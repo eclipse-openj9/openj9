@@ -51,10 +51,10 @@ uint8_t *TR::ARMRecompilationSnippet::emitSnippetBody()
    *(int32_t *)buffer = encodeHelperBranchAndLink(countingRecompMethodSymRef, buffer, getNode(), cg());  // BL resolve
    buffer += 4;
 
-   *(int32_t *)buffer = (int32_t)(intptrj_t)cg()->comp()->getRecompilationInfo()->getJittedBodyInfo();
+   *(int32_t *)buffer = (int32_t)(intptr_t)cg()->comp()->getRecompilationInfo()->getJittedBodyInfo();
    buffer += 4;
 
-   *(int32_t *)buffer = ((int32_t)(intptrj_t)cg()->getCodeStart());
+   *(int32_t *)buffer = ((int32_t)(intptr_t)cg()->getCodeStart());
    buffer += 4;
 
    return buffer;

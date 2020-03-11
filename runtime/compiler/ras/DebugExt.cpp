@@ -3835,18 +3835,18 @@ TR_DebugExt::getMethodName(TR_OpaqueMethodBlock *mb)
    if (!localRomClass)
       return NULL;
 
-   intptrj_t localClassNameAddr = (intptrj_t)((intptrj_t)(localRamClass->romClass) + offsetof(J9ROMClass, className));
-   struct J9UTF8 *localClassName = (struct J9UTF8 *)(localClassNameAddr + (intptrj_t)localRomClass->className);
+   intptr_t localClassNameAddr = (intptr_t)((intptr_t)(localRamClass->romClass) + offsetof(J9ROMClass, className));
+   struct J9UTF8 *localClassName = (struct J9UTF8 *)(localClassNameAddr + (intptr_t)localRomClass->className);
 
-   intptrj_t romMethod = (intptrj_t)J9_ROM_METHOD_FROM_RAM_METHOD(localRamMethod);
-   intptrj_t localMethodNameSigAddr = (intptrj_t)(((J9ROMMethod *)romMethod) + offsetof(J9ROMMethod, nameAndSignature));
+   intptr_t romMethod = (intptr_t)J9_ROM_METHOD_FROM_RAM_METHOD(localRamMethod);
+   intptr_t localMethodNameSigAddr = (intptr_t)(((J9ROMMethod *)romMethod) + offsetof(J9ROMMethod, nameAndSignature));
 
    struct J9ROMNameAndSignature *localMethodNameAndSig = (J9ROMNameAndSignature *) dxMallocAndRead(sizeof(J9ROMNameAndSignature), (J9ROMNameAndSignature *)localMethodNameSigAddr);
    if (!localMethodNameAndSig)
       return NULL;
 
-   intptrj_t localMethodNameAddr = (intptrj_t)(localMethodNameSigAddr + localMethodNameAndSig->name + offsetof(J9ROMNameAndSignature, name));
-   intptrj_t localMethodSigAddr  = (intptrj_t)(localMethodNameSigAddr + localMethodNameAndSig->signature + offsetof(J9ROMNameAndSignature, signature));
+   intptr_t localMethodNameAddr = (intptr_t)(localMethodNameSigAddr + localMethodNameAndSig->name + offsetof(J9ROMNameAndSignature, name));
+   intptr_t localMethodSigAddr  = (intptr_t)(localMethodNameSigAddr + localMethodNameAndSig->signature + offsetof(J9ROMNameAndSignature, signature));
    struct J9UTF8 *localMethodName = (struct J9UTF8 *)(localMethodNameAddr);
    struct J9UTF8 *localMethodSig =  (struct J9UTF8 *)(localMethodSigAddr);
 

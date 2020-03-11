@@ -50,7 +50,7 @@ extern TR::Instruction *loadAddressRAM32(TR::CodeGenerator *cg,
 
 extern TR::Instruction *loadAddressRAM(TR::CodeGenerator *cg,
                                     TR::Node        *node,
-                                    intptrj_t         value,
+                                    intptr_t         value,
                                     TR::Register    *targetRegister);
 
 extern TR::Instruction *loadAddressJNI32(TR::CodeGenerator *cg,
@@ -60,7 +60,7 @@ extern TR::Instruction *loadAddressJNI32(TR::CodeGenerator *cg,
 
 extern TR::Instruction *loadAddressJNI(TR::CodeGenerator *cg,
                                     TR::Node        *node,
-                                    intptrj_t         value,
+                                    intptr_t         value,
                                     TR::Register    *targetRegister);
 
 namespace J9

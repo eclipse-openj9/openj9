@@ -1385,7 +1385,7 @@ J9::Compilation::notYetRunMeansCold()
 
    TR_ResolvedMethod *currentMethod = self()->getJittedMethodSymbol()->getResolvedMethod();
 
-   intptrj_t initialCount = currentMethod->hasBackwardBranches() ?
+   intptr_t initialCount = currentMethod->hasBackwardBranches() ?
                              self()->getOptions()->getInitialBCount() :
                              self()->getOptions()->getInitialCount();
 

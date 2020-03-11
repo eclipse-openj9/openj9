@@ -176,7 +176,7 @@ TR::Instruction *TR_X86Recompilation::generatePrologue(TR::Instruction *cursor)
          else
             {
             TR_ASSERT(linkage->getMinimumFirstInstructionSize() <= 5, "Can't satisfy first instruction size constraint");
-            mRef = generateX86MemoryReference((intptrj_t)getCounterAddress(), cg());
+            mRef = generateX86MemoryReference((intptr_t)getCounterAddress(), cg());
             }
 
          if (!isProfilingCompilation())

@@ -274,14 +274,14 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
          // Align the real snippet entry point because it will be patched with
          // the vtable dispatch when the method is resolved.
          //
-         intptrj_t entryPoint = ((intptrj_t)cursor +
+         intptr_t entryPoint = ((intptr_t)cursor +
                                  ((3 * sizeof(uintptr_t)) +
                                   (hasJ2IThunkInPicData() ? sizeof(uintptr_t) : 0) +
                                   (cg()->comp()->target().is64Bit() ? 4 : 1)));
 
-         intptrj_t requiredEntryPoint =
+         intptr_t requiredEntryPoint =
             (entryPoint + (cg()->getLowestCommonCodePatchingAlignmentBoundary()-1) &
-            (intptrj_t)(~(cg()->getLowestCommonCodePatchingAlignmentBoundary()-1)));
+            (intptr_t)(~(cg()->getLowestCommonCodePatchingAlignmentBoundary()-1)));
 
          cursor += (requiredEntryPoint - entryPoint);
 
@@ -351,7 +351,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
 
       if (!isInterface() && _methodSymRef->isUnresolved())
          {
-         TR_ASSERT((((intptrj_t)cursor & (cg()->getLowestCommonCodePatchingAlignmentBoundary()-1)) == 0),
+         TR_ASSERT((((intptr_t)cursor & (cg()->getLowestCommonCodePatchingAlignmentBoundary()-1)) == 0),
                  "Mis-aligned VPIC snippet");
          }
 
@@ -757,11 +757,11 @@ TR::X86CallSnippet::alignCursorForCodePatching(
       uint8_t *cursor,
       bool alignWithNOPs)
    {
-   intptrj_t alignedCursor =
-      ((intptrj_t)cursor + (cg()->getLowestCommonCodePatchingAlignmentBoundary()-1) &
-      (intptrj_t)(~(cg()->getLowestCommonCodePatchingAlignmentBoundary()-1)));
+   intptr_t alignedCursor =
+      ((intptr_t)cursor + (cg()->getLowestCommonCodePatchingAlignmentBoundary()-1) &
+      (intptr_t)(~(cg()->getLowestCommonCodePatchingAlignmentBoundary()-1)));
 
-   intptrj_t paddingLength = alignedCursor - (intptrj_t)cursor;
+   intptr_t paddingLength = alignedCursor - (intptr_t)cursor;
 
    if (alignWithNOPs && (paddingLength > 0))
       {
@@ -903,8 +903,8 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
 
       // DD/DQ cpAddr
       //
-      intptrj_t cpAddr = (intptrj_t)methodSymRef->getOwningMethod(comp)->constantPool();
-      *(intptrj_t *)cursor = cpAddr;
+      intptr_t cpAddr = (intptr_t)methodSymRef->getOwningMethod(comp)->constantPool();
+      *(intptr_t *)cursor = cpAddr;
 
       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                                     *(uint8_t **)cursor,
@@ -912,7 +912,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
                                                                                     TR_ConstantPool,
                                                                                     cg()),
                                   __FILE__, __LINE__, getNode());
-      cursor += sizeof(intptrj_t);
+      cursor += sizeof(intptr_t);
 
       // DD cpIndex
       //
@@ -947,11 +947,11 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       if (!isJitInduceOSRCall)
          {
 #if defined(J9VM_OPT_JITSERVER)
-         intptrj_t ramMethod = comp->isOutOfProcessCompilation() && !methodSymbol->isInterpreted() ?
+         intptr_t ramMethod = comp->isOutOfProcessCompilation() && !methodSymbol->isInterpreted() ?
                                     (intptr_t)methodSymRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier() :
                                     (intptr_t)methodSymbol->getMethodAddress();
 #else
-         intptrj_t ramMethod = (intptr_t)methodSymbol->getMethodAddress();
+         intptr_t ramMethod = (intptr_t)methodSymbol->getMethodAddress();
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
          if (cg()->comp()->target().is64Bit())
@@ -968,7 +968,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
             *cursor++ = 0xbf;
             }
 
-         *(intptrj_t *)cursor = ramMethod;
+         *(intptr_t *)cursor = ramMethod;
 
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
@@ -985,7 +985,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
          if (comp->getOption(TR_EnableHCR))
             cg()->jitAddPicToPatchOnClassRedefinition((void *)ramMethod, (void *)cursor);
 
-         cursor += sizeof(intptrj_t);
+         cursor += sizeof(intptr_t);
          }
 
       // JMP interpreterStaticAndSpecialGlue

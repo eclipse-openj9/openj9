@@ -78,7 +78,7 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
       if (cg->comp()->getOption(TR_UseSymbolValidationManager))
          {
          TR::ResolvedMethodSymbol *methodSym = (TR::ResolvedMethodSymbol*) _symbolReference->getSymbol();
-         uint8_t * j9Method = (uint8_t *) (reinterpret_cast<intptrj_t>(methodSym->getResolvedMethod()->resolvedMethodAddress()));
+         uint8_t * j9Method = (uint8_t *) (reinterpret_cast<intptr_t>(methodSym->getResolvedMethod()->resolvedMethodAddress()));
          TR_ASSERT_FATAL(j9Method, "TR_RamMethod relocation : cursor = %x, j9Method can not be null", cursor);
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                            j9Method,

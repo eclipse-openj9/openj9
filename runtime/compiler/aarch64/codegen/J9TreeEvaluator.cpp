@@ -934,7 +934,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
    TR::Register *objReg = cg->evaluate(secondChild);
    TR::RegisterDependencyConditions *conditions = NULL;
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-   intptrj_t oldValue = 0;
+   intptr_t oldValue = 0;
    bool oldValueInReg = true;
    offsetReg = cg->evaluate(thirdChild);
 

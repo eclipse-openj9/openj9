@@ -6798,7 +6798,7 @@ int32_t
 TR_J9ByteCodeIlGenerator::genLookupSwitch()
    {
    int32_t i = 1;
-   while ((intptrj_t)&_code[_bcIndex+i] & 3) ++i; // 4 byte align
+   while ((intptr_t)&_code[_bcIndex+i] & 3) ++i; // 4 byte align
 
    int32_t bcIndex = _bcIndex + i;
    int32_t defaultTarget = nextSwitchValue(bcIndex) + _bcIndex;
@@ -6838,7 +6838,7 @@ int32_t
 TR_J9ByteCodeIlGenerator::genTableSwitch()
    {
    int32_t i = 1;
-   while ((intptrj_t)&_code[_bcIndex+i] & 3) ++i; // 4 byte align
+   while ((intptr_t)&_code[_bcIndex+i] & 3) ++i; // 4 byte align
 
    int32_t bcIndex = _bcIndex + i;
    int32_t defaultTarget = nextSwitchValue(bcIndex) + _bcIndex;

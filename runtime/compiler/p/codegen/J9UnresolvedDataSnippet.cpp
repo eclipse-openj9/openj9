@@ -124,15 +124,15 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(refNum, false, false, false);
    getSnippetLabel()->setCodeLocation(cursor);
 
-   intptrj_t helperAddress = (intptrj_t)glueRef->getMethodAddress();
-   if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)cursor))
+   intptr_t helperAddress = (intptr_t)glueRef->getMethodAddress();
+   if (cg()->directCallRequiresTrampoline(helperAddress, (intptr_t)cursor))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
-      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor), "Helper address is out of range");
+      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)cursor), "Helper address is out of range");
       }
 
    // bl distance
-   *(int32_t *)cursor = 0x48000001 | ((helperAddress - (intptrj_t)cursor) & 0x03fffffc);
+   *(int32_t *)cursor = 0x48000001 | ((helperAddress - (intptr_t)cursor) & 0x03fffffc);
    cg()->addProjectSpecializedRelocation(cursor,(uint8_t *)glueRef, NULL, TR_HelperAddress,
                           __FILE__,
                           __LINE__,
@@ -144,7 +144,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
       }
    cursor += 4;
 
-   *(intptrj_t *)cursor = (intptrj_t)getAddressOfDataReference();   // Code Cache RA
+   *(intptr_t *)cursor = (intptr_t)getAddressOfDataReference();   // Code Cache RA
    cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
                              __FILE__, __LINE__, getNode());
    cursor += TR::Compiler->om.sizeofReferenceAddress();
@@ -174,7 +174,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
       *(int32_t *)cursor |= 1<<27;	                     // Set the double word load/store bit
    cursor += 4;
 
-   *(intptrj_t *)cursor = (intptrj_t)getDataSymbolReference()->getOwningMethod(comp)->constantPool();
+   *(intptr_t *)cursor = (intptr_t)getDataSymbolReference()->getOwningMethod(comp)->constantPool();
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,*(uint8_t **)cursor,
                                                                           getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                                                           TR_ConstantPool,
@@ -246,10 +246,10 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    cursor += 4;
    *(int32_t *)cursor = 0xdeadbeef; // Patched with lis via runtime code
    cursor += 4;
-   intptrj_t targetAddress = (intptrj_t)getAddressOfDataReference()+4;
-   TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(targetAddress, (intptrj_t)cursor),
+   intptr_t targetAddress = (intptr_t)getAddressOfDataReference()+4;
+   TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(targetAddress, (intptr_t)cursor),
                    "Return address is out of range");
-   *(int32_t *)cursor = 0x48000000 | ((targetAddress - (intptrj_t)cursor) & 0x03fffffc);
+   *(int32_t *)cursor = 0x48000000 | ((targetAddress - (intptr_t)cursor) & 0x03fffffc);
 
    return cursor+4;
    }
@@ -318,20 +318,20 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
    printPrefix(pOutFile, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptrj_t)cursor + distance, info);
+   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Code cache return address", *(intptrj_t *)cursor);
-   cursor += sizeof(intptrj_t);
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
+   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Code cache return address", *(intptr_t *)cursor);
+   cursor += sizeof(intptr_t);
 
    printPrefix(pOutFile, NULL, cursor, 4);
    trfprintf(pOutFile, ".long \t0x%08x\t\t; pTOC|VD|SY|IX|cpIndex of the data reference", *(int32_t *)cursor);
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant pool address", *(intptrj_t *)cursor);
-   cursor += sizeof(intptrj_t);
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
+   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant pool address", *(intptr_t *)cursor);
+   cursor += sizeof(intptr_t);
 
    printPrefix(pOutFile, NULL, cursor, 4);
    trfprintf(pOutFile, ".long \t0x%08x\t\t; Offset to be merged", *(int32_t *)cursor);
@@ -352,7 +352,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
    printPrefix(pOutFile, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; <clinit> case - Branch back to main line code", (intptrj_t)cursor + distance);
+   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; <clinit> case - Branch back to main line code", (intptr_t)cursor + distance);
    }
 
 uint32_t J9::Power::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart)

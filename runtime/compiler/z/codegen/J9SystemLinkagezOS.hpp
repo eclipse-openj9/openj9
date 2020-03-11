@@ -47,7 +47,7 @@ public:
    zOSSystemLinkage(TR::CodeGenerator * cg);
 
    virtual void generateInstructionsForCall(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies,
-         intptrj_t targetAddress, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
+         intptr_t targetAddress, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
          TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint = true);
 
 

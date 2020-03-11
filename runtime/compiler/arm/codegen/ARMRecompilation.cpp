@@ -90,7 +90,7 @@ TR::Instruction *TR_ARMRecompilation::generatePrePrologue()
          cursor = new (cg()->trHeapMemory()) TR::ARMTrg1Src1Instruction(cursor, ARMOp_mov, firstNode, gr4, lr, cg());
          cursor = generateImmSymInstruction(cg(), ARMOp_bl, firstNode, (uintptr_t)recompileMethodSymRef->getMethodAddress(), new (cg()->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t)0, 0, cg()->trMemory()), recompileMethodSymRef, NULL, cursor);
          }
-      cursor = new (cg()->trHeapMemory()) TR::ARMImmInstruction(cursor, ARMOp_dd, firstNode, (int32_t)(intptrj_t)info, cg());
+      cursor = new (cg()->trHeapMemory()) TR::ARMImmInstruction(cursor, ARMOp_dd, firstNode, (int32_t)(intptr_t)info, cg());
       cursor->setNeedsAOTRelocation();
       ((TR::ARMImmInstruction *)cursor)->setReloKind(TR_BodyInfoAddress);
 
@@ -110,7 +110,7 @@ TR::Instruction *TR_ARMRecompilation::generatePrologue(TR::Instruction *cursor)
       TR::Register   *gr5 = machine->getRealRegister(TR::RealRegister::gr5);
       TR::Register   *lr = machine->getRealRegister(TR::RealRegister::gr14); // link register
       TR::Node       *firstNode = _compilation->getStartTree()->getNode();
-      intptrj_t        addr = (intptrj_t)getCounterAddress();
+      intptr_t        addr = (intptr_t)getCounterAddress();
       TR::LabelSymbol *snippetLabel = TR::LabelSymbol::create(cg()->trHeapMemory(), cg());
       intParts localVal(addr);
 

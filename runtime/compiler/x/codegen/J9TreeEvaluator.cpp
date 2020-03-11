@@ -3249,7 +3249,7 @@ TR::Register *J9::X86::TreeEvaluator::barrierFenceEvaluator(TR::Node *node, TR::
    else
       {
       TR::RealRegister *stackReg = cg->machine()->getRealRegister(TR::RealRegister::esp);
-      TR::MemoryReference *mr = generateX86MemoryReference(stackReg, intptrj_t(0), cg);
+      TR::MemoryReference *mr = generateX86MemoryReference(stackReg, intptr_t(0), cg);
 
       mr->setRequiresLockPrefix();
       generateMemImmInstruction(OR4MemImms, node, mr, 0, cg);
@@ -6074,7 +6074,7 @@ static void genHeapAlloc(
 
       if (sizeReg)
          {
-         // calculate variable size, rounding up if necessary to a intptrj_t multiple boundary
+         // calculate variable size, rounding up if necessary to a intptr_t multiple boundary
          //
          int32_t round; // zero indicates no rounding is necessary
 
@@ -6466,7 +6466,7 @@ static void genHeapAlloc2(
                                                               offsetof(J9VMThread, heapAlloc), cg), cg);
 
 
-         // calculate variable size, rounding up if necessary to a intptrj_t multiple boundary
+         // calculate variable size, rounding up if necessary to a intptr_t multiple boundary
          //
          int32_t round; // zero indicates no rounding is necessary
 
@@ -6808,9 +6808,9 @@ static void genInitObjectHeader(TR::Node             *node,
       if (use64BitClasses)
          {
          if (cg->needClassAndMethodPointerRelocations() && comp->getOption(TR_UseSymbolValidationManager))
-            instr = generateRegImm64Instruction(MOV8RegImm64, node, tempReg, ((intptrj_t)clazz|orFlagsClass), cg, TR_ClassPointer);
+            instr = generateRegImm64Instruction(MOV8RegImm64, node, tempReg, ((intptr_t)clazz|orFlagsClass), cg, TR_ClassPointer);
          else
-            instr = generateRegImm64Instruction(MOV8RegImm64, node, tempReg, ((intptrj_t)clazz|orFlagsClass), cg);
+            instr = generateRegImm64Instruction(MOV8RegImm64, node, tempReg, ((intptr_t)clazz|orFlagsClass), cg);
          generateMemRegInstruction(S8MemReg, node, generateX86MemoryReference(objectReg, TR::Compiler->om.offsetOfObjectVftField(), cg), tempReg, cg);
          }
       else
@@ -11239,7 +11239,7 @@ VMgenerateCatchBlockBBStartPrologue(
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *restartLabel = generateLabelSymbol(cg);
 
-      generateMemInstruction(DEC4Mem, node, generateX86MemoryReference((intptrj_t)comp->getRecompilationInfo()->getCounterAddress(), cg), cg);
+      generateMemInstruction(DEC4Mem, node, generateX86MemoryReference((intptr_t)comp->getRecompilationInfo()->getCounterAddress(), cg), cg);
       generateLabelInstruction(JE4, node, snippetLabel, cg);
       generateLabelInstruction(LABEL, node, restartLabel, cg);
       cg->addSnippet(new (cg->trHeapMemory()) TR::X86ForceRecompilationSnippet(cg, node, restartLabel, snippetLabel));
@@ -12362,7 +12362,7 @@ J9::X86::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField (TR::C
             {
             fieldClassReg = sideEffectRegister;
             }
-         generateMemRegInstruction(SMemReg(is64Bit), node, generateX86MemoryReference(dataBlockReg, (intptrj_t)(offsetof(J9JITWatchedStaticFieldData, fieldClass)), cg), fieldClassReg, cg);
+         generateMemRegInstruction(SMemReg(is64Bit), node, generateX86MemoryReference(dataBlockReg, (intptr_t)(offsetof(J9JITWatchedStaticFieldData, fieldClass)), cg), fieldClassReg, cg);
          deps->addPreCondition(fieldClassReg, TR::RealRegister::NoReg, cg);
          deps->addPostCondition(fieldClassReg, TR::RealRegister::NoReg, cg);
          if (isWrite)

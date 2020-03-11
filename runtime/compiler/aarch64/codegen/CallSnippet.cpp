@@ -255,7 +255,7 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
    cursor += 4;
 
    // Store the code cache RA
-   *(intptrj_t *)cursor = (intptrj_t)getCallRA();
+   *(intptr_t *)cursor = (intptr_t)getCallRA();
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
                                cursor,
                                NULL,
@@ -270,7 +270,7 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
       // Store the method pointer: it is NULL for unresolved
       if (methodSymRef->isUnresolved() || comp->compileRelocatableCode())
          {
-         *(intptrj_t *)cursor = 0;
+         *(intptr_t *)cursor = 0;
          if (comp->getOption(TR_EnableHCR))
             {
             cg()->jitAddPicToPatchOnClassRedefinition((void*)-1, (void *)cursor, true);
@@ -281,7 +281,7 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
          }
       else
          {
-         *(intptrj_t *)cursor = (intptrj_t)methodSymbol->getMethodAddress();
+         *(intptr_t *)cursor = (intptr_t)methodSymbol->getMethodAddress();
          if (comp->getOption(TR_EnableHCR))
             {
             cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);
@@ -335,12 +335,12 @@ uint8_t *TR::ARM64UnresolvedCallSnippet::emitSnippetBody()
 
    TR::SymbolReference *methodSymRef = getNode()->getSymbolReference();
    TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
-   intptrj_t helperLookupOffset;
+   intptr_t helperLookupOffset;
 
    TR::Compilation* comp = cg()->comp();
 
    // CP
-   *(intptrj_t *)cursor = (intptrj_t)methodSymRef->getOwningMethod(comp)->constantPool();
+   *(intptr_t *)cursor = (intptr_t)methodSymRef->getOwningMethod(comp)->constantPool();
 
    if (comp->compileRelocatableCode() && comp->getOption(TR_TraceRelocatableDataDetailsCG))
       {
@@ -382,7 +382,7 @@ uint8_t *TR::ARM64UnresolvedCallSnippet::emitSnippetBody()
       }
 
    // CP index and helper offset
-   *(intptrj_t *)cursor = (helperLookupOffset<<56) | methodSymRef->getCPIndexForVM();
+   *(intptr_t *)cursor = (helperLookupOffset<<56) | methodSymRef->getCPIndexForVM();
 
    return cursor + 8;
    }
@@ -417,7 +417,7 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
    cursor += 4;
 
    // Store the code cache RA
-   *(intptrj_t *)cursor = (intptrj_t)getReturnLabel()->getCodeLocation();
+   *(intptr_t *)cursor = (intptr_t)getReturnLabel()->getCodeLocation();
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
                                cursor,
                                NULL,
@@ -426,8 +426,8 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
    cursor += 8;
 
    // CP
-   intptrj_t cpAddr = (intptrj_t)methodSymRef->getOwningMethod(comp)->constantPool();
-   *(intptrj_t *)cursor = cpAddr;
+   intptr_t cpAddr = (intptr_t)methodSymRef->getOwningMethod(comp)->constantPool();
+   *(intptr_t *)cursor = cpAddr;
    uint8_t *j2iThunkRelocationPoint = cursor;
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
                                cursor,
@@ -438,18 +438,18 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
    cursor += 8;
 
    // CP index
-   *(intptrj_t *)cursor = methodSymRef->getCPIndexForVM();
+   *(intptr_t *)cursor = methodSymRef->getCPIndexForVM();
    cursor += 8;
 
    // Reserved spot to hold J9Method pointer of the callee
    // This is used for private nestmate calls
    // Initial value is 0
-   *(intptrj_t *)cursor = 0;
+   *(intptr_t *)cursor = 0;
    cursor += 8;
 
    // J2I thunk address
    // This is used for private nestmate calls
-   *(intptrj_t*)cursor = (intptrj_t)thunk;
+   *(intptr_t*)cursor = (intptr_t)thunk;
 
    auto info =
       (TR_RelocationRecordInformation *)comp->trMemory()->allocateMemory(
@@ -463,7 +463,7 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
    info->data2 = callNode ? callNode->getInlinedSiteIndex() : (uintptr_t)-1;
 
    // data3 = distance in bytes from Constant Pool Pointer to J2I Thunk
-   info->data3 = (intptrj_t)cursor - (intptrj_t)j2iThunkRelocationPoint;
+   info->data3 = (intptr_t)cursor - (intptr_t)j2iThunkRelocationPoint;
 
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
                                j2iThunkRelocationPoint,
@@ -494,7 +494,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64VirtualUnresolvedSnippet * snippet)
    cursor += sizeof(intptr_t);
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Constant pool address", *(intptrj_t *)cursor);
+   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Constant pool address", *(intptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
@@ -519,7 +519,7 @@ uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
    cursor += 4;
 
    // Store the code cache RA
-   *(intptrj_t *)cursor = (intptrj_t)getReturnLabel()->getCodeLocation();
+   *(intptr_t *)cursor = (intptr_t)getReturnLabel()->getCodeLocation();
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
                                cursor,
                                NULL,
@@ -528,7 +528,7 @@ uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
    cursor += 8;
 
    // CP
-   *(intptrj_t *)cursor = (intptrj_t)methodSymRef->getOwningMethod(cg()->comp())->constantPool();
+   *(intptr_t *)cursor = (intptr_t)methodSymRef->getOwningMethod(cg()->comp())->constantPool();
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
                                cursor,
                                *(uint8_t **)cursor,
@@ -538,13 +538,13 @@ uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
    cursor += 8;
 
    // CP index
-   *(intptrj_t *)cursor = methodSymRef->getCPIndexForVM();
+   *(intptr_t *)cursor = methodSymRef->getCPIndexForVM();
    cursor += 8;
 
    // Add 2 more slots for resolved values (interface class and iTable offset)
-   *(intptrj_t *)cursor = 0;
+   *(intptr_t *)cursor = 0;
    cursor += 8;
-   *(intptrj_t *)cursor = 0;
+   *(intptr_t *)cursor = 0;
    cursor += 8;
 
    return cursor;
@@ -569,7 +569,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64InterfaceCallSnippet * snippet)
    cursor += sizeof(intptr_t);
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Constant pool address", *(intptrj_t *)cursor);
+   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Constant pool address", *(intptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
@@ -577,7 +577,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64InterfaceCallSnippet * snippet)
    cursor += sizeof(intptr_t);
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Interface class", *(intptrj_t *)cursor);
+   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Interface class", *(intptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));

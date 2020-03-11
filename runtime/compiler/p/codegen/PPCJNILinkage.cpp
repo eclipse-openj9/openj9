@@ -200,7 +200,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    TR::RealRegister *metaReg = cg()->getMethodMetaDataRegister();
    TR::Register        *gr2Reg, *gr30Reg, *gr31Reg;
    int32_t             argSize;
-   intptrj_t           aValue;
+   intptr_t           aValue;
 
    TR::RegisterDependencyConditions *deps = new (trHeapMemory()) TR::RegisterDependencyConditions(104,104, trMemory());
    const TR::PPCLinkageProperties& jniLinkageProperties = getProperties();
@@ -643,7 +643,7 @@ void J9::Power::JNILinkage::releaseVMAccess(TR::Node* callNode, TR::RegisterDepe
    TR::addDependency(deps, gr28Reg, TR::RealRegister::gr28, TR_GPR, cg());
    TR::addDependency(deps, gr29Reg, TR::RealRegister::gr29, TR_GPR, cg());
 
-   intptrj_t aValue;
+   intptr_t aValue;
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    aValue = fej9->constReleaseVMAccessOutOfLineMask();

@@ -2903,7 +2903,7 @@ TR::CompilationInfo::startCompilationThread(int32_t priority, int32_t threadId, 
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
 void *TR::CompilationInfo::searchForDLTRecord(J9Method *method, int32_t bcIndex)
    {
-   int32_t hashVal = (intptrj_t)method * bcIndex % DLT_HASHSIZE;
+   int32_t hashVal = (intptr_t)method * bcIndex % DLT_HASHSIZE;
    if (hashVal < 0)
       hashVal = -hashVal;
 
@@ -2948,7 +2948,7 @@ void *TR::CompilationInfo::searchForDLTRecord(J9Method *method, int32_t bcIndex)
 
 void TR::CompilationInfo::insertDLTRecord(J9Method *method, int32_t bcIndex, void *dltEntry)
    {
-   int32_t hashVal = (intptrj_t)method * bcIndex % DLT_HASHSIZE;
+   int32_t hashVal = (intptr_t)method * bcIndex % DLT_HASHSIZE;
    if (hashVal < 0)
       hashVal = -hashVal;
 
@@ -3055,7 +3055,7 @@ void printAllCounts(J9JavaVM *javaVM)
                utf8 = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
                fprintf(stderr, "%.*s", J9UTF8_LENGTH(utf8), (char *) J9UTF8_DATA(utf8));
                   */
-               intptrj_t count = (intptrj_t) TR::CompilationInfo::getInvocationCount(method);
+               intptr_t count = (intptr_t) TR::CompilationInfo::getInvocationCount(method);
                if (count < 0)
                   {
                   fprintf(stderr, "Bad count\n");
@@ -3063,14 +3063,14 @@ void printAllCounts(J9JavaVM *javaVM)
                else
                   {
                   //fprintf(stderr, " extra=%d ", count);
-                  intptrj_t initialCount = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? TR::Options::getCmdLineOptions()->getInitialBCount() : TR::Options::getCmdLineOptions()->getInitialCount();
+                  intptr_t initialCount = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? TR::Options::getCmdLineOptions()->getInitialBCount() : TR::Options::getCmdLineOptions()->getInitialCount();
                   if (count > initialCount)
                      {
                      fprintf(stderr, " Bad count\n");
                      }
                   else
                      {
-                     intptrj_t invocationCount = initialCount - count;
+                     intptr_t invocationCount = initialCount - count;
                      //fprintf(stderr, " invocation count=%d\n", invocationCount);
                      if (invocationCount==0 || count == 0) // some methods have count==0 and are never invoked
                         {
@@ -10052,7 +10052,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             {
             J9::MethodHandleThunkDetails &mhDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
             uintptr_t thunks = trvm->getReferenceField(*mhDetails.getHandleRef(), "thunks", "Ljava/lang/invoke/ThunkTuple;");
-            int64_t jitEntryPoint = (int64_t)(intptrj_t)startPC + J9::PrivateLinkage::LinkageInfo::get(startPC)->getJitEntryOffset();
+            int64_t jitEntryPoint = (int64_t)(intptr_t)startPC + J9::PrivateLinkage::LinkageInfo::get(startPC)->getJitEntryOffset();
 
 #if defined(JIT_METHODHANDLE_TRANSLATED)
             jitMethodHandleTranslated(vmThread, *mhDetails.getHandleRef(), mhDetails.getArgRef() ? *mhDetails.getArgRef() : NULL, jitEntryPoint, startPC);
@@ -10062,7 +10062,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             // word-tearing of aligned 64-bit stores on any platform we care about.
             //
             trvm->setInt64Field(thunks, "invokeExactThunk", jitEntryPoint);
-            trvm->setInt64Field(thunks, "i2jInvokeExactThunk", (intptrj_t)startPC);
+            trvm->setInt64Field(thunks, "i2jInvokeExactThunk", (intptr_t)startPC);
 #endif
             deleteMethodHandleRef(mhDetails, vmThread, trvm);
             }
@@ -12341,7 +12341,7 @@ TR::CompilationInfo::scheduleLPQAndBumpCount(TR::IlGeneratorMethodDetails &detai
    // queue are marked QUEUED_FOR_COMPILATION
    // To summarize: methods in LPQ can have any invocation count, but methods
    // in main queue must have an invocation count of QUEUED_FOR_COMPILATION
-   intptrj_t count = getInvocationCount(method);
+   intptr_t count = getInvocationCount(method);
    if (count == 0)
       {
       bool dequeued = false;
@@ -12368,7 +12368,7 @@ TR::CompilationInfo::scheduleLPQAndBumpCount(TR::IlGeneratorMethodDetails &detai
             // Decide what value to add
             // TODO: look at options sets
 
-            intptrj_t newCount = getCount(romMethod, TR::Options::getCmdLineOptions(), TR::Options::getAOTCmdLineOptions());
+            intptr_t newCount = getCount(romMethod, TR::Options::getCmdLineOptions(), TR::Options::getAOTCmdLineOptions());
             newCount = newCount * (100 - TR::Options::_countPercentageForEarlyCompilation) / 100; // TODO: verify we don't have negative numbers
             if (TR::CompilationInfo::setInvocationCount(method, count, newCount))
                {

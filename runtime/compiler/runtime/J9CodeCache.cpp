@@ -719,7 +719,7 @@ extern "C"
 
    void mcc_lookupHelperTrampoline_unwrapper(void **argsPtr, void **resPtr)
       {
-      intptrj_t trampoline = TR::CodeCacheManager::instance()->findHelperTrampoline(static_cast<int32_t>((UDATA)argsPtr[1]), argsPtr[0]);
+      intptr_t trampoline = TR::CodeCacheManager::instance()->findHelperTrampoline(static_cast<int32_t>((UDATA)argsPtr[1]), argsPtr[0]);
       *resPtr = reinterpret_cast<void *>(trampoline);
       }
 

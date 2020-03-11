@@ -864,7 +864,7 @@ void DLTLogic(J9VMThread* vmThread, TR::CompilationInfo *compInfo)
    if (startPC ||
        walkState.method==0 ||
        (romMethod->modifiers & J9AccNative) ||
-       ((intptrj_t)(walkState.method->constantPool) & J9_STARTPC_JNI_NATIVE) ||
+       ((intptr_t)(walkState.method->constantPool) & J9_STARTPC_JNI_NATIVE) ||
        !J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ||
        TR::CompilationInfo::getJ9MethodVMExtra(walkState.method)==J9_JIT_NEVER_TRANSLATE ||
        (J9CLASS_FLAGS(J9_CLASS_FROM_METHOD(walkState.method)) & J9AccClassHotSwappedOut) ||
@@ -3230,11 +3230,11 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
       J9Class * superCl = cl->superclasses[classDepth];
 
       J9VTableHeader * superVTableHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(superCl);
-      intptrj_t methodCount =  (intptrj_t)superVTableHeader->size;
+      intptr_t methodCount =  (intptr_t)superVTableHeader->size;
       J9Method ** superVTable = J9VTABLE_FROM_HEADER(superVTableHeader);
       J9Method ** subVTable = J9VTABLE_FROM_RAM_CLASS(cl);
 
-      intptrj_t methodIndex=0;
+      intptr_t methodIndex=0;
 
       while(methodCount--)
          {
@@ -3479,13 +3479,13 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
                J9VTableHeader * tempsuperVTableHeader;
                J9Method ** tempsuperVTable;
                J9Method * tempsuperMethod;
-               intptrj_t tempmethodCount;
+               intptr_t tempmethodCount;
                for(int32_t k=classDepth-1;k>=0;k--)
                   {
 
                   tempsuperCl = cl->superclasses[k];
                   tempsuperVTableHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(tempsuperCl);
-                  tempmethodCount =  (intptrj_t)tempsuperVTableHeader->size;
+                  tempmethodCount =  (intptr_t)tempsuperVTableHeader->size;
 
                   if(methodIndex>= tempmethodCount)  //we are outside the grandparent's vft slots
                      break;
@@ -3523,13 +3523,13 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
             J9VTableHeader * tempsuperVTableHeader;
             J9Method ** tempsuperVTable;
             J9Method * tempsuperMethod;
-            intptrj_t tempmethodCount;
+            intptr_t tempmethodCount;
             for(int32_t k=classDepth-1;k>=0;k--)
                {
 
                tempsuperCl = cl->superclasses[k];
                tempsuperVTableHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(tempsuperCl);
-               tempmethodCount =  (intptrj_t)tempsuperVTableHeader->size;
+               tempmethodCount =  (intptr_t)tempsuperVTableHeader->size;
 
                if(methodIndex >= tempmethodCount) //we are outside the grandparent's vft slots
                   break;

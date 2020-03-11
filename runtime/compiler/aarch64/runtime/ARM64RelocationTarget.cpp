@@ -103,7 +103,7 @@ bool
 TR_ARM64RelocationTarget::useTrampoline(uint8_t *helperAddress, uint8_t *baseLocation)
    {
    return
-      !reloRuntime()->comp()->target().cpu.isTargetWithinUnconditionalBranchImmediateRange((intptrj_t)helperAddress, (intptrj_t)baseLocation) ||
+      !reloRuntime()->comp()->target().cpu.isTargetWithinUnconditionalBranchImmediateRange((intptr_t)helperAddress, (intptr_t)baseLocation) ||
       TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines);
    }
 

@@ -2098,7 +2098,7 @@ J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * c
    TR::Node * firstChild = testNode->getFirstChild();
    TR::Node * secondChild = testNode->getSecondChild();
    TR::Compilation *comp = cg->comp();
-   intptrj_t value = cg->comp()->target().is64Bit() ? secondChild->getLongInt() : secondChild->getInt();
+   intptr_t value = cg->comp()->target().is64Bit() ? secondChild->getLongInt() : secondChild->getInt();
 
    TR_ASSERT( testNode->getOpCodeValue() == (cg->comp()->target().is64Bit() ? TR::lcmpeq : TR::icmpeq), "asynccheck bad format");
    TR_ASSERT( secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL, "asynccheck bad format");
@@ -4841,7 +4841,7 @@ VMarrayStoreCHKEvaluator(
    if (debugObj)
       debugObj->addInstructionComment(cursor, "Check if src.type == array.type");
 
-   intptrj_t objectClass = (intptrj_t) fej9->getSystemClassFromClassName("java/lang/Object", 16, true);
+   intptr_t objectClass = (intptr_t) fej9->getSystemClassFromClassName("java/lang/Object", 16, true);
    /*
     * objectClass is used for Object arrays check optimization: when we are storing to Object arrays we can skip all other array store checks
     * However, TR_J9SharedCacheVM::getSystemClassFromClassName can return 0 when it's impossible to relocate j9class later for AOT loads
@@ -8133,7 +8133,7 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
          {
          if (cg->wantToPatchClassPointer(classAddress, node))
             {
-            iCursor = genLoadAddressConstantInSnippet(cg, node, (intptr_t) classAddress | (intptrj_t)orFlag, temp1Reg, iCursor, conditions, litPoolBaseReg, true);
+            iCursor = genLoadAddressConstantInSnippet(cg, node, (intptr_t) classAddress | (intptr_t)orFlag, temp1Reg, iCursor, conditions, litPoolBaseReg, true);
             if (orFlag != 0)
                {
 #ifdef OMR_GC_COMPRESSED_POINTERS
@@ -8162,7 +8162,7 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
              */
 
             if (!canUseIIHF)
-               iCursor = genLoadAddressConstant(cg, node, (intptr_t) classAddress | (intptrj_t)orFlag, temp1Reg, iCursor, conditions, litPoolBaseReg);
+               iCursor = genLoadAddressConstant(cg, node, (intptr_t) classAddress | (intptr_t)orFlag, temp1Reg, iCursor, conditions, litPoolBaseReg);
             }
          if (canUseIIHF)
             {
@@ -8276,7 +8276,7 @@ genAlignDoubleArray(TR::Node * node, TR::Instruction *& iCursor, bool isVariable
       }
    else if (objectSize >= MAXDISP)
       {
-      iCursor = genLoadAddressConstant(cg, node, (intptrj_t) objectSize, temp1Reg, iCursor, conditions);
+      iCursor = genLoadAddressConstant(cg, node, (intptr_t) objectSize, temp1Reg, iCursor, conditions);
       iCursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, temp2Reg,
                    generateS390MemoryReference(resReg, temp1Reg, 0, cg), iCursor);
       }
@@ -9448,10 +9448,10 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node,
    generateRSInstruction(cg, TR::InstOpCode::SRL, node,  countReg, trailingZeroes(TR::Compiler->om.sizeofReferenceField()));
 
    // Ready parameter 6: helper reg
-   intptrj_t *funcdescrptr = (intptrj_t*) fej9->getReferenceArrayCopyHelperAddress();
+   intptr_t *funcdescrptr = (intptr_t*) fej9->getReferenceArrayCopyHelperAddress();
    if (comp->compileRelocatableCode())
       {
-      generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, helperReg, (intptrj_t)funcdescrptr, TR_ArrayCopyHelper, NULL, NULL, NULL);
+      generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, helperReg, (intptr_t)funcdescrptr, TR_ArrayCopyHelper, NULL, NULL, NULL);
       }
    else
       {

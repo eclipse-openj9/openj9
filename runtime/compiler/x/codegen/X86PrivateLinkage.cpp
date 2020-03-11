@@ -2096,7 +2096,7 @@ bool J9::X86::PrivateLinkage::buildVirtualGuard(TR::X86CallSite &site, TR::Label
       generateMemImmInstruction(
          opCode,
          callNode,
-         generateX86MemoryReference((intptrj_t)site.getResolvedMethod()->addressContainingIsOverriddenBit(), cg()),
+         generateX86MemoryReference((intptr_t)site.getResolvedMethod()->addressContainingIsOverriddenBit(), cg()),
          overRiddenBit,
          cg()
          );
@@ -2573,14 +2573,14 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
       generateMemImmInstruction(CMP4MemImm4,
                                 callNode,
                                 generateX86MemoryReference(scratchReg, fej9->getOffsetOfInterfaceClassFromITableField(), cg()),
-                                (int32_t)(intptrj_t)declaringClass,
+                                (int32_t)(intptr_t)declaringClass,
                                 cg());
       }
    else
       {
       TR_ASSERT(cg()->comp()->target().is64Bit(), "Only 64-bit path should reach here.");
       TR::Register *interfaceClassReg = vtableIndexReg;
-      auto cds = cg()->findOrCreate8ByteConstant(site.getCallNode(), (intptrj_t)declaringClass);
+      auto cds = cg()->findOrCreate8ByteConstant(site.getCallNode(), (intptr_t)declaringClass);
       TR::MemoryReference *interfaceClassAddr = generateX86MemoryReference(cds, cg());
       generateRegMemInstruction(LRegMem(), callNode, interfaceClassReg, interfaceClassAddr, cg());
       generateMemRegInstruction(CMPMemReg(),

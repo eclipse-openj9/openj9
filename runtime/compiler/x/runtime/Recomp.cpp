@@ -33,7 +33,7 @@
 #include "control/CompilationRuntime.hpp"
 
 #if defined(TR_HOST_X86) && defined(TR_HOST_64BIT)
-#define IS_32BIT_RIP(x,rip)  ((intptrj_t)(x) == (intptrj_t)(rip) + (int32_t)((intptrj_t)(x) - (intptrj_t)(rip)))
+#define IS_32BIT_RIP(x,rip)  ((intptr_t)(x) == (intptr_t)(rip) + (int32_t)((intptr_t)(x) - (intptr_t)(rip)))
 
 extern "C" void mcc_callPointPatching_unwrapper(void **argsPtr, void *resPtr);
 
@@ -64,7 +64,7 @@ extern "C" void mcc_AMD64callPointPatching_unwrapper(void **argsPtr, void **resP
       // Maybe it's a call through a trampoline.
       //
       static char *alwaysUseTrampolines = feGetEnv("TR_AlwaysUseTrampolines");
-      if (!IS_32BIT_RIP(oldJitEntry, (intptrj_t)(callSite+5)) || alwaysUseTrampolines)
+      if (!IS_32BIT_RIP(oldJitEntry, (intptr_t)(callSite+5)) || alwaysUseTrampolines)
          {
          trampoline = (uint8_t*)TR::CodeCacheManager::instance()->findMethodTrampoline(method, callSite);
          }
@@ -206,10 +206,10 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
       //    DB    ??                     (8 bytes of junk)
       //    JL    recompilationSnippet   (6 bytes)
       //
-      intptrj_t helperAddr = (intptrj_t)runtimeHelperValue(COUNTING_PATCH_CALL_SITE);
+      intptr_t helperAddr = (intptr_t)runtimeHelperValue(COUNTING_PATCH_CALL_SITE);
 
 #if defined(TR_HOST_X86) && defined(TR_HOST_64BIT)
-      if (!IS_32BIT_RIP(helperAddr, (intptrj_t)(startByte+5)))
+      if (!IS_32BIT_RIP(helperAddr, (intptr_t)(startByte+5)))
          {
          helperAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(COUNTING_PATCH_CALL_SITE, startByte);
          }
@@ -248,10 +248,10 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
       //
       p = (char*)oldStartPC + START_PC_TO_RECOMPILE_SAMPLING + 1; // the immediate field of the call
 
-      intptrj_t helperAddr = (intptrj_t)runtimeHelperValue(SAMPLING_PATCH_CALL_SITE);
+      intptr_t helperAddr = (intptr_t)runtimeHelperValue(SAMPLING_PATCH_CALL_SITE);
 
 #if defined(TR_HOST_X86) && defined(TR_HOST_64BIT)
-      if (!IS_32BIT_RIP(helperAddr, (intptrj_t)(p+4)))
+      if (!IS_32BIT_RIP(helperAddr, (intptr_t)(p+4)))
          {
          helperAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(SAMPLING_PATCH_CALL_SITE, p);
          }

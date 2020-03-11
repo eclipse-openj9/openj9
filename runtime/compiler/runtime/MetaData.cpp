@@ -321,7 +321,7 @@ createInternalPtrStackMapInJ9Format(
    //printf("JIT Address %x\n", location);
    //*((int32_t *) location) = (int16_t) trStackAtlas->getNumberOfInternalPtrs();
    //printf("Number of internal pointers = %d\n", (*((int16_t *) location)));
-   location += sizeof(intptrj_t);
+   location += sizeof(intptr_t);
 
    // Fill in the data now.
    //

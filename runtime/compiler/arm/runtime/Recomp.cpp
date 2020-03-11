@@ -169,7 +169,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
    J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(oldStartPC);
    int32_t   bytesToSaveAtStart = 0;
    int32_t   *patchAddr, newInstr;
-   intptrj_t distance;
+   intptr_t distance;
    if (DEBUG_ARM_RECOMP)
       {
       printf("\nmethodHasBeenRecompiled: oldStartPC (0x%x) -> newStartPC (0x%x)\n", oldStartPC, newStartPC);fflush(stdout);
@@ -239,13 +239,13 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
 
 uint32_t encodeRuntimeHelperBranchAndLink(TR_RuntimeHelper helper, uint8_t *cursor, TR_FrontEnd *fe)
    {
-   intptrj_t target = (intptrj_t)runtimeHelperValue(helper);
+   intptr_t target = (intptr_t)runtimeHelperValue(helper);
 
-   if (!TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange(target, (intptrj_t)cursor))
+   if (!TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange(target, (intptr_t)cursor))
       {
       target = TR::CodeCacheManager::instance()->findHelperTrampoline(helper, (void *)cursor);
 
-      TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange(target, (intptrj_t)cursor),
+      TR_ASSERT(TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange(target, (intptr_t)cursor),
                 "Helper target address is out of range");
       }
    return 0xEB000000 | encodeBranchDistance((uintptr_t) cursor, (uint32_t)target);

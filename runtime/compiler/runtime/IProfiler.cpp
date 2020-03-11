@@ -444,7 +444,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
                   fprintf(stderr, "\n");
 #endif
                   void * memChunk = comp->trMemory()->allocateMemory(bytesFootprint, stackAlloc);
-                  intptrj_t bytes = createBalancedBST(pcEntries, 0, numEntries-1, (uintptr_t) memChunk, comp);
+                  intptr_t bytes = createBalancedBST(pcEntries, 0, numEntries-1, (uintptr_t) memChunk, comp);
                   TR_ASSERT(bytes == bytesFootprint, "BST doesn't match expected footprint");
 
 
@@ -1660,7 +1660,7 @@ TR_IProfiler::canProduceBlockFrequencyInfo(TR::Compilation& comp)
    // able to produce block frequency info
    if (isIProfilingEnabled())
       {
-      intptrj_t initialCount = comp.getMethodSymbol()->getResolvedMethod()->hasBackwardBranches() ?
+      intptr_t initialCount = comp.getMethodSymbol()->getResolvedMethod()->hasBackwardBranches() ?
          comp.getOptions()->getInitialBCount() :
          comp.getOptions()->getInitialCount() ;
 
@@ -3997,7 +3997,7 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
    J9Method *lastMethod = NULL;
    uintptr_t lastMethodSize = 0;
    uintptr_t lastMethodStart = 0;
-   intptrj_t data = 0;
+   intptr_t data = 0;
    bool addSample = false;
    J9Method *caller;
    J9Method *callee;
@@ -4104,7 +4104,7 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
             receiverClass = *(J9Class**)cursor;
             cursor += sizeof(receiverClass);
 
-            data = (intptrj_t)receiverClass;
+            data = (intptr_t)receiverClass;
 
             addSample = true;
             //bytecodeType = CHECKCAST_BYTECODE;
@@ -4174,7 +4174,7 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
                   _compInfo->getLowPriorityCompQueue().tryToScheduleCompilation(vmThread, caller);
                   }
                }
-            data = (intptrj_t)receiverClass;
+            data = (intptr_t)receiverClass;
             addSample = true;
             //bytecodeType = INTERFACE_BYTECODE;
 

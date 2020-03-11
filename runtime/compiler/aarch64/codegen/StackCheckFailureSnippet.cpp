@@ -174,11 +174,11 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64StackCheckFailureSnippet * snippet)
    bufferPos += ARM64_INSTRUCTION_LENGTH;
 
    char *info = "";
-   intptrj_t target = (intptrj_t)(sofRef->getMethodAddress());
+   intptr_t target = (intptr_t)(sofRef->getMethodAddress());
    int32_t distance;
    if (isBranchToTrampoline(sofRef, bufferPos, distance))
       {
-      target = (intptrj_t)distance + (intptrj_t)bufferPos;
+      target = (intptr_t)distance + (intptr_t)bufferPos;
       info = " Through trampoline";
       }
    printPrefix(pOutFile, NULL, bufferPos, 4);

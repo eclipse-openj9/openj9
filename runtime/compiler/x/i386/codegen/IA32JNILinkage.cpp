@@ -279,7 +279,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
                                 cg());
 
 #if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-      TR::MemoryReference *mr = generateX86MemoryReference(espReal, intptrj_t(0), cg());
+      TR::MemoryReference *mr = generateX86MemoryReference(espReal, intptr_t(0), cg());
       mr->setRequiresLockPrefix();
       generateMemImmInstruction(OR4MemImms, callNode, mr, 0, cg());
 #endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
@@ -373,7 +373,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
                                 cg());
 
 #if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-      TR::MemoryReference *mr = generateX86MemoryReference(espReal, intptrj_t(0), cg());
+      TR::MemoryReference *mr = generateX86MemoryReference(espReal, intptr_t(0), cg());
       mr->setRequiresLockPrefix();
       generateMemImmInstruction(OR4MemImms, callNode, mr, 0, cg());
 #endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */

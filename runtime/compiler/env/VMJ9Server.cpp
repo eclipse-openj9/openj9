@@ -768,12 +768,12 @@ TR_J9ServerVM::getHostClass(TR_OpaqueClassBlock *clazz)
    return hostClass;
    }
 
-intptrj_t
+intptr_t
 TR_J9ServerVM::getStringUTF8Length(uintptr_t objectPointer)
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_getStringUTF8Length, objectPointer);
-   return std::get<0>(stream->read<intptrj_t>());
+   return std::get<0>(stream->read<intptr_t>());
    }
 
 bool
@@ -946,12 +946,12 @@ TR_J9ServerVM::compareAndSwapInt64FieldAt(uintptr_t objectPointer, uintptr_t fie
    return std::get<0>(stream->read<bool>());
    }
 
-intptrj_t
+intptr_t
 TR_J9ServerVM::getArrayLengthInElements(uintptr_t objectPointer)
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_getArrayLengthInElements, objectPointer);
-   return std::get<0>(stream->read<intptrj_t>());
+   return std::get<0>(stream->read<intptr_t>());
    }
 
 TR_OpaqueClassBlock *
@@ -1477,12 +1477,12 @@ TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptr_
    return result;
    }
 
-intptrj_t
+intptr_t
 TR_J9ServerVM::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_getVFTEntry, clazz, offset);
-   return std::get<0>(stream->read<intptrj_t>());
+   return std::get<0>(stream->read<intptr_t>());
    }
 
 bool
@@ -1668,11 +1668,11 @@ TR_J9ServerVM::reserveTrampolineIfNecessary(TR::Compilation *, TR::SymbolReferen
    // Not necessary in JITServer server mode
    }
 
-intptrj_t
+intptr_t
 TR_J9ServerVM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference * symRef, void * callSite)
    {
    // Not necessary in JITServer server mode, return the call's PC so that the call will not appear to require a trampoline
-   return (intptrj_t)callSite;
+   return (intptr_t)callSite;
    }
 
 uintptr_t

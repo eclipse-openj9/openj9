@@ -86,7 +86,7 @@ public:
    bool isDiscontiguousArray(int32_t sizeInBytes);
    bool isDiscontiguousArray(int32_t sizeInElements, int32_t elementSize);
    bool isDiscontiguousArray(TR::Compilation* comp, uintptr_t objectPointer);
-   intptrj_t getArrayLengthInElements(TR::Compilation* comp, uintptr_t objectPointer);
+   intptr_t getArrayLengthInElements(TR::Compilation* comp, uintptr_t objectPointer);
    uintptr_t getArrayLengthInBytes(TR::Compilation* comp, uintptr_t objectPointer);
    uintptr_t getArrayElementWidthInBytes(TR::DataType type);
    uintptr_t getArrayElementWidthInBytes(TR::Compilation* comp, uintptr_t objectPointer);

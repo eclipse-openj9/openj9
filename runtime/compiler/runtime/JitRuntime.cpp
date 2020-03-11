@@ -1041,8 +1041,8 @@ extern "C" void _patchJNICallSite(J9Method *method, uint8_t *callPC, uint8_t *ne
 
    // Now patch the call in the jitted code
    //
-   intptrj_t offset = trampoline - callPC - 5;
-   TR_ASSERT((intptrj_t)(int32_t)offset == offset, "trampoline is not reachable!");
+   intptr_t offset = trampoline - callPC - 5;
+   TR_ASSERT((intptr_t)(int32_t)offset == offset, "trampoline is not reachable!");
    *(uint32_t*)(callPC+1) = (uint32_t)offset;
 #else
    // The code in directToJNI would look like
@@ -1431,7 +1431,7 @@ static void printMethodHandleArgs(j9object_t methodHandle, void **stack, J9VMThr
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
 
    uintptr_t sigObject = fej9->methodType_descriptor(fej9->methodHandle_type((uintptr_t)methodHandle));
-   intptrj_t  sigLength = fej9->getStringUTF8Length(sigObject);
+   intptr_t  sigLength = fej9->getStringUTF8Length(sigObject);
    char *sig = (char*)alloca(sigLength+1);
    fej9->getStringUTF8(sigObject, sig, sigLength+1);
 
@@ -1473,7 +1473,7 @@ static void printMethodHandleArgs(j9object_t methodHandle, void **stack, J9VMThr
                   break;
                case 'L':
                case '[':
-                  TR_VerboseLog::writeLine(vlogTag, "%p     arg " POINTER_PRINTF_FORMAT " %.*s", vmThread, (void*)(*(intptrj_t*)stack), nextArg-curArg, curArg);
+                  TR_VerboseLog::writeLine(vlogTag, "%p     arg " POINTER_PRINTF_FORMAT " %.*s", vmThread, (void*)(*(intptr_t*)stack), nextArg-curArg, curArg);
                   stack -= 1;
                   break;
                default:
@@ -1561,7 +1561,7 @@ uint8_t *compileMethodHandleThunk(j9object_t methodHandle, j9object_t arg, J9VMT
       int32_t    hashCode         = mmf->j9gc_objaccess_getObjectHashCode(jitConfig->javaVM, (J9Object*)methodHandle);
       uintptr_t methodType       = fej9->methodHandle_type((uintptr_t)methodHandle);
       uintptr_t descriptorObject = fej9->methodType_descriptor(methodType);
-      intptrj_t  descriptorLength = fej9->getStringUTF8Length(descriptorObject);
+      intptr_t  descriptorLength = fej9->getStringUTF8Length(descriptorObject);
       char      *descriptorNTS    = (char*)alloca(descriptorLength+1); // NTS = null-terminated string
       fej9->getStringUTF8(descriptorObject, descriptorNTS, descriptorLength+1);
       TR_VerboseLog::writeLineLocked(TR_Vlog_MHD, "%p   %.*s %p hash %x type %p %s", vmThread, classNameLength, className, methodHandle, hashCode, methodType, descriptorNTS);
@@ -1591,7 +1591,7 @@ uint8_t *compileMethodHandleThunk(j9object_t methodHandle, j9object_t arg, J9VMT
       if (details)
          {
          uintptr_t thunkableSignatureString = fej9->methodHandle_thunkableSignature((uintptr_t)methodHandle);
-         intptrj_t  thunkableSignatureLength = fej9->getStringUTF8Length(thunkableSignatureString);
+         intptr_t  thunkableSignatureLength = fej9->getStringUTF8Length(thunkableSignatureString);
          char *thunkSignature = (char*)alloca(thunkableSignatureLength+1);
          fej9->getStringUTF8(thunkableSignatureString, thunkSignature, thunkableSignatureLength+1);
          TR_VerboseLog::writeLineLocked(TR_Vlog_MHD, "%p   Looking up archetype for class %.*s signature %s", vmThread, classNameLength, className, thunkSignature);
@@ -1684,7 +1684,7 @@ void *initialInvokeExactThunk(j9object_t methodHandle, J9VMThread *vmThread)
       TR_VerboseLog::writeLineLocked(TR_Vlog_MH, "%p initialInvokeExactThunk on MethodHandle %p", vmThread, methodHandle);
 
    uintptr_t thunkableSignatureString = fej9->methodHandle_thunkableSignature((uintptr_t)methodHandle);
-   intptrj_t  thunkableSignatureLength = fej9->getStringUTF8Length(thunkableSignatureString);
+   intptr_t  thunkableSignatureLength = fej9->getStringUTF8Length(thunkableSignatureString);
    char *thunkSignature = (char*)alloca(thunkableSignatureLength+1);
    fej9->getStringUTF8(thunkableSignatureString, thunkSignature, thunkableSignatureLength+1);
 
@@ -1698,7 +1698,7 @@ void *initialInvokeExactThunk(j9object_t methodHandle, J9VMThread *vmThread)
       int32_t    hashCode         = mmf->j9gc_objaccess_getObjectHashCode(jitConfig->javaVM, (J9Object*)methodHandle);
       uintptr_t methodType       = fej9->methodHandle_type((uintptr_t)methodHandle);
       uintptr_t descriptorObject = fej9->methodType_descriptor(methodType);
-      intptrj_t  descriptorLength = fej9->getStringUTF8Length(descriptorObject);
+      intptr_t  descriptorLength = fej9->getStringUTF8Length(descriptorObject);
       char      *descriptorNTS    = (char*)alloca(descriptorLength+1); // NTS = null-terminated string
       fej9->getStringUTF8(descriptorObject, descriptorNTS, descriptorLength+1);
       TR_VerboseLog::writeLineLocked(TR_Vlog_MHD, "%p   %.*s %p hash %x type %p %s", vmThread, classNameLength, className, methodHandle, hashCode, methodType, descriptorNTS);

@@ -563,7 +563,7 @@ J9::ObjectModel::getArrayLengthInBytes(TR::Compilation* comp, uintptr_t objectPo
    return (uintptr_t)TR::Compiler->om.getArrayLengthInElements(comp, objectPointer) * TR::Compiler->om.getArrayElementWidthInBytes(comp, objectPointer);
    }
 
-intptrj_t
+intptr_t
 J9::ObjectModel::getArrayLengthInElements(TR::Compilation* comp, uintptr_t objectPointer)
    {
    return comp->fej9()->getArrayLengthInElements(objectPointer);

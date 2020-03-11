@@ -2522,7 +2522,7 @@ J9::CodeGenerator::processRelocations()
       TR::list<TR_AOTGuardSite*> *aotGuardSites = self()->comp()->getAOTGuardPatchSites();
       for(auto it = aotGuardSites->begin(); it != aotGuardSites->end(); ++it)
          {
-         intptrj_t inlinedSiteIndex = -1;
+         intptr_t inlinedSiteIndex = -1;
 
          // first, figure out the appropriate relocation record type from the guard type and symbol
          TR_ExternalRelocationTargetKind type;
@@ -2621,7 +2621,7 @@ J9::CodeGenerator::processRelocations()
             case TR_InlinedVirtualMethod:
             case TR_InlinedInterfaceMethod:
                TR_ASSERT(inlinedCallSize, "TR_AOT expect inlinedCallSize to be larger than 0\n");
-               inlinedSiteIndex = (intptrj_t)(*it)->getGuard()->getCurrentInlinedSiteIndex();
+               inlinedSiteIndex = (intptr_t)(*it)->getGuard()->getCurrentInlinedSiteIndex();
                entry = (TR_InlinedSiteLinkedListEntry *)self()->comp()->trMemory()->allocateMemory(sizeof(TR_InlinedSiteLinkedListEntry), heapAlloc);
 
                entry->reloType = type;

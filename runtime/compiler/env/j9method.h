@@ -326,8 +326,8 @@ public:
    virtual bool                    getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0);
 
 
-   virtual intptrj_t               getInvocationCount();
-   virtual bool                    setInvocationCount(intptrj_t oldCount, intptrj_t newCount);
+   virtual intptr_t               getInvocationCount();
+   virtual bool                    setInvocationCount(intptr_t oldCount, intptr_t newCount);
    virtual bool                    isSameMethod(TR_ResolvedMethod *);
 
    virtual uint16_t                numberOfParameterSlots();

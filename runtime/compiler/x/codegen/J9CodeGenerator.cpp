@@ -219,7 +219,7 @@ J9::X86::CodeGenerator::beginInstructionSelection()
    else if (methodSymbol->isJNI())
       {
 
-      intptrj_t methodAddress = (intptrj_t)methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp);
+      intptr_t methodAddress = (intptr_t)methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp);
 
       if (comp->target().is64Bit())
          new (self()->trHeapMemory()) TR::AMD64Imm64Instruction ((TR::Instruction *)NULL, DQImm64, methodAddress, self());
@@ -301,7 +301,7 @@ J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
    TR::Compilation *comp = self()->comp();
    TR::Register *ediRegister = self()->allocateRegister();
    TR::ResolvedMethodSymbol *methodSymbol = comp->getJittedMethodSymbol();
-   intptrj_t feMethod = (intptrj_t)methodSymbol->getResolvedMethod()->resolvedMethodAddress();
+   intptr_t feMethod = (intptr_t)methodSymbol->getResolvedMethod()->resolvedMethodAddress();
    TR::LabelSymbol *startLabel = NULL;
 
    if (comp->target().is32Bit())

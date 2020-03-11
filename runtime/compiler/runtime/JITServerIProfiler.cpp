@@ -764,7 +764,7 @@ JITClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock *
          {
          // Serialize the entries
          std::string buffer(bytesFootprint, '\0');
-         intptrj_t writtenBytes = serializeIProfilerMethodEntries(pcEntries, numEntries, (uintptr_t)&buffer[0], methodStart);
+         intptr_t writtenBytes = serializeIProfilerMethodEntries(pcEntries, numEntries, (uintptr_t)&buffer[0], methodStart);
          TR_ASSERT(writtenBytes == bytesFootprint, "BST doesn't match expected footprint");
          // send the information to the server
          client->write(JITServer::MessageType::IProfiler_profilingSample, buffer, true, usePersistentCache);

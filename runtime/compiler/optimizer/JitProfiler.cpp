@@ -168,7 +168,7 @@ int32_t TR_JitProfiler::performOnNode(TR::Node *node, TR::TreeTop *tt)
    _checklist->add(node);
 
    // Walk its children
-   for (intptrj_t i = 0; i < node->getNumChildren(); ++i)
+   for (intptr_t i = 0; i < node->getNumChildren(); ++i)
       {
       TR::Node *child = node->getChild(i);
       changesPerformed += performOnNode(child, tt);

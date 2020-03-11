@@ -209,7 +209,7 @@ class X86CallSite
 
 struct PicParameters
    {
-   intptrj_t defaultSlotAddress;
+   intptr_t defaultSlotAddress;
    int32_t roundedSizeOfSlot;
    int32_t defaultNumberOfSlots;
    };

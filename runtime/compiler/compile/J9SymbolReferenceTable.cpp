@@ -1139,7 +1139,7 @@ J9::SymbolReferenceTable::findOrCreateCurrentThreadSymbolRef()
    }
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateJ9MethodConstantPoolFieldSymbolRef(intptrj_t offset)
+J9::SymbolReferenceTable::findOrCreateJ9MethodConstantPoolFieldSymbolRef(intptr_t offset)
    {
    if (!element(j9methodConstantPoolSymbol))
       {
@@ -1158,7 +1158,7 @@ J9::SymbolReferenceTable::findOrCreateJ9MethodConstantPoolFieldSymbolRef(intptrj
    }
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateJ9MethodExtraFieldSymbolRef(intptrj_t offset)
+J9::SymbolReferenceTable::findOrCreateJ9MethodExtraFieldSymbolRef(intptr_t offset)
    {
    if (!element(j9methodExtraFieldSymbol))
       {
@@ -1178,7 +1178,7 @@ J9::SymbolReferenceTable::findOrCreateJ9MethodExtraFieldSymbolRef(intptrj_t offs
 
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateStartPCLinkageInfoSymbolRef(intptrj_t offset)
+J9::SymbolReferenceTable::findOrCreateStartPCLinkageInfoSymbolRef(intptr_t offset)
    {
    if (!element(startPCLinkageInfoSymbol))
       {
@@ -1915,7 +1915,7 @@ TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateThreadDebugEventData(int32_t index)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   intptrj_t offset = fej9->getThreadDebugEventDataOffset(index);
+   intptr_t offset = fej9->getThreadDebugEventDataOffset(index);
    ListIterator<TR::SymbolReference> li(&_currentThreadDebugEventDataSymbolRefs);
    TR::SymbolReference * symRef;
    for (symRef = li.getFirst(); symRef; symRef = li.getNext())
@@ -2208,7 +2208,7 @@ J9::SymbolReferenceTable::checkImmutable(TR::SymbolReference *symRef)
 
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateImmutableGenericIntShadowSymbolReference(intptrj_t offset)
+J9::SymbolReferenceTable::findOrCreateImmutableGenericIntShadowSymbolReference(intptr_t offset)
    {
    static char *disableImmutableIntShadows = feGetEnv("TR_disableImmutableIntShadows");
    if (disableImmutableIntShadows)
@@ -2263,7 +2263,7 @@ J9::SymbolReferenceTable::findOrCreateProfilingBufferEndSymbolRef()
 
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateProfilingBufferSymbolRef(intptrj_t offset)
+J9::SymbolReferenceTable::findOrCreateProfilingBufferSymbolRef(intptr_t offset)
    {
    if (!element(profilingBufferSymbol))
       {

@@ -139,16 +139,16 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
       // which expects the new startPC.
 
       patchAddr = (int32_t *)((uint8_t *)oldStartPC + getJitEntryOffset(linkageInfo) + OFFSET_COUNTING_BRANCH_FROM_JITENTRY - 4);
-      intptrj_t helperAddress = (intptrj_t)runtimeHelperValue(TR_PPCcountingPatchCallSite);
-      if (!TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)patchAddr) ||
+      intptr_t helperAddress = (intptr_t)runtimeHelperValue(TR_PPCcountingPatchCallSite);
+      if (!TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)patchAddr) ||
           TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines))
 	 {
          helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(TR_PPCcountingPatchCallSite, (void *)patchAddr);
-         TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)patchAddr),
+         TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)patchAddr),
                          "Helper address is out of range");
 	 }
 
-      newInstr = 0x48000001 | ((helperAddress - (intptrj_t)patchAddr) & 0x03FFFFFC);
+      newInstr = 0x48000001 | ((helperAddress - (intptr_t)patchAddr) & 0x03FFFFFC);
       *patchAddr = newInstr;
       ppcCodeSync((uint8_t *)patchAddr, 4);
       bytesToSaveAtStart = getJitEntryOffset(linkageInfo) + OFFSET_COUNTING_BRANCH_FROM_JITENTRY;
@@ -158,16 +158,16 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
       // Turn the call to samplingMethodRecompile into a call to samplingPatchCallSite
 
       patchAddr = (int32_t *)((uint8_t *)oldStartPC + OFFSET_SAMPLING_BRANCH_FROM_STARTPC);
-      intptrj_t helperAddress = (intptrj_t)runtimeHelperValue(TR_PPCsamplingPatchCallSite);
-      if (!TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)patchAddr) ||
+      intptr_t helperAddress = (intptr_t)runtimeHelperValue(TR_PPCsamplingPatchCallSite);
+      if (!TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)patchAddr) ||
           TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines))
 	 {
          helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(TR_PPCsamplingPatchCallSite, (void *)patchAddr);
-         TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)patchAddr),
+         TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)patchAddr),
                          "Helper address is out of range");
 	 }
 
-      newInstr = 0x48000001 | ((helperAddress - (intptrj_t)patchAddr) & 0x03FFFFFC);
+      newInstr = 0x48000001 | ((helperAddress - (intptr_t)patchAddr) & 0x03FFFFFC);
       *patchAddr = newInstr;
       ppcCodeSync((uint8_t *)patchAddr, 4);
 

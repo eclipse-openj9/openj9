@@ -562,7 +562,7 @@ J9::ClassEnv::getArrayElementWidthInBytes(TR::Compilation *comp, TR_OpaqueClassB
    return 1 << logElementSize;
    }
 
-intptrj_t
+intptr_t
 J9::ClassEnv::getVFTEntry(TR::Compilation *comp, TR_OpaqueClassBlock* clazz, int32_t offset)
    {
    return comp->fej9()->getVFTEntry(clazz, offset);

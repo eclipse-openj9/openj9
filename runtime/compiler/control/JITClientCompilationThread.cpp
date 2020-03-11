@@ -883,7 +883,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          auto recv = client->getRecvData<uintptr_t*>();
          uintptr_t *methodHandleLocation = std::get<0>(recv);
-         intptrj_t length;
+         intptr_t length;
          char *thunkableSignature;
             {
             TR::VMAccessCriticalSection createMethodHandleArchetypeSpecimen(fe);
@@ -2105,7 +2105,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             methodHandle,
             "type",             "Ljava/lang/invoke/MethodType;"),
             "methodDescriptor", "Ljava/lang/String;");
-         intptrj_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
+         intptr_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
          char *methodDescriptor = (char*)alloca(methodDescriptorLength+1);
          fe->getStringUTF8(methodDescriptorRef, methodDescriptor, methodDescriptorLength+1);
          client->write(response, std::string(methodDescriptor, methodDescriptorLength));
@@ -2167,14 +2167,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             "next",             "Ljava/lang/invoke/MethodHandle;"),
             "type",             "Ljava/lang/invoke/MethodType;"),
             "arguments",        "[Ljava/lang/Class;");
-         TR_OpaqueClassBlock *targetParmClass = (TR_OpaqueClassBlock*)(intptrj_t)fe->getInt64Field(fe->getReferenceElement(targetArguments, argIndex),
+         TR_OpaqueClassBlock *targetParmClass = (TR_OpaqueClassBlock*)(intptr_t)fe->getInt64Field(fe->getReferenceElement(targetArguments, argIndex),
                                                                           "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
          // Load callsite type and check if two types are compatible
          uintptr_t sourceArguments = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "type",             "Ljava/lang/invoke/MethodType;"),
             "arguments",        "[Ljava/lang/Class;");
-         TR_OpaqueClassBlock *sourceParmClass = (TR_OpaqueClassBlock*)(intptrj_t)fe->getInt64Field(fe->getReferenceElement(sourceArguments, argIndex),
+         TR_OpaqueClassBlock *sourceParmClass = (TR_OpaqueClassBlock*)(intptr_t)fe->getInt64Field(fe->getReferenceElement(sourceArguments, argIndex),
                                                                           "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
          client->write(response, sourceParmClass, targetParmClass);
          }
@@ -2203,7 +2203,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             }
          else
             {
-            j9method = (TR_OpaqueMethodBlock*)(intptrj_t)vmSlot;
+            j9method = (TR_OpaqueMethodBlock*)(intptr_t)vmSlot;
             }
          client->write(response, j9method, vmSlot);
          }
@@ -2214,7 +2214,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR::VMAccessCriticalSection invokeSpreadHandleArrayArg(fe);
          uintptr_t methodHandle = *std::get<0>(recv);
          uintptr_t arrayClass   = fe->getReferenceField(methodHandle, "arrayClass", "Ljava/lang/Class;");
-         J9ArrayClass *arrayJ9Class = (J9ArrayClass*)(intptrj_t)fe->getInt64Field(arrayClass,
+         J9ArrayClass *arrayJ9Class = (J9ArrayClass*)(intptr_t)fe->getInt64Field(arrayClass,
                                                                       "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
          J9Class *leafClass = arrayJ9Class->leafComponentType;
          UDATA arity = arrayJ9Class->arity;
@@ -2385,7 +2385,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                "next",             "Ljava/lang/invoke/MethodHandle;"),
                "type",             "Ljava/lang/invoke/MethodType;"),
                "methodDescriptor", "Ljava/lang/String;");
-            intptrj_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
+            intptr_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
             char *nextSignature = (char*)alloca(methodDescriptorLength+1);
             fe->getStringUTF8(methodDescriptorRef, nextSignature, methodDescriptorLength+1);
             nextSignatureString.assign(nextSignature, methodDescriptorLength);
@@ -2431,7 +2431,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             "next",             "Ljava/lang/invoke/MethodHandle;"),
             "type",             "Ljava/lang/invoke/MethodType;"),
             "methodDescriptor", "Ljava/lang/String;");
-         intptrj_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
+         intptr_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
          char *nextHandleSignature = (char*)alloca(methodDescriptorLength+1);
          fe->getStringUTF8(methodDescriptorRef, nextHandleSignature, methodDescriptorLength+1);
          client->write(response, std::string(nextHandleSignature, methodDescriptorLength));

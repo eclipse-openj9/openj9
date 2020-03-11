@@ -1474,7 +1474,7 @@ TR_ResolvedJ9JITServerMethod::classOfMethod()
       if (isNewInstanceImplThunk())
          {
          TR_ASSERT(_j9classForNewInstance, "Must have the class for the newInstance");
-         //J9Class * clazz = (J9Class *)((intptrj_t)ramMethod()->extra & ~J9_STARTPC_NOT_TRANSLATED);
+         //J9Class * clazz = (J9Class *)((intptr_t)ramMethod()->extra & ~J9_STARTPC_NOT_TRANSLATED);
          return _fe->convertClassPtrToClassOffset(_j9classForNewInstance);//(TR_OpaqueClassBlock *&)(rc);
          }
       return _fe->convertClassPtrToClassOffset(_ramClass);

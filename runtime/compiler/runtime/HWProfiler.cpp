@@ -835,7 +835,7 @@ TR_HWProfiler::createRecords(TR::Compilation *comp)
             {
 
             relocationTargetKind = TR_EmitClass;
-            target2 = (uint8_t *) ((intptrj_t) node->getInlinedSiteIndex());
+            target2 = (uint8_t *) ((intptr_t) node->getInlinedSiteIndex());
             TR_HWPBytecodePCToIAMap map = {(void *)getPCFromMethodAndBCIndex(method, bcIndex, comp),
                                            (void *)ia};
             comp->addHWPBCMap(map);

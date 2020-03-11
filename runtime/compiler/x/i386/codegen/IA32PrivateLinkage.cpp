@@ -708,7 +708,7 @@ void J9::X86::I386::PrivateLinkage::buildVirtualOrComputedCall(
       if (entryLabel)
          generateLabelInstruction(LABEL, site.getCallNode(), entryLabel, cg());
 
-      intptrj_t offset=site.getSymbolReference()->getOffset();
+      intptr_t offset=site.getSymbolReference()->getOffset();
       if (!resolvedSite)
          offset = 0;
 

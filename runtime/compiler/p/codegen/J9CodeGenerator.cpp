@@ -574,13 +574,13 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
 
                if (comp()->getOptions()->getHeapBase() != NULL)
                   {
-                  loadAddressConstant(self(), comp()->compileRelocatableCode(), node, (intptrj_t)(comp()->getOptions()->getHeapBase()), tempReg);
+                  loadAddressConstant(self(), comp()->compileRelocatableCode(), node, (intptr_t)(comp()->getOptions()->getHeapBase()), tempReg);
                   generateTrg1Src2Instruction(self(), TR::InstOpCode::cmpl4, node, condReg, temp3Reg, tempReg);
                   generateConditionalBranchInstruction(self(), TR::InstOpCode::blt, node, endCtrlFlowLabel, condReg);
                   }
                if (heapTop != 0xFFFFFFFF)
                   {
-                  loadAddressConstant(self(), comp()->compileRelocatableCode(), node, (intptrj_t)(heapTop-prefetchOffset), tempReg);
+                  loadAddressConstant(self(), comp()->compileRelocatableCode(), node, (intptr_t)(heapTop-prefetchOffset), tempReg);
                   generateTrg1Src2Instruction(self(), TR::InstOpCode::cmpl4, node, condReg, temp3Reg, tempReg);
                   generateConditionalBranchInstruction(self(), TR::InstOpCode::bgt, node, endCtrlFlowLabel, condReg);
                   }

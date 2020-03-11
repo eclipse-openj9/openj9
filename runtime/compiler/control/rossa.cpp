@@ -2219,7 +2219,7 @@ static UDATA forEachIterator(J9VMThread *vmThread, J9StackWalkState *walkState)
 
    compInfo->acquireCompMonitor(vmThread);
 
-   intptrj_t count = TR::CompilationInfo::getJ9MethodExtra(j9method) >> 1;
+   intptr_t count = TR::CompilationInfo::getJ9MethodExtra(j9method) >> 1;
 
    if (!(romMethod->modifiers & J9AccNative) && // Never change the extra field of a native method
        !(walkState->jitInfo) &&                 // If the frame has jit metadata, it was already compiled

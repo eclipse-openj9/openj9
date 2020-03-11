@@ -570,9 +570,9 @@ public:
       return compareAndSwapInt64FieldAt(objectPointer, getInstanceFieldOffset(getObjectClass(objectPointer), fieldName, "J"), oldValue, newValue);
       }
 
-   virtual intptrj_t            getArrayLengthInElements(uintptr_t objectPointer);
+   virtual intptr_t            getArrayLengthInElements(uintptr_t objectPointer);
    int32_t                      getInt32Element(uintptr_t objectPointer, int32_t elementIndex);
-   virtual uintptr_t           getReferenceElement(uintptr_t objectPointer, intptrj_t elementIndex);
+   virtual uintptr_t           getReferenceElement(uintptr_t objectPointer, intptr_t elementIndex);
 
    virtual TR_OpaqueClassBlock *getClassFromJavaLangClass(uintptr_t objectPointer);
    virtual TR_arrayTypeCode    getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz);
@@ -814,8 +814,8 @@ public:
    virtual bool      isString(uintptr_t objectPointer);
    virtual int32_t   getStringLength(uintptr_t objectPointer);
    virtual uint16_t  getStringCharacter(uintptr_t objectPointer, int32_t index);
-   virtual intptrj_t getStringUTF8Length(uintptr_t objectPointer);
-   virtual char     *getStringUTF8      (uintptr_t objectPointer, char *buffer, intptrj_t bufferSize);
+   virtual intptr_t getStringUTF8Length(uintptr_t objectPointer);
+   virtual char     *getStringUTF8      (uintptr_t objectPointer, char *buffer, intptr_t bufferSize);
 
    virtual uint32_t getVarHandleHandleTableOffset(TR::Compilation *);
 
@@ -916,7 +916,7 @@ public:
    virtual TR_OpaqueClassBlock *getHostClass(TR_OpaqueClassBlock *clazzOffset);
    virtual bool canAllocateInlineClass(TR_OpaqueClassBlock *clazz);
    virtual bool isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz);
-   virtual intptrj_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset);
+   virtual intptr_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset);
 
    TR::TreeTop * lowerAsyncCheck(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    TR::TreeTop * lowerAtcCheck(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
@@ -1107,7 +1107,7 @@ public:
    virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *);
    virtual TR_OpaqueMethodBlock * getObjectNewInstanceImplMethod();
 
-   virtual intptrj_t          methodTrampolineLookup( TR::Compilation *, TR::SymbolReference *symRef, void *callSite);
+   virtual intptr_t          methodTrampolineLookup( TR::Compilation *, TR::SymbolReference *symRef, void *callSite);
    virtual TR::CodeCache*    getResolvedTrampoline( TR::Compilation *, TR::CodeCache *curCache, J9Method * method, bool inBinaryEncoding);
 
    virtual TR_IProfiler *         getIProfiler();
@@ -1220,7 +1220,7 @@ public:
    virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_OpaqueMethodBlock *method, bool isVettedForAOT=false);
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT=false);
 
-   virtual intptrj_t          methodTrampolineLookup( TR::Compilation *, TR::SymbolReference *symRef, void *callSite);
+   virtual intptr_t          methodTrampolineLookup( TR::Compilation *, TR::SymbolReference *symRef, void *callSite);
    virtual TR::CodeCache *    getResolvedTrampoline( TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding);
 
    virtual TR_OpaqueMethodBlock *getInlinedCallSiteMethod(TR_InlinedCallSite *ics);

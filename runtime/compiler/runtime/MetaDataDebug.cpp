@@ -266,7 +266,7 @@ TR_Debug::printStackAtlasDetails(uintptr_t startPC, uint8_t * mapBits, int32_t n
       {
       trfprintf(_file, "      variable length internal pointer stack map portion exists\n");
       uint8_t *internalPtrMapCursor = (uint8_t *) stackAtlas->internalPointerMap;
-      internalPtrMapCursor += sizeof(intptrj_t);
+      internalPtrMapCursor += sizeof(intptr_t);
       uint8_t variableLengthSize = *((uint8_t *)internalPtrMapCursor);
       trfprintf(_file, "        size of internal pointer stack map = %d\n", variableLengthSize);
       internalPtrMapCursor += 1;
@@ -305,7 +305,7 @@ TR_Debug::printStackAtlasDetails(uintptr_t startPC, uint8_t * mapBits, int32_t n
        {
        trfprintf(_file, "\nStack alloc map location : %p ", stackAtlas->stackAllocMap);
 
-       uint8_t *localStackAllocMap = (uint8_t *) dxMallocAndRead(sizeof(intptrj_t), stackAtlas->stackAllocMap);
+       uint8_t *localStackAllocMap = (uint8_t *) dxMallocAndRead(sizeof(intptr_t), stackAtlas->stackAllocMap);
 
        trfprintf(_file, "\n  GC map at stack overflow check : %p", localStackAllocMap);
        trfprintf(_file, "\n  Stack alloc map bits : ");

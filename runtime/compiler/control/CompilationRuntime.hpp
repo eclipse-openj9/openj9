@@ -491,37 +491,37 @@ public:
          return std::get<0>(stream->read<int32_t>());
          }
 #endif /* defined(J9VM_OPT_JITSERVER) */
-      if (((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED) == 0)
+      if (((intptr_t)method->extra & J9_STARTPC_NOT_TRANSLATED) == 0)
          return -1;
       int32_t count = getJ9MethodVMExtra(method);
       if (count < 0)
          return count;
       return count >> 1;
       }
-   static intptrj_t getJ9MethodExtra(J9Method *method)
+   static intptr_t getJ9MethodExtra(J9Method *method)
       {
 #if defined(J9VM_OPT_JITSERVER)
       if (auto stream = getStream())
          {
          stream->write(JITServer::MessageType::CompInfo_getJ9MethodExtra, method);
-         return (intptrj_t) std::get<0>(stream->read<uint64_t>());
+         return (intptr_t) std::get<0>(stream->read<uint64_t>());
          }
 #endif /* defined(J9VM_OPT_JITSERVER) */
-      return (intptrj_t)method->extra;
+      return (intptr_t)method->extra;
       }
    static int32_t getJ9MethodVMExtra(J9Method *method)
       {
 #if defined(J9VM_OPT_JITSERVER)
       TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(J9VM_OPT_JITSERVER) */
-      return (int32_t)((intptrj_t)method->extra);
+      return (int32_t)((intptr_t)method->extra);
       }
    static uint32_t getJ9MethodJITExtra(J9Method *method)
       {
 #if defined(J9VM_OPT_JITSERVER)
       TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(J9VM_OPT_JITSERVER) */
-      TR_ASSERT((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED, "MethodExtra Already Jitted!");
+      TR_ASSERT((intptr_t)method->extra & J9_STARTPC_NOT_TRANSLATED, "MethodExtra Already Jitted!");
       return (uint32_t)((uintptr_t)method->extra >> 32);
       }
    static void * getJ9MethodStartPC(J9Method *method)
@@ -535,11 +535,11 @@ public:
       else
 #endif /* defined(J9VM_OPT_JITSERVER) */
          {
-         TR_ASSERT(!((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED), "Method NOT Jitted!");
+         TR_ASSERT(!((intptr_t)method->extra & J9_STARTPC_NOT_TRANSLATED), "Method NOT Jitted!");
          return (void *)method->extra;
          }
       }
-   static void setJ9MethodExtra(J9Method *method, intptrj_t newValue)
+   static void setJ9MethodExtra(J9Method *method, intptr_t newValue)
       {
 #if defined(J9VM_OPT_JITSERVER)
       if (auto stream = getStream())
@@ -553,19 +553,19 @@ public:
          method->extra = (void *)newValue;
          }
       }
-   static bool setJ9MethodExtraAtomic(J9Method *method, intptrj_t oldValue, intptrj_t newValue)
+   static bool setJ9MethodExtraAtomic(J9Method *method, intptr_t oldValue, intptr_t newValue)
       {
 #if defined(J9VM_OPT_JITSERVER)
       TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(J9VM_OPT_JITSERVER) */
       return oldValue == VM_AtomicSupport::lockCompareExchange((UDATA*)&method->extra, oldValue, newValue);
       }
-   static bool setJ9MethodExtraAtomic(J9Method *method, intptrj_t newValue)
+   static bool setJ9MethodExtraAtomic(J9Method *method, intptr_t newValue)
       {
 #if defined(J9VM_OPT_JITSERVER)
       TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(J9VM_OPT_JITSERVER) */
-      intptrj_t oldValue = (intptrj_t)method->extra;
+      intptr_t oldValue = (intptr_t)method->extra;
       return setJ9MethodExtraAtomic(method, oldValue, newValue);
       }
    static bool setJ9MethodVMExtra(J9Method *method, int32_t value)
@@ -573,10 +573,10 @@ public:
 #if defined(J9VM_OPT_JITSERVER)
       TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(J9VM_OPT_JITSERVER) */
-      intptrj_t oldValue = (intptrj_t)method->extra;
-      //intptrj_t newValue = oldValue & (intptrj_t)~J9_INVOCATION_COUNT_MASK;
-      //newValue |= (intptrj_t)value;
-      intptrj_t newValue = (intptrj_t)value;
+      intptr_t oldValue = (intptr_t)method->extra;
+      //intptr_t newValue = oldValue & (intptr_t)~J9_INVOCATION_COUNT_MASK;
+      //newValue |= (intptr_t)value;
+      intptr_t newValue = (intptr_t)value;
       return setJ9MethodExtraAtomic(method, oldValue, newValue);
       }
    static bool setInvocationCount(J9Method *method, int32_t newCount)
@@ -606,8 +606,8 @@ public:
       oldCount = (oldCount << 1) | 1;
       if (newCount < 0)
          return false;
-      intptrj_t oldMethodExtra = (intptrj_t) method->extra & (intptrj_t)(~J9_INVOCATION_COUNT_MASK);
-      intptrj_t newMethodExtra = oldMethodExtra | newCount;
+      intptr_t oldMethodExtra = (intptr_t) method->extra & (intptr_t)(~J9_INVOCATION_COUNT_MASK);
+      intptr_t newMethodExtra = oldMethodExtra | newCount;
       oldMethodExtra = oldMethodExtra | oldCount;
       bool success = setJ9MethodExtraAtomic(method, oldMethodExtra, newMethodExtra);
       if (success)

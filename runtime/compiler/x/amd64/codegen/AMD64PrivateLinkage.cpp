@@ -330,7 +330,7 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::flushArguments(
 
    // account for the return address in thunks and snippets.
    if (isReturnAddressOnStack)
-      offset += sizeof(intptrj_t);
+      offset += sizeof(intptr_t);
 
    TR::RealRegister::RegNum reg = TR::RealRegister::NoReg;
    TR_X86OpCodes            op  = BADIA32Op;
@@ -468,7 +468,7 @@ J9::X86::AMD64::PrivateLinkage::flushArguments(
 
    // account for the return address in SwitchToInterpreterPrePrologue
    if (isReturnAddressOnStack)
-      offset += sizeof(intptrj_t);
+      offset += sizeof(intptr_t);
 
    TR::RealRegister::RegNum reg;
    TR::Register *espReg = cg()->allocateRegister();
@@ -1201,7 +1201,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
       TR::SymbolReference * callSymRef = comp()->getSymRefTab()->findOrCreateMethodSymbol(
             node->getSymbolReference()->getOwningMethodIndex(), -1, picSlot.getMethod(), TR::MethodSymbol::Virtual);
 
-      instr = generateImmSymInstruction(CALLImm4, node, (intptrj_t)picSlot.getMethod()->startAddressForJittedMethod(), callSymRef, cg());
+      instr = generateImmSymInstruction(CALLImm4, node, (intptr_t)picSlot.getMethod()->startAddressForJittedMethod(), callSymRef, cg());
       }
    else if (picSlot.getHelperMethodSymbolRef())
       {

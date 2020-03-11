@@ -1183,14 +1183,14 @@ TR_J9VMBase::compareAndSwapInt64FieldAt(uintptr_t objectPointer, uintptr_t field
    return success != 0;
    }
 
-intptrj_t
+intptr_t
 TR_J9VMBase::getArrayLengthInElements(uintptr_t objectPointer)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getArrayLengthInElements");
    int32_t result = *(int32_t*)(objectPointer + getOffsetOfContiguousArraySizeField());
    if (TR::Compiler->om.useHybridArraylets() && (result == 0))
       result = *(int32_t*)(objectPointer + getOffsetOfDiscontiguousArraySizeField());
-   return (intptrj_t)result;
+   return (intptr_t)result;
    }
 
 int32_t
@@ -1201,7 +1201,7 @@ TR_J9VMBase::getInt32Element(uintptr_t objectPointer, int32_t elementIndex)
    }
 
 uintptr_t
-TR_J9VMBase::getReferenceElement(uintptr_t objectPointer, intptrj_t elementIndex)
+TR_J9VMBase::getReferenceElement(uintptr_t objectPointer, intptr_t elementIndex)
    {
    TR_ASSERT(haveAccess(), "getReferenceElement requires VM access");
    return (uintptr_t)J9JAVAARRAYOFOBJECT_LOAD(vmThread(), objectPointer, elementIndex);
@@ -1925,7 +1925,7 @@ int32_t TR_J9VMBase::getFirstArrayletPointerOffset(TR::Compilation *comp)
    int32_t headerSize = TR::Compiler->om.useHybridArraylets() ?
 		   TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() : TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 
-   return (headerSize + TR::Compiler->om.sizeofReferenceField()-1) & (-1)*(intptrj_t)(TR::Compiler->om.sizeofReferenceField());
+   return (headerSize + TR::Compiler->om.sizeofReferenceField()-1) & (-1)*(intptr_t)(TR::Compiler->om.sizeofReferenceField());
    }
 
 int32_t TR_J9VMBase::getArrayletFirstElementOffset(int8_t elementSize, TR::Compilation *comp)
@@ -4815,7 +4815,7 @@ TR_J9VMBase::lookupMethodHandleThunkArchetype(uintptr_t methodHandle)
    // Compute thunk's asignature and archetype's name
    //
    uintptr_t thunkableSignatureString = methodHandle_thunkableSignature((uintptr_t)methodHandle);
-   intptrj_t  thunkableSignatureLength = getStringUTF8Length(thunkableSignatureString);
+   intptr_t  thunkableSignatureLength = getStringUTF8Length(thunkableSignatureString);
    char *thunkSignature = (char*)alloca(thunkableSignatureLength+1);
    getStringUTF8(thunkableSignatureString, thunkSignature, thunkableSignatureLength+1);
 
@@ -4847,7 +4847,7 @@ TR_J9VMBase::lookupMethodHandleThunkArchetype(uintptr_t methodHandle)
 TR_ResolvedMethod *
 TR_J9VMBase::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, TR_OpaqueMethodBlock *archetype, uintptr_t *methodHandleLocation, TR_ResolvedMethod *owningMethod)
    {
-   intptrj_t length;
+   intptr_t length;
    char *thunkableSignature;
 
       {
@@ -4903,7 +4903,7 @@ void *
 TR_J9VMBase::methodHandle_jitInvokeExactThunk(uintptr_t methodHandle)
    {
    TR_ASSERT(haveAccess(), "methodHandle_jitInvokeExactThunk requires VM access");
-   return (void*)(intptrj_t)getInt64Field(getReferenceField(
+   return (void*)(intptr_t)getInt64Field(getReferenceField(
       methodHandle,
       "thunks", "Ljava/lang/invoke/ThunkTuple;"),
       "invokeExactThunk");
@@ -5175,7 +5175,7 @@ TR_J9VMBase::getStringCharacter(uintptr_t objectPointer, int32_t index)
       }
    }
 
-intptrj_t
+intptr_t
 TR_J9VMBase::getStringUTF8Length(uintptr_t objectPointer)
    {
    TR_ASSERT(haveAccess(), "Must have VM access to call getStringUTF8Length");
@@ -5184,7 +5184,7 @@ TR_J9VMBase::getStringUTF8Length(uintptr_t objectPointer)
    }
 
 char *
-TR_J9VMBase::getStringUTF8(uintptr_t objectPointer, char *buffer, intptrj_t bufferSize)
+TR_J9VMBase::getStringUTF8(uintptr_t objectPointer, char *buffer, intptr_t bufferSize)
    {
    TR_ASSERT(haveAccess(), "Must have VM access to call getStringAscii");
 
@@ -5991,10 +5991,10 @@ TR_J9VMBase::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
    return getSystemClassLoader() == getClassLoader(clazz);
    }
 
-intptrj_t
+intptr_t
 TR_J9VMBase::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
    {
-   return *(intptrj_t*) (((uint8_t *)clazz) + offset);
+   return *(intptr_t*) (((uint8_t *)clazz) + offset);
    }
 
 TR_OpaqueClassBlock *
@@ -6909,14 +6909,14 @@ TR_J9VM::getResolvedTrampoline(TR::Compilation *comp, TR::CodeCache* curCache, J
    return newCache;
    }
 
-intptrj_t
+intptr_t
 TR_J9VM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference * symRef, void * callSite)
    {
    TR::VMAccessCriticalSection methodTrampolineLookup(this);
    TR_ASSERT(!symRef->isUnresolved(), "No need to lookup trampolines for unresolved methods.\n");
    TR_OpaqueMethodBlock * method = symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier();
 
-   intptrj_t tramp;
+   intptr_t tramp;
    TR::MethodSymbol *methodSym = symRef->getSymbol()->castToMethodSymbol();
    switch (methodSym->getMandatoryRecognizedMethod())
       {
@@ -6924,7 +6924,7 @@ TR_J9VM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference * sym
          tramp = TR::CodeCacheManager::instance()->findHelperTrampoline(TR_j2iTransition, callSite);
          break;
       default:
-         tramp = (intptrj_t)TR::CodeCacheManager::instance()->findMethodTrampoline(method, callSite);
+         tramp = (intptr_t)TR::CodeCacheManager::instance()->findMethodTrampoline(method, callSite);
          break;
       }
 
@@ -9095,7 +9095,7 @@ TR_J9SharedCacheVM::getResolvedTrampoline(TR::Compilation *comp, TR::CodeCache *
    return 0;
    }
 
-intptrj_t
+intptr_t
 TR_J9SharedCacheVM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference * symRef, void * callSite)
    {
    TR_ASSERT(0, "methodTrampolineLookup not implemented for AOT");
@@ -9299,15 +9299,15 @@ JNIEXPORT jlong JNICALL Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
 JNIEXPORT jint JNICALL Java_java_lang_invoke_InterfaceHandle_convertITableIndexToVTableIndex
   (JNIEnv *env, jclass InterfaceMethodHandle, jlong interfaceArg, jint itableIndex, jlong receiverClassArg)
    {
-   J9Class  *interfaceClass = (J9Class*)(intptrj_t)interfaceArg;
-   J9Class  *receiverClass  = (J9Class*)(intptrj_t)receiverClassArg;
+   J9Class  *interfaceClass = (J9Class*)(intptr_t)interfaceArg;
+   J9Class  *receiverClass  = (J9Class*)(intptr_t)receiverClassArg;
    J9ITable *itableEntry;
    for (itableEntry = (J9ITable*)receiverClass->iTable; itableEntry; itableEntry = itableEntry->next)
       if (itableEntry->interfaceClass == interfaceClass)
          break;
    TR_ASSERT(itableEntry, "Shouldn't call convertITableIndexToVTableIndex without first ensuring the receiver implements the interface");
    UDATA *itableArray = (UDATA*)(itableEntry+1);
-   return (itableArray[itableIndex] - sizeof(J9Class))/sizeof(intptrj_t);
+   return (itableArray[itableIndex] - sizeof(J9Class))/sizeof(intptr_t);
 #if 0 // TODO:JSR292: We probably want to do something more like this instead, so it will properly handle exceptional cases
    struct
       {

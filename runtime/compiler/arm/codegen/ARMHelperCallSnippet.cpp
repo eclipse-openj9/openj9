@@ -39,13 +39,13 @@
 uint8_t *TR::ARMHelperCallSnippet::emitSnippetBody()
    {
    uint8_t   *buffer = cg()->getBinaryBufferCursor();
-   intptrj_t distance = (intptrj_t)getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress() - (intptrj_t)buffer - 8;
+   intptr_t distance = (intptr_t)getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress() - (intptr_t)buffer - 8;
 
    getSnippetLabel()->setCodeLocation(buffer);
 
    if (!(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT))
       {
-      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(getDestination()->getReferenceNumber(), (void *)buffer) - (intptrj_t)buffer - 8;
+      distance = TR::CodeCacheManager::instance()->findHelperTrampoline(getDestination()->getReferenceNumber(), (void *)buffer) - (intptr_t)buffer - 8;
       TR_ASSERT(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT,
              "CodeCache is more than 32MB.\n");
       }

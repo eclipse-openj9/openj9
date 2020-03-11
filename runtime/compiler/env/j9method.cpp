@@ -1117,12 +1117,12 @@ TR_ResolvedJ9MethodBase::isInlineable(TR::Compilation *comp)
 
 
 
-static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *rm, TR::Compilation *comp)
+static intptr_t getInitialCountForMethod(TR_ResolvedMethod *rm, TR::Compilation *comp)
    {
    TR_ResolvedJ9Method *m = static_cast<TR_ResolvedJ9Method *>(rm);
    TR::Options * options = comp->getOptions();
 
-   intptrj_t initialCount = m->hasBackwardBranches() ? options->getInitialBCount() : options->getInitialCount();
+   intptr_t initialCount = m->hasBackwardBranches() ? options->getInitialBCount() : options->getInitialCount();
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    if (TR::Options::sharedClassCache())
@@ -1220,9 +1220,9 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
    if (convertToMethod()->isArchetypeSpecimen())
       return false;
 
-   intptrj_t count = getInvocationCount();
+   intptr_t count = getInvocationCount();
 
-   intptrj_t initialCount = getInitialCountForMethod(this, comp);
+   intptr_t initialCount = getInitialCountForMethod(this, comp);
 
    if (count < 0 || count > initialCount)
       return false;
@@ -5030,14 +5030,14 @@ char *        TR_ResolvedJ9Method::classNameChars()               { return TR_J9
 char *        TR_ResolvedJ9Method::nameChars()                    { return TR_J9Method::nameChars(); }
 char *        TR_ResolvedJ9Method::signatureChars()               { return TR_J9Method::signatureChars(); }
 
-intptrj_t
+intptr_t
 TR_ResolvedJ9Method::getInvocationCount()
    {
    return TR::CompilationInfo::getInvocationCount(ramMethod());
    }
 
 bool
-TR_ResolvedJ9Method::setInvocationCount(intptrj_t oldCount, intptrj_t newCount)
+TR_ResolvedJ9Method::setInvocationCount(intptr_t oldCount, intptr_t newCount)
    {
    return TR::CompilationInfo::setInvocationCount(ramMethod(), oldCount, newCount);
    }
@@ -5857,7 +5857,7 @@ TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
    if (isNewInstanceImplThunk())
       {
       TR_ASSERT(_j9classForNewInstance, "Must have the class for the newInstance");
-      //J9Class *clazz = (J9Class*) ((intptrj_t)_ramMethod->extra & ~J9_STARTPC_NOT_TRANSLATED);
+      //J9Class *clazz = (J9Class*) ((intptr_t)_ramMethod->extra & ~J9_STARTPC_NOT_TRANSLATED);
 
       // Primitives and arrays don't have constant pool, use the constant pool of java/lang/Class
       if (TR::Compiler->cls.isPrimitiveClass(comp, (TR_OpaqueClassBlock*)_j9classForNewInstance) ||
@@ -5943,7 +5943,7 @@ TR_ResolvedJ9Method::classOfMethod()
    if (isNewInstanceImplThunk())
       {
       TR_ASSERT(_j9classForNewInstance, "Must have the class for the newInstance");
-      //J9Class * clazz = (J9Class *)((intptrj_t)ramMethod()->extra & ~J9_STARTPC_NOT_TRANSLATED);
+      //J9Class * clazz = (J9Class *)((intptr_t)ramMethod()->extra & ~J9_STARTPC_NOT_TRANSLATED);
       return _fe->convertClassPtrToClassOffset(_j9classForNewInstance);//(TR_OpaqueClassBlock *&)(rc);
       }
 
@@ -6138,7 +6138,7 @@ TR_ResolvedJ9Method::isUnresolvedMethodType(I_32 cpIndex)
    TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
 #endif /* defined(J9VM_OPT_JITSERVER) */
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-   return *(intptrj_t*)methodTypeConstant(cpIndex) == 0;
+   return *(intptr_t*)methodTypeConstant(cpIndex) == 0;
    }
 
 void *
@@ -6159,7 +6159,7 @@ TR_ResolvedJ9Method::isUnresolvedMethodHandle(I_32 cpIndex)
    TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
 #endif /* defined(J9VM_OPT_JITSERVER) */
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-   return *(intptrj_t*)methodHandleConstant(cpIndex) == 0;
+   return *(intptr_t*)methodHandleConstant(cpIndex) == 0;
    }
 
 void *
@@ -6313,7 +6313,7 @@ TR_ResolvedJ9Method::startAddressForJNIMethod(TR::Compilation * comp)
    char *address = (char *)TR::CompilationInfo::getJ9MethodExtra(ramMethod());
 
    if (isInterpreted())
-      return (void*)((intptrj_t)address & ~J9_STARTPC_NOT_TRANSLATED);
+      return (void*)((intptr_t)address & ~J9_STARTPC_NOT_TRANSLATED);
 
    return *(void * *)(TR::CompilationInfo::getJ9MethodExtra(ramMethod()) - (comp->target().is64Bit() ? 12 : 8));
    }
@@ -7700,7 +7700,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          uintptr_t methodHandle;
          uintptr_t methodDescriptorRef;
-         intptrj_t methodDescriptorLength;
+         intptr_t methodDescriptorLength;
          char *methodDescriptor;
 
 #if defined(J9VM_OPT_JITSERVER)      
@@ -7828,14 +7828,14 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                      "next",             "Ljava/lang/invoke/MethodHandle;"),
                      "type",             "Ljava/lang/invoke/MethodType;"),
                      "arguments",        "[Ljava/lang/Class;");
-                  targetParmClass = (TR_OpaqueClassBlock*)(intptrj_t)fej9->getInt64Field(fej9->getReferenceElement(targetArguments, argIndex),
+                  targetParmClass = (TR_OpaqueClassBlock*)(intptr_t)fej9->getInt64Field(fej9->getReferenceElement(targetArguments, argIndex),
                                                                                    "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
                   // Load callsite type and check if two types are compatible
                   sourceArguments = fej9->getReferenceField(fej9->getReferenceField(
                      methodHandle,
                      "type",             "Ljava/lang/invoke/MethodType;"),
                      "arguments",        "[Ljava/lang/Class;");
-                  sourceParmClass = (TR_OpaqueClassBlock*)(intptrj_t)fej9->getInt64Field(fej9->getReferenceElement(sourceArguments, argIndex),
+                  sourceParmClass = (TR_OpaqueClassBlock*)(intptr_t)fej9->getInt64Field(fej9->getReferenceElement(sourceArguments, argIndex),
                                                                                    "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
                   }
 
@@ -7895,7 +7895,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          uintptr_t receiverHandle;
          uintptr_t methodHandle;
          uintptr_t methodDescriptorRef;
-         intptrj_t methodDescriptorLength;
+         intptr_t methodDescriptorLength;
          char *methodDescriptor;
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -8010,7 +8010,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          uintptr_t methodHandle;
          uintptr_t methodDescriptorRef;
-         intptrj_t methodDescriptorLength;
+         intptr_t methodDescriptorLength;
 
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
@@ -8378,7 +8378,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                }
             else
                {
-               j9method = (TR_OpaqueMethodBlock*)(intptrj_t)vmSlot;
+               j9method = (TR_OpaqueMethodBlock*)(intptr_t)vmSlot;
                }
             }
 
@@ -8526,7 +8526,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             TR::VMAccessCriticalSection invokeSpreadHandleArrayArg(fej9);
             methodHandle = *thunkDetails->getHandleRef();
             arrayClass   = fej9->getReferenceField(methodHandle, "arrayClass", "Ljava/lang/Class;");
-            arrayJ9Class = (J9ArrayClass*)(intptrj_t)fej9->getInt64Field(arrayClass,
+            arrayJ9Class = (J9ArrayClass*)(intptr_t)fej9->getInt64Field(arrayClass,
                                                                          "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
             leafClass = (J9Class*)fej9->getLeafComponentClassFromArrayClass((TR_OpaqueClassBlock*)arrayJ9Class);
             arity = arrayJ9Class->arity;
@@ -9038,7 +9038,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             std::vector<uintptr_t *> &recvFilterObjectReferenceLocationList = std::get<4>(recv);
 
             // copy the next signature
-            intptrj_t methodDescriptorLength = nextSigStr.size();
+            intptr_t methodDescriptorLength = nextSigStr.size();
             nextSignature = (char*)alloca(methodDescriptorLength+1);
             memcpy(nextSignature, &nextSigStr[0], methodDescriptorLength);
             nextSignature[methodDescriptorLength] = 0;
@@ -9085,7 +9085,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                "next",             "Ljava/lang/invoke/MethodHandle;"),
                "type",             "Ljava/lang/invoke/MethodType;"),
                "methodDescriptor", "Ljava/lang/String;");
-            intptrj_t methodDescriptorLength = fej9->getStringUTF8Length(methodDescriptorRef);
+            intptr_t methodDescriptorLength = fej9->getStringUTF8Length(methodDescriptorRef);
             nextSignature = (char*)alloca(methodDescriptorLength+1);
             fej9->getStringUTF8(methodDescriptorRef, nextSignature, methodDescriptorLength+1);
             }

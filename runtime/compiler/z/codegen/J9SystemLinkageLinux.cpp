@@ -64,7 +64,7 @@ J9::Z::zLinuxSystemLinkage::zLinuxSystemLinkage(TR::CodeGenerator * codeGen)
 ////////////////////////////////////////////////////////////////////////////////
 void
 J9::Z::zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode,
-	TR::RegisterDependencyConditions * deps, intptrj_t targetAddress,
+	TR::RegisterDependencyConditions * deps, intptr_t targetAddress,
 	TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg,
 	TR::LabelSymbol * returnFromJNICallLabel,
 	TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint)
