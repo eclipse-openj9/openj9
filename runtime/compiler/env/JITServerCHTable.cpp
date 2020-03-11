@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -388,6 +388,12 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
 
             {
             TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+            // JITServer KOT:
+            // This method is called by JITClientCHTableCommit() at the client.
+            // Although accessing VM is not an issue, getIndex() could update the KOT
+            // at the client directly and the KOT at the server could be out of sync.
+            // However, JITClientCHTableCommit() is called at the end of compilation,
+            // and therefore it cannot cause any issues.
             TR::VMAccessCriticalSection invalidateMCSTargetGuards(fej9);
             // TODO: Code duplication with TR_InlinerBase::findInlineTargets
             currentIndex = TR::KnownObjectTable::UNKNOWN;

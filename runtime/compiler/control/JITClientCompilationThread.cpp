@@ -33,6 +33,7 @@
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "net/ClientStream.hpp"
+#include "optimizer/J9TransformUtil.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
 #include "runtime/J9VMAccess.hpp"
 #include "runtime/JITClientSession.hpp"
@@ -187,6 +188,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                                                           interruptReason, comp->signature(), comp->getHotnessName());
       comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
       }
+
+   TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
 
    bool done = false;
    switch (response)
@@ -2348,29 +2351,47 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeFilterArgumentsHandle:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
-         TR::VMAccessCriticalSection invokeFilterArgumentsHandle(fe);
+         auto recv = client->getRecvData<uintptrj_t*, bool>();
          uintptrj_t methodHandle = *std::get<0>(recv);
-         int32_t startPos = (int32_t)fe->getInt32Field(methodHandle, "startPos");
+         bool knotEnabled = std::get<1>(recv);
 
-         uintptrj_t filters = fe->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
-         int32_t numFilters = fe->getArrayLengthInElements(filters);
-         std::vector<uintptrj_t> filtersList(numFilters);
-         for (int i = 0; i < numFilters; i++)
+         int32_t startPos = 0;
+         std::string nextSignatureString;
+         std::vector<uint8_t> haveFilterList;
+         std::vector<TR::KnownObjectTable::Index> filterIndexList;
+         std::vector<uintptrj_t *> filterObjectReferenceLocationList;
+
             {
-            filtersList[i] = fe->getReferenceElement(filters, i);
+            TR::VMAccessCriticalSection invokeFilterArgumentsHandle(fe);
+            uintptrj_t filters = fe->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
+            int32_t numFilters = fe->getArrayLengthInElements(filters);
+            haveFilterList.resize(numFilters);
+            filterIndexList.resize(numFilters);
+            filterObjectReferenceLocationList.resize(numFilters);
+
+            for (int i = 0; i < numFilters; i++)
+               {
+               haveFilterList[i] = (fe->getReferenceElement(filters, i) != 0) ? 1 : 0;
+               if (knotEnabled)
+                  {
+                  filterIndexList[i] = knot->getIndex(fe->getReferenceElement(filters, i));
+                  filterObjectReferenceLocationList[i] = knot->getPointerLocation(filterIndexList[i]);
+                  }
+               }
+
+            startPos = (int32_t)fe->getInt32Field(methodHandle, "startPos");
+            uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
+               methodHandle,
+               "next",             "Ljava/lang/invoke/MethodHandle;"),
+               "type",             "Ljava/lang/invoke/MethodType;"),
+               "methodDescriptor", "Ljava/lang/String;");
+            intptrj_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
+            char *nextSignature = (char*)alloca(methodDescriptorLength+1);
+            fe->getStringUTF8(methodDescriptorRef, nextSignature, methodDescriptorLength+1);
+            nextSignatureString.assign(nextSignature, methodDescriptorLength);
             }
 
-         uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
-            methodHandle,
-            "next",             "Ljava/lang/invoke/MethodHandle;"),
-            "type",             "Ljava/lang/invoke/MethodType;"),
-            "methodDescriptor", "Ljava/lang/String;");
-         intptrj_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
-         char *nextSignature = (char*)alloca(methodDescriptorLength+1);
-         fe->getStringUTF8(methodDescriptorRef, nextSignature, methodDescriptorLength+1);
-         std::string nextSignatureString(nextSignature, methodDescriptorLength);
-         client->write(response, startPos, nextSignatureString, filtersList);
+         client->write(response, startPos, nextSignatureString, haveFilterList, filterIndexList, filterObjectReferenceLocationList);
          }
          break;
       case MessageType::runFEMacro_invokeFilterArgumentsHandle2:
@@ -2469,6 +2490,30 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, result);
          }
          break;
+      case MessageType::runFEMacro_invokeCollectHandleAllocateArray:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+         TR::KnownObjectTable::Index knotIndex = std::get<0>(recv);
+         int32_t collectArraySize = 0;
+         int32_t collectPosition = 0;
+         TR_OpaqueClassBlock *componentClazz = NULL;
+
+            {
+            TR::VMAccessCriticalSection invokeCollectHandleAllocateArray(fe);
+            uintptrj_t methodHandle = knot->getPointer(knotIndex);
+            collectArraySize = fe->getInt32Field(methodHandle, "collectArraySize");
+            collectPosition = fe->getInt32Field(methodHandle, "collectPosition");
+            uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
+               methodHandle,
+               "next",             "Ljava/lang/invoke/MethodHandle;"),
+               "type",             "Ljava/lang/invoke/MethodType;"),
+               "arguments",        "[Ljava/lang/Class;");
+            componentClazz = fe->getComponentClassFromArrayClass(fe->getClassFromJavaLangClass(fe->getReferenceElement(arguments, collectPosition)));
+            }
+
+         client->write(response, collectArraySize, collectPosition, componentClazz);
+         }
+         break;
       case MessageType::CHTable_getAllClassInfo:
          {
          client->getRecvData<JITServer::Void>();
@@ -2539,6 +2584,253 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          else
             client->write(response, std::string((char*) bodyInfo, sizeof(TR_PersistentJittedBodyInfo)),
                           std::string((char*) bodyInfo->getMethodInfo(), sizeof(TR_PersistentMethodInfo)));
+         }
+         break;
+      case MessageType::KnownObjectTable_getIndex:
+         {
+         uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
+         TR::KnownObjectTable::Index index = TR::KnownObjectTable::UNKNOWN;
+         uintptrj_t *objectPointerReference = NULL;
+
+            {
+            TR::VMAccessCriticalSection knownObjectTableGetIndex(fe);
+            index = knot->getIndex(objectPointer);
+            objectPointerReference = knot->getPointerLocation(index);
+            }
+
+         client->write(response, index, objectPointerReference);
+         }
+         break;
+      case MessageType::KnownObjectTable_getIndexAt:
+         {
+         uintptrj_t *objectPointerReference = std::get<0>(client->getRecvData<uintptrj_t*>());
+         client->write(response, knot->getIndexAt(objectPointerReference));
+         }
+         break;
+      case MessageType::KnownObjectTable_getPointer:
+         {
+         TR::KnownObjectTable::Index knotIndex = std::get<0>(client->getRecvData<TR::KnownObjectTable::Index>());
+         uintptrj_t objectPointer = 0;
+
+            {
+            TR::VMAccessCriticalSection knownObjectTableGetPointer(fe);
+            objectPointer = knot->getPointer(knotIndex);
+            }
+
+         client->write(response, objectPointer);
+         }
+         break;
+      case MessageType::KnownObjectTable_getExistingIndexAt:
+         {
+         uintptrj_t *objectPointerReference = std::get<0>(client->getRecvData<uintptrj_t*>());
+         client->write(response, knot->getExistingIndexAt(objectPointerReference));
+         }
+         break;
+      case MessageType::KnownObjectTable_symbolReferenceTableCreateKnownObject:
+         {
+         auto recv = client->getRecvData<void *, TR_ResolvedMethod *, int32_t>();
+         void *dataAddress = std::get<0>(recv);
+         TR_ResolvedMethod *owningMethod = std::get<1>(recv);
+         int32_t cpIndex = std::get<2>(recv);
+
+         bool createKnownObject = false;
+         TR::KnownObjectTable::Index knotIndex = TR::KnownObjectTable::UNKNOWN;
+         uintptrj_t *objectPointerReference = NULL;
+
+            {
+            TR::VMAccessCriticalSection getObjectReferenceLocation(fe);
+            if (*((uintptrj_t*)dataAddress) != 0)
+               {
+               TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp, cpIndex);
+               if (declaringClass && fe->isClassInitialized(declaringClass))
+                  {
+                  static const char *foldVarHandle = feGetEnv("TR_FoldVarHandleWithoutFear");
+                  int32_t clazzNameLength = 0;
+                  char *clazzName = fe->getClassNameChars(declaringClass, clazzNameLength);
+                  bool createKnownObject = false;
+
+                  if (J9::TransformUtil::foldFinalFieldsIn(declaringClass, clazzName, clazzNameLength, true, comp))
+                     {
+                     createKnownObject = true;
+                     }
+                  else if (foldVarHandle
+                           && (clazzNameLength != 16 || strncmp(clazzName, "java/lang/System", 16)))
+                     {
+                     TR_OpaqueClassBlock *varHandleClass =  fe->getSystemClassFromClassName("java/lang/invoke/VarHandle", 26);
+                     TR_OpaqueClassBlock *objectClass = TR::Compiler->cls.objectClass(comp, *((uintptrj_t*)dataAddress));
+
+                     if (varHandleClass != NULL
+                         && objectClass != NULL
+                         && fe->isInstanceOf(objectClass, varHandleClass, true, true))
+                        {
+                        createKnownObject = true;
+                        }
+                     }
+
+                  if (createKnownObject)
+                     {
+                     knotIndex = knot->getIndexAt((uintptrj_t*)dataAddress);
+                     objectPointerReference = knot->getPointerLocation(knotIndex);
+                     }
+                  }
+               }
+            }
+
+         client->write(response, knotIndex, objectPointerReference);
+         }
+         break;
+      case MessageType::KnownObjectTable_mutableCallSiteEpoch:
+         {
+         auto recv = client->getRecvData<uintptrj_t*, bool>();
+         uintptrj_t* mcsReferenceLocation = std::get<0>(recv);
+         bool knotEnabled = std::get<1>(recv);
+
+         uintptrj_t mcsObject = 0;
+         TR::KnownObjectTable::Index knotIndex = TR::KnownObjectTable::UNKNOWN;
+         uintptrj_t *objectPointerReference = NULL;
+
+            {
+            TR::VMAccessCriticalSection mutableCallSiteEpoch(fe);
+            mcsObject = fe->getStaticReferenceFieldAtAddress((uintptrj_t)mcsReferenceLocation);
+            if (mcsObject && knotEnabled && knot)
+               {
+               TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe);
+               uintptrj_t currentEpoch = fej9->getVolatileReferenceField(mcsObject, "epoch", "Ljava/lang/invoke/MethodHandle;");
+               if (currentEpoch)
+                  {
+                  knotIndex = knot->getIndex(currentEpoch);
+                  objectPointerReference = knot->getPointerLocation(knotIndex);
+                  }
+               }
+            }
+
+         client->write(response, mcsObject, knotIndex, objectPointerReference);
+         }
+         break;
+      case MessageType::KnownObjectTable_dereferenceKnownObjectField:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index, TR_ResolvedMethod *, int32_t, uint32_t>();
+         TR::KnownObjectTable::Index baseObjectIndex = std::get<0>(recv);
+         TR_ResolvedMethod *calleeMethod = std::get<1>(recv);
+         int32_t cpIndex = std::get<2>(recv);
+         uint32_t fieldOffset = std::get<3>(recv);
+
+         TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
+         uintptrj_t *objectPointerReference = NULL;
+         uintptrj_t fieldAddress = 0;
+         uintptrj_t baseObjectAddress = 0;
+
+            {
+            TR::VMAccessCriticalSection dereferenceKnownObjectField(fe);
+            baseObjectAddress = knot->getPointer(baseObjectIndex);
+            TR_OpaqueClassBlock *baseObjectClass = fe->getObjectClass(baseObjectAddress);
+            TR_OpaqueClassBlock *fieldDeclaringClass = calleeMethod->getDeclaringClassFromFieldOrStatic(comp, cpIndex);
+            if (fieldDeclaringClass && fe->isInstanceOf(baseObjectClass, fieldDeclaringClass, true) == TR_yes)
+               {
+               fieldAddress = fe->getReferenceFieldAtAddress(baseObjectAddress + fieldOffset);
+               resultIndex = knot->getIndex(fieldAddress);
+               objectPointerReference = knot->getPointerLocation(resultIndex);
+               }
+            }
+
+         client->write(response, resultIndex, objectPointerReference, fieldAddress, baseObjectAddress);
+         }
+         break;
+      case MessageType::KnownObjectTable_dereferenceKnownObjectField2:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock*, TR::KnownObjectTable::Index>();
+         TR_OpaqueClassBlock *mutableCallsiteClass = std::get<0>(recv);
+         TR::KnownObjectTable::Index receiverIndex = std::get<1>(recv);
+
+         TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
+         uintptrj_t *objectPointerReference = NULL;
+
+            {
+            TR::VMAccessCriticalSection dereferenceKnownObjectField(fe);
+            int32_t targetFieldOffset = fe->getInstanceFieldOffset(mutableCallsiteClass, "target", "Ljava/lang/invoke/MethodHandle;");
+            uintptrj_t receiverAddress = knot->getPointer(receiverIndex);
+            TR_OpaqueClassBlock *receiverClass = fe->getObjectClass(receiverAddress);
+            TR_ASSERT_FATAL(fe->isInstanceOf(receiverClass, mutableCallsiteClass, true) == TR_yes, "receiver of mutableCallsite_getTarget must be instance of MutableCallSite (*%p)", knot->getPointerLocation(receiverIndex));
+            uintptrj_t fieldAddress = fe->getReferenceFieldAt(receiverAddress, targetFieldOffset);
+
+            resultIndex = knot->getIndex(fieldAddress);
+            objectPointerReference = knot->getPointerLocation(resultIndex);
+            }
+
+         client->write(response, resultIndex, objectPointerReference);
+         }
+         break;
+      case MessageType::KnownObjectTable_invokeDirectHandleDirectCall:
+         {
+         auto recv = (client->getRecvData<uintptrj_t*, bool>());
+         uintptrj_t *methodHandleLocation = std::get<0>(recv);
+         bool knotEnabled = std::get<1>(recv);
+
+         TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
+         uintptrj_t *objectPointerReference = NULL;
+         int64_t vmSlot = 0;
+         uintptrj_t jlClass = 0;
+
+            {
+            TR::VMAccessCriticalSection invokeDirectHandleDirectCall(fe);
+            uintptrj_t methodHandle = *methodHandleLocation;
+            vmSlot = fe->getInt64Field(methodHandle, "vmSlot");
+            uintptrj_t jlClass = fe->getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
+
+            if (knotEnabled && knot)
+               {
+               resultIndex = knot->getIndex(methodHandle);
+               objectPointerReference = knot->getPointerLocation(resultIndex);
+               }
+            }
+
+         client->write(response, vmSlot, jlClass, resultIndex, objectPointerReference);
+         }
+         break;
+      case MessageType::KnownObjectTable_createSymRefWithKnownObject:
+         {
+         void *staticAddress = std::get<0>(client->getRecvData<void*>());
+
+         TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
+         uintptrj_t *objectPointerReference = NULL;
+
+            {
+            TR::VMAccessCriticalSection createSymRefWithKnownObject(fe);
+            uintptrj_t jlClass = (uintptrj_t)J9VM_J9CLASS_TO_HEAPCLASS((J9Class*)staticAddress);
+            TR_ASSERT(jlClass, "java/lang/Class reference from heap class must be non null");
+
+            resultIndex = knot->getIndexAt(&jlClass);
+            objectPointerReference = knot->getPointerLocation(resultIndex);
+            }
+
+         client->write(response, resultIndex, objectPointerReference);
+         }
+         break;
+      case MessageType::KnownObjectTable_getReferenceField:
+         {
+         auto recv = (client->getRecvData<bool, uintptrj_t*, int32_t, bool>());
+         bool isStatic = std::get<0>(recv);
+         uintptrj_t *baseObjectRefLocation = std::get<1>(recv);
+         int32_t fieldOffset = std::get<2>(recv);
+         bool knotEnabled = std::get<3>(recv);
+
+         TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
+         uintptrj_t *objectPointerReference = NULL;
+         uintptrj_t targetObjectReference = 0;
+
+            {
+            TR::VMAccessCriticalSection getReferenceField(fe);
+            uintptrj_t baseObjectRef = isStatic ? fe->getStaticReferenceFieldAtAddress((uintptrj_t)baseObjectRefLocation) : *baseObjectRefLocation;
+            targetObjectReference = fe->getReferenceFieldAt(baseObjectRef, fieldOffset);
+
+            if (knotEnabled && knot)
+               {
+               resultIndex = knot->getIndexAt(&targetObjectReference);
+               objectPointerReference = knot->getPointerLocation(resultIndex);
+               }
+            }
+
+         client->write(response, resultIndex, objectPointerReference, targetObjectReference);
          }
          break;
       default:

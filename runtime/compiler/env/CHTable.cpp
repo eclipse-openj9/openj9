@@ -558,6 +558,13 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
       static char *dontInvalidateMCSTargetGuards = feGetEnv("TR_dontInvalidateMCSTargetGuards");
       if (!dontInvalidateMCSTargetGuards)
          {
+#if defined(J9VM_OPT_JITSERVER)
+         // JITServer KOT: At the moment this method is called only by TR_CHTable::commit().
+         // TR_CHTable::commit() already checks comp->isOutOfProcessCompilation().
+         // Adding the following check as a precaution in case commitVirtualGuard() is called
+         // outside TR_CHTable::commit() in the future.
+         TR_ASSERT(!comp->isOutOfProcessCompilation(), "TR_CHTable::commitVirtualGuard() should not be called at the server\n");
+#endif /* defined(J9VM_OPT_JITSERVER) */
          uintptrj_t *mcsReferenceLocation = info->mutableCallSiteObject();
          TR::KnownObjectTable *knot = comp->getKnownObjectTable();
          TR_ASSERT(knot, "MutableCallSiteTargetGuard requires the Known Object Table");

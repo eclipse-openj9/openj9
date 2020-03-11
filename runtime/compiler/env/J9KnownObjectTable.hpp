@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,12 +59,25 @@ public:
 
    KnownObjectTable(TR::Compilation *comp);
 
-   virtual Index getEndIndex();
-   virtual Index getIndex(uintptrj_t objectPointer);
-   virtual uintptrj_t *getPointerLocation(Index index);
-   virtual bool isNull(Index index);
+   TR::KnownObjectTable *self();
 
-   virtual void dumpTo(TR::FILE *file, TR::Compilation *comp);
+   Index getEndIndex();
+   Index getIndex(uintptrj_t objectPointer);
+   Index getIndex(uintptrj_t objectPointer, bool isArrayWithConstantElements);
+   uintptrj_t *getPointerLocation(Index index);
+   bool isNull(Index index);
+
+   void dumpTo(TR::FILE *file, TR::Compilation *comp);
+
+   Index getIndexAt(uintptrj_t *objectReferenceLocation);
+   Index getIndexAt(uintptrj_t *objectReferenceLocation, bool isArrayWithConstantElements);
+   Index getExistingIndexAt(uintptrj_t *objectReferenceLocation);
+
+   uintptrj_t getPointer(Index index);
+
+#if defined(J9VM_OPT_JITSERVER)
+   void updateKnownObjectTableAtServer(Index index, uintptrj_t *objectReferenceLocation);
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 private:
 
