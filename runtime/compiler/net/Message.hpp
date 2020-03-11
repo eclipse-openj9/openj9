@@ -94,13 +94,15 @@ public:
          UINT64,
          BOOL,
          STRING,
-         OBJECT, // only trivially-copyable,
+         OBJECT, // only trivially-copyable; pointers fall into this category
          ENUM,
          VECTOR,
+         SIMPLE_VECTOR, // vector whose elements are trivially-copyable and less than 256 bytes
+         EMPTY_VECTOR,
          TUPLE,
          LAST_TYPE
          };
-
+      static const char* const _descriptorNames[];
       /**
          @brief Constructor
 
@@ -108,7 +110,7 @@ public:
          @param payloadSize Size of the real data (excluding any required padding)
 
       */
-      DataDescriptor(DataType type, uint32_t payloadSize) : _type(type), _dataOffset(0), _reserved(0xff)
+      DataDescriptor(DataType type, uint32_t payloadSize) : _type(type), _dataOffset(0), _vectorElementSize(0)
          {
          // align on 4 byte boundary
          _size = (payloadSize + 3) & 0xfffffffc;
@@ -119,6 +121,8 @@ public:
       uint32_t getTotalSize() const { return _size; }
       uint8_t getPaddingSize() const { return _paddingSize; }
       uint8_t getDataOffset() const { return _dataOffset; }
+      uint8_t getVectorElementSize() const { return _vectorElementSize; }
+      void setVectorElementSize(uint8_t sz) { _vectorElementSize = sz; }
 
       /**
          @brief Initialize descriptor with values give as parameters.
@@ -133,7 +137,7 @@ public:
          _type = type;
          _paddingSize = paddingSize;
          _dataOffset = dataOffset;
-         _reserved = 0xff;
+         _vectorElementSize = 0;
          _size = totalSize;
          }
 
@@ -186,18 +190,27 @@ public:
          return static_cast<DataDescriptor*>(static_cast<void*>(static_cast<char*>(static_cast<void*>(this + 1)) + _size));
          }
 
-      void print();
+      uint32_t print(uint32_t nestingLevel);
       private:
       DataType _type; // Message type on 8 bits
       uint8_t  _paddingSize; // How many bytes are actually used for padding (0-3)
-      uint8_t  _dataOffset; // Offset from DataDescriptor to actual data. Always 0 for now.
-      uint8_t  _reserved; // For future use
+      uint8_t  _dataOffset; // Offset from DataDescriptor to actual data
+      uint8_t  _vectorElementSize; // Size of an element for SIMPLE_VECTORs
       uint32_t _size; // Size of the data segment, which can include nested data
       }; // struct DataDescriptor
 
-   Message();
+   Message()
+      {
+      // Reserve space for encoding the size and MetaData.
+      // These will be populated at a later time
+      _buffer.reserveValue<uint32_t>(); // Reserve space for encoding the size
+      _buffer.reserveValue<Message::MetaData>();
+      }
 
-   MetaData *getMetaData() const;
+   MetaData *getMetaData() const
+      {
+      return _buffer.getValueAtOffset<MetaData>(sizeof(uint32_t)); // sizeof(uint32_t) represents the space for message size
+      }
 
    /**
       @brief Add a new data point to the message.
@@ -220,13 +233,15 @@ public:
 
       This method is needed for some specific cases, mainly for writing
       non-primitive data points.
-      TODO: can probably get rid of this, if addData is changed to return
-      the index of the descriptor added. Then writing a descriptor with size 0
-      would achieve the same result.
 
       @return The offset to the descriptor reserved
    */
-   uint32_t reserveDescriptor();
+   uint32_t reserveDescriptor()
+      {
+      uint32_t descOffset = _buffer.reserveValue<DataDescriptor>();
+      _descriptorOffsets.push_back(descOffset);
+      return descOffset;
+      }
 
    /**
       @brief Get a pointer to the descriptor at given index
@@ -235,19 +250,22 @@ public:
 
       @return A pointer to the descriptor
    */
-   DataDescriptor *getDescriptor(size_t idx) const;
+   DataDescriptor *getDescriptor(size_t idx) const
+      {
+      uint32_t offset = _descriptorOffsets[idx];
+      return _buffer.getValueAtOffset<DataDescriptor>(offset);
+      }
 
    /**
       @brief Get a pointer to the last descriptor added to the message.
-
-      @return A pointer to the last descriptor
    */
-   DataDescriptor *getLastDescriptor() const;
-   
-   /**
-      @brief Get a total number of descriptors in the message.
+   DataDescriptor *getLastDescriptor() const
+      {
+      return _buffer.getValueAtOffset<DataDescriptor>(_descriptorOffsets.back());
+      }
 
-      @return Number of descriptors
+   /**
+      @brief Get the total number of descriptors in the message.
    */
    uint32_t getNumDescriptors() const { return _descriptorOffsets.size(); }
 
@@ -260,22 +278,24 @@ public:
 
    /**
       @brief Get message type
-
-      @return the message type
    */
    MessageType type() const { return getMetaData()->_type; }
 
    /**
       @brief Serialize the message
+      
+      Write total message size to the beginning of message buffer and return pointer to it.
 
       @return A pointer to the beginning of the serialized message
    */
-   char *serialize();
+   char *serialize()
+      {
+      *_buffer.getValueAtOffset<uint32_t>(0) = _buffer.size();
+      return _buffer.getBufferStart();
+      }
 
    /**
-      @brief The size of the serialized message.
-
-      @return the serialized size
+      @brief Return the size of the serialized message.
    */
    uint32_t serializedSize() { return _buffer.size(); }
 
@@ -291,23 +311,34 @@ public:
    /**
       @brief Set serialized size of the message
    */
-   void setSerializedSize(uint32_t serializedSize);
+   void setSerializedSize(uint32_t serializedSize)
+      {
+      _buffer.expandIfNeeded(serializedSize);
+      _buffer.writeValue(serializedSize);
+      }
 
    /**
       @brief Get the pointer to the start of the buffer.
       
       This method should be used only to read an incoming message.
-      TODO: this is probably bad design, as it's the only place where
-      Message explicitly exposes MessageBuffer, but I'm not sure how
-      to fix this without resorting to creating more Read/Write streams,
-      like protobuf does.
       
       @return A pointer to the beginning of the MessageBuffer
    */
    char *getBufferStartForRead() { return _buffer.getBufferStart(); }
 
-   void clearForRead();
-   void clearForWrite();
+   void clearForRead()
+      {
+      _descriptorOffsets.clear();
+      _buffer.clear();
+      }
+
+   void clearForWrite()
+      {
+      _descriptorOffsets.clear();
+      _buffer.clear();
+      _buffer.reserveValue<uint32_t>(); // For writing the size
+      _buffer.reserveValue<MetaData>(); // For writing the metadata
+      }
 
    void print();
 protected:

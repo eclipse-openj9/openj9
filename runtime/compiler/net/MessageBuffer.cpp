@@ -34,12 +34,6 @@ MessageBuffer::MessageBuffer() :
    _curPtr = _storage;
    }
 
-uint32_t
-MessageBuffer::size() const
-   {
-   return _curPtr - _storage;
-   }
-
 void
 MessageBuffer::expandIfNeeded(uint32_t requiredSize)
    {
@@ -73,18 +67,7 @@ MessageBuffer::writeData(const void *dataStart, uint32_t dataSize, uint8_t paddi
    _curPtr += dataSize + paddingSize;
    return offset(data);
    }
-
-uint32_t
-MessageBuffer::readData(uint32_t dataSize)
-   {
-   // "read" next dataSize bytes by returning
-   // the offset into the buffer and advancing pointer
-   // by dataSize bytes
-   char *data = _curPtr;
-   _curPtr += dataSize;
-   return offset(data);
-   }
-
+ 
 uint8_t
 MessageBuffer::alignCurrentPositionOn64Bit()
    {

@@ -26,24 +26,30 @@
 
 namespace JITServer
 {
-Message::Message()
-   {
-   // when the message is constructed, it's not valid
-   _buffer.reserveValue<uint32_t>(); // Reserve space for encoding the size
-   _buffer.reserveValue<Message::MetaData>();
-   }
-
-Message::MetaData *
-Message::getMetaData() const
-   {
-   return _buffer.getValueAtOffset<MetaData>(sizeof(uint32_t)); // sizeof(uint32_t) represents the space for message size
-   }
+   const char* const Message::DataDescriptor::_descriptorNames[] = {
+      "UINT32",
+      "INT64",
+      "UINT32",
+      "UINT64",
+      "BOOL",
+      "STRING",
+      "OBJECT",
+      "ENUM",
+      "VECTOR",
+      "SIMPLE_VECTOR",
+      "EMPTY_VECTOR",
+      "TUPLE",
+      "INVALID"
+   };
 
 uint32_t
 Message::addData(const DataDescriptor &desc, const void *dataStart, bool needs64BitAlignment)
    {
    // Write the descriptor itself
    uint32_t descOffset = _buffer.writeValue(desc);
+
+   //TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "addData(dataStart=%p):  DataDescriptor(@%u): type=%d payload_size=%u dataOffset=%u, padding=%u",
+   //   dataStart, descOffset, desc.getDataType(), desc.getPayloadSize(), desc.getDataOffset(), desc.getPaddingSize());
 
    // If the data following the descriptor needs to be 64-bit aligned,
    // add some initial padding in the outgoing buffer and write the
@@ -61,27 +67,6 @@ Message::addData(const DataDescriptor &desc, const void *dataStart, bool needs64
    _buffer.writeData(dataStart, desc.getPayloadSize(), desc.getPaddingSize()); 
    _descriptorOffsets.push_back(descOffset);
    return desc.getTotalSize() + initialPadding;
-   }
-
-uint32_t
-Message::reserveDescriptor()
-   {
-   uint32_t descOffset = _buffer.reserveValue<DataDescriptor>();
-   _descriptorOffsets.push_back(descOffset);
-   return descOffset;
-   }
-
-Message::DataDescriptor *
-Message::getDescriptor(size_t idx) const
-   {
-   uint32_t offset = _descriptorOffsets[idx];
-   return _buffer.getValueAtOffset<DataDescriptor>(offset);
-   }
-
-Message::DataDescriptor *
-Message::getLastDescriptor() const
-   {
-   return _buffer.getValueAtOffset<DataDescriptor>(_descriptorOffsets.back());
    }
 
 void
@@ -113,63 +98,42 @@ Message::deserialize()
       }
    }
 
-char *
-Message::serialize()
+uint32_t
+Message::DataDescriptor::print(uint32_t nestingLevel)
    {
-   // write total message size to the beginning of message buffer
-   // and return pointer to it
-   *_buffer.getValueAtOffset<uint32_t>(0) = _buffer.size();
-   return _buffer.getBufferStart();
-   }
-
-void
-Message::setSerializedSize(uint32_t serializedSize)
-   {
-   _buffer.expandIfNeeded(serializedSize);
-   _buffer.writeValue(serializedSize);
-   }
-
-void
-Message::clearForRead()
-   {
-   _descriptorOffsets.clear();
-   _buffer.clear();
-   }
-
-void
-Message::clearForWrite()
-   {
-   _descriptorOffsets.clear();
-   _buffer.clear();
-   _buffer.reserveValue<uint32_t>(); // For writing the size
-   _buffer.reserveValue<MetaData>(); // For writing the metadata
-   }
-
-void
-Message::DataDescriptor::print()
-   {
-   TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor[%p]: type=%d payload_size=%u dataOffset=%u, padding=%u\n", 
-                                  this, getDataType(), getPayloadSize(), getDataOffset(), getPaddingSize());
+   uint32_t numDescriptorsPrinted = 1;
+   TR_VerboseLog::writeLine(TR_Vlog_JITServer, "");
+   for (uint32_t i = 0; i < nestingLevel; ++i)
+      TR_VerboseLog::write("\t");
+   TR_VerboseLog::write("DataDescriptor[%p]: type=%d(%6s) payload_size=%u dataOffset=%u, padding=%u", 
+                        this, getDataType(), _descriptorNames[getDataType()], getPayloadSize(), getDataOffset(), getPaddingSize());
    if (!isPrimitive())
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor[%p]: nested data begin\n", this);
+      TR_VerboseLog::writeLine(TR_Vlog_JITServer, "DataDescriptor[%p]: nested data begin", this);
       DataDescriptor *curDesc = static_cast<DataDescriptor *>(getDataStart());
       while ((char *) curDesc->getDataStart() + curDesc->getTotalSize() - (char *) getDataStart() <= getTotalSize())
          {
-         curDesc->print();
-         curDesc = reinterpret_cast<DataDescriptor *>(reinterpret_cast<char *>(curDesc->getDataStart()) + curDesc->getTotalSize());
+         numDescriptorsPrinted += curDesc->print(nestingLevel + 1);
+         curDesc = curDesc->getNextDescriptor();
          }
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor[%p] nested data end\n", this);
+      TR_VerboseLog::writeLine(TR_Vlog_JITServer, "DataDescriptor[%p] nested data end", this);
       }
+   return numDescriptorsPrinted;
    }
 
 void
 Message::print()
    {
    const MetaData *metaData = getMetaData();
-   TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Message: type=%d numDataPoints=%u version=%lu\n",
-                                  metaData->_type, metaData->_numDataPoints, metaData->_version);
-   for (int32_t i = 0; i < _descriptorOffsets.size(); ++i)
-      getDescriptor(i)->print();
+   TR_VerboseLog::vlogAcquire();
+   TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Message: type=%d numDataPoints=%u version=%lu numDescriptors=%lu\n",
+                            metaData->_type, metaData->_numDataPoints, metaData->_version, _descriptorOffsets.size());
+   uint32_t numDescriptorsPrinted = 0;
+   for (uint32_t i = 0; i < _descriptorOffsets.size(); i += numDescriptorsPrinted)
+      {
+      DataDescriptor* desc = getDescriptor(i);
+      numDescriptorsPrinted = desc->print(0);
+      }
+   TR_VerboseLog::vlogRelease();
    }
 };
