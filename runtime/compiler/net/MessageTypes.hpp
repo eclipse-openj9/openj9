@@ -28,15 +28,17 @@ namespace JITServer
    {
 enum MessageType : uint16_t
    {
-   compilationCode = 0,
+   compilationCode = 0, // Send the compiled code back to the client
    compilationFailure = 1,
    mirrorResolvedJ9Method = 2,
    get_params_to_construct_TR_j9method = 3,
    getUnloadedClassRanges = 4,
-   compilationRequest = 5,
-   compilationInterrupted = 6,
-   clientSessionTerminate = 7,
-   connectionTerminate = 8,
+   compilationRequest = 5, // type used when client sends remote compilation requests
+   compilationInterrupted = 6, // type used when client informs the server to abort the remote compilation
+   clientSessionTerminate = 7, // type used when client process is about to terminate
+   connectionTerminate = 8, // type used when client informs the server to close the connection
+
+   // For TR_ResolvedJ9JITServerMethod methods
    ResolvedMethod_isJNINative = 100,
    ResolvedMethod_isInterpreted = 101,
    ResolvedMethod_setRecognizedMethodInfo = 102,
@@ -55,8 +57,8 @@ enum MessageType : uint16_t
    ResolvedMethod_localName = 115,
    ResolvedMethod_getResolvedPossiblyPrivateVirtualMethodAndMirror = 116,
    ResolvedMethod_virtualMethodIsOverridden = 117,
-   ResolvedMethod_getResolvedInterfaceMethod_2 = 118,
-   ResolvedMethod_getResolvedInterfaceMethodAndMirror_3 = 119,
+   ResolvedMethod_getResolvedInterfaceMethod_2 = 118, // arity 2
+   ResolvedMethod_getResolvedInterfaceMethodAndMirror_3 = 119, // arity 3
    ResolvedMethod_getResolvedInterfaceMethodOffset = 120,
    ResolvedMethod_getUnresolvedStaticMethodInCP = 121,
    ResolvedMethod_isSubjectToPhaseChange = 122,
@@ -93,11 +95,14 @@ enum MessageType : uint16_t
    ResolvedMethod_isUnresolvedConstantDynamic = 155,
    ResolvedMethod_dynamicConstant = 156,
    ResolvedMethod_definingClassFromCPFieldRef = 157,
+
    ResolvedRelocatableMethod_createResolvedRelocatableJ9Method = 160,
    ResolvedRelocatableMethod_storeValidationRecordIfNecessary = 161,
    ResolvedRelocatableMethod_fieldAttributes = 162,
    ResolvedRelocatableMethod_staticAttributes = 163,
    ResolvedRelocatableMethod_getFieldType = 164,
+
+   // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200,
    VM_isClassLibraryMethod = 201,
    VM_getSuperClass = 202,
@@ -125,7 +130,7 @@ enum MessageType : uint16_t
    VM_getStaticHookAddress = 228,
    VM_isClassInitialized = 229,
    VM_getOSRFrameSizeInBytes = 230,
-   VM_getByteOffsetToLockword = 231,
+   VM_getInitialLockword = 231,
    VM_isString1 = 232,
    VM_getMethods = 233,
    VM_isPrimitiveArray = 236,
@@ -186,7 +191,6 @@ enum MessageType : uint16_t
    VM_setInvokeExactJ2IThunk = 294,
    VM_createMethodHandleArchetypeSpecimen = 295,
    VM_instanceOfOrCheckCast = 297,
-   VM_getNewArrayTypeFromClass = 298,
    VM_getResolvedMethodsAndMirror = 300,
    VM_getVMInfo = 301,
    VM_isAnonymousClass = 302,
@@ -197,6 +201,8 @@ enum MessageType : uint16_t
    VM_getJ2IThunk = 307,
    VM_needsInvokeExactJ2IThunk = 308,
    VM_instanceOfOrCheckCastNoCacheUpdate = 309,
+
+   // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 400,
    CompInfo_getInvocationCount = 401,
    CompInfo_setInvocationCount = 402,
@@ -208,6 +214,8 @@ enum MessageType : uint16_t
    CompInfo_setInvocationCountAtomic = 408,
    CompInfo_isClassSpecial = 409,
    CompInfo_getJ9MethodStartPC = 410,
+
+   // For J9::ClassEnv Methods
    ClassEnv_classFlagsValue = 500,
    ClassEnv_classDepthOf = 501,
    ClassEnv_classInstanceSize = 502,
@@ -219,10 +227,14 @@ enum MessageType : uint16_t
    ClassEnv_getITable = 509,
    ClassEnv_classHasIllegalStaticFinalFieldModification = 510,
    ClassEnv_getROMClassRefName = 511,
+
+   // For TR_J9SharedCache
    SharedCache_getClassChainOffsetInSharedCache = 600,
    SharedCache_rememberClass = 601,
    SharedCache_addHint = 602,
    SharedCache_storeSharedData = 603,
+
+   // For runFEMacro
    runFEMacro_invokeCollectHandleNumArgsToCollect = 700,
    runFEMacro_invokeExplicitCastHandleConvertArgs = 701,
    runFEMacro_targetTypeL = 702,
@@ -246,20 +258,41 @@ enum MessageType : uint16_t
    runFEMacro_invokeFilterArgumentsWithCombinerHandleNumSuffixArgs = 720,
    runFEMacro_invokeFilterArgumentsWithCombinerHandleFilterPosition = 721,
    runFEMacro_invokeFilterArgumentsWithCombinerHandleArgumentIndices = 722,
+   runFEMacro_invokeCollectHandleAllocateArray = 723,
+
+   // for JITServerPersistentCHTable
    CHTable_getAllClassInfo = 800,
    CHTable_getClassInfoUpdates = 801,
    CHTable_commit = 802,
    CHTable_clearReservable = 803,
+
+   // for JITServerIProfiler
    IProfiler_profilingSample = 900,
    IProfiler_searchForMethodSample = 901,
    IProfiler_getMaxCallCount = 902,
    IProfiler_setCallCount = 903,
+
    Recompilation_getExistingMethodInfo = 1000,
    Recompilation_getJittedBodyInfoFromPC = 1001,
-   ClassInfo_getRemoteROMString = 1100,
-   MessageType_MAXTYPE
-   }; 
 
-const int MessageType_ARRAYSIZE = MessageType_MAXTYPE;
+   ClassInfo_getRemoteROMString = 1100,
+
+   // for KnownObjectTable
+   KnownObjectTable_getIndex = 1200,
+   KnownObjectTable_getIndexAt = 1201,
+   KnownObjectTable_getPointer = 1202,
+   KnownObjectTable_getExistingIndexAt = 1203,
+   // for KnownObjectTable outside J9::KnownObjectTable class
+   KnownObjectTable_symbolReferenceTableCreateKnownObject = 1204,
+   KnownObjectTable_mutableCallSiteEpoch = 1205,
+   KnownObjectTable_dereferenceKnownObjectField = 1206,
+   KnownObjectTable_dereferenceKnownObjectField2 = 1207,
+   KnownObjectTable_createSymRefWithKnownObject = 1208,
+   KnownObjectTable_getReferenceField = 1209,
+   KnownObjectTable_invokeDirectHandleDirectCall = 1210,
+   MessageType_MAXTYPE
+   };
+
+   const int MessageType_ARRAYSIZE = MessageType_MAXTYPE;
    }; // namespace JITServer
 #endif // MESSAGE_TYPES_HPP
