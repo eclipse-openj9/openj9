@@ -581,12 +581,16 @@ define({CURRENT_DONE},CONCAT(done,SYM_COUNT))dnl
 ZZ The ugly formatting in this macro is due to restrictions
 ZZ in the assembler regarding line length and spacing before
 ZZ comments.
+ZZ
+ZZ The +7 below is because TM operates on a byte. The compressed
+ZZ flag is in the LSB of the word, which is byte 7 on 64-bit
+ZZ big endian.
 
 define({IfCompressedElse},{dnl
 ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
 ifdef({ASM_OMR_GC_FULL_POINTERS},{dnl
 GENSYM
-TM      J9TR_VMThreadCompressObjectReferences(r13),1
+TM      J9TR_VMThreadCompressObjectReferences+7(r13),1
 JZ      CURRENT_FULL
 $1
 j       CURRENT_DONE
