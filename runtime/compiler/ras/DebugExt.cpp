@@ -91,7 +91,7 @@
 #endif
 
 #define DEFAULT_INDENT_INCREMENT   2
-#define IS_4_BYTE_ALIGNED(p) (!((uintptrj_t) p & 0x3))
+#define IS_4_BYTE_ALIGNED(p) (!((uintptr_t) p & 0x3))
 
 static bool isGoodPtr(void* p)
    {
@@ -107,9 +107,9 @@ TR_DebugExt::operator new (size_t s, TR_Malloc_t dbgjit_Malloc)
    }
 
 bool
-TR_DebugExt::dxReadMemory(void* remotePtr, void* localPtr, uintptrj_t size)
+TR_DebugExt::dxReadMemory(void* remotePtr, void* localPtr, uintptr_t size)
    {
-   uintptrj_t bytesRead;
+   uintptr_t bytesRead;
    assert(remotePtr != 0 && localPtr != 0 && size != 0);
    if (localPtr == remotePtr)
       {
@@ -118,7 +118,7 @@ TR_DebugExt::dxReadMemory(void* remotePtr, void* localPtr, uintptrj_t size)
       if (_memchk) assert(false);
       return true;   // try to be nice by not crashing the debugger
       }
-   _dbgReadMemory((uintptrj_t) remotePtr, localPtr, size, &bytesRead);
+   _dbgReadMemory((uintptr_t) remotePtr, localPtr, size, &bytesRead);
    if (bytesRead != size)
       {
       _dbgPrintf("\n*** JIT Error: could not read memory at 0x%x for %zu bytes\n", remotePtr, size);  // FIXME:: should use dbgError()
@@ -129,15 +129,15 @@ TR_DebugExt::dxReadMemory(void* remotePtr, void* localPtr, uintptrj_t size)
    }
 
 bool
-TR_DebugExt::dxReadField(void* classPtr, uintptrj_t fieldOffset, void* localPtr, uintptrj_t size)
+TR_DebugExt::dxReadField(void* classPtr, uintptr_t fieldOffset, void* localPtr, uintptr_t size)
    {
-   uintptrj_t remoteAddr = ((uintptrj_t)classPtr) + fieldOffset;
+   uintptr_t remoteAddr = ((uintptr_t)classPtr) + fieldOffset;
    bool rc = dxReadMemory((void*)remoteAddr, localPtr, size);
    return rc;
    }
 
 void*
-TR_DebugExt::dxMalloc(uintptrj_t size, void *remotePtr, bool dontAddToMap)
+TR_DebugExt::dxMalloc(uintptr_t size, void *remotePtr, bool dontAddToMap)
    {
    if (size == 0) return 0;
 
@@ -153,7 +153,7 @@ TR_DebugExt::dxMalloc(uintptrj_t size, void *remotePtr, bool dontAddToMap)
    }
 
 void*
-TR_DebugExt::dxMallocAndRead(uintptrj_t size, void *remotePtr, bool dontAddToMap)
+TR_DebugExt::dxMallocAndRead(uintptr_t size, void *remotePtr, bool dontAddToMap)
    {
    if (size == 0 || remotePtr == 0) return 0;
    void *localPtr = dxMalloc(size, remotePtr, dontAddToMap);
@@ -168,15 +168,15 @@ TR_DebugExt::dxMallocAndReadString(void* remotePtr, bool dontAddToMap)
    {
    char c;
    int sz = 0;
-   uintptrj_t bytesRead = 0;
+   uintptr_t bytesRead = 0;
    if (remotePtr == 0) return 0;
    do {
-      _dbgReadMemory(((uintptrj_t)remotePtr+sz), &c, 1, &bytesRead);
+      _dbgReadMemory(((uintptr_t)remotePtr+sz), &c, 1, &bytesRead);
       sz++;
    } while (bytesRead == 1 && c != '\0');
    if (bytesRead != 1) sz--;
    if (sz == 0) return 0;
-   return dxMallocAndRead((uintptrj_t)sz, remotePtr, dontAddToMap);
+   return dxMallocAndRead((uintptr_t)sz, remotePtr, dontAddToMap);
    }
 
 void
@@ -235,10 +235,10 @@ TR_DebugExt::TR_DebugExt(
    struct J9PortLibrary *dbgextPortLib,
    J9JavaVM *localVM,
    void (*dbgjit_Printf)(const char *s, ...),
-   void (*dbgjit_ReadMemory)(uintptrj_t remoteAddr, void *localPtr, uintptrj_t size, uintptrj_t *bytesRead),
-   void* (*dbgjit_Malloc)(uintptrj_t size, void *originalAddress),
+   void (*dbgjit_ReadMemory)(uintptr_t remoteAddr, void *localPtr, uintptr_t size, uintptr_t *bytesRead),
+   void* (*dbgjit_Malloc)(uintptr_t size, void *originalAddress),
    void (*dbgjit_Free)(void * addr),
-   uintptrj_t (*dbgGetExpression)(const char* args)
+   uintptr_t (*dbgGetExpression)(const char* args)
    ) :
    TR_Debug(NULL),
    _jit(f),
@@ -398,16 +398,16 @@ TR_DebugExt::allocateLocalCompiler(TR::Compilation *remoteCompiler)
          _localCompiler->_knownObjectTable->setFe(_localCompiler->_fe);
          _localCompiler->_knownObjectTable->setComp(_localCompiler);
 
-         TR_Array<uintptrj_t*> &localReferences = ((J9::KnownObjectTable *)_localCompiler->_knownObjectTable)->_references;
-         uintptrj_t **array = localReferences._array;
+         TR_Array<uintptr_t*> &localReferences = ((J9::KnownObjectTable *)_localCompiler->_knownObjectTable)->_references;
+         uintptr_t **array = localReferences._array;
          uint32_t arraySize = localReferences.size();
-         uintptrj_t **localArray = (uintptrj_t **) dxMallocAndRead(sizeof(array[0])*arraySize, array);
+         uintptr_t **localArray = (uintptr_t **) dxMallocAndRead(sizeof(array[0])*arraySize, array);
          localReferences._array = localArray;
 
          for (int32_t i = 0; i < arraySize; i++)
             {
-            uintptrj_t *remotePointer = localArray[i];
-            uintptrj_t *localPointer = (uintptrj_t *)dxMallocAndRead(sizeof(uintptrj_t), remotePointer);
+            uintptr_t *remotePointer = localArray[i];
+            uintptr_t *localPointer = (uintptr_t *)dxMallocAndRead(sizeof(uintptr_t), remotePointer);
             localArray[i] = localPointer;
             }
          }
@@ -486,8 +486,8 @@ TR_DebugExt::freeLocalCompiler()
          dxFree(_localCompiler->_methodSymbol);
        if (_localCompiler->_knownObjectTable)
           {
-          TR_Array<uintptrj_t*> &localReferences = ((J9::KnownObjectTable *)_localCompiler->_knownObjectTable)->_references;
-          uintptrj_t **localArray = localReferences._array;
+          TR_Array<uintptr_t*> &localReferences = ((J9::KnownObjectTable *)_localCompiler->_knownObjectTable)->_references;
+          uintptr_t **localArray = localReferences._array;
           uint32_t arraySize = localReferences.size();
           if (localArray)
              {
@@ -676,8 +676,8 @@ TR_DebugExt::dxAllocateSymRefInternals(TR::SymbolReference *localSymRef, bool co
 
    if (localSym->isStatic())
       {
-      uintptrj_t *remoteStaticAddress = (uintptrj_t *)localSym->castToStaticSymbol()->getStaticAddress();
-      uintptrj_t *localStaticAddress = (uintptrj_t *)dxMallocAndRead(sizeof(uintptrj_t), remoteStaticAddress);
+      uintptr_t *remoteStaticAddress = (uintptr_t *)localSym->castToStaticSymbol()->getStaticAddress();
+      uintptr_t *localStaticAddress = (uintptr_t *)dxMallocAndRead(sizeof(uintptr_t), remoteStaticAddress);
       localSym->castToStaticSymbol()->setStaticAddress((void *)localStaticAddress);
       }
    }
@@ -1123,7 +1123,7 @@ TR_DebugExt::dxPrintUsage()
  * main entry for debugger extension print
  */
 void
-TR_DebugExt::dxTrPrint(const char* name1, void* addr2, uintptrj_t argCount, const char *args)
+TR_DebugExt::dxTrPrint(const char* name1, void* addr2, uintptr_t argCount, const char *args)
    {
    /*
     * Printing the default help page
@@ -2784,8 +2784,8 @@ TR_DebugExt::dxPrintCodeCacheInfo(TR::CodeCache *cacheInfo)
    _dbgPrintf("  ->freeBlockList = (OMR::CodeCacheFreeCacheBlock*)0x%p\n", localCacheInfo->freeBlockList());
    _dbgPrintf("  ->mutex = (TR::Monitor*)0x%p\n", localCacheInfo->_mutex);
 #if defined(TR_TARGET_X86)
-   _dbgPrintf("  ->prefetchCodeSnippetAddress = (uintptrj_t)0x%p\n", localCacheInfo->_CCPreLoadedCode[TR_AllocPrefetch]);
-   _dbgPrintf("  ->noZeroPrefetchCodeSnippetAddress = (uintptrj_t)0x%p\n", localCacheInfo->_CCPreLoadedCode[TR_NonZeroAllocPrefetch]);
+   _dbgPrintf("  ->prefetchCodeSnippetAddress = (uintptr_t)0x%p\n", localCacheInfo->_CCPreLoadedCode[TR_AllocPrefetch]);
+   _dbgPrintf("  ->noZeroPrefetchCodeSnippetAddress = (uintptr_t)0x%p\n", localCacheInfo->_CCPreLoadedCode[TR_NonZeroAllocPrefetch]);
 #endif
    _dbgPrintf("  ->next = (TR::CodeCache*)0x%p\n", localCacheInfo->_next);
    _dbgPrintf("  ->reserved = (bool)%d\n", localCacheInfo->_reserved);

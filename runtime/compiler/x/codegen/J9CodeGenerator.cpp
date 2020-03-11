@@ -337,7 +337,7 @@ J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
          comp->getStaticHCRPICSites()->push_front(prev);
       }
 
-   prev = new (self()->trHeapMemory()) TR::X86ImmSymInstruction(prev, JMP4, (uintptrj_t)helperSymRef->getMethodAddress(), helperSymRef, deps, self());
+   prev = new (self()->trHeapMemory()) TR::X86ImmSymInstruction(prev, JMP4, (uintptr_t)helperSymRef->getMethodAddress(), helperSymRef, deps, self());
    self()->stopUsingRegister(ediRegister);
 
    if (comp->target().is64Bit())

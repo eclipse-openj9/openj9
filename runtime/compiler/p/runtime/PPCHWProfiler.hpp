@@ -88,8 +88,8 @@ public:
     */
    virtual void processBufferRecords(J9VMThread *vmThread,
                                      uint8_t *bufferStart,
-                                     uintptrj_t size,
-                                     uintptrj_t bufferFilledSize,
+                                     uintptr_t size,
+                                     uintptr_t bufferFilledSize,
                                      uint32_t dataTag = 0);
 
    /**

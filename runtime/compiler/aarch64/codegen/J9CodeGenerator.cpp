@@ -94,7 +94,7 @@ uint32_t
 J9::ARM64::CodeGenerator::encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node, bool omitLink)
    {
    TR::CodeGenerator *cg = self();
-   uintptrj_t target = (uintptrj_t)symRef->getMethodAddress();
+   uintptr_t target = (uintptr_t)symRef->getMethodAddress();
 
    if (cg->directCallRequiresTrampoline(target, (intptrj_t)cursor))
       {

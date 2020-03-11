@@ -62,7 +62,7 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentInfo);
    TR_PersistentClassInfo(TR_OpaqueClassBlock *id) : _classId(id), _fieldInfo(0), _prexAssumptions(0), _timeStamp(0), _nameLength(-1)
     {
-    uintptrj_t classPointerValue = (uintptrj_t) id;
+    uintptr_t classPointerValue = (uintptr_t) id;
 
     // Bit is switched on to mark it as uninitialized
     //
@@ -76,7 +76,7 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    // HCR
    virtual void setClassId(TR_OpaqueClassBlock *newClass)
       {
-      _classId = (TR_OpaqueClassBlock *) (((uintptrj_t)newClass) | (uintptrj_t)isInitialized());
+      _classId = (TR_OpaqueClassBlock *) (((uintptr_t)newClass) | (uintptr_t)isInitialized());
       setClassHasBeenRedefined(true);
       }
 
@@ -84,7 +84,7 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    virtual void setFirstSubClass(TR_SubClass *sc) { _subClasses.setFirst(sc); }
 
    void setVisited() {_visitedStatus |= 1; }
-   void resetVisited() { _visitedStatus = _visitedStatus & ~(uintptrj_t)1; }
+   void resetVisited() { _visitedStatus = _visitedStatus & ~(uintptr_t)1; }
    bool hasBeenVisited()
     {
     if (_visitedStatus & 1)
@@ -94,14 +94,14 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
 
    TR_PersistentClassInfoForFields *getFieldInfo()
       {
-      uintptrj_t fieldInfo = (uintptrj_t) _fieldInfo;
-      fieldInfo = fieldInfo & ~(uintptrj_t)3;
+      uintptr_t fieldInfo = (uintptr_t) _fieldInfo;
+      fieldInfo = fieldInfo & ~(uintptr_t)3;
       return (TR_PersistentClassInfoForFields *) fieldInfo;
       }
    virtual void setFieldInfo(TR_PersistentClassInfoForFields *i)
       {
-      uintptrj_t fieldInfo = (uintptrj_t) i;
-      fieldInfo |= (((uintptrj_t) _fieldInfo) & (uintptrj_t)3);
+      uintptr_t fieldInfo = (uintptr_t) i;
+      fieldInfo |= (((uintptr_t) _fieldInfo) & (uintptr_t)3);
       _visitedStatus = fieldInfo;
       }
 
@@ -172,7 +172,7 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
 
    union
       {
-      uintptrj_t _visitedStatus;
+      uintptr_t _visitedStatus;
       TR_PersistentClassInfoForFields *_fieldInfo;
       };
    int16_t                             _prexAssumptions;
@@ -184,8 +184,8 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
 
 class TR_AddressRange
    {
-   uintptrj_t _start;
-   uintptrj_t _end; // start == end means only one address in this range
+   uintptr_t _start;
+   uintptr_t _end; // start == end means only one address in this range
 
    public:
    TR_PERSISTENT_ALLOC(TR_MemoryBase::Assumption);
@@ -197,12 +197,12 @@ class TR_AddressRange
 #endif
       {}
 
-   uintptrj_t getStart() { return _start; }
-   uintptrj_t getEnd()   { return _end; }
+   uintptr_t getStart() { return _start; }
+   uintptr_t getEnd()   { return _end; }
 
-   void initialize(uintptrj_t start, uintptrj_t end){ _start = start; _end = end; }
-   void add(uintptrj_t start, uintptrj_t end){ _start = std::min(_start, start); _end = std::max(end, _end); }
-   bool covers(uintptrj_t address){ return _start <= address && address <= _end; }
+   void initialize(uintptr_t start, uintptr_t end){ _start = start; _end = end; }
+   void add(uintptr_t start, uintptr_t end){ _start = std::min(_start, start); _end = std::max(end, _end); }
+   bool covers(uintptr_t address){ return _start <= address && address <= _end; }
 
    };
 
@@ -218,9 +218,9 @@ class TR_AddressSet
 
    void moveAddressRanges(int32_t desiredHole, int32_t currentHole);
    void moveAddressRangesBy(int32_t low, int32_t high, int32_t distance);
-   void findCheapestRangesToMerge(uintptrj_t *cost, int32_t *lowerIndex);
+   void findCheapestRangesToMerge(uintptr_t *cost, int32_t *lowerIndex);
 
-   int32_t firstHigherAddressRangeIndex(uintptrj_t address); // the binary search
+   int32_t firstHigherAddressRangeIndex(uintptr_t address); // the binary search
 
    public:
 
@@ -241,9 +241,9 @@ class TR_AddressSet
    int32_t getMaxRanges() const { return _maxAddressRanges; }
 #endif
 
-   void add        (uintptrj_t address){ add(address, address); }
-   void add        (uintptrj_t start, uintptrj_t end);
-   bool mayContain (uintptrj_t address)
+   void add        (uintptr_t address){ add(address, address); }
+   void add        (uintptr_t start, uintptr_t end);
+   bool mayContain (uintptr_t address)
       {
       traceDetails("%p.mayContain(%p)\n", this, address);
       int32_t index = firstHigherAddressRangeIndex(address);
@@ -258,13 +258,13 @@ class TR_AddressSet
 class TR_UnloadedClassPicSite : public OMR::ValueModifyRuntimeAssumption
    {
    protected:
-   TR_UnloadedClassPicSite(TR_PersistentMemory * pm, uintptrj_t key, uint8_t *picLocation, uint32_t size = sizeof(uintptrj_t))
+   TR_UnloadedClassPicSite(TR_PersistentMemory * pm, uintptr_t key, uint8_t *picLocation, uint32_t size = sizeof(uintptr_t))
       : OMR::ValueModifyRuntimeAssumption(pm, key), _picLocation(picLocation), _size(size)
          {}
 
    public:
    static TR_UnloadedClassPicSite *make(
-      TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptrj_t key, uint8_t *picLocation, uint32_t size,
+      TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptr_t key, uint8_t *picLocation, uint32_t size,
       TR_RuntimeAssumptionKind kind, OMR::RuntimeAssumption **sentinel);
    virtual TR_RuntimeAssumptionKind getAssumptionKind() { return RuntimeAssumptionOnClassUnload; }
    virtual void compensate(TR_FrontEnd *vm, bool isSMP, void *data);
@@ -278,7 +278,7 @@ class TR_UnloadedClassPicSite : public OMR::ValueModifyRuntimeAssumption
    virtual TR_UnloadedClassPicSite *asUCPSite() { return this; }
    uint8_t * getPicLocation()    { return _picLocation; }
    void      setPicLocation   (uint8_t *p) { _picLocation = p; }
-   uintptrj_t getPicEntry() { return *((uintptrj_t*)_picLocation); }
+   uintptr_t getPicEntry() { return *((uintptr_t*)_picLocation); }
 
    virtual void dumpInfo();
 
@@ -292,16 +292,16 @@ class TR_UnloadedClassPicSite : public OMR::ValueModifyRuntimeAssumption
 // runtime assumption that we may want to send from the server to the client
 struct SerializedRuntimeAssumption
    {
-   SerializedRuntimeAssumption(TR_RuntimeAssumptionKind kind, uintptrj_t key, intptr_t offset, uint32_t size = 0)
+   SerializedRuntimeAssumption(TR_RuntimeAssumptionKind kind, uintptr_t key, intptr_t offset, uint32_t size = 0)
       : _kind(kind), _key(key), _offsetFromStartPC(offset), _size(size) {}
    TR_RuntimeAssumptionKind getKind() const { return _kind; }
-   uintptrj_t getKey() const { return _key; }
+   uintptr_t getKey() const { return _key; }
    intptr_t getOffsetFromStartPC() const { return _offsetFromStartPC; }
    uint32_t getSize() const { return _size; }
 
    TR_RuntimeAssumptionKind _kind;
    uint32_t   _size;
-   uintptrj_t _key;
+   uintptr_t _key;
    intptr_t  _offsetFromStartPC; // can be negative
    };
 #endif // J9VM_OPT_JITSERVER

@@ -616,8 +616,8 @@ int32_t TR_StringBuilderTransformer::computeHeuristicStringBuilderInitCapacity(L
 
                      if (stringBuildAppendStringCriticalSection.hasVMAccess())
                         {
-                        uintptrj_t stringObjectLocation = (uintptrj_t)symbol->castToStaticSymbol()->getStaticAddress();
-                        uintptrj_t stringObject = comp()->fej9()->getStaticReferenceFieldAtAddress(stringObjectLocation);
+                        uintptr_t stringObjectLocation = (uintptr_t)symbol->castToStaticSymbol()->getStaticAddress();
+                        uintptr_t stringObject = comp()->fej9()->getStaticReferenceFieldAtAddress(stringObjectLocation);
                         capacity += comp()->fe()->getStringUTF8Length(stringObject);
 
                         break;

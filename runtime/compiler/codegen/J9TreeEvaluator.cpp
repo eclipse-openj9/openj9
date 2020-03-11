@@ -1112,7 +1112,7 @@ J9::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(
       return 0;
       }
 
-   uintptrj_t totalFrequency = valueInfo->getTotalFrequency();
+   uintptr_t totalFrequency = valueInfo->getTotalFrequency();
    TR_ScratchList<TR_ExtraAddressInfo> valuesSortedByFrequency(comp->trMemory());
    valueInfo->getSortedList(comp, &valuesSortedByFrequency);
 

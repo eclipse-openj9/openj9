@@ -428,7 +428,7 @@ JITClientPersistentCHTable::classGotLoaded(
    if (clazz)
       {
       auto classes = getClasses();
-      classes[TR_RuntimeAssumptionTable::hashCode((uintptrj_t) classId) % CLASSHASHTABLE_SIZE].add(clazz);
+      classes[TR_RuntimeAssumptionTable::hashCode((uintptr_t) classId) % CLASSHASHTABLE_SIZE].add(clazz);
       }
    return clazz;
    }

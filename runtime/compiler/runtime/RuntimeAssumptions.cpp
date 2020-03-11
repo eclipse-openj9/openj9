@@ -52,11 +52,11 @@ TR_PatchNOPedGuardSiteOnClassPreInitialize::make(
    return result;
    }
 
-uintptrj_t
+uintptr_t
 TR_PatchNOPedGuardSiteOnClassPreInitialize::hashCode(char *sig, uint32_t sigLen)
    {
-   uintptrj_t sum = 0;
-   uintptrj_t scale = 1;
+   uintptr_t sum = 0;
+   uintptr_t scale = 1;
    bool skipFirstAndLastChars = false;
    if (sigLen > 0)
       {
@@ -179,7 +179,7 @@ TR_PersistentCHTable::classGotUnloadedPost(
 
    cl = findClassInfo(classId);
    classDepth = TR::Compiler->cls.classDepthOf(classId) - 1;
-   uintptrj_t hashPos = TR_RuntimeAssumptionTable::hashCode((uintptrj_t)classId) % CLASSHASHTABLE_SIZE;
+   uintptr_t hashPos = TR_RuntimeAssumptionTable::hashCode((uintptr_t)classId) % CLASSHASHTABLE_SIZE;
    _classes[hashPos].remove(cl);
 
    if ((classDepth >= 0) &&
@@ -268,10 +268,10 @@ TR_PersistentCHTable::classGotExtended(
       {
       OMR::CriticalSection classGotExtended(assumptionTableMutex);
       OMR::RuntimeAssumption ** headPtr = table->getBucketPtr(RuntimeAssumptionOnClassExtend,
-                                         TR_RuntimeAssumptionTable::hashCode((uintptrj_t) superClassId));
+                                         TR_RuntimeAssumptionTable::hashCode((uintptr_t) superClassId));
       for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext())
          {
-         if (cursor->matches((uintptrj_t) superClassId))
+         if (cursor->matches((uintptr_t) superClassId))
             {
             cursor->compensate(fe, 0, 0);
             removeAssumptionFromRAT(cursor);
@@ -308,7 +308,7 @@ TR_PersistentCHTable::removeClass(
    TR_PersistentClassInfo * scl;
 
    int classDepth = TR::Compiler->cls.classDepthOf(classId) - 1;
-   uintptrj_t hashPos = TR_RuntimeAssumptionTable::hashCode((uintptrj_t)classId) % CLASSHASHTABLE_SIZE;
+   uintptr_t hashPos = TR_RuntimeAssumptionTable::hashCode((uintptr_t)classId) % CLASSHASHTABLE_SIZE;
 
    if (classDepth >= 0)
       {
@@ -389,10 +389,10 @@ TR_PersistentCHTable::methodGotOverridden(
    OMR::CriticalSection methodGotOverridden(assumptionTableMutex);
    TR_RuntimeAssumptionTable *table = persistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
    OMR::RuntimeAssumption ** headPtr = table->getBucketPtr(RuntimeAssumptionOnMethodOverride,
-                                        TR_RuntimeAssumptionTable::hashCode((uintptrj_t)overriddenMethod));
+                                        TR_RuntimeAssumptionTable::hashCode((uintptr_t)overriddenMethod));
    for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext())
       {
-      if (cursor->matches((uintptrj_t) overriddenMethod))
+      if (cursor->matches((uintptr_t) overriddenMethod))
          {
          cursor->compensate(fe, 0, 0);
          removeAssumptionFromRAT(cursor);
@@ -417,10 +417,10 @@ TR_PersistentCHTable::classGotRedefined(
 
    TR_RuntimeAssumptionTable *table = _trPersistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
    OMR::RuntimeAssumption **headPtr = table->getBucketPtr(RuntimeAssumptionOnClassExtend,
-                                      TR_RuntimeAssumptionTable::hashCode((uintptrj_t) oldClassId));
+                                      TR_RuntimeAssumptionTable::hashCode((uintptr_t) oldClassId));
    for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext())
       {
-      if (cursor->matches((uintptrj_t) oldClassId))
+      if (cursor->matches((uintptr_t) oldClassId))
          {
          cursor->compensate(fe, 0, 0);
          removeAssumptionFromRAT(cursor);
@@ -432,8 +432,8 @@ TR_PersistentCHTable::classGotRedefined(
    //
 
    TR_PersistentClassInfo *newClass = findClassInfo(newClassId);
-   uintptrj_t oldIndex = TR_RuntimeAssumptionTable::hashCode((uintptrj_t)oldClassId) % CLASSHASHTABLE_SIZE;
-   uintptrj_t newIndex = TR_RuntimeAssumptionTable::hashCode((uintptrj_t)newClassId) % CLASSHASHTABLE_SIZE;
+   uintptr_t oldIndex = TR_RuntimeAssumptionTable::hashCode((uintptr_t)oldClassId) % CLASSHASHTABLE_SIZE;
+   uintptr_t newIndex = TR_RuntimeAssumptionTable::hashCode((uintptr_t)newClassId) % CLASSHASHTABLE_SIZE;
    _classes[oldIndex].remove(oldClass);
    oldClass->setClassId(newClassId);
    _classes[newIndex].add(oldClass);

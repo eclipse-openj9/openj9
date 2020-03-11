@@ -5059,8 +5059,8 @@ TR_ResolvedJ9Method::isSameMethod(TR_ResolvedMethod * m2)
       if (!other->asJ9Method()->isArchetypeSpecimen())
          return false;
 
-      uintptrj_t *thisHandleLocation  = getMethodHandleLocation();
-      uintptrj_t *otherHandleLocation = other->getMethodHandleLocation();
+      uintptr_t *thisHandleLocation  = getMethodHandleLocation();
+      uintptr_t *otherHandleLocation = other->getMethodHandleLocation();
 
       // If these are not MethodHandle thunk archetypes, then we're not sure
       // how to compare them.  Conservatively return false in that case.
@@ -6081,10 +6081,10 @@ TR_ResolvedJ9Method::isUnresolvedConstantDynamic(I_32 cpIndex)
    }
 
 void *
-TR_ResolvedJ9Method::dynamicConstant(I_32 cpIndex, uintptrj_t *obj)
+TR_ResolvedJ9Method::dynamicConstant(I_32 cpIndex, uintptr_t *obj)
    {
    TR_ASSERT_FATAL(cpIndex != -1, "ConstantDynamic cpIndex shouldn't be -1");
-   uintptrj_t *objLocation = (uintptrj_t *)&(((J9RAMConstantDynamicRef *) literals())[cpIndex].value);
+   uintptr_t *objLocation = (uintptr_t *)&(((J9RAMConstantDynamicRef *) literals())[cpIndex].value);
    if (obj)
       {
       *obj = *objLocation;
@@ -6296,7 +6296,7 @@ TR_ResolvedJ9Method::newInstancePrototypeSignature(TR_Memory * m, TR_AllocationK
    {
    int32_t  clen;
    TR_ASSERT(_j9classForNewInstance, "Must have the class for newInstance");
-   J9Class * clazz = _j9classForNewInstance; //((J9Class*)((uintptrj_t)(ramMethod()->extra) & ~J9_STARTPC_NOT_TRANSLATED);
+   J9Class * clazz = _j9classForNewInstance; //((J9Class*)((uintptr_t)(ramMethod()->extra) & ~J9_STARTPC_NOT_TRANSLATED);
    char    * className = fej9()->getClassNameChars(_fe->convertClassPtrToClassOffset(clazz), clen);
    char    * s = (char *)m->allocateMemory(clen+nameLength()+signatureLength()+3, allocKind);
    sprintf(s, "%.*s.%.*s%.*s", clen, className, nameLength(), nameChars(), signatureLength(), signatureChars());
@@ -7595,11 +7595,11 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #endif /* defined(J9VM_OPT_JITSERVER) */
                {
                TR::VMAccessCriticalSection invokeCollectHandleAllocateArray(fej9);
-               uintptrj_t methodHandle = knot->getPointer(methodHandleNode->getSymbolReference()->getKnownObjectIndex());
+               uintptr_t methodHandle = knot->getPointer(methodHandleNode->getSymbolReference()->getKnownObjectIndex());
                collectArraySize = fej9->getInt32Field(methodHandle, "collectArraySize");
                collectPosition = fej9->getInt32Field(methodHandle, "collectPosition");
 
-               uintptrj_t arguments = fej9->getReferenceField(fej9->getReferenceField(fej9->getReferenceField(
+               uintptr_t arguments = fej9->getReferenceField(fej9->getReferenceField(fej9->getReferenceField(
                   methodHandle,
                   "next",             "Ljava/lang/invoke/MethodHandle;"),
                   "type",             "Ljava/lang/invoke/MethodType;"),
@@ -7633,10 +7633,10 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (!thunkDetails)
             return false;
 
-         uintptrj_t methodHandle;
+         uintptr_t methodHandle;
          int32_t collectArraySize;
          int32_t collectionStart;
-         uintptrj_t arguments;
+         uintptr_t arguments;
          int32_t numArguments;
 
          bool getCollectPosition = (symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() ==
@@ -7698,8 +7698,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (!thunkDetails)
             return false;
 
-         uintptrj_t methodHandle;
-         uintptrj_t methodDescriptorRef;
+         uintptr_t methodHandle;
+         uintptr_t methodDescriptorRef;
          intptrj_t methodDescriptorLength;
          char *methodDescriptor;
 
@@ -7803,10 +7803,10 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             //
             if (targetType[0] == 'L')
                {
-               uintptrj_t methodHandle;
-               uintptrj_t sourceArguments;
+               uintptr_t methodHandle;
+               uintptr_t sourceArguments;
                TR_OpaqueClassBlock *sourceParmClass;
-               uintptrj_t targetArguments;
+               uintptr_t targetArguments;
                TR_OpaqueClassBlock *targetParmClass;
 #if defined(J9VM_OPT_JITSERVER)
                if (comp()->isOutOfProcessCompilation())
@@ -7892,16 +7892,16 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          // Grab the proper return type signature string from the methodHandleExpression
          //
-         uintptrj_t receiverHandle;
-         uintptrj_t methodHandle;
-         uintptrj_t methodDescriptorRef;
+         uintptr_t receiverHandle;
+         uintptr_t methodHandle;
+         uintptr_t methodDescriptorRef;
          intptrj_t methodDescriptorLength;
          char *methodDescriptor;
 
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            std::vector<uintptrj_t> listOfOffsets;
+            std::vector<uintptr_t> listOfOffsets;
             if (!returnFromArchetype)
                {
                packReferenceChainOffsets(methodHandleExpression, listOfOffsets);
@@ -8008,8 +8008,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (!thunkDetails)
             return false;
 
-         uintptrj_t methodHandle;
-         uintptrj_t methodDescriptorRef;
+         uintptr_t methodHandle;
+         uintptr_t methodDescriptorRef;
          intptrj_t methodDescriptorLength;
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -8147,9 +8147,9 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #endif /* defined(J9VM_OPT_JITSERVER) */
             {
             TR::VMAccessCriticalSection invokePermuteHandlePermuteArgs(fej9);
-            uintptrj_t methodHandle = *thunkDetails->getHandleRef();
+            uintptr_t methodHandle = *thunkDetails->getHandleRef();
 
-            uintptrj_t permuteArray = fej9->getReferenceField(methodHandle, "permute", "[I");
+            uintptr_t permuteArray = fej9->getReferenceField(methodHandle, "permute", "[I");
 
             // Create temporary placeholder to cause argument expressions to be expanded
             //
@@ -8252,8 +8252,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (!thunkDetails)
             return false;
 
-         uintptrj_t methodHandle;
-         uintptrj_t guardArgs;
+         uintptr_t methodHandle;
+         uintptr_t guardArgs;
          int32_t numGuardArgs;
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
@@ -8284,11 +8284,11 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (!thunkDetails)
             return false;
 
-         uintptrj_t methodHandle;
+         uintptr_t methodHandle;
          int32_t insertionIndex;
-         uintptrj_t arguments;
+         uintptr_t arguments;
          int32_t numArguments;
-         uintptrj_t values;
+         uintptr_t values;
          int32_t numValues;
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -8343,9 +8343,9 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             return false;
 
          TR_OpaqueMethodBlock *j9method;
-         uintptrj_t methodHandle;
+         uintptr_t methodHandle;
          int64_t vmSlot;
-         uintptrj_t jlClass;
+         uintptr_t jlClass;
 
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
@@ -8372,7 +8372,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                 }
             else if (isVirtual)
                {
-               TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptrj_t)fej9->getClassFromJavaLangClass(jlClass)) + TR::Compiler->vm.getInterpreterVTableOffset());
+               TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptr_t)fej9->getClassFromJavaLangClass(jlClass)) + TR::Compiler->vm.getInterpreterVTableOffset());
                int32_t index = (int32_t)((vmSlot - TR::Compiler->vm.getInterpreterVTableOffset()) / sizeof(vtable[0]));
                j9method = vtable[index];
                }
@@ -8493,8 +8493,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          // Expand args and then discard all but the last one
          //
-         uintptrj_t methodHandle;
-         uintptrj_t arrayClass;
+         uintptr_t methodHandle;
+         uintptr_t arrayClass;
          J9ArrayClass *arrayJ9Class;
          J9Class *leafClass;
          UDATA arity;
@@ -8598,11 +8598,11 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (!thunkDetails)
             return false;
 
-         uintptrj_t methodHandle;
-         uintptrj_t arguments;
+         uintptr_t methodHandle;
+         uintptr_t arguments;
          int32_t numArguments;
-         uintptrj_t next;
-         uintptrj_t nextArguments;
+         uintptr_t next;
+         uintptr_t nextArguments;
          int32_t numNextArguments;
          int32_t spreadStart;
 
@@ -8660,8 +8660,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (!thunkDetails)
             return false;
 
-         uintptrj_t methodHandle;
-         uintptrj_t argIndices;
+         uintptr_t methodHandle;
+         uintptr_t argIndices;
 
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
@@ -8721,8 +8721,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                }
             else
                {
-               uintptrj_t combiner         = fej9->getReferenceField(methodHandle, "combiner", "Ljava/lang/invoke/MethodHandle;");
-               uintptrj_t combinerArguments = fej9->getReferenceField(fej9->methodHandle_type(combiner), "arguments", "[Ljava/lang/Class;");
+               uintptr_t combiner         = fej9->getReferenceField(methodHandle, "combiner", "Ljava/lang/invoke/MethodHandle;");
+               uintptr_t combinerArguments = fej9->getReferenceField(fej9->methodHandle_type(combiner), "arguments", "[Ljava/lang/Class;");
                int32_t numArgs = (int32_t)fej9->getArrayLengthInElements(combinerArguments);
                // Push the indices in reverse order
                for (int i=foldPosition+numArgs-1; i>=foldPosition; i--)
@@ -8739,8 +8739,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (!thunkDetails)
             return false;
 
-         uintptrj_t methodHandle;
-         uintptrj_t argumentIndices;
+         uintptr_t methodHandle;
+         uintptr_t argumentIndices;
 
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
@@ -8781,7 +8781,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (!thunkDetails)
             return false;
 
-         uintptrj_t methodHandle;
+         uintptr_t methodHandle;
          int32_t foldPosition;
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -8810,7 +8810,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (!thunkDetails)
             return false;
 
-         uintptrj_t methodHandle;
+         uintptr_t methodHandle;
          int32_t filterPosition;
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -8893,13 +8893,13 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #endif /* defined(J9VM_OPT_JITSERVER) */
             {
             TR::VMAccessCriticalSection invokeFinallyHandle(fej9);
-            uintptrj_t methodHandle = *thunkDetails->getHandleRef();
-            uintptrj_t finallyTarget = fej9->getReferenceField(methodHandle, "finallyTarget", "Ljava/lang/invoke/MethodHandle;");
-            uintptrj_t finallyType = fej9->getReferenceField(finallyTarget, "type", "Ljava/lang/invoke/MethodType;");
-            uintptrj_t arguments        = fej9->getReferenceField(finallyType, "arguments", "[Ljava/lang/Class;");
+            uintptr_t methodHandle = *thunkDetails->getHandleRef();
+            uintptr_t finallyTarget = fej9->getReferenceField(methodHandle, "finallyTarget", "Ljava/lang/invoke/MethodHandle;");
+            uintptr_t finallyType = fej9->getReferenceField(finallyTarget, "type", "Ljava/lang/invoke/MethodType;");
+            uintptr_t arguments        = fej9->getReferenceField(finallyType, "arguments", "[Ljava/lang/Class;");
             numArgsPassToFinallyTarget = (int32_t)fej9->getArrayLengthInElements(arguments);
 
-            uintptrj_t methodDescriptorRef = fej9->getReferenceField(finallyType, "methodDescriptor", "Ljava/lang/String;");
+            uintptr_t methodDescriptorRef = fej9->getReferenceField(finallyType, "methodDescriptor", "Ljava/lang/String;");
             int methodDescriptorLength = fej9->getStringUTF8Length(methodDescriptorRef);
             methodDescriptor = (char*)alloca(methodDescriptorLength+1);
             fej9->getStringUTF8(methodDescriptorRef, methodDescriptor, methodDescriptorLength+1);
@@ -8922,8 +8922,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (!thunkDetails)
             return false;
 
-         uintptrj_t methodHandle;
-         uintptrj_t arguments;
+         uintptr_t methodHandle;
+         uintptr_t arguments;
          int32_t numArguments;
          int32_t filterPos;
 
@@ -8959,11 +8959,11 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (!thunkDetails)
             return false;
 
-         uintptrj_t methodHandle;
-         uintptrj_t arguments;
+         uintptr_t methodHandle;
+         uintptr_t arguments;
          int32_t numArguments;
          int32_t startPos;
-         uintptrj_t filters;
+         uintptr_t filters;
          int32_t numFilters;
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -9030,12 +9030,12 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             {
             auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeFilterArgumentsHandle, thunkDetails->getHandleRef(), knotEnabled);
-            auto recv = stream->read<int32_t, std::string, std::vector<uint8_t>, std::vector<TR::KnownObjectTable::Index>, std::vector<uintptrj_t *>>();
+            auto recv = stream->read<int32_t, std::string, std::vector<uint8_t>, std::vector<TR::KnownObjectTable::Index>, std::vector<uintptr_t *>>();
             startPos = std::get<0>(recv);
             std::string nextSigStr = std::get<1>(recv);
             std::vector<uint8_t> &haveFilterList = std::get<2>(recv);
             std::vector<TR::KnownObjectTable::Index> &recvfilterIndexList = std::get<3>(recv);
-            std::vector<uintptrj_t *> &recvFilterObjectReferenceLocationList = std::get<4>(recv);
+            std::vector<uintptr_t *> &recvFilterObjectReferenceLocationList = std::get<4>(recv);
 
             // copy the next signature
             intptrj_t methodDescriptorLength = nextSigStr.size();
@@ -9063,8 +9063,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #endif /* defined(J9VM_OPT_JITSERVER) */
             {
             TR::VMAccessCriticalSection invokeFilterArgumentsHandle(fej9);
-            uintptrj_t methodHandle = *thunkDetails->getHandleRef();
-            uintptrj_t filters = fej9->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
+            uintptr_t methodHandle = *thunkDetails->getHandleRef();
+            uintptr_t filters = fej9->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
 
             int32_t numFilters = fej9->getArrayLengthInElements(filters);
             filterIndexList = knotEnabled ? (TR::KnownObjectTable::Index *) comp()->trMemory()->allocateMemory(sizeof(TR::KnownObjectTable::Index) * numFilters, stackAlloc) : NULL;
@@ -9080,7 +9080,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                
 
             startPos = (int32_t)fej9->getInt32Field(methodHandle, "startPos");
-            uintptrj_t methodDescriptorRef = fej9->getReferenceField(fej9->getReferenceField(fej9->getReferenceField(
+            uintptr_t methodDescriptorRef = fej9->getReferenceField(fej9->getReferenceField(fej9->getReferenceField(
                methodHandle,
                "next",             "Ljava/lang/invoke/MethodHandle;"),
                "type",             "Ljava/lang/invoke/MethodType;"),
@@ -9190,9 +9190,9 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #endif /* defined(J9VM_OPT_JITSERVER) */
             {
             TR::VMAccessCriticalSection invokeCatchHandle(fej9);
-            uintptrj_t methodHandle   = *thunkDetails->getHandleRef();
-            uintptrj_t catchTarget    = fej9->getReferenceField(methodHandle, "catchTarget", "Ljava/lang/invoke/MethodHandle;");
-            uintptrj_t catchArguments = fej9->getReferenceField(fej9->getReferenceField(
+            uintptr_t methodHandle   = *thunkDetails->getHandleRef();
+            uintptr_t catchTarget    = fej9->getReferenceField(methodHandle, "catchTarget", "Ljava/lang/invoke/MethodHandle;");
+            uintptr_t catchArguments = fej9->getReferenceField(fej9->getReferenceField(
                catchTarget,
                "type", "Ljava/lang/invoke/MethodType;"),
                "arguments", "[Ljava/lang/Class;");
@@ -9214,7 +9214,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
-            std::vector<uintptrj_t> listOfOffsets;
+            std::vector<uintptr_t> listOfOffsets;
             packReferenceChainOffsets(pop(), listOfOffsets);
             stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacrosParameterCount, thunkDetails->getHandleRef(), listOfOffsets);
             parameterCount = std::get<0>(stream->read<int32_t>());
@@ -9223,9 +9223,9 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #endif /* defined(J9VM_OPT_JITSERVER) */
             {
             TR::VMAccessCriticalSection invokeILGenMacros(fej9);
-            uintptrj_t receiverHandle   = *thunkDetails->getHandleRef();
-            uintptrj_t methodHandle     = walkReferenceChain(pop(), receiverHandle);
-            uintptrj_t arguments        = fej9->getReferenceField(fej9->getReferenceField(
+            uintptr_t receiverHandle   = *thunkDetails->getHandleRef();
+            uintptr_t methodHandle     = walkReferenceChain(pop(), receiverHandle);
+            uintptr_t arguments        = fej9->getReferenceField(fej9->getReferenceField(
                methodHandle,
                "type", "Ljava/lang/invoke/MethodType;"),
                "arguments", "[Ljava/lang/Class;");
@@ -9247,7 +9247,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
-            std::vector<uintptrj_t> listOfOffsets;
+            std::vector<uintptr_t> listOfOffsets;
             packReferenceChainOffsets(pop(), listOfOffsets);
             stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacrosArrayLength, thunkDetails->getHandleRef(), listOfOffsets);
             arrayLength = std::get<0>(stream->read<int32_t>());
@@ -9256,8 +9256,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #endif /* defined(J9VM_OPT_JITSERVER) */
             {
             TR::VMAccessCriticalSection invokeILGenMacros(fej9);
-            uintptrj_t receiverHandle   = *thunkDetails->getHandleRef();
-            uintptrj_t array            = walkReferenceChain(pop(), receiverHandle);
+            uintptr_t receiverHandle   = *thunkDetails->getHandleRef();
+            uintptr_t array            = walkReferenceChain(pop(), receiverHandle);
             arrayLength = (int32_t)fej9->getArrayLengthInElements(array);
             }
 
@@ -9276,7 +9276,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          TR::SymbolReference *fieldSymRef = fieldLoad->getSymbolReference();
          TR::Symbol *fieldSym = fieldSymRef->getSymbol();
          TR_ASSERT(fieldSym->isShadow() && fieldSymRef->getCPIndex() > 0, "ILGenMacros.getField expecting field load; found load of %s", comp()->getDebug()->getName(symRef));
-         uintptrj_t fieldOffset = fieldSymRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes(); // blah
+         uintptr_t fieldOffset = fieldSymRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes(); // blah
 
          int32_t result;
 
@@ -9284,7 +9284,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
-            std::vector<uintptrj_t> listOfOffsets;
+            std::vector<uintptr_t> listOfOffsets;
             packReferenceChainOffsets(baseObjectNode, listOfOffsets);
             TR_ASSERT(fieldSym->getDataType() == TR::Int32, "ILGenMacros.getField expecting int field; found load of %s", comp()->getDebug()->getName(symRef));
             stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacrosGetField, thunkDetails->getHandleRef(), fieldOffset, listOfOffsets);
@@ -9294,8 +9294,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #endif /* defined(J9VM_OPT_JITSERVER) */
             {
             TR::VMAccessCriticalSection invokeILGenMacros(fej9);
-            uintptrj_t receiverHandle   = *thunkDetails->getHandleRef();
-            uintptrj_t baseObject       = walkReferenceChain(baseObjectNode, receiverHandle);
+            uintptr_t receiverHandle   = *thunkDetails->getHandleRef();
+            uintptr_t baseObject       = walkReferenceChain(baseObjectNode, receiverHandle);
             TR_ASSERT(fieldSym->getDataType() == TR::Int32, "ILGenMacros.getField expecting int field; found load of %s", comp()->getDebug()->getName(symRef));
             result = fej9->getInt32FieldAt(baseObject, fieldOffset); // TODO: Handle types other than int32
             }
@@ -9321,11 +9321,11 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
    return false;
    }
 
-uintptrj_t
-TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver)
+uintptr_t
+TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptr_t receiver)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
-   uintptrj_t result = 0;
+   uintptr_t result = 0;
    if (node->getOpCode().isLoadDirect() && node->getType() == TR::Address)
       {
       TR_ASSERT(node->getSymbolReference()->getCPIndex() == 0, "walkReferenceChain expecting aload of 'this'; found aload of %s", comp()->getDebug()->getName(node->getSymbolReference()));
@@ -9342,7 +9342,7 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver
          }
       TR::Symbol *sym = symRef->getSymbol();
       TR_ASSERT(sym->isShadow() && symRef->getCPIndex() > 0, "walkReferenceChain expecting field load; found load of %s", comp()->getDebug()->getName(symRef));
-      uintptrj_t fieldOffset = symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes();
+      uintptr_t fieldOffset = symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes();
       result = fej9->getReferenceFieldAt(walkReferenceChain(node->getFirstChild(), receiver), fieldOffset);
       }
    else
@@ -9366,7 +9366,7 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver
 
 #if defined(J9VM_OPT_JITSERVER)
 void
-TR_J9ByteCodeIlGenerator::packReferenceChainOffsets(TR::Node *node, std::vector<uintptrj_t>& listOfOffsets)
+TR_J9ByteCodeIlGenerator::packReferenceChainOffsets(TR::Node *node, std::vector<uintptr_t>& listOfOffsets)
    {
    if (node->getOpCode().isLoadDirect() && node->getType() == TR::Address)
       {
@@ -9384,7 +9384,7 @@ TR_J9ByteCodeIlGenerator::packReferenceChainOffsets(TR::Node *node, std::vector<
          }
       TR::Symbol *sym = symRef->getSymbol();
       TR_ASSERT(sym->isShadow() && symRef->getCPIndex() > 0, "walkReferenceChain expecting field load; found load of %s", comp()->getDebug()->getName(symRef));
-      uintptrj_t fieldOffset = symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes();
+      uintptr_t fieldOffset = symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes();
       packReferenceChainOffsets(node->getFirstChild(), listOfOffsets);
       listOfOffsets.push_back(fieldOffset);
       }

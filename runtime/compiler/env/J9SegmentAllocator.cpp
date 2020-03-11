@@ -147,7 +147,7 @@ SegmentAllocator::preventAllocationOfBTLMemory(J9MemorySegment * &segment, J9Jav
    // Special code for zOS. If we allocated BTL memory (first 16MB), then we must
    // release this segment, failing the compilation and forcing to use only one compilation thread
    if (TR::Options::getCmdLineOptions()->getOption(TR_DontAllocateScratchBTL) &&
-      segment && ((uintptrj_t)(segment->heapBase) < (uintptrj_t)(1 << 24)))
+      segment && ((uintptr_t)(segment->heapBase) < (uintptr_t)(1 << 24)))
       {
       // If applicable, reduce the number of compilation threads to 1
       TR::CompilationInfo * compInfo = TR::CompilationInfo::get();

@@ -43,9 +43,9 @@
 // To transfer control to VM during OSR
 extern "C" {
 #if defined(TR_HOST_X86)
-void prepareForOSR(uintptrj_t vmThreadArg, int32_t currentInlinedSiteIndex, int32_t slotData)
+void prepareForOSR(uintptr_t vmThreadArg, int32_t currentInlinedSiteIndex, int32_t slotData)
 #else
-void _prepareForOSR(uintptrj_t vmThreadArg, int32_t currentInlinedSiteIndex, int32_t slotData)
+void _prepareForOSR(uintptr_t vmThreadArg, int32_t currentInlinedSiteIndex, int32_t slotData)
 #endif
    {
    const bool details = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseOSRDetails);

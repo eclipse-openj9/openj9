@@ -139,7 +139,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
                           getNode());
    if (getDataSymbol()->isClassObject() && cg()->wantToPatchClassPointer(NULL, getAddressOfDataReference()))
       {
-      uintptrj_t dis = cursor - getAddressOfDataReference();
+      uintptr_t dis = cursor - getAddressOfDataReference();
       cg()->jitAddUnresolvedAddressMaterializationToPatchOnClassRedefinition((void *) getAddressOfDataReference());
       }
    cursor += 4;

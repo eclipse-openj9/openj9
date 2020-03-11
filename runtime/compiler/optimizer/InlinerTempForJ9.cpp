@@ -962,7 +962,7 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       // expensive, especially for applications that intensively use Unsafe, such as Apache Spark.
       // As a compromise, the node is given such BCI as if it is generated from the out-most call, so that J9Class can be correctly
       // relocated without any guard.
-      TR::Node *loadJavaLangClass = TR::Node::createAddressNode(vftLoad, TR::aconst,(uintptrj_t) javaLangClass);
+      TR::Node *loadJavaLangClass = TR::Node::createAddressNode(vftLoad, TR::aconst,(uintptr_t) javaLangClass);
       loadJavaLangClass->getByteCodeInfo().setInvalidCallerIndex();
       loadJavaLangClass->getByteCodeInfo().setZeroByteCodeIndex();
       loadJavaLangClass->setIsClassPointerConstant(true);
@@ -4536,7 +4536,7 @@ TR_J9InlinerUtil::refineInlineGuard(TR::Node *callNode, TR::Block *&block1, TR::
 
                   TR::SymbolReferenceTable *symRefTab = comp()->getSymRefTab();
 
-                  TR::Node * aconstNode = TR::Node::aconst(callNode, (uintptrj_t)pc);
+                  TR::Node * aconstNode = TR::Node::aconst(callNode, (uintptr_t)pc);
                   aconstNode->setIsClassPointerConstant(true);
 
                   TR::Node *guard = NULL;
@@ -5149,14 +5149,14 @@ void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_InlinerTrace
              !argFirstChild->getSymbolReference()->isUnresolved() &&
              argFirstChild->getSymbol()->isClassObject())
             {
-            uintptrj_t objectReferenceLocation = (uintptrj_t)argFirstChild->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress();
+            uintptr_t objectReferenceLocation = (uintptr_t)argFirstChild->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress();
             if (objectReferenceLocation)
                {
                TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
                if (knot)
                   {
                   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-                  knownObjectIndex = knot->getIndexAt((uintptrj_t*)(objectReferenceLocation + fej9->getOffsetOfJavaLangClassFromClassField()));
+                  knownObjectIndex = knot->getIndexAt((uintptr_t*)(objectReferenceLocation + fej9->getOffsetOfJavaLangClassFromClassField()));
                   knownObjectClass = true;
                   }
                }

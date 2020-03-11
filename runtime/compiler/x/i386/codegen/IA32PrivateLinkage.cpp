@@ -383,7 +383,7 @@ TR::Register *J9::X86::I386::PrivateLinkage::pushIntegerWordArg(TR::Node *child)
                {
                // Must pass symbol reference so that aot can put out a relocation for it
                //
-               TR::Instruction *instr = generateImmSymInstruction(PUSHImm4, child, (uintptrj_t)sym->getStaticAddress(), symRef, cg());
+               TR::Instruction *instr = generateImmSymInstruction(PUSHImm4, child, (uintptr_t)sym->getStaticAddress(), symRef, cg());
 
                // HCR register the class passed as a parameter
                //
@@ -435,11 +435,11 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(
    {
    TR::Node *node = site.getCallNode();
    TR::Register *vftReg = site.evaluateVFT();
-   uintptrj_t addrToBeCompared = picSlot.getClassAddress();
+   uintptr_t addrToBeCompared = picSlot.getClassAddress();
    TR::Instruction *firstInstruction;
    if (picSlot.getMethodAddress())
       {
-      addrToBeCompared = (uintptrj_t) picSlot.getMethodAddress();
+      addrToBeCompared = (uintptr_t) picSlot.getMethodAddress();
       firstInstruction = generateMemImmInstruction(CMPMemImm4(false), node,
                                 generateX86MemoryReference(vftReg, picSlot.getSlot(), cg()), (uint32_t) addrToBeCompared, cg());
       }
@@ -494,12 +494,12 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(
    TR::Instruction *instr;
    if (picSlot.getMethod())
       {
-      instr = generateImmInstruction(CALLImm4, node, (uint32_t)(uintptrj_t)picSlot.getMethod()->startAddressForJittedMethod(), cg());
+      instr = generateImmInstruction(CALLImm4, node, (uint32_t)(uintptr_t)picSlot.getMethod()->startAddressForJittedMethod(), cg());
       }
    else if (picSlot.getHelperMethodSymbolRef())
       {
       TR::MethodSymbol *helperMethod = picSlot.getHelperMethodSymbolRef()->getSymbol()->castToMethodSymbol();
-      instr = generateImmSymInstruction(CALLImm4, node, (uint32_t)(uintptrj_t)helperMethod->getMethodAddress(), picSlot.getHelperMethodSymbolRef(), cg());
+      instr = generateImmSymInstruction(CALLImm4, node, (uint32_t)(uintptr_t)helperMethod->getMethodAddress(), picSlot.getHelperMethodSymbolRef(), cg());
       }
    else
       {
@@ -644,7 +644,7 @@ void J9::X86::I386::PrivateLinkage::buildIPIC(
 
    TR::Method *method = site.getMethodSymbol()->getMethod();
    TR_OpaqueClassBlock *declaringClass = NULL;
-   uintptrj_t itableIndex;
+   uintptr_t itableIndex;
    if (  useLastITableCache
       && (declaringClass = site.getSymbolReference()->getOwningMethod(comp())->getResolvedInterfaceMethod(site.getSymbolReference()->getCPIndex(), &itableIndex))
       && performTransformation(comp(), "O^O useLastITableCache for n%dn itableIndex=%d: %.*s.%.*s%.*s\n",

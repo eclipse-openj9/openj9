@@ -145,14 +145,14 @@ J9::ValuePropagation::transformCallToIconstWithHCRGuard(TR::TreeTop *callTree, i
  *    Return a pointer to the object reference if the constraint is a constString or a known object constraint,
  *    otherwise return NULL.
  */
-uintptrj_t*
+uintptr_t*
 J9::ValuePropagation::getObjectLocationFromConstraint(TR::VPConstraint *constraint)
    {
-    uintptrj_t* objectLocation = NULL;
+    uintptr_t* objectLocation = NULL;
     if (constraint->isConstString())
        {
        // VPConstString constraint, the symref is resolved for VPConstString constraint
-       objectLocation = (uintptrj_t*)constraint->getClassType()->asConstString()->getSymRef()->getSymbol()->castToStaticSymbol()->getStaticAddress();
+       objectLocation = (uintptr_t*)constraint->getClassType()->asConstString()->getSymRef()->getSymbol()->castToStaticSymbol()->getStaticAddress();
        }
     else if (constraint->getKnownObject())
        {
@@ -310,7 +310,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          TR::VPConstraint *receiverChildConstraint= getConstraint(receiverChild, receiverChildGlobal);
          if (isKnownStringObject(receiverChildConstraint))
             {
-            uintptrj_t* stringLocation = getObjectLocationFromConstraint(receiverChildConstraint);
+            uintptr_t* stringLocation = getObjectLocationFromConstraint(receiverChildConstraint);
             TR_ASSERT(stringLocation, "Expecting non null pointer to String object for constString or known String object");
             int32_t hashCode;
             bool success = comp()->fej9()->getStringHashCode(comp(), stringLocation, hashCode);
@@ -369,8 +369,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                if (isKnownStringObject(receiverChildConstraint)
                    && isKnownStringObject(objectChildConstraint))
                   {
-                  uintptrj_t* receiverLocation = getObjectLocationFromConstraint(receiverChildConstraint);
-                  uintptrj_t* objectLocation = getObjectLocationFromConstraint(objectChildConstraint);
+                  uintptr_t* receiverLocation = getObjectLocationFromConstraint(receiverChildConstraint);
+                  uintptr_t* objectLocation = getObjectLocationFromConstraint(objectChildConstraint);
                   TR_ASSERT(receiverLocation && objectLocation, "Expecting non null pointer to String object for constString or known String object");
 
                   int32_t result = 0;
@@ -402,7 +402,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          // Receiver is a const string or known string object
          if (isKnownStringObject(receiverChildConstraint))
             {
-            uintptrj_t* stringLocation = getObjectLocationFromConstraint(receiverChildConstraint);
+            uintptr_t* stringLocation = getObjectLocationFromConstraint(receiverChildConstraint);
             TR_ASSERT(stringLocation, "Expecting non null pointer to String object for constString or known String object");
             int32_t len;
             {
@@ -410,7 +410,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                                                         TR::VMAccessCriticalSection::tryToAcquireVMAccess);
             if (!getStringlength.hasVMAccess())
                break;
-            uintptrj_t stringObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)stringLocation);
+            uintptr_t stringObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptr_t)stringLocation);
             len = comp()->fej9()->getStringLength(stringObject);
             }
             // java/lang/String.lengthInternal is used internally and HCR guards can be skipped for calls to it.
@@ -547,7 +547,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                node->removeAllChildren();
 
                // Use aconst instead of loadaddr because AOT relocation is not supported for loadaddr
-               TR::Node *arrayComponentClassPointer = TR::Node::aconst(node, (uintptrj_t)arrayComponentClass);
+               TR::Node *arrayComponentClassPointer = TR::Node::aconst(node, (uintptr_t)arrayComponentClass);
                // The classPointerConstant flag has to be set for AOT relocation
                arrayComponentClassPointer->setIsClassPointerConstant(true);
                node = TR::Node::recreateWithoutProperties(node, TR::aloadi, 1, arrayComponentClassPointer, comp()->getSymRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
@@ -555,7 +555,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
                if (knot)
                   {
-                  TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptrj_t*)(arrayComponentClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
+                  TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptr_t*)(arrayComponentClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
                   addBlockOrGlobalConstraint(node,
                         TR::VPClass::create(this,
                            TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
@@ -624,7 +624,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                node->removeAllChildren();
 
                // Use aconst instead of loadaddr because AOT relocation is not supported for loadaddr
-               TR::Node *superClassPointer = TR::Node::aconst(node, (uintptrj_t)superClass);
+               TR::Node *superClassPointer = TR::Node::aconst(node, (uintptr_t)superClass);
                // The classPointerConstant flag has to be set for AOT relocation
                superClassPointer->setIsClassPointerConstant(true);
                node = TR::Node::recreateWithoutProperties(node, TR::aloadi, 1, superClassPointer, comp()->getSymRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
@@ -632,7 +632,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
                if (knot)
                   {
-                  TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptrj_t*)(superClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
+                  TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptr_t*)(superClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
                   addBlockOrGlobalConstraint(node,
                         TR::VPClass::create(this,
                            TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
@@ -677,17 +677,17 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                 && comp()->fej9()->isInstanceOf(mhConstraint->getClass(), methodHandleClass, true, true) == TR_yes
                 && comp()->fej9()->isInstanceOf(mtConstraint->getClass(), methodTypeClass, true, true) == TR_yes)
                {
-               uintptrj_t* mhLocation = getObjectLocationFromConstraint(mhConstraint);
-               uintptrj_t* mtLocation = getObjectLocationFromConstraint(mtConstraint);
+               uintptr_t* mhLocation = getObjectLocationFromConstraint(mhConstraint);
+               uintptr_t* mtLocation = getObjectLocationFromConstraint(mtConstraint);
                uint32_t mtOffset = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE_OFFSET(vmThread);
 
                TR::VMAccessCriticalSection asType(comp(),
                                                            TR::VMAccessCriticalSection::tryToAcquireVMAccess);
                if (!asType.hasVMAccess())
                   break;
-               uintptrj_t mhObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)mhLocation);
-               uintptrj_t mtInMh = comp()->fej9()->getReferenceFieldAtAddress(mhObject + mtOffset);
-               uintptrj_t mtObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)mtLocation);
+               uintptr_t mhObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptr_t)mhLocation);
+               uintptr_t mtInMh = comp()->fej9()->getReferenceFieldAtAddress(mhObject + mtOffset);
+               uintptr_t mtObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptr_t)mtLocation);
 
                if (trace())
                   traceMsg(comp(), "mhLocation %p mtLocation %p mhObject %p mtOffset %d mtInMh %p mtObject %p\n", mhLocation, mtLocation, mhObject, mtOffset, mtInMh, mtObject);
@@ -721,14 +721,14 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                 && comp()->fej9()->isInstanceOf(mhConstraint->getClass(), primitiveHandleClass, true, true) == TR_yes)
                {
                uint32_t defcOffset = J9VMJAVALANGINVOKEPRIMITIVEHANDLE_DEFC_OFFSET(comp()->fej9()->vmThread());
-               uintptrj_t* mhLocation = getObjectLocationFromConstraint(mhConstraint);
+               uintptr_t* mhLocation = getObjectLocationFromConstraint(mhConstraint);
 
                TR::VMAccessCriticalSection initializeClassIfRequired(comp(),
                                                         TR::VMAccessCriticalSection::tryToAcquireVMAccess);
                if (!initializeClassIfRequired.hasVMAccess())
                   break;
-               uintptrj_t mhObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)mhLocation);
-               uintptrj_t defc = comp()->fej9()->getReferenceFieldAtAddress(mhObject + defcOffset);
+               uintptr_t mhObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptr_t)mhLocation);
+               uintptr_t defc = comp()->fej9()->getReferenceFieldAtAddress(mhObject + defcOffset);
                J9Class* defcClazz = (J9Class*)TR::Compiler->cls.classFromJavaLangClass(comp(), defc);
                if (defcClazz->initializeStatus == J9ClassInitSucceeded)
                   {
@@ -782,13 +782,13 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                int32_t isStaticOffset = comp()->fej9()->getInstanceFieldOffset(mhClass, "isStatic", "Z");
                TR_ASSERT(isStaticOffset >= 0, "Can't find field isStatic in MethodHandle %p\n", mh);
 
-               uintptrj_t* mhLocation = getObjectLocationFromConstraint(mhConstraint);
+               uintptr_t* mhLocation = getObjectLocationFromConstraint(mhConstraint);
 
                TR::VMAccessCriticalSection nullCheckIfRequired(comp(),
                                                         TR::VMAccessCriticalSection::tryToAcquireVMAccess);
                if (!nullCheckIfRequired.hasVMAccess())
                   break;
-               uintptrj_t mhObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)mhLocation);
+               uintptr_t mhObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptr_t)mhLocation);
                int32_t isStatic = comp()->fej9()->getInt32FieldAt(mhObject, isStaticOffset);
                if (isStatic)
                   {

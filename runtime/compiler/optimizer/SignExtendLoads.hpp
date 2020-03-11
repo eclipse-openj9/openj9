@@ -73,7 +73,7 @@ class TR_SignExtendLoads : public TR::Optimization
       };
 
    int32_t nodeHashBucket(TR::Node *node)
-               {return ((uintptrj_t)node >> 2) % _sharedNodesHash._numBuckets;}
+               {return ((uintptr_t)node >> 2) % _sharedNodesHash._numBuckets;}
 
    void    InitializeHashTable();
    TR_ScratchList<TR::Node> * getListFromHash(TR::Node *node);

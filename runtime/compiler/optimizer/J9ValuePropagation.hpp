@@ -53,7 +53,7 @@ class ValuePropagation : public OMR::ValuePropagation
    virtual void doDelayedTransformations();
    void transformCallToIconstWithHCRGuard(TR::TreeTop *callTree, int32_t result);
    void transformCallToIconstInPlaceOrInDelayedTransformations(TR::TreeTop *callTree, int32_t result, bool isGlobal, bool inPlace = true);
-   uintptrj_t* getObjectLocationFromConstraint(TR::VPConstraint *constraint);
+   uintptr_t* getObjectLocationFromConstraint(TR::VPConstraint *constraint);
    bool isKnownStringObject(TR::VPConstraint *constraint);
    TR_YesNoMaybe isStringObject(TR::VPConstraint *constraint);
 

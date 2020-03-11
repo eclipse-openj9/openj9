@@ -120,7 +120,7 @@ bool J9::Options::_userClassLoadingPhase = false;
 int32_t J9::Options::_bigAppSampleThresholdAdjust = 3; //amount to shift the hot and scorching threshold
 int32_t J9::Options::_availableCPUPercentage = 100;
 int32_t J9::Options::_cpuCompTimeExpensiveThreshold = 4000;
-uintptrj_t J9::Options::_compThreadAffinityMask = 0;
+uintptr_t J9::Options::_compThreadAffinityMask = 0;
 
 int32_t J9::Options::_interpreterSamplingThreshold = 300;
 int32_t J9::Options::_interpreterSamplingDivisor = TR_DEFAULT_INTERPRETER_SAMPLING_DIVISOR;
@@ -2682,7 +2682,7 @@ unpackRegex(TR::SimpleRegex *&regexPtr)
    {
    if (!regexPtr)
       return;
-   char *str = (char*)((uintptrj_t)&regexPtr + (uintptrj_t)regexPtr);
+   char *str = (char*)((uintptr_t)&regexPtr + (uintptr_t)regexPtr);
    regexPtr = TR::SimpleRegex::create(str);
    }
 

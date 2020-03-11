@@ -156,7 +156,7 @@ TR_RelocationTarget::loadCPIndex(uint8_t *reloLocation)
    return 0;
    }
 
-uintptrj_t
+uintptr_t
 TR_RelocationTarget::loadThunkCPIndex(uint8_t *reloLocation)
    {
    TR_ASSERT(0, "Error: loadThunkCPIndex not implemented in relocation target base class");

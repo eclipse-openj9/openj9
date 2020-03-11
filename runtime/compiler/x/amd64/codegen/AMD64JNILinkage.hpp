@@ -68,7 +68,7 @@ class JNILinkage : public PrivateLinkage
    void buildJNIMergeLabelDependencies(TR::Node *callNode, bool killNonVolatileGPRs = true);
    void buildOutgoingJNIArgsAndDependencies(TR::Node *callNode, bool passThread = true, bool passReceiver = true, bool killNonVolatileGPRs = true);
    TR::Register *processJNIReferenceArg(TR::Node *child);
-   TR::Instruction *generateMethodDispatch(TR::Node *callNode, bool isJNIGCPoint = true, uintptrj_t targetAddress = 0);
+   TR::Instruction *generateMethodDispatch(TR::Node *callNode, bool isJNIGCPoint = true, uintptr_t targetAddress = 0);
    void releaseVMAccess(TR::Node *callNode);
    void acquireVMAccess(TR::Node *callNode);
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI

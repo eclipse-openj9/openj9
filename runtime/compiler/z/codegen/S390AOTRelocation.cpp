@@ -55,7 +55,7 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
       AOTcgDiag2(  comp, "TR_ClassAddress cursor=%x symbolReference=%x\n", cursor, _symbolReference);
       if (cg->comp()->getOption(TR_UseSymbolValidationManager))
          {
-         TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock*)(*((uintptrj_t*)cursor));
+         TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock*)(*((uintptr_t*)cursor));
          TR_ASSERT_FATAL(clazz, "TR_ClassAddress relocation : cursor = %x, clazz can not be null", cursor);
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                            (uint8_t *)clazz,
@@ -67,7 +67,7 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
          }
       else
          {
-         *((uintptrj_t*)cursor)=fej9->getPersistentClassPointerFromClassPointer((TR_OpaqueClassBlock*)(*((uintptrj_t*)cursor)));
+         *((uintptr_t*)cursor)=fej9->getPersistentClassPointerFromClassPointer((TR_OpaqueClassBlock*)(*((uintptr_t*)cursor)));
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) _symbolReference, (uint8_t *)_inlinedSiteIndex, TR_ClassAddress, cg),
                            file, line, node);
          }

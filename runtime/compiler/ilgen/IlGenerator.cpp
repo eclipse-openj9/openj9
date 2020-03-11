@@ -3294,7 +3294,7 @@ void TR_J9ByteCodeIlGenerator::expandMethodHandleInvokeCall(TR::TreeTop *tree)
        && methodHandle->getSymbolReference()->hasKnownObjectIndex())
       {
       TR::KnownObjectTable::Index index = methodHandle->getSymbolReference()->getKnownObjectIndex();
-      uintptrj_t* objectLocation = comp()->getKnownObjectTable()->getPointerLocation(index);
+      uintptr_t* objectLocation = comp()->getKnownObjectTable()->getPointerLocation(index);
       TR::TransformUtil::specializeInvokeExactSymbol(comp(), callNode,  objectLocation);
       }
 

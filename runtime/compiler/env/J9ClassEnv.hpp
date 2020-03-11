@@ -59,15 +59,15 @@ public:
 
    bool romClassObjectsMayBeCollected() { return false; }
 
-   TR_OpaqueClassBlock *getClassFromJavaLangClass(uintptrj_t objectPointer);
+   TR_OpaqueClassBlock *getClassFromJavaLangClass(uintptr_t objectPointer);
 
    J9Class *convertClassOffsetToClassPtr(TR_OpaqueClassBlock *clazzOffset);
    TR_OpaqueClassBlock *convertClassPtrToClassOffset(J9Class *clazzPtr);
 
-   uintptrj_t classFlagsValue(TR_OpaqueClassBlock * classPointer);
-   uintptrj_t classFlagReservableWordInitValue(TR_OpaqueClassBlock * classPointer);
-   uintptrj_t classDepthOf(TR_OpaqueClassBlock *clazzPointer);
-   uintptrj_t classInstanceSize(TR_OpaqueClassBlock * clazzPointer);
+   uintptr_t classFlagsValue(TR_OpaqueClassBlock * classPointer);
+   uintptr_t classFlagReservableWordInitValue(TR_OpaqueClassBlock * classPointer);
+   uintptr_t classDepthOf(TR_OpaqueClassBlock *clazzPointer);
+   uintptr_t classInstanceSize(TR_OpaqueClassBlock * clazzPointer);
 
    J9ROMClass *romClassOf(TR_OpaqueClassBlock * clazz);
    J9ROMClass *romClassOfSuperClass(TR_OpaqueClassBlock * clazz, size_t index);
@@ -83,7 +83,7 @@ public:
 
    bool isStringClass(TR_OpaqueClassBlock *clazz);
 
-   bool isStringClass(uintptrj_t objectPointer);
+   bool isStringClass(uintptr_t objectPointer);
 
    bool classHasIllegalStaticFinalFieldModification(TR_OpaqueClassBlock * clazzPointer);
    bool isAbstractClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer);
@@ -100,7 +100,7 @@ public:
    bool hasFinalFieldsInClass(TR::Compilation *comp, TR_OpaqueClassBlock *classPointer);
    bool sameClassLoaders(TR::Compilation *comp, TR_OpaqueClassBlock *, TR_OpaqueClassBlock *);
    bool isString(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
-   bool isString(TR::Compilation *comp, uintptrj_t objectPointer);
+   bool isString(TR::Compilation *comp, uintptr_t objectPointer);
    bool jitStaticsAreSame(TR::Compilation *comp, TR_ResolvedMethod * method1, int32_t cpIndex1, TR_ResolvedMethod * method2, int32_t cpIndex2);
    bool jitFieldsAreSame(TR::Compilation *comp, TR_ResolvedMethod * method1, int32_t cpIndex1, TR_ResolvedMethod * method2, int32_t cpIndex2, int32_t isStatic);
 
@@ -118,13 +118,13 @@ public:
     */
    const TR::TypeLayout* enumerateFields(TR::Region& region, TR_OpaqueClassBlock * clazz, TR::Compilation *comp);
 
-   uintptrj_t getArrayElementWidthInBytes(TR::Compilation *comp, TR_OpaqueClassBlock* arrayClass);
+   uintptr_t getArrayElementWidthInBytes(TR::Compilation *comp, TR_OpaqueClassBlock* arrayClass);
 
-   uintptrj_t persistentClassPointerFromClassPointer(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
-   TR_OpaqueClassBlock *objectClass(TR::Compilation *comp, uintptrj_t objectPointer);
-   TR_OpaqueClassBlock *classFromJavaLangClass(TR::Compilation *comp, uintptrj_t objectPointer);
+   uintptr_t persistentClassPointerFromClassPointer(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
+   TR_OpaqueClassBlock *objectClass(TR::Compilation *comp, uintptr_t objectPointer);
+   TR_OpaqueClassBlock *classFromJavaLangClass(TR::Compilation *comp, uintptr_t objectPointer);
 
-   uint16_t getStringCharacter(TR::Compilation *comp, uintptrj_t objectPointer, int32_t index);
+   uint16_t getStringCharacter(TR::Compilation *comp, uintptr_t objectPointer, int32_t index);
    bool getStringFieldByName(TR::Compilation *, TR::SymbolReference *stringRef, TR::SymbolReference *fieldRef, void* &pResult);
 
    using OMR::ClassEnv::classNameChars;

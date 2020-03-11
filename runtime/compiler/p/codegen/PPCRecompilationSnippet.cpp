@@ -68,16 +68,16 @@ uint8_t *TR::PPCRecompilationSnippet::emitSnippetBody()
    buffer += 4;
 
    // bodyinfo
-   uintptrj_t valueBits = (uintptrj_t)comp->getRecompilationInfo()->getJittedBodyInfo();
-   *(uintptrj_t *)buffer = valueBits;
+   uintptr_t valueBits = (uintptr_t)comp->getRecompilationInfo()->getJittedBodyInfo();
+   *(uintptr_t *)buffer = valueBits;
 
-   buffer += sizeof(uintptrj_t);
+   buffer += sizeof(uintptr_t);
 
    // startPC
-   valueBits = (uintptrj_t)cg()->getCodeStart() | (longPrologue?1:0);
-   *(uintptrj_t *)buffer = valueBits;
+   valueBits = (uintptr_t)cg()->getCodeStart() | (longPrologue?1:0);
+   *(uintptr_t *)buffer = valueBits;
 
-   return buffer + sizeof(uintptrj_t);
+   return buffer + sizeof(uintptr_t);
    }
 
 

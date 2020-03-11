@@ -163,7 +163,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _cpuCompTimeExpensiveThreshold;
    int32_t getCpuCompTimeExpensiveThreshold() { return _cpuCompTimeExpensiveThreshold; }
 
-   static uintptrj_t _compThreadAffinityMask;
+   static uintptr_t _compThreadAffinityMask;
    static int32_t _interpreterSamplingThreshold;
    static int32_t _interpreterSamplingDivisor;
    static int32_t _interpreterSamplingThresholdInStartupMode;

@@ -849,12 +849,12 @@ TR_J9VMBase::isAsyncCompilation()
    }
 
 
-uintptrj_t
+uintptr_t
 TR_J9VMBase::getProcessID()
    {
    PORT_ACCESS_FROM_ENV(_jitConfig->javaVM);
    TR::VMAccessCriticalSection getProcessID(this);
-   uintptrj_t result = j9sysinfo_get_pid();
+   uintptr_t result = j9sysinfo_get_pid();
    return result;
    }
 
@@ -1068,7 +1068,7 @@ UDATA TR_J9VMBase::getOffsetOfJLThreadJ9Thread()
 UDATA TR_J9VMBase::getOSRFrameHeaderSizeInBytes()                   {return sizeof(J9OSRFrame);}
 UDATA TR_J9VMBase::getOSRFrameSizeInBytes(TR_OpaqueMethodBlock* method)  {return osrFrameSize((J9Method*) method);}
 
-bool TR_J9VMBase::ensureOSRBufferSize(uintptrj_t osrFrameSizeInBytes, uintptrj_t osrScratchBufferSizeInBytes, uintptrj_t osrStackFrameSizeInBytes)
+bool TR_J9VMBase::ensureOSRBufferSize(uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes)
    {
    J9JavaVM *vm = _jitConfig->javaVM;
    return ::ensureOSRBufferSize(vm, osrFrameSizeInBytes, osrScratchBufferSizeInBytes, osrStackFrameSizeInBytes);
@@ -1105,22 +1105,22 @@ TR_J9VMBase::compiledAsDLTBefore(TR_ResolvedMethod * method)
 
 
 TR_OpaqueClassBlock *
-TR_J9VMBase::getObjectClass(uintptrj_t objectPointer)
+TR_J9VMBase::getObjectClass(uintptr_t objectPointer)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getObjectClass");
    J9Class *j9class = J9OBJECT_CLAZZ(vmThread(), objectPointer);
    return convertClassPtrToClassOffset(j9class);
    }
 
-uintptrj_t
-TR_J9VMBase::getStaticReferenceFieldAtAddress(uintptrj_t fieldAddress)
+uintptr_t
+TR_J9VMBase::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getStaticReferenceFieldAtAddress");
-   return (uintptrj_t)J9STATIC_OBJECT_LOAD(vmThread(), NULL, fieldAddress);
+   return (uintptr_t)J9STATIC_OBJECT_LOAD(vmThread(), NULL, fieldAddress);
    }
 
-uintptrj_t
-TR_J9VMBase::getReferenceFieldAtAddress(uintptrj_t fieldAddress)
+uintptr_t
+TR_J9VMBase::getReferenceFieldAtAddress(uintptr_t fieldAddress)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getReferenceFieldAtAddress");
    TR::Compilation* comp = TR::comp();
@@ -1132,50 +1132,50 @@ TR_J9VMBase::getReferenceFieldAtAddress(uintptrj_t fieldAddress)
 
    if (TR::Compiler->om.compressObjectReferences())
       {
-      uintptrj_t compressedResult = *(uint32_t*)fieldAddress;
+      uintptr_t compressedResult = *(uint32_t*)fieldAddress;
       return (compressedResult << TR::Compiler->om.compressedReferenceShift()) + TR::Compiler->vm.heapBaseAddress();
       }
-   return *(uintptrj_t*)fieldAddress;
+   return *(uintptr_t*)fieldAddress;
    }
 
-uintptrj_t
-TR_J9VMBase::getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
+uintptr_t
+TR_J9VMBase::getReferenceFieldAt(uintptr_t objectPointer, uintptr_t fieldOffset)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getReferenceFieldAt");
-   return (uintptrj_t)J9OBJECT_OBJECT_LOAD(vmThread(), objectPointer, TR::Compiler->om.objectHeaderSizeInBytes() + fieldOffset);
+   return (uintptr_t)J9OBJECT_OBJECT_LOAD(vmThread(), objectPointer, TR::Compiler->om.objectHeaderSizeInBytes() + fieldOffset);
    }
 
-uintptrj_t
-TR_J9VMBase::getVolatileReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
+uintptr_t
+TR_J9VMBase::getVolatileReferenceFieldAt(uintptr_t objectPointer, uintptr_t fieldOffset)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getVolatileReferenceFieldAt");
-   return (uintptrj_t)vmThread()->javaVM->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectReadObject(vmThread(),
+   return (uintptr_t)vmThread()->javaVM->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectReadObject(vmThread(),
       (J9Object*)objectPointer, TR::Compiler->om.objectHeaderSizeInBytes() + fieldOffset, IS_VOLATILE);
    }
 
 int32_t
-TR_J9VMBase::getInt32FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
+TR_J9VMBase::getInt32FieldAt(uintptr_t objectPointer, uintptr_t fieldOffset)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getInt32Field");
    return *(int32_t*)(objectPointer + getObjectHeaderSizeInBytes() + fieldOffset);
    }
 
 int64_t
-TR_J9VMBase::getInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
+TR_J9VMBase::getInt64FieldAt(uintptr_t objectPointer, uintptr_t fieldOffset)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getInt64Field");
    return *(int64_t*)(objectPointer + getObjectHeaderSizeInBytes() + fieldOffset);
    }
 
 void
-TR_J9VMBase::setInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset, int64_t newValue)
+TR_J9VMBase::setInt64FieldAt(uintptr_t objectPointer, uintptr_t fieldOffset, int64_t newValue)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in setInt64Field");
    *(int64_t*)(objectPointer + getObjectHeaderSizeInBytes() + fieldOffset) = newValue;
    }
 
 bool
-TR_J9VMBase::compareAndSwapInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset, int64_t oldValue, int64_t newValue)
+TR_J9VMBase::compareAndSwapInt64FieldAt(uintptr_t objectPointer, uintptr_t fieldOffset, int64_t oldValue, int64_t newValue)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in compareAndSwapInt64FieldAt");
    UDATA success = vmThread()->javaVM->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectCompareAndSwapLong(vmThread(),
@@ -1184,7 +1184,7 @@ TR_J9VMBase::compareAndSwapInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fie
    }
 
 intptrj_t
-TR_J9VMBase::getArrayLengthInElements(uintptrj_t objectPointer)
+TR_J9VMBase::getArrayLengthInElements(uintptr_t objectPointer)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getArrayLengthInElements");
    int32_t result = *(int32_t*)(objectPointer + getOffsetOfContiguousArraySizeField());
@@ -1194,17 +1194,17 @@ TR_J9VMBase::getArrayLengthInElements(uintptrj_t objectPointer)
    }
 
 int32_t
-TR_J9VMBase::getInt32Element(uintptrj_t objectPointer, int32_t elementIndex)
+TR_J9VMBase::getInt32Element(uintptr_t objectPointer, int32_t elementIndex)
    {
    TR_ASSERT(haveAccess(), "getInt32Element requires VM access");
    return J9JAVAARRAYOFINT_LOAD(vmThread(), objectPointer, elementIndex);
    }
 
-uintptrj_t
-TR_J9VMBase::getReferenceElement(uintptrj_t objectPointer, intptrj_t elementIndex)
+uintptr_t
+TR_J9VMBase::getReferenceElement(uintptr_t objectPointer, intptrj_t elementIndex)
    {
    TR_ASSERT(haveAccess(), "getReferenceElement requires VM access");
-   return (uintptrj_t)J9JAVAARRAYOFOBJECT_LOAD(vmThread(), objectPointer, elementIndex);
+   return (uintptr_t)J9JAVAARRAYOFOBJECT_LOAD(vmThread(), objectPointer, elementIndex);
    }
 
 TR_arrayTypeCode TR_J9VMBase::getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz)
@@ -1236,21 +1236,21 @@ TR_arrayTypeCode TR_J9VMBase::getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* cla
    }
 
 TR_OpaqueClassBlock *
-TR_J9VMBase::getClassFromJavaLangClass(uintptrj_t objectPointer)
+TR_J9VMBase::getClassFromJavaLangClass(uintptr_t objectPointer)
    {
    return (TR_OpaqueClassBlock*)J9VM_J9CLASS_FROM_HEAPCLASS(_vmThread, objectPointer);
    }
 
-uintptrj_t
+uintptr_t
 TR_J9VMBase::getConstantPoolFromMethod(TR_OpaqueMethodBlock *method)
    {
-   return (uintptrj_t)J9_CP_FROM_METHOD((J9Method *)method);
+   return (uintptr_t)J9_CP_FROM_METHOD((J9Method *)method);
    }
 
-uintptrj_t
+uintptr_t
 TR_J9VMBase::getConstantPoolFromClass(TR_OpaqueClassBlock *clazz)
    {
-   return (uintptrj_t)J9_CP_FROM_CLASS((J9Class *)clazz);
+   return (uintptr_t)J9_CP_FROM_CLASS((J9Class *)clazz);
    }
 
 void TR_J9VMBase::printVerboseLogHeader(TR::Options *cmdLineOptions)
@@ -1477,7 +1477,7 @@ int32_t TR_J9VMBase::getITableEntryJitVTableOffset()
    return sizeof(J9Class);
    }
 
-int32_t TR_J9VMBase::convertITableIndexToOffset(uintptrj_t itableIndex)
+int32_t TR_J9VMBase::convertITableIndexToOffset(uintptr_t itableIndex)
    {
    return (int32_t)(sizeof(J9ITable) + itableIndex*sizeof(UDATA));
    }
@@ -1533,7 +1533,7 @@ UDATA TR_J9VMBase::getGCForwardingPointerOffset()               {
                                                                    return 0;
                                                                 }
 
-bool TR_J9VMBase::getNurserySpaceBounds(uintptrj_t *base, uintptrj_t *top)
+bool TR_J9VMBase::getNurserySpaceBounds(uintptr_t *base, uintptr_t *top)
    {
    J9JavaVM *vm = _jitConfig->javaVM;
    J9MemoryManagerFunctions * mmf = vm->memoryManagerFunctions;
@@ -1605,7 +1605,7 @@ TR_J9VMBase::getMaxObjectSizeForSizeClass()
    }
 
 UDATA
-TR_J9VMBase::thisThreadAllocationCacheCurrentOffset(uintptrj_t sizeClass)
+TR_J9VMBase::thisThreadAllocationCacheCurrentOffset(uintptr_t sizeClass)
    {
 #if defined(J9VM_GC_REALTIME)
    return J9_VMTHREAD_SEGREGATED_ALLOCATION_CACHE_OFFSET +
@@ -1616,7 +1616,7 @@ TR_J9VMBase::thisThreadAllocationCacheCurrentOffset(uintptrj_t sizeClass)
    }
 
 UDATA
-TR_J9VMBase::thisThreadAllocationCacheTopOffset(uintptrj_t sizeClass)
+TR_J9VMBase::thisThreadAllocationCacheTopOffset(uintptr_t sizeClass)
    {
 #if defined(J9VM_GC_REALTIME)
    return J9_VMTHREAD_SEGREGATED_ALLOCATION_CACHE_OFFSET +
@@ -1627,7 +1627,7 @@ TR_J9VMBase::thisThreadAllocationCacheTopOffset(uintptrj_t sizeClass)
    }
 
 UDATA
-TR_J9VMBase::getCellSizeForSizeClass(uintptrj_t sizeClass)
+TR_J9VMBase::getCellSizeForSizeClass(uintptr_t sizeClass)
    {
 #if defined(J9VM_GC_REALTIME)
    J9JavaVM * javaVM = _jitConfig->javaVM;
@@ -1637,7 +1637,7 @@ TR_J9VMBase::getCellSizeForSizeClass(uintptrj_t sizeClass)
    }
 
 UDATA
-TR_J9VMBase::getObjectSizeClass(uintptrj_t objectSize)
+TR_J9VMBase::getObjectSizeClass(uintptr_t objectSize)
    {
 #if defined(J9VM_GC_REALTIME)
    J9JavaVM * javaVM = _jitConfig->javaVM;
@@ -2014,7 +2014,7 @@ TR_J9VMBase::isLogSamplingSet()
    }
 
 
-uintptrj_t
+uintptr_t
 TR_J9VMBase::getOffsetOfIndexableSizeField()
    {
    return offsetof(J9ROMArrayClass, arrayShape);
@@ -2274,7 +2274,7 @@ TR_MarkHotField::mark(J9Class * clazz, bool isFixedClass)
    if (!_symRef->getSymbol()->getShadowSymbol() || _symRef->isUnresolved() || !clazz)
       return;
 
-   if ((uintptrj_t)_symRef->getOffset() < fej9->getObjectHeaderSizeInBytes())
+   if ((uintptr_t)_symRef->getOffset() < fej9->getObjectHeaderSizeInBytes())
       return;
 
    _slotIndex = ((_symRef->getOffset() - fej9->getObjectHeaderSizeInBytes()) / TR::Compiler->om.sizeofReferenceField()) + 1; // +1 because low order bit means tenured alignment
@@ -3264,7 +3264,7 @@ TR::TreeTop *
 TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTop * treeTop)
    {
    J9Method * j9method = (J9Method *) root->getOwningMethod();
-   TR::Node * ramMethod = TR::Node::aconst(root, (uintptrj_t)j9method);
+   TR::Node * ramMethod = TR::Node::aconst(root, (uintptr_t)j9method);
    ramMethod->setIsMethodPointerConstant(true);
 
    bool isTrace = isMethodTracingEnabled(j9method);
@@ -4447,12 +4447,12 @@ TR_J9VMBase::getStaticObjectFlags()
    return staticFlag;
    }
 
-uintptrj_t
+uintptr_t
 TR_J9VMBase::getOverflowSafeAllocSize()
    {
    TR::VMAccessCriticalSection getOverflowSafeAllocSize(this);
    J9JavaVM *jvm = _jitConfig->javaVM;
-   uintptrj_t result = jvm->memoryManagerFunctions->j9gc_get_overflow_safe_alloc_size(jvm);
+   uintptr_t result = jvm->memoryManagerFunctions->j9gc_get_overflow_safe_alloc_size(jvm);
    return result;
    }
 
@@ -4643,8 +4643,8 @@ TR_J9VMBase::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *comp)
       return false;
    }
 
-uintptrj_t
-TR_J9VMBase::methodHandle_thunkableSignature(uintptrj_t methodHandle)
+uintptr_t
+TR_J9VMBase::methodHandle_thunkableSignature(uintptr_t methodHandle)
    {
    TR_ASSERT(haveAccess(), "methodHandle_thunkableSignature requires VM access");
    return getReferenceField(getReferenceField(
@@ -4653,8 +4653,8 @@ TR_J9VMBase::methodHandle_thunkableSignature(uintptrj_t methodHandle)
       "thunkableSignature", "Ljava/lang/String;");
    }
 
-uintptrj_t
-TR_J9VMBase::methodHandle_type(uintptrj_t methodHandle)
+uintptr_t
+TR_J9VMBase::methodHandle_type(uintptr_t methodHandle)
    {
    TR_ASSERT(haveAccess(), "methodHandle_type requires VM access");
    return getReferenceField(
@@ -4662,8 +4662,8 @@ TR_J9VMBase::methodHandle_type(uintptrj_t methodHandle)
       "type", "Ljava/lang/invoke/MethodType;");
    }
 
-uintptrj_t
-TR_J9VMBase::methodType_descriptor(uintptrj_t methodType)
+uintptr_t
+TR_J9VMBase::methodType_descriptor(uintptr_t methodType)
    {
    TR_ASSERT(haveAccess(), "methodType_descriptor requires VM access");
    return getReferenceField(
@@ -4671,7 +4671,7 @@ TR_J9VMBase::methodType_descriptor(uintptrj_t methodType)
       "methodDescriptor", "Ljava/lang/String;");
    }
 
-static uint8_t *bypassBaseAddress(uintptrj_t mutableCallSite, TR_J9VMBase *fej9)
+static uint8_t *bypassBaseAddress(uintptr_t mutableCallSite, TR_J9VMBase *fej9)
    {
    /* The location of the JNI global ref is actually stored in the form of an
       offset from the ramStatics area of whatever object was returned by
@@ -4680,17 +4680,17 @@ static uint8_t *bypassBaseAddress(uintptrj_t mutableCallSite, TR_J9VMBase *fej9)
       global ref, so it must have a "base object" and "offset" just as though
       it were a static field.
    */
-   uintptrj_t *fieldAddress = (uintptrj_t*)fej9->getStaticFieldAddress(
+   uintptr_t *fieldAddress = (uintptr_t*)fej9->getStaticFieldAddress(
          fej9->getObjectClass(mutableCallSite),
          (unsigned char*)"bypassBase", 10, (unsigned char*)"Ljava/lang/Object;", 18
          );
-   uintptrj_t bypassBaseObject = *fieldAddress; // Statics are not compressed refs
+   uintptr_t bypassBaseObject = *fieldAddress; // Statics are not compressed refs
    TR_OpaqueClassBlock *bypassClass = fej9->getClassFromJavaLangClass(bypassBaseObject);
    return (uint8_t*)TR::Compiler->cls.convertClassOffsetToClassPtr(bypassClass)->ramStatics;
    }
 
-uintptrj_t *
-TR_J9VMBase::mutableCallSite_bypassLocation(uintptrj_t mutableCallSite)
+uintptr_t *
+TR_J9VMBase::mutableCallSite_bypassLocation(uintptr_t mutableCallSite)
    {
    TR_ASSERT(haveAccess(), "mutableCallSite_bypassLocation requires VM access");
 
@@ -4703,20 +4703,20 @@ TR_J9VMBase::mutableCallSite_bypassLocation(uintptrj_t mutableCallSite)
 
    uint8_t *baseAddress = bypassBaseAddress(mutableCallSite, this);
    bypassOffset &= -2L; // mask off low tag if present
-   return (uintptrj_t*)(baseAddress + bypassOffset);
+   return (uintptr_t*)(baseAddress + bypassOffset);
    }
 
-uintptrj_t *
-TR_J9VMBase::mutableCallSite_findOrCreateBypassLocation(uintptrj_t mutableCallSite)
+uintptr_t *
+TR_J9VMBase::mutableCallSite_findOrCreateBypassLocation(uintptr_t mutableCallSite)
    {
    TR_ASSERT(haveAccess(), "mutableCallSite_bypassLocation requires VM access");
 
-   uintptrj_t cleaner   = getReferenceField(mutableCallSite, "globalRefCleaner", "Ljava/lang/invoke/GlobalRefCleaner;");
+   uintptr_t cleaner   = getReferenceField(mutableCallSite, "globalRefCleaner", "Ljava/lang/invoke/GlobalRefCleaner;");
    uint32_t fieldOffset = getInstanceFieldOffset(getObjectClass(cleaner), "bypassOffset", "J");
    int64_t bypassOffset = getInt64FieldAt(cleaner, fieldOffset);
    if (bypassOffset == 0)
       {
-      uintptrj_t target = getReferenceField(mutableCallSite, "target", "Ljava/lang/invoke/MethodHandle;");
+      uintptr_t target = getReferenceField(mutableCallSite, "target", "Ljava/lang/invoke/MethodHandle;");
       jobject handleRef = vmThread()->javaVM->internalVMFunctions->j9jni_createGlobalRef((JNIEnv*)vmThread(), (j9object_t)target, false);
       uint8_t *baseAddress = bypassBaseAddress(mutableCallSite, this);
       bypassOffset = ((int64_t)handleRef) - ((int64_t)baseAddress);
@@ -4808,13 +4808,13 @@ TR_J9VMBase::lookupArchetype(TR_OpaqueClassBlock *clazz, char *name, char *signa
    }
 
 TR_OpaqueMethodBlock *
-TR_J9VMBase::lookupMethodHandleThunkArchetype(uintptrj_t methodHandle)
+TR_J9VMBase::lookupMethodHandleThunkArchetype(uintptr_t methodHandle)
    {
    TR_ASSERT(haveAccess(), "methodHandle_jitInvokeExactThunk requires VM access");
 
    // Compute thunk's asignature and archetype's name
    //
-   uintptrj_t thunkableSignatureString = methodHandle_thunkableSignature((uintptrj_t)methodHandle);
+   uintptr_t thunkableSignatureString = methodHandle_thunkableSignature((uintptr_t)methodHandle);
    intptrj_t  thunkableSignatureLength = getStringUTF8Length(thunkableSignatureString);
    char *thunkSignature = (char*)alloca(thunkableSignatureLength+1);
    getStringUTF8(thunkableSignatureString, thunkSignature, thunkableSignatureLength+1);
@@ -4835,17 +4835,17 @@ TR_J9VMBase::lookupMethodHandleThunkArchetype(uintptrj_t methodHandle)
    char methodName[50];
    sprintf(methodName, "invokeExact_thunkArchetype_%c", returnType[0]);
 
-   TR_OpaqueMethodBlock *result = lookupArchetype(getObjectClass((uintptrj_t)methodHandle), methodName, archetypeSpecimenSignature);
+   TR_OpaqueMethodBlock *result = lookupArchetype(getObjectClass((uintptr_t)methodHandle), methodName, archetypeSpecimenSignature);
    if (!result)
       {
       strcpy(returnType, "I");
-      result = lookupArchetype(getObjectClass((uintptrj_t)methodHandle), "invokeExact_thunkArchetype_X", archetypeSpecimenSignature);
+      result = lookupArchetype(getObjectClass((uintptr_t)methodHandle), "invokeExact_thunkArchetype_X", archetypeSpecimenSignature);
       }
    return result;
    }
 
 TR_ResolvedMethod *
-TR_J9VMBase::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, TR_OpaqueMethodBlock *archetype, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod)
+TR_J9VMBase::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, TR_OpaqueMethodBlock *archetype, uintptr_t *methodHandleLocation, TR_ResolvedMethod *owningMethod)
    {
    intptrj_t length;
    char *thunkableSignature;
@@ -4854,7 +4854,7 @@ TR_J9VMBase::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, TR_OpaqueM
       TR::VMAccessCriticalSection createMethodHandleArchetypeSpecimen(this);
       TR_ASSERT(archetype, "Explicitly provided archetype must not be null");
       TR_ASSERT(archetype == lookupMethodHandleThunkArchetype(*methodHandleLocation), "Explicitly provided archetype must be the right one");
-      uintptrj_t signatureString = getReferenceField(getReferenceField(
+      uintptr_t signatureString = getReferenceField(getReferenceField(
          *methodHandleLocation,
          "thunks",             "Ljava/lang/invoke/ThunkTuple;"),
          "thunkableSignature", "Ljava/lang/String;");
@@ -4870,7 +4870,7 @@ TR_J9VMBase::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, TR_OpaqueM
    }
 
 TR_ResolvedMethod *
-TR_J9VMBase::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod)
+TR_J9VMBase::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptr_t *methodHandleLocation, TR_ResolvedMethod *owningMethod)
    {
    TR::VMAccessCriticalSection createMethodHandleArchetypeSpecimenCS(this);
    TR_OpaqueMethodBlock *archetype = lookupMethodHandleThunkArchetype(*methodHandleLocation);
@@ -4883,13 +4883,13 @@ TR_J9VMBase::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptrj_t
    return result;
    }
 
-uintptrj_t TR_J9VMBase::mutableCallSiteCookie(uintptrj_t mutableCallSite, uintptrj_t potentialCookie)
+uintptr_t TR_J9VMBase::mutableCallSiteCookie(uintptr_t mutableCallSite, uintptr_t potentialCookie)
    {
-   uintptrj_t result=0;
+   uintptr_t result=0;
    if (potentialCookie && compareAndSwapInt64Field(mutableCallSite, "invalidationCookie", 0, potentialCookie))
       result =  potentialCookie;
    else
-      result = (uintptrj_t)getInt64Field(mutableCallSite, "invalidationCookie");
+      result = (uintptr_t)getInt64Field(mutableCallSite, "invalidationCookie");
    return result;
    }
 
@@ -4900,7 +4900,7 @@ TR_J9VMBase::hasMethodTypesSideTable()
    }
 
 void *
-TR_J9VMBase::methodHandle_jitInvokeExactThunk(uintptrj_t methodHandle)
+TR_J9VMBase::methodHandle_jitInvokeExactThunk(uintptr_t methodHandle)
    {
    TR_ASSERT(haveAccess(), "methodHandle_jitInvokeExactThunk requires VM access");
    return (void*)(intptrj_t)getInt64Field(getReferenceField(
@@ -4929,7 +4929,7 @@ TR_J9VMBase::methodHandle_jitInvokeExactThunk(uintptrj_t methodHandle)
  *    True if comparison succeeds, false otherwise.
  */
 bool
-TR_J9VMBase::stringEquals(TR::Compilation * comp, uintptrj_t* stringLocation1, uintptrj_t* stringLocation2, int32_t& result)
+TR_J9VMBase::stringEquals(TR::Compilation * comp, uintptr_t* stringLocation1, uintptr_t* stringLocation2, int32_t& result)
    {
    TR::VMAccessCriticalSection stringEquals(this,
                                              TR::VMAccessCriticalSection::tryToAcquireVMAccess,
@@ -4960,7 +4960,7 @@ TR_J9VMBase::stringEquals(TR::Compilation * comp, uintptrj_t* stringLocation1, u
  *    True if the query succeeds, otherwise false.
  */
 bool
-TR_J9VMBase::getStringHashCode(TR::Compilation * comp, uintptrj_t* stringLocation, int32_t& result)
+TR_J9VMBase::getStringHashCode(TR::Compilation * comp, uintptr_t* stringLocation, int32_t& result)
    {
    TR::VMAccessCriticalSection getStringHashCodeCriticalSection(this,
                                                                 TR::VMAccessCriticalSection::tryToAcquireVMAccess,
@@ -4985,7 +4985,7 @@ TR_J9VMBase::getStringFieldByName(TR::Compilation * comp, TR::SymbolReference * 
 
    TR_ASSERT(!stringRef->isUnresolved(), "don't handle unresolved constant strings yet");
 
-   uintptrj_t stringStaticAddr = (uintptrj_t)stringRef->getSymbol()->castToStaticSymbol()->getStaticAddress();
+   uintptr_t stringStaticAddr = (uintptr_t)stringRef->getSymbol()->castToStaticSymbol()->getStaticAddress();
    j9object_t string = (j9object_t)getStaticReferenceFieldAtAddress(stringStaticAddr);
 
    TR::Symbol::RecognizedField   field = fieldRef->getSymbol()->getRecognizedField();
@@ -5003,7 +5003,7 @@ TR_J9VMBase::getStringFieldByName(TR::Compilation * comp, TR::SymbolReference * 
 
          for (int32_t i = J9VMJAVALANGSTRING_LENGTH(vmThread(), string) - 1; i >= 0; --i, scale *= 31)
             {
-            uint16_t thisChar = getStringCharacter((uintptrj_t)string, i);
+            uint16_t thisChar = getStringCharacter((uintptr_t)string, i);
             sum += thisChar * scale;
             }
 
@@ -5019,14 +5019,14 @@ TR_J9VMBase::getStringFieldByName(TR::Compilation * comp, TR::SymbolReference * 
    return true;
    }
 
-uintptrj_t
+uintptr_t
 TR_J9VMBase::getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef)
    {
    TR_ResolvedMethod* method = classRef->getOwningMethod(comp);
    TR::StaticSymbol* classSym = classRef->getSymbol()->castToStaticSymbol();
-   j9object_t classString = (j9object_t)getStaticReferenceFieldAtAddress((uintptrj_t)classSym->getStaticAddress());
+   j9object_t classString = (j9object_t)getStaticReferenceFieldAtAddress((uintptr_t)classSym->getStaticAddress());
    TR::StaticSymbol* fieldSym = fieldRef->getSymbol()->castToStaticSymbol();
-   j9object_t fieldString = (j9object_t)getStaticReferenceFieldAtAddress((uintptrj_t)fieldSym->getStaticAddress());
+   j9object_t fieldString = (j9object_t)getStaticReferenceFieldAtAddress((uintptr_t)fieldSym->getStaticAddress());
 
    int32_t len = (int32_t)jitConfig->javaVM->internalVMFunctions->getStringUTF8Length(vmThread(), classString);
    U_8* u8ClassString = (U_8*)comp->trMemory()->allocateStackMemory(len + 1);
@@ -5078,7 +5078,7 @@ TR_J9VMBase::getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRe
          //                               J9_LOOK_NO_JAVA);
 
          // fprintf(stderr,">>>>> Offset for %s determined to be : %d\n", field->name,offset);
-         return (uintptrj_t)offset;
+         return (uintptr_t)offset;
          }
       }
 
@@ -5097,7 +5097,7 @@ TR_J9VMBase::getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRe
       }
 
 
-   return (uintptrj_t)staticAddr;
+   return (uintptr_t)staticAddr;
    }
 
 bool
@@ -5145,21 +5145,21 @@ TR_J9VMBase::isString(TR_OpaqueClassBlock *clazz)
    }
 
 bool
-TR_J9VMBase::isString(uintptrj_t objectPointer)
+TR_J9VMBase::isString(uintptr_t objectPointer)
    {
    TR_ASSERT(haveAccess(), "isString requires VM access");
    return isString(getObjectClass(objectPointer));
    }
 
 int32_t
-TR_J9VMBase::getStringLength(uintptrj_t objectPointer)
+TR_J9VMBase::getStringLength(uintptr_t objectPointer)
    {
    TR_ASSERT(haveAccess(), "getStringLength requires VM access");
    return J9VMJAVALANGSTRING_LENGTH(vmThread(), (j9object_t)objectPointer);
    }
 
 uint16_t
-TR_J9VMBase::getStringCharacter(uintptrj_t objectPointer, int32_t index)
+TR_J9VMBase::getStringCharacter(uintptr_t objectPointer, int32_t index)
    {
    TR_ASSERT(haveAccess(), "getStringCharacter requires VM access");
 
@@ -5176,7 +5176,7 @@ TR_J9VMBase::getStringCharacter(uintptrj_t objectPointer, int32_t index)
    }
 
 intptrj_t
-TR_J9VMBase::getStringUTF8Length(uintptrj_t objectPointer)
+TR_J9VMBase::getStringUTF8Length(uintptr_t objectPointer)
    {
    TR_ASSERT(haveAccess(), "Must have VM access to call getStringUTF8Length");
    TR_ASSERT(objectPointer, "assertion failure");
@@ -5184,7 +5184,7 @@ TR_J9VMBase::getStringUTF8Length(uintptrj_t objectPointer)
    }
 
 char *
-TR_J9VMBase::getStringUTF8(uintptrj_t objectPointer, char *buffer, intptrj_t bufferSize)
+TR_J9VMBase::getStringUTF8(uintptr_t objectPointer, char *buffer, intptrj_t bufferSize)
    {
    TR_ASSERT(haveAccess(), "Must have VM access to call getStringAscii");
 
@@ -6057,10 +6057,10 @@ TR_J9VM::TR_J9VM(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, J9VMTh
    }
 
 //d169771 [2177]
-uintptrj_t
+uintptr_t
 TR_J9VMBase::getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock * clazz)
    {
-   return (uintptrj_t)TR::Compiler->cls.romClassOf(clazz);
+   return (uintptr_t)TR::Compiler->cls.romClassOf(clazz);
    }
 
 void *
@@ -6134,11 +6134,11 @@ TR_J9VM::getObjectNewInstanceImplMethod()
    return (TR_OpaqueMethodBlock *)protoMethod;
    }
 
-uintptrj_t
+uintptr_t
 TR_J9VMBase::getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeInfo &bcInfo)
    {
-   uintptrj_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
-   return methodStart + (uintptrj_t)(bcInfo.getByteCodeIndex());
+   uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
+   return methodStart + (uintptr_t)(bcInfo.getByteCodeIndex());
    }
 
 
@@ -6532,7 +6532,7 @@ TR_J9VMBase::getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBloc
    bool haveAcquiredVMAccess = false;
    if (tryToAcquireAccess(comp, &haveAcquiredVMAccess))
       {
-      uintptrj_t structure = (uintptrj_t) clazzPointer;
+      uintptr_t structure = (uintptr_t) clazzPointer;
       J9Object *ref = *(J9Object **)(structure + getOffsetOfJavaLangClassFromClassField());
       int32_t hashCode = mmf->j9gc_objaccess_getObjectHashCode(jitConfig->javaVM, ref);
 
@@ -6590,13 +6590,13 @@ TR_J9VMBase::hasFinalizer(TR_OpaqueClassBlock * classPointer)
    return (J9CLASS_FLAGS(TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)) & (J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer)) != 0;
    }
 
-uintptrj_t
+uintptr_t
 TR_J9VMBase::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
    {
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classDepthAndFlags);
    }
 
-uintptrj_t
+uintptr_t
 TR_J9VMBase::getClassFlagsValue(TR_OpaqueClassBlock * classPointer)
    {
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classFlags);
@@ -8225,14 +8225,14 @@ TR_J9VM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
 
       // j9class points to the J9Class corresponding to java/lang/Object
       if (TR::Compiler->om.generateCompressedObjectHeaders())
-         j9class = (J9Class *)(uintptrj_t) *((uint32_t *) ((uintptrj_t) javaLangClass + (uintptrj_t) TR::Compiler->om.offsetOfObjectVftField()));
+         j9class = (J9Class *)(uintptr_t) *((uint32_t *) ((uintptr_t) javaLangClass + (uintptr_t) TR::Compiler->om.offsetOfObjectVftField()));
       else
-         j9class = (J9Class *)(*((J9Class **) ((uintptrj_t) javaLangClass + (uintptrj_t) TR::Compiler->om.offsetOfObjectVftField())));
+         j9class = (J9Class *)(*((J9Class **) ((uintptr_t) javaLangClass + (uintptr_t) TR::Compiler->om.offsetOfObjectVftField())));
       }
    else
-      j9class = (J9Class *)(*((J9Class **) ((uintptrj_t)j9class + (uintptrj_t) TR::Compiler->om.offsetOfObjectVftField())));
+      j9class = (J9Class *)(*((J9Class **) ((uintptr_t)j9class + (uintptr_t) TR::Compiler->om.offsetOfObjectVftField())));
 
-   j9class = (J9Class *)((uintptrj_t)j9class & TR::Compiler->om.maskOfObjectVftField());
+   j9class = (J9Class *)((uintptr_t)j9class & TR::Compiler->om.maskOfObjectVftField());
 
    return convertClassPtrToClassOffset(j9class);
    }
@@ -8337,7 +8337,7 @@ TR_J9VM::dereferenceStaticFinalAddress(void *staticAddress, TR::DataType address
          data.dataDouble = *(double *) staticAddress;
          break;
       case TR::Address:
-         data.dataAddress = *(uintptrj_t *) staticAddress;
+         data.dataAddress = *(uintptr_t *) staticAddress;
          break;
       default:
          TR_ASSERT(0, "Unexpected type %s", addressType.toString());
@@ -8810,14 +8810,14 @@ TR_J9SharedCacheVM::hasFinalizer(TR_OpaqueClassBlock * classPointer)
       return true;
    }
 
-uintptrj_t
+uintptr_t
 TR_J9SharedCacheVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
    {
    TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
-   uintptrj_t classDepthFlags = TR_J9VM::getClassDepthAndFlagsValue(classPointer);
+   uintptr_t classDepthFlags = TR_J9VM::getClassDepthAndFlagsValue(classPointer);
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
@@ -8836,14 +8836,14 @@ TR_J9SharedCacheVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointe
       return 0;
    }
 
-uintptrj_t
+uintptr_t
 TR_J9SharedCacheVM::getClassFlagsValue(TR_OpaqueClassBlock * classPointer)
    {
    TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
-   uintptrj_t classFlags = TR_J9VM::getClassFlagsValue(classPointer);
+   uintptr_t classFlags = TR_J9VM::getClassFlagsValue(classPointer);
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {

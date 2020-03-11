@@ -36,7 +36,7 @@
 class TR_RedefinedClassPicSite : public OMR::ValueModifyRuntimeAssumption
    {
    protected:
-   TR_RedefinedClassPicSite(TR_PersistentMemory * pm, uintptrj_t key, uint8_t *picLocation, uint32_t size, TR_RuntimeAssumptionKind kind)
+   TR_RedefinedClassPicSite(TR_PersistentMemory * pm, uintptr_t key, uint8_t *picLocation, uint32_t size, TR_RuntimeAssumptionKind kind)
       : OMR::ValueModifyRuntimeAssumption(pm, key), _picLocation(picLocation), _size(size)
          {}
 
@@ -53,8 +53,8 @@ class TR_RedefinedClassPicSite : public OMR::ValueModifyRuntimeAssumption
    virtual TR_RedefinedClassPicSite *asRCPSite() { return this; }
    uint8_t * getPicLocation()    { return _picLocation; }
    void      setPicLocation   (uint8_t *p) { _picLocation = p; }
-   void      setKey(uintptrj_t newKey) { _key = newKey; }
-   uintptrj_t getPicEntry() { return *((uintptrj_t*)_picLocation); }
+   void      setKey(uintptr_t newKey) { _key = newKey; }
+   uintptr_t getPicEntry() { return *((uintptr_t*)_picLocation); }
    bool      isForAddressMaterializationSequence(){ return _size == 1; }
 
    virtual void dumpInfo();
@@ -68,14 +68,14 @@ class TR_RedefinedClassPicSite : public OMR::ValueModifyRuntimeAssumption
 class TR_RedefinedClassRPicSite : public TR_RedefinedClassPicSite
    {
    protected:
-   TR_RedefinedClassRPicSite(TR_PersistentMemory * pm, uintptrj_t key, uint8_t *picLocation, uint32_t size)
+   TR_RedefinedClassRPicSite(TR_PersistentMemory * pm, uintptr_t key, uint8_t *picLocation, uint32_t size)
           : TR_RedefinedClassPicSite(pm, key, picLocation, size, RuntimeAssumptionOnClassRedefinitionPIC)
       {}
 
    public:
    virtual TR_RuntimeAssumptionKind getAssumptionKind() { return RuntimeAssumptionOnClassRedefinitionPIC; }
    static TR_RedefinedClassRPicSite *make(
-      TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptrj_t key, uint8_t *picLocation, uint32_t size,
+      TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptr_t key, uint8_t *picLocation, uint32_t size,
       OMR::RuntimeAssumption **sentinel);
    };
 
@@ -83,16 +83,16 @@ class TR_RedefinedClassRPicSite : public TR_RedefinedClassPicSite
 class TR_RedefinedClassUPicSite : public TR_RedefinedClassPicSite
    {
    protected:
-   TR_RedefinedClassUPicSite(TR_PersistentMemory * pm, uintptrj_t key, uint8_t *picLocation, uint32_t size)
+   TR_RedefinedClassUPicSite(TR_PersistentMemory * pm, uintptr_t key, uint8_t *picLocation, uint32_t size)
             : TR_RedefinedClassPicSite(pm, key, picLocation, size, RuntimeAssumptionOnClassRedefinitionUPIC)
       {}
    public:
    virtual TR_RuntimeAssumptionKind getAssumptionKind() { return RuntimeAssumptionOnClassRedefinitionUPIC; }
    static TR_RedefinedClassUPicSite *make(
-      TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptrj_t key, uint8_t *picLocation, uint32_t size,
+      TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptr_t key, uint8_t *picLocation, uint32_t size,
       OMR::RuntimeAssumption **sentinel);
 
-   virtual uintptrj_t hashCode() { return TR_RuntimeAssumptionTable::hashCode((uintptrj_t)getPicLocation()); }
+   virtual uintptr_t hashCode() { return TR_RuntimeAssumptionTable::hashCode((uintptr_t)getPicLocation()); }
    };
 
 #endif

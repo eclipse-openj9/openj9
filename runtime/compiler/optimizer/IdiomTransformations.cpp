@@ -2081,7 +2081,7 @@ CISCTransform2NestedArrayFindBytes(TR_CISCTransformer *trans)
       // Prepare TR::arraytranslate
       //
       TR::Node * inputNode = createArrayTopAddressTree(comp, trans->isGenerateI2L(), outerBaseRepNode);
-      TR::Node * outputNode = TR::Node::aconst(baseRepNode, (uintptrj_t)tableOuterResult);
+      TR::Node * outputNode = TR::Node::aconst(baseRepNode, (uintptr_t)tableOuterResult);
       TR::Node * termCharNode = TR::Node::create( baseRepNode, TR::iconst, 0, 0xff);
       TR::Node * lengthNode = TR::Node::create( baseRepNode, TR::iconst, 0, lenForDynamic);
       TR::Node * stoppingNode = TR::Node::create( baseRepNode, TR::iconst, 0, 0xffffffff);
@@ -2119,7 +2119,7 @@ CISCTransform2NestedArrayFindBytes(TR_CISCTransformer *trans)
       }
    else
       {
-      tableNode = TR::Node::create( baseRepNode, TR::aconst, (uintptrj_t)tableOuterResult);
+      tableNode = TR::Node::create( baseRepNode, TR::aconst, (uintptr_t)tableOuterResult);
       }
    ////findBytesNode->setSymbolReference(comp->getSymRefTab()->findOrCreateFindBytesSymbol());
    findBytesNode->setSymbolReference(comp->getSymRefTab()->findOrCreateArrayTranslateAndTestSymbol());

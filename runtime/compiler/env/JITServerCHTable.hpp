@@ -44,7 +44,7 @@ struct VirtualGuardInfoForCHTable
    bool _mergedWithOSRGuard;
 
    // These reference locations are non-null only for MutableCallSiteGuards
-   uintptrj_t *_mutableCallSiteObject;
+   uintptr_t *_mutableCallSiteObject;
    TR::KnownObjectTable::Index _mutableCallSiteEpoch;
 
    // Part of the symref

@@ -161,7 +161,7 @@ public:
 
    union
       {
-      uintptrj_t _visitedStatus;
+      uintptr_t _visitedStatus;
       TR_PersistentClassInfoForFields *_fieldInfo;
       };
    int16_t                             _prexAssumptions;

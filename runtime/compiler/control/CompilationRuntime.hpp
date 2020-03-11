@@ -130,7 +130,7 @@ class TR_LowPriorityCompQueue
 
       // The following refer to the mechanism that schedules low priority
       // compilation requests based on the Iprofiler
-      static uint32_t hash(J9Method *j9method) { return ((uintptrj_t)j9method >> 3) & (HT_SIZE - 1); }
+      static uint32_t hash(J9Method *j9method) { return ((uintptr_t)j9method >> 3) & (HT_SIZE - 1); }
       bool isTrackingEnabled() const { return _trackingEnabled; }
       void startTrackingIProfiledCalls(int32_t threshold);
       bool isTrackableMethod(J9Method *j9method) const;
@@ -146,12 +146,12 @@ class TR_LowPriorityCompQueue
 
       struct Entry
          {
-         uintptrj_t _j9method; // this is the key; Initialized by IProfiler thread; reset by compilation thread
+         uintptr_t _j9method; // this is the key; Initialized by IProfiler thread; reset by compilation thread
          uint32_t   _count; // updated by IProfiler thread
          bool       _queuedForCompilation; // used to avoid duplicates in the queue; set by IProfiler thread
          bool isInvalid() const { return !_j9method; }
          void setInvalid() { _j9method = 0; }
-         void initialize(J9Method *m, uint32_t c) { _j9method = (uintptrj_t)m; _count = c; _queuedForCompilation = false; }
+         void initialize(J9Method *m, uint32_t c) { _j9method = (uintptr_t)m; _count = c; _queuedForCompilation = false; }
          };
    private:
       TR::CompilationInfo*    _compInfo;
@@ -466,7 +466,7 @@ public:
          return std::get<0>(stream->read<bool>());
          }
 #endif /* defined(J9VM_OPT_JITSERVER) */
-      return (((uintptrj_t)method->extra) & J9_STARTPC_NOT_TRANSLATED) == 0;
+      return (((uintptr_t)method->extra) & J9_STARTPC_NOT_TRANSLATED) == 0;
       }
    static bool isJNINative(J9Method *method)
       {
@@ -479,7 +479,7 @@ public:
 #endif /* defined(J9VM_OPT_JITSERVER) */
       // Note: This query is only concerned with the method to be compiled
       // and so we don't have to care if the VM has a FastJNI version
-      return (((uintptrj_t)method->constantPool) & J9_STARTPC_JNI_NATIVE) != 0;
+      return (((uintptr_t)method->constantPool) & J9_STARTPC_JNI_NATIVE) != 0;
       }
 
    static int32_t getInvocationCount(J9Method *method)
@@ -522,7 +522,7 @@ public:
       TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(J9VM_OPT_JITSERVER) */
       TR_ASSERT((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED, "MethodExtra Already Jitted!");
-      return (uint32_t)((uintptrj_t)method->extra >> 32);
+      return (uint32_t)((uintptr_t)method->extra >> 32);
       }
    static void * getJ9MethodStartPC(J9Method *method)
       {

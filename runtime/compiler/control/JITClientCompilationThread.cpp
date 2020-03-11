@@ -103,7 +103,7 @@ findField(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA index, BOOLE
 static void
 handler_IProfiler_profilingSample(JITServer::ClientStream *client, TR_J9VM *fe, TR::Compilation *comp)
    {
-   auto recv = client->getRecvData<TR_OpaqueMethodBlock*, uint32_t, uintptrj_t>();
+   auto recv = client->getRecvData<TR_OpaqueMethodBlock*, uint32_t, uintptr_t>();
    auto method = std::get<0>(recv);
    auto bcIndex = std::get<1>(recv);
    auto data = std::get<2>(recv); // data==1 means 'send info for 1 bytecode'; data==0 means 'send info for entire method if possible'
@@ -133,7 +133,7 @@ handler_IProfiler_profilingSample(JITServer::ClientStream *client, TR_J9VM *fe, 
             uint32_t bytes = entry->getBytesFootprint();
             std::string entryBytes(bytes, '\0');
             auto storage = (TR_IPBCDataStorageHeader*)&entryBytes[0];
-            uintptrj_t methodStartAddress = (uintptrj_t)TR::Compiler->mtd.bytecodeStart(method);
+            uintptr_t methodStartAddress = (uintptr_t)TR::Compiler->mtd.bytecodeStart(method);
             entry->serialize(methodStartAddress, storage, comp->getPersistentInfo());
             client->write(JITServer::MessageType::IProfiler_profilingSample, entryBytes, false, usePersistentCache);
             }
@@ -542,14 +542,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::VM_getObjectClass:
          {
          TR::VMAccessCriticalSection getObjectClass(fe);
-         uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
+         uintptr_t objectPointer = std::get<0>(client->getRecvData<uintptr_t>());
          client->write(response, fe->getObjectClass(objectPointer));
          }
          break;
       case MessageType::VM_getStaticReferenceFieldAtAddress:
          {
          TR::VMAccessCriticalSection getStaticReferenceFieldAtAddress(fe);
-         uintptrj_t fieldAddress = std::get<0>(client->getRecvData<uintptrj_t>());
+         uintptr_t fieldAddress = std::get<0>(client->getRecvData<uintptr_t>());
          client->write(response, fe->getStaticReferenceFieldAtAddress(fieldAddress));
          }
          break;
@@ -587,7 +587,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::VM_getStringUTF8Length:
          {
-         uintptrj_t string = std::get<0>(client->getRecvData<uintptrj_t>());
+         uintptr_t string = std::get<0>(client->getRecvData<uintptr_t>());
             {
             TR::VMAccessCriticalSection getStringUTF8Length(fe);
             client->write(response, fe->getStringUTF8Length(string));
@@ -633,49 +633,49 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::VM_getReferenceFieldAtAddress:
          {
          TR::VMAccessCriticalSection getReferenceFieldAtAddress(fe);
-         uintptrj_t fieldAddress = std::get<0>(client->getRecvData<uintptrj_t>());
+         uintptr_t fieldAddress = std::get<0>(client->getRecvData<uintptr_t>());
          client->write(response, fe->getReferenceFieldAtAddress(fieldAddress));
          }
          break;
       case MessageType::VM_getReferenceFieldAt:
          {
-         auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
-         uintptrj_t objectPointer = std::get<0>(recv);
-         uintptrj_t fieldOffset = std::get<1>(recv);
+         auto recv = client->getRecvData<uintptr_t, uintptr_t>();
+         uintptr_t objectPointer = std::get<0>(recv);
+         uintptr_t fieldOffset = std::get<1>(recv);
          client->write(response, fe->getReferenceFieldAt(objectPointer, fieldOffset));
          }
          break;
       case MessageType::VM_getVolatileReferenceFieldAt:
          {
-         auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
-         uintptrj_t objectPointer = std::get<0>(recv);
-         uintptrj_t fieldOffset = std::get<1>(recv);
+         auto recv = client->getRecvData<uintptr_t, uintptr_t>();
+         uintptr_t objectPointer = std::get<0>(recv);
+         uintptr_t fieldOffset = std::get<1>(recv);
          client->write(response, fe->getVolatileReferenceFieldAt(objectPointer, fieldOffset));
          }
          break;
       case MessageType::VM_getInt32FieldAt:
          {
-         auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
-         uintptrj_t objectPointer = std::get<0>(recv);
-         uintptrj_t fieldOffset = std::get<1>(recv);
+         auto recv = client->getRecvData<uintptr_t, uintptr_t>();
+         uintptr_t objectPointer = std::get<0>(recv);
+         uintptr_t fieldOffset = std::get<1>(recv);
          TR::VMAccessCriticalSection getInt32FieldAt(fe);
          client->write(response, fe->getInt32FieldAt(objectPointer, fieldOffset));
          }
          break;
       case MessageType::VM_getInt64FieldAt:
          {
-         auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
-         uintptrj_t objectPointer = std::get<0>(recv);
-         uintptrj_t fieldOffset = std::get<1>(recv);
+         auto recv = client->getRecvData<uintptr_t, uintptr_t>();
+         uintptr_t objectPointer = std::get<0>(recv);
+         uintptr_t fieldOffset = std::get<1>(recv);
          TR::VMAccessCriticalSection getInt64FieldAt(fe);
          client->write(response, fe->getInt64FieldAt(objectPointer, fieldOffset));
          }
          break;
       case MessageType::VM_setInt64FieldAt:
          {
-         auto recv = client->getRecvData<uintptrj_t, uintptrj_t, int64_t>();
-         uintptrj_t objectPointer = std::get<0>(recv);
-         uintptrj_t fieldOffset = std::get<1>(recv);
+         auto recv = client->getRecvData<uintptr_t, uintptr_t, int64_t>();
+         uintptr_t objectPointer = std::get<0>(recv);
+         uintptr_t fieldOffset = std::get<1>(recv);
          int64_t newValue = std::get<2>(recv);
          fe->setInt64FieldAt(objectPointer, fieldOffset, newValue);
          client->write(response, JITServer::Void());
@@ -683,9 +683,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::VM_compareAndSwapInt64FieldAt:
          {
-         auto recv = client->getRecvData<uintptrj_t, uintptrj_t, int64_t, int64_t>();
-         uintptrj_t objectPointer = std::get<0>(recv);
-         uintptrj_t fieldOffset = std::get<1>(recv);
+         auto recv = client->getRecvData<uintptr_t, uintptr_t, int64_t, int64_t>();
+         uintptr_t objectPointer = std::get<0>(recv);
+         uintptr_t fieldOffset = std::get<1>(recv);
          int64_t oldValue = std::get<2>(recv);
          int64_t newValue = std::get<3>(recv);
          client->write(response, fe->compareAndSwapInt64FieldAt(objectPointer, fieldOffset, oldValue, newValue));
@@ -693,14 +693,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::VM_getArrayLengthInElements:
          {
-         uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
+         uintptr_t objectPointer = std::get<0>(client->getRecvData<uintptr_t>());
          TR::VMAccessCriticalSection getArrayLengthInElements(fe);
          client->write(response, fe->getArrayLengthInElements(objectPointer));
          }
          break;
       case MessageType::VM_getClassFromJavaLangClass:
          {
-         uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
+         uintptr_t objectPointer = std::get<0>(client->getRecvData<uintptr_t>());
          client->write(response, fe->getClassFromJavaLangClass(objectPointer));
          }
          break;
@@ -881,14 +881,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::VM_createMethodHandleArchetypeSpecimen:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
-         uintptrj_t *methodHandleLocation = std::get<0>(recv);
+         auto recv = client->getRecvData<uintptr_t*>();
+         uintptr_t *methodHandleLocation = std::get<0>(recv);
          intptrj_t length;
          char *thunkableSignature;
             {
             TR::VMAccessCriticalSection createMethodHandleArchetypeSpecimen(fe);
             TR_OpaqueMethodBlock *archetype = fe->lookupMethodHandleThunkArchetype(*methodHandleLocation);
-            uintptrj_t signatureString = fe->getReferenceField(fe->getReferenceField(
+            uintptr_t signatureString = fe->getReferenceField(fe->getReferenceField(
                *methodHandleLocation,
                "thunks",             "Ljava/lang/invoke/ThunkTuple;"),
                "thunkableSignature", "Ljava/lang/String;");
@@ -998,9 +998,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::VM_stringEquals:
          {
-         auto recv = client->getRecvData<uintptrj_t *, uintptrj_t *>();
-         uintptrj_t *stringLocation1 = std::get<0>(recv);
-         uintptrj_t *stringLocation2 = std::get<1>(recv);
+         auto recv = client->getRecvData<uintptr_t *, uintptr_t *>();
+         uintptr_t *stringLocation1 = std::get<0>(recv);
+         uintptr_t *stringLocation2 = std::get<1>(recv);
          int32_t result;
          bool isEqual = fe->stringEquals(comp, stringLocation1, stringLocation2, result);
          client->write(response, result, isEqual);
@@ -1008,7 +1008,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::VM_getStringHashCode:
          {
-         uintptrj_t *stringLocation = std::get<0>(client->getRecvData<uintptrj_t *>());
+         uintptr_t *stringLocation = std::get<0>(client->getRecvData<uintptr_t *>());
          int32_t result;
          bool isGet = fe->getStringHashCode(comp, stringLocation, result);
          client->write(response, result, isGet);
@@ -1274,7 +1274,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          J9Method * ramMethod = 0;
          UDATA vTableIndex = (((J9RAMVirtualMethodRef*) literals)[cpIndex]).methodIndexAndArgCount;
          vTableIndex >>= 8;
-         if ((TR::Compiler->vm.getInterpreterVTableOffset() + sizeof(uintptrj_t)) == vTableIndex)
+         if ((TR::Compiler->vm.getInterpreterVTableOffset() + sizeof(uintptr_t)) == vTableIndex)
             {
             TR::VMAccessCriticalSection resolveVirtualMethodRef(fe);
             vTableIndex = fe->_vmFunctionTable->resolveVirtualMethodRefInto(fe->vmThread(), cp, cpIndex,
@@ -1373,7 +1373,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::ResolvedMethod_jniNativeMethodProperties:
          {
          auto ramMethod = std::get<0>(client->getRecvData<J9Method*>());
-         uintptrj_t jniProperties;
+         uintptr_t jniProperties;
          void *jniTargetAddress = fe->getJ9JITConfig()->javaVM->internalVMFunctions->jniNativeMethodProperties(fe->vmThread(), ramMethod, &jniProperties);
          client->write(response, jniProperties, jniTargetAddress);
          }
@@ -1617,7 +1617,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::ResolvedMethod_isSameMethod:
          {
-         auto recv = client->getRecvData<uintptrj_t*, uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*, uintptr_t*>();
          client->write(response, *std::get<0>(recv) == *std::get<1>(recv));
          }
          break;
@@ -1801,8 +1801,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto cpIndex = std::get<1>(recv);
 
          TR::VMAccessCriticalSection condyCriticalSection(fe);
-         uintptrj_t obj = 0;
-         uintptrj_t *objLocation = (uintptrj_t*)mirror->dynamicConstant(cpIndex, &obj);
+         uintptr_t obj = 0;
+         uintptr_t *objLocation = (uintptr_t*)mirror->dynamicConstant(cpIndex, &obj);
          client->write(response, objLocation, obj);
          }
          break;
@@ -2061,7 +2061,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::SharedCache_getClassChainOffsetInSharedCache:
          {
          auto j9class = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         uintptrj_t classChainOffsetInSharedCache = fe->sharedCache()->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
+         uintptr_t classChainOffsetInSharedCache = fe->sharedCache()->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
          client->write(response, classChainOffsetInSharedCache);
          }
          break;
@@ -2096,12 +2096,12 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup:
          {
-         auto recv = client->getRecvData<uintptrj_t*, std::vector<uintptrj_t> >();
+         auto recv = client->getRecvData<uintptr_t*, std::vector<uintptr_t> >();
          TR::VMAccessCriticalSection invokeILGenMacrosInvokeExactAndFixup(fe);
-         uintptrj_t receiverHandle = *std::get<0>(recv);
-         const std::vector<uintptrj_t>& listOfOffsets = std::get<1>(recv);
-         uintptrj_t methodHandle = listOfOffsets.size() == 0 ? receiverHandle : JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
-         uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(
+         uintptr_t receiverHandle = *std::get<0>(recv);
+         const std::vector<uintptr_t>& listOfOffsets = std::get<1>(recv);
+         uintptr_t methodHandle = listOfOffsets.size() == 0 ? receiverHandle : JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
+         uintptr_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "type",             "Ljava/lang/invoke/MethodType;"),
             "methodDescriptor", "Ljava/lang/String;");
@@ -2113,12 +2113,12 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeCollectHandleNumArgsToCollect:
          {
-         auto recv = client->getRecvData<uintptrj_t*, bool>();
+         auto recv = client->getRecvData<uintptr_t*, bool>();
          TR::VMAccessCriticalSection invokeCollectHandleNumArgsToCollect(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
+         uintptr_t methodHandle = *std::get<0>(recv);
          bool getPos = std::get<1>(recv);
          int32_t collectArraySize = fe->getInt32Field(methodHandle, "collectArraySize");
-         uintptrj_t arguments = fe->getReferenceField(
+         uintptr_t arguments = fe->getReferenceField(
                   fe->getReferenceField(methodHandle, "type", "Ljava/lang/invoke/MethodType;"),
                   "arguments", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
@@ -2130,10 +2130,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeGuardWithTestHandleNumGuardArgs:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeGuardWithTestHandleNumGuardArgs(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
-         uintptrj_t guardArgs = fe->getReferenceField(fe->methodHandle_type(fe->getReferenceField(methodHandle,
+         uintptr_t methodHandle = *std::get<0>(recv);
+         uintptr_t guardArgs = fe->getReferenceField(fe->methodHandle_type(fe->getReferenceField(methodHandle,
             "guard", "Ljava/lang/invoke/MethodHandle;")),
             "arguments", "[Ljava/lang/Class;");
          int32_t numGuardArgs = (int32_t)fe->getArrayLengthInElements(guardArgs);
@@ -2142,10 +2142,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeExplicitCastHandleConvertArgs:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeExplicitCastHandleConvertArgs(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
-         uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
+         uintptr_t methodHandle = *std::get<0>(recv);
+         uintptr_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "next",             "Ljava/lang/invoke/MethodHandle;"),
             "type",             "Ljava/lang/invoke/MethodType;"),
@@ -2158,11 +2158,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_targetTypeL:
          {
-         auto recv = client->getRecvData<uintptrj_t*, int32_t>();
+         auto recv = client->getRecvData<uintptr_t*, int32_t>();
          TR::VMAccessCriticalSection targetTypeL(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
+         uintptr_t methodHandle = *std::get<0>(recv);
          int32_t argIndex = std::get<1>(recv);
-         uintptrj_t targetArguments = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
+         uintptr_t targetArguments = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "next",             "Ljava/lang/invoke/MethodHandle;"),
             "type",             "Ljava/lang/invoke/MethodType;"),
@@ -2170,7 +2170,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR_OpaqueClassBlock *targetParmClass = (TR_OpaqueClassBlock*)(intptrj_t)fe->getInt64Field(fe->getReferenceElement(targetArguments, argIndex),
                                                                           "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
          // Load callsite type and check if two types are compatible
-         uintptrj_t sourceArguments = fe->getReferenceField(fe->getReferenceField(
+         uintptr_t sourceArguments = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "type",             "Ljava/lang/invoke/MethodType;"),
             "arguments",        "[Ljava/lang/Class;");
@@ -2181,15 +2181,15 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeDirectHandleDirectCall:
          {
-         auto recv = client->getRecvData<uintptrj_t*, bool, bool>();
+         auto recv = client->getRecvData<uintptr_t*, bool, bool>();
          TR::VMAccessCriticalSection invokeDirectHandleDirectCall(fe);
-         uintptrj_t methodHandle   = *std::get<0>(recv);
+         uintptr_t methodHandle   = *std::get<0>(recv);
          int64_t vmSlot         = fe->getInt64Field(methodHandle, "vmSlot");
          bool isInterface = std::get<1>(recv);
          bool isVirtual = std::get<2>(recv);
          TR_OpaqueMethodBlock * j9method;
 
-         uintptrj_t jlClass = fe->getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
+         uintptr_t jlClass = fe->getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
          if (isInterface)
              {
              TR_OpaqueClassBlock *clazz = fe->getClassFromJavaLangClass(jlClass);
@@ -2197,7 +2197,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
              }
          else if (isVirtual)
             {
-            TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptrj_t)fe->getClassFromJavaLangClass(jlClass)) + TR::Compiler->vm.getInterpreterVTableOffset());
+            TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptr_t)fe->getClassFromJavaLangClass(jlClass)) + TR::Compiler->vm.getInterpreterVTableOffset());
             int32_t index = (int32_t)((vmSlot - TR::Compiler->vm.getInterpreterVTableOffset()) / sizeof(vtable[0]));
             j9method = vtable[index];
             }
@@ -2210,10 +2210,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeSpreadHandleArrayArg:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeSpreadHandleArrayArg(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
-         uintptrj_t arrayClass   = fe->getReferenceField(methodHandle, "arrayClass", "Ljava/lang/Class;");
+         uintptr_t methodHandle = *std::get<0>(recv);
+         uintptr_t arrayClass   = fe->getReferenceField(methodHandle, "arrayClass", "Ljava/lang/Class;");
          J9ArrayClass *arrayJ9Class = (J9ArrayClass*)(intptrj_t)fe->getInt64Field(arrayClass,
                                                                       "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
          J9Class *leafClass = arrayJ9Class->leafComponentType;
@@ -2231,14 +2231,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeSpreadHandle:
          {
-         auto recv = client->getRecvData<uintptrj_t*, bool>();
+         auto recv = client->getRecvData<uintptr_t*, bool>();
          TR::VMAccessCriticalSection invokeSpreadHandle(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
+         uintptr_t methodHandle = *std::get<0>(recv);
          bool getSpreadPosition = std::get<1>(recv);
-         uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+         uintptr_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
-         uintptrj_t next = fe->getReferenceField(methodHandle, "next", "Ljava/lang/invoke/MethodHandle;");
-         uintptrj_t nextArguments = fe->getReferenceField(fe->methodHandle_type(next), "arguments", "[Ljava/lang/Class;");
+         uintptr_t next = fe->getReferenceField(methodHandle, "next", "Ljava/lang/invoke/MethodHandle;");
+         uintptr_t nextArguments = fe->getReferenceField(fe->methodHandle_type(next), "arguments", "[Ljava/lang/Class;");
          int32_t numNextArguments = (int32_t)fe->getArrayLengthInElements(nextArguments);
          int32_t spreadStart = 0;
          // Guard to protect old code
@@ -2249,24 +2249,24 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeInsertHandle:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeInsertHandle(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
+         uintptr_t methodHandle = *std::get<0>(recv);
          int32_t insertionIndex = fe->getInt32Field(methodHandle, "insertionIndex");
-         uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(methodHandle, "type",
+         uintptr_t arguments = fe->getReferenceField(fe->getReferenceField(methodHandle, "type",
                   "Ljava/lang/invoke/MethodType;"), "arguments", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
-         uintptrj_t values = fe->getReferenceField(methodHandle, "values", "[Ljava/lang/Object;");
+         uintptr_t values = fe->getReferenceField(methodHandle, "values", "[Ljava/lang/Object;");
          int32_t numValues = (int32_t)fe->getArrayLengthInElements(values);
          client->write(response, insertionIndex, numArguments, numValues);
          }
          break;
       case MessageType::runFEMacro_invokeFoldHandle:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeFoldHandle(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
-         uintptrj_t argIndices = fe->getReferenceField(methodHandle, "argumentIndices", "[I");
+         uintptr_t methodHandle = *std::get<0>(recv);
+         uintptr_t argIndices = fe->getReferenceField(methodHandle, "argumentIndices", "[I");
          int32_t arrayLength = (int32_t)fe->getArrayLengthInElements(argIndices);
          int32_t foldPosition = fe->getInt32Field(methodHandle, "foldPosition");
          std::vector<int32_t> indices(arrayLength);
@@ -2281,8 +2281,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             }
          else
             {
-            uintptrj_t combiner         = fe->getReferenceField(methodHandle, "combiner", "Ljava/lang/invoke/MethodHandle;");
-            uintptrj_t combinerArguments = fe->getReferenceField(fe->methodHandle_type(combiner), "arguments", "[Ljava/lang/Class;");
+            uintptr_t combiner         = fe->getReferenceField(methodHandle, "combiner", "Ljava/lang/invoke/MethodHandle;");
+            uintptr_t combinerArguments = fe->getReferenceField(fe->methodHandle_type(combiner), "arguments", "[Ljava/lang/Class;");
             numArgs = (int32_t)fe->getArrayLengthInElements(combinerArguments);
             }
          client->write(response, indices, foldPosition, numArgs);
@@ -2290,19 +2290,19 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeFoldHandle2:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeFoldHandle(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
+         uintptr_t methodHandle = *std::get<0>(recv);
          int32_t foldPosition = fe->getInt32Field(methodHandle, "foldPosition");
          client->write(response, foldPosition);
          }
          break;
       case MessageType::runFEMacro_invokeFilterArgumentsWithCombinerHandleArgumentIndices:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
-         uintptrj_t argumentIndices = fe->getReferenceField(methodHandle, "argumentIndices", "[I");
+         uintptr_t methodHandle = *std::get<0>(recv);
+         uintptr_t argumentIndices = fe->getReferenceField(methodHandle, "argumentIndices", "[I");
          int32_t arrayLength = fe->getArrayLengthInElements(argumentIndices);
          std::vector<int32_t> argIndices(arrayLength);
          for (int i = arrayLength - 1; i >= 0; i--)
@@ -2314,24 +2314,24 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeFilterArgumentsWithCombinerHandleFilterPosition:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
+         uintptr_t methodHandle = *std::get<0>(recv);
          int32_t filterPosition = fe->getInt32Field(methodHandle, "filterPosition");
          client->write(response, filterPosition);
          }
          break;
       case MessageType::runFEMacro_invokeFinallyHandle:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeFinallyHandle(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
-         uintptrj_t finallyTarget = fe->getReferenceField(methodHandle, "finallyTarget", "Ljava/lang/invoke/MethodHandle;");
-         uintptrj_t finallyType = fe->getReferenceField(finallyTarget, "type", "Ljava/lang/invoke/MethodType;");
-         uintptrj_t arguments        = fe->getReferenceField(finallyType, "arguments", "[Ljava/lang/Class;");
+         uintptr_t methodHandle = *std::get<0>(recv);
+         uintptr_t finallyTarget = fe->getReferenceField(methodHandle, "finallyTarget", "Ljava/lang/invoke/MethodHandle;");
+         uintptr_t finallyType = fe->getReferenceField(finallyTarget, "type", "Ljava/lang/invoke/MethodType;");
+         uintptr_t arguments        = fe->getReferenceField(finallyType, "arguments", "[Ljava/lang/Class;");
          int32_t numArgsPassToFinallyTarget = (int32_t)fe->getArrayLengthInElements(arguments);
 
-         uintptrj_t methodDescriptorRef = fe->getReferenceField(finallyType, "methodDescriptor", "Ljava/lang/String;");
+         uintptr_t methodDescriptorRef = fe->getReferenceField(finallyType, "methodDescriptor", "Ljava/lang/String;");
          int methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
          char *methodDescriptor = (char*)alloca(methodDescriptorLength+1);
          fe->getStringUTF8(methodDescriptorRef, methodDescriptor, methodDescriptorLength+1);
@@ -2340,10 +2340,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeFilterArgumentsWithCombinerHandleNumSuffixArgs:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
-         uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+         uintptr_t methodHandle = *std::get<0>(recv);
+         uintptr_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          int32_t filterPos     = (int32_t)fe->getInt32Field(methodHandle, "filterPosition");
          client->write(response, numArguments, filterPos);
@@ -2351,19 +2351,19 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeFilterArgumentsHandle:
          {
-         auto recv = client->getRecvData<uintptrj_t*, bool>();
-         uintptrj_t methodHandle = *std::get<0>(recv);
+         auto recv = client->getRecvData<uintptr_t*, bool>();
+         uintptr_t methodHandle = *std::get<0>(recv);
          bool knotEnabled = std::get<1>(recv);
 
          int32_t startPos = 0;
          std::string nextSignatureString;
          std::vector<uint8_t> haveFilterList;
          std::vector<TR::KnownObjectTable::Index> filterIndexList;
-         std::vector<uintptrj_t *> filterObjectReferenceLocationList;
+         std::vector<uintptr_t *> filterObjectReferenceLocationList;
 
             {
             TR::VMAccessCriticalSection invokeFilterArgumentsHandle(fe);
-            uintptrj_t filters = fe->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
+            uintptr_t filters = fe->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
             int32_t numFilters = fe->getArrayLengthInElements(filters);
             haveFilterList.resize(numFilters);
             filterIndexList.resize(numFilters);
@@ -2380,7 +2380,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                }
 
             startPos = (int32_t)fe->getInt32Field(methodHandle, "startPos");
-            uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
+            uintptr_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
                methodHandle,
                "next",             "Ljava/lang/invoke/MethodHandle;"),
                "type",             "Ljava/lang/invoke/MethodType;"),
@@ -2396,24 +2396,24 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeFilterArgumentsHandle2:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeFilderArgumentsHandle(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
-         uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+         uintptr_t methodHandle = *std::get<0>(recv);
+         uintptr_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          int32_t startPos     = (int32_t)fe->getInt32Field(methodHandle, "startPos");
-         uintptrj_t filters = fe->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
+         uintptr_t filters = fe->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
          int32_t numFilters = fe->getArrayLengthInElements(filters);
          client->write(response, numArguments, startPos, numFilters);
          }
          break;
       case MessageType::runFEMacro_invokeCatchHandle:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeCatchHandle(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
-         uintptrj_t catchTarget    = fe->getReferenceField(methodHandle, "catchTarget", "Ljava/lang/invoke/MethodHandle;");
-         uintptrj_t catchArguments = fe->getReferenceField(fe->getReferenceField(
+         uintptr_t methodHandle = *std::get<0>(recv);
+         uintptr_t catchTarget    = fe->getReferenceField(methodHandle, "catchTarget", "Ljava/lang/invoke/MethodHandle;");
+         uintptr_t catchArguments = fe->getReferenceField(fe->getReferenceField(
             catchTarget,
             "type", "Ljava/lang/invoke/MethodType;"),
             "arguments", "[Ljava/lang/Class;");
@@ -2423,10 +2423,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeArgumentMoverHandlePermuteArgs:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeArgumentMoverHandlePermuteArgs(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
-         uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
+         uintptr_t methodHandle = *std::get<0>(recv);
+         uintptr_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "next",             "Ljava/lang/invoke/MethodHandle;"),
             "type",             "Ljava/lang/invoke/MethodType;"),
@@ -2439,10 +2439,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokePermuteHandlePermuteArgs:
          {
-         auto recv = client->getRecvData<uintptrj_t*>();
+         auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokePermuteHandlePermuteArgs(fe);
-         uintptrj_t methodHandle = *std::get<0>(recv);
-         uintptrj_t permuteArray = fe->getReferenceField(methodHandle, "permute", "[I");
+         uintptr_t methodHandle = *std::get<0>(recv);
+         uintptr_t permuteArray = fe->getReferenceField(methodHandle, "permute", "[I");
          int32_t permuteLength = fe->getArrayLengthInElements(permuteArray);
          std::vector<int32_t> argIndices(permuteLength);
          for (int32_t i=0; i < permuteLength; i++)
@@ -2454,12 +2454,12 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeILGenMacrosParameterCount:
          {
-         auto recv = client->getRecvData<uintptrj_t*, std::vector<uintptrj_t> >();
+         auto recv = client->getRecvData<uintptr_t*, std::vector<uintptr_t> >();
          TR::VMAccessCriticalSection invokeILGenMacrosParameterCount(fe);
-         uintptrj_t receiverHandle = *std::get<0>(recv);
-         const std::vector<uintptrj_t>& listOfOffsets = std::get<1>(recv);
-         uintptrj_t methodHandle = JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
-         uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(
+         uintptr_t receiverHandle = *std::get<0>(recv);
+         const std::vector<uintptr_t>& listOfOffsets = std::get<1>(recv);
+         uintptr_t methodHandle = JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
+         uintptr_t arguments = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "type", "Ljava/lang/invoke/MethodType;"),
             "arguments", "[Ljava/lang/Class;");
@@ -2469,23 +2469,23 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeILGenMacrosArrayLength:
          {
-         auto recv = client->getRecvData<uintptrj_t*, std::vector<uintptrj_t> >();
+         auto recv = client->getRecvData<uintptr_t*, std::vector<uintptr_t> >();
          TR::VMAccessCriticalSection invokeILGenMacrosArrayLength(fe);
-         uintptrj_t receiverHandle = *std::get<0>(recv);
-         const std::vector<uintptrj_t>& listOfOffsets = std::get<1>(recv);
-         uintptrj_t array = JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
+         uintptr_t receiverHandle = *std::get<0>(recv);
+         const std::vector<uintptr_t>& listOfOffsets = std::get<1>(recv);
+         uintptr_t array = JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
          int32_t arrayLength = (int32_t)fe->getArrayLengthInElements(array);
          client->write(response, arrayLength);
          }
          break;
       case MessageType::runFEMacro_invokeILGenMacrosGetField:
          {
-         auto recv = client->getRecvData<uintptrj_t*, uintptrj_t, std::vector<uintptrj_t> >();
+         auto recv = client->getRecvData<uintptr_t*, uintptr_t, std::vector<uintptr_t> >();
          TR::VMAccessCriticalSection invokeILGenMacrosGetField(fe);
-         uintptrj_t receiverHandle = *std::get<0>(recv);
-         uintptrj_t fieldOffset = std::get<1>(recv);
-         const std::vector<uintptrj_t>& listOfOffsets = std::get<2>(recv);
-         uintptrj_t baseObject = JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
+         uintptr_t receiverHandle = *std::get<0>(recv);
+         uintptr_t fieldOffset = std::get<1>(recv);
+         const std::vector<uintptr_t>& listOfOffsets = std::get<2>(recv);
+         uintptr_t baseObject = JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
          int32_t result = fe->getInt32FieldAt(baseObject, fieldOffset);
          client->write(response, result);
          }
@@ -2500,10 +2500,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 
             {
             TR::VMAccessCriticalSection invokeCollectHandleAllocateArray(fe);
-            uintptrj_t methodHandle = knot->getPointer(knotIndex);
+            uintptr_t methodHandle = knot->getPointer(knotIndex);
             collectArraySize = fe->getInt32Field(methodHandle, "collectArraySize");
             collectPosition = fe->getInt32Field(methodHandle, "collectPosition");
-            uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
+            uintptr_t arguments = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
                methodHandle,
                "next",             "Ljava/lang/invoke/MethodHandle;"),
                "type",             "Ljava/lang/invoke/MethodType;"),
@@ -2588,9 +2588,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::KnownObjectTable_getIndex:
          {
-         uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
+         uintptr_t objectPointer = std::get<0>(client->getRecvData<uintptr_t>());
          TR::KnownObjectTable::Index index = TR::KnownObjectTable::UNKNOWN;
-         uintptrj_t *objectPointerReference = NULL;
+         uintptr_t *objectPointerReference = NULL;
 
             {
             TR::VMAccessCriticalSection knownObjectTableGetIndex(fe);
@@ -2603,14 +2603,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::KnownObjectTable_getIndexAt:
          {
-         uintptrj_t *objectPointerReference = std::get<0>(client->getRecvData<uintptrj_t*>());
+         uintptr_t *objectPointerReference = std::get<0>(client->getRecvData<uintptr_t*>());
          client->write(response, knot->getIndexAt(objectPointerReference));
          }
          break;
       case MessageType::KnownObjectTable_getPointer:
          {
          TR::KnownObjectTable::Index knotIndex = std::get<0>(client->getRecvData<TR::KnownObjectTable::Index>());
-         uintptrj_t objectPointer = 0;
+         uintptr_t objectPointer = 0;
 
             {
             TR::VMAccessCriticalSection knownObjectTableGetPointer(fe);
@@ -2622,7 +2622,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::KnownObjectTable_getExistingIndexAt:
          {
-         uintptrj_t *objectPointerReference = std::get<0>(client->getRecvData<uintptrj_t*>());
+         uintptr_t *objectPointerReference = std::get<0>(client->getRecvData<uintptr_t*>());
          client->write(response, knot->getExistingIndexAt(objectPointerReference));
          }
          break;
@@ -2635,11 +2635,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 
          bool createKnownObject = false;
          TR::KnownObjectTable::Index knotIndex = TR::KnownObjectTable::UNKNOWN;
-         uintptrj_t *objectPointerReference = NULL;
+         uintptr_t *objectPointerReference = NULL;
 
             {
             TR::VMAccessCriticalSection getObjectReferenceLocation(fe);
-            if (*((uintptrj_t*)dataAddress) != 0)
+            if (*((uintptr_t*)dataAddress) != 0)
                {
                TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp, cpIndex);
                if (declaringClass && fe->isClassInitialized(declaringClass))
@@ -2657,7 +2657,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                            && (clazzNameLength != 16 || strncmp(clazzName, "java/lang/System", 16)))
                      {
                      TR_OpaqueClassBlock *varHandleClass =  fe->getSystemClassFromClassName("java/lang/invoke/VarHandle", 26);
-                     TR_OpaqueClassBlock *objectClass = TR::Compiler->cls.objectClass(comp, *((uintptrj_t*)dataAddress));
+                     TR_OpaqueClassBlock *objectClass = TR::Compiler->cls.objectClass(comp, *((uintptr_t*)dataAddress));
 
                      if (varHandleClass != NULL
                          && objectClass != NULL
@@ -2669,7 +2669,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 
                   if (createKnownObject)
                      {
-                     knotIndex = knot->getIndexAt((uintptrj_t*)dataAddress);
+                     knotIndex = knot->getIndexAt((uintptr_t*)dataAddress);
                      objectPointerReference = knot->getPointerLocation(knotIndex);
                      }
                   }
@@ -2681,21 +2681,21 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::KnownObjectTable_mutableCallSiteEpoch:
          {
-         auto recv = client->getRecvData<uintptrj_t*, bool>();
-         uintptrj_t* mcsReferenceLocation = std::get<0>(recv);
+         auto recv = client->getRecvData<uintptr_t*, bool>();
+         uintptr_t* mcsReferenceLocation = std::get<0>(recv);
          bool knotEnabled = std::get<1>(recv);
 
-         uintptrj_t mcsObject = 0;
+         uintptr_t mcsObject = 0;
          TR::KnownObjectTable::Index knotIndex = TR::KnownObjectTable::UNKNOWN;
-         uintptrj_t *objectPointerReference = NULL;
+         uintptr_t *objectPointerReference = NULL;
 
             {
             TR::VMAccessCriticalSection mutableCallSiteEpoch(fe);
-            mcsObject = fe->getStaticReferenceFieldAtAddress((uintptrj_t)mcsReferenceLocation);
+            mcsObject = fe->getStaticReferenceFieldAtAddress((uintptr_t)mcsReferenceLocation);
             if (mcsObject && knotEnabled && knot)
                {
                TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe);
-               uintptrj_t currentEpoch = fej9->getVolatileReferenceField(mcsObject, "epoch", "Ljava/lang/invoke/MethodHandle;");
+               uintptr_t currentEpoch = fej9->getVolatileReferenceField(mcsObject, "epoch", "Ljava/lang/invoke/MethodHandle;");
                if (currentEpoch)
                   {
                   knotIndex = knot->getIndex(currentEpoch);
@@ -2716,9 +2716,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          uint32_t fieldOffset = std::get<3>(recv);
 
          TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
-         uintptrj_t *objectPointerReference = NULL;
-         uintptrj_t fieldAddress = 0;
-         uintptrj_t baseObjectAddress = 0;
+         uintptr_t *objectPointerReference = NULL;
+         uintptr_t fieldAddress = 0;
+         uintptr_t baseObjectAddress = 0;
 
             {
             TR::VMAccessCriticalSection dereferenceKnownObjectField(fe);
@@ -2743,15 +2743,15 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR::KnownObjectTable::Index receiverIndex = std::get<1>(recv);
 
          TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
-         uintptrj_t *objectPointerReference = NULL;
+         uintptr_t *objectPointerReference = NULL;
 
             {
             TR::VMAccessCriticalSection dereferenceKnownObjectField(fe);
             int32_t targetFieldOffset = fe->getInstanceFieldOffset(mutableCallsiteClass, "target", "Ljava/lang/invoke/MethodHandle;");
-            uintptrj_t receiverAddress = knot->getPointer(receiverIndex);
+            uintptr_t receiverAddress = knot->getPointer(receiverIndex);
             TR_OpaqueClassBlock *receiverClass = fe->getObjectClass(receiverAddress);
             TR_ASSERT_FATAL(fe->isInstanceOf(receiverClass, mutableCallsiteClass, true) == TR_yes, "receiver of mutableCallsite_getTarget must be instance of MutableCallSite (*%p)", knot->getPointerLocation(receiverIndex));
-            uintptrj_t fieldAddress = fe->getReferenceFieldAt(receiverAddress, targetFieldOffset);
+            uintptr_t fieldAddress = fe->getReferenceFieldAt(receiverAddress, targetFieldOffset);
 
             resultIndex = knot->getIndex(fieldAddress);
             objectPointerReference = knot->getPointerLocation(resultIndex);
@@ -2762,20 +2762,20 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::KnownObjectTable_invokeDirectHandleDirectCall:
          {
-         auto recv = (client->getRecvData<uintptrj_t*, bool>());
-         uintptrj_t *methodHandleLocation = std::get<0>(recv);
+         auto recv = (client->getRecvData<uintptr_t*, bool>());
+         uintptr_t *methodHandleLocation = std::get<0>(recv);
          bool knotEnabled = std::get<1>(recv);
 
          TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
-         uintptrj_t *objectPointerReference = NULL;
+         uintptr_t *objectPointerReference = NULL;
          int64_t vmSlot = 0;
-         uintptrj_t jlClass = 0;
+         uintptr_t jlClass = 0;
 
             {
             TR::VMAccessCriticalSection invokeDirectHandleDirectCall(fe);
-            uintptrj_t methodHandle = *methodHandleLocation;
+            uintptr_t methodHandle = *methodHandleLocation;
             vmSlot = fe->getInt64Field(methodHandle, "vmSlot");
-            uintptrj_t jlClass = fe->getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
+            uintptr_t jlClass = fe->getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
 
             if (knotEnabled && knot)
                {
@@ -2792,11 +2792,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          void *staticAddress = std::get<0>(client->getRecvData<void*>());
 
          TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
-         uintptrj_t *objectPointerReference = NULL;
+         uintptr_t *objectPointerReference = NULL;
 
             {
             TR::VMAccessCriticalSection createSymRefWithKnownObject(fe);
-            uintptrj_t jlClass = (uintptrj_t)J9VM_J9CLASS_TO_HEAPCLASS((J9Class*)staticAddress);
+            uintptr_t jlClass = (uintptr_t)J9VM_J9CLASS_TO_HEAPCLASS((J9Class*)staticAddress);
             TR_ASSERT(jlClass, "java/lang/Class reference from heap class must be non null");
 
             resultIndex = knot->getIndexAt(&jlClass);
@@ -2808,19 +2808,19 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::KnownObjectTable_getReferenceField:
          {
-         auto recv = (client->getRecvData<bool, uintptrj_t*, int32_t, bool>());
+         auto recv = (client->getRecvData<bool, uintptr_t*, int32_t, bool>());
          bool isStatic = std::get<0>(recv);
-         uintptrj_t *baseObjectRefLocation = std::get<1>(recv);
+         uintptr_t *baseObjectRefLocation = std::get<1>(recv);
          int32_t fieldOffset = std::get<2>(recv);
          bool knotEnabled = std::get<3>(recv);
 
          TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
-         uintptrj_t *objectPointerReference = NULL;
-         uintptrj_t targetObjectReference = 0;
+         uintptr_t *objectPointerReference = NULL;
+         uintptr_t targetObjectReference = 0;
 
             {
             TR::VMAccessCriticalSection getReferenceField(fe);
-            uintptrj_t baseObjectRef = isStatic ? fe->getStaticReferenceFieldAtAddress((uintptrj_t)baseObjectRefLocation) : *baseObjectRefLocation;
+            uintptr_t baseObjectRef = isStatic ? fe->getStaticReferenceFieldAtAddress((uintptr_t)baseObjectRefLocation) : *baseObjectRefLocation;
             targetObjectReference = fe->getReferenceFieldAt(baseObjectRef, fieldOffset);
 
             if (knotEnabled && knot)

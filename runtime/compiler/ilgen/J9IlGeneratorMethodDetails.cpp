@@ -310,7 +310,7 @@ ShareableInvokeExactThunkDetails::isSameThunk(MethodHandleThunkDetails & other, 
    if (!other.isShareable())
       return false;
 
-   uintptrj_t thisThunkTuple, otherThunkTuple;
+   uintptr_t thisThunkTuple, otherThunkTuple;
 
    // Consider: there is a race condition here.  If there are two shareable thunks requested,
    // and then we change the thunktuple of one of the handles, then this code will not detect

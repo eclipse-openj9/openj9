@@ -503,12 +503,12 @@ void * getStackAllocMapFromJitPC(J9JavaVM * javaVM, J9TR_MethodMetaData * method
    stackAllocMap = (void **)((J9JITStackAtlas *) methodMetaData->gcStackAtlas)->stackAllocMap;
    if (stackAllocMap)
       {
-      uintptrj_t returnValue;
+      uintptr_t returnValue;
 
       if (*((uint8_t **) stackAllocMap) == ((uint8_t *) stackMap))
          return NULL;
 
-      returnValue = ((uintptrj_t) stackAllocMap) + sizeof(uintptrj_t);
+      returnValue = ((uintptr_t) stackAllocMap) + sizeof(uintptr_t);
 
       return ((void *) returnValue);
       }

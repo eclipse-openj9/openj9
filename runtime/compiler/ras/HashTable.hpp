@@ -33,7 +33,7 @@ class TR_Memory;
 #define MINIMUM_HASHTABLE_SIZE 16
 
 typedef uint32_t TR_HashIndex;
-typedef uintptrj_t TR_HashCode;
+typedef uintptr_t TR_HashCode;
 
 class TR_HashTableEntry
    {

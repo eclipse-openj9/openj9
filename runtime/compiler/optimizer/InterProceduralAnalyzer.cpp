@@ -799,7 +799,7 @@ uint32_t TR::InterProceduralAnalyzer::hash(void * h, uint32_t size)
    {
    // 2654435761 is the golden ratio of 2^32.
    //
-   return (((uint32_t)(uintptrj_t)h >> 2) * 2654435761u) % size;
+   return (((uint32_t)(uintptr_t)h >> 2) * 2654435761u) % size;
    }
 
 

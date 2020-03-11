@@ -263,18 +263,18 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
    cursor += 2;
 
    // PicBuilder function address
-   *(uintptrj_t *) cursor = (uintptrj_t) glueRef->getMethodAddress();
+   *(uintptr_t *) cursor = (uintptr_t) glueRef->getMethodAddress();
    AOTcgDiag1(comp, "add TR_AbsoluteHelperAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, (uint8_t *)glueRef, NULL, TR_AbsoluteHelperAddress,
                              __FILE__, __LINE__, getNode());
-   cursor += sizeof(uintptrj_t);
+   cursor += sizeof(uintptr_t);
 
    // code cache RA
-   *(uintptrj_t *) cursor = (uintptrj_t) (getBranchInstruction()->getNext())->getBinaryEncoding();
+   *(uintptr_t *) cursor = (uintptr_t) (getBranchInstruction()->getNext())->getBinaryEncoding();
    AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
                              __FILE__, __LINE__, getNode());
-   cursor += sizeof(uintptrj_t);
+   cursor += sizeof(uintptr_t);
 
    // cp
    if (getDataSymbolReference()->getSymbol()->isCallSiteTableEntry())
@@ -293,33 +293,33 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
    cursor += 4;
 
    // address of constant pool
-   *(uintptrj_t *) cursor = (uintptrj_t) getDataSymbolReference()->getOwningMethod(comp)->constantPool();
+   *(uintptr_t *) cursor = (uintptr_t) getDataSymbolReference()->getOwningMethod(comp)->constantPool();
    AOTcgDiag1(comp, "add TR_ConstantPool cursor=%x\n", cursor);
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool, cg()),
                              __FILE__, __LINE__, getNode());
-   cursor += sizeof(uintptrj_t);
+   cursor += sizeof(uintptr_t);
 
    // referencing instruction that needs patching
    if (getDataReferenceInstruction() != NULL)
       {
-      *(uintptrj_t *) cursor = (uintptrj_t) (getDataReferenceInstruction()->getBinaryEncoding());
+      *(uintptr_t *) cursor = (uintptr_t) (getDataReferenceInstruction()->getBinaryEncoding());
       }
    else
       {
-      *(uintptrj_t *) cursor = (uintptrj_t) (getBranchInstruction()->getNext())->getBinaryEncoding();
+      *(uintptr_t *) cursor = (uintptr_t) (getBranchInstruction()->getNext())->getBinaryEncoding();
       }
    AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
                              __FILE__, __LINE__, getNode());
-   cursor += sizeof(uintptrj_t);
+   cursor += sizeof(uintptr_t);
 
    // Literal Pool Address to patch.
-   *(uintptrj_t *) cursor = 0x0;
+   *(uintptr_t *) cursor = 0x0;
    setLiteralPoolPatchAddress(cursor);
    AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
                              __FILE__, __LINE__, getNode());
-   cursor += sizeof(uintptrj_t);
+   cursor += sizeof(uintptr_t);
 
 
    // Instance data load and stores require patching of the displacement field
@@ -390,14 +390,14 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
       cursor += sizeof(int32_t);
 
       // Padding to ensure resolved offset slot is aligned.
-      if ((uintptrj_t)cursor % 4 != 0)
+      if ((uintptr_t)cursor % 4 != 0)
          cursor += sizeof(int16_t);
 
       *(int32_t *) cursor = (int32_t)0x0badbeef;                 // DC Offset
 
       // Store pointer to resolved offset slot
       // code cache RA
-      *(uintptrj_t *) offsetMarker = (uintptrj_t) cursor;
+      *(uintptr_t *) offsetMarker = (uintptr_t) cursor;
       AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress offsetMarker=%x\n", offsetMarker);
       cg()->addProjectSpecializedRelocation(offsetMarker, NULL, NULL, TR_AbsoluteMethodAddress,
                                 __FILE__, __LINE__, getNode());
@@ -415,7 +415,7 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
 uint32_t
 J9::Z::UnresolvedDataSnippet::getLength(int32_t  estimatedSnippetStart)
    {
-   uint32_t length = (cg()->comp()->target().is64Bit() ? (14 + 5 * sizeof(uintptrj_t)) : (12 + 5 * sizeof(uintptrj_t)));
+   uint32_t length = (cg()->comp()->target().is64Bit() ? (14 + 5 * sizeof(uintptr_t)) : (12 + 5 * sizeof(uintptr_t)));
    // For instance snippets, we have the out-of-line sequence
    if (isInstanceData())
       length += (cg()->comp()->target().is64Bit()) ? 36 : 28;
@@ -541,15 +541,15 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
    bufferPos += sizeof(intptrj_t);
 
    printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
-   uintptrj_t addr;
+   uintptr_t addr;
 
    if (snippet->getDataReferenceInstruction() != NULL)
       {
-      addr = (uintptrj_t) (snippet->getDataReferenceInstruction()->getBinaryEncoding());
+      addr = (uintptr_t) (snippet->getDataReferenceInstruction()->getBinaryEncoding());
       }
    else
       {
-      addr = (uintptrj_t) (snippet->getBranchInstruction()->getNext())->getBinaryEncoding();
+      addr = (uintptr_t) (snippet->getBranchInstruction()->getNext())->getBinaryEncoding();
       }
    trfprintf(pOutFile, "DC    \t0x%p \t# Address Of Ref. Instruction", addr);
 
@@ -601,7 +601,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
                              snippet->getBranchInstruction()->getNext()->getBinaryEncoding());
       bufferPos += 6;
 
-      if ((uintptrj_t)bufferPos % 4 != 0)
+      if ((uintptr_t)bufferPos % 4 != 0)
          {
          printPrefix(pOutFile, NULL, bufferPos, 2);
          trfprintf(pOutFile, "\t\t# 2 byte padding");

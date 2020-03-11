@@ -297,7 +297,7 @@ TR_PersistentCHTable::findSingleJittedImplementer(
 TR_PersistentClassInfo *
 TR_PersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
-   TR_PersistentClassInfo *cl = _classes[TR_RuntimeAssumptionTable::hashCode((uintptrj_t)classId) % CLASSHASHTABLE_SIZE].getFirst();
+   TR_PersistentClassInfo *cl = _classes[TR_RuntimeAssumptionTable::hashCode((uintptr_t)classId) % CLASSHASHTABLE_SIZE].getFirst();
    while (cl &&
           cl->getClassId() != classId)
       cl = cl->getNext();
@@ -709,7 +709,7 @@ TR_PersistentCHTable::classGotLoaded(
    TR_PersistentClassInfo *clazz = new (PERSISTENT_NEW) TR_PersistentClassInfo(classId);
    if (clazz)
       {
-      _classes[TR_RuntimeAssumptionTable::hashCode((uintptrj_t) classId) % CLASSHASHTABLE_SIZE].add(clazz);
+      _classes[TR_RuntimeAssumptionTable::hashCode((uintptr_t) classId) % CLASSHASHTABLE_SIZE].add(clazz);
       }
    return clazz;
    }

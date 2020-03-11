@@ -42,7 +42,7 @@ namespace TR { class Node; }
 /*
  * Debugger Extensions
  */
-typedef void* (* TR_Malloc_t)(uintptrj_t, void*);
+typedef void* (* TR_Malloc_t)(uintptr_t, void*);
 typedef void  (* TR_Free_t)(void*);
 typedef void  (* TR_Printf_t)(const char *s, ...);
 

@@ -623,7 +623,7 @@ static void processMethodHotness(J9VMThread *vmThread, J9JITConfig *jitConfig, T
    }
 
 void
-TR_PPCHWProfiler::processBufferRecords(J9VMThread *vmThread, uint8_t *bufferStart, uintptrj_t size, uintptrj_t bufferFilledSize, uint32_t dataTag)
+TR_PPCHWProfiler::processBufferRecords(J9VMThread *vmThread, uint8_t *bufferStart, uintptr_t size, uintptr_t bufferFilledSize, uint32_t dataTag)
    {
    TR_PPCHWProfilingConfigs config = (TR_PPCHWProfilingConfigs)(dataTag & 0xFFFF);
    uint32_t                 pmc = dataTag >> 16;

@@ -69,13 +69,13 @@ class X86PICSlot
 
    TR_ALLOC(TR_Memory::Linkage);
 
-   X86PICSlot(uintptrj_t classAddress, TR_ResolvedMethod *method, bool jumpToDone=true, TR_OpaqueMethodBlock *m = NULL, int32_t slot = -1):
+   X86PICSlot(uintptr_t classAddress, TR_ResolvedMethod *method, bool jumpToDone=true, TR_OpaqueMethodBlock *m = NULL, int32_t slot = -1):
      _classAddress(classAddress), _method(method), _helperMethodSymbolRef(NULL), _branchType(BranchJNE), _methodAddress(m), _slot(slot)
       {
       if (jumpToDone) setNeedsJumpToDone(); // TODO: Remove this oddball.  We can tell whether we need a dump to done based on whether a doneLabel is passed to buildPICSlot
       }
 
-   uintptrj_t          getClassAddress()                         { return _classAddress; }
+   uintptr_t          getClassAddress()                         { return _classAddress; }
    TR_ResolvedMethod  *getMethod()                               { return _method; }
 
    TR_OpaqueMethodBlock *getMethodAddress()                      { return _methodAddress; }
@@ -116,7 +116,7 @@ class X86PICSlot
    protected:
 
    flags8_t            _flags;
-   uintptrj_t          _classAddress;
+   uintptr_t          _classAddress;
    TR_ResolvedMethod  *_method;
    TR::SymbolReference *_helperMethodSymbolRef;
    TR_OpaqueMethodBlock *_methodAddress;
@@ -270,7 +270,7 @@ class PrivateLinkage : public J9::PrivateLinkage
    virtual void buildVPIC(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel);
    virtual void buildIPIC(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk)=0;
    virtual TR::Instruction *buildVFTCall(TR::X86CallSite &site, TR_X86OpCode dispatchOp, TR::Register *targetAddressReg, TR::MemoryReference *targetAddressMemref);
-   virtual void buildInterfaceDispatchUsingLastITable (TR::X86CallSite &site, int32_t numIPicSlots, TR::X86PICSlot &lastPicSlot, TR::Instruction *&slotPatchInstruction, TR::LabelSymbol *doneLabel, TR::LabelSymbol *lookupDispatchSnippetLabel, TR_OpaqueClassBlock *declaringClass, uintptrj_t itableIndex);
+   virtual void buildInterfaceDispatchUsingLastITable (TR::X86CallSite &site, int32_t numIPicSlots, TR::X86PICSlot &lastPicSlot, TR::Instruction *&slotPatchInstruction, TR::LabelSymbol *doneLabel, TR::LabelSymbol *lookupDispatchSnippetLabel, TR_OpaqueClassBlock *declaringClass, uintptr_t itableIndex);
 
    // Creates a thunk for interpreted virtual calls, used to initialize
    // the vTable slot for the called method.

@@ -377,12 +377,12 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
       static char *dontInvalidateMCSTargetGuards = feGetEnv("TR_dontInvalidateMCSTargetGuards");
       if (!dontInvalidateMCSTargetGuards)
          {
-         uintptrj_t *mcsReferenceLocation = info->_mutableCallSiteObject;
+         uintptr_t *mcsReferenceLocation = info->_mutableCallSiteObject;
          TR::KnownObjectTable *knot = comp->getKnownObjectTable();
          TR_ASSERT(knot, "MutableCallSiteTargetGuard requires the Known Object Table");
          void *cookiePointer = comp->trPersistentMemory()->allocatePersistentMemory(1);
-         uintptrj_t potentialCookie = (uintptrj_t)(uintptr_t)cookiePointer;
-         uintptrj_t cookie = 0;
+         uintptr_t potentialCookie = (uintptr_t)(uintptr_t)cookiePointer;
+         uintptr_t cookie = 0;
 
          TR::KnownObjectTable::Index currentIndex;
 
@@ -397,7 +397,7 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
             TR::VMAccessCriticalSection invalidateMCSTargetGuards(fej9);
             // TODO: Code duplication with TR_InlinerBase::findInlineTargets
             currentIndex = TR::KnownObjectTable::UNKNOWN;
-            uintptrj_t currentEpoch = fej9->getVolatileReferenceField(*mcsReferenceLocation, "epoch", "Ljava/lang/invoke/MethodHandle;");
+            uintptr_t currentEpoch = fej9->getVolatileReferenceField(*mcsReferenceLocation, "epoch", "Ljava/lang/invoke/MethodHandle;");
             if (currentEpoch)
                currentIndex = knot->getIndex(currentEpoch);
             if (info->_mutableCallSiteEpoch == currentIndex)

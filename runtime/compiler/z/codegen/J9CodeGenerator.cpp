@@ -513,11 +513,11 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
       {
       ListIterator<TR_Pair<TR::Node, int32_t> > listIter(&_ialoadUnneeded);
       TR_Pair<TR::Node, int32_t> *ptr;
-      uintptrj_t temp;
+      uintptr_t temp;
       int32_t updatedTemp;
       for (ptr = listIter.getFirst(); ptr; ptr = listIter.getNext())
          {
-         temp = (uintptrj_t)ptr->getValue();
+         temp = (uintptr_t)ptr->getValue();
          updatedTemp = (int32_t) temp;
          if (ptr->getKey() == node && temp != node->getReferenceCount())
             {

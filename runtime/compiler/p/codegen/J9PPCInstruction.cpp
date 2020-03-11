@@ -121,7 +121,7 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
                {
                TR_ASSERT(cg()->hasCodeCacheSwitched(), "Expecting per-codecache helper to be unreachable only when codecache was switched");
                TR_CCPreLoadedCode helper = (TR_CCPreLoadedCode)(refNum - cg()->symRefTab()->getNonhelperIndex(TR::SymbolReferenceTable::firstPerCodeCacheHelperSymbol));
-               _addrImmediate = (uintptrj_t)fej9->getCCPreLoadedCodeAddress(cg()->getCodeCache(), helper, cg());
+               _addrImmediate = (uintptr_t)fej9->getCCPreLoadedCodeAddress(cg()->getCodeCache(), helper, cg());
                targetAddress = (intptrj_t)_addrImmediate;
                }
             else

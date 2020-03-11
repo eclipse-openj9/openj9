@@ -41,7 +41,7 @@ uint8_t* TR::J9PPCWatchedStaticFieldSnippet::emitSnippetBody()
    // Insert into TOC 
    if (cg()->comp()->target().is64Bit() && getTOCOffset() != PTOC_FULL_INDEX)
       {
-      TR_PPCTableOfConstants::setTOCSlot(getTOCOffset(), reinterpret_cast<uintptrj_t>(snippetLocation));
+      TR_PPCTableOfConstants::setTOCSlot(getTOCOffset(), reinterpret_cast<uintptr_t>(snippetLocation));
       }
    else if (getLowerInstruction() != NULL)
       {

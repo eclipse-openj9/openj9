@@ -52,7 +52,7 @@ class OMR_EXTENSIBLE KnownObjectTable : public OMR::KnownObjectTableConnector
    friend class ::TR_J9VMBase;
    friend class Compilation;
    friend class ::TR_DebugExt;
-   TR_Array<uintptrj_t*> _references;
+   TR_Array<uintptr_t*> _references;
 
 public:
    TR_ALLOC(TR_Memory::FrontEnd);
@@ -62,21 +62,21 @@ public:
    TR::KnownObjectTable *self();
 
    Index getEndIndex();
-   Index getIndex(uintptrj_t objectPointer);
-   Index getIndex(uintptrj_t objectPointer, bool isArrayWithConstantElements);
-   uintptrj_t *getPointerLocation(Index index);
+   Index getIndex(uintptr_t objectPointer);
+   Index getIndex(uintptr_t objectPointer, bool isArrayWithConstantElements);
+   uintptr_t *getPointerLocation(Index index);
    bool isNull(Index index);
 
    void dumpTo(TR::FILE *file, TR::Compilation *comp);
 
-   Index getIndexAt(uintptrj_t *objectReferenceLocation);
-   Index getIndexAt(uintptrj_t *objectReferenceLocation, bool isArrayWithConstantElements);
-   Index getExistingIndexAt(uintptrj_t *objectReferenceLocation);
+   Index getIndexAt(uintptr_t *objectReferenceLocation);
+   Index getIndexAt(uintptr_t *objectReferenceLocation, bool isArrayWithConstantElements);
+   Index getExistingIndexAt(uintptr_t *objectReferenceLocation);
 
-   uintptrj_t getPointer(Index index);
+   uintptr_t getPointer(Index index);
 
 #if defined(J9VM_OPT_JITSERVER)
-   void updateKnownObjectTableAtServer(Index index, uintptrj_t *objectReferenceLocation);
+   void updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocation);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 private:

@@ -264,8 +264,8 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
                                                                       comp);
                  if (vmAccessCriticalSection.hasVMAccess())
                     {
-                    uintptrj_t objectStaticAddress = (uintptrj_t)symbol->getStaticAddress();
-                    uintptrj_t objectRef = comp->fej9()->getStaticReferenceFieldAtAddress(objectStaticAddress);
+                    uintptr_t objectStaticAddress = (uintptr_t)symbol->getStaticAddress();
+                    uintptr_t objectRef = comp->fej9()->getStaticReferenceFieldAtAddress(objectStaticAddress);
                     if (objectRef != 0)
                        {
                        TR_OpaqueClassBlock *classOfObject = comp->fej9()->getObjectClass(objectRef);

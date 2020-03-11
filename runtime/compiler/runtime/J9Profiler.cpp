@@ -895,7 +895,7 @@ TR_ValueProfiler::addListOrArrayProfilingTrees(
 
    if (kind == BigDecimalInfo)
       {
-      TR::Node *bdarg = TR::Node::aconst(node, (uintptrj_t)_bdClass) ;
+      TR::Node *bdarg = TR::Node::aconst(node, (uintptr_t)_bdClass) ;
       bdarg->setIsClassPointerConstant(true);
 
       call->setAndIncChild(childNum++, bdarg);
@@ -908,7 +908,7 @@ TR_ValueProfiler::addListOrArrayProfilingTrees(
       call->setAndIncChild(childNum++, TR::Node::create(node, TR::iconst, 0, lengthOffset));
       }
 
-   TR::Node *arg = TR::Node::aconst(node, (uintptrj_t)valueInfo) ;
+   TR::Node *arg = TR::Node::aconst(node, (uintptr_t)valueInfo) ;
 
    call->setAndIncChild(childNum++, arg);
    call->setAndIncChild(childNum++, TR::Node::create(node, TR::iconst, 0, numExpandedValues));

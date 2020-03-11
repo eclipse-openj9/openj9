@@ -61,7 +61,7 @@ uint8_t *TR::X86AllocPrefetchSnippet::emitSnippetBody()
    *buffer++ = 0xe8;
 
    int32_t disp32;
-   uintptrj_t helperAddress = 0;
+   uintptr_t helperAddress = 0;
 
    if (useSharedCodeCacheSnippet)
       {

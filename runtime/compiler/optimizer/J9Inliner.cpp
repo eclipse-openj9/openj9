@@ -56,13 +56,13 @@ extern int32_t          *InlinedSizes;       // Defined in Inliner.cpp
 
 
 //duplicated as long as there are two versions of findInlineTargets
-static uintptrj_t *failMCS(char *reason, TR_CallSite *callSite, TR_InlinerBase* inliner)
+static uintptr_t *failMCS(char *reason, TR_CallSite *callSite, TR_InlinerBase* inliner)
    {
    debugTrace(inliner->tracer(),"  Fail isMutableCallSiteTargetInvokeExact(%p): %s", callSite, reason);
    return NULL;
    }
 
-static uintptrj_t *isMutableCallSiteTargetInvokeExact(TR_CallSite *callSite, TR_InlinerBase *inliner)
+static uintptr_t *isMutableCallSiteTargetInvokeExact(TR_CallSite *callSite, TR_InlinerBase *inliner)
    {
    // Looking for either mcs.target.invokeExact(...) or mcs.getTarget().invokeExact(...)
    // on some known/fixed MutableCallSite object mcs.
@@ -118,13 +118,13 @@ static uintptrj_t *isMutableCallSiteTargetInvokeExact(TR_CallSite *callSite, TR_
 
    if (mcsNode->getSymbolReference()->hasKnownObjectIndex())
       {
-      uintptrj_t *result = mcsNode->getSymbolReference()->getKnownObjectReferenceLocation(inliner->comp());
+      uintptr_t *result = mcsNode->getSymbolReference()->getKnownObjectReferenceLocation(inliner->comp());
       heuristicTrace(inliner->tracer(), "  Success: isMutableCallSiteTargetInvokeExact(%p)=%p (obj%d)", callSite, result, mcsNode->getSymbolReference()->getKnownObjectIndex());
       return result;
       }
    else if (mcsNode->getSymbol()->isFixedObjectRef())
       {
-      uintptrj_t *result = (uintptrj_t*)mcsNode->getSymbol()->castToStaticSymbol()->getStaticAddress();
+      uintptr_t *result = (uintptr_t*)mcsNode->getSymbol()->castToStaticSymbol()->getStaticAddress();
       heuristicTrace(inliner->tracer(),"  Success: isMutableCallSiteTargetInvokeExact(%p)=%p (fixed object reference)", callSite, result);
       return result;
       }
@@ -697,10 +697,10 @@ bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inlin
          auto stream = TR::CompilationInfo::getStream();
          stream->write(JITServer::MessageType::KnownObjectTable_mutableCallSiteEpoch, _mcsReferenceLocation, knotEnabled);
 
-         auto recv = stream->read<uintptrj_t, TR::KnownObjectTable::Index, uintptrj_t*>();
-         uintptrj_t mcsObject = std::get<0>(recv);
+         auto recv = stream->read<uintptr_t, TR::KnownObjectTable::Index, uintptr_t*>();
+         uintptr_t mcsObject = std::get<0>(recv);
          TR::KnownObjectTable::Index knotIndex = std::get<1>(recv);
-         uintptrj_t *objectPointerReference = std::get<2>(recv);
+         uintptr_t *objectPointerReference = std::get<2>(recv);
 
          if (mcsObject && knot && (knotIndex != TR::KnownObjectTable::UNKNOWN))
             {
@@ -717,11 +717,11 @@ bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inlin
          {
          TR::VMAccessCriticalSection mutableCallSiteEpoch(comp()->fej9());
          vgs->_mutableCallSiteEpoch = TR::KnownObjectTable::UNKNOWN;
-         uintptrj_t mcsObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)_mcsReferenceLocation);
+         uintptr_t mcsObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptr_t)_mcsReferenceLocation);
          if (mcsObject && knot)
             {
             TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fej9());
-            uintptrj_t currentEpoch = fej9->getVolatileReferenceField(mcsObject, "epoch", "Ljava/lang/invoke/MethodHandle;");
+            uintptr_t currentEpoch = fej9->getVolatileReferenceField(mcsObject, "epoch", "Ljava/lang/invoke/MethodHandle;");
             if (currentEpoch)
                vgs->_mutableCallSiteEpoch = knot->getIndex(currentEpoch);
             }

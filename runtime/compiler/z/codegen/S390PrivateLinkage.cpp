@@ -1865,7 +1865,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             if (!comp()->compileRelocatableCode())
                valueInfo = static_cast<TR_AddressInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(callNode, comp(), AddressInfo));
 
-            uintptrj_t topValue = valueInfo ? valueInfo->getTopValue() : 0;
+            uintptr_t topValue = valueInfo ? valueInfo->getTopValue() : 0;
 
             // Is the topValue valid?
             if( topValue )
@@ -1920,7 +1920,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
             if (useProfiledValues)
                {
-               TR::Instruction * unloadableConstInstr = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegZero, reinterpret_cast<uintptrj_t*>(profiledClass));
+               TR::Instruction * unloadableConstInstr = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegZero, reinterpret_cast<uintptr_t*>(profiledClass));
                if (fej9->isUnloadAssumptionRequired(profiledClass, comp()->getCurrentMethod()))
                   {
                   comp()->getStaticPICSites()->push_front(unloadableConstInstr);
@@ -2581,7 +2581,7 @@ J9::Z::PrivateLinkage::setupJNICallOutFrame(TR::Node * callNode,
 
    // JNI Callout Frame setup
    // 0(sp) : RAM method for the native
-   intptrj_t ramMethod = (uintptrj_t) resolvedMethod->resolvedMethodAddress();
+   intptrj_t ramMethod = (uintptr_t) resolvedMethod->resolvedMethodAddress();
    jniCallDataSnippet->setRAMMethod(ramMethod);
 
    // 4[8](sp) : flags

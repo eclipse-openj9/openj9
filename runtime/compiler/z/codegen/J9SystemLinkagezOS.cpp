@@ -111,7 +111,7 @@ J9::Z::zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::Re
    if (fej9->needRelocationsForHelpers()
          && !(callNode->getSymbol()->isResolvedMethod() || jniCallDataSnippet))
       {
-      generateRegLitRefInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, methodAddressReg, (uintptrj_t) callNode->getSymbolReference(),
+      generateRegLitRefInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, methodAddressReg, (uintptr_t) callNode->getSymbolReference(),
       TR_HelperAddress, NULL, NULL, NULL);
       }
    else if (!callNode->getSymbol()->isResolvedMethod()  || !jniCallDataSnippet) // An unresolved method means a helper being called  using system linkage
@@ -130,7 +130,7 @@ J9::Z::zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::Re
             reloType = TR_NoRelocation;
             TR_ASSERT(0,"JNI relocation not supported.");
             }
-         generateRegLitRefInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, methodAddressReg, (uintptrj_t) targetAddress, reloType, NULL, NULL, NULL);
+         generateRegLitRefInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, methodAddressReg, (uintptr_t) targetAddress, reloType, NULL, NULL, NULL);
          }
       else
          genLoadAddressConstant(codeGen, callNode, targetAddress, methodAddressReg, NULL, NULL, javaLitPoolRegister);

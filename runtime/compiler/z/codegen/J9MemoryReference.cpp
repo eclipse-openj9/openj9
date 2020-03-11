@@ -352,7 +352,7 @@ J9::Z::MemoryReference::createPatchableDataInLitpool(TR::Node * node, TR::CodeGe
       {
       litpool->resetNeedLitPoolBasePtr();
       TR::S390RILInstruction * LRLinst;
-      LRLinst = (TR::S390RILInstruction *) generateRILInstruction(cg, TR::InstOpCode::getLoadRelativeLongOpCode(), node, tempReg, reinterpret_cast<uintptrj_t*>(0xBABE), 0);
+      LRLinst = (TR::S390RILInstruction *) generateRILInstruction(cg, TR::InstOpCode::getLoadRelativeLongOpCode(), node, tempReg, reinterpret_cast<uintptr_t*>(0xBABE), 0);
       uds->setDataReferenceInstruction(LRLinst);
       LRLinst->setSymbolReference(uds->getDataSymbolReference());
       LRLinst->setTargetSnippet(litpool);

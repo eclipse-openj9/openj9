@@ -56,8 +56,8 @@ class TR_RelocationTarget
 
       virtual bool isOrderedPairRelocation(TR_RelocationRecord *reloRecord, TR_RelocationTarget *reloTarget);
 
-      virtual uintptrj_t loadRelocationRecordValue(uintptrj_t *address)     { return *address; }
-      virtual void storeRelocationRecordValue(uintptrj_t value, uintptrj_t *address) { *address = value; }
+      virtual uintptr_t loadRelocationRecordValue(uintptr_t *address)     { return *address; }
+      virtual void storeRelocationRecordValue(uintptr_t value, uintptr_t *address) { *address = value; }
 
       virtual uint8_t loadUnsigned8b(uint8_t *address)                      { return *address; }
       virtual void storeUnsigned8b(uint8_t value, uint8_t *address)	    { *address = value; }

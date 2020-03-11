@@ -583,7 +583,7 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
 
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
-   *(uintptrj_t *)cursor = callNode->getSymbolReference()->getCPIndexForVM();
+   *(uintptr_t *)cursor = callNode->getSymbolReference()->getCPIndexForVM();
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
    /*
@@ -701,19 +701,19 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
 
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
-   *(uintptrj_t *)cursor = callNode->getSymbolReference()->getCPIndexForVM();
+   *(uintptr_t *)cursor = callNode->getSymbolReference()->getCPIndexForVM();
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
    // Add two slots for interface class & iTable index, keeping cp/cpindex around
-   ((uintptrj_t *)cursor)[0] = 0;
-   ((uintptrj_t *)cursor)[1] = 0;
+   ((uintptr_t *)cursor)[0] = 0;
+   ((uintptr_t *)cursor)[1] = 0;
    cursor += 2*TR::Compiler->om.sizeofReferenceAddress();
 
    if (cg()->comp()->target().is64Bit())
       {
       if (getTOCOffset() != PTOC_FULL_INDEX)
          {
-         TR_PPCTableOfConstants::setTOCSlot(getTOCOffset(), (uintptrj_t)cursor);
+         TR_PPCTableOfConstants::setTOCSlot(getTOCOffset(), (uintptr_t)cursor);
          }
       else
          {
@@ -1379,7 +1379,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCCallSnippet * snippet)
       }
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Method Pointer", *(uintptrj_t *)cursor);
+   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Method Pointer", *(uintptr_t *)cursor);
    cursor += sizeof(intptrj_t);
 
    printPrefix(pOutFile, NULL, cursor, 4);
@@ -1518,19 +1518,19 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCallSnippet * snippet)
       }
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant Pool Pointer", *(uintptrj_t*)cursor);
+   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant Pool Pointer", *(uintptr_t*)cursor);
    cursor += sizeof(intptrj_t);
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant Pool Index", *(uintptrj_t*)cursor);
+   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant Pool Index", *(uintptr_t*)cursor);
    cursor += sizeof(intptrj_t);
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Interface Class Pointer", *(uintptrj_t*)cursor);
+   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Interface Class Pointer", *(uintptr_t*)cursor);
    cursor += sizeof(intptrj_t);
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; ITable Index", *(uintptrj_t*)cursor);
+   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; ITable Index", *(uintptr_t*)cursor);
    cursor += sizeof(intptrj_t);
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));

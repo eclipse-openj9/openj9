@@ -1331,7 +1331,7 @@ uint8_t *TR::PPCAllocPrefetchSnippet::emitSnippetBody()
    if (TR::Options::getCmdLineOptions()->realTimeGC())
       return NULL;
 
-   TR_ASSERT((uintptrj_t)((cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_AllocPrefetch, cg())) != 0xDEADBEEF,
+   TR_ASSERT((uintptr_t)((cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_AllocPrefetch, cg())) != 0xDEADBEEF,
          "Invalid addr for code cache helper");
    intptrj_t distance = (intptrj_t)(cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_AllocPrefetch, cg())
                            - (intptrj_t)buffer;
@@ -1384,7 +1384,7 @@ uint8_t *TR::PPCNonZeroAllocPrefetchSnippet::emitSnippetBody()
    if (TR::Options::getCmdLineOptions()->realTimeGC())
       return NULL;
 
-   TR_ASSERT((uintptrj_t)((cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_NonZeroAllocPrefetch, cg())) != 0xDEADBEEF,
+   TR_ASSERT((uintptr_t)((cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_NonZeroAllocPrefetch, cg())) != 0xDEADBEEF,
          "Invalid addr for code cache helper");
    intptrj_t distance = (intptrj_t)(cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_NonZeroAllocPrefetch, cg())
                            - (intptrj_t)buffer;

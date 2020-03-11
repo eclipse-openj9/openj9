@@ -161,7 +161,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateJ9MethodExtraFieldSymbolRef(intptrj_t offset);
    TR::SymbolReference * findOrCreateJ9MethodConstantPoolFieldSymbolRef(intptrj_t offset);
    TR::SymbolReference * findOrCreateStartPCLinkageInfoSymbolRef(intptrj_t offset);
-   TR::SymbolReference * findOrCreatePerCodeCacheHelperSymbolRef(TR_CCPreLoadedCode helper, uintptrj_t helperAddr);
+   TR::SymbolReference * findOrCreatePerCodeCacheHelperSymbolRef(TR_CCPreLoadedCode helper, uintptr_t helperAddr);
    TR::SymbolReference * findOrCreateANewArraySymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateStringSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex);
    /** \brief

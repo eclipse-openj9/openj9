@@ -83,12 +83,12 @@ class TR_RuntimeAssumptionTable
    public:
    TR_RuntimeAssumptionTable() {} // constructor of TR_RuntimeAssumptionTable
    bool init();  // Must call this during bootstrap on a single thread because it is not MT safe
-   static uintptrj_t hashCode(uintptrj_t key)
+   static uintptr_t hashCode(uintptr_t key)
       {return (key >> 2) * 2654435761u; } // 2654435761u is the golden ratio of 2^32
    TR_RatHT* findAssumptionHashTable(TR_RuntimeAssumptionKind kind) { return (kind >= 0 && kind < LastAssumptionKind) ? _tables + kind : NULL; }
 
-   OMR::RuntimeAssumption **getBucketPtr(TR_RuntimeAssumptionKind kind, uintptrj_t hashIndex);
-   OMR::RuntimeAssumption *getBucket(TR_RuntimeAssumptionKind kind, uintptrj_t key)
+   OMR::RuntimeAssumption **getBucketPtr(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex);
+   OMR::RuntimeAssumption *getBucket(TR_RuntimeAssumptionKind kind, uintptr_t key)
       {
       return *getBucketPtr(kind, hashCode(key));
       }
@@ -104,7 +104,7 @@ class TR_RuntimeAssumptionTable
                                TR_OpaqueClassBlock *picKey);
    void notifyIllegalStaticFinalFieldModificationEvent(TR_FrontEnd *vm, void *key);
    void notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool isSMP, void *oldKey, void *newKey);
-   void notifyMutableCallSiteChangeEvent(TR_FrontEnd *vm, uintptrj_t cookie);
+   void notifyMutableCallSiteChangeEvent(TR_FrontEnd *vm, uintptr_t cookie);
 
    int32_t getAssumptionCount(int32_t tableId) const { return assumptionCount[tableId]; }
    int32_t getReclaimedAssumptionCount(int32_t tableId) const { return reclaimedAssumptionCount[tableId]; }

@@ -208,7 +208,7 @@ J9::Power::CodeGenerator::generateBinaryEncodingPrologue(
          /* thunk is not recompilable, nor does it support FSD */
          if (methodSymbol->isJNI())
             {
-            uintptrj_t JNIMethodAddress = (uintptrj_t)methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp);
+            uintptr_t JNIMethodAddress = (uintptr_t)methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp);
             TR::Node *firstNode = comp->getStartTree()->getNode();
             if (comp->target().is64Bit())
                {

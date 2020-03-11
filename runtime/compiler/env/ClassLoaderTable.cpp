@@ -56,13 +56,13 @@ TR_PersistentClassLoaderTable::TR_PersistentClassLoaderTable(TR_PersistentMemory
 int32_t
 TR_PersistentClassLoaderTable::hashLoader(void *classLoaderPointer)
    {
-   return ((uintptrj_t)classLoaderPointer % CLASSLOADERTABLE_SIZE);
+   return ((uintptr_t)classLoaderPointer % CLASSLOADERTABLE_SIZE);
    }
 
 int32_t
 TR_PersistentClassLoaderTable::hashClassChain(void *classChainPointer)
    {
-   return ((uintptrj_t)classChainPointer % CLASSLOADERTABLE_SIZE);
+   return ((uintptr_t)classChainPointer % CLASSLOADERTABLE_SIZE);
    }
 
 int32_t TR_PersistentClassLoaderTable::_numClassLoaders = 0;

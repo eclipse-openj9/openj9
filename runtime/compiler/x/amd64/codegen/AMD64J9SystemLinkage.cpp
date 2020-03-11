@@ -151,7 +151,7 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(
       }
    else
       {
-      instr = generateImmSymInstruction(CALLImm4, callNode, (uintptrj_t)methodSymbol->getMethodAddress(), methodSymRef, preDeps, cg());
+      instr = generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, preDeps, cg());
       }
 
    instr->setNeedsGCMap(getProperties().getPreservedRegisterMapForGC());

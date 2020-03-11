@@ -3690,12 +3690,12 @@ IDATA J9THREAD_PROC protectedCompilationThreadProc(J9PortLibrary *, TR::Compilat
       */
    if (TR::Options::_compThreadAffinityMask)
       {
-      uintptrj_t affinityMask = TR::Options::_compThreadAffinityMask;
+      uintptr_t affinityMask = TR::Options::_compThreadAffinityMask;
       int32_t numBitsSetInMask = populationCount(affinityMask);
       int32_t bitNumberToSet = compInfoPT->getCompThreadId() % numBitsSetInMask;
-      uintptrj_t myMask = 0x1;
+      uintptr_t myMask = 0x1;
       int32_t oneBits = 0;
-      for (int32_t k = 0; k < 8*sizeof(uintptrj_t); k++, myMask <<= 1)
+      for (int32_t k = 0; k < 8*sizeof(uintptr_t); k++, myMask <<= 1)
         {
         if (!(affinityMask & myMask))
            continue; // jump over bits that are 0
@@ -4209,7 +4209,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
       {
       J9::NewInstanceThunkDetails &newInstanceDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
       J9Class  *classForNewInstance = newInstanceDetails.classNeedingThunk();
-      TR::CompilationInfo::setJ9MethodExtra(method,(uintptrj_t)classForNewInstance | J9_STARTPC_NOT_TRANSLATED);
+      TR::CompilationInfo::setJ9MethodExtra(method,(uintptr_t)classForNewInstance | J9_STARTPC_NOT_TRANSLATED);
       }
 
 #ifdef STATS
@@ -5346,7 +5346,7 @@ void *TR::CompilationInfo::startPCIfAlreadyCompiled(J9VMThread * vmThread, TR::I
 
          {
          TR::VMAccessCriticalSection startPCIfAlreadyCompiled(fe);
-         uintptrj_t methodHandle = *thunkDetails.getHandleRef();
+         uintptr_t methodHandle = *thunkDetails.getHandleRef();
          void *thunkAddress = fe->methodHandle_jitInvokeExactThunk(methodHandle);
          void *initialInvokeExactThunkGlueAddress;
 #if defined(J9ZOS390)
@@ -5460,7 +5460,7 @@ static void deleteMethodHandleRef(J9::MethodHandleThunkDetails & details, J9VMTh
    if (verboseDetails)
       {
       TR::VMAccessCriticalSection deleteMethodHandleRef(fej9);
-      uintptrj_t methodHandle = * details.getHandleRef();
+      uintptr_t methodHandle = * details.getHandleRef();
       TR_VerboseLog::writeLineLocked(TR_Vlog_MHD,"%p   Deleting MethodHandle %p global reference", vmThread, (j9object_t)methodHandle);
       }
 
@@ -6810,7 +6810,7 @@ TR::CompilationInfoPerThreadBase::generatePerfToolEntry()
    if (firstAttempt)
       {
       firstAttempt = false;
-      uintptrj_t jvmPid = getCompilation()->fej9()->getProcessID();
+      uintptr_t jvmPid = getCompilation()->fej9()->getProcessID();
       static const int maxPerfFilenameSize = 15 + sizeof(jvmPid)* 3; // "/tmp/perf-%ld.map"
       char perfFilename[maxPerfFilenameSize] = { 0 };
 
@@ -10051,7 +10051,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          if (startPC)
             {
             J9::MethodHandleThunkDetails &mhDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
-            uintptrj_t thunks = trvm->getReferenceField(*mhDetails.getHandleRef(), "thunks", "Ljava/lang/invoke/ThunkTuple;");
+            uintptr_t thunks = trvm->getReferenceField(*mhDetails.getHandleRef(), "thunks", "Ljava/lang/invoke/ThunkTuple;");
             int64_t jitEntryPoint = (int64_t)(intptrj_t)startPC + J9::PrivateLinkage::LinkageInfo::get(startPC)->getJitEntryOffset();
 
 #if defined(JIT_METHODHANDLE_TRANSLATED)
@@ -11976,7 +11976,7 @@ void TR_LowPriorityCompQueue::tryToScheduleCompilation(J9VMThread *vmThread, J9M
 
    // Find the j9method in the hashtable
    Entry *entry = _spine + TR_LowPriorityCompQueue::hash(j9method);
-   if (entry->_j9method == (uintptrj_t)j9method) // found match
+   if (entry->_j9method == (uintptr_t)j9method) // found match
       {
       if (++entry->_count > _threshold)  // hot entry; possibly queue compilation
          {
@@ -12133,7 +12133,7 @@ void TR_LowPriorityCompQueue::tryToScheduleCompilation(J9VMThread *vmThread, J9M
 void TR_LowPriorityCompQueue::stopTrackingMethod(J9Method *j9method)
    {
    Entry *entry = _spine + TR_LowPriorityCompQueue::hash(j9method);
-   if (entry->_j9method == (uintptrj_t)j9method)
+   if (entry->_j9method == (uintptr_t)j9method)
       {
       //TR_ASSERT(entry->_queuedForCompilation, "Entry %p, j9method %p j9m=%p, count=%u queued=%d (should be 1)\n", entry, entry->_j9method, j9method, entry->_count, entry->_queuedForCompilation);
       entry->setInvalid();

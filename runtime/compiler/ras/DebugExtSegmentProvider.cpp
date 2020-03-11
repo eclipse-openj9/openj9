@@ -25,7 +25,7 @@
 
 J9::DebugSegmentProvider::DebugSegmentProvider(
    size_t segmentSize,
-   void* (*dbgMalloc)(uintptrj_t size, void *originalAddress),
+   void* (*dbgMalloc)(uintptr_t size, void *originalAddress),
    void  (*dbgFree)(void *addr)
    ) :
    TR::SegmentProvider(segmentSize),

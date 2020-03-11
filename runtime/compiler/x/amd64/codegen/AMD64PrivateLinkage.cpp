@@ -592,7 +592,7 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::generateVirtualIndirectThunk(TR::Node *
    //
    *(uint16_t *)cursor = 0xbf48;
    cursor += 2;
-   *(uint64_t *)cursor = (uintptrj_t)glueSymRef->getMethodAddress();
+   *(uint64_t *)cursor = (uintptr_t)glueSymRef->getMethodAddress();
    cursor += 8;
 
    // JMPReg rdi
@@ -662,7 +662,7 @@ TR_J2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::Nod
    //
    *(uint16_t *)cursor = 0xbf48;
    cursor += 2;
-   *(uint64_t *)cursor = (uintptrj_t) cg()->fej9()->getInvokeExactThunkHelperAddress(comp, glueSymRef, callNode->getDataType());
+   *(uint64_t *)cursor = (uintptr_t) cg()->fej9()->getInvokeExactThunkHelperAddress(comp, glueSymRef, callNode->getDataType());
    cursor += 8;
 
    // Arg stores
@@ -1206,7 +1206,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
    else if (picSlot.getHelperMethodSymbolRef())
       {
       TR::MethodSymbol *helperMethod = picSlot.getHelperMethodSymbolRef()->getSymbol()->castToMethodSymbol();
-      instr = generateImmSymInstruction(CALLImm4, node, (uint32_t)(uintptrj_t)helperMethod->getMethodAddress(), picSlot.getHelperMethodSymbolRef(), cg());
+      instr = generateImmSymInstruction(CALLImm4, node, (uint32_t)(uintptr_t)helperMethod->getMethodAddress(), picSlot.getHelperMethodSymbolRef(), cg());
       }
    else
       {
@@ -1320,7 +1320,7 @@ void J9::X86::AMD64::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelS
 
    TR::Method *method = site.getMethodSymbol()->getMethod();
    TR_OpaqueClassBlock *declaringClass = NULL;
-   uintptrj_t itableIndex;
+   uintptr_t itableIndex;
    if (  useLastITableCache
       && (declaringClass = site.getSymbolReference()->getOwningMethod(comp())->getResolvedInterfaceMethod(site.getSymbolReference()->getCPIndex(), &itableIndex))
       && performTransformation(comp(), "O^O useLastITableCache for n%dn itableIndex=%d: %.*s.%.*s%.*s\n",

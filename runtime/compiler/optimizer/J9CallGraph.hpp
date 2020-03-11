@@ -53,9 +53,9 @@ class TR_J9MutableCallSite : public  TR_FunctionPointerCallSite
       TR_CALLSITE_TR_ALLOC_AND_INHERIT_CONSTRUCTOR(TR_J9MutableCallSite, TR_FunctionPointerCallSite) { _mcsReferenceLocation = NULL; };
       virtual bool findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner);
 		virtual const char*  name () { return "TR_J9MutableCallSite"; }
-      virtual void setMCSReferenceLocation(uintptrj_t *mcsReferenceLocation) { _mcsReferenceLocation = mcsReferenceLocation; }
+      virtual void setMCSReferenceLocation(uintptr_t *mcsReferenceLocation) { _mcsReferenceLocation = mcsReferenceLocation; }
    private:
-      uintptrj_t * _mcsReferenceLocation;
+      uintptr_t * _mcsReferenceLocation;
    };
 
 class TR_J9VirtualCallSite : public TR_ProfileableCallSite

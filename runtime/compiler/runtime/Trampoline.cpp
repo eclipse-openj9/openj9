@@ -565,7 +565,7 @@ void amd64CreateMethodTrampoline(void *trampPtr, void *startPC, TR_OpaqueMethodB
       // version of the patchJNICallSite routine.
       //
       if (TR::CompilationInfo::isCompiled(ramMethod))
-         startPC = (void *)(*((uintptrj_t *)((uint8_t *)startPC - 12)));
+         startPC = (void *)(*((uintptr_t *)((uint8_t *)startPC - 12)));
 
       *buffer++ = 0x49;
       *buffer++ = 0xbb;
@@ -654,7 +654,7 @@ int32_t amd64CodePatching(void *theMethod, void *callSite, void *currentPC, void
       {
       // Patch the call displacement
       //
-      if (((uintptrj_t)patchAddr+4) % INSTRUCTION_PATCH_ALIGNMENT_BOUNDARY >= 3)
+      if (((uintptr_t)patchAddr+4) % INSTRUCTION_PATCH_ALIGNMENT_BOUNDARY >= 3)
          {
          // Displacement is entirely between the boundaries, so just patch it
          //
@@ -664,7 +664,7 @@ int32_t amd64CodePatching(void *theMethod, void *callSite, void *currentPC, void
          {
          // Must use self-loop
          //
-         //TR_ASSERT(((uintptrj_t)patchAddr+1) % INSTRUCTION_PATCH_ALIGNMENT_BOUNDARY != 0,
+         //TR_ASSERT(((uintptr_t)patchAddr+1) % INSTRUCTION_PATCH_ALIGNMENT_BOUNDARY != 0,
          //   "Self-loop can't cross instruction patch alignment boundary");
 
          // (We don't need any mutual exclusion on this patching because the
@@ -997,7 +997,7 @@ void s390zOS31CodeCacheParameters(int32_t *trampolineSize, void **callBacks, int
 
 // Atomic Storage of a 4 byte value - Picbuilder.m4
 extern "C" void _Store4(int32_t * addr, uint32_t newData);
-extern "C" void _Store8(intptrj_t * addr, uintptrj_t newData);
+extern "C" void _Store8(intptrj_t * addr, uintptr_t newData);
 
 
 //Note method trampolines no longer used
@@ -1217,7 +1217,7 @@ void s390zLinux31CodeCacheParameters(int32_t *trampolineSize, void **callBacks, 
 
 // Atomic Storage of a 4 byte value - Picbuilder.m4
 extern "C" void _Store4(int32_t * addr, uint32_t newData);
-extern "C" void _Store8(intptrj_t * addr, uintptrj_t newData);
+extern "C" void _Store8(intptrj_t * addr, uintptr_t newData);
 
 // zLinux64 Configuration of Code Cache.
 void s390zLinux64CodeCacheConfig(int32_t ccSizeInByte, int32_t *numTempTrampolines)
