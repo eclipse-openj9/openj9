@@ -9107,7 +9107,11 @@ TR::CompilationInfoPerThreadBase::compile(
          }
 
       _methodBeingCompiled->_compErrCode = compilationOK;
-      if (!_methodBeingCompiled->isAotLoad() && !_methodBeingCompiled->isRemoteCompReq())
+      if (!_methodBeingCompiled->isAotLoad()
+#if defined(J9VM_OPT_JITSERVER)
+          && !_methodBeingCompiled->isRemoteCompReq()
+#endif /* defined(J9VM_OPT_JITSERVER) */
+         )
          {
          class TraceMethodMetadata
             {
@@ -9167,8 +9171,6 @@ TR::CompilationInfoPerThreadBase::compile(
                );
             }
 
-         setMetadata(metaData);
-
          // Put a metaData pointer into the Code Cache Header(s).
          //
          uint8_t *warmMethodHeader = compiler->cg()->getBinaryBufferStart() - sizeof(OMR::CodeCacheMethodHeader);
@@ -9186,6 +9188,8 @@ TR::CompilationInfoPerThreadBase::compile(
          // and in fact it would be wrong to do so because code during chtable.commit is
          // expecting something in the compiler object
          }
+
+      setMetadata(metaData);
 
       if (compiler->getOption(TR_BreakAfterCompile))
          {
