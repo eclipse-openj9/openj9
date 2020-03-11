@@ -526,6 +526,12 @@ J9::Compilation::isShortRunningMethod(int32_t callerIndex)
 bool
 J9::Compilation::isRecompilationEnabled()
    {
+
+   if (!self()->cg()->getSupportsRecompilation())
+      {
+      return false;
+      }
+
    if (self()->isDLT())
       {
       return false;
