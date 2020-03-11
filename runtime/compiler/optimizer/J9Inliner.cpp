@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -689,15 +689,40 @@ bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inlin
       vgs->_mutableCallSiteObject = _mcsReferenceLocation;
       TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
 
+#if defined(J9VM_OPT_JITSERVER)
+      if (comp()->isOutOfProcessCompilation())
+         {
+         vgs->_mutableCallSiteEpoch = TR::KnownObjectTable::UNKNOWN;
+         bool knotEnabled = (knot != NULL);
+         auto stream = TR::CompilationInfo::getStream();
+         stream->write(JITServer::MessageType::KnownObjectTable_mutableCallSiteEpoch, _mcsReferenceLocation, knotEnabled);
+
+         auto recv = stream->read<uintptrj_t, TR::KnownObjectTable::Index, uintptrj_t*>();
+         uintptrj_t mcsObject = std::get<0>(recv);
+         TR::KnownObjectTable::Index knotIndex = std::get<1>(recv);
+         uintptrj_t *objectPointerReference = std::get<2>(recv);
+
+         if (mcsObject && knot && (knotIndex != TR::KnownObjectTable::UNKNOWN))
+            {
+            vgs->_mutableCallSiteEpoch = knotIndex;
+            knot->updateKnownObjectTableAtServer(knotIndex, objectPointerReference);
+            }
+         else
+            {
+            vgs->_mutableCallSiteObject = NULL;
+            }
+         }
+      else
+#endif /* defined(J9VM_OPT_JITSERVER) */
          {
          TR::VMAccessCriticalSection mutableCallSiteEpoch(comp()->fej9());
          vgs->_mutableCallSiteEpoch = TR::KnownObjectTable::UNKNOWN;
          uintptrj_t mcsObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)_mcsReferenceLocation);
-         if (mcsObject)
+         if (mcsObject && knot)
             {
             TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fej9());
             uintptrj_t currentEpoch = fej9->getVolatileReferenceField(mcsObject, "epoch", "Ljava/lang/invoke/MethodHandle;");
-            if (knot && currentEpoch)
+            if (currentEpoch)
                vgs->_mutableCallSiteEpoch = knot->getIndex(currentEpoch);
             }
          else
@@ -720,7 +745,7 @@ bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inlin
          //
          heuristicTrace(inliner->tracer(),"  addTarget: MutableCallSite.epoch is %p.obj%d (%p.%p)",
              vgs->_mutableCallSiteObject, vgs->_mutableCallSiteEpoch,
-            *vgs->_mutableCallSiteObject, *knot->getPointerLocation(vgs->_mutableCallSiteEpoch));
+            *vgs->_mutableCallSiteObject, knot->getPointer(vgs->_mutableCallSiteEpoch));
 
          return true;
          }

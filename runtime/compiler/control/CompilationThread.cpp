@@ -7533,11 +7533,6 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       _reservedDataCache = NULL;
       }
 
-   // The KOT needs to survive at least until we're done committing virtual guards
-   //
-   if (_compiler && _compiler->getKnownObjectTable())
-      _compiler->freeKnownObjectTable();
-
 #if defined(J9VM_OPT_JITSERVER)
    if (_compiler && _compiler->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
@@ -7546,7 +7541,14 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    if (_compiler)
+      {
+      // The KOT needs to survive at least until we're done committing virtual guards
+      //
+      if (_compiler->getKnownObjectTable())
+         _compiler->freeKnownObjectTable();
+
       _compiler->~Compilation();
+      }
 
    setCompilation(NULL);
 
@@ -7737,6 +7739,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
          }
 
       Trc_JIT_outOfMemory(vmThread);
+
 #if defined(J9VM_OPT_JITSERVER)
       if (getCompilation() && getCompilation()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
@@ -7745,8 +7748,12 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 #endif /* defined(J9VM_OPT_JITSERVER) */
       if (getCompilation())
          {
+         if (getCompilation()->getKnownObjectTable())
+            getCompilation()->freeKnownObjectTable();
+
          getCompilation()->~Compilation();
          }
+
       setCompilation(NULL);
 
       // This method has to be called from within the catch block,
@@ -8380,9 +8387,18 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 #if defined(J9VM_OPT_JITSERVER)
          // JITServer TODO: put info in optPlan so that compilation constructor can do this
          if (that->_methodBeingCompiled->isRemoteCompReq())
+            {
             compiler->setRemoteCompilation();
+            // Create the KOT by default at the client if it's a remote compilation.
+            // getOrCreateKnownObjectTable() checks if TR_DisableKnownObjectTable is set or not.
+            compiler->getOrCreateKnownObjectTable();
+            }
          else if (that->_methodBeingCompiled->isOutOfProcessCompReq())
+            {
             compiler->setOutOfProcessCompilation();
+            // Create the KOT by default at the server as long as it is not disabled at the client.
+            compiler->getOrCreateKnownObjectTable();
+            }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
          p->trMemory()->setCompilation(compiler);
@@ -8527,6 +8543,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
       if (compiler)
          {
+         if (compiler->getKnownObjectTable())
+            compiler->freeKnownObjectTable();
+
          compiler->~Compilation();
          }
 
@@ -9107,7 +9126,11 @@ TR::CompilationInfoPerThreadBase::compile(
          }
 
       _methodBeingCompiled->_compErrCode = compilationOK;
-      if (!_methodBeingCompiled->isAotLoad() && !_methodBeingCompiled->isRemoteCompReq())
+      if (!_methodBeingCompiled->isAotLoad()
+#if defined(J9VM_OPT_JITSERVER)
+          && !_methodBeingCompiled->isRemoteCompReq()
+#endif /* defined(J9VM_OPT_JITSERVER) */
+         )
          {
          class TraceMethodMetadata
             {
@@ -9167,8 +9190,6 @@ TR::CompilationInfoPerThreadBase::compile(
                );
             }
 
-         setMetadata(metaData);
-
          // Put a metaData pointer into the Code Cache Header(s).
          //
          uint8_t *warmMethodHeader = compiler->cg()->getBinaryBufferStart() - sizeof(OMR::CodeCacheMethodHeader);
@@ -9186,6 +9207,8 @@ TR::CompilationInfoPerThreadBase::compile(
          // and in fact it would be wrong to do so because code during chtable.commit is
          // expecting something in the compiler object
          }
+
+      setMetadata(metaData);
 
       if (compiler->getOption(TR_BreakAfterCompile))
          {

@@ -2080,7 +2080,6 @@ J9::Options::setupJITServerOptions()
       self()->setIsVariableHeapBaseForBarrierRange0(true);
       self()->setOption(TR_DisableProfiling); // JITServer limitation, JIT profiling data is not available to remote compiles yet
       self()->setOption(TR_DisableEDO); // JITServer limitation, EDO counters are not relocatable yet
-      self()->setOption(TR_DisableKnownObjectTable);
       self()->setOption(TR_DisableMethodIsCold); // Shady heuristic; better to disable to reduce client/server traffic
       self()->setOption(TR_DisableDecimalFormatPeephole);// JITServer decimalFormatPeephole,
 
