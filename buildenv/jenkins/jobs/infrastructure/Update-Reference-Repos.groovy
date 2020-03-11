@@ -39,8 +39,6 @@ UPDATE_BUILD_NODES = params.UPDATE_BUILD_NODES
 
 EXTENSIONS_REPOS = [[name: "openj9", url: "https://github.com/eclipse/openj9.git"]]
 
-properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10'))])
-
 def jobs = [:]
 
 timeout(time: 6, unit: 'HOURS') {
