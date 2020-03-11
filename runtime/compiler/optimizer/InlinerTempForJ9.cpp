@@ -2481,6 +2481,10 @@ TR_J9InlinerPolicy::skipHCRGuardForCallee(TR_ResolvedMethod *callee)
        && !callee->isPublic())
       return true;
 
+   J9Class* clazz = TR::Compiler->cls.convertClassOffsetToClassPtr((callee->classOfMethod()));
+   if (J9ROMCLASS_IS_UNMODIFIABLE(clazz->romClass))
+      return true;
+
    return false;
    }
 
