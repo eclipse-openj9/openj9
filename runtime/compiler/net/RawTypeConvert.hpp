@@ -150,6 +150,18 @@ template <typename T> struct RawTypeConvert<T, typename std::enable_if<std::is_s
    {
    static inline T onRecv(Message::DataDescriptor *desc)
       {
+      if (desc->getDataType() == Message::DataDescriptor::DataType::EMPTY_VECTOR)
+         {
+         return std::vector<typename T::value_type>();
+         }
+      if (desc->getDataType() == Message::DataDescriptor::DataType::SIMPLE_VECTOR)
+         {
+         TR_ASSERT(desc->getVectorElementSize() == sizeof(typename T::value_type), "Vector element size missmatch");
+         typename T::value_type *dataStart = static_cast<typename T::value_type *>(desc->getDataStart());
+         typename T::value_type *dataEnd = reinterpret_cast<typename T::value_type *>(reinterpret_cast<uintptr_t>(dataStart) + desc->getPayloadSize());
+         return T(dataStart, dataEnd);
+         }
+
       TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::VECTOR, "onRecv type missmatch VECTOR");
       // The first element is another descriptor to represent the number of elements in the vector
       Message::DataDescriptor *sizeDesc = static_cast<Message::DataDescriptor *>(desc->getDataStart());
@@ -169,8 +181,30 @@ template <typename T> struct RawTypeConvert<T, typename std::enable_if<std::is_s
       }
    static inline uint32_t onSend(Message &msg, const T &value)
       {
+      if (value.size() == 0)
+         {
+         // Empty vector. Write just a descriptor followed by no data
+         return msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::EMPTY_VECTOR, 0), 0);
+         }
+      // If the vector is for trivially copyable elements and
+      // the size of such an element is smaller than 256,
+      // copy the data as a contiguous region of memory
+      if (std::is_trivially_copyable<typename T::value_type>::value)
+         {
+         size_t elemSize = sizeof(typename T::value_type);
+         if (elemSize <= 0xff)
+            {
+            uint32_t payloadSize = elemSize * value.size();
+            Message::DataDescriptor desc(Message::DataDescriptor::DataType::SIMPLE_VECTOR, payloadSize);
+            // Need to store the size of an element in the descriptor
+            desc.setVectorElementSize(elemSize);
+            return msg.addData(desc, value.data(), elemSize > 4);
+            }
+         }
+      // Complex vectors here
       uint32_t descIndex = msg.getNumDescriptors();
       uint32_t descOffset = msg.reserveDescriptor();
+
       // Write the size of the vector as a data point
       uint32_t totalSize = (value.size() + 1) * sizeof(Message::DataDescriptor);
       totalSize += RawTypeConvert<uint32_t>::onSend(msg, value.size());

@@ -64,7 +64,7 @@ public:
 
       @return the size of the buffer
    */
-   uint32_t size() const;
+   uint32_t size() const { return _curPtr - _storage; }
 
    char *getBufferStart() const { return _storage; }
 
@@ -149,14 +149,19 @@ public:
       }
 
    /**
-      @brief Read next dataSize bytes from the buffer.
+      @brief "Read" next dataSize bytes from the buffer.
 
       Assumes that the buffer contains at least dataSize unread bytes.
-      Advances _curPtr by dataSize bytes.
+      Advances _curPtr by dataSize bytes ( this is considered a "read")
 
       @return offset to the beginning of data
    */
-   uint32_t readData(uint32_t dataSize);
+   uint32_t readData(uint32_t dataSize)
+      {
+      char* data = _curPtr;
+      _curPtr += dataSize; // Advance cursor
+      return offset(data); // Return offset before the advance
+      }
 
    void clear() { _curPtr = _storage; }
 
