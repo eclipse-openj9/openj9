@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.structure.J9Object;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 
 public class J9ClassShapeCommand extends Command 
 {
@@ -121,7 +122,7 @@ public class J9ClassShapeCommand extends Command
 					boolean printField = true;
 					boolean isHiddenField = result.isHidden();
 
-					boolean isLockword = (isHiddenField && (result.getOffsetOrAddress().add(J9Object.SIZEOF).eq(superclass.lockOffset())));
+					boolean isLockword = (isHiddenField && (result.getOffsetOrAddress().add(J9ObjectHelper.headerSize()).eq(superclass.lockOffset())));
 
 					if (isLockword) {
 						/*

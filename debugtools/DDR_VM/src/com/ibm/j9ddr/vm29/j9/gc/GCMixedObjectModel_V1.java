@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,6 +61,6 @@ class GCMixedObjectModel_V1 extends GCMixedObjectModel
 	@Override
 	public UDATA getHeaderSize(J9ObjectPointer object) throws CorruptDataException
 	{		
-		return new UDATA(J9Object.SIZEOF);
+		return new UDATA(J9ObjectHelper.headerSize());
 	}
 }

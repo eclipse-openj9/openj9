@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,6 +50,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.structure.J9Object;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 
 
 /**
@@ -186,7 +187,7 @@ public class PrintObjectFieldsHelper {
 				J9ObjectFieldOffset result = iterator.next();
 				boolean printField = true;
 				boolean isHiddenField = result.isHidden();
-				boolean isLockword = isHiddenField && result.getOffsetOrAddress().add(J9Object.SIZEOF).eq(superclass.lockOffset());
+				boolean isLockword = isHiddenField && result.getOffsetOrAddress().add(J9ObjectHelper.headerSize()).eq(superclass.lockOffset());
 
 				if (isLockword) {
 					/* Print the lockword field if it is indeed the lockword for this instanceClass and we haven't printed it yet. */
@@ -251,7 +252,7 @@ public class PrintObjectFieldsHelper {
 				hierarchy.append(fieldName);
 				out.format("!j9object 0x%x %s", object.getAddress(), hierarchy);
 			} else {
-				AbstractPointer ptr = J9BuildFlags.gc_compressedPointers ? U32Pointer.cast(valuePtr) : UDATAPointer.cast(valuePtr);
+				AbstractPointer ptr = J9ObjectHelper.compressObjectReferences ? U32Pointer.cast(valuePtr) : UDATAPointer.cast(valuePtr);
 				out.format("!fj9object 0x%x", ptr.at(0).longValue());
 			}
 		} else {
@@ -304,7 +305,7 @@ public class PrintObjectFieldsHelper {
 				printJ9ObjectFields(out, tabLevel + 1, containerClazz, dataStart, null, address, newNestingHierarchy, true);
 
 			} else {
-				AbstractPointer ptr = J9BuildFlags.gc_compressedPointers ? U32Pointer.cast(valuePtr) : UDATAPointer.cast(valuePtr);
+				AbstractPointer ptr = J9ObjectHelper.compressObjectReferences ? U32Pointer.cast(valuePtr) : UDATAPointer.cast(valuePtr);
 				out.format("!fj9object 0x%x%n", ptr.at(0).longValue());
 			}
 		} else {

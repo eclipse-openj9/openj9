@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,11 +27,12 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 
 public class ObjectReferencePointer extends Pointer
 {
 	public static final ObjectReferencePointer NULL = new ObjectReferencePointer(0);
-	public static final long SIZEOF = J9BuildFlags.gc_compressedPointers ? U32.SIZEOF : UDATA.SIZEOF;
+	public static final long SIZEOF = J9ObjectHelper.compressObjectReferences ? U32.SIZEOF : UDATA.SIZEOF;
 	
 	protected ObjectReferencePointer(long address)
 	{

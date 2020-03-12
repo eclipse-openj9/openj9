@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -480,7 +480,7 @@ public class DTFJJavaObject implements JavaObject {
 		final int arraySize = this.getArraySize();
 
 		// i.e. size of the array if all it contained were object headers
-		long lowestPossibleSizeOfThisArray = arraySize * J9Object.SIZEOF;
+		long lowestPossibleSizeOfThisArray = arraySize * J9ObjectHelper.headerSize();
 		
 		// Sanity check to see if the array size is at all legal (i.e. smaller than the whole heap).
 		if (lowestPossibleSizeOfThisArray > DTFJJavaRuntimeHelper.getTotalHeapSize(DTFJContext.getRuntime(), DTFJContext.getProcess()) || lowestPossibleSizeOfThisArray < 0) {
@@ -603,7 +603,7 @@ public class DTFJJavaObject implements JavaObject {
 			try {
 				objectIsArray = ObjectModel.isIndexable(object);
 				if (objectIsArray) { // this is an array object, so cast to the underlying type
-					arrayptr = J9ArrayClassPointer.cast(object.clazz());
+					arrayptr = J9ArrayClassPointer.cast(J9ObjectHelper.rawClazz(object));
 					arraySize = ObjectModel.getSizeInElements(object).intValue();
 				}
 				size = ObjectModel.getTotalFootprintInBytesWithHeader(object).longValue();

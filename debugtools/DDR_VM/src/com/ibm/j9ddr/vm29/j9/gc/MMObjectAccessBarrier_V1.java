@@ -48,7 +48,7 @@ class MMObjectAccessBarrier_V1 extends MMObjectAccessBarrier
 	{
 		shift = 0;
 		
-		if(J9BuildFlags.gc_compressedPointers) {
+		if(J9ObjectHelper.compressObjectReferences) {
 			try {
 				J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 
@@ -154,7 +154,7 @@ class MMObjectAccessBarrier_V1 extends MMObjectAccessBarrier
 		if (token == 0) {
 			return J9ObjectPointer.NULL;
 		}
-		if (J9BuildFlags.gc_compressedPointers) {
+		if (J9ObjectHelper.compressObjectReferences) {
 			UDATA ref = new UDATA(token & U32.MASK);
 			ref = ref.leftShift(shift);
 			return J9ObjectPointer.cast(ref);
@@ -173,7 +173,7 @@ class MMObjectAccessBarrier_V1 extends MMObjectAccessBarrier
 			return 0L;
 		}
 		UDATA address = UDATA.cast(pointer);
-		if(J9BuildFlags.gc_compressedPointers) {
+		if(J9ObjectHelper.compressObjectReferences) {
 			address = address.rightShift(shift);
 		}
 		return address.longValue();

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,6 +52,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
@@ -159,7 +160,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 			 * This function returns offsets relative to the end of the object header,
 			 * whereas fieldOffset is relative to the start of the header.
 			 */
-			offset = new UDATA(hiddenField.fieldOffset().intValue() - J9Object.SIZEOF);
+			offset = new UDATA(hiddenField.fieldOffset().intValue() - J9ObjectHelper.headerSize());
 			/* Hidden fields do not have a valid JVMTI index. */
 			index = new UDATA(-1);
 		}
@@ -297,8 +298,8 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 			 * we store the total instance size (including the header) instead.
 			 */
 			fieldInfo.setSuperclassFieldsSize( superClazz.totalInstanceSize().intValue());
-			if (!superClazz.backfillOffset().eq(superClazz.totalInstanceSize().add(J9Object.SIZEOF))) {
-				fieldInfo.setSuperclassBackfillOffset(superClazz.backfillOffset().sub(J9Object.SIZEOF).intValue());
+			if (!superClazz.backfillOffset().eq(superClazz.totalInstanceSize().add(J9ObjectHelper.headerSize()))) {
+				fieldInfo.setSuperclassBackfillOffset(superClazz.backfillOffset().sub(J9ObjectHelper.headerSize()).intValue());
 			}
 		} else {
 			fieldInfo.setSuperclassFieldsSize(0);
@@ -392,9 +393,9 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		 * Note that the hidden fields remember their offsets, so this need be done once only.
 		 */
 		if (!hiddenInstanceFieldList.isEmpty()) {
-			UDATA hiddenSingleOffset = firstSingleOffset.add(J9Object.SIZEOF + (fieldInfo.getNonBackfilledInstanceSingleCount() * U32.SIZEOF));
-			UDATA hiddenDoubleOffset = firstDoubleOffset.add(J9Object.SIZEOF + (fieldInfo.getInstanceDoubleCount() * U64.SIZEOF));
-			UDATA hiddenObjectOffset = firstObjectOffset.add(J9Object.SIZEOF + (fieldInfo.getNonBackfilledInstanceObjectCount() * fj9object_t_SizeOf));
+			UDATA hiddenSingleOffset = firstSingleOffset.add(J9ObjectHelper.headerSize() + (fieldInfo.getNonBackfilledInstanceSingleCount() * U32.SIZEOF));
+			UDATA hiddenDoubleOffset = firstDoubleOffset.add(J9ObjectHelper.headerSize() + (fieldInfo.getInstanceDoubleCount() * U64.SIZEOF));
+			UDATA hiddenObjectOffset = firstObjectOffset.add(J9ObjectHelper.headerSize() + (fieldInfo.getNonBackfilledInstanceObjectCount() * fj9object_t_SizeOf));
 			boolean useBackfillForObject = false;
 			boolean useBackfillForSingle = false;
 
