@@ -934,7 +934,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
    TR::Register *objReg = cg->evaluate(secondChild);
    TR::RegisterDependencyConditions *conditions = NULL;
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-   intptrj_t oldValue = 0;
+   intptr_t oldValue = 0;
    bool oldValueInReg = true;
    offsetReg = cg->evaluate(thirdChild);
 
@@ -1027,7 +1027,7 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 TR::Instruction *J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *dstReg, TR::Register *srcReg, TR::Instruction *preced)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   uintptrj_t mask = TR::Compiler->om.maskOfObjectVftField();
+   uintptr_t mask = TR::Compiler->om.maskOfObjectVftField();
    bool isCompressed = TR::Compiler->om.compressObjectReferences();
 
    if (~mask == 0)

@@ -434,7 +434,7 @@ J9::Node::processJNICall(TR::TreeTop * callNodeTreeTop, TR::ResolvedMethodSymbol
 
       TR_ASSERT ((callerCP != -1 || callerSymbol->isNative()), "Cannot have cp index -1 for JNI calls other than JNI thunks.\n");
 
-      TR::Node *addressOfJ9Class = TR::Node::aconst(newNode, (uintptrj_t)resolvedMethod->containingClass());
+      TR::Node *addressOfJ9Class = TR::Node::aconst(newNode, (uintptr_t)resolvedMethod->containingClass());
       addressOfJ9Class->setIsClassPointerConstant(true);
       TR::Node *addressOfJavaLangClassReference;
 

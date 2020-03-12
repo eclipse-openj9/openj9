@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,8 +88,8 @@ public:
     */
    virtual void processBufferRecords(J9VMThread *vmThread,
                                      uint8_t *bufferStart,
-                                     uintptrj_t size,
-                                     uintptrj_t bufferFilledSize,
+                                     uintptr_t size,
+                                     uintptr_t bufferFilledSize,
                                      uint32_t dataTag = 0);
 
    /**

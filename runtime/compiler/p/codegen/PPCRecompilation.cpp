@@ -96,10 +96,10 @@ TR::Instruction *TR_PPCRecompilation::generatePrePrologue()
       {
       // gr0 must contain the saved LR; see Recompilation.s
       cursor = new (cg()->trHeapMemory()) TR::PPCTrg1Instruction(TR::InstOpCode::mflr, firstNode, gr0, cursor, cg());
-      cursor = generateDepImmSymInstruction(cg(), TR::InstOpCode::bl, firstNode, (uintptrj_t)recompileMethodSymRef->getMethodAddress(), new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0,0, cg()->trMemory()), recompileMethodSymRef, NULL, cursor);
+      cursor = generateDepImmSymInstruction(cg(), TR::InstOpCode::bl, firstNode, (uintptr_t)recompileMethodSymRef->getMethodAddress(), new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0,0, cg()->trMemory()), recompileMethodSymRef, NULL, cursor);
       if (cg()->comp()->target().is64Bit())
          {
-         int32_t highBits = (int32_t)((intptrj_t)info>>32), lowBits = (int32_t)((intptrj_t)info);
+         int32_t highBits = (int32_t)((intptr_t)info>>32), lowBits = (int32_t)((intptr_t)info);
          cursor = generateImmInstruction(cg(), TR::InstOpCode::dd, firstNode,
             cg()->comp()->target().cpu.isBigEndian()?highBits:lowBits, TR_BodyInfoAddress, cursor);
          cursor = generateImmInstruction(cg(), TR::InstOpCode::dd, firstNode,
@@ -107,7 +107,7 @@ TR::Instruction *TR_PPCRecompilation::generatePrePrologue()
          }
       else
          {
-         cursor = generateImmInstruction(cg(), TR::InstOpCode::dd, firstNode, (int32_t)(intptrj_t)info, TR_BodyInfoAddress, cursor);
+         cursor = generateImmInstruction(cg(), TR::InstOpCode::dd, firstNode, (int32_t)(intptr_t)info, TR_BodyInfoAddress, cursor);
          }
       cursor = generateImmInstruction(cg(), TR::InstOpCode::dd, firstNode, 0, cursor);
       }
@@ -127,12 +127,12 @@ TR::Instruction *TR_PPCRecompilation::generatePrologue(TR::Instruction *cursor)
       TR::Register   *gr11 = machine->getRealRegister(TR::RealRegister::gr11);
       TR::Register   *cr0 = machine->getRealRegister(TR::RealRegister::cr0);
       TR::Node       *firstNode = _compilation->getStartTree()->getNode();
-      intptrj_t        addr = (intptrj_t)getCounterAddress();          // What is the RL category?
+      intptr_t        addr = (intptr_t)getCounterAddress();          // What is the RL category?
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
 
       if (cg()->comp()->target().is64Bit())
          {
-         intptrj_t  adjustedAddr =  ((addr>>16) + ((addr&0x00008000)==0?0:1)) << 16 ;
+         intptr_t  adjustedAddr =  ((addr>>16) + ((addr&0x00008000)==0?0:1)) << 16 ;
          // lis gr11, upper 16-bits
          cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::lis, firstNode, gr11,
                ((adjustedAddr>>48) & 0x0000FFFF), cursor );

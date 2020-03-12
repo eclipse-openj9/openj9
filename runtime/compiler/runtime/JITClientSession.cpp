@@ -122,7 +122,7 @@ ClientSessionData::processUnloadedClasses(JITServer::ServerStream *stream, const
       for (auto clazz : classes)
          {
          if (updateUnloadedClasses)
-            _unloadedClassAddresses->add((uintptrj_t)clazz);
+            _unloadedClassAddresses->add((uintptr_t)clazz);
 
          auto it = _romClassMap.find((J9Class*)clazz);
          if (it == _romClassMap.end())

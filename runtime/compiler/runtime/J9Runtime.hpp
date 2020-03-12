@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,11 +63,11 @@ void replaceFirstTwoBytesWithData(void *startPC, int32_t startPCToData);
 #if defined(TR_HOST_POWER)
 
 #define  OFFSET_REVERT_INTP_PRESERVED_FSD                (-4)
-#define  OFFSET_REVERT_INTP_FIXED_PORTION                (-12-2*sizeof(intptrj_t))
+#define  OFFSET_REVERT_INTP_FIXED_PORTION                (-12-2*sizeof(intptr_t))
 
-#define  OFFSET_SAMPLING_PREPROLOGUE_FROM_STARTPC        (-(16+sizeof(intptrj_t)))
-#define  OFFSET_SAMPLING_BRANCH_FROM_STARTPC             (-(12+sizeof(intptrj_t)))
-#define  OFFSET_SAMPLING_METHODINFO_FROM_STARTPC         (-(8+sizeof(intptrj_t)))
+#define  OFFSET_SAMPLING_PREPROLOGUE_FROM_STARTPC        (-(16+sizeof(intptr_t)))
+#define  OFFSET_SAMPLING_BRANCH_FROM_STARTPC             (-(12+sizeof(intptr_t)))
+#define  OFFSET_SAMPLING_METHODINFO_FROM_STARTPC         (-(8+sizeof(intptr_t)))
 #define  OFFSET_SAMPLING_PRESERVED_FROM_STARTPC          (-8)
 
 inline uint32_t getJitEntryOffset(J9::PrivateLinkage::LinkageInfo *linkageInfo)
@@ -79,10 +79,10 @@ inline uint32_t getJitEntryOffset(J9::PrivateLinkage::LinkageInfo *linkageInfo)
 
 
 #if defined(TR_HOST_ARM)
-#define  OFFSET_REVERT_INTP_FIXED_PORTION                (-12-2*sizeof(intptrj_t))
-#define  OFFSET_SAMPLING_PREPROLOGUE_FROM_STARTPC        (-(16+sizeof(intptrj_t)))
-#define  OFFSET_SAMPLING_BRANCH_FROM_STARTPC             (-(12+sizeof(intptrj_t)))
-#define  OFFSET_METHODINFO_FROM_STARTPC                  (-(8+sizeof(intptrj_t)))
+#define  OFFSET_REVERT_INTP_FIXED_PORTION                (-12-2*sizeof(intptr_t))
+#define  OFFSET_SAMPLING_PREPROLOGUE_FROM_STARTPC        (-(16+sizeof(intptr_t)))
+#define  OFFSET_SAMPLING_BRANCH_FROM_STARTPC             (-(12+sizeof(intptr_t)))
+#define  OFFSET_METHODINFO_FROM_STARTPC                  (-(8+sizeof(intptr_t)))
 #define  OFFSET_SAMPLING_PRESERVED_FROM_STARTPC          (-8)
 #define  START_PC_TO_METHOD_INFO_ADDRESS                  -8 // offset from startpc to jitted body info
 #define  OFFSET_COUNTING_BRANCH_FROM_JITENTRY             36

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -799,7 +799,7 @@ uint32_t TR::InterProceduralAnalyzer::hash(void * h, uint32_t size)
    {
    // 2654435761 is the golden ratio of 2^32.
    //
-   return (((uint32_t)(uintptrj_t)h >> 2) * 2654435761u) % size;
+   return (((uint32_t)(uintptr_t)h >> 2) * 2654435761u) % size;
    }
 
 

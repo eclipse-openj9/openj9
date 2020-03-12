@@ -46,7 +46,7 @@ uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
    {
    uint8_t             *buffer = cg()->getBinaryBufferCursor();
    TR::SymbolReference  *induceRecompilationSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinduceRecompilation, false, false, false);
-   intptrj_t startPC = (intptrj_t)((uint8_t*)cg()->getCodeStart());
+   intptr_t startPC = (intptr_t)((uint8_t*)cg()->getCodeStart());
 
    getSnippetLabel()->setCodeLocation(buffer);
 
@@ -118,16 +118,16 @@ uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
       buffer += PPC_INSTRUCTION_LENGTH;
       }
 
-   intptrj_t helperAddress = (intptrj_t)induceRecompilationSymRef->getMethodAddress();
-   if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)buffer))
+   intptr_t helperAddress = (intptr_t)induceRecompilationSymRef->getMethodAddress();
+   if (cg()->directCallRequiresTrampoline(helperAddress, (intptr_t)buffer))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(induceRecompilationSymRef->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)buffer),
+      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)buffer),
                       "Helper address is out of range");
       }
 
    // b distance
-   *(int32_t *)buffer = 0x48000000 | ((helperAddress - (intptrj_t)buffer) & 0x03ffffff);
+   *(int32_t *)buffer = 0x48000000 | ((helperAddress - (intptr_t)buffer) & 0x03ffffff);
 
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,(uint8_t *)induceRecompilationSymRef,TR_HelperAddress, cg()),
                           __FILE__,
@@ -197,7 +197,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCForceRecompilationSnippet * snippet)
    printPrefix(pOutFile, NULL, cursor, 4);
    value = *((int32_t *) cursor) & 0x03fffffc;
    value = (value << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t; %s%s", (intptrj_t)cursor + value, getName(_cg->getSymRef(TR_PPCinduceRecompilation)), info);
+   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t; %s%s", (intptr_t)cursor + value, getName(_cg->getSymRef(TR_PPCinduceRecompilation)), info);
    cursor += 4;
    }
 

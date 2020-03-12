@@ -82,12 +82,12 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
       // in the AOT method header, but that would use space for AOT bodies that
       // don't use the SVM. TODO: Move it once SVM takes over?
       int wellKnownClassesOffsetSize = useSVM ? SIZEPOINTER : 0;
-      uintptrj_t reloBufferSize =
+      uintptr_t reloBufferSize =
          self()->getSizeOfAOTRelocations() + SIZEPOINTER + wellKnownClassesOffsetSize;
       uint8_t *relocationDataCursor = self()->setRelocationData(
          fej9->allocateRelocationData(self()->comp(), reloBufferSize));
       // set up the size for the region
-      *(uintptrj_t*)relocationDataCursor = reloBufferSize;
+      *(uintptr_t*)relocationDataCursor = reloBufferSize;
       relocationDataCursor += SIZEPOINTER;
 
       if (useSVM)
@@ -95,7 +95,7 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
          TR::SymbolValidationManager *svm =
             self()->comp()->getSymbolValidationManager();
          void *offsets = const_cast<void*>(svm->wellKnownClassChainOffsets());
-         *(uintptrj_t *)relocationDataCursor =
+         *(uintptr_t *)relocationDataCursor =
             self()->offsetInSharedCacheFromPointer(fej9->sharedCache(), offsets);
          relocationDataCursor += SIZEPOINTER;
          }
@@ -168,7 +168,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          if (comp->target().is64Bit())
             {
-            *(uint64_t *) cursor = (uint64_t) (uintptrj_t) tempSR->getOwningMethod(comp)->constantPool();
+            *(uint64_t *) cursor = (uint64_t) (uintptr_t) tempSR->getOwningMethod(comp)->constantPool();
             cursor += 8;
 
             // final word is the index in the above stored constant pool
@@ -180,7 +180,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
             {
             TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
             *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-            *(uint32_t *) cursor = (uint32_t) (uintptrj_t) tempSR->getOwningMethod(comp)->constantPool();
+            *(uint32_t *) cursor = (uint32_t) (uintptr_t) tempSR->getOwningMethod(comp)->constantPool();
             cursor += 4;
 
             // final word is the index in the above stored constant pool
@@ -199,14 +199,14 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), inlinedSiteIndex);
 
-         *(uintptrj_t *)cursor = inlinedSiteIndex;  // inlinedSiteIndex
+         *(uintptr_t *)cursor = inlinedSiteIndex;  // inlinedSiteIndex
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t *)cursor = (uintptrj_t)tempSR->getOwningMethod(comp)->constantPool(); // constantPool
+         *(uintptr_t *)cursor = (uintptr_t)tempSR->getOwningMethod(comp)->constantPool(); // constantPool
          cursor += SIZEPOINTER;
 
-         uintptrj_t cpIndex=(uintptrj_t)tempSR->getCPIndex();
-         *(uintptrj_t *)cursor =cpIndex;// cpIndex
+         uintptr_t cpIndex=(uintptr_t)tempSR->getCPIndex();
+         *(uintptr_t *)cursor =cpIndex;// cpIndex
          cursor += SIZEPOINTER;
          }
          break;
@@ -224,7 +224,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
             *(uint64_t *) cursor = (uint64_t) self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), recordInfo->data2); //inlineSiteIndex
             cursor += 8;
 
-            *(uint64_t *) cursor = (uint64_t) (uintptrj_t) tempSR->getOwningMethod(comp)->constantPool();
+            *(uint64_t *) cursor = (uint64_t) (uintptr_t) tempSR->getOwningMethod(comp)->constantPool();
             cursor += 8;
 
             *(uint64_t *) cursor = tempSR->getCPIndex(); // cpIndex
@@ -237,7 +237,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
             cursor += 4;
 
-            *(uint32_t *) cursor = (uint32_t) (uintptrj_t) tempSR->getOwningMethod(comp)->constantPool(); //cp
+            *(uint32_t *) cursor = (uint32_t) (uintptr_t) tempSR->getOwningMethod(comp)->constantPool(); //cp
             cursor += 4;
 
             *(uint32_t *) cursor = tempSR->getCPIndex(); // cpIndex
@@ -259,16 +259,16 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), inlinedSiteIndex);
 
          // relocation target
-         *(uintptrj_t *) cursor = inlinedSiteIndex; // inlinedSiteIndex
+         *(uintptr_t *) cursor = inlinedSiteIndex; // inlinedSiteIndex
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t *) cursor = (uintptrj_t) tempSR->getOwningMethod(comp)->constantPool(); // constantPool
+         *(uintptr_t *) cursor = (uintptr_t) tempSR->getOwningMethod(comp)->constantPool(); // constantPool
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t *) cursor = tempSR->getCPIndex(); // cpIndex
+         *(uintptr_t *) cursor = tempSR->getCPIndex(); // cpIndex
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t *) cursor = tempSR->getOffset(); // offset
+         *(uintptr_t *) cursor = tempSR->getOffset(); // offset
          cursor += SIZEPOINTER;
 
          break;
@@ -373,16 +373,16 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
          if (comp->target().is64Bit())
             {
-            *(uint64_t *) cursor = (uint64_t) (uintptrj_t) recordInfo->data2;
+            *(uint64_t *) cursor = (uint64_t) (uintptr_t) recordInfo->data2;
             cursor += 8;
-            *(uint64_t *) cursor = (uint64_t) (uintptrj_t) recordInfo->data1;
+            *(uint64_t *) cursor = (uint64_t) (uintptr_t) recordInfo->data1;
             cursor += 8;
             }
          else
             {
-            *(uint32_t *) cursor = (uint32_t) (uintptrj_t) recordInfo->data2;
+            *(uint32_t *) cursor = (uint32_t) (uintptr_t) recordInfo->data2;
             cursor += 4;
-            *(uint32_t *) cursor = (uint32_t) (uintptrj_t) recordInfo->data1;
+            *(uint32_t *) cursor = (uint32_t) (uintptr_t) recordInfo->data1;
             cursor += 4;
             }
          break;
@@ -409,13 +409,13 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          {
          auto info = (TR_RelocationRecordInformation*)relocation->getTargetAddress();
 
-         *(uintptrj_t *)cursor = (uintptrj_t)info->data2; // inlined site index
+         *(uintptr_t *)cursor = (uintptr_t)info->data2; // inlined site index
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t *)cursor = (uintptrj_t)info->data1; // constantPool
+         *(uintptr_t *)cursor = (uintptr_t)info->data1; // constantPool
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t *)cursor = (uintptrj_t)info->data3; // offset to J2I virtual thunk pointer
+         *(uintptr_t *)cursor = (uintptr_t)info->data3; // offset to J2I virtual thunk pointer
          cursor += SIZEPOINTER;
          }
          break;
@@ -424,12 +424,12 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          {
          if (comp->target().is64Bit())
             {
-            *(uint64_t *) cursor = (uint64_t) (uintptrj_t) relocation->getTargetAddress();
+            *(uint64_t *) cursor = (uint64_t) (uintptr_t) relocation->getTargetAddress();
             cursor += 8;
             }
          else
             {
-            *(uint32_t *) cursor = (uint32_t) (uintptrj_t) relocation->getTargetAddress();
+            *(uint32_t *) cursor = (uint32_t) (uintptr_t) relocation->getTargetAddress();
             cursor += 4;
             }
          }
@@ -462,21 +462,21 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
       case TR_MethodPointer:
          {
          TR::Node *aconstNode = (TR::Node *) relocation->getTargetAddress();
-         uintptrj_t inlinedSiteIndex = (uintptrj_t)aconstNode->getInlinedSiteIndex();
-         *(uintptrj_t *)cursor = inlinedSiteIndex;
+         uintptr_t inlinedSiteIndex = (uintptr_t)aconstNode->getInlinedSiteIndex();
+         *(uintptr_t *)cursor = inlinedSiteIndex;
          cursor += SIZEPOINTER;
 
          TR_OpaqueMethodBlock *j9method = (TR_OpaqueMethodBlock *) aconstNode->getAddress();
          TR_OpaqueClassBlock *j9class = fej9->getClassFromMethodBlock(j9method);
 
-         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
-         *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
+         uintptr_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
+         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
          cursor = emitClassChainOffset(cursor, j9class);
 
-         uintptrj_t vTableOffset = (uintptrj_t) fej9->getInterpreterVTableSlot(j9method, j9class);
-         *(uintptrj_t *)cursor = vTableOffset;
+         uintptr_t vTableOffset = (uintptr_t) fej9->getInterpreterVTableSlot(j9method, j9class);
+         *(uintptr_t *)cursor = vTableOffset;
          cursor += SIZEPOINTER;
          }
          break;
@@ -484,14 +484,14 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
       case TR_ClassPointer:
          {
          TR::Node *aconstNode = (TR::Node *) relocation->getTargetAddress();
-         uintptrj_t inlinedSiteIndex = (uintptrj_t)aconstNode->getInlinedSiteIndex();
-         *(uintptrj_t *)cursor = inlinedSiteIndex;
+         uintptr_t inlinedSiteIndex = (uintptr_t)aconstNode->getInlinedSiteIndex();
+         *(uintptr_t *)cursor = inlinedSiteIndex;
          cursor += SIZEPOINTER;
 
          TR_OpaqueClassBlock *j9class = (TR_OpaqueClassBlock *) aconstNode->getAddress();
 
-         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
-         *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
+         uintptr_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
+         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
          cursor = emitClassChainOffset(cursor, j9class);
@@ -513,11 +513,11 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          // Data identifying the class is as though for TR_ClassPointer
          // (TR_RelocationRecordPointerBinaryTemplate)
-         *(uintptrj_t *)cursor = inlinedSiteIndex;
+         *(uintptr_t *)cursor = inlinedSiteIndex;
          cursor += SIZEPOINTER;
 
-         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
-         *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
+         uintptr_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
+         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
          cursor = emitClassChainOffset(cursor, j9class);
@@ -542,10 +542,10 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
 
          int32_t inlinedSiteIndex = guard->getCurrentInlinedSiteIndex();
-         *(uintptrj_t *) cursor = (uintptrj_t) inlinedSiteIndex;
+         *(uintptr_t *) cursor = (uintptr_t) inlinedSiteIndex;
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t *) cursor = (uintptrj_t) guard->getSymbolReference()->getOwningMethod(comp)->constantPool(); // record constant pool
+         *(uintptr_t *) cursor = (uintptr_t) guard->getSymbolReference()->getOwningMethod(comp)->constantPool(); // record constant pool
          cursor += SIZEPOINTER;
 
          if (relocation->getTargetKind() == TR_InlinedInterfaceMethodWithNopGuard ||
@@ -568,13 +568,13 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
             uint16_t methodID = symValManager->getIDFromSymbol(static_cast<void *>(method));
             uint16_t receiverClassID = symValManager->getIDFromSymbol(static_cast<void *>(thisClass));
 
-            uintptrj_t data = 0;
-            data = (((uintptrj_t)receiverClassID << 16) | (uintptrj_t)methodID);
-            *(uintptrj_t*)cursor = data;
+            uintptr_t data = 0;
+            data = (((uintptr_t)receiverClassID << 16) | (uintptr_t)methodID);
+            *(uintptr_t*)cursor = data;
             }
          else
             {
-            *(uintptrj_t*)cursor = (uintptrj_t)guard->getSymbolReference()->getCPIndex(); // record cpIndex
+            *(uintptr_t*)cursor = (uintptr_t)guard->getSymbolReference()->getCPIndex(); // record cpIndex
             }
          cursor += SIZEPOINTER;
 
@@ -582,13 +582,13 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          void *romClass = (void *) fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass);
          uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
 
-         *(uintptrj_t *) cursor = romClassOffsetInSharedCache;
+         *(uintptr_t *) cursor = romClassOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
          if (relocation->getTargetKind() != TR_InlinedInterfaceMethod &&
              relocation->getTargetKind() != TR_InlinedVirtualMethod)
             {
-            *(uintptrj_t *) cursor = (uintptrj_t) relocation->getTargetAddress(); // record Patch Destination Address
+            *(uintptr_t *) cursor = (uintptr_t) relocation->getTargetAddress(); // record Patch Destination Address
             cursor += SIZEPOINTER;
             }
          }
@@ -601,7 +601,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          guard = (TR_VirtualGuard *) relocation->getTargetAddress2();
 
          int32_t inlinedSiteIndex = guard->getCurrentInlinedSiteIndex();
-         *(uintptrj_t *) cursor = (uintptrj_t) inlinedSiteIndex;
+         *(uintptr_t *) cursor = (uintptr_t) inlinedSiteIndex;
          cursor += SIZEPOINTER;
 
          TR::SymbolReference *callSymRef = guard->getSymbolReference();
@@ -611,35 +611,35 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          TR_ResolvedMethod *inlinedMethod = ((TR_AOTMethodInfo *)ics._methodInfo)->resolvedMethod;
          TR_OpaqueClassBlock *inlinedCodeClass = reinterpret_cast<TR_OpaqueClassBlock *>(inlinedMethod->classOfMethod());
 
-         *(uintptrj_t *) cursor = (uintptrj_t) owningMethod->constantPool(); // record constant pool
+         *(uintptr_t *) cursor = (uintptr_t) owningMethod->constantPool(); // record constant pool
          cursor += SIZEPOINTER;
 
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
             uint16_t inlinedCodeClassID = symValManager->getIDFromSymbol(static_cast<void *>(inlinedCodeClass));
-            uintptrj_t data = (uintptrj_t)inlinedCodeClassID;
-            *(uintptrj_t*)cursor = data;
+            uintptr_t data = (uintptr_t)inlinedCodeClassID;
+            *(uintptr_t*)cursor = data;
             }
          else
             {
-            *(uintptrj_t*)cursor = (uintptrj_t)callSymRef->getCPIndex(); // record cpIndex
+            *(uintptr_t*)cursor = (uintptr_t)callSymRef->getCPIndex(); // record cpIndex
             }
          cursor += SIZEPOINTER;
 
          void *romClass = (void *) fej9->getPersistentClassPointerFromClassPointer(inlinedCodeClass);
          uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
          traceMsg(comp, "class is %p, romclass is %p, offset is %p\n", inlinedCodeClass, romClass, romClassOffsetInSharedCache);
-         *(uintptrj_t *) cursor = romClassOffsetInSharedCache;
+         *(uintptr_t *) cursor = romClassOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
-         uintptrj_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(inlinedCodeClass);
-         *(uintptrj_t *) cursor = classChainOffsetInSharedCache;
+         uintptr_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(inlinedCodeClass);
+         *(uintptr_t *) cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
          cursor = emitClassChainOffset(cursor, inlinedCodeClass);
 
-         uintptrj_t methodIndex = fej9->getMethodIndexInClass(inlinedCodeClass, inlinedMethod->getNonPersistentIdentifier());
-         *(uintptrj_t *)cursor = methodIndex;
+         uintptr_t methodIndex = fej9->getMethodIndexInClass(inlinedCodeClass, inlinedMethod->getNonPersistentIdentifier());
+         *(uintptr_t *)cursor = methodIndex;
          cursor += SIZEPOINTER;
          }
          break;
@@ -650,14 +650,14 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          uint8_t flags = (uint8_t)((uintptr_t)relocation->getTargetAddress2());
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-         *(uintptrj_t*)cursor = (uintptr_t)relocation->getTargetAddress();
+         *(uintptr_t*)cursor = (uintptr_t)relocation->getTargetAddress();
 #else
 
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
          uint8_t flags = (uint8_t) recordInfo->data3;
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-         *(uintptrj_t*) cursor = (uintptr_t) recordInfo->data1;
+         *(uintptr_t*) cursor = (uintptr_t) recordInfo->data1;
 #endif
 
          cursor += SIZEPOINTER;
@@ -697,7 +697,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          void *classChainForClassToValidate = record->_classChain;
 
          //store the classchain's offset for the classloader for the class
-         uintptrj_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
+         uintptr_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
 
          //store the classchain's offset for the class that needs to be validated in the second run
          uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
@@ -913,7 +913,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
          binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
-         binaryTemplate->_index = static_cast<uintptrj_t>(record->_index);
+         binaryTemplate->_index = static_cast<uintptr_t>(record->_index);
 
          cursor += sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate);
          }
@@ -1023,7 +1023,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
          binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
          binaryTemplate->_lookupID = symValManager->getIDFromSymbol(static_cast<void *>(record->_lookup));
-         binaryTemplate->_cpIndex = static_cast<uintptrj_t>(record->_cpIndex);
+         binaryTemplate->_cpIndex = static_cast<uintptr_t>(record->_cpIndex);
 
          cursor += sizeof(TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate);
          }
@@ -1170,7 +1170,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          uint8_t *symbol = relocation->getTargetAddress();
          uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
 
-         uint16_t symbolType = (uint16_t)(uintptrj_t)relocation->getTargetAddress2();
+         uint16_t symbolType = (uint16_t)(uintptr_t)relocation->getTargetAddress2();
 
          cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
 
@@ -1211,37 +1211,37 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
       case TR_ValidateClass:
          {
-         *(uintptrj_t*)cursor = (uintptrj_t)relocation->getTargetAddress(); // Inlined site index
+         *(uintptr_t*)cursor = (uintptr_t)relocation->getTargetAddress(); // Inlined site index
          cursor += SIZEPOINTER;
 
          TR::AOTClassInfo *aotCI = (TR::AOTClassInfo*)relocation->getTargetAddress2();
-         *(uintptrj_t*)cursor = (uintptrj_t) aotCI->_constantPool;
+         *(uintptr_t*)cursor = (uintptr_t) aotCI->_constantPool;
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t*)cursor = (uintptrj_t) aotCI->_cpIndex;
+         *(uintptr_t*)cursor = (uintptr_t) aotCI->_cpIndex;
          cursor += SIZEPOINTER;
 
          uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, aotCI->_classChain);
-         *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
+         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
          }
          break;
 
       case TR_ValidateStaticField:
          {
-         *(uintptrj_t*)cursor = (uintptrj_t)relocation->getTargetAddress(); // Inlined site index
+         *(uintptr_t*)cursor = (uintptr_t)relocation->getTargetAddress(); // Inlined site index
          cursor += SIZEPOINTER;
 
          TR::AOTClassInfo *aotCI = (TR::AOTClassInfo*)relocation->getTargetAddress2();
-         *(uintptrj_t*)cursor = (uintptrj_t) aotCI->_constantPool;
+         *(uintptr_t*)cursor = (uintptr_t) aotCI->_constantPool;
          cursor += SIZEPOINTER;
 
-         *(uintptrj_t*)cursor = (uintptrj_t) aotCI->_cpIndex;
+         *(uintptr_t*)cursor = (uintptr_t) aotCI->_cpIndex;
          cursor += SIZEPOINTER;
 
          void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(aotCI->_clazz);
          uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
-         *(uintptrj_t *)cursor = romClassOffsetInSharedCache;
+         *(uintptr_t *)cursor = romClassOffsetInSharedCache;
          cursor += SIZEPOINTER;
          }
          break;
@@ -1252,15 +1252,15 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          TR_OpaqueClassBlock *classToValidate = aotCI->_clazz;
 
          //store the classchain's offset for the classloader for the class
-         uintptrj_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
-         *(uintptrj_t *)cursor = classChainOffsetInSharedCacheForCL;
+         uintptr_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
+         *(uintptr_t *)cursor = classChainOffsetInSharedCacheForCL;
          cursor += SIZEPOINTER;
 
          //store the classchain's offset for the class that needs to be validated in the second run
          void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(classToValidate);
-         uintptrj_t *classChainForClassToValidate = (uintptrj_t *) aotCI->_classChain;
+         uintptr_t *classChainForClassToValidate = (uintptr_t *) aotCI->_classChain;
          uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
-         *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
+         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
          }
          break;
@@ -1268,12 +1268,12 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
       case TR_HCR:
          {
          flags = 0;
-         if (((TR_HCRAssumptionFlags)((uintptrj_t)(relocation->getTargetAddress2()))) == needsFullSizeRuntimeAssumption)
+         if (((TR_HCRAssumptionFlags)((uintptr_t)(relocation->getTargetAddress2()))) == needsFullSizeRuntimeAssumption)
         	 flags = needsFullSizeRuntimeAssumption;
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
 
-         *(uintptrj_t*) cursor = (uintptrj_t) relocation->getTargetAddress();
+         *(uintptr_t*) cursor = (uintptr_t) relocation->getTargetAddress();
          cursor += SIZEPOINTER;
          }
          break;
@@ -1286,23 +1286,23 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          TR::DebugCounterReloData *counterReloData = counter->getReloData();
 
-         uintptrj_t offset = (uintptrj_t)fej9->sharedCache()->rememberDebugCounterName(counter->getName());
+         uintptr_t offset = (uintptr_t)fej9->sharedCache()->rememberDebugCounterName(counter->getName());
 
          uint8_t flags = (uint8_t)counterReloData->_seqKind;
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
 
-         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_callerIndex;
+         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_callerIndex;
          cursor += SIZEPOINTER;
-         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_bytecodeIndex;
+         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_bytecodeIndex;
          cursor += SIZEPOINTER;
-         *(uintptrj_t *)cursor = offset;
+         *(uintptr_t *)cursor = offset;
          cursor += SIZEPOINTER;
-         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_delta;
+         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_delta;
          cursor += SIZEPOINTER;
-         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_fidelity;
+         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_fidelity;
          cursor += SIZEPOINTER;
-         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_staticDelta;
+         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_staticDelta;
          cursor += SIZEPOINTER;
          }
          break;

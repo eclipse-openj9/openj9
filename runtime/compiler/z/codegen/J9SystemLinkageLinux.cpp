@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,7 @@ J9::Z::zLinuxSystemLinkage::zLinuxSystemLinkage(TR::CodeGenerator * codeGen)
 ////////////////////////////////////////////////////////////////////////////////
 void
 J9::Z::zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode,
-	TR::RegisterDependencyConditions * deps, intptrj_t targetAddress,
+	TR::RegisterDependencyConditions * deps, intptr_t targetAddress,
 	TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg,
 	TR::LabelSymbol * returnFromJNICallLabel,
 	TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint)
@@ -112,7 +112,7 @@ J9::Z::zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode,
 				   || jniCallDataSnippet))
       {
       generateRegLitRefInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, systemReturnAddressRegister,
-    		  (uintptrj_t) callNode->getSymbolReference(), TR_HelperAddress, NULL, NULL, NULL);
+    		  (uintptr_t) callNode->getSymbolReference(), TR_HelperAddress, NULL, NULL, NULL);
 	   }
    // get the address of the function descriptor
    else if (callNode->getSymbol()->isResolvedMethod() && jniCallDataSnippet) // unresolved means a helper being called using system linkage
@@ -137,7 +137,7 @@ J9::Z::zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode,
          TR_ASSERT(0,"JNI relocation not supported.");
          }
       generateRegLitRefInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode,
-				systemReturnAddressRegister, (uintptrj_t) targetAddress,
+				systemReturnAddressRegister, (uintptr_t) targetAddress,
 				reloType, NULL, NULL, NULL);
 	   }
    else

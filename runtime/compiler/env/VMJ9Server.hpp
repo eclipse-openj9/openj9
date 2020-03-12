@@ -84,7 +84,7 @@ public:
    virtual bool classHasBeenReplaced(TR_OpaqueClassBlock *) override;
    virtual bool classHasBeenExtended(TR_OpaqueClassBlock *) override;
    virtual bool compiledAsDLTBefore(TR_ResolvedMethod *) override;
-   virtual uintptrj_t getOverflowSafeAllocSize() override;
+   virtual uintptr_t getOverflowSafeAllocSize() override;
    virtual bool isThunkArchetype(J9Method * method) override;
    virtual int32_t printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method) override;
    virtual bool isClassInitialized(TR_OpaqueClassBlock * clazz) override;
@@ -97,14 +97,14 @@ public:
    virtual void getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, List<TR_ResolvedMethod> * resolvedMethodsInClass) override;
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *clazz) override;
    virtual uint32_t getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock *clazz) override;
-   virtual TR_OpaqueClassBlock * getObjectClass(uintptrj_t objectPointer) override;
-   virtual uintptrj_t getStaticReferenceFieldAtAddress(uintptrj_t fieldAddress) override;
+   virtual TR_OpaqueClassBlock * getObjectClass(uintptr_t objectPointer) override;
+   virtual uintptr_t getStaticReferenceFieldAtAddress(uintptr_t fieldAddress) override;
 
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz) override;
    virtual bool hasFinalFieldsInClass(TR_OpaqueClassBlock *clazz) override;
    virtual const char *sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_t bufLen, TR_Memory *memory) override;
    virtual TR_OpaqueClassBlock * getHostClass(TR_OpaqueClassBlock *clazzOffset) override;
-   virtual intptrj_t getStringUTF8Length(uintptrj_t objectPointer) override;
+   virtual intptr_t getStringUTF8Length(uintptr_t objectPointer) override;
    virtual bool classInitIsFinished(TR_OpaqueClassBlock *) override;
    virtual int32_t getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock *getClassFromNewArrayType(int32_t arrayType) override;
@@ -114,19 +114,19 @@ public:
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass) override;
    virtual J9Class * matchRAMclassFromROMclass(J9ROMClass *clazz, TR::Compilation *comp) override;
    virtual int32_t * getCurrentLocalsMapForDLT(TR::Compilation *comp) override;
-   virtual uintptrj_t getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader) override;
-   virtual uintptrj_t getReferenceFieldAtAddress(uintptrj_t fieldAddress) override;
-   virtual uintptrj_t getVolatileReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset) override;
-   virtual int32_t getInt32FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset) override;
-   virtual int64_t getInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset) override;
-   virtual void setInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset, int64_t newValue) override;
-   virtual bool compareAndSwapInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset, int64_t oldValue, int64_t newValue) override;
-   virtual intptrj_t getArrayLengthInElements(uintptrj_t objectPointer) override;
-   virtual TR_OpaqueClassBlock * getClassFromJavaLangClass(uintptrj_t objectPointer) override;
+   virtual uintptr_t getReferenceFieldAt(uintptr_t objectPointer, uintptr_t offsetFromHeader) override;
+   virtual uintptr_t getReferenceFieldAtAddress(uintptr_t fieldAddress) override;
+   virtual uintptr_t getVolatileReferenceFieldAt(uintptr_t objectPointer, uintptr_t fieldOffset) override;
+   virtual int32_t getInt32FieldAt(uintptr_t objectPointer, uintptr_t fieldOffset) override;
+   virtual int64_t getInt64FieldAt(uintptr_t objectPointer, uintptr_t fieldOffset) override;
+   virtual void setInt64FieldAt(uintptr_t objectPointer, uintptr_t fieldOffset, int64_t newValue) override;
+   virtual bool compareAndSwapInt64FieldAt(uintptr_t objectPointer, uintptr_t fieldOffset, int64_t oldValue, int64_t newValue) override;
+   virtual intptr_t getArrayLengthInElements(uintptr_t objectPointer) override;
+   virtual TR_OpaqueClassBlock * getClassFromJavaLangClass(uintptr_t objectPointer) override;
    virtual UDATA getOffsetOfClassFromJavaLangClassField() override;
-   virtual uintptrj_t getConstantPoolFromMethod(TR_OpaqueMethodBlock *method) override;
-   virtual uintptrj_t getConstantPoolFromClass(TR_OpaqueClassBlock *clazz) override;
-   virtual uintptrj_t getProcessID() override;
+   virtual uintptr_t getConstantPoolFromMethod(TR_OpaqueMethodBlock *method) override;
+   virtual uintptr_t getConstantPoolFromClass(TR_OpaqueClassBlock *clazz) override;
+   virtual uintptr_t getProcessID() override;
    virtual UDATA getIdentityHashSaltPolicy() override;
    virtual UDATA getOffsetOfJLThreadJ9Thread() override;
    virtual bool scanReferenceSlotsInClassForOffset(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, int32_t offset) override;
@@ -141,8 +141,8 @@ public:
    virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock *clazz, char *fieldName, uint32_t fieldLen, char *sig, uint32_t sigLen, UDATA options) override;
    virtual int32_t getJavaLangClassHashCode(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, bool &hashCodeComputed) override;
    virtual bool hasFinalizer(TR_OpaqueClassBlock *clazz) override;
-   virtual uintptrj_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock *clazz) override;
-   virtual uintptrj_t getClassFlagsValue(TR_OpaqueClassBlock * clazz) override;
+   virtual uintptr_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock *clazz) override;
+   virtual uintptr_t getClassFlagsValue(TR_OpaqueClassBlock * clazz) override;
    virtual TR_OpaqueMethodBlock *getMethodFromName(char *className, char *methodName, char *signature) override;
    virtual TR_OpaqueMethodBlock *getMethodFromClass(TR_OpaqueClassBlock *methodClass, char *methodName, char *signature, TR_OpaqueClassBlock *callingClass) override;
    virtual bool isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass) override;
@@ -158,19 +158,19 @@ public:
    virtual TR_OpaqueClassBlock * getClassFromMethodBlock(TR_OpaqueMethodBlock *method) override;
    virtual U_8 * fetchMethodExtendedFlagsPointer(J9Method *method) override;
    virtual void * getStaticHookAddress(int32_t event) override;
-   virtual bool stringEquals(TR::Compilation *comp, uintptrj_t* stringLocation1, uintptrj_t*stringLocation2, int32_t& result) override;
-   virtual bool getStringHashCode(TR::Compilation *comp, uintptrj_t* stringLocation, int32_t& result) override;
+   virtual bool stringEquals(TR::Compilation *comp, uintptr_t* stringLocation1, uintptr_t*stringLocation2, int32_t& result) override;
+   virtual bool getStringHashCode(TR::Compilation *comp, uintptr_t* stringLocation, int32_t& result) override;
    virtual int32_t getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *method, int32_t bcIndex) override;
    virtual TR_OpaqueMethodBlock * getObjectNewInstanceImplMethod() override;
-   virtual uintptrj_t getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeInfo &bcInfo) override;
+   virtual uintptr_t getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeInfo &bcInfo) override;
    virtual bool isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz) override;
    virtual void setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp) override;
    virtual bool needsInvokeExactJ2IThunk(TR::Node *node,  TR::Compilation *comp) override;
-   virtual TR_ResolvedMethod *createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0) override;
-   virtual TR_ResolvedMethod *createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, TR_OpaqueMethodBlock *archetype, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0) override;
-   virtual intptrj_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset) override;
+   virtual TR_ResolvedMethod *createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptr_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0) override;
+   virtual TR_ResolvedMethod *createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, TR_OpaqueMethodBlock *archetype, uintptr_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0) override;
+   virtual intptr_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset) override;
    virtual bool isClassArray(TR_OpaqueClassBlock *klass) override;
-   virtual uintptrj_t getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef) override { return 0; } // safe answer
+   virtual uintptr_t getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef) override { return 0; } // safe answer
    virtual bool canDereferenceAtCompileTime(TR::SymbolReference *fieldRef,  TR::Compilation *comp) { return false; } // safe answer, might change in the future
    virtual bool instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass) override;
    virtual bool instanceOfOrCheckCastNoCacheUpdate(J9Class *instanceClass, J9Class* castClass) override;
@@ -180,8 +180,8 @@ public:
    virtual TR_IProfiler *getIProfiler() override;
    virtual TR_StaticFinalData dereferenceStaticFinalAddress(void *staticAddress, TR::DataType addressType) override;
    virtual void reserveTrampolineIfNecessary( TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding) override;
-   virtual intptrj_t methodTrampolineLookup( TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override;
-   virtual uintptrj_t getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock * clazz) override;
+   virtual intptr_t methodTrampolineLookup( TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override;
+   virtual uintptr_t getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock * clazz) override;
    virtual bool isStringCompressionEnabledVM() override;
    virtual TR_OpaqueClassBlock *getClassFromCP(J9ConstantPool *cp) override;
    virtual J9ROMMethod *getROMMethodFromRAMMethod(J9Method *ramMethod) override;
@@ -268,8 +268,8 @@ public:
    virtual TR_OpaqueClassBlock * getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *profiledInfo) override;
    virtual bool isPublicClass(TR_OpaqueClassBlock *clazz) override;
    virtual bool hasFinalizer(TR_OpaqueClassBlock * classPointer) override;
-   virtual uintptrj_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer) override;
-   virtual uintptrj_t getClassFlagsValue(TR_OpaqueClassBlock * classPointer) override;
+   virtual uintptr_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer) override;
+   virtual uintptr_t getClassFlagsValue(TR_OpaqueClassBlock * classPointer) override;
    virtual bool isPrimitiveClass(TR_OpaqueClassBlock *clazzPointer) override;
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override;
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass) override;
@@ -285,7 +285,7 @@ public:
    virtual bool isGetImplInliningSupported() override { return false; }
    virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *) override { return NULL; }
    virtual TR::CodeCache * getResolvedTrampoline(TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) override { return 0; }
-   virtual intptrj_t methodTrampolineLookup(TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override { TR_ASSERT_FATAL(0, "methodTrampolineLookup not implemented for AOT");  return 0; }
+   virtual intptr_t methodTrampolineLookup(TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override { TR_ASSERT_FATAL(0, "methodTrampolineLookup not implemented for AOT");  return 0; }
    virtual TR::CodeCache * getDesignatedCodeCache(TR::Compilation *comp) override;
    virtual void * persistJ2IThunk(void *thunk) override { TR_ASSERT_FATAL(0, "persistJ2IThunk should not be called on the server"); return NULL; }
    virtual void * persistThunk(char *signatureChars, uint32_t signatureLength, uint8_t *thunkStart, uint32_t totalSize) { TR_ASSERT_FATAL(0, "persistThunk should not be called on the server"); return NULL; }

@@ -211,7 +211,7 @@ OMR::RuntimeAssumption::dumpInfo(char *subclassName)
    TR_VerboseLog::write("%s@%p: key=%p", subclassName, this, _key);
    }
 
-bool OMR::RuntimeAssumption::isAssumingRange(uintptrj_t rangeStartPC, uintptrj_t rangeEndPC, uintptrj_t rangeColdStartPC, uintptrj_t rangeColdEndPC, uintptrj_t rangeStartMD, uintptrj_t rangeEndMD)
+bool OMR::RuntimeAssumption::isAssumingRange(uintptr_t rangeStartPC, uintptr_t rangeEndPC, uintptr_t rangeColdStartPC, uintptr_t rangeColdEndPC, uintptr_t rangeStartMD, uintptr_t rangeEndMD)
    {
    return (assumptionInRange(rangeStartPC, rangeEndPC) ||
            (rangeColdStartPC && assumptionInRange(rangeColdStartPC, rangeColdEndPC)) ||
@@ -225,18 +225,18 @@ bool OMR::RuntimeAssumption::isAssumingMethod(void *md, bool reclaimPrePrologueA
    // MetaData->startPC refers to the interpreter entry point, and does not include pre-prologue.
    // If we need to reclaim pre-prologue assumptions (i.e. on class unloading), we need to scan
    // from the beginning of the code cache allocation of the method (metaData->codeCacheAlloc).
-   uintptrj_t metaStartPC = (reclaimPrePrologueAssumptions)?metaData->codeCacheAlloc:metaData->startPC;
+   uintptr_t metaStartPC = (reclaimPrePrologueAssumptions)?metaData->codeCacheAlloc:metaData->startPC;
    if (assumptionInRange(metaStartPC, metaData->endWarmPC) ||
            (metaData->startColdPC && assumptionInRange(metaData->startColdPC, metaData->endPC)))
       return true;
 
-   if (assumptionInRange((uintptrj_t)metaData, ((uintptrj_t)metaData) + ((uintptrj_t)metaData->size)))
+   if (assumptionInRange((uintptr_t)metaData, ((uintptr_t)metaData) + ((uintptr_t)metaData->size)))
       {
       TR_PersistentJittedBodyInfo *bodyInfo = (TR_PersistentJittedBodyInfo *)metaData->bodyInfo;
       if (bodyInfo && bodyInfo->getMethodInfo() && bodyInfo->getMethodInfo()->isInDataCache())
          {
          // Don't reclaim if address is in the persistent body/method info in the data cache
-         if (!assumptionInRange((uintptrj_t)metaData->bodyInfo, ((uintptrj_t) metaData->bodyInfo) + (uintptrj_t)sizeof(TR_PersistentJittedBodyInfo) + (uintptrj_t)sizeof(TR_PersistentMethodInfo)))
+         if (!assumptionInRange((uintptr_t)metaData->bodyInfo, ((uintptr_t) metaData->bodyInfo) + (uintptr_t)sizeof(TR_PersistentJittedBodyInfo) + (uintptr_t)sizeof(TR_PersistentMethodInfo)))
             return true;
          }
       else
@@ -305,7 +305,7 @@ bool OMR::RuntimeAssumption::enqueueInListOfAssumptionsForJittedBody(OMR::Runtim
    return true;
    }
 
-OMR::RuntimeAssumption **TR_RuntimeAssumptionTable::getBucketPtr(TR_RuntimeAssumptionKind kind, uintptrj_t hashIndex)
+OMR::RuntimeAssumption **TR_RuntimeAssumptionTable::getBucketPtr(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex)
    {
    TR_RatHT *hashTable = findAssumptionHashTable(kind);
    OMR::RuntimeAssumption **head = hashTable->_htSpineArray + (hashIndex % hashTable->_spineArraySize);
@@ -610,7 +610,7 @@ TR_RuntimeAssumptionTable::notifyIllegalStaticFinalFieldModificationEvent(TR_Fro
    OMR::CriticalSection notifyIllegalStaticFinalFieldModificationEvent(assumptionTableMutex);
    bool reportDetails = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions);
 
-   OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnStaticFinalFieldModification, hashCode((uintptrj_t)key));
+   OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnStaticFinalFieldModification, hashCode((uintptr_t)key));
    OMR::RuntimeAssumption* cursor = *headPtr;
    bool found = false;
 
@@ -620,7 +620,7 @@ TR_RuntimeAssumptionTable::notifyIllegalStaticFinalFieldModificationEvent(TR_Fro
       if (reportDetails)
          TR_VerboseLog::writeLine(TR_Vlog_RA, "key=%p @ %p", cursor->getKey(), cursor->getFirstAssumingPC());
 
-      if (cursor->matches((uintptrj_t)key))
+      if (cursor->matches((uintptr_t)key))
          {
          found = true;
          if (reportDetails)
@@ -649,14 +649,14 @@ TR_RuntimeAssumptionTable::notifyClassUnloadEvent(TR_FrontEnd *vm, bool isSMP,
                                                   TR_OpaqueClassBlock *unloadedClass)
    {
    OMR::CriticalSection notifyClassUnloadEvent(assumptionTableMutex);
-   OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnClassUnload, hashCode((uintptrj_t)assumingClass));
+   OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnClassUnload, hashCode((uintptr_t)assumingClass));
    for (TR_UnloadedClassPicSite *cursor = (TR_UnloadedClassPicSite*)(*headPtr)
         ; cursor
         ; cursor = (TR_UnloadedClassPicSite*)cursor->getNext())
       {
-      if (cursor->matches((uintptrj_t)assumingClass) &&
+      if (cursor->matches((uintptr_t)assumingClass) &&
           ((unloadedClass == assumingClass) ||
-           (cursor->getPicEntry() == (uintptrj_t)unloadedClass) ))
+           (cursor->getPicEntry() == (uintptr_t)unloadedClass) ))
          {
          cursor->compensate(vm, 0, 0);
          if (assumingClass == unloadedClass)
@@ -731,7 +731,7 @@ TR_UnloadedClassPicSite::dumpInfo()
    }
 
 TR_RedefinedClassRPicSite *TR_RedefinedClassRPicSite::make(
-   TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptrj_t key, uint8_t *picLocation, uint32_t size,
+   TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptr_t key, uint8_t *picLocation, uint32_t size,
    OMR::RuntimeAssumption **sentinel)
    {
    TR_RedefinedClassRPicSite *result = new (pm) TR_RedefinedClassRPicSite(pm, key, picLocation, size);
@@ -741,7 +741,7 @@ TR_RedefinedClassRPicSite *TR_RedefinedClassRPicSite::make(
    }
 
 TR_RedefinedClassUPicSite *TR_RedefinedClassUPicSite::make(
-   TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptrj_t key, uint8_t *picLocation, uint32_t size,
+   TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptr_t key, uint8_t *picLocation, uint32_t size,
    OMR::RuntimeAssumption **sentinel)
    {
    TR_RedefinedClassUPicSite *result = new (pm) TR_RedefinedClassUPicSite(pm, key, picLocation, size);
@@ -751,7 +751,7 @@ TR_RedefinedClassUPicSite *TR_RedefinedClassUPicSite::make(
 
 
 TR_UnloadedClassPicSite *TR_UnloadedClassPicSite::make(
-   TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptrj_t key, uint8_t *picLocation, uint32_t size,
+   TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptr_t key, uint8_t *picLocation, uint32_t size,
    TR_RuntimeAssumptionKind kind,  OMR::RuntimeAssumption **sentinel)
    {
    TR_UnloadedClassPicSite *result = new (pm) TR_UnloadedClassPicSite(pm, key, picLocation, size);
@@ -767,8 +767,8 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
    OMR::CriticalSection notifyClassRedefinitionEvent(assumptionTableMutex);
    bool reportDetails = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions);
 
-   OMR::RuntimeAssumption **oldHeadPtr = getBucketPtr(RuntimeAssumptionOnClassRedefinitionPIC,  hashCode((uintptrj_t)oldKey));
-   OMR::RuntimeAssumption **newHeadPtr = getBucketPtr(RuntimeAssumptionOnClassRedefinitionPIC,  hashCode((uintptrj_t)newKey));
+   OMR::RuntimeAssumption **oldHeadPtr = getBucketPtr(RuntimeAssumptionOnClassRedefinitionPIC,  hashCode((uintptr_t)oldKey));
+   OMR::RuntimeAssumption **newHeadPtr = getBucketPtr(RuntimeAssumptionOnClassRedefinitionPIC,  hashCode((uintptr_t)newKey));
 
    TR_RedefinedClassPicSite *pic_cursor = (TR_RedefinedClassPicSite*)(*oldHeadPtr);
    TR_RedefinedClassPicSite *predecessor = NULL;
@@ -789,7 +789,7 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
       TR_RedefinedClassPicSite *pic_next = (TR_RedefinedClassPicSite*)pic_cursor->getNext();
       if (reportDetails)
          TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "old=%p @ %p", pic_cursor->getKey(), pic_cursor->getPicLocation());
-      if (pic_cursor->matches((uintptrj_t)oldKey))
+      if (pic_cursor->matches((uintptr_t)oldKey))
          {
          if (reportDetails)
             {
@@ -801,7 +801,7 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
          pic_cursor->compensate(vm, 0, newKey);
 
          // HCR update the assumption
-         pic_cursor->setKey((uintptrj_t)newKey);
+         pic_cursor->setKey((uintptr_t)newKey);
          if (oldHeadPtr == newHeadPtr)
             {
             predecessor = pic_cursor;
@@ -823,7 +823,7 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
          }
       pic_cursor = pic_next;
       }
-   oldHeadPtr = getBucketPtr(RuntimeAssumptionOnClassRedefinitionNOP, hashCode((uintptrj_t)oldKey));
+   oldHeadPtr = getBucketPtr(RuntimeAssumptionOnClassRedefinitionNOP, hashCode((uintptr_t)oldKey));
    OMR::RuntimeAssumption* nop_cursor = *oldHeadPtr;
 
    raArray = findAssumptionHashTable(RuntimeAssumptionOnClassRedefinitionNOP)->_htSpineArray;
@@ -841,7 +841,7 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
       OMR::RuntimeAssumption* nop_next = nop_cursor->getNext();
       if (reportDetails)
          TR_VerboseLog::writeLine(TR_Vlog_RA, "old=%p @ %p", nop_cursor->getKey(), nop_cursor->getFirstAssumingPC());
-      if (nop_cursor->matches((uintptrj_t)oldKey))
+      if (nop_cursor->matches((uintptr_t)oldKey))
          {
          if (reportDetails)
             {
@@ -860,8 +860,8 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
    if (reportDetails)
       TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "Scanning for unresolved PIC assumptions");
 
-   uintptrj_t resolvedKey;
-   uintptrj_t initialKey;
+   uintptr_t resolvedKey;
+   uintptr_t initialKey;
 
    TR_RatHT *classRedefinitionUPICAssumptionTable = findAssumptionHashTable(RuntimeAssumptionOnClassRedefinitionUPIC);
    for (size_t index = 0; index < classRedefinitionUPICAssumptionTable->_spineArraySize; index++)
@@ -872,13 +872,13 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
          TR_RedefinedClassPicSite *pic_next = (TR_RedefinedClassPicSite*)pic_cursor->getNext();
          if (!pic_cursor->isForAddressMaterializationSequence())
             {
-            resolvedKey = *(uintptrj_t *)(pic_cursor->getPicLocation());
+            resolvedKey = *(uintptr_t *)(pic_cursor->getPicLocation());
             initialKey = pic_cursor->getKey();
-            if ((uintptrj_t)oldKey == resolvedKey)
+            if ((uintptr_t)oldKey == resolvedKey)
                {
                if (reportDetails)
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "old=%p resolved=%p @ %p patching new=%p", initialKey, resolvedKey, pic_cursor->getPicLocation(), *(uintptrj_t *)(pic_cursor->getPicLocation()));
-               *(uintptrj_t *)(pic_cursor->getPicLocation()) = (uintptrj_t)newKey;
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "old=%p resolved=%p @ %p patching new=%p", initialKey, resolvedKey, pic_cursor->getPicLocation(), *(uintptr_t *)(pic_cursor->getPicLocation()));
+               *(uintptr_t *)(pic_cursor->getPicLocation()) = (uintptr_t)newKey;
                }
             }
          pic_cursor = pic_next;
@@ -902,22 +902,22 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
             bool isAddressMaterialization =
                   (location[0] & 0xf0) == 0x40  // REX
                && (location[1] & 0xf8) == 0xb8; // MOV
-            uintptrj_t *immLocation = (uintptrj_t*)(location+2);
+            uintptr_t *immLocation = (uintptr_t*)(location+2);
 #else
             bool isAddressMaterialization =
                   (location[0] & 0xf8) == 0xb8; // MOV
-            uintptrj_t *immLocation = (uintptrj_t*)(location+1);
+            uintptr_t *immLocation = (uintptr_t*)(location+1);
 #endif
             // Make sure it really is a materialization sequence (ie. mov reg, Imm) before patching it
             //
             if (isAddressMaterialization){
                resolvedKey = *immLocation;
                initialKey = pic_cursor->getKey();
-               if ((uintptrj_t)oldKey == resolvedKey)
+               if ((uintptr_t)oldKey == resolvedKey)
                   {
                   if (reportDetails)
                      TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "old=%p resolved=%p @ %p+2 patching new=%p", initialKey, resolvedKey, location, newKey);
-                  *immLocation = (uintptrj_t)newKey;
+                  *immLocation = (uintptr_t)newKey;
                   }
                }
             }
@@ -934,13 +934,13 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
    uint32_t resolvedKey1, resolvedKey2, resolvedKey3, resolvedKey4, tempKey5;
    uint32_t oldKey1, oldKey2, oldKey3, oldKey4;
 #if defined(TR_HOST_64BIT)
-   oldKey1 = (uint32_t)((uintptrj_t)oldKey >> 48);
-   oldKey2 = (uint32_t)((uintptrj_t)oldKey >> 32 & 0xffff);
-   oldKey3 = (uint32_t)((uintptrj_t)oldKey >> 16 & 0xffff);
-   oldKey4 = (uint32_t)((uintptrj_t)oldKey & 0xffff);
+   oldKey1 = (uint32_t)((uintptr_t)oldKey >> 48);
+   oldKey2 = (uint32_t)((uintptr_t)oldKey >> 32 & 0xffff);
+   oldKey3 = (uint32_t)((uintptr_t)oldKey >> 16 & 0xffff);
+   oldKey4 = (uint32_t)((uintptr_t)oldKey & 0xffff);
 #else
-   oldKey1 = HI_VALUE((uintptrj_t)oldKey);
-   oldKey2 = LO_VALUE((uintptrj_t)oldKey);
+   oldKey1 = HI_VALUE((uintptr_t)oldKey);
+   oldKey2 = LO_VALUE((uintptr_t)oldKey);
 #endif
    for (size_t index = 0; index < classRedefinitionUPICAssumptionTable->_spineArraySize; index++)
       {
@@ -983,10 +983,10 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
             		  TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "o=%p @ %p  r=%p %p %p %p",
             				  initialKey, pic_cursor->getPicLocation(),
             				  resolvedKey1, resolvedKey2, resolvedKey3, resolvedKey4);
-                  *(uint32_t *)(pic_cursor->getPicLocation()) = resolvedKey1 & 0xffff0000 | (uint32_t)((uintptrj_t)newKey >> 48);;
-                  *(uint32_t *)(pic_cursor->getPicLocation()+4) = resolvedKey2 & 0xffff0000 | (uint32_t)((uintptrj_t)newKey >> 32 & 0xffff);;
-                  *(uint32_t *)(pic_cursor->getPicLocation()+12) = resolvedKey3 & 0xffff0000 | (uint32_t)((uintptrj_t)newKey >> 16 & 0xffff);;
-                  *(uint32_t *)(pic_cursor->getPicLocation()+16) = resolvedKey4 & 0xffff0000 | (uint32_t)((uintptrj_t)newKey & 0xffff);;
+                  *(uint32_t *)(pic_cursor->getPicLocation()) = resolvedKey1 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 48);;
+                  *(uint32_t *)(pic_cursor->getPicLocation()+4) = resolvedKey2 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 32 & 0xffff);;
+                  *(uint32_t *)(pic_cursor->getPicLocation()+12) = resolvedKey3 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 16 & 0xffff);;
+                  *(uint32_t *)(pic_cursor->getPicLocation()+16) = resolvedKey4 & 0xffff0000 | (uint32_t)((uintptr_t)newKey & 0xffff);;
                   if (reportDetails)
                      {
                      TR_VerboseLog::vlogAcquire();
@@ -1032,7 +1032,7 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
    }
 
 void
-TR_RuntimeAssumptionTable::notifyMutableCallSiteChangeEvent(TR_FrontEnd *fe, uintptrj_t cookie)
+TR_RuntimeAssumptionTable::notifyMutableCallSiteChangeEvent(TR_FrontEnd *fe, uintptr_t cookie)
    {
    OMR::CriticalSection notifyMutableCallSiteChangeEvent(assumptionTableMutex);
 
@@ -1065,7 +1065,7 @@ void TR_RedefinedClassPicSite::compensate(TR_FrontEnd *, bool isSMP, void *newKe
 #if (defined(TR_HOST_X86) || defined(TR_HOST_S390))
    if (_size == 4)
       {
-      *(int32_t *)_picLocation = (uintptrj_t)newKey;
+      *(int32_t *)_picLocation = (uintptr_t)newKey;
 #if (defined(TR_HOST_64BIT) && defined(TR_HOST_S390))
       //Check if LARL followed by IIHL/IIHH
       {
@@ -1094,21 +1094,21 @@ void TR_RedefinedClassPicSite::compensate(TR_FrontEnd *, bool isSMP, void *newKe
       }
    else
       {
-      *(int64_t *)_picLocation = (uintptrj_t)newKey;
+      *(int64_t *)_picLocation = (uintptr_t)newKey;
       }
 #elif defined(TR_HOST_POWER)
    extern void ppcCodeSync(unsigned char *codeStart, unsigned int codeSize);
 #if (defined(TR_HOST_64BIT))
-   *(int64_t *)_picLocation = (uintptrj_t)newKey;
+   *(int64_t *)_picLocation = (uintptr_t)newKey;
    // we need to flush the pre-load of this address
    // ppcCodeSync(_picLocation, 4);
 #else
-   *(int32_t *)_picLocation = (uintptrj_t)newKey;
+   *(int32_t *)_picLocation = (uintptr_t)newKey;
 #endif
 #elif defined(TR_HOST_ARM)
-   *(int32_t *)_picLocation = (uintptrj_t)newKey;
+   *(int32_t *)_picLocation = (uintptr_t)newKey;
 #elif defined(TR_HOST_ARM64)
-   *(int64_t *)_picLocation = (uintptrj_t)newKey;
+   *(int64_t *)_picLocation = (uintptr_t)newKey;
 #else
    //   TR_ASSERT(0, "redefined class PIC patching is not implemented on this platform yet");
 #endif
@@ -1127,7 +1127,7 @@ static uint32_t hash(TR_OpaqueClassBlock * h, uint32_t size)
    {
    // 2654435761 is the golden ratio of 2^32.
    //
-   return (((uint32_t)(uintptrj_t)h >> 2) * 2654435761u) % size;
+   return (((uint32_t)(uintptr_t)h >> 2) * 2654435761u) % size;
    }
 
 
@@ -1194,11 +1194,11 @@ J9::PersistentInfo::isUnloadedClass(
       {
       auto clientData = TR::compInfoPT->getClientData();
       OMR::CriticalSection isUnloadedClass(clientData->getROMMapMonitor());
-      return clientData->getUnloadedClassAddresses().mayContain((uintptrj_t)v);
+      return clientData->getUnloadedClassAddresses().mayContain((uintptr_t)v);
       } 
 #endif
    OMR::CriticalSection isUnloadedClass(assumptionTableMutex);
-   bool result = (_unloadedClassAddresses && _unloadedClassAddresses->mayContain((uintptrj_t)v));
+   bool result = (_unloadedClassAddresses && _unloadedClassAddresses->mayContain((uintptr_t)v));
    return result;
    }
 
@@ -1220,7 +1220,7 @@ J9::PersistentInfo::isObsoleteClass(void *v, TR_FrontEnd *fe)
 
 
 bool
-J9::PersistentInfo::isInUnloadedMethod(uintptrj_t address)
+J9::PersistentInfo::isInUnloadedMethod(uintptr_t address)
    {
 #if defined(J9VM_OPT_JITSERVER)
    TR_ASSERT(getRemoteCompilationMode() != JITServer::SERVER, "JITServer does not maintain unloaded method ranges, this method should not be called");
@@ -1233,12 +1233,12 @@ J9::PersistentInfo::isInUnloadedMethod(uintptrj_t address)
 void
 J9::PersistentInfo::addUnloadedClass(
       TR_OpaqueClassBlock *clazz,
-      uintptrj_t startAddress,
+      uintptr_t startAddress,
       uint32_t size)
    {
    OMR::CriticalSection addUnloadedClass(assumptionTableMutex);
    TR_ASSERT(_unloadedClassAddresses && _unloadedMethodAddresses, "Address sets should be initialized before TR::PersistentInfo::addUnloadedClass");
-   _unloadedClassAddresses->add((uintptrj_t)clazz);
+   _unloadedClassAddresses->add((uintptr_t)clazz);
    _unloadedMethodAddresses->add(startAddress, startAddress+size);
    }
 
@@ -1322,7 +1322,7 @@ void TR_AddressSet::moveAddressRangesBy(int32_t low, int32_t high, int32_t dista
       }
    }
 
-void TR_AddressSet::add(uintptrj_t start, uintptrj_t end)
+void TR_AddressSet::add(uintptr_t start, uintptr_t end)
    {
    trace("%p.add [%p, %p]\n", this, start, end);
 
@@ -1366,7 +1366,7 @@ void TR_AddressSet::add(uintptrj_t start, uintptrj_t end)
          // Compute the costs of extending an existing range.
          // Cost equals the number of addresses that will become false positives.
          //
-         uintptrj_t extendDownCost = MAX_UINTPTRJ;
+         uintptr_t extendDownCost = MAX_UINTPTRJ;
          if (firstHigherIndex < _numAddressRanges)
             {
             if (firstHigher.covers(end))
@@ -1375,7 +1375,7 @@ void TR_AddressSet::add(uintptrj_t start, uintptrj_t end)
                extendDownCost = firstHigher.getStart() - end;
             }
 
-         uintptrj_t extendUpCost = MAX_UINTPTRJ;
+         uintptr_t extendUpCost = MAX_UINTPTRJ;
          if (firstHigherIndex > 0)
             {
             if (lastLower.covers(start))
@@ -1386,13 +1386,13 @@ void TR_AddressSet::add(uintptrj_t start, uintptrj_t end)
 
          // Scan for a pair of adjacent ranges to merge
          //
-         uintptrj_t bestMergeCost = MAX_UINTPTRJ;
+         uintptr_t bestMergeCost = MAX_UINTPTRJ;
          int32_t    bestMergeIndex = 0;
          if (extendUpCost > 0 && extendDownCost > 0)
             {
             for (int32_t i = 0; i < _numAddressRanges-1; i++)
                {
-               uintptrj_t cost = _addressRanges[i+1].getStart() - _addressRanges[i].getEnd();
+               uintptr_t cost = _addressRanges[i+1].getStart() - _addressRanges[i].getEnd();
                if (cost < bestMergeCost)
                   {
                   bestMergeCost = cost;
@@ -1418,7 +1418,7 @@ void TR_AddressSet::add(uintptrj_t start, uintptrj_t end)
                bestMergeIndex+1, mergeRange2.getStart(), mergeRange2.getEnd(),
                this, bestMergeCost);
             mergeRange2.initialize(mergeRange1.getStart(), mergeRange2.getEnd());
-            uintptrj_t hole = (firstHigherIndex <= bestMergeIndex)? firstHigherIndex : firstHigherIndex-1;
+            uintptr_t hole = (firstHigherIndex <= bestMergeIndex)? firstHigherIndex : firstHigherIndex-1;
             moveAddressRanges(hole, bestMergeIndex);
             _addressRanges[hole].initialize(start, end);
             }
@@ -1439,7 +1439,7 @@ void TR_AddressSet::add(uintptrj_t start, uintptrj_t end)
       // It's a bit complicated -- the given range overlaps some existing ranges
       TR_ASSERT(firstHigherThanStartIndex < firstHigherThanEndIndex, "If indices are not equal, start must be less than end");
 
-      uintptrj_t newStart = std::min(start, firstHigherThanStart.getStart());
+      uintptr_t newStart = std::min(start, firstHigherThanStart.getStart());
       if (firstHigherThanEndIndex < _numAddressRanges && firstHigherThanEnd.covers(end))
          {
          trace("6) Collapsing ranges from %d [%p - %p] to %d [%p - %p] in %p and setting start = %p\n",
@@ -1497,7 +1497,7 @@ void TR_AddressSet::add(uintptrj_t start, uintptrj_t end)
 #endif
    }
 
-int32_t TR_AddressSet::firstHigherAddressRangeIndex(uintptrj_t address)
+int32_t TR_AddressSet::firstHigherAddressRangeIndex(uintptr_t address)
    {
    if (_numAddressRanges == 0)
       return _numAddressRanges;

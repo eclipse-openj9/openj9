@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@ class DebugSegmentProvider : public TR::SegmentProvider
 public:
    DebugSegmentProvider(
       size_t segmentSize,
-      void* (*dbgMalloc)(uintptrj_t size, void *originalAddress),
+      void* (*dbgMalloc)(uintptr_t size, void *originalAddress),
       void  (*dbgFree)(void *addr)
    );
 
@@ -45,7 +45,7 @@ public:
    virtual size_t bytesAllocated() const throw();
 
 private:
-   void* (*_dbgMalloc)(uintptrj_t size, void *originalAddress);
+   void* (*_dbgMalloc)(uintptr_t size, void *originalAddress);
    void  (*_dbgFree)(void *addr);
    };
 

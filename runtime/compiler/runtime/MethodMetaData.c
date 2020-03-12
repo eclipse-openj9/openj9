@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -503,12 +503,12 @@ void * getStackAllocMapFromJitPC(J9JavaVM * javaVM, J9TR_MethodMetaData * method
    stackAllocMap = (void **)((J9JITStackAtlas *) methodMetaData->gcStackAtlas)->stackAllocMap;
    if (stackAllocMap)
       {
-      uintptrj_t returnValue;
+      uintptr_t returnValue;
 
       if (*((uint8_t **) stackAllocMap) == ((uint8_t *) stackMap))
          return NULL;
 
-      returnValue = ((uintptrj_t) stackAllocMap) + sizeof(uintptrj_t);
+      returnValue = ((uintptr_t) stackAllocMap) + sizeof(uintptr_t);
 
       return ((void *) returnValue);
       }

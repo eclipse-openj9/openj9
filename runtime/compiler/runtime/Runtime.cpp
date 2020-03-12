@@ -60,7 +60,7 @@ TR_UnloadedClassPicSite *createClassUnloadPicSite(void *classPointer, void *addr
                                                   OMR::RuntimeAssumption **sentinel)
    {
    TR_FrontEnd * fe = (TR_FrontEnd*)jitConfig->compilationInfo; // ugly, but codert cannot include VMJ9.h
-   return TR_UnloadedClassPicSite::make(fe, trPersistentMemory, (uintptrj_t) classPointer,
+   return TR_UnloadedClassPicSite::make(fe, trPersistentMemory, (uintptr_t) classPointer,
       (uint8_t*)addressToBePatched, size, RuntimeAssumptionOnClassRedefinitionPIC, sentinel);
    }
 
@@ -70,11 +70,11 @@ void jitAddPicToPatchOnClassUnload(void *classPointer, void *addressToBePatched)
       J9VMThread          *vmContext = vm->internalVMFunctions->currentVMThread(vm);
       J9JITExceptionTable *metaData  = jitConfig->jitGetExceptionTableFromPC(vmContext, (UDATA)addressToBePatched);
 
-      if (!createClassUnloadPicSite(classPointer, addressToBePatched, sizeof(uintptrj_t),
+      if (!createClassUnloadPicSite(classPointer, addressToBePatched, sizeof(uintptr_t),
                                     (OMR::RuntimeAssumption**)(&metaData->runtimeAssumptionList))
          || debug("failToRegisterPicSitesForClassUnloading"))
          {
-         *(uintptrj_t*)addressToBePatched = 0x0101dead;
+         *(uintptr_t*)addressToBePatched = 0x0101dead;
          }
 
    }
@@ -83,7 +83,7 @@ void createJNICallSite(void *ramMethod, void *addressToBePatched, OMR::RuntimeAs
    {
    TR_FrontEnd * fe = (TR_FrontEnd*)jitConfig->compilationInfo; // ugly, but codert cannot include VMJ9.h
 
-   TR_PatchJNICallSite::make(fe, trPersistentMemory, (uintptrj_t) ramMethod, (uint8_t *) addressToBePatched, sentinel);
+   TR_PatchJNICallSite::make(fe, trPersistentMemory, (uintptr_t) ramMethod, (uint8_t *) addressToBePatched, sentinel);
 
    }
 
@@ -109,12 +109,12 @@ void createClassRedefinitionPicSite(void *classPointer, void *addressToBePatched
    TR_FrontEnd * fe = (TR_FrontEnd*)jitConfig->compilationInfo; // ugly, but codert cannot include VMJ9.h
    if (unresolved)
       {
-      TR_RedefinedClassUPicSite::make(fe, trPersistentMemory, (uintptrj_t) classPointer,
+      TR_RedefinedClassUPicSite::make(fe, trPersistentMemory, (uintptr_t) classPointer,
                                       (uint8_t*)addressToBePatched, size, sentinel);
       }
    else
       {
-      TR_RedefinedClassRPicSite::make(fe, trPersistentMemory, (uintptrj_t) classPointer,
+      TR_RedefinedClassRPicSite::make(fe, trPersistentMemory, (uintptr_t) classPointer,
                                      (uint8_t*)addressToBePatched, size, sentinel);
       }
    }
@@ -124,7 +124,7 @@ void jitAddPicToPatchOnClassRedefinition(void *classPointer, void *addressToBePa
    J9JavaVM            *vm        = jitConfig->javaVM;
    J9VMThread          *vmThread  = vm->internalVMFunctions->currentVMThread(vm);
    J9JITExceptionTable *metaData  = jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA)addressToBePatched);
-   createClassRedefinitionPicSite(classPointer, addressToBePatched, sizeof(uintptrj_t), unresolved,
+   createClassRedefinitionPicSite(classPointer, addressToBePatched, sizeof(uintptr_t), unresolved,
                                   (OMR::RuntimeAssumption**)(&metaData->runtimeAssumptionList));
    }
 

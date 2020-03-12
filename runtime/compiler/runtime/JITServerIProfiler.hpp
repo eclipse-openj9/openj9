@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,17 +92,17 @@ public:
    virtual TR_IPMethodHashTableEntry *searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucket) override;
 
    // This method is used to search only the hash table
-   virtual TR_IPBytecodeHashTableEntry *profilingSample (uintptrj_t pc, uintptrj_t data, bool addIt, bool isRIData = false, uint32_t freq  = 1) override;
+   virtual TR_IPBytecodeHashTableEntry *profilingSample (uintptr_t pc, uintptr_t data, bool addIt, bool isRIData = false, uint32_t freq  = 1) override;
    // This method is used to search the hash table first, then the shared cache
    virtual TR_IPBytecodeHashTableEntry *profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex,
-                                                         TR::Compilation *comp, uintptrj_t data = 0xDEADF00D, bool addIt = false) override;
+                                                         TR::Compilation *comp, uintptr_t data = 0xDEADF00D, bool addIt = false) override;
 
    virtual int32_t getMaxCallCount() override;
    virtual void setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_t count, TR::Compilation *) override;
    
    virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, TR_ResolvedMethod *method, TR::Compilation *comp) override;
 
-   TR_IPBytecodeHashTableEntry *ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *storage, uintptrj_t pc, TR_Memory* mem, TR_AllocationKind allocKind);
+   TR_IPBytecodeHashTableEntry *ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *storage, uintptr_t pc, TR_Memory* mem, TR_AllocationKind allocKind);
    TR_IPMethodHashTableEntry *deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *serialEntry, TR_Memory *trMemory);
    void printStats();
 
@@ -110,7 +110,7 @@ protected:
    virtual bool invalidateEntryIfInconsistent(TR_IPBytecodeHashTableEntry *entry) override;
 
 private:
-   void validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR_IPBCDataStorageHeader *clientData, uintptrj_t methodStart, bool isMethodBeingCompiled, TR_OpaqueMethodBlock *method, bool fromPerCompilationCache, bool isCompiledWhenProfiling);
+   void validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR_IPBCDataStorageHeader *clientData, uintptr_t methodStart, bool isMethodBeingCompiled, TR_OpaqueMethodBlock *method, bool fromPerCompilationCache, bool isCompiledWhenProfiling);
    bool _useCaching;
    // Statistics
    uint32_t _statsIProfilerInfoFromCache;  // IP cache answered the query
@@ -145,9 +145,9 @@ public:
    std::string serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb);
 
 private:
-   uint32_t walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
+   uint32_t walkILTreeForIProfilingEntries(uintptr_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
                                            TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort, TR::Compilation *comp);
-   uintptr_t serializeIProfilerMethodEntries(uintptrj_t *pcEntries, uint32_t numEntries, uintptr_t memChunk, uintptrj_t methodStartAddress);
+   uintptr_t serializeIProfilerMethodEntries(uintptr_t *pcEntries, uint32_t numEntries, uintptr_t memChunk, uintptr_t methodStartAddress);
    };
 
 #endif

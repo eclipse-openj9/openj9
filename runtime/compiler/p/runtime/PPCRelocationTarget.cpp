@@ -323,7 +323,7 @@ TR_PPC32RelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecor
 bool TR_PPCRelocationTarget::useTrampoline(uint8_t * helperAddress, uint8_t *baseLocation)
    {
    return
-      !reloRuntime()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptrj_t)helperAddress, (intptrj_t)baseLocation) ||
+      !reloRuntime()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptr_t)helperAddress, (intptr_t)baseLocation) ||
       TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines);
    }
 

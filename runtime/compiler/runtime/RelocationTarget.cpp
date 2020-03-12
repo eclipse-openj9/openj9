@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -156,7 +156,7 @@ TR_RelocationTarget::loadCPIndex(uint8_t *reloLocation)
    return 0;
    }
 
-uintptrj_t
+uintptr_t
 TR_RelocationTarget::loadThunkCPIndex(uint8_t *reloLocation)
    {
    TR_ASSERT(0, "Error: loadThunkCPIndex not implemented in relocation target base class");

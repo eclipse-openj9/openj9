@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -616,8 +616,8 @@ int32_t TR_StringBuilderTransformer::computeHeuristicStringBuilderInitCapacity(L
 
                      if (stringBuildAppendStringCriticalSection.hasVMAccess())
                         {
-                        uintptrj_t stringObjectLocation = (uintptrj_t)symbol->castToStaticSymbol()->getStaticAddress();
-                        uintptrj_t stringObject = comp()->fej9()->getStaticReferenceFieldAtAddress(stringObjectLocation);
+                        uintptr_t stringObjectLocation = (uintptr_t)symbol->castToStaticSymbol()->getStaticAddress();
+                        uintptr_t stringObject = comp()->fej9()->getStaticReferenceFieldAtAddress(stringObjectLocation);
                         capacity += comp()->fe()->getStringUTF8Length(stringObject);
 
                         break;

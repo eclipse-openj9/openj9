@@ -43,7 +43,7 @@ namespace J9
 class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnector
    {
    public:
-   static const size_t SIZEPOINTER = sizeof(uintptrj_t);
+   static const size_t SIZEPOINTER = sizeof(uintptr_t);
 
    AheadOfTimeCompile(uint32_t *headerSizeMap, TR::Compilation * c) :
       OMR::AheadOfTimeCompileConnector(headerSizeMap, c)

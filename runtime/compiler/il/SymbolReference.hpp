@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ public:
 
    SymbolReference(TR::SymbolReferenceTable * symRefTab,
                    TR::Symbol * symbol,
-                   intptrj_t offset = 0) :
+                   intptr_t offset = 0) :
       J9::SymbolReferenceConnector(symRefTab,
                                         symbol,
                                         offset) {}
@@ -55,7 +55,7 @@ public:
    SymbolReference(TR::SymbolReferenceTable * symRefTab,
                    int32_t refNumber,
                    TR::Symbol *ps,
-                   intptrj_t offset = 0) :
+                   intptr_t offset = 0) :
       J9::SymbolReferenceConnector(symRefTab,
                                         refNumber,
                                         ps,
@@ -64,7 +64,7 @@ public:
    SymbolReference(TR::SymbolReferenceTable *symRefTab,
                    TR::SymbolReferenceTable::CommonNonhelperSymbol number,
                    TR::Symbol *ps,
-                   intptrj_t offset = 0) :
+                   intptr_t offset = 0) :
       J9::SymbolReferenceConnector(symRefTab,
                                         number,
                                         ps,
@@ -85,7 +85,7 @@ public:
 
    SymbolReference(TR::SymbolReferenceTable *symRefTab,
                    TR::SymbolReference& sr,
-                   intptrj_t offset,
+                   intptr_t offset,
                    TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN) :
       J9::SymbolReferenceConnector(symRefTab,
                                         sr,
@@ -96,7 +96,7 @@ protected:
 
    SymbolReference(TR::SymbolReferenceTable * symRefTab,
                    TR::Symbol *          symbol,
-                   intptrj_t              offset,
+                   intptr_t              offset,
                    const char *           name) :
       J9::SymbolReferenceConnector(symRefTab,
                                         symbol,

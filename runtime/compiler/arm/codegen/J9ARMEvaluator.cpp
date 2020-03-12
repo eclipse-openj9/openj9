@@ -118,7 +118,7 @@ static int32_t numberOfRegisterCandidate(TR::Node *depNode, TR_RegisterKinds kin
 TR::Instruction *OMR::ARM::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *dstReg, TR::Register *srcReg, TR::Instruction *prev)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
-   uintptrj_t mask = TR::Compiler->om.maskOfObjectVftField();
+   uintptr_t mask = TR::Compiler->om.maskOfObjectVftField();
 #ifdef OMR_GC_COMPRESSED_POINTERS
    bool isCompressed = true;
 #else

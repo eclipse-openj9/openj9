@@ -1930,7 +1930,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
    {
       if(cg()->comp()->target().isLinux() && cg()->comp()->target().is64Bit() && cg()->comp()->target().cpu.isLittleEndian())
       {
-         int32_t helperOffset = (callNode->getSymbolReference()->getReferenceNumber() - 1)*sizeof(intptrj_t);
+         int32_t helperOffset = (callNode->getSymbolReference()->getReferenceNumber() - 1)*sizeof(intptr_t);
          generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, dependencies->searchPreConditionRegister(TR::RealRegister::gr12),
             new(trHeapMemory()) TR::MemoryReference(cg()->getTOCBaseRegister(), helperOffset, TR::Compiler->om.sizeofReferenceAddress(), cg()));
 
@@ -2058,7 +2058,7 @@ static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, u
    return numStaticPics > 0;
    }
 
-static TR::Instruction* buildStaticPICCall(TR::CodeGenerator *cg, TR::Node *callNode, uintptrj_t profiledClass, TR_ResolvedMethod *profiledMethod,
+static TR::Instruction* buildStaticPICCall(TR::CodeGenerator *cg, TR::Node *callNode, uintptr_t profiledClass, TR_ResolvedMethod *profiledMethod,
                                              TR::Register *vftReg, TR::Register *tempReg, TR::Register *condReg, TR::LabelSymbol *missLabel,
                                              uint32_t regMapForGC)
    {
@@ -2073,7 +2073,7 @@ static TR::Instruction* buildStaticPICCall(TR::CodeGenerator *cg, TR::Node *call
    loadAddressConstant(cg, comp->compileRelocatableCode(), callNode, profiledClass, tempReg, NULL, fej9->isUnloadAssumptionRequired((TR_OpaqueClassBlock *)profiledClass, comp->getCurrentMethod()));
    generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, callNode, condReg, vftReg, tempReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, callNode, missLabel, condReg);
-   TR::Instruction *gcPoint = generateDepImmSymInstruction(cg, TR::InstOpCode::bl, callNode, (uintptrj_t)profiledMethod->startAddressForJittedMethod(),
+   TR::Instruction *gcPoint = generateDepImmSymInstruction(cg, TR::InstOpCode::bl, callNode, (uintptr_t)profiledMethod->startAddressForJittedMethod(),
                                                                                   new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0,0, cg->trMemory()), profiledMethodSymRef);
    gcPoint->PPCNeedsGCMap(regMapForGC);
    fej9->reserveTrampolineIfNecessary(comp, profiledMethodSymRef, false);
@@ -2158,7 +2158,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
    TR_SymbolReference  *methodSymRef = callNode->getSymbolReference();
    TR_ResolvedMethod   *owningMethod = methodSymRef->getOwningMethod(comp);
    TR_OpaqueClassBlock *interfaceClassOfMethod;
-   uintptrj_t           itableIndex;
+   uintptr_t           itableIndex;
 
    interfaceClassOfMethod = owningMethod->getResolvedInterfaceMethod(methodSymRef->getCPIndex(), &itableIndex);
 
@@ -2419,7 +2419,7 @@ void J9::Power::PrivateLinkage::buildVirtualDispatch(TR::Node                   
                   resolvedMethodSymbol = methodSymbol->getResolvedMethodSymbol();
                   resolvedMethod = resolvedMethodSymbol->getResolvedMethod();
                   }
-               uintptrj_t methodAddress = resolvedMethod->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT() ? 0 : (uintptrj_t)resolvedMethod->startAddressForJittedMethod();
+               uintptr_t methodAddress = resolvedMethod->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT() ? 0 : (uintptr_t)resolvedMethod->startAddressForJittedMethod();
                TR::Instruction *gcPoint = generateDepImmSymInstruction(cg(), TR::InstOpCode::bl, callNode, methodAddress,
                                                                                               new (trHeapMemory()) TR::RegisterDependencyConditions(0, 0, trMemory()), methodSymRef);
                generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, dependencies);
@@ -2495,7 +2495,7 @@ void J9::Power::PrivateLinkage::buildVirtualDispatch(TR::Node                   
             {
             TR::LabelSymbol *slowCallLabel = generateLabelSymbol(cg());
 
-            TR::Instruction *gcPoint = buildStaticPICCall(cg(), callNode, (uintptrj_t)pic->_clazz, pic->_method,
+            TR::Instruction *gcPoint = buildStaticPICCall(cg(), callNode, (uintptr_t)pic->_clazz, pic->_method,
                                                             vftReg, gr11, cr0, slowCallLabel, regMapForGC);
             generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, dependencies);
 
@@ -2540,7 +2540,7 @@ void J9::Power::PrivateLinkage::buildVirtualDispatch(TR::Node                   
                {
                TR::LabelSymbol *nextLabel = generateLabelSymbol(cg());
 
-               buildStaticPICCall(cg(), callNode, (uintptrj_t)pic->_clazz, pic->_method,
+               buildStaticPICCall(cg(), callNode, (uintptr_t)pic->_clazz, pic->_method,
                                   vftReg, gr11, cr0, nextLabel, regMapForGC);
                generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, doneLabel);
                generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, nextLabel);
@@ -2677,7 +2677,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
         (!callSymRef->isUnresolved() && !callSymbol->isInterpreted() && ((forceUnresolvedDispatch && callSymbol->isHelper()) || !forceUnresolvedDispatch))))
       {
       gcPoint = generateDepImmSymInstruction(cg(), TR::InstOpCode::bl, callNode,
-                                                                  myself?0:(uintptrj_t)callSymbol->getMethodAddress(),
+                                                                  myself?0:(uintptr_t)callSymbol->getMethodAddress(),
                                                                   dependencies, callSymRef?callSymRef:callNode->getSymbolReference());
       }
    else

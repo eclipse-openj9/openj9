@@ -493,7 +493,7 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
       dumpOptDetails(self()->comp(), "transforming unloadable aconst %p \n", node);
 
       constCopy =TR::Node::copy(node);
-      intShadow = self()->symRefTab()->findOrCreateGenericIntShadowSymbolReference((intptrj_t)constCopy);
+      intShadow = self()->symRefTab()->findOrCreateGenericIntShadowSymbolReference((intptr_t)constCopy);
       intShadow->setLiteralPoolAddress();
 
       TR::Node::recreate(node, TR::aloadi);
@@ -513,11 +513,11 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
       {
       ListIterator<TR_Pair<TR::Node, int32_t> > listIter(&_ialoadUnneeded);
       TR_Pair<TR::Node, int32_t> *ptr;
-      uintptrj_t temp;
+      uintptr_t temp;
       int32_t updatedTemp;
       for (ptr = listIter.getFirst(); ptr; ptr = listIter.getNext())
          {
-         temp = (uintptrj_t)ptr->getValue();
+         temp = (uintptr_t)ptr->getValue();
          updatedTemp = (int32_t) temp;
          if (ptr->getKey() == node && temp != node->getReferenceCount())
             {
@@ -3599,7 +3599,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
 
    AOTcgDiag3(comp, "Add encodingRelocation = %p reloType = %p symbolRef = %p\n", encodingRelocation, encodingRelocation->getReloType(), encodingRelocation->getSymbolReference());
 
-   const intptrj_t vmCallHelperAddress = reinterpret_cast<intptrj_t>(helperSymRef->getMethodAddress());
+   const intptr_t vmCallHelperAddress = reinterpret_cast<intptr_t>(helperSymRef->getMethodAddress());
 
    // Encode the address of the VM call helper
    if (self()->comp()->target().is64Bit())
@@ -3623,7 +3623,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
 
    AOTcgDiag2(comp, "Add encodingRelocation = %p reloType = %p\n", encodingRelocation, encodingRelocation->getReloType());
 
-   const intptrj_t j9MethodAddress = reinterpret_cast<intptrj_t>(methodSymbol->getResolvedMethod()->resolvedMethodAddress());
+   const intptr_t j9MethodAddress = reinterpret_cast<intptr_t>(methodSymbol->getResolvedMethod()->resolvedMethodAddress());
 
    if (self()->comp()->target().is64Bit())
       {

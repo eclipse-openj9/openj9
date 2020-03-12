@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,9 +51,9 @@ public:
 
    int64_t maxHeapSizeInBytes();
 
-   uintptrj_t heapBaseAddress();
+   uintptr_t heapBaseAddress();
 
-   uintptrj_t thisThreadGetPendingExceptionOffset();
+   uintptr_t thisThreadGetPendingExceptionOffset();
 
    bool hasResumableTrapHandler(TR::Compilation *comp);
    bool hasResumableTrapHandler(OMR_VMThread *omrVMThread);
@@ -98,23 +98,23 @@ public:
    bool canMethodExitEventBeHooked(TR::Compilation *comp);
    bool isSelectiveMethodEnterExitEnabled(TR::Compilation *comp);
 
-   uintptrj_t getOverflowSafeAllocSize(TR::Compilation *comp);
+   uintptr_t getOverflowSafeAllocSize(TR::Compilation *comp);
 
    int64_t cpuTimeSpentInCompilationThread(TR::Compilation *comp);
 
    // On-stack replacement
    //
-   uintptrj_t OSRFrameHeaderSizeInBytes(TR::Compilation *comp);
-   uintptrj_t OSRFrameSizeInBytes(TR::Compilation *comp, TR_OpaqueMethodBlock* method);
-   bool ensureOSRBufferSize(TR::Compilation *comp, uintptrj_t osrFrameSizeInBytes, uintptrj_t osrScratchBufferSizeInBytes, uintptrj_t osrStackFrameSizeInBytes);
-   uintptrj_t thisThreadGetOSRReturnAddressOffset(TR::Compilation *comp);
+   uintptr_t OSRFrameHeaderSizeInBytes(TR::Compilation *comp);
+   uintptr_t OSRFrameSizeInBytes(TR::Compilation *comp, TR_OpaqueMethodBlock* method);
+   bool ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes);
+   uintptr_t thisThreadGetOSRReturnAddressOffset(TR::Compilation *comp);
 
-   uintptrj_t thisThreadGetGSIntermediateResultOffset(TR::Compilation *comp);
-   uintptrj_t thisThreadGetConcurrentScavengeActiveByteAddressOffset(TR::Compilation *comp);
-   uintptrj_t thisThreadGetEvacuateBaseAddressOffset(TR::Compilation *comp);
-   uintptrj_t thisThreadGetEvacuateTopAddressOffset(TR::Compilation *comp);
-   uintptrj_t thisThreadGetGSOperandAddressOffset(TR::Compilation *comp);
-   uintptrj_t thisThreadGetGSHandlerAddressOffset(TR::Compilation *comp);
+   uintptr_t thisThreadGetGSIntermediateResultOffset(TR::Compilation *comp);
+   uintptr_t thisThreadGetConcurrentScavengeActiveByteAddressOffset(TR::Compilation *comp);
+   uintptr_t thisThreadGetEvacuateBaseAddressOffset(TR::Compilation *comp);
+   uintptr_t thisThreadGetEvacuateTopAddressOffset(TR::Compilation *comp);
+   uintptr_t thisThreadGetGSOperandAddressOffset(TR::Compilation *comp);
+   uintptr_t thisThreadGetGSHandlerAddressOffset(TR::Compilation *comp);
    size_t getInterpreterVTableOffset();
 
    };

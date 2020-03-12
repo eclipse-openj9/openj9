@@ -91,7 +91,7 @@ uint8_t *TR::X86RecompilationSnippet::emitSnippetBody()
    uint8_t *buffer = cg()->getBinaryBufferCursor();
    getSnippetLabel()->setCodeLocation(buffer);
 
-   intptrj_t helperAddress = (intptrj_t)_destination->getMethodAddress();
+   intptr_t helperAddress = (intptr_t)_destination->getMethodAddress();
    *buffer++ = 0xe8; // CallImm4
    if (NEEDS_TRAMPOLINE(helperAddress, buffer+4, cg()))
       {

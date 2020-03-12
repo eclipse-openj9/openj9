@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -625,7 +625,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    //   {
    //   J9::NewInstanceThunkDetails &newInstanceDetails = static_cast<J9::NewInstanceThunkDetails &>(entry.getMethodDetails());
    //   J9Class  *classForNewInstance = newInstanceDetails.classNeedingThunk();
-   //   TR::CompilationInfo::setJ9MethodExtra(ramMethod, (uintptrj_t)classForNewInstance | J9_STARTPC_NOT_TRANSLATED);
+   //   TR::CompilationInfo::setJ9MethodExtra(ramMethod, (uintptr_t)classForNewInstance | J9_STARTPC_NOT_TRANSLATED);
    //   }
 #ifdef STATS
    statQueueSize.update(compInfo->getMethodQueueSize());

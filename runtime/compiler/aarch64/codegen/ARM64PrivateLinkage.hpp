@@ -220,12 +220,12 @@ class PrivateLinkage : public J9::PrivateLinkage
    /**
     * @brief J9 private linkage override of OMR function
     */
-   virtual intptrj_t entryPointFromCompiledMethod();
+   virtual intptr_t entryPointFromCompiledMethod();
 
    /**
     * @brief J9 private linkage override of OMR function
     */
-   virtual intptrj_t entryPointFromInterpretedMethod();
+   virtual intptr_t entryPointFromInterpretedMethod();
 
    /**
     * J9 private linkage override of OMR function

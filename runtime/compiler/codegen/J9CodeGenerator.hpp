@@ -219,8 +219,8 @@ public:
    // GPU
    //
    static const int32_t GPUAlignment = 128;
-   uintptrj_t objectLengthOffset();
-   uintptrj_t objectHeaderInvariant();
+   uintptr_t objectLengthOffset();
+   uintptr_t objectHeaderInvariant();
 
   enum GPUScopeType
       {
@@ -323,14 +323,14 @@ private:
                                        const void *location)
       {
       // If we have a class pointer to consider, it should look like one.
-      const uintptrj_t j9classEyecatcher = 0x99669966;
+      const uintptr_t j9classEyecatcher = 0x99669966;
 #if defined(J9VM_OPT_JITSERVER)
       if (allegedClassPointer != NULL && !comp->isOutOfProcessCompilation())
 #else
       if (allegedClassPointer != NULL)
 #endif /* defined(J9VM_OPT_JITSERVER) */
          {
-         TR_ASSERT(*(const uintptrj_t*)allegedClassPointer == j9classEyecatcher,
+         TR_ASSERT(*(const uintptr_t*)allegedClassPointer == j9classEyecatcher,
                    "expected a J9Class* for omitted runtime assumption");
          }
 

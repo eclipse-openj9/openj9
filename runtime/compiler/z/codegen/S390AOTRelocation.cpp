@@ -55,7 +55,7 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
       AOTcgDiag2(  comp, "TR_ClassAddress cursor=%x symbolReference=%x\n", cursor, _symbolReference);
       if (cg->comp()->getOption(TR_UseSymbolValidationManager))
          {
-         TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock*)(*((uintptrj_t*)cursor));
+         TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock*)(*((uintptr_t*)cursor));
          TR_ASSERT_FATAL(clazz, "TR_ClassAddress relocation : cursor = %x, clazz can not be null", cursor);
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                            (uint8_t *)clazz,
@@ -67,7 +67,7 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
          }
       else
          {
-         *((uintptrj_t*)cursor)=fej9->getPersistentClassPointerFromClassPointer((TR_OpaqueClassBlock*)(*((uintptrj_t*)cursor)));
+         *((uintptr_t*)cursor)=fej9->getPersistentClassPointerFromClassPointer((TR_OpaqueClassBlock*)(*((uintptr_t*)cursor)));
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) _symbolReference, (uint8_t *)_inlinedSiteIndex, TR_ClassAddress, cg),
                            file, line, node);
          }
@@ -78,7 +78,7 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
       if (cg->comp()->getOption(TR_UseSymbolValidationManager))
          {
          TR::ResolvedMethodSymbol *methodSym = (TR::ResolvedMethodSymbol*) _symbolReference->getSymbol();
-         uint8_t * j9Method = (uint8_t *) (reinterpret_cast<intptrj_t>(methodSym->getResolvedMethod()->resolvedMethodAddress()));
+         uint8_t * j9Method = (uint8_t *) (reinterpret_cast<intptr_t>(methodSym->getResolvedMethod()->resolvedMethodAddress()));
          TR_ASSERT_FATAL(j9Method, "TR_RamMethod relocation : cursor = %x, j9Method can not be null", cursor);
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                            j9Method,

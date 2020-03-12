@@ -414,7 +414,7 @@ bool TR_DynamicLiteralPool::transformConstToIndirectLoad(TR::Node *parent, TR::N
    addrNode = getAloadFromCurrentBlock(parent);
 
    constCopy =TR::Node::copy(child);
-   shadow = getSymRefTab()->findOrCreateImmutableGenericIntShadowSymbolReference((intptrj_t)constCopy);
+   shadow = getSymRefTab()->findOrCreateImmutableGenericIntShadowSymbolReference((intptr_t)constCopy);
    shadow->setLiteralPoolAddress();
 
    if (child->getReferenceCount() > 1)  // rematerialize the const by creating new indirect load node

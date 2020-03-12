@@ -94,13 +94,13 @@ uint32_t
 J9::ARM64::CodeGenerator::encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node, bool omitLink)
    {
    TR::CodeGenerator *cg = self();
-   uintptrj_t target = (uintptrj_t)symRef->getMethodAddress();
+   uintptr_t target = (uintptr_t)symRef->getMethodAddress();
 
-   if (cg->directCallRequiresTrampoline(target, (intptrj_t)cursor))
+   if (cg->directCallRequiresTrampoline(target, (intptr_t)cursor))
       {
       target = TR::CodeCacheManager::instance()->findHelperTrampoline(symRef->getReferenceNumber(), (void *)cursor);
 
-      TR_ASSERT_FATAL(cg->comp()->target().cpu.isTargetWithinUnconditionalBranchImmediateRange(target, (intptrj_t)cursor),
+      TR_ASSERT_FATAL(cg->comp()->target().cpu.isTargetWithinUnconditionalBranchImmediateRange(target, (intptr_t)cursor),
                       "Target address is out of range");
       }
 

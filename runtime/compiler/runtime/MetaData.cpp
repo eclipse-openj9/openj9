@@ -181,9 +181,9 @@ createExceptionTable(
             || comp->isOutOfProcessCompilation()
 #endif
             )
-            *(uintptrj_t *)cursor = (uintptrj_t)e->_byteCodeInfo.getCallerIndex(), cursor += sizeof(uintptrj_t);
+            *(uintptr_t *)cursor = (uintptr_t)e->_byteCodeInfo.getCallerIndex(), cursor += sizeof(uintptr_t);
          else
-            *(uintptrj_t *)cursor = (uintptrj_t)e->_method->resolvedMethodAddress(), cursor += sizeof(uintptrj_t);
+            *(uintptr_t *)cursor = (uintptr_t)e->_method->resolvedMethodAddress(), cursor += sizeof(uintptr_t);
          }
       else
          {
@@ -321,7 +321,7 @@ createInternalPtrStackMapInJ9Format(
    //printf("JIT Address %x\n", location);
    //*((int32_t *) location) = (int16_t) trStackAtlas->getNumberOfInternalPtrs();
    //printf("Number of internal pointers = %d\n", (*((int16_t *) location)));
-   location += sizeof(intptrj_t);
+   location += sizeof(intptr_t);
 
    // Fill in the data now.
    //
@@ -482,7 +482,7 @@ createStackMap(
    else
       map->resetRegistersBits((1<<cg->getInternalPtrMapBit()));
 
-   uintptrj_t startLocation = (uintptrj_t) location;
+   uintptr_t startLocation = (uintptr_t) location;
 
    if (fourByteOffsets)
       {
@@ -924,7 +924,7 @@ createStackAtlas(
    if (trStackAtlas->getStackAllocMap())
       {
       vmAtlas->stackAllocMap = cursor;
-      cursor += sizeof(uintptrj_t);
+      cursor += sizeof(uintptr_t);
       int32_t mapSizeInBytes = trStackAtlas->getStackAllocMap()->getMapSizeInBytes();
       memcpy(cursor, trStackAtlas->getStackAllocMap()->getMapBits(), mapSizeInBytes);
       cursor += numberOfMapBytes;
@@ -934,7 +934,7 @@ createStackAtlas(
 
    if (trStackAtlas->getStackAllocMap())
       {
-      cursor -= (numberOfMapBytes + sizeof(uintptrj_t));
+      cursor -= (numberOfMapBytes + sizeof(uintptr_t));
       }
 
    TR::ResolvedMethodSymbol * methodSymbol = comp->getJittedMethodSymbol();
@@ -983,9 +983,9 @@ createStackAtlas(
          createStackMap(mapCursor, cg, cursor, fourByteOffsets, trStackAtlas, numberOfMapBytes, comp);
 
          if (vmAtlas->internalPointerMap && mapCursor == trStackAtlas->getParameterMap())
-            *((uintptrj_t *) vmAtlas->internalPointerMap) = (uintptrj_t) cursor;
+            *((uintptr_t *) vmAtlas->internalPointerMap) = (uintptr_t) cursor;
          if (vmAtlas->stackAllocMap && mapCursor == trStackAtlas->getParameterMap())
-            *((uintptrj_t *) vmAtlas->stackAllocMap) = (uintptrj_t) cursor;
+            *((uintptr_t *) vmAtlas->stackAllocMap) = (uintptr_t) cursor;
          }
       previousLowestCodeOffset = mapCursor->getLowestCodeOffset();
       mapCursor = nextMapCursor;
@@ -1252,7 +1252,7 @@ static void populateInlineCalls(
 #if (defined(TR_HOST_64BIT) && defined(TR_HOST_POWER))
             createClassUnloadPicSite((void*) clazzOfInlinedMethod, (void*) (callSiteCursor+(comp->target().cpu.isBigEndian()?4:0)), 4, comp->getMetadataAssumptionList());
 #else
-            createClassUnloadPicSite((void*) clazzOfInlinedMethod, (void*) callSiteCursor, sizeof(uintptrj_t), comp->getMetadataAssumptionList());
+            createClassUnloadPicSite((void*) clazzOfInlinedMethod, (void*) callSiteCursor, sizeof(uintptr_t), comp->getMetadataAssumptionList());
 #endif
             }
          }
@@ -1376,7 +1376,7 @@ createMethodMetaData(
    TR_GCStackAllocMap * stackAllocMap = trStackAtlas->getStackAllocMap();
    if (stackAllocMap)
       {
-      tableSize += numberOfMapBytes + sizeof(uintptrj_t);
+      tableSize += numberOfMapBytes + sizeof(uintptr_t);
       }
 
    int32_t osrInfoOffset = -1;

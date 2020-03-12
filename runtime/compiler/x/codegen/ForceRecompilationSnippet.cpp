@@ -49,7 +49,7 @@ uint8_t *TR::X86ForceRecompilationSnippet::emitSnippetBody()
    getSnippetLabel()->setCodeLocation(buffer);
 
    TR::SymbolReference *helper = cg()->symRefTab()->findOrCreateRuntimeHelper(cg()->comp()->target().is64Bit()? TR_AMD64induceRecompilation : TR_IA32induceRecompilation, false, false, false);
-   intptrj_t helperAddress = (intptrj_t)helper->getMethodAddress();
+   intptr_t helperAddress = (intptr_t)helper->getMethodAddress();
    *buffer++ = 0xe8; // CallImm4
    if (NEEDS_TRAMPOLINE(helperAddress, buffer+4, cg()))
       {
@@ -91,7 +91,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86ForceRecompilationSnippet  * snippet)
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet));
 
    TR::SymbolReference *helper        = _cg->getSymRef(_comp->target().is64Bit()? TR_AMD64induceRecompilation : TR_IA32induceRecompilation);
-   intptrj_t           helperAddress = (intptrj_t)helper->getMethodAddress();
+   intptr_t           helperAddress = (intptr_t)helper->getMethodAddress();
    printPrefix(pOutFile, NULL, bufferPos, 5);
    trfprintf(pOutFile, "call\t%s \t%s Helper Address = " POINTER_PRINTF_FORMAT,
                  getName(helper),

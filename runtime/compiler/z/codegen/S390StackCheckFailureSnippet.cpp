@@ -87,13 +87,13 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
    bool requireRALoad  = requireRAStore;
 
    // These are assumption checks to make sure our offsets to data constants at the end are correct.
-   intptrj_t startOfHelperBASR = -1;
-   intptrj_t locOfHelperAddr = -1;
-   intptrj_t offsetHelperAddr = 0;
+   intptr_t startOfHelperBASR = -1;
+   intptr_t locOfHelperAddr = -1;
+   intptr_t offsetHelperAddr = 0;
 
-   intptrj_t startOfRetBASR = -1;
-   intptrj_t locOfRetAddr = -1;
-   intptrj_t offsetRetAddr = 0;
+   intptr_t startOfRetBASR = -1;
+   intptr_t locOfRetAddr = -1;
+   intptr_t offsetRetAddr = 0;
 
    //-----------------------------------------------------------------------------------//
    // This section of code:
@@ -154,8 +154,8 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
       {
       *(int32_t *) cursor = 0xa7050000 + (rEP << 20) + (2 + TR::Compiler->om.sizeofReferenceAddress()/2);        // BRAS     rEP, 4/6
       cursor += sizeof(int32_t);
-      startOfHelperBASR = (intptrj_t)cursor;
-      *(intptrj_t *) cursor = (intptrj_t) getFrameSize();                                // DC       <_frameSize>
+      startOfHelperBASR = (intptr_t)cursor;
+      *(intptr_t *) cursor = (intptr_t) getFrameSize();                                // DC       <_frameSize>
       cursor += TR::Compiler->om.sizeofReferenceAddress();
 
       // Unwind the stack frame.
@@ -235,7 +235,7 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
    // If MCC is not supported, everything should be reachable.
    // If MCC is supported, we will look up the appropriate trampoline, if
    // necessary.
-   intptrj_t destAddr = (intptrj_t)(getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress());
+   intptr_t destAddr = (intptr_t)(getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress());
 
 #if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
@@ -254,7 +254,7 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
    TR_ASSERT(CHECK_32BIT_TRAMPOLINE_RANGE(destAddr, cursor), "Helper Call is not reachable.");
    this->setSnippetDestAddr(destAddr);
 
-   *(int32_t *) cursor = (int32_t)((destAddr - (intptrj_t)(cursor - 2)) / 2);
+   *(int32_t *) cursor = (int32_t)((destAddr - (intptr_t)(cursor - 2)) / 2);
    AOTcgDiag5(cg()->comp(), "cursor=%x destAddr=%x TR_HelperAddress=%x cg=%x %x\n",
    cursor, getDestination()->getSymbol(), TR_HelperAddress, cg(), *((int*) cursor) );
    cg()->addProjectSpecializedRelocation(cursor, (uint8_t*) getDestination(), NULL, TR_HelperAddress,
@@ -305,10 +305,10 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
 
       // Branch back to main line code.
       //We only require BRCL <return address>.  It is guaranteed to be reachable.
-      intptrj_t returnAddr = (intptrj_t)_reStartLabel->getCodeLocation();             // BRCL   <Return Addr>
+      intptr_t returnAddr = (intptr_t)_reStartLabel->getCodeLocation();             // BRCL   <Return Addr>
       *(int16_t *) cursor = 0xC0F4;
       cursor += sizeof(int16_t);
-      *(int32_t *) cursor = (int32_t)((returnAddr - (intptrj_t)(cursor - 2)) / 2);
+      *(int32_t *) cursor = (int32_t)((returnAddr - (intptr_t)(cursor - 2)) / 2);
       cursor += sizeof(int32_t);
       // Set the Stack Atlas.
       setStackAtlasHelper();
@@ -503,12 +503,12 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390StackCheckFailureSnippet * snippet)
       trfprintf(pOutFile, "...Large stack detected...");
 
       printPrefix(pOutFile, NULL, bufferPos, 4);
-      trfprintf(pOutFile, "BRAS \tGPR_EP, *+%d <%p>", 4 + sizeof(intptrj_t), bufferPos + 4 + sizeof(intptrj_t));
+      trfprintf(pOutFile, "BRAS \tGPR_EP, *+%d <%p>", 4 + sizeof(intptr_t), bufferPos + 4 + sizeof(intptr_t));
       bufferPos += 4;
 
-      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
+      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
       trfprintf(pOutFile, "DC \t0x%p \t\t# Frame Size", snippet->getFrameSize());
-      bufferPos += sizeof(intptrj_t);
+      bufferPos += sizeof(intptr_t);
 
       if (is64BitTarget)
          {

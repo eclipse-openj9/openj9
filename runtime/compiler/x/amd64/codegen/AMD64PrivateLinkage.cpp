@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -330,7 +330,7 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::flushArguments(
 
    // account for the return address in thunks and snippets.
    if (isReturnAddressOnStack)
-      offset += sizeof(intptrj_t);
+      offset += sizeof(intptr_t);
 
    TR::RealRegister::RegNum reg = TR::RealRegister::NoReg;
    TR_X86OpCodes            op  = BADIA32Op;
@@ -468,7 +468,7 @@ J9::X86::AMD64::PrivateLinkage::flushArguments(
 
    // account for the return address in SwitchToInterpreterPrePrologue
    if (isReturnAddressOnStack)
-      offset += sizeof(intptrj_t);
+      offset += sizeof(intptr_t);
 
    TR::RealRegister::RegNum reg;
    TR::Register *espReg = cg()->allocateRegister();
@@ -592,7 +592,7 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::generateVirtualIndirectThunk(TR::Node *
    //
    *(uint16_t *)cursor = 0xbf48;
    cursor += 2;
-   *(uint64_t *)cursor = (uintptrj_t)glueSymRef->getMethodAddress();
+   *(uint64_t *)cursor = (uintptr_t)glueSymRef->getMethodAddress();
    cursor += 8;
 
    // JMPReg rdi
@@ -662,7 +662,7 @@ TR_J2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::Nod
    //
    *(uint16_t *)cursor = 0xbf48;
    cursor += 2;
-   *(uint64_t *)cursor = (uintptrj_t) cg()->fej9()->getInvokeExactThunkHelperAddress(comp, glueSymRef, callNode->getDataType());
+   *(uint64_t *)cursor = (uintptr_t) cg()->fej9()->getInvokeExactThunkHelperAddress(comp, glueSymRef, callNode->getDataType());
    cursor += 8;
 
    // Arg stores
@@ -1201,12 +1201,12 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
       TR::SymbolReference * callSymRef = comp()->getSymRefTab()->findOrCreateMethodSymbol(
             node->getSymbolReference()->getOwningMethodIndex(), -1, picSlot.getMethod(), TR::MethodSymbol::Virtual);
 
-      instr = generateImmSymInstruction(CALLImm4, node, (intptrj_t)picSlot.getMethod()->startAddressForJittedMethod(), callSymRef, cg());
+      instr = generateImmSymInstruction(CALLImm4, node, (intptr_t)picSlot.getMethod()->startAddressForJittedMethod(), callSymRef, cg());
       }
    else if (picSlot.getHelperMethodSymbolRef())
       {
       TR::MethodSymbol *helperMethod = picSlot.getHelperMethodSymbolRef()->getSymbol()->castToMethodSymbol();
-      instr = generateImmSymInstruction(CALLImm4, node, (uint32_t)(uintptrj_t)helperMethod->getMethodAddress(), picSlot.getHelperMethodSymbolRef(), cg());
+      instr = generateImmSymInstruction(CALLImm4, node, (uint32_t)(uintptr_t)helperMethod->getMethodAddress(), picSlot.getHelperMethodSymbolRef(), cg());
       }
    else
       {
@@ -1320,7 +1320,7 @@ void J9::X86::AMD64::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelS
 
    TR::Method *method = site.getMethodSymbol()->getMethod();
    TR_OpaqueClassBlock *declaringClass = NULL;
-   uintptrj_t itableIndex;
+   uintptr_t itableIndex;
    if (  useLastITableCache
       && (declaringClass = site.getSymbolReference()->getOwningMethod(comp())->getResolvedInterfaceMethod(site.getSymbolReference()->getCPIndex(), &itableIndex))
       && performTransformation(comp(), "O^O useLastITableCache for n%dn itableIndex=%d: %.*s.%.*s%.*s\n",

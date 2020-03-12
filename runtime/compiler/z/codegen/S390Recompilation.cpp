@@ -196,7 +196,7 @@ TR_S390Recompilation::generatePrePrologue()
 
       AOTcgDiag4(comp, "Add encodingRelocation = %p reloType = %p symbolRef = %p helperId = %x\n", encodingRelocation, encodingRelocation->getReloType(), encodingRelocation->getSymbolReference(), TR_S390samplingRecompileMethod);
 
-      const intptrj_t samplingRecompileMethodAddress = reinterpret_cast<intptrj_t>(helperSymRef->getMethodAddress());
+      const intptr_t samplingRecompileMethodAddress = reinterpret_cast<intptr_t>(helperSymRef->getMethodAddress());
 
       // Encode the address of the sampling method
       if (cg->comp()->target().is64Bit())
@@ -240,7 +240,7 @@ TR_S390Recompilation::generatePrePrologue()
 
    AOTcgDiag3(comp, "Add encodingRelocation = %p reloType = %p symbolRef = %p\n", encodingRelocation, encodingRelocation->getReloType(), encodingRelocation->getSymbolReference());
 
-   const intptrj_t bodyInfoAddress = reinterpret_cast<intptrj_t>(getJittedBodyInfo());
+   const intptr_t bodyInfoAddress = reinterpret_cast<intptr_t>(getJittedBodyInfo());
 
    // Encode the persistent body info address. Note that we must generate this irregardless of whether we are sampling
    // or not as the counting recompilation generated in the prologue will use this location.
@@ -410,7 +410,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
 
    AOTcgDiag4(comp, "Add encodingRelocation = %p reloType = %p symbolRef = %p helperId = %x\n", encodingRelocation, encodingRelocation->getReloType(), encodingRelocation->getSymbolReference(), TR_S390countingRecompileMethod);
 
-   const intptrj_t countingRecompileMethodAddress = reinterpret_cast<intptrj_t>(helperSymRef->getMethodAddress());
+   const intptr_t countingRecompileMethodAddress = reinterpret_cast<intptr_t>(helperSymRef->getMethodAddress());
 
    if (cg->comp()->target().is64Bit())
       {
@@ -495,7 +495,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
 
    AOTcgDiag4(comp, "Add encodingRelocation = %p reloType = %p symbolRef = %p helperId = %x\n", encodingRelocation, encodingRelocation->getReloType(), encodingRelocation->getSymbolReference(), TR_S390countingPatchCallSite);
 
-   const intptrj_t countingPatchCallSiteAddress = reinterpret_cast<intptrj_t>(helperSymRef->getMethodAddress());
+   const intptr_t countingPatchCallSiteAddress = reinterpret_cast<intptr_t>(helperSymRef->getMethodAddress());
 
    if (cg->comp()->target().is64Bit())
       {

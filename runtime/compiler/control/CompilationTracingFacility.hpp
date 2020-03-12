@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,8 +79,8 @@ class CompilationTracingFacility
       _circularBuffer[_index]._otherData = otherData;
       _index = ++_index & (_size-1); // assumes size is a power of two
       }
-   uint16_t compactJ9VMThreadPtr(J9VMThread *vmThread) const { return (uint16_t)((((uintptrj_t)vmThread) >> 8) & 0xffff); }
-   J9VMThread *expandJ9VMThreadId(uint16_t vmThreadId) const { return (J9VMThread*)(((uintptrj_t)vmThreadId) << 8);}
+   uint16_t compactJ9VMThreadPtr(J9VMThread *vmThread) const { return (uint16_t)((((uintptr_t)vmThread) >> 8) & 0xffff); }
+   J9VMThread *expandJ9VMThreadId(uint16_t vmThreadId) const { return (J9VMThread*)(((uintptr_t)vmThreadId) << 8);}
    bool    isInitialized() const { return _circularBuffer ? true : false; }
    int32_t getIndex()      const { return _index; }
    int32_t getSize()       const { return _size; }

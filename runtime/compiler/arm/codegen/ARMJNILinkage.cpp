@@ -870,13 +870,13 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 
    // push tag bits (savedA0 slot)
    // if the current method is simply a wrapper for the JNI call, hide the call-out stack frame
-   uintptrj_t tagBits = fej9->constJNICallOutFrameSpecialTag();
+   uintptr_t tagBits = fej9->constJNICallOutFrameSpecialTag();
    if (resolvedMethod == comp()->getCurrentMethod())
       {
       tagBits |= fej9->constJNICallOutFrameInvisibleTag();
       }
    armLoadConstant(callNode, tagBits, gr4Reg, codeGen);
-   tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, -((int)sizeof(uintptrj_t)), codeGen);
+   tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, -((int)sizeof(uintptr_t)), codeGen);
    tempMR->setImmediatePreIndexed();
    generateMemSrc1Instruction(codeGen, ARMOp_str, callNode, tempMR, gr4Reg);
 
@@ -884,7 +884,7 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    //
    TR::LabelSymbol *returnAddrLabel               = generateLabelSymbol(codeGen);
    generateLabelInstruction(codeGen, ARMOp_add, callNode, returnAddrLabel, NULL, gr4Reg, instrPtr);
-   tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, -2 * ((int)sizeof(uintptrj_t)), codeGen);
+   tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, -2 * ((int)sizeof(uintptr_t)), codeGen);
    tempMR->setImmediatePreIndexed();
    generateMemSrc1Instruction(codeGen, ARMOp_str, callNode, tempMR, gr4Reg);
 
@@ -946,7 +946,7 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    deps->setNumPostConditions(0, trMemory());
    postDeps->setNumPreConditions(0, trMemory());
    // get the target method address and dispatch JNI method directly
-   uintptrj_t methodAddress = (uintptrj_t)resolvedMethod->startAddressForJNIMethod(comp());
+   uintptr_t methodAddress = (uintptr_t)resolvedMethod->startAddressForJNIMethod(comp());
    //AOT relocation is handled in TR::ARMImmSymInstruction::generateBinaryEncoding()
    gcPoint = generateImmSymInstruction(codeGen, ARMOp_bl, callNode, methodAddress, deps, callSymRef);
    codeGen->getJNICallSites().push_front(new (trHeapMemory()) TR_Pair<TR_ResolvedMethod, TR::Instruction>(calleeSym->getResolvedMethod(), gcPoint));

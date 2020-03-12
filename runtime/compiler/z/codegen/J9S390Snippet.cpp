@@ -69,7 +69,7 @@ TR::S390HeapAllocSnippet::emitSnippetBody()
    uint8_t * buffer = codeGen->getBinaryBufferCursor();
    int32_t distance;
    int32_t jumpToCallDistance = -1;
-   intptrj_t branchToCallLocation = -1;
+   intptr_t branchToCallLocation = -1;
 
    TR::Machine *machine = codeGen->machine();
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
@@ -79,7 +79,7 @@ TR::S390HeapAllocSnippet::emitSnippetBody()
 
    getSnippetLabel()->setCodeLocation(buffer);
 
-   TR_ASSERT(jumpToCallDistance == -1 || jumpToCallDistance == (((intptrj_t)buffer) - branchToCallLocation), "Jump in Heap Alloc Misaligned.");
+   TR_ASSERT(jumpToCallDistance == -1 || jumpToCallDistance == (((intptr_t)buffer) - branchToCallLocation), "Jump in Heap Alloc Misaligned.");
 
    // The code for the none-G5 32bit snippet looks like:
    // BRASL  gr14, jitNewXXXX;
@@ -89,7 +89,7 @@ TR::S390HeapAllocSnippet::emitSnippetBody()
    *(uint16_t *) buffer = 0xc0e5;
    buffer += 2;
 
-   intptrj_t destAddr = (intptrj_t) getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress();
+   intptr_t destAddr = (intptr_t) getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress();
 
 #if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
@@ -116,7 +116,7 @@ TR::S390HeapAllocSnippet::emitSnippetBody()
    TR_ASSERT(CHECK_32BIT_TRAMPOLINE_RANGE(destAddr, buffer), "Helper Call is not reachable.");
    this->setSnippetDestAddr(destAddr);
 
-   *(int32_t *) buffer = (int32_t)((destAddr - (intptrj_t)(buffer - 2)) / 2);
+   *(int32_t *) buffer = (int32_t)((destAddr - (intptr_t)(buffer - 2)) / 2);
    if (cg()->comp()->compileRelocatableCode())
       {
       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer, (uint8_t*) getDestination(), TR_HelperAddress, cg()),
@@ -143,7 +143,7 @@ TR::S390HeapAllocSnippet::emitSnippetBody()
       buffer += 2;
       }
 
-   distance = (intptrj_t) getRestartLabel()->getCodeLocation() - (intptrj_t) buffer;
+   distance = (intptr_t) getRestartLabel()->getCodeLocation() - (intptr_t) buffer;
    distance >>= 1;
    if (!isLongBranch())
       {
@@ -227,7 +227,7 @@ TR::S390HeapAllocSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    // LR/LGR     resReg, gr2;
    // BRC[L] restartLabel;
 
-   distance = (intptrj_t) getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress() - (intptrj_t) buffer;
+   distance = (intptr_t) getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress() - (intptr_t) buffer;
 
    debug->printPrefix(pOutFile, NULL, buffer, 6);
    trfprintf(pOutFile, "BRASL \tGPR14, 0x%8x", distance >> 1);
@@ -246,7 +246,7 @@ TR::S390HeapAllocSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
       buffer += 2;
       }
 
-   distance = (intptrj_t) getRestartLabel()->getCodeLocation() - (intptrj_t) buffer;
+   distance = (intptr_t) getRestartLabel()->getCodeLocation() - (intptr_t) buffer;
    distance >>= 1;
    if (!isLongBranch())
       {

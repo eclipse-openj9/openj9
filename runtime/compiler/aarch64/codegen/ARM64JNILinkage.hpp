@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -171,7 +171,7 @@ class JNILinkage : public PrivateLinkage
     * @param[in] scratchReg : scratch register
     * @return instruction of method dispatch
     */
-   TR::Instruction *generateMethodDispatch(TR::Node *callNode, bool isJNIGCPoint, TR::RegisterDependencyConditions *deps, uintptrj_t targetAddress, TR::Register *scratchReg);
+   TR::Instruction *generateMethodDispatch(TR::Node *callNode, bool isJNIGCPoint, TR::RegisterDependencyConditions *deps, uintptr_t targetAddress, TR::Register *scratchReg);
 
    /**
     * @brief Adjusts return value to java semantics

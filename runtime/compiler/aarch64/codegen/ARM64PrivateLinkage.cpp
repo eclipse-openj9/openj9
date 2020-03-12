@@ -150,16 +150,16 @@ uint32_t J9::ARM64::PrivateLinkage::getRightToLeft()
    return getProperties().getRightToLeft();
    }
 
-intptrj_t
+intptr_t
 J9::ARM64::PrivateLinkage::entryPointFromCompiledMethod()
    {
-   return reinterpret_cast<intptrj_t>(getJittedMethodEntryPoint()->getBinaryEncoding());
+   return reinterpret_cast<intptr_t>(getJittedMethodEntryPoint()->getBinaryEncoding());
    }
 
-intptrj_t
+intptr_t
 J9::ARM64::PrivateLinkage::entryPointFromInterpretedMethod()
    {
-   return reinterpret_cast<intptrj_t>(getInterpretedMethodEntryPoint()->getBinaryEncoding());
+   return reinterpret_cast<intptr_t>(getInterpretedMethodEntryPoint()->getBinaryEncoding());
    }
 
 void J9::ARM64::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
@@ -1476,8 +1476,8 @@ void J9::ARM64::PrivateLinkage::performPostBinaryEncoding()
    TR::ARM64ImmInstruction *linkageInfoWordInstruction = cg()->getReturnTypeInfoInstruction();
    uint32_t linkageInfoWord = linkageInfoWordInstruction->getSourceImmediate();
 
-   intptrj_t jittedMethodEntryAddress = reinterpret_cast<intptrj_t>(getJittedMethodEntryPoint()->getBinaryEncoding());
-   intptrj_t interpretedMethodEntryAddress = reinterpret_cast<intptrj_t>(getInterpretedMethodEntryPoint()->getBinaryEncoding());
+   intptr_t jittedMethodEntryAddress = reinterpret_cast<intptr_t>(getJittedMethodEntryPoint()->getBinaryEncoding());
+   intptr_t interpretedMethodEntryAddress = reinterpret_cast<intptr_t>(getInterpretedMethodEntryPoint()->getBinaryEncoding());
 
    linkageInfoWord = (static_cast<uint32_t>(jittedMethodEntryAddress - interpretedMethodEntryAddress) << 16) | linkageInfoWord;
    linkageInfoWordInstruction->setSourceImmediate(linkageInfoWord);

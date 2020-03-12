@@ -137,12 +137,12 @@ TR::Instruction *TR_X86Recompilation::generatePrePrologue()
       // binary-encoding-time support.  If you change this, be sure to adjust
       // the alignmentMargin above.
       //
-      prev = new (trHeapMemory()) TR::AMD64Imm64Instruction(prev, DQImm64, (uintptrj_t)getJittedBodyInfo(), cg());
+      prev = new (trHeapMemory()) TR::AMD64Imm64Instruction(prev, DQImm64, (uintptr_t)getJittedBodyInfo(), cg());
       prev->setNeedsAOTRelocation();
       }
    else
       {
-      prev = new (trHeapMemory()) TR::X86ImmInstruction(prev, DDImm4, (uint32_t)(uintptrj_t)getJittedBodyInfo(), cg());
+      prev = new (trHeapMemory()) TR::X86ImmInstruction(prev, DDImm4, (uint32_t)(uintptr_t)getJittedBodyInfo(), cg());
       prev->setNeedsAOTRelocation();
       }
 
@@ -170,13 +170,13 @@ TR::Instruction *TR_X86Recompilation::generatePrologue(TR::Instruction *cursor)
             {
             TR_ASSERT(linkage->getMinimumFirstInstructionSize() <= 10, "Can't satisfy first instruction size constraint");
             TR::RealRegister *scratchReg = machine->getRealRegister(TR::RealRegister::edi);
-            cursor = new (trHeapMemory()) TR::AMD64RegImm64Instruction(cursor, MOV8RegImm64, scratchReg, (uintptrj_t)getCounterAddress(), cg());
+            cursor = new (trHeapMemory()) TR::AMD64RegImm64Instruction(cursor, MOV8RegImm64, scratchReg, (uintptr_t)getCounterAddress(), cg());
             mRef = generateX86MemoryReference(scratchReg, 0, cg());
             }
          else
             {
             TR_ASSERT(linkage->getMinimumFirstInstructionSize() <= 5, "Can't satisfy first instruction size constraint");
-            mRef = generateX86MemoryReference((intptrj_t)getCounterAddress(), cg());
+            mRef = generateX86MemoryReference((intptr_t)getCounterAddress(), cg());
             }
 
          if (!isProfilingCompilation())

@@ -48,7 +48,7 @@
 void
 TR_Debug::printJ9JITExceptionTableDetails(J9JITExceptionTable *data, J9JITExceptionTable *dbgextRemotePtr)
    {
-   uintptrj_t startPC = (uintptrj_t)data->startPC;
+   uintptr_t startPC = (uintptr_t)data->startPC;
    if (inDebugExtension())
       trfprintf(_file, "J9JITExceptionTable [%p]\n", dbgextRemotePtr);
    else
@@ -70,7 +70,7 @@ TR_Debug::printJ9JITExceptionTableDetails(J9JITExceptionTable *data, J9JITExcept
 void
 TR_Debug::print(J9JITExceptionTable * data, TR_ResolvedMethod * feMethod, bool fourByteOffsets)
    {
-   uintptrj_t startPC = (uintptrj_t)data->startPC;
+   uintptr_t startPC = (uintptr_t)data->startPC;
    printJ9JITExceptionTableDetails(data);
    TR::GCStackAtlas * sa = _comp->cg()->getStackAtlas();
    J9JITStackAtlas * j9StackAtlas = (J9JITStackAtlas *)sa->getAtlasBits();
@@ -104,7 +104,7 @@ TR_Debug::print(J9JITExceptionTable * data, TR_ResolvedMethod * feMethod, bool f
          J9Method *method = *(J9Method **)cursor;
          if (_comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
             {
-            uintptrj_t callerIndex = *(uintptrj_t *)cursor;
+            uintptr_t callerIndex = *(uintptr_t *)cursor;
             trfprintf(_file, "caller index=\"%08x\" ", callerIndex);
             TR_InlinedCallSite * inlinedCallSite = ((TR_InlinedCallSite *)data->inlinedCalls) + callerIndex;
             method = (J9Method *) inlinedCallSite->_methodInfo;
@@ -224,7 +224,7 @@ TR_Debug::print(J9JITExceptionTable * data, TR_ResolvedMethod * feMethod, bool f
    }
 
 int32_t *
-TR_Debug::printStackAtlas(uintptrj_t startPC, uint8_t * mapBits, int32_t numberOfSlotsMapped, bool fourByteOffsets, int32_t * sizeOfStackAtlas, int32_t frameSize)
+TR_Debug::printStackAtlas(uintptr_t startPC, uint8_t * mapBits, int32_t numberOfSlotsMapped, bool fourByteOffsets, int32_t * sizeOfStackAtlas, int32_t frameSize)
    {
    J9JITStackAtlas *stackAtlas = (J9JITStackAtlas *) mapBits;
    int32_t *offsetInfo = (int32_t *) _comp->trMemory()->allocateHeapMemory(sizeof(int32_t)*numberOfSlotsMapped);
@@ -245,7 +245,7 @@ TR_Debug::printStackAtlas(uintptrj_t startPC, uint8_t * mapBits, int32_t numberO
    }
 
 uint16_t
-TR_Debug::printStackAtlasDetails(uintptrj_t startPC, uint8_t * mapBits, int32_t numberOfSlotsMapped, bool fourByteOffsets, int32_t * sizeOfStackAtlas, int32_t frameSize, int32_t *offsetInfo)
+TR_Debug::printStackAtlasDetails(uintptr_t startPC, uint8_t * mapBits, int32_t numberOfSlotsMapped, bool fourByteOffsets, int32_t * sizeOfStackAtlas, int32_t frameSize, int32_t *offsetInfo)
    {
    J9JITStackAtlas *stackAtlas = (J9JITStackAtlas *) mapBits;
 
@@ -266,7 +266,7 @@ TR_Debug::printStackAtlasDetails(uintptrj_t startPC, uint8_t * mapBits, int32_t 
       {
       trfprintf(_file, "      variable length internal pointer stack map portion exists\n");
       uint8_t *internalPtrMapCursor = (uint8_t *) stackAtlas->internalPointerMap;
-      internalPtrMapCursor += sizeof(intptrj_t);
+      internalPtrMapCursor += sizeof(intptr_t);
       uint8_t variableLengthSize = *((uint8_t *)internalPtrMapCursor);
       trfprintf(_file, "        size of internal pointer stack map = %d\n", variableLengthSize);
       internalPtrMapCursor += 1;
@@ -305,12 +305,12 @@ TR_Debug::printStackAtlasDetails(uintptrj_t startPC, uint8_t * mapBits, int32_t 
        {
        trfprintf(_file, "\nStack alloc map location : %p ", stackAtlas->stackAllocMap);
 
-       uint8_t *localStackAllocMap = (uint8_t *) dxMallocAndRead(sizeof(intptrj_t), stackAtlas->stackAllocMap);
+       uint8_t *localStackAllocMap = (uint8_t *) dxMallocAndRead(sizeof(intptr_t), stackAtlas->stackAllocMap);
 
        trfprintf(_file, "\n  GC map at stack overflow check : %p", localStackAllocMap);
        trfprintf(_file, "\n  Stack alloc map bits : ");
 
-       uint8_t *mapBits = (uint8_t *) ((uintptrj_t) localStackAllocMap + sizeof(uintptrj_t));
+       uint8_t *mapBits = (uint8_t *) ((uintptr_t) localStackAllocMap + sizeof(uintptr_t));
        printStackMapInfo(mapBits, numberOfSlotsMapped, sizeOfStackAtlas, NULL);
 
        trfprintf(_file,"\n");
@@ -339,7 +339,7 @@ TR_Debug::printStackAtlasDetails(uintptrj_t startPC, uint8_t * mapBits, int32_t 
    }
 
 uint8_t *
-TR_Debug::printMapInfo(uintptrj_t startPC, uint8_t * mapBits, int32_t numberOfSlotsMapped, bool fourByteOffsets, int32_t * sizeOfStackAtlas, TR_ByteCodeInfo *byteCodeInfo, uint16_t indexOfFirstInternalPtr, int32_t offsetInfo[], bool nummaps)
+TR_Debug::printMapInfo(uintptr_t startPC, uint8_t * mapBits, int32_t numberOfSlotsMapped, bool fourByteOffsets, int32_t * sizeOfStackAtlas, TR_ByteCodeInfo *byteCodeInfo, uint16_t indexOfFirstInternalPtr, int32_t offsetInfo[], bool nummaps)
    {
    uint32_t lowOffset, registerMap;
    //TR_ByteCodeInfo *byteCodeInfo;

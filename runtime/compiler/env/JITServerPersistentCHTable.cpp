@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -428,7 +428,7 @@ JITClientPersistentCHTable::classGotLoaded(
    if (clazz)
       {
       auto classes = getClasses();
-      classes[TR_RuntimeAssumptionTable::hashCode((uintptrj_t) classId) % CLASSHASHTABLE_SIZE].add(clazz);
+      classes[TR_RuntimeAssumptionTable::hashCode((uintptr_t) classId) % CLASSHASHTABLE_SIZE].add(clazz);
       }
    return clazz;
    }
