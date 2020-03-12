@@ -1865,7 +1865,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             if (!comp()->compileRelocatableCode())
                valueInfo = static_cast<TR_AddressInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(callNode, comp(), AddressInfo));
 
-            uintptrj_t topValue = valueInfo ? valueInfo->getTopValue() : 0;
+            uintptr_t topValue = valueInfo ? valueInfo->getTopValue() : 0;
 
             // Is the topValue valid?
             if( topValue )
@@ -1920,7 +1920,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
             if (useProfiledValues)
                {
-               TR::Instruction * unloadableConstInstr = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegZero, reinterpret_cast<uintptrj_t*>(profiledClass));
+               TR::Instruction * unloadableConstInstr = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegZero, reinterpret_cast<uintptr_t*>(profiledClass));
                if (fej9->isUnloadAssumptionRequired(profiledClass, comp()->getCurrentMethod()))
                   {
                   comp()->getStaticPICSites()->push_front(unloadableConstInstr);
@@ -2551,7 +2551,7 @@ J9::Z::PrivateLinkage::setupJNICallOutFrame(TR::Node * callNode,
    TR_ResolvedMethod * resolvedMethod = cs->getResolvedMethod();
    TR::Instruction * cursor = NULL;
 
-   int32_t stackAdjust = (-5 * (int32_t)sizeof(intptrj_t));
+   int32_t stackAdjust = (-5 * (int32_t)sizeof(intptr_t));
 
    cursor = generateRXInstruction(codeGen, TR::InstOpCode::LAY, callNode, javaStackPointerRealRegister, generateS390MemoryReference(javaStackPointerRealRegister, stackAdjust, codeGen), cursor);
 
@@ -2559,7 +2559,7 @@ J9::Z::PrivateLinkage::setupJNICallOutFrame(TR::Node * callNode,
 
 
    // set up Java Thread
-   intptrj_t constJNICallOutFrameType = fej9->constJNICallOutFrameType();
+   intptr_t constJNICallOutFrameType = fej9->constJNICallOutFrameType();
    TR_ASSERT( constJNICallOutFrameType < MAX_IMMEDIATE_VAL, "OMR::Z::Linkage::setupJNICallOutFrame constJNICallOutFrameType is too big for MVHI");
 
    TR_ASSERT((fej9->thisThreadGetJavaFrameFlagsOffset() == fej9->thisThreadGetJavaLiteralsOffset() + TR::Compiler->om.sizeofReferenceAddress()) &&
@@ -2581,11 +2581,11 @@ J9::Z::PrivateLinkage::setupJNICallOutFrame(TR::Node * callNode,
 
    // JNI Callout Frame setup
    // 0(sp) : RAM method for the native
-   intptrj_t ramMethod = (uintptrj_t) resolvedMethod->resolvedMethodAddress();
+   intptr_t ramMethod = (uintptr_t) resolvedMethod->resolvedMethodAddress();
    jniCallDataSnippet->setRAMMethod(ramMethod);
 
    // 4[8](sp) : flags
-   intptrj_t flags = fej9->constJNICallOutFrameFlags();
+   intptr_t flags = fej9->constJNICallOutFrameFlags();
    jniCallDataSnippet->setJNICallOutFrameFlags(flags);
 
    // 8[16](sp) : return address (savedCP)
@@ -2628,7 +2628,7 @@ void J9::Z::JNILinkage::releaseVMAccessMask(TR::Node * callNode,
    TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(self()->cg());
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
 
-   intptrj_t aValue = fej9->constReleaseVMAccessMask(); //0xfffffffffffdffdf
+   intptr_t aValue = fej9->constReleaseVMAccessMask(); //0xfffffffffffdffdf
    jniCallDataSnippet->setConstReleaseVMAccessMask(aValue);
 
    generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(), callNode, methodAddressReg,
@@ -2714,7 +2714,7 @@ void J9::Z::JNILinkage::acquireVMAccessMask(TR::Node * callNode, TR::Register * 
    // so that in case of long disp, we will reuse the target reg as a scratch reg
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
-   intptrj_t aValue = fej9->constAcquireVMAccessOutOfLineMask();
+   intptr_t aValue = fej9->constAcquireVMAccessOutOfLineMask();
 
    TR::Instruction * loadInstr = (TR::Instruction *) genLoadAddressConstant(self()->cg(), callNode, aValue, methodAddressReg, NULL, NULL, javaLitPoolVirtualRegister);
    switch (loadInstr->getKind())
@@ -2978,7 +2978,7 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
 
    TR::Register * methodAddressReg = NULL;
    TR::Register * javaLitOffsetReg = NULL;
-   intptrj_t targetAddress = (intptrj_t) 0;
+   intptr_t targetAddress = (intptr_t) 0;
    TR::DataType returnType = TR::NoType;
    int8_t numTempRegs = -1;
    comp()->setHasNativeCall();
@@ -3003,7 +3003,7 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
    killMask = killAndAssignRegister(killMask, deps, &methodAddressReg, (cg()->comp()->target().isLinux()) ?  TR::RealRegister::GPR1 : TR::RealRegister::GPR9 , codeGen, true);
    killMask = killAndAssignRegister(killMask, deps, &javaLitOffsetReg, TR::RealRegister::GPR11, codeGen, true);
 
-   targetAddress = (intptrj_t) resolvedMethod->startAddressForJNIMethod(comp());
+   targetAddress = (intptr_t) resolvedMethod->startAddressForJNIMethod(comp());
    returnType = resolvedMethod->returnType();
 
    static char * disablePureFn = feGetEnv("TR_DISABLE_PURE_FUNC_RECOGNITION");
@@ -3144,9 +3144,9 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
    if (isJNICallOutFrame)
      {
      generateRXInstruction(codeGen, TR::InstOpCode::LA, callNode, javaStackPointerRealRegister,
-        generateS390MemoryReference(javaStackPointerRealRegister, 5 * sizeof(intptrj_t), codeGen));
+        generateS390MemoryReference(javaStackPointerRealRegister, 5 * sizeof(intptr_t), codeGen));
 
-     setOffsetToLongDispSlot(getOffsetToLongDispSlot() - (5 * (int32_t)sizeof(intptrj_t)) );
+     setOffsetToLongDispSlot(getOffsetToLongDispSlot() - (5 * (int32_t)sizeof(intptr_t)) );
      }
 
    if (isCheckException)

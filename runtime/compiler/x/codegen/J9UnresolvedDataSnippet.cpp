@@ -146,14 +146,14 @@ J9::X86::UnresolvedDataSnippet::emitResolveHelperCall(uint8_t *cursor)
    {
    // Get the address for the glue routine (or its trampoline)
    //
-   intptrj_t glueAddress = (intptrj_t)_glueSymRef->getMethodAddress();
+   intptr_t glueAddress = (intptr_t)_glueSymRef->getMethodAddress();
 
    cg()->addProjectSpecializedRelocation(cursor+1, (uint8_t *)_glueSymRef, NULL, TR_HelperAddress,
    __FILE__, __LINE__, getNode());
 
    // Call to the glue routine
    //
-   const intptrj_t rip = (intptrj_t)(cursor+5);
+   const intptr_t rip = (intptr_t)(cursor+5);
    if ((cg()->needRelocationsForHelpers() && cg()->comp()->target().is64Bit()) ||
        NEEDS_TRAMPOLINE(glueAddress, rip, cg()))
       {
@@ -164,11 +164,11 @@ J9::X86::UnresolvedDataSnippet::emitResolveHelperCall(uint8_t *cursor)
 
    *cursor++ = 0xe8;    // CALLImm4
 
-   int32_t offset = (int32_t)((intptrj_t)glueAddress - rip);
+   int32_t offset = (int32_t)((intptr_t)glueAddress - rip);
    *(int32_t *)cursor = offset;
    cursor += 4;
 
-   TR_ASSERT((intptrj_t)cursor == rip, "assertion failure");
+   TR_ASSERT((intptr_t)cursor == rip, "assertion failure");
 
    return cursor;
    }
@@ -284,7 +284,7 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolAddress(uint8_t *cursor)
       *cursor++ = 0x68;  // push imm4
       }
 
-   *(intptrj_t *)cursor = (intptrj_t)getDataSymbolReference()->getOwningMethod(comp)->constantPool();
+   *(intptr_t *)cursor = (intptr_t)getDataSymbolReference()->getOwningMethod(comp)->constantPool();
    // in MT JRE, it might have no data reference instruction
    if (getDataReferenceInstruction())
       {
@@ -553,7 +553,7 @@ J9::X86::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart)
 
    // cpAddr
    //
-   length += sizeof(intptrj_t);
+   length += sizeof(intptr_t);
 
    // cpIndex
    //

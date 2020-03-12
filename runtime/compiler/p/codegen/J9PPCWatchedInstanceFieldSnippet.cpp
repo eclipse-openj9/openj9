@@ -34,13 +34,13 @@ uint8_t *TR::J9PPCWatchedInstanceFieldSnippet::emitSnippetBody()
    // Insert into TOC 
    if (cg()->comp()->target().is64Bit() && getTOCOffset() != PTOC_FULL_INDEX)
       {
-      TR_PPCTableOfConstants::setTOCSlot(getTOCOffset(), reinterpret_cast<uintptrj_t>(snippetLocation));
+      TR_PPCTableOfConstants::setTOCSlot(getTOCOffset(), reinterpret_cast<uintptr_t>(snippetLocation));
       }
    else if (getLowerInstruction() != NULL)
       {
       // Handle Nibbles - Generation of instructions to materialise address
       int32_t *patchAddr = reinterpret_cast<int32_t *>(getLowerInstruction()->getBinaryEncoding());
-      intptrj_t addrValue = reinterpret_cast<intptrj_t>(snippetLocation);
+      intptr_t addrValue = reinterpret_cast<intptr_t>(snippetLocation);
 
       if (cg()->comp()->target().is64Bit())
          {
@@ -53,9 +53,9 @@ uint8_t *TR::J9PPCWatchedInstanceFieldSnippet::emitSnippetBody()
       else
          {
       	int32_t *patchAddress1 = reinterpret_cast<int32_t *>(getUpperInstruction()->getBinaryEncoding());
-         *patchAddress1 |= cg()->hiValue(static_cast<int32_t>(reinterpret_cast<intptrj_t>(snippetLocation))) & 0x0000ffff;
+         *patchAddress1 |= cg()->hiValue(static_cast<int32_t>(reinterpret_cast<intptr_t>(snippetLocation))) & 0x0000ffff;
          int32_t *patchAddress2 = reinterpret_cast<int32_t *>(getLowerInstruction()->getBinaryEncoding());
-         *patchAddress2 |= static_cast<int32_t>(reinterpret_cast<intptrj_t>(snippetLocation)) & 0x0000ffff;
+         *patchAddress2 |= static_cast<int32_t>(reinterpret_cast<intptr_t>(snippetLocation)) & 0x0000ffff;
          }
       }
 

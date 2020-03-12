@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,7 @@ struct VirtualGuardInfoForCHTable
    bool _mergedWithOSRGuard;
 
    // These reference locations are non-null only for MutableCallSiteGuards
-   uintptrj_t *_mutableCallSiteObject;
+   uintptr_t *_mutableCallSiteObject;
    TR::KnownObjectTable::Index _mutableCallSiteEpoch;
 
    // Part of the symref

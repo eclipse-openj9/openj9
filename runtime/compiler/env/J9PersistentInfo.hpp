@@ -162,9 +162,9 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void resetGCwillBlockOnClassUnloadMonitor() { _GCwillBlockOnClassUnloadMonitor = false; }
 
    bool ensureUnloadedAddressSetsAreInitialized();
-   void addUnloadedClass(TR_OpaqueClassBlock *clazz, uintptrj_t startAddress, uint32_t size);
+   void addUnloadedClass(TR_OpaqueClassBlock *clazz, uintptr_t startAddress, uint32_t size);
    bool isUnloadedClass(void *v, bool yesIReallyDontCareAboutHCR); // You probably want isObsoleteClass
-   bool isInUnloadedMethod(uintptrj_t address);
+   bool isInUnloadedMethod(uintptr_t address);
    int32_t getNumUnloadedClasses() const { return _numUnloadedClasses; }
    TR_AddressSet* getUnloadedClassAddresses() const { return _unloadedClassAddresses; }
 

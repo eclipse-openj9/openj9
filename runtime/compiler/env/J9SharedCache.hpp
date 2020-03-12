@@ -96,9 +96,9 @@ public:
       return (rememberClass((J9Class *) classPtr, false) != NULL);
       }
 
-   virtual uintptrj_t *rememberClass(TR_OpaqueClassBlock *classPtr)
+   virtual uintptr_t *rememberClass(TR_OpaqueClassBlock *classPtr)
       {
-      return (uintptrj_t *) rememberClass((J9Class *) classPtr, true);
+      return (uintptr_t *) rememberClass((J9Class *) classPtr, true);
       }
 
    virtual UDATA *rememberClass(J9Class *clazz, bool create=true);
@@ -112,7 +112,7 @@ public:
       return classMatchesCachedVersion((J9Class *) classPtr, chainData);
       }
 
-   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader);
+   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader);
 
    /**
     * \brief Checks whether the specified pointer points into the shared cache.
@@ -121,7 +121,7 @@ public:
     * \param[out] cacheOffset If ptr points into the shared cache and this parameter is not NULL the result of converting ptr into an offset will be returned here. If ptr does not point into the shared cache this parameter is ignored.
     * \return True if the pointer points into the shared cache, false otherwise.
     */
-   virtual bool isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset = NULL);
+   virtual bool isPointerInSharedCache(void *ptr, uintptr_t *cacheOffset = NULL);
 
    /**
     * \brief Checks whether the specified offset is within the shared cache.
@@ -130,11 +130,11 @@ public:
     * \param[out] ptr If offset is within the shared cache and this parameter is not NULL the result of converting offset into a pointer will be returned here. If offset is not within the shared cache this parameter is ignored.
     * \return True if the offset is within the shared cache, false otherwise.
     */
-   virtual bool isOffsetInSharedCache(uintptrj_t offset, void *ptr = NULL);
+   virtual bool isOffsetInSharedCache(uintptr_t offset, void *ptr = NULL);
 
    J9ROMClass *startingROMClassOfClassChain(UDATA *classChain);
 
-   virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz);
+   virtual uintptr_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz);
 
    virtual const void *storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor);
 
@@ -252,14 +252,14 @@ public:
 
    virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL) override { TR_ASSERT_FATAL(false, "called"); return false;}
 
-   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader) override { TR_ASSERT_FATAL(false, "called"); return NULL;}
+   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader) override { TR_ASSERT_FATAL(false, "called"); return NULL;}
 
    static void setSharedCacheDisabledReason(TR_J9SharedCacheDisabledReason state) { TR_ASSERT_FATAL(false, "called"); }
    static TR_J9SharedCacheDisabledReason getSharedCacheDisabledReason() { TR_ASSERT_FATAL(false, "called"); return TR_J9SharedCache::TR_J9SharedCacheDisabledReason::UNINITIALIZED;}
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo) { TR_ASSERT_FATAL(false, "called"); return TR_no;}
    static void setStoreSharedDataFailedLength(UDATA length) { TR_ASSERT_FATAL(false, "called"); }
 
-   virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) override;
+   virtual uintptr_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) override;
 
    virtual J9SharedClassCacheDescriptor *getCacheDescriptorList();
 

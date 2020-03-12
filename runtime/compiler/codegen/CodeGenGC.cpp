@@ -84,7 +84,7 @@ J9::CodeGenerator::createStackAtlas()
    ListIterator<TR::ParameterSymbol> parameterIterator(&methodSymbol->getParameterList());
    TR::ParameterSymbol *parmCursor;
 
-   intptrj_t stackSlotSize = TR::Compiler->om.sizeofReferenceAddress();
+   intptr_t stackSlotSize = TR::Compiler->om.sizeofReferenceAddress();
    int32_t sizeOfParameterAreaInBytes = methodSymbol->getNumParameterSlots() * stackSlotSize;
    int32_t firstMappedParmOffsetInBytes;
    int32_t parmOffsetInBytes;

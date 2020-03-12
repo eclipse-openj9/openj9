@@ -779,8 +779,8 @@ J9::Compilation::freeKnownObjectTable()
          J9VMThread *thread = self()->fej9()->vmThread();
          TR_ASSERT(thread, "assertion failure");
 
-         TR_ArrayIterator<uintptrj_t> i(&_knownObjectTable->_references);
-         for (uintptrj_t *ref = i.getFirst(); !i.pastEnd(); ref = i.getNext())
+         TR_ArrayIterator<uintptr_t> i(&_knownObjectTable->_references);
+         for (uintptr_t *ref = i.getFirst(); !i.pastEnd(); ref = i.getNext())
             thread->javaVM->internalVMFunctions->j9jni_deleteLocalRef((JNIEnv*)thread, (jobject)ref);
          }
       }
@@ -1385,7 +1385,7 @@ J9::Compilation::notYetRunMeansCold()
 
    TR_ResolvedMethod *currentMethod = self()->getJittedMethodSymbol()->getResolvedMethod();
 
-   intptrj_t initialCount = currentMethod->hasBackwardBranches() ?
+   intptr_t initialCount = currentMethod->hasBackwardBranches() ?
                              self()->getOptions()->getInitialBCount() :
                              self()->getOptions()->getInitialCount();
 

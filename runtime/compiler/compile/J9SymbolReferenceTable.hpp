@@ -158,10 +158,10 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateDiscontiguousArraySizeSymbolRef();
    TR::SymbolReference * findOrCreateClassLoaderSymbolRef(TR_ResolvedMethod *);
    TR::SymbolReference * findOrCreateCurrentThreadSymbolRef();
-   TR::SymbolReference * findOrCreateJ9MethodExtraFieldSymbolRef(intptrj_t offset);
-   TR::SymbolReference * findOrCreateJ9MethodConstantPoolFieldSymbolRef(intptrj_t offset);
-   TR::SymbolReference * findOrCreateStartPCLinkageInfoSymbolRef(intptrj_t offset);
-   TR::SymbolReference * findOrCreatePerCodeCacheHelperSymbolRef(TR_CCPreLoadedCode helper, uintptrj_t helperAddr);
+   TR::SymbolReference * findOrCreateJ9MethodExtraFieldSymbolRef(intptr_t offset);
+   TR::SymbolReference * findOrCreateJ9MethodConstantPoolFieldSymbolRef(intptr_t offset);
+   TR::SymbolReference * findOrCreateStartPCLinkageInfoSymbolRef(intptr_t offset);
+   TR::SymbolReference * findOrCreatePerCodeCacheHelperSymbolRef(TR_CCPreLoadedCode helper, uintptr_t helperAddr);
    TR::SymbolReference * findOrCreateANewArraySymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateStringSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex);
    /** \brief
@@ -209,7 +209,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    TR::SymbolReference * findOrCreateProfilingBufferCursorSymbolRef();
    TR::SymbolReference * findOrCreateProfilingBufferEndSymbolRef();
-   TR::SymbolReference * findOrCreateProfilingBufferSymbolRef(intptrj_t offset = 0);
+   TR::SymbolReference * findOrCreateProfilingBufferSymbolRef(intptr_t offset = 0);
 
    // optimizer
    TR::SymbolReference * findOrCreateRamStaticsFromClassSymbolRef();
@@ -263,7 +263,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     */
    TR::SymbolReference* findOrCreateUnsafeSymbolRef(TR::DataType type, bool javaObjectReference = false, bool javaStaticReference = false, bool isVolatile = false);
 
-   TR::SymbolReference * findOrCreateImmutableGenericIntShadowSymbolReference(intptrj_t offset); // "Immutable" means no aliasing issues; ie. reads from these shadows can be freely reordered wrt anything else
+   TR::SymbolReference * findOrCreateImmutableGenericIntShadowSymbolReference(intptr_t offset); // "Immutable" means no aliasing issues; ie. reads from these shadows can be freely reordered wrt anything else
 
    TR::SymbolReference * findOrCreateCheckCastForArrayStoreSymbolRef(TR::ResolvedMethodSymbol *owningMethodSymbol);
 

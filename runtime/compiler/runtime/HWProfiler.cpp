@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,18 +98,18 @@ TR_HWProfiler::setHWProfilingAvailable(bool supported)
    }
 
 int32_t
-TR_HWProfiler::IAHash(uintptrj_t pc)
+TR_HWProfiler::IAHash(uintptr_t pc)
    {
    return (int32_t)(((pc >> 1) & 0x7FFFFFFF) % HASH_TABLE_SIZE);
    }
 
-uintptrj_t
+uintptr_t
 TR_HWProfiler::getPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation * comp)
    {
    if (byteCodeIndex >= TR::Compiler->mtd.bytecodeSize(method))
-      return (uintptrj_t)NULL;
+      return (uintptr_t)NULL;
 
-   return (uintptrj_t)(TR::Compiler->mtd.bytecodeStart(method) + byteCodeIndex);
+   return (uintptr_t)(TR::Compiler->mtd.bytecodeStart(method) + byteCodeIndex);
    }
 
 /**
@@ -684,7 +684,7 @@ TR_HWProfiler::recompilationLogic(TR_PersistentJittedBodyInfo *bodyInfo,
    }
 
 
-uintptrj_t
+uintptr_t
 TR_HWProfiler::getPCFromBCInfo(TR::Node *node, TR::Compilation *comp)
    {
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
@@ -725,7 +725,7 @@ TR_HWProfiler::createBCMap(uint8_t *ia, uint32_t bcIndex, TR_OpaqueMethodBlock *
    return map;
    }
 
-uintptrj_t
+uintptr_t
 TR_HWProfiler::getBytecodePCFromIA(J9VMThread *vmThread, uint8_t *IA)
    {
    if (vmThread)
@@ -757,7 +757,7 @@ TR_HWProfiler::getBytecodePCFromIA(J9VMThread *vmThread, uint8_t *IA)
                      }
                   }
 #endif
-               return (uintptrj_t)cursor->_bytecodePC;
+               return (uintptr_t)cursor->_bytecodePC;
                }
             }
          }
@@ -791,7 +791,7 @@ TR_HWProfiler::registerRecords(J9JITExceptionTable *metaData, TR::Compilation *c
 
       // Initialize the special first element
       cursor->_bytecodePC = (void *)METADATA_MAPPING_EYECATCHER;
-      cursor->_instructionAddr = (void *)(uintptrj_t)arraySize;
+      cursor->_instructionAddr = (void *)(uintptr_t)arraySize;
       cursor++;
 
       for (uint32_t i = 0; i < arraySize; i++, cursor++)
@@ -835,7 +835,7 @@ TR_HWProfiler::createRecords(TR::Compilation *comp)
             {
 
             relocationTargetKind = TR_EmitClass;
-            target2 = (uint8_t *) ((intptrj_t) node->getInlinedSiteIndex());
+            target2 = (uint8_t *) ((intptr_t) node->getInlinedSiteIndex());
             TR_HWPBytecodePCToIAMap map = {(void *)getPCFromMethodAndBCIndex(method, bcIndex, comp),
                                            (void *)ia};
             comp->addHWPBCMap(map);

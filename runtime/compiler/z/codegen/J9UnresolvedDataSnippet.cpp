@@ -263,18 +263,18 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
    cursor += 2;
 
    // PicBuilder function address
-   *(uintptrj_t *) cursor = (uintptrj_t) glueRef->getMethodAddress();
+   *(uintptr_t *) cursor = (uintptr_t) glueRef->getMethodAddress();
    AOTcgDiag1(comp, "add TR_AbsoluteHelperAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, (uint8_t *)glueRef, NULL, TR_AbsoluteHelperAddress,
                              __FILE__, __LINE__, getNode());
-   cursor += sizeof(uintptrj_t);
+   cursor += sizeof(uintptr_t);
 
    // code cache RA
-   *(uintptrj_t *) cursor = (uintptrj_t) (getBranchInstruction()->getNext())->getBinaryEncoding();
+   *(uintptr_t *) cursor = (uintptr_t) (getBranchInstruction()->getNext())->getBinaryEncoding();
    AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
                              __FILE__, __LINE__, getNode());
-   cursor += sizeof(uintptrj_t);
+   cursor += sizeof(uintptr_t);
 
    // cp
    if (getDataSymbolReference()->getSymbol()->isCallSiteTableEntry())
@@ -293,33 +293,33 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
    cursor += 4;
 
    // address of constant pool
-   *(uintptrj_t *) cursor = (uintptrj_t) getDataSymbolReference()->getOwningMethod(comp)->constantPool();
+   *(uintptr_t *) cursor = (uintptr_t) getDataSymbolReference()->getOwningMethod(comp)->constantPool();
    AOTcgDiag1(comp, "add TR_ConstantPool cursor=%x\n", cursor);
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool, cg()),
                              __FILE__, __LINE__, getNode());
-   cursor += sizeof(uintptrj_t);
+   cursor += sizeof(uintptr_t);
 
    // referencing instruction that needs patching
    if (getDataReferenceInstruction() != NULL)
       {
-      *(uintptrj_t *) cursor = (uintptrj_t) (getDataReferenceInstruction()->getBinaryEncoding());
+      *(uintptr_t *) cursor = (uintptr_t) (getDataReferenceInstruction()->getBinaryEncoding());
       }
    else
       {
-      *(uintptrj_t *) cursor = (uintptrj_t) (getBranchInstruction()->getNext())->getBinaryEncoding();
+      *(uintptr_t *) cursor = (uintptr_t) (getBranchInstruction()->getNext())->getBinaryEncoding();
       }
    AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
                              __FILE__, __LINE__, getNode());
-   cursor += sizeof(uintptrj_t);
+   cursor += sizeof(uintptr_t);
 
    // Literal Pool Address to patch.
-   *(uintptrj_t *) cursor = 0x0;
+   *(uintptr_t *) cursor = 0x0;
    setLiteralPoolPatchAddress(cursor);
    AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
                              __FILE__, __LINE__, getNode());
-   cursor += sizeof(uintptrj_t);
+   cursor += sizeof(uintptr_t);
 
 
    // Instance data load and stores require patching of the displacement field
@@ -347,7 +347,7 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
 
       // Get PC for relative load of the resolved offset.
       uint8_t* offsetMarker = cursor;                        // DC Address of Offset
-      cursor += sizeof(intptrj_t);
+      cursor += sizeof(intptr_t);
 
       // Get PC for relative load of the resolved offset.
       // We need to use getNext - 6 because the branch instruction may have padding before it.
@@ -390,14 +390,14 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
       cursor += sizeof(int32_t);
 
       // Padding to ensure resolved offset slot is aligned.
-      if ((uintptrj_t)cursor % 4 != 0)
+      if ((uintptr_t)cursor % 4 != 0)
          cursor += sizeof(int16_t);
 
       *(int32_t *) cursor = (int32_t)0x0badbeef;                 // DC Offset
 
       // Store pointer to resolved offset slot
       // code cache RA
-      *(uintptrj_t *) offsetMarker = (uintptrj_t) cursor;
+      *(uintptr_t *) offsetMarker = (uintptr_t) cursor;
       AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress offsetMarker=%x\n", offsetMarker);
       cg()->addProjectSpecializedRelocation(offsetMarker, NULL, NULL, TR_AbsoluteMethodAddress,
                                 __FILE__, __LINE__, getNode());
@@ -415,7 +415,7 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
 uint32_t
 J9::Z::UnresolvedDataSnippet::getLength(int32_t  estimatedSnippetStart)
    {
-   uint32_t length = (cg()->comp()->target().is64Bit() ? (14 + 5 * sizeof(uintptrj_t)) : (12 + 5 * sizeof(uintptrj_t)));
+   uint32_t length = (cg()->comp()->target().is64Bit() ? (14 + 5 * sizeof(uintptr_t)) : (12 + 5 * sizeof(uintptr_t)));
    // For instance snippets, we have the out-of-line sequence
    if (isInstanceData())
       length += (cg()->comp()->target().is64Bit()) ? 36 : 28;
@@ -522,55 +522,55 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
       }
 
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
    trfprintf(pOutFile, "DC    \t%s", getName(glueRef));
-   bufferPos += sizeof(intptrj_t);
+   bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
    trfprintf(pOutFile, "DC    \t%p \t# Return Address",
-            (intptrj_t) (snippet->getBranchInstruction()->getNext())->getBinaryEncoding());
-   bufferPos += sizeof(intptrj_t);
+            (intptr_t) (snippet->getBranchInstruction()->getNext())->getBinaryEncoding());
+   bufferPos += sizeof(intptr_t);
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
    trfprintf(pOutFile, "DC    \t0x%08x \t# Constant Pool Index", snippet->getDataSymbolReference()->getCPIndex());
    bufferPos += 4;
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
    trfprintf(pOutFile, "DC    \t0x%p \t# Address Of Constant Pool",
-            (intptrj_t) getOwningMethod(snippet->getDataSymbolReference())->constantPool());
-   bufferPos += sizeof(intptrj_t);
+            (intptr_t) getOwningMethod(snippet->getDataSymbolReference())->constantPool());
+   bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
-   uintptrj_t addr;
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   uintptr_t addr;
 
    if (snippet->getDataReferenceInstruction() != NULL)
       {
-      addr = (uintptrj_t) (snippet->getDataReferenceInstruction()->getBinaryEncoding());
+      addr = (uintptr_t) (snippet->getDataReferenceInstruction()->getBinaryEncoding());
       }
    else
       {
-      addr = (uintptrj_t) (snippet->getBranchInstruction()->getNext())->getBinaryEncoding();
+      addr = (uintptr_t) (snippet->getBranchInstruction()->getNext())->getBinaryEncoding();
       }
    trfprintf(pOutFile, "DC    \t0x%p \t# Address Of Ref. Instruction", addr);
 
-   bufferPos += sizeof(intptrj_t);
+   bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
    trfprintf(pOutFile, "DC   \t0x%p \t# Address Of Literal Pool Slot",
-           (intptrj_t)(snippet->getLiteralPoolSlot()));
-   bufferPos += sizeof(intptrj_t);
+           (intptr_t)(snippet->getLiteralPoolSlot()));
+   bufferPos += sizeof(intptr_t);
 
    // Snippet has out-of-line sequence for large offsets for instance data
    if (snippet->isInstanceData())
       {
-      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
+      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
       trfprintf(pOutFile, "DC   \t0x%p \t# Address to large offset slot",
-            (intptrj_t)((intptrj_t*)bufferPos));
-      bufferPos += sizeof(intptrj_t);
+            (intptr_t)((intptr_t*)bufferPos));
+      bufferPos += sizeof(intptr_t);
 
       printPrefix(pOutFile, NULL, bufferPos, sizeof(int32_t));
       trfprintf(pOutFile, "DC   \t0x%p \t# Displacement from helper branch to out-of-line sequence",
-            (int32_t)((intptrj_t)bufferPos + sizeof(int32_t) - (intptrj_t)snippet->getBranchInstruction()->getBinaryEncoding() +6));
+            (int32_t)((intptr_t)bufferPos + sizeof(int32_t) - (intptr_t)snippet->getBranchInstruction()->getBinaryEncoding() +6));
       bufferPos += sizeof(int32_t);
 
       printPrefix(pOutFile, NULL, bufferPos, 2);
@@ -601,7 +601,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
                              snippet->getBranchInstruction()->getNext()->getBinaryEncoding());
       bufferPos += 6;
 
-      if ((uintptrj_t)bufferPos % 4 != 0)
+      if ((uintptr_t)bufferPos % 4 != 0)
          {
          printPrefix(pOutFile, NULL, bufferPos, 2);
          trfprintf(pOutFile, "\t\t# 2 byte padding");

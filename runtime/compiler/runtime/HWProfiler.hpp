@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,7 +63,7 @@ class TR_HWPRecord
    {
 public:
    TR_HWPRecord *next;
-   uintptrj_t pc;
+   uintptr_t pc;
    uint8_t *ia;
    uint32_t count;
    TR_HWPRecord ()
@@ -83,9 +83,9 @@ class HWProfilerBuffer : public TR_Link0<HWProfilerBuffer>
    public:
       uint8_t *getBuffer() {return _buffer;}
       void setBuffer(U_8* buffer) { _buffer = buffer; }
-      uintptrj_t getSize() {return _size;}
+      uintptr_t getSize() {return _size;}
       void setSize(UDATA size) {_size = size;}
-      uintptrj_t getBufferFilledSize() {return _bufferFilledSize;}
+      uintptr_t getBufferFilledSize() {return _bufferFilledSize;}
       void setBufferFilledSize(UDATA size) {_bufferFilledSize = size;}
       bool isValid() const { return !_isInvalidated; }
       void setIsInvalidated(bool b) { _isInvalidated = b; }
@@ -94,8 +94,8 @@ class HWProfilerBuffer : public TR_Link0<HWProfilerBuffer>
       
    private:
       uint8_t *_buffer;
-      uintptrj_t _size;
-      uintptrj_t _bufferFilledSize;
+      uintptr_t _size;
+      uintptr_t _bufferFilledSize;
       volatile bool _isInvalidated;
       uint32_t _type;
    };
@@ -219,8 +219,8 @@ public:
     */
    virtual void processBufferRecords(J9VMThread *vmThread, 
                                      uint8_t *dataStart, 
-                                     uintptrj_t size, 
-                                     uintptrj_t bufferFilledSize, 
+                                     uintptr_t size, 
+                                     uintptr_t bufferFilledSize, 
                                      uint32_t dataTag = 0) = 0;
 
    /**
@@ -403,7 +403,7 @@ public:
     * @param comp The TR::Compilation object
     * @return the Bytecode PC
     */
-   uintptrj_t getPCFromBCInfo(TR::Node *node, TR::Compilation *comp);
+   uintptr_t getPCFromBCInfo(TR::Node *node, TR::Compilation *comp);
    
    /**
     * Used to get the Bytecode PC from the J9Method and Bytecode Index.
@@ -412,7 +412,7 @@ public:
     * @param comp the TR::Compilation object
     * @return the Bytecode PC
     */
-   uintptrj_t getPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, 
+   uintptr_t getPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, 
                                         uint32_t byteCodeIndex, 
                                         TR::Compilation * comp);
    
@@ -447,7 +447,7 @@ public:
     * @param IA the JIT Instruction Address
     * @return the Bytecode PC
     */
-   uintptrj_t getBytecodePCFromIA(J9VMThread *vmThread, uint8_t *IA);
+   uintptr_t getBytecodePCFromIA(J9VMThread *vmThread, uint8_t *IA);
    
    /**
     * Used to create a TR_HWPBytecodePCToIAMap struct that will be stored in the
@@ -477,7 +477,7 @@ public:
     * @param pc The JIT Instruction Address
     * @return the hash table index
     */
-   static int32_t IAHash (uintptrj_t pc);
+   static int32_t IAHash (uintptr_t pc);
    
    // JIT Config Cache
    J9JITConfig                    *_jitConfig;

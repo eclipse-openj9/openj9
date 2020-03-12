@@ -777,7 +777,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
             generateRegImmInstruction(ADDRegImm4(), cursor->getNode(), espReal, allocSize, cg());
             }
          TR::SymbolReference* helper = comp()->getSymRefTab()->findOrCreateStackOverflowSymbolRef(NULL);
-         jitOverflowCheck = generateImmSymInstruction(CALLImm4, cursor->getNode(), (uintptrj_t)helper->getMethodAddress(), helper, cg());
+         jitOverflowCheck = generateImmSymInstruction(CALLImm4, cursor->getNode(), (uintptr_t)helper->getMethodAddress(), helper, cg());
          jitOverflowCheck->setNeedsGCMap(0xFF00FFFF);
          if (doAllocateFrameSpeculatively)
             {
@@ -858,7 +858,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       TR::RealRegister *frameSlotIndexReg = machine()->getRealRegister(TR::RealRegister::edi);
       uint32_t paintBound = 0;
       uint32_t paintSlotsOffset = 0;
-      uint32_t paintSize = allocSize-sizeof(uintptrj_t);
+      uint32_t paintSize = allocSize-sizeof(uintptr_t);
 
       //Paint the slots with deadf00d
       //
@@ -875,11 +875,11 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          {
          if (cg()->comp()->target().is64Bit())
             {
-            paintValue64 = ((uintptrj_t) ((uintptrj_t)comp()->getOptions()->getHeapBase() + (uintptrj_t) 4096));
+            paintValue64 = ((uintptr_t) ((uintptr_t)comp()->getOptions()->getHeapBase() + (uintptr_t) 4096));
             }
          else
             {
-            paintValue32 = ((uintptrj_t) ((uintptrj_t)comp()->getOptions()->getHeapBase() + (uintptrj_t) 4096));
+            paintValue32 = ((uintptr_t) ((uintptr_t)comp()->getOptions()->getHeapBase() + (uintptr_t) 4096));
             }
          }
 
@@ -1329,7 +1329,7 @@ void TR::X86CallSite::computeProfiledTargets()
          // PMR 05447,379,000 getTopValue may return array length profile data instead of a class pointer
          // (when the virtual call feeds an arraycopy method length parameter). We need to defend this case to
          // avoid attempting to use the length as a pointer, so use asAddressInfo() to gate assignment of topValue.
-         uintptrj_t topValue = (valueInfo) ? valueInfo->getTopValue() : 0;
+         uintptr_t topValue = (valueInfo) ? valueInfo->getTopValue() : 0;
 
          // if the call to hashcode is a virtual call node, the top value was already inlined.
          if (callNode->isTheVirtualCallNodeForAGuardedInlinedCall())
@@ -1357,7 +1357,7 @@ void TR::X86CallSite::computeProfiledTargets()
 
          if (!topValue && !callNode->getSymbolReference()->isUnresolved() &&
              (callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_lang_Object_clone))
-            topValue = (uintptrj_t) comp()->getObjectClassPointer();
+            topValue = (uintptr_t) comp()->getObjectClassPointer();
 
          if (topValue)
             {
@@ -1381,7 +1381,7 @@ void TR::X86CallSite::computeProfiledTargets()
                   methodToBeCompared = profiledVirtualMethod->getPersistentIdentifier();
                   }
 
-               _profiledTargets->add(new(comp()->trStackMemory()) TR::X86PICSlot((uintptrj_t)topValue, profiledVirtualMethod, true, methodToBeCompared, slot));
+               _profiledTargets->add(new(comp()->trStackMemory()) TR::X86PICSlot((uintptr_t)topValue, profiledVirtualMethod, true, methodToBeCompared, slot));
                }
             }
          }
@@ -1414,8 +1414,8 @@ void TR::X86CallSite::computeProfiledTargets()
             traceMsg(comp(), "\n");
             }
 
-         uintptrj_t totalPICHitFrequency = 0;
-         uintptrj_t totalPICMissFrequency = 0;
+         uintptr_t totalPICHitFrequency = 0;
+         uintptr_t totalPICMissFrequency = 0;
          ListIterator<TR_ExtraAddressInfo> sortedValuesIt(&valuesSortedByFrequency);
          for (TR_ExtraAddressInfo *profiledInfo = sortedValuesIt.getFirst(); profiledInfo != NULL; profiledInfo = sortedValuesIt.getNext())
             {
@@ -1449,7 +1449,7 @@ void TR::X86CallSite::computeProfiledTargets()
                   }
                else
                   {
-                  _profiledTargets->add(new(comp()->trStackMemory()) TR::X86PICSlot((uintptrj_t)thisType, profiledInterfaceMethod));
+                  _profiledTargets->add(new(comp()->trStackMemory()) TR::X86PICSlot((uintptr_t)thisType, profiledInterfaceMethod));
                   if (comp()->getOption(TR_TraceCG))
                      traceMsg(comp(), " + Added static PIC slot");
                   numStaticPICSlots++;
@@ -1926,11 +1926,11 @@ void J9::X86::PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef,
       // Load the RAM method into rdi and call the helper
       if (cg()->comp()->target().is64Bit())
          {
-         generateRegImm64Instruction(MOV8RegImm64, callNode, ramMethodReg, (uint64_t)(uintptrj_t)methodSymbol->getMethodAddress(), cg());
+         generateRegImm64Instruction(MOV8RegImm64, callNode, ramMethodReg, (uint64_t)(uintptr_t)methodSymbol->getMethodAddress(), cg());
          }
       else
          {
-         generateRegImmInstruction(MOV4RegImm4, callNode, ramMethodReg, (uint32_t)(uintptrj_t)methodSymbol->getMethodAddress(), cg());
+         generateRegImmInstruction(MOV4RegImm4, callNode, ramMethodReg, (uint32_t)(uintptr_t)methodSymbol->getMethodAddress(), cg());
          }
 
       callInstr = generateHelperCallInstruction(callNode, TR_j2iTransition, NULL, cg());
@@ -1945,7 +1945,7 @@ void J9::X86::PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef,
       TR::Register *nativeMethodReg = cg()->allocateRegister();
       site.addPostCondition(nativeMethodReg, TR::RealRegister::edi);
 
-      generateRegImm64Instruction(MOV8RegImm64, callNode, nativeMethodReg, (uint64_t)(uintptrj_t)methodSymbol->getMethodAddress(), cg());
+      generateRegImm64Instruction(MOV8RegImm64, callNode, nativeMethodReg, (uint64_t)(uintptr_t)methodSymbol->getMethodAddress(), cg());
       callInstr = generateRegInstruction(CALLReg, callNode, nativeMethodReg, cg());
       cg()->stopUsingRegister(nativeMethodReg);
       }
@@ -1967,7 +1967,7 @@ void J9::X86::PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef,
       }
    else
       {
-      callInstr = generateImmSymInstruction(CALLImm4, callNode, (uintptrj_t)methodSymbol->getMethodAddress(), methodSymRef, cg());
+      callInstr = generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, cg());
 
       if (cg()->comp()->target().isSMP() && !methodSymbol->isHelper())
          {
@@ -2096,7 +2096,7 @@ bool J9::X86::PrivateLinkage::buildVirtualGuard(TR::X86CallSite &site, TR::Label
       generateMemImmInstruction(
          opCode,
          callNode,
-         generateX86MemoryReference((intptrj_t)site.getResolvedMethod()->addressContainingIsOverriddenBit(), cg()),
+         generateX86MemoryReference((intptr_t)site.getResolvedMethod()->addressContainingIsOverriddenBit(), cg()),
          overRiddenBit,
          cg()
          );
@@ -2465,7 +2465,7 @@ void J9::X86::PrivateLinkage::buildVPIC(TR::X86CallSite &site, TR::LabelSymbol *
    cg()->reserveNTrampolines(VPicParameters.defaultNumberOfSlots);
    }
 
-void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86CallSite &site, int32_t numIPicSlots, TR::X86PICSlot &lastPicSlot, TR::Instruction *&slotPatchInstruction, TR::LabelSymbol *doneLabel, TR::LabelSymbol *lookupDispatchSnippetLabel, TR_OpaqueClassBlock *declaringClass, uintptrj_t itableIndex )
+void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86CallSite &site, int32_t numIPicSlots, TR::X86PICSlot &lastPicSlot, TR::Instruction *&slotPatchInstruction, TR::LabelSymbol *doneLabel, TR::LabelSymbol *lookupDispatchSnippetLabel, TR_OpaqueClassBlock *declaringClass, uintptr_t itableIndex )
    {
    static char *breakBeforeInterfaceDispatchUsingLastITable = feGetEnv("TR_breakBeforeInterfaceDispatchUsingLastITable");
 
@@ -2573,14 +2573,14 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
       generateMemImmInstruction(CMP4MemImm4,
                                 callNode,
                                 generateX86MemoryReference(scratchReg, fej9->getOffsetOfInterfaceClassFromITableField(), cg()),
-                                (int32_t)(intptrj_t)declaringClass,
+                                (int32_t)(intptr_t)declaringClass,
                                 cg());
       }
    else
       {
       TR_ASSERT(cg()->comp()->target().is64Bit(), "Only 64-bit path should reach here.");
       TR::Register *interfaceClassReg = vtableIndexReg;
-      auto cds = cg()->findOrCreate8ByteConstant(site.getCallNode(), (intptrj_t)declaringClass);
+      auto cds = cg()->findOrCreate8ByteConstant(site.getCallNode(), (intptr_t)declaringClass);
       TR::MemoryReference *interfaceClassAddr = generateX86MemoryReference(cds, cg());
       generateRegMemInstruction(LRegMem(), callNode, interfaceClassReg, interfaceClassAddr, cg());
       generateMemRegInstruction(CMPMemReg(),

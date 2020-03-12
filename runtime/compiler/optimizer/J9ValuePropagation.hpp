@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,7 @@ class ValuePropagation : public OMR::ValuePropagation
    virtual void doDelayedTransformations();
    void transformCallToIconstWithHCRGuard(TR::TreeTop *callTree, int32_t result);
    void transformCallToIconstInPlaceOrInDelayedTransformations(TR::TreeTop *callTree, int32_t result, bool isGlobal, bool inPlace = true);
-   uintptrj_t* getObjectLocationFromConstraint(TR::VPConstraint *constraint);
+   uintptr_t* getObjectLocationFromConstraint(TR::VPConstraint *constraint);
    bool isKnownStringObject(TR::VPConstraint *constraint);
    TR_YesNoMaybe isStringObject(TR::VPConstraint *constraint);
 

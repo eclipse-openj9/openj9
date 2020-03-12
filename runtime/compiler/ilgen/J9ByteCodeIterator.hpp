@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,7 +75,7 @@ public:
 
    void initialize(TR_ResolvedJ9Method *, TR_J9VMBase *);
 
-   int32_t defaultTargetIndex() { return (int32_t)(_bcIndex + 1 + ((4 - ((intptrj_t)&_code[_bcIndex+1] & 3)) & 3)); }
+   int32_t defaultTargetIndex() { return (int32_t)(_bcIndex + 1 + ((4 - ((intptr_t)&_code[_bcIndex+1] & 3)) & 3)); }
 
    bool isThisChanged();
 

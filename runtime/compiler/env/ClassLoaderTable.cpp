@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,13 +56,13 @@ TR_PersistentClassLoaderTable::TR_PersistentClassLoaderTable(TR_PersistentMemory
 int32_t
 TR_PersistentClassLoaderTable::hashLoader(void *classLoaderPointer)
    {
-   return ((uintptrj_t)classLoaderPointer % CLASSLOADERTABLE_SIZE);
+   return ((uintptr_t)classLoaderPointer % CLASSLOADERTABLE_SIZE);
    }
 
 int32_t
 TR_PersistentClassLoaderTable::hashClassChain(void *classChainPointer)
    {
-   return ((uintptrj_t)classChainPointer % CLASSLOADERTABLE_SIZE);
+   return ((uintptr_t)classChainPointer % CLASSLOADERTABLE_SIZE);
    }
 
 int32_t TR_PersistentClassLoaderTable::_numClassLoaders = 0;

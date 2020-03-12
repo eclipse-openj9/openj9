@@ -66,7 +66,7 @@ class TR_X86RelocationTarget : public TR_RelocationTarget
       
       virtual void storeRelativeAddressSequence(uint8_t *address, uint8_t *reloLocation, uint32_t seqNumber) 
          {
-         address = (uint8_t *)((intptrj_t)address - (intptrj_t)(reloLocation + 4));
+         address = (uint8_t *)((intptr_t)address - (intptr_t)(reloLocation + 4));
          storeAddressSequence(address, reloLocation, seqNumber);
          }
       

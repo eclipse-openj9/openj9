@@ -1932,11 +1932,11 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
 #endif
 
    #if defined(TR_TARGET_S390)
-      uintptrj_t * tocBase = (uintptrj_t *)jitConfig->pseudoTOC;
+      uintptr_t * tocBase = (uintptr_t *)jitConfig->pseudoTOC;
 
       // Initialize the helper function table (0 to TR_S390numRuntimeHelpers-2)
       for (int32_t idx=1; idx<TR_S390numRuntimeHelpers; idx++)
-         tocBase[idx-1] = (uintptrj_t)runtimeHelperValue((TR_RuntimeHelper)idx);
+         tocBase[idx-1] = (uintptr_t)runtimeHelperValue((TR_RuntimeHelper)idx);
    #endif
 
    TR::CodeCacheManager::instance()->lateInitialization();
@@ -2219,7 +2219,7 @@ static UDATA forEachIterator(J9VMThread *vmThread, J9StackWalkState *walkState)
 
    compInfo->acquireCompMonitor(vmThread);
 
-   intptrj_t count = TR::CompilationInfo::getJ9MethodExtra(j9method) >> 1;
+   intptr_t count = TR::CompilationInfo::getJ9MethodExtra(j9method) >> 1;
 
    if (!(romMethod->modifiers & J9AccNative) && // Never change the extra field of a native method
        !(walkState->jitInfo) &&                 // If the frame has jit metadata, it was already compiled

@@ -324,7 +324,7 @@ J9::VMEnv::releaseAccess(TR_J9VMBase *fej9)
       }
    }
 
-uintptrj_t
+uintptr_t
 J9::VMEnv::thisThreadGetPendingExceptionOffset()
    {
    return offsetof(J9VMThread, jitException);
@@ -403,7 +403,7 @@ J9::VMEnv::canMethodExitEventBeHooked(TR::Compilation *comp)
    return comp->fej9()->canMethodExitEventBeHooked();
    }
 
-uintptrj_t
+uintptr_t
 J9::VMEnv::getOverflowSafeAllocSize(TR::Compilation *comp)
    {
    return comp->fej9()->getOverflowSafeAllocSize();
@@ -417,14 +417,14 @@ J9::VMEnv::cpuTimeSpentInCompilationThread(TR::Compilation *comp)
    }
 
 
-uintptrj_t
+uintptr_t
 J9::VMEnv::OSRFrameHeaderSizeInBytes(TR::Compilation *comp)
    {
    return comp->fej9()->getOSRFrameHeaderSizeInBytes();
    }
 
 
-uintptrj_t
+uintptr_t
 J9::VMEnv::OSRFrameSizeInBytes(TR::Compilation *comp, TR_OpaqueMethodBlock* method)
    {
    return comp->fej9()->getOSRFrameSizeInBytes(method);
@@ -432,48 +432,48 @@ J9::VMEnv::OSRFrameSizeInBytes(TR::Compilation *comp, TR_OpaqueMethodBlock* meth
 
 
 bool
-J9::VMEnv::ensureOSRBufferSize(TR::Compilation *comp, uintptrj_t osrFrameSizeInBytes, uintptrj_t osrScratchBufferSizeInBytes, uintptrj_t osrStackFrameSizeInBytes)
+J9::VMEnv::ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes)
    {
    return comp->fej9()->ensureOSRBufferSize(osrFrameSizeInBytes, osrScratchBufferSizeInBytes, osrStackFrameSizeInBytes);
    }
 
-uintptrj_t
+uintptr_t
 J9::VMEnv::thisThreadGetOSRReturnAddressOffset(TR::Compilation *comp)
    {
    return comp->fej9()->thisThreadGetOSRReturnAddressOffset();
    }
 
-uintptrj_t
+uintptr_t
 J9::VMEnv::thisThreadGetGSIntermediateResultOffset(TR::Compilation *comp)
    {
    return comp->fej9()->thisThreadGetGSIntermediateResultOffset();
    }
 
-uintptrj_t
+uintptr_t
 J9::VMEnv::thisThreadGetConcurrentScavengeActiveByteAddressOffset(TR::Compilation *comp)
    {
    return comp->fej9()->thisThreadGetConcurrentScavengeActiveByteAddressOffset();
    }
 
-uintptrj_t
+uintptr_t
 J9::VMEnv::thisThreadGetEvacuateBaseAddressOffset(TR::Compilation *comp)
    {
    return comp->fej9()->thisThreadGetEvacuateBaseAddressOffset();
    }
 
-uintptrj_t
+uintptr_t
 J9::VMEnv::thisThreadGetEvacuateTopAddressOffset(TR::Compilation *comp)
    {
    return comp->fej9()->thisThreadGetEvacuateTopAddressOffset();
    }
 
-uintptrj_t
+uintptr_t
 J9::VMEnv::thisThreadGetGSOperandAddressOffset(TR::Compilation *comp)
    {
    return comp->fej9()->thisThreadGetGSOperandAddressOffset();
    }
 
-uintptrj_t
+uintptr_t
 J9::VMEnv::thisThreadGetGSHandlerAddressOffset(TR::Compilation *comp)
    {
    return comp->fej9()->thisThreadGetGSHandlerAddressOffset();

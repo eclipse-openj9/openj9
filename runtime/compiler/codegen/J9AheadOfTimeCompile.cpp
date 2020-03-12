@@ -41,8 +41,8 @@ J9::AheadOfTimeCompile::emitClassChainOffset(uint8_t* cursor, TR_OpaqueClassBloc
    void *classChainForInlinedMethod = sharedCache->rememberClass(classToRemember);
    if (!classChainForInlinedMethod)
       self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("classChainForInlinedMethod == NULL");
-   uintptrj_t classChainForInlinedMethodOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForInlinedMethod);
-   *pointer_cast<uintptrj_t *>(cursor) = classChainForInlinedMethodOffsetInSharedCache;
+   uintptr_t classChainForInlinedMethodOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForInlinedMethod);
+   *pointer_cast<uintptr_t *>(cursor) = classChainForInlinedMethodOffsetInSharedCache;
    return cursor + SIZEPOINTER;
    }
 
@@ -189,8 +189,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          {
          TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
 
-         cpRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(relocation->getTargetAddress()));
-         cpRecord->setInlinedSiteIndex(reloTarget, reinterpret_cast<uintptrj_t>(relocation->getTargetAddress2()));
+         cpRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(relocation->getTargetAddress()));
+         cpRecord->setInlinedSiteIndex(reloTarget, reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
          }
          break;
 
@@ -245,13 +245,13 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          {
          TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
          TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
-         uintptrj_t inlinedSiteIndex = reinterpret_cast<uintptrj_t>(relocation->getTargetAddress2());
+         uintptr_t inlinedSiteIndex = reinterpret_cast<uintptr_t>(relocation->getTargetAddress2());
 
          void *constantPool = symRef->getOwningMethod(comp)->constantPool();
          inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(constantPool, inlinedSiteIndex);
 
          cpiRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
-         cpiRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(constantPool));
+         cpiRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(constantPool));
          cpiRecord->setCpIndex(reloTarget, symRef->getCPIndex());
          }
          break;
@@ -260,7 +260,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          {
          TR_RelocationRecordMethodEnterCheck *mcRecord = reinterpret_cast<TR_RelocationRecordMethodEnterCheck *>(reloRecord);
 
-         mcRecord->setDestinationAddress(reloTarget, reinterpret_cast<uintptrj_t>(relocation->getTargetAddress()));
+         mcRecord->setDestinationAddress(reloTarget, reinterpret_cast<uintptr_t>(relocation->getTargetAddress()));
          }
          break;
 
@@ -275,21 +275,21 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          uint32_t branchOffset = static_cast<uint32_t>(label->getCodeLocation() - instr->getBinaryEncoding());
 
-         allocRecord->setInlinedSiteIndex(reloTarget, static_cast<uintptrj_t>(recordInfo->data2));
-         allocRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(classSymRef->getOwningMethod(comp)->constantPool()));
-         allocRecord->setBranchOffset(reloTarget, static_cast<uintptrj_t>(branchOffset));
-         allocRecord->setAllocationSize(reloTarget, static_cast<uintptrj_t>(recordInfo->data1));
+         allocRecord->setInlinedSiteIndex(reloTarget, static_cast<uintptr_t>(recordInfo->data2));
+         allocRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(classSymRef->getOwningMethod(comp)->constantPool()));
+         allocRecord->setBranchOffset(reloTarget, static_cast<uintptr_t>(branchOffset));
+         allocRecord->setAllocationSize(reloTarget, static_cast<uintptr_t>(recordInfo->data1));
 
          /* Temporary, will be cleaned up in a future PR */
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
             TR_OpaqueClassBlock *classOfMethod = reinterpret_cast<TR_OpaqueClassBlock *>(recordInfo->data5);
             uint16_t classID = symValManager->getIDFromSymbol(static_cast<void *>(classOfMethod));
-            allocRecord->setCpIndex(reloTarget, static_cast<uintptrj_t>(classID));
+            allocRecord->setCpIndex(reloTarget, static_cast<uintptr_t>(classID));
             }
          else
             {
-            allocRecord->setCpIndex(reloTarget, static_cast<uintptrj_t>(classSymRef->getCPIndex()));
+            allocRecord->setCpIndex(reloTarget, static_cast<uintptr_t>(classSymRef->getCPIndex()));
             }
          }
          break;
@@ -305,20 +305,20 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          uint32_t branchOffset = static_cast<uint32_t>(label->getCodeLocation() - instr->getBinaryEncoding());
 
-         allocRecord->setInlinedSiteIndex(reloTarget, static_cast<uintptrj_t>(recordInfo->data2));
-         allocRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(classSymRef->getOwningMethod(comp)->constantPool()));
-         allocRecord->setBranchOffset(reloTarget, static_cast<uintptrj_t>(branchOffset));
+         allocRecord->setInlinedSiteIndex(reloTarget, static_cast<uintptr_t>(recordInfo->data2));
+         allocRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(classSymRef->getOwningMethod(comp)->constantPool()));
+         allocRecord->setBranchOffset(reloTarget, static_cast<uintptr_t>(branchOffset));
 
          /* Temporary, will be cleaned up in a future PR */
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
             TR_OpaqueClassBlock *classOfMethod = reinterpret_cast<TR_OpaqueClassBlock *>(recordInfo->data5);
             uint16_t classID = symValManager->getIDFromSymbol(static_cast<void *>(classOfMethod));
-            allocRecord->setCpIndex(reloTarget, static_cast<uintptrj_t>(classID));
+            allocRecord->setCpIndex(reloTarget, static_cast<uintptr_t>(classID));
             }
          else
             {
-            allocRecord->setCpIndex(reloTarget, static_cast<uintptrj_t>(classSymRef->getCPIndex()));
+            allocRecord->setCpIndex(reloTarget, static_cast<uintptr_t>(classSymRef->getCPIndex()));
             }
          }
          break;
@@ -326,13 +326,13 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_ValidateInstanceField:
          {
          TR_RelocationRecordValidateInstanceField *fieldRecord = reinterpret_cast<TR_RelocationRecordValidateInstanceField *>(reloRecord);
-         uintptrj_t inlinedSiteIndex = reinterpret_cast<uintptrj_t>(relocation->getTargetAddress());
+         uintptr_t inlinedSiteIndex = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
          TR::AOTClassInfo *aotCI = reinterpret_cast<TR::AOTClassInfo*>(relocation->getTargetAddress2());
          uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, aotCI->_classChain);
 
          fieldRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
-         fieldRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(aotCI->_constantPool));
-         fieldRecord->setCpIndex(reloTarget, static_cast<uintptrj_t>(aotCI->_cpIndex));
+         fieldRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(aotCI->_constantPool));
+         fieldRecord->setCpIndex(reloTarget, static_cast<uintptr_t>(aotCI->_cpIndex));
          fieldRecord->setClassChainOffsetInSharedCache(reloTarget, classChainOffsetInSharedCache);
          }
          break;
@@ -343,7 +343,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_InlinedInterfaceMethodWithNopGuard:
          {
          TR_RelocationRecordNopGuard *inlinedMethod = reinterpret_cast<TR_RelocationRecordNopGuard *>(reloRecord);
-         uintptrj_t destinationAddress = reinterpret_cast<uintptrj_t>(relocation->getTargetAddress());
+         uintptr_t destinationAddress = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
          TR_VirtualGuard *guard = reinterpret_cast<TR_VirtualGuard *>(relocation->getTargetAddress2());
 
          uint8_t flags = 0;
@@ -371,7 +371,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             }
 
          // Ugly; this will be cleaned up in a future PR
-         uintptrj_t cpIndexOrData = 0;
+         uintptr_t cpIndexOrData = 0;
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
             TR_OpaqueMethodBlock *method = resolvedMethod->getPersistentIdentifier();
@@ -379,11 +379,11 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             uint16_t methodID = symValManager->getIDFromSymbol(static_cast<void *>(method));
             uint16_t receiverClassID = symValManager->getIDFromSymbol(static_cast<void *>(thisClass));
 
-            cpIndexOrData = (((uintptrj_t)receiverClassID << 16) | (uintptrj_t)methodID);
+            cpIndexOrData = (((uintptr_t)receiverClassID << 16) | (uintptr_t)methodID);
             }
          else
             {
-            cpIndexOrData = static_cast<uintptrj_t>(guard->getSymbolReference()->getCPIndex());
+            cpIndexOrData = static_cast<uintptr_t>(guard->getSymbolReference()->getCPIndex());
             }
 
          TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
@@ -392,7 +392,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          inlinedMethod->setReloFlags(reloTarget, flags);
          inlinedMethod->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
-         inlinedMethod->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(guard->getSymbolReference()->getOwningMethod(comp)->constantPool()));
+         inlinedMethod->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(guard->getSymbolReference()->getOwningMethod(comp)->constantPool()));
          inlinedMethod->setCpIndex(reloTarget, cpIndexOrData);
          inlinedMethod->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache);
          inlinedMethod->setDestinationAddress(reloTarget, destinationAddress);
@@ -682,8 +682,8 @@ J9::AheadOfTimeCompile::dumpRelocationData()
       traceMsg(
          self()->comp(),
          "SCC offset of class chain offsets of well-known classes is: 0x%llx\n\n",
-         (unsigned long long)*(uintptrj_t *)cursor);
-      cursor += sizeof (uintptrj_t);
+         (unsigned long long)*(uintptr_t *)cursor);
+      cursor += sizeof (uintptr_t);
       }
 
    traceMsg(self()->comp(), "Address           Size %-31s", "Type");
@@ -898,18 +898,18 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             cursor++;        // unused field
             cursor += is64BitTarget ? 4 : 0;
             ep1 = cursor;
-            ep2 = cursor + sizeof(uintptrj_t);
-            ep3 = cursor + 2 * sizeof(uintptrj_t);
-            cursor += 3 * sizeof(uintptrj_t);
+            ep2 = cursor + sizeof(uintptr_t);
+            ep3 = cursor + 2 * sizeof(uintptr_t);
+            cursor += 3 * sizeof(uintptr_t);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             if (isVerbose)
                {
                traceMsg(
                   self()->comp(),
                   "\nInlined site index %lld, constant pool 0x%llx, offset to j2i thunk pointer 0x%llx",
-                  (int64_t)*(uintptrj_t*)ep1,
-                  (uint64_t)*(uintptrj_t*)ep2,
-                  (uint64_t)*(uintptrj_t*)ep3);
+                  (int64_t)*(uintptr_t*)ep1,
+                  (uint64_t)*(uintptr_t*)ep2,
+                  (uint64_t)*(uintptr_t*)ep3);
                }
             break;
          case TR_ResolvedTrampolines:

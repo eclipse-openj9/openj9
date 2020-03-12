@@ -259,7 +259,7 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
       }
 
    bool classHasFinalFields = fe->hasFinalFieldsInClass((TR_OpaqueClassBlock *)clazz);
-   uintptrj_t classDepthAndFlags = fe->getClassDepthAndFlagsValue((TR_OpaqueClassBlock *)clazz);
+   uintptr_t classDepthAndFlags = fe->getClassDepthAndFlagsValue((TR_OpaqueClassBlock *)clazz);
    bool classInitialized =  fe->isClassInitialized((TR_OpaqueClassBlock *)clazz);
    uint32_t byteOffsetToLockword = fe->getByteOffsetToLockword((TR_OpaqueClassBlock *)clazz);
    TR_OpaqueClassBlock * leafComponentClass = fe->getLeafComponentClassFromArrayClass((TR_OpaqueClassBlock *)clazz);
@@ -267,9 +267,9 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
    TR_OpaqueClassBlock * hostClass = fe->convertClassPtrToClassOffset(clazz->hostClass);
    TR_OpaqueClassBlock * componentClass = fe->getComponentClassFromArrayClass((TR_OpaqueClassBlock *)clazz);
    TR_OpaqueClassBlock * arrayClass = fe->getArrayClassFromComponentClass((TR_OpaqueClassBlock *)clazz);
-   uintptrj_t totalInstanceSize = clazz->totalInstanceSize;
-   uintptrj_t cp = fe->getConstantPoolFromClass((TR_OpaqueClassBlock *)clazz);
-   uintptrj_t classFlags = fe->getClassFlagsValue((TR_OpaqueClassBlock *)clazz);
+   uintptr_t totalInstanceSize = clazz->totalInstanceSize;
+   uintptr_t cp = fe->getConstantPoolFromClass((TR_OpaqueClassBlock *)clazz);
+   uintptr_t classFlags = fe->getClassFlagsValue((TR_OpaqueClassBlock *)clazz);
 
    return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, clazz->romClass, cp, classFlags);
    }
@@ -410,7 +410,7 @@ JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo,
          break;
       case CLASSINFO_CLASS_DEPTH_AND_FLAGS :
          {
-         *(uintptrj_t *)data = classInfo._classDepthAndFlags;
+         *(uintptr_t *)data = classInfo._classDepthAndFlags;
          }
          break;
       case CLASSINFO_CLASS_INITIALIZED :
@@ -450,7 +450,7 @@ JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo,
          break;
       case CLASSINFO_TOTAL_INSTANCE_SIZE :
          {
-         *(uintptrj_t *)data = classInfo._totalInstanceSize;
+         *(uintptr_t *)data = classInfo._totalInstanceSize;
          }
          break;
       case CLASSINFO_REMOTE_ROM_CLASS :
@@ -460,7 +460,7 @@ JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo,
          break;
       case CLASSINFO_CLASS_FLAGS :
          {
-         *(uintptrj_t *)data = classInfo._classFlags;
+         *(uintptr_t *)data = classInfo._classFlags;
          }
          break;
       case CLASSINFO_METHODS_OF_CLASS :
@@ -552,10 +552,10 @@ JITServerHelpers::isAddressInROMClass(const void *address, const J9ROMClass *rom
    }
 
 
-uintptrj_t
-JITServerHelpers::walkReferenceChainWithOffsets(TR_J9VM * fe, const std::vector<uintptrj_t>& listOfOffsets, uintptrj_t receiver)
+uintptr_t
+JITServerHelpers::walkReferenceChainWithOffsets(TR_J9VM * fe, const std::vector<uintptr_t>& listOfOffsets, uintptr_t receiver)
    {
-   uintptrj_t result = receiver;
+   uintptr_t result = receiver;
    for (size_t i = 0; i < listOfOffsets.size(); i++)
       {
       result = fe->getReferenceFieldAt(result, listOfOffsets[i]);

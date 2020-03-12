@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,17 +38,17 @@ public:
    virtual bool isMostlyFull() { return false; }
 
    virtual bool canRememberClass(TR_OpaqueClassBlock *clazz) { return 0; }
-   virtual uintptrj_t *rememberClass(TR_OpaqueClassBlock *clazz) { return 0; }
-   virtual bool classMatchesCachedVersion(TR_OpaqueClassBlock *clazz, uintptrj_t *chainData=NULL) { return false; }
+   virtual uintptr_t *rememberClass(TR_OpaqueClassBlock *clazz) { return 0; }
+   virtual bool classMatchesCachedVersion(TR_OpaqueClassBlock *clazz, uintptr_t *chainData=NULL) { return false; }
 
    virtual void *pointerFromOffsetInSharedCache(uintptr_t offset) { return NULL; }
    virtual uintptr_t offsetInSharedCacheFromPointer(void *ptr) { return 0; }
 
-   virtual bool isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset = NULL) { return false; }
+   virtual bool isPointerInSharedCache(void *ptr, uintptr_t *cacheOffset = NULL) { return false; }
 
-   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *cinaData, void *loader) { return NULL; }
+   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *cinaData, void *loader) { return NULL; }
 
-   virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) { return 0; }
+   virtual uintptr_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) { return 0; }
 
    void setPersistentClassLoaderTable(TR_PersistentClassLoaderTable *table) { _persistentClassLoaderTable = table; }
 

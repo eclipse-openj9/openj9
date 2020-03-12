@@ -604,13 +604,13 @@ void TR_ProfileGenerator::createProfiledMethod()
             blockO1c->getExit()->join(blockO1a->getEntry());
 
             // assign pointer     freqPtr = &frequencyArray[0]
-            TR::Node *addrNode = TR::Node::aconst(node, (uintptrj_t)profileInfo->getProfilingFrequencyArray());
+            TR::Node *addrNode = TR::Node::aconst(node, (uintptr_t)profileInfo->getProfilingFrequencyArray());
 
             newNode = TR::Node::createWithSymRef(TR::astore, 1, 1, addrNode, freqPtrSymRef);
             treeTop = TR::TreeTop::create(comp(), treeTop, newNode);
 
             // assign pointer     cntrPtr = &cntrArray[0]
-            addrNode = TR::Node::aconst(node, (uintptrj_t)profileInfo->getProfilingCountArray());
+            addrNode = TR::Node::aconst(node, (uintptr_t)profileInfo->getProfilingCountArray());
 
             newNode = TR::Node::createWithSymRef(TR::astore, 1, 1, addrNode, cntrPtrSymRef);
             treeTop = TR::TreeTop::create(comp(), treeTop, newNode);

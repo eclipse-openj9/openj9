@@ -133,7 +133,7 @@ TR_PatchMultipleNOPedGuardSitesOnStaticFinalFieldModification *TR_PatchMultipleN
    }
 
 TR_PatchJNICallSite *TR_PatchJNICallSite::make(
-   TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptrj_t key, uint8_t *pc, OMR::RuntimeAssumption **sentinel)
+   TR_FrontEnd *fe, TR_PersistentMemory * pm, uintptr_t key, uint8_t *pc, OMR::RuntimeAssumption **sentinel)
    {
    TR_PatchJNICallSite *result = new (pm) TR_PatchJNICallSite(pm, key, pc);
    result->addToRAT(pm, RuntimeAssumptionOnRegisterNative, fe, sentinel);
@@ -157,7 +157,7 @@ TR_PreXRecompileOnMethodOverride *TR_PreXRecompileOnMethodOverride::make(
    }
 
 TR_PatchNOPedGuardSiteOnMutableCallSiteChange *TR_PatchNOPedGuardSiteOnMutableCallSiteChange::make(
-      TR_FrontEnd *fe, TR_PersistentMemory *pm, uintptrj_t key, uint8_t *location, uint8_t *destination, OMR::RuntimeAssumption **sentinel)
+      TR_FrontEnd *fe, TR_PersistentMemory *pm, uintptr_t key, uint8_t *location, uint8_t *destination, OMR::RuntimeAssumption **sentinel)
    {
    TR_PatchNOPedGuardSiteOnMutableCallSiteChange *result = new (pm) TR_PatchNOPedGuardSiteOnMutableCallSiteChange(pm, key, location, destination);
    result->addToRAT(pm, RuntimeAssumptionOnMutableCallSiteChange, fe, sentinel);
@@ -565,12 +565,12 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
          // outside TR_CHTable::commit() in the future.
          TR_ASSERT(!comp->isOutOfProcessCompilation(), "TR_CHTable::commitVirtualGuard() should not be called at the server\n");
 #endif /* defined(J9VM_OPT_JITSERVER) */
-         uintptrj_t *mcsReferenceLocation = info->mutableCallSiteObject();
+         uintptr_t *mcsReferenceLocation = info->mutableCallSiteObject();
          TR::KnownObjectTable *knot = comp->getKnownObjectTable();
          TR_ASSERT(knot, "MutableCallSiteTargetGuard requires the Known Object Table");
          void *cookiePointer = comp->trPersistentMemory()->allocatePersistentMemory(1);
-         uintptrj_t potentialCookie = (uintptrj_t)(uintptr_t)cookiePointer;
-         uintptrj_t cookie = 0;
+         uintptr_t potentialCookie = (uintptr_t)(uintptr_t)cookiePointer;
+         uintptr_t cookie = 0;
 
          TR::KnownObjectTable::Index currentIndex;
 
@@ -579,7 +579,7 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
             TR::VMAccessCriticalSection invalidateMCSTargetGuards(fej9);
             // TODO: Code duplication with TR_InlinerBase::findInlineTargets
             currentIndex = TR::KnownObjectTable::UNKNOWN;
-            uintptrj_t currentEpoch = fej9->getVolatileReferenceField(*mcsReferenceLocation, "epoch", "Ljava/lang/invoke/MethodHandle;");
+            uintptr_t currentEpoch = fej9->getVolatileReferenceField(*mcsReferenceLocation, "epoch", "Ljava/lang/invoke/MethodHandle;");
             if (currentEpoch)
                currentIndex = knot->getIndex(currentEpoch);
             if (info->mutableCallSiteEpoch() == currentIndex)

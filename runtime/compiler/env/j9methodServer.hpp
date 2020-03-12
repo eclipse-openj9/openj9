@@ -36,7 +36,7 @@ TR_ResolvedJ9JITServerMethodInfoStruct
    J9RAMConstantPoolItem *literals;
    J9Class *ramClass;
    uint64_t methodIndex;
-   uintptrj_t jniProperties;
+   uintptr_t jniProperties;
    void *jniTargetAddress;
    bool isInterpreted;
    bool isJNINative;
@@ -161,7 +161,7 @@ public:
    virtual void * getConstantDynamicTypeFromCP(int32_t cpIndex) override;
    virtual bool isConstantDynamic(I_32 cpIndex) override;
    virtual bool isUnresolvedConstantDynamic(int32_t cpIndex) override;
-   virtual void * dynamicConstant(int32_t cpIndex, uintptrj_t *obj) override;
+   virtual void * dynamicConstant(int32_t cpIndex, uintptr_t *obj) override;
 
    virtual bool isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false) override;
    virtual TR_ResolvedMethod * getResolvedVirtualMethod(TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP) override;
@@ -178,7 +178,7 @@ public:
    virtual char * localName(uint32_t slotNumber, uint32_t bcIndex, int32_t &len, TR_Memory *) override;
    virtual bool virtualMethodIsOverridden() override { return _virtualMethodIsOverridden; }
    virtual TR_ResolvedMethod * getResolvedInterfaceMethod(TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
-   virtual TR_OpaqueClassBlock * getResolvedInterfaceMethod(int32_t cpIndex, uintptrj_t * pITableIndex) override;
+   virtual TR_OpaqueClassBlock * getResolvedInterfaceMethod(int32_t cpIndex, uintptr_t * pITableIndex) override;
    virtual uint32_t getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
    virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex) override;
    virtual void * startAddressForJNIMethod(TR::Compilation *) override;

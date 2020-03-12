@@ -83,7 +83,7 @@ uint8_t *TR::X86GuardedDevirtualSnippet::emitSnippetBody()
       *(uint8_t *)buffer = (uint8_t) TR::Compiler->om.offsetOfObjectVftField(); // mov edi, [eax + class_offset]
       buffer += 1;
 
-      uintptrj_t vftMask = TR::Compiler->om.maskOfObjectVftField();
+      uintptr_t vftMask = TR::Compiler->om.maskOfObjectVftField();
       if (~vftMask != 0)
          {
          if (cg()->comp()->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders())
@@ -223,7 +223,7 @@ uint32_t TR::X86GuardedDevirtualSnippet::getLength(int32_t estimatedSnippetStart
       int32_t delta = 0;
       delta = 1;
       TR::Compilation *comp = cg()->comp();
-      uintptrj_t vftMask = TR::Compiler->om.maskOfObjectVftField();
+      uintptr_t vftMask = TR::Compiler->om.maskOfObjectVftField();
       if (~vftMask != 0)
          delta += 6 + (cg()->comp()->target().is64Bit()? 1 /* Rex */ : 0);
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -172,7 +172,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
       static const int reloTypes[] = {TR_VirtualRamMethodConst, 0 /*Interfaces*/, TR_StaticRamMethodConst, TR_SpecialRamMethodConst};
       int rType = resolvedMethodSymbol->getMethodKind()-1; //method kinds are 1-based
       TR_ASSERT(reloTypes[rType], "There shouldn't be direct JNI interface calls!");
-      generateImmInstruction(PUSHImm4, callNode, (uintptrj_t) resolvedMethod->resolvedMethodAddress(), cg(), reloTypes[rType]);
+      generateImmInstruction(PUSHImm4, callNode, (uintptr_t) resolvedMethod->resolvedMethodAddress(), cg(), reloTypes[rType]);
 
       // Store out pc and literals values indicating the callout frame.
       //
@@ -279,7 +279,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
                                 cg());
 
 #if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-      TR::MemoryReference *mr = generateX86MemoryReference(espReal, intptrj_t(0), cg());
+      TR::MemoryReference *mr = generateX86MemoryReference(espReal, intptr_t(0), cg());
       mr->setRequiresLockPrefix();
       generateMemImmInstruction(OR4MemImms, callNode, mr, 0, cg());
 #endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
@@ -298,7 +298,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
 
       TR_OutlinedInstructionsGenerator og(longReleaseSnippetLabel, callNode, cg());
       auto helper = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol());
-      generateImmSymInstruction(CALLImm4, callNode, (uintptrj_t)helper->getMethodAddress(), helper, cg());
+      generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)helper->getMethodAddress(), helper, cg());
       generateLabelInstruction(JMP4, callNode, longReleaseRestartLabel, cg());
       }
 
@@ -307,7 +307,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
    TR::Instruction  *instr = generateImmSymInstruction(
       CALLImm4,
       callNode,
-      (uintptrj_t)resolvedMethodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp()),
+      (uintptr_t)resolvedMethodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp()),
       callNode->getSymbolReference(),
       cg()
       );
@@ -373,7 +373,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
                                 cg());
 
 #if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-      TR::MemoryReference *mr = generateX86MemoryReference(espReal, intptrj_t(0), cg());
+      TR::MemoryReference *mr = generateX86MemoryReference(espReal, intptr_t(0), cg());
       mr->setRequiresLockPrefix();
       generateMemImmInstruction(OR4MemImms, callNode, mr, 0, cg());
 #endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
@@ -392,7 +392,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
 
       TR_OutlinedInstructionsGenerator og(longAcquireSnippetLabel, callNode, cg());
       auto helper = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol());
-      generateImmSymInstruction(CALLImm4, callNode, (uintptrj_t)helper->getMethodAddress(), helper, cg());
+      generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)helper->getMethodAddress(), helper, cg());
       generateLabelInstruction(JMP4, callNode, longAcquireRestartLabel, cg());
       }
 

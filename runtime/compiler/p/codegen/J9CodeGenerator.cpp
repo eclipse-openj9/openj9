@@ -208,7 +208,7 @@ J9::Power::CodeGenerator::generateBinaryEncodingPrologue(
          /* thunk is not recompilable, nor does it support FSD */
          if (methodSymbol->isJNI())
             {
-            uintptrj_t JNIMethodAddress = (uintptrj_t)methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp);
+            uintptr_t JNIMethodAddress = (uintptr_t)methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp);
             TR::Node *firstNode = comp->getStartTree()->getNode();
             if (comp->target().is64Bit())
                {
@@ -574,13 +574,13 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
 
                if (comp()->getOptions()->getHeapBase() != NULL)
                   {
-                  loadAddressConstant(self(), comp()->compileRelocatableCode(), node, (intptrj_t)(comp()->getOptions()->getHeapBase()), tempReg);
+                  loadAddressConstant(self(), comp()->compileRelocatableCode(), node, (intptr_t)(comp()->getOptions()->getHeapBase()), tempReg);
                   generateTrg1Src2Instruction(self(), TR::InstOpCode::cmpl4, node, condReg, temp3Reg, tempReg);
                   generateConditionalBranchInstruction(self(), TR::InstOpCode::blt, node, endCtrlFlowLabel, condReg);
                   }
                if (heapTop != 0xFFFFFFFF)
                   {
-                  loadAddressConstant(self(), comp()->compileRelocatableCode(), node, (intptrj_t)(heapTop-prefetchOffset), tempReg);
+                  loadAddressConstant(self(), comp()->compileRelocatableCode(), node, (intptr_t)(heapTop-prefetchOffset), tempReg);
                   generateTrg1Src2Instruction(self(), TR::InstOpCode::cmpl4, node, condReg, temp3Reg, tempReg);
                   generateConditionalBranchInstruction(self(), TR::InstOpCode::bgt, node, endCtrlFlowLabel, condReg);
                   }

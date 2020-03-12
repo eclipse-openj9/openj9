@@ -636,7 +636,7 @@ public:
    SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee);
 
    void populateWellKnownClasses();
-   bool validateWellKnownClasses(const uintptrj_t *wellKnownClassChainOffsets);
+   bool validateWellKnownClasses(const uintptr_t *wellKnownClassChainOffsets);
    bool isWellKnownClass(TR_OpaqueClassBlock *clazz);
    bool classCanSeeWellKnownClasses(TR_OpaqueClassBlock *clazz);
    const void *wellKnownClassChainOffsets() { return _wellKnownClassChainOffsets; }
@@ -701,7 +701,7 @@ public:
 
 
 
-   bool validateClassByNameRecord(uint16_t classID, uint16_t beholderID, uintptrj_t *classChain);
+   bool validateClassByNameRecord(uint16_t classID, uint16_t beholderID, uintptr_t *classChain);
    bool validateProfiledClassRecord(uint16_t classID, void *classChainIdentifyingLoader, void *classChainForClassBeingValidated);
    bool validateClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateDefiningClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex, bool isStatic);
@@ -709,7 +709,7 @@ public:
    bool validateArrayClassFromComponentClassRecord(uint16_t arrayClassID, uint16_t componentClassID);
    bool validateSuperClassFromClassRecord(uint16_t superClassID, uint16_t childClassID);
    bool validateClassInstanceOfClassRecord(uint16_t classOneID, uint16_t classTwoID, bool objectTypeIsFixed, bool castTypeIsFixed, bool wasInstanceOf);
-   bool validateSystemClassByNameRecord(uint16_t systemClassID, uintptrj_t *classChain);
+   bool validateSystemClassByNameRecord(uint16_t systemClassID, uintptr_t *classChain);
    bool validateClassFromITableIndexCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateDeclaringClassFromFieldOrStaticRecord(uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
    bool validateConcreteSubClassFromClassRecord(uint16_t childClassID, uint16_t superClassID);

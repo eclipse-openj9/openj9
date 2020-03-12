@@ -110,7 +110,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    bool wrapRefs;
    bool passReceiver;
    bool passThread;
-   uintptrj_t targetAddress;
+   uintptr_t targetAddress;
 
    bool crc32m1 = (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_update);
    bool crc32m2 = (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes);
@@ -154,7 +154,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       wrapRefs = !fej9->jniDoNotWrapObjects(resolvedMethod);
       passReceiver = !fej9->jniDoNotPassReceiver(resolvedMethod);
       passThread = !fej9->jniDoNotPassThread(resolvedMethod);
-      targetAddress = (uintptrj_t)resolvedMethod->startAddressForJNIMethod(comp());
+      targetAddress = (uintptr_t)resolvedMethod->startAddressForJNIMethod(comp());
       }
    else
       {
@@ -175,7 +175,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       wrapRefs = false; //unused for this code path
       passReceiver = true;
       passThread = false;
-      targetAddress = (uintptrj_t)callSymbol->getMethodAddress();
+      targetAddress = (uintptr_t)callSymbol->getMethodAddress();
       }
 
    if (!isGPUHelper && (callSymbol->isPureFunction() || resolvedMethodSymbol->canDirectNativeCall() || specialCaseJNI))
@@ -200,7 +200,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    TR::RealRegister *metaReg = cg()->getMethodMetaDataRegister();
    TR::Register        *gr2Reg, *gr30Reg, *gr31Reg;
    int32_t             argSize;
-   intptrj_t           aValue;
+   intptr_t           aValue;
 
    TR::RegisterDependencyConditions *deps = new (trHeapMemory()) TR::RegisterDependencyConditions(104,104, trMemory());
    const TR::PPCLinkageProperties& jniLinkageProperties = getProperties();
@@ -264,13 +264,13 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       // No argument change is needed
       if (crc32m1)
          {
-         targetAddress = (uintptrj_t)crc32_oneByte;
+         targetAddress = (uintptr_t)crc32_oneByte;
          }
 
       // Argument changes are needed
       if (crc32m2 || crc32m3)
          {
-         targetAddress = (uintptrj_t)((comp()->target().cpu.id() >= TR_PPCp8 && comp()->target().cpu.getPPCSupportsVSX())?crc32_vpmsum:crc32_no_vpmsum);
+         targetAddress = (uintptr_t)((comp()->target().cpu.id() >= TR_PPCp8 && comp()->target().cpu.getPPCSupportsVSX())?crc32_vpmsum:crc32_no_vpmsum);
 
          // Assuming pre/postCondition have the same index, we use preCondition to map
          OMR::RegisterDependencyMap map(deps->getPreConditions()->getRegisterDependency(0), deps->getAddCursorForPre());
@@ -436,7 +436,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_stu, callNode,  new (trHeapMemory()) TR::MemoryReference(stackPtr, -TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress(), cg()),gr11Reg);
 
       // push the RAM method for the native
-      aValue = (uintptrj_t)resolvedMethod->resolvedMethodAddress();
+      aValue = (uintptr_t)resolvedMethod->resolvedMethodAddress();
       // use loadAddressConstantFixed - fixed instruction count 2 32-bit, or 5 64-bit
       // loadAddressRAM needs a resolved method symbol so the gpuHelper SumRef is passed in instead of
       // the callSymRef which does not have a resolved method symbol
@@ -594,7 +594,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
          simplifyANDRegImm(callNode, gr31Reg, gr30Reg, flagValue, cg());
          generateTrg1Src1ImmInstruction(cg(),TR::InstOpCode::Op_cmpi, callNode, cr0Reg, gr31Reg, 0);
          generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, callNode, refPoolRestartLabel, cr0Reg);
-         generateDepImmSymInstruction(cg(), TR::InstOpCode::bl, callNode, (uintptrj_t)collapseSymRef->getMethodAddress(), new (trHeapMemory()) TR::RegisterDependencyConditions(0,0, trMemory()), collapseSymRef, NULL);
+         generateDepImmSymInstruction(cg(), TR::InstOpCode::bl, callNode, (uintptr_t)collapseSymRef->getMethodAddress(), new (trHeapMemory()) TR::RegisterDependencyConditions(0,0, trMemory()), collapseSymRef, NULL);
          generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, refPoolRestartLabel);
          }
 
@@ -643,7 +643,7 @@ void J9::Power::JNILinkage::releaseVMAccess(TR::Node* callNode, TR::RegisterDepe
    TR::addDependency(deps, gr28Reg, TR::RealRegister::gr28, TR_GPR, cg());
    TR::addDependency(deps, gr29Reg, TR::RealRegister::gr29, TR_GPR, cg());
 
-   intptrj_t aValue;
+   intptr_t aValue;
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    aValue = fej9->constReleaseVMAccessOutOfLineMask();

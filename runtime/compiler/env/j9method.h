@@ -232,13 +232,13 @@ public:
    virtual char *                  staticName(int32_t cpIndex, int32_t & len, TR_Memory *, TR_AllocationKind kind = heapAlloc);
    virtual char *                  localName (uint32_t slotNumber, uint32_t bcIndex, int32_t &len, TR_Memory *){ return NULL; }
 
-   virtual void setMethodHandleLocation(uintptrj_t *location)
+   virtual void setMethodHandleLocation(uintptr_t *location)
       {
       TR_ASSERT(convertToMethod()->isArchetypeSpecimen(), "All methods associated with a MethodHandle must be archetype specimens");
       _methodHandleLocation = location;
       }
 
-   virtual uintptrj_t *getMethodHandleLocation()
+   virtual uintptr_t *getMethodHandleLocation()
       {
       TR_ASSERT(convertToMethod()->isArchetypeSpecimen(), "All methods associated with a MethodHandle must be archetype specimens");
       return _methodHandleLocation;
@@ -255,7 +255,7 @@ public:
    TR_J9VMBase *                   _fe;
    TR_ResolvedMethod *             _owningMethod;
    J9ROMConstantPoolItem *         _romLiterals;
-   uintptrj_t *                    _methodHandleLocation; // Address of a (uncompressed) reference to a j/l/i/MethodHandle
+   uintptr_t *                    _methodHandleLocation; // Address of a (uncompressed) reference to a j/l/i/MethodHandle
 
    };
 
@@ -326,8 +326,8 @@ public:
    virtual bool                    getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0);
 
 
-   virtual intptrj_t               getInvocationCount();
-   virtual bool                    setInvocationCount(intptrj_t oldCount, intptrj_t newCount);
+   virtual intptr_t               getInvocationCount();
+   virtual bool                    setInvocationCount(intptr_t oldCount, intptr_t newCount);
    virtual bool                    isSameMethod(TR_ResolvedMethod *);
 
    virtual uint16_t                numberOfParameterSlots();
@@ -405,7 +405,7 @@ public:
     *     The returned pointer should always be dereferenced by using the passed-in
     *     parameter "obj".
     */
-   virtual void *                  dynamicConstant(int32_t cpIndex, uintptrj_t *obj);
+   virtual void *                  dynamicConstant(int32_t cpIndex, uintptr_t *obj);
    virtual void *                  methodTypeConstant(int32_t cpIndex);
    virtual bool                    isUnresolvedMethodType(int32_t cpIndex);
    virtual void *                  methodHandleConstant(int32_t cpIndex);
@@ -446,13 +446,13 @@ public:
    virtual bool                    isCompilable(TR_Memory *);
 
    static TR_OpaqueMethodBlock *   getVirtualMethod(TR_J9VMBase *fej9, J9ConstantPool *cp, I_32 cpIndex, UDATA *vTableOffset, bool *unresolvedInCP);
-   static TR_OpaqueClassBlock  *   getInterfaceITableIndexFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex, uintptrj_t *pITableIndex);
+   static TR_OpaqueClassBlock  *   getInterfaceITableIndexFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex, uintptr_t *pITableIndex);
 
    virtual TR_ResolvedMethod *     getResolvedStaticMethod ( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
    virtual TR_ResolvedMethod *     getResolvedSpecialMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
    virtual TR_ResolvedMethod *     getResolvedVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP);
    virtual TR_ResolvedMethod *     getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP);
-   virtual TR_OpaqueClassBlock *   getResolvedInterfaceMethod(int32_t cpIndex, uintptrj_t * pITableIndex);
+   virtual TR_OpaqueClassBlock *   getResolvedInterfaceMethod(int32_t cpIndex, uintptr_t * pITableIndex);
 
    virtual TR_ResolvedMethod *     getResolvedDynamicMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
    virtual TR_ResolvedMethod *     getResolvedHandleMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
@@ -476,7 +476,7 @@ public:
    virtual bool                    isJITInternalNative();
    virtual bool                    methodIsNotzAAPEligible();
 
-   uintptrj_t                      getJNIProperties() { return _jniProperties; }
+   uintptr_t                      getJNIProperties() { return _jniProperties; }
    void *                          getJNITargetAddress() {return _jniTargetAddress; }
 
    virtual TR_OpaqueMethodBlock *  getNonPersistentIdentifier();
@@ -522,7 +522,7 @@ protected:
    J9ROMMethod *                   _romMethod;
    uint32_t                        _vTableSlot;
    J9Class *                       _j9classForNewInstance;
-   uintptrj_t                      _jniProperties;
+   uintptr_t                      _jniProperties;
    void *                          _jniTargetAddress;
    int32_t                         _pendingPushSlots;
    };

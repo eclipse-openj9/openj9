@@ -176,7 +176,7 @@ TR::ARMMonitorEnterSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
 
    debug->printPrefix(pOutFile, NULL, bufferPos, 4);
    //    beq     restartLabel
-   trfprintf(pOutFile, "beq\t" POINTER_PRINTF_FORMAT "\t\t; Return to %s", (intptrj_t)(restartLabel->getCodeLocation()), debug->getName(restartLabel));
+   trfprintf(pOutFile, "beq\t" POINTER_PRINTF_FORMAT "\t\t; Return to %s", (intptr_t)(restartLabel->getCodeLocation()), debug->getName(restartLabel));
    debug->print(pOutFile, (TR::ARMHelperCallSnippet *)this);
    }
 uint32_t TR::ARMMonitorEnterSnippet::getLength(int32_t estimatedSnippetStart)
@@ -483,7 +483,7 @@ TR::ARMMonitorExitSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
 
    debug->printPrefix(pOutFile, NULL, bufferPos, 4);
    //    beq     restartLabel
-   trfprintf(pOutFile, "beq\t" POINTER_PRINTF_FORMAT "\t\t; Return to %s", (intptrj_t)(restartLabel->getCodeLocation()), debug->getName(restartLabel));
+   trfprintf(pOutFile, "beq\t" POINTER_PRINTF_FORMAT "\t\t; Return to %s", (intptr_t)(restartLabel->getCodeLocation()), debug->getName(restartLabel));
 
    debug->print(pOutFile, (TR::ARMHelperCallSnippet *)this);
    }

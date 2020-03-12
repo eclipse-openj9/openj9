@@ -3637,13 +3637,13 @@ J9::CodeGenerator::generateGPU()
       }
    }
 
-uintptrj_t
+uintptr_t
 J9::CodeGenerator::objectLengthOffset()
    {
    return self()->fe()->getOffsetOfContiguousArraySizeField();
    }
 
-uintptrj_t
+uintptr_t
 J9::CodeGenerator::objectHeaderInvariant()
    {
    return self()->objectLengthOffset() + 4 /*length*/ ;

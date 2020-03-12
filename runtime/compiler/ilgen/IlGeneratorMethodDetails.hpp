@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -215,13 +215,13 @@ class MethodHandleThunkDetails : public ArchetypeSpecimenDetails
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
 
 public:
-   MethodHandleThunkDetails(J9Method * const method, uintptrj_t *handleRef, uintptrj_t *argRef) :
+   MethodHandleThunkDetails(J9Method * const method, uintptr_t *handleRef, uintptr_t *argRef) :
       ArchetypeSpecimenDetails(method)
       {
       _data._methodHandleData._handleRef = handleRef;
       _data._methodHandleData._argRef = argRef;
       }
-   MethodHandleThunkDetails(TR_ResolvedMethod *method, uintptrj_t *handleRef, uintptrj_t *argRef) :
+   MethodHandleThunkDetails(TR_ResolvedMethod *method, uintptr_t *handleRef, uintptr_t *argRef) :
       ArchetypeSpecimenDetails(method)
       {
       _data._methodHandleData._handleRef = handleRef;
@@ -238,8 +238,8 @@ public:
 
    virtual bool isMethodHandleThunk()  const { return true; }
 
-   uintptrj_t *getHandleRef()          const { return _data._methodHandleData._handleRef; }
-   uintptrj_t *getArgRef()             const { return _data._methodHandleData._argRef;    }
+   uintptr_t *getHandleRef()          const { return _data._methodHandleData._handleRef; }
+   uintptr_t *getArgRef()             const { return _data._methodHandleData._argRef;    }
 
    virtual bool sameAs(TR::IlGeneratorMethodDetails & other, TR_FrontEnd *fe)
       {
@@ -267,9 +267,9 @@ class ShareableInvokeExactThunkDetails : public MethodHandleThunkDetails
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
 
 public:
-   ShareableInvokeExactThunkDetails(J9Method * const method, uintptrj_t *handleRef, uintptrj_t *argRef) :
+   ShareableInvokeExactThunkDetails(J9Method * const method, uintptr_t *handleRef, uintptr_t *argRef) :
       MethodHandleThunkDetails(method, handleRef, argRef) { }
-   ShareableInvokeExactThunkDetails(TR_ResolvedMethod *method, uintptrj_t *handleRef, uintptrj_t *argRef) :
+   ShareableInvokeExactThunkDetails(TR_ResolvedMethod *method, uintptr_t *handleRef, uintptr_t *argRef) :
       MethodHandleThunkDetails(method, handleRef, argRef) { }
    ShareableInvokeExactThunkDetails(const ShareableInvokeExactThunkDetails & other) :
       MethodHandleThunkDetails(other.getMethod(), other.getHandleRef(), other.getArgRef()) { }
@@ -288,9 +288,9 @@ class CustomInvokeExactThunkDetails : public MethodHandleThunkDetails
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
 
 public:
-   CustomInvokeExactThunkDetails(J9Method * const method, uintptrj_t *handleRef, uintptrj_t *argRef) :
+   CustomInvokeExactThunkDetails(J9Method * const method, uintptr_t *handleRef, uintptr_t *argRef) :
       MethodHandleThunkDetails(method, handleRef, argRef) { }
-   CustomInvokeExactThunkDetails(TR_ResolvedMethod *method, uintptrj_t *handleRef, uintptrj_t *argRef) :
+   CustomInvokeExactThunkDetails(TR_ResolvedMethod *method, uintptr_t *handleRef, uintptr_t *argRef) :
       MethodHandleThunkDetails(method, handleRef, argRef) { }
    CustomInvokeExactThunkDetails(const CustomInvokeExactThunkDetails & other) :
       MethodHandleThunkDetails(other.getMethod(), other.getHandleRef(), other.getArgRef()) { }

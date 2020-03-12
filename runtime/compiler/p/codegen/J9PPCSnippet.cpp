@@ -164,11 +164,11 @@ uint8_t *TR::PPCReadMonitorSnippet::emitSnippetBody()
    *(int32_t *)buffer |= (getRestartLabel()->getCodeLocation()-buffer) & 0x03FFFFFC;
    buffer += PPC_INSTRUCTION_LENGTH;
 
-   intptrj_t helperAddress = (intptrj_t)getMonitorEnterHelper()->getSymbol()->castToMethodSymbol()->getMethodAddress();
-   if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)buffer))
+   intptr_t helperAddress = (intptr_t)getMonitorEnterHelper()->getSymbol()->castToMethodSymbol()->getMethodAddress();
+   if (cg()->directCallRequiresTrampoline(helperAddress, (intptr_t)buffer))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(getMonitorEnterHelper()->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)buffer), "Helper address is out of range");
+      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)buffer), "Helper address is out of range");
       }
 
    opcode.setOpCodeValue(TR::InstOpCode::bl);
@@ -180,7 +180,7 @@ uint8_t *TR::PPCReadMonitorSnippet::emitSnippetBody()
                                 __FILE__, __LINE__, getNode());
       }
 
-   *(int32_t *)buffer |= (helperAddress - (intptrj_t)buffer) & 0x03FFFFFC;
+   *(int32_t *)buffer |= (helperAddress - (intptr_t)buffer) & 0x03FFFFFC;
    buffer += PPC_INSTRUCTION_LENGTH;
 
    gcMap().registerStackMap(buffer, cg());
@@ -242,7 +242,7 @@ TR::PPCReadMonitorSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    debug->printPrefix(pOutFile, NULL, cursor, 4);
    int32_t distance = *((int32_t *) cursor) & 0x0000fffc;
    distance = (distance << 16) >> 16;   // sign extend
-   trfprintf(pOutFile, "bne %s, " POINTER_PRINTF_FORMAT "\t; Use Helpers", debug->getName(condReg), (intptrj_t)cursor + distance);
+   trfprintf(pOutFile, "bne %s, " POINTER_PRINTF_FORMAT "\t; Use Helpers", debug->getName(condReg), (intptr_t)cursor + distance);
    cursor+= 4;
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
@@ -252,14 +252,14 @@ TR::PPCReadMonitorSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    debug->printPrefix(pOutFile, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; ", (intptrj_t)cursor + distance);
+   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; ", (intptr_t)cursor + distance);
    debug->print(pOutFile, getRestartLabel());
    cursor+= 4;
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t; %s", (intptrj_t)cursor + distance, debug->getName(getMonitorEnterHelper()));
+   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t; %s", (intptr_t)cursor + distance, debug->getName(getMonitorEnterHelper()));
    if (debug->isBranchToTrampoline(getMonitorEnterHelper(), cursor, distance))
       trfprintf(pOutFile, " Through trampoline");
    cursor+= 4;
@@ -338,16 +338,16 @@ uint8_t *TR::PPCHeapAllocSnippet::emitSnippetBody()
       buffer += PPC_INSTRUCTION_LENGTH;
       }
 
-   intptrj_t helperAddress = (intptrj_t)getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress();
-   if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)buffer))
+   intptr_t helperAddress = (intptr_t)getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress();
+   if (cg()->directCallRequiresTrampoline(helperAddress, (intptr_t)buffer))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(getDestination()->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)buffer), "Helper address is out of range");
+      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)buffer), "Helper address is out of range");
       }
 
    opcode.setOpCodeValue(TR::InstOpCode::bl);
    buffer = opcode.copyBinaryToBuffer(buffer);
-   *(int32_t *)buffer |= (helperAddress - (intptrj_t)buffer) & 0x03FFFFFC;
+   *(int32_t *)buffer |= (helperAddress - (intptr_t)buffer) & 0x03FFFFFC;
    if (cg()->comp()->compileRelocatableCode())
       {
       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer, (uint8_t*) getDestination(), TR_HelperAddress, cg()),
@@ -410,7 +410,7 @@ TR::PPCHeapAllocSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    debug->printPrefix(pOutFile, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptrj_t)cursor + distance, info);
+   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
    cursor += 4;
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
@@ -420,8 +420,8 @@ TR::PPCHeapAllocSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    debug->printPrefix(pOutFile, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   TR_ASSERT( (intptrj_t)cursor + distance == (intptrj_t)getRestartLabel()->getCodeLocation(), "heap snippet: bad branch to restart label");
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t; Back to restart %s", (intptrj_t)cursor + distance, debug->getName(getRestartLabel()));
+   TR_ASSERT( (intptr_t)cursor + distance == (intptr_t)getRestartLabel()->getCodeLocation(), "heap snippet: bad branch to restart label");
+   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t; Back to restart %s", (intptr_t)cursor + distance, debug->getName(getRestartLabel()));
    }
 
 
@@ -889,8 +889,8 @@ static uint8_t* initializeCCPreLoadedWriteBarrier(uint8_t *buffer, void **CCPreL
 
    const bool constHeapBase = !comp->getOptions()->isVariableHeapBaseForBarrierRange0();
    const bool constHeapSize = !comp->getOptions()->isVariableHeapSizeForBarrierRange0();
-   intptrj_t heapBase;
-   intptrj_t heapSize;
+   intptr_t heapBase;
+   intptr_t heapSize;
 
    if (cg->comp()->target().is32Bit() && !comp->compileRelocatableCode() && constHeapBase)
       {
@@ -1000,8 +1000,8 @@ static uint8_t* initializeCCPreLoadedWriteBarrierAndCardMark(uint8_t *buffer, vo
 
    const bool constHeapBase = !comp->getOptions()->isVariableHeapBaseForBarrierRange0();
    const bool constHeapSize = !comp->getOptions()->isVariableHeapSizeForBarrierRange0();
-   intptrj_t heapBase;
-   intptrj_t heapSize;
+   intptr_t heapBase;
+   intptr_t heapSize;
 
    if (cg->comp()->target().is32Bit() && !comp->compileRelocatableCode() && constHeapBase)
       {
@@ -1331,10 +1331,10 @@ uint8_t *TR::PPCAllocPrefetchSnippet::emitSnippetBody()
    if (TR::Options::getCmdLineOptions()->realTimeGC())
       return NULL;
 
-   TR_ASSERT((uintptrj_t)((cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_AllocPrefetch, cg())) != 0xDEADBEEF,
+   TR_ASSERT((uintptr_t)((cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_AllocPrefetch, cg())) != 0xDEADBEEF,
          "Invalid addr for code cache helper");
-   intptrj_t distance = (intptrj_t)(cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_AllocPrefetch, cg())
-                           - (intptrj_t)buffer;
+   intptr_t distance = (intptr_t)(cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_AllocPrefetch, cg())
+                           - (intptr_t)buffer;
    opcode.setOpCodeValue(TR::InstOpCode::b);
    buffer = opcode.copyBinaryToBuffer(buffer);
    *(int32_t *)buffer |= distance & 0x03FFFFFC;
@@ -1354,7 +1354,7 @@ TR::PPCAllocPrefetchSnippet::print(TR::FILE *pOutFile, TR_Debug * debug)
    debug->printPrefix(pOutFile, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t", (intptrj_t)cursor + distance);
+   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t", (intptr_t)cursor + distance);
    }
 
 uint32_t TR::PPCAllocPrefetchSnippet::getLength(int32_t estimatedCodeStart)
@@ -1384,10 +1384,10 @@ uint8_t *TR::PPCNonZeroAllocPrefetchSnippet::emitSnippetBody()
    if (TR::Options::getCmdLineOptions()->realTimeGC())
       return NULL;
 
-   TR_ASSERT((uintptrj_t)((cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_NonZeroAllocPrefetch, cg())) != 0xDEADBEEF,
+   TR_ASSERT((uintptr_t)((cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_NonZeroAllocPrefetch, cg())) != 0xDEADBEEF,
          "Invalid addr for code cache helper");
-   intptrj_t distance = (intptrj_t)(cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_NonZeroAllocPrefetch, cg())
-                           - (intptrj_t)buffer;
+   intptr_t distance = (intptr_t)(cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_NonZeroAllocPrefetch, cg())
+                           - (intptr_t)buffer;
    opcode.setOpCodeValue(TR::InstOpCode::b);
    buffer = opcode.copyBinaryToBuffer(buffer);
    *(int32_t *)buffer |= distance & 0x03FFFFFC;
@@ -1407,7 +1407,7 @@ TR::PPCNonZeroAllocPrefetchSnippet::print(TR::FILE *pOutFile, TR_Debug * debug)
    debug->printPrefix(pOutFile, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t", (intptrj_t)cursor + distance);
+   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t", (intptr_t)cursor + distance);
    }
 
 uint32_t TR::PPCNonZeroAllocPrefetchSnippet::getLength(int32_t estimatedCodeStart)

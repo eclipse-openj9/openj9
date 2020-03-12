@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ extern TR::Instruction *loadAddressRAM32(TR::CodeGenerator *cg,
 
 extern TR::Instruction *loadAddressRAM(TR::CodeGenerator *cg,
                                     TR::Node        *node,
-                                    intptrj_t         value,
+                                    intptr_t         value,
                                     TR::Register    *targetRegister);
 
 extern TR::Instruction *loadAddressJNI32(TR::CodeGenerator *cg,
@@ -60,7 +60,7 @@ extern TR::Instruction *loadAddressJNI32(TR::CodeGenerator *cg,
 
 extern TR::Instruction *loadAddressJNI(TR::CodeGenerator *cg,
                                     TR::Node        *node,
-                                    intptrj_t         value,
+                                    intptr_t         value,
                                     TR::Register    *targetRegister);
 
 namespace J9

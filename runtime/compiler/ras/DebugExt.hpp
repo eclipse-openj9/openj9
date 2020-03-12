@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -134,13 +134,13 @@ public:
       struct J9PortLibrary *dbgextPortLib,
       J9JavaVM *localVM,
       void (*dbgjit_Printf)(const char *s, ...),
-      void (*dbgjit_ReadMemory)(uintptrj_t remoteAddr, void *localPtr, uintptrj_t size, uintptrj_t *bytesRead),
-      void* (*dbgjit_Malloc)(uintptrj_t size, void *originalAddress),
+      void (*dbgjit_ReadMemory)(uintptr_t remoteAddr, void *localPtr, uintptr_t size, uintptr_t *bytesRead),
+      void* (*dbgjit_Malloc)(uintptr_t size, void *originalAddress),
       void (*dbgjit_Free)(void * addr),
-      uintptrj_t (*dbgGetExpression)(const char* args)
+      uintptr_t (*dbgGetExpression)(const char* args)
       );
    /* entry points need virtual keywords */
-   virtual void dxTrPrint(const char* name1, void* addr2, uintptrj_t argCount, const char* args);
+   virtual void dxTrPrint(const char* name1, void* addr2, uintptr_t argCount, const char* args);
    virtual void   setFile(TR::FILE *f) {_file = f;}
    // override these for TR_Debug
    virtual bool inDebugExtension() { return true; }
@@ -273,10 +273,10 @@ private:
    TR::CFG*                             Compilation2CFG();
 
    // for memory management
-   bool  dxReadMemory(void* remotePtr, void* localPtr, uintptrj_t size);
-   bool  dxReadField(void* classPtr, uintptrj_t fieldOffset, void* localPtr, uintptrj_t size);
-   void* dxMalloc(uintptrj_t size, void *remotePtr, bool dontAddToMap = false);
-   void* dxMallocAndRead(uintptrj_t size, void *remotePtr, bool dontAddToMap = false);
+   bool  dxReadMemory(void* remotePtr, void* localPtr, uintptr_t size);
+   bool  dxReadField(void* classPtr, uintptr_t fieldOffset, void* localPtr, uintptr_t size);
+   void* dxMalloc(uintptr_t size, void *remotePtr, bool dontAddToMap = false);
+   void* dxMallocAndRead(uintptr_t size, void *remotePtr, bool dontAddToMap = false);
    void* dxMallocAndReadString(void *remotePtr, bool dontAddToMap = false);
    void  dxFree(void * localPtr);
    void  dxFreeAll();
@@ -297,10 +297,10 @@ private:
    J9JITConfig         *_localJITConfig;
    struct J9PortLibrary *_dbgextPortLib;
    void  (*_dbgPrintf)(const char *s, ...);
-   void  (*_dbgReadMemory)(uintptrj_t remoteAddr, void *localPtr, uintptrj_t size, uintptrj_t *bytesRead);
-   void* (*_dbgMalloc)(uintptrj_t size, void *originalAddress);
+   void  (*_dbgReadMemory)(uintptr_t remoteAddr, void *localPtr, uintptr_t size, uintptr_t *bytesRead);
+   void* (*_dbgMalloc)(uintptr_t size, void *originalAddress);
    void  (*_dbgFree)(void *addr);
-   uintptrj_t (*_dbgGetExpression)(const char* args);
+   uintptr_t (*_dbgGetExpression)(const char* args);
 
    J9::DebugSegmentProvider _debugSegmentProvider;
    TR::Region _debugRegion;

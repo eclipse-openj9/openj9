@@ -71,27 +71,27 @@ public:
       }
 
    int32_t sizeofReferenceField();
-   uintptrj_t elementSizeOfBooleanArray();
+   uintptr_t elementSizeOfBooleanArray();
    uint32_t getSizeOfArrayElement(TR::Node *node);
    int64_t maxArraySizeInElementsForAllocation(TR::Node *newArray, TR::Compilation *comp);
    int64_t maxArraySizeInElements(int32_t knownMinElementSize, TR::Compilation *comp);
 
    int32_t maxContiguousArraySizeInBytes();
 
-   uintptrj_t contiguousArrayHeaderSizeInBytes();
+   uintptr_t contiguousArrayHeaderSizeInBytes();
 
-   uintptrj_t discontiguousArrayHeaderSizeInBytes();
+   uintptr_t discontiguousArrayHeaderSizeInBytes();
 
    // For array access
    bool isDiscontiguousArray(int32_t sizeInBytes);
    bool isDiscontiguousArray(int32_t sizeInElements, int32_t elementSize);
-   bool isDiscontiguousArray(TR::Compilation* comp, uintptrj_t objectPointer);
-   intptrj_t getArrayLengthInElements(TR::Compilation* comp, uintptrj_t objectPointer);
-   uintptrj_t getArrayLengthInBytes(TR::Compilation* comp, uintptrj_t objectPointer);
-   uintptrj_t getArrayElementWidthInBytes(TR::DataType type);
-   uintptrj_t getArrayElementWidthInBytes(TR::Compilation* comp, uintptrj_t objectPointer);
-   uintptrj_t getAddressOfElement(TR::Compilation* comp, uintptrj_t objectPointer, int64_t offset);
-   uintptrj_t decompressReference(TR::Compilation* comp, uintptrj_t compressedReference);
+   bool isDiscontiguousArray(TR::Compilation* comp, uintptr_t objectPointer);
+   intptr_t getArrayLengthInElements(TR::Compilation* comp, uintptr_t objectPointer);
+   uintptr_t getArrayLengthInBytes(TR::Compilation* comp, uintptr_t objectPointer);
+   uintptr_t getArrayElementWidthInBytes(TR::DataType type);
+   uintptr_t getArrayElementWidthInBytes(TR::Compilation* comp, uintptr_t objectPointer);
+   uintptr_t getAddressOfElement(TR::Compilation* comp, uintptr_t objectPointer, int64_t offset);
+   uintptr_t decompressReference(TR::Compilation* comp, uintptr_t compressedReference);
 
    bool generateCompressedObjectHeaders();
 
@@ -106,20 +106,20 @@ public:
 
    bool nativeAddressesCanChangeSize();
 
-   uintptrj_t offsetOfObjectVftField();
+   uintptr_t offsetOfObjectVftField();
 
-   uintptrj_t offsetOfHeaderFlags();
+   uintptr_t offsetOfHeaderFlags();
 
-   uintptrj_t maskOfObjectVftField();
+   uintptr_t maskOfObjectVftField();
 
    int32_t arraySpineShift(int32_t width);
    int32_t arrayletMask(int32_t width);
    int32_t arrayletLeafIndex(int32_t index, int32_t elementSize);
    int32_t objectAlignmentInBytes();
-   uintptrj_t offsetOfContiguousArraySizeField();
-   uintptrj_t offsetOfDiscontiguousArraySizeField();
-   uintptrj_t objectHeaderSizeInBytes();
-   uintptrj_t offsetOfIndexableSizeField();
+   uintptr_t offsetOfContiguousArraySizeField();
+   uintptr_t offsetOfDiscontiguousArraySizeField();
+   uintptr_t objectHeaderSizeInBytes();
+   uintptr_t offsetOfIndexableSizeField();
 
    /**
    * @brief Returns the read barrier type of VM's GC

@@ -433,7 +433,7 @@ TR_J9SharedCache::isPointerInCache(const J9SharedClassCacheDescriptor *cacheDesc
 void *
 TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
    {
-   uintptrj_t ptr = NULL;
+   uintptr_t ptr = NULL;
    if (isOffsetInSharedCache(offset, &ptr))
       {
       return (void *)ptr;
@@ -443,7 +443,7 @@ TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
    }
 
 bool
-TR_J9SharedCache::isOffsetInSharedCache(uintptrj_t offset, void *ptr)
+TR_J9SharedCache::isOffsetInSharedCache(uintptr_t offset, void *ptr)
    {
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 #if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
@@ -457,7 +457,7 @@ TR_J9SharedCache::isOffsetInSharedCache(uintptrj_t offset, void *ptr)
          if (ptr)
             {
             uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress;
-            *(uintptrj_t *)ptr = offset + cacheStart;
+            *(uintptr_t *)ptr = offset + cacheStart;
             }
          return true;
          }
@@ -472,7 +472,7 @@ TR_J9SharedCache::isOffsetInSharedCache(uintptrj_t offset, void *ptr)
       if (ptr)
          {
          uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress;
-         *(uintptrj_t *)ptr = offset + cacheStart;
+         *(uintptr_t *)ptr = offset + cacheStart;
          }
       return true;
       }
@@ -494,7 +494,7 @@ TR_J9SharedCache::offsetInSharedCacheFromPointer(void *ptr)
    }
 
 bool
-TR_J9SharedCache::isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset)
+TR_J9SharedCache::isPointerInSharedCache(void *ptr, uintptr_t *cacheOffset)
    {
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 #if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
@@ -575,7 +575,7 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
    LOG(5,{ log("rememberClass class %p romClass %p %.*s\n", clazz, romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
 
-   uintptrj_t classOffsetInCache;
+   uintptr_t classOffsetInCache;
    if (!isPointerInSharedCache(romClass, &classOffsetInCache))
       {
       LOG(5,{ log("\trom class not in shared cache, returning\n"); });
@@ -705,7 +705,7 @@ TR_J9SharedCache::numInterfacesImplemented(J9Class *clazz)
 bool
 TR_J9SharedCache::writeClassToChain(J9ROMClass *romClass, UDATA * & chainPtr)
    {
-   uintptrj_t classOffsetInCache;
+   uintptr_t classOffsetInCache;
    if (!isPointerInSharedCache(romClass, &classOffsetInCache))
       {
       LOG(9, { log("\t\tromclass %p not in shared cache, writeClassToChain returning false\n", romClass); });
@@ -819,7 +819,7 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
    LOG(5, { log("classMatchesCachedVersion class %p %.*s\n", clazz, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
 
-   uintptrj_t classOffsetInCache;
+   uintptr_t classOffsetInCache;
    if (!isPointerInSharedCache(romClass, &classOffsetInCache))
       {
       LOG(5, { log("\tclass not in shared cache, returning false\n"); });
@@ -885,7 +885,7 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
    }
 
 TR_OpaqueClassBlock *
-TR_J9SharedCache::lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader)
+TR_J9SharedCache::lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader)
    {
    UDATA *ptrToRomClassOffset = chainData+1;
    J9ROMClass *romClass = (J9ROMClass *)pointerFromOffsetInSharedCache(*ptrToRomClassOffset);
@@ -902,13 +902,13 @@ TR_J9SharedCache::lookupClassFromChainAndLoader(uintptrj_t *chainData, void *cla
    return NULL;
    }
 
-uintptrj_t
+uintptr_t
 TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz)
    {
    void *loaderForClazz = _fe->getClassLoader(clazz);
    void *classChainIdentifyingLoaderForClazz = persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
 
-   uintptrj_t classChainOffsetInSharedCache;
+   uintptr_t classChainOffsetInSharedCache;
    TR::Compilation *comp = TR::comp();
    if (comp)
       {
@@ -1012,12 +1012,12 @@ TR_J9JITServerSharedCache::getCacheDescriptorList()
    return vmInfo->_j9SharedClassCacheDescriptorList;
    }
 
-uintptrj_t
+uintptr_t
 TR_J9JITServerSharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
    _stream->write(JITServer::MessageType::SharedCache_getClassChainOffsetInSharedCache, clazz);
-   return std::get<0>(_stream->read<uintptrj_t>());
+   return std::get<0>(_stream->read<uintptr_t>());
    }
 
 void

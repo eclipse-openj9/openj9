@@ -42,7 +42,7 @@
 /*  REQUIRES STATE (_vmThread).  MOVE vmThread to COMPILATION
 
 TR_OpaqueClassBlock *
-J9::ClassEnv::getClassFromJavaLangClass(uintptrj_t objectPointer)
+J9::ClassEnv::getClassFromJavaLangClass(uintptr_t objectPointer)
    {
    return (TR_OpaqueClassBlock*)J9VM_J9CLASS_FROM_HEAPCLASS(_vmThread, objectPointer);
    }
@@ -87,7 +87,7 @@ J9::ClassEnv::isClassSpecialForStackAllocation(TR_OpaqueClassBlock * clazz)
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      uintptrj_t classDepthAndFlags = 0;
+      uintptr_t classDepthAndFlags = 0;
       JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
       return ((classDepthAndFlags & mask)?true:false);
       }
@@ -103,30 +103,30 @@ J9::ClassEnv::isClassSpecialForStackAllocation(TR_OpaqueClassBlock * clazz)
    return false;
    }
 
-uintptrj_t
+uintptr_t
 J9::ClassEnv::classFlagsValue(TR_OpaqueClassBlock * classPointer)
    {
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       stream->write(JITServer::MessageType::ClassEnv_classFlagsValue, classPointer);
-      return std::get<0>(stream->read<uintptrj_t>());
+      return std::get<0>(stream->read<uintptr_t>());
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classFlags);
    }
 
-uintptrj_t
+uintptr_t
 J9::ClassEnv::classFlagReservableWordInitValue(TR_OpaqueClassBlock * classPointer)
    {
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      uintptrj_t classFlags = 0;
+      uintptr_t classFlags = 0;
       JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)classPointer, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_FLAGS, (void *)&classFlags);
 #ifdef DEBUG
       stream->write(JITServer::MessageType::ClassEnv_classFlagsValue, classPointer);
-      uintptrj_t classFlagsRemote = std::get<0>(stream->read<uintptrj_t>());
+      uintptr_t classFlagsRemote = std::get<0>(stream->read<uintptr_t>());
       // Check that class flags from remote call is equal to the cached ones
       classFlags = classFlags & J9ClassReservableLockWordInit;
       classFlagsRemote = classFlagsRemote & J9ClassReservableLockWordInit;
@@ -138,13 +138,13 @@ J9::ClassEnv::classFlagReservableWordInitValue(TR_OpaqueClassBlock * classPointe
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classFlags) & J9ClassReservableLockWordInit;
    }
 
-uintptrj_t
+uintptr_t
 J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
    {
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      uintptrj_t classDepthAndFlags = 0;
+      uintptr_t classDepthAndFlags = 0;
       JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
       return (classDepthAndFlags & J9AccClassDepthMask);
       }
@@ -153,13 +153,13 @@ J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
    }
 
 
-uintptrj_t
+uintptr_t
 J9::ClassEnv::classInstanceSize(TR_OpaqueClassBlock * clazzPointer)
    {
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      uintptrj_t totalInstanceSize = 0;
+      uintptr_t totalInstanceSize = 0;
       JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_TOTAL_INSTANCE_SIZE, (void *)&totalInstanceSize);
       return totalInstanceSize;
       }
@@ -275,7 +275,7 @@ J9::ClassEnv::isStringClass(TR_OpaqueClassBlock *clazz)
 
 
 bool
-J9::ClassEnv::isStringClass(uintptrj_t objectPointer)
+J9::ClassEnv::isStringClass(uintptr_t objectPointer)
    {
    /*
    TR_ASSERT(TR::Compiler->vm.hasAccess(omrVMThread), "isString requires VM access");
@@ -377,7 +377,7 @@ J9::ClassEnv::isString(TR::Compilation *comp, TR_OpaqueClassBlock *clazz)
    }
 
 bool
-J9::ClassEnv::isString(TR::Compilation *comp, uintptrj_t objectPointer)
+J9::ClassEnv::isString(TR::Compilation *comp, uintptr_t objectPointer)
    {
    return comp->fej9()->isString(objectPointer);
    }
@@ -522,27 +522,27 @@ J9::ClassEnv::classSignature(TR::Compilation *comp, TR_OpaqueClassBlock * clazz,
    return comp->fej9()->getClassSignature(clazz, m);
    }
 
-uintptrj_t
+uintptr_t
 J9::ClassEnv::persistentClassPointerFromClassPointer(TR::Compilation *comp, TR_OpaqueClassBlock *clazz)
    {
    return comp->fej9()->getPersistentClassPointerFromClassPointer(clazz);
    }
 
 TR_OpaqueClassBlock *
-J9::ClassEnv::objectClass(TR::Compilation *comp, uintptrj_t objectPointer)
+J9::ClassEnv::objectClass(TR::Compilation *comp, uintptr_t objectPointer)
    {
    return comp->fej9()->getObjectClass(objectPointer);
    }
 
 TR_OpaqueClassBlock *
-J9::ClassEnv::classFromJavaLangClass(TR::Compilation *comp, uintptrj_t objectPointer)
+J9::ClassEnv::classFromJavaLangClass(TR::Compilation *comp, uintptr_t objectPointer)
    {
    return comp->fej9()->getClassFromJavaLangClass(objectPointer);
    }
 
 
 uint16_t
-J9::ClassEnv::getStringCharacter(TR::Compilation *comp, uintptrj_t objectPointer, int32_t index)
+J9::ClassEnv::getStringCharacter(TR::Compilation *comp, uintptr_t objectPointer, int32_t index)
    {
    return comp->fej9()->getStringCharacter(objectPointer, index);
    }
@@ -554,7 +554,7 @@ J9::ClassEnv::getStringFieldByName(TR::Compilation *comp, TR::SymbolReference *s
    return comp->fej9()->getStringFieldByName(comp, stringRef, fieldRef, pResult);
    }
 
-uintptrj_t
+uintptr_t
 J9::ClassEnv::getArrayElementWidthInBytes(TR::Compilation *comp, TR_OpaqueClassBlock* arrayClass)
    {
    TR_ASSERT(TR::Compiler->cls.isClassArray(comp, arrayClass), "Class must be array");
@@ -562,7 +562,7 @@ J9::ClassEnv::getArrayElementWidthInBytes(TR::Compilation *comp, TR_OpaqueClassB
    return 1 << logElementSize;
    }
 
-intptrj_t
+intptr_t
 J9::ClassEnv::getVFTEntry(TR::Compilation *comp, TR_OpaqueClassBlock* clazz, int32_t offset)
    {
    return comp->fej9()->getVFTEntry(clazz, offset);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -705,7 +705,7 @@ void TR_BoolArrayStoreTransformer::transformUnknownTypeArrayStore()
    if (fej9->isAOT_DEPRECATED_DO_NOT_USE())
       return;
    //get j9class of [Z
-   uintptrj_t j9class =  (uintptrj_t) fej9->getClassFromNewArrayType(4);
+   uintptr_t j9class =  (uintptr_t) fej9->getClassFromNewArrayType(4);
    for (auto it = _bstoreiUnknownArrayTypeNodes->begin(); it != _bstoreiUnknownArrayTypeNodes->end(); it++)
       {
       TR::Node *bstoreiNode = *it;

@@ -149,8 +149,8 @@ protected:
       int32_t _byteCodeIndex;
       struct
          {
-         uintptrj_t *_handleRef;
-         uintptrj_t *_argRef;
+         uintptr_t *_handleRef;
+         uintptr_t *_argRef;
          } _methodHandleData;
       } _data;
 

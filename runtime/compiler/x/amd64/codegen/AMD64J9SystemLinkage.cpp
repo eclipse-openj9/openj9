@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -151,7 +151,7 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(
       }
    else
       {
-      instr = generateImmSymInstruction(CALLImm4, callNode, (uintptrj_t)methodSymbol->getMethodAddress(), methodSymRef, preDeps, cg());
+      instr = generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, preDeps, cg());
       }
 
    instr->setNeedsGCMap(getProperties().getPreservedRegisterMapForGC());
