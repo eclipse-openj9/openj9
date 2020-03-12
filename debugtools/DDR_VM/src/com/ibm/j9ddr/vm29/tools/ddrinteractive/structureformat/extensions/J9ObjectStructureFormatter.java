@@ -53,6 +53,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.pointer.helper.PrintObjectFieldsHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.types.U32;
 
 /**
@@ -242,7 +243,7 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 		for (int index = begin; index < finish; index++) {
 			VoidPointer slot = J9IndexableObjectHelper.getElementEA(array, index, (int) ObjectReferencePointer.SIZEOF);
 			long pointer;
-			if (J9BuildFlags.gc_compressedPointers) {
+			if (J9ObjectHelper.compressObjectReferences) {
 				pointer = U32Pointer.cast(slot).at(0).longValue();
 			} else {
 				pointer = DataType.getProcess().getPointerAt(slot.getAddress());

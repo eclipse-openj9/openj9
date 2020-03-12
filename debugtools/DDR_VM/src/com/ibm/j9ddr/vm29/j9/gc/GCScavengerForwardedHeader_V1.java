@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,7 @@ import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.structure.MM_ScavengerForwardedHeader;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 
 class GCScavengerForwardedHeader_V1 extends GCScavengerForwardedHeader
 {
@@ -55,7 +56,7 @@ class GCScavengerForwardedHeader_V1 extends GCScavengerForwardedHeader
 
 	protected J9ObjectPointer getForwardedObjectNoCheck() throws CorruptDataException
 	{
-		if(J9BuildFlags.gc_compressedPointers && !J9BuildFlags.env_littleEndian) {
+		if(J9ObjectHelper.compressObjectReferences && !J9BuildFlags.env_littleEndian) {
 			/* compressed big endian - read two halves separately */
 			U32 low = U32Pointer.cast(objectPointer.clazzEA()).at(0).bitAnd(~ALL_TAGS);
 			U32 high = U32Pointer.cast(objectPointer.clazzEA()).at(1);
@@ -78,13 +79,13 @@ class GCScavengerForwardedHeader_V1 extends GCScavengerForwardedHeader
 	@Override
 	public boolean isForwardedPointer() throws CorruptDataException
 	{
-		return objectPointer.clazz().allBitsIn(MM_ScavengerForwardedHeader.FORWARDED_TAG);
+		return J9ObjectHelper.rawClazz(objectPointer).allBitsIn(MM_ScavengerForwardedHeader.FORWARDED_TAG);
 	}
 
 	@Override
 	public boolean isReverseForwardedPointer() throws CorruptDataException
 	{
-		UDATA flagBits = UDATA.cast(objectPointer.clazz());
+		UDATA flagBits = J9ObjectHelper.rawClazz(objectPointer);
 		return flagBits.bitAnd(J9Consts.J9_GC_OBJ_HEAP_HOLE_MASK).eq(J9Consts.J9_GC_MULTI_SLOT_HOLE);
 	}
 

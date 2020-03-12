@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMArrayClassPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9IndexableObjectHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.structure.GC_ArrayletObjectModelBase$ArrayLayout;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectContiguous;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectDiscontiguous;
@@ -108,9 +109,9 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	{
 		long headerSize;
 		if (GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous != layout) {
-			headerSize = J9IndexableObjectDiscontiguous.SIZEOF;
+			headerSize = J9IndexableObjectHelper.discontiguousHeaderSize();
 		} else {
-			headerSize = J9IndexableObjectContiguous.SIZEOF;
+			headerSize = J9IndexableObjectHelper.contiguousHeaderSize();
 		}
 		return new UDATA(headerSize);
 	}
@@ -124,11 +125,11 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	public UDATA getHeaderSize(J9IndexableObjectPointer array) throws CorruptDataException
 	{
 		long headerSize;
-		UDATA size = J9IndexableObjectContiguousPointer.cast(array).size();
+		UDATA size = J9IndexableObjectHelper.rawSize(array);
 		if (size.eq(0)) {
-			headerSize = J9IndexableObjectDiscontiguous.SIZEOF;
+			headerSize = J9IndexableObjectHelper.discontiguousHeaderSize();
 		} else {
-			headerSize = J9IndexableObjectContiguous.SIZEOF;
+			headerSize = J9IndexableObjectHelper.contiguousHeaderSize();
 		}
 		return new UDATA(headerSize);
 	}
@@ -197,7 +198,7 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	protected long getArrayLayout(J9IndexableObjectPointer array) throws CorruptDataException 
 	{
 		/* Trivial check for InlineContiguous. */
-		if (!J9IndexableObjectContiguousPointer.cast(array).size().eq(0)) {
+		if (!J9IndexableObjectHelper.rawSize(array).eq(0)) {
 			return GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous;
 		}
 
@@ -231,7 +232,7 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 		}
 
 		/* CMVC 135307 : when checking for InlineContiguous layout, perform subtraction as adding to dataSizeInBytes could trigger overflow. */
-		if ( largestDesirableArraySpineSize.eq(UDATA.MAX) || dataSizeInBytes.lte(largestDesirableArraySpineSize.sub(minimumSpineSizeAfterGrowing).sub(J9IndexableObjectContiguous.SIZEOF))) {
+		if ( largestDesirableArraySpineSize.eq(UDATA.MAX) || dataSizeInBytes.lte(largestDesirableArraySpineSize.sub(minimumSpineSizeAfterGrowing).sub(J9IndexableObjectHelper.contiguousHeaderSize()))) {
 			layout = GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous;
 			if (dataSizeInBytes.eq(0)) {
 				/* Zero sized NUA uses the discontiguous shape */
@@ -277,13 +278,13 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	@Override
 	public ObjectReferencePointer getArrayoidPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException 
 	{
-		return ObjectReferencePointer.cast(arrayPtr.addOffset(J9IndexableObjectDiscontiguous.SIZEOF));
+		return ObjectReferencePointer.cast(arrayPtr.addOffset(J9IndexableObjectHelper.discontiguousHeaderSize()));
 	}
 
 	@Override
 	public VoidPointer getDataPointerForContiguous(J9IndexableObjectPointer arrayPtr) throws CorruptDataException
 	{
-		return VoidPointer.cast(arrayPtr.addOffset(J9IndexableObjectContiguous.SIZEOF));
+		return VoidPointer.cast(arrayPtr.addOffset(J9IndexableObjectHelper.contiguousHeaderSize()));
 	}
 
 	@Override
@@ -333,7 +334,7 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	{
 		boolean needAlignment = false;
 
-		if (J9BuildFlags.gc_compressedPointers) {
+		if (J9ObjectHelper.compressObjectReferences) {
 			/* Compressed pointers require that each leaf starts at 8 aligned address.
 			 * Otherwise compressed leaf pointers will not work with shift value of 3.
 			 */

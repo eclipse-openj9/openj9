@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,6 +73,7 @@ import com.ibm.j9ddr.vm29.types.IDATA;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
 import com.ibm.j9ddr.vm29.types.UDATA;
+import com.ibm.j9ddr.vm29.pointer.helper.J9IndexableObjectHelper;
 
 import static com.ibm.j9ddr.vm29.tools.ddrinteractive.gccheck.CheckBase.*;
 import static com.ibm.j9ddr.vm29.structure.J9MemorySegment.*;
@@ -422,7 +423,7 @@ class CheckEngine
 				}
 			}
 			
-			UDATA classSlot = UDATA.cast(object.clazz());
+			UDATA classSlot = J9ObjectHelper.rawClazz(object);
 			if (classSlot.eq(J9MODRON_GCCHK_J9CLASS_EYECATCHER)) {
 				return J9MODRON_GCCHK_RC_OBJECT_SLOT_POINTS_TO_J9CLASS;
 			}
@@ -1194,12 +1195,12 @@ class CheckEngine
 			long delta = regionEnd.sub(UDATA.cast(object)).longValue();
 			
 			/* Basic check that there is enough room for the object header */
-			if (delta < J9Object.SIZEOF) {
+			if (delta < J9ObjectHelper.headerSize()) {
 				return J9MODRON_GCCHK_RC_INVALID_RANGE;
 			}
 
 			/* TODO: find out what the indexable header size should really be */
-			if (ObjectModel.isIndexable(object) && (delta < J9IndexableObjectContiguous.SIZEOF)) {
+			if (ObjectModel.isIndexable(object) && (delta < J9IndexableObjectHelper.contiguousHeaderSize())) {
 				return J9MODRON_GCCHK_RC_INVALID_RANGE;
 			}
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,6 +83,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9VTableHeaderPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.structure.J9Class;
 import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.structure.J9ITable;
@@ -257,7 +258,7 @@ public class RamClassWalker extends ClassWalker {
 			final int totalInstanceSize = ramClass.totalInstanceSize().intValue();
 			
 			final int fj9object_t_SizeOf =
-				(J9BuildFlags.gc_compressedPointers ? U32.SIZEOF : UDATA.SIZEOF);
+				J9ObjectHelper.compressObjectReferences ? U32.SIZEOF : UDATA.SIZEOF;
 			final long totalSize = totalInstanceSize / fj9object_t_SizeOf;
 
 			/* calculate number of slots required to store description bits */

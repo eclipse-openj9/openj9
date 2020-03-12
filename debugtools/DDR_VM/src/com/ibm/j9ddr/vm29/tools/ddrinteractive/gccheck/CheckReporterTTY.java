@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 
 import static com.ibm.j9ddr.vm29.tools.ddrinteractive.gccheck.CheckBase.*;
 import static com.ibm.j9ddr.vm29.tools.ddrinteractive.gccheck.CheckError.*;
@@ -230,7 +231,7 @@ public class CheckReporterTTY extends CheckReporter
 			out.print(String.format("  <gc check (%d): %s%s %x header:", error._errorNumber, prefixString, "Corrupt", object.getAddress()));
 		}
 		
-		int headerSize = (int)J9Object.SIZEOF;
+		int headerSize = (int)J9ObjectHelper.headerSize();
 		if(isHole) {
 			headerSize = (int)MM_HeapLinkedFreeHeader.SIZEOF;
 		} else {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -494,7 +494,7 @@ public abstract class AbstractPointer extends DataType {
 		if (address == 0) {
 			throw new NullPointerDereference();
 		}
-		if (J9BuildFlags.gc_compressedPointers) {
+		if (J9ObjectHelper.compressObjectReferences) {
 			return ObjectAccessBarrier.convertPointerFromToken(getAddressSpace().getIntAt(address + offset));
 		} else {
 			return J9ObjectPointer.cast(getAddressSpace().getPointerAt(address + offset));
@@ -505,7 +505,7 @@ public abstract class AbstractPointer extends DataType {
 	{
 		long location = address + offset;
 		long classPointer;
-		if (J9BuildFlags.gc_compressedPointers) {
+		if (J9ObjectHelper.compressObjectReferences) {
 			classPointer = (long)getAddressSpace().getIntAt(location) & 0xFFFFFFFFL;
 		} else {
 			classPointer = getAddressSpace().getPointerAt(location);
@@ -553,7 +553,7 @@ public abstract class AbstractPointer extends DataType {
 		if (address == 0) {
 			throw new NullPointerDereference();
 		}
-		if (J9BuildFlags.gc_compressedPointers) {
+		if (J9ObjectHelper.compressObjectReferences) {
 			return J9ObjectMonitorPointer.cast(0xFFFFFFFFL & (long)(getAddressSpace().getIntAt(address + offset)));
 		} else {
 			return J9ObjectMonitorPointer.cast(getAddressSpace().getPointerAt(address + offset));
