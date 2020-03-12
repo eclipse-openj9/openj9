@@ -375,6 +375,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::java_lang_StringBuffer_lengthInternalUnsynchronized:
       case TR::java_lang_StringBuilder_capacityInternal:
       case TR::java_lang_StringBuilder_lengthInternal:
+      case TR::java_lang_StringUTF16_newBytesFor:
       case TR::java_util_HashMap_get:
       case TR::java_util_HashMap_getNode:
       case TR::java_lang_String_getChars_charArray:
