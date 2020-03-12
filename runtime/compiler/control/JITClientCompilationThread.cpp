@@ -471,6 +471,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::VM_getVMInfo:
          {
          ClientSessionData::VMInfo vmInfo = {};
+         J9JavaVM * javaVM = vmThread->javaVM;
          vmInfo._systemClassLoader = fe->getSystemClassLoader();
          vmInfo._processID = fe->getProcessID();
          vmInfo._canMethodEnterEventBeHooked = fe->canMethodEnterEventBeHooked();
@@ -504,6 +505,20 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._doubleInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD, false, false, false)->getMethodAddress();
          vmInfo._interpreterVTableOffset = TR::Compiler->vm.getInterpreterVTableOffset();
          vmInfo._enableGlobalLockReservation = vmThread->javaVM->enableGlobalLockReservation;
+         {
+            TR::VMAccessCriticalSection getVMInfo(fe);
+            vmInfo._jlrMethodInvoke = javaVM->jlrMethodInvoke;
+#if defined(J9VM_OPT_SIDECAR)
+            if (javaVM->srMethodAccessor != NULL)
+               vmInfo._srMethodAccessorClass = (TR_OpaqueClassBlock *) J9VM_J9CLASS_FROM_JCLASS(vmThread, javaVM->srMethodAccessor);
+            else
+               vmInfo._srMethodAccessorClass = NULL;
+            if (javaVM->srConstructorAccessor != NULL)
+               vmInfo._srConstructorAccessorClass = (TR_OpaqueClassBlock *) J9VM_J9CLASS_FROM_JCLASS(vmThread, javaVM->srConstructorAccessor);
+            else
+               vmInfo._srConstructorAccessorClass = NULL;
+#endif // J9VM_OPT_SIDECAR
+         }
 
          // For multi-layered SCC support
          std::vector<uintptr_t> listOfCacheStartAddress;
@@ -555,10 +570,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::VM_stackWalkerMaySkipFrames:
          {
-         auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *>();
-         TR_OpaqueMethodBlock *method = std::get<0>(recv);
-         TR_OpaqueClassBlock *clazz = std::get<1>(recv);
-         client->write(response, fe->stackWalkerMaySkipFrames(method, clazz));
+         client->getRecvData<JITServer::Void>();
+         client->write(response, 
+            vmThread->javaVM->jlrMethodInvoke, 
+            vmThread->javaVM->srMethodAccessor ? (TR_OpaqueClassBlock *) J9VM_J9CLASS_FROM_JCLASS(vmThread, vmThread->javaVM->srMethodAccessor) : NULL, 
+            vmThread->javaVM->srConstructorAccessor ? (TR_OpaqueClassBlock *) J9VM_J9CLASS_FROM_JCLASS(vmThread, vmThread->javaVM->srConstructorAccessor) : NULL);
          }
          break;
       case MessageType::VM_hasFinalFieldsInClass:

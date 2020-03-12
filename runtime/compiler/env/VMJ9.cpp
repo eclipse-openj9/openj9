@@ -223,13 +223,6 @@ TR_J9VM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBl
       return false;
       }
 
-   if ( ( vmThread()->javaVM->jlrAccessibleObject != NULL) &&
-          TR_J9VM::isInstanceOf( methodClass, (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->jlrAccessibleObject),false) )
-      {
-      return true;
-      }
-
-
 #if defined(J9VM_OPT_SIDECAR)
    if ( ( vmThread()->javaVM->srMethodAccessor != NULL) &&
           TR_J9VM::isInstanceOf(methodClass, (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srMethodAccessor), false) )

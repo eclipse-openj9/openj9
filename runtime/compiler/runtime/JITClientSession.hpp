@@ -322,7 +322,12 @@ class ClientSessionData
       void *_floatInvokeExactThunkHelper;
       void *_doubleInvokeExactThunkHelper;
       size_t _interpreterVTableOffset;
+      J9Method *_jlrMethodInvoke;
       uint32_t _enableGlobalLockReservation;
+#if defined(J9VM_OPT_SIDECAR)
+      TR_OpaqueClassBlock *_srMethodAccessorClass;
+      TR_OpaqueClassBlock *_srConstructorAccessorClass;
+#endif // J9VM_OPT_SIDECAR
       }; // struct VMInfo
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
