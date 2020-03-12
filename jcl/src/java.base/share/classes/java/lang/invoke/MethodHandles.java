@@ -1414,11 +1414,26 @@ public class MethodHandles {
 			if ((accessMode & UNCONDITIONAL) == UNCONDITIONAL) {
 				newPrevAccessClass = null;
 			}
-			
-			return new Lookup(lookupClass, newPrevAccessClass, newAccessMode);
-			/*[ELSE]*/
-			return new Lookup(lookupClass, newAccessMode);
 			/*[ENDIF] Java14*/
+			
+			/* Return the same lookup object if there is no change on the access mode and the lookup lass */
+			/*[IF Java14]*/
+			/* Note: only check the previous lookup lass in Java 14 */
+			/*[ENDIF] Java14 */
+			if ((newAccessMode == accessMode) 
+				&& (lookupClass == accessClass)
+			/*[IF Java14]*/
+				&& (newPrevAccessClass == prevAccessClass)
+			/*[ENDIF] Java14 */
+			) {
+				return this;
+			} else {
+				/*[IF Java14]*/
+				return new Lookup(lookupClass, newPrevAccessClass, newAccessMode);
+				/*[ELSE]*/
+				return new Lookup(lookupClass, newAccessMode);
+				/*[ENDIF] Java14 */
+			}
 		}
 		
 		/*
@@ -2140,20 +2155,6 @@ public class MethodHandles {
 			 * as it is not set up for lookup objects by default.
 			 */
 			int fullAccessMode = FULL_ACCESS_MASK | MODULE | UNCONDITIONAL;
-			
-			switch(dropMode) {
-			case PUBLIC:
-			case MODULE:
-			case PACKAGE:
-			case PRIVATE:
-			case PROTECTED:
-			case UNCONDITIONAL:
-				/* dropMode is OK */
-				break;
-			default:
-				/*[MSG "K065R", "The requested lookup mode: 0x{0} is not one of the existing access modes: 0x{1}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065R", Integer.toHexString(dropMode), Integer.toHexString(fullAccessMode))); //$NON-NLS-1$
-			}
 
 			/*[IF Java14]*/
 			/* The lookup object has to discard the protected access by default */
@@ -2163,33 +2164,35 @@ public class MethodHandles {
 			int newAccessMode = accessMode & ~(PROTECTED | UNCONDITIONAL);
 			/*[ENDIF] Java14*/
 			
-			/* The access mode to be dropped must exist in the current access mode;
-			 * otherwise, the new access mode remains unchanged.
-			 */
-			switch (dropMode & newAccessMode) {
-			case PUBLIC:
-				newAccessMode = NO_ACCESS;
-				break;
-			case PACKAGE:
-				newAccessMode &= ~(PACKAGE | PRIVATE);
-				break;
-			case PRIVATE:
-				newAccessMode &= ~PRIVATE;
-				break;
-			case UNCONDITIONAL:
-				/*[IF Java14]*/
-				newAccessMode = NO_ACCESS;
-				/*[ENDIF] Java14*/
-				break;
-			default:
-				/* no change in the access mode */
-			}
-			
-			/* The exception is MODULE in which case all access bits involved must be dropped
-			 * whether or not the MODULE bit exists in the access mode.
-			 */
-			if ((dropMode == MODULE) || ((dropMode & newAccessMode) == MODULE)) {
-				newAccessMode &= ~(MODULE | PACKAGE | PRIVATE);
+			/*[IF Java14]*/
+			/* There is no access after dropping the UNCONDITIONAL mode of a public lookup */
+			if (accessMode ==  UNCONDITIONAL) {
+				if (dropMode == UNCONDITIONAL) {
+					newAccessMode = NO_ACCESS;
+				}
+			} else
+			/*[ENDIF] Java14 */
+			{
+				switch (dropMode) {
+				case PUBLIC:
+					newAccessMode = NO_ACCESS;
+					break;
+				case MODULE:
+					newAccessMode &= ~(MODULE | PACKAGE | PRIVATE);
+					break;
+				case PACKAGE:
+					newAccessMode &= ~(PACKAGE | PRIVATE);
+					break;
+				case PRIVATE:
+					newAccessMode &= ~PRIVATE;
+					break;
+				case PROTECTED:
+				case UNCONDITIONAL:
+					break;
+				default:
+					/*[MSG "K065R", "The requested lookup mode: 0x{0} is not one of the existing access modes: 0x{1}"]*/
+					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065R", Integer.toHexString(dropMode), Integer.toHexString(fullAccessMode))); //$NON-NLS-1$
+				}
 			}
 			
 			/*[IF Java14]*/
@@ -2202,11 +2205,25 @@ public class MethodHandles {
 			) {
 				newPrevAccessClass = null;
 			}
+			/*[ENDIF] Java14 */
 			
-			return new Lookup(accessClass, newPrevAccessClass, newAccessMode);
-			/*[ELSE]*/
-			return new Lookup(accessClass, newAccessMode);
-			/*[ENDIF] Java14*/
+			/* Return the same lookup object if there is no change on the access mode */
+			/*[IF Java14]*/
+			/* Note: only check the previous lookup lass in Java 14 */
+			/*[ENDIF] Java14 */
+			if ((newAccessMode == accessMode)
+			/*[IF Java14]*/
+				&& (newPrevAccessClass == prevAccessClass)
+			/*[ENDIF] Java14 */
+			) {
+				return this;
+			} else {
+				/*[IF Java14]*/
+				return new Lookup(accessClass, newPrevAccessClass, newAccessMode);
+				/*[ELSE]*/
+				return new Lookup(accessClass, newAccessMode);
+				/*[ENDIF] Java14 */
+			}
 		}
 		
 		/**
