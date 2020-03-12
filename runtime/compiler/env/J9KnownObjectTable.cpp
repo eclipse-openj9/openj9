@@ -135,7 +135,6 @@ J9::KnownObjectTable::getIndexAt(uintptr_t *objectReferenceLocation)
       {
       auto stream = TR::CompilationInfo::getStream();
       stream->write(JITServer::MessageType::KnownObjectTable_getIndexAt, objectReferenceLocation);
-      auto recv = stream->read<TR::KnownObjectTable::Index>();
       result = std::get<0>(stream->read<TR::KnownObjectTable::Index>());
 
       updateKnownObjectTableAtServer(result, objectReferenceLocation);
