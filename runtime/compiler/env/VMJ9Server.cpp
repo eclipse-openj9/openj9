@@ -1805,6 +1805,28 @@ TR_J9ServerVM::getInvokeExactThunkHelperAddress(TR::Compilation *comp, TR::Symbo
    return helper;
    }
 
+UDATA
+TR_J9ServerVM::getCellSizeForSizeClass(uintptr_t sizeClass)
+   {
+#if defined(J9VM_GC_REALTIME)
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_getCellSizeForSizeClass, sizeClass);
+   return std::get<0>(stream->read<UDATA>());
+#endif
+   return 0;
+   }
+
+UDATA
+TR_J9ServerVM::getObjectSizeClass(uintptr_t objectSize)
+   {
+#if defined(J9VM_GC_REALTIME)
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_getObjectSizeClass, objectSize);
+   return std::get<0>(stream->read<UDATA>());
+#endif
+   return 0;
+   }
+
 bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {

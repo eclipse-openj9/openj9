@@ -346,7 +346,7 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
       }
    else if (cardMarkIsNeeded)
       {
-      if (!TR::Options::getCmdLineOptions()->realTimeGC())
+      if (!comp->getOptions()->realTimeGC())
          {
          TR::Register *temp1Reg = cg->allocateRegister();
          TR::Register *temp2Reg = cg->allocateRegister();

@@ -188,6 +188,9 @@ public:
    virtual bool getReportByteCodeInfoAtCatchBlock() override;
    virtual void *getInvokeExactThunkHelperAddress(TR::Compilation *comp, TR::SymbolReference *glueSymRef, TR::DataType dataType) override;
 
+   virtual uintptr_t getCellSizeForSizeClass(uintptr_t) override;
+   virtual uintptr_t getObjectSizeClass(uintptr_t) override;
+
 private:
    bool instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* castClass, bool cacheUpdate);
 

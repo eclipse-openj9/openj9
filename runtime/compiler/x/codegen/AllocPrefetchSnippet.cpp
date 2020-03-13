@@ -34,7 +34,7 @@
 uint8_t *TR::X86AllocPrefetchSnippet::emitSnippetBody()
    {
    TR::Compilation *comp = cg()->comp();
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       return 0;
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());

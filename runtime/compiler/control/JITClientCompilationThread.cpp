@@ -1120,6 +1120,18 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getROMMethodFromRAMMethod(std::get<0>(recv)));
          }
          break;
+      case MessageType::VM_getCellSizeForSizeClass:
+         {
+         auto recv = client->getRecvData<uintptr_t>();
+         client->write(response, fe->getCellSizeForSizeClass(std::get<0>(recv)));
+         }
+         break;
+      case MessageType::VM_getObjectSizeClass:
+         {
+         auto recv = client->getRecvData<uintptr_t>();
+         client->write(response, fe->getObjectSizeClass(std::get<0>(recv)));
+         }
+         break;
       case MessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only

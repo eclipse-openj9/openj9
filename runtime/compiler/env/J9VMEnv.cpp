@@ -170,7 +170,9 @@ acquireVMaccessIfNeededInner(J9VMThread *vmThread, TR_YesNoMaybe isCompThread)
                     heldMonitor, TR_J9VMBase::get(jitConfig, NULL)->getJ9MonitorName((J9ThreadMonitor*)heldMonitor->getVMMonitor()));
 #endif // #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
 
-         if (TR::Options::getCmdLineOptions()->realTimeGC())
+         TR::Compilation *comp = compInfoPT->getCompilation();
+         if ((comp && comp->getOptions()->realTimeGC()) ||
+              TR::Options::getCmdLineOptions()->realTimeGC())
             compInfoPT->waitForGCCycleMonitor(false); // used only for real-time
 
          acquireVMAccessNoSuspend(vmThread);   // blocking. Will wait for the entire GC
@@ -189,7 +191,6 @@ acquireVMaccessIfNeededInner(J9VMThread *vmThread, TR_YesNoMaybe isCompThread)
             //TR::MonitorTable::get()->readReleaseClassUnloadMonitor(0); // Main code should do it.
             // releaseVMAccess(vmThread);
 
-            TR::Compilation *comp = compInfoPT->getCompilation();
             if (comp)
                {
                comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted by GC unloading classes");

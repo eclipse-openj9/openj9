@@ -1795,7 +1795,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
 
       TR::LabelSymbol *noChkLabel = generateLabelSymbol(cg);
 
-      if (!TR::Options::getCmdLineOptions()->realTimeGC())
+      if (!comp->getOptions()->realTimeGC())
          {
          bool isDefinitelyNonHeapObj = false, isDefinitelyHeapObj = false;
          if (wrtbarNode != NULL && doCompileTimeCheckForHeapObj)
@@ -1912,7 +1912,8 @@ VMCardCheckEvaluator(
       TR::LabelSymbol *doneLabel = NULL,
       bool doCompileTimeCheckForHeapObj = true)
    {
-   if (!TR::Options::getCmdLineOptions()->realTimeGC())
+   TR::Compilation * comp = cg->comp();
+   if (!comp->getOptions()->realTimeGC())
       {
       TR::Node * wrtbarNode = NULL;
       if (node->getOpCodeValue() == TR::awrtbari || node->getOpCodeValue() == TR::awrtbar)
@@ -1928,9 +1929,6 @@ VMCardCheckEvaluator(
          isDefinitelyNonHeapObj = wrtbarNode->isNonHeapObjectWrtBar();
          isDefinitelyHeapObj = wrtbarNode->isHeapObjectWrtBar();
          }
-
-      // Make sure we really should be here
-      TR::Compilation * comp = cg->comp();
 
       // 83613: We used to do inline CM for Old&CM Objects.
       // However, since all Old objects will go through the wrtbar helper,
@@ -7836,7 +7834,7 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-   if (!TR::Options::getCmdLineOptions()->realTimeGC())
+   if (!comp->getOptions()->realTimeGC())
       {
       TR::Register *metaReg = cg->getMethodMetaDataRealRegister();
 
@@ -8090,7 +8088,7 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR_J9VM *fej9vm = (TR_J9VM *)(comp->fe());
-   if (!TR::Options::getCmdLineOptions()->realTimeGC())
+   if (!comp->getOptions()->realTimeGC())
       {
       J9ROMClass *romClass = 0;
       int32_t staticFlag = 0;
@@ -9624,7 +9622,7 @@ void J9::Z::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register *s
 
    else if (doCrdMrk)
       {
-      if (!TR::Options::getCmdLineOptions()->realTimeGC())
+      if (!comp->getOptions()->realTimeGC())
          {
          TR::Register * temp1Reg = cg->allocateRegister();
          conditions->addPostCondition(temp1Reg, TR::RealRegister::AssignAny);
