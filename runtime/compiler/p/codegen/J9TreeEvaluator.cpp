@@ -72,6 +72,7 @@
 #include "runtime/CodeCache.hpp"
 #include "env/VMJ9.h"
 
+#define MAX_PPC_ARRAYCOPY_INLINE 256
 #define AIX_NULL_ZERO_AREA_SIZE 256
 #define NUM_PICS 3
 
@@ -13648,7 +13649,11 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
    if (node->isForwardArrayCopy() && lengthNode->getOpCode().isLoadConst())
       {
       len = (lengthNode->getType().isInt32() ? lengthNode->getInt() : lengthNode->getLongInt());
-      if (len >= 0)
+
+      // inlineArrayCopy_ICF is not currently capable of handling very long lengths correctly. Under some circumstances,
+      // it will generate an li instruction with an out-of-bounds immediate, which triggers an assert in the binary
+      // encoder.
+      if (len >= 0 && len < MAX_PPC_ARRAYCOPY_INLINE)
          {
          /*
           * This path generates code to perform a runtime check on whether concurrent GC is done moving objects or not.
