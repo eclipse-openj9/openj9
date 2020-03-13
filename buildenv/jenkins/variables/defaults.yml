@@ -317,7 +317,7 @@ aarch64_linux_xl:
 # Windows x86 64bits Compressed Pointers
 #========================================#
 x86-64_windows:
-  extends: ['cuda', 'openjdk_reference_repo', 'openssl_bundle']
+  extends: ['cuda', 'debuginfo', 'openjdk_reference_repo', 'openssl_bundle']
   boot_jdk:
     8: '/cygdrive/c/openjdk/jdk7'
     11: '/cygdrive/c/openjdk/jdk11'
@@ -350,7 +350,7 @@ x86-64_windows_xl:
 # Windows x86 32bits
 #========================================#
 x86-32_windows:
-  extends: ['openjdk_reference_repo', 'openssl_bundle']
+  extends: ['debuginfo', 'openjdk_reference_repo', 'openssl_bundle']
   boot_jdk:
     8: '/cygdrive/c/openjdk/jdk7'
   release:
