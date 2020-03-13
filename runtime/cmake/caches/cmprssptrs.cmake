@@ -20,6 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
+set(OMR_GC_POINTER_MODE "compressed" CACHE STRING "")
 set(OMR_GC_COMPRESSED_POINTERS ON CACHE BOOL "")
 set(J9VM_GC_CLASSES_ON_HEAP ON CACHE BOOL "")
 set(J9VM_GC_COMPRESSED_POINTERS ON CACHE BOOL "")

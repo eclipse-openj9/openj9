@@ -40,7 +40,8 @@ ifeq (linux_x86-64_cmprssptrs, $(SPEC))
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		--enable-OMR_PORT_NUMA_SUPPORT
+		--enable-OMR_PORT_NUMA_SUPPORT \
+		OMR_GC_POINTER_MODE=compressed
 endif
 
 ifeq (linux_x86-64_cmprssptrs_panama, $(SPEC))
@@ -55,7 +56,8 @@ ifeq (linux_x86-64_cmprssptrs_panama, $(SPEC))
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT \
-		--enable-OMR_JITBUILDER
+		--enable-OMR_JITBUILDER \
+		OMR_GC_POINTER_MODE=compressed
 endif
 
 ifeq (linux_x86-64_codecov, $(SPEC))
@@ -68,7 +70,8 @@ ifeq (linux_x86-64_codecov, $(SPEC))
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		--enable-OMR_PORT_NUMA_SUPPORT
+		--enable-OMR_PORT_NUMA_SUPPORT \
+		OMR_GC_POINTER_MODE=full
 endif
 
 ifeq (linux_x86-64, $(SPEC))
@@ -83,7 +86,8 @@ ifeq (linux_x86-64, $(SPEC))
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		--enable-OMR_PORT_NUMA_SUPPORT
+		--enable-OMR_PORT_NUMA_SUPPORT \
+		OMR_GC_POINTER_MODE=full
 endif
 
 ifeq (linux_x86_codecov, $(SPEC))
@@ -94,7 +98,8 @@ ifeq (linux_x86_codecov, $(SPEC))
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		--enable-OMR_PORT_NUMA_SUPPORT
+		--enable-OMR_PORT_NUMA_SUPPORT \
+		OMR_GC_POINTER_MODE=full
 endif
 
 ifeq (linux_x86, $(SPEC))
@@ -106,7 +111,8 @@ ifeq (linux_x86, $(SPEC))
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		--enable-OMR_PORT_NUMA_SUPPORT
+		--enable-OMR_PORT_NUMA_SUPPORT \
+		OMR_GC_POINTER_MODE=full
 endif
 
 ifeq (linux_x86-64_cmprssptrs_purec, $(SPEC))
@@ -119,7 +125,8 @@ ifeq (linux_x86-64_cmprssptrs_purec, $(SPEC))
 		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		--enable-OMR_PORT_NUMA_SUPPORT
+		--enable-OMR_PORT_NUMA_SUPPORT \
+		OMR_GC_POINTER_MODE=compressed
 endif
 
 ifeq (linux_x86-64_purec, $(SPEC))
@@ -132,7 +139,8 @@ ifeq (linux_x86-64_purec, $(SPEC))
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		--enable-OMR_PORT_NUMA_SUPPORT
+		--enable-OMR_PORT_NUMA_SUPPORT \
+		OMR_GC_POINTER_MODE=full
 endif
 
 ifeq (linux_x86_purec, $(SPEC))
@@ -143,7 +151,8 @@ ifeq (linux_x86_purec, $(SPEC))
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		--enable-OMR_PORT_NUMA_SUPPORT
+		--enable-OMR_PORT_NUMA_SUPPORT \
+		OMR_GC_POINTER_MODE=full
 endif
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
