@@ -1670,8 +1670,9 @@ j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, const J9CacheInfoQue
 		}
 #elif defined(LINUX) && defined(J9AARCH64)
 	if ((query->cmd == J9PORT_CACHEINFO_QUERY_LINESIZE)
-	    && (query->cacheType == J9PORT_CACHEINFO_DCACHE)
-	    && (query->level == 1)) {
+	&& (query->cacheType == J9PORT_CACHEINFO_DCACHE)
+	&& (query->level == 1)
+	) {
 		/* L1 data cache line size */
 		int32_t rc = (int32_t)sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
 		if (rc >= 0) {
