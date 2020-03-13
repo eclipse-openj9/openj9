@@ -48,14 +48,15 @@
 #ifndef INTERPRETER_EMULATOR_INCL
 #define INTERPRETER_EMULATOR_INCL
 
+#include "compile/Compilation.hpp"
+#include "env/TRMemory.hpp"
 #include "il/Block.hpp"
 #include "ilgen/ByteCodeIteratorWithState.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
-#include "compile/Compilation.hpp"
 #include "optimizer/Inliner.hpp"
-#include "optimizer/J9Inliner.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
-#include "env/TRMemory.hpp"
+#include "optimizer/J9Inliner.hpp"
+#include "optimizer/PreExistence.hpp" // TR_PREXARGINFO_TRACER_CLASS
 
 class IconstOperand;
 class KnownObjOperand;
@@ -157,7 +158,7 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
             TR::ResolvedMethodSymbol * methodSymbol,
             TR_J9VMBase * fe,
             TR::Compilation * comp,
-            TR_InlinerTracer *tracer,
+            TR_PREXARGINFO_TRACER_CLASS *tracer,
             TR_EstimateCodeSize *ecs)
          : Base(methodSymbol, comp),
            _calltarget(calltarget),
@@ -169,7 +170,7 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
          _flags = NULL;
          _stacks = NULL;
          }
-      TR_InlinerTracer *tracer() { return _tracer; }
+      TR_PREXARGINFO_TRACER_CLASS *tracer() { return _tracer; }
       /* \brief Initialize data needed for looking for callsites
        *
        * \param blocks
@@ -284,7 +285,7 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
       bool isCurrentCallUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod, bool isUnresolvedInCP);
       void debugUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod);
 
-      TR_InlinerTracer *_tracer;
+      TR_PREXARGINFO_TRACER_CLASS *_tracer;
       TR_EstimateCodeSize *_ecs;
       Operand * _unknownOperand; // used whenever the iterator can't reason about an operand
       TR_CallTarget *_calltarget; // the target method to inline

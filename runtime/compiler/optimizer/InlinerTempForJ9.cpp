@@ -3230,14 +3230,14 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
                   if (tracer()->heuristicLevel())
                      {
                      alwaysTrace(tracer(), "compArgInfo :");
-                     tracer()->dumpPrexArgInfo(compArgInfo);
+                     compArgInfo->dumpTrace();
                      }
                   compArgInfo->clearArgInfoForNonInvariantArguments(thisCallSiteCallerSymbol, tracer());
                   TR_PrexArgInfo::propagateArgsFromCaller(thisCallSiteCallerSymbol, callsite, compArgInfo, tracer());
                   if (tracer()->heuristicLevel())
                      {
                      alwaysTrace(tracer(), "callsite->getTarget(0)->_ecsPrexArgInfo :");
-                     tracer()->dumpPrexArgInfo(callsite->getTarget(0)->_ecsPrexArgInfo);
+                     callsite->getTarget(0)->_ecsPrexArgInfo->dumpTrace();
                      }
                   }
 
@@ -5090,7 +5090,7 @@ bool TR_J9InlinerUtil::needTargetedInlining(TR::ResolvedMethodSymbol *callee)
  If a parameter refers to a constant class, set the known object index in _ecsPrexArgInfo
  of the target.
 */
-void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_InlinerTracer *tracer)
+void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_LogTracer *tracer)
    {
    static char *disableCCI=feGetEnv("TR_DisableConstClassInlining");
 
@@ -5109,7 +5109,7 @@ void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_InlinerTrace
    bool tracePrex = comp->trace(OMR::inlining) || comp->trace(OMR::invariantArgumentPreexistence);
 
    if (tracePrex)
-      traceMsg(comp, "checkForConstClass parm for [%p] %s %s\n", callNode, callNode->getOpCode().getName(), callNode->getSymbol()->castToMethodSymbol()->getMethod()->signature(tracer->trMemory(), stackAlloc));
+      traceMsg(comp, "checkForConstClass parm for [%p] %s %s\n", callNode, callNode->getOpCode().getName(), callNode->getSymbol()->castToMethodSymbol()->getMethod()->signature(comp->trMemory(), stackAlloc));
 
    // loop over args
    int32_t firstArgIndex = callNode->getFirstArgumentIndex();
@@ -5169,13 +5169,13 @@ void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_InlinerTrace
             {
             if (knownObjectClass)
                {
-               ecsArgInfo->set(argOrdinal, new (tracer->trStackMemory()) TR_PrexArgument(knownObjectIndex, comp));
+               ecsArgInfo->set(argOrdinal, new (comp->trStackMemory()) TR_PrexArgument(knownObjectIndex, comp));
                if (tracePrex)
                   traceMsg(comp, "checkForConstClass: %p: is known object obj%d (knownObjectClass)\n", ecsArgInfo->get(argOrdinal), knownObjectIndex);
                }
             else
                {
-               ecsArgInfo->set(argOrdinal, new (tracer->trStackMemory()) TR_PrexArgument(argument->getSymbolReference()->getKnownObjectIndex(), comp));
+               ecsArgInfo->set(argOrdinal, new (comp->trStackMemory()) TR_PrexArgument(argument->getSymbolReference()->getKnownObjectIndex(), comp));
                if (tracePrex)
                   traceMsg(comp, "checkForConstClass: %p: is known object obj%d\n", ecsArgInfo->get(argOrdinal), argument->getSymbolReference()->getKnownObjectIndex());
                }
@@ -5189,14 +5189,16 @@ void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_InlinerTrace
    } // checkForConstClass
 
 //@TODO this can be re-used as we start building prexargs for every callsite
-TR_PrexArgInfo* TR_PrexArgInfo::buildPrexArgInfoForMethodSymbol(TR::ResolvedMethodSymbol* methodSymbol, TR_InlinerTracer* tracer)
+TR_PrexArgInfo* TR_PrexArgInfo::buildPrexArgInfoForMethodSymbol(TR::ResolvedMethodSymbol* methodSymbol, TR_PREXARGINFO_TRACER_CLASS* tracer)
    {
    int numArgs = methodSymbol->getParameterList().getSize();
    TR_ResolvedMethod       *feMethod = methodSymbol->getResolvedMethod();
    ListIterator<TR::ParameterSymbol> parms(&methodSymbol->getParameterList());
 
-   TR_PrexArgInfo *argInfo = new (tracer->trHeapMemory()) TR_PrexArgInfo(numArgs, tracer->trMemory());
-   heuristicTrace(tracer, "PREX-CSI:  Populating parmInfo of current method %s\n", feMethod->signature(tracer->trMemory()));
+   TR::Compilation *comp = tracer->comp();
+
+   TR_PrexArgInfo *argInfo = new (comp->trHeapMemory()) TR_PrexArgInfo(numArgs, comp->trMemory());
+   heuristicTrace(tracer, "PREX-CSI:  Populating parmInfo of current method %s\n", feMethod->signature(comp->trMemory()));
    int index = 0;
    for (TR::ParameterSymbol *p = parms.getFirst(); p != NULL; index++, p = parms.getNext())
       {
@@ -5206,10 +5208,10 @@ TR_PrexArgInfo* TR_PrexArgInfo::buildPrexArgInfoForMethodSymbol(TR::ResolvedMeth
 
       if (*sig == 'L')
          {
-         TR_OpaqueClassBlock *clazz = tracer->fe()->getClassFromSignature(sig, len, feMethod);
+         TR_OpaqueClassBlock *clazz = comp->fe()->getClassFromSignature(sig, len, feMethod);
          if (clazz)
             {
-            argInfo->set(index, new (tracer->trHeapMemory()) TR_PrexArgument(TR_PrexArgument::ClassIsPreexistent, clazz));
+            argInfo->set(index, new (comp->trHeapMemory()) TR_PrexArgument(TR_PrexArgument::ClassIsPreexistent, clazz));
             heuristicTrace(tracer, "PREX-CSI:  Parm %d class %p in %p is %.*s\n", index, argInfo->get(index)->getClass(), argInfo->get(index), len, sig);
             }
          }
@@ -5261,7 +5263,7 @@ static char* classSignature (TR::Method * m, TR::Compilation* comp) //tracer hel
    return classNameToSignature(m->classNameChars(), len /*don't care, cos this gives us a null terminated string*/, comp);
    }
 
-TR::Node* TR_PrexArgInfo::getCallNode (TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite, TR_InlinerTracer* tracer)
+TR::Node* TR_PrexArgInfo::getCallNode (TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite, TR_PREXARGINFO_TRACER_CLASS* tracer)
    {
    if (callsite->_callNode)
       return callsite->_callNode;
@@ -5373,13 +5375,14 @@ TR_PrexArgument* TR_PrexArgInfo::getArgForChild(TR::Node *child, TR_PrexArgInfo*
    }
 
 void TR_PrexArgInfo::propagateReceiverInfoIfAvailable (TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite,
-                                              TR_PrexArgInfo * argInfo, TR_InlinerTracer *tracer)
+                                              TR_PrexArgInfo * argInfo, TR_PREXARGINFO_TRACER_CLASS *tracer)
    {
    //this implies we have some argInfo available
    TR_ASSERT(argInfo, "otherwise we shouldn't even peek");
    TR::Node* callNode = TR_PrexArgInfo::getCallNode(methodSymbol, callsite, tracer);
+   TR::Compilation *comp = tracer->comp();
    heuristicTrace(tracer, "ARGS PROPAGATION: trying to propagate receiver's info for callsite %p at %p", callsite, callNode);
-   if (!callNode || TR::comp()->getOption(TR_DisableInlinerArgsPropagation))
+   if (!callNode || comp->getOption(TR_DisableInlinerArgsPropagation))
       return;
 
    uint32_t numOfArgs = callNode->getNumChildren()-callNode->getFirstArgumentIndex();
@@ -5393,12 +5396,12 @@ void TR_PrexArgInfo::propagateReceiverInfoIfAvailable (TR::ResolvedMethodSymbol*
    if (TR_PrexArgInfo::hasArgInfoForChild(child, argInfo))
       {
       heuristicTrace(tracer, "ARGS PROPAGATION: the receiver for callsite %p is also one of the caller's args", callsite);
-      callsite->_ecsPrexArgInfo = new (tracer->trHeapMemory()) TR_PrexArgInfo(numOfArgs, tracer->trMemory());
+      callsite->_ecsPrexArgInfo = new (comp->trHeapMemory()) TR_PrexArgInfo(numOfArgs, comp->trMemory());
       callsite->_ecsPrexArgInfo->set(0, TR_PrexArgInfo::getArgForChild(child, argInfo));
       }
    }
 
-bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* argsFromSymbol, TR_PrexArgInfo* argsFromTarget, TR_InlinerTracer *tracer)
+bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* argsFromSymbol, TR_PrexArgInfo* argsFromTarget, TR_PREXARGINFO_TRACER_CLASS *tracer)
    {
    if (!argsFromSymbol || !argsFromTarget || tracer->comp()->getOption(TR_DisableInlinerArgsPropagation))
       {
@@ -5407,7 +5410,8 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
       }
 
    heuristicTrace(tracer, "ARGS PROPAGATION: argsFromSymbol (from calleeSymbol)");
-   tracer->dumpPrexArgInfo(argsFromSymbol);
+   if (tracer->heuristicLevel())
+      argsFromSymbol->dumpTrace();
 
    //validation
    TR_FrontEnd* fe = tracer->comp()->fe();
@@ -5440,13 +5444,14 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
    TR_PrexArgInfo::enhance(argsFromTarget, argsFromSymbol, tracer->comp()); //otherwise just pick more specific
 
    heuristicTrace(tracer, "ARGS PROPAGATION: final argInfo after merging argsFromTarget %p", argsFromTarget);
-   tracer->dumpPrexArgInfo(argsFromTarget);
+   if (tracer->heuristicLevel())
+      argsFromTarget->dumpTrace();
 
    return true;
    }
 
 
-   void TR_PrexArgInfo::clearArgInfoForNonInvariantArguments(TR::ResolvedMethodSymbol* methodSymbol, TR_InlinerTracer* tracer)
+   void TR_PrexArgInfo::clearArgInfoForNonInvariantArguments(TR::ResolvedMethodSymbol* methodSymbol, TR_PREXARGINFO_TRACER_CLASS* tracer)
       {
       if (tracer->comp()->getOption(TR_DisableInlinerArgsPropagation))
          return;
@@ -5473,12 +5478,13 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
       if (cleanedAnything)
          {
          debugTrace(tracer, "ARGS PROPAGATION: argInfo %p after clear arg info for non-invariant arguments", this);
-         tracer->dumpPrexArgInfo(this);
+         if (tracer->heuristicLevel())
+            dumpTrace();
          }
       }
 
 void TR_PrexArgInfo::propagateArgsFromCaller(TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite,
-                           TR_PrexArgInfo * argInfo, TR_InlinerTracer *tracer)
+                           TR_PrexArgInfo * argInfo, TR_PREXARGINFO_TRACER_CLASS *tracer)
    {
    if (tracer->comp()->getOption(TR_DisableInlinerArgsPropagation))
       return;
@@ -5508,7 +5514,8 @@ void TR_PrexArgInfo::propagateArgsFromCaller(TR::ResolvedMethodSymbol* methodSym
 
    heuristicTrace(tracer, "ARGS PROPAGATION: argsFromTarget before args propagation");
    for (int i = 0; i < callsite->numTargets(); i++)
-      tracer->dumpPrexArgInfo(callsite->getTarget(i)->_ecsPrexArgInfo);
+      if (tracer->heuristicLevel())
+         callsite->getTarget(i)->_ecsPrexArgInfo->dumpTrace();
 
    for (int i = callNode->getFirstArgumentIndex(); i < callNode->getNumChildren(); i++)
       {
@@ -5550,7 +5557,7 @@ void TR_PrexArgInfo::propagateArgsFromCaller(TR::ResolvedMethodSymbol* methodSym
       {
       heuristicTrace(tracer, "ARGS PROPAGATION: ArgInfo after propagating the args from the caller");
       for (int i = 0; i < callsite->numTargets(); i++)
-         tracer->dumpPrexArgInfo(callsite->getTarget(i)->_ecsPrexArgInfo);
+         callsite->getTarget(i)->_ecsPrexArgInfo->dumpTrace();
       }
    }
 
