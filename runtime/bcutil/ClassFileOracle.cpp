@@ -568,11 +568,19 @@ ClassFileOracle::walkRecordComponents(J9CfrAttributeRecord *attrib)
 				break;
 			}
 			case CFR_ATTRIBUTE_RuntimeVisibleAnnotations: {
-				_recordComponentsInfo[i].annotationsAttribute = (J9CfrAttributeRuntimeVisibleAnnotations *) recordComponentAttr;
+				J9CfrAttributeRuntimeVisibleAnnotations *recordComponentAnnotations = (J9CfrAttributeRuntimeVisibleAnnotations *)recordComponentAttr;
+				if (0 == recordComponentAnnotations->rawDataLength) {
+					walkAnnotations(recordComponentAnnotations->numberOfAnnotations, recordComponentAnnotations->annotations, 0);
+				}
+				_recordComponentsInfo[i].annotationsAttribute = recordComponentAnnotations;
 				break;
 			}
 			case CFR_ATTRIBUTE_RuntimeVisibleTypeAnnotations: {
-				_recordComponentsInfo[i].typeAnnotationsAttribute = (J9CfrAttributeRuntimeVisibleTypeAnnotations *) recordComponentAttr;
+				J9CfrAttributeRuntimeVisibleTypeAnnotations *recordComponentTypeAnnotations = (J9CfrAttributeRuntimeVisibleTypeAnnotations *)recordComponentAttr;
+				if (0 == recordComponentTypeAnnotations->rawDataLength) {
+					walkTypeAnnotations(recordComponentTypeAnnotations->numberOfAnnotations, recordComponentTypeAnnotations->typeAnnotations);
+				}
+				_recordComponentsInfo[i].typeAnnotationsAttribute = recordComponentTypeAnnotations;
 				break;
 			}
 			default:
