@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -187,16 +187,8 @@ MM_RootScanner::scanMonitorReferencesComplete(MM_EnvironmentBase *env)
 void
 MM_RootScanner::doMonitorLookupCacheSlot(j9objectmonitor_t* slotPtr)
 {
-	// TODO: Local version of compressObjectReferences() ?
-	// TODO: Add new lockword macros (pass boolean)
-	if (_env->compressObjectReferences()) {
-		if (0 != *(U_32*)slotPtr) {
-			*(U_32*)slotPtr = 0;
-		}
-	} else {
-		if (0 != *(UDATA*)slotPtr) {
-			*(UDATA*)slotPtr = 0;
-		}
+	if(0 != *slotPtr) {
+		*slotPtr = 0;
 	}
 }
 
