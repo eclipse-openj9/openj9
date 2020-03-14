@@ -32,7 +32,8 @@ CONFIGURE_ARGS += \
 	--enable-OMR_ARCH_S390 \
 	--enable-OMR_GC_FULL_POINTERS \
 	--enable-OMR_ENV_DATA64 \
-	--enable-OMR_GC_CONCURRENT_SCAVENGER
+	--enable-OMR_GC_CONCURRENT_SCAVENGER \
+	OMR_GC_POINTER_MODE=full
 
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
