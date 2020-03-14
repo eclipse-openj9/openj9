@@ -37,7 +37,8 @@ ifeq (win_x86-64_cmprssptrs, $(SPEC))
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		OMR_GC_POINTER_MODE=compressed
 endif
 
 ifeq (win_x86-64_cmprssptrs_purec, $(SPEC))
@@ -49,7 +50,8 @@ ifeq (win_x86-64_cmprssptrs_purec, $(SPEC))
 		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		OMR_GC_POINTER_MODE=compressed
 endif
 
 ifeq (win_x86-64, $(SPEC))
@@ -62,7 +64,8 @@ ifeq (win_x86-64, $(SPEC))
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		OMR_GC_POINTER_MODE=full
 endif
 
 ifeq (win_x86-64_purec, $(SPEC))
@@ -74,7 +77,8 @@ ifeq (win_x86-64_purec, $(SPEC))
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		OMR_GC_POINTER_MODE=full
 endif
 
 ifeq (win_x86, $(SPEC))
@@ -85,7 +89,8 @@ ifeq (win_x86, $(SPEC))
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		OMR_GC_POINTER_MODE=full
 endif
 
 ifeq (win_x86_purec, $(SPEC))
@@ -96,7 +101,8 @@ ifeq (win_x86_purec, $(SPEC))
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		OMR_GC_POINTER_MODE=full
 endif
 
 CONFIGURE_ARGS += libprefix= exeext=.exe solibext=.dll arlibext=.lib objext=.obj
