@@ -280,8 +280,8 @@ enum MessageType : uint16_t
    ClassInfo_getRemoteROMString = 1100,
 
    // for KnownObjectTable
-   KnownObjectTable_getIndex = 1200,
-   KnownObjectTable_getIndexAt = 1201,
+   KnownObjectTable_getOrCreateIndex = 1200,
+   KnownObjectTable_getOrCreateIndexAt = 1201,
    KnownObjectTable_getPointer = 1202,
    KnownObjectTable_getExistingIndexAt = 1203,
    // for KnownObjectTable outside J9::KnownObjectTable class
@@ -292,6 +292,7 @@ enum MessageType : uint16_t
    KnownObjectTable_createSymRefWithKnownObject = 1208,
    KnownObjectTable_getReferenceField = 1209,
    KnownObjectTable_invokeDirectHandleDirectCall = 1210,
+   KnownObjectTable_getKnownObjectTableDumpInfo = 1211,
    MessageType_MAXTYPE
    };
 

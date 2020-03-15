@@ -723,7 +723,7 @@ bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inlin
             TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fej9());
             uintptr_t currentEpoch = fej9->getVolatileReferenceField(mcsObject, "epoch", "Ljava/lang/invoke/MethodHandle;");
             if (currentEpoch)
-               vgs->_mutableCallSiteEpoch = knot->getIndex(currentEpoch);
+               vgs->_mutableCallSiteEpoch = knot->getOrCreateIndex(currentEpoch);
             }
          else
             {

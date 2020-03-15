@@ -212,7 +212,7 @@ J9::Compilation::Compilation(int32_t id,
       J9::MethodHandleThunkDetails & thunkDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
       if (thunkDetails.isCustom())
          {
-         TR::KnownObjectTable::Index index = knot->getIndexAt(thunkDetails.getHandleRef());
+         TR::KnownObjectTable::Index index = knot->getOrCreateIndexAt(thunkDetails.getHandleRef());
          ListIterator<TR::ParameterSymbol> parms(&_methodSymbol->getParameterList());
          TR::ParameterSymbol* parm0 = parms.getFirst();
          parm0->setKnownObjectIndex(index);

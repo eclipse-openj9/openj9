@@ -4004,7 +4004,7 @@ TR_J9VMBase::getCompiledMethodReceiverKnownObjectIndex(TR::Compilation *comp)
          J9::MethodHandleThunkDetails & thunkDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
          if (thunkDetails.isCustom())
             {
-            return knot->getIndexAt(thunkDetails.getHandleRef());
+            return knot->getOrCreateIndexAt(thunkDetails.getHandleRef());
             }
          }
       }
