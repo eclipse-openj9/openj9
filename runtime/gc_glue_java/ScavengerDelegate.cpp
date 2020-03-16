@@ -779,7 +779,7 @@ MM_ScavengerDelegate::MM_ScavengerDelegate(MM_EnvironmentBase* env)
 	, _javaVM(MM_GCExtensions::getExtensions(env)->getJavaVM())
 	, _extensions(MM_GCExtensions::getExtensions(env))
 #if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
-	, _compressObjectReferences(env-compressObjectReferences())
+	, _compressObjectReferences(env->compressObjectReferences())
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	, _shouldScavengeFinalizableObjects(false)
 	, _shouldScavengeUnfinalizedObjects(false)
