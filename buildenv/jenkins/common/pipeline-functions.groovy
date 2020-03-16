@@ -34,7 +34,7 @@ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO,
             // fetch SHAs for all OpenJDK repositories
             def OPENJDK_SHAS_BY_RELEASES = [:]
 
-            // e.g. OPENJDK_SHA = [ 8: [linux_x86-64: sha1, linux_x86-64_cmprssptrs: sha2, ...], 
+            // e.g. OPENJDK_SHA = [ 8: [linux_x86-64: sha1, linux_x86-64_cmprssptrs: sha2, ...],
             //                     10: [linux_x86-64: sha1, linux_x86-64_cmprssptrs: sha2, ...],...]
             OPENJDK_SHA.each { release, shas_by_specs ->
                 def unique_shas = [:]
@@ -74,7 +74,7 @@ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO,
         }
 
         SHAS['OMR'] = OMR_SHA
-        if (!SHAS['OMR'] && (OMR_REPO && OMR_BRANCH)){
+        if (!SHAS['OMR'] && (OMR_REPO && OMR_BRANCH)) {
             SHAS['OMR'] = get_repository_sha(OMR_REPO, OMR_BRANCH)
         }
 
@@ -120,7 +120,7 @@ def get_sha(REPO, BRANCH) {
     // Allows Pipelines to kick off multiple builds and have the same SHA built everywhere.
     return sh (
             // "git ls-remote $REPO" will return all refs, adding "$BRANCH" will only return the specific branch we are interested in
-            // return the full 40 characters sha instead of the short version 
+            // return the full 40 characters sha instead of the short version
             // to avoid errors due to short sha ambiguousness due to multiple matches for a short sha
             script: "git ls-remote $REPO refs/heads/$BRANCH | cut -c1-40",
             returnStdout: true
@@ -424,7 +424,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         for (name in TARGET_NAMES) {
             target = get_target_name(name)
             // Checking to see if the test should be excluded
-            if (EXCLUDED_TESTS.contains(target)){
+            if (EXCLUDED_TESTS.contains(target)) {
                 echo "The '${target}' test suite will be excluded"
                 continue
             }
@@ -442,7 +442,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             def TEST_JOB_NAME = get_test_job_name(target, SPEC, SDK_VERSION, BUILD_IDENTIFIER)
 
             def IS_PARALLEL = false
-            if (TEST_JOB_NAME.contains("special.system")){
+            if (TEST_JOB_NAME.contains("special.system")) {
                 IS_PARALLEL = true
             }
             testjobs["${TEST_JOB_NAME}"] = {
@@ -457,7 +457,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 }
             }
         }
-        if (params.AUTOMATIC_GENERATION != 'false'){
+        if (params.AUTOMATIC_GENERATION != 'false') {
             generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO)
         }
         parallel testjobs
@@ -570,8 +570,8 @@ def get_downstream_job_names(spec, version, identifier) {
     return downstreamJobNames
 }
 
-def cleanup_artifactory(artifactory_manual_cleanup, job_name, artifactory_server, artifactory_repo, artifactory_num_artifacts){
-    if (artifactory_manual_cleanup == 'true'){
+def cleanup_artifactory(artifactory_manual_cleanup, job_name, artifactory_server, artifactory_repo, artifactory_num_artifacts) {
+    if (artifactory_manual_cleanup == 'true') {
         try {
             def cleanup_job_params = [
                 string(name: 'JOB_TYPE', value: 'COUNT'),
@@ -581,19 +581,19 @@ def cleanup_artifactory(artifactory_manual_cleanup, job_name, artifactory_server
                 string(name: 'ARTIFACTORY_NUM_ARTIFACTS', value: artifactory_num_artifacts)]
 
             build job: 'Cleanup_Artifactory', parameters: cleanup_job_params, wait: false
-        } catch (any){
+        } catch (any) {
             echo 'The Cleanup_Artifactory job is not available'
         }
     }
 }
 
-def generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO){
+def generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO) {
     def levels = []
     def groups = []
 
     TARGET_NAMES.each { target ->
         def target_name = get_target_name(target)
-        if (!EXCLUDED_TESTS.contains(target_name)){
+        if (!EXCLUDED_TESTS.contains(target_name)) {
             def split_target = target_name.tokenize('.')
             levels.add(split_target[0])
             groups.add(split_target[1])
@@ -712,7 +712,7 @@ def setup_pull_request_single_comment(parsedComment) {
     def minCommentSize = 1
     // Setup JDK VERSIONS
     switch (ghprbGhRepository) {
-        case   ~/.*openj9-openjdk-jdk.*/:
+        case ~/.*openj9-openjdk-jdk.*/:
             def tmp_version = ghprbGhRepository.substring(ghprbGhRepository.indexOf('-jdk')+4)
             if ("${tmp_version}" == "") {
                 tmp_version = 'next'
@@ -748,16 +748,17 @@ def setup_pull_request_single_comment(parsedComment) {
 
     // Setup PLATFORMS
     def parsedPlatforms = parsedComment[2+offset].tokenize(',')
-    parsedPlatforms.each { shortName ->
-        def longPlatform = SHORT_NAMES["${shortName}"]
-        if (longPlatform) {
-            PLATFORMS.addAll(longPlatform)
+    parsedPlatforms.each { platformName ->
+        if (platformName in SPECS.keySet()) {
+            PLATFORMS.add(platformName)
         } else {
-            def shortNamesList = []
-            SHORT_NAMES.each {
-                shortNamesList.add(it.key)
+            def longPlatformName = SHORT_NAMES["${platformName}"]
+            if (longPlatformName) {
+                PLATFORMS.addAll(longPlatformName)
+            } else {
+                def namesList = (SPECS.keySet() + SHORT_NAMES.keySet()).toSorted()
+                error("Unknown PLATFORM:'${platformName}'\nExpected one of: ${namesList}")
             }
-            error("Unknown PLATFORM short:'${shortName}'\nExpected one of:${shortNamesList}")
         }
     }
     echo "PLATFORMS:'${PLATFORMS}'"
@@ -794,7 +795,7 @@ def move_spec_suffix_to_id(spec, id) {
 
 def build_all() {
     try {
-        if (params.AUTOMATIC_GENERATION != 'false'){
+        if (params.AUTOMATIC_GENERATION != 'false') {
             node(SETUP_LABEL) {
                 unstash 'DSL'
                 variableFile.create_job(BUILD_NAME, SDK_VERSION, SPEC, 'build', buildFile.convert_build_identifier(BUILD_IDENTIFIER))
@@ -816,7 +817,7 @@ def add_badges(downstreamBuilds) {
     downstreamBuilds.entrySet().each { entry ->
         def build = entry.value
 
-        switch(build.getResult()){
+        switch (build.getResult()) {
             case "SUCCESS":
                 icon = "/images/16x16/accept.png"
                 break
