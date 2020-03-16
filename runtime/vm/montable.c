@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,7 +88,8 @@ void
 cacheObjectMonitorForLookup(J9JavaVM* vm, J9VMThread* vmStruct, J9ObjectMonitor* objectMonitor)
 {
 	j9object_t object = J9MONITORTABLE_OBJECT_LOAD(vmStruct, &((J9ThreadAbstractMonitor*)(objectMonitor->monitor))->userData);
-	J9_STORE_LOCKWORD(vmStruct, vmStruct->objectMonitorLookupCache + J9_OBJECT_MONITOR_LOOKUP_SLOT(object,vm), objectMonitor);
+
+	vmStruct->objectMonitorLookupCache[J9_OBJECT_MONITOR_LOOKUP_SLOT(object,vm)] = (j9objectmonitor_t) ((UDATA) objectMonitor);
 }
 
 
