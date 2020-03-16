@@ -91,7 +91,7 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - `<level>` is sanity | extended (required only for "test" `<build type>`)
     - `<group>` is functional | system
     - `<test_flag>` Optional: any TEST_FLAG is supported. See notes below.
-    - `<platform>` is one of the platform shorthands above
+    - `<platform>` is one of the (short or full) platform names above
     - `<version>` is the number of the supported release, e.g. 8 | 11 | next
 - Note: You can use keyword `all` for platform but not for test level/type or JDK versions.
 - Note: For backward compatibility `<level>.<test type>` equal to `sanity` or `extended` is acceptable and will map to `sanity.functional` and `extended.functional` respectively.
