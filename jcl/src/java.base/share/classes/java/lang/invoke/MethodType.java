@@ -134,6 +134,22 @@ public final class MethodType implements Serializable
 	/* Indicate that there are no persistent/serializable fields in MethodType */
 	private static final ObjectStreamField[] serialPersistentFields = new ObjectStreamField[0];
 	private static final long serialVersionUID = 292L;
+	private DeserializedFieldsHolder deserializedFields;
+
+
+	/**
+	 * Holder for the deserialized arguments[] and returnType values
+	 * from #readObject() so they can be passed to #readResolve()
+	 */
+	private static class DeserializedFieldsHolder {
+		Class<?> returnType;
+		Class<?>[] arguments;
+
+		DeserializedFieldsHolder(Class<?> rtype, Class<?>[] args) {
+			returnType = (rtype == null) ? void.class : rtype;
+			arguments = (args == null) ? EMTPY_PARAMS : args;
+		}
+	}
 
 	/*
 	 * Private constructor as MethodTypes need to be interned.  
@@ -1195,14 +1211,11 @@ public final class MethodType implements Serializable
 					}
 				}
 			);
-			try {
-				fReturnType.set(this, in.readObject());
-				fArguments.set(this, in.readObject());
-			} catch(Exception e) {
-				fReturnType.set(this, void.class);
-				fArguments.set(this, EMTPY_PARAMS);
-				throw e;
-			}
+			fReturnType.set(this, void.class);
+			fArguments.set(this, EMTPY_PARAMS);
+			Class<?> serialReturnType = (Class<?>) in.readObject();
+			Class<?>[] serialArguments = (Class<?>[]) in.readObject();
+			deserializedFields = new DeserializedFieldsHolder(serialReturnType, serialArguments);
 		} catch (IllegalAccessException e) {
 		} catch (NoSuchFieldException e) {
 		}
@@ -1211,7 +1224,14 @@ public final class MethodType implements Serializable
 	/* Hook to ensure that all objects go through the factory */
 	@SuppressWarnings("unused")
 	private Object readResolve() throws ObjectStreamException {
-		return MethodType.methodType(returnType, arguments);
+		Class<?> ret = void.class;
+		Class<?>[] args = EMTPY_PARAMS;
+		DeserializedFieldsHolder localArgs = deserializedFields;
+		if (localArgs != null) {
+			ret = deserializedFields.returnType;
+			args = deserializedFields.arguments;
+		}
+		return MethodType.methodType(ret, args);
 	}
 	
 	/*
