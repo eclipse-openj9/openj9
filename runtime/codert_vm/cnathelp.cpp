@@ -2852,7 +2852,7 @@ fast_jitNewValue(J9VMThread *currentThread, J9Class *objectClass)
 	void *slowPath = NULL;
 	if (J9_UNEXPECTED(fast_jitNewValueImpl(currentThread, objectClass, true, false))) {
 		SET_PARM_COUNT(0);
-		slowPath = (void*) slow_jitNewValueImpl(currentThread, true, false);
+		slowPath = (void*) slow_jitNewValueImpl;
 	}
 	return slowPath;
 }
@@ -2865,7 +2865,7 @@ fast_jitNewValueNoZeroInit(J9VMThread *currentThread, J9Class *objectClass)
 	void *slowPath = NULL;
 	if (J9_UNEXPECTED(fast_jitNewValueImpl(currentThread, objectClass, true, true))) {
 		SET_PARM_COUNT(0);
-		slowPath = (void*)slow_jitNewValueImpl(currentThread, true, true);
+		slowPath = (void*)slow_jitNewValueImpl;
 	}
 	return slowPath;
 }
