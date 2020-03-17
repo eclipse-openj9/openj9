@@ -284,10 +284,7 @@ x86-64_linux:
     cmd: 'source /home/jenkins/set_gcc7.5.0_env'
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
   excluded_tests:
-    8:
-      - sanity.openjdk
     11:
-      - sanity.openjdk
       - special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers /w CMake
@@ -306,7 +303,10 @@ x86-64_linux_xl:
   extends: ['x86-64_linux', 'largeheap']
   excluded_tests:
     8:
+      - sanity.openjdk
       - special.system
+    11:
+      - sanity.openjdk
 #========================================#
 # Linux Aarch 64bits Compressed Pointers
 #========================================#
