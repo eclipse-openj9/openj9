@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,6 +85,7 @@ Java_java_lang_invoke_FieldVarHandle_lookupField(JNIEnv *env, jobject handle, jc
 	J9VMThread *vmThread = (J9VMThread *) env;
 	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	j9object_t varHandle = NULL;
 	PORT_ACCESS_FROM_ENV(env);
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
@@ -111,7 +112,18 @@ Java_java_lang_invoke_FieldVarHandle_lookupField(JNIEnv *env, jobject handle, jc
 		goto _cleanup;
 	}
 
-	J9VMJAVALANGINVOKEVARHANDLE_SET_MODIFIERS(vmThread, J9_JNI_UNWRAP_REFERENCE(handle), ((J9ROMFieldShape*) romField)->modifiers);
+	varHandle = J9_JNI_UNWRAP_REFERENCE(handle);
+	J9VMJAVALANGINVOKEVARHANDLE_SET_MODIFIERS(vmThread, varHandle, ((J9ROMFieldShape *)romField)->modifiers);
+
+	/* StaticFieldVarHandle and InstanceFieldVarHandle extend FieldVarHandle. For StaticFieldVarHandle, isStatic
+	 * is true, and the definingClass field is set to the owner of the static field. For InstanceFieldVarHandle,
+	 * isStatic is false, and the definingClass field is set to the lookupClass, which is also the instance class,
+	 * in FieldVarHandle's constructor.
+	 */
+	if (isStatic) {
+		Assert_JCL_notNull(definingClass);
+		J9VMJAVALANGINVOKEFIELDVARHANDLE_SET_DEFININGCLASS(vmThread, varHandle, J9VM_J9CLASS_TO_HEAPCLASS(definingClass));
+	}
 
 _cleanup:
 	vmFuncs->internalExitVMToJNI(vmThread);

@@ -35,8 +35,12 @@ import com.ibm.oti.vm.VM;
 
 abstract class FieldVarHandle extends VarHandle {
 	final long vmslot;
-	final Class<?> definingClass;
 	final String fieldName;
+
+	/* definingClass cannot be a final field since it is modified twice, once in
+	 * Java code and once in native code.
+	 */
+	Class<?> definingClass;
 
 	/**
 	 * Constructs a VarHandle referencing a field.
@@ -55,7 +59,10 @@ abstract class FieldVarHandle extends VarHandle {
 		this.definingClass = lookupClass;
 		this.fieldName = fieldName;
 		int header = (isStatic ? 0 : VM.OBJECT_HEADER_SIZE);
+
+		/* The native lookupField method also modifies the definingClass field. */
 		this.vmslot = lookupField(definingClass, fieldName, MethodType.getBytecodeStringName(fieldType), fieldType, isStatic, accessClass) + header;
+
 		checkSetterFieldFinality(handleTable);
 	}
 	
