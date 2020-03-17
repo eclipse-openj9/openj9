@@ -25,6 +25,7 @@
 
 #include "env/jittypes.h"
 #include "env/TRMemory.hpp"
+#include "OMR/Bytes.hpp" // for alignNoCheck
 
 namespace JITServer
 {
@@ -98,7 +99,8 @@ public:
    template <typename T>
    uint32_t writeValue(const T &val)
       {
-      uint8_t paddingSize = static_cast<uint8_t>(((sizeof(T) + 3) & 0xfffffffc) - sizeof(T));
+      static_assert(std::is_trivially_copyable<T>::value == true, "T must be trivially copyable.");
+      uint8_t paddingSize = static_cast<uint8_t>(OMR::alignNoCheck(sizeof(T), sizeof(uint32_t)) - sizeof(T));
       return writeData(&val, sizeof(T), paddingSize);
       }
 
@@ -189,6 +191,7 @@ public:
    void expandIfNeeded(uint32_t requiredSize);
 
 private:
+   static const size_t INITIAL_BUFFER_SIZE = 10000;
    uint32_t offset(char *addr) const { return addr - _storage; }
 
    uint32_t _capacity;

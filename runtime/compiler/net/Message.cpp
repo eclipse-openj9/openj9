@@ -1,4 +1,5 @@
 /*******************************************************************************
+/*******************************************************************************
  * Copyright (c) 2020, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
@@ -27,7 +28,7 @@
 namespace JITServer
 {
    const char* const Message::DataDescriptor::_descriptorNames[] = {
-      "UINT32",
+      "INT32",
       "INT64",
       "UINT32",
       "UINT64",
@@ -47,9 +48,6 @@ Message::addData(const DataDescriptor &desc, const void *dataStart, bool needs64
    {
    // Write the descriptor itself
    uint32_t descOffset = _buffer.writeValue(desc);
-
-   //TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "addData(dataStart=%p):  DataDescriptor(@%u): type=%d payload_size=%u dataOffset=%u, padding=%u",
-   //   dataStart, descOffset, desc.getDataType(), desc.getPayloadSize(), desc.getDataOffset(), desc.getPaddingSize());
 
    // If the data following the descriptor needs to be 64-bit aligned,
    // add some initial padding in the outgoing buffer and write the
@@ -80,18 +78,12 @@ Message::deserialize()
 
    uint32_t numDataPoints = getMetaData()->_numDataPoints;
 
-   //TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Metadata: type=%u numDataPoints=%u\n", type(), numDataPoints);
-
    _descriptorOffsets.reserve(numDataPoints);
    // TODO: do I need to clear the vector of _descriptorOffsets just in case?
    for (uint32_t i = 0; i < numDataPoints; ++i)
       {
       uint32_t descOffset = _buffer.readValue<DataDescriptor>(); // Read the descriptor itself
       _descriptorOffsets.push_back(descOffset);
-
-      //DataDescriptor *desc = getLastDescriptor();
-      //TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor: type=%d payload_size=%u dataOffset=%u, padding=%u\n",
-      //   desc->getDataType(), desc->getPayloadSize(), desc->getDataOffset(), desc->getPaddingSize());
 
       // skip the data segment, which is processed in getArgs
       _buffer.readData(getLastDescriptor()->getTotalSize());

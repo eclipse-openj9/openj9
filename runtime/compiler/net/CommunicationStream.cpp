@@ -67,8 +67,6 @@ CommunicationStream::readMessage(Message &msg)
    readBlocking(serializedSize);
    msg.setSerializedSize(serializedSize);
 
-   //TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Will receive a message of size %lu\n", serializedSize);
-
    // read the rest of the message
    uint32_t messageSize = serializedSize - sizeof(uint32_t);
    readBlocking(msg.getBufferStartForRead() + sizeof(uint32_t), messageSize);
@@ -81,8 +79,6 @@ void
 CommunicationStream::writeMessage(Message &msg)
    {
    char *serialMsg = msg.serialize();
-   //TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Will send a message of size %lu\n", msg.serializedSize());
-   //msg.print();
    // write serialized message to the socket
    writeBlocking(serialMsg, msg.serializedSize());
    msg.clearForWrite();
