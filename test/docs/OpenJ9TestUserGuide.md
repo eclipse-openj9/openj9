@@ -200,6 +200,13 @@ e.g.,
 Above command will run [all possible variations in _testExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L28-L30)
 target
 
+#### Run a list of tests <br />
+make _testList TESTLIST=_testTargetName1,_testTargetName2,_testTargetName3 <br />
+e.g.,
+```
+make _testList TESTLIST=jit_jitt,jit_recognizedMethod,testSCCMLTests2_1
+```
+
 #### Run all tests
 - compile & run tests
 ```
