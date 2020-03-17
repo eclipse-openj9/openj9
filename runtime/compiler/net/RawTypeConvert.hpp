@@ -329,9 +329,6 @@ struct GetArgsRaw<Arg>
    static std::tuple<Arg> getArgs(const Message &message, size_t n)
       {
       Message::DataDescriptor *desc = message.getDescriptor(n);
-      // TODO: add type checking functionality
-      // if (data.type_case() != AnyPrimitive<typename ProtobufTypeConvert<Arg>::ProtoType>::typeCase())
-         // throw StreamTypeMismatch("Received type " + std::to_string(data.type_case()) + " but expect type " + std::to_string(AnyPrimitive<typename ProtobufTypeConvert<Arg>::ProtoType>::typeCase()));
       return std::make_tuple(RawTypeConvert<Arg>::onRecv(desc));
       }
    };

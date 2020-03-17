@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include "net/MessageBuffer.hpp"
 #include "net/MessageTypes.hpp"
+#include "OMR/Bytes.hpp" // for alignNoCheck
 
 namespace JITServer
 {
@@ -59,8 +60,8 @@ public:
          {}
       uint32_t _version;
       uint32_t _config; // includes JITServerCompatibilityFlags which must match
-      MessageType _type; // uint16_t
-      uint16_t _numDataPoints; // number of data points in a message
+      MessageType _type;
+      uint16_t _numDataPoints;
       };
 
    /**
@@ -112,8 +113,9 @@ public:
       */
       DataDescriptor(DataType type, uint32_t payloadSize) : _type(type), _dataOffset(0), _vectorElementSize(0)
          {
-         // align on 4 byte boundary
-         _size = (payloadSize + 3) & 0xfffffffc;
+         // Round the _size up to a 4-byte multiple to ensure that the 
+         // descriptor coming after this data point is 4-byte aligned
+         _size = OMR::alignNoCheck(payloadSize, sizeof(uint32_t));
          _paddingSize = static_cast<uint8_t>(_size - payloadSize);    
          }
       DataType getDataType() const { return _type; }
@@ -252,6 +254,7 @@ public:
    */
    DataDescriptor *getDescriptor(size_t idx) const
       {
+      TR_ASSERT(idx < _descriptorOffsets.size(), "Out-of-bounds access for _descriptorOffsets");
       uint32_t offset = _descriptorOffsets[idx];
       return _buffer.getValueAtOffset<DataDescriptor>(offset);
       }

@@ -100,6 +100,7 @@ private:
    template <typename T>
    void readBlocking(T &val)
       {
+      static_assert(std::is_trivially_copyable<T>::value == true, "T must be trivially copyable.");
       readBlocking((char*)&val, sizeof(T));
       }
 
@@ -137,6 +138,7 @@ private:
    template <typename T>
    void writeBlocking(const T &val)
       {
+      static_assert(std::is_trivially_copyable<T>::value == true, "T must be trivially copyable.");
       writeBlocking(&val, sizeof(T));
       }
 

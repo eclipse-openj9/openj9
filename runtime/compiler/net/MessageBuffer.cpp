@@ -26,7 +26,7 @@
 namespace JITServer
 {
 MessageBuffer::MessageBuffer() :
-   _capacity(10000)
+   _capacity(INITIAL_BUFFER_SIZE)
    {
    _storage = static_cast<char *>(TR_Memory::jitPersistentAlloc(_capacity));
    if (!_storage)
