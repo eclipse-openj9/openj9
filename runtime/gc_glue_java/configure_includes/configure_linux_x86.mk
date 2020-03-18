@@ -35,7 +35,6 @@ ifeq (linux_x86-64_cmprssptrs, $(SPEC))
 		--enable-OMR_ENV_DATA64 \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
-		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
@@ -51,7 +50,6 @@ ifeq (linux_x86-64_cmprssptrs_panama, $(SPEC))
 		--enable-OMR_ENV_DATA64 \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
-		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
@@ -65,7 +63,6 @@ ifeq (linux_x86-64_codecov, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
@@ -79,7 +76,6 @@ ifeq (linux_x86-64, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
@@ -94,7 +90,6 @@ ifeq (linux_x86_codecov, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
-		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
@@ -106,7 +101,6 @@ ifeq (linux_x86, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
-		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
@@ -122,7 +116,6 @@ ifeq (linux_x86-64_cmprssptrs_purec, $(SPEC))
 		--enable-OMR_ENV_DATA64 \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
-		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT \
@@ -134,7 +127,6 @@ ifeq (linux_x86-64_purec, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
@@ -147,7 +139,6 @@ ifeq (linux_x86_purec, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
-		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \

@@ -4220,11 +4220,11 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	if (registerCmdLineMapping(vm, MAPOPT_XXONOUTOFMEMORYERROR_EQUALS, VMOPT_XDUMP_TOOL_OUTOFMEMORYERROR_EXEC_EQUALS, EXACT_MAP_WITH_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
-	/* Map -XX:+ExitOnOutOfMemoryError to -Xdump:exit:events=throw+systhrow,filter=java/lang/OutOfMemoryError */ 
+	/* Map -XX:+ExitOnOutOfMemoryError to -Xdump:exit:events=systhrow,filter=java/lang/OutOfMemoryError */ 
 	if (registerCmdLineMapping(vm, MAPOPT_XXENABLEEXITONOUTOFMEMORYERROR, VMOPT_XDUMP_EXIT_OUTOFMEMORYERROR, EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
-	/* Map -XX:-ExitOnOutOfMemoryError to -Xdump:exit:none:events=throw+systhrow,filter=java/lang/OutOfMemoryError */ 
+	/* Map -XX:-ExitOnOutOfMemoryError to -Xdump:exit:none:events=systhrow,filter=java/lang/OutOfMemoryError */ 
 	if (registerCmdLineMapping(vm, MAPOPT_XXDISABLEEXITONOUTOFMEMORYERROR, VMOPT_XDUMP_EXIT_OUTOFMEMORYERROR_DISABLE, EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
