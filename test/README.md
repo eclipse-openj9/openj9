@@ -109,7 +109,7 @@ Supported levels are `sanity|extended`
 
 Supported groups  are `functional|system|openjdk|external|perf|jck`
 
-Supported groups  are `regular|native`
+Supported types  are `regular|native`
 
 ```
     make _sanity
@@ -121,8 +121,7 @@ Supported groups  are `regular|native`
 
 ## 5) How to execute a list of tests?
 
-
-A list of Tests can be executed through the `_testList` target followed by parameter `TESTLIST`. User can specify comma separated list of test names in `TESTLIST`. 
+A list of Tests can be executed through the `_testList` target followed by parameter `TESTLIST`. User can specify comma separated list of test names in `TESTLIST`. Note:  level, group, type or combinations of above (e.g., functional, sanity, sanity.native) are not supported in the TESTLIST.
 
 ```
 make _testList TESTLIST=jit_jitt,jit_recognizedMethod,testSCCMLTests2_1
