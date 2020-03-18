@@ -118,7 +118,7 @@ jitserver:
 # OpenSSL
 #========================================#
 openssl:
-  extra_getsource_options: '--openssl-version=1.1.1d'
+  extra_getsource_options: '--openssl-version=1.1.1e'
   extra_configure_options: '--with-openssl=fetched'
 #========================================#
 # OpenSSL Bundling
