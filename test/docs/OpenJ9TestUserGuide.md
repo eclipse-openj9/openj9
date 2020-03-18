@@ -219,7 +219,10 @@ make _testList TESTLIST=jit_jitt,jit_recognizedMethod,testSCCMLTests2_1
 
 #### Run tests against specific (e.g., hotspot 8) SDK
 
-`<impl>` and `<subset>` elements are used to annotate tests in playlist.xml, so that the tests will be run against the targeted JDK_IMPL and JDK_VERSION (and is determined by the SDK defined in TEST_JDK_HOME variable)
+`<impl>` and `<subset>` elements are used to annotate tests in playlist.xml, so that the tests will be run against the targeted JDK_IMPL and JDK_VERSION (and is determined by the SDK defined in TEST_JDK_HOME variable).  
+
+For example, adding a `<subsets><subset>8</subset></subsets>` block into the [target definition of TestExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L26-L49) would mean that test would only get run against jdk8 and would be skipped for other JDK versions.  If `<subsets>` or `<impls>` are not included in the target definition, then it is assumed that ALL versions and implementations are valid for that test target.
+
 
 #### Rerun the failed tests from the last run
 ```
