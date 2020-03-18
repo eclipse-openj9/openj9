@@ -1957,6 +1957,15 @@ static void loadLibrary(Class<?> caller, String name, boolean fullPath) {
 		loadLibraryWithClassLoader(name, caller.getClassLoaderImpl());
 }
 
+/*[IF Java15]*/
+static void loadLibrary(Class<?> caller, File file) {
+	loadLibraryWithPath(file.getAbsolutePath(), caller.getClassLoaderImpl(), null);
+}
+static void loadLibrary(Class<?> caller, String libName) {
+	loadLibraryWithClassLoader(libName, caller.getClassLoaderImpl());
+}
+/*[ENDIF] Java15 */
+
 /**
  * Sets the assertion status of a class.
  *
