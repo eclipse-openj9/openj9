@@ -30,6 +30,7 @@ j9jit_files(
 	optimizer/EstimateCodeSize.cpp
 	optimizer/FearPointAnalysis.cpp
 	optimizer/HCRGuardAnalysis.cpp
+	optimizer/HotFieldMarking.cpp
 	optimizer/IdiomRecognition.cpp
 	optimizer/IdiomRecognitionUtils.cpp
 	optimizer/IdiomTransformations.cpp

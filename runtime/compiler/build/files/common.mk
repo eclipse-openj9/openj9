@@ -30,6 +30,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/PreEscapeAnalysis.cpp \
     compiler/optimizer/PostEscapeAnalysis.cpp \
     compiler/optimizer/FearPointAnalysis.cpp \
+    compiler/optimizer/HotFieldMarking.cpp \
     compiler/optimizer/HCRGuardAnalysis.cpp \
     compiler/optimizer/IdiomRecognition.cpp \
     compiler/optimizer/IdiomRecognitionUtils.cpp \

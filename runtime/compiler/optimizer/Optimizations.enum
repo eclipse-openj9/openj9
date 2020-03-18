@@ -34,3 +34,4 @@
    OPTIMIZATION(jProfilingBlock)
    OPTIMIZATION(jProfilingValue)
    OPTIMIZATION(jProfilingRecompLoopTest)
+   OPTIMIZATION(hotFieldMarking)
