@@ -32,7 +32,6 @@ ifeq (aix_ppc-64_cmprssptrs, $(SPEC))
 		--enable-OMRTHREAD_LIB_AIX \
 		--enable-OMR_ARCH_POWER \
 		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=compressed
@@ -43,7 +42,6 @@ ifeq (aix_ppc-64_cmprssptrs_purec, $(SPEC))
 		--enable-OMRTHREAD_LIB_AIX \
 		--enable-OMR_ARCH_POWER \
 		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=compressed
 endif
@@ -53,7 +51,6 @@ ifeq (aix_ppc-64_codecov, $(SPEC))
 		--enable-OMRTHREAD_LIB_AIX \
 		--enable-OMR_ARCH_POWER \
 		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=full
 endif
@@ -63,7 +60,6 @@ ifeq (aix_ppc-64, $(SPEC))
 		--enable-OMRTHREAD_LIB_AIX \
 		--enable-OMR_ARCH_POWER \
 		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=full
@@ -74,7 +70,6 @@ ifeq (aix_ppc-64_purec, $(SPEC))
 		--enable-OMRTHREAD_LIB_AIX \
 		--enable-OMR_ARCH_POWER \
 		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=full
 endif
@@ -83,7 +78,6 @@ ifeq (aix_ppc_codecov, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_AIX \
 		--enable-OMR_ARCH_POWER \
-		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=full
 endif
@@ -92,7 +86,6 @@ ifeq (aix_ppc, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_AIX \
 		--enable-OMR_ARCH_POWER \
-		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=full
 endif
@@ -101,7 +94,6 @@ ifeq (aix_ppc_purec, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_AIX \
 		--enable-OMR_ARCH_POWER \
-		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=full
 endif

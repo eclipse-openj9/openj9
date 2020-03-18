@@ -39,11 +39,9 @@ CONFIGURE_ARGS += \
 
 ifneq (,$(findstring _cmprssptrs,$(SPEC)))
 	CONFIGURE_ARGS += \
-		--enable-OMR_GC_COMPRESSED_POINTERS \
 		OMR_GC_POINTER_MODE=compressed
 else
 	CONFIGURE_ARGS += \
-		--enable-OMR_GC_FULL_POINTERS \
 		OMR_GC_POINTER_MODE=full
 endif
 
