@@ -24,8 +24,17 @@
 
 #define OBJECTACCESSBARRIERAPI_HPP_
 
-#include "j9.h"
 #include "j9cfg.h"
+
+#if defined(J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#if J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES
+#define MM_ObjectAccessBarrierAPI MM_ObjectAccessBarrierAPICompressed
+#else /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#define MM_ObjectAccessBarrierAPI MM_ObjectAccessBarrierAPIFull
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+
+#include "j9.h"
 #include "j9modron.h"
 #include "omrmodroncore.h"
 #include "omr.h"

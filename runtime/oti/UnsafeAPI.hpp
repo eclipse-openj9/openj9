@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,16 @@
 
 #if !defined(UNSAFEAPI_HPP_)
 #define UNSAFEAPI_HPP_
+
+#include "j9cfg.h"
+
+#if defined(J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#if J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES
+#define VM_UnsafeAPI VM_UnsafeAPICompressed
+#else /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#define VM_UnsafeAPI VM_UnsafeAPIFull
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
 
 #include "j9.h"
 #include "ArrayCopyHelpers.hpp"

@@ -29,6 +29,8 @@
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
 
+#include "objectreferencesmacros_undefine.inc"
+
 class VM_ValueTypeHelpers {
 	/*
 	 * Data members
@@ -95,5 +97,7 @@ public:
 	}
 
 };
+
+#include "objectreferencesmacros_define.inc"
 
 #endif /* VALUETYPEHELPERS_HPP_ */
