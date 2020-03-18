@@ -385,6 +385,9 @@ if(OMR_OS_LINUX)
 	target_link_libraries(j9jit PRIVATE m)
 elseif(OMR_OS_WINDOWS)
 	target_sources(j9jit PRIVATE build/scripts/j9jit.def)
+elseif(OMR_OS_AIX)
+	set_property(TARGET j9jit APPEND_STRING PROPERTY
+		LINK_FLAGS " -Wl,-bE:${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/j9jit.aix.exp")
 endif()
 if((OMR_TOOLCONFIG STREQUAL "gnu") AND ALLOWS_STATIC_LIBCPP)
 	# We assume that if the compiler allows -static-libstdc++
