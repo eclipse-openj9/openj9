@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,8 @@
 #define CLASS_NAME_LEN 256
 
 typedef enum ModType {
-	NO_MODIFY = 0,
+	MOD_TYPE_UNSPECIFIED = -1,
+	NO_MODIFY,
 	MODIFY_BOOTSTRAP,
 	MODIFY_NON_BOOTSTRAP,
 	MODIFY_ALL,
@@ -106,7 +107,7 @@ classFileLoadHook(jvmtiEnv *jvmti_env,
 
 /*
  * Note: Arguments accepted by this agent are -
- * args:<modtype>[+printClassFileLoadMsg]
+ * args:[<modtype>[+printClassFileLoadMsg]|printClassFileLoadMsg]
  * 	where <modtype> is one of the strings in the array ModTypeStrings,
  * 		  and printClassFileLoadMsg prints a message when ClassFileLoadHook event is triggered.
  *
@@ -129,7 +130,7 @@ ecflh001(agentEnv * agent_env, char * args)
 	testArgs = agent_env->testArgs;
 
 	/* parse agent arguments if available */
-	argSet.modType = -1;
+	argSet.modType = MOD_TYPE_UNSPECIFIED;
 	memset(argSet.className, 0, CLASS_NAME_LEN);
 	if (NULL != testArgs) {
 		for (i = 0; i < MOD_NUM_TYPE; i++) {
@@ -186,7 +187,7 @@ ecflh001(agentEnv * agent_env, char * args)
 	} 
 
 	/* Disable the JVMTI_EVENT_CLASS_FILE_LOAD_HOOK callback */
-	if (NULL == testArgs) {
+	if (MOD_TYPE_UNSPECIFIED == argSet.modType) {
 		err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_DISABLE, JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, NULL);
 		if (err != JVMTI_ERROR_NONE) {
 			error(env, err, "Failed to disable ClassFileLoadHook event");
