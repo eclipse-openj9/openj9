@@ -196,7 +196,10 @@ dnl Load the updated object pointer into CARG2
     LG CARG1,J9TR_VMThread_gsParameters_operandAddr(J9VMTHREAD)
 ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{
 ifdef({ASM_OMR_GC_FULL_POINTERS},{
-    TM J9TR_VMThreadCompressObjectReferences(J9VMTHREAD),1
+dnl The +7 below is because TM operates on a byte. The compressed
+dnl flag is in the LSB of the word, which is byte 7 on 64-bit
+dnl big endian.
+    TM J9TR_VMThreadCompressObjectReferences+7(J9VMTHREAD),1
     JZ LABEL_NAME(L_GS_SKIP_SHIFT)
 }) dnl ASM_OMR_GC_FULL_POINTERS
 dnl Some objects may be stored in a decompressed format on the heap.

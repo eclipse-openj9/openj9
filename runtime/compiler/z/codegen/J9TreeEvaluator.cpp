@@ -1168,11 +1168,9 @@ extern void TEMPORARY_initJ9S390TreeEvaluatorTable(TR::CodeGenerator *cg)
 TR::Instruction *
 J9::Z::TreeEvaluator::genLoadForObjectHeaders(TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::MemoryReference *tempMR, TR::Instruction *iCursor)
    {
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-   return generateRXInstruction(cg, TR::InstOpCode::LLGF, node, reg, tempMR, iCursor);
-#else
+   if (TR::Compiler->om.compressObjectReferences())
+      return generateRXInstruction(cg, TR::InstOpCode::LLGF, node, reg, tempMR, iCursor);
    return generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, reg, tempMR, iCursor);
-#endif
    }
 
 TR::Instruction *
@@ -1183,35 +1181,38 @@ J9::Z::TreeEvaluator::genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::N
    TR::Compilation *comp = cg->comp();
    TR::Instruction *loadInstr;
 
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z13))
+   if (TR::Compiler->om.compressObjectReferences())
       {
-      iCursor = generateRXInstruction(cg, TR::InstOpCode::LLZRGF, node, reg, tempMR, iCursor);
-      loadInstr = iCursor;
-      cg->generateDebugCounter("z13/LoadAndMask", 1, TR::DebugCounter::Free);
+      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z13))
+         {
+         iCursor = generateRXInstruction(cg, TR::InstOpCode::LLZRGF, node, reg, tempMR, iCursor);
+         loadInstr = iCursor;
+         cg->generateDebugCounter("z13/LoadAndMask", 1, TR::DebugCounter::Free);
+         }
+      else
+         {
+         // Zero out top 32 bits and load the unmasked J9Class
+         iCursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, reg, tempMR, iCursor);
+         loadInstr = iCursor;
+         // Now mask it to get the actual pointer
+         iCursor = generateRIInstruction(cg, TR::InstOpCode::NILL, node, reg, mask, iCursor);
+         }
       }
    else
       {
-      // Zero out top 32 bits and load the unmasked J9Class
-      iCursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, reg, tempMR, iCursor);
-      loadInstr = iCursor;
-      // Now mask it to get the actual pointer
-      iCursor = generateRIInstruction(cg, TR::InstOpCode::NILL, node, reg, mask, iCursor);
+      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z13))
+         {
+         iCursor = generateRXInstruction(cg, TR::InstOpCode::getLoadAndMaskOpCode(), node, reg, tempMR, iCursor);
+         loadInstr = iCursor;
+         cg->generateDebugCounter("z13/LoadAndMask", 1, TR::DebugCounter::Free);
+         }
+      else
+         {
+         iCursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, reg, tempMR, iCursor);
+         loadInstr = iCursor;
+         iCursor = generateRIInstruction(cg, TR::InstOpCode::NILL,           node, reg, mask,   iCursor);
+         }
       }
-#else
-   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z13))
-      {
-      iCursor = generateRXInstruction(cg, TR::InstOpCode::getLoadAndMaskOpCode(), node, reg, tempMR, iCursor);
-      loadInstr = iCursor;
-      cg->generateDebugCounter("z13/LoadAndMask", 1, TR::DebugCounter::Free);
-      }
-   else
-      {
-      iCursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, reg, tempMR, iCursor);
-      loadInstr = iCursor;
-      iCursor = generateRIInstruction(cg, TR::InstOpCode::NILL,           node, reg, mask,   iCursor);
-      }
-#endif
 
    // The intended functionality of rdbar/wrtbar IL nodes is to first report to the VM that a field is being watched
    // (i.e. being read or being written to), and then perform the actual load/store operation. To achieve this, evaluators
@@ -1883,8 +1884,9 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
       // inline checking remembered bit for generational or (gencon+cardmarking is inlined).
       static_assert(J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST <= 0xFF, "The constant is too big");
       int32_t offsetToAgeBits =  TR::Compiler->om.offsetOfHeaderFlags() + 3;
-#if defined(J9VM_INTERP_FLAGS_IN_CLASS_SLOT) && defined(TR_TARGET_64BIT) && defined(OMR_GC_FULL_POINTERS)
-      offsetToAgeBits += 4;
+#if defined(J9VM_INTERP_FLAGS_IN_CLASS_SLOT) && defined(TR_TARGET_64BIT)
+      if (!TR::Compiler->om.compressObjectReferences())
+         offsetToAgeBits += 4;
 #endif
       TR::MemoryReference * tempMR = generateS390MemoryReference(owningObjectReg, offsetToAgeBits, cg);
       generateSIInstruction(cg, TR::InstOpCode::TM, node, tempMR, J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST);
@@ -4832,11 +4834,10 @@ VMarrayStoreCHKEvaluator(
    cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, t1Reg, generateS390MemoryReference(owningObjectRegVal, (int32_t) offsetof(J9ArrayClass, componentType), cg));
 
    // check if obj.class(in t1Reg) == array.componentClass in t2Reg
-#ifdef OMR_GC_COMPRESSED_POINTERS
-   cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CR, node, t1Reg, srcRegVal, TR::InstOpCode::COND_BER, wbLabel, false, false);
-#else
-   cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalRegOpCode(), node, t1Reg, srcRegVal, TR::InstOpCode::COND_BE, wbLabel, false, false);
-#endif
+   if (TR::Compiler->om.compressObjectReferences())
+      cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CR, node, t1Reg, srcRegVal, TR::InstOpCode::COND_BER, wbLabel, false, false);
+   else
+      cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalRegOpCode(), node, t1Reg, srcRegVal, TR::InstOpCode::COND_BE, wbLabel, false, false);
 
    if (debugObj)
       debugObj->addInstructionComment(cursor, "Check if src.type == array.type");
@@ -4885,11 +4886,10 @@ VMarrayStoreCHKEvaluator(
             genLoadAddressConstantInSnippet(cg, node, (intptr_t)objectClass, t2Reg, cursor, conditions, litPoolBaseReg, true);
             }
 
-#ifdef OMR_GC_COMPRESSED_POINTERS
-         generateRRInstruction(cg, TR::InstOpCode::CR, node, t1Reg, t2Reg);
-#else
-         generateRRInstruction(cg, TR::InstOpCode::getCmpLogicalRegOpCode(), node, t1Reg, t2Reg);
-#endif
+         if (TR::Compiler->om.compressObjectReferences())
+            generateRRInstruction(cg, TR::InstOpCode::CR, node, t1Reg, t2Reg);
+         else
+            generateRRInstruction(cg, TR::InstOpCode::getCmpLogicalRegOpCode(), node, t1Reg, t2Reg);
          }
       }
    else if (doObjectArrayCheck)
@@ -7102,14 +7102,16 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
          TR::MemoryReference * temp2MR = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), lookupOffsetReg, offsetOfMonitorLookupCache, cg);
 
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-         generateRXInstruction(cg, TR::InstOpCode::LLGF, node, tempRegister, temp2MR, NULL);
-         startICF = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, tempRegister, NULLVALUE, TR::InstOpCode::COND_BE, helperCallLabel, false, true);
-#else
-         generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, temp2MR);
-
-         startICF = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, helperCallLabel);
-#endif
+         if (TR::Compiler->om.compressObjectReferences())
+            {
+            generateRXInstruction(cg, TR::InstOpCode::LLGF, node, tempRegister, temp2MR, NULL);
+            startICF = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, tempRegister, NULLVALUE, TR::InstOpCode::COND_BE, helperCallLabel, false, true);
+            }
+         else
+            {
+            generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, temp2MR);
+            startICF = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, helperCallLabel);
+            }
 
          int32_t offsetOfMonitor = offsetof(J9ObjectMonitor, monitor);
          temp2MR = generateS390MemoryReference(tempRegister, offsetOfMonitor, cg);
@@ -7527,13 +7529,16 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
          // TODO No Need to use Memory Reference Here. Combine it with generateRXInstruction
          TR::MemoryReference * temp2MR = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), lookupOffsetReg, offsetOfMonitorLookupCache, cg);
 
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-         generateRXInstruction(cg, TR::InstOpCode::LLGF, node, tempRegister, temp2MR, NULL);
-         startICF = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, tempRegister, NULLVALUE, TR::InstOpCode::COND_BE, helperCallLabel, false, true);
-#else
-         generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, temp2MR);
-         startICF = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, helperCallLabel);
-#endif
+         if (TR::Compiler->om.compressObjectReferences())
+            {
+            generateRXInstruction(cg, TR::InstOpCode::LLGF, node, tempRegister, temp2MR, NULL);
+            startICF = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, tempRegister, NULLVALUE, TR::InstOpCode::COND_BE, helperCallLabel, false, true);
+            }
+         else
+            {
+            generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, temp2MR);
+            startICF = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, helperCallLabel);
+            }
 
          int32_t offsetOfMonitor = offsetof(J9ObjectMonitor, monitor);
          // TODO No Need to use Memory Reference Here. Combine it with generateRXInstruction
@@ -8136,14 +8141,15 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
             iCursor = genLoadAddressConstantInSnippet(cg, node, (intptr_t) classAddress | (intptr_t)orFlag, temp1Reg, iCursor, conditions, litPoolBaseReg, true);
             if (orFlag != 0)
                {
-#ifdef OMR_GC_COMPRESSED_POINTERS
-               iCursor = generateS390ImmOp(cg, TR::InstOpCode::O, node, temp1Reg, temp1Reg, (int32_t)orFlag, conditions, litPoolBaseReg);
-#else
-               if (cg->comp()->target().is64Bit())
-                  iCursor = generateS390ImmOp(cg, TR::InstOpCode::OG, node, temp1Reg, temp1Reg, (int64_t)orFlag, conditions, litPoolBaseReg);
-               else
+               if (TR::Compiler->om.compressObjectReferences())
                   iCursor = generateS390ImmOp(cg, TR::InstOpCode::O, node, temp1Reg, temp1Reg, (int32_t)orFlag, conditions, litPoolBaseReg);
-#endif
+               else
+                  {
+                  if (cg->comp()->target().is64Bit())
+                     iCursor = generateS390ImmOp(cg, TR::InstOpCode::OG, node, temp1Reg, temp1Reg, (int64_t)orFlag, conditions, litPoolBaseReg);
+                  else
+                     iCursor = generateS390ImmOp(cg, TR::InstOpCode::O, node, temp1Reg, temp1Reg, (int32_t)orFlag, conditions, litPoolBaseReg);
+                  }
                }
             }
          else
@@ -8170,27 +8176,25 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
             }
          else
             {
-#ifdef OMR_GC_COMPRESSED_POINTERS
-            // must store just 32 bits (class offset)
+            if (TR::Compiler->om.compressObjectReferences())
+               // must store just 32 bits (class offset)
 
-            iCursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, temp1Reg,
-                  generateS390MemoryReference(resReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), iCursor);
-#else
-            iCursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, temp1Reg,
-                  generateS390MemoryReference(resReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), iCursor);
-#endif
+               iCursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, temp1Reg,
+                     generateS390MemoryReference(resReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), iCursor);
+            else
+               iCursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, temp1Reg,
+                     generateS390MemoryReference(resReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), iCursor);
             }
          }
       else
          {
-#ifdef OMR_GC_COMPRESSED_POINTERS
-         // must store just 32 bits (class offset)
-         iCursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, clzReg,
-               generateS390MemoryReference(resReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), iCursor);
-#else
-         iCursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, clzReg,
-               generateS390MemoryReference(resReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), iCursor);
-#endif
+         if (TR::Compiler->om.compressObjectReferences())
+            // must store just 32 bits (class offset)
+            iCursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, clzReg,
+                  generateS390MemoryReference(resReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), iCursor);
+         else
+            iCursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, clzReg,
+                  generateS390MemoryReference(resReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), iCursor);
          }
 
 #ifndef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
@@ -8305,9 +8309,7 @@ genInitArrayHeader(TR::Node * node, TR::Instruction *& iCursor, bool isVariableL
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    bool canUseIIHF= false;
    if (!comp->compileRelocatableCode() && (node->getOpCodeValue() == TR::newarray || node->getOpCodeValue() == TR::anewarray)
-#ifndef OMR_GC_COMPRESSED_POINTERS
-         && cg->comp()->target().is32Bit()
-#endif
+         && (TR::Compiler->om.compressObjectReferences() || cg->comp()->target().is32Bit())
 #ifndef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
 #if defined(J9VM_OPT_NEW_OBJECT_HASH)
          && false
@@ -9018,11 +9020,10 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
    //
    TR::TreeEvaluator::genLoadForObjectHeaders(cg, node, tempReg, generateS390MemoryReference(object1Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
 
-#ifdef OMR_GC_COMPRESSED_POINTERS
-   generateRXInstruction(cg, TR::InstOpCode::X, node, tempReg, generateS390MemoryReference(object2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
-#else
-   generateRXInstruction(cg, TR::InstOpCode::getXOROpCode(), node, tempReg, generateS390MemoryReference(object2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
-#endif
+   if (TR::Compiler->om.compressObjectReferences())
+      generateRXInstruction(cg, TR::InstOpCode::X, node, tempReg, generateS390MemoryReference(object2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
+   else
+      generateRXInstruction(cg, TR::InstOpCode::getXOROpCode(), node, tempReg, generateS390MemoryReference(object2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
 
    TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
 
