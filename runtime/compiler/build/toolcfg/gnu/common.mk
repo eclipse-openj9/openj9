@@ -519,14 +519,6 @@ endif
 SOLINK_FLAGS+=$(SOLINK_FLAGS_EXTRA)
 
 ifneq ($(J9VM_OPT_JITSERVER),)
-    #
-    # Setup protobuf
-    #
-    PROTO_CMD?=protoc
-
-    SOLINK_SLINK_STATIC=-l:libprotobuf.a
-    CXX_DEFINES+=GOOGLE_PROTOBUF_NO_RTTI
-
     ifneq ($(OPENSSL_CFLAGS),)
         C_FLAGS+=$(OPENSSL_CFLAGS)
         CXX_FLAGS+=$(OPENSSL_CFLAGS)
