@@ -574,8 +574,8 @@ define({CONCAT},$1$2)dnl
 define({SYM_COUNT},0)dnl
 define({GENSYM},{dnl
 define({SYM_COUNT},eval(1+SYM_COUNT))dnl
-define({CURRENT_FULL},CONCAT(full,SYM_COUNT))dnl
-define({CURRENT_DONE},CONCAT(done,SYM_COUNT))dnl
+define({CURRENT_FULL},CONCAT(Lfull,SYM_COUNT))dnl
+define({CURRENT_DONE},CONCAT(Ldone,SYM_COUNT))dnl
 })dnl
 
 ZZ The ugly formatting in this macro is due to restrictions
@@ -590,10 +590,10 @@ define({IfCompressedElse},{dnl
 ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
 ifdef({ASM_OMR_GC_FULL_POINTERS},{dnl
 GENSYM
-TM      J9TR_VMThreadCompressObjectReferences+7(r13),1
-JZ      CURRENT_FULL
+ TM eval(J9TR_VMThreadCompressObjectReferences+7)(r13),1
+ JZ CURRENT_FULL
 $1
-j       CURRENT_DONE
+ J CURRENT_DONE
 LABEL(CURRENT_FULL)
 $2
 LABEL(CURRENT_DONE)
