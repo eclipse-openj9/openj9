@@ -8351,6 +8351,28 @@ TR_J9VM::getROMMethodFromRAMMethod(J9Method *ramMethod)
    return J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
    }
 
+bool 
+TR_J9VM::noMultipleConcreteClasses(List<TR_PersistentClassInfo>* subClasses)
+   {
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   int count = 0;
+   ListIterator<TR_PersistentClassInfo> i(subClasses);
+   for (TR_PersistentClassInfo *ptClassInfo = i.getFirst(); ptClassInfo; ptClassInfo = i.getNext())
+      {
+      TR_OpaqueClassBlock *clazz = ptClassInfo->getClassId();
+      if (!TR::Compiler->cls.isInterfaceClass(comp, clazz) && !TR::Compiler->cls.isAbstractClass(comp, clazz))
+         {
+         count++;
+         }
+      if (count > 1)
+         {
+         return false;
+         }
+      }
+
+   return true;
+   }
+
 //////////////////////////////////////////////////////////
 // TR_J9SharedCacheVM
 //////////////////////////////////////////////////////////
