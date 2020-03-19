@@ -1500,7 +1500,7 @@ createMethodMetaData(
       if (!comp->isOutOfProcessCompilation())
 #endif
          /* Align code caches */
-         codeCache->alignWarmCodeAlloc(3);
+         codeCache->alignWarmCodeAlloc(4);
 
       J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
       TR_AOTMethodHeader *aotMethodHeaderEntry =  (TR_AOTMethodHeader *)(aotMethodHeader + 1);

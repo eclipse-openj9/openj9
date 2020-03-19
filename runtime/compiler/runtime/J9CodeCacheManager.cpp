@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -362,12 +362,12 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
       if (someJitLibraryAddress > MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE)
          {
          // align the startAddress to page boundary
-         vmemParams.startAddress = (void *)align((uint8_t *)(someJitLibraryAddress - MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE), alignment - 1);
+         vmemParams.startAddress = (void *)OMR::align((size_t)(someJitLibraryAddress - MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE), alignment);
          vmemParams.endAddress = preferredStartAddress;
          }
       else
          {
-         vmemParams.startAddress = (void *)align((uint8_t *)(someJitLibraryAddress + SAFE_DISTANCE_REPOSITORY_JITLIBRARY), alignment -1);
+         vmemParams.startAddress = (void *)OMR::align((size_t)(someJitLibraryAddress + SAFE_DISTANCE_REPOSITORY_JITLIBRARY), alignment);
          vmemParams.endAddress = (void *)(someJitLibraryAddress + MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE);
          }
       // unset STRICT_ADDRESS and ADDRESS_HINT
@@ -540,7 +540,7 @@ J9::CodeCacheManager::chooseCacheStartAddress(size_t repositorySize)
             // otherwise move back some space larger than the VM DLL footprint
             startAddress = (void *)(((uint8_t *)someFunctionPointer) - safeDistance);
             // align so that port library returns exactly what we wanted
-            startAddress = (void *) align((uint8_t *)startAddress, alignment - 1);
+            startAddress = (void *)OMR::align((size_t)startAddress, alignment);
             }
          }
       }
