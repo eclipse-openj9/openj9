@@ -75,7 +75,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link byte} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link byte} field.
 	 */
 	@Test
 	public void testByte() {
@@ -293,7 +293,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link char} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link char} field.
 	 */
 	@Test
 	public void testChar() {
@@ -511,7 +511,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link double} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link double} field.
 	 */
 	@Test
 	public void testDouble() {
@@ -729,7 +729,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link float} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link float} field.
 	 */
 	@Test
 	public void testFloat() {
@@ -947,7 +947,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link int} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link int} field.
 	 */
 	@Test
 	public void testInt() {
@@ -1165,7 +1165,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link int} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link int} field.
 	 */
 	@Test
 	public void testLong() {
@@ -1383,7 +1383,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link String} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link String} field.
 	 */
 	@Test
 	public void testReference() {
@@ -1604,7 +1604,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link Class} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link Class} field.
 	 */
 	@Test
 	public void testReferenceOtherType() {
@@ -1837,7 +1837,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link short} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link short} field.
 	 */
 	@Test
 	public void testShort() {
@@ -2055,7 +2055,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link boolean} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link boolean} field.
 	 */
 	@Test
 	public void testBoolean() {
@@ -2273,7 +2273,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a <b>final</b> {@link int} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a <b>final</b> {@link int} field.
 	 */
 	@Test
 	public void testFinalField() {
@@ -2459,7 +2459,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a <b>final</b> {@link int} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a <b>final</b> {@link int} field.
 	 * Note: The static field StaticHelper.StaticNoInitializationHelper.finalI hasn't been initialized implicitly
 	 * by StaticHelper.reset() before VarHandle.get() is invoked.
 	 */
