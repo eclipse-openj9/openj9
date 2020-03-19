@@ -56,18 +56,6 @@ ifeq (linux_ppc-64_cmprssptrs_le_gcc, $(SPEC))
 		OMR_GC_POINTER_MODE=compressed
 endif
 
-ifeq (linux_ppc-64_cmprssptrs_le_purec, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_POWER \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
-		--enable-OMR_ENV_LITTLE_ENDIAN \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		--enable-OMR_PORT_NUMA_SUPPORT \
-		OMR_GC_POINTER_MODE=compressed
-endif
-
 ifeq (linux_ppc-64_cmprssptrs, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \
@@ -76,17 +64,6 @@ ifeq (linux_ppc-64_cmprssptrs, $(SPEC))
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		--enable-OMR_PORT_NUMA_SUPPORT \
-		OMR_GC_POINTER_MODE=compressed
-endif
-
-ifeq (linux_ppc-64_cmprssptrs_purec, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_POWER \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT \
 		OMR_GC_POINTER_MODE=compressed
@@ -121,29 +98,6 @@ ifeq (linux_ppc-64_le_gcc, $(SPEC))
 		OMR_GC_POINTER_MODE=full
 endif
 
-ifeq (linux_ppc-64_le_purec, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_POWER \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
-		--enable-OMR_ENV_LITTLE_ENDIAN \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		--enable-OMR_PORT_NUMA_SUPPORT \
-		OMR_GC_POINTER_MODE=full
-endif
-
-ifeq (linux_ppc-64_purec, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_POWER \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		--enable-OMR_PORT_NUMA_SUPPORT \
-		OMR_GC_POINTER_MODE=full
-endif
-
 ifeq (linux_ppc-64, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \
@@ -158,15 +112,6 @@ ifeq (linux_ppc-64, $(SPEC))
 endif
 
 ifeq (linux_ppc, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_POWER \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		--enable-OMR_PORT_NUMA_SUPPORT \
-		OMR_GC_POINTER_MODE=full
-endif
-
-ifeq (linux_ppc_purec, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_POWER \
