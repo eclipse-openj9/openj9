@@ -687,10 +687,16 @@ def set_test_misc() {
         TEST_KEEP_REPORTDIR[target] = buildspec_manager.getSpec('misc').getScalarField("test_keep_reportdir", target) ?: 'false'
     }
 
+    TEST_BUILD_LIST = [:]
+    TARGET_NAMES.each { target ->
+        TEST_BUILD_LIST[target] = buildspec.getScalarField("test_build_list", target) ?: ''
+    }
+
     echo "EXCLUDED_TESTS:'${EXCLUDED_TESTS}'"
     echo "TEST_FLAG:'${TEST_FLAG}'"
     echo "EXTRA_TEST_LABELS:'${EXTRA_TEST_LABELS}'"
     echo "TEST_KEEP_REPORTDIR:'${TEST_KEEP_REPORTDIR}'"
+    echo "TEST_BUILD_LIST:'${TEST_BUILD_LIST}'"
 }
 
 
