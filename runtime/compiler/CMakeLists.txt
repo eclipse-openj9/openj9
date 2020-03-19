@@ -138,7 +138,6 @@ add_subdirectory(ras)
 add_subdirectory(runtime)
 
 if(J9VM_OPT_JITSERVER)
-	j9jit_files(${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.cpp)
 	add_subdirectory(net)
 endif()
 

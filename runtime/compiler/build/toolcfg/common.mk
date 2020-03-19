@@ -87,7 +87,6 @@ ifneq ($(J9VM_OPT_JITSERVER),)
 # Networking
 #
 PRODUCT_INCLUDES+=\
-    $(FIXED_SRCBASE)/compiler/net/gen \
     $(FIXED_SRCBASE)/compiler/net
 endif
 #
