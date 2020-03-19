@@ -108,6 +108,7 @@ cmake:
       - sanity.system
       - extended.system
       - special.system
+      - sanity.openjdk
 #========================================#
 # JITServer
 #========================================#
