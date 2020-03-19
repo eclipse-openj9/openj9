@@ -3591,9 +3591,14 @@ JVM_LoadLibrary(const char* libName)
 	J9VMThread* currentThread = vmFuncs->currentVMThread(javaVM);
 
 	Trc_SC_LoadLibrary_Entry(libName);
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	/* registerBootstrapLibrary can't have VM access */
+	vmFuncs->internalReleaseVMAccess(currentThread);
 	if (vmFuncs->registerBootstrapLibrary(currentThread, libName, &nativeLibrary, FALSE) == J9NATIVELIB_LOAD_OK) {
 		result = (void*)nativeLibrary->handle;
 	}
+	/* No need to acquire VM access since next is to exit VM */
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	Trc_SC_LoadLibrary_Exit(result);
 	return result;
