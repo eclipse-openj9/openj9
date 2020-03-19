@@ -123,11 +123,10 @@ JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig)
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    j9tty_printf(PORTLIB, "JITServer Message Type Statistics:\n");
    j9tty_printf(PORTLIB, "Type# #called TypeName\n");
-   const ::google::protobuf::EnumDescriptor *descriptor = JITServer::MessageType_descriptor();
    for (int i = 0; i < JITServer::MessageType_ARRAYSIZE; ++i)
       {
       if (JITServerHelpers::serverMsgTypeCount[i] > 0)
-         j9tty_printf(PORTLIB, "#%04d %7u %s\n", i, JITServerHelpers::serverMsgTypeCount[i], descriptor->FindValueByNumber(i)->name().c_str());
+         j9tty_printf(PORTLIB, "#%04d %7u\n", i, JITServerHelpers::serverMsgTypeCount[i]);
       }
    }
 
