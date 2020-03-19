@@ -257,7 +257,7 @@ objectMonitorInflate(J9VMThread* vmStruct, j9object_t object, UDATA lock)
 	((J9ThreadAbstractMonitor*)monitor)->count = J9_FLATLOCK_COUNT(lock);	
 
 	if (!LN_HAS_LOCKWORD(vmStruct,object)) {
-		objectMonitor->alternateLockword = (j9objectmonitor_t)((UDATA)objectMonitor | OBJECT_HEADER_LOCK_INFLATED);
+		J9_STORE_LOCKWORD(vmStruct, &objectMonitor->alternateLockword, (j9objectmonitor_t)((UDATA)objectMonitor | OBJECT_HEADER_LOCK_INFLATED));
 	} else {
 		J9OBJECT_SET_MONITOR(vmStruct, object, (j9objectmonitor_t)((UDATA)objectMonitor | OBJECT_HEADER_LOCK_INFLATED));
 	}
