@@ -21,7 +21,6 @@
 ################################################################################
 
 set(OMR_GC_POINTER_MODE "compressed" CACHE STRING "")
-set(OMR_GC_COMPRESSED_POINTERS ON CACHE BOOL "")
 set(J9VM_GC_CLASSES_ON_HEAP ON CACHE BOOL "")
 set(J9VM_GC_COMPRESSED_POINTERS ON CACHE BOOL "")
 set(J9VM_INTERP_COMPRESSED_OBJECT_HEADER ON CACHE BOOL "")
