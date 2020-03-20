@@ -49,7 +49,7 @@ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO,
                         unique_shas.put(repoUrl, sha)
 
                         def repo_short_name = repoUrl.substring(repoUrl.lastIndexOf('/') + 1, repoUrl.indexOf('.git'))
-                        description += "<br/>OpenJDK${release}: ${get_short_sha(sha)} - ${repo_short_name}"
+                        description += "<br/>OpenJDK${release}: <a href=${get_http_repo_url(repoUrl)}/commit/${sha}>${get_short_sha(sha)}</a> - ${repo_short_name}"
                         echo "OPENJDK${release}_SHA:${sha} - ${repo_short_name}"
                     }
                 }
@@ -63,7 +63,7 @@ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO,
             if (!SHAS['OPENJDK']) {
                 SHAS['OPENJDK'] = get_repository_sha(OPENJDK_REPO, OPENJDK_BRANCH)
             }
-            description += "<br/>OpenJDK: ${get_short_sha(SHAS['OPENJDK'])}"
+            description += "<br/>OpenJDK: <a href=${get_http_repo_url(OPENJDK_REPO)}/commit/${SHAS['OPENJDK']}>${get_short_sha(SHAS['OPENJDK'])}</a>"
             echo "OPENJDK_SHA:${SHAS['OPENJDK']}"
         }
 
@@ -82,7 +82,7 @@ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO,
         echo "OPENJ9_SHA:${SHAS['OPENJ9']}"
         echo "OMR_SHA:${SHAS['OMR']}"
         def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
-        currentBuild.description = TMP_DESC + "OpenJ9: ${get_short_sha(SHAS['OPENJ9'])}<br/>OMR: ${get_short_sha(SHAS['OMR'])}${description}"
+        currentBuild.description = TMP_DESC + "OpenJ9: <a href=${get_http_repo_url(OPENJ9_REPO)}/commit/${SHAS['OPENJ9']}>${get_short_sha(SHAS['OPENJ9'])}</a><br/>OMR: <a href=${get_http_repo_url(OMR_REPO)}/commit/${SHAS['OMR']}>${get_short_sha(SHAS['OMR'])}</a>${description}"
 
         if (VENDOR_TEST_REPOS_MAP && VENDOR_TEST_BRANCHES_MAP) {
             // fetch SHAs for vendor test repositories
@@ -92,7 +92,7 @@ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO,
                 }
 
                 // update build description
-                currentBuild.description += "<br/>${repoName}: ${get_short_sha(VENDOR_TEST_SHAS_MAP[repoName])}"
+                currentBuild.description += "<br/>${repoName}: <a href=${get_http_repo_url(OPENJ9_REPO)}/commit/${SVENDOR_TEST_SHAS_MAP[repoName]}>${get_short_sha(VENDOR_TEST_SHAS_MAP[repoName])}</a>"
                 echo "${repoName}_SHA: ${VENDOR_TEST_SHAS_MAP[repoName]}"
             }
 
@@ -134,6 +134,10 @@ def get_short_sha(SHA) {
     }
 
     return SHA
+}
+
+def get_http_repo_url(repo) {
+    return repo.replace("git@", "https://").replace("com:", "com/").replace(".git", "")
 }
 
 def git_push_auth(REPO, OPTION, CRED_ID) {
