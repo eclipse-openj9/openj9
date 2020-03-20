@@ -49,7 +49,7 @@ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO,
                         unique_shas.put(repoUrl, sha)
 
                         def repo_short_name = repoUrl.substring(repoUrl.lastIndexOf('/') + 1, repoUrl.indexOf('.git'))
-                        description += "<br/>OpenJDK${release}: ${get_short_sha(sha)} - ${repo_short_name}"
+                        description += "<br/>OpenJDK${release}: <a href=${get_http_repo_url(repoUrl)}/commit/${sha}>${get_short_sha(sha)}</a> - ${repo_short_name}"
                         echo "OPENJDK${release}_SHA:${sha} - ${repo_short_name}"
                     }
                 }
@@ -63,7 +63,7 @@ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO,
             if (!SHAS['OPENJDK']) {
                 SHAS['OPENJDK'] = get_repository_sha(OPENJDK_REPO, OPENJDK_BRANCH)
             }
-            description += "<br/>OpenJDK: ${get_short_sha(SHAS['OPENJDK'])}"
+            description += "<br/>OpenJDK: <a href=${get_http_repo_url(OPENJDK_REPO)}/commit/${SHAS['OPENJDK']}>${get_short_sha(SHAS['OPENJDK'])}</a>"
             echo "OPENJDK_SHA:${SHAS['OPENJDK']}"
         }
 
@@ -82,7 +82,7 @@ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO,
         echo "OPENJ9_SHA:${SHAS['OPENJ9']}"
         echo "OMR_SHA:${SHAS['OMR']}"
         def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
-        currentBuild.description = TMP_DESC + "OpenJ9: ${get_short_sha(SHAS['OPENJ9'])}<br/>OMR: ${get_short_sha(SHAS['OMR'])}${description}"
+        currentBuild.description = TMP_DESC + "OpenJ9: <a href=${get_http_repo_url(OPENJ9_REPO)}/commit/${SHAS['OPENJ9']}>${get_short_sha(SHAS['OPENJ9'])}</a><br/>OMR: <a href=${get_http_repo_url(OMR_REPO)}/commit/${SHAS['OMR']}>${get_short_sha(SHAS['OMR'])}</a>${description}"
 
         if (VENDOR_TEST_REPOS_MAP && VENDOR_TEST_BRANCHES_MAP) {
             // fetch SHAs for vendor test repositories
@@ -92,7 +92,7 @@ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO,
                 }
 
                 // update build description
-                currentBuild.description += "<br/>${repoName}: ${get_short_sha(VENDOR_TEST_SHAS_MAP[repoName])}"
+                currentBuild.description += "<br/>${repoName}: <a href=${get_http_repo_url(OPENJ9_REPO)}/commit/${SVENDOR_TEST_SHAS_MAP[repoName]}>${get_short_sha(VENDOR_TEST_SHAS_MAP[repoName])}</a>"
                 echo "${repoName}_SHA: ${VENDOR_TEST_SHAS_MAP[repoName]}"
             }
 
@@ -134,6 +134,10 @@ def get_short_sha(SHA) {
     }
 
     return SHA
+}
+
+def get_http_repo_url(repo) {
+    return repo.replace("git@", "https://").replace("com:", "com/").replace(".git", "")
 }
 
 def git_push_auth(REPO, OPTION, CRED_ID) {
@@ -216,12 +220,10 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
     }
 }
 
-def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, extraTestLabels, keepReportDir) {
+def test(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, extraTestLabels, keepReportDir) {
     stage ("${JOB_NAME}") {
-        return build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
-            [string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME),
-            string(name: 'UPSTREAM_JOB_NUMBER', value: "${UPSTREAM_JOB_NUMBER}"),
-            string(name: 'LABEL', value: NODE),
+        def testParams = []
+        testParams.addAll([string(name: 'LABEL', value: NODE),
             string(name: 'LABEL_ADDITION', value: extraTestLabels),
             string(name: 'ADOPTOPENJDK_REPO', value: ADOPTOPENJDK_REPO),
             string(name: 'ADOPTOPENJDK_BRANCH', value: ADOPTOPENJDK_BRANCH),
@@ -237,31 +239,14 @@ def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NO
             string(name: 'KEEP_REPORTDIR', value: keepReportDir),
             string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
             booleanParam(name: 'IS_PARALLEL', value: IS_PARALLEL)])
-
-    }
-}
-
-def build_with_artifactory(JOB_NAME, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, extraTestLabels, keepReportDir) {
-    stage ("${JOB_NAME}") {
-        return build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
-            [string(name: 'LABEL', value: NODE),
-            string(name: 'LABEL_ADDITION', value: extraTestLabels),
-            string(name: 'ADOPTOPENJDK_REPO', value: ADOPTOPENJDK_REPO),
-            string(name: 'ADOPTOPENJDK_BRANCH', value: ADOPTOPENJDK_BRANCH),
-            string(name: 'OPENJ9_REPO', value: OPENJ9_REPO),
-            string(name: 'OPENJ9_BRANCH', value: OPENJ9_BRANCH),
-            string(name: 'OPENJ9_SHA', value: OPENJ9_SHA),
-            string(name: 'VENDOR_TEST_REPOS', value: VENDOR_TEST_REPOS),
-            string(name: 'VENDOR_TEST_BRANCHES', value: VENDOR_TEST_BRANCHES),
-            string(name: 'VENDOR_TEST_SHAS', value: VENDOR_TEST_SHAS),
-            string(name: 'VENDOR_TEST_DIRS', value: VENDOR_TEST_DIRS),
-            string(name: 'USER_CREDENTIALS_ID', value: USER_CREDENTIALS_ID),
-            string(name: 'CUSTOMIZED_SDK_URL', value: CUSTOMIZED_SDK_URL),
-            string(name: 'CUSTOMIZED_SDK_URL_CREDENTIAL_ID', value: ARTIFACTORY_CREDS),
-            string(name: 'TEST_FLAG', value: TEST_FLAG),
-            string(name: 'KEEP_REPORTDIR', value: keepReportDir),
-            string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
-            booleanParam(name: 'IS_PARALLEL', value: IS_PARALLEL)])
+        if (ARTIFACTORY_CREDS) {
+            testParams.addAll([string(name: 'CUSTOMIZED_SDK_URL', value: CUSTOMIZED_SDK_URL),
+                string(name: 'CUSTOMIZED_SDK_URL_CREDENTIAL_ID', value: ARTIFACTORY_CREDS)])
+        } else {
+            testParams.addAll([string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME),
+            string(name: 'UPSTREAM_JOB_NUMBER', value: "${UPSTREAM_JOB_NUMBER}")])
+        }
+        return build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, testParams)
     }
 }
 
@@ -389,6 +374,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
     // Determine if Build job archived to Artifactory
     def BUILD_JOB_ENV = jobs["build"].getBuildVariables()
     ARTIFACTORY_CREDS = ''
+    CUSTOMIZED_SDK_URL = ''
     echo "BUILD_JOB_ENV:'${BUILD_JOB_ENV}'"
     if (BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']) {
         CUSTOMIZED_SDK_URL = BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']
@@ -451,10 +437,8 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 }
                 if (ARTIFACTORY_CREDS) {
                     cleanup_artifactory(ARTIFACTORY_MANUAL_CLEANUP, TEST_JOB_NAME, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
-                    jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, extraTestLabels, keepReportDir)
-                } else {
-                    jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, extraTestLabels, keepReportDir)
                 }
+                jobs["${TEST_JOB_NAME}"] = test(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, extraTestLabels, keepReportDir)
             }
         }
         if (params.AUTOMATIC_GENERATION != 'false') {
