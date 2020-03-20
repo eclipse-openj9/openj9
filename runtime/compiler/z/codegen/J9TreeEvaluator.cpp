@@ -275,7 +275,7 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    const bool isStaticCall = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->isStatic();
    const uint8_t firstCallArgIdx = isStaticCall ? 0 : 1;
 
-   TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager(7);
+   TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager(9);
 
    // Get call parameters where stringValue and patternValue are byte arrays
    TR::Register* stringValueReg = cg->evaluate(node->getChild(firstCallArgIdx));
@@ -287,12 +287,14 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    // Registers
    TR::Register* matchIndexReg    = cg->allocateRegister();
    TR::Register* maxIndexReg      = srm->findOrCreateScratchRegister();
+   TR::Register* patternIndexReg  = srm->findOrCreateScratchRegister();
    TR::Register* loadLenReg       = srm->findOrCreateScratchRegister();
    TR::Register* stringVReg       = srm->findOrCreateScratchRegister(TR_VRF);
+   TR::Register* patternVReg      = srm->findOrCreateScratchRegister(TR_VRF);
    TR::Register* searchResultVReg = srm->findOrCreateScratchRegister(TR_VRF);
 
    // Register dependencies
-   TR::RegisterDependencyConditions* regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, supportsVSTRS ? 13 : 12, cg);
+   TR::RegisterDependencyConditions* regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, supportsVSTRS ? 16 : 13, cg);
 
    regDeps->addPostCondition(stringValueReg, TR::RealRegister::AssignAny);
    regDeps->addPostCondition(stringLenReg, TR::RealRegister::AssignAny);
@@ -463,6 +465,7 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
       cursor = generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), node, patternLenReg, (int8_t)vectorSize, labelLoadResult, TR::InstOpCode::COND_BNH);
       iComment("if patternLen <= 16 then we are done, otherwise we continue to check the rest of pattern");
       generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, stringIndexReg, loadLenReg);
+      generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, patternIndexReg, vectorSize);
       cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelMatchPatternResidue);
       iComment("find residual pattern");
 
@@ -555,11 +558,10 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    // If VSTRS is supported, the first VSTRS already handled the 1st 16 bytes at this point (full match in the 1st 16
    // bytes). Hence, residue offset starts at 16.
    uint32_t patternResidueDisp = headerSize + (supportsVSTRS ? vectorSize : 0);
-   TR::Register* patternVReg = srm->findOrCreateScratchRegister(TR_VRF);
+
    generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, patternVReg, loadLenReg, generateS390MemoryReference(patternValueReg, patternResidueDisp, cg));
    generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, loadLenReg, 1);
 
-   TR::Register* patternIndexReg  = srm->findOrCreateScratchRegister();
    if (supportsVSTRS)
       {
       generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, patternIndexReg, vectorSize);
@@ -590,7 +592,7 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
 
    srm->reclaimScratchRegister(loadLenReg);
    TR::Register* loopCountReg = srm->findOrCreateScratchRegister();
-   generateRSInstruction(cg, TR::InstOpCode::SRLK, node, loopCountReg, patternLenReg, 4);
+   generateRSInstruction(cg, TR::InstOpCode::SRLG, node, loopCountReg, patternLenReg, 4);
 
    if (supportsVSTRS)
       {
@@ -688,10 +690,6 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
       cg->decReferenceCount(node->getChild(i));
       }
    cg->stopUsingRegister(stringIndexReg);
-   cg->stopUsingRegister(stringValueReg);
-   cg->stopUsingRegister(stringLenReg);
-   cg->stopUsingRegister(patternValueReg);
-   cg->stopUsingRegister(patternLenReg);
    srm->stopUsingRegisters();
 
    return matchIndexReg;
