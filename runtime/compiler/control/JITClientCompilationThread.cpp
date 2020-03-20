@@ -577,14 +577,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             vmThread->javaVM->srConstructorAccessor ? (TR_OpaqueClassBlock *) J9VM_J9CLASS_FROM_JCLASS(vmThread, vmThread->javaVM->srConstructorAccessor) : NULL);
          }
          break;
-      case MessageType::VM_stackWalkerMaySkipFramesSVM:
-         {
-         auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *>();
-         TR_OpaqueMethodBlock *method = std::get<0>(recv);
-         TR_OpaqueClassBlock *clazz = std::get<1>(recv);
-         client->write(response, fe->stackWalkerMaySkipFrames(method, clazz));
-         }
-         break;
       case MessageType::VM_hasFinalFieldsInClass:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
