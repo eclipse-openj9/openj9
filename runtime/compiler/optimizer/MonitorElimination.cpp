@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1566,10 +1566,17 @@ void TR::MonitorElimination::transformMonitorsIntoTMRegions()
       TR::Node *monitorObject = TR::Node::copy(monitor->getMonitorNode()->getFirstChild());
       monitorObject->setReferenceCount(0);
       TR::Node *tstartNode = TR::Node::createWithRoomForFive(TR::tstart,  persistentFailNode, transientFailNode,fallThroughNode,monitorObject);
+#ifdef OLD_MONITOR_API
       if(monitor->getMonitorNode()->hasMonitorClassInNode())
-        tstartNode->setMonitorClassInNode(monitor->getMonitorNode()->getMonitorClassInNode());
+         tstartNode->setMonitorClassInNode(monitor->getMonitorNode()->getMonitorClassInNode());
       else
-        tstartNode->setMonitorClassInNode(NULL);
+         tstartNode->setMonitorClassInNode(NULL);
+#else
+      if(monitor->getMonitorNode()->hasMonitorInfoInNode())
+         tstartNode->setMonitorInfoInNode(monitor->getMonitorNode()->getMonitorInfoInNode());
+      else
+         tstartNode->setMonitorInfoInNode(NULL);
+#endif
       tstartNode->setSymbolReference(comp()->getSymRefTab()->findOrCreateTransactionEntrySymbolRef(comp()->getMethodSymbol()));
       TR::TreeTop *tstarttt = TR::TreeTop::create(comp(),tstartNode,NULL,NULL);
 
