@@ -32,16 +32,6 @@ CONFIGURE_ARGS += \
 	--enable-OMR_THR_YIELD_ALG \
 	--enable-OMR_THR_SPIN_WAKE_CONTROL
 
-ifeq (linux_390-64_cmprssptrs_codecov, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_S390 \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		OMR_GC_POINTER_MODE=compressed
-endif
-
 ifeq (linux_390-64_cmprssptrs, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \
@@ -52,26 +42,6 @@ ifeq (linux_390-64_cmprssptrs, $(SPEC))
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=compressed
-endif
-
-ifeq (linux_390-64_cmprssptrs_purec, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_S390 \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		OMR_GC_POINTER_MODE=compressed
-endif
-
-ifeq (linux_390-64_codecov, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_S390 \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		OMR_GC_POINTER_MODE=full
 endif
 
 ifeq (linux_390-64, $(SPEC))
@@ -86,25 +56,7 @@ ifeq (linux_390-64, $(SPEC))
 		OMR_GC_POINTER_MODE=full
 endif
 
-ifeq (linux_390-64_purec, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_S390 \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		OMR_GC_POINTER_MODE=full
-endif
-
 ifeq (linux_390, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_S390 \
-		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-		OMR_GC_POINTER_MODE=full
-endif
-
-ifeq (linux_390_purec, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_S390 \
