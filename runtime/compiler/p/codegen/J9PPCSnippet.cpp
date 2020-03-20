@@ -868,11 +868,9 @@ static uint8_t* initializeCCPreLoadedWriteBarrier(uint8_t *buffer, void **CCPreL
    helperTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(TR_writeBarrierStoreGenerational, buffer));
    TR::Instruction *entry = generateLabelInstruction(cg, TR::InstOpCode::label, n, entryLabel);
    TR::Instruction *cursor = entry;
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-   const TR::InstOpCode::Mnemonic Op_lclass = TR::InstOpCode::lwz;
-#else
-   const TR::InstOpCode::Mnemonic Op_lclass =TR::InstOpCode::Op_load;
-#endif
+   TR::InstOpCode::Mnemonic Op_lclass = TR::InstOpCode::Op_load;
+   if (TR::Compiler->om.compressObjectReferences())
+      Op_lclass = TR::InstOpCode::lwz;
    const TR::InstOpCode::Mnemonic rememberedClassMaskOp = J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST > UPPER_IMMED ||
                                                J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST < LOWER_IMMED ? TR::InstOpCode::andis_r : TR::InstOpCode::andi_r;
    const uint32_t      rememberedClassMask = rememberedClassMaskOp == TR::InstOpCode::andis_r ?
@@ -966,11 +964,9 @@ static uint8_t* initializeCCPreLoadedWriteBarrierAndCardMark(uint8_t *buffer, vo
    helperTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(TR_writeBarrierStoreGenerationalAndConcurrentMark, buffer));
    TR::Instruction *entry = generateLabelInstruction(cg, TR::InstOpCode::label, n, entryLabel);
    TR::Instruction *cursor = entry;
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-   const TR::InstOpCode::Mnemonic Op_lclass = TR::InstOpCode::lwz;
-#else
-   const TR::InstOpCode::Mnemonic Op_lclass =TR::InstOpCode::Op_load;
-#endif
+   TR::InstOpCode::Mnemonic Op_lclass = TR::InstOpCode::Op_load;
+   if (TR::Compiler->om.compressObjectReferences())
+      Op_lclass = TR::InstOpCode::lwz;
    const TR::InstOpCode::Mnemonic cmActiveMaskOp = J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE > UPPER_IMMED ||
                                         J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE < LOWER_IMMED ? TR::InstOpCode::andis_r : TR::InstOpCode::andi_r;
    const uint32_t      cmActiveMask = cmActiveMaskOp == TR::InstOpCode::andis_r ?
@@ -1173,11 +1169,9 @@ static uint8_t* initializeCCPreLoadedArrayStoreCHK(uint8_t *buffer, void **CCPre
    helperTrampolineLabel->setCodeLocation((uint8_t *)TR::CodeCacheManager::instance()->findHelperTrampoline(TR_typeCheckArrayStore, buffer));
    TR::Instruction *entry = generateLabelInstruction(cg, TR::InstOpCode::label, n, entryLabel);
    TR::Instruction *cursor = entry;
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-   const TR::InstOpCode::Mnemonic Op_lclass = TR::InstOpCode::lwz;
-#else
-   const TR::InstOpCode::Mnemonic Op_lclass =TR::InstOpCode::Op_load;
-#endif
+   TR::InstOpCode::Mnemonic Op_lclass = TR::InstOpCode::Op_load;
+   if (TR::Compiler->om.compressObjectReferences())
+      Op_lclass = TR::InstOpCode::lwz;
 
    TR::Register *r3 = cg->machine()->getRealRegister(TR::RealRegister::gr3);
    TR::Register *r4 = cg->machine()->getRealRegister(TR::RealRegister::gr4);
