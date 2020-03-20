@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -198,9 +198,9 @@ public abstract class MethodHandle
 	private native void requestCustomThunkFromJit(ThunkTuple tt);
 
 	@VMCONSTANTPOOL_FIELD
-	final MethodType type;		/* Type of the MethodHandle */
+	final MethodType type; /* Type of the MethodHandle */
 	@VMCONSTANTPOOL_FIELD
-	final byte kind;				/* The kind (STATIC/SPECIAL/etc) of this MethodHandle */
+	byte kind; /* The kind (STATIC/SPECIAL/etc) of this MethodHandle */
 	
 	@VMCONSTANTPOOL_FIELD
 	int invocationCount; /* used to determine how many times the MH has been invoked*/

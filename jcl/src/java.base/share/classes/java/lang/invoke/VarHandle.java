@@ -340,7 +340,7 @@ public abstract class VarHandle extends VarHandleInternal
 	private final MethodHandle[] handleTable;
 	final Class<?> fieldType;
 	final Class<?>[] coordinateTypes;
-	final int modifiers;
+	int modifiers;
 /*[IF Java12]*/
 	private int hashCode = 0;
 /*[ENDIF] Java12 */
