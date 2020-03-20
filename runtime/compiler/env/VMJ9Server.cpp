@@ -2078,12 +2078,22 @@ TR_J9SharedCacheServerVM::isPrimitiveClass(TR_OpaqueClassBlock * classPointer)
 bool
 TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
    {
-   bool skipFrames = TR_J9ServerVM::stackWalkerMaySkipFrames(method, methodClass);
+   bool skipFrames = false;
    TR::Compilation *comp = _compInfoPT->getCompilation();
+   // For AOT with SVM do not optimize the messages by calling TR_J9ServerVM::stackWalkerMaySkipFrames
+   // because this will call isInstanceOf() and then isSuperClass() which will fail the 
+   // the SVM validation check and result in an AOT compilation failure
    if (comp && comp->getOption(TR_UseSymbolValidationManager))
       {
+      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JITServer::MessageType::VM_stackWalkerMaySkipFramesSVM, method, methodClass);
+      skipFrames = std::get<0>(stream->read<bool>());
       bool recordCreated = comp->getSymbolValidationManager()->addStackWalkerMaySkipFramesRecord(method, methodClass, skipFrames);
       SVM_ASSERT(recordCreated, "Failed to validate addStackWalkerMaySkipFramesRecord");
+      }
+   else
+      {
+      skipFrames = TR_J9ServerVM::stackWalkerMaySkipFrames(method, methodClass);
       }
    return skipFrames;
    }
