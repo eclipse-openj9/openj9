@@ -269,8 +269,6 @@ static const char * nvvmOpCodeNames[] =
    "icmp sge",    // TR::icmpge
    "icmp sgt",    // TR::icmpgt
    "icmp sle",    // TR::icmple
-   "icmp eq",     // TR::iucmpeq
-   "icmp ne",     // TR::iucmpne
    "icmp ult",    // TR::iucmplt
    "icmp uge",    // TR::iucmpge
    "icmp ugt",    // TR::iucmpgt
@@ -281,8 +279,6 @@ static const char * nvvmOpCodeNames[] =
    "icmp sge",    // TR::lcmpge
    "icmp sgt",    // TR::lcmpgt
    "icmp sle",    // TR::lcmple
-   "icmp eq",     // TR::lucmpeq
-   "icmp ne",     // TR::lucmpne
    "icmp ult",    // TR::lucmplt
    "icmp uge",    // TR::lucmpge
    "icmp ugt",    // TR::lucmpgt
@@ -323,8 +319,6 @@ static const char * nvvmOpCodeNames[] =
    "icmp sge",    // TR::bcmpge
    "icmp sgt",    // TR::bcmpgt
    "icmp sle",    // TR::bcmple
-   "icmp eq",     // TR::bucmpeq
-   "icmp ne",     // TR::bucmpne
    "icmp ult",    // TR::bucmplt
    "icmp uge",    // TR::bucmpge
    "icmp ugt",    // TR::bucmpgt
@@ -335,8 +329,6 @@ static const char * nvvmOpCodeNames[] =
    "icmp sge",    // TR::scmpge
    "icmp sgt",    // TR::scmpgt
    "icmp sle",    // TR::scmple
-   "icmp eq",     // TR::sucmpeq
-   "icmp ne",     // TR::sucmpne
    "icmp ult",    // TR::sucmplt
    "icmp uge",    // TR::sucmpge
    "icmp ugt",    // TR::sucmpgt
