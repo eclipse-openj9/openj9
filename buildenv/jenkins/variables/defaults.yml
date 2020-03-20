@@ -164,8 +164,7 @@ ppc64le_linux:
   node_labels:
     build: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
   extra_configure_options:
-    8: '--enable-jitserver'
-    11: '--enable-jitserver'
+    all: '--enable-jitserver'
   build_env:
     vars: 'PATH+GCC7=/usr/local/gcc-7.5.0/bin LD_LIBRARY_PATH=/usr/local/gcc-7.5.0/lib64:$LD_LIBRARY_PATH'
 #========================================#
@@ -279,8 +278,7 @@ x86-64_linux:
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
   extra_configure_options:
-    8: '--enable-jitserver'
-    11: '--enable-jitserver'
+    all: '--enable-jitserver'
   build_env:
     cmd: 'source /home/jenkins/set_gcc7.5.0_env'
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
