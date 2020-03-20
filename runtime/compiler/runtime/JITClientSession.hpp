@@ -322,6 +322,7 @@ class ClientSessionData
       void *_floatInvokeExactThunkHelper;
       void *_doubleInvokeExactThunkHelper;
       size_t _interpreterVTableOffset;
+      uint32_t _enableGlobalLockReservation;
       }; // struct VMInfo
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
