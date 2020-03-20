@@ -374,7 +374,7 @@ doVerify:
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				/* verify flattened fields */
-				if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+				if (NULL != clazz->flattenedClassCache) {
 					UDATA numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
 
 					for (UDATA i = 0; i < numberOfFlattenedFields; i++) {
@@ -494,7 +494,7 @@ doVerify:
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				/* prepare flattened fields */
-				if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+				if (NULL != clazz->flattenedClassCache) {
 					UDATA numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
 
 					for (UDATA i = 0; i < numberOfFlattenedFields; i++) {
@@ -611,7 +611,7 @@ doVerify:
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				/* init flattened fields */
-				if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+				if (NULL != clazz->flattenedClassCache) {
 					UDATA numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
 
 					for (UDATA i = 0; i < numberOfFlattenedFields; i++) {
