@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,7 +80,7 @@ public class Throwable implements java.io.Serializable {
 	 * The list containing the exceptions suppressed 
 	 */
 	private List<Throwable> suppressedExceptions = Collections.EMPTY_LIST;
-	private transient boolean enableWritableStackTrace = true;
+	private transient boolean disableWritableStackTrace;
 	
 /**
  * Constructs a new instance of this class with its 
@@ -165,7 +165,7 @@ protected Throwable(String detailMessage, Throwable throwable,
 	}
 	
 	if (enableWritableStackTrace == false)	{
-		this.enableWritableStackTrace = false;
+		this.disableWritableStackTrace = true;
 	} else {
 		fillInStackTrace();
 	}
@@ -237,7 +237,7 @@ public void setStackTrace(StackTraceElement[] trace) {
 		}
 	}
 	
-	if (enableWritableStackTrace == false) {
+	if (disableWritableStackTrace) {
 		return;
 	}
 	
@@ -284,7 +284,7 @@ private static int countDuplicates(StackTraceElement[] currentStack, StackTraceE
  */
 StackTraceElement[] getInternalStackTrace() {
 
-	if (!enableWritableStackTrace) {
+	if (disableWritableStackTrace) {
 		return	ZeroStackTraceElementArray;
 	}
 
@@ -429,7 +429,7 @@ private void readObject(ObjectInputStream s)
 	throws IOException, ClassNotFoundException	{
 	s.defaultReadObject();
 	
-	enableWritableStackTrace = (stackTrace != null);
+	disableWritableStackTrace = (stackTrace == null);
 	
 	if (stackTrace != null) {
 		if (stackTrace.length == 1) {
