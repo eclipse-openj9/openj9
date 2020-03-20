@@ -234,7 +234,7 @@ s390x_linux_jit:
 ppc64_aix:
   extends: ['debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
-    8: '/usr/java7'
+    8: '/usr/java8_64'
     11: '/usr/java11_64'
     14: '/usr/java13_64'
     next: '/usr/java13_64'
