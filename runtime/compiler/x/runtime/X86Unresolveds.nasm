@@ -922,22 +922,17 @@ interpreterUnresolvedStaticGlue:
       ;
       mov         rdi, rax
 
-      ; Skip code patching if the interpreter low-tag the RAM method
+      ; Skip code patching if the interpreter low-tagged the RAM method and
+      ; dispatch the interpreted method directly.
       ;
-      jc          .skippatching
+      jc          j2iTransition
 
       ; Patch the call that brought us here into a load of the resolved RAM method into RDI.
       ;
       shl         rax, 16
       xor         rax, 0bf48h                                  ; REX+MOV bytes
       mov         qword [rsi-5], rax                           ; Replaced current call with "mov rdi, 0x0000aabbccddeeff"
-      jmp         interpreterStaticAndSpecialGlue              ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
-                                                               ; jump to its target directly.
-.skippatching:
-      mov         rcx, qword [rdi+J9TR_MethodPCStartOffset]    ; rcx = interpreter entry point of the compiled method
-      test        cl, J9TR_MethodNotCompiledBit
-      jnz         j2iTransition
-      jmp         rcx
+      jmp         j2iTransition                                ; Dispatch interpreted method
 
 
       align 16
@@ -963,8 +958,7 @@ interpreterUnresolvedSpecialGlue:
       shl         rax, 16
       xor         rax, 0bf48h                                  ; REX+MOV bytes
       mov         qword [rsi-5], rax                           ; Replaced current call with "mov rdi, 0x0000aabbccddeeff"
-      jmp         interpreterStaticAndSpecialGlue              ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
-                                                               ; jump to its target directly.
+      jmp         j2iTransition                                ; Dispatch interpreted method
 
 
 ; interpreterStaticAndSpecialGlue
