@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -371,6 +371,77 @@ public class JITRegMap {
 						0x06	/* jit_r6 */
 				};
 			}
+		} else if (J9ConfigFlags.arch_aarch64) {
+			/* 64 bit only */
+			jitRegisterNames = new String[] {
+					"jit_r0",
+					"jit_r1",
+					"jit_r2",
+					"jit_r3",
+					"jit_r4",
+					"jit_r5",
+					"jit_r6",
+					"jit_r7",
+					"jit_r8",
+					"jit_r9",
+					"jit_r10",
+					"jit_r11",
+					"jit_r12",
+					"jit_r13",
+					"jit_r14",
+					"jit_r15",
+					"jit_r16",
+					"jit_r17",
+					"jit_r18",
+					"jit_r19",
+					"jit_r20",
+					"jit_r21",
+					"jit_r22",
+					"jit_r23",
+					"jit_r24",
+					"jit_r25",
+					"jit_r26",
+					"jit_r27",
+					"jit_r28",
+					"jit_r29",
+					"jit_r30",
+					"jit_r31"
+			};
+
+			jitCalleeDestroyedRegisterList = new int[] {
+					0x00,   /* jit_r0 */
+					0x01,   /* jit_r1 */
+					0x02,   /* jit_r2 */
+					0x03,   /* jit_r3 */
+					0x04,   /* jit_r4 */
+					0x05,   /* jit_r5 */
+					0x06,   /* jit_r6 */
+					0x07,   /* jit_r7 */
+					0x08,   /* jit_r8 */
+					0x09,   /* jit_r9 */
+					0x0A,   /* jit_r10 */
+					0x0B,   /* jit_r11 */
+					0x0C,   /* jit_r12 */
+					0x0D,   /* jit_r13 */
+					0x0E,   /* jit_r14 */
+					0x0F,   /* jit_r15 */
+					0x10,   /* jit_r16 */
+					0x11,   /* jit_r17 */
+					0x12,   /* jit_r18 */
+					0x13,   /* jit_r19 */
+					0x14    /* jit_r20 */
+			};
+
+			jitCalleeSavedRegisterList = new int[] {
+					0x15,   /* jit_r21 */
+					0x16,   /* jit_r22 */
+					0x17,   /* jit_r23 */
+					0x18,   /* jit_r24 */
+					0x19,   /* jit_r25 */
+					0x1A,   /* jit_r26 */
+					0x1B,   /* jit_r27 */
+					0x1C    /* jit_r28 */
+			};
 		} else {
 			throw new InternalError("Unsupported platform");
 		}
