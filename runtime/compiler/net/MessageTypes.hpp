@@ -203,6 +203,7 @@ enum MessageType : uint16_t
    VM_instanceOfOrCheckCastNoCacheUpdate = 309,
    VM_getCellSizeForSizeClass = 310,
    VM_getObjectSizeClass = 311,
+   VM_stackWalkerMaySkipFramesSVM = 312,
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 400,
