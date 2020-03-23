@@ -37,4 +37,5 @@ target_link_libraries(j9modronstandard
 
 		omrgc
 		j9gcbase
+		j9modronstartup
 )
