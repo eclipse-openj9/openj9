@@ -932,7 +932,7 @@ static void genHeapAlloc(TR::CodeGenerator  *cg,
                          TR::LabelSymbol     *callLabel,
                          int32_t            allocSize)
    {
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (cg->comp()->getOptions()->realTimeGC())
       {
       TR_ASSERT(0, "genHeapAlloc() not supported for RT");
       return;

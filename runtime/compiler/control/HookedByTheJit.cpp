@@ -6800,13 +6800,14 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
    bool yieldHappened = false;
    bool doStackWalkForThread = true;
 
+   bool isRealTimeGC = TR::Options::getCmdLineOptions()->realTimeGC();
    do
       {
       J9VMThread *thread = vmThread;
       yieldHappened = false;
       do
          {
-         if (TR::Options::getCmdLineOptions()->realTimeGC() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableIncrementalCCR))
+         if (isRealTimeGC && !TR::Options::getCmdLineOptions()->getOption(TR_DisableIncrementalCCR))
             doStackWalkForThread = (thread->dropFlags & 0x1) ? false : true;
 
          if (doStackWalkForThread)
@@ -6818,7 +6819,7 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
             walkState.walkThread = thread;
             vmThread->javaVM->walkStackFrames(vmThread, &walkState);
 
-            if (TR::Options::getCmdLineOptions()->realTimeGC() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableIncrementalCCR))
+            if (isRealTimeGC && !TR::Options::getCmdLineOptions()->getOption(TR_DisableIncrementalCCR))
                {
                thread->dropFlags |= 0x1;
                yieldHappened = condYield(omrVMThread, J9_GC_METRONOME_UTILIZATION_COMPONENT_JIT);
@@ -6884,7 +6885,7 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
          OMR::FaintCacheBlock *next = cursor->_next;
          jitReleaseCodeCollectMetaData(jitConfig, vmThread, metaData, cursor);
          cursor = next;
-         if (TR::Options::getCmdLineOptions()->realTimeGC() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableIncrementalCCR))
+         if (isRealTimeGC && !TR::Options::getCmdLineOptions()->getOption(TR_DisableIncrementalCCR))
             condYieldCounter += condYield(omrVMThread, J9_GC_METRONOME_UTILIZATION_COMPONENT_JIT);
 
          continue;
@@ -6904,7 +6905,7 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
       cursor->_isStillLive = false;
       }
 
-   if (TR::Options::getCmdLineOptions()->realTimeGC() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableIncrementalCCR))
+   if (isRealTimeGC && !TR::Options::getCmdLineOptions()->getOption(TR_DisableIncrementalCCR))
       { //clear flags
       J9VMThread *thr = vmThread;
       do

@@ -201,6 +201,8 @@ enum MessageType : uint16_t
    VM_getJ2IThunk = 307,
    VM_needsInvokeExactJ2IThunk = 308,
    VM_instanceOfOrCheckCastNoCacheUpdate = 309,
+   VM_getCellSizeForSizeClass = 310,
+   VM_getObjectSizeClass = 311,
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 400,

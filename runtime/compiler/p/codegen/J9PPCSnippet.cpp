@@ -1255,12 +1255,12 @@ void TR::createCCPreLoadedCode(uint8_t *CCPreLoadedCodeBase, uint8_t *CCPreLoade
    {
    /* If you modify this make sure you update CCPreLoadedCodeSize above as well */
 
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
-      return;
-
    // We temporarily clobber the first and append instructions so we can use high level codegen to generate pre-loaded code
    // So save the original values here and restore them when done
    TR::Compilation *comp = cg->comp();
+   if (comp->getOptions()->realTimeGC())
+      return;
+
    TR::Instruction *curFirst = cg->getFirstInstruction();
    TR::Instruction *curAppend = cg->getAppendInstruction();
    uint8_t *curBinaryBufferStart = cg->getBinaryBufferStart();
@@ -1315,7 +1315,7 @@ uint8_t *TR::PPCAllocPrefetchSnippet::emitSnippetBody()
    getSnippetLabel()->setCodeLocation(buffer);
    TR::InstOpCode opcode;
 
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       return NULL;
 
    TR_ASSERT((uintptr_t)((cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_AllocPrefetch, cg())) != 0xDEADBEEF,
@@ -1347,7 +1347,7 @@ TR::PPCAllocPrefetchSnippet::print(TR::FILE *pOutFile, TR_Debug * debug)
 uint32_t TR::PPCAllocPrefetchSnippet::getLength(int32_t estimatedCodeStart)
    {
 
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (cg()->comp()->getOptions()->realTimeGC())
       return 0;
 
    return PPC_INSTRUCTION_LENGTH;
@@ -1368,7 +1368,7 @@ uint8_t *TR::PPCNonZeroAllocPrefetchSnippet::emitSnippetBody()
    getSnippetLabel()->setCodeLocation(buffer);
    TR::InstOpCode opcode;
 
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       return NULL;
 
    TR_ASSERT((uintptr_t)((cg()->getCodeCache())->getCCPreLoadedCodeAddress(TR_NonZeroAllocPrefetch, cg())) != 0xDEADBEEF,
@@ -1400,7 +1400,7 @@ TR::PPCNonZeroAllocPrefetchSnippet::print(TR::FILE *pOutFile, TR_Debug * debug)
 uint32_t TR::PPCNonZeroAllocPrefetchSnippet::getLength(int32_t estimatedCodeStart)
    {
 
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (cg()->comp()->getOptions()->realTimeGC())
       return 0;
 
    return PPC_INSTRUCTION_LENGTH;

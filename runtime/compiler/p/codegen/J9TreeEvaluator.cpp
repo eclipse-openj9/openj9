@@ -372,7 +372,7 @@ VMoutlinedHelperWrtbarEvaluator(
       return;
 
    const bool doWrtbar = gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always
-         || TR::Options::getCmdLineOptions()->realTimeGC();
+         || comp->getOptions()->realTimeGC();
 
    const bool doCardMark = !node->isNonHeapObjectWrtBar() && (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental);
 
@@ -448,7 +448,7 @@ TR::Register *outlinedHelperWrtbarEvaluator(TR::Node *node, TR::CodeGenerator *c
 
    // Under real-time, store happens after the wrtbar
    // For other GC modes, store happens before the wrtbar
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       {
       }
    else
@@ -517,7 +517,7 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
    bool definitelyHeapObject = false, definitelyNonHeapObject = false;
    bool doCrdMrk = (gcMode == gc_modron_wrtbar_cardmark_and_oldcheck);
    bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always
-         || TR::Options::getCmdLineOptions()->realTimeGC());
+         || comp->getOptions()->realTimeGC());
    bool temp3RegIsNull = (temp3Reg == NULL);
 
    TR_ASSERT(doWrtBar == true, "VMnonNullSrcWrtBarCardCheckEvaluator: Invalid call to VMnonNullSrcWrtBarCardCheckEvaluator\n");
@@ -543,7 +543,7 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
       wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalAndConcurrentMarkSymbolRef(comp->getMethodSymbol());
    else if (gcMode == gc_modron_wrtbar_oldcheck)
       wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalSymbolRef(comp->getMethodSymbol());
-   else if (TR::Options::getCmdLineOptions()->realTimeGC())
+   else if (comp->getOptions()->realTimeGC())
       {
       if (wrtbarNode->getOpCodeValue() == TR::awrtbar || wrtbarNode->isUnsafeStaticWrtBar())
          wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierClassStoreRealTimeGCSymbolRef(comp->getMethodSymbol());
@@ -553,7 +553,7 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
    else
       wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef(comp->getMethodSymbol());
 
-   if (gcMode != gc_modron_wrtbar_always && !TR::Options::getCmdLineOptions()->realTimeGC())
+   if (gcMode != gc_modron_wrtbar_always && !comp->getOptions()->realTimeGC())
       {
       bool inlineCrdmrk = (doCrdMrk && !definitelyNonHeapObject);
       // object header flags now occupy 4bytes (instead of 8) on 64-bit. Keep it in temp1Reg for following checks.
@@ -654,7 +654,7 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
       TR::Instruction * i = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, temp2Reg, temp1Reg, condReg, J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, doneLabel, condReg);
       }
-   else if (TR::Options::getCmdLineOptions()->realTimeGC())
+   else if (comp->getOptions()->realTimeGC())
       {
       if (!dstAddrComputed)
          {
@@ -801,14 +801,14 @@ static void VMwrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register
    TR::Compilation *comp = cg->comp();
    auto gcMode = TR::Compiler->om.writeBarrierType();
    bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always
-         || TR::Options::getCmdLineOptions()->realTimeGC());
+         || comp->getOptions()->realTimeGC());
    bool doCrdMrk = ((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && !node->isNonHeapObjectWrtBar());
    TR::LabelSymbol *label;
    TR::Register *cr0, *temp1Reg, *temp2Reg, *temp3Reg = NULL, *temp4Reg = NULL;
    uint8_t numRegs = (doWrtBar && doCrdMrk) ? 7 : 5;
 
    //Also need to pass in destinationAddress to jitWriteBarrierStoreMetronome
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       numRegs += 3;
 
    if (doWrtBar || doCrdMrk)
@@ -838,7 +838,7 @@ static void VMwrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register
       TR::addDependency(conditions, cr0, TR::RealRegister::cr0, TR_CCR, cg);
       TR::addDependency(conditions, dstReg, TR::RealRegister::gr3, TR_GPR, cg);
       TR::addDependency(conditions, temp1Reg, TR::RealRegister::gr11, TR_GPR, cg);
-      if (TR::Options::getCmdLineOptions()->realTimeGC())
+      if (comp->getOptions()->realTimeGC())
          {
          TR::addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
          conditions->getPostConditions()->getRegisterDependency(3)->setExcludeGPR0(); //3=temp2Reg
@@ -879,12 +879,12 @@ static void VMwrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register
          }
       if (needDeps)
          {
-         if (TR::Options::getCmdLineOptions()->realTimeGC())
+         if (comp->getOptions()->realTimeGC())
             TR::addDependency(conditions, srcReg, TR::RealRegister::gr5, TR_GPR, cg);
          else
             TR::addDependency(conditions, srcReg, TR::RealRegister::gr4, TR_GPR, cg);
          }
-      if (!srcNonNull && !TR::Options::getCmdLineOptions()->realTimeGC())
+      if (!srcNonNull && !comp->getOptions()->realTimeGC())
          {
          generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpi, node, cr0, srcReg, NULLVALUE);
          generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, label, cr0);
@@ -898,7 +898,7 @@ static void VMwrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register
          cg->stopUsingRegister(temp3Reg);
          cg->stopUsingRegister(temp4Reg);
          }
-      else if (TR::Options::getCmdLineOptions()->realTimeGC())
+      else if (comp->getOptions()->realTimeGC())
          cg->stopUsingRegister(temp3Reg);
       }
    else if (doCrdMrk)
@@ -1372,7 +1372,7 @@ TR::Register *J9::Power::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::Cod
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (comp->fe());
 
-   if (comp->isOptServer() && !comp->compileRelocatableCode() && !TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->isOptServer() && !comp->compileRelocatableCode() && !comp->getOptions()->realTimeGC())
       {
       if (cg->comp()->target().cpu.id() < TR_PPCp8)
          {
@@ -1431,7 +1431,7 @@ TR::Register *J9::Power::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::Cod
       }
 
    // RealTimeGC write barriers occur BEFORE the store
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       {
       tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, TR::Compiler->om.sizeofReferenceAddress(), cg);
       TR::Register *destinationAddressRegister = cg->allocateRegister();
@@ -1600,7 +1600,7 @@ TR::Register *J9::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Co
       }
 
    // RealTimeGC write barriers occur BEFORE the store
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       {
       tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, sizeofMR, cg);
 
@@ -3632,7 +3632,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
    static bool oldArrayStoreCHK = feGetEnv("TR_newArrayStoreCheck") == NULL;
-   if (!comp->compileRelocatableCode() && !TR::Options::getCmdLineOptions()->realTimeGC() && !comp->useCompressedPointers() && !oldArrayStoreCHK)
+   if (!comp->compileRelocatableCode() && !comp->getOptions()->realTimeGC() && !comp->useCompressedPointers() && !oldArrayStoreCHK)
       return outlinedHelperArrayStoreCHKEvaluator(node, cg);
 
    // Note: we take advantage of the register conventions of the helpers by limiting register usages on
@@ -3642,7 +3642,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
 
    auto gcMode = TR::Compiler->om.writeBarrierType();
    bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always)
-         || (TR::Options::getCmdLineOptions()->realTimeGC());
+         || (comp->getOptions()->realTimeGC());
    bool doCrdMrk = ((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && !firstChild->isNonHeapObjectWrtBar());
 
    TR::Node *sourceChild = firstChild->getSecondChild();
@@ -3745,7 +3745,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
    int32_t numDeps = 11;
    if (usingCompressedPointers)
       numDeps++;
-   if ((gcMode == gc_modron_wrtbar_satb) || (TR::Options::getCmdLineOptions()->realTimeGC()))
+   if ((gcMode == gc_modron_wrtbar_satb) || (comp->getOptions()->realTimeGC()))
       numDeps++;
    if (!firstChild->skipWrtBar())
       numDeps += 2;
@@ -3760,7 +3760,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
    // !!! Adding any dependency before the baseReg, you have to be careful with the excludeGPR0 order
    TR::addDependency(conditions, dstReg, TR::RealRegister::gr3, TR_GPR, cg);
 
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       TR::addDependency(conditions, srcReg, TR::RealRegister::gr5, TR_GPR, cg);
    else
       TR::addDependency(conditions, srcReg, TR::RealRegister::gr4, TR_GPR, cg);
@@ -3790,7 +3790,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
 
    TR::Register *dstAddrReg = NULL;
 
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       {
       dstAddrReg = cg->allocateRegister();
       TR::addDependency(conditions, dstAddrReg, TR::RealRegister::gr4, TR_GPR, cg);
@@ -3802,7 +3802,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
    //--Generate Test to see if 'sourceRegister' is NULL
    generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpli, node, condReg, srcReg, NULLVALUE);
    //--Generate Jump past ArrayStoreCHKEvaluator or WrtBar depending on GC policy
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, ((!TR::Options::getCmdLineOptions()->realTimeGC()) && doWrtBar) ? storeLabel : wbLabel, condReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, ((!comp->getOptions()->realTimeGC()) && doWrtBar) ? storeLabel : wbLabel, condReg);
 
    TR::LabelSymbol *helperCall = generateLabelSymbol(cg);
    VMarrayStoreCHKEvaluator(node, srcReg, dstReg, temp1Reg, temp2Reg, temp3Reg, temp4Reg, condReg, wbLabel, helperCall, cg);
@@ -3814,7 +3814,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, wbLabel);
 
-   if (!TR::Options::getCmdLineOptions()->realTimeGC())
+   if (!comp->getOptions()->realTimeGC())
       {
       if (usingCompressedPointers)
          generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, tempMR1, compressedReg);
@@ -3840,7 +3840,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
 
    if (doWrtBar)
       {
-      if (!TR::Options::getCmdLineOptions()->realTimeGC())
+      if (!comp->getOptions()->realTimeGC())
          generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
 
       //--Generate the store instruction skipped over if source is null
@@ -3878,7 +3878,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
 
    if (stopUsingSrc)
       cg->stopUsingRegister(srcReg);
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       cg->stopUsingRegister(dstAddrReg);
    cg->stopUsingRegister(temp1Reg);
    cg->stopUsingRegister(temp2Reg);
@@ -6131,7 +6131,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
    TR::ILOpCodes opCode = node->getOpCodeValue();
 
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       {
 #if defined(J9VM_GC_REALTIME)
       // Use temp3Reg to hold the javaVM.
@@ -6275,7 +6275,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
       //we're done
       return;
 #endif
-      } // if (TR::Options::getCmdLineOptions()->realTimeGC())
+      } // if (comp->getOptions()->realTimeGC())
    else
       {
       uint32_t maxSafeSize = cg->getMaxObjectSizeGuaranteedNotToOverflow();
@@ -6970,7 +6970,7 @@ static void genInitObjectHeader(TR::Node *node, TR::Instruction *&iCursor, TR_Op
                iCursor);
          }
       }
-   else if (!TR::Options::getCmdLineOptions()->realTimeGC())
+   else if (!comp->getOptions()->realTimeGC())
       {
       // If the object flags cannot be determined at compile time, we add a load for it.
       //
@@ -8879,7 +8879,7 @@ void J9::Power::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Registe
 
    if (!ageCheckIsNeeded && cardMarkIsNeeded)
       {
-      if (!TR::Options::getCmdLineOptions()->realTimeGC())
+      if (!comp->getOptions()->realTimeGC())
 
          {
          TR::Register *cndReg = cg->allocateRegister(TR_CCR);
@@ -9055,7 +9055,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
 
    auto gcMode = TR::Compiler->om.writeBarrierType();
    bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always
-         || TR::Options::getCmdLineOptions()->realTimeGC());
+         || comp->getOptions()->realTimeGC());
    bool doCrdMrk = (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental);
 
    firstChild = node->getFirstChild();
@@ -9132,7 +9132,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
    doneLabel = generateLabelSymbol(cg);
    storeLabel = generateLabelSymbol(cg);
 
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       wrtBarEndLabel = storeLabel;
    else
       wrtBarEndLabel = doneLabel;
@@ -9210,7 +9210,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
       }
 #endif //OMR_GC_CONCURRENT_SCAVENGER
 
-   if (!TR::Options::getCmdLineOptions()->realTimeGC())
+   if (!comp->getOptions()->realTimeGC())
       resultReg = genCAS(node, cg, objReg, offsetReg, oldVReg, newVReg, cndReg, doneLabel, secondChild, 0, true, (cg->comp()->target().is64Bit() && !comp->useCompressedPointers()));
 
    uint32_t numDeps = (doWrtBar || doCrdMrk) ? 13 : 11;
@@ -9271,14 +9271,14 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
       if (newVReg != translatedNode->getRegister())
          {
          TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
-         if (TR::Options::getCmdLineOptions()->realTimeGC())
+         if (comp->getOptions()->realTimeGC())
             TR::addDependency(conditions, translatedNode->getRegister(), TR::RealRegister::gr5, TR_GPR, cg);
          else
             TR::addDependency(conditions, translatedNode->getRegister(), TR::RealRegister::gr4, TR_GPR, cg);
          }
       else
          {
-         if (TR::Options::getCmdLineOptions()->realTimeGC())
+         if (comp->getOptions()->realTimeGC())
             TR::addDependency(conditions, newVReg, TR::RealRegister::gr5, TR_GPR, cg);
          else
             TR::addDependency(conditions, newVReg, TR::RealRegister::gr4, TR_GPR, cg);
@@ -9287,7 +9287,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
       TR::addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
 
       //Realtime needs the offsetReg to be preserved after the wrtbar to do the store in genCAS()
-      if (freeOffsetReg && !TR::Options::getCmdLineOptions()->realTimeGC())
+      if (freeOffsetReg && !comp->getOptions()->realTimeGC())
          {
          TR::addDependency(conditions, offsetReg, TR::RealRegister::gr11, TR_GPR, cg);
          temp2Reg = offsetReg;
@@ -9308,7 +9308,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
       TR::Register *dstAddrReg = NULL;
       bool dstAddrComputed = false;
 
-      if (TR::Options::getCmdLineOptions()->realTimeGC())
+      if (comp->getOptions()->realTimeGC())
          {
          dstAddrReg = cg->allocateRegister();
          TR::addDependency(conditions, dstAddrReg, TR::RealRegister::gr4, TR_GPR, cg);
@@ -9319,11 +9319,11 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
       VMnonNullSrcWrtBarCardCheckEvaluator(node, comp->useCompressedPointers() ? translatedNode->getRegister() : newVReg, objReg, cndReg, temp1Reg, temp2Reg, dstAddrReg, NULL,
             wrtBarEndLabel, conditions, NULL, dstAddrComputed, false, cg);
 
-      if (TR::Options::getCmdLineOptions()->realTimeGC())
+      if (comp->getOptions()->realTimeGC())
          cg->stopUsingRegister(dstAddrReg);
 
       cg->stopUsingRegister(temp1Reg);
-      if (!freeOffsetReg || TR::Options::getCmdLineOptions()->realTimeGC())
+      if (!freeOffsetReg || comp->getOptions()->realTimeGC())
          cg->stopUsingRegister(temp2Reg);
       }
    else if (!doWrtBar && doCrdMrk)
@@ -9368,7 +9368,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, storeLabel);
 
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       resultReg = genCAS(node, cg, objReg, offsetReg, oldVReg, newVReg, cndReg, doneLabel, secondChild, 0, true, (cg->comp()->target().is64Bit() && !comp->useCompressedPointers()));
 
    TR::addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -10945,7 +10945,7 @@ static TR::Register *inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::Code
    // wrt bar
    auto gcMode = TR::Compiler->om.writeBarrierType();
    bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always
-         || TR::Options::getCmdLineOptions()->realTimeGC());
+         || comp->getOptions()->realTimeGC());
    bool doCrdMrk = ((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && (!node->getOpCode().isWrtBar() || !node->isNonHeapObjectWrtBar()));
    if (doWrtBar)
       {
@@ -11124,7 +11124,7 @@ static TR::Register *inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::CodeG
    // WrtBar for this.head = q
    auto gcMode = TR::Compiler->om.writeBarrierType();
    bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always
-         || TR::Options::getCmdLineOptions()->realTimeGC());
+         || comp->getOptions()->realTimeGC());
    bool doCrdMrk = ((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && (!node->getOpCode().isWrtBar() || !node->isNonHeapObjectWrtBar()));
    if (doWrtBar)
       {
