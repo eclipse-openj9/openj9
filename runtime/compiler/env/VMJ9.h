@@ -628,7 +628,7 @@ public:
    uintptr_t                 getMaxObjectSizeForSizeClass();
    uintptr_t                 thisThreadAllocationCacheCurrentOffset(uintptr_t);
    uintptr_t                 thisThreadAllocationCacheTopOffset(uintptr_t);
-   uintptr_t                 getCellSizeForSizeClass(uintptr_t);
+   virtual uintptr_t         getCellSizeForSizeClass(uintptr_t);
    virtual uintptr_t         getObjectSizeClass(uintptr_t);
 
    uintptr_t                 thisThreadMonitorCacheOffset();

@@ -5737,7 +5737,7 @@ static void genHeapAlloc(
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
 
-   if (TR::Options::getCmdLineOptions()->realTimeGC())
+   if (comp->getOptions()->realTimeGC())
       {
 #if defined(J9VM_GC_REALTIME)
       // this will be bogus for variable length allocations because it only includes the header size (+ arraylet ptr for arrays)
@@ -6929,7 +6929,7 @@ static void genInitArrayHeader(
    TR::Compilation *comp = cg->comp();
 
    bool canUseFastInlineAllocation =
-      (!TR::Options::getCmdLineOptions()->realTimeGC() &&
+      (!comp->getOptions()->realTimeGC() &&
        !comp->generateArraylets()) ? true : false;
 
    // Initialize the array size
@@ -7674,7 +7674,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    // --------------------------------------------------------------------------------
 
    bool canUseFastInlineAllocation =
-      (!TR::Options::getCmdLineOptions()->realTimeGC() &&
+      (!comp->getOptions()->realTimeGC() &&
        !comp->generateArraylets()) ? true : false;
 
    bool useRepInstruction;
@@ -10032,9 +10032,9 @@ static void generateWriteBarrierCall(
    TR::LabelSymbol*       doneLabel,
    TR::CodeGenerator*     cg)
    {
-   TR_ASSERT(gcMode != gc_modron_wrtbar_satb && !TR::Options::getCmdLineOptions()->realTimeGC(), "This helper is not for RealTimeGC.");
-
    TR::Compilation *comp = cg->comp();
+   TR_ASSERT(gcMode != gc_modron_wrtbar_satb && !comp->getOptions()->realTimeGC(), "This helper is not for RealTimeGC.");
+
    uint8_t helperArgCount = 0;  // Number of arguments passed on the runtime helper.
    TR::SymbolReference *wrtBarSymRef = NULL;
 
@@ -10119,7 +10119,7 @@ void J9::X86::TreeEvaluator::VMwrtbarRealTimeWithoutStoreEvaluator(
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   TR_ASSERT(TR::Options::getCmdLineOptions()->realTimeGC(),"Call the non real-time barrier");
+   TR_ASSERT(comp->getOptions()->realTimeGC(),"Call the non real-time barrier");
    auto gcMode = TR::Compiler->om.writeBarrierType();
 
    if (node->getOpCode().isWrtBar() && node->skipWrtBar())
@@ -10346,7 +10346,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   TR_ASSERT(!(TR::Options::getCmdLineOptions()->realTimeGC()),"Call the real-time barrier");
+   TR_ASSERT(!(comp->getOptions()->realTimeGC()),"Call the real-time barrier");
    auto gcMode = TR::Compiler->om.writeBarrierType();
 
    if (node->getOpCode().isWrtBar() && node->skipWrtBar())
@@ -11017,7 +11017,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(
    TR::Register *sourceRegister = cg->evaluate(sourceObject);
 
    auto gcMode = TR::Compiler->om.writeBarrierType();
-   bool isRealTimeGC = (TR::Options::getCmdLineOptions()->realTimeGC())? true:false;
+   bool isRealTimeGC = (comp->getOptions()->realTimeGC())? true:false;
 
    bool usingCompressedPointers = false;
    bool usingLowMemHeap = false;
