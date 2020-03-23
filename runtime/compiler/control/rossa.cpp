@@ -634,9 +634,22 @@ freeJITConfig(J9JITConfig * jitConfig)
 extern "C" void
 jitExclusiveVMShutdownPending(J9VMThread * vmThread)
    {
-   #ifndef SMALL_APPTHREAD
-      getCompilationInfo(vmThread->javaVM->jitConfig)->stopCompilationThreads();
-   #endif
+#ifndef SMALL_APPTHREAD
+   J9JavaVM *javaVM = vmThread->javaVM;
+#if defined(J9VM_OPT_JITSERVER)
+   TR::CompilationInfo * compInfo = getCompilationInfo(javaVM->jitConfig);
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      TR_Listener *listener = ((TR_JitPrivateConfig*)(javaVM->jitConfig->privateConfig))->listener;
+      if (listener)
+         {
+         listener->stop();
+         }
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   getCompilationInfo(javaVM->jitConfig)->stopCompilationThreads();
+#endif
    }
 
 // Code cache callbacks to be used by the VM
