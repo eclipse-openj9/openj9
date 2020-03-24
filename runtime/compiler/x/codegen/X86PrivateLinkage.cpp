@@ -57,18 +57,13 @@
 #include "x/codegen/FPTreeEvaluator.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
+#include "OMR/Bytes.hpp"
 
 #ifdef TR_TARGET_64BIT
 #include "x/amd64/codegen/AMD64GuardedDevirtualSnippet.hpp"
 #else
 #include "x/codegen/GuardedDevirtualSnippet.hpp"
 #endif
-
-inline uint32_t align(uint32_t number, uint32_t requirement)
-   {
-   TR_ASSERT(requirement && ((requirement & (requirement -1)) == 0), "INCORRECT ALIGNMENT");
-   return (number + requirement - 1) & ~(requirement - 1);
-   }
 
 inline uint32_t gcd(uint32_t a, uint32_t b)
    {
@@ -635,7 +630,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       {
       int32_t frameSize = localSize + preservedRegsSize + ( _properties.getReservesOutgoingArgsInPrologue()? outgoingArgSize : 0 );
       uint32_t stackSize = frameSize + _properties.getRetAddressWidth();
-      uint32_t adjust = align(stackSize, _properties.getOutgoingArgAlignment()) - stackSize;
+      uint32_t adjust = OMR::align(stackSize, _properties.getOutgoingArgAlignment()) - stackSize;
       cg()->setStackFramePaddingSizeInBytes(adjust);
       cg()->setFrameSizeInBytes(frameSize + adjust);
       if (trace)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,7 @@ namespace J9 { typedef CodeCache CodeCacheConnector; }
 #include "runtime/OMRCodeCache.hpp"
 #include "env/IO.hpp"
 #include "env/VMJ9.h"
+#include "OMR/Bytes.hpp" // Temporary
 
 struct J9MemorySegment;
 struct J9ClassLoader;
@@ -100,6 +101,9 @@ public:
 
    OMR::CodeCacheHashEntry *  findUnresolvedMethod(void *constPool, int32_t constPoolIndex);
 
+   // Temporary
+   void alignWarmCodeAlloc(uint32_t round)  { _warmCodeAlloc = reinterpret_cast<uint8_t *>(OMR::align(reinterpret_cast<size_t>(_warmCodeAlloc), round)); }
+   void alignColdCodeAlloc(uint32_t round)  { _coldCodeAlloc = reinterpret_cast<uint8_t *>(OMR::align(reinterpret_cast<size_t>(_coldCodeAlloc), round)); }
 
   /**
    * @brief Restore warmCodeAlloc/coldCodeAlloc and trampoline pointers to their initial positions

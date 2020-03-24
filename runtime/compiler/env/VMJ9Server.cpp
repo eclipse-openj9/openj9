@@ -100,7 +100,7 @@ TR_J9ServerVM::isSameOrSuperClass(J9Class *superClass, J9Class *subClass)
    while (classPtr)
       {
       // getSuperClass might invoke a remote call with a very low probability
-      classPtr = getSuperClass(classPtr); 
+      classPtr = getSuperClass(classPtr);
       if (classPtr == candidateSuperClassPtr)
          return true;
       }
@@ -155,7 +155,7 @@ TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_Opaque
 
 TR_YesNoMaybe
 TR_J9ServerVM::isInstanceOf(TR_OpaqueClassBlock *a, TR_OpaqueClassBlock *b, bool objectTypeIsFixed, bool castTypeIsFixed, bool optimizeForAOT)
-   { 
+   {
    // use instanceOfOrCheckCast to get the result, because
    // their logic is mostly the same, remote call might be made from there
    J9Class * objectClass   = (J9Class *) a;
@@ -448,7 +448,7 @@ TR_J9ServerVM::jitStaticsAreSame(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_R
    TR_ResolvedJ9JITServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JITServerMethod*>(method2);
    TR_ResolvedMethod *clientMethod1 = serverMethod1->getRemoteMirror();
    TR_ResolvedMethod *clientMethod2 = serverMethod2->getRemoteMirror();
-   
+
    bool result = false;
 
    bool sigSame = true;
@@ -460,7 +460,7 @@ TR_J9ServerVM::jitStaticsAreSame(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_R
       {
       if (sigSame)
          {
-         // if name and signature comparison is inconclusive, make a remote call 
+         // if name and signature comparison is inconclusive, make a remote call
          stream->write(JITServer::MessageType::VM_jitStaticsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2);
          result = std::get<0>(stream->read<bool>());
          }
@@ -494,7 +494,7 @@ TR_J9ServerVM::classHasBeenExtended(TR_OpaqueClassBlock *clazz)
    uintptr_t classDepthAndFlags = 0;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    bool dataFromCache = JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
-   
+
    if(dataFromCache)
       {
       // Check if flag is set, since once set it can not be removed
@@ -1096,7 +1096,7 @@ TR::CodeCache *
 TR_J9ServerVM::getDesignatedCodeCache(TR::Compilation *comp)
    {
    TR::CodeCache * codeCache = TR_J9VMBase::getDesignatedCodeCache(comp);
-   
+
    if (codeCache)
       {
       // memorize the allocation pointers
@@ -1575,7 +1575,7 @@ TR_J9ServerVM::instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* cast
       if (it != _compInfoPT->getClientData()->getROMClassMap().end())
          {
          TR_OpaqueClassBlock *instanceClassOffset = (TR_OpaqueClassBlock *) instanceClass;
-         TR_OpaqueClassBlock *castClassOffset = (TR_OpaqueClassBlock *) castClass; 
+         TR_OpaqueClassBlock *castClassOffset = (TR_OpaqueClassBlock *) castClass;
 
          // this sometimes results in remote messages, but it happens relatively infrequently
          for (TR_OpaqueClassBlock *clazz = getSuperClass(instanceClassOffset); clazz; clazz = getSuperClass(clazz))
@@ -1592,11 +1592,11 @@ TR_J9ServerVM::instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* cast
             {
             int instanceNumDims = 0, castNumDims = 0;
             // these are the leaf classes of the arrays, unless the leaf class is primitive.
-            // in that case, return values are one-dimensional arrays, and 
+            // in that case, return values are one-dimensional arrays, and
             // instanceNumDims is 1 less than the actual number of array dimensions
             instanceClassOffset = getBaseComponentClass(instanceClassOffset, instanceNumDims);
             castClassOffset = getBaseComponentClass(castClassOffset, castNumDims);
-                       
+
             if (instanceNumDims < castNumDims)
                return false;
             if (instanceNumDims != 0 && instanceNumDims == castNumDims)
@@ -2364,7 +2364,7 @@ TR_J9SharedCacheServerVM::getClassFlagsValue(TR_OpaqueClassBlock * classPointer)
 
    bool validated = false;
    uintptr_t classFlags = TR_J9ServerVM::getClassFlagsValue(classPointer);
-   
+
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
       SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
@@ -2446,7 +2446,7 @@ TR_J9SharedCacheServerVM::getDesignatedCodeCache(TR::Compilation *comp)
    // For AOT we need some alignment
    if (codeCache)
       {
-      codeCache->alignWarmCodeAlloc(_jitConfig->codeCacheAlignment - 1);
+      codeCache->alignWarmCodeAlloc(_jitConfig->codeCacheAlignment);
 
       // For AOT we must install the beginning of the code cache
       comp->setRelocatableMethodCodeStart((uint32_t *)codeCache->getWarmCodeAlloc());
