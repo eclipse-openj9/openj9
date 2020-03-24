@@ -9096,9 +9096,6 @@ TR_J9SharedCacheVM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolRefe
    return 0;
    }
 
-
-extern U_8 *align(U_8 *ptr, U_32 alignment);
-
 // Multiple codeCache support
 TR::CodeCache *
 TR_J9SharedCacheVM::getDesignatedCodeCache(TR::Compilation *comp)
@@ -9112,7 +9109,7 @@ TR_J9SharedCacheVM::getDesignatedCodeCache(TR::Compilation *comp)
    // For AOT we need some alignment
    if (codeCache)
       {
-      codeCache->alignWarmCodeAlloc(_jitConfig->codeCacheAlignment - 1);
+      codeCache->alignWarmCodeAlloc(_jitConfig->codeCacheAlignment);
 
       // For AOT we must install the beginning of the code cache
       comp->setRelocatableMethodCodeStart((uint32_t *)codeCache->getWarmCodeAlloc());

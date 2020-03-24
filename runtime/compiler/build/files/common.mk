@@ -375,7 +375,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     omr/compiler/env/OMRCompilerEnv.cpp \
     omr/compiler/env/OMRIO.cpp \
     omr/compiler/env/OMRKnownObjectTable.cpp \
-    omr/compiler/runtime/Alignment.cpp \
     omr/compiler/runtime/CodeCacheTypes.cpp \
     omr/compiler/runtime/OMRCodeCache.cpp \
     omr/compiler/runtime/OMRCodeCacheConfig.cpp \
