@@ -390,7 +390,7 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
             TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
             // JITServer KOT:
             // This method is called by JITClientCHTableCommit() at the client.
-            // Although accessing VM is not an issue, getIndex() could update the KOT
+            // Although accessing VM is not an issue, getOrCreateIndex() could update the KOT
             // at the client directly and the KOT at the server could be out of sync.
             // However, JITClientCHTableCommit() is called at the end of compilation,
             // and therefore it cannot cause any issues.
@@ -399,7 +399,7 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
             currentIndex = TR::KnownObjectTable::UNKNOWN;
             uintptr_t currentEpoch = fej9->getVolatileReferenceField(*mcsReferenceLocation, "epoch", "Ljava/lang/invoke/MethodHandle;");
             if (currentEpoch)
-               currentIndex = knot->getIndex(currentEpoch);
+               currentIndex = knot->getOrCreateIndex(currentEpoch);
             if (info->_mutableCallSiteEpoch == currentIndex)
                cookie = fej9->mutableCallSiteCookie(*mcsReferenceLocation, potentialCookie);
             else

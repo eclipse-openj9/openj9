@@ -557,7 +557,7 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
                      TR::VMAccessCriticalSection createSymRefWithKnownObject(comp->fej9());
                      uintptr_t jlClass = (uintptr_t)J9VM_J9CLASS_TO_HEAPCLASS((J9Class*)baseObject->getSymbol()->castToStaticSymbol()->getStaticAddress());
                      TR_ASSERT(jlClass, "java/lang/Class reference from heap class must be non null");
-                     TR::KnownObjectTable::Index knotIndex = knot->getIndexAt(&jlClass);
+                     TR::KnownObjectTable::Index knotIndex = knot->getOrCreateIndexAt(&jlClass);
                      if (knotIndex != TR::KnownObjectTable::UNKNOWN)
                         {
                         improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), knotIndex);
@@ -909,7 +909,7 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
 
                   if (knot)
                      {
-                     TR::KnownObjectTable::Index knotIndex = knot->getIndexAt(&targetObjectReference);
+                     TR::KnownObjectTable::Index knotIndex = knot->getOrCreateIndexAt(&targetObjectReference);
                      if (knotIndex != TR::KnownObjectTable::UNKNOWN)
                         improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), knotIndex);
                      }

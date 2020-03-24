@@ -289,7 +289,7 @@ MethodHandleThunkDetails::printDetails(TR_FrontEnd *fe, TR::FILE *file)
    // annoying: knot can only be accessed from the compilation object which isn't always handy: wait for thread locals
    TR::KnownObjectTable *knot = fe->getKnownObjectTable();
    if (knot)
-      trfprintf(file, "obj%d,%s", knot->getIndexAt(getHandleRef()), fe->sampleSignature((TR_OpaqueMethodBlock *)getMethod()));
+      trfprintf(file, "obj%d,%s", knot->getOrCreateIndexAt(getHandleRef()), fe->sampleSignature((TR_OpaqueMethodBlock *)getMethod()));
    else
 #endif
       trfprintf(file, "%p,%s", getHandleRef(), fe->sampleSignature((TR_OpaqueMethodBlock *)getMethod()));
