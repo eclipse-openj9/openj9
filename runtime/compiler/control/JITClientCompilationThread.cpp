@@ -2410,7 +2410,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                haveFilterList[i] = (fe->getReferenceElement(filters, i) != 0) ? 1 : 0;
                if (knotEnabled)
                   {
-                  filterIndexList[i] = knot->getIndex(fe->getReferenceElement(filters, i));
+                  filterIndexList[i] = knot->getOrCreateIndex(fe->getReferenceElement(filters, i));
                   filterObjectReferenceLocationList[i] = knot->getPointerLocation(filterIndexList[i]);
                   }
                }
@@ -2622,7 +2622,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                           std::string((char*) bodyInfo->getMethodInfo(), sizeof(TR_PersistentMethodInfo)));
          }
          break;
-      case MessageType::KnownObjectTable_getIndex:
+      case MessageType::KnownObjectTable_getOrCreateIndex:
          {
          uintptr_t objectPointer = std::get<0>(client->getRecvData<uintptr_t>());
          TR::KnownObjectTable::Index index = TR::KnownObjectTable::UNKNOWN;
@@ -2630,17 +2630,17 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 
             {
             TR::VMAccessCriticalSection knownObjectTableGetIndex(fe);
-            index = knot->getIndex(objectPointer);
+            index = knot->getOrCreateIndex(objectPointer);
             objectPointerReference = knot->getPointerLocation(index);
             }
 
          client->write(response, index, objectPointerReference);
          }
          break;
-      case MessageType::KnownObjectTable_getIndexAt:
+      case MessageType::KnownObjectTable_getOrCreateIndexAt:
          {
          uintptr_t *objectPointerReference = std::get<0>(client->getRecvData<uintptr_t*>());
-         client->write(response, knot->getIndexAt(objectPointerReference));
+         client->write(response, knot->getOrCreateIndexAt(objectPointerReference));
          }
          break;
       case MessageType::KnownObjectTable_getPointer:
@@ -2705,7 +2705,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 
                   if (createKnownObject)
                      {
-                     knotIndex = knot->getIndexAt((uintptr_t*)dataAddress);
+                     knotIndex = knot->getOrCreateIndexAt((uintptr_t*)dataAddress);
                      objectPointerReference = knot->getPointerLocation(knotIndex);
                      }
                   }
@@ -2734,7 +2734,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                uintptr_t currentEpoch = fej9->getVolatileReferenceField(mcsObject, "epoch", "Ljava/lang/invoke/MethodHandle;");
                if (currentEpoch)
                   {
-                  knotIndex = knot->getIndex(currentEpoch);
+                  knotIndex = knot->getOrCreateIndex(currentEpoch);
                   objectPointerReference = knot->getPointerLocation(knotIndex);
                   }
                }
@@ -2764,7 +2764,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             if (fieldDeclaringClass && fe->isInstanceOf(baseObjectClass, fieldDeclaringClass, true) == TR_yes)
                {
                fieldAddress = fe->getReferenceFieldAtAddress(baseObjectAddress + fieldOffset);
-               resultIndex = knot->getIndex(fieldAddress);
+               resultIndex = knot->getOrCreateIndex(fieldAddress);
                objectPointerReference = knot->getPointerLocation(resultIndex);
                }
             }
@@ -2789,7 +2789,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             TR_ASSERT_FATAL(fe->isInstanceOf(receiverClass, mutableCallsiteClass, true) == TR_yes, "receiver of mutableCallsite_getTarget must be instance of MutableCallSite (*%p)", knot->getPointerLocation(receiverIndex));
             uintptr_t fieldAddress = fe->getReferenceFieldAt(receiverAddress, targetFieldOffset);
 
-            resultIndex = knot->getIndex(fieldAddress);
+            resultIndex = knot->getOrCreateIndex(fieldAddress);
             objectPointerReference = knot->getPointerLocation(resultIndex);
             }
 
@@ -2815,7 +2815,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 
             if (knotEnabled && knot)
                {
-               resultIndex = knot->getIndex(methodHandle);
+               resultIndex = knot->getOrCreateIndex(methodHandle);
                objectPointerReference = knot->getPointerLocation(resultIndex);
                }
             }
@@ -2835,7 +2835,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             uintptr_t jlClass = (uintptr_t)J9VM_J9CLASS_TO_HEAPCLASS((J9Class*)staticAddress);
             TR_ASSERT(jlClass, "java/lang/Class reference from heap class must be non null");
 
-            resultIndex = knot->getIndexAt(&jlClass);
+            resultIndex = knot->getOrCreateIndexAt(&jlClass);
             objectPointerReference = knot->getPointerLocation(resultIndex);
             }
 
@@ -2861,12 +2861,23 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 
             if (knotEnabled && knot)
                {
-               resultIndex = knot->getIndexAt(&targetObjectReference);
+               resultIndex = knot->getOrCreateIndexAt(&targetObjectReference);
                objectPointerReference = knot->getPointerLocation(resultIndex);
                }
             }
 
          client->write(response, resultIndex, objectPointerReference, targetObjectReference);
+         }
+         break;
+      case MessageType::KnownObjectTable_getKnownObjectTableDumpInfo:
+         {
+         client->getRecvData<JITServer::Void>();
+
+         std::vector<TR_KnownObjectTableDumpInfo> knownObjectTableDumpInfoList;
+
+         knot->getKnownObjectTableDumpInfo(knownObjectTableDumpInfoList);
+
+         client->write(response, knownObjectTableDumpInfoList);
          }
          break;
       default:

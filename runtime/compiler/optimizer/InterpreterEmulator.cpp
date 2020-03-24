@@ -136,7 +136,7 @@ InterpreterEmulator::maintainStackForGetField()
                if (fieldDeclaringClass && comp()->fej9()->isInstanceOf(baseObjectClass, fieldDeclaringClass, true) == TR_yes)
                   {
                   uintptr_t fieldAddress = comp()->fej9()->getReferenceFieldAtAddress(baseObjectAddress + fieldOffset);
-                  newOperand = new (trStackMemory()) KnownObjOperand(knot->getIndex(fieldAddress));
+                  newOperand = new (trStackMemory()) KnownObjOperand(knot->getOrCreateIndex(fieldAddress));
                   int32_t len = 0;
                   debugTrace(tracer(), "dereference obj%d (%p)from field %s(offset = %d) of base obj%d(%p)\n",
                         newOperand->getKnownObjectIndex(), (void *)fieldAddress, _calltarget->_calleeMethod->fieldName(cpIndex, len, this->trMemory()),
@@ -393,7 +393,7 @@ InterpreterEmulator::getReturnValueForInvokevirtual(TR_ResolvedMethod *callee)
             TR_OpaqueClassBlock *receiverClass = comp()->fej9()->getObjectClass(receiverAddress);
             TR_ASSERT_FATAL(comp()->fej9()->isInstanceOf(receiverClass, mutableCallsiteClass, true) == TR_yes, "receiver of mutableCallsite_getTarget must be instance of MutableCallSite (*%p)", knot->getPointerLocation(receiverIndex));
             uintptr_t fieldAddress = comp()->fej9()->getReferenceFieldAt(receiverAddress, targetFieldOffset);
-            resultIndex = knot->getIndex(fieldAddress);
+            resultIndex = knot->getOrCreateIndex(fieldAddress);
             result = new (trStackMemory()) MutableCallsiteTargetOperand(resultIndex, receiverIndex);
             }
          }
@@ -481,7 +481,7 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
                uintptr_t methodHandle = *_calltarget->_calleeMethod->getMethodHandleLocation();
                vmSlot = fej9->getInt64Field(methodHandle, "vmSlot");
                jlClass = fej9->getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
-               debugTrace(tracer(), "refine resolved method for leaf methodHandle [obj%d]\n", knot ? knot->getIndex(methodHandle) : -1);
+               debugTrace(tracer(), "refine resolved method for leaf methodHandle [obj%d]\n", knot ? knot->getOrCreateIndex(methodHandle) : -1);
                }
 
             if (isInterface)
@@ -611,7 +611,7 @@ InterpreterEmulator::visitInvokedynamic()
       isIndirectCall = true;
       uintptr_t *entryLocation = (uintptr_t*)owningMethod->callSiteTableEntryAddress(cpIndex);
       // Add callsite handle to known object table
-      knot->getIndexAt((uintptr_t*)entryLocation);
+      knot->getOrCreateIndexAt((uintptr_t*)entryLocation);
       TR_ResolvedMethod * resolvedMethod = comp()->fej9()->createMethodHandleArchetypeSpecimen(this->trMemory(), entryLocation, owningMethod);
       bool allconsts= false;
 

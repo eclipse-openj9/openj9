@@ -581,7 +581,7 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
             currentIndex = TR::KnownObjectTable::UNKNOWN;
             uintptr_t currentEpoch = fej9->getVolatileReferenceField(*mcsReferenceLocation, "epoch", "Ljava/lang/invoke/MethodHandle;");
             if (currentEpoch)
-               currentIndex = knot->getIndex(currentEpoch);
+               currentIndex = knot->getOrCreateIndex(currentEpoch);
             if (info->mutableCallSiteEpoch() == currentIndex)
                cookie = fej9->mutableCallSiteCookie(*mcsReferenceLocation, potentialCookie);
             else

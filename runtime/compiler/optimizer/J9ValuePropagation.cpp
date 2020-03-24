@@ -555,7 +555,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
                if (knot)
                   {
-                  TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptr_t*)(arrayComponentClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
+                  TR::KnownObjectTable::Index knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)(arrayComponentClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
                   addBlockOrGlobalConstraint(node,
                         TR::VPClass::create(this,
                            TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
@@ -632,7 +632,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
                if (knot)
                   {
-                  TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptr_t*)(superClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
+                  TR::KnownObjectTable::Index knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)(superClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
                   addBlockOrGlobalConstraint(node,
                         TR::VPClass::create(this,
                            TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),

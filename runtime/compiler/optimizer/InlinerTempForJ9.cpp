@@ -5012,7 +5012,7 @@ TR_J9InlinerUtil::computePrexInfo(TR_CallTarget *target)
             //
             if (priorKnowledge < KNOWN_OBJECT)
                {
-               TR::KnownObjectTable::Index methodHandleIndex = comp()->getKnownObjectTable()->getIndexAt(target->_calleeSymbol->getResolvedMethod()->getMethodHandleLocation());
+               TR::KnownObjectTable::Index methodHandleIndex = comp()->getKnownObjectTable()->getOrCreateIndexAt(target->_calleeSymbol->getResolvedMethod()->getMethodHandleLocation());
                TR_PrexArgument *prexArg = new (inliner()->trStackMemory()) TR_PrexArgument(methodHandleIndex, comp());
                if (target->_guard->_kind == TR_MutableCallSiteTargetGuard)
                   prexArg->setTypeInfoForInlinedBody();
@@ -5156,7 +5156,7 @@ void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_LogTracer *t
                if (knot)
                   {
                   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-                  knownObjectIndex = knot->getIndexAt((uintptr_t*)(objectReferenceLocation + fej9->getOffsetOfJavaLangClassFromClassField()));
+                  knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)(objectReferenceLocation + fej9->getOffsetOfJavaLangClassFromClassField()));
                   knownObjectClass = true;
                   }
                }
@@ -6065,7 +6065,7 @@ TR_J9InlinerUtil::createPrexArgInfoForCallTarget(TR_VirtualGuardSelection *guard
           implementer->getMethodHandleLocation() &&
           comp()->getOrCreateKnownObjectTable())
          {
-         myPrexArgInfo->set(0, new (comp()->trHeapMemory()) TR_PrexArgument(comp()->getKnownObjectTable()->getIndexAt(implementer->getMethodHandleLocation()), comp()));
+         myPrexArgInfo->set(0, new (comp()->trHeapMemory()) TR_PrexArgument(comp()->getKnownObjectTable()->getOrCreateIndexAt(implementer->getMethodHandleLocation()), comp()));
          }
       }
    return myPrexArgInfo;
