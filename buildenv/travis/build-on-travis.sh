@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ###############################################################################
-# Copyright (c) 2018, 2019 IBM Corp. and others
+# Copyright (c) 2018, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,7 @@ export CXX=g++-7
 # download bootstrap jdk
 SRCDIR=$PWD
 cd ~
-wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
+wget -O bootjdk11.tar.gz https://api.adoptopenjdk.net/v3/binary/latest/11/ga/linux/x64/jdk/openj9/normal/adoptopenjdk
 tar -xzf bootjdk11.tar.gz
 rm -f bootjdk11.tar.gz
 mv $(ls | grep -i jdk) bootjdk11
