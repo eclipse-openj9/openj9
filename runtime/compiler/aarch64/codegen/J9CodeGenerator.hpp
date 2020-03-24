@@ -78,6 +78,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    uint32_t encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node, bool omitLink = false);
    
    bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg);
+
+   bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method);
    
    /**
     * @brief Generates pre-prologue

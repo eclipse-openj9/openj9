@@ -134,3 +134,20 @@ J9::ARM64::CodeGenerator::generateBinaryEncodingPrePrologue(TR_ARM64BinaryEncodi
       generateImmInstruction(self(), TR::InstOpCode::dd, startNode, high, cursor);
       }
    }
+
+bool
+J9::ARM64::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
+   {
+
+   printf("surpress Inlining \n");
+   switch (method)
+      {
+         case TR::java_lang_Math_fma_D:
+         case TR::java_lang_StrictMath_fma_D:
+         case TR::java_lang_Math_fma_F:
+         case TR::java_lang_StrictMath_fma_F:
+         return true;
+      default:
+         return false;
+      }
+   }
