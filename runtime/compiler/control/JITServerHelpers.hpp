@@ -51,7 +51,8 @@ class JITServerHelpers
       CLASSINFO_REMOTE_ROM_CLASS,
       CLASSINFO_CLASS_FLAGS,
       CLASSINFO_METHODS_OF_CLASS,
-      CLASSINFO_CONSTANT_POOL
+      CLASSINFO_CONSTANT_POOL,
+      CLASSINFO_CLASS_CHAIN_OFFSET,
       };
    // NOTE: when adding new elements to this tuple, add them to the end,
    // to not mess with the established order.
@@ -61,12 +62,13 @@ class JITServerHelpers
       TR_OpaqueClassBlock *, int32_t,                                // 2:  _baseComponentClass     3:  _numDimensions
       TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>,     // 4:  _parentClass            5:  _tmpInterfaces
       std::vector<uint8_t>, bool,                                    // 6:  _methodTracingInfo      7:  _classHasFinalFields
-      uintptr_t, bool,                                              // 8:  _classDepthAndFlags     9:  _classInitialized
+      uintptr_t, bool,                                               // 8:  _classDepthAndFlags     9:  _classInitialized
       uint32_t, TR_OpaqueClassBlock *,                               // 10: _byteOffsetToLockword   11: _leafComponentClass
       void *, TR_OpaqueClassBlock *,                                 // 12: _classLoader            13: _hostClass
       TR_OpaqueClassBlock *, TR_OpaqueClassBlock *,                  // 14: _componentClass         15: _arrayClass
-      uintptr_t, J9ROMClass *,                                      // 16: _totalInstanceSize      17: _remoteRomClass
-      uintptr_t, uintptr_t                                         // 18: _constantPool           19: _classFlags
+      uintptr_t, J9ROMClass *,                                       // 16: _totalInstanceSize      17: _remoteRomClass
+      uintptr_t, uintptr_t,                                          // 18: _constantPool           19: _classFlags
+      uintptr_t                                                      // 20: _classChainOffsetOfIdentifyingLoaderForClazz
       >;
 
    static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory);
