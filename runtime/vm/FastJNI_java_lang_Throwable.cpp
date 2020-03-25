@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,12 +41,10 @@ Fast_java_lang_Throwable_fillInStackTrace(J9VMThread *currentThread, j9object_t 
 	if (0 == (vm->runtimeFlags & J9_RUNTIME_OMIT_STACK_TRACES)) {
 		MM_ObjectAllocationAPI objectAllocate(currentThread);
 		MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
-		/* If the enableWritableStackTrace field is unresolved (i.e. doesn't exist) or is set to true,
+		/* If the disableWritableStackTrace field is set to false,
 		 * continue filling in the stack trace.
 		 */
-		if (VM_VMHelpers::vmConstantPoolFieldIsResolved(vm, J9VMCONSTANTPOOL_JAVALANGTHROWABLE_ENABLEWRITABLESTACKTRACE)
-			&& J9VMJAVALANGTHROWABLE_ENABLEWRITABLESTACKTRACE(currentThread, receiver)
-		) {
+		if (!J9VMJAVALANGTHROWABLE_DISABLEWRITABLESTACKTRACE(currentThread, receiver)) {
 			j9object_t walkback = (j9object_t)J9VMJAVALANGTHROWABLE_WALKBACK(currentThread, receiver);
 			J9StackWalkState *walkState = currentThread->stackWalkState;
 			UDATA walkFlags = J9_STACKWALK_CACHE_PCS | J9_STACKWALK_WALK_TRANSLATE_PC |
