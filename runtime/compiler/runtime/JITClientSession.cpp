@@ -302,6 +302,7 @@ ClientSessionData::ClassInfo::ClassInfo() :
    _totalInstanceSize(0),
    _constantPool(NULL),
    _classFlags(0),
+   _classChainOffsetOfIdentifyingLoaderForClazz(0),
    _remoteROMStringsCache(decltype(_remoteROMStringsCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _fieldOrStaticNameCache(decltype(_fieldOrStaticNameCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _classOfStaticCache(decltype(_classOfStaticCache)::allocator_type(TR::Compiler->persistentAllocator())),
