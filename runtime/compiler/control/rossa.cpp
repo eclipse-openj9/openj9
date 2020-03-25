@@ -1657,7 +1657,7 @@ onLoadInternal(
 
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      JITServer::CommunicationStream::initVersion();
+      JITServer::CommunicationStream::initConfigurationFlags();
 
       // Allocate the hashtable that holds information about clients
       compInfo->setClientSessionHT(ClientSessionHT::allocate());
@@ -1695,7 +1695,7 @@ onLoadInternal(
       if (JITServer::ClientStream::static_init(compInfo->getPersistentInfo()) != 0)
          return -1;
 
-      JITServer::CommunicationStream::initVersion();
+      JITServer::CommunicationStream::initConfigurationFlags();
       }
 #endif // J9VM_OPT_JITSERVER
 

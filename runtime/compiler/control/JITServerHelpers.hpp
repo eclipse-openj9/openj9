@@ -23,7 +23,7 @@
 #ifndef JITSERVER_HELPERS_H
 #define JITSERVER_HELPERS_H
 
-#include "net/gen/compile.pb.h"
+#include "net/MessageTypes.hpp"
 #include "runtime/JITClientSession.hpp"
 
 class JITServerHelpers

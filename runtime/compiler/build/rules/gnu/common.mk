@@ -48,7 +48,7 @@ endif
 jit: $(JIT_PRODUCT_SONAME)
 
 $(JIT_PRODUCT_SONAME): $(JIT_PRODUCT_OBJECTS) | jit_createdirs
-	$(SOLINK_CMD) -shared $(SOLINK_FLAGS) $(patsubst %,-L%,$(SOLINK_LIBPATH)) -o $@ $(SOLINK_PRE_OBJECTS) $(JIT_PRODUCT_OBJECTS) $(SOLINK_POST_OBJECTS) $(LINK_GROUP_START) $(patsubst %,-l%,$(SOLINK_SLINK)) $(SOLINK_SLINK_STATIC) $(LINK_GROUP_END) $(SOLINK_EXTRA_ARGS)
+	$(SOLINK_CMD) -shared $(SOLINK_FLAGS) $(patsubst %,-L%,$(SOLINK_LIBPATH)) -o $@ $(SOLINK_PRE_OBJECTS) $(JIT_PRODUCT_OBJECTS) $(SOLINK_POST_OBJECTS) $(LINK_GROUP_START) $(patsubst %,-l%,$(SOLINK_SLINK)) $(LINK_GROUP_END) $(SOLINK_EXTRA_ARGS)
 ifeq ($(BUILD_CONFIG),prod)
 ifneq ($(OBJCOPY),)
 	$(OBJCOPY) --only-keep-debug $@ $(JIT_PRODUCT_DEBUGINFO)
@@ -81,24 +81,6 @@ jit_cleanobjs::
 $(foreach SRCFILE,$(JIT_PRODUCT_SOURCE_FILES),\
     $(call RULE$(suffix $(SRCFILE)),$(FIXED_OBJBASE)/$(basename $(SRCFILE))$(OBJSUFF),$(FIXED_SRCBASE)/$(SRCFILE)) \
  )
-
-ifneq (,$(J9VM_OPT_JITSERVER))
-#
-# Generate a rule to run the protobuf compiler.
-#
-$(call RULE.proto,$(PROTO_GEN_DIR)/compile,$(PROTO_DIR)/compile.proto)
-
-#
-# Make every object file, for which there is no corresponding depend.mk file,
-# depend on compile.pb.h. If a depend.mk file exists, it will include this
-# dependency only if appropriate. This will ensure the protobuf compilation
-# occurs early enough, but not more than necessary.
-#
-PROTO_DEP = $(if $(wildcard $(1)$(DEPSUFF)),,$(1) : $(PROTO_GEN_DIR)/compile.pb.h)
-
-$(foreach SRCFILE, $(JIT_PRODUCT_SOURCE_FILES), \
-	$(eval $(call PROTO_DEP,$(FIXED_OBJBASE)/$(basename $(SRCFILE))$(OBJSUFF))))
-endif # J9VM_OPT_JITSERVER
 
 #
 # Generate a rule that will create every directory before the build starts
