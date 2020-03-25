@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,6 +46,8 @@ public class StaticFieldVarHandleTests {
 	private final static VarHandle VH_FINAL_INT;
 	private final static VarHandle VH_FINAL_NOINIT_INT;
 	
+	private final static VarHandle VH_STRING_FROM_CHILD;
+	
 	static {
 		StaticHelper.reset();
 		
@@ -62,13 +64,18 @@ public class StaticFieldVarHandleTests {
 			VH_CLASS = MethodHandles.lookup().findStaticVarHandle(StaticHelper.class, "l2", Class.class);
 			VH_FINAL_INT = MethodHandles.lookup().findStaticVarHandle(StaticHelper.class, "finalI", int.class);
 			VH_FINAL_NOINIT_INT = MethodHandles.lookup().findStaticVarHandle(StaticHelper.StaticNoInitializationHelper.class, "finalI", int.class);
+			
+			/* l1 is a field in StaticHelper (parent class), and StaticHelperChild extends StaticHelper. */
+			VH_STRING_FROM_CHILD = MethodHandles.lookup()
+					.in(StaticHelperChild.class)
+					.findStaticVarHandle(StaticHelperChild.class, "l1", String.class);
 		} catch (Throwable t) {
 			throw new Error(t);
 		}
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link byte} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link byte} field.
 	 */
 	@Test
 	public void testByte() {
@@ -286,7 +293,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link char} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link char} field.
 	 */
 	@Test
 	public void testChar() {
@@ -504,7 +511,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link double} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link double} field.
 	 */
 	@Test
 	public void testDouble() {
@@ -722,7 +729,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link float} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link float} field.
 	 */
 	@Test
 	public void testFloat() {
@@ -940,7 +947,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link int} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link int} field.
 	 */
 	@Test
 	public void testInt() {
@@ -1158,7 +1165,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link int} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link int} field.
 	 */
 	@Test
 	public void testLong() {
@@ -1376,7 +1383,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link String} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link String} field.
 	 */
 	@Test
 	public void testReference() {
@@ -1597,7 +1604,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link Class} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link Class} field.
 	 */
 	@Test
 	public void testReferenceOtherType() {
@@ -1830,7 +1837,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link short} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link short} field.
 	 */
 	@Test
 	public void testShort() {
@@ -2048,7 +2055,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a {@link boolean} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a {@link boolean} field.
 	 */
 	@Test
 	public void testBoolean() {
@@ -2266,7 +2273,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a <b>final</b> {@link int} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a <b>final</b> {@link int} field.
 	 */
 	@Test
 	public void testFinalField() {
@@ -2452,7 +2459,7 @@ public class StaticFieldVarHandleTests {
 	}
 	
 	/**
-	 * Perform all the operations available on a StaticFieldViewVarHandle referencing a <b>final</b> {@link int} field.
+	 * Perform all the operations available on a StaticFieldVarHandle referencing a <b>final</b> {@link int} field.
 	 * Note: The static field StaticHelper.StaticNoInitializationHelper.finalI hasn't been initialized implicitly
 	 * by StaticHelper.reset() before VarHandle.get() is invoked.
 	 */
@@ -2483,5 +2490,422 @@ public class StaticFieldVarHandleTests {
 	
 	private long commonVarHandleCallSite(VarHandle vh, long value) {
 		return (long)vh.get();
+	}
+	
+	/**
+	 * Perform the get operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_get() {
+		StaticHelper.reset();
+		String lFromVH = (String)VH_STRING_FROM_CHILD.get();
+		Assert.assertEquals("1", lFromVH);
+	}
+	
+	/**
+	 * Perform the set operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_set() {
+		VH_STRING_FROM_CHILD.set("2");
+		Assert.assertEquals("2", StaticHelper.l1);
+	}
+	
+	/**
+	 * Perform the getOpaque operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getOpaque() {
+		StaticHelper.reset();
+		String lFromVH = (String)VH_STRING_FROM_CHILD.getOpaque();
+		Assert.assertEquals("1", lFromVH);
+	}
+	
+	/**
+	 * Perform the setOpaque operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_setOpaque() {
+		VH_STRING_FROM_CHILD.setOpaque("3");
+		Assert.assertEquals("3", StaticHelper.l1);
+	}
+	
+	/**
+	 * Perform the getVolatile operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getVolatile() {
+		StaticHelper.reset();
+		String lFromVH = (String)VH_STRING_FROM_CHILD.getVolatile();
+		Assert.assertEquals("1", lFromVH);
+	}
+	
+	/**
+	 * Perform the setVolatile operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_setVolatile() {
+		VH_STRING_FROM_CHILD.setVolatile("4");
+		Assert.assertEquals("4", StaticHelper.l1);
+	}
+	
+	/**
+	 * Perform the getAcquire operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAcquire() {
+		StaticHelper.reset();
+		String lFromVH = (String)VH_STRING_FROM_CHILD.getAcquire();
+		Assert.assertEquals("1", lFromVH);
+		
+	}
+	
+	/**
+	 * Perform the setRelease operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_setRelease() {
+		VH_STRING_FROM_CHILD.setRelease("5");
+		Assert.assertEquals("5", StaticHelper.l1);
+	}		
+		
+	/**
+	 * Perform the compareAndSet operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_compareAndSet() {
+		StaticHelper.reset();
+		
+		/* Fail */
+		boolean casResult = (boolean)VH_STRING_FROM_CHILD.compareAndSet("2", "3");
+		Assert.assertEquals("1", StaticHelper.l1);
+		Assert.assertFalse(casResult);
+	
+		/* Success */
+		casResult = (boolean)VH_STRING_FROM_CHILD.compareAndSet("1", "2");
+		Assert.assertEquals("2", StaticHelper.l1);
+		Assert.assertTrue(casResult);
+	}
+	
+	/**
+	 * Perform the compareAndExchange operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_compareAndExchange() {
+		StaticHelper.reset();
+		
+		/* Fail */
+		String caeResult = (String)VH_STRING_FROM_CHILD.compareAndExchange("2", "3");
+		Assert.assertEquals("1", StaticHelper.l1);
+		Assert.assertEquals("1", caeResult);
+
+		/* Success */
+		caeResult = (String)VH_STRING_FROM_CHILD.compareAndExchange("1", "2");
+		Assert.assertEquals("2", StaticHelper.l1);
+		Assert.assertEquals("1", caeResult);
+	}
+	
+	/**
+	 * Perform the compareAndExchangeAcquire operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_compareAndExchangeAcquire() {
+		StaticHelper.reset();
+		
+		/* Fail */
+		String caeResult = (String)VH_STRING_FROM_CHILD.compareAndExchangeAcquire("2", "3");
+		Assert.assertEquals("1", StaticHelper.l1);
+		Assert.assertEquals("1", caeResult);
+
+		/* Success */
+		caeResult = (String)VH_STRING_FROM_CHILD.compareAndExchangeAcquire("1", "2");
+		Assert.assertEquals("2", StaticHelper.l1);
+		Assert.assertEquals("1", caeResult);
+	}
+	
+	/**
+	 * Perform the compareAndExchangeRelease operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_compareAndExchangeRelease() {
+		StaticHelper.reset();
+		
+		/* Fail */
+		String caeResult = (String)VH_STRING_FROM_CHILD.compareAndExchangeRelease("2", "3");
+		Assert.assertEquals("1", StaticHelper.l1);
+		Assert.assertEquals("1", caeResult);
+
+		/* Success */
+		caeResult = (String)VH_STRING_FROM_CHILD.compareAndExchangeRelease("1", "2");
+		Assert.assertEquals("2", StaticHelper.l1);
+		Assert.assertEquals("1", caeResult);
+	}
+	
+	/**
+	 * Perform the weakCompareAndSet operation available on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_weakCompareAndSet() {
+		StaticHelper.reset();
+		
+		/* Fail */
+		boolean casResult = (boolean)VH_STRING_FROM_CHILD.weakCompareAndSet("2", "3");
+		Assert.assertEquals("1", StaticHelper.l1);
+		Assert.assertFalse(casResult);
+
+		/* Success */
+		casResult = (boolean)VH_STRING_FROM_CHILD.weakCompareAndSet("1", "2");
+		Assert.assertEquals("2", StaticHelper.l1);
+		Assert.assertTrue(casResult);
+	}
+	
+	/**
+	 * Perform the weakCompareAndSetAcquire operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_weakCompareAndSetAcquire() {
+		StaticHelper.reset();
+		
+		/* Fail */
+		boolean casResult = (boolean)VH_STRING_FROM_CHILD.weakCompareAndSetAcquire("2", "3");
+		Assert.assertEquals("1", StaticHelper.l1);
+		Assert.assertFalse(casResult);
+
+		/* Success */
+		casResult = (boolean)VH_STRING_FROM_CHILD.weakCompareAndSetAcquire("1", "2");
+		Assert.assertEquals("2", StaticHelper.l1);
+		Assert.assertTrue(casResult);
+	}
+	
+	/**
+	 * Perform the weakCompareAndSetRelease operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_weakCompareAndSetRelease() {
+		StaticHelper.reset();
+		
+		/* Fail */
+		boolean casResult = (boolean)VH_STRING_FROM_CHILD.weakCompareAndSetRelease("2", "3");
+		Assert.assertEquals("1", StaticHelper.l1);
+		Assert.assertFalse(casResult);
+
+		/* Success */
+		casResult = (boolean)VH_STRING_FROM_CHILD.weakCompareAndSetRelease("1", "2");
+		Assert.assertEquals("2", StaticHelper.l1);
+		Assert.assertTrue(casResult);
+	}
+	
+	/**
+	 * Perform the weakCompareAndSetPlain operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_weakCompareAndSetPlain() {
+		StaticHelper.reset();
+		
+		/* Fail */
+		boolean casResult = (boolean)VH_STRING_FROM_CHILD.weakCompareAndSetPlain("2", "3");
+		Assert.assertEquals("1", StaticHelper.l1);
+		Assert.assertFalse(casResult);
+
+		/* Success */
+		casResult = (boolean)VH_STRING_FROM_CHILD.weakCompareAndSetPlain("1", "2");
+		Assert.assertEquals("2", StaticHelper.l1);
+		Assert.assertTrue(casResult);
+	}
+	
+	/**
+	 * Perform the getAndSet operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndSet() {
+		StaticHelper.reset();
+		String lFromVH = (String)VH_STRING_FROM_CHILD.getAndSet("2");
+		Assert.assertEquals("1", lFromVH);
+		Assert.assertEquals("2", StaticHelper.l1);
+	}
+	
+	/**
+	 * Perform the getAndSetAcquire operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndSetAcquire() {
+		StaticHelper.reset();
+		String lFromVH = (String)VH_STRING_FROM_CHILD.getAndSetAcquire("2");
+		Assert.assertEquals("1", lFromVH);
+		Assert.assertEquals("2", StaticHelper.l1);
+	}
+	
+	/**
+	 * Perform the getAndSetRelease operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndSetRelease() {
+		StaticHelper.reset();
+		String lFromVH = (String)VH_STRING_FROM_CHILD.getAndSetRelease("2");
+		Assert.assertEquals("1", lFromVH);
+		Assert.assertEquals("2", StaticHelper.l1);
+	}
+	
+	/**
+	 * Perform the getAndAdd operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndAdd() {
+		try {
+			String lFromVH = (String)VH_STRING_FROM_CHILD.getAndAdd("2");
+			Assert.fail("Successfully added reference types (String)");
+		} catch (UnsupportedOperationException e) {	}
+	}
+	
+	/**
+	 * Perform the getAndAddAcquire operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndAddAcquire() {
+		try {
+			String lFromVH = (String)VH_STRING_FROM_CHILD.getAndAddAcquire("2");
+			Assert.fail("Successfully added reference types (String)");
+		} catch (UnsupportedOperationException e) {	}
+	}
+	
+	/**
+	 * Perform the getAndAddRelease operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndAddRelease() {
+		try {
+			String lFromVH = (String)VH_STRING_FROM_CHILD.getAndAddRelease("2");
+			Assert.fail("Successfully added reference types (String)");
+		} catch (UnsupportedOperationException e) {	}
+	}
+	
+	/**
+	 * Perform the getAndBitwiseAnd operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndBitwiseAnd() {
+		try {
+			String lFromVH = (String)VH_STRING_FROM_CHILD.getAndBitwiseAnd("3");
+			Assert.fail("Expected UnsupportedOperationException");
+		} catch (UnsupportedOperationException e) {}
+	}
+	
+	/**
+	 * Perform the getAndBitwiseAndAcquire operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndBitwiseAndAcquire() {
+		try {
+			String lFromVH = (String)VH_STRING_FROM_CHILD.getAndBitwiseAndAcquire("3");
+			Assert.fail("Expected UnsupportedOperationException");
+		} catch (UnsupportedOperationException e) {}
+	}
+	
+	/**
+	 * Perform the getAndBitwiseAndRelease operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndBitwiseAndRelease() {
+		try {
+			String lFromVH = (String)VH_STRING_FROM_CHILD.getAndBitwiseAndRelease("3");
+			Assert.fail("Expected UnsupportedOperationException");
+		} catch (UnsupportedOperationException e) {}
+	}
+	
+	/**
+	 * Perform the getAndBitwiseOr operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndBitwiseOr() {
+		try {
+			String lFromVH = (String)VH_STRING_FROM_CHILD.getAndBitwiseOr("3");
+			Assert.fail("Expected UnsupportedOperationException");
+		} catch (UnsupportedOperationException e) {}
+	}
+	
+	/**
+	 * Perform the getAndBitwiseOrAcquire operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndBitwiseOrAcquire() {
+		try {
+			String lFromVH = (String)VH_STRING_FROM_CHILD.getAndBitwiseOrAcquire("3");
+			Assert.fail("Expected UnsupportedOperationException");
+		} catch (UnsupportedOperationException e) {}
+	}
+	
+	/**
+	 * Perform the getAndBitwiseOrRelease operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndBitwiseOrRelease() {
+		try {
+			String lFromVH = (String)VH_STRING_FROM_CHILD.getAndBitwiseOrRelease("3");
+			Assert.fail("Expected UnsupportedOperationException");
+		} catch (UnsupportedOperationException e) {}
+	}
+	
+	/**
+	 * Perform the getAndBitwiseXor operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndBitwiseXor() {
+		try {
+			String lFromVH = (String)VH_STRING_FROM_CHILD.getAndBitwiseXor("3");
+			Assert.fail("Expected UnsupportedOperationException");
+		} catch (UnsupportedOperationException e) {}
+	}
+	
+	/**
+	 * Perform the getAndBitwiseXorAcquire operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndBitwiseXorAcquire() {
+		try {
+			String lFromVH = (String)VH_STRING_FROM_CHILD.getAndBitwiseXorAcquire("3");
+			Assert.fail("Expected UnsupportedOperationException");
+		} catch (UnsupportedOperationException e) {}
+	}
+	
+	/**
+	 * Perform the getAndBitwiseXorRelease operation on a StaticFieldVarHandle referencing a {@link String} field of a
+	 * parent class via the child class.
+	 */
+	@Test
+	public void testReferenceInParentFromChild_getAndBitwiseXorRelease() {
+		try {
+			String lFromVH = (String)VH_STRING_FROM_CHILD.getAndBitwiseXorRelease("3");
+			Assert.fail("Expected UnsupportedOperationException");
+		} catch (UnsupportedOperationException e) {}
 	}
 }
