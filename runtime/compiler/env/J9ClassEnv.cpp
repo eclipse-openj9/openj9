@@ -461,7 +461,10 @@ J9::ClassEnv::enumerateFields(TR::Region& region, TR_OpaqueClassBlock * opaqueCl
       strncpy(fieldName, field->name, nameSize);
       TR_ASSERT_FATAL(fieldName[nameSize-1] == '\0', "fieldName buffer was too small.");
       int32_t offset = field->offset + TR::Compiler->om.objectHeaderSizeInBytes();
-      tlb.add(TR::TypeLayoutEntry(dataType, offset, fieldName));
+      bool isVolatile = (field->modifiers & J9AccVolatile) ? true : false;
+      bool isPrivate = (field->modifiers & J9AccPrivate) ? true : false;
+      bool isFinal = (field->modifiers & J9AccFinal) ? true : false;
+      tlb.add(TR::TypeLayoutEntry(dataType, offset, fieldName, isVolatile, isPrivate, isFinal, signature));
       }
    return tlb.build();
    }
@@ -615,4 +618,11 @@ J9::ClassEnv::getROMConstantPool(TR::Compilation *comp, TR_OpaqueClassBlock *cla
 #endif /* defined(J9VM_OPT_JITSERVER) */
    J9ConstantPool *ramCP = reinterpret_cast<J9ConstantPool *>(comp->fej9()->getConstantPoolFromClass(clazz));
    return ramCP->romConstantPool;
+   }
+
+bool
+J9::ClassEnv::isValueTypeClass(TR_OpaqueClassBlock *clazz)
+   {
+   J9Class *j9class = reinterpret_cast<J9Class*>(clazz);
+   return J9_IS_J9CLASS_VALUETYPE(j9class);
    }
