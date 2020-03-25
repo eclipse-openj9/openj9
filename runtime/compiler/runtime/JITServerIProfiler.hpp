@@ -39,9 +39,10 @@ struct TR_ContiguousIPMethodData
 
 struct TR_ContiguousIPMethodHashTableEntry
    {
-   static TR_ContiguousIPMethodHashTableEntry serialize(TR_IPMethodHashTableEntry *entry);
+   static void serialize(TR_IPMethodHashTableEntry *entry, TR_ContiguousIPMethodHashTableEntry *serialEntry);
 
    TR_OpaqueMethodBlock *_method; // callee
+   size_t _callerCount;
    TR_ContiguousIPMethodData _callers[TR_IPMethodHashTableEntry::MAX_IPMETHOD_CALLERS]; // array of callers and their weights. null _method means EOL
    TR_DummyBucket _otherBucket;
    };
