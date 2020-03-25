@@ -642,20 +642,27 @@ def get_date() {
 * Set TESTS_TARGETS, indicating the level of testing.
 */
 def set_test_targets() {
-    TARGET_NAMES = []
-
+    // Map of Maps
+    TESTS = [:]
     if (TESTS_TARGETS != 'none') {
         for (target in TESTS_TARGETS.replaceAll("\\s","").toLowerCase().tokenize(',')) {
             switch (target) {
                 case ["sanity", "extended"]:
-                    TARGET_NAMES.add("${target}.functional")
+                    TESTS["${target}.functional"] = [:]
                     break
                 default:
-                    TARGET_NAMES.add(target)
+                    if (target.contains('+')) {
+                        def id = target.substring(0, target.indexOf('+'))
+                        TESTS[id] = [:]
+                        TESTS[id]['testFlag'] = target.substring(target.indexOf('+') +1).toUpperCase()
+                    } else {
+                        TESTS[target] = [:]
+                    }
+                    break
             }
         }
     }
-    echo "TARGET_NAMES:'${TARGET_NAMES}'"
+    echo "TESTS:'${TESTS}'"
 }
 
 /*
@@ -664,39 +671,39 @@ def set_test_targets() {
 * Set EXTRA_TEST_LABELS map if defined in variable file.
 */
 def set_test_misc() {
-    EXTRA_TEST_LABELS = [:]
     if (!params.TEST_NODE) {
         // Only add extra test labels if the user has not specified a specific TEST_NODE
-        TARGET_NAMES.each { target ->
-            EXTRA_TEST_LABELS[target] = buildspec.getVectorField("extra_test_labels", target).join('&&') ?: ''
+        TESTS.each { id, target ->
+            target['extraTestLabels'] = buildspec.getVectorField("extra_test_labels", target).join('&&') ?: ''
         }
     }
 
-    EXCLUDED_TESTS = []
     def buildspec = buildspec_manager.getSpec(SPEC)
     def excludedTests = buildspec.getVectorField("excluded_tests", SDK_VERSION)
     if (excludedTests) {
-        EXCLUDED_TESTS.addAll(excludedTests)
+        TESTS.each { id, target ->
+            if (excludedTests.contains(id)) {
+                echo "Excluding test target:'${id}'"
+                TESTS.remove(id)
+            }
+        }
     }
 
-    TEST_FLAG = buildspec.getScalarField("test_flags", SDK_VERSION) ?: ''
+    TESTS.each { id, target ->
+        flag = buildspec.getScalarField("test_flags", id) ?: ''
+        if (!target['testFlag']) {
+            target['testFlag'] = flag
+        } else if (flag) {
+            error("Cannot set more than 1 TEST_FLAG:'${target['testFlag']}' & '${flag}'")
+        }
 
-    // Set test param KEEP_REPORTDIR to false unless set true in variable file.
-    TEST_KEEP_REPORTDIR = [:]
-    TARGET_NAMES.each { target ->
-        TEST_KEEP_REPORTDIR[target] = buildspec_manager.getSpec('misc').getScalarField("test_keep_reportdir", target) ?: 'false'
+        // Set test param KEEP_REPORTDIR to false unless set true in variable file.
+        target['keepReportDir'] = buildspec_manager.getSpec('misc').getScalarField("test_keep_reportdir", id) ?: 'false'
+
+        target['buildList'] = buildspec.getScalarField("test_build_list", id) ?: ''
     }
 
-    TEST_BUILD_LIST = [:]
-    TARGET_NAMES.each { target ->
-        TEST_BUILD_LIST[target] = buildspec.getScalarField("test_build_list", target) ?: ''
-    }
-
-    echo "EXCLUDED_TESTS:'${EXCLUDED_TESTS}'"
-    echo "TEST_FLAG:'${TEST_FLAG}'"
-    echo "EXTRA_TEST_LABELS:'${EXTRA_TEST_LABELS}'"
-    echo "TEST_KEEP_REPORTDIR:'${TEST_KEEP_REPORTDIR}'"
-    echo "TEST_BUILD_LIST:'${TEST_BUILD_LIST}'"
+    echo "TESTS:'${TESTS}'"
 }
 
 
