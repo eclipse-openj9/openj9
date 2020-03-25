@@ -616,3 +616,10 @@ J9::ClassEnv::getROMConstantPool(TR::Compilation *comp, TR_OpaqueClassBlock *cla
    J9ConstantPool *ramCP = reinterpret_cast<J9ConstantPool *>(comp->fej9()->getConstantPoolFromClass(clazz));
    return ramCP->romConstantPool;
    }
+
+bool
+J9::ClassEnv::isValueTypeClass(TR_OpaqueClassBlock *clazz)
+   {
+   J9Class *j9class = reinterpret_cast<J9Class*>(clazz);
+   return J9_IS_J9CLASS_VALUETYPE(j9class);
+   }
