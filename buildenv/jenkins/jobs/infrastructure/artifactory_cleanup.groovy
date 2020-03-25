@@ -120,6 +120,10 @@ def cleanupBuilds(artifactory_server, artifactory_repo, jobToCheck, artifactory_
             echo 'There are no artifacts to delete'
             amount_deleted = 0
         }
+        if (artifactory_max_num_artifacts == 0) {
+            echo "Deleting Entire Build '${jobToCheck}'"
+            httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: "${artifactory_server}/${env.ARTIFACTORY_REPO}${testSubfolder}/${jobToCheck}"
+        }
         currentBuild.description += "<br>Deleted ${amount_deleted} artifacts"
     }
 }
