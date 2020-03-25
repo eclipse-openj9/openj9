@@ -2937,12 +2937,10 @@ done:
 		/* Don't fill in stack traces if -XX:-StackTraceInThrowable is in effect */
 		if (0 == (_vm->runtimeFlags & J9_RUNTIME_OMIT_STACK_TRACES)) {
 			j9object_t receiver = *(j9object_t*)_sp;
-			/* If the enableWritableStackTrace field is unresolved (i.e. doesn't exist) or is set to true,
+			/* If the disableWritableStackTrace field is set to false,
 			 * continue filling in the stack trace.
 			 */
-			if (VM_VMHelpers::vmConstantPoolFieldIsResolved(_vm, J9VMCONSTANTPOOL_JAVALANGTHROWABLE_ENABLEWRITABLESTACKTRACE)
-				&& J9VMJAVALANGTHROWABLE_ENABLEWRITABLESTACKTRACE(_currentThread, receiver)
-			) {
+			if (!J9VMJAVALANGTHROWABLE_DISABLEWRITABLESTACKTRACE(_currentThread, receiver)) {
 				buildInternalNativeStackFrame(REGISTER_ARGS);
 				j9object_t walkback = (j9object_t)J9VMJAVALANGTHROWABLE_WALKBACK(_currentThread, receiver);
 				J9StackWalkState *walkState = _currentThread->stackWalkState;

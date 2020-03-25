@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2019 IBM Corp. and others
+ * Copyright (c) 2002, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -427,10 +427,8 @@ JVM_FillInStackTrace(JNIEnv* env, jobject throwable)
 	vmfns->internalEnterVMFromJNI(currentThread);
 	unwrappedThrowable = J9_JNI_UNWRAP_REFERENCE(throwable);
 	if ((0 == (javaVM->runtimeFlags & J9_RUNTIME_OMIT_STACK_TRACES)) &&
-		/* If the enableWritableStackTrace field is resolved, check it. If it's false, do not create the stack trace. */
-		/* TODO should be: (0 == J9VMCONSTANTPOOL_FIELDREF_AT(javaVM, J9VMCONSTANTPOOL_JAVALANGTHROWABLE_ENABLEWRITABLESTACKTRACE)->flags) */
-		((J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(J9_CLASS_FROM_CP((javaVM)->jclConstantPool)->romClass), J9VMCONSTANTPOOL_JAVALANGTHROWABLE_ENABLEWRITABLESTACKTRACE) == J9CPTYPE_UNUSED) ||
-			J9VMJAVALANGTHROWABLE_ENABLEWRITABLESTACKTRACE(currentThread, unwrappedThrowable)))
+		/* If the disableWritableStackTrace field is true, do not create the stack trace. */
+		!J9VMJAVALANGTHROWABLE_DISABLEWRITABLESTACKTRACE(currentThread, unwrappedThrowable))
 	{
 		UDATA flags = J9_STACKWALK_CACHE_PCS | J9_STACKWALK_WALK_TRANSLATE_PC | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_SKIP_INLINES;
 		J9StackWalkState* walkState = currentThread->stackWalkState;

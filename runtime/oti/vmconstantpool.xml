@@ -192,7 +192,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/Throwable" name="detailMessage" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/Throwable" name="walkback" signature="Ljava/lang/Object;"/>
 	<fieldref class="java/lang/Throwable" name="stackTrace" signature="[Ljava/lang/StackTraceElement;"/>
-	<fieldref class="java/lang/Throwable" name="enableWritableStackTrace" signature="Z"/>
+	<fieldref class="java/lang/Throwable" name="disableWritableStackTrace" signature="Z"/>
 	<fieldref class="java/lang/ExceptionInInitializerError" name="exception" signature="Ljava/lang/Throwable;" versions="8-11"/>
 	<fieldref class="java/lang/Boolean" name="value" signature="Z"/>
 	<fieldref class="java/lang/Byte" name="value" signature="B"/>
