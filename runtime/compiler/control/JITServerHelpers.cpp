@@ -215,6 +215,7 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    classInfoStruct._remoteRomClass = std::get<17>(classInfo);
    classInfoStruct._constantPool = (J9ConstantPool *)std::get<18>(classInfo);
    classInfoStruct._classFlags = std::get<19>(classInfo);
+   classInfoStruct._classChainOffsetOfIdentifyingLoaderForClazz = std::get<20>(classInfo);
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
 
    uint32_t numMethods = romClass->romMethodCount;
@@ -269,8 +270,14 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
    uintptr_t totalInstanceSize = clazz->totalInstanceSize;
    uintptr_t cp = fe->getConstantPoolFromClass((TR_OpaqueClassBlock *)clazz);
    uintptr_t classFlags = fe->getClassFlagsValue((TR_OpaqueClassBlock *)clazz);
+   uintptr_t classChainOffsetOfIdentifyingLoaderForClazz = fe->sharedCache() ? 
+      fe->sharedCache()->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCacheNoFail((TR_OpaqueClassBlock *)clazz) : 0;
 
-   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, clazz->romClass, cp, classFlags);
+   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass,
+                          TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo,
+                          classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword,
+                          leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize,
+                          clazz->romClass, cp, classFlags, classChainOffsetOfIdentifyingLoaderForClazz);
    }
 
 J9ROMClass *
@@ -470,6 +477,11 @@ JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo,
       case CLASSINFO_CONSTANT_POOL :
          {
          *(J9ConstantPool **)data = classInfo._constantPool;
+         }
+         break;
+      case CLASSINFO_CLASS_CHAIN_OFFSET:
+         {
+         *(uintptr_t *)data = classInfo._classChainOffsetOfIdentifyingLoaderForClazz;
          }
          break;
       default :

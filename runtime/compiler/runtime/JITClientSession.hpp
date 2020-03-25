@@ -252,6 +252,7 @@ class ClientSessionData
       uintptr_t _totalInstanceSize;
       J9ConstantPool *_constantPool;
       uintptr_t _classFlags;
+      uintptr_t _classChainOffsetOfIdentifyingLoaderForClazz;
       PersistentUnorderedMap<TR_RemoteROMStringKey, std::string> _remoteROMStringsCache; // cached strings from the client
       PersistentUnorderedMap<int32_t, std::string> _fieldOrStaticNameCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _classOfStaticCache;

@@ -136,6 +136,16 @@ public:
 
    virtual uintptr_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz);
 
+   #if defined(J9VM_OPT_JITSERVER)
+   /**
+     * \brief Finds the offset in SCC of the class chain identifying the class loader of the given class.
+     *        This is very similar to getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache
+     *        except that it will not fail the compilation if the offset is not valid.
+     * \return Returns the offset of the class chain that identifies given class or 0 is such offset is not valid.
+    */
+   uintptr_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCacheNoFail(TR_OpaqueClassBlock *clazz);
+   #endif
+
    virtual const void *storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor);
 
    enum TR_J9SharedCacheDisabledReason
