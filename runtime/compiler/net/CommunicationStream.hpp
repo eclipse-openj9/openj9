@@ -61,6 +61,9 @@ protected:
       _ssl(NULL),
       _connfd(-1)
       {
+      static_assert(
+         sizeof(messageNames) / sizeof(messageNames[0]) == MessageType_ARRAYSIZE,
+         "wrong number of message names");
       }
 
    virtual ~CommunicationStream()
@@ -89,7 +92,7 @@ protected:
    ClientMessage _cMsg;
 
    static const uint8_t MAJOR_NUMBER = 1;
-   static const uint16_t MINOR_NUMBER = 2;
+   static const uint16_t MINOR_NUMBER = 3;
    static const uint8_t PATCH_NUMBER = 0;
    static uint32_t CONFIGURATION_FLAGS;
 

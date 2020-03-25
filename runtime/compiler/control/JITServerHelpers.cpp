@@ -126,7 +126,7 @@ JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig)
    for (int i = 0; i < JITServer::MessageType_ARRAYSIZE; ++i)
       {
       if (JITServerHelpers::serverMsgTypeCount[i] > 0)
-         j9tty_printf(PORTLIB, "#%04d %7u\n", i, JITServerHelpers::serverMsgTypeCount[i]);
+         j9tty_printf(PORTLIB, "#%04d %7u %s\n", i, JITServerHelpers::serverMsgTypeCount[i], JITServer::messageNames[i]);
       }
    }
 
