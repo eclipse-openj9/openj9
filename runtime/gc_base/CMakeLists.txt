@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,7 +60,6 @@ target_link_libraries(j9gcbase
 		j9vm_interface
 		j9vm_gc_includes
 		omrgc
-		j9modronstartup
 )
 
 target_enable_ddr(j9gcbase GLOB_HEADERS)
