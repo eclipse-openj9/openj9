@@ -38,7 +38,7 @@ import org.testng.annotations.BeforeClass;
 /*
  * Instructions to run this test:
  * 
- * 1)  recompile the JVM with J9VM_OPT_VALHALLA_VALUE_TYPES flag turned on in j9cfg.h.ftl (or j9cfg.h.in when cmake is turned on)
+ * 1)  Build the JDK with the '--enable-inline-types' configure flag
  * 2)  cd [openj9-openjdk-dir]/openj9/test
  * 3)  git clone https://github.com/AdoptOpenJDK/TKG.git
  * 4)  cd TKG

@@ -155,7 +155,6 @@ option(J9VM_OPT_MULTI_VM "Decides if multiple VMs can be created in the same add
 
 
 option(J9VM_OPT_PANAMA "Enables support for Project Panama features such as native method handles")
-option(J9VM_OPT_VALHALLA_MVT "Enables support for Project Valhalla Minimal Value Types")
 option(J9VM_OPT_VALHALLA_NESTMATES "Enables support for Project Valhalla Nest Mates")
 option(J9VM_OPT_VALHALLA_VALUE_TYPES "Enables support for Project Valhalla Value Types")
 
