@@ -68,7 +68,7 @@ class JITServerHelpers
       TR_OpaqueClassBlock *, TR_OpaqueClassBlock *,                  // 14: _componentClass         15: _arrayClass
       uintptr_t, J9ROMClass *,                                       // 16: _totalInstanceSize      17: _remoteRomClass
       uintptr_t, uintptr_t,                                          // 18: _constantPool           19: _classFlags
-      uintptr_t                                                      // 20: _classChainOffsetOfIdentifyingLoaderForClazz
+      uintptr_t, std::vector<J9ROMMethod *>                          // 20: _classChainOffsetOfIdentifyingLoaderForClazz 21. _origROMMethods
       >;
 
    static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory);

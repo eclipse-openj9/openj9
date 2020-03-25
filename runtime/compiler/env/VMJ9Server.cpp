@@ -1761,6 +1761,16 @@ TR_J9ServerVM::isStringCompressionEnabledVM()
 J9ROMMethod *
 TR_J9ServerVM::getROMMethodFromRAMMethod(J9Method *ramMethod)
    {
+      {
+      // Check persistent cache first
+      OMR::CriticalSection J9MethodMapMonitor(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getJ9MethodMap().find(ramMethod);
+      if (it != _compInfoPT->getClientData()->getJ9MethodMap().end())
+         {
+         return it->second._origROMMethod;
+         }
+      }
+
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_getROMMethodFromRAMMethod, ramMethod);
    return std::get<0>(stream->read<J9ROMMethod *>());
