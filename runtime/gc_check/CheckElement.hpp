@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +32,7 @@
 #include "j9cfg.h"
 
 struct GC_CheckElement {
-	enum {
+	enum Type {
 		type_none = 0,
 		type_object,
 		type_class
@@ -42,7 +41,7 @@ struct GC_CheckElement {
 		J9Object *object;
 		J9Class *clazz;
 	} u;
-	
+
 	GC_CheckElement() :
 		type(type_none)
 		{}
