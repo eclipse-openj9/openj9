@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2019 IBM Corp. and others
+ * Copyright (c) 2010, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,7 +73,6 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.HashCodeCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.ITableSizeCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.J9ClassShapeCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.J9MemTagCommands;
-import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.J9RegCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.J9StaticsCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.J9VTablesCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.JitMetadataFromPcCommand;
@@ -173,7 +172,6 @@ public class GetCommandsTask extends BaseJVMCommands implements IBootstrapRunnab
 		toPassBack.add(new SetVMCommand());
 		toPassBack.add(new TraceConfigCommand());
 		toPassBack.add(new WalkJ9PoolCommand());
-		toPassBack.add(new J9RegCommand());
 		toPassBack.add(new CoreInfoCommand());
 		toPassBack.add(new GCCheckCommand());
 		toPassBack.add(new DumpStringTableCommand());
