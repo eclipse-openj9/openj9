@@ -2299,7 +2299,15 @@ TR_J9ByteCodeIlGenerator::genCheckCast()
 void
 TR_J9ByteCodeIlGenerator::genCheckCast(int32_t cpIndex)
    {
-   loadClassObjectForTypeTest(cpIndex, TR_DisableAOTCheckCastInlining);
+   if (TR::Compiler->om.areValueTypesEnabled() && TR::Compiler->cls.isClassRefValueType(comp(), method()->classOfMethod(), cpIndex))
+      {
+      TR::Node * objNode = _stack->top();
+      TR::Node *passThruNode = TR::Node::create(TR::PassThrough, 1, objNode);
+      genTreeTop(genNullCheck(passThruNode));
+      loadClassObject(cpIndex);
+      }
+   else
+      loadClassObjectForTypeTest(cpIndex, TR_DisableAOTCheckCastInlining);
    genCheckCast();
    }
 
@@ -5392,7 +5400,7 @@ TR_J9ByteCodeIlGenerator::loadClassObjectForTypeTest(int32_t cpIndex, TR_Compila
    TR::SymbolReference *symRef = symRefTab()->findOrCreateClassSymbol(_methodSymbol, cpIndex, classObject);
    TR::Node *node = TR::Node::createWithSymRef(TR::loadaddr, 0, symRef);
    if (symRef->isUnresolved())
-   {
+      {
       // We still need to anchor from the stack *as though* we were emitting
       // the ResolveCHK, since the type test will expand to include one later.
       TR::Node *dummyResolveCheck = genResolveCheck(node);
