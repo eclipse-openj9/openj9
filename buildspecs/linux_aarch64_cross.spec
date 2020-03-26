@@ -145,6 +145,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="interp_nativeSupport" value="true"/>
 		<flag id="interp_profilingBytecodes" value="true"/>
 		<flag id="interp_sigQuitThread" value="true"/>
+		<flag id="interp_useUnsafeHelper" value="true"/>
 		<flag id="ive_jxeFileRelocator" value="true"/>
 		<flag id="ive_jxeInPlaceRelocator" value="true"/>
 		<flag id="ive_jxeNatives" value="true"/>
