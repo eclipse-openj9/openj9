@@ -158,6 +158,11 @@ typedef struct blocked_thread_record {
 	UDATA waitingThreadState;
 } blocked_thread_record;
 
+typedef struct memcategory_max_indexes {
+	U_32 omrMaxIndex;
+	U_32 languageMaxIndex;
+} memcategory_max_indexes;
+
 typedef struct memcategory_total {
 	U_32 *category_bitmask;
 	UDATA liveBytes;
@@ -175,7 +180,7 @@ typedef struct memcategory_data_frame
 
 /* Macros for working with the category_bitmask in the memcategory_total structure. The range of category codes is not contiguous, so we have
  * to map entries from the end of the range (unknown & port library) onto the end of the entries from the start of the range*/
-#define MAP_CATEGORY_TO_BITMASK_ENTRY(category) ( ((category) >= OMRMEM_LANGUAGE_CATEGORY_LIMIT) ? ((writer->_TotalCategories - 1) - (OMRMEM_OMR_CATEGORY_INDEX_FROM_CODE(category))): (category) )
+#define MAP_CATEGORY_TO_BITMASK_ENTRY(category) ( ((category) > OMRMEM_LANGUAGE_CATEGORY_LIMIT) ? ((writer->_MaxCategoryBits - 1) - (OMRMEM_OMR_CATEGORY_INDEX_FROM_CODE(category))): (category) )
 
 #define CATEGORY_WORD_INDEX(category) (MAP_CATEGORY_TO_BITMASK_ENTRY(category) / 32)
 #define CATEGORY_WORD_MASK(category) (1 << ( MAP_CATEGORY_TO_BITMASK_ENTRY(category) % 32 ))
@@ -352,7 +357,8 @@ private :
 	memcategory_data_frame* _CategoryStack;
 	U_32              _CategoryStackTop;
 	const char *      _SpaceDescriptorName;
-	I_32              _TotalCategories;
+	U_32              _TotalCategories;
+	U_32              _MaxCategoryBits;
 	UDATA             _AllocatedVMThreadCount;
 
 	/* Static declared data */
@@ -431,7 +437,8 @@ JavaCoreDumpWriter::JavaCoreDumpWriter(
 	_PreemptLocked(false),
 	_ThreadsWalkStarted(false),
 	_Agent(agent),
-	_TotalCategories(-1)
+	_TotalCategories(0),
+	_MaxCategoryBits(0)
 {
 	PORT_ACCESS_FROM_PORT(_PortLibrary);
 	bool bufferWrites=false;
@@ -1498,7 +1505,19 @@ JavaCoreDumpWriter::writeMemorySection(void)
 static UDATA
 countMemoryCategoriesCallback (U_32 categoryCode, const char * categoryName, UDATA liveBytes, UDATA liveAllocations, BOOLEAN isRoot, U_32 parentCategoryCode, OMRMemCategoryWalkState * state)
 {
-	(*(I_32 *)state->userData1)++;
+	(*(U_32 *)state->userData1)++;
+	
+	memcategory_max_indexes *max_indexes = (memcategory_max_indexes *)state->userData2;
+	if (categoryCode > OMRMEM_LANGUAGE_CATEGORY_LIMIT) {
+		U_32 omrCode = OMRMEM_OMR_CATEGORY_INDEX_FROM_CODE(categoryCode);
+		if (max_indexes->omrMaxIndex < omrCode) {
+			max_indexes->omrMaxIndex = omrCode;
+		}
+	} else {
+		if (max_indexes->languageMaxIndex < categoryCode) {
+			max_indexes->languageMaxIndex = categoryCode;
+		}
+	}
 	return J9MEM_CATEGORIES_KEEP_ITERATING;
 }
 
@@ -1587,8 +1606,9 @@ outerMemCategoryCallBack (U_32 categoryCode, const char * categoryName, UDATA li
 	 * for all children of this node.
 	 */
 	memset(&total, 0, sizeof(memcategory_total));
-	total.category_bitmask = (U_32*)alloca(writer->_TotalCategories * sizeof(U_32));
-	memset(total.category_bitmask, 0, writer->_TotalCategories * sizeof(U_32));
+	U_32 bitmask_size = ((writer->_MaxCategoryBits + 31) / 32) * sizeof(U_32);
+	total.category_bitmask = (U_32*)alloca(bitmask_size);
+	memset(total.category_bitmask, 0, bitmask_size);
 	total.liveBytes = liveBytes;
 	total.liveAllocations = liveAllocations;
 	total.codeToMatch = categoryCode;
@@ -1638,7 +1658,10 @@ JavaCoreDumpWriter::writeMemoryCountersSection(void)
 	_TotalCategories = 0;
 	walkState.walkFunction = countMemoryCategoriesCallback;
 	walkState.userData1 = &_TotalCategories;
+	memcategory_max_indexes max_indexes = {0, 0};
+	walkState.userData2 = &max_indexes;
 	j9mem_walk_categories(&walkState);
+	_MaxCategoryBits = (max_indexes.omrMaxIndex + 1) + (max_indexes.languageMaxIndex + 1);
 
 	_CategoryStack = (memcategory_data_frame*) alloca(_TotalCategories * sizeof(memcategory_data_frame*));
 
