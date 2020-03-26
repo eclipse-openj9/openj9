@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -555,59 +555,6 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 		return numElements;
 	}
 
-	/**
-	 * This junit method tests the !j9reg DDR extension functionality
-	 */
-	public void testJ9Reg()
-	{
-		String j9regLevel0Output = exec(Constants.J9REG_CMD, new String[] {});
-		String j9regLevel1Output = exec(Constants.J9REG_CMD, new String[] {"1"});
-		String j9regLevel2Output = exec(Constants.J9REG_CMD, new String[] {"2"});
-		String j9regLevel3Output = exec(Constants.J9REG_CMD, new String[] {"3"});
-		String j9regLevel4Output = exec(Constants.J9REG_CMD, new String[] {"4"});
-		
-		if (null == j9regLevel0Output) {
-			fail("\"!j9reg\" output is null");
-		}
-		
-		if (null == j9regLevel1Output) {
-			fail("\"!j9reg 1\" output is null");
-		}
-
-		if (null == j9regLevel2Output) {
-			fail("\"!j9reg 2\" output is null");
-		}
-
-		if (null == j9regLevel3Output) {
-			fail("\"!j9reg 3\" output is null");
-		}
-
-		if (null == j9regLevel4Output) {
-			fail("\"!j9reg 4\" output is null");
-		}
-		
-		assertTrue(validate(j9regLevel0Output, Constants.J9REG_SUCCESS_KEYS,
-				Constants.J9REG_FAILURE_KEYS, false));		
-		
-		/* Default level to print is 1. So j9reg and j9reg 1 output should be exactly the same.*/
-		if (!j9regLevel0Output.equals(j9regLevel1Output)) {
-			fail("\"j9reg\" and \"j9reg 1\" output is not same.");
-		}
-		
-		if (!j9regLevel2Output.startsWith(j9regLevel1Output)) {
-			fail("\"j9reg 1\" output is not a subset of \"j9reg 2\" output.");
-		}
-		
-		if (!j9regLevel3Output.startsWith(j9regLevel2Output)) {
-			fail("\"j9reg 2\" output is not a subset of \"j9reg 3\" output.");
-		}
-		
-		if (!j9regLevel4Output.startsWith(j9regLevel3Output)) {
-			fail("\"j9reg 3\" output is not a subset of \"j9reg 4\" output.");
-		}	
-	}
-
-	
 	/**
 	 * This junit method tests the !coreinfo DDR extension functionality
 	 */

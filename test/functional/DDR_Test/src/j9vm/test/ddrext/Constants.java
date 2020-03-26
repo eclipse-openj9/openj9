@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -607,10 +607,6 @@ public class Constants {
 	
 	public static final String J9METHOD_CMD = "j9method";
 	
-	public static final String J9REG_CMD = "j9reg";
-	public static final String J9REG_SUCCESS_KEYS = "vmStruct,sp,arg0EA,pc,literals";
-	public static final String J9REG_FAILURE_KEYS = "Problem running command";
-
 	public static final String COREINFO_CMD = "coreinfo";
 	public static final String COREINFO_SUCCESS_KEYS = "COMMANDLINE,JAVA VERSION INFO,PLATFORM INFO,Platform Name,OS Level,Processors,Architecture,How Many";
 	public static final String COREINFO_FAILURE_KEYS = "Problem running command";
