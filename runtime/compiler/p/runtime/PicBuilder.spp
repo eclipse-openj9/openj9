@@ -64,6 +64,21 @@
 #define maskVFT(reg)    rlwinm reg, reg, 0, 0, 31-J9TR_RequiredClassAlignmentInBits
 #endif
 
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+#define LOAD_CLASS(dest, src) \
+	laddr dest, J9TR_VMThreadCompressObjectReferences(r15) ; \
+	cmpli cr0, CmpAddr, dest, 0 ; \
+	laddr dest, J9TR_J9Object_class(src) ; \
+	beq $+8 ; \
+	lwz dest, J9TR_J9Object_class(src)
+#else /* OMR_GC_FULL_POINTERS */
+#define LOAD_CLASS(dest, src) lwz dest, J9TR_J9Object_class(src)
+#endif /* OMR_GC_FULL_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
+#define LOAD_CLASS(dest, src) laddr dest, J9TR_J9Object_class(src)
+#endif /* OMR_GC_COMPRESSED_POINTERS */
+
 #if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS)
 /* extract isolated field address in TenantDataxxx
    MT_ComputeIsolatedFieldAddress(32/64/obj, element_shift size 2/3)
@@ -2269,12 +2284,7 @@ _virtualUnresolvedHelper:
 .L.directDispatch:							! J9SP-96,r5(offset),r11,RTOC
 	laddr	r3, 7*ALen(J9SP)					! Restore object ptr: this
 	laddr	r0, VirtualRAOffset(r11)				! Load code cache RA
-#ifdef OMR_GC_COMPRESSED_POINTERS
-        lwz     r6, J9TR_J9Object_class(r3)                                               ! Load class offset
-        ! may need to convert class offset to J9Class
-#else
-	laddr	r6, J9TR_J9Object_class(r3)						! Load class pointer
-#endif
+	LOAD_CLASS(r6,r3)					! Load class pointer
 	maskVFT(r6)
 	mtspr   LR, r0							! Set up the return addr
 	laddrx	r8, r6, r5						! Load the vtable entry
@@ -2391,11 +2401,7 @@ _interfaceCallHelper:
 	laddr	r5, jitLookupInterfaceMethod@got(RTOC)		! Load the callee address
 #endif
 	mtspr	CTR, r5						! Prepare for long jump
-#ifdef OMR_GC_COMPRESSED_POINTERS
-	lwz	r3, J9TR_J9Object_class(r4)				! Load the class offset
-#else
-	laddr	r3, J9TR_J9Object_class(r4)				! Load the class
-#endif
+	LOAD_CLASS(r3,r4)					! Load the class
 	maskVFT(r3)
 	addi	r4, r11, 3*ALen					! Address of interface table&slot number
 	mr	r5, r11						! Load original RA for use inside jitLookupInterfaceMethod
@@ -2451,20 +2457,11 @@ _interfaceCallHelper:
 	mtspr	CTR, r5						! Prepare for long jump
 	mr	r5, r11						! Load code cache RA
 	addi	r4, r11, 3*ALen					! Address of interface table&slot number
-#ifdef OMR_GC_COMPRESSED_POINTERS
-	lwz	r3, J9TR_J9Object_class(r6)				! Load the class offset
-#else
-	laddr	r3, J9TR_J9Object_class(r6)				! Load the class
-#endif
+	LOAD_CLASS(r3,r6)					! Load the class
 	maskVFT(r3)
 	bcctrl	BO_ALWAYS, CR0_LT					! Call to look up method
 	laddr	r5, 7*ALen(J9SP)					! Load:  this
-#ifdef OMR_GC_COMPRESSED_POINTERS
-	lwz	r6, J9TR_J9Object_class(r5)				! Load the class offset
-	! may need to convert class offset to J9Class
-#else
-	laddr	r6, J9TR_J9Object_class(r5)				! Load the class
-#endif
+	LOAD_CLASS(r6,r5)					! Load the class
 	maskVFT(r6)
 	laddrx	r7, r6, r3					! Load method pointer
 	laddr	r8, J9TR_MethodPCStartOffset(r7)			! Load startPC field
@@ -2526,12 +2523,7 @@ _interfaceCallHelper:
 	neg	r4, r3
 	addi	r12, r4,J9TR_InterpVTableOffset			! Must set it up in r12
 	laddr	r3, 7*ALen(J9SP)					! Restore "this"
-#ifdef OMR_GC_COMPRESSED_POINTERS
-	lwz	r5, J9TR_J9Object_class(r3)				! class offset
-        ! may need to convert class offset to J9Class pointer
-#else
-	laddr	r5, J9TR_J9Object_class(r3)				! class pointer
-#endif
+ 	LOAD_CLASS(r5,r3)						! Load the class
 	maskVFT(r5)
 	laddrx	r4, r5, r12
 	mtspr	CTR, r4						! set up callee addr
@@ -2580,23 +2572,14 @@ _interfaceCompeteSlot2:
 	laddr	r5, jitLookupInterfaceMethod@got(RTOC)		! Load the callee address
 #endif
 	laddr	r6, 7*ALen(J9SP)					! Load "this"
-#ifdef OMR_GC_COMPRESSED_POINTERS
-	lwz	r3, J9TR_J9Object_class(r6)				! Load the class offset
-#else
-	laddr	r3, J9TR_J9Object_class(r6)				! Load the class
-#endif
+ 	LOAD_CLASS(r3,r6)							! Load the class
 	maskVFT(r3)
 	addi	r4, r11, 3*ALen					! Address of interface info
 	mtspr	CTR, r5						! Prepare for long jump
 	mr	r5, r11						! Load code cache RA
 	bcctrl	BO_ALWAYS, CR0_LT					! Call to look up
 	laddr	r5, 7*ALen(J9SP)					! Load:  this
-#ifdef OMR_GC_COMPRESSED_POINTERS
-	lwz	r6, J9TR_J9Object_class(r5)				! Load the class offset
-        ! may need to convert class offset to J9Class
-#else
-	laddr	r6, J9TR_J9Object_class(r5)				! Load the class
-#endif
+ 	LOAD_CLASS(r6,r5)							! Load the class
 	maskVFT(r6)
 	laddrx	r7, r6, r3					! Load method pointer
 	laddr	r5, J9TR_MethodPCStartOffset(r7)			! Load startPC/extra field
@@ -2721,11 +2704,7 @@ _interfaceSlotsUnavailable:
 #ifndef NO_HELPER_LASTITABLE_CHECK
         ! Before going to the VM helper, check if the receiver class lastITable matches the interface class
         ! of the method being called and if so, use it to quickly look up the vtable offset and make the call
-#ifdef OMR_GC_COMPRESSED_POINTERS
-        lwz     r10, J9TR_J9Object_class(r3)                    ! Load class
-#else
-        laddr   r10, J9TR_J9Object_class(r3)                    ! Load class
-#endif
+        LOAD_CLASS(r10,r3)										! Load the class
         maskVFT(r10)
         laddr   r12, 3*ALen(r11)                                ! Load the interface class of the method from the snippet
         laddr   r9, J9TR_J9Class_lastITable(r10)                ! Load the cached last ITable
@@ -2766,11 +2745,8 @@ _interfaceSlotsUnavailable:
 #else
 	laddr	r5, jitLookupInterfaceMethod@got(RTOC)		! Load address of final helper
 #endif
-#ifdef OMR_GC_COMPRESSED_POINTERS
-	lwz	r3, J9TR_J9Object_class(r3)				! Load class
-#else
-	laddr	r3, J9TR_J9Object_class(r3)				! Load class
-#endif
+	mr		r4, r3						! LOAD_CLASS cannot have identical source and destination
+	LOAD_CLASS(r3,r4)					! Load the class
 	maskVFT(r3)
 	addi	r4, r11, 3*ALen					! Address of interface info
 	mtspr	CTR, r5						! Prepare for long jump
