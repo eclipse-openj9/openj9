@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2019 IBM Corp. and others
+Copyright (c) 2006, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,6 +121,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<project id="compiler"/>
 	</source>
 	<flags>
+		<flag id="interp_atomicFreeJni" value="true"/>
+		<flag id="interp_atomicFreeJniUsesFlush" value="true"/>
+		<flag id="interp_twoPassExclusive" value="true"/>
 		<flag id="arch_x86" value="true"/>
 		<flag id="build_SE6_package" value="true"/>
 		<flag id="build_dropToHursley" value="true"/>

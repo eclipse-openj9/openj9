@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,12 @@
 
 #if defined(WIN32)
 #include <windows.h>
-#elif defined(LINUX) || defined(AIXPPC) /* WIN32 */
-#include <sys/mman.h>
-#endif /* LINUX || AIXPPC */
+#endif /* WIN32 */
 
 #include "vm_internal.h"
+#if defined(J9UNIX) || defined(AIXPPC)
+#include <sys/mman.h>
+#endif /* J9UNIX || AIXPPC */
 #include "ut_j9vm.h"
 #include "AtomicSupport.hpp"
 
@@ -44,7 +45,7 @@ flushProcessWriteBuffers(J9JavaVM *vm)
 	if (NULL != vm->flushFunction) {
 		((VOID (WINAPI*)(void))vm->flushFunction)();
 	}
-#elif defined(LINUX) || defined(AIXPPC) /* WIN32 */
+#elif defined(J9UNIX) || defined(AIXPPC) /* WIN32 */
 	if (NULL != vm->flushMutex) {
 		omrthread_monitor_enter(vm->flushMutex);
 		void *addr = vm->exclusiveGuardPage.address;
@@ -56,9 +57,9 @@ flushProcessWriteBuffers(J9JavaVM *vm)
 		Assert_VM_true(0 == mprotectrc);
 		omrthread_monitor_exit(vm->flushMutex);
 	}
-#else /* LINUX || AIXPPC */
+#else /* J9UNIX || AIXPPC */
 #error flushProcessWriteBuffers unimplemented
-#endif /* LINUX || AIXPPC */
+#endif /* J9UNIX || AIXPPC */
 }
 
 UDATA
