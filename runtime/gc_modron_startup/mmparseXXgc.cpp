@@ -813,6 +813,16 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->softwareRangeCheckReadBarrier = true;
 			continue;
 		}
+
+		if (try_scan(&scan_start, "enableConcurrentScavengeExhaustiveTermination")) {
+			extensions->concurrentScavengeExhaustiveTermination = true;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "disableConcurrentScavengeExhaustiveTermination")) {
+			extensions->concurrentScavengeExhaustiveTermination = false;
+			continue;
+		}
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
 
 #endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
