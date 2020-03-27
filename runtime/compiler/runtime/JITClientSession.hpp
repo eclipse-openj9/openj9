@@ -330,6 +330,7 @@ class ClientSessionData
       TR_OpaqueClassBlock *_srMethodAccessorClass;
       TR_OpaqueClassBlock *_srConstructorAccessorClass;
 #endif // J9VM_OPT_SIDECAR
+      U_32 _extendedRuntimeFlags2;
       }; // struct VMInfo
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
