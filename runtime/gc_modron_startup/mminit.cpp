@@ -3039,10 +3039,14 @@ hookReleaseVMAccess(J9HookInterface** hook, UDATA eventNum, void* voidEventData,
 	J9VMReleaseVMAccessEvent* eventData = (J9VMReleaseVMAccessEvent*)voidEventData;
 
 	J9VMThread *currentThread = eventData->currentThread;
+	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(currentThread->omrVMThread);
 	MM_GCExtensions* ext = MM_GCExtensions::getExtensions(currentThread);
 
 	if (ext->isConcurrentScavengerInProgress()) {
-		/* to call a variant of OMR's flushGCcaches, once it's properly adjusted */
+		/* Flush and final flags are false, which means that we will not release the copy caches to scan queue, but just make them inactive,
+		 * for someone else to release them if needed. More often, however, this thread will re-acquire VM access and re-active the caches
+		 */
+		ext->scavenger->threadReleaseCaches(env, env, false, false);
 	}
 }
 
@@ -3051,11 +3055,14 @@ hookAcquiringExclusiveInNative(J9HookInterface** hook, UDATA eventNum, void* voi
 {
 	J9VMAcquringExclusiveInNativeEvent* eventData = (J9VMAcquringExclusiveInNativeEvent*)voidEventData;
 
-	J9VMThread *currentThread = eventData->currentThread;
-	MM_GCExtensions* ext = MM_GCExtensions::getExtensions(currentThread);
+	J9VMThread *targetThread = eventData->targetThread;
+	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(targetThread->omrVMThread);
+	MM_GCExtensions* ext = MM_GCExtensions::getExtensions(targetThread);
 
 	if (ext->isConcurrentScavengerInProgress()) {
-		/* to call a variant of OMR's flushGCcaches, once it's properly adjusted */
+		/* This call back occurs when Exclusive is being acquired. There are no reason for delaying final flush - do it now (Hence, the flags are true). */
+		ext->scavenger->threadReleaseCaches(NULL, env, true, true);
+
 	}
 }
 
@@ -3173,10 +3180,13 @@ gcInitializeVMHooks(MM_GCExtensionsBase *extensions)
 	else if (extensions->concurrentScavenger) {
 		if ((*vmHookInterface)->J9HookRegisterWithCallSite(vmHookInterface, J9HOOK_VM_ACQUIREVMACCESS, hookAcquireVMAccess, OMR_GET_CALLSITE(), NULL)) {
 			result = false;
-		} else if ((*vmHookInterface)->J9HookRegisterWithCallSite(vmHookInterface, J9HOOK_VM_RELEASEVMACCESS, hookReleaseVMAccess, OMR_GET_CALLSITE(), NULL)) {
-			result = false;
-		} else if ((*vmHookInterface)->J9HookRegisterWithCallSite(vmHookInterface, J9HOOK_VM_ACQUIRING_EXCLUSIVE_IN_NATIVE, hookAcquiringExclusiveInNative, OMR_GET_CALLSITE(), NULL)) {
-			result = false;
+		} else if (extensions->concurrentScavengeExhaustiveTermination) {
+			/* Register these hooks only if Exhaustive Termination optimization is enabled */
+			if ((*vmHookInterface)->J9HookRegisterWithCallSite(vmHookInterface, J9HOOK_VM_RELEASEVMACCESS, hookReleaseVMAccess, OMR_GET_CALLSITE(), NULL)) {
+				result = false;
+			} else if ((*vmHookInterface)->J9HookRegisterWithCallSite(vmHookInterface, J9HOOK_VM_ACQUIRING_EXCLUSIVE_IN_NATIVE, hookAcquiringExclusiveInNative, OMR_GET_CALLSITE(), NULL)) {
+				result = false;
+			}
 		}
 	}
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
@@ -3195,8 +3205,10 @@ gcCleanupVMHooks(MM_GCExtensionsBase *extensions)
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 		if (extensions->concurrentScavenger) {
 			(*vmHookInterface)->J9HookUnregister(vmHookInterface, J9HOOK_VM_ACQUIREVMACCESS, hookAcquireVMAccess, NULL);
-			(*vmHookInterface)->J9HookUnregister(vmHookInterface, J9HOOK_VM_RELEASEVMACCESS, hookReleaseVMAccess, NULL);
-			(*vmHookInterface)->J9HookUnregister(vmHookInterface, J9HOOK_VM_ACQUIRING_EXCLUSIVE_IN_NATIVE, hookAcquiringExclusiveInNative, NULL);
+			if (extensions->concurrentScavengeExhaustiveTermination) {
+				(*vmHookInterface)->J9HookUnregister(vmHookInterface, J9HOOK_VM_RELEASEVMACCESS, hookReleaseVMAccess, NULL);
+				(*vmHookInterface)->J9HookUnregister(vmHookInterface, J9HOOK_VM_ACQUIRING_EXCLUSIVE_IN_NATIVE, hookAcquiringExclusiveInNative, NULL);
+			}
 		}
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	}
