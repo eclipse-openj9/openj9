@@ -218,12 +218,14 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    classInfoStruct._classChainOffsetOfIdentifyingLoaderForClazz = std::get<20>(classInfo);
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
 
+   auto &origROMMethods = std::get<21>(classInfo);
+
    uint32_t numMethods = romClass->romMethodCount;
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)
       {
       clientSessionData->getJ9MethodMap().insert({&methods[i],
-            {romMethod, NULL, static_cast<bool>(methodTracingInfo[i]), (TR_OpaqueClassBlock *)clazz, false}});
+            {romMethod, origROMMethods[i], NULL, static_cast<bool>(methodTracingInfo[i]), (TR_OpaqueClassBlock *)clazz, false}});
       romMethod = nextROMMethod(romMethod);
       }
    }
@@ -251,11 +253,17 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
    TR_OpaqueClassBlock *parentClass = fe->getSuperClass((TR_OpaqueClassBlock *) clazz);
 
    uint32_t numMethods = clazz->romClass->romMethodCount;
+
    std::vector<uint8_t> methodTracingInfo;
    methodTracingInfo.reserve(numMethods);
+
+   std::vector<J9ROMMethod *> origROMMethods;
+   origROMMethods.reserve(numMethods);
    for(uint32_t i = 0; i < numMethods; ++i)
       {
       methodTracingInfo.push_back(static_cast<uint8_t>(fe->isMethodTracingEnabled((TR_OpaqueMethodBlock *) &methodsOfClass[i])));
+      // record client-side pointers to ROM methods
+      origROMMethods.push_back(fe->getROMMethodFromRAMMethod(&methodsOfClass[i]));
       }
 
    bool classHasFinalFields = fe->hasFinalFieldsInClass((TR_OpaqueClassBlock *)clazz);
@@ -277,7 +285,7 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
                           TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo,
                           classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword,
                           leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize,
-                          clazz->romClass, cp, classFlags, classChainOffsetOfIdentifyingLoaderForClazz);
+                          clazz->romClass, cp, classFlags, classChainOffsetOfIdentifyingLoaderForClazz, origROMMethods);
    }
 
 J9ROMClass *
