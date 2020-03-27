@@ -1341,21 +1341,10 @@ ZZ  Check if it's a private method
     LR      r1,r2
     NILL    r1,J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG
     JNZ     L_privateMethod
-ZZ  Skip patching if vft offset is smaller than -32768
-    C       r2,4(rEP)
-    JL      L_endPatch
 LABEL(LVirtualDispatch)
 
     L_GPR   r3,eq_patchVftInstr_inVUCallSnippet(r14)
-    XR      r1,r1      # clear r1
-    ICM     r1,1,0(r3) # first opcode byte for LY/LG is E3
-    CHI     r1,HEX(E3) # is LY/LG?
-    JZ      L_isLY
-    STH     r2,2(r3)    # Update the vft offset for A[G]HI
-    STH     r2,6(r3)    # Update the vft offset for L[G]HI
-    J       L_patchBRASL
-LABEL(L_isLY)
-    STH     r2,8(r3)    # Update the vft offset field for L[G]HI
+    ST      r2,8(r3)    # Update the vft offset field for LGFI
 ZZ Long Displacement patching for LY/LG
     LR      r1,r2
     SLL     r1,20
