@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,6 +98,7 @@ void TR_OSRGuardInsertion::cleanUpPotentialOSRPointHelperCalls()
       TR::Node *node = ttNode->getFirstChild();
       if (node->isPotentialOSRPointHelperCall())
          {
+         dumpOptDetails(comp(), "%sRemove potentialOSRPointHelper call n%dn %p\n", optDetailString(), ttNode->getGlobalIndex(), ttNode);
          TR::TreeTop* prevTreeTop = treeTop->getPrevTreeTop();
          TR::TransformUtil::removeTree(comp(), treeTop);
          treeTop = prevTreeTop;
@@ -146,7 +147,7 @@ void TR_OSRGuardInsertion::removeRedundantPotentialOSRPointHelperCalls(TR_HCRGua
          if (protectedByOSRPoints &&
              osrNode->isPotentialOSRPointHelperCall())
             {
-            dumpOptDetails(comp(), "Remove redundant potentialOSRPointHelper call n%dn %p\n", osrNode->getGlobalIndex(), osrNode);
+            dumpOptDetails(comp(), "%sRemove redundant potentialOSRPointHelper call n%dn %p\n", optDetailString(), osrNode->getGlobalIndex(), osrNode);
 
             TR::TreeTop* prevTree = treeTop->getPrevTreeTop();
             TR::TransformUtil::removeTree(comp(), treeTop);
@@ -202,6 +203,14 @@ static bool skipOSRGuardInsertion(TR::Compilation* comp)
 
 int32_t TR_OSRGuardInsertion::perform()
    {
+   if (!comp()->supportsInduceOSR() ||
+       comp()->getOSRMode() != TR::voluntaryOSR)
+      {
+      if (trace())
+         traceMsg(comp(), "Not in voluntary OSR mode, quiting\n");
+      return 0;
+      }
+
    bool needHCRGuardRemoval = hasHCRGuard(comp());
    bool hasFearPoint = hasOSRFearPoint(comp());
    bool canInsertOSRGuards = !skipOSRGuardInsertion(comp());
@@ -937,7 +946,7 @@ void TR_OSRGuardInsertion::cleanUpOSRFearPoints()
       if (ttNode->getNumChildren() == 1 &&
           ttNode->getFirstChild()->isOSRFearPointHelperCall())
          {
-         dumpOptDetails(comp(), "Remove osrFearPointHelper call n%dn %p\n", ttNode->getGlobalIndex(), ttNode);
+         dumpOptDetails(comp(), "%sRemove osrFearPointHelper call n%dn %p\n", optDetailString(), ttNode->getGlobalIndex(), ttNode);
          TR::TreeTop* prevTree = treeTop->getPrevTreeTop();
          TR::TransformUtil::removeTree(comp(), treeTop);
          treeTop = prevTree;

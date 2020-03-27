@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,7 +87,7 @@ static const OptimizationStrategy J9EarlyGlobalOpts[] =
    { OMR::inlining                             },
    { OMR::methodHandleInvokeInliningGroup,  OMR::IfEnabled },
    { OMR::staticFinalFieldFolding,             },
-   { OMR::osrGuardInsertion,                OMR::IfVoluntaryOSR       },
+   { OMR::osrGuardInsertion,                OMR::MustBeDone       },
    { OMR::osrExceptionEdgeRemoval                       }, // most inlining is done by now
    { OMR::jProfilingBlock                      },
    { OMR::stringBuilderTransformer             },
@@ -304,7 +304,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::inlining                                                              },
    { OMR::methodHandleInvokeInliningGroup,                       OMR::IfEnabled },
    { OMR::staticFinalFieldFolding,                                              },
-   { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR       },
+   { OMR::osrGuardInsertion,                         OMR::MustBeDone       },
    { OMR::osrExceptionEdgeRemoval                       }, // most inlining is done by now
    { OMR::jProfilingBlock                                                       },
    { OMR::virtualGuardTailSplitter                                              }, // merge virtual guards
@@ -385,7 +385,7 @@ static const OptimizationStrategy reducedWarmStrategyOpts[] =
    {
    { OMR::inlining                                                              },
    { OMR::staticFinalFieldFolding,                                              },
-   { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR       },
+   { OMR::osrGuardInsertion,                         OMR::MustBeDone       },
    { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
    { OMR::jProfilingBlock                                                       },
    { OMR::dataAccessAccelerator                                                 }, // immediate does unconditional dataAccessAccelerator after inlining
@@ -648,7 +648,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::inlining                                                              },
    { OMR::methodHandleInvokeInliningGroup,           OMR::IfEnabled             },
    { OMR::staticFinalFieldFolding,                                              },
-   { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR        },
+   { OMR::osrGuardInsertion,                         OMR::MustBeDone        },
    { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
    { OMR::jProfilingBlock                                                       },
    { OMR::virtualGuardTailSplitter                                              }, // merge virtual guards
