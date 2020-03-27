@@ -1213,6 +1213,8 @@ public final class MethodType implements Serializable
 			);
 			fReturnType.set(this, void.class);
 			fArguments.set(this, EMTPY_PARAMS);
+			methodDescriptor = "()V";
+			stackDescriptionBits = stackDescriptionBits(EMTPY_PARAMS, 0);
 			Class<?> serialReturnType = (Class<?>) in.readObject();
 			Class<?>[] serialArguments = (Class<?>[]) in.readObject();
 			deserializedFields = new DeserializedFieldsHolder(serialReturnType, serialArguments);
