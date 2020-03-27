@@ -187,6 +187,7 @@ public:
    virtual J9ROMMethod *getROMMethodFromRAMMethod(J9Method *ramMethod) override;
    virtual bool getReportByteCodeInfoAtCatchBlock() override;
    virtual void *getInvokeExactThunkHelperAddress(TR::Compilation *comp, TR::SymbolReference *glueSymRef, TR::DataType dataType) override;
+   virtual bool noMultipleConcreteClasses(List<TR_PersistentClassInfo>* subClasses) override;
 
    virtual uintptr_t getCellSizeForSizeClass(uintptr_t) override;
    virtual uintptr_t getObjectSizeClass(uintptr_t) override;
