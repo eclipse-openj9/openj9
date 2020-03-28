@@ -101,7 +101,24 @@ private:
 	 * The class unloading occurs after a user defined number of cycles.
 	 */
 	bool private_shouldPercolateGarbageCollect_classUnloading(MM_EnvironmentBase *envBase);
-	void private_SortAllHotField();
+
+	/**
+	 * Sort all hot fields for all classes.
+	 * Used when scavenger dynamicBreadthFirstScanOrdering is enabled
+	 */
+	void private_SortAllHotFieldData();
+
+	/**
+	 * Reset all hot fields for all classes.
+	 * Used when scavenger dynamicBreadthFirstScanOrdering is enabled and hotFieldResettingEnabled is true
+	 */
+	void private_ResetAllHotFieldData();
+	
+	/**
+	 * Sort all hot fields for a single class.
+	 * Used when scavenger dynamicBreadthFirstScanOrdering is enabled
+	 */
+	void private_SortClassHotFieldList(J9ClassHotFieldsInfo* hotFieldClassInfo);
 
 	/**
 	 * Decide if GC percolation should occur due to active JNI critical

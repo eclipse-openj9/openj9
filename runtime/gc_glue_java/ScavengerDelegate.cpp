@@ -111,8 +111,11 @@
 #include "VMThreadListIterator.hpp"
 #include "VMThreadStackSlotIterator.hpp"
 
-#define LOCAL_GCS_BETWEEN_HOT_FIELD_SORTING 2
-#define LOCAL_GCS_BETWEEN_HOT_METHOD_CPU_UTILIZATION_UPDATE 20
+/* Value used to help with the incrementing of the gc count between hot field sorting for dynamicBreadthFirstScanOrdering */
+#define INCREMENT_GC_COUNT_BETWEEN_HOT_FIELD_SORT 100
+
+/* Minimum hotness value for a third hot field offset if depthCopyThreePaths is enabled for dynamicBreadthFirstScanOrdering */
+#define MINIMUM_THIRD_HOT_FIELD_HOTNESS 50000
 
 class MM_AllocationContext;
 
@@ -183,7 +186,11 @@ MM_ScavengerDelegate::mainSetupForGC(MM_EnvironmentBase * envBase)
 
 	private_setupForOwnableSynchronizerProcessing(MM_EnvironmentStandard::getEnvironment(envBase));
 
-	private_SortAllHotField();
+	/* Sort all hot fields for all classes if scavenger dynamicBreadthFirstScanOrdering is enabled */
+	if (MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST == _extensions->scavengerScanOrdering) {
+		private_SortAllHotFieldData();
+	}
+
 	return;
 }
 
@@ -656,83 +663,122 @@ MM_ScavengerDelegate::private_shouldPercolateGarbageCollect_classUnloading(MM_En
 }
 
 void
-MM_ScavengerDelegate::private_SortAllHotField()
-{
-	printf("\nSCAVE: NEWLOCALGC: count:%zu\n", _extensions->scavengerStats._gcCount); 
-	U_32 hotClassCount = 0;
-	U_32 dirtyHotClassCount = 0; 
-	U_32 hotFieldCount = 0;
-	U_32 dirtyHotFieldCount = 0;
-	U_32 lengthOfMaxTwo = 0;
-	U_32 lengthMoreThanTwo = 0; 
-	U_32 dirtyLengthOfMaxTwo = 0;
-	U_32 dirtyLengthMoreThanTwo = 0; 
-	//update hottest fields for all J9Classes in J9HotClassList where isClassHotFieldListDirty is true
-	//if (MM_GCExtensions::getExtensions(javaVM)->scavengerScanOrdering == MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST && extensions->localGcCount % LOCAL_GCS_BETWEEN_HOT_FIELD_SORTING == 0) {
-	if ((_extensions->scavengerStats._gcCount + 1)  % LOCAL_GCS_BETWEEN_HOT_FIELD_SORTING == 0) {	
-		J9ClassLoader *classLoader;
-		J9ClassLoaderWalkState walkState;
-
-		/* this walk will include any dead or unloading classloaders */
-		classLoader = _javaVM->internalVMFunctions->allClassLoadersStartDo(&walkState, _javaVM, J9CLASSLOADERWALK_INCLUDE_DEAD);
+MM_ScavengerDelegate::private_SortAllHotFieldData()
+{	
+	/* update hottest fields for all elements of the hotFieldClassInfoPool where isClassHotFieldListDirty is true */
+	if ((NULL != _javaVM->hotFieldClassInfoPool) && ((_extensions->scavengerStats._gcCount  % _extensions->gcCountBetweenHotFieldSort) == 0)) {
+		pool_state hotFieldClassInfoPoolState;
+		J9ClassHotFieldsInfo *hotFieldClassInfoTemp;
+		omrthread_monitor_enter(_javaVM->hotFieldClassInfoPoolMutex);
+		hotFieldClassInfoTemp = (struct J9ClassHotFieldsInfo*)pool_startDo(_javaVM->hotFieldClassInfoPool, &hotFieldClassInfoPoolState);
 		
-		while (NULL != classLoader) {
-			printf("\n\nSCAVE:Walk class loader: %p\n", classLoader);
-			//walk hotClassPool for each class loader
-			pool_state hotFieldClassInfoPoolState;
-			J9ClassHotFieldsInfo *hotFieldClassInfoTemp = (J9ClassHotFieldsInfo *)pool_startDo(classLoader->hotFieldClassInfoPool, &hotFieldClassInfoPoolState);
-			
-			//sort hot field list for the class if hot field list of the class is dirty NOTE: //add list length field in J9ClassHotFieldsInfo to check to see if list of fields for the class is longer than 2, only sort the list (only set dirty class bit) if list is longer than 2
-			printf("SCAVE: Walk hot class pool of classloader: %p; hotFieldClassInfoPoolStart:%p \n",classLoader, hotFieldClassInfoTemp); 
-			while (NULL != hotFieldClassInfoTemp) {
-				if(hotFieldClassInfoTemp->hotFieldListLength < 3) lengthOfMaxTwo++;
-				else lengthMoreThanTwo++;
-
-				if(hotFieldClassInfoTemp->isClassHotFieldListDirty && hotFieldClassInfoTemp->hotFieldListLength > 2) {
-				//if(hotFieldClassInfoTemp->isClassHotFieldListDirty) {		
-					if(hotFieldClassInfoTemp->hotFieldListLength < 3) dirtyLengthOfMaxTwo++;
-					else dirtyLengthMoreThanTwo++;
-
-					dirtyHotClassCount++; 
-					dirtyHotFieldCount += hotFieldClassInfoTemp->hotFieldListLength;	
-					printf("SCAVE: Walk dirty hot class: hotFieldOffset1:%u hotFieldOffset2:%u; hotfieldListLength:%u\n", hotFieldClassInfoTemp->hotFieldOffset1, hotFieldClassInfoTemp->hotFieldOffset2, hotFieldClassInfoTemp->hotFieldListLength); 	
-					J9HotField* currentHotField = hotFieldClassInfoTemp->hotFieldListHead;
-					U_64 hottest = 0;
-					U_64 secondHottest = 0;
-					U_64 current = 0;
-					//omrthread_monitor_enter(classLoader->hotFieldPoolMutex); /*monitor not needed as master thread will have exclusive access */
-					while (NULL != currentHotField) {
-						//printf("SCAVE: Walk hot field list of class. hotFieldOffset:%u hotness:%u \n",currentHotField->hotFieldOffset, currentHotField->hotness); 
-						if (currentHotField->hotness > 40000000) printf("SCAVE: hotness will soon overflow\n"); 					
-						
-						current = currentHotField->hotness * currentHotField->cpuUtil;
-						if (current > hottest) {
-							secondHottest = hottest;
-							hotFieldClassInfoTemp->hotFieldOffset2 = hotFieldClassInfoTemp->hotFieldOffset1;
-						
-							hottest = current;
-							hotFieldClassInfoTemp->hotFieldOffset1 = currentHotField->hotFieldOffset;
-											
-						} else if (current > secondHottest) {
-							secondHottest = current;
-							hotFieldClassInfoTemp->hotFieldOffset2 = currentHotField->hotFieldOffset;		
-						}
-						printf("SCAVE: hotfieldlistHead:%p; hottestField1:%zu; hotFieldOffset1:%u; hottestField2:%zu; hotFieldOffset2=%u;  \n",hotFieldClassInfoTemp->hotFieldListHead, hottest,  hotFieldClassInfoTemp->hotFieldOffset1, secondHottest,  hotFieldClassInfoTemp->hotFieldOffset2);
-						currentHotField = currentHotField->next;
-					}
-					hotFieldClassInfoTemp->isClassHotFieldListDirty = false;
-					//omrthread_monitor_exit(classLoader->hotFieldPoolMutex); /*monitor not needed as master thread will have exclusive access */
-				}
-				hotClassCount++;
-				hotFieldCount += hotFieldClassInfoTemp->hotFieldListLength;
-				hotFieldClassInfoTemp = (struct J9ClassHotFieldsInfo*)pool_nextDo(&hotFieldClassInfoPoolState);
+		/* sort hot field list for the class if the hot field list of the class is dirty */
+		while ((NULL != hotFieldClassInfoTemp) && (U_8_MAX != hotFieldClassInfoTemp->consecutiveHotFieldSelections)) {
+			if (hotFieldClassInfoTemp->isClassHotFieldListDirty) {
+				private_SortClassHotFieldList(hotFieldClassInfoTemp);
 			}
-			classLoader = _javaVM->internalVMFunctions->allClassLoadersNextDo(&walkState);
+			hotFieldClassInfoTemp = (struct J9ClassHotFieldsInfo*)pool_nextDo(&hotFieldClassInfoPoolState);
 		}
-		_javaVM->internalVMFunctions->allClassLoadersEndDo(&walkState);
+		omrthread_monitor_exit(_javaVM->hotFieldClassInfoPoolMutex);
 	}
-	printf("SCAVE: hotClassCount:%u; dirtyHotClassCount:%u; hotFieldCount:%u; dirtyHotFieldCount:%u \n", hotClassCount, dirtyHotClassCount, hotFieldCount, dirtyHotFieldCount);
-	printf("SCAVE: lengthOfMaxTwo:%u; lengthMoreThanTwo:%u; dirtyLengthOfMaxTwo:%u; dirtyLengthMoreThanTwo:%u \n", lengthOfMaxTwo, lengthMoreThanTwo, dirtyLengthOfMaxTwo, dirtyLengthMoreThanTwo);		
+	/* If adaptiveGcCountBetweenHotFieldSort, update the gc count required between sorting all hot fields as the application runs longer */
+	if ((_extensions->adaptiveGcCountBetweenHotFieldSort) && (_extensions->gcCountBetweenHotFieldSort < _extensions->gcCountBetweenHotFieldSortMax) && ((_extensions->scavengerStats._gcCount % INCREMENT_GC_COUNT_BETWEEN_HOT_FIELD_SORT) == 0)) {
+		_extensions->gcCountBetweenHotFieldSort++;
+	}
+	/* If hotFieldResettingEnabled, update the gc count required between resetting all hot fields */
+	if ((_extensions->hotFieldResettingEnabled) && ((_extensions->scavengerStats._gcCount % _extensions->gcCountBetweenHotFieldReset) == 0)) {
+		private_ResetAllHotFieldData();
+	}
+}
+
+void
+MM_ScavengerDelegate::private_SortClassHotFieldList(J9ClassHotFieldsInfo* hotFieldClassInfo) {
+	/* store initial hot field offsets before hotFieldClassInfo hot field offsets are updated */
+	uint8_t initialHotFieldOffset1 = hotFieldClassInfo->hotFieldOffset1;
+	uint8_t initialHotFieldOffset2 = hotFieldClassInfo->hotFieldOffset2;
+	uint8_t initialHotFieldOffset3 = hotFieldClassInfo->hotFieldOffset3;
+
+	/* compute and update the hot fields for each class */
+	if (1 == hotFieldClassInfo->hotFieldListLength) {
+		hotFieldClassInfo->hotFieldOffset1 = hotFieldClassInfo->hotFieldListHead->hotFieldOffset;
+	} else {
+		J9HotField* currentHotField = hotFieldClassInfo->hotFieldListHead;
+		uint64_t hottest = 0;
+		uint64_t secondHottest = 0;
+		uint64_t thirdHottest = 0;
+		uint64_t current = 0;
+		while (NULL != currentHotField) {
+			if(currentHotField->cpuUtil > _extensions->minCpuUtil) {
+				current = currentHotField->hotness;
+				/* compute the three hottest fields if depthCopyThreePaths is enabled, or the two hottest fields if only depthCopyTwoPaths is enabled, otherwise, compute just the hottest field if both depthCopyTwoPaths and depthCopyThreePaths are disabled */
+				if (_extensions->depthCopyThreePaths) {
+					if (current > hottest) {
+						thirdHottest = secondHottest;
+						hotFieldClassInfo->hotFieldOffset3 = hotFieldClassInfo->hotFieldOffset2;
+						secondHottest = hottest;
+						hotFieldClassInfo->hotFieldOffset2 = hotFieldClassInfo->hotFieldOffset1;
+						hottest = current;
+						hotFieldClassInfo->hotFieldOffset1 = currentHotField->hotFieldOffset;
+					} else if (current > secondHottest) {
+						thirdHottest = secondHottest;
+						hotFieldClassInfo->hotFieldOffset3 = hotFieldClassInfo->hotFieldOffset2;
+						secondHottest = current;
+						hotFieldClassInfo->hotFieldOffset2 = currentHotField->hotFieldOffset;		
+					} else if (current > thirdHottest) {
+						thirdHottest = current;
+						hotFieldClassInfo->hotFieldOffset3 = currentHotField->hotFieldOffset;
+					}
+				} else if (_extensions->depthCopyTwoPaths) {
+					if (current > hottest) {
+						secondHottest = hottest;
+						hotFieldClassInfo->hotFieldOffset2 = hotFieldClassInfo->hotFieldOffset1;
+						hottest = current;
+						hotFieldClassInfo->hotFieldOffset1 = currentHotField->hotFieldOffset;
+					} else if (current > secondHottest) {
+						secondHottest = current;
+						hotFieldClassInfo->hotFieldOffset2 = currentHotField->hotFieldOffset;		
+					}
+				} else if (current > hottest) {
+					hottest = current;
+					hotFieldClassInfo->hotFieldOffset1 = currentHotField->hotFieldOffset;
+				}
+			}
+			currentHotField = currentHotField->next;
+		}
+		if (thirdHottest < MINIMUM_THIRD_HOT_FIELD_HOTNESS) { 
+			hotFieldClassInfo->hotFieldOffset3 = U_8_MAX;
+		}
+	}
+	/* if permanantHotFields are allowed, update consecutiveHotFieldSelections counter if hot field offsets are the same as the previous time the class hot field list was sorted  */
+	if (_extensions->allowPermanantHotFields) {
+		if ((initialHotFieldOffset1 == hotFieldClassInfo->hotFieldOffset1) && (initialHotFieldOffset2 == hotFieldClassInfo->hotFieldOffset2) && (initialHotFieldOffset3 == hotFieldClassInfo->hotFieldOffset3)) {
+			hotFieldClassInfo->consecutiveHotFieldSelections++;
+			if (hotFieldClassInfo->consecutiveHotFieldSelections == _extensions->maxConsecutiveHotFieldSelections) { 
+				hotFieldClassInfo->consecutiveHotFieldSelections = U_8_MAX;
+			}
+		} else {
+			hotFieldClassInfo->consecutiveHotFieldSelections = 0;
+		}
+	}
+	hotFieldClassInfo->isClassHotFieldListDirty = false;
+}
+
+void
+MM_ScavengerDelegate::private_ResetAllHotFieldData()
+{
+	pool_state hotFieldClassInfoPoolState;
+	omrthread_monitor_enter(_javaVM->hotFieldClassInfoPoolMutex);
+	J9ClassHotFieldsInfo *hotFieldClassInfoTemp = (J9ClassHotFieldsInfo *)pool_startDo(_javaVM->hotFieldClassInfoPool, &hotFieldClassInfoPoolState);
+	while (NULL != hotFieldClassInfoTemp) {
+		J9HotField* currentHotField = hotFieldClassInfoTemp->hotFieldListHead;
+		while (NULL != currentHotField) {
+			currentHotField->hotness = 0;
+			currentHotField->cpuUtil = 0;
+			currentHotField = currentHotField->next;
+		}
+		hotFieldClassInfoTemp = (struct J9ClassHotFieldsInfo*)pool_nextDo(&hotFieldClassInfoPoolState);
+	}
+	omrthread_monitor_exit(_javaVM->hotFieldClassInfoPoolMutex);
 }
 
 bool

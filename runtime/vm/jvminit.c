@@ -613,6 +613,7 @@ isJITServerEnabled(J9JavaVM *vm)
 void
 freeJavaVM(J9JavaVM * vm)
 {
+	BOOLEAN hotReferenceFieldRequired = FALSE;
 	J9PortLibrary *tmpLib = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9VMThread *currentThread = currentVMThread(vm);
@@ -633,6 +634,21 @@ freeJavaVM(J9JavaVM * vm)
 
 	if (NULL != vm->dllLoadTable) {
 		runShutdownStage(vm, INTERPRETER_SHUTDOWN, NULL, 0);
+	}
+
+	/* Kill global hot field class info pool and its monitor if dynamicBreadthFirstScanOrdering is enabled */
+	hotReferenceFieldRequired = vm->memoryManagerFunctions->j9gc_hot_reference_field_required(vm);
+	if (hotReferenceFieldRequired && NULL != vm->hotFieldClassInfoPool) {
+		pool_kill(vm->hotFieldClassInfoPool);
+		vm->hotFieldClassInfoPool = NULL;
+	}
+
+	if (hotReferenceFieldRequired && NULL != vm->hotFieldClassInfoPoolMutex) {
+		omrthread_monitor_destroy(vm->hotFieldClassInfoPoolMutex);
+	}
+
+	if (hotReferenceFieldRequired && NULL != vm->globalHotFieldPoolMutex) {
+		omrthread_monitor_destroy(vm->globalHotFieldPoolMutex);
 	}
 
 	if (NULL != vm->classMemorySegments) {
@@ -6343,6 +6359,21 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 			}
 		}
 #endif
+		/* Create the global hot field class info pool and global hot field class info pool monitor if scavenger dynamicBreadthFirstScanOrdering is enabled
+		 * 
+		 * The global hot field class info pool and global hot field class info pool monitor will be used to store hot
+		 * field information for all classes containing hot fields. In addition to this, the globalHotFieldPoolMutex that is created
+		 * is used when a new hot field pool for a classLoader is to be dynamically created.
+		 */
+		if (vm->memoryManagerFunctions->j9gc_hot_reference_field_required(vm)) {
+			vm->hotFieldClassInfoPool = pool_new(sizeof(J9ClassHotFieldsInfo),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(portLibrary));	/* Create the hot field class pool */
+			if ((NULL == vm->hotFieldClassInfoPool)
+				|| (0 != omrthread_monitor_init_with_name(&vm->hotFieldClassInfoPoolMutex, 0, "hotFieldClassInfoPoolMutex"))
+				|| (0 != omrthread_monitor_init_with_name(&vm->globalHotFieldPoolMutex, 0, "globalHotFieldPoolMutex"))
+			) {
+				goto error;
+			} 
+		}
 
 	} else {
 		/* If there is no JIT, change the vm phase so RAS will enable level 2 tracepoints */

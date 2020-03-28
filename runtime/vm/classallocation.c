@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -173,13 +173,6 @@ allocateClassLoader(J9JavaVM *javaVM)
 		/* memset not required as the classLoaderBlocks pool returns zero'd memory */
 
 		classLoader->classHashTable = hashClassTableNew(javaVM, INITIAL_CLASSHASHTABLE_SIZE);
-		classLoader->hotFieldPool = pool_new(sizeof(J9HotField),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(javaVM->portLibrary));	/* Create the hot fields pool */
-		classLoader->hotFieldClassInfoPool = pool_new(sizeof(J9ClassHotFieldsInfo),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(javaVM->portLibrary));	/* Create the hot field class pool */
-		if (0 != omrthread_monitor_init_with_name(&classLoader->hotFieldPoolMutex, 0, "Hot Field Pool")) {
-			freeClassLoader(classLoader, javaVM, NULL, TRUE);
-			return NULL;
-		}
-		
 #if JAVA_SPEC_VERSION > 8
 		classLoader->moduleHashTable = hashModuleNameTableNew(javaVM, INITIAL_MODULE_HASHTABLE_SIZE);
 		classLoader->packageHashTable = hashPackageTableNew(javaVM, INITIAL_PACKAGE_HASHTABLE_SIZE);
@@ -194,7 +187,7 @@ allocateClassLoader(J9JavaVM *javaVM)
 		/* Allocate classRelationshipsHashTable */
 		classRelationshipsHashTableResult = j9bcv_hashClassRelationshipTableNew(classLoader, javaVM);
 
-		if ((NULL == classLoader->classHashTable || NULL == classLoader->hotFieldPool || NULL == classLoader->hotFieldClassInfoPool)
+		if ((NULL == classLoader->classHashTable)
 #if JAVA_SPEC_VERSION > 8
 			|| (NULL == classLoader->moduleHashTable)
 			|| (NULL == classLoader->packageHashTable)
@@ -202,7 +195,6 @@ allocateClassLoader(J9JavaVM *javaVM)
 			|| ((NULL == javaVM->systemClassLoader) && (NULL == classLoader->classLocationHashTable))
 			|| (1 == classRelationshipsHashTableResult)
 		) {
-			printf("Failed to allocate memory for hot field pool for classloader \n");
 			freeClassLoader(classLoader, javaVM, NULL, TRUE);
 			classLoader = NULL;
 		} else {
@@ -239,6 +231,35 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 	RELEASE_CLASS_LOADER_BLOCKS_MUTEX(javaVM);
 #endif
 
+	/* Free the hot field pool and clean up global hot field class info pool if scavenger dynamicBreadthFirstScanOrdering is enabled */
+	if (javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(javaVM)) {
+		if (NULL != classLoader->hotFieldPool) {
+			if (NULL != javaVM->hotFieldClassInfoPool && J9_ARE_NO_BITS_SET(classLoader->flags, J9CLASSLOADER_ANON_CLASS_LOADER)) {
+				pool_state hotFieldClassInfoPoolState;
+				J9ClassHotFieldsInfo *hotFieldClassInfoTemp;
+				omrthread_monitor_enter(classLoader->hotFieldPoolMutex);
+				omrthread_monitor_enter(javaVM->hotFieldClassInfoPoolMutex);
+				hotFieldClassInfoTemp = (struct J9ClassHotFieldsInfo*)pool_startDo(javaVM->hotFieldClassInfoPool, &hotFieldClassInfoPoolState);
+				while (NULL != hotFieldClassInfoTemp) {
+					if (hotFieldClassInfoTemp->classLoader == classLoader) {
+						pool_removeElement(javaVM->hotFieldClassInfoPool, hotFieldClassInfoTemp);
+					}
+					hotFieldClassInfoTemp = (struct J9ClassHotFieldsInfo*)pool_nextDo(&hotFieldClassInfoPoolState);
+				}
+				omrthread_monitor_exit(javaVM->hotFieldClassInfoPoolMutex);
+				omrthread_monitor_exit(classLoader->hotFieldPoolMutex);
+			}
+			pool_kill(classLoader->hotFieldPool);
+			classLoader->hotFieldPool = NULL;
+		}
+
+		/* destroy the classloader hot field pool monitor if it exists */
+		if (NULL != classLoader->hotFieldPoolMutex) {
+			omrthread_monitor_destroy(classLoader->hotFieldPoolMutex);
+			classLoader->hotFieldPoolMutex = NULL;
+		}
+	}
+	
 	/* free the class path entries allocated ofr system and non-system class loaders */
 	if (NULL != classLoader->classPathEntries) {
 		if (javaVM->systemClassLoader == classLoader) {
@@ -375,22 +396,6 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 		hashTableFree(classLoader->moduleExtraInfoHashTable);
 		classLoader->moduleExtraInfoHashTable = NULL;	
 	}
-
-	if (NULL != classLoader->hotFieldPool) {
-		pool_kill(classLoader->hotFieldPool);
-		classLoader->hotFieldPool = NULL;
-	}
-
-	if (NULL != classLoader->hotFieldClassInfoPool) {
-		pool_kill(classLoader->hotFieldClassInfoPool);
-		classLoader->hotFieldClassInfoPool = NULL;
-	}
-
-	if (classLoader->hotFieldPoolMutex != NULL) {
-		omrthread_monitor_destroy(classLoader->hotFieldPoolMutex);
-		classLoader->hotFieldPoolMutex = NULL;
-	}
-
 	if (NULL != classLoader->classLocationHashTable) {
 		hashTableFree(classLoader->classLocationHashTable);
 		classLoader->classLocationHashTable = NULL;

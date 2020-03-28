@@ -114,6 +114,7 @@ MM_GCExtensions::initialize(MM_EnvironmentBase *env)
 	}
 	
 	initializeReferenceArrayCopyTable(&referenceArrayCopyTable);
+	
 	{
 		J9InternalVMFunctions const * const vmFuncs = getJavaVM()->internalVMFunctions;
 		_asyncCallbackKey = vmFuncs->J9RegisterAsyncEvent(getJavaVM(), memoryManagerAsyncCallbackHandler, getJavaVM());

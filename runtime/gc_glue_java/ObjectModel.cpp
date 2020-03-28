@@ -92,25 +92,18 @@ GC_ObjectModel::getSpecialClassScanType(J9Class *objectClazz)
 }
 
 void
-GC_ObjectModel::printClassDetails(MM_ForwardedHeader *forwardedHeader) { 
-    J9Class *clazz = getPreservedClass(forwardedHeader);
-    J9UTF8* name = J9ROMCLASS_CLASSNAME(clazz->romClass);
-    printf("class name is %.*s \n",J9UTF8_LENGTH(name), J9UTF8_DATA(name));
-}
-
-
-void
 GC_ObjectModel::internalClassLoadHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
 	J9VMInternalClassLoadEvent *classLoadEvent = (J9VMInternalClassLoadEvent*)eventData;
 	GC_ObjectModel *objectModel = (GC_ObjectModel*)userData;
 	J9VMThread *vmThread = classLoadEvent->currentThread;
 	J9Class *clazz = classLoadEvent->clazz;
-	J9ROMClass *romClass = clazz->romClass;
-	J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
-	printf("ALLOMCLASSES: class name is %.*s ;\n",J9UTF8_LENGTH(className), J9UTF8_DATA(className)); 
+	
 	/* we're only interested in bootstrap classes */
-	if (clazz->classLoader == vmThread->javaVM->systemClassLoader) {		
+	if (clazz->classLoader == vmThread->javaVM->systemClassLoader) {
+		J9ROMClass *romClass = clazz->romClass;
+		J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
+		
 		const char * const atomicMarkableReference = "java/util/concurrent/atomic/AtomicMarkableReference";
 		const char * const javaLangClassLoader = "java/lang/ClassLoader";
 		const char * const javaLangClass = "java/lang/Class";
@@ -127,23 +120,6 @@ GC_ObjectModel::internalClassLoadHook(J9HookInterface** hook, UDATA eventNum, vo
 			objectModel->_classClass = clazz;
 		} else if (0 == compareUTF8Length(J9UTF8_DATA(className), J9UTF8_LENGTH(className), (U_8*)abstractOwnableSynchronizer, strlen(abstractOwnableSynchronizer))) {
 			 clazz->classDepthAndFlags |= J9AccClassOwnableSynchronizer;
-		}
-		if(vmThread->javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(vmThread->javaVM) && J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(className), J9UTF8_LENGTH(className), "java/lang/String")) {
-			const char * const fieldName = "value";
-			const char * const fieldSig = "[C";				
-			omrthread_monitor_enter(clazz->classLoader->hotFieldPoolMutex);
-			clazz->hotFieldsInfo = (J9ClassHotFieldsInfo *)pool_newElement(clazz->classLoader->hotFieldClassInfoPool);
-
-			if(NULL == clazz->hotFieldsInfo) {
-				omrthread_monitor_exit(clazz->classLoader->hotFieldPoolMutex);
-				printf("MODRON: Failed to allocate memory for hotFieldsInfo or hotfield pool\n");
-				return; 
-			} else {
-				clazz->hotFieldsInfo->hotFieldOffset1 = (U_8)vmThread->javaVM->internalVMFunctions->instanceFieldOffset(vmThread, clazz, (U_8*)fieldName, strlen(fieldName), (U_8*)fieldSig, strlen(fieldSig), NULL, NULL, J9_LOOK_NO_JAVA) + (J9JAVAVM_OBJECT_HEADER_SIZE(javaVM)/J9JAVAVM_REFERENCE_SIZE(javaVM));;
-				clazz->hotFieldsInfo->hotFieldOffset2 = U_8_MAX; 
-				omrthread_monitor_exit(clazz->classLoader->hotFieldPoolMutex);
-				printf("MODRON: AddFF newHotField to class STRING. Class:%p; hotFieldOffset:%u\n", clazz, clazz->hotFieldsInfo->hotFieldOffset1);
-			}
 		}
 	}
 }

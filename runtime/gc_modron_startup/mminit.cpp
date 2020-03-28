@@ -468,7 +468,6 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 		goto error_no_memory;
 	}
 
-
 	extensions->classLoaderManager = MM_ClassLoaderManager::newInstance(&env, globalCollector);
 	if (NULL == extensions->classLoaderManager) {
 		goto error_no_memory;

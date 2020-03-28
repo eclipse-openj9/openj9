@@ -1,17 +1,18 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2020, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
- * distribution and is available at http://eclipse.org/legal/epl-2.0
- * or the Apache License, Version 2.0 which accompanies this distribution
- * and is available at https://www.apache.org/licenses/LICENSE-2.0.
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * This Source Code may also be made available under the following Secondary
- * Licenses when the conditions for such availability set forth in the
- * Eclipse Public License, v. 2.0 are satisfied: GNU General Public License,
- * version 2 with the GNU Classpath Exception [1] and GNU General Public
- * License, version 2 with the OpenJDK Assembly Exception [2].
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
  *
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
@@ -34,6 +35,12 @@
 
 #include <map>
 
+/**
+ * @struct that represents the statistics related to each field during a compilation
+ * Member '_count' contains the number of blocks within the compilation that contributes to the frequency score value of the field
+ * Member '_score' contains the combined block frequency score of the field for the compilation
+ * Member '_clazz' contains the class of the field
+ */
 struct SymStats
    {
    int32_t _count;
@@ -47,29 +54,55 @@ struct SymStats
       _count(count), _score(score), _fieldNameLength(fieldNameLength), _fieldName(fieldName), _fieldSigLength(fieldSigLength), _fieldSig(fieldSig), _clazz(clazz) {}
    };
 
-typedef TR::typed_allocator<std::pair<TR::Symbol *, SymStats *>, TR::Region&> SymAggMapAllocator;
+typedef TR::typed_allocator<std::pair<TR::Symbol* const, SymStats *>, TR::Region&> SymAggMapAllocator;
 typedef std::less<TR::Symbol *> SymAggMapComparator;
 typedef std::map<TR::Symbol *, SymStats *, SymAggMapComparator, SymAggMapAllocator> SymAggMap;
+typedef int32_t(*BlockFrequencyReducer)(int32_t, int32_t, int32_t);
 
-static int32_t getReducedFrequency(int32_t currentValue, int32_t count, int32_t newFrequency) {
+static int32_t getReducedFrequencySum(int32_t currentValue, int32_t count, int32_t newFrequency)
+   {
+   return (currentValue + newFrequency);
+   }
+
+static int32_t getReducedFrequencyAverage(int32_t currentValue, int32_t count, int32_t newFrequency)
+   {
    return ((currentValue * count) + newFrequency) / (count + 1);
-}
+   }
+
+static int32_t getReducedFrequencyMax(int32_t currentValue, int32_t count, int32_t newFrequency)
+   {
+   return (currentValue < newFrequency) ? newFrequency : currentValue; 
+   }
 
 int32_t TR_HotFieldMarking::perform()
    {
-   if (!comp()->getOption(TR_DisableMarkingOfHotFields))
+   if (!jitConfig->javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(jitConfig->javaVM))
       {
       if (trace())
-         traceMsg(comp(), "Skipping hot field marking since it is disabled\n");
+         traceMsg(comp(), "Skipping hot field marking since dynamic breadth first scan ordering is disabled\n");
       return 0;
       }
 
-   SymAggMap stats(SymAggMapComparator(), comp()->trMemory()->currentStackRegion());
+   SymAggMap stats((SymAggMapComparator()), SymAggMapAllocator(comp()->trMemory()->currentStackRegion()));
    TR::Block *block = NULL;
+
+   static BlockFrequencyReducer getReducedFrequency;
+   if(TR::Options::getReductionAlgorithm(TR_HotFieldReductionAlgorithmSum))
+      {
+      getReducedFrequency = getReducedFrequencySum;
+      }
+   else if(TR::Options::getReductionAlgorithm(TR_HotFieldReductionAlgorithmMax))
+      {
+      getReducedFrequency = getReducedFrequencyMax;
+      }
+   else 
+      {
+      getReducedFrequency = getReducedFrequencyAverage;
+      }
+
    for (TR::PostorderNodeIterator it(comp()->getStartTree(), comp()); it != NULL; ++it)
       {
       TR::Node * const node = it.currentNode();
-
       if (node->getOpCodeValue() == TR::BBStart)
          {
          block = node->getBlock();
@@ -80,6 +113,7 @@ int32_t TR_HotFieldMarking::perform()
                && node->getSymbolReference()->getSymbol()->isShadow()
                && !node->isInternalPointer()
                && !node->getOpCode().isArrayLength()
+               && node->getSymbolReference()->getSymbol()->isCollectedReference()
               )
          {
          TR::SymbolReference *symRef = node->getSymbolReference();
@@ -105,6 +139,12 @@ int32_t TR_HotFieldMarking::perform()
             if (isStatic)
                continue;
 
+            if (comp()->getOption(TR_TraceMarkingOfHotFields)) 
+               {
+               int32_t classNameLength = 0;
+               char *className = comp()->fej9()->getClassNameChars(itr->second->_clazz, classNameLength);
+               traceMsg(comp(),"Add new hot field to the compilation stats table. signature: %.*s; class:%.*s; fieldName: %.*s; frequencyScore = %d; \n", J9UTF8_LENGTH(itr->second->_fieldSig), J9UTF8_DATA(itr->second->_fieldSig), J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(itr->second->_fieldName), J9UTF8_DATA(itr->second->_fieldName), itr->second->_score);
+               }
             stats[symRef->getSymbol()] = new (trStackMemory()) SymStats(1, block->getFrequency(), fieldNameLength, fieldName, fieldSigLength, fieldSig, containingClass);
             }
          }
@@ -112,29 +152,47 @@ int32_t TR_HotFieldMarking::perform()
 
    for (auto itr = stats.begin(), end = stats.end(); itr != end; ++itr)
       {
-      int32_t classNameLength = 0;
-      char *className = comp()->fej9()->getClassNameChars(itr->second->_clazz, classNameLength);
-
-      int32_t fieldOffset = comp()->fej9()->getInstanceFieldOffset(itr->second->_clazz, itr->second->_fieldName, itr->second->_fieldNameLength, itr->second->_fieldSig, itr->second->_fieldSigLength);
-      dumpOptDetails(comp(), "%s notifying hot field %.*s%.*s.%.*s = %d\n", itr->second->_fieldSigLength, itr->second->_fieldSig, classNameLength, className, itr->second->_fieldNameLength, itr->second->_fieldName, itr->second->_score);
-      //comp()->fej9()->markHotField(getUtilization(), itr->second->_clazz, fieldOffset, itr->second->_score);
+      if (itr->second->_score >= TR::Options::_hotFieldThreshold)
+         {
+         int32_t fieldOffset = (comp()->fej9()->getInstanceFieldOffset(itr->second->_clazz, itr->second->_fieldName, itr->second->_fieldNameLength, itr->second->_fieldSig, itr->second->_fieldSigLength) + TR::Compiler->om.objectHeaderSizeInBytes()) / TR::Compiler->om.sizeofReferenceField();
+            
+         if (!comp()->fej9()->isAnonymousClass(itr->second->_clazz) && performTransformation(comp(), "%sUpdate hot field info for hot field. signature: %.*s; fieldName: %.*s; frequencyScore = %d\n", optDetailString(), itr->second->_fieldSigLength, itr->second->_fieldSig, itr->second->_fieldNameLength, itr->second->_fieldName, itr->second->_score) && (fieldOffset < U_8_MAX))
+            {
+            if (comp()->getOption(TR_TraceMarkingOfHotFields))
+               {
+               int32_t classNameLength = 0;
+               char *className = comp()->fej9()->getClassNameChars(itr->second->_clazz, classNameLength);
+               traceMsg(comp(),"Hot field marked or updated. signature: %.*s; class:%.*s; fieldName: %.*s; frequencyScore = %d; fieldOffset: %d; \n", J9UTF8_LENGTH(itr->second->_fieldSig), J9UTF8_DATA(itr->second->_fieldSig), J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(itr->second->_fieldName), J9UTF8_DATA(itr->second->_fieldName), itr->second->_score, fieldOffset);
+               }
+            } 
+            comp()->fej9()->reportHotField(getUtilization(), TR::Compiler->cls.convertClassOffsetToClassPtr(itr->second->_clazz), fieldOffset, itr->second->_score);
+         }
       }
    return 1;
    }
 
 int32_t TR_HotFieldMarking::getUtilization()
    {
+   static const char *hotFieldMarkingUtilizationWarmAndBelow;
+   static int32_t hotFieldMarkingUtilizationWarmAndBelowValue = (hotFieldMarkingUtilizationWarmAndBelow = feGetEnv("TR_hotFieldMarkingUtilizationWarmAndBelow")) ? atoi(hotFieldMarkingUtilizationWarmAndBelow) : 1;
+
+   static const char *hotFieldMarkingUtilizationHot;
+   static int32_t hotFieldMarkingUtilizationHotValue = (hotFieldMarkingUtilizationHot = feGetEnv("TR_hotFieldMarkingUtilizationHot")) ? atoi(hotFieldMarkingUtilizationHot) : 10;
+
+   static const char *hotFieldMarkingUtilizationScorching;
+   static int32_t hotFieldMarkingUtilizationScorchingValue = (hotFieldMarkingUtilizationScorching = feGetEnv("TR_hotFieldMarkingUtilizationScorching")) ? atoi(hotFieldMarkingUtilizationScorching) : 100;
+   
    switch (comp()->getMethodHotness())
       {
       case noOpt:
       case cold:
       case warm:
-         return 0;
+         return hotFieldMarkingUtilizationWarmAndBelowValue;
       case hot:
-         return 1;
+         return hotFieldMarkingUtilizationHotValue;
       case veryHot:
       case scorching:
-         return 12;
+         return hotFieldMarkingUtilizationScorchingValue;
       default:
          TR_ASSERT(false, "Unable handled hotness for utilization calculation");
       }

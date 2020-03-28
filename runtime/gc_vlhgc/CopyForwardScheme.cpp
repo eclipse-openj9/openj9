@@ -232,9 +232,8 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 	cachesPerThread += compactGroupCount; /* copy caches */
 	switch (_extensions->scavengerScanOrdering) {
 	case MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_BREADTH_FIRST:
-		break;
 	case MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST:
-		break;	
+		break;
 	case MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_HIERARCHICAL:
 		cachesPerThread += DEFERRED_CACHES_PER_THREAD;
 		break;

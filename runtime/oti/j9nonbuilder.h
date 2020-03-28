@@ -612,26 +612,22 @@ typedef struct J9JITRedefinedClass {
 } J9JITRedefinedClass;
 
 typedef struct J9HotField {
-    U_8 hotFieldOffset; //the slot offset for the hot field
-    U_32 hotness; //the combined opt level and frequency of each block (combine both into one field)
-	U_16 cpuUtil;
-   struct J9HotField* next; //pointer to the next J9Hotfield for the class 
+	struct J9HotField* next;
+	uint32_t hotness;
+	uint16_t cpuUtil;
+	uint8_t hotFieldOffset; 
 } J9HotField;
 
 typedef struct J9ClassHotFieldsInfo {
-    struct J9HotField* hotFieldListHead; //pointer to head of the linked list of hot fields for the class 
-    U_8 hotFieldOffset1;
-    U_8 hotFieldOffset2;
-	U_8 hotFieldListLength;  
-    BOOLEAN isClassHotFieldListDirty;
-	//UDATA* instanceHotFieldDescription; /* potential to include this field and completely remove the now unused instanceHotFieldDescription field in J9Class and all hot field allignment related code*/
+	struct J9HotField* hotFieldListHead;
+	struct J9ClassLoader* classLoader;
+	BOOLEAN isClassHotFieldListDirty;	
+	uint8_t hotFieldOffset1;
+	uint8_t hotFieldOffset2;
+	uint8_t hotFieldOffset3;
+	uint8_t consecutiveHotFieldSelections; 
+	uint8_t hotFieldListLength;  
  } J9ClassHotFieldsInfo;
-
-typedef struct J9OldHotField {
-	UDATA hotFieldOffset;
-	int32_t hotFieldMethodHotness;
-	int32_t hotFieldThreshold;
-} J9OldHotField;
 
 typedef struct J9ROMNameAndSignature {
 	J9SRP name;
@@ -3044,7 +3040,7 @@ typedef struct J9Class {
 	struct J9Class** superclasses;
 	UDATA classDepthAndFlags;
 	U_32 classDepthWithFlags;
-	U_32 classFlags; //add flag containsActualHotFields to allow dual purpose of instanceHotFieldDescription and hotFieldsInfo fields
+	U_32 classFlags;
 	struct J9ClassLoader* classLoader;
 	j9object_t classObject;
 	UDATA volatile initializeStatus;
@@ -3231,7 +3227,6 @@ typedef struct J9ClassLoader {
 	struct J9HashTable* classLocationHashTable;
 	struct J9HashTable* classRelationshipsHashTable;
 	struct J9Pool* hotFieldPool;
-	struct J9Pool* hotFieldClassInfoPool;
 	omrthread_monitor_t hotFieldPoolMutex; 
 } J9ClassLoader;
 
@@ -3513,7 +3508,6 @@ typedef struct J9Method {
 	struct J9ConstantPool* constantPool;
 	void* methodRunAddress;
 	void* extra;
-	U_16 cpuUtil;
 } J9Method;
 
 typedef struct J9JNIMethodID {
@@ -4081,7 +4075,8 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_scavenger_enabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_concurrent_scavenger_enabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_software_read_barrier_enabled)(struct J9JavaVM *javaVM) ;
-	UDATA  ( *j9gc_hot_reference_field_required)(struct J9JavaVM *javaVM) ;
+	BOOLEAN  ( *j9gc_hot_reference_field_required)(struct J9JavaVM *javaVM) ;
+	uint32_t  ( *j9gc_max_hot_field_list_length)(struct J9JavaVM *javaVM) ;
 #if defined(J9VM_GC_HEAP_CARD_TABLE)
 	UDATA  ( *j9gc_concurrent_getCardSize)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_concurrent_getHeapBase)(struct J9JavaVM *javaVM) ;
@@ -4240,7 +4235,6 @@ typedef struct J9MemoryManagerFunctions {
 	const jchar*  ( *j9gc_objaccess_jniGetStringCritical)(struct J9VMThread* vmThread, jstring str, jboolean *isCopy) ;
 	void  ( *j9gc_objaccess_jniReleaseStringCritical)(struct J9VMThread* vmThread, jstring str, const jchar* elems) ;
 	void  ( *j9gc_finalizer_completeFinalizersOnExit)(struct J9VMThread* vmThread) ;
-	void ( *j9gc_report_j9_hot_field_info)(int32_t reducedCpuUtil, J9Class* clazz, U_8 fieldOffset,  U_32 reducedFrequency) ;
 	void  ( *j9gc_get_CPU_times)(struct J9JavaVM *javaVM, U_64* mainCpuMillis, U_64* workerCpuMillis, U_32* maxThreads, U_32* currentThreads) ;
 	void*  ( *omrgc_walkLWNRLockTracePool)(void *omrVM, pool_state *state) ;
 #if defined(J9VM_GC_OBJECT_ACCESS_BARRIER)
@@ -4457,6 +4451,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *structuredSignalHandler)(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData) ;
 	UDATA  ( *structuredSignalHandlerVM)(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData) ;
 	UDATA  ( *addHiddenInstanceField)(struct J9JavaVM *vm, const char *className, const char *fieldName, const char *fieldSignature, UDATA *offsetReturn) ;
+	void  ( *reportHotField)(struct J9JavaVM *javaVM, int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency) ;
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9ROMClass *romClass, struct J9Class *superClazz, struct J9ROMFieldOffsetWalkState *state, U_32 flags, J9FlattenedClassCache *flattenedClassCache) ;
 #else
@@ -4949,6 +4944,9 @@ typedef struct J9JavaVM {
 	U_32 extendedRuntimeFlags;
 	U_32 extendedRuntimeFlags2;
 	UDATA zeroOptions;
+	struct J9Pool* hotFieldClassInfoPool;
+	omrthread_monitor_t hotFieldClassInfoPoolMutex;
+	omrthread_monitor_t globalHotFieldPoolMutex;
 	struct J9ClassLoader* systemClassLoader;
 	UDATA sigFlags;
 	void* vmLocalStorageFunctions;
