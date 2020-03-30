@@ -1240,6 +1240,7 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		if (J9_OBJECT_MONITOR_OOM == monstatus) {
 			addr = setNativeOutOfMemoryErrorFromJIT(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
+			goto done;
 		}
 	} else {
 		currentThread->javaVM->internalVMFunctions->objectMonitorEnterBlocking(currentThread);

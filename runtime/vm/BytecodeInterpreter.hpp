@@ -1595,12 +1595,8 @@ obj:;
 					}
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 					if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
-						J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, syncObject)->romClass);
-						updateVMStruct(REGISTER_ARGS);
-						prepareForExceptionThrow(_currentThread);
-						setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
-						VMStructHasBeenUpdated(REGISTER_ARGS);
-						rc = GOTO_THROW_CURRENT_EXCEPTION;
+						_currentThread->tempSlot = (UDATA) syncObject;
+						rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 					} else
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 					{
@@ -1667,12 +1663,8 @@ done:
 			*bp |= J9SF_A0_INVISIBLE_TAG;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
-				J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, syncObject)->romClass);
-				updateVMStruct(REGISTER_ARGS);
-				prepareForExceptionThrow(_currentThread);
-				setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				_currentThread->tempSlot = (UDATA) syncObject;
+				rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 			} else
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			{
@@ -1797,12 +1789,8 @@ throwStackOverflow:
 					*(_arg0EA + relativeBP) |= J9SF_A0_INVISIBLE_TAG;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 					if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
-						J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, syncObject)->romClass);
-						updateVMStruct(REGISTER_ARGS);
-						prepareForExceptionThrow(_currentThread);
-						setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
-						VMStructHasBeenUpdated(REGISTER_ARGS);
-						rc = GOTO_THROW_CURRENT_EXCEPTION;
+						_currentThread->tempSlot = (UDATA) syncObject;
+						rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 					} else
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 					{
@@ -2155,12 +2143,8 @@ done:
 			if (monitorRC < J9_OBJECT_MONITOR_BLOCKING) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
-					J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, receiver)->romClass);
-					updateVMStruct(REGISTER_ARGS);
-					prepareForExceptionThrow(_currentThread);
-					setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
-					VMStructHasBeenUpdated(REGISTER_ARGS);
-					rc = GOTO_THROW_CURRENT_EXCEPTION;
+					_currentThread->tempSlot = (UDATA) receiver;
+					rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 				} else
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				{
@@ -7774,12 +7758,8 @@ done:
 			if (monitorRC < J9_OBJECT_MONITOR_BLOCKING) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
-					J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, obj)->romClass);
-					updateVMStruct(REGISTER_ARGS);
-					prepareForExceptionThrow(_currentThread);
-					setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
-					VMStructHasBeenUpdated(REGISTER_ARGS);
-					rc = GOTO_THROW_CURRENT_EXCEPTION;
+					_currentThread->tempSlot = (UDATA) obj;
+					rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 				} else
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				{
@@ -9062,6 +9042,14 @@ public:
 #define DEBUG_ACTIONS
 #endif
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define PERFORM_ACTION_VALUE_TYPE_IMSE \
+	case THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE: \
+	goto valueTypeIllegalMonitorState;
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#define PERFORM_ACTION_VALUE_TYPE_IMSE
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 #define PERFORM_ACTION(functionCall) \
 	do { \
 		DEBUG_UPDATE_VMSTRUCT(); \
@@ -9119,6 +9107,7 @@ public:
 		case RUN_METHOD_COMPILED: \
 			goto i2j; \
 		DEBUG_ACTIONS \
+		PERFORM_ACTION_VALUE_TYPE_IMSE \
 		default: \
 			Assert_VM_unreachable(); \
 		} \
@@ -9712,6 +9701,17 @@ illegalMonitorState:
 	setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, NULL);
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+valueTypeIllegalMonitorState:
+	updateVMStruct(REGISTER_ARGS);
+	prepareForExceptionThrow(_currentThread);
+#define badClassName J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, (j9object_t)_currentThread->tempSlot)->romClass)
+	setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+	_currentThread->tempSlot = 0;
+	VMStructHasBeenUpdated(REGISTER_ARGS);
+	goto throwCurrentException;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 incompatibleClassChange:
 	updateVMStruct(REGISTER_ARGS);
