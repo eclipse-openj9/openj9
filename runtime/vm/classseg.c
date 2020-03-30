@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2014 IBM Corp. and others
  *
@@ -108,10 +107,12 @@ allocateClassMemorySegment(J9JavaVM *javaVM, UDATA requiredSize, UDATA segmentTy
 {
 	UDATA appropriateSize = 0;
 	J9MemorySegment *memorySegment = NULL;
+	omrthread_monitor_t segmentMutex = NULL;
 	
 #if defined(J9VM_THR_PREEMPTIVE)
-	if (javaVM->classMemorySegments->segmentMutex) {
-		omrthread_monitor_enter(javaVM->classMemorySegments->segmentMutex);
+	segmentMutex = javaVM->classMemorySegments->segmentMutex;
+	if (NULL != segmentMutex) {
+		omrthread_monitor_enter(segmentMutex);
 	}
 #endif
 
@@ -125,8 +126,8 @@ allocateClassMemorySegment(J9JavaVM *javaVM, UDATA requiredSize, UDATA segmentTy
 	}
 	
 #if defined(J9VM_THR_PREEMPTIVE)
-	if (javaVM->classMemorySegments->segmentMutex) {
-		omrthread_monitor_exit(javaVM->classMemorySegments->segmentMutex);
+	if (NULL != segmentMutex) {
+		omrthread_monitor_exit(segmentMutex);
 	}
 #endif
 
