@@ -80,6 +80,7 @@ findROMClassFromPC(J9VMThread *vmThread, UDATA methodPC, J9ClassLoader **resultC
 	segmentForClass = findMemorySegment(javaVM, javaVM->classMemorySegments, methodPC);
 	if (segmentForClass != NULL && (segmentForClass->type & MEMORY_TYPE_ROM_CLASS) != 0) {
 		romClass = findROMClassInSegment(vmThread, segmentForClass, methodPC);
+		/* Note, for classes from the SharedClasses cache, this will *always* be the vm->systemLoader */
 		*resultClassLoader = segmentForClass->classLoader;
 	}
 
