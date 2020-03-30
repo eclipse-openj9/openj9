@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2018 IBM Corp. and others
+Copyright (c) 2018, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,22 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 # CMake Getting Started / FAQ
 
-:pencil: the information here is meant to supplement the
-[OMR CMake documentation](https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md).
+## How to build with CMake
+
+The CMake build system is designed to provide as seamless a transition as is possible.
+As such, the normal OpenJ9 [build instructions](https://www.eclipse.org/openj9/oj9_build.html)
+can be followed with the following modifications:
+
+- Ensure that CMake version 3.4 or greater is installed
+  - The docker images will already have this provided
+  - Windows users need to have the Cygwin CMake package via the Cygwin installer, rather than downloading
+  the native windows version from the CMake website.
+- Downloading freemarker is not required.
+- Modify the provided configure command by:
+  - removing the `--with-free-marker-jar=` argument
+  - adding `--with-cmake`
+
+:pencil: For more CMake info see [OMR CMake documentation](https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md)
 
 ## FAQ
 
