@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -111,12 +111,31 @@ public class ValueTypeGenerator extends ClassLoader {
 				makeGeneric(cw, className, "makeValueGeneric", "makeValue", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
 			}
 		}
-
+		addStaticSynchronizedMethods(cw);
+		addSynchronizedMethods(cw);
 		cw.visitEnd();
 		return cw.toByteArray();
 		
 	}
 
+	private static void addStaticSynchronizedMethods(ClassWriter cw) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC + ACC_SYNCHRONIZED, "staticSynchronizedMethodReturnInt", "()I", null, null);
+		mv.visitCode();
+		mv.visitInsn(ICONST_1);
+		mv.visitInsn(IRETURN);
+		mv.visitMaxs(1, 1);
+		mv.visitEnd();
+	}
+	
+	private static void addSynchronizedMethods(ClassWriter cw) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_SYNCHRONIZED, "synchronizedMethodReturnInt", "()I", null, null);
+		mv.visitCode();
+		mv.visitInsn(ICONST_1);
+		mv.visitInsn(IRETURN);
+		mv.visitMaxs(1, 1);
+		mv.visitEnd();
+	}
+	
 	private static void generateFieldMethods(ClassWriter cw, String[] nameAndSigValue, String className, boolean isVerifiable, boolean isRef) {
 		if ((nameAndSigValue.length > 2) && nameAndSigValue[2].equals("static")) {
 			generateSetterStatic(cw, nameAndSigValue, className);

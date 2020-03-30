@@ -267,7 +267,11 @@ done:
 	inlineFastObjectMonitorEnter(J9VMThread *currentThread, j9object_t object)
 	{
 		bool locked = false;
-		if (LN_HAS_LOCKWORD(currentThread, object)) {
+		if (LN_HAS_LOCKWORD(currentThread, object)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		&& !J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ(currentThread, object))
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		) {
 			locked = inlineFastInitAndEnterMonitor(currentThread, J9OBJECT_MONITOR_EA(currentThread, object));
 		}
 		return locked;
@@ -311,7 +315,7 @@ done:
 		IDATA rc = (IDATA)object;
 		if (!inlineFastObjectMonitorEnter(currentThread, object)) {
 			rc = J9_VM_FUNCTION(currentThread, objectMonitorEnterNonBlocking)(currentThread, object);
-			if (1 == rc) {
+			if (J9_OBJECT_MONITOR_BLOCKING == rc) {
 				rc = J9_VM_FUNCTION(currentThread, objectMonitorEnterBlocking)(currentThread);
 			}
 		}

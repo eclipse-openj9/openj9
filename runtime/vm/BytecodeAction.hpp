@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,6 +47,9 @@ typedef enum {
 	THROW_AIOB,
 	THROW_ARRAY_STORE,
 	THROW_DIVIDE_BY_ZERO,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE,
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	THROW_ILLEGAL_MONITOR_STATE,
 	THROW_INCOMPATIBLE_CLASS_CHANGE,
 	THROW_WRONG_METHOD_TYPE,
