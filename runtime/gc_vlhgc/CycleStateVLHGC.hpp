@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,7 @@
 #include "VLHGCCycleStats.hpp"
 
 class MM_CycleState;
+class MM_SchedulingDelegate;
 
 /**
  * Per cycle state information
@@ -37,11 +38,13 @@ class MM_CycleStateVLHGC : public MM_CycleState {
 public:
 	MM_VLHGCIncrementStats _vlhgcIncrementStats; /**< Stats for the various phases / operations within an increment */
 	MM_VLHGCCycleStats _vlhgcCycleStats; /**< Stats for the various phases / operations within a cycle */
+	MM_SchedulingDelegate *_schedulingDelegate;
 
 	MM_CycleStateVLHGC()
 		: MM_CycleState()
 		, _vlhgcIncrementStats()
 		, _vlhgcCycleStats()
+		, _schedulingDelegate(NULL)
 	{
 	}
 };

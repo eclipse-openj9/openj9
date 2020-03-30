@@ -41,6 +41,10 @@ class MM_CollectionStatisticsVLHGC;
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "HeapRegionManager.hpp"
 #include "RememberedSetCardList.hpp"
+#include "MarkMap.hpp"
+#include "CompressedCardTable.hpp"
+#include "SchedulingDelegate.hpp"
+
 
 /* value for MAX_LOCAL_RSCL_BUFFER_POOL_SIZE is empirically chosen to be the lowest one but still reduces most of contention on global pool lock */
 #define MAX_LOCAL_RSCL_BUFFER_POOL_SIZE 16
@@ -185,8 +189,40 @@ private:
 	void clearFromRegionReferencesForCompactOptimized(MM_EnvironmentVLHGC* env);
 	MM_InterRegionRememberedSet(MM_HeapRegionManager *heapRegionManager);
 	
+
+	/**
+	 * Helper function isCompressedCardDirtyForPartialCollect
+	 * extended from compressedCardTable->isCompressedCardDirtyForPartialCollect(), only in case first PGC after GMP, also return as dirty if card Contains No Object.
+	 */
+	MMINLINE bool isCompressedCardDirtyForPartialCollect(MM_EnvironmentVLHGC* env, UDATA card, MM_CompressedCardTable *compressedCardTable, MM_MarkMap *markMap)
+	{
+		void* heapAddress = convertHeapAddressFromRememberedSetCard(card);
+		bool ret = compressedCardTable->isCompressedCardDirtyForPartialCollect(env, heapAddress);
+		if (!ret && (NULL != markMap)) {
+			/* TODO: consider incorporating areAnyLiveObjectsInCard info when building CompressedCard */
+			ret = !markMap->areAnyLiveObjectsInCard(heapAddress);
+		}
+		return ret;
+
+	}
 protected:
 public:
+	/**
+	 * Helper function cardMayContainObjects
+	 * if this is first PGC after GMP, check if markMap->areAnyLiveObjectsInCard()
+	 * otherwise check if region->containsObjects()
+	 */
+	MMINLINE bool cardMayContainObjects(UDATA card, MM_HeapRegionDescriptorVLHGC *fromRegion, MM_MarkMap *markMap)
+	{
+		bool ret = false;
+		if (NULL != markMap) {
+			void* heapAddress = convertHeapAddressFromRememberedSetCard(card);
+			ret = markMap->areAnyLiveObjectsInCard(heapAddress);
+		} else {
+			ret = fromRegion->containsObjects();
+		}
+		return ret;
+	}
 
 	/**
 	 * Return back true if object references are compressed

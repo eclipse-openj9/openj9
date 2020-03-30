@@ -848,6 +848,7 @@ MM_IncrementalGenerationalGC::taxationEntryPoint(MM_EnvironmentBase *envModron, 
 		Assert_MM_true(NULL == env->_cycleState);
 		MM_CycleStateVLHGC cycleState;
 		env->_cycleState = &cycleState;
+		cycleState._schedulingDelegate = &_schedulingDelegate;
 		env->_cycleState->_gcCode = MM_GCCode(J9MMCONSTANT_IMPLICIT_GC_DEFAULT);
 		env->_cycleState->_collectionType = MM_CycleState::CT_PARTIAL_GARBAGE_COLLECTION;
 		env->_cycleState->_type = OMR_GC_CYCLE_TYPE_VLHGC_PARTIAL_GARBAGE_COLLECT;
@@ -1350,6 +1351,7 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingCopyForward(MM_Environme
 
 	/* flush the RSList and RSM from our currently selected regions into the card table since we will rebuild them as we process the table */
 	flushRememberedSetIntoCardTable(env);
+
 	_interRegionRememberedSet->flushBuffersForDecommitedRegions(env);
 
 	Assert_MM_true(env->_cycleState->_markMap == _markMapManager->getPartialGCMap());
