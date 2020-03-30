@@ -161,6 +161,12 @@ cuda_version:
   extends: ['cuda']
   extra_configure_options: '--with-cuda=/usr/local/cuda-9.0'
 #========================================#
+# Valhalla
+#========================================#
+valhalla:
+  extra_configure_options: '--enable-inline-types'
+  test_build_list: 'functional/Valhalla,functional/cmdline_options_tester,functional/cmdLineTests/valuetypeddrtests'
+#========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
 ppc64le_linux:
@@ -321,6 +327,11 @@ x86-64_linux_xl:
       - special.system
     11:
       - sanity.openjdk
+#========================================#
+# Linux x86 64bits Compressed Pointers / Valhalla
+#========================================#
+x86-64_linux_valhalla:
+  extends: ['x86-64_linux', 'valhalla']
 #========================================#
 # Linux Aarch 64bits Compressed Pointers
 #========================================#

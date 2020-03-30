@@ -220,7 +220,7 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
     }
 }
 
-def test(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, extraTestLabels, keepReportDir) {
+def test(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, extraTestLabels, keepReportDir, buildList) {
     stage ("${JOB_NAME}") {
         def testParams = []
         testParams.addAll([string(name: 'LABEL', value: NODE),
@@ -245,6 +245,10 @@ def test(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NODE, OPENJ9_REPO, OP
         } else {
             testParams.addAll([string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME),
             string(name: 'UPSTREAM_JOB_NUMBER', value: "${UPSTREAM_JOB_NUMBER}")])
+        }
+        // If BUILD_LIST is set, pass it, otherwise don't pass it in order to pickup the default in the test job config.
+        if (buildList) {
+            testParams.add(string(name: 'BUILD_LIST', value: buildList))
         }
         return build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, testParams)
     }
@@ -423,6 +427,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
             def extraTestLabels = EXTRA_TEST_LABELS[target] ?: ''
             def keepReportDir = TEST_KEEP_REPORTDIR[target]
+            def buildList = TEST_BUILD_LIST[target] ?: ''
             echo "Target:'${target}' extraTestLabels:'${extraTestLabels}', keepReportDir:'${keepReportDir}'"
 
             def TEST_JOB_NAME = get_test_job_name(target, SPEC, SDK_VERSION, BUILD_IDENTIFIER)
@@ -438,7 +443,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 if (ARTIFACTORY_CREDS) {
                     cleanup_artifactory(ARTIFACTORY_MANUAL_CLEANUP, TEST_JOB_NAME, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
                 }
-                jobs["${TEST_JOB_NAME}"] = test(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, extraTestLabels, keepReportDir)
+                jobs["${TEST_JOB_NAME}"] = test(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, extraTestLabels, keepReportDir, buildList)
             }
         }
         if (params.AUTOMATIC_GENERATION != 'false') {
@@ -467,6 +472,9 @@ def get_test_job_name(targetName, spec, version, identifier) {
     // No need to use function 'move_spec_suffix_to_id' since the test job name returned below will match.
     // Although we may want to in case behaviour changes.
     def id = convert_build_identifier(identifier)
+    if (spec ==~ /.*_valhalla/) {
+        version = 'valhalla'
+    }
     return "Test_openjdk${version}_j9_${targetName}_${spec}_${id}"
 }
 
@@ -587,17 +595,26 @@ def generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO)
     groups.unique(true)
 
     def spec_id = move_spec_suffix_to_id(SPEC, convert_build_identifier(BUILD_IDENTIFIER))
+    def sdk_version = SDK_VERSION
+    def auto_detect = true
+    if (SPEC ==~ /.*valhalla/) {
+        // Test expects Valhalla with a capital V
+        sdk_version = 'Valhalla'
+        auto_detect = false
+    }
+
     if (levels && groups) {
         def parameters = [
             string(name: 'LEVELS', value: levels.join(',')),
             string(name: 'GROUPS', value: groups.join(',')),
-            string(name: 'JDK_VERSIONS', value: SDK_VERSION),
+            string(name: 'JDK_VERSIONS', value: sdk_version),
             string(name: 'SUFFIX', value: "_${spec_id['id']}"),
             string(name: 'ARCH_OS_LIST', value: spec_id['spec']),
             string(name: 'JDK_IMPL', value: 'openj9'),
             string(name: 'ARTIFACTORY_SERVER', value: ARTIFACTORY_SERVER),
             string(name: 'ARTIFACTORY_REPO', value: ARTIFACTORY_REPO),
-            string(name: 'BUILDS_TO_KEEP', value: DISCARDER_NUM_BUILDS)
+            string(name: 'BUILDS_TO_KEEP', value: DISCARDER_NUM_BUILDS),
+            booleanParam(name: 'AUTO_DETECT', value: auto_detect)
         ]
         build job: 'Test_Job_Auto_Gen', parameters: parameters, propagate: false
     }
@@ -768,7 +785,7 @@ def move_spec_suffix_to_id(spec, id) {
     def spec_id = [:]
     spec_id['spec'] = spec
     spec_id['id'] = id
-    for (suffix in ['cm', 'jit']) {
+    for (suffix in ['cm', 'jit', 'valhalla']) {
         if (spec.contains("_${suffix}")) {
             spec_id['spec'] = spec - "_${suffix}"
             spec_id['id'] = "${suffix}_" + id
