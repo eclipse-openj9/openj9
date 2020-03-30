@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,6 +44,7 @@
 #include "vm_internal.h"
 #include "j2sever.h"
 #include "util_api.h"
+#include "j9accessbarrier.h"
 
 #include "VMHelpers.hpp"
 #include "VMAccess.hpp"
@@ -1850,13 +1851,21 @@ monitorEnter(JNIEnv* env, jobject obj)
 	j9object_t object = *(j9object_t*)obj;
 	IDATA monstatus = objectMonitorEnter(vmThread, object);
 
-	if (0 == monstatus) {
-oom:
-		SET_NATIVE_OUT_OF_MEMORY_ERROR(vmThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
+	if (monstatus < J9_OBJECT_MONITOR_BLOCKING) {
+fail:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monstatus) {
+			J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, obj)->romClass);
+			setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+		} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		if (J9_OBJECT_MONITOR_OOM == monstatus) {
+			SET_NATIVE_OUT_OF_MEMORY_ERROR(vmThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
+		}
 		rc = -1;
 	} else if (J9_UNEXPECTED(!VM_ObjectMonitor::recordJNIMonitorEnter(vmThread, (j9object_t)monstatus))) {
 		objectMonitorExit(vmThread, (j9object_t)monstatus);
-		goto oom;
+		goto fail;
 	}
 
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
