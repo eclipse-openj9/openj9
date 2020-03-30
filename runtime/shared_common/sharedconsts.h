@@ -40,19 +40,24 @@
  * Pick the unix version since it has the maximum possible length for cacheNameWithVersionString
  * compared to windows version for the same cacheName.
  *
- * length of version string =>  11 chars
+ * length of version string =>  11 chars for Java 8, 12 chars for Java 11 and up
  * identifier string is "_memory_" length => 8 chars
  * maximum length of user specified or default cacheName  => 64 chars
  * prefix separator char is _     => 1 char
  * generation string is of form Gnn where nn stands for 2 digit number => 3 chars
  * layer number string is of form Lnn where nn stands for 2 digit number => 3 chars
  *
- * Total chars needed  = 11 + 8 + 64 + 1 + 3 + 3 = 90 chars.
+ * Total chars needed  = 11 + 8 + 64 + 1 + 3 + 3 = 91 chars for Java 8
+ *                       12 + 8 + 64 + 1 + 3 + 3 = 92 chars for Java 11 and up
  *
  * Add 1 to above length to accommodate NULL char.
  * Reference:  getCacheVersionAndGen function
  */
+#if JAVA_SPEC_VERSION == 8
 #define CACHE_ROOT_MAXLEN 91
+#else /* JAVA_SPEC_VERSION == 8 */
+#define CACHE_ROOT_MAXLEN 92
+#endif /* JAVA_SPEC_VERSION == 8 */
 
 #define SHR_SUBOPT_BUFLEN (2 * J9SH_MAXPATH)
 
