@@ -518,6 +518,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             else
                vmInfo._srConstructorAccessorClass = NULL;
 #endif // J9VM_OPT_SIDECAR
+         vmInfo._extendedRuntimeFlags2 = javaVM->extendedRuntimeFlags2;
          }
 
          // For multi-layered SCC support
@@ -1182,8 +1183,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          int32_t isStore = std::get<2>(recv);
          int32_t needAOTValidation = std::get<3>(recv);
          void *address;
-         TR::DataType type;
-         bool volatileP, isFinal, isPrivate, unresolvedInCP;
+         TR::DataType type = TR::NoType;
+         bool volatileP = true;
+         bool isFinal = false;
+         bool isPrivate = false;
+         bool unresolvedInCP;
          bool result = method->staticAttributes(comp, cpIndex, &address, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
          TR_J9MethodFieldAttributes attrs(reinterpret_cast<uintptr_t>(address), type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
          client->write(response, attrs);
@@ -1232,8 +1236,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          bool isStore = std::get<2>(recv);
          bool needAOTValidation = std::get<3>(recv);
          U_32 fieldOffset;
-         TR::DataType type;
-         bool volatileP, isFinal, isPrivate, unresolvedInCP;
+         TR::DataType type = TR::NoType;
+         bool volatileP = true;
+         bool isFinal = false;
+         bool isPrivate = false;
+         bool unresolvedInCP;
          bool result = method->fieldAttributes(comp, cpIndex, &fieldOffset, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
          TR_J9MethodFieldAttributes attrs(static_cast<uintptr_t>(fieldOffset), type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
          client->write(response, attrs);
@@ -1910,8 +1917,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          bool isStore = std::get<2>(recv);
          bool needAOTValidation = std::get<3>(recv);
          U_32 fieldOffset;
-         TR::DataType type;
-         bool volatileP, isFinal, isPrivate, unresolvedInCP;
+         TR::DataType type = TR::NoType;
+         bool volatileP = true;
+         bool isFinal = false;
+         bool isPrivate = false;
+         bool unresolvedInCP;
          bool result = method->fieldAttributes(comp, cpIndex, &fieldOffset, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
 
          J9ConstantPool *constantPool = (J9ConstantPool *) J9_CP_FROM_METHOD(method->ramMethod());
@@ -1930,8 +1940,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          int32_t isStore = std::get<2>(recv);
          int32_t needAOTValidation = std::get<3>(recv);
          void *address;
-         TR::DataType type;
-         bool volatileP, isFinal, isPrivate, unresolvedInCP;
+         TR::DataType type = TR::NoType;
+         bool volatileP = true;
+         bool isFinal = false;
+         bool isPrivate = false;
+         bool unresolvedInCP;
          bool result = method->staticAttributes(comp, cpIndex, &address, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
 
          J9ConstantPool *constantPool = (J9ConstantPool *) J9_CP_FROM_METHOD(method->ramMethod());
