@@ -346,19 +346,6 @@ TR_PPCRelocationTarget::flushCache(uint8_t *codeStart, unsigned long size)
    }
 
 void
-TR_PPCRelocationTarget::patchMTIsolatedOffset(uint32_t offset, uint8_t *reloLocation)
-   {
-   /* apply constant to lis and ori instructions
-      lis  r0, high_16 bits
-      ori  r0, r0, low_16 bits
-    */
-   uint16_t highBits = offset >> 16;
-   uint16_t lowBits = offset &0xffff;
-   storeUnsigned16b(highBits, reloLocation+(reloRuntime()->comp()->target().cpu.isBigEndian()?2:0));
-   storeUnsigned16b(lowBits, reloLocation+(reloRuntime()->comp()->target().cpu.isBigEndian()?6:4));
-   }
-
-void
 TR_PPC64RelocationTarget::platformAddPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr)
    {
    /*

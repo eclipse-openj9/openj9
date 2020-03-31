@@ -264,9 +264,3 @@ TR_X86RelocationTarget::patchNonVolatileFieldMemoryFence(J9ROMFieldShape* resolv
          }
       }
    }
-
-void
-TR_X86RelocationTarget::patchMTIsolatedOffset(uint32_t offset, uint8_t *reloLocation)
-   {
-   storeUnsigned32b(offset, reloLocation);
-   }
