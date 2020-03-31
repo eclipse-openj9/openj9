@@ -1948,7 +1948,7 @@ mustReportEnterStepOrBreakpoint(J9JavaVM * vm);
 * @param object
 * @return IDATA
 */
-IDATA
+UDATA
 objectMonitorEnter(J9VMThread* vmStruct, j9object_t object);
 
 

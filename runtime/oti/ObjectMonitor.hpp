@@ -309,10 +309,10 @@ done:
 	 *
 	 * @returns	the possibly-updated object pointer on success, or an error code
 	 */
-	static VMINLINE IDATA
+	static VMINLINE UDATA
 	enterObjectMonitor(J9VMThread *currentThread, j9object_t object)
 	{
-		IDATA rc = (IDATA)object;
+		UDATA rc = (IDATA)object;
 		if (!inlineFastObjectMonitorEnter(currentThread, object)) {
 			rc = J9_VM_FUNCTION(currentThread, objectMonitorEnterNonBlocking)(currentThread, object);
 			if (J9_OBJECT_MONITOR_BLOCKING == rc) {
