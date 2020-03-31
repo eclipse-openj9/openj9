@@ -103,6 +103,14 @@ J9::ObjectModel::initialize()
 bool
 J9::ObjectModel::areValueTypesEnabled()
    {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return J9_ARE_ALL_BITS_SET(vmInfo->_extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VALHALLA);
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    J9JavaVM * javaVM = TR::Compiler->javaVM;
    return javaVM->internalVMFunctions->areValueTypesEnabled(javaVM);
    }

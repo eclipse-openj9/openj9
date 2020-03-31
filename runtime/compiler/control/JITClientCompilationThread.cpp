@@ -518,6 +518,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             else
                vmInfo._srConstructorAccessorClass = NULL;
 #endif // J9VM_OPT_SIDECAR
+         vmInfo._extendedRuntimeFlags2 = javaVM->extendedRuntimeFlags2;
          }
 
          // For multi-layered SCC support
