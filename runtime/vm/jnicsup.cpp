@@ -1849,7 +1849,7 @@ monitorEnter(JNIEnv* env, jobject obj)
 	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 
 	j9object_t object = *(j9object_t*)obj;
-	IDATA monstatus = objectMonitorEnter(vmThread, object);
+	UDATA monstatus = objectMonitorEnter(vmThread, object);
 
 	if (monstatus < J9_OBJECT_MONITOR_BLOCKING) {
 fail:

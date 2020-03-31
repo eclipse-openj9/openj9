@@ -1201,10 +1201,10 @@ static VMINLINE bool
 fast_jitMonitorEnterImpl(J9VMThread *currentThread, j9object_t syncObject, bool forMethod)
 {
 	bool slowPathRequired = false;
-	IDATA monstatus = currentThread->javaVM->internalVMFunctions->objectMonitorEnterNonBlocking(currentThread, syncObject);
+	UDATA monstatus = currentThread->javaVM->internalVMFunctions->objectMonitorEnterNonBlocking(currentThread, syncObject);
 	if (monstatus <= J9_OBJECT_MONITOR_BLOCKING) {
 		slowPathRequired = true;
-		currentThread->floatTemp1 = (void*)(UDATA)monstatus;
+		currentThread->floatTemp1 = (void*)monstatus;
 	}
 	return slowPathRequired;
 }

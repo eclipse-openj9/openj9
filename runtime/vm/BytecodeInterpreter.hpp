@@ -1123,7 +1123,7 @@ obj:;
 	VMINLINE IDATA
 	enterObjectMonitor(REGISTER_ARGS_LIST, j9object_t obj)
 	{
-		IDATA rc = (IDATA)obj;
+		UDATA rc = (IDATA)obj;
 		if (!VM_ObjectMonitor::inlineFastObjectMonitorEnter(_currentThread, obj)) {
 			rc = objectMonitorEnterNonBlocking(_currentThread, obj);
 			if (J9_OBJECT_MONITOR_BLOCKING == rc) {
@@ -1577,7 +1577,7 @@ obj:;
 		UDATA volatile stackOverflowMark = (UDATA)_currentThread->stackOverflowMark;
 		if ((UDATA)_sp >= stackOverflowMark) {
 			if (methodIsSynchronized) {
-				IDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, syncObject);
+				UDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, syncObject);
 				/* Monitor enter can only fail in the nonblocking case, which does not
 				 * release VM access, so the immediate async and failed enter cases are
 				 * mutually exclusive.
@@ -1649,7 +1649,7 @@ done:
 		VM_BytecodeAction rc = REPORT_METHOD_ENTER;
 		UDATA *bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
 		j9object_t syncObject = ((j9object_t*)bp)[1];
-		IDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, syncObject);
+		UDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, syncObject);
 		/* Monitor enter can only fail in the nonblocking case, which does not
 		 * release VM access, so the immediate async and failed enter cases are
 		 * mutually exclusive.
@@ -1775,7 +1775,7 @@ throwStackOverflow:
 #endif /* defined(DEBUG_VERSION) */
 			if (romMethod->modifiers & J9AccSynchronized) {
 				j9object_t syncObject = ((j9object_t*)(_arg0EA + relativeBP))[1];
-				IDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, syncObject);
+				UDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, syncObject);
 				/* Monitor enter can only fail in the nonblocking case, which does not
 				 * release VM access, so the immediate async and failed enter cases are
 				 * mutually exclusive.
@@ -2137,7 +2137,7 @@ done:
 		if (isSynchronized) {
 			j9object_t receiver = *(j9object_t *)receiverAddress;
 			UDATA relativeBP = _arg0EA - bp;
-			IDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, receiver);
+			UDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, receiver);
 			// No immediate async possible due to the current frame being for a native method.
 			bp = _arg0EA - relativeBP;
 			if (monitorRC < J9_OBJECT_MONITOR_BLOCKING) {
@@ -2617,14 +2617,14 @@ done:
 		/* Synchronize on the thread lock around interrupted() on windows */
 		j9object_t threadLock = J9VMJAVALANGTHREAD_LOCK(_currentThread, _currentThread->threadObject);
 		if (!VM_ObjectMonitor::inlineFastObjectMonitorEnter(_currentThread, threadLock)) {
-			IDATA monitorRC = objectMonitorEnterNonBlocking(_currentThread, threadLock);
+			UDATA monitorRC = objectMonitorEnterNonBlocking(_currentThread, threadLock);
 			if (J9_OBJECT_MONITOR_OOM == monitorRC) {
 				rc = THROW_MONITOR_ALLOC_FAIL;
 				goto done;
 			} else if (J9_OBJECT_MONITOR_BLOCKING == monitorRC) {
 				buildInternalNativeStackFrame(REGISTER_ARGS);
 				updateVMStruct(REGISTER_ARGS);
-				threadLock = (j9object_t)(UDATA)objectMonitorEnterBlocking(_currentThread);
+				threadLock = (j9object_t)objectMonitorEnterBlocking(_currentThread);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
 				restoreInternalNativeStackFrame(REGISTER_ARGS);
 			}
@@ -7750,7 +7750,7 @@ done:
 		if (NULL == obj) {
 			rc = THROW_NPE;
 		} else {
-			IDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, obj);
+			UDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, obj);
 			/* Monitor enter can only fail in the nonblocking case, which does not
 			 * release VM access, so the immediate async and failed enter cases are
 			 * mutually exclusive.
@@ -9106,8 +9106,8 @@ public:
 			goto jni; \
 		case RUN_METHOD_COMPILED: \
 			goto i2j; \
-		DEBUG_ACTIONS \
 		PERFORM_ACTION_VALUE_TYPE_IMSE \
+		DEBUG_ACTIONS \
 		default: \
 			Assert_VM_unreachable(); \
 		} \
