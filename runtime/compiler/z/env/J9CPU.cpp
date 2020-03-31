@@ -269,6 +269,11 @@ CPU::initializeS390ProcessorFeatures()
 
    if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z14))
       {
+      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_MISCELLANEOUS_INSTRUCTION_EXTENSION_2))
+         {
+         TR::Compiler->target.cpu.setSupportsMiscellaneousInstructionExtensions2Facility(true);
+         }
+
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL))
          {
          TR::Compiler->target.cpu.setSupportsVectorPackedDecimalFacility(true);
