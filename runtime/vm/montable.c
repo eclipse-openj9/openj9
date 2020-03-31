@@ -79,7 +79,7 @@ hashMonitorCompare(void *tableEntryKey, void *userKey, void *userData)
 	 * we need a proper barrier to get an up-to-date location of the monitor object
 	 * Only access to the table entry needs the barrier. The user provided key should already have an updated location of the objects,
 	 * since a read barrier had to be executed some time prior to the construction of the key, wherever the value is read from */
-	j9object_t tableEntryObject = J9MONITORTABLE_OBJECT_LOAD_VM((J9JavaVM *)userData, &(tableEntryMonitor->userData));
+	j9object_t tableEntryObject = J9WEAKROOT_OBJECT_LOAD_VM((J9JavaVM *)userData, &(tableEntryMonitor->userData));
 
 	return tableEntryObject == (j9object_t)userMonitor->userData;
 }
@@ -87,7 +87,7 @@ hashMonitorCompare(void *tableEntryKey, void *userKey, void *userData)
 void
 cacheObjectMonitorForLookup(J9JavaVM* vm, J9VMThread* vmStruct, J9ObjectMonitor* objectMonitor)
 {
-	j9object_t object = J9MONITORTABLE_OBJECT_LOAD(vmStruct, &((J9ThreadAbstractMonitor*)(objectMonitor->monitor))->userData);
+	j9object_t object = J9WEAKROOT_OBJECT_LOAD(vmStruct, &((J9ThreadAbstractMonitor*)(objectMonitor->monitor))->userData);
 
 	vmStruct->objectMonitorLookupCache[J9_OBJECT_MONITOR_LOOKUP_SLOT(object,vm)] = (j9objectmonitor_t) ((UDATA) objectMonitor);
 }
@@ -253,7 +253,7 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object)
 	 * with the comparison. Otherwise, we may miss to identify cache hit. Hence, we call a 'weak' read barrier (only updating slot if object already moved,
 	 * but not triggering a copy) on userData slot.
 	 */
-	if ((objectMonitor != NULL) && (J9MONITORTABLE_OBJECT_LOAD_VM(vm, &((J9ThreadAbstractMonitor*)objectMonitor->monitor)->userData) == object)) {
+	if ((objectMonitor != NULL) && (J9WEAKROOT_OBJECT_LOAD_VM(vm, &((J9ThreadAbstractMonitor*)objectMonitor->monitor)->userData) == object)) {
 		HIT();
 		TRACE("Cache hit");
 		Trc_VM_monitorTableAt_CacheHit_Exit(vmStruct, objectMonitor);

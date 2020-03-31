@@ -767,7 +767,7 @@ MM_StandardAccessBarrier::asConstantPoolObject(J9VMThread *vmThread, J9Object* t
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 bool
-MM_StandardAccessBarrier::preMonitorTableSlotRead(J9VMThread *vmThread, j9object_t *srcAddress)
+MM_StandardAccessBarrier::preWeakRootSlotRead(J9VMThread *vmThread, j9object_t *srcAddress)
 {
 	omrobjectptr_t object = (omrobjectptr_t)*srcAddress;
 	bool const compressed = compressObjectReferences();
@@ -797,7 +797,7 @@ MM_StandardAccessBarrier::preMonitorTableSlotRead(J9VMThread *vmThread, j9object
 }
 
 bool
-MM_StandardAccessBarrier::preMonitorTableSlotRead(J9JavaVM *vm, j9object_t *srcAddress)
+MM_StandardAccessBarrier::preWeakRootSlotRead(J9JavaVM *vm, j9object_t *srcAddress)
 {
 	omrobjectptr_t object = (omrobjectptr_t)*srcAddress;
 	bool const compressed = compressObjectReferences();

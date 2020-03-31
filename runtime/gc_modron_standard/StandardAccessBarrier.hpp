@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,8 +100,8 @@ public:
 	virtual bool preObjectRead(J9VMThread *vmThread, J9Object *srcObject, fj9object_t *srcAddress);
 	/* off-heap slot (always non-compressed) */
 	virtual bool preObjectRead(J9VMThread *vmThread, J9Class *srcClass, j9object_t *srcAddress);
-	virtual bool preMonitorTableSlotRead(J9VMThread *vmThread, j9object_t *srcAddress);
-	virtual bool preMonitorTableSlotRead(J9JavaVM *vm, j9object_t *srcAddress);	
+	virtual bool preWeakRootSlotRead(J9VMThread *vmThread, j9object_t *srcAddress);
+	virtual bool preWeakRootSlotRead(J9JavaVM *vm, j9object_t *srcAddress);	
 #endif	
 
 	bool preObjectStoreImpl(J9VMThread *vmThread, J9Object *destObject, fj9object_t *destAddress, J9Object *value, bool isVolatile);

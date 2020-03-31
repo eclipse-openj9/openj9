@@ -201,7 +201,7 @@ restart:
 			}
 			/* In a Concurrent GC where monitor object can *move* in a middle of GC cycle,
 			 * we need a proper barrier to get an up-to-date location of the monitor object */
-			j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, J9MONITORTABLE_OBJECT_LOAD(currentThread, &((J9ThreadMonitor*)monitor)->userData));
+			j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, J9WEAKROOT_OBJECT_LOAD(currentThread, &((J9ThreadMonitor*)monitor)->userData));
 			j9objectmonitor_t lockInLoop = J9_LOAD_LOCKWORD(currentThread, lwEA);
 			/* Change lockword from Learning to Flat if in Learning state. */
 			while (OBJECT_HEADER_LOCK_LEARNING == (lockInLoop & (OBJECT_HEADER_LOCK_LEARNING | OBJECT_HEADER_LOCK_INFLATED))) {

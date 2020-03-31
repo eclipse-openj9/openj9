@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -733,18 +733,18 @@ J9ReadBarrierJ9Class(J9VMThread *vmThread, j9object_t *srcAddress)
 }
 
 j9object_t
-j9gc_objaccess_monitorTableReadObject(J9VMThread *vmThread, j9object_t *srcAddress)
+j9gc_weakRoot_readObject(J9VMThread *vmThread, j9object_t *srcAddress)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
-	barrier->preMonitorTableSlotRead(vmThread, srcAddress);
+	barrier->preWeakRootSlotRead(vmThread, srcAddress);
 	return *srcAddress;
 }
 
 j9object_t
-j9gc_objaccess_monitorTableReadObjectVM(J9JavaVM *vm, j9object_t *srcAddress)
+j9gc_weakRoot_readObjectVM(J9JavaVM *vm, j9object_t *srcAddress)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vm)->accessBarrier;
-	barrier->preMonitorTableSlotRead(vm, srcAddress);
+	barrier->preWeakRootSlotRead(vm, srcAddress);
 	return *srcAddress;
 }
 

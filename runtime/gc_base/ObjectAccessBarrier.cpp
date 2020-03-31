@@ -2013,13 +2013,13 @@ MM_ObjectAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObject,
 }
 
 bool
-MM_ObjectAccessBarrier::preMonitorTableSlotRead(J9VMThread *vmThread, j9object_t *srcAddress)
+MM_ObjectAccessBarrier::preWeakRootSlotRead(J9VMThread *vmThread, j9object_t *srcAddress)
 {
 	return true;
 }
 
 bool
-MM_ObjectAccessBarrier::preMonitorTableSlotRead(J9JavaVM *vm, j9object_t *srcAddress)
+MM_ObjectAccessBarrier::preWeakRootSlotRead(J9JavaVM *vm, j9object_t *srcAddress)
 {
 	return true;
 }
