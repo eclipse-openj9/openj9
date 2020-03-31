@@ -426,7 +426,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             echo "TEST_FLAG:'${TEST_FLAG}'"
 
             def extraTestLabels = EXTRA_TEST_LABELS[target] ?: ''
-            def keepReportDir = TEST_KEEP_REPORTDIR[target]
+            def keepReportDir = TEST_KEEP_REPORTDIR[target] ?: ''
             def buildList = TEST_BUILD_LIST[target] ?: ''
             echo "Target:'${target}' extraTestLabels:'${extraTestLabels}', keepReportDir:'${keepReportDir}'"
 
