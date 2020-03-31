@@ -107,14 +107,11 @@ allocateClassMemorySegment(J9JavaVM *javaVM, UDATA requiredSize, UDATA segmentTy
 {
 	UDATA appropriateSize = 0;
 	J9MemorySegment *memorySegment = NULL;
-	omrthread_monitor_t segmentMutex = NULL;
-	
-#if defined(J9VM_THR_PREEMPTIVE)
-	segmentMutex = javaVM->classMemorySegments->segmentMutex;
+	omrthread_monitor_t segmentMutex = javaVM->classMemorySegments->segmentMutex;
+
 	if (NULL != segmentMutex) {
 		omrthread_monitor_enter(segmentMutex);
 	}
-#endif
 
 	appropriateSize = calculateAppropriateSegmentSize(javaVM, requiredSize, segmentType, classLoader, allocationIncrement);
 	memorySegment = allocateMemorySegmentInList(javaVM, javaVM->classMemorySegments, appropriateSize, segmentType, J9MEM_CATEGORY_CLASSES);
@@ -125,11 +122,9 @@ allocateClassMemorySegment(J9JavaVM *javaVM, UDATA requiredSize, UDATA segmentTy
 		classLoader->classSegments = memorySegment;
 	}
 	
-#if defined(J9VM_THR_PREEMPTIVE)
 	if (NULL != segmentMutex) {
 		omrthread_monitor_exit(segmentMutex);
 	}
-#endif
 
 	return memorySegment;
 }
