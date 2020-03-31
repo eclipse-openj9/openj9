@@ -1123,7 +1123,7 @@ obj:;
 	VMINLINE IDATA
 	enterObjectMonitor(REGISTER_ARGS_LIST, j9object_t obj)
 	{
-		UDATA rc = (IDATA)obj;
+		UDATA rc = (UDATA)obj;
 		if (!VM_ObjectMonitor::inlineFastObjectMonitorEnter(_currentThread, obj)) {
 			rc = objectMonitorEnterNonBlocking(_currentThread, obj);
 			if (J9_OBJECT_MONITOR_BLOCKING == rc) {
