@@ -60,7 +60,6 @@
 #include "runtime/codertinit.hpp"
 #include "runtime/IProfiler.hpp"
 #include "runtime/HWProfiler.hpp"
-#include "runtime/LMGuardedStorage.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/J2IThunk.hpp"
@@ -76,7 +75,6 @@
 #include "z/runtime/ZHWProfiler.hpp"
 #elif defined(TR_HOST_POWER)
 #include "p/runtime/PPCHWProfiler.hpp"
-#include "p/runtime/PPCLMGuardedStorage.hpp"
 #endif
 
 #include "control/rossa.h"
@@ -1720,17 +1718,6 @@ onLoadInternal(
    // OpenJ9 issue #6438 tracks the work to enable.
    //
    TR::Options::getCmdLineOptions()->setOption(TR_DisableArrayCopyOpts);
-#endif
-
-#if defined(TR_HOST_POWER)
-#if !defined(J9OS_I5_V6R1) && !defined(J9OS_I5_V7R2) /* We may support it since i 7.3. */
-      TR_Processor processor = portLibCall_getProcessorType();
-      bool enableLMGS = false; //processor > TR_PPCp8; // maybe additional conditions
-      bool ebbSetupDone = persistentMemory->getPersistentInfo()->isRuntimeInstrumentationEnabled();
-      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->lmGuardedStorage = enableLMGS ? TR_PPCLMGuardedStorage::allocate(jitConfig, ebbSetupDone) : NULL;
-#else
-      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->lmGuardedStorage = NULL;
-#endif /* !defined(J9OS_I5_V6R1) && !defined(J9OS_I5_V7R2) */
 #endif
 
 #ifdef J9VM_RAS_DUMP_AGENTS

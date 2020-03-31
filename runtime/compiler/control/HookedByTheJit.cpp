@@ -76,7 +76,6 @@
 #include "ilgen/J9ByteCodeIterator.hpp"
 #include "runtime/IProfiler.hpp"
 #include "runtime/HWProfiler.hpp"
-#include "runtime/LMGuardedStorage.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/JITServerHelpers.hpp"
@@ -2365,12 +2364,6 @@ static void jitHookThreadStart(J9HookInterface * * hookInterface, UDATA eventNum
          hwProfiler->initializeThread(vmThread);
          }
       }
-
-   TR_LMGuardedStorage *lmGuardedStorage = compInfo->getLMGuardedStorage();
-   if (lmGuardedStorage)
-      {
-      lmGuardedStorage->initializeThread(vmThread);
-      }
 #endif //defined(TR_HOST_POWER)
    }
 
@@ -2428,13 +2421,6 @@ static void jitHookThreadDestroy(J9HookInterface * * hookInterface, UDATA eventN
       {
       if (IS_THREAD_RI_INITIALIZED(vmThread))
          hwProfiler->deinitializeThread(vmThread);
-      }
-
-   // LM / GS
-   TR_LMGuardedStorage *lmGuardedStorage = compInfo->getLMGuardedStorage();
-   if (lmGuardedStorage)
-      {
-      lmGuardedStorage->deinitializeThread(vmThread);
       }
 
    void  *vmWithThreadInfo = vmThread->jitVMwithThreadInfo;
@@ -7210,20 +7196,6 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       J9VMThread *currThread = javaVM->mainThread;
       if (currThread)
          {
-#if defined(TR_HOST_POWER)
-         J9JITConfig * jitConfig = currThread->javaVM->jitConfig;
-         TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
-         TR_LMGuardedStorage *lmGuardedStorage = compInfo->getLMGuardedStorage();
-
-         if (lmGuardedStorage)
-            {
-            // TODO (GuardedStorage): jitHookThreadStart is never triggered on the main thread, since it's created before
-            // the JIT enables the hook. Since the main thread can execute JIT code we still need to initialize it for
-            // guarded storage.
-            lmGuardedStorage->initializeThread(currThread);
-            }
-#endif
-
          do
             {
             initThreadAfterCreation(currThread);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,6 @@ typedef enum p9emu_insn_id
     */
    P9EMU_MFSPR,
    P9EMU_MTSPR,
-   /* This is not a P9 instruction, but is required to emulate ldmx. */
    P9EMU_RFEBB,
 
    P9EMU_ADDPCIS,
@@ -572,43 +571,6 @@ void rfebb(uint32_t insn, unsigned long *gpregs, p9emu_ctx_t *ctx)
    gpregs[PT_NIP] = ctx->ebbrr;
    }
 
-#ifdef TR_HOST_64BIT
-static
-void ldmx(uint32_t insn, unsigned long *gpregs, p9emu_ctx_t *ctx)
-   {
-   uintptr_t ra = XFORM_RA(insn) == 0 ? 0 : gpregs[XFORM_RA(insn)];
-   uintptr_t rb = gpregs[XFORM_RB(insn)];
-   uintptr_t ea = ra + rb;
-   uint64_t  loaded_ea = *(uint64_t *)ea;
-
-   if ((ctx->bescr >> 32 & 0x80000004u) == 0x80000004u)
-      {
-      uint64_t  lmrr = ctx->lmrr;
-      uint64_t  lmr_size = lmrr & 0xF;
-      uint64_t  size = (uint64_t)1 << (lmr_size + 25);
-      uint64_t  base_mask = ~(size - 1);
-      uint64_t  base = lmrr & base_mask;
-
-      uint64_t  region_size = size / 64;
-      uint64_t  region_size_log2 = trailingZeroes(region_size);
-      uint64_t  loaded_ea_region = (loaded_ea - base) >> region_size_log2;
-      uint64_t  loaded_ea_region_bit = (uint64_t)1 << (63 - loaded_ea_region);
-
-      if (loaded_ea_region_bit & ctx->lmser)
-         {
-         ctx->bescr = (ctx->bescr & ~0x8000000400000000u) | 0x0000000000000004u;
-         ctx->ebbrr = gpregs[PT_NIP] + 4;
-         gpregs[PT_NIP] = ctx->ebbhr;
-
-         return;
-         }
-      }
-
-   gpregs[XFORM_RT(insn)] = loaded_ea;
-   gpregs[PT_NIP] = gpregs[PT_NIP] + 4;
-   }
-#endif
-
 static
 p9emu_insn_id_t p9emu_decode_insn_p4(uint32_t insn)
    {
@@ -738,12 +700,6 @@ int32_t p9emu_process(p9emu_ctx_t *ctx, ucontext_t *uctx)
       case P9EMU_CMPEQB:
          cmpeqb(insn, gpregs);
          break;
-#endif
-#ifdef TR_HOST_64BIT
-      case P9EMU_LDMX:
-         ldmx(insn, gpregs, ctx);
-         /* Return here as ldmx modifies the instruction pointer, no need to increment it. */
-         return 0;
 #endif
 #ifdef TR_HOST_64BIT
       case P9EMU_MODSD:
