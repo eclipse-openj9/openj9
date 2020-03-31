@@ -70,7 +70,6 @@ public:
    bool getPPCSupportsVSX();
    bool getPPCSupportsAES();
    bool getPPCSupportsTM();
-   bool getPPCSupportsLM();
 
    bool hasPopulationCountInstruction();
    bool supportsDecimalFloatingPoint();

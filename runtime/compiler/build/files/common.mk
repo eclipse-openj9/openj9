@@ -355,7 +355,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/J9JitPersistentMemory.cpp \
     compiler/runtime/J9Profiler.cpp \
     compiler/runtime/JitRuntime.cpp \
-    compiler/runtime/LMGuardedStorage.cpp \
     compiler/runtime/MetaData.cpp \
     compiler/runtime/MetaDataDebug.cpp \
     compiler/runtime/MethodMetaData.c \

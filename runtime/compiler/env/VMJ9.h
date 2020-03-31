@@ -52,7 +52,6 @@ namespace TR { class CompilationInfoPerThread; }
 class TR_IProfiler;
 class TR_HWProfiler;
 class TR_JProfilerThread;
-class TR_LMGuardedStorage;
 class TR_Debug;
 class TR_OptimizationPlan;
 class TR_ExternalValueProfileInfo;
@@ -146,7 +145,6 @@ typedef struct TR_JitPrivateConfig
    TR_Listener   *listener;
    JITServerStatisticsThread   *statisticsThreadObject;
 #endif /* defined(J9VM_OPT_JITSERVER) */
-   TR_LMGuardedStorage *lmGuardedStorage;
    TR::CodeCacheManager *codeCacheManager; // reachable from JitPrivateConfig for kca's benefit
    TR_DataCacheManager *dcManager;  // reachable from JitPrivateConfig for kca's benefit
    bool          annotationClassesAlreadyLoaded;

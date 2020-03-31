@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/p/runtime/J9PPCEncodeUTF16.spp \
     compiler/p/runtime/Math.spp \
     compiler/p/runtime/PPCHWProfiler.cpp \
-    compiler/p/runtime/PPCLMGuardedStorage.cpp \
     compiler/p/runtime/PPCRelocationTarget.cpp \
     compiler/p/runtime/PicBuilder.spp \
     compiler/p/runtime/Recomp.cpp \
@@ -42,18 +41,14 @@ JIT_PRODUCT_SOURCE_FILES+=\
 
 ifeq ($(OS),aix)
     PPC_HW_PROFILER=compiler/p/runtime/PPCHWProfilerAIX.cpp
-    PPC_LM_GUARDED_STORAGE=compiler/p/runtime/PPCLMGuardedStorageAIX.cpp
 
     ifneq ($(findstring $(I5_VERSION),I5_V6R1 I5_V7R2 I5_V7R3 I5_V7R4),)
         PPC_HW_PROFILER=
-        PPC_LM_GUARDED_STORAGE=
     endif
 endif
 
 ifeq ($(OS),linux)
     PPC_HW_PROFILER=compiler/p/runtime/PPCHWProfilerLinux.cpp
-    PPC_LM_GUARDED_STORAGE=compiler/p/runtime/PPCLMGuardedStorageLinux.cpp
 endif
 
 JIT_PRODUCT_SOURCE_FILES+=$(PPC_HW_PROFILER)
-JIT_PRODUCT_SOURCE_FILES+=$(PPC_LM_GUARDED_STORAGE)
