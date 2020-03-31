@@ -1237,8 +1237,8 @@ extern J9_CFUNC j9object_t  methodToString (J9VMThread * vmThread, J9Method* met
 /* J9VMTasukiMonitor*/
 #ifndef _J9VMTASUKIMONITOR_
 #define _J9VMTASUKIMONITOR_
-extern J9_CFUNC IDATA  objectMonitorEnterBlocking (J9VMThread *currentThread);
-extern J9_CFUNC IDATA  objectMonitorEnterNonBlocking (J9VMThread *currentThread, j9object_t object);
+extern J9_CFUNC UDATA  objectMonitorEnterBlocking (J9VMThread *currentThread);
+extern J9_CFUNC UDATA  objectMonitorEnterNonBlocking (J9VMThread *currentThread, j9object_t object);
 extern J9_CFUNC void  monitorExitWriteBarrier ();
 extern J9_CFUNC void  incrementCancelCounter (J9Class *clazz);
 #endif /* _J9VMTASUKIMONITOR_ */
