@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,6 +80,7 @@ findROMClassFromPC(J9VMThread *vmThread, UDATA methodPC, J9ClassLoader **resultC
 	segmentForClass = findMemorySegment(javaVM, javaVM->classMemorySegments, methodPC);
 	if (segmentForClass != NULL && (segmentForClass->type & MEMORY_TYPE_ROM_CLASS) != 0) {
 		romClass = findROMClassInSegment(vmThread, segmentForClass, methodPC);
+		/* Note, for classes from the SharedClasses cache, this will *always* be the vm->systemLoader */
 		*resultClassLoader = segmentForClass->classLoader;
 	}
 

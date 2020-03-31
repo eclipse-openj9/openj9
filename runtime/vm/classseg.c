@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,12 +107,11 @@ allocateClassMemorySegment(J9JavaVM *javaVM, UDATA requiredSize, UDATA segmentTy
 {
 	UDATA appropriateSize = 0;
 	J9MemorySegment *memorySegment = NULL;
-	
-#if defined(J9VM_THR_PREEMPTIVE)
-	if (javaVM->classMemorySegments->segmentMutex) {
-		omrthread_monitor_enter(javaVM->classMemorySegments->segmentMutex);
+	omrthread_monitor_t segmentMutex = javaVM->classMemorySegments->segmentMutex;
+
+	if (NULL != segmentMutex) {
+		omrthread_monitor_enter(segmentMutex);
 	}
-#endif
 
 	appropriateSize = calculateAppropriateSegmentSize(javaVM, requiredSize, segmentType, classLoader, allocationIncrement);
 	memorySegment = allocateMemorySegmentInList(javaVM, javaVM->classMemorySegments, appropriateSize, segmentType, J9MEM_CATEGORY_CLASSES);
@@ -124,11 +122,9 @@ allocateClassMemorySegment(J9JavaVM *javaVM, UDATA requiredSize, UDATA segmentTy
 		classLoader->classSegments = memorySegment;
 	}
 	
-#if defined(J9VM_THR_PREEMPTIVE)
-	if (javaVM->classMemorySegments->segmentMutex) {
-		omrthread_monitor_exit(javaVM->classMemorySegments->segmentMutex);
+	if (NULL != segmentMutex) {
+		omrthread_monitor_exit(segmentMutex);
 	}
-#endif
 
 	return memorySegment;
 }
