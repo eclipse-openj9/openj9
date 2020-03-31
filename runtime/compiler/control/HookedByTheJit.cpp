@@ -6074,7 +6074,7 @@ void samplerThreadStateLogic(TR::CompilationInfo *compInfo, TR_FrontEnd *fe, int
                            newVMState = J9VM_RUNTIME_STATE_IDLE;
                         }
                      // Enter DEEPIDLE
-                     newSamplerState = TR::CompilationInfo::SAMPLER_DEEPIDLE;;
+                     newSamplerState = TR::CompilationInfo::SAMPLER_DEEPIDLE;
                      jitConfig->samplingFrequency = TR::Options::getSamplingFrequencyInDeepIdleMode();
                      }
                   else

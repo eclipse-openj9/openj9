@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -269,7 +269,7 @@ j9process_create(struct J9PortLibrary *portLibrary, const char *command[], uintp
 	if ( FLAG_IS_SET(J9PORT_PROCESS_INHERIT_STDIN, options) ) {
 		processHandleStruct->inHandle = J9PORT_INVALID_FD;
 		if (sinfo.dwFlags == STARTF_USESTDHANDLES) {
-			sinfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);;
+			sinfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 		}
 	} else if ( J9PORT_INVALID_FD != j9fdInput ) {
 		processHandleStruct->inHandle = J9PORT_INVALID_FD;
@@ -303,7 +303,7 @@ j9process_create(struct J9PortLibrary *portLibrary, const char *command[], uintp
 	if ( FLAG_IS_SET(J9PORT_PROCESS_INHERIT_STDOUT, options) ) {
 		processHandleStruct->outHandle = J9PORT_INVALID_FD;
 		if (sinfo.dwFlags == STARTF_USESTDHANDLES) {
-			sinfo.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);;
+			sinfo.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 		}
 	} else  if ( J9PORT_INVALID_FD != j9fdOutput ) {
 		if ( FLAG_IS_NOT_SET(J9PORT_PROCESS_IGNORE_OUTPUT, options) ) {

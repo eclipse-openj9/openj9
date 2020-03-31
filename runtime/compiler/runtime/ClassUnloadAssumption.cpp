@@ -983,10 +983,10 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
             		  TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "o=%p @ %p  r=%p %p %p %p",
             				  initialKey, pic_cursor->getPicLocation(),
             				  resolvedKey1, resolvedKey2, resolvedKey3, resolvedKey4);
-                  *(uint32_t *)(pic_cursor->getPicLocation()) = resolvedKey1 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 48);;
-                  *(uint32_t *)(pic_cursor->getPicLocation()+4) = resolvedKey2 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 32 & 0xffff);;
-                  *(uint32_t *)(pic_cursor->getPicLocation()+12) = resolvedKey3 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 16 & 0xffff);;
-                  *(uint32_t *)(pic_cursor->getPicLocation()+16) = resolvedKey4 & 0xffff0000 | (uint32_t)((uintptr_t)newKey & 0xffff);;
+                  *(uint32_t *)(pic_cursor->getPicLocation()) = resolvedKey1 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 48);
+                  *(uint32_t *)(pic_cursor->getPicLocation()+4) = resolvedKey2 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 32 & 0xffff);
+                  *(uint32_t *)(pic_cursor->getPicLocation()+12) = resolvedKey3 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 16 & 0xffff);
+                  *(uint32_t *)(pic_cursor->getPicLocation()+16) = resolvedKey4 & 0xffff0000 | (uint32_t)((uintptr_t)newKey & 0xffff);
                   if (reportDetails)
                      {
                      TR_VerboseLog::vlogAcquire();

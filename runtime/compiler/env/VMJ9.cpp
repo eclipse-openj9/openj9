@@ -8880,7 +8880,7 @@ TR_J9SharedCacheVM::isPrimitiveClass(TR_OpaqueClassBlock * classPointer)
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
-   bool isPrimClass = TR_J9VMBase::isPrimitiveClass(classPointer);;
+   bool isPrimClass = TR_J9VMBase::isPrimitiveClass(classPointer);
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
