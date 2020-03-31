@@ -60,10 +60,7 @@ JITServerIProfiler::deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *
       entry->_method = serialEntry->_method;
       entry->_otherBucket = serialEntry->_otherBucket;
 
-      size_t callerCount = 0;
-      for (; callerCount < TR_IPMethodHashTableEntry::MAX_IPMETHOD_CALLERS; callerCount++)
-         if (serialEntry->_callers[callerCount]._method == NULL)
-            break;
+      size_t callerCount = serialEntry->_callerCount;
 
       TR_IPMethodData *callerStore = (TR_IPMethodData*) trMemory->allocateHeapMemory(callerCount * sizeof(TR_IPMethodData));
       if (callerStore)
@@ -91,26 +88,24 @@ JITServerIProfiler::deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *
    return entry;
    }
 
-TR_ContiguousIPMethodHashTableEntry
-TR_ContiguousIPMethodHashTableEntry::serialize(TR_IPMethodHashTableEntry *entry)
+void
+TR_ContiguousIPMethodHashTableEntry::serialize(TR_IPMethodHashTableEntry *entry, TR_ContiguousIPMethodHashTableEntry *serialEntry)
    {
-   TR_ContiguousIPMethodHashTableEntry serialEntry;
-   memset(&serialEntry, 0, sizeof(TR_ContiguousIPMethodHashTableEntry));
-   serialEntry._method = entry->_method;
-   serialEntry._otherBucket = entry->_otherBucket;
+   serialEntry->_method = entry->_method;
+   serialEntry->_otherBucket = entry->_otherBucket;
 
    size_t callerIdx = 0;
    for (TR_IPMethodData *caller = &entry->_caller; caller; caller = caller->next)
       {
       if (callerIdx >= TR_IPMethodHashTableEntry::MAX_IPMETHOD_CALLERS)
          break;
-      auto &serialCaller = serialEntry._callers[callerIdx];
+      auto &serialCaller = serialEntry->_callers[callerIdx];
       serialCaller._method = caller->getMethod();
       serialCaller._pcIndex = caller->getPCIndex();
       serialCaller._weight = caller->getWeight();
       callerIdx++;
       }
-   return serialEntry;
+   serialEntry->_callerCount = callerIdx;
    }
 
 TR_IPBytecodeHashTableEntry*
@@ -803,8 +798,10 @@ JITClientIProfiler::serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb)
    auto entry = findOrCreateMethodEntry(NULL, (J9Method *) omb, false);
    if (entry)
       {
-      auto serialEntry = TR_ContiguousIPMethodHashTableEntry::serialize(entry);
-      std::string entryStr((char *) &serialEntry, sizeof(TR_ContiguousIPMethodHashTableEntry));
+      std::string entryStr(sizeof(TR_ContiguousIPMethodHashTableEntry), 0);
+      TR_ContiguousIPMethodHashTableEntry::serialize(
+         entry,
+         reinterpret_cast<TR_ContiguousIPMethodHashTableEntry *>(&entryStr[0]));
       return entryStr;
       }
    else
