@@ -623,6 +623,22 @@ J9::ClassEnv::getROMConstantPool(TR::Compilation *comp, TR_OpaqueClassBlock *cla
 bool
 J9::ClassEnv::isValueTypeClass(TR_OpaqueClassBlock *clazz)
    {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      uintptr_t classFlags = 0;
+      JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_FLAGS, (void *)&classFlags);
+#ifdef DEBUG
+      stream->write(JITServer::MessageType::ClassEnv_classFlagsValue, classPointer);
+      uintptr_t classFlagsRemote = std::get<0>(stream->read<uintptr_t>());
+      // Check that class flags from remote call is equal to the cached ones
+      classFlags = classFlags & J9ClassIsValueType;
+      classFlagsRemote = classFlagsRemote & J9ClassIsValueType;
+      TR_ASSERT(classFlags == classFlagsRemote, "remote call class flags is not equal to cached class flags");
+#endif
+      return classFlags & J9ClassIsValueType;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
    J9Class *j9class = reinterpret_cast<J9Class*>(clazz);
    return J9_IS_J9CLASS_VALUETYPE(j9class);
    }
