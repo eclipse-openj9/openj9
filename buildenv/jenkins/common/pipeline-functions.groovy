@@ -92,7 +92,7 @@ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO,
                 }
 
                 // update build description
-                currentBuild.description += "<br/>${repoName}: <a href=${get_http_repo_url(OPENJ9_REPO)}/commit/${SVENDOR_TEST_SHAS_MAP[repoName]}>${get_short_sha(VENDOR_TEST_SHAS_MAP[repoName])}</a>"
+                currentBuild.description += "<br/>${repoName}: <a href=${get_http_repo_url(OPENJ9_REPO)}/commit/${VENDOR_TEST_SHAS_MAP[repoName]}>${get_short_sha(VENDOR_TEST_SHAS_MAP[repoName])}</a>"
                 echo "${repoName}_SHA: ${VENDOR_TEST_SHAS_MAP[repoName]}"
             }
 
