@@ -2019,7 +2019,9 @@ private boolean useModularSearch(String absoluteResName, Module thisModule, Clas
 	boolean visible = false;
 
 	if (thisModule.isNamed()) {
-		final Module callerModule = callerClass.getModule();
+		// When the caller class is null, assuming it is loaded by module java.base.
+		// See https://github.com/eclipse/openj9/issues/8993 for more info.
+		final Module callerModule = callerClass == null ? Class.class.getModule() : callerClass.getModule();
 		visible = (thisModule == callerModule);
 		if (!visible) {
 			visible = absoluteResName.endsWith(".class"); //$NON-NLS-1$
