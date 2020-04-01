@@ -536,6 +536,7 @@ def get_summary_table(identifier) {
                     pipelineLink = buildFile.get_build_embedded_status_link(build)
                     downstreamBuilds.putAll(buildFile.get_downstream_builds(build, pipelineName, downstreamJobNames.values()))
                     pipelineDuration = build.getDurationString()
+                    pipelineDuration = pipelineDuration.replaceAll(" and counting", "+")
 
                     if (build.getResult()) {
                         // pipeline finished, cache its status
@@ -544,7 +545,7 @@ def get_summary_table(identifier) {
                 }
             }
 
-            innerTable += "<tr><td>&nbsp;</td><td style=\"text-align: right;\">${pipelineLink}</td><td style=\"text-align: right;\">${pipelineDuration}</td></tr>"
+            innerTable += "<tr><td>&nbsp;</td><td style=\"text-align: right;\">${pipelineLink}</td><td style=\"text-align: right; white-space: nowrap;\">${pipelineDuration}</td></tr>"
 
             // add pipeline's downstream builds
             downstreamJobNames.each { label, jobName ->
@@ -556,6 +557,7 @@ def get_summary_table(identifier) {
                 if (downstreamBuild) {
                     link = buildFile.get_build_embedded_status_link(downstreamBuild)
                     duration = downstreamBuild.getDurationString()
+                    duration = duration.replaceAll(" and counting", "+")
                 }
 
                 if (showLabel) {
@@ -563,7 +565,7 @@ def get_summary_table(identifier) {
                     aLabel = label
                 }
 
-                innerTable += "<tr style=\"vertical-align: bottom;\"><td>${aLabel}</td><td style=\"text-align: right\">${link}</td><td style=\"text-align: right\">${duration}</td></tr>"
+                innerTable += "<tr style=\"vertical-align: bottom;\"><td>${aLabel}</td><td style=\"text-align: right\">${link}</td><td style=\"text-align: right; white-space: nowrap;\">${duration}</td></tr>"
             }
 
             innerTable += "</tbody></table>"
