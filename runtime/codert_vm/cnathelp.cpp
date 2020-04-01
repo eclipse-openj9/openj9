@@ -604,6 +604,12 @@ old_slow_jitNewObject(J9VMThread *currentThread)
 }
 
 void* J9FASTCALL
+old_slow_jitNewValue(J9VMThread *currentThread)
+{
+	return slow_jitNewValueImpl(currentThread, true, false);
+}
+
+void* J9FASTCALL
 old_fast_jitNewObject(J9VMThread *currentThread)
 {
 	OLD_JIT_HELPER_PROLOGUE(1);
@@ -619,6 +625,12 @@ void* J9FASTCALL
 old_slow_jitNewObjectNoZeroInit(J9VMThread *currentThread)
 {
 	return slow_jitNewObjectImpl(currentThread, true, true);
+}
+
+void* J9FASTCALL
+old_slow_jitNewValueNoZeroInit(J9VMThread *currentThread)
+{
+	return slow_jitNewValueImpl(currentThread, true, true);
 }
 
 void* J9FASTCALL
@@ -2871,7 +2883,7 @@ fast_jitNewValue(J9VMThread *currentThread, J9Class *objectClass)
 	void *slowPath = NULL;
 	if (J9_UNEXPECTED(fast_jitNewValueImpl(currentThread, objectClass, true, false))) {
 		SET_PARM_COUNT(0);
-		slowPath = (void*) slow_jitNewValueImpl;
+		slowPath = (void*) old_slow_jitNewValue;
 	}
 	return slowPath;
 }
@@ -2884,7 +2896,7 @@ fast_jitNewValueNoZeroInit(J9VMThread *currentThread, J9Class *objectClass)
 	void *slowPath = NULL;
 	if (J9_UNEXPECTED(fast_jitNewValueImpl(currentThread, objectClass, true, true))) {
 		SET_PARM_COUNT(0);
-		slowPath = (void*)slow_jitNewValueImpl;
+		slowPath = (void*)old_slow_jitNewValueNoZeroInit;
 	}
 	return slowPath;
 }
