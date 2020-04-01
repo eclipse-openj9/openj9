@@ -27,6 +27,7 @@ j9jit_files(
 	control/HookedByTheJit.cpp
 	control/J9Options.cpp
 	control/J9Recompilation.cpp
+	control/JitDump.cpp
 	control/MethodToBeCompiled.cpp
 	control/rossa.cpp
 )

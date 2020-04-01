@@ -51,6 +51,7 @@
 #include "codegen/PrivateLinkage.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
+#include "control/JitDump.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "runtime/ArtifactManager.hpp"
@@ -124,10 +125,6 @@ extern TR_Processor portLibCall_getProcessorType();
 extern "C" {
 struct J9RASdumpContext;
 }
-
-#ifdef J9VM_RAS_DUMP_AGENTS
-extern "C" intptr_t dumpJitInfo(J9VMThread * currentThread, char *label, J9RASdumpContext *context);
-#endif
 
 #if defined(TR_TARGET_X86) && defined(TR_HOST_32BIT)
 extern TR_X86CPUIDBuffer *queryX86TargetCPUID(void * javaVM);
