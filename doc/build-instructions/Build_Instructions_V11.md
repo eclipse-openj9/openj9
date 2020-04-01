@@ -23,10 +23,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 Building OpenJDK Version 11 with OpenJ9
 ======================================
 
-Our website describes a simple [build process](http://www.eclipse.org/openj9/oj9_build.html)
-that uses Docker and Dockerfiles to create a build environment that contains everything
-you need to easily build a Linux binary of **OpenJDK V11** with the Eclipse OpenJ9 virtual machine.
-A more complete set of build instructions are included here for multiple platforms:
+Building OpenJDK 11 with OpenJ9 will be familiar to anyone who has already built OpenJDK. The easiest method
+involves the use of Docker and Dockerfiles to create a build environment that contains everything
+you need to produce a Linux binary of OpenJDK V11 with the Eclipse OpenJ9 virtual machine. If this method
+sounds ideal for you, go straight to the [Linux :penguin:](#linux) section.
+
+Build instructions are available for the following platforms:
 
 - [Linux :penguin:](#linux)
 - [AIX :blue_book:](#aix)
@@ -359,7 +361,7 @@ JCL      - e5c64f5 based on jdk-11+21)
 ## Windows
 :ledger:
 
-The following instructions guide you through the process of building a Windows **OpenJDK V11** binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows 7, 8, and 10.
+The following instructions guide you through the process of building a Windows **OpenJDK V11** binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows.
 
 ### 1. Prepare your system
 :ledger:
