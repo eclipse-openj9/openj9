@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -420,13 +420,15 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 	}
 }
 
-#if !defined(J9ZOS390) && !defined(J9ZTPF) && defined(OMR_GC_COMPRESSED_POINTERS)
-#define ALLOCATE_RAS_DATA_IN_SUBALLOCATOR
-#endif
+#if !defined(J9ZOS390) && !defined(J9ZTPF)
+#define ALLOCATE_RAS_DATA_IN_SUBALLOCATOR TRUE
+#else /* !defined(J9ZOS390) && !defined(J9ZTPF) */
+#define ALLOCATE_RAS_DATA_IN_SUBALLOCATOR FALSE
+#endif /* !defined(J9ZOS390) && !defined(J9ZTPF) */
 
 #if defined(J9ZOS390) || (defined (AIXPPC) && !defined (J9VM_ENV_DATA64))
 #define USE_STATIC_RAS_STRUCT
-#endif
+#endif /* defined(J9ZOS390) || (defined (AIXPPC) && !defined (J9VM_ENV_DATA64)) */
 
 static J9RAS*
 allocateRASStruct(J9JavaVM *javaVM)
@@ -443,8 +445,8 @@ allocateRASStruct(J9JavaVM *javaVM)
 	 *
 	 * Compressed references: the RAS data is relocated to the JVM suballocator once the latter is created.
 	 */
-#if !defined(USE_STATIC_RAS_STRUCT) && !defined(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR)
-	if (!J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
+#if !defined(USE_STATIC_RAS_STRUCT)
+	if (!(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR && J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM))) {
 		/* if not z/OS or AIX32 */
 
 		J9PortVmemParams params;
@@ -485,14 +487,14 @@ allocateRASStruct(J9JavaVM *javaVM)
 			candidate = &result->ras;
 		}
 	}
-#endif /* !defined(USE_STATIC_RAS_STRUCT) && !defined(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR) */
+#endif /* !defined(USE_STATIC_RAS_STRUCT) */
 	return candidate;
 }
 
 void J9RelocateRASData(J9JavaVM* javaVM) {
 	/* See comments for allocateRASStruct concerning compressed references and z/OS */
-#if !defined(USE_STATIC_RAS_STRUCT) && defined(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR)
-	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
+#if !defined(USE_STATIC_RAS_STRUCT)
+	if (ALLOCATE_RAS_DATA_IN_SUBALLOCATOR && J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
 		PORT_ACCESS_FROM_JAVAVM(javaVM);
 		J9RAS * result = j9mem_allocate_memory32(sizeof(J9RAS), OMRMEM_CATEGORY_VM);
 
@@ -502,7 +504,7 @@ void J9RelocateRASData(J9JavaVM* javaVM) {
 			memset((J9RAS*)GLOBAL_DATA(_j9ras_), 0, sizeof(J9RAS));
 		}
 	}
-#endif /* defined(USE_STATIC_RAS_STRUCT) && defined(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR) */
+#endif /* defined(USE_STATIC_RAS_STRUCT) */
 	return;
 }
 
@@ -513,12 +515,9 @@ freeRASStruct(J9JavaVM *javaVM, J9RAS* rasStruct)
 	if (rasStruct != GLOBAL_DATA(_j9ras_)) { /* dynamic allocation may have failed */
 		PORT_ACCESS_FROM_JAVAVM(javaVM);
 
-#if defined(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR) /* memory was allocated using j9vmem_reserve_memory_ex */
-		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
+		if (ALLOCATE_RAS_DATA_IN_SUBALLOCATOR && J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
 			j9mem_free_memory32(rasStruct);
-		} else
-#endif /* defined(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR) */
-		{
+		} else {
 			J9AllocatedRAS* allocatedStruct = (J9AllocatedRAS*)rasStruct;
 			J9PortVmemIdentifier identifier;
 
