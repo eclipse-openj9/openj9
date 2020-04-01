@@ -5456,6 +5456,13 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
       case TR::Address:
          if (method()->isConstantDynamic(cpIndex))
             {
+            if (comp()->compileRelocatableCode())
+               {
+               if (comp()->getOption(TR_TraceILGen))
+                  traceMsg(comp(), "  Constant Dynamic not supported in AOT.\n");
+               comp()->failCompilation<J9::AOTHasConstantDynamic>("Constant Dynamic not supported in AOT.");
+               }
+
             bool isCondyUnresolved = _methodSymbol->getResolvedMethod()->isUnresolvedConstantDynamic(cpIndex);
             J9UTF8 *returnTypeUtf8 = (J9UTF8 *)_methodSymbol->getResolvedMethod()->getConstantDynamicTypeFromCP(cpIndex);
             int returnTypeUtf8Length = J9UTF8_LENGTH(returnTypeUtf8);
@@ -5678,11 +5685,23 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
             }
          else if (method()->isMethodHandleConstant(cpIndex))
             {
+            if (comp()->compileRelocatableCode())
+               {
+               if (comp()->getOption(TR_TraceILGen))
+                  traceMsg(comp(), "  Method Handle Constant not supported in AOT.\n");
+               comp()->failCompilation<J9::AOTHasMethodHandleConstant>("Method Handle Constant not supported in AOT.");
+               }
             loadSymbol(TR::aload, symRefTab()->findOrCreateMethodHandleSymbol(_methodSymbol, cpIndex));
             }
          else
             {
             TR_ASSERT(method()->isMethodTypeConstant(cpIndex), "Address-type CP entry %d must be class, string, methodHandle, or methodType", cpIndex);
+            if (comp()->compileRelocatableCode())
+               {
+               if (comp()->getOption(TR_TraceILGen))
+                  traceMsg(comp(), "  Method Type Constant not supported in AOT.\n");
+               comp()->failCompilation<J9::AOTHasMethodTypeConstant>("Method Type Constant not supported in AOT.");
+               }
             loadSymbol(TR::aload, symRefTab()->findOrCreateMethodTypeSymbol(_methodSymbol, cpIndex));
             }
          break;
