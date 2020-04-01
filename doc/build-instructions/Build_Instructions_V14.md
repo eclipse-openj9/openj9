@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2020 IBM Corp. and others
+Copyright (c) 2020, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,13 +20,15 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-Building OpenJDK Version 13 with OpenJ9
+Building OpenJDK Version 14 with OpenJ9
 ======================================
 
-Our website describes a simple [build process](http://www.eclipse.org/openj9/oj9_build.html)
-that uses Docker and Dockerfiles to create a build environment that contains everything
-you need to easily build a Linux binary of **OpenJDK V13** with the Eclipse OpenJ9 virtual machine.
-A more complete set of build instructions are included here for multiple platforms:
+Building OpenJDK 14 with OpenJ9 will be familiar to anyone who has already built OpenJDK. The easiest method
+involves the use of Docker and Dockerfiles to create a build environment that contains everything
+you need to produce a Linux binary of OpenJDK V14 with the Eclipse OpenJ9 virtual machine. If this method
+sounds ideal for you, go straight to the [Linux :penguin:](#linux) section.
+
+Build instructions are available for the following platforms:
 
 - [Linux :penguin:](#linux)
 - [AIX :blue_book:](#aix)
@@ -43,7 +45,7 @@ documentation for the next release of OpenJ9 can be found [here](https://eclipse
 
 ## Linux
 :penguin:
-This build process provides detailed instructions for building a Linux x86-64 binary of **OpenJDK V13** with OpenJ9 on Ubuntu 16.04. The binary can be built directly on your system, in a virtual machine, or in a Docker container :whale:.
+This build process provides detailed instructions for building a Linux x86-64 binary of **OpenJDK V14** with OpenJ9 on Ubuntu 16.04. The binary can be built directly on your system, in a virtual machine, or in a Docker container :whale:.
 
 If you are using a different Linux distribution, you might have to review the list of libraries that are bundled with your distribution and/or modify the instructions to use equivalent commands to the Advanced Packaging Tool (APT). For example, for Centos, substitute the `apt-get` command with `yum`.
 
@@ -60,25 +62,25 @@ If you want to build a binary by using a Docker container, follow these steps to
 
 1. The first thing you need to do is install Docker. You can download the free Community edition from [here](https://docs.docker.com/engine/installation/), which also contains instructions for installing Docker on your system.  You should also read the [Getting started](https://docs.docker.com/get-started/) guide to familiarise yourself with the basic Docker concepts and terminology.
 
-2. Obtain the [Linux on 64-bit x86 systems Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk13/x86_64/ubuntu16/Dockerfile) to build and run a container that has all the correct software pre-requisites.
+2. Obtain the [Linux on 64-bit x86 systems Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk14/x86_64/ubuntu16/Dockerfile) to build and run a container that has all the correct software pre-requisites.
 
-    :pencil: Dockerfiles are also available for the following Linux architectures: [Linux on 64-bit Power systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk13/ppc64le/ubuntu16/Dockerfile) and [Linux on 64-bit z Systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk13/s390x/ubuntu16/Dockerfile)
+    :pencil: Dockerfiles are also available for the following Linux architectures: [Linux on 64-bit Power systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk14/ppc64le/ubuntu16/Dockerfile) and [Linux on 64-bit z Systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk14/s390x/ubuntu16/Dockerfile)
 
     Either download one of these Dockerfiles to your local system or copy and paste one of the following commands:
 
   - For Linux on 64-bit x86 systems, run:
 ```
-wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk13/x86_64/ubuntu16/Dockerfile
+wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk14/x86_64/ubuntu16/Dockerfile
 ```
 
   - For Linux on 64-bit Power systems, run:
 ```
-wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk13/ppc64le/ubuntu16/Dockerfile
+wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk14/ppc64le/ubuntu16/Dockerfile
 ```
 
   - For Linux on 64-bit z Systems, run:
 ```
-wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk13/s390x/ubuntu16/Dockerfile
+wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk14/s390x/ubuntu16/Dockerfile
 ```
 
 3. Next, run the following command to build a Docker image, called **openj9**:
@@ -98,12 +100,12 @@ Now that you have the Docker image running, you are ready to move to the next st
 
 #### Setting up your build environment without Docker
 
-If you don't want to user Docker, you can still build an **OpenJDK V13** with OpenJ9 directly on your Ubuntu system or in a Ubuntu virtual machine. Use the
-[Linux on x86 Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk13/x86_64/ubuntu16/Dockerfile) like a recipe card to determine the software dependencies
+If you don't want to user Docker, you can still build an **OpenJDK V14** with OpenJ9 directly on your Ubuntu system or in a Ubuntu virtual machine. Use the
+[Linux on x86 Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk14/x86_64/ubuntu16/Dockerfile) like a recipe card to determine the software dependencies
 that must be installed on the system, plus a few configuration steps.
 
 :pencil:
-Not on x86? We also have Dockerfiles for the following Linux architectures: [Linux on Power systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk13/ppc64le/ubuntu16/Dockerfile) and [Linux on z Systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk13/s390x/ubuntu16/Dockerfile).
+Not on x86? We also have Dockerfiles for the following Linux architectures: [Linux on Power systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk14/ppc64le/ubuntu16/Dockerfile) and [Linux on z Systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk14/s390x/ubuntu16/Dockerfile).
 
 1. Install the list of dependencies that can be obtained with the `apt-get` command from the following section of the Dockerfile:
 ```
@@ -134,15 +136,15 @@ tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
 rm -f freemarker.tgz
 ```
 
-4. Download and setup the boot JDK using the latest AdoptOpenJDK v12 build.
+4. Download and setup the boot JDK using the latest AdoptOpenJDK v13 build.
 ```
 cd /<my_home_dir>
-wget -O bootjdk12.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk12?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
-tar -xzf bootjdk12.tar.gz
-rm -f bootjdk12.tar.gz
-mv $(ls | grep -i jdk) bootjdk12
+wget -O bootjdk13.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk13?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
+tar -xzf bootjdk13.tar.gz
+rm -f bootjdk13.tar.gz
+mv $(ls | grep -i jdk) bootjdk13
 
-export JAVA_HOME="/<my_home_dir>/bootjdk12"
+export JAVA_HOME="/<my_home_dir>/bootjdk13"
 export PATH="${JAVA_HOME}/bin:${PATH}"
 ```
 
@@ -150,11 +152,11 @@ export PATH="${JAVA_HOME}/bin:${PATH}"
 :penguin:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk13.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk14.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk13
+cd openj9-openjdk-jdk14
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 ```
@@ -167,7 +169,7 @@ bash get_source.sh
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar --with-boot-jdk=<path_to_boot_JDK12>
+bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar --with-boot-jdk=<path_to_boot_JDK13>
 ```
 :warning: You must give an absolute path to freemarker.jar
 
@@ -185,7 +187,7 @@ bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar --with-boot-j
 
 ### 4. Build
 :penguin:
-Now you're ready to build **OpenJDK V13** with OpenJ9:
+Now you're ready to build **OpenJDK V14** with OpenJ9:
 ```
 make all
 ```
@@ -216,12 +218,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "13-internal" 2019-09-17
-OpenJDK Runtime Environment (build 13-internal+0-adhoc..openj9-openjdk-jdk13)
-Eclipse OpenJ9 VM (build tye-2e3d778, JRE 13 Linux amd64-64-Bit Compressed References 20190901_000000 (JIT enabled, AOT enabled)
+openjdk version "14-internal" 2020-03-20
+OpenJDK Runtime Environment (build 14-internal+0-adhoc..openj9-openjdk-jdk14)
+Eclipse OpenJ9 VM (build tye-2e3d778, JRE 14 Linux amd64-64-Bit Compressed References 20190901_000000 (JIT enabled, AOT enabled)
 OpenJ9   - 2e3d778
 OMR      - a5a028d
-JCL      - 9af014f based on jdk-13+29)
+JCL      - 9af014f based on jdk-14+29)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
@@ -239,7 +241,7 @@ JCL      - 9af014f based on jdk-13+29)
 :construction:
 This section is still under construction. Further contributions expected.
 
-The following instructions guide you through the process of building an **OpenJDK V13** binary that contains Eclipse OpenJ9 on AIX 7.2.
+The following instructions guide you through the process of building an **OpenJDK V14** binary that contains Eclipse OpenJ9 on AIX 7.2.
 
 ### 1. Prepare your system
 :blue_book:
@@ -247,11 +249,11 @@ You must install the following AIX Licensed Program Products (LPPs):
 - [xlc/C++ 16](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
 - x11.adt.ext
 
-You must also install the boot JDK: [Java12_AIX_PPC64](https://adoptopenjdk.net/releases.html?variant=openjdk12&jvmVariant=openj9#ppc64_aix).
+You must also install the boot JDK: [Java13_AIX_PPC64](https://adoptopenjdk.net/releases.html?variant=openjdk13&jvmVariant=openj9#ppc64_aix).
 
 A number of RPM packages are also required. The easiest method for installing these packages is to use `yum`, because `yum` takes care of any additional dependent packages for you.
 
-Download the following file: [yum_install_aix-ppc64.txt](aix/jdk13/yum_install_aix-ppc64.txt)
+Download the following file: [yum_install_aix-ppc64.txt](aix/jdk14/yum_install_aix-ppc64.txt)
 
 This file contains a list of required RPM packages that you can install by specifying the following command:
 ```
@@ -273,11 +275,11 @@ rm -f freemarker.tgz
 :blue_book:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk13.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk14.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk13
+cd openj9-openjdk-jdk14
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -292,7 +294,7 @@ bash get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
 bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
-               --with-boot-jdk=<path_to_boot_JDK12> \
+               --with-boot-jdk=<path_to_boot_JDK13> \
                --with-cups-include=<cups_include_path> \
                --disable-warnings-as-errors
 ```
@@ -339,12 +341,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "13-internal" 2019-09-19
-OpenJDK Runtime Environment (build 13-internal+0-adhoc.jenkins.Build-JDK13-aixppc-64cmprssptrs)
-Eclipse OpenJ9 VM (build tye-e85051733, JRE 13 AIX ppc64-64-Bit Compressed References 20190906_28 (JIT enabled, AOT enabled)
+openjdk version "14-internal" 2020-03-20
+OpenJDK Runtime Environment (build 14-internal+0-adhoc.jenkins.Build-JDK14-aixppc-64cmprssptrs)
+Eclipse OpenJ9 VM (build tye-e85051733, JRE 13 AIX ppc64-64-Bit Compressed References 20209317_28 (JIT enabled, AOT enabled)
 OpenJ9   - e85051733
 OMR      - 46127623
-JCL      - 2ef6b4c54d8 based on jdk-13+30)
+JCL      - 2ef6b4c54d8 based on jdk-14+30)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
@@ -359,15 +361,15 @@ JCL      - 2ef6b4c54d8 based on jdk-13+30)
 ## Windows
 :ledger:
 
-The following instructions guide you through the process of building a Windows **OpenJDK V13** binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows 7, 8, and 10.
+The following instructions guide you through the process of building a Windows **OpenJDK V14** binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows.
 
 ### 1. Prepare your system
 :ledger:
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
-- [Windows JDK 12](https://adoptopenjdk.net/releases.html?variant=openjdk12#x64_win), which is used as the boot JDK.
-- [Microsoft Visual Studio 2017](https://aka.ms/vs/15/release/vs_community.exe), which is the default compiler level used by OpenJDK13.
+- [Windows JDK 13](https://adoptopenjdk.net/releases.html?variant=openjdk13#x64_win), which is used as the boot JDK.
+- [Microsoft Visual Studio 2017](https://aka.ms/vs/15/release/vs_community.exe), which is the default compiler level used by OpenJDK14.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
 - [LLVM/Clang](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
@@ -424,11 +426,11 @@ First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repo
 
 Run the following command in the Cygwin terminal:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk13.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk14.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk13
+cd openj9-openjdk-jdk14
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -443,7 +445,7 @@ bash get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
 bash configure --disable-warnings-as-errors \
-               --with-boot-jdk=<path_to_boot_JDK12> \
+               --with-boot-jdk=<path_to_boot_JDK13> \
                --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar
 ```
 
@@ -482,12 +484,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "13-internal" 2019-09-19
-OpenJDK Runtime Environment (build 13-internal+0-adhoc.jenkins.Build-JDK13-winx86-64cmprssptrs)
-Eclipse OpenJ9 VM (build tye-e85051733, JRE 13 Windows Server 2016 amd64-64-Bit Compressed References 20190906_27 (JIT enabled, AOT enabled)
+openjdk version "14-internal" 2020-03-20
+OpenJDK Runtime Environment (build 14-internal+0-adhoc.jenkins.Build-JDK14-winx86-64cmprssptrs)
+Eclipse OpenJ9 VM (build tye-e85051733, JRE 14 Windows Server 2016 amd64-64-Bit Compressed References 20200319_27 (JIT enabled, AOT enabled)
 OpenJ9   - e85051733
 OMR      - dfbca14c
-JCL      - 2ef6b4c54d8 based on jdk-13+30)
+JCL      - 2ef6b4c54d8 based on jdk-14+30)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
@@ -501,14 +503,14 @@ JCL      - 2ef6b4c54d8 based on jdk-13+30)
 
 ## macOS
 :apple:
-The following instructions guide you through the process of building a macOS **OpenJDK V13** binary that contains Eclipse OpenJ9. This process can be used to build binaries for macOS 10.
+The following instructions guide you through the process of building a macOS **OpenJDK V14** binary that contains Eclipse OpenJ9. This process can be used to build binaries for macOS 10.
 
 ### 1. Prepare your system
 :apple:
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Xcode 9.4]( https://developer.apple.com/download/more/) (requires an Apple account to log in).
-- [macOS OpenJDK 12](https://adoptopenjdk.net/archive.html?variant=openjdk12&jvmVariant=openj9), which is used as the boot JDK.
+- [macOS OpenJDK 13](https://adoptopenjdk.net/archive.html?variant=openjdk13&jvmVariant=openj9), which is used as the boot JDK.
 
 The following dependencies can be installed by using [Homebrew](https://brew.sh/):
 
@@ -558,11 +560,11 @@ First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repo
 
 Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk13.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk14.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk13
+cd openj9-openjdk-jdk14
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -578,7 +580,7 @@ When you have all the source files that you need, run the configure script, whic
 
 ```
 bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
-               --with-boot-jdk=<path_to_boot_JDK12> \
+               --with-boot-jdk=<path_to_boot_JDK13> \
                --disable-warnings-as-errors
 ```
 
@@ -620,12 +622,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "13-internal" 2019-09-19
-OpenJDK Runtime Environment (build 13-internal+0-adhoc.jenkins.Build-JDK13-osxx86-64cmprssptrs)
-Eclipse OpenJ9 VM (build tye-e85051733, JRE 13 Mac OS X amd64-64-Bit Compressed References 20190906_27 (JIT enabled, AOT enabled)
+openjdk version "14-internal" 2020-03-20
+OpenJDK Runtime Environment (build 14-internal+0-adhoc.jenkins.Build-JDK14-osxx86-64cmprssptrs)
+Eclipse OpenJ9 VM (build tye-e85051733, JRE 14 Mac OS X amd64-64-Bit Compressed References 20200319_27 (JIT enabled, AOT enabled)
 OpenJ9   - e85051733
 OMR      - dfbca14c
-JCL      - 2ef6b4c54d8 based on jdk-13+30)
+JCL      - 2ef6b4c54d8 based on jdk-14+30)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
