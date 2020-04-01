@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -629,8 +629,8 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 
 	Trc_VM_romFieldOffsetsStartDo_Entry( NULL, romClass, superClazz, flags );
 
-	UDATA const referenceSize = J9JAVAVM_REFERENCE_SIZE(vm);
-	UDATA const objectHeaderSize = J9JAVAVM_OBJECT_HEADER_SIZE(vm);
+	U_32 const referenceSize = J9JAVAVM_REFERENCE_SIZE(vm);
+	U_32 const objectHeaderSize = J9JAVAVM_OBJECT_HEADER_SIZE(vm);
 
 	/* init the walk state, including all counters to 0 */
 	memset( state, 0, sizeof( *state ) );

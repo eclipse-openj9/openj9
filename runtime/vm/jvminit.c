@@ -5909,9 +5909,18 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	}
 #endif
 
+	/* Scans cmd-line arguments in order */
+	if (JNI_OK != processVMArgsFromFirstToLast(vm)) {
+		goto error;
+	}
+
+	/* At this point, the compressed/full determination has been made */
+
 #ifdef J9VM_RAS_EYECATCHERS
 	J9RASInitialize(vm);
 #endif
+
+	initializeROMClasses(vm);
 
 #ifdef J9VM_INTERP_VERBOSE
 	localVerboseLevel = vm->verboseLevel;
@@ -6089,14 +6098,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 	/* Default to using lazy in all but realtime */
 	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_LAZY_SYMBOL_RESOLUTION;
-
-	/* Scans cmd-line arguments in order */
-	if (JNI_OK != processVMArgsFromFirstToLast(vm)) {
-		goto error;
-	}
-
-	/* Must be done after the compressed/full determination has been made */
-	initializeROMClasses(vm);
 
 #if !defined(WIN32)
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags,J9_EXTENDED_RUNTIME_HANDLE_SIGXFSZ)) {
