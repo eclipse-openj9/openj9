@@ -3288,7 +3288,7 @@ remoteCompile(
             // this list will be copied into the metadata
             for (auto& it : serializedRuntimeAssumptions)
                {
-               uint8_t *addrToPatch = (uint8_t*)(metaData->startPC + it.getOffsetFromStartPC());
+               uint8_t *addrToPatch = (uint8_t*)(metaData->codeCacheAlloc + it.getOffsetFromBinaryBufferStart());
                switch (it.getKind()) 
                   {
                   case RuntimeAssumptionOnRegisterNative:
