@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,57 +20,18 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
+# Get OMR's platform config
 include(OmrPlatform)
-# Note: we need to inject WIN32 et al, as OMR no longer uses them
-if(OMR_OS_WINDOWS)
-    list(APPEND OMR_PLATFORM_DEFINITIONS
-        -DWIN32
-        -D_WIN32
-    )
-    if(OMR_ENV_DATA64)
-        list(APPEND OMR_PLATFORM_DEFINITIONS
-            -DWIN64
-            -D_WIN64
-        )
-    endif()
-endif()
+
+# Add our own platform specific config if we have any
+include("${CMAKE_CURRENT_LIST_DIR}/platform/os/${OMR_HOST_OS}.cmake" OPTIONAL)
+include("${CMAKE_CURRENT_LIST_DIR}/platform/arch/${OMR_HOST_ARCH}.cmake" OPTIONAL)
+include("${CMAKE_CURRENT_LIST_DIR}/platform/toolcfg/${OMR_TOOLCONFIG}.cmake" OPTIONAL)
+
+
+# Apply the combined platform config
 omr_platform_global_setup()
-
-if(OMR_TOOLCONFIG STREQUAL "gnu")
-    set(CMAKE_CXX_FLAGS " -g -fno-rtti -fno-exceptions ${CMAKE_CXX_FLAGS}")
-    set(CMAKE_C_FLAGS "-g ${CMAKE_C_FLAGS}")
-
-    # Raise an error if a shared library has any unresolved symbols.
-    # This flag isn't supported on OSX, but it has this behaviour by default
-    if(NOT OMR_OS_OSX)
-        set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,defs ${CMAKE_SHARED_LINKER_FLAGS}")
-    endif()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -O3 -fno-strict-aliasing")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -O3 -fno-strict-aliasing -fno-exceptions -fno-rtti -fno-threadsafe-statics")
-elseif(OMR_TOOLCONFIG STREQUAL "xlc")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -qalias=noansi")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -qalias=noansi -qnortti -qnoeh -qsuppress=1540-1087:1540-1088:1540-1090")
-    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -qpic=large")
-endif()
-
-if(OMR_ARCH_POWER)
-    #TODO do based on toolchain stuff
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        add_definitions(-DOMR_ENV_GCC)
-    endif()
-    #TODO this is a hack
-    set(J9VM_JIT_RUNTIME_INSTRUMENTATION ON CACHE BOOL "")
-    set(J9VM_PORT_RUNTIME_INSTRUMENTATION ON CACHE BOOL "")
-endif()
-
-if(OMR_OS_AIX)
-    # Override cmake default of ".a" for shared libs on aix
-    set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
-endif()
 
 if(NOT OMR_OS_OSX)
     add_definitions(-DIPv6_FUNCTION_SUPPORT)
 endif()
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1")
