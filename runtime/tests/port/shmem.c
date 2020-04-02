@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -390,7 +390,7 @@ exit:
 		j9shmem_destroy(cacheDir, 0, &mem0);
 	}
 
-	return reportTestExit(portLibrary, testName);;
+	return reportTestExit(portLibrary, testName);
 }
 
 int

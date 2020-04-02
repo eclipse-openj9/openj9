@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -916,7 +916,7 @@ deleteSnapshot(struct J9JavaVM* vm, UDATA verboseFlags, const char* pathFileName
 			CLM_ERR_TRACE1(J9NLS_SHRC_ERROR_SNAPSHOT_FILE_OPEN, pathFileName);
 			rc = -2;
 		}
-		goto done;;
+		goto done;
 	}
 	/* Get the length of the file, acquire file lock and delete the file in the lock */
 	fileSize = j9file_flength(fd);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -537,7 +537,7 @@ j9shmem_open (J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t gr
 			Trc_PRT_shmem_j9shmem_open_ExitWithMsg("Error: Created shared memory, but could not attach.");
 		} else {
 			rc = J9PORT_ERROR_SHMEM_OPEN_ATTACHED_FAILED;
-			Trc_PRT_shmem_j9shmem_open_ExitWithMsg("Error: Opened shared memory, but could not attach.");;
+			Trc_PRT_shmem_j9shmem_open_ExitWithMsg("Error: Opened shared memory, but could not attach.");
 		}
 		*handle = tmphandle;
 		return rc;

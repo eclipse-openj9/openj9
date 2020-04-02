@@ -304,7 +304,7 @@ void
 TR_Debug::print(TR::FILE *pOutFile, TR::ARM64CallSnippet * snippet)
    {
    TR::Node            *callNode     = snippet->getNode();
-   TR::SymbolReference *glueRef      = _cg->getSymRef(snippet->getHelper());;
+   TR::SymbolReference *glueRef      = _cg->getSymRef(snippet->getHelper());
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
    TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
 

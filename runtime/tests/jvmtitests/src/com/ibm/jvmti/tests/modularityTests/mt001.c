@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,7 @@ Java_com_ibm_jvmti_tests_modularityTests_mt001_addModuleReads(JNIEnv * jni_env, 
 {
 	JVMTI_ACCESS_FROM_AGENT(env);
 
-	return (jint) (*jvmti_env)->AddModuleReads(jvmti_env, fromMod, toMod);;
+	return (jint) (*jvmti_env)->AddModuleReads(jvmti_env, fromMod, toMod);
 }
 
 jint JNICALL
@@ -101,6 +101,6 @@ Java_com_ibm_jvmti_tests_modularityTests_mt001_addModuleProvides(JNIEnv * jni_en
 {
 	JVMTI_ACCESS_FROM_AGENT(env);
 
-	return (jint) (*jvmti_env)->AddModuleProvides(jvmti_env, module, service, implClass);;
+	return (jint) (*jvmti_env)->AddModuleProvides(jvmti_env, module, service, implClass);
 }
 #endif /* JAVA_SPEC_VERSION >= 9 */

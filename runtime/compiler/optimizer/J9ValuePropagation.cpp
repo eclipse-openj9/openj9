@@ -1433,7 +1433,7 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
                      if (trace())
                         traceMsg(comp(), "Object Clone: Resolved Class of node %p array clone\n", node);
                      _arrayCloneCalls.add(_curTree);
-                     _arrayCloneTypes.add(new (trStackMemory()) OMR::ValuePropagation::ArrayCloneInfo(constraint->getClass(), false));;
+                     _arrayCloneTypes.add(new (trStackMemory()) OMR::ValuePropagation::ArrayCloneInfo(constraint->getClass(), false));
                      }
                   }
 #endif

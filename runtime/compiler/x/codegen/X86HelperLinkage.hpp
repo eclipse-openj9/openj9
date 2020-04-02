@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,7 +80,7 @@ class HelperCallSite
    static const bool                     CalleeCleanup;
    static const bool                     RegisterParameterShadowOnStack;
    static const size_t                   StackSlotSize;
-   static const size_t                   NumberOfIntParamRegisters;;
+   static const size_t                   NumberOfIntParamRegisters;
    static const size_t                   StackIndexAdjustment;
    static const TR::RealRegister::RegNum IntParamRegisters[];
    static const TR::RealRegister::RegNum CallerSavedRegisters[];

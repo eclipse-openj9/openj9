@@ -633,7 +633,7 @@ bool TR_DataAccessAccelerator::inlineCheckPackedDecimal(TR::TreeTop* callTreeTop
    TR::Node* precisionNode = callNode->getChild(2);
    TR::Node* ignoreHighNibbleForEvenPrecisionNode = callNode->getChild(3);
    TR::Node* canOverwriteHighNibbleForEvenPrecisionNode = callNode->getChild(4);
-   int32_t precision = precisionNode->getInt();;
+   int32_t precision = precisionNode->getInt();
    char* failMsg = NULL;
 
    if (!precisionNode->getOpCode().isLoadConst())

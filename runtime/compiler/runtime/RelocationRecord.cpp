@@ -3841,7 +3841,7 @@ TR_RelocationRecordValidateMethodFromSingleImpl::applyRelocation(TR_RelocationRu
    uint16_t thisClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_thisClassID);
    int32_t cpIndexOrVftSlot = reloTarget->loadSigned32b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_cpIndexOrVftSlot);
    uint16_t callerMethodID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_callerMethodID);
-   uint16_t useGetResolvedInterfaceMethod = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_useGetResolvedInterfaceMethod);;
+   uint16_t useGetResolvedInterfaceMethod = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_useGetResolvedInterfaceMethod);
 
    if (reloRuntime->reloLogger()->logEnabled())
       {
