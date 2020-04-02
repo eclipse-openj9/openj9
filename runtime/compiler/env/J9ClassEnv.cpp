@@ -629,7 +629,7 @@ J9::ClassEnv::isValueTypeClass(TR_OpaqueClassBlock *clazz)
       uintptr_t classFlags = 0;
       JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_FLAGS, (void *)&classFlags);
 #ifdef DEBUG
-      stream->write(JITServer::MessageType::ClassEnv_classFlagsValue, classPointer);
+      stream->write(JITServer::MessageType::ClassEnv_classFlagsValue, clazz);
       uintptr_t classFlagsRemote = std::get<0>(stream->read<uintptr_t>());
       // Check that class flags from remote call is equal to the cached ones
       classFlags = classFlags & J9ClassIsValueType;
