@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,11 +53,11 @@ private:
 protected:
 	/**
 	 * @param env The scanning thread environment
-	 * @param[in] objectPtr the object to be processed
-	 * @param[in] flags Scanning context flags
+	 * @param objectPtr the object to be processed
+	 * @param flags Scanning context flags
 	 */
 	MMINLINE GC_MixedObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, uintptr_t flags)
-		: GC_HeadlessMixedObjectScanner(env, J9GC_J9OBJECT_CLAZZ(objectPtr, env), env->getExtensions()->mixedObjectModel.getHeadlessObject(objectPtr), flags)
+		: GC_HeadlessMixedObjectScanner(env, env->getExtensions()->mixedObjectModel.getHeadlessObject(objectPtr), env->getExtensions()->mixedObjectModel.getSizeInBytesWithoutHeader(J9GC_J9OBJECT_CLAZZ(objectPtr, env)), flags)
 	{
 		_typeId = __FUNCTION__;
 	}
@@ -69,7 +69,11 @@ protected:
 	MMINLINE void
 	initialize(MM_EnvironmentBase *env, J9Class *clazzPtr)
 	{
-		GC_HeadlessMixedObjectScanner::initialize(env, clazzPtr);
+#if defined(J9VM_GC_LEAF_BITS)
+		GC_HeadlessMixedObjectScanner::initialize(env, clazzPtr->instanceDescription, clazzPtr->instanceLeafDescription);
+#else /* J9VM_GC_LEAF_BITS */
+		GC_HeadlessMixedObjectScanner::initialize(env, clazzPtr->instanceDescription);
+#endif /* J9VM_GC_LEAF_BITS */
 	}
 
 public:
@@ -85,8 +89,10 @@ public:
 	newInstance(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags)
 	{
 		GC_MixedObjectScanner *objectScanner = (GC_MixedObjectScanner *)allocSpace;
+		J9Class *classPtr = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
+
 		new(objectScanner) GC_MixedObjectScanner(env, objectPtr, flags);
-		objectScanner->initialize(env, J9GC_J9OBJECT_CLAZZ(objectPtr, env));
+		objectScanner->initialize(env, classPtr);
 		return objectScanner;
 	}
 };
