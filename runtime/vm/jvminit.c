@@ -296,13 +296,6 @@ const U_8 J9Impdep1PC[] = { 0xFE, 0x00, 0x00, 0xFE }; /* impdep1, parm, parm, im
 static jint (JNICALL * vprintfHookFunction)(FILE *fp, const char *format, va_list args) = NULL;
 static IDATA (* portLibrary_file_write_text) (struct OMRPortLibrary *portLibrary, IDATA fd, const char *buf, IDATA nbytes) = NULL;
 
-#if defined(WIN32) && !defined(OPENJ9_BUILD)
-/* Remove the "shutDownHookWrapper" once IBMJ9 uses the JVM_*Signal native functions
- * in the sun.misc.Signal class. OpenJ9 does not depend on the "shutDownHookWrapper".
- */
-static UDATA shutDownHookWrapper(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData);
-#endif /* defined(WIN32) && !defined(OPENJ9_BUILD) */
-
 #if !defined(WIN32)
 static UDATA sigxfszHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData);
 #endif /* !defined(WIN32) */
@@ -614,23 +607,9 @@ freeJavaVM(J9JavaVM * vm)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9VMThread *currentThread = currentVMThread(vm);
 	IDATA traceDescriptor = 0;
-#if defined(WIN32)
-#if !defined(OPENJ9_BUILD)
-	/* Remove the "shutDownHookWrapper" once IBMJ9 uses the JVM_*Signal native functions
-	 * in the sun.misc.Signal class. OpenJ9 does not depend on the "shutDownHookWrapper".
-	 *
-	 * Install the handler for running the shutdown hooks when the console window is closed
-	 * J2SE/Sidecar builds:
-	 *			This applies to Windows only. Shutdown hooks for all other platforms are handled by the Hursley JCLs
-	 *
-	 * J2ME/Embedded builds:
-	 * 			This applies to Windows only for now. Since we don't have Hursley JCLs for this, we will need to provide our own support for all other cases/platforms.
-	 */
-	j9sig_set_async_signal_handler(shutDownHookWrapper, vm, 0);
-#endif /* !defined(OPENJ9_BUILD) */
-#else /* defined(WIN32) */
+#if !defined(WIN32)
 	j9sig_set_async_signal_handler(sigxfszHandler, NULL, 0);
-#endif /* defined(WIN32) */
+#endif /* !defined(WIN32) */
 
 	/* Remove the predefinedHandlerWrapper. */
 	j9sig_set_single_async_signal_handler(predefinedHandlerWrapper, vm, 0, NULL);
@@ -6009,29 +5988,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		goto error;
 	}
 
-#if defined(WIN32) && !defined(OPENJ9_BUILD)
-	/* Remove the "shutDownHookWrapper" once IBMJ9 uses the JVM_*Signal native functions
-	 * in the sun.misc.Signal class. OpenJ9 does not depend on the "shutDownHookWrapper".
-	 *
-	 * Install the handler for running the shutdown hooks when the console window is closed
-	 * J2SE/Sidecar builds:
-	 *			This applies to Windows only. Shutdown hooks for all other platforms are handled by the Hursley JCLs
-	 *
-	 * J2ME/Embedded builds:
-	 * 			This applies to Windows only for now. Since we don't have Hursley JCLs for this, we will need to provide our own support for all other cases/platforms.
-	 */
-	if (J9_ARE_NO_BITS_SET(vm->sigFlags, J9_SIG_XRS_ASYNC)) {
-		/* Only register the handler if -Xrs is not present. This is a temporary hack,
-		 * which will be removed once the required OMR signal API has been implemented.
-		 * The following OMR issue needs to be closed before removing this hack:
-		 * https://github.com/eclipse/omr/issues/2332.
-		 */
-		if (0 != j9sig_set_async_signal_handler(shutDownHookWrapper, vm, J9PORT_SIG_FLAG_SIGTERM | J9PORT_SIG_FLAG_SIGINT)) {
-			goto error;
-		}
-	}
-#endif /* defined(WIN32) && !defined(OPENJ9_BUILD) */
-
 #ifndef J9VM_SIZE_SMALL_CODE
 	if (NULL == fieldIndexTableNew(vm, portLibrary)) {
 		goto error;
@@ -6750,37 +6706,6 @@ freeClassNativeMemory(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 }
 
 #endif /* GC_DYNAMIC_CLASS_UNLOADING */
-
-#if defined(WIN32) && !defined(OPENJ9_BUILD)
-/* Remove the "shutDownHookWrapper" once IBMJ9 uses the JVM_*Signal native functions
- * in the sun.misc.Signal class. OpenJ9 does not depend on the "shutDownHookWrapper".
- */
-static UDATA
-shutDownHookWrapper(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData)
-{
-	J9JavaVM* vm = (J9JavaVM *) userData;
-	J9JavaVMAttachArgs thr_args;
-	J9VMThread * vmThread;
-
-	PORT_ACCESS_FROM_JAVAVM(vm);
-
-	thr_args.version = JNI_VERSION_1_2;
-	thr_args.name = "ShutDownHook helper thread";
-	thr_args.group = vm->systemThreadGroupRef;
-	if (AttachCurrentThread((JavaVM *) vm, (void **) &vmThread, &thr_args) != JNI_OK) {
-		/* We won't be able to run the shutdown hooks so just exit */
-		j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_CANNOT_ATTACH_THREAD);
-		j9exit_shutdown_and_exit(-1);
-	}
-
-	/* run exit hooks */
-	sidecarExit(vmThread);
-
-	/* Shouldn't hit this */
-	return 0;
-
-}
-#endif /* defined(WIN32) && !defined(OPENJ9_BUILD) */
 
 /**
  * Invoke jdk.internal.misc.Signal.dispatch(int number) in Java 9 and
