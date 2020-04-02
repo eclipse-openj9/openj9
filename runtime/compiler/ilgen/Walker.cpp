@@ -30,6 +30,7 @@
 #include "env/CompilerEnv.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/StackMemoryRegion.hpp"
+#include "env/TypeLayout.hpp"
 #include "env/jittypes.h"
 #include "env/VMAccessCriticalSection.hpp"
 #include "exceptions/AOTFailure.hpp"
@@ -546,6 +547,18 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
             break;
 
          case J9BCdefaultvalue:
+            {
+            if (TR::Compiler->om.areValueTypesEnabled())
+               {
+               genDefaultValue(next2Bytes());
+               _bcIndex += 3;
+               }
+            else
+               {
+               fej9()->unsupportedByteCode(comp(), opcode);
+               }
+            break;
+            }
          case J9BCwithfield:
          case J9BCbreakpoint:
             fej9()->unsupportedByteCode(comp(), opcode);
@@ -5687,7 +5700,7 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
             }
          break;
       default:
-      	break;
+         break;
       }
    }
 
@@ -5966,6 +5979,173 @@ TR_J9ByteCodeIlGenerator::genNew(TR::ILOpCodes opCode)
 
       if (!skipFlush)
          genFlush(0);
+   }
+
+void
+TR_J9ByteCodeIlGenerator::genDefaultValue(uint16_t cpIndex)
+   {
+   TR_OpaqueClassBlock *valueTypeClass = method()->getClassFromConstantPool(comp(), cpIndex);
+   genDefaultValue(valueTypeClass);
+   }
+
+void
+TR_J9ByteCodeIlGenerator::genDefaultValue(TR_OpaqueClassBlock *valueTypeClass)
+   {
+   // valueTypeClass will be NULL if it is unresolved.  Abort the compilation and
+   // track the failure with a static debug counter
+   if (valueTypeClass == NULL)
+      {
+      const int32_t bcIndex = currentByteCodeIndex();
+      if (isOutermostMethod())
+         {
+         TR::DebugCounter::incStaticDebugCounter(comp(),
+            TR::DebugCounter::debugCounterName(comp(),
+                  "ilgen.abort/unresolved/defaultvalue/(%s)/bc=%d",
+                  comp()->signature(),
+                  bcIndex));
+         }
+      else
+         {
+         TR::DebugCounter::incStaticDebugCounter(comp(),
+            TR::DebugCounter::debugCounterName(comp(),
+               "ilgen.abort/unresolved/defaultvalue/(%s)/bc=%d/root=(%s)",
+               _method->signature(comp()->trMemory()),
+               bcIndex,
+               comp()->signature()));
+         }
+
+      comp()->failCompilation<TR::UnsupportedValueTypeOperation>("Unresolved class encountered for defaultvalue bytecode instruction");
+      }
+
+   TR::SymbolReference *valueClassSymRef = symRefTab()->findOrCreateClassSymbol(_methodSymbol, 0, valueTypeClass);
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "Handling defaultvalue for valueClass %s\n", comp()->getDebug()->getName(valueClassSymRef));
+      }
+
+   loadSymbol(TR::loadaddr, valueClassSymRef);
+
+   TR::Node *newValueNode = NULL;
+
+   if (valueClassSymRef->isUnresolved())
+      {
+      // IL generation for defaultvalue is currently only able to handle value type classes that have been resolved.
+      // If the class is still unresolved, abort the compilation and track the failure with a static debug counter.
+      const int32_t bcIndex = currentByteCodeIndex();
+      if (isOutermostMethod())
+         {
+         TR::DebugCounter::incStaticDebugCounter(comp(),
+            TR::DebugCounter::debugCounterName(comp(),
+                  "ilgen.abort/unresolved/defaultvalue/(%s)/bc=%d",
+                  comp()->signature(),
+                  bcIndex));
+         }
+      else
+         {
+         TR::DebugCounter::incStaticDebugCounter(comp(),
+            TR::DebugCounter::debugCounterName(comp(),
+               "ilgen.abort/unresolved/defaultvalue/(%s)/bc=%d/root=(%s)",
+               _method->signature(comp()->trMemory()),
+               bcIndex,
+               comp()->signature()));
+         }
+
+      comp()->failCompilation<TR::UnsupportedValueTypeOperation>("Unresolved class encountered for defaultvalue bytecode instruction");
+      }
+   else
+      {
+      const TR::TypeLayout *typeLayout = comp()->typeLayout(valueTypeClass);
+      size_t fieldCount = typeLayout->count();
+
+      for (size_t idx = 0; idx < fieldCount; idx++)
+         {
+         const TR::TypeLayoutEntry &entry = typeLayout->entry(idx);
+
+         if (comp()->getOption(TR_TraceILGen))
+            {
+            traceMsg(comp(), "Handling defaultvalue for valueClass %s\n - field[%d] name %s type %d offset %d\n", comp()->getDebug()->getName(valueClassSymRef), idx, entry._fieldname, entry._datatype.getDataType(), entry._offset);
+            }
+
+         // Supply default value that is appropriate for the type of the corresponding field
+         // All these are gathered up as operands of a newvalue instruction.
+         //
+         // For example, if a value type class "Val" has fields of type int, long, double, LIdent;
+         // and Qval2;, where value type class "Val2" has a field of type boolean, the following
+         // IL will be generated:
+         //
+         //     newvalue jitNewValue   // Default value of type Val
+         //        loadaddr  Val
+         //        iconst 0     // int default value
+         //        lconst 0     // long default value
+         //        dconst 0.0   // double default value
+         //        aconst 0     // default value (null reference) for class Ident
+         //        newvalue jitNewValue    // Default value of type Val2
+         //           loadaddr  Val2
+         //           iconst 0  // boolean default value
+         //
+         switch (entry._datatype.getDataType())
+            {
+            case TR::Int8:
+            case TR::Int16:
+            case TR::Int32:
+               {
+               loadConstant(TR::iconst, 0);
+               break;
+               }
+            case TR::Int64:
+               {
+               loadConstant(TR::lconst, (int64_t) 0ll);
+               break;
+               }
+            case TR::Float:
+               {
+               loadConstant(TR::fconst, 0.0f);
+               break;
+               }
+            case TR::Double:
+               {
+               loadConstant(TR::dconst, 0.0);
+               break;
+               }
+            case TR::Address:
+               {
+               const char *fieldSignature = entry._typeSignature;
+
+               // If the field's signature begins with a Q, it is a value type and should be initialized with a default value
+               // for that value type.  That's handled with a recursive call to genDefaultValue.
+               // If the signature does not begin with a Q, the field is an identity type whose default value is a Java null
+               /// reference.
+               if (fieldSignature[0] == 'Q')
+                  {
+                  TR_OpaqueClassBlock *fieldClass = fej9()->getClassFromSignature(fieldSignature, (int32_t)strlen(fieldSignature),
+                                                                                  comp()->getCurrentMethod());
+                  genDefaultValue(fieldClass);
+                  }
+               else if (comp()->target().is64Bit())
+                  {
+                  loadConstant(TR::aconst, (int64_t)0);
+                  }
+               else
+                  {
+                  loadConstant(TR::aconst, (int32_t)0);
+                  }
+               break;
+               }
+            default:
+               {
+               TR_ASSERT_FATAL(false, "Unexpected type for defaultvalue field\n");
+               }
+            }
+         }
+
+         newValueNode = genNodeAndPopChildren(TR::newvalue, fieldCount+1, symRefTab()->findOrCreateNewValueSymbolRef(_methodSymbol));
+         newValueNode->setIdentityless(true);
+      }
+
+   genTreeTop(newValueNode);
+   push(newValueNode);
+   genFlush(0);
    }
 
 void
