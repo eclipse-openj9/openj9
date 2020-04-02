@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -386,10 +386,10 @@ verifyQualifiedName(J9VMThread *vmThread, j9object_t string)
 		return CLASSNAME_INVALID;
 	}
 
-	classNameInfo.slot1 = (U_32)unicodeLength;
 	classNameInfo.bytes = (U_8*)copyStringToUTF8WithMemAlloc(vmThread, string,
 									J9_STR_NULL_TERMINATE_RESULT, "", 0,
-									utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+									utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &unicodeLength);
+	classNameInfo.slot1 = (U_32)unicodeLength;
 	if (NULL == classNameInfo.bytes) {
 		vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
 		return CLASSNAME_INVALID;
