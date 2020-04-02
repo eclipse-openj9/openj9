@@ -352,7 +352,8 @@ J9RASInitialize(J9JavaVM* javaVM)
 }
 
 void
-j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
+j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion)
+{
 	/*
 	 * This creates one of the following two strings (the latter if runtimeVersion is not NULL).
 	 *   JRE 1.8.0 Linux amd64-64
@@ -446,7 +447,7 @@ allocateRASStruct(J9JavaVM *javaVM)
 	 * Compressed references: the RAS data is relocated to the JVM suballocator once the latter is created.
 	 */
 #if !defined(USE_STATIC_RAS_STRUCT)
-	if (!(ALLOCATE_RAS_DATA_IN_SUBALLOCATOR && J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM))) {
+	if (!ALLOCATE_RAS_DATA_IN_SUBALLOCATOR && !J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
 		/* if not z/OS or AIX32 */
 
 		J9PortVmemParams params;
@@ -491,7 +492,8 @@ allocateRASStruct(J9JavaVM *javaVM)
 	return candidate;
 }
 
-void J9RelocateRASData(J9JavaVM* javaVM) {
+void J9RelocateRASData(J9JavaVM* javaVM)
+{
 	/* See comments for allocateRASStruct concerning compressed references and z/OS */
 #if !defined(USE_STATIC_RAS_STRUCT)
 	if (ALLOCATE_RAS_DATA_IN_SUBALLOCATOR && J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
