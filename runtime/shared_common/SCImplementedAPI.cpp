@@ -627,23 +627,23 @@ IDATA
 j9shr_classStoreTransaction_stop(void * tobj)
 {
 	IDATA retval = SCCLASS_STORE_STOP_NOTHING_STORED;
-	const char * fname = "j9shr_classStoreTransaction_stop";
-	J9SharedClassTransaction * obj = (J9SharedClassTransaction *) tobj;
-	J9VMThread* currentThread = obj->ownerThread;
+	const char *fname = "j9shr_classStoreTransaction_stop";
+	J9SharedClassTransaction *obj = (J9SharedClassTransaction *)tobj;
+	J9VMThread *currentThread = obj->ownerThread;
 	J9JavaVM *vm = currentThread->javaVM;
-	J9SharedClassConfig * sconfig = vm->sharedClassConfig;
-	SH_CacheMap* cachemap = (SH_CacheMap*) (sconfig->sharedClassCache);
+	J9SharedClassConfig *sconfig = vm->sharedClassConfig;
+	SH_CacheMap *cachemap = (SH_CacheMap *)sconfig->sharedClassCache;
 	bool releaseWriteMutex;
 	bool releaseReadWriteMutex;
 	bool releaseSegmentMutex;
 	UDATA oldVMState = obj->oldVMState;
-	ClasspathWrapper* cpw = NULL;;
-	ClasspathItem* classpath = NULL;;
+	ClasspathWrapper *cpw = NULL;
+	ClasspathItem *classpath = NULL;
 	IDATA didWeStore = 0;
 	bool modifiedNoContext = ((obj->isModifiedClassfile == 1) && (NULL == obj->modContextInCache));
-	J9ROMClass * storedClass = NULL;
-	J9UTF8 * storedClassName = NULL;
-	J9SharedInvariantInternTable* table = currentThread->javaVM->sharedInvariantInternTable;
+	J9ROMClass *storedClass = NULL;
+	J9UTF8 *storedClassName = NULL;
+	J9SharedInvariantInternTable *table = currentThread->javaVM->sharedInvariantInternTable;
 
 	Trc_SHR_API_j9shr_classStoreTransaction_stop_Entry(currentThread, obj->transactionState);
 	

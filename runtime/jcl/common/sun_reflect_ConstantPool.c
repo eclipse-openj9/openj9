@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -779,7 +779,7 @@ Java_java_lang_invoke_MethodHandle_getCPConstantDynamicAt(JNIEnv *env, jclass un
 		result = getRAMConstantRef(vmThread, constantPoolOop, cpIndex, J9CPTYPE_CONSTANT_DYNAMIC, (J9RAMConstantRef **) &ramConstantDynamicRef);
 		if (OK == result) {
 			J9Class *ramClass = J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, constantPoolOop);
-			j9object_t value = J9STATIC_OBJECT_LOAD(vmThread, ramClass, &ramConstantDynamicRef->value);;
+			j9object_t value = J9STATIC_OBJECT_LOAD(vmThread, ramClass, &ramConstantDynamicRef->value);
 
 			/* Check if the value is resolved, Void.Class exception represents a valid null reference */
 			if ((NULL == value) && (ramConstantDynamicRef->exception != vmThread->javaVM->voidReflectClass->classObject)) {

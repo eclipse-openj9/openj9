@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -320,7 +320,7 @@ jimageFindResource(J9JImageIntf *jimageIntf, UDATA handle, const char *moduleNam
 
 	if (jimageIntf->libJImageHandle) {
 		JImageFile *jimage = (JImageFile *)handle;
-		JImageLocationRef *locationRef = (JImageLocationRef *)j9mem_allocate_memory(sizeof(JImageLocationRef), J9MEM_CATEGORY_CLASSES);;
+		JImageLocationRef *locationRef = (JImageLocationRef *)j9mem_allocate_memory(sizeof(JImageLocationRef), J9MEM_CATEGORY_CLASSES);
 
 		if (NULL != locationRef) {
 			*locationRef = libJImageFindResource(jimage, moduleName, JIMAGE_VERSION_NUMBER, name, (jlong *)size);

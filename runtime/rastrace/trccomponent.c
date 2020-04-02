@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1029,7 +1029,7 @@ openFileFromDirectorySearchList(char *searchPath, char *fileName, int32_t flags,
 		}
 		
 		offset += currentPathEntryEndsAt + 1;
-		nextPathEntry += currentPathEntryEndsAt + 1;;
+		nextPathEntry += currentPathEntryEndsAt + 1;
 	}
 	
 	return fileHandle;

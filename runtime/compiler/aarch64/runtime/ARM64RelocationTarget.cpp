@@ -35,7 +35,7 @@ void
 TR_ARM64RelocationTarget::storeCallTarget(uintptr_t callTarget, uint8_t *reloLocation)
    {
    // reloLocation points at the start of the call offset, so just store the uint8_t * at reloLocation
-   storePointer((uint8_t *)callTarget, reloLocation);;
+   storePointer((uint8_t *)callTarget, reloLocation);
    }
 
 uint32_t

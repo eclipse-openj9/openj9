@@ -6846,7 +6846,7 @@ SH_CacheMap::appendCacheDescriptorList(J9VMThread* currentThread, J9SharedClassC
 	J9SharedClassCacheDescriptor* cacheDescriptorTail = sharedClassConfig->cacheDescriptorList->previous;
 	cacheDesc->cacheStartAddress = ccToUse->getCacheHeaderAddress();
 	cacheDesc->romclassStartAddress = ccToUse->getFirstROMClassAddress(_runningNested);
-	cacheDesc->metadataStartAddress = (U_8*)ccToUse->getClassDebugDataStartAddress() - sizeof(ShcItemHdr);;
+	cacheDesc->metadataStartAddress = (U_8*)ccToUse->getClassDebugDataStartAddress() - sizeof(ShcItemHdr);
 	cacheDesc->cacheSizeBytes = ccToUse->getCacheMemorySize();
 
 	cacheDescriptorTail->next = cacheDesc;

@@ -115,7 +115,7 @@ void TR_SignExtendLoads::emptyHashTable()
    {
      if(false)traceMsg(comp(), "emptying the hash table\n");
    for(int i=0; i < _sharedNodesHash._numBuckets;++i)
-    _sharedNodesHash._buckets[i] = NULL;;
+    _sharedNodesHash._buckets[i] = NULL;
    }
 
 // -------------------------------------------------------------------------------------------

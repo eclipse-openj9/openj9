@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,7 +95,7 @@ testGetNextStackMapFrame(J9PortLibrary *portLib, const char *classFileName)
 			UDATA *frame = NULL;
 			UDATA *prevFrame = NULL;
 			U_16 stackFrameIndex = 0;
-			U_16 stackFrameCount = GET_BE_U16((((U_8*)stackMap)+sizeof(U_32)));;
+			U_16 stackFrameCount = GET_BE_U16((((U_8 *)stackMap) + sizeof(U_32)));
 			/* get the first stack frame */
 			frame = getNextStackMapFrame(stackMap, frame);
 			while(stackFrameIndex < stackFrameCount) {

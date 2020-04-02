@@ -2021,7 +2021,7 @@ done:
 	VMINLINE VM_BytecodeAction
 	bindNative(REGISTER_ARGS_LIST)
 	{
-		VM_BytecodeAction rc = GOTO_RUN_METHOD;;
+		VM_BytecodeAction rc = GOTO_RUN_METHOD;
 		buildMethodFrame(REGISTER_ARGS, _sendMethod, jitStackFrameFlags(REGISTER_ARGS, 0));
 		updateVMStruct(REGISTER_ARGS);
 		UDATA bindRC = resolveNativeAddress(_currentThread, _sendMethod, TRUE);
@@ -7876,7 +7876,7 @@ done:
 	genericReturn(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_literals);;
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_literals);
 		UDATA isConstructor = FALSE;
 		UDATA isObjectConstructor = FALSE;
 		J9UTF8 *sig = NULL;

@@ -386,7 +386,7 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
          return !comp()->compileRelocatableCode();
       case TR::java_lang_StrictMath_sqrt:
       case TR::java_lang_Math_sqrt:
-         return comp()->target().cpu.getSupportsHardwareSQRT();;
+         return comp()->target().cpu.getSupportsHardwareSQRT();
       default:
          return false;
       }

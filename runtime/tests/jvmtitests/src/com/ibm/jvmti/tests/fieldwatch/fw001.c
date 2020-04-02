@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -187,7 +187,7 @@ Java_com_ibm_jvmti_tests_fieldwatch_fw001_modifyWatches(JNIEnv *env, jclass rcv,
 			if (isAdd) {
 				err = (*globalEnv)->SetFieldAccessWatch(globalEnv, rcv, fid);
 			} else {
-				err = (*globalEnv)->ClearFieldAccessWatch(globalEnv, rcv, fid);;
+				err = (*globalEnv)->ClearFieldAccessWatch(globalEnv, rcv, fid);
 			}
 
 			if (JVMTI_ERROR_NONE != err) {
