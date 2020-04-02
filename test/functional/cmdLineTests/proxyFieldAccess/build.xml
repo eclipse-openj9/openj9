@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,6 +85,11 @@
 	</target>
 	
 	<target name="build">
-		<antcall target="clean" inheritall="true" />
+		<if>
+			<equals arg1="${JDK_IMPL}" arg2="ibm" />
+			<then>
+				<antcall target="clean" inheritall="true" />
+			</then>
+		</if>
 	</target>
 </project>
