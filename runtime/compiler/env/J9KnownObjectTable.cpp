@@ -232,9 +232,12 @@ J9::KnownObjectTable::getOrCreateIndexAt(uintptr_t *objectReferenceLocation)
       {
       auto stream = TR::CompilationInfo::getStream();
       stream->write(JITServer::MessageType::KnownObjectTable_getOrCreateIndexAt, objectReferenceLocation);
-      result = std::get<0>(stream->read<TR::KnownObjectTable::Index>());
+      auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
 
-      updateKnownObjectTableAtServer(result, objectReferenceLocation);
+      result = std::get<0>(recv);
+      uintptr_t *objectReferenceLocationClient = std::get<1>(recv);
+
+      updateKnownObjectTableAtServer(result, objectReferenceLocationClient);
       }
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -324,10 +327,10 @@ J9::KnownObjectTable::getPointerLocation(Index index)
 
 #if defined(J9VM_OPT_JITSERVER)
 void
-J9::KnownObjectTable::updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocation)
+J9::KnownObjectTable::updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocationClient)
    {
    TR_ASSERT_FATAL(self()->comp()->isOutOfProcessCompilation(), "updateKnownObjectTableAtServer should only be called at the server");
-   TR_ASSERT(objectReferenceLocation, "objectReferenceLocation should not be NULL");
+   TR_ASSERT(objectReferenceLocationClient, "objectReferenceLocationClient should not be NULL");
 
    if (index == TR::KnownObjectTable::UNKNOWN)
       return;
@@ -337,13 +340,14 @@ J9::KnownObjectTable::updateKnownObjectTableAtServer(Index index, uintptr_t *obj
    if (index == nextIndex)
       {
       _references.setSize(nextIndex+1);
-      _references[nextIndex] = objectReferenceLocation;
+      _references[nextIndex] = objectReferenceLocationClient;
       }
    else if (index < nextIndex)
       {
-      TR_ASSERT((objectReferenceLocation == _references[index]), "_references[%d]=%p is not the same as the client KOT[%d]=%p. _references.size()=%u",
-                  index, _references[index], index, objectReferenceLocation, nextIndex);
-      _references[index] = objectReferenceLocation;
+      TR_ASSERT((objectReferenceLocationClient == _references[index]),
+            "comp %p: server _references[%d]=%p is not the same as the client _references[%d]=%p (total size = %u)",
+            self()->comp(), index, _references[index], index, objectReferenceLocationClient, nextIndex);
+      _references[index] = objectReferenceLocationClient;
       }
    else
       {

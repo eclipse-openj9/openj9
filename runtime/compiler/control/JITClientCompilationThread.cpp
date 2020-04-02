@@ -2652,8 +2652,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::KnownObjectTable_getOrCreateIndexAt:
          {
-         uintptr_t *objectPointerReference = std::get<0>(client->getRecvData<uintptr_t*>());
-         client->write(response, knot->getOrCreateIndexAt(objectPointerReference));
+         uintptr_t *objectPointerReferenceServerQuery = std::get<0>(client->getRecvData<uintptr_t*>());
+         TR::KnownObjectTable::Index index = knot->getOrCreateIndexAt(objectPointerReferenceServerQuery);
+         client->write(response, index, knot->getPointerLocation(index));
          }
          break;
       case MessageType::KnownObjectTable_getPointer:
