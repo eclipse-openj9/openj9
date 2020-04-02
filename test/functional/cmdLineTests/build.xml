@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,21 +37,9 @@
 	</target>
 
 	<target name="build" depends="dist">
-		<if>
-			<equals arg1="${JCL_VERSION}" arg2="latest" />
-			<then>
-				<subant target="">
-					<fileset dir="." includes="*/build.xml">
-						<exclude name="proxyFieldAccess/build.xml" />
-					</fileset>
-				</subant>
-			</then>
-			<else>
-				<subant target="">
-					<fileset dir="." includes="*/build.xml" />
-				</subant>
-			</else>
-		</if>
+		<subant target="">
+			<fileset dir="." includes="*/build.xml" />
+		</subant>
 	</target>
 	
 	<target name="dist" depends="init,dist_functional">
