@@ -7016,6 +7016,7 @@ TR_ResolvedJ9Method::fieldAttributes(TR::Compilation * comp, I_32 cpIndex, U_32 
       *fieldOffset = TR::Compiler->om.objectHeaderSizeInBytes();
       ltype = ltype << 16;
       if (isFinal) *isFinal = false;
+      if (isPrivate) *isPrivate = false;
       }
 
    *type = decodeType(ltype);
@@ -7076,6 +7077,7 @@ TR_ResolvedJ9Method::staticAttributes(TR::Compilation * comp, I_32 cpIndex, void
       resolved = false;
       *volatileP = true;
       if (isFinal) *isFinal = false;
+      if (isPrivate) *isPrivate = false;
 
          {
          TR::VMAccessCriticalSection getFieldType(fej9());
