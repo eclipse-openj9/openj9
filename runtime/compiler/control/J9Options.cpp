@@ -1303,6 +1303,7 @@ J9::Options::fePreProcess(void * base)
       if (vm->runtimeFlags & J9_RUNTIME_TUNE_VIRTUALIZED)
          {
          _aggressivenessLevel = TR::Options::AGGRESSIVE_AOT;
+         _scratchSpaceFactorWhenJSR292Workload = 1;
          }
       if (_aggressivenessLevel == -1) // not yet set
          {
