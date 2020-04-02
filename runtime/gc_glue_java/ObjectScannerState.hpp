@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2014 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,6 @@
 #if !defined(OBJECTSCANNERSTATE_HPP_)
 #define OBJECTSCANNERSTATE_HPP_
 
-#include "FlattenedArrayObjectScanner.hpp"
 #include "MixedObjectScanner.hpp"
 #include "PointerArrayObjectScanner.hpp"
 #include "ReferenceObjectScanner.hpp"
@@ -43,7 +42,6 @@ typedef union GC_ObjectScannerState
 	uint8_t mixed[sizeof(GC_MixedObjectScanner)];
 	uint8_t reference[sizeof(GC_ReferenceObjectScanner)];
 	uint8_t pointerArray[sizeof(GC_PointerArrayObjectScanner)];
-	uint8_t flattenedArray[sizeof(GC_FlattenedArrayObjectScanner)];
 } GC_ObjectScannerState;
 
 #endif /* OBJECTSCANNERSTATE_HPP_ */
