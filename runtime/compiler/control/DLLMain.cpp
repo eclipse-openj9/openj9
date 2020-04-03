@@ -30,7 +30,9 @@
 #include "env/VMJ9.h"
 #include "runtime/IProfiler.hpp"
 #include "runtime/J9Profiler.hpp"
+#if defined(J9VM_OPT_JITSERVER)
 #include "runtime/Listener.hpp"
+#endif /* J9VM_OPT_JITSERVER */
 #include "runtime/codertinit.hpp"
 #include "rossa.h"
 
