@@ -792,7 +792,6 @@ done:
 		if (J9_ARE_ANY_BITS_SET((UDATA)_sp, sizeof(UDATA))) {
 			_sp -= 1;
 			memmove(_sp, _sp + 1, sizeof(UDATA) * argCount);
-			returnSP |= J9_STACK_FLAGS_ARGS_ALIGNED;
 		}
 		J9I2JState *i2jState = &_currentThread->entryLocalStorage->i2jState;
 		i2jState->returnSP = (UDATA*)returnSP;

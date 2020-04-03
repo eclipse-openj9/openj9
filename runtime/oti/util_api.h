@@ -1652,17 +1652,6 @@ getOriginalROMMethod(J9Method * method);
 J9ROMMethod *
 getOriginalROMMethodUnchecked(J9Method * method);
 
-/* ---------------- sleephelp.c ---------------- */
-
-/**
-* @brief
-* @param sleepTime
-* @return IDATA
-*/
-IDATA
-callThreadSleep(IDATA sleepTime);
-
-
 /* ---------------- subclass.c ---------------- */
 
 /**

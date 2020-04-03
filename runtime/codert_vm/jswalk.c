@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -291,12 +291,6 @@ i2jTransition: ;
 	walkState->arg0EA = (UDATA *) walkState->i2jState->a0;
 	returnSP = walkState->i2jState->returnSP;
 	walkState->previousFrameFlags = 0;
-	if (((UDATA) returnSP) & J9_STACK_FLAGS_ARGS_ALIGNED) {
-#ifdef J9VM_INTERP_STACKWALK_TRACING
-		swPrintf(walkState, 2, "I2J args were copied for alignment\n");
-#endif
-		walkState->previousFrameFlags = J9_STACK_FLAGS_JIT_ARGS_ALIGNED;
-	}
 	walkState->walkSP = (UDATA *) UNTAG2(returnSP, UDATA *);
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	swPrintf(walkState, 2, "I2J values: PC = %p, A0 = %p, walkSP = %p, literals = %p, JIT PC = %p, pcAddress = %p, decomp = %p\n", walkState->pc,
