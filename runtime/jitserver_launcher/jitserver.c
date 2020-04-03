@@ -360,6 +360,8 @@ main(int argc, char *argv[])
 		goto _end;
 	}
 
+	server->destroyJITServer(&server);
+
 	free(jvmLibPath);
 	free(options);
 

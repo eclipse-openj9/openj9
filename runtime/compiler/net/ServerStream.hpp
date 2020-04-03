@@ -34,7 +34,6 @@ class SSLInputStream;
 
 namespace JITServer
 {
-class BaseCompileDispatcher;
 
 /**
    @class ServerStream
@@ -47,7 +46,7 @@ class BaseCompileDispatcher;
    2) Create a dedicated thread that will listen for incoming connection requests
    3) In this thread, instantiate a CompileDispatcher from a class defined in step (1)
       E.g.:    J9CompileDispatcher handler(jitConfig);
-   4) Call  "ServerStream::serveRemoteCompilationRequests(&handler, persistentInfo);"
+   4) Call  "TR_Listener::serveRemoteCompilationRequests(&handler);"
       which will wait for a connection, accept the connection, create a ServerStream and call
       handler->compile(stream) for further processing, e.g. add the stream
       to a compilation queue
@@ -227,21 +226,6 @@ public:
       return _clientId;
       }
 
-   /**
-      @brief Function called to deal with incoming connection requests
-
-      This function opens a socket, binds it and then waits for incoming connection
-      requests by using `accept()` in an infinite loop. Once a connection is accepted
-      a ServerStream object is created (receiving the newly opened socket descriptor as
-      a parameter) and passed to the compilation handler. Typically, the compilation
-      handler places the ServerStream object in a queue and returns immediately so that
-      other connection requests can be accepted.
-      Note: because the function does not return, it must be executed on a separate thread.
-
-      @param [in] compiler Object that defines the behavior when a new connection is accepted
-      @param [in] info Pointer to PersistentInfo which contains the port and the timeout value for the connection
-   */
-   static void serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::PersistentInfo *info);
 
    // Statistics
    static int getNumConnectionsOpened() { return _numConnectionsOpened; }
@@ -253,20 +237,6 @@ private:
    uint64_t _clientId;  // UID of client connected to this communication stream
    };
 
-
-/**
-   @class BaseCompileDispatcher
-   @brief Abstract class defining the interface for the compilation handler
-
-   Typically, an user would derive this class and provide an implementation for "compile()"
-   An instance of the derived class needs to be passed to serveRemoteCompilationRequests 
-   which internally calls "compile()"
- */
-class BaseCompileDispatcher
-   {
-public:
-   virtual void compile(ServerStream *stream) = 0;
-   };
 
 }
 

@@ -294,6 +294,7 @@ static jint formatErrorMessage(int errorCode, char *inBuffer, jint inBufferLengt
 #if defined(J9VM_OPT_JITSERVER)
 static int32_t startJITServer(struct JITServer *);
 static int32_t waitForJITServerTermination(struct JITServer *);
+static int32_t destroyJITServer(struct JITServer **);
 #endif /* J9VM_OPT_JITSERVER */
 
 /**
@@ -1473,7 +1474,9 @@ static jint initializeReflectionGlobals(JNIEnv * env, BOOLEAN includeAccessors) 
  *
  * DLL: jvm
  */
-jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
+jint JNICALL
+JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args)
+{
 	return JNI_CreateJavaVM_impl(pvm, penv, vm_args, FALSE);
 }
 
@@ -1492,6 +1495,7 @@ JITServer_CreateServer(JITServer **jitServer, void *serverArgs)
 	}
 	server->startJITServer = startJITServer;
 	server->waitForJITServerTermination = waitForJITServerTermination;
+	server->destroyJITServer = destroyJITServer;
 	rc = JNI_CreateJavaVM_impl(&server->jvm, (void **)&env, serverArgs, TRUE);
 
 	if (JNI_OK != rc) {
@@ -1504,6 +1508,7 @@ JITServer_CreateServer(JITServer **jitServer, void *serverArgs)
 _end:
 	if ((JITSERVER_OK != rc) && (NULL != server)) {
 		free(server);
+		*jitServer = NULL;
 	}
 	return rc;
 }
@@ -1513,7 +1518,7 @@ _end:
  *
  * @param jitServer pointer to the JITServer interface
  *
- * @returns zero on success, else negative error code
+ * @returns JITSERVER_OK on success, else negative error code
  */
 static int32_t
 startJITServer(JITServer *jitServer)
@@ -1543,7 +1548,7 @@ startJITServer(JITServer *jitServer)
  *
  * @param jitServer pointer to the JITServer interface
  *
- * @returns zero on success, else negative error code
+ * @returns JITSERVER_OK on success, else negative error code
  */
 static int32_t
 waitForJITServerTermination(JITServer *jitServer)
@@ -1567,6 +1572,31 @@ waitForJITServerTermination(JITServer *jitServer)
 	}
 	return rc;
 }
+
+/**
+ * Frees the resources allocated by JITServer_CreateServer.
+ *
+ * @param jitServer double pointer to the JITServer interface. Must not be NULL
+ *
+ * @returns JITSERVER_OK on success, else negative error code
+ *
+ * @note on return *jitServer is set to NULL
+ */
+static int32_t
+destroyJITServer(JITServer **jitServer)
+{
+	JavaVM *vm = (*jitServer)->jvm;
+	jint rc = (*vm)->DestroyJavaVM(vm);
+	free(*jitServer);
+	*jitServer = NULL;
+	if (JNI_OK == rc) {
+		rc = JITSERVER_OK;
+	} else {
+		rc = JITSERVER_DESTROY_ERROR;
+	}
+	return rc;
+}
+
 #endif /* J9VM_OPT_JITSERVER */
 
 /*
