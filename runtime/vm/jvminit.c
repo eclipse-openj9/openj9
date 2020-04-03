@@ -5888,6 +5888,14 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	}
 #endif
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
+	/* Enable i2j MethodHandle transitions by default */
+	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_I2J_MH_TRANSITION_ENABLED;
+#endif
+
+	/* Default to using lazy in all but realtime */
+	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_LAZY_SYMBOL_RESOLUTION;
+
 	/* Scans cmd-line arguments in order */
 	if (JNI_OK != processVMArgsFromFirstToLast(vm)) {
 		goto error;
@@ -6046,14 +6054,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	if (JNI_OK != modifyDllLoadTable(vm, vm->dllLoadTable, vm->vmArgsArray)) {
 		goto error;
 	}
-	
-#if defined(J9VM_OPT_METHOD_HANDLE)
-	/* Enable i2j MethodHandle transitions by default */
-	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_I2J_MH_TRANSITION_ENABLED;
-#endif
-
-	/* Default to using lazy in all but realtime */
-	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_LAZY_SYMBOL_RESOLUTION;
 
 #if !defined(WIN32)
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags,J9_EXTENDED_RUNTIME_HANDLE_SIGXFSZ)) {
