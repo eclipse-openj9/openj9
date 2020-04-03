@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@
 
 #include "vmaccess.h" // for acquireVMAccess and releaseVMAccess
 #include "net/ServerStream.hpp" // for JITServer::BaseCompileDispatcher
+#include "runtime/Listener.hpp"
 
 struct J9JITConfig;
 struct J9VMThread;
@@ -53,7 +54,7 @@ private:
    This handler, 'compile(ServerStream *)', is executed by the listener thread when a new connection request has been received by JITServer
 */
 
-class J9CompileDispatcher : public JITServer::BaseCompileDispatcher
+class J9CompileDispatcher : public BaseCompileDispatcher
 {
 public:
    J9CompileDispatcher(J9JITConfig *jitConfig) : _jitConfig(jitConfig) { }

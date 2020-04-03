@@ -32,8 +32,32 @@ extern "C" {
 struct JITServer; /* Forward declaration */
 
 typedef struct JITServer {
+	/**
+	 * Starts an instance of JITServer.
+	 *
+	 * @param jitServer pointer to the JITServer interface
+	 *
+	 * @returns JITSERVER_OK on success, else negative error code
+	 */
 	int32_t (* startJITServer)(struct JITServer *);
+	/**
+	 * Wait for JITServer to terminate.
+	 *
+	 * @param jitServer pointer to the JITServer interface
+	 *
+	 * @returns JITSERVER_OK on success, else negative error code
+	 */
 	int32_t (* waitForJITServerTermination)(struct JITServer *);
+	/**
+	 * Frees the resources allocated by JITServer_CreateServer.
+	 *
+	 * @param jitServer double pointer to the JITServer interface. Must not be NULL
+	 *
+	 * @returns JITSERVER_OK on success, else negative error code
+	 *
+	 * @note on return *jitServer is set to NULL
+	 */
+	int32_t (* destroyJITServer)(struct JITServer **);
 	JavaVM *jvm;
 } JITServer;
 
