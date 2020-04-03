@@ -113,17 +113,17 @@ def checkout_pullrequest() {
     // Cannot depend on a change from the same repo as the source repo
     def SOURCE_REPO_MESSAGE
     switch (params.ghprbGhRepository) {
-        case "eclipse/openj9-omr":
+        case ~/.*\/openj9-omr/:
             omr_bool = true
             OMR_PR = params.ghprbPullId
             SOURCE_REPO_MESSAGE = "PullRequest source repo appears to be OpenJ9-OMR"
             break
-        case "eclipse/openj9":
+        case ~/.*\/openj9/:
             openj9_bool = true
             OPENJ9_PR = params.ghprbPullId
             SOURCE_REPO_MESSAGE = "PullRequest source repo appears to be OpenJ9"
             break
-        case ~/ibmruntimes(.*)/:
+        case ~/.*openj9-openjdk-jdk.*/:
             openjdk_bool = true
             OPENJDK_PR = params.ghprbPullId
             SOURCE_REPO_MESSAGE = "PullRequest source repo appears to be OpenJDK"
@@ -198,7 +198,7 @@ def checkout_pullrequest() {
         checkout_pullrequest(OPENJDK_PR, "ibmruntimes/openj9-openjdk-jdk${JDK_REPO_SUFFIX}")
     }
 
-    sh "bash ./get_source.sh ${EXTRA_GETSOURCE_OPTIONS}"
+    sh "bash ./get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
 
     // Checkout dependent PRs, if any were specified
     if (openj9_bool) {
@@ -225,6 +225,8 @@ def checkout_pullrequest(ID, REPO) {
                 fetchRef("pull/${ID}/merge", "pr/${ID}/merge" )
                 checkoutRef ("pr/${ID}/merge")
             } catch (e) {
+                // If merge ref doesn't exist, checkout PR base branch.
+                // Not going to fix this to work for internal PRs.
                 def JSONFILE = ""
                 def BASEREF = ""
                 def URL = "https://api.github.com/repos/${REPO}/pulls/${ID}"

@@ -135,7 +135,8 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_
             'osxxl' : ['x86-64_mac_xl'],
             'alinux64' : ['aarch64_linux'],
             'alinux64xl' : ['aarch64_linux_xl'],
-            'alinux64largeheap' : ['aarch64_linux_xl']]
+            'alinux64largeheap' : ['aarch64_linux_xl'],
+            'zos' : ['s390x_zos']]
 
 // Initialize all PARAMETERS (params) to Groovy Variables even if they are not passed
 echo "Initialize all PARAMETERS..."
@@ -191,14 +192,14 @@ echo "SCM_REPO:'${SCM_REPO}'"
 SCM_BRANCH = 'refs/heads/master'
 if (params.SCM_BRANCH) {
     SCM_BRANCH = params.SCM_BRANCH
-} else if (ghprbPullId && ghprbGhRepository == 'eclipse/openj9') {
+} else if (ghprbPullId && ghprbGhRepository ==~ /.*\/openj9/) {
     SCM_BRANCH = sha1
 }
 echo "SCM_BRANCH:'${SCM_BRANCH}'"
 SCM_REFSPEC = ''
 if (params.SCM_REFSPEC) {
     SCM_REFSPEC = params.SCM_REFSPEC
-} else if (ghprbPullId && ghprbGhRepository == 'eclipse/openj9') {
+} else if (ghprbPullId && ghprbGhRepository ==~ /.*\/openj9/) {
     SCM_REFSPEC = "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge"
 }
 echo "SCM_REFSPEC:'${SCM_REFSPEC}'"
