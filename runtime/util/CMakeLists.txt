@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,7 +80,6 @@ add_library(j9util STATIC
 	romhelp.c
 	sendslot.c
 	shchelp_j9.c
-	sleephelp.c
 	srphashtable.c
 	strhelp.c
 	subclass.c

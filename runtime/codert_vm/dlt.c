@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -194,7 +194,6 @@ retry:
 		if (J9_ARE_ANY_BITS_SET((UDATA)sp, sizeof(UDATA))) {
 			Trc_DLT_setUpForDLT_Aligning_Arguments(currentThread);
 			memmove((walkState->sp = sp - 1), sp, argCount * sizeof(UDATA));
-			returnSP = (UDATA *) ((UDATA) returnSP | J9_STACK_FLAGS_ARGS_ALIGNED);
 		}
 		elsState->returnSP = returnSP;
 	}
