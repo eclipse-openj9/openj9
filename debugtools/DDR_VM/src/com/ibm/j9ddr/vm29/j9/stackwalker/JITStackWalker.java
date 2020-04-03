@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -293,10 +293,6 @@ public class JITStackWalker
 			walkState.arg0EA = walkState.i2jState.a0();
 			returnSP = walkState.i2jState.returnSP();
 			walkState.previousFrameFlags = new UDATA(0);
-			if (returnSP.anyBitsIn(J9_STACK_FLAGS_ARGS_ALIGNED)) {
-				swPrintf(walkState, 2, "I2J args were copied for alignment");
-				walkState.previousFrameFlags = new UDATA(J9_STACK_FLAGS_JIT_ARGS_ALIGNED);
-			}
 			walkState.walkSP = returnSP.untag(3L);
 			swPrintf(walkState, 2, "I2J values: PC = {0}, A0 = {1}, walkSP = {2}, literals = {3}, JIT PC = {4}, pcAddress = {5}, decomp = {6}", 
 					walkState.pc.getHexAddress(),

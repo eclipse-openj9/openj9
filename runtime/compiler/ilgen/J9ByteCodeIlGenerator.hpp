@@ -162,7 +162,7 @@ private:
    // GenLoadStore
    //
    void         loadInstance(int32_t);
-   void         loadInstance(TR::SymbolReference *, int32_t);
+   void         loadInstance(TR::SymbolReference *);
    void         loadStatic(int32_t);
    void         loadAuto(TR::DataType type, int32_t slot, bool isAdjunct = false);
    TR::Node     *loadSymbol(TR::ILOpCodes, TR::SymbolReference *);
