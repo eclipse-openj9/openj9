@@ -293,16 +293,16 @@ class TR_UnloadedClassPicSite : public OMR::ValueModifyRuntimeAssumption
 struct SerializedRuntimeAssumption
    {
    SerializedRuntimeAssumption(TR_RuntimeAssumptionKind kind, uintptr_t key, intptr_t offset, uint32_t size = 0)
-      : _kind(kind), _key(key), _offsetFromStartPC(offset), _size(size) {}
+      : _kind(kind), _key(key), _offsetFromBinaryBufferStart(offset), _size(size) {}
    TR_RuntimeAssumptionKind getKind() const { return _kind; }
    uintptr_t getKey() const { return _key; }
-   intptr_t getOffsetFromStartPC() const { return _offsetFromStartPC; }
+   intptr_t getOffsetFromBinaryBufferStart() const { return _offsetFromBinaryBufferStart; }
    uint32_t getSize() const { return _size; }
 
    TR_RuntimeAssumptionKind _kind;
    uint32_t   _size;
    uintptr_t _key;
-   intptr_t  _offsetFromStartPC; // can be negative
+   intptr_t  _offsetFromBinaryBufferStart;
    };
 #endif // J9VM_OPT_JITSERVER
 
