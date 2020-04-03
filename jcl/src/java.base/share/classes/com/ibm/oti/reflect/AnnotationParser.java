@@ -2,7 +2,7 @@
 package com.ibm.oti.reflect;
 
 /*******************************************************************************
- * Copyright (c) 2010, 2017 IBM Corp. and others
+ * Copyright (c) 2010, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,9 @@ package com.ibm.oti.reflect;
 
 import java.lang.annotation.Annotation;
 import java.nio.ByteBuffer;
+import java.lang.reflect.Method;
+import java.lang.reflect.Field;
+import java.lang.reflect.Constructor;
 /*[IF Sidecar19-SE]
 import jdk.internal.reflect.ConstantPool;
 /*[ELSE]*/
@@ -33,23 +36,23 @@ import sun.reflect.ConstantPool;
 
 public class AnnotationParser {
 
-	public static Annotation[] parseAnnotations(java.lang.reflect.Field field) {
+	public static Annotation[] parseAnnotations(Field field) {
 		return parseAnnotations(getAnnotationsData(field), field.getDeclaringClass());
 	}
 
-	public static Annotation[] parseAnnotations(java.lang.reflect.Constructor constructor) {
+	public static Annotation[] parseAnnotations(Constructor constructor) {
 		return parseAnnotations(getAnnotationsData(constructor), constructor.getDeclaringClass());
 	}
 
-	public static Annotation[] parseAnnotations(java.lang.reflect.Method method) {
+	public static Annotation[] parseAnnotations(Method method) {
 		return parseAnnotations(getAnnotationsData(method), method.getDeclaringClass());
 	}
 
-	public static Annotation[][] parseParameterAnnotations(java.lang.reflect.Constructor constructor) {
+	public static Annotation[][] parseParameterAnnotations(Constructor constructor) {
 		return parseParameterAnnotations(getParameterAnnotationsData(constructor), constructor.getDeclaringClass(), constructor.getParameterTypes().length);
 	}
 
-	public static Annotation[][] parseParameterAnnotations(java.lang.reflect.Method method) {
+	public static Annotation[][] parseParameterAnnotations(Method method) {
 		return parseParameterAnnotations(getParameterAnnotationsData(method), method.getDeclaringClass(), method.getParameterTypes().length);
 	}
 	
@@ -65,7 +68,7 @@ public class AnnotationParser {
 		return result;
 	};
 	
-	public static Object parseDefaultValue(java.lang.reflect.Method method) {
+	public static Object parseDefaultValue(Method method) {
 		byte[] elementValueData = getDefaultValueData(method);
 		if (elementValueData == null) return null;
 		ByteBuffer buf = ByteBuffer.wrap(elementValueData);
@@ -103,12 +106,12 @@ public class AnnotationParser {
 						clazz));
 	}
 
-	private static native byte[] getAnnotationsData(java.lang.reflect.Field field);
-	private static native byte[] getAnnotationsData(java.lang.reflect.Constructor constructor);
-	private static native byte[] getAnnotationsData(java.lang.reflect.Method method);
-	private static native byte[] getParameterAnnotationsData(java.lang.reflect.Constructor constructor);
-	private static native byte[] getParameterAnnotationsData(java.lang.reflect.Method method);
-	private static native byte[] getDefaultValueData(java.lang.reflect.Method method);
+	private static native byte[] getAnnotationsData(Field field);
+	private static native byte[] getAnnotationsData(Constructor constructor);
+	private static native byte[] getAnnotationsData(Method method);
+	private static native byte[] getParameterAnnotationsData(Constructor constructor);
+	private static native byte[] getParameterAnnotationsData(Method method);
+	private static native byte[] getDefaultValueData(Method method);
 	static native ConstantPool getConstantPool(Class clazz);
 	private static native byte[] getAnnotationsDataImpl(java.lang.Class clazz);
 
