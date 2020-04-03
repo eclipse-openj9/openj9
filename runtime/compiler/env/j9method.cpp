@@ -4776,6 +4776,10 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
       bool disableRecMethods = !comp  ? true
          : (fej9()->getSupportsRecognizedMethods() && !comp->getOption(TR_DisableRecognizedMethods)) ? false : true;
 
+      printf("XDDDDDDDDDD disableRecmethods = %d\n", disableRecMethods);
+      printf("XDDDDDDDDDD comp->getOption(TR_DisableRecognizedMethods) = %d\n", comp->getOption(TR_DisableRecognizedMethods));
+
+
       if (disableRecMethods && fej9()->isAOT_DEPRECATED_DO_NOT_USE()) // AOT_JIT_GAP
          {
          switch (rm) {
