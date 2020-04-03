@@ -89,6 +89,24 @@ public:
    bool isAbstractClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer);
    bool isInterfaceClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer);
    bool isValueTypeClass(TR_OpaqueClassBlock *);
+
+   /**
+    * \brief
+    *    Checks whether instances of the specified class can be trivially initialized by
+    *    "zeroing" their fields.
+    *    In the case of OpenJ9, this tests whether any field is of a value type that has not been
+    *    "flattened" (that is, had the value type's fields inlined into this class).  Such a value
+    *    type field must be initialized with the default value of the type.
+    *
+    * \param clazz
+    *    The class that is to be checked
+    *
+    * \return
+    *    `true` if instances of the specified class can be initialized by zeroing their fields;
+    *    `false` otherwise (that is, if the class has value type fields whose fields have not
+    *    been inlined)
+    */
+   bool isZeroInitializable(TR_OpaqueClassBlock *clazz);
    bool isEnumClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer, TR_ResolvedMethod *method);
    bool isPrimitiveClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
    bool isAnonymousClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
