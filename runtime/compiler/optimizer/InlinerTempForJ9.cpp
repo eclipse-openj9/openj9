@@ -2314,6 +2314,38 @@ bool TR_J9InlinerPolicy::tryToInlineTrivialMethod (TR_CallStack* callStack, TR_C
    return false;
    }
 
+bool TR_J9InlinerPolicy::shouldSkipInliningRecognizedMethod(TR_CallTarget *calltarget, TR_LogTracer *tracer)
+   {
+   TR::RecognizedMethod rm = calltarget->_calleeSymbol ? calltarget->_calleeSymbol->getRecognizedMethod() : calltarget->_calleeMethod->getRecognizedMethod();
+   switch (rm)
+      {
+      case TR::java_lang_String_indexOf_char:
+      case TR::java_lang_String_indexOf_native:
+      case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
+      case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
+         {
+         TR_PrexArgInfo *ecsArgInfo = calltarget->_ecsPrexArgInfo;
+         if (ecsArgInfo)
+            {
+            TR_PrexArgument *stringArg = ecsArgInfo->get(0);
+            PrexKnowledgeLevel priorKnowledge = TR_PrexArgument::knowledgeLevel(stringArg);
+            if (priorKnowledge == KNOWN_OBJECT)
+               {
+               // For String indexOf methods where the receiver is a known
+               // object, the call node can be transformed away by value
+               // propagation. Therefore it does not need to be inlined.
+               debugTrace(tracer, "Skip inlining indexOf recognized method with KNOWN_OBJECT receiver: call target %p", calltarget);
+               return true;
+               }
+            }
+         break;
+         }
+      default:
+         return false;
+      }
+   return false;
+   }
+
 bool
 TR_J9InlinerPolicy::adjustFanInSizeInExceedsSizeThreshold(int bytecodeSize,
                                                       uint32_t& calculatedSize,
