@@ -43,6 +43,8 @@ namespace J9 { typedef J9::ClassEnv ClassEnvConnector; }
 namespace TR { class SymbolReference; }
 namespace TR { class TypeLayout; }
 namespace TR { class Region; }
+class TR_PersistentClassInfo;
+template <typename ListKind> class List;
 
 namespace J9
 {
@@ -169,6 +171,15 @@ public:
    intptr_t getVFTEntry(TR::Compilation *comp, TR_OpaqueClassBlock* clazz, int32_t offset);
    uint8_t *getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t cpIndex, int &classRefLen);
    J9ROMConstantPoolItem *getROMConstantPool(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
+
+   /**
+    * @brief Determine if a list of classes contains less than two concrete classes.
+    * A class is considered concrete if it is not an interface or an abstract class
+    * @param subClasses List of subclasses to be checked.
+    * @return Returns 'true' if the given list of classes contains less than 
+    * 2 concrete classses and false otherwise.
+    */
+   bool containesZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_PersistentClassInfo>* subClasses);
    };
 
 }
