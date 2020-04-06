@@ -511,7 +511,7 @@
 		-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 		-DSERVER_EXE=$(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) \
 		-DCLIENT_EXE=$(JAVA_COMMAND) \
-		-DCLIENT_PROGRAM=$(SQ)$(JVM_OPTIONS) -cp $(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar -DjarTesterArgs=$(TEST_RESROOT)$(D)jitt.jar org.testng.TestNG -d $(REPORTDIR)$(D)client $(TEST_RESROOT)$(D)testng.xml -testnames JarTesterTest -groups $(TEST_GROUP) -excludegroups $(DEFAULT_EXCLUDE)$(SQ) \
+		-DCLIENT_PROGRAM=$(SQ)$(JVM_OPTIONS) -cp $(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar -DjarTesterArgs=$(Q)-loopforever $(TEST_RESROOT)$(D)jitt.jar$(Q) org.testng.TestNG -d $(REPORTDIR)$(D)client $(TEST_RESROOT)$(D)testng.xml -testnames JarTesterTest -groups $(TEST_GROUP) -excludegroups $(DEFAULT_EXCLUDE)$(SQ) \
 		org.testng.TestNG \
 		-d $(REPORTDIR) \
 		$(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -523,7 +523,6 @@
 		echo $(Q)$(TEST_JDK_BIN)$(D)jitserver doesn't exist; assuming this JDK does not support JITServer and trivially passing the test.$(Q); \
 	fi; \
 	$(TEST_STATUS)</command>
-		<disabled>https://github.com/eclipse/openj9/issues/8806</disabled>
 		<platformRequirements>os.linux,arch.x86,bits.64</platformRequirements>
 		<levels>
 			<level>sanity</level>

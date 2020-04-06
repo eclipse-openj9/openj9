@@ -285,11 +285,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::VM_getClassFromSignature:
          {
+         // Need to get a non-AOT frontend because the AOT frontend also
+         // performs some class validation which we want to do at the server
+         TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
          auto recv = client->getRecvData<std::string, TR_OpaqueMethodBlock *, bool>();
          std::string sig = std::get<0>(recv);
          auto method = std::get<1>(recv);
          bool isVettedForAOT = std::get<2>(recv);
-         auto clazz = fe->getClassFromSignature(sig.c_str(), sig.length(), method, isVettedForAOT);
+         auto clazz = fej9->getClassFromSignature(sig.c_str(), sig.length(), method, isVettedForAOT);
          client->write(response, clazz);
          }
          break;
