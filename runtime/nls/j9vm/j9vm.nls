@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1952,4 +1952,11 @@ J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_4=ParentClassName
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.explanation=The specified child class fails verification since it has an invalid class relationship.
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.system_action=The JVM will throw a java/lang/VerifyError.
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.user_response=Ensure that all class relationships are valid.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_XLP_DEPRECATED=Since Java 9 -Xlp, and -Xlp:<size> were deprecated for removal and may not be accepted options in the future.
+# START NON-TRANSLATABLE
+J9NLS_VM_XLP_DEPRECATED.explanation=Since Java 9 -Xlp, and -Xlp:<size> were deprecated for removal and may not be accepted options in the future.
+J9NLS_VM_XLP_DEPRECATED.system_action=The JVM will show a warning and continue to recognize the options.
+J9NLS_VM_XLP_DEPRECATED.user_response=Consider not using these options as they will likely be removed in a future release. Consider replacing with respective -Xlp:codecache, and -Xlp:objectheap options.
 # END NON-TRANSLATABLE
