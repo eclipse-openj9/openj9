@@ -821,7 +821,7 @@ done:
 			returnPoint = jitConfig->jitExitInterpreter0;
 			break;
 		case ';':
-obj:;
+obj:
 		/* On 32-bit, object uses the "1" target (already loaded, so just break).
 		 * On 64-bit, object uses the "J" target (fall through)
 		 */
@@ -2274,7 +2274,7 @@ done:
 			*(U_32 *)_sp = (U_32)_currentThread->returnValue;
 		}
 		rc = EXECUTE_BYTECODE;
-done:;
+done:
 		return rc;
 	}
 
