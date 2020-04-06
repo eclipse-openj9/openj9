@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,11 +37,16 @@ import org.testng.Assert;
  */
 public class ZipTester {
 	private static Logger logger = Logger.getLogger(ZipTester.class);
-	public static final String CLASS_FILTER_TAG = "-class:";
+	public static final String TAG_PREFIX = "-";
+	public static final String LOOP_FOREVER_TAG = TAG_PREFIX + "loopforever";
+	public static final String CLASS_FILTER_TAG = TAG_PREFIX + "class:";
 	public static final String CLASS_FILTER_SUBSTRING = "substring";
 	public static final String CLASS_FILTER =
 		CLASS_FILTER_TAG + CLASS_FILTER_SUBSTRING;
 	public static final String ZIP_NAMES = "zip1 zip2 ...";
+	public static final String LOOP_FOREVER_HELPER =
+		LOOP_FOREVER_TAG
+			+ " --> loop forever (until the JVM is terminated)";
 	public static final String CLASS_FILTER_HELPER =
 		CLASS_FILTER
 			+ " --> load classes whose names contain "
@@ -53,23 +58,31 @@ public class ZipTester {
 	public static void main(String args[]) {
 		new ZipTester().run(args);
 	}
-	
+
 	public void run(String args[]) {
 		if (args.length < 1 || args[0].isEmpty()) {
 			printUsageText();
 			Assert.fail();
 		}
 
-		String classFilter = args[0];
+		String classFilter = "";
+		boolean loopForever = false;
 		int zipFilenameIndex = 0;
-		if (!classFilter.startsWith(CLASS_FILTER_TAG))
-			classFilter = "";
-		else {
-			classFilter = classFilter.substring(CLASS_FILTER_TAG.length());
-			zipFilenameIndex = 1;
+
+		while (args[zipFilenameIndex].startsWith(TAG_PREFIX)) {
+			if (args[zipFilenameIndex].startsWith(CLASS_FILTER_TAG))
+				classFilter = classFilter.substring(CLASS_FILTER_TAG.length());
+			else if (args[zipFilenameIndex].equals(LOOP_FOREVER_TAG))
+				loopForever = true;
+			zipFilenameIndex++;
 		}
 
-		process(classFilter, args, zipFilenameIndex);
+		if (loopForever)
+			logger.info(LOOP_FOREVER_TAG + " was specified; test will run continuously until the JVM is terminated.");
+
+		do {
+			process(classFilter, args, zipFilenameIndex);
+		} while (loopForever);
 	}
 
 	public String getClassName() {
@@ -123,6 +136,7 @@ public class ZipTester {
 	}
 
 	protected void printGenericCommandlineExplanation() {
+		logger.debug("\t" + LOOP_FOREVER_HELPER);
 		logger.debug("\t" + CLASS_FILTER_HELPER);
 		logger.debug("\t" + JAR_NAMES_HELPER);
 	}
