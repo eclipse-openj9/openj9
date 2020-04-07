@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,7 @@ public class FindCommand extends BaseJdmpviewCommand{
 	 */	
 	FindAttribute findAtt = new FindAttribute();
 	StringBuffer sb = new StringBuffer();
-	ArrayList matches = new ArrayList();
+	ArrayList<Long> matches = new ArrayList<>();
 	
 	{
 		addCommand("find", "", "searches memory for a given string. Please run \"help find\" for details.");	
@@ -75,7 +75,7 @@ public class FindCommand extends BaseJdmpviewCommand{
 		if (!isParametersValid(params)) return;
 		determineModeFromPattern();
 		if (!parseParams(params)) return;
-		Iterator imageSections = ctx.getAddressSpace().getImageSections();
+		Iterator<?> imageSections = ctx.getAddressSpace().getImageSections();
 		
 		while(imageSections.hasNext()){
 			if (matches.size() > findAtt.numMatchesToDisplay) break;
@@ -83,7 +83,7 @@ public class FindCommand extends BaseJdmpviewCommand{
 			if (scanImageSection(imageSection)) break;
 		}
 		if (matches.size() > 0) 
-			findAtt.lastMatch = ((Long)matches.get(matches.size()-1)).longValue();
+			findAtt.lastMatch = matches.get(matches.size() - 1).longValue();
 		ctx.getProperties().put(Utils.FIND_ATTRIBUTES, findAtt);
 		doPrint();
 		if (matches.size() > 0) 
@@ -105,15 +105,15 @@ public class FindCommand extends BaseJdmpviewCommand{
 				+ findAtt.numBytesToPrint, out);
 	}
 	
-	private void doPrint(){
+	private void doPrint() {
 		int size = matches.size();
-		if(0 == size){
+		if (0 == size) {
 			sb.append("No matches found.\n");
 		}
 		else{
 			int limit = Math.min(findAtt.numMatchesToDisplay, size);
-			for(int i = 0; i < limit; i++){
-				long match = ((Long)matches.get(i)).longValue();
+			for (int i = 0; i < limit; i++) {
+				long match = matches.get(i).longValue();
 				sb.append("#" + i + ": " + "0x" + Long.toHexString(match) + "\n");
 			}
 		}
@@ -148,17 +148,17 @@ public class FindCommand extends BaseJdmpviewCommand{
 	private boolean scanRegion(long start, long end, ImageSection imageSection){
 		ImagePointer imagePointer = imageSection.getBaseAddress();
 		long i;
-		if (0 != start%findAtt.boundary) {
-			i = start - start%findAtt.boundary + findAtt.boundary;
+		if (0 != start % findAtt.boundary) {
+			i = start - start % findAtt.boundary + findAtt.boundary;
 		} else {
 			i = start;
 		}
 		int patternLength = findAtt.length();
 		byte[] bytes = findAtt.getBytes();
 		
-		for(; i <= end; i+=findAtt.boundary){
+		for (; i <= end; i += findAtt.boundary) {
 			int j;
-			for(j = 0; j < patternLength; j++){
+			for (j = 0; j < patternLength; j++) {
 				byte oneByte = bytes[j];
 				try {
 					if (getByteFromImage(imagePointer, i+j) == oneByte){
@@ -171,7 +171,7 @@ public class FindCommand extends BaseJdmpviewCommand{
 					return false;
 				}
 			}
-			if (j >= patternLength){
+			if (j >= patternLength) {
 				matches.add(Long.valueOf(i));
 				if (matches.size() == findAtt.numMatchesToDisplay) 
 					return true;
@@ -253,7 +253,7 @@ public class FindCommand extends BaseJdmpviewCommand{
 	
 	private void alignBits(){
 		int patternLength = findAtt.pattern.length();
-		if (0 != patternLength%2){
+		if (0 != patternLength % 2) {
 			findAtt.pattern = "0" + findAtt.pattern;
 		}
 	}

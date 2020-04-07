@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -123,7 +123,7 @@ public class XKCommand extends XCommand {
 	private boolean printSymbol(long pointer, long diff, int pointerSize)
 	{
 		ImageProcess ip = ctx.getProcess();
-		Iterator itModule;
+		Iterator<?> itModule;
 		try {
 			itModule = ip.getLibraries();
 		} catch (CorruptDataException e) {
@@ -135,7 +135,7 @@ public class XKCommand extends XCommand {
 		}
 		while (null != itModule && itModule.hasNext()) {
 			ImageModule im = (ImageModule)itModule.next();
-			Iterator itImageSection = im.getSections();
+			Iterator<?> itImageSection = im.getSections();
 			while (itImageSection.hasNext()) {
 				ImageSection is = (ImageSection)itImageSection.next();
 				long startAddr = is.getBaseAddress().getAddress();
@@ -145,7 +145,7 @@ public class XKCommand extends XCommand {
 					/* can we find a matching symbol? */
 					long maxDifference = pointer - startAddr;
 					ImageSymbol bestSymbol = null;
-					for (Iterator iter = im.getSymbols(); iter.hasNext();) {
+					for (Iterator<?> iter = im.getSymbols(); iter.hasNext();) {
 						Object next = iter.next();
 						if (next instanceof CorruptData)
 							continue;

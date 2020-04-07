@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2017 IBM Corp. and others
+ * Copyright (c) 2011, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -201,38 +201,38 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 	 */
 	public void startDDRInteractiveSession(Image image, PrintStream out) {
 		ddrAvailable = false;
-		//late bind / reflect to the DDR -interactive main class so as not to provide a compile time link
-		Class<?> ddriClass = null;
+		// late bind / reflect to the DDR -interactive main class so as not to provide a compile time link
+		Class<?> ddriClass;
 		try {
-			//ddriClass = Class.forName(DDR_INTERACTIVE_CLASS, true, image.getClass().getClassLoader());
 			ddriClass = Class.forName(DDR_INTERACTIVE_CLASS, true, image.getClass().getClassLoader());
 		} catch (ClassNotFoundException e) {
 			logger.fine("DDR is not enabled for " + image.getSource() + " (context " + id + "). It may be pre-DDR or not a core file e.g. javacore or PHD");
 			return;
 		}
-		Constructor<?> constructor = null;
+		Constructor<?> constructor;
 		try {
-			constructor = ddriClass.getConstructor(new Class[]{List.class, PrintStream.class});
+			constructor = ddriClass.getConstructor(List.class, PrintStream.class);
 		} catch (Exception e) {
 			logger.log(Level.FINE, "Error getting DDR Interactive constructor", e);
 			return;
 		}
 		try {
-			ArrayList<Object> contexts = new ArrayList<Object>();
-			contexts.add((DTFJContext)this);
+			List<Object> contexts = new ArrayList<>(1);
+			contexts.add(this);
 			ddriObject = constructor.newInstance(contexts, out);
-			ddriMethod = ddriObject.getClass().getMethod("processLine", new Class[]{String.class});
+			ddriMethod = ddriObject.getClass().getMethod("processLine", String.class);
 			ddrAvailable = true;
 			if (hasPropertyBeenSet(VERBOSE_MODE_PROPERTY)) {
 				out.println("DTFJ DDR is enabled for this core dump");
 			}
-		} catch(InvocationTargetException e) {
-			if((e.getCause() != null) && (e.getCause() instanceof UnsupportedOperationException)) {
-				//this is thrown if DDR is not supported for this DTFJ Image e.g. it's pre-DDR, or a javacore etc.
+		} catch (InvocationTargetException e) {
+			Throwable cause = e.getCause();
+			if ((cause != null) && (cause instanceof UnsupportedOperationException)) {
+				// this is thrown if DDR is not supported for this DTFJ Image e.g. it's pre-DDR, or a javacore etc.
 				logger.fine("DDR is not enabled for " + image.getSource() + " (context " + id + "). It may be pre-DDR or not a core file e.g. javacore or PHD");
 			} else {
-				//for an invocation exception show the cause not the reflection exception
-				ddrStartupException = e.getCause();
+				// for an invocation exception show the cause not the reflection exception
+				ddrStartupException = cause;
 				logger.log(Level.FINE, "Error creating DDR Interactive instance", e.getCause());
 			}
 		} catch (Exception e) {

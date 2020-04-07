@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,6 +72,7 @@ public abstract class CoreReaderSupport implements ICoreFileReader {
 		return _reader.readBytes(n);
 	}
 
+	@Override
 	public IAbstractAddressSpace getAddressSpace() {
 		if (null == _addressSpace) {
 			MemoryRange[] ranges = getMemoryRangesAsArray();
@@ -89,6 +90,7 @@ public abstract class CoreReaderSupport implements ICoreFileReader {
 		return _addressSpace;
 	}
 	
+	@Override
 	public boolean isTruncated() {
 		return false;
 	}
@@ -110,7 +112,8 @@ public abstract class CoreReaderSupport implements ICoreFileReader {
 		coreSeek(currentPos);
 		return canRead;
 	}
-	
+
+	@Override
 	public void releaseResources() throws IOException {
 		_reader.releaseResources();
 	}

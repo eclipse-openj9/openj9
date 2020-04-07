@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,16 +58,16 @@ public class InfoJitmCommand extends BaseJdmpviewCommand {
 	
 	private void showJITdMethods() {
 		JavaRuntime jr = ctx.getRuntime();
-		Iterator itJavaClassLoader = jr.getJavaClassLoaders();
+		Iterator<?> itJavaClassLoader = jr.getJavaClassLoaders();
 		while (itJavaClassLoader.hasNext())
 		{
 			JavaClassLoader jcl = (JavaClassLoader)itJavaClassLoader.next();
-			Iterator itJavaClass = jcl.getDefinedClasses();
+			Iterator<?> itJavaClass = jcl.getDefinedClasses();
 			
 			while (itJavaClass.hasNext())
 			{
 				JavaClass jc = (JavaClass)itJavaClass.next();
-				Iterator itJavaMethod = jc.getDeclaredMethods();
+				Iterator<?> itJavaMethod = jc.getDeclaredMethods();
 				
 				String jcName;
 				try {
@@ -96,7 +96,7 @@ public class InfoJitmCommand extends BaseJdmpviewCommand {
 
 					if (jm.getCompiledSections().hasNext())
 					{
-						Iterator itImageSection = jm.getCompiledSections();
+						Iterator<?> itImageSection = jm.getCompiledSections();
 						while (itImageSection.hasNext())
 						{
 							ImageSection is = (ImageSection)itImageSection.next();
