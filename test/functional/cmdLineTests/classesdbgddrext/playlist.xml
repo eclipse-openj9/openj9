@@ -64,7 +64,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-xlist $(Q)$(TEST_RESROOT)$(D)dbgextddrtests_excludes.xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<!-- j9ddr.jar is not supported on z/OS; OpenJ9 issue 1511 -->
-		<platformRequirements>^os.zos,^arch.aarch64</platformRequirements>
+		<platformRequirements>^os.zos</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
