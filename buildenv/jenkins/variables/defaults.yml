@@ -199,10 +199,8 @@ ppc64le_linux_xl:
   extends: ['ppc64le_linux', 'largeheap']
   excluded_tests:
     8:
-      - sanity.openjdk
       - special.system
     11:
-      - sanity.openjdk
       - special.system
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers /w JITSERVER
@@ -237,10 +235,7 @@ s390x_linux:
 s390x_linux_xl:
   extends: ['s390x_linux', 'largeheap']
   excluded_tests:
-    8:
-      - sanity.openjdk
-    11:
-      - sanity.openjdk
+     11:
       - special.system
 #========================================#
 # Linux S390 64bits Compressed Pointers /w JITSERVER
@@ -319,10 +314,7 @@ x86-64_linux_xl:
   extends: ['x86-64_linux', 'largeheap']
   excluded_tests:
     8:
-      - sanity.openjdk
       - special.system
-    11:
-      - sanity.openjdk
 #========================================#
 # Linux x86 64bits Compressed Pointers / Valhalla
 #========================================#
