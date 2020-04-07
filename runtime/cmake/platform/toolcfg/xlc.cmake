@@ -22,10 +22,10 @@
 
 list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -O3)
 
-list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -qsuppress=1540-1087:1540-1088:1540-1090)
+list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -qnortti -qsuppress=1540-1087:1540-1088:1540-1090)
 
 # OMR_PLATFORM_CXX_COMPILE_OPTIONS gets applied to the jit (which needs exceptions),
 # so we put these in the CMAKE_CXX_FLAGS instead
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qnortti -qnoeh")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qnoeh")
 
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -qpic=large")
