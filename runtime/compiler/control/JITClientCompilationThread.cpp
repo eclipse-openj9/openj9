@@ -1883,26 +1883,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, methodInfo, isRomClassForMethodInSC, sameLoaders, sameClass);
          }
          break;
-      case MessageType::ResolvedRelocatableMethod_storeValidationRecordIfNecessary:
-         {
-         auto recv = client->getRecvData<J9Method *, J9ConstantPool *, int32_t, bool, J9Class *>();
-         auto ramMethod = std::get<0>(recv);
-         auto constantPool = std::get<1>(recv);
-         auto cpIndex = std::get<2>(recv);
-         bool isStatic = std::get<3>(recv);
-         J9Class *definingClass = std::get<4>(recv);
-         J9Class *clazz = (J9Class *) J9_CLASS_FROM_METHOD(ramMethod);
-         if (!definingClass)
-            {
-            definingClass = (J9Class *) TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, constantPool, cpIndex, isStatic);
-            }
-         UDATA *classChain = NULL;
-         if (definingClass)
-            classChain = fe->sharedCache()->rememberClass(definingClass);
-
-         client->write(response, clazz, definingClass, classChain);
-         }
-         break;
       case MessageType::ResolvedRelocatableMethod_getFieldType:
          {
          auto recv = client->getRecvData<int32_t, TR_ResolvedJ9Method *>();

@@ -2038,68 +2038,55 @@ bool
 TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) comp->fe();
+
    bool storeClassInfo = true;
    bool fieldInfoCanBeUsed = false;
    TR_AOTStats *aotStats = ((TR_JitPrivateConfig *)fej9->_jitConfig->privateConfig)->aotStats;
    bool isStatic = (reloKind == TR_ValidateStaticField);
 
-   UDATA *classChain = NULL;
-   auto clientData = _fe->_compInfoPT->getClientData();
-   PersistentUnorderedMap<J9Class *, UDATA *> &classChainCache = clientData->getClassChainDataCache();
-   if (definingClass)
+   if (comp->getDebug())
       {
-      // if defining class is known, check if we already have a corresponding class chain cached
-      OMR::CriticalSection classChainDataMapMonitor(clientData->getClassChainDataMapMonitor());
-      auto it = classChainCache.find(definingClass);
-      if (it != classChainCache.end())
-         classChain = it->second;
-      }
-
-   if (!classChain)
-      {
-      _stream->write(JITServer::MessageType::ResolvedRelocatableMethod_storeValidationRecordIfNecessary, ramMethod, constantPool, cpIndex, isStatic, definingClass);
-      // 1. RAM class of ramMethod
-      // 2. defining class
-      // 3. class chain
-      auto recv = _stream->read<J9Class *, J9Class *, UDATA *>();
-
-      J9Class *clazz = std::get<0>(recv);
+      // guard this code with debug check, to avoid
+      // sending extra messages when not tracing
       traceMsg(comp, "storeValidationRecordIfNecessary:\n");
       traceMsg(comp, "\tconstantPool %p cpIndex %d\n", constantPool, cpIndex);
       traceMsg(comp, "\treloKind %d isStatic %d\n", reloKind, isStatic);
-      J9UTF8 *methodClassName = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) clazz));
-      traceMsg(comp, "\tmethod %p from class %p %.*s\n", ramMethod, clazz, J9UTF8_LENGTH(methodClassName), J9UTF8_DATA(methodClassName));
+      J9UTF8 *methodClassName =
+         J9ROMCLASS_CLASSNAME(
+            TR::Compiler->cls.romClassOf(
+               fej9->getClassOfMethod(reinterpret_cast<TR_OpaqueMethodBlock *>(ramMethod))));
+      traceMsg(comp,
+               "\tmethod %p from class %p %.*s\n",
+               ramMethod,
+               fej9->getClassOfMethod(reinterpret_cast<TR_OpaqueMethodBlock *>(ramMethod)),
+               J9UTF8_LENGTH(methodClassName),
+               J9UTF8_DATA(methodClassName));
       traceMsg(comp, "\tdefiningClass %p\n", definingClass);
+      }
 
-      if (!definingClass)
-         {
-         definingClass = std::get<1>(recv);
-         traceMsg(comp, "\tdefiningClass recomputed from cp as %p\n", definingClass);
-         }
+   if (!definingClass)
+      {
+      definingClass = (J9Class *) TR_ResolvedJ9JITServerMethod::definingClassFromCPFieldRef(comp, cpIndex, isStatic);
+      traceMsg(comp, "\tdefiningClass recomputed from cp as %p\n", definingClass);
+      }
 
-      if (!definingClass)
-         {
-         if (aotStats)
-            aotStats->numDefiningClassNotFound++;
-         return false;
-         }
+   if (!definingClass)
+      {
+      if (aotStats)
+         aotStats->numDefiningClassNotFound++;
+      return false;
+      }
 
+   if (comp->getDebug())
+      {
       J9UTF8 *className = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) definingClass));
       traceMsg(comp, "\tdefiningClass name %.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
-
-      // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
-      classChain = std::get<2>(recv);
       }
 
+   // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
+   void *classChain = fej9->sharedCache()->rememberClass(definingClass);
    if (!classChain)
       return false;
-
-      {
-      // class chain and defining class found, cache here
-      OMR::CriticalSection classChainDataMapMonitor(clientData->getClassChainDataMapMonitor());
-      classChainCache.insert(std::make_pair(definingClass, classChain));
-      }
-   
 
    bool inLocalList = false;
    TR::list<TR::AOTClassInfo*>* aotClassInfo = comp->_aotClassInfo;

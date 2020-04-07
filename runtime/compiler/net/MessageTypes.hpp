@@ -97,7 +97,6 @@ enum MessageType : uint16_t
    ResolvedMethod_definingClassFromCPFieldRef,
 
    ResolvedRelocatableMethod_createResolvedRelocatableJ9Method,
-   ResolvedRelocatableMethod_storeValidationRecordIfNecessary,
    ResolvedRelocatableMethod_fieldAttributes,
    ResolvedRelocatableMethod_staticAttributes,
    ResolvedRelocatableMethod_getFieldType,
@@ -367,7 +366,6 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "ResolvedMethod_dynamicConstant", // 63
    "ResolvedMethod_definingClassFromCPFieldRef", // 64
    "ResolvedRelocatableMethod_createResolvedRelocatableJ9Method", // 65
-   "ResolvedRelocatableMethod_storeValidationRecordIfNecessary", // 66
    "ResolvedRelocatableMethod_fieldAttributes", // 67
    "ResolvedRelocatableMethod_staticAttributes", // 68
    "ResolvedRelocatableMethod_getFieldType", // 69
