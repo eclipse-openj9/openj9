@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -516,6 +516,21 @@ public class MethodMetaData
 					}
 					while (! savedGPRs.eq(0));
 				}
+			} else if (J9ConfigFlags.arch_aarch64) {
+				savedGPRs = registerSaveDescription.bitAnd(0xFFFF0000L);
+
+				if (! savedGPRs.eq(0)) {
+					saveOffset = registerSaveDescription.bitAnd(0xFFFF);
+					saveCursor = walkState.bp.subOffset(saveOffset);
+					do {
+						if (savedGPRs.anyBitsIn(1)) {
+							walkState.registerEAs[mapCursor] = saveCursor;
+							saveCursor = saveCursor.add(1);
+						}
+						++mapCursor;
+						savedGPRs = savedGPRs.rightShift(1);
+					} while (! savedGPRs.eq(0));
+				}
 			}
 
 			jitPrintRegisterMapArray(walkState, "Frame");
@@ -569,6 +584,11 @@ public class MethodMetaData
 				   12 slots saved integer registers
 				*/
 				return new UDATA(12);
+			} else if (J9ConfigFlags.arch_aarch64) {
+				/* AArch64 data resolve shape
+				 * 29 integer registers (not saving x29/x30/x31)
+				 */
+				return new UDATA(29);
 			} else if (J9ConfigFlags.arch_s390) {
 				/* 390 data resolve shape
 				   16 integer registers
