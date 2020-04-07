@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -O3)
+list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -O3 -g)
 
 list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -qnortti -qsuppress=1540-1087:1540-1088:1540-1090)
 
