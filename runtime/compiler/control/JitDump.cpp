@@ -20,54 +20,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <algorithm>
-#include <limits.h>
-#include <stdarg.h>
 #include "control/JitDump.hpp"
 
 #include "codegen/CodeGenerator.hpp"
-#include "compile/CompilationTypes.hpp"
-#include "compile/Method.hpp"
-#include "compile/ResolvedMethod.hpp"
-#include "control/OptimizationPlan.hpp"
-#include "control/OptionsUtil.hpp"
-#include "control/Recompilation.hpp"
-#include "control/RecompilationInfo.hpp"
-#include "control/CompilationController.hpp"
-#include "env/ClassLoaderTable.hpp"
-#include "env/CompilerEnv.hpp"
-#include "env/IO.hpp"
-#include "env/J2IThunk.hpp"
-#include "env/PersistentCHTable.hpp"
-#include "env/PersistentInfo.hpp"
-#include "env/jittypes.h"
-#include "env/ClassTableCriticalSection.hpp"
-#include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
-#include "il/DataTypes.hpp"
-#include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
-#include "infra/Monitor.hpp"
-#include "infra/MonitorTable.hpp"
-#include "infra/CriticalSection.hpp"
-#include "optimizer/DebuggingCounters.hpp"
-#include "optimizer/JProfilingBlock.hpp"
-#include "runtime/CodeCacheManager.hpp"
-#include "runtime/HookHelpers.hpp"
-#include "runtime/MethodMetaData.h"
-#include "runtime/RelocationRuntime.hpp"
-#include "runtime/asmprotos.h"
-#include "runtime/codertinit.hpp"
 #include "control/MethodToBeCompiled.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
-#include "env/VMJ9.h"
-#include "env/j9method.h"
 #include "env/ut_j9jit.h"
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
-#include "ilgen/J9ByteCodeIterator.hpp"
-#include "runtime/IProfiler.hpp"
-#include "runtime/HWProfiler.hpp"
-#include "env/SystemSegmentProvider.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/JITServerHelpers.hpp"
 #include "runtime/JITServerIProfiler.hpp"
@@ -83,7 +44,7 @@ blankDumpSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpI
 
    // Returning J9PORT_SIG_EXCEPTION_RETURN will make us come back to the same crashing instruction over and over
    //
-   return J9PORT_SIG_EXCEPTION_RETURN; // FIXME: is this the right return type? - This appears to be the right return type
+   return J9PORT_SIG_EXCEPTION_RETURN;
    }
 
 typedef struct DumpCurrentILParamenters
