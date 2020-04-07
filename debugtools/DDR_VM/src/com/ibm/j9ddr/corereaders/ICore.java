@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,7 +68,14 @@ public interface ICore
 	 * @return Property set for this core
 	 */
 	public Properties getProperties();
-	
+
+	/**
+	 * Is this core file truncated (i.e. incomplete)?
+	 */
+	public default boolean isTruncated() {
+		return false;
+	}
+
 	/**
 	 * Close the handle to the core file and release any resources
 	 */
