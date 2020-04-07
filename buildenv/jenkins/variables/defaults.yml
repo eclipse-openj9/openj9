@@ -276,10 +276,6 @@ ppc64_aix:
       14: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
   excluded_tests:
-    8:
-      - sanity.openjdk
-    11:
-      - sanity.openjdk
       - special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers
@@ -375,10 +371,7 @@ x86-64_windows:
   build_env:
     vars: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
   excluded_tests:
-    8:
-      - sanity.openjdk
     11:
-      - sanity.openjdk
       - special.system
 #========================================#
 # Windows x86 64bits Large Heap
@@ -405,10 +398,7 @@ x86-32_windows:
       8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM32/bin:/cygdrive/c/openjdk/nasm-2.13.03'
   excluded_tests:
     8:
-      - sanity.openjdk
       - special.system
-    11:
-      - sanity.openjdk
 #========================================#
 # OSX x86 64bits Compressed Pointers
 #========================================#
@@ -436,10 +426,7 @@ x86-64_mac:
       all: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
   excluded_tests:
-    8:
-      - sanity.openjdk
     11:
-      - sanity.openjdk
       - special.system
 #========================================#
 # OSX x86 64bits Large Heap
