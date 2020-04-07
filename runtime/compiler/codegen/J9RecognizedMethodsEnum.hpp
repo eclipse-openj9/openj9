@@ -205,6 +205,7 @@
 
    java_lang_StringUTF16_getChar,
    java_lang_StringUTF16_indexOf,
+   java_lang_StringUTF16_newBytesFor,
    java_lang_StringUTF16_toBytes,
 
    java_lang_StringBuffer_append,
