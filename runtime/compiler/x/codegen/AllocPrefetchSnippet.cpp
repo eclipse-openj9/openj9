@@ -83,20 +83,6 @@ uint8_t *TR::X86AllocPrefetchSnippet::emitSnippetBody()
       {
       disp32 = (int32_t)(helperAddress - (uintptr_t)(buffer+4));
       }
-   else
-      {
-      TR_RuntimeHelper helper = (comp->getOption(TR_EnableNewX86PrefetchTLH)) ? TR_X86newPrefetchTLH : TR_X86prefetchTLH;
-      helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
-      disp32 = cg()->branchDisplacementToHelperOrTrampoline(buffer+4, helperSymRef);
-      if (fej9->needRelocationsForHelpers())
-         {
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
-                                                                                (uint8_t *)helperSymRef,
-                                                                                TR_HelperAddress,
-                                                                                cg()),
-                                   __FILE__, __LINE__, getNode());
-         }
-      }
 
    *(int32_t *)buffer = disp32;
    buffer += 4;

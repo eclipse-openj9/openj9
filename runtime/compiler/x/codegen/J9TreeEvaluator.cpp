@@ -6339,8 +6339,6 @@ static void genHeapAlloc(
             useDirectPrefetchCall = true;
             }
 
-         if (!comp->getOption(TR_EnableNewX86PrefetchTLH))
-            {
             generateRegRegInstruction(SUB4RegReg, node, tempReg, eaxReal, cg);
 
             generateMemRegInstruction(SUB4MemReg,
@@ -6368,19 +6366,6 @@ static void genHeapAlloc(
 #endif
                generateImmSymInstruction(CALLImm4, node, (uintptr_t)helperSymbol->getMethodAddress(), helperSymRef, cg);
                }
-            }
-         else
-            {
-            // This currently only works when 'tlhPrefetchFTA' field is 4 bytes (on 32-bit or a
-            // compressed references build).  True 64-bit support requires this field be widened
-            // to 64-bits.
-            //
-            generateRegMemInstruction(CMP4RegMem, node,
-                                      tempReg,
-                                      generateX86MemoryReference(vmThreadReg,tlhPrefetchFTA_offset, cg),
-                                      cg);
-            generateLabelInstruction(JAE4, node, prefetchSnippetLabel, cg);
-            }
 
          generateLabelInstruction(LABEL, node, restartLabel, cg);
          }
