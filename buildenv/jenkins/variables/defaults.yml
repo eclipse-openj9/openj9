@@ -248,10 +248,10 @@ s390x_linux_jit:
 ppc64_aix:
   extends: ['debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
-    8: '/usr/java7'
-    11: '/usr/java11_64'
-    14: '/usr/java13_64'
-    next: '/usr/java13_64'
+    8: '/opt/java7'
+    11: '/opt/java11_64'
+    14: '/opt/java13_64'
+    next: '/opt/java13_64'
   release:
     all: 'aix-ppc64-server-release'
     8: 'aix-ppc64-normal-server-release'
