@@ -1975,6 +1975,10 @@ static void loadLibrary(Class<?> caller, String libName) {
  * @since 1.4
  */
 public void setClassAssertionStatus(String cname, boolean enable) {
+	setClassAssertionStatusImpl(cname, enable);
+}
+
+private void setClassAssertionStatusImpl(String cname, boolean enable) {
 	if (!isParallelCapable) {
 		synchronized(this) {
 			setClassAssertionStatusHelper(cname, enable);
@@ -2002,6 +2006,10 @@ private void setClassAssertionStatusHelper(final String cname, final boolean ena
  * @since 1.4
  */
 public void setPackageAssertionStatus(String pname, boolean enable) {
+	setPackageAssertionStatusImpl(pname, enable);
+}
+
+private void setPackageAssertionStatusImpl(String pname, boolean enable) {
 	if (!isParallelCapable) {
 		synchronized(this) {
 			setPackageAssertionStatusHelper(pname, enable);
@@ -2012,7 +2020,6 @@ public void setPackageAssertionStatus(String pname, boolean enable) {
 		}
 	}
 }
-
 
 private void setPackageAssertionStatusHelper(final String pname, final boolean enable) {
 	if (packageAssertionStatus == null ) {
@@ -2030,6 +2037,10 @@ private void setPackageAssertionStatusHelper(final String pname, final boolean e
  * @since 1.4
  */
 public void setDefaultAssertionStatus(boolean enable){
+	setDefaultAssertionStatusImpl(enable);
+}
+
+private void setDefaultAssertionStatusImpl(boolean enable){
 	if (!isParallelCapable) {
 		synchronized(this) {
 			defaultAssertionStatus = enable;
@@ -2217,16 +2228,16 @@ private void initializeClassLoaderAssertStatus() {
 					if (bootLoader) {
 						continue;
 					}
-					setDefaultAssertionStatus(def);
+					setDefaultAssertionStatusImpl(def);
 				} else {
 					String str = vmargExtraInfo;
 					int len = str.length();
 					if ( len > 3 && str.charAt(len-1) == '.'  && 
 						str.charAt(len-2) == '.' && str.charAt(len-3) == '.') {
 						str = str.substring(0,len-3);
-						setPackageAssertionStatus(str, def);
+						setPackageAssertionStatusImpl(str, def);
 					} else {
-						setClassAssertionStatus(str, def);
+						setClassAssertionStatusImpl(str, def);
 					}
 				}
 		} else if ( vmargOptions.compareTo("-esa") == 0  //$NON-NLS-1$
@@ -2236,7 +2247,7 @@ private void initializeClassLoaderAssertStatus() {
 		) {
 			if (bootLoader) {
 				boolean def = vmargOptions.charAt(1) == 'e';
-				setDefaultAssertionStatus(def);
+				setDefaultAssertionStatusImpl(def);
 			}
 		}
 
