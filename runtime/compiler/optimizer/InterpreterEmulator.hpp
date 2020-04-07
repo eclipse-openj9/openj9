@@ -56,7 +56,6 @@
 #include "optimizer/Inliner.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
 #include "optimizer/J9Inliner.hpp"
-#include "optimizer/PreExistence.hpp" // TR_PREXARGINFO_TRACER_CLASS
 
 class IconstOperand;
 class KnownObjOperand;
@@ -158,7 +157,7 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
             TR::ResolvedMethodSymbol * methodSymbol,
             TR_J9VMBase * fe,
             TR::Compilation * comp,
-            TR_PREXARGINFO_TRACER_CLASS *tracer,
+            TR_LogTracer *tracer,
             TR_EstimateCodeSize *ecs)
          : Base(methodSymbol, comp),
            _calltarget(calltarget),
@@ -170,7 +169,7 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
          _flags = NULL;
          _stacks = NULL;
          }
-      TR_PREXARGINFO_TRACER_CLASS *tracer() { return _tracer; }
+      TR_LogTracer *tracer() { return _tracer; }
       /* \brief Initialize data needed for looking for callsites
        *
        * \param blocks
@@ -285,7 +284,7 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
       bool isCurrentCallUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod, bool isUnresolvedInCP);
       void debugUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod);
 
-      TR_PREXARGINFO_TRACER_CLASS *_tracer;
+      TR_LogTracer *_tracer;
       TR_EstimateCodeSize *_ecs;
       Operand * _unknownOperand; // used whenever the iterator can't reason about an operand
       TR_CallTarget *_calltarget; // the target method to inline
