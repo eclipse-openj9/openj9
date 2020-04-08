@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2017 IBM Corp. and others
+ * Copyright (c) 2011, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,6 @@ import com.ibm.dtfj.image.ImageProcess;
 import com.ibm.dtfj.java.JavaRuntime;
 import com.ibm.dtfj.utils.file.FileManager;
 import com.ibm.java.diagnostics.utils.IContext;
-import com.ibm.java.diagnostics.utils.IDTFJContext;
 import com.ibm.java.diagnostics.utils.commands.CommandException;
 import com.ibm.jvm.dtfjview.CombinedContext;
 import com.ibm.jvm.dtfjview.JdmpviewContextManager;
@@ -264,4 +263,3 @@ public class OpenCommand extends BaseJdmpviewCommand {
 	}
 
 }
-

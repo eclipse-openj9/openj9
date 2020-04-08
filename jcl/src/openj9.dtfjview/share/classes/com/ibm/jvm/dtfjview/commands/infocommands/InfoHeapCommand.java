@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,8 +72,7 @@ public class InfoHeapCommand extends BaseJdmpviewCommand {
 
 
 	private void printHeapInfo(String param, JavaRuntime runtime, PrintStream out){
-		
-		Iterator itHeaps = runtime.getHeaps();
+		Iterator<?> itHeaps = runtime.getHeaps();
 		int countheaps = 1;
 		
 		while (itHeaps.hasNext())
@@ -92,8 +91,7 @@ public class InfoHeapCommand extends BaseJdmpviewCommand {
 		}
 	}
 	private void printSectionInfo(JavaHeap theHeap, PrintStream out){
-		
-		Iterator itSections = theHeap.getSections();
+		Iterator<?> itSections = theHeap.getSections();
 		int countSections = 1;
 		
 		while (itSections.hasNext()){
@@ -118,8 +116,7 @@ public class InfoHeapCommand extends BaseJdmpviewCommand {
 	private boolean searchForHeap(String param, JavaRuntime jr, PrintStream out){
 		
 		boolean foundHeap = false;
-		
-		Iterator itHeaps = jr.getHeaps();
+		Iterator<?> itHeaps = jr.getHeaps();
 		int countheaps = 1;
 		
 		while (itHeaps.hasNext())
@@ -148,7 +145,7 @@ public class InfoHeapCommand extends BaseJdmpviewCommand {
 		long totalObjects = 0;				//total number of objects on the heap
 		long totalCorruptObjects = 0;		//total number of corrupt objects 
 		
-		Iterator itSections = theHeap.getSections();
+		Iterator<?> itSections = theHeap.getSections();
 		Object obj = null;					//object returned from various iterators
 		CorruptData cdata = null;			//corrupt data
 		while (itSections.hasNext()){
@@ -167,7 +164,7 @@ public class InfoHeapCommand extends BaseJdmpviewCommand {
 		}
 		out.print("\t  Size of heap: "+ size + " bytes\n");
 		
-		Iterator itObjects = theHeap.getObjects();
+		Iterator<?> itObjects = theHeap.getObjects();
 		try{
 			while (itObjects.hasNext()){
 				obj = itObjects.next();
