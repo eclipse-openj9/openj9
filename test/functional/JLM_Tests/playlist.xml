@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1343,7 +1343,8 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>^os.zos,bits.64</platformRequirements>
+		<!-- Temporarily disable this test on AArch64; github.com/eclipse/openj9/issues/8967 -->
+		<platformRequirements>^os.zos,bits.64,^arch.aarch64</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
