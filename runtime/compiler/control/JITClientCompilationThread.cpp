@@ -120,7 +120,7 @@ handler_IProfiler_profilingSample(JITServer::ClientStream *client, TR_J9VM *fe, 
    if (wholeMethodInfo)
       {
       // Serialize all the information related to this method
-      abort = iProfiler->serializeAndSendIProfileInfoForMethod(method, comp, client, usePersistentCache);
+      abort = iProfiler->serializeAndSendIProfileInfoForMethod(method, comp, client, usePersistentCache, isCompiled);
       }
    if (!wholeMethodInfo || abort) // Send information just for this entry
       {
@@ -135,11 +135,11 @@ handler_IProfiler_profilingSample(JITServer::ClientStream *client, TR_J9VM *fe, 
             auto storage = (TR_IPBCDataStorageHeader*)&entryBytes[0];
             uintptr_t methodStartAddress = (uintptr_t)TR::Compiler->mtd.bytecodeStart(method);
             entry->serialize(methodStartAddress, storage, comp->getPersistentInfo());
-            client->write(JITServer::MessageType::IProfiler_profilingSample, entryBytes, false, usePersistentCache);
+            client->write(JITServer::MessageType::IProfiler_profilingSample, entryBytes, false, usePersistentCache, isCompiled);
             }
          else
             {
-            client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), false, usePersistentCache);
+            client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), false, usePersistentCache, isCompiled);
             }
          // Unlock the entry
          if (auto callGraphEntry = entry->asIPBCDataCallGraph())
@@ -148,7 +148,7 @@ handler_IProfiler_profilingSample(JITServer::ClientStream *client, TR_J9VM *fe, 
          }
       else // No valid info for specified bytecode index
          {
-         client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), false, usePersistentCache);
+         client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), false, usePersistentCache, isCompiled);
          }
       }
    }
@@ -2597,7 +2597,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto count = std::get<2>(recv);
          TR_IProfiler * iProfiler = fe->getIProfiler();
          iProfiler->setCallCount(method, bcIndex, count, comp);
-         client->write(response, JITServer::Void());
+
+         client->write(response, TR::CompilationInfo::isCompiled((J9Method *)method));
          }
          break;
       case MessageType::Recompilation_getExistingMethodInfo:

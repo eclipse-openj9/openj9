@@ -351,7 +351,7 @@ class ClientSessionData
    TR::Monitor *getClassMapMonitor() { return _classMapMonitor; }
    TR::Monitor *getClassChainDataMapMonitor() { return _classChainDataMapMonitor; }
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
-   bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
+   bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry, bool isCompiled);
    VMInfo *getOrCacheVMInfo(JITServer::ServerStream *stream);
    void clearCaches(); // destroys _chTableClassMap, _romClassMap and _J9MethodMap
    TR_AddressSet& getUnloadedClassAddresses()
