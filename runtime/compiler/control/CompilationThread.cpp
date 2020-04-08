@@ -49,6 +49,7 @@
 #include "codegen/PrivateLinkage.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/ResolvedMethod.hpp"
+#include "control/JitDump.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "control/MethodToBeCompiled.hpp"
@@ -193,19 +194,6 @@ TR::CompilationInfoPerThreadBase::setCompilation(TR::Compilation *compiler)
 #endif
    _compiler = compiler;
    }
-
-#ifdef J9VM_RAS_DUMP_AGENTS
-static UDATA
-blankDumpSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg)
-   {
-   J9VMThread *vmThread = (J9VMThread *) arg;
-   TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "vmThread=%p Recursive crash occurred. Aborting JIT dump.", vmThread);
-
-   // Returning J9PORT_SIG_EXCEPTION_RETURN will make us come back to the same crashing instruction over and over
-   //
-   return J9PORT_SIG_EXCEPTION_RETURN; // FIXME: is this the right return type? - This appears to be the right return type
-   }
-#endif
 
 #if defined(J9VM_OPT_JITSERVER)
 thread_local TR::CompilationInfoPerThread *TR::compInfoPT;
