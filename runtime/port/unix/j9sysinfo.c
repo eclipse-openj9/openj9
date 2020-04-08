@@ -1675,8 +1675,15 @@ j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, const J9CacheInfoQue
 	) {
 		/* L1 data cache line size */
 		int32_t rc = (int32_t)sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
-		if (rc >= 0) {
+		if (rc > 0) {
 			result = rc;
+		} else if (rc == 0) {
+			/*
+			 * Cache line size is unavailable on some systems
+			 * Use 64 as the default value because Arm Cortex ARMv8-A cores
+			 * have L1 data cache lines of that size
+			 */
+			result = 64;
 		}
 	}
 #endif
