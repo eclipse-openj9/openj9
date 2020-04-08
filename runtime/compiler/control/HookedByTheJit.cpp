@@ -3930,10 +3930,9 @@ void lowerCompilationLimitsOnLowVirtualMemory(TR::CompilationInfo *compInfo, J9V
             }
          }
 
-      // If the scratch space limit is still the default value, then change it now
-      if (TR::Options::getScratchSpaceLimit() == (DEFAULT_SCRATCH_SPACE_LIMIT_KB * 1024))
+      // Decrease the scratch space limit
+      if (TR::Options::getScratchSpaceLimit() > TR::Options::getScratchSpaceLimitKBWhenLowVirtualMemory()*1024)
          {
-         TR_ASSERT(DEFAULT_SCRATCH_SPACE_LIMIT_KB > TR::Options::getScratchSpaceLimitKBWhenLowVirtualMemory(), "assertion failure");
          TR::Options::setScratchSpaceLimit(TR::Options::getScratchSpaceLimitKBWhenLowVirtualMemory() * 1024);
          if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
             {
