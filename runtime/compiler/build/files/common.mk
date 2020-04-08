@@ -275,6 +275,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/control/DLLMain.cpp \
     compiler/control/HookedByTheJit.cpp \
     compiler/control/J9Options.cpp \
+    compiler/control/JitDump.cpp \
     compiler/control/MethodToBeCompiled.cpp \
     compiler/control/rossa.cpp \
     compiler/env/ClassLoaderTable.cpp \
