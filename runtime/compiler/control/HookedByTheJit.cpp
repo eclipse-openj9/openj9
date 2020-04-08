@@ -3136,16 +3136,26 @@ void jitMethodBreakpointed(J9VMThread * vmThread, J9Method *j9method)
  */
 void jitIllegalFinalFieldModification(J9VMThread *currentThread, J9Class *fieldClass)
    {
+   J9JITConfig * jitConfig = currentThread->javaVM->jitConfig;
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      // Don't execute this hook at the jitserver side
+      // This piece of code will be removed once all JIT hooks is disabled at the jitserver side
+      fieldClass->classFlags |= J9ClassHasIllegalFinalFieldModifications;
+      return;
+      }
+#endif
    // Set the bit so that VM doesn't report the modification next time
    fieldClass->classFlags |= J9ClassHasIllegalFinalFieldModifications;
 
-   J9JITConfig * jitConfig = currentThread->javaVM->jitConfig;
    TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, currentThread);
    int32_t length;
    char *className = fe->getClassNameChars((TR_OpaqueClassBlock*)fieldClass, length);
    reportHook(currentThread, "jitIllegalFinalFieldModification", "class %p %.*s", fieldClass, length, className);
 
-   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    TR_RuntimeAssumptionTable * rat = compInfo->getPersistentInfo()->getRuntimeAssumptionTable();
    if (rat)
       {
@@ -3547,12 +3557,13 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
+#if defined(J9VM_OPT_JITSERVER)
+   TR_ASSERT_FATAL(compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER, "updateCHTable() should not be called on JITServer!\n");
+#endif
+
    TR_PersistentCHTable * table = 0;
    if (TR::Options::getCmdLineOptions()->allowRecompilation()
       && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
-#if defined(J9VM_OPT_JITSERVER)
-      && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
-#endif
       )
       table = compInfo->getPersistentInfo()->getPersistentCHTable();
 
@@ -4268,30 +4279,32 @@ static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA e
 
    jitAcquireClassTableMutex(vmThread);
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() 
-      && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
 #if defined(J9VM_OPT_JITSERVER)
-      && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
 #endif
-      )
       {
-      if (!initFailed && !compInfo->getPersistentInfo()->getPersistentCHTable()->classGotInitialized(vm, compInfo->persistentMemory(), clazz))
-         initFailed = true;
+      if (TR::Options::getCmdLineOptions()->allowRecompilation() 
+         && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
+         )
+         {
+         if (!initFailed && !compInfo->getPersistentInfo()->getPersistentCHTable()->classGotInitialized(vm, compInfo->persistentMemory(), clazz))
+            initFailed = true;
 
-      if (!initFailed &&
-          !vm->isInterfaceClass(clazz))
-         updateCHTable(vmThread, cl);
-      }
-   else
-      {
-      if (!initFailed && !updateCHTable(vmThread, cl))
-         initFailed = true;
-      }
+         if (!initFailed &&
+             !vm->isInterfaceClass(clazz))
+            updateCHTable(vmThread, cl);
+         }
+      else
+         {
+         if (!initFailed && !updateCHTable(vmThread, cl))
+            initFailed = true;
+         }
 
-   if (initFailed)
-      {
-      TR_PersistentClassInfo *info = compInfo->getPersistentInfo()->getPersistentCHTable()->findClassInfo(clazz);
-      compInfo->getPersistentInfo()->getPersistentCHTable()->removeClass(vm, clazz, info, false);
+      if (initFailed)
+         {
+         TR_PersistentClassInfo *info = compInfo->getPersistentInfo()->getPersistentCHTable()->findClassInfo(clazz);
+         compInfo->getPersistentInfo()->getPersistentCHTable()->removeClass(vm, clazz, info, false);
+         }
       }
 
    classPreinitializeEvent->failed = initFailed;
@@ -7205,7 +7218,11 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       }
    j9thread_monitor_exit(javaVM->vmThreadListMutex);
 
-   if (!vmj9->isAOT_DEPRECATED_DO_NOT_USE())
+   if (!vmj9->isAOT_DEPRECATED_DO_NOT_USE()
+#if defined(J9VM_OPT_JITSERVER)
+      && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+#endif
+      )
       {
       if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_JNI_NATIVE_REGISTERED, jitHookJNINativeRegistered, OMR_GET_CALLSITE(), NULL))
          {

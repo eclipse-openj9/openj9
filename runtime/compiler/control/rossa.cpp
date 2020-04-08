@@ -1315,8 +1315,14 @@ onLoadInternal(
       numCodeCachesToCreateAtStartup = 4;
 #endif
 
-   if (!persistentMemory->getPersistentInfo()->getRuntimeAssumptionTable()->init())
-      return -1;
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
+#endif
+      {
+      if (!persistentMemory->getPersistentInfo()->getRuntimeAssumptionTable()->init())
+         return -1;
+      }
 
    TR_PersistentClassLoaderTable *loaderTable = new (PERSISTENT_NEW) TR_PersistentClassLoaderTable(persistentMemory);
    if (loaderTable == NULL)
