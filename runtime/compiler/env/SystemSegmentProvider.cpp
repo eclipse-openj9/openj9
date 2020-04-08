@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,6 +89,10 @@ J9::SystemSegmentProvider::request(size_t requiredSize)
       return recycledSegment;
       }
 
+   if (_regionBytesAllocated + roundedSize > _allocationLimit)
+      {
+      throw std::bad_alloc();
+      }
    if (remaining(_currentSystemSegment) >= roundedSize)
       {
       // Only allocate small segments from _currentSystemSegment
@@ -97,10 +101,6 @@ J9::SystemSegmentProvider::request(size_t requiredSize)
       }
 
    size_t systemSegmentSize = std::max(roundedSize, _systemSegmentSize);
-   if (_systemBytesAllocated + systemSegmentSize > _allocationLimit )
-      {
-      throw std::bad_alloc();
-      }
 
    J9MemorySegment &newSegment = _systemSegmentAllocator.request(systemSegmentSize);
    TR_ASSERT(
