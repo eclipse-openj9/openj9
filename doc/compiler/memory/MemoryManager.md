@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2018 IBM Corp. and others
+Copyright (c) 2017, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -224,3 +224,20 @@ calling it `TR::PersistentSegmentProvider`, and have it use
 `TR::PersistentAllocator`. The `TR::Region` would then be provided this 
 `TR::PersistentSegmentProvider` object.
 
+The mechanism for limiting the memory usage during compilation can be summarized as:
+
+Default size of system segments allocatd by `J9::SystemSegmentProvider` is 16 MB. 
+These system segments are then carved into smaller segments based on the size requested
+which is rounded up to 64 KB. The cumulative memory usage of these system segments is limited 
+by the value of the option `scratchSpaceLimit`. When the scratch space limit is not a multiple
+of system segment size, it is possible that the total memory allocated using system segments
+would go beyond the scratch space limit. However, the logic in `J9::SystemSegmentProvider::request`
+would ensures that the compiler does not touch memory beyond the scratch space limit.
+So the physical memory usage due to scratch space stays with the limit specified. 
+If a request is made that would cause physical memory usage to go beyond the limit,
+then `J9::SystemSegmentProvider::request` would throw `std::bad_alloc`.
+
+When allocating a new system segment `J9::SegmentAllocator::allocate` also checks that the system
+has enough free physical memory. This is done by verifying that the free physical memory is more
+than the system segment size (=16 MB) plus an additional buffer, which is governed by the 
+option `safeReservePhysicalMemoryValue`. If this condition fails, then the compilation thread is suspended.

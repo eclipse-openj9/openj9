@@ -48,6 +48,7 @@
 #include "MHInterpreter.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
 #include "ObjectHash.hpp"
+#include "ValueTypeHelpers.hpp"
 #include "VMHelpers.hpp"
 #include "VMAccess.hpp"
 #include "ObjectAllocationAPI.hpp"
@@ -7323,56 +7324,6 @@ done:
 		return rc;
 	}
 
-	/*
-	 * Determine if the two objects are substitutable
-	 *
-	 * @param[in] lhs the lhs object of acmp bytecodes
-	 * @param[in] rhs the rhs object of acmp bytecodes
-	 * return true if they are substitutable and false otherwise
-	 */
-	VMINLINE bool
-	acmp(j9object_t lhs, j9object_t rhs)
-	{
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		bool acmpResult = false;
-		if (rhs == lhs) {
-			acmpResult = true;
-		} else if ((NULL == rhs) || (NULL == lhs)) {
-			acmpResult = false;
-		} else {
-			J9Class * lhsClass = J9OBJECT_CLAZZ(_currentThread, lhs);
-			J9Class * rhsClass = J9OBJECT_CLAZZ(_currentThread, rhs);
-			if ((J9_IS_J9CLASS_VALUETYPE(rhsClass)
-				&& J9_IS_J9CLASS_VALUETYPE(lhsClass))
-				&& (rhsClass == lhsClass)
-			) {
-				acmpResult = isSubstitutable(lhs, rhs);
-			}
-		}
-		return acmpResult;
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-		return (rhs == lhs);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-	}
-
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	/*
-	 * Determine if the two valueTypes are substitutable when rhs.class equals lhs.class
-	 *
-	 * @param[in] lhs the lhs object of acmp bytecodes and it's a valueType
-	 * @param[in] rhs the rhs object of acmp bytecodes and it's a valueType
-	 * return true if they are substitutable and false otherwise
-	 */
-	VMINLINE bool
-	isSubstitutable(j9object_t lhs, j9object_t rhs)
-	{
-		/*
-		 * TODO: this will be updated in a future PR.
-		 */
-		return false;
-	}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-
 	/* ..., lhs, rhs => ... */
 	VMINLINE VM_BytecodeAction
 	ifacmpeq(REGISTER_ARGS_LIST)
@@ -7382,7 +7333,7 @@ done:
 		j9object_t lhs = *(j9object_t*)(_sp + 1);
 		U_8 *profilingCursor = startProfilingRecord(REGISTER_ARGS, sizeof(U_8));
 		_sp += 2;
-		if(acmp(lhs, rhs)) {
+		if(VM_ValueTypeHelpers::acmp(_currentThread, _objectAccessBarrier, lhs, rhs)) {
 			_pc += *(I_16*)(_pc + 1);
 			if (NULL != profilingCursor) {
 				*profilingCursor = 1;
@@ -7406,7 +7357,7 @@ done:
 		j9object_t lhs = *(j9object_t*)(_sp + 1);
 		U_8 *profilingCursor = startProfilingRecord(REGISTER_ARGS, sizeof(U_8));
 		_sp += 2;
-		if(!acmp(lhs, rhs)) {
+		if(!VM_ValueTypeHelpers::acmp(_currentThread, _objectAccessBarrier, lhs, rhs)) {
 			_pc += *(I_16*)(_pc + 1);
 			if (NULL != profilingCursor) {
 				*profilingCursor = 1;
@@ -8519,7 +8470,8 @@ retry:
 				goto done;
 			}
 
-			copyObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, objectRefClass, false, false);
+			/* need to zero memset the memory so padding bytes are zeroed for memcmp-like comparisons */
+			copyObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, objectRefClass, true, false);
 			if (NULL == copyObjectRef) {
 				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 				pushObjectInSpecialFrame(REGISTER_ARGS, originalObjectRef);

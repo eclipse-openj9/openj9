@@ -429,7 +429,10 @@ public class JITRegMap {
 					0x11,   /* jit_r17 */
 					0x12,   /* jit_r18 */
 					0x13,   /* jit_r19 */
-					0x14    /* jit_r20 */
+					0x14,   /* jit_r20 */
+					0x1D,   /* jit_r29 */
+					0x1E,   /* jit_r30 */
+					0x1F    /* jit_r31 */
 			};
 
 			jitCalleeSavedRegisterList = new int[] {
