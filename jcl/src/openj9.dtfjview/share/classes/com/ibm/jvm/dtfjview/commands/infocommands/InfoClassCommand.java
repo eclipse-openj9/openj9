@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,6 @@ import java.util.Stack;
 
 import com.ibm.dtfj.image.CorruptData;
 import com.ibm.dtfj.image.CorruptDataException;
-import com.ibm.dtfj.image.DataUnavailable;
 import com.ibm.dtfj.java.JavaClass;
 import com.ibm.dtfj.java.JavaClassLoader;
 import com.ibm.dtfj.java.JavaHeap;
@@ -245,12 +244,12 @@ public class InfoClassCommand extends BaseJdmpviewCommand {
 		JavaRuntime runtime = ctx.getRuntime();
 		classInstanceCounts.put(runtime, classesOfThisRuntime);
 
-		Iterator itClassLoader = runtime.getJavaClassLoaders();
+		Iterator<?> itClassLoader = runtime.getJavaClassLoaders();
 
 		while (itClassLoader.hasNext()) {
 			JavaClassLoader jcl = (JavaClassLoader)itClassLoader.next();
 			
-			Iterator itClass = jcl.getDefinedClasses();
+			Iterator<?> itClass = jcl.getDefinedClasses();
 			while (itClass.hasNext()) {
 				Object obj = itClass.next();
 				if(obj instanceof JavaClass) {
@@ -319,7 +318,7 @@ public class InfoClassCommand extends BaseJdmpviewCommand {
 		long corruptClassCount = 0;
 		long corruptClassNameCount = 0;
 		
-		Iterator itHeap = runtime.getHeaps();
+		Iterator<?> itHeap = runtime.getHeaps();
 		while (itHeap.hasNext()) {
 			Object heap = itHeap.next();
 			if(heap instanceof CorruptData) {
@@ -327,7 +326,7 @@ public class InfoClassCommand extends BaseJdmpviewCommand {
 				continue;
 			}
 			JavaHeap jh = (JavaHeap)heap;
-			Iterator itObject = jh.getObjects();
+			Iterator<?> itObject = jh.getObjects();
 			
 			// Walk through all objects in this heap, accumulating counts and total memory size by class
 			while (itObject.hasNext()) {

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,12 +36,10 @@ import com.ibm.dtfj.image.DataUnavailable;
 import com.ibm.dtfj.image.ImageThread;
 import com.ibm.dtfj.image.MemoryAccessException;
 import com.ibm.dtfj.java.JavaClass;
-import com.ibm.dtfj.java.JavaField;
 import com.ibm.dtfj.java.JavaMonitor;
 import com.ibm.dtfj.java.JavaObject;
 import com.ibm.dtfj.java.JavaRuntime;
 import com.ibm.dtfj.java.JavaThread;
-import com.ibm.dtfj.runtime.ManagedRuntime;
 import com.ibm.java.diagnostics.utils.IContext;
 import com.ibm.java.diagnostics.utils.commands.CommandException;
 import com.ibm.java.diagnostics.utils.plugins.DTFJPlugin;
@@ -68,9 +66,9 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 	}
 	
 	private void showSystemLocks() {
-		Vector vMonitorsWithLockedObjects = new Vector();
+		Vector<JavaMonitor> vMonitorsWithLockedObjects = new Vector<>();
 		JavaRuntime jRuntime = ctx.getRuntime();
-		Iterator monitors = jRuntime.getMonitors();
+		Iterator<?> monitors = jRuntime.getMonitors();
 		
 		out.println("\nSystem locks...");
 		while (monitors.hasNext()){
@@ -110,7 +108,7 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 	private void showWaiters(JavaMonitor jMonitor)
 			throws CorruptDataException {
 		// List any threads waiting on enter or notify for this monitor
-		Iterator itEnterWaiter = jMonitor.getEnterWaiters();
+		Iterator<?> itEnterWaiter = jMonitor.getEnterWaiters();
 		while (itEnterWaiter.hasNext()) {
 			Object t = itEnterWaiter.next();
 			if( !(t instanceof JavaThread) ) {
@@ -125,7 +123,7 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 				logger.log(Level.FINE, Exceptions.getDataUnavailableString(), dae);
 			}
 		}
-		Iterator itNotifyWaiter = jMonitor.getNotifyWaiters();
+		Iterator<?> itNotifyWaiter = jMonitor.getNotifyWaiters();
 		while (itNotifyWaiter.hasNext()) {
 			Object t = itNotifyWaiter.next();
 			if( !(t instanceof JavaThread) ) {
@@ -142,15 +140,15 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 		}
 	}
 	
-	private void showLockedObjects(Vector vMonitorsWithLockedObjects) {
+	private void showLockedObjects(Vector<JavaMonitor> vMonitorsWithLockedObjects) {
 		out.println("\nObject Locks in use...");
 		if (0 == vMonitorsWithLockedObjects.size()){
 			out.println("\t...None.");
 			return;
 		}
-		Iterator lockedObjects = vMonitorsWithLockedObjects.iterator();
+		Iterator<JavaMonitor> lockedObjects = vMonitorsWithLockedObjects.iterator();
 		while(lockedObjects.hasNext()){
-			JavaMonitor jMonitor = (JavaMonitor)lockedObjects.next();
+			JavaMonitor jMonitor = lockedObjects.next();
 			JavaObject jObject = jMonitor.getObject();
 			try{
 				JavaThread owner = jMonitor.getOwner();
@@ -182,22 +180,22 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 	
 	private void showJavaUtilConcurrentLocks() {
 		// A map of lock objects and their waiting threads.
-		Map locksToThreads = new HashMap();
+		Map<JavaObject, List<JavaThread>> locksToThreads = new HashMap<>();
 		JavaRuntime jr = ctx.getRuntime();
-		Iterator itThread = jr.getThreads();
+		Iterator<?> itThread = jr.getThreads();
 		while (itThread.hasNext()) {
 			try {
 				Object o = itThread.next();
-				if( !(o instanceof JavaThread) ) {
+				if (!(o instanceof JavaThread)) {
 					continue;
 				}
-				JavaThread jt = (JavaThread)o;
-				if( (jt.getState() & JavaThread.STATE_PARKED) != 0 ) {
+				JavaThread jt = (JavaThread) o;
+				if ((jt.getState() & JavaThread.STATE_PARKED) != 0) {
 					JavaObject lock = jt.getBlockingObject();
-					if( lock != null ) {
-						List parkedList = (List)locksToThreads.get(lock);
-						if( parkedList == null ) {
-							parkedList = new LinkedList();
+					if (lock != null) {
+						List<JavaThread> parkedList = locksToThreads.get(lock);
+						if (parkedList == null) {
+							parkedList = new LinkedList<>();
 							locksToThreads.put(lock, parkedList);
 						}
 						parkedList.add(jt);
@@ -216,11 +214,10 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 			out.println("\t...None.");
 			out.println();
 		}
-		for( Object e: locksToThreads.entrySet() ) {
+		for (Map.Entry<JavaObject, List<JavaThread>> entry : locksToThreads.entrySet()) {
 			try {
-				Map.Entry entry = (Map.Entry)e;
-				JavaObject lock = (JavaObject)entry.getKey();
-				List threads = (List)entry.getValue();
+				JavaObject lock = entry.getKey();
+				List<JavaThread> threads = entry.getValue();
 				String threadName = "<unowned>";
 				JavaThread lockOwnerThread = Utils.getParkBlockerOwner(lock, ctx.getRuntime());
 				if( lockOwnerThread != null ) {

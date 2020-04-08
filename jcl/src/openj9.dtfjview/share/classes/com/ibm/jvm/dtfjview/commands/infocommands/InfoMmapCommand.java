@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,10 +77,10 @@ public class InfoMmapCommand extends BaseJdmpviewCommand{
 			}
 		}
 
-		List<ImageSection> sortedSections = new LinkedList<ImageSection>();
-		Iterator<ImageSection> imageSections = ctx.getAddressSpace().getImageSections();
-		while( imageSections.hasNext() ) {
-			sortedSections.add(imageSections.next());
+		List<ImageSection> sortedSections = new LinkedList<>();
+		Iterator<?> imageSections = ctx.getAddressSpace().getImageSections();
+		while (imageSections.hasNext()) {
+			sortedSections.add((ImageSection) imageSections.next());
 		}
 		if( sortOrder != null ) {
 			Collections.sort(sortedSections, sortOrder);
@@ -101,11 +101,11 @@ public class InfoMmapCommand extends BaseJdmpviewCommand{
 		out.println();
 		long totalSize = 0;
 		long totalSizeRwx = 0;
-		Iterator sortedIterator = sortedSections.iterator();
-		while(sortedIterator.hasNext()){
-			ImageSection imageSection = (ImageSection)sortedIterator.next();
-			if( addressPointer != null ) {
-				if( imageSection.getBaseAddress().getAddress() <= addressPointer.getAddress() &&
+		Iterator<ImageSection> sortedIterator = sortedSections.iterator();
+		while (sortedIterator.hasNext()) {
+			ImageSection imageSection = sortedIterator.next();
+			if (addressPointer != null) {
+				if (imageSection.getBaseAddress().getAddress() <= addressPointer.getAddress() &&
 					imageSection.getBaseAddress().add(imageSection.getSize()).getAddress() > addressPointer.getAddress() ) {
 					// Print this address
 				} else {

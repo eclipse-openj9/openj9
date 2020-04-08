@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,8 +24,6 @@ package com.ibm.jvm.dtfjview.commands;
 
 import java.io.PrintStream;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.Vector;
@@ -65,9 +63,9 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 	
 	public void doCommand()
 	{
-		SortedMap monitorNodes = new TreeMap();
+		SortedMap<Long, MonitorNode> monitorNodes = new TreeMap<>();
 		JavaRuntime jr = ctx.getRuntime();
-		Iterator itMonitor = jr.getMonitors();
+		Iterator<?> itMonitor = jr.getMonitors();
 		int nodeListNum = 0;
 		
 		out.print("\n  deadlocks for runtime \n");
@@ -123,7 +121,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 		// heap. But the active ones can be found by walking the thread list and looking
 		// at the blocking objects. (Any others aren't blocking any threads anyway so aren't
 		// interesting.
-		Iterator itThread = jr.getThreads();
+		Iterator<?> itThread = jr.getThreads();
 		while (itThread.hasNext()) {
 			try {
 				Object o = itThread.next();
@@ -164,7 +162,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 			}
 		}
 
-		Iterator values = monitorNodes.values().iterator();
+		Iterator<?> values = monitorNodes.values().iterator();
 		
 		// Step 2. iterate over Hashtable and for every MonitorNode, iterate over monitor m1's
 		// enter waiters (JavaMonitor.getEnterWaiters()), which are JavaThreads, and for each 
@@ -172,7 +170,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 		while (values.hasNext()) {
 			MonitorNode currNode = (MonitorNode)values.next();
 			
-			Iterator itWaiters = currNode.getEnterWaiters();
+			Iterator<?> itWaiters = currNode.getEnterWaiters();
 			while (itWaiters.hasNext()) {
 				Object o = itWaiters.next();
 				if( !(o instanceof JavaThread) ) {
@@ -201,7 +199,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 
 		values = monitorNodes.values().iterator();
 		int visit = 1;
-		Vector lists = new Vector();
+		Vector<NodeList> lists = new Vector<>();
 		
 		// Step 3. iterate over Hashtable and for every MonitorNode m1:
 		// Step 3a. set a unique visit number, visit > 0 (visit++ would work)
@@ -349,7 +347,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 		}
 		
 		boolean lastListWasLoop = true;
-		Iterator itList = lists.iterator();
+		Iterator<NodeList> itList = lists.iterator();
 
 		// Step 5. print the lists
 		while (itList.hasNext())

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,6 @@ import java.util.Iterator;
 import com.ibm.dtfj.image.CorruptData;
 import com.ibm.dtfj.image.CorruptDataException;
 import com.ibm.dtfj.image.DataUnavailable;
-import com.ibm.dtfj.image.ImagePointer;
 import com.ibm.dtfj.java.JavaClass;
 import com.ibm.dtfj.java.JavaHeap;
 import com.ibm.dtfj.java.JavaObject;
@@ -45,8 +44,7 @@ public class XJCommand extends XCommand {
 	{
 		addCommand("x/j", "<object address> | <class name>", "displays information about a particular object or all objects of a class");	
 	}
-	
-	
+
 	@Override
 	public boolean recognises(String command, IContext context) {
 		if(super.recognises(command, context)) {
@@ -61,8 +59,7 @@ public class XJCommand extends XCommand {
 		String param = args[0];
 		Long objAddress;
 		String objName;
-		
-		
+
 		objAddress = Utils.longFromStringWithPrefix(param);
 		if (null == objAddress)
 		{

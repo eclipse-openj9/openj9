@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,7 +99,7 @@ public class InfoSymCommand extends BaseJdmpviewCommand {
 		} catch (CorruptDataException e) {
 			out.println(Exceptions.getCorruptDataExceptionString());
 		}
-		Iterator iLibs;
+		Iterator<?> iLibs;
 		try {
 			iLibs = ip.getLibraries();
 		} catch (DataUnavailable du) {
@@ -157,7 +157,7 @@ public class InfoSymCommand extends BaseJdmpviewCommand {
 			// if we do not have the load address, simply omit it
 		}
 
-		Iterator itSection = imageModule.getSections();
+		Iterator<?> itSection = imageModule.getSections();
 		
 		if (itSection.hasNext()) {
 			out.print(", sections:\n");		
@@ -190,7 +190,7 @@ public class InfoSymCommand extends BaseJdmpviewCommand {
 		}
 		if (printSymbols) {
 			out.print("\t  " + "symbols:\n");
-			Iterator itSymbols = imageModule.getSymbols();
+			Iterator<?> itSymbols = imageModule.getSymbols();
 			while (itSymbols.hasNext()) {
 				Object next = itSymbols.next();
 				if (next instanceof ImageSymbol) {

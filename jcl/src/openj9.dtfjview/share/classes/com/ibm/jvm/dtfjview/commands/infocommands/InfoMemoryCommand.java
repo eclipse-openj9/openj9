@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2017 IBM Corp. and others
+ * Copyright (c) 2013, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,7 @@ public class InfoMemoryCommand extends BaseJdmpviewCommand {
 		JavaRuntime runtime = ctx.getRuntime();
 
 		try {
-			Iterator memoryCategories = runtime.getMemoryCategories();
+			Iterator<?> memoryCategories = runtime.getMemoryCategories();
 			printAllMemoryCategories(out, memoryCategories);
 			printDbgmallocWarning(out, runtime);
 		} catch (DataUnavailable du) {
@@ -100,7 +100,7 @@ public class InfoMemoryCommand extends BaseJdmpviewCommand {
 	 * @param out the PrintStream to write to.
 	 * @param memoryCategories the memory categories to write
 	 */
-	private void printAllMemoryCategories(PrintStream out, Iterator memoryCategories) {
+	private void printAllMemoryCategories(PrintStream out, Iterator<?> memoryCategories) {
 		try {
 			while (memoryCategories.hasNext()) {
 				Object obj = memoryCategories.next();
@@ -147,7 +147,7 @@ public class InfoMemoryCommand extends BaseJdmpviewCommand {
 				/* Only descend if there's really more data in sub categories unaccounted for. */
 				if( category.getDeepBytes() > category.getShallowBytes() ) {
 					
-					Iterator memoryCategories = category.getChildren();
+					Iterator<?> memoryCategories = category.getChildren();
 					JavaRuntimeMemoryCategory other = getOtherCategory(category);
 					
 					while (memoryCategories.hasNext()) {
@@ -187,7 +187,7 @@ public class InfoMemoryCommand extends BaseJdmpviewCommand {
 	private static int countPrintableChildren(JavaRuntimeMemoryCategory category) throws CorruptDataException {
 		int children = 0;
 		if (category.getDeepBytes() > category.getShallowBytes()) {
-			Iterator memoryCategories = category.getChildren();
+			Iterator<?> memoryCategories = category.getChildren();
 			while (memoryCategories.hasNext()) {
 				Object obj = memoryCategories.next();
 				if( obj instanceof JavaRuntimeMemoryCategory) {
