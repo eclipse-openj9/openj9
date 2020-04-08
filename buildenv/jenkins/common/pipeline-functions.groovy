@@ -714,14 +714,19 @@ def setup_pull_request_single_comment(parsedComment) {
     // Setup JDK VERSIONS
     switch (ghprbGhRepository) {
         case ~/.*openj9-openjdk-jdk.*/:
+            // <org>/openj9-openjdk-jdk<version>(-zos)?
             def tmp_version = ghprbGhRepository.substring(ghprbGhRepository.indexOf('-jdk')+4)
             if ("${tmp_version}" == "") {
                 tmp_version = 'next'
             }
+            if (tmp_version.contains('-')) {
+                // Strip off '-zos'
+                tmp_version = tmp_version.substring(0, tmp_version.indexOf('-'))
+            }
             RELEASES.add(tmp_version)
             minCommentSize = 3
             break
-        case "eclipse/openj9":
+        case ~/.*\/openj9(-omr)?/:
             def tmpVersions = parsedComment[3+offset].tokenize(',')
             tmpVersions.each { version ->
                 echo "VERSION:'${version}'"
