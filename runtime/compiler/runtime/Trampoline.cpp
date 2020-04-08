@@ -863,6 +863,10 @@ void armCodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *
 
 #define TRAMPOLINE_SIZE         16
 
+#if defined(TR_HOST_ARM64)
+extern void arm64CodeSync(uint8_t *, uint32_t);
+#endif
+
 void arm64CodeCacheConfig(int32_t ccSizeInByte, int32_t *numTempTrampolines)
    {
    *numTempTrampolines = 0;
@@ -880,6 +884,10 @@ void arm64CreateHelperTrampolines(void *trampPtr, int32_t numHelpers)
       *((intptrj_t *)buffer) = (intptrj_t)runtimeHelperValue((TR_RuntimeHelper)i);
       buffer += 2;
       }
+
+#if defined(TR_HOST_ARM64)
+   arm64CodeSync((uint8_t*)trampPtr, TRAMPOLINE_SIZE * numHelpers);
+#endif
    }
 
 void arm64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
@@ -893,6 +901,10 @@ void arm64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
    *buffer = 0xD61F0200; //BR R16
    buffer += 1;
    *((intptrj_t *)buffer) = dispatcher;
+
+#if defined(TR_HOST_ARM64)
+   arm64CodeSync((uint8_t*)trampPtr, TRAMPOLINE_SIZE);
+#endif
    }
 
 bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *currentTramp, void *newAddrOfCallee, void *extra)
@@ -934,6 +946,9 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
          else
             {
             *((uint64_t*)currentTramp+1) = (uint64_t)entryAddress;
+#if defined(TR_HOST_ARM64)
+            arm64CodeSync((uint8_t*)currentTramp+8, 8);
+#endif
             }
          }
 
@@ -944,6 +959,9 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
       {
       branchInstr |= (distance >> 2) & 0x03ffffff;
       *(int32_t *)callSite = branchInstr;
+#if defined(TR_HOST_ARM64)
+      arm64CodeSync((uint8_t*)callSite, 4);
+#endif
       }
 
    return true;
