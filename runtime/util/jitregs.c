@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -389,6 +389,9 @@ U_8 jitCalleeDestroyedRegisterList[] = {
 	0x12,	/* jit_r18 */
 	0x13,	/* jit_r19 */
 	0x14,	/* jit_r20 */
+	0x1D,   /* jit_r29 */
+	0x1E,   /* jit_r30 */
+	0x1F    /* jit_r31 */
 };
 U_8 jitCalleeSavedRegisterList[] = {
 	0x15,	/* jit_r21 */
