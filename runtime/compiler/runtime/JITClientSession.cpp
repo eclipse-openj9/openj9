@@ -228,7 +228,7 @@ ClientSessionData::getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t
    }
 
 bool
-ClientSessionData::cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry)
+ClientSessionData::cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry, bool isCompiled)
    {
    OMR::CriticalSection getRemoteROMClass(getROMMapMonitor());
    // check whether info about j9method exists
@@ -240,7 +240,6 @@ ClientSessionData::cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byt
       if (!iProfilerMap)
          {
          // Check and update if method is compiled when collecting profiling data
-         bool isCompiled = TR::CompilationInfo::isCompiled((J9Method*)method);
          if (isCompiled)
             it->second._isCompiledWhenProfiling = true;
 

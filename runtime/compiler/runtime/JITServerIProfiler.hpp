@@ -142,7 +142,7 @@ public:
    // Thus, any virtual function here must call the corresponding method in
    // the base class. It may be better not to override any methods though
  
-   bool serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITServer::ClientStream *client, bool usePersistentCache);
+   bool serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITServer::ClientStream *client, bool usePersistentCache, bool isCompiled);
    std::string serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb);
 
 private:

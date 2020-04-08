@@ -201,10 +201,11 @@ JITServerIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          // Ask the client again and see if the two sources of information match
          auto stream = TR::CompilationInfo::getStream();
          stream->write(JITServer::MessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptr_t)1);
-         auto recv = stream->read<std::string, bool, bool>();
+         auto recv = stream->read<std::string, bool, bool, bool>();
          const std::string ipdata = std::get<0>(recv);
          bool wholeMethod = std::get<1>(recv); // indicates whether the client has sent info for entire method
          bool usePersistentCache = std::get<2>(recv);
+         bool isCompiled = std::get<3>(recv);
          TR_ASSERT(!wholeMethod, "Client should not have sent whole method info");
          uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
          TR_IPBCDataStorageHeader *clientData = ipdata.empty() ? NULL : (TR_IPBCDataStorageHeader *) &ipdata[0];
@@ -237,10 +238,11 @@ JITServerIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
    //
    auto stream = TR::CompilationInfo::getStream();
    stream->write(JITServer::MessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptr_t)(_useCaching ? 0 : 1));
-   auto recv = stream->read<std::string, bool, bool>();
+   auto recv = stream->read<std::string, bool, bool, bool>();
    const std::string ipdata = std::get<0>(recv);
    bool wholeMethod = std::get<1>(recv); // indicates whether the client sent info for entire method
    bool usePersistentCache = std::get<2>(recv); // indicates whether info can be saved in persistent memory, or only in heap memory
+   bool isCompiled = std::get<3>(recv);
    _statsIProfilerInfoMsgToClient++;
 
    bool doCache = _useCaching && wholeMethod;
@@ -254,10 +256,10 @@ JITServerIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          {
          // cache some empty data so that we don't ask again for this method
          // this method contains empty data
-         if (usePersistentCache && !clientSessionData->cacheIProfilerInfo(method, byteCodeIndex, NULL))
-               _statsIProfilerInfoCachingFailures++;
+         if (usePersistentCache && !clientSessionData->cacheIProfilerInfo(method, byteCodeIndex, NULL, isCompiled))
+            _statsIProfilerInfoCachingFailures++;
          else if (!usePersistentCache && !compInfoPT->cacheIProfilerInfo(method, byteCodeIndex, NULL))   
-               _statsIProfilerInfoCachingFailures++;
+            _statsIProfilerInfoCachingFailures++;
          }
       return NULL;
       }
@@ -300,7 +302,7 @@ JITServerIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
                      bci += 2;
                   }
                }
-            if (usePersistentCache && !clientSessionData->cacheIProfilerInfo(method, bci, entry))
+            if (usePersistentCache && !clientSessionData->cacheIProfilerInfo(method, bci, entry, isCompiled))
                {
                // If caching failed we must delete the entry allocated with persistent memory
                _statsIProfilerInfoCachingFailures++;
@@ -496,14 +498,14 @@ JITServerIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, 
       return;
 
    bool sendRemoteMessage = false; 
+   bool createNewEntry = false;
+   bool methodInfoPresentInPersistent = false;
    ClientSessionData *clientData = TR::compInfoPT->getClientData(); // Find clientSessionData
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) TR::compInfoPT;
    if (_useCaching)
       {
       OMR::CriticalSection getRemoteROMClass(clientData->getROMMapMonitor());
-      auto & j9methodMap = clientData->getJ9MethodMap();
-      bool methodInfoPresentInPersistent = false;
       bool methodInfoPresentInHeap = false;
-      auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) TR::compInfoPT;
       // Check persistent cache first, then per-compilation cache
       TR_IPBytecodeHashTableEntry *entry = clientData->getCachedIProfilerInfo(method, bcIndex, &methodInfoPresentInPersistent);
       if (!methodInfoPresentInPersistent)
@@ -529,24 +531,10 @@ JITServerIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, 
                // Nothing to do because the correct data is already in place
                }
             }
-         else
+         else // Info for this bcIndex is missing.
             {
-            // Info for this bcIndex is missing. 
-            // Create a new entry, add it to the cache and send a remote message as well
-            uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
-            TR_AllocationKind allocKind = methodInfoPresentInPersistent ? persistentAlloc : heapAlloc;
-            TR_IPBCDataCallGraph *cgEntry = (TR_IPBCDataCallGraph*)comp->trMemory()->allocateMemory(sizeof(TR_IPBCDataCallGraph), allocKind, TR_Memory::IPBCDataCallGraph);
-            cgEntry = new (cgEntry) TR_IPBCDataCallGraph(methodStart + bcIndex);
-
-            CallSiteProfileInfo *csInfo = cgEntry->getCGData();
-            csInfo->_weight[0] = count;
-            // TODO: we should probably add some class as well
-            if (methodInfoPresentInPersistent)
-               clientData->cacheIProfilerInfo(method, bcIndex, cgEntry);
-            else
-               compInfoPT->cacheIProfilerInfo(method, bcIndex, cgEntry);
-
             sendRemoteMessage = true;
+            createNewEntry = true;
             }
          }
       else
@@ -563,7 +551,25 @@ JITServerIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, 
       {
       auto stream = TR::CompilationInfo::getStream();
       stream->write(JITServer::MessageType::IProfiler_setCallCount, method, bcIndex, count);
-      stream->read<JITServer::Void>();
+      auto recv = stream->read<bool>();
+      bool isCompiled = std::get<0>(recv);
+
+      if (createNewEntry)
+         {
+         // Create a new entry, add it to the cache and send a remote message as well
+         uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
+         TR_AllocationKind allocKind = methodInfoPresentInPersistent ? persistentAlloc : heapAlloc;
+         TR_IPBCDataCallGraph *cgEntry = (TR_IPBCDataCallGraph*)comp->trMemory()->allocateMemory(sizeof(TR_IPBCDataCallGraph), allocKind, TR_Memory::IPBCDataCallGraph);
+         cgEntry = new (cgEntry) TR_IPBCDataCallGraph(methodStart + bcIndex);
+
+         CallSiteProfileInfo *csInfo = cgEntry->getCGData();
+         csInfo->_weight[0] = count;
+         // TODO: we should probably add some class as well
+         if (methodInfoPresentInPersistent)
+            clientData->cacheIProfilerInfo(method, bcIndex, cgEntry, isCompiled);
+         else
+            compInfoPT->cacheIProfilerInfo(method, bcIndex, cgEntry);
+         }
       }
    }
 
@@ -733,7 +739,7 @@ JITClientIProfiler::serializeIProfilerMethodEntries(uintptr_t *pcEntries, uint32
  * @return Whether the operation was successful
  */
 bool
-JITClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock *method, TR::Compilation *comp, JITServer::ClientStream *client, bool usePersistentCache)
+JITClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock *method, TR::Compilation *comp, JITServer::ClientStream *client, bool usePersistentCache, bool isCompiled)
    {
    TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
    uint32_t numEntries = 0;
@@ -762,11 +768,11 @@ JITClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock *
          intptr_t writtenBytes = serializeIProfilerMethodEntries(pcEntries, numEntries, (uintptr_t)&buffer[0], methodStart);
          TR_ASSERT(writtenBytes == bytesFootprint, "BST doesn't match expected footprint");
          // send the information to the server
-         client->write(JITServer::MessageType::IProfiler_profilingSample, buffer, true, usePersistentCache);
+         client->write(JITServer::MessageType::IProfiler_profilingSample, buffer, true, usePersistentCache, isCompiled);
          }
       else if (!numEntries && !abort)// Empty IProfiler data for this method
          {
-         client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), true, usePersistentCache);
+         client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), true, usePersistentCache, isCompiled);
          }
 
       // release any entry that has been locked by us
