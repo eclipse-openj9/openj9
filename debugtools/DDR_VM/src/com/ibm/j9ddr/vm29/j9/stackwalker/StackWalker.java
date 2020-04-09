@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -272,6 +272,8 @@ public class StackWalker
 								/* esp */
 								javaSPName = "esp";
 							}
+						} else if (J9ConfigFlags.arch_aarch64) {
+							javaSPName = "r20";
 						} else {
 							throw new IllegalArgumentException("Unsupported platform");
 						}
