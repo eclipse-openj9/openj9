@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,51 +54,41 @@ public class J9DDRImage implements ManagedImage {
 	private boolean machineDataSet = false;
 	private final URI source;
 	private ManagedImageSource imageSource = null;
-	private ImageInputStream meta = null;		//meta data, although DDR does nothing with it, it still has to close it
-	private boolean closed = false;				//flag to indicate if the image has been closed
-	
-	public J9DDRImage(ICore coreFile)
-	{
-		this.coreFile = coreFile;
-		source = null;
-		
-		if (coreFile instanceof ILibraryDependentCore) {
-			//Figure out and pass-back the executable PATH.
-			//It may not be able to figure it out from the core file header
-			passBackExecutablePath((ILibraryDependentCore)coreFile);
-		}
+	private final ImageInputStream meta; // meta data, although DDR does nothing with it, it still has to close it
+	private boolean closed = false; // flag to indicate if the image has been closed
+
+	public J9DDRImage(ICore coreFile) {
+		this(null, coreFile, null);
 	}
-	
-	public J9DDRImage(URI source, ICore coreFile, ImageInputStream meta)
-	{
+
+	public J9DDRImage(URI source, ICore coreFile, ImageInputStream meta) {
 		this.coreFile = coreFile;
 		this.source = source;
 		this.meta = meta;
-		
+
 		if (coreFile instanceof ILibraryDependentCore) {
 			//Figure out and pass-back the executable PATH.
 			//It may not be able to figure it out from the core file header
-			passBackExecutablePath((ILibraryDependentCore)coreFile);
+			passBackExecutablePath((ILibraryDependentCore) coreFile);
 		}
 	}
 
 	public ICore getCore() {
 		return coreFile;
 	}
-	
+
 	public URI getSource() {
 		return source;
 	}
 
-	private void passBackExecutablePath(ILibraryDependentCore core)
-	{
+	private void passBackExecutablePath(ILibraryDependentCore core) {
 		Iterator<J9DDRImageAddressSpace> addressSpacesIt = getAddressSpaces();
-		
+
 		while (addressSpacesIt.hasNext()) {
 			J9DDRImageAddressSpace thisAS = addressSpacesIt.next();
-			
+
 			J9DDRImageProcess proc = thisAS.getCurrentProcess();
-			
+
 			String executablePath = proc.getExecutablePath();
 			if (executablePath != null) {
 				core.executablePathHint(executablePath);
@@ -106,23 +96,22 @@ public class J9DDRImage implements ManagedImage {
 		}
 	}
 
-	private void checkJ9RASMachineData()
-	{
-		if (! machineDataSet) {
+	private void checkJ9RASMachineData() {
+		if (!machineDataSet) {
 			j9MachineData = J9RASImageDataFactory.getMachineData(coreFile);
 			machineDataSet = true;
 		}
 	}
-	
+
 	public Iterator<J9DDRImageAddressSpace> getAddressSpaces() {
 		Collection<? extends IAddressSpace> addressSpaces = coreFile.getAddressSpaces();
-		
+
 		List<J9DDRImageAddressSpace> dtfjList = new LinkedList<J9DDRImageAddressSpace>();
-		
+
 		for (IAddressSpace thisAs : addressSpaces) {
 			dtfjList.add(new J9DDRImageAddressSpace(thisAs));
 		}
-		
+
 		return dtfjList.iterator();
 	}
 
@@ -345,11 +334,20 @@ public class J9DDRImage implements ManagedImage {
 	}
 
 	@Override
+	public boolean isTruncated() {
+		if (coreFile == null) {
+			return true;
+		}
+
+		return coreFile.isTruncated();
+	}
+
+	@Override
 	public boolean equals(Object o) {
-		if(o == null) {
+		if (o == null) {
 			return false;
 		}
-		if(!(o instanceof J9DDRImage)) {
+		if (!(o instanceof J9DDRImage)) {
 			return false;
 		}
 		J9DDRImage compareto = (J9DDRImage) o;
