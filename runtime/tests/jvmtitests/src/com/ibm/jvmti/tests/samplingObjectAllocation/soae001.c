@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,38 +42,28 @@ soae001(agentEnv *agent_env, char *args)
 	jvmtiCapabilities capabilities;
 	jvmtiError err = JVMTI_ERROR_NONE;
 	jint result = JNI_OK;
-	jvmtiCapabilities initialCapabilities = {0};
 
 	env = agent_env;
 
-	err = (*jvmti_env)->GetPotentialCapabilities(jvmti_env, &initialCapabilities);
+	/* Set the JVMTI_EVENT_SAMPLED_OBJECT_ALLOC event callback */
+	memset(&callbacks, 0, sizeof(jvmtiEventCallbacks));
+	callbacks.SampledObjectAlloc = sampledObjectAlloc;
+	err = (*jvmti_env)->SetEventCallbacks(jvmti_env, &callbacks, sizeof(jvmtiEventCallbacks));
 	if (JVMTI_ERROR_NONE != err) {
-		error(env, err, "Failed to GetPotentialCapabilities");
-		result = JNI_ERR;
-	} else if (!initialCapabilities.can_generate_sampled_object_alloc_events) {
-		error(agent_env, JVMTI_ERROR_UNSUPPORTED_VERSION, "can_generate_sampled_object_alloc_events should be available in onload phase");
+		error(agent_env, err, "Failed to set callback for JVMTI_EVENT_SAMPLED_OBJECT_ALLOC event");
 		result = JNI_ERR;
 	} else {
-		/* Set the JVMTI_EVENT_SAMPLED_OBJECT_ALLOC event callback */
-		memset(&callbacks, 0, sizeof(jvmtiEventCallbacks));
-		callbacks.SampledObjectAlloc = sampledObjectAlloc;
-		err = (*jvmti_env)->SetEventCallbacks(jvmti_env, &callbacks, sizeof(jvmtiEventCallbacks));
+		/* we require the can_generate_sampled_object_alloc_events capability if we want to enable allocation callbacks */
+		memset(&capabilities, 0, sizeof(jvmtiCapabilities));
+		capabilities.can_generate_sampled_object_alloc_events = 1;
+		err = (*jvmti_env)->AddCapabilities(jvmti_env, &capabilities);
 		if (JVMTI_ERROR_NONE != err) {
-			error(agent_env, err, "Failed to set callback for JVMTI_EVENT_SAMPLED_OBJECT_ALLOC event");
+			error(agent_env, err, "Failed to add capabilities can_generate_sampled_object_alloc_events");
 			result = JNI_ERR;
-		} else {
-			/* we require the can_generate_sampled_object_alloc_events capability if we want to enable allocation callbacks */
-			memset(&capabilities, 0, sizeof(jvmtiCapabilities));
-			capabilities.can_generate_sampled_object_alloc_events = 1;
-			err = (*jvmti_env)->AddCapabilities(jvmti_env, &capabilities);
-			if (JVMTI_ERROR_NONE != err) {
-				error(agent_env, err, "Failed to add capabilities can_generate_sampled_object_alloc_events");
-				result = JNI_ERR;
-			}
 		}
 	}
 	
-	return result;
+	return JNI_OK;
 }
 
 static void JNICALL
