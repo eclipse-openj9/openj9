@@ -37,10 +37,9 @@
 #endif
 
 UDATA
-blankDumpSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg)
+jitDumpSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg)
    {
-   J9VMThread *vmThread = (J9VMThread *) arg;
-   TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "vmThread=%p Recursive crash occurred. Aborting JIT dump.", vmThread);
+   TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "vmThread = %p Recursive crash occurred. Aborting JIT dump.", reinterpret_cast<J9VMThread*>(arg));
 
    // Returning J9PORT_SIG_EXCEPTION_RETURN will make us come back to the same crashing instruction over and over
    //

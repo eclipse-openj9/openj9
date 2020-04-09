@@ -19,11 +19,17 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+
+#ifndef TR_JITDUMP_INCL
+#define TR_JITDUMP_INCL
+
 #include "j9.h"
 #include "j9nonbuilder.h"
 
 extern J9_CFUNC UDATA
-blankDumpSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg);
+jitDumpSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg);
 
 extern J9_CFUNC intptr_t
 dumpJitInfo(J9VMThread * currentThread, char *label, J9RASdumpContext *context);
+
+#endif

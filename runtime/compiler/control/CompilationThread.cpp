@@ -7672,7 +7672,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
                //       for intentional crashes, intentional traps cause the dump, and we
                //       are not protected against them (flag: J9PORT_SIG_FLAG_SIGTRAP)
                protectedResult = j9sig_protect((j9sig_protected_fn)wrappedCompile, static_cast<void *>(&compParam),
-                                                  (j9sig_handler_fn)  blankDumpSignalHandler, vmThread,
+                                                  (j9sig_handler_fn)  jitDumpSignalHandler, vmThread,
                                                   flags, &result);
                }
             else
