@@ -671,65 +671,6 @@ J9::ClassEnv::isZeroInitializable(TR_OpaqueClassBlock *clazz)
    }
 
 bool 
-J9::ClassEnv::containesZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_PersistentClassInfo>* subClasses)
-   {
-   int count = 0;
-#if defined(J9VM_OPT_JITSERVER)
-   if (comp->isOutOfProcessCompilation())
-      {
-      ListIterator<TR_PersistentClassInfo> j(subClasses);
-      TR_ScratchList<TR_PersistentClassInfo> subClassesNotCached(comp->trMemory());
-   
-      // Process classes cached at the server first
-      ClientSessionData * clientData = TR::compInfoPT->getClientData();
-      for (TR_PersistentClassInfo *ptClassInfo = j.getFirst(); ptClassInfo; ptClassInfo = j.getNext())
-         {
-         TR_OpaqueClassBlock *clazz = ptClassInfo->getClassId();
-         J9Class *j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
-         auto romClass = JITServerHelpers::getRemoteROMClassIfCached(clientData, j9clazz);
-         if (romClass == NULL)
-            {
-            subClassesNotCached.add(ptClassInfo);
-            }
-         else
-            {
-            if (!TR::Compiler->cls.isInterfaceClass(comp, clazz) && !TR::Compiler->cls.isAbstractClass(comp, clazz))
-               {
-               if (++count > 1)
-                  return false;
-               }
-            }
-         }
-      // Traverse through classes that are not cached on server
-      ListIterator<TR_PersistentClassInfo> i(&subClassesNotCached);
-      for (TR_PersistentClassInfo *ptClassInfo = i.getFirst(); ptClassInfo; ptClassInfo = i.getNext())
-         {
-         TR_OpaqueClassBlock *clazz = ptClassInfo->getClassId();
-         if (!TR::Compiler->cls.isInterfaceClass(comp, clazz) && !TR::Compiler->cls.isAbstractClass(comp, clazz))
-            {
-            if (++count > 1)
-               return false;
-            }
-         }
-      }
-   else // non-jitserver
-#endif /* defined(J9VM_OPT_JITSERVER) */
-      {
-      ListIterator<TR_PersistentClassInfo> i(subClasses);
-      for (TR_PersistentClassInfo *ptClassInfo = i.getFirst(); ptClassInfo; ptClassInfo = i.getNext())
-         {
-         TR_OpaqueClassBlock *clazz = ptClassInfo->getClassId();
-         if (!TR::Compiler->cls.isInterfaceClass(comp, clazz) && !TR::Compiler->cls.isAbstractClass(comp, clazz))
-            {
-            if (++count > 1)
-               return false;
-            }
-         }
-      }
-   return true;
-   }
-
-bool 
 J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_PersistentClassInfo>* subClasses)
    {
    int count = 0;
