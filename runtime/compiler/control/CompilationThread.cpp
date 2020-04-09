@@ -590,17 +590,19 @@ bool TR::CompilationInfo::importantMethodForStartup(J9Method *method)
 bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
    {
    bool doDowngrade = false;
-   J9Method *method = entry->getMethodDetails().getMethod();
+   TR::IlGeneratorMethodDetails& methodDetails = entry->getMethodDetails();
+   J9Method *method = methodDetails.getMethod();
 #ifdef J9VM_OPT_JITSERVER
    TR_ASSERT(getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER, "shouldDowngradeCompReq should not be used by JITServer");
 #endif
-   if (!isCompiled(method) && /*entry->_priority <= CP_ASYNC_MAX &&*/
+   if (!isCompiled(method) &&
        entry->_optimizationPlan->getOptLevel() == warm && // only warm compilations are subject to downgrades
-       !entry->isDLTCompile() &&
+       !methodDetails.isMethodInProgress() &&
+       !methodDetails.isDumpMethod() &&
        !TR::Options::getCmdLineOptions()->getOption(TR_DontDowngradeToCold))
       {
       TR::PersistentInfo *persistentInfo = getPersistentInfo();
-      const J9ROMMethod * romMethod = entry->getMethodDetails().getRomMethod();
+      const J9ROMMethod * romMethod = methodDetails.getRomMethod();
       TR_J9VMBase *fe = TR_J9VMBase::get(_jitConfig, NULL);
 
       // Don't downgrade if method is JSR292. See CMVC 200145
@@ -706,7 +708,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
          // Always downgrade J9VMInternals because they are expensive
          if (!doDowngrade)
             {
-            J9UTF8 * className = J9ROMCLASS_CLASSNAME(entry->getMethodDetails().getRomClass());
+            J9UTF8 * className = J9ROMCLASS_CLASSNAME(methodDetails.getRomClass());
             if (className->length == 23 && !memcmp(utf8Data(className), "java/lang/J9VMInternals", 23))
                {
                doDowngrade = true;
