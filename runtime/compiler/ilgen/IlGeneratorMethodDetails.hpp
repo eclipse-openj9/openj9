@@ -43,7 +43,7 @@ public:
    IlGeneratorMethodDetails() :
       J9::IlGeneratorMethodDetailsConnector() {}
 
-   IlGeneratorMethodDetails(J9Method * const method) :
+   IlGeneratorMethodDetails(J9Method* method) :
       J9::IlGeneratorMethodDetailsConnector(method) {}
 
    IlGeneratorMethodDetails(TR_ResolvedMethod *method) :
@@ -65,9 +65,8 @@ class DumpMethodDetails : public TR::IlGeneratorMethodDetails
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
 
 public:
-   DumpMethodDetails(J9Method * const method) : TR::IlGeneratorMethodDetails(method) { }
-   DumpMethodDetails(TR_ResolvedMethod *method) : TR::IlGeneratorMethodDetails(method) { }
-   DumpMethodDetails(const DumpMethodDetails & other) : TR::IlGeneratorMethodDetails(other.getMethod()) { }
+   DumpMethodDetails(J9Method* method) : TR::IlGeneratorMethodDetails(method) { }
+   DumpMethodDetails(const DumpMethodDetails& other) : TR::IlGeneratorMethodDetails(other.getMethod()) { }
 
    virtual const char * name()     const { return "DumpMethod"; }
 
@@ -89,7 +88,7 @@ class MethodInProgressDetails : public TR::IlGeneratorMethodDetails
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
 
 public:
-   MethodInProgressDetails(J9Method * const method, int32_t byteCodeIndex) :
+   MethodInProgressDetails(J9Method* method, int32_t byteCodeIndex) :
       TR::IlGeneratorMethodDetails(method)
       {
       _data._byteCodeIndex = byteCodeIndex;
@@ -141,7 +140,7 @@ class NewInstanceThunkDetails : public TR::IlGeneratorMethodDetails
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
 
 public:
-   NewInstanceThunkDetails(J9Method * const method, J9Class *clazz) :
+   NewInstanceThunkDetails(J9Method* method, J9Class *clazz) :
       TR::IlGeneratorMethodDetails(method)
       {
       _data._class = clazz;
@@ -186,7 +185,7 @@ class ArchetypeSpecimenDetails : public TR::IlGeneratorMethodDetails
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
 
 public:
-   ArchetypeSpecimenDetails(J9Method * const method) : TR::IlGeneratorMethodDetails(method) { }
+   ArchetypeSpecimenDetails(J9Method* method) : TR::IlGeneratorMethodDetails(method) { }
    ArchetypeSpecimenDetails(TR_ResolvedMethod *method) : TR::IlGeneratorMethodDetails(method) { }
    ArchetypeSpecimenDetails(const ArchetypeSpecimenDetails &other) : TR::IlGeneratorMethodDetails(other) { }
 
@@ -215,7 +214,7 @@ class MethodHandleThunkDetails : public ArchetypeSpecimenDetails
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
 
 public:
-   MethodHandleThunkDetails(J9Method * const method, uintptr_t *handleRef, uintptr_t *argRef) :
+   MethodHandleThunkDetails(J9Method* method, uintptr_t *handleRef, uintptr_t *argRef) :
       ArchetypeSpecimenDetails(method)
       {
       _data._methodHandleData._handleRef = handleRef;
@@ -267,7 +266,7 @@ class ShareableInvokeExactThunkDetails : public MethodHandleThunkDetails
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
 
 public:
-   ShareableInvokeExactThunkDetails(J9Method * const method, uintptr_t *handleRef, uintptr_t *argRef) :
+   ShareableInvokeExactThunkDetails(J9Method* method, uintptr_t *handleRef, uintptr_t *argRef) :
       MethodHandleThunkDetails(method, handleRef, argRef) { }
    ShareableInvokeExactThunkDetails(TR_ResolvedMethod *method, uintptr_t *handleRef, uintptr_t *argRef) :
       MethodHandleThunkDetails(method, handleRef, argRef) { }
@@ -288,7 +287,7 @@ class CustomInvokeExactThunkDetails : public MethodHandleThunkDetails
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
 
 public:
-   CustomInvokeExactThunkDetails(J9Method * const method, uintptr_t *handleRef, uintptr_t *argRef) :
+   CustomInvokeExactThunkDetails(J9Method* method, uintptr_t *handleRef, uintptr_t *argRef) :
       MethodHandleThunkDetails(method, handleRef, argRef) { }
    CustomInvokeExactThunkDetails(TR_ResolvedMethod *method, uintptr_t *handleRef, uintptr_t *argRef) :
       MethodHandleThunkDetails(method, handleRef, argRef) { }

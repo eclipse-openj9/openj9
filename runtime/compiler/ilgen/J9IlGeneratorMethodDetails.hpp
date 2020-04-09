@@ -81,7 +81,7 @@ public:
       _method = NULL;
       }
 
-   IlGeneratorMethodDetails(J9Method * const method) :
+   IlGeneratorMethodDetails(J9Method* method) :
       OMR::IlGeneratorMethodDetailsConnector(),
       _method(method)
    { }
