@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -136,26 +136,21 @@ Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc001_verifyOnLoadCapabilitie
 	getCapabilities(&initialCapabilities, &availableCount, &unavailableCount);
 
 	if (!initialCapabilities.can_retransform_any_class) {
-		unavailableCount -= 1;
+		unavailableCount--;
 	}
 	
 	if (!initialCapabilities.can_redefine_any_class) {
-		unavailableCount -= 1;
+		unavailableCount--;
 	}
 	
 	/* s390 thread/port lib does not support this functionality */
 	if (!initialCapabilities.can_get_current_thread_cpu_time) {
-		unavailableCount -= 1;
+		unavailableCount--;
 	}
 	
 	/* s390 thread/port lib does not support this functionality */
 	if (!initialCapabilities.can_get_thread_cpu_time) {
-		unavailableCount -= 1;
-	}
-
-	/* GC policies Metronome & Balanced don't support this event */
-	if (!initialCapabilities.can_generate_sampled_object_alloc_events) {
-		unavailableCount -= 1;
+		unavailableCount--;
 	}
 
 	if (unavailableCount != 0) {
@@ -171,6 +166,12 @@ Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc001_verifyOnLoadCapabilitie
 		error(env, JVMTI_ERROR_INTERNAL, "can_generate_early_class_hook_events should be available in onload phase.");
 		result = JNI_FALSE;
 	}
+#if JAVA_SPEC_VERSION >= 11
+	else if (!initialCapabilities.can_generate_sampled_object_alloc_events) {
+		error(env, JVMTI_ERROR_INTERNAL, "can_generate_sampled_object_alloc_events should be available in onload phase.");
+		result = JNI_FALSE;
+	}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 #endif /* JAVA_SPEC_VERSION >= 9 */
 
 	return result;
