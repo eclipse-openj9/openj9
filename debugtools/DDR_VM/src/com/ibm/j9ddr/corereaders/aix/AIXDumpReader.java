@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,17 +71,15 @@ public abstract class AIXDumpReader extends AbstractCoreReader implements ILibra
 {
 	private static final Logger logger = Logger.getLogger(com.ibm.j9ddr.corereaders.ICoreFileReader.J9DDR_CORE_READERS_LOGGER_NAME);
 	
-	private static final long FAULTING_THREAD_OFFSET = 216; // offsetof(core_dumpx,
-															// c_flt)
-	protected static final int S64BIT = 0x00000001; // indicates a 64-bit
-													// process
-	
-	private static final long CORE_FILE_VERSION_OFFSET = 4;
-	
-	//See /usr/include/core.h on an AIX box for the core structures
+	private static final int FAULTING_THREAD_OFFSET = 216; // offsetof(core_dumpx, c_flt)
+	protected static final int S64BIT = 0x00000001; // indicates a 64-bit process
+
+	private static final int CORE_FILE_VERSION_OFFSET = 4;
+
+	// see /usr/include/core.h on an AIX box for the core structures
 	private static final int CORE_DUMP_XX_VERSION = 0xFEEDDB2;
 	private static final int CORE_DUMP_X_VERSION = 0xFEEDDB1;
-	private static final long CORE_DUMP_X_PI_FLAGS_2_OFFSET = 0x420;
+	private static final int CORE_DUMP_X_PI_FLAGS_2_OFFSET = 0x420;
 
 	private static final int POWER_RS1 = 0x0001;
 	private static final int POWER_RSC = 0x0002;
@@ -134,20 +132,27 @@ public abstract class AIXDumpReader extends AbstractCoreReader implements ILibra
 
 	private boolean _isTruncated = false;
 
-	private ILibraryResolver resolver = null; 	//LibraryResolverFactory.getResolverForCoreFile(this.coreFile);
+	private ILibraryResolver resolver = null; // LibraryResolverFactory.getResolverForCoreFile(this.coreFile);
 	private ArrayList<XCOFFReader> openFileTracker = new ArrayList<XCOFFReader>();
 	
 	protected static boolean isAIXDump(ClosingFileReader f) throws IOException
 	{
 		// There are no magic signatures in an AIX dump header. Some simple
-		// validation of the header
-		// allows a best guess about validity of the file.
-		f.seek(8);
+		// validation of the header allows a best guess about validity of the file.
+		f.seek(CORE_FILE_VERSION_OFFSET);
+		int version = f.readInt();
+		if ((version != CORE_DUMP_X_VERSION) && (version != CORE_DUMP_XX_VERSION)) {
+			return false; // unrecognised core file version
+		}
 		long fdsinfox = f.readLong();
 		long loader = f.readLong();
 		long filesize = f.length();
-		return fdsinfox > 0 && loader > 0 && loader > fdsinfox
-				&& fdsinfox < filesize && loader < filesize;
+		return fdsinfox > 0 && loader > 0 && loader > fdsinfox && fdsinfox < filesize && loader < filesize;
+	}
+
+	@Override
+	public boolean isTruncated() {
+		return _isTruncated;
 	}
 
 	public boolean validDump(byte[] data, long filesize)
@@ -873,9 +878,9 @@ public abstract class AIXDumpReader extends AbstractCoreReader implements ILibra
 	
 	public static boolean isAIXDump(byte[] data, long filesize)
 	{
-		int version = readInt(data, (int)CORE_FILE_VERSION_OFFSET);
-		if((version != CORE_DUMP_X_VERSION) && (version != CORE_DUMP_XX_VERSION)) {
-			return false;		//unrecognised core file version
+		int version = readInt(data, CORE_FILE_VERSION_OFFSET);
+		if ((version != CORE_DUMP_X_VERSION) && (version != CORE_DUMP_XX_VERSION)) {
+			return false; // unrecognised core file version
 		}
 		long fdsinfox = readLong(data, 8);
 		long loader = readLong(data, 16);
