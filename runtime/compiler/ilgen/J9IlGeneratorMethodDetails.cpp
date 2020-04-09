@@ -50,7 +50,7 @@ IlGeneratorMethodDetails::clone(TR::IlGeneratorMethodDetails &storage, const TR:
    if (other.isOrdinaryMethod())
       return new (&storage) TR::IlGeneratorMethodDetails(static_cast<const TR::IlGeneratorMethodDetails &>(other));
    else if (other.isDumpMethod())
-      return new (&storage) DumpMethodDetails(static_cast<const DumpMethodDetails &>(other));
+      return new (&storage) JitDumpMethodDetails(static_cast<const JitDumpMethodDetails &>(other));
    else if (other.isNewInstanceThunk())
       return new (&storage) NewInstanceThunkDetails(static_cast<const NewInstanceThunkDetails &>(other));
    else if (other.isMethodInProgress())
@@ -78,7 +78,7 @@ IlGeneratorMethodDetails::clone(TR::IlGeneratorMethodDetails &storage, const TR:
    if (type & ORDINARY_METHOD)
       return new (&storage) TR::IlGeneratorMethodDetails(static_cast<const TR::IlGeneratorMethodDetails &>(other));
    else if (type & DUMP_METHOD)
-      return new (&storage) DumpMethodDetails(static_cast<const DumpMethodDetails &>(other));
+      return new (&storage) JitDumpMethodDetails(static_cast<const JitDumpMethodDetails &>(other));
    else if (type & NEW_INSTANCE_THUNK)
       return new (&storage) NewInstanceThunkDetails(static_cast<const NewInstanceThunkDetails &>(other));
    else if (type & METHOD_IN_PROGRESS)

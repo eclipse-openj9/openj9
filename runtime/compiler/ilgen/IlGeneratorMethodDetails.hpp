@@ -60,13 +60,13 @@ public:
 namespace J9
 {
 
-class DumpMethodDetails : public TR::IlGeneratorMethodDetails
+class JitDumpMethodDetails : public TR::IlGeneratorMethodDetails
    {
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
 
 public:
-   DumpMethodDetails(J9Method* method) : TR::IlGeneratorMethodDetails(method) { }
-   DumpMethodDetails(const DumpMethodDetails& other) : TR::IlGeneratorMethodDetails(other.getMethod()) { }
+   JitDumpMethodDetails(J9Method* method) : TR::IlGeneratorMethodDetails(method) { }
+   JitDumpMethodDetails(const JitDumpMethodDetails& other) : TR::IlGeneratorMethodDetails(other.getMethod()) { }
 
    virtual const char * name()     const { return "DumpMethod"; }
 

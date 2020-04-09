@@ -326,7 +326,7 @@ static TR_CompilationErrorCode recompileMethodForLog(
    // TODO: this is indiscriminately compiling as J9::DumpMethodRequest, which is wrong;
    //       should be fixed by checking if the method is indeed DLT, and compiling DLT if so
       {
-      J9::DumpMethodDetails details( ramMethod);
+      J9::JitDumpMethodDetails details(ramMethod);
       compInfo->compileMethod(vmThread, details, oldStartPC, TR_no, &compErrCode, &successfullyQueued, plan);
       }
 
