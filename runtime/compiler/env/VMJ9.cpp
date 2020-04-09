@@ -4043,7 +4043,7 @@ TR_J9VMBase::methodMayHaveBeenInterpreted(TR::Compilation *comp)
 bool
 TR_J9VMBase::canRecompileMethodWithMatchingPersistentMethodInfo(TR::Compilation *comp)
    {
-   return (comp->ilGenRequest().details().isDumpMethod() || // for a log recompilation, it's okay to compile at the same level
+   return (comp->ilGenRequest().details().isJitDumpMethod() || // for a log recompilation, it's okay to compile at the same level
            comp->getOption(TR_EnableHCR)
           );                     // TODO: Why does this assume sometimes fail in HCR mode?
    }

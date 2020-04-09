@@ -71,12 +71,12 @@ public:
    virtual const char * name()     const { return "DumpMethod"; }
 
    virtual bool isOrdinaryMethod() const { return false; }
-   virtual bool isDumpMethod()     const { return true; }
+   virtual bool isJitDumpMethod()     const { return true; }
 
 
    virtual bool sameAs(TR::IlGeneratorMethodDetails & other, TR_FrontEnd *fe)
       {
-      return other.isDumpMethod() && sameMethod(other);
+      return other.isJitDumpMethod() && sameMethod(other);
       }
 
    virtual bool supportsInvalidation() { return false; }

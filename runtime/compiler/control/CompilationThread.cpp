@@ -598,7 +598,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
    if (!isCompiled(method) &&
        entry->_optimizationPlan->getOptLevel() == warm && // only warm compilations are subject to downgrades
        !methodDetails.isMethodInProgress() &&
-       !methodDetails.isDumpMethod() &&
+       !methodDetails.isJitDumpMethod() &&
        !TR::Options::getCmdLineOptions()->getOption(TR_DontDowngradeToCold))
       {
       TR::PersistentInfo *persistentInfo = getPersistentInfo();
@@ -5722,7 +5722,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
    //
    if (!details.isMethodInProgress())
       startPC = startPCIfAlreadyCompiled(vmThread, details, oldStartPC);
-   if (startPC && !details.isDumpMethod() &&
+   if (startPC && !details.isJitDumpMethod() &&
       !optimizationPlan->isGPUCompilation())
       {
       // Release the compilation lock and return
@@ -5742,7 +5742,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
          (
             getPersistentInfo()->getDisableFurtherCompilation() &&
             oldStartPC == 0 &&
-            !details.isDumpMethod()
+            !details.isJitDumpMethod()
          )
       )
       {
@@ -7666,7 +7666,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
             // inside the compile request. For log compilations, simply return.
             //
             UDATA protectedResult;
-            if (entry->getMethodDetails().isDumpMethod())
+            if (entry->getMethodDetails().isJitDumpMethod())
                {
                // NOTE:
                //       for intentional crashes, intentional traps cause the dump, and we
