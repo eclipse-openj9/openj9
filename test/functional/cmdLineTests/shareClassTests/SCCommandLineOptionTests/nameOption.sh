@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004, 2018 IBM Corp. and others
+# Copyright (c) 2004, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,11 +31,8 @@ export TESTSCRIPT=nameOption
 
 export DEFAULT_CACHE_NAME="sharedcc_$TESTUSER"
 
-$2/javac HelloWorld.java
-$2/javac SimpleGrep.java
-
-$1/java -Xshareclasses HelloWorld
-$1/java -Xshareclasses:listAllCaches 2> $TESTSCRIPT.out
+$1/java -Xshareclasses:cacheDir=/tmp HelloWorld
+$1/java -Xshareclasses:cacheDir=/tmp,listAllCaches 2> $TESTSCRIPT.out
 
 if [ ! -e $TESTSCRIPT.out ]
 then
@@ -50,8 +47,8 @@ else
     fi
 fi
 
-$1/java -Xshareclasses:name="$DEFAULT_CACHE_NAME",destroy
-$1/java -Xshareclasses:name="$DEFAULT_CACHE_NAME",printStats 2> $TESTSCRIPT_2.out
+$1/java -Xshareclasses:cacheDir=/tmp,name="$DEFAULT_CACHE_NAME",destroy
+$1/java -Xshareclasses:cacheDir=/tmp,name="$DEFAULT_CACHE_NAME",printStats 2> $TESTSCRIPT_2.out
 
 if [ ! -e $TESTSCRIPT.out ]
 then
