@@ -50,6 +50,7 @@ import com.ibm.java.diagnostics.utils.IContext;
 import com.ibm.java.diagnostics.utils.commands.CommandException;
 import com.ibm.jvm.dtfjview.CombinedContext;
 import com.ibm.jvm.dtfjview.JdmpviewContextManager;
+import com.ibm.jvm.dtfjview.Session;
 import com.ibm.jvm.dtfjview.SessionProperties;
 import com.ibm.jvm.dtfjview.Version;
 import com.ibm.jvm.dtfjview.spi.ISession;
@@ -69,20 +70,20 @@ public class OpenCommand extends BaseJdmpviewCommand {
 	}
 	
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
-		if (initCommand(command, args, context, out)) {
-			return; // processing already handled by super class
+		if(initCommand(command, args, context, out)) {
+			return;		//processing already handled by super class
 		}
-		switch (args.length) {
-		case 0: // print out the version information for the factory
-			out.println(Version.getAllVersionInfo(factory));
-			return;
-		case 1:
-		case 2:
-			imagesFromCommandLine(args);
-			break;
-		default:
-			out.println("The open command requires at least one and at most two parameters. See 'help open'.");
-			return;
+		switch(args.length) {
+			case 0 :		//print out the version information for the factory
+				out.println(Version.getAllVersionInfo(factory));
+				return;
+			case 1:
+			case 2:
+				imagesFromCommandLine(args);
+				break;
+			default :
+				out.println("The open command requires at least one and at most two parameters. See 'help open'.");
+				return;
 		}
 	}
 
@@ -97,6 +98,7 @@ public class OpenCommand extends BaseJdmpviewCommand {
 		out.println("Loading image from DTFJ...\n");
 		
 		try {
+			Image[] images = new Image[1];		//default to a single image
 			if (ctx.hasPropertyBeenSet(VERBOSE_MODE_PROPERTY)) {
 				// If we are using DDR this will enable warnings.
 				// (If not it's irrelevant.)
@@ -105,9 +107,8 @@ public class OpenCommand extends BaseJdmpviewCommand {
 			//at this point the existence of either -core or -zip has been checked
 			long current = System.currentTimeMillis();
 			File file1 = new File(args[0]);
-			Image[] images = new Image[1]; // default to a single image
-			if (args.length == 1) {
-				if (FileManager.isArchive(file1) && !ctx.hasPropertyBeenSet(LEGACY_ZIP_MODE_PROPERTY)) {
+			if(args.length == 1) {
+				if (FileManager.isArchive(file1) && !ctx.hasPropertyBeenSet(LEGACY_ZIP_MODE_PROPERTY) ) {
 					images = factory.getImagesFromArchive(file1, ctx.hasPropertyBeenSet(EXTRACT_PROPERTY));
 				} else {
 					images[0] = factory.getImage(file1);
@@ -117,7 +118,7 @@ public class OpenCommand extends BaseJdmpviewCommand {
 				images[0] = factory.getImage(file1, file2);
 			}
 			logger.fine(String.format("Time taken to load image %d ms", System.currentTimeMillis() - current));
-			for (Image image : images) {
+			for(Image image : images) {
 				createContexts(image, args[0]);
 			}
 		} catch (IOException e) {
@@ -127,26 +128,23 @@ public class OpenCommand extends BaseJdmpviewCommand {
 			}
 		}
 	}
-
+	
 	private ImageFactory getFactory() {
-		if (factory != null) {
+		if(factory != null) {
 			return factory;
 		}
 		try {
 			Class<?> factoryClass = Class.forName(factoryName);
-			factory = (ImageFactory) factoryClass.newInstance();
+			factory = (ImageFactory)factoryClass.newInstance();
 		} catch (ClassNotFoundException e) {
 			out.println("ClassNotFoundException while getting ImageFactory: " + e.getMessage());
 			out.println("Use -D" + SYSPROP_FACTORY + "=<classname> to change the ImageFactory");
 			System.exit(JDMPVIEW_SYNTAX_ERROR);
-		} catch (ClassCastException e) {
-			out.println("ClassCastException while getting ImageFactory: " + e.getMessage());
+		} catch (InstantiationException e) {
+			out.println("InstantiationException while getting ImageFactory: " + e.getMessage());
 			System.exit(JDMPVIEW_SYNTAX_ERROR);
 		} catch (IllegalAccessException e) {
 			out.println("IllegalAccessException while getting ImageFactory: " + e.getMessage());
-			System.exit(JDMPVIEW_SYNTAX_ERROR);
-		} catch (InstantiationException e) {
-			out.println("InstantiationException while getting ImageFactory: " + e.getMessage());
 			System.exit(JDMPVIEW_SYNTAX_ERROR);
 		}
 		return factory;
@@ -154,87 +152,76 @@ public class OpenCommand extends BaseJdmpviewCommand {
 	
 	
 	private void createContexts(Image loadedImage, String coreFilePath) {
-		if (loadedImage == null) {
-			// cannot create any contexts as an image has not been obtained
+		if(loadedImage == null) {
+			//cannot create any contexts as an image has not been obtained
 			return;
 		}
 		boolean hasContexts = false;
 		Iterator<?> spaces = loadedImage.getAddressSpaces();
-		while (spaces.hasNext()) {
+		while(spaces.hasNext()) {
 			Object o = spaces.next();
-			if (!(o instanceof ImageAddressSpace)) {
-				// need a representation of a corrupt context
-				logger.fine("Skipping corrupt ImageAddress space");
-				continue;
-			}
-
-			ImageAddressSpace space = (ImageAddressSpace) o;
-			Iterator<?> procs = space.getProcesses();
-			if (!procs.hasNext()) {
-				// context with only an address space
-				createCombinedContext(loadedImage, apiLevelMajor, apiLevelMinor, space, null, null, coreFilePath);
-				hasContexts = true;
-				continue;
-			}
-
-			while (procs.hasNext()) {
-				o = procs.next();
-				if (!(o instanceof ImageProcess)) {
-					continue;
-				}
-
-				ImageProcess proc = (ImageProcess) o;
-				Iterator<?> runtimes = proc.getRuntimes();
-
-				if (!runtimes.hasNext()) {
-					// there are no runtimes so create a context for this process
-					createCombinedContext(loadedImage, apiLevelMajor, apiLevelMinor, space, proc, null, coreFilePath);
-					hasContexts = true;
-					continue;
-				}
-
-				while (runtimes.hasNext()) {
-					o = runtimes.next();
-					if (o instanceof JavaRuntime) {
-						createCombinedContext(loadedImage, apiLevelMajor, apiLevelMinor, space, proc, (JavaRuntime) o, coreFilePath);
-						hasContexts = true;
-					} else if (o instanceof CorruptData) {
-						logger.fine("CorruptData encountered in ImageProcess.getRuntimes(): " + o);
-						createCombinedContext(loadedImage, apiLevelMajor, apiLevelMinor, space, proc, null, coreFilePath);
-						hasContexts = true;
-					} else {
-						logger.fine("Unexpected class encountered in ImageProcess.getRuntimes()");
-						createCombinedContext(loadedImage, apiLevelMajor, apiLevelMinor, space, proc, null, coreFilePath);
-						hasContexts = true;
+			if(o instanceof ImageAddressSpace) {
+				ImageAddressSpace space = (ImageAddressSpace) o;
+				Iterator<?> procs = space.getProcesses();
+				if(procs.hasNext()) {
+					while(procs.hasNext()) {
+						o = procs.next();
+						if(o instanceof ImageProcess) {
+							ImageProcess proc = (ImageProcess) o;
+							Iterator<?> runtimes = proc.getRuntimes();
+							if(runtimes.hasNext()) {
+								while(runtimes.hasNext()) {
+									o = runtimes.next();
+									if(o instanceof JavaRuntime) {
+										createCombinedContext(loadedImage, apiLevelMajor, apiLevelMinor, space, proc, (JavaRuntime)o, coreFilePath);
+										hasContexts = true;
+									} else if (o instanceof CorruptData) {
+										logger.fine("CorruptData encountered in ImageProcess.getRuntimes(): " + ((CorruptData)o).toString());
+										createCombinedContext(loadedImage, apiLevelMajor, apiLevelMinor, space, proc, null, coreFilePath);
+										hasContexts = true;
+									} else {
+										logger.fine("Unexpected class encountered in ImageProcess.getRuntimes()");
+										createCombinedContext(loadedImage, apiLevelMajor, apiLevelMinor, space, proc, null, coreFilePath);
+										hasContexts = true;
+									}
+								}
+							} else {
+								//there are no runtimes so create a context for this process
+								createCombinedContext(loadedImage, apiLevelMajor, apiLevelMinor, space, proc, null, coreFilePath);
+								hasContexts = true;
+							}
+						}
 					}
+				} else {
+					//context with only an address space
+					createCombinedContext(loadedImage, apiLevelMajor, apiLevelMinor, space, null, null, coreFilePath);
+					hasContexts = true;
 				}
+			} else {
+				//need a representation of a corrupt context
+				logger.fine("Skipping corrupt ImageAddress space");
 			}
 		}
-		if (!hasContexts) {
-			if (ctx.hasPropertyBeenSet(VERBOSE_MODE_PROPERTY)) {
-				out.println("Warning: no contexts were found, is this a valid core file?");
-			}
-		} else {
-			if (loadedImage.isTruncated()) {
-				out.println("Warning: dump file is truncated. Extracted information may be incomplete.");
-				out.println();
+		if(!hasContexts) {
+			if(ctx.hasPropertyBeenSet(VERBOSE_MODE_PROPERTY)) {
+				out.println("Warning : no contexts were found, is this a valid core file ?");
 			}
 		}
 	}
 	
 	private void createCombinedContext(final Image loadedImage, final int major, final int minor, final ImageAddressSpace space, final ImageProcess proc, final JavaRuntime rt, String coreFilePath) {
-		// take the DTFJ context and attempt to combine it with a DDR interactive one
+		//take the DTFJ context and attempt to combine it with a DDR interactive one
 		Object obj = ctx.getProperties().get(SessionProperties.SESSION_PROPERTY);
-		if (obj == null) {
+		if(obj == null) {
 			logger.fine("Could not create a new context as the session property has not been set");
 			return;
 		}
-		if (!(obj instanceof ISession)) {
+		if(!(obj instanceof Session)) {
 			logger.fine("Could not create a new context as the session type was not recognised [" + obj.getClass().getName() + "]");
 			return;
 		}
-		JdmpviewContextManager mgr = (JdmpviewContextManager) ((ISession) obj).getContextManager();
-		CombinedContext cc = (CombinedContext) mgr.createContext(loadedImage, major, minor, space, proc, rt);
+		JdmpviewContextManager mgr = (JdmpviewContextManager)((ISession)obj).getContextManager();
+		CombinedContext cc = (CombinedContext)mgr.createContext(loadedImage, major, minor, space, proc, rt);
 		cc.startDDRInteractiveSession(loadedImage, out);
 		cc.getProperties().put(CORE_FILE_PATH_PROPERTY, coreFilePath);
 		cc.getProperties().put(IMAGE_FACTORY_PROPERTY, getFactory());
@@ -243,35 +230,36 @@ public class OpenCommand extends BaseJdmpviewCommand {
 		}
 		
 		try {
-			boolean hasLibError = true; // flag to indicate if native libs are required but not present
+			boolean hasLibError = true;		//flag to indicate if native libs are required but not present
 			String os = cc.getImage().getSystemType().toLowerCase();
-			if (os.contains("linux") || os.contains("aix")) {
-				if (cc.getProcess() != null) {
+			if(os.contains("linux") || (os.contains("aix"))) {
+				if(cc.getProcess() != null) {
 					Iterator<?> modules = cc.getProcess().getLibraries();
-					if (modules.hasNext()) {
+					if(modules.hasNext()) {
 						obj = modules.next();
-						if (obj instanceof ImageModule) {
-							hasLibError = false; // there is at least one native lib available
+						if(obj instanceof ImageModule) {
+							hasLibError = false;		//there is at least one native lib available
 						}
 					}
 				}
 			} else {
 				hasLibError = false;
 			}
-			if (hasLibError) {
-				out.println("Warning: native libraries are not available for " + coreFilePath);
+			if(hasLibError) {
+				out.println("Warning : native libraries are not available for " + coreFilePath);
 			}
 		} catch (DataUnavailable e) {
-			logger.log(Level.FINE, "Warning: native libraries are not available for " + coreFilePath);
-		} catch (Exception e) {
+			logger.log(Level.FINE, "Warning : native libraries are not available for " + coreFilePath);
+		}
+		catch (Exception e) {
 			logger.log(Level.FINE, "Error determining if native libraries are required for " + coreFilePath, e);
 		}
 	}
-
+	
 	@Override
 	public void printDetailedHelp(PrintStream out) {
-		out.println("Opens a core file or zip file and loads it into jdmpview ready for further analysis.");
-		out.println("Any resultant contexts are added to the list of currently available contexts.");
+		out.println("Opens a core file or zip file and loads it into jdmpview ready for further analysis. Any resultant contexts are added to the " +
+				" list of currently available contexts");
 	}
 
 }
