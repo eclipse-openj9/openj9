@@ -2051,14 +2051,16 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
       traceMsg(comp, "storeValidationRecordIfNecessary:\n");
       traceMsg(comp, "\tconstantPool %p cpIndex %d\n", constantPool, cpIndex);
       traceMsg(comp, "\treloKind %d isStatic %d\n", reloKind, isStatic);
+      TR_J9ServerVM *serverVM = static_cast<TR_J9ServerVM *>(fej9);
+
       J9UTF8 *methodClassName =
          J9ROMCLASS_CLASSNAME(
             TR::Compiler->cls.romClassOf(
-               fej9->getClassOfMethod(reinterpret_cast<TR_OpaqueMethodBlock *>(ramMethod))));
+               serverVM->TR_J9ServerVM::getClassOfMethod(reinterpret_cast<TR_OpaqueMethodBlock *>(ramMethod))));
       traceMsg(comp,
                "\tmethod %p from class %p %.*s\n",
                ramMethod,
-               fej9->getClassOfMethod(reinterpret_cast<TR_OpaqueMethodBlock *>(ramMethod)),
+               serverVM->TR_J9ServerVM::getClassOfMethod(reinterpret_cast<TR_OpaqueMethodBlock *>(ramMethod)),
                J9UTF8_LENGTH(methodClassName),
                J9UTF8_DATA(methodClassName));
       traceMsg(comp, "\tdefiningClass %p\n", definingClass);
