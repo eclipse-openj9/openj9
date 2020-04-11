@@ -81,7 +81,7 @@ public:
       _method = NULL;
       }
 
-   IlGeneratorMethodDetails(J9Method * const method) :
+   IlGeneratorMethodDetails(J9Method* method) :
       OMR::IlGeneratorMethodDetailsConnector(),
       _method(method)
    { }
@@ -104,7 +104,7 @@ public:
    virtual const char * name() const { return "OrdinaryMethod"; }
 
    virtual bool isOrdinaryMethod()     const { return true; }
-   virtual bool isDumpMethod()         const { return false; }
+   virtual bool isJitDumpMethod()      const { return false; }
    virtual bool isNewInstanceThunk()   const { return false; }
    virtual bool isMethodInProgress()   const { return false; }
    virtual bool isArchetypeSpecimen()  const { return false; }

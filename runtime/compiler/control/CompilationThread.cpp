@@ -590,17 +590,19 @@ bool TR::CompilationInfo::importantMethodForStartup(J9Method *method)
 bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
    {
    bool doDowngrade = false;
-   J9Method *method = entry->getMethodDetails().getMethod();
+   TR::IlGeneratorMethodDetails& methodDetails = entry->getMethodDetails();
+   J9Method *method = methodDetails.getMethod();
 #ifdef J9VM_OPT_JITSERVER
    TR_ASSERT(getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER, "shouldDowngradeCompReq should not be used by JITServer");
 #endif
-   if (!isCompiled(method) && /*entry->_priority <= CP_ASYNC_MAX &&*/
+   if (!isCompiled(method) &&
        entry->_optimizationPlan->getOptLevel() == warm && // only warm compilations are subject to downgrades
-       !entry->isDLTCompile() &&
+       !methodDetails.isMethodInProgress() &&
+       !methodDetails.isJitDumpMethod() &&
        !TR::Options::getCmdLineOptions()->getOption(TR_DontDowngradeToCold))
       {
       TR::PersistentInfo *persistentInfo = getPersistentInfo();
-      const J9ROMMethod * romMethod = entry->getMethodDetails().getRomMethod();
+      const J9ROMMethod * romMethod = methodDetails.getRomMethod();
       TR_J9VMBase *fe = TR_J9VMBase::get(_jitConfig, NULL);
 
       // Don't downgrade if method is JSR292. See CMVC 200145
@@ -706,7 +708,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
          // Always downgrade J9VMInternals because they are expensive
          if (!doDowngrade)
             {
-            J9UTF8 * className = J9ROMCLASS_CLASSNAME(entry->getMethodDetails().getRomClass());
+            J9UTF8 * className = J9ROMCLASS_CLASSNAME(methodDetails.getRomClass());
             if (className->length == 23 && !memcmp(utf8Data(className), "java/lang/J9VMInternals", 23))
                {
                doDowngrade = true;
@@ -5720,7 +5722,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
    //
    if (!details.isMethodInProgress())
       startPC = startPCIfAlreadyCompiled(vmThread, details, oldStartPC);
-   if (startPC && !details.isDumpMethod() &&
+   if (startPC && !details.isJitDumpMethod() &&
       !optimizationPlan->isGPUCompilation())
       {
       // Release the compilation lock and return
@@ -5740,7 +5742,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
          (
             getPersistentInfo()->getDisableFurtherCompilation() &&
             oldStartPC == 0 &&
-            !details.isDumpMethod()
+            !details.isJitDumpMethod()
          )
       )
       {
@@ -7664,13 +7666,13 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
             // inside the compile request. For log compilations, simply return.
             //
             UDATA protectedResult;
-            if (entry->getMethodDetails().isDumpMethod())
+            if (entry->getMethodDetails().isJitDumpMethod())
                {
                // NOTE:
                //       for intentional crashes, intentional traps cause the dump, and we
                //       are not protected against them (flag: J9PORT_SIG_FLAG_SIGTRAP)
                protectedResult = j9sig_protect((j9sig_protected_fn)wrappedCompile, static_cast<void *>(&compParam),
-                                                  (j9sig_handler_fn)  blankDumpSignalHandler, vmThread,
+                                                  (j9sig_handler_fn)  jitDumpSignalHandler, vmThread,
                                                   flags, &result);
                }
             else
