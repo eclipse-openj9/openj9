@@ -269,8 +269,6 @@ ppc64_aix:
       11: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
       14: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
-  excluded_tests:
-      - special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
