@@ -1,27 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <!--
-  Copyright (c) 2010, 2019 IBM Corp. and others
- 
-  This program and the accompanying materials are made available under
-  the terms of the Eclipse Public License 2.0 which accompanies this
-  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-  or the Apache License, Version 2.0 which accompanies this distribution and
-  is available at https://www.apache.org/licenses/LICENSE-2.0.
- 
-  This Source Code may also be made available under the following
-  Secondary Licenses when the conditions for such availability set
-  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-  General Public License, version 2 with the GNU Classpath
-  Exception [1] and GNU General Public License, version 2 with the
-  OpenJDK Assembly Exception [2].
- 
-  [1] https://www.gnu.org/software/classpath/license.html
-  [2] http://openjdk.java.net/legal/assembly-exception.html
+Copyright (c) 2010, 2020 IBM Corp. and others
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <project name="DDR_VM" default="dist">
 
 	<property environment="env"/>
@@ -36,7 +34,7 @@
 	<property name="findbugs.results.dir" value="${findbugs.dir}/results"/>
 
 	<condition property="j9ddr_jar" value="${output.libs.dir}/j9ddr.jar" else="${output.libs.dir}/${product}_j9ddr.jar">
-		<equals arg1="${product}" arg2="java8" />
+		<equals arg1="${product}" arg2="java8"/>
 	</condition>
 
 	<property name="j9_core_dir" value="../DDR_VM"/>
@@ -57,36 +55,34 @@
 
 	<if>
 		<!-- VM_VERSION is inherited from DDR_VM/generate.xml -->
-		<equals arg1="${VM_VERSION}" arg2="24" />
+		<equals arg1="${VM_VERSION}" arg2="24"/>
 		<then>
 			<!-- the RAS jars are in RASTools folder in 2.4 VM infrastructure -->
-			<property name="dtfj_interface_dir"   value="../RASTools"/>
-			<!-- !snapformat only compiles against a traceformat.jar with the API included  -->
-			<property name="traceformat.jar"   value="${j9_core_lib}/traceformat.jar"/>
+			<property name="dtfj_interface_dir" value="../RASTools"/>
+			<!-- !snapformat only compiles against a traceformat.jar with the API included -->
+			<property name="traceformat.jar" value="${j9_core_lib}/traceformat.jar"/>
 		</then>
 		<else>
-			<property name="dtfj_interface_dir"   value="../../RAS_Binaries"/>
+			<property name="dtfj_interface_dir" value="../../RAS_Binaries"/>
 			<!-- Until DDR is compiled in the modular way, use Java 8 jars for traceformat and DTFJ. -->
-			<property name="traceformat.jar"      value="${dtfj_interface_dir}/traceformat.jar"/>
+			<property name="traceformat.jar" value="${dtfj_interface_dir}/traceformat.jar"/>
 		</else>
 	</if>
-	<property name="dtfj.jar"             value="${dtfj_interface_dir}/dtfj.jar"/>
-	<property name="dtfj-j9.jar"          value="${j9_core_lib}/dtfj.j9-head.jar"/>
-	<property name="ibmjzos.jar"          value="${j9_core_lib}/ibmjzos.jar"/>
+	<property name="dtfj.jar"    value="${dtfj_interface_dir}/dtfj.jar"/>
+	<property name="dtfj-j9.jar" value="${j9_core_lib}/dtfj.j9-head.jar"/>
+	<property name="ibmjzos.jar" value="${j9_core_lib}/ibmjzos.jar"/>
 
- 	<if>
- 		<equals arg1="${product}" arg2="java8" />
- 		<then>
- 			<property name="src.level" value="1.8"/>
- 			<property name="target.level" value="1.8"/>
- 			<property name="compilerarg.javac.addexports" value=""/>
- 		</then>
- 		<else>
- 			<property name="src.level" value="1.9"/>
- 			<property name="target.level" value="1.9"/>
- 			<property name="compilerarg.javac.addexports" value="--add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED,com.ibm.dtfj --add-exports com.ibm.dtfj/com.ibm.dtfj.utils=ALL-UNNAMED --add-exports com.ibm.dtfj/com.ibm.dtfj.utils.file=ALL-UNNAMED --add-exports com.ibm.traceformat/com.ibm.jvm.trace.format.api=ALL-UNNAMED"/>
- 		</else>
- 	</if>
+	<if>
+		<equals arg1="${product}" arg2="java8"/>
+		<then>
+			<property name="src.level" value="1.8"/>
+			<property name="target.level" value="1.8"/>
+		</then>
+		<else>
+			<property name="src.level" value="1.9"/>
+			<property name="target.level" value="1.9"/>
+		</else>
+	</if>
 
 	<!-- Set up task classpath -->
 	<path id="runtime.cp">
@@ -104,17 +100,20 @@
 	</target>
 
 	<target name="clean.bin">
-		<delete dir="${output.dir}/bin" includeemptydirs="true" failonerror="false" />
-		<delete dir="${output.dir}/findbugs" includeemptydirs="true" failonerror="false" />
+		<delete dir="${output.dir}/bin" includeemptydirs="true" failonerror="false"/>
+		<delete dir="${output.dir}/findbugs" includeemptydirs="true" failonerror="false"/>
 
 		<if>
 			<os family="unix"/>
 			<then>
-				<!-- ant delete appears to be flaky most of the time and fails to delete an otherwise
-				     accessible and empty directory. Fix it by using proper tooling, avoid rm -rf to avoid non-fun deletions -->
+				<!--
+				The ant delete task appears to be flaky most of the time and fails to delete
+				an otherwise accessible and empty directory. Fix it by using proper tooling,
+				avoid rm -rf to avoid non-fun deletions.
+				-->
 				<shellscript shell="bash" dir="/tmp">
-						rmdir ${output.dir}/bin
-						rmdir ${output.dir}/findbugs
+					rmdir ${output.dir}/bin
+					rmdir ${output.dir}/findbugs
 				</shellscript>
 			</then>
 		</if>
@@ -138,10 +137,10 @@
 	</target>
 
 	<target name="package.mat_plugin">
-		<copy file="${j9_core_jar}" todir="${mat_plugin_lib}" />
+		<copy file="${j9_core_jar}" todir="${mat_plugin_lib}"/>
 		<jar destfile="${mat_plugin_jar}" manifest="${mat_plugin_meta}/MANIFEST.MF">
-			<zipfileset file="${mat_plugin_dir}/plugin.xml" />
-			<zipfileset dir="${mat_plugin_lib}" includes="*" prefix="lib" />
+			<zipfileset file="${mat_plugin_dir}/plugin.xml"/>
+			<zipfileset dir="${mat_plugin_lib}" includes="*" prefix="lib"/>
 		</jar>
 	</target>
 
@@ -155,68 +154,70 @@
 		<antcall target="compile.j9_core"/>
 	</target>
 
-	<target name="compile.j9_core.minmum">
-		<echo>Compiling j9_core excluding vm 23/24/26/27/28/29/29_00 </echo>
-		<echo>JAVAC ARGS: </echo>
-		<echo>destdir = ${j9_core_bin}</echo>
-		<echo>src.level = ${src.level}</echo>
-		<echo>target.level = ${target.level}</echo>
+	<target name="compile.j9_core.minimum">
+		<echo>Compiling j9_core excluding vm 23/24/26/27/28/29/29_00</echo>
+		<echo>JAVAC ARGS:</echo>
+		<echo>destdir             = ${j9_core_bin}</echo>
+		<echo>src.level           = ${src.level}</echo>
+		<echo>target.level        = ${target.level}</echo>
 		<echo>build.compiler.java = ${build.compiler.java}</echo>
 		<echo>Source Paths:</echo>
 		<echo>- j9_core_src = ${j9_core_src}</echo>
-		<echo>Classpaths :</echo>
-		<echo>- dtfj.jar = ${dtfj.jar}</echo>
-		<echo>- dtfj-j9.jar = ${dtfj-j9.jar}</echo>
-		<echo>- ibmjzos.jar = ${ibmjzos.jar}</echo>
-		<echo>- junit.jar = ${junit.jar}</echo>
+		<echo>Bootclasspath:</echo>
+		<echo>- dtfj.jar        = ${dtfj.jar}</echo>
+		<echo>- dtfj-j9.jar     = ${dtfj-j9.jar}</echo>
+		<echo>- ibmjzos.jar     = ${ibmjzos.jar}</echo>
 		<echo>- traceformat.jar = ${traceformat.jar}</echo>
+		<echo>Classpath:</echo>
+		<echo>- junit.jar       = ${junit.jar}</echo>
+		<path id="j9ddr.bootclasspath">
+			<pathelement location="${dtfj.jar}"/>
+			<pathelement location="${dtfj-j9.jar}"/>
+			<pathelement location="${ibmjzos.jar}"/>
+			<pathelement location="${traceformat.jar}"/>
+		</path>
 		<javac destdir="${j9_core_bin}" source="${src.level}" target="${target.level}"
 			debug="true" fork="true" executable="${build.compiler.java}">
+			<compilerarg value="-Xbootclasspath/p:${toString:j9ddr.bootclasspath}"/>
 			<src path="${j9_core_src}"/>
-			<exclude name="com/ibm/j9ddr/vm*/**" />
+			<exclude name="com/ibm/j9ddr/vm*/**"/>
 			<classpath>
-				<pathelement location="${dtfj.jar}"/>
-				<pathelement location="${dtfj-j9.jar}"/>
-				<pathelement location="${ibmjzos.jar}"/>
 				<pathelement location="${junit.jar}"/>
-				<pathelement location="${traceformat.jar}"/>
 			</classpath>
- 			<compilerarg line=" ${compilerarg.javac.addexports} "/>
 		</javac>
 	</target>
 
 	<target name="compile.j9_core.vmversion">
-		<echo>Compiling com/ibm/j9ddr/vm${include.core.vmnbr}/** </echo>
-		<echo>JAVAC ARGS: </echo>
-		<echo>destdir = ${j9_core_bin}</echo>
-		<echo>src.level = ${src.level}</echo>
-		<echo>target.level = ${target.level}</echo>
+		<echo>Compiling com/ibm/j9ddr/vm${include.core.vmnbr}/**</echo>
+		<echo>JAVAC ARGS:</echo>
+		<echo>destdir             = ${j9_core_bin}</echo>
+		<echo>src.level           = ${src.level}</echo>
+		<echo>target.level        = ${target.level}</echo>
 		<echo>build.compiler.java = ${build.compiler.java}</echo>
 		<echo>Source Paths:</echo>
 		<echo>- j9_core_src = ${j9_core_src}</echo>
-		<echo>Classpaths :</echo>
-		<echo>- ibmjzos.jar = ${ibmjzos.jar}</echo>
-		<echo>- junit.jar = ${junit.jar}</echo>
-		<echo>- dtfj.jar = ${dtfj.jar}</echo>
-		<echo>- dtfj-j9.jar = ${dtfj-j9.jar}</echo>
+		<echo>Classpath:</echo>
+		<echo>- dtfj.jar        = ${dtfj.jar}</echo>
+		<echo>- dtfj-j9.jar     = ${dtfj-j9.jar}</echo>
+		<echo>- ibmjzos.jar     = ${ibmjzos.jar}</echo>
+		<echo>- junit.jar       = ${junit.jar}</echo>
 		<javac destdir="${j9_core_bin}" source="${src.level}" target="${target.level}"
 			debug="true" fork="true" executable="${build.compiler.java}">
 			<src path="${j9_core_src}"/>
-			<include name="com/ibm/j9ddr/vm${include.core.vmnbr}/**" />
+			<include name="com/ibm/j9ddr/vm${include.core.vmnbr}/**"/>
 			<classpath>
-				<pathelement location="${ibmjzos.jar}"/>
-				<pathelement location="${junit.jar}"/>
 				<pathelement location="${dtfj.jar}"/>
 				<pathelement location="${dtfj-j9.jar}"/>
+				<pathelement location="${ibmjzos.jar}"/>
+				<pathelement location="${junit.jar}"/>
 			</classpath>
-			<compilerarg line=" ${compilerarg.javac.addexports} "/>
 		</javac>
 	</target>
 
-	<target name="compile.j9_core.test.minmum">
-		<echo>Compiling J9 Core Tests excluding vm 23/24/26/27/28/29/29_00 </echo>
-		<echo>JAVAC ARGS: </echo>
-		<echo>srcdir = ${j9_core_tests_src}</echo>
+	<target name="compile.j9_core.test.minimum">
+		<echo>Compiling J9 Core Tests excluding vm 23/24/26/27/28/29/29_00</echo>
+		<echo>JAVAC ARGS:</echo>
+		<echo>srcdir  = ${j9_core_tests_src}</echo>
 		<echo>destdir = ${j9_core_tests_bin}</echo>
 		<echo>src.level = ${src.level}</echo>
 		<echo>target.level = ${target.level}</echo>
@@ -227,9 +228,9 @@
 		<echo>- ${j9_core_lib}/dtfj.j9-head.jar</echo>
 		<echo>- ${j9_core_lib}/dtfj.pkg.tck-head.jar</echo>
 		<javac destdir="${j9_core_tests_bin}" source="${src.level}" target="${target.level}"
-			fork="yes" executable="${build.compiler.java}" debug="true">
+			debug="true" fork="yes" executable="${build.compiler.java}">
 			<src path="${j9_core_tests_src}"/>
-			<exclude name="com/ibm/j9ddr/vm*/**" />
+			<exclude name="com/ibm/j9ddr/vm*/**"/>
 			<classpath>
 				<pathelement location="${j9_core_bin}"/>
 				<pathelement location="${junit.jar}"/>
@@ -240,8 +241,8 @@
 	</target>
 
 	<target name="compile.j9_core.test.vmversion">
-		<echo>Compiling J9 Core Tests com/ibm/j9ddr/vm${include.core.vmnbr}/** </echo>
-		<echo>JAVAC ARGS: </echo>
+		<echo>Compiling J9 Core Tests com/ibm/j9ddr/vm${include.core.vmnbr}/**</echo>
+		<echo>JAVAC ARGS:</echo>
 		<echo>srcdir = ${j9_core_tests_src}</echo>
 		<echo>destdir = ${j9_core_tests_bin}</echo>
 		<echo>src.level = ${src.level}</echo>
@@ -253,9 +254,9 @@
 		<echo>- ${j9_core_lib}/dtfj.j9-head.jar</echo>
 		<echo>- ${j9_core_lib}/dtfj.pkg.tck-head.jar</echo>
 		<javac destdir="${j9_core_tests_bin}" source="${src.level}" target="${target.level}"
-			fork="yes" executable="${build.compiler.java}" debug="true">
+			debug="true" fork="yes" executable="${build.compiler.java}">
 			<src path="${j9_core_tests_src}"/>
-			<include name="com/ibm/j9ddr/vm${include.core.vmnbr}/**" />
+			<include name="com/ibm/j9ddr/vm${include.core.vmnbr}/**"/>
 			<classpath>
 				<pathelement location="${j9_core_bin}"/>
 				<pathelement location="${junit.jar}"/>
@@ -266,8 +267,8 @@
 	</target>
 
 	<target name="compile.j9_core">
-		<!-- The 27 stream is compiled separately due to javac going OOM if you try everything at once -->
-		<antcall target="compile.j9_core.minmum"/>
+		<!-- Compile separately to avoid running out of memory doing everything at once. -->
+		<antcall target="compile.j9_core.minimum"/>
 		<for list="${streamList}" param="vmnbr">
 			<sequential>
 				<antcall target="compile.j9_core.vmversion">
@@ -280,7 +281,7 @@
 			<fileset dir="${j9_core_src}/com/ibm/j9ddr/" includes="StructureAliases*.dat"/>
 		</copy>
 
-		<antcall target="compile.j9_core.test.minmum"/>
+		<antcall target="compile.j9_core.test.minimum"/>
 		<for list="${streamList}" param="vmnbr">
 			<sequential>
 				<antcall target="compile.j9_core.test.vmversion">
@@ -291,8 +292,8 @@
 	</target>
 
 	<target name="clean">
-		<delete file="${j9_core_dir}/coverage.em" failonerror="false" />
-		<delete dir="${output.dir}" includeemptydirs="true" />
+		<delete file="${j9_core_dir}/coverage.em" failonerror="false"/>
+		<delete dir="${output.dir}" includeemptydirs="true"/>
 	</target>
 
 	<target name="compile.setup" depends="clean.bin">
@@ -305,25 +306,25 @@
 		<mkdir dir="${findbugs.results.dir}"/>
 		<mkdir dir="${findbugs.unpack.dir}"/>
 
-		<property name="build.compiler.java" value="${with-boot-jdk}/bin/javac" />
+		<property name="build.compiler.java" value="${with-boot-jdk}/bin/javac"/>
 	</target>
 
 	<target name="findbugs">
-		<!--Unpack it-->
+		<!-- Unpack it. -->
 		<unzip src="${findbugs.zip}" dest="${findbugs.unpack.dir}"/>
 
-		<!--Load the Findbugs task-->
+		<!-- Load the Findbugs task. -->
 		<taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask" classpath="${findbugs.unpack.dir}/findbugs-1.3.9/lib/findbugs-ant.jar"/>
 
-		<!--Do the FindBugs analysis-->
+		<!-- Do the FindBugs analysis. -->
 		<findbugs home="${findbugs.unpack.dir}/findbugs-1.3.9"
 			output="xml"
 			outputFile="${findbugs.results.dir}/ddr-fb.xml"
 			jvmargs="-Xmx1024M"
 			excludeFilter="findbugs-exclude-filter.xml">
-			<auxClasspath path="${j9_core_bin}" />
-			<sourcePath path="${j9_core_src}" />
-			<class location="${j9_core_jar}" />
+			<auxClasspath path="${j9_core_bin}"/>
+			<sourcePath path="${j9_core_src}"/>
+			<class location="${j9_core_jar}"/>
 		</findbugs>
 	</target>
 
