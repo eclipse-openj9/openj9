@@ -1,7 +1,7 @@
 @ echo off
 
 rem
-rem Copyright (c) 2004, 2018 IBM Corp. and others
+rem Copyright (c) 2004, 2020 IBM Corp. and others
 rem
 rem This program and the accompanying materials are made available under
 rem the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,9 +31,6 @@ rem @summary that only one cache is created and that the destroy command works
 setlocal
 
 call cmdlineConfig.bat
-
-%2\javac HelloWorld.java
-%2\javac SimpleGrep.java
 
 set TESTSCRIPT=nameOption
 set DEFAULT_CACHE_NAME=sharedcc_%TESTUSER%
