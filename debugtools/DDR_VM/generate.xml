@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2010, 2019 IBM Corp. and others
+Copyright (c) 2010, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -172,13 +172,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</then>
 			<else>
 				<shellscript shell="bash" dir="${TMP_DIR}">
-					mkdir ${TMP_DIR}/debugtools
-					cp -af ${WORKSPACE}/debugtools/DDR_* ${TMP_DIR}/debugtools
-					cp -af ${WORKSPACE}/jcl ${TMP_DIR}
-					cp -af ${WORKSPACE}/../build/RAS_Binaries/*.jar ${TMP_DIR}/RAS_Binaries
-					mkdir ${TMP_DIR}/sourcetools/
-					cp -af ${WORKSPACE}/sourcetools/lib ${TMP_DIR}/sourcetools/
-					cp -af ${WORKSPACE}/sourcetools/*.mk ${TMP_DIR}/sourcetools/
+					mkdir -p debugtools/ RAS_Binaries/ sourcetools/
+					cp -af ${WORKSPACE}/jcl ./
+					cp -af ${WORKSPACE}/debugtools/DDR_* debugtools/
+					cp -af ${WORKSPACE}/../build/RAS_Binaries/*.jar RAS_Binaries/
+					cp -af ${WORKSPACE}/sourcetools/lib ${WORKSPACE}/sourcetools/*.mk sourcetools/
 				</shellscript>
 				<if>
 					<or>
