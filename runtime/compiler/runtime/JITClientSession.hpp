@@ -406,6 +406,14 @@ class ClientSessionData
    J9SharedClassCacheDescriptor * reconstructJ9SharedClassCacheDescriptorList(const std::vector<uintptr_t> &listOfCacheStartAddress, const std::vector<uintptr_t> &listOfCacheSizeBytes);
    void destroyJ9SharedClassCacheDescriptorList();
 
+   volatile bool isClassUnloadingAttempted() const { return _bClassUnloadingAttempt; }
+   volatile bool isReadingClassUnload() { return !omrthread_rwmutex_is_writelocked(_classUnloadRWMutex); }
+
+   void readAcquireClassUnloadRWMutex();
+   void readReleaseClassUnloadRWMutex();
+   void writeAcquireClassUnloadRWMutex();
+   void writeReleaseClassUnloadRWMutex();
+
    private:
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
@@ -450,6 +458,9 @@ class ClientSessionData
    TR::Monitor *_thunkSetMonitor;
    PersistentUnorderedMap<std::pair<std::string, bool>, void *> _registeredJ2IThunksMap; // stores a map of J2I thunks created for this client
    PersistentUnorderedSet<std::pair<std::string, bool>> _registeredInvokeExactJ2IThunksSet; // stores a set of invoke exact J2I thunks created for this client
+
+   omrthread_rwmutex_t _classUnloadRWMutex;
+   volatile bool _bClassUnloadingAttempt;
    }; // class ClientSessionData
 
 

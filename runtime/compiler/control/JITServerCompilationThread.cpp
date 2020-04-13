@@ -632,7 +632,14 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 #endif
    // The following call will return with compilation monitor in hand
    //
+   stream->setClientData(clientSession);
+   getClientData()->readAcquireClassUnloadRWMutex();
+
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
+
+   getClientData()->readReleaseClassUnloadRWMutex();
+   stream->setClientData(NULL);
+
    if (entry._compErrCode == compilationStreamFailure)
       {
       if (!enableJITServerPerCompConn)

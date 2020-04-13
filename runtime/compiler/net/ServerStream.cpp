@@ -32,5 +32,6 @@ ServerStream::ServerStream(int connfd, BIO *ssl)
    {
    initStream(connfd, ssl);
    _numConnectionsOpened++;
+   _pClientSessionData = NULL;
    }
 }
