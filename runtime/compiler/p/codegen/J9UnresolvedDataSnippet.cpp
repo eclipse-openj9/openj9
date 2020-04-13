@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "codegen/UnresolvedDataSnippet.hpp"
+#include "codegen/UnresolvedDataSnippet_inlines.hpp"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -66,6 +67,13 @@ J9::Power::UnresolvedDataSnippet::UnresolvedDataSnippet(
    {
    }
 
+uint8_t *J9::Power::UnresolvedDataSnippet::getAddressOfDataReference()
+   {
+   if (self()->getDataReferenceInstruction())
+      return self()->getDataReferenceInstruction()->getBinaryEncoding();
+   else
+      return self()->OMR::UnresolvedDataSnippet::getAddressOfDataReference();
+   }
 
 uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    {
