@@ -6936,6 +6936,15 @@ static void jitHookReleaseCodeLocalGCEnd(J9HookInterface **hook, UDATA eventNum,
 /// setupHooks is used in ABOUT_TO_BOOTSTRAP stage (13)
 int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    {
+   TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
+#if defined(J9VM_OPT_JITSERVER)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+      return 0;
+      }
+#endif
+
    TR_J9VMBase *vmj9 = (TR_J9VMBase *)vm;
 
    J9HookInterface * * vmHooks = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
@@ -6970,7 +6979,6 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       initJitGCMapCheckAsyncHook(javaVM, javaVM->internalVMFunctions->J9RegisterAsyncEvent(javaVM, jitGCMapCheck, NULL), jitConfig);
 
    jitConfig->samplerMonitor = NULL; // initialize this field just in case
-   TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
    compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_NOT_CREATED); // just in case
    if (jitConfig->samplingFrequency 
       && !vmj9->isAOT_DEPRECATED_DO_NOT_USE()
