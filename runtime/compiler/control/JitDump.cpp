@@ -127,16 +127,16 @@ static UDATA dumpCurrentILProtected(J9PortLibrary *portLib, void * opaqueParamet
       if ( ((vmThread->omrVMThread->vmState) & bitMask) == bitMask )  // if we are in the Codegen Phase
          {
          dbg->dumpMethodInstrs(logFile, "Post Binary Instructions", false, true);
-
-         dbg->print(logFile,comp->cg()->getSnippetList(), true);  // print Warm Snippets
-         dbg->print(logFile,comp->cg()->getSnippetList(), false);
-
+         dbg->print(logFile,comp->cg()->getSnippetList());
          dbg->dumpMixedModeDisassembly();
          }
-
-      // leaving to the very end in case there is a crash before this point.
-      comp->verifyTrees(comp->getMethodSymbol());
-      comp->verifyBlocks(comp->getMethodSymbol());
+      else
+         {
+         // Tree verification is only valid during optimizations as it relies on consistent node counts which are only
+         // valid before codegen, since the codegen will decrement the node counts as part of instruction selection
+         comp->verifyTrees(comp->getMethodSymbol());
+         comp->verifyBlocks(comp->getMethodSymbol());
+         }
 
       trfprintf(logFile, "</currentIL>\n");
       }
