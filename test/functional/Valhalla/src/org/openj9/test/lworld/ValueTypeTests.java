@@ -107,6 +107,9 @@ public class ValueTypeTests {
 	static Class largeObjectValueClass = null;
 	static MethodHandle makeLargeObjectValue = null;
 	static MethodHandle[] getObjects = null;
+	/* megaObject */
+	static Class megaObjectValueClass = null;
+	static MethodHandle makeMegaObjectValue = null;
 	/* assortedRefWithLongAlignment */
 	static Class assortedRefWithLongAlignmentClass = null;
 	static MethodHandle makeAssortedRefWithLongAlignment = null;
@@ -251,6 +254,107 @@ public class ValueTypeTests {
 		assertEquals(getX.invoke(point2D_2_check), getX.invoke(point2D_2));
 		assertEquals(getY.invoke(point2D_2_check), getY.invoke(point2D_2));
 	}
+
+	@Test(priority=5)
+	static public void testGCFlattenedPoint2DArray() throws Throwable {
+		int x1 = 0xFFEEFFEE;
+		int y1 = 0xAABBAABB;
+		Object point2D = makePoint2D.invoke(x1, y1);
+		Object arrayObject = Array.newInstance(point2DClass, 8);
+
+		for (int i = 0; i < 8; i++) {
+			Array.set(arrayObject, i, point2D);
+		}
+
+		System.gc();
+		System.gc();
+
+		Object value = Array.get(arrayObject, 0);
+	}
+
+	@Test(priority=5)
+	static public void testGCFlattenedValueArrayWithSingleAlignment() throws Throwable {
+		Object array = Array.newInstance(assortedValueWithSingleAlignmentClass, 4);
+		
+		for (int i = 0; i < 4; i++) {
+			Object object = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
+			Array.set(array, i, object);
+		}
+
+		System.gc();
+		System.gc();
+
+		for (int i = 0; i < 4; i++) {
+			checkFieldAccessMHOfAssortedType(assortedValueWithSingleAlignmentGetterAndWither, Array.get(array, i), typeWithSingleAlignmentFields, true);
+		}
+	}
+
+	@Test(priority=5)
+	static public void testGCFlattenedValueArrayWithObjectAlignment() throws Throwable {
+		Object array = Array.newInstance(assortedValueWithObjectAlignmentClass, 4);
+		
+		for (int i = 0; i < 4; i++) {
+			Object object = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
+			Array.set(array, i, object);
+		}
+
+		System.gc();
+		System.gc();
+
+		for (int i = 0; i < 4; i++) {
+			checkFieldAccessMHOfAssortedType(assortedValueWithObjectAlignmentGetterAndWither, Array.get(array, i), typeWithObjectAlignmentFields, true);
+		}
+	}
+
+	@Test(priority=5)
+	static public void testGCFlattenedValueArrayWithLongAlignment() throws Throwable {
+		Object array = Array.newInstance(assortedValueWithLongAlignmentClass, 4);
+		
+		for (int i = 0; i < 4; i++) {
+			Object object = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
+			Array.set(array, i, object);
+		}
+
+		System.gc();
+		System.gc();
+
+		for (int i = 0; i < 4; i++) {
+			checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterAndWither, Array.get(array, i), typeWithLongAlignmentFields, true);
+		}
+	}
+
+	@Test(priority=5)
+	static public void testGCFlattenedLargeObjectArray() throws Throwable {
+		Object arrayObject = Array.newInstance(largeObjectValueClass, 4);
+		Object largeObjectRef = createLargeObject(new Object());
+
+		for (int i = 0; i < 4; i++) {
+			Array.set(arrayObject, i, largeObjectRef);
+		}
+
+		System.gc();
+		System.gc();
+
+		Object value = Array.get(arrayObject, 0);
+	}
+
+	@Test(priority=5)
+	static public void testGCFlattenedMegaObjectArray() throws Throwable {
+		Object arrayObject = Array.newInstance(megaObjectValueClass, 4);
+		Object megaObjectRef = createMegaObject(new Object());
+
+		System.gc();
+		System.gc();
+
+		for (int i = 0; i < 4; i++) {
+			Array.set(arrayObject, i, megaObjectRef);
+		}
+		System.gc();
+		System.gc();
+
+		Object value = Array.get(arrayObject, 0);
+	}
+
 
 	/*
 	 * Create a value type with double slot primitive members
@@ -1564,9 +1668,10 @@ public class ValueTypeTests {
 				"val14:QLargeObject;:value",
 				"val15:QLargeObject;:value",
 				"val16:QLargeObject;:value"};
-		Class megaObjectClass = ValueTypeGenerator.generateValueClass("MegaObject", megaFields);
-		MethodHandle makeMega = lookup.findStatic(megaObjectClass, "makeValueGeneric",
-				MethodType.methodType(megaObjectClass, Object.class, Object.class, Object.class, Object.class,
+
+		megaObjectValueClass = ValueTypeGenerator.generateValueClass("MegaObject", megaFields);
+		makeMegaObjectValue = lookup.findStatic(megaObjectValueClass, "makeValueGeneric",
+				MethodType.methodType(megaObjectValueClass, Object.class, Object.class, Object.class, Object.class,
 						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class,
 						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class));
 
@@ -1574,8 +1679,8 @@ public class ValueTypeTests {
 		 * Getters are created in array getterAndWither[i][0] according to the order of fields i
 		 * Withers are created in array getterAndWither[i][1] according to the order of fields i
 		 */
-		MethodHandle[][] megaGetterAndWither = generateGenericGetterAndWither(megaObjectClass, megaFields);
-		Object megaObject = createAssorted(makeMega, megaFields);
+		MethodHandle[][] megaGetterAndWither = generateGenericGetterAndWither(megaObjectValueClass, megaFields);
+		Object megaObject = createAssorted(makeMegaObjectValue, megaFields);
 		checkFieldAccessMHOfAssortedType(megaGetterAndWither, megaObject, megaFields, true);
 	}
 
@@ -2160,6 +2265,15 @@ public class ValueTypeTests {
 			args[i] = valueObject;
 		}
 		return makeLargeObjectValue.invokeWithArguments(args);
+	}
+
+	static Object createMegaObject(Object arg) throws Throwable {
+		Object[] args = new Object[16];
+		for(int i = 0; i < 16; i++) {
+			Object valueObject = createLargeObject(arg);
+			args[i] = valueObject;
+		}
+		return makeMegaObjectValue.invokeWithArguments(args);
 	}
 
 	static Object createAssorted(MethodHandle makeMethod, String[] fields) throws Throwable {

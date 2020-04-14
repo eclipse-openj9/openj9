@@ -26,6 +26,7 @@
 #include "j9nonbuilder.h"
 #include "objectdescription.h"
 
+#include "FlattenedArrayObjectScanner.hpp"
 #include "GCExtensions.hpp"
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 #include "MarkMap.hpp"
@@ -137,8 +138,10 @@ public:
 		}
 		case GC_ObjectModel::SCAN_FLATTENED_ARRAY_OBJECT:
 		{
-			Assert_MM_true(J9_IS_J9CLASS_FLATTENED(clazz));
-			Assert_MM_unimplemented();
+			/* TODO: Flattened arrays do not support array splitting */
+			uintptr_t slotsToDo = 0; 
+			uintptr_t startIndex = 0;
+			objectScanner = GC_FlattenedArrayObjectScanner::newInstance(env, objectPtr, scannerSpace, GC_ObjectScanner::indexableObject, slotsToDo, startIndex);
 			break;
 		}
 		case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
