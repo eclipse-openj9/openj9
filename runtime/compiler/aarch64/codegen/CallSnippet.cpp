@@ -472,7 +472,10 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
                                TR_J2IVirtualThunkPointer, cg()),
                                __FILE__, __LINE__, callNode);
 
-   return cursor + 8;
+   cursor += 8;
+   // Lock word
+   *(int32_t *)cursor = 0;
+   return cursor + sizeof(int32_t);
    }
 
 void
@@ -499,11 +502,23 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64VirtualUnresolvedSnippet * snippet)
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
    trfprintf(pOutFile, ".dword \t0x%08x\t\t; cpIndex", *(intptr_t *)cursor);
+   cursor += sizeof(intptr_t);
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
+   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Private J9Method pointer", *(intptr_t *)cursor);
+   cursor += sizeof(intptr_t);
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
+   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; J2I thunk address for private", *(intptr_t *)cursor);
+   cursor += sizeof(intptr_t);
+
+   printPrefix(pOutFile, NULL, cursor, 4);
+   trfprintf(pOutFile, ".word \t0x%08x\t\t; Lock Word For Resolution", *(int32_t *)cursor);
    }
 
 uint32_t TR::ARM64VirtualUnresolvedSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   return 44;
+   return 48;
    }
 
 uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()

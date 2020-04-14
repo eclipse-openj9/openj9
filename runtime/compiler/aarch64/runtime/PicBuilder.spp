@@ -119,6 +119,7 @@
 	.set	J9TR_UVCSnippet_CPIndex,	16
 	.set	J9TR_UVCSnippet_method,		24
 	.set	J9TR_UVCSnippet_J2IThunk,	32
+	.set	J9TR_UVCSnippet_lockword,	40
 
 // Unresolved data snippet
 
@@ -630,17 +631,16 @@ const_jitResolveConstantDynamic:
 //
 // in: x30 = snippet
 //
-// trash: x10, x11
+// trash: x10, x11, x12
 
 // For virtual unresolved call, we generate following instructions
-//  movz  x9, #0
+//  b     VirtualUnresolvedSnippet ; change this to "movz x9, #low16bits"
 //  movk  x9, #0, LSL #16
 //  sxtw  x9, w9
-//  ldr   dstReg, [vftReg, x9]
-//  b     VirtualUnresolvedSnippet ; change this to "blr dstReg"
+//  ldr   x9, [vftReg, x9]
+//  blr   x9
 //
-// We encode the resolved index value into movz and movk instructions first
-// Then the b instruction is changed to "blr dstReg"
+// We encode the resolved index value (signed 32 bits) into movz and movk instructions
 //
 _virtualUnresolvedHelper:
 	stp	x7, x6, [J9SP, #-64]!				// save parameter regs. jitWalkResolveMethodFrame assumes that argument registers are saved in this order
@@ -680,38 +680,47 @@ L_calloutPrivate:
 	add	J9SP, J9SP, #64
 	br	x10						// Call the target, not returning here
 L_callVirtual:
-	mov	x2, x0
-	sub	x0, x10, #20					// get the address of the movz instruction
-	ldr	w1, [x0]					// fetch the movz instruction
-	ubfx	x3, x2, #0, #16					// lower 16 bits of the index
-	orr	w1, w1, w3, LSL #5				// encode the index in the movz instruction
-	str	w1, [x0]					// store the movz instruction
-	ldr	w1, [x0, #4]					// fetch the movk instruction
-	ubfx	x3, x2, #16, #16				// next 16 bits of the index
-	orr	w1, w1, w3, LSL #5				// encode the index in the movk instruction
-	str	w1, [x0, #4]					// store the movk instruction
-	mov	x1, #8						// 2 instruction to flush
-	bl	flushICache
-	sub	x0, x10, #8					// get the address of the ldr instruction
-	ldr	w2, [x0]					// fetch the ldr instruction
-	ubfx	x2, x2, #0, #5					// extract the dstReg
-	ldr	w3, const_blr					// fetch constant for the blr instruction
-	orr	w3, w3, w2, LSL #5				// encode the dstReg in the blr instruction
-	sub	x0, x10, #4					// get the address of the b instruction
-	str	w3, [x0]					// store instruction
+	add	x1, x11, #J9TR_UVCSnippet_lockword		// address of the lockword
+	mov	w3, #1
+	ldxr	w2, [x1]
+	cbnz	w2, L_spinForUpdate				// already locked by another thread
+	stxr	w2, w3, [x1]					// try to lock
+	cbnz	w2, L_spinForUpdate				// failed to lock
+	mov	x12, x0					// resolved index
+	sub	x0, x10, #16					// get the address of the movk instruction
+	ldr	w1, [x0]					// fetch the movk instruction
+	ubfx	x2, x12, #16, #16				// upper 16 bits of the index
+	orr	w1, w1, w2, LSL #5				// encode the index in the movk instruction
+	str	w1, [x0]					// store the movk instruction
 	mov	x1, #4						// 1 instruction to flush
 	bl	flushICache
-	sub	x30, x10, #20					// set the movk instruction as the destination
+	ldr	w1, const_movz_x9				// fetch movz template
+	ubfx	x12, x12, #0, #16					// lower 16 bits of the index
+	sub	x0, x10, #20					// get the address of the b instruction
+	orr	w1, w1, w12, LSL #5				// encode the index in the movz instruction
+	str	w1, [x0]					// store the movz instruction
+	mov	x1, #4						// 1 instruction to flush
+	bl	flushICache
+	mov	w0, #0
+	dmb	sy
+	str	w0, [x11, #J9TR_UVCSnippet_lockword]		// unlock
+L_calloutVirtual:
+	sub	x30, x10, #20					// set the movz instruction as the destination
 	ldp	x7, x6, [J9SP, #0]				// restore other parameter regs
 	ldp	x5, x4, [J9SP, #16]
 	ldp	x3, x2, [J9SP, #32]
 	ldp	x1, x0, [J9SP, #48]
 	add	J9SP, J9SP, #64
-	ret							// jump back to the movk instruction
+	ret							// jump back to the movz instruction
+
+L_spinForUpdate:
+	ldr	w2, [x1]
+	cbnz	w2, L_spinForUpdate
+	b	L_calloutVirtual				// another thread completed rewriting instructions
 
 	.align	2
-const_blr:
-	.word	0xD63F0000
+const_movz_x9:
+	.word	0xD2800009					// template for "movz x9, #0"
 
 // Handles calls to interface call snippets
 //
