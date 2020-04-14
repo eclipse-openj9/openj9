@@ -730,7 +730,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                uintptr_t mhObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptr_t)mhLocation);
                uintptr_t defc = comp()->fej9()->getReferenceFieldAtAddress(mhObject + defcOffset);
                J9Class* defcClazz = (J9Class*)TR::Compiler->cls.classFromJavaLangClass(comp(), defc);
-               if (defcClazz->initializeStatus == J9ClassInitSucceeded)
+               if (comp()->fej9()->classInitIsFinished((TR_OpaqueClassBlock*)defcClazz))
                   {
                   removeCall = true;
                   if (trace())
