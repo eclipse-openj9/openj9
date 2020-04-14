@@ -1224,18 +1224,17 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
             TR::ARM64VirtualUnresolvedSnippet(cg(), callNode, vcSnippetLabel, argSize, doneLabel, (uint8_t *)thunk);
          cg()->addSnippet(vcSnippet);
 
-         TR::Register *dstReg = cg()->allocateRegister();
 
          // The following instructions are modified by _virtualUnresolvedHelper
          // in aarch64/runtime/PicBuilder.spp to load the vTable index in x9
-         generateTrg1ImmInstruction(cg(), TR::InstOpCode::movzx, callNode, x9, 0);
+
+         // This `b` instruction is modified to movzx x9, lower 16bit of offset
+         generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, vcSnippetLabel);
          generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, x9, TR::MOV_LSL16);
          generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::sbfmx, callNode, x9, x9, 0x1F); // sxtw x9, w9
          tempMR = new (trHeapMemory()) TR::MemoryReference(vftReg, x9, cg());
-         generateTrg1MemInstruction(cg(), TR::InstOpCode::ldroffx, callNode, dstReg, tempMR);
-         gcPoint = generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, vcSnippetLabel);
-
-         cg()->stopUsingRegister(dstReg);
+         generateTrg1MemInstruction(cg(), TR::InstOpCode::ldroffx, callNode, x9, tempMR);
+         gcPoint = generateRegBranchInstruction(cg(), TR::InstOpCode::blr, callNode, x9);
          }
       else
          {
