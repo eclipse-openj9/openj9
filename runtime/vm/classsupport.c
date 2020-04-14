@@ -525,21 +525,16 @@ callFindLocallyDefinedClass(J9VMThread* vmThread, J9Module *j9module, U_8* class
 	/* localBuffer should not be NULL */
 	Assert_VM_true(NULL != localBuffer);
 
-	omrthread_monitor_enter(vmThread->javaVM->classMemorySegments->segmentMutex);
 	if (NULL != dynamicLoadBuffers) {
 		 J9ClassPathEntry* classPathEntries = NULL;
 		 if (classLoader == vmThread->javaVM->systemClassLoader) {
 			 classPathEntries = classLoader->classPathEntries;
 		 }
-
-
 		 TRIGGER_J9HOOK_VM_FIND_LOCALLY_DEFINED_CLASS(vmThread->javaVM->hookInterface, vmThread, classLoader, j9module, (char*)className, classNameLength,
 						classPathEntries, classLoader->classPathEntryCount, -1, NULL, 0, 0,
 						(IDATA *) &localBuffer->entryIndex, returnVal);
 
 		findResult = (IDATA) returnVal;
-
- 		omrthread_monitor_exit(vmThread->javaVM->classMemorySegments->segmentMutex);
 		if (0 == findResult) {
 			TRIGGER_J9HOOK_VM_FIND_LOCALLY_DEFINED_CLASS_FROM_FILESYSTEM(vmThread->javaVM->hookInterface, 
 																		 vmThread, 
@@ -570,8 +565,6 @@ callFindLocallyDefinedClass(J9VMThread* vmThread, J9Module *j9module, U_8* class
 				localBuffer->loadLocationType = LOAD_LOCATION_CLASSPATH;
 			}
 		}
-	} else {
- 		omrthread_monitor_exit(vmThread->javaVM->classMemorySegments->segmentMutex);
 	}
 	return findResult;
 }

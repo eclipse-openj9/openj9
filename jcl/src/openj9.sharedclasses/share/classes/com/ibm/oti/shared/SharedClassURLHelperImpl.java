@@ -2,7 +2,7 @@
 package com.ibm.oti.shared;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@ package com.ibm.oti.shared;
 
 import java.net.URL;
 import java.util.Set;
-import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.ibm.oti.util.Msg;
 
@@ -71,12 +71,11 @@ final class SharedClassURLHelperImpl extends SharedClassAbstractHelper implement
 		}
 		
 		if (null == jarFileNameCache) {
-			jarFileNameCache = new HashSet<>();
+			jarFileNameCache = ConcurrentHashMap.newKeySet();
 		}
 		
-		if (isJarType && !jarFileNameCache.contains(jarFile)) {
-			jarFileNameCache.add(jarFile);
-			return true;
+		if (isJarType) {
+			return jarFileNameCache.add(jarFile);
 		}
 		
 		return false;
@@ -103,7 +102,7 @@ final class SharedClassURLHelperImpl extends SharedClassAbstractHelper implement
 	}
 
 	@Override
-	public synchronized byte[] findSharedClass(String partition, URL path, String className) {
+	public byte[] findSharedClass(String partition, URL path, String className) {
 		ClassLoader loader = getClassLoader();
 		if (loader == null) {
 			/*[MSG "K059f", "ClassLoader has been garbage collected. Returning null."]*/
@@ -126,12 +125,14 @@ final class SharedClassURLHelperImpl extends SharedClassAbstractHelper implement
 		SharedClassFilter theFilter = getSharingFilter();
 		boolean doFind, doStore;
 		if (theFilter!=null) {
-			doFind = theFilter.acceptFind(className);
-			/* Don't invoke the store filter if the cache is full */
-			if (nativeFlags[CACHE_FULL_FLAG] == 0) {
-				doStore = theFilter.acceptStore(className);
-			} else {
-				doStore = true;
+			synchronized(this) {
+				doFind = theFilter.acceptFind(className);
+				/* Don't invoke the store filter if the cache is full */
+				if (nativeFlags[CACHE_FULL_FLAG] == 0) {
+					doStore = theFilter.acceptStore(className);
+				} else {
+					doStore = true;
+				}
 			}
 		} else {
 			doFind = true;
@@ -158,7 +159,7 @@ final class SharedClassURLHelperImpl extends SharedClassAbstractHelper implement
 	}
 
 	@Override
-	public synchronized boolean storeSharedClass(String partition, URL path, Class<?> clazz) {
+	public boolean storeSharedClass(String partition, URL path, Class<?> clazz) {
 		if (!canStore) {
 			return false;
 		}

@@ -3,7 +3,7 @@ package com.ibm.oti.shared;
 
 import com.ibm.oti.util.Msg;
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,7 @@ final class SharedClassTokenHelperImpl extends SharedClassAbstractHelper impleme
 	private native boolean storeSharedClassImpl2(int loaderId, ClassLoader loader, String token, Class<?> clazz, byte[] flags);
 
 	@Override
-	public synchronized byte[] findSharedClass(String token, String className) {
+	public byte[] findSharedClass(String token, String className) {
 		ClassLoader loader = getClassLoader();
 		if (loader == null) {
 			/*[MSG "K059f", "ClassLoader has been garbage collected. Returning null."]*/
@@ -67,12 +67,14 @@ final class SharedClassTokenHelperImpl extends SharedClassAbstractHelper impleme
 		SharedClassFilter theFilter = getSharingFilter();
 		boolean doFind, doStore;
 		if (theFilter!=null) {
-			doFind = theFilter.acceptFind(className);
-			/* Don't invoke the store filter if the cache is full */
-			if (nativeFlags[CACHE_FULL_FLAG] == 0) {
-				doStore = theFilter.acceptStore(className);
-			} else {
-				doStore = true;
+			synchronized(this) {
+				doFind = theFilter.acceptFind(className);
+				/* Don't invoke the store filter if the cache is full */
+				if (nativeFlags[CACHE_FULL_FLAG] == 0) {
+					doStore = theFilter.acceptStore(className);
+				} else {
+					doStore = true;
+				}
 			}
 		} else {
 			doFind = true;
@@ -87,7 +89,7 @@ final class SharedClassTokenHelperImpl extends SharedClassAbstractHelper impleme
 	}
 
 	@Override
-	public synchronized boolean storeSharedClass(String token, Class<?> clazz) {
+	public boolean storeSharedClass(String token, Class<?> clazz) {
 		if (!canStore) {
 			return false;
 		}

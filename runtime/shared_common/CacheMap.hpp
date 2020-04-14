@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -262,7 +262,7 @@ public:
 
 	bool isCacheCorruptReported(void);
 
-	IDATA runEntryPointChecks(J9VMThread* currentThread, void* isAddressInCache, const char** subcstr);
+	IDATA runEntryPointChecks(J9VMThread* currentThread, void* isAddressInCache, const char** subcstr, bool acquireClassSegmentMutex = false);
 
 	void protectPartiallyFilledPages(J9VMThread *currentThread);
 
