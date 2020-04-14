@@ -2,6 +2,7 @@ package org.openj9.test.java.lang.reflect;
 
 import org.testng.annotations.Test;
 import org.openj9.test.support.resource.Support_Resources;
+import org.openj9.test.util.VersionCheck;
 import org.testng.Assert;
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -10,7 +11,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
 /*******************************************************************************
- * Copyright (c) 2014, 2019 IBM Corp. and others
+ * Copyright (c) 2014, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,6 +83,7 @@ public class Test_Executable {
 			Method[] methods = null;
 			Constructor[] constructors = null;
 			Parameter[] parameters = null;
+			int javaVersion = VersionCheck.major();
 
 			/*************** TESTING WITHPARAMS.JAVA ************************************/
 			withParamsClass = Class.forName("org.openj9.resources.methodparameters.WithParams", false, loader);
@@ -147,13 +149,14 @@ public class Test_Executable {
 			checkParameterType(constructors[0], parameters[0], withParamsClass);
 
 			/*************** TESTING WITHPARAMS$MOOD.JAVA ************************************/
-			withoutParamsClass_EnumClass = Class.forName("org.openj9.resources.methodparameters.WithParams$MOOD", false, loader);
-			methods = withoutParamsClass_EnumClass.getDeclaredMethods();
-			constructors = withoutParamsClass_EnumClass.getDeclaredConstructors();
+			withParamsClass_EnumClass = Class.forName("org.openj9.resources.methodparameters.WithParams$MOOD", false, loader);
+			methods = withParamsClass_EnumClass.getDeclaredMethods();
+			constructors = withParamsClass_EnumClass.getDeclaredConstructors();
 			nullCheck(methods, "getDeclaredMethods()");
 			nullCheck(constructors, "getDeclaredConstructors()");
-			/* MOOD enum should have 2 synthetic method */
-			checkExecutableCount(methods, 2, true, "enum class MOOD");
+			int enumMethods = (javaVersion >= 15) ? 3 : 2;
+			/* MOOD enum should have 2 synthetic method, or 3 for jdk15 and above */
+			checkExecutableCount(methods, enumMethods, true, "enum class MOOD");
 			/* MOOD enum should have 1 synthetic constructor */
 			checkExecutableCount(constructors, 1, false, "enum class MOOD");
 
@@ -207,6 +210,17 @@ public class Test_Executable {
 			checkParameterName(methods[1], parameters[0], "name");
 			checkParameterModifiers(methods[1], parameters[0], ACC_MANDATED);
 			checkParameterType(methods[1], parameters[0], String.class);
+			
+			if (enumMethods >= 3) {
+				/* For jdk15+, test the third synthetic method: $values() */
+				checkExecutableName(methods[2], "$values");
+				parameters = methods[2].getParameters();
+				nullCheck(parameters, "getParameters()");
+				if (parameters.length != 0) {
+					Assert.fail(
+							"Wrong number of parameters for enum method $values(). Expected 0. Got: " + parameters.length);
+				}
+			}
 
 			/*************** TESTING WITHOUTPARAMS.JAVA ************************************/
 			withoutParamsClass = Class.forName("org.openj9.resources.methodparameters.WithoutParams", false, loader);
@@ -291,38 +305,32 @@ public class Test_Executable {
 			checkParameterType(constructors[0], parameters[0], withoutParamsClass);
 
 			/*************** TESTING WITHOUTPARAMS$MOOD.JAVA ************************************/
-			withoutParamsClass_EnumClass = Class.forName("org.openj9.resources.methodparameters.WithParams$MOOD", false, loader);
+			withoutParamsClass_EnumClass = Class.forName("org.openj9.resources.methodparameters.WithoutParams$MOOD", false, loader);
 			methods = withoutParamsClass_EnumClass.getDeclaredMethods();
 			constructors = withoutParamsClass_EnumClass.getDeclaredConstructors();
 			nullCheck(methods, "getDeclaredMethods()");
 			nullCheck(constructors, "getDeclaredConstructors()");
-			/* MOOD enum should have 2 synthetic method */
-			checkExecutableCount(methods, 2, true, "InnerClass");
+			/* MOOD enum should have 2 synthetic method, or 3 for jdk15 and above */
+			checkExecutableCount(methods, enumMethods, true, "InnerClass");
 			/* MOOD enum should have 1 synthetic constructor */
 			checkExecutableCount(constructors, 1, false, "InnerClass");
 
-			checkExecutableName(constructors[0], "org.openj9.resources.methodparameters.WithParams$MOOD");
+			checkExecutableName(constructors[0], "org.openj9.resources.methodparameters.WithoutParams$MOOD");
 			parameters = constructors[0].getParameters();
 			nullCheck(parameters, "getParameters()");
-			/* Constructor should have 2 synthetic parameters :
-			 * - String $enum$name
-			 * - int $enum$ordinal
-			 *
-			 * INTERESTING NOTE: Although it is compiled without -parameters, it seems like it has parameters attribute,
-			 * b/c names and modifiers of parameters are reserved.
-			 */
+			/* Constructor should have 2 synthetic parameters */
 			if (parameters.length != 2) {
-				Assert.fail("Wrong number of parameters for enum constructor. Expected 1. Got: " + parameters.length);
+				Assert.fail("Wrong number of parameters for enum constructor. Expected 2. Got: " + parameters.length);
 			}
 
 			checkDeclaringExecutable(parameters[0], constructors[0]);
-			checkParameterName(constructors[0], parameters[0], "$enum$name");
-			checkParameterModifiers(constructors[0], parameters[0], ACC_SYNTHETIC);
+			checkParameterName(constructors[0], parameters[0], "arg0");
+			checkParameterModifiers(constructors[0], parameters[0], ACC_DEFAULT);
 			checkParameterType(constructors[0], parameters[0], String.class);
 
 			checkDeclaringExecutable(parameters[1], constructors[0]);
-			checkParameterName(constructors[0], parameters[1], "$enum$ordinal");
-			checkParameterModifiers(constructors[0], parameters[1], ACC_SYNTHETIC);
+			checkParameterName(constructors[0], parameters[1], "arg1");
+			checkParameterModifiers(constructors[0], parameters[1], ACC_DEFAULT);
 			checkParameterType(constructors[0], parameters[1], int.class);
 
 			/*
@@ -351,9 +359,20 @@ public class Test_Executable {
 			}
 
 			checkDeclaringExecutable(parameters[0], methods[1]);
-			checkParameterName(methods[1], parameters[0], "name");
-			checkParameterModifiers(methods[1], parameters[0], ACC_MANDATED);
+			checkParameterName(methods[1], parameters[0], "arg0");
+			checkParameterModifiers(methods[1], parameters[0], ACC_DEFAULT);
 			checkParameterType(methods[1], parameters[0], String.class);
+
+			if (enumMethods >= 3) {
+				/* For jdk15+, test the third synthetic method: $values() */
+				checkExecutableName(methods[2], "$values");
+				parameters = methods[2].getParameters();
+				nullCheck(parameters, "getParameters()");
+				if (parameters.length != 0) {
+					Assert.fail(
+							"Wrong number of parameters for enum method $values(). Expected 0. Got: " + parameters.length);
+				}
+			}
 
 		} catch (Exception e) {
 			if (e instanceof RuntimeException)
