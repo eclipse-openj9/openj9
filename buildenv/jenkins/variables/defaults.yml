@@ -328,6 +328,8 @@ aarch64_linux:
   node_labels:
     build:
       11: 'ci.role.build && hw.arch.aarch64 && sw.os.cent.7'
+  build_env:
+    vars: 'PATH+TOOLS=/usr/local/gcc-7.5.0/bin'
 #========================================#
 # Linux Aarch 64bits Large Heap
 #========================================#
