@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -174,6 +174,8 @@ disposeEnvironment(J9JVMTIEnv * j9env, UDATA freeData)
 #if JAVA_SPEC_VERSION >= 11
 		if (j9env->capabilities.can_generate_sampled_object_alloc_events) {
 			J9JVMTI_DATA_FROM_VM(vm)->flags &= ~J9JVMTI_FLAG_SAMPLED_OBJECT_ALLOC_ENABLED;
+			/* Set sampling interval to UDATA_MAX to inform GC that sampling is not required */
+			vm->memoryManagerFunctions->j9gc_set_allocation_sampling_interval(vm, UDATA_MAX);
 		}
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
