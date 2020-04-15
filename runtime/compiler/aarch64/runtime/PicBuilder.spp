@@ -735,6 +735,7 @@ L_callResolve:
 	add	x0, x30, #J9TR_UICSnippet_CP			// get CP/index pair pointer
 	mov	x1, x10						// get code cache RA
 	bl	jitResolveInterfaceMethod			// call the helper
+	dmb	ishst						// make sure interface class and iTable offset are visible if `bl` instruction is rewritten.
 	cbz	x0, L_commonLookupException			// if resolve failed, throw the exception
 	ldr	x0, [x7, #J9TR_ICSnippet_ITableIndex]		// Load ITable Index
 	tst	x0, #J9TR_J9_ITABLE_OFFSET_DIRECT		// Check if J9TR_J9_ITABLE_OFFSET_DIRECT flag is set
