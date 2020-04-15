@@ -611,8 +611,6 @@ bool TR_J9InterfaceCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inl
       _ecsPrexArgInfo->set(0, NULL);
       }
 
-   //inliner->tracer()->dumpPrexArgInfo(_ecsPrexArgInfo);
-
    if (!_receiverClass)
       {
       int32_t len = _interfaceMethod->classNameLength();

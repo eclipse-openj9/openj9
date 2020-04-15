@@ -5190,7 +5190,7 @@ void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_LogTracer *t
    } // checkForConstClass
 
 //@TODO this can be re-used as we start building prexargs for every callsite
-TR_PrexArgInfo* TR_PrexArgInfo::buildPrexArgInfoForMethodSymbol(TR::ResolvedMethodSymbol* methodSymbol, TR_PREXARGINFO_TRACER_CLASS* tracer)
+TR_PrexArgInfo* TR_PrexArgInfo::buildPrexArgInfoForMethodSymbol(TR::ResolvedMethodSymbol* methodSymbol, TR_LogTracer* tracer)
    {
    int numArgs = methodSymbol->getParameterList().getSize();
    TR_ResolvedMethod       *feMethod = methodSymbol->getResolvedMethod();
@@ -5264,7 +5264,7 @@ static char* classSignature (TR::Method * m, TR::Compilation* comp) //tracer hel
    return classNameToSignature(m->classNameChars(), len /*don't care, cos this gives us a null terminated string*/, comp);
    }
 
-TR::Node* TR_PrexArgInfo::getCallNode (TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite, TR_PREXARGINFO_TRACER_CLASS* tracer)
+TR::Node* TR_PrexArgInfo::getCallNode (TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite, TR_LogTracer* tracer)
    {
    if (callsite->_callNode)
       return callsite->_callNode;
@@ -5376,7 +5376,7 @@ TR_PrexArgument* TR_PrexArgInfo::getArgForChild(TR::Node *child, TR_PrexArgInfo*
    }
 
 void TR_PrexArgInfo::propagateReceiverInfoIfAvailable (TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite,
-                                              TR_PrexArgInfo * argInfo, TR_PREXARGINFO_TRACER_CLASS *tracer)
+                                              TR_PrexArgInfo * argInfo, TR_LogTracer *tracer)
    {
    //this implies we have some argInfo available
    TR_ASSERT(argInfo, "otherwise we shouldn't even peek");
@@ -5402,7 +5402,7 @@ void TR_PrexArgInfo::propagateReceiverInfoIfAvailable (TR::ResolvedMethodSymbol*
       }
    }
 
-bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* argsFromSymbol, TR_PrexArgInfo* argsFromTarget, TR_PREXARGINFO_TRACER_CLASS *tracer)
+bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* argsFromSymbol, TR_PrexArgInfo* argsFromTarget, TR_LogTracer *tracer)
    {
    if (!argsFromSymbol || !argsFromTarget || tracer->comp()->getOption(TR_DisableInlinerArgsPropagation))
       {
@@ -5452,7 +5452,7 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
    }
 
 
-   void TR_PrexArgInfo::clearArgInfoForNonInvariantArguments(TR::ResolvedMethodSymbol* methodSymbol, TR_PREXARGINFO_TRACER_CLASS* tracer)
+   void TR_PrexArgInfo::clearArgInfoForNonInvariantArguments(TR::ResolvedMethodSymbol* methodSymbol, TR_LogTracer* tracer)
       {
       if (tracer->comp()->getOption(TR_DisableInlinerArgsPropagation))
          return;
@@ -5485,7 +5485,7 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
       }
 
 void TR_PrexArgInfo::propagateArgsFromCaller(TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite,
-                           TR_PrexArgInfo * argInfo, TR_PREXARGINFO_TRACER_CLASS *tracer)
+                           TR_PrexArgInfo * argInfo, TR_LogTracer *tracer)
    {
    if (tracer->comp()->getOption(TR_DisableInlinerArgsPropagation))
       return;

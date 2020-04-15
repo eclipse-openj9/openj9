@@ -1252,15 +1252,21 @@ bool J9::TransformUtil::attemptStaticFinalFieldFoldingImpl(TR::Optimization* opt
       return false;
       }
 
+   int32_t cpIndex = symRef->getCPIndex();
+   TR_OpaqueClassBlock* declaringClass = symRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, cpIndex);
+   if (J9::TransformUtil::canFoldStaticFinalField(comp, node) != TR_maybe
+       || !declaringClass
+       || TR::Compiler->cls.classHasIllegalStaticFinalFieldModification(declaringClass))
+      {
+      return false;
+      }
+
    if (skipFinalFieldFoldingInBlock(comp, currentTree->getEnclosingBlock())
-       || J9::TransformUtil::canFoldStaticFinalField(comp, node) != TR_maybe
        || safeToAddFearPointAt(opt, currentTree) != TR_yes)
       {
       return false;
       }
 
-   int32_t cpIndex = symRef->getCPIndex();
-   TR_OpaqueClassBlock* declaringClass = symRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, cpIndex);
    int32_t fieldNameLen;
    char* fieldName = symRef->getOwningMethod(comp)->fieldName(cpIndex, fieldNameLen, comp->trMemory(), stackAlloc);
    int32_t fieldSigLength;
