@@ -54,8 +54,8 @@ artifactory:
     osu: 'ci-eclipse-openj9'
     #unb: 'ci-eclipse-openj9-unb' TEMP DISABLE. See #8817
   repo: 'ci-eclipse-openj9'
+  # if numArtifacts not set, use build_discarder
   numArtifacts:
-    osu: 30
     unb: 5
   daysToKeepArtifacts:
     osu: 50
