@@ -2134,6 +2134,16 @@ old_slow_jitThrowException(J9VMThread *currentThread)
 }
 
 void* J9FASTCALL
+old_slow_jitThrowUnreportedException(J9VMThread *currentThread)
+{
+	OLD_JIT_HELPER_PROLOGUE(1);
+	DECLARE_JIT_PARM(j9object_t, exception, 1);
+	VM_VMHelpers::setExceptionPending(currentThread, exception, false);
+	buildJITResolveFrame(currentThread, J9_SSF_JIT_RESOLVE, parmCount);
+	return J9_JITHELPER_ACTION_THROW;
+}
+
+void* J9FASTCALL
 old_slow_jitThrowAbstractMethodError(J9VMThread *currentThread)
 {
 	OLD_JIT_HELPER_PROLOGUE(0);
@@ -3376,6 +3386,7 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->old_slow_jitRetranslateMethod = (void*)old_slow_jitRetranslateMethod;
 	jitConfig->old_slow_jitThrowCurrentException = (void*)old_slow_jitThrowCurrentException;
 	jitConfig->old_slow_jitThrowException = (void*)old_slow_jitThrowException;
+	jitConfig->old_slow_jitThrowUnreportedException = (void*)old_slow_jitThrowUnreportedException;
 	jitConfig->old_slow_jitThrowAbstractMethodError = (void*)old_slow_jitThrowAbstractMethodError;
 	jitConfig->old_slow_jitThrowArithmeticException = (void*)old_slow_jitThrowArithmeticException;
 	jitConfig->old_slow_jitThrowArrayIndexOutOfBounds = (void*)old_slow_jitThrowArrayIndexOutOfBounds;

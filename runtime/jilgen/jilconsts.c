@@ -592,6 +592,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitRetranslateMethod", offsetof(J9JITConfig, old_slow_jitRetranslateMethod)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitThrowCurrentException", offsetof(J9JITConfig, old_slow_jitThrowCurrentException)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitThrowException", offsetof(J9JITConfig, old_slow_jitThrowException)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitThrowUnreportedException", offsetof(J9JITConfig, old_slow_jitThrowUnreportedException)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitThrowAbstractMethodError", offsetof(J9JITConfig, old_slow_jitThrowAbstractMethodError)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitThrowArithmeticException", offsetof(J9JITConfig, old_slow_jitThrowArithmeticException)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitThrowArrayIndexOutOfBounds", offsetof(J9JITConfig, old_slow_jitThrowArrayIndexOutOfBounds)) |
