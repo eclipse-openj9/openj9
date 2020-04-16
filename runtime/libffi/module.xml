@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2014, 2019 IBM Corp. and others
+Copyright (c) 2014, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,6 +74,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<makefilestub data="FFI_TARGET_DIR := powerpc">
 				<include-if condition="spec.flags.arch_power" />
 			</makefilestub>
+			<makefilestub data="FFI_TARGET_DIR := riscv">
+				<include-if condition="spec.linux_riscv64.*" />
+			</makefilestub>
 			<makefilestub data="FFI_TARGET_DIR := s390">
 				<include-if condition="spec.linux_390.*" />
 				<include-if condition="spec.linux_ztpf.*" />
@@ -112,6 +115,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<include-if condition="spec.osx_x86.* and spec.flags.J9VM_ENV_DATA64" />
 			</makefilestub>
 
+			<makefilestub data="FFI_PRECONF_DIR := rv64">
+				<include-if condition="spec.linux_riscv64.*" />
+			</makefilestub>
 
 			<makefilestub data="FFI_PRECONF_DIR := wa">
 				<include-if condition="spec.win_x86.* and spec.flags.J9VM_ENV_DATA64" />
@@ -203,6 +209,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</vpath>
 			<vpath pattern="sysv.S" path="aarch64" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_aarch64.*" />
+			</vpath>
+
+			<!-- vpaths for riscv -->
+			<vpath pattern="ffi.c" path="riscv" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_riscv64.*" />
+			</vpath>
+			<vpath pattern="sysv.S" path="riscv" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_riscv64.*" />
 			</vpath>
 
 			<!-- vpaths for x86 -->
