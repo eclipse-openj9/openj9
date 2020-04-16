@@ -52,7 +52,7 @@ artifactory:
   defaultGeo: 'osu'
   server:
     osu: 'ci-eclipse-openj9'
-    #unb: 'ci-eclipse-openj9-unb' TEMP DISABLE. See #8817
+    unb: 'ci-eclipse-openj9-unb'
   repo: 'ci-eclipse-openj9'
   numArtifacts:
     osu: 30
