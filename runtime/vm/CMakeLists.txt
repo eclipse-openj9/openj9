@@ -26,7 +26,8 @@ add_library(j9vm SHARED
 	AsyncMessageHandler.cpp
 	bchelper.c
 	bindnatv.cpp
-	BytecodeInterpreter.cpp
+	BytecodeInterpreterFull.cpp
+	BytecodeInterpreterCompressed.cpp
 	callin.cpp
 	classallocation.c
 	ClassInitialization.cpp
@@ -34,7 +35,8 @@ add_library(j9vm SHARED
 	classseg.c
 	classsupport.c
 	createramclass.cpp
-	DebugBytecodeInterpreter.cpp
+	DebugBytecodeInterpreterFull.cpp
+	DebugBytecodeInterpreterCompressed.cpp
 	description.c
 	dllsup.c
 	drophelp.c

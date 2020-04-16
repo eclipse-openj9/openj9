@@ -67,10 +67,7 @@
 #if defined(DEBUG_VERSION)
 #define DO_HOOKS
 #define DO_SINGLE_STEP
-#define INTERPRETER_CLASS VM_DebugBytecodeInterpreter
-#else
-#define INTERPRETER_CLASS VM_BytecodeInterpreter
-#endif
+#endif /* DEBUG_VERSION */
 
 typedef enum {
 	VM_NO,

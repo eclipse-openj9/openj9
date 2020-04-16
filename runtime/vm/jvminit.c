@@ -320,6 +320,17 @@ static UDATA parseGlrOption(J9JavaVM* jvm, char* option);
 J9_DECLARE_CONSTANT_UTF8(j9_int_void, "(I)V");
 J9_DECLARE_CONSTANT_UTF8(j9_dispatch, "dispatch");
 
+/* The appropriate bytecodeLoop is selected based on interpreter mode */
+#if defined(OMR_GC_FULL_POINTERS)
+UDATA bytecodeLoopFull(J9VMThread *currentThread);
+UDATA debugBytecodeLoopFull(J9VMThread *currentThread);
+#endif /* OMR_GC_FULL_POINTERS */
+
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+UDATA bytecodeLoopCompressed(J9VMThread *currentThread);
+UDATA debugBytecodeLoopCompressed(J9VMThread *currentThread);
+#endif /* OMR_GC_COMPRESSED_POINTERS */
+
 #if defined(COUNT_BYTECODE_PAIRS)
 static jint
 initializeBytecodePairs(J9JavaVM *vm)
@@ -2431,9 +2442,27 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 			TRIGGER_J9HOOK_VM_ABOUT_TO_BOOTSTRAP(vm->hookInterface, vm->mainThread);
 			/* At this point, the decision about which interpreter to use has been made */
-			vm->bytecodeLoop = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DEBUG_MODE)
-					? (void*)debugBytecodeLoop
-					: (void*)bytecodeLoop;
+			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DEBUG_MODE)) {
+				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+					vm->bytecodeLoop = (void*)debugBytecodeLoopCompressed;
+#endif /* OMR_GC_COMPRESSED_POINTERS */
+				} else {
+#if defined(OMR_GC_FULL_POINTERS)
+					vm->bytecodeLoop = (void*)debugBytecodeLoopFull;
+#endif /* OMR_GC_FULL_POINTERS */
+				}
+			} else {
+				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+					vm->bytecodeLoop = (void*)bytecodeLoopCompressed;
+#endif /* OMR_GC_COMPRESSED_POINTERS */
+				} else {
+#if defined(OMR_GC_FULL_POINTERS)
+					vm->bytecodeLoop = (void*)bytecodeLoopFull;
+#endif /* OMR_GC_FULL_POINTERS */
+				}
+			}
 			break;
 
 		case JCL_INITIALIZED :

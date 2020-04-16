@@ -4090,26 +4090,6 @@ typedef enum {
 void*
 J9_GetInterface(J9_INTERFACE_SELECTOR interfaceSelector, J9PortLibrary* portLib, void *userData);
 
-/* -------------------- BytecodeInterpreter.cpp ------------ */
-
-/**
-* @brief Execute the bytecode loop
-* @param currentThread
-* @return UDATA the action to take upon return to the builder interpreter
-*/
-UDATA  
-bytecodeLoop(J9VMThread *currentThread);
-
-/* -------------------- DebugBytecodeInterpreter.cpp ------------ */
-
-/**
-* @brief Execute the bytecode loop
-* @param currentThread
-* @return UDATA the action to take upon return to the builder interpreter
-*/
-UDATA  
-debugBytecodeLoop(J9VMThread *currentThread);
-
 /* -------------------- ClassInitialization.cpp ------------ */
 
 /**

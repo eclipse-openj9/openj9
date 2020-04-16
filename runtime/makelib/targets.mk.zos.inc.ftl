@@ -128,10 +128,17 @@ endif
 MRABIG = -Wc,"TBYDBG(-qdebug=MRABIG)"
 SPECIALCXXFLAGS = $(filter-out -Wc$(COMMA)debug -O3,$(CXXFLAGS))
 NEW_OPTIMIZATION_FLAG = -O2 -Wc,"TBYDBG(-qdebug=lincomm:ptranl:tfbagg)" -Wc,"FEDBG(-qxflag=InlineDespiteVolatileInArgs)"
-BytecodeInterpreter.o : BytecodeInterpreter.cpp
+
+BytecodeInterpreterFull.o : BytecodeInterpreterFull.cpp
 	$(CXX) $(SPECIALCXXFLAGS) $(MRABIG) $(NEW_OPTIMIZATION_FLAG) -c $< > $*.asmlist
 
-DebugBytecodeInterpreter.o : DebugBytecodeInterpreter.cpp
+BytecodeInterpreterCompressed.o : BytecodeInterpreterCompressed.cpp
+	$(CXX) $(SPECIALCXXFLAGS) $(MRABIG) $(NEW_OPTIMIZATION_FLAG) -c $< > $*.asmlist
+
+DebugBytecodeInterpreterFull.o : DebugBytecodeInterpreterFull.cpp
+	$(CXX) $(SPECIALCXXFLAGS) $(MRABIG) $(NEW_OPTIMIZATION_FLAG) -c $< > $*.asmlist
+
+DebugBytecodeInterpreterCompressed.o : DebugBytecodeInterpreterCompressed.cpp
 	$(CXX) $(SPECIALCXXFLAGS) $(MRABIG) $(NEW_OPTIMIZATION_FLAG) -c $< > $*.asmlist
 
 MHInterpreter$(UMA_DOT_O) : MHInterpreter.cpp

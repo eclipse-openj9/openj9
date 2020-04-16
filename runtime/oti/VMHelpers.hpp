@@ -23,6 +23,16 @@
 #if !defined(VMHELPERS_HPP_)
 #define VMHELPERS_HPP_
 
+#include "j9cfg.h"
+
+#if defined(J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#if J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES
+#define VM_VMHelpers VM_VMHelpersCompressed
+#else /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#define VM_VMHelpers VM_VMHelpersFull
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+
 #include "j9.h"
 #include "j9protos.h"
 #include "j9consts.h"
