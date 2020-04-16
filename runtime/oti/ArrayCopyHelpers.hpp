@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,16 @@
 #if defined(TYPESTUBS_H)
 #define ARRAYCOPYHELPERS_STUB
 #endif /* defined(TYPESTUBS_H) */
+
+#include "j9cfg.h"
+
+#if defined(J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#if J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES
+#define VM_ArrayCopyHelpers VM_ArrayCopyHelpersCompressed
+#else /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#define VM_ArrayCopyHelpers VM_ArrayCopyHelpersFull
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
 
 #include "j9.h"
 #include "j9protos.h"

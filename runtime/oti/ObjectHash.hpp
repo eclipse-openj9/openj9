@@ -23,6 +23,16 @@
 #if !defined(OBJECTHASH_HPP_)
 #define OBJECTHASH_HPP_
 
+#include "j9cfg.h"
+
+#if defined(J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#if J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES
+#define VM_ObjectHash VM_ObjectHashCompressed
+#else /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#define VM_ObjectHash VM_ObjectHashFull
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+
 #include "j9.h"
 #include "j9accessbarrier.h"
 #include "j9consts.h"

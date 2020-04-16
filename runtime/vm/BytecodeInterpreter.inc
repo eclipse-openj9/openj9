@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,12 +27,6 @@
 /* MSVC compiler hangs on this file at max opt (/Ox) */
 #pragma optimize( "g", off )
 #endif /* _MSC_VER */
-
-#if defined(DEBUG_VERSION)
-#define LOOP_NAME debugBytecodeLoop
-#else
-#define LOOP_NAME bytecodeLoop
-#endif
 
 /* USE_COMPUTED_GOTO on Windows has a performance improvement of 15%.
  * USE_COMPUTED_GOTO on Linux amd64 has a performance improvement of 3%.
@@ -102,6 +96,11 @@ getMethodName(J9PortLibrary *PORTLIB, J9Method *method, U_8 *pc, char *buffer)
 #include "BytecodeInterpreter.hpp"
 
 /* Entry point must be C, not C++ */
+/**
+* @brief Execute the bytecode loop specified by LOOP_NAME
+* @param currentThread the current thread
+* @return UDATA the action to take upon return to the builder interpreter
+*/
 extern "C" UDATA
 LOOP_NAME(J9VMThread *currentThread)
 {

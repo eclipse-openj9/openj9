@@ -23,6 +23,16 @@
 #if !defined(OBJECTALLOCATIONAPI_HPP_)
 #define OBJECTALLOCATIONAPI_HPP_
 
+#include "j9cfg.h"
+
+#if defined(J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#if J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES
+#define MM_ObjectAllocationAPI MM_ObjectAllocationAPICompressed
+#else /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#define MM_ObjectAllocationAPI MM_ObjectAllocationAPIFull
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+
 #include "j9.h"
 #include "j9consts.h"
 #include "j9generated.h"

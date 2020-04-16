@@ -518,11 +518,18 @@ endif
 <#if uma.spec.processor.ppc && !uma.spec.type.aix>
 ifdef USE_PPC_GCC
 
-# special handling BytecodeInterpreter.cpp and DebugBytecodeInterpreter.cpp
-BytecodeInterpreter$(UMA_DOT_O) : BytecodeInterpreter.cpp
+# special handling BytecodeInterpreterFull.cpp, BytecodeInterpreterCompressed.cpp, DebugBytecodeInterpreterFull.cpp and DebugBytecodeInterpreterCompressed.cpp
+
+BytecodeInterpreterFull$(UMA_DOT_O) : BytecodeInterpreterFull.cpp
 	$(PPC_GCC_CXX) $(PPC_GCC_CXXFLAGS) -c $<
 
-DebugBytecodeInterpreter$(UMA_DOT_O) : DebugBytecodeInterpreter.cpp
+BytecodeInterpreterCompressed$(UMA_DOT_O) : BytecodeInterpreterCompressed.cpp
+	$(PPC_GCC_CXX) $(PPC_GCC_CXXFLAGS) -c $<
+
+DebugBytecodeInterpreterFull$(UMA_DOT_O) : DebugBytecodeInterpreterFull.cpp
+	$(PPC_GCC_CXX) $(PPC_GCC_CXXFLAGS) -c $<
+
+DebugBytecodeInterpreterCompressed$(UMA_DOT_O) : DebugBytecodeInterpreterCompressed.cpp
 	$(PPC_GCC_CXX) $(PPC_GCC_CXXFLAGS) -c $<
 
 MHInterpreter$(UMA_DOT_O) : MHInterpreter.cpp

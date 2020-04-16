@@ -4711,18 +4711,6 @@ typedef struct J9VMThread {
 #define J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, object, value) J9VMTHREAD_JAVAVM(vmThread)->memoryManagerFunctions->j9gc_objaccess_storeObjectToInternalVMSlot((vmThread), (j9object_t*)&((object)->blockingEnterObject), (value))
 #define TMP_J9VMTHREAD_BLOCKINGENTEROBJECT(object) ((object)->blockingEnterObject)
 
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-#if defined(OMR_GC_FULL_POINTERS)
-/* Mixed mode - necessarily 64-bit */
-#define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) (0 != (vmThread)->compressObjectReferences)
-#else /* OMR_GC_FULL_POINTERS */
-/* Compressed only - necessarily 64-bit */
-#define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) TRUE
-#endif /* OMR_GC_FULL_POINTERS */
-#else /* OMR_GC_COMPRESSED_POINTERS */
-/* Full only - could be 32 or 64-bit */
-#define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) FALSE
-#endif /* OMR_GC_COMPRESSED_POINTERS */
 #define J9VMTHREAD_REFERENCE_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(U_32) : sizeof(UDATA))
 #define J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))
 #define J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull))
@@ -5186,18 +5174,6 @@ typedef struct J9JavaVM {
  */
 #define J9_OBJECT_MONITOR_BLOCKING 3
 
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-#if defined(OMR_GC_FULL_POINTERS)
-/* Mixed mode - necessarily 64-bit */
-#define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) J9_ARE_ANY_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES)
-#else /* OMR_GC_FULL_POINTERS */
-/* Compressed only - necessarily 64-bit */
-#define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) TRUE
-#endif /* OMR_GC_FULL_POINTERS */
-#else /* OMR_GC_COMPRESSED_POINTERS */
-/* Full only - could be 32 or 64-bit */
-#define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) FALSE
-#endif /* OMR_GC_COMPRESSED_POINTERS */
 #define J9JAVAVM_REFERENCE_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(U_32) : sizeof(UDATA))
 #define J9JAVAVM_OBJECT_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))
 #define J9JAVAVM_CONTIGUOUS_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull))
@@ -5449,5 +5425,7 @@ typedef struct J9CInterpreterStackFrame {
 #error Unknown architecture
 #endif /* J9VM_ARCH_X86 */
 } J9CInterpreterStackFrame;
+
+#include "objectreferencesmacros_define.inc"
 
 #endif /* J9NONBUILDER_H */
