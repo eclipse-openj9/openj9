@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,9 +73,6 @@ class TR_StringPeepholes : public TR::Optimization
 	   SPH_String_init_SI, //_initSymRef3
 	   SPH_String_init_AIIZ, //_initSymRef4
 	   SPH_String_init_ISISS, //_initSymRef7
-	   START_BIG_DECIMAL_HELPER_METHODS, //separator
-	   SPH_DecimalFormatHelper_formatAsDouble,
-	   SPH_DecimalFormatHelper_formatAsFloat,
 	   END_STRINGPEEPHOLES_METHODS
       };
 
@@ -87,7 +84,6 @@ class TR_StringPeepholes : public TR::Optimization
    void processBlock(TR::Block *block);
    TR::TreeTop *detectPattern(TR::Block *block, TR::TreeTop *tt, bool useStringBuffer);
    TR::TreeTop *detectBDPattern(TR::Block *block, TR::TreeTop *tt, TR::Node *node);
-   TR::TreeTop *detectFormatPattern(TR::TreeTop *tt, TR::TreeTop *exit, TR::Node *node);
    TR::TreeTop *detectSubMulSetScalePattern(TR::TreeTop *tt, TR::TreeTop *exit, TR::Node *node);
    TR::SymbolReference *findSymRefForValueOf(const char *sig);
 
