@@ -455,6 +455,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          {
          _recompilationMethodInfo = new (PERSISTENT_NEW) TR_PersistentMethodInfo();
          memcpy(_recompilationMethodInfo, recompInfoStr.data(), sizeof(TR_PersistentMethodInfo));
+         J9::Recompilation::resetPersistentProfileInfo(_recompilationMethodInfo);
          }
       // Get the ROMClass for the method to be compiled if it is already cached
       // Or read it from the compilation request and cache it otherwise
