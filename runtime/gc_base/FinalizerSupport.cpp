@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,8 +127,12 @@ finalizeForcedUnfinalizedToFinalizable(J9VMThread *vmThread)
 	/* process the lists */
 	MM_UnfinalizedObjectList *unfinalizedObjectList = extensions->unfinalizedObjectLists;
 	while(NULL != unfinalizedObjectList) {
-		unfinalizedObjectList->startUnfinalizedProcessing();
-		J9Object *objectPtr = unfinalizedObjectList->getPriorList();
+		/* Iterate directly the current list. Not calling startUnfinalizedProcessing() to create and iterate priorList.
+		 * If forced finalize occurs in a middle of a CS cycle, startUnfinalizedProcessing have been already done.
+		 * Doing it again would overwrite existing prior list, plus all of objects would then be processed
+		 * at the end of CS as being in unfinalized list, while ther are actually in finalizable list.
+		 */
+		J9Object *objectPtr = unfinalizedObjectList->getHeadOfList();
 		while (NULL != objectPtr) {
 			J9Object* next = extensions->accessBarrier->getFinalizeLink(objectPtr);
 			/* CMVC 181817: need to remember all objects forced onto the finalizable list */
@@ -136,6 +140,9 @@ finalizeForcedUnfinalizedToFinalizable(J9VMThread *vmThread)
 			buffer.add(env, objectPtr);
 			objectPtr = next;
 		}
+		/* Now that we moved out the content, make the list look empty (what typically startUnfinalizedProcessing does).
+		 */
+		unfinalizedObjectList->resetHeadOfList();
 
 		/* Flush the local buffer of finalizable objects to the global list.
 		 * This needs to be done once per unfinalized list to ensure that all

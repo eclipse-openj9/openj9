@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,6 +67,12 @@ public:
 	 * @return the head object, or NULL if the list is empty
 	 */
 	MMINLINE j9object_t getHeadOfList() { return _head; }
+	
+	/**
+	 * Reset the current list, to look empty.
+	 */
+	void resetHeadOfList() { _head = NULL; }
+	
 
 	/**
 	 * Move the list to the prior list and reset the current list to empty.

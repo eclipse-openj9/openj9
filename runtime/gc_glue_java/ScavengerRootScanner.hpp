@@ -198,7 +198,14 @@ public:
 	virtual void scanRoots(MM_EnvironmentBase *env) 
 	{
 		MM_RootScanner::scanRoots(env);
-		
+		/* Determine if there is unfinalized work (any newly created finalizable objects
+		 * since last GC) to be done later during clearable phase.
+		 * In CS this will be called in first STW increment.
+		 * Doing so may conclude there is no unfinalize work, while new finalizable objects
+		 * can be created later during concurrent phase of this cycle. It's still ok,
+		 * since these objects cannot die (as any newly allocated objects during CS),
+		 * hence not subject for unfinalized processing.
+		 */ 
 		startUnfinalizedProcessing(env);
 	}
 
