@@ -27,9 +27,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 <#elseif uma.spec.processor.aarch64>
   OBJCOPY := $(OPENJ9_CC_PREFIX)-objcopy
 <#elseif uma.spec.processor.riscv64 && uma.spec.flags.env_crossbuild.enabled>
-  AR := riscv64-unknown-linux-gnu-ar
-  AS := riscv64-unknown-linux-gnu-as
-  OBJCOPY := riscv64-unknown-linux-gnu-objcopy
+  RISCV_CROSSTOOLS_PREFIX ?= riscv64-unknown-linux-gnu
+  AR := $(RISCV_CROSSTOOLS_PREFIX)-ar
+  AS := $(RISCV_CROSSTOOLS_PREFIX)-as
+  OBJCOPY := $(RISCV_CROSSTOOLS_PREFIX)-objcopy
 <#else>
   OBJCOPY := objcopy
 </#if>
