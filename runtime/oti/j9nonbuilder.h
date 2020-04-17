@@ -4082,7 +4082,7 @@ typedef struct J9MemoryManagerFunctions {
 	void  ( *j9mm_get_guaranteed_nursery_range)(struct J9JavaVM* javaVM, void** start, void** end) ;
 	UDATA  ( *j9gc_arraylet_getLeafSize)(struct J9JavaVM* javaVM) ;
 	UDATA  ( *j9gc_arraylet_getLeafLogSize)(struct J9JavaVM* javaVM) ;
-	void  ( *j9gc_set_allocation_sampling_interval)(struct J9VMThread *vmThread, UDATA samplingInterval);
+	void  ( *j9gc_set_allocation_sampling_interval)(struct J9JavaVM *vm, UDATA samplingInterval);
 	void  ( *j9gc_set_allocation_threshold)(struct J9VMThread *vmThread, UDATA low, UDATA high) ;
 	void  ( *j9gc_objaccess_recentlyAllocatedObject)(struct J9VMThread *vmThread, J9Object *dstObject) ;
 	void  ( *j9gc_objaccess_postStoreClassToClassLoader)(struct J9VMThread* vmThread, J9ClassLoader* destClassLoader, J9Class* srcClass) ;

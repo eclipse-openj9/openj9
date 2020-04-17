@@ -240,7 +240,7 @@ extern J9_CFUNC void j9gc_set_memoryController(J9VMThread *vmThread, J9Object* o
 extern J9_CFUNC const char* omrgc_get_version(OMR_VM *omrVM);
 extern J9_CFUNC void j9gc_startGCIfTimeExpired(OMR_VMThread* vmThread);
 extern J9_CFUNC void j9gc_allocation_threshold_changed(J9VMThread* currentThread);
-extern J9_CFUNC void j9gc_set_allocation_sampling_interval(J9VMThread* vmThread, UDATA samplingInterval);
+extern J9_CFUNC void j9gc_set_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval);
 extern J9_CFUNC void j9gc_set_allocation_threshold(J9VMThread* vmThread, UDATA low, UDATA high);
 extern J9_CFUNC void j9gc_objaccess_recentlyAllocatedObject(J9VMThread *vmThread, J9Object *dstObject);
 extern J9_CFUNC void j9gc_objaccess_postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader* destClassLoader, J9Class* srcClass);
