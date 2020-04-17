@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,6 +87,7 @@ jvmtiSetHeapSamplingInterval(jvmtiEnv *env,
 {
 	jvmtiError rc = JVMTI_ERROR_NONE;
 	J9VMThread *currentThread = NULL;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
 	
 	Trc_JVMTI_jvmtiSetHeapSamplingInterval_Entry(env, samplingInterval);
 	
@@ -94,10 +95,10 @@ jvmtiSetHeapSamplingInterval(jvmtiEnv *env,
 	ENSURE_CAPABILITY(env, can_generate_sampled_object_alloc_events);
 	ENSURE_NON_NEGATIVE(samplingInterval);
 
-	rc = getCurrentVMThread(((J9JVMTIEnv *)env)->vm, &currentThread);
+	rc = getCurrentVMThread(vm, &currentThread);
 	if ((JVMTI_ERROR_NONE == rc) && (NULL != currentThread)) {
 		/* No negative samplingInterval, and there is no data lost when jint is casted to UDATA. */
-		currentThread->javaVM->memoryManagerFunctions->j9gc_set_allocation_sampling_interval(currentThread, samplingInterval);
+		vm->memoryManagerFunctions->j9gc_set_allocation_sampling_interval(currentThread, samplingInterval);
 	}
 
 done:
