@@ -91,21 +91,29 @@ MM_Heap *
 MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBase *env, UDATA heapBytesRequested, MM_HeapRegionManager *regionManager)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	
+
 	MM_Heap *heap = MM_HeapVirtualMemory::newInstance(env, extensions->heapAlignment, heapBytesRequested, regionManager);
 	if (NULL == heap) {
 		return NULL;
 	}
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	/* Disable double map if requested page sizes used is equal to huge pages.
-	 * Currently double map is not supported when huge pages are used.
-	 * Note that we keep two double map fields: one for requested and another for
-	 * status. If large pages is enabled, it  will only change the STATUS of double
-	 * mapping, keeping the REQUESTED double mapping field intact.
+	/* Enable double mapping if glibc version 2.27 or newer is found. For double map to
+	 * work we need a file descriptor, to get one we use shm_open(3)  or memfd_create(2);
+	 * shm_open(3) has 2 drawbacks: [I] shared memory is used; [II] does not support
+	 * anonymous huge pages. [I] shared memory in Linux systems has a limit (half of
+	 * physical memory). [II] if we create a file descriptor using shm_open(3) and then
+	 * try to mmap with huge pages with the respective file descriptor the mmap call
+	 * fails. It would only succeed if MAP_ANON flag was provided, but doing so ignores
+	 * the file descriptor which is the opposite of what we want. In a newer glibc
+	 * version (glibc 2.27 onwards) there’s a new function that does exactly what we
+	 * want, and that's memfd_create(2); however that's only supported in glibc 2.27. We
+	 * also need to check if region size is a bigger or equal to multiple of page size.
+	 *
 	 */
-	if (extensions->isArrayletDoubleMapRequested) {
-		if (!extensions->memoryManager->isLargePage(env, heap->getPageSize())) {
+	if (extensions->isArrayletDoubleMapRequested && extensions->isArrayletDoubleMapAvailable) {
+		uintptr_t pagesize = heap->getPageSize();
+		if (!extensions->memoryManager->isLargePage(env, pagesize) || (pagesize <= extensions->getOmrVM()->_arrayletLeafSize)) {
 			extensions->indexableObjectModel.setEnableDoubleMapping(true);
 		}
 	}

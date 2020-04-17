@@ -321,12 +321,12 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	J9JavaVM *javaVM = extensions->getJavaVM();
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	GC_ArrayletLeafIterator arrayletLeafIterator(javaVM, (J9IndexableObject *)objectPtr);
 	MM_Heap *heap = extensions->getHeap();
 	UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
 	UDATA arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, _dataSize) / arrayletLeafSize;
+	Trc_MM_double_map_Entry(env->getLanguageVMThread(), (void *)objectPtr, arrayletLeafSize, arrayletLeafCount);
 
 	void *result = NULL;
 
@@ -348,6 +348,7 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 		void *currentLeaf = slotObject->readReferenceFromSlot();
 		/* In some corner cases the last leaf might be NULL therefore we must ignore it */
 		if (NULL == currentLeaf) {
+			Trc_MM_double_map_TraverseLeavesNULLPointer(env->getLanguageVMThread());
 			break;
 		}
 		arrayletLeaveAddrs[count] = currentLeaf;
@@ -362,8 +363,8 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 
 	MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)heap->getHeapRegionManager()->tableDescriptorForAddress(firstLeafSlot);
 
-	/* gets pagesize  or j9vmem_supported_page_sizes()[0]? */
-	UDATA pageSize = j9mmap_get_region_granularity(NULL);
+	/* Retrieve actual page size */
+	UDATA pageSize = heap->getPageSize();
 
 	/* Get heap and from there call an OMR API that will doble map everything */
 	result = heap->doubleMapArraylet(env, arrayletLeaveAddrs, count, arrayletLeafSize, _dataSize,
@@ -382,9 +383,11 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 	 * but execution won't halt.
 	 */
 	if (NULL == firstLeafRegionDescriptor->_arrayletDoublemapID.address) {
+		Trc_MM_double_map_Failed(env->getLanguageVMThread());
 		result = NULL;
 	}
 
+	Trc_MM_double_map_Exit(env->getLanguageVMThread(), result);
 	return result;
 }
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
