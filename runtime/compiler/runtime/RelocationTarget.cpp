@@ -259,12 +259,6 @@ TR_RelocationTarget::patchNonVolatileFieldMemoryFence(J9ROMFieldShape* resolvedF
    }
 
 void
-TR_RelocationTarget::patchMTIsolatedOffset(uint32_t offset, uint8_t *reloLocation)
-   {
-   TR_ASSERT(0, "Error: patchMTIsolatedOffset not implemented in relocation target base class");
-   }
-
-void
 TR_RelocationTarget::addPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr)
    {
    platformAddPICtoPatchPtrOnClassUnload(classKey, ptr);

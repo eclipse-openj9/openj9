@@ -146,8 +146,6 @@ class TR_RelocationTarget
 
       virtual void patchNonVolatileFieldMemoryFence(J9ROMFieldShape* resolvedField, UDATA cpAddr, U_8 descriptorByte, U_8 *instructionAddress, U_8 *snippetStartAddress, J9JavaVM *javaVM);
 
-      virtual void patchMTIsolatedOffset(uint32_t offset, uint8_t *reloLocation);
-
       /**
        * @brief Adds a PIC guard that will invalidate a pointer when the class it is dependant on is unloaded.  Marks metadata as having class unload assumptions.
        *

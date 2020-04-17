@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -118,26 +118,3 @@ TR_S390RelocationTarget::arrayCopyHelperAddress(J9JavaVM *javaVM)
    {
    return (uint8_t *)javaVM->memoryManagerFunctions->referenceArrayCopy;
    }
-
-void
-TR_S390RelocationTarget::patchMTIsolatedOffset(uint32_t offset, uint8_t *reloLocation)
-  {
-   /* for Z platform, isolated field row/col offset is recorded in long displacement
-      Long displacement Format
-       ________ ____ ____ ____ __ ________ ____________ _______
-      |Op Code | R1 | X2 | B2 |DL2        | DH2        |Op Code|
-      |________|____|____|____|___________|____________|_______|
-      0         8   12   16   20          32           40      47
-
-      put new offset into DL2 and DH2
-   */
-   TR_ASSERT(offset < 0x7FFFF, "new offset excceed Z long displacmet range\n");
-   uint32_t tmpOffset = loadUnsigned32b(reloLocation);
-   // clear DL2 and DH2 bits
-   tmpOffset = tmpOffset & 0xf00000ff;
-   // add DL2
-   tmpOffset = tmpOffset | ((offset & 0xfff) << 16);
-   // add DH2
-   tmpOffset = tmpOffset | ((offset & 0xff000) >>4);
-   storeUnsigned32b(tmpOffset, reloLocation);
-  }

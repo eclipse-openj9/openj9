@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2008, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,8 +57,6 @@ class TR_PPCRelocationTarget : public TR_RelocationTarget
 
       virtual uint8_t *arrayCopyHelperAddress(J9JavaVM *javaVM);
       virtual void flushCache(uint8_t *codeStart, unsigned long size);
-
-      virtual void patchMTIsolatedOffset(uint32_t offset, uint8_t *reloLocation);
 
    };
 
