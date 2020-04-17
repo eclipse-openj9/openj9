@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,6 @@ class TR_S390RelocationTarget : public TR_RelocationTarget
 
       virtual bool useTrampoline(uint8_t * helperAddress, uint8_t *baseLocation);
       virtual uint8_t *arrayCopyHelperAddress(J9JavaVM *javaVM);
-      virtual void patchMTIsolatedOffset(uint32_t offset, uint8_t *reloLocation);
    };
 
 #endif   // S390RELOCATION_TARGET_INCL

@@ -86,7 +86,6 @@ class TR_X86RelocationTarget : public TR_RelocationTarget
 
       virtual void patchNonVolatileFieldMemoryFence(J9ROMFieldShape* resolvedField, UDATA cpAddr, U_8 descriptorByte, U_8 *instructionAddress, U_8 *snippetStartAddress, J9JavaVM *javaVM);
 
-      virtual void patchMTIsolatedOffset(uint32_t offset, uint8_t *reloLocation);
    };
 
 class TR_AMD64RelocationTarget : public TR_X86RelocationTarget
