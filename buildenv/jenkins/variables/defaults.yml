@@ -84,12 +84,12 @@ slack_channel: '#jenkins'
 build_discarder:
   logs:
     Nightly: 40
-    Release: 10
-    OMR: 20
-    OpenJDK8: 20
-    OpenJDK11: 20
-    OpenJDK14: 20
-    OpenJDK: 20
+    Release: 5
+    OMR: 15
+    OpenJDK8: 10
+    OpenJDK11: 10
+    OpenJDK14: 10
+    OpenJDK: 10
     Personal: 50
     Pipeline: 100
 restart_timeout:
