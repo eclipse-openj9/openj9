@@ -863,20 +863,20 @@ j9gc_allocation_threshold_changed(J9VMThread *currentThread)
  * 
  * Examples:
  * 	To trigger an event whenever 4K objects have been allocated:
- *		j9gc_set_allocation_sampling_interval(vmThread, (UDATA)4096);
+ *		j9gc_set_allocation_sampling_interval(vm, (UDATA)4096);
  *	To trigger an event for every object allocation:
- *		j9gc_set_allocation_sampling_interval(vmThread, (UDATA)0);
+ *		j9gc_set_allocation_sampling_interval(vm, (UDATA)0);
  * The initial MM_GCExtensions::oolObjectSamplingBytesGranularity value is 16M
  * or set by command line option "-Xgc:allocationSamplingGranularity".
  * By default, the sampling interval is going to be set to 512 KB.
  * 
- * @parm[in] vmThread The current VM Thread
+ * @parm[in] vm The J9JavaVM
  * @parm[in] samplingInterval The allocation sampling interval.
  */
 void 
-j9gc_set_allocation_sampling_interval(J9VMThread *vmThread, UDATA samplingInterval)
+j9gc_set_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval)
 {
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vmThread->javaVM);
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
 	if (0 == samplingInterval) {
 		/* avoid (env->_oolTraceAllocationBytes) % 0 which could be undefined. */
 		samplingInterval = 1;

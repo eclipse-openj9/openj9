@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -173,6 +173,14 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 					break;
  			}
 		}
+#if JAVA_SPEC_VERSION >= 11
+		else if (JVMTI_DISABLE == mode) {
+			if (JVMTI_EVENT_SAMPLED_OBJECT_ALLOC == event_type) {
+				/* Set sampling interval to UDATA_MAX to inform GC that sampling is not required */
+				vm->memoryManagerFunctions->j9gc_set_allocation_sampling_interval(vm, UDATA_MAX);
+			}
+		}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 		/* Disallow certain events at the thread level */
 
