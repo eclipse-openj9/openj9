@@ -222,7 +222,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="opt_zipSupport" value="true"/>
 		<flag id="opt_zlibCompression" value="true"/>
 		<flag id="opt_zlibSupport" value="true"/>
-		<flag id="port_omrsigSupport" value="false"/>
+		<flag id="port_omrsigSupport" value="true"/>
 		<flag id="port_signalSupport" value="true"/>
 		<flag id="prof_eventReporting" value="true"/>
 		<flag id="ras_dumpAgents" value="true"/>
