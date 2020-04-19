@@ -683,8 +683,8 @@ bash get_source.sh
 
 You must install a number of software dependencies to create a suitable build environment on your AArch64 Linux system:
 
-- GNU C/C++ compiler (The Docker image uses GCC 7.3)
-- [AArch64 Linux JDK](https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=hotspot), which is used as the boot JDK.
+- GNU C/C++ compiler (The Docker image uses GCC 7.5)
+- [AArch64 Linux JDK](https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=openj9), which is used as the boot JDK.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
 
 See [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker) in [Linux section](#linux) for other dependencies to be installed.
