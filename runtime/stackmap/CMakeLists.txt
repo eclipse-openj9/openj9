@@ -22,7 +22,7 @@
 
 add_tracegen(map.tdf)
 
-add_library(j9stackmap STATIC
+j9vm_add_library(j9stackmap STATIC
 	debuglocalmap.c
 	fixreturns.c
 	localmap.c

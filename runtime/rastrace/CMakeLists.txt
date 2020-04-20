@@ -25,7 +25,7 @@ add_tracegen(j9trc.tdf)
 add_tracegen(j9trc_aux.tdf)
 add_tracegen(mt.tdf)
 
-add_library(j9trc SHARED
+j9vm_add_library(j9trc SHARED
 	method_trace.c
 	method_trigger.c
 	trccomponent.c

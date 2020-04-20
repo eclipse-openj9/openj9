@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 
 omr_add_tracegen(j9jvmti.tdf)
 
-add_library(j9jvmti SHARED
+j9vm_add_library(j9jvmti SHARED
 	jvmtiBreakpoint.c
 	jvmtiCapability.c
 	jvmtiClass.c

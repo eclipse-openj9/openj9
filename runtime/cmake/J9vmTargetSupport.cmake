@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2020, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,53 +20,17 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-omr_add_tracegen(j9shr.tdf)
+include(OmrTargetSupport)
 
-j9vm_add_library(j9shrcommon STATIC
-	AttachedDataManagerImpl.cpp
-	ByteDataManagerImpl.cpp
-	CacheLifecycleManager.cpp
-	CacheMap.cpp
-	ClassDebugDataProvider.cpp
-	ClasspathItem.cpp
-	ClasspathManagerImpl2.cpp
-	CompiledMethodManagerImpl.cpp
-	CompositeCache.cpp
-	hookhelpers.cpp
-	Manager.cpp
-	ManagerHintTable.cpp
-	Managers.cpp
-	OSCache.cpp
-	OSCacheFile.cpp
-	OSCachemmap.cpp
-	OSCachesysv.cpp
-	OSCachevmem.cpp
-	ROMClassManagerImpl.cpp
-	ROMClassResourceManager.cpp
-	SCImplementedAPI.cpp
-	ScopeManagerImpl.cpp
-	shrinit.cpp
-	TimestampManagerImpl.cpp
-	${CMAKE_CURRENT_BINARY_DIR}/ut_j9shr.c
-)
-target_include_directories(j9shrcommon
-	PRIVATE
-		${j9vm_SOURCE_DIR}/shared
-		${j9vm_SOURCE_DIR}/shared_util
-		${j9vm_SOURCE_DIR}/verbose
-	PUBLIC
-		${CMAKE_CURRENT_BINARY_DIR}
-		include
-		.
-)
-target_link_libraries(j9shrcommon
-	PRIVATE
-		j9vm_interface
-		j9pool
-		j9hashtable
-		j9utilcore
-		j9util
-)
+# Currently j9vm_add_library and j9vm_add_executable just call
+# omr_add_library and omr_add_executable, but have them so that we can add
+# functionality in the future, without having to hunt down all the 
+# add_library/add_executable calls.
 
-target_enable_ddr(j9shrcommon GLOB_HEADERS)
-ddr_set_add_targets(j9ddr j9shrcommon)
+function(j9vm_add_library name)
+	omr_add_library("${name}" ${ARGN})
+endfunction()
+
+function(j9vm_add_executable name)
+	omr_add_executable("${name}" ${ARGN})
+endfunction()

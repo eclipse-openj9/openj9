@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 #re-enable version num suffix
 set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_SHARED_LIBRARY_SUFFIX})
 
-add_library(thread_cutest_harness STATIC
+j9vm_add_library(thread_cutest_harness STATIC
 	cuharness/CuTest.c
 	cuharness/parser.c
 )
@@ -44,7 +44,7 @@ target_link_libraries(thread_cutest_harness
 )
 
 
-add_library(j9thrtestnatives SHARED
+j9vm_add_library(j9thrtestnatives SHARED
 	testnatives/testnatives.c
 )
 
@@ -80,7 +80,7 @@ omr_add_exports(j9thrtestnatives
 	Java_j9vm_test_softmx_TestNatives_setAggressiveGCPolicy
 )
 
-add_library(j9thrnumanatives SHARED
+j9vm_add_library(j9thrnumanatives SHARED
 	thrnumanatives/thrnumanatives.c
 )
 
@@ -93,7 +93,7 @@ omr_add_exports(j9thrnumanatives
 	Java_com_ibm_j9_numa_NumaTest_getUsableNodeCount
 )
 
-add_executable(thrstatetest
+j9vm_add_executable(thrstatetest
 	thrstate/runtest.c
 	thrstate/testcases1.c
 	thrstate/testcases2.c
