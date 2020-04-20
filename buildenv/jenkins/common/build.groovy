@@ -540,7 +540,7 @@ def build_all() {
                         cleanWs()
                         add_node_to_description()
                         // Setup Artifactory now that we are on a node. This determines which server(s) we push to.
-                        variableFile.set_artifactory_config()
+                        variableFile.set_artifactory_config(BUILD_IDENTIFIER)
                         get_source()
                         build()
                         archive_sdk()
