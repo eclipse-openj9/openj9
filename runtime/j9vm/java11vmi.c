@@ -84,6 +84,10 @@ static BOOLEAN isModuleJavaBase(j9object_t moduleName);
 static BOOLEAN isModuleNameGood(j9object_t moduleName);
 static UDATA allowReadAccessToModule(J9VMThread * currentThread, J9Module * fromModule, J9Module * toModule);
 static void trcModulesAddReadsModule(J9VMThread *currentThread, jobject toModule, J9Module *j9FromMod, J9Module *j9ToMod);
+#if JAVA_SPEC_VERSION >= 15
+static void convertPackageName(char* packageName);
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
 
 #if !defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
 /* These come from jvm.c */
@@ -690,6 +694,22 @@ allowReadAccessToModule(J9VMThread * currentThread, J9Module * fromModule, J9Mod
 	return retval;
 }
 
+#if JAVA_SPEC_VERSION >= 15
+/* Convert '.' to '/' in the package name. */
+static void
+convertPackageName(char* packageName)
+{
+	char ch = '\0';
+	char* p = packageName;
+	while ('\0' != (ch = *p)) {
+		if ('.' == ch) {
+			*p = '/';
+		}
+		p++;
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
 /**
  * Define a module containing the specified packages. It will create the module record in the  ClassLoader's module hash table and
  * create package records in the class loader's package hash table if necessary.
@@ -710,11 +730,57 @@ allowReadAccessToModule(J9VMThread * currentThread, J9Module * fromModule, J9Mod
  * @return If successful, returns a java.lang.reflect.Module object. Otherwise, returns NULL.
  */
 jobject JNICALL
+#if JAVA_SPEC_VERSION >= 15
+JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version, jstring location, jobjectArray packageArray)
+#else
 JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version, jstring location, const char* const* packages, jsize numPackages)
+#endif /* JAVA_SPEC_VERSION >= 15 */
 {
 	J9VMThread * const currentThread = (J9VMThread*)env;
 	J9JavaVM * vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+#if JAVA_SPEC_VERSION >= 15
+	BOOLEAN oom = FALSE;
+	BOOLEAN nullPackage = FALSE;
+	jsize numPackages = (NULL == packageArray) ? 0 : (*env)->GetArrayLength(env, packageArray);
+	PORT_ACCESS_FROM_ENV(env);
+	UDATA packagesNumBytes = sizeof(char*) * numPackages;
+	const char* * packages = (const char* *)j9mem_allocate_memory(packagesNumBytes, OMRMEM_CATEGORY_VM);
+	if ((*env)->ExceptionCheck(env)) {
+		goto cleanup;
+	}
+
+	if (NULL != packages) {
+		jsize pkgIndex = 0;
+		memset(packages, 0, packagesNumBytes);
+		for (pkgIndex = 0; pkgIndex < numPackages; pkgIndex++) {
+			jobject packageObj = (*env)->GetObjectArrayElement(env, packageArray, pkgIndex);
+			if ((*env)->ExceptionCheck(env)) {
+				Assert_SC_unreachable();
+				goto cleanup;
+			}
+			if (NULL != packageObj) {
+				jboolean isCopy = JNI_FALSE;
+				const char* packageName = (*env)->GetStringUTFChars(env, packageObj, &isCopy);
+				(*env)->DeleteLocalRef(env, packageObj);
+
+				if (NULL == packageName) {
+					oom = TRUE;
+					break;
+				}
+				if (JNI_FALSE == isCopy) {
+					Assert_SC_unreachable();
+					goto cleanup;
+				}
+				convertPackageName((char*)packageName);
+				packages[pkgIndex] = packageName;
+			} else {
+				nullPackage = TRUE;
+				break;
+			}
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 #if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
@@ -722,6 +788,22 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 #else
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
 #endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
+
+#if JAVA_SPEC_VERSION >= 15
+	if (NULL == packageArray) {
+		vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, J9NLS_VM_PACKAGES_IS_NULL);
+		goto done;
+	}
+	if ((NULL == packages) || oom) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		goto done;
+	}
+	if (nullPackage) {
+		vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, J9NLS_VM_PACKAGE_IS_NULL);
+		goto done;
+	}
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
 	if (NULL == module) {
 		vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, J9NLS_VM_MODULE_IS_NULL);
 	} else {
@@ -851,6 +933,29 @@ done:
 #endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	vmFuncs->internalExitVMToJNI(currentThread);
 
+#if JAVA_SPEC_VERSION >= 15
+cleanup:
+	if (NULL != packages) {
+		jsize pkgIndex = 0;
+		for (pkgIndex = 0; pkgIndex < numPackages; pkgIndex++) {
+			jobject packageObj = NULL;
+			const char* packageName = packages[pkgIndex];
+			if (NULL == packageName) {
+				break;
+			}
+
+			packageObj = (*env)->GetObjectArrayElement(env, packageArray, pkgIndex);
+			if ((*env)->ExceptionCheck(env)) {
+				Assert_SC_unreachable();
+				break;
+			}
+			(*env)->ReleaseStringUTFChars(env, packageObj, packageName);
+			(*env)->DeleteLocalRef(env, packageObj);
+		}
+		j9mem_free_memory((void *)packages);		
+	}
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
 	return module;
 }
 
@@ -866,12 +971,26 @@ done:
  * 4) Package is not defined for fromModule's class loader
  * 5) Package is not in module fromModule.
  */
+#if JAVA_SPEC_VERSION >= 15
+void JNICALL
+JVM_AddModuleExports(JNIEnv * env, jobject fromModule, jstring packageObj, jobject toModule)
+#else
 void JNICALL
 JVM_AddModuleExports(JNIEnv * env, jobject fromModule, const char *package, jobject toModule)
+#endif /* JAVA_SPEC_VERSION >= 15 */
 {
 	J9VMThread * const currentThread = (J9VMThread*)env;
 	J9JavaVM const * const vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+#if JAVA_SPEC_VERSION >= 15
+	jboolean isCopy = JNI_FALSE;
+	const char* package = (NULL == packageObj) ? NULL : (*env)->GetStringUTFChars(env, packageObj, &isCopy);
+	if ((NULL != package) && (JNI_FALSE == isCopy)) {
+		Assert_SC_unreachable();
+		(*env)->ReleaseStringUTFChars(env, packageObj, package);
+		package = NULL;
+	}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 #if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
@@ -879,6 +998,19 @@ JVM_AddModuleExports(JNIEnv * env, jobject fromModule, const char *package, jobj
 #else
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
 #endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
+
+#if JAVA_SPEC_VERSION >= 15
+	if (NULL == packageObj) {
+		vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, J9NLS_VM_PACKAGE_IS_NULL);
+		goto done;
+	}
+	if (NULL == package) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		goto done;
+	}
+	convertPackageName((char*)package);
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
 	if (NULL == toModule) {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, "module is null");
 	} else {
@@ -896,12 +1028,23 @@ JVM_AddModuleExports(JNIEnv * env, jobject fromModule, const char *package, jobj
 			throwExceptionHelper(currentThread, rc);
 		}
 	}
+
+#if JAVA_SPEC_VERSION >= 15
+done:
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
 #if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
 	omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
 #else
 	f_monitorExit(vm->classLoaderModuleAndLocationMutex);
 #endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	vmFuncs->internalExitVMToJNI(currentThread);
+
+#if JAVA_SPEC_VERSION >= 15
+	if (NULL != package) {
+		(*env)->ReleaseStringUTFChars(env, packageObj, package);
+	}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 }
 
 /**
@@ -913,12 +1056,26 @@ JVM_AddModuleExports(JNIEnv * env, jobject fromModule, const char *package, jobj
  * 3) Package is not defined for fromModule's class loader
  * 4) Package is not in module fromModule.
  */
+#if JAVA_SPEC_VERSION >= 15
+void JNICALL
+JVM_AddModuleExportsToAll(JNIEnv * env, jobject fromModule, jstring packageObj)
+#else
 void JNICALL
 JVM_AddModuleExportsToAll(JNIEnv * env, jobject fromModule, const char *package)
+#endif /* JAVA_SPEC_VERSION >= 15 */
 {
 	J9VMThread * const currentThread = (J9VMThread*)env;
 	J9JavaVM const * const vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+#if JAVA_SPEC_VERSION >= 15
+	jboolean isCopy = JNI_FALSE;
+	const char* package = (NULL == packageObj) ? NULL : (*env)->GetStringUTFChars(env, packageObj, &isCopy);
+	if ((NULL != package) && (JNI_FALSE == isCopy)) {
+		Assert_SC_unreachable();
+		(*env)->ReleaseStringUTFChars(env, packageObj, package);
+		package = NULL;
+	}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 #if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
@@ -926,6 +1083,19 @@ JVM_AddModuleExportsToAll(JNIEnv * env, jobject fromModule, const char *package)
 #else
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
 #endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
+
+#if JAVA_SPEC_VERSION >= 15
+	if (NULL == packageObj) {
+		vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, J9NLS_VM_PACKAGE_IS_NULL);
+		goto done;
+	}
+	if (NULL == package) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		goto done;
+	}
+	convertPackageName((char*)package);
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
 	{
 		UDATA rc = ERRCODE_GENERAL_FAILURE;
 
@@ -937,12 +1107,23 @@ JVM_AddModuleExportsToAll(JNIEnv * env, jobject fromModule, const char *package)
 			throwExceptionHelper(currentThread, rc);
 		}
 	}
+
+#if JAVA_SPEC_VERSION >= 15
+done:
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
 #if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
 	omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
 #else
 	f_monitorExit(vm->classLoaderModuleAndLocationMutex);
 #endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	vmFuncs->internalExitVMToJNI(currentThread);
+
+#if JAVA_SPEC_VERSION >= 15
+	if (NULL != package) {
+		(*env)->ReleaseStringUTFChars(env, packageObj, package);
+	}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 }
 
 static void
@@ -1142,12 +1323,26 @@ JVM_AddModulePackage(JNIEnv * env, jobject module, const char *package)
  * 2) module is unnamed or
  * 3) package is not in module
  */
+#if JAVA_SPEC_VERSION >= 15
+void JNICALL
+JVM_AddModuleExportsToAllUnnamed(JNIEnv * env, jobject fromModule, jstring packageObj)
+#else
 void JNICALL
 JVM_AddModuleExportsToAllUnnamed(JNIEnv * env, jobject fromModule, const char *package)
+#endif /* JAVA_SPEC_VERSION >= 15 */
 {
 	J9VMThread * const currentThread = (J9VMThread*)env;
 	J9JavaVM const * const vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+#if JAVA_SPEC_VERSION >= 15
+	jboolean isCopy = JNI_FALSE;
+	const char* package = (NULL == packageObj) ? NULL : (*env)->GetStringUTFChars(env, packageObj, &isCopy);
+	if ((NULL != package) && (JNI_FALSE == isCopy)) {
+		Assert_SC_unreachable();
+		(*env)->ReleaseStringUTFChars(env, packageObj, package);
+		package = NULL;
+	}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 #if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
@@ -1155,6 +1350,19 @@ JVM_AddModuleExportsToAllUnnamed(JNIEnv * env, jobject fromModule, const char *p
 #else
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
 #endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
+
+#if JAVA_SPEC_VERSION >= 15
+	if (NULL == packageObj) {
+		vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, J9NLS_VM_PACKAGE_IS_NULL);
+		goto done;
+	}
+	if (NULL == package) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		goto done;
+	}
+	convertPackageName((char*)package);
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
 	{
 		UDATA rc = ERRCODE_GENERAL_FAILURE;
 
@@ -1166,12 +1374,23 @@ JVM_AddModuleExportsToAllUnnamed(JNIEnv * env, jobject fromModule, const char *p
 			throwExceptionHelper(currentThread, rc);
 		}
 	}
+
+#if JAVA_SPEC_VERSION >= 15
+done:
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
 #if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
 	omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
 #else
 	f_monitorExit(vm->classLoaderModuleAndLocationMutex);
 #endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	vmFuncs->internalExitVMToJNI(currentThread);
+
+#if JAVA_SPEC_VERSION >= 15
+	if (NULL != package) {
+		(*env)->ReleaseStringUTFChars(env, packageObj, package);
+	}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 }
 
 jstring JNICALL
