@@ -121,6 +121,55 @@ J9::Power::CodeGenerator::CodeGenerator() :
    if (comp->fej9()->hasFixedFrameC_CallingConvention())
       self()->setHasFixedFrameC_CallingConvention();
 
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_HAS_ALTIVEC) == TR::Compiler->target.cpu.getPPCSupportsVMX(), "getPPCSupportsVMX test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) == TR::Compiler->target.cpu.getPPCSupportsVSX(), "getPPCSupportsVSX test failed");
+   TR_ASSERT_FATAL((TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_HAS_ALTIVEC) && TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX)) == TR::Compiler->target.cpu.getPPCSupportsAES(), "getPPCSupportsAES test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_HTM) == TR::Compiler->target.cpu.getPPCSupportsTM(), "getPPCSupportsTM test failed");
+   // TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P9) == TR::Compiler->target.cpu.getPPCSupportsLM(), "getPPCSupportsLM test failed");
+
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.hasPopulationCountInstructionNew() == TR::Compiler->target.cpu.hasPopulationCountInstruction(), "hasPopulationCountInstruction test failed");
+
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_HAS_DFP) == TR::Compiler->target.cpu.supportsDecimalFloatingPoint(), "supportsDecimalFloatingPoint test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_FIRST) == (TR::Compiler->target.cpu.id() == TR_FirstPPCProcessor), "getPPCSupportsVMX test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_RIOS1) == (TR::Compiler->target.cpu.id() == TR_PPCrios1), "getPPCSupportsVMX test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_PWR403) == (TR::Compiler->target.cpu.id() == TR_PPCpwr403), "getPPCSupportsVMX test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_PWR405) == (TR::Compiler->target.cpu.id() == TR_PPCpwr405), "getPPCSupportsVMX test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_PWR440) == (TR::Compiler->target.cpu.id() == TR_PPCpwr440), "getPPCSupportsVMX test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_PWR601) == (TR::Compiler->target.cpu.id() == TR_PPCpwr601), "getPPCSupportsVMX test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_PWR602) == (TR::Compiler->target.cpu.id() == TR_PPCpwr602), "getPPCSupportsVMX test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_PWR603) == (TR::Compiler->target.cpu.id() == TR_PPCpwr603), "getPPCSupportsVMX test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_82XX) == (TR::Compiler->target.cpu.id() == TR_PPC82xx), "OMR_PROCESSOR_PPC_82XX test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_7XX) == (TR::Compiler->target.cpu.id() == TR_PPC7xx), "OMR_PROCESSOR_PPC_7XX test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_PWR604) == (TR::Compiler->target.cpu.id() == TR_PPCpwr604), "OMR_PROCESSOR_PPC_PWR604 test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_HW_SQRT_FIRST) == (TR::Compiler->target.cpu.id() == TR_FirstPPCHwSqrtProcessor), "OMR_PROCESSOR_PPC_HW_SQRT_FIRST test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_RIOS2) == (TR::Compiler->target.cpu.id() == TR_PPCrios2), "OMR_PROCESSOR_PPC_RIOS2 test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_PWR2S) == (TR::Compiler->target.cpu.id() == TR_PPCpwr2s), "OMR_PROCESSOR_PPC_PWR2S test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_64BIT_FIRST) == (TR::Compiler->target.cpu.id() == TR_FirstPPC64BitProcessor), "OMR_PROCESSOR_PPC_64BIT_FIRST test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_PWR620) == (TR::Compiler->target.cpu.id() == TR_PPCpwr620), "OMR_PROCESSOR_PPC_PWR620 test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_PWR630) == (TR::Compiler->target.cpu.id() == TR_PPCpwr630), "OMR_PROCESSOR_PPC_PWR630 test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_NSTAR) == (TR::Compiler->target.cpu.id() == TR_PPCnstar), "OMR_PROCESSOR_PPC_NSTAR test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_PULSAR) == (TR::Compiler->target.cpu.id() == TR_PPCpulsar), "OMR_PROCESSOR_PPC_PULSAR test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_AS_FIRST) == (TR::Compiler->target.cpu.id() == TR_FirstPPCASProcessor), "OMR_PROCESSOR_PPC_AS_FIRST test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_GP) == (TR::Compiler->target.cpu.id() == TR_PPCgp), "OMR_PROCESSOR_PPC_GP test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_GR) == (TR::Compiler->target.cpu.id() == TR_PPCgr), "OMR_PROCESSOR_PPC_GR test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_VMX_FIRST) == (TR::Compiler->target.cpu.id() == TR_FirstPPCVMXProcessor), "OMR_PROCESSOR_PPC_VMX_FIRST test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_GPUL) == (TR::Compiler->target.cpu.id() == TR_PPCgpul), "OMR_PROCESSOR_PPC_GPUL test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_HW_ROUND_FIRST) == (TR::Compiler->target.cpu.id() == TR_FirstPPCHwRoundProcessor), "OMR_PROCESSOR_PPC_HW_ROUND_FIRST test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_HW_COPY_SIGN_FIRST) == (TR::Compiler->target.cpu.id() == TR_FirstPPCHwCopySignProcessor), "OMR_PROCESSOR_PPC_HW_COPY_SIGN_FIRST test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_P6) == (TR::Compiler->target.cpu.id() == TR_PPCp6), "OMR_PROCESSOR_PPC_P6 test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESOSR_PPC_ATLAS) == (TR::Compiler->target.cpu.id() == TR_PPCatlas), "OMR_PROCESOSR_PPC_ATLAS test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_BALANCED) == (TR::Compiler->target.cpu.id() == TR_PPCbalanced), "OMR_PROCESSOR_PPC_BALANCED test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_CELLPX) == (TR::Compiler->target.cpu.id() == TR_PPCcellpx), "OMR_PROCESSOR_PPC_CELLPX test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_VSX_FIRST) == (TR::Compiler->target.cpu.id() == TR_FirstPPCVSXProcessor), "OMR_PROCESSOR_PPC_VSX_FIRST test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_P7) == (TR::Compiler->target.cpu.id() == TR_PPCp7), "OMR_PROCESSOR_PPC_P7 test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_P8) == (TR::Compiler->target.cpu.id() == TR_PPCp8), "OMR_PROCESSOR_PPC_P8 test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_P9) == (TR::Compiler->target.cpu.id() == TR_PPCp9), "OMR_PROCESSOR_PPC_P9 test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_LAST) == (TR::Compiler->target.cpu.id() == TR_LastPPCProcessor), "OMR_PROCESSOR_PPC_LAST test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_HW_SQRT_FIRST) == TR::Compiler->target.cpu.getSupportsHardwareSQRT(), "getSupportsHardwareSQRT test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_HW_ROUND_FIRST) == TR::Compiler->target.cpu.getSupportsHardwareRound(), "getSupportsHardwareRound test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_HW_COPY_SIGN_FIRST) == TR::Compiler->target.cpu.getSupportsHardwareCopySign(), "getSupportsHardwareCopySign test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_64BIT_FIRST) == TR::Compiler->target.cpu.getPPCis64bit(), "getPPCis64bit test failed");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_HTM) == TR::Compiler->target.cpu.supportsTransactionalMemoryInstructions(), "supportsTransactionalMemoryInstructions test failed");   
    }
 
 bool

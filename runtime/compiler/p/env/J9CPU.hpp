@@ -77,6 +77,7 @@ public:
    TR_ProcessorFeatureFlags getProcessorFeatureFlags();
    bool isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags);
 
+   bool hasPopulationCountInstructionNew();
    };
 
 }

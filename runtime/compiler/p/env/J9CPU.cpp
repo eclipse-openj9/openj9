@@ -97,6 +97,18 @@ CPU::hasPopulationCountInstruction()
 #endif
    }
 
+// Double check with os400 team to see if we can enable popcnt on I
+//
+bool 
+CPU::hasPopulationCountInstructionNew()
+   {
+#if defined(J9OS_I5)
+   return false;
+#else
+   return TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P7);
+#endif
+   }
+
 
 bool
 CPU::supportsDecimalFloatingPoint()

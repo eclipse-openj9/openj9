@@ -67,6 +67,8 @@ class OMR_EXTENSIBLE CPU : public J9::CPU
 
    public:
 
+   static TR::CPU detect(OMRPortLibrary * const omrPortLib);
+
    static int32_t TO_PORTLIB_get390MachineId();
    static bool TO_PORTLIB_get390_supportsZNext();
    static bool TO_PORTLIB_get390_supportsZ15();

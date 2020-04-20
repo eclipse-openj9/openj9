@@ -187,6 +187,30 @@ J9::Z::CodeGenerator::CodeGenerator() :
       }
 
    cg->setIgnoreDecimalOverflowException(false);
+
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.getSupportsHardwareSQRT() == TR::Compiler->target.cpu.getSupportsHardwareSQRT(), "getSupportsHardwareSQRT test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_HIGH_WORD) == TR::Compiler->target.cpu.getSupportsHighWordFacility(), "getSupportsHighWordFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_DFP) == TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility(), "getSupportsDecimalFloatingPointFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_FPE) == TR::Compiler->target.cpu.getSupportsFloatingPointExtensionFacility(), "getSupportsFloatingPointExtensionFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_TE) == TR::Compiler->target.cpu.getSupportsTransactionalMemoryFacility(), "getSupportsTransactionalMemoryFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_TE) == TR::Compiler->target.cpu.supportsTransactionalMemoryInstructions(), "supportsTransactionalMemoryInstructions test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_RI) == TR::Compiler->target.cpu.getSupportsRuntimeInstrumentationFacility(), "getSupportsRuntimeInstrumentationFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY) == TR::Compiler->target.cpu.getSupportsVectorFacility(), "getSupportsVectorFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) == TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility(), "getSupportsVectorPackedDecimalFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3) == TR::Compiler->target.cpu.getSupportsMiscellaneousInstructionExtensions3Facility(), "getSupportsMiscellaneousInstructionExtensions3Facility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2) == TR::Compiler->target.cpu.getSupportsVectorFacilityEnhancement2(), "getSupportsVectorFacilityEnhancement2 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY) == TR::Compiler->target.cpu.getSupportsVectorPackedDecimalEnhancementFacility(), "getSupportsVectorPackedDecimalEnhancementFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE) == TR::Compiler->target.cpu.getSupportsGuardedStorageFacility(), "getSupportsGuardedStorageFacility test failed!\n");
+
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) == TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10), "OMR_PROCESSOR_S390_Z10 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z196) == TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196), "OMR_PROCESSOR_S390_Z196 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12) == TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zEC12), "OMR_PROCESSOR_S390_ZEC12 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z13) == TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z13), "OMR_PROCESSOR_S390_Z13 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z14) == TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z14), "OMR_PROCESSOR_S390_Z14 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z15) == TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z15), "OMR_PROCESSOR_S390_Z15 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT) == TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zNext), "OMR_PROCESSOR_S390_ZNEXT test failed!\n");
+
+   // TR_ASSERT_FATAL(TR::Compiler->cpu.getProcessorDescription().features[0] == TR::Compiler->cpu.getProcessorFeatureFlags().featureFlags[0], "getProcessorFeatureFlags test failed!\n");
    }
 
 

@@ -49,9 +49,40 @@ namespace J9
 namespace Z
 {
 
+TR::CPU
+CPU::detect(OMRPortLibrary * const omrPortLib)
+   {
+   TR::CPU cpu = OMR::Z::CPU::detect(omrPortLib);
+   OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
+   OMRProcessorDesc * processorDesc = &cpu._processorDescription;
+
+   // This variable is used internally by the j9sysinfo macros below and cannot be folded away
+   J9PortLibrary* privatePortLibrary = TR::Compiler->portLib;
+   
+#if defined(LINUX)
+   if (TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_RI))
+      {
+      if (0 != j9ri_enableRISupport())
+         {
+         omrsysinfo_processor_set_feature(processorDesc, OMR_FEATURE_S390_RI, FALSE);
+         }
+      }
+#endif
+
+   if (TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE))
+      {
+      // turn off GS facility if GC has -XXgc:softwareRangeCheckReadBarrier
+      if (!TR::Compiler->javaVM->memoryManagerFunctions->j9gc_software_read_barrier_enabled(TR::Compiler->javaVM))
+         {
+         omrsysinfo_processor_set_feature(processorDesc, OMR_FEATURE_S390_GUARDED_STORAGE, FALSE);
+         }
+      }
+   return cpu;
+   }
+
 int32_t
 CPU::TO_PORTLIB_get390MachineId()
-  {
+   {
 #if defined(J9ZTPF) || defined(J9ZOS390)
    // Note we cannot use utsname on Linux as it simply returns "s390x" in info.machine. On z/OS we can indeed use it [1].
    //
@@ -317,6 +348,51 @@ CPU::getProcessorFeatureFlags()
    TR_ProcessorFeatureFlags processorFeatureFlags = { {_flags.getValue()} };
    return processorFeatureFlags;
    }
+
+// enum
+//    {
+//    // Available                             = 0x00000001,
+//    HasResumableTrapHandler                  = 0x00000002,
+//    HasFixedFrameC_CallingConvention         = 0x00000004,
+//    SupportsScaledIndexAddressing            = 0x00000080,
+//    S390SupportsDFP                          = 0x00000100,
+//    S390SupportsFPE                          = 0x00000200,
+//    S390SupportsHPR                          = 0x00001000,
+//    IsInZOSSupervisorState                   = 0x00008000,
+//    S390SupportsTM                           = 0x00010000,
+//    S390SupportsRI                           = 0x00020000,
+//    S390SupportsVectorFacility               = 0x00040000,
+//    S390SupportsVectorPackedDecimalFacility  = 0x00080000,
+//    S390SupportsGuardedStorageFacility       = 0x00100000,
+//    S390SupportsSideEffectAccessFacility     = 0x00200000,
+//    S390SupportsMIE2                         = 0x00400000,
+//    S390SupportsMIE3                         = 0x00800000,
+//    S390SupportsVectorFacilityEnhancement2   = 0x01000000,
+//    S390SupportsVectorPDEnhancementFacility  = 0x02000000,
+//    S390SupportsVectorFacilityEnhancement1   = 0x04000000,
+//    };
+
+// TR_ProcessorFeatureFlags
+// CPU::getProcessorFeatureFlagsNew()
+//    {
+//    uint32_t featureFlag = 0;
+//    if (TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_HIGH_WORD) == TR::Compiler->target.cpu.getSupportsHighWordFacility())
+//    TR_ProcessorFeatureFlags processorFeatureFlags = { {_flags.getValue()} };
+//    return processorFeatureFlags;
+//    }
+
+// TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_HIGH_WORD) == TR::Compiler->target.cpu.getSupportsHighWordFacility(), "getSupportsHighWordFacility test failed!\n");
+// TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_DFP) == TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility(), "getSupportsDecimalFloatingPointFacility test failed!\n");
+// TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_FPE) == TR::Compiler->target.cpu.getSupportsFloatingPointExtensionFacility(), "getSupportsFloatingPointExtensionFacility test failed!\n");
+// TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_TE) == TR::Compiler->target.cpu.getSupportsTransactionalMemoryFacility(), "getSupportsTransactionalMemoryFacility test failed!\n");
+// TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_TE) == TR::Compiler->target.cpu.supportsTransactionalMemoryInstructions(), "supportsTransactionalMemoryInstructions test failed!\n");
+// TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_RI) == TR::Compiler->target.cpu.getSupportsRuntimeInstrumentationFacility(), "getSupportsRuntimeInstrumentationFacility test failed!\n");
+// TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY) == TR::Compiler->target.cpu.getSupportsVectorFacility(), "getSupportsVectorFacility test failed!\n");
+// TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) == TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility(), "getSupportsVectorPackedDecimalFacility test failed!\n");
+// TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3) == TR::Compiler->target.cpu.getSupportsMiscellaneousInstructionExtensions3Facility(), "getSupportsMiscellaneousInstructionExtensions3Facility test failed!\n");
+// TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2) == TR::Compiler->target.cpu.getSupportsVectorFacilityEnhancement2(), "getSupportsVectorFacilityEnhancement2 test failed!\n");
+// TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY) == TR::Compiler->target.cpu.getSupportsVectorPackedDecimalEnhancementFacility(), "getSupportsVectorPackedDecimalEnhancementFacility test failed!\n");
+// TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE) == TR::Compiler->target.cpu.getSupportsGuardedStorageFacility(), "getSupportsGuardedStorageFacility test failed!\n");
 
 bool
 CPU::isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags)
