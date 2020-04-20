@@ -54,8 +54,8 @@ artifactory:
     osu: 'ci-eclipse-openj9'
     #unb: 'ci-eclipse-openj9-unb' TEMP DISABLE. See #8817
   repo: 'ci-eclipse-openj9'
+  # if numArtifacts not set, use build_discarder
   numArtifacts:
-    osu: 30
     unb: 5
   daysToKeepArtifacts:
     osu: 50
@@ -84,12 +84,12 @@ slack_channel: '#jenkins'
 build_discarder:
   logs:
     Nightly: 40
-    Release: 10
-    OMR: 20
-    OpenJDK8: 20
-    OpenJDK11: 20
-    OpenJDK14: 20
-    OpenJDK: 20
+    Release: 5
+    OMR: 15
+    OpenJDK8: 10
+    OpenJDK11: 10
+    OpenJDK14: 10
+    OpenJDK: 10
     Personal: 50
     Pipeline: 100
 restart_timeout:

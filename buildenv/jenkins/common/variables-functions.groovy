@@ -707,7 +707,7 @@ def set_slack_channel() {
     }
 }
 
-def set_artifactory_config() {
+def set_artifactory_config(id="Nightly") {
     ARTIFACTORY_CONFIG = [:]
     echo "Configure Artifactory..."
 
@@ -721,7 +721,11 @@ def set_artifactory_config() {
         for (geo in ARTIFACTORY_CONFIG['geos']) {
             ARTIFACTORY_CONFIG[geo] = [:]
             ARTIFACTORY_CONFIG[geo]['server'] = get_value(VARIABLES.artifactory.server, geo)
-            ARTIFACTORY_CONFIG[geo]['numArtifacts'] = get_value(VARIABLES.artifactory.numArtifacts, geo).toInteger()
+            def numArtifacts = get_value(VARIABLES.artifactory.numArtifacts, geo)
+            if (!numArtifacts ){
+                numArtifacts = get_value(VARIABLES.build_discarder.logs, pipelineFunctions.convert_build_identifier(id))
+            }
+            ARTIFACTORY_CONFIG[geo]['numArtifacts'] = numArtifacts.toInteger()
             ARTIFACTORY_CONFIG[geo]['daysToKeepArtifacts'] = get_value(VARIABLES.artifactory.daysToKeepArtifacts, geo).toInteger()
             ARTIFACTORY_CONFIG[geo]['manualCleanup'] = get_value(VARIABLES.artifactory.manualCleanup, geo)
             ARTIFACTORY_CONFIG[geo]['vpn'] = get_value(VARIABLES.artifactory.vpn, geo)
