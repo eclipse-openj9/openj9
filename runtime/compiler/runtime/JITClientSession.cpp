@@ -74,11 +74,6 @@ ClientSessionData::~ClientSessionData()
    _classChainDataMapMonitor->destroy();
    _sequencingMonitor->destroy();
    _constantPoolMapMonitor->destroy();
-   if (_unloadedClassAddresses)
-      {
-      _unloadedClassAddresses->destroy();
-      jitPersistentFree(_unloadedClassAddresses);
-      }
    _staticMapMonitor->destroy();
    if (_vmInfo)
       {
@@ -98,39 +93,32 @@ ClientSessionData::updateTimeOfLastAccess()
    _timeOfLastAccess = j9time_current_time_millis();
    }
 
+// This method is called within a critical section such that no two threads can enter it concurrently
 void
-ClientSessionData::processUnloadedClasses(JITServer::ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes)
+ClientSessionData::initializeUnloadedClassAddrRanges(const std::vector<TR_AddressRange> &unloadedClassRanges, int32_t maxRanges)
    {
-   const uint32_t numOfUnloadedClasses = (uint32_t)classes.size();
+   OMR::CriticalSection getUnloadedClasses(getROMMapMonitor());
+
+   if (!_unloadedClassAddresses)
+      _unloadedClassAddresses = new (PERSISTENT_NEW) TR_AddressSet(trPersistentMemory, maxRanges);
+   _unloadedClassAddresses->setRanges(unloadedClassRanges);
+   }
+
+void
+ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes, bool updateUnloadedClasses)
+   {
+   const size_t numOfUnloadedClasses = classes.size();
+
+  if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will process a list of %zu unloaded classes for clientUID %llu", 
+         TR::compInfoPT->getCompThreadId(), numOfUnloadedClasses, (unsigned long long)_clientUID);
 
    if (numOfUnloadedClasses > 0)
-      writeAcquireClassUnloadRWMutex();
+      writeAcquireClassUnloadRWMutex(); //TODO: use RAII style to avoid problems with exceptions
 
-   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d Server will process a list of %u unloaded classes for clientUID %llu", TR::compInfoPT->getCompThreadId(), numOfUnloadedClasses, (unsigned long long)_clientUID);
    //Vector to hold the list of the unloaded classes and the corresponding data needed for purging the Caches
    std::vector<ClassUnloadedData> unloadedClasses;
    unloadedClasses.reserve(numOfUnloadedClasses);
-   bool updateUnloadedClasses = true;
-   if (_requestUnloadedClasses)
-      {
-      stream->write(JITServer::MessageType::getUnloadedClassRanges, JITServer::Void());
-
-      auto response = stream->read<std::vector<TR_AddressRange>, int32_t>();
-      auto unloadedClassRanges = std::get<0>(response);
-      auto maxRanges = std::get<1>(response);
-
-         {
-         OMR::CriticalSection getUnloadedClasses(getROMMapMonitor());
-
-         if (!_unloadedClassAddresses)
-            _unloadedClassAddresses = new (PERSISTENT_NEW) TR_AddressSet(trPersistentMemory, maxRanges);
-         _unloadedClassAddresses->setRanges(unloadedClassRanges);
-         _requestUnloadedClasses = false;
-         }
-
-      updateUnloadedClasses = false;
-      }
       {
       OMR::CriticalSection processUnloadedClasses(getROMMapMonitor());
 
@@ -413,6 +401,15 @@ ClientSessionData::clearCaches()
       _classByNameMap.clear();
       }
    OMR::CriticalSection getRemoteROMClass(getROMMapMonitor());
+
+   if (_unloadedClassAddresses)
+      {
+      _unloadedClassAddresses->destroy();
+      jitPersistentFree(_unloadedClassAddresses);
+      _unloadedClassAddresses = NULL;
+      }
+  _requestUnloadedClasses = true;
+
    // Free memory for all hashtables with IProfiler info
    for (auto& it : _J9MethodMap)
       {
@@ -449,7 +446,6 @@ ClientSessionData::clearCaches()
       jitPersistentFree(classInfo);
       }
    _chTableClassMap.clear();
-   _requestUnloadedClasses = true;
    _registeredJ2IThunksMap.clear();
    _registeredInvokeExactJ2IThunksSet.clear();
    _bClassUnloadingAttempt = false;
