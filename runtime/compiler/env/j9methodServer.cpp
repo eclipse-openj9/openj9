@@ -38,7 +38,8 @@ getJ9ClassInfo(TR::CompilationInfoPerThread *threadCompInfo, J9Class *clazz)
    // Do not use it otherwise
    auto &classMap = threadCompInfo->getClientData()->getROMClassMap();
    auto it = classMap.find(clazz);
-   TR_ASSERT(it != classMap.end(), "ClassInfo is not in the class map");
+   TR_ASSERT_FATAL(it != classMap.end(),"compThreadID %d, ClientData %p, clazz %p: ClassInfo is not in the class map %p!!\n",
+      threadCompInfo->getCompThreadId(), threadCompInfo->getClientData(), clazz, &classMap);
    return it->second;
    }
 

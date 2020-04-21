@@ -26,7 +26,9 @@
 #include "net/RawTypeConvert.hpp"
 #include "net/CommunicationStream.hpp"
 #include "env/VerboseLog.hpp"
+#include "control/CompilationThread.hpp" // for TR::compInfoPT->getCompThreadId()
 #include "control/Options.hpp"
+#include "runtime/JITClientSession.hpp"
 #include <openssl/ssl.h>
 
 class SSLOutputStream;
@@ -73,17 +75,30 @@ public:
    virtual ~ServerStream()
       {
       _numConnectionsClosed++;
+      _pClientSessionData = NULL;
       }
 
    /**
       @brief Send a message to the client
 
       @param [in] type Message type to be sent
-      @param [in] args Variable number of additional paramaters to be sent
+      @param [in] args Variable number of additional parameters to be sent
    */
    template <typename ...Args>
    void write(MessageType type, Args... args)
       {
+      if (isReadingClassUnload() &&
+          isClassUnloadingAttempted() &&
+          (MessageType::compilationFailure != type) &&
+          (MessageType::compilationCode != type))
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d MessageType[%u] %s: throw TR::CompilationInterrupted",
+               TR::compInfoPT->getCompThreadId(), type, messageNames[type]);
+
+         throw TR::CompilationInterrupted();
+         }
+
       _sMsg.setType(type);
       setArgsRaw<Args...>(_sMsg, args...);
       writeMessage(_sMsg);
@@ -207,7 +222,8 @@ public:
       try
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "MessageType::compilationFailure: statusCode %u", statusCode);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d MessageType::compilationFailure: statusCode %u",
+                  TR::compInfoPT->getCompThreadId(), statusCode);
          write(MessageType::compilationFailure, statusCode);
          }
       catch (std::exception &e)
@@ -226,6 +242,20 @@ public:
       return _clientId;
       }
 
+   void setClientData(ClientSessionData *pClientData)
+      {
+      _pClientSessionData = pClientData;
+      }
+
+   volatile bool isReadingClassUnload()
+      {
+      return (_pClientSessionData) ? _pClientSessionData->isReadingClassUnload() : false;
+      }
+
+   volatile bool isClassUnloadingAttempted()
+      {
+      return (_pClientSessionData) ? _pClientSessionData->isClassUnloadingAttempted() : false;
+      }
 
    // Statistics
    static int getNumConnectionsOpened() { return _numConnectionsOpened; }
@@ -235,6 +265,7 @@ private:
    static int _numConnectionsOpened;
    static int _numConnectionsClosed;
    uint64_t _clientId;  // UID of client connected to this communication stream
+   ClientSessionData *_pClientSessionData;
    };
 
 
