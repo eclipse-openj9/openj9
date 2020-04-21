@@ -259,7 +259,7 @@ done:
 		}
 
 		if (lock == compareAndSwapLockword(currentThread, lockEA, lock, mine, readBeforeCAS)) {
-			VM_AtomicSupport::monitorEnterBarrier();
+			VM_AtomicSupport::readBarrier();
 			locked = true;
 		}
 		return locked;
