@@ -740,6 +740,10 @@ int32_t p9emu_process(p9emu_ctx_t *ctx, ucontext_t *uctx)
       case P9EMU_MADDLD:
          maddld(insn, gpregs);
          break;
+      default:
+         /* Do nothing */
+         /* this is to avoid compiler warnings for unhandled enumeration values */
+         break;
       }
 
    gpregs[PT_NIP] = iar + 4;
