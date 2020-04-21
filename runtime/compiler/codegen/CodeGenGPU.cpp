@@ -2634,8 +2634,7 @@ J9::CodeGenerator::printNVVMIR(
                    isLongMul ? "i64" : "i32");
       }
    else if (node->getOpCodeValue() == TR::bneg || node->getOpCodeValue() == TR::sneg ||
-            node->getOpCodeValue() == TR::ineg || node->getOpCodeValue() == TR::lneg ||
-            node->getOpCodeValue() == TR::iuneg || node->getOpCodeValue() == TR::luneg ||
+            node->getOpCodeValue() == TR::ineg || node->getOpCodeValue() == TR::lneg || 
             node->getOpCodeValue() == TR::fneg || node->getOpCodeValue() == TR::dneg)
       {
       getNodeName(node->getChild(0), name0, self()->comp());
