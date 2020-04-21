@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2483,6 +2483,9 @@ static UtProcessorInfo * getProcessorInfo(void)
 		} else if (strcmp(osarch, J9PORT_ARCH_X86) == 0) {
 			ret->architecture = UT_X86;
 			ret->procInfo.subtype = UT_PIV;
+		} else if (0 == strcmp(osarch, J9PORT_ARCH_RISCV)) {
+			ret->architecture = UT_RISCV;
+			ret->procInfo.subtype = UT_RV64G;
 		} else {
 			ret->architecture = UT_UNKNOWN;
 		}
