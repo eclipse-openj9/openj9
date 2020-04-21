@@ -505,6 +505,7 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 
 - [autoconf 2.6.9](https://formulae.brew.sh/formula/autoconf)
 - [bash 4.4.23](https://formulae.brew.sh/formula/bash)
+- [cmake >= 3.4](https://formulae.brew.sh/formula/cmake)
 - [binutils 2.32](https://formulae.brew.sh/formula/binutils)
 - [freetype 2.9.1](https://formulae.brew.sh/formula/freetype)
 - [git 2.19.2](https://formulae.brew.sh/formula/git)
@@ -513,15 +514,6 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 - [nasm 2.13.03](https://formulae.brew.sh/formula/nasm)
 - [pkg-config 0.29.2](https://formulae.brew.sh/formula/pkg-config)
 - [wget 1.19.5 ](https://formulae.brew.sh/formula/wget)
-
-[Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) is also required, which can be obtained and installed with the following commands:
-
-```
-cd /<my_home_dir>
-wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
-tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
-rm -f freemarker.tgz
-```
 
 Bash version 4 is required by the `./get_source.sh` script that you will use in step 2, which is installed to `/usr/local/bin/bash`. To prevent problems during the build process, make Bash v4 your default shell by typing the following commands:
 
@@ -568,12 +560,11 @@ bash ./get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 
 ```
-bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
-               --with-boot-jdk=<path_to_macOS_JDK11> \
+bash configure --with-boot-jdk=<path_to_macOS_JDK11> \
                --disable-warnings-as-errors
 ```
 
-:pencil: Modify the paths for freemarker and the macOS boot JDK that you installed in step 1. If `configure` is unable to detect Freetype, add the option `--with-freetype=<path to freetype>`, where `<path to freetype>` is typically `/usr/local/Cellar/freetype/2.9.1/`.
+:pencil: Modify the path for the macOS boot JDK that you installed in step 1. If `configure` is unable to detect Freetype, add the option `--with-freetype=<path to freetype>`, where `<path to freetype>` is typically `/usr/local/Cellar/freetype/2.9.1/`.
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
