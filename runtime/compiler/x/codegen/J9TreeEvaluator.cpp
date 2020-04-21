@@ -131,15 +131,19 @@ inline void generateLoadJ9Class(TR::Node* node, TR::Register* j9class, TR::Regis
       {
       switch (opValue)
          {
+         case TR::monent:
+         case TR::monexit:
+            TR_ASSERT_FATAL(TR::Compiler->om.areValueTypesEnabled(), "monent and monexit are expected for generateLoadJ9Class only when value type is enabled");
          case TR::checkcastAndNULLCHK:
             needsNULLCHK = true;
             break;
          case TR::icall: // TR_checkAssignable
             return; // j9class register already holds j9class
+         case TR::checkcast:
+         case TR::instanceof:
+            break;
          default:
-            TR_ASSERT(opValue == TR::checkcast ||
-                      opValue == TR::instanceof,
-                     "Unexpected opCode for generateLoadJ9Class %s.", node->getOpCode().getName());
+            TR_ASSERT_FATAL(false, "Unexpected opCode for generateLoadJ9Class %s.", node->getOpCode().getName());
             break;
          }
       }
@@ -1868,7 +1872,7 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
             {
             needExplicitCheck = false;
             TR::MemoryReference *memRef = NULL;
-            if (TR::Compiler->om.compressedReferenceShift() > 0 
+            if (TR::Compiler->om.compressedReferenceShift() > 0
                 && firstChild->getType() == TR::Address
                 && firstChild->getOpCode().hasSymbolReference()
                 && firstChild->getSymbol()->isCollectedReference())
@@ -4508,6 +4512,25 @@ void J9::X86::TreeEvaluator::transactionalMemoryJITMonitorEntry(TR::Node        
       cg->stopUsingRegister(counterReg);
    }
 
+void
+J9::X86::TreeEvaluator::generateCheckForValueTypeMonitorEnterOrExit(
+      TR::Node *node,
+      TR::LabelSymbol *snippetLabel,
+      TR::CodeGenerator *cg)
+   {
+   if (cg->isMonitorValueType(node) != TR_maybe)
+      return;
+   TR::Register *objectReg = cg->evaluate(node->getFirstChild());
+   TR::Register *j9classReg = cg->allocateRegister();
+   generateLoadJ9Class(node, j9classReg, objectReg, cg);
+   auto fej9 = (TR_J9VMBase *)(cg->fe());
+   TR::MemoryReference *classFlagsMR = generateX86MemoryReference(j9classReg, (uintptr_t)(fej9->getOffsetOfClassFlags()), cg);
+   static_assert((uint32_t) J9ClassIsValueType < USHRT_MAX, "Expecting J9ClassIsValueType to be less than 16 bits for use in test instruction");
+   //test [j9classReg.classFlags], J9ClassIsValueType
+   generateMemImmInstruction(TEST2MemImm2, node, classFlagsMR, J9ClassIsValueType, cg);
+   generateLabelInstruction(JNE4, node, snippetLabel, cg);
+   }
+
 TR::Register *
 J9::X86::TreeEvaluator::VMmonentEvaluator(
       TR::Node *node,
@@ -4518,20 +4541,22 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    // appropriate excepting instruction we must make sure to reset the
    // excepting instruction since our children may have set it.
    //
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    static const char *noInline = feGetEnv("TR_NoInlineMonitor");
-   static int32_t monEntCount = 0;
    static const char *firstMonEnt = feGetEnv("TR_FirstMonEnt");
-   static const char *doCmpFirst = feGetEnv("TR_AddCMPBeforeCMPXCHG");
+   static int32_t monEntCount = 0;
    bool reservingLock = false;
    bool normalLockPreservingReservation = false;
    bool dummyMethodMonitor = false;
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   TR::Compilation *comp = cg->comp();
+
+   static const char *doCmpFirst = feGetEnv("TR_AddCMPBeforeCMPXCHG");
 
    int lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    if (comp->getOption(TR_MimicInterpreterFrameShape) ||
        (comp->getOption(TR_FullSpeedDebug) && node->isSyncMethodMonitor()) ||
        noInline ||
+       TR::Compiler->om.areValueTypesEnabled() && cg->isMonitorValueType(node) == TR_yes ||
        comp->getOption(TR_DisableInlineMonEnt) ||
        (firstMonEnt && (*firstMonEnt-'0') > monEntCount++))
       {
@@ -4596,6 +4621,8 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    TR::SymbolReference *originalNodeSymRef = NULL;
 
    TR::Node *helperCallNode = node;
+   if (TR::Compiler->om.areValueTypesEnabled())
+      TR::TreeEvaluator::generateCheckForValueTypeMonitorEnterOrExit(node, snippetLabel, cg);
    if (comp->getOption(TR_ReservingLocks))
       {
       // About to change the node's symref... store the original.
@@ -5124,8 +5151,10 @@ void J9::X86::TreeEvaluator::generateValueTracingCode(
    generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(vmThreadReg, vmThreadCursor, cg), scratchReg, cg);
    }
 
-TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node,
-                                                     TR::CodeGenerator *cg)
+TR::Register
+*J9::X86::TreeEvaluator::VMmonexitEvaluator(
+      TR::Node          *node,
+      TR::CodeGenerator *cg)
    {
    // If there is a NULLCHK above this node it will be expecting us to set
    // up the excepting instruction.  If we are not going to inline an
@@ -5135,16 +5164,17 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    static const char *noInline = feGetEnv("TR_NoInlineMonitor");
-   static int32_t monExitCount = 0;
    static const char *firstMonExit = feGetEnv("TR_FirstMonExit");
+   static int32_t monExitCount = 0;
    bool reservingLock = false;
    bool normalLockPreservingReservation = false;
    bool dummyMethodMonitor = false;
    bool gen64BitInstr = cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord();
-
    int lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
+
    if ((comp->getOption(TR_MimicInterpreterFrameShape) /*&& !comp->getOption(TR_EnableLiveMonitorMetadata)*/) ||
        noInline ||
+       TR::Compiler->om.areValueTypesEnabled() && cg->isMonitorValueType(node) == TR_yes ||
        comp->getOption(TR_DisableInlineMonExit) ||
        (firstMonExit && (*firstMonExit-'0') > monExitCount++))
       {
@@ -5192,7 +5222,10 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *fallThru   = generateLabelSymbol(cg);
-
+   // Create the monitor exit snippet
+   TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
+   if (TR::Compiler->om.areValueTypesEnabled())
+       TR::TreeEvaluator::generateCheckForValueTypeMonitorEnterOrExit(node, snippetLabel, cg);
 #if !defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
    // Now that the object reference has been generated, see if this is the end
    // of a small synchronized block.
@@ -5245,7 +5278,6 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
    TR::LabelSymbol *fallThruFromMonitorLookupCacheLabel = generateLabelSymbol(cg);
 
 #if defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
-   TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *decCountLabel = generateLabelSymbol(cg);
 
    unlockedReg = cg->allocateRegister();
@@ -5342,10 +5374,6 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
       1, TR::DebugCounter::Cheap);
 
 #else
-
-   // Create the monitor exit snippet
-   //
-   TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
 
    if (lwOffset <= 0)
       {
@@ -12663,7 +12691,7 @@ TR::Register *
 J9::X86::TreeEvaluator::generateConcurrentScavengeSequence(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Register* object = TR::TreeEvaluator::performHeapLoadWithReadBarrier(node, cg);
-   
+
    if (!node->getSymbolReference()->isUnresolved() &&
        (node->getSymbolReference()->getSymbol()->getKind() == TR::Symbol::IsShadow) &&
        (node->getSymbolReference()->getCPIndex() >= 0) &&
@@ -12712,7 +12740,7 @@ J9::X86::TreeEvaluator::irdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          }
       }
 
-   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the 
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the
    // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
    // decrementing the node we skip doing it here and let the load evaluator do it.
    return resultReg;
@@ -12780,7 +12808,7 @@ J9::X86::TreeEvaluator::ardbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       node->setRegister(resultReg);
       }
 
-   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the 
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the
    // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
    // decrementing the node we skip doing it here and let the load evaluator do it.
    return resultReg;
@@ -12800,7 +12828,7 @@ TR::Register *J9::X86::TreeEvaluator::fwrtbarEvaluator(TR::Node *node, TR::CodeG
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -12821,7 +12849,7 @@ TR::Register *J9::X86::TreeEvaluator::fwrtbariEvaluator(TR::Node *node, TR::Code
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -12843,7 +12871,7 @@ TR::Register *J9::X86::i386::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR:
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -12864,7 +12892,7 @@ TR::Register *J9::X86::i386::TreeEvaluator::dwrtbariEvaluator(TR::Node *node, TR
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -12887,7 +12915,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -12908,7 +12936,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::dwrtbariEvaluator(TR::Node *node, T
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -12954,4 +12982,3 @@ TR::Register *J9::X86::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeG
    // counts of the children evaluated here and let this helper handle it.
    return TR::TreeEvaluator::writeBarrierEvaluator(node, cg);
    }
-

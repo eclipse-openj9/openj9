@@ -74,9 +74,9 @@ RUN cd /root \
 
 # get the toolchain
 RUN cd /root \
-  && wget https://releases.linaro.org/components/toolchain/binaries/7.3-2018.05/aarch64-linux-gnu/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu.tar.xz \
-  && tar xf gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu.tar.xz \
-  && rm gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu.tar.xz
+  && wget https://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/aarch64-linux-gnu/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz \
+  && tar xf gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz \
+  && rm gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz
 
 # Get the debs for native libraries on the target platform
 # These were current releases in stretch as of Nov 2017
@@ -87,20 +87,20 @@ RUN cd /root \
 ADD \
     http://ftp.us.debian.org/debian/pool/main/a/alsa-lib/libasound2_1.1.3-5_arm64.deb                \
     http://ftp.us.debian.org/debian/pool/main/a/alsa-lib/libasound2-dev_1.1.3-5_arm64.deb            \
-    http://ftp.us.debian.org/debian/pool/main/c/cups/libcups2-dev_2.2.1-8%2bdeb9u4_arm64.deb         \
-    http://ftp.us.debian.org/debian/pool/main/c/cups/libcupsimage2-dev_2.2.1-8%2bdeb9u4_arm64.deb    \
-    http://ftp.us.debian.org/debian/pool/main/d/dwarfutils/libdwarf-dev_20161124-1+deb9u1_arm64.deb  \
-    http://ftp.us.debian.org/debian/pool/main/e/elfutils/libelf-dev_0.176-1.1_arm64.deb \
-    http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6_2.6.3-3.2_arm64.deb            \
-    http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6-dev_2.6.3-3.2_arm64.deb        \
+    http://ftp.us.debian.org/debian/pool/main/c/cups/libcups2-dev_2.3.1-11_arm64.deb                 \
+    http://ftp.us.debian.org/debian/pool/main/c/cups/libcupsimage2-dev_2.3.1-11_arm64.deb            \
+    http://ftp.us.debian.org/debian/pool/main/d/dwarfutils/libdwarf-dev_20180809-1_arm64.deb         \
+    http://ftp.us.debian.org/debian/pool/main/e/elfutils/libelf-dev_0.176-1.1_arm64.deb              \
+    http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6_2.6.3-3.2+deb9u1_arm64.deb     \
+    http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6-dev_2.6.3-3.2+deb9u1_arm64.deb \
     http://ftp.us.debian.org/debian/pool/main/f/fontconfig/libfontconfig1_2.13.1-2_arm64.deb         \
     http://ftp.us.debian.org/debian/pool/main/f/fontconfig/libfontconfig1-dev_2.13.1-2_arm64.deb     \
     http://ftp.us.debian.org/debian/pool/main/libi/libice/libice-dev_1.0.9-2_arm64.deb               \
     http://ftp.us.debian.org/debian/pool/main/libp/libpng1.6/libpng16-16_1.6.28-1+deb9u1_arm64.deb   \
     http://ftp.us.debian.org/debian/pool/main/libp/libpng1.6/libpng-dev_1.6.28-1+deb9u1_arm64.deb    \
     http://ftp.us.debian.org/debian/pool/main/libs/libsm/libsm-dev_1.2.2-1+b3_arm64.deb              \
-    http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl1.1_1.1.1d-2_arm64.deb                 \
-    http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl-dev_1.1.1d-2_arm64.deb                \
+    http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl1.1_1.1.1f-1_arm64.deb                 \
+    http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl-dev_1.1.1f-1_arm64.deb                \
     http://ftp.us.debian.org/debian/pool/main/libx/libx11/libx11-6_1.6.4-3%2bdeb9u1_arm64.deb        \
     http://ftp.us.debian.org/debian/pool/main/libx/libx11/libx11-dev_1.6.4-3%2bdeb9u1_arm64.deb      \
     http://ftp.us.debian.org/debian/pool/main/libx/libxext/libxext6_1.3.3-1+b2_arm64.deb             \
@@ -126,9 +126,9 @@ ADD \
 # unpack debs into toolchain libc dir
 RUN cd /root/debs \
   && for f in *.deb; do dpkg-deb -x $f .; done \
-  && cp -r usr/include/* ../gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/usr/include/ \
-  && cp -r usr/lib/aarch64-linux-gnu/* ../gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/usr/lib/ \
-  && cp lib/aarch64-linux-gnu/* ../gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/lib/ \
+  && cp -r usr/include/* ../gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/usr/include/ \
+  && cp -r usr/lib/aarch64-linux-gnu/* ../gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/usr/lib/ \
+  && cp lib/aarch64-linux-gnu/* ../gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/lib/ \
   && rm -rf /root/debs
 
 # Env vars set here will be visible in the running container, so can be
@@ -139,7 +139,7 @@ ENV JAVA_HOME=/root/bootjdk11
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Directory containing the cross compilation tool chain
-ENV OPENJ9_CC_DIR=/root/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu
+ENV OPENJ9_CC_DIR=/root/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu
 
 # Prefix for the cross compilation tools (without the trailing '-')
 ENV OPENJ9_CC_PREFIX=aarch64-linux-gnu
