@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,13 @@
 #define MMCR0           779
 #define MMCR0_FC        0x80000000
 #define MMCR0_PMAE      0x04000000
+
+/* Please keep this definition in sync with the one in PPCHWProfilerPrivate.hpp. */
+#if defined(__xlC__) || defined(__ibmxl__)
+#define MTSPR(spr, src) __mtspr(spr, src)
+#elif defined(__GNUC__)
+#define MTSPR(spr, src) asm("mtspr %0,%1\n\t" : : "i" (spr), "r" (src))
+#endif
 
 /* Functions added for Jazz design 55557 */
 
@@ -85,7 +92,6 @@ j9ri_initialize(struct J9PortLibrary *portLibrary, struct J9RIParameters *riPara
 	Trc_PRT_ri_initialize_Entry();
 
 	Trc_PRT_ri_initialize_Exit();
-
 }
 
 /**
@@ -103,7 +109,6 @@ j9ri_deinitialize(struct J9PortLibrary *portLibrary, struct J9RIParameters *riPa
 	Trc_PRT_ri_deinitialize_Entry();
 
 	Trc_PRT_ri_deinitialize_Exit();
-
 }
 
 /**
@@ -119,12 +124,14 @@ void
 j9ri_enable(struct J9PortLibrary *portLibrary, struct J9RIParameters *riParams)
 {
 	Trc_PRT_ri_enable_Entry();
-#ifndef OMR_ENV_GCC
+
+#if defined(MTSPR)
 	if (J9_ARE_ALL_BITS_SET(riParams->flags, J9PORT_RI_INITIALIZED)) {
-		__mtspr(MMCR0, MMCR0_PMAE);
+		MTSPR(MMCR0, MMCR0_PMAE);
 		riParams->flags |= J9PORT_RI_ENABLED;
 	}
-#endif
+#endif /* defined(MTSPR) */
+
 	Trc_PRT_ri_enable_Exit();
 }
 
@@ -142,11 +149,13 @@ void
 j9ri_disable(struct J9PortLibrary *portLibrary, struct J9RIParameters *riParams)
 {
 	Trc_PRT_ri_disable_Entry();
-#ifndef OMR_ENV_GCC
+
+#if defined(MTSPR)
 	if (J9_ARE_ALL_BITS_SET(riParams->flags, J9PORT_RI_INITIALIZED)) {
-		__mtspr(MMCR0, MMCR0_FC);
+		MTSPR(MMCR0, MMCR0_FC);
 		riParams->flags &= ~J9PORT_RI_ENABLED;
 	}
-#endif
+#endif /* defined(MTSPR) */
+
 	Trc_PRT_ri_disable_Exit();
 }
