@@ -128,6 +128,17 @@ add_library(j9vm SHARED
 )
 
 
+# JIT helper methods require us to disable buffer security checks on Windows
+# See https://github.com/eclipse/openj9/pull/1494 for rationale
+if(OMR_OS_WINDOWS AND (OMR_TOOLCONFIG STREQUAL "msvc"))
+	set_property(
+		SOURCE
+			cnathelp.cpp
+			SharedService.c
+		APPEND PROPERTY COMPILE_FLAGS "/GS-"
+	)
+endif()
+
 if(OMR_ARCH_X86)
 	j9vm_gen_asm(xcinterp.m4)
 

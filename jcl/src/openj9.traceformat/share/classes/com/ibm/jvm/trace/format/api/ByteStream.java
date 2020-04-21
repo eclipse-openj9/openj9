@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,7 @@ public class ByteStream {
 	ByteOrder byteOrder = ByteOrder.BIG_ENDIAN;
 
 	/* This holds triples describing a slice of an array */
-	class Slice {
+	static class Slice {
 		byte[] data;
 		int offset;
 		int length;
@@ -51,9 +51,6 @@ public class ByteStream {
 
 	/* our queue of raw data */
 	Vector rawData = new Vector();
-
-	/* do we block on requests that require data we don't yet have? */
-	boolean blocking = false;
 
 	/*
 	 * this is similar to the ByteBuffer limit, it's indented so we can fix
@@ -100,23 +97,7 @@ public class ByteStream {
 
 		/* can we swap data in from our queue? */
 		if (rawData.isEmpty()) {
-			if (!blocking) {
-				throw new BufferUnderflowException();
-			} else {
-				try {
-					rawData.wait();
-				} catch (InterruptedException e) {
-					/*
-					 * suppress this, we'll translate to
-					 * buffer underflow unless there's new
-					 * data
-					 */
-				}
-
-				if (rawData.isEmpty()) {
-					throw new BufferUnderflowException();
-				}
-			}
+			throw new BufferUnderflowException();
 		}
 
 		/*
@@ -208,9 +189,6 @@ public class ByteStream {
 		}
 
 		rawData.add(new Slice(data, offset, length));
-		if (blocking) {
-			rawData.notify();
-		}
 	}
 
 	public byte get() {
@@ -615,9 +593,7 @@ public class ByteStream {
 	}
 
 	public int peek(byte[] dest) {
-		boolean currentBlocking = blocking;
 		byte data[];
-		blocking = false;
 		int bytes = dest.length;
 		int offset = 0;
 
@@ -632,7 +608,6 @@ public class ByteStream {
 		offset = buffer.arrayOffset() + buffer.position();
 		System.arraycopy(data, offset, dest, 0, bytes);
 
-		blocking = currentBlocking;
 		return bytes;
 	}
 
