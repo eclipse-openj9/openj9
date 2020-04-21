@@ -810,6 +810,21 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 								clazz = vmFuncs->allClassesNextDo(&classWalkState);
 							}
 							vmFuncs->allClassesEndDo(&classWalkState);
+
+							if (vm->anonClassCount > 0) {
+								J9ClassWalkState classWalkStateAnon = {0};
+								J9Class *clazzAnon = NULL;
+
+								Assert_SC_notNull(vm->anonClassLoader);
+								clazzAnon = vmFuncs->allClassesStartDo(&classWalkStateAnon, vm, vm->anonClassLoader);
+								while (NULL != clazzAnon) {
+									Assert_SC_true(clazzAnon->module == vm->javaBaseModule);
+									J9VMJAVALANGCLASS_SET_MODULE(currentThread, clazzAnon->classObject, modObj);
+									clazzAnon = vmFuncs->allClassesNextDo(&classWalkStateAnon);
+								}
+								vmFuncs->allClassesEndDo(&classWalkStateAnon);
+							}
+
 							vm->runtimeFlags |= J9_RUNTIME_JAVA_BASE_MODULE_CREATED;
 							TRIGGER_J9HOOK_JAVA_BASE_LOADED(vm->hookInterface, currentThread);
 							Trc_MODULE_defineModule(currentThread, "java.base", j9mod);
