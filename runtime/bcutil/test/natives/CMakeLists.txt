@@ -24,7 +24,7 @@
 # We dont want to suffix vm version to bcuwhite_test
 set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_OLD_SHARED_SUFFIX})
 
-add_library(bcuwhite_test SHARED
+j9vm_add_library(bcuwhite_test SHARED
 	bcunatives.c
 )
 

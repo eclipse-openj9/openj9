@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 
 set_source_files_properties(${j9vm_BINARY_DIR}/bcutil/ut_j9bcu.c PROPERTIES GENERATED TRUE)
 
-add_executable(dyntest
+j9vm_add_executable(dyntest
 	intern_tests.cpp
 	lineNumber_tests.c
 	localVariableTable_tests.c

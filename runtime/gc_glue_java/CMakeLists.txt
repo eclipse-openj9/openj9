@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-add_library(j9vm_gc_glue INTERFACE)
+j9vm_add_library(j9vm_gc_glue INTERFACE)
 target_sources(j9vm_gc_glue
 	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}/ArrayletObjectModel.cpp
@@ -64,7 +64,7 @@ target_include_directories(j9vm_gc_glue
 		${j9vm_SOURCE_DIR}/gc_trace
 		${j9vm_SOURCE_DIR}/gc_vlhgc
 )
-add_library(j9vm_util_glue INTERFACE)
+j9vm_add_library(j9vm_util_glue INTERFACE)
 target_sources(j9vm_util_glue
 	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}/UtilGlue.c
@@ -74,7 +74,7 @@ target_link_libraries(j9vm_util_glue
 		j9vm_interface
 )
 
-add_library(j9vm_core_glue INTERFACE)
+j9vm_add_library(j9vm_core_glue INTERFACE)
 target_sources(j9vm_core_glue
 	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}/LanguageVMGlue.c
@@ -86,5 +86,5 @@ target_link_libraries(j9vm_core_glue
 )
 
 # Note: we dont actually need to add any glue for the vm or ras components
-add_library(j9vm_vm_glue INTERFACE)
-add_library(j9vm_ras_glue INTERFACE)
+j9vm_add_library(j9vm_vm_glue INTERFACE)
+j9vm_add_library(j9vm_ras_glue INTERFACE)

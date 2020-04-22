@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 
 # Note: We just take the objects provided by omr.
 # TODO: Do we just want to make omr build a shared lib?
-add_library(j9thr SHARED
+j9vm_add_library(j9thr SHARED
 	$<TARGET_OBJECTS:j9thr_obj>
 )
 target_link_libraries(j9thr
