@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@ omr_add_tracegen(j9bcu.tdf)
 
 # We define an interface library containing all the sources here
 # this is to avoid having to retype the entire sources list for test/recompiled
-add_library(j9dyn_sources INTERFACE)
+j9vm_add_library(j9dyn_sources INTERFACE)
 target_sources(j9dyn_sources
 	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}/bcutil.c
@@ -69,7 +69,7 @@ target_link_libraries(j9dyn_sources
 # also add explicit dependency on running tracegen, because cmake wont pick this up outside of this dir
 add_dependencies(j9dyn_sources trc_j9bcu)
 
-add_library(j9dyn STATIC)
+j9vm_add_library(j9dyn STATIC)
 target_compile_definitions(j9dyn PRIVATE J9_INTERNAL_TO_VM)
 
 target_include_directories(j9dyn

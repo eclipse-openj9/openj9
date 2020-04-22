@@ -21,7 +21,7 @@
 ################################################################################
 
 omr_add_tracegen(j9vm.tdf)
-add_library(j9vm SHARED
+j9vm_add_library(j9vm SHARED
 	annsup.c
 	AsyncMessageHandler.cpp
 	bchelper.c

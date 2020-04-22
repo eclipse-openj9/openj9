@@ -27,7 +27,7 @@ add_tracegen(j9scar.tdf)
 
 # Note we add all the actual sources to this interface library.
 # This is so that we can reuse them in jvm_b150/jvm_b156 without having to explicitly re-list all the files
-add_library(jvm_common INTERFACE)
+j9vm_add_library(jvm_common INTERFACE)
 target_sources(jvm_common INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/j7verify.c
 	${CMAKE_CURRENT_SOURCE_DIR}/j7vmi.c
@@ -62,7 +62,7 @@ target_include_directories(jvm_common
 		../jcl/
 )
 
-add_library(jvm SHARED ${CMAKE_CURRENT_BINARY_DIR}/ut_j9scar.c)
+j9vm_add_library(jvm SHARED ${CMAKE_CURRENT_BINARY_DIR}/ut_j9scar.c)
 target_link_libraries(jvm
 	PRIVATE
 		jvm_common

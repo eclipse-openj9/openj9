@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-add_library(j9ddr_misc SHARED
+j9vm_add_library(j9ddr_misc SHARED
 	algorithm_versions.c
 	gcddr.cpp
 	jitflagsddr.c

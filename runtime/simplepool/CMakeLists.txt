@@ -22,7 +22,7 @@
 
 add_tracegen(simplepool.tdf)
 
-add_library(j9simplepool STATIC
+j9vm_add_library(j9simplepool STATIC
 	simplepool.c
 	${CMAKE_CURRENT_BINARY_DIR}/ut_simplepool.c
 )

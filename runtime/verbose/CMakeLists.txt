@@ -22,7 +22,7 @@
 
 add_tracegen(j9vrb.tdf)
 
-add_library(j9vrb SHARED
+j9vm_add_library(j9vrb SHARED
 	errormessage_internal.c
 	errormessagebuffer.c
 	errormessageframeworkcfr.c
