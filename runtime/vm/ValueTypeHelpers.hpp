@@ -23,13 +23,22 @@
 #if !defined(VALUETYPEHELPERS_HPP_)
 #define VALUETYPEHELPERS_HPP_
 
+#include "j9cfg.h"
+
+#if defined(J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#if J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES
+#define VM_ValueTypeHelpers VM_ValueTypeHelpersCompressed
+#else /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#define VM_ValueTypeHelpers VM_ValueTypeHelpersFull
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+
 #include "j9.h"
 #include "fltconst.h"
+#include "ut_j9vm.h"
 
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
-
-#include "objectreferencesmacros_undefine.inc"
 
 class VM_ValueTypeHelpers {
 	/*
@@ -45,8 +54,139 @@ public:
 	 * Function members
 	 */
 private:
+	/*
+	* Determine if the two valueTypes are substitutable when rhs.class equals lhs.class
+	* and rhs and lhs are not null
+	*
+	* @param[in] lhs the lhs object address
+	* @param[in] rhs the rhs object address
+	* @param[in] startOffset the initial offset for the object
+	* @param[in] clazz the value type class
+	* return true if they are substitutable and false otherwise
+	*/
 	static bool
-	isSubstitutable(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI objectAccessBarrier, j9object_t lhs, j9object_t rhs, UDATA startOffset, J9Class *clazz);
+	isSubstitutable(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI objectAccessBarrier, j9object_t lhs, j9object_t rhs, UDATA startOffset, J9Class *clazz)
+	{
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		J9JavaVM *vm = currentThread->javaVM;
+		U_32 walkFlags = J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE;
+		J9ROMFieldOffsetWalkState state;
+		J9ROMFieldOffsetWalkResult *result = fieldOffsetsStartDo(vm, clazz->romClass, VM_VMHelpers::getSuperclass(clazz), &state, walkFlags, clazz->flattenedClassCache);
+		bool rc = true;
+
+		Assert_VM_notNull(lhs);
+		Assert_VM_notNull(rhs);
+		Assert_VM_true(J9OBJECT_CLAZZ(currentThread, lhs) == J9OBJECT_CLAZZ(currentThread, rhs));
+
+		/* If J9ClassCanSupportFastSubstitutability is set, we can use the barrier version of memcmp,
+		* else we recursively check the fields manually. */
+		if (J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassCanSupportFastSubstitutability)) {
+			rc = objectAccessBarrier.structuralFlattenedCompareObjects(currentThread, clazz, lhs, rhs, startOffset);
+		} else {
+			while (NULL != result->field) {
+				J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(&result->field->nameAndSignature);
+				U_8 *sigChar = J9UTF8_DATA(signature);
+
+				switch (*sigChar) {
+				case 'Z': /* boolean */
+				case 'B': /* byte */
+				case 'C': /* char */
+				case 'I': /* int */
+				case 'S': { /* short */
+					I_32 lhsValue = objectAccessBarrier.inlineMixedObjectReadI32(currentThread, lhs, startOffset + result->offset);
+					I_32 rhsValue = objectAccessBarrier.inlineMixedObjectReadI32(currentThread, rhs, startOffset + result->offset);
+					if (lhsValue != rhsValue) {
+						rc = false;
+						goto done;
+					}
+					break;
+				}
+				case 'J': { /* long */
+					I_64 lhsValue = objectAccessBarrier.inlineMixedObjectReadI64(currentThread, lhs, startOffset + result->offset);
+					I_64 rhsValue = objectAccessBarrier.inlineMixedObjectReadI64(currentThread, rhs, startOffset + result->offset);
+					if (lhsValue != rhsValue) {
+						rc = false;
+						goto done;
+					}
+					break;
+				}
+				case 'D': { /* double */
+					U_64 lhsValue = objectAccessBarrier.inlineMixedObjectReadU64(currentThread, lhs, startOffset + result->offset);
+					U_64 rhsValue = objectAccessBarrier.inlineMixedObjectReadU64(currentThread, rhs, startOffset + result->offset);
+
+					if (!checkDoubleEquality(lhsValue, rhsValue)) {
+						rc = false;
+						goto done;
+					}
+					break;
+				}
+				case 'F': { /* float */
+					U_32 lhsValue = objectAccessBarrier.inlineMixedObjectReadU32(currentThread, lhs, startOffset + result->offset);
+					U_32 rhsValue = objectAccessBarrier.inlineMixedObjectReadU32(currentThread, rhs, startOffset + result->offset);
+
+					if (!checkFloatEquality(lhsValue, rhsValue)) {
+						rc = false;
+						goto done;
+					}
+					break;
+				}
+				case '[': { /* Array */
+					j9object_t lhsObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, lhs, startOffset + result->offset);
+					j9object_t rhsObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, rhs, startOffset + result->offset);
+					if (lhsObject != rhsObject) {
+						rc = false;
+						goto done;
+					}
+					break;
+				}
+				case 'L': { /* Nullable class type or interface type */
+					j9object_t lhsObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, lhs, startOffset + result->offset);
+					j9object_t rhsObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, rhs, startOffset + result->offset);
+
+					if (!VM_ValueTypeHelpers::acmp(currentThread, objectAccessBarrier, lhsObject, rhsObject)) {
+						rc = false;
+						goto done;
+					}
+					break;
+				}
+				case 'Q': { /* Null-free class type */
+					J9Class *fieldClass = findJ9ClassInFlattenedClassCache(clazz->flattenedClassCache, sigChar + 1, J9UTF8_LENGTH(signature) - 2);
+					rc = false;
+
+					if (J9_IS_J9CLASS_FLATTENED(fieldClass)) {
+						rc = isSubstitutable(currentThread, objectAccessBarrier, lhs, rhs, startOffset + result->offset, fieldClass);
+					} else {
+						j9object_t lhsFieldObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, lhs, startOffset + result->offset);
+						j9object_t rhsFieldObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, rhs, startOffset + result->offset);
+
+						if (lhsFieldObject == rhsFieldObject) {
+							rc = true;
+						} else {
+							/* When unflattened, we get our object from the specified offset, then increment past the header to the first field. */
+							rc = isSubstitutable(currentThread, objectAccessBarrier, lhsFieldObject, rhsFieldObject, J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread), fieldClass);
+						}
+					}
+
+					if (false == rc) {
+						goto done;
+					}
+					break;
+				}
+				default:
+					Assert_VM_unreachable();
+				} /* switch */
+
+				result = fieldOffsetsNextDo(&state);
+			}
+		}
+
+	done:
+		return rc;
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		Assert_VM_unreachable();
+		return true;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	}
 
 	static VMINLINE bool
 	checkDoubleEquality(U_64 a, U_64 b)
@@ -83,12 +223,12 @@ public:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		if (!acmpResult) {
 			if ((NULL != rhs) && (NULL != lhs)) {
-				J9Class * lhsClass = J9OBJECT_CLAZZ(_currentThread, lhs);
-				J9Class * rhsClass = J9OBJECT_CLAZZ(_currentThread, rhs);
+				J9Class * lhsClass = J9OBJECT_CLAZZ(currentThread, lhs);
+				J9Class * rhsClass = J9OBJECT_CLAZZ(currentThread, rhs);
 				if (J9_IS_J9CLASS_VALUETYPE(lhsClass)
 					&& (rhsClass == lhsClass)
 				) {
-					acmpResult = VM_ValueTypeHelpers::isSubstitutable(currentThread, objectAccessBarrier, lhs, rhs, J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread), lhsClass);
+					acmpResult = isSubstitutable(currentThread, objectAccessBarrier, lhs, rhs, J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread), lhsClass);
 				}
 			}
 		}
@@ -97,7 +237,5 @@ public:
 	}
 
 };
-
-#include "objectreferencesmacros_define.inc"
 
 #endif /* VALUETYPEHELPERS_HPP_ */
