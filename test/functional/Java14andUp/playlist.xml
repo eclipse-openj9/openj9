@@ -23,28 +23,50 @@
 -->
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
-      <test>
-          <testCaseName>Jep359Tests</testCaseName>
-          <variations>
-                  <variation>NoOptions</variation>
-          </variations>
-          <command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-                  --enable-preview \
-                  -cp $(Q)$(LIB_DIR)$(D)asm-7.3.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-                  org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Jep359Tests \
-                  -groups $(TEST_GROUP) \
-                  -excludegroups $(DEFAULT_EXCLUDE); \
-                  $(TEST_STATUS)
-          </command>
-          <levels>
-                  <level>sanity</level>
-          </levels>
-          <groups>
-                  <group>functional</group>
-          </groups>
-          <!-- Run for Java 14 only since this is a preview feature. -->
-          <subsets>
-                  <subset>14</subset>
-          </subsets>
-        </test>
+    <test>
+        <testCaseName>Jep359Tests</testCaseName>
+        <variations>
+            <variation>--enable-preview</variation>
+        </variations>
+        <command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+            -cp $(Q)$(LIB_DIR)$(D)asm-7.3.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+            org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Jep359Tests \
+            -groups $(TEST_GROUP) \
+            -excludegroups $(DEFAULT_EXCLUDE); \
+            $(TEST_STATUS)
+        </command>
+        <levels>
+            <level>sanity</level>
+        </levels>
+        <groups>
+            <group>functional</group>
+        </groups>
+        <!-- Run for Java 14 only since this is a preview feature. -->
+        <subsets>
+            <subset>14</subset>
+        </subsets>
+    </test>
+    <test>
+        <testCaseName>ThreadInterruptImplTest</testCaseName>
+        <variations>
+            <!-- enable-preview is needed here because JEP 359 test class files will be included on the classpath. -->
+            <variation>--enable-preview</variation>
+        </variations>
+        <command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+            -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+            org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames ThreadInterruptImplTest \
+            -groups $(TEST_GROUP) \
+            -excludegroups $(DEFAULT_EXCLUDE); \
+            $(TEST_STATUS)
+        </command>
+        <levels>
+            <level>sanity</level>
+        </levels>
+        <groups>
+            <group>functional</group>
+        </groups>
+        <subsets>
+            <subset>14+</subset>
+        </subsets>
+    </test>
 </playlist>
