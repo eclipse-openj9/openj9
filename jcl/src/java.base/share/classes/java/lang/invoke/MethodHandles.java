@@ -2245,7 +2245,30 @@ public class MethodHandles {
 			return (!isWeakenedLookup() && (MODULE == (accessMode & MODULE)));
 		}
 		/*[ENDIF] Java14*/
-		/*[ENDIF]*/
+		/*[ENDIF] Sidecar19-SE */
+		
+		/*[IF Java15]*/
+		// TODO: implement support for hidden classes.
+
+		public enum ClassOption {
+			NESTMATE,
+			STRONG
+		}
+
+		static class ClassDefiner {
+			Class<?> defineClass(boolean option) {
+				return null;
+			}
+		}
+
+		public Lookup defineHiddenClass(byte[] bytes, boolean initOption, ClassOption... classOptions) {
+			return null;
+		}
+
+		ClassDefiner makeHiddenClassDefiner(String name, byte[] template) {
+			return null;
+		}
+		/*[ENDIF] Java15 */		
 	}
 	
 	static MethodHandle filterArgument(MethodHandle target, int pos, MethodHandle filter) {

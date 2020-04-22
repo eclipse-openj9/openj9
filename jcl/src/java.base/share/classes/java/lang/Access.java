@@ -23,6 +23,10 @@
 package java.lang;
 
 import java.lang.annotation.Annotation;
+/*[IF Java15]*/
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
+/*[ENDIF] Java15 */
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
@@ -390,6 +394,26 @@ final class Access implements JavaLangAccess {
 		System.loadLibrary(library);
 	}
 /*[ENDIF] Java14 */
+
+/*[IF Java15]*/
+	// TODO: implement support for hidden classes.
+
+	public Class<?> defineClass(ClassLoader classLoader, Class<?> clazz, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean option, int flags, Object obj) {
+		return null;
+	}
+
+	public ProtectionDomain protectionDomain(Class<?> clazz) {
+		return null;
+	}
+
+	public MethodHandle stringConcatHelper(String arg0, MethodType type) {
+		return null;
+	}
+
+	public Object classData(Class<?> clazz) {
+		return null;
+	}
+/*[ENDIF] Java15 */
 
 /*[ENDIF] Sidecar19-SE */
 }
