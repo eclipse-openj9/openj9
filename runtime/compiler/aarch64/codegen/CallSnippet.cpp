@@ -410,11 +410,19 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    void *thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
 
+   // for alignment of intptr_t data
+   if (((uint64_t)cursor % sizeof(intptr_t)) == 0)
+      {
+      *(int32_t *)cursor = 0xdeadc0de;
+      cursor += sizeof(int32_t);
+      }
+
    getSnippetLabel()->setCodeLocation(cursor);
 
    // bl glueRef
    *(int32_t *)cursor = cg()->encodeHelperBranchAndLink(glueRef, cursor, callNode);
-   cursor += 4;
+   cursor += ARM64_INSTRUCTION_LENGTH;
+   TR_ASSERT(((uint64_t)cursor % sizeof(intptr_t)) == 0, "Snippet data is not aligned");
 
    // Store the code cache RA
    *(intptr_t *)cursor = (intptr_t)getReturnLabel()->getCodeLocation();
@@ -423,7 +431,7 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
                                NULL,
                                TR_AbsoluteMethodAddress, cg()),
                                __FILE__, __LINE__, callNode);
-   cursor += 8;
+   cursor += sizeof(intptr_t);
 
    // CP
    intptr_t cpAddr = (intptr_t)methodSymRef->getOwningMethod(comp)->constantPool();
@@ -435,17 +443,17 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
                                getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                TR_Thunks, cg()),
                                __FILE__, __LINE__, getNode());
-   cursor += 8;
+   cursor += sizeof(intptr_t);
 
    // CP index
    *(intptr_t *)cursor = methodSymRef->getCPIndexForVM();
-   cursor += 8;
+   cursor += sizeof(intptr_t);
 
    // Reserved spot to hold J9Method pointer of the callee
    // This is used for private nestmate calls
    // Initial value is 0
    *(intptr_t *)cursor = 0;
-   cursor += 8;
+   cursor += sizeof(intptr_t);
 
    // J2I thunk address
    // This is used for private nestmate calls
@@ -472,9 +480,11 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
                                TR_J2IVirtualThunkPointer, cg()),
                                __FILE__, __LINE__, callNode);
 
-   cursor += 8;
+   cursor += sizeof(intptr_t);
+
    // Lock word
    *(int32_t *)cursor = 0;
+
    return cursor + sizeof(int32_t);
    }
 
@@ -512,13 +522,24 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64VirtualUnresolvedSnippet * snippet)
    trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; J2I thunk address for private", *(intptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(pOutFile, NULL, cursor, sizeof(int32_t));
    trfprintf(pOutFile, ".word \t0x%08x\t\t; Lock Word For Resolution", *(int32_t *)cursor);
    }
 
 uint32_t TR::ARM64VirtualUnresolvedSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   return 48;
+   /*
+    * (1 word for alignment)
+    * 1 instruction
+    * 5 address fields:
+    *   - Code cache RA
+    *   - CP pointer
+    *   - CP index
+    *   - Private J9Method pointer
+    *   - J2I thunk address
+    * 1 lock word
+    */
+   return ARM64_INSTRUCTION_LENGTH + sizeof(intptr_t)*5 + sizeof(int32_t)*2;
    }
 
 uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
@@ -531,11 +552,19 @@ uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    void* thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
 
+   // for alignment of intptr_t data
+   if (((uint64_t)cursor % sizeof(intptr_t)) == 0)
+      {
+      *(int32_t *)cursor = 0xdeadc0de;
+      cursor += sizeof(int32_t);
+      }
+
    getSnippetLabel()->setCodeLocation(cursor);
 
    // bl glueRef
    *(int32_t *)cursor = cg()->encodeHelperBranchAndLink(glueRef, cursor, callNode);
    cursor += ARM64_INSTRUCTION_LENGTH;
+   TR_ASSERT(((uint64_t)cursor % sizeof(intptr_t)) == 0, "Snippet data is not aligned");
 
    // Store the code cache RA
    *(intptr_t *)cursor = (intptr_t)getReturnLabel()->getCodeLocation();
@@ -635,7 +664,10 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64InterfaceCallSnippet * snippet)
 
 uint32_t TR::ARM64InterfaceCallSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   /* 6 address fields:
+   /*
+    * (1 word for alignment)
+    * 1 instruction
+    * 6 address fields:
     *   - Code cache RA
     *   - CP Pointer
     *   - CP Index
@@ -643,7 +675,7 @@ uint32_t TR::ARM64InterfaceCallSnippet::getLength(int32_t estimatedSnippetStart)
     *   - ITable Index (may also contain a tagged J9Method* when handling nestmates)
     *   - J2I thunk address
     */
-   return ARM64_INSTRUCTION_LENGTH + sizeof(intptr_t)*6;
+   return ARM64_INSTRUCTION_LENGTH + sizeof(intptr_t)*6 + sizeof(int32_t);
    }
 
 uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
