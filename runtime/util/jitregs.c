@@ -404,7 +404,77 @@ U_8 jitCalleeSavedRegisterList[] = {
 	0x1C	/* jit_r28 */
 };
 
-#else /* J9VM_ARCH_AARCH64 */
+#elif defined(J9VM_ARCH_RISCV) /* J9VM_ARCH_AARCH64 */
+
+U_8 jitArgumentRegisterNumbers[] = { 10, 11, 12, 13, 14, 15, 16, 17 };
+U_8 jitFloatArgumentRegisterNumbers[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+char * jitRegisterNames[] = {
+	"jit_r0",
+	"jit_r1",
+	"jit_r2",
+	"jit_r3",
+	"jit_r4",
+	"jit_r5",
+	"jit_r6",
+	"jit_r7",
+	"jit_r8",
+	"jit_r9",
+	"jit_r10",
+	"jit_r11",
+	"jit_r12",
+	"jit_r13",
+	"jit_r14",
+	"jit_r15",
+	"jit_r16",
+	"jit_r17",
+	"jit_r18",
+	"jit_r19",
+	"jit_r20",
+	"jit_r21",
+	"jit_r22",
+	"jit_r23",
+	"jit_r24",
+	"jit_r25",
+	"jit_r26",
+	"jit_r27",
+	"jit_r28",
+	"jit_r29",
+	"jit_r30",
+	"jit_r31"
+};
+U_8 jitCalleeDestroyedRegisterList[] = {
+	0x01,	/* jit_r1 */
+	0x02,	/* jit_r2 */
+	0x03,	/* jit_r3 */
+	0x04,	/* jit_r4 */
+	0x05,	/* jit_r5 */
+	0x06,	/* jit_r6 */
+	0x07,	/* jit_r7 */
+	0x0A,	/* jit_r10 */
+	0x0B,	/* jit_r11 */
+	0x0C,	/* jit_r12 */
+	0x0D,	/* jit_r13 */
+	0x0E,	/* jit_r14 */
+	0x0F,	/* jit_r15 */
+	0x10,	/* jit_r16 */
+	0x11,	/* jit_r17 */
+};
+U_8 jitCalleeSavedRegisterList[] = {
+	0x08,	/* jit_r8 */
+	0x09,	/* jit_r9 */
+	0x12,	/* jit_r18 */
+	0x13,	/* jit_r19 */
+	0x14,	/* jit_r20 */
+	0x15,	/* jit_r21 */
+	0x16,	/* jit_r22 */
+	0x17,	/* jit_r23 */
+	0x18,	/* jit_r24 */
+	0x19,	/* jit_r25 */
+	0x1A,	/* jit_r26 */
+	0x1B,	/* jit_r27 */
+};
+
+#else /* J9VM_ARCH_RISCV */
 
 #error Unsupported platform
 

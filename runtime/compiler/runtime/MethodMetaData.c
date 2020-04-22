@@ -1753,6 +1753,9 @@ void jitAddSpilledRegisters(J9StackWalkState * walkState, void * stackMap)
          }
       while (savedGPRs != 0);
       }
+#elif defined(TR_HOST_RISCV)
+   // TODO: Implement this
+   assert(0);
 #else
 #error Unknown TR_HOST type
 #endif
