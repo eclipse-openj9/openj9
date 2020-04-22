@@ -426,3 +426,8 @@ x86-64_mac_xl:
   excluded_tests:
     8:
       - special.system
+#========================================#
+# OSX x86 64bits Compressed Pointers /w CMake
+#========================================#
+x86-64_mac_cm:
+  extends: ['x86-64_mac', 'cmake']
