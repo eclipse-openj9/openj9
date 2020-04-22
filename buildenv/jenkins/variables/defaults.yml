@@ -175,7 +175,7 @@ ppc64le_linux:
     8: '/usr/lib/jvm/adoptojdk-java-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
     14: '/usr/lib/jvm/adoptojdk-java-13'
-    next: '/usr/lib/jvm/adoptojdk-java-13'
+    next: '/usr/lib/jvm/adoptojdk-java-14'
   release:
     all: 'linux-ppc64le-server-release'
     8: 'linux-ppc64le-normal-server-release'
@@ -217,7 +217,7 @@ s390x_linux:
     8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
     14: '/usr/lib/jvm/adoptojdk-java-13'
-    next: '/usr/lib/jvm/adoptojdk-java-13'
+    next: '/usr/lib/jvm/adoptojdk-java-14'
   release:
     all: 'linux-s390x-server-release'
     8: 'linux-s390x-normal-server-release'
@@ -250,7 +250,7 @@ ppc64_aix:
     8: '/opt/java7'
     11: '/opt/java11_64'
     14: '/opt/java13_64'
-    next: '/opt/java13_64'
+    next: '/opt/java14_64'
   release:
     all: 'aix-ppc64-server-release'
     8: 'aix-ppc64-normal-server-release'
@@ -278,7 +278,7 @@ x86-64_linux:
     8: '/usr/lib/jvm/jdk-7'
     11: '/usr/lib/jvm/jdk-11'
     14: '/usr/lib/jvm/adoptojdk-java-13'
-    next: '/usr/lib/jvm/adoptojdk-java-13'
+    next: '/usr/lib/jvm/adoptojdk-java-14'
   release:
     all: 'linux-x86_64-server-release'
     8: 'linux-x86_64-normal-server-release'
@@ -344,7 +344,7 @@ x86-64_windows:
     8: '/cygdrive/c/openjdk/jdk7'
     11: '/cygdrive/c/openjdk/jdk11'
     14: '/cygdrive/c/openjdk/jdk13'
-    next: '/cygdrive/c/openjdk/jdk13'
+    next: '/cygdrive/c/openjdk/jdk14'
   release:
     all: 'windows-x86_64-server-release'
     8: 'windows-x86_64-normal-server-release'
@@ -398,7 +398,7 @@ x86-64_mac:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
     14: '/Users/jenkins/bootjdks/adoptojdk-java-13'
-    next: '/Users/jenkins/bootjdks/adoptojdk-java-13'
+    next: '/Users/jenkins/bootjdks/adoptojdk-java-14'
   release:
     all: 'macosx-x86_64-server-release'
     8: 'macosx-x86_64-normal-server-release'
