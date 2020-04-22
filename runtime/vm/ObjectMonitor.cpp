@@ -372,7 +372,7 @@ restart:
 
 				if (lock == VM_ObjectMonitor::compareAndSwapLockword(currentThread, lwEA, lock, incremented, false)) {
 					if (0 == J9_FLATLOCK_COUNT(lock)) {
-						VM_AtomicSupport::monitorEnterBarrier();
+						VM_AtomicSupport::readBarrier();
 					}
 					if (reservedTransition) {
 						/* Transition from Learning to Reserved occurred so the Reserved Counter in the object's J9Class is incremented by 1. */
@@ -536,7 +536,7 @@ spinOnFlatLock(J9VMThread *currentThread, j9objectmonitor_t volatile *lwEA, j9ob
 					if (0 == J9_FLATLOCK_COUNT(lock)) {
 						if (lock == VM_ObjectMonitor::compareAndSwapLockword(currentThread, lwEA, lock, (j9objectmonitor_t)(UDATA)currentThread, false)) {
 							/* compare and swap succeeded */
-							VM_AtomicSupport::monitorEnterBarrier();
+							VM_AtomicSupport::readBarrier();
 							rc = true;
 
 							/* Transition from Learning to Flat occurred so the Cancel Counter in the object's J9Class is incremented by 1. */
