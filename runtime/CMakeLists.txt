@@ -37,6 +37,9 @@ set(CMAKE_MODULE_PATH "${j9vm_SOURCE_DIR}/cmake/modules" "${J9VM_OMR_DIR}/cmake/
 # pull in definitions of what options we support
 include(cmake/options.cmake)
 
+# ensure that we apply omr configuration early so any overrides we might set apply properly
+include(cmake/omr_config.cmake)
+
 ###
 ### End basic housekeeping
 ###
@@ -99,9 +102,6 @@ if(J9VM_IS_NON_STAGING)
 	# we also want to set the RPATH properly
 	set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 endif()
-
-# Generic configuration for omr
-include(cmake/omr_config.cmake)
 
 if(OPENJ9_BUILD)
 	add_definitions(-DOPENJ9_BUILD)
