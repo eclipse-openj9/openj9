@@ -4029,8 +4029,8 @@ typedef struct J9MemoryManagerFunctions {
 	void  ( *J9MetronomeWriteBarrierJ9ClassStore)(struct J9VMThread *vmThread, J9Object *dstObject, J9Object **dstAddress, J9Object *srcObject) ;
 	void  ( *J9ReadBarrier)(struct J9VMThread *vmThread, fj9object_t *srcAddress);
 	void  ( *J9ReadBarrierJ9Class)(struct J9VMThread *vmThread, j9object_t *srcAddress);
-	j9object_t  ( *j9gc_objaccess_monitorTableReadObject)(struct J9VMThread *vmThread, j9object_t *srcAddress);
-	j9object_t  ( *j9gc_objaccess_monitorTableReadObjectVM)(struct J9JavaVM *vm, j9object_t *srcAddress);
+	j9object_t  ( *j9gc_weakRoot_readObject)(struct J9VMThread *vmThread, j9object_t *srcAddress);
+	j9object_t  ( *j9gc_weakRoot_readObjectVM)(struct J9JavaVM *vm, j9object_t *srcAddress);
 	UDATA  ( *j9gc_ext_check_is_valid_heap_object)(struct J9JavaVM *javaVM, j9object_t ptr, UDATA flags) ;
 #if defined(J9VM_GC_FINALIZATION)
 	UDATA  ( *j9gc_get_objects_pending_finalization_count)(struct J9JavaVM* vm) ;

@@ -219,7 +219,7 @@ MM_ReadBarrierVerifier::preObjectRead(J9VMThread *vmThread, J9Class *srcClass, j
 }
 
 bool
-MM_ReadBarrierVerifier::preMonitorTableSlotRead(J9VMThread *vmThread, j9object_t *srcAddress)
+MM_ReadBarrierVerifier::preWeakRootSlotRead(J9VMThread *vmThread, j9object_t *srcAddress)
 {
 	Assert_MM_true(vmThread->javaVM->internalVMFunctions->currentVMThread(vmThread->javaVM) == vmThread);
 	healSlot(_extensions, srcAddress);
@@ -227,7 +227,7 @@ MM_ReadBarrierVerifier::preMonitorTableSlotRead(J9VMThread *vmThread, j9object_t
 }
 
 bool
-MM_ReadBarrierVerifier::preMonitorTableSlotRead(J9JavaVM *vm, j9object_t *srcAddress)
+MM_ReadBarrierVerifier::preWeakRootSlotRead(J9JavaVM *vm, j9object_t *srcAddress)
 {
 	healSlot(_extensions, srcAddress);
 	return true;

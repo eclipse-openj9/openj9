@@ -195,8 +195,8 @@ extern J9_CFUNC void J9MetronomeWriteBarrierStore(J9VMThread *vmThread, J9Object
 extern J9_CFUNC void J9MetronomeWriteBarrierJ9ClassStore(J9VMThread *vmThread, J9Object *dstObject, J9Object **dstAddress, J9Object *srcObject);
 extern J9_CFUNC void J9ReadBarrier(J9VMThread *vmThread, fj9object_t *srcAddress);
 extern J9_CFUNC void J9ReadBarrierJ9Class(J9VMThread *vmThread, j9object_t *srcAddress);
-extern J9_CFUNC j9object_t j9gc_objaccess_monitorTableReadObject(J9VMThread *vmThread, j9object_t *srcAddress);
-extern J9_CFUNC j9object_t j9gc_objaccess_monitorTableReadObjectVM(J9JavaVM *vm, j9object_t *srcAddress);
+extern J9_CFUNC j9object_t j9gc_weakRoot_readObject(J9VMThread *vmThread, j9object_t *srcAddress);
+extern J9_CFUNC j9object_t j9gc_weakRoot_readObjectVM(J9JavaVM *vm, j9object_t *srcAddress);
 extern J9_CFUNC UDATA isStaticObjectAllocateFlags(J9JavaVM *javaVM);
 extern J9_CFUNC void J9FlushThreadLocalHeap(J9VMThread *vmContext);
 extern J9_CFUNC jvmtiIterationControl j9mm_iterate_region_objects(J9JavaVM *vm, J9PortLibrary *portLibrary, struct J9MM_IterateRegionDescriptor *region, UDATA flags, jvmtiIterationControl(*func)(J9JavaVM *vm, struct J9MM_IterateObjectDescriptor *objectDesc, void *userData), void *userData);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -224,16 +224,7 @@ stringComparatorFn(struct J9AVLTree *tree, struct J9AVLTreeNode *leftNode, struc
 	stu8Ptr = *((UDATA*) (leftNode+1)); 
 
 	/* Get at the String information  */
-	right_s = *(j9object_t *)(rightNode+1);
-
-	if (!isMetronome) {
-		/* Check if string was copy-forwarded.  Only do this on non-metronome since metronome re-uses the FORWARDED bit */
-		MM_ScavengerForwardedHeader forwardedHeader(right_s, extensions);
-		J9Object* forwardedPtr = forwardedHeader.getForwardedObject();
-		if (NULL != forwardedPtr) {
-			right_s = forwardedPtr;
-		}
-	}
+	right_s = J9WEAKROOT_OBJECT_LOAD_VM(javaVM, (j9object_t *)(rightNode+1));
 
 	rightLength = J9VMJAVALANGSTRING_LENGTH_VM(javaVM, right_s);
 	right_p = J9VMJAVALANGSTRING_VALUE_VM(javaVM, right_s);
@@ -297,16 +288,7 @@ stringComparatorFn(struct J9AVLTree *tree, struct J9AVLTreeNode *leftNode, struc
 		U_32 i = 0;
 		bool leftCompressed = false;
 
-		left_s = *(j9object_t *)(leftNode+1);
-
-		if (!isMetronome) {
-			/* Check if string was copy-forwarded.  Only do this on non-metronome since metronome re-uses the FORWARDED bit */
-			MM_ScavengerForwardedHeader forwardedHeader(left_s, extensions);
-			J9Object* forwardedPtr = forwardedHeader.getForwardedObject();
-			if (NULL != forwardedPtr) {
-				left_s = forwardedPtr;
-			}
-		}
+		left_s = J9WEAKROOT_OBJECT_LOAD_VM(javaVM, (j9object_t *)(leftNode+1));
 
 		leftLength = J9VMJAVALANGSTRING_LENGTH_VM(javaVM, left_s);
 		left_p = J9VMJAVALANGSTRING_VALUE_VM(javaVM, left_s);
