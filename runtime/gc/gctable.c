@@ -103,8 +103,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	J9MetronomeWriteBarrierJ9ClassStore,
 	J9ReadBarrier,
 	J9ReadBarrierJ9Class,
-	j9gc_objaccess_monitorTableReadObject,
-	j9gc_objaccess_monitorTableReadObjectVM,
+	j9gc_weakRoot_readObject,
+	j9gc_weakRoot_readObjectVM,
 	j9gc_ext_check_is_valid_heap_object,
 #if defined(J9VM_GC_FINALIZATION)
 	j9gc_get_objects_pending_finalization_count,
