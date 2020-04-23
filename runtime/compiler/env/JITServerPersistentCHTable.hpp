@@ -58,7 +58,7 @@ public:
    JITServerPersistentCHTable(TR_PersistentMemory *);
 
    bool isInitialized() { return !getData().empty(); } // needs CHTable mutex in hand
-   bool initializeIfNeeded(TR_J9VMBase *fej9);
+   bool initializeCHTable(TR_J9VMBase *fej9, const std::string &rawData);
    void doUpdate(TR_J9VMBase *fej9, const std::string &removeStr, const std::string &modifyStr);
 
    virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId) override;

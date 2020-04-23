@@ -38,6 +38,7 @@ class TR_PersistentClassInfo;
 class J9ConstantPool;
 class TR_IPBytecodeHashTableEntry;
 class TR_MethodToBeCompiled;
+class TR_AddressRange;
 namespace JITServer { class ServerStream; }
 
 
@@ -346,14 +347,17 @@ class ClientSessionData
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getClassByNameMap() { return _classByNameMap; }
    PersistentUnorderedMap<J9Class *, UDATA *> & getClassChainDataCache() { return _classChainDataMap; }
    PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock*> & getConstantPoolToClassMap() { return _constantPoolToClassMap; }
-   void processUnloadedClasses(JITServer::ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes);
+   void initializeUnloadedClassAddrRanges(const std::vector<TR_AddressRange> &unloadedClassRanges, int32_t maxRanges);
+   void processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes, bool updateUnloadedClasses);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
    TR::Monitor *getClassMapMonitor() { return _classMapMonitor; }
    TR::Monitor *getClassChainDataMapMonitor() { return _classChainDataMapMonitor; }
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry, bool isCompiled);
    VMInfo *getOrCacheVMInfo(JITServer::ServerStream *stream);
-   void clearCaches(); // destroys _chTableClassMap, _romClassMap and _J9MethodMap
+   void clearCaches(); // destroys _chTableClassMap, _romClassMap, _J9MethodMap and _unloadedClassAddresses
+   bool cachesAreCleared() const { return _requestUnloadedClasses; }
+   void setCachesAreCleared(bool b) { _requestUnloadedClasses = b; }
    TR_AddressSet& getUnloadedClassAddresses()
       {
       TR_ASSERT(_unloadedClassAddresses, "Unloaded classes address set should exist by now");
