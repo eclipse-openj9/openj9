@@ -24,12 +24,13 @@
 #define TR_JITDUMP_INCL
 
 #include "j9.h"
+#include "j9dump.h"
 #include "j9nonbuilder.h"
 
 extern J9_CFUNC UDATA
 jitDumpSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg);
 
-extern J9_CFUNC intptr_t
-dumpJitInfo(J9VMThread * currentThread, char *label, J9RASdumpContext *context);
+extern J9_CFUNC omr_error_t
+runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent);
 
 #endif

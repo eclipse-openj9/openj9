@@ -283,6 +283,7 @@ struct J9MM_IterateSpaceDescriptor;
 struct J9ObjectMonitorInfo;
 struct J9Pool;
 struct J9PortLibrary;
+struct J9RASdumpAgent;
 struct J9RASdumpContext;
 struct J9RASdumpFunctions;
 struct J9ROMClass;
@@ -3685,7 +3686,7 @@ typedef struct J9JITConfig {
 	void  ( *jitReportDynamicCodeLoadEvents)(struct J9VMThread * currentThread) ;
 	UDATA  ( *jitSignalHandler)(struct J9VMThread *vmStruct, U_32 gpType, void* gpInfo) ;
 	IDATA sampleInterruptHandlerKey;
-	IDATA  ( *dumpJitInfo)(struct J9VMThread *currentThread, char *label, struct J9RASdumpContext *context) ;
+	omr_error_t ( *runJitdump)(char *label, struct J9RASdumpContext *context, struct J9RASdumpAgent *agent);
 	void*  ( *isDLTReady)(struct J9VMThread * currentThread, struct J9Method * method, UDATA bytecodeIndex) ;
 	UDATA*  ( *jitLocalSlotAddress)(struct J9VMThread * currentThread, J9StackWalkState *walkState, UDATA slot, UDATA inlineDepth) ;
 	void  ( *jitOSRPatchMethod)(struct J9VMThread * currentThread, struct J9JITExceptionTable * metaData, U_8 * pc) ;
