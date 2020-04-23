@@ -395,8 +395,8 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         cleanup_artifactory(ARTIFACTORY_MANUAL_CLEANUP, BUILD_JOB_NAME, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
     }
 
-    if (TARGET_NAMES) {
-        def testjobs = [:]
+    if (TESTS) {
+        def testJobs = [:]
 
         if (SHAS['VENDOR_TEST']) {
             // the downstream job is expecting comma separated SHAs
@@ -411,56 +411,37 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             SHAS['OPENJ9'] = "origin/pr/${params.ghprbPullId}/merge"
         }
 
-        for (name in TARGET_NAMES) {
-            target = get_target_name(name)
-            // Checking to see if the test should be excluded
-            if (EXCLUDED_TESTS.contains(target)) {
-                echo "The '${target}' test suite will be excluded"
-                continue
-            }
-            // Add a TEST_FLAG to a specific target if one was passed with the test target. Eg. sanity.functional+aot
-            if (name.contains('+')) {
-                def temp_test_flag = name.substring(name.indexOf('+')+1).toUpperCase()
-                TEST_FLAG = (TEST_FLAG) ? TEST_FLAG + ',' + temp_test_flag : temp_test_flag
-            }
-            echo "TEST_FLAG:'${TEST_FLAG}'"
+        TESTS.each { id, target ->
+            def testFlag = target['testFlag']
+            def extraTestLabels = target['extraTestLabels']
+            def keepReportDir = target['keepReportDir']
+            def buildList = target['buildList']
+            echo "Test:'${id}' testFlag:'${testFlag}' extraTestLabels:'${extraTestLabels}', keepReportDir:'${keepReportDir}'"
 
-            def extraTestLabels = EXTRA_TEST_LABELS[target] ?: ''
-            def keepReportDir = TEST_KEEP_REPORTDIR[target] ?: ''
-            def buildList = TEST_BUILD_LIST[target] ?: ''
-            echo "Target:'${target}' extraTestLabels:'${extraTestLabels}', keepReportDir:'${keepReportDir}'"
-
-            def TEST_JOB_NAME = get_test_job_name(target, SPEC, SDK_VERSION, BUILD_IDENTIFIER)
+            def testJobName = get_test_job_name(id, SPEC, SDK_VERSION, BUILD_IDENTIFIER)
 
             def IS_PARALLEL = false
-            if (TEST_JOB_NAME.contains("special.system")) {
+            if (testJobName.contains("special.system")) {
                 IS_PARALLEL = true
             }
-            testjobs["${TEST_JOB_NAME}"] = {
+            testJobs[id] = {
                 if (params.ghprbPullId) {
-                    cancel_running_builds(TEST_JOB_NAME, BUILD_IDENTIFIER)
+                    cancel_running_builds(testJobName, BUILD_IDENTIFIER)
                 }
                 if (ARTIFACTORY_CREDS) {
-                    cleanup_artifactory(ARTIFACTORY_MANUAL_CLEANUP, TEST_JOB_NAME, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
+                    cleanup_artifactory(ARTIFACTORY_MANUAL_CLEANUP, testJobName, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
                 }
-                jobs["${TEST_JOB_NAME}"] = test(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, extraTestLabels, keepReportDir, buildList)
+                jobs[id] = test(testJobName, BUILD_JOB_NAME, jobs["build"].getNumber(), TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, testFlag, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, extraTestLabels, keepReportDir, buildList)
             }
         }
         if (params.AUTOMATIC_GENERATION != 'false') {
-            generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO)
+            generate_test_jobs(TESTS, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO)
         }
-        parallel testjobs
+        parallel testJobs
     }
 
     // return jobs for further reference
     return jobs
-}
-
-def get_target_name(name) {
-    if (name.contains('+')) {
-        name = name.substring(0, name.indexOf('+'))
-    }
-    return name.toString()
 }
 
 def get_build_job_name(spec, version, identifier) {
@@ -552,11 +533,10 @@ def get_downstream_job_names(spec, version, identifier) {
     */
 
     downstreamJobNames = [:]
-    downstreamJobNames.put('build', get_build_job_name(spec, version, identifier))
+    downstreamJobNames['build'] = get_build_job_name(spec, version, identifier)
 
-    for (target in TARGET_NAMES.sort()) {
-        target = get_target_name(target)
-        downstreamJobNames.put(target, get_test_job_name(target, spec, version, identifier))
+    TESTS.each { id, target ->
+        downstreamJobNames[id] = get_test_job_name(id, spec, version, identifier)
     }
 
     return downstreamJobNames
@@ -579,17 +559,14 @@ def cleanup_artifactory(artifactory_manual_cleanup, job_name, artifactory_server
     }
 }
 
-def generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO) {
+def generate_test_jobs(TESTS, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO) {
     def levels = []
     def groups = []
 
-    TARGET_NAMES.each { target ->
-        def target_name = get_target_name(target)
-        if (!EXCLUDED_TESTS.contains(target_name)) {
-            def split_target = target_name.tokenize('.')
-            levels.add(split_target[0])
-            groups.add(split_target[1])
-        }
+    TESTS.each { id, target ->
+        def splitTarget = id.tokenize('.')
+        levels.add(splitTarget[0])
+        groups.add(splitTarget[1])
     }
     levels.unique(true)
     groups.unique(true)
@@ -810,7 +787,7 @@ def build_all() {
         jobs = buildFile.workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_DIRS_MAP, USER_CREDENTIALS_ID, SETUP_LABEL, ghprbGhRepository, ghprbActualCommit, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, BUILD_NAME, CUSTOM_DESCRIPTION, ARCHIVE_JAVADOC)
     } finally {
         //display the build status of the downstream jobs
-        def downstreamBuilds = buildFile.get_downstream_builds(currentBuild, currentBuild.projectName, buildFile.get_downstream_job_names(SPEC, SDK_VERSION, BUILD_IDENTIFIER).values())
+        def downstreamBuilds = get_downstream_builds(currentBuild, currentBuild.projectName, get_downstream_job_names(SPEC, SDK_VERSION, BUILD_IDENTIFIER).values())
         add_badges(downstreamBuilds)
         add_summary_badge(downstreamBuilds)
     }
