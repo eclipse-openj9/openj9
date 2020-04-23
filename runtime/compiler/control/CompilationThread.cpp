@@ -3091,6 +3091,54 @@ void printAllCounts(J9JavaVM *javaVM)
 
 #include "infra/Statistics.hpp"  // MCT
 
+class CompStatsPerBytecodes
+   {
+public:
+   const static unsigned _numBins = 10;
+   const static unsigned _resolution = 1; // in bytecodes
+   const static unsigned _upperValue = _numBins * _resolution;
+   CompStatsPerBytecodes()
+      {
+      char name[32];
+      for (unsigned i = 0; i < _numBins; i++)
+         {
+         snprintf(name, 32, "Stats for < %u bytecodes", (i + 1) * _resolution);
+         _stats[i].setName(name);
+         }
+      snprintf(name, 32, "Stats for >= %u bytecodes",  _upperValue);
+      _overflowStats.setName(name);
+      }
+ 
+   void update(uint32_t bcSize, uint32_t val)
+      {
+      if (bcSize >_upperValue)
+         {
+         _overflowStats.update(val);
+         }
+      else
+         {
+         unsigned binNum = bcSize / _resolution;
+         _stats[binNum].update(val);
+         }
+      }
+   void report(FILE *file)
+      {
+      for (unsigned i = 0; i < _numBins; i++)
+         {
+         _stats[i].report(file);
+         }
+      _overflowStats.report(file);
+      }
+
+private:
+   TR_Stats _stats[_numBins];
+   TR_Stats _overflowStats;
+   };
+
+CompStatsPerBytecodes memStats;
+CompStatsPerBytecodes latencyStats;
+
+
 void TR::CompilationInfo::stopCompilationThreads()
    {
    J9JavaVM   * const vm       = _jitConfig->javaVM;
@@ -3136,6 +3184,11 @@ void TR::CompilationInfo::stopCompilationThreads()
          fprintf(stderr, "numUpgradesDueToRI=%u\n", TR_HWProfiler::_STATS_NumUpgradesDueToRI);
 
       fprintf(stderr, "Classes loaded=%d\n",  getPersistentInfo()->getNumLoadedClasses());
+
+      fprintf(stderr, "\nMemory statistics per bytecode size\n");
+      memStats.report(stderr);
+      fprintf(stderr, "\nCompilation time statistics per bytecode size\n");
+      latencyStats.report(stderr);
 
       // assumptionTableMutex is not used, so the numbers may be a little off
       fprintf(stderr, "\tStats on assumptions:\n");
@@ -10536,6 +10589,7 @@ TR::CompilationInfoPerThreadBase::methodCanBeCompiled(TR_Memory *trMemory, TR_Fr
    return TR::Options::getDebug()->methodCanBeCompiled(trMemory, method, filter);
    }
 
+
 void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
    J9VMThread * vmThread,
    TR_J9VMBase &vm,
@@ -10594,6 +10648,11 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             trfprintf(compiler->getOutFile(), "Compilation took %d usec\n", (int32_t)translationTime);
          compiler->dumpMethodTrees("Post optimization trees for large computing method");
          }
+      uint32_t bcsz = TR::CompilationInfo::getMethodBytecodeSize(method);
+      latencyStats.update(bcsz, translationTime);
+      uint32_t memKB = static_cast<uint32_t>(scratchSegmentProvider.regionBytesAllocated())/1024;
+      memStats.update(bcsz, memKB);
+
       if (_onSeparateThread)
          {
          TR::CompilationInfoPerThread *cipt = (TR::CompilationInfoPerThread*)this;
