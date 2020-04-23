@@ -2242,7 +2242,40 @@ typedef struct J9WalkStackFramesAndSlotsStorage {
 	UDATA* jit_r29;
 	UDATA* jit_r30;
 	UDATA* jit_r31;
-#elif defined(J9VM_ARCH_S390) /* J9VM_ARCH_POWER */
+#elif defined(J9VM_ARCH_RISCV) /* J9VM_ARCH_POWER */
+	UDATA* jit_r0;
+	UDATA* jit_r1;
+	UDATA* jit_r2;
+	UDATA* jit_r3;
+	UDATA* jit_r4;
+	UDATA* jit_r5;
+	UDATA* jit_r6;
+	UDATA* jit_r7;
+	UDATA* jit_r8;
+	UDATA* jit_r9;
+	UDATA* jit_r10;
+	UDATA* jit_r11;
+	UDATA* jit_r12;
+	UDATA* jit_r13;
+	UDATA* jit_r14;
+	UDATA* jit_r15;
+	UDATA* jit_r16;
+	UDATA* jit_r17;
+	UDATA* jit_r18;
+	UDATA* jit_r19;
+	UDATA* jit_r20;
+	UDATA* jit_r21;
+	UDATA* jit_r22;
+	UDATA* jit_r23;
+	UDATA* jit_r24;
+	UDATA* jit_r25;
+	UDATA* jit_r26;
+	UDATA* jit_r27;
+	UDATA* jit_r28;
+	UDATA* jit_r29;
+	UDATA* jit_r30;
+	UDATA* jit_r31;
+#elif defined(J9VM_ARCH_S390) /* J9VM_ARCH_RISCV */
 	UDATA* jit_r0;
 	UDATA* jit_r1;
 	UDATA* jit_r2;
@@ -2511,7 +2544,40 @@ typedef struct J9SFJ2IFrame {
 #if !defined(J9VM_ENV_DATA64)
 	UDATA jit_r15;
 #endif /* !J9VM_ENV_DATA64 */
-#elif defined(J9VM_ARCH_S390) /* J9VM_ARCH_POWER */
+#elif defined(J9VM_ARCH_RISCV) /* J9VM_ARCH_POWER */
+	UDATA jit_r0;
+	UDATA jit_r1;
+	UDATA jit_r2;
+	UDATA jit_r3;
+	UDATA jit_r4;
+	UDATA jit_r5;
+	UDATA jit_r6;
+	UDATA jit_r7;
+	UDATA jit_r8;
+	UDATA jit_r9;
+	UDATA jit_r10;
+	UDATA jit_r11;
+	UDATA jit_r12;
+	UDATA jit_r13;
+	UDATA jit_r14;
+	UDATA jit_r15;
+	UDATA jit_r16;
+	UDATA jit_r17;
+	UDATA jit_r18;
+	UDATA jit_r19;
+	UDATA jit_r20;
+	UDATA jit_r21;
+	UDATA jit_r22;
+	UDATA jit_r23;
+	UDATA jit_r24;
+	UDATA jit_r25;
+	UDATA jit_r26;
+	UDATA jit_r27;
+	UDATA jit_r28;
+	UDATA jit_r29;
+	UDATA jit_r30;
+	UDATA jit_r31;
+#elif defined(J9VM_ARCH_S390) /* J9VM_ARCH_RISCV */
 #if !defined(J9VM_ENV_DATA64)
 	UDATA jit_r28;
 	UDATA jit_r27;
@@ -4778,7 +4844,7 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t systemPropertiesMutex;
 	U_8* javaHome;
 	void* cInterpreter;
-	void* bytecodeLoop;
+	UDATA (*bytecodeLoop)(struct J9VMThread *currentThread);
 	struct J9CudaGlobals* cudaGlobals;
 	struct J9SharedClassConfig* sharedClassConfig;
 	U_8* bootstrapClassPath;
@@ -5346,6 +5412,11 @@ typedef struct J9CInterpreterStackFrame {
 	U_8 preservedFPRs[8 * 8]; /* v8-15 */
 	UDATA jitGPRs[32]; /* x0-x31 */
 	U_8 jitFPRs[32 * 8]; /* v0-v31 */
+#elif defined(J9VM_ARCH_RISCV) /* J9VM_ARCH_ARM */
+	UDATA preservedGPRs[13]; /* x2, x8, x9, and x18-x27  */
+	U_8 preservedFPRs[32 * 8]; /* f0-f31 */
+	UDATA jitGPRs[32]; /* x0-x31 */
+	U_8 jitFPRs[32 * 8]; /* f0-f31 */
 #elif defined(J9VM_ARCH_X86) /* J9VM_ARCH_AARCH64 */
 #if defined(J9VM_ENV_DATA64) && defined(WIN32)
 	UDATA arguments[4]; /* outgoing arguments shadow */
