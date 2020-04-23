@@ -2445,21 +2445,21 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DEBUG_MODE)) {
 				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-					vm->bytecodeLoop = (void*)debugBytecodeLoopCompressed;
+					vm->bytecodeLoop = debugBytecodeLoopCompressed;
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 				} else {
 #if defined(OMR_GC_FULL_POINTERS)
-					vm->bytecodeLoop = (void*)debugBytecodeLoopFull;
+					vm->bytecodeLoop = debugBytecodeLoopFull;
 #endif /* OMR_GC_FULL_POINTERS */
 				}
 			} else {
 				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-					vm->bytecodeLoop = (void*)bytecodeLoopCompressed;
+					vm->bytecodeLoop = bytecodeLoopCompressed;
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 				} else {
 #if defined(OMR_GC_FULL_POINTERS)
-					vm->bytecodeLoop = (void*)bytecodeLoopFull;
+					vm->bytecodeLoop = bytecodeLoopFull;
 #endif /* OMR_GC_FULL_POINTERS */
 				}
 			}

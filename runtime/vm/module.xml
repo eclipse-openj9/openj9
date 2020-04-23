@@ -90,6 +90,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<makefilestub data="UMA_OBJECTS:=$(filter-out zcinterp%,$(UMA_OBJECTS))">
 				<exclude-if condition="spec.flags.arch_s390"/>
 			</makefilestub>
+			<makefilestub data="UMA_OBJECTS:=$(filter-out rv64cinterp%,$(UMA_OBJECTS))">
+				<exclude-if condition="spec.flags.arch_riscv and spec.flags.J9VM_ENV_DATA64"/>
+			</makefilestub>
+			<makefilestub data="UMA_OBJECTS:=$(filter-out rv64cinterpnojit%,$(UMA_OBJECTS))">
+				<exclude-if condition="spec.flags.arch_riscv and spec.flags.J9VM_ENV_DATA64"/>
+			</makefilestub>
 			<makefilestub data="UMA_OBJECTS:=$(filter-out leconditionexceptionsup$(UMA_DOT_O),$(UMA_OBJECTS))">
 				<exclude-if condition="spec.zos_390.* and not spec.flags.J9VM_ENV_DATA64"/>
 			</makefilestub>
@@ -153,6 +159,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</vpath>
 			<vpath pattern="unsafeHelper.s" path="xr64" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_aarch64.*"/>
+			</vpath>
+			<vpath pattern="unsafeHelper.s" path="rv64" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_riscv64.*"/>
 			</vpath>
 		</vpaths>
 		<libraries>
