@@ -181,11 +181,11 @@ ppc64le_linux:
     8: 'linux-ppc64le-normal-server-release'
     11: 'linux-ppc64le-normal-server-release'
   node_labels:
-    build: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+    build: 'ci.role.build && hw.arch.ppc64le && sw.os.cent.7'
   extra_configure_options:
     all: '--enable-jitserver'
   build_env:
-    vars: 'PATH+GCC7=/usr/local/gcc-7.5.0/bin LD_LIBRARY_PATH=/usr/local/gcc-7.5.0/lib64:$LD_LIBRARY_PATH'
+    cmd: 'source /home/jenkins/set_gcc7.5.0_env'
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers /w cmake
 #========================================#
