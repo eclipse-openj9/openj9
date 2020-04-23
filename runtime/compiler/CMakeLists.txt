@@ -303,6 +303,9 @@ create_omr_compiler_library(NAME j9jit
 	INCLUDES ${J9_INCLUDES}
 	FILTER ${REMOVED_OMR_FILES}
 )
+# Since create_omr_compiler_library doesn't go through j9vm_add_library
+# we have to manually make sure we get split debug info
+omr_process_split_debug(j9jit)
 
 add_dependencies(j9jit
 	omrgc_hookgen
