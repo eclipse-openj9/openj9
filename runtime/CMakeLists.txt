@@ -444,11 +444,6 @@ endif()
 if(J9VM_MODULE_GC_CHECK)
 	add_subdirectory(gc_check)
 endif()
-if(J9VM_MODULE_DDR)
-	# TODO: Does this need to be implemented? Or are we only going to bother to support
-	# new style ddrgen with cmake?
-	# add_subdirectory(gc_ddr)
-endif()
 if(J9VM_MODULE_GC_MODRON_STANDARD)
 	add_subdirectory(gc_modron_standard)
 endif()
