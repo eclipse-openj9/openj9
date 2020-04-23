@@ -5826,6 +5826,7 @@ TR_J9TransformInlinedFunction::appendCatchBlockForInlinedSyncMethod(
    TR::Block * catchBlock = TR::Block::createEmptyBlock(lastNode, comp());
    catchBlock->setHandlerInfo(catchType, (uint8_t)comp()->getInlineDepth(), handlerIndex, calleeResolvedMethod, comp());
    catchBlock->setIsSynchronizedHandler();
+   catchBlock->setIsSyntheticHandler();
 
    // store the exception symbol into a temp
    //
@@ -5923,7 +5924,7 @@ TR_J9TransformInlinedFunction::appendCatchBlockForInlinedSyncMethod(
    // rethrow the exception
    //
    TR::Node * temp = TR::Node::createWithSymRef(lastNode, TR::aload, 0, tempSymRef);
-   rethrowBlock->append(TR::TreeTop::create(comp(), TR::Node::createWithSymRef(TR::athrow, 1, 1, temp, symRefTab->findOrCreateAThrowSymbolRef(_calleeSymbol))));
+   rethrowBlock->append(TR::TreeTop::create(comp(), TR::Node::createWithSymRef(TR::athrow, 1, 1, temp, symRefTab->findOrCreateThrowUnreportedExceptionSymbolRef(_calleeSymbol))));
 
    calleeCFG->addEdge(rethrowBlock, calleeCFG->getEnd());
 

@@ -1079,6 +1079,8 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_releaseVMAccess,            (void *)jitReleaseVMAccess,            TR_Helper);
 #endif
    SET(TR_throwCurrentException,      (void *)jitThrowCurrentException,      TR_Helper);
+   SET(TR_throwUnreportedException,   (void *)jitThrowUnreportedException,   TR_Helper); // used for throwing exceptions from synthetic handlers
+
 #if defined (TR_HOST_X86)
    SET(TR_throwClassCastException,    (void *)jitThrowClassCastException,    TR_Helper);
 #endif

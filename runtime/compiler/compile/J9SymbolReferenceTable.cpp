@@ -181,6 +181,11 @@ J9::SymbolReferenceTable::findOrCreateThrowCurrentExceptionSymbolRef(TR::Resolve
    return findOrCreateRuntimeHelper(TR_throwCurrentException, true, false, true);
    }
 
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateThrowUnreportedExceptionSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_throwUnreportedException, true /* canGCandReturn */, false /* canGCandExcept */, true /* preservesAllRegisters */);
+   }
 
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateReleaseVMAccessSymbolRef(TR::ResolvedMethodSymbol *)
@@ -1275,7 +1280,7 @@ J9::SymbolReferenceTable::findOrCreateMethodMonitorEntrySymbolRef(TR::ResolvedMe
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateMethodMonitorExitSymbolRef(TR::ResolvedMethodSymbol *)
    {
-   return findOrCreateRuntimeHelper(TR_methodMonitorExit, true, false, true);
+   return findOrCreateRuntimeHelper(TR_methodMonitorExit, true /* canGCandReturn */, true /* canGCandExcept */, true /* preservesAllRegisters */);
    }
 
 

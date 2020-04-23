@@ -26,6 +26,7 @@
 #include <string.h>
 #include "jilconsts.h"
 #include "jitprotos.h"
+#include "j9nonbuilder.h"
 #include "j9cfg.h"
 #include "j9comp.h"
 #include "j9consts.h"
@@ -158,6 +159,22 @@ createByteCodeInfoRange(
    location += sizeof(int32_t);
    }
 
+/*
+ * use special catch type value to indicate to the VM the handler is synthetic handler so that OSR can be handled correctly
+ */
+static uint32_t
+useSpecialCatchTypeIfNecessary(TR_ExceptionTableEntry *e, bool fourByteOffsets, TR::Compilation *comp)
+   {
+   if (comp->getOption(TR_EnableOSR))
+      {
+      if ((fourByteOffsets && e->_catchType == J9_CATCHTYPE_VALUE_FOR_SYNTHETIC_HANDLER_4BYTES) ||
+          (!fourByteOffsets && e->_catchType == J9_CATCHTYPE_VALUE_FOR_SYNTHETIC_HANDLER_2BYTES) )
+         comp->failCompilation<TR::CompilationException>("Failed due to handler catch type value collides with special value reserved for synthetic handler");
+      if (e->_isSyntheticHandler)
+         return fourByteOffsets ? J9_CATCHTYPE_VALUE_FOR_SYNTHETIC_HANDLER_4BYTES : J9_CATCHTYPE_VALUE_FOR_SYNTHETIC_HANDLER_2BYTES;
+      }
+   return e->_catchType;
+   }
 
 static void
 createExceptionTable(
@@ -170,12 +187,13 @@ createExceptionTable(
 
    for (TR_ExceptionTableEntry * e = exceptionIterator.getFirst(); e; e = exceptionIterator.getNext())
       {
+      uint32_t catchType = useSpecialCatchTypeIfNecessary(e, fourByteOffsets, comp);
       if (fourByteOffsets)
          {
          *(uint32_t *)cursor = e->_instructionStartPC, cursor += 4;
          *(uint32_t *)cursor = e->_instructionEndPC, cursor += 4;
          *(uint32_t *)cursor = e->_instructionHandlerPC, cursor += 4;
-         *(uint32_t *)cursor = e->_catchType, cursor += 4;
+         *(uint32_t *)cursor = catchType, cursor += 4;
          if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE()
 #if defined(J9VM_OPT_JITSERVER)
             || comp->isOutOfProcessCompilation()
@@ -192,7 +210,7 @@ createExceptionTable(
          *(uint16_t *)cursor = e->_instructionStartPC, cursor += 2;
          *(uint16_t *)cursor = e->_instructionEndPC, cursor += 2;
          *(uint16_t *)cursor = e->_instructionHandlerPC, cursor += 2;
-         *(uint16_t *)cursor = e->_catchType, cursor += 2;
+         *(uint16_t *)cursor = catchType, cursor += 2;
          }
 
       // Ensure that InstructionBoundaries are initialized properly.
