@@ -41,18 +41,8 @@ PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &JITServer
    }
 
 bool
-JITServerPersistentCHTable::initializeIfNeeded(TR_J9VMBase *fej9)
+JITServerPersistentCHTable::initializeCHTable(TR_J9VMBase *fej9, const std::string &rawData)
    {
-      {
-      TR::ClassTableCriticalSection initializeIfNeeded(fej9);
-      auto& data = getData();
-      if (!data.empty())
-         return false; // this is the most frequent path
-      }
-
-   auto stream = TR::CompilationInfo::getStream();
-   stream->write(JITServer::MessageType::CHTable_getAllClassInfo, JITServer::Void());
-   std::string rawData = std::get<0>(stream->read<std::string>());
    if (rawData.length() == 0)
       return false;
    auto infos = FlatPersistentClassInfo::deserializeHierarchy(rawData);
@@ -67,7 +57,7 @@ JITServerPersistentCHTable::initializeIfNeeded(TR_J9VMBase *fej9)
          return true;
          }
       }
-      return false;
+   return false;
    }
 
 void 

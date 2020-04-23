@@ -32,7 +32,7 @@ enum MessageType : uint16_t
    compilationFailure,
    mirrorResolvedJ9Method,
    get_params_to_construct_TR_j9method,
-   getUnloadedClassRanges,
+   getUnloadedClassRangesAndCHTable,
    compilationRequest, // type used when client sends remote compilation requests
    compilationInterrupted, // type used when client informs the server to abort the remote compilation
    clientSessionTerminate, // type used when client process is about to terminate
@@ -304,7 +304,7 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "compilationFailure", // 1
    "mirrorResolvedJ9Method", // 2
    "get_params_to_construct_TR_j9method", // 3
-   "getUnloadedClassRanges", // 4
+   "getUnloadedClassRangesAndCHTable", // 4
    "compilationRequest", // 5
    "compilationInterrupted", // 6
    "clientSessionTerminate", // 7
