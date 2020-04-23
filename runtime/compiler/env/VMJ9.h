@@ -900,7 +900,6 @@ public:
    virtual intptr_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset);
 
    TR::TreeTop * lowerAsyncCheck(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
-   TR::TreeTop * lowerAtcCheck(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method);
    virtual bool isMethodTracingEnabled(J9Method *j9method)
       {

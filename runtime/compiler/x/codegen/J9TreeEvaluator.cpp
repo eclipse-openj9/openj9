@@ -3317,56 +3317,6 @@ TR::Register *J9::X86::TreeEvaluator::readbarEvaluator(TR::Node *node, TR::CodeG
    return handleRegister;
    }
 
-
-TR::Register *J9::X86::TreeEvaluator::ScopeCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR_ASSERT(node->getNumChildren() == 1, "ScopeCHK node should have one child");
-   TR::Node *child = node->getChild(0);
-   cg->evaluate(child);
-   cg->decReferenceCount(child);
-   return NULL;
-   }
-
-TR::Register *J9::X86::TreeEvaluator::atccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR_ASSERT(node->getNumChildren() == 1, "atccheck nodes should have 1 children");
-
-   TR::Node *pendingAIELoad = node->getChild(0);
-   TR_ASSERT(pendingAIELoad->getOpCodeValue() == TR::aload, "atccheck first child should be a compare test");
-
-   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *doneLabel  = generateLabelSymbol(cg);
-
-   startLabel->setStartInternalControlFlow();
-   doneLabel->setEndInternalControlFlow();
-
-   generateLabelInstruction(LABEL, node, startLabel, cg);
-
-   // if there is no pending AIE, then just branch around the throw
-   TR::Register *pendingAIERegister = cg->evaluate(pendingAIELoad);
-
-   generateRegRegInstruction(TESTRegReg(), node, pendingAIERegister, pendingAIERegister, cg);
-   generateLabelInstruction(JE4, node, doneLabel, cg);
-
-   // here, we've got a pending AIE so that means we're interruptible
-   // so throw the pending AIE here
-   TR::Node *throwCallNode = TR::Node::createWithSymRef(TR::call, 1, 1, pendingAIELoad, node->getSymbolReference());
-   cg->evaluate(throwCallNode);
-
-   TR::Register *vmThreadRegister = cg->getVMThreadRegister();
-
-   TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t) 0, 2, cg);
-   deps->addPostCondition(pendingAIERegister, TR::RealRegister::NoReg, cg);
-   deps->addPostCondition(vmThreadRegister, (TR::RealRegister::RegNum)vmThreadRegister->getAssociation(), cg);
-
-   // and we're done
-   generateLabelInstruction(LABEL, node, doneLabel, deps, cg);
-
-   cg->decReferenceCount(pendingAIELoad);
-
-   return NULL;
-   }
-
 static
 TR::Register * highestOneBit(TR::Node *node, TR::CodeGenerator *cg, TR::Register *reg, bool is64Bit)
    {
