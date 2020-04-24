@@ -885,7 +885,7 @@ void DLTLogic(J9VMThread* vmThread, TR::CompilationInfo *compInfo)
       {
       int32_t numHitsInDLTBuffer = -1;
       TR_YesNoMaybe answer = shouldInitiateDLT(dltBlock, idx, &bcRepeats, &numHitsInDLTBuffer);
-      if (answer == TR_maybe)
+      if (answer != TR_no)
          {
          // Perform another test
          if (compInfo->getDLT_HT())
