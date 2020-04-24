@@ -241,6 +241,18 @@ There are 3 ways to add options to your test run:
 
 - If you want to change test options, you can update playlist.xml in the corresponding test project.
 
+#### Run test or group of tests multiple times
+- Using TEST_ITERATIONS to specify the number of iterations. The test (for group target, each test in the group) will be executed multiple times. The test will pass if all the iterations pass. This feature is designed to repetitively run small test targets, use with caution for top-level test targets that may take a long time to run.
+
+```
+    make _testExample TEST_ITERATIONS=2
+```
+or
+```
+    export TEST_ITERATIONS=2
+    make _testExample
+```
+
 ### 5. Exclude tests
 
 #### Exclude test target in playlist.xml
