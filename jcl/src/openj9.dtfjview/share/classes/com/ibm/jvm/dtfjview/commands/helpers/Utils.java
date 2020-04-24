@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,6 @@ import java.util.Vector;
 
 import com.ibm.dtfj.image.CorruptData;
 import com.ibm.dtfj.image.CorruptDataException;
-import com.ibm.dtfj.image.DataUnavailable;
 import com.ibm.dtfj.image.Image;
 import com.ibm.dtfj.image.ImageAddressSpace;
 import com.ibm.dtfj.image.ImagePointer;
@@ -80,17 +79,17 @@ public class Utils {
 		  "................" +
 		  "................" +
 		  "................" +
-		  "................" +
-		  "................" +
-		  "................" +
-		  "................" +
+		  " ...........<(+|" +
+		  "&.........!$*);." +
+		  "-/.........,%_>?" +
+		  ".........`:#@'=\""+
 		  ".abcdefghi......" +
 		  ".jklmnopqr......" +
-		  "..stuvwxyz......" +
-		  "................" +
-		  ".ABCDEFGHI......" +
-		  ".JKLMNOPQR......" +
-		  "..STUVWXYZ......"+
+		  ".~stuvwxyz......" +
+		  "^..........[]..." +
+		  "{ABCDEFGHI......" +
+		  "}JKLMNOPQR......" +
+		  "\\.STUVWXYZ......"+
 		  "0123456789......"
 		 ;
 	
