@@ -240,19 +240,13 @@ public:
 	 * @return the number of arraylets used for an array of dataSizeInBytes bytes
 	 */
 	MMINLINE UDATA
-	numArraylets(UDATA unadjustedDataSizeInBytes)
+	numArraylets(UDATA dataSizeInBytes)
 	{
 		UDATA leafSize = _omrVM->_arrayletLeafSize;
 		UDATA numberOfArraylets = 1;
 		if (UDATA_MAX != leafSize) {
 			UDATA leafSizeMask = leafSize - 1;
 			UDATA leafLogSize = _omrVM->_arrayletLeafLogSize;
-
-			/* We add one to unadjustedDataSizeInBytes to ensure that it's always possible to determine the address
-			 * of the after-last element without crashing. Handle the case of UDATA_MAX specially, since we use that
-			 * for any object whose size overflows the address space.
-			 */
-			UDATA dataSizeInBytes = (UDATA_MAX == unadjustedDataSizeInBytes) ? UDATA_MAX : (unadjustedDataSizeInBytes + 1);
 
 			/* CMVC 135307 : following logic for calculating the leaf count would not overflow dataSizeInBytes.
 			 * the assumption is leaf size is order of 2. It's identical to:
