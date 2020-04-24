@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,15 +83,15 @@ RUN cd /root \
  && tar -xzf freemarker.tar.gz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
  && rm -f freemarker.tar.gz
 
-# Download the boot JDK from AdoptOpenJDK.
+# Download and install boot JDK from AdoptOpenJDK
 RUN cd /root \
- && wget https://api.adoptopenjdk.net/openjdk8-openj9/releases/s390x_linux/latest/binary -O bootjdk8.tar.gz \
- && tar -xzf bootjdk8.tar.gz \
- && rm -f bootjdk8.tar.gz \
- && mv $(ls | grep -i jdk) bootjdk8
+  && wget -O bootjdk8.tar.gz https://api.adoptopenjdk.net/v3/binary/latest/8/ga/linux/s390x/jdk/openj9/normal/adoptopenjdk?project=jdk \
+  && tar -xzf bootjdk8.tar.gz \
+  && rm -f bootjdk8.tar.gz \
+  && mv $(ls | grep -i jdk) bootjdk8
 
-# Set JAVA_HOME, and prepend $JAVA_HOME/bin to PATH.
-ENV JAVA_HOME=/root/bootjdk8
-ENV PATH="$JAVA_HOME/bin:$PATH"
+# Set environment variable JAVA_HOME, and prepend ${JAVA_HOME}/bin to PATH
+ENV JAVA_HOME="/root/bootjdk8"
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 WORKDIR /root
