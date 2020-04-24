@@ -5942,10 +5942,18 @@ done:
 					rc = THROW_ARRAY_STORE;
 				} else {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-					J9Class *arrayrefClass = J9OBJECT_CLAZZ(_currentThread, arrayref);
-					if (J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
-						_objectAccessBarrier.copyObjectFieldsToFlattenedArrayElement(_currentThread, (J9ArrayClass *) arrayrefClass, value, (J9IndexableObject *) arrayref, index);
-					} else 
+					J9ArrayClass *arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(_currentThread, arrayref);
+					if (J9_IS_J9CLASS_VALUETYPE(arrayrefClass->componentType)) {
+						if (NULL == value) {
+							rc = THROW_NPE;
+							goto done;
+						}
+						if (J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
+							_objectAccessBarrier.copyObjectFieldsToFlattenedArrayElement(_currentThread, arrayrefClass, value, (J9IndexableObject *) arrayref, index);
+						} else {
+							_objectAccessBarrier.inlineIndexableObjectStoreObject(_currentThread, arrayref, index, value);
+						}
+					} else
 #endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 					{
 						_objectAccessBarrier.inlineIndexableObjectStoreObject(_currentThread, arrayref, index, value);
@@ -5955,6 +5963,9 @@ done:
 				}
 			}
 		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+done:
+#endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		return rc;
 	}
 
@@ -8523,7 +8534,7 @@ protected:
 
 public:
 
-#if ((defined(WIN32) && defined(__clang__)) || ((defined(J9VM_ARCH_X86) || defined(S390)) && defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ > 6)))))
+#if ((defined(WIN32) && defined(__clang__)) || ((defined(J9VM_ARCH_X86) || defined(S390) || defined(J9VM_ARCH_RISCV)) && defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ > 6)))))
 	/*
 	 * This method can't be 'VMINLINE' because it declares local static data
 	 * triggering a warning with GCC compilers newer than 4.6.

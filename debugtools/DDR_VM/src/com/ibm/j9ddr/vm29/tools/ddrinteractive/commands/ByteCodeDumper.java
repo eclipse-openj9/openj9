@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -171,9 +171,6 @@ public class ByteCodeDumper {
 		UDATA start;
 		UDATA pc;
 		UDATA bc;
-		I32 low;
-		I32 high;
-		U32 npairs;
 		J9ROMMethodPointer romMethod = (J9ROMMethodPointer.cast(bytecodes.sub(J9ROMMethod.SIZEOF)));
 		U32 localsCount = new U32(ROMHelp.J9_ARG_COUNT_FROM_ROM_METHOD(romMethod).add(ROMHelp.J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod)));
 		int resultArray[] = new int[8192];
@@ -365,19 +362,17 @@ public class ByteCodeDumper {
 					bcIndex = bcIndex.add(padding);
 					pc = pc.add(padding);
 				}
-				index = new UDATA(_GETNEXT_U32());
-				target = start.add(index);
-				index = new UDATA(_GETNEXT_U32());
-				low = new I32(index);
-				index = new UDATA(_GETNEXT_U32());
-				high = new I32(index);
+				I32 offset = _GETNEXT_I32();
+				I32 low = _GETNEXT_I32();
+				I32 high = _GETNEXT_I32();
 				pc = pc.add(12);
+				target = start.add(offset);
 				out.append(String.format("low %d high %d\n", low.intValue(), high.intValue()));
 				out.append(String.format("        default %10d\n", target.intValue()));
-				npairs = new U32(high.sub(low).add(1));
+				I32 npairs = high.sub(low).add(1);
 				for (int i = 0; npairs.gt(i); i++) {
-					index = new UDATA(_GETNEXT_U32());
-					target = start.add(index);
+					offset = _GETNEXT_I32();
+					target = start.add(offset);
 					out.append(String.format("     %10d %10d\n", low.add(i).intValue(), target.intValue()));
 					pc = pc.add(4);
 				}
@@ -387,18 +382,17 @@ public class ByteCodeDumper {
 					bcIndex = bcIndex.add(padding);
 					pc = pc.add(padding);
 				}
-				index = new UDATA(_GETNEXT_U32());
-				target = start.add(index);
-				npairs = new U32(_GETNEXT_U32());
+				I32 offset = _GETNEXT_I32();
+				I32 npairs = _GETNEXT_I32();
+				target = start.add(offset);
 				out.append(String.format("pairs %d\n", npairs.intValue()));
 				out.append(String.format("        default %10d\n", target.intValue()));
 				pc = pc.add(8);
 				for (int i = 0; npairs.gt(i); i++) {
-					index = new UDATA(_GETNEXT_U32());
-					out.append(String.format("     %10d", index.intValue()));
-					index = new UDATA(_GETNEXT_U32());
-					target = start.add(index);
-					out.append(String.format(" %10d\n", target.intValue()));
+					I32 key = _GETNEXT_I32();
+					offset = _GETNEXT_I32();
+					target = start.add(offset);
+					out.append(String.format("     %10d %10d\n", key.intValue(), target.intValue()));
 					pc = pc.add(8);
 				}
 			} else if ((bcIntVal == JBgetstatic)
@@ -427,13 +421,13 @@ public class ByteCodeDumper {
 			} else if (bcIntVal == JBinvokedynamic) {
 				index = new UDATA(_GETNEXT_U16());
 				out.append(String.format("%d ", index.intValue()));
-				
+
 				long callSiteCount = romClass.callSiteCount().longValue();
 				SelfRelativePointer callSiteData = SelfRelativePointer.cast(romClass.callSiteData());
 				U16Pointer bsmIndices = U16Pointer.cast(callSiteData.addOffset(4*callSiteCount));
-				
+
 				nameAndSig = J9ROMNameAndSignaturePointer.cast(callSiteData.add(index).get());
-				
+
 				out.append("bsm #" + String.valueOf(bsmIndices.at(index).longValue()));	/* Bootstrap method index */
 				out.append(":");
 				out.append(J9UTF8Helper.stringValue(nameAndSig.name())); /* dump name */
@@ -566,6 +560,24 @@ public class ByteCodeDumper {
 
 	private static void incIndex() {
 		bcIndex = bcIndex.add(1);
+	}
+
+	private static I32 _GETNEXT_I32() throws CorruptDataException {
+		int a = bcIndex.at(0).intValue();
+		int b = bcIndex.at(1).intValue();
+		int c = bcIndex.at(2).intValue();
+		int d = bcIndex.at(3).intValue();
+		int value;
+
+		if (bigEndian) {
+			value = (a << 24) | (b << 16) | (c << 8) | d;
+		} else {
+			value = (d << 24) | (c << 16) | (b << 8) | a;
+		}
+
+		bcIndex = bcIndex.add(4);
+
+		return new I32(value);
 	}
 
 	private static U32 _GETNEXT_U32() throws CorruptDataException {

@@ -57,6 +57,13 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _staticMapMonitor = TR::Monitor::create("JIT-JITServerStaticMapMonitor");
    _markedForDeletion = false;
    _thunkSetMonitor = TR::Monitor::create("JIT-JITServerThunkSetMonitor");
+
+   _bClassUnloadingAttempt = false;
+   _classUnloadRWMutex = NULL;
+   if (omrthread_rwmutex_init(&_classUnloadRWMutex, 0, "JITServer class unload RWMutex"))
+      {
+      TR_ASSERT_FATAL(false, "Failed to initialize JITServer class unload RWMutex");
+      }
    }
 
 ClientSessionData::~ClientSessionData()
@@ -67,11 +74,6 @@ ClientSessionData::~ClientSessionData()
    _classChainDataMapMonitor->destroy();
    _sequencingMonitor->destroy();
    _constantPoolMapMonitor->destroy();
-   if (_unloadedClassAddresses)
-      {
-      _unloadedClassAddresses->destroy();
-      jitPersistentFree(_unloadedClassAddresses);
-      }
    _staticMapMonitor->destroy();
    if (_vmInfo)
       {
@@ -79,6 +81,9 @@ ClientSessionData::~ClientSessionData()
       jitPersistentFree(_vmInfo);
       }
    _thunkSetMonitor->destroy();
+
+   omrthread_rwmutex_destroy(_classUnloadRWMutex);
+   _classUnloadRWMutex = NULL;
    }
 
 void
@@ -88,34 +93,32 @@ ClientSessionData::updateTimeOfLastAccess()
    _timeOfLastAccess = j9time_current_time_millis();
    }
 
+// This method is called within a critical section such that no two threads can enter it concurrently
 void
-ClientSessionData::processUnloadedClasses(JITServer::ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes)
+ClientSessionData::initializeUnloadedClassAddrRanges(const std::vector<TR_AddressRange> &unloadedClassRanges, int32_t maxRanges)
    {
-   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server will process a list of %u unloaded classes for clientUID %llu", (unsigned)classes.size(), (unsigned long long)_clientUID);
+   OMR::CriticalSection getUnloadedClasses(getROMMapMonitor());
+
+   if (!_unloadedClassAddresses)
+      _unloadedClassAddresses = new (PERSISTENT_NEW) TR_AddressSet(trPersistentMemory, maxRanges);
+   _unloadedClassAddresses->setRanges(unloadedClassRanges);
+   }
+
+void
+ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes, bool updateUnloadedClasses)
+   {
+   const size_t numOfUnloadedClasses = classes.size();
+
+  if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will process a list of %zu unloaded classes for clientUID %llu", 
+         TR::compInfoPT->getCompThreadId(), numOfUnloadedClasses, (unsigned long long)_clientUID);
+
+   if (numOfUnloadedClasses > 0)
+      writeAcquireClassUnloadRWMutex(); //TODO: use RAII style to avoid problems with exceptions
+
    //Vector to hold the list of the unloaded classes and the corresponding data needed for purging the Caches
    std::vector<ClassUnloadedData> unloadedClasses;
-   unloadedClasses.reserve(classes.size());
-   bool updateUnloadedClasses = true;
-   if (_requestUnloadedClasses)
-      {
-      stream->write(JITServer::MessageType::getUnloadedClassRanges, JITServer::Void());
-
-      auto response = stream->read<std::vector<TR_AddressRange>, int32_t>();
-      auto unloadedClassRanges = std::get<0>(response);
-      auto maxRanges = std::get<1>(response);
-
-         {
-         OMR::CriticalSection getUnloadedClasses(getROMMapMonitor());
-
-         if (!_unloadedClassAddresses)
-            _unloadedClassAddresses = new (PERSISTENT_NEW) TR_AddressSet(trPersistentMemory, maxRanges);
-         _unloadedClassAddresses->setRanges(unloadedClassRanges);
-         _requestUnloadedClasses = false;
-         }
-
-      updateUnloadedClasses = false;
-      }
+   unloadedClasses.reserve(numOfUnloadedClasses);
       {
       OMR::CriticalSection processUnloadedClasses(getROMMapMonitor());
 
@@ -192,6 +195,9 @@ ClientSessionData::processUnloadedClasses(JITServer::ServerStream *stream, const
    OMR::CriticalSection constantPoolToClassMap(getConstantPoolMonitor());
    purgeCache(&unloadedClasses, getConstantPoolToClassMap(), &ClassUnloadedData::_cp);
    }
+
+   if (numOfUnloadedClasses > 0)
+      writeReleaseClassUnloadRWMutex();
    }
 
 TR_IPBytecodeHashTableEntry*
@@ -395,6 +401,15 @@ ClientSessionData::clearCaches()
       _classByNameMap.clear();
       }
    OMR::CriticalSection getRemoteROMClass(getROMMapMonitor());
+
+   if (_unloadedClassAddresses)
+      {
+      _unloadedClassAddresses->destroy();
+      jitPersistentFree(_unloadedClassAddresses);
+      _unloadedClassAddresses = NULL;
+      }
+  _requestUnloadedClasses = true;
+
    // Free memory for all hashtables with IProfiler info
    for (auto& it : _J9MethodMap)
       {
@@ -431,9 +446,9 @@ ClientSessionData::clearCaches()
       jitPersistentFree(classInfo);
       }
    _chTableClassMap.clear();
-   _requestUnloadedClasses = true;
    _registeredJ2IThunksMap.clear();
    _registeredInvokeExactJ2IThunksSet.clear();
+   _bClassUnloadingAttempt = false;
    }
 
 void
@@ -555,6 +570,31 @@ void ClientSessionData::purgeCache(std::vector<ClassUnloadedData> *unloadedClass
       }
    }
 
+void
+ClientSessionData::readAcquireClassUnloadRWMutex()
+   {
+   omrthread_rwmutex_enter_read(_classUnloadRWMutex);
+   }
+
+void
+ClientSessionData::readReleaseClassUnloadRWMutex()
+   {
+   omrthread_rwmutex_exit_read(_classUnloadRWMutex);
+   }
+
+void
+ClientSessionData::writeAcquireClassUnloadRWMutex()
+   {
+    _bClassUnloadingAttempt = true;
+   omrthread_rwmutex_enter_write(_classUnloadRWMutex);
+   }
+
+void
+ClientSessionData::writeReleaseClassUnloadRWMutex()
+   {
+   _bClassUnloadingAttempt = false;
+   omrthread_rwmutex_exit_write(_classUnloadRWMutex);
+   }
 
 ClientSessionHT*
 ClientSessionHT::allocate()

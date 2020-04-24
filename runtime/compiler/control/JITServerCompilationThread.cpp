@@ -287,23 +287,25 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    ClientSessionData *clientSession = NULL;
    try
       {
-      auto req = stream->readCompileRequest<uint64_t, uint32_t, J9Method *, J9Class*, TR_OptimizationPlan, std::string,
-         J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>,
-         JITServerHelpers::ClassInfoTuple, std::string, std::string, uint32_t, bool>();
+      auto req = stream->readCompileRequest<uint64_t, uint32_t, uint32_t, J9Method *, J9Class*, TR_OptimizationPlan, 
+         std::string, J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>, 
+         JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string, bool>();
 
       clientId                           = std::get<0>(req);
-      uint32_t romMethodOffset           = std::get<1>(req);
-      J9Method *ramMethod                = std::get<2>(req);
-      J9Class *clazz                     = std::get<3>(req);
-      TR_OptimizationPlan clientOptPlan  = std::get<4>(req);
-      std::string detailsStr             = std::get<5>(req);
-      auto detailsType                   = std::get<6>(req);
-      auto &unloadedClasses              = std::get<7>(req);
-      auto &classInfoTuple               = std::get<8>(req);
-      std::string clientOptStr           = std::get<9>(req);
-      std::string recompInfoStr          = std::get<10>(req);
-      seqNo                              = std::get<11>(req); // Sequence number at the client
-      useAotCompilation                  = std::get<12>(req);
+      seqNo                              = std::get<1>(req); // Sequence number at the client
+      uint32_t romMethodOffset           = std::get<2>(req);
+      J9Method *ramMethod                = std::get<3>(req);
+      J9Class *clazz                     = std::get<4>(req);
+      TR_OptimizationPlan clientOptPlan  = std::get<5>(req);
+      std::string detailsStr             = std::get<6>(req);
+      auto detailsType                   = std::get<7>(req);
+      auto &unloadedClasses              = std::get<8>(req);
+      auto &classInfoTuple               = std::get<9>(req);
+      std::string clientOptStr           = std::get<10>(req);
+      std::string recompInfoStr          = std::get<11>(req);
+      const std::string &chtableUnloads  = std::get<12>(req);
+      const std::string &chtableMods     = std::get<13>(req);
+      useAotCompilation                  = std::get<14>(req);
 
       if (useAotCompilation)
          {
@@ -373,28 +375,60 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       clientSession->getSequencingMonitor()->exit();
 
       // At this point I know that all preceeding requests have been processed
-      // Free data for all classes that were unloaded for this sequence number
-      // Redefined classes are marked as unloaded, since they need to be cleared
-      // from the ROM class cache.
-      clientSession->processUnloadedClasses(stream, unloadedClasses); // this locks getROMMapMonitor()
-
-      auto chTable = (JITServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
-      // TODO: is chTable always non-null?
-      // TODO: we could send JVM info that is global and does not change together with CHTable
-      // The following will acquire CHTable monitor and VMAccess, send a message and then release them
-      bool initialized = chTable->initializeIfNeeded(_vm);
-
-      // A thread that initialized the CHTable does not have to apply the incremental update
-      if (!initialized)
+      // and only one thread can ever be present in this section
+      if (!clientSession->cachesAreCleared())
          {
+         // Free data for all classes that were unloaded for this sequence number
+         // Redefined classes are marked as unloaded, since they need to be cleared
+         // from the ROM class cache.
+         if (unloadedClasses.empty())
+            {
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d has no class to unload for clientUID %llu", 
+                  getCompThreadId(), (unsigned long long)clientId);
+            }
+          else
+            {
+            clientSession->processUnloadedClasses(unloadedClasses, true); // this locks getROMMapMonitor()
+            }
+
          // Process the CHTable updates in order
-         stream->write(JITServer::MessageType::CHTable_getClassInfoUpdates, JITServer::Void());
-         auto recv = stream->read<std::string, std::string>();
-         const std::string &chtableUnloads = std::get<0>(recv);
-         const std::string &chtableMods = std::get<1>(recv);
          // Note that applying the updates will acquire the CHTable monitor and VMAccess
+         auto chTable = (JITServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+         TR_ASSERT_FATAL(chTable->isInitialized() || (chtableUnloads.empty() && chtableMods.empty()), 
+                         "CHTable must have been initialized for clientUID=%llu", (unsigned long long)clientId);
          if (!chtableUnloads.empty() || !chtableMods.empty())
             chTable->doUpdate(_vm, chtableUnloads, chtableMods);
+         }
+      else // Internal caches are empty
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will ask for address ranges of unloaded classes and CHTable for clientUID %llu", 
+               getCompThreadId(), (unsigned long long)clientId);
+         stream->write(JITServer::MessageType::getUnloadedClassRangesAndCHTable, JITServer::Void());
+         auto response = stream->read<std::vector<TR_AddressRange>, int32_t, std::string>();
+         // TODO: we could send JVM info that is global and does not change together with CHTable
+         auto &unloadedClassRanges = std::get<0>(response);
+         auto maxRanges = std::get<1>(response);
+         std::string &serializedCHTable = std::get<2>(response);
+
+         clientSession->initializeUnloadedClassAddrRanges(unloadedClassRanges, maxRanges);
+         if (!unloadedClasses.empty())
+            {
+            // This function updates multiple caches based on the newly unloaded classes list. 
+            // Pass `false` here to indicate that we want the unloaded class ranges table cache excluded,
+            // since we just retrieved the entire table and it should therefore already be up to date.
+            clientSession->processUnloadedClasses(unloadedClasses, false);
+            }
+
+         auto chTable = (JITServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+         // Need CHTable mutex
+         TR_ASSERT_FATAL(!chTable->isInitialized(), "CHTable must be empty for clientUID=%llu", (unsigned long long)clientId);
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will initialize CHTable for clientUID %llu size=%zu", 
+               getCompThreadId(), (unsigned long long)clientId, serializedCHTable.size());
+         chTable->initializeCHTable(_vm, serializedCHTable);
+         clientSession->setCachesAreCleared(false);
          }
 
       clientSession->getSequencingMonitor()->enter();
@@ -534,9 +568,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             getCompThreadId(), e.what());
 
       abortCompilation = true;
-      // If the client aborted this compilation it could have happened only while
-      // asking for CHTable updates and at that point the seqNo was not updated.
-      // We must update it now to allow for blocking threads to pass through.
+      // If the client aborted this compilation it could have happened only while asking for entire 
+      // CHTable and unloaded class address ranges and at that point the seqNo was not updated.
+      // We must update seqNo now to allow for blocking threads to pass through.
       clientSession->getSequencingMonitor()->enter();
       TR_ASSERT(seqNo == clientSession->getExpectedSeqNo(), "Unexpected seqNo");
       updateSeqNo(clientSession);
@@ -632,7 +666,14 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 #endif
    // The following call will return with compilation monitor in hand
    //
+   stream->setClientData(clientSession);
+   getClientData()->readAcquireClassUnloadRWMutex();
+
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
+
+   getClientData()->readReleaseClassUnloadRWMutex();
+   stream->setClientData(NULL);
+
    if (entry._compErrCode == compilationStreamFailure)
       {
       if (!enableJITServerPerCompConn)

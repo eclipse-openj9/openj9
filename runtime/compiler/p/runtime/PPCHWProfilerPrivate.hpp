@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,6 +178,7 @@ extern "C" void ebbHandler(void);
 #define BHRBE_T_MASK    2L
 #define BHRBE_POWER_MASK    1L
 
+/* Any changes to MTSPR should be copied to runtime/port/linuxppc/j9ri.c. */
 #if defined(__xlC__) || defined(__ibmxl__)
 #define MTSPR(spr, src)         __mtspr(spr, src)
 #define MFSPR(dst, spr)         ((dst) = __mfspr(spr))
@@ -508,4 +509,3 @@ extern "C" UDATA
 updateJITRuntimeInstrumentationFlags(J9VMThread *targetThread, UDATA newFlags);
 
 #endif /* PPCHWPROFILERPRIVATE_INCL */
-

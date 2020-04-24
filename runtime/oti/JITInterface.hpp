@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -123,6 +123,49 @@ typedef struct {
 	U_64 fpr[32];
 } J9JITRegisters;
 
+#elif defined(J9VM_ARCH_RISCV)
+
+typedef struct {
+	union {
+		UDATA numbered[32];
+		struct {
+			UDATA PC;
+			UDATA RA;
+			UDATA SP;
+			UDATA GP;
+			UDATA TP;
+			UDATA T0;
+			UDATA T1;
+			UDATA T2;
+			UDATA S0;
+			UDATA S1;
+			UDATA A0;
+			UDATA A1;
+			UDATA A2;
+			UDATA A3;
+			UDATA A4;
+			UDATA A5;
+			UDATA A6;
+			UDATA A7;
+			UDATA S2;
+			UDATA S3;
+			UDATA S4;
+			UDATA S5;
+			UDATA S6;
+			UDATA S7;
+			UDATA S8;
+			UDATA S9;
+			UDATA S10;
+			UDATA S11;
+			UDATA T3;
+			UDATA T4;
+			UDATA T5;
+			UDATA T6;
+		} named;
+	} gpr;
+	U_64 fpr[32];
+} J9JITRegisters;
+
 #else
 #error UNKNOWN PROCESSOR
 #endif
@@ -216,6 +259,8 @@ public:
 		}
 #elif defined(J9VM_ARCH_S390)
 		/* The vtable index is always in the register */
+#elif defined(J9VM_ARCH_RISCV)
+		/* To be implmeneted in JIT */
 #else
 #error UNKNOWN PROCESSOR
 #endif
@@ -235,6 +280,8 @@ public:
 		return (void*)((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->gpr.numbered[30]; // LR
 #elif defined(J9VM_ARCH_S390)
 		return (void*)((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->gpr.numbered[14];
+#elif defined(J9VM_ARCH_RISCV)
+		return (void*)((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->gpr.named.RA;
 #else
 #error UNKNOWN PROCESSOR
 #endif
@@ -253,6 +300,8 @@ public:
 		((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->gpr.numbered[30] = (UDATA)returnAddress; // LR
 #elif defined(J9VM_ARCH_S390)
 		((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->gpr.numbered[14] = (UDATA)returnAddress;
+#elif defined(J9VM_ARCH_RISCV)
+		((J9JITRegisters*)vmThread->entryLocalStorage->jitGlobalStorageBase)->gpr.named.RA = (UDATA)returnAddress;
 #else
 #error UNKNOWN PROCESSOR
 #endif

@@ -184,8 +184,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->writeError(JITServer::MessageType::compilationInterrupted, 0 /* placeholder */);
 
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in handleServerMessage of %s @ %s", 
-                                                          interruptReason, comp->signature(), comp->getHotnessName());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in handleServerMessage(%s) for %s @ %s",
+                                                          interruptReason, JITServer::messageNames[response], comp->signature(), comp->getHotnessName());
+
       comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
       }
 
@@ -199,7 +200,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          done = true;
          break;
 
-      case MessageType::getUnloadedClassRanges:
+      case MessageType::getUnloadedClassRangesAndCHTable:
          {
          auto unloadedClasses = comp->getPersistentInfo()->getUnloadedClassAddresses();
          std::vector<TR_AddressRange> ranges;
@@ -208,7 +209,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             OMR::CriticalSection getAddressSetRanges(assumptionTableMutex);
             unloadedClasses->getRanges(ranges);
             }
-         client->write(response, ranges, unloadedClasses->getMaxRanges());
+         // Add the entire CHTable as well
+         auto table = (JITClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
+         std::string encoded = FlatPersistentClassInfo::serializeHierarchy(table);
+
+         client->write(response, ranges, unloadedClasses->getMaxRanges(), encoded);
          break;
          }
 
@@ -3134,8 +3139,8 @@ remoteCompile(
    std::vector<TR_OpaqueClassBlock*> unloadedClasses(compInfo->getUnloadedClassesTempList()->begin(), compInfo->getUnloadedClassesTempList()->end());
    compInfo->getUnloadedClassesTempList()->clear();
    // Collect and encode the CHTable updates; this will acquire CHTable mutex
-   //auto table = (JITClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
-   //std::pair<std::string, std::string> chtableUpdates = table->serializeUpdates();
+   auto table = (JITClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+   std::pair<std::string, std::string> chtableUpdates = table->serializeUpdates();
    // Update the sequence number for these updates
    uint32_t seqNo = compInfo->getCompReqSeqNo();
    compInfo->incCompReqSeqNo();
@@ -3163,10 +3168,10 @@ remoteCompile(
             "Client sending compReq seqNo=%u to server for method %s @ %s.",
             seqNo, compiler->signature(), compiler->getHotnessName());
          }
-      client->buildCompileRequest(TR::comp()->getPersistentInfo()->getClientUID(), romMethodOffset,
-                                 method, clazz, *compInfoPT->getMethodBeingCompiled()->_optimizationPlan, detailsStr, details.getType(), unloadedClasses,
-                                 classInfoTuple, optionsStr, recompMethodInfoStr, seqNo, useAotCompilation);
-
+      client->buildCompileRequest(TR::comp()->getPersistentInfo()->getClientUID(), seqNo, romMethodOffset, method,
+                                  clazz, *compInfoPT->getMethodBeingCompiled()->_optimizationPlan, detailsStr,
+                                  details.getType(), unloadedClasses, classInfoTuple, optionsStr, recompMethodInfoStr,
+                                  chtableUpdates.first, chtableUpdates.second, useAotCompilation);
       JITServer::MessageType response;
       while(!handleServerMessage(client, compiler->fej9vm(), response));
 

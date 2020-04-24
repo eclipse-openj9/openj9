@@ -266,6 +266,10 @@ class PrivateLinkage : public J9::PrivateLinkage
     */
    TR::Instruction *_jittedMethodEntryPoint;
 
+   private:
+
+   // Tactical GRA
+   static uint32_t _globalRegisterNumberToRealRegisterMap[];
    };
 
 

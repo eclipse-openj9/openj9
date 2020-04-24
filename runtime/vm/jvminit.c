@@ -2072,7 +2072,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			 */
 			if (J9_ARE_ANY_BITS_SET(vm->vmRuntimeStateListener.idleTuningFlags, J9_IDLE_TUNING_GC_ON_IDLE | J9_IDLE_TUNING_COMPACT_ON_IDLE)) {
 				BOOLEAN idleGCTuningSupported = FALSE;
-#if (defined(LINUX) && (defined(J9HAMMER) || defined(J9X86) || defined(S39064) || defined(PPC64))) || defined(J9ZOS39064)
+#if (defined(LINUX) && (defined(J9HAMMER) || defined(J9X86) || defined(S39064) || defined(PPC64) || defined(RISCV64))) || defined(J9ZOS39064)
 				/* & only for gencon GC policy */
 				if (J9_GC_POLICY_GENCON == ((OMR_VM *)vm->omrVM)->gcPolicy) {
 					idleGCTuningSupported = TRUE;
@@ -2445,21 +2445,21 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DEBUG_MODE)) {
 				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-					vm->bytecodeLoop = (void*)debugBytecodeLoopCompressed;
+					vm->bytecodeLoop = debugBytecodeLoopCompressed;
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 				} else {
 #if defined(OMR_GC_FULL_POINTERS)
-					vm->bytecodeLoop = (void*)debugBytecodeLoopFull;
+					vm->bytecodeLoop = debugBytecodeLoopFull;
 #endif /* OMR_GC_FULL_POINTERS */
 				}
 			} else {
 				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-					vm->bytecodeLoop = (void*)bytecodeLoopCompressed;
+					vm->bytecodeLoop = bytecodeLoopCompressed;
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 				} else {
 #if defined(OMR_GC_FULL_POINTERS)
-					vm->bytecodeLoop = (void*)bytecodeLoopFull;
+					vm->bytecodeLoop = bytecodeLoopFull;
 #endif /* OMR_GC_FULL_POINTERS */
 				}
 			}
@@ -2820,6 +2820,14 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 			}
 		}
 	}
+
+	/* Temporarily disable JIT/AOT until it is fully implemented */
+#if defined(RISCV64)
+	xint = TRUE;
+	xjit = FALSE;
+	xaot = FALSE;
+	xnoaot = FALSE;
+#endif
 
 	if (xint) {
 		JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "-Xint set\n");

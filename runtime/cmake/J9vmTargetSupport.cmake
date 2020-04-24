@@ -20,6 +20,17 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-if(OMR_TOOLCONFIG STREQUAL "GNU")
-    add_definitions(-DOMR_ENV_GCC)
-endif()
+include(OmrTargetSupport)
+
+# Currently j9vm_add_library and j9vm_add_executable just call
+# omr_add_library and omr_add_executable, but have them so that we can add
+# functionality in the future, without having to hunt down all the 
+# add_library/add_executable calls.
+
+function(j9vm_add_library name)
+	omr_add_library("${name}" ${ARGN})
+endfunction()
+
+function(j9vm_add_executable name)
+	omr_add_executable("${name}" ${ARGN})
+endfunction()

@@ -927,6 +927,8 @@ getj9bin()
 #define JVM_ARCH_DIR "arm"
 #elif defined(J9AARCH64)
 #define JVM_ARCH_DIR "aarch64"
+#elif defined(RISCV64)
+#define JVM_ARCH_DIR "riscv64"
 #else
 #error "Must define an architecture"
 #endif

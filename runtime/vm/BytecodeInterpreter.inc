@@ -37,6 +37,8 @@
 #define USE_COMPUTED_GOTO
 #elif (defined(LINUX) && defined(J9HAMMER))
 #define USE_COMPUTED_GOTO
+#elif (defined(LINUX) && defined(__riscv))
+#define USE_COMPUTED_GOTO
 #elif (defined(LINUX) && defined(S390) && (__GNUC__ >= 7))
 #define USE_COMPUTED_GOTO
 #elif defined(OSX)

@@ -2183,7 +2183,7 @@ j9sysinfo_test_get_l1dcache_line_size(struct J9PortLibrary *portLibrary)
 	cQuery.level = 1;
 	cQuery.cacheType = J9PORT_CACHEINFO_DCACHE;
 	rc = j9sysinfo_get_cache_info(&cQuery);
-#if !(defined(J9ARM))
+#if !(defined(J9ARM) || defined(RISCV64))
 	if (rc < 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9sysinfo_get_cache_info returned %d\n", rc);
 	} else {
@@ -2199,13 +2199,13 @@ j9sysinfo_test_get_l1dcache_line_size(struct J9PortLibrary *portLibrary)
 					l1DcacheSize, rc);
 		}
 	}
-#else /*!(defined(J9ARM))*/
+#else /* !(defined(J9ARM) || defined(RISCV64)) */
 	outputComment(PORTLIB, "j9sysinfo_get_cache_info is not supported on this platform\n");
 	if (J9PORT_ERROR_SYSINFO_NOT_SUPPORTED != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9sysinfo_get_cache_info should have returned %d but returned %d\n", 
 			J9PORT_ERROR_SYSINFO_NOT_SUPPORTED, rc);
 	}
-#endif /*!(defined(J9ARM))*/
+#endif /* !(defined(J9ARM) || defined(RISCV64)) */
 
 	return reportTestExit(portLibrary, testName);
 }
@@ -2273,9 +2273,9 @@ j9sysinfo_runTests(struct J9PortLibrary *portLibrary, char *argv0)
 	rc |= j9sysinfo_test_get_groups(portLibrary);
 #endif /* !(defined(WIN32) || defined(WIN64)) */
 	rc |= j9sysinfo_test_get_l1dcache_line_size(portLibrary);
-#if !(defined(LINUXPPC) || defined(S390) || defined(J9ZOS390) || defined(J9ARM) || defined(J9AARCH64) || defined(OSX))
+#if !(defined(LINUXPPC) || defined(S390) || defined(J9ZOS390) || defined(J9ARM) || defined(J9AARCH64) || defined(RISCV64) || defined(OSX))
 	rc |= j9sysinfo_test_get_levels_and_types(portLibrary);
-#endif /* !(defined(LINUXPPC) || defined(S390) || defined(J9ZOS390) || defined(J9ARM) || defined(J9AARCH64) || defined(OSX)) */
+#endif /* !(defined(LINUXPPC) || defined(S390) || defined(J9ZOS390) || defined(J9ARM) || defined(J9AARCH64) || defined(RISCV64) || defined(OSX)) */
 #if defined(LINUX) || defined(AIXPPC)
 	/* Not supported on Z & OSX (and Windows, of course).  Enable, when available. */
 	rc |= j9sysinfo_test_get_open_file_count(portLibrary);

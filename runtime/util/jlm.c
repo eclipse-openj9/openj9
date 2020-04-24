@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -183,7 +183,7 @@ request_MonitorJlmDump(jvmtiEnv * env, J9VMJlmDump * jlmd, jint dump_format)
 			if (dump_format == COM_IBM_JLM_DUMP_FORMAT_TAGS) {
 				jlong tag = 0;
 					if (monitor->flags & J9THREAD_MONITOR_OBJECT) {
-					j9object_t object = J9MONITORTABLE_OBJECT_LOAD(vmThread, &monitor->userData);
+					j9object_t object = J9WEAKROOT_OBJECT_LOAD(vmThread, &monitor->userData);
 						/* Similar to jvmtiGetTag code, but with object being of object_t type */
 						if (object != NULL) {							
 						J9JVMTIObjectTag   entry;
@@ -314,7 +314,7 @@ GetMonitorName(J9VMThread *vmThread, J9ThreadAbstractMonitor *monitor, char *nam
 	PORT_ACCESS_FROM_VMC(vmThread);
 
 	if (monitor->flags & J9THREAD_MONITOR_OBJECT ) {
-		j9object_t object = J9MONITORTABLE_OBJECT_LOAD(vmThread, &monitor->userData);
+		j9object_t object = J9WEAKROOT_OBJECT_LOAD(vmThread, &monitor->userData);
 		J9Class *clazz;
 		char* objType;
 		J9ROMClass *romClass;

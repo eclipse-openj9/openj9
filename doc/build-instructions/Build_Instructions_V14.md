@@ -195,20 +195,20 @@ make all
 
 A binary for the full developer kit (jdk) is built and stored in the following directory:
 
-- **build/linux-x86_64-normal-server-release/images/jdk**
+- **build/linux-x86_64-server-release/images/jdk**
 
     :whale: If you built your binaries in a Docker container, copy the binaries to the containers **/root/hostdir** directory so that you can access them on your local system. You'll find them in the directory you set for `<host_directory>` when you started your Docker container. See [Setting up your build environment with Docker](#setting-up-your-build-environment-with-docker).
 
-    :pencil: On other architectures the **/jdk** directory is in **build/linux-ppc64le-normal-server-release/images** (Linux on 64-bit Power systems) and **build/linux-s390x-normal-server-release/images** (Linux on 64-bit z Systems).
+    :pencil: On other architectures the **/jdk** directory is in **build/linux-ppc64le-server-release/images** (Linux on 64-bit Power systems) and **build/linux-s390x-server-release/images** (Linux on 64-bit z Systems).
 
-    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/linux-x86_64-normal-server-release/images/jre** directory.
+    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/linux-x86_64-server-release/images/jre** directory.
 
 ### 5. Test
 :penguin:
 For a simple test, try running the `java -version` command.
 Change to the /jdk directory:
 ```
-cd build/linux-x86_64-normal-server-release/images/jdk
+cd build/linux-x86_64-server-release/images/jdk
 ```
 Run:
 ```
@@ -322,16 +322,16 @@ make all
 
 A binary for the full developer kit (jdk) is built and stored in the following directory:
 
-- **build/aix-ppc64-normal-server-release/images/jdk**
+- **build/aix-ppc64-server-release/images/jdk**
 
-    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/aix-ppc64-normal-server-release/images/jre** directory.
+    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/aix-ppc64-server-release/images/jre** directory.
 
 ### 5. Test
 :blue_book:
 For a simple test, try running the `java -version` command.
 Change to the /jdk directory:
 ```
-cd build/aix-ppc64-normal-server-release/images/jdk
+cd build/aix-ppc64-server-release/images/jdk
 ```
 Run:
 ```
@@ -465,16 +465,16 @@ make all
 
 A binary for the full developer kit (jdk) is built and stored in the following directory:
 
-- **build/windows-x86_64-normal-server-release/images/jdk**
+- **build/windows-x86_64-server-release/images/jdk**
 
-    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/windows-x86_64-normal-server-release/images/jre** directory.
+    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/windows-x86_64-server-release/images/jre** directory.
 
 ### 5. Test
 :ledger:
 For a simple test, try running the `java -version` command.
 Change to the /jdk directory:
 ```
-cd build/windows-x86_64-normal-server-release/images/jdk
+cd build/windows-x86_64-server-release/images/jdk
 ```
 Run:
 ```
@@ -600,19 +600,19 @@ make all
 
 Two builds of OpenJDK with Eclipse OpenJ9 are built and stored in the following directories:
 
-- **build/macos-x86_64-normal-server-release/images/jdk**
-- **build/macos-x86_64-normal-server-release/images/jdk-bundle**
+- **build/macos-x86_64-server-release/images/jdk**
+- **build/macos-x86_64-server-release/images/jdk-bundle**
 
     :pencil: For running applications such as Eclipse, use the **-bundle** version.
 
-    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/macos-x86_64-normal-server-release/images/jre** directory.
+    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/macos-x86_64-server-release/images/jre** directory.
 
 ### 5. Test
 :apple:
 For a simple test, try running the `java -version` command.
 Change to the /jdk directory:
 ```
-cd build/macos-x86_64-normal-server-release/images/jdk
+cd build/macos-x86_64-server-release/images/jdk
 ```
 Run:
 ```

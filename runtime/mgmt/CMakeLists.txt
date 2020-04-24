@@ -22,7 +22,7 @@
 
 set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_OLD_SHARED_SUFFIX})
 
-add_library(management_ext SHARED
+j9vm_add_library(management_ext SHARED
 	mgmtinit.c
 )
 

@@ -672,7 +672,22 @@ public class ValueTypeTests {
 			Assert.fail("should throw error. Class does not exist");
 		} catch (NoClassDefFoundError e) {}
 	}
+	
+	@Test(priority=4)
+	static public void testNullWritesOnNonNullableArrays() throws Throwable {
+		Object arrayObject = Array.newInstance(point2DClass, 3);
+		try {
+			Array.set(arrayObject, 1, null);
+			Assert.fail("Should throw NPE. Cant write null to arrays of valuetypes");
+		} catch(NullPointerException e) {}
 
+		Object arrayObject2 = Array.newInstance(String.class, 3);
+		try {
+			Array.set(arrayObject2, 1, null);
+		} catch(NullPointerException e) {
+			Assert.fail("Should not throw NPE. Can write null to arrays of identity types");
+		}
+	}
 	
 	@Test(priority=2)
 	static public void testBasicACMPTestOnIdentityTypes() throws Throwable {

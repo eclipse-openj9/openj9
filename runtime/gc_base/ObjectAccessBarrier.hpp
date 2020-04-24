@@ -262,8 +262,8 @@ public:
 
 	virtual bool preObjectRead(J9VMThread *vmThread, J9Object *srcObject, fj9object_t *srcAddress);
 	virtual bool preObjectRead(J9VMThread *vmThread, J9Class *srcClass, j9object_t *srcAddress);
-	virtual bool preMonitorTableSlotRead(J9VMThread *vmThread, j9object_t *srcAddress);
-	virtual bool preMonitorTableSlotRead(J9JavaVM *vm, j9object_t *srcAddress);
+	virtual bool preWeakRootSlotRead(J9VMThread *vmThread, j9object_t *srcAddress);
+	virtual bool preWeakRootSlotRead(J9JavaVM *vm, j9object_t *srcAddress);
 	virtual bool postObjectRead(J9VMThread *vmThread, J9Object *srcObject, fj9object_t *srcAddress);
 	virtual bool postObjectRead(J9VMThread *vmThread, J9Class *srcClass, J9Object **srcAddress);
 

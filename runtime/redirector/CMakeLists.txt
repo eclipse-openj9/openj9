@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@ set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/generated.c" PROPERTIES
 ################################################################################
 # Redirector
 ################################################################################
-add_library(jvm_redirect SHARED
+j9vm_add_library(jvm_redirect SHARED
 	"${CMAKE_CURRENT_BINARY_DIR}/generated.c"
 	redirector.c
 )

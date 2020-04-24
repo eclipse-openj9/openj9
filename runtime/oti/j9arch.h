@@ -51,6 +51,8 @@ extern "C" {
 #define OPENJ9_ARCH_DIR "arm"
 #elif defined(J9AARCH64)
 #define OPENJ9_ARCH_DIR "aarch64"
+#elif defined(RISCV64)
+#define OPENJ9_ARCH_DIR "riscv64"
 #else
 #error "Must define an architecture"
 #endif

@@ -72,13 +72,13 @@
 
 J9::CodeGenerator::CodeGenerator() :
       OMR::CodeGeneratorConnector(),
-   _gpuSymbolMap(self()->comp()->allocator()),
-   _stackLimitOffsetInMetaData(self()->comp()->fej9()->thisThreadGetStackLimitOffset()),
-   _uncommonedNodes(self()->comp()->trMemory(), stackAlloc),
+   _gpuSymbolMap(TR::comp()->allocator()),
+   _stackLimitOffsetInMetaData(TR::comp()->fej9()->thisThreadGetStackLimitOffset()),
+   _uncommonedNodes(TR::comp()->trMemory(), stackAlloc),
    _liveMonitors(NULL),
    _nodesSpineCheckedList(getTypedAllocator<TR::Node*>(TR::comp()->allocator())),
    _jniCallSites(getTypedAllocator<TR_Pair<TR_ResolvedMethod,TR::Instruction> *>(TR::comp()->allocator())),
-   _monitorMapping(self()->comp()->trMemory(), 256),
+   _monitorMapping(std::less<ncount_t>(), MonitorMapAllocator(TR::comp()->trMemory()->heapMemoryRegion())),
    _dummyTempStorageRefNode(NULL)
    {
    }
@@ -163,7 +163,7 @@ static TR::Node *lowerCASValues(
 //    luaddh
 //      xh
 //      yh
-//      luadd
+//      ladd
 //        xl
 //        yl
 //        ==> luaddh             <=== replace dummy node with this third child to complete cycle
@@ -521,10 +521,10 @@ J9::CodeGenerator::lowerCompressedRefs(
       }
    }
 
-bool 
-J9::CodeGenerator::supportVMInternalNatives() 
-   { 
-   return !self()->comp()->compileRelocatableCode(); 
+bool
+J9::CodeGenerator::supportVMInternalNatives()
+   {
+   return !self()->comp()->compileRelocatableCode();
    }
 
 // J9
@@ -1070,10 +1070,8 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       TR_OpaqueClassBlock * monClass = node->getMonitorClass(self()->comp()->getCurrentMethod());
       if (monClass)
          self()->addMonClass(node, monClass);
-
-      // Clear the hidden second child that may be used by code generation
-      //
-      node->setMonitorInfo(0);
+      //Clear the hidden second child that may be used by code generation
+      node->setMonitorClassInNode(NULL);
       }
 
 
@@ -2737,7 +2735,7 @@ J9::CodeGenerator::processRelocations()
 
 #if defined(J9VM_OPT_JITSERVER)
    if (self()->comp()->compileRelocatableCode() || self()->comp()->isOutOfProcessCompilation())
-#else   
+#else
    if (self()->comp()->compileRelocatableCode())
 #endif /* defined(J9VM_OPT_JITSERVER) */
       {
@@ -4655,7 +4653,7 @@ J9::CodeGenerator::registerAssumptions()
          {
          // For JITServer we need to build a list of assumptions that will be sent to client at end of compilation
          intptr_t offset = i->getBinaryEncoding() - self()->getBinaryBufferStart();
-         SerializedRuntimeAssumption* sar = 
+         SerializedRuntimeAssumption* sar =
             new (self()->trHeapMemory()) SerializedRuntimeAssumption(RuntimeAssumptionOnRegisterNative, (uintptr_t)method, offset);
          self()->comp()->getSerializedRuntimeAssumptions().push_front(sar);
          }
@@ -4674,7 +4672,7 @@ J9::CodeGenerator::jitAddPicToPatchOnClassUnload(void *classPointer, void *addre
    if (self()->comp()->isOutOfProcessCompilation())
       {
       intptr_t offset = (uint8_t*)addressToBePatched - self()->getBinaryBufferStart();
-      SerializedRuntimeAssumption* sar = 
+      SerializedRuntimeAssumption* sar =
          new (self()->trHeapMemory()) SerializedRuntimeAssumption(RuntimeAssumptionOnClassUnload, (uintptr_t)classPointer, offset, sizeof(uintptr_t));
       self()->comp()->getSerializedRuntimeAssumptions().push_front(sar);
       }
@@ -4693,7 +4691,7 @@ J9::CodeGenerator::jitAdd32BitPicToPatchOnClassUnload(void *classPointer, void *
    if (self()->comp()->isOutOfProcessCompilation())
       {
       intptr_t offset = (uint8_t*)addressToBePatched - self()->getBinaryBufferStart();
-      SerializedRuntimeAssumption* sar = 
+      SerializedRuntimeAssumption* sar =
          new (self()->trHeapMemory()) SerializedRuntimeAssumption(RuntimeAssumptionOnClassUnload, (uintptr_t)classPointer, offset, 4);
       self()->comp()->getSerializedRuntimeAssumptions().push_front(sar);
       }
@@ -4716,7 +4714,7 @@ J9::CodeGenerator::jitAddPicToPatchOnClassRedefinition(void *classPointer, void 
          TR_RuntimeAssumptionKind kind = unresolved ? RuntimeAssumptionOnClassRedefinitionUPIC : RuntimeAssumptionOnClassRedefinitionPIC;
          uintptr_t key = unresolved ? (uintptr_t)-1 : (uintptr_t)classPointer;
          intptr_t offset = (uint8_t*)addressToBePatched - self()->getBinaryBufferStart();
-         SerializedRuntimeAssumption* sar = 
+         SerializedRuntimeAssumption* sar =
             new (self()->trHeapMemory()) SerializedRuntimeAssumption(kind, key, offset, sizeof(uintptr_t));
          self()->comp()->getSerializedRuntimeAssumptions().push_front(sar);
          }
@@ -4740,7 +4738,7 @@ J9::CodeGenerator::jitAdd32BitPicToPatchOnClassRedefinition(void *classPointer, 
          TR_RuntimeAssumptionKind kind = unresolved ? RuntimeAssumptionOnClassRedefinitionUPIC : RuntimeAssumptionOnClassRedefinitionPIC;
          uintptr_t key = unresolved ? (uintptr_t)-1 : (uintptr_t)classPointer;
          intptr_t offset = (uint8_t*)addressToBePatched - self()->getBinaryBufferStart();
-         SerializedRuntimeAssumption* sar = 
+         SerializedRuntimeAssumption* sar =
             new (self()->trHeapMemory()) SerializedRuntimeAssumption(kind, key, offset, 4);
          self()->comp()->getSerializedRuntimeAssumptions().push_front(sar);
          }
@@ -4980,15 +4978,35 @@ J9::CodeGenerator::generatePoisonNode(TR::Block *currentBlock, TR::SymbolReferen
 void
 J9::CodeGenerator::addMonClass(TR::Node* monNode, TR_OpaqueClassBlock* clazz)
    {
-   _monitorMapping.add(monNode);
-   _monitorMapping.add(clazz);
+   _monitorMapping[monNode->getGlobalIndex()] = clazz;
    }
 
 TR_OpaqueClassBlock *
 J9::CodeGenerator::getMonClass(TR::Node* monNode)
    {
-   for (int i = 0; i < _monitorMapping.size(); i += 2)
-      if (_monitorMapping[i] == monNode)
-         return (TR_OpaqueClassBlock *) _monitorMapping[i+1];
-   return 0;
+   auto it = _monitorMapping.find(monNode->getGlobalIndex());
+   return it != _monitorMapping.end() ? it->second : NULL;
+   }
+
+TR_YesNoMaybe
+J9::CodeGenerator::isMonitorValueType(TR::Node* monNode)
+   {
+   if (_monitorMapping.find(monNode->getGlobalIndex()) == _monitorMapping.end())
+      return TR_maybe;
+
+   TR_OpaqueClassBlock *clazz = _monitorMapping[monNode->getGlobalIndex()];
+   //java.lang.Object class is only set when monitor is java.lang.Object but not its subclass
+   if (clazz == self()->comp()->getObjectClassPointer())
+      return TR_no;
+
+   if (TR::Compiler->cls.isInterfaceClass(self()->comp(), clazz))
+      return TR_maybe;
+
+   if (TR::Compiler->cls.isAbstractClass(self()->comp(), clazz))
+      return TR_maybe;
+
+   if (TR::Compiler->cls.isValueTypeClass(clazz))
+      return TR_yes;
+
+   return TR_no;
    }

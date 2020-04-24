@@ -62,6 +62,14 @@ public:
       uint32_t _config; // includes JITServerCompatibilityFlags which must match
       MessageType _type;
       uint16_t _numDataPoints;
+
+      void init()
+         {
+         _version = 0;
+         _config = 0;
+         _type = MessageType_MAXTYPE;
+         _numDataPoints = 0;
+         }
       };
 
    /**
@@ -207,6 +215,8 @@ public:
       // These will be populated at a later time
       _buffer.reserveValue<uint32_t>(); // Reserve space for encoding the size
       _buffer.reserveValue<Message::MetaData>();
+
+      getMetaData()->init();
       }
 
    MetaData *getMetaData() const

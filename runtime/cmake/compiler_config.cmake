@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 # used by the jit components.
 
 # TODO should probably rename to j9vm_jit_defines for less ambiguity
-add_library(j9vm_compiler_defines INTERFACE)
+j9vm_add_library(j9vm_compiler_defines INTERFACE)
 
 if(OMR_ENV_DATA64)
 	target_compile_definitions(j9vm_compiler_defines INTERFACE TR_64bit TR_HOST_64BIT TR_TARGET_64BIT)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,6 +90,26 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *checkcastinstanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static void asyncGCMapCheckPatching(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol *snippetLabel);
    static void inlineRecursiveMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol *startLabel, TR::LabelSymbol *snippetLabel, TR::LabelSymbol *JITMonitorEnterSnippetLabel, TR::Register *objectReg, int lwoffset, TR::LabelSymbol *snippetRestartLabel, bool reservingLock);
+
+   /*
+   * \brief
+   *     Generates the sequence to handle cases where the monitor object is value type
+   *
+   * \param node
+   *     the monitor enter/exit node
+   *
+   * \param snippetLabel
+   *     the label for OOL code calling VM monitor enter/exit helpers
+   *
+   * \details
+   *     Call the VM helper if it's detected at runtime that the monitor object is value type.
+   *     The VM helper throws appropriate IllegalMonitorStateException.
+   *
+   * \note
+   *     This method only handles the cases where, at compile time, it's unknown whether the
+   *     object is reference type or value type.
+   */
+   static void generateCheckForValueTypeMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol *snippetLabel, TR::CodeGenerator *cg);
    static void transactionalMemoryJITMonitorEntry(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol *startLabel, TR::LabelSymbol *snippetLabel, TR::LabelSymbol *JITMonitorEnterSnippetLabel, TR::Register *objectReg, int lwoffset);
    static void generateValueTracingCode(TR::Node *node, TR::Register *vmThreadReg, TR::Register *scratchReg, TR::Register *valueRegHigh, TR::Register *valueRegLow, TR::CodeGenerator *cg);
    static void generateValueTracingCode(TR::Node *node, TR::Register *vmThreadReg, TR::Register *scratchReg, TR::Register *valueReg, TR::CodeGenerator *cg);
@@ -101,14 +121,14 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    /*
     * Generate instructions for static/instance field access report.
-    * @param dataSnippetRegister: Optional, can be used to pass the address of the snippet inside the register.  
-    */ 
+    * @param dataSnippetRegister: Optional, can be used to pass the address of the snippet inside the register.
+    */
    static void generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg, TR::Register *dataSnippetRegister);
 
    /*
     * Generates instructions to fill in the J9JITWatchedStaticFieldData.fieldAddress, J9JITWatchedStaticFieldData.fieldClass for static fields,
     * and J9JITWatchedInstanceFieldData.offset for instance fields at runtime. Used for fieldwatch support.
-    * @param dataSnippetRegister: Optional, can be used to pass the address of the snippet inside the register.  
+    * @param dataSnippetRegister: Optional, can be used to pass the address of the snippet inside the register.
     */
    static void generateFillInDataBlockSequenceForUnresolvedField (TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *dataSnippetRegister);
    static TR::Register *directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg);

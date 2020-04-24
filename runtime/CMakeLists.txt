@@ -37,6 +37,9 @@ set(CMAKE_MODULE_PATH "${j9vm_SOURCE_DIR}/cmake/modules" "${J9VM_OMR_DIR}/cmake/
 # pull in definitions of what options we support
 include(cmake/options.cmake)
 
+# ensure that we apply omr configuration early so any overrides we might set apply properly
+include(cmake/omr_config.cmake)
+
 ###
 ### End basic housekeeping
 ###
@@ -59,6 +62,7 @@ if(J9VM_IS_NON_STAGING)
 else()
 	set(OMR_TRACE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
+include(cmake/J9vmTargetSupport.cmake)
 include(OmrTracegen)
 include(OmrDDRSupport)
 include(cmake/build_tags.cmake)
@@ -98,9 +102,6 @@ if(J9VM_IS_NON_STAGING)
 	# we also want to set the RPATH properly
 	set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 endif()
-
-# Generic configuration for omr
-include(cmake/omr_config.cmake)
 
 if(OPENJ9_BUILD)
 	add_definitions(-DOPENJ9_BUILD)
@@ -255,7 +256,7 @@ endif()
 
 # j9vm_interface is used to hold properties we want to apply to everyone.
 # e.g. adding oti/ to the include path etc.
-add_library(j9vm_interface INTERFACE)
+j9vm_add_library(j9vm_interface INTERFACE)
 target_include_directories(j9vm_interface
 	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}/oti
@@ -288,7 +289,7 @@ add_dependencies(j9vm_interface
 )
 
 # j9vm_gc_includes is used to track the include directories that are consumed by the various gc components
-add_library(j9vm_gc_includes INTERFACE)
+j9vm_add_library(j9vm_gc_includes INTERFACE)
 target_include_directories(j9vm_gc_includes
 	INTERFACE
 		# Pull in the public include paths exposed by the omrgc library
@@ -302,7 +303,7 @@ target_include_directories(j9vm_gc_includes
 )
 
 # Stub library to simplify programs which use makelib/cmain.c to provide a signal protected main
-add_library(j9vm_main_wrapper INTERFACE)
+j9vm_add_library(j9vm_main_wrapper INTERFACE)
 target_sources(j9vm_main_wrapper INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/makelib/cmain.c)
 target_link_libraries(j9vm_main_wrapper
 	INTERFACE
@@ -442,11 +443,6 @@ if(J9VM_MODULE_GC_BASE)
 endif()
 if(J9VM_MODULE_GC_CHECK)
 	add_subdirectory(gc_check)
-endif()
-if(J9VM_MODULE_DDR)
-	# TODO: Does this need to be implemented? Or are we only going to bother to support
-	# new style ddrgen with cmake?
-	# add_subdirectory(gc_ddr)
 endif()
 if(J9VM_MODULE_GC_MODRON_STANDARD)
 	add_subdirectory(gc_modron_standard)

@@ -132,7 +132,7 @@ jitserver:
 # OpenSSL
 #========================================#
 openssl:
-  extra_getsource_options: '--openssl-version=1.1.1f'
+  extra_getsource_options: '--openssl-version=1.1.1g'
   extra_configure_options: '--with-openssl=fetched'
 #========================================#
 # OpenSSL Bundling
@@ -175,17 +175,17 @@ ppc64le_linux:
     8: '/usr/lib/jvm/adoptojdk-java-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
     14: '/usr/lib/jvm/adoptojdk-java-13'
-    next: '/usr/lib/jvm/adoptojdk-java-13'
+    next: '/usr/lib/jvm/adoptojdk-java-14'
   release:
     all: 'linux-ppc64le-server-release'
     8: 'linux-ppc64le-normal-server-release'
     11: 'linux-ppc64le-normal-server-release'
   node_labels:
-    build: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+    build: 'ci.role.build && hw.arch.ppc64le && sw.os.cent.7'
   extra_configure_options:
     all: '--enable-jitserver'
   build_env:
-    vars: 'PATH+GCC7=/usr/local/gcc-7.5.0/bin LD_LIBRARY_PATH=/usr/local/gcc-7.5.0/lib64:$LD_LIBRARY_PATH'
+    cmd: 'source /home/jenkins/set_gcc7.5.0_env'
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers /w cmake
 #========================================#
@@ -217,7 +217,7 @@ s390x_linux:
     8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
     14: '/usr/lib/jvm/adoptojdk-java-13'
-    next: '/usr/lib/jvm/adoptojdk-java-13'
+    next: '/usr/lib/jvm/adoptojdk-java-14'
   release:
     all: 'linux-s390x-server-release'
     8: 'linux-s390x-normal-server-release'
@@ -250,7 +250,7 @@ ppc64_aix:
     8: '/opt/java7'
     11: '/opt/java11_64'
     14: '/opt/java13_64'
-    next: '/opt/java13_64'
+    next: '/opt/java14_64'
   release:
     all: 'aix-ppc64-server-release'
     8: 'aix-ppc64-normal-server-release'
@@ -278,7 +278,7 @@ x86-64_linux:
     8: '/usr/lib/jvm/jdk-7'
     11: '/usr/lib/jvm/jdk-11'
     14: '/usr/lib/jvm/adoptojdk-java-13'
-    next: '/usr/lib/jvm/adoptojdk-java-13'
+    next: '/usr/lib/jvm/adoptojdk-java-14'
   release:
     all: 'linux-x86_64-server-release'
     8: 'linux-x86_64-normal-server-release'
@@ -344,7 +344,7 @@ x86-64_windows:
     8: '/cygdrive/c/openjdk/jdk7'
     11: '/cygdrive/c/openjdk/jdk11'
     14: '/cygdrive/c/openjdk/jdk13'
-    next: '/cygdrive/c/openjdk/jdk13'
+    next: '/cygdrive/c/openjdk/jdk14'
   release:
     all: 'windows-x86_64-server-release'
     8: 'windows-x86_64-normal-server-release'
@@ -352,10 +352,10 @@ x86-64_windows:
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   extra_configure_options:
     all: '--disable-ccache --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1f-x86_64-VS2013'
-    11: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1f-x86_64-VS2017'
-    14: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1f-x86_64-VS2017'
-    next: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1f-x86_64-VS2017'
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1g-x86_64-VS2013'
+    11: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1g-x86_64-VS2017'
+    14: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1g-x86_64-VS2017'
+    next: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1g-x86_64-VS2017'
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
   build_env:
@@ -378,7 +378,7 @@ x86-32_windows:
   release:
     8: 'windows-x86-normal-server-release'
   extra_configure_options:
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib32 --with-target-bits=32 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1f-x86_32-VS2013'
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib32 --with-target-bits=32 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1g-x86_32-VS2013'
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   node_labels:
     build:
@@ -398,7 +398,7 @@ x86-64_mac:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
     14: '/Users/jenkins/bootjdks/adoptojdk-java-13'
-    next: '/Users/jenkins/bootjdks/adoptojdk-java-13'
+    next: '/Users/jenkins/bootjdks/adoptojdk-java-14'
   release:
     all: 'macosx-x86_64-server-release'
     8: 'macosx-x86_64-normal-server-release'
@@ -426,3 +426,8 @@ x86-64_mac_xl:
   excluded_tests:
     8:
       - special.system
+#========================================#
+# OSX x86 64bits Compressed Pointers /w CMake
+#========================================#
+x86-64_mac_cm:
+  extends: ['x86-64_mac', 'cmake']

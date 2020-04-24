@@ -1726,11 +1726,6 @@ onLoadInternal(
 #endif
 
 #if defined(TR_HOST_ARM64)
-   // DLT support is not available in AArch64 yet.
-   // OpenJ9 issue #5917 tracks the work to enable.
-   //
-   TR::Options::getCmdLineOptions()->setOption(TR_DisableDynamicLoopTransfer);
-
    // ArrayCopy transformations are not available in AArch64 yet.
    // OpenJ9 issue #6438 tracks the work to enable.
    //
@@ -1840,6 +1835,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
 
    J9VMThread *curThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
    TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, curThread);
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
    /* Initialize helpers */
    codert_init_helpers_and_targets(jitConfig, TR::Compiler->target.isSMP());
@@ -1847,10 +1843,14 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
    if (vm->isAOT_DEPRECATED_DO_NOT_USE() || (jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
       return 0;
 
-   /* jit specific helpers */
-   initializeJitRuntimeHelperTable(TR::Compiler->target.isSMP());
 
-   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+#if defined(J9VM_OPT_JITSERVER)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
+#endif
+      {
+      /* jit specific helpers */
+      initializeJitRuntimeHelperTable(TR::Compiler->target.isSMP());
+      }
 
 #if defined(TR_TARGET_POWER)
    if (TR::Compiler->target.cpu.isPower())

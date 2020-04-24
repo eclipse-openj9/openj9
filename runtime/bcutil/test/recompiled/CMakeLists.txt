@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 
 set_source_files_properties(${j9vm_BINARY_DIR}/vm/ut_j9vm.c PROPERTIES GENERATED TRUE)
 set_source_files_properties(${j9vm_BINARY_DIR}/bcutil/ut_j9bcu.c PROPERTIES GENERATED TRUE)
-add_library(j9dyn_generic_test STATIC
+j9vm_add_library(j9dyn_generic_test STATIC
 
 	${j9vm_BINARY_DIR}/vm/ut_j9vm.c
 	${j9vm_SOURCE_DIR}/vm/stringhelpers.cpp

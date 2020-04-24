@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -159,7 +159,9 @@ public class J9BCUtil {
 				SelfRelativePointer currentThrowName = ROMHelp.J9EXCEPTIONINFO_THROWNAMES(exceptionData);
 				for (long i = 0; i < throwCount; i++) {
 					J9UTF8Pointer currentName = J9UTF8Pointer.cast(currentThrowName.get());
+					out.append("    ");
 					out.append(J9UTF8Helper.stringValue(currentName));
+					out.append(nl);
 				}
 			}
 		}

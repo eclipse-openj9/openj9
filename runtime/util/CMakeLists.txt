@@ -28,7 +28,7 @@ add_tracegen(srphashtable.tdf)
 
 j9vm_gen_asm(fpusup.m4)
 
-add_library(j9util STATIC
+j9vm_add_library(j9util STATIC
 	alignedmemcpy.c
 	annhelp.c
 	argbits.c

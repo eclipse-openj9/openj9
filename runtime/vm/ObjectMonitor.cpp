@@ -201,7 +201,7 @@ restart:
 			}
 			/* In a Concurrent GC where monitor object can *move* in a middle of GC cycle,
 			 * we need a proper barrier to get an up-to-date location of the monitor object */
-			j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, J9MONITORTABLE_OBJECT_LOAD(currentThread, &((J9ThreadMonitor*)monitor)->userData));
+			j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, J9WEAKROOT_OBJECT_LOAD(currentThread, &((J9ThreadMonitor*)monitor)->userData));
 			j9objectmonitor_t lockInLoop = J9_LOAD_LOCKWORD(currentThread, lwEA);
 			/* Change lockword from Learning to Flat if in Learning state. */
 			while (OBJECT_HEADER_LOCK_LEARNING == (lockInLoop & (OBJECT_HEADER_LOCK_LEARNING | OBJECT_HEADER_LOCK_INFLATED))) {
@@ -372,7 +372,7 @@ restart:
 
 				if (lock == VM_ObjectMonitor::compareAndSwapLockword(currentThread, lwEA, lock, incremented, false)) {
 					if (0 == J9_FLATLOCK_COUNT(lock)) {
-						VM_AtomicSupport::monitorEnterBarrier();
+						VM_AtomicSupport::readBarrier();
 					}
 					if (reservedTransition) {
 						/* Transition from Learning to Reserved occurred so the Reserved Counter in the object's J9Class is incremented by 1. */
@@ -536,7 +536,7 @@ spinOnFlatLock(J9VMThread *currentThread, j9objectmonitor_t volatile *lwEA, j9ob
 					if (0 == J9_FLATLOCK_COUNT(lock)) {
 						if (lock == VM_ObjectMonitor::compareAndSwapLockword(currentThread, lwEA, lock, (j9objectmonitor_t)(UDATA)currentThread, false)) {
 							/* compare and swap succeeded */
-							VM_AtomicSupport::monitorEnterBarrier();
+							VM_AtomicSupport::readBarrier();
 							rc = true;
 
 							/* Transition from Learning to Flat occurred so the Cancel Counter in the object's J9Class is incremented by 1. */

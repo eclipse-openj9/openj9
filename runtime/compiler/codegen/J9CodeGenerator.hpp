@@ -298,21 +298,41 @@ public:
    TR_BitVector *setLiveMonitors(TR_BitVector *v) {return (_liveMonitors = v);}
 
 public:
+   /*
+    * \brief
+    *    Get the most abstract type the monitor may be operating on.
+    *
+    * \note
+    *    java.lang.Object is only returned when the monitor object is of type java.lang.Object but not any subclasses
+    */
+   TR_OpaqueClassBlock* getMonClass(TR::Node* monNode);
 
-TR_OpaqueClassBlock* getMonClass(TR::Node* monNode);
+   /*
+    * \brief
+    *    Whether a monitor object is of value type
+    *
+    * \return
+    *    TR_yes The monitor object is definitely value type
+    *    TR_no The monitor object is definitely identity type
+    *    TR_maybe It is unknown whether the monitor object is identity type or value type
+    */
+   TR_YesNoMaybe isMonitorValueType(TR::Node* monNode);
 
 protected:
 
-TR_Array<void *> _monitorMapping;
+typedef TR::typed_allocator<std::pair<const ncount_t , TR_OpaqueClassBlock*>, TR::Region &> MonitorMapAllocator;
+typedef std::map<ncount_t , TR_OpaqueClassBlock *, std::less<ncount_t>, MonitorMapAllocator> MonitorTypeMap;
+
+MonitorTypeMap _monitorMapping; // map global node index to monitor object class
 
 void addMonClass(TR::Node* monNode, TR_OpaqueClassBlock* clazz);
 
 private:
 
    TR_HashTabInt _uncommonedNodes;               // uncommoned nodes keyed by the original nodes
-   
+
    TR::list<TR::Node*> _nodesSpineCheckedList;
-   
+
    TR::list<TR_Pair<TR_ResolvedMethod, TR::Instruction> *> _jniCallSites; // list of instrutions representing direct jni call sites
 
    uint16_t changeParmLoadsToRegLoads(TR::Node*node, TR::Node **regLoads, TR_BitVector *globalRegsWithRegLoad, TR_BitVector &killedParms, vcount_t visitCount); // returns number of RegLoad nodes created
@@ -391,11 +411,11 @@ public:
    void setSupportsBigDecimalLongLookasideVersioning() { _flags3.set(SupportsBigDecimalLongLookasideVersioning);}
 
    bool constLoadNeedsLiteralFromPool(TR::Node *node) { return false; }
-   
+
    // Java, likely Z
    bool supportsTrapsInTMRegion() { return true; }
 
-   // J9	
+   // J9
    int32_t getInternalPtrMapBit() { return 31;}
 
    // --------------------------------------------------------------------------
@@ -534,7 +554,7 @@ public:
    TR::Node *generatePoisonNode(
       TR::Block *currentBlock,
       TR::SymbolReference *liveAutoSymRef);
-   
+
 
    /**
     * \brief Determines whether VM Internal Natives is supported or not
@@ -551,7 +571,7 @@ private:
       SupportsInlineStringIndexOf                         = 0x00000008, /*! codegen inlining of Java string index of */
       SupportsInlineStringHashCode                        = 0x00000010, /*! codegen inlining of Java string hash code */
       SupportsInlineConcurrentLinkedQueue                 = 0x00000020,
-      SupportsBigDecimalLongLookasideVersioning           = 0x00000040, 
+      SupportsBigDecimalLongLookasideVersioning           = 0x00000040,
       };
 
    flags32_t _j9Flags;
