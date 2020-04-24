@@ -357,8 +357,8 @@ private:
 
       virtual void incompatibleCache(U_32 module, U_32 reason, char *assumeMessage);
 
-      void checkAOTHeaderFlags(TR_FrontEnd *fe, TR_AOTHeader * hdrInCache, intptr_t featureFlags);
-      bool generateError(char *assumeMessage);
+      void checkAOTHeaderFlags(TR_AOTHeader * hdrInCache, intptr_t featureFlags);
+      bool generateError(U_32 module_name, U_32 reason, char *assumeMessage);
 
       bool _sharedCacheIsFull;
 

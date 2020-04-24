@@ -943,52 +943,51 @@ TR_SharedCacheRelocationRuntime::incompatibleCache(U_32 module_name, U_32 reason
    }
 
 bool
-TR_SharedCacheRelocationRuntime::generateError(char *assumeMessage)
+TR_SharedCacheRelocationRuntime::generateError(U_32 module_name, U_32 reason, char *assumeMessage)
    {
-   incompatibleCache(J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE, assumeMessage);
+   incompatibleCache(module_name, reason, assumeMessage);
    return false;
    }
 
 void
-TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_FrontEnd *fe, TR_AOTHeader *hdrInCache, intptr_t featureFlags)
+TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_AOTHeader *hdrInCache, intptr_t featureFlags)
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    bool defaultMessage = true;
 
    if (!TR::Compiler->target.cpu.isCompatible((TR_Processor)hdrInCache->processorSignature, hdrInCache->processorFeatureFlags))
-      defaultMessage = generateError("AOT header validation failed: Processor incompatible.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE, "AOT header validation failed: Processor incompatible.");
    if ((featureFlags & TR_FeatureFlag_sanityCheckBegin) != (hdrInCache->featureFlags & TR_FeatureFlag_sanityCheckBegin))
-      defaultMessage = generateError("AOT header validation failed: Processor feature sanity bit mangled.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_START_SANITY_BIT_MANGLED, "AOT header validation failed: Processor feature sanity bit mangled.");
    if ((featureFlags & TR_FeatureFlag_IsSMP) != (hdrInCache->featureFlags & TR_FeatureFlag_IsSMP))
-      defaultMessage = generateError("AOT header validation failed: SMP feature mismatch.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_SMP_MISMATCH, "AOT header validation failed: SMP feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_UsesCompressedPointers) != (hdrInCache->featureFlags & TR_FeatureFlag_UsesCompressedPointers))
-      defaultMessage = generateError("AOT header validation failed: Compressed references feature mismatch.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH, "AOT header validation failed: Compressed references feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_UseDFPHardware) != (hdrInCache->featureFlags & TR_FeatureFlag_UseDFPHardware))
-      defaultMessage = generateError("AOT header validation failed: DFP hardware feature mismatch.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_DFP_MISMATCH, "AOT header validation failed: DFP hardware feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_DisableTraps) != (hdrInCache->featureFlags & TR_FeatureFlag_DisableTraps))
-      defaultMessage = generateError("AOT header validation failed: Use of trap instruction feature mismatch.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH, "AOT header validation failed: Use of trap instruction feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_TLHPrefetch) != (hdrInCache->featureFlags & TR_FeatureFlag_TLHPrefetch))
-      defaultMessage = generateError("AOT header validation failed: TLH prefetch feature mismatch.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH, "AOT header validation failed: TLH prefetch feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_MethodTrampolines) != (hdrInCache->featureFlags & TR_FeatureFlag_MethodTrampolines))
-      defaultMessage = generateError("AOT header validation failed: MethodTrampolines feature mismatch.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH, "AOT header validation failed: MethodTrampolines feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_HCREnabled) != (hdrInCache->featureFlags & TR_FeatureFlag_HCREnabled))
-      defaultMessage = generateError("AOT header validation failed: HCR feature mismatch.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HCR_MISMATCH, "AOT header validation failed: HCR feature mismatch.");
    if (((featureFlags & TR_FeatureFlag_SIMDEnabled) == 0) && ((hdrInCache->featureFlags & TR_FeatureFlag_SIMDEnabled) != 0))
-      defaultMessage = generateError("AOT header validation failed: SIMD feature mismatch.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_SIMD_MISMATCH, "AOT header validation failed: SIMD feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_AsyncCompilation) != (hdrInCache->featureFlags & TR_FeatureFlag_AsyncCompilation))
-      defaultMessage = generateError("AOT header validation failed: AsyncCompilation feature mismatch.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH, "AOT header validation failed: AsyncCompilation feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_ConcurrentScavenge) != (hdrInCache->featureFlags & TR_FeatureFlag_ConcurrentScavenge))
-      defaultMessage = generateError("AOT header validation failed: Concurrent Scavenge feature mismatch.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_CS_MISMATCH, "AOT header validation failed: Concurrent Scavenge feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_SoftwareReadBarrier) != (hdrInCache->featureFlags & TR_FeatureFlag_SoftwareReadBarrier))
-      defaultMessage = generateError("AOT header validation failed: Software Read Barrier feature mismatch.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH, "AOT header validation failed: Software Read Barrier feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_UsesTM) != (hdrInCache->featureFlags & TR_FeatureFlag_UsesTM))
-      defaultMessage = generateError("AOT header validation failed: TM feature mismatch.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_TM_MISMATCH, "AOT header validation failed: TM feature mismatch.");
 
    if ((featureFlags & TR_FeatureFlag_SanityCheckEnd) != (hdrInCache->featureFlags & TR_FeatureFlag_SanityCheckEnd))
-      defaultMessage = generateError("AOT header validation failed: Trailing sanity bit mismatch.");
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED, "AOT header validation failed: Trailing sanity bit mismatch.");
 
    if (defaultMessage)
-      generateError("AOT header validation failed: Unkown problem with processor features.");
+      generateError(J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM, "AOT header validation failed: Unkown problem with processor features.");
    }
 
 // The method CS::Hash_FNV is being used to compute the hash value
@@ -1054,26 +1053,26 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *
           !TR::Compiler->target.cpu.isCompatible((TR_Processor)hdrInCache->processorSignature, hdrInCache->processorFeatureFlags)
          )
          {
-         checkAOTHeaderFlags(fe, hdrInCache, featureFlags);
+         checkAOTHeaderFlags(hdrInCache, featureFlags);
          }
-      else if ( hdrInCache->gcPolicyFlag != javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM()) )
+      else if (hdrInCache->gcPolicyFlag != javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM()) )
          {
          incompatibleCache(J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY,
                            "AOT header validation failed: incompatible gc write barrier type");
          }
       else if (hdrInCache->lockwordOptionHashValue != getCurrentLockwordOptionHashValue(javaVM()))
          {
-         incompatibleCache(J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE,
+         incompatibleCache(J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH,
                            "AOT header validation failed: incompatible lockword options");
          }
       else if (hdrInCache->arrayLetLeafSize != TR::Compiler->om.arrayletLeafSize())
          {
-         incompatibleCache(J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE,
+         incompatibleCache(J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH,
                            "AOT header validation failed: incompatible arraylet size");
          }
-      else if ( hdrInCache->compressedPointerShift != TR::Compiler->om.compressedReferenceShift())
+      else if (hdrInCache->compressedPointerShift != TR::Compiler->om.compressedReferenceShift())
          {
-         incompatibleCache(J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE,
+         incompatibleCache(J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH,
                            "AOT header validation failed: incompatible compressed pointer shift");
          }
       else
