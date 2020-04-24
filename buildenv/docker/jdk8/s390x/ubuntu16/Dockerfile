@@ -82,10 +82,10 @@ RUN cd /root \
 
 # Download and install boot JDK from AdoptOpenJDK
 RUN cd /root \
-  && wget -O bootjdk8.tar.gz https://api.adoptopenjdk.net/openjdk8-openj9/releases/s390x_linux/latest/binary \
+  && wget -O bootjdk8.tar.gz https://api.adoptopenjdk.net/v3/binary/latest/8/ga/linux/s390x/jdk/openj9/normal/adoptopenjdk?project=jdk \
   && tar -xzf bootjdk8.tar.gz \
   && rm -f bootjdk8.tar.gz \
-  && ls | grep -i jdk | xargs -I % sh -c 'mv % bootjdk8'
+  && mv $(ls | grep -i jdk) bootjdk8
 
 # Set environment variable JAVA_HOME, and prepend ${JAVA_HOME}/bin to PATH
 ENV JAVA_HOME="/root/bootjdk8"

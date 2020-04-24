@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,13 +87,13 @@ RUN cd /root \
 
 # Download and install boot JDK from AdoptOpenJDK
 RUN cd /root \
-  && wget -O bootjdk12.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk12?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
-  && tar -xzf bootjdk12.tar.gz \
-  && rm -f bootjdk12.tar.gz \
-  && mv $(ls | grep -i jdk) bootjdk12
+  && wget -O bootjdk13.tar.gz https://api.adoptopenjdk.net/v3/binary/latest/13/ga/linux/s390x/jdk/openj9/normal/adoptopenjdk?project=jdk \
+  && tar -xzf bootjdk13.tar.gz \
+  && rm -f bootjdk13.tar.gz \
+  && mv $(ls | grep -i jdk) bootjdk13
 
 # Set environment variable JAVA_HOME, and prepend ${JAVA_HOME}/bin to PATH
-ENV JAVA_HOME="/root/bootjdk12"
+ENV JAVA_HOME="/root/bootjdk13"
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 WORKDIR /root
