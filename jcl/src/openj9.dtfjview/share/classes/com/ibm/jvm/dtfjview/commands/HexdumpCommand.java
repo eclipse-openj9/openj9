@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,8 @@
 package com.ibm.jvm.dtfjview.commands;
 
 import java.io.PrintStream;
+import java.util.Arrays;
+
 import com.ibm.dtfj.image.CorruptDataException;
 import com.ibm.dtfj.image.DataUnavailable;
 import com.ibm.dtfj.image.ImageAddressSpace;
@@ -37,161 +39,153 @@ import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 public class HexdumpCommand extends BaseJdmpviewCommand {
 
 	{
-		addCommand("hexdump", "<hex address>", "outputs a section of memory in hexadecimal, ascii and ebcdic");	
+		addCommand("hexdump", "<hex address> [<bytes_to_print>]", "outputs a section of memory in hexadecimal, ASCII and EBCDIC");	
 	}
-	
+
+	@Override
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
-		if(initCommand(command, args, context, out)) {
-			return;		//processing already handled by super class
+		if (initCommand(command, args, context, out)) {
+			return; // processing already handled by super class
 		}
 		doCommand(args);
 	}
-	
-	public void doCommand(String[] args){
-		StringBuffer stringBuffer = new StringBuffer();
+
+	public void doCommand(String[] args) {
 		ImageAddressSpace imageAddressSpace = ctx.getAddressSpace();
-		if(null == imageAddressSpace) {
+
+		if (null == imageAddressSpace) {
 			out.println("Could not find an address space which contains a process in this core file");
 			return;
 		}
-		long addressInDecimal = 0;
-		int numBytesToPrint = 16*16; //dump 256 bytes by default
-		int asciiIndex = 0;
-		
-		if (args.length != 0){
-			Long address = Utils.longFromString(args[0]);
-			if(null == address){
-				out.println("Specified address is invalid");
-				return;
-			}
-			addressInDecimal = address.longValue();
-		}
-		else
-		{
+
+		if (args.length == 0) {
 			out.println("\"hexdump\" requires at least an address parameter");
 			return;
 		}
-		
-		if (args.length > 1){
-			try{
-				numBytesToPrint = Integer.parseInt(args[1]);
-			}catch(NumberFormatException nfe){
-				out.println("Specified length is invalid");
+
+		long address;
+
+		{
+			Long longAddress = Utils.longFromString(args[0]);
+
+			if (null != longAddress) {
+				address = longAddress.longValue();
+			} else {
+				out.println("Specified address is invalid: " + args[0]);
 				return;
 			}
 		}
-		
-		ImagePointer imagePointerBase = imageAddressSpace.getPointer(addressInDecimal);
-		boolean is_zOSdump = false;
-		try {
-			is_zOSdump = ctx.getImage().getSystemType().toLowerCase().indexOf("z/os") >= 0;
-		} catch (DataUnavailable e1) {
-			// unable to get the dump OS type, continue without the additional zOS EBCDIC option
-		} catch (CorruptDataException e1) {
-			// unable to get the dump OS type, continue without the additional zOS EBCDIC option
-		}
-		
-		String asciiChars = "";
-		String ebcdicChars = "";
-		
-		long i; 
-		for (i = 0; i < numBytesToPrint; i++){
-			ImagePointer imagePointer = imagePointerBase.add(i);
-			//stringBuffer.append(Long.toHexString(addressInDecimal+i)+":\t");
-			//stringBuffer.append(Long.toHexString(imagePointer.getAddress())+":\t");
-			try {
-				byte byteValue = imagePointer.getByteAt(0);
-				asciiIndex = byteValue & 0xFF;
 
-				String rawHexString = Integer.toHexString(asciiIndex);
-				String fixedHexString = fixHexStringLength(rawHexString);
-				
-				String hexText = fixedHexString;
-				if (0 == i%4){
-					hexText = " "+hexText;
-				}
-				
-				if (0 == i%16){
-					hexText  = "\n"+Long.toHexString(imagePointer.getAddress())+":"+hexText;
-					asciiChars = "  |";
-					ebcdicChars = " |";
-				}
-				
-				stringBuffer.append(hexText);
-				
-				asciiChars += Utils.byteToAscii.substring(asciiIndex,asciiIndex+1);
-				if (15 == i%16 && i != 0){
-					asciiChars += "|";
-					stringBuffer.append(asciiChars);
-				}
-				if (is_zOSdump){
-					// for zOS dumps, output additional EBCDIC interpretation of the memory byes
-					ebcdicChars += Utils.byteToEbcdic.substring(asciiIndex,asciiIndex+1);
-					if (15 == i%16 && i != 0){
-						ebcdicChars += "|";
-						stringBuffer.append(ebcdicChars);
-					}
-				}
-			}catch (MemoryAccessException e) {
-				out.println("Address not in memory - 0x" 
-						+ Long.toHexString(imagePointer.getAddress()));
+		int numBytesToPrint = 256; // dump 256 bytes by default
+
+		if (args.length > 1) {
+			try {
+				numBytesToPrint = Integer.decode(args[1]);
+			} catch (NumberFormatException e) {
+				out.println("Specified length is invalid: " + args[1]);
 				return;
-			}catch (CorruptDataException e) {
+			}
+		}
+
+		boolean is_zOSdump = false;
+
+		try {
+			is_zOSdump = ctx.getImage().getSystemType().toLowerCase().contains("z/os");
+		} catch (CorruptDataException | DataUnavailable e) {
+			// unable to get the dump OS type, continue without the additional z/OS EBCDIC option
+		}
+
+		ImagePointer imagePointer = imageAddressSpace.getPointer(address);
+		StringBuilder lineBuffer = new StringBuilder();
+		char[] asciiBlock = new char[16];
+		char[] ebcdicBlock = new char[16];
+
+		out.println();
+
+		for (int byteOffset = 0; byteOffset < numBytesToPrint; ++byteOffset) {
+			try {
+				int lineOffset = byteOffset % 16;
+
+				if (0 == lineOffset) {
+					lineBuffer.append(Long.toHexString(address + byteOffset));
+					lineBuffer.append(':');
+				}
+
+				int byteValue = imagePointer.getByteAt(byteOffset) & 0xFF;
+
+				if (0 == (lineOffset % 4)) {
+					lineBuffer.append(' ');
+				}
+
+				lineBuffer.append(String.format("%02x", byteValue));
+				asciiBlock[lineOffset] = Utils.byteToAscii.charAt(byteValue);
+
+				if (is_zOSdump) {
+					// for z/OS dumps, output additional EBCDIC interpretation of the memory bytes
+					ebcdicBlock[lineOffset] = Utils.byteToEbcdic.charAt(byteValue);
+				}
+
+				if (15 == lineOffset) {
+					lineBuffer.append("  |");
+					lineBuffer.append(asciiBlock);
+					lineBuffer.append('|');
+
+					if (is_zOSdump) {
+						lineBuffer.append(" |");
+						lineBuffer.append(ebcdicBlock);
+						lineBuffer.append('|');
+					}
+
+					out.println(lineBuffer.toString());
+					lineBuffer.setLength(0);
+				}
+			} catch (CorruptDataException e) {
 				out.println("Dump data is corrupted");
 				return;
+			} catch (MemoryAccessException e) {
+				out.println("Address not in memory - 0x" + Long.toHexString(address + byteOffset));
+				return;
 			}
 		}
-		
-		long undisplayedBytes = 16 - i%16; 
-		if (16 != undisplayedBytes){
-			stringBuffer.append(padSpace(undisplayedBytes, asciiChars));
-			if (is_zOSdump){
-				// Add padding and output the remaining EBCDIC characters
-				for (int j = 0; j < undisplayedBytes; j++){
-					ebcdicChars = " " + ebcdicChars;
+
+		int lineOffset = numBytesToPrint % 16;
+
+		if (0 != lineOffset) {
+			for (int offset = lineOffset; offset < 16; ++offset) {
+				if (0 == (offset % 4)) {
+					lineBuffer.append(' ');
 				}
-				stringBuffer.append(" " + ebcdicChars);
+				lineBuffer.append("  ");
 			}
+
+			Arrays.fill(asciiBlock, lineOffset, 16, ' ');
+			lineBuffer.append("  |");
+			lineBuffer.append(asciiBlock);
+			lineBuffer.append('|');
+
+			if (is_zOSdump) {
+				Arrays.fill(ebcdicBlock, lineOffset, 16, ' ');
+				lineBuffer.append(" |");
+				lineBuffer.append(ebcdicBlock);
+				lineBuffer.append('|');
+			}
+
+			out.println(lineBuffer.toString());
 		}
-		stringBuffer.append("\n");
-		out.println(new String(stringBuffer));
-		
-		/*properties.put(Utils.CURRENT_MEM_ADDRESS, 
-				Long.toHexString(addressInDecimal+numBytesToPrint));*/
-		ctx.getProperties().put(Utils.CURRENT_MEM_ADDRESS, Long.valueOf(addressInDecimal));
+
+		out.println();
+
+		ctx.getProperties().put(Utils.CURRENT_MEM_ADDRESS, Long.valueOf(address));
 		ctx.getProperties().put(Utils.CURRENT_NUM_BYTES_TO_PRINT, Integer.valueOf(numBytesToPrint));
 	}
-	
-	private String padSpace(long undisplayedBytes, String asciiChars){
-		for (int i = 0; i < 2*undisplayedBytes + undisplayedBytes/4; i++){
-			asciiChars = " " + asciiChars;
-		}
-		return asciiChars;
-	}
-	
-	private String fixHexStringLength(String rawHexString){
-		int length = rawHexString.length();
-		if (1 == length){
-			return ("0" + rawHexString);
-		}
-		else if (2 == length){
-			return rawHexString;
-		}
-		else if (8 == length){
-			return rawHexString.substring(6, 8);
-		}
-		else{
-			return "ERROR fixHexStringLength";
-		}
-	}
-	
+
 	@Override
 	public void printDetailedHelp(PrintStream out) {
-		out.println("outputs a section of memory in hexadecimal, ascii and ebcdic\n\n" + 
-				"parameters: <hex_address> <bytes_to_print>\n\n" +
-				"outputs <bytes_to_print> bytes of memory contents " +
-				"starting from <hex_address>, ebcdic output is provided for z/OS dumps"
-				);
-		
+		out.format("outputs a section of memory in hexadecimal, ASCII and EBCDIC%n"
+				+ "%n" 
+				+ "parameters: <hex_address> [<bytes_to_print>]%n" 
+				+ "%n"
+				+ "outputs <bytes_to_print> (default 256) bytes of memory contents starting from <hex_address>%n"
+				+ "EBCDIC output is also provided for z/OS dumps%n");
 	}
 }

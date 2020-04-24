@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2019 IBM Corp. and others
+# Copyright (c) 2018, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,7 +87,7 @@ RUN cd /root \
 
 # Download and install boot JDK from AdoptOpenJDK
 RUN cd /root \
-  && wget -O bootjdk10.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
+  && wget -O bootjdk10.tar.gz https://api.adoptopenjdk.net/v3/binary/latest/10/ga/linux/s390x/jdk/openj9/normal/adoptopenjdk?project=jdk \
   && tar -xzf bootjdk10.tar.gz \
   && rm -f bootjdk10.tar.gz \
   && mv $(ls | grep -i jdk) bootjdk10
