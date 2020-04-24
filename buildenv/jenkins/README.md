@@ -136,6 +136,12 @@ You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj
 
 ###### Note: When specifying a dependent change in an OpenJDK extensions repo, you can only build the SDK version that matches the repo where the dependent change lives. Eg. You cannot build JDK8 with a PR in openj9-openjdk-jdk11.
 
+##### Building Release branch PRs
+
+- If you have a PR against a release branch, it can be tested with a PR build that specifies the OMR and Extensions repos.
+- Ex. Release PR against the `v0.20.0-release` branch specifying both OMR and Extensions
+    - `Jenkins compile plinux jdk11 depends eclipse/openj9-omr#v0.20.0-release ibmruntimes/openj9-openjdk-jdk11#openj9-0.20.0`
+
 ##### Testing Changes to Pipeline code
 
 - If you have changes to Jenkins Pipeline code (including the defaults.yml variable file), you can test most code paths via a PR build. Your PR build will load the Pipeline code from your PR (merge ref). Also note if you have dependent changes you have to launch your PR build through the OpenJ9 repo in order for the Pipeline changes to be loaded in your build.
