@@ -3552,6 +3552,7 @@ typedef struct J9JITConfig {
 	void *old_slow_jitRetranslateMethod;
 	void *old_slow_jitThrowCurrentException;
 	void *old_slow_jitThrowException;
+	void *old_slow_jitThrowUnreportedException;
 	void *old_slow_jitThrowAbstractMethodError;
 	void *old_slow_jitThrowArithmeticException;
 	void *old_slow_jitThrowArrayIndexOutOfBounds;

@@ -436,6 +436,7 @@ dnl Exception throw helpers
 
 EXCEPTION_THROW_HELPER(jitThrowCurrentException,0)
 EXCEPTION_THROW_HELPER(jitThrowException,1)
+EXCEPTION_THROW_HELPER(jitThrowUnreportedException,1)
 EXCEPTION_THROW_HELPER(jitThrowAbstractMethodError,0)
 EXCEPTION_THROW_HELPER(jitThrowArithmeticException,0)
 EXCEPTION_THROW_HELPER(jitThrowArrayIndexOutOfBounds,0)
