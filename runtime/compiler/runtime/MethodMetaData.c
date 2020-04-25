@@ -708,11 +708,9 @@ UDATA jitExceptionHandlerSearch(J9VMThread * currentThread, J9StackWalkState * w
       searchCache=(TR_jitExceptionHandlerCache *)(currentThread->jitExceptionHandlerCache);
       if(searchCache)
          {
-        cacheResult = getJitExceptionHandlerCache(searchCache,(UDATA) walkState->pc);
+         cacheResult = getJitExceptionHandlerCache(searchCache,(UDATA) walkState->pc);
          if (cacheResult.pc == (UDATA) walkState->pc && cacheResult.thrownClass == (J9Class *)walkState->userData4)
-            {
             return J9_STACKWALK_KEEP_ITERATING;
-            }
          }
       else
          {
@@ -746,24 +744,27 @@ UDATA jitExceptionHandlerSearch(J9VMThread * currentThread, J9StackWalkState * w
       if (hasWideExceptions(walkState->jitInfo))
          {
          J9JIT32BitExceptionTableEntry * handlerCursor = get32BitFirstExceptionDataField(walkState->jitInfo);
-
          numberOfRanges &= ~(J9_JIT_METADATA_WIDE_EXCEPTIONS | J9_JIT_METADATA_HAS_BYTECODE_PC);
          while (numberOfRanges)
             {
             if ((deltaPC >= getJit32BitTableEntryStartPC(handlerCursor)) && (deltaPC < getJit32BitTableEntryEndPC(handlerCursor)))
                {
-               if (
-                  /* { RTSJ Support begins */
-                   isExceptionTypeCaughtByHandler(walkState->walkThread, (J9Class *)walkState->userData4, UNTAGGED_METHOD_CP(handlerCursor->ramMethod), handlerCursor->catchType, walkState))
-                  /* } RTSJ Support ends */
+               uintptr_t synthetic = 0;
+               uint32_t catchType = handlerCursor->catchType;
+               /* Check for synthetic handler - if it is, change catchType to 0 to indicate catching all exceptions */
+               if (0xFFFFFFFF == catchType)
+                  {
+                     catchType = 0;
+                     synthetic = 1;
+                  }
+               if (isExceptionTypeCaughtByHandler(walkState->walkThread, (J9Class *)walkState->userData4, UNTAGGED_METHOD_CP(handlerCursor->ramMethod), catchType, walkState))
                   {
                   if (bytecodePCBytes)
-                     {
                      walkState->userData1 = (void *)(intptr_t)*get32BitByteCodeIndexFromExceptionTable(walkState->jitInfo);
-                     }
                   walkState->userData2 = (void *) (getJittedMethodStartPC(walkState->jitInfo) + getJit32BitTableEntryHandlerPC(handlerCursor));
                   walkState->restartPoint = walkState->walkThread->javaVM->jitConfig->runJITHandler;
                   walkState->userData3 = (void *) J9_EXCEPT_SEARCH_JIT_HANDLER;
+                  walkState->userData4 = (void *) synthetic;
                   return J9_STACKWALK_STOP_ITERATING;
                   }
                }
@@ -779,17 +780,22 @@ UDATA jitExceptionHandlerSearch(J9VMThread * currentThread, J9StackWalkState * w
             {
             if ((deltaPC >= getJit16BitTableEntryStartPC(handlerCursor)) && (deltaPC < getJit16BitTableEntryEndPC(handlerCursor)))
                {
-               if (
-                   isExceptionTypeCaughtByHandler(walkState->walkThread, (J9Class *)walkState->userData4, walkState->constantPool, handlerCursor->catchType, walkState))
-                  /* } RTSJ Support ends */
+               uintptr_t synthetic = 0;
+               uint16_t catchType = handlerCursor->catchType;
+               /* Check for synthetic handler - if it is, change catchType to 0 to indicate catching all exceptions */
+               if (0xFFFF == catchType)
+                  {
+                     catchType = 0;
+                     synthetic = 1;
+                  }
+               if (isExceptionTypeCaughtByHandler(walkState->walkThread, (J9Class *)walkState->userData4, walkState->constantPool, catchType, walkState))
                   {
                   if (bytecodePCBytes)
-                     {
                      walkState->userData1 = (void *)(intptr_t)*get16BitByteCodeIndexFromExceptionTable(walkState->jitInfo);
-                     }
                   walkState->userData2 = (void *) (getJittedMethodStartPC(walkState->jitInfo) + getJit16BitTableEntryHandlerPC(handlerCursor));
                   walkState->restartPoint = walkState->walkThread->javaVM->jitConfig->runJITHandler;
                   walkState->userData3 = (void *) J9_EXCEPT_SEARCH_JIT_HANDLER;
+                  walkState->userData4 = (void *) synthetic;
                   return J9_STACKWALK_STOP_ITERATING;
                   }
                }

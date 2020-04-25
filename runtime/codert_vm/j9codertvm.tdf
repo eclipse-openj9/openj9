@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2007, 2017 IBM Corp. and others
+// Copyright (c) 2007, 2020 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -163,3 +163,5 @@ TraceAssert=Assert_Swalk_stackMapNull noEnv Overhead=1 Level=1 Assert="(0 /* Una
 TraceAssert=Assert_Decomp_breakpointFailed noEnv Overhead=1 Level=1 Assert="(0 /* alloc failure in jitPermanentBreakpointAdded */)"
 
 TraceAssert=Assert_CodertVM_mustHaveVMAccess noEnv overhead=1 Level=1 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS"
+
+TraceEvent=Trc_Decomp_jitExceptionCaught_SyntheticHandler Overhead=1 Level=1 Template="jitExceptionCaught - synthetic handler - do not report or decompile"

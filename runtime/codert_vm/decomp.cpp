@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1200,12 +1200,45 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 	U_8 *jitPC = decompRecord->pc;
 	/* Simulate a call to a resolve helper to make the stack walkable */
 	buildBranchJITResolveFrame(currentThread, jitPC, J9_STACK_FLAGS_JIT_EXCEPTION_CATCH_RESOLVE);
-	/* Discard the existing decompilation in favour of a new one at the exception catch point */
+
+	J9JavaVM *vm = currentThread->javaVM;
+	J9JITDecompileState decompileState;
+	J9StackWalkState walkState;
 	J9OSRBuffer *osrBuffer = &decompRecord->osrBuffer;
 	UDATA numberOfFrames = osrBuffer->numberOfFrames;
 	J9OSRFrame *osrFrame = (J9OSRFrame*)(osrBuffer + 1);
+	J9JITExceptionTable *metaData = NULL;
+
+	/* Collect the required information from the stack - top visible frame is the decompile frame */
+	walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_MAINTAIN_REGISTER_MAP | J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_SAVE_STACKED_REGISTERS;
+	walkState.skipCount = 0;
+	walkState.frameWalkFunction = decompileMethodFrameIterator;
+	walkState.walkThread = currentThread;
+	walkState.userData1 = &decompileState;
+	walkState.userData2 = NULL;
+	vm->walkStackFrames(currentThread, &walkState);
+	metaData = decompileState.metaData;
+
+	/* Determine in which inlined frame the exception is being caught */
+	UDATA newNumberOfFrames = 1;
+	void *stackMap = NULL;
+	void *inlineMap = NULL;
+	void *inlinedCallSite = NULL;
+	/* Note we need to add 1 to the JIT PC here in order to get the correct map at the exception handler
+	 * because jitGetMapsFromPC is expecting a return address, so it subtracts 1.  The value stored in the
+	 * decomp record is the start address of the compiled exception handler.
+	 */
+	jitGetMapsFromPC(vm, metaData, (UDATA)jitPC + 1, &stackMap, &inlineMap);
+	Assert_CodertVM_false(NULL == inlineMap);
+	if (NULL != getJitInlinedCallInfo(metaData)) {
+		inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
+		if (inlinedCallSite != NULL) {
+			newNumberOfFrames = getJitInlineDepthFromCallSite(metaData, inlinedCallSite) + 1;
+		}
+	}
+	Assert_CodertVM_true(numberOfFrames >= newNumberOfFrames);
 	J9Pool *monitorEnterRecordPool = currentThread->monitorEnterRecordPool;
-	while (0 != numberOfFrames) {
+	while (numberOfFrames != newNumberOfFrames) {
 		/* Discard the monitor records for the popped frames */
 		J9MonitorEnterRecord *enterRecord = osrFrame->monitorEnterRecords;
 		while (NULL != enterRecord) {
@@ -1217,36 +1250,17 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 		osrFrame = (J9OSRFrame*)((U_8*)osrFrame + osrFrameSize(osrFrame->method));
 		numberOfFrames -= 1;
 	}
-	freeDecompilationRecord(currentThread, decompRecord, FALSE);
 
-	J9JavaVM *vm = currentThread->javaVM;
-	J9StackWalkState walkState;
+	/* Fix the OSR frame to resume at the catch point with an empty pending stack (the caught exception
+	 * is pushed after decompilation completes).
+	 */
+	osrFrame->bytecodePCOffset = getCurrentByteCodeIndexAndIsSameReceiver(metaData, inlineMap, inlinedCallSite, NULL);
+	Trc_Decomp_jitInterpreterPCFromWalkState_Entry(jitPC);
+	Trc_Decomp_jitInterpreterPCFromWalkState_exHandler(osrFrame->bytecodePCOffset);
+	osrFrame->pendingStackHeight = 0;
 
-	/* Add a new decompilation to the catching frame */
-	walkState.flags = J9_STACKWALK_COUNT_SPECIFIED | J9_STACKWALK_SKIP_INLINES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_MAINTAIN_REGISTER_MAP;
-	walkState.skipCount = 0;
-	walkState.maxFrames = 1;
-	walkState.walkThread = currentThread;
-	vm->walkStackFrames(currentThread, &walkState);
-	decompRecord = addDecompilation(currentThread, &walkState, 0);
-	Assert_CodertVM_false(NULL == decompRecord);
-	decompRecord = fetchAndUnstackDecompilationInfo(currentThread);
-	/* Fix the saved PC since the frame is still on the stack */
-	fixSavedPC(currentThread, decompRecord);
-
-	/* Collect the required information from the stack - top visible frame is the decompile frame */
-	J9JITDecompileState decompileState;
-	walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_MAINTAIN_REGISTER_MAP | J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_SAVE_STACKED_REGISTERS;
-	walkState.skipCount = 0;
-	walkState.frameWalkFunction = decompileMethodFrameIterator;
-	walkState.walkThread = currentThread;
-	walkState.userData1 = &decompileState;
-	walkState.userData2 = NULL;
-	vm->walkStackFrames(currentThread, &walkState);
-	osrBuffer = &decompRecord->osrBuffer;
-	numberOfFrames = osrBuffer->numberOfFrames;
-	osrFrame = (J9OSRFrame*)(osrBuffer + 1);
 	performDecompile(currentThread, &decompileState, decompRecord, osrFrame, numberOfFrames);
+
 	freeDecompilationRecord(currentThread, decompRecord, TRUE);
 
 	/* Push the exception */
@@ -1487,16 +1501,14 @@ deleteAllDecompilations(J9VMThread * currentThread, UDATA reason, J9Method * met
 void  
 jitExceptionCaught(J9VMThread * currentThread)
 {
-	PORT_ACCESS_FROM_VMC(currentThread);
 	J9StackWalkState * walkState = currentThread->stackWalkState;
-	J9JITDecompilationInfo * catchDecompile = NULL;
-	UDATA reportEvent = FALSE;
 
 	Trc_Decomp_jitExceptionCaught_Entry(currentThread, walkState->arg0EA);
 
 	/* Called when an exception is caught, the thread's walkState knows how far to pop */
 
-	catchDecompile = jitCleanUpDecompilationStack(currentThread, walkState, FALSE);
+	J9JITDecompilationInfo *catchDecompile = jitCleanUpDecompilationStack(currentThread, walkState, FALSE);
+	void *handlerPC = walkState->userData2;
 
 	/* If the catch frame is not JIT, nothing more needs to be done */
 
@@ -1505,34 +1517,46 @@ jitExceptionCaught(J9VMThread * currentThread)
 		return;
 	}
 
-	Trc_Decomp_jitExceptionCaught_JITFrame(currentThread);
-
-	/* If a decompilation record exists for the catch frame, update the PC to be the exception handler PC */
-
-	if (catchDecompile) {
-		Trc_Decomp_jitExceptionCaught_frameMarked(currentThread, walkState->bp);
-		catchDecompile->pc = (U_8 *) walkState->userData2;
-	}
-
-	reportEvent = J9_EVENT_IS_HOOKED(currentThread->javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH);
-	if (reportEvent) {
-		Trc_Decomp_jitExceptionCaught_mustReportNormal(currentThread, walkState->arg0EA);
-
-		if (catchDecompile) {
-			Trc_Decomp_jitExceptionCaught_decompileRequested(currentThread);
-			currentThread->floatTemp4 = J9_BUILDER_SYMBOL(jitDecompileAtExceptionCatch);
-		} else {
-			Trc_Decomp_jitExceptionCaught_notDecompiling(currentThread);
-			currentThread->floatTemp4 = walkState->userData2;
-		}
-		walkState->userData2 = J9_BUILDER_SYMBOL(jitReportExceptionCatch);
+	/* userData4 indicates whether or not the handler is synthetic */
+	if (NULL != walkState->userData4) {
+		/* The exception handler has been inserted by the JIT in order to exit the monitor
+		 * for an inlined synchronized method - do not report the exception catch event or
+		 * attempt to decompile at this point. The handler will rethrow the exception after
+		 * the monitor exit and the catch will be reported when the real catch block that came
+		 * from the bytecodes is reached.
+		 */
+		Trc_Decomp_jitExceptionCaught_SyntheticHandler(currentThread);
 	} else {
-		Trc_Decomp_jitExceptionCaught_notReportingCatch(currentThread);
-		if (catchDecompile) {
-			Trc_Decomp_jitExceptionCaught_decompileRequested(currentThread);
-			walkState->userData2 = J9_BUILDER_SYMBOL(jitDecompileAtExceptionCatch);
+		Trc_Decomp_jitExceptionCaught_JITFrame(currentThread);
+
+		/* If a decompilation record exists for the catch frame, update the PC to be the exception handler PC */
+
+		if (NULL != catchDecompile) {
+			Trc_Decomp_jitExceptionCaught_frameMarked(currentThread, walkState->bp);
+			catchDecompile->pc = (U_8 *)handlerPC;
+		}
+
+		/* Report the exception catch event if hooked */
+
+		if (J9_EVENT_IS_HOOKED(currentThread->javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH)) {
+			Trc_Decomp_jitExceptionCaught_mustReportNormal(currentThread, walkState->arg0EA);
+
+			if (catchDecompile) {
+				Trc_Decomp_jitExceptionCaught_decompileRequested(currentThread);
+				currentThread->floatTemp4 = J9_BUILDER_SYMBOL(jitDecompileAtExceptionCatch);
+			} else {
+				Trc_Decomp_jitExceptionCaught_notDecompiling(currentThread);
+				currentThread->floatTemp4 = handlerPC;
+			}
+			walkState->userData2 = J9_BUILDER_SYMBOL(jitReportExceptionCatch);
 		} else {
-			Trc_Decomp_jitExceptionCaught_notDecompiling(currentThread);
+			Trc_Decomp_jitExceptionCaught_notReportingCatch(currentThread);
+			if (catchDecompile) {
+				Trc_Decomp_jitExceptionCaught_decompileRequested(currentThread);
+				walkState->userData2 = J9_BUILDER_SYMBOL(jitDecompileAtExceptionCatch);
+			} else {
+				Trc_Decomp_jitExceptionCaught_notDecompiling(currentThread);
+			}
 		}
 	}
 
