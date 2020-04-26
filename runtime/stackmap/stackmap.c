@@ -60,36 +60,6 @@ typedef struct J9MappingStack {
 #define PUSH( t ) \
 	((*stackTop++ = t))
 
-#define PARAM_8(index, offset) ((index) [offset])
-
-#ifdef J9VM_ENV_LITTLE_ENDIAN
-#define PARAM_16(index, offset)	\
-	( ( ((U_16) (index)[offset])			)	\
-	| ( ((U_16) (index)[offset + 1]) << 8)	\
-	)
-#else
-#define PARAM_16(index, offset)	\
-	( ( ((U_16) (index)[offset]) << 8)	\
-	| ( ((U_16) (index)[offset + 1])			)	\
-	)
-#endif
-
-#ifdef J9VM_ENV_LITTLE_ENDIAN
-#define PARAM_32(index, offset)						\
-	( ( ((U_32) (index)[offset])					)	\
-	| ( ((U_32) (index)[offset + 1]) << 8 )	\
-	| ( ((U_32) (index)[offset + 2]) << 16)	\
-	| ( ((U_32) (index)[offset + 3]) << 24)	\
-	)
-#else
-#define PARAM_32(index, offset)						\
-	( ( ((U_32) (index)[offset])		 << 24)	\
-	| ( ((U_32) (index)[offset + 1]) << 16)	\
-	| ( ((U_32) (index)[offset + 2]) << 8 )	\
-	| ( ((U_32) (index)[offset + 3])			)	\
-	)
-#endif
-
 static J9MappingStack* pushStack (J9MappingStack* liveStack, UDATA totalStack, UDATA** stackTop);
 static IDATA outputStackMap (J9MappingStack * liveStack, U_32 * newStackDescription, UDATA bits);
 static IDATA mapStack (UDATA *scratch, UDATA totalStack, U_8 * map, J9ROMClass * romClass, J9ROMMethod * romMethod, J9MappingStack ** resultStack);

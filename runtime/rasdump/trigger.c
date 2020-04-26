@@ -126,7 +126,7 @@ struct ExceptionStackFrame
 };
 
 static UDATA
-countExceptionStackFrame(J9VMThread *vmThread, void *userData, J9ROMClass *romClass, J9ROMMethod *romMethod, J9UTF8 *fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass)
+countExceptionStackFrame(J9VMThread *vmThread, void *userData, UDATA bytecodeOffset, J9ROMClass *romClass, J9ROMMethod *romMethod, J9UTF8 *fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass)
 {
 	struct ExceptionStackFrame *frame = (struct ExceptionStackFrame *) userData;
 

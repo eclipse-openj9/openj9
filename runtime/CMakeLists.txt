@@ -262,6 +262,7 @@ target_include_directories(j9vm_interface
 		${CMAKE_CURRENT_SOURCE_DIR}/oti
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${J9VM_OMR_DIR}/include_core
+		${J9VM_OMR_DIR}/gc/include
 		${CMAKE_CURRENT_BINARY_DIR}/include
 		${CMAKE_CURRENT_BINARY_DIR}/omr
 		${CMAKE_CURRENT_BINARY_DIR}

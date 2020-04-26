@@ -338,3 +338,8 @@ TraceEvent=Trc_SC_LoadSystemLibrary_LoadFailed NoEnv Overhead=1 Level=1 Template
 TraceEntry=Trc_SC_RegisterSignal_Entry Overhead=1 Level=1 Template="JVM_RegisterSignal(signal=%d, handler=%p)"
 TraceExit=Trc_SC_RegisterSignal_Exit Overhead=1 Level=1 Template="JVM_RegisterSignal -- return old OS handler = %p"
 TraceException=Trc_SC_RegisterSignal_FailedToRegisterHandler Overhead=1 Level=1 Template="Failed to register handler: OS signal value = %d, new signal handler = %p, old signal handler = %p"
+
+TraceEntry=Trc_SC_GetExtendedNPEMessage_Entry Overhead=1 Level=3 Template="JVM_GetExtendedNPEMessage - throwableObj(0x%p)"
+TraceEntry=Trc_SC_GetExtendedNPEMessage_Entry2 Overhead=1 Level=1 Template="JVM_GetExtendedNPEMessage - throwableObj(0x%p)"
+TraceEvent=Trc_SC_GetExtendedNPEMessage_Null_NPE_MSG Overhead=1 Level=1 Template="JVM_GetExtendedNPEMessage - returns a NULL NPE message : romClass (0x%p) && romMethod (0x%p) bytecodeOffset (%d)"
+TraceExit=Trc_SC_GetExtendedNPEMessage_Exit Overhead=1 Level=3 Template="JVM_GetExtendedNPEMessage - returns msgObjectRef(0x%p)"

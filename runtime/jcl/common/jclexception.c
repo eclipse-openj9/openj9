@@ -31,7 +31,7 @@
 #include "vm_api.h"
 #include "ut_j9jcl.h"
 
-static UDATA getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass);
+static UDATA getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass);
 
 /**
  * Saves enough context into the StackTraceElement to allow printing later.  For
@@ -83,7 +83,7 @@ setStackTraceElementSource(J9VMThread* vmThread, j9object_t stackTraceElement, J
 
 
 static UDATA
-getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass)
+getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass)
 {
 	J9GetStackTraceUserData * userData = voidUserData;
 	J9JavaVM * vm = vmThread->javaVM;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,9 +19,17 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
-#include "j9cfg.h"
 #include <jni.h>
+
+#include "bcverify_api.h"
+#include "j9.h"
+#include "j9cfg.h"
+#include "rommeth.h"
+#include "ut_j9scar.h"
+
+/* Define for debug
+#define DEBUG_BCV
+*/
 
 #if JAVA_SPEC_VERSION >= 11
 JNIEXPORT void JNICALL
@@ -32,10 +40,90 @@ JVM_InitializeFromArchive(JNIEnv *env, jclass clz)
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
 #if JAVA_SPEC_VERSION >= 14
+typedef struct GetStackTraceElementUserData {
+	J9ROMClass *romClass;
+	J9ROMMethod *romMethod;
+	UDATA bytecodeOffset;
+} GetStackTraceElementUserData;
+
+static UDATA
+getStackTraceElementIterator(J9VMThread *vmThread, void *voidUserData, UDATA bytecodeOffset, J9ROMClass *romClass, J9ROMMethod *romMethod, J9UTF8 *fileName, UDATA lineNumber, J9ClassLoader *classLoader, J9Class* ramClass)
+{
+	GetStackTraceElementUserData *userData = voidUserData;
+
+	/* We are done, only first stack frame is needed. */
+	userData->romClass = romClass;
+	userData->romMethod = romMethod;
+	userData->bytecodeOffset = bytecodeOffset;
+
+	return FALSE;
+}
+
+#if defined(DEBUG_BCV)
+static void cfdumpBytecodePrintFunction(void *userData, char *format, ...)
+{
+	PORT_ACCESS_FROM_PORT((J9PortLibrary*)userData);
+	va_list args;
+	char outputBuffer[512] = {0};
+
+	va_start(args, format);
+	j9str_vprintf(outputBuffer, 512, format, args);
+	va_end(args);
+	j9tty_printf(PORTLIB, "%s", outputBuffer);
+}
+#endif /* defined(DEBUG_BCV) */
+
 JNIEXPORT jstring JNICALL
 JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 {
-	/* Returning NULL to allow JDK14 compilation, https://github.com/eclipse/openj9/issues/7500 */
-	return NULL;
+	J9VMThread *vmThread = (J9VMThread *)env;
+	J9JavaVM *vm = vmThread->javaVM;
+	jobject msgObjectRef = NULL;
+	
+	Trc_SC_GetExtendedNPEMessage_Entry(vmThread, throwableObj);
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_SHOW_EXTENDED_NPEMSG)) {
+		J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+		char *npeMsg = NULL;
+		GetStackTraceElementUserData userData = {0};
+		
+		Trc_SC_GetExtendedNPEMessage_Entry2(vmThread, throwableObj);
+		vmFuncs->internalEnterVMFromJNI(vmThread);
+		userData.bytecodeOffset = UDATA_MAX;
+		vmFuncs->iterateStackTrace(vmThread, (j9object_t*)throwableObj, getStackTraceElementIterator, &userData, FALSE);
+		if ((NULL != userData.romClass)
+			&& (NULL != userData.romMethod)
+			&& (UDATA_MAX != userData.bytecodeOffset)
+		) {
+#if defined(DEBUG_BCV)
+			{
+				PORT_ACCESS_FROM_VMC(vmThread);
+				U_8 *bytecodes = J9_BYTECODE_START_FROM_ROM_METHOD(userData.romMethod);
+				U_32 flags = 0;
+
+#if defined(J9VM_ENV_LITTLE_ENDIAN)
+				flags |= BCT_LittleEndianOutput;
+#else /* defined(J9VM_ENV_LITTLE_ENDIAN) */
+				flags |= BCT_BigEndianOutput;
+#endif /* defined(J9VM_ENV_LITTLE_ENDIAN) */
+				j9bcutil_dumpBytecodes(PORTLIB, userData.romClass, bytecodes, 0, userData.bytecodeOffset, flags, (void *)cfdumpBytecodePrintFunction, PORTLIB, "");
+			}
+#endif /* defined(DEBUG_BCV) */
+			npeMsg = vmFuncs->getCompleteNPEMessage(vmThread, J9_BYTECODE_START_FROM_ROM_METHOD(userData.romMethod) + userData.bytecodeOffset, userData.romClass, npeMsg);
+			if (NULL != npeMsg) {
+				PORT_ACCESS_FROM_VMC(vmThread);
+				j9object_t msgObject = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmThread, (U_8 *)npeMsg, strlen(npeMsg), 0);
+				if (NULL != msgObject) {
+					msgObjectRef = vmFuncs->j9jni_createLocalRef(env, msgObject);
+				}
+				j9mem_free_memory(npeMsg);
+			}
+		} else {
+			Trc_SC_GetExtendedNPEMessage_Null_NPE_MSG(vmThread, userData.romClass, userData.romMethod, userData.bytecodeOffset);
+		}
+		vmFuncs->internalExitVMToJNI(vmThread);
+	}
+	Trc_SC_GetExtendedNPEMessage_Exit(vmThread, msgObjectRef);
+	
+	return msgObjectRef;
 }
 #endif /* JAVA_SPEC_VERSION >= 14 */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -114,6 +114,35 @@
 	(freePointer += size * sizeof(type)), \
 	(freePointer < segmentEnd))
 
+#define PARAM_8(index, offset) ((index) [offset])
+
+#ifdef J9VM_ENV_LITTLE_ENDIAN
+#define PARAM_16(index, offset)	\
+	( ( ((U_16) (index)[offset])			)	\
+	| ( ((U_16) (index)[offset + 1]) << 8)	\
+	)
+#else
+#define PARAM_16(index, offset)	\
+	( ( ((U_16) (index)[offset]) << 8)	\
+	| ( ((U_16) (index)[offset + 1])			)	\
+	)
+#endif
+
+#ifdef J9VM_ENV_LITTLE_ENDIAN
+#define PARAM_32(index, offset)						\
+	( ( ((U_32) (index)[offset])					)	\
+	| ( ((U_32) (index)[offset + 1]) << 8 )	\
+	| ( ((U_32) (index)[offset + 2]) << 16)	\
+	| ( ((U_32) (index)[offset + 3]) << 24)	\
+	)
+#else
+#define PARAM_32(index, offset)						\
+	( ( ((U_32) (index)[offset])		 << 24)	\
+	| ( ((U_32) (index)[offset + 1]) << 16)	\
+	| ( ((U_32) (index)[offset + 2]) << 8 )	\
+	| ( ((U_32) (index)[offset + 3])			)	\
+	)
+#endif
 
 #define NEXT_U8(value, index) (value = *((index)++))
 #define NEXT_U16(value, index) ((value = ((U_16)(index)[0] << 8) | (U_16)(index)[1]), index += 2, value)
