@@ -693,61 +693,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          }
          break;
 
-      case TR_MethodPointer:
-         {
-         TR::Node *aconstNode = (TR::Node *) relocation->getTargetAddress();
-
-         uintptr_t inlinedSiteIndex = (uintptr_t)aconstNode->getInlinedSiteIndex();
-         *(uintptr_t *)cursor = inlinedSiteIndex;
-         cursor += SIZEPOINTER;
-
-         TR_OpaqueMethodBlock *j9method = (TR_OpaqueMethodBlock *) aconstNode->getAddress();
-         if (aconstNode->getOpCodeValue() == TR::loadaddr)
-            j9method = (TR_OpaqueMethodBlock *) aconstNode->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress();
-         TR_OpaqueClassBlock *j9class = fej9->getClassFromMethodBlock(j9method);
-
-         uintptr_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-
-         cursor = self()->emitClassChainOffset(cursor, j9class);
-
-         uintptr_t vTableOffset = (uintptr_t) fej9->getInterpreterVTableSlot(j9method, j9class);
-         *(uintptr_t *)cursor = vTableOffset;
-         cursor += SIZEPOINTER;
-         }
-         break;
-
-      case TR_ClassPointer:
-         {
-         TR::Node *aconstNode = (TR::Node *) relocation->getTargetAddress();
-
-         uintptr_t inlinedSiteIndex = (uintptr_t)aconstNode->getInlinedSiteIndex();
-         *(uintptr_t *)cursor = inlinedSiteIndex;
-         cursor += SIZEPOINTER;
-
-         //for optimizations where we are trying to relocate either profiled j9class or getfrom signature we can't use node to get the target address
-         //so we need to pass it to relocation in targetaddress2 for now
-         //two instances where use this relotype in such way are: profile checkcast and arraystore check object check optimizations
-
-         TR_OpaqueClassBlock *j9class = NULL;
-         if (relocation->getTargetAddress2())
-            j9class = (TR_OpaqueClassBlock *) relocation->getTargetAddress2();
-         else
-            {
-            j9class = (TR_OpaqueClassBlock *) aconstNode->getAddress();
-            if (aconstNode->getOpCodeValue() == TR::loadaddr)
-               j9class = (TR_OpaqueClassBlock *) aconstNode->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress();
-            }
-
-         uintptr_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-
-         cursor = self()->emitClassChainOffset(cursor, j9class);
-         }
-         break;
-
       case TR_ArbitraryClassAddress:
          {
          // ExternalRelocation data is as expected for TR_ClassAddress
@@ -842,97 +787,9 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          }
          break;
 
-      case TR_ProfiledInlinedMethodRelocation:
-      case TR_ProfiledClassGuardRelocation:
-      case TR_ProfiledMethodGuardRelocation :
-         {
-         guard = (TR_VirtualGuard *)relocation->getTargetAddress2();
-
-         int32_t inlinedSiteIndex = guard->getCurrentInlinedSiteIndex();
-         *(uintptr_t *)cursor = (uintptr_t)inlinedSiteIndex;
-         cursor += SIZEPOINTER;
-
-         TR::SymbolReference *callSymRef = guard->getSymbolReference();
-         TR_ResolvedMethod *owningMethod = callSymRef->getOwningMethod(self()->comp());
-
-         TR_InlinedCallSite & ics = comp->getInlinedCallSite(inlinedSiteIndex);
-         TR_ResolvedMethod *inlinedMethod = ((TR_AOTMethodInfo *)ics._methodInfo)->resolvedMethod;
-         TR_OpaqueClassBlock *inlinedCodeClass = reinterpret_cast<TR_OpaqueClassBlock *>(inlinedMethod->classOfMethod());
-
-         *(uintptr_t *)cursor = (uintptr_t)owningMethod->constantPool(); // record constant pool
-         cursor += SIZEPOINTER;
-
-         if (comp->getOption(TR_UseSymbolValidationManager))
-            {
-            uint16_t inlinedCodeClassID = symValManager->getIDFromSymbol(static_cast<void *>(inlinedCodeClass));
-            uintptr_t data = (uintptr_t)inlinedCodeClassID;
-            *(uintptr_t*)cursor = data;
-            }
-         else
-            {
-            *(uintptr_t*)cursor = (uintptr_t)callSymRef->getCPIndex(); // record cpIndex
-            }
-         cursor += SIZEPOINTER;
-
-         void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(inlinedCodeClass);
-         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
-         traceMsg(self()->comp(), "class is %p, romclass is %p, offset is %p\n", inlinedCodeClass, romClass, romClassOffsetInSharedCache);
-         *(uintptr_t *)cursor = romClassOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-
-         uintptr_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(inlinedCodeClass);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-
-         cursor = self()->emitClassChainOffset(cursor, inlinedCodeClass);
-
-         uintptr_t methodIndex = fej9->getMethodIndexInClass(inlinedCodeClass, inlinedMethod->getNonPersistentIdentifier());
-         *(uintptr_t *)cursor = methodIndex;
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_GlobalValue:
          *(uintptr_t*)cursor = (uintptr_t) relocation->getTargetAddress();
          cursor += SIZEPOINTER;
-         break;
-
-      case TR_ValidateClass:
-         {
-         *(uintptr_t*)cursor = (uintptr_t)relocation->getTargetAddress(); // Inlined site index
-         cursor += SIZEPOINTER;
-
-         TR::AOTClassInfo *aotCI = (TR::AOTClassInfo*)relocation->getTargetAddress2();
-         *(uintptr_t*)cursor = (uintptr_t) aotCI->_constantPool;
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t*)cursor = (uintptr_t) aotCI->_cpIndex;
-         cursor += SIZEPOINTER;
-
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, aotCI->_classChain);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-         }
-         break;
-
-      case TR_ValidateStaticField:
-         {
-
-         *(uintptr_t*)cursor = (uintptr_t)relocation->getTargetAddress(); // Inlined site index
-         cursor += SIZEPOINTER;
-
-         TR::AOTClassInfo *aotCI = (TR::AOTClassInfo*)relocation->getTargetAddress2();
-         *(uintptr_t*)cursor = (uintptr_t) aotCI->_constantPool;
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t*)cursor = (uintptr_t) aotCI->_cpIndex;
-         cursor += SIZEPOINTER;
-
-         void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(aotCI->_clazz);
-         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
-         *(uintptr_t *)cursor = romClassOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-         }
          break;
 
       case TR_ValidateArbitraryClass:
