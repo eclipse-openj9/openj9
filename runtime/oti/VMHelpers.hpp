@@ -771,7 +771,7 @@ done:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
 			instance = objectAllocate->inlineAllocateIndexableValueTypeObject(currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
-		} else
+		} else if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables))
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		{
 			instance = objectAllocate->inlineAllocateIndexableObject(currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
