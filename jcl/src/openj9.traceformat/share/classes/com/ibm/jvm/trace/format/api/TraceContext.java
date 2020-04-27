@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -556,8 +556,10 @@ public class TraceContext {
 		if (debugStream != null) {
 			debug(this, 2, "Thread " + thread + " terminated, removing thread from thread list? " + moreData);
 		}
-		if( !moreData ) {
-			threadMap.remove(Long.valueOf(thread.getThreadID()));
+		if (!moreData) {
+			Long id = Long.valueOf(thread.getThreadID());
+			knownThreads.remove(id);
+			threadMap.remove(id);
 			threads.remove(thread);
 		}
 	}
