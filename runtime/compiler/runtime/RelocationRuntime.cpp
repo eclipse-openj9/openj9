@@ -971,8 +971,6 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_FrontEnd *fe, TR_AOTHead
       defaultMessage = generateError("AOT header validation failed: TLH prefetch feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_MethodTrampolines) != (hdrInCache->featureFlags & TR_FeatureFlag_MethodTrampolines))
       defaultMessage = generateError("AOT header validation failed: MethodTrampolines feature mismatch.");
-   if ((featureFlags & TR_FeatureFlag_MultiTenancy) != (hdrInCache->featureFlags & TR_FeatureFlag_MultiTenancy))
-      defaultMessage = generateError("AOT header validation failed: MultiTenancy feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_HCREnabled) != (hdrInCache->featureFlags & TR_FeatureFlag_HCREnabled))
       defaultMessage = generateError("AOT header validation failed: HCR feature mismatch.");
    if (((featureFlags & TR_FeatureFlag_SIMDEnabled) == 0) && ((hdrInCache->featureFlags & TR_FeatureFlag_SIMDEnabled) != 0))

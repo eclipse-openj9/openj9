@@ -70,7 +70,7 @@ typedef enum TR_AOTFeatureFlags
    TR_FeatureFlag_DisableTraps                  = 0x00000010,
    TR_FeatureFlag_TLHPrefetch                   = 0x00000020,
    TR_FeatureFlag_MethodTrampolines             = 0x00000040,
-   TR_FeatureFlag_MultiTenancy                  = 0x00000080,
+   // Available                                 = 0x00000080,
    TR_FeatureFlag_HCREnabled                    = 0x00000100,
    TR_FeatureFlag_SIMDEnabled                   = 0x00000200,     //set and tested for s390
    TR_FeatureFlag_AsyncCompilation              = 0x00000400,     //async compilation - switch to interpreter code NOT generated
