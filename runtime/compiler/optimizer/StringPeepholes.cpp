@@ -172,11 +172,7 @@ TR::SymbolReference* TR_StringPeepholes::MethodEnumToArgsForMethodSymRefFromName
                          "java/lang/String",
                                  "java/lang/String",
                          "java/lang/String",
-                         "java/lang/String",
-                         NULL, //separator
-                         "com/ibm/jit/DecimalFormatHelper",
-                         "com/ibm/jit/DecimalFormatHelper"
-                         };
+                         "java/lang/String"};
 
    static char* methodNames [] = {"SMAAMSS",
                                   "SMSS",
@@ -188,10 +184,7 @@ TR::SymbolReference* TR_StringPeepholes::MethodEnumToArgsForMethodSymRefFromName
                           "<init>",
                           "<init>",
                                   "<init>",
-                          "<init>",
-                          NULL,
-                          "formatAsDouble",
-                          "formatAsFloat"};
+                          "<init>"};
 
    static char* signatures [] =  {        "(Ljava/math/BigDecimal;Ljava/math/BigDecimal;Ljava/math/BigDecimal;Ljava/math/BigDecimal;Ljava/math/BigDecimal;IIII)Ljava/math/BigDecimal;",
                                   "(Ljava/math/BigDecimal;Ljava/math/BigDecimal;Ljava/math/BigDecimal;II)Ljava/math/BigDecimal;",
@@ -203,10 +196,7 @@ TR::SymbolReference* TR_StringPeepholes::MethodEnumToArgsForMethodSymRefFromName
                                   "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V",
                                   "(Ljava/lang/String;I)V",
                                   "([BIIZ)V",
-                                  "(ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;)V",
-                          NULL,
-                          "(Ljava/text/DecimalFormat;Ljava/math/BigDecimal;)Ljava/lang/String;",
-                          "(Ljava/text/DecimalFormat;Ljava/math/BigDecimal;)Ljava/lang/String;"};
+                                  "(ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;)V"};
 
    // TODO: This is a workaround as we switched to using a byte[] backing array in String*. Remove this workaround once obsolete.
    if (m == SPH_String_init_AIIZ)
@@ -449,18 +439,6 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
                {
                postProcessTreesForOSR(prevTree->getNextTreeTop(), newTree);
                tt = newTree;
-               }
-            }
-
-         // check that the helper class is available before invoking the matcher
-         if (comp()->isOutermostMethod() && !optimizer()->isIlGenOpt() && !comp()->getOption(TR_DisableDecimalFormatPeephole))
-            {
-            TR_OpaqueClassBlock *DFHClass = fe()->getClassFromSignature("com/ibm/jit/DecimalFormatHelper", 31, comp()->getCurrentMethod());
-            if (DFHClass != NULL)
-               {
-               TR::TreeTop *newTree = detectFormatPattern(tt, exit, callNode);
-               if (newTree)
-                  tt = newTree;
                }
             }
 
@@ -786,120 +764,6 @@ static bool isRecognizedMethod(TR::Node* node, TR::RecognizedMethod rm) {
    }
    return result;
 }
-
-//Replaces df.format(bd.doubleValue()) and df.format(bd.floatValue())
-//with, respectively, DecimalFormatHelper.formatAsDouble(df, bd) and
-//DecimalFormatHelper.formatAsFloat(df, bd) in which bd is a
-//BigDecimal object and df is DecimalFormat object. The latter pair of calls are
-//much faster than the former ones because it avoids many of the
-//conversions that the former performs.
-TR::TreeTop *TR_StringPeepholes::detectFormatPattern(TR::TreeTop *tt, TR::TreeTop *exit, TR::Node *node)
-   {
-   TR::TreeTop *firstTree = tt;
-   TR::TreeTop *privateFormatMethodCall = NULL;
-
-   if ((isRecognizedMethod(node,  TR::java_math_BigDecimal_doubleValue) ||
-        isRecognizedMethod(node,  TR::java_math_BigDecimal_floatValue)) &&
-       (node->getReferenceCount() == 2))
-      {
-      bool needsNullCheck = false;
-      if (tt->getNode()->getOpCodeValue() == TR::NULLCHK)
-         needsNullCheck = true;
-      tt = tt->getNextTreeTop();
-      TR::Node *nextNode = tt->getNode();
-      if (nextNode->getOpCodeValue() == TR::treetop)
-         nextNode = nextNode->getFirstChild();
-
-      if (!nextNode->getOpCode().isCall() &&
-         (nextNode->getNumChildren() > 0))
-         nextNode = nextNode->getFirstChild();
-
-      if (isRecognizedMethod(nextNode,  TR::java_text_NumberFormat_format))
-         {
-       StringpeepholesMethods bdMethod = isRecognizedMethod(node, TR::java_math_BigDecimal_doubleValue) ?
-                                         SPH_DecimalFormatHelper_formatAsDouble :
-                                 SPH_DecimalFormatHelper_formatAsFloat;
-
-         TR::SymbolReference *callSymRef = findSymRefForOptMethod (bdMethod);
-         if (nextNode->getSecondChild() == node && callSymRef && performTransformation(comp(), "%ssimplified number format pattern from node [%p] to [%p] \n", optDetailString(), firstTree->getNode(), tt->getNode()))
-            {
-            TR::TreeTop *prevTree = firstTree->getPrevTreeTop();
-            TR::TreeTop *treeAfterLast = tt->getNextTreeTop();
-
-            TR::SymbolReference* origSymRef = nextNode->getSymbolReference();
-            nextNode->setSymbolReference(callSymRef);
-            TR::Node* origSecondChild = nextNode->getSecondChild();
-            nextNode->setAndIncChild(1, node->getOpCode().isIndirect() ? node->getSecondChild() : node->getFirstChild());
-            TR::TreeTop* next = tt->getNextRealTreeTop();
-
-            TR::TreeTop *nullChkTT = NULL;
-            if (needsNullCheck && node->getOpCode().isCall())
-               {
-               TR::Node *arg = node->getChild(node->getFirstArgumentIndex());
-               arg = TR::Node::create(node, TR::PassThrough, 1, arg);
-               TR::Node * nullChkNode = TR::Node::createWithSymRef(node, TR::NULLCHK, 1, arg, getSymRefTab()->findOrCreateRuntimeHelper(TR_nullCheck, false, true, true));
-               nullChkTT = TR::TreeTop::create(comp(), nullChkNode);
-               prevTree->insertAfter(nullChkTT);
-               traceMsg(comp(), "\t%sInserted NULLCHK %p for receiver of original call tree %p\n", optDetailString(), nullChkNode, firstTree->getNode());
-               }
-
-            if (performTransformation(comp(), "%sAttempting to inline call [%p]\n", optDetailString(), tt->getNode()))
-               {
-               nextNode->getByteCodeInfo().setDoNotProfile(true);
-               TR_InlineCall newInlineCall(optimizer(), this);
-               newInlineCall.setSizeThreshold(800);
-               bool inlineOK = newInlineCall.inlineCall(tt, 0, true, 0, 400);
-               privateFormatMethodCall = inlineOK ? next->getPrevRealTreeTop() : NULL;
-               if (inlineOK && performTransformation(comp(), "%sdf.format(bd.doubleValue()) (or df.format(bd.floatValue()) ) has been optimized\n", optDetailString()))
-                  {
-                  traceMsg(comp(), "%sInlining success at call tree %p\n", optDetailString(), firstTree->getNode());
-
-                  TR::Node *danglingCallNode = origSecondChild;
-                  if (origSecondChild->getOpCodeValue() == TR::f2d)
-                     danglingCallNode = origSecondChild->getFirstChild();
-
-                  if (danglingCallNode->getReferenceCount() > 1)
-                     {
-                     TR::TreeTop *nextRefToCall = firstTree->getNextTreeTop();
-                     while (nextRefToCall->getNode()->getOpCodeValue() != TR::BBEnd)
-              {
-                        TR::TreeTop *nextToNextRefToCall = nextRefToCall->getNextTreeTop();
-
-                        if (nextRefToCall->getNode()->getOpCode().isStore() &&
-                            nextRefToCall->getNode()->getFirstChild() == danglingCallNode)
-                           {
-                           //danglingCallNode->recursivelyDecReferenceCount();
-                           traceMsg(comp(), "removing a reference to dangling call node %p from tree %p\n", danglingCallNode, nextRefToCall->getNode());
-                           TR::TransformUtil::removeTree(comp(), nextRefToCall);
-                           }
-
-                        nextRefToCall = nextToNextRefToCall;
-         }
-                     }
-
-                  origSecondChild->recursivelyDecReferenceCount();
-                  TR::TreeTop *cursorTree = firstTree;
-                  TR::TransformUtil::removeTree(comp(), cursorTree);
-                  }
-               else
-                  {
-                  //now that inlining wasn't successful, revert back all the changes done to the IL
-                  nextNode->getByteCodeInfo().setDoNotProfile(false);
-                  nextNode->setSymbolReference(origSymRef);
-                  nextNode->getSecondChild()->recursivelyDecReferenceCount();
-                  nextNode->setChild(1, origSecondChild);
-                  if (nullChkTT)
-                     nullChkTT->unlink(true);
-                  traceMsg(comp(), "%sReversing optimization to original call tree %p\n", optDetailString(), firstTree->getNode());
-                  }
-               }
-            }
-         }
-      return privateFormatMethodCall;
-      }
-   return NULL;
-   }
-
 
 TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR::TreeTop *exit, TR::Node *node)
    {
