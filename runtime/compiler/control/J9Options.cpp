@@ -2634,13 +2634,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    //
    self()->setOption(TR_DisableEDO);
 
-   // Full support for GRA is not available on AArch64 yet, mainly to
-   // work out all the subtleties with GlRegDeps.
-   //
-   // OpenJ9 issue #6606 tracks the work to enable.
-   //
-   self()->setDisabled(OMR::tacticalGlobalRegisterAllocator, true);
-
    // Support for shuffling linkage registers to GRA registers is not
    // available on AArch64 yet.
    //
