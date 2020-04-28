@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,8 +23,12 @@
 	.file "Recompilation.s"
 
 	.globl	_countingRecompileMethod
-	.globl	_initialInvokeExactThunkGlue
+	.globl	_samplingRecompileMethod
+	.globl	_countingPatchCallSite
+	.globl	_samplingPatchCallSite
+	.globl	_induceRecompilation
 	.globl	_revertToInterpreterGlue
+	.globl	_initialInvokeExactThunkGlue
 
 	.extern	initialInvokeExactThunk_unwrapper
 	.extern	jitCallCFunction
@@ -33,6 +37,21 @@
 #define J9SP x20
 
 _countingRecompileMethod:
+	hlt	#0	// Not implemented yet
+
+_samplingRecompileMethod:
+	hlt	#0	// Not implemented yet
+
+_countingPatchCallSite:
+	hlt	#0	// Not implemented yet
+
+_samplingPatchCallSite:
+	hlt	#0	// Not implemented yet
+
+_induceRecompilation:
+	hlt	#0	// Not implemented yet
+
+_revertToInterpreterGlue:
 	hlt	#0	// Not implemented yet
 
 // _initialInvokeExactThunkGlue
@@ -56,6 +75,3 @@ _initialInvokeExactThunkGlue:
 	.align	3
 const_initialInvokeExactThunk_unwrapper:
 	.dword	initialInvokeExactThunk_unwrapper
-
-_revertToInterpreterGlue:
-	hlt	#0	// Not implemented yet
