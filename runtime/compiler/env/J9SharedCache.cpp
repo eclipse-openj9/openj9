@@ -30,6 +30,7 @@
 #include "env/jittypes.h"
 #include "env/VMAccessCriticalSection.hpp"
 #include "exceptions/PersistenceFailure.hpp"
+#include "infra/CriticalSection.hpp"
 #include "runtime/CodeRuntime.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "env/VMJ9.h"
@@ -52,7 +53,8 @@ TR_J9SharedCache::TR_J9SharedCacheDisabledReason TR_J9SharedCache::_sharedCacheS
 TR_YesNoMaybe TR_J9SharedCache::_sharedCacheDisabledBecauseFull = TR_maybe;
 UDATA TR_J9SharedCache::_storeSharedDataFailedLength = 0;
 
-TR::Monitor * TR_J9SharedCache::_classChainValidationMutex = NULL;
+TR_J9SharedCache::CCVMap *TR_J9SharedCache::_ccvMap = NULL;
+TR::Monitor *TR_J9SharedCache::_classChainValidationMutex = NULL;
 
 TR_YesNoMaybe TR_J9SharedCache::isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo)
    {
@@ -106,6 +108,39 @@ TR_J9SharedCache::initCCVCaching()
       if (!(_classChainValidationMutex = TR::Monitor::create("JIT-ClassChainValidationMutex")))
          return false;
       }
+
+   if (!_ccvMap)
+      {
+      void *storage = jitPersistentAlloc(sizeof(CCVMap));
+      if (!storage)
+         return false;
+
+      _ccvMap = new (storage) CCVMap(CCVComparator(), getPersistentAllocator());
+      }
+
+   return true;
+   }
+
+TR_J9SharedCache::CCVResult
+TR_J9SharedCache::getCachedCCVResult(uintptr_t classOffsetInCache)
+   {
+   OMR::CriticalSection getCachedResult(_classChainValidationMutex);
+
+   auto iter = _ccvMap->find(classOffsetInCache);
+   if (iter == _ccvMap->end())
+      return CCVResult::notYetValidated;
+   else
+      return iter->second;
+   }
+
+bool
+TR_J9SharedCache::cacheCCVResult(uintptr_t classOffsetInCache, CCVResult result)
+   {
+   OMR::CriticalSection cacheResult(_classChainValidationMutex);
+
+   auto res = _ccvMap->insert(std::make_pair(classOffsetInCache, result));
+
+   return res.second;
    }
 
 TR_J9SharedCache::TR_J9SharedCache(TR_J9VMBase *fe)

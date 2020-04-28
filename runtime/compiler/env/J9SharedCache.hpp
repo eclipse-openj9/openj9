@@ -26,6 +26,7 @@
 #include "compiler/env/SharedCache.hpp"
 
 #include <stdint.h>
+#include <map>
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
@@ -61,7 +62,7 @@ struct J9SharedDataDescriptor;
 class TR_J9SharedCache : public TR_SharedCache
    {
 public:
-   TR_ALLOC(TR_Memory::SharedCache)
+   TR_ALLOC_SPECIALIZED(TR_Memory::SharedCache)
 
    TR_J9SharedCache(TR_J9VMBase *fe);
 
@@ -183,6 +184,13 @@ private:
       uint16_t data;
       };
 
+   enum CCVResult
+      {
+      notYetValidated,
+      success,
+      failure
+      };
+
    J9JITConfig *jitConfig() { return _jitConfig; }
    J9JavaVM *javaVM() { return _javaVM; }
    TR_J9VMBase *fe() { return _fe; }
@@ -210,6 +218,9 @@ private:
 
    static bool isPointerInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
 
+   static CCVResult getCachedCCVResult(uintptr_t classOffsetInCache);
+   static bool cacheCCVResult(uintptr_t classOffsetInCache, CCVResult result);
+
    uint16_t _initialHintSCount;
    uint16_t _hintsEnabledMask;
 
@@ -229,6 +240,11 @@ private:
    static TR_YesNoMaybe                  _sharedCacheDisabledBecauseFull;
    static UDATA                          _storeSharedDataFailedLength;
 
+   typedef TR::typed_allocator<std::pair<uintptr_t const, CCVResult>, TrackedPersistentAllocator&> CCVAllocator;
+   typedef std::less<uintptr_t> CCVComparator;
+   typedef std::map<uintptr_t, CCVResult, CCVComparator, CCVAllocator> CCVMap;
+
+   static CCVMap                        *_ccvMap;
    static TR::Monitor                   *_classChainValidationMutex;
    };
 
