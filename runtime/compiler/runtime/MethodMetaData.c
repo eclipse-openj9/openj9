@@ -27,6 +27,7 @@
 #include "j9.h"
 #include "jitprotos.h"
 #include "j9protos.h"
+#include "omrcomp.h"
 #include "rommeth.h"
 #include "env/jittypes.h"
 
@@ -34,7 +35,47 @@
 
 #define FASTWALK_CACHESIZE 2
 
-static JITINLINE void initializeIterator(TR_MapIterator * i, void * methodMetaData)
+static VMINLINE J9JIT32BitExceptionTableEntry * get32BitFirstExceptionDataField(J9TR_MethodMetaData* metaData);
+static VMINLINE J9JIT16BitExceptionTableEntry * get16BitFirstExceptionDataField(J9TR_MethodMetaData* metaData);
+static VMINLINE J9JIT32BitExceptionTableEntry * get32BitNextExceptionTableEntry(J9JIT32BitExceptionTableEntry* handlerCursor);
+static VMINLINE J9JIT32BitExceptionTableEntry * get32BitNextExceptionTableEntryFSD(J9JIT32BitExceptionTableEntry* handlerCursor, UDATA fullSpeedDebug);
+static VMINLINE J9JIT16BitExceptionTableEntry * get16BitNextExceptionTableEntry(J9JIT16BitExceptionTableEntry* handlerCursor);
+static VMINLINE J9JIT16BitExceptionTableEntry * get16BitNextExceptionTableEntryFSD(J9JIT16BitExceptionTableEntry* handlerCursor, int fullSpeedDebug);
+
+static VMINLINE UDATA  getJittedMethodStartPC(J9TR_MethodMetaData * md);
+static VMINLINE UDATA  getJittedMethodEndPC(J9TR_MethodMetaData * md);
+
+static VMINLINE U_16   getJitProloguePushes(J9TR_MethodMetaData * md);
+static VMINLINE I_16   getJitTempOffset(J9TR_MethodMetaData * md);
+static VMINLINE U_16   getJitNumberOfExceptionRanges(J9TR_MethodMetaData * md);
+static VMINLINE I_32   getJitExceptionTableSize(J9TR_MethodMetaData * md);
+
+static VMINLINE I_16 getJitLocalBaseOffset(J9TR_StackAtlas * sa);
+
+static VMINLINE U_32 getJit32BitTableEntryStartPC(J9JIT32BitExceptionTableEntry * te);
+static VMINLINE U_32 getJit32BitTableEntryEndPC(J9JIT32BitExceptionTableEntry * te);
+static VMINLINE U_32 getJit32BitTableEntryHandlerPC(J9JIT32BitExceptionTableEntry * te);
+static VMINLINE U_32 getJit32BitTableEntryCatchType(J9JIT32BitExceptionTableEntry * te);
+static VMINLINE J9Method * getJit32BitTableEntryRamMethod(J9JIT32BitExceptionTableEntry * te);
+
+static VMINLINE U_16 getJit16BitTableEntryStartPC(J9JIT16BitExceptionTableEntry * te);
+static VMINLINE U_16 getJit16BitTableEntryEndPC(J9JIT16BitExceptionTableEntry * te);
+static VMINLINE U_16 getJit16BitTableEntryHandlerPC(J9JIT16BitExceptionTableEntry * te);
+static VMINLINE U_16 getJit16BitTableEntryCatchType(J9JIT16BitExceptionTableEntry * te);
+
+static VMINLINE UDATA hasBytecodePC(J9TR_MethodMetaData * md);
+static VMINLINE UDATA hasWideExceptions(J9TR_MethodMetaData * md);
+
+static VMINLINE U_32 * get32BitByteCodeIndexFromExceptionTable(J9TR_MethodMetaData * exceptionTable);
+static VMINLINE U_32 * get16BitByteCodeIndexFromExceptionTable(J9TR_MethodMetaData * exceptionTable);
+
+static VMINLINE U_8 * getFirstStackMap(J9TR_StackAtlas * stackAtlas);
+
+static VMINLINE void * getByteCodeInfoFromStackMap(J9TR_MethodMetaData * metaData, void * stackMap);
+
+static VMINLINE void * getByteCodeInfo(void *inlinedCallSite);
+
+static VMINLINE void initializeIterator(TR_MapIterator * i, void * methodMetaData)
    {
    i->_methodMetaData = (J9TR_MethodMetaData *)methodMetaData;
    i->_stackAtlas = (J9JITStackAtlas *) i->_methodMetaData->gcStackAtlas;
@@ -44,7 +85,7 @@ static JITINLINE void initializeIterator(TR_MapIterator * i, void * methodMetaDa
    i->_mapIndex = 0;
    }
 
-static JITINLINE void initializeIteratorWithSpecifiedMap(TR_MapIterator * i, J9TR_MethodMetaData * methodMetaData, U_8 * map, U_32 mapCount)
+static VMINLINE void initializeIteratorWithSpecifiedMap(TR_MapIterator * i, J9TR_MethodMetaData * methodMetaData, U_8 * map, U_32 mapCount)
    {
    i->_methodMetaData = methodMetaData;
    i->_stackAtlas = (J9JITStackAtlas *) i->_methodMetaData->gcStackAtlas;
@@ -54,7 +95,7 @@ static JITINLINE void initializeIteratorWithSpecifiedMap(TR_MapIterator * i, J9T
    i->_mapIndex = mapCount;
    }
 
-static JITINLINE U_8 * getNextMap(TR_MapIterator * i, UDATA fourByteOffsets)
+static VMINLINE U_8 * getNextMap(TR_MapIterator * i, UDATA fourByteOffsets)
    {
    i->_currentMap = i->_nextMap;
 
@@ -82,7 +123,7 @@ static JITINLINE U_8 * getNextMap(TR_MapIterator * i, UDATA fourByteOffsets)
 /*
  * Get the next full stack map, skipping over maps that are just inlineMaps/bytecodeinfos.
  */
-static JITINLINE U_8 * getNextStackMap(TR_MapIterator * i, U_32 * mapCount, UDATA fourByteOffsets)
+static VMINLINE U_8 * getNextStackMap(TR_MapIterator * i, U_32 * mapCount, UDATA fourByteOffsets)
    {
    if (getNextMap(i, fourByteOffsets))
       { ++*mapCount; }
@@ -121,7 +162,7 @@ typedef struct TR_PersistentJittedBodyInfo {
 
 static const U_32 TR_StackMapTable_magicNumber = 0xABCDEFAB;
 
-static JITINLINE TR_StackMapTable * initializeMapTable(J9JavaVM * javaVM, J9TR_MethodMetaData * metaData, UDATA fourByteOffsets)
+static VMINLINE TR_StackMapTable * initializeMapTable(J9JavaVM * javaVM, J9TR_MethodMetaData * metaData, UDATA fourByteOffsets)
    {
    /* How big should the table be before we give up on linear search? */
    const U_32 threshold = 6;
@@ -182,7 +223,7 @@ static JITINLINE TR_StackMapTable * initializeMapTable(J9JavaVM * javaVM, J9TR_M
    return mapTable;
    }
 
-static JITINLINE TR_StackMapTable * findOrCreateMapTable(J9JavaVM * javaVM, J9TR_MethodMetaData * metaData, UDATA fourByteOffsets)
+static VMINLINE TR_StackMapTable * findOrCreateMapTable(J9JavaVM * javaVM, J9TR_MethodMetaData * metaData, UDATA fourByteOffsets)
    {
    TR_StackMapTable * mapTablePtr = 0;
    assert(metaData);
@@ -202,12 +243,12 @@ static JITINLINE TR_StackMapTable * findOrCreateMapTable(J9JavaVM * javaVM, J9TR
    return mapTablePtr;
    }
 
-static JITINLINE void * currentInlineMap(TR_MapIterator * i)
+static VMINLINE void * currentInlineMap(TR_MapIterator * i)
    {
    return i->_currentInlineMap;
    }
 
-static JITINLINE void * currentStackMap(TR_MapIterator * i)
+static VMINLINE void * currentStackMap(TR_MapIterator * i)
    {
    return i->_currentStackMap;
    }
@@ -217,7 +258,7 @@ static U_32 matchingRange(TR_MapIterator * i, UDATA offset)
    return i->_rangeStartOffset <= offset && offset <= i->_rangeEndOffset;
    }
 
-static JITINLINE void findMapsAtPC(TR_MapIterator * i, UDATA offsetPC, void * * stackMap, void * * inlineMap, UDATA fourByteOffsets)
+static VMINLINE void findMapsAtPC(TR_MapIterator * i, UDATA offsetPC, void * * stackMap, void * * inlineMap, UDATA fourByteOffsets)
    {
    while (getNextMap(i, fourByteOffsets))
       {
@@ -230,7 +271,7 @@ static JITINLINE void findMapsAtPC(TR_MapIterator * i, UDATA offsetPC, void * * 
       }
    }
 
-static JITINLINE int compareMapTableEntries(UDATA key, TR_MapTableEntry * ent)
+static VMINLINE int compareMapTableEntries(UDATA key, TR_MapTableEntry * ent)
    {
    /* Position (ent+1) is always valid, because there's an extra entry at
     * the end of the table that isn't part of this search.
@@ -240,7 +281,7 @@ static JITINLINE int compareMapTableEntries(UDATA key, TR_MapTableEntry * ent)
    return 0;
    }
 
-static JITINLINE void * mapSearch(UDATA key, TR_MapTableEntry * base, size_t num)
+static VMINLINE void * mapSearch(UDATA key, TR_MapTableEntry * base, size_t num)
    {
    size_t delta = OMR_MAX(num / 2, 1);
    size_t pos = delta;
@@ -637,13 +678,13 @@ void * getNextInlineRange(TR_MapIterator * i, UDATA * startOffset, UDATA * endOf
    return i->_currentInlineMap;
    }
 
-JITINLINE static J9JIT32BitExceptionTableEntry * getNext32BitExceptionDataField(J9JIT32BitExceptionTableEntry * handlerCursor, UDATA bytecodePCBytes)
+static VMINLINE J9JIT32BitExceptionTableEntry * getNext32BitExceptionDataField(J9JIT32BitExceptionTableEntry * handlerCursor, UDATA bytecodePCBytes)
    {
    return (J9JIT32BitExceptionTableEntry *) (((U_8 *) (handlerCursor + 1)) + bytecodePCBytes);
    }
 
 
-JITINLINE static J9JIT16BitExceptionTableEntry * getNext16BitExceptionDataField(J9JIT16BitExceptionTableEntry * handlerCursor, UDATA bytecodePCBytes)
+static VMINLINE J9JIT16BitExceptionTableEntry * getNext16BitExceptionDataField(J9JIT16BitExceptionTableEntry * handlerCursor, UDATA bytecodePCBytes)
    {
    return (J9JIT16BitExceptionTableEntry *) (((U_8 *) (handlerCursor + 1)) + bytecodePCBytes);
    }
@@ -680,14 +721,14 @@ typedef struct TR_jitExceptionHandlerCache
         ((key*JIT_EXCEPTION_HANDLER_CACHE_HASH_VALUE) >> (BIT_IN_INTERGER-JIT_EXCEPTION_HANDLER_CACHE_DIMENSION))
 
 
-void JITINLINE setJitExceptionHandlerCache(TR_jitExceptionHandlerCache* jitExceptionHandlerCache, UDATA pc, J9Class * thrownClass)
+void static VMINLINE setJitExceptionHandlerCache(TR_jitExceptionHandlerCache* jitExceptionHandlerCache, UDATA pc, J9Class * thrownClass)
    {
     jitExceptionHandlerCache[JIT_EXCEPTION_HANDLER_CACHE_HASH_RESULT(pc)].pc=pc;
     jitExceptionHandlerCache[JIT_EXCEPTION_HANDLER_CACHE_HASH_RESULT(pc)].thrownClass=thrownClass;
     return;
    }
 
-JITINLINE TR_jitExceptionHandlerCache getJitExceptionHandlerCache(TR_jitExceptionHandlerCache* jitExceptionHandlerCache, UDATA pc)
+static VMINLINE TR_jitExceptionHandlerCache getJitExceptionHandlerCache(TR_jitExceptionHandlerCache* jitExceptionHandlerCache, UDATA pc)
    {
    return jitExceptionHandlerCache[JIT_EXCEPTION_HANDLER_CACHE_HASH_RESULT(pc)];
    }
@@ -809,12 +850,12 @@ UDATA jitExceptionHandlerSearch(J9VMThread * currentThread, J9StackWalkState * w
    return J9_STACKWALK_KEEP_ITERATING;
    }
 
-JITINLINE J9JIT32BitExceptionTableEntry * get32BitFirstExceptionDataField(J9TR_MethodMetaData * methodMetaData)
+static VMINLINE J9JIT32BitExceptionTableEntry * get32BitFirstExceptionDataField(J9TR_MethodMetaData * methodMetaData)
    {
    return (J9JIT32BitExceptionTableEntry *) (methodMetaData + 1);
    }
 
-JITINLINE J9JIT16BitExceptionTableEntry * get16BitFirstExceptionDataField(J9TR_MethodMetaData * methodMetaData)
+static VMINLINE J9JIT16BitExceptionTableEntry * get16BitFirstExceptionDataField(J9TR_MethodMetaData * methodMetaData)
    {
    return (J9JIT16BitExceptionTableEntry *) (methodMetaData + 1);
    }
@@ -824,17 +865,17 @@ U_8 * getJit32BitInterpreterPC(U_8 * bytecodes, J9JIT32BitExceptionTableEntry * 
    return bytecodes + *((U_32 *) (handlerCursor + 1));
    }
 
-JITINLINE U_8 * getJit16BitInterpreterPC(U_8 * bytecodes, J9JIT16BitExceptionTableEntry * handlerCursor)
+static VMINLINE U_8 * getJit16BitInterpreterPC(U_8 * bytecodes, J9JIT16BitExceptionTableEntry * handlerCursor)
    {
    return bytecodes + *((U_32 *) (handlerCursor + 1));
    }
 
-JITINLINE J9JIT32BitExceptionTableEntry * get32BitNextExceptionTableEntry(J9JIT32BitExceptionTableEntry * handlerCursor)
+static VMINLINE J9JIT32BitExceptionTableEntry * get32BitNextExceptionTableEntry(J9JIT32BitExceptionTableEntry * handlerCursor)
    {
    return (J9JIT32BitExceptionTableEntry *) (((U_8 *) (handlerCursor + 1)) + sizeof(U_32));
    }
 
-JITINLINE J9JIT32BitExceptionTableEntry * get32BitNextExceptionTableEntryFSD(J9JIT32BitExceptionTableEntry * handlerCursor, UDATA fullSpeedDebug)
+static VMINLINE J9JIT32BitExceptionTableEntry * get32BitNextExceptionTableEntryFSD(J9JIT32BitExceptionTableEntry * handlerCursor, UDATA fullSpeedDebug)
    {
    if (fullSpeedDebug)
       {
@@ -844,12 +885,12 @@ JITINLINE J9JIT32BitExceptionTableEntry * get32BitNextExceptionTableEntryFSD(J9J
    return (J9JIT32BitExceptionTableEntry *) (((U_8 *) (handlerCursor + 1)));
    }
 
-JITINLINE J9JIT16BitExceptionTableEntry * get16BitNextExceptionTableEntry(J9JIT16BitExceptionTableEntry * handlerCursor)
+static VMINLINE J9JIT16BitExceptionTableEntry * get16BitNextExceptionTableEntry(J9JIT16BitExceptionTableEntry * handlerCursor)
    {
    return (J9JIT16BitExceptionTableEntry *) (((U_8 *) (handlerCursor + 1)) + sizeof(U_32));
    }
 
-JITINLINE J9JIT16BitExceptionTableEntry * get16BitNextExceptionTableEntryFSD(J9JIT16BitExceptionTableEntry * handlerCursor, int fullSpeedDebug)
+static VMINLINE J9JIT16BitExceptionTableEntry * get16BitNextExceptionTableEntryFSD(J9JIT16BitExceptionTableEntry * handlerCursor, int fullSpeedDebug)
    {
    if (fullSpeedDebug)
       {
@@ -1556,17 +1597,17 @@ static U_32 getStackMapRegisterMap(U_8 * mapBits)
    return *(U_32 *)mapBits;
    }
 
-JITINLINE U_8 * getFirstStackMap(J9TR_StackAtlas * stackAtlas)
+static VMINLINE U_8 * getFirstStackMap(J9TR_StackAtlas * stackAtlas)
    {
    return (U_8*)stackAtlas + sizeof(J9TR_StackAtlas) + stackAtlas->numberOfMapBytes;
    }
 
-JITINLINE U_32 * get32BitByteCodeIndexFromExceptionTable(J9TR_MethodMetaData * methodMetaData)
+static VMINLINE U_32 * get32BitByteCodeIndexFromExceptionTable(J9TR_MethodMetaData * methodMetaData)
    {
    return (U_32 *)((char *)methodMetaData + sizeof(J9JITExceptionTable) + sizeof(J9JIT32BitExceptionTableEntry));
    }
 
-JITINLINE U_32 * get16BitByteCodeIndexFromExceptionTable(J9TR_MethodMetaData * methodMetaData)
+static VMINLINE U_32 * get16BitByteCodeIndexFromExceptionTable(J9TR_MethodMetaData * methodMetaData)
    {
    return (U_32 *)((char *)methodMetaData + sizeof(J9JITExceptionTable) + sizeof(J9JIT16BitExceptionTableEntry));
    }
@@ -1772,22 +1813,22 @@ void jitAddSpilledRegisters(J9StackWalkState * walkState, void * stackMap)
 #endif
    }
 
-JITINLINE J9ConstantPool * getJitConstantPool(J9TR_MethodMetaData * md)
+static VMINLINE J9ConstantPool * getJitConstantPool(J9TR_MethodMetaData * md)
    {
    return md->constantPool;
    }
 
-JITINLINE J9Method * getJitRamMethod(J9TR_MethodMetaData * md)
+static VMINLINE J9Method * getJitRamMethod(J9TR_MethodMetaData * md)
    {
    return md->ramMethod;
    }
 
-JITINLINE UDATA getJittedMethodStartPC(J9TR_MethodMetaData * md)
+static VMINLINE UDATA getJittedMethodStartPC(J9TR_MethodMetaData * md)
    {
    return md->startPC;
    }
 
-JITINLINE UDATA getJittedMethodEndPC(J9TR_MethodMetaData * md)
+static VMINLINE UDATA getJittedMethodEndPC(J9TR_MethodMetaData * md)
    {
    return md->endPC;
    }
@@ -1812,22 +1853,22 @@ I_16 getJitObjectTempSlots(J9TR_MethodMetaData * md)
    return md->objectTempSlots;
    }
 
-JITINLINE U_16 getJitProloguePushes(J9TR_MethodMetaData * md)
+static VMINLINE U_16 getJitProloguePushes(J9TR_MethodMetaData * md)
    {
    return md->prologuePushes;
    }
 
-JITINLINE I_16 getJitTempOffset(J9TR_MethodMetaData * md)
+static VMINLINE I_16 getJitTempOffset(J9TR_MethodMetaData * md)
    {
    return md->tempOffset;
    }
 
-JITINLINE U_16 getJitNumberOfExceptionRanges(J9TR_MethodMetaData * md)
+static VMINLINE U_16 getJitNumberOfExceptionRanges(J9TR_MethodMetaData * md)
    {
    return md->numExcptionRanges;
    }
 
-JITINLINE I_32 getJitExceptionTableSize(J9TR_MethodMetaData * md)
+static VMINLINE I_32 getJitExceptionTableSize(J9TR_MethodMetaData * md)
    {
    return md->size;
    }
@@ -1867,61 +1908,61 @@ U_16 getJitNumberOfParmSlots(J9TR_StackAtlas * sa)
    return sa->numberOfParmSlots;
    }
 
-JITINLINE I_16 getJitLocalBaseOffset(J9TR_StackAtlas * sa)
+static VMINLINE I_16 getJitLocalBaseOffset(J9TR_StackAtlas * sa)
    {
    return sa->localBaseOffset;
    }
 
-JITINLINE U_32 getJit32BitTableEntryStartPC(J9JIT32BitExceptionTableEntry * te)
+static VMINLINE U_32 getJit32BitTableEntryStartPC(J9JIT32BitExceptionTableEntry * te)
    {
    return te->startPC;
    }
 
-JITINLINE U_32 getJit32BitTableEntryEndPC(J9JIT32BitExceptionTableEntry * te) {
+static VMINLINE U_32 getJit32BitTableEntryEndPC(J9JIT32BitExceptionTableEntry * te) {
    return te->endPC;
    }
 
-JITINLINE U_32 getJit32BitTableEntryHandlerPC(J9JIT32BitExceptionTableEntry * te)
+static VMINLINE U_32 getJit32BitTableEntryHandlerPC(J9JIT32BitExceptionTableEntry * te)
    {
    return te->handlerPC;
    }
 
-JITINLINE U_32 getJit32BitTableEntryCatchType(J9JIT32BitExceptionTableEntry * te)
+static VMINLINE U_32 getJit32BitTableEntryCatchType(J9JIT32BitExceptionTableEntry * te)
    {
    return te->catchType;
    }
 
-JITINLINE J9Method * getJit32BitTableEntryRamMethod(J9JIT32BitExceptionTableEntry * te)
+static VMINLINE J9Method * getJit32BitTableEntryRamMethod(J9JIT32BitExceptionTableEntry * te)
    {
    return te->ramMethod;
    }
 
-JITINLINE U_16 getJit16BitTableEntryStartPC(J9JIT16BitExceptionTableEntry * te)
+static VMINLINE U_16 getJit16BitTableEntryStartPC(J9JIT16BitExceptionTableEntry * te)
    {
    return te->startPC;
    }
 
-JITINLINE U_16 getJit16BitTableEntryEndPC(J9JIT16BitExceptionTableEntry * te)
+static VMINLINE U_16 getJit16BitTableEntryEndPC(J9JIT16BitExceptionTableEntry * te)
    {
    return te->endPC;
    }
 
-JITINLINE U_16 getJit16BitTableEntryHandlerPC(J9JIT16BitExceptionTableEntry * te)
+static VMINLINE U_16 getJit16BitTableEntryHandlerPC(J9JIT16BitExceptionTableEntry * te)
    {
    return te->handlerPC;
    }
 
-JITINLINE U_16 getJit16BitTableEntryCatchType(J9JIT16BitExceptionTableEntry * te)
+static VMINLINE U_16 getJit16BitTableEntryCatchType(J9JIT16BitExceptionTableEntry * te)
    {
    return te->catchType;
    }
 
-JITINLINE UDATA hasBytecodePC(J9TR_MethodMetaData * md)
+static VMINLINE UDATA hasBytecodePC(J9TR_MethodMetaData * md)
    {
    return md->numExcptionRanges & J9_JIT_METADATA_HAS_BYTECODE_PC;
    }
 
-JITINLINE UDATA hasWideExceptions(J9TR_MethodMetaData * md)
+static VMINLINE UDATA hasWideExceptions(J9TR_MethodMetaData * md)
    {
    return md->numExcptionRanges & J9_JIT_METADATA_WIDE_EXCEPTIONS;
    }
@@ -1936,14 +1977,14 @@ UDATA * getTempBase(UDATA * bp, J9TR_MethodMetaData * methodMetaData)
    return ((UDATA *) (((U_8 *) bp) + getJitLocalBaseOffset((J9JITStackAtlas *) getJitGCStackAtlas(methodMetaData)))) + getJitTempOffset(methodMetaData);
    }
 
-JITINLINE void * getByteCodeInfoFromStackMap(J9TR_MethodMetaData * methodMetaData, void * stackMap)
+static VMINLINE void * getByteCodeInfoFromStackMap(J9TR_MethodMetaData * methodMetaData, void * stackMap)
    {
    return (void *)ADDRESS_OF_BYTECODEINFO_IN_STACK_MAP(HAS_FOUR_BYTE_OFFSET(methodMetaData), stackMap);
    }
 
 
 /* This is the method vm can call to retrieve the bytecode index given a pointer to the TR_InlinedCallSite*/
-JITINLINE UDATA getByteCodeIndex(void * inlinedCallSite)
+UDATA getByteCodeIndex(void * inlinedCallSite)
    {
    TR_ByteCodeInfo * byteCodeInfo = (TR_ByteCodeInfo *)getByteCodeInfo(inlinedCallSite);
    return byteCodeInfo->_byteCodeIndex;
@@ -2019,7 +2060,7 @@ U_8 * getMonitorMask(J9TR_StackAtlas * stackAtlas, void * inlinedCallSite)
    return (U_8 *)stackAtlas + sizeof(J9TR_StackAtlas);
    }
 
-JITINLINE void * getByteCodeInfo(void * inlinedCallSite)
+static VMINLINE void * getByteCodeInfo(void * inlinedCallSite)
    {
    TR_ByteCodeInfo * bci = NULL;
    bci = &(((TR_InlinedCallSite *)inlinedCallSite)->_byteCodeInfo);
