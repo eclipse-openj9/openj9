@@ -82,7 +82,7 @@
 		  dependencies="SIDECAR18-SE"
 		  jdkcompliance="1.8">
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
-		<source path="src/com.ibm.jzos/share/classes"/>
+		<source path="src/ibm.jzos/share/classes"/>
 		<source path="src/java.base/share/classes"/>
 		<source path="src/java.desktop/share/classes"/>
 		<source path="src/java.logging/share/classes"/>
