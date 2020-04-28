@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,17 +192,6 @@ typedef struct TR_MapIterator
       void* cuModuleArray;      //Array of cached CUmodules. One entry per PTX kernel and device combination
       };
 
-#if defined(DEBUG)
-#define JITINLINE
-#else /* DEBUG */
-#if defined(WINDOWS)
-#define JITINLINE __forceinline
-#elif ((__GNUC__ > 3) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)) && !defined(J9VM_GC_REALTIME)
-#define JITINLINE inline __attribute((always_inline))
-#else
-#define JITINLINE __inline
-#endif /* WINDOWS */
-#endif
 
 /* @ddr_namespace: map_to_type=MethodMetaDataConstants */
 
@@ -275,29 +264,13 @@ UDATA * getObjectTempScanCursor(J9StackWalkState *walkState);
 I_32    hasSyncObjectTemp(J9StackWalkState *walkState);
 UDATA * getSyncObjectTempScanCursor(J9StackWalkState *walkState);
 U_8 getNextDescriptionBit(U_8 ** jitDescriptionCursor);
-JITINLINE J9JIT32BitExceptionTableEntry * get32BitFirstExceptionDataField(J9TR_MethodMetaData* metaData);
-JITINLINE J9JIT16BitExceptionTableEntry * get16BitFirstExceptionDataField(J9TR_MethodMetaData* metaData);
-JITINLINE J9JIT32BitExceptionTableEntry * get32BitNextExceptionTableEntry(J9JIT32BitExceptionTableEntry* handlerCursor);
-JITINLINE J9JIT32BitExceptionTableEntry * get32BitNextExceptionTableEntryFSD(J9JIT32BitExceptionTableEntry* handlerCursor, UDATA fullSpeedDebug);
-JITINLINE J9JIT16BitExceptionTableEntry * get16BitNextExceptionTableEntry(J9JIT16BitExceptionTableEntry* handlerCursor);
-JITINLINE J9JIT16BitExceptionTableEntry * get16BitNextExceptionTableEntryFSD(J9JIT16BitExceptionTableEntry* handlerCursor, int fullSpeedDebug);
 
-U_8 * getJit32BitInterpreterPC(U_8* bytecodes, J9JIT32BitExceptionTableEntry * handlerCursor);
-U_8 * getJit16BitInterpreterPC(U_8* bytecodes, J9JIT16BitExceptionTableEntry * handlerCursor);
 U_8 * getJitDescriptionCursor(void * stackMap, J9StackWalkState *walkState);
 
-J9ConstantPool * getJitConstantPool(J9TR_MethodMetaData * md);
-J9Method * getJitRamMethod(J9TR_MethodMetaData * md);
-JITINLINE UDATA  getJittedMethodStartPC(J9TR_MethodMetaData * md);
-JITINLINE UDATA  getJittedMethodEndPC(J9TR_MethodMetaData * md);
 I_16   getJitTotalFrameSize(J9TR_MethodMetaData * md);
 I_16   getJitSlots(J9TR_MethodMetaData *md);
 I_16   getJitScalarTempSlots(J9TR_MethodMetaData * md);
 I_16   getJitObjectTempSlots(J9TR_MethodMetaData * md);
-JITINLINE U_16   getJitProloguePushes(J9TR_MethodMetaData * md);
-JITINLINE I_16   getJitTempOffset(J9TR_MethodMetaData * md);
-JITINLINE U_16   getJitNumberOfExceptionRanges(J9TR_MethodMetaData * md);
-JITINLINE I_32   getJitExceptionTableSize(J9TR_MethodMetaData * md);
 void * getJitGCStackAtlas(J9TR_MethodMetaData * md);
 void * getJitInlinedCallInfo(J9TR_MethodMetaData * md);
 
@@ -306,24 +279,6 @@ U_16 getJitNumberOfMaps(J9TR_StackAtlas * sa);
 U_16 getJitNumberOfMapBytes(J9TR_StackAtlas * sa);
 I_16 getJitParmBaseOffset(J9TR_StackAtlas * sa);
 U_16 getJitNumberOfParmSlots(J9TR_StackAtlas * sa);
-JITINLINE I_16 getJitLocalBaseOffset(J9TR_StackAtlas * sa);
-
-JITINLINE U_32 getJit32BitTableEntryStartPC(J9JIT32BitExceptionTableEntry * te);
-JITINLINE U_32 getJit32BitTableEntryEndPC(J9JIT32BitExceptionTableEntry * te);
-JITINLINE U_32 getJit32BitTableEntryHandlerPC(J9JIT32BitExceptionTableEntry * te);
-JITINLINE U_32 getJit32BitTableEntryCatchType(J9JIT32BitExceptionTableEntry * te);
-JITINLINE J9Method * getJit32BitTableEntryRamMethod(J9JIT32BitExceptionTableEntry * te);
-
-JITINLINE U_16 getJit16BitTableEntryStartPC(J9JIT16BitExceptionTableEntry * te);
-JITINLINE U_16 getJit16BitTableEntryEndPC(J9JIT16BitExceptionTableEntry * te);
-JITINLINE U_16 getJit16BitTableEntryHandlerPC(J9JIT16BitExceptionTableEntry * te);
-JITINLINE U_16 getJit16BitTableEntryCatchType(J9JIT16BitExceptionTableEntry * te);
-
-JITINLINE UDATA hasBytecodePC(J9TR_MethodMetaData * md);
-JITINLINE UDATA hasWideExceptions(J9TR_MethodMetaData * md);
-
-JITINLINE U_32 * get32BitByteCodeIndexFromExceptionTable(J9TR_MethodMetaData * exceptionTable);
-JITINLINE U_32 * get16BitByteCodeIndexFromExceptionTable(J9TR_MethodMetaData * exceptionTable);
 
 U_8 * getVariablePortionInternalPtrRegMap(U_8 * mapBits, int fourByteOffsets);
 U_8 getVariableLengthSizeOfInternalPtrRegMap(U_8 * internalPtrMapLocation);
@@ -334,8 +289,6 @@ U_8 getNumberOfInternalPtrs(U_8 * pinningArrayCursor);
 U_8 * getFirstInternalPtr(U_8 * pinningArrayCursor);
 
 U_8 * getNextInternalPtr(U_8 * pinningArrayCursor);
-
-JITINLINE U_8 * getFirstStackMap(J9TR_StackAtlas * stackAtlas);
 
 U_8 getVariableLengthSizeOfInternalPtrMap(U_8 * internalPtrMapLocation);
 U_16 getIndexOfFirstInternalPtr(U_8 * internalPtrMapLocation);
@@ -353,8 +306,6 @@ U_8 * getMonitorMask(J9TR_StackAtlas *, void * inlinedCallSite);
 
 UDATA * getTempBase(UDATA * bp, J9TR_MethodMetaData * metaData);
 
-JITINLINE void * getByteCodeInfoFromStackMap(J9TR_MethodMetaData * metaData, void * stackMap);
-
 U_32 getNumInlinedCallSites(J9JITExceptionTable * methodMetaData);
 void * getFirstInlinedCallSiteWithByteCodeInfo(J9TR_MethodMetaData * methodMetaData, void * stackMap, void * byteCodeInfo);
 void * getFirstInlinedCallSite(J9TR_MethodMetaData * metaData, void * stackMap);
@@ -368,7 +319,6 @@ U_8 isUnloadedInlinedMethod(J9Method *method);
 U_32 isPatchedValue(J9Method *m);
 
 UDATA etByteCodeIndex(void *inlinedCallSite);
-JITINLINE void * getByteCodeInfo(void *inlinedCallSite);
 
 UDATA getJitInlineDepthFromCallSite(J9TR_MethodMetaData *metaData, void *inlinedCallSite);
 UDATA getByteCodeIndexFromStackMap(J9TR_MethodMetaData *metaData, void *stackMap);
