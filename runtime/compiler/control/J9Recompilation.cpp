@@ -111,6 +111,12 @@ J9::Recompilation::setupMethodInfo()
       // has a compilation level set in it (by virtue of a previous compilation)
       //
       _methodInfo = getExistingMethodInfo(_compilation->getCurrentMethod());
+#if defined(J9VM_OPT_JITSERVER)
+      if (comp()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+         {
+         TR_ASSERT_FATAL(_methodInfo->profilingDisabled(), "Profiling is not supported in JITServer");
+         }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
       if (!comp()->fej9()->canRecompileMethodWithMatchingPersistentMethodInfo(comp()) &&
           !comp()->isGPUCompilation())
@@ -581,7 +587,7 @@ TR_PersistentMethodInfo::TR_PersistentMethodInfo(TR::Compilation *comp) :
       comp->cg()->jitAddPicToPatchOnClassRedefinition((void*)_methodInfo, (void*)&_methodInfo, false);
       }
 
-   if (comp->getOption(TR_DisableProfiling))
+   if (comp->getOption(TR_DisableProfiling) || comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
       {
       setDisableProfiling();
       }
@@ -753,11 +759,17 @@ J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInf
    bodyInfo->setMethodInfo(methodInfo);
    bodyInfo->setProfileInfo(NULL);
    bodyInfo->setMapTable(NULL);
+   resetPersistentProfileInfo(methodInfo);
+   return bodyInfo;
+   }
+
+void
+J9::Recompilation::resetPersistentProfileInfo(TR_PersistentMethodInfo *methodInfo)
+   {
    methodInfo->setOptimizationPlan(NULL);
    // Cannot use setter because it calls the destructor on the old profile data,
    // which is a client pointer
    methodInfo->_recentProfileInfo = NULL;
    methodInfo->_bestProfileInfo = NULL;
-   return bodyInfo;
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
