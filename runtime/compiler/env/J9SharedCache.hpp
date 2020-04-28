@@ -216,6 +216,10 @@ private:
    bool romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & chainPtr, UDATA *chainEnd);
    UDATA *findChainForClass(J9Class *clazz, const char *key, uint32_t keyLength);
 
+   bool validateClassChain(J9ROMClass *romClass, TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd);
+   bool validateSuperClassesInClassChain(TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd);
+   bool validateInterfacesInClassChain(TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd);
+
    static bool isPointerInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
 
    static CCVResult getCachedCCVResult(uintptr_t classOffsetInCache);

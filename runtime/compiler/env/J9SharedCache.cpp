@@ -860,56 +860,25 @@ TR_J9SharedCache::findChainForClass(J9Class *clazz, const char *key, uint32_t ke
    }
 
 bool
-TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
+TR_J9SharedCache::validateSuperClassesInClassChain(TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd)
    {
-   J9ROMClass *romClass = TR::Compiler->cls.romClassOf(fe()->convertClassPtrToClassOffset(clazz));
-   J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-   LOG(1, "classMatchesCachedVersion class %p %.*s\n", clazz, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
-
-   uintptr_t classOffsetInCache;
-   if (!isPointerInSharedCache(romClass, &classOffsetInCache))
+   int32_t numSuperclasses = TR::Compiler->cls.classDepthOf(clazz);
+   for (int32_t index=0; index < numSuperclasses; index++)
       {
-      LOG(1, "\tclass not in shared cache, returning false\n");
-      return false;
-      }
-
-   if (chainData == NULL)
-      {
-      char key[17]; // longest possible key length is way less than 16 digits
-      uint32_t keyLength;
-      createClassKey(classOffsetInCache, key, keyLength);
-      LOG(3, "\tno chain specific, so looking up for key %.*s\n", keyLength, key);
-      chainData = findChainForClass(clazz, key, keyLength);
-      if (chainData == NULL)
-         {
-         LOG(1, "\tno stored chain, returning false\n");
-         return false;
-         }
-      }
-
-   UDATA *chainPtr = chainData;
-   UDATA chainLength = *chainPtr++;
-   UDATA *chainEnd = (UDATA *) (((U_8*)chainData) + chainLength);
-   LOG(3, "\tfound chain: %p with length %d\n", chainData, chainLength);
-
-   if (!romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
-      {
-         LOG(1, "\tClass did not match, returning false\n");
-         return false;
-      }
-
-   int32_t numSuperclasses = TR::Compiler->cls.classDepthOf(fe()->convertClassPtrToClassOffset(clazz));
-   for (int32_t index=0; index < numSuperclasses;index++)
-      {
-      J9ROMClass *romClass = TR::Compiler->cls.romClassOfSuperClass(fe()->convertClassPtrToClassOffset(clazz), index);
+      J9ROMClass *romClass = TR::Compiler->cls.romClassOfSuperClass(clazz, index);
       if (!romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
          {
          LOG(1, "\tClass in hierarchy did not match, returning false\n");
          return false;
          }
       }
+   return true;
+   }
 
-   J9ITable *interfaceElement = TR::Compiler->cls.iTableOf(fe()->convertClassPtrToClassOffset(clazz));
+bool
+TR_J9SharedCache::validateInterfacesInClassChain(TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd)
+   {
+   J9ITable *interfaceElement = TR::Compiler->cls.iTableOf(clazz);
    while (interfaceElement)
       {
       J9ROMClass * romClass = TR::Compiler->cls.iTableRomClass(interfaceElement);
@@ -920,15 +889,121 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
          }
       interfaceElement = TR::Compiler->cls.iTableNext(interfaceElement);
       }
+   return true;
+   }
 
-   if (chainPtr != chainEnd)
+bool
+TR_J9SharedCache::validateClassChain(J9ROMClass *romClass, TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd)
+   {
+   bool validationSucceeded = false;
+
+   if (!romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
+      {
+      LOG(1, "\tClass did not match, returning false\n");
+      }
+   else if (!validateSuperClassesInClassChain(clazz, chainPtr, chainEnd))
+      {
+      LOG(1, "\tClass in hierarchy did not match, returning false\n");
+      }
+   else if (!validateInterfacesInClassChain(clazz, chainPtr, chainEnd))
+      {
+      LOG(1, "\tInterface class did not match, returning false\n");
+      }
+   else if (chainPtr != chainEnd)
       {
       LOG(1, "\tfinished classes and interfaces, but not at chain end, returning false\n");
+      }
+   else
+      {
+      validationSucceeded = true;
+      }
+
+   return validationSucceeded;
+   }
+
+bool
+TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
+   {
+   J9ROMClass *romClass = TR::Compiler->cls.romClassOf(fe()->convertClassPtrToClassOffset(clazz));
+   J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
+   LOG(1, "classMatchesCachedVersion class %p %.*s\n", clazz, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+
+   uintptr_t classOffsetInCache;
+
+   /* If the pointer isn't the SCC, then return false immmediately
+    * as the map holds offsets into the SCC of romclasses
+    */
+   if (!isPointerInSharedCache(romClass, &classOffsetInCache))
+      {
+      LOG(1, "\tclass not in shared cache, returning false\n");
       return false;
       }
 
-   LOG(1, "\tMatch!  return true\n");
-   return true;
+   /* Check if the validation of the class chain was previously
+    * performed; if so, return the result of that validation
+    */
+   if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching))
+      {
+      auto result = getCachedCCVResult(classOffsetInCache);
+      if (result == CCVResult::success)
+         {
+         LOG(1, "\tcached result: validation succeeded\n");
+         return true;
+         }
+      else if (result == CCVResult::failure)
+         {
+         LOG(1, "\tcached result: validation failed\n");
+         return false;
+         }
+      else
+         {
+         TR_ASSERT_FATAL(result == CCVResult::notYetValidated, "Unknown result cached %d\n", result);
+         }
+      }
+
+   /* If the chainData passed in is NULL, try to find it in the SCC
+    * using the romclass
+    */
+   if (chainData == NULL)
+      {
+      char key[17]; // longest possible key length is way less than 16 digits
+      uint32_t keyLength;
+      createClassKey(classOffsetInCache, key, keyLength);
+      LOG(3, "\tno chain specific, so looking up for key %.*s\n", keyLength, key);
+      chainData = findChainForClass(clazz, key, keyLength);
+      }
+
+   /* If the chainData is still NULL, cache the result as failure
+    * and return false
+    */
+   if (chainData == NULL)
+      {
+      LOG(1, "\tno stored chain, returning false\n");
+      if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching))
+         cacheCCVResult(classOffsetInCache, CCVResult::failure);
+
+      return false;
+      }
+
+   UDATA *chainPtr = chainData;
+   UDATA chainLength = *chainPtr++;
+   UDATA *chainEnd = (UDATA *) (((U_8*)chainData) + chainLength);
+   LOG(3, "\tfound chain: %p with length %d\n", chainData, chainLength);
+
+   /* Perform class chain validation */
+   bool success = validateClassChain(romClass, fe()->convertClassPtrToClassOffset(clazz), chainPtr, chainEnd);
+
+   /* Cache the result of the validation */
+   if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching))
+      {
+      auto result = success ? CCVResult::success : CCVResult::failure;
+      cacheCCVResult(classOffsetInCache, result);
+      }
+
+   if (success)
+      LOG(1, "\tMatch!  return true\n");
+
+   return success;
    }
 
 TR_OpaqueClassBlock *
