@@ -1348,7 +1348,7 @@ void TR_J9VMBase::printPID()
 void TR_J9VMBase::emitNewPseudoRandomNumberVerbosePrefix()
    {
    TR_VerboseLog::vlogAcquire();
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"%s ", PSEUDO_RANDOM_NUMBER_PREFIX);
+   TR_VerboseLog::write(TR_Vlog_INFO, "%s ", PSEUDO_RANDOM_NUMBER_PREFIX);
    //vlogRelease();
    }
 
@@ -1363,6 +1363,7 @@ void TR_J9VMBase::emitNewPseudoRandomVerboseSuffix()
    {
    //vlogAcquire();
    TR_VerboseLog::write("%c ", PSEUDO_RANDOM_SUFFIX);
+   TR_VerboseLog::writeLine("");
    TR_VerboseLog::vlogRelease();
    }
 
@@ -9171,13 +9172,13 @@ TR_J9SharedCacheVM::persistThunk(char *signatureChars, uint32_t signatureLength,
 
    if (TR::Options::getAOTCmdLineOptions()->getOption(TR_TraceRelocatableDataDetailsCG))
       {
-      TR_VerboseLog::write("<relocatableDataThunksDetailsCG>\n");
+      TR_VerboseLog::writeLine("<relocatableDataThunksDetailsCG>");
 
-      TR_VerboseLog::write("%.*s\n", signatureLength, signatureChars);
-      TR_VerboseLog::write("thunkAddress: %p, thunkSize: %x\n", dataDescriptor.address, dataDescriptor.length);
-      TR_VerboseLog::write("thunkStart: %p\n", thunkStart);
-      TR_VerboseLog::write("</relocatableDataThunksDetailsCG>\n");
+      TR_VerboseLog::writeLine("%.*s", signatureLength, signatureChars);
+      TR_VerboseLog::writeLine("thunkAddress: %p, thunkSize: %x", dataDescriptor.address, dataDescriptor.length);
+      TR_VerboseLog::writeLine("thunkStart: %p", thunkStart);
 
+      TR_VerboseLog::writeLine("</relocatableDataThunksDetailsCG>");
       }
 
    const void* store= _jitConfig->javaVM->sharedClassConfig->storeSharedData(curThread, signatureChars, signatureLength, &dataDescriptor);

@@ -199,8 +199,9 @@ OMR::RuntimeAssumption::addToRAT(TR_PersistentMemory * persistentMemory, TR_Runt
    if (reportDetails)
       {
       TR_VerboseLog::vlogAcquire();
-      TR_VerboseLog::writeLine(TR_Vlog_RA,"Adding %s assumption: ", runtimeAssumptionKindNames[kind] );
+      TR_VerboseLog::write(TR_Vlog_RA,"Adding %s assumption: ", runtimeAssumptionKindNames[kind] );
       dumpInfo();
+      TR_VerboseLog::writeLine("");
       TR_VerboseLog::vlogRelease();
       }
    }
@@ -282,8 +283,9 @@ void OMR::RuntimeAssumption::dequeueFromListOfAssumptionsForJittedBody()
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions))
       {
       TR_VerboseLog::vlogAcquire();
-      TR_VerboseLog::writeLine(TR_Vlog_RA, "Deleting %s assumption: ", runtimeAssumptionKindNames[getAssumptionKind()] );
+      TR_VerboseLog::write(TR_Vlog_RA, "Deleting %s assumption: ", runtimeAssumptionKindNames[getAssumptionKind()] );
       dumpInfo();
+      TR_VerboseLog::writeLine("");
       TR_VerboseLog::vlogRelease();
       }
    }
@@ -618,7 +620,11 @@ TR_RuntimeAssumptionTable::notifyIllegalStaticFinalFieldModificationEvent(TR_Fro
       {
       OMR::RuntimeAssumption* next = cursor->getNext();
       if (reportDetails)
-         TR_VerboseLog::writeLine(TR_Vlog_RA, "key=%p @ %p", cursor->getKey(), cursor->getFirstAssumingPC());
+         {
+         TR_VerboseLog::vlogAcquire();
+         TR_VerboseLog::write(TR_Vlog_RA, "key=%p @ %p", cursor->getKey(), cursor->getFirstAssumingPC());
+         TR_VerboseLog::vlogRelease();
+         }
 
       if (cursor->matches((uintptr_t)key))
          {
@@ -632,14 +638,20 @@ TR_RuntimeAssumptionTable::notifyIllegalStaticFinalFieldModificationEvent(TR_Fro
          cursor->compensate(vm, 0, 0);
          markForDetachFromRAT(cursor);
          }
+
+      if (reportDetails)
+         {
+         TR_VerboseLog::vlogAcquire();
+         TR_VerboseLog::writeLine("");
+         TR_VerboseLog::vlogRelease();
+         }
+
       cursor = next;
       }
 
    if (!found && reportDetails)
       {
-      TR_VerboseLog::vlogAcquire();
-      TR_VerboseLog::writeLine(TR_Vlog_RA,"key %p not registered!", key);
-      TR_VerboseLog::vlogRelease();
+      TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "key %p not registered!", key);
       }
    }
 
@@ -732,7 +744,7 @@ void
 TR_UnloadedClassPicSite::dumpInfo()
    {
    OMR::RuntimeAssumption::dumpInfo("TR_UnloadedClassPicSite");
-   TR_VerboseLog::write(" picLocation=%p size=%d", _picLocation, _size );
+   TR_VerboseLog::write(" picLocation=%p size=%d", _picLocation, _size);
    }
 
 TR_RedefinedClassRPicSite *TR_RedefinedClassRPicSite::make(
@@ -793,7 +805,12 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
       {
       TR_RedefinedClassPicSite *pic_next = (TR_RedefinedClassPicSite*)pic_cursor->getNext();
       if (reportDetails)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "old=%p @ %p", pic_cursor->getKey(), pic_cursor->getPicLocation());
+         {
+         TR_VerboseLog::vlogAcquire();
+         TR_VerboseLog::write(TR_Vlog_RA, "old=%p @ %p", pic_cursor->getKey(), pic_cursor->getPicLocation());
+         TR_VerboseLog::vlogRelease();
+         }
+
       if (pic_cursor->matches((uintptr_t)oldKey))
          {
          if (reportDetails)
@@ -826,6 +843,14 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
          {
          predecessor = pic_cursor;
          }
+
+      if (reportDetails)
+         {
+         TR_VerboseLog::vlogAcquire();
+         TR_VerboseLog::writeLine("");
+         TR_VerboseLog::vlogRelease();
+         }
+
       pic_cursor = pic_next;
       }
    oldHeadPtr = getBucketPtr(RuntimeAssumptionOnClassRedefinitionNOP, hashCode((uintptr_t)oldKey));
@@ -965,7 +990,7 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
 #endif
             initialKey = pic_cursor->getKey();
 #if defined(TR_HOST_64BIT)
-            if (oldKey4 == (resolvedKey4 & 0xffff) && oldKey3 ==(resolvedKey3 & 0xffff) &&
+            if (oldKey4 == (resolvedKey4 & 0xffff) && oldKey3 == (resolvedKey3 & 0xffff) &&
                oldKey2 == (resolvedKey2 & 0xffff) && oldKey1 == (resolvedKey1 & 0xffff))
                {
                // Make sure it really is a materialization sequence
@@ -974,35 +999,39 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
                // rldicr
                // oris
                // ori
-               tempKey5 = *(uint32_t *)(pic_cursor->getPicLocation()+8);
+               tempKey5 = *(uint32_t *)(pic_cursor->getPicLocation() + 8);
                bool isAddressMaterialization =
-            		   ((resolvedKey1 >> 26) == 0x0f)  //lis
-                     &&((resolvedKey2 >> 26) == 0x18)  //ori
-                     &&((tempKey5 >> 26) == 0x1e)  //rldicr
-                     &&((resolvedKey3 >> 26) == 0x19)  //oris
-                     &&((resolvedKey4 >> 26) == 0x18);     //ori
+                  ((resolvedKey1 >> 26) == 0x0f)  //lis
+                  && ((resolvedKey2 >> 26) == 0x18)  //ori
+                  && ((tempKey5 >> 26) == 0x1e)  //rldicr
+                  && ((resolvedKey3 >> 26) == 0x19)  //oris
+                  && ((resolvedKey4 >> 26) == 0x18);     //ori
 
                if (isAddressMaterialization)
-				  {
-            	  if (reportDetails)
-            		  TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "o=%p @ %p  r=%p %p %p %p",
-            				  initialKey, pic_cursor->getPicLocation(),
-            				  resolvedKey1, resolvedKey2, resolvedKey3, resolvedKey4);
-                  *(uint32_t *)(pic_cursor->getPicLocation()) = resolvedKey1 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 48);
-                  *(uint32_t *)(pic_cursor->getPicLocation()+4) = resolvedKey2 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 32 & 0xffff);
-                  *(uint32_t *)(pic_cursor->getPicLocation()+12) = resolvedKey3 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 16 & 0xffff);
-                  *(uint32_t *)(pic_cursor->getPicLocation()+16) = resolvedKey4 & 0xffff0000 | (uint32_t)((uintptr_t)newKey & 0xffff);
+                  {
                   if (reportDetails)
                      {
                      TR_VerboseLog::vlogAcquire();
-                     TR_VerboseLog::write(" patched n=%p %p %p %p",
-                     *(uint32_t *)(pic_cursor->getPicLocation()),
-                     *(uint32_t *)(pic_cursor->getPicLocation()+4),
-                     *(uint32_t *)(pic_cursor->getPicLocation()+12),
-                     *(uint32_t *)(pic_cursor->getPicLocation()+16));
+                     TR_VerboseLog::write(TR_Vlog_RA, "o=%p @ %p  r=%p %p %p %p",
+                        initialKey, pic_cursor->getPicLocation(),
+                        resolvedKey1, resolvedKey2, resolvedKey3, resolvedKey4);
+                     }
+
+                  *(uint32_t *)(pic_cursor->getPicLocation()) = resolvedKey1 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 48);
+                  *(uint32_t *)(pic_cursor->getPicLocation() + 4) = resolvedKey2 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 32 & 0xffff);
+                  *(uint32_t *)(pic_cursor->getPicLocation() + 12) = resolvedKey3 & 0xffff0000 | (uint32_t)((uintptr_t)newKey >> 16 & 0xffff);
+                  *(uint32_t *)(pic_cursor->getPicLocation() + 16) = resolvedKey4 & 0xffff0000 | (uint32_t)((uintptr_t)newKey & 0xffff);
+
+                  if (reportDetails)
+                     {
+                     TR_VerboseLog::writeLine(" patched n=%p %p %p %p",
+                        *(uint32_t *)(pic_cursor->getPicLocation()),
+                        *(uint32_t *)(pic_cursor->getPicLocation() + 4),
+                        *(uint32_t *)(pic_cursor->getPicLocation() + 12),
+                        *(uint32_t *)(pic_cursor->getPicLocation() + 16));
                      TR_VerboseLog::vlogRelease();
                      }
-				  }
+                  }
                }
 #else
             if (oldKey2 == (resolvedKey2 & 0xffff) && oldKey1 == (resolvedKey1 & 0xffff))
@@ -1012,21 +1041,25 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
                // lis
                // addi
                bool isAddressMaterialization =
-                 	((resolvedKey1 >> 26) == 0x0f)  //lis
-                  &&((resolvedKey2 >> 26) == 0x0e); //addi
+                  ((resolvedKey1 >> 26) == 0x0f)  //lis
+                  && ((resolvedKey2 >> 26) == 0x0e); //addi
                if (isAddressMaterialization)
-				  {
-            	  if (reportDetails)
-            		 TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "o=%p r=%p %p @ %p", initialKey, resolvedKey1, resolvedKey2, pic_cursor->getPicLocation());
-				  *(uint32_t *)(pic_cursor->getPicLocation()) = resolvedKey1 & 0xffff0000 | HI_VALUE((uint32_t)newKey);
-                  *(uint32_t *)(pic_cursor->getPicLocation()+4) = resolvedKey2 & 0xffff0000 | LO_VALUE((uint32_t)newKey);
+                  {
                   if (reportDetails)
-					 {
-                	 TR_VerboseLog::vlogAcquire();
-                	 TR_VerboseLog::write(" patched n=%p %p", *(uint32_t *)(pic_cursor->getPicLocation()), *(uint32_t *)(pic_cursor->getPicLocation()+4));
-                	 TR_VerboseLog::vlogRelease();
-					 }
-				  }
+                     {
+                     TR_VerboseLog::vlogAcquire();
+                     TR_VerboseLog::write(TR_Vlog_RA, "o=%p r=%p %p @ %p", initialKey, resolvedKey1, resolvedKey2, pic_cursor->getPicLocation());
+                     }
+
+                  *(uint32_t *)(pic_cursor->getPicLocation()) = resolvedKey1 & 0xffff0000 | HI_VALUE((uint32_t)newKey);
+                  *(uint32_t *)(pic_cursor->getPicLocation() + 4) = resolvedKey2 & 0xffff0000 | LO_VALUE((uint32_t)newKey);
+
+                  if (reportDetails)
+                     {
+                     TR_VerboseLog::writeLine(" patched n=%p %p", *(uint32_t *)(pic_cursor->getPicLocation()), *(uint32_t *)(pic_cursor->getPicLocation() + 4));
+                     TR_VerboseLog::vlogRelease();
+                     }
+                  }
                }
 #endif
             }
@@ -1054,8 +1087,9 @@ TR_RuntimeAssumptionTable::notifyMutableCallSiteChangeEvent(TR_FrontEnd *fe, uin
          if (reportDetails)
             {
             TR_VerboseLog::vlogAcquire();
-            TR_VerboseLog::writeLine(TR_Vlog_RA,"compensating cookie " UINT64_PRINTF_FORMAT_HEX " ", cookie);
+            TR_VerboseLog::write(TR_Vlog_RA,"compensating cookie " UINT64_PRINTF_FORMAT_HEX " ", cookie);
             cursor->dumpInfo();
+            TR_VerboseLog::writeLine("");
             TR_VerboseLog::vlogRelease();
             }
          cursor->compensate(fe, 0, 0);
@@ -1125,7 +1159,7 @@ void
 TR_RedefinedClassPicSite::dumpInfo()
    {
    OMR::RuntimeAssumption::dumpInfo("TR_RedefinedClassPicSite");
-   TR_VerboseLog::write(" picLocation=%p size=%d", _picLocation, _size );
+   TR_VerboseLog::write(" picLocation=%p size=%d", _picLocation, _size);
    }
 
 static uint32_t hash(TR_OpaqueClassBlock * h, uint32_t size)

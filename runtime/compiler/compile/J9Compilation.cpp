@@ -309,7 +309,7 @@ J9::Compilation::allocateCompYieldStatsMatrix()
 void
 J9::Compilation::printCompYieldStats()
    {
-   TR_VerboseLog::writeLine(TR_Vlog_PERF,"max yield-to-yield time of %u usec for ", (uint32_t)_maxYieldInterval);
+   TR_VerboseLog::writeLine(TR_Vlog_PERF, "Max yield-to-yield time of %u usec for ", static_cast<uint32_t>(_maxYieldInterval));
    TR_VerboseLog::write("%s -", J9::Compilation::getContextName(_sourceContextForMaxYieldInterval));
    TR_VerboseLog::write("- %s", J9::Compilation::getContextName(_destinationContextForMaxYieldInterval));
    }

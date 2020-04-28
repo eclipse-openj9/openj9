@@ -5516,7 +5516,7 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
    if (verbose)
       {
       TR_VerboseLog::vlogAcquire();
-      TR_VerboseLog::writeLine(TR_Vlog_CR,"%p   Compile request %s", vmThread, details.name());
+      TR_VerboseLog::write(TR_Vlog_CR, "%p   Compile request %s", vmThread, details.name());
 
       if (newInstanceThunkDetails)
          {
@@ -5543,6 +5543,7 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
          TR_ASSERT(!fe->isAOT_DEPRECATED_DO_NOT_USE(), "Shouldn't get obsolete classes in AOT");
          TR_VerboseLog::write(" OBSOLETE class=%p -- request declined", clazz);
          }
+      TR_VerboseLog::writeLine("");
       TR_VerboseLog::vlogRelease();
       }
 
@@ -6598,7 +6599,7 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
             }
 
          TR_VerboseLog::vlogAcquire();
-         TR_VerboseLog::writeLine(TR_Vlog_COMP,"(AOT load) ");
+         TR_VerboseLog::write(TR_Vlog_COMP, "(AOT load) ");
          CompilationInfo::printMethodNameToVlog(method);
          TR_VerboseLog::write(" @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT, metaData->startPC, metaData->endWarmPC);
          TR_VerboseLog::write(" Q_SZ=%d Q_SZI=%d QW=%d j9m=%p bcsz=%u", _compInfo.getMethodQueueSize(), _compInfo.getNumQueuedFirstTimeCompilations(),
@@ -6611,6 +6612,7 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
          if (entry)
             TR_VerboseLog::write(" compThreadID=%d", getCompThreadId());
 
+         TR_VerboseLog::writeLine("");
          TR_VerboseLog::vlogRelease();
          }
 
@@ -7521,9 +7523,9 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
          if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompFailure))
             {
             TR_VerboseLog::vlogAcquire();
-            TR_VerboseLog::writeLine(TR_Vlog_COMP, "Method ");
+            TR_VerboseLog::write(TR_Vlog_COMP, "Method ");
             CompilationInfo::printMethodNameToVlog(method);
-            TR_VerboseLog::write(" will continue as interpreted");
+            TR_VerboseLog::writeLine(" will continue as interpreted");
             TR_VerboseLog::vlogRelease();
             }
          if (entry->_compErrCode != compilationRestrictedMethod && // do not look at methods excluded by filters
@@ -7965,12 +7967,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             options = TR::Options::getAOTCmdLineOptions();
          if (options->getVerboseOption(TR_VerboseCompileExclude))
             {
-            TR_VerboseLog::vlogAcquire();
-            if (jitConfig->runtimeFlags & J9JIT_TESTMODE)
-               TR_VerboseLog::write("\n<JIT: translating %s -- CANNOT BE TRANSLATED>\n", compilee->signature(p->trMemory()));
-            else
-               TR_VerboseLog::writeLine(TR_Vlog_COMPFAIL,"%s cannot be translated", compilee->signature(p->trMemory()));
-            TR_VerboseLog::vlogRelease();
+            TR_VerboseLog::writeLineLocked(TR_Vlog_COMPFAIL, "%s cannot be translated", compilee->signature(p->trMemory()));
             }
          Trc_JIT_noAttemptToJit(vmThread, compilee->signature(p->trMemory()));
 
@@ -9169,22 +9166,13 @@ TR::CompilationInfoPerThreadBase::compile(
 
          if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch) && !rtn)
             {
-            TR_VerboseLog::vlogAcquire();
-
-            TR_VerboseLog::writeLine(
+            TR_VerboseLog::writeLineLocked(
                TR_Vlog_DISPATCH,
-               "Successfully created compiled body [" POINTER_PRINTF_FORMAT "-",
-               compiler->cg()->getCodeStart()
-            );
-
-            TR_VerboseLog::write(
-               POINTER_PRINTF_FORMAT "] for %s @ %s",
+               "Successfully created compiled body [" POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT "] for %s @ %s",
+               compiler->cg()->getCodeStart(),
                compiler->cg()->getCodeEnd(),
                compiler->signature(),
-               compiler->getHotnessName()
-            );
-
-            TR_VerboseLog::vlogRelease();
+               compiler->getHotnessName());
             }
          }
 
@@ -10865,13 +10853,13 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             const uint32_t bytecodeSize = TR::CompilationInfo::getMethodBytecodeSize(method);
             const bool isJniNative = compilee->isJNINative();
             TR_VerboseLog::vlogAcquire();
-            TR_VerboseLog::writeLine(TR_Vlog_COMP,"(%s%s) %s @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
+            TR_VerboseLog::write(TR_Vlog_COMP,"(%s%s) %s @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
                compilationTypeString,
                hotnessString,
                compiler->signature(),
                startPC,
-               startColdPC ? endWarmPC : endPC
-               );
+               startColdPC ? endWarmPC : endPC);
+
             if (startColdPC)
                {
                TR_VerboseLog::write("/" POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT, startColdPC, endPC);
@@ -10885,7 +10873,6 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                TR_VerboseLog::write(" %.2f%%", optimizationPlan->getPerceivedCPUUtil() / 10.0);
 
             TR_VerboseLog::write(" %c", recompReason);
-
             TR_VerboseLog::write(" Q_SZ=%d Q_SZI=%d QW=%d", _compInfo.getMethodQueueSize(),
                                  _compInfo.getNumQueuedFirstTimeCompilations(), _compInfo.getQueueWeight());
 
@@ -10926,13 +10913,12 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             if (TR::Options::getVerboseOption(TR_VerbosePerformance))
                TR_VerboseLog::write(" time=%dus", translationTime);
 
-            if(TR::Options::getVerboseOption(TR_VerbosePerformance))
+            if (TR::Options::getVerboseOption(TR_VerbosePerformance))
                {
                TR_VerboseLog::write(
                   " mem=[region=%llu system=%llu]KB",
                   static_cast<unsigned long long>(scratchSegmentProvider.regionBytesAllocated())/1024,
-                  static_cast<unsigned long long>(scratchSegmentProvider.systemBytesAllocated())/1024
-                  );
+                  static_cast<unsigned long long>(scratchSegmentProvider.systemBytesAllocated())/1024);
                }
 
 #if defined(WINDOWS) && defined(TR_TARGET_32BIT)
@@ -10942,7 +10928,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
                if (j9sysinfo_get_memory_info(&memInfo) == 0 &&
                memInfo.availVirtual != J9PORT_MEMINFO_NOT_AVAILABLE)
-                  TR_VerboseLog::write( " VMemAv=%u MB", (uint32_t)(memInfo.availVirtual >> 20));
+                  TR_VerboseLog::write(" VMemAv=%u MB", static_cast<uint32_t>(memInfo.availVirtual >> 20));
                }
 #endif
             if (TR::Options::getVerboseOption(TR_VerboseRecompile))
@@ -10986,6 +10972,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                   TR_VerboseLog::write(" compCPU=%d%%", cpuUtil);
                }
 
+            TR_VerboseLog::writeLine("");
             TR_VerboseLog::vlogRelease();
             }
 
@@ -11329,14 +11316,14 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
       if (_methodBeingCompiled->_compErrCode != compilationFailure)
          {
          if ((_jitConfig->runtimeFlags & J9JIT_TESTMODE) && _methodBeingCompiled->_compErrCode == compilationInterrupted)
-            TR_VerboseLog::writeLine(TR_Vlog_FAILURE,"<JIT: translating %s -- Interrupted because of %s", compiler->signature(), exceptionName);
+            TR_VerboseLog::write(TR_Vlog_FAILURE, "Translating %s -- Interrupted because of %s", compiler->signature(), exceptionName);
          else
             {
             bool incomplete;
             uint64_t freePhysicalMemorySizeB = _compInfo.computeAndCacheFreePhysicalMemory(incomplete);
             if (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE)
                {
-               TR_VerboseLog::writeLine(TR_Vlog_COMPFAIL,"%s time=%dus %s memLimit=%zu KB freePhysicalMemory=%llu MB",
+               TR_VerboseLog::write(TR_Vlog_COMPFAIL, "%s time=%dus %s memLimit=%zu KB freePhysicalMemory=%llu MB",
                                            compiler->signature(),
                                            translationTime,
                                            compilationErrorNames[_methodBeingCompiled->_compErrCode],
@@ -11345,7 +11332,7 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
                }
             else
                {
-               TR_VerboseLog::writeLine(TR_Vlog_COMPFAIL,"%s time=%dus %s memLimit=%zu KB",
+               TR_VerboseLog::write(TR_Vlog_COMPFAIL, "%s time=%dus %s memLimit=%zu KB",
                                            compiler->signature(),
                                            translationTime,
                                            compilationErrorNames[_methodBeingCompiled->_compErrCode],
@@ -11356,7 +11343,7 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
       else
          {
          uintptr_t translationTime = j9time_usec_clock() - getTimeWhenCompStarted(); //get the time it took to fail the compilation
-         TR_VerboseLog::writeLine(TR_Vlog_COMPFAIL,"compThreadID=%d %s time=%dus <TRANSLATION FAILURE: %s>",
+         TR_VerboseLog::write(TR_Vlog_COMPFAIL, "compThreadID=%d %s time=%dus <TRANSLATION FAILURE: %s>",
                                         compiler->getCompThreadID(),
                                         compiler->signature(),
                                         translationTime,
@@ -11368,9 +11355,10 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
          TR_VerboseLog::write(
             " mem=[region=%llu system=%llu]KB",
             static_cast<unsigned long long>(scratchSegmentProvider.regionBytesAllocated())/1024,
-            static_cast<unsigned long long>(scratchSegmentProvider.systemBytesAllocated())/1024
-            );
+            static_cast<unsigned long long>(scratchSegmentProvider.systemBytesAllocated())/1024);
          }
+
+      TR_VerboseLog::writeLine("");
       TR_VerboseLog::vlogRelease();
       }
 
@@ -11474,10 +11462,11 @@ TR::CompilationInfo::triggerOrderedCompiles(TR_FrontEnd * f, intptr_t tickCount)
                if (logSampling)
                   {
                   TR_VerboseLog::vlogAcquire();
-                  TR_VerboseLog::writeLine(TR_Vlog_SAMPLING,"(%d) Compiled %s.%s%s (SIMULATED) recompile at level --> %d", tickCount, filter->getClass(),
+                  TR_VerboseLog::write(TR_Vlog_SAMPLING, "(%d) Compiled %s.%s%s (SIMULATED) recompile at level --> %d", tickCount, filter->getClass(),
                            filter->getName(), filter->getSignature(), filter->getSampleLevel());
                   if (filter->getSampleProfiled())
                      TR_VerboseLog::write(", profiled");
+                  TR_VerboseLog::writeLine("");
                   TR_VerboseLog::vlogRelease();
                   }
 

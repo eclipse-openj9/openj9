@@ -94,10 +94,10 @@ uint32_t
 Message::DataDescriptor::print(uint32_t nestingLevel)
    {
    uint32_t numDescriptorsPrinted = 1;
-   TR_VerboseLog::writeLine(TR_Vlog_JITServer, "");
+   TR_VerboseLog::write(TR_Vlog_JITServer, "");
    for (uint32_t i = 0; i < nestingLevel; ++i)
       TR_VerboseLog::write("\t");
-   TR_VerboseLog::write("DataDescriptor[%p]: type=%d(%6s) payload_size=%u dataOffset=%u, padding=%u", 
+   TR_VerboseLog::writeLine("DataDescriptor[%p]: type=%d(%6s) payload_size=%u dataOffset=%u, padding=%u", 
                         this, getDataType(), _descriptorNames[getDataType()], getPayloadSize(), getDataOffset(), getPaddingSize());
    if (!isPrimitive())
       {
@@ -110,6 +110,7 @@ Message::DataDescriptor::print(uint32_t nestingLevel)
          }
       TR_VerboseLog::writeLine(TR_Vlog_JITServer, "DataDescriptor[%p] nested data end", this);
       }
+
    return numDescriptorsPrinted;
    }
 

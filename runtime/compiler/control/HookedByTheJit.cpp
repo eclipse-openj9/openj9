@@ -209,7 +209,7 @@ static void reportHook(J9VMThread *curThread, char *name, char *format=NULL, ...
       || TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHookDetails))
       {
       TR_VerboseLog::vlogAcquire();
-      TR_VerboseLog::writeLine(TR_Vlog_HK,"%x hook %s vmThread=%p ", (int)(intptr_t)curThread, name, curThread);
+      TR_VerboseLog::write(TR_Vlog_HK,"%x hook %s vmThread=%p ", (int)(intptr_t)curThread, name, curThread);
       if (format)
          {
          va_list args;
@@ -217,6 +217,7 @@ static void reportHook(J9VMThread *curThread, char *name, char *format=NULL, ...
          j9jit_vprintf(jitConfig, format, args);
          va_end(args);
          }
+      TR_VerboseLog::writeLine("");
       TR_VerboseLog::vlogRelease();
       }
    }
@@ -4945,15 +4946,19 @@ static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, 
    if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompilationThreads, TR_VerboseCompilationThreadsDetails))
       {
       TR_VerboseLog::vlogAcquire();
-      TR_VerboseLog::writeLine(TR_Vlog_INFO, "t=%6u TotalCompCpuUtil=%3d%%.", (uint32_t)crtTime, totalCompCPUUtilization);
+      TR_VerboseLog::write(TR_Vlog_INFO, "t=%6u TotalCompCpuUtil=%3d%%.", static_cast<uint32_t>(crtTime), totalCompCPUUtilization);
       TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
       for (uint8_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
          {
          const CpuSelfThreadUtilization& cpuUtil = arrayOfCompInfoPT[i]->getCompThreadCPU();
          TR_VerboseLog::write(" compThr%d:%3d%% (%2d%%, %2d%%) ", i, cpuUtilizationValues[i], cpuUtil.getThreadLastCpuUtil(), cpuUtil.getThreadPrevCpuUtil());
          if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreadsDetails))
-            TR_VerboseLog::write("(%dms, %dms, lastCheckpoint=%u) ", (int32_t)cpuUtil.getLastMeasurementInterval() / 1000000, (int32_t)cpuUtil.getSecondLastMeasurementInterval() / 1000000, cpuUtil.getLowResolutionClockAtLastUpdate());
+            TR_VerboseLog::write("(%dms, %dms, lastCheckpoint=%u) ", 
+               static_cast<int32_t>(cpuUtil.getLastMeasurementInterval()) / 1000000,
+               static_cast<int32_t>(cpuUtil.getSecondLastMeasurementInterval()) / 1000000,
+               cpuUtil.getLowResolutionClockAtLastUpdate());
          }
+      TR_VerboseLog::writeLine("");
       TR_VerboseLog::vlogRelease();
       }
    }
