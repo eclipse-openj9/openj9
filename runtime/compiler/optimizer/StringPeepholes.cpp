@@ -157,8 +157,7 @@ TR::SymbolReference* TR_StringPeepholes::findSymRefForOptMethod (Stringpeepholes
 TR::SymbolReference* TR_StringPeepholes::MethodEnumToArgsForMethodSymRefFromName (StringpeepholesMethods m)
    {
 
-   TR_ASSERT(m !=  START_BIG_DECIMAL_HELPER_METHODS &&
-             m !=  START_STRING_METHODS &&
+   TR_ASSERT(m !=  START_STRING_METHODS &&
           m !=  END_STRINGPEEPHOLES_METHODS , "wrong constant!!");
 
 
