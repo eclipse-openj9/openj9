@@ -325,6 +325,7 @@ class ClientSessionData
       void *_floatInvokeExactThunkHelper;
       void *_doubleInvokeExactThunkHelper;
       size_t _interpreterVTableOffset;
+      int64_t _maxHeapSizeInBytes;
       J9Method *_jlrMethodInvoke;
       uint32_t _enableGlobalLockReservation;
 #if defined(J9VM_OPT_SIDECAR)
