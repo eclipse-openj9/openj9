@@ -59,6 +59,37 @@ samePCs(void *pc1, void *pc2)
 #define samePCs(pc1, pc2) (MASK_PC(pc1) == MASK_PC(pc2))
 #endif /* J9ZOS390 && !J9VM_ENV_DATA64 */
 
+/**
+ * Fix the java and decompilation stacks for cases where exceptions can be
+ * thrown from insde a JIT synthetic exception handler. There must be a
+ * resolve frame on the top of the java stack with a valid JIT PC.
+ *
+ * @param currentThread[in] the current J9VMThread
+ */
+static void
+fixStackForSyntheticHandler(J9VMThread *currentThread)
+{
+	/* If the top decompilation record is for the current compiled frame, re-link the resolve frame
+	 * and decompilation record to keep the stack walkable.
+	 */
+	J9JITDecompilationInfo *decomp = currentThread->decompilationStack;
+	if (NULL != decomp) {
+		J9SFJITResolveFrame *resolveFrame = (J9SFJITResolveFrame*)currentThread->sp;
+		void *jitPC = resolveFrame->returnAddress;
+		J9JITExceptionTable *metaData = jitGetExceptionTableFromPC(currentThread, (UDATA)jitPC);
+		Assert_CodertVM_false(NULL == metaData);
+		UDATA *oldSP = (UDATA*)(resolveFrame + 1);
+		UDATA *bp = oldSP + getJitTotalFrameSize(metaData);
+		if (bp == decomp->bp) {
+			/* Use a value which is guaranteed to fail metadata lookup. This makes
+			 * the stack walker get the PC from the decompilation stack.
+			 */
+			resolveFrame->returnAddress = NULL;
+			decomp->pcAddress = (U_8**)&(resolveFrame->returnAddress);
+			decomp->pc = (U_8*)jitPC;
+		}
+	}
+}
 
 /**
  * Determine the vTable offset for an interface send to a particular
@@ -1334,11 +1365,13 @@ slow_jitMonitorExitImpl(J9VMThread *currentThread, bool forMethod)
 	/* J9THREAD_WOULD_BLOCK indicates that the exit hook was reserved */
 	if (J9THREAD_WOULD_BLOCK == monstatus) {
 		oldPC = buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+		fixStackForSyntheticHandler(currentThread);
 		monstatus = vmFuncs->objectMonitorExit(currentThread, syncObject);
 	}
 	if (0 != monstatus) {
 		if (NULL == oldPC) {
 			oldPC = buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+			fixStackForSyntheticHandler(currentThread);
 		}
 		addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, NULL);
 		goto done;
@@ -2138,8 +2171,9 @@ old_slow_jitThrowUnreportedException(J9VMThread *currentThread)
 {
 	OLD_JIT_HELPER_PROLOGUE(1);
 	DECLARE_JIT_PARM(j9object_t, exception, 1);
-	VM_VMHelpers::setExceptionPending(currentThread, exception, false);
 	buildJITResolveFrame(currentThread, J9_SSF_JIT_RESOLVE, parmCount);
+	fixStackForSyntheticHandler(currentThread);
+	VM_VMHelpers::setExceptionPending(currentThread, exception, false);
 	return J9_JITHELPER_ACTION_THROW;
 }
 
