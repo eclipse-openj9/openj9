@@ -1,4 +1,4 @@
-dnl Copyright (c) 2001, 2019 IBM Corp. and others
+dnl Copyright (c) 2001, 2020 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -301,10 +301,9 @@ _X(JVM_InitStackTraceElement,JNICALL,false,void ,JNIEnv *env, jobject arg1, jobj
 _X(JVM_GetAndClearReferencePendingList,JNICALL,false,jobject ,JNIEnv *env)
 _X(JVM_HasReferencePendingList,JNICALL,false,jboolean ,JNIEnv *env)
 _X(JVM_WaitForReferencePendingList,JNICALL,false,void ,JNIEnv *env)
+_X(JVM_BeforeHalt,JNICALL,false,void,void)
 _IF([JAVA_SPEC_VERSION >= 9],
 	[_X(JVM_GetNanoTimeAdjustment,JNICALL,true,jlong ,JNIEnv *env, jclass clazz, jlong offsetSeconds)])
-_IF([JAVA_SPEC_VERSION >= 11],
-	[_X(JVM_BeforeHalt,JNICALL,false,void,void)])
 _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_GetNestHost,JNICALL,false,jclass,JNIEnv *env,jclass clz)])
 _IF([JAVA_SPEC_VERSION >= 11],
