@@ -22,6 +22,8 @@
  *******************************************************************************/
 package com.ibm.lang.management.internal;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Objects;
 
 import javax.management.MBeanNotificationInfo;
@@ -37,6 +39,7 @@ import com.ibm.lang.management.ProcessingCapacityNotificationInfo;
 import com.ibm.lang.management.ProcessorUsage;
 import com.ibm.lang.management.ProcessorUsageRetrievalException;
 import com.ibm.lang.management.TotalPhysicalMemoryNotificationInfo;
+import com.ibm.oti.vm.VM;
 
 /**
  * Runtime type for {@link com.ibm.lang.management.OperatingSystemMXBean}.
@@ -110,11 +113,14 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 		super();
 		// only launch the notification thread if the environment could change
 		if (isDLPAREnabled()) {
-			Thread thread = new OperatingSystemNotificationThread(this);
+			PrivilegedAction<Thread> createThread = () -> {
+				Thread thread = VM.getVMLangAccess().createThread(new OperatingSystemNotificationThread(this),
+					"OperatingSystemMXBean notification dispatcher", true, false, true, ClassLoader.getSystemClassLoader()); //$NON-NLS-1$
+				thread.setPriority(Thread.NORM_PRIORITY + 1);
+				return thread;
+			};
 
-			thread.setDaemon(true);
-			thread.setName("OperatingSystemMXBean notification dispatcher"); //$NON-NLS-1$
-			thread.setPriority(Thread.NORM_PRIORITY + 1);
+			Thread thread = AccessController.doPrivileged(createThread);
 			thread.start();
 		}
 	}

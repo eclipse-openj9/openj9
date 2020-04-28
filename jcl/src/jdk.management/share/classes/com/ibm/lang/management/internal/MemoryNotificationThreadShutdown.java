@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,13 +30,13 @@ package com.ibm.lang.management.internal;
  */
 final class MemoryNotificationThreadShutdown extends Thread {
 
-	private final MemoryNotificationThread myVictim;
+	private final Thread myVictim;
 
 	/**
 	 * Basic constructor
 	 * @param victim The thread to notify on shutdown
 	 */
-	MemoryNotificationThreadShutdown(MemoryNotificationThread victim) {
+	MemoryNotificationThreadShutdown(Thread victim) {
 		super();
 		myVictim = victim;
 	}
