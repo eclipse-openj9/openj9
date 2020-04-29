@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@ import com.sun.management.internal.GarbageCollectionNotificationInfoUtil;
  *
  * @since 1.5
  */
-final class MemoryNotificationThread extends Thread {
+final class MemoryNotificationThread implements Runnable {
 
 	private final ExtendedMemoryMXBeanImpl memBean;
 
@@ -156,7 +156,7 @@ final class MemoryNotificationThread extends Thread {
 	private native void processNotificationLoop();
 
 	private boolean registerShutdownHandler() {
-		Thread notifier = new MemoryNotificationThreadShutdown(this);
+		Thread notifier = new MemoryNotificationThreadShutdown(Thread.currentThread());
 		PrivilegedAction<Boolean> action = () -> {
 			try {
 				Runtime.getRuntime().addShutdownHook(notifier);

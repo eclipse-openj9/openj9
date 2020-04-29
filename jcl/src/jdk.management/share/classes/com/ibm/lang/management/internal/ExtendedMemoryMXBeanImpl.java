@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,8 @@ package com.ibm.lang.management.internal;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.NotificationFilter;
@@ -32,6 +34,7 @@ import javax.management.NotificationListener;
 
 import com.ibm.java.lang.management.internal.MemoryMXBeanImpl;
 import com.ibm.lang.management.MemoryMXBean;
+import com.ibm.oti.vm.VM;
 
 /**
  * Runtime type for {@link com.ibm.lang.management.MemoryMXBean}.
@@ -74,11 +77,14 @@ public final class ExtendedMemoryMXBeanImpl extends MemoryMXBeanImpl implements 
 	@Override
 	protected void startNotificationThread() {
 		if (!notificationThreadStarted.getAndSet(true)) {
-			Thread notifier = new MemoryNotificationThread(this);
+			PrivilegedAction<Thread> createThread = () -> {
+				Thread thread = VM.getVMLangAccess().createThread(new MemoryNotificationThread(this),
+					"MemoryMXBean notification dispatcher", true, false, true, ClassLoader.getSystemClassLoader()); //$NON-NLS-1$
+				thread.setPriority(Thread.NORM_PRIORITY + 1);
+				return thread;
+			};
 
-			notifier.setDaemon(true);
-			notifier.setName("MemoryMXBean notification dispatcher"); //$NON-NLS-1$
-			notifier.setPriority(Thread.NORM_PRIORITY + 1);
+			Thread notifier = AccessController.doPrivileged(createThread);
 			notifier.start();
 		}
 	}

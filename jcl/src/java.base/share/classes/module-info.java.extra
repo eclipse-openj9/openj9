@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@
 exports com.ibm.jit.crypto to ibm.crypto.hdwrcca;
 /*[ENDIF]*/
 exports com.ibm.sharedclasses.spi to openj9.sharedclasses, java.management, java.rmi;
-exports com.ibm.oti.vm to java.management, jdk.attach, jdk.management, openj9.jvm, openj9.sharedclasses;
+exports com.ibm.oti.vm to java.management, jdk.attach, jdk.management, openj9.cuda, openj9.gpu, openj9.jvm, openj9.sharedclasses;
 exports com.ibm.oti.util to java.management, jdk.attach, jdk.jcmd, jdk.management, openj9.sharedclasses;
 exports openj9.internal.tools.attach.target to jdk.attach, jdk.jcmd, jdk.management;
 exports openj9.management.internal to java.management, openj9.jvm;
