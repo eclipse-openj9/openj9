@@ -35,8 +35,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
    ```
 2. Build `openj9` build env image.
    ```
-   cd buildenv/docker/jdk8/x86_64/ubuntu18
-   docker build -f Dockerfile -t=openj9 .
+   cd buildenv/docker
+   bash mkdocker.sh --build --dist=ubuntu --tag=openj9 --version=18
    ```
 3. Build JITServer
    ```
@@ -67,18 +67,18 @@ JITServer Dockerfiles are located under: `openj9/buildenv/docker/jdk<version>/<p
    ```
 - <a name="openj9-jitserver-build"></a>Build `openj9-jitserver-build` image using `build/Dockerfile`
    ```
-  docker build -f \ 
-  buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitserver/build/Dockerfile \ 
-  --build-arg openj9_repo=<your-openj9-repo> \ 
-  --build-arg openj9_branch=<your-openj9-branch> \ 
-  --build-arg omr_repo=<your-omr-repo> \ 
+  docker build -f \
+  buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitserver/build/Dockerfile \
+  --build-arg openj9_repo=<your-openj9-repo> \
+  --build-arg openj9_branch=<your-openj9-branch> \
+  --build-arg omr_repo=<your-omr-repo> \
   --build-arg omr_branch=<your-omr-branch> \
   -t=openj9-jitserver-build .
   ```
   Or without specifying repos and using the default latest branch for OpenJ9 and OMR
   ```
-  docker build -f \ 
-  buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitserver/build/Dockerfile \ 
+  docker build -f \
+  buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitserver/build/Dockerfile \
   -t=openj9-jitserver-build .
   ```
 
