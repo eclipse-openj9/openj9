@@ -6937,6 +6937,74 @@ J9::Z::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node * node, TR::CodeGenerator
    return NULL;
    }
 
+/**
+ * Generates a quick runtime test for valueType node and in case if node is of valueType, generates a branch to helper call
+ * 
+ * @param node monent/exit node
+ * @param mergeLabel Label pointing to merge point
+ * @param helperCallLabel Label pointing to helper call dispatch sequence.
+ * @param cg Codegenerator object
+ * @return Returns a register containing objectClassPointer
+ */
+static TR::Register*
+generateCheckForValueTypeMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol* mergeLabel, TR::LabelSymbol *helperCallLabel, TR::CodeGenerator *cg)
+   {
+   TR::Register *objReg = cg->evaluate(node->getFirstChild());
+   TR::Register *objectClassReg = cg->allocateRegister();
+
+   TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objectClassReg, generateS390MemoryReference(objReg, TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
+
+   // Currently the value of J9ClassIsValueType flag maps to the second (low order) byte of the class flags field. To
+   // be able to use the TM instruction we need to ensure we safe guard against changes of this value since we have to
+   // hardcode the offset from the class flags field to reach the byte corresponding to the bit we want to test.
+   static_assert(static_cast<uint32_t>(J9ClassIsValueType & 0xFF00) == static_cast<uint32_t>(J9ClassIsValueType), "Expecting J9ClassIsValueType to be within second byte of classFlags");
+
+   TR::MemoryReference *classFlagsMemRef = generateS390MemoryReference(objectClassReg, static_cast<uint32_t>(static_cast<TR_J9VMBase *>(cg->comp()->fe())->getOffsetOfClassFlags()) + 2, cg);
+   generateSIInstruction(cg, TR::InstOpCode::TM, node, classFlagsMemRef, J9ClassIsValueType >> 8);
+
+   bool generateOOLSection = helperCallLabel == NULL;
+   if (generateOOLSection)
+      helperCallLabel = generateLabelSymbol(cg);
+
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRNZ, node, helperCallLabel);
+
+   // TODO: There is now the possibility of multiple distinct OOL sections with helper calls to be generated when
+   // evaluating the TR::monent or TR::monexit nodes:
+   //
+   // 1. Monitor cache lookup OOL
+   // 2. Lock reservation OOL
+   // 3. Value types object OOL
+   // 4. Recursive CAS sequence for Locking
+   //
+   // These distinct OOL sections may perform non-trivial logic but what they all have in common is they all have a
+   // call to the same JIT helper which acts as a fall back. This complexity exists because of the way the evaluators
+   // are currently architected and due to the restriction that we cannot have nested OOL code sections. Whenever
+   // making future changes to these evaluators we should consider refactoring them to reduce the complexity and
+   // attempt to consolidate the calls to the JIT helper so as to not have multiple copies.
+   if (generateOOLSection)
+      {
+      TR_S390OutOfLineCodeSection *helperCallOOLSection = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(helperCallLabel, mergeLabel, cg);
+      cg->getS390OutOfLineCodeSectionList().push_front(helperCallOOLSection);
+      helperCallOOLSection->swapInstructionListsWithCompilation();
+
+      TR::Instruction *cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, helperCallLabel);
+
+      TR_Debug *debugObj = cg->getDebug();
+      if (debugObj)
+         debugObj->addInstructionComment(cursor, "Denotes Start of OOL for ValueType Node");
+
+      cg->getLinkage(TR_CHelper)->buildDirectDispatch(node);
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, mergeLabel);
+
+      if (debugObj)
+         debugObj->addInstructionComment(cursor, "Denotes End of OOL for ValueType Node");
+
+      helperCallOOLSection->swapInstructionListsWithCompilation();
+      }
+
+   return objectClassReg;
+   }
+
 TR::Register *
 J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -6944,9 +7012,10 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    J9::Z::CHelperLinkage *helperLink =  static_cast<J9::Z::CHelperLinkage*>(cg->getLinkage(TR_CHelper));
+   TR_YesNoMaybe isMonitorValueType = cg->isMonitorValueType(node);
 
    if (comp->getOption(TR_OptimizeForSpace) ||
-       (comp->getOption(TR_FullSpeedDebug) && node->isSyncMethodMonitor()) ||
+       (TR::Compiler->om.areValueTypesEnabled() && isMonitorValueType == TR_yes) ||
        comp->getOption(TR_DisableInlineMonEnt) ||
        comp->getOption(TR_FullSpeedDebug))  // Required for Live Monitor Meta Data in FSD.
       {
@@ -7006,13 +7075,24 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    if (disableOOL)
       inlineRecursive = false;
 
+   if (TR::Compiler->om.areValueTypesEnabled() && isMonitorValueType == TR_maybe)
+      {
+      numDeps += 1;
+      // If we are generating code for MonitorCacheLookup then we will not have a separate OOL for inlineRecursive, and callLabel points
+      // to the OOL Containing only helper call. Otherwise, OOL will have other code apart from helper call which we do not want to execute
+      // for ValueType and in that scenario we will need to generate another OOL that just contains helper call.
+      objectClassReg = generateCheckForValueTypeMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg);
+      }
    TR::RegisterDependencyConditions * conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg);
 
    bool isAOT = comp->getOption(TR_AOT);
    TR_Debug * debugObj = cg->getDebug();
 
+
    conditions->addPostCondition(objReg, TR::RealRegister::AssignAny);
    conditions->addPostCondition(monitorReg, TR::RealRegister::AssignAny);
+   if (objectClassReg != NULL)
+      conditions->addPostCondition(objectClassReg, TR::RealRegister::AssignAny);
 
    static const char * peekFirst = feGetEnv("TR_PeekingMonEnter");
    // This debug option is for printing the locking mechanism.
@@ -7025,11 +7105,15 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
       TR::LabelSymbol               *helperCallLabel = generateLabelSymbol(cg);
       TR::LabelSymbol               *helperReturnOOLLabel = generateLabelSymbol(cg);
-      TR::MemoryReference * tempMR = generateS390MemoryReference(objReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-      // TODO We don't need objectClassReg except in this ifCase. We can use scratchRegisterManager to allocate one here.
-      objectClassReg = cg->allocateRegister();
-      conditions->addPostCondition(objectClassReg, TR::RealRegister::AssignAny);
-      TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objectClassReg, tempMR, NULL);
+      TR::MemoryReference * tempMR = NULL;
+      if (objectClassReg == NULL)
+         {
+         tempMR = generateS390MemoryReference(objReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
+         // TODO We don't need objectClassReg except in this ifCase. We can use scratchRegisterManager to allocate one here.
+         objectClassReg = cg->allocateRegister();
+         conditions->addPostCondition(objectClassReg, TR::RealRegister::AssignAny);
+         TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objectClassReg, tempMR, NULL);
+         }
       int32_t offsetOfLockOffset = offsetof(J9Class, lockOffset);
       tempMR = generateS390MemoryReference(objectClassReg, offsetOfLockOffset, cg);
 
@@ -7324,28 +7408,28 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, callHelper);
       }
 
-      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "%s/VMHelper", debugCounterNamePrefix), 1, TR::DebugCounter::Undetermined);
-      TR::RegisterDependencyConditions *deps = NULL;
-      dummyResultReg = inlineRecursive ? helperLink->buildDirectDispatch(node, &deps) : helperLink->buildDirectDispatch(node);
-      TR::RegisterDependencyConditions *mergeConditions = NULL;
-      if (inlineRecursive)
-         mergeConditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(conditions, deps, cg);
-      else
-         mergeConditions = conditions;
-      generateS390LabelInstruction(cg,TR::InstOpCode::LABEL,node,returnLabel,mergeConditions);
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "%s/VMHelper", debugCounterNamePrefix), 1, TR::DebugCounter::Undetermined);
+   TR::RegisterDependencyConditions *deps = NULL;
+   dummyResultReg = inlineRecursive ? helperLink->buildDirectDispatch(node, &deps) : helperLink->buildDirectDispatch(node);
+   TR::RegisterDependencyConditions *mergeConditions = NULL;
+   if (inlineRecursive)
+      mergeConditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(conditions, deps, cg);
+   else
+      mergeConditions = conditions;
+   generateS390LabelInstruction(cg,TR::InstOpCode::LABEL,node,returnLabel,mergeConditions);
 
-      if (!disableOOL)
+   if (!disableOOL)
+      {
+      // End of OOl path.
+      cursor = generateS390BranchInstruction(cg,TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,node,cFlowRegionEnd);
+      if (debugObj)
          {
-         // End of OOl path.
-         cursor = generateS390BranchInstruction(cg,TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,node,cFlowRegionEnd);
-         if (debugObj)
-            {
-            debugObj->addInstructionComment(cursor, "Denotes end of OOL monent: return to mainline");
-            }
-
-         // Done using OOL with manual code generation
-         outlinedHelperCall->swapInstructionListsWithCompilation();
+         debugObj->addInstructionComment(cursor, "Denotes end of OOL monent: return to mainline");
          }
+
+      // Done using OOL with manual code generation
+      outlinedHelperCall->swapInstructionListsWithCompilation();
+      }
 
    bool needDeps = false;
    if (lwOffset <= 0 && disableOOL)
@@ -7377,7 +7461,10 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    J9::Z::CHelperLinkage *helperLink =  static_cast<J9::Z::CHelperLinkage*>(cg->getLinkage(TR_CHelper));
+   TR_YesNoMaybe isMonitorValueType = cg->isMonitorValueType(node);
+
    if (comp->getOption(TR_OptimizeForSpace) ||
+       (TR::Compiler->om.areValueTypesEnabled() && isMonitorValueType == TR_yes) ||
        comp->getOption(TR_DisableInlineMonExit) ||
        comp->getOption(TR_FullSpeedDebug))  // Required for Live Monitor Meta Data in FSD.
       {
@@ -7428,6 +7515,11 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    if (comp->getOptions()->enableDebugCounters())
          numDeps += 4;
 
+   if (TR::Compiler->om.areValueTypesEnabled() && isMonitorValueType == TR_maybe)
+      {
+      numDeps += 1;
+      objectClassReg = generateCheckForValueTypeMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg);
+      }
    TR::RegisterDependencyConditions * conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg);
 
 
@@ -7442,6 +7534,8 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
    conditions->addPostCondition(objReg, TR::RealRegister::AssignAny);
    conditions->addPostCondition(monitorReg, TR::RealRegister::AssignAny);
+   if (objectClassReg != NULL)
+      conditions->addPostCondition(objectClassReg, TR::RealRegister::AssignAny);
 
 
    if (lwOffset <= 0)
@@ -7450,14 +7544,19 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
       TR::LabelSymbol *helperCallLabel          = generateLabelSymbol(cg);
       TR::LabelSymbol *helperReturnOOLLabel     = generateLabelSymbol(cg);
-
-      objectClassReg = cg->allocateRegister();
-      TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objectClassReg, generateS390MemoryReference(objReg, TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
-
+      TR::MemoryReference *tempMR = NULL;
+   
+      if (objectClassReg == NULL)
+         {
+         tempMR = generateS390MemoryReference(objReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
+         objectClassReg = cg->allocateRegister();
+         conditions->addPostCondition(objectClassReg, TR::RealRegister::AssignAny);
+         TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objectClassReg, tempMR, NULL);
+         }
       int32_t offsetOfLockOffset = offsetof(J9Class, lockOffset);
-      TR::MemoryReference* tempMR = generateS390MemoryReference(objectClassReg, offsetOfLockOffset, cg);
+      tempMR = generateS390MemoryReference(objectClassReg, offsetOfLockOffset, cg);
+      
       tempRegister = cg->allocateRegister();
-
       TR::LabelSymbol *targetLabel = callLabel;
       if (comp->getOption(TR_EnableMonitorCacheLookup))
          targetLabel = monitorLookupCacheLabel;
