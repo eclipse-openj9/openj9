@@ -288,7 +288,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    try
       {
       auto req = stream->readCompileRequest<uint64_t, uint32_t, uint32_t, J9Method *, J9Class*, TR_OptimizationPlan, 
-         std::string, J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>, 
+         std::string, J9::IlGeneratorMethodDetailsType,
+         std::vector<TR_OpaqueClassBlock*>, std::vector<TR_OpaqueClassBlock*>, 
          JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string, bool>();
 
       clientId                           = std::get<0>(req);
@@ -300,12 +301,13 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       std::string detailsStr             = std::get<6>(req);
       auto detailsType                   = std::get<7>(req);
       auto &unloadedClasses              = std::get<8>(req);
-      auto &classInfoTuple               = std::get<9>(req);
-      std::string clientOptStr           = std::get<10>(req);
-      std::string recompInfoStr          = std::get<11>(req);
-      const std::string &chtableUnloads  = std::get<12>(req);
-      const std::string &chtableMods     = std::get<13>(req);
-      useAotCompilation                  = std::get<14>(req);
+      auto &illegalModificationList      = std::get<9>(req);
+      auto &classInfoTuple               = std::get<10>(req);
+      std::string clientOptStr           = std::get<11>(req);
+      std::string recompInfoStr          = std::get<12>(req);
+      const std::string &chtableUnloads  = std::get<13>(req);
+      const std::string &chtableMods     = std::get<14>(req);
+      useAotCompilation                  = std::get<15>(req);
 
       if (useAotCompilation)
          {
@@ -381,15 +383,14 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          // Free data for all classes that were unloaded for this sequence number
          // Redefined classes are marked as unloaded, since they need to be cleared
          // from the ROM class cache.
-         if (unloadedClasses.empty())
-            {
-            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d has no class to unload for clientUID %llu", 
-                  getCompThreadId(), (unsigned long long)clientId);
-            }
-          else
+         if (!unloadedClasses.empty())
             {
             clientSession->processUnloadedClasses(unloadedClasses, true); // this locks getROMMapMonitor()
+            }
+
+         if (!illegalModificationList.empty())
+            {
+            clientSession->processIllegalFinalFieldModificationList(illegalModificationList); // this locks getROMMapMonitor()
             }
 
          // Process the CHTable updates in order

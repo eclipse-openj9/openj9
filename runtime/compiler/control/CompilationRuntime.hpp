@@ -994,11 +994,11 @@ public:
 #if defined(J9VM_OPT_JITSERVER)
    ClientSessionHT *getClientSessionHT() const { return _clientSessionHT; }
    void setClientSessionHT(ClientSessionHT *ht) { _clientSessionHT = ht; }
+
    PersistentVector<TR_OpaqueClassBlock*> *getUnloadedClassesTempList() const { return _unloadedClassesTempList; }
    void setUnloadedClassesTempList(PersistentVector<TR_OpaqueClassBlock*> *it) { _unloadedClassesTempList = it; }
-   TR::Monitor *getSequencingMonitor() const { return _sequencingMonitor; }
-   uint32_t getCompReqSeqNo() const { return _compReqSeqNo; }
-   uint32_t incCompReqSeqNo() { return ++_compReqSeqNo; }
+   PersistentVector<TR_OpaqueClassBlock*> *getIllegalFinalFieldModificationList() const { return _illegalFinalFieldModificationList; }
+   void setIllegalFinalFieldModificationList(PersistentVector<TR_OpaqueClassBlock*> *it) { _illegalFinalFieldModificationList = it; }
    PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *getNewlyExtendedClasses() const { return _newlyExtendedClasses; }
    void classGotNewlyExtended(TR_OpaqueClassBlock* clazz)
       {
@@ -1008,6 +1008,10 @@ public:
          newlyExtendedClasses[clazz] |= inProgress;
       }
    void setNewlyExtendedClasses(PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *it) { _newlyExtendedClasses = it; }
+
+   TR::Monitor *getSequencingMonitor() const { return _sequencingMonitor; }
+   uint32_t getCompReqSeqNo() const { return _compReqSeqNo; }
+   uint32_t incCompReqSeqNo() { return ++_compReqSeqNo; }
    void markCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags |= (1 << threadId); }
    void resetCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags &= ~(1 << threadId); }
    uint8_t getCHTableUpdateDone() const { return _chTableUpdateFlags; }
@@ -1221,6 +1225,7 @@ private:
 #if defined(J9VM_OPT_JITSERVER)
    ClientSessionHT               *_clientSessionHT; // JITServer hashtable that holds session information about JITClients
    PersistentVector<TR_OpaqueClassBlock*> *_unloadedClassesTempList; // JITServer list of classes unloaded
+   PersistentVector<TR_OpaqueClassBlock*> *_illegalFinalFieldModificationList; // JITServer list of classes that have J9ClassHasIllegalFinalFieldModifications is set
    TR::Monitor                   *_sequencingMonitor; // Used for ordering outgoing messages at the client
    uint32_t                      _compReqSeqNo; // seqNo for outgoing messages at the client
    PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *_newlyExtendedClasses; // JITServer table of newly extended classes

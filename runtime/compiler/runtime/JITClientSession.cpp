@@ -109,7 +109,7 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
    {
    const size_t numOfUnloadedClasses = classes.size();
 
-  if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will process a list of %zu unloaded classes for clientUID %llu", 
          TR::compInfoPT->getCompThreadId(), numOfUnloadedClasses, (unsigned long long)_clientUID);
 
@@ -198,6 +198,32 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
 
    if (numOfUnloadedClasses > 0)
       writeReleaseClassUnloadRWMutex();
+   }
+
+void
+ClientSessionData::processIllegalFinalFieldModificationList(const std::vector<TR_OpaqueClassBlock*> &classes)
+   {
+   const size_t numOfClasses = classes.size();
+   int32_t compThreadID = TR::compInfoPT->getCompThreadId();
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+         "compThreadID=%d will process a list of %zu classes with illegal final field modification for clientUID %llu",
+            compThreadID, numOfClasses, (unsigned long long)_clientUID);
+      {
+      OMR::CriticalSection processClassesWithIllegalModification(getROMMapMonitor());
+      for (auto clazz : classes)
+         {
+         auto it = _romClassMap.find((J9Class*)clazz);
+         if (it != _romClassMap.end())
+            {
+            it->second._classFlags |= J9ClassHasIllegalFinalFieldModifications;
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                  "compThreadID=%d found clazz %p in the cache and updated bit J9ClassHasIllegalFinalFieldModifications to 1\n", compThreadID, clazz);
+            }
+         }
+      }
    }
 
 TR_IPBytecodeHashTableEntry*
