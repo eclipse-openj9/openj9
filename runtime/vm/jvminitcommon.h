@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2017 IBM Corp. and others
+ * Copyright (c) 2006, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,6 +48,7 @@ void freeDllLoadTable (J9Pool* table);
 void freeVMArgsArray (J9PortLibrary* portLibrary, J9VMInitArgs* j9vm_args);
 J9VMDllLoadInfo *createLoadInfo (J9PortLibrary* portLibrary, J9Pool* aPool, char* name, U_32 flags, void* methodPointer, UDATA verboseFlags);
 UDATA jniVersionIsValid (UDATA jniVersion);
+void initializeArrayHeaderSize(J9JavaVM *javaVM);
 
 
 

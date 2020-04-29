@@ -1013,6 +1013,9 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	/* initialize the mappings between omrthread and java priorities */
 	initializeJavaPriorityMaps(vm);
 
+	/* Initialize array header size */
+	initializeArrayHeaderSize(vm);
+
 	if (0 != j9sig_protect(
 		protectedInitializeJavaVM, &initArgs,
 		structuredSignalHandlerVM, vm,

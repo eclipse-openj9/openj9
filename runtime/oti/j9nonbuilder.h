@@ -4674,6 +4674,8 @@ typedef struct J9VMThread {
 	j9object_t javaLangThreadLocalCache;
 	UDATA jitCountDelta;
 	UDATA maxProfilingCount;
+	UDATA contiguousHeaderSize;
+	UDATA discontiguousHeaderSize;
 	j9objectmonitor_t objectMonitorLookupCache[J9VM_OBJECT_MONITOR_CACHE_SIZE];
 	UDATA jniCriticalCopyCount;
 	UDATA jniCriticalDirectCount;
@@ -4968,6 +4970,8 @@ typedef struct J9JavaVM {
 	UDATA thrTryEnterNestedSpinning;
 	UDATA thrDeflationPolicy;
 	UDATA gcOptions;
+	UDATA contiguousHeaderSize;
+	UDATA discontiguousHeaderSize;
 	UDATA  ( *unhookVMEvent)(struct J9JavaVM *javaVM, UDATA eventNumber, void * currentHandler, void * oldHandler) ;
 	UDATA classLoadingMaxStack;
 	U_8* callInReturnPC;

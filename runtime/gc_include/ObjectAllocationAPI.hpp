@@ -80,7 +80,7 @@ private:
 #endif /* J9VM_ENV_DATA64 */
 			{
 				/* Calculate the size of the object */
-				UDATA const headerSize = J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(currentThread);
+				UDATA const headerSize = currentThread->contiguousHeaderSize;
 				UDATA const dataSize = ((UDATA)size) * J9ARRAYCLASS_GET_STRIDE(arrayClass);
 				UDATA allocateSize = (dataSize + headerSize + _objectAlignmentInBytes - 1) & ~(UDATA)(_objectAlignmentInBytes - 1);
 				if (allocateSize < J9_GC_MINIMUM_OBJECT_SIZE) {

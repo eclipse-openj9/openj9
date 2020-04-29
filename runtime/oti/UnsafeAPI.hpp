@@ -91,7 +91,7 @@ public:
 private:
 
 	static VMINLINE UDATA arrayBase(J9VMThread *currentThread) {
-		return J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(currentThread);
+		return currentThread->contiguousHeaderSize;
 	}
 
 	static VMINLINE UDATA logFJ9ObjectSize(J9VMThread *currentThread) {

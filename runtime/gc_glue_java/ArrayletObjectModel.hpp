@@ -91,7 +91,7 @@ public:
 	MMINLINE UDATA
 	contiguousHeaderSize()
 	{
-		return compressObjectReferences() ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull);
+		return ((J9JavaVM*)_omrVM->_language_vm)->contiguousHeaderSize;
 	}
 
 	/**
@@ -101,7 +101,7 @@ public:
 	MMINLINE UDATA
 	discontiguousHeaderSize()
 	{
-		return compressObjectReferences() ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull);
+		return ((J9JavaVM*)_omrVM->_language_vm)->discontiguousHeaderSize;
 	}
 
 	/**
@@ -860,19 +860,13 @@ public:
 	MMINLINE UDATA
 	getHeaderSize(J9IndexableObject *arrayPtr)
 	{
-		UDATA headerSize = 0;
-		if (compressObjectReferences()) {
-			UDATA size = ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size;
-			headerSize = sizeof(J9IndexableObjectContiguousCompressed);
-			if (0 == size) {
-				headerSize = sizeof(J9IndexableObjectDiscontiguousCompressed);
-			}
-		} else {
-			UDATA size = ((J9IndexableObjectContiguousFull *)arrayPtr)->size;
-			headerSize = sizeof(J9IndexableObjectContiguousFull);
-			if (0 == size) {
-				headerSize = sizeof(J9IndexableObjectDiscontiguousFull);
-			}
+		J9JavaVM *javaVM = (J9JavaVM*)_omrVM->_language_vm;
+		UDATA size = compressObjectReferences()
+				? ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size
+				: ((J9IndexableObjectContiguousFull *)arrayPtr)->size;
+		UDATA headerSize = javaVM->contiguousHeaderSize;
+		if (0 == size) {
+			headerSize = javaVM->discontiguousHeaderSize;
 		}
 		return headerSize;
 	}
@@ -885,7 +879,7 @@ public:
 	MMINLINE fj9object_t *
 	getArrayoidPointer(J9IndexableObject *arrayPtr)
 	{
-		return (fj9object_t *)((UDATA)arrayPtr + (compressObjectReferences() ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull)));
+		return (fj9object_t *)((UDATA)arrayPtr + ((J9JavaVM*)_omrVM->_language_vm)->discontiguousHeaderSize);
 	}
 
 	/**

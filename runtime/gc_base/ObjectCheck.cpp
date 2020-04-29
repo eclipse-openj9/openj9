@@ -151,7 +151,7 @@ j9gc_ext_check_is_valid_heap_object(J9JavaVM *javaVM, J9Object *ptr, UDATA flags
 	if (extensions->objectModel.isObjectArray(ptr)
 		|| extensions->objectModel.isPrimitiveArray(ptr)) {
 		/* ensure that the array size fits into the segment */
-		if (((UDATA)highAddress - (UDATA)ptr) < J9JAVAVM_CONTIGUOUS_HEADER_SIZE(javaVM)) {
+		if (((UDATA)highAddress - (UDATA)ptr) < javaVM->contiguousHeaderSize) {
 			return J9OBJECTCHECK_INVALID;
 		}
 	}

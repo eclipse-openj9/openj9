@@ -216,6 +216,7 @@ public:
 	inlineObjectHashCode(J9JavaVM *vm, j9object_t objectPointer)
 	{
 		I_32 hashValue = 0;
+		UDATA headerSize = vm->contiguousHeaderSize;
 		if (VM_VMHelpers::mustCallWriteAccessBarrier(vm)) {
 			hashValue = vm->memoryManagerFunctions->j9gc_objaccess_getObjectHashCode(vm, objectPointer);
 		} else {
@@ -230,7 +231,7 @@ public:
 						if (0 != offset) {
 							/* Contiguous array */
 							J9ROMArrayClass *romClass = (J9ROMArrayClass*)objectClass->romClass;
-							offset = ROUND_UP_TO_POWEROF2((offset << (romClass->arrayShape & 0x0000FFFF)) + sizeof(J9IndexableObjectContiguousCompressed), sizeof(I_32));
+							offset = ROUND_UP_TO_POWEROF2((offset << (romClass->arrayShape & 0x0000FFFF)) + headerSize, sizeof(I_32));
 							hashValue = *(I_32*)((UDATA)objectPointer + offset);
 						} else {
 							if (0 == ((J9IndexableObjectDiscontiguousCompressed*)objectPointer)->size) {
@@ -246,7 +247,7 @@ public:
 						if (0 != offset) {
 							/* Contiguous array */
 							J9ROMArrayClass *romClass = (J9ROMArrayClass*)objectClass->romClass;
-							offset = ROUND_UP_TO_POWEROF2((offset << (romClass->arrayShape & 0x0000FFFF)) + sizeof(J9IndexableObjectContiguousFull), sizeof(I_32));
+							offset = ROUND_UP_TO_POWEROF2((offset << (romClass->arrayShape & 0x0000FFFF)) + headerSize, sizeof(I_32));
 							hashValue = *(I_32*)((UDATA)objectPointer + offset);
 						} else {
 							if (0 == ((J9IndexableObjectDiscontiguous*)objectPointer)->size) {

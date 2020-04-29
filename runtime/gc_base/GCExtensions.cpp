@@ -90,7 +90,7 @@ MM_GCExtensions::initialize(MM_EnvironmentBase *env)
 
 #if defined(J9VM_GC_REALTIME)
 	/* only ref slots, size in bytes: 2 * minObjectSize - header size */
-	minArraySizeToSetAsScanned = 2 * (1 << J9VMGC_SIZECLASSES_LOG_SMALLEST) - J9JAVAVM_CONTIGUOUS_HEADER_SIZE(getJavaVM());
+	minArraySizeToSetAsScanned = 2 * (1 << J9VMGC_SIZECLASSES_LOG_SMALLEST) - getJavaVM()->contiguousHeaderSize;
 #endif /* J9VM_GC_REALTIME */
 
 #if defined(J9VM_GC_JNI_ARRAY_CACHE)

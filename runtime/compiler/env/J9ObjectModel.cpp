@@ -256,14 +256,14 @@ J9::ObjectModel::generateCompressedObjectHeaders()
 uintptr_t
 J9::ObjectModel::contiguousArrayHeaderSizeInBytes()
    {
-   return compressObjectReferences() ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull);
+   return TR::Compiler->javaVM->contiguousHeaderSize;
    }
 
 
 uintptr_t
 J9::ObjectModel::discontiguousArrayHeaderSizeInBytes()
    {
-   return compressObjectReferences() ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull);
+   return TR::Compiler->javaVM->discontiguousHeaderSize;
    }
 
 

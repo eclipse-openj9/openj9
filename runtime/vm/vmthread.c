@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -250,6 +250,10 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 	newThread->jitTOC = vm->jitTOC;
 #endif
 #endif
+
+	/* Initialize array header size */
+	newThread->contiguousHeaderSize = J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(newThread);
+	newThread->discontiguousHeaderSize = J9VMTHREAD_DISCONTIGUOUS_HEADER_SIZE(newThread);
 
 	/* If an exclusive access request is in progress, mark this thread */
 

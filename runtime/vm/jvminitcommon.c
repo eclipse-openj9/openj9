@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -146,4 +146,16 @@ jniVersionIsValid(UDATA jniVersion)
 		|| (jniVersion == JNI_VERSION_10)
 #endif /* JAVA_SPEC_VERSION >= 10 */
 		;
+}
+
+/**
+ * Initialize cached indexable object header size
+ *
+ * @param javaVM The javaVM for the current VM Instance
+ */
+void
+initializeArrayHeaderSize(J9JavaVM *javaVM)
+{
+	javaVM->contiguousHeaderSize = J9JAVAVM_CONTIGUOUS_HEADER_SIZE(javaVM);
+	javaVM->discontiguousHeaderSize = J9JAVAVM_DISCONTIGUOUS_HEADER_SIZE(javaVM);
 }

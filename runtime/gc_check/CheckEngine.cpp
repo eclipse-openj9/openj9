@@ -471,7 +471,7 @@ GC_CheckEngine::checkJ9Object(J9JavaVM *javaVM, J9Object* objectPtr, J9MM_Iterat
 		}
 
 		/* TODO: find out what the indexable header size should really be */
-		if (extensions->objectModel.isIndexable(objectPtr) && (delta < J9JAVAVM_CONTIGUOUS_HEADER_SIZE(javaVM))) {
+		if (extensions->objectModel.isIndexable(objectPtr) && (delta < javaVM->contiguousHeaderSize)) {
 			return J9MODRON_GCCHK_RC_INVALID_RANGE;
 		}
 
