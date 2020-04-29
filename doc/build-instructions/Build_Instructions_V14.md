@@ -111,21 +111,14 @@ Not on x86? We also have Dockerfiles for the following Linux architectures: [Lin
 ```
 apt-get update \
   && apt-get install -qq -y --no-install-recommends \
-    gcc-7 \
-    g++-7 \
-    autoconf \
-    ca-certificates \
     ...
 ```
 
-2. This build uses the same gcc and g++ compiler levels as OpenJDK, which might be
-backlevel compared with the versions you use on your system. Create links for
-the compilers with the following commands:
+2. The previous step installed g++-7 and gcc-7 packages, which might be different
+than the default version installed on your system. Export variables to set the 
+version used in the build.
 ```
-ln -s g++ /usr/bin/c++
-ln -s g++-7 /usr/bin/g++
-ln -s gcc /usr/bin/cc
-ln -s gcc-7 /usr/bin/gcc
+export CC=gcc-7 CXX=g++-7
 ```
 
 3. Download and setup **freemarker.jar** into a directory.
@@ -136,16 +129,13 @@ tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
 rm -f freemarker.tgz
 ```
 
-4. Download and setup the boot JDK using the latest AdoptOpenJDK v13 build.
+4. Download and setup the boot JDK using the latest AdoptOpenJDK v14 build.
 ```
 cd /<my_home_dir>
-wget -O bootjdk13.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk13?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
-tar -xzf bootjdk13.tar.gz
-rm -f bootjdk13.tar.gz
-mv $(ls | grep -i jdk) bootjdk13
-
-export JAVA_HOME="/<my_home_dir>/bootjdk13"
-export PATH="${JAVA_HOME}/bin:${PATH}"
+wget -O bootjdk14.tar.gz "https://api.adoptopenjdk.net/v3/binary/latest/14/ga/linux/x64/jdk/openj9/normal/adoptopenjdk"
+tar -xzf bootjdk14.tar.gz
+rm -f bootjdk14.tar.gz
+mv $(ls | grep -i jdk-14) bootjdk14
 ```
 
 ### 2. Get the source
@@ -169,9 +159,11 @@ bash get_source.sh
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar --with-boot-jdk=<path_to_boot_JDK13>
+bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar --with-boot-jdk=/usr/lib/adoptojdk-java-14
 ```
 :warning: You must give an absolute path to freemarker.jar
+
+:warning: The path in the example --with-boot-jdk= option is appropriate for the Docker installation. If not using the Docker environment, set the path appropriate for your setup, such as "/<my_home_dir>/bootjdk14" as setup in the previous instructions.
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 

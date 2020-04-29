@@ -569,7 +569,7 @@ bootjdk_url() {
 }
 
 install_bootjdks() {
-  local versions="8 11 13 14"
+  local versions="8 11 14"
   echo ""
   echo "# Download and install boot JDKs from AdoptOpenJDK."
   echo "RUN cd /tmp \\"
