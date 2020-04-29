@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,7 @@ import com.ibm.cuda.CudaKernel;
 import com.ibm.cuda.CudaModule;
 import com.ibm.cuda.CudaStream;
 import com.ibm.cuda.Dim3;
+import com.ibm.oti.vm.VM;
 
 /**
  * This class provides access to a GPU implementation of the bitonic sort
@@ -176,7 +177,7 @@ final class SortNetwork {
 	/**
 	 * Unloads modules on VM shutdown.
 	 */
-	private static final class ShutdownHook extends Thread {
+	private static final class ShutdownHook implements Runnable {
 
 		private static final Queue<CudaModule> modules;
 
@@ -184,7 +185,9 @@ final class SortNetwork {
 			modules = new ConcurrentLinkedQueue<>();
 
 			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-				Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+				Thread shutdownThread = VM.getVMLangAccess().createThread(new ShutdownHook(),
+					"GPU sort shutdown helper", true, false, false, ClassLoader.getSystemClassLoader()); //$NON-NLS-1$
+				Runtime.getRuntime().addShutdownHook(shutdownThread);
 				return null;
 			});
 		}
@@ -194,7 +197,7 @@ final class SortNetwork {
 		}
 
 		private ShutdownHook() {
-			super("GPU sort shutdown helper"); //$NON-NLS-1$
+			super();
 		}
 
 		@Override

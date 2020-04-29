@@ -36,7 +36,7 @@ import com.ibm.lang.management.TotalPhysicalMemoryNotificationInfo;
  *
  * @since 1.5
  */
-final class OperatingSystemNotificationThread extends Thread {
+final class OperatingSystemNotificationThread implements Runnable {
 
 	private final ExtendedOperatingSystemMXBeanImpl osBean;
 
@@ -51,7 +51,7 @@ final class OperatingSystemNotificationThread extends Thread {
 	 */
 	@Override
 	public void run() {
-		Thread myShutdownNotifier = new OperatingSystemNotificationThreadShutdown(this);
+		Thread myShutdownNotifier = new OperatingSystemNotificationThreadShutdown(Thread.currentThread());
 
 		try {
 			AccessController.doPrivileged(new PrivilegedAction<Void>() {
