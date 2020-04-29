@@ -1500,11 +1500,6 @@ JVM_GetNanoTimeAdjustment(JNIEnv *env, jclass clazz, jlong offsetSeconds)
 }
 
 #if JAVA_SPEC_VERSION >= 11
-void JNICALL
-JVM_BeforeHalt()
-{
-	/* To be implemented via https://github.com/eclipse/openj9/issues/1459 */
-}
 JNIEXPORT jclass JNICALL
 JVM_GetNestHost(JNIEnv *env, jclass clz)
 {

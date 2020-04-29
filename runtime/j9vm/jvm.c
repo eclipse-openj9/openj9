@@ -6077,3 +6077,10 @@ checkZOSThrWeightEnvVar(void)
 	return retVal;
 }
 #endif /* defined(J9ZOS390) */
+
+void JNICALL
+JVM_BeforeHalt()
+{
+	/* To be implemented via https://github.com/eclipse/openj9/issues/1459 */
+}
+
