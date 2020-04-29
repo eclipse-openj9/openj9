@@ -1923,6 +1923,10 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<variations>
+			<variation>Mode110</variation>
+			<variation>Mode610</variation>
+		</variations>
 		<!-- OpenJ9 issue 1421, failed on zos:
 		z/OS documentation indicates the destructor supplied 
 		with pthread_key_create() may not be run on thread exit.
