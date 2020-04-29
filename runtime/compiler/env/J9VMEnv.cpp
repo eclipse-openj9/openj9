@@ -45,6 +45,13 @@
 int64_t
 J9::VMEnv::maxHeapSizeInBytes()
    {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_maxHeapSizeInBytes;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
    J9JavaVM *jvm = TR::Compiler->javaVM;
 
    if (!jvm)
