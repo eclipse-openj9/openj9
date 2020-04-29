@@ -1271,6 +1271,8 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 							J9CfrLocalVariableTypeTableEntry *lvttCompareEntry = &(localVariableTypeTable->localVariableTypeTable[localVariableTypeTableCompareIndex]);
 							if ((lvttEntry->startPC == lvttCompareEntry->startPC)
 								&& (lvttEntry->length == lvttCompareEntry->length)
+								&& (lvttEntry->nameIndex == lvttCompareEntry->nameIndex)
+								&& (lvttEntry->signatureIndex == lvttCompareEntry->signatureIndex) 
 								&& (index == lvttCompareEntry->index) 
 							) {
 								throwGenericErrorWithCustomMsg(J9NLS_CFR_LVTT_DUPLICATE__ID, index);
