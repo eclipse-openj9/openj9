@@ -844,6 +844,11 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
    for (int i = 0; i < compClassesForOSRRedefinition->size(); ++i)
       classesForOSRRedefinition[i] = (*compClassesForOSRRedefinition)[i];
 
+   auto *compClassesForStaticFinalFieldModification = comp->getClassesForStaticFinalFieldModification();
+   std::vector<TR_OpaqueClassBlock*> classesForStaticFinalFieldModification(compClassesForStaticFinalFieldModification->size());
+   for (int i = 0; i < compClassesForStaticFinalFieldModification->size(); ++i)
+      classesForStaticFinalFieldModification[i] = (*compClassesForStaticFinalFieldModification)[i];
+
    uint8_t *startPC = comp->cg()->getCodeStart();
 
    return std::make_tuple(classes,
@@ -854,6 +859,7 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
                           compClassesThatShouldNotBeLoaded,
                           compClassesThatShouldNotBeNewlyExtended,
                           classesForOSRRedefinition,
+                          classesForStaticFinalFieldModification,
                           startPC);
    }
 #endif
