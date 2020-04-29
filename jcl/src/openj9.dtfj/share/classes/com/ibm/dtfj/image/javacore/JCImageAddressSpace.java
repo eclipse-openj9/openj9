@@ -55,7 +55,8 @@ public class JCImageAddressSpace implements ImageAddressSpace {
 
 	@Override
 	public ByteOrder getByteOrder() {
-		return ByteOrder.BIG_ENDIAN; // FIXME
+		// Return a default value since javacore image memory can't be accessed anyways.
+		return ByteOrder.BIG_ENDIAN;
 	}
 
 	/**

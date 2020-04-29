@@ -72,11 +72,8 @@ class PHDImageAddressSpace implements ImageAddressSpace {
 
 	@Override
 	public ByteOrder getByteOrder() {
-		if (metaImageAddressSpace != null) {
-			return metaImageAddressSpace.getByteOrder();
-		}
-
-		return ByteOrder.BIG_ENDIAN; // FIXME
+		 // Return a default value since PHD image memory can't be accessed anyways.
+		return ByteOrder.BIG_ENDIAN;
 	}
 
 	@Override
