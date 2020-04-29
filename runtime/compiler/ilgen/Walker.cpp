@@ -4596,13 +4596,13 @@ break
 
    // We disable this optimization for JITServer because TR_VMField is not supported on JITServer yet. Once we have decided how to build the data structures
    // required by this optimization efficiently, we can re-enable this optimization.
-   if (cg()->getEnforceStoreOrder() && calledMethod->isConstructor()
-      #ifdef J9VM_OPT_JITSERVER
-         && !cg()->comp()->isOutOfProcessCompilation()
-      #endif
-      )
+   if (cg()->getEnforceStoreOrder() && calledMethod->isConstructor())
       {
-      if (resolvedMethodSymbol)
+      if (resolvedMethodSymbol
+#ifdef J9VM_OPT_JITSERVER
+         && !cg()->comp()->isOutOfProcessCompilation()
+#endif /* defined(J9VM_OPT_JITSERVER) */
+         )
          {
          J9Class *methodClass = (J9Class *) resolvedMethodSymbol->getResolvedMethod()->containingClass();
          TR_VMFieldsInfo *fieldsInfoByIndex = new (comp()->trStackMemory()) TR_VMFieldsInfo(comp(), methodClass, 1, stackAlloc);

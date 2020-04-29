@@ -512,6 +512,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._floatInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactF, false, false, false)->getMethodAddress();
          vmInfo._doubleInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD, false, false, false)->getMethodAddress();
          vmInfo._interpreterVTableOffset = TR::Compiler->vm.getInterpreterVTableOffset();
+         vmInfo._maxHeapSizeInBytes = TR::Compiler->vm.maxHeapSizeInBytes();
          vmInfo._enableGlobalLockReservation = vmThread->javaVM->enableGlobalLockReservation;
          {
             TR::VMAccessCriticalSection getVMInfo(fe);
