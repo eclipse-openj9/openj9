@@ -292,6 +292,7 @@ jvm_add_exports(jvm
 	_JVM_IsVMGeneratedMethodIx@12
 	JVM_GetTemporaryDirectory
 	_JVM_CopySwapMemory@44
+	JVM_BeforeHalt
 )
 
 if(JAVA_SPEC_VERSION LESS 11)
@@ -335,7 +336,6 @@ else()
 		_JVM_GetNanoTimeAdjustment@16
 
 		# Additions for Java 11 (General)
-		JVM_BeforeHalt
 		JVM_GetNestHost
 		JVM_GetNestMembers
 		JVM_AreNestMates
