@@ -19,40 +19,36 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
+# Copyright (c) 2020, 2020 IBM Corp. and others
+###############################################################################
 ---
 - name: Create a build folder
   file:
-    dest: "{{ build_dir }}" 
-    mode: 0755 
+    dest: "{{ build_dir }}"
+    mode: 0755
     state: directory
   tags:
     - buildenv
-- name: Get Dockerfile for the building environment
+- name: Get script to build docker image
   get_url:
-    dest: "{{ build_dir }}/Dockerfile-base"
-    url: "https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/{{ version }}/{{ platform }}/ubuntu16/Dockerfile"
+    dest: "{{ build_dir }}/mkdocker.sh"
+    url: "https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/mkdocker.sh"
     mode: 0644
     validate_certs: no
   tags:
     - buildenv
 - name: Build the docker image for the building environment
-  docker_image:
-    path: "{{ build_dir }}"
-    dockerfile: Dockerfile-base
-    name: "openj9-{{ version }}-build"
-    tag: "latest"
-    rm: yes
-    push: no
+  command: bash mkdocker.sh --tag=openj9-{{ version }}-build --dist=ubuntu --version=16.04 --build
   tags:
     - buildenv
 - name: Create a build result folder
   file:
-    dest: "{{ host_dir }}" 
-    mode: 0755 
+    dest: "{{ host_dir }}"
+    mode: 0755
     state: directory
   tags:
     - buildenv
-- name: Start the building environment as a docker container 
+- name: Start the building environment as a docker container
   docker_container:
     name: "openj9-{{ version }}-build"
     image: "openj9-{{ version }}-build:latest"
@@ -85,7 +81,7 @@
   tags:
     - buildenv
 - name: Add the container to inventory
-  add_host:      
+  add_host:
     name: "openj9-{{ version }}-build"
     ansible_connection: docker
     ansible_user: root
@@ -99,36 +95,36 @@
   tags:
     - buildenv
 - name: Add group "{{ target.group }}"
-  group: 
+  group:
     name: "{{ target.group }}"
     gid:  "{{ target.groupid }}"
   delegate_to: "openj9-{{ version }}-build"
   tags:
     - buildenv
 - name: Add user "{{ target.user }}"
-  user: 
+  user:
     name: "{{ target.user }}"
     uid:  "{{ target.userid }}"
-    group: "{{ target.group }}" 
+    group: "{{ target.group }}"
     createhome: no
     shell: /sbin/nologin
   delegate_to: "openj9-{{ version }}-build"
-  tags: 
+  tags:
     - buildenv
 - name: Add group "{{ ansible_group.stdout }}"
-  group: 
+  group:
     name: "{{ ansible_group.stdout }}"
     gid:  "{{ ansible_gid.stdout }}"
   delegate_to: "openj9-{{ version }}-build"
   tags:
     - buildenv
 - name: Add user "{{ ansible_user.stdout }}"
-  user: 
+  user:
     name: "{{ ansible_user.stdout }}"
     uid:  "{{ ansible_uid.stdout }}"
-    group: "{{ ansible_group.stdout }}" 
+    group: "{{ ansible_group.stdout }}"
     createhome: no
     shell: /sbin/nologin
   delegate_to: "openj9-{{ version }}-build"
-  tags: 
+  tags:
     - buildenv

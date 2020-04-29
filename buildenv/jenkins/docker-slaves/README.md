@@ -1,25 +1,24 @@
 <!--
-Copyright (c) 2018, 2018 IBM Corp. and others
- 
- This program and the accompanying materials are made available under
- the terms of the Eclipse Public License 2.0 which accompanies this
- distribution and is available at https://www.eclipse.org/legal/epl-2.0/
- or the Apache License, Version 2.0 which accompanies this distribution 
+Copyright (c) 2018, 2020 IBM Corp. and others
+
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution
 and
- is available at https://www.apache.org/licenses/LICENSE-2.0.
- 
- This Source Code may also be made available under the following
- Secondary Licenses when the conditions for such availability set
- forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
- General Public License, version 2 with the GNU Classpath
- Exception [1] and GNU General Public License, version 2 with the
- OpenJDK Assembly Exception [2].
- 
- [1] https://www.gnu.org/software/classpath/license.html
- [2] http://openjdk.java.net/legal/assembly-exception.html
- 
- SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH 
-Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 # Docker
 ## About
@@ -40,17 +39,17 @@ same environment every time.
 | Windows   | To be Added  | Not Available | Not Available |
 
 ## Eclipse OpenJ9 CI
-The Dockerfiles are used by two Jenkins jobs at Eclipse to
-generate docker containers. The first [job](https://ci.eclipse.org/openj9/view/Build/job/Build-Jenkins-Agent-Container/) is run manually
+Generated Dockerfiles are used by two Jenkins jobs at Eclipse to
+build docker images. The first [job](https://ci.eclipse.org/openj9/view/Build/job/Build-Jenkins-Agent-Container/) is run manually
 by supplying the architecture and os. It should be run after
-a Dockerfile change has been merged. The second [job](https://ci.eclipse.org/openj9/view/Pull%20Requests/job/PullRequest-Build-Jenkins-Agent-Container/) is used
-to test pull requests. Whenever a PR makes changes to a Dockerfile,
-a PR build should be launched for each Dockerfile changed. A PR
+changes to mkdocker.sh have been merged. The second [job](https://ci.eclipse.org/openj9/view/Pull%20Requests/job/PullRequest-Build-Jenkins-Agent-Container/) is used
+to test pull requests. Whenever a PR makes changes to mkdocker.sh,
+a PR build should be launched for each affected architecture and os combination. A PR
 build can be launched by making a comment in the PR with the following format
 ```
 Jenkins build docker <ARCH> <OS>
 ```
-Both jobs will push the Docker images to Docker Hub under the repo 
+Both jobs will push the Docker images to Docker Hub under the repo
 `eclipse/openj9-jenkins-agent-<ARCH>-<OS>:<TAG>`
 If a manual build is run the tag will be the build number of
 the job, as well as the `latest` tag. If a PR build is run the

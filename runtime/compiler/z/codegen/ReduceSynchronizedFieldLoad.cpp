@@ -284,7 +284,9 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
          TR::Node* monentNode = iter.currentNode()->getOpCodeValue() == TR::monent ?
             iter.currentNode() :
             iter.currentNode()->getFirstChild();
-
+         // Locking on value types is prohibited by the spec., so this optimization can only be performed if we are certain (at compile time) the locking object is not a value type
+         if (TR::Compiler->om.areValueTypesEnabled() && cg->isMonitorValueType(monentNode) != TR_no)
+            continue;
          if (cg->comp()->getOption(TR_TraceCG))
             {
             traceMsg(cg->comp(), "Found monent [%p]\n", monentNode);
@@ -299,7 +301,6 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                TR::Node* monexitNode = iter.currentNode()->getOpCodeValue() == TR::monexit ?
                   iter.currentNode() :
                   iter.currentNode()->getFirstChild();
-
                if (cg->comp()->getOption(TR_TraceCG))
                   {
                   traceMsg(cg->comp(), "Found monexit [%p]\n", monexitNode);

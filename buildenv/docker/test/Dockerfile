@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,8 +20,8 @@
 
 # To use this docker file:
 # 1.Depends on your OS platform, build the base openj9 docker
-#   image from the Dockerfile in buildenv/docker/jdk11/
-#   `docker build -f buildenv/docker/jdk11/<platform>/ubuntu/Dockerfile -t=openj9 .`
+#   image from the script in buildenv/docker/mkdocker.sh
+#   `bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=16 --build`
 #
 # 2.Build the Docker image from buildenv/docker/test/ for testing
 #   `docker build -t=openj9-buildandtest .`
@@ -29,7 +29,7 @@
 #   name, use this to build the testing Docker image
 #   `docker build --build-arg IMAGE_NAME=<image_name> --build-arg IMAGE_VERSION=<image_version> -t openj9-buildandtest .`
 #
-# 3.Run this Docker image for your scenario
+# 3.Run this Docker image for your scenario --tag=$@
 #   a) Scenario 1: I want to run OpenJ9 tests against a downloaded
 #      OpenJ9 binary (OpenJ9 SDK). Or I just want to test my new
 #      test code against a pre-built OpenJ9 SDK.
@@ -47,7 +47,6 @@
 #   than cloning them within Docker container. e.g.
 #   `docker run -it -v <path_to_openj9-openjdk-jdk11_dir>:/openj9-openjdk-jdk11`
 #   In this case, the built OpenJ9 SDK can be easily ported to localhost machine.
-#
 
 ARG IMAGE_NAME=openj9
 ARG IMAGE_VERSION=latest
@@ -56,7 +55,7 @@ FROM ${IMAGE_NAME}:${IMAGE_VERSION}
 
 # Install required executable dependencies for testing
 RUN apt-get update \
-    && apt-get install -qq -y --no-install-recommends \
+ && apt-get install -qq -y --no-install-recommends \
     ant \
     ant-contrib \
     build-essential \
@@ -64,20 +63,13 @@ RUN apt-get update \
     vim \
     # 'libexpat1-dev' package should be removed once switching to TestKitGen java is complete and the builds are stabilized.
     libexpat1-dev \
-  && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/*
 
 # Install Docker module to run test framework
 RUN echo yes | cpan install JSON Text::CSV XML::Parser
-
-# Create links for c++,g++,cc,gcc
-RUN ln -sf g++ /usr/bin/c++ \
-  && ln -sf g++-4.8 /usr/bin/g++ \
-  && ln -sf gcc /usr/bin/cc \
-  && ln -sf gcc-4.8 /usr/bin/gcc
 
 # These two folders are used for Scenario 1 talked above.
 # In the `docker run` command, user also need mount <JDK_ROOT>
 # and openj9/test dir to the Docker image by using cmd:
 #   `docker run -it -v <path_to_openj9_sdk_roots>:/java -v <path_to_openj9_test_dir>:/test openj9-buildandtest`
-VOLUME ["/test","/java"]
-
+VOLUME [ "/test", "/java" ]
