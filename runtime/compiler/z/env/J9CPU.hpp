@@ -81,6 +81,7 @@ class OMR_EXTENSIBLE CPU : public J9::CPU
    void initializeS390ProcessorFeatures();
 
    TR_ProcessorFeatureFlags getProcessorFeatureFlags();
+   TR_ProcessorFeatureFlags getProcessorFeatureFlagsNew();
    bool isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags);
    };
 
