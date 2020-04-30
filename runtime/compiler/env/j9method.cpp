@@ -3115,6 +3115,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_String_equals,              "equals",              "(Ljava/lang/Object;)Z")},
       {x(TR::java_lang_String_indexOf_String,      "indexOf",             "(Ljava/lang/String;)I")},
       {x(TR::java_lang_String_indexOf_String_int,  "indexOf",             "(Ljava/lang/String;I)I")},
+      {x(TR::java_lang_String_indexOf_char,        "indexOf",             "(I)I")},
       {x(TR::java_lang_String_indexOf_native,      "indexOf",             "(II)I")},
       {x(TR::java_lang_String_indexOf_fast,        "indexOf",             "(Ljava/lang/String;Ljava/lang/String;IIC)I")},
       {x(TR::java_lang_String_isCompressed,        "isCompressed",        "()Z")},
