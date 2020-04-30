@@ -4635,7 +4635,7 @@ J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL=\ud30c\uc77c \uc2dc\uc2a4\ud15c\uc5d0 \uacf5\u
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.explanation=An error has occurred within Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
-J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.user_response=Clean the file system.
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.user_response=Clean the file system. If the file system doesn't support free space reporting, see the "-Xshareclasses:noPersistentDiskSpaceCheck" option.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CM_READ_CORRUPT_CACHE_ENTRY_HEADER_BAD_LEN=\uce90\uc2dc \ud56d\ubaa9 \ud5e4\ub354 0x%p\uc758 \uc190\uc0c1 \ub370\uc774\ud130 \uc77d\uae30(%u\ubc14\uc774\ud2b8\uc758 \uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \ud56d\ubaa9 \uae38\uc774)
@@ -6763,4 +6763,142 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=\ubaa8\ub4e0 \ud074\ub798\uc2a4 
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destroy all shared cache layers of the same name (use name parm or default)
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR=\uce90\uc2dc \ub514\uc2a4\ud06c\ub9bd\ud130 \ud560\ub2f9\uc5d0 \uc2e4\ud328\ud568
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.explanation=An error has occurred in shared class processing.
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=\uacf5\uc720 \uce90\uc2dc\ub97c \uc2dc\uc791\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \ud558\uc704 \uacc4\uce35 \uacf5\uc720 \uce90\uc2dc\uc5d0 \ub300\ud55c \uc218\uc815\uc774 \ubc1c\uacac\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc608\uc0c1 \uace0\uc720 \uce90\uc2dc ID\ub294 %s\uc785\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.sample_input_1=foo
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layer shared caches built on top of it.
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.user_response=Use -Xshareclasses:name=<cacheName>,destroyAllLayers to destroy all layers and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED=\uacf5\uc720 \uce90\uc2dc\ub97c \uc2dc\uc791\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \ud558\uc704 \uacc4\uce35 \ud544\uc218 \uc18c\ud504\ud2b8\uc6e8\uc5b4 \uce90\uc2dc\uc758 \uace0\uc720 ID\ub97c \uac00\uc838\uc624\ub294 \uc911\uc5d0 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.explanation=Cannot get the unique ID of a lower layer prerequisite cache.
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.user_response=Use -Xshareclasses:name=<cacheName>,destroyAllLayers to destroy all layers and retry. Please make sure the lower layer shared caches remain unmodified.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_FAILED_TO_START_UP=\uacf5\uc720 \uce90\uc2dc\ub97c \uc2dc\uc791\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_FAILED_TO_START_UP.explanation=An error occurred while starting up the shared cache.
+J9NLS_SHRC_CM_FAILED_TO_START_UP.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_FAILED_TO_START_UP.user_response=Previous error messages may indicate the reason.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=\uc0c1\uc704 \uacc4\uce35 \ubc88\ud638\ub97c \uc9c0\uc815\ud558\uc2ed\uc2dc\uc624. \uc9c0\uc815\ub41c \uacc4\uce35\uc774 \uc5c6\ub294 \uacbd\uc6b0 \uc0c8 \uacf5\uc720 \uce90\uc2dc \uacc4\uce35\uc744 \uc791\uc131\ud558\uc2ed\uc2dc\uc624.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER=\uc0c8 \uacf5\uc720 \uce90\uc2dc \uacc4\uce35\uc744 \uc791\uc131\ud558\uc2ed\uc2dc\uc624.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=\"%s\"\uc5d0 \ub300\ud574 \uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \uacc4\uce35 \ubc88\ud638 %d\uc774(\uac00) \ubc1c\uacac\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uacc4\uce35 \ubc88\ud638\ub294 %d \ubbf8\ub9cc\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_3=100
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.explanation=Incorrect layer number has been used in the command-line option
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.system_action=The JVM terminates.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.user_response=Correct or remove the invalid command-line option and rerun.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \uacc4\uce35 \ubc88\ud638 %d\uc785\ub2c8\ub2e4. \uae30\uc874 \uc0c1\uc704 \uacc4\uce35\uc740 %d\uc785\ub2c8\ub2e4. \uc0c8 \uacc4\uce35 \ubc88\ud638\ub294 %d\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_1=3
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_2=1
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_3=2
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.explanation=User has passed in an incorrect layer number.
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.user_response=Correct the layer number in the command line and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK=\uc9c0\uc18d\uc801 \uce90\uc2dc\ub97c \uc791\uc131\ud558\uae30 \uc804\uc5d0 \ub514\uc2a4\ud06c \uc5ec\uc720 \uacf5\uac04\uc744 \ud655\uc778\ud558\uc9c0 \ub9c8\uc2ed\uc2dc\uc624.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE=\n\
+\uce90\uc2dc \"%s\"\uc758 \uc0c1\uc704 \uacc4\uce35\uc5d0 \ub300\ud55c \ud604\uc7ac \ud1b5\uacc4: \n
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.sample_input_1=myCache
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER=\uce90\uc2dc \uacc4\uce35                         %*.c= %d
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_1=0
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_2=
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_3=1
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE=\n\
+\uce90\uc2dc \"%s\"\uc758 \ubaa8\ub4e0 \uacc4\uce35\uc5d0 \ub300\ud55c \ud604\uc7ac \ud1b5\uacc4: \n
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.sample_input_1=myCache
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS=\uc0c1\uc704 \uacc4\uce35\uc5d0\uc11c\ub9cc \uce90\uc2dc \ud1b5\uacc4\uc758 \uc694\uc57d\uc744 \uc778\uc1c4\ud569\ub2c8\ub2e4. printTopLayerStats=help\ub97c \uc0ac\uc6a9\ud558\uc5ec \uc0ac\uc6a9 \uac00\ub2a5\ud55c \uc635\uc158\uc744 \ubcf4\uc2ed\uc2dc\uc624.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1=-Xshareclasses:%1$s<options>\uc5d0 \uc0ac\uc6a9 \uac00\ub2a5\ud55c \uc635\uc158\uc785\ub2c8\ub2e4. \ubcf5\uc218 \uc635\uc158\uc744 \uc9c0\uc815\ud558\ub824\uba74 '+'\ub97c \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624. \uc989, %2$saot+url \n
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_1=printStats=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_2=printStats=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1=\uacf5\uc720 \uce90\uc2dc\uc5d0\uc11c \ud074\ub798\uc2a4\ub97c \ucc3e\uc744 \ub54c \uc2dc\uac04\uc18c\uc778 \uac80\uc0ac\ub97c \ub055\ub2c8\ub2e4. \uacf5\uc720 \uce90\uc2dc\uc5d0\uc11c \ub354 \uc774\uc0c1 \uc0ac\uc6a9\ub418\uc9c0 \uc54a\ub294 \ud074\ub798\uc2a4\ub97c \ub85c\ub4dc\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED=\uce90\uc2dc\uc758 \uc0c1\uc704 \uacc4\uce35(\uacc4\uce35 %d)\uc740 \uc601\uad6c \uc0ad\uc81c\ub429\ub2c8\ub2e4. \uacf5\uc720 \uce90\uc2dc\uc758 \uacc4\uce35 %d\uc5d0 \ub300\ud55c \uc218\uc815\uc774 \ubc1c\uacac\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc608\uc0c1 \uce90\uc2dc \uace0\uc720 ID\ub294 %s\uc774\uba70 \ud604\uc7ac \uce90\uc2dc \uace0\uc720 ID\ub294 %s\uc785\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_1=1
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_2=0
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_3=Cache_1
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_4=Cache_2
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layers shared caches built on top of it.
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.user_response=Use -Xshareclasses:name=<cacheName>,destroy to destroy all invalid layers (all the higher layers which are built on top of the modified layer) and retry.
 # END NON-TRANSLATABLE

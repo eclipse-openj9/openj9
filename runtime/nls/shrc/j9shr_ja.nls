@@ -340,7 +340,7 @@ J9NLS_SHRC_SHRINIT_HELP_HEADER.system_action=
 J9NLS_SHRC_SHRINIT_HELP_HEADER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_HELP=\u4e00\u822c\u7684\u306a\u5171\u7528\u30d8\u30eb\u30d7\u3092\u5370\u5237\u3057\u307e\u3059
+J9NLS_SHRC_SHRINIT_HELPTEXT_HELP=\u4e00\u822c\u7684\u306a\u5171\u7528\u30d8\u30eb\u30d7\u3092\u8868\u793a\u3057\u307e\u3059
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_HELP.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_HELP.system_action=
@@ -398,7 +398,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_LISTALLCACHES.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_LISTALLCACHES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS=\u30ad\u30e3\u30c3\u30b7\u30e5\u7d71\u8a08\u306e\u8981\u7d04\u3092\u5370\u5237\u3057\u307e\u3059
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS=\u30ad\u30e3\u30c3\u30b7\u30e5\u7d71\u8a08\u306e\u8981\u7d04\u3092\u8868\u793a\u3057\u307e\u3059
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS.system_action=
@@ -2578,7 +2578,7 @@ J9NLS_SHRC_CC_FAILED_RUN_EXIT_CODE_ACQUIRE_MUTEX.system_action=The JVM will atte
 J9NLS_SHRC_CC_FAILED_RUN_EXIT_CODE_ACQUIRE_MUTEX.user_response=Contact your service representative if this problem persists.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SEMAPHORE_MISMATCH=\u4ee5\u524d\u306b\u3053\u306e\u30ad\u30e3\u30c3\u30b7\u30e5\u3067\u4f7f\u7528\u3055\u308c\u305f\u3082\u306e\u3068\u306f\u7570\u306a\u308b\u30bb\u30de\u30d5\u30a9\u30fc\u3092\u7372\u5f97\u3057\u307e\u3057\u305f
+J9NLS_SHRC_OSCACHE_ERROR_SEMAPHORE_MISMATCH=\u3053\u306e\u30ad\u30e3\u30c3\u30b7\u30e5\u3067\u4ee5\u524d\u306b\u4f7f\u7528\u3055\u308c\u305f\u3082\u306e\u3068\u306f\u7570\u306a\u308b\u30bb\u30de\u30d5\u30a9\u30fc\u3092\u7372\u5f97\u3057\u307e\u3057\u305f
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SEMAPHORE_MISMATCH.explanation=This is an attempt to control the shared cache area with two different semaphores
 J9NLS_SHRC_OSCACHE_ERROR_SEMAPHORE_MISMATCH.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -2961,7 +2961,7 @@ J9NLS_SHRC_CM_PRINTSTATS_CACHE_CREATED_WITH.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_CREATED_WITH.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG=\u30e6\u30fc\u30b6\u30fc\u540d\u304c\u7d44\u307f\u8fbc\u307e\u308c\u308b\u3068\u30ad\u30e3\u30c3\u30b7\u30e5\u540d\u304c\u9577\u304f\u306a\u308a\u3059\u304e\u307e\u3059\u3002\u3053\u306e\u30d0\u30c3\u30d5\u30a1\u30fc\u306b\u306f %d \u30d0\u30a4\u30c8\u306e\u7a7a\u304d\u304c\u3042\u308a\u3001\u30e6\u30fc\u30b6\u30fc\u540d\u306f %d \u30d0\u30a4\u30c8\u3067\u3059\u3002
+J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG=\u30e6\u30fc\u30b6\u30fc\u540d\u304c\u7d44\u307f\u8fbc\u307e\u308c\u308b\u3068\u30ad\u30e3\u30c3\u30b7\u30e5\u540d\u304c\u9577\u304f\u306a\u308a\u3059\u304e\u307e\u3059\u3002 \u3053\u306e\u30d0\u30c3\u30d5\u30a1\u30fc\u306b\u306f %d \u30d0\u30a4\u30c8\u306e\u7a7a\u304d\u304c\u3042\u308a\u3001\u30e6\u30fc\u30b6\u30fc\u540d\u306f %d \u30d0\u30a4\u30c8\u3067\u3059\u3002
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.sample_input_1=23
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.sample_input_2=45
@@ -4636,7 +4636,7 @@ J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL=\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.explanation=An error has occurred within Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
-J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.user_response=Clean the file system.
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.user_response=Clean the file system. If the file system doesn't support free space reporting, see the "-Xshareclasses:noPersistentDiskSpaceCheck" option.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CM_READ_CORRUPT_CACHE_ENTRY_HEADER_BAD_LEN=\u30ad\u30e3\u30c3\u30b7\u30e5\u30fb\u30a8\u30f3\u30c8\u30ea\u30fc\u30fb\u30d8\u30c3\u30c0\u30fc 0x%p \u306b\u95a2\u3059\u308b\u58ca\u308c\u305f\u30c7\u30fc\u30bf\u3092\u8aad\u307f\u53d6\u308a\u307e\u3057\u305f (%u \u30d0\u30a4\u30c8\u306e\u7121\u52b9\u306a\u9805\u76ee\u9577)
@@ -6645,7 +6645,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_BOOTCLASSESONLY=\u975e\u30d6\u30fc\u30c8\u30b9\u30c8\u30e9\u30c3\u30d7\u30fb\u30af\u30e9\u30b9\u30fb\u30ed\u30fc\u30c0\u30fc\u306b\u3088\u3063\u3066\u30ed\u30fc\u30c9\u3055\u308c\u305f\u30af\u30e9\u30b9\u3092\u30ad\u30e3\u30c3\u30b7\u30e5\u3067\u304d\u306a\u3044\u3088\u3046\u306b\u3057\u307e\u3059\u3002\u3053\u306e\u30aa\u30d7\u30b7\u30e7\u30f3\u3092\u8a2d\u5b9a\u3059\u308b\u3068\u3001\u30aa\u30d7\u30b7\u30e7\u30f3\u300cnonfatal\u300d\u3082\u30aa\u30f3\u306b\u306a\u308a\u307e\u3059\u3002
+J9NLS_SHRC_SHRINIT_HELPTEXT_BOOTCLASSESONLY=\u975e\u30d6\u30fc\u30c8\u30b9\u30c8\u30e9\u30c3\u30d7\u30fb\u30af\u30e9\u30b9\u30fb\u30ed\u30fc\u30c0\u30fc\u306b\u3088\u3063\u3066\u30ed\u30fc\u30c9\u3055\u308c\u305f\u30af\u30e9\u30b9\u3092\u30ad\u30e3\u30c3\u30b7\u30e5\u3067\u304d\u306a\u3044\u3088\u3046\u306b\u3057\u307e\u3059\u3002 \u3053\u306e\u30aa\u30d7\u30b7\u30e7\u30f3\u3092\u8a2d\u5b9a\u3059\u308b\u3068\u3001\u30aa\u30d7\u30b7\u30e7\u30f3\u300cnonfatal\u300d\u3082\u30aa\u30f3\u306b\u306a\u308a\u307e\u3059\u3002
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_BOOTCLASSESONLY.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_BOOTCLASSESONLY.system_action=
@@ -6716,28 +6716,28 @@ J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.system_action=The JVM terminates, unless you hav
 J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.user_response=Please try using a shorter shared cache directory.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME=\u30e6\u30fc\u30b6\u30fc\u306e\u30db\u30fc\u30e0\u3092\u30c7\u30d5\u30a9\u30eb\u30c8\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3068\u3057\u3066\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u30db\u30fc\u30e0\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u53d6\u5f97\u3067\u304d\u307e\u305b\u3093\u3002\u74b0\u5883\u5909\u6570\u300cHOME\u300d\u307e\u305f\u306f\u30b3\u30de\u30f3\u30c9\u884c\u30aa\u30d7\u30b7\u30e7\u30f3\u300ccacheDir=\u300d\u3092\u4f7f\u7528\u3057\u3066\u5225\u306e\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u8a2d\u5b9a\u3059\u308b\u304b\u3001\u3042\u308b\u3044\u306f\u30d1\u30b9\u30ef\u30fc\u30c9\u30fb\u30d5\u30a1\u30a4\u30eb\u9805\u76ee\u306b\u3042\u308b\u30db\u30fc\u30e0\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u4fee\u6b63\u3057\u3066\u304f\u3060\u3055\u3044\u3002
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME=\u30e6\u30fc\u30b6\u30fc\u306e\u30db\u30fc\u30e0\u3092\u30c7\u30d5\u30a9\u30eb\u30c8\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3068\u3057\u3066\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002 \u30db\u30fc\u30e0\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u53d6\u5f97\u3067\u304d\u307e\u305b\u3093\u3002 \u74b0\u5883\u5909\u6570\u300cHOME\u300d\u307e\u305f\u306f\u30b3\u30de\u30f3\u30c9\u884c\u30aa\u30d7\u30b7\u30e7\u30f3\u300ccacheDir=\u300d\u3092\u4f7f\u7528\u3057\u3066\u5225\u306e\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u8a2d\u5b9a\u3059\u308b\u304b\u3001\u3042\u308b\u3044\u306f\u30d1\u30b9\u30ef\u30fc\u30c9\u30fb\u30d5\u30a1\u30a4\u30eb\u9805\u76ee\u306b\u3042\u308b\u30db\u30fc\u30e0\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u4fee\u6b63\u3057\u3066\u304f\u3060\u3055\u3044\u3002
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.explanation=An error occurred getting user's home directory.
 J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW=\u30e6\u30fc\u30b6\u30fc\u306e\u30db\u30fc\u30e0\u3092\u30c7\u30d5\u30a9\u30eb\u30c8\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3068\u3057\u3066\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u30d1\u30b9\u304c\u9577\u3059\u304e\u307e\u3059\u3002\u30db\u30fc\u30e0\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u53d6\u5f97\u3067\u304d\u307e\u305b\u3093\u3002\u74b0\u5883\u5909\u6570\u300cHOME\u300d\u307e\u305f\u306f\u30b3\u30de\u30f3\u30c9\u884c\u30aa\u30d7\u30b7\u30e7\u30f3\u300ccacheDir=\u300d\u3092\u4f7f\u7528\u3057\u3066\u5225\u306e\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u8a2d\u5b9a\u3059\u308b\u304b\u3001\u3042\u308b\u3044\u306f\u30d1\u30b9\u30ef\u30fc\u30c9\u30fb\u30d5\u30a1\u30a4\u30eb\u9805\u76ee\u306b\u3042\u308b\u30db\u30fc\u30e0\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u4fee\u6b63\u3057\u3066\u304f\u3060\u3055\u3044\u3002
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW=\u30e6\u30fc\u30b6\u30fc\u306e\u30db\u30fc\u30e0\u3092\u30c7\u30d5\u30a9\u30eb\u30c8\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3068\u3057\u3066\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002 \u30d1\u30b9\u304c\u9577\u3059\u304e\u307e\u3059\u3002 \u30db\u30fc\u30e0\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u53d6\u5f97\u3067\u304d\u307e\u305b\u3093\u3002 \u74b0\u5883\u5909\u6570\u300cHOME\u300d\u307e\u305f\u306f\u30b3\u30de\u30f3\u30c9\u884c\u30aa\u30d7\u30b7\u30e7\u30f3\u300ccacheDir=\u300d\u3092\u4f7f\u7528\u3057\u3066\u5225\u306e\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u8a2d\u5b9a\u3059\u308b\u304b\u3001\u3042\u308b\u3044\u306f\u30d1\u30b9\u30ef\u30fc\u30c9\u30fb\u30d5\u30a1\u30a4\u30eb\u9805\u76ee\u306b\u3042\u308b\u30db\u30fc\u30e0\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u4fee\u6b63\u3057\u3066\u304f\u3060\u3055\u3044\u3002
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.explanation=The length of user's home directory is greater than the internal buffer space.
 J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_HOME_ON_NFS=\u30e6\u30fc\u30b6\u30fc\u306e\u30db\u30fc\u30e0\u3092\u30c7\u30d5\u30a9\u30eb\u30c8\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3068\u3057\u3066\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u3053\u308c\u306f\u30cd\u30c3\u30c8\u30ef\u30fc\u30af\u30fb\u30d5\u30a1\u30a4\u30eb\u30fb\u30b7\u30b9\u30c6\u30e0\u4e0a\u306b\u3042\u308a\u307e\u3059\u3002\u30db\u30fc\u30e0\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u53d6\u5f97\u3067\u304d\u307e\u305b\u3093\u3002\u74b0\u5883\u5909\u6570\u300cHOME\u300d\u307e\u305f\u306f\u30b3\u30de\u30f3\u30c9\u884c\u30aa\u30d7\u30b7\u30e7\u30f3\u300ccacheDir=\u300d\u3092\u4f7f\u7528\u3057\u3066\u5225\u306e\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u8a2d\u5b9a\u3059\u308b\u304b\u3001\u3042\u308b\u3044\u306f\u30d1\u30b9\u30ef\u30fc\u30c9\u30fb\u30d5\u30a1\u30a4\u30eb\u9805\u76ee\u306b\u3042\u308b\u30db\u30fc\u30e0\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u4fee\u6b63\u3057\u3066\u304f\u3060\u3055\u3044\u3002
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS=\u30e6\u30fc\u30b6\u30fc\u306e\u30db\u30fc\u30e0\u3092\u30c7\u30d5\u30a9\u30eb\u30c8\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3068\u3057\u3066\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002 \u3053\u308c\u306f\u30cd\u30c3\u30c8\u30ef\u30fc\u30af\u30fb\u30d5\u30a1\u30a4\u30eb\u30fb\u30b7\u30b9\u30c6\u30e0\u4e0a\u306b\u3042\u308a\u307e\u3059\u3002 \u30db\u30fc\u30e0\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u53d6\u5f97\u3067\u304d\u307e\u305b\u3093\u3002 \u74b0\u5883\u5909\u6570\u300cHOME\u300d\u307e\u305f\u306f\u30b3\u30de\u30f3\u30c9\u884c\u30aa\u30d7\u30b7\u30e7\u30f3\u300ccacheDir=\u300d\u3092\u4f7f\u7528\u3057\u3066\u5225\u306e\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u8a2d\u5b9a\u3059\u308b\u304b\u3001\u3042\u308b\u3044\u306f\u30d1\u30b9\u30ef\u30fc\u30c9\u30fb\u30d5\u30a1\u30a4\u30eb\u9805\u76ee\u306b\u3042\u308b\u30db\u30fc\u30e0\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3092\u4fee\u6b63\u3057\u3066\u304f\u3060\u3055\u3044\u3002
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_HOME_ON_NFS.explanation=The shared cache directory cannot be on a Network File System.
 J9NLS_SHRC_GET_DIR_HOME_ON_NFS.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_GET_DIR_HOME_ON_NFS.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME=\u30e6\u30fc\u30b6\u30fc\u306e\u30db\u30fc\u30e0\u3092\u30c7\u30d5\u30a9\u30eb\u30c8\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3068\u3057\u3066\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u30a8\u30e9\u30fc\u30fb\u30b3\u30fc\u30c9\u306f %1$d \u3067\u3059\u3002
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME=\u30e6\u30fc\u30b6\u30fc\u306e\u30db\u30fc\u30e0\u3092\u30c7\u30d5\u30a9\u30eb\u30c8\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u30fb\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\u30fc\u3068\u3057\u3066\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002 \u30a8\u30e9\u30fc\u30fb\u30b3\u30fc\u30c9\u306f %1$d \u3067\u3059\u3002
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.sample_input_1=-1
 J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.explanation=An error occurred checking the attributes of the directory.
@@ -6764,4 +6764,142 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=\u30af\u30e9\u30b9\u30fb\u30ed\u
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destroy all shared cache layers of the same name (use name parm or default)
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR=\u30ad\u30e3\u30c3\u30b7\u30e5\u8a18\u8ff0\u5b50\u306e\u5272\u308a\u632f\u308a\u306b\u5931\u6557\u3057\u307e\u3057\u305f
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.explanation=An error has occurred in shared class processing.
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u3092\u958b\u59cb\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002 \u4e0b\u5c64\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u3078\u306e\u5909\u66f4\u304c\u691c\u51fa\u3055\u308c\u307e\u3057\u305f\u3002\u4e88\u671f\u3055\u308c\u308b\u56fa\u6709\u30ad\u30e3\u30c3\u30b7\u30e5 ID \u306f %s \u3067\u3059
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.sample_input_1=foo
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layer shared caches built on top of it.
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.user_response=Use -Xshareclasses:name=<cacheName>,destroyAllLayers to destroy all layers and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED=\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u3092\u958b\u59cb\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002 \u4e0b\u5c64\u524d\u63d0\u6761\u4ef6\u30ad\u30e3\u30c3\u30b7\u30e5\u306e\u56fa\u6709 ID \u3092\u53d6\u5f97\u3057\u3066\u3044\u308b\u3068\u304d\u306b\u30a8\u30e9\u30fc\u304c\u767a\u751f\u3057\u307e\u3057\u305f\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.explanation=Cannot get the unique ID of a lower layer prerequisite cache.
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.user_response=Use -Xshareclasses:name=<cacheName>,destroyAllLayers to destroy all layers and retry. Please make sure the lower layer shared caches remain unmodified.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_FAILED_TO_START_UP=\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u3092\u958b\u59cb\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_FAILED_TO_START_UP.explanation=An error occurred while starting up the shared cache.
+J9NLS_SHRC_CM_FAILED_TO_START_UP.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_FAILED_TO_START_UP.user_response=Previous error messages may indicate the reason.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=\u4e0a\u5c64\u756a\u53f7\u3092\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002\u6307\u5b9a\u3059\u308b\u5c64\u304c\u5b58\u5728\u3057\u306a\u3044\u5834\u5408\u306f\u3001\u65b0\u3057\u3044\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u5c64\u3092\u4f5c\u6210\u3057\u3066\u304f\u3060\u3055\u3044\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER=\u65b0\u3057\u3044\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u5c64\u3092\u4f5c\u6210\u3057\u3066\u304f\u3060\u3055\u3044\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=\u5c64\u756a\u53f7 %d \u306f\u3001\"%s\" \u306b\u306f\u7121\u52b9\u3067\u3059\u3002\u5c64\u756a\u53f7\u306f %d \u3088\u308a\u5c0f\u3055\u304f\u306a\u3051\u308c\u3070\u306a\u308a\u307e\u305b\u3093\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_3=100
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.explanation=Incorrect layer number has been used in the command-line option
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.system_action=The JVM terminates.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.user_response=Correct or remove the invalid command-line option and rerun.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER=\u5c64\u756a\u53f7 %d \u306f\u7121\u52b9\u3067\u3059\u3002\u65e2\u5b58\u306e\u4e0a\u5c64\u306f %d \u3067\u3059\u3002\u65b0\u3057\u3044\u5c64\u756a\u53f7\u306f %d \u3067\u306a\u3051\u308c\u3070\u306a\u308a\u307e\u305b\u3093\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_1=3
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_2=1
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_3=2
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.explanation=User has passed in an incorrect layer number.
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.user_response=Correct the layer number in the command line and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK=\u6c38\u7d9a\u30ad\u30e3\u30c3\u30b7\u30e5\u4f5c\u6210\u306e\u524d\u306b\u30d5\u30ea\u30fc\u30fb\u30c7\u30a3\u30b9\u30af\u30fb\u30b9\u30da\u30fc\u30b9\u3092\u78ba\u8a8d\u3057\u307e\u305b\u3093\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE=\n\
+\u30ad\u30e3\u30c3\u30b7\u30e5 \"%s\" \u306e\u4e0a\u5c64\u306e\u73fe\u5728\u306e\u7d71\u8a08: \n
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.sample_input_1=myCache
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER=\u30ad\u30e3\u30c3\u30b7\u30e5\u5c64                         %*.c= %d
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_1=0
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_2=
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_3=1
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE=\n\
+\u30ad\u30e3\u30c3\u30b7\u30e5 \"%s\" \u306e\u3059\u3079\u3066\u306e\u5c64\u306e\u73fe\u5728\u306e\u7d71\u8a08: \n
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.sample_input_1=myCache
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS=\u4e0a\u5c64\u306e\u307f\u306e\u30ad\u30e3\u30c3\u30b7\u30e5\u7d71\u8a08\u306e\u8981\u7d04\u3092\u8868\u793a\u3057\u307e\u3059\u3002\u4f7f\u7528\u53ef\u80fd\u306a\u30aa\u30d7\u30b7\u30e7\u30f3\u3092\u78ba\u8a8d\u3059\u308b\u306b\u306f\u3001printTopLayerStats=help \u3092\u4f7f\u7528\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1=-Xshareclasses \u306b\u4f7f\u7528\u53ef\u80fd\u306a\u30aa\u30d7\u30b7\u30e7\u30f3\u306f %1$s<options> \u3067\u3059\u3002\u8907\u6570\u306e\u30aa\u30d7\u30b7\u30e7\u30f3\u3092\u6307\u5b9a\u3059\u308b\u306b\u306f\u3001\u300c+\u300d\u3092\u4f7f\u7528\u3057\u307e\u3059\u3002(%2$saot+url) \n
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_1=printStats=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_2=printStats=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1=\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u3067\u30af\u30e9\u30b9\u3067\u691c\u7d22\u3059\u308b\u3068\u304d\u306b\u3001\u30bf\u30a4\u30e0\u30fb\u30b9\u30bf\u30f3\u30d7\u691c\u67fb\u3092\u30aa\u30d5\u306b\u3057\u307e\u3059\u3002\u53e4\u304f\u306a\u3063\u305f\u30af\u30e9\u30b9\u304c\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u304b\u3089\u30ed\u30fc\u30c9\u3055\u308c\u308b\u53ef\u80fd\u6027\u304c\u3042\u308a\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED=\u30ad\u30e3\u30c3\u30b7\u30e5\u306e\u4e0a\u5c64 (\u5c64 %d) \u306f\u7834\u68c4\u3055\u308c\u307e\u3057\u305f\u3002\u5171\u7528\u30ad\u30e3\u30c3\u30b7\u30e5\u306e\u5c64 %d \u3078\u306e\u5909\u66f4\u304c\u691c\u51fa\u3055\u308c\u307e\u3057\u305f\u3002\u4e88\u671f\u3055\u308c\u308b\u30ad\u30e3\u30c3\u30b7\u30e5\u56fa\u6709 ID \u306f %s \u3067\u3001\u73fe\u5728\u306e\u30ad\u30e3\u30c3\u30b7\u30e5\u56fa\u6709 ID \u306f %s \u3067\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_1=1
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_2=0
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_3=Cache_1
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_4=Cache_2
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layers shared caches built on top of it.
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.user_response=Use -Xshareclasses:name=<cacheName>,destroy to destroy all invalid layers (all the higher layers which are built on top of the modified layer) and retry.
 # END NON-TRANSLATABLE

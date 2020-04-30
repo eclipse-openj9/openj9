@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1452,3 +1452,71 @@ J9NLS_CFR_ERR_PREVIEW_VERSION.system_action=The JVM will throw a verification or
 J9NLS_CFR_ERR_PREVIEW_VERSION.user_response=Run with the correct Java runtime version and use --enable-preview.
 # END NON-TRANSLATABLE
 
+J9NLS_CFR_LVT_INDEX_OUTOFRANGE=LocalVariableTable \u4e2d\u7684\u7d22\u5f15\u8d85\u51fa\u7bc4\u570d
+# START NON-TRANSLATABLE
+J9NLS_CFR_LVT_INDEX_OUTOFRANGE.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_LVT_INDEX_OUTOFRANGE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_LVT_INDEX_OUTOFRANGE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_LVTT_INDEX_OUTOFRANGE=LocalVariableTypeTable \u4e2d\u7684\u7d22\u5f15\u8d85\u51fa\u7bc4\u570d
+# START NON-TRANSLATABLE
+J9NLS_CFR_LVTT_INDEX_OUTOFRANGE.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_LVTT_INDEX_OUTOFRANGE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_LVTT_INDEX_OUTOFRANGE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_LVTT_DUPLICATE=\u4e0d\u5bb9\u8a31 LocalVariableTypeTable \u4e2d\u7684\u91cd\u8907\u9805\u76ee
+# START NON-TRANSLATABLE
+J9NLS_CFR_LVTT_DUPLICATE.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_LVTT_DUPLICATE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_LVTT_DUPLICATE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Record is not translatable
+J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES=\u591a\u500b\u8a18\u9304\u5c6c\u6027
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Record is not translatable
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=\u8a18\u9304\u985e\u5225\u4e0d\u80fd\u662f abstract
+# START NON-TRANSLATABLE
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Record is not translatable
+J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8=\u8a18\u9304\u540d\u7a31\u5fc5\u9808\u662f\u5b57\u4e32
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# RecordComponent is not translatable
+J9NLS_CFR_ERR_RECORD_COMPONENT_NAME_NOT_UTF8=RecordComponent \u540d\u7a31\u5fc5\u9808\u662f\u5b57\u4e32
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_RECORD_COMPONENT_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_RECORD_COMPONENT_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_RECORD_COMPONENT_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# RecordComponent is not translatable
+J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8=RecordComponent \u63cf\u8ff0\u5b50\u5fc5\u9808\u662f\u5b57\u4e32
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Record is not translatable
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=\u8a18\u9304\u672a\u660e\u78ba\u7d50\u675f
+# START NON-TRANSLATABLE
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

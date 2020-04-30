@@ -4636,7 +4636,7 @@ J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL=Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbe
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.explanation=An error has occurred within Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
-J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.user_response=Clean the file system.
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.user_response=Clean the file system. If the file system doesn't support free space reporting, see the "-Xshareclasses:noPersistentDiskSpaceCheck" option.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CM_READ_CORRUPT_CACHE_ENTRY_HEADER_BAD_LEN=\u00d6nbellek giri\u015fi \u00fcstbilgisi 0x%p i\u00e7in bozuk veri okundu (%u byte \u00f6\u011fe uzunlu\u011fu ge\u00e7ersiz)
@@ -6764,4 +6764,142 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=Her s\u0131n\u0131f y\u00fck\u00
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destroy all shared cache layers of the same name (use name parm or default)
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR=Bir \u00f6nbellek tan\u0131mlay\u0131c\u0131s\u0131 ayr\u0131lamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.explanation=An error has occurred in shared class processing.
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=Payla\u015f\u0131lan \u00f6nbellek ba\u015flat\u0131lamad\u0131. Alt katman payla\u015f\u0131lan \u00f6nbellekte de\u011fi\u015fiklik saptand\u0131. Beklenen Benzersiz \u00d6nbellek Tan\u0131t\u0131c\u0131s\u0131: %s
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.sample_input_1=foo
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layer shared caches built on top of it.
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.user_response=Use -Xshareclasses:name=<cacheName>,destroyAllLayers to destroy all layers and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED=Payla\u015f\u0131lan \u00f6nbellek ba\u015flat\u0131lamad\u0131. Alt katman \u00f6nko\u015ful \u00f6nbelle\u011finin benzersiz tan\u0131t\u0131c\u0131s\u0131 al\u0131n\u0131rken hata olu\u015ftu.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.explanation=Cannot get the unique ID of a lower layer prerequisite cache.
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.user_response=Use -Xshareclasses:name=<cacheName>,destroyAllLayers to destroy all layers and retry. Please make sure the lower layer shared caches remain unmodified.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_FAILED_TO_START_UP=Payla\u015f\u0131lan \u00f6nbellek ba\u015flat\u0131lamad\u0131.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_FAILED_TO_START_UP.explanation=An error occurred while starting up the shared cache.
+J9NLS_SHRC_CM_FAILED_TO_START_UP.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_FAILED_TO_START_UP.user_response=Previous error messages may indicate the reason.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=\u00dcst katman numaras\u0131 belirtin. Belirtilen katman yoksa yeni bir payla\u015f\u0131lan \u00f6nbellek katman\u0131 yarat\u0131n.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER=Yeni bir payla\u015f\u0131lan \u00f6nbellek katman\u0131 yarat\u0131n.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=\"%s\" i\u00e7in ge\u00e7ersiz katman numaras\u0131 %d bulundu. Katman numaras\u0131 %d de\u011ferinden k\u00fc\u00e7\u00fck olmal\u0131d\u0131r.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_3=100
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.explanation=Incorrect layer number has been used in the command-line option
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.system_action=The JVM terminates.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.user_response=Correct or remove the invalid command-line option and rerun.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER=Ge\u00e7ersiz katman numaras\u0131 %d. %d var olan \u00fcst katmand\u0131r. Yeni katman numaras\u0131 %d olmal\u0131d\u0131r.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_1=3
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_2=1
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_3=2
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.explanation=User has passed in an incorrect layer number.
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.user_response=Correct the layer number in the command line and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK=Kal\u0131c\u0131 bir \u00f6nbellek yaratmadan \u00f6nce bo\u015f disk alan\u0131n\u0131 kontrol etmeyin.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE=\n\
+\"%s\" \u00f6nbelle\u011finin \u00fcst katman\u0131 i\u00e7in y\u00fcr\u00fcrl\u00fckteki istatistik: \n
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.sample_input_1=myCache
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER=\u00f6nbellek katman\u0131                         %*.c= %d
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_1=0
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_2=
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_3=1
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE=\n\
+\"%s\" \u00f6nbelle\u011finin t\u00fcm katmanlar\u0131 i\u00e7in y\u00fcr\u00fcrl\u00fckteki istatistik: \n
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.sample_input_1=myCache
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS=Yaln\u0131zca \u00fcst katmandan \u00f6nbellek istatistiklerinin \u00f6zetini yazd\u0131r\u0131n. Mevcut se\u00e7enekleri g\u00f6rmek i\u00e7in printTopLayerStats=help kullan\u0131n.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1=-Xshareclasses:%1$s<options> i\u00e7in kullan\u0131labilir se\u00e7enekler. Birden \u00e7ok se\u00e7enek belirtmek i\u00e7in '+' i\u015faretini kullan\u0131n. \u00d6rne\u011fin, %2$saot+url \n
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_1=printStats=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_2=printStats=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1=Payla\u015f\u0131lan \u00f6nbellekte s\u0131n\u0131flar\u0131 bulurken zaman damgas\u0131 denetimini kapat\u0131r. Eski s\u0131n\u0131flar payla\u015f\u0131lan \u00f6nbellekten y\u00fcklenebilir.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED=\u00d6nbelle\u011fin \u00fcst katman\u0131 (%d katman\u0131) zarar g\u00f6rm\u00fc\u015f. Payla\u015f\u0131lan \u00f6nbelle\u011fin %d katman\u0131nda de\u011fi\u015fiklik saptand\u0131. Beklenen \u00d6nbellek Benzersiz Tan\u0131t\u0131c\u0131s\u0131 %s iken y\u00fcr\u00fcrl\u00fckteki \u00d6nbellek Benzersiz Tan\u0131t\u0131c\u0131s\u0131 %s.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_1=1
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_2=0
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_3=Cache_1
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_4=Cache_2
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layers shared caches built on top of it.
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.user_response=Use -Xshareclasses:name=<cacheName>,destroy to destroy all invalid layers (all the higher layers which are built on top of the modified layer) and retry.
 # END NON-TRANSLATABLE

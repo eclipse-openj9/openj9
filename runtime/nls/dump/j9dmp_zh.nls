@@ -514,3 +514,19 @@ J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.system_action=The JVM exits.
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.user_response=Combine dump types, event types, and filters using '+' into a single option
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.link=
 # END NON-TRANSLATABLE
+
+J9NLS_DMP_EXIT_SHUTDOWN=VM \u6b63\u5728\u5173\u95ed\u3002\u539f\u56e0\uff1a%2$.*1$s
+# START NON-TRANSLATABLE
+J9NLS_DMP_EXIT_SHUTDOWN.explanation=User requested to exit
+J9NLS_DMP_EXIT_SHUTDOWN.system_action=The JVM exits.
+J9NLS_DMP_EXIT_SHUTDOWN.user_response=This exit was requested by the user.
+J9NLS_DMP_EXIT_SHUTDOWN.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN=VM \u6b63\u5728\u5173\u95ed\u3002\u539f\u56e0\uff1a\u672a\u77e5
+# START NON-TRANSLATABLE
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.explanation=User requested to exit
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.system_action=The JVM exits.
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.user_response=This exit was requested by the user.
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.link=
+# END NON-TRANSLATABLE
