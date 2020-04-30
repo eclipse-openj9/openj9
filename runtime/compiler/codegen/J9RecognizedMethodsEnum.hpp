@@ -171,6 +171,7 @@
    java_lang_String_lengthInternal,
    java_lang_String_indexOf_String,
    java_lang_String_indexOf_String_int,
+   java_lang_String_indexOf_char,
    java_lang_String_indexOf_native,
    java_lang_String_indexOf_fast,
    java_lang_String_isCompressed,
