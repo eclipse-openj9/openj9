@@ -98,7 +98,8 @@ bool JITClientCHTableCommit(
    FlatClassLoadCheck &compClassesThatShouldNotBeLoaded = std::get<5>(data);
    FlatClassExtendCheck &compClassesThatShouldNotBeNewlyExtended = std::get<6>(data);
    std::vector<TR_OpaqueClassBlock*> &classesForOSRRedefinition = std::get<7>(data);
-   uint8_t *serverStartPC = std::get<8>(data);
+   std::vector<TR_OpaqueClassBlock*> &classesForStaticFinalFieldModification = std::get<8>(data);
+   uint8_t *serverStartPC = std::get<9>(data);
    uint8_t *startPC = (uint8_t*) metaData->startPC;
    
    if (vguards.empty() && sideEffectPatchSites.empty() && preXMethods.empty() && classes.empty() && classesThatShouldNotBeNewlyExtended.empty())
@@ -197,6 +198,23 @@ bool JITClientCHTableCommit(
       if (invalidAssumption) return false;
       } //  if (classesThatShouldNotBeNewlyExtended)
 
+   // Check if the assumptions for static final field are still valid
+   // Returning false will cause CHTable opts to be disabled in the next compilation of this method,
+   // thus we abort the compilation here to avoid causing performance issues
+   comp->getClassesForStaticFinalFieldModification()->clear();
+   for (auto &clazz : classesForStaticFinalFieldModification)
+      {
+      if (TR::Compiler->cls.classHasIllegalStaticFinalFieldModification(clazz))
+         {
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseRuntimeAssumptions, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "JITClientCHTableCommit failure while commiting static final field assumption for class %p for %s", clazz, comp->signature());
+            }
+         comp->failCompilation<TR::CompilationInterrupted>("JITClientCHTableCommit compilation interrupted: Static final field of a class has been modified");
+         }
+      comp->addClassForStaticFinalFieldModification(clazz);
+      }
+
    comp->getClassesForOSRRedefinition()->clear();
    for (auto &clazz : classesForOSRRedefinition)
       comp->addClassForOSRRedefinition(clazz);
@@ -275,15 +293,20 @@ JITClientCommitOSRVirtualGuards(TR::Compilation *comp, std::vector<VirtualGuardF
          }
       }
 
-   TR_Array<TR_OpaqueClassBlock*> *clazzes = comp->getClassesForOSRRedefinition();
-   if (osrSites == 0 || clazzes->size() == 0)
+   TR_Array<TR_OpaqueClassBlock*> *clazzesForOSRRedefinition = comp->getClassesForOSRRedefinition();
+   TR_Array<TR_OpaqueClassBlock*> *clazzesForStaticFinalFieldModification = comp->getClassesForStaticFinalFieldModification();
+   if (osrSites == 0 || (clazzesForOSRRedefinition->size() == 0 && clazzesForStaticFinalFieldModification->size() == 0))
       return;
    else if (osrSites == 1)
       {
       // Only one patch point, create an assumption for each class
-      for (int i = 0; i < clazzes->size(); ++i)
+      for (int i = 0; i < clazzesForOSRRedefinition->size(); ++i)
          TR_PatchNOPedGuardSiteOnClassRedefinition
-            ::make(comp->fe(), comp->trPersistentMemory(), (*clazzes)[i], onlySite->getLocation(), onlySite->getDestination(), comp->getMetadataAssumptionList());
+            ::make(comp->fe(), comp->trPersistentMemory(), (*clazzesForOSRRedefinition)[i], onlySite->getLocation(), onlySite->getDestination(), comp->getMetadataAssumptionList());
+
+      for (int i = 0; i < clazzesForStaticFinalFieldModification->size(); ++i)
+         TR_PatchNOPedGuardSiteOnStaticFinalFieldModification
+            ::make(comp->fe(), comp->trPersistentMemory(), (*clazzesForStaticFinalFieldModification)[i], onlySite->getLocation(), onlySite->getDestination(), comp->getMetadataAssumptionList());
       }
    else if (osrSites > 1)
       {
@@ -300,12 +323,17 @@ JITClientCommitOSRVirtualGuards(TR::Compilation *comp, std::vector<VirtualGuardF
             }
          }
  
-      for (int i = 0; i < clazzes->size(); ++i)
+      for (int i = 0; i < clazzesForOSRRedefinition->size(); ++i)
          TR_PatchMultipleNOPedGuardSitesOnClassRedefinition
-            ::make(comp->fe(), comp->trPersistentMemory(), (*clazzes)[i], points, comp->getMetadataAssumptionList());
+            ::make(comp->fe(), comp->trPersistentMemory(), (*clazzesForOSRRedefinition)[i], points, comp->getMetadataAssumptionList());
+
+      for (int i = 0; i < clazzesForStaticFinalFieldModification->size(); ++i)
+         TR_PatchMultipleNOPedGuardSitesOnStaticFinalFieldModification
+            ::make(comp->fe(), comp->trPersistentMemory(), (*clazzesForStaticFinalFieldModification)[i], points, comp->getMetadataAssumptionList());
       }
 
-   comp->setHasClassRedefinitionAssumptions();
+   if (clazzesForOSRRedefinition->size() > 0)
+      comp->setHasClassRedefinitionAssumptions();
    return;
    }
 
@@ -321,17 +349,23 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
       static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
       if (dontGroupOSRAssumptions)
          {
-         TR_Array<TR_OpaqueClassBlock*> *clazzes = comp->getClassesForOSRRedefinition();
-         if (clazzes)
+         TR_Array<TR_OpaqueClassBlock*> *clazzesForRedefinition = comp->getClassesForOSRRedefinition();
+         TR_Array<TR_OpaqueClassBlock*> *clazzesForStaticFinalFieldModification = comp->getClassesForStaticFinalFieldModification();
+         if (clazzesForRedefinition || clazzesForStaticFinalFieldModification)
             {
             for (TR_VirtualGuardSite &site : sites)
                {
-               for (uint32_t i = 0; i < clazzes->size(); ++i)
+               for (uint32_t i = 0; i < clazzesForRedefinition->size(); ++i)
                   TR_PatchNOPedGuardSiteOnClassRedefinition
-                     ::make(comp->fe(), comp->trPersistentMemory(), (*clazzes)[i], site.getLocation(), site.getDestination(), comp->getMetadataAssumptionList());
+                     ::make(comp->fe(), comp->trPersistentMemory(), (*clazzesForRedefinition)[i], site.getLocation(), site.getDestination(), comp->getMetadataAssumptionList());
 
-               if (clazzes->size() > 0)
+               if (clazzesForRedefinition->size() > 0)
                   comp->setHasClassRedefinitionAssumptions();
+
+               // Add assumption for static final field folding
+               for (uint32_t i = 0; i < clazzesForStaticFinalFieldModification->size(); ++i)
+                  TR_PatchNOPedGuardSiteOnStaticFinalFieldModification
+                     ::make(comp->fe(), comp->trPersistentMemory(), (*clazzesForStaticFinalFieldModification)[i], site.getLocation(), site.getDestination(), comp->getMetadataAssumptionList());
                }
             }
          }

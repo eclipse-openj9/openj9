@@ -76,6 +76,7 @@ using CHTableCommitData = std::tuple<
       FlatClassLoadCheck, // comp->getClassesThatShouldNotBeLoaded
       FlatClassExtendCheck, // comp->getClassesThatShouldNotBeNewlyExtended
       std::vector<TR_OpaqueClassBlock*>, // classesForOSRRedefinition
+      std::vector<TR_OpaqueClassBlock*>, // classesForStaticFinalFieldModification
       uint8_t*>; // startPC
 
 /** 
