@@ -118,6 +118,15 @@ class AOTNoSupportForAOTFailure : public virtual TR::CompilationException
    virtual const char* what() const throw() { return "This code doesn't support AOT"; }
    };
 
+/**
+ * AOT Relocation Record Generation Failure exception type.
+ *
+ * Thrown when an AOT compilation fails in relocation record generation phase.
+ */
+class AOTRelocationRecordGenerationFailure: public virtual TR::CompilationException
+   {
+   virtual const char* what() const throw() { return "AOT Relocation Record Generation Failed"; }
+   };
 }
 
 #endif // AOT_FAILURE_HPP

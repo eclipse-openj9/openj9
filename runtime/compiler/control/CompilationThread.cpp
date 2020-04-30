@@ -2143,6 +2143,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationSymbolValidationManagerFailure:
             case compilationAOTNoSupportForAOTFailure:
             case compilationAOTValidateTMFailure:
+            case compilationAOTRelocationRecordGenerationFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotUseAotCodeFromSharedCache = true;
                tryCompilingAgain = true;
@@ -11095,6 +11096,10 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const J9::AOTNoSupportForAOTFailure &e)
       {
       _methodBeingCompiled->_compErrCode = compilationAOTNoSupportForAOTFailure;
+      }
+   catch (const J9::AOTRelocationRecordGenerationFailure &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationAOTRelocationRecordGenerationFailure;
       }
    catch (const J9::ClassChainPersistenceFailure &e)
       {
