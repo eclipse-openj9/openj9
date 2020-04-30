@@ -6349,6 +6349,41 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	Xj9BreakPoint("jvminit");
 #endif
 
+	{
+		IDATA enabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXPRINTFLAGSFINALENABLE, NULL);
+		IDATA disabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXPRINTFLAGSFINALDISABLE, NULL);
+		if (enabled > disabled) {
+			size_t maxHeapSize = (size_t) (vm->memoryManagerFunctions->j9gc_get_maximum_heap_size(vm));
+			uint64_t maxDirectMemorySize = (uint64_t) (vm->directByteBufferMemoryMax);
+			const char *howset = NULL;
+
+			/*
+			 * Emulate Hotspot -XX:+PrintFlagsFinal output for two specific flags:
+			 *
+			 * [Global flags]
+			 *    size_t MaxHeapSize                              = 4294967296                                {product} {ergonomic}
+			 *  uint64_t MaxDirectMemorySize                      = 3758096384                                {product} {default}
+			 *
+			 * OpenJ9 stores both of these values as UDATA, so they will both be printed
+			 * as "size_t" type.
+			 */
+
+			j9tty_printf(PORTLIB, "[Global flags]\n");
+
+			howset = "ergonomic";
+			if ((findArgInVMArgs( PORTLIB, vm->vmArgsArray, STARTSWITH_MATCH, VMOPT_XMX, NULL, 0) >= 0)) {
+				howset = "command line";
+			}
+			j9tty_printf(PORTLIB, "   size_t MaxHeapSize                              = %-41zu {product} {%s}\n", maxHeapSize, howset);
+
+			howset = "ergonomic";
+			if ((findArgInVMArgs( PORTLIB, vm->vmArgsArray, STARTSWITH_MATCH, VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS, NULL, 0) >= 0)) {
+				howset = "command line";
+			}
+			j9tty_printf(PORTLIB, " uint64_t MaxDirectMemorySize                      = %-41llu {product} {%s}\n", maxDirectMemorySize, howset);
+		}
+	}
+
 	return JNI_OK;
 
 error:
