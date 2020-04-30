@@ -62,30 +62,17 @@ If you want to build a binary by using a Docker container, follow these steps to
 
 1. The first thing you need to do is install Docker. You can download the free Community edition from [here](https://docs.docker.com/engine/installation/), which also contains instructions for installing Docker on your system.  You should also read the [Getting started](https://docs.docker.com/get-started/) guide to familiarise yourself with the basic Docker concepts and terminology.
 
-2. Obtain the [Linux on 64-bit x86 systems Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk14/x86_64/ubuntu16/Dockerfile) to build and run a container that has all the correct software pre-requisites.
+2. Obtain the [docker build script](https://github.com/eclipse/openj9/blob/master/buildenv/mkdocker.sh) to build and run a container that has all the correct software pre-requisites.
 
-    :pencil: Dockerfiles are also available for the following Linux architectures: [Linux on 64-bit Power systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk14/ppc64le/ubuntu16/Dockerfile) and [Linux on 64-bit z Systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk14/s390x/ubuntu16/Dockerfile)
+Download the docker build script to your local system or copy and paste the following command:
 
-    Either download one of these Dockerfiles to your local system or copy and paste one of the following commands:
-
-  - For Linux on 64-bit x86 systems, run:
 ```
-wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk14/x86_64/ubuntu16/Dockerfile
-```
-
-  - For Linux on 64-bit Power systems, run:
-```
-wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk14/ppc64le/ubuntu16/Dockerfile
-```
-
-  - For Linux on 64-bit z Systems, run:
-```
-wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk14/s390x/ubuntu16/Dockerfile
+wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/mkdocker.sh
 ```
 
 3. Next, run the following command to build a Docker image, called **openj9**:
 ```
-docker build -t openj9 -f Dockerfile .
+bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=16.04 --build
 ```
 
 4. Start a Docker container from the **openj9** image with the following command, where `-v` maps any directory, `<host_directory>`,
@@ -100,12 +87,11 @@ Now that you have the Docker image running, you are ready to move to the next st
 
 #### Setting up your build environment without Docker
 
-If you don't want to user Docker, you can still build an **OpenJDK V14** with OpenJ9 directly on your Ubuntu system or in a Ubuntu virtual machine. Use the
-[Linux on x86 Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk14/x86_64/ubuntu16/Dockerfile) like a recipe card to determine the software dependencies
-that must be installed on the system, plus a few configuration steps.
+If you don't want to user Docker, you can still build directly on your Ubuntu system or in a Ubuntu virtual machine. Use the output of the following command like a recipe card to determine the software dependencies that must be installed on the system, plus a few configuration steps.
 
-:pencil:
-Not on x86? We also have Dockerfiles for the following Linux architectures: [Linux on Power systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk14/ppc64le/ubuntu16/Dockerfile) and [Linux on z Systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk14/s390x/ubuntu16/Dockerfile).
+```
+bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=16.04 --print
+```
 
 1. Install the list of dependencies that can be obtained with the `apt-get` command from the following section of the Dockerfile:
 ```
@@ -183,7 +169,8 @@ Now you're ready to build **OpenJDK V14** with OpenJ9:
 ```
 make all
 ```
-:warning: If you just type `make`, rather than `make all` your build will fail, because the default `make` target is `exploded-image`. If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script. For more information, read this [issue](https://github.com/ibmruntimes/openj9-openjdk-jdk9/issues/34).
+:warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
+If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
 
 A binary for the full developer kit (jdk) is built and stored in the following directory:
 
@@ -290,7 +277,7 @@ bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
                --with-cups-include=<cups_include_path> \
                --disable-warnings-as-errors
 ```
-where `<my_home_dir>` is the location where you stored **freemarker.jar** and `<cups_include_path>` is the absolute path to CUPS. For example `/opt/freeware/include`.
+where `<my_home_dir>` is the location where you stored **freemarker.jar** and `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/freeware/include`.
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
@@ -310,7 +297,8 @@ Now you're ready to build OpenJDK with OpenJ9:
 ```
 make all
 ```
-:warning: If you just type `make`, rather than `make all` your build will fail, because the default `make` target is `exploded-image`. If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script. For more information, read this [issue](https://github.com/ibmruntimes/openj9-openjdk-jdk9/issues/34).
+:warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
+If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
 
 A binary for the full developer kit (jdk) is built and stored in the following directory:
 
@@ -454,6 +442,8 @@ Now you're ready to build OpenJDK with OpenJ9:
 ```
 make all
 ```
+:warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
+If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
 
 A binary for the full developer kit (jdk) is built and stored in the following directory:
 
@@ -589,6 +579,8 @@ Now you're ready to build OpenJDK with OpenJ9:
 ```
 make all
 ```
+:warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
+If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
 
 Two builds of OpenJDK with Eclipse OpenJ9 are built and stored in the following directories:
 

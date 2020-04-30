@@ -88,7 +88,7 @@ Now that you have the Docker image running, you are ready to move to the next st
 
 #### Setting up your build environment without Docker
 
-If you don't want to user Docker, you can still build an OpenJDK V8 with OpenJ9 directly on your Ubuntu system or in a Ubuntu virtual machine. Use the output of this command like a recipe card to determine the software dependencies that must be installed on the system, plus a few configuration steps.
+If you don't want to user Docker, you can still build directly on your Ubuntu system or in a Ubuntu virtual machine. Use the output of the following command like a recipe card to determine the software dependencies that must be installed on the system, plus a few configuration steps.
 
 ```
 bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=16.04 --print
@@ -472,6 +472,8 @@ Now you're ready to build OpenJDK with OpenJ9:
 ```
 make all
 ```
+:warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
+If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
 
 Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre)
 1) Win 64-bit
@@ -642,6 +644,8 @@ Now you're ready to build OpenJDK with OpenJ9.
 ```
 make all
 ```
+:warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
+If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
 
 :pencil: Because `make all` does not provide sufficient details for debugging, a more verbose build can be produced by running the command `make LOG=trace all 2>&1 | tee make_all.log`.
 
