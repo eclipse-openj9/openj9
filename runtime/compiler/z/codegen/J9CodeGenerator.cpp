@@ -211,8 +211,6 @@ J9::Z::CodeGenerator::CodeGenerator() :
    TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z14) == TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z14), "OMR_PROCESSOR_S390_Z14 test failed!\n");
    TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z15) == TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z15), "OMR_PROCESSOR_S390_Z15 test failed!\n");
    TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT) == TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zNext), "OMR_PROCESSOR_S390_ZNEXT test failed!\n");
-
-   // TR_ASSERT_FATAL(TR::Compiler->cpu.getProcessorDescription().features[0] == TR::Compiler->cpu.getProcessorFeatureFlags().featureFlags[0], "getProcessorFeatureFlags test failed!\n");
    }
 
 
