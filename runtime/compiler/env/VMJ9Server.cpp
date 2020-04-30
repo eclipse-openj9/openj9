@@ -881,27 +881,36 @@ TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_INITIALIZED, (void *)&isClassInitialized, JITServerHelpers::CLASSINFO_ROMCLASS_MODIFIERS, (void *)&modifiers);
 
-  if (!isClassInitialized)
-     {
-     JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-     stream->write(JITServer::MessageType::VM_isClassInitialized, clazz);
-     isClassInitialized = std::get<0>(stream->read<bool>());
-     if (isClassInitialized)
-        {
-        OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
-        auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
-        if (it != _compInfoPT->getClientData()->getROMClassMap().end())
-           {
-           it->second._classInitialized = isClassInitialized;
-           }
-        }
-
-        classFlags = TR_J9ServerVM::getClassFlagsValue(clazz);
-     }
+   if (!isClassInitialized)
+      {
+      // Class could have been initialized since we last cached it. Check again.
+      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JITServer::MessageType::VM_isClassInitialized, clazz);
+      isClassInitialized = std::get<0>(stream->read<bool>());
+      if (isClassInitialized)
+         {
+         OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+         auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
+         if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+            {
+            it->second._classInitialized = isClassInitialized;
+            }
+         }
+      }
 
    if (isClassInitialized)
-      return ((modifiers & (J9AccAbstract | J9AccInterface | J9AccValueType)
-              || (classFlags & J9ClassContainsUnflattenedFlattenables)) ? false : true);
+      {
+      if (modifiers & (J9AccAbstract | J9AccInterface | J9AccValueType))
+         {
+         return false;
+         }
+      else
+         {
+         uintptr_t classFlags = 0;
+         JITServerHelpers::getAndCacheRAMClassInfo((J9Class*)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_FLAGS, (void*)&classFlags);
+         return (classFlags & J9ClassContainsUnflattenedFlattenables) ? false : true;
+         }
+      }
 
    return false;
    }
