@@ -201,6 +201,8 @@ J9::Z::CodeGenerator::CodeGenerator() :
    TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2) == TR::Compiler->target.cpu.getSupportsVectorFacilityEnhancement2(), "getSupportsVectorFacilityEnhancement2 test failed!\n");
    TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY) == TR::Compiler->target.cpu.getSupportsVectorPackedDecimalEnhancementFacility(), "getSupportsVectorPackedDecimalEnhancementFacility test failed!\n");
    TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE) == TR::Compiler->target.cpu.getSupportsGuardedStorageFacility(), "getSupportsGuardedStorageFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_2) == TR::Compiler->target.cpu.getSupportsMiscellaneousInstructionExtensions2Facility(), "getSupportsMiscellaneousInstructionExtensions2Facility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1) == TR::Compiler->target.cpu.getSupportsVectorFacilityEnhancement1(), "getSupportsVectorFacilityEnhancement1 test failed!\n");
 
    TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) == TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10), "OMR_PROCESSOR_S390_Z10 test failed!\n");
    TR_ASSERT_FATAL(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z196) == TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196), "OMR_PROCESSOR_S390_Z196 test failed!\n");
