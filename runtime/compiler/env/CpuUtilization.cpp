@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -106,6 +106,7 @@ int CpuUtilization::updateCpuUtil(J9JITConfig *jitConfig)
       int64_t newTotalTimeUsedByVm = vmCpuStats._systemTime + vmCpuStats._userTime;
       
       _cpuUsage = (100 * (machineCpuStats.cpuTime - _prevMachineCpuTime)) / _prevIntervalLength;
+      _cpuIdle = 100 * machineCpuStats.numberOfCpus - _cpuUsage;
       _vmCpuUsage = (100 * (newTotalTimeUsedByVm - prevTotalTimeUsedByVm)) / _prevIntervalLength;
       }
    
@@ -121,11 +122,6 @@ int CpuUtilization::updateCpuUtil(J9JITConfig *jitConfig)
    _prevMachineCpuTime = machineCpuStats.cpuTime;
    _prevVmSysTime      = vmCpuStats._systemTime;
    _prevVmUserTime     = vmCpuStats._userTime;
-   
-   /*
-   fprintf(stderr, "#CPUINFO: usage=%lld%%, vm-usage=%lld%%, avg-usage=%lld%%, avg-idle=%lld%%, interval=%lldms\n", 
-      _cpuUsage, _vmCpuUsage, _avgCpuUsage, _avgCpuIdle, (_prevIntervalLength / 1000000ll));
-   */
    
    return 0;
    } // updateCpuUtil
@@ -161,6 +157,7 @@ CpuUtilization::CpuUtilization(J9JITConfig *jitConfig):
    _cpuUsage    (INITIAL_USAGE),
    _vmCpuUsage  (INITIAL_USAGE),
    _avgCpuUsage (INITIAL_USAGE),
+   _cpuIdle     (INITIAL_IDLE),
    _avgCpuIdle  (INITIAL_IDLE),
    
    _prevIntervalLength (0),

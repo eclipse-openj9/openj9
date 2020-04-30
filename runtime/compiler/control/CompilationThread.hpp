@@ -256,6 +256,18 @@ class CompilationInfoPerThreadBase
 
    void                     setClientStream(JITServer::ClientStream *stream) { _clientStream = stream; }
    JITServer::ClientStream *getClientStream() const { return _clientStream; }
+   /**
+      @brief Heuristic that returns true if compiling a method of given size
+             and at given optimization level less is likely to consume little
+             memory relative to what the JVM has at its disposal
+    */
+   bool isMemoryCheapCompilation(uint32_t bcsz, TR_Hotness optLevel);
+   /**
+      @brief Heuristic that returns true if compiling a method of given size
+             and at given optimization level less is likely to consume little
+             CPU relative to what the JVM has at its disposal
+    */
+   bool isCPUCheapCompilation(uint32_t bcsz, TR_Hotness optLevel);
    bool shouldPerformLocalComp(const TR_MethodToBeCompiled *entry);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
