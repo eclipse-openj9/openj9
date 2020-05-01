@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2019 IBM Corp. and others
+Copyright (c) 2016, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 # Prerequisites:
 
-  * ant 1.7.1 or above with ant-contrib (1.0b2 or above)
+  * ant 1.9.6 or above with ant-contrib (1.0b2 or above)
   * make 4.1 or above
   * perl 5.10.1 or above** 
   * curl 7.20.0 or above (needs -J/--remote-header-name support)
