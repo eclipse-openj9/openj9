@@ -3139,6 +3139,9 @@ remoteCompile(
    // Collect the list of unloaded classes
    std::vector<TR_OpaqueClassBlock*> unloadedClasses(compInfo->getUnloadedClassesTempList()->begin(), compInfo->getUnloadedClassesTempList()->end());
    compInfo->getUnloadedClassesTempList()->clear();
+   std::vector<TR_OpaqueClassBlock*> illegalModificationList(compInfo->getIllegalFinalFieldModificationList()->begin(),
+                                                             compInfo->getIllegalFinalFieldModificationList()->end());
+   compInfo->getIllegalFinalFieldModificationList()->clear();
    // Collect and encode the CHTable updates; this will acquire CHTable mutex
    auto table = (JITClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
    std::pair<std::string, std::string> chtableUpdates = table->serializeUpdates();
@@ -3171,7 +3174,7 @@ remoteCompile(
          }
       client->buildCompileRequest(TR::comp()->getPersistentInfo()->getClientUID(), seqNo, romMethodOffset, method,
                                   clazz, *compInfoPT->getMethodBeingCompiled()->_optimizationPlan, detailsStr,
-                                  details.getType(), unloadedClasses, classInfoTuple, optionsStr, recompMethodInfoStr,
+                                  details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr, recompMethodInfoStr,
                                   chtableUpdates.first, chtableUpdates.second, useAotCompilation);
       JITServer::MessageType response;
       while(!handleServerMessage(client, compiler->fej9vm(), response));
