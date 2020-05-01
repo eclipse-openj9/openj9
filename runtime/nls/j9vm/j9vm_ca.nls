@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1167,7 +1167,7 @@ J9NLS_VM_XSCMAXJITDATA_IGNORED.system_action=The JVM continues
 J9NLS_VM_XSCMAXJITDATA_IGNORED.user_response=The -Xscmaxjitdata value is ignored
 # END NON-TRANSLATABLE
 
-J9NLS_VM_COULD_NOT_GET_USER32_DLL_RANGE=NO es pot obtenir l'interfal d'adreces user32.dll necessari per a -Xprotectcontiguous.
+J9NLS_VM_COULD_NOT_GET_USER32_DLL_RANGE=NO es pot obtenir l'interval d'adreces user32.dll necessari per a -Xprotectcontiguous.
 # START NON-TRANSLATABLE
 J9NLS_VM_COULD_NOT_GET_USER32_DLL_RANGE.explanation=The JVM failed to find the address of user32.dll.
 J9NLS_VM_COULD_NOT_GET_USER32_DLL_RANGE.system_action=The JVM will terminate.
@@ -1938,4 +1938,18 @@ J9NLS_VM_XVERIFYNONE_DEPRECATED=A partir del Java 13 -Xverify:none i -noverify h
 J9NLS_VM_XVERIFYNONE_DEPRECATED.explanation=Since Java 13 -Xverify:none and -noverify were deprecated for removal and may not be accepted options in the future.
 J9NLS_VM_XVERIFYNONE_DEPRECATED.system_action=The JVM will show a warning and continue to recognize the options.
 J9NLS_VM_XVERIFYNONE_DEPRECATED.user_response=Consider not using these options as they will likely be removed in a future release.
+# END NON-TRANSLATABLE
+
+# Message for failed validation of class relationships for a particular class
+# Arguments 1 and 2 are the child class name
+# Arguments 3 and 4 are the parent class name
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID=Relaci\u00f3 de c\u00e0rrega de classes no v\u00e0lida per a l'element fill: %2$.*1$s, pare: %4$.*3$s
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_1=10
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_2=ChildClassName
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_3=11
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_4=ParentClassName
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.explanation=The specified child class fails verification since it has an invalid class relationship.
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.system_action=The JVM will throw a java/lang/VerifyError.
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.user_response=Ensure that all class relationships are valid.
 # END NON-TRANSLATABLE

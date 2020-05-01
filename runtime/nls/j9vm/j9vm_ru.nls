@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1924,7 +1924,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_CLASS_OR_INTERFACE.user_response=Contact 
 
 # Message for LinkageError when a IncompatibleClassChangeError is thrown out
 # arguments 1 and 2 are the specified interface name
-J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE=%2$.*1$s \u043d\u0435 \u044f\u043b\u044f\u0435\u0442\u0441\u044f \u0438\u043d\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u043e\u043c
+J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE=%2$.*1$s \u043d\u0435 \u044f\u0432\u043b\u044f\u0435\u0442\u0441\u044f \u0438\u043d\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u043e\u043c
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.sample_input_1=9
 J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.sample_input_2=InterfaceName
@@ -1938,4 +1938,18 @@ J9NLS_VM_XVERIFYNONE_DEPRECATED=\u041d\u0430\u0447\u0438\u043d\u0430\u044f \u044
 J9NLS_VM_XVERIFYNONE_DEPRECATED.explanation=Since Java 13 -Xverify:none and -noverify were deprecated for removal and may not be accepted options in the future.
 J9NLS_VM_XVERIFYNONE_DEPRECATED.system_action=The JVM will show a warning and continue to recognize the options.
 J9NLS_VM_XVERIFYNONE_DEPRECATED.user_response=Consider not using these options as they will likely be removed in a future release.
+# END NON-TRANSLATABLE
+
+# Message for failed validation of class relationships for a particular class
+# Arguments 1 and 2 are the child class name
+# Arguments 3 and 4 are the parent class name
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID=\u041d\u0435\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u0430\u044f \u0432\u0437\u0430\u0438\u043c\u043e\u0441\u0432\u044f\u0437\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438 \u043a\u043b\u0430\u0441\u0441\u0430 \u0434\u043b\u044f \u0434\u043e\u0447\u0435\u0440\u043d\u0435\u0433\u043e \u043a\u043b\u0430\u0441\u0441\u0430: %2$.*1$s, \u0440\u043e\u0434\u0438\u0442\u0435\u043b\u044c\u0441\u043a\u0438\u0439 \u043a\u043b\u0430\u0441\u0441: %4$.*3$s
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_1=10
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_2=ChildClassName
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_3=11
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_4=ParentClassName
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.explanation=The specified child class fails verification since it has an invalid class relationship.
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.system_action=The JVM will throw a java/lang/VerifyError.
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.user_response=Ensure that all class relationships are valid.
 # END NON-TRANSLATABLE

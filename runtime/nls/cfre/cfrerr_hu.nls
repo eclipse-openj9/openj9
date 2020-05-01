@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -629,7 +629,7 @@ J9NLS_CFR_ERR_MULTIPLE_INNER_CLASS_ATTRIBUTES.user_response=Contact the provider
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_UNKNOWN_CONSTANT=ismeretlen konstanst\u00e1r-bejegyz\u00e9sc\u00edmke
+J9NLS_CFR_ERR_UNKNOWN_CONSTANT=ismeretlen konstanst\u00e1r bejegyz\u00e9sc\u00edmke
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_UNKNOWN_CONSTANT.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_UNKNOWN_CONSTANT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1117,7 +1117,7 @@ J9NLS_CFR_ERR_BAD_ANNOTATION_TAG.user_response=Contact the provider of the class
 # END NON-TRANSLATABLE
 
 # InvokeDynamic and invokedynamic are not translatable
-J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC=Az invokedynamic byte-k\u00f3dnak egy InvokeDynamic konstanst\u00e1r-bejegyz\u00e9sre kell hivatkoznia
+J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC=Az invokedynamic byte-k\u00f3dnak egy InvokeDynamic konstanst\u00e1r bejegyz\u00e9sre kell hivatkoznia
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1133,7 +1133,7 @@ J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.user_response=Contact the provider of th
 # END NON-TRANSLATABLE
 
 # MethodHandle is not translatable
-J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE=A bootstrap met\u00f3dusindexnek egy MethodHandle konstanst\u00e1r-bejegyz\u00e9sre kell hivatkoznia
+J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE=A bootstrap met\u00f3dusindexnek egy MethodHandle konstanst\u00e1r bejegyz\u00e9sre kell hivatkoznia
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1148,7 +1148,7 @@ J9NLS_CFR_ERR_METHODTYPE_INVALID_SIG.system_action=The JVM will throw a verifica
 J9NLS_CFR_ERR_METHODTYPE_INVALID_SIG.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51=A konstanst\u00e1r-bejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 51.0
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51=A konstanst\u00e1r bejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 51.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1226,7 +1226,7 @@ J9NLS_CFR_ERR_MULTIPLE_TYPE_ANNOTATIONS_ATTRIBUTES__ID.user_response=Contact the
 # END NON-TRANSLATABLE
 
 # invalid constant pool index
-J9NLS_CFR_ERR_INVALID_CONSTANT_POOL_INDEX=Az oszt\u00e1lyf\u00e1jl attrib\u00fatum egy nem l\u00e9tez\u0151 konstanst\u00e1r-bejegyz\u00e9sre vonatkozik
+J9NLS_CFR_ERR_INVALID_CONSTANT_POOL_INDEX=Az oszt\u00e1lyf\u00e1jl attrib\u00fatum egy nem l\u00e9tez\u0151 konstanst\u00e1r bejegyz\u00e9sre vonatkozik
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INVALID_CONSTANT_POOL_INDEX.explanation=Constant pool indexes must refer to valid constant pool entries
 J9NLS_CFR_ERR_INVALID_CONSTANT_POOL_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1340,7 +1340,7 @@ J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.user_response=Contact the provider
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=A konstanst\u00e1r-bejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 53.0
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=A konstanst\u00e1r bejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 53.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1356,7 +1356,7 @@ J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.user_response=Contact the provider of the 
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55=A konstanst\u00e1r-bejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 55.0
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55=A konstanst\u00e1r bejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 55.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1400,7 +1400,7 @@ J9NLS_CFR_ERR_BC_LDC2W_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE.user_response=Contact
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49=A konstanst\u00e1r-bejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 49.0
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49=A konstanst\u00e1r bejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 49.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1408,7 +1408,7 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.user_response=Contact the provider of
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51=A konstanst\u00e1r-bejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 51.0
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51=A konstanst\u00e1r bejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 51.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1416,7 +1416,7 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.user_response=Contact the provider of
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55=A konstanst\u00e1r-bejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 55.0
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55=A konstanst\u00e1r bejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 55.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1452,3 +1452,71 @@ J9NLS_CFR_ERR_PREVIEW_VERSION.system_action=The JVM will throw a verification or
 J9NLS_CFR_ERR_PREVIEW_VERSION.user_response=Run with the correct Java runtime version and use --enable-preview.
 # END NON-TRANSLATABLE
 
+J9NLS_CFR_LVT_INDEX_OUTOFRANGE=A LocalVariableTable indexe k\u00edv\u00fcl esik az \u00e9rtelmez\u00e9si tartom\u00e1nyon
+# START NON-TRANSLATABLE
+J9NLS_CFR_LVT_INDEX_OUTOFRANGE.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_LVT_INDEX_OUTOFRANGE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_LVT_INDEX_OUTOFRANGE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_LVTT_INDEX_OUTOFRANGE=A LocalVariableTypeTable indexe k\u00edv\u00fcl esik az \u00e9rtelmez\u00e9si tartom\u00e1nyon
+# START NON-TRANSLATABLE
+J9NLS_CFR_LVTT_INDEX_OUTOFRANGE.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_LVTT_INDEX_OUTOFRANGE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_LVTT_INDEX_OUTOFRANGE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_LVTT_DUPLICATE=A LocalVariableTypeTable attrib\u00fatumaiban nem megengedettek a t\u00f6bbsz\u00f6r szerepl\u0151 bejegyz\u00e9sek
+# START NON-TRANSLATABLE
+J9NLS_CFR_LVTT_DUPLICATE.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_LVTT_DUPLICATE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_LVTT_DUPLICATE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Record is not translatable
+J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES=t\u00f6bbsz\u00f6r szerepl\u0151 Record attrib\u00fatumok
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Record is not translatable
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=A Record oszt\u00e1lyok nem lehetnek absztraktok
+# START NON-TRANSLATABLE
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Record is not translatable
+J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8=A Record neve csak karaktersorozat lehet
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# RecordComponent is not translatable
+J9NLS_CFR_ERR_RECORD_COMPONENT_NAME_NOT_UTF8=A RecordComponent neve csak karaktersorozat lehet
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_RECORD_COMPONENT_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_RECORD_COMPONENT_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_RECORD_COMPONENT_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# RecordComponent is not translatable
+J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8=A RecordComponent le\u00edr\u00f3 csak karaktersorozat lehet
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Record is not translatable
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=A Record mag\u00e1t\u00f3l \u00e9rtet\u0151d\u0151en v\u00e9gleges
+# START NON-TRANSLATABLE
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -513,4 +513,20 @@ J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.explanation=The number of -Xdump: options exceed
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.system_action=The JVM exits.
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.user_response=Combine dump types, event types, and filters using '+' into a single option
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_EXIT_SHUTDOWN=A VM est\u00e1 sendo encerrada. Motivo: %2$.*1$s
+# START NON-TRANSLATABLE
+J9NLS_DMP_EXIT_SHUTDOWN.explanation=User requested to exit
+J9NLS_DMP_EXIT_SHUTDOWN.system_action=The JVM exits.
+J9NLS_DMP_EXIT_SHUTDOWN.user_response=This exit was requested by the user.
+J9NLS_DMP_EXIT_SHUTDOWN.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN=A VM est\u00e1 sendo encerrada. Motivo: desconhecido
+# START NON-TRANSLATABLE
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.explanation=User requested to exit
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.system_action=The JVM exits.
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.user_response=This exit was requested by the user.
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.link=
 # END NON-TRANSLATABLE
