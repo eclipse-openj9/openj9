@@ -189,7 +189,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
    cg->setIgnoreDecimalOverflowException(false);
 
    TR_ASSERT_FATAL(TR::Compiler->target.cpu.getSupportsHardwareSQRT() == TR::Compiler->target.cpu.getSupportsHardwareSQRT(), "getSupportsHardwareSQRT test failed!\n");
-   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_HIGH_WORD) == TR::Compiler->target.cpu.getSupportsHighWordFacility(), "getSupportsHighWordFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_HIGH_WORD) == TR::Compiler->target.cpu.getSupportsHighWordFacility(), "getSupportsHighWordFacility test failed! %d, %d \n", TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_HIGH_WORD), TR::Compiler->target.cpu.getSupportsHighWordFacility());
    TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_DFP) == TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility(), "getSupportsDecimalFloatingPointFacility test failed!\n");
    TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_FPE) == TR::Compiler->target.cpu.getSupportsFloatingPointExtensionFacility(), "getSupportsFloatingPointExtensionFacility test failed!\n");
    TR_ASSERT_FATAL(TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_TE) == TR::Compiler->target.cpu.getSupportsTransactionalMemoryFacility(), "getSupportsTransactionalMemoryFacility test failed!\n");
