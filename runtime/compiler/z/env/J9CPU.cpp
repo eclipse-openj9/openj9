@@ -77,6 +77,11 @@ CPU::detect(OMRPortLibrary * const omrPortLib)
          omrsysinfo_processor_set_feature(processorDesc, OMR_FEATURE_S390_GUARDED_STORAGE, FALSE);
          }
       }
+
+
+   printf("went through TR::CPU CPU::detect(OMRPortLibrary * const omrPortLib) \n");
+
+
    return cpu;
    }
 
