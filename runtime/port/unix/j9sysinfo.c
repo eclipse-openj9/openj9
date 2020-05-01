@@ -246,6 +246,10 @@ static intptr_t getAIXPPCDescription(struct J9PortLibrary *portLibrary, J9Proces
 #if !defined(__power_9)
 #define POWER_9 0x20000 /* Power 9 class CPU */
 #define __power_9() (_system_configuration.implementation == POWER_9)
+#if defined(J9OS_I5) && !defined(J9OS_I5_V6R1)
+#define PPI9 0x4E
+#define __phy_proc_imp_9() (_system_configuration.phys_implementation == PPI9)
+#endif /* defined(J9OS_I5) && !defined(J9OS_I5_V6R1) */
 #endif /* !defined(__power_9) */
 
 #if defined(J9OS_I5_V6R1) /* vmx_version id only available since TL4 */
@@ -628,7 +632,13 @@ getAIXPPCDescription(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 		desc->physicalProcessor = PROCESSOR_PPC_P7;
 	} else if (__phy_proc_imp_8()) {
 		desc->physicalProcessor = PROCESSOR_PPC_P8;
-	} else {
+	}
+#if defined(J9OS_I5)
+	else if (__phy_proc_imp_9()) {
+		desc->physicalProcessor = PROCESSOR_PPC_P9;
+	}
+#endif
+	else {
 		desc->physicalProcessor = desc->processor;
 	}
 #else
@@ -1599,7 +1609,6 @@ getCacheSize(struct J9PortLibrary *portLibrary,
 	const int32_t cpu, const int32_t level, const int32_t cacheType, const J9CacheQueryCommand query)
 {
 	int32_t result = J9PORT_ERROR_SYSINFO_NOT_SUPPORTED;
-
 	switch (level) {
 	case 1: {
 		/* Note: AIX has split I/D level 1 cache.  Querying UCACHE is invalid. */
@@ -1680,6 +1689,18 @@ j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, const J9CacheInfoQue
 	case J9PORT_CACHEINFO_QUERY_CACHESIZE: /* FALLTHROUGH */
 	case J9PORT_CACHEINFO_QUERY_TYPES: /* FALLTHROUGH */
 	case J9PORT_CACHEINFO_QUERY_LEVELS: /* FALLTHROUGH */
+	default:
+		result = J9PORT_ERROR_SYSINFO_NOT_SUPPORTED;
+		break;
+	}
+#elif defined(J9OS_I5_V6R1)
+	switch (query->cmd) {
+	case J9PORT_CACHEINFO_QUERY_LEVELS:
+		result =  getCacheLevels(portLibrary, query->cpu);
+		break;
+	case J9PORT_CACHEINFO_QUERY_LINESIZE:
+	case J9PORT_CACHEINFO_QUERY_CACHESIZE:
+	case J9PORT_CACHEINFO_QUERY_TYPES:
 	default:
 		result = J9PORT_ERROR_SYSINFO_NOT_SUPPORTED;
 		break;
