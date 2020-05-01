@@ -77,6 +77,7 @@ typedef enum {
    compilationAOTNoSupportForAOTFailure            = 51,
    compilationAOTValidateTMFailure                 = 52,
    compilationILGenUnsupportedValueTypeOperationFailure = 53,
+   compilationAOTRelocationRecordGenerationFailure = 54,
 #if defined(J9VM_OPT_JITSERVER)
    compilationFirstJITServerFailure,
    compilationStreamFailure                        = compilationFirstJITServerFailure,

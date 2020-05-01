@@ -205,12 +205,13 @@ char *compilationErrorNames[]={
    "compilationAOTNoSupportForAOTFailure", //51
    "compilationAOTValidateTMFailure", //52
    "compilationILGenUnsupportedValueTypeOperationFailure", //53
+   "compilationAOTRelocationRecordGenerationFailure", //54
 #if defined(J9VM_OPT_JITSERVER)
-   "compilationStreamFailure", //54
-   "compilationStreamLostMessage", // 55
-   "compilationStreamMessageTypeMismatch", // 56
-   "compilationStreamVersionIncompatible", // 57
-   "compilationStreamInterrupted", // 58
+   "compilationStreamFailure", //55
+   "compilationStreamLostMessage", // 56
+   "compilationStreamMessageTypeMismatch", // 57
+   "compilationStreamVersionIncompatible", // 58
+   "compilationStreamInterrupted", // 59
 #endif /* defined(J9VM_OPT_JITSERVER) */
    "compilationMaxError"
 };
