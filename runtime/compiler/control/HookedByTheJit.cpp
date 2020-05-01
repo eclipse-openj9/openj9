@@ -2484,20 +2484,26 @@ void jitIllegalFinalFieldModification(J9VMThread *currentThread, J9Class *fieldC
    {
    J9JITConfig * jitConfig = currentThread->javaVM->jitConfig;
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, currentThread);
+
+   // Set the bit so that VM doesn't report the modification next time
+   fieldClass->classFlags |= J9ClassHasIllegalFinalFieldModifications;
 
 #if defined(J9VM_OPT_JITSERVER)
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       // Don't execute this hook at the jitserver side
-      // This piece of code will be removed once all JIT hooks is disabled at the jitserver side
-      fieldClass->classFlags |= J9ClassHasIllegalFinalFieldModifications;
       return;
       }
+   else if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+      {
+      TR_OpaqueClassBlock *clazz = fe->convertClassPtrToClassOffset(fieldClass);
+      compInfo->getSequencingMonitor()->enter();
+      compInfo->getIllegalFinalFieldModificationList()->push_back(clazz);
+      compInfo->getSequencingMonitor()->exit();
+      }
 #endif
-   // Set the bit so that VM doesn't report the modification next time
-   fieldClass->classFlags |= J9ClassHasIllegalFinalFieldModifications;
 
-   TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, currentThread);
    int32_t length;
    char *className = fe->getClassNameChars((TR_OpaqueClassBlock*)fieldClass, length);
    reportHook(currentThread, "jitIllegalFinalFieldModification", "class %p %.*s", fieldClass, length, className);

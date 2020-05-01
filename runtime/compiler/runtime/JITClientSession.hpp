@@ -350,6 +350,7 @@ class ClientSessionData
    PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock*> & getConstantPoolToClassMap() { return _constantPoolToClassMap; }
    void initializeUnloadedClassAddrRanges(const std::vector<TR_AddressRange> &unloadedClassRanges, int32_t maxRanges);
    void processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes, bool updateUnloadedClasses);
+   void processIllegalFinalFieldModificationList(const std::vector<TR_OpaqueClassBlock*> &classes);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
    TR::Monitor *getClassMapMonitor() { return _classMapMonitor; }
    TR::Monitor *getClassChainDataMapMonitor() { return _classChainDataMapMonitor; }

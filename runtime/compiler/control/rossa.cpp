@@ -1704,8 +1704,12 @@ onLoadInternal(
       compInfo->setUnloadedClassesTempList(new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock*>(
          PersistentVector<TR_OpaqueClassBlock*>::allocator_type(TR::Compiler->persistentAllocator())));
 
+      compInfo->setIllegalFinalFieldModificationList(new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock*>(
+         PersistentVector<TR_OpaqueClassBlock*>::allocator_type(TR::Compiler->persistentAllocator())));
+
       compInfo->setNewlyExtendedClasses(new (PERSISTENT_NEW) PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t>(
          PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t>::allocator_type(TR::Compiler->persistentAllocator())));
+
       // Try to initialize SSL
       if (JITServer::ClientStream::static_init(compInfo->getPersistentInfo()) != 0)
          return -1;

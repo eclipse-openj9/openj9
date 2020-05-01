@@ -350,14 +350,17 @@ J9::ClassEnv::isClassInitialized(TR::Compilation *comp, TR_OpaqueClassBlock *cla
 bool
 J9::ClassEnv::classHasIllegalStaticFinalFieldModification(TR_OpaqueClassBlock * clazzPointer)
    {
+   J9Class* j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer);
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      stream->write(JITServer::MessageType::ClassEnv_classHasIllegalStaticFinalFieldModification, clazzPointer);
-      return std::get<0>(stream->read<bool>());
+      // J9ClassHasIllegalFinalFieldModifications bit is cached by ClientSessionData::processIllegalFinalFieldModificationList()
+      // before the compilation takes place.
+      uintptr_t classFlags = 0;
+      JITServerHelpers::getAndCacheRAMClassInfo(j9clazz, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_FLAGS, (void *)&classFlags);
+      return J9_ARE_ANY_BITS_SET(classFlags, J9ClassHasIllegalFinalFieldModifications);
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
-   J9Class* j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer);
    return J9_ARE_ANY_BITS_SET(j9clazz->classFlags, J9ClassHasIllegalFinalFieldModifications);
    }
 
