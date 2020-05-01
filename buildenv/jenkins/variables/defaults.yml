@@ -174,7 +174,7 @@ ppc64le_linux:
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
-    14: '/usr/lib/jvm/adoptojdk-java-13'
+    14: '/usr/lib/jvm/adoptojdk-java-14'
     next: '/usr/lib/jvm/adoptojdk-java-14'
   release:
     all: 'linux-ppc64le-server-release'
@@ -216,7 +216,7 @@ s390x_linux:
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
-    14: '/usr/lib/jvm/adoptojdk-java-13'
+    14: '/usr/lib/jvm/adoptojdk-java-14'
     next: '/usr/lib/jvm/adoptojdk-java-14'
   release:
     all: 'linux-s390x-server-release'
@@ -249,7 +249,7 @@ ppc64_aix:
   boot_jdk:
     8: '/opt/java7'
     11: '/opt/java11_64'
-    14: '/opt/java13_64'
+    14: '/opt/java14_64'
     next: '/opt/java14_64'
   release:
     all: 'aix-ppc64-server-release'
@@ -277,7 +277,7 @@ x86-64_linux:
   boot_jdk:
     8: '/usr/lib/jvm/jdk-7'
     11: '/usr/lib/jvm/jdk-11'
-    14: '/usr/lib/jvm/adoptojdk-java-13'
+    14: '/usr/lib/jvm/adoptojdk-java-14'
     next: '/usr/lib/jvm/adoptojdk-java-14'
   release:
     all: 'linux-x86_64-server-release'
@@ -343,7 +343,7 @@ x86-64_windows:
   boot_jdk:
     8: '/cygdrive/c/openjdk/jdk7'
     11: '/cygdrive/c/openjdk/jdk11'
-    14: '/cygdrive/c/openjdk/jdk13'
+    14: '/cygdrive/c/openjdk/jdk14'
     next: '/cygdrive/c/openjdk/jdk14'
   release:
     all: 'windows-x86_64-server-release'
@@ -397,7 +397,7 @@ x86-64_mac:
   boot_jdk:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
-    14: '/Users/jenkins/bootjdks/adoptojdk-java-13'
+    14: '/Users/jenkins/bootjdks/adoptojdk-java-14'
     next: '/Users/jenkins/bootjdks/adoptojdk-java-14'
   release:
     all: 'macosx-x86_64-server-release'
