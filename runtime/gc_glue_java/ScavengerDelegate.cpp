@@ -604,12 +604,12 @@ MM_ScavengerDelegate::private_addOwnableSynchronizerObjectInList(MM_EnvironmentS
 	omrobjectptr_t link = MM_GCExtensions::getExtensions(_extensions)->accessBarrier->isObjectInOwnableSynchronizerList(object);
 	/* if isObjectInOwnableSynchronizerList() return NULL, it means the object isn't in OwnableSynchronizerList,
 	 * it could be the constructing object which would be added in the list after the construction finish later. ignore the object to avoid duplicated reference in the list.
-	 * For concurrent scavenger, an object that doesn't finish constructing before the start of the STW phase will be added to the list after, during the concurrent phase.
-	 * In this case, the object may already be added to the list. */
-	if (NULL != link && (!_extensions->isConcurrentScavengerEnabled() || (_extensions->isConcurrentScavengerEnabled() && !_extensions->scavenger->isObjectInNewSpace(link)))) {
+	 * For concurrent scavenger, an object that doesn't finish constructing before the start of the STW phase will be added to the list after. As a result, the object may already
+	 * be added to the list (non NULL link) when we scan it during the concurrent phase. We must not add it again here, so check link before proceeding */
+	if ((NULL != link) && (!_extensions->isConcurrentScavengerEnabled() || (_extensions->isConcurrentScavengerEnabled() && _extensions->scavenger->isObjectInEvacuateMemory(link)))) {
 		/* this method expects the caller (scanObject) never pass the same object twice, which could cause circular loop when walk through the list.
 		 * the assertion partially could detect duplication case */
-		Assert_MM_false(_extensions->scavenger->isObjectInNewSpace(link));
+		Assert_MM_true(_extensions->scavenger->isObjectInEvacuateMemory(link));
 		env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->add(env, object);
 		env->getGCEnvironment()->_scavengerJavaStats._ownableSynchronizerTotalSurvived += 1;
 		if (_extensions->scavenger->isObjectInNewSpace(object)) {

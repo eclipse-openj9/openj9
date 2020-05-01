@@ -51,8 +51,9 @@ class ValuePropagation : public OMR::ValuePropagation
    virtual void constrainRecognizedMethod(TR::Node *node);
    virtual bool transformDirectLoad(TR::Node *node);
    virtual void doDelayedTransformations();
-   void transformCallToIconstWithHCRGuard(TR::TreeTop *callTree, int32_t result);
-   void transformCallToIconstInPlaceOrInDelayedTransformations(TR::TreeTop *callTree, int32_t result, bool isGlobal, bool inPlace = true);
+   void transformCallToNodeWithHCRGuard(TR::TreeTop *callTree, TR::Node *result);
+   void transformCallToIconstInPlaceOrInDelayedTransformations(TR::TreeTop *callTree, int32_t result, bool isGlobal, bool inPlace = true, bool requiresGuard = false);
+   void transformCallToNodeDelayedTransformations(TR::TreeTop *callTree, TR::Node *result, bool requiresGuard = false);
    uintptr_t* getObjectLocationFromConstraint(TR::VPConstraint *constraint);
    bool isKnownStringObject(TR::VPConstraint *constraint);
    TR_YesNoMaybe isStringObject(TR::VPConstraint *constraint);
@@ -72,15 +73,55 @@ class ValuePropagation : public OMR::ValuePropagation
 
    private:
 
-   struct TreeIntResultPair {
+   /**
+    * \brief
+    *    Transforms a call to a String indexOf method when the source string is a
+    *    KnownObject or ConstString.
+    *
+    * \parm indexOfNode
+    *    Node corresponding to a call to an indexOf method.
+    *
+    * \parm sourceStringNode
+    *    Node corresponding to the source string (the string to search through).
+    *
+    * \parm targetCharNode
+    *    Node corresponding to the target character (the character to search for).
+    *
+    * \parm startNode
+    *    The index in the source string at which to start searching from.
+    *    If NULL, search will start at index zero.
+    *
+    * \parm lengthNode
+    *    The length in characters of the source string.
+    *    If lengthNode is NULL, will attempt to determine length from constraint
+    *    on sourceStringNode.
+    *
+    * \parm is16Bit
+    *    True if each character in the source string is 16 bits. If false, assumed
+    *    to be 8 bits.
+    *
+    * \return
+    *    Return true if a transformation was performed, false otherwise.
+    */
+   bool transformIndexOfKnownString(
+      TR::Node *indexOfNode,
+      TR::Node *sourceStringNode,
+      TR::Node *targetCharNode,
+      TR::Node *startNode,
+      TR::Node *lengthNode,
+      bool is16Bit = true);
+
+   struct TreeNodeResultPair {
       TR_ALLOC(TR_Memory::ValuePropagation)
       TR::TreeTop *_tree;
-      int32_t _result;
-      TreeIntResultPair(TR::TreeTop *tree, int32_t result) : _tree(tree), _result(result) {}
+      TR::Node *_result;
+      bool _requiresHCRGuard;
+      TreeNodeResultPair(TR::TreeTop *tree, TR::Node *result, bool requiresHCRGuard) 
+         : _tree(tree), _result(result), _requiresHCRGuard(requiresHCRGuard) {}
    };
 
    TR::VP_BCDSign **_bcdSignConstraints;
-   List<TreeIntResultPair> _callsToBeFoldedToIconst;
+   List<TreeNodeResultPair> _callsToBeFoldedToNode;
    };
 
 

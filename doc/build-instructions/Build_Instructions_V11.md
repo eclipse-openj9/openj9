@@ -694,7 +694,7 @@ See [Setting up your build environment without Docker](#setting-up-your-build-en
 
 If you build the binary on x86-64 Linux, run the following commands to build a Docker image for AArch64 cross-compilation, called **openj9aarch64**:
 ```
-cd openj9/buildenv/docker/jdk11/aarch64_CC/arm-linux-aarch64
+cd openj9/buildenv/docker/aarch64-linux_CC
 docker build -t openj9aarch64 -f Dockerfile .
 ```
 
@@ -743,6 +743,8 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
   - Using `--with-openssl=fetched` will fail during the build in the Docker environment.
 
 :pencil: **DDR support:** You can build DDR support only on AArch64 Linux.  If you are building in a cross-compilation environment, you need the `--disable-ddr` option.
+
+:pencil: You may need to add `--disable-warnings-as-errors-openj9` depending on the toolchain version.
 
 ### 6. Build
 :penguin:
