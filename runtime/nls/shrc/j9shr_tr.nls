@@ -6815,7 +6815,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=\"%s\" i\u00e7in ge\u00e7ersiz katman numaras\u0131 %d bulundu. Katman numaras\u0131 %d de\u011ferinden k\u00fc\u00e7\u00fck olmal\u0131d\u0131r.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=\u015eunun i\u00e7in ge\u00e7ersiz katman numaras\u0131 %d bulundu: \"%s\". Katman numaras\u0131 %d de\u011ferinden k\u00fc\u00e7\u00fck olmal\u0131d\u0131r.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=

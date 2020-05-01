@@ -6814,7 +6814,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=\"%s\"\uc5d0 \ub300\ud574 \uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \uacc4\uce35 \ubc88\ud638 %d\uc774(\uac00) \ubc1c\uacac\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uacc4\uce35 \ubc88\ud638\ub294 %d \ubbf8\ub9cc\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \uacc4\uce35 \ubc88\ud638 %d\uc774(\uac00) \"%s\"\uc5d0 \ub300\ud574 \ubc1c\uacac\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uacc4\uce35 \ubc88\ud638\ub294 %d \ubbf8\ub9cc\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=

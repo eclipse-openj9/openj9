@@ -6815,7 +6815,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=A(z) \"%s\" eset\u00e9n a(z) %d \u00e9rv\u00e9nytelen r\u00e9tegsz\u00e1m \u00e9rhet\u0151 el. A r\u00e9tegsz\u00e1mnak %d \u00e9rt\u00e9kn\u00e9l kisebbnek kell lennie.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=Invalid layer number %d found for \"%s\". A r\u00e9tegsz\u00e1mnak %d \u00e9rt\u00e9kn\u00e9l kisebbnek kell lennie.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=

@@ -1943,7 +1943,7 @@ J9NLS_VM_XVERIFYNONE_DEPRECATED.user_response=Consider not using these options a
 # Message for failed validation of class relationships for a particular class
 # Arguments 1 and 2 are the child class name
 # Arguments 3 and 4 are the parent class name
-J9NLS_VM_CLASS_RELATIONSHIP_INVALID=Relazione caricamento classe non valida per l'elemento child: %2$.*1$s, elemento parent: 4$.*3$s
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID=Relazione caricamento classe non valida per l'elemento child: %2$.*1$s, elemento parent: %4$.*3$s
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_1=10
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_2=ChildClassName
