@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4229,7 +4229,7 @@ J9NLS_SHRC_CM_CACHE_FIND_NOTFOUND.system_action=
 J9NLS_SHRC_CM_CACHE_FIND_NOTFOUND.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_CACHEDIRPERM=Unix st\u00edlus\u00fa enged\u00e9lyek be\u00e1ll\u00edt\u00e1sa a gyors\u00edt\u00f3t\u00e1r-k\u00f6nyvt\u00e1rak l\u00e9trehoz\u00e1s\u00e1hoz
+J9NLS_SHRC_SHRINIT_HELPTEXT_CACHEDIRPERM=Unix st\u00edlus\u00fa enged\u00e9lyek be\u00e1ll\u00edt\u00e1sa a gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rak l\u00e9trehoz\u00e1s\u00e1hoz
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_CACHEDIRPERM.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_CACHEDIRPERM.system_action=
@@ -4243,7 +4243,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_INVALID_CACHEDIR_PERM.system_action=The JVM terminate
 J9NLS_SHRC_SHRINIT_FAILURE_INVALID_CACHEDIR_PERM.user_response=Rerun the command with a valid cacheDirPerm value. This must be unix style file permission in the range of 0700 - 0777 or 1700 - 1777 (in octal representation).
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED=Nem siker\u00fclt megszerezni az alap\u00e9rtelmezett gyors\u00edt\u00f3t\u00e1r-k\u00f6nyvt\u00e1rat.
+J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED=Nem siker\u00fclt megszerezni az alap\u00e9rtelmezett gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rat.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED.system_action=The JVM terminates.
@@ -4636,7 +4636,7 @@ J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL=Nem siker\u00fclt inicializ\u00e1lni a megoszt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.explanation=An error has occurred within Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
-J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.user_response=Clean the file system.
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.user_response=Clean the file system. If the file system doesn't support free space reporting, see the "-Xshareclasses:noPersistentDiskSpaceCheck" option.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CM_READ_CORRUPT_CACHE_ENTRY_HEADER_BAD_LEN=S\u00e9r\u00fclt adatok beolvas\u00e1sa a(z) 0x%p gyors\u00edt\u00f3t\u00e1r bejegyz\u00e9s fejl\u00e9chez (\u00e9rv\u00e9nytelen elemhossz: %u byte)
@@ -6638,7 +6638,7 @@ J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requ
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=A bootstrap oszt\u00e1lybet\u00f6lt\u0151 \u00e1ltal bet\u00f6lt\u00f6tt oszt\u00e1lyok gyos\u00edt\u00f3t\u00e1raz\u00e1s\u00e1nak letilt\u00e1sa.
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=A bootstrap oszt\u00e1lybet\u00f6llt\u0151 \u00e1ltal bet\u00f6lt\u00f6tt oszt\u00e1lyok gyos\u00edt\u00f3t\u00e1raz\u00e1s\u00e1nak letilt\u00e1sa.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
@@ -6659,7 +6659,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_FATAL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_FATAL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY=%1$d: 0x%2$p STARTUP HINTS KEY: %4$.*3$s C\u00edm: 0x%5$p M\u00e9ret: %6$d
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY=%1$d: 0x%2$p STARTUP HINTS KEY: %4$.*3$s C\u00edm: 0x%5$p Size: %6$d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.sample_input_2=042F71F8
@@ -6716,28 +6716,28 @@ J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.system_action=The JVM terminates, unless you hav
 J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.user_response=Please try using a shorter shared cache directory.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r-k\u00f6nyvt\u00e1rk\u00e9nt. A saj\u00e1t k\u00f6nyvt\u00e1r nem k\u00e9rdezhet\u0151 le. \u00c1ll\u00edtson be m\u00e1sik k\u00f6nyvt\u00e1rat a "HOME" k\u00f6rnyezeti v\u00e1ltoz\u00f3n vagy a "cacheDir=" parancssori param\u00e9teren kereszt\u00fcl, vagy jav\u00edtsa ki a saj\u00e1t k\u00f6nyvt\u00e1rat a jelsz\u00f3f\u00e1jl-bejegyz\u00e9sben.
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rk\u00e9nt. A saj\u00e1t k\u00f6nyvt\u00e1r nem k\u00e9rdezhet\u0151 le. \u00c1ll\u00edtson b m\u00e1sik k\u00f6nyvt\u00e1rat a "HOME" k\u00f6rnyezeti v\u00e1ltoz\u00f3n vagy a "cacheDir=" parancssori param\u00e9teren kereszt\u00fcl, vagy jav\u00edtsa ki a saj\u00e1t k\u00f6nyvt\u00e1rat a jelsz\u00f3f\u00e1jl bejegyz\u00e9sben.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.explanation=An error occurred getting user's home directory.
 J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r-k\u00f6nyvt\u00e1rk\u00e9nt. Az \u00fatvonal t\u00fal hossz\u00fa. A saj\u00e1t k\u00f6nyvt\u00e1r nem k\u00e9rdezhet\u0151 le. \u00c1ll\u00edtson be m\u00e1sik k\u00f6nyvt\u00e1rat a "HOME" k\u00f6rnyezeti v\u00e1ltoz\u00f3n vagy a "cacheDir=" parancssori param\u00e9teren kereszt\u00fcl, vagy jav\u00edtsa ki a saj\u00e1t k\u00f6nyvt\u00e1rat a jelsz\u00f3f\u00e1jl-bejegyz\u00e9sben.
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rk\u00e9nt. Az \u00fatvonal t\u00fal hossz\u00fa. A saj\u00e1t k\u00f6nyvt\u00e1r nem k\u00e9rdezhet\u0151 le. \u00c1ll\u00edtson b m\u00e1sik k\u00f6nyvt\u00e1rat a "HOME" k\u00f6rnyezeti v\u00e1ltoz\u00f3n vagy a "cacheDir=" parancssori param\u00e9teren kereszt\u00fcl, vagy jav\u00edtsa ki a saj\u00e1t k\u00f6nyvt\u00e1rat a jelsz\u00f3f\u00e1jl bejegyz\u00e9sben.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.explanation=The length of user's home directory is greater than the internal buffer space.
 J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_HOME_ON_NFS=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r-k\u00f6nyvt\u00e1rk\u00e9nt. A H\u00e1l\u00f3zati f\u00e1jlrendszeren tal\u00e1lhat\u00f3. A saj\u00e1t k\u00f6nyvt\u00e1r nem k\u00e9rdezhet\u0151 le. \u00c1ll\u00edtson be m\u00e1sik k\u00f6nyvt\u00e1rat a "HOME" k\u00f6rnyezeti v\u00e1ltoz\u00f3n vagy a "cacheDir=" parancssori param\u00e9teren kereszt\u00fcl, vagy jav\u00edtsa ki a saj\u00e1t k\u00f6nyvt\u00e1rat a jelsz\u00f3f\u00e1jl-bejegyz\u00e9sben.
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rk\u00e9nt. Az H\u00e1l\u00f3zati f\u00e1jlrendszeren tal\u00e1lhat\u00f3. A saj\u00e1t k\u00f6nyvt\u00e1r nem k\u00e9rdezhet\u0151 le. \u00c1ll\u00edtson b m\u00e1sik k\u00f6nyvt\u00e1rat a "HOME" k\u00f6rnyezeti v\u00e1ltoz\u00f3n vagy a "cacheDir=" parancssori param\u00e9teren kereszt\u00fcl, vagy jav\u00edtsa ki a saj\u00e1t k\u00f6nyvt\u00e1rat a jelsz\u00f3f\u00e1jl bejegyz\u00e9sben.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_HOME_ON_NFS.explanation=The shared cache directory cannot be on a Network File System.
 J9NLS_SHRC_GET_DIR_HOME_ON_NFS.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_GET_DIR_HOME_ON_NFS.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r-k\u00f6nyvt\u00e1rk\u00e9nt. A hibak\u00f3d a k\u00f6vetkez\u0151: %1$d.
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rk\u00e9nt. A hibak\u00f3d a k\u00f6vetkez\u0151: %1$d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.sample_input_1=-1
 J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.explanation=An error occurred checking the attributes of the directory.
@@ -6745,7 +6745,7 @@ J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.system_action=The JVM terminates, unless you
 J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.user_response=Please fix the setting of home directory according to the error code and retry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_NO_SPACE=Nem siker\u00fclt lefoglalni a megosztott gyors\u00edt\u00f3t\u00e1r-k\u00f6nyvt\u00e1r lek\u00e9rdez\u00e9s\u00e9hez sz\u00fcks\u00e9ges nat\u00edv mem\u00f3ri\u00e1t.
+J9NLS_SHRC_GET_DIR_NO_SPACE=Nem siker\u00fclt lefoglalni a megosztott gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1r lek\u00e9rdez\u00e9s\u00e9hez sz\u00fcks\u00e9ges nat\u00edv mem\u00f3ri\u00e1t.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_NO_SPACE.explanation=Cannot allocate native memory.
 J9NLS_SHRC_GET_DIR_NO_SPACE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -6764,4 +6764,142 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=Ellen\u0151rizze a nem-bootstrap
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destroy all shared cache layers of the same name (use name parm or default)
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR=Nem siker\u00fclt a gyors\u00edt\u00f3t\u00e1r le\u00edr\u00f3 lefoglal\u00e1sa
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.explanation=An error has occurred in shared class processing.
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=Nem siker\u00fclt elind\u00edtani a megosztott gyors\u00edt\u00f3t\u00e1rat. A rendszer m\u00f3dos\u00edt\u00e1st \u00e9szlelt egy als\u00f3bb r\u00e9teg osztott gyors\u00edt\u00f3t\u00e1r\u00e1ra vonatkoz\u00f3an. A v\u00e1rt egyedi gyors\u00edt\u00f3t\u00e1r azonos\u00edt\u00f3: %s
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.sample_input_1=foo
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layer shared caches built on top of it.
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.user_response=Use -Xshareclasses:name=<cacheName>,destroyAllLayers to destroy all layers and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED=Nem siker\u00fclt elind\u00edtani a megosztott gyors\u00edt\u00f3t\u00e1rat. Hiba t\u00f6rt\u00e9nt egy als\u00f3bb r\u00e9teg\u0171 el\u0151felt\u00e9tel gyors\u00edt\u00f3t\u00e1r egyedi azonos\u00edt\u00f3j\u00e1nak lek\u00e9r\u00e9se sor\u00e1n.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.explanation=Cannot get the unique ID of a lower layer prerequisite cache.
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.user_response=Use -Xshareclasses:name=<cacheName>,destroyAllLayers to destroy all layers and retry. Please make sure the lower layer shared caches remain unmodified.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_FAILED_TO_START_UP=Nem siker\u00fclt elind\u00edtani a megosztott gyors\u00edt\u00f3t\u00e1rat.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_FAILED_TO_START_UP.explanation=An error occurred while starting up the shared cache.
+J9NLS_SHRC_CM_FAILED_TO_START_UP.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_FAILED_TO_START_UP.user_response=Previous error messages may indicate the reason.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Adja meg a legfels\u0151 r\u00e9teg sz\u00e1m\u00e1t. Hozzon l\u00e9tre egy \u00faj osztott gyors\u00edt\u00f3t\u00e1rr\u00e9teget, ha a megadott r\u00e9teg nem l\u00e9tezik.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER=Hozzon l\u00e9tre \u00faj osztott gyors\u00edt\u00f3t\u00e1rr\u00e9teget.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=Invalid layer number %d found for \"%s\". A r\u00e9tegsz\u00e1mnak %d \u00e9rt\u00e9kn\u00e9l kisebbnek kell lennie.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_3=100
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.explanation=Incorrect layer number has been used in the command-line option
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.system_action=The JVM terminates.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.user_response=Correct or remove the invalid command-line option and rerun.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER=\u00c9rv\u00e9nytelen r\u00e9tegsz\u00e1m: %d. A megl\u00e9v\u0151 legfels\u0151 r\u00e9teg sz\u00e1ma: %d. Az \u00faj r\u00e9teg csak %d lehet.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_1=3
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_2=1
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_3=2
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.explanation=User has passed in an incorrect layer number.
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.user_response=Correct the layer number in the command line and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK=\u00c1lland\u00f3 gyors\u00edt\u00f3t\u00e1r l\u00e9trehoz\u00e1sa el\u0151tt ne ellen\u0151rizze le a szabad lemezter\u00fcletet.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE=\n\
+A(z) \"%s\" gyors\u00edt\u00f3t\u00e1r legfels\u0151 r\u00e9teg\u00e9nek aktu\u00e1lis statisztik\u00e1ja: \n
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.sample_input_1=myCache
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER=gyors\u00edt\u00f3t\u00e1rr\u00e9teg                         %*.c= %d
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_1=0
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_2=
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_3=1
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE=\n\
+A(z) \"%s\" gyors\u00edt\u00f3t\u00e1r \u00f6sszes r\u00e9teg\u00e9nek aktu\u00e1lis statisztik\u00e1ja: \n
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.sample_input_1=myCache
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS=Statisztika nyomtat\u00e1sa csak a legfels\u0151 gyors\u00edt\u00f3t\u00e1rr\u00e9tegb\u0151l. A printTopLayerStats=help seg\u00edts\u00e9g\u00e9vel megtekintheti a rendelkez\u00e9sre \u00e1ll\u00f3 be\u00e1ll\u00edt\u00e1sokat.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1= -Xshareclasses:%1$s<param\u00e9terek> rendelkez\u00e9sre \u00e1ll\u00f3 be\u00e1ll\u00edt\u00e1sai. T\u00f6bb opci\u00f3 megad\u00e1s\u00e1hoz haszn\u00e1ljon '+' jelet. P\u00e9ld\u00e1ul %2$saot+url \n
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_1=printStats=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_2=printStats=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1=Kikapcsolja az id\u0151pecs\u00e9t-ellen\u0151rz\u00e9st, ha oszt\u00e1lyokat tal\u00e1l az osztott gyors\u00edt\u00f3t\u00e1rban. Lehet, hogy az osztott gyors\u00edt\u00f3t\u00e1rb\u00f3l elavult oszt\u00e1lyok ker\u00fclnek bet\u00f6lt\u00e9sre.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED=A gyors\u00edt\u00f3t\u00e1r legfels\u0151 r\u00e9tege (%d. r\u00e9teg) megsemmis\u00fclt. A rendszer m\u00f3dos\u00edt\u00e1st \u00e9szlelt a(z) %d. r\u00e9teg osztott gyors\u00edt\u00f3t\u00e1r\u00e1ra vonatkoz\u00f3an. A gyors\u00edt\u00f3t\u00e1r v\u00e1rt egyedi azonos\u00edt\u00f3ja %s, az aktu\u00e1lis egyedi gyors\u00edt\u00f3t\u00e1r azonos\u00edt\u00f3 %s.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_1=1
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_2=0
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_3=Cache_1
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_4=Cache_2
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layers shared caches built on top of it.
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.user_response=Use -Xshareclasses:name=<cacheName>,destroy to destroy all invalid layers (all the higher layers which are built on top of the modified layer) and retry.
 # END NON-TRANSLATABLE

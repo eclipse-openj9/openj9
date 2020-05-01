@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -914,7 +914,7 @@ J9NLS_VM_ADAPTIVE_SPIN_NOT_SUPPORTED.user_response=None, this is an information 
 # END NON-TRANSLATABLE
 
 # Message to use when CPU/OS doesn't support SSE2
-J9NLS_VM_SSE2_NOT_SUPPORTED=Cette version de Java n\u00e9cessite un processeur (UC) prenant en charge les extensions SSE2 ou sup\u00e9rieures. Consultez la rubrique relative aux environnements pris en charge dans le manuel IBM Java User Guide pour obtenir des d\u00e9tails.
+J9NLS_VM_SSE2_NOT_SUPPORTED=Cette version de Java n\u00e9cessite un processeur (UC) prenant en charge les extensions SSE2 ou sup\u00e9rieures.  Consultez la rubrique relative aux environnements pris en charge dans le manuel IBM Java User Guide pour obtenir des d\u00e9tails.
 # START NON-TRANSLATABLE
 J9NLS_VM_SSE2_NOT_SUPPORTED.explanation=The CPU and/or operating system do not support the SSE2 or later instruction set.
 J9NLS_VM_SSE2_NOT_SUPPORTED.system_action=The JVM will terminate.
@@ -1938,4 +1938,18 @@ J9NLS_VM_XVERIFYNONE_DEPRECATED=Depuis l'introduction de Java 13, les options -X
 J9NLS_VM_XVERIFYNONE_DEPRECATED.explanation=Since Java 13 -Xverify:none and -noverify were deprecated for removal and may not be accepted options in the future.
 J9NLS_VM_XVERIFYNONE_DEPRECATED.system_action=The JVM will show a warning and continue to recognize the options.
 J9NLS_VM_XVERIFYNONE_DEPRECATED.user_response=Consider not using these options as they will likely be removed in a future release.
+# END NON-TRANSLATABLE
+
+# Message for failed validation of class relationships for a particular class
+# Arguments 1 and 2 are the child class name
+# Arguments 3 and 4 are the parent class name
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID=Relation de chargement de classe non valide pour l'enfant : %2$.*1$s, parent : %4$.*3$s
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_1=10
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_2=ChildClassName
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_3=11
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_4=ParentClassName
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.explanation=The specified child class fails verification since it has an invalid class relationship.
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.system_action=The JVM will throw a java/lang/VerifyError.
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.user_response=Ensure that all class relationships are valid.
 # END NON-TRANSLATABLE

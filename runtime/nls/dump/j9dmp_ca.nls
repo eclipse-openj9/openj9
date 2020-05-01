@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,7 +100,7 @@ J9NLS_DMP_MISSING_EXECUTABLE_STR.sample_input_1=bogus
 J9NLS_DMP_MISSING_EXECUTABLE_STR.link=dita:///diag/tools/dumpagents_exec.dita
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_PROCESSING_EVENT_STR=S'est\u00e0 processant la incid\u00e8ncai d'abocament de mem\u00f2ria \"%1$s\", detall \"%3$.*2$s\"; espereu, si us plau.
+J9NLS_DMP_PROCESSING_EVENT_STR=S'est\u00e0 processant la incid\u00e8ncia d'abocament de mem\u00f2ria \"%1$s\", detall \"%3$.*2$s\"; espereu.
 # START NON-TRANSLATABLE
 J9NLS_DMP_PROCESSING_EVENT_STR.explanation=A dump event has occurred and is being handled.
 J9NLS_DMP_PROCESSING_EVENT_STR.system_action=The JVM attempts to process the event.
@@ -263,7 +263,7 @@ J9NLS_DMP_WRITTEN_DUMP_STR_NOFILE.link=
 # END NON-TRANSLATABLE
 
 # "heapdump" and "exclusive" are not translatable. request=exclusive+prepwalk+compact and -Xdump:heap: are literal
-J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST=El heapdum sol\u00b7licitat no s'ha generat perqu\u00e8 no s'ha sol\u00b7licitat acc\u00e9s exclusiu o no s'ha pogut obtenir.
+J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST=El heapdump sol\u00b7licitat no s'ha generat perqu\u00e8 no s'ha sol\u00b7licitat acc\u00e9s exclusiu o no s'ha pogut obtenir.
 # START NON-TRANSLATABLE
 J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
 J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
@@ -290,7 +290,7 @@ J9NLS_DMP_INVALID_HEAP_PREPARATION_REQUEST.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_MULTIPLE_DUMP_OVERWRITE=S'han sol\u00b7licitat diversos heapdumps, per\u00f2 falta %%id a l'etiqueta de fitxer: els abocaments de mem\u00f2ria se sobrescriuran.
+J9NLS_DMP_MULTIPLE_DUMP_OVERWRITE=S'han sol\u00b7licitat diversos heapdumps, per\u00f2 falta %%id a l'etiqueta de fitxer: els abocaments de mem\u00f2ria se sobreescriuran.
 # START NON-TRANSLATABLE
 J9NLS_DMP_MULTIPLE_DUMP_OVERWRITE.explanation=The JVM replaces the %%id insertion point with a unique number. Because %%id is missing the replacement cannot take place, causing a potential file name clash and file overwrite.
 J9NLS_DMP_MULTIPLE_DUMP_OVERWRITE.system_action=The JVM informs the user and produces dumps as requested.
@@ -513,4 +513,20 @@ J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.explanation=The number of -Xdump: options exceed
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.system_action=The JVM exits.
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.user_response=Combine dump types, event types, and filters using '+' into a single option
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_EXIT_SHUTDOWN=La m\u00e0quina virtual s'atura. Motiu: %2$.*1$s
+# START NON-TRANSLATABLE
+J9NLS_DMP_EXIT_SHUTDOWN.explanation=User requested to exit
+J9NLS_DMP_EXIT_SHUTDOWN.system_action=The JVM exits.
+J9NLS_DMP_EXIT_SHUTDOWN.user_response=This exit was requested by the user.
+J9NLS_DMP_EXIT_SHUTDOWN.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN=La m\u00e0quina virtual s'atura. Motiu: desconegut
+# START NON-TRANSLATABLE
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.explanation=User requested to exit
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.system_action=The JVM exits.
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.user_response=This exit was requested by the user.
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.link=
 # END NON-TRANSLATABLE

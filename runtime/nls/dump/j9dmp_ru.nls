@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -513,4 +513,20 @@ J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.explanation=The number of -Xdump: options exceed
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.system_action=The JVM exits.
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.user_response=Combine dump types, event types, and filters using '+' into a single option
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_EXIT_SHUTDOWN=\u0412\u0438\u0440\u0442\u0443\u0430\u043b\u044c\u043d\u0430\u044f \u043c\u0430\u0448\u0438\u043d\u0430 \u0437\u0430\u0432\u0435\u0440\u0448\u0430\u0435\u0442 \u0440\u0430\u0431\u043e\u0442\u0443. \u041f\u0440\u0438\u0447\u0438\u043d\u0430: %2$.*1$s
+# START NON-TRANSLATABLE
+J9NLS_DMP_EXIT_SHUTDOWN.explanation=User requested to exit
+J9NLS_DMP_EXIT_SHUTDOWN.system_action=The JVM exits.
+J9NLS_DMP_EXIT_SHUTDOWN.user_response=This exit was requested by the user.
+J9NLS_DMP_EXIT_SHUTDOWN.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN=\u0412\u0438\u0440\u0442\u0443\u0430\u043b\u044c\u043d\u0430\u044f \u043c\u0430\u0448\u0438\u043d\u0430 \u0437\u0430\u0432\u0435\u0440\u0448\u0430\u0435\u0442 \u0440\u0430\u0431\u043e\u0442\u0443. \u041f\u0440\u0438\u0447\u0438\u043d\u0430: \u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u043e
+# START NON-TRANSLATABLE
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.explanation=User requested to exit
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.system_action=The JVM exits.
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.user_response=This exit was requested by the user.
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.link=
 # END NON-TRANSLATABLE
