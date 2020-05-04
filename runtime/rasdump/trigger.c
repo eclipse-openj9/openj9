@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -126,7 +126,7 @@ struct ExceptionStackFrame
 };
 
 static UDATA
-countExceptionStackFrame(J9VMThread *vmThread, void *userData, J9ROMClass *romClass, J9ROMMethod *romMethod, J9UTF8 *fileName, UDATA lineNumber, J9ClassLoader* classLoader)
+countExceptionStackFrame(J9VMThread *vmThread, void *userData, J9ROMClass *romClass, J9ROMMethod *romMethod, J9UTF8 *fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass)
 {
 	struct ExceptionStackFrame *frame = (struct ExceptionStackFrame *) userData;
 
