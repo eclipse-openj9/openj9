@@ -201,6 +201,8 @@ omr_add_exports(jvmtitest
 	Java_com_ibm_jvmti_tests_setNativeMethodPrefix_snmp001_nat
 	Java_com_ibm_jvmti_tests_getSystemProperty_gsp001_getSystemProperty
 	Java_com_ibm_jvmti_tests_getSystemProperty_gsp001_cleanup
+	Java_com_ibm_jvmti_tests_eventException_ee001_invoke
+	Java_com_ibm_jvmti_tests_eventException_ee001_check
 )
 
 if(NOT JAVA_SPEC_VERSION LESS 9)
