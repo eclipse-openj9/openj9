@@ -31,7 +31,7 @@
 #include "vm_api.h"
 #include "ut_j9jcl.h"
 
-static UDATA getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader);
+static UDATA getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass);
 
 /**
  * Saves enough context into the StackTraceElement to allow printing later.  For
@@ -83,7 +83,7 @@ setStackTraceElementSource(J9VMThread* vmThread, j9object_t stackTraceElement, J
 
 
 static UDATA
-getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader)
+getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass)
 {
 	J9GetStackTraceUserData * userData = voidUserData;
 	J9JavaVM * vm = vmThread->javaVM;
@@ -121,7 +121,6 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 			J9UTF8 * utf = NULL;
 			j9object_t string = NULL;
 			UDATA j2seVersion = J2SE_VERSION(vm) & J2SE_VERSION_MASK;
-			J9Class* clazz = NULL;
 
 			PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, element);
 
@@ -130,13 +129,15 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 			 * able to handle the case where the J9Class cannot be found
 			 */
 			if (NULL != classLoader) {
-				clazz = vmFuncs->peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
-				if (NULL != clazz) {
-					/* clazz can never be an array here as arrays can't define methods so we don't need to
+				if (NULL == ramClass) {
+					ramClass = vmFuncs->peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+				}
+				if (NULL != ramClass) {
+					/* ramClass can never be an array here as arrays can't define methods so we don't need to
 					* take them into account in the code below when writing the interned string back to
 					* the Class object.
 					*/
-					Assert_JCL_false(J9CLASS_IS_ARRAY(clazz));
+					Assert_JCL_false(J9CLASS_IS_ARRAY(ramClass));
 				}
 			}
 
@@ -169,8 +170,8 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 					/* Fetch the J9Module from the j.l.Class->j.l.Module field if we have a class.
 					 * Otherwise the more painful package-based lookup must be performed
 					 */
-					if (clazz != NULL) {
-						j9object_t moduleObject = J9VMJAVALANGCLASS_MODULE(vmThread, clazz->classObject);
+					if (ramClass != NULL) {
+						j9object_t moduleObject = J9VMJAVALANGCLASS_MODULE(vmThread, ramClass->classObject);
 						module = J9OBJECT_ADDRESS_LOAD(vmThread, moduleObject, vm->modulePointerOffset);
 					} else {
 						UDATA length = packageNameLength(romClass);
@@ -189,8 +190,8 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 			/* Fill in method class */
 			string = NULL;
 			{
-				if (NULL != clazz) {
-					string = J9VMJAVALANGCLASS_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
+				if (NULL != ramClass) {
+					string = J9VMJAVALANGCLASS_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass));
 				}
 				if (NULL == string) {
 					UDATA flags = J9_STR_XLAT | J9_STR_TENURE | J9_STR_INTERN;
@@ -203,9 +204,9 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 						/* exception is pending from the call */
 						goto done;
 					} else {
-						if (NULL != clazz) {
+						if (NULL != ramClass) {
 							/* Class name was interned so it's safe to write it back to the Class Object */
-							J9VMJAVALANGCLASS_SET_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz), string);
+							J9VMJAVALANGCLASS_SET_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), string);
 						}
 					}
 				}
@@ -235,8 +236,8 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 			 * This avoids additional allocations during stack trace generation
 			 */
 			string = NULL;
-			if (clazz != NULL) {
-				string = J9VMJAVALANGCLASS_FILENAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
+			if (ramClass != NULL) {
+				string = J9VMJAVALANGCLASS_FILENAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass));
 			}
 			if (string == NULL) {
 				if (fileName != NULL) {
@@ -261,9 +262,9 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 						}
 					}
 					Assert_JCL_notNull(string);
-					if (clazz != NULL) {
+					if (ramClass != NULL) {
 						/* Update the cached fileNameString on the class so subsequent calls will find it */
-						J9VMJAVALANGCLASS_SET_FILENAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz), string);
+						J9VMJAVALANGCLASS_SET_FILENAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), string);
 					}
 				}
 			}
