@@ -2734,7 +2734,6 @@ J9::Options::packOptions(const TR::Options *origOptions)
    // sizeof(bool) is reserved to pack J9JIT_RUNTIME_RESOLVE
    size_t totalSize = sizeof(TR::Options) + logFileNameLength + suffixLogsFormatLength + blockShufflingSequenceLength + induceOSRLength + sizeof(bool);
 
-   addRegexStringSize(origOptions->_traceForCodeMining, totalSize);
    addRegexStringSize(origOptions->_disabledOptTransformations, totalSize);
    addRegexStringSize(origOptions->_disabledInlineSites, totalSize);
    addRegexStringSize(origOptions->_disabledOpts, totalSize);
@@ -2775,7 +2774,6 @@ J9::Options::packOptions(const TR::Options *origOptions)
    options->_customStrategy = NULL;
    options->_customStrategySize = 0;
    options->_countString = NULL;
-   appendRegex(options->_traceForCodeMining, curPos);
    appendRegex(options->_disabledOptTransformations, curPos);
    appendRegex(options->_disabledInlineSites, curPos);
    appendRegex(options->_disabledOpts, curPos);
@@ -2844,7 +2842,6 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
    // On JITServer, we store this value for each client in ClientSessionData
    bool rtResolve = (bool) *((uint8_t *) options + clientOptionsSize - sizeof(bool));
    compInfoPT->getClientData()->setRtResolve(rtResolve);
-   unpackRegex(options->_traceForCodeMining);
    unpackRegex(options->_disabledOptTransformations);
    unpackRegex(options->_disabledInlineSites);
    unpackRegex(options->_disabledOpts);
