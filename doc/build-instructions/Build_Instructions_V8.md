@@ -63,7 +63,7 @@ If you want to build a binary by using a Docker container, follow these steps to
 
 1. The first thing you need to do is install Docker. You can download the free Community edition from [here](https://docs.docker.com/engine/installation/), which also contains instructions for installing Docker on your system.  You should also read the [Getting started](https://docs.docker.com/get-started/) guide to familiarise yourself with the basic Docker concepts and terminology.
 
-2. Obtain the [docker build script](https://github.com/eclipse/openj9/blob/master/buildenv/mkdocker.sh) to build and run a container that has all the correct software pre-requisites.
+2. Obtain the [docker build script](https://github.com/eclipse/openj9/blob/master/buildenv/docker/mkdocker.sh) to build and run a container that has all the correct software pre-requisites.
 
 Download the docker build script to your local system or copy and paste the following command:
 
@@ -88,7 +88,7 @@ Now that you have the Docker image running, you are ready to move to the next st
 
 #### Setting up your build environment without Docker
 
-If you don't want to user Docker, you can still build an OpenJDK V8 with OpenJ9 directly on your Ubuntu system or in a Ubuntu virtual machine. Use the output of this command like a recipe card to determine the software dependencies that must be installed on the system, plus a few configuration steps.
+If you don't want to user Docker, you can still build directly on your Ubuntu system or in a Ubuntu virtual machine. Use the output of the following command like a recipe card to determine the software dependencies that must be installed on the system, plus a few configuration steps.
 
 ```
 bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=16.04 --print
@@ -99,17 +99,31 @@ bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=16.04 --print
 ```
 apt-get update \
  && apt-get install -qq -y --no-install-recommends \
-   autoconf \
-   ca-certificates \
    ...
 ```
 
-2. Download and setup **freemarker.jar** into a directory. The example commands use `/root` to be consistent with the Docker instructions. If you aren't using Docker, you probably want to store the **freemarker.jar** in your home directory.
+2. The previous step installed g++-7 and gcc-7 packages, which might be different
+than the default version installed on your system. Export variables to set the 
+version used in the build.
+```
+export CC=gcc-7 CXX=g++-7
+```
+
+3. Download and setup **freemarker.jar** into a directory. The example commands use `/root` to be consistent with the Docker instructions. If you aren't using Docker, you probably want to store the **freemarker.jar** in your home directory.
 ```
 cd /root
 wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
 tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
 rm -f freemarker.tgz
+```
+
+4. Download and setup the boot JDK using the latest AdoptOpenJDK v8 build.
+```
+cd /<my_home_dir>
+wget -O bootjdk8.tar.gz "https://api.adoptopenjdk.net/v3/binary/latest/8/ga/linux/x64/jdk/openj9/normal/adoptopenjdk"
+tar -xzf bootjdk8.tar.gz
+rm -f bootjdk8.tar.gz
+mv $(ls | grep -i jdk8) bootjdk8
 ```
 
 ### 2. Get the source
@@ -133,9 +147,11 @@ bash get_source.sh
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-freemarker-jar=/root/freemarker.jar
+bash configure --with-freemarker-jar=/root/freemarker.jar --with-boot-jdk=/usr/lib/adoptojdk-java-80
 ```
 :warning: You must give an absolute path to freemarker.jar
+
+:warning: The path in the example --with-boot-jdk= option is appropriate for the Docker installation. If not using the Docker environment, set the path appropriate for your setup, such as "/<my_home_dir>/bootjdk8" as setup in the previous instructions.
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
@@ -456,6 +472,8 @@ Now you're ready to build OpenJDK with OpenJ9:
 ```
 make all
 ```
+:warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
+If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
 
 Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre)
 1) Win 64-bit
@@ -626,6 +644,8 @@ Now you're ready to build OpenJDK with OpenJ9.
 ```
 make all
 ```
+:warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
+If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
 
 :pencil: Because `make all` does not provide sufficient details for debugging, a more verbose build can be produced by running the command `make LOG=trace all 2>&1 | tee make_all.log`.
 
