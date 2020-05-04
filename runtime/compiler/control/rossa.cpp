@@ -1738,7 +1738,7 @@ onLoadInternal(
 #endif
 
 #ifdef J9VM_RAS_DUMP_AGENTS
-   jitConfig->dumpJitInfo = dumpJitInfo;
+   jitConfig->runJitdump = runJitdump;
 #endif
 
    if (!TR::Compiler->target.cpu.isI386())

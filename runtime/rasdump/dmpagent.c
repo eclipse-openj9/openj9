@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -914,7 +914,6 @@ doToolDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 	return OMR_ERROR_NONE;
 }
 
-
 static omr_error_t
 doJavaDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 {
@@ -936,7 +935,6 @@ doJavaDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 	return OMR_ERROR_NONE;
 }
 
-
 omr_error_t
 doHeapDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 {
@@ -950,8 +948,6 @@ doHeapDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 
 	return OMR_ERROR_NONE;
 }
-
-
 
 static omr_error_t
 doSnapDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
@@ -998,8 +994,6 @@ doSnapDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 
 	return OMR_ERROR_NONE;
 }
-
-
 
 #ifdef J9ZOS390
 static omr_error_t
@@ -1054,31 +1048,30 @@ static omr_error_t
 doJitDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 {
 	J9JavaVM *vm = context->javaVM;
-	omr_error_t result = OMR_ERROR_INTERNAL;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	omr_error_t result = OMR_ERROR_NONE;
 	
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
-	PORT_ACCESS_FROM_JAVAVM(vm);
-
-	/* If the JIT configuration structure and JIT dump function pointer are set, run the JIT dump */
-	J9JITConfig *jitConfig = vm->jitConfig;
-	if ((jitConfig != NULL) && (jitConfig->dumpJitInfo != NULL)) {
-		IDATA rc = 0;
+	if (NULL != vm->jitConfig) {
 		if (makePath(vm, label) == OMR_ERROR_INTERNAL) {
 			/* Nowhere available to write the dump, we are done, makePath() will have issued error message */
 			return OMR_ERROR_INTERNAL;
 		}
-		j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_REQUESTING_DUMP_STR, "JIT", label);
-		rc = jitConfig->dumpJitInfo(vm->internalVMFunctions->currentVMThread(vm), label, context);
-		if (0 == rc) {
-			result = OMR_ERROR_NONE;
+
+		reportDumpRequest(privatePortLibrary, context, "JIT", label);
+
+		result = vm->jitConfig->runJitdump(label, context, agent);
+
+		if (OMR_ERROR_NONE == result) {
 			j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_WRITTEN_DUMP_STR, "JIT", label);
+			Trc_dump_reportDumpEnd_Event2("JIT", label);
 		} else {
-			result = OMR_ERROR_INTERNAL;
 			j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR, "JIT", label);
+			Trc_dump_reportDumpEnd_Event2("JIT", "stderr");
 		}
 	}
-
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
+
 	return result;
 }
 

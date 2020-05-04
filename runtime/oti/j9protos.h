@@ -1094,8 +1094,6 @@ extern J9_CFUNC UDATA * getNextStackMapFrame(U_32 *stackMap, UDATA *previousFram
 extern J9_CFUNC void  jitResetAllUntranslateableMethods (J9VMThread *vmThread);
 #endif /* J9VM_JIT_FULL_SPEED_DEBUG &&  J9VM_INTERP_NATIVE_SUPPORT */
 
-extern J9_CFUNC IDATA dumpJitInfo(J9VMThread *thread, char *label, J9RASdumpContext *context);
-
 extern J9_CFUNC void  jitConvertStoredDoubleRegisterToSingle (U_64 * doublePtr, U_32 * singlePtr);
 #endif /* _J9VMJITDEBUGHELPERS_ */
 
