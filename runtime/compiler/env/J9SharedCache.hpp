@@ -168,6 +168,9 @@ public:
    static TR_J9SharedCacheDisabledReason getSharedCacheDisabledReason() { return _sharedCacheState; }
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo);
    static void setStoreSharedDataFailedLength(UDATA length) {_storeSharedDataFailedLength = length; }
+
+   static bool initCCVCaching();
+
    virtual J9SharedClassCacheDescriptor *getCacheDescriptorList();
 
 private:
@@ -225,6 +228,8 @@ private:
    static TR_J9SharedCacheDisabledReason _sharedCacheState;
    static TR_YesNoMaybe                  _sharedCacheDisabledBecauseFull;
    static UDATA                          _storeSharedDataFailedLength;
+
+   static TR::Monitor                   *_classChainValidationMutex;
    };
 
 

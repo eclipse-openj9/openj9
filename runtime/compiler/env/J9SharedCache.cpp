@@ -52,6 +52,8 @@ TR_J9SharedCache::TR_J9SharedCacheDisabledReason TR_J9SharedCache::_sharedCacheS
 TR_YesNoMaybe TR_J9SharedCache::_sharedCacheDisabledBecauseFull = TR_maybe;
 UDATA TR_J9SharedCache::_storeSharedDataFailedLength = 0;
 
+TR::Monitor * TR_J9SharedCache::_classChainValidationMutex = NULL;
+
 TR_YesNoMaybe TR_J9SharedCache::isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo)
    {
    if (_sharedCacheDisabledBecauseFull == TR_maybe)
@@ -96,6 +98,15 @@ TR_YesNoMaybe TR_J9SharedCache::isSharedCacheDisabledBecauseFull(TR::Compilation
    return _sharedCacheDisabledBecauseFull;
    }
 
+bool
+TR_J9SharedCache::initCCVCaching()
+   {
+   if (!_classChainValidationMutex)
+      {
+      if (!(_classChainValidationMutex = TR::Monitor::create("JIT-ClassChainValidationMutex")))
+         return false;
+      }
+   }
 
 TR_J9SharedCache::TR_J9SharedCache(TR_J9VMBase *fe)
    {
