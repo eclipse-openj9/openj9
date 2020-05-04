@@ -314,7 +314,7 @@ static TR_CompilationErrorCode recompileMethodForLog(
 
    // actually request the compilation
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "dumpJitInfo: compileMethod() about to issued synchronously");
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "compileMethod() about to issued synchronously");
    TR_CompilationErrorCode compErrCode;
 
    // Set the VM state of the crashed thread so the diagnostic thread can use consume it
@@ -330,7 +330,7 @@ static TR_CompilationErrorCode recompileMethodForLog(
       }
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "dumpJitInfo: crashing thread returned from compileMethod() with errorCode=%d", compErrCode);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Crashing thread returned from compileMethod() with rc = %d", compErrCode);
 
    trfprintf(logFile, "</logRecompilation>\n");
 
@@ -341,9 +341,11 @@ static TR_CompilationErrorCode recompileMethodForLog(
    return compErrCode;
    }
 
-/// Dumps JIT-specific crash info
-IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContext *context)
+omr_error_t
+runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
    {
+   J9VMThread *crashedThread = context->javaVM->internalVMFunctions->currentVMThread(context->javaVM);
+
    Trc_JIT_DumpStart(crashedThread);
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -375,17 +377,17 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "JIT dump initiated. Crashed vmThread=%p", crashedThread);
 
    // if either one of the args is null, we can't really do anything
-   if (crashedThread == 0 || logFileLabel == 0)
+   if (crashedThread == 0 || label == 0)
       {
       jitDumpFailedBecause(crashedThread, "one or both arguments are null");
-      return 0;
+      return OMR_ERROR_NONE;
       }
 
    // if VM is gone, can't do anything either
    if (crashedThread->javaVM == 0)
       {
       jitDumpFailedBecause(crashedThread, "VM pointer is null");
-      return 0;
+      return OMR_ERROR_NONE;
       }
 
    // get a hold of jitConfig in order to later get compinfo and frontend
@@ -395,14 +397,14 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
    if (jitConfig == 0)
       {
       jitDumpFailedBecause(crashedThread, "jitConfig is null");
-      return 0;
+      return OMR_ERROR_NONE;
       }
    // get global compinfo
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
    if (!compInfo)
       {
       jitDumpFailedBecause(crashedThread, "compInfo is null");
-      return 0;
+      return OMR_ERROR_NONE;
       }
 
    // Must be able to allocate a frontend for this thread
@@ -410,7 +412,7 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
    if (!frontendOfThread)
       {
       jitDumpFailedBecause(crashedThread, "thread's frontend is missing");
-      return 0;
+      return OMR_ERROR_NONE;
       }
 
    // get global configuration options
@@ -418,15 +420,15 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
    if (!options)
       {
       jitDumpFailedBecause(crashedThread, "No cmdLineOptions available");
-      return 0;
+      return OMR_ERROR_NONE;
       }
 
 
    // open log file, using the postfixed timestamp if specified
    TR::FILE *logFile;
    char tmp[1025];
-   logFileLabel = frontendOfThread->getFormattedName(tmp, 1025, logFileLabel, NULL, false);
-   logFile = trfopen(logFileLabel, "ab", false);
+   label = frontendOfThread->getFormattedName(tmp, 1025, label, NULL, false);
+   logFile = trfopen(label, "ab", false);
 
    trfprintf(logFile,
       "<?xml version=\"1.0\" standalone=\"no\"?>\n"
@@ -440,7 +442,7 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
       jitDumpFailedBecause(crashedThread, "some thread is holding exclusive VM access");
       trfprintf(logFile, "Some thread is holding exclusive VM access. No log created.\n");
       trfclose(logFile);
-      return 0;
+      return OMR_ERROR_NONE;
       }
 
 
@@ -463,7 +465,7 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
       jitDumpFailedBecause(crashedThread, "detected recursive crash");
       trfprintf(logFile, "Detected recursive crash. No log created.\n");
       trfclose(logFile);
-      return 0;
+      return OMR_ERROR_NONE;
       }
 
    // get the method currently being compiled
@@ -485,13 +487,13 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
       currentMethodBeingCompiled->getMonitor()->notifyAll();
       currentMethodBeingCompiled->getMonitor()->exit();
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "dumpJitInfo notified all waiting threads");
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Notified all waiting threads");
       }
 
    // disable all non-essential compilations
    compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "dumpJitInfo disabled further compilation");
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Disabled further compilation");
 
    // get the dump thread
    TR::CompilationInfoPerThread *recompilationThreadInfo = compInfo->getCompilationInfoForDumpThread();
@@ -503,19 +505,17 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
    if (recompilationThread)
       {
       if (options->getVerboseOption(TR_VerboseDump))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "dumpJitInfo: diagnostic compilation thread available. Will purge compilation queue");
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Diagnostic compilation thread available - purging compilation queue");
       compInfo->acquireCompMonitor(crashedThread);
       compInfo->purgeMethodQueue(compilationFailure); // compilationFailure is a TR_CompilationErrorCode
       compInfo->releaseCompMonitor(crashedThread);
       }
 
-
-
    // if our compinfo is null, we are an application thread
    if (threadCompInfo == 0)
       {
       if (options->getVerboseOption(TR_VerboseDump))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "crashed in application thread");
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Crashed in application thread");
       trfprintf(logFile, "#INFO: Crashed in application thread %p.\n", crashedThread);
 
       // only bother doing anything if we have a healthy compilation thread available
@@ -620,7 +620,7 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
       if (comp)
          {
          if (options->getVerboseOption(TR_VerboseDump))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "dumpJitInfo: found comp object");
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Found compilation object");
 
          // dump IL of current compilation
          dumpCurrentIL(comp, crashedThread, jitConfig, logFile);
@@ -635,7 +635,7 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
                // resume the healthy compilation thread
                recompilationThreadInfo->resumeCompilationThread();  // TODO: Postpone this so that the thread does not get to sleep again
                if (options->getVerboseOption(TR_VerboseDump))
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "dumpJitInfo: have resumed DiagCompThread");
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Resuming DiagCompThread");
 
                // get old start PC if method was available
                void *oldStartPC = 0;
@@ -692,6 +692,5 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
    if (options && options->getVerboseOption(TR_VerboseDump))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "JIT dump complete");
 
-
-   return 0;
-   } // dumpJitInfo
+   return OMR_ERROR_NONE;
+   }
