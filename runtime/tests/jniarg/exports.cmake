@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,9 @@
 ################################################################################
 
 omr_add_exports(jniargtests
+	Java_JniArgTests_logRetValError
+	Java_JniArgTests_summary
+
 	Java_JniArgTests_nativeBBrB
 	Java_JniArgTests_nativeBBBBrB
 	Java_JniArgTests_nativeBSrB
