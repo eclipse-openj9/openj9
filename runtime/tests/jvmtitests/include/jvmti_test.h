@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,11 @@
 #include "j9comp.h"
 #include "jvmti.h"
 #include "j9cfg.h"
+
+#if defined(_MSC_VER)
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif /* _MSC_VER */
 
 /* TODO: remove */
 #define BUFFER_SIZE 65536
@@ -222,6 +227,7 @@ jint JNICALL decomp001(agentEnv * env, char * args);
 jint JNICALL decomp002(agentEnv * env, char * args);
 jint JNICALL decomp003(agentEnv * env, char * args);
 jint JNICALL decomp004(agentEnv * env, char * args);
+jint JNICALL decomp005(agentEnv * env, char * args);
 jint JNICALL fw001(agentEnv * env, char * args);
 jint JNICALL vmd001(agentEnv * env, char * args);
 jint JNICALL glc001(agentEnv * env, char * args);
