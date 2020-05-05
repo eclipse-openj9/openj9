@@ -147,7 +147,7 @@ bash get_source.sh
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-freemarker-jar=/root/freemarker.jar --with-boot-jdk=/usr/lib/adoptojdk-java-80
+bash configure --with-freemarker-jar=/root/freemarker.jar --with-boot-jdk=/usr/lib/jvm/adoptojdk-java-80
 ```
 :warning: You must give an absolute path to freemarker.jar
 
