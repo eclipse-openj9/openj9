@@ -423,14 +423,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<makefilestub data="CFLAGS += -femit-class-debug-always">
 				<include-if condition="spec.linux_390.*"/>
 				<include-if condition="spec.linux_aarch64.*"/>
-				<include-if condition="spec.linux_ppc.*_gcc"/>
+				<include-if condition="spec.linux_ppc.*_le"/>
 				<include-if condition="spec.linux_riscv64.*"/>
 				<include-if condition="spec.linux_x86.*"/>
 			</makefilestub>
 			<makefilestub data="CXXFLAGS += -femit-class-debug-always">
 				<include-if condition="spec.linux_390.*"/>
 				<include-if condition="spec.linux_aarch64.*"/>
-				<include-if condition="spec.linux_ppc.*_gcc"/>
+				<include-if condition="spec.linux_ppc.*_le"/>
 				<include-if condition="spec.linux_riscv64.*"/>
 				<include-if condition="spec.linux_x86.*"/>
 			</makefilestub>

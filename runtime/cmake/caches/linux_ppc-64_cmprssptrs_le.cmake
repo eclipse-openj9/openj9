@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 1991, 2019 IBM Corp. and others
+# Copyright (c) 1991, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,4 +21,4 @@
 ################################################################################
 
 include("${CMAKE_CURRENT_LIST_DIR}/cmprssptrs.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/linux_ppc-64_le_gcc.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/linux_ppc-64_le.cmake")
