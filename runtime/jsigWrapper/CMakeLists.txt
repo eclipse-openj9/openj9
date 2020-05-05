@@ -31,7 +31,6 @@ target_link_libraries(jsig
 	PRIVATE
 		j9vm_interface
 
-		omrsig
 		omrutil
 		${CMAKE_DL_LIBS}
 )
