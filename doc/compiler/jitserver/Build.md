@@ -20,7 +20,6 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-
 There are currently 3 supported build procedures. Select the one that best suits your needs.
 
 - [Building the whole VM](#vm). The complete build process (Most correct and recommended). Produces a complete JVM as output (including the JIT).
@@ -93,15 +92,6 @@ cd /root \
  && rm -f bootjdk8.tar.gz \
  && mv $(ls | grep -i jdk) bootjdk8
 
-#########
-# Version 3.5.1 of protobuf has been validated to work on x86. On Z and PowerPC a version of 3.7.1 or higher is needed.
-#########
-
-wget https://github.com/protocolbuffers/protobuf/releases/download/v3.7.1/protobuf-cpp-3.7.1.tar.gz \
- && tar -xvzf protobuf-cpp-3.7.1.tar.gz \
- && cd protobuf-3.7.1 \
- && ./configure --disable-shared --with-pic && make && make install && ldconfig \
- && rm -rf /protobuf-3.7.1 && rm -rf /protobuf-cpp-3.7.1.tar.gz
 
 export JAVA_HOME=/root/bootjdk8
 export PATH="$JAVA_HOME/bin:$PATH"
@@ -126,8 +116,34 @@ Depending on where you want to fetch OpenJ9 sources from, you could use your own
 ```
 bash get_source.sh -openj9-repo=https://github.com/<Your GitHub UserID>/openj9.git -omr-repo=https://github.com/eclipse/openj9-omr.git
 ```
-See https://www.eclipse.org/openj9/oj9_build.html for more detail. The only difference is you need to check out the JITServer code instead of upstream OpenJ9.
+See https://www.eclipse.org/openj9/oj9_build.html for more detail.
 
+You can test the success of the build process by starting the JVM in server and client mode.
+
+```
+cd build/linux-x86_64-normal-server-release/images/jdk
+```
+Run:
+
+To start the JVM in server mode:
+```
+$./bin/jitserver
+JITServer is currently a technology preview. Its use is not yet supported
+
+JITServer is ready to accept incoming requests
+```
+To start the JVM in client mode:
+```
+$./bin/java -XX:+UseJITServer -version
+JIT: using build "Nov 6 2019 20:02:35"
+JIT level: cf3ba4120
+openjdk version "1.8.0_232-internal"
+OpenJDK Runtime Environment (build 1.8.0_232-internal-root_2019_11_06_19_57-b00)
+Eclipse OpenJ9 VM (build master-cf3ba4120, JRE 1.8.0 Linux amd64-64-Bit Compressed References 20191106_000000(JIT enabled, AOT enabled)
+OpenJ9   - cf3ba4120
+OMR      - cf9d75a4a
+JCL      - 03cb3a3cb4 based on jdk8u232-b09)
+```
 ## JIT
 
 If you already have an SDK enabled with JITServer and just want to rebuild the JIT library, then **`export J9VM_OPT_JITSERVER=1` needs to be added to the build environment**.

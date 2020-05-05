@@ -20,7 +20,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-JITServer adds two additional *personas* to the JVM: client mode and server mode. To start the JVM in server mode, run the `jitserver` launcher present under `bin` directory (along side `java` launcher). To start the JVM in client mode, there is a new command line option: `-XX:+UseJITServer`
+JITServer adds two additional *personas* to the JVM: client mode and server mode. To start the JVM in server mode, run the `jitserver` launcher present under `bin` directory (along side `java` launcher). To start the JVM in client mode, there is a new command line option: `-XX:+UseJITServer` (under bin run `./java -XX:+UseJITServer <application name>`)
 
 In server mode, the JVM will halt after startup and begin listening for compilation requests from clients. No Java application is given to the `jitserver` launcher on the command line. Any option accepted by JVM can also be passed to the `jitserver` launcher.
 

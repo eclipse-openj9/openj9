@@ -33,13 +33,13 @@ These are the steps to run the tests on your machine.
 
 2. Install [prerequisites](https://github.com/eclipse/openj9/blob/master/test/docs/Prerequisites.md)
 
-   Example installation can be found [here](https://github.com/eclipse/openj9/blob/master/buildenv/docker/test/Dockerfile#L57-L68).
+   An example of how to install the prerequisites can be found [here](https://github.com/eclipse/openj9/blob/master/buildenv/docker/test/Dockerfile#L57-L68). Make sure that JAVA_HOME and JAVA_BIN are set (E.g. `export JAVA_HOME=/root/openj9-openjdk-jdk11/build/linux-x86_64-normal-server-release/images/jdk` and `export JAVA_BIN=/root/openj9-openjdk-jdk11/build/linux-x86_64-normal-server-release/images/jdk/bin`). Basically you want to test on the jdk you build, so point the environment variable to your personal build of jdk.
 3. Compile  the tests (only need to compile once):
    ```
    cd $OPENJ9_DIR/openj9/test
    git clone https://github.com/AdoptOpenJDK/TKG.git
    cd TKG
-   export JAVA_VERSION=SE80
+   export TEST_JDK_HOME=<path to JDK directory that you wish to test, it's the same as $JAVA_HOME>
    export JAVA_BIN=/your/sdk/jre/bin
    export SPEC=linux_x86-64_cmprssptrs
    ```
