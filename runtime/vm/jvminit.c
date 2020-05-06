@@ -2203,6 +2203,16 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				GET_INTEGER_VALUE(argIndex, optname, threshold);
 				vm->valueFlatteningThreshold = threshold;
 			}
+
+			{
+				IDATA enableFlattenedArrays = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_VTARRAYFLATTENING_EQUALS, NULL);
+				IDATA disableFlattenedArrays = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_VTDISABLEARRAYFLATTENING_EQUALS, NULL);
+				if (disableFlattenedArrays > enableFlattenedArrays) {
+					vm->extendedRuntimeFlags2 &= ~J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING;
+				} else if (disableFlattenedArrays < enableFlattenedArrays) {
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING;
+				}
+			}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 			if ((argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XXDUMPLOADEDCLASSLIST, NULL)) >= 0) {
