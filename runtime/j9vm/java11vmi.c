@@ -752,7 +752,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 
 	if (NULL != packages) {
 		jsize pkgIndex = 0;
-		memset(packages, 0, packagesNumBytes);
+		memset((void *)packages, 0, packagesNumBytes);
 		for (pkgIndex = 0; pkgIndex < numPackages; pkgIndex++) {
 			jobject packageObj = (*env)->GetObjectArrayElement(env, packageArray, pkgIndex);
 			if ((*env)->ExceptionCheck(env)) {

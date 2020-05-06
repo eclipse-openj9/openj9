@@ -26,6 +26,8 @@ import java.lang.annotation.Annotation;
 /*[IF Java15]*/
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import jdk.internal.misc.Unsafe;
+import java.lang.StringConcatHelper;
 /*[ENDIF] Java15 */
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
@@ -398,16 +400,21 @@ final class Access implements JavaLangAccess {
 /*[IF Java15]*/
 	// TODO: implement support for hidden classes.
 
-	public Class<?> defineClass(ClassLoader classLoader, Class<?> clazz, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean option, int flags, Object obj) {
-		return null;
+	public Class<?> defineClass(ClassLoader classLoader, Class<?> clazz, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object obj) {
+		Unsafe theUnsafe = Unsafe.getUnsafe();
+		Class <?> ret = theUnsafe.defineAnonymousClass(clazz, classRep, null);
+		if (init) {
+			theUnsafe.ensureClassInitialized(ret);
+		}
+		return ret;
 	}
 
 	public ProtectionDomain protectionDomain(Class<?> clazz) {
-		return null;
+		return clazz.getProtectionDomain();
 	}
 
 	public MethodHandle stringConcatHelper(String arg0, MethodType type) {
-		return null;
+		return StringConcatHelper.lookupStatic(arg0, type);
 	}
 
 	public Object classData(Class<?> clazz) {

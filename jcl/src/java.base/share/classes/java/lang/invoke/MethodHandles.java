@@ -30,7 +30,6 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ReflectPermission;
-
 /*[IF Panama]*/
 import java.nicl.*;
 import java.nicl.types.*;
@@ -60,6 +59,8 @@ import java.lang.reflect.Array;
 /*[IF Java12]*/
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.JavaLangAccess;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 /*[ELSE]
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.JavaLangAccess;
@@ -2255,18 +2256,45 @@ public class MethodHandles {
 			STRONG
 		}
 
-		static class ClassDefiner {
-			Class<?> defineClass(boolean option) {
-				return null;
+		static final class ClassDefiner {
+			private final byte[] classBytes;
+			private final String className;
+			private final Lookup lookup;
+			ClassDefiner(String name, byte[] template, Lookup lookupObj) {
+				className = name;
+				classBytes = template;
+				lookup = lookupObj;
+			}
+			Class<?> defineClass(boolean initOption) {
+				Class<?> ret = AccessController.doPrivileged(new PrivilegedAction<Class<?>>() {
+					@Override
+					public Class<?> run() {
+						JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
+						Class<?> lookupClass = lookup.lookupClass();
+						return jlAccess.defineClass(lookupClass.getClassLoader(), lookupClass, className, classBytes, jlAccess.protectionDomain(lookupClass), initOption, 0, null);
+					}
+				});
+				return ret;
 			}
 		}
 
 		public Lookup defineHiddenClass(byte[] bytes, boolean initOption, ClassOption... classOptions) {
-			return null;
+			ClassReader cr;
+			try {
+				cr = new ClassReader(bytes);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				/*[MSG "K065Y2", "The class byte array is corrupted"]*/
+				throw new ClassFormatError(com.ibm.oti.util.Msg.getString("K065Y2")); //$NON-NLS-1$
+			}
+
+			String targetClassName = cr.getClassName().replace('/', '.');
+			ClassDefiner definer = makeHiddenClassDefiner(targetClassName, bytes);
+			return new Lookup(definer.defineClass(initOption), false);
 		}
 
 		ClassDefiner makeHiddenClassDefiner(String name, byte[] template) {
-			return null;
+			ClassDefiner definer = new ClassDefiner(name, template, this);
+			return definer;
 		}
 		/*[ENDIF] Java15 */		
 	}
