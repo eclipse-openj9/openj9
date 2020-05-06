@@ -2892,6 +2892,12 @@ fail:
 					arity = elementArrayClass->arity + 1;
 					leafComponentType = elementArrayClass->leafComponentType;
 				} else {
+					U_32 arrayFlags = J9ClassLargestAlignmentConstraintReference | J9ClassLargestAlignmentConstraintDouble;
+
+					if (J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING)) {
+						arrayFlags |= J9ClassIsFlattened;
+					}
+
 					arity = 1;
 					leafComponentType = elementClass;
 					/* For arrays of valueType elements (where componentType is a valuetype), the arrays themselves are not
@@ -2901,14 +2907,15 @@ fail:
 					 * properties from the leafComponentType. A 2D array is an array of references so it can never be flattened, however, its
 					 * elements may be flattened arrays.
 					 */
-					ramArrayClass->classFlags |= (elementClass->classFlags & (J9ClassIsFlattened | J9ClassLargestAlignmentConstraintReference | J9ClassLargestAlignmentConstraintDouble));
+					ramArrayClass->classFlags |= (elementClass->classFlags & arrayFlags);
+
 				}
 				ramArrayClass->leafComponentType = leafComponentType;
 				ramArrayClass->arity = arity;
 				ramArrayClass->componentType = elementClass;
 				ramArrayClass->module = leafComponentType->module;
 
-				if (J9_IS_J9CLASS_FLATTENED(elementClass)) {
+				if (J9_IS_J9CLASS_FLATTENED(ramArrayClass)) {
 					if (J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {
 						J9ARRAYCLASS_SET_STRIDE(ramClass, ROUND_UP_TO_POWEROF2(J9_VALUETYPE_FLATTENED_SIZE(elementClass), sizeof(U_64)));
 					} else if (J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
