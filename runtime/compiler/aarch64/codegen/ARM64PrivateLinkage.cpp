@@ -1426,16 +1426,17 @@ J9::ARM64::PrivateLinkage::loadStackParametersToLinkageRegisters(TR::Instruction
          int8_t lri = parmCursor->getLinkageRegisterIndex();
          TR::RealRegister *linkageReg;
          TR::InstOpCode::Mnemonic op;
+         TR::DataType dataType = parmCursor->getDataType();
 
-         if (parmCursor->getDataType() == TR::Double || parmCursor->getDataType() == TR::Float)
+         if (dataType == TR::Double || dataType == TR::Float)
             {
             linkageReg = machine->getRealRegister(properties.getFloatArgumentRegister(lri));
-            op = (parmCursor->getDataType() == TR::Double) ? TR::InstOpCode::vldrimmd : TR::InstOpCode::vldrimms;
+            op = (dataType == TR::Double) ? TR::InstOpCode::vldrimmd : TR::InstOpCode::vldrimms;
             }
          else
             {
             linkageReg = machine->getRealRegister(properties.getIntegerArgumentRegister(lri));
-            op = TR::InstOpCode::ldrimmx;
+            op = (dataType == TR::Int64 || dataType == TR::Address) ? TR::InstOpCode::ldrimmx : TR::InstOpCode::ldrimmw;
             }
 
          TR::MemoryReference *stackMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, parmCursor->getParameterOffset(), cg());
