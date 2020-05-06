@@ -313,4 +313,6 @@ _IF([JAVA_SPEC_VERSION >= 11],
 _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_InitializeFromArchive, JNICALL, false, void, JNIEnv *env, jclass clz)])
 _IF([JAVA_SPEC_VERSION >= 14],
-		[_X(JVM_GetExtendedNPEMessage, JNICALL, false, jstring, JNIEnv *env, jthrowable throwableObj)])
+	[_X(JVM_GetExtendedNPEMessage, JNICALL, false, jstring, JNIEnv *env, jthrowable throwableObj)])
+_IF([JAVA_SPEC_VERSION >= 15],
+	[_X(JVM_GetRandomSeedForCDSDump, JNICALL, false, jlong)])

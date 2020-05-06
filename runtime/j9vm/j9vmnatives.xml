@@ -338,10 +338,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<export name="JVM_InitClassName"/>
 		<export name="JVM_InitializeFromArchive"/>
 	</exports>
-	
+
 	<exports group="jdk14">
 		<!-- Additions for Java 14 (General) -->
 		<export name="JVM_GetExtendedNPEMessage"/>
+	</exports>
+
+	<exports group="jdk15">
+		<!-- Additions for Java 15 (General) -->
+		<export name="JVM_GetRandomSeedForCDSDump"/>
 	</exports>
 
 </exportlists>
