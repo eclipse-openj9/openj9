@@ -30,6 +30,7 @@
  * programming interface (API) used to support the building of Java diagnostic
  * tools. DTFJ works with data from a system dump or a Javadump.
  */
+@SuppressWarnings("module")
 module openj9.dtfj {
   requires transitive java.desktop;
   requires transitive java.logging;
