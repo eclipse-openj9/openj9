@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 /**
  * Provides the ConditionException class for z/OS Language Environment condition handling.
  */
+@SuppressWarnings("module")
 module openj9.zosconditionhandling {
   exports com.ibm.le.conditionhandling;
 }

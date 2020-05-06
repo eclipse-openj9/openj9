@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@
  * Defines API to perform certain operations using any connected CUDA capable GPU,
  * such as sorting arrays of natives types.
  */
+@SuppressWarnings("module")
 module openj9.gpu {
   requires java.base;
   requires openj9.cuda;
