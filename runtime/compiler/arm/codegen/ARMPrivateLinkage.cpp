@@ -289,7 +289,7 @@ void J9::ARM::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
 
    ListIterator<TR::ParameterSymbol> parameterIterator(&method->getParameterList());
    TR::ParameterSymbol              *parmCursor = parameterIterator.getFirst();
-   int32_t                          offsetToFirstParm = self()->getOffsetToFirstParm();
+   int32_t                          offsetToFirstParm = getOffsetToFirstParm();
    if (linkage.getRightToLeft())
       {
       while (parmCursor != NULL)
@@ -449,7 +449,7 @@ void J9::ARM::PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
    int32_t registerSaveSize = intRegistersSaved * 4 + fpRegistersSaved * 8;
 
-   int32_t outgoingArgSize  = self()->getOffsetToFirstParm() + codeGen->getLargestOutgoingArgSize();
+   int32_t outgoingArgSize  = getOffsetToFirstParm() + codeGen->getLargestOutgoingArgSize();
    int32_t totalFrameSize   = localSize + registerSaveSize + outgoingArgSize;
 
    // Align frame to 8-byte boundaries.
@@ -745,7 +745,7 @@ void J9::ARM::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
 
    int32_t registerSaveSize  = intRegistersSaved * 4 + fpRegistersSaved * 8;
 
-   int32_t outgoingArgSize   = self()->getOffsetToFirstParm() + codeGen->getLargestOutgoingArgSize();
+   int32_t outgoingArgSize   = getOffsetToFirstParm() + codeGen->getLargestOutgoingArgSize();
    int32_t totalFrameSize    = localSize + registerSaveSize + outgoingArgSize;
 
    if (debug("alignStackFrame"))

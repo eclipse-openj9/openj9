@@ -569,7 +569,7 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    mapIncomingParms(method);
 
    atlas->setLocalBaseOffset(lowGCOffset - firstLocalOffset);
-   atlas->setParmBaseOffset(atlas->getParmBaseOffset() + self()->getOffsetToFirstParm() - firstLocalOffset);
+   atlas->setParmBaseOffset(atlas->getParmBaseOffset() + getOffsetToFirstParm() - firstLocalOffset);
    }
 
 void J9::Power::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex)
@@ -1313,11 +1313,11 @@ void J9::Power::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
 
    if (0 && cg()->comp()->target().is64Bit())
       {
-      saveSize = (cg()->getLargestOutgoingArgSize() * 2) + self()->getOffsetToFirstParm();
+      saveSize = (cg()->getLargestOutgoingArgSize() * 2) + getOffsetToFirstParm();
       }
    else
       {
-      saveSize = cg()->getLargestOutgoingArgSize() + self()->getOffsetToFirstParm();
+      saveSize = cg()->getLargestOutgoingArgSize() + getOffsetToFirstParm();
       }
 
    while (savedFirst<=TR::RealRegister::LastGPR && !machine->getRealRegister(savedFirst)->getHasBeenAssignedInMethod())
@@ -1381,7 +1381,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
    TR::PPCMemoryArgument           *pushToMemory = NULL;
    TR::Register                    *tempRegister;
    int32_t                          argIndex = 0, memArgs = 0, from, to, step;
-   int32_t                          argSize = -self()->getOffsetToFirstParm(), totalSize = 0;
+   int32_t                          argSize = -getOffsetToFirstParm(), totalSize = 0;
    uint32_t                         numIntegerArgs = 0;
    uint32_t                         numFloatArgs = 0;
    uint32_t                         firstExplicitArg = 0;
@@ -2852,7 +2852,7 @@ TR::MemoryReference *J9::Power::PrivateLinkage::getOutgoingArgumentMemRef(int32_
    TR::Machine *machine = cg()->machine();
 
    TR::MemoryReference *result=new (trHeapMemory()) TR::MemoryReference(machine->getRealRegister(properties.getNormalStackPointerRegister()),
-                                        argSize+self()->getOffsetToFirstParm(), length, cg());
+                                        argSize+getOffsetToFirstParm(), length, cg());
    memArg.argRegister = argReg;
    memArg.argMemory = result;
    memArg.opCode = opCode;
