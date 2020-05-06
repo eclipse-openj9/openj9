@@ -1,6 +1,6 @@
 /*[INCLUDE-IF DAA]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2015 IBM Corp. and others
+ * Copyright (c) 2013, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package com.ibm.dataaccess;
 
 /**
@@ -45,6 +44,7 @@ public final class ByteArrayUnmarshaller {
 
     // private constructor, class contains only static methods.
     private ByteArrayUnmarshaller() {
+    	super();
     }
 
     /**
@@ -352,7 +352,7 @@ public final class ByteArrayUnmarshaller {
     
     private static long readLong_(byte[] byteArray, int offset, boolean bigEndian) {
         if (bigEndian) {
-            return (long) (((long) (byteArray[offset] & 0xFF)) << 56)
+            return (((long) (byteArray[offset] & 0xFF)) << 56)
                     | (((long) (byteArray[offset + 1] & 0xFF)) << 48)
                     | (((long) (byteArray[offset + 2] & 0xFF)) << 40)
                     | (((long) (byteArray[offset + 3] & 0xFF)) << 32)
@@ -361,7 +361,7 @@ public final class ByteArrayUnmarshaller {
                     | (((byteArray[offset + 6] & 0xFF)) << 8)
                     | (((byteArray[offset + 7] & 0xFF)));
         } else {
-            return (long) (((long) (byteArray[offset + 7] & 0xFF)) << 56)
+            return (((long) (byteArray[offset + 7] & 0xFF)) << 56)
                     | (((long) (byteArray[offset + 6] & 0xFF)) << 48)
                     | (((long) (byteArray[offset + 5] & 0xFF)) << 40)
                     | (((long) (byteArray[offset + 4] & 0xFF)) << 32)

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF DAA]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2019 IBM Corp. and others
+ * Copyright (c) 2013, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package com.ibm.dataaccess;
 
 import java.math.BigDecimal;
@@ -315,18 +314,15 @@ public final class DecimalData
 
         // fill in high/low nibble pairs from next-to-last up to first
         for (i = last - 1; i > offset && value != 0; i--) {
-            packedDecimal[i] = CommonData
-                    .getBinaryToPackedValues((int) (value % 100));
+            packedDecimal[i] = CommonData.getBinaryToPackedValues(value % 100);
             value = value / 100;
         }
 
         if (i == offset && value != 0) {
             if (evenPrecision)
-                packedDecimal[i] = (byte) (CommonData
-                        .getBinaryToPackedValues((int) (value % 100)) & CommonData.LOWER_NIBBLE_MASK);
+                packedDecimal[i] = (byte) (CommonData.getBinaryToPackedValues(value % 100) & CommonData.LOWER_NIBBLE_MASK);
             else
-                packedDecimal[i] = CommonData
-                        .getBinaryToPackedValues((int) (value % 100));
+                packedDecimal[i] = CommonData.getBinaryToPackedValues(value % 100);
             value = value / 100;
             i--;
         }
