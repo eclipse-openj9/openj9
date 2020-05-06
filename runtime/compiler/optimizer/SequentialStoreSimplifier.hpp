@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,9 @@ namespace TR { class Node; }
 namespace TR { class TreeTop; }
 
 class TR_StoreBaseWalker;
+
+typedef TR::typed_allocator<TR::Node*, TR::Region &> NodeForwardListAllocator;
+typedef TR::forward_list<TR::Node*, NodeForwardListAllocator> NodeForwardList;
 
 class TR_SequentialStoreSimplifier : public TR::Optimization
    {
