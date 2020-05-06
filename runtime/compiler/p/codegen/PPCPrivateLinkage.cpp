@@ -1098,9 +1098,21 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
                   residualSize -= TR::Compiler->om.sizeofReferenceAddress();
                   initBottomOffset -= TR::Compiler->om.sizeofReferenceAddress();
                   }
+
                if (initBottomOffset < LOWER_IMMED)
-                  cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addis, firstNode, gr12, gr12, HI_VALUE(initBottomOffset), cursor);
-               if (initBottomOffset != 0)
+                  {
+                  if (0x00008000 == HI_VALUE(initBottomOffset))
+                     {
+                     cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addis, firstNode, gr12, gr12, 0x7FFF, cursor);
+                     cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addis, firstNode, gr12, gr12, 0x1, cursor);
+                     }
+                  else
+                     {
+                     cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addis, firstNode, gr12, gr12, HI_VALUE(initBottomOffset), cursor);
+                     }
+                  }
+
+               if (initBottomOffset & 0xFFFF)
                   cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addi2, firstNode, gr12, gr12, LO_VALUE(initBottomOffset), cursor);
                }
             else
@@ -2062,9 +2074,9 @@ static void buildVirtualCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Regi
    // DO NOT MODIFY without also changing Recompilation.s!!
    if (offset < LOWER_IMMED || offset > UPPER_IMMED)
       {
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, callNode, gr12, vftReg,
-                                     (offset>>16)+((offset & (1<<15))?1:0) & 0x0000ffff);
-      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, new (cg->trHeapMemory()) TR::MemoryReference(gr12, ((offset & 0x0000ffff)<<16)>>16, TR::Compiler->om.sizeofReferenceAddress(), cg));
+      TR_ASSERT_FATAL_WITH_NODE(callNode, 0x00008000 != HI_VALUE(offset), "offset (0x%x) is unexpectedly high. Can not encode upper 16 bits into an addis instruction.", offset);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, callNode, gr12, vftReg, HI_VALUE(offset));
+      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, new (cg->trHeapMemory()) TR::MemoryReference(gr12, LO_VALUE(offset), TR::Compiler->om.sizeofReferenceAddress(), cg));
       }
    else
       {
@@ -2092,6 +2104,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
          beginIndex *= TR::Compiler->om.sizeofReferenceAddress();
          if (beginIndex < LOWER_IMMED || beginIndex > UPPER_IMMED)
             {
+            TR_ASSERT_FATAL_WITH_NODE(callNode, 0x00008000 != HI_VALUE(beginIndex), "TOC offset (0x%x) is unexpectedly high. Can not encode upper 16 bits into an addis instruction.", beginIndex);
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, callNode, gr12, cg->getTOCBaseRegister(), HI_VALUE(beginIndex));
             generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, new (cg->trHeapMemory()) TR::MemoryReference(gr12, LO_VALUE(beginIndex), TR::Compiler->om.sizeofReferenceAddress(), cg));
             }
