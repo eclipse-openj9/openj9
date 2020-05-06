@@ -441,7 +441,6 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::redundantInductionVarElimination,      OMR::IfLoops                  },
    { OMR::loopAliasRefinerGroup,                 OMR::IfLoops     },
    { OMR::recompilationModifier,                 OMR::IfEnabledAndNotProfiling },
-   { OMR::sequentialStoreSimplificationGroup,                             }, // reduce sequential stores into an arrayset
    { OMR::partialRedundancyEliminationGroup                               },
    { OMR::globalDeadStoreElimination,            OMR::IfLoopsAndNotProfiling   },
    { OMR::inductionVariableAnalysis,             OMR::IfLoopsAndNotProfiling   },
@@ -450,6 +449,7 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::generalLoopUnroller,                   OMR::IfLoopsAndNotProfiling   }, // unroll Loops
    { OMR::blockManipulationGroup                                          },
    { OMR::lateLocalGroup                                                  },
+   { OMR::sequentialStoreSimplificationGroup,                             }, // reduce sequential stores into an arrayset
    { OMR::redundantAsyncCheckRemoval,            OMR::IfNotJitProfiling        }, // optimize async check placement
    { OMR::recompilationModifier,                 OMR::IfProfiling              }, // do before GRA to avoid commoning of longs afterwards
    { OMR::globalCopyPropagation,                 OMR::IfMoreThanOneBlock       }, // Can produce opportunities for store sinking
@@ -526,8 +526,6 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::loopAliasRefinerGroup,                 OMR::IfLoops     }, // version loops to improve aliasing (after versioned to reduce code growth)
    { OMR::expressionsSimplification,             OMR::IfLoops     },
    { OMR::recompilationModifier,                 OMR::IfEnabled   },
-
-   { OMR::sequentialStoreSimplificationGroup                 }, // reduce sequential stores into an arrayset
    { OMR::partialRedundancyEliminationGroup                  },
    { OMR::globalDeadStoreElimination,            OMR::IfLoops     },
    { OMR::inductionVariableAnalysis,             OMR::IfLoops     },
@@ -537,6 +535,7 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::blockSplitter,                         OMR::MarkLastRun },
    { OMR::blockManipulationGroup                             },
    { OMR::lateLocalGroup                                     },
+   { OMR::sequentialStoreSimplificationGroup                 }, // reduce sequential stores into an arrayset
    { OMR::redundantAsyncCheckRemoval,            OMR::IfNotJitProfiling        }, // optimize async check placement
    { OMR::recompilationModifier,                 OMR::IfProfiling              }, // do before GRA to avoid commoning of longs afterwards
    { OMR::globalCopyPropagation,                 OMR::IfMoreThanOneBlock       }, // Can produce opportunities for store sinking
@@ -587,7 +586,7 @@ const OptimizationStrategy sequentialLoadAndStoreWarmOpts[] =
 
 const OptimizationStrategy sequentialStoreSimplificationOpts[] =
    {
-   { OMR::treeSimplification },
+   { OMR::treeSimplification                   },
    { OMR::sequentialStoreSimplification        },
    { OMR::treeSimplification                   }, // might fold expressions created by versioning/induction variables
    { OMR::endGroup                             }
@@ -611,10 +610,10 @@ static const OptimizationStrategy AOTStrategyOpts[] =
    { OMR::loopCanonicalizationGroup,             OMR::IfLoops   }, // canonicalize loops (improve fall throughs) and versioning
    { OMR::partialRedundancyEliminationGroup                },
    { OMR::globalDeadStoreElimination,            OMR::IfLoops   },
-   { OMR::sequentialStoreSimplificationGroup               }, // reduce sequential stores into an arrayset
    { OMR::generalLoopUnroller,                   OMR::IfLoops   }, // unroll Loops
    { OMR::blockManipulationGroup                           },
    { OMR::lateLocalGroup                                   },
+   { OMR::sequentialStoreSimplificationGroup               }, // reduce sequential stores into an arrayset
    { OMR::redundantAsyncCheckRemoval,                OMR::IfNotJitProfiling          }, // optimize async check placement
    { OMR::dynamicLiteralPool,                        OMR::IfNotProfiling             },
    { OMR::localDeadStoreElimination,                 OMR::IfEnabled                  }, //remove the astore if no literal pool is required
