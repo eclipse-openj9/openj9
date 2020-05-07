@@ -230,11 +230,11 @@ You must install the following AIX Licensed Program Products (LPPs):
 - [xlc/C++ 13.1.3](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
 - x11.adt.ext
 
-You must also install the boot JDK: [Java10_AIX_PPC64](https://adoptopenjdk.net/releases.html?variant=openjdk10&jvmVariant=openj9#ppc64_aix).
+You must also install the boot JDK: [Java11_AIX_PPC64](https://api.adoptopenjdk.net/v3/binary/latest/11/ga/aix/ppc64/jdk/openj9/normal/adoptopenjdk).
 
 A number of RPM packages are also required. The easiest method for installing these packages is to use `yum`, because `yum` takes care of any additional dependent packages for you.
 
-Download the following file: [yum_install_aix-ppc64.txt](aix/jdk10/yum_install_aix-ppc64.txt)
+Download the following file: [yum_install_aix-ppc64.txt](../../buildenv/aix/jdk11/yum_install_aix-ppc64.txt)
 
 This file contains a list of required RPM packages that you can install by specifying the following command:
 ```
@@ -349,7 +349,7 @@ The following instructions guide you through the process of building a Windows *
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
-- [Windows JDK 10](https://adoptopenjdk.net/releases.html?variant=openjdk10#x64_win), which is used as the boot JDK.
+- [Windows JDK 11](https://api.adoptopenjdk.net/v3/binary/latest/11/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Microsoft Visual Studio 2017]( https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15), which is the default compiler level used by OpenJDK11; or [Microsoft Visual Studio 2013]( https://go.microsoft.com/fwlink/?LinkId=532495), which is chosen to compile if VS2017 isn't installed.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
 - [LLVM/Clang](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
@@ -437,7 +437,7 @@ bash configure --disable-warnings-as-errors \
 ```
 Note: there is no need to specify --with-toolchain-version for 2017 as it will be located automatically
 
-:pencil: Modify the paths for freemarker if you manually downloaded and unpacked these dependencies into different directories. If Java 10 is not available on the path, add the `--with-boot-jdk=<path_to_jdk10>` configuration option.
+:pencil: Modify the paths for freemarker if you manually downloaded and unpacked these dependencies into different directories. If Java 11 is not available on the path, add the `--with-boot-jdk=<path_to_jdk11>` configuration option.
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
@@ -499,7 +499,7 @@ The following instructions guide you through the process of building a macOS **O
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Xcode 9.4]( https://developer.apple.com/download/more/) (requires an Apple account to log in).
-- [macOS OpenJDK 10](https://adoptopenjdk.net/archive.html?variant=openjdk10&jvmVariant=hotspot), which is used as the boot JDK.
+- [macOS OpenJDK 11](https://api.adoptopenjdk.net/v3/binary/latest/11/ga/mac/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 
 The following dependencies can be installed by using [Homebrew](https://brew.sh/):
 
@@ -569,7 +569,7 @@ When you have all the source files that you need, run the configure script, whic
 
 ```
 bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
-               --with-boot-jdk=<path_to_macOS_JDK10> \
+               --with-boot-jdk=<path_to_macOS_JDK11> \
                --disable-warnings-as-errors
 ```
 
@@ -669,7 +669,7 @@ bash get_source.sh
 You must install a number of software dependencies to create a suitable build environment on your AArch64 Linux system:
 
 - GNU C/C++ compiler (The Docker image uses GCC 7.5)
-- [AArch64 Linux JDK](https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=openj9), which is used as the boot JDK.
+- [AArch64 Linux JDK](https://api.adoptopenjdk.net/v3/binary/latest/11/ga/linux/aarch64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
 
 See [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker) in [Linux section](#linux) for other dependencies to be installed.
@@ -793,7 +793,7 @@ It is assumed that the Ubuntu version is at least 16.04 (gcc & g++ >= 7) is the 
 A number of software packages/dependencies must be installed on the host system to create a suitable cross-compiling environment:
 
 - [The GNU cross-toolchain](https://github.com/riscv/riscv-gnu-toolchain), which contains the source code of the C/C++ cross-compiler intended for RISC-V
-- [bootJDK_OpenJ9](https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=openj9), which is only used to generate a build JDK for the cross-compilation on the host system
+- [bootJDK_OpenJ9](https://api.adoptopenjdk.net/v3/binary/latest/11/ga/linux/x64/jdk/openj9/normal/adoptopenjdk), which is only used to generate a build JDK for the cross-compilation on the host system
 - [QEMU](https://www.qemu.org/download/#source), which is an open source emulator that converts the RISC-V instructions to the opcode on the host system
 - [Fedora_Stage4](https://fedorapeople.org/groups/risc-v/disk-images/), which contains the 1st Fedora bootstrap image on RISC-V and the corresponding BBL (Berkeley Boot Loader) binary file
 - [Fedora_Developer_Rawhide](https://dl.fedoraproject.org/pub/alt/risc-v/repo/virt-builder-images/images/), which contains the latest Fedora disk images for development and the corresponding firmware image files
@@ -1158,7 +1158,7 @@ bash get_source.sh
 :rocket:
 When you have all the source files on the host system, run the following configure command to set up the compilation environment as follows:
 ```
-export JAVA_HOME=/<path_to_build_JDK>  #the build JDK here is downloaded from https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=openj9
+export JAVA_HOME=/<path_to_build_JDK>  # the build JDK here is downloaded from https://api.vm.net/v3/binary/latest/11/ga/linux/x64/jdk/openj9/normal/adoptopenjdk
 export PATH="$JAVA_HOME/bin:$PATH"
 
 bash configure --disable-warnings-as-errors --with-freemarker-jar=/<path_to>/freemarker.jar
