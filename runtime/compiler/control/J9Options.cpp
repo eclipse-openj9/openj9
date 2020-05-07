@@ -1987,8 +1987,19 @@ J9::Options::fePreProcess(void * base)
          // Check if option is at all specified
          if (xxUseJITServerArgIndex > xxDisableUseJITServerArgIndex)
             {
-            j9tty_printf(PORTLIB, "JITServer is currently a technology preview. Its use is not yet supported\n");
             compInfo->getPersistentInfo()->setRemoteCompilationMode(JITServer::CLIENT);
+
+            // Check if the technology preview message should be displayed.
+            const char *xxJITServerTechPreviewMessageOption = "-XX:+JITServerTechPreviewMessage";
+            const char *xxDisableJITServerTechPreviewMessageOption = "-XX:-JITServerTechPreviewMessage";
+
+            int32_t xxJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerTechPreviewMessageOption, 0);
+            int32_t xxDisableJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxDisableJITServerTechPreviewMessageOption, 0);
+
+            if (xxJITServerTechPreviewMessageArgIndex >= xxDisableJITServerTechPreviewMessageArgIndex)
+               {
+               j9tty_printf(PORTLIB, "JITServer is currently a technology preview. Its use is not yet supported\n");
+               }
 
             const char *xxJITServerAddressOption = "-XX:JITServerAddress=";
             int32_t xxJITServerAddressArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerAddressOption, 0);
