@@ -985,6 +985,9 @@ class TR_RelocationRecordJ2IVirtualThunkPointer : public TR_RelocationRecordThun
       virtual char *name();
       virtual int32_t bytesInHeaderAndPayload();
 
+      void setOffsetToJ2IVirtualThunkPointer(TR_RelocationTarget *reloTarget, uintptr_t j2iVirtualThunkPointer);
+      uintptr_t getOffsetToJ2IVirtualThunkPointer(TR_RelocationTarget *reloTarget);
+
    protected:
       virtual void relocateJ2IVirtualThunkPointer(TR_RelocationTarget *reloTarget, uint8_t *reloLocation, void *thunk);
       uintptr_t offsetToJ2IVirtualThunkPointer(TR_RelocationTarget *reloTarget);
