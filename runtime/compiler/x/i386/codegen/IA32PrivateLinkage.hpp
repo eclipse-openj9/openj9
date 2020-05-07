@@ -53,11 +53,6 @@ class PrivateLinkage : public J9::X86::PrivateLinkage
     */
    virtual intptr_t entryPointFromCompiledMethod();
 
-   /**
-    * @brief J9 private linkage override of OMR function
-    */
-   virtual intptr_t entryPointFromInterpretedMethod();
-
    protected:
 
    virtual TR::Instruction *savePreservedRegisters(TR::Instruction *cursor);
