@@ -351,6 +351,13 @@ if(NOT JAVA_SPEC_VERSION LESS 14)
 	)
 endif()
 
+if(NOT JAVA_SPEC_VERSION LESS 15)
+	jvm_add_exports(jvm
+		# Additions for Java 15 (General)
+		JVM_GetRandomSeedForCDSDump
+	)
+endif()
+
 if(J9VM_OPT_JITSERVER)
 	jvm_add_exports(jvm
 		JITServer_CreateServer

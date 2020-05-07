@@ -33,6 +33,7 @@
 #include "jvminit.h"
 #include "util_api.h"
 #include "j9vmnls.h"
+#include "j9version.h"
 
 #define J9TIME_NANOSECONDS_PER_SECOND         ((jlong) 1000000000)
 /* Need to do a |currentSecondsTime - secondsOffset| < (2^32) check to ensure that the
@@ -40,7 +41,7 @@
  * |currentNanoTime - nanoTimeOffset| <  4294967295000000000.
  */
 #define TIME_LONG_MAX     ((jlong) 4294967295000000000LL)
-#define TIME_LONG_MIN     ((jlong) -4294967295000000000LL)
+#define TIME_LONG_MIN     ((jlong)-4294967295000000000LL)
 #define OFFSET_MAX        ((jlong) 0x225C17D04LL)         /*  2^63/10^9 */
 #define OFFSET_MIN        ((jlong) 0xFFFFFFFDDA3E82FCLL)  /* -2^63/10^9 */
 
@@ -1570,3 +1571,12 @@ done:
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 }
 #endif /* JAVA_SPEC_VERSION >= 11 */
+
+#if JAVA_SPEC_VERSION >= 15
+JNIEXPORT jlong JNICALL
+JVM_GetRandomSeedForCDSDump()
+{
+	/* OpenJ9 does not support -Xshare:dump, so we return zero unconditionally. */
+	return 0;
+}
+#endif /* JAVA_SPEC_VERSION >= 15 */
