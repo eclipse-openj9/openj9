@@ -720,3 +720,8 @@ void J9::X86::I386::PrivateLinkage::buildVirtualOrComputedCall(
       }
    }
 
+intptr_t
+J9::X86::I386::PrivateLinkage::entryPointFromCompiledMethod()
+   {
+   return reinterpret_cast<intptr_t>(cg()->getCodeStart());
+   }
