@@ -154,25 +154,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          cursor += SIZEPOINTER;
          }
          break;
-      case TR_JNISpecialTargetAddress:
-      case TR_VirtualRamMethodConst:
-         {
-         TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
-         uintptr_t inlinedSiteIndex = (uintptr_t)relocation->getTargetAddress2();
-
-         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), inlinedSiteIndex);
-
-         *(uintptr_t *)cursor = inlinedSiteIndex;  // inlinedSiteIndex
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)tempSR->getOwningMethod(comp)->constantPool(); // constantPool
-         cursor += SIZEPOINTER;
-
-         uintptr_t cpIndex=(uintptr_t)tempSR->getCPIndex();
-         *(uintptr_t *)cursor =cpIndex;// cpIndex
-         cursor += SIZEPOINTER;
-         }
-         break;
       case TR_ClassAddress:
          {
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
@@ -250,27 +231,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
          }
 
-      case TR_J2IVirtualThunkPointer:
-         {
-         auto info = (TR_RelocationRecordInformation*)relocation->getTargetAddress();
-
-         *(uintptr_t *)cursor = (uintptr_t)info->data2; // inlined site index
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)info->data1; // constantPool
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)info->data3; // offset to J2I virtual thunk pointer
-         cursor += SIZEPOINTER;
-         }
-         break;
-
-      case TR_CheckMethodExit:
-         {
-         *(uintptr_t*)cursor = (uintptr_t)relocation->getTargetAddress();
-         cursor += SIZEPOINTER;
-         }
-        break;
       case TR_J2IThunks:
          {
          // Note: thunk relos should only be created for 64 bit
@@ -334,79 +294,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          cursor += SIZEPOINTER;
 
          cursor = self()->emitClassChainOffset(cursor, j9class);
-         }
-         break;
-
-      case TR_InlinedVirtualMethod:
-      case TR_InlinedInterfaceMethod:
-         {
-         guard = (TR_VirtualGuard *) relocation->getTargetAddress2();
-
-         // Setup flags field with type of method that needs to be validated at relocation time
-         if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isStatic())
-            flags = inlinedMethodIsStatic;
-         if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isSpecial())
-            flags = inlinedMethodIsSpecial;
-         if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
-            flags = inlinedMethodIsVirtual;
-
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-
-         int32_t inlinedSiteIndex = guard->getCurrentInlinedSiteIndex();
-         *(uintptr_t *) cursor = (uintptr_t) inlinedSiteIndex;
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *) cursor = (uintptr_t) guard->getSymbolReference()->getOwningMethod(comp)->constantPool(); // record constant pool
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t*) cursor = (uintptr_t) guard->getSymbolReference()->getCPIndex(); // record cpIndex
-         cursor += SIZEPOINTER;
-
-         if (relocation->getTargetKind() == TR_InlinedInterfaceMethodWithNopGuard ||
-             relocation->getTargetKind() == TR_InlinedInterfaceMethod)
-            {
-            TR_InlinedCallSite *inlinedCallSite = &comp->getInlinedCallSite(inlinedSiteIndex);
-            TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *) inlinedCallSite->_methodInfo;
-            resolvedMethod = aotMethodInfo->resolvedMethod;
-            }
-         else
-            {
-            resolvedMethod = guard->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod();
-            }
-
-         TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
-         void *romClass = (void *) fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass);
-         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
-
-         *(uintptr_t *) cursor = romClassOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-
-         if (relocation->getTargetKind() != TR_InlinedInterfaceMethod &&
-             relocation->getTargetKind() != TR_InlinedVirtualMethod)
-            {
-            *(uintptr_t *) cursor = (uintptr_t) relocation->getTargetAddress(); // record Patch Destination Address
-            cursor += SIZEPOINTER;
-            }
-         }
-         break;
-
-      case TR_ValidateArbitraryClass:
-         {
-         TR::AOTClassInfo *aotCI = (TR::AOTClassInfo*) relocation->getTargetAddress2();
-         TR_OpaqueClassBlock *classToValidate = aotCI->_clazz;
-
-         //store the classchain's offset for the classloader for the class
-         uintptr_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCacheForCL;
-         cursor += SIZEPOINTER;
-
-         //store the classchain's offset for the class that needs to be validated in the second run
-         void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(classToValidate);
-         uintptr_t *classChainForClassToValidate = (uintptr_t *) aotCI->_classChain;
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
          }
          break;
 
