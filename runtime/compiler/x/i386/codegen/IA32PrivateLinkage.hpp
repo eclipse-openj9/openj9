@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@
 #define IA32LINKAGE_INCL
 
 #include "codegen/X86PrivateLinkage.hpp"
+#include "env/jittypes.h"
 
 namespace TR { class UnresolvedDataSnippet; }
 
@@ -46,6 +47,16 @@ class PrivateLinkage : public J9::X86::PrivateLinkage
    TR::Register *pushIntegerWordArg(TR::Node *child);
 
    TR::UnresolvedDataSnippet *generateX86UnresolvedDataSnippetWithCPIndex(TR::Node *child, TR::SymbolReference *symRef, int32_t cpIndex);
+
+   /**
+    * @brief J9 private linkage override of OMR function
+    */
+   virtual intptr_t entryPointFromCompiledMethod();
+
+   /**
+    * @brief J9 private linkage override of OMR function
+    */
+   virtual intptr_t entryPointFromInterpretedMethod();
 
    protected:
 

@@ -266,6 +266,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/codegen/J9WatchedInstanceFieldSnippet.cpp \
     compiler/codegen/J9WatchedStaticFieldSnippet.cpp \
     compiler/codegen/MonitorState.cpp \
+    compiler/codegen/PrivateLinkage.cpp \
     compiler/compile/J9AliasBuilder.cpp \
     compiler/compile/J9Compilation.cpp \
     compiler/compile/J9Method.cpp \
