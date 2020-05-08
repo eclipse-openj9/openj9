@@ -490,7 +490,7 @@ public abstract class VarHandle extends VarHandleInternal
 		MethodType permuteMethodType = methodHandle.type;
 		int parameterCount = permuteMethodType.parameterCount();
 		Class<?> firstParameter = permuteMethodType.parameterType(0);
-		permuteMethodType = permuteMethodType.dropFirstParameterType();
+		permuteMethodType = permuteMethodType.dropParameterTypes(0, 1);
 		permuteMethodType = permuteMethodType.appendParameterTypes(firstParameter);
 
 		/* reorder specifies the mapping between PermuteType and HandleType
