@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1958,6 +1958,13 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 		J9VMJAVALANGTHREAD_SET_LOCK(currentThread, threadObject, lock);
 	}
 	J9VMJAVALANGTHREAD_SET_THREADREF(currentThread, threadObject, newThread);
+
+#if (JAVA_SPEC_VERSION >= 14)
+    /* If thread was interrupted before start, make sure interrupt flag is set for running thread. */
+    if (J9VMJAVALANGTHREAD_DEADINTERRUPT(currentThread, threadObject)) {
+        omrthread_interrupt(osThread);
+    }
+#endif
 
 	/* Allow the thread to run */
 
