@@ -30,6 +30,7 @@
 #include "env/jittypes.h"
 #include "env/VMAccessCriticalSection.hpp"
 #include "exceptions/PersistenceFailure.hpp"
+#include "infra/CriticalSection.hpp"
 #include "runtime/CodeRuntime.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "env/VMJ9.h"
@@ -42,15 +43,18 @@
 #include "runtime/JITClientSession.hpp"
 #endif
 
-#define   LOG(n,c) \
-   if (_logLevel >= (3*n)) \
-      {\
-      c;\
+#define LOG(logLevel, format, ...)               \
+   if (_logLevel >= logLevel)                    \
+      {                                          \
+      log("" format "", ##__VA_ARGS__);          \
       }
 
 TR_J9SharedCache::TR_J9SharedCacheDisabledReason TR_J9SharedCache::_sharedCacheState = TR_J9SharedCache::UNINITIALIZED;
 TR_YesNoMaybe TR_J9SharedCache::_sharedCacheDisabledBecauseFull = TR_maybe;
 UDATA TR_J9SharedCache::_storeSharedDataFailedLength = 0;
+
+TR_J9SharedCache::CCVMap *TR_J9SharedCache::_ccvMap = NULL;
+TR::Monitor *TR_J9SharedCache::_classChainValidationMutex = NULL;
 
 TR_YesNoMaybe TR_J9SharedCache::isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo)
    {
@@ -96,6 +100,48 @@ TR_YesNoMaybe TR_J9SharedCache::isSharedCacheDisabledBecauseFull(TR::Compilation
    return _sharedCacheDisabledBecauseFull;
    }
 
+bool
+TR_J9SharedCache::initCCVCaching()
+   {
+   if (!_classChainValidationMutex)
+      {
+      if (!(_classChainValidationMutex = TR::Monitor::create("JIT-ClassChainValidationMutex")))
+         return false;
+      }
+
+   if (!_ccvMap)
+      {
+      void *storage = jitPersistentAlloc(sizeof(CCVMap));
+      if (!storage)
+         return false;
+
+      _ccvMap = new (storage) CCVMap(CCVComparator(), getPersistentAllocator());
+      }
+
+   return true;
+   }
+
+TR_J9SharedCache::CCVResult
+TR_J9SharedCache::getCachedCCVResult(uintptr_t classOffsetInCache)
+   {
+   OMR::CriticalSection getCachedResult(_classChainValidationMutex);
+
+   auto iter = _ccvMap->find(classOffsetInCache);
+   if (iter == _ccvMap->end())
+      return CCVResult::notYetValidated;
+   else
+      return iter->second;
+   }
+
+bool
+TR_J9SharedCache::cacheCCVResult(uintptr_t classOffsetInCache, CCVResult result)
+   {
+   OMR::CriticalSection cacheResult(_classChainValidationMutex);
+
+   auto res = _ccvMap->insert(std::make_pair(classOffsetInCache, result));
+
+   return res.second;
+   }
 
 TR_J9SharedCache::TR_J9SharedCache(TR_J9VMBase *fe)
    {
@@ -142,8 +188,8 @@ TR_J9SharedCache::TR_J9SharedCache(TR_J9VMBase *fe)
 
       _verboseHints = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseSCHints);
 
-      LOG(5, { log("\t_sharedCacheConfig %p\n", _sharedCacheConfig); });
-      LOG(5, { log("\ttotalCacheSize %p\n", totalCacheSize); });
+      LOG(1, "\t_sharedCacheConfig %p\n", _sharedCacheConfig);
+      LOG(1, "\ttotalCacheSize %p\n", totalCacheSize);
       }
 #endif
    }
@@ -574,12 +620,12 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
    J9ROMClass *romClass = TR::Compiler->cls.romClassOf(fej9->convertClassPtrToClassOffset(clazz));
 
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-   LOG(5,{ log("rememberClass class %p romClass %p %.*s\n", clazz, romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
+   LOG(1, "rememberClass class %p romClass %p %.*s\n", clazz, romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 
    uintptr_t classOffsetInCache;
    if (!isPointerInSharedCache(romClass, &classOffsetInCache))
       {
-      LOG(5,{ log("\trom class not in shared cache, returning\n"); });
+      LOG(1,"\trom class not in shared cache, returning\n");
       return NULL;
       }
 
@@ -587,38 +633,38 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
    uint32_t keyLength;
    createClassKey(classOffsetInCache, key, keyLength);
 
-   LOG(9, { log("\tkey created: %.*s\n", keyLength, key); });
+   LOG(3, "\tkey created: %.*s\n", keyLength, key);
 
    chainData = findChainForClass(clazz, key, keyLength);
    if (chainData != NULL)
       {
-      LOG(5, { log("\tchain exists (%p) so nothing to store\n", chainData); });
+      LOG(1, "\tchain exists (%p) so nothing to store\n", chainData);
       return chainData;
       }
 
    int32_t numSuperclasses = TR::Compiler->cls.classDepthOf(fe()->convertClassPtrToClassOffset(clazz));
    int32_t numInterfaces = numInterfacesImplemented(clazz);
 
-   LOG(9, { log("\tcreating chain now: 1 + 1 + %d superclasses + %d interfaces\n", numSuperclasses, numInterfaces); });
+   LOG(3, "\tcreating chain now: 1 + 1 + %d superclasses + %d interfaces\n", numSuperclasses, numInterfaces);
    UDATA chainLength = (2 + numSuperclasses + numInterfaces) * sizeof(UDATA);
    const uint32_t maxChainLength = 32;
    UDATA typicalChainData[maxChainLength];
    chainData = typicalChainData;
    if (chainLength > maxChainLength*sizeof(UDATA))
       {
-      LOG(5, { log("\t\t > %d so bailing\n", maxChainLength); });
+      LOG(1, "\t\t > %d so bailing\n", maxChainLength);
       return NULL;
       }
 
    if (!fillInClassChain(clazz, chainData, chainLength, numSuperclasses, numInterfaces))
       {
-      LOG(5, { log("\tfillInClassChain failed, bailing\n"); });
+      LOG(1, "\tfillInClassChain failed, bailing\n");
       return NULL;
       }
 
    if (!create)
       {
-      LOG(5, { log("\tnot asked to create but could create, returning non-null\n"); });
+      LOG(1, "\tnot asked to create but could create, returning non-null\n");
       return (UDATA *) 0x1;
       }
 
@@ -640,11 +686,11 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
                                                              &dataDescriptor);
    if (chainData)
       {
-      LOG(5, { log("\tstored data, chain at %p\n", chainData); });
+      LOG(1, "\tstored data, chain at %p\n", chainData);
       }
    else
       {
-      LOG(5, { log("\tunable to store chain\n"); });
+      LOG(1, "\tunable to store chain\n");
       TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
 
       setSharedCacheDisabledReason(SHARED_CACHE_CLASS_CHAIN_STORE_FAILED);
@@ -709,12 +755,12 @@ TR_J9SharedCache::writeClassToChain(J9ROMClass *romClass, UDATA * & chainPtr)
    uintptr_t classOffsetInCache;
    if (!isPointerInSharedCache(romClass, &classOffsetInCache))
       {
-      LOG(9, { log("\t\tromclass %p not in shared cache, writeClassToChain returning false\n", romClass); });
+      LOG(3, "\t\tromclass %p not in shared cache, writeClassToChain returning false\n", romClass);
       return false;
       }
 
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-   LOG(9, {log("\t\tChain %p storing romclass %p (%.*s) offset %d\n", chainPtr, romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className), classOffsetInCache); });
+   LOG(3, "\t\tChain %p storing romclass %p (%.*s) offset %d\n", chainPtr, romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className), classOffsetInCache);
    *chainPtr++ = classOffsetInCache;
    return true;
    }
@@ -722,7 +768,7 @@ TR_J9SharedCache::writeClassToChain(J9ROMClass *romClass, UDATA * & chainPtr)
 bool
 TR_J9SharedCache::writeClassesToChain(J9Class *clazz, int32_t numSuperclasses, UDATA * & chainPtr)
    {
-   LOG(9, { log("\t\twriteClassesToChain:\n"); });
+   LOG(3, "\t\twriteClassesToChain:\n");
 
    for (int32_t index=0; index < numSuperclasses;index++)
       {
@@ -736,7 +782,7 @@ TR_J9SharedCache::writeClassesToChain(J9Class *clazz, int32_t numSuperclasses, U
 bool
 TR_J9SharedCache::writeInterfacesToChain(J9Class *clazz, UDATA * & chainPtr)
    {
-   LOG(9, { log("\t\twriteInterfacesToChain:\n"); });
+   LOG(3, "\t\twriteInterfacesToChain:\n");
 
    J9ITable *element = TR::Compiler->cls.iTableOf(fe()->convertClassPtrToClassOffset(clazz));
    while (element != NULL)
@@ -755,7 +801,7 @@ bool
 TR_J9SharedCache::fillInClassChain(J9Class *clazz, UDATA *chainData, uint32_t chainLength,
                                    uint32_t numSuperclasses, uint32_t numInterfaces)
    {
-   LOG(9, { log("\t\tChain %p store chainLength %d\n", chainData, chainLength); });
+   LOG(3, "\t\tChain %p store chainLength %d\n", chainData, chainLength);
 
    UDATA *chainPtr = chainData;
    *chainPtr++ = chainLength;
@@ -771,7 +817,7 @@ TR_J9SharedCache::fillInClassChain(J9Class *clazz, UDATA *chainData, uint32_t ch
       return false;
       }
 
-   LOG(9, {log("\t\tfillInClassChain returning true\n"); });
+   LOG(3, "\t\tfillInClassChain returning true\n");
    return chainData;
    }
 
@@ -783,7 +829,7 @@ TR_J9SharedCache::romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & c
    UDATA romClassOffset;
    if (!isPointerInSharedCache(romClass, &romClassOffset))
       return false;
-   LOG(9, { log("\t\tExamining romclass %p (%.*s) offset %d, comparing to %d\n", romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className), romClassOffset, *chainPtr); });
+   LOG(3, "\t\tExamining romclass %p (%.*s) offset %d, comparing to %d\n", romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className), romClassOffset, *chainPtr);
    if ((chainPtr > chainEnd) || (romClassOffset != *chainPtr++))
       return false;
    return true;
@@ -814,75 +860,150 @@ TR_J9SharedCache::findChainForClass(J9Class *clazz, const char *key, uint32_t ke
    }
 
 bool
-TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
+TR_J9SharedCache::validateSuperClassesInClassChain(TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd)
    {
-   J9ROMClass *romClass = TR::Compiler->cls.romClassOf(fe()->convertClassPtrToClassOffset(clazz));
-   J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-   LOG(5, { log("classMatchesCachedVersion class %p %.*s\n", clazz, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
-
-   uintptr_t classOffsetInCache;
-   if (!isPointerInSharedCache(romClass, &classOffsetInCache))
+   int32_t numSuperclasses = TR::Compiler->cls.classDepthOf(clazz);
+   for (int32_t index=0; index < numSuperclasses; index++)
       {
-      LOG(5, { log("\tclass not in shared cache, returning false\n"); });
-      return false;
-      }
-
-   if (chainData == NULL)
-      {
-      char key[17]; // longest possible key length is way less than 16 digits
-      uint32_t keyLength;
-      createClassKey(classOffsetInCache, key, keyLength);
-      LOG(9, { log("\tno chain specific, so looking up for key %.*s\n", keyLength, key); });
-      chainData = findChainForClass(clazz, key, keyLength);
-      if (chainData == NULL)
-         {
-         LOG(5, { log("\tno stored chain, returning false\n"); });
-         return false;
-         }
-      }
-
-   UDATA *chainPtr = chainData;
-   UDATA chainLength = *chainPtr++;
-   UDATA *chainEnd = (UDATA *) (((U_8*)chainData) + chainLength);
-   LOG(9, { log("\tfound chain: %p with length %d\n", chainData, chainLength); });
-
-   if (!romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
-      {
-         LOG(5, { log("\tClass did not match, returning false\n"); });
-         return false;
-      }
-
-   int32_t numSuperclasses = TR::Compiler->cls.classDepthOf(fe()->convertClassPtrToClassOffset(clazz));
-   for (int32_t index=0; index < numSuperclasses;index++)
-      {
-      J9ROMClass *romClass = TR::Compiler->cls.romClassOfSuperClass(fe()->convertClassPtrToClassOffset(clazz), index);
+      J9ROMClass *romClass = TR::Compiler->cls.romClassOfSuperClass(clazz, index);
       if (!romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
          {
-         LOG(5, { log("\tClass in hierarchy did not match, returning false\n"); });
+         LOG(1, "\tClass in hierarchy did not match, returning false\n");
          return false;
          }
       }
+   return true;
+   }
 
-   J9ITable *interfaceElement = TR::Compiler->cls.iTableOf(fe()->convertClassPtrToClassOffset(clazz));
+bool
+TR_J9SharedCache::validateInterfacesInClassChain(TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd)
+   {
+   J9ITable *interfaceElement = TR::Compiler->cls.iTableOf(clazz);
    while (interfaceElement)
       {
       J9ROMClass * romClass = TR::Compiler->cls.iTableRomClass(interfaceElement);
       if (!romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
          {
-         LOG(5, { log("\tInterface class did not match, returning false\n"); });
+         LOG(1, "\tInterface class did not match, returning false\n");
          return false;
          }
       interfaceElement = TR::Compiler->cls.iTableNext(interfaceElement);
       }
+   return true;
+   }
 
-   if (chainPtr != chainEnd)
+bool
+TR_J9SharedCache::validateClassChain(J9ROMClass *romClass, TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd)
+   {
+   bool validationSucceeded = false;
+
+   if (!romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
       {
-      LOG(5, { log("\tfinished classes and interfaces, but not at chain end, returning false\n"); });
+      LOG(1, "\tClass did not match, returning false\n");
+      }
+   else if (!validateSuperClassesInClassChain(clazz, chainPtr, chainEnd))
+      {
+      LOG(1, "\tClass in hierarchy did not match, returning false\n");
+      }
+   else if (!validateInterfacesInClassChain(clazz, chainPtr, chainEnd))
+      {
+      LOG(1, "\tInterface class did not match, returning false\n");
+      }
+   else if (chainPtr != chainEnd)
+      {
+      LOG(1, "\tfinished classes and interfaces, but not at chain end, returning false\n");
+      }
+   else
+      {
+      validationSucceeded = true;
+      }
+
+   return validationSucceeded;
+   }
+
+bool
+TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
+   {
+   J9ROMClass *romClass = TR::Compiler->cls.romClassOf(fe()->convertClassPtrToClassOffset(clazz));
+   J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
+   LOG(1, "classMatchesCachedVersion class %p %.*s\n", clazz, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+
+   uintptr_t classOffsetInCache;
+
+   /* If the pointer isn't the SCC, then return false immmediately
+    * as the map holds offsets into the SCC of romclasses
+    */
+   if (!isPointerInSharedCache(romClass, &classOffsetInCache))
+      {
+      LOG(1, "\tclass not in shared cache, returning false\n");
       return false;
       }
 
-   LOG(5, { log("\tMatch!  return true\n"); });
-   return true;
+   /* Check if the validation of the class chain was previously
+    * performed; if so, return the result of that validation
+    */
+   if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching))
+      {
+      auto result = getCachedCCVResult(classOffsetInCache);
+      if (result == CCVResult::success)
+         {
+         LOG(1, "\tcached result: validation succeeded\n");
+         return true;
+         }
+      else if (result == CCVResult::failure)
+         {
+         LOG(1, "\tcached result: validation failed\n");
+         return false;
+         }
+      else
+         {
+         TR_ASSERT_FATAL(result == CCVResult::notYetValidated, "Unknown result cached %d\n", result);
+         }
+      }
+
+   /* If the chainData passed in is NULL, try to find it in the SCC
+    * using the romclass
+    */
+   if (chainData == NULL)
+      {
+      char key[17]; // longest possible key length is way less than 16 digits
+      uint32_t keyLength;
+      createClassKey(classOffsetInCache, key, keyLength);
+      LOG(3, "\tno chain specific, so looking up for key %.*s\n", keyLength, key);
+      chainData = findChainForClass(clazz, key, keyLength);
+      }
+
+   /* If the chainData is still NULL, cache the result as failure
+    * and return false
+    */
+   if (chainData == NULL)
+      {
+      LOG(1, "\tno stored chain, returning false\n");
+      if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching))
+         cacheCCVResult(classOffsetInCache, CCVResult::failure);
+
+      return false;
+      }
+
+   UDATA *chainPtr = chainData;
+   UDATA chainLength = *chainPtr++;
+   UDATA *chainEnd = (UDATA *) (((U_8*)chainData) + chainLength);
+   LOG(3, "\tfound chain: %p with length %d\n", chainData, chainLength);
+
+   /* Perform class chain validation */
+   bool success = validateClassChain(romClass, fe()->convertClassPtrToClassOffset(clazz), chainPtr, chainEnd);
+
+   /* Cache the result of the validation */
+   if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching))
+      {
+      auto result = success ? CCVResult::success : CCVResult::failure;
+      cacheCCVResult(classOffsetInCache, result);
+      }
+
+   if (success)
+      LOG(1, "\tMatch!  return true\n");
+
+   return success;
    }
 
 TR_OpaqueClassBlock *

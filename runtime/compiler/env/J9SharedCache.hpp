@@ -26,6 +26,7 @@
 #include "compiler/env/SharedCache.hpp"
 
 #include <stdint.h>
+#include <map>
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
@@ -61,7 +62,7 @@ struct J9SharedDataDescriptor;
 class TR_J9SharedCache : public TR_SharedCache
    {
 public:
-   TR_ALLOC(TR_Memory::SharedCache)
+   TR_ALLOC_SPECIALIZED(TR_Memory::SharedCache)
 
    TR_J9SharedCache(TR_J9VMBase *fe);
 
@@ -168,6 +169,14 @@ public:
    static TR_J9SharedCacheDisabledReason getSharedCacheDisabledReason() { return _sharedCacheState; }
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo);
    static void setStoreSharedDataFailedLength(UDATA length) {_storeSharedDataFailedLength = length; }
+
+   /**
+    * @brief Initializes the monitor and map used to cache the result of a class chain validation
+    *
+    * @return true if initialization succeeded, false otherwise
+    */
+   static bool initCCVCaching();
+
    virtual J9SharedClassCacheDescriptor *getCacheDescriptorList();
 
 private:
@@ -178,6 +187,13 @@ private:
       void clear() { flags = 0; data = 0; }
       uint16_t flags;
       uint16_t data;
+      };
+
+   enum CCVResult
+      {
+      notYetValidated,
+      success,
+      failure
       };
 
    J9JITConfig *jitConfig() { return _jitConfig; }
@@ -205,7 +221,53 @@ private:
    bool romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & chainPtr, UDATA *chainEnd);
    UDATA *findChainForClass(J9Class *clazz, const char *key, uint32_t keyLength);
 
+   /**
+    * @brief Validates the provided class chain. This method modifies the chainPtr arg.
+    *
+    * @param romClass The J9ROMClass of the class whose chain is to be validated
+    * @param clazz The TR_OpaqueClassBlock of the class whose chain is to be validated
+    * @param chainPtr Pointer to the start of the class chain passed by reference
+    * @param chainEnd Pointer to the end of the class chain
+    * @return true if validation succeeded, false otherwise.
+    */
+   bool validateClassChain(J9ROMClass *romClass, TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd);
+
+   /**
+    * @brief Validates the super classes portion of the class chain. This method modifies the chainPtr arg.
+    *
+    * @param clazz The TR_OpaqueClassBlock of the class whose chain is to be validated
+    * @param chainPtr Pointer to the start of super classes portion of the class chain passed by reference
+    * @param chainEnd Pointer to the end of the class chain
+    * @return true if validation succeeded, false otherwise.
+    */
+   bool validateSuperClassesInClassChain(TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd);
+
+   /**
+    * @brief Validates the interfaces portion of the class chain. This method modifies the chainPtr arg.
+    *
+    * @param clazz The TR_OpaqueClassBlock of the class whose chain is to be validated
+    * @param chainPtr Pointer to the start of interfaces portion of the class chain passed by reference
+    * @param chainEnd Pointer to the end of the class chain
+    * @return true if validation succeeded, false otherwise.
+    */
+   bool validateInterfacesInClassChain(TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd);
+
    static bool isPointerInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
+
+   /**
+    * @brief Gets the cached result of a prior class chain validation
+    * @param classOffsetInCache Offset into the SCC of the class to be validated
+    * @return The CCVResult stored in the map; CCVResult::notYetValidated if result does not exist.
+    */
+   static CCVResult getCachedCCVResult(uintptr_t classOffsetInCache);
+
+   /**
+    * @brief Caches the result of a class chain validation
+    * @param classOffsetInCache Offset into the SCC of the class to be validated
+    * @param result The result represented as a CCVResult
+    * @return The result of the insertion.
+    */
+   static bool cacheCCVResult(uintptr_t classOffsetInCache, CCVResult result);
 
    uint16_t _initialHintSCount;
    uint16_t _hintsEnabledMask;
@@ -225,6 +287,13 @@ private:
    static TR_J9SharedCacheDisabledReason _sharedCacheState;
    static TR_YesNoMaybe                  _sharedCacheDisabledBecauseFull;
    static UDATA                          _storeSharedDataFailedLength;
+
+   typedef TR::typed_allocator<std::pair<uintptr_t const, CCVResult>, TrackedPersistentAllocator&> CCVAllocator;
+   typedef std::less<uintptr_t> CCVComparator;
+   typedef std::map<uintptr_t, CCVResult, CCVComparator, CCVAllocator> CCVMap;
+
+   static CCVMap                        *_ccvMap;
+   static TR::Monitor                   *_classChainValidationMutex;
    };
 
 
