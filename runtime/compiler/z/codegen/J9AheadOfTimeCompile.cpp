@@ -272,20 +272,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          }
          break;
 
-      case TR_ValidateClassChain:
-         {
-         TR::ClassChainRecord *record = reinterpret_cast<TR::ClassChainRecord *>(relocation->getTargetAddress());
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-         TR_RelocationRecordValidateClassChainBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateClassChainBinaryTemplate *>(cursor);
-         void *classToValidate = static_cast<void *>(record->_class);
-         void *classChainForClassToValidate = record->_classChain;
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
-         binaryTemplate->_classID = symValManager->getIDFromSymbol(classToValidate);
-         binaryTemplate->_classChainOffsetInSCC = classChainOffsetInSharedCache;
-         cursor += sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate);
-         }
-         break;
       case TR_ValidateMethodFromClass:
          {
          TR::MethodFromClassRecord *record = reinterpret_cast<TR::MethodFromClassRecord *>(relocation->getTargetAddress());
