@@ -738,6 +738,17 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateConcreteSubClassFromClass:
+         {
+         TR_RelocationRecordValidateConcreteSubClassFromClass *csccRecord = reinterpret_cast<TR_RelocationRecordValidateConcreteSubClassFromClass *>(reloRecord);
+
+         TR::ConcreteSubClassFromClassRecord *svmRecord = reinterpret_cast<TR::ConcreteSubClassFromClassRecord *>(relocation->getTargetAddress());
+
+         csccRecord->setSuperClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_superClass));
+         csccRecord->setChildClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_childClass));
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1168,13 +1179,23 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          break;
 
       case TR_ValidateSuperClassFromClass:
+      case TR_ValidateConcreteSubClassFromClass:
          {
          TR_RelocationRecordValidateSuperClassFromClass *scRecord = reinterpret_cast<TR_RelocationRecordValidateSuperClassFromClass *>(reloRecord);
 
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Super Class From Class: superClassID=%d, childClassID=%d ",
+            const char *recordType;
+            if (kind == TR_ValidateSuperClassFromClass)
+               recordType = "Super Class From Class";
+            else if (kind == TR_ValidateConcreteSubClassFromClass)
+               recordType = "Concrete SubClass From Class";
+            else
+               TR_ASSERT_FATAL(false, "Unknown relokind %d!\n", kind);
+
+            traceMsg(self()->comp(), "\n Validate %s: superClassID=%d, childClassID=%d ",
+                                      recordType,
                                       (uint32_t)scRecord->superClassID(reloTarget),
                                       (uint32_t)scRecord->childClassID(reloTarget));
             }
@@ -1692,25 +1713,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                                    *(int32_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
                   }
                }
-            break;
-
-         case TR_ValidateConcreteSubClassFromClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Concrete SubClass From Class: childClassID=%d, superClassID=%d ",
-                        (uint32_t)binaryTemplate->_childClassID,
-                        (uint32_t)binaryTemplate->_superClassID);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
             break;
 
          case TR_ValidateClassChain:

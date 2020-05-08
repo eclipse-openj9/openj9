@@ -3865,15 +3865,8 @@ TR_RelocationRecordValidateDeclaringClassFromFieldOrStatic::applyRelocation(TR_R
 int32_t
 TR_RelocationRecordValidateConcreteSubClassFromClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
-   uint16_t childClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate *)_record)->_childClassID);
-   uint16_t superClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate *)_record)->_superClassID);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: childClassID %d\n", childClassID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: superClassID %d\n", superClassID);
-      }
+   uint16_t superClassID = this->superClassID(reloTarget);
+   uint16_t childClassID = this->childClassID(reloTarget);
 
    if (reloRuntime->comp()->getSymbolValidationManager()->validateConcreteSubClassFromClassRecord(childClassID, superClassID))
       return 0;
@@ -4996,7 +4989,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate),                     // TR_ValidateClassFromITableIndexCP               = 75
    sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate),                     // TR_ValidateDeclaringClassFromFieldOrStatic      = 76
    0,                                                                                // TR_ValidateClassClass                           = 77
-   sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),            // TR_ValidateConcreteSubClassFromClass            = 78
+   sizeof(TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate),             // TR_ValidateConcreteSubClassFromClass            = 78
    sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),                      // TR_ValidateClassChain                           = 79
    0,                                                                                // TR_ValidateRomClass                             = 80
    0,                                                                                // TR_ValidatePrimitiveClass                       = 81

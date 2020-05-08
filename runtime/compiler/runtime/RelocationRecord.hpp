@@ -261,12 +261,6 @@ struct TR_RelocationRecordValidateSystemClassByNameBinaryTemplate : public TR_Re
    UDATA _classChainOffsetInSCC;
    };
 
-struct TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
-   {
-   uint16_t _childClassID;
-   uint16_t _superClassID;
-   };
-
 struct TR_RelocationRecordValidateClassChainBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _classID;
@@ -1616,15 +1610,13 @@ class TR_RelocationRecordValidateDeclaringClassFromFieldOrStatic : public TR_Rel
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };
 
-class TR_RelocationRecordValidateConcreteSubClassFromClass : public TR_RelocationRecord
+class TR_RelocationRecordValidateConcreteSubClassFromClass : public TR_RelocationRecordValidateSuperClassFromClass
    {
    public:
       TR_RelocationRecordValidateConcreteSubClassFromClass() {}
-      TR_RelocationRecordValidateConcreteSubClassFromClass(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
+      TR_RelocationRecordValidateConcreteSubClassFromClass(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record)
+         : TR_RelocationRecordValidateSuperClassFromClass(reloRuntime, record) {}
       virtual char *name() { return "TR_RelocationRecordValidateConcreteSubClassFromClass"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };
 

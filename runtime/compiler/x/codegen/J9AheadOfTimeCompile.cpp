@@ -284,22 +284,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
          }
 
-      case TR_ValidateConcreteSubClassFromClass:
-         {
-         TR::ConcreteSubClassFromClassRecord *record = reinterpret_cast<TR::ConcreteSubClassFromClassRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate *>(cursor);
-
-         binaryTemplate->_childClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_childClass));
-         binaryTemplate->_superClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_superClass));
-
-         cursor += sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateClassChain:
          {
          TR::ClassChainRecord *record = reinterpret_cast<TR::ClassChainRecord *>(relocation->getTargetAddress());
@@ -727,7 +711,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate),       //TR_ValidateClassFromITableIndexCP       = 75,
    sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate),       //TR_ValidateDeclaringClassFromFieldOrStatic=76,
    0,                                                                  // TR_ValidateClassClass                  = 77,
-   sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),//TR_ValidateConcreteSubClassFromClass  = 78,
+   sizeof(TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate),//TR_ValidateConcreteSubClassFromClass   = 78,
    sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),        // TR_ValidateClassChain                  = 79,
    0,                                                                  // TR_ValidateRomClass                    = 80,
    0,                                                                  // TR_ValidatePrimitiveClass              = 81,
