@@ -726,6 +726,18 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateDeclaringClassFromFieldOrStatic:
+         {
+         TR_RelocationRecordValidateDeclaringClassFromFieldOrStatic *dcfsRecord = reinterpret_cast<TR_RelocationRecordValidateDeclaringClassFromFieldOrStatic *>(reloRecord);
+
+         TR::DeclaringClassFromFieldOrStaticRecord *svmRecord = reinterpret_cast<TR::DeclaringClassFromFieldOrStaticRecord *>(relocation->getTargetAddress());
+
+         dcfsRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_class));
+         dcfsRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         dcfsRecord->setCpIndex(reloTarget, svmRecord->_cpIndex);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1097,15 +1109,27 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_ValidateClassFromCP:
       case TR_ValidateStaticClassFromCP:
       case TR_ValidateClassFromITableIndexCP:
+      case TR_ValidateDeclaringClassFromFieldOrStatic:
          {
          TR_RelocationRecordValidateClassFromCP *cpRecord = reinterpret_cast<TR_RelocationRecordValidateClassFromCP *>(reloRecord);
 
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate" "%s" "Class From" "%s" "CP: classID=%d, beholderID=%d, cpIndex=%d ",
-                                     kind == TR_ValidateStaticClassFromCP ? " Static " : " ",
-                                     kind == TR_ValidateClassFromITableIndexCP ? " ITable Index " : " ",
+            const char *recordType;
+            if (kind == TR_ValidateClassFromCP)
+               recordType = "Class From CP";
+            else if (kind == TR_ValidateStaticClassFromCP)
+               recordType = "Static Class FromCP";
+            else if (kind == TR_ValidateClassFromITableIndexCP)
+               recordType = "Class From ITable Index CP";
+            else if (kind == TR_ValidateDeclaringClassFromFieldOrStatic)
+               recordType = "Declaring Class From Field or Static";
+            else
+               TR_ASSERT_FATAL(false, "Unknown relokind %d!\n", kind);
+
+            traceMsg(self()->comp(), "\n Validate %s: classID=%d, beholderID=%d, cpIndex=%d ",
+                                     recordType,
                                      (uint32_t)cpRecord->classID(reloTarget),
                                      (uint32_t)cpRecord->beholderID(reloTarget),
                                      cpRecord->cpIndex(reloTarget));
@@ -1668,26 +1692,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                                    *(int32_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
                   }
                }
-            break;
-
-         case TR_ValidateDeclaringClassFromFieldOrStatic:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Declaring Class From Field Or Static: classID=%d, beholderID=%d, cpIndex=%d ",
-                        (uint32_t)binaryTemplate->_classID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_cpIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
             break;
 
          case TR_ValidateConcreteSubClassFromClass:
