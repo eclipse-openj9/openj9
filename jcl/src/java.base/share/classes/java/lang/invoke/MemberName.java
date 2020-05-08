@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
+/*[INCLUDE-IF Sidecar18-SE-OpenJ9 & !OPENJDK_METHODHANDLES]*/
 
 /*******************************************************************************
  * Copyright (c) 2017, 2020 IBM Corp. and others
@@ -24,9 +24,9 @@
 
 package java.lang.invoke;
 
-/*[IF Java14]*/
+/*[IF Java11]*/
 import java.lang.reflect.Method;
-/*[ENDIF] Java14 */
+/*[ENDIF] Java11 */
 
 /*
  * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
@@ -48,10 +48,8 @@ final class MemberName {
 	public MemberName(MethodHandle methodHandle) {
 		mh = methodHandle;
 	}
-	/*[ENDIF] Java11 */
 
-	/*[IF Java14]*/
-	Method method;
+	private Method method;
 
 	public MemberName(Method method) {
 		this.method = method;
@@ -60,7 +58,7 @@ final class MemberName {
 	public boolean isStatic() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[ENDIF] Java14 */
+	/*[ENDIF] Java11 */
 
 	public boolean isVarargs() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
@@ -88,7 +86,10 @@ final class MemberName {
 	
 	/*[IF Java11]*/
 	public MethodType getMethodType() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		if (method != null) {
+			return MethodType.methodType(method.getReturnType(), method.getParameterTypes());
+		}
+		throw new UnsupportedOperationException("MemberName.method is null.");
 	}
 
 	String getMethodDescriptor() {
@@ -96,7 +97,10 @@ final class MemberName {
 	}
 
 	public Class<?> getDeclaringClass() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		if (method != null) {
+			return method.getDeclaringClass();
+		}
+		throw new UnsupportedOperationException("MemberName.method is null.");
 	}
 
 	public boolean isFinal() {

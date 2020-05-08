@@ -342,7 +342,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 /*[IF Java14]*/
 	static final BiFunction<String, List<Integer>, ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
-	private boolean varFormUsed = false;
+	VarForm vform = null;
 /*[ENDIF] Java14 */
 	
 	private final MethodHandle[] handleTable;
@@ -396,18 +396,15 @@ public abstract class VarHandle extends VarHandleInternal
 		for (int i = 0; i < numAccessModes; i++) {
 			MemberName memberName = varForm.memberName_table[i];
 			if (memberName != null) {
-				Method method = memberName.method;
-				if (method != null) {
-					operationMTs[i] = MethodType.methodType(method.getReturnType(), method.getParameterTypes());
-					if (operationMTsExact != null) {
-						/* Replace with the actual receiver, which is expected when the operation method
-						 * is invoked. The receiver is the second argument. 
-						 */
-						operationMTsExact[i] = operationMTs[i].changeParameterType(1, receiverActual);
-					}
-					if (operationsClass == null) {
-						operationsClass = method.getDeclaringClass();
-					}
+				operationMTs[i] = memberName.getMethodType();
+				if (operationMTsExact != null) {
+					/* Replace with the actual receiver, which is expected when the operation method
+					 * is invoked. The receiver is the second argument.
+					 */
+					operationMTsExact[i] = operationMTs[i].changeParameterType(1, receiverActual);
+				}
+				if (operationsClass == null) {
+					operationsClass = memberName.getDeclaringClass();
 				}
 			}
 		}
@@ -435,7 +432,7 @@ public abstract class VarHandle extends VarHandleInternal
 		}
 		
 		this.modifiers = 0;
-		this.varFormUsed = true;
+		this.vform = varForm;
 	}
 
 	/**
@@ -680,7 +677,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 */
 	boolean isAccessModeSupportedHelper(AccessMode accessMode) {
 /*[IF Java14]*/
-		if (varFormUsed) {
+		if (vform != null) {
 			return (handleTable[accessMode.ordinal()] != null);
 		}
 /*[ENDIF] Java14 */
