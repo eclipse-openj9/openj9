@@ -3839,17 +3839,9 @@ TR_RelocationRecordValidateSystemClassByName::classChainOffset(TR_RelocationTarg
 int32_t
 TR_RelocationRecordValidateClassFromITableIndexCP::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
-   uint16_t classID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate *)_record)->_classID);
-   uint16_t beholderID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate *)_record)->_beholderID);
-   uint32_t cpIndex = reloTarget->loadUnsigned32b((uint8_t *) &((TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate *)_record)->_cpIndex);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classID %d\n", classID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: beholderID %d\n", beholderID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: cpIndex %d\n", cpIndex);
-      }
+   uint16_t classID = this->classID(reloTarget);
+   uint16_t beholderID = this->beholderID(reloTarget);
+   uint32_t cpIndex = this->cpIndex(reloTarget);
 
    if (reloRuntime->comp()->getSymbolValidationManager()->validateClassFromITableIndexCPRecord(classID, beholderID, cpIndex))
       return 0;
@@ -5009,7 +5001,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate),             // TR_ValidateSuperClassFromClass                  = 72
    sizeof(TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate),            // TR_ValidateClassInstanceOfClass                 = 73
    sizeof(TR_RelocationRecordValidateSystemClassByNameBinaryTemplate),               // TR_ValidateSystemClassByName                    = 74
-   sizeof(TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate),          // TR_ValidateClassFromITableIndexCP               = 75
+   sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate),                     // TR_ValidateClassFromITableIndexCP               = 75
    sizeof(TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate), // TR_ValidateDeclaringClassFromFieldOrStatic      = 76
    0,                                                                                // TR_ValidateClassClass                           = 77
    sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),            // TR_ValidateConcreteSubClassFromClass            = 78
