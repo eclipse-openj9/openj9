@@ -2973,18 +2973,6 @@ int TR_J9VMBase::checkInlineableWithoutInitialCalleeSymbol (TR_CallSite* callsit
    return InlineableTarget;
    }
 
-void
-TR_J9VMBase::refineColdness (TR::Node* node, bool& isCold)
-   {
-   bool inlineableJNI = false;
-   TR::SymbolReference * symRef = node->getSymbolReference();
-   if(symRef->getSymbol()->isResolvedMethod()
-         && symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod())
-       inlineableJNI = TR_J9InlinerPolicy::isInlineableJNI(symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod(),node);
-
-   isCold = isCold && !inlineableJNI;
-   }
-
 static TR::ILOpCodes udataIndirectLoadOpCode(TR::Compilation * comp)
    {
    if (comp->target().is64Bit())

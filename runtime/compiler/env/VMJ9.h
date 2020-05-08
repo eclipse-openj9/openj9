@@ -691,7 +691,6 @@ public:
    virtual bool inlineRecognizedCryptoMethod(TR_CallTarget* target, TR::Compilation* comp);
    virtual bool inlineNativeCryptoMethod(TR::Node *callNode, TR::Compilation *comp);
 #endif
-   virtual void refineColdness (TR::Node* node, bool& isCold);
 
    virtual TR::Node * inlineNativeCall(TR::Compilation *,  TR::TreeTop *, TR::Node *) { return 0; }
 

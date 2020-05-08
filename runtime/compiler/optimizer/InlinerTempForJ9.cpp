@@ -5796,8 +5796,13 @@ TR_PrexArgInfo::enhance(TR_PrexArgInfo *dest, TR_PrexArgInfo *source, TR::Compil
 void
 TR_J9InlinerUtil::refineColdness(TR::Node* node, bool& isCold)
    {
-   comp()->fej9()->refineColdness(node, isCold);
-   return;
+   bool inlineableJNI = false;
+   TR::SymbolReference * symRef = node->getSymbolReference();
+   if(symRef->getSymbol()->isResolvedMethod()
+         && symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod())
+       inlineableJNI = static_cast<TR_J9InlinerPolicy*>(inliner()->getPolicy())->isInlineableJNI(symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod(),node);
+
+   isCold = isCold && !inlineableJNI;
    }
 
 void
