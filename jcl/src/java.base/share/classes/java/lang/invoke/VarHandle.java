@@ -270,11 +270,19 @@ public abstract class VarHandle extends VarHandleInternal
 	}
 	
 	enum AccessType {
-		GET,
-		SET,
-		COMPARE_AND_SET,
-		COMPARE_AND_EXCHANGE,
-		GET_AND_UPDATE;
+		GET(Object.class),
+		SET(void.class),
+		COMPARE_AND_SET(boolean.class),
+		COMPARE_AND_EXCHANGE(Object.class),
+		GET_AND_UPDATE(Object.class);
+
+		final boolean isMonomorphicInReturnType;
+		final Class<?> returnType;
+
+		AccessType(Class<?> returnType) {
+			this.returnType = returnType;
+			this.isMonomorphicInReturnType = (returnType != Object.class);
+		}
 
 		/**
 		 * Gets the MethodType associated with the AccessType.
