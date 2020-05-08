@@ -151,17 +151,6 @@ class PrivateLinkage : public J9::PrivateLinkage
    TR::Instruction *loadStackParametersToLinkageRegisters(TR::Instruction *cursor);
 
    /**
-    * @brief Stores parameters passed in linkage registers to the stack where the
-    *        method body expects to find them.
-    *
-    * @param[in] cursor : the instruction cursor to begin inserting copy instructions
-    * @param[in] parmsHaveBeenStored : true if the parameters have been stored to the stack
-    *
-    * @return The instruction cursor after copies inserted.
-    */
-   TR::Instruction *copyParametersToHomeLocation(TR::Instruction *cursor, bool parmsHaveBeenStored);
-
-   /**
     * @brief Stores parameters passed in linkage registers to the stack. This method is used only in FSD mode.
     *
     * @param[in] cursor : the instruction cursor to begin inserting copy instructions
