@@ -228,11 +228,11 @@ You must install the following AIX Licensed Program Products (LPPs):
 - [xlc/C++ 16](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
 - x11.adt.ext
 
-You must also install the boot JDK: [Java13_AIX_PPC64](https://adoptopenjdk.net/releases.html?variant=openjdk13&jvmVariant=openj9#ppc64_aix).
+You must also install the boot JDK: [Java14_AIX_PPC64](https://api.adoptopenjdk.net/v3/binary/latest/14/ga/aix/ppc64/jdk/openj9/normal/adoptopenjdk).
 
 A number of RPM packages are also required. The easiest method for installing these packages is to use `yum`, because `yum` takes care of any additional dependent packages for you.
 
-Download the following file: [yum_install_aix-ppc64.txt](aix/jdk14/yum_install_aix-ppc64.txt)
+Download the following file: [yum_install_aix-ppc64.txt](../../buildenv/aix/jdk14/yum_install_aix-ppc64.txt)
 
 This file contains a list of required RPM packages that you can install by specifying the following command:
 ```
@@ -273,7 +273,7 @@ bash get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
 bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
-               --with-boot-jdk=<path_to_boot_JDK13> \
+               --with-boot-jdk=<path_to_boot_JDK14> \
                --with-cups-include=<cups_include_path> \
                --disable-warnings-as-errors
 ```
@@ -323,7 +323,7 @@ Here is some sample output:
 ```
 openjdk version "14-internal" 2020-03-20
 OpenJDK Runtime Environment (build 14-internal+0-adhoc.jenkins.Build-JDK14-aixppc-64cmprssptrs)
-Eclipse OpenJ9 VM (build tye-e85051733, JRE 13 AIX ppc64-64-Bit Compressed References 20209317_28 (JIT enabled, AOT enabled)
+Eclipse OpenJ9 VM (build tye-e85051733, JRE 14 AIX ppc64-64-Bit Compressed References 20209317_28 (JIT enabled, AOT enabled)
 OpenJ9   - e85051733
 OMR      - 46127623
 JCL      - 2ef6b4c54d8 based on jdk-14+30)
@@ -348,7 +348,7 @@ The following instructions guide you through the process of building a Windows *
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
-- [Windows JDK 13](https://adoptopenjdk.net/releases.html?variant=openjdk13#x64_win), which is used as the boot JDK.
+- [Windows JDK 14](https://api.adoptopenjdk.net/v3/binary/latest/14/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Microsoft Visual Studio 2017](https://aka.ms/vs/15/release/vs_community.exe), which is the default compiler level used by OpenJDK14.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
 - [LLVM/Clang](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
@@ -425,7 +425,7 @@ bash get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
 bash configure --disable-warnings-as-errors \
-               --with-boot-jdk=<path_to_boot_JDK13> \
+               --with-boot-jdk=<path_to_boot_JDK14> \
                --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar
 ```
 
@@ -492,7 +492,7 @@ The following instructions guide you through the process of building a macOS **O
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Xcode 9.4]( https://developer.apple.com/download/more/) (requires an Apple account to log in).
-- [macOS OpenJDK 13](https://adoptopenjdk.net/archive.html?variant=openjdk13&jvmVariant=openj9), which is used as the boot JDK.
+- [macOS OpenJDK 14](https://api.adoptopenjdk.net/v3/binary/latest/14/ga/mac/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 
 The following dependencies can be installed by using [Homebrew](https://brew.sh/):
 
@@ -562,7 +562,7 @@ When you have all the source files that you need, run the configure script, whic
 
 ```
 bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
-               --with-boot-jdk=<path_to_boot_JDK13> \
+               --with-boot-jdk=<path_to_boot_JDK14> \
                --disable-warnings-as-errors
 ```
 

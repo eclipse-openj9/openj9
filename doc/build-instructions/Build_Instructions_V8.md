@@ -232,7 +232,7 @@ You must install the following AIX Licensed Program Products (LPPs):
 
 A number of RPM packages are also required. The easiest method for installing these packages is to use `yum`, because `yum` takes care of any additional dependent packages for you.
 
-Download the following file: [yum_install_aix-ppc64.txt](aix/jdk8/yum_install_aix-ppc64.txt)
+Download the following file: [yum_install_aix-ppc64.txt](../../buildenv/aix/jdk8/yum_install_aix-ppc64.txt)
 
 This file contains a list of required RPM packages that you can install by specifying the following command:
 ```
@@ -345,7 +345,7 @@ The following instructions guide you through the process of building a Windows 6
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Cygwin for 64-bit versions of Windows](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
-- [Windows JDK 7](http://www.oracle.com/technetwork/java/javase/downloads/java-archive-downloads-javase7-521261.html), which is used as the boot JDK.
+- [Windows JDK 8](https://api.adoptopenjdk.net/v3/binary/latest/8/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Windows SDK 7 Debugging tools](https://www.microsoft.com/download/confirmation.aspx?id=8279).
 - [Microsoft Visual Studio 2010 Professional](https://www.visualstudio.com/vs/older-downloads/).
 - [Microsoft Visual Studio 2010 Service Pack 1](https://support.microsoft.com/en-us/help/983509/description-of-visual-studio-2010-service-pack-1)
@@ -445,7 +445,7 @@ When you have all the source files that you need, run the configure script, whic
 1) Win 64-bit
 ```
 bash configure --disable-ccache \
-               --with-boot-jdk=/cygdrive/c/temp/jdk7 \
+               --with-boot-jdk=/cygdrive/c/<path to_jdk8> \
                --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar \
                --with-freetype-include=/cygdrive/c/temp/freetype/include \
                --with-freetype-lib=/cygdrive/c/temp/freetype/lib64
@@ -454,7 +454,7 @@ bash configure --disable-ccache \
 2) Win 32-bit
 ```
 bash configure --disable-ccache \
-               --with-boot-jdk=/cygdrive/c/temp/jdk7 \
+               --with-boot-jdk=/cygdrive/c/<path_to_jdk8> \
                --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar \
                --with-freetype-include=/cygdrive/c/temp/freetype/include \
                --with-freetype-lib=/cygdrive/c/temp/freetype/lib32  \
