@@ -1538,4 +1538,10 @@ public abstract class VarHandle extends VarHandleInternal
 /*[ENDIF] Java15 */
 
 	abstract MethodType accessModeTypeUncached(AccessMode accessMode);
+
+/*[IF OPENJDK_METHODHANDLES]*/
+	final MethodHandle getMethodHandle(int i) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF] OPENJDK_METHODHANDLES */
 }

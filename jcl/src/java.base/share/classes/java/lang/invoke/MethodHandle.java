@@ -1587,6 +1587,32 @@ public abstract class MethodHandle
 		return "KIND_#"+kind; //$NON-NLS-1$
 	}
 
+/*[IF OPENJDK_METHODHANDLES]*/
+	byte customizationCount;
+
+	String debugString() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	MethodHandle copyWith(MethodType mt, LambdaForm lf) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	String internalValues() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	BoundMethodHandle bindArgumentL(int i, Object obj) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	MethodHandle getMethodHandle() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	static native Object linkToStatic(Object... objs);
+/*[ENDIF] OPENJDK_METHODHANDLES */
+
 /*[IF Sidecar18-SE-OpenJ9]*/
 	MethodHandle(MethodType mt, LambdaForm lf) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
@@ -1662,7 +1688,7 @@ public abstract class MethodHandle
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
-	String internalProperties() {
+	Object internalProperties() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 /*[ENDIF]*/
