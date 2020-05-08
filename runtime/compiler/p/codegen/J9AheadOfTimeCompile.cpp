@@ -457,25 +457,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
          }
 
-      case TR_ValidateClassInstanceOfClass:
-         {
-         TR::ClassInstanceOfClassRecord *record = reinterpret_cast<TR::ClassInstanceOfClassRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate *>(cursor);
-
-         binaryTemplate->_objectTypeIsFixed = record->_objectTypeIsFixed;
-         binaryTemplate->_castTypeIsFixed = record->_castTypeIsFixed;
-         binaryTemplate->_isInstanceOf = record->_isInstanceOf;
-         binaryTemplate->_classOneID = symValManager->getIDFromSymbol(static_cast<void *>(record->_classOne));
-         binaryTemplate->_classTwoID = symValManager->getIDFromSymbol(static_cast<void *>(record->_classTwo));
-
-         cursor += sizeof(TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateSystemClassByName:
          {
          TR::SystemClassByNameRecord *record = reinterpret_cast<TR::SystemClassByNameRecord *>(relocation->getTargetAddress());

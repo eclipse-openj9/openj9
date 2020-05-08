@@ -248,9 +248,9 @@ struct TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate : public TR_
 
 struct TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
-   bool _objectTypeIsFixed;
-   bool _castTypeIsFixed;
-   bool _isInstanceOf;
+   uint8_t _objectTypeIsFixed;
+   uint8_t _castTypeIsFixed;
+   uint8_t _isInstanceOf;
    uint16_t _classOneID;
    uint16_t _classTwoID;
    };
@@ -1564,6 +1564,23 @@ class TR_RelocationRecordValidateClassInstanceOfClass : public TR_RelocationReco
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setObjectTypeIsFixed(TR_RelocationTarget *reloTarget, bool objectTypeIsFixed);
+      bool objectTypeIsFixed(TR_RelocationTarget *reloTarget);
+
+      void setCastTypeIsFixed(TR_RelocationTarget *reloTarget, bool castTypeIsFixed);
+      bool castTypeIsFixed(TR_RelocationTarget *reloTarget);
+
+      void setIsInstanceOf(TR_RelocationTarget *reloTarget, bool isInstanceOf);
+      bool isInstanceOf(TR_RelocationTarget *reloTarget);
+
+      void setClassOneID(TR_RelocationTarget *reloTarget, uint16_t classOneID);
+      uint16_t classOneID(TR_RelocationTarget *reloTarget);
+
+      void setClassTwoID(TR_RelocationTarget *reloTarget, uint16_t classTwoID);
+      uint16_t classTwoID(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordValidateSystemClassByName : public TR_RelocationRecord

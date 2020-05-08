@@ -658,6 +658,20 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateClassInstanceOfClass:
+         {
+         TR_RelocationRecordValidateClassInstanceOfClass *cicRecord = reinterpret_cast<TR_RelocationRecordValidateClassInstanceOfClass *>(reloRecord);
+
+         TR::ClassInstanceOfClassRecord *svmRecord = reinterpret_cast<TR::ClassInstanceOfClassRecord *>(relocation->getTargetAddress());
+
+         cicRecord->setObjectTypeIsFixed(reloTarget, svmRecord->_objectTypeIsFixed);
+         cicRecord->setCastTypeIsFixed(reloTarget, svmRecord->_castTypeIsFixed);
+         cicRecord->setIsInstanceOf(reloTarget, svmRecord->_isInstanceOf);
+         cicRecord->setClassOneID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_classOne));
+         cicRecord->setClassTwoID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_classTwo));
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1083,6 +1097,23 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
             traceMsg(self()->comp(), "\n Validate Super Class From Class: superClassID=%d, childClassID=%d ",
                                       (uint32_t)scRecord->superClassID(reloTarget),
                                       (uint32_t)scRecord->childClassID(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateClassInstanceOfClass:
+         {
+         TR_RelocationRecordValidateClassInstanceOfClass *cicRecord = reinterpret_cast<TR_RelocationRecordValidateClassInstanceOfClass *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if(isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Validate Class InstanceOf Class: classOneID=%d, classTwoID=%d, objectTypeIsFixed=%s, castTypeIsFixed=%s, isInstanceOf=%s ",
+                                     (uint32_t)cicRecord->classOneID(reloTarget),
+                                     (uint32_t)cicRecord->classTwoID(reloTarget),
+                                     cicRecord->objectTypeIsFixed(reloTarget) ? "true" : "false",
+                                     cicRecord->castTypeIsFixed(reloTarget) ? "true" : "false",
+                                     cicRecord->isInstanceOf(reloTarget) ? "true" : "false");
             }
          }
          break;
@@ -1567,28 +1598,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                                    *(int32_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
                   }
                }
-            break;
-
-         case TR_ValidateClassInstanceOfClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Class InstanceOf Class: classOneID=%d, classTwoID=%d, objectTypeIsFixed=%s, castTypeIsFixed=%s, isInstanceOf=%s ",
-                        (uint32_t)binaryTemplate->_classOneID,
-                        (uint32_t)binaryTemplate->_classTwoID,
-                        binaryTemplate->_objectTypeIsFixed ? "true" : "false",
-                        binaryTemplate->_castTypeIsFixed ? "true" : "false",
-                        binaryTemplate->_isInstanceOf ? "true" : "false");
-               }
-            cursor += sizeof(TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
             break;
 
          case TR_ValidateSystemClassByName:
