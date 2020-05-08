@@ -457,25 +457,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
          }
 
-      case TR_ValidateSystemClassByName:
-         {
-         TR::SystemClassByNameRecord *record = reinterpret_cast<TR::SystemClassByNameRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *>(cursor);
-
-         // Store class chain to get name of class. Checking the class chain for
-         // this record eliminates the need for a separate class chain validation.
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, record->_classChain);
-         binaryTemplate->_systemClassID = symValManager->getIDFromSymbol(record->_class);
-         binaryTemplate->_classChainOffsetInSCC = classChainOffsetInSharedCache;
-
-         cursor += sizeof(TR_RelocationRecordValidateSystemClassByNameBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateClassFromITableIndexCP:
          {
          TR::ClassFromITableIndexCPRecord *record = reinterpret_cast<TR::ClassFromITableIndexCPRecord *>(relocation->getTargetAddress());

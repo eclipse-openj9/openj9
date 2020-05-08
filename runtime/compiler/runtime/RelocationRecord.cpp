@@ -3787,21 +3787,48 @@ TR_RelocationRecordValidateClassInstanceOfClass::classTwoID(TR_RelocationTarget 
 int32_t
 TR_RelocationRecordValidateSystemClassByName::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
-   uint16_t systemClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *)_record)->_systemClassID);
-   uintptr_t classChainOffset = reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *)_record)->_classChainOffsetInSCC);
+   uint16_t systemClassID = this->systemClassID(reloTarget);
+   uintptr_t classChainOffset = this->classChainOffset(reloTarget);
    uintptr_t *classChain = (uintptr_t*)reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainOffset);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: systemClassID %d\n", systemClassID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classChain %p\n", classChain);
-      }
 
    if (reloRuntime->comp()->getSymbolValidationManager()->validateSystemClassByNameRecord(systemClassID, classChain))
       return 0;
    else
       return compilationAotClassReloFailure;
+   }
+
+void
+TR_RelocationRecordValidateSystemClassByName::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tsystemClassID %d\n", systemClassID(reloTarget));
+   reloLogger->printf("\tclassChain %p\n", (void *)classChainOffset(reloTarget));
+   }
+
+void
+TR_RelocationRecordValidateSystemClassByName::setSystemClassID(TR_RelocationTarget *reloTarget, uint16_t systemClassID)
+   {
+   reloTarget->storeUnsigned16b(systemClassID, (uint8_t *) &((TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *)_record)->_systemClassID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateSystemClassByName::systemClassID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *)_record)->_systemClassID);
+   }
+
+void
+TR_RelocationRecordValidateSystemClassByName::setClassChainOffset(TR_RelocationTarget *reloTarget, uintptr_t classChainOffset)
+   {
+   reloTarget->storeRelocationRecordValue(classChainOffset, (uintptr_t *) &((TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *)_record)->_classChainOffsetInSCC);
+   }
+
+uintptr_t
+TR_RelocationRecordValidateSystemClassByName::classChainOffset(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *)_record)->_classChainOffsetInSCC);
    }
 
 int32_t

@@ -1593,6 +1593,14 @@ class TR_RelocationRecordValidateSystemClassByName : public TR_RelocationRecord
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateSystemClassByNameBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setSystemClassID(TR_RelocationTarget *reloTarget, uint16_t systemClassID);
+      uint16_t systemClassID(TR_RelocationTarget *reloTarget);
+
+      void setClassChainOffset(TR_RelocationTarget *reloTarget, uintptr_t classChainOffset);
+      uintptr_t classChainOffset(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordValidateClassFromITableIndexCP : public TR_RelocationRecord
