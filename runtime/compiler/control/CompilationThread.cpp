@@ -8332,9 +8332,10 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                      options->setOption(TR_UseSymbolValidationManager, false);
                   }
 
-               // See if we need to inset GCR trees
-               if (!details.supportsInvalidation())
-                  {
+               // See if we need to insert GCR trees
+               if (!details.supportsInvalidation() ||
+                   options->getOptLevel() >= hot) // Workaround for a bug with GCR inserted in hot bodies. See #4549 for details.
+                  {                               // Upgrades hot-->scorching should be done through sampling, not GCR
                   options->setOption(TR_DisableGuardedCountingRecompilations);
                   }
                else if (vm->isAOT_DEPRECATED_DO_NOT_USE() || (options->getOptLevel() < warm &&
