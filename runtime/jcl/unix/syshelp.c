@@ -241,7 +241,11 @@ void mapLibraryToPlatformName(const char *inPath, char *outPath) {
 #else
 	strcpy(outPath, "lib");
 	strcat(outPath,inPath);
+#if defined(AIXPPC) && (JAVA_SPEC_VERSION == 8)
+	strcat(outPath, ".a");
+#else /* defined(AIXPPC) && (JAVA_SPEC_VERSION == 8) */
 	strcat(outPath, J9PORT_LIBRARY_SUFFIX);
+#endif /* defined(AIXPPC) && (JAVA_SPEC_VERSION == 8) */
 #endif
 }
 
