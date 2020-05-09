@@ -324,9 +324,9 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    // Decompressed strings have [byte_length = char_length * 2]
    if (isUTF16 && cg->comp()->target().is64Bit())
       {
-      generateShiftAndKeepSelected64Bit(node, cg, stringLenReg, stringLenReg, 31, 62, 1, true, false);
-      generateShiftAndKeepSelected64Bit(node, cg, patternLenReg, patternLenReg, 31, 62, 1, true, false);
-      generateShiftAndKeepSelected64Bit(node, cg, stringIndexReg, stringIndexReg, 31, 62, 1, true, false);
+      generateShiftThenKeepSelected64Bit(node, cg, stringLenReg, stringLenReg, 31, 62, 1);
+      generateShiftThenKeepSelected64Bit(node, cg, patternLenReg, patternLenReg, 31, 62, 1);
+      generateShiftThenKeepSelected64Bit(node, cg, stringIndexReg, stringIndexReg, 31, 62, 1);
       }
    else
       {
@@ -4630,7 +4630,7 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
       }
    else
       {
-      generateShiftAndKeepSelected31Bit(node, cg, tmpReg2, indexReg, 32-spineShift - elementShift, 31-elementShift, elementShift, true, false);
+      generateShiftThenKeepSelected31Bit(node, cg, tmpReg2, indexReg, 32-spineShift - elementShift, 31-elementShift, elementShift);
       }
 
    arrayletMR = generateS390MemoryReference(tmpReg, tmpReg2, 0, cg);
