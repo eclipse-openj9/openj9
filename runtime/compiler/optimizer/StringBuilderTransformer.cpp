@@ -338,9 +338,9 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
 
             if (acallSymbol != NULL)
                {
-               TR::RecognizedMethod recogniedMethod = acallSymbol->getRecognizedMethod();
+               TR::RecognizedMethod recognizedMethod = acallSymbol->getRecognizedMethod();
 
-               switch (recogniedMethod)
+               switch (recognizedMethod)
                   {
                   case TR::java_lang_StringBuilder_append_bool:
                   case TR::java_lang_StringBuilder_append_char:
@@ -360,7 +360,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
                            traceMsg(comp(), "[0x%p] Adding argument of java/lang/StringBuilder.append acall node.\n", acallNode);
                            }
 
-                        appendArguments.add(new (trHeapMemory()) TR_Pair<TR::Node*, TR::RecognizedMethod> (acallNode->getSecondChild(), recogniedMethod));
+                        appendArguments.add(new (trHeapMemory()) TR_Pair<TR::Node*, TR::RecognizedMethod> (acallNode->getSecondChild(), recognizedMethod));
 
                         // The result of this append call is chained to the next so update the current receiver
                         stringBuilderReceiver = acallNode;
