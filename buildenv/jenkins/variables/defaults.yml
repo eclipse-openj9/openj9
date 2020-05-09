@@ -298,6 +298,19 @@ x86-64_linux:
 #========================================#
 x86-64_linux_cm:
   extends: ['x86-64_linux', 'cmake']
+  excluded_tests:
+      - extended.functional
+      - sanity.system
+      - extended.system
+#========================================#
+# Linux x86 64bits Large Heap /w CMake
+#========================================#
+x86-64_linux_xl_cm:
+  extends: ['x86-64_linux_xl', 'cmake']
+  excluded_tests:
+      - extended.functional
+      - sanity.system
+      - extended.system
 #========================================#
 # Linux x86 64bits Compressed Pointers /w JITSERVER
 #========================================#
