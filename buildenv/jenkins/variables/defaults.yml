@@ -116,12 +116,10 @@ cmake:
     next: '--disable-ddr'
   extra_make_options: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
   excluded_tests:
-      - sanity.functional
-      - extended.functional
-      - sanity.system
-      - extended.system
+    8:
       - special.system
-      - sanity.openjdk
+    11:
+      - special.system
 #========================================#
 # JITServer
 #========================================#
@@ -298,6 +296,19 @@ x86-64_linux:
 #========================================#
 x86-64_linux_cm:
   extends: ['x86-64_linux', 'cmake']
+  excluded_tests:
+      - extended.functional
+      - sanity.system
+      - extended.system
+#========================================#
+# Linux x86 64bits Large Heap /w CMake
+#========================================#
+x86-64_linux_xl_cm:
+  extends: ['x86-64_linux_xl', 'cmake']
+  excluded_tests:
+      - extended.functional
+      - sanity.system
+      - extended.system
 #========================================#
 # Linux x86 64bits Compressed Pointers /w JITSERVER
 #========================================#
@@ -431,3 +442,8 @@ x86-64_mac_xl:
 #========================================#
 x86-64_mac_cm:
   extends: ['x86-64_mac', 'cmake']
+#========================================#
+# OSX x86 64bits Large Heap /w CMake
+#========================================#
+x86-64_mac_xl_cm:
+  extends: ['x86-64_mac_xl', 'cmake']
