@@ -115,13 +115,6 @@ cmake:
     14: '--disable-ddr'
     next: '--disable-ddr'
   extra_make_options: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
-  excluded_tests:
-      - sanity.functional
-      - extended.functional
-      - sanity.system
-      - extended.system
-      - special.system
-      - sanity.openjdk
 #========================================#
 # JITServer
 #========================================#
@@ -196,11 +189,6 @@ ppc64le_linux_cm:
 #========================================#
 ppc64le_linux_xl:
   extends: ['ppc64le_linux', 'largeheap']
-  excluded_tests:
-    8:
-      - special.system
-    11:
-      - special.system
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers /w JITSERVER
 #========================================#
@@ -233,9 +221,6 @@ s390x_linux:
 #========================================#
 s390x_linux_xl:
   extends: ['s390x_linux', 'largeheap']
-  excluded_tests:
-     11:
-      - special.system
 #========================================#
 # Linux S390 64bits Compressed Pointers /w JITSERVER
 #========================================#
@@ -290,9 +275,6 @@ x86-64_linux:
   build_env:
     cmd: 'source /home/jenkins/set_gcc7.5.0_env'
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
-  excluded_tests:
-    11:
-      - special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers /w CMake
 #========================================#
@@ -308,9 +290,6 @@ x86-64_linux_jit:
 #========================================#
 x86-64_linux_xl:
   extends: ['x86-64_linux', 'largeheap']
-  excluded_tests:
-    8:
-      - special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers / Valhalla
 #========================================#
@@ -360,9 +339,6 @@ x86-64_windows:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
   build_env:
     vars: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-  excluded_tests:
-    11:
-      - special.system
 #========================================#
 # Windows x86 64bits Large Heap
 #========================================#
@@ -386,9 +362,6 @@ x86-32_windows:
   build_env:
     vars:
       8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM32/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-  excluded_tests:
-    8:
-      - special.system
 #========================================#
 # OSX x86 64bits Compressed Pointers
 #========================================#
@@ -415,19 +388,19 @@ x86-64_mac:
     vars:
       all: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
-  excluded_tests:
-    11:
-      - special.system
 #========================================#
 # OSX x86 64bits Large Heap
 #========================================#
 x86-64_mac_xl:
   extends: ['x86-64_mac', 'largeheap']
-  excluded_tests:
-    8:
-      - special.system
 #========================================#
 # OSX x86 64bits Compressed Pointers /w CMake
 #========================================#
 x86-64_mac_cm:
   extends: ['x86-64_mac', 'cmake']
+#========================================#
+# OSX x86 64bits Large Heap /w CMake
+#========================================#
+x86-64_mac_xl_cm:
+  extends: ['x86-64_mac_xl', 'cmake']
+  
