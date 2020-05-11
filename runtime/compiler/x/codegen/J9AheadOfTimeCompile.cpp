@@ -284,24 +284,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
          }
 
-      case TR_ValidateVirtualMethodFromCP:
-         {
-         TR::VirtualMethodFromCPRecord *record = reinterpret_cast<TR::VirtualMethodFromCPRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate *>(cursor);
-
-         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
-         binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
-         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
-         binaryTemplate->_cpIndex = static_cast<uint16_t>(record->_cpIndex);
-
-         cursor += sizeof(TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateVirtualMethodFromOffset:
          {
          TR::VirtualMethodFromOffsetRecord *record = reinterpret_cast<TR::VirtualMethodFromOffsetRecord *>(relocation->getTargetAddress());
@@ -633,7 +615,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate),   // TR_ValidatedMethodFromClass            = 84,
    sizeof(TR_RelocationRecordValidateMethodFromCPBinaryTemplate),      // TR_ValidateStaticMethodFromCP          = 85,
    sizeof(TR_RelocationRecordValidateMethodFromCPBinaryTemplate),      //TR_ValidateSpecialMethodFromCP         = 86,
-   sizeof(TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate),//TR_ValidateVirtualMethodFromCP         = 87,
+   sizeof(TR_RelocationRecordValidateMethodFromCPBinaryTemplate),      //TR_ValidateVirtualMethodFromCP         = 87,
    sizeof(TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate),//TR_ValidateVirtualMethodFromOffset = 88,
    sizeof(TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate),//TR_ValidateInterfaceMethodFromCP     = 89,
    sizeof(TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate),//TR_ValidateMethodFromClassAndSig     = 90,

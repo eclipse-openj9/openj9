@@ -819,6 +819,19 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateVirtualMethodFromCP:
+         {
+         TR_RelocationRecordValidateVirtualMethodFromCP *vmfcpRecord = reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromCP *>(reloRecord);
+
+         TR::VirtualMethodFromCPRecord *svmRecord = reinterpret_cast<TR::VirtualMethodFromCPRecord *>(relocation->getTargetAddress());
+
+         vmfcpRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
+         vmfcpRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
+         vmfcpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         vmfcpRecord->setCpIndex(reloTarget, static_cast<uint16_t>(svmRecord->_cpIndex));
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1334,6 +1347,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
       case TR_ValidateStaticMethodFromCP:
       case TR_ValidateSpecialMethodFromCP:
+      case TR_ValidateVirtualMethodFromCP:
          {
          TR_RelocationRecordValidateMethodFromCP *mfcpRecord = reinterpret_cast<TR_RelocationRecordValidateMethodFromCP *>(reloRecord);
 
@@ -1345,6 +1359,8 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                recordType = "Static";
             else if (kind == TR_ValidateSpecialMethodFromCP)
                recordType = "Special";
+            else if (kind == TR_ValidateVirtualMethodFromCP)
+               recordType = "Virtual";
             else
                TR_ASSERT_FATAL(false, "Unknown relokind %d!\n", kind);
 
@@ -1838,27 +1854,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                                    *(int32_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
                   }
                }
-            break;
-
-         case TR_ValidateVirtualMethodFromCP:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Virtual Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_definingClassID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_cpIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
             break;
 
          case TR_ValidateVirtualMethodFromOffset:
