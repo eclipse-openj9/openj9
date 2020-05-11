@@ -352,7 +352,7 @@ struct TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate : publi
 struct TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _classID;
-   bool _isInitialized;
+   uint8_t _isInitialized;
    };
 
 struct TR_RelocationRecordSymbolFromManagerBinaryTemplate : public TR_RelocationRecordBinaryTemplate
@@ -1840,6 +1840,14 @@ class TR_RelocationRecordValidateClassInfoIsInitialized : public TR_RelocationRe
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setClassID(TR_RelocationTarget *reloTarget, uint16_t classID);
+      uint16_t classID(TR_RelocationTarget *reloTarget);
+
+      void setIsInitialized(TR_RelocationTarget *reloTarget, bool isInitialized);
+      bool isInitialized(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordValidateMethodFromSingleImpl : public TR_RelocationRecord
