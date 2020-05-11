@@ -4286,28 +4286,91 @@ TR_RelocationRecordValidateImproperInterfaceMethodFromCP::applyRelocation(TR_Rel
 int32_t
 TR_RelocationRecordValidateMethodFromClassAndSig::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
-   uint16_t methodID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_methodID);
-   uint16_t definingClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_definingClassID);
-   uint16_t lookupClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_lookupClassID);
-   uint16_t beholderID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_beholderID);
+   uint16_t methodID = this->methodID(reloTarget);
+   uint16_t definingClassID = this->definingClassID(reloTarget);
+   uint16_t lookupClassID = this->lookupClassID(reloTarget);
+   uint16_t beholderID = this->beholderID(reloTarget);
 
-   uintptr_t romMethodOffset = reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_romMethodOffsetInSCC);
+   uintptr_t romMethodOffset = this->romMethodOffsetInSCC(reloTarget);
    J9ROMMethod *romMethod = reloRuntime->fej9()->sharedCache()->romMethodFromOffsetInSharedCache(romMethodOffset);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: methodID %d\n", methodID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: definingClassID %d\n", definingClassID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: lookupClassID %d\n", lookupClassID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: beholderID %d\n", beholderID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: romMethod %p\n", romMethod);
-      }
 
    if (reloRuntime->comp()->getSymbolValidationManager()->validateMethodFromClassAndSignatureRecord(methodID, definingClassID, lookupClassID, beholderID, romMethod))
       return 0;
    else
       return compilationAotClassReloFailure;
+   }
+
+void
+TR_RelocationRecordValidateMethodFromClassAndSig::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tmethodID %d\n", methodID(reloTarget));
+   reloLogger->printf("\tdefiningClassID %d\n", definingClassID(reloTarget));
+   reloLogger->printf("\tbeholderID %d\n", beholderID(reloTarget));
+   reloLogger->printf("\tlookupClassID %d\n", lookupClassID(reloTarget));
+   reloLogger->printf("\tromMethodOffsetInSCC %p\n", (void *)romMethodOffsetInSCC(reloTarget));
+   }
+
+void
+TR_RelocationRecordValidateMethodFromClassAndSig::setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID)
+   {
+   reloTarget->storeUnsigned16b(methodID, (uint8_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_methodID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateMethodFromClassAndSig::methodID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_methodID);
+   }
+
+void
+TR_RelocationRecordValidateMethodFromClassAndSig::setDefiningClassID(TR_RelocationTarget *reloTarget, uint16_t definingClassID)
+   {
+   reloTarget->storeUnsigned16b(definingClassID, (uint8_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_definingClassID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateMethodFromClassAndSig::definingClassID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_definingClassID);
+   }
+
+void
+TR_RelocationRecordValidateMethodFromClassAndSig::setLookupClassID(TR_RelocationTarget *reloTarget, uint16_t lookupClassID)
+   {
+   reloTarget->storeUnsigned16b(lookupClassID, (uint8_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_lookupClassID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateMethodFromClassAndSig::lookupClassID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_lookupClassID);
+   }
+
+void
+TR_RelocationRecordValidateMethodFromClassAndSig::setBeholderID(TR_RelocationTarget *reloTarget, uint16_t beholderID)
+   {
+   reloTarget->storeUnsigned16b(beholderID, (uint8_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_beholderID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateMethodFromClassAndSig::beholderID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_beholderID);
+   }
+
+void
+TR_RelocationRecordValidateMethodFromClassAndSig::setRomMethodOffsetInSCC(TR_RelocationTarget *reloTarget, uintptr_t romMethodOffsetInSCC)
+   {
+   reloTarget->storeRelocationRecordValue(romMethodOffsetInSCC, (uintptr_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_romMethodOffsetInSCC);
+   }
+
+uintptr_t
+TR_RelocationRecordValidateMethodFromClassAndSig::romMethodOffsetInSCC(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *)_record)->_romMethodOffsetInSCC);
    }
 
 int32_t

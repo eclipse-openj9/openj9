@@ -867,6 +867,25 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateMethodFromClassAndSig:
+         {
+         TR_RelocationRecordValidateMethodFromClassAndSig *mfcsRecord = reinterpret_cast<TR_RelocationRecordValidateMethodFromClassAndSig *>(reloRecord);
+
+         TR::MethodFromClassAndSigRecord *svmRecord = reinterpret_cast<TR::MethodFromClassAndSigRecord *>(relocation->getTargetAddress());
+
+         // Store rom method to get name of method
+         J9Method *methodToValidate = reinterpret_cast<J9Method *>(svmRecord->_method);
+         J9ROMMethod *romMethod = static_cast<TR_J9VM *>(fej9)->getROMMethodFromRAMMethod(methodToValidate);
+         uintptr_t romMethodOffsetInSharedCache = self()->offsetInSharedCacheFromROMMethod(sharedCache, romMethod);
+
+         mfcsRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
+         mfcsRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
+         mfcsRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         mfcsRecord->setLookupClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_lookupClass));
+         mfcsRecord->setRomMethodOffsetInSCC(reloTarget, romMethodOffsetInSharedCache);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1443,6 +1462,23 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          }
          break;
 
+      case TR_ValidateMethodFromClassAndSig:
+         {
+         TR_RelocationRecordValidateMethodFromClassAndSig *mfcsRecord = reinterpret_cast<TR_RelocationRecordValidateMethodFromClassAndSig *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Validate Method From Class and Sig: methodID=%d, definingClassID=%d, lookupClassID=%d, beholderID=%d, romMethodOffsetInSCC=%p ",
+                     (uint32_t)mfcsRecord->methodID(reloTarget),
+                     (uint32_t)mfcsRecord->definingClassID(reloTarget),
+                     (uint32_t)mfcsRecord->lookupClassID(reloTarget),
+                     (uint32_t)mfcsRecord->beholderID(reloTarget),
+                     (void *)mfcsRecord->romMethodOffsetInSCC(reloTarget));
+            }
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1942,28 +1978,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                         binaryTemplate->_cpIndex);
                }
             cursor += sizeof(TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateMethodFromClassAndSig:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Method From Class and Sig: methodID=%d, definingClassID=%d, lookupClassID=%d, beholderID=%d, romMethodOffsetInSCC=%p ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_definingClassID,
-                        (uint32_t)binaryTemplate->_lookupClassID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_romMethodOffsetInSCC);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             }
             break;

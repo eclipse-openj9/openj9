@@ -1788,6 +1788,23 @@ class TR_RelocationRecordValidateMethodFromClassAndSig : public TR_RelocationRec
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID);
+      uint16_t methodID(TR_RelocationTarget *reloTarget);
+
+      void setDefiningClassID(TR_RelocationTarget *reloTarget, uint16_t definingClassID);
+      uint16_t definingClassID(TR_RelocationTarget *reloTarget);
+
+      void setBeholderID(TR_RelocationTarget *reloTarget, uint16_t beholderID);
+      uint16_t beholderID(TR_RelocationTarget *reloTarget);
+
+      void setLookupClassID(TR_RelocationTarget *reloTarget, uint16_t lookupClassID);
+      uint16_t lookupClassID(TR_RelocationTarget *reloTarget);
+
+      void setRomMethodOffsetInSCC(TR_RelocationTarget *reloTarget, uintptr_t romMethodOffsetInSCC);
+      uintptr_t romMethodOffsetInSCC(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordValidateStackWalkerMaySkipFrames : public TR_RelocationRecord
