@@ -346,7 +346,7 @@ struct TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate : publi
    {
    uint16_t _methodID;
    uint16_t _methodClassID;
-   bool _skipFrames;
+   uint8_t _skipFrames;
    };
 
 struct TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate : public TR_RelocationRecordBinaryTemplate
@@ -1817,6 +1817,17 @@ class TR_RelocationRecordValidateStackWalkerMaySkipFrames : public TR_Relocation
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID);
+      uint16_t methodID(TR_RelocationTarget *reloTarget);
+
+      void setMethodClassID(TR_RelocationTarget *reloTarget, uint16_t methodClassID);
+      uint16_t methodClassID(TR_RelocationTarget *reloTarget);
+
+      void setSkipFrames(TR_RelocationTarget *reloTarget, bool skipFrames);
+      bool skipFrames(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordValidateClassInfoIsInitialized : public TR_RelocationRecord
