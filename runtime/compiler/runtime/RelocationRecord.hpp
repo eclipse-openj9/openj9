@@ -1976,6 +1976,11 @@ class TR_RelocationRecordResolvedTrampolines : public TR_RelocationRecord
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setSymbolID(TR_RelocationTarget *reloTarget, uint16_t symbolID);
+      uint16_t symbolID(TR_RelocationTarget *reloTarget);
    };
 /* SYMBOL VALIDATION MANAGER */
 

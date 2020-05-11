@@ -979,6 +979,17 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ResolvedTrampolines:
+         {
+         TR_RelocationRecordResolvedTrampolines *rtRecord = reinterpret_cast<TR_RelocationRecordResolvedTrampolines *>(reloRecord);
+
+         uint8_t *symbol = relocation->getTargetAddress();
+         uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
+
+         rtRecord->setSymbolID(reloTarget, symbolID);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1670,6 +1681,19 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          }
          break;
 
+      case TR_ResolvedTrampolines:
+         {
+         TR_RelocationRecordResolvedTrampolines *rtRecord = reinterpret_cast<TR_RelocationRecordResolvedTrampolines *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Resolved Trampoline: symbolID=%u ",
+                     (uint32_t)rtRecord->symbolID(reloTarget));
+            }
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1960,23 +1984,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                cursor +=4;      // padding
                }
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            break;
-         case TR_ResolvedTrampolines:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordResolvedTrampolinesBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordResolvedTrampolinesBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Resolved Trampoline: symbolID=%d ",
-                        (uint32_t)binaryTemplate->_symbolID);
-               }
-            cursor += sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
             break;
          case TR_PicTrampolines:
             cursor++;        // unused field

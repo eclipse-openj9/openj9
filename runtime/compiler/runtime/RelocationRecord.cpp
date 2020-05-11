@@ -4939,11 +4939,32 @@ TR_RelocationRecordSymbolFromManager::activatePointer(TR_RelocationRuntime *relo
    }
 
 void
+TR_RelocationRecordResolvedTrampolines::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tsymbolID %d\n", symbolID(reloTarget));
+   }
+
+void
+TR_RelocationRecordResolvedTrampolines::setSymbolID(TR_RelocationTarget *reloTarget, uint16_t symbolID)
+   {
+   reloTarget->storeUnsigned16b(symbolID, (uint8_t *) &((TR_RelocationRecordResolvedTrampolinesBinaryTemplate *)_record)->_symbolID);
+   }
+
+uint16_t
+TR_RelocationRecordResolvedTrampolines::symbolID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordResolvedTrampolinesBinaryTemplate *)_record)->_symbolID);
+   }
+
+void
 TR_RelocationRecordResolvedTrampolines::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
    {
    TR_RelocationRecordResolvedTrampolinesPrivateData *reloPrivateData = &(privateData()->resolvedTrampolines);
 
-   uint16_t symbolID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordResolvedTrampolinesBinaryTemplate *)_record)->_symbolID);
+   uint16_t symbolID = this->symbolID(reloTarget);
 
    if (reloRuntime->reloLogger()->logEnabled())
       {

@@ -370,23 +370,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
          }
 
-      case TR_ResolvedTrampolines:
-         {
-         uint8_t *symbol = relocation->getTargetAddress();
-         uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
-         TR_ASSERT_FATAL(symbolID, "symbolID should exist!\n");
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordResolvedTrampolinesBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordResolvedTrampolinesBinaryTemplate *>(cursor);
-
-         binaryTemplate->_symbolID = symbolID;
-
-         cursor += sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate);
-         }
-         break;
-
       case TR_RamMethodSequence:
       case TR_RamMethodSequenceReg:
          {
