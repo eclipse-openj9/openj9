@@ -81,6 +81,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateReleaseVMAccessSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol); // minor rework
    TR::SymbolReference * findOrCreateStackOverflowSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol); // minor rework
    TR::SymbolReference * findOrCreateThrowCurrentExceptionSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = 0); // minor rework
+   TR::SymbolReference * findOrCreateThrowUnreportedExceptionSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = 0);
 
    TR::SymbolReference * findOrCreateWriteBarrierStoreSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = 0);
    TR::SymbolReference * findOrCreateWriteBarrierStoreGenerationalSymbolRef(TR::ResolvedMethodSymbol *owningMethodSymbol = 0);
