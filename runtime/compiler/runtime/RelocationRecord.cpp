@@ -4482,33 +4482,120 @@ TR_RelocationRecordValidateClassInfoIsInitialized::isInitialized(TR_RelocationTa
 int32_t
 TR_RelocationRecordValidateMethodFromSingleImpl::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
-   uint16_t methodID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_methodID);
-   uint16_t definingClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_definingClassID);
-   uint16_t thisClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_thisClassID);
-   int32_t cpIndexOrVftSlot = reloTarget->loadSigned32b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_cpIndexOrVftSlot);
-   uint16_t callerMethodID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_callerMethodID);
-   uint16_t useGetResolvedInterfaceMethod = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_useGetResolvedInterfaceMethod);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: methodID %d\n", methodID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: definingClassID %d\n", definingClassID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: thisClassID %d\n", thisClassID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: cpIndexOrVftSlot %d\n", cpIndexOrVftSlot);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: callerMethodID %d\n", callerMethodID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: useGetResolvedInterfaceMethod %d\n", useGetResolvedInterfaceMethod);
-      }
+   uint16_t methodID = this->methodID(reloTarget);
+   uint16_t definingClassID = this->definingClassID(reloTarget);
+   uint16_t thisClassID = this->thisClassID(reloTarget);
+   int32_t cpIndexOrVftSlot = this->cpIndexOrVftSlot(reloTarget);
+   uint16_t callerMethodID = this->callerMethodID(reloTarget);
+   TR_YesNoMaybe useGetResolvedInterfaceMethod = this->useGetResolvedInterfaceMethod(reloTarget);
 
    if (reloRuntime->comp()->getSymbolValidationManager()->validateMethodFromSingleImplementerRecord(methodID,
                                                                                                     definingClassID,
                                                                                                     thisClassID,
                                                                                                     cpIndexOrVftSlot,
                                                                                                     callerMethodID,
-                                                                                                    (TR_YesNoMaybe)useGetResolvedInterfaceMethod))
+                                                                                                    useGetResolvedInterfaceMethod))
       return 0;
    else
       return compilationAotClassReloFailure;
+   }
+
+void
+TR_RelocationRecordValidateMethodFromSingleImpl::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+
+   const char *yesnomaybe;
+   TR_YesNoMaybe useGetResolvedInterfaceMethod = this->useGetResolvedInterfaceMethod(reloTarget);
+   if (useGetResolvedInterfaceMethod == TR_yes)
+      yesnomaybe = "TR_yes";
+   else if (useGetResolvedInterfaceMethod == TR_no)
+      yesnomaybe = "TR_no";
+   else if (useGetResolvedInterfaceMethod == TR_maybe)
+      yesnomaybe = "TR_maybe";
+   else
+      TR_ASSERT_FATAL(false, "Unknown TR_YesNoMaybe %d\n", useGetResolvedInterfaceMethod);
+
+   reloLogger->printf("\tmethodID %d\n", methodID(reloTarget));
+   reloLogger->printf("\tdefiningClassID %d\n", definingClassID(reloTarget));
+   reloLogger->printf("\tthisClassID %d\n", thisClassID(reloTarget));
+   reloLogger->printf("\tcpIndexOrVftSlot %d\n", cpIndexOrVftSlot(reloTarget));
+   reloLogger->printf("\tcallerMethodID %d\n", callerMethodID(reloTarget));
+   reloLogger->printf("\tuseGetResolvedInterfaceMethod %s\n", yesnomaybe);
+   }
+
+void
+TR_RelocationRecordValidateMethodFromSingleImpl::setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID)
+   {
+   reloTarget->storeUnsigned16b(methodID, (uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_methodID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateMethodFromSingleImpl::methodID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_methodID);
+   }
+
+void
+TR_RelocationRecordValidateMethodFromSingleImpl::setDefiningClassID(TR_RelocationTarget *reloTarget, uint16_t definingClassID)
+   {
+   reloTarget->storeUnsigned16b(definingClassID, (uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_definingClassID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateMethodFromSingleImpl::definingClassID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_definingClassID);
+   }
+
+void
+TR_RelocationRecordValidateMethodFromSingleImpl::setThisClassID(TR_RelocationTarget *reloTarget, uint16_t thisClassID)
+   {
+   reloTarget->storeUnsigned16b(thisClassID, (uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_thisClassID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateMethodFromSingleImpl::thisClassID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_thisClassID);
+   }
+
+void
+TR_RelocationRecordValidateMethodFromSingleImpl::setCpIndexOrVftSlot(TR_RelocationTarget *reloTarget, int32_t cpIndexOrVftSlot)
+   {
+   reloTarget->storeSigned32b(cpIndexOrVftSlot, (uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_cpIndexOrVftSlot);
+   }
+
+int32_t
+TR_RelocationRecordValidateMethodFromSingleImpl::cpIndexOrVftSlot(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadSigned32b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_cpIndexOrVftSlot);
+   }
+
+void
+TR_RelocationRecordValidateMethodFromSingleImpl::setCallerMethodID(TR_RelocationTarget *reloTarget, uint16_t callerMethodID)
+   {
+   reloTarget->storeUnsigned16b(callerMethodID, (uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_callerMethodID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateMethodFromSingleImpl::callerMethodID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_callerMethodID);
+   }
+
+void
+TR_RelocationRecordValidateMethodFromSingleImpl::setUseGetResolvedInterfaceMethod(TR_RelocationTarget *reloTarget, TR_YesNoMaybe useGetResolvedInterfaceMethod)
+   {
+   reloTarget->storeUnsigned16b((uint16_t)useGetResolvedInterfaceMethod, (uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_useGetResolvedInterfaceMethod);
+   }
+
+TR_YesNoMaybe
+TR_RelocationRecordValidateMethodFromSingleImpl::useGetResolvedInterfaceMethod(TR_RelocationTarget *reloTarget)
+   {
+   return (TR_YesNoMaybe)reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *)_record)->_useGetResolvedInterfaceMethod);
    }
 
 int32_t

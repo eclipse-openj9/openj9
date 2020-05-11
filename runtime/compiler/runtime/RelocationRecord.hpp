@@ -1860,6 +1860,26 @@ class TR_RelocationRecordValidateMethodFromSingleImpl : public TR_RelocationReco
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID);
+      uint16_t methodID(TR_RelocationTarget *reloTarget);
+
+      void setDefiningClassID(TR_RelocationTarget *reloTarget, uint16_t definingClassID);
+      uint16_t definingClassID(TR_RelocationTarget *reloTarget);
+
+      void setThisClassID(TR_RelocationTarget *reloTarget, uint16_t thisClassID);
+      uint16_t thisClassID(TR_RelocationTarget *reloTarget);
+
+      void setCpIndexOrVftSlot(TR_RelocationTarget *reloTarget, int32_t cpIndexOrVftSlot);
+      int32_t cpIndexOrVftSlot(TR_RelocationTarget *reloTarget);
+
+      void setCallerMethodID  (TR_RelocationTarget *reloTarget, uint16_t callerMethodID);
+      uint16_t callerMethodID(TR_RelocationTarget *reloTarget);
+
+      void setUseGetResolvedInterfaceMethod(TR_RelocationTarget *reloTarget, TR_YesNoMaybe useGetResolvedInterfaceMethod);
+      TR_YesNoMaybe useGetResolvedInterfaceMethod(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordValidateMethodFromSingleInterfaceImpl : public TR_RelocationRecord
