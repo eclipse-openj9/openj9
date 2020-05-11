@@ -252,6 +252,11 @@ static intptr_t getAIXPPCDescription(struct J9PortLibrary *portLibrary, J9Proces
 #endif /* defined(J9OS_I5) && !defined(J9OS_I5_V6R1) */
 #endif /* !defined(__power_9) */
 
+#if !defined(__power_10)
+#define POWER_10 0x40000 /* Power 10 class CPU */
+#define __power_10() (_system_configuration.implementation == POWER_10)
+#endif /* !defined(__power_10) */
+
 #if defined(J9OS_I5_V6R1) /* vmx_version id only available since TL4 */
 #define __power_vsx() (_system_configuration.vmx_version > 1)
 #endif
@@ -566,6 +571,8 @@ mapPPCProcessor(const char *processorName)
 		rc = PROCESSOR_PPC_P8;
 	} else if (0 == strncasecmp(processorName, "power9", 6)) {
 		rc = PROCESSOR_PPC_P9;
+	} else if (0 == strncasecmp(processorName, "power10", 7)) {
+                rc = PROCESSOR_PPC_P10;
 	}
 
 	return rc;
@@ -617,6 +624,8 @@ getAIXPPCDescription(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 		desc->processor = PROCESSOR_PPC_P8;
 	} else if (__power_9()) {
 		desc->processor = PROCESSOR_PPC_P9;
+	} else if (__power_10()) {
+                desc->processor = PROCESSOR_PPC_P10;
 	} else {
 		desc->processor = PROCESSOR_PPC_UNKNOWN;
 	}
