@@ -1948,6 +1948,14 @@ class TR_RelocationRecordSymbolFromManager : public TR_RelocationRecord
       virtual void activatePointer(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
       bool needsUnloadAssumptions(TR::SymbolType symbolType);
       bool needsRedefinitionAssumption(TR_RelocationRuntime *reloRuntime, uint8_t *reloLocation, TR_OpaqueClassBlock *clazz, TR::SymbolType symbolType);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setSymbolID(TR_RelocationTarget *reloTarget, uint16_t symbolID);
+      uint16_t symbolID(TR_RelocationTarget *reloTarget);
+
+      void setSymbolType(TR_RelocationTarget *reloTarget, TR::SymbolType symbolType);
+      TR::SymbolType symbolType(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordDiscontiguousSymbolFromManager : public TR_RelocationRecordSymbolFromManager

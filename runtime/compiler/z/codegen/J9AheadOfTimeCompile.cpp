@@ -272,21 +272,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          }
          break;
 
-      case TR_SymbolFromManager:
-         {
-         uint8_t *symbol = relocation->getTargetAddress();
-         uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
-         uint16_t symbolType = (uint16_t)(uintptr_t)relocation->getTargetAddress2();
-         TR_ASSERT_FATAL(symbolID, "symbolID should exist!\n");
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-         TR_RelocationRecordSymbolFromManagerBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordSymbolFromManagerBinaryTemplate *>(cursor);
-         binaryTemplate->_symbolID = symbolID;
-         binaryTemplate->_symbolType = symbolType;
-         cursor += sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate);
-         }
-         break;
-
       case TR_ArbitraryClassAddress:
          {
          // ExternalRelocation data is as expected for TR_ClassAddress

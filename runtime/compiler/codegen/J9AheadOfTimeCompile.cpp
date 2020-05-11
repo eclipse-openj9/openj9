@@ -965,6 +965,20 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_SymbolFromManager:
+         {
+         TR_RelocationRecordSymbolFromManager *sfmRecord = reinterpret_cast<TR_RelocationRecordSymbolFromManager *>(reloRecord);
+
+         uint8_t *symbol = relocation->getTargetAddress();
+         uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
+
+         uint16_t symbolType = (uint16_t)(uintptr_t)relocation->getTargetAddress2();
+
+         sfmRecord->setSymbolID(reloTarget, symbolID);
+         sfmRecord->setSymbolType(reloTarget, static_cast<TR::SymbolType>(symbolType));
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1642,6 +1656,20 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          }
          break;
 
+      case TR_SymbolFromManager:
+         {
+         TR_RelocationRecordSymbolFromManager *sfmRecord = reinterpret_cast<TR_RelocationRecordSymbolFromManager *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Symbol From Manager: symbolID=%u symbolType=%u ",
+                     (uint32_t)sfmRecord->symbolID(reloTarget),
+                     (uint32_t)sfmRecord->symbolType(reloTarget));
+            }
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -2124,7 +2152,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                }
             break;
 
-         case TR_SymbolFromManager:
          case TR_DiscontiguousSymbolFromManager:
             {
             cursor++;
