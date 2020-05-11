@@ -284,8 +284,6 @@ struct TR_RelocationRecordValidateMethodFromCPBinaryTemplate : public TR_Relocat
    uint16_t _cpIndex; // constrained to 16 bits by the class file format
    };
 
-typedef TR_RelocationRecordValidateMethodFromCPBinaryTemplate TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate;
-
 struct TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _methodID;
@@ -1766,15 +1764,12 @@ class TR_RelocationRecordValidateInterfaceMethodFromCP : public TR_RelocationRec
       uint16_t cpIndex(TR_RelocationTarget *reloTarget);
    };
 
-class TR_RelocationRecordValidateImproperInterfaceMethodFromCP : public TR_RelocationRecord
+class TR_RelocationRecordValidateImproperInterfaceMethodFromCP : public TR_RelocationRecordValidateMethodFromCP
    {
    public:
       TR_RelocationRecordValidateImproperInterfaceMethodFromCP() {}
-      TR_RelocationRecordValidateImproperInterfaceMethodFromCP(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
+      TR_RelocationRecordValidateImproperInterfaceMethodFromCP(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordValidateMethodFromCP(reloRuntime, record) {}
       virtual char *name() { return "TR_RelocationRecordValidateImproperInterfaceMethodFromCP"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };
 
