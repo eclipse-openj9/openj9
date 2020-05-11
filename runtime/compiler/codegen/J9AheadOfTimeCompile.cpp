@@ -1662,13 +1662,15 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          break;
 
       case TR_SymbolFromManager:
+      case TR_DiscontiguousSymbolFromManager:
          {
          TR_RelocationRecordSymbolFromManager *sfmRecord = reinterpret_cast<TR_RelocationRecordSymbolFromManager *>(reloRecord);
 
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Symbol From Manager: symbolID=%u symbolType=%u ",
+            traceMsg(self()->comp(), "\n %sSymbol From Manager: symbolID=%d symbolType=%d ",
+                     kind == TR_DiscontiguousSymbolFromManager ? "Discontiguous " : "",
                      (uint32_t)sfmRecord->symbolID(reloTarget),
                      (uint32_t)sfmRecord->symbolType(reloTarget));
             }
@@ -2151,29 +2153,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                                    *(int32_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
                   }
                }
-            break;
-
-         case TR_DiscontiguousSymbolFromManager:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordSymbolFromManagerBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordSymbolFromManagerBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Symbol From Manager: symbolID=%d symbolType=%d ",
-                        (uint32_t)binaryTemplate->_symbolID, (uint32_t)binaryTemplate->_symbolType);
-
-               if (kind == TR_DiscontiguousSymbolFromManager)
-                  {
-                  traceMsg(self()->comp(), "isDiscontiguous ");
-                  }
-               }
-            cursor += sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
             break;
 
          default:

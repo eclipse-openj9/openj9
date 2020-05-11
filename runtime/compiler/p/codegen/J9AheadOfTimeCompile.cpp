@@ -429,6 +429,8 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
       case TR_DiscontiguousSymbolFromManager:
          {
+         TR_RelocationRecordDiscontiguousSymbolFromManager *dsfmRecord = reinterpret_cast<TR_RelocationRecordDiscontiguousSymbolFromManager *>(reloRecord);
+
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
 
          uint8_t *symbol = (uint8_t *)recordInfo->data1;
@@ -439,16 +441,11 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          uint8_t flags = (uint8_t) recordInfo->data3;
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
 
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+         dsfmRecord->setSymbolID(reloTarget, symbolID);
+         dsfmRecord->setSymbolType(reloTarget, static_cast<TR::SymbolType>(symbolType));
+         dsfmRecord->setReloFlags(reloTarget, flags);
 
-         TR_RelocationRecordSymbolFromManagerBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordSymbolFromManagerBinaryTemplate *>(cursor);
-
-         binaryTemplate->_flags |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-         binaryTemplate->_symbolID = symbolID;
-         binaryTemplate->_symbolType = symbolType;
-
-         cursor += sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate);
+         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 

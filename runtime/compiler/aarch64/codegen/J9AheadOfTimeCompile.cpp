@@ -255,20 +255,17 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
       case TR_DiscontiguousSymbolFromManager:
          {
+         TR_RelocationRecordDiscontiguousSymbolFromManager *dsfmRecord = reinterpret_cast<TR_RelocationRecordDiscontiguousSymbolFromManager *>(reloRecord);
+
          uint8_t *symbol = (uint8_t *)relocation->getTargetAddress();
          uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
 
          uint16_t symbolType = (uint16_t)(uintptr_t)relocation->getTargetAddress2();
 
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
+         dsfmRecord->setSymbolID(reloTarget, symbolID);
+         dsfmRecord->setSymbolType(reloTarget, static_cast<TR::SymbolType>(symbolType));
 
-         TR_RelocationRecordSymbolFromManagerBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordSymbolFromManagerBinaryTemplate *>(cursor);
-
-         binaryTemplate->_symbolID = symbolID;
-         binaryTemplate->_symbolType = symbolType;
-
-         cursor += sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate);
+         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
