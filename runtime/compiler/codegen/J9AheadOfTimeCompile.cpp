@@ -924,6 +924,20 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateMethodFromSingleInterfaceImplementer:
+         {
+         TR_RelocationRecordValidateMethodFromSingleInterfaceImpl *mfsiiRecord = reinterpret_cast<TR_RelocationRecordValidateMethodFromSingleInterfaceImpl *>(reloRecord);
+
+         TR::MethodFromSingleInterfaceImplementer *svmRecord = reinterpret_cast<TR::MethodFromSingleInterfaceImplementer *>(relocation->getTargetAddress());
+
+         mfsiiRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
+         mfsiiRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
+         mfsiiRecord->setThisClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_thisClass));
+         mfsiiRecord->setCallerMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_callerMethod));
+         mfsiiRecord->setCpIndex(reloTarget, static_cast<uint16_t>(svmRecord->_cpIndex));
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1557,9 +1571,26 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                      (uint32_t)mfsiRecord->methodID(reloTarget),
                      (uint32_t)mfsiRecord->definingClassID(reloTarget),
                      (uint32_t)mfsiRecord->thisClassID(reloTarget),
-                     mfsiRecord->cpIndexOrVftSlot(reloTarget),
+                     (uint32_t)mfsiRecord->cpIndexOrVftSlot(reloTarget),
                      (uint32_t)mfsiRecord->callerMethodID(reloTarget),
-                     mfsiRecord->useGetResolvedInterfaceMethod(reloTarget));
+                     (uint32_t)mfsiRecord->useGetResolvedInterfaceMethod(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateMethodFromSingleInterfaceImplementer:
+         {
+         TR_RelocationRecordValidateMethodFromSingleInterfaceImpl *mfsiiRecord = reinterpret_cast<TR_RelocationRecordValidateMethodFromSingleInterfaceImpl *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Validate Method From Single Interface Implementor: methodID=%u, definingClassID=%u, thisClassID=%u, cpIndex=%u, callerMethodID=%u ",
+                     (uint32_t)mfsiiRecord->methodID(reloTarget),
+                     (uint32_t)mfsiiRecord->definingClassID(reloTarget),
+                     (uint32_t)mfsiiRecord->thisClassID(reloTarget),
+                     mfsiiRecord->cpIndex(reloTarget),
+                     (uint32_t)mfsiiRecord->callerMethodID(reloTarget));
             }
          }
          break;
@@ -2063,28 +2094,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                         binaryTemplate->_cpIndex);
                }
             cursor += sizeof(TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateMethodFromSingleInterfaceImplementer:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Method From Single Interface Implementor: methodID=%d, definingClassID=%d, thisClassID=%d, cpIndex=%d, callerMethodID=%d ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_definingClassID,
-                        (uint32_t)binaryTemplate->_thisClassID,
-                        binaryTemplate->_cpIndex,
-                        (uint32_t)binaryTemplate->_callerMethodID);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             }
             break;
