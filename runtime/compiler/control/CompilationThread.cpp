@@ -12561,19 +12561,25 @@ void J9Method_HT::onClassUnloading(J9ClassLoader *j9classLoader)
       {
       HT_Entry *entry = _spine[bucketID];
       HT_Entry *prev = NULL;
-      for (; entry; prev = entry, entry = entry->_next)
+      while (entry)
          {
          if (NULL == entry->_j9method
             || J9_CLASS_FROM_METHOD(entry->_j9method)->classLoader == j9classLoader)
             {
+            HT_Entry *removed = NULL;
             if (prev)
                prev->_next = entry->_next;
             else
                _spine[bucketID] = entry->_next;
-            entry->_next = NULL; // for safety
-            jitPersistentFree(entry);
+            removed = entry;
+            entry = entry->_next;
+            removed->_next = NULL; // for safety
+            jitPersistentFree(removed);
             _numEntries--;
+            continue;
             }
+         prev = entry;
+         entry = entry->_next;
          }
       }
    }
