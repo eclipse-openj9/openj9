@@ -1921,6 +1921,23 @@ class TR_RelocationRecordValidateMethodFromSingleAbstractImpl : public TR_Reloca
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID);
+      uint16_t methodID(TR_RelocationTarget *reloTarget);
+
+      void setDefiningClassID(TR_RelocationTarget *reloTarget, uint16_t definingClassID);
+      uint16_t definingClassID(TR_RelocationTarget *reloTarget);
+
+      void setThisClassID(TR_RelocationTarget *reloTarget, uint16_t thisClassID);
+      uint16_t thisClassID(TR_RelocationTarget *reloTarget);
+
+      void setVftSlot(TR_RelocationTarget *reloTarget, int32_t vftSlot);
+      int32_t vftSlot(TR_RelocationTarget *reloTarget);
+
+      void setCallerMethodID  (TR_RelocationTarget *reloTarget, uint16_t callerMethodID);
+      uint16_t callerMethodID(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordSymbolFromManager : public TR_RelocationRecord
