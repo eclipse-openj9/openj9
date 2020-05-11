@@ -793,10 +793,10 @@ UDATA jitExceptionHandlerSearch(J9VMThread * currentThread, J9StackWalkState * w
                uintptr_t synthetic = 0;
                uint32_t catchType = handlerCursor->catchType;
                /* Check for synthetic handler - if it is, change catchType to 0 to indicate catching all exceptions */
-               if (0xFFFFFFFF == catchType)
+               if (J9_CATCHTYPE_VALUE_FOR_SYNTHETIC_HANDLER_4BYTES == catchType)
                   {
-                     catchType = 0;
-                     synthetic = 1;
+                  catchType = 0;
+                  synthetic = 1;
                   }
                if (isExceptionTypeCaughtByHandler(walkState->walkThread, (J9Class *)walkState->userData4, UNTAGGED_METHOD_CP(handlerCursor->ramMethod), catchType, walkState))
                   {
@@ -824,10 +824,10 @@ UDATA jitExceptionHandlerSearch(J9VMThread * currentThread, J9StackWalkState * w
                uintptr_t synthetic = 0;
                uint16_t catchType = handlerCursor->catchType;
                /* Check for synthetic handler - if it is, change catchType to 0 to indicate catching all exceptions */
-               if (0xFFFF == catchType)
+               if (J9_CATCHTYPE_VALUE_FOR_SYNTHETIC_HANDLER_2BYTES == catchType)
                   {
-                     catchType = 0;
-                     synthetic = 1;
+                  catchType = 0;
+                  synthetic = 1;
                   }
                if (isExceptionTypeCaughtByHandler(walkState->walkThread, (J9Class *)walkState->userData4, walkState->constantPool, catchType, walkState))
                   {
