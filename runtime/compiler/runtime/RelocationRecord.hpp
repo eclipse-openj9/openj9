@@ -284,7 +284,6 @@ struct TR_RelocationRecordValidateMethodFromCPBinaryTemplate : public TR_Relocat
    uint16_t _cpIndex; // constrained to 16 bits by the class file format
    };
 
-typedef TR_RelocationRecordValidateMethodFromCPBinaryTemplate TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate;
 typedef TR_RelocationRecordValidateMethodFromCPBinaryTemplate TR_RelocationRecordValidateSpecialMethodFromCPBinaryTemplate;
 typedef TR_RelocationRecordValidateMethodFromCPBinaryTemplate TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate;
 typedef TR_RelocationRecordValidateMethodFromCPBinaryTemplate TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate;
@@ -1687,15 +1686,12 @@ class TR_RelocationRecordValidateMethodFromCP : public TR_RelocationRecord
       uint16_t cpIndex(TR_RelocationTarget *reloTarget);
    };
 
-class TR_RelocationRecordValidateStaticMethodFromCP : public TR_RelocationRecord
+class TR_RelocationRecordValidateStaticMethodFromCP : public TR_RelocationRecordValidateMethodFromCP
    {
    public:
       TR_RelocationRecordValidateStaticMethodFromCP() {}
-      TR_RelocationRecordValidateStaticMethodFromCP(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
+      TR_RelocationRecordValidateStaticMethodFromCP(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordValidateMethodFromCP(reloRuntime, record) {}
       virtual char *name() { return "TR_RelocationRecordValidateStaticMethodFromCP"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };
 

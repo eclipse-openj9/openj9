@@ -779,6 +779,26 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateStaticMethodFromCP:
+         {
+         TR_RelocationRecordValidateStaticMethodFromCP *smfcpRecord = reinterpret_cast<TR_RelocationRecordValidateStaticMethodFromCP *>(reloRecord);
+
+         TR::StaticMethodFromCPRecord *svmRecord = reinterpret_cast<TR::StaticMethodFromCPRecord *>(relocation->getTargetAddress());
+
+         TR_ASSERT_FATAL(
+            (svmRecord->_cpIndex & J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG) == 0,
+            "static method cpIndex has special split table flag set");
+
+         if ((svmRecord->_cpIndex & J9_STATIC_SPLIT_TABLE_INDEX_FLAG) != 0)
+            smfcpRecord->setReloFlags(reloTarget, TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT);
+
+         smfcpRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
+         smfcpRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
+         smfcpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         smfcpRecord->setCpIndex(reloTarget, static_cast<uint16_t>(svmRecord->_cpIndex & J9_SPLIT_TABLE_INDEX_MASK));
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1292,6 +1312,22 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          }
          break;
 
+      case TR_ValidateStaticMethodFromCP:
+         {
+         TR_RelocationRecordValidateStaticMethodFromCP *smfcpRecord = reinterpret_cast<TR_RelocationRecordValidateStaticMethodFromCP *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Validate Static Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
+                     (uint32_t)smfcpRecord->methodID(reloTarget),
+                     (uint32_t)smfcpRecord->definingClassID(reloTarget),
+                     (uint32_t)smfcpRecord->beholderID(reloTarget),
+                     (uint32_t)smfcpRecord->cpIndex(reloTarget));
+            }
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1772,27 +1808,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                                    *(int32_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
                   }
                }
-            break;
-
-         case TR_ValidateStaticMethodFromCP:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Static Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_definingClassID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_cpIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
             break;
 
          case TR_ValidateSpecialMethodFromCP:
