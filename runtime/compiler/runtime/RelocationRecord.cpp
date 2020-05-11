@@ -3924,22 +3924,61 @@ TR_RelocationRecordValidateClassChain::classChainOffset(TR_RelocationTarget *rel
 int32_t
 TR_RelocationRecordValidateMethodFromClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
-   uint16_t methodID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassBinaryTemplate *)_record)->_methodID);
-   uint16_t beholderID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassBinaryTemplate *)_record)->_beholderID);
-   uint32_t index = reloTarget->loadUnsigned32b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassBinaryTemplate *)_record)->_index);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: methodID %d\n", methodID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: beholderID %d\n", beholderID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: index %d\n", index);
-      }
+   uint16_t methodID = this->methodID(reloTarget);
+   uint16_t beholderID = this->beholderID(reloTarget);
+   uint32_t index = this->index(reloTarget);
 
    if (reloRuntime->comp()->getSymbolValidationManager()->validateMethodFromClassRecord(methodID, beholderID, index))
       return 0;
    else
       return compilationAotClassReloFailure;
+   }
+
+void
+TR_RelocationRecordValidateMethodFromClass::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tmethodID %d\n", methodID(reloTarget));
+   reloLogger->printf("\tbeholderID %d\n", beholderID(reloTarget));
+   reloLogger->printf("\tindex %d\n", index(reloTarget));
+   }
+
+void
+TR_RelocationRecordValidateMethodFromClass::setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID)
+   {
+   reloTarget->storeUnsigned16b(methodID, (uint8_t *) &((TR_RelocationRecordValidateMethodFromClassBinaryTemplate *)_record)->_methodID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateMethodFromClass::methodID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassBinaryTemplate *)_record)->_methodID);
+   }
+
+void
+TR_RelocationRecordValidateMethodFromClass::setBeholderID(TR_RelocationTarget *reloTarget, uint16_t beholderID)
+   {
+   reloTarget->storeUnsigned16b(beholderID, (uint8_t *) &((TR_RelocationRecordValidateMethodFromClassBinaryTemplate *)_record)->_beholderID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateMethodFromClass::beholderID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassBinaryTemplate *)_record)->_beholderID);
+   }
+
+void
+TR_RelocationRecordValidateMethodFromClass::setIndex(TR_RelocationTarget *reloTarget, uint32_t index)
+   {
+   reloTarget->storeUnsigned32b(index, (uint8_t *) &((TR_RelocationRecordValidateMethodFromClassBinaryTemplate *)_record)->_index);
+   }
+
+uint32_t
+TR_RelocationRecordValidateMethodFromClass::index(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned32b((uint8_t *) &((TR_RelocationRecordValidateMethodFromClassBinaryTemplate *)_record)->_index);
    }
 
 int32_t

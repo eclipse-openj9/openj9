@@ -457,23 +457,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
          }
 
-      case TR_ValidateMethodFromClass:
-         {
-         TR::MethodFromClassRecord *record = reinterpret_cast<TR::MethodFromClassRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateMethodFromClassBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateMethodFromClassBinaryTemplate *>(cursor);
-
-         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
-         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
-         binaryTemplate->_index = static_cast<uintptr_t>(record->_index);
-
-         cursor += sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateStaticMethodFromCP:
          {
          TR::StaticMethodFromCPRecord *record = reinterpret_cast<TR::StaticMethodFromCPRecord *>(relocation->getTargetAddress());
