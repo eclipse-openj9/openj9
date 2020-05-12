@@ -10552,7 +10552,8 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
       J9JavaVM * javaVM = _jitConfig->javaVM;
       // Dump mixed mode disassembly listing.
       //
-      if (compiler->getOutFile() != NULL && compiler->getOption(TR_TraceAll))
+      if (compiler->getOutFile() != NULL &&
+          (compiler->getOption(TR_TraceAll) || compiler->getOptions()->getTraceCGOption(TR_TraceCGMixedModeDisassembly)))
          compiler->getDebug()->dumpMixedModeDisassembly();
 
       if (!vm.isAOT_DEPRECATED_DO_NOT_USE())

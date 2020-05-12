@@ -236,7 +236,7 @@ void J9::Z::PrivateLinkage::alignLocalsOffset(uint32_t &stackIndex, uint32_t loc
 
       atlas->setNumberOfSlotsMapped(atlas->getNumberOfSlotsMapped() + ((stackIndexBeforeAlignment - stackIndex) / TR::Compiler->om.sizeofReferenceAddress()));
 
-      if (comp()->getOption(TR_TraceRA))
+      if (cg()->getTraceRAOption(TR_TraceRASpillTemps))
          {
          traceMsg(comp(),"\nAlign stack offset before alignment = %d and after alignment = %d\n", stackIndexBeforeAlignment, stackIndex);
          }
@@ -440,7 +440,7 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
          {
          int32_t newOffset = stackIndex + pointerSize*(localCursor->getGCMapIndex()-firstLocalGCIndex);
 
-         if (comp()->getOption(TR_TraceRA))
+         if (cg()->getTraceRAOption(TR_TraceRASpillTemps))
             traceMsg(comp(), "\nmapCompactedStack: changing %s (GC index %d) offset from %d to %d",
                comp()->getDebug()->getName(localCursor), localCursor->getGCMapIndex(), localCursor->getOffset(), newOffset);
 
