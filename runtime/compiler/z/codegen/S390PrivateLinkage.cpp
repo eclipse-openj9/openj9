@@ -101,7 +101,7 @@ J9::Z::PrivateLinkage::PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390Linkage
    setLongDoubleReturnRegister4  (TR::RealRegister::FPR4 );
    setLongDoubleReturnRegister6  (TR::RealRegister::FPR6 );
 
-   if(codeGen->comp()->target().cpu.getSupportsArch(TR::CPU::z13) && codeGen->comp()->target().cpu.getSupportsVectorFacility() &&
+   if(codeGen->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z13) && codeGen->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY) &&
      !comp()->getOption(TR_DisableSIMD))
        {
        codeGen->setSupportsVectorRegisters();
@@ -1093,7 +1093,7 @@ J9::Z::PrivateLinkage::setupLiteralPoolRegister(TR::Snippet *firstSnippet)
    if (!cg()->isLiteralPoolOnDemandOn() && firstSnippet != NULL)
       {
       // The immediate operand will be patched when the actual address of the literal pool is known
-      if (!cg()->comp()->target().cpu.getSupportsArch(TR::CPU::z10) || cg()->anyLitPoolSnippets())
+      if (!cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) || cg()->anyLitPoolSnippets())
          {
          return getLitPoolRealRegister()->getRegisterNumber();
          }
@@ -1422,7 +1422,7 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
    // Save or move arguments according to the result of register assignment.
    cursor = (TR::Instruction *) saveArguments(cursor, false);
 
-   if (cg()->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
+   if (cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
       {
       static const bool prefetchStack = feGetEnv("TR_PrefetchStack") != NULL;
 
@@ -2758,7 +2758,7 @@ J9::Z::JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
    TR::CodeGenerator* cg = self()->cg();
    TR::Compilation* comp = self()->comp();
 
-   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
+   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
       {
       // Store a 1 into vmthread->inNative
       generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode,
@@ -2889,7 +2889,7 @@ J9::Z::JNILinkage::processJNIReturnValue(TR::Node * callNode,
       }
    else if ((returnType == TR::Int8) && comp()->getSymRefTab()->isReturnTypeBool(callNode->getSymbolReference()))
       {
-      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z13))
+      if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z13))
          {
          generateRIInstruction(cg, TR::InstOpCode::getCmpHalfWordImmOpCode(), callNode, javaReturnRegister, 0);
          generateRIEInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::LOCGHI : TR::InstOpCode::LOCHI,
@@ -3056,7 +3056,7 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
      auto* literalOffsetMemoryReference = new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, (int32_t)fej9->thisThreadGetJavaLiteralsOffset(), codeGen);
 
      // Set up literal offset slot to zero
-     if (cg()->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
+     if (cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
         {
         generateSILInstruction(codeGen, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode, literalOffsetMemoryReference, 0);
         }

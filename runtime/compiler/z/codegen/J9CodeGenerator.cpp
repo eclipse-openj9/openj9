@@ -155,8 +155,8 @@ J9::Z::CodeGenerator::CodeGenerator() :
    // RI support
    if (comp->getOption(TR_HWProfilerDisableRIOverPrivateLinkage)
        && comp->getPersistentInfo()->isRuntimeInstrumentationEnabled()
-       && cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12)
-       && cg->comp()->target().cpu.getSupportsRuntimeInstrumentationFacility())
+       && cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12)
+       && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_RI))
       {
       cg->setSupportsRuntimeInstrumentation();
       cg->setEnableRIOverPrivateLinkage(false);  // Disable RI over private linkage, since RION/OFF will be controlled over J2I / I2J.
@@ -175,7 +175,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
 
    cg->getS390Linkage()->initS390RealRegisterLinkage();
 
-   const bool accessStaticsIndirectly = !cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) ||
+   const bool accessStaticsIndirectly = !cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) ||
          comp->getOption(TR_DisableDirectStaticAccessOnZ) ||
          (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager));
 
@@ -2038,7 +2038,7 @@ J9::Z::CodeGenerator::genSignCodeSetting(TR::Node *node, TR_PseudoRegister *targ
       case TR::ZonedDecimal:
       case TR::ZonedDecimalSignLeadingEmbedded:
          {
-         if (self()->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && isPacked && digitsToClear >= 3)
+         if (self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && isPacked && digitsToClear >= 3)
             {
             int32_t bytesToSet = (digitsToClear+1)/2;
             int32_t leftMostByte = 0;
@@ -2981,7 +2981,7 @@ J9::Z::CodeGenerator::canCopyWithOneOrTwoInstrs(char *lit, size_t size)
       }
 
    // z9 does not support these complex move instructions
-   if (!self()->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && size > 2)
+   if (!self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && size > 2)
       {
       return false;
       }
@@ -3080,7 +3080,7 @@ J9::Z::CodeGenerator::useMoveImmediateCommon(TR::Node *node,
          break;
       case 2:  // MVI/MVI or MVHHI
          {
-         if (self()->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
+         if (self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
             {
             genMVHHI(destMR, node, (lit[0]<<8)|lit[1], cg);
             }
@@ -3694,7 +3694,7 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
    if (self()->isMethodInAtomicLongGroup(method))
       return true;
 
-   if (!self()->comp()->compileRelocatableCode() && !self()->comp()->getOption(TR_DisableDFP) && self()->comp()->target().cpu.getSupportsDecimalFloatingPointFacility())
+   if (!self()->comp()->compileRelocatableCode() && !self()->comp()->getOption(TR_DisableDFP) && self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP))
       {
       if (method == TR::java_math_BigDecimal_DFPIntConstructor ||
           method == TR::java_math_BigDecimal_DFPLongConstructor ||
@@ -3733,7 +3733,7 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
          {
          return true;
          }
-      if (self()->comp()->target().cpu.getSupportsVectorFacilityEnhancement1() &&
+      if (self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1) &&
             (method == TR::java_lang_Math_fma_F ||
              method == TR::java_lang_StrictMath_fma_F))
          { 
@@ -3952,7 +3952,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
       case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         if (cg->checkFieldAlignmentForAtomicLong() && self()->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
+         if (cg->checkFieldAlignmentForAtomicLong() && self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
             {
             // TODO: I'm not sure we need the z196 restriction here given that the function already checks for z196 and
             // has a compare and swap fallback path
@@ -3967,7 +3967,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
       case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         if (cg->checkFieldAlignmentForAtomicLong() && self()->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
+         if (cg->checkFieldAlignmentForAtomicLong() && self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
             {
             // TODO: I'm not sure we need the z196 restriction here given that the function already checks for z196 and
             // has a compare and swap fallback path
@@ -4134,7 +4134,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
 
             case TR::java_lang_Math_fma_F:
             case TR::java_lang_StrictMath_fma_F:
-               if (comp->target().cpu.getSupportsVectorFacilityEnhancement1())
+               if (comp->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1))
                   {
                   resultReg = inlineMathFma(node, cg);
                   return true;
@@ -4162,7 +4162,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
         }
 
    if (!comp->compileRelocatableCode() && !comp->getOption(TR_DisableDFP) &&
-       self()->comp()->target().cpu.getSupportsDecimalFloatingPointFacility())
+       self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP))
       {
       TR_ASSERT( methodSymbol, "require a methodSymbol for DFP on Z\n");
       if (methodSymbol)
