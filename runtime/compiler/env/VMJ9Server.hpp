@@ -193,6 +193,7 @@ public:
 
 private:
    bool instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* castClass, bool cacheUpdate);
+   bool checkCHTableIfClassInfoExistsAndHasBeenExtended(TR_OpaqueClassBlock *clazz, bool &bClassHasBeenExtended);
 
 protected:
    void getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods);
