@@ -1248,11 +1248,8 @@ static void populateInlineCalls(
          traceMsg(comp, "inlineIdx %d, callSiteCursor %p, inlinedCallSite->methodInfo = %p\n", i, callSiteCursor, inlinedCallSite->_methodInfo);
          }
 
-      if (!vm->isAOT_DEPRECATED_DO_NOT_USE()
-#if defined(J9VM_OPT_JITSERVER)
-         && !comp->isOutOfProcessCompilation()
-#endif
-         ) // For AOT, we should only have returned resolved info about a method if the method came from same class loaders.
+      // For AOT, we should only have returned resolved info about a method if the method came from same class loaders.
+      if (!vm->isAOT_DEPRECATED_DO_NOT_USE())
          {
          TR_OpaqueClassBlock *clazzOfInlinedMethod = vm->getClassFromMethodBlock(inlinedCallSite->_methodInfo);
          if (comp->fej9()->isUnloadAssumptionRequired(clazzOfInlinedMethod, comp->getCurrentMethod()))
@@ -1267,11 +1264,31 @@ static void populateInlineCalls(
                        comp->fej9()->getClassLoader(clazzOfCallerMethod),
                        callSiteCursor);
                }
+
 #if (defined(TR_HOST_64BIT) && defined(TR_HOST_POWER))
-            createClassUnloadPicSite((void*) clazzOfInlinedMethod, (void*) (callSiteCursor+(comp->target().cpu.isBigEndian()?4:0)), 4, comp->getMetadataAssumptionList());
+            void *addressToBePatched = (void *)(callSiteCursor+(comp->target().cpu.isBigEndian()?4:0));
+            uint32_t size = 4;
 #else
-            createClassUnloadPicSite((void*) clazzOfInlinedMethod, (void*) callSiteCursor, sizeof(uintptr_t), comp->getMetadataAssumptionList());
+            void *addressToBePatched = (void *)callSiteCursor;
+            uint32_t size = sizeof(uintptr_t);
 #endif
+#if defined(J9VM_OPT_JITSERVER)
+            if (comp->isOutOfProcessCompilation())
+               {
+               intptr_t offset = ((uint8_t*)addressToBePatched) - ((uint8_t*)data);
+               SerializedRuntimeAssumption* sra =
+                  new (comp->trHeapMemory()) SerializedRuntimeAssumption(RuntimeAssumptionOnClassUnload,
+                                                      (uintptr_t)clazzOfInlinedMethod,
+                                                      offset,
+                                                      size,
+                                                      true);
+               comp->getSerializedRuntimeAssumptions().push_front(sra);
+               }
+            else
+#endif
+               {
+               createClassUnloadPicSite((void*)clazzOfInlinedMethod, addressToBePatched, size, comp->getMetadataAssumptionList());
+               }
             }
          }
 
