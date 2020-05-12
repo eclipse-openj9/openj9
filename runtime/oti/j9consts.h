@@ -579,6 +579,7 @@ extern "C" {
 #define J9_JCL_FLAG_JDK_MODULE_PATCH_PROP	0x40
 
 #define J9_SIG_NO_SIG_QUIT 0x1
+#define J9_SIG_NO_SIG_ABRT 0x2
 #define J9_SIG_NO_SIG_CHAIN 0x4
 #define J9_SIG_NO_SIG_INT 0x8
 #define J9_SIG_XRS_SYNC 0x10
