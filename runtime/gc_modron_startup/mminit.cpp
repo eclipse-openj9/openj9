@@ -2872,6 +2872,13 @@ gcInitializeDefaults(J9JavaVM* vm)
 		goto error;
 	}
 
+#if defined(J9VM_GC_VLHGC) || defined(J9VM_GC_GENERATIONAL)
+	/* if thread library isnt assigning numa affinity, we won't either */
+	if ((omrthread_lib_get_flags() & J9THREAD_LIB_FLAG_DISABLE_DEFAULT_AFFINITY) != 0) {
+		extensions->_numaManager.shouldSetCPUAffinity(false);
+	}
+#endif /* J9VM_GC_VLHGC || J9VM_GC_GENERATIONAL */
+
 	initializeVerboseFunctionTableWithDummies(&extensions->verboseFunctionTable);
 
 	if (JNI_OK != gcParseCommandLineAndInitializeWithValues(vm, memoryParameterTable)) {

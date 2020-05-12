@@ -3810,6 +3810,10 @@ threadInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 				loadInfo->fatalErrorStr = "cannot parse -Xjni:";
 				return returnVal;
 			}
+
+			if ( 0 >= FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLECPUAFFINITY, NULL)) {
+				omrthread_lib_set_flags(J9THREAD_LIB_FLAG_DISABLE_DEFAULT_AFFINITY);
+			}
 			break;
 		case HEAP_STRUCTURES_INITIALIZED :
 			break;

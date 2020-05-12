@@ -539,6 +539,8 @@ enum INIT_STAGE {
 #define VMOPT_XCONCURRENTBACKGROUND "-Xconcurrentbackground"
 #define VMOPT_XGCTHREADS "-Xgcthreads"
 
+#define VMOPT_XXDISABLECPUAFFINITY "-XX:DisableCPUAffinity"
+
 /* Modularity command line options */
 #define VMOPT_MODULE_UPGRADE_PATH "--upgrade-module-path"
 #define VMOPT_MODULE_PATH "--module-path"

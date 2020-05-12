@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -238,7 +238,11 @@ public:
 	 * @param env[in] the current thread
 	 * @see MM_RuntimeExecManager
 	 */
-	MMINLINE void clearNumaAffinityForThread(MM_EnvironmentBase *env) { env->setNumaAffinity(NULL, 0); }
+	MMINLINE void clearNumaAffinityForThread(MM_EnvironmentBase *env) {
+		if (env->_numaManager.shouldSetCPUAffinity()) {
+			env->setNumaAffinity(NULL, 0);
+		}
+	}
 
 	/**
 	 * Determines whether or not a region should be migrated to the common context.
