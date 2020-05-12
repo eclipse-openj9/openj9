@@ -582,3 +582,24 @@ JITServerHelpers::walkReferenceChainWithOffsets(TR_J9VM * fe, const std::vector<
    return result;
    }
 
+uintptr_t
+JITServerHelpers::getRemoteClassDepthAndFlagsWhenROMClassNotCached(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream)
+{
+   ClientSessionData::ClassInfo classInfo;
+   stream->write(JITServer::MessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
+   const auto &recv = stream->read<JITServerHelpers::ClassInfoTuple>();
+   JITServerHelpers::ClassInfoTuple classInfoTuple = std::get<0>(recv);
+
+   OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
+   auto it = clientSessionData->getROMClassMap().find(clazz);
+   if (it == clientSessionData->getROMClassMap().end())
+      {
+      auto romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), TR::comp()->trMemory()->trPersistentMemory());
+      JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, &classInfoTuple, classInfo);
+      return classInfo._classDepthAndFlags;
+      }
+   else
+      {
+      return it->second._classDepthAndFlags;
+      }
+}

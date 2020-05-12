@@ -180,6 +180,20 @@ JITServerPersistentCHTable::findClassInfoAfterLocking(
    return classInfo;
    }
 
+/**
+ * Find persistent JIT class information for a given class.
+ * The class table lock is used to synchronize use of this method
+ */
+TR_PersistentClassInfo *
+JITServerPersistentCHTable::findClassInfoAfterLocking(
+      TR_OpaqueClassBlock *classId,
+      TR_FrontEnd *fe,
+      bool returnClassInfoForAOT)
+   {
+   TR::ClassTableCriticalSection findClassInfoAfterLocking(fe);
+   return findClassInfo(classId);
+   }
+
 std::string
 JITClientPersistentCHTable::serializeRemoves()
    {

@@ -30,7 +30,7 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
 #include "control/JITServerHelpers.hpp"
-#include "env/PersistentCHTable.hpp"
+#include "env/JITServerPersistentCHTable.hpp"
 #include "exceptions/AOTFailure.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "env/J2IThunk.hpp"
@@ -487,31 +487,76 @@ TR_J9ServerVM::classHasBeenReplaced(TR_OpaqueClassBlock *clazz)
    }
 
 bool
+TR_J9ServerVM::checkCHTableIfClassInfoExistsAndHasBeenExtended(TR_OpaqueClassBlock *clazz, bool &bClassHasBeenExtended)
+   {
+   JITServerPersistentCHTable *table = (JITServerPersistentCHTable*)(_compInfo->getPersistentInfo()->getPersistentCHTable());
+   TR_PersistentClassInfo *classInfo = table->findClassInfoAfterLocking(clazz, this);
+   if (classInfo)
+      {
+      bClassHasBeenExtended = classInfo->getFirstSubclass() ? true : false;
+      return true;
+      }
+   return false;
+   }
+
+bool
 TR_J9ServerVM::classHasBeenExtended(TR_OpaqueClassBlock *clazz)
    {
-   if(!clazz)
+   if (!clazz)
       return false;
-   uintptr_t classDepthAndFlags = 0;
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   bool dataFromCache = JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
 
-   if(dataFromCache)
+   ClientSessionData *clientSessionData = _compInfoPT->getClientData();
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+
+   // Check the CHTable first and then the ROMClass cache.
+   // Checking the CHTable and checking the ROMClass cache both take monitors.
+   // They should not be nested into each other to avoid the potential
+   // deadlock when being accessed in different orders in other parts of the code.
+   bool bClassHasBeenExtended = false;
+   bool bIsClassInfoInCHTable = checkCHTableIfClassInfoExistsAndHasBeenExtended(clazz, bClassHasBeenExtended);
+
+   // The class data is in the CHTable and the flag is set.
+   if (bClassHasBeenExtended)
+      return true;
+
       {
-      // Check if flag is set, since once set it can not be removed
-      if((classDepthAndFlags & J9AccClassHasBeenOverridden) != 0)
+      OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
+      auto it = clientSessionData->getROMClassMap().find((J9Class*)clazz);
+      if (it != clientSessionData->getROMClassMap().end())
          {
-         return true;
+         if ((it->second._classDepthAndFlags & J9AccClassHasBeenOverridden) != 0)
+            return true;
+
+         if (bIsClassInfoInCHTable)
+            {
+            // The flag is neither set in the CHTable nor the class data cache.
+            return false;
+            }
+         else
+            {
+            // The class info does not exist in the CHTable but it's cached in
+            // the class data cache and the flag is not set.
+            stream->write(JITServer::MessageType::VM_classHasBeenExtended, clazz);
+            bool result = std::get<0>(stream->read<bool>());
+            if (result)
+               {
+               it->second._classDepthAndFlags |= J9AccClassHasBeenOverridden;
+               }
+            return result;
+            }
          }
-      else
-         {
-         //Flag not set, check with client as cache data may be outdated
-         stream->write(JITServer::MessageType::VM_classHasBeenExtended, clazz);
-         return std::get<0>(stream->read<bool>());
-         }
+      }
+
+   if (bIsClassInfoInCHTable)
+      {
+      // The class data exists in the CHTable but it's not cached in the ROMClass cache.
+      return false;
       }
    else
       {
-      return (classDepthAndFlags & J9AccClassHasBeenOverridden) != 0;
+      // The class data does not exist in the CHTable and is not cached. Retrieve ClassInfo from the client.
+      uintptr_t classDepthAndFlags = JITServerHelpers::getRemoteClassDepthAndFlagsWhenROMClassNotCached((J9Class *)clazz, clientSessionData, stream);
+      return ((classDepthAndFlags & J9AccClassHasBeenOverridden) != 0);
       }
    }
 

@@ -84,6 +84,8 @@ class JITServerHelpers
 
    static void insertIntoOOSequenceEntryList(ClientSessionData *clientData, TR_MethodToBeCompiled *entry);
 
+   static uintptr_t getRemoteClassDepthAndFlagsWhenROMClassNotCached(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream);
+
    // Functions used for allowing the client to compile locally when server is unavailable.
    // Should be used only on the client side.
    static void postStreamFailure(OMRPortLibrary *portLibrary);
