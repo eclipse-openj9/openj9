@@ -642,8 +642,7 @@ MM_ScavengerDelegate::private_shouldPercolateGarbageCollect_classUnloading(MM_En
 	bool shouldGCPercolate = false;
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	MM_Collector *globalCollector = _extensions->getGlobalCollector();
-	shouldGCPercolate = globalCollector->isTimeForGlobalGCKickoff();
+	shouldGCPercolate = _extensions->getGlobalCollector()->isTimeForGlobalGCKickoff();
 #endif
 
 	return shouldGCPercolate;
