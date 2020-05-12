@@ -25,6 +25,7 @@ import org.objectweb.asm.*;
 
 import static org.objectweb.asm.Opcodes.*;
 
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -34,6 +35,8 @@ import java.util.List;
 
 public class ValueTypeGenerator extends ClassLoader {
 	private static ValueTypeGenerator generator;
+	
+	private static boolean DEBUG = false;
 	
 	/* workaround till the new ASM is released */
 	public static final int DEFAULTVALUE = 203;
@@ -48,6 +51,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		ClassWriter cw = new ClassWriter(0);
 		FieldVisitor fv;
 		MethodVisitor mv;
+		String classFileName = className + ".class";
 
 		if (isRef) {
 			cw.visit(55, ACC_PUBLIC + ACC_FINAL + ACC_SUPER, className, null, "java/lang/Object", null);
@@ -90,9 +94,10 @@ public class ValueTypeGenerator extends ClassLoader {
 			makeRef(cw, className, makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
 			makeRefDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal);
 			if (!isVerifiable) {
-				makeGeneric(cw, className, "makeRefGeneric", "makeRef", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
+				makeGeneric(cw, className, "makeRefGeneric", "makeRef", makeValueSig, makeValueGenericSig, fields, makeMaxLocal, isRef);
 				/* makeValue is invalid on ref: Included to test if runtime error is (correctly) thrown */
 				makeValue(cw, className, makeValueSig, fields, makeMaxLocal);
+				makeValueTypeDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal);
 			}
 
 			testWithFieldOnNonValueType(cw, className, fields);
@@ -108,13 +113,17 @@ public class ValueTypeGenerator extends ClassLoader {
 			testCheckCastValueTypeOnNull(cw, className, fields);
 			testCheckCastValueTypeOnNonNullType(cw, className, fields);
 			if (!isVerifiable) {
-				makeGeneric(cw, className, "makeValueGeneric", "makeValue", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
+				makeGeneric(cw, className, "makeValueGeneric", "makeValue", makeValueSig, makeValueGenericSig, fields, makeMaxLocal, isRef);
 			}
 		}
 		addStaticSynchronizedMethods(cw);
 		addSynchronizedMethods(cw);
 		cw.visitEnd();
-		return cw.toByteArray();
+		
+		byte[] bytes = cw.toByteArray();
+		generateClassFile(classFileName, bytes);
+		
+		return bytes;
 		
 	}
 
@@ -263,9 +272,9 @@ public class ValueTypeGenerator extends ClassLoader {
 
 	private static void makeValue(ClassWriter cw, String valueName, String makeValueSig, String[] fields, int makeMaxLocal) {
 		boolean doubleDetected = false;
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "makeValue", "(" + makeValueSig + ")L" + valueName + ";", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "makeValue", "(" + makeValueSig + ")" + getSigFromSimpleName(valueName, false), null, null);
 		mv.visitCode();
-		mv.visitTypeInsn(DEFAULTVALUE, valueName);
+		mv.visitTypeInsn(DEFAULTVALUE, getSigFromSimpleName(valueName, false));
 		for (int i = 0, count = 0; i <  fields.length; i++) {
 			String nameAndSig[] = fields[i].split(":");
 			if ((nameAndSig.length < 3) ||  !(nameAndSig[2].equals("static"))) {
@@ -307,9 +316,9 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 	
 	private static void makeValueTypeDefaultValue(ClassWriter cw, String valueName, String makeValueSig, String[] fields, int makeMaxLocal) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeValueTypeDefaultValue", "()L" + valueName + ";", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeValueTypeDefaultValue", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
-		mv.visitTypeInsn(DEFAULTVALUE, valueName);
+		mv.visitTypeInsn(DEFAULTVALUE, getSigFromSimpleName(valueName, false));
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 0);
 		mv.visitEnd();
@@ -318,7 +327,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	private static void testCheckCastValueTypeOnNonNullType(ClassWriter cw, String className, String[] fields) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "testCheckCastValueTypeOnNonNullType", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
-		mv.visitTypeInsn(DEFAULTVALUE, className);
+		mv.visitTypeInsn(DEFAULTVALUE, getSigFromSimpleName(className, false));
 		mv.visitTypeInsn(CHECKCAST, className);
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 2);
@@ -354,8 +363,8 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitEnd();
 	}
 
-	private static void makeGeneric(ClassWriter cw, String className, String methodName, String specificMethodName, String makeValueSig, String makeValueGenericSig, String[] fields, int makeMaxLocal) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, methodName, "(" + makeValueGenericSig + ")L" + className + ";", null, new String[] {"java/lang/Exception"});
+	private static void makeGeneric(ClassWriter cw, String className, String methodName, String specificMethodName, String makeValueSig, String makeValueGenericSig, String[] fields, int makeMaxLocal, boolean isRef) {		
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, methodName, "(" + makeValueGenericSig + ")Ljava/lang/Object;", null, new String[] {"java/lang/Exception"});
 		mv.visitCode();
 		for (int i = 0; i <  fields.length; i++) {
 			mv.visitVarInsn(ALOAD, i);
@@ -368,15 +377,19 @@ public class ValueTypeGenerator extends ClassLoader {
 			case "I":
 				mv.visitTypeInsn(CHECKCAST, "java/lang/Integer");
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+				break;
 			case "Z":
 				mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+				break;
 			case "B":
 				mv.visitTypeInsn(CHECKCAST, "java/lang/Byte");
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
+				break;
 			case "C":
 				mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
+				break;
 			case "S":
 				mv.visitTypeInsn(CHECKCAST, "java/lang/Short");
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
@@ -386,14 +399,20 @@ public class ValueTypeGenerator extends ClassLoader {
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
 				break;
 			case "J":
-				mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()J", false);
+				mv.visitTypeInsn(CHECKCAST, "java/lang/Long");
+				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
 				break;
 			default:
+				String signature = nameAndSigValue[1];
+				
+				if ('L' == signature.charAt(0)) {
+					signature = signature.substring(1, signature.length() - 1);
+				}
+				mv.visitTypeInsn(CHECKCAST, signature);
 				break;
 			}
 		}
-		mv.visitMethodInsn(INVOKESTATIC, className, specificMethodName, "(" + makeValueSig + ")L"+ className + ";", false);
+		mv.visitMethodInsn(INVOKESTATIC, className, specificMethodName, "(" + makeValueSig + ")" + getSigFromSimpleName(className, isRef), false);
 		mv.visitInsn(ARETURN);
 
 		mv.visitMaxs(makeMaxLocal, makeMaxLocal);
@@ -403,8 +422,8 @@ public class ValueTypeGenerator extends ClassLoader {
 	private static void makeRef(ClassWriter cw, String className, String makeValueSig, String makeValueGenericSig, String[]fields, int makeMaxLocal) {
 		boolean doubleDetected = false;
 		int makeRefArgsAndLocals = makeMaxLocal + 1; //extra slot is to store the ref being created
-		
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeRef", "(" + makeValueSig + ")L" + className + ";", null, null);
+
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeRef", "(" + makeValueSig + ")" + getSigFromSimpleName(className, true), null, null);
 		mv.visitCode();
 		mv.visitTypeInsn(NEW, className);
 		mv.visitInsn(DUP);
@@ -848,6 +867,26 @@ public class ValueTypeGenerator extends ClassLoader {
 		int maxStack = (doubleDetected ? 2 : 1);
 		mv.visitMaxs(maxStack, 0);
 		mv.visitEnd();
+	}
+	
+	private static String getSigFromSimpleName(String className, boolean isRef) {
+		String classNameSignature = null;
+		if (isRef) {
+			classNameSignature = "L" + className + ";";
+		} else {
+			classNameSignature = "Q" + className + ";";
+		}
+		return classNameSignature;
+	}
+	
+	public static void generateClassFile(String name, byte[] bytes) {
+		if (DEBUG) {
+			try (FileOutputStream stream = new FileOutputStream(name)) {
+				stream.write(bytes);
+			}  catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public static Class<?> generateValueClass(String name, String[] fields) throws Throwable {
