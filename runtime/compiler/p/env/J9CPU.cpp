@@ -97,7 +97,6 @@ CPU::hasPopulationCountInstruction()
 #endif
    }
 
-
 bool
 CPU::supportsDecimalFloatingPoint()
    {

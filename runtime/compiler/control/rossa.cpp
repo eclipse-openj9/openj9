@@ -1492,7 +1492,7 @@ onLoadInternal(
 #ifdef TR_TARGET_S390
    // Need to let VM know that we will be using a machines vector facility (so it can save/restore preserved regs),
    // early in JIT startup to prevent subtle FP bugs
-   if (TR::Compiler->target.cpu.getSupportsVectorFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableSIMD))
+   if (TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY) && !TR::Options::getCmdLineOptions()->getOption(TR_DisableSIMD))
       {
       javaVM->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
       }
@@ -1607,7 +1607,7 @@ onLoadInternal(
    if (TR::Options::_hwProfilerEnabled == TR_yes)
       {
 #if defined(TR_HOST_S390) && defined(BUILD_Z_RUNTIME_INSTRUMENTATION)
-      if (TR::Compiler->target.cpu.getSupportsRuntimeInstrumentationFacility())
+      if (TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_RI))
          ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->hwProfiler = TR_ZHWProfiler::allocate(jitConfig);
 #elif defined(TR_HOST_POWER)
 #if !defined(J9OS_I5)

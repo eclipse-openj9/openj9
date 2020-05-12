@@ -254,7 +254,7 @@ ReduceSynchronizedFieldLoad::perform()
    {
    bool transformed = false;
 
-   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
+   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
       {
       if (!cg->comp()->getOption(TR_DisableSynchronizedFieldLoad) && cg->comp()->getMethodSymbol()->mayContainMonitors())
          {

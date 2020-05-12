@@ -262,7 +262,7 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    const uint32_t elementSizeMask = isUTF16 ? 1 : 0;
    const int8_t vectorSize = cg->machine()->getVRFSize();
    const uintptr_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   const bool supportsVSTRS = cg->comp()->target().cpu.getSupportsVectorFacilityEnhancement2();
+   const bool supportsVSTRS = cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2);
    TR::Compilation* comp = cg->comp();
    TR_Debug *compDebug = comp->getDebug();
    TR::Instruction* cursor;
@@ -1196,7 +1196,7 @@ J9::Z::TreeEvaluator::genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::N
 
    if (TR::Compiler->om.compressObjectReferences())
       {
-      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z13))
+      if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z13))
          {
          iCursor = generateRXInstruction(cg, TR::InstOpCode::LLZRGF, node, reg, tempMR, iCursor);
          loadInstr = iCursor;
@@ -1213,7 +1213,7 @@ J9::Z::TreeEvaluator::genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::N
       }
    else
       {
-      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z13))
+      if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z13))
          {
          iCursor = generateRXInstruction(cg, TR::InstOpCode::getLoadAndMaskOpCode(), node, reg, tempMR, iCursor);
          loadInstr = iCursor;
@@ -2181,7 +2181,7 @@ J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * c
          }
       if (value >= MIN_IMMEDIATE_VAL && value <= MAX_IMMEDIATE_VAL)
          {
-         if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
+         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
             {
             TR::MemoryReference * tempMR = generateS390MemoryReference(firstChild, cg);
 
@@ -2971,7 +2971,7 @@ J9::Z::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg
    // Load the Contiguous Array Size and test if it's zero.
    generateRSInstruction(cg, TR::InstOpCode::ICM, node, lengthReg, (uint32_t) 0xF, contiguousArraySizeMR);
 
-   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
+   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
       {
       // Conditionally load from discontiguousArraySize if contiguousArraySize is zero
       generateRSInstruction(cg, TR::InstOpCode::LOC, node, lengthReg, 0x8, discontiguousArraySizeMR);
@@ -3070,7 +3070,7 @@ J9::Z::TreeEvaluator::DIVCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    bool disableS390CompareAndTrap = comp->getOption(TR_DisableTraps);
 
    // Try to compare directly to memory if if the child is a field access (load with no index reg)
-   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && divisorIsFieldAccess &&
+   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && divisorIsFieldAccess &&
        !willUseIndexAndBaseReg &&
        (node->getFirstChild()->getOpCodeValue() == TR::idiv ||
         node->getFirstChild()->getOpCodeValue() == TR::irem))
@@ -3361,7 +3361,7 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       else if (useS390CompareAndTrap &&
               (  (firstChild->getOpCode().isLoadVar() && firstChild->isSingleRefUnevaluated()) ||
                  (secondChild->getOpCode().isLoadVar() && secondChild->isSingleRefUnevaluated())) &&
-              cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12))
+              cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12))
          {
          // Assume 1st child is the memory operand.
          TR::Node * memChild = firstChild;
@@ -3603,7 +3603,7 @@ J9::Z::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node * node, TR::CodeGenerato
                return NULL;
                }
             // check if we can use Compare-and-Branch at least
-            else if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) &&
+            else if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) &&
                      arrayTargetLengthConst <= MAX_IMMEDIATE_BYTE_VAL &&
                      arrayTargetLengthConst >= MIN_IMMEDIATE_BYTE_VAL &&
                      !disableS390CompareAndBranch)
@@ -3679,7 +3679,7 @@ J9::Z::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node * node, TR::CodeGenerato
             return NULL;
             }
          // check if we can use Compare-and-Branch at least
-         else if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) &&
+         else if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) &&
                   secondChild->getOpCode().isLoadConst() &&
                   secondChild->getInt() <= MAX_IMMEDIATE_BYTE_VAL &&
                   secondChild->getInt() >= MIN_IMMEDIATE_BYTE_VAL &&
@@ -4134,7 +4134,7 @@ J9::Z::TreeEvaluator::ardbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       // MemRef can generate BRCL to unresolved data snippet if needed.
       TR::MemoryReference* loadMemRef = generateS390MemoryReference(node, cg);
 
-      if (cg->comp()->target().cpu.getSupportsGuardedStorageFacility())
+      if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE))
          {
          TR::TreeEvaluator::checkAndSetMemRefDataSnippetRelocationType(node, cg, loadMemRef);
          TR::InstOpCode::Mnemonic loadOp = cg->comp()->useCompressedPointers() ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
@@ -4559,11 +4559,11 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
    TR::Register* tmpReg = cg->allocateRegister();
    if (cg->comp()->target().is64Bit())
       {
-      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12))
+      if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12))
          {
          cursor = generateRIEInstruction(cg, TR::InstOpCode::RISBGN, node, tmpReg, indexReg,(32+spineShift-spinePtrShift), (128+63-spinePtrShift),(64-spineShift+spinePtrShift),cursor);
          }
-      else if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
+      else if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
          {
          cursor = generateRIEInstruction(cg, TR::InstOpCode::RISBG, node, tmpReg, indexReg,(32+spineShift-spinePtrShift), (128+63-spinePtrShift),(64-spineShift+spinePtrShift),cursor);
          }
@@ -4613,11 +4613,11 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
    TR::MemoryReference *arrayletMR;
    if (cg->comp()->target().is64Bit())
       {
-      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12))
+      if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12))
          {
          cursor = generateRIEInstruction(cg, TR::InstOpCode::RISBGN, node, tmpReg2, indexReg,(64-spineShift- elementShift), (128+63-elementShift),(elementShift),cursor);
          }
-      else if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
+      else if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
          {
          cursor = generateRIEInstruction(cg, TR::InstOpCode::RISBG, node, tmpReg2, indexReg,(64-spineShift- elementShift), (128+63-elementShift),(elementShift),cursor);
          }
@@ -4853,7 +4853,7 @@ VMarrayStoreCHKEvaluator(
 
    if (doObjectArrayCheck && (cg->wantToPatchClassPointer((TR_OpaqueClassBlock*)objectClass, node) || cg->needClassAndMethodPointerRelocations()))
       {
-      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && cg->isLiteralPoolOnDemandOn())
+      if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && cg->isLiteralPoolOnDemandOn())
          {
          TR::S390ConstantDataSnippet * targetsnippet;
          if (cg->comp()->target().is64Bit())
@@ -5575,7 +5575,7 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
          // Use Load-And-Trap on zHelix if available.
          // This loads the field and performance a NULLCHK on the field value.
          // i.e.  o.f == NULL
-         if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12)
+         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12)
                && reference->getOpCode().isLoadVar()
                && (reference->getOpCodeValue() != TR::ardbari)
                && reference->getRegister() == NULL)
@@ -5584,7 +5584,7 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
             appendTo = generateRXInstruction(cg, TR::InstOpCode::getLoadAndTrapOpCode(), node, targetRegister, generateS390MemoryReference(reference, cg), appendTo);
             reference->setRegister(targetRegister);
             }
-         else if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12)
+         else if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12)
                && reference->getRegister() == NULL
                && comp->useCompressedPointers()
                && reference->getOpCodeValue() == TR::l2a
@@ -7247,9 +7247,9 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          int32_t end = 63 - trailingZeroes((int32_t) TR::Compiler->om.sizeofReferenceField());
          int32_t start = end - trailingZeroes(J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE) + 1;
 
-         if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12) && cg->comp()->target().is64Bit())
+         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12) && cg->comp()->target().is64Bit())
             generateRIEInstruction(cg, TR::InstOpCode::RISBGN, node, lookupOffsetReg, objReg, start, end+0x80, shiftAmount);
-         else if(cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && cg->comp()->target().is64Bit())
+         else if(cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && cg->comp()->target().is64Bit())
             generateRIEInstruction(cg, TR::InstOpCode::RISBG, node, lookupOffsetReg, objReg, start, end+0x80, shiftAmount);
          else
             {
@@ -7688,9 +7688,9 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
          int32_t end = 63 - trailingZeroes((int32_t) TR::Compiler->om.sizeofReferenceField());
          int32_t start = end - trailingZeroes(J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE) + 1;
 
-         if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12) && cg->comp()->target().is64Bit())
+         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12) && cg->comp()->target().is64Bit())
             generateRIEInstruction(cg, TR::InstOpCode::RISBGN, node, lookupOffsetReg, objReg, start, end+0x80, shiftAmount);
-         else if(cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && cg->comp()->target().is64Bit())
+         else if(cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && cg->comp()->target().is64Bit())
             generateRIEInstruction(cg, TR::InstOpCode::RISBG, node, lookupOffsetReg, objReg, start, end+0x80, shiftAmount);
          else
             {
@@ -7750,7 +7750,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
          // If VMThread matches, we can safely perform the monitor exit by zero'ing
          // out the lockWord on the object
-         if (!cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
+         if (!cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
             {
             if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
                {
@@ -7843,7 +7843,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       cg->generateDebugCounter("LockExit/Normal/MVHISuccessfull", 1, TR::DebugCounter::Undetermined);
    // If VMThread matches, we can safely perform the monitor exit by zero'ing
    // out the lockWord on the object
-   if (!cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
+   if (!cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
       {
       generateRRInstruction(cg, xorOp, node, monitorReg, monitorReg);
       generateRXInstruction(cg, storeOp, node, monitorReg, generateS390MemoryReference(baseReg, lwOffset, cg));
@@ -8050,7 +8050,7 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
             tmp = dataSizeReg;
             }
 
-         if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
+         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
             {
             iCursor = generateRSInstruction(cg, TR::InstOpCode::SRAK, node, tmp, enumReg, 16, iCursor);
             }
@@ -8399,7 +8399,7 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
          staticFlag |= fej9->getStaticObjectFlags();
          if (staticFlag != 0)
             {
-            if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && staticFlag >= MIN_IMMEDIATE_VAL && staticFlag <= MAX_IMMEDIATE_VAL)
+            if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && staticFlag >= MIN_IMMEDIATE_VAL && staticFlag <= MAX_IMMEDIATE_VAL)
                {
                iCursor = generateSILInstruction(cg, TR::InstOpCode::MVHI, node, generateS390MemoryReference(resReg, TMP_OFFSETOF_J9OBJECT_FLAGS, cg), staticFlag, iCursor);
                }
@@ -8772,7 +8772,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             TR::LabelSymbol * startOOLLabel = generateLabelSymbol(cg);
             exitOOLLabel = generateLabelSymbol(cg);
             TR_S390OutOfLineCodeSection *zeroSizeArrayChckOOL;
-            if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && cg->comp()->target().is64Bit())
+            if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && cg->comp()->target().is64Bit())
                {
                //need 31 bit as well, combining lgfr + sllg into rsibg
                int32_t shift_amount = trailingZeroes(elementSize);
@@ -8978,7 +8978,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       //////////////////////////////////////////////////////////////////////////////////////////////////////
       ///============================ STAGE 5b: Prefetch after stores ===================================///
       //////////////////////////////////////////////////////////////////////////////////////////////////////
-      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && cg->enableTLHPrefetching())
+      if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && cg->enableTLHPrefetching())
          {
          iCursor = generateS390MemInstruction(cg, TR::InstOpCode::PFD, node, 2, generateS390MemoryReference(resReg, 0x100, cg), iCursor);
          }
@@ -9937,7 +9937,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
    if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none && isObj)
       {
       TR::Register* tempReadBarrier = cg->allocateRegister();
-      if (cg->comp()->target().cpu.getSupportsGuardedStorageFacility())
+      if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE))
          {
          auto guardedLoadMnemonic = comp->useCompressedPointers() ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
 
@@ -10425,7 +10425,7 @@ extern TR::Register *inlineAtomicOps(
       }
 
    // Exploit z196 interlocked-update instructions
-   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
+   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
       {
       if (isAddOp) //getAndAdd or andAndGet
          {
@@ -11281,7 +11281,7 @@ VMgenerateCatchBlockBBStartPrologue(
       genLoadAddressConstant(cg, node, (uintptr_t) comp->getRecompilationInfo()->getCounterAddress(), biAddrReg);
 
       // Counter is 32-bit, so only use 32-bit opcodes
-      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
+      if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
          {
          TR::MemoryReference * recompMR = generateS390MemoryReference(biAddrReg, 0, cg);
          generateSIInstruction(cg, TR::InstOpCode::ASI, node, recompMR, -1);
@@ -12047,7 +12047,7 @@ J9::Z::TreeEvaluator::generateLoadAndStoreForArrayCopy(TR::Node *node, TR::CodeG
    {
    if ((node->getArrayCopyElementType() == TR::Address)
            && needsGuardedLoad
-           && (!cg->comp()->target().cpu.getSupportsGuardedStorageFacility()))
+           && (!cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE)))
       {
       TR::Register* resultReg = srm->findOrCreateScratchRegister();
       TR::TreeEvaluator::generateSoftwareReadBarrier(node, cg, resultReg, srcMemRef, deps, true);

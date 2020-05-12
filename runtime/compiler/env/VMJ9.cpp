@@ -1296,13 +1296,13 @@ void TR_J9VMBase::printVerboseLogHeader(TR::Options *cmdLineOptions)
    TR_VerboseLog::writeLine(TR_Vlog_INFO, "        Name: %s", processorName);
    TR_VerboseLog::writeLine(TR_Vlog_INFO, "      Vendor: %s", vendorId);
    TR_VerboseLog::writeLine(TR_Vlog_INFO, "     numProc: %u", TR::Compiler->target.numberOfProcessors());
-   TR_VerboseLog::writeLine(TR_Vlog_INFO, "         DFP: %d", TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility());
-   TR_VerboseLog::writeLine(TR_Vlog_INFO, "         FPE: %d", TR::Compiler->target.cpu.getSupportsFloatingPointExtensionFacility());
-   TR_VerboseLog::writeLine(TR_Vlog_INFO, "         HPR: %d", TR::Compiler->target.cpu.getSupportsHighWordFacility());
-   TR_VerboseLog::writeLine(TR_Vlog_INFO, "          RI: %d", TR::Compiler->target.cpu.getSupportsRuntimeInstrumentationFacility());
-   TR_VerboseLog::writeLine(TR_Vlog_INFO, "          TM: %d", TR::Compiler->target.cpu.getSupportsTransactionalMemoryFacility());
-   TR_VerboseLog::writeLine(TR_Vlog_INFO, "          VF: %d", TR::Compiler->target.cpu.getSupportsVectorFacility());
-   TR_VerboseLog::writeLine(TR_Vlog_INFO, "          GS: %d", TR::Compiler->target.cpu.getSupportsGuardedStorageFacility());
+   TR_VerboseLog::writeLine(TR_Vlog_INFO, "         DFP: %d", TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_DFP));
+   TR_VerboseLog::writeLine(TR_Vlog_INFO, "         FPE: %d", TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_FPE));
+   TR_VerboseLog::writeLine(TR_Vlog_INFO, "         HPR: %d", TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_HIGH_WORD));
+   TR_VerboseLog::writeLine(TR_Vlog_INFO, "          RI: %d", TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_RI));
+   TR_VerboseLog::writeLine(TR_Vlog_INFO, "          TM: %d", TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_TE));
+   TR_VerboseLog::writeLine(TR_Vlog_INFO, "          VF: %d", TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY));
+   TR_VerboseLog::writeLine(TR_Vlog_INFO, "          GS: %d", TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE));
    TR_VerboseLog::writeLine(TR_Vlog_INFO, "");
 #endif
 #endif
@@ -4019,7 +4019,7 @@ TR_J9VMBase::methodMayHaveBeenInterpreted(TR::Compilation *comp)
         !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableDFP)) &&
        (comp->target().cpu.supportsDecimalFloatingPoint()
 #ifdef TR_TARGET_S390
-       || comp->target().cpu.getSupportsDecimalFloatingPointFacility()
+       || comp->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP)
 #endif
          ))
       {
