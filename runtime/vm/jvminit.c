@@ -221,7 +221,7 @@ static UDATA initializeVprintfHook (J9JavaVM* vm);
 static const char* getNameForLoadStage (IDATA stage);
 #endif /* J9VM_INTERP_VERBOSE */
 static jint runInitializationStage (J9JavaVM* vm, IDATA stage);
-static void setSignalOptions (J9JavaVM* vm);
+static IDATA setSignalOptions(J9JavaVM *vm, J9PortLibrary *portLibrary);
 #if (defined(J9VM_OPT_SIDECAR))
 void sidecarExit(J9VMThread* shutdownThread);
 #endif /* J9VM_OPT_SIDECAR */
@@ -1007,8 +1007,11 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	initArgs.vm = vm;
 
 	vm->vmArgsArray = createParams->vm_args;
-	/* Process the signal options as early as possible (BEFORE we call sig_protect) */
-	setSignalOptions(vm);
+
+	/* Process the signal options as early as possible (BEFORE we call sig_protect). */
+	if (0 != setSignalOptions(vm, portLibrary)) {
+		return JNI_ERR;
+	}
 
 	/* initialize the mappings between omrthread and java priorities */
 	initializeJavaPriorityMaps(vm);
@@ -6462,9 +6465,13 @@ initializeJVMExtensionInterface(J9JavaVM* vm)
  * Parse the -Xrs, -Xsigchain, -Xnosigchain, etc. options.
  * This is called as early as possible, so that the rest of initialization
  * can be protected from errors (unless -Xrs is specified, of course)
+ *
+ * @param[in] vm pointer to a J9JavaVM
+ *
+ * @return 0 on success and -1 on failure
  */
-static void
-setSignalOptions(J9JavaVM* vm)
+static IDATA
+setSignalOptions(J9JavaVM *vm, J9PortLibrary *portLibrary)
 {
 	IDATA argIndex, argIndex2;
 	UDATA defaultSigChain;
@@ -6519,6 +6526,23 @@ setSignalOptions(J9JavaVM* vm)
 		}
 	}
 
+	argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOHANDLESIGABRT, NULL);
+	argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXHANDLESIGABRT, NULL);
+
+	if (argIndex2 > argIndex) {
+		/* Enable the JVM abort handler since -XX:+HandleSIGABRT is seen last. */
+		if (OMR_ARE_ALL_BITS_SET(vm->sigFlags, J9_SIG_XRS_SYNC)) {
+			/* Throw error message if both -XX:+HandleSIGABRT and -Xrs/-Xrs:sync are supplied. */
+			j9nls_printf(portLibrary, J9NLS_ERROR, J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR, VMOPT_XXHANDLESIGABRT, VMOPT_XRS);
+			return -1;
+		}
+	} else if (argIndex > argIndex2) {
+		/* Disable the JVM abort handler since -XX:-HandleSIGABRT is seen last. */
+		vm->sigFlags |= J9_SIG_NO_SIG_ABRT;
+	} else {
+		/* argIndex == argIndex2 i.e. no option supplied. Enable the JVM abort handler by default. */
+	}
+
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)
 	if (FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XUSE_CEEHDLR, NULL) >= 0) {
 		sigOptions |= J9PORT_SIG_OPTIONS_ZOS_USE_CEEHDLR;
@@ -6545,6 +6569,7 @@ setSignalOptions(J9JavaVM* vm)
 	/* deprecated way of configuring the port lib */
 	j9port_control(J9PORT_CTLDATA_SIG_FLAGS, vm->sigFlags);
 
+	return 0;
 }
 
 #if (defined(J9VM_INTERP_VERBOSE))
