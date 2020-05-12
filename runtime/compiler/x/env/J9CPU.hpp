@@ -71,8 +71,8 @@ public:
    const char * getProcessorVendorId();
    uint32_t getProcessorSignature();
 
-   bool testOSForSSESupport();
    bool hasPopulationCountInstruction();
+   bool testOSForSSESupport() { return true; }
 
    TR_ProcessorFeatureFlags getProcessorFeatureFlags();
    bool isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags);

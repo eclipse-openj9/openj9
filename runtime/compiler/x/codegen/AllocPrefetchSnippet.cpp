@@ -177,7 +177,7 @@ class HeapProperties
    };
 
 template <TR::HeapTypes::Type HEAP_TYPE, bool is64Bit>
-uint8_t* TR::X86AllocPrefetchSnippet::emitSharedBody(uint8_t* prefetchSnippetBuffer, TR_X86ProcessorInfo &cpuInfo)
+uint8_t* TR::X86AllocPrefetchSnippet::emitSharedBody(uint8_t* prefetchSnippetBuffer, TR::Compilation* comp)
    {
 
    typedef HeapProperties<HEAP_TYPE> HeapTraits;
@@ -232,8 +232,9 @@ uint8_t* TR::X86AllocPrefetchSnippet::emitSharedBody(uint8_t* prefetchSnippetBuf
    //
    for (int32_t lineOffset = 0; lineOffset < numLines; ++lineOffset)
       {
+      TR_ASSERT_FATAL(TR::CodeGenerator::getX86ProcessorInfo().isAMD15h() == comp->target().cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H), "OMR_PROCESSOR_X86_AMDFAMILY15H\n");
       prefetchSnippetBuffer[0] = 0x0F;
-      if (cpuInfo.isAMD15h())
+      if (comp->target().cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H))
          prefetchSnippetBuffer[1] = 0x0D;
       else
          prefetchSnippetBuffer[1] = 0x18;
@@ -319,17 +320,17 @@ void TR::createCCPreLoadedCode(uint8_t *CCPreLoadedCodeBase, uint8_t *CCPreLoade
 
    CCPreLoadedCodeTable[TR_CCPreLoadedCode::TR_AllocPrefetch] = static_cast<void *>(cursor);
    if (cg->comp()->target().is64Bit())
-      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::ZeroedHeap, true>(cursor, cg->getX86ProcessorInfo());
+      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::ZeroedHeap, true>(cursor, cg->comp());
    else
-      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::ZeroedHeap, false>(cursor, cg->getX86ProcessorInfo());
+      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::ZeroedHeap, false>(cursor, cg->comp());
 
    cursor = static_cast<uint8_t *>( TR::alignAllocation<32>(cursor) );
 
    CCPreLoadedCodeTable[TR_CCPreLoadedCode::TR_NonZeroAllocPrefetch] = static_cast<void *>(cursor);
    if (cg->comp()->target().is64Bit())
-      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::NonZeroedHeap, true>(cursor, cg->getX86ProcessorInfo());
+      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::NonZeroedHeap, true>(cursor, cg->comp());
    else
-      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::NonZeroedHeap, false>(cursor, cg->getX86ProcessorInfo());
+      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::NonZeroedHeap, false>(cursor, cg->comp());
 
    cursor = static_cast<uint8_t *>( TR::alignAllocation<32>(cursor) );
 
