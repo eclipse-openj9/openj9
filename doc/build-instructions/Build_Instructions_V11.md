@@ -1002,7 +1002,7 @@ user_riscv@localhost's password: riscv
 ```
 dnf install libX11-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel libXext-devel
 dnf install cups-devel fontconfig-devel alsa-lib-devel freetype-devel  #freetype might be skipped if already installed
-dnf install libdwarf-devel #optional if the DDR is enabled for compilation on the target system
+dnf install libdwarf-devel libstdc++-static #optional if the DDR is enabled for compilation on the target system
 dnf install wget git autoconf automake  #mostly used in the compilation on the target system
 dnf install openssl-devel  #optional if the OpenSSL support is required
 ```
@@ -1295,6 +1295,9 @@ e.g.
 export JAVA_HOME=/<path_to>/<the_cross_built_jdk>
 export PATH="$JAVA_HOME/bin:$PATH"
 ```
+:bulb:
+Please remove `/usr/lib64/ccache` from the PATH environment variable as `/usr/lib64/ccache/gcc` is not supported in the compilation of OpenJDK.
+
 The boot JDK set up in `JAVA_HOME` is the cross-built jdk uploaded to Fedora after cross-compiled on your host system.
 ```
 bash configure --disable-warnings-as-errors --with-freemarker-jar=/<path_to>/freemarker.jar
