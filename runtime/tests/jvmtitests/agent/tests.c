@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,7 +107,6 @@ static jvmtiTest jvmtiTestList[] =
 	{ "decomp002", decomp002, "com.ibm.jvmti.tests.decompResolveFrame.decomp002",             "Intermittent single stepping throught some code" },
 	{ "decomp003", decomp003, "com.ibm.jvmti.tests.decompResolveFrame.decomp003",             "Decompile at exception catch at various levels of inlining" },
 	{ "decomp004", decomp004, "com.ibm.jvmti.tests.decompResolveFrame.decomp004",             "Decompile a synchronized method" },
-	{ "decomp005", decomp005, "com.ibm.jvmti.tests.decompResolveFrame.decomp005",             "Decompile at exception catch with an inlined synchronized method" },
 	{ "fw001",     fw001,     "com.ibm.jvmti.tests.fieldwatch.fw001",                         "Test field watch" },
 	{ "vmd001",    vmd001,    "com.ibm.jvmti.tests.vmDump.vmd001",                            "VM Dump tests" },
 	{ "glc001",    glc001,    "com.ibm.jvmti.tests.getLoadedClasses.glc001",                  "Verify correct return of all relevant loaded classes" },
