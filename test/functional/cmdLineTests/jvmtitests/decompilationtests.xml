@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2004, 2018 IBM Corp. and others
+  Copyright (c) 2004, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,6 +77,16 @@
 
 	<test id="decomp004-mimic">
 		<command>$EXE$ $JVM_OPTS$ -Xjit:count=0,limit={*.jit*},mimicinterpreterframeshape $AGENTLIB$=test:decomp004 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="decomp005">
+		<command>$EXE$ $JVM_OPTS$ -Xjit:count=1,disableAsyncCompilation,limit={*.jit*},tryToInline={*.jitIn*} $AGENTLIB$=test:decomp005 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="decomp005-imse">
+		<command>$EXE$ $JVM_OPTS$ -Xjit:count=1,disableAsyncCompilation,limit={*.jit*},tryToInline={*.jitIn*} $AGENTLIB$=test:decomp005,args:imse -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 
