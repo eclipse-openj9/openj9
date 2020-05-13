@@ -44,8 +44,6 @@
 #define OFFSET_IPIC_TO_CALL   32
 #endif
 
-extern TR_Processor portLibCall_getProcessorType();
-
 #ifdef TR_HOST_POWER
 extern void     ppcCodeSync(uint8_t *, uint32_t);
 #endif
@@ -61,8 +59,6 @@ void ppcCreateHelperTrampolines(uint8_t *trampPtr, int32_t numHelpers)
    {
    TR::CodeCacheConfig &config = TR::CodeCacheManager::instance()->codeCacheConfig();
    static bool customP4 =  feGetEnv("TR_CustomP4Trampoline") ? true : false;
-   static TR_Processor proc = customP4 ? portLibCall_getProcessorType() :
-      TR_DefaultPPCProcessor;
 
    uint8_t *bufferStart = trampPtr, *buffer;
    for (int32_t cookie=1; cookie<numHelpers; cookie++)
@@ -101,7 +97,7 @@ void ppcCreateHelperTrampolines(uint8_t *trampPtr, int32_t numHelpers)
 
             // Now, if highest bit is on we need to clear the sign extend bits on 64bit CPUs
             // ** POWER4 pref fix **
-            if( (helper & 0x80000000) && (!customP4 || proc == TR_PPCgp))
+            if( (helper & 0x80000000) && (!customP4 || (customP4 && TR::comp()->target().cpu.is(OMR_PROCESSOR_PPC_GP))))
                {
                // rlwinm r11,r11,sh=0,mb=0,me=31
                *(int32_t *)buffer = 0x556b003e;
@@ -128,8 +124,6 @@ void ppcCreateHelperTrampolines(uint8_t *trampPtr, int32_t numHelpers)
 void ppcCreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
    {
    static bool customP4 =  feGetEnv("TR_CustomP4Trampoline") ? true : false;
-   static TR_Processor proc = customP4 ? portLibCall_getProcessorType() :
-      TR_DefaultPPCProcessor;
    uint8_t *buffer = (uint8_t *)trampPtr;
    J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    intptr_t dispatcher = (intptr_t)((uint8_t *)startPC + linkInfo->getReservedWord());
@@ -183,7 +177,7 @@ void ppcCreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
 
             // Now, if highest bit is on we need to clear the sign extend bits on 64bit CPUs
             // ** POWER4 pref fix **
-            if ( (dispatcher & 0x80000000) && proc == TR_PPCgp)
+            if ( (dispatcher & 0x80000000) && (!customP4 || (customP4 && TR::comp()->target().cpu.is(OMR_PROCESSOR_PPC_GP))))
                {
                // rlwinm r11,r11,sh=0,mb=0,me=31
                *(int32_t *)buffer = 0x556b003e;
@@ -474,7 +468,7 @@ void ppcCodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *
 #else
    if (customP4)
       {
-      *trampolineSize = portLibCall_getProcessorType() == TR_PPCgp ? TRAMPOLINE_SIZE + 4 : TRAMPOLINE_SIZE;
+      *trampolineSize = TR::comp()->target().cpu.is(OMR_PROCESSOR_PPC_GP) ? TRAMPOLINE_SIZE + 4 : TRAMPOLINE_SIZE;
       }
    else
       {

@@ -479,7 +479,7 @@ bool
 TR_J9VMBase::getPPCSupportsVSXRegisters()
    {
 #if defined(TR_TARGET_POWER)
-   return TR::Compiler->target.cpu.getPPCSupportsVSX();
+   return TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX);
 #else
    return false;
 #endif // TR_TARGET_POWER
@@ -647,20 +647,18 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
 void
 TR_J9VM::initializeProcessorType()
    {
-
    TR_ASSERT(_compInfo,"compInfo not defined");
+   TR::Compiler->target.cpu.applyUserOptions();
 
    if (TR::Compiler->target.cpu.isZ())
       {
 #if defined(TR_HOST_S390)
-         TR::Compiler->target.cpu.applyUserOptions();
-
-         initializeS390ProcessorFeatures();
+      initializeS390ProcessorFeatures();
 
 #if defined(J9ZOS390)
-         // Cache whether current process is running in Supervisor State (i.e. Control Region of WAS).
-         if (!_isPSWInProblemState())
-             _compInfo->setIsInZOSSupervisorState();
+      // Cache whether current process is running in Supervisor State (i.e. Control Region of WAS).
+      if (!_isPSWInProblemState())
+         _compInfo->setIsInZOSSupervisorState();
 #endif
 #endif
 

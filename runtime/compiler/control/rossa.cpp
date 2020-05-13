@@ -1612,8 +1612,7 @@ onLoadInternal(
 #elif defined(TR_HOST_POWER)
 #if !defined(J9OS_I5)
 /* We disable it on current releases. May enable in future. */
-      TR_Processor processor = portLibCall_getProcessorType();
-      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->hwProfiler = processor >= TR_PPCp8 ? TR_PPCHWProfiler::allocate(jitConfig) : NULL;
+      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->hwProfiler = TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) ? TR_PPCHWProfiler::allocate(jitConfig) : NULL;
 #else
       ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->hwProfiler = NULL;
 #endif /* !defined(J9OS_I5) */

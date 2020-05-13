@@ -272,7 +272,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       // Argument changes are needed
       if (crc32m2 || crc32m3)
          {
-         targetAddress = (uintptr_t)((comp()->target().cpu.id() >= TR_PPCp8 && comp()->target().cpu.getPPCSupportsVSX())?crc32_vpmsum:crc32_no_vpmsum);
+         targetAddress = (uintptr_t)((comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX))?crc32_vpmsum:crc32_no_vpmsum);
 
          // Assuming pre/postCondition have the same index, we use preCondition to map
          OMR::RegisterDependencyMap map(deps->getPreConditions()->getRegisterDependency(0), deps->getAddCursorForPre());
@@ -679,7 +679,7 @@ void J9::Power::JNILinkage::releaseVMAccess(TR::Node* callNode, TR::RegisterDepe
    generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, callNode, longReleaseLabel, cr0Reg);
    generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_stcx_r, callNode, new (trHeapMemory()) TR::MemoryReference(NULL, gr28Reg, TR::Compiler->om.sizeofReferenceAddress(), cg()), tempReg2);
 
-   if (comp()->target().cpu.id() >= TR_PPCgp)
+   if (comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_GP))
       // use PPC AS branch hint
       generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, callNode, loopHead, cr0Reg);
    else
@@ -723,7 +723,7 @@ void J9::Power::JNILinkage::acquireVMAccess(TR::Node* callNode, TR::RegisterDepe
    generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, callNode, longReacquireLabel, cr0Reg);
    generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_stcx_r, callNode, new (trHeapMemory()) TR::MemoryReference(NULL, tempReg0, TR::Compiler->om.sizeofReferenceAddress(), cg()), tempReg1);
 
-   if (comp()->target().cpu.id() >= TR_PPCgp)
+   if (comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_GP))
       // use PPC AS branch hint
       generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, callNode, loopHead2, cr0Reg);
    else
@@ -763,7 +763,7 @@ void J9::Power::JNILinkage::releaseVMAccessAtomicFree(TR::Node* callNode, TR::Re
       cg()->addSnippet(new (trHeapMemory()) TR::PPCHelperCallSnippet(cg(), callNode, releaseVMAccessSnippetLabel, jitReleaseVMAccessSymRef));
       }
 
-   if (comp()->target().cpu.id() >= TR_PPCgp)
+   if (comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_GP))
       generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, PPCOpProp_BranchUnlikely, callNode, releaseVMAccessSnippetLabel, cr0Reg);
    else
       generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, callNode, releaseVMAccessSnippetLabel, cr0Reg);
@@ -790,7 +790,7 @@ void J9::Power::JNILinkage::acquireVMAccessAtomicFree(TR::Node* callNode, TR::Re
       cg()->addSnippet(new (trHeapMemory()) TR::PPCHelperCallSnippet(cg(), callNode, acquireVMAccessSnippetLabel, jitAcquireVMAccessSymRef));
       }
 
-   if (comp()->target().cpu.id() >= TR_PPCgp)
+   if (comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_GP))
       generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, PPCOpProp_BranchUnlikely, callNode, acquireVMAccessSnippetLabel, cr0Reg);
    else
       generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, callNode, acquireVMAccessSnippetLabel, cr0Reg);

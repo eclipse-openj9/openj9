@@ -75,7 +75,7 @@ J9::Power::CodeGenerator::CodeGenerator() :
    cg->setSupportsPartialInlineOfMethodHooks();
    cg->setSupportsInliningOfTypeCoersionMethods();
 
-   if (cg->comp()->target().cpu.id() >= TR_PPCp8 && cg->comp()->target().cpu.getPPCSupportsVSX() &&
+   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) &&
       cg->comp()->target().is64Bit() && !comp->getOption(TR_DisableFastStringIndexOf) &&
       !TR::Compiler->om.canGenerateArraylets())
       cg->setSupportsInlineStringIndexOf();
@@ -375,7 +375,7 @@ bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::Recognized
 bool
 J9::Power::CodeGenerator::enableAESInHardwareTransformations()
    {
-   if ( (self()->comp()->target().cpu.getPPCSupportsAES() || (self()->comp()->target().cpu.getPPCSupportsVMX() && self()->comp()->target().cpu.getPPCSupportsVSX())) &&
+   if ( (self()->comp()->target().cpu.getPPCSupportsAES() || (self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_ALTIVEC) && self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX))) &&
          !self()->comp()->getOption(TR_DisableAESInHardware))
       return true;
    else
@@ -397,7 +397,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
          node->getOpCodeValue() == TR::l2a &&
          comp()->getMethodHotness() >= scorching &&
          TR::Compiler->om.compressedReferenceShiftOffset() == 0 &&
-         self()->comp()->target().cpu.id() >= TR_PPCp6)
+         self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
       )
       {
       int32_t prefetchOffset = comp()->findPrefetchInfo(node);
@@ -732,7 +732,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
       }
    else if (node->getOpCodeValue() == TR::awrtbari &&
             comp()->getMethodHotness() >= scorching &&
-            self()->comp()->target().cpu.id() >= TR_PPCp6 &&
+            self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6) &&
               (self()->comp()->target().is32Bit() ||
                 (self()->comp()->target().is64Bit() &&
                  comp()->useCompressedPointers() &&

@@ -28,17 +28,19 @@
 J9::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod *method, TR::Compilation *comp) :
    OMR::ResolvedMethodSymbolConnector(method, comp)
    {
-
-   if ((comp->target().cpu.getSupportsHardwareRound() &&
-        ((method->getRecognizedMethod() == TR::java_lang_Math_floor) ||
-         (method->getRecognizedMethod() == TR::java_lang_StrictMath_floor) ||
-         (method->getRecognizedMethod() == TR::java_lang_Math_ceil) ||
-         (method->getRecognizedMethod() == TR::java_lang_StrictMath_ceil))) ||
-       (comp->target().cpu.getSupportsHardwareCopySign() &&
-        ((method->getRecognizedMethod() == TR::java_lang_Math_copySign_F) ||
-         (method->getRecognizedMethod() == TR::java_lang_Math_copySign_D))))
+   if (comp->target().cpu.isPower())
       {
-      self()->setCanReplaceWithHWInstr(true);
+      if ((comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_HW_ROUND_FIRST) &&
+           ((method->getRecognizedMethod() == TR::java_lang_Math_floor) ||
+            (method->getRecognizedMethod() == TR::java_lang_StrictMath_floor) ||
+            (method->getRecognizedMethod() == TR::java_lang_Math_ceil) ||
+            (method->getRecognizedMethod() == TR::java_lang_StrictMath_ceil))) ||
+          (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_HW_COPY_SIGN_FIRST) &&
+           ((method->getRecognizedMethod() == TR::java_lang_Math_copySign_F) ||
+            (method->getRecognizedMethod() == TR::java_lang_Math_copySign_D))))
+         {
+         self()->setCanReplaceWithHWInstr(true);
+         }
       }
 
    if (method->isJNINative())

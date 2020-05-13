@@ -694,7 +694,7 @@ static TR::Instruction *unrollPrologueInitLoop(TR::CodeGenerator *cg, TR::Node *
 
    static bool disableVSXMemInit = (feGetEnv("TR_disableVSXMemInit") != NULL); //Disable toggle incase we break in production.
    bool use8Bytes                = ((cg->is64BitProcessor() && TR::Compiler->om.sizeofReferenceAddress() == 4) || TR::Compiler->om.sizeofReferenceAddress() == 8);
-   bool useVectorStores          = (cg->comp()->target().cpu.id() >= TR_PPCp8 && cg->comp()->target().cpu.getPPCSupportsVSX() && !disableVSXMemInit);
+   bool useVectorStores          = (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) && !disableVSXMemInit);
 
    if (useVectorStores)
       {
@@ -1029,7 +1029,7 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       TR::LabelSymbol *reStartLabel = generateLabelSymbol(cg());
 
       // Branch to StackOverflow snippet if javaSP > stack limit
-      if (cg()->comp()->target().cpu.id() >= TR_PPCgp)
+      if (cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_GP))
          // use PPC AS branch hint
          cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::ble, PPCOpProp_BranchUnlikely, firstNode, snippetLabel, cr0, cursor);
       else
@@ -2701,7 +2701,7 @@ TR::Register *J9::Power::PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
    // SG - start
    int32_t           argSize = buildArgs(callNode, dependencies);
    bool inlinedCharacterIsMethod = false;
-   if (cg()->comp()->target().cpu.id() >= TR_PPCp9 && cg()->comp()->target().is64Bit())
+   if (cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9) && cg()->comp()->target().is64Bit())
       {
       switch(callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod())
          {

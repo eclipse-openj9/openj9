@@ -109,7 +109,7 @@ static void overlapDFPOperandAndPrecisionLoad(
       TR::CodeGenerator *cg)
    {
    // check for direct move
-   bool p8DirectMoveTest = cg->comp()->target().cpu.id() == TR_PPCp8;
+   bool p8DirectMoveTest = cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_P8);
 
    /* We want to overlap the loading of the DFP operands and precision...
       Cases will be..
@@ -361,7 +361,7 @@ static TR::Register *inlineBigDecimalConstructor64(
       bool isLong,
       bool exp)
    {
-   bool p8DirectMoveTest = cg->comp()->target().cpu.id() == TR_PPCp8;
+   bool p8DirectMoveTest = cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_P8);
 
    // second child is an expression representing the value to be converted to DFP
    TR::Register * valRegister = cg->evaluate(node->getSecondChild());
@@ -886,7 +886,7 @@ extern TR::Register *inlineBigDecimalBinaryOp(
    {
    // This is the check used to determine whether or not to use direct move instructions in 64 bit
    // Is used consistently throughout this file
-   bool p8DirectMoveTest = cg->comp()->target().cpu.id() == TR_PPCp8;
+   bool p8DirectMoveTest = cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_P8);
 
    int32_t toRound = 0;
    bool isConst16Precision = false;
@@ -1108,7 +1108,7 @@ extern TR::Register *inlineBigDecimalScaledDivide(
       TR::CodeGenerator *cg)
    {
    // used to check for direct move instruction support
-   bool p8DirectMoveTest = cg->comp()->target().cpu.id() == TR_PPCp8;
+   bool p8DirectMoveTest = cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_P8);
 
    // check the rounding constant
    TR::Register * rmRegister = NULL;
@@ -1558,7 +1558,7 @@ extern TR::Register *inlineBigDecimalRound(
       TR::CodeGenerator *cg)
    {
    // check for direct move
-   bool p8DirectMoveTest = cg->comp()->target().cpu.id() == TR_PPCp8;
+   bool p8DirectMoveTest = cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_P8);
 
    // load DFP to be rounded
    TR::Register * dfpFPRegister = NULL;
@@ -1692,7 +1692,7 @@ extern TR::Register *inlineBigDecimalCompareTo(
       TR::Node * node,
       TR::CodeGenerator * cg)
    {
-   bool p8DirectMoveTest = cg->comp()->target().cpu.id() == TR_PPCp8;
+   bool p8DirectMoveTest = cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_P8);
 
    // load both operands into FPRs
    TR::Register * lhsFPRegister = NULL;
@@ -1838,7 +1838,7 @@ extern TR::Register *inlineBigDecimalUnaryOp(
       bool precision)
    {
    // check for direct move
-   bool p8DirectMoveTest = cg->comp()->target().cpu.id() == TR_PPCp8;
+   bool p8DirectMoveTest = cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_P8);
 
    // load DFP
    TR::Register * dfpFPRegister = NULL;
@@ -2013,7 +2013,7 @@ extern TR::Register *inlineBigDecimalSetScale(
       TR::CodeGenerator * cg)
    {
    // check for direct move support
-   bool p8DirectMoveTest = cg->comp()->target().cpu.id() == TR_PPCp8;
+   bool p8DirectMoveTest = cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_P8);
 
    TR::MemoryReference *tempMR = NULL;
    TR::SymbolReference * temp = NULL;
@@ -2204,7 +2204,7 @@ extern TR::Register *inlineBigDecimalUnscaledValue(
       TR::CodeGenerator * cg)
    {
    // check for direct move support
-   bool p8DirectMoveTest = cg->comp()->target().cpu.id() == TR_PPCp8;
+   bool p8DirectMoveTest = cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_P8);
 
    // load DFP to be quantized
    TR::Node * dfpNode = node->getFirstChild();

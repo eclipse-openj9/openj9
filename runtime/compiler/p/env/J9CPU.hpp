@@ -53,16 +53,18 @@ protected:
    CPU(const OMRProcessorDesc& processorDescription) : J9::CPU(processorDescription) {}
 
 public:
-   bool getPPCSupportsVMX();
-   bool getPPCSupportsVSX();
-   bool getPPCSupportsAES();
-   bool getPPCSupportsTM();
 
-   bool hasPopulationCountInstruction();
-   bool supportsDecimalFloatingPoint();
+   bool supportsFeature(uint32_t feature);
+   bool supports_feature_test(uint32_t feature);
 
    bool isCompatible(const OMRProcessorDesc& processorDescription);
    OMRProcessorDesc getProcessorDescription();
+
+   bool is(OMRProcessorArchitecture p);
+   bool isAtLeast(OMRProcessorArchitecture p);
+   bool isAtMost(OMRProcessorArchitecture p);
+
+   bool getPPCSupportsVSX();
    };
 
 }
