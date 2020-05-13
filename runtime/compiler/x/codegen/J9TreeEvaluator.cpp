@@ -2691,8 +2691,11 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
 
    // -------------------------------------------------------------------------
    //
-   // If the source reference is NULL, the array store checks and the write
-   // barrier can be bypassed.  Generate the NULL store in an outlined sequence.
+   // If the source reference is NULL and value types are not enabled, the array
+   // store checks and the write barrier can be bypassed.  Generate the NULL
+   // store in an outlined sequence.
+   // If value types are enabled, NULL results in an NPE if it is stored to an
+   // array with a value type for its component type.
    // For realtime GC we must still do the barrier.  If we are not generating
    // a write barrier then the store will happen inline.
    //
@@ -2702,12 +2705,22 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
    startLabel->setStartInternalControlFlow();
    generateLabelInstruction(LABEL, node, startLabel, cg);
 
-   generateRegRegInstruction(TESTRegReg(), node, sourceRegister, sourceRegister, cg);
+   const bool areValueTypesEnabled = TR::Compiler->om.areValueTypesEnabled();
 
-   TR::LabelSymbol *nullTargetLabel =
-      isRealTimeGC ? startOfWrtbarLabel : doNullStoreLabel;
+   TR::LabelSymbol *nullTargetLabel = NULL;
 
-   generateLabelInstruction(JE4, node, nullTargetLabel, cg);
+   // Bypass store check for NULL reference, unless array's component type could
+   // be a value type, in which case an array component type of value type has
+   // to be checked if the source value is NULL
+   //
+   if (!areValueTypesEnabled)
+      {
+      generateRegRegInstruction(TESTRegReg(), node, sourceRegister, sourceRegister, cg);
+
+      nullTargetLabel = isRealTimeGC ? startOfWrtbarLabel : doNullStoreLabel;
+
+      generateLabelInstruction(JE4, node, nullTargetLabel, cg);
+      }
 
    // -------------------------------------------------------------------------
    //
@@ -2829,25 +2842,28 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
          //
          sourceChild->setIsNonNull(isSourceNonNull);
 
-         // Perform the NULL store that was bypassed earlier by the write barrier.
-         //
-         TR_OutlinedInstructionsGenerator og(nullTargetLabel, node, cg);
+         if (!areValueTypesEnabled)
+            {
+            // Perform the NULL store that was bypassed earlier by the write barrier.
+            //
+            TR_OutlinedInstructionsGenerator og(nullTargetLabel, node, cg);
 
-         tempMR2 = generateX86MemoryReference(*tempMR, 0, cg);
+            tempMR2 = generateX86MemoryReference(*tempMR, 0, cg);
 
-         if (usingCompressedPointers)
-            generateMemRegInstruction(S4MemReg, node, tempMR2, compressedRegister, cg);
-         else
-            generateMemRegInstruction(SMemReg(), node, tempMR2, sourceRegister, cg);
+            if (usingCompressedPointers)
+               generateMemRegInstruction(S4MemReg, node, tempMR2, compressedRegister, cg);
+            else
+               generateMemRegInstruction(SMemReg(), node, tempMR2, sourceRegister, cg);
 
-         generateLabelInstruction(JMP4, node, doneLabel, cg);
+            generateLabelInstruction(JMP4, node, doneLabel, cg);
+            }
          }
       else
          {
          // No write barrier emitted.  Evaluate the store here.
          //
          assert(!isNonRTWriteBarrierRequired);
-         assert(doneLabel == nullTargetLabel);
+         assert(doneLabel == nullTargetLabel || areValueTypesEnabled);
 
          // This is where the dependency condition will eventually go.
          //
@@ -8059,6 +8075,8 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
    TR::Register *destReg = destinationChild->getRegister();
    TR::LabelSymbol *helperCallLabel = generateLabelSymbol(cg);
 
+   const bool areValueTypesEnabled = TR::Compiler->om.areValueTypesEnabled();
+
    static char *disableArrayStoreCheckOpts = feGetEnv("TR_disableArrayStoreCheckOpts");
    if (!disableArrayStoreCheckOpts || !debug("noInlinedArrayStoreCHKs"))
       {
@@ -8074,7 +8092,6 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
 
       if (TR::Compiler->om.compressObjectReferences())
          {
-
          // FIXME: Add check for hint when doing the arraystore check as below when class pointer compression
          // is enabled.
 
@@ -8108,12 +8125,54 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
             generateX86MemoryReference(destComponentClassReg, offsetof(J9ArrayClass, componentType), cg);
          generateRegMemInstruction(LRegMem(), node, destComponentClassReg, destCompTypeMR, cg);
 
+         if (areValueTypesEnabled)
+            {
+            // If sourceReg is null, check whether the array's component type
+            // is a value type.  If so, fall through to the load of the source
+            // class which will trigger a NPE.  If the component type is not a
+            // value type, go to the wrtbarLabel, bypassing any additional
+            // checks for a null source.
+            //
+            // test sourceReg,sourceReg
+            // jne bypassNullValueTypeTestLabel
+            // test [destComponentClassReg.classFlags], J9ClassIsValueType 
+            // je wrtbarLabel
+            // Label bypassNullValueTypeTestLabel
+            //
+            TR::LabelSymbol *bypassNullValueTypeTestLabel = generateLabelSymbol(cg);
+            TR::LabelSymbol *bypassSourceClassCheck = generateLabelSymbol(cg);
+
+            generateRegRegInstruction(TESTRegReg(), node, sourceReg, sourceReg, cg);
+            generateLabelInstruction(JNE4, node, bypassNullValueTypeTestLabel, cg);
+
+            auto fej9 = (TR_J9VMBase *)(cg->fe());
+            TR::MemoryReference *destClassFlagsMR = generateX86MemoryReference(destComponentClassReg, (uintptr_t)(fej9->getOffsetOfClassFlags()), cg);
+            static_assert((uint32_t) J9ClassIsValueType < USHRT_MAX, "Expecting J9ClassIsValueType to be less than 16 bits for use in test instruction");
+            //test [destComponentClassReg.classFlags], J9ClassIsValueType
+            generateMemImmInstruction(TEST2MemImm2, node, destClassFlagsMR, J9ClassIsValueType, cg);
+            generateLabelInstruction(JE4, node, wrtbarLabel, cg);
+
+            generateLabelInstruction(LABEL, node, bypassNullValueTypeTestLabel, cg);
+            }
+
          // here we may have to convert the J9Class pointer from destComponentClassReg into
          // a TR_OpaqueClassBlock and store it back into destComponentClassReg
          // ..
 
          TR::MemoryReference *sourceRegClassMR = generateX86MemoryReference(sourceReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-         generateRegMemInstruction(L4RegMem, node, sourceClassReg, sourceRegClassMR, cg);
+         TR::Instruction *sourceClassInstr = generateRegMemInstruction(L4RegMem, node, sourceClassReg, sourceRegClassMR, cg);
+
+         // For arrays with a component type that is a value type, the load of
+         // the source class will result in an exception if the source was null.
+         // For other arrays, this will be bypassed completely if the source
+         // was null
+         //
+         if (areValueTypesEnabled)
+            {
+            cg->setImplicitExceptionPoint(sourceClassInstr);
+            sourceClassInstr->setNeedsGCMap(0xFF00FFFF);
+            }
+
          TR::TreeEvaluator::generateVFTMaskInstruction(node, sourceClassReg, cg);
 
          generateRegRegInstruction(CMP4RegReg, node, destComponentClassReg, sourceClassReg, cg); // compare only 32 bits
@@ -8131,8 +8190,51 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
          }
       else // no class pointer compression
          {
+         if (areValueTypesEnabled)
+            {
+            // If sourceReg is null, check whether the array's component type
+            // is a value type.  If so, fall through to the load of the source
+            // class which will trigger a NPE.  If the component type is not a
+            // value type, go to the wrtbarLabel, bypassing any additional
+            // checks for a null source.
+            //
+            // test sourceReg,sourceReg
+            // jne bypassNullValueTypeTestLabel
+            // test [destComponentClassReg.classFlags], J9ClassIsValueType 
+            // je wrtbarLabel
+            // Label bypassNullValueTypeTestLabel
+            //
+            TR::LabelSymbol *bypassNullValueTypeTestLabel = generateLabelSymbol(cg);
+            TR::LabelSymbol *bypassSourceClassCheck = generateLabelSymbol(cg);
+
+            generateRegRegInstruction(TESTRegReg(), node, sourceReg, sourceReg, cg);
+            generateLabelInstruction(JNE4, node, bypassNullValueTypeTestLabel, cg);
+
+            auto fej9 = (TR_J9VMBase *)(cg->fe());
+            TR::MemoryReference *classFlagsMR = generateX86MemoryReference(destComponentClassReg, (uintptr_t)(fej9->getOffsetOfClassFlags()), cg);
+            static_assert((uint32_t) J9ClassIsValueType < USHRT_MAX, "Expecting J9ClassIsValueType to be less than 16 bits for use in test instruction");
+            //test [destComponentClassReg.classFlags], J9ClassIsValueType
+            generateMemImmInstruction(TEST2MemImm2, node, classFlagsMR, J9ClassIsValueType, cg);
+            generateLabelInstruction(JE4, node, wrtbarLabel, cg);
+
+            generateLabelInstruction(LABEL, node, bypassNullValueTypeTestLabel, cg);
+            }
+
          TR::MemoryReference *sourceClassMR = generateX86MemoryReference(sourceReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-         generateRegMemInstruction(LRegMem(), node, sourceClassReg, sourceClassMR, cg);
+         TR::Instruction *sourceClassInstr = generateRegMemInstruction(LRegMem(), node, sourceClassReg, sourceClassMR, cg);
+
+
+         // For arrays with a component type that is a value type, the load of
+         // the source class will result in an exception if the source was null.
+         // For other arrays, this will be bypassed completely if the source
+         // was null
+         //
+         if (areValueTypesEnabled)
+         {
+            cg->setImplicitExceptionPoint(sourceClassInstr);
+            sourceClassInstr->setNeedsGCMap(0xFF00FFFF);
+         }
+
          TR::TreeEvaluator::generateVFTMaskInstruction(node, sourceClassReg, cg);
 
          TR::MemoryReference *destClassMR = generateX86MemoryReference(destReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
