@@ -101,6 +101,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<feature id="combogc"/>
 		<feature id="core"/>
 		<feature id="dbgext"/>
+		<feature id="gpu"/>
 		<feature id="se"/>
 		<feature id="se60_26"/>
 		<feature id="se7"/>
