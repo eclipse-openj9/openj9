@@ -440,8 +440,8 @@
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_OSRG_nongold_SE80</testCaseName>
 		<variations>
-			<variation>Mode107-OSRG</variation>
-			<variation>Mode110-OSRG</variation>
+			<variation>Mode107-OSRG -Xnocompressedrefs</variation>
+			<variation>Mode110-OSRG -Xnocompressedrefs</variation>
 			<variation>Mode607-OSRG</variation>
 			<variation>Mode610-OSRG</variation>
 			<variation>Mode612-OSRG</variation>
