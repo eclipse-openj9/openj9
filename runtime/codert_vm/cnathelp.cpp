@@ -75,7 +75,7 @@ fixStackForSyntheticHandler(J9VMThread *currentThread)
 	J9JITDecompilationInfo *decomp = currentThread->decompilationStack;
 	if (NULL != decomp) {
 		J9SFJITResolveFrame *resolveFrame = (J9SFJITResolveFrame*)currentThread->sp;
-		void *jitPC = resolveFrame->returnAddress;
+		void *jitPC = MASK_PC(resolveFrame->returnAddress);
 		J9JITExceptionTable *metaData = jitGetExceptionTableFromPC(currentThread, (UDATA)jitPC);
 		Assert_CodertVM_false(NULL == metaData);
 		UDATA *oldSP = (UDATA*)(resolveFrame + 1);
