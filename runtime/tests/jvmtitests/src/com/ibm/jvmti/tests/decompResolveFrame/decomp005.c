@@ -37,7 +37,7 @@ jint JNICALL
 decomp005(agentEnv * _env, char * args)
 {
 	JVMTI_ACCESS_FROM_AGENT(_env);
-	jvmtiError err = JVMTI_ERROR_NONE;                	
+	jvmtiError err;                	
 	jvmtiEventCallbacks callbacks;
 	jvmtiCapabilities capabilities;                
 
