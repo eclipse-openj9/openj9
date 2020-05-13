@@ -41,6 +41,7 @@ j9vm_add_library(jvmti_test_src STATIC
 	com/ibm/jvmti/tests/decompResolveFrame/decomp002.c
 	com/ibm/jvmti/tests/decompResolveFrame/decomp003.c
 	com/ibm/jvmti/tests/decompResolveFrame/decomp004.c
+	com/ibm/jvmti/tests/decompResolveFrame/decomp005.c
 
 	com/ibm/jvmti/tests/eventClassFileLoadHook/ecflh001.c
 
