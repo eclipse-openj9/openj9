@@ -102,6 +102,7 @@ public class TraceContext {
 
 	/* Map of thread IDs to list of associated names */
 	Map knownThreads = new HashMap();
+	private boolean recordThreadNames = false;
 
 	/* The subset of threads we're interested in */
 	Set filteredThreads;
@@ -156,6 +157,33 @@ public class TraceContext {
 		this(data, message, error, warning, debug);
 
 		this.messageFile = MessageFile.getMessageFile(messageFile, this);
+	}
+
+	/**
+	 * Controls whether thread names are captured for inclusion in the
+	 * information returned by {@link TraceContext#summary() summary()}.
+	 *
+	 * By default, thread names are not captured unless enabled via this
+	 * method. Any previously captured names are discarded when subsequently
+	 * disabled.
+	 *
+	 * @param value whether thread names should be captured
+	 */
+	public void setRecordThreadNames(boolean value) {
+		recordThreadNames = value;
+		if (!value) {
+			knownThreads.clear();
+		}
+	}
+
+	/**
+	 * Answer whether thread names are being captured for inclusion in the
+	 * information returned by {@link TraceContext#summary() summary()}.
+	 *
+	 * @return true if thread names are being captured, false otherwise
+	 */
+	public boolean getRecordThreadNames() {
+		return recordThreadNames;
 	}
 
 	/**
@@ -587,14 +615,16 @@ public class TraceContext {
 			 */
 		}
 
-		/* record the threads current name for historical reference */
-		if (knownThreads.containsKey(ident)) {
-			Set names = (Set)knownThreads.get(ident);
-			names.add(record.threadName);
-		} else {
-			Set names = new HashSet();
-			names.add(record.threadName);
-			knownThreads.put(ident, names);
+		if (recordThreadNames) {
+			/* record the threads current name for historical reference */
+			if (knownThreads.containsKey(ident)) {
+				Set names = (Set)knownThreads.get(ident);
+				names.add(record.threadName);
+			} else {
+				Set names = new HashSet();
+				names.add(record.threadName);
+				knownThreads.put(ident, names);
+			}
 		}
 		
 		thread = (TraceThread)threadMap.get(ident);

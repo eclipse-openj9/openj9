@@ -162,6 +162,8 @@ public class TraceFormat
 			return;
 		}
 
+		context.setRecordThreadNames(true);
+
 		if (verbose.booleanValue() || debugLevel.intValue() > 0) {
 			/* we don't set these in the constructor otherwise we see error messages during the retry logic if the block
 			 * size estimate is too small */
