@@ -9690,20 +9690,18 @@ static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8
    TR::RegisterDependencyConditions *conditions;
 
    //Set the conditions and dependencies
-   conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint16_t) numDeps, (uint16_t) numDeps, cg->trMemory());
-   TR::addDependency(conditions, valueReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   conditions->getPreConditions()->getRegisterDependency(0)->setExcludeGPR0();
+   conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, (uint16_t) numDeps, cg->trMemory());
+   conditions->addPostCondition(valueReg, TR::RealRegister::NoReg);
    conditions->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
-   TR::addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   conditions->getPreConditions()->getRegisterDependency(1)->setExcludeGPR0();
+   conditions->addPostCondition(resultReg, TR::RealRegister::NoReg);
    conditions->getPostConditions()->getRegisterDependency(1)->setExcludeGPR0();
-   TR::addDependency(conditions, deltaReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   TR::addDependency(conditions, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
-   TR::addDependency(conditions, fieldOffsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   conditions->addPostCondition(deltaReg, TR::RealRegister::NoReg);
+   conditions->addPostCondition(cndReg, TR::RealRegister::cr0);
+   conditions->addPostCondition(fieldOffsetReg, TR::RealRegister::NoReg);
    if (tempReg)
-      TR::addDependency(conditions, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      conditions->addPostCondition(tempReg, TR::RealRegister::NoReg);
    if (scratchRegister)
-      TR::addDependency(conditions, scratchRegister, TR::RealRegister::NoReg, TR_GPR, cg);
+      conditions->addPostCondition(scratchRegister, TR::RealRegister::NoReg);
 
    doneLabel->setEndInternalControlFlow();
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
@@ -10322,67 +10320,66 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
       }
 
    TR::RegisterDependencyConditions *conditions;
-   conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(numDeps, numDeps, cg->trMemory());
-   TR::addDependency(conditions, valueReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   conditions->getPreConditions()->getRegisterDependency(0)->setExcludeGPR0();
+   conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg->trMemory());
+   conditions->addPostCondition(valueReg, TR::RealRegister::NoReg);
    conditions->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
-   TR::addDependency(conditions, currentReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   conditions->addPostCondition(currentReg, TR::RealRegister::NoReg);
 
    numDeps -= 2;
    if (fieldOffsetReg != NULL)
       {
-      TR::addDependency(conditions, fieldOffsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      conditions->addPostCondition(fieldOffsetReg, TR::RealRegister::NoReg);
       numDeps--;
       }
    if (resultReg != fieldOffsetReg)
       {
-      TR::addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      conditions->addPostCondition(resultReg, TR::RealRegister::NoReg);
       numDeps--;
       }
    if (objReg != valueReg)
       {
-      TR::addDependency(conditions, objReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      conditions->addPostCondition(objReg, TR::RealRegister::NoReg);
       numDeps--;
       }
    if (isUnsafe)
       {
       if (isRefWrite)
          {
-         TR::addDependency(conditions, newRefReg, TR::RealRegister::NoReg, TR_GPR, cg);
-         TR::addDependency(conditions, expRefReg, TR::RealRegister::NoReg, TR_GPR, cg);
+         conditions->addPostCondition(newRefReg, TR::RealRegister::NoReg);
+         conditions->addPostCondition(expRefReg, TR::RealRegister::NoReg);
          numDeps -= 2;
          }
       else
          {
          if (newPair)
             {
-            TR::addDependency(conditions, newValReg->getHighOrder(), TR::RealRegister::NoReg, TR_GPR, cg);
-            TR::addDependency(conditions, newValReg->getLowOrder(), TR::RealRegister::NoReg, TR_GPR, cg);
+            conditions->addPostCondition(newValReg->getHighOrder(), TR::RealRegister::NoReg);
+            conditions->addPostCondition(newValReg->getLowOrder(), TR::RealRegister::NoReg);
             numDeps--;
             }
          else
             {
-            TR::addDependency(conditions, newValReg, TR::RealRegister::NoReg, TR_GPR, cg);
+            conditions->addPostCondition(newValReg, TR::RealRegister::NoReg);
             }
          numDeps--;
          if (!isArgImm)
             {
             if (expPair)
                {
-               TR::addDependency(conditions, expValReg->getHighOrder(), TR::RealRegister::NoReg, TR_GPR, cg);
-               TR::addDependency(conditions, expValReg->getLowOrder(), TR::RealRegister::NoReg, TR_GPR, cg);
+               conditions->addPostCondition(expValReg->getHighOrder(), TR::RealRegister::NoReg);
+               conditions->addPostCondition(expValReg->getLowOrder(), TR::RealRegister::NoReg);
                numDeps--;
                }
             else
                {
-               TR::addDependency(conditions, expValReg, TR::RealRegister::NoReg, TR_GPR, cg);
+               conditions->addPostCondition(expValReg, TR::RealRegister::NoReg);
                }
             numDeps--;
             }
          }
       }
 
-   TR::addDependency(conditions, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
+   conditions->addPostCondition(cndReg, TR::RealRegister::cr0);
    numDeps--;
 
    doneLabel->setEndInternalControlFlow();
@@ -13668,32 +13665,32 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
           * r3-r8 are used to pass parameters to the referenceArrayCopy helper.
           * r11 is used for the tmp1Reg since r11 gets killed by the trampoline and values put into tmp1Reg are not needed after the trampoline.
           */
-         TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(numDeps, numDeps, cg->trMemory());
-         TR::addDependency(deps, condReg, TR::RealRegister::cr0, TR_CCR, cg);
-         TR::addDependency(deps, metaReg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg->trMemory());
+         deps->addPostCondition(condReg, TR::RealRegister::cr0);
+         deps->addPostCondition(metaReg, TR::RealRegister::NoReg);
 
-         TR::addDependency(deps, r3Reg, TR::RealRegister::gr3, TR_GPR, cg);
-         TR::addDependency(deps, srcObjReg, TR::RealRegister::gr4, TR_GPR, cg);
-         TR::addDependency(deps, dstObjReg, TR::RealRegister::gr5, TR_GPR, cg);
-         TR::addDependency(deps, srcAddrReg, TR::RealRegister::gr6, TR_GPR, cg);
-         TR::addDependency(deps, dstAddrReg, TR::RealRegister::gr7, TR_GPR, cg);
-         TR::addDependency(deps, lengthReg, TR::RealRegister::gr8, TR_GPR, cg);
+         deps->addPostCondition(r3Reg, TR::RealRegister::gr3);
+         deps->addPostCondition(srcObjReg, TR::RealRegister::gr4);
+         deps->addPostCondition(dstObjReg, TR::RealRegister::gr5);
+         deps->addPostCondition(srcAddrReg, TR::RealRegister::gr6);
+         deps->addPostCondition(dstAddrReg, TR::RealRegister::gr7);
+         deps->addPostCondition(lengthReg, TR::RealRegister::gr8);
 
-         TR::addDependency(deps, tmp1Reg, TR::RealRegister::gr11, TR_GPR, cg);
+         deps->addPostCondition( tmp1Reg, TR::RealRegister::gr11);
 
          if (groups != 0)
             {
-            TR::addDependency(deps, tmp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
-            TR::addDependency(deps, tmp3Reg, TR::RealRegister::NoReg, TR_GPR, cg);
-            TR::addDependency(deps, tmp4Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+            deps->addPostCondition(tmp2Reg, TR::RealRegister::NoReg);
+            deps->addPostCondition(tmp3Reg, TR::RealRegister::NoReg);
+            deps->addPostCondition(tmp4Reg, TR::RealRegister::NoReg);
             }
 
          if (supportsLEArrayCopyInline)
             {
-            TR::addDependency(deps, fp1Reg, TR::RealRegister::NoReg, TR_FPR, cg);
-            TR::addDependency(deps, fp2Reg, TR::RealRegister::NoReg, TR_FPR, cg);
-            TR::addDependency(deps, fp3Reg, TR::RealRegister::NoReg, TR_FPR, cg);
-            TR::addDependency(deps, fp4Reg, TR::RealRegister::NoReg, TR_FPR, cg);
+            deps->addPostCondition(fp1Reg, TR::RealRegister::NoReg);
+            deps->addPostCondition(fp2Reg, TR::RealRegister::NoReg);
+            deps->addPostCondition(fp3Reg, TR::RealRegister::NoReg);
+            deps->addPostCondition(fp4Reg, TR::RealRegister::NoReg);
             }
 
          TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
