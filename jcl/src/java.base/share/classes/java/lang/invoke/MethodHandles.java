@@ -2250,7 +2250,12 @@ public class MethodHandles {
 		
 		/*[IF Java15]*/
 		// TODO: implement support for hidden classes.
-
+		/**
+		 * The ClassOption used to define the hidden class.
+		 * NESTMATE adds the hidden class into the same nest of the lookup class as a nest member.
+		 * STRONG indicates the hidden class has a strong relationship with its class loader, which means the hidden class will be unloaded 
+		 * only when its class loader becomes unreachable and can be garbage collected.
+		 */
 		public enum ClassOption {
 			NESTMATE,
 			STRONG
@@ -2277,6 +2282,14 @@ public class MethodHandles {
 				return ret;
 			}
 		}
+		/**
+		 * Constructs a new hidden class from an array of class data bytes.
+		 * 
+		 * @param bytes the class data bytes of the hidden class to be defined.  
+		 * @param initOption whether to initialize the hidden class.
+		 * @param classOptions the {@link ClassOption} to define the hidden class.
+		 * @return A Lookup object of the newly created hidden class.
+		 */
 
 		public Lookup defineHiddenClass(byte[] bytes, boolean initOption, ClassOption... classOptions) {
 			ClassReader cr;

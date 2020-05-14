@@ -416,6 +416,10 @@ final class Access implements JavaLangAccess {
 	public MethodHandle stringConcatHelper(String arg0, MethodType type) {
 		return StringConcatHelper.lookupStatic(arg0, type);
 	}
+	
+	 public long stringConcatInitialCoder() {
+         return StringConcatHelper.initialCoder();
+     }
 
 	public Object classData(Class<?> clazz) {
 		return null;
