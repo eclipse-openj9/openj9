@@ -152,9 +152,9 @@ class TR_RelocationTarget
        * @param classKey The class upon which the pointer to be updated is dependant.
        * @param ptr The address to be updated.
        */
-      void addPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr);
+      void addPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr, void *metaDataBasePtr = NULL);
    private:
-      virtual void platformAddPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr);
+      virtual void platformAddPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr, void *metaDataBasePtr = NULL);
       TR_RelocationRuntime *_reloRuntime;
    };
 

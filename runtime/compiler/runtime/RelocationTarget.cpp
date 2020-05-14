@@ -259,14 +259,30 @@ TR_RelocationTarget::patchNonVolatileFieldMemoryFence(J9ROMFieldShape* resolvedF
    }
 
 void
-TR_RelocationTarget::addPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr)
+TR_RelocationTarget::addPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr, void *metaDataBasePtr)
    {
-   platformAddPICtoPatchPtrOnClassUnload(classKey, ptr);
+   platformAddPICtoPatchPtrOnClassUnload(classKey, ptr, metaDataBasePtr);
    _reloRuntime->comp()->setHasClassUnloadAssumptions();
    }
 
 void
-TR_RelocationTarget::platformAddPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr)
+TR_RelocationTarget::platformAddPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr, void *metaDataBasePtr)
    {
-   createClassUnloadPicSite(classKey, ptr, sizeof(uintptr_t), _reloRuntime->comp()->getMetadataAssumptionList());
+#if defined(J9VM_OPT_JITSERVER)
+   if (_reloRuntime->comp()->isOutOfProcessCompilation() && metaDataBasePtr)
+      {
+      intptr_t offset = ((uint8_t *)ptr) - ((uint8_t *)metaDataBasePtr);
+      SerializedRuntimeAssumption* sra =
+      new (_reloRuntime->comp()->trHeapMemory()) SerializedRuntimeAssumption(RuntimeAssumptionOnClassUnload,
+                                                       (uintptr_t)classKey,
+                                                       offset,
+                                                       sizeof(uintptr_t),
+                                                       true);
+      _reloRuntime->comp()->getSerializedRuntimeAssumptions().push_front(sra);
+      }
+   else
+#endif
+      {
+      createClassUnloadPicSite(classKey, ptr, sizeof(uintptr_t), _reloRuntime->comp()->getMetadataAssumptionList());
+      }
    }

@@ -75,7 +75,7 @@ class TR_PPC64RelocationTarget : public TR_PPCRelocationTarget
          }
 
    private:
-         virtual void platformAddPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr);
+         virtual void platformAddPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr, void *metaDataBasePtr = NULL);
 
    };
 

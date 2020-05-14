@@ -346,7 +346,7 @@ TR_PPCRelocationTarget::flushCache(uint8_t *codeStart, unsigned long size)
    }
 
 void
-TR_PPC64RelocationTarget::platformAddPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr)
+TR_PPC64RelocationTarget::platformAddPICtoPatchPtrOnClassUnload(TR_OpaqueClassBlock *classKey, void *ptr, void *metaDataBasePtr)
    {
    /*
     * On POWER, PICs always treat the value guarded as 4 bytes wide.  Taking the 4 bytes, they set the least significant bit to 1.
@@ -354,5 +354,21 @@ TR_PPC64RelocationTarget::platformAddPICtoPatchPtrOnClassUnload(TR_OpaqueClassBl
     * Instead, we will create the PIC site on the low bits directly so that it flags the right bit.
     */
    uint8_t *sitePointer = static_cast<uint8_t *>(ptr) + (reloRuntime()->comp()->target().cpu.isBigEndian()?4:0);
-   createClassUnloadPicSite(classKey, sitePointer, sizeof(int32_t), reloRuntime()->comp()->getMetadataAssumptionList());
+#if defined(J9VM_OPT_JITSERVER)
+   if (reloRuntime()->comp()->isOutOfProcessCompilation() && metaDataBasePtr)
+      {
+      intptr_t offset = ((uint8_t *)sitePointer) - ((uint8_t *)metaDataBasePtr);
+      SerializedRuntimeAssumption* sra =
+      new (reloRuntime()->comp()->trHeapMemory()) SerializedRuntimeAssumption(RuntimeAssumptionOnClassUnload,
+                                                       (uintptr_t)classKey,
+                                                       offset,
+                                                       sizeof(int32_t),
+                                                       true);
+      reloRuntime()->comp()->getSerializedRuntimeAssumptions().push_front(sra);
+      }
+   else
+#endif
+      {
+      createClassUnloadPicSite(classKey, sitePointer, sizeof(int32_t), reloRuntime()->comp()->getMetadataAssumptionList());
+      }
    }
