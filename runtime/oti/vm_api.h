@@ -2263,6 +2263,19 @@ BOOLEAN
 valueTypeCapableAcmp(J9VMThread *currentThread, j9object_t lhs, j9object_t rhs);
 
 /**
+ * Determines if the classref c=signature is a Qtype. There is no validation performed
+ * to ensure that the cpIndex points at a classref.
+ *
+ * @param[in] cpContextClass ramClass that owns the constantpool being queried
+ * @param[in] cpIndex the CP index
+ *
+ * @return TRUE if classref is a Qtype, false otherwise
+ */
+BOOLEAN
+isClassRefQtype(J9Class *cpContextClass, U_16 cpIndex);
+
+
+/**
 * @brief Iterate over fields of the specified class in JVMTI order.
 * @param state[in/out]  the walk state that was initialized via fieldOffsetsStartDo()
 * @return J9ROMFieldOffsetWalkResult *

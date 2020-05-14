@@ -63,4 +63,10 @@ valueTypeCapableAcmp(J9VMThread *currentThread, j9object_t lhs, j9object_t rhs)
 	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
 	return VM_ValueTypeHelpers::acmp(currentThread, objectAccessBarrier, lhs, rhs);
 }
+
+BOOLEAN
+isClassRefQtype(J9Class *cpContextClass, U_16 cpIndex)
+{
+	return VM_ValueTypeHelpers::isClassRefQtype((J9ConstantPool *) cpContextClass->ramConstantPool, cpIndex);
+}
 } /* extern "C" */
