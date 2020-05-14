@@ -84,6 +84,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/codegen/OMRLinkage.cpp \
     omr/compiler/codegen/OMRMachine.cpp \
     omr/compiler/codegen/OMRMemoryReference.cpp \
+    omr/compiler/codegen/OMRPeephole.cpp \
     omr/compiler/codegen/OMRRealRegister.cpp \
     omr/compiler/codegen/OMRRegister.cpp \
     omr/compiler/codegen/OMRRegisterPair.cpp \
