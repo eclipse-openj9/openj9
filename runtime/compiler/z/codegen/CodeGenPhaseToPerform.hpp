@@ -30,6 +30,7 @@
     ReserveCodeCachePhase,
     FixUpProfiledInterfaceGuardTest,
 
+
     InliningReportPhase,
     LateSequentialConstantStoreSimplificationPhase,
 
@@ -55,7 +56,7 @@
     InstructionSelectionPhase,
     CreateStackAtlasPhase,
 
-    PreRAPeepholePhase,
+    PeepholePhase,
     RegisterAssigningPhase,
     MapStackPhase,
     PeepholePhase,
