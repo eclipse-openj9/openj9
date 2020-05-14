@@ -76,8 +76,8 @@ public:
 
 	struct LocalVariableInfo
 	{
-		J9CfrAttributeLocalVariableTable *localVariableTable;
-		J9CfrAttributeLocalVariableTypeTable *localVariableTypeTable;
+		J9CfrAttributeLocalVariableTable *localVariableTableAttribute;
+		J9CfrAttributeLocalVariableTypeTable *localVariableTypeTableAttribute;
 	};
 
 	struct BytecodeFixupEntry
@@ -365,7 +365,7 @@ class LocalVariablesIterator
 			_index(0),
 			_count(count),
 			_localVariablesInfo(localVariablesInfo),
-			_localVariableTable(NULL)
+			_localVariableTable(NULL) // TODO why do we need this?
 		{
 			findNextValidEntry();
 		}
@@ -390,7 +390,7 @@ class LocalVariablesIterator
 		void findNextValidEntry()
 		{
 			/*
-			 * _localVariableTable is a cached pointer to _localVariablesInfo[_index].localVariableTable->localVariableTable.
+			 * _localVariableTable is a cached pointer to _localVariablesInfo[_index].localVariableTableAttribute->localVariableTable.
 			 * The LocalVariableInfo array is indexed by the "local variable index" (a.k.a. slot number).
 			 * An entry is valid if:
 			 * 	- there is a localVariableTable for the current slot (_index) and
@@ -400,21 +400,21 @@ class LocalVariablesIterator
 			 * getter methods above.
 			 */
 			if ((NULL == _localVariableTable) /* Is the cached pointer invalid? */
-					|| (_localVariableTableIndex >= _localVariablesInfo[_index].localVariableTable->localVariableTableLength) /* Have we walked off the end of the current localVariableTable? */
+					|| (_localVariableTableIndex >= _localVariablesInfo[_index].localVariableTableAttribute->localVariableTableLength) /* Have we walked off the end of the current localVariableTable? */
 					|| (_index != _localVariableTable[_localVariableTableIndex].index)) { /* Is the _index different from the current entry's index? */
 				_localVariableTable = NULL;
 				while ((NULL == _localVariableTable) && isNotDone()) { /* Keep looking until a valid entry is found or we run out of entries */
-					if ((NULL == _localVariablesInfo[_index].localVariableTable)
-							|| (_localVariableTableIndex >= _localVariablesInfo[_index].localVariableTable->localVariableTableLength)) {
+					if ((NULL == _localVariablesInfo[_index].localVariableTableAttribute)
+							|| (_localVariableTableIndex >= _localVariablesInfo[_index].localVariableTableAttribute->localVariableTableLength)) {
 						/* If there is no localVariableTable or we've exhausted the entries for the current slot, advance to the next slot */
 						++_index;
 						_localVariableTableIndex = 0;
-					} else if (_index != _localVariablesInfo[_index].localVariableTable->localVariableTable[_localVariableTableIndex].index) {
+					} else if (_index != _localVariablesInfo[_index].localVariableTableAttribute->localVariableTable[_localVariableTableIndex].index) {
 						/* If the current entry doesn't match the slot number, advance to the next entry */
 						++_localVariableTableIndex;
 					} else {
 						/* A valid entry has been found. Cache the localVariableTable pointer and exit the loop. */
-						_localVariableTable = _localVariablesInfo[_index].localVariableTable->localVariableTable;
+						_localVariableTable = _localVariablesInfo[_index].localVariableTableAttribute->localVariableTable;
 					}
 				}
 			}
