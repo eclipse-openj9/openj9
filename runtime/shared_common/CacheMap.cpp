@@ -7979,7 +7979,7 @@ checkROMClassUTF8SRPs(J9ROMClass *romClass)
 		}
 	}
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	Trc_SHR_Assert_True((UDATA)J9ROMCLASS_NESTHOSTNAME(romClass) < romClassEnd);
 
 	if (romClass->nestMemberCount > 0) {
@@ -7989,7 +7989,7 @@ checkROMClassUTF8SRPs(J9ROMClass *romClass)
 			nestMemberNames++;
 		}
 	}
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 }
 
 /**

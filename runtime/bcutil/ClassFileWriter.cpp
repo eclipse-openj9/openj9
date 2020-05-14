@@ -63,10 +63,10 @@ DECLARE_UTF8_ATTRIBUTE_NAME(RUNTIME_VISIBLE_TYPE_ANNOTATIONS, "RuntimeVisibleTyp
 DECLARE_UTF8_ATTRIBUTE_NAME(ANNOTATION_DEFAULT, "AnnotationDefault");
 DECLARE_UTF8_ATTRIBUTE_NAME(BOOTSTRAP_METHODS, "BootstrapMethods");
 DECLARE_UTF8_ATTRIBUTE_NAME(RECORD, "Record");
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 DECLARE_UTF8_ATTRIBUTE_NAME(NEST_MEMBERS, "NestMembers");
 DECLARE_UTF8_ATTRIBUTE_NAME(NEST_HOST, "NestHost");
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 void
 ClassFileWriter::analyzeROMClass()
@@ -101,9 +101,9 @@ ClassFileWriter::analyzeROMClass()
 	U_32 * typeAnnotationsData = getClassTypeAnnotationsDataForROMClass(_romClass);
 	J9UTF8 * outerClassName = J9ROMCLASS_OUTERCLASSNAME(_romClass);
 	J9UTF8 * simpleName = getSimpleNameForROMClass(_javaVM, NULL, _romClass);
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	J9UTF8 *nestHost = J9ROMCLASS_NESTHOSTNAME(_romClass);
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	/* For a local class only InnerClasses.class[i].inner_name_index is preserved as simpleName in its J9ROMClass */
 	if ((0 != _romClass->innerClassCount) || J9_ARE_ANY_BITS_SET(_romClass->extraModifiers, J9AccClassInnerClass)) {
@@ -124,7 +124,7 @@ ClassFileWriter::analyzeROMClass()
 		}
 	}
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	/* Class can not have both a nest members and nest host attribute */
 	if (0 != _romClass->nestMemberCount) {
 		U_16 nestMemberCount = _romClass->nestMemberCount;
@@ -139,7 +139,7 @@ ClassFileWriter::analyzeROMClass()
 		addEntry((void *) &NEST_HOST, 0, CFR_CONSTANT_Utf8);
 		addClassEntry(nestHost, 0);
 	}
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	if (NULL != enclosingObject) {
 		addEntry((void *) &ENCLOSING_METHOD, 0, CFR_CONSTANT_Utf8);
@@ -925,10 +925,10 @@ ClassFileWriter::writeAttributes()
 	J9SourceDebugExtension * sourceDebugExtension = getSourceDebugExtensionForROMClass(_javaVM, NULL, _romClass);
 	U_32 * annotationsData = getClassAnnotationsDataForROMClass(_romClass);
 	U_32 * typeAnnotationsData = getClassTypeAnnotationsDataForROMClass(_romClass);
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	J9UTF8 *nestHost = J9ROMCLASS_NESTHOSTNAME(_romClass);
 	U_16 nestMemberCount = _romClass->nestMemberCount;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	if ((0 != _romClass->innerClassCount) || J9_ARE_ANY_BITS_SET(_romClass->extraModifiers, J9AccClassInnerClass)) {
 		attributesCount += 1;
@@ -957,12 +957,12 @@ ClassFileWriter::writeAttributes()
 	if (J9_ARE_ANY_BITS_SET(_romClass->extraModifiers, J9AccRecord)) {
 		attributesCount += 1;
 	}
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	/* Class can not have both a nest members and member of nest attribute */
 	if ((0 != _romClass->nestMemberCount) || (NULL != nestHost)) {
 		attributesCount += 1;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	writeU16(attributesCount);
 
 	if ((0 != _romClass->innerClassCount) || J9_ARE_ANY_BITS_SET(_romClass->extraModifiers, J9AccClassInnerClass)) {
@@ -1004,7 +1004,7 @@ ClassFileWriter::writeAttributes()
 		}
 	}
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	/* A class can only have one of the nest mate attributes */
 	if (0 != nestMemberCount) {
 		J9SRP *nestMembers = (J9SRP *) J9ROMCLASS_NESTMEMBERS(_romClass);
@@ -1021,7 +1021,7 @@ ClassFileWriter::writeAttributes()
 		writeAttributeHeader((J9UTF8 *) &NEST_HOST, 2);
 		writeU16(indexForClass(nestHost));
 	}
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	if (NULL != enclosingObject) {
 		J9ROMNameAndSignature * nas = J9ENCLOSINGOBJECT_NAMEANDSIGNATURE(enclosingObject);

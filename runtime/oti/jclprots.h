@@ -895,10 +895,10 @@ jobject JNICALL Java_java_security_AccessController_getCallerPD(JNIEnv* env, jcl
 jobject JNICALL Java_com_ibm_oti_vm_VM_getClassNameImpl(JNIEnv *env, jclass recv, jclass jlClass);
 jobject JNICALL Java_java_lang_Class_getDeclaredFieldImpl(JNIEnv *env, jobject recv, jstring jname);
 jarray JNICALL Java_java_lang_Class_getDeclaredFieldsImpl(JNIEnv *env, jobject recv);
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 jobject JNICALL Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv);
 jobject JNICALL Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv);
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 /* sun_misc_Perf.c */
 void JNICALL Java_sun_misc_Perf_registerNatives(JNIEnv *env, jclass klass);

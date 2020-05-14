@@ -842,7 +842,7 @@ class RecordComponentIterator
 		}
 	}
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	void nestMembersDo(ConstantPoolIndexVisitor *visitor)
 	{
 		if (NULL != _nestMembers) {
@@ -853,7 +853,7 @@ class RecordComponentIterator
 			}
 		}
 	}
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	/*
 	 * Iterate over the bootstrap methods and their arguments.
@@ -899,10 +899,10 @@ class RecordComponentIterator
 	U_16 getDoubleScalarStaticCount() const { return _doubleScalarStaticCount; }
 	U_16 getMemberAccessFlags() const { return _memberAccessFlags; }
 	U_16 getInnerClassCount() const { return _innerClassCount; }
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	U_16 getNestMembersCount() const { return _nestMembersCount; }
 	U_16 getNestHostNameIndex() const { return _nestHost; }
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	U_16 getMajorVersion() const { return _classFile->majorVersion; }
 	U_16 getMinorVersion() const { return _classFile->minorVersion; }
 	U_32 getMaxBranchCount() const { return _maxBranchCount; }
@@ -1025,10 +1025,10 @@ private:
 	U_16 _doubleScalarStaticCount;
 	U_16 _memberAccessFlags;
 	U_16 _innerClassCount;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	U_16 _nestMembersCount;
 	U_16 _nestHost;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	U_32 _maxBranchCount;
 	U_16 _outerClassNameIndex;
 	U_16 _simpleNameIndex;
@@ -1063,9 +1063,9 @@ private:
 	J9CfrAttributeRuntimeVisibleTypeAnnotations *_typeAnnotationsAttribute;
 	J9CfrAttributeInnerClasses *_innerClasses;
 	J9CfrAttributeBootstrapMethods *_bootstrapMethodsAttribute;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	J9CfrAttributeNestMembers *_nestMembers;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	void walkHeader();
 	void walkFields();

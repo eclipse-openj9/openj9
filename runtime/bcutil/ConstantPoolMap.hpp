@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -230,9 +230,9 @@ public:
 				&& (_context->alwaysSplitBytecodes()
 					|| isMarked(cfrCPIndex, INVOKE_INTERFACE)
 					|| isMarked(cfrCPIndex, INVOKE_SPECIAL)
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 					|| isMarked(cfrCPIndex, INVOKE_VIRTUAL)
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 				));
 	}
 
@@ -246,9 +246,9 @@ public:
 		return (isMarked(cfrCPIndex, INVOKE_SPECIAL)
 				&& (_context->alwaysSplitBytecodes()
 					|| isMarked(cfrCPIndex, INVOKE_INTERFACE)
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 					|| isMarked(cfrCPIndex, INVOKE_VIRTUAL)
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 				));
 	}
 

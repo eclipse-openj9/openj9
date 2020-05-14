@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,7 +113,7 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 		} else if (modifiers & J9AccPrivate) {
 			/* Private */
 			if (sourceClass != destClass) {
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 				if (J9_ARE_NO_BITS_SET(lookupOptions, J9_LOOK_NO_NESTMATES)) {
 					/* loadAndVerifyNestHost returns an error code if setting the
 					 * nest host field fails.
@@ -144,7 +144,7 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 						result = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 					}
 				} else
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 				{
 					result = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 				}
@@ -172,9 +172,9 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 		}
 	}
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 _exit:
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == result) {
 		/* "checkVisibility from %p (%.*s) to %p (%.*s) modifiers=%zx failed" */
 		Trc_VM_checkVisibility_Failed(currentThread,
@@ -188,7 +188,7 @@ _exit:
 	return result;
 }
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 
 /**
  * Sets the nestmates error based on the errorCode
@@ -340,4 +340,4 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 
 	return result;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
