@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3171,6 +3171,53 @@ done:
 
 }
 
+#if (JAVA_SPEC_VERSION >= 15)
+static jvmtiError
+verifyRecordAttributesAreSame(J9ROMClass *originalROMClass, J9ROMClass *replacementROMClass)
+{
+	jvmtiError rc = JVMTI_ERROR_NONE;
+
+	/* Since retranformation is not allowed to change inheritance there's no need to consider 
+	 * one class being a record and one not. */
+	if (J9ROMCLASS_IS_RECORD(originalROMClass) && J9ROMCLASS_IS_RECORD(replacementROMClass)) {
+		U_32 originalNumberOfRecords = getNumberOfRecordComponents(originalROMClass);
+		U_32 replacementNumberOfRecords = getNumberOfRecordComponents(replacementROMClass);
+
+		if (originalNumberOfRecords == replacementNumberOfRecords) {
+			if (originalNumberOfRecords > 0) {
+				J9ROMRecordComponentShape* originalRecordComponent = NULL;
+				J9ROMRecordComponentShape* replacementRecordComponent = NULL;
+				U_32 i = 0;
+
+				/* Compare record components in order. For two records to be the same their record components
+				 * must be in the same order. According to the spec: "Each component of the record must have 
+				 * exactly one corresponding entry in the 
+				 * components array, in the order in which the components are declared."
+				 */
+				originalRecordComponent = recordComponentStartDo(originalROMClass);
+				replacementRecordComponent = recordComponentStartDo(replacementROMClass);
+				for (; i < originalNumberOfRecords; i++) {
+					/* verify name and signature */
+					if (!NAME_AND_SIG_IDENTICAL(originalRecordComponent, replacementRecordComponent, 
+						J9ROMRECORDCOMPONENTSHAPE_NAME, J9ROMRECORDCOMPONENTSHAPE_SIGNATURE)
+					) {
+						rc = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
+						goto done;
+					}
+					originalRecordComponent = recordComponentNextDo(originalRecordComponent);
+					replacementRecordComponent = recordComponentNextDo(replacementRecordComponent);
+				}
+			}
+		} else {
+			rc = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
+		}
+	}
+
+done:
+	return rc;
+}
+#endif /* (JAVA_SPEC_VERSION >= 15) */
+
 jvmtiError
 verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTIClassPair * classPairs,
 						   UDATA extensionsEnabled, UDATA * extensionsUsed)
@@ -3272,6 +3319,14 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 		if (rc != JVMTI_ERROR_NONE) {
 			return rc;
 		}
+
+#if (JAVA_SPEC_VERSION >= 15)
+		/* Verify that records attributes are the same */
+		rc = verifyRecordAttributesAreSame(originalROMClass, replacementROMClass);
+		if (rc != JVMTI_ERROR_NONE) {
+			return rc;
+		}
+#endif /* (JAVA_SPEC_VERSION >= 15) */
 
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 		/* Verify that the nestmates attributes - nest host & nest members - are the same */
