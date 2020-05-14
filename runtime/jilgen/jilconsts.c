@@ -67,9 +67,9 @@ createConstant(OMRPortLibrary *OMRPORTLIB, char const *name, UDATA value)
 	if (values) {
 		return omrstr_printf(line, sizeof(line), "J9CONST({%s},%zu)dnl\n", name, value);
 	}
-#if defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_ARM)
+#if defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_ARM) || defined(J9VM_ARCH_AARCH64)
 	return omrstr_printf(line, sizeof(line), "#define %s %zu\n", name, value);
-#elif defined(J9VM_ARCH_X86) /* J9VM_ARCH_POWER || J9VM_ARCH_ARM */
+#elif defined(J9VM_ARCH_X86) /* J9VM_ARCH_POWER || J9VM_ARCH_ARM || J9VM_ARCH_AARCH64 */
 	return omrstr_printf(line, sizeof(line), "%%define %s %zu\n", name, value);
 #elif defined(LINUX) /* J9VM_ARCH_X86 */
 	return omrstr_printf(line, sizeof(line), "%s = %zu\n", name, value);
@@ -77,7 +77,7 @@ createConstant(OMRPortLibrary *OMRPORTLIB, char const *name, UDATA value)
 	return omrstr_printf(line, sizeof(line), "%s EQU %zu\n", name, value);
 #else
 #error "Unknown constant format"
-#endif /* J9VM_ARCH_POWER || J9VM_ARCH_ARM */
+#endif /* J9VM_ARCH_POWER || J9VM_ARCH_ARM || J9VM_ARCH_AARCH64 */
 }
 
 #if defined(J9VM_ARCH_X86)
