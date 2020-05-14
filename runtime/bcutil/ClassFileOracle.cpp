@@ -79,11 +79,11 @@ U_16
 ClassFileOracle::LocalVariablesIterator::getGenericSignatureIndex()
 {
 	Trc_BCU_Assert_NotEquals(NULL, _localVariableTable);
-	Trc_BCU_Assert_NotEquals(NULL, _localVariablesInfo[_index].localVariableTypeTable);
+	Trc_BCU_Assert_NotEquals(NULL, _localVariablesInfo[_index].localVariableTypeTableAttribute);
 
 	/* If the localVariableTable and localVariableTypeTable are in the same order, return the signatureIndex */
-	J9CfrLocalVariableTypeTableEntry* localVariableTypeTable = _localVariablesInfo[_index].localVariableTypeTable->localVariableTypeTable;
-	if ((_localVariableTableIndex < _localVariablesInfo[_index].localVariableTypeTable->localVariableTypeTableLength)
+	J9CfrLocalVariableTypeTableEntry* localVariableTypeTable = _localVariablesInfo[_index].localVariableTypeTableAttribute->localVariableTypeTable;
+	if ((_localVariableTableIndex < _localVariablesInfo[_index].localVariableTypeTableAttribute->localVariableTypeTableLength)
 			&& (_localVariableTable[_localVariableTableIndex].index == localVariableTypeTable[_localVariableTableIndex].index)
 			&& (_localVariableTable[_localVariableTableIndex].startPC == localVariableTypeTable[_localVariableTableIndex].startPC)
 			&& (_localVariableTable[_localVariableTableIndex].length == localVariableTypeTable[_localVariableTableIndex].length)) {
@@ -92,7 +92,7 @@ ClassFileOracle::LocalVariablesIterator::getGenericSignatureIndex()
 
 	/* Scan for matching localVariableTypeTable entry */
 	for (U_16 localVariableTypeTableIndex = 0;
-			localVariableTypeTableIndex < _localVariablesInfo[_index].localVariableTypeTable->localVariableTypeTableLength;
+			localVariableTypeTableIndex < _localVariablesInfo[_index].localVariableTypeTableAttribute->localVariableTypeTableLength;
 			++localVariableTypeTableIndex) {
 		if ((_localVariableTable[_localVariableTableIndex].index == localVariableTypeTable[localVariableTypeTableIndex].index)
 				&& (_localVariableTable[_localVariableTableIndex].startPC == localVariableTypeTable[localVariableTypeTableIndex].startPC)
@@ -111,13 +111,13 @@ ClassFileOracle::LocalVariablesIterator::hasGenericSignature()
 	Trc_BCU_Assert_NotEquals(NULL, _localVariableTable);
 
 	/* Check if the current local variable isn't generic */
-	if (NULL == _localVariablesInfo[_index].localVariableTypeTable) {
+	if (NULL == _localVariablesInfo[_index].localVariableTypeTableAttribute) {
 		return false;
 	}
 
 	/* Check if the localVariableTable and localVariableTypeTable are in the same order */
-	J9CfrLocalVariableTypeTableEntry* localVariableTypeTable = _localVariablesInfo[_index].localVariableTypeTable->localVariableTypeTable;
-	if ((_localVariableTableIndex < _localVariablesInfo[_index].localVariableTypeTable->localVariableTypeTableLength)
+	J9CfrLocalVariableTypeTableEntry* localVariableTypeTable = _localVariablesInfo[_index].localVariableTypeTableAttribute->localVariableTypeTable;
+	if ((_localVariableTableIndex < _localVariablesInfo[_index].localVariableTypeTableAttribute->localVariableTypeTableLength)
 			&& (_localVariableTable[_localVariableTableIndex].index == localVariableTypeTable[_localVariableTableIndex].index)
 			&& (_localVariableTable[_localVariableTableIndex].startPC == localVariableTypeTable[_localVariableTableIndex].startPC)
 			&& (_localVariableTable[_localVariableTableIndex].length == localVariableTypeTable[_localVariableTableIndex].length)) {
@@ -126,7 +126,7 @@ ClassFileOracle::LocalVariablesIterator::hasGenericSignature()
 
 	/* Scan for matching localVariableTypeTable entry */
 	for (U_16 localVariableTypeTableIndex = 0;
-			localVariableTypeTableIndex < _localVariablesInfo[_index].localVariableTypeTable->localVariableTypeTableLength;
+			localVariableTypeTableIndex < _localVariablesInfo[_index].localVariableTypeTableAttribute->localVariableTypeTableLength;
 			++localVariableTypeTableIndex) {
 		if ((_localVariableTable[_localVariableTableIndex].index == localVariableTypeTable[localVariableTypeTableIndex].index)
 				&& (_localVariableTable[_localVariableTableIndex].startPC == localVariableTypeTable[localVariableTypeTableIndex].startPC)
@@ -1208,27 +1208,28 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 					memset(_methodsInfo[methodIndex].localVariablesInfo, 0, codeAttribute->maxLocals * sizeof(LocalVariableInfo));
 				}
 
-				J9CfrAttributeLocalVariableTable *localVariableTable = (J9CfrAttributeLocalVariableTable *) attribute;
-				_methodsInfo[methodIndex].localVariablesCount += localVariableTable->localVariableTableLength;
-				if (0 != localVariableTable->localVariableTableLength) {
-					for (U_16 localVariableTableIndex = 0; localVariableTableIndex < localVariableTable->localVariableTableLength; ++localVariableTableIndex) {
-						U_16 index = localVariableTable->localVariableTable[localVariableTableIndex].index;
+				J9CfrAttributeLocalVariableTable *localVariableTableAttribute = (J9CfrAttributeLocalVariableTable *) attribute;
+				_methodsInfo[methodIndex].localVariablesCount += localVariableTableAttribute->localVariableTableLength;
+				if (0 != localVariableTableAttribute->localVariableTableLength) {
+					for (U_16 localVariableTableIndex = 0; localVariableTableIndex < localVariableTableAttribute->localVariableTableLength; ++localVariableTableIndex) {
+						U_16 index = localVariableTableAttribute->localVariableTable[localVariableTableIndex].index;
 						if (codeAttribute->maxLocals <= index) {
 							Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_LocalVariableTableIndexOutOfBounds(
 									index, codeAttribute->maxLocals, (U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex));
 
 							throwGenericErrorWithCustomMsg(J9NLS_CFR_LVT_INDEX_OUTOFRANGE__ID, index);
 							break;
-						} else if (NULL == _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTable) {
-							_methodsInfo[methodIndex].localVariablesInfo[index].localVariableTable = localVariableTable;
-						} else if (localVariableTable != _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTable) {
+						} else if (NULL == _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTableAttribute) {
+							_methodsInfo[methodIndex].localVariablesInfo[index].localVariableTableAttribute = localVariableTableAttribute;
+						} else if (localVariableTableAttribute != _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTableAttribute) {
 							Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_DuplicateLocalVariableTable(
-									(U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex), localVariableTable, _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTable);
+									(U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex), 
+									localVariableTableAttribute, _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTableAttribute);
 							_buildResult = GenericError;
 							break;
 						}
-						markConstantUTF8AsReferenced(localVariableTable->localVariableTable[localVariableTableIndex].nameIndex);
-						markConstantUTF8AsReferenced(localVariableTable->localVariableTable[localVariableTableIndex].descriptorIndex);
+						markConstantUTF8AsReferenced(localVariableTableAttribute->localVariableTable[localVariableTableIndex].nameIndex);
+						markConstantUTF8AsReferenced(localVariableTableAttribute->localVariableTable[localVariableTableIndex].descriptorIndex);
 					}
 				}
 			}
@@ -1246,21 +1247,22 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 					memset(_methodsInfo[methodIndex].localVariablesInfo, 0, codeAttribute->maxLocals * sizeof(LocalVariableInfo));
 				}
 
-				J9CfrAttributeLocalVariableTypeTable *localVariableTypeTable = (J9CfrAttributeLocalVariableTypeTable *) attribute;
-				if (0 != localVariableTypeTable->localVariableTypeTableLength) {
-					for (U_16 localVariableTypeTableIndex = 0; localVariableTypeTableIndex < localVariableTypeTable->localVariableTypeTableLength; ++localVariableTypeTableIndex) {
-						J9CfrLocalVariableTypeTableEntry *lvttEntry = &(localVariableTypeTable->localVariableTypeTable[localVariableTypeTableIndex]);
+				J9CfrAttributeLocalVariableTypeTable *localVariableTypeTableAttribute = (J9CfrAttributeLocalVariableTypeTable *) attribute;
+				if (0 != localVariableTypeTableAttribute->localVariableTypeTableLength) {
+					for (U_16 localVariableTypeTableIndex = 0; localVariableTypeTableIndex < localVariableTypeTableAttribute->localVariableTypeTableLength; ++localVariableTypeTableIndex) {
+						J9CfrLocalVariableTypeTableEntry *lvttEntry = &(localVariableTypeTableAttribute->localVariableTypeTable[localVariableTypeTableIndex]);
 						const U_16 index = lvttEntry->index;
 						if (codeAttribute->maxLocals <= index) {
 							Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_LocalVariableTypeTableIndexOutOfBounds(
 									index, codeAttribute->maxLocals, (U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex));
 							throwGenericErrorWithCustomMsg(J9NLS_CFR_LVTT_INDEX_OUTOFRANGE__ID, index);
 							break;
-						} else if (NULL == _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTable) {
-							_methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTable = localVariableTypeTable;
-						} else if (localVariableTypeTable != _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTable) {
+						} else if (NULL == _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTableAttribute) {
+							_methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTableAttribute = localVariableTypeTableAttribute;
+						} else if (localVariableTypeTableAttribute != _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTableAttribute) {
 							Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_DuplicateLocalVariableTypeTable(
-									(U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex), localVariableTypeTable, _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTable);
+									(U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex), 
+									localVariableTypeTableAttribute, _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTableAttribute);
 							_buildResult = GenericError;
 							break;
 						}
@@ -1268,7 +1270,7 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 						/* 4.7.14: There may be no more than one LocalVariableTypeTable attribute per local variable in the attributes table of a Code attribute. 
 						 * The entry is unique with its startPC, length, and index. */
 						for (U_16 localVariableTypeTableCompareIndex = 0; localVariableTypeTableCompareIndex < localVariableTypeTableIndex; ++localVariableTypeTableCompareIndex) {
-							J9CfrLocalVariableTypeTableEntry *lvttCompareEntry = &(localVariableTypeTable->localVariableTypeTable[localVariableTypeTableCompareIndex]);
+							J9CfrLocalVariableTypeTableEntry *lvttCompareEntry = &(localVariableTypeTableAttribute->localVariableTypeTable[localVariableTypeTableCompareIndex]);
 							if ((lvttEntry->startPC == lvttCompareEntry->startPC)
 								&& (lvttEntry->length == lvttCompareEntry->length)
 								&& (lvttEntry->nameIndex == lvttCompareEntry->nameIndex)
@@ -1279,7 +1281,7 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 								break;
 							}
 						}
-						markConstantUTF8AsReferenced(localVariableTypeTable->localVariableTypeTable[localVariableTypeTableIndex].signatureIndex);
+						markConstantUTF8AsReferenced(localVariableTypeTableAttribute->localVariableTypeTable[localVariableTypeTableIndex].signatureIndex);
 					}
 				}
 			}

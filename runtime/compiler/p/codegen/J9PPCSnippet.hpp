@@ -72,33 +72,6 @@ class PPCReadMonitorSnippet : public TR::PPCHelperCallSnippet
    int32_t getLoadOffset() { return _loadOffset; }
    };
 
-class PPCHeapAllocSnippet : public TR::Snippet
-   {
-   TR::LabelSymbol      *_restartLabel;
-   TR::SymbolReference *_destination;
-   bool               _insertType;
-
-   public:
-
-   PPCHeapAllocSnippet(TR::CodeGenerator   *codeGen,
-                       TR::Node            *node,
-                       TR::LabelSymbol      *callLabel,
-                       TR::SymbolReference *destination,
-                       TR::LabelSymbol      *restartLabel,
-                       bool               insertType=false);
-
-   virtual Kind getKind() { return IsHeapAlloc; }
-   virtual void print(TR::FILE *, TR_Debug*);
-
-   virtual uint8_t *emitSnippetBody();
-
-   virtual uint32_t getLength(int32_t estimatedSnippetStart);
-
-   TR::LabelSymbol      *getRestartLabel() { return _restartLabel; }
-   TR::SymbolReference *getDestination() {return _destination;}
-   bool                getInsertType() {return _insertType;}
-   };
-
 class PPCAllocPrefetchSnippet : public TR::Snippet
    {
 
