@@ -35,7 +35,7 @@
 #include "jvminit.h"
 #include "SCQueryFunctions.h"
 
-typedef UDATA (*callback_func_t) (J9VMThread * vmThread, void * userData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass);
+typedef UDATA (*callback_func_t) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass);
 
 static void printExceptionInThread (J9VMThread* vmThread);
 static UDATA isSubclassOfThreadDeath (J9VMThread *vmThread, j9object_t exception);
@@ -100,7 +100,7 @@ printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
 
 /* assumes VM access */
 static UDATA
-printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, J9ROMClass *romClass, J9ROMMethod * romMethod, J9UTF8 * sourceFile, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass) {
+printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeOffset, J9ROMClass *romClass, J9ROMMethod * romMethod, J9UTF8 * sourceFile, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass) {
 	const char* format;
 	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions * vmFuncs = vm->internalVMFunctions;
@@ -319,7 +319,7 @@ inlinedEntry:
 					}
 					if (inlineDepth == 0) {
 						if (inlineMap == NULL) {
-							methodPC = -1;
+							methodPC = UDATA_MAX;
 							isSameReceiver = FALSE;
 						} else {
 							methodPC = jitConfig->getCurrentByteCodeIndexAndIsSameReceiver(metaData, inlineMap, NULL, &isSameReceiver);
@@ -381,9 +381,13 @@ inlinedEntry:
 							romMethod = findROMMethodInROMClass(vmThread, romClass, methodPC);
 							if (NULL != romMethod) {
 								methodPC -= (UDATA)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
+							} else {
+								methodPC = UDATA_MAX;
 							}
 						}
 foundROMMethod: ;
+					} else {
+						methodPC = UDATA_MAX;
 					}
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 				}
@@ -399,7 +403,8 @@ foundROMMethod: ;
 				/* Call the callback with the information */
 
 				if (callback != NULL) {
-					callbackResult = callback(vmThread, userData, romClass, romMethod, fileName, lineNumber, classLoader, ramClass);
+					/* The methodPC is the bytecode offset within the romMethod. */
+					callbackResult = callback(vmThread, userData, methodPC, romClass, romMethod, fileName, lineNumber, classLoader, ramClass);
 				}
 
 #ifdef J9VM_OPT_DEBUG_INFO_SERVER

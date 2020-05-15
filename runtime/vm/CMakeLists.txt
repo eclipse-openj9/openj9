@@ -42,6 +42,7 @@ j9vm_add_library(j9vm SHARED
 	drophelp.c
 	exceptiondescribe.c
 	exceptionsupport.c
+	extendedMessageNPE.cpp
 	FastJNI_com_ibm_oti_vm_VM.cpp
 	FastJNI.cpp
 	FastJNI_java_lang_Class.cpp

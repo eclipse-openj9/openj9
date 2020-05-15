@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,44 +28,9 @@
    This permits the bytecode verifier to be endian neutral when using
 	 the SRP macros */
 
-#include "j9comp.h"
-
-/* Must appear before the j9.h include */
-#define NNSRP_GET(field, type) ((type) (((U_8 *) &(field)) + ((I_32) (field))))
-
+#include "cfreader.h"
 #include "j9.h"
-
-#define PARAM_8(index, offset) \
-	((index)[offset])
-
-#ifdef J9VM_ENV_LITTLE_ENDIAN
-#define PARAM_16(index, offset)	\
-	( ( ((U_16) (index)[offset])			)	\
-	| ( ((U_16) (index)[offset + 1]) << 8)	\
-	)
-#else
-#define PARAM_16(index, offset)	\
-	( ( ((U_16) (index)[offset]) << 8)	\
-	| ( ((U_16) (index)[offset + 1])			)	\
-	)
-#endif
-
-#ifdef J9VM_ENV_LITTLE_ENDIAN
-#define PARAM_32(index, offset)						\
-	( ( ((U_32) (index)[offset])					)	\
-	| ( ((U_32) (index)[offset + 1]) << 8 )	\
-	| ( ((U_32) (index)[offset + 2]) << 16)	\
-	| ( ((U_32) (index)[offset + 3]) << 24)	\
-	)
-#else
-#define PARAM_32(index, offset)						\
-	( ( ((U_32) (index)[offset])		 << 24)	\
-	| ( ((U_32) (index)[offset + 1]) << 16)	\
-	| ( ((U_32) (index)[offset + 2]) << 8 )	\
-	| ( ((U_32) (index)[offset + 3])			)	\
-	)
-#endif
-
+#include "j9comp.h"
 #include "rommeth.h"
 
 #endif     /* bcvcfr_h */
