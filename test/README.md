@@ -32,7 +32,7 @@ Linux x86-64 cmprssptrs OpenJ9 SDK:
     export TEST_JDK_HOME=/my/openj9/jdk
     make compile               // downloads test related material/libs
                                // and compiles test material
-    make _sanity.functional    // generates makefiles and runs tests
+    make _sanity.functional.regular    // generates makefiles and runs tests
 ```
 
 Please read [OpenJ9 Test User Guide](./docs/OpenJ9TestUserGuide.md) for
