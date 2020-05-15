@@ -808,18 +808,18 @@ The following sections cover the whole installation & building steps for all req
 :rocket:
 For the cross-compilation, the first thing is to install all required software packages on your system before building the JDK. When it comes to Fedora/RISC-V, you need to boot the OS image via `QEMU` to login the target system for installation.
 
-[1] First of all, download & compile the `QEMU` source on your host system as follows:
+[1] First of all, download & compile the latest version of `QEMU` source on your host system as follows:
 ```
-wget https://download.qemu.org/qemu-5.0.0-rc0.tar.xz
-tar xvJf qemu-5.0.0-rc0.tar.xz
-cd qemu-5.0.0-rc0
+wget https://download.qemu.org/qemu-5.0.0.tar.xz
+tar xvJf qemu-5.0.0.tar.xz
+cd qemu-5.0.0
 ./configure
 make
 make install
 ```
 
 Note:
-For the moment, the `QEMU` package targeted for RISC-V is not ready & unavailable even on Ubuntu 19.10, in which case there is no way to directly install the package for use.
+For the moment, the `QEMU` package targeted for RISC-V is not ready & unavailable even on Ubuntu 19.10, in which case there is no way to directly install the package for use. In addition, please avoid using qemu 4.2 as there are bugs of qemu 4.2 with floating points on Linux in which case SSH doesn't work properly.
 
 [2] Download the Fedora OS image & the corresponding kernel related file for bootstrap
 
@@ -984,7 +984,7 @@ Given that the root account is rejected in login remotely via SSH, you need
 to create a user account on `Fedora_Developer_Rawhide` to establish another 
 session to communicate with the target system as follows:
 
-Create a non-account on `Fedora_Developer_Rawhide`:
+Create a user account on `Fedora_Developer_Rawhide`:
 e.g.
 ```
 sudo adduser user_riscv
@@ -1139,6 +1139,8 @@ Copyright (C) 2019 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 ```
+:bulb:
+The cross-built JDK compiled by the installed cross-compiler (with GLIBC >= 2.28)  doesn't work on Fedora_stage4 (only support `GLIBC_2.27`).
 
 ### 4. Get the source for building the JDK
 :rocket: You need to clone the Extensions for OpenJDK for OpenJ9 project, which is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
