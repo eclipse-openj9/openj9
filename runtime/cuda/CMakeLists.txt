@@ -23,6 +23,7 @@
 add_tracegen(cuda4j.tdf)
 
 j9vm_add_library(cuda4j SHARED
+	OUTPUT_NAME cuda4j${J9VM_VERSION_SUFFIX}
 	CudaBuffer.cpp
 	CudaCommon.cpp
 	CudaDevice.cpp

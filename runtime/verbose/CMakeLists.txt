@@ -24,6 +24,7 @@ set(OMR_ENHANCED_WARNINGS OFF)
 add_tracegen(j9vrb.tdf)
 
 j9vm_add_library(j9vrb SHARED
+	OUTPUT_NAME j9vrb${J9VM_VERSION_SUFFIX}
 	errormessage_internal.c
 	errormessagebuffer.c
 	errormessageframeworkcfr.c

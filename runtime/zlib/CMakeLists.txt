@@ -21,6 +21,7 @@
 ################################################################################
 
 j9vm_add_library(j9zlib SHARED
+	OUTPUT_NAME j9zlib${J9VM_VERSION_SUFFIX}
 	adler32.c
 	compress.c
 	crc32.c

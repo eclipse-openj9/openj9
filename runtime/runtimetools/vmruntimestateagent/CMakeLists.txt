@@ -22,6 +22,7 @@
 
 set(OMR_ENHANCED_WARNINGS OFF)
 j9vm_add_library(vmruntimestateagent SHARED
+	OUTPUT_NAME vmruntimestateagent${J9VM_VERSION_SUFFIX}
 	VMRuntimeStateAgent.cpp
 )
 

@@ -20,9 +20,6 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-#re-enable version num suffix
-set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_SHARED_LIBRARY_SUFFIX})
-
 j9vm_add_library(thread_cutest_harness STATIC
 	cuharness/CuTest.c
 	cuharness/parser.c
@@ -45,6 +42,7 @@ target_link_libraries(thread_cutest_harness
 
 
 j9vm_add_library(j9thrtestnatives SHARED
+	OUTPUT_NAME j9thrtestnatives${J9VM_VERSION_SUFFIX}
 	testnatives/testnatives.c
 )
 
@@ -81,6 +79,7 @@ omr_add_exports(j9thrtestnatives
 )
 
 j9vm_add_library(j9thrnumanatives SHARED
+	OUTPUT_NAME j9thrnumanatives${J9VM_VERSION_SUFFIX}
 	thrnumanatives/thrnumanatives.c
 )
 

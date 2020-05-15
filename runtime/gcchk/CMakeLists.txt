@@ -21,6 +21,7 @@
 ################################################################################
 
 j9vm_add_library(j9gcchk SHARED
+	OUTPUT_NAME j9gcchk${J9VM_VERSION_SUFFIX}
 	gcchk.cpp
 )
 
