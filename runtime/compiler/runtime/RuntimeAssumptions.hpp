@@ -292,17 +292,23 @@ class TR_UnloadedClassPicSite : public OMR::ValueModifyRuntimeAssumption
 // runtime assumption that we may want to send from the server to the client
 struct SerializedRuntimeAssumption
    {
-   SerializedRuntimeAssumption(TR_RuntimeAssumptionKind kind, uintptr_t key, intptr_t offset, uint32_t size = 0)
-      : _kind(kind), _key(key), _offsetFromBinaryBufferStart(offset), _size(size) {}
+   SerializedRuntimeAssumption(TR_RuntimeAssumptionKind kind,
+                               uintptr_t key,
+                               intptr_t offset,
+                               uint32_t size = 0,
+                               bool bOffsetFromMetaDataBase = false)
+      : _kind(kind), _key(key), _offset(offset), _size(size), _bOffsetFromMetaDataBase(bOffsetFromMetaDataBase) {}
    TR_RuntimeAssumptionKind getKind() const { return _kind; }
    uintptr_t getKey() const { return _key; }
-   intptr_t getOffsetFromBinaryBufferStart() const { return _offsetFromBinaryBufferStart; }
+   intptr_t getOffset() const { return _offset; }
    uint32_t getSize() const { return _size; }
+   bool isOffsetFromMetaDataBase() const { return _bOffsetFromMetaDataBase; }
 
    TR_RuntimeAssumptionKind _kind;
-   uint32_t   _size;
+   uint32_t  _size;
    uintptr_t _key;
-   intptr_t  _offsetFromBinaryBufferStart;
+   intptr_t  _offset; // By default, it is the offset from the start of the binary buffer.
+   bool      _bOffsetFromMetaDataBase; // If true, the _offset is from the start of TR_MethodMetaData.
    };
 #endif // J9VM_OPT_JITSERVER
 
