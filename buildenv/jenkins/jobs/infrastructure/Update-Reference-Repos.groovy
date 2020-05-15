@@ -26,7 +26,7 @@ if (!SETUP_LABEL) {
 
 LABEL = params.LABEL
 if (!LABEL) {
-    LABEL = 'ci.role.build'
+    LABEL = 'ci.role.build || ci.role.test'
 }
 
 CLEAN_CACHE_DIR = params.CLEAN_CACHE_DIR
@@ -129,7 +129,10 @@ timeout(time: 6, unit: 'HOURS') {
                         }
 
                         // get Eclipse OpenJ9 extensions repositories from variables file
-                        def repos = get_openjdk_repos(VARIABLES.openjdk, foundLabel)
+                        def repos = []
+                        if (nodeLabels.contains('ci.role.build')) {
+                            repos.addAll(get_openjdk_repos(VARIABLES.openjdk, foundLabel))
+                        }
 
                         if (nodeLabels.contains('ci.role.test')) {
                             // add AdoptOpenJDK/openjdk-tests repository
