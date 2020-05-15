@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@
 
 bool SPMDPreCheck::isSPMDCandidate(TR::Compilation *comp, TR_RegionStructure *loop)
    {
-   bool trace = comp->getOption(TR_TraceAll);
+   bool trace = comp->getOption(TR_TraceAll) || comp->trace(OMR::SPMDKernelParallelization);
 
    if (!loop->isNaturalLoop())
       {

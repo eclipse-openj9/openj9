@@ -846,26 +846,26 @@ usedInLoopTest(TR::Compilation *comp, TR::Node *loopTestNode, TR::SymbolReferenc
    }
 
 static bool
-indexContainsArray(TR::Compilation *comp, TR::Node *index, vcount_t visitCount, bool shouldTrace)
+indexContainsArray(TR::Compilation *comp, TR::Node *index, vcount_t visitCount)
    {
    if (index->getVisitCount() == visitCount)
       return false;
 
    index->setVisitCount(visitCount);
 
-   if (shouldTrace)
+   if (comp->trace(OMR::idiomRecognition))
       traceMsg(comp, "analyzing node %p\n", index);
    
    if (index->getOpCode().hasSymbolReference() &&
          index->getSymbolReference()->getSymbol()->isArrayShadowSymbol())
       {
-      if (shouldTrace)
+      if (comp->trace(OMR::idiomRecognition))
          traceMsg(comp, "found array node %p\n", index);
       return true;
       }
 
    for (int32_t i = 0; i < index->getNumChildren(); i++)
-      if (indexContainsArray(comp, index->getChild(i), visitCount, shouldTrace))
+      if (indexContainsArray(comp, index->getChild(i), visitCount))
          return true;
 
    return false;
@@ -873,9 +873,9 @@ indexContainsArray(TR::Compilation *comp, TR::Node *index, vcount_t visitCount, 
 
 
 static bool
-indexContainsArrayAccess(TR::Compilation *comp, TR::Node *aXaddNode, bool shouldTrace)
+indexContainsArrayAccess(TR::Compilation *comp, TR::Node *aXaddNode)
    {
-   if (shouldTrace)
+   if (comp->trace(OMR::idiomRecognition))
       traceMsg(comp, "axaddnode %p\n", aXaddNode);
    
    TR::Node *loadNode1, *loadNode2, *topLevelIndex;
@@ -885,11 +885,11 @@ indexContainsArrayAccess(TR::Compilation *comp, TR::Node *aXaddNode, bool should
    // this loop into an arraycopy
    // ie. a[b[i]] do not represent linear array accesses
    //
-   if (shouldTrace)
+   if (comp->trace(OMR::idiomRecognition))
       traceMsg(comp, "aXaddNode %p topLevelIndex %p\n", aXaddNode, topLevelIndex);
    vcount_t visitCount = comp->incOrResetVisitCount();
    if (topLevelIndex)
-      return indexContainsArray(comp, topLevelIndex, visitCount, shouldTrace);
+      return indexContainsArray(comp, topLevelIndex, visitCount);
    return false;
    }
 
@@ -972,14 +972,14 @@ static TR::Node* getArrayBase(TR::Node *node)
    }
 
 static bool
-areArraysInvariant(TR::Compilation *comp, TR::Node *inputNode, TR::Node *outputNode, TR_CISCGraph *T, bool shouldTrace)
+areArraysInvariant(TR::Compilation *comp, TR::Node *inputNode, TR::Node *outputNode, TR_CISCGraph *T)
    {
    if (T)
       {
       TR::Node *aNode = getArrayBase(inputNode);
       TR::Node *bNode = getArrayBase(outputNode);
 
-      if (shouldTrace)
+      if (comp->trace(OMR::idiomRecognition))
          traceMsg(comp, "aNode = %p bNode = %p\n", aNode, bNode);
       if (aNode && aNode->getOpCode().isLoadDirect() &&
             bNode && bNode->getOpCode().isLoadDirect())
@@ -987,7 +987,7 @@ areArraysInvariant(TR::Compilation *comp, TR::Node *inputNode, TR::Node *outputN
          TR_CISCNode *aCNode = T->getCISCNode(aNode);
          TR_CISCNode *bCNode = T->getCISCNode(bNode);
 
-         if (shouldTrace)
+         if (comp->trace(OMR::idiomRecognition))
             traceMsg(comp, "aC = %p %d bC = %p %d\n", aCNode, aCNode->getID(), bCNode, bCNode->getID());
          if (aCNode && bCNode)
             {
@@ -1095,7 +1095,7 @@ findIndVarLoads(TR::Node *node, TR::Node *indVarStoreNode, bool &storeFound,
    }
 
 static int32_t
-checkForPostIncrement(TR::Compilation *comp, TR::Block *loopHeader, TR::Node *loopCmpNode, TR::Symbol *ivSym, bool shouldTrace)
+checkForPostIncrement(TR::Compilation *comp, TR::Block *loopHeader, TR::Node *loopCmpNode, TR::Symbol *ivSym)
    {
    TR::TreeTop *startTree = loopHeader->getFirstRealTreeTop();
    TR::Node *indVarStoreNode = NULL;
@@ -1126,7 +1126,7 @@ checkForPostIncrement(TR::Compilation *comp, TR::Block *loopHeader, TR::Node *lo
    if (storeIvLoad->getOpCode().isAdd() || storeIvLoad->getOpCode().isSub())
       storeIvLoad = storeIvLoad->getFirstChild();
 
-   if(shouldTrace)
+   if(comp->trace(OMR::idiomRecognition))
       traceMsg(comp, "found storeIvload %p cmpFirstChild %p\n", storeIvLoad, cmpFirstChild);
    // simple case
    // the loopCmp uses the un-incremented value
@@ -5675,8 +5675,8 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
    if ((statusArrayStore = checkArrayStore(comp, inputNode, outputNode, elementSize, !isDecrement)) == ABANDONING_REDUCTION)
       return false;
 
-   if (indexContainsArrayAccess(comp, inLoadNode->getFirstChild(), disptrace) ||
-         indexContainsArrayAccess(comp, inStoreNode->getFirstChild(), disptrace))
+   if (indexContainsArrayAccess(comp, inLoadNode->getFirstChild()) ||
+         indexContainsArrayAccess(comp, inStoreNode->getFirstChild()))
       {
       traceMsg(comp, "inputNode %p or outputnode %p contains another arrayaccess, no reduction\n", inLoadNode, inStoreNode);
       return false;
@@ -5733,7 +5733,7 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
    variableORconstRepNode = convertStoreToLoad(comp, variableORconstRepNode);
 
 
-   int32_t postIncrement = checkForPostIncrement(comp, block, cmpIfAllCISCNode->getHeadOfTrNodeInfo()->_node, exitVarSymRef->getSymbol(), disptrace);
+   int32_t postIncrement = checkForPostIncrement(comp, block, cmpIfAllCISCNode->getHeadOfTrNodeInfo()->_node, exitVarSymRef->getSymbol());
    
    if (disptrace)
       traceMsg(comp, "detected postIncrement %d modLength %d modStartIdx %d\n", postIncrement, modLength, modStartIdx);
@@ -9160,7 +9160,8 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
 
    if (preHeader)
       {
-      traceMsg(comp, "found preheader to be %d\n", preHeader->getNumber());
+      if (disptrace)
+         traceMsg(comp, "found preheader to be %d\n", preHeader->getNumber());
       //
       // obtain a CISCNode of each store for incrementing induction variables
 
@@ -9352,7 +9353,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
       return false;
       }
 
-   if (!areArraysInvariant(comp, inSrc1Node, inSrc2Node, T, disptrace))
+   if (!areArraysInvariant(comp, inSrc1Node, inSrc2Node, T))
       {
       traceMsg(comp, "input array bases %p and %p are not invariant, no reduction\n", inSrc1Node, inSrc2Node);
       return false;
