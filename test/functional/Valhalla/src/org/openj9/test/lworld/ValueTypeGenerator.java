@@ -116,6 +116,8 @@ public class ValueTypeGenerator extends ClassLoader {
 				makeGeneric(cw, className, "makeValueGeneric", "makeValue", makeValueSig, makeValueGenericSig, fields, makeMaxLocal, isRef);
 			}
 		}
+		testCheckCastOnInvalidQtype(cw);
+		testCheckCastOnInvalidLtype(cw);
 		addStaticSynchronizedMethods(cw);
 		addSynchronizedMethods(cw);
 		cw.visitEnd();
@@ -338,7 +340,27 @@ public class ValueTypeGenerator extends ClassLoader {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastValueTypeOnNull", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitInsn(ACONST_NULL);
-		mv.visitTypeInsn(CHECKCAST, className);
+		mv.visitTypeInsn(CHECKCAST, getSigFromSimpleName(className, false));
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(1, 2);
+		mv.visitEnd();
+	}
+	
+	private static void testCheckCastOnInvalidQtype(ClassWriter cw) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastOnInvalidQtype", "()Ljava/lang/Object;", null, null);
+		mv.visitCode();
+		mv.visitInsn(ACONST_NULL);
+		mv.visitTypeInsn(CHECKCAST, "QClassDoesNotExist;");
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(1, 2);
+		mv.visitEnd();
+	}
+	
+	private static void testCheckCastOnInvalidLtype(ClassWriter cw) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastOnInvalidLtype", "()Ljava/lang/Object;", null, null);
+		mv.visitCode();
+		mv.visitInsn(ACONST_NULL);
+		mv.visitTypeInsn(CHECKCAST, "ClassDoesNotExist");
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 2);
 		mv.visitEnd();

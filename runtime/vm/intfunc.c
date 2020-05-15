@@ -376,4 +376,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 #endif /* J9VM_OPT_JITSERVER */
 	createJoinableThreadWithCategory,
 	valueTypeCapableAcmp,
+	isClassRefQtype,
 };
