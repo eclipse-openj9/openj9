@@ -29,6 +29,8 @@
 # The final step is where the differences are. While vpaths under make handle everything automatically,
 # we have to actually resolve the full paths to the source files (via omr_find_files and output in resolvedPaths)
 
+set(OMR_ENHANCED_WARNINGS OFF)
+
 add_tracegen(common/j9prt.tdf)
 j9vm_add_library(j9prt SHARED
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9prt.c
@@ -193,6 +195,15 @@ target_include_directories(j9prt
 		${CMAKE_CURRENT_BINARY_DIR}
 		${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+if(OMR_OS_LINUX)
+	if((OMR_ARCH_RISCV) OR (OMR_ARCH_X86 AND OMR_ENV_DATA64))
+		set_source_files_properties(unix/j9process.c
+			COMPILE_FLAGS
+			-Wno-unused-result
+		)
+	endif()
+endif()
 
 omr_add_exports(j9prt
 	j9port_allocate_library
