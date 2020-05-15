@@ -97,7 +97,6 @@ public final class System {
 	private static String lineSeparator;
 		
 	private static boolean propertiesInitialized = false;
-	private static boolean useLegacyVerPresents = false; 
 
 	private static String platformEncoding;
 	private static String fileEncoding;
@@ -474,9 +473,6 @@ private static void ensureProperties(boolean isInitialization) {
 /*[ELSE]
 	lineSeparator = initializedProperties.getProperty("line.separator", "\n"); //$NON-NLS-1$
 /*[ENDIF] Java12 */
-	/*[IF Sidecar19-SE]*/
-	useLegacyVerPresents = initializedProperties.containsKey("use.legacy.version");
-	/*[ENDIF]*/
 
 	if (isInitialization) {
 		/*[PR CMVC 179976] System.setProperties(null) throws IllegalStateException */
@@ -616,24 +612,7 @@ static Properties internalGetProperties() {
  */
 @SuppressWarnings("nls")
 public static String getProperty(String prop) {
-	String propertyString = getProperty(prop, null);
-	/*[IF Sidecar19-SE]*/
-	if (useLegacyVerPresents && prop.equals("java.version")) {
-		StackWalker walker = StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE);
-
-		/* If jdk.internal.misc.VM.initLevel() < 4, bootstrap isn't completed yet, walker.getCallerClass().getModule()
-		 * can be null, return real version in this case. 
-		 */
-		Module callerModule = walker.getCallerClass().getModule();
-		
-		if ((jdk.internal.misc.VM.initLevel() >= 4) 
-			&& ((null == callerModule) || (!callerModule.isNamed()))
-		) {
-			propertyString = "1.9.0";
-		}
-	}
-	/*[ENDIF]*/
-	return propertyString;
+	return getProperty(prop, null);
 }
 
 /**
