@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -223,10 +223,10 @@ else
 endif
 
 SOLINK_DEF?=$(JIT_SCRIPT_DIR)/j9jit.def
-SOLINK_ORG?=0x12900000
 
 ifeq ($(HOST_BITS),32)
     SOLINK_FLAGS+=-machine:i386 -safeseh
+    SOLINK_ORG?=0x12900000
 endif
 
 ifeq ($(HOST_BITS),64)

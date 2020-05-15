@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,7 @@ jit: $(JIT_PRODUCT_SONAME)
 $(JIT_PRODUCT_SONAME): $(JIT_PRODUCT_OBJECTS) | jit_createdirs
 	$(call RM,$@.objlist)
 	$(call GENLIST,$@.objlist,$(SOLINK_PRE_OBJECTS) $(JIT_PRODUCT_OBJECTS) $(SOLINK_POST_OBJECTS))
-	$(SOLINK_CMD) -DLL -subsystem:windows $(SOLINK_FLAGS) $(patsubst %,-libpath:%,$(call FIXPATH,$(SOLINK_LIBPATH))) -OUT:$(call FIXPATH,$@) -MAP:$(call FIXPATH,$@.map) -BASE:$(SOLINK_ORG) -DEF:$(call FIXPATH,$(SOLINK_DEF)) @$(call FIXPATH,$@.objlist) $(call FIXPATH,$(patsubst %,%.lib,$(SOLINK_SLINK))) $(SOLINK_EXTRA_ARGS)
+	$(SOLINK_CMD) -DLL -subsystem:windows $(SOLINK_FLAGS) $(patsubst %,-libpath:%,$(call FIXPATH,$(SOLINK_LIBPATH))) -OUT:$(call FIXPATH,$@) -MAP:$(call FIXPATH,$@.map) $(if $(SOLINK_ORG),-BASE:$(SOLINK_ORG)) -DEF:$(call FIXPATH,$(SOLINK_DEF)) @$(call FIXPATH,$@.objlist) $(call FIXPATH,$(patsubst %,%.lib,$(SOLINK_SLINK))) $(SOLINK_EXTRA_ARGS)
 	$(call RM,$@.objlist)
 
 JIT_DIR_LIST+=$(dir $(JIT_PRODUCT_SONAME))
