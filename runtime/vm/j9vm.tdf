@@ -785,3 +785,11 @@ TraceException=Trc_VM_classInitStateMachine_classRelationshipValidationFailed Gr
 TraceEvent=Trc_VM_classInitStateMachine_verifyFlattenableField Group=classinit Overhead=1 Level=3 Template="verify flattenable field clazz=%p"
 TraceEvent=Trc_VM_classInitStateMachine_prepareFlattenableField Group=classinit Overhead=1 Level=3 Template="prepare flattenable field clazz=%p"
 TraceEvent=Trc_VM_classInitStateMachine_initFlattenableField Group=classinit Overhead=1 Level=3 Template="initialize flattenable field clazz=%p"
+
+TraceEntry=Trc_VM_GetCompleteNPEMessage_Entry Overhead=1 Level=3 Template="GetCompleteNPEMessage - bcCurrentPtr (0x%p) bcCurrent (0x%x) romClass (0x%p) npeCauseMsg (%s)"
+TraceException=Trc_VM_GetCompleteNPEMessage_Unreachable Overhead=1 Level=1 Template="GetCompleteNPEMessage - Unreachable error occurred : bcCurrent (0x%x)"
+TraceEvent=Trc_VM_GetCompleteNPEMessage_UnexpectedCPType Overhead=1 Level=1 Template="GetCompleteNPEMessage - unexpected CP type (0x%x) at bcCurrent(0x%x)"
+TraceEvent=Trc_VM_GetCompleteNPEMessage_Field_Index Overhead=1 Level=3 Template="GetCompleteNPEMessage - field index (0x%x)"
+TraceEvent=Trc_VM_GetCompleteNPEMessage_Invoke_Index Overhead=1 Level=3 Template="GetCompleteNPEMessage - invoke index (0x%x)"
+TraceEvent=Trc_VM_GetCompleteNPEMessage_MissedBytecode Overhead=1 Level=1 Template="GetCompleteNPEMessage - missed bcCurrent(0x%x)"
+TraceExit=Trc_VM_GetCompleteNPEMessage_Exit Overhead=1 Level=3 Template="GetCompleteNPEMessage - npeMsg (%s)"

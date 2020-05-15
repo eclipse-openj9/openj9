@@ -549,16 +549,19 @@ internalExceptionDescribe(J9VMThread *vmThread);
 * @param exception
 * @param vmThread
 * @param userData
-* @param method
+* @param bytecodeOffset
+* @param romClass
+* @param romMethod
 * @param fileName
 * @param lineNumber
+* @param classLoader
 * @param ramClass)
 * @param userData
 * @param pruneConstructors
 * @return UDATA
 */
 UDATA
-iterateStackTrace(J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callback) (J9VMThread * vmThread, void * userData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass), void * userData, UDATA pruneConstructors);
+iterateStackTrace(J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callback) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass), void * userData, UDATA pruneConstructors);
 
 
 /* ---------------- exceptionsupport.c ---------------- */
@@ -834,6 +837,20 @@ setClassLoadingConstraintSignatureError(J9VMThread *currentThread, J9ClassLoader
 
 void  
 setClassLoadingConstraintOverrideError(J9VMThread *currentThread, J9UTF8 *newClassNameUTF, J9ClassLoader *loader1, J9UTF8 *class1NameUTF, J9ClassLoader *loader2, J9UTF8 *class2NameUTF, J9UTF8 *exceptionClassNameUTF, U_8 *methodName, UDATA methodNameLength, U_8 *signature, UDATA signatureLength);
+
+/**
+* Return an extended NPE message.
+*
+* Note: the caller is responsible for freeing the returned string if it is not NULL.
+*
+* @param vmThread The current J9VMThread
+* @param bcCurrentPtr The pointer to the bytecode being executed and caused the NPE
+* @param romClass The romClass of the bytecode
+* @param npeCauseMsg The cause of NPE, reserved for future use.
+* @return char* An extended NPE message or NULL if such a message can't be generated
+*/
+char*
+getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romClass, const char *npeCauseMsg);
 
 /* ---------------- gphandle.c ---------------- */
 
