@@ -39,7 +39,7 @@ enum MessageType : uint16_t
    connectionTerminate, // type used when client informs the server to close the connection
 
    // For TR_ResolvedJ9JITServerMethod methods
-   ResolvedMethod_isJNINative,
+   ResolvedMethod_isJNINative, // 9
    ResolvedMethod_isInterpreted,
    ResolvedMethod_setRecognizedMethodInfo,
    ResolvedMethod_startAddressForInterpreterOfJittedMethod,
@@ -96,13 +96,13 @@ enum MessageType : uint16_t
    ResolvedMethod_dynamicConstant,
    ResolvedMethod_definingClassFromCPFieldRef,
 
-   ResolvedRelocatableMethod_createResolvedRelocatableJ9Method,
+   ResolvedRelocatableMethod_createResolvedRelocatableJ9Method, // 65
    ResolvedRelocatableMethod_fieldAttributes,
    ResolvedRelocatableMethod_staticAttributes,
    ResolvedRelocatableMethod_getFieldType,
 
    // For TR_J9ServerVM methods
-   VM_isClassLibraryClass,
+   VM_isClassLibraryClass, // 69
    VM_isClassLibraryMethod,
    VM_getSuperClass,
    VM_isInstanceOf,
@@ -205,7 +205,7 @@ enum MessageType : uint16_t
    VM_stackWalkerMaySkipFramesSVM,
 
    // For static TR::CompilationInfo methods
-   CompInfo_isCompiled,
+   CompInfo_isCompiled, // 170
    CompInfo_getInvocationCount,
    CompInfo_setInvocationCount,
    CompInfo_getJ9MethodExtra,
@@ -218,7 +218,7 @@ enum MessageType : uint16_t
    CompInfo_getJ9MethodStartPC,
 
    // For J9::ClassEnv Methods
-   ClassEnv_classFlagsValue,
+   ClassEnv_classFlagsValue, // 181
    ClassEnv_classDepthOf,
    ClassEnv_classInstanceSize,
    ClassEnv_superClassesOf,
@@ -231,13 +231,13 @@ enum MessageType : uint16_t
    ClassEnv_getROMClassRefName,
 
    // For TR_J9SharedCache
-   SharedCache_getClassChainOffsetInSharedCache,
+   SharedCache_getClassChainOffsetInSharedCache, // 192
    SharedCache_rememberClass,
    SharedCache_addHint,
    SharedCache_storeSharedData,
 
    // For runFEMacro
-   runFEMacro_invokeCollectHandleNumArgsToCollect,
+   runFEMacro_invokeCollectHandleNumArgsToCollect, // 196
    runFEMacro_invokeExplicitCastHandleConvertArgs,
    runFEMacro_targetTypeL,
    runFEMacro_invokeILGenMacrosInvokeExactAndFixup,
@@ -263,24 +263,24 @@ enum MessageType : uint16_t
    runFEMacro_invokeCollectHandleAllocateArray,
 
    // for JITServerPersistentCHTable
-   CHTable_getAllClassInfo,
+   CHTable_getAllClassInfo, // 220
    CHTable_getClassInfoUpdates,
    CHTable_commit,
    CHTable_clearReservable,
 
    // for JITServerIProfiler
-   IProfiler_profilingSample,
+   IProfiler_profilingSample, // 224
    IProfiler_searchForMethodSample,
    IProfiler_getMaxCallCount,
    IProfiler_setCallCount,
 
-   Recompilation_getExistingMethodInfo,
+   Recompilation_getExistingMethodInfo, // 228
    Recompilation_getJittedBodyInfoFromPC,
 
    ClassInfo_getRemoteROMString,
 
    // for KnownObjectTable
-   KnownObjectTable_getOrCreateIndex,
+   KnownObjectTable_getOrCreateIndex, // 231
    KnownObjectTable_getOrCreateIndexAt,
    KnownObjectTable_getPointer,
    KnownObjectTable_getExistingIndexAt,
@@ -366,183 +366,183 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "ResolvedMethod_dynamicConstant", // 63
    "ResolvedMethod_definingClassFromCPFieldRef", // 64
    "ResolvedRelocatableMethod_createResolvedRelocatableJ9Method", // 65
-   "ResolvedRelocatableMethod_fieldAttributes", // 67
-   "ResolvedRelocatableMethod_staticAttributes", // 68
-   "ResolvedRelocatableMethod_getFieldType", // 69
-   "VM_isClassLibraryClass", // 70
-   "VM_isClassLibraryMethod", // 71
-   "VM_getSuperClass", // 72
-   "VM_isInstanceOf", // 73
-   "VM_isClassArray", // 74
-   "VM_transformJlrMethodInvoke", // 75
-   "VM_getStaticReferenceFieldAtAddress", // 76
-   "VM_getSystemClassFromClassName", // 77
-   "VM_isMethodTracingEnabled", // 78
-   "VM_getClassClassPointer", // 79
-   "VM_setJ2IThunk", // 80
-   "VM_getClassOfMethod", // 81
-   "VM_getBaseComponentClass", // 82
-   "VM_getLeafComponentClassFromArrayClass", // 83
-   "VM_isClassLoadedBySystemClassLoader", // 84
-   "VM_getClassFromSignature", // 85
-   "VM_jitFieldsAreSame", // 86
-   "VM_jitStaticsAreSame", // 87
-   "VM_getComponentClassFromArrayClass", // 88
-   "VM_classHasBeenReplaced", // 89
-   "VM_classHasBeenExtended", // 90
-   "VM_compiledAsDLTBefore", // 91
-   "VM_isThunkArchetype", // 92
-   "VM_printTruncatedSignature", // 93
-   "VM_getStaticHookAddress", // 94
-   "VM_isClassInitialized", // 95
-   "VM_getOSRFrameSizeInBytes", // 96
-   "VM_getInitialLockword", // 97
-   "VM_isString1", // 98
-   "VM_getMethods", // 99
-   "VM_isPrimitiveArray", // 100
-   "VM_getAllocationSize", // 101
-   "VM_getObjectClass", // 102
-   "VM_stackWalkerMaySkipFrames", // 103
-   "VM_hasFinalFieldsInClass", // 104
-   "VM_getClassNameSignatureFromMethod", // 105
-   "VM_getHostClass", // 106
-   "VM_getStringUTF8Length", // 107
-   "VM_classInitIsFinished", // 108
-   "VM_getClassFromNewArrayType", // 109
-   "VM_isCloneable", // 110
-   "VM_canAllocateInlineClass", // 111
-   "VM_getArrayClassFromComponentClass", // 112
-   "VM_matchRAMclassFromROMclass", // 113
-   "VM_getReferenceFieldAtAddress", // 114
-   "VM_getVolatileReferenceFieldAt", // 115
-   "VM_getInt32FieldAt", // 116
-   "VM_getInt64FieldAt", // 117
-   "VM_setInt64FieldAt", // 118
-   "VM_compareAndSwapInt64FieldAt", // 119
-   "VM_getArrayLengthInElements", // 120
-   "VM_getClassFromJavaLangClass", // 121
-   "VM_getOffsetOfClassFromJavaLangClassField", // 122
-   "VM_getIdentityHashSaltPolicy", // 123
-   "VM_getOffsetOfJLThreadJ9Thread", // 124
-   "VM_getVFTEntry", // 125
-   "VM_scanReferenceSlotsInClassForOffset", // 126
-   "VM_findFirstHotFieldTenuredClassOffset", // 127
-   "VM_getResolvedVirtualMethod", // 128
-   "VM_sameClassLoaders", // 129
-   "VM_isUnloadAssumptionRequired", // 130
-   "VM_getInstanceFieldOffset", // 131
-   "VM_getJavaLangClassHashCode", // 132
-   "VM_hasFinalizer", // 133
-   "VM_getClassDepthAndFlagsValue", // 134
-   "VM_getMethodFromName", // 135
-   "VM_getMethodFromClass", // 136
-   "VM_isClassVisible", // 137
-   "VM_markClassForTenuredAlignment", // 138
-   "VM_getReferenceSlotsInClass", // 139
-   "VM_getMethodSize", // 140
-   "VM_addressOfFirstClassStatic", // 141
-   "VM_getStaticFieldAddress", // 142
-   "VM_getInterpreterVTableSlot", // 143
-   "VM_revertToInterpreted", // 144
-   "VM_getLocationOfClassLoaderObjectPointer", // 145
-   "VM_isOwnableSyncClass", // 146
-   "VM_getClassFromMethodBlock", // 147
-   "VM_fetchMethodExtendedFlagsPointer", // 148
-   "VM_stringEquals", // 149
-   "VM_getStringHashCode", // 150
-   "VM_getLineNumberForMethodAndByteCodeIndex", // 151
-   "VM_getObjectNewInstanceImplMethod", // 152
-   "VM_getBytecodePC", // 153
-   "VM_getClassFromStatic", // 154
-   "VM_setInvokeExactJ2IThunk", // 155
-   "VM_createMethodHandleArchetypeSpecimen", // 156
-   "VM_instanceOfOrCheckCast", // 157
-   "VM_getResolvedMethodsAndMirror", // 158
-   "VM_getVMInfo", // 159
-   "VM_isAnonymousClass", // 160
-   "VM_dereferenceStaticAddress", // 161
-   "VM_getClassFromCP", // 162
-   "VM_getROMMethodFromRAMMethod", // 163
-   "VM_getReferenceFieldAt", // 164
-   "VM_getJ2IThunk", // 165
-   "VM_needsInvokeExactJ2IThunk", // 166
-   "VM_instanceOfOrCheckCastNoCacheUpdate", // 167
-   "VM_getCellSizeForSizeClass", // 168
-   "VM_getObjectSizeClass", // 169
-   "VM_stackWalkerMaySkipFramesSVM", // 170
-   "CompInfo_isCompiled", // 171
-   "CompInfo_getInvocationCount", // 172
-   "CompInfo_setInvocationCount", // 173
-   "CompInfo_getJ9MethodExtra", // 174
-   "CompInfo_isJNINative", // 175
-   "CompInfo_isJSR292", // 176
-   "CompInfo_getMethodBytecodeSize", // 177
-   "CompInfo_setJ9MethodExtra", // 178
-   "CompInfo_setInvocationCountAtomic", // 179
-   "CompInfo_isClassSpecial", // 180
-   "CompInfo_getJ9MethodStartPC", // 181
-   "ClassEnv_classFlagsValue", // 182
-   "ClassEnv_classDepthOf", // 183
-   "ClassEnv_classInstanceSize", // 184
-   "ClassEnv_superClassesOf", // 185
-   "ClassEnv_indexedSuperClassOf", // 186
-   "ClassEnv_iTableOf", // 187
-   "ClassEnv_iTableNext", // 188
-   "ClassEnv_iTableRomClass", // 189
-   "ClassEnv_getITable", // 190
-   "ClassEnv_classHasIllegalStaticFinalFieldModification", // 191
-   "ClassEnv_getROMClassRefName", // 192
-   "SharedCache_getClassChainOffsetInSharedCache", // 193
-   "SharedCache_rememberClass", // 194
-   "SharedCache_addHint", // 195
-   "SharedCache_storeSharedData", // 196
-   "runFEMacro_invokeCollectHandleNumArgsToCollect", // 197
-   "runFEMacro_invokeExplicitCastHandleConvertArgs", // 198
-   "runFEMacro_targetTypeL", // 199
-   "runFEMacro_invokeILGenMacrosInvokeExactAndFixup", // 200
-   "runFEMacro_invokeArgumentMoverHandlePermuteArgs", // 201
-   "runFEMacro_invokePermuteHandlePermuteArgs", // 202
-   "runFEMacro_invokeGuardWithTestHandleNumGuardArgs", // 203
-   "runFEMacro_invokeInsertHandle", // 204
-   "runFEMacro_invokeDirectHandleDirectCall", // 205
-   "runFEMacro_invokeSpreadHandleArrayArg", // 206
-   "runFEMacro_invokeSpreadHandle", // 207
-   "runFEMacro_invokeFoldHandle", // 208
-   "runFEMacro_invokeFoldHandle2", // 209
-   "runFEMacro_invokeFinallyHandle", // 210
-   "runFEMacro_invokeFilterArgumentsHandle", // 211
-   "runFEMacro_invokeFilterArgumentsHandle2", // 212
-   "runFEMacro_invokeCatchHandle", // 213
-   "runFEMacro_invokeILGenMacrosParameterCount", // 214
-   "runFEMacro_invokeILGenMacrosArrayLength", // 215
-   "runFEMacro_invokeILGenMacrosGetField", // 216
-   "runFEMacro_invokeFilterArgumentsWithCombinerHandleNumSuffixArgs", // 217
-   "runFEMacro_invokeFilterArgumentsWithCombinerHandleFilterPosition", // 218
-   "runFEMacro_invokeFilterArgumentsWithCombinerHandleArgumentIndices", // 219
-   "runFEMacro_invokeCollectHandleAllocateArray", // 220
-   "CHTable_getAllClassInfo", // 221
-   "CHTable_getClassInfoUpdates", // 222
-   "CHTable_commit", // 223
-   "CHTable_clearReservable", // 224
-   "IProfiler_profilingSample", // 225
-   "IProfiler_searchForMethodSample", // 226
-   "IProfiler_getMaxCallCount", // 227
-   "IProfiler_setCallCount", // 228
-   "Recompilation_getExistingMethodInfo", // 229
-   "Recompilation_getJittedBodyInfoFromPC", // 230
-   "ClassInfo_getRemoteROMString", // 231
-   "KnownObjectTable_getOrCreateIndex", // 232
-   "KnownObjectTable_getOrCreateIndexAt", // 233
-   "KnownObjectTable_getPointer", // 234
-   "KnownObjectTable_getExistingIndexAt", // 235
-   "KnownObjectTable_symbolReferenceTableCreateKnownObject", // 236
-   "KnownObjectTable_mutableCallSiteEpoch", // 237
-   "KnownObjectTable_dereferenceKnownObjectField", // 238
-   "KnownObjectTable_dereferenceKnownObjectField2", // 239
-   "KnownObjectTable_createSymRefWithKnownObject", // 240
-   "KnownObjectTable_getReferenceField", // 241
-   "KnownObjectTable_invokeDirectHandleDirectCall", // 242
-   "KnownObjectTable_getKnownObjectTableDumpInfo" // 243
+   "ResolvedRelocatableMethod_fieldAttributes", // 66
+   "ResolvedRelocatableMethod_staticAttributes", // 67
+   "ResolvedRelocatableMethod_getFieldType", // 68
+   "VM_isClassLibraryClass", // 69
+   "VM_isClassLibraryMethod", // 70
+   "VM_getSuperClass", // 71
+   "VM_isInstanceOf", // 72
+   "VM_isClassArray", // 73
+   "VM_transformJlrMethodInvoke", // 74
+   "VM_getStaticReferenceFieldAtAddress", // 75
+   "VM_getSystemClassFromClassName", // 76
+   "VM_isMethodTracingEnabled", // 77
+   "VM_getClassClassPointer", // 78
+   "VM_setJ2IThunk", // 79
+   "VM_getClassOfMethod", // 80
+   "VM_getBaseComponentClass", // 81
+   "VM_getLeafComponentClassFromArrayClass", // 82
+   "VM_isClassLoadedBySystemClassLoader", // 83
+   "VM_getClassFromSignature", // 84
+   "VM_jitFieldsAreSame", // 85
+   "VM_jitStaticsAreSame", // 86
+   "VM_getComponentClassFromArrayClass", // 87
+   "VM_classHasBeenReplaced", // 88
+   "VM_classHasBeenExtended", // 89
+   "VM_compiledAsDLTBefore", // 90
+   "VM_isThunkArchetype", // 91
+   "VM_printTruncatedSignature", // 92
+   "VM_getStaticHookAddress", // 93
+   "VM_isClassInitialized", // 94
+   "VM_getOSRFrameSizeInBytes", // 95
+   "VM_getInitialLockword", // 96
+   "VM_isString1", // 97
+   "VM_getMethods", // 98
+   "VM_isPrimitiveArray", // 99
+   "VM_getAllocationSize", // 100
+   "VM_getObjectClass", // 101
+   "VM_stackWalkerMaySkipFrames", // 102
+   "VM_hasFinalFieldsInClass", // 103
+   "VM_getClassNameSignatureFromMethod", // 104
+   "VM_getHostClass", // 105
+   "VM_getStringUTF8Length", // 106
+   "VM_classInitIsFinished", // 107
+   "VM_getClassFromNewArrayType", // 108
+   "VM_isCloneable", // 109
+   "VM_canAllocateInlineClass", // 110
+   "VM_getArrayClassFromComponentClass", // 111
+   "VM_matchRAMclassFromROMclass", // 112
+   "VM_getReferenceFieldAtAddress", // 113
+   "VM_getVolatileReferenceFieldAt", // 114
+   "VM_getInt32FieldAt", // 115
+   "VM_getInt64FieldAt", // 116
+   "VM_setInt64FieldAt", // 117
+   "VM_compareAndSwapInt64FieldAt", // 118
+   "VM_getArrayLengthInElements", // 119
+   "VM_getClassFromJavaLangClass", // 120
+   "VM_getOffsetOfClassFromJavaLangClassField", // 121
+   "VM_getIdentityHashSaltPolicy", // 122
+   "VM_getOffsetOfJLThreadJ9Thread", // 123
+   "VM_getVFTEntry", // 124
+   "VM_scanReferenceSlotsInClassForOffset", // 125
+   "VM_findFirstHotFieldTenuredClassOffset", // 126
+   "VM_getResolvedVirtualMethod", // 127
+   "VM_sameClassLoaders", // 128
+   "VM_isUnloadAssumptionRequired", // 129
+   "VM_getInstanceFieldOffset", // 130
+   "VM_getJavaLangClassHashCode", // 131
+   "VM_hasFinalizer", // 132
+   "VM_getClassDepthAndFlagsValue", // 133
+   "VM_getMethodFromName", // 134
+   "VM_getMethodFromClass", // 135
+   "VM_isClassVisible", // 136
+   "VM_markClassForTenuredAlignment", // 137
+   "VM_getReferenceSlotsInClass", // 138
+   "VM_getMethodSize", // 139
+   "VM_addressOfFirstClassStatic", // 140
+   "VM_getStaticFieldAddress", // 141
+   "VM_getInterpreterVTableSlot", // 142
+   "VM_revertToInterpreted", // 143
+   "VM_getLocationOfClassLoaderObjectPointer", // 144
+   "VM_isOwnableSyncClass", // 145
+   "VM_getClassFromMethodBlock", // 146
+   "VM_fetchMethodExtendedFlagsPointer", // 147
+   "VM_stringEquals", // 148
+   "VM_getStringHashCode", // 149
+   "VM_getLineNumberForMethodAndByteCodeIndex", // 150
+   "VM_getObjectNewInstanceImplMethod", // 151
+   "VM_getBytecodePC", // 152
+   "VM_getClassFromStatic", // 153
+   "VM_setInvokeExactJ2IThunk", // 154
+   "VM_createMethodHandleArchetypeSpecimen", // 155
+   "VM_instanceOfOrCheckCast", // 156
+   "VM_getResolvedMethodsAndMirror", // 157
+   "VM_getVMInfo", // 158
+   "VM_isAnonymousClass", // 159
+   "VM_dereferenceStaticAddress", // 160
+   "VM_getClassFromCP", // 161
+   "VM_getROMMethodFromRAMMethod", // 162
+   "VM_getReferenceFieldAt", // 163
+   "VM_getJ2IThunk", // 164
+   "VM_needsInvokeExactJ2IThunk", // 165
+   "VM_instanceOfOrCheckCastNoCacheUpdate", // 166
+   "VM_getCellSizeForSizeClass", // 167
+   "VM_getObjectSizeClass", // 168
+   "VM_stackWalkerMaySkipFramesSVM", // 169
+   "CompInfo_isCompiled", // 170
+   "CompInfo_getInvocationCount", // 171
+   "CompInfo_setInvocationCount", // 172
+   "CompInfo_getJ9MethodExtra", // 173
+   "CompInfo_isJNINative", // 174
+   "CompInfo_isJSR292", // 175
+   "CompInfo_getMethodBytecodeSize", // 176
+   "CompInfo_setJ9MethodExtra", // 177
+   "CompInfo_setInvocationCountAtomic", // 178
+   "CompInfo_isClassSpecial", // 179
+   "CompInfo_getJ9MethodStartPC", // 180
+   "ClassEnv_classFlagsValue", // 181
+   "ClassEnv_classDepthOf", // 182
+   "ClassEnv_classInstanceSize", // 183
+   "ClassEnv_superClassesOf", // 184
+   "ClassEnv_indexedSuperClassOf", // 185
+   "ClassEnv_iTableOf", // 186
+   "ClassEnv_iTableNext", // 187
+   "ClassEnv_iTableRomClass", // 188
+   "ClassEnv_getITable", // 189
+   "ClassEnv_classHasIllegalStaticFinalFieldModification", // 190
+   "ClassEnv_getROMClassRefName", // 191
+   "SharedCache_getClassChainOffsetInSharedCache", // 192
+   "SharedCache_rememberClass", // 193
+   "SharedCache_addHint", // 194
+   "SharedCache_storeSharedData", // 195
+   "runFEMacro_invokeCollectHandleNumArgsToCollect", // 196
+   "runFEMacro_invokeExplicitCastHandleConvertArgs", // 197
+   "runFEMacro_targetTypeL", // 198
+   "runFEMacro_invokeILGenMacrosInvokeExactAndFixup", // 199
+   "runFEMacro_invokeArgumentMoverHandlePermuteArgs", // 200
+   "runFEMacro_invokePermuteHandlePermuteArgs", // 201
+   "runFEMacro_invokeGuardWithTestHandleNumGuardArgs", // 202
+   "runFEMacro_invokeInsertHandle", // 203
+   "runFEMacro_invokeDirectHandleDirectCall", // 204
+   "runFEMacro_invokeSpreadHandleArrayArg", // 205
+   "runFEMacro_invokeSpreadHandle", // 206
+   "runFEMacro_invokeFoldHandle", // 207
+   "runFEMacro_invokeFoldHandle2", // 208
+   "runFEMacro_invokeFinallyHandle", // 209
+   "runFEMacro_invokeFilterArgumentsHandle", // 210
+   "runFEMacro_invokeFilterArgumentsHandle2", // 211
+   "runFEMacro_invokeCatchHandle", // 212
+   "runFEMacro_invokeILGenMacrosParameterCount", // 213
+   "runFEMacro_invokeILGenMacrosArrayLength", // 214
+   "runFEMacro_invokeILGenMacrosGetField", // 215
+   "runFEMacro_invokeFilterArgumentsWithCombinerHandleNumSuffixArgs", // 216
+   "runFEMacro_invokeFilterArgumentsWithCombinerHandleFilterPosition", // 217
+   "runFEMacro_invokeFilterArgumentsWithCombinerHandleArgumentIndices", // 218
+   "runFEMacro_invokeCollectHandleAllocateArray", // 219
+   "CHTable_getAllClassInfo", // 220
+   "CHTable_getClassInfoUpdates", // 221
+   "CHTable_commit", // 222
+   "CHTable_clearReservable", // 223
+   "IProfiler_profilingSample", // 224
+   "IProfiler_searchForMethodSample", // 225
+   "IProfiler_getMaxCallCount", // 226
+   "IProfiler_setCallCount", // 227
+   "Recompilation_getExistingMethodInfo", // 228
+   "Recompilation_getJittedBodyInfoFromPC", // 229
+   "ClassInfo_getRemoteROMString", // 230
+   "KnownObjectTable_getOrCreateIndex", // 231
+   "KnownObjectTable_getOrCreateIndexAt", // 232
+   "KnownObjectTable_getPointer", // 233
+   "KnownObjectTable_getExistingIndexAt", // 234
+   "KnownObjectTable_symbolReferenceTableCreateKnownObject", // 235
+   "KnownObjectTable_mutableCallSiteEpoch", // 236
+   "KnownObjectTable_dereferenceKnownObjectField", // 237
+   "KnownObjectTable_dereferenceKnownObjectField2", // 238
+   "KnownObjectTable_createSymRefWithKnownObject", // 239
+   "KnownObjectTable_getReferenceField", // 240
+   "KnownObjectTable_invokeDirectHandleDirectCall", // 241
+   "KnownObjectTable_getKnownObjectTableDumpInfo" // 242
    };
    }; // namespace JITServer
 #endif // MESSAGE_TYPES_HPP
