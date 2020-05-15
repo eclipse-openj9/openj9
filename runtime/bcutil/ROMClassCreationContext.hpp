@@ -378,12 +378,12 @@ public:
 					if (NULL != errorUTF) {
 						U_8 *current = errorUTF;
 
-						memcpy(current, _className, _classNameLength);
-						current += _classNameLength;
-						memcpy(current, J9WRONGNAME, sizeof(J9WRONGNAME) - 1);
-						current += sizeof(J9WRONGNAME) - 1;
 						memcpy(current, className, classNameLength);
 						current += classNameLength;
+						memcpy(current, J9WRONGNAME, sizeof(J9WRONGNAME) - 1);
+						current += sizeof(J9WRONGNAME) - 1;
+						memcpy(current, _className, _classNameLength);
+						current += _classNameLength;
 						*current++ = (U_8) ')';
 						*current = (U_8) '\0';
 
