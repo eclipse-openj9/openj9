@@ -2000,6 +2000,32 @@ public class ValueTypeTests {
 	}
 
 	/*
+	 * Ensure that casting null to invalid Qtype class will throw a NoClassDef 
+	 */
+	@Test(priority=1)
+	static public void testCheckCastValueTypeOnInvalidLtype() throws Throwable {
+		try {
+			String fields[] = {"longField:J"};
+			Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastOnInvalidLtype", fields);
+			MethodHandle checkCastOnInvalidLtype = lookup.findStatic(valueClass, "testCheckCastOnInvalidLtype", MethodType.methodType(Object.class));
+			checkCastOnInvalidLtype.invoke();
+		} catch (Exception e) {
+			Assert.fail("Should not throw exception");
+		}
+	}
+	
+	/*
+	 * Ensure that casting null to invalid Qtype class will throw a NoClassDef 
+	 */
+	@Test(priority=1, expectedExceptions=NoClassDefFoundError.class)
+	static public void testCheckCastValueTypeOnInvalidQtype() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastOnInvalidQtype", fields);
+		MethodHandle checkCastOnInvalidQtype = lookup.findStatic(valueClass, "testCheckCastOnInvalidQtype", MethodType.methodType(Object.class));
+		checkCastOnInvalidQtype.invoke();
+	}
+	
+	/*
 	 * Ensure that casting null to a value type class will throw a null pointer exception 
 	 */
 	@Test(priority=1, expectedExceptions=NullPointerException.class)

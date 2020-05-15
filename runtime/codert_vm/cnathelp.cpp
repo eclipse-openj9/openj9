@@ -39,6 +39,9 @@
 
 extern "C" {
 
+void* J9FASTCALL
+old_slow_jitThrowNullPointerException(J9VMThread *currentThread);
+
 J9_EXTERN_BUILDER_SYMBOL(throwCurrentExceptionFromJIT);
 J9_EXTERN_BUILDER_SYMBOL(handlePopFramesFromJIT);
 #define J9_JITHELPER_ACTION_THROW		J9_BUILDER_SYMBOL(throwCurrentExceptionFromJIT)
@@ -1068,7 +1071,7 @@ old_fast_jitCheckCast(J9VMThread *currentThread)
 	OLD_JIT_HELPER_PROLOGUE(2);
 	DECLARE_JIT_CLASS_PARM(castClass, 1);
 	DECLARE_JIT_PARM(j9object_t, object, 2);
-	/* null can be cast to anything */
+	/* null can be cast to anything, except if castClass is a VT */
 	if (NULL != object) {
 		J9Class *instanceClass = J9OBJECT_CLAZZ(currentThread, object);
 		if (!VM_VMHelpers::inlineCheckCast(instanceClass, castClass)) {
@@ -1077,6 +1080,11 @@ old_fast_jitCheckCast(J9VMThread *currentThread)
 			slowPath = (void*)old_slow_jitCheckCast;
 		}
 	}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	else if (J9_IS_J9CLASS_VALUETYPE(castClass)) {
+		slowPath = (void*)old_slow_jitThrowNullPointerException;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	return slowPath;
 }
 
@@ -1095,13 +1103,18 @@ old_fast_jitCheckCastForArrayStore(J9VMThread *currentThread)
 	OLD_JIT_HELPER_PROLOGUE(2);
 	DECLARE_JIT_CLASS_PARM(castClass, 1);
 	DECLARE_JIT_PARM(j9object_t, object, 2);
-	/* null can be cast to anything */
+	/* null can be cast to anything, except if castClass is a VT */
 	if (NULL != object) {
 		J9Class *instanceClass = J9OBJECT_CLAZZ(currentThread, object);
 		if (!VM_VMHelpers::inlineCheckCast(instanceClass, castClass)) {
 			slowPath = (void*)old_slow_jitCheckCastForArrayStore;
 		}
 	}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	else if (J9_IS_J9CLASS_VALUETYPE(castClass)) {
+		slowPath = (void*)old_slow_jitThrowNullPointerException;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	return slowPath;
 }
 
@@ -3054,7 +3067,7 @@ fast_jitCheckCast(J9VMThread *currentThread, J9Class *castClass, j9object_t obje
 //	extern void* slow_jitCheckCast(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
 	void *slowPath = NULL;
-	/* null can be cast to anything */
+	/* null can be cast to anything, except if castClass is a VT */
 	if (NULL != object) {
 		J9Class *instanceClass = J9OBJECT_CLAZZ(currentThread, object);
 		if (J9_UNEXPECTED(!VM_VMHelpers::inlineCheckCast(instanceClass, castClass))) {
@@ -3064,6 +3077,11 @@ fast_jitCheckCast(J9VMThread *currentThread, J9Class *castClass, j9object_t obje
 			slowPath = (void*)old_slow_jitCheckCast;
 		}
 	}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	else if (J9_IS_J9CLASS_VALUETYPE(castClass)) {
+		slowPath = (void*)old_slow_jitThrowNullPointerException;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	return slowPath;
 }
 
@@ -3078,7 +3096,7 @@ fast_jitCheckCastForArrayStore(J9VMThread *currentThread, J9Class *castClass, j9
 //	extern void* slow_jitCheckCastForArrayStore(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
 	void *slowPath = NULL;
-	/* null can be cast to anything */
+	/* null can be cast to anything, except if castClass is a VT */
 	if (NULL != object) {
 		J9Class *instanceClass = J9OBJECT_CLAZZ(currentThread, object);
 		if (J9_UNEXPECTED(!VM_VMHelpers::inlineCheckCast(instanceClass, castClass))) {
@@ -3086,6 +3104,11 @@ fast_jitCheckCastForArrayStore(J9VMThread *currentThread, J9Class *castClass, j9
 			slowPath = (void*)old_slow_jitCheckCastForArrayStore;
 		}
 	}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	else if (J9_IS_J9CLASS_VALUETYPE(castClass)) {
+		slowPath = (void*)old_slow_jitThrowNullPointerException;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	return slowPath;
 }
 

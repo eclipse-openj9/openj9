@@ -236,6 +236,24 @@ public:
 		return acmpResult;
 	}
 
+	static VMINLINE bool
+	isClassRefQtype(J9ConstantPool *ramCP, U_16 cpIndex)
+	{
+		J9ROMStringRef *romStringRef = (J9ROMStringRef *)&ramCP->romConstantPool[cpIndex];
+		J9UTF8 *classNameWrapper = J9ROMSTRINGREF_UTF8DATA(romStringRef);
+		U_16 classNameLength = J9UTF8_LENGTH(classNameWrapper);
+		U_8 *classNameData = J9UTF8_DATA(classNameWrapper);
+		bool rc = false;
+
+		if ((';' == *(char *)(classNameData + (classNameLength - 1)))
+			&& ('Q' == *(char *)classNameData)
+		) {
+			rc = true;
+		}
+
+		return rc;
+	}
+
 };
 
 #endif /* VALUETYPEHELPERS_HPP_ */

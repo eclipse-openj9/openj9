@@ -7667,14 +7667,20 @@ resolve:
 			}
 		}
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		else {
+		else if (VM_ValueTypeHelpers::isClassRefQtype(ramConstantPool, index)) {
+			/* Even though an NPE is going to be thrown the classref must still be resolved because
+			 * its a qtype.
+			 *
+			 * TODO in the future a different type of exception may thrown, spec for this behaviour
+			 * not currently known.
+			 */
 			if (NULL == castClass) {
 				/* Resolve the class and then check again whether it is a value type */
 				goto resolve;
-			} else if (J9_IS_J9CLASS_VALUETYPE(castClass)) {
-				rc = THROW_NPE;
-				goto done;
 			}
+
+			rc = THROW_NPE;
+			goto done;
 		}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		_pc += 3;
