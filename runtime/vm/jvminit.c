@@ -1662,6 +1662,18 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				exit(0);
 			}
 
+			/* -Xlp commandline options parsing */
+			{
+				IDATA xlpExactIndex, xlpSizeIndex;
+				xlpSizeIndex  = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, VMOPT_XLP, NULL);
+				xlpExactIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XLP, NULL);
+
+				/* -Xlp and -Xlp<size> options are deprecated in JDK11+ */
+				if (J2SE_VERSION(vm) >= J2SE_V11 && (xlpSizeIndex != -1 || xlpExactIndex != -1)) {
+					j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_XLP_DEPRECATED);
+				}
+			}
+
 #if defined(J9VM_OPT_SHARED_CLASSES)
 			{
 				IDATA argIndex3, argIndex4, argIndex5, argIndex6, argIndex7, argIndex8;

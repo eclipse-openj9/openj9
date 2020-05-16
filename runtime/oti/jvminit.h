@@ -432,6 +432,7 @@ enum INIT_STAGE {
 #define VMOPT_XXDECOMP_COLON "-XXdecomp:"
 
 #define VMOPT_XLP_CODECACHE "-Xlp:codecache:"
+#define VMOPT_XLP "-Xlp"
 #define VMOPT_XTLHPREFETCH "-XtlhPrefetch"
 
 #define VMOPT_XXALLOWNONVIRTUALCALLS "-XX:+AllowNonVirtualCalls"
