@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,6 +94,151 @@ J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.explanation=AOT code cannot 
 J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
 J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.user_response=Disable JVMPI and JVMTI if you want to use AOT code.
 J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_HEADER_START_SANITY_BIT_MANGLED=Zlyhala valid\u00e1cia hlavi\u010dky AOT; po\u0161koden\u00fd za\u010diato\u010dn\u00fd sanity bit pr\u00edznaku komponentu. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_HEADER_START_SANITY_BIT_MANGLED.explanation=The AOT Header is corrupted.
+J9NLS_RELOCATABLE_CODE_HEADER_START_SANITY_BIT_MANGLED.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_HEADER_START_SANITY_BIT_MANGLED.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_HEADER_START_SANITY_BIT_MANGLED.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED=Zlyhala valid\u00e1cia hlavi\u010dky AOT; po\u0161koden\u00fd koncov\u00fd sanity bit pr\u00edznaku komponentu. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED.explanation=The AOT Header is corrupted.
+J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_SMP_MISMATCH=Nezhoda komponentu SMP. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_SMP_MISMATCH.explanation=The JVM is not running in the same SMP mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_SMP_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_SMP_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_SMP_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH=Nezhoda komponentu Komprimovan\u00e9 referencie. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH.explanation=The JVM is not running in the same compressedrefs mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_DFP_MISMATCH=Nezhoda komponentu DFP. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_DFP_MISMATCH.explanation=The JVM is not running in the same DFP mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_DFP_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_DFP_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_DFP_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH=Nezhoda komponentu Zak\u00e1za\u0165 preru\u0161enia. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH.explanation=The JVM is not running with the same Disable Traps option as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH=Nezhoda komponentu Predv\u00fdber TLH. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH.explanation=The JVM is not running in the same TLH Prefetch mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH=Nezhoda komponentu Trampol\u00edna met\u00f3dy. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.explanation=The JVM is not running in the same Method Trampoline mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_HCR_MISMATCH=Nezhoda komponentu Povolen\u00e9 HCR. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_HCR_MISMATCH.explanation=The JVM is not running in the same HCR mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_HCR_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_HCR_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_HCR_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_SIMD_MISMATCH=Nezhoda komponentu Povolen\u00e9 SIMD. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_SIMD_MISMATCH.explanation=The JVM is not running in the same SIMD mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_SIMD_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_SIMD_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_SIMD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH=Nezhoda komponentu Asynchr\u00f3nna kompil\u00e1cia. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH.explanation=The JVM is not running in the same Async Compilation mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_CS_MISMATCH=Nezhoda komponentu S\u00fabe\u017en\u00e9 \u010distenie. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_CS_MISMATCH.explanation=The JVM is not running in the same Concurrent Scavenge mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_CS_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_CS_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_CS_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH=Nezhoda komponentu Softv\u00e9rov\u00e1 bari\u00e9ra \u010d\u00edtania. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH.explanation=The JVM is not running in the same Software Read Barrier mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_TM_MISMATCH=Nezhoda komponentu TM. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_TM_MISMATCH.explanation=The JVM is not running in the same TM mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_TM_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_TM_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_TM_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH=Nezhoda uzamykacieho slova. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH.explanation=The JVM is not running with the same Lockword as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH=Nezhoda ve\u013ekosti Arraylet. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH.explanation=The JVM is not running with the same Arraylet Size as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH=Nezhoda posunutia komprimovan\u00fdch referenci\u00ed. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.explanation=The JVM is not running with the same Compressedrefs Shift as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+
+J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM=Nezn\u00e1my probl\u00e9m. K\u00f3d AOT v zdie\u013eanej pam\u00e4ti cache pre triedy sa bude ignorova\u0165.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM.explanation=The JVM is not running in the same configuration as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
 J9NLS_JIT_OUT_OF_MEMORY=JIT zlyhalo pri vyhradzovan\u00ed pam\u00e4te

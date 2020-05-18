@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,6 +94,151 @@ J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.explanation=AOT code cannot 
 J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
 J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.user_response=Disable JVMPI and JVMTI if you want to use AOT code.
 J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_HEADER_START_SANITY_BIT_MANGLED=AOT \u30d8\u30c3\u30c0\u30fc\u691c\u8a3c\u304c\u5931\u6557\u3057\u307e\u3057\u305f\u3002\u6a5f\u80fd\u30d5\u30e9\u30b0\u958b\u59cb\u6b63\u5e38\u6027\u30d3\u30c3\u30c8\u304c\u7834\u640d\u3057\u3066\u3044\u307e\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_HEADER_START_SANITY_BIT_MANGLED.explanation=The AOT Header is corrupted.
+J9NLS_RELOCATABLE_CODE_HEADER_START_SANITY_BIT_MANGLED.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_HEADER_START_SANITY_BIT_MANGLED.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_HEADER_START_SANITY_BIT_MANGLED.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED=AOT \u30d8\u30c3\u30c0\u30fc\u691c\u8a3c\u304c\u5931\u6557\u3057\u307e\u3057\u305f\u3002\u6a5f\u80fd\u30d5\u30e9\u30b0\u7d42\u4e86\u6b63\u5e38\u6027\u30d3\u30c3\u30c8\u304c\u7834\u640d\u3057\u3066\u3044\u307e\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED.explanation=The AOT Header is corrupted.
+J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_SMP_MISMATCH=SMP \u6a5f\u80fd\u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_SMP_MISMATCH.explanation=The JVM is not running in the same SMP mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_SMP_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_SMP_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_SMP_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH=Compressed References \u6a5f\u80fd\u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH.explanation=The JVM is not running in the same compressedrefs mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_DFP_MISMATCH=DFP \u6a5f\u80fd\u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_DFP_MISMATCH.explanation=The JVM is not running in the same DFP mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_DFP_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_DFP_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_DFP_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH=Disable Traps \u6a5f\u80fd\u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH.explanation=The JVM is not running with the same Disable Traps option as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH=TLH Prefetch \u6a5f\u80fd\u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH.explanation=The JVM is not running in the same TLH Prefetch mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH=Method Trampoline \u6a5f\u80fd\u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.explanation=The JVM is not running in the same Method Trampoline mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_HCR_MISMATCH=HCR Enabled \u6a5f\u80fd\u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_HCR_MISMATCH.explanation=The JVM is not running in the same HCR mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_HCR_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_HCR_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_HCR_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_SIMD_MISMATCH=SIMD Enabled \u6a5f\u80fd\u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_SIMD_MISMATCH.explanation=The JVM is not running in the same SIMD mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_SIMD_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_SIMD_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_SIMD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH=Async Compilation \u6a5f\u80fd\u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH.explanation=The JVM is not running in the same Async Compilation mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_CS_MISMATCH=Concurrent Scavenge \u6a5f\u80fd\u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_CS_MISMATCH.explanation=The JVM is not running in the same Concurrent Scavenge mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_CS_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_CS_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_CS_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH=Software Read Barrier \u6a5f\u80fd\u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH.explanation=The JVM is not running in the same Software Read Barrier mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_TM_MISMATCH=TM \u6a5f\u80fd\u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_TM_MISMATCH.explanation=The JVM is not running in the same TM mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_TM_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_TM_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_TM_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH=Lockword \u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH.explanation=The JVM is not running with the same Lockword as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH=Arraylet Size \u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH.explanation=The JVM is not running with the same Arraylet Size as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH=Compressedrefs Shift \u306e\u4e0d\u4e00\u81f4\u3067\u3059\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.explanation=The JVM is not running with the same Compressedrefs Shift as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+
+J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM=\u4e0d\u660e\u306a\u554f\u984c\u3002\u5171\u7528\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u5185\u306e AOT \u30b3\u30fc\u30c9\u3092\u7121\u8996\u3057\u307e\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM.explanation=The JVM is not running in the same configuration as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
 J9NLS_JIT_OUT_OF_MEMORY=JIT \u306f\u30e1\u30e2\u30ea\u30fc\u306e\u5272\u308a\u632f\u308a\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002
