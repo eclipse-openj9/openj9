@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1573,7 +1573,7 @@ createJvmInitArgs(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, J9JavaV
 		numArgs = (jint) pool_numElements(vmArgumentsList->pool);
 	}
 
-	memoryRequired = sizeof(J9VMInitArgs) + sizeof(JavaVMInitArgs) + numArgs*(sizeof(JavaVMInitArgs) + numArgs*sizeof(J9CmdLineOption));
+	memoryRequired = sizeof(J9VMInitArgs) + sizeof(JavaVMInitArgs) + (numArgs * (sizeof(JavaVMInitArgs)) + (numArgs * sizeof(J9CmdLineOption *)));
 	argsBuffer = j9mem_allocate_memory(memoryRequired, OMRMEM_CATEGORY_VM);
 	if (NULL == argsBuffer) {
 		return NULL;
