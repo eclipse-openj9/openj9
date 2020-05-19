@@ -59,10 +59,10 @@ struct TR_MethodToBeCompiled
    void initialize(TR::IlGeneratorMethodDetails & details, void *oldStartPC, CompilationPriority p, TR_OptimizationPlan *optimizationPlan);
 
    TR::Monitor *getMonitor() { return _monitor; }
-   TR::IlGeneratorMethodDetails & getMethodDetails(){ return *_methodDetails; }
+   TR::IlGeneratorMethodDetails & getMethodDetails() const { return *_methodDetails; }
    bool isDLTCompile()   { return getMethodDetails().isMethodInProgress(); }
-   bool isCompiled();
-   bool isJNINative();
+   bool isCompiled() const;
+   bool isJNINative() const;
    void acquireSlotMonitor(J9VMThread *vmThread);
    void releaseSlotMonitor(J9VMThread *vmThread);
    void setAotCodeToBeRelocated(const void *m);

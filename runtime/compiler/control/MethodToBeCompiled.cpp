@@ -127,13 +127,13 @@ void TR_MethodToBeCompiled::releaseSlotMonitor(J9VMThread *vmThread)
    }
 
 bool
-TR_MethodToBeCompiled::isCompiled()
+TR_MethodToBeCompiled::isCompiled() const
    {
    return TR::CompilationInfo::isCompiled(getMethodDetails().getMethod());
    }
 
 bool
-TR_MethodToBeCompiled::isJNINative()
+TR_MethodToBeCompiled::isJNINative() const
    {
    return TR::CompilationInfo::isJNINative(getMethodDetails().getMethod());
    }

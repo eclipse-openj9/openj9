@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,16 +71,17 @@ public:
 
    bool    isFunctional() const { return _isFunctional; }
    int32_t getCpuUsage() const { return _cpuUsage; }
+   int32_t getCpuIdle() const { return _cpuIdle; }
    int32_t getVmCpuUsage() const { return _vmCpuUsage; }
    int32_t getAvgCpuUsage() const { return _avgCpuUsage; }
-   int32_t getCpuIdle() const { return _avgCpuIdle; }
+   int32_t getAvgCpuIdle() const { return _avgCpuIdle; }
    int64_t getUptime() const { return _prevMachineUptime; } // in nanoseconds
    int64_t getLastMeasurementInterval() const { return _prevIntervalLength; } // in nanoseconds
    int64_t getVmTotalCpuTime() const { return _prevVmSysTime + _prevVmUserTime; }
    int32_t getCpuUtil(J9JITConfig *jitConfig, J9SysinfoCPUTime *machineCpuStats, j9thread_process_time_t *vmCpuStats);
    int32_t updateCpuUtil(J9JITConfig *jitConfig);
    void    disable() { _isFunctional = false;
-                       _cpuUsage = _vmCpuUsage = _avgCpuUsage = _avgCpuIdle = -1;
+                       _cpuUsage = _cpuIdle = _vmCpuUsage = _avgCpuUsage = _avgCpuIdle = -1;
                        disableCpuUsageCircularBuffer(); }
 
    // Circular Buffer related functions
@@ -94,9 +95,10 @@ public:
 private:
 
    int32_t _cpuUsage;    // percentage of used CPU on the whole machine for the last update interval
+   int32_t _cpuIdle;     // percentage of idle CPU on the whole machine for the last update interval
    int32_t _vmCpuUsage;  // percentage of used CPU by the VM for the last update interval
-   int32_t _avgCpuUsage; // percentage of time each processor is used on average
-   int32_t _avgCpuIdle;  // percentage of time each processor is idle on average
+   int32_t _avgCpuUsage; // percentage of time each processor is used on average (0..100)
+   int32_t _avgCpuIdle;  // percentage of time each processor is idle on average (0..100)
 
    int64_t _prevIntervalLength; // the duration (in ns) of the last update interval
 
