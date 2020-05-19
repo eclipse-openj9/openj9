@@ -305,7 +305,7 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 	uint64_t prevReadObjectBarrierUpdate = 0;
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	while (historyRecord < endRecord) {
-		totalRecordUpdates += (uintptr_t) historyRecord->updates;
+		totalRecordUpdates += historyRecord->updates;
 		uint64_t elapsedMicros = extensions->copyScanRatio.getSpannedMicros(env, historyRecord);
 		double majorUpdates = (double)historyRecord->majorUpdates;
 		double lists = (double)historyRecord->lists / majorUpdates;
