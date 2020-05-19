@@ -544,9 +544,19 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
          if (_queueWeight > _compThreadActivationThresholds[getNumCompThreadsActive()])
             return TR_yes;
          }
+#if defined(J9VM_OPT_JITSERVER)
+      else if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && JITServerHelpers::isServerAvailable())
+         {
+         // For JITClient let's be more agressive with compilation thread activation
+         // because the latencies are larger. Beyond 'numProc-1' we will use the
+         // 'starvation activation schedule', but accelerated (divide those thresholds by 2)
+         if (_queueWeight > (_compThreadActivationThresholdsonStarvation[getNumCompThreadsActive()] >> 1))
+            return TR_yes;
+         }
+#endif /* defined(J9VM_OPT_JITSERVER) */
       else if (_starvationDetected)
          {
-         // comp thread starvation; may activate threads beyond numCpu-1
+         // comp thread starvation; may activate threads beyond 'numCpu-1'
          if (_queueWeight > _compThreadActivationThresholdsonStarvation[getNumCompThreadsActive()])
             return TR_yes;
          }
