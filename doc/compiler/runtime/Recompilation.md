@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2019, 2019 IBM Corp. and others
+Copyright (c) 2019, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,8 +30,8 @@ in this doc.
 # Reasons for recompilation
 
 This section outlines the various reasons for the
-recompilation of a method. Recompilation can either be optional or 
-mandatory. However, since since any compilation is technically not
+recompilation of a method. Recompilation can either be optional or
+mandatory. However, since any compilation is technically not
 mandatory for functional correctness (it exists for performance
 only), both *optional* and *mandatory* in the previous sentence should
 be suffixed with "in order to continue executing the existing compiled
