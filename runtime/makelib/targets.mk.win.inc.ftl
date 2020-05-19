@@ -1,5 +1,5 @@
 <#-- 
-	Copyright (c) 1998, 2019 IBM Corp. and others
+	Copyright (c) 1998, 2020 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -167,6 +167,13 @@ CFLAGS+=-D_CRT_SECURE_NO_WARNINGS
 CXXFLAGS+=-D_CRT_SECURE_NO_WARNINGS
 ifdef USE_CLANG
   CLANG_CXXFLAGS+=-D_CRT_SECURE_NO_WARNINGS
+endif
+
+# We don't want warnings about deprecated POSIX function names
+CFLAGS+=-D_CRT_NONSTDC_NO_WARNINGS
+CXXFLAGS+=-D_CRT_NONSTDC_NO_WARNINGS
+ifdef USE_CLANG
+  CLANG_CFFGLAGS+=-D_CRT_NONSTDC_NO_WARNINGS
 endif
 
 CFLAGS+=-DCRTAPI1=_cdecl -DCRTAPI2=_cdecl -nologo
