@@ -296,7 +296,7 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 	}
 
 	uintptr_t recordCount = 0;
-	uintptr_t totalRecordUpdates = 0;
+	uint64_t totalRecordUpdates = 0;
 	MM_ScavengerCopyScanRatio::UpdateHistory *historyRecord = extensions->copyScanRatio.getHistory(&recordCount);
 	MM_ScavengerCopyScanRatio::UpdateHistory *endRecord = historyRecord + recordCount;
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
@@ -305,7 +305,7 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 	uint64_t prevReadObjectBarrierUpdate = 0;
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	while (historyRecord < endRecord) {
-		totalRecordUpdates += (uintptr_t) historyRecord->updates;
+		totalRecordUpdates += historyRecord->updates;
 		uint64_t elapsedMicros = extensions->copyScanRatio.getSpannedMicros(env, historyRecord);
 		double majorUpdates = (double)historyRecord->majorUpdates;
 		double lists = (double)historyRecord->lists / majorUpdates;
@@ -337,7 +337,7 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 		extensions->scavengerStats._syncStallCount, j9time_hires_delta(0, extensions->scavengerStats._syncStallTime, J9PORT_TIME_DELTA_IN_MICROSECONDS),
 		extensions->scavengerStats._workStallCount, j9time_hires_delta(0, extensions->scavengerStats._workStallTime, J9PORT_TIME_DELTA_IN_MICROSECONDS),
 		extensions->scavengerStats._completeStallCount, j9time_hires_delta(0, extensions->scavengerStats._completeStallTime, J9PORT_TIME_DELTA_IN_MICROSECONDS),
-		extensions->copyScanRatio.getScalingFactor(env), extensions->copyScanRatio.getScalingUpdateCount(), extensions->copyScanRatio.getOverflowCount(), (extensions->scavengerStats._copyScanUpdates -  totalRecordUpdates)
+		extensions->copyScanRatio.getScalingFactor(env), extensions->copyScanRatio.getScalingUpdateCount(), extensions->copyScanRatio.getOverflowCount(), ( (uint64_t) extensions->scavengerStats._copyScanUpdates -  totalRecordUpdates)
 	);
 
 	tgcExtensions->printf("\n");
