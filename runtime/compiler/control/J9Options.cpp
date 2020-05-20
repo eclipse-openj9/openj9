@@ -585,7 +585,7 @@ Options::loadLimitOption(char * option, void * base, TR::OptionTable *entry)
       J9JITConfig * jitConfig = (J9JITConfig*)base;
       PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
       // otherwise, we're processing JIT options
-      j9tty_printf(PORTLIB, "<JIT: loadLimit option should be specified on -Xaot --> '%s'>\n", option);
+      j9tty_printf(PORTLIB, "<JIT: loadLimit/reloCompileLimit option should be specified on -Xaot --> '%s'>\n", option);
       return option;
       //return J9::Options::getDebug()->limitOption(option, base, entry, getJITCmdLineOptions(), true);
       }
@@ -616,7 +616,7 @@ Options::loadLimitfileOption(char * option, void * base, TR::OptionTable *entry)
       J9JITConfig * jitConfig = (J9JITConfig*)base;
       PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
       // otherwise, we're processing JIT options
-      j9tty_printf(PORTLIB, "<JIT: loadLimitfile option should be specified on -Xaot --> '%s'>\n", option);
+      j9tty_printf(PORTLIB, "<JIT: loadLimitfile/reloCompileLimitfile option should be specified on -Xaot --> '%s'>\n", option);
       return option;
       }
    }
@@ -915,6 +915,9 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"regmap",             0, SET_JITCONFIG_RUNTIME_FLAG(J9JIT_CG_REGISTER_MAPS) },
    {"relaxedCompilationLimitsSampleThreshold=", "R<nnn>\tGlobal samples below this threshold means we can use higher compilation limits",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_relaxedCompilationLimitsSampleThreshold, 0, " %d", NOT_IN_SUBSET },
+   {"reloCompileExclude=",           "D\talias of loadExclude", TR::Options::loadLimitOption, 1, 0, "P%s"},
+   {"reloCompileLimit=",             "D\talias of loadLimit", TR::Options::loadLimitOption, 0, 0, "P%s"},
+   {"reloCompileLimitFile=",         "D\talias of loadLimitFile", TR::Options::loadLimitfileOption, 0, 0, "P%s"},
    {"resetCountThreshold=", "R<nnn>\tThe number of global samples which if exceed during a method's sampling interval will cause the method's sampling counter to be incremented by the number of samples in a sampling interval",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_resetCountThreshold, 0, " %d", NOT_IN_SUBSET},
    {"rtlog=",             "L<filename>\twrite verbose run-time output to filename",
