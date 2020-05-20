@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,6 +68,16 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     * @param dataSnippetRegister: Optional, can be used to pass the address of the snippet inside the register.  
     */
    static void generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg, TR::Register *dataSnippetRegister);
+
+   /**
+    * @brief Generates instructions for inlining new/newarray/anewarray
+    *
+    * @param[in] node: node
+    * @param[in]   cg: code generator
+    *
+    * @return register containing allocated object, NULL if inlining is not possible
+    */
+   static TR::Register *VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
