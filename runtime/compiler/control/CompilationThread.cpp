@@ -3859,16 +3859,21 @@ TR::CompilationInfoPerThread::doSuspend()
 J9::J9SegmentCache
 TR::CompilationInfoPerThread::initializeSegmentCache(J9::J9SegmentProvider &segmentProvider)
    {
-   try
+#if defined(J9VM_OPT_JITSERVER)
+   if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() != JITServer::CLIENT)
+#endif /* defined(J9VM_OPT_JITSERVER) */
       {
-      J9::J9SegmentCache segmentCache(1 << 24, segmentProvider);
-      return segmentCache;
-      }
-   catch (const std::bad_alloc &allocationFailure)
-      {
-      if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+      try
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Failed to initialize segment cache of size 1 << 24");
+         J9::J9SegmentCache segmentCache(1 << 24, segmentProvider);
+         return segmentCache;
+         }
+      catch (const std::bad_alloc &allocationFailure)
+         {
+         if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Failed to initialize segment cache of size 1 << 24");
+            }
          }
       }
    try
