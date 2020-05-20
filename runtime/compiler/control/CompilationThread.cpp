@@ -6940,36 +6940,40 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    entry->_doAotLoad = false;
 
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
+   // Determine whether the compilation filters allows me to relocate
+   // Filters should not be applied to out-of-process compilations
+   // because decisions on what needs to be compiled are done at the client
+   //
+   TR_Debug *debug = TR::Options::getDebug();
+   bool canRelocateMethod = true;
+   if (debug && !entry->isOutOfProcessCompReq())
+      {
+      setCompilationShouldBeInterrupted(0); // zero the flag because createResolvedMethod calls
+                                            // acquire/releaseVMaccessIfNeeded and may see the flag set by previous compilation
+      TR_FilterBST *filter = NULL;
+      TR_J9VMBase *fe = TR_J9VMBase::get(_jitConfig, vmThread);
+
+      if (NULL == fe)
+         {
+         throw std::bad_alloc();
+         }
+
+      TR_ResolvedMethod *resolvedMethod = fe->createResolvedMethod(&trMemory, (TR_OpaqueMethodBlock *)method);
+      if (!debug->methodCanBeRelocated(&trMemory, resolvedMethod, filter) ||
+          !debug->methodCanBeCompiled(&trMemory, resolvedMethod, filter))
+         {
+         canRelocateMethod = false;
+         *aotCachedMethod = NULL;
+         entry->_doNotUseAotCodeFromSharedCache = true;
+         }
+      }
+
    if (entry->_methodIsInSharedCache == TR_yes &&    // possible AOT load
        !TR::CompilationInfo::isCompiled(method) &&
        !entry->_doNotUseAotCodeFromSharedCache &&
        !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) &&
        !(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
       {
-      // Determine whether the compilation filters allows me to relocate
-      // Filters should not be applied to out-of-process compilations
-      // because decisions on what needs to be compiled are done at the client
-      //
-      TR_Debug *debug = TR::Options::getDebug();
-      bool canRelocateMethod = true;
-      if (debug && !entry->isOutOfProcessCompReq())
-         {
-         setCompilationShouldBeInterrupted(0); // zero the flag because createResolvedMethod calls
-                                               // acquire/releaseVMaccessIfNeeded and may see the flag set by previous compilation
-         TR_FilterBST *filter = NULL;
-         TR_J9VMBase *fe = TR_J9VMBase::get(_jitConfig, vmThread);
-
-         if (NULL == fe)
-            {
-            throw std::bad_alloc();
-            }
-
-         TR_ResolvedMethod *resolvedMethod = fe->createResolvedMethod(&trMemory, (TR_OpaqueMethodBlock *)method);
-         if (!debug->methodCanBeRelocated(&trMemory, resolvedMethod, filter) ||
-             !debug->methodCanBeCompiled(&trMemory, resolvedMethod, filter))
-            canRelocateMethod = false;
-         }
-
       if (canRelocateMethod && !entry->_oldStartPC)
          {
          // Find the AOT body in the SCC
