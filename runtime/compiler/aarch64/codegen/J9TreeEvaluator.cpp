@@ -668,7 +668,9 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    // 4. Allocate object/array on heap
    genHeapAlloc(node, cg, allocateSize, resultReg, tempReg1, tempReg2, callLabel);
 
-   // TODO 5. Setup HeapAllocSnippet for slowpath
+   // 5. Setup HeapAllocSnippet for slowpath
+   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HeapAllocSnippet(cg, node, callLabel, node->getSymbolReference(), doneLabel);
+   cg->addSnippet(snippet);
 
    // 6. Initialize the allocated memory area with zero
    // TODO selectively initialize necessary slots
