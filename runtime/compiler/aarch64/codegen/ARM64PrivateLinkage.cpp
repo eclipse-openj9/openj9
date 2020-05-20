@@ -678,13 +678,51 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          //
          int32_t initializedLocalsOffsetFromAdjustedJavaSP = alignedFrameSizeIncludingReturnAddress + atlas->getLocalBaseOffset() + firstLocalOffset;
 
-         TR::RealRegister *zeroReg = machine->getRealRegister(TR::RealRegister::RegNum::x10);
-         cursor = loadConstant64(cg(), NULL, 0, zeroReg, cursor);
+         TR::RealRegister *zeroReg = machine->getRealRegister(TR::RealRegister::RegNum::xzr);
+         auto loopCount = numLocalsToBeInitialized / 2;
+         // stp instruction has 7bit immediate offset which is scaled by 8 for 64bit registers.
+         // If the offset to the last 2 slots cleared by stp instruction does not fit in imm7,
+         // we use x10 as base register.
+         const bool isImm7OffsetOverflow = (loopCount > 0) &&
+               !constantIsImm7((initializedLocalsOffsetFromAdjustedJavaSP + (loopCount - 1) * 2 * TR::Compiler->om.sizeofReferenceAddress()) >> 3);
 
-         for (int32_t i = 0; i < numLocalsToBeInitialized; i++, initializedLocalsOffsetFromAdjustedJavaSP += TR::Compiler->om.sizeofReferenceAddress())
+         if (isImm7OffsetOverflow)
             {
-            TR::MemoryReference *localMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, initializedLocalsOffsetFromAdjustedJavaSP, cg());
-            cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, NULL, localMR, zeroReg, cursor);
+            TR::RealRegister *baseReg = machine->getRealRegister(TR::RealRegister::RegNum::x10);
+            // mov x10, javaSP
+            cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::orrx, NULL, baseReg, zeroReg, javaSP, cursor);
+            for (int32_t i = 0; i < loopCount; i++)
+               {
+               if (!constantIsImm7(initializedLocalsOffsetFromAdjustedJavaSP >> 3))
+                  {
+                  // If offset does not fit in imm7, update baseReg and reset offset to 0
+                  cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, NULL, baseReg, baseReg, initializedLocalsOffsetFromAdjustedJavaSP, cursor);
+                  initializedLocalsOffsetFromAdjustedJavaSP = 0;
+                  }
+               TR::MemoryReference *localMR = new (cg()->trHeapMemory()) TR::MemoryReference(baseReg, initializedLocalsOffsetFromAdjustedJavaSP, cg());
+               cursor = generateMemSrc2Instruction(cg(), TR::InstOpCode::stpoffx, NULL, localMR, zeroReg, zeroReg, cursor);
+               initializedLocalsOffsetFromAdjustedJavaSP += (TR::Compiler->om.sizeofReferenceAddress() * 2);
+               }
+            if (numLocalsToBeInitialized % 2)
+               {
+               // clear residue
+               TR::MemoryReference *localMR = new (cg()->trHeapMemory()) TR::MemoryReference(baseReg, initializedLocalsOffsetFromAdjustedJavaSP, cg());
+               cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, NULL, localMR, zeroReg, cursor);
+               }
+            }
+         else
+            {
+            for (int32_t i = 0; i < loopCount; i++, initializedLocalsOffsetFromAdjustedJavaSP += (TR::Compiler->om.sizeofReferenceAddress() * 2))
+               {
+               TR::MemoryReference *localMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, initializedLocalsOffsetFromAdjustedJavaSP, cg());
+               cursor = generateMemSrc2Instruction(cg(), TR::InstOpCode::stpoffx, NULL, localMR, zeroReg, zeroReg, cursor);
+               }
+            if (numLocalsToBeInitialized % 2)
+               {
+               // clear residue
+               TR::MemoryReference *localMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, initializedLocalsOffsetFromAdjustedJavaSP, cg());
+               cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, NULL, localMR, zeroReg, cursor);
+               }
             }
 
          if (atlas->getInternalPointerMap())
