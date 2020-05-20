@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,6 +52,7 @@ public:
    virtual bool canDevirtualizeDispatch() override                       { return true; }
    virtual bool needRelocationsForBodyInfoData() override                { return true; }
    virtual bool needRelocationsForPersistentInfoData() override          { return true; }
+   virtual bool needRelocationsForPersistentProfileInfoData() override   { return true; }
    virtual bool needRelocationsForLookupEvaluationData() override        { return true; }
    virtual bool needRelocationsForCurrentMethodPC() override                     { return true; }
    virtual void markHotField(TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool) override { return; }
@@ -246,6 +247,7 @@ public:
    virtual bool       needRelocationsForLookupEvaluationData() override        { return true; }
    virtual bool       needRelocationsForBodyInfoData() override                { return true; }
    virtual bool       needRelocationsForPersistentInfoData() override          { return true; }
+   virtual bool       needRelocationsForPersistentProfileInfoData() override   { return true; }
    virtual bool       forceUnresolvedDispatch() override                       { return true; }
    virtual bool       nopsAlsoProcessedByRelocations() override                { return true; }
    virtual bool       supportsGuardMerging() override                          { return false; }

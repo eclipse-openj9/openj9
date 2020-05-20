@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,6 +83,7 @@ class TR_PersistentMethodInfo
    friend class TR_DebugExt;
    friend class TR::DefaultCompilationStrategy;
    friend class TR::ThresholdCompilationStrategy;
+   friend class TR_RelocationRuntime;
 
    public:
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentMethodInfo);
