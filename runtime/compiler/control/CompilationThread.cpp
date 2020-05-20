@@ -544,9 +544,19 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
          if (_queueWeight > _compThreadActivationThresholds[getNumCompThreadsActive()])
             return TR_yes;
          }
+#if defined(J9VM_OPT_JITSERVER)
+      else if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && JITServerHelpers::isServerAvailable())
+         {
+         // For JITClient let's be more agressive with compilation thread activation
+         // because the latencies are larger. Beyond 'numProc-1' we will use the
+         // 'starvation activation schedule', but accelerated (divide those thresholds by 2)
+         if (_queueWeight > (_compThreadActivationThresholdsonStarvation[getNumCompThreadsActive()] >> 1))
+            return TR_yes;
+         }
+#endif /* defined(J9VM_OPT_JITSERVER) */
       else if (_starvationDetected)
          {
-         // comp thread starvation; may activate threads beyond numCpu-1
+         // comp thread starvation; may activate threads beyond 'numCpu-1'
          if (_queueWeight > _compThreadActivationThresholdsonStarvation[getNumCompThreadsActive()])
             return TR_yes;
          }
@@ -1270,7 +1280,7 @@ TR_YesNoMaybe TR::CompilationInfo::detectCompThreadStarvation()
    // The following is just an approximation because we look at idle
    // cyles on the entire machine
    if (getCpuUtil()->isFunctional() &&
-      getCpuUtil()->getCpuIdle() > 5 && // This is for the entire machine
+      getCpuUtil()->getAvgCpuIdle() > 5 && // This is for the entire machine
       getCpuUtil()->getVmCpuUsage() + 10 < getJvmCpuEntitlement()) // at least 10% unutilized by this JVM
       return TR_no;
 
@@ -1728,7 +1738,7 @@ bool TR::CompilationInfo::canProcessLowPriorityRequest()
        _jitConfig->javaVM->phase == J9VM_PHASE_NOT_STARTUP) // ConcurrentLPQ is too damaging to startup
       {
       if ((getCpuUtil() && getCpuUtil()->isFunctional() &&
-         getCpuUtil()->getCpuIdle() > idleThreshold() && // enough idle time
+         getCpuUtil()->getAvgCpuIdle() > idleThreshold() && // enough idle time
          getJvmCpuEntitlement() - getCpuUtil()->getVmCpuUsage() >= 200)) // at least 2 cpus should be not utilized
          return true;
       // Fall through the next case where we allow LPQ if the JVM leaves 50% of a CPU
@@ -1745,7 +1755,7 @@ bool TR::CompilationInfo::canProcessLowPriorityRequest()
          return false;
       }
    return (getCpuUtil() && getCpuUtil()->isFunctional() &&
-      getCpuUtil()->getCpuIdle() > idleThreshold() && // enough idle time
+      getCpuUtil()->getAvgCpuIdle() > idleThreshold() && // enough idle time
            getJvmCpuEntitlement() - getCpuUtil()->getVmCpuUsage() > 50); // at least half a processor should be empty
    }
 
@@ -6886,26 +6896,116 @@ TR::CompilationInfoPerThreadBase::isMethodIneligibleForAot(J9Method *method)
    }
 
 #if defined(J9VM_OPT_JITSERVER)
+
+bool
+TR::CompilationInfoPerThreadBase::isMemoryCheapCompilation(uint32_t bcsz, TR_Hotness optLevel)
+   {
+   if (optLevel > warm)
+      {
+      return false;
+      }
+   if (optLevel == warm && bcsz > 6) // For bcsz >= 7, scratch_mem can reach 7.5 MB which is deemed too much
+      {
+      return false;
+      }
+   // Look at the available resources and decide whether we can afford a local compilation
+   // Ideally, we should consider network latency too, but that is too complicated
+   //
+   bool incompleteInfo = true;
+   uint64_t freePhysicalMemorySizeB = _compInfo.computeAndCacheFreePhysicalMemory(incompleteInfo);
+   // If memory information is not available, perform all compilations remotely for safety
+   if (freePhysicalMemorySizeB == OMRPORT_MEMINFO_NOT_AVAILABLE || incompleteInfo)
+      {
+      return false;
+      }
+   // For very small amounts of free memory, send everything remotely
+   if (freePhysicalMemorySizeB < 10 * 1024 * 1024)
+      {
+      return false;
+      }
+   if (freePhysicalMemorySizeB < 20 * 1024 * 1024) // 10MB <= freeMem < 20MB
+      {
+      // Very small methods at cold (expected to take 1MB max)
+      return (optLevel <= cold) && (bcsz <= 4); 
+      }
+   if (freePhysicalMemorySizeB < 100 * 1024 * 1024) // 20MB <= freeMem < 100MB
+      {
+      // All methods at noOpt, very small methods at cold/warm and medium sized methods at cold (expected to take 2.5MB max)
+      return (optLevel < cold) || (bcsz <= 4) || (optLevel == cold && bcsz <= 31);
+      }
+   // freeMem >= 100MB
+   // All methods at noOpt/cold and small methods at warm (expected to take 6MB max)
+   return true; // Large methods at warm have already been filtered out above
+   }
+
+bool
+TR::CompilationInfoPerThreadBase::isCPUCheapCompilation(uint32_t bcsz, TR_Hotness optLevel)
+   {
+   double cpuEntitlement = _compInfo.getJvmCpuEntitlement();
+   if (cpuEntitlement < 100.0)
+      {
+      return false;
+      }
+   if (cpuEntitlement < 150.0) // [100, 150)
+      {
+      // Keep local some noOpt/cold compilations
+      if (optLevel >= warm || bcsz >= 32)
+         {
+         return false;
+         }
+      if (bcsz <= 7)  // Small methods at noOpt/cold should be local
+         {
+         return true;
+         }
+      // If we have CPU available we could keep local even medium sized cold compilations
+      CpuUtilization *cpuUtil = _compInfo.getCpuUtil();
+      if (cpuUtil->isFunctional() && 
+          _compInfo.getPersistentInfo()->getElapsedTime() >= TR::Options::_classLoadingPhaseInterval && // For first 0.5 sec we don't have valid data
+          cpuUtil->getCpuIdle() >= 15 && // There is idle CPU to use
+          cpuUtil->getVmCpuUsage() + 15 <= cpuEntitlement) // I am allowed to use 15% more CPU
+         return true;
+      else
+         return false;
+      }
+   if (cpuEntitlement < 350.0) // [150, 350)
+      {
+      // Medium sized methods at noOpt/cold
+      return (optLevel <= cold) && (bcsz <= 31); 
+      }
+
+   // CPU Entitlement >= 350%
+   // All noOpt/cold methods and small warm methods
+   return (optLevel <= cold) || (bcsz <= 5);
+   }
+
 bool
 TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeCompiled *entry)
    {
-   bool doLocalComp = false;
-   static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
-   // Perform all AOT compilations remotely.
-   // As a heuristic, cold compilations should be performed locally because
-   // they are supposed to be cheap with respect to memory and CPU.
-   //
-   if (!entry->_useAotCompilation && entry->_optimizationPlan->getOptLevel() <= cold &&
-      (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITServerHeuristics) || localColdCompilations) ||
-      !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
-      (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))))
-      doLocalComp = true;
+   // As a heuristic, cold compilations could be performed locally because
+   // they are supposed to be cheap with respect to memory and CPU, but
+   // only if we think we have enough resources
+   if (!JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
+       (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))))
+       return true; // I really cannot do a remote compilation
 
    // Do a local compile because the Power codegen is missing some FieldWatch relocation support.
    if (TR::Compiler->target.cpu.isPower() && _jitConfig->inlineFieldWatches)
-      doLocalComp = true;
+      return true;
 
-   return doLocalComp;
+   // AOT compilations are expensive, so don't keep them local
+   if (entry->_useAotCompilation)
+      return false;
+
+   // Only do local compilations if the options indicate so
+   static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_EnableJITServerHeuristics) &&  !localColdCompilations)
+      return false;
+
+   TR_Hotness optLevel = entry->_optimizationPlan->getOptLevel();
+   J9Method *method = entry->getMethodDetails().getMethod();
+   uint32_t bcsz = TR::CompilationInfo::getMethodBytecodeSize(method);
+  
+   return (isMemoryCheapCompilation(bcsz, optLevel) && isCPUCheapCompilation(bcsz, optLevel));
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
