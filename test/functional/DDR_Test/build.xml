@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright (c) 2018, 2019 IBM Corp. and others
+Copyright (c) 2018, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,13 +99,21 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<target name="build" >
 		<echo>os.name: ${os.name}</echo>
 		<if>
-			<available file="${j9ddr}" />
+			<or>
+				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="openj9" />
+  			</or>
 			<then>
-				<antcall target="clean" inheritall="true" />
+				<if>
+					<available file="${j9ddr}" />
+					<then>
+						<antcall target="clean" inheritall="true" />
+					</then>
+					<else>
+						<fail  message="File '${j9ddr}' not found; assuming JDK '${TEST_JDK_HOME}' does not support DDR."/>
+					</else>
+				</if>
 			</then>
-			<else>
-				<echo>File '${j9ddr}' not found; assuming JDK '${TEST_JDK_HOME}' does not support DDR.</echo>
-			</else>
 		</if>
 	</target>
 </project>
