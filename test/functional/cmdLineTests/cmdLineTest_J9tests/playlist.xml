@@ -24,6 +24,28 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<test>
+		<testCaseName>cmdLineTest_J9test_common</testCaseName>
+		<command>$(JAVA_COMMAND) -Xdump $(JVM_OPTIONS) -DFIBJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
+	-DJARPATH=$(Q)$(TEST_RESROOT)$(D)cmdLineTest_J9tests.jar$(Q) \
+	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) \
+	-Xint -jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)j9tests_Java_common.xml$(Q) \
+	-xids all,$(PLATFORM) -plats all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)j9tests_exclude.xml$(Q) \
+	-explainExcludes -nonZeroExitWhenError; \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+
+	<test>
 		<testCaseName>cmdLineTest_J9test_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) -Xdump $(JVM_OPTIONS) -DFIBJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-DJARPATH=$(Q)$(TEST_RESROOT)$(D)cmdLineTest_J9tests.jar$(Q) \
