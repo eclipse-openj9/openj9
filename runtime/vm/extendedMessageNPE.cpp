@@ -22,9 +22,224 @@
 
 #include "cfreader.h"
 #include "stackwalk.h"
+#include "util_api.h"
 #include "ut_j9vm.h"
 
 extern "C" {
+
+static char* convertToJavaFullyQualifiedName(J9VMThread *vmThread, J9UTF8 *fullyQualifiedNameUTF);
+static char* convertMethodSignature(J9VMThread *vmThread, J9UTF8 *methodSig);
+
+
+/**
+ * Replace '/' with '.' for an internal fully qualified name
+ *
+ * The caller is responsible for freeing the returned string.
+ *
+ * @param[in] vmThread current J9VMThread
+ * @param[in] fullyQualifiedNameUTF pointer to J9UTF8 containing the fully qualified name
+ *
+ * @return a char pointer to the fully qualified name,
+ *         NULL if not successful, but keep application exception instead of throwing OOM.
+ */
+static char*
+convertToJavaFullyQualifiedName(J9VMThread *vmThread, J9UTF8 *fullyQualifiedNameUTF)
+{
+	PORT_ACCESS_FROM_VMC(vmThread);
+	UDATA length = J9UTF8_LENGTH(fullyQualifiedNameUTF);
+	char *result =  (char *)j9mem_allocate_memory(length + 1, OMRMEM_CATEGORY_VM);
+
+	if (NULL != result) {
+		char *cursor = result;
+		char *end = result + length;
+
+		memcpy(result, J9UTF8_DATA(fullyQualifiedNameUTF), length);
+		while (cursor < end) {
+			if ('/' == *cursor) {
+				*cursor = '.';
+			}
+			cursor += 1;
+		}
+		*end = '\0';
+	}
+
+	Trc_VM_ConvertToJavaFullyQualifiedName_Get_ClassName(vmThread, result, length, fullyQualifiedNameUTF);
+
+	return result;
+}
+
+/**
+ * Convert a signature string
+ * from
+ *  ([[[Ljava/lang/String;Ljava/lang/Void;BLjava/lang/String;ICDFJLjava/lang/Object;SZ)Ljava/lang/String;
+ * to
+ * (java.lang.String[][][], java.lang.Void, byte, java.lang.String, int, char, double, float, long, java.lang.Object, short, boolean)
+ *
+ * Note:
+ * The return type is ignored.
+ * Assuming the method signature is well formed.
+ * The caller is responsible for freeing the returned string.
+ *
+ * @param[in] vmThread current J9VMThread
+ * @param[in] methodSig pointer to J9UTF8 containing the method signature
+ *
+ * @return a char pointer to the class name within fullQualifiedUTF,
+ *         NULL if not successful, but keep application exception instead of OOM.
+ */
+static char*
+convertMethodSignature(J9VMThread *vmThread, J9UTF8 *methodSig)
+{
+	UDATA i = 0;
+	UDATA j = 0;
+	U_8 *string = J9UTF8_DATA(methodSig);
+	UDATA stringLength = J9UTF8_LENGTH(methodSig);
+	UDATA bufferSize = 0;
+	char *result = NULL;
+
+	PORT_ACCESS_FROM_VMC(vmThread);
+
+	/* first scan to calculate the buffer size required */
+	/* first character is '(' */
+	bufferSize += 1;
+	for (i = 1; (')' != string[i]); i++) {
+		UDATA arity = 0;
+		while ('[' == string[i]) {
+			arity += 1;
+			i += 1;
+		}
+		switch (string[i]) {
+		case 'B': /* FALLTHROUGH */
+		case 'C': /* FALLTHROUGH */
+		case 'J':
+			/* byte, char, long */
+			bufferSize += 4;
+			break;
+		case 'D':
+			/* double */
+			bufferSize += 6;
+			break;
+		case 'F': /* FALLTHROUGH */
+		case 'S':
+			/* float, short */
+			bufferSize += 5;
+			break;
+		case 'I':
+			/* int */
+			bufferSize += 3;
+			break;
+		case 'L': {
+			i += 1;
+			UDATA objSize = 0;
+			while (';' != string[i]) {
+				objSize += 1;
+				i += 1;
+			}
+			bufferSize += objSize;
+			break;
+		}
+		case 'Z':
+			/* boolean */
+			bufferSize += 7;
+			break;
+		default:
+			Trc_VM_ConvertMethodSignature_Malformed_Signature(vmThread, stringLength, string, i);
+			break;
+		}
+		bufferSize += (2 * arity);
+		if (')' != string[i + 1]) {
+			/* ", " */
+			bufferSize += 2;
+		}
+	}
+	/* ')' and the extra byte for '\0' */
+	bufferSize += 2;
+	Trc_VM_ConvertMethodSignature_Signature_BufferSize(vmThread, stringLength, string, bufferSize);
+	result = (char *)j9mem_allocate_memory(bufferSize, OMRMEM_CATEGORY_VM);
+	if (NULL != result) {
+		char *cursor = result;
+		UDATA availableSize = bufferSize;
+
+		memset(result, 0, bufferSize);
+		/* first character is '(' */
+		j9str_printf(PORTLIB, cursor, availableSize, "(");
+		cursor += 1;
+		availableSize -= 1;
+		for (i = 1; (')' != string[i]); i++) {
+			UDATA arity = 0;
+			while ('[' == string[i]) {
+				arity += 1;
+				i += 1;
+			}
+			const char *elementType = NULL;
+			if ('L' == string[i]) {
+				i += 1;
+
+				UDATA objSize = 0;
+				while (';' != string[i]) {
+					*cursor = string[i];
+					if ('/' == string[i]) {
+						*cursor = '.';
+					}
+					objSize += 1;
+					cursor += 1;
+					i += 1;
+				}
+				availableSize -= objSize;
+			} else {
+				switch (string[i]) {
+				case 'B':
+					elementType = "byte";
+					break;
+				case 'C':
+					elementType = "char";
+					break;
+				case 'D':
+					elementType = "double";
+					break;
+				case 'F':
+					elementType = "float";
+					break;
+				case 'I':
+					elementType = "int";
+					break;
+				case 'J':
+					elementType = "long";
+					break;
+				case 'S':
+					elementType = "short";
+					break;
+				case 'Z':
+					elementType = "boolean";
+					break;
+				default:
+					Trc_VM_ConvertMethodSignature_Malformed_Signature(vmThread, stringLength, string, i);
+					break;
+				}
+				UDATA elementLength = strlen(elementType);
+				j9str_printf(PORTLIB, cursor, availableSize, elementType);
+				cursor += elementLength;
+				availableSize -= elementLength;
+			}
+			for(j = 0; j < arity; j++) {
+				j9str_printf(PORTLIB, cursor, availableSize, "[]");
+				cursor += 2;
+				availableSize -= 2;
+			}
+
+			if (')' != string[i + 1]) {
+				j9str_printf(PORTLIB, cursor, availableSize, ", ");
+				cursor += 2;
+				availableSize -= 2;
+			}
+		}
+		j9str_printf(PORTLIB, cursor, availableSize, ")");
+	} else {
+		bufferSize = 0;
+	}
+	Trc_VM_ConvertMethodSignature_Signature_Result(vmThread, result, bufferSize);
+
+	return result;
+}
 
 char*
 getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romClass, const char *npeCauseMsg)
@@ -124,17 +339,17 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 			if (J9CPTYPE_FIELD == cpType) {
 				J9ROMConstantPoolItem *constantPool = J9_ROM_CP_FROM_ROM_CLASS(romClass);
 				J9ROMConstantPoolItem *cpItem = constantPool + index;
-				J9ROMNameAndSignature *nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE((J9ROMFieldRef *) cpItem);
-				J9UTF8 *name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
+				J9ROMNameAndSignature *fieldNameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE((J9ROMFieldRef *)cpItem);
+				J9UTF8 *fieldName = J9ROMNAMEANDSIGNATURE_NAME(fieldNameAndSig);
 
 				if (JBputfield == bcCurrent) {
-					msgTemplate = "Cannot assign field \"%2$.*1$s\"";
+					msgTemplate = "Cannot assign field \"%.*s\"";
 				} else {
-					msgTemplate = "Cannot read field \"%2$.*1$s\"";
+					msgTemplate = "Cannot read field \"%.*s\"";
 				}
-				msgLen = j9str_printf(PORTLIB, NULL, 0, msgTemplate, J9UTF8_LENGTH(name), J9UTF8_DATA(name));
+				msgLen = j9str_printf(PORTLIB, NULL, 0, msgTemplate, J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
 				npeMsg = (char *)j9mem_allocate_memory(msgLen + 1, OMRMEM_CATEGORY_VM);
-				j9str_printf(PORTLIB, npeMsg, msgLen, msgTemplate, J9UTF8_LENGTH(name), J9UTF8_DATA(name));
+				j9str_printf(PORTLIB, npeMsg, msgLen, msgTemplate, J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
 			} else {
 				Trc_VM_GetCompleteNPEMessage_UnexpectedCPType(vmThread, cpType, bcCurrent);
 			}
@@ -145,9 +360,7 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 		case JBinvokeinterface2: /* FALLTHROUGH */
 		case JBinvokeinterface: /* FALLTHROUGH */
 		case JBinvokespecial: /* FALLTHROUGH */
-		case JBinvokedynamic: /* FALLTHROUGH */
-		case JBinvokevirtual: /* FALLTHROUGH */
-		case JBinvokestatic: {
+		case JBinvokevirtual: {
 			U_16 index = 0;
 			J9ROMConstantPoolItem *constantPool = J9_ROM_CP_FROM_ROM_CLASS(romClass);
 
@@ -159,19 +372,23 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 			Trc_VM_GetCompleteNPEMessage_Invoke_Index(vmThread, index);
 
 			J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)&constantPool[index];
-			J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-			J9UTF8 *sig = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
-			J9UTF8 *name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
-			const char *VM_NPE_INVOKEMETHOD = "Cannot invoke \"%2$.*1$s.%4$.*3$s%6$.*5$s\"";
-			J9UTF8 *definingUTF = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&constantPool[romMethodRef->classRefCPIndex]);
+			J9ROMNameAndSignature *methodNameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
+			J9UTF8 *methodName = J9ROMNAMEANDSIGNATURE_NAME(methodNameAndSig);
+			const char *VM_NPE_INVOKEMETHOD = "Cannot invoke \"%s.%.*s%s\"";
 
-			msgLen = j9str_printf(PORTLIB, NULL, 0, VM_NPE_INVOKEMETHOD,
-				J9UTF8_LENGTH(definingUTF), J9UTF8_DATA(definingUTF),
-				J9UTF8_LENGTH(name), J9UTF8_DATA(name), J9UTF8_LENGTH(sig), J9UTF8_DATA(sig));
-			npeMsg = (char *)j9mem_allocate_memory(msgLen + 1, OMRMEM_CATEGORY_VM);
-			j9str_printf(PORTLIB, npeMsg, msgLen, VM_NPE_INVOKEMETHOD,
-				J9UTF8_LENGTH(definingUTF), J9UTF8_DATA(definingUTF),
-				J9UTF8_LENGTH(name), J9UTF8_DATA(name), J9UTF8_LENGTH(sig), J9UTF8_DATA(sig));
+			J9UTF8 *definingClassFullQualifiedName = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&constantPool[romMethodRef->classRefCPIndex]);
+			char *fullyQualifiedDefiningClassName = convertToJavaFullyQualifiedName(vmThread, definingClassFullQualifiedName);
+			char *methodSigParameters = convertMethodSignature(vmThread, J9ROMNAMEANDSIGNATURE_SIGNATURE(methodNameAndSig));
+
+			if ((NULL != definingClassFullQualifiedName) && (NULL != methodSigParameters)) {
+				msgLen = j9str_printf(PORTLIB, NULL, 0, VM_NPE_INVOKEMETHOD,
+					fullyQualifiedDefiningClassName, J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName), methodSigParameters);
+				npeMsg = (char *)j9mem_allocate_memory(msgLen + 1, OMRMEM_CATEGORY_VM);
+				j9str_printf(PORTLIB, npeMsg, msgLen, VM_NPE_INVOKEMETHOD,
+					fullyQualifiedDefiningClassName, J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName), methodSigParameters);
+			}
+			j9mem_free_memory(fullyQualifiedDefiningClassName);
+			j9mem_free_memory(methodSigParameters);
 			break;
 		}
 		default:

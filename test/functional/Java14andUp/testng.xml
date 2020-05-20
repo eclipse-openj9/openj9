@@ -35,4 +35,9 @@
             <class name="org.openj9.test.java.lang.Test_Thread"/>
         </classes>
     </test>
+    <test name="JEP358NPEMessageTests">
+        <classes>
+            <class name="org.openj9.test.jep358.NPEMessageTests" />
+        </classes>
+    </test>
 </suite>
