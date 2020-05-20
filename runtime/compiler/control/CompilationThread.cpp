@@ -7020,7 +7020,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                   // If we can not inflate the method data, JIT compile the method.
                   canRelocateMethod = false;
                   *aotCachedMethod = NULL;
-                  entry->_doNotUseAotCodeFromSharedCache = false;
+                  entry->_doNotUseAotCodeFromSharedCache = true;
                   }
                else
                   {
