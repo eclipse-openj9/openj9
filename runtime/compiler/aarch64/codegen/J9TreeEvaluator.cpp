@@ -564,7 +564,71 @@ static void
 genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, uint32_t allocSize, TR::Register *resultReg, TR::Register *heapTopReg,
    TR::Register *tempReg, TR::LabelSymbol *callLabel)
    {
-   TR_UNIMPLEMENTED();
+   TR::Register *metaReg = cg->getMethodMetaDataRegister();
+
+   uint32_t maxSafeSize = cg->getMaxObjectSizeGuaranteedNotToOverflow();
+
+   static_assert(offsetof(J9VMThread, heapAlloc) < 32760, "Expecting offset to heapAlloc fits in imm12");
+   static_assert(offsetof(J9VMThread, heapTop) < 32760, "Expecting offset to heapTop fits in imm12");
+
+   /*
+    * Instructions for allocating heap for `new`.
+    *
+    * ldrimmx  resultReg, [metaReg, offsetToHeapAlloc]
+    * ldrimmx  heapTopReg, [metaReg, offsetToHeapTop]
+    * addsimmx tempReg, resutlReg, #allocSize
+    * # check for address wrap-around if necessary
+    * b.cc     callLabel
+    * # check for overflow
+    * cmp      tempReg, heapTopReg
+    * b.gt     callLabel
+    * # write back heapAlloc
+    * strimmx  tempReg, [metaReg, offsetToHeapAlloc]
+    *
+    */
+
+   // Load the base of the next available heap storage.
+   generateTrg1MemInstruction(cg,TR::InstOpCode::ldrimmx, node, resultReg,
+         new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapAlloc), cg));
+   // Load the heap top
+   generateTrg1MemInstruction(cg,TR::InstOpCode::ldrimmx, node, heapTopReg,
+            new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapTop), cg));
+
+   // Calculate the after-allocation heapAlloc: if the size is huge,
+   // we need to check address wrap-around also. This is unsigned
+   // integer arithmetic, checking carry bit is enough to detect it.
+   const bool isAllocSizeInReg = !constantIsUnsignedImm12(allocSize);
+   const bool isWithinMaxSafeSize = allocSize <= maxSafeSize;
+   if (isAllocSizeInReg)
+      {
+      loadConstant64(cg, node, allocSize, tempReg);
+      generateTrg1Src2Instruction(cg, isWithinMaxSafeSize ? TR::InstOpCode::addx : TR::InstOpCode::addsx,
+                  node, tempReg, resultReg, tempReg);
+      }
+   else
+      {
+      generateTrg1Src1ImmInstruction(cg, isWithinMaxSafeSize ? TR::InstOpCode::addimmx : TR::InstOpCode::addsimmx,
+                  node, tempReg, resultReg, allocSize);
+      }
+   if (!isWithinMaxSafeSize)
+      {
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_CC);
+      }
+
+   // Ok, tempReg now points to where the object will end on the TLH.
+   // resultReg will contain the start of the object where we'll write out our
+   // J9Class*. Should look like this in memory:
+   // [heapAlloc == resultReg] ... tempReg ...//... heapTopReg.
+
+   //Here we check if we overflow the TLH Heap Top
+   //branch to heapAlloc Snippet if we overflow (ie callLabel).
+   generateCompareInstruction(cg, node, tempReg, heapTopReg, true);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_GT);
+
+   //Done, write back to heapAlloc here.
+   generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node,
+         new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapAlloc), cg), tempReg);
+
    }
 
 /**
