@@ -559,11 +559,12 @@ J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
  * @param[in] resultReg:  the register that contains allocated heap address
  * @param[in] heapTopReg: temporary register 1
  * @param[in] tempReg:    temporary register 2
+ * @param[in] conditions: dependency conditions
  * @param[in] callLabel:  label to call when allocation fails
  */
 static void
 genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, uint32_t allocSize, TR::Register *resultReg, TR::Register *heapTopReg,
-   TR::Register *tempReg, TR::LabelSymbol *callLabel)
+   TR::Register *tempReg, TR::RegisterDependencyConditions *conditions, TR::LabelSymbol *callLabel)
    {
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
 
@@ -613,7 +614,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, uint32_t allocSize, TR::Regi
       }
    if (!isWithinMaxSafeSize)
       {
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_CC);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_CC, conditions);
       }
 
    // Ok, tempReg now points to where the object will end on the TLH.
@@ -624,7 +625,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, uint32_t allocSize, TR::Regi
    //Here we check if we overflow the TLH Heap Top
    //branch to heapAlloc Snippet if we overflow (ie callLabel).
    generateCompareInstruction(cg, node, tempReg, heapTopReg, true);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_GT);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_GT, conditions);
 
    //Done, write back to heapAlloc here.
    generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node,
@@ -720,6 +721,86 @@ genZeroInitObject(TR::Node *node, TR::CodeGenerator *cg, uint32_t objectSize, ui
    }
 
 /**
+ * @brief Generates instructions for initializing Object header for new/newarray/anewarray
+ *
+ * @param[in] node:       node
+ * @param[in] cg:         code generator
+ * @param[in] clazz:      class pointer to store in the object header
+ * @param[in] objectReg:  the register that holds object address
+ * @param[in] classReg:   the register that holds class
+ * @param[in] tempReg1:   temporary register 1
+ */
+static void
+genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *clazz, TR::Register *objectReg, TR::Register *classReg, TR::Register *tempReg1)
+   {
+   TR_ASSERT(clazz, "Cannot have a null OpaqueClassBlock\n");
+   TR::Register * clzReg = classReg;
+
+   // For newarray/anewarray, classReg holds the class pointer of array elements
+   // Prepare valid class pointer for arrays
+   if (node->getOpCodeValue() != TR::New)
+      {
+      loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(clazz), tempReg1, NULL, true, TR_ClassPointer);
+      clzReg = tempReg1;
+      }
+
+   // Store the class
+   generateMemSrc1Instruction(cg, TR::Compiler->om.generateCompressedObjectHeaders() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
+      node, new (cg->trHeapMemory()) TR::MemoryReference(objectReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), clzReg);
+   }
+
+/**
+ * @brief Generates instructions for initializing array header for newarray/anewarray
+ *
+ * @param[in] node:       node
+ * @param[in] cg:         code generator
+ * @param[in] clazz:      class pointer to store in the object header
+ * @param[in] objectReg:  the register that holds object address
+ * @param[in] classReg:   the register that holds class
+ * @param[in] sizeReg:    the register that holds array length.
+ * @param[in] zeroReg:    the register whose value is zero
+ * @param[in] tempReg1:   temporary register 1
+ */
+static void
+genInitArrayHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *clazz, TR::Register *objectReg, TR::Register *classReg, TR::Register *sizeReg, TR::Register *zeroReg, TR::Register *tempReg1)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
+
+   genInitObjectHeader(node, cg, clazz, objectReg, classReg, tempReg1);
+   if (node->getFirstChild()->getOpCode().isLoadConst() && (node->getFirstChild()->getInt() == 0))
+      {
+      // constant zero length array
+      // Zero length arrays are discontiguous (i.e. they also need the discontiguous length field to be 0) because
+      // they are indistinguishable from non-zero length discontiguous arrays
+      if (TR::Compiler->om.generateCompressedObjectHeaders())
+         {
+         // `mustBeZero` and `size` field of J9IndexableObjectDiscontiguousCompressed must be cleared.
+         // We cannot use `strimmx` in this case because offset would be 4 bytes, which cannot be encoded as imm12 of `strimmx`.
+         generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
+                                    new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField() - 4, cg),
+                                    zeroReg);
+         generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
+                                    new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg),
+                                    zeroReg);
+         }
+      else
+         {
+         // `strimmx` can be used as offset is 8 bytes.
+         generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node,
+                                    new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField() - 4, cg),
+                                    zeroReg);
+         }
+      }
+   else
+      {
+      // Store the array size
+      generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
+                                  new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfContiguousArraySizeField(), cg),
+                                  sizeReg);
+      }
+   }
+
+/**
  * @brief Generates instructions for inlining new/newarray/anewarray
  *        The limitation of the current implementation:
  *          - supports `new` only
@@ -763,6 +844,11 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    int32_t objectSize = comp->canAllocateInline(node, clazz);
    if (objectSize < 0)
       return NULL;
+   const bool isVariableLength = (objectSize == 0);
+
+   // TODO: Support variable sized allocation
+   if (isVariableLength)
+      return NULL;
 
    static long count = 0;
    if (!performTransformation(comp, "O^O <%3d> Inlining Allocation of %s [0x%p].\n", count++, node->getOpCode().getName(), node))
@@ -771,20 +857,41 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Instruction *firstInstruction = cg->getAppendInstruction();
 
    // 1. Evaluate children
-   int32_t headerOffset;
+   int32_t headerSize;
    TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = NULL;
+   int32_t elementSize = 0;
+   bool isArrayNew = false;
    TR::Register *classReg = NULL;
+   TR::Register *lengthReg = NULL;
    TR::ILOpCodes opCode = node->getOpCodeValue();
    if (opCode == TR::New)
       {
       // classReg is passed to the VM helper on the slow path and subsequently clobbered; copy it for later nodes if necessary
       classReg = cg->gprClobberEvaluate(firstChild);
-      headerOffset = TR::Compiler->om.objectHeaderSizeInBytes();
+      headerSize = TR::Compiler->om.objectHeaderSizeInBytes();
+      lengthReg = cg->allocateRegister();
       }
    else
       {
-      // TODO newarray/anewarray
-      TR_UNIMPLEMENTED();
+      if (node->getOpCodeValue() == TR::newarray)
+         {
+         elementSize = TR::Compiler->om.getSizeOfArrayElement(node);
+         }
+      else
+         {
+         // Must be TR::anewarray
+         //
+         TR_UNIMPLEMENTED();
+         }
+      // If the array cannot be allocated as a contiguous array, then comp->canAllocateInline should have returned -1.
+      // The only exception is when the array length is 0.
+      headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+      isArrayNew = true;
+      lengthReg = cg->evaluate(firstChild);
+      secondChild = node->getSecondChild();
+      // classReg is passed to the VM helper on the slow path and subsequently clobbered; copy it for later nodes if necessary
+      classReg = cg->gprClobberEvaluate(secondChild);
       }
 
    // 2. Calculate allocation size
@@ -798,22 +905,37 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::LabelSymbol *callLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
 
-   // 4. Allocate object/array on heap
-   genHeapAlloc(node, cg, allocateSize, resultReg, tempReg1, tempReg2, callLabel);
+   // 4. Setup register dependencies
+   TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(6, 6, cg->trMemory());
+   TR::addDependency(conditions, classReg, TR::RealRegister::x0, TR_GPR, cg);
+   TR::addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, lengthReg, isArrayNew ? TR::RealRegister::x1 : TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, zeroReg, TR::RealRegister::xzr, TR_GPR, cg);
+   TR::addDependency(conditions, tempReg1, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, tempReg2, TR::RealRegister::NoReg, TR_GPR, cg);
 
-   // 5. Setup HeapAllocSnippet for slowpath
+   // 5. Allocate object/array on heap
+   genHeapAlloc(node, cg, allocateSize, resultReg, tempReg1, tempReg2, conditions, callLabel);
+
+   // 6. Setup HeapAllocSnippet for slowpath
    TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HeapAllocSnippet(cg, node, callLabel, node->getSymbolReference(), doneLabel);
    cg->addSnippet(snippet);
 
-   // 6. Initialize the allocated memory area with zero
+   // 7. Initialize the allocated memory area with zero
    // TODO selectively initialize necessary slots
-   genZeroInitObject(node, cg, objectSize, headerOffset, resultReg, zeroReg, tempReg1, tempReg2);
+   genZeroInitObject(node, cg, objectSize, headerSize, resultReg, zeroReg, tempReg1, tempReg2);
 
-   // 7. Initialize Object Header
-   generateMemSrc1Instruction(cg, TR::Compiler->om.generateCompressedObjectHeaders() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
-         node, new (cg->trHeapMemory()) TR::MemoryReference(resultReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), classReg);
+   // 8. Initialize Object Header
+   if (isArrayNew)
+      {
+      genInitArrayHeader(node, cg, clazz, resultReg, classReg, lengthReg, zeroReg, tempReg1);
+      }
+   else
+      {
+      genInitObjectHeader(node, cg, clazz, resultReg, classReg, tempReg1);
+      }
 
-   // 8. Setup AOT relocation
+   // 9. Setup AOT relocation
    if (cg->comp()->compileRelocatableCode() && (opCode == TR::New || opCode == TR::anewarray))
       {
       firstInstruction = firstInstruction->getNext();
@@ -852,12 +974,6 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
                __FILE__, __LINE__, node);
       }
 
-   // 9. Setup register dependencies
-   TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3, 3, cg->trMemory());
-   TR::addDependency(conditions, classReg, TR::RealRegister::x0, TR_GPR, cg);
-   TR::addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   TR::addDependency(conditions, zeroReg, TR::RealRegister::xzr, TR_GPR, cg);
-
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
 
    // Cleanup registers
@@ -866,10 +982,21 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->stopUsingRegister(zeroReg);
 
    cg->decReferenceCount(firstChild);
-
-   if (classReg != firstChild->getRegister())
+   if (opCode == TR::New)
       {
-      cg->stopUsingRegister(classReg);
+      if (classReg != firstChild->getRegister())
+         {
+         cg->stopUsingRegister(classReg);
+         }
+      cg->stopUsingRegister(lengthReg);
+      }
+   else
+      {
+      cg->decReferenceCount(secondChild);
+      if (classReg != secondChild->getRegister())
+         {
+         cg->stopUsingRegister(classReg);
+         }
       }
 
    node->setRegister(resultReg);
@@ -907,10 +1034,16 @@ J9::ARM64::TreeEvaluator::newObjectEvaluator(TR::Node *node, TR::CodeGenerator *
 TR::Register *
 J9::ARM64::TreeEvaluator::newArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::ILOpCodes opCode = node->getOpCodeValue();
-   TR::Node::recreate(node, TR::acall);
-   TR::Register *targetRegister = directCallEvaluator(node, cg);
-   TR::Node::recreate(node, opCode);
+   TR::Register *targetRegister = TR::TreeEvaluator::VMnewEvaluator(node, cg);
+   if (!targetRegister)
+      {
+      // Inline array allocation wasn't generated, just generate a call to the helper.
+      //
+      TR::ILOpCodes opCode = node->getOpCodeValue();
+      TR::Node::recreate(node, TR::acall);
+      targetRegister = directCallEvaluator(node, cg);
+      TR::Node::recreate(node, opCode);
+      }
    return targetRegister;
    }
 
