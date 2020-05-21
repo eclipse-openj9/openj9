@@ -47,6 +47,7 @@
 #include "JNICriticalRegion.hpp"
 #include "ObjectModel.hpp"
 #include "SublistFragment.hpp"
+#include "ScavengerForwardedHeader.hpp"
 
 MM_VLHGCAccessBarrier *
 MM_VLHGCAccessBarrier::newInstance(MM_EnvironmentBase *env)
@@ -607,4 +608,28 @@ MM_VLHGCAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring st
 		MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
 	}
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
+}
+
+bool
+MM_VLHGCAccessBarrier::preWeakRootSlotRead(J9VMThread *vmThread, j9object_t *srcAddress)
+{
+	MM_ScavengerForwardedHeader forwardedHeader(*srcAddress, compressObjectReferences());
+	J9Object* forwardedPtr = forwardedHeader.getForwardedObject();
+	if (NULL != forwardedPtr) {
+		*srcAddress = forwardedPtr;
+	}
+
+	return true;
+}
+
+bool
+MM_VLHGCAccessBarrier::preWeakRootSlotRead(J9JavaVM *vm, j9object_t *srcAddress)
+{
+	MM_ScavengerForwardedHeader forwardedHeader(*srcAddress, compressObjectReferences());
+	J9Object* forwardedPtr = forwardedHeader.getForwardedObject();
+	if (NULL != forwardedPtr) {
+		*srcAddress = forwardedPtr;
+	}
+
+	return true;
 }
