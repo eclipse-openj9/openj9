@@ -68,6 +68,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/z/codegen/J9Instruction.cpp \
     compiler/z/codegen/J9Linkage.cpp \
     compiler/z/codegen/J9MemoryReference.cpp \
+    compiler/z/codegen/J9Peephole.cpp \
     compiler/z/codegen/J9S390Snippet.cpp \
     compiler/z/codegen/J9SystemLinkageLinux.cpp \
     compiler/z/codegen/J9SystemLinkagezOS.cpp \

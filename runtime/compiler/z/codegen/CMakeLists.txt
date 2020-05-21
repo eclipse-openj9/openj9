@@ -30,6 +30,7 @@ j9jit_files(
 	z/codegen/J9Instruction.cpp
 	z/codegen/J9Linkage.cpp
 	z/codegen/J9MemoryReference.cpp
+	z/codegen/J9Peephole.cpp
 	z/codegen/J9S390Snippet.cpp
 	z/codegen/J9SystemLinkageLinux.cpp
 	z/codegen/J9SystemLinkagezOS.cpp
