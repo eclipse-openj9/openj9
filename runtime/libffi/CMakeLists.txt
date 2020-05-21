@@ -168,6 +168,30 @@ elseif(OMR_ARCH_S390)
 	else()
 		message(SEND_ERROR "Unsupported platform")
 	endif()
+elseif(OMR_ARCH_ARM AND OMR_OS_LINUX)
+	target_include_directories(ffi
+		PUBLIC
+			arm
+			preconf/arm
+	)
+	target_sources(ffi
+		PRIVATE
+			arm/ffi.c
+			arm/sysv.S
+			arm/trampoline.S
+	)
+elseif(OMR_ARCH_AARCH64 AND OMR_OS_LINUX)
+	target_include_directories(ffi
+		PUBLIC
+			aarch64
+			preconf/xr64
+	)
+	target_sources(ffi
+		PRIVATE
+			aarch64/ffi.c
+			aarch64/sysv.S
+	)
+
 else()
 	message(SEND_ERROR "Unsupported platform")
 endif()
