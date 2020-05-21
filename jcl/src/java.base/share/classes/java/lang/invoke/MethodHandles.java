@@ -30,7 +30,6 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ReflectPermission;
-
 /*[IF Panama]*/
 import java.nicl.*;
 import java.nicl.types.*;
@@ -60,6 +59,8 @@ import java.lang.reflect.Array;
 /*[IF Java12]*/
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.JavaLangAccess;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 /*[ELSE]
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.JavaLangAccess;
@@ -2245,7 +2246,70 @@ public class MethodHandles {
 			return (!isWeakenedLookup() && (MODULE == (accessMode & MODULE)));
 		}
 		/*[ENDIF] Java14*/
-		/*[ENDIF]*/
+		/*[ENDIF] Sidecar19-SE */
+		
+		/*[IF Java15]*/
+		// TODO: implement support for hidden classes.
+		/**
+		 * The ClassOption used to define the hidden class.
+		 * NESTMATE adds the hidden class into the same nest of the lookup class as a nest member.
+		 * STRONG indicates the hidden class has a strong relationship with its class loader, which means the hidden class will be unloaded 
+		 * only when its class loader becomes unreachable and can be garbage collected.
+		 */
+		public enum ClassOption {
+			NESTMATE,
+			STRONG
+		}
+
+		static final class ClassDefiner {
+			private final byte[] classBytes;
+			private final String className;
+			private final Lookup lookup;
+			ClassDefiner(String name, byte[] template, Lookup lookupObj) {
+				className = name;
+				classBytes = template;
+				lookup = lookupObj;
+			}
+			Class<?> defineClass(boolean initOption) {
+				Class<?> ret = AccessController.doPrivileged(new PrivilegedAction<Class<?>>() {
+					@Override
+					public Class<?> run() {
+						JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
+						Class<?> lookupClass = lookup.lookupClass();
+						return jlAccess.defineClass(lookupClass.getClassLoader(), lookupClass, className, classBytes, jlAccess.protectionDomain(lookupClass), initOption, 0, null);
+					}
+				});
+				return ret;
+			}
+		}
+		/**
+		 * Constructs a new hidden class from an array of class data bytes.
+		 * 
+		 * @param bytes the class data bytes of the hidden class to be defined.  
+		 * @param initOption whether to initialize the hidden class.
+		 * @param classOptions the {@link ClassOption} to define the hidden class.
+		 * @return A Lookup object of the newly created hidden class.
+		 */
+
+		public Lookup defineHiddenClass(byte[] bytes, boolean initOption, ClassOption... classOptions) {
+			ClassReader cr;
+			try {
+				cr = new ClassReader(bytes);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				/*[MSG "K065Y2", "The class byte array is corrupted"]*/
+				throw new ClassFormatError(com.ibm.oti.util.Msg.getString("K065Y2")); //$NON-NLS-1$
+			}
+
+			String targetClassName = cr.getClassName().replace('/', '.');
+			ClassDefiner definer = makeHiddenClassDefiner(targetClassName, bytes);
+			return new Lookup(definer.defineClass(initOption), false);
+		}
+
+		ClassDefiner makeHiddenClassDefiner(String name, byte[] template) {
+			ClassDefiner definer = new ClassDefiner(name, template, this);
+			return definer;
+		}
+		/*[ENDIF] Java15 */		
 	}
 	
 	static MethodHandle filterArgument(MethodHandle target, int pos, MethodHandle filter) {

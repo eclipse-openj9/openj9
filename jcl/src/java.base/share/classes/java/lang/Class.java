@@ -4711,7 +4711,7 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	 * For a class that is not a record, null is returned.
 	 * For a record with no components an empty array is returned.
 	 * 
-	 * @throws SecurityException 
+	 * @throws SecurityException if declared member access or package access is not allowed
 	 */
 	@CallerSensitive
 	public RecordComponent[] getRecordComponents() {
@@ -4730,4 +4730,11 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 
 	private native RecordComponent[] getRecordComponentsImpl();
 /*[ENDIF] Java14 */
+
+/*[IF Java15]*/
+	// TODO: implement support for hidden classes.
+	public boolean isHidden() {
+		return false;
+	}
+/*[ENDIF] Java15 */
 }

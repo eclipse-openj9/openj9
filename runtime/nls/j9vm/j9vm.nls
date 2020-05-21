@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1953,3 +1953,20 @@ J9NLS_VM_CLASS_RELATIONSHIP_INVALID.explanation=The specified child class fails 
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.system_action=The JVM will throw a java/lang/VerifyError.
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.user_response=Ensure that all class relationships are valid.
 # END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_PACKAGES_IS_NULL=Package array is null.
+# START NON-TRANSLATABLE
+J9NLS_VM_PACKAGES_IS_NULL.explanation=Incoming package array can't be NULL.
+J9NLS_VM_PACKAGES_IS_NULL.system_action=The JVM will throw a java/lang/NullPointerException.
+J9NLS_VM_PACKAGES_IS_NULL.user_response=Don't pass a NULL package array.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_PACKAGE_IS_NULL=Package String is null.
+# START NON-TRANSLATABLE
+J9NLS_VM_PACKAGE_IS_NULL.explanation=Incoming package String can't be NULL.
+J9NLS_VM_PACKAGE_IS_NULL.system_action=The JVM will throw a java/lang/NullPointerException.
+J9NLS_VM_PACKAGE_IS_NULL.user_response=Don't pass a NULL package String.
+# END NON-TRANSLATABLE
+
