@@ -321,7 +321,7 @@ CPU::getProcessorFeatureFlags()
 bool
 CPU::isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags)
    {
-   if (!self()->isAtLeast(processorSignature))
+   if (self()->id() < processorSignature)
       {
       return false;
       }
