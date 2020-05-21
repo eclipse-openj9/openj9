@@ -531,10 +531,10 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 	U_16 index, index2;
 	J9CfrAttributeCode* code;
 	J9CfrAttributeInnerClasses* classes;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	J9CfrAttributeNestMembers* nestMembers;
 	U_16 nestMemberCount;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	J9CfrAttributeExceptions* exceptions;
 	U_32 i;
 	U_32 j;
@@ -667,7 +667,7 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 			}
 			break;
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 		case CFR_ATTRIBUTE_NestMembers: {
 			nestMembers = (J9CfrAttributeNestMembers*)attrib;
 			nestMemberCount = nestMembers->numberOfClasses;
@@ -686,7 +686,7 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 			j9tty_printf( PORTLIB, "%i -> %s\n", index, classfile->constantPool[classfile->constantPool[index].slot1].bytes);
 			break;
 		}
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 		case CFR_ATTRIBUTE_LineNumberTable:
 			for(i = 0; i < ((J9CfrAttributeLineNumberTable*)attrib)->lineNumberTableLength; i++)

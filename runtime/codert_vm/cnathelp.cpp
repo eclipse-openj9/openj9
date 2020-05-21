@@ -2697,7 +2697,7 @@ illegalAccess:
 			/* Private methods are visible only within their declaring class
 			 * unless the two classes are in the same nest (JDK11 and beyond).
 			 */
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 			if (NULL == thisClass->nestHost) {
 				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, thisClass, 0)) {
 					goto illegalAccess;
@@ -2709,7 +2709,7 @@ illegalAccess:
 				}
 			}
 			if (thisClass->nestHost != callerClass->nestHost)
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 			{
 				if (thisClass != callerClass) {
 					goto illegalAccess;

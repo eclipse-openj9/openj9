@@ -27,7 +27,6 @@
 extern "C" {
 #endif
 
-
 #include "j9.h"
 #include "j9port.h"
 
@@ -486,7 +485,7 @@ typedef struct J9CfrAttributeSynthetic {
     UDATA romAddress;
 } J9CfrAttributeSynthetic;
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 typedef struct J9CfrAttributeNestHost {
 	U_8 tag;
 	U_16 nameIndex;
@@ -503,7 +502,7 @@ typedef struct J9CfrAttributeNestMembers {
 	U_16 numberOfClasses;
 	U_16* classes;
 } J9CfrAttributeNestMembers;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 typedef struct J9CfrAttributeUnknown {
     U_8 tag;

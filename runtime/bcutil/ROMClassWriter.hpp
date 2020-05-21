@@ -158,9 +158,9 @@ private:
 	UDATA _fieldsSRPKey;
 	UDATA _cpDescriptionShapeSRPKey;
 	UDATA _innerClassesSRPKey;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	UDATA _nestMembersSRPKey;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	UDATA _optionalInfoSRPKey;
 	UDATA _stackMapsSRPKey;
 	UDATA _enclosingMethodSRPKey;

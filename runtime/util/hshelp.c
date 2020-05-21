@@ -2319,8 +2319,7 @@ flushClassLoaderReflectCache(J9VMThread * currentThread, J9HashTable * classPair
 	}
 }
 
-
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 /**
  * \brief  Fix any resolved nest members
  * \ingroup
@@ -2334,7 +2333,6 @@ flushClassLoaderReflectCache(J9VMThread * currentThread, J9HashTable * classPair
  *	class within its next class. In order for these access checks to be accurate
  *	post nest host resolution, any classes that point to the original class def
  *	as their nest host must be updated to point do the replaced class def instead.
- *
  */
 void
 fixNestMembers(J9VMThread * currentThread, J9HashTable * classPairs)
@@ -2366,7 +2364,7 @@ fixNestMembers(J9VMThread * currentThread, J9HashTable * classPairs)
 		classPair = hashTableNextDo(&hashTableState);
 	}
 }
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 static void
 swapClassesForFastHCR(J9Class *originalClass, J9Class *obsoleteClass)
@@ -2381,7 +2379,6 @@ swapClassesForFastHCR(J9Class *originalClass, J9Class *obsoleteClass)
 
 	/* Preserved values. */
 	obsoleteClass->initializeStatus = originalClass->initializeStatus;
-
 
 	obsoleteClass->classObject = originalClass->classObject;
 	obsoleteClass->module = originalClass->module;
@@ -3171,7 +3168,7 @@ done:
 
 }
 
-#if (JAVA_SPEC_VERSION >= 15)
+#if JAVA_SPEC_VERSION >= 15
 static jvmtiError
 verifyRecordAttributesAreSame(J9ROMClass *originalROMClass, J9ROMClass *replacementROMClass)
 {
@@ -3216,7 +3213,7 @@ verifyRecordAttributesAreSame(J9ROMClass *originalROMClass, J9ROMClass *replacem
 done:
 	return rc;
 }
-#endif /* (JAVA_SPEC_VERSION >= 15) */
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 jvmtiError
 verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTIClassPair * classPairs,
@@ -3320,15 +3317,15 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 			return rc;
 		}
 
-#if (JAVA_SPEC_VERSION >= 15)
+#if JAVA_SPEC_VERSION >= 15
 		/* Verify that records attributes are the same */
 		rc = verifyRecordAttributesAreSame(originalROMClass, replacementROMClass);
 		if (rc != JVMTI_ERROR_NONE) {
 			return rc;
 		}
-#endif /* (JAVA_SPEC_VERSION >= 15) */
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 		/* Verify that the nestmates attributes - nest host & nest members - are the same */
 		{
 			J9UTF8 *originalNestHostName = J9ROMCLASS_NESTHOSTNAME(originalROMClass);
@@ -3360,7 +3357,7 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 				}
 			}
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 		if (0 != classUsesExtensions) {
 			classPairs[i].flags |= J9JVMTI_CLASS_PAIR_FLAG_USES_EXTENSIONS;
@@ -3931,7 +3928,6 @@ hshelpUTRegister(J9JavaVM *vm)
 	UT_J9HSHELP_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(vm));
 }
 
-
 /**
  * \brief	Notify the jit about redefined classes
  * \ingroup
@@ -3962,6 +3958,3 @@ jitClassRedefineEvent(J9VMThread * currentThread, J9JVMTIHCRJitEventData * jitEv
 }
 
 #endif /* J9VM_INTERP_HOT_CODE_REPLACEMENT */ /* End File Level Build Flags */
-
-
-

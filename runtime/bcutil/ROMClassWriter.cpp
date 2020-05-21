@@ -296,9 +296,9 @@ ROMClassWriter::ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *cl
 	_fieldsSRPKey(srpKeyProducer->generateKey()),
 	_cpDescriptionShapeSRPKey(srpKeyProducer->generateKey()),
 	_innerClassesSRPKey(srpKeyProducer->generateKey()),
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	_nestMembersSRPKey(srpKeyProducer->generateKey()),
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	_optionalInfoSRPKey(srpKeyProducer->generateKey()),
 	_enclosingMethodSRPKey(srpKeyProducer->generateKey()),
 	_sourceDebugExtensionSRPKey(srpKeyProducer->generateKey()),
@@ -383,12 +383,12 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 		cursor->writeU32(_classFileOracle->getMemberAccessFlags(), Cursor::GENERIC);
 		cursor->writeU32(_classFileOracle->getInnerClassCount(), Cursor::GENERIC);
 		cursor->writeSRP(_innerClassesSRPKey, Cursor::SRP_TO_GENERIC);
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 		cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(_classFileOracle->getNestHostNameIndex()), Cursor::SRP_TO_UTF8);
 		cursor->writeU16(_classFileOracle->getNestMembersCount(), Cursor::GENERIC);
 		cursor->writeU16(0, Cursor::GENERIC); /* padding */
 		cursor->writeSRP(_nestMembersSRPKey, Cursor::SRP_TO_GENERIC);
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 		cursor->writeU16(_classFileOracle->getMajorVersion(), Cursor::GENERIC);
 		cursor->writeU16(_classFileOracle->getMinorVersion(), Cursor::GENERIC);
 		cursor->writeU32(optionalFlags, Cursor::OPTIONAL_FLAGS);
@@ -418,9 +418,9 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	writeFields(cursor, markAndCountOnly);
 	writeInterfaces(cursor, markAndCountOnly);
 	writeInnerClasses(cursor, markAndCountOnly);
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	writeNestMembers(cursor, markAndCountOnly);
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	writeNameAndSignatureBlock(cursor);
 	writeMethods(cursor, lineNumberCursor, variableInfoCursor, markAndCountOnly);
 	writeConstantPoolShapeDescriptions(cursor, markAndCountOnly);
@@ -722,14 +722,14 @@ public:
 		}
 	}
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	void writeNestMembers()
 	{
 		if (!_markAndCountOnly) {
 			_classFileOracle->nestMembersDo(this); /* visitConstantPoolIndex */
 		}
 	}
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	void writeInterfaces()
 	{
@@ -1095,7 +1095,7 @@ ROMClassWriter::writeInnerClasses(Cursor *cursor, bool markAndCountOnly)
 	Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeInnerClasses();
 }
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 void
 ROMClassWriter::writeNestMembers(Cursor *cursor, bool markAndCountOnly)
 {
@@ -1104,7 +1104,7 @@ ROMClassWriter::writeNestMembers(Cursor *cursor, bool markAndCountOnly)
 	CheckSize _(cursor,size);
 	Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeNestMembers();
 }
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 void
 ROMClassWriter::writeNameAndSignatureBlock(Cursor *cursor)

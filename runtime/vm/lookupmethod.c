@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1059,7 +1059,7 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 	Trc_VM_illegalAccessMessage_Entry(currentThread, J9UTF8_LENGTH(senderClassNameUTF), J9UTF8_DATA(senderClassNameUTF),
 			J9UTF8_LENGTH(targetClassNameUTF), J9UTF8_DATA(targetClassNameUTF), badMemberModifier);
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	/* If an issue with the nest host loading and verification occurred, then
 	 * it will be one of:
 	 * 		J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR
@@ -1130,7 +1130,7 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 					J9UTF8_DATA(nestHostNameUTF));
 		}
 	} else
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR != errorType) {
 		/* illegal module access */
 		j9object_t srcModuleObject = J9VMJAVALANGCLASS_MODULE(currentThread, senderClass->classObject);

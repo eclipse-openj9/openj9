@@ -365,10 +365,10 @@ J9InternalVMFunctions J9InternalFunctions = {
 	registerOSHandler,
 	throwNativeOOMError,
 	throwNewJavaIoIOException,
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	loadAndVerifyNestHost,
 	setNestmatesError,
-#endif
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	areValueTypesEnabled,
 	peekClassHashTable,
 #if defined(J9VM_OPT_JITSERVER)

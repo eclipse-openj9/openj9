@@ -151,10 +151,10 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_doubleScalarStaticCount(0),
 	_memberAccessFlags(0),
 	_innerClassCount(0),
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	_nestMembersCount(0),
 	_nestHost(0),
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	_maxBranchCount(1), /* This is required to support buffer size calculations for stackmap support code */
 	_outerClassNameIndex(0),
 	_simpleNameIndex(0),
@@ -180,9 +180,9 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_typeAnnotationsAttribute(NULL),
 	_innerClasses(NULL),
 	_bootstrapMethodsAttribute(NULL),
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	_nestMembers(NULL),
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	_isClassContended(false),
 	_isClassUnmodifiable(context->isClassUnmodifiable()),
 	_isInnerClass(false),
@@ -494,7 +494,7 @@ ClassFileOracle::walkAttributes()
 			walkRecordComponents((J9CfrAttributeRecord *)attrib);
 			break;
 		}
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 		case CFR_ATTRIBUTE_NestMembers:
 			_nestMembers = (J9CfrAttributeNestMembers *)attrib;
 			_nestMembersCount = _nestMembers->numberOfClasses;
@@ -513,7 +513,7 @@ ClassFileOracle::walkAttributes()
 			markConstantUTF8AsReferenced(_nestHost);
 			break;
 		}
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 		default:
 			Trc_BCU_ClassFileOracle_walkAttributes_UnknownAttribute((U_32)attrib->tag, (U_32)getUTF8Length(attrib->nameIndex), getUTF8Data(attrib->nameIndex), attrib->length);
 			break;
