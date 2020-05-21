@@ -1805,13 +1805,25 @@ Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv)
 	J9Class *nestHost = clazz->nestHost;
 
 	if (NULL == nestHost) {
-		if (J9_VISIBILITY_ALLOWED == vmFuncs->loadAndVerifyNestHost(currentThread, clazz, J9_LOOK_NO_THROW)) {
-			nestHost = clazz->nestHost;
+		J9Class *clazzToUse = clazz;
+#if JAVA_SPEC_VERSION >= 15
+		if (J9_ARE_ALL_BITS_SET(clazz->romClass->extraModifiers, J9AccClassAnonClass)) {
+			if (NULL != clazz->hostClass) {
+				/* https://github.com/eclipse/openj9/issues/9328
+				 * JEP371 is not fully implemented yet,
+				 * for J9AccClassAnonClass return the nestHost of hostClass for now.
+				 */
+				clazzToUse = clazz->hostClass;
+			}
+		}
+#endif /* JAVA_SPEC_VERSION >= 15 */
+		if (J9_VISIBILITY_ALLOWED == vmFuncs->loadAndVerifyNestHost(currentThread, clazzToUse, J9_LOOK_NO_THROW)) {
+			nestHost = clazzToUse->nestHost;
 		} else {
 			/* If there is a failure loading or accessing the nest host, or if this class or interface does
 			 * not specify a nest, then it is considered to belong to its own nest and this is returned as
 			 * the host */
-			nestHost = clazz;
+			nestHost = clazzToUse;
 		}
 	}
 	j9object_t resultObject = J9VM_J9CLASS_TO_HEAPCLASS(nestHost);
