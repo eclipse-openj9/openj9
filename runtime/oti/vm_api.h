@@ -29,7 +29,6 @@
 *
 * This file contains public function prototypes and
 * type definitions for the VM module.
-*
 */
 
 #include "j9.h"
@@ -3184,7 +3183,7 @@ trace(J9VMThread *vmStruct);
 #endif /* J9VM_INTERP_TRACING || INTERP_UPDATE_VMCTRACING */ /* End File Level Build Flags */
 
 /* ---------------- visible.c ---------------- */
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 /**
  * Loads the nest host and ensures that the nest host belongs
  * to the same runtime package as the class. This function requires
@@ -3214,7 +3213,7 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options);
  */
 void
 setNestmatesError(J9VMThread *vmThread, J9Class *nestMember, J9Class *nestHost, IDATA errorCode);
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 /* ---------------- VMAccess.cpp ---------------- */
 
@@ -4369,4 +4368,3 @@ throwNewJavaIoIOException(JNIEnv *env, const char *message);
 #endif
 
 #endif /* vm_api_h */
-

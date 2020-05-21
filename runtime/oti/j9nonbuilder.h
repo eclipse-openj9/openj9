@@ -1,6 +1,6 @@
 /*******************************************************************************
- *
  * Copyright (c) 1991, 2020 IBM Corp. and others
+ *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
  * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
@@ -249,11 +249,11 @@
 #define J9_VISIBILITY_NON_MODULE_ACCESS_ERROR 0
 #define J9_VISIBILITY_MODULE_READ_ACCESS_ERROR -1
 #define J9_VISIBILITY_MODULE_PACKAGE_EXPORT_ERROR -2
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 #define J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR -3
 #define J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR -4
 #define J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR -5
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 #define J9_CATCHTYPE_VALUE_FOR_SYNTHETIC_HANDLER_4BYTES 0xFFFFFFFF
 #define J9_CATCHTYPE_VALUE_FOR_SYNTHETIC_HANDLER_2BYTES 0xFFFF
@@ -3044,9 +3044,9 @@ typedef struct J9Class {
 	struct J9JITExceptionTable* jitMetaDataList;
 	struct J9Class* gcLink;
 	struct J9Class* hostClass;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	struct J9Class* nestHost;
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	struct J9FlattenedClassCache* flattenedClassCache;
 } J9Class;
 
@@ -3117,9 +3117,9 @@ typedef struct J9ArrayClass {
 	struct J9JITExceptionTable* jitMetaDataList;
 	struct J9Class* gcLink;
 	struct J9Class* hostClass;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	struct J9Class* nestHost;
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	/* Added temporarily for consistency */
 	UDATA flattenedElementSize;
 } J9ArrayClass;
@@ -3226,12 +3226,12 @@ typedef struct J9ROMClass {
 	U_32 memberAccessFlags;
 	U_32 innerClassCount;
 	J9SRP innerClasses;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	J9SRP nestHost;
 	U_16 nestMemberCount;
 	U_16 unused;
 	J9SRP nestMembers;
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	U_16 majorVersion;
 	U_16 minorVersion;
 	U_32 optionalFlags;
@@ -3250,14 +3250,14 @@ typedef struct J9ROMClass {
 	J9SRP specialSplitMethodRefIndexes;
 	J9SRP varHandleMethodTypeLookupTable;
 #if defined(J9VM_ENV_DATA64)
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	U_32 padding;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 #else /* J9VM_ENV_DATA64 */
-#if !defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION < 11
 	U_32 padding;
-#endif /* !J9VM_OPT_VALHALLA_NESTMATES */
-#endif /* J9VM_ENV_DATA64 && J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION < 11 */
+#endif /* J9VM_ENV_DATA64 */
 } J9ROMClass;
 
 #define J9ROMCLASS_CLASSNAME(base) NNSRP_GET((base)->className, struct J9UTF8*)
@@ -3269,10 +3269,10 @@ typedef struct J9ROMClass {
 #define J9ROMCLASS_CPSHAPEDESCRIPTION(base) NNSRP_GET((base)->cpShapeDescription, U_32*)
 #define J9ROMCLASS_OUTERCLASSNAME(base) SRP_GET((base)->outerClassName, struct J9UTF8*)
 #define J9ROMCLASS_INNERCLASSES(base) NNSRP_GET((base)->innerClasses, J9SRP*)
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 #define J9ROMCLASS_NESTHOSTNAME(base) SRP_GET((base)->nestHost, struct J9UTF8*)
 #define J9ROMCLASS_NESTMEMBERS(base) SRP_GET((base)->nestMembers, J9SRP*)
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 #define J9ROMCLASS_OPTIONALINFO(base) SRP_GET((base)->optionalInfo, U_32*)
 #define J9ROMCLASS_CALLSITEDATA(base) SRP_GET((base)->callSiteData, U_8*)
 #define J9ROMCLASS_STATICSPLITMETHODREFINDEXES(base) SRP_GET((base)->staticSplitMethodRefIndexes, U_16*)
@@ -3303,12 +3303,12 @@ typedef struct J9ROMArrayClass {
 	U_32 memberAccessFlags;
 	U_32 innerClassCount;
 	J9SRP innerClasses;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	J9SRP nestHost;
 	U_16 nestMemberCount;
 	U_16 unused;
 	J9SRP nestMembers;
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	U_16 majorVersion;
 	U_16 minorVersion;
 	U_32 optionalFlags;
@@ -3327,14 +3327,14 @@ typedef struct J9ROMArrayClass {
 	J9SRP specialSplitMethodRefIndexes;
 	J9SRP varHandleMethodTypeLookupTable;
 #if defined(J9VM_ENV_DATA64)
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	U_32 padding;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 #else /* J9VM_ENV_DATA64 */
-#if !defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION < 11
 	U_32 padding;
-#endif /* !J9VM_OPT_VALHALLA_NESTMATES */
-#endif /* J9VM_ENV_DATA64 && J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION < 11 */
+#endif /* J9VM_ENV_DATA64 */
 } J9ROMArrayClass;
 
 #define J9ROMARRAYCLASS_CLASSNAME(base) NNSRP_GET((base)->className, struct J9UTF8*)
@@ -3375,12 +3375,12 @@ typedef struct J9ROMReflectClass {
 	U_32 memberAccessFlags;
 	U_32 innerClassCount;
 	J9SRP innerClasses;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	J9SRP nestHost;
 	U_16 nestMemberCount;
 	U_16 unused;
 	J9SRP nestMembers;
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	U_16 majorVersion;
 	U_16 minorVersion;
 	U_32 optionalFlags;
@@ -3399,14 +3399,14 @@ typedef struct J9ROMReflectClass {
 	J9SRP specialSplitMethodRefIndexes;
 	J9SRP varHandleMethodTypeLookupTable;
 #if defined(J9VM_ENV_DATA64)
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	U_32 padding;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 #else /* J9VM_ENV_DATA64 */
-#if !defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION < 11
 	U_32 padding;
-#endif /* !J9VM_OPT_VALHALLA_NESTMATES */
-#endif /* J9VM_ENV_DATA64 && J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION < 11 */
+#endif /* J9VM_ENV_DATA64 */
 } J9ROMReflectClass;
 
 #define J9ROMREFLECTCLASS_CLASSNAME(base) NNSRP_GET((base)->className, struct J9UTF8*)
@@ -4525,10 +4525,10 @@ typedef struct J9InternalVMFunctions {
 	IDATA ( *registerOSHandler)(struct J9JavaVM *vm, U_32 signal, void *newOSHandler, void **oldOSHandler);
 	void ( *throwNativeOOMError)(JNIEnv *env, U_32 moduleName, U_32 messageNumber);
 	void ( *throwNewJavaIoIOException)(JNIEnv *env, const char *message);
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#if JAVA_SPEC_VERSION >= 11
 	UDATA ( *loadAndVerifyNestHost)(struct J9VMThread *vmThread, struct J9Class *clazz, UDATA options);
 	void ( *setNestmatesError)(struct J9VMThread *vmThread, struct J9Class *nestMember, struct J9Class *nestHost, IDATA errorCode);
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	BOOLEAN ( *areValueTypesEnabled)(struct J9JavaVM *vm);
 	J9Class* ( *peekClassHashTable)(struct J9VMThread* currentThread, J9ClassLoader* classLoader, U_8* className, UDATA classNameLength);
 #if defined(J9VM_OPT_JITSERVER)

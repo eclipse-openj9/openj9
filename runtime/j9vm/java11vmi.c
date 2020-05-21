@@ -1507,12 +1507,14 @@ JVM_GetNestHost(JNIEnv *env, jclass clz)
 	assert(!"JVM_GetNestHost unimplemented");
 	return NULL;
 }
+
 JNIEXPORT jobjectArray JNICALL
 JVM_GetNestMembers(JNIEnv *env, jclass clz)
 {
 	assert(!"JVM_GetNestMembers unimplemented");
 	return NULL;
 }
+
 /**
  * Check if two classes belong to the same nest
  *
@@ -1525,7 +1527,6 @@ JVM_GetNestMembers(JNIEnv *env, jclass clz)
 JNIEXPORT jboolean JNICALL
 JVM_AreNestMates(JNIEnv *env, jclass jClassOne, jclass jClassTwo)
 {
-#ifdef J9VM_OPT_VALHALLA_NESTMATES
 	jboolean result = JNI_FALSE;
 
 	if ((NULL != jClassOne) && (NULL != jClassTwo)) {
@@ -1565,10 +1566,6 @@ done:
 	}
 
 	return result;
-#else
-	assert(!"JVM_GetNestMembers unimplemented");
-	return JNI_FALSE;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 }
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
