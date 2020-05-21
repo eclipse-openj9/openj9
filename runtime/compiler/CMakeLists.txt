@@ -70,15 +70,14 @@ set_property(DIRECTORY PROPERTY COMPILE_DEFINITIONS ${compile_defs})
 
 omr_add_tracegen(env/j9jit.tdf)
 
-# this is a workaround because the jit code is inconsistent about how it includes the tracegen files
-# It only really works if we put it in the source tree
+# this is a workaround because the jit code includes the tracegen header as <env/ut_j9jit.h>
 add_custom_command(
-	OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/env/ut_j9jit.h
+	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/env/ut_j9jit.h
 	DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ut_j9jit.h
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/ut_j9jit.h" "${CMAKE_CURRENT_SOURCE_DIR}/env/ut_j9jit.h"
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/ut_j9jit.h" "${CMAKE_CURRENT_BINARY_DIR}/env/ut_j9jit.h"
 	VERBATIM
 )
-add_custom_target(j9jit_tracegen DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/env/ut_j9jit.h)
+add_custom_target(j9jit_tracegen DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/env/ut_j9jit.h)
 
 # J9VM_OPT_JITSERVER
 if(J9VM_OPT_JITSERVER)

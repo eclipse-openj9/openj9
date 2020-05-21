@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,7 +96,7 @@ include $(JIT_MAKE_DIR)/toolcfg/common.mk
 # is different from an automake build.
 #
 ifneq ("$(CMAKE_BUILD_DIR)","")
-CXX_INCLUDES+=$(CMAKE_BUILD_DIR)/runtime $(CMAKE_BUILD_DIR)/runtime/omr $(CMAKE_BUILD_DIR)/runtime/nls $(CMAKE_BUILD_DIR)/runtime/include
+CXX_INCLUDES+=$(CMAKE_BUILD_DIR)/runtime $(CMAKE_BUILD_DIR)/runtime/omr $(CMAKE_BUILD_DIR)/runtime/nls $(CMAKE_BUILD_DIR)/runtime/include $(CMAKE_BUILD_DIR)/runtime/compiler
 endif
 
 #
