@@ -28,8 +28,7 @@
 #include "ModronAssertions.h"
 
 #include "EnvironmentBase.hpp"
-#include "GCExtensionsBase.hpp"
-#include "ScavengerForwardedHeader.hpp"
+#include "GCExtensions.hpp"
 #include "StringTable.hpp"
 #include "VMHelpers.hpp"
 
