@@ -118,14 +118,21 @@ public class ValueTypeTests {
 	static Class assortedValueWithLongAlignmentClass = null;
 	static MethodHandle makeAssortedValueWithLongAlignment = null;
 	static MethodHandle[][] assortedValueWithLongAlignmentGetterAndWither = null;
+	static Class classWithOnlyStaticFieldsWithLongAlignment = null;
+	static MethodHandle[][] staticFieldsWithLongAlignmentGenericGetterAndSetter = null;
 	/* assortedValueWithObjectAlignment */
 	static Class assortedValueWithObjectAlignmentClass = null;
 	static MethodHandle makeAssortedValueWithObjectAlignment = null;
 	static MethodHandle[][] assortedValueWithObjectAlignmentGetterAndWither = null;
+	static Class classWithOnlyStaticFieldsWithObjectAlignment = null;
+	static MethodHandle[][] staticFieldsWithObjectAlignmentGenericGetterAndSetter = null;
 	/* assortedValueWithSingleAlignment */
 	static Class assortedValueWithSingleAlignmentClass = null;
 	static MethodHandle makeAssortedValueWithSingleAlignment = null;
 	static MethodHandle[][] assortedValueWithSingleAlignmentGetterAndWither = null;
+	static Class classWithOnlyStaticFieldsWithSingleAlignment = null;
+	static MethodHandle[][] staticFieldsWithSingleAlignmentGenericGetterAndSetter = null;
+	
 	/* fields */
 	static String typeWithSingleAlignmentFields[] = {
 		"tri:QTriangle2D;:value",
@@ -1835,6 +1842,62 @@ public class ValueTypeTests {
 		assertNotNull(getV3.invoke(triangleObject));
 	}
 	
+	@Test(priority=5)
+	static public void testStaticFieldsWithObjectAlignmenDefaultValues() throws Throwable {
+		for (MethodHandle getterAndSetter[] : staticFieldsWithObjectAlignmentGenericGetterAndSetter) {
+			assertNotNull(getterAndSetter[0].invoke());
+		}
+	}
+	
+	@Test(priority=5)
+	static public void testStaticFieldsWithLongAlignmenDefaultValues() throws Throwable {
+		for (MethodHandle getterAndSetter[] : staticFieldsWithLongAlignmentGenericGetterAndSetter) {
+			assertNotNull(getterAndSetter[0].invoke());
+		}
+	}
+	
+	@Test(priority=5)
+	static public void testStaticFieldsWithSingleAlignmenDefaultValues() throws Throwable {
+		for (MethodHandle getterAndSetter[] : staticFieldsWithSingleAlignmentGenericGetterAndSetter) {
+			assertNotNull(getterAndSetter[0].invoke());
+		}
+	}
+	
+	@Test(priority=1)
+	static public void testCyclicalStaticFieldDefaultValues1() throws Throwable {
+		String cycleA1[] = { "val1:QCycleB1;:static" };
+		String cycleB1[] = { "val1:QCycleA1;:static" };
+		
+		Class cycleA1Class = ValueTypeGenerator.generateValueClass("CycleA1", cycleA1);
+		Class cycleB1Class = ValueTypeGenerator.generateValueClass("CycleB1", cycleB1);
+		
+		cycleA1Class.newInstance();
+		cycleB1Class.newInstance();
+	}
+	
+	@Test(priority=1)
+	static public void testCyclicalStaticFieldDefaultValues2() throws Throwable {
+		String cycleA2[] = { "val1:QCycleB2;:static" };
+		String cycleB2[] = { "val1:QCycleC2;:static" };
+		String cycleC2[] = { "val1:QCycleA2;:static" };
+		
+		Class cycleA2Class = ValueTypeGenerator.generateValueClass("CycleA2", cycleA2);
+		Class cycleB2Class = ValueTypeGenerator.generateValueClass("CycleB2", cycleB2);
+		Class cycleC2Class = ValueTypeGenerator.generateValueClass("CycleC2", cycleC2);
+		
+		cycleA2Class.newInstance();
+		cycleB2Class.newInstance();
+		cycleC2Class.newInstance();
+	}
+	
+	@Test(priority=1)
+	static public void testCyclicalStaticFieldDefaultValues3() throws Throwable {
+		String cycleA3[] = { "val1:QCycleA3;:static" };
+		
+		Class cycleA3Class = ValueTypeGenerator.generateValueClass("CycleA3", cycleA3);
+		
+		cycleA3Class.newInstance();
+	}
 
 	@Test(priority=4)
 	static public void testStaticFieldsWithSingleAlignment() throws Throwable {
@@ -1845,11 +1908,11 @@ public class ValueTypeTests {
 			"i:QValueInt;:static",
 			"f:QValueFloat;:static",
 			"tri2:QTriangle2D;:static"};
-		Class ClassWithOnlyStaticFieldsWithSingleAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithSingleAlignment", fields);
-		MethodHandle[][] StaticFieldsWithSingleAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(ClassWithOnlyStaticFieldsWithSingleAlignment, fields);
+		classWithOnlyStaticFieldsWithSingleAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithSingleAlignment", fields);
+		staticFieldsWithSingleAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(classWithOnlyStaticFieldsWithSingleAlignment, fields);
 		
-		initializeStaticFields(ClassWithOnlyStaticFieldsWithSingleAlignment, StaticFieldsWithSingleAlignmentGenericGetterAndSetter, fields);
-		checkFieldAccessMHOfStaticType(StaticFieldsWithSingleAlignmentGenericGetterAndSetter, fields);
+		initializeStaticFields(classWithOnlyStaticFieldsWithSingleAlignment, staticFieldsWithSingleAlignmentGenericGetterAndSetter, fields);
+		checkFieldAccessMHOfStaticType(staticFieldsWithSingleAlignmentGenericGetterAndSetter, fields);
 	}
 
 	@Test(priority=4)
@@ -1862,11 +1925,11 @@ public class ValueTypeTests {
 			"d:QValueDouble;:static",
 			"i:QValueInt;:static",
 			"tri:QTriangle2D;:static"};
-		Class ClassWithOnlyStaticFieldsWithLongAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithLongAlignment", fields);
-		MethodHandle[][] StaticFieldsWithLongAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(ClassWithOnlyStaticFieldsWithLongAlignment, fields);
+		classWithOnlyStaticFieldsWithLongAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithLongAlignment", fields);
+		staticFieldsWithLongAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(classWithOnlyStaticFieldsWithLongAlignment, fields);
 		
-		initializeStaticFields(ClassWithOnlyStaticFieldsWithLongAlignment, StaticFieldsWithLongAlignmentGenericGetterAndSetter, fields);
-		checkFieldAccessMHOfStaticType(StaticFieldsWithLongAlignmentGenericGetterAndSetter, fields);
+		initializeStaticFields(classWithOnlyStaticFieldsWithLongAlignment, staticFieldsWithLongAlignmentGenericGetterAndSetter, fields);
+		checkFieldAccessMHOfStaticType(staticFieldsWithLongAlignmentGenericGetterAndSetter, fields);
 	}
 
 	@Test(priority=4)
@@ -1879,11 +1942,11 @@ public class ValueTypeTests {
 			"i:QValueInt;:static",
 			"f:QValueFloat;:static",
 			"tri2:QTriangle2D;:static"};
-		Class ClassWithOnlyStaticFieldsWithObjectAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithObjectAlignment", fields);
-		MethodHandle[][] StaticFieldsWithObjectAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(ClassWithOnlyStaticFieldsWithObjectAlignment, fields);
+		classWithOnlyStaticFieldsWithObjectAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithObjectAlignment", fields);
+		staticFieldsWithObjectAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(classWithOnlyStaticFieldsWithObjectAlignment, fields);
 
-		initializeStaticFields(ClassWithOnlyStaticFieldsWithObjectAlignment, StaticFieldsWithObjectAlignmentGenericGetterAndSetter, fields);
-		checkFieldAccessMHOfStaticType(StaticFieldsWithObjectAlignmentGenericGetterAndSetter, fields);
+		initializeStaticFields(classWithOnlyStaticFieldsWithObjectAlignment, staticFieldsWithObjectAlignmentGenericGetterAndSetter, fields);
+		checkFieldAccessMHOfStaticType(staticFieldsWithObjectAlignmentGenericGetterAndSetter, fields);
 	}
 
 	/*

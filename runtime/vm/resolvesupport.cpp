@@ -898,7 +898,7 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 				if (-1 != fieldOffset) {
 					definingClass = resolvedClass;
 					field = flattenedClassCacheEntry->field;
-					flattenableClass = flattenedClassCacheEntry->clazz;
+					flattenableClass = J9_VM_FCC_CLASS_FROM_ENTRY(flattenedClassCacheEntry);
 					fccEntryFieldNotSet = false;
 				}
 			}

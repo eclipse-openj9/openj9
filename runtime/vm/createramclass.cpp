@@ -1464,6 +1464,22 @@ setCurrentExceptionForBadClass(J9VMThread *vmThread, J9UTF8 *badClassName, UDATA
 	setCurrentExceptionUTF(vmThread, exceptionIndex, errorMsg);
 	j9mem_free_memory(errorMsg);
 }
+static BOOLEAN
+compareRomClassName(void *item, J9StackElement *currentElement)
+{
+	J9UTF8 *currentRomName;
+	BOOLEAN rc = FALSE;
+	J9UTF8 *className = J9ROMCLASS_CLASSNAME((J9ROMClass *) item);
+
+	currentRomName = J9ROMCLASS_CLASSNAME((J9ROMClass *) currentElement->element);
+	if (0 == compareUTF8Length(J9UTF8_DATA(currentRomName), J9UTF8_LENGTH(currentRomName),
+			J9UTF8_DATA(className), J9UTF8_LENGTH(className)))
+	{
+		Trc_VM_CreateRAMClassFromROMClass_circularity2();
+		rc = TRUE;
+	}
+	return rc;
+}
 
 /**
  * Verifies the class loading stack for circularity and overflows.
@@ -1479,25 +1495,30 @@ static BOOLEAN
 verifyClassLoadingStack(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass)
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
-	J9ClassLoadingStackElement *currentElement;
-	J9ClassLoadingStackElement *newTopOfStack;
-	J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
-	UDATA count = 0;
-	UDATA maxStack = javaVM->classLoadingMaxStack;
+	return verifyLoadingOrLinkingStack(vmThread, classLoader, romClass, &vmThread->classLoadingStack, &compareRomClassName, javaVM->classLoadingMaxStack, javaVM->classLoadingStackPool, TRUE, TRUE);
+}
 
-	currentElement = vmThread->classLoadingStack;
+BOOLEAN
+verifyLoadingOrLinkingStack(J9VMThread *vmThread, J9ClassLoader *classLoader, void *clazz, J9StackElement **stack, BOOLEAN (*comparator)(void *, J9StackElement *), UDATA maxStack, J9Pool *stackpool, BOOLEAN throwException, BOOLEAN ownsClassTableMutex)
+{
+	J9JavaVM *javaVM = vmThread->javaVM;
+	J9StackElement *currentElement;
+	J9StackElement *newTopOfStack;
+
+	UDATA count = 0;
+
+	currentElement = *stack;
 	while (currentElement != NULL) {
 		count++;
 		if (currentElement->classLoader == classLoader) {
-			J9UTF8 *currentRomName;
-			currentRomName = J9ROMCLASS_CLASSNAME(currentElement->romClass);
-			if (compareUTF8Length(J9UTF8_DATA(currentRomName), J9UTF8_LENGTH(currentRomName),
-					J9UTF8_DATA(className), J9UTF8_LENGTH(className)) == 0)
-			{
+			if (comparator(clazz, currentElement)) {
 				/* class circularity problem.  Fail. */
-				Trc_VM_CreateRAMClassFromROMClass_circularity(vmThread);
-				omrthread_monitor_exit(javaVM->classTableMutex);
-				setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGCLASSCIRCULARITYERROR, NULL);
+				if (ownsClassTableMutex) {
+					omrthread_monitor_exit(javaVM->classTableMutex);
+				}
+				if (throwException) {
+					setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGCLASSCIRCULARITYERROR, NULL);
+				}
 				return FALSE;
 			}
 		}
@@ -1505,28 +1526,32 @@ verifyClassLoadingStack(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMC
 	}
 
 	if ((0 != maxStack) && (count >= maxStack)) {
-		if ((vmThread->privateFlags & J9_PRIVATE_FLAGS_CLOAD_OVERFLOW) != J9_PRIVATE_FLAGS_CLOAD_OVERFLOW) {
+		if ((vmThread->privateFlags & J9_PRIVATE_FLAGS_CLOAD_OR_LINKING_OVERFLOW) != J9_PRIVATE_FLAGS_CLOAD_OR_LINKING_OVERFLOW) {
 			/* too many simultaneous class loads.  Fail. */
 			Trc_VM_CreateRAMClassFromROMClass_overflow(vmThread, count);
-			omrthread_monitor_exit(javaVM->classTableMutex);
-			vmThread->privateFlags |= J9_PRIVATE_FLAGS_CLOAD_OVERFLOW;
+			if (ownsClassTableMutex) {
+				omrthread_monitor_exit(javaVM->classTableMutex);
+			}
+			vmThread->privateFlags |= J9_PRIVATE_FLAGS_CLOAD_OR_LINKING_OVERFLOW;
 			setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGSTACKOVERFLOWERROR, NULL);
-			vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_CLOAD_OVERFLOW;
+			vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_CLOAD_OR_LINKING_OVERFLOW;
 			return FALSE;
 		}
 	}
 
-	newTopOfStack = (J9ClassLoadingStackElement *)pool_newElement(javaVM->classLoadingStackPool);
+	newTopOfStack = (J9StackElement *)pool_newElement(stackpool);
 	if (newTopOfStack == NULL) {
 		Trc_VM_CreateRAMClassFromROMClass_classLoadingStackOOM(vmThread);
-		omrthread_monitor_exit(javaVM->classTableMutex);
+		if (ownsClassTableMutex) {
+			omrthread_monitor_exit(javaVM->classTableMutex);
+		}
 		setNativeOutOfMemoryError(vmThread, 0, 0);
 		return FALSE;
 	}
-	newTopOfStack->romClass = romClass;
-	newTopOfStack->previous = vmThread->classLoadingStack;
+	newTopOfStack->element = (void *) clazz;
+	newTopOfStack->previous = *stack;
 	newTopOfStack->classLoader = classLoader;
-	vmThread->classLoadingStack = newTopOfStack;
+	*stack = newTopOfStack;
 
 	return TRUE;
 }
@@ -1540,10 +1565,16 @@ verifyClassLoadingStack(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMC
 static void
 popFromClassLoadingStack(J9VMThread *vmThread)
 {
-	J9ClassLoadingStackElement *topOfStack = vmThread->classLoadingStack;
+	popLoadingOrLinkingStack(vmThread, &vmThread->classLoadingStack, vmThread->javaVM->classLoadingStackPool);
+}
 
-	vmThread->classLoadingStack = topOfStack->previous;
-	pool_removeElement(vmThread->javaVM->classLoadingStackPool, topOfStack);
+void
+popLoadingOrLinkingStack(J9VMThread *vmThread, J9StackElement **stack, J9Pool *stackpool)
+{
+	J9StackElement *topOfStack = *stack;
+
+	*stack = topOfStack->previous;
+	pool_removeElement(stackpool, topOfStack);
 }
 
 /**
@@ -1721,15 +1752,15 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 	J9ROMFieldWalkState fieldWalkState = {0};
 	J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
 	BOOLEAN result = TRUE;
-	UDATA flattenableInstanceFieldCount = 0;
+	UDATA flattenableFieldCount = 0;
 	bool eligibleForFastSubstitutability = true;
 
 	/* iterate over fields and load classes of fields marked as QTypes */
 	while (NULL != field) {
 		const U_32 modifiers = field->modifiers;
+		J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
+		U_8 *signatureChars = J9UTF8_DATA(signature);
 		if (J9_ARE_NO_BITS_SET(modifiers, J9AccStatic)) {
-			J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
-			U_8 *signatureChars = J9UTF8_DATA(signature);
 			switch (signatureChars[0]) {
 			case 'Q':
 			{
@@ -1765,11 +1796,11 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 						eligibleForFastSubstitutability = false;
 					}
 
-					J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, flattenableInstanceFieldCount);
+					J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, flattenableFieldCount);
 					entry->clazz = valueClass;
 					entry->field = field;
 					entry->offset = UDATA_MAX;
-					flattenableInstanceFieldCount += 1;
+					flattenableFieldCount += 1;
 				}
 				*valueTypeFlags |= (valueClass->classFlags & (J9ClassLargestAlignmentConstraintDouble | J9ClassLargestAlignmentConstraintReference));
 				break;
@@ -1793,13 +1824,21 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 				 */
 				break;
 			}
+		} else {
+			if ('Q' == signatureChars[0]) {
+				J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, flattenableFieldCount);
+				entry->clazz = (J9Class *) J9_VM_FCC_CLASS_FLAGS_STATIC_FIELD;
+				entry->field = field;
+				entry->offset = UDATA_MAX;
+				flattenableFieldCount += 1;
+			}
 		}
 		field = romFieldsNextDo(&fieldWalkState);
 	}
 	if (eligibleForFastSubstitutability) {
 		*valueTypeFlags |= J9ClassCanSupportFastSubstitutability;
 	}
-	flattenedClassCache->numberOfEntries = flattenableInstanceFieldCount;
+	flattenedClassCache->numberOfEntries = flattenableFieldCount;
 
 done:
 	return result;
