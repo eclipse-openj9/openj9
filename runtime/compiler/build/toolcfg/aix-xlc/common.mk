@@ -39,6 +39,11 @@ DEPSUFF=.depend.mk
 # for example, you want to compile .spp files with a different C++ compiler than you use
 # to compile .cpp files
 #
+ifeq ($(I5_VERSION),I5_V6R1)
+#On IBM i I5_V6R1 build, only the as under ~j9/bin could handle "pwr7" and its instructions.
+#Change the as for building some *.spp files
+    AS=~j9/bin/as
+endif
 
 # Use default AR=ar
 # Use default AS=as
@@ -124,6 +129,11 @@ endif
 ifneq (,$(findstring xlclang++,$(notdir $(CXX))))
   # xlclang++ options
   CXX_FLAGS+=-fno-rtti
+endif
+
+ifdef I5_VERSION
+# Added i5 os specific flags
+  CX_FLAGS_EXTRA+=$(USERCFLAGS)
 endif
 
 C_CMD?=$(CC)
