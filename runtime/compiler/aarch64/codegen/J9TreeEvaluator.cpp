@@ -737,7 +737,7 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
 
-   if (comp->getOption(TR_DisableAllocationInlining))
+   if (comp->suppressAllocationInlining())
       return NULL;
 
    if (comp->getOption(TR_DisableTarokInlineArrayletAllocation) && (node->getOpCodeValue() == TR::anewarray || node->getOpCodeValue() == TR::newarray))
@@ -891,10 +891,16 @@ J9::ARM64::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR::CodeGenera
 TR::Register *
 J9::ARM64::TreeEvaluator::newObjectEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::ILOpCodes opCode = node->getOpCodeValue();
-   TR::Node::recreate(node, TR::acall);
-   TR::Register *targetRegister = directCallEvaluator(node, cg);
-   TR::Node::recreate(node, opCode);
+   TR::Register *targetRegister = TR::TreeEvaluator::VMnewEvaluator(node, cg);
+   if (!targetRegister)
+      {
+      // Inline object allocation wasn't generated, just generate a call to the helper.
+      //
+      TR::ILOpCodes opCode = node->getOpCodeValue();
+      TR::Node::recreate(node, TR::acall);
+      targetRegister = directCallEvaluator(node, cg);
+      TR::Node::recreate(node, opCode);
+      }
    return targetRegister;
    }
 
