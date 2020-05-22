@@ -300,6 +300,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
       auto helper = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol());
       generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)helper->getMethodAddress(), helper, cg());
       generateLabelInstruction(JMP4, callNode, longReleaseRestartLabel, cg());
+      og.endOutlinedInstructionSequence();
       }
 
    // Dispatch jni method directly.
@@ -394,6 +395,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
       auto helper = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol());
       generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)helper->getMethodAddress(), helper, cg());
       generateLabelInstruction(JMP4, callNode, longAcquireRestartLabel, cg());
+      og.endOutlinedInstructionSequence();
       }
 
    if (TR::Address == resolvedMethod->returnType() && wrapRefs)
@@ -455,6 +457,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
          TR_OutlinedInstructionsGenerator og(refPoolSnippetLabel, callNode, cg());
          generateHelperCallInstruction(callNode, TR_IA32jitCollapseJNIReferenceFrame, NULL, cg());
          generateLabelInstruction(JMP4, callNode, refPoolRestartLabel, cg());
+      og.endOutlinedInstructionSequence();
          }
 
       // Now set esp back to its previous value.

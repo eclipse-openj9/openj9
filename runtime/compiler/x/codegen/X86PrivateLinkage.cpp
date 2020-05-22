@@ -2160,6 +2160,7 @@ TR::Instruction *J9::X86::PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR
          {
          TR_OutlinedInstructionsGenerator og(jmpLabel, callNode, cg());
          generateRegInstruction(JMPReg, callNode, targetAddressReg, cg());
+         og.endOutlinedInstructionSequence();
          }
 
          // The targetAddressReg doesn't appear to be used in mainline code, so

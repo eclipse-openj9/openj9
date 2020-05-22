@@ -910,6 +910,7 @@ void J9::X86::AMD64::JNILinkage::releaseVMAccess(TR::Node *callNode)
    auto helper = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol());
    generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)helper->getMethodAddress(), helper, cg());
    generateLabelInstruction(JMP4, callNode, longReleaseRestartLabel, cg());
+   og.endOutlinedInstructionSequence();
    }
 
    mask = fej9->constReleaseVMAccessMask();
@@ -1007,6 +1008,7 @@ void J9::X86::AMD64::JNILinkage::acquireVMAccess(TR::Node *callNode)
    auto helper = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol());
    generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)helper->getMethodAddress(), helper, cg());
    generateLabelInstruction(JMP4, callNode, longReacquireRestartLabel, cg());
+   og.endOutlinedInstructionSequence();
    }
    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(2, 2, cg());
    deps->addPreCondition(scratchReg1, TR::RealRegister::eax, cg());
@@ -1058,6 +1060,7 @@ void J9::X86::AMD64::JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
    auto helper = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol());
    generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)helper->getMethodAddress(), helper, cg());
    generateLabelInstruction(JMP4, callNode, longReleaseRestartLabel, cg());
+   og.endOutlinedInstructionSequence();
    }
 
 
@@ -1095,6 +1098,7 @@ void J9::X86::AMD64::JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
    auto helper = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol());
    generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)helper->getMethodAddress(), helper, cg());
    generateLabelInstruction(JMP4, callNode, longAcquireRestartLabel, cg());
+   og.endOutlinedInstructionSequence();
    }
 
 
@@ -1215,6 +1219,7 @@ void J9::X86::AMD64::JNILinkage::cleanupJNIRefPool(TR::Node *callNode)
    TR_OutlinedInstructionsGenerator og(refPoolSnippetLabel, callNode, cg());
    generateHelperCallInstruction(callNode, TR_AMD64jitCollapseJNIReferenceFrame, NULL, cg());
    generateLabelInstruction(JMP4, callNode, refPoolRestartLabel, cg());
+   og.endOutlinedInstructionSequence();
    }
 
 
