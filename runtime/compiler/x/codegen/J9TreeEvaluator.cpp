@@ -1029,6 +1029,7 @@ TR::Register* J9::X86::TreeEvaluator::performHeapLoadWithReadBarrier(TR::Node* n
          generateHelperCallInstruction(node, TR_softwareReadBarrier, NULL, cg);
          generateRegMemInstruction(LRegMem(use64BitClasses), node, object, generateX86MemoryReference(address, 0, cg), cg);
          generateLabelInstruction(JMP4, node, endLabel, cg);
+         og.endOutlinedInstructionSequence();
          }
          generateLabelInstruction(LABEL, node, endLabel, deps, cg);
          }
@@ -1210,6 +1211,7 @@ TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::Co
    TR_OutlinedInstructionsGenerator og(snippetLabel, node, cg);
    generateImmSymInstruction(CALLImm4, node, (uintptr_t)node->getSymbolReference()->getMethodAddress(), node->getSymbolReference(), cg)->setNeedsGCMap(0xFF00FFFF);
    generateLabelInstruction(JMP4, node, endControlFlowLabel, cg);
+   og.endOutlinedInstructionSequence();
    }
 
    endControlFlowLabel->setEndInternalControlFlow();
@@ -1601,6 +1603,7 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
          generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp2), cg), dstObjReg, cg);
          generateHelperCallInstruction(node, TR_referenceArrayCopy, NULL, cg)->setNeedsGCMap(0xFF00FFFF);
          generateLabelInstruction(JMP4, node, endLabel, cg);
+         og.endOutlinedInstructionSequence();
          }
       if (!node->isForwardArrayCopy())
          {
@@ -1619,6 +1622,7 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
          generateInstruction(use64BitClasses ? REPMOVSQ : REPMOVSD, node, cg);
          generateInstruction(CLD, node, cg);
          generateLabelInstruction(JMP4, node, endLabel, cg);
+         og.endOutlinedInstructionSequence();
          }
       generateRegImmInstruction(SHRRegImm1(), node, RCX, use64BitClasses ? 3 : 2, cg);
       generateInstruction(use64BitClasses ? REPMOVSQ : REPMOVSD, node, cg);
@@ -2841,6 +2845,7 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
             generateMemRegInstruction(SMemReg(), node, tempMR2, sourceRegister, cg);
 
          generateLabelInstruction(JMP4, node, doneLabel, cg);
+         og.endOutlinedInstructionSequence();
          }
       else
          {
@@ -3755,6 +3760,7 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node* node, TR::Code
       auto call = generateHelperCallInstruction(node, TR_throwClassCastException, NULL, cg);
       call->setNeedsGCMap(0xFF00FFFF);
       call->setAdjustsFramePointerBy(-2*(int32_t)sizeof(J9Class*));
+      og.endOutlinedInstructionSequence();
    }
 
    TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, 8, cg);
@@ -3920,6 +3926,8 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_
          generateRegInstruction(POPReg, node, j9class, cg);
          generateLabelInstruction(JMP4, node, endLabel, cg);
          }
+
+      og.endOutlinedInstructionSequence();
       }
 
    // Succeed
@@ -4032,6 +4040,7 @@ inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node* node, TR_Opaq
             TR_OutlinedInstructionsGenerator og(outlineLabel, node, cg);
             generateInstruction(CLC, node, cg);
             generateLabelInstruction(JMP4, node, failLabel, cg);
+            og.endOutlinedInstructionSequence();
             }
          else
             {
@@ -4086,6 +4095,8 @@ inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node* node, TR_Opaq
       auto call = generateHelperCallInstruction(node, TR_throwClassCastException, NULL, cg);
       call->setNeedsGCMap(0xFF00FFFF);
       call->setAdjustsFramePointerBy(-2*(int32_t)sizeof(J9Class*));
+
+      og.endOutlinedInstructionSequence();
       }
 
    // Succeed
@@ -4266,6 +4277,8 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
       cg->stopUsingRegister(patchValReg);
       cg->stopUsingRegister(tempReg);
       generateLabelInstruction(LABEL, node, outlinedEndLabel, cg);
+
+      og.endOutlinedInstructionSequence();
       }
   else
       {
@@ -4355,6 +4368,8 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
       cg->stopUsingRegister(lowExistingValReg);
       cg->stopUsingRegister(highExistingValReg);
       generateLabelInstruction(LABEL, node, outlinedEndLabel, cg);
+
+      og.endOutlinedInstructionSequence();
      }
   }
 
@@ -4421,6 +4436,8 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(TR::Node          *node,
    deps->addPostCondition(vmThreadReg, TR::RealRegister::ebp, cg);
    deps->stopAddingConditions();
    generateLabelInstruction(LABEL, node, outlinedEndLabel, deps, cg);
+
+   og.endOutlinedInstructionSequence();
    }
 
 void J9::X86::TreeEvaluator::transactionalMemoryJITMonitorEntry(TR::Node           *node,
@@ -4460,6 +4477,8 @@ void J9::X86::TreeEvaluator::transactionalMemoryJITMonitorEntry(TR::Node        
       generateLabelInstruction(LABEL, node, outlinedEndLabel, cg);
 
       cg->stopUsingRegister(counterReg);
+
+      og.endOutlinedInstructionSequence();
    }
 
 void
@@ -5289,6 +5308,8 @@ TR::Register
       TR_OutlinedInstructionsGenerator og(decCountLabel, node, cg);
       generateMemInstruction(  DECMem(cg), node, generateX86MemoryReference(unlockedReg, fej9->getMonitorEntryCountOffset(), cg), cg);
       generateLabelInstruction(JMP4,       node, fallThru, cg);
+
+      og.endOutlinedInstructionSequence();
       }
 
    // back to main-line code path
@@ -9385,6 +9406,8 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
          generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), tmp, cg);
          generateHelperCallInstruction(node, TR_softwareReadBarrier, NULL, cg);
          generateLabelInstruction(JMP4, node, endLabel, cg);
+
+         og.endOutlinedInstructionSequence();
          }
 
          generateLabelInstruction(LABEL, node, endLabel, deps, cg);
@@ -10057,6 +10080,8 @@ static void generateWriteBarrierCall(
       }
    generateImmSymInstruction(CALLImm4, node, (uintptr_t)wrtBarSymRef->getMethodAddress(), wrtBarSymRef, cg);
    generateLabelInstruction(JMP4, node, doneLabel, cg);
+
+   og.endOutlinedInstructionSequence();
    }
 
 static void reportFlag(bool value, char *name, TR::CodeGenerator *cg)
@@ -10625,6 +10650,8 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
       generateMemImmInstruction(S1MemImm1, node, cardTableMR, dirtyCard, cg);
       srm->reclaimScratchRegister(tempReg);
       generateLabelInstruction(JMP4, node, doneLabel, cg);
+
+      og.endOutlinedInstructionSequence();
       }
    else if (doInlineCardMarkingWithoutOldSpaceCheck && !dirtyCardTableOutOfLine)
       {
@@ -12386,6 +12413,8 @@ J9::X86::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField (TR::C
       //store result into J9JITWatchedStaticFieldData.fieldAddress / J9JITWatchedInstanceFieldData.offset
       generateMemRegInstruction(SMemReg(is64Bit), node, generateX86MemoryReference(dataBlockReg, offsetInDataBlock, cg), resultReg, cg);
       generateLabelInstruction(JMP4, node, endLabel, cg);
+
+      og.endOutlinedInstructionSequence();
       }
 
    deps->stopAddingConditions();
@@ -12627,6 +12656,7 @@ J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGene
       {
       TR_OutlinedInstructionsGenerator og(fieldReportLabel, node ,cg);
       generateReportFieldAccessOutlinedInstructions(node, endLabel, dataSnippet, isWrite, deps, cg, sideEffectRegister, valueReg);
+      og.endOutlinedInstructionSequence();
       }
    deps->stopAddingConditions();
    generateLabelInstruction(LABEL, node, endLabel, deps, cg);
