@@ -112,7 +112,7 @@ J9::Z::PrivateLinkage::PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390Linkage
       comp()->setOption(TR_DisableSIMD);
       }
 
-   static const bool enableVectorLinkage = codeGen->getSupportsVectorRegisters();
+   const bool enableVectorLinkage = codeGen->getSupportsVectorRegisters();
    if (enableVectorLinkage) setVectorReturnRegister(TR::RealRegister::VRF24);
 
    setStackPointerRegister  (TR::RealRegister::GPR5 );
@@ -248,14 +248,6 @@ void J9::Z::PrivateLinkage::alignLocalsOffset(uint32_t &stackIndex, uint32_t loc
 // J9::Z::PrivateLinkage::mapCompactedStack - maps variables onto the stack, sharing
 //     stack slots for automatic variables with non-interfering live ranges.
 ////////////////////////////////////////////////////////////////////////////////
-#ifdef DEBUG
-// track the total size of the stacks of all methods compiled had we not compacted them
-static uint32_t accumOrigSize = 0;
-
-// track the total size of the stacks of all methods compiled with stack compaction
-static uint32_t accumMappedSize = 0;
-#endif
-
 void
 J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
    {
@@ -635,13 +627,6 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
                   (mappedSize),
                   origSize,
                   origSize - mappedSize,
-                  comp()->signature());
-
-      accumMappedSize += mappedSize;
-      accumOrigSize += origSize;
-
-      diagnostic("\n**** Accumulated totals: mapped size=%d, shared size=%d, original size=%d after %s\n",
-                  accumMappedSize, accumOrigSize-accumMappedSize, accumOrigSize,
                   comp()->signature());
       }
 #endif
