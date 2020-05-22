@@ -22,6 +22,7 @@
 
 #TODO specify -O3 for zos
 
+set(OMR_ENHANCED_WARNINGS OFF)
 add_tracegen(j9bcverify.tdf)
 
 j9vm_add_library(j9bcv STATIC

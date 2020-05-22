@@ -20,6 +20,8 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
+set(OMR_ENHANCED_WARNINGS OFF)
+
 omr_add_tracegen(j9bcu.tdf)
 
 # We define an interface library containing all the sources here
