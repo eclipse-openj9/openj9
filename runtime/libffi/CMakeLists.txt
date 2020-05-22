@@ -20,6 +20,9 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
+set(OMR_ENHANCED_WARNINGS OFF)
+set(OMR_WARNINGS_AS_ERRORS OFF)
+
 j9vm_add_library(ffi STATIC
 	closures.c
 	debug.c
