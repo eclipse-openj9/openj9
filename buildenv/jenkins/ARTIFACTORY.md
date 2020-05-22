@@ -232,6 +232,8 @@ Under the Admin tab on the left side, select Services -> Backups and make sure t
 
 Under the Admin tab on the left side, select Configuration -> General Configuration. Disable trash can. Save.
 
+Admin tab, Advanced, Maintenance. Garbage collection. Cron expression. Set to 9pm daily (Before the nightly, after the daily cleanup). `0 0 1 * * ?` for OSU (UTC) and `0 0 21 * * ?` for UNB (EDT). Save. The GC will give back the disk space to the OS after artifacts are deleted. See https://www.jfrog.com/confluence/display/JFROG/Managing+Disk+Space+Usage
+
 Now logoff of the admin account and log into the Jenkins account. Edit the profile of Jenkins by clicking on Welcome, Jenkins -> Edit Profile. Insert the password to unlock the account and generate the API key. Copy that key to the secrets repo and update Jenkins so that it can upload artifacts.
 
 I also added in a separate shell command to restart Artifactory.
