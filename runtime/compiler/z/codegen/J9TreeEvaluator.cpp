@@ -4662,21 +4662,11 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
                             else
                                op = (cg->comp()->target().is64Bit() ? TR::InstOpCode::LGB : TR::InstOpCode::LB);
                             break;
-            case TR::Int16:  if (actualLoadOrStoreChild->getOpCode().isShort())
-                               {
-                               op = TR::InstOpCode::getLoadHalfWordOpCode();
-                               }
+            case TR::Int16:
+                            if (loadOrStoreChild->isZeroExtendedAtSource())
+                               op = (cg->comp()->target().is64Bit() ? TR::InstOpCode::LLGH : TR::InstOpCode::LLH);
                             else
-                               {
-                               if (cg->comp()->target().is64Bit())
-                                  {
-                                  op = TR::InstOpCode::LLGH;
-                                  }
-                               else
-                                  {
-                                  op = TR::InstOpCode::LLH;
-                                  }
-                               }
+                               op = (cg->comp()->target().is64Bit() ? TR::InstOpCode::LGH : TR::InstOpCode::LH);
                             break;
             case TR::Int32:
                             if (loadOrStoreChild->isZeroExtendedAtSource())
