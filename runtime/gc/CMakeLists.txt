@@ -21,6 +21,7 @@
 ################################################################################
 
 j9vm_add_library(j9gc SHARED
+	OUTPUT_NAME j9gc${J9VM_VERSION_SUFFIX}
 	dllinit.c
 	gctable.c
 

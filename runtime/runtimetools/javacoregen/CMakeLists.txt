@@ -22,6 +22,7 @@
 
 set(OMR_ENHANCED_WARNINGS OFF)
 j9vm_add_library(jcoregen SHARED
+	OUTPUT_NAME jcoregen${J9VM_VERSION_SUFFIX}
 	JavacoreGenAgent.cpp
 )
 

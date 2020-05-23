@@ -24,6 +24,7 @@ set(OMR_ENHANCED_WARNINGS OFF)
 add_tracegen(j9vmchk.tdf)
 
 j9vm_add_library(j9vmchk SHARED
+	OUTPUT_NAME j9vmchk${J9VM_VERSION_SUFFIX}
 	checkclasses.c
 	checkclconstraints.c
 	checkinterntable.c

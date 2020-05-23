@@ -25,6 +25,7 @@ set(OMR_ENHANCED_WARNINGS OFF)
 add_tracegen(j9jni.tdf)
 
 j9vm_add_library(j9jnichk SHARED
+	OUTPUT_NAME j9jnichk${J9VM_VERSION_SUFFIX}
 	jnicbuf.c
 	jnicheck.c
 	jnicmem.c

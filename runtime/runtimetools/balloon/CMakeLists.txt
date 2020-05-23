@@ -22,6 +22,7 @@
 
 set(OMR_ENHANCED_WARNINGS OFF)
 j9vm_add_library(balloon SHARED
+	OUTPUT_NAME balloon${J9VM_VERSION_SUFFIX}
 	BalloonAgent.cpp
 )
 target_link_libraries(balloon

@@ -23,6 +23,7 @@
 # Note: We just take the objects provided by omr.
 # TODO: Do we just want to make omr build a shared lib?
 j9vm_add_library(j9thr SHARED
+	OUTPUT_NAME j9thr${J9VM_VERSION_SUFFIX}
 	$<TARGET_OBJECTS:j9thr_obj>
 )
 target_link_libraries(j9thr

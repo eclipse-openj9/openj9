@@ -22,6 +22,7 @@
 
 set(OMR_ENHANCED_WARNINGS OFF)
 j9vm_add_library(memorywatcher SHARED
+	OUTPUT_NAME memorywatcher${J9VM_VERSION_SUFFIX}
 	MemoryWatcherAgent.cpp
 )
 

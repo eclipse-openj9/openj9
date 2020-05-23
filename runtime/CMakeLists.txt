@@ -381,19 +381,10 @@ endif()
 add_dependencies(omrutil_obj j9vm_nlsgen run_cptool)
 
 ###
-### Share library version suffixing
+### Shared library version suffixing
 ###
-# Note: this has to happen after we add_subdirectory omr
-
 # The string we append to the name of shared libs
-# set(versionStr "${J9VM_VERSION_MAJOR}${J9VM_VERSION_MINOR}")
-set(versionStr "29")
-
-# Save the old shared library suffix val (eg. '.so' or '.dll', so we can use it later if needed)
-set(J9VM_OLD_SHARED_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
-set(J9VM_SHARED_LIBRARY_SUFFIX ${versionStr}${CMAKE_SHARED_LIBRARY_SUFFIX})
-# Prepend the version string so eg. '29.so' gets tacked onto the end of library names if they are built into shared libs
-set(CMAKE_SHARED_LIBRARY_SUFFIX "${J9VM_SHARED_LIBRARY_SUFFIX}")
+set(J9VM_VERSION_SUFFIX "29")
 
 ###
 ### Begin the definitions of our modules
