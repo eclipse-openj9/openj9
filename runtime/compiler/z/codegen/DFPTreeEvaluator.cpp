@@ -49,7 +49,7 @@
 **/
 
 // used when querying VM for BigDecimal dfp field
-static int16_t dfpFieldOffset = -1; // initialize to an illegal val
+int16_t dfpFieldOffset = -1; // initialize to an illegal val
 
 // Rounding modes
 const uint8_t rmIEEEdefault = 0x0; // round to nearest ties to even
