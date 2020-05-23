@@ -93,7 +93,7 @@ CPU::hasPopulationCountInstruction()
 #if defined(J9OS_I5)
    return false;
 #else
-   return TR::Compiler->target.cpu.isAtLeast(TR_PPCp7);
+   return self()->id() >= TR_PPCp7;
 #endif
    }
 
@@ -133,9 +133,9 @@ CPU::isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags proc
         || targetProcessor == TR_PPCp6 
         || targetProcessor >= TR_PPCp7 && targetProcessor <= TR_LastPPCProcessor))
       {
-      return self()->isAtLeast(processorSignature);
+      return targetProcessor >= processorSignature;
       }
-   return self()->is(processorSignature);
+   return targetProcessor == processorSignature;
    }
    
 }
