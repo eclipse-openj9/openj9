@@ -22,6 +22,7 @@
 
 set(OMR_ENHANCED_WARNINGS OFF)
 j9vm_add_library(osmemory SHARED
+	OUTPUT_NAME osmemory${J9VM_VERSION_SUFFIX}
 	OSMemoryAgent.cpp
 )
 

@@ -23,6 +23,7 @@
 omr_add_tracegen(j9jvmti.tdf)
 
 j9vm_add_library(j9jvmti SHARED
+	OUTPUT_NAME j9jvmti${J9VM_VERSION_SUFFIX}
 	jvmtiBreakpoint.c
 	jvmtiCapability.c
 	jvmtiClass.c

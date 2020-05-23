@@ -21,6 +21,7 @@
 ################################################################################
 
 j9vm_add_library(j9hookable SHARED
+	OUTPUT_NAME j9hookable${J9VM_VERSION_SUFFIX}
 	# We just pull in the hookable objects built as part of OMR
 	# TODO: Do we want to just make omr build a shared lib and use that?
 	$<TARGET_OBJECTS:j9hook_obj>

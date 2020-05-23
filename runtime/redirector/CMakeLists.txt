@@ -20,15 +20,15 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-# Don't append version suffix.
-set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_OLD_SHARED_SUFFIX})
-
 set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/generated.c" PROPERTIES GENERATED TRUE)
 
 ################################################################################
 # Redirector
 ################################################################################
-j9vm_add_library(jvm_redirect SHARED
+j9vm_add_library(jvm_redirect
+	SHARED
+	OUTPUT_NAME jvm
+
 	"${CMAKE_CURRENT_BINARY_DIR}/generated.c"
 	redirector.c
 )
@@ -49,7 +49,6 @@ if(OMR_OS_ZOS)
 	)
 endif()
 set_target_properties(jvm_redirect PROPERTIES
-	OUTPUT_NAME jvm
 	ARCHIVE_OUTPUT_NAME redirector_jvm
 	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"

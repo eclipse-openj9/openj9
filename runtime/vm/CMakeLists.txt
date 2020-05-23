@@ -22,6 +22,7 @@
 
 omr_add_tracegen(j9vm.tdf)
 j9vm_add_library(j9vm SHARED
+	OUTPUT_NAME j9vm${J9VM_VERSION_SUFFIX}
 	annsup.c
 	AsyncMessageHandler.cpp
 	bchelper.c

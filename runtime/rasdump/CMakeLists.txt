@@ -22,6 +22,7 @@
 
 add_tracegen(j9dmp.tdf)
 j9vm_add_library(j9dmp SHARED
+	OUTPUT_NAME j9dmp${J9VM_VERSION_SUFFIX}
 	dmpagent.c
 	dmpmap.c
 	dmpqueue.c

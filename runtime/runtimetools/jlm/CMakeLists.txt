@@ -22,6 +22,7 @@
 
 set(OMR_ENHANCED_WARNINGS OFF)
 j9vm_add_library(jlmagent SHARED
+	OUTPUT_NAME jlmagent${J9VM_VERSION_SUFFIX}
 	JLMAgent.cpp
 )
 

@@ -33,6 +33,7 @@ set(OMR_ENHANCED_WARNINGS OFF)
 
 add_tracegen(common/j9prt.tdf)
 j9vm_add_library(j9prt SHARED
+	OUTPUT_NAME j9prt${J9VM_VERSION_SUFFIX}
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9prt.c
 
 	# Pull in the objects compiled as part of the OMR port library

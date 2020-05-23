@@ -26,6 +26,7 @@ add_tracegen(j9trc_aux.tdf)
 add_tracegen(mt.tdf)
 
 j9vm_add_library(j9trc SHARED
+	OUTPUT_NAME j9trc${J9VM_VERSION_SUFFIX}
 	method_trace.c
 	method_trigger.c
 	trccomponent.c

@@ -23,6 +23,7 @@
 set(OMR_ENHANCED_WARNINGS OFF)
 
 j9vm_add_library(j9ddr_misc SHARED
+	OUTPUT_NAME j9ddr_misc${J9VM_VERSION_SUFFIX}
 	algorithm_versions.c
 	gcddr.cpp
 	jitflagsddr.c

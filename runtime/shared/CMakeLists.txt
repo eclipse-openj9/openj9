@@ -21,6 +21,7 @@
 ################################################################################
 
 j9vm_add_library(j9shr SHARED
+	OUTPUT_NAME j9shr${J9VM_VERSION_SUFFIX}
 	shrclssup.c
 )
 target_link_libraries(j9shr
