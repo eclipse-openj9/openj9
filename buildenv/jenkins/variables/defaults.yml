@@ -112,7 +112,6 @@ largeheap:
 cmake:
   extra_configure_options:
     all: '--with-cmake'
-  extra_make_options: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
   excluded_tests:
     8:
       - special.system
