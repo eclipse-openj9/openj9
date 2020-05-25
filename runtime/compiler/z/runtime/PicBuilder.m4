@@ -1750,6 +1750,12 @@ ifdef({J9ZOS390},{dnl
     ST_GPR  rEP,0(J9SP)
 })dnl
 
+ifdef({TR_HOST_64BIT},{dnl
+    AHI_GPR J9SP,-(16*PTR_SIZE)
+},{dnl
+    AHI_GPR J9SP,-(32*PTR_SIZE)
+})
+    SAVE_FP_REGS(J9SP)
     ST_GPR  J9SP,J9TR_VMThread_sp(r13)
 
     LA      CARG2,eq_implementerClass_inInterfaceSnippet(r14)
@@ -1789,6 +1795,14 @@ ZZ zLinux case
 
 ZZ Restore killed regs
     L_GPR  J9SP,J9TR_VMThread_sp(r13)
+    RESTORE_FP_REGS(J9SP)
+
+ifdef({TR_HOST_64BIT},{dnl
+    AHI_GPR J9SP,(16*PTR_SIZE)
+},{dnl
+    AHI_GPR J9SP,(32*PTR_SIZE)
+})
+
 ifdef({J9ZOS390},{dnl
     L_GPR  r0,(3*PTR_SIZE)(J9SP)
     L_GPR  r6,(2*PTR_SIZE)(J9SP)
@@ -2046,6 +2060,13 @@ ifdef({J9ZOS390},{dnl
     ST_GPR  r14,0(J9SP)
 })dnl
 
+ifdef({TR_HOST_64BIT},{dnl
+    AHI_GPR J9SP,-(16*PTR_SIZE)
+},{dnl
+    AHI_GPR J9SP,-(32*PTR_SIZE)
+})
+    SAVE_FP_REGS(J9SP)
+
     ST_GPR  J9SP,J9TR_VMThread_sp(r13)
 
 ZZ make the call
@@ -2083,6 +2104,15 @@ LOAD_ADDR_FROM_TOC(r14,TR_jitAddPicToPatchOnClassUnload)
 
 ZZ Restore killed regs
     L_GPR  J9SP,J9TR_VMThread_sp(r13)
+
+    RESTORE_FP_REGS(J9SP)
+
+ifdef({TR_HOST_64BIT},{dnl
+    AHI_GPR J9SP,(16*PTR_SIZE)
+},{dnl
+    AHI_GPR J9SP,(32*PTR_SIZE)
+})
+
 ifdef({J9ZOS390},{dnl
     L_GPR  r6,(2*PTR_SIZE)(J9SP)
     L_GPR  r7,PTR_SIZE(J9SP)
