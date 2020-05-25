@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar16]*/
 
 /*******************************************************************************
- * Copyright (c) 2009, 2010 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 package com.ibm.le.conditionhandling;
 
 /**
- * A ConditionException is used to represent a z/OS Language Environment condition in Java.
+ * A ConditionException is used to represent a z/OS Language Environment condition.
  * <p>
  * References 
  * <ul>

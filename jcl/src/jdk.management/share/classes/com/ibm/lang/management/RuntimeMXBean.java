@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2019 IBM Corp. and others
+ * Copyright (c) 2012, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,20 +23,29 @@
 package com.ibm.lang.management;
 
 /**
- * The IBM-specific interface for the runtime system of the virtual machine.
+ * The OpenJ9 extension interface for the runtime system of the virtual machine.
  */
 public interface RuntimeMXBean extends java.lang.management.RuntimeMXBean {
 
 	/**
-	 * enum type defines the different states of the VM Idle 
+	 * Defines the different states of {@link com.ibm.lang.management.RuntimeMXBean#getVMIdleState()}.
 	 */
 	public enum VMIdleStates {
 		/* Below constant values reflect J9VMRuntimeStateListener.vmRuntimeState
 		 * from the VM and the VM constants J9VM_RUNTIME_STATE_ACTIVE and
 		 * J9VM_RUNTIME_STATE_IDLE. These values need to match the VM values.
 		 */
+		/**
+		 * VM idle state could not be determined.
+		 */
 		INVALID(-1, "Invalid"),
+		/**
+		 * VM idle state is active.
+		 */
 		ACTIVE(1, "Active"),
+		/**
+		 * VM idle state is idle.
+		 */
 		IDLE(2, "Idle");
 
 		private int stateVal;
