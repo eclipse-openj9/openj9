@@ -2017,6 +2017,8 @@ _illegalPrimitiveReturn:
 						bcIndex += 4;
 						if (!firstKey) {
 							if (nextKey <= currentKey) {
+								verboseErrorCode = BCV_ERR_BYTECODE_ERROR;
+								storeVerifyErrorData(verifyData, (I_16)verboseErrorCode, (U_32)errorStackIndex, (UDATA)-1, (UDATA)-1, start);
 								errorType = J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED__ID;
 								errorModule = J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED__MODULE;
 								goto _verifyError;

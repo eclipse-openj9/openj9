@@ -940,6 +940,8 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 	case BCV_ERR_UNEXPECTED_EOF:
 		printMessage(&msgBuf, "Unexpected EOF is detected in the class file.");
 		break;
+	case BCV_ERR_BYTECODE_ERROR:
+		printMessage(&msgBuf, "Error exists in the bytecode.");
 	default:
 		Assert_VRB_ShouldNeverHappen();
 		break;
