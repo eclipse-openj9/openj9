@@ -65,8 +65,9 @@ J9::Z::zOSSystemLinkage::zOSSystemLinkage(TR::CodeGenerator * cg)
 void
 J9::Z::zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::RegisterDependencyConditions * deps, intptr_t targetAddress,
       TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
-      TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint)
+      TR::Snippet * callDataSnippet, bool isJNIGCPoint)
    {
+   TR::S390JNICallDataSnippet * jniCallDataSnippet = static_cast<TR::S390JNICallDataSnippet *>(callDataSnippet);
    TR::CodeGenerator * codeGen = cg();
    TR::Compilation *comp = codeGen->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(codeGen->fe());
