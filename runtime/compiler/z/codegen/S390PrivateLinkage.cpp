@@ -2521,7 +2521,7 @@ J9::Z::PrivateLinkage::setupJNICallOutFrame(TR::Node * callNode,
    TR::RealRegister * javaStackPointerRealRegister,
    TR::Register * methodMetaDataVirtualRegister,
    TR::LabelSymbol * returnFromJNICallLabel,
-   TR::S390JNICallDataSnippet *jniCallDataSnippet)
+   TR::S390JNICallDataSnippet2 *jniCallDataSnippet)
    {
    TR::CodeGenerator * codeGen = cg();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
@@ -2598,7 +2598,7 @@ J9::Z::PrivateLinkage::setupJNICallOutFrame(TR::Node * callNode,
  */
 void J9::Z::JNILinkage::releaseVMAccessMask(TR::Node * callNode,
    TR::Register * methodMetaDataVirtualRegister, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg,
-   TR::S390JNICallDataSnippet * jniCallDataSnippet, TR::RegisterDependencyConditions * deps)
+   TR::S390JNICallDataSnippet2 * jniCallDataSnippet, TR::RegisterDependencyConditions * deps)
    {
    TR::LabelSymbol * loopHead = generateLabelSymbol(self()->cg());
    TR::LabelSymbol * longReleaseLabel = generateLabelSymbol(self()->cg());
@@ -2946,7 +2946,7 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
    deps = generateRegisterDependencyConditions(numDeps, numDeps, cg());
    int64_t killMask = -1;
    TR::Register *vftReg = NULL;
-   TR::S390JNICallDataSnippet * jniCallDataSnippet = NULL;
+   TR::S390JNICallDataSnippet2 * jniCallDataSnippet = NULL;
    TR::RealRegister * javaStackPointerRealRegister = getStackPointerRealRegister();
    TR::RealRegister * methodMetaDataRealRegister = getMethodMetaDataRealRegister();
    TR::RealRegister * javaLitPoolRealRegister = getLitPoolRealRegister();
@@ -3032,7 +3032,7 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
      {
      TR::Register * JNISnippetBaseReg = NULL;
      killMask = killAndAssignRegister(killMask, deps, &JNISnippetBaseReg, TR::RealRegister::GPR12, codeGen, true);
-     jniCallDataSnippet = new (trHeapMemory()) TR::S390JNICallDataSnippet(cg(), callNode);
+     jniCallDataSnippet = new (trHeapMemory()) TR::S390JNICallDataSnippet2(cg(), callNode);
      cg()->addSnippet(jniCallDataSnippet);
      jniCallDataSnippet->setBaseRegister(JNISnippetBaseReg);
      new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode,

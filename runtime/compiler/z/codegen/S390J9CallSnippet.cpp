@@ -1273,3 +1273,285 @@ TR::J9S390InterfaceCallDataSnippet::getLength(int32_t)
    TR_ASSERT(0,"Interface Call Data Snippet has 0 size.");
    return 0;
    }
+
+
+uint32_t
+TR::S390JNICallDataSnippet2::getJNICallOutFrameFlagsOffset()
+   {
+   return TR::Compiler->om.sizeofReferenceAddress();
+   }
+
+uint32_t
+TR::S390JNICallDataSnippet2::getReturnFromJNICallOffset()
+   {
+   return 2 * TR::Compiler->om.sizeofReferenceAddress();
+   }
+
+uint32_t
+TR::S390JNICallDataSnippet2::getSavedPCOffset()
+   {
+   return 3 * TR::Compiler->om.sizeofReferenceAddress();
+   }
+
+uint32_t
+TR::S390JNICallDataSnippet2::getTagBitsOffset()
+   {
+   return 4 * TR::Compiler->om.sizeofReferenceAddress();
+   }
+
+uint32_t
+TR::S390JNICallDataSnippet2::getPCOffset()
+   {
+   return 5 * TR::Compiler->om.sizeofReferenceAddress();
+   }
+
+uint32_t
+TR::S390JNICallDataSnippet2::getLiteralsOffset()
+   {
+   return 6 * TR::Compiler->om.sizeofReferenceAddress();
+   }
+
+uint32_t
+TR::S390JNICallDataSnippet2::getJitStackFrameFlagsOffset()
+   {
+   return 7 * TR::Compiler->om.sizeofReferenceAddress();
+   }
+
+uint32_t
+TR::S390JNICallDataSnippet2::getConstReleaseVMAccessMaskOffset()
+   {
+   return 8 * TR::Compiler->om.sizeofReferenceAddress();
+   }
+
+uint32_t
+TR::S390JNICallDataSnippet2::getConstReleaseVMAccessOutOfLineMaskOffset()
+   {
+   return 9 * TR::Compiler->om.sizeofReferenceAddress();
+   }
+
+uint32_t
+TR::S390JNICallDataSnippet2::getTargetAddressOffset()
+   {
+   return 10 * TR::Compiler->om.sizeofReferenceAddress();
+   }
+
+uint32_t
+TR::S390JNICallDataSnippet2::getLength(int32_t estimatedSnippetStart)
+   {
+   return 12 * TR::Compiler->om.sizeofReferenceAddress(); /*one ptr more for possible padding */
+   }
+
+
+TR::S390JNICallDataSnippet2::S390JNICallDataSnippet2(TR::CodeGenerator * cg,
+                               TR::Node * node)
+: TR::S390ConstantDataSnippet(cg, node, generateLabelSymbol(cg),0),
+ _baseRegister(0),
+ _ramMethod(0),
+ _JNICallOutFrameFlags(0),
+ _returnFromJNICallLabel(0),
+ _savedPC(0),
+ _tagBits(0),
+ _pc(0),
+ _literals(0),
+ _jitStackFrameFlags(0),
+ _constReleaseVMAccessMask(0),
+ _constReleaseVMAccessOutOfLineMask(0),
+ _targetAddress(0)
+   {
+   return;
+   }
+
+uint8_t *
+TR::S390JNICallDataSnippet2::emitSnippetBody()
+   {
+   uint8_t * cursor = cg()->getBinaryBufferCursor();
+
+   /* TR::S390JNICallDataSnippet2 Layout: all fields are pointer sized
+       ramMethod
+       JNICallOutFrameFlags
+       returnFromJNICall
+       savedPC
+       tagBits
+       pc
+       literals
+       jitStackFrameFlags
+       constReleaseVMAccessMask
+       constReleaseVMAccessOutOfLineMask
+       targetAddress
+   */
+      TR::Compilation *comp = cg()->comp();
+
+      AOTcgDiag1(comp, "TR::S390JNICallDataSnippet2::emitSnippetBody cursor=%x\n", cursor);
+      // Ensure pointer sized alignment
+      int32_t alignSize = TR::Compiler->om.sizeofReferenceAddress();
+      int32_t padBytes = ((intptr_t)cursor + alignSize -1) / alignSize * alignSize - (intptr_t)cursor;
+      cursor += padBytes;
+
+      getSnippetLabel()->setCodeLocation(cursor);
+      TR::Node * callNode = getNode();
+
+      intptr_t snippetStart = (intptr_t)cursor;
+
+      //  JNI Callout Frame data
+      // _ramMethod
+      *(intptr_t *) cursor = (intptr_t) _ramMethod;
+
+      uint32_t reloType;
+      if (getNode()->getSymbol()->castToResolvedMethodSymbol()->isSpecial())
+         reloType = TR_SpecialRamMethodConst;
+      else if (getNode()->getSymbol()->castToResolvedMethodSymbol()->isStatic())
+         reloType = TR_StaticRamMethodConst;
+      else if (getNode()->getSymbol()->castToResolvedMethodSymbol()->isVirtual())
+         reloType = TR_VirtualRamMethodConst;
+      else
+         {
+         reloType = TR_NoRelocation;
+         TR_ASSERT(0,"JNI relocation not supported.");
+         }
+
+      AOTcgDiag2(comp, "add relocation (%d) cursor=%x\n", reloType, cursor);
+      if (cg()->needClassAndMethodPointerRelocations())
+         {
+         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) callNode->getSymbolReference(),
+               callNode  ? (uint8_t *)(intptr_t)callNode->getInlinedSiteIndex() : (uint8_t *)-1,
+                     (TR_ExternalRelocationTargetKind) reloType, cg()),
+                     __FILE__, __LINE__, callNode);
+         }
+
+      cursor += TR::Compiler->om.sizeofReferenceAddress();
+
+      // _JNICallOutFrameFlags
+       *(intptr_t *) cursor = (intptr_t) _JNICallOutFrameFlags;
+       cursor += TR::Compiler->om.sizeofReferenceAddress();
+       // _returnFromJNICall
+       *(intptr_t *) cursor = (intptr_t) (_returnFromJNICallLabel->getCodeLocation());
+
+       AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
+       cg()->addRelocation(new (cg()->trHeapMemory()) TR::LabelAbsoluteRelocation(cursor, _returnFromJNICallLabel));
+       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
+             __FILE__, __LINE__, getNode());
+
+       cursor += TR::Compiler->om.sizeofReferenceAddress();
+       // _savedPC
+       *(intptr_t *) cursor = (intptr_t) _savedPC;
+       cursor += TR::Compiler->om.sizeofReferenceAddress();
+       // _tagBits
+       *(intptr_t *) cursor = (intptr_t) _tagBits;
+       cursor += TR::Compiler->om.sizeofReferenceAddress();
+
+       //VMThread data
+       // _pc
+       *(intptr_t *) cursor = (intptr_t) _pc;
+       cursor += TR::Compiler->om.sizeofReferenceAddress();
+       // _literals
+       *(intptr_t *) cursor = (intptr_t) _literals;
+       cursor += TR::Compiler->om.sizeofReferenceAddress();
+       // _jitStackFrameFlags
+       *(intptr_t *) cursor = (intptr_t) _jitStackFrameFlags;
+       cursor += TR::Compiler->om.sizeofReferenceAddress();
+
+       // _constReleaseVMAccessMask
+      *(intptr_t *) cursor = (intptr_t) _constReleaseVMAccessMask;
+      cursor += TR::Compiler->om.sizeofReferenceAddress();
+      // _constReleaseVMAccessOutOfLineMask
+      *(intptr_t *) cursor = (intptr_t) _constReleaseVMAccessOutOfLineMask;
+      cursor += TR::Compiler->om.sizeofReferenceAddress();
+
+      // _targetAddress/function pointer of native method
+      *(intptr_t *) cursor = (intptr_t) _targetAddress;
+      TR_OpaqueMethodBlock *method = getNode()->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier();
+      TR_PatchJNICallSite::make(cg()->fe(), cg()->trPersistentMemory(), (uintptr_t) method, cursor, comp->getMetadataAssumptionList());
+
+      if (getNode()->getSymbol()->castToResolvedMethodSymbol()->isSpecial())
+         reloType = TR_JNISpecialTargetAddress;
+      else if (getNode()->getSymbol()->castToResolvedMethodSymbol()->isStatic())
+         reloType = TR_JNIStaticTargetAddress;
+      else if (getNode()->getSymbol()->castToResolvedMethodSymbol()->isVirtual())
+         reloType = TR_JNIVirtualTargetAddress;
+      else
+         {
+         reloType = TR_NoRelocation;
+         TR_ASSERT(0,"JNI relocation not supported.");
+         }
+
+      if (cg()->needClassAndMethodPointerRelocations())
+         {
+         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) callNode->getSymbolReference(),
+               callNode  ? (uint8_t *)(intptr_t)callNode->getInlinedSiteIndex() : (uint8_t *)-1,
+                     (TR_ExternalRelocationTargetKind) reloType, cg()),
+                     __FILE__, __LINE__, callNode);
+         }
+
+      cursor += TR::Compiler->om.sizeofReferenceAddress();
+
+   return cursor;
+   }
+
+void
+TR::S390JNICallDataSnippet2::print(TR::FILE *pOutFile, TR_Debug *debug)
+   {
+/*
+       ramMethod
+       JNICallOutFrameFlags
+       returnFromJNICall
+       savedPC
+       tagBits
+       pc
+       literals
+       jitStackFrameFlags
+       constReleaseVMAccessMask
+       constReleaseVMAccessOutOfLineMask
+       targetAddress
+
+*/
+   TR_FrontEnd *fe = cg()->comp()->fe();
+   uint8_t * bufferPos = getSnippetLabel()->getCodeLocation();
+
+   int i = 0;
+
+   debug->printSnippetLabel(pOutFile, getSnippetLabel(), bufferPos, "JNI Call Data Snippet");
+
+   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# ramMethod",*((intptr_t*)bufferPos));
+   bufferPos += sizeof(intptr_t);
+
+   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# JNICallOutFrameFlags",*((intptr_t*)bufferPos));
+   bufferPos += sizeof(intptr_t);
+
+   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# returnFromJNICall", *((intptr_t*)bufferPos));
+   bufferPos += sizeof(intptr_t);
+
+   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# savedPC", *((intptr_t*)bufferPos));
+   bufferPos += sizeof(intptr_t);
+
+   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# tagBits", *((intptr_t*)bufferPos));
+   bufferPos += sizeof(intptr_t);
+
+   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# pc", *((intptr_t*)bufferPos));
+   bufferPos += sizeof(intptr_t);
+
+   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# literals", *((intptr_t*)bufferPos));
+   bufferPos += sizeof(intptr_t);
+
+   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# jitStackFrameFlags", *((intptr_t*)bufferPos));
+   bufferPos += sizeof(intptr_t);
+
+   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# constReleaseVMAccessMask",*((intptr_t*)bufferPos));
+   bufferPos += sizeof(intptr_t);
+
+   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# constReleaseVMAccessOutOfLineMask",*((intptr_t*)bufferPos));
+   bufferPos += sizeof(intptr_t);
+
+   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# targetAddress",*((intptr_t*)bufferPos));
+   bufferPos += sizeof(intptr_t);
+}
