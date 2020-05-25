@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 
 #include "bcvcfr.h"
 #include "j9bcvnls.h"
+#include "cfrerrnls.h"
 
 #include "cfreader.h"
 #include "bcnames.h"
@@ -2003,13 +2004,30 @@ _illegalPrimitiveReturn:
 						}
 					}
 				} else {
+					BOOLEAN firstKey = TRUE;
+					I_32 currentKey = 0;
+					I_32 nextKey = 0;
 					i2 = (I_32) PARAM_32(bcIndex, 1);
 					bcIndex += 4;
 
 					pc += (I_32)i2 * 8;
 					CHECK_END;
 					for (i1 = 0; (I_32)i1 < (I_32)i2; i1++) {
+						nextKey = (I_32) PARAM_32(bcIndex, 1);
 						bcIndex += 4;
+						if (!firstKey) {
+							if (nextKey <= currentKey) {
+								verboseErrorCode = BCV_ERR_BYTECODE_ERROR;
+								storeVerifyErrorData(verifyData, (I_16)verboseErrorCode, (U_32)errorStackIndex, (UDATA)-1, (UDATA)-1, start);
+								errorType = J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED__ID;
+								errorModule = J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED__MODULE;
+								goto _verifyError;
+							}
+						} else {
+							firstKey = FALSE;
+						}
+						currentKey = nextKey;
+
 						offset32 = (I_32) PARAM_32(bcIndex, 1);
 						bcIndex += 4;
 						target = offset32 + start;
