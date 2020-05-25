@@ -12875,7 +12875,8 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          break;
 
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
-         traceMsg(comp, "In evaluator for compareAndSwapLong. node = %p node->isSafeForCGToFastPathUnsafeCall = %p\n", node, node->isSafeForCGToFastPathUnsafeCall());
+         if (comp->getOption(TR_TraceCG))
+            traceMsg(comp, "In evaluator for compareAndSwapLong. node = %p node->isSafeForCGToFastPathUnsafeCall = %p\n", node, node->isSafeForCGToFastPathUnsafeCall());
          // As above, we only want to inline the JNI methods, so add an explicit test for isNative()
          if (!methodSymbol->isNative())
             break;

@@ -7742,7 +7742,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          //
          char *targetSig = methodDescriptor+1; // skip parenthesis
          int firstArgSlot = _methodSymbol->isStatic()? 0 : 1;
-         traceMsg(comp(), "sourceSig %s targetSig %.*s\n", sourceSig, methodDescriptorLength, methodDescriptor);
+         if (trace())
+            traceMsg(comp(), "sourceSig %s targetSig %.*s\n", sourceSig, methodDescriptorLength, methodDescriptor);
 
          for (
             int32_t argIndex = 0;

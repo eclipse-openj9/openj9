@@ -1748,7 +1748,7 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
       bci.setCallerIndex(comp->getCurrentInlinedSiteIndex());
       normalizeForCallers = false;
       }
-   int32_t frequency = getFrequencyInfo(bci, comp, normalizeForCallers, true);
+   int32_t frequency = getFrequencyInfo(bci, comp, normalizeForCallers, comp->getOption(TR_TraceBFGeneration));
    if (comp->getOption(TR_TraceBFGeneration))
       traceMsg(comp, "@@ block_%d [%d,%d] has raw count %d\n", block->getNumber(), bci.getCallerIndex(), bci.getByteCodeIndex(), frequency);
    return frequency;
@@ -1764,7 +1764,8 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
    int64_t maxCount = normalizeForCallers ? getMaxRawCount() : getMaxRawCount(bci.getCallerIndex());
    int32_t callerIndex = bci.getCallerIndex();
    int32_t frequency = getRawCount(callerIndex < 0 ? comp->getMethodSymbol() : comp->getInlinedResolvedMethodSymbol(callerIndex), bci, _callSiteInfo, maxCount, comp);
-   traceMsg(comp,"raw frequency on outter level was %d for bci %d:%d\n", frequency, bci.getCallerIndex(), bci.getByteCodeIndex());
+   if (trace)
+      traceMsg(comp,"raw frequency on outter level was %d for bci %d:%d\n", frequency, bci.getCallerIndex(), bci.getByteCodeIndex());
    if (frequency > -1 || _counterDerivationInfo == NULL)
       return frequency;
 
@@ -1805,7 +1806,8 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
          // we have found a frame where we don't have profiling info
          if (callerFrequency < 0)
             {
-            traceMsg(comp, "  found frame for %s with no outter profiling info\n", resolvedMethodSymbol->signature(comp->trMemory()));
+            if (trace)
+               traceMsg(comp, "  found frame for %s with no outter profiling info\n", resolvedMethodSymbol->signature(comp->trMemory()));
             // has this method been compiled so we might have had a chance to profile it?
             if (!resolvedMethod->isInterpretedForHeuristics()
                 && !resolvedMethod->isNative()
@@ -1817,7 +1819,8 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
                    && info->getBlockFrequencyInfo()
                    && info->getBlockFrequencyInfo()->_counterDerivationInfo)
                   {
-                  traceMsg(comp, "  method has profiling\n");
+                  if (trace)
+                     traceMsg(comp, "  method has profiling\n");
                   int32_t effectiveCallerIndex = -1;
                   TR_BlockFrequencyInfo *bfi = info->getBlockFrequencyInfo();
                   if (callStack.empty() || info->getCallSiteInfo()->computeEffectiveCallerIndex(comp, callStack, effectiveCallerIndex))

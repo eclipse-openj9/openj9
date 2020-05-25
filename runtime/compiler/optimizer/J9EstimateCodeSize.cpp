@@ -1549,10 +1549,11 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                      {
                      ///printf("set warmcallgraphtoobig for method %s at index %d\n", calleeName, newBCInfo._byteCodeIndex);fflush(stdout);
                      calltarget->_calleeMethod->setWarmCallGraphTooBig( newBCInfo.getByteCodeIndex(), comp());
-                     traceMsg(comp(), "set warmcallgraphtoobig for method %s at index %d\n", calleeName, newBCInfo.getByteCodeIndex());
+                     heuristicTrace(tracer(), "set warmcallgraphtoobig for method %s at index %d\n", calleeName, newBCInfo.getByteCodeIndex());
                      //_optimisticSize = origOptimisticSize;
                      //_realSize = origRealSize;
                      calltargetSetTooBig = true;
+                        
                      }
                   }
 
