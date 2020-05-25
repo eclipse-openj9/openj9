@@ -434,6 +434,8 @@ def archive_diagnostics() {
         }
         // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
         sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | pax -wzf ${DIAGNOSTICS_FILENAME}"
+    } else if(SPEC.endsWith("_cm")) {
+        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp'  -o -name ddr_info  -o -name superset.dat -o -name j9ddr.dat -o -name '*.stub.h' -o -name '*.annt.h' | sed 's#^./##' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"
     } else {
         sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"
     }
