@@ -48,7 +48,7 @@ public:
 
    virtual void generateInstructionsForCall(TR::Node * callNode, TR::RegisterDependencyConditions * deps, intptr_t targetAddress,
 		   TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
-		   TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint);
+		   TR::Snippet* callDataSnippet, bool isJNIGCPoint);
 
    virtual void setupRegisterDepForLinkage(TR::Node *, TR_DispatchType, TR::RegisterDependencyConditions * &,
          int64_t &, TR::SystemLinkage *, TR::Node * &, bool &, TR::Register **, TR::Register *&);
