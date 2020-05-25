@@ -51,9 +51,7 @@ import com.ibm.jvm.trace.format.api.TracePointImpl;
 import com.ibm.jvm.trace.format.api.TraceThread;
 
 /**
- * !!! WARNING !!!
- * Adding any new top level classes in this file requires modification to jcl/jcl_build.mk
- * to ensure the new classes are included within traceformat.jar for Java 8.
+ * Support for converting binary trace files to a human readable form.
  */
 public class TraceFormat
 {

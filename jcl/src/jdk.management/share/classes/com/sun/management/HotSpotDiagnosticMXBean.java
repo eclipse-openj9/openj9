@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@ package com.sun.management;
 import java.lang.management.PlatformManagedObject;
 
 /**
- * Stub class to compile OpenJDK diagnostic management, see openj9.lang.management and com.ibm.lang.management packages instead.
+ * Stub to compile OpenJDK diagnostic management, see {@link openj9.lang.management} and {@link com.ibm.lang.management} packages instead.
  *
  */
 public interface HotSpotDiagnosticMXBean extends PlatformManagedObject {

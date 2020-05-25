@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,16 +24,16 @@
 package com.ibm.lang.management;
 
 /**
- * IBM specific platform management interface for the Operating System on which the Java Virtual Machine is running. 
+ * OpenJ9 platform management extension interface for the Operating System on which the Java Virtual Machine is running. 
  * <br>
  * <table border="1">
  * <caption><b>Usage example for the {@link com.ibm.lang.management.OperatingSystemMXBean}</b></caption>
  * <tr> <td> <pre>
  * {@code
- *  ...
- *     com.ibm.lang.management.OperatingSystemMXBean osmxbean = null;
- *    osmxbean = (com.ibm.lang.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
- *   ...
+ * ...
+ * com.ibm.lang.management.OperatingSystemMXBean osmxbean = null;
+ * osmxbean = (com.ibm.lang.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+ * ...
  * }
  * </pre></td></tr></table>
  *
