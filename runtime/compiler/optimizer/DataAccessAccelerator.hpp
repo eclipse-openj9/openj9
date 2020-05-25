@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -243,14 +243,16 @@ class TR_DataAccessAccelerator : public TR::Optimization
 
    bool printInliningStatus(bool status, TR::Node* node, const char* reason = "")
       {
-      if (status)
-         traceMsg(comp(), "DataAccessAccelerator: Intrinsics on node %p : SUCCESS\n", node);
-      else
+      if (trace()) 
          {
-         traceMsg(comp(), "DataAccessAccelerator: Intrinsics on node %p : FAILED\n", node);
-         traceMsg(comp(), "DataAccessAccelerator:     Reason : %s\n", reason);
+            if (status)
+               traceMsg(comp(), "DataAccessAccelerator: Intrinsics on node %p : SUCCESS\n", node);
+            else
+               {
+               traceMsg(comp(), "DataAccessAccelerator: Intrinsics on node %p : FAILED\n", node);
+               traceMsg(comp(), "DataAccessAccelerator:     Reason : %s\n", reason);
+               }
          }
-
       return status;
       }
    };

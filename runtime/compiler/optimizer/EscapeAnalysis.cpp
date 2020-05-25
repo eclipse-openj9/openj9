@@ -5170,7 +5170,8 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
        */
       if (ilgenFailed)
          {
-         traceMsg(comp(), "   (IL generation failed)\n");
+         if (trace())
+            traceMsg(comp(), "   (IL generation failed)\n");
          static char *disableHCRCallPeeking = feGetEnv("TR_disableEAHCRCallPeeking");
          if (!isPeekableCall
              && disableHCRCallPeeking == NULL
