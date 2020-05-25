@@ -897,7 +897,7 @@ TR_JProfilingValue::createHelperCall(TR::Compilation *comp, TR::Node *value, TR:
       profiler = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_jProfile64BitValue, false, false, false);
       }
 
-#if defined(TR_HOST_POWER) || defined(TR_HOST_ARM) || defined(TR_HOST_S390)
+#if defined(TR_HOST_POWER) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64) || defined(TR_HOST_S390)
    profiler->getSymbol()->castToMethodSymbol()->setLinkage(TR_System);
 #elif defined(TR_HOST_X86)
    profiler->getSymbol()->castToMethodSymbol()->setSystemLinkageDispatch();
