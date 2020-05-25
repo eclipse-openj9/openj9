@@ -8603,12 +8603,14 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "<EARLY TRANSLATION FAILURE: JITServer stream failure>");
          that->_methodBeingCompiled->_compErrCode = compilationStreamFailure;
+         Trc_JITServerStreamFailure(vmThread, that->getCompThreadId(), __FUNCTION__, "", "", e.what());
          }
       catch (const JITServer::StreamInterrupted &e)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "<EARLY TRANSLATION FAILURE: compilation interrupted by JITClient>");
          that->_methodBeingCompiled->_compErrCode = compilationStreamInterrupted;
+         Trc_JITServerStreamInterrupted(vmThread, that->getCompThreadId(), __FUNCTION__, e.what());
          }
 #endif /* defined(J9VM_OPT_JITSERVER) */
       catch (const J9::JITShutdown)
@@ -8622,6 +8624,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure, TR_VerbosePerformance))
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,"<EARLY TRANSLATION FAILURE: out of scratch memory>");
          that->_methodBeingCompiled->_compErrCode = compilationFailure;
+         Trc_JIT_outOfMemory(vmThread);
          }
       catch (const std::exception &e)
          {
@@ -8629,8 +8632,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,"<EARLY TRANSLATION FAILURE: compilation aborted>");
          that->_methodBeingCompiled->_compErrCode = compilationFailure;
          }
-
-      Trc_JIT_outOfMemory(vmThread);
 
 #if defined(J9VM_OPT_JITSERVER)
       if (compiler && compiler->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
@@ -10494,6 +10495,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   "compThreadID=%d has failed to compile: compErrCode %u %s",
                   entry->_compInfoPT->getCompThreadId(), entry->_compErrCode, comp ? comp->signature() : "");
             }
+         if (vmThread)
+            Trc_JITServerFailedToCompile(vmThread, entry->_compInfoPT->getCompThreadId(), entry->_compErrCode, comp ? comp->signature() : "");
+
          static bool breakAfterFailedCompile = feGetEnv("TR_breakAfterFailedCompile") != NULL;
          if (breakAfterFailedCompile)
             {
@@ -10524,6 +10528,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   "compThreadID=%d has failed to recompile: compErrCode %u %s",
                   entry->_compInfoPT->getCompThreadId(), entry->_compErrCode, comp ? comp->signature() : "");
             }
+         if (vmThread)
+            Trc_JITServerFailedToRecompile(vmThread, entry->_compInfoPT->getCompThreadId(), entry->_compErrCode, comp ? comp->signature() : "");
+
          int8_t compErrCode = entry->_compErrCode;
          if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
             entry->_stream->writeError(compilationNotNeeded);
