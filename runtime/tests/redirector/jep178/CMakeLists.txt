@@ -25,6 +25,8 @@ add_subdirectory(testjvmtiB)
 add_subdirectory(testlibA)
 add_subdirectory(testlibB)
 
+set(OMR_ENHANCED_WARNINGS OFF)
+set(OMR_WARNINGS_AS_ERRORS OFF)
 
 #TODO: this is how its done in the module.xml, but its probably a toolchain thing
 if(OMR_OS_LINUX)
