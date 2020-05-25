@@ -120,14 +120,21 @@ JITServerHelpers::insertIntoOOSequenceEntryList(ClientSessionData *clientData, T
 void
 JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig)
    {
+   int totalMsgCount = 0;	   
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    j9tty_printf(PORTLIB, "JITServer Message Type Statistics:\n");
    j9tty_printf(PORTLIB, "Type# #called TypeName\n");
    for (int i = 0; i < JITServer::MessageType_ARRAYSIZE; ++i)
       {
       if (JITServerHelpers::serverMsgTypeCount[i] > 0)
+         {
          j9tty_printf(PORTLIB, "#%04d %7u %s\n", i, JITServerHelpers::serverMsgTypeCount[i], JITServer::messageNames[i]);
+         totalMsgCount += JITServerHelpers::serverMsgTypeCount[i];
+         }
       }
+   if (JITServerHelpers::serverMsgTypeCount[0])
+       j9tty_printf(PORTLIB, "Total number of messages: %d. Average number of messages per compilation:%f\n", totalMsgCount, totalMsgCount/float(JITServerHelpers::serverMsgTypeCount[0]));
+
    }
 
 void
