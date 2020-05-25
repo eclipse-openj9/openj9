@@ -528,6 +528,7 @@ extern "C" {
 #define BCV_ERR_BAD_BYTECODE							-31
 #define BCV_ERR_UNEXPECTED_EOF							-32
 #define BCV_ERR_INACCESSIBLE_CLASS						-33
+#define BCV_ERR_BYTECODE_ERROR							-34
 
 #define J9_GC_OBJ_HEAP_HOLE 0x1
 #define J9_GC_MULTI_SLOT_HOLE 0x1

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -745,17 +745,10 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			CHECK_END;
 			bcIndex -= (I_32) u1 * 8;
 
-			firstKey = TRUE;
 			for (i = 0; i < u1; i++) {
-				i1 = (IDATA) NEXT_U32(u2, bcIndex);
-				if (!firstKey) {
-					if ((I_32)i1 <= (I_32)i2) {
-						errorType = J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED__ID;
-						goto _verifyError;
-					}
-				}
-				firstKey = FALSE;
-				i2 = i1;
+				/* Skip over match/key part of match-offset pair. Match/key order is verified in the second verification pass */
+				NEXT_U32(u2, bcIndex);
+
 				target = start + (I_32) NEXT_U32(u2, bcIndex);
 				if ((UDATA) target >= length) {
 					errorType = J9NLS_CFR_ERR_BC_SWITCH_OFFSET__ID;
