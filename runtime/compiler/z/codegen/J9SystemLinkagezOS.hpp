@@ -48,7 +48,7 @@ public:
 
    virtual void generateInstructionsForCall(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies,
          intptr_t targetAddress, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
-         TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint = true);
+         TR::Snippet * callDataSnippet, bool isJNIGCPoint = true);
 
 
 

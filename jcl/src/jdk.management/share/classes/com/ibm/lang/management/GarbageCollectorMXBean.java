@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2017 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 package com.ibm.lang.management;
 
 /**
- * The IBM-specific interface for managing and monitoring the virtual machine's
+ * The OpenJ9 extension interface for managing and monitoring the virtual machine's
  * garbage collection functionality.
  *
  * @since 1.5

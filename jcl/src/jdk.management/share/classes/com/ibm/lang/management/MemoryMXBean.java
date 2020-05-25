@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 package com.ibm.lang.management;
 
 /**
- * The IBM-specific interface for monitoring the virtual machine's memory
+ * The OpenJ9 extension interface for monitoring the virtual machine's memory
  * management system.
  * 
  * @since 1.5
