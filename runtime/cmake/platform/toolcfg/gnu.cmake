@@ -23,12 +23,6 @@
 list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -O3 -g -fstack-protector)
 list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -fno-threadsafe-statics)
 
-list(APPEND OMR_BASE_WARNING_FLAGS
-	# -Wimplicit is only valid for C. Newer compilers error if given for c++ compile
-	$<$<COMPILE_LANGUAGE:C>:-Wimplicit>
-	-Wreturn-type
-)
-
 # OMR_PLATFORM_CXX_COMPILE_OPTIONS gets applied to the jit (which needs exceptions),
 # so we put these in the CMAKE_CXX_FLAGS instead
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
