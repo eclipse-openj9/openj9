@@ -81,12 +81,7 @@ add_custom_target(j9jit_tracegen DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/env/ut_j9ji
 
 # J9VM_OPT_JITSERVER
 if(J9VM_OPT_JITSERVER)
-	message(STATUS "JITServer is supported")
-
-	if(OPENSSL_CFLAGS)
-		set(J9_CFLAGS "${J9_CFLAGS} ${OPENSSL_CFLAGS}")
-		set(J9_CXXFLAGS "${J9_CXXFLAGS} ${OPENSSL_CFLAGS}")
-	endif()
+	message(STATUS "JITServer is enabled")
 
 	if(OPENSSL_BUNDLE_LIB_PATH) # --enable-openssl-bundling
 		set(OPENSSL_ROOT_DIR ${OPENSSL_BUNDLE_LIB_PATH})
@@ -95,7 +90,6 @@ if(J9VM_OPT_JITSERVER)
 		set(OPENSSL_ROOT_DIR ${OPENSSL_DIR})
 	endif()
 
-	include(FindOpenSSL)
 	find_package(OpenSSL REQUIRED)
 	include_directories(${OPENSSL_INCLUDE_DIR})
 endif()
@@ -225,6 +219,8 @@ set(J9_INCLUDES
 # Makefiles
 set(J9_SHAREDFLAGS
 	${OMR_PLATFORM_COMPILE_OPTIONS}
+)
+set(J9_CFLAGS
 	${OMR_PLATFORM_C_COMPILE_OPTIONS}
 )
 set(J9_CXXFLAGS
