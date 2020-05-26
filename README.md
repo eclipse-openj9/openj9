@@ -107,5 +107,12 @@ Videos and Presentations
 - [JavaOne 2017: Open sourcing the IBM J9 Java Virtual Machine](https://www.slideshare.net/MarkStoodley/javaone-2017-mark-stoodley-open-sourcing-ibm-j9-jvm)
 - [JavaOne 2017: Eclipse OpenJ9 Under the hood of the next open source JVM](https://www.slideshare.net/DanHeidinga/javaone-2017-eclipse-openj9-under-the-hood-of-the-jvm)
 - [JavaOne 2017: Ask the OpenJ9 Architects](https://www.youtube.com/watch?v=qb5ennM_pgc)
+- [Eclipse OpenJ9 verbose JIT logs](https://mstoodle.github.io/EclipseOpenJ9JitVerboseLogs/)
+- [JavaOne 2017: How to build a debuggable runtime](https://www.slideshare.net/TobiAjila1/how-to-build-a-debuggle-runtime)
+- [Reducing Garbage Collection pause times with Concurrent Scavenge and the Guarded Storage Facility](https://developer.ibm.com/javasdk/2017/09/18/reducing-garbage-collection-pause-times-concurrent-scavenge-guarded-storage-facility/)
+- [How Concurrent Scavenge using the Guarded Storage Facility Works](https://developer.ibm.com/javasdk/2017/09/25/concurrent-scavenge-using-guarded-storage-facility-works/)
+- [Are you still paying for unused memory when your Java app is idle?](https://developer.ibm.com/javasdk/2017/09/25/still-paying-unused-memory-java-app-idle/)
+- [Under the hood of the Testarossa JIT Compiler](https://www.slideshare.net/MarkStoodley/under-the-hood-of-the-testarossa-jit-compiler)
+- [Class sharing In Eclipse OpenJ9](https://www.ibm.com/developerworks/library/j-class-sharing-openj9/)
 
 Copyright (c) 2017, 2020 IBM Corp. and others
