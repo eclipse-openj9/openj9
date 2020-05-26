@@ -1132,6 +1132,7 @@ J9::Options::fePreProcess(void * base)
    J9JavaVM * vm = jitConfig->javaVM;
 
    PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
    #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
       bool forceSuffixLogs = false;
@@ -1941,6 +1942,13 @@ J9::Options::fePreProcess(void * base)
       if (proposed > reserveLimit)
          proposed = reserveLimit;
       J9::Options::_safeReservePhysicalMemoryValue = (int32_t)proposed;
+      }
+
+   // enable TR_SelfTuningScratchMemoryUsageBeforeCompile if there is no swap memory
+   J9MemoryInfo memInfo;
+   if ((omrsysinfo_get_memory_info(&memInfo) == 0) && (0 == memInfo.totalSwap))
+      {
+      self()->setOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile);
       }
 
    // Process the deterministic mode
