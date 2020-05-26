@@ -165,7 +165,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 	J9CfrMethod *method;
 	IDATA target, start, i1, i2, result, tableSize;
 	U_8 *bcStart, *bcInstructionStart, *bcIndex, *bcEnd;
-	UDATA bc, index, u1, u2, i, maxLocals, cpCount, tag, firstKey;
+	UDATA bc, index, u1, u2, i, maxLocals, cpCount, tag;
 	UDATA sigChar;
 	UDATA errorType = 0;
 	UDATA errorDataIndex = 0;
