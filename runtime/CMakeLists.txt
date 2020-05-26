@@ -383,7 +383,7 @@ add_dependencies(omrutil_obj j9vm_nlsgen run_cptool)
 ###
 ### Shared library version suffixing
 ###
-# The string we append to the name of shared libs
+# The string we append to the name of select shared libraries.
 set(J9VM_VERSION_SUFFIX "29")
 
 ###
