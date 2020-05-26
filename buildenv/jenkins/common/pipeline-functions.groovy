@@ -427,7 +427,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             }
 
             def NUM_MACHINES = "1"
-            if (testJobName.contains("extended.functional_x86-64_linux_Nightly")) {
+            if (testJobName.contains("functional")) {
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "2"
             }
