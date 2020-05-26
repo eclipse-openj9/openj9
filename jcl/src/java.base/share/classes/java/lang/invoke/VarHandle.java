@@ -523,7 +523,11 @@ public abstract class VarHandle extends VarHandleInternal
 	 * 
 	 * @return The field type
 	 */
+	/*[IF Java15]*/
+	public Class<?> varType() {
+	/*[ELSE]*/
 	public final Class<?> varType() {
+	/*[ENDIF] Java15 */
 		return this.fieldType;
 	}
 	
@@ -535,7 +539,11 @@ public abstract class VarHandle extends VarHandleInternal
 	 * 
 	 * @return The parameters required to access the field.
 	 */
+	/*[IF Java15]*/
+	public List<Class<?>> coordinateTypes() {
+	/*[ELSE]*/
 	public final List<Class<?>> coordinateTypes() {
+	/*[ENDIF] Java15 */
 		return Collections.unmodifiableList(Arrays.<Class<?>>asList(coordinateTypes));
 	}
 
@@ -730,7 +738,11 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @return A {@link MethodHandle} for the specified {@link AccessMode}, bound to
 	 * 			this {@link VarHandle} instance.
 	 */
+	/*[IF Java15]*/
+	public MethodHandle toMethodHandle(AccessMode accessMode) {
+	/*[ELSE]*/
 	public final MethodHandle toMethodHandle(AccessMode accessMode) {
+	/*[ENDIF] Java15 */
 		MethodHandle mh = handleTable[accessMode.ordinal()];
 
 		if (mh != null) {
@@ -1506,6 +1518,24 @@ public abstract class VarHandle extends VarHandleInternal
 		}		
 	}
 /*[ENDIF] Java12 */ 
+
+/*[IF Java15]*/
+	VarHandle target() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	VarHandle asDirect() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	MethodHandle getMethodHandle(int i) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	boolean isDirect() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF] Java15 */
 
 	abstract MethodType accessModeTypeUncached(AccessMode accessMode);
 }
