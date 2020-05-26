@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2019 IBM Corp. and others
+Copyright (c) 2017, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,8 +34,7 @@ We're not sure which route you might have taken on your way here, but we're real
 
 - [Eclipse OpenJ9 website](http://www.eclipse.org/openj9) - Learn about this high performance, enterprise-grade Java Virtual Machine (JVM) and why we think you want to get involved in its development.
 - [AdoptOpenJDK website](https://adoptopenjdk.net/releases.html?variant=openjdk9-openj9) - Grab pre-built OpenJDK binaries that embed OpenJ9 and try it out.
-- [Build instructions](https://www.eclipse.org/openj9/oj9_build.html) - Here's how you can build an OpenJDK with OpenJ9 yourself.
-- [FAQ](https://www.eclipse.org/openj9/oj9_faq.html)
+- Build instructions for [JDK8](https://github.com/eclipse/openj9/blob/master/doc/build-instructions/Build_Instructions_V8.md), [JDK11](https://github.com/eclipse/openj9/blob/master/doc/build-instructions/Build_Instructions_V11.md), and [More](https://github.com/eclipse/openj9/blob/master/doc/build-instructions) - Here's how you can build an OpenJDK with OpenJ9 yourself.
 
 If you're looking for ways to help out at the project (thanks!), we have:
 - [Beginner issues](https://github.com/eclipse/openj9/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner)
@@ -109,6 +108,4 @@ Videos and Presentations
 - [JavaOne 2017: Eclipse OpenJ9 Under the hood of the next open source JVM](https://www.slideshare.net/DanHeidinga/javaone-2017-eclipse-openj9-under-the-hood-of-the-jvm)
 - [JavaOne 2017: Ask the OpenJ9 Architects](https://www.youtube.com/watch?v=qb5ennM_pgc)
 
-Also check out the [Resources](https://www.eclipse.org/openj9/oj9_resources.html) page on our website.
-
-Copyright (c) 2017, 2018 IBM Corp. and others
+Copyright (c) 2017, 2020 IBM Corp. and others
