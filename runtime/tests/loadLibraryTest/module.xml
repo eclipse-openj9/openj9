@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2019, 2019 IBM Corp. and others
+Copyright (c) 2019, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<export name="Java_j9vm_test_loadLibrary_TestLoadLegacyLibrary_fooImpl"/>
 	</exports>
 	<artifact type="shared" name="loadLibraryTest" appendrelease="false">
+		<include-if condition="spec.osx.*"/>
 		<phase>core quick j2se</phase>
 		<exports>
 			<group name="all"/>
@@ -37,16 +38,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</artifact>
 
 	<artifact type="target" name="rename_loadLibraryTest">
+		<include-if condition="spec.osx.*"/>
 		<dependencies>
 			<dependency name="loadLibraryTest"/>
 		</dependencies>
 		<commands>
-			<command line="mv $(UMA_PATH_TO_ROOT)libloadLibraryTest.dylib $(UMA_PATH_TO_ROOT)libloadLibraryTest.jnilib" type="all">
-				<include-if condition="spec.osx.*"/>
-			</command>
-			<command line="$(RM) $(UMA_PATH_TO_ROOT)libloadLibraryTest.jnilib" type="clean">
-				<include-if condition="spec.osx.*"/>
-			</command>
+			<command line="mv $(UMA_PATH_TO_ROOT)libloadLibraryTest.dylib $(UMA_PATH_TO_ROOT)libloadLibraryTest.jnilib" type="all"/>
+			<command line="$(RM) $(UMA_PATH_TO_ROOT)libloadLibraryTest.jnilib" type="clean"/>
 		</commands>
 	</artifact>
 </module>

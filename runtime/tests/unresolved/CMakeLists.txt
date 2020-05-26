@@ -20,31 +20,25 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(bcuwhite SHARED
-	bcunatives.c
+# Remove '-Wl,-z,defs' because this test is specifically
+# about a shared library with unresolved symbols.
+string(REPLACE
+	"-Wl,-z,defs"
+	""
+	CMAKE_SHARED_LINKER_FLAGS
+	"${CMAKE_SHARED_LINKER_FLAGS}"
 )
 
-target_link_libraries(bcuwhite
-	PRIVATE
-		j9vm_interface
-
-		j9dyn_generic_test
-		j9verutil
-		j9util
-		j9utilcore
-		j9avl
-		j9hashtable
-		j9thr
-		j9stackmap
-		j9simplepool
-		j9pool
-
-		#IF opt_zip_support
-		j9hookable
-		#endif
-		j9bcv
+j9vm_add_library(j9unresolved SHARED
+	j9unres.c
 )
 
-omr_add_exports(bcuwhite
-	Java_com_ibm_j9_test_bcutil_TestNatives_verifyCanonisizeAndCopyUTF8
+omr_add_exports(j9unresolved
+	functionWithUnresolvedRef
+)
+
+install(
+	TARGETS j9unresolved
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
+	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
 )
