@@ -583,14 +583,6 @@ static const char * nvvmOpCodeNames[] =
    "store",          // TR::iustorei
    "store",          // TR::lustorei
    "store",          // TR::bustorei
-   "add",         // TR::iuadd
-   "add",         // TR::luadd
-   "add",         // TR::buadd
-   "sub",         // TR::iusub
-   "sub",         // TR::lusub
-   "sub",         // TR::busub
-   "sub",         // TR::iuneg
-   "sub",         // TR::luneg
    "fptoui",      // TR::f2iu
    "fptoui",      // TR::f2lu
    "fptoui",      // TR::f2bu
@@ -637,15 +629,11 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::calli
    NULL,          // TR::fence
    NULL,          // TR::luaddh
-   "add",        // TR::cadd
 
   "getelementptr",          // TR::aiadd
-  "getelementptr",          // TR::aiuadd
   "getelementptr",          // TR::aladd
-  "getelementptr",          // TR::aluadd
 
    NULL,          // TR::lusubh
-   "sub",         // TR::csub
 
    NULL,          // TR::imulh, implemented but this table value is unused
    NULL,          // TR::iumulh, implemented but this table value is unused
