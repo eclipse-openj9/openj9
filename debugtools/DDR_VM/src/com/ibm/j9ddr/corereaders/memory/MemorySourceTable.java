@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2016 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -292,7 +292,7 @@ public class MemorySourceTable
 
 		public boolean isReadOnly()
 		{
-			return lower.isExecutable() && upper.isExecutable();
+			return lower.isReadOnly() && upper.isReadOnly();
 		}
 
 		public boolean isShared()
