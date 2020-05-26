@@ -33,7 +33,7 @@ Welcome to the Eclipse OpenJ9 repository
 We're not sure which route you might have taken on your way here, but we're really pleased to see you! If you came directly from our website, you've probably already learned a lot about Eclipse OpenJ9 and how it fits in to the OpenJDK ecosystem. If you came via some other route, here are a few key links to get you started:
 
 - [Eclipse OpenJ9 website](http://www.eclipse.org/openj9) - Learn about this high performance, enterprise-grade Java Virtual Machine (JVM) and why we think you want to get involved in its development.
-- [AdoptOpenJDK website](https://adoptopenjdk.net/releases.html?variant=openjdk9-openj9) - Grab pre-built OpenJDK binaries that embed OpenJ9 and try it out.
+- [AdoptOpenJDK website](https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=openj9) - Grab pre-built OpenJDK binaries that embed OpenJ9 and try it out.
 - Build instructions for [JDK8](https://github.com/eclipse/openj9/blob/master/doc/build-instructions/Build_Instructions_V8.md), [JDK11](https://github.com/eclipse/openj9/blob/master/doc/build-instructions/Build_Instructions_V11.md), and [More](https://github.com/eclipse/openj9/blob/master/doc/build-instructions) - Here's how you can build an OpenJDK with OpenJ9 yourself.
 
 If you're looking for ways to help out at the project (thanks!), we have:
@@ -62,8 +62,8 @@ GPLv2 license) that is designed to allow OpenJDK to be built with the OpenJ9 JVM
 
 Eclipse OpenJ9 is a source code project that can be built alongside Java class libraries.  Cross platform
 nightly and release binaries and docker containers for OpenJDK with OpenJ9, targeting several JDK levels
-(like JDK8, JDK10, etc.) are built by the [AdoptOpenJDK organization](https://github.com/adoptopenjdk)
-and can be downloaded from the [AdoptOpenJDK download site](https://adoptopenjdk.net/?variant=openjdk8-openj9)
+(JDK8, JDK11, and the latest versions) are built by the [AdoptOpenJDK organization](https://github.com/adoptopenjdk)
+and can be downloaded from the [AdoptOpenJDK download site](https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=openj9)
 or on [DockerHub](https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=openj9&starCount=0).
 
 What is the goal of the project?
@@ -99,6 +99,10 @@ What repos are part of the project?
 Where can I learn more?
 =======================
 
+- [Moving to OpenJ9](https://blog.openj9.org/2019/02/26/moving-to-openjdk-with-eclipse-openj9/)
+- [User documentation](https://www.eclipse.org/openj9/docs/)
+- Many more resources are available on the [OpenJ9 blog](https://blog.openj9.org/)
+
 Videos and Presentations
 ------------------------
 
@@ -114,7 +118,5 @@ Videos and Presentations
 - [Are you still paying for unused memory when your Java app is idle?](https://developer.ibm.com/javasdk/2017/09/25/still-paying-unused-memory-java-app-idle/)
 - [Under the hood of the Testarossa JIT Compiler](https://www.slideshare.net/MarkStoodley/under-the-hood-of-the-testarossa-jit-compiler)
 - [Class sharing In Eclipse OpenJ9](https://developer.ibm.com/components/java-platform/tutorials/j-class-sharing-openj9)
-
-Many more resources are available on the [OpenJ9 blog](https://blog.openj9.org/).
 
 Copyright (c) 2017, 2020 IBM Corp. and others
