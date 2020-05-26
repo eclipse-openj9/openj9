@@ -113,6 +113,8 @@ Videos and Presentations
 - [How Concurrent Scavenge using the Guarded Storage Facility Works](https://developer.ibm.com/javasdk/2017/09/25/concurrent-scavenge-using-guarded-storage-facility-works/)
 - [Are you still paying for unused memory when your Java app is idle?](https://developer.ibm.com/javasdk/2017/09/25/still-paying-unused-memory-java-app-idle/)
 - [Under the hood of the Testarossa JIT Compiler](https://www.slideshare.net/MarkStoodley/under-the-hood-of-the-testarossa-jit-compiler)
-- [Class sharing In Eclipse OpenJ9](https://www.ibm.com/developerworks/library/j-class-sharing-openj9/)
+- [Class sharing In Eclipse OpenJ9](https://developer.ibm.com/components/java-platform/tutorials/j-class-sharing-openj9)
+
+Many more resources are available on the [OpenJ9 blog](https://blog.openj9.org/).
 
 Copyright (c) 2017, 2020 IBM Corp. and others
