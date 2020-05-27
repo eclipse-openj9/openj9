@@ -1,7 +1,7 @@
 # This makefile is generated using an UMA template.
 
 #
-# Copyright (c) 2015, 2019 IBM Corp. and others
+# Copyright (c) 2015, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,10 +92,6 @@ MODULE_SHARED_LIBS += rt
 # weak symbols.
 MODULE_SHARED_LIBS += pthread
 endif # Linux
-
-ifeq (osx,$(OMR_HOST_OS))
-GLOBAL_LDFLAGS += -install_name lib$(MODULE_NAME).dylib
-endif # OSX
 
 include $(top_srcdir)/omrmakefiles/rules.mk
 
