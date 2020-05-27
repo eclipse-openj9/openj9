@@ -1861,6 +1861,55 @@ TR_J9ByteCodeIlGenerator::loadConstantValueIfPossible(TR::Node *topNode, uintptr
    return constNode;
    }
 
+/**
+ * @brief Abort compilation due to unsupported unresolved value type operation
+ *
+ * When dealing with unreslved CP references, certain value type operations cannot
+ * be handled. This helper provides a convenient way of aborting the compilation
+ * in such cases.
+ *
+ * The abort is triggered by throwing TR::UnsupportedValueTypeOperation with an
+ * appropriate exception message.
+ *
+ * Static debug counters are also used to keep track of how frequently these
+ * aborts occure. The counters are named using the following formats:
+ *
+ * - for outermost methods: ilgen.abort/unresolved/{bytecodeName}/{refType}/({method signature})/bc={bcIndex}
+ * - for inlining/peeking: ilgen.abort/unresolved/{bytecodeName}/{refType}/({method signature})/bc={bcIndex}/root=({top level method signature})
+ *
+ * @param bytecodeName is the name of the unhandled bytecode instruction
+ * @param refType is the type of unresolved reference (e.g. field, class, etc.)
+ * @throw TR::UnsupportedValueTypeOperation unconditionally
+ */
+ void
+ TR_J9ByteCodeIlGenerator::abortForUnresolvedValueTypeOp(const char* bytecodeName, const char* refType)
+   {
+   const int32_t bcIndex = currentByteCodeIndex();
+   if (isOutermostMethod())
+      {
+      TR::DebugCounter::incStaticDebugCounter(comp(),
+         TR::DebugCounter::debugCounterName(comp(),
+            "ilgen.abort/unresolved/%s/%s/(%s)/bc=%d",
+            bytecodeName,
+            refType,
+            comp()->signature(),
+            bcIndex));
+      }
+   else
+      {
+      TR::DebugCounter::incStaticDebugCounter(comp(),
+         TR::DebugCounter::debugCounterName(comp(),
+            "ilgen.abort/unresolved/%s/%s/(%s)/bc=%d/root=(%s)",
+            bytecodeName,
+            refType,
+            _method->signature(comp()->trMemory()),
+            bcIndex,
+            comp()->signature()));
+      }
+
+   comp()->failCompilation<TR::UnsupportedValueTypeOperation>("Unresolved %s encountered for %s bytecode instruction", refType, bytecodeName);
+   }
+
 //----------------------------------------------
 // gen array
 //----------------------------------------------
@@ -6022,48 +6071,14 @@ TR_J9ByteCodeIlGenerator::genWithField(uint16_t fieldCpIndex)
    TR_OpaqueClassBlock *valueClass = method()->getClassFromConstantPool(comp(), classCpIndex, true);
    if (!valueClass)
       {
-      if (isOutermostMethod())
-         {
-         TR::DebugCounter::incStaticDebugCounter(comp(),
-            TR::DebugCounter::debugCounterName(comp(),
-                  "ilgen.abort/unresolved/withfield/class/(%s)/bc=%d",
-                  comp()->signature(),
-                  bcIndex));
-         }
-      else
-         {
-         TR::DebugCounter::incStaticDebugCounter(comp(),
-            TR::DebugCounter::debugCounterName(comp(),
-               "ilgen.abort/unresolved/withfield/class/(%s)/bc=%d/root=(%s)",
-               _method->signature(comp()->trMemory()),
-               bcIndex,
-               comp()->signature()));
-         }
-      comp()->failCompilation<TR::UnsupportedValueTypeOperation>("Unresolved class encountered for withfieldbytecode instruction");
+      abortForUnresolvedValueTypeOp("withfield", "class");
       }
 
    bool isStore = false;
    TR::SymbolReference * symRef = symRefTab()->findOrCreateShadowSymbol(_methodSymbol, fieldCpIndex, isStore);
    if (symRef->isUnresolved())
       {
-      if (isOutermostMethod())
-         {
-         TR::DebugCounter::incStaticDebugCounter(comp(),
-            TR::DebugCounter::debugCounterName(comp(),
-                  "ilgen.abort/unresolved/withfield/field/(%s)/bc=%d",
-                  comp()->signature(),
-                  bcIndex));
-         }
-      else
-         {
-         TR::DebugCounter::incStaticDebugCounter(comp(),
-            TR::DebugCounter::debugCounterName(comp(),
-               "ilgen.abort/unresolved/withfield/field/(%s)/bc=%d/root=(%s)",
-               _method->signature(comp()->trMemory()),
-               bcIndex,
-               comp()->signature()));
-         }
-      comp()->failCompilation<TR::UnsupportedValueTypeOperation>("Unresolved field encountered for withfield bytecode instruction");
+      abortForUnresolvedValueTypeOp("withfield", "field");
       }
 
    TR::Node *newFieldValue = pop();
@@ -6123,26 +6138,7 @@ TR_J9ByteCodeIlGenerator::genDefaultValue(TR_OpaqueClassBlock *valueTypeClass)
    // track the failure with a static debug counter
    if (valueTypeClass == NULL)
       {
-      const int32_t bcIndex = currentByteCodeIndex();
-      if (isOutermostMethod())
-         {
-         TR::DebugCounter::incStaticDebugCounter(comp(),
-            TR::DebugCounter::debugCounterName(comp(),
-                  "ilgen.abort/unresolved/defaultvalue/(%s)/bc=%d",
-                  comp()->signature(),
-                  bcIndex));
-         }
-      else
-         {
-         TR::DebugCounter::incStaticDebugCounter(comp(),
-            TR::DebugCounter::debugCounterName(comp(),
-               "ilgen.abort/unresolved/defaultvalue/(%s)/bc=%d/root=(%s)",
-               _method->signature(comp()->trMemory()),
-               bcIndex,
-               comp()->signature()));
-         }
-
-      comp()->failCompilation<TR::UnsupportedValueTypeOperation>("Unresolved class encountered for defaultvalue bytecode instruction");
+      abortForUnresolvedValueTypeOp("defaultvalue", "class");
       }
 
    TR::SymbolReference *valueClassSymRef = symRefTab()->findOrCreateClassSymbol(_methodSymbol, 0, valueTypeClass);
@@ -6160,26 +6156,7 @@ TR_J9ByteCodeIlGenerator::genDefaultValue(TR_OpaqueClassBlock *valueTypeClass)
       {
       // IL generation for defaultvalue is currently only able to handle value type classes that have been resolved.
       // If the class is still unresolved, abort the compilation and track the failure with a static debug counter.
-      const int32_t bcIndex = currentByteCodeIndex();
-      if (isOutermostMethod())
-         {
-         TR::DebugCounter::incStaticDebugCounter(comp(),
-            TR::DebugCounter::debugCounterName(comp(),
-                  "ilgen.abort/unresolved/defaultvalue/(%s)/bc=%d",
-                  comp()->signature(),
-                  bcIndex));
-         }
-      else
-         {
-         TR::DebugCounter::incStaticDebugCounter(comp(),
-            TR::DebugCounter::debugCounterName(comp(),
-               "ilgen.abort/unresolved/defaultvalue/(%s)/bc=%d/root=(%s)",
-               _method->signature(comp()->trMemory()),
-               bcIndex,
-               comp()->signature()));
-         }
-
-      comp()->failCompilation<TR::UnsupportedValueTypeOperation>("Unresolved class encountered for defaultvalue bytecode instruction");
+      abortForUnresolvedValueTypeOp("defaultvalue", "class");
       }
    else
       {
