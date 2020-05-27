@@ -283,8 +283,6 @@ _end:
 int
 main(int argc, char *argv[])
 {
-	JavaVM *jvm = NULL;
-	JNIEnv *env = NULL;
 	JITServer *server = NULL;
 	JavaVMOption *options = NULL;
 	JavaVMInitArgs vmArgs = {0};
@@ -296,7 +294,7 @@ main(int argc, char *argv[])
 	int32_t numJvmOptions = 0;
 	createJITServer createServer = NULL;
 
-	fprintf(stderr, "JITServer is currently a technology preview. Its use is not yet supported\n");
+	fprintf(stderr, "JITServer is currently a technology preview. Its use is not yet supported.\n");
 
 	jvmLibPath = getJvmLibPath();
 	if (NULL == jvmLibPath) {
