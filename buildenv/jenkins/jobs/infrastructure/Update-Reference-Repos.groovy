@@ -37,8 +37,6 @@ if ((CLEAN_CACHE_DIR == null) || (CLEAN_CACHE_DIR == '')) {
 UPDATE_SETUP_NODES = params.UPDATE_SETUP_NODES
 UPDATE_BUILD_NODES = params.UPDATE_BUILD_NODES
 
-EXTENSIONS_REPOS = [[name: "openj9", url: "https://github.com/eclipse/openj9.git"]]
-
 def jobs = [:]
 
 timeout(time: 6, unit: 'HOURS') {
@@ -100,7 +98,7 @@ timeout(time: 6, unit: 'HOURS') {
                         jobs["${sNodeName}"] = {
                             node("${sNodeName}"){
                                 stage("${sNodeName} - Update Reference Repo") {
-                                    refresh(sNodeName, "${HOME}/openjdk_cache", EXTENSIONS_REPOS, true)
+                                    refresh(sNodeName, "${HOME}/openjdk_cache", [[name: "openj9", url: VARIABLES.openj9.get('default').get('repoUrl')]], true)
                                 }
                             }
                         }
@@ -132,6 +130,8 @@ timeout(time: 6, unit: 'HOURS') {
                         def repos = []
                         if (nodeLabels.contains('ci.role.build')) {
                             repos.addAll(get_openjdk_repos(VARIABLES.openjdk, foundLabel))
+                            repos.add([name: "openj9", url: VARIABLES.openj9.get('default').get('repoUrl')])
+                            repos.add([name: "omr", url: VARIABLES.omr.get('default').get('repoUrl')])
                         }
 
                         if (nodeLabels.contains('ci.role.test')) {
@@ -141,9 +141,12 @@ timeout(time: 6, unit: 'HOURS') {
 
                         if (jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes().contains(aNode)) {
                             // add OpenJ9 repo
-                            repos.addAll(EXTENSIONS_REPOS)
+                            repos.add([name: "openj9", url: VARIABLES.openj9.get('default').get('repoUrl')])
                             setupNodesNames.add(aNode)
                         }
+
+                        // Remove any dups
+                        repos.unique()
 
                         jobs["${nodeName}"] = {
                             node("${nodeName}"){
@@ -211,22 +214,18 @@ def config(remoteName, remoteUrl) {
 */
 def get_openjdk_repos(openJdkMap, useDefault) {
     def repos = []
-    def releases = ['8', '11', '14', 'next']
 
     // iterate over VARIABLES.openjdk map and fetch the repository URL
     openJdkMap.entrySet().each { mapEntry ->
-        if (releases.contains(mapEntry.key.toString())) {
-            if (useDefault) {
-                repos.add([name: "jdk${mapEntry.key}", url: mapEntry.value.get('default').get('repoUrl')])
-            } else {
-               mapEntry.value.entrySet().each { entry ->
-                    if (entry.key != 'default') {
-                        repos.add([name: "jdk${mapEntry.key}", url: entry.value.get('repoUrl')])
-                    }
+        if (useDefault) {
+            repos.add([name: "jdk${mapEntry.key}", url: mapEntry.value.get('default').get('repoUrl')])
+        } else {
+           mapEntry.value.entrySet().each { entry ->
+                if (entry.key != 'default') {
+                    repos.add([name: "jdk${mapEntry.key}", url: entry.value.get('repoUrl')])
                 }
             }
         }
     }
-
     return repos
 }
