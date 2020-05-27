@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,3 +21,17 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+/*[IF Java15]*/
+package java.lang.invoke;
+
+/*
+ * Stub class to compile RI j.l.i.MethodHandleImpl
+ */
+
+class DirectMethodHandle extends MethodHandle {
+	DirectMethodHandle(MethodType mt, LambdaForm lf) {
+		super(mt, lf);
+		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+}
+/*[ENDIF] Java15 */

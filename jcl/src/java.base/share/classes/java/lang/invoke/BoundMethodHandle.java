@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,6 +61,16 @@ abstract class BoundMethodHandle extends MethodHandle {
 	LambdaForm.NamedFunction getterFunction(int num) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
+/*[IF Java15]*/
+	final int fieldCount() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	final Object arg(int i) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF] Java15 */
 
 	class SpeciesData {
 		MethodHandle constructor() {
