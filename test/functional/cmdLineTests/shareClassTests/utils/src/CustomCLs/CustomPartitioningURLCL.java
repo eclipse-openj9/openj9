@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package CustomClassloaders;
+package CustomCLs;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -38,7 +38,6 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.jar.Attributes.Name;
 
-import com.ibm.oti.shared.CannotSetClasspathException;
 import com.ibm.oti.shared.HelperAlreadyDefinedException;
 import com.ibm.oti.shared.Shared;
 import com.ibm.oti.shared.SharedClassHelperFactory;
@@ -49,12 +48,14 @@ import com.ibm.oti.shared.SharedClassURLHelper;
 /**
  * @author Matthew Kilner
  */
-public class CustomURLClassLoaderNonConfirming extends SecureClassLoader {
+public class CustomPartitioningURLCL extends SecureClassLoader {
 
 	URL[] urls, orgUrls;
 	
 	private Hashtable jarCache = new Hashtable(32);
 	int loaderType;
+	
+	String partition = null;
 	
 	SharedClassURLClasspathHelper scHelper;
 	
@@ -62,7 +63,7 @@ public class CustomURLClassLoaderNonConfirming extends SecureClassLoader {
 	
 	FoundAtIndex foundAtIndex = new FoundAtIndex();
 
-	public CustomURLClassLoaderNonConfirming(URL[] passedUrls, ClassLoader parent){
+	public CustomPartitioningURLCL(URL[] passedUrls, ClassLoader parent){
 		super(parent);
 		loaderType = ClassLoaderType.CACHEDURL.ord;
 		int urlLength = passedUrls.length;
@@ -80,13 +81,16 @@ public class CustomURLClassLoaderNonConfirming extends SecureClassLoader {
 		if(schFactory != null){
 			try{
 				scHelper = schFactory.getURLClasspathHelper(this, passedUrls);
+				if(null != scHelper){
+					scHelper.confirmAllEntries();
+				}
 			} catch (HelperAlreadyDefinedException e){
 				e.printStackTrace();
 			}
 		}
 	}
 	
-	public CustomURLClassLoaderNonConfirming(URL[] passedUrls){
+	public CustomPartitioningURLCL(URL[] passedUrls){
 		super();
 		loaderType = ClassLoaderType.CACHEDURL.ord;
 		int urlLength = passedUrls.length;
@@ -104,10 +108,17 @@ public class CustomURLClassLoaderNonConfirming extends SecureClassLoader {
 		if(schFactory != null){
 			try{
 				scHelper = schFactory.getURLClasspathHelper(this, passedUrls);
+				if(null != scHelper){
+					scHelper.confirmAllEntries();
+				}
 			} catch (HelperAlreadyDefinedException e){
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public void setPartition(String newPartition){
+		partition = newPartition;
 	}
 	
 	public boolean getHelper(){
@@ -206,6 +217,7 @@ public class CustomURLClassLoaderNonConfirming extends SecureClassLoader {
 		urls = newUrls;
 		urls[(urls.length - 1)] = searchURL;
 		scHelper.addClasspathEntry(url);
+		scHelper.confirmAllEntries();
 		addMetaDataEntry();
 	}
 	
@@ -350,7 +362,7 @@ public class CustomURLClassLoaderNonConfirming extends SecureClassLoader {
 	public Class findClass(String name) throws ClassNotFoundException {
 		Class clazz = null;
 		if(scHelper != null){
-			byte[] classBytes = scHelper.findSharedClass(name, foundAtIndex);
+			byte[] classBytes = scHelper.findSharedClass(partition, name, foundAtIndex);
 			if(classBytes != null){
 				if(metaDataArray[foundAtIndex.getIndex()] != null){
 					checkPackage(name, foundAtIndex.getIndex());
@@ -370,7 +382,8 @@ public class CustomURLClassLoaderNonConfirming extends SecureClassLoader {
 					CodeSource codeSource = metadata.codeSource;
 					clazz = defineClass(name, classBytes, 0, classBytes.length, codeSource);
 					if(clazz != null){
-						scHelper.storeSharedClass(clazz, indexFoundAt);
+						System.out.println("\n** Storing class: "+name+" on partition: "+partition);
+						scHelper.storeSharedClass(partition, clazz, indexFoundAt);
 					}
 				} catch (Exception e){
 					e.printStackTrace();
@@ -475,8 +488,9 @@ public class CustomURLClassLoaderNonConfirming extends SecureClassLoader {
 	
 	public boolean isClassInSharedCache(String className){
 		byte[] sharedClass = null;
+		System.out.println("\n** Checking for class: "+className+" on partition: "+partition);
 		if (scHelper!=null) {
-			sharedClass = scHelper.findSharedClass(className, foundAtIndex);
+			sharedClass = scHelper.findSharedClass(partition, className, foundAtIndex);
 			if (sharedClass !=null){
 				return true;
 			} else {
@@ -488,37 +502,12 @@ public class CustomURLClassLoaderNonConfirming extends SecureClassLoader {
 	
 	public Class getClassFromCache(String name){
 		Class clazz = null;
-		byte[] classBytes = scHelper.findSharedClass(name, foundAtIndex);
+		byte[] classBytes = scHelper.findSharedClass(partition, name, foundAtIndex);
 		if(classBytes != null){
 			CodeSource cs = null;
 			clazz = defineClass(name, classBytes, 0, classBytes.length, cs);
 		}
 		return clazz;
-	}
-	
-	public void confirmAllEntries(){
-		scHelper.confirmAllEntries();
-	}
-	
-	public boolean changeClassPath(URL[] newUrls){
-		boolean changed = true;
-		int urlLength = newUrls.length;
-		urls = new URL[urlLength];
-		orgUrls = new URL[urlLength];
-		for (int i=0; i < urlLength; i++) {
-			try {
-				urls[i] = createSearchURL(newUrls[i]);
-			} catch (MalformedURLException e) {}
-			orgUrls[i] = newUrls[i];
-		}
-		metaDataArray = new CustomLoaderMetaDataCache[urls.length];
-		initMetaData();
-		try{
-			scHelper.setClasspath(newUrls);
-		} catch (CannotSetClasspathException e){
-			changed = false;
-		}
-		return changed;
 	}
 	
 	public static class FoundAtIndex implements SharedClassURLClasspathHelper.IndexHolder {
@@ -536,6 +525,6 @@ public class CustomURLClassLoaderNonConfirming extends SecureClassLoader {
 		public void reset(){
 			indexFoundAt = -1;
 		}
-		
+
 	}
 }

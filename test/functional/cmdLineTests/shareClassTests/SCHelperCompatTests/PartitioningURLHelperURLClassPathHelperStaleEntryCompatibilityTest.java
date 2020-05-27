@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,8 +26,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Properties;
 
-import CustomClassloaders.CustomPartitioningURLClassLoader;
-import CustomClassloaders.CustomPartitioningURLLoader;
+import CustomCLs.CustomPartitioningURLCL;
+import CustomCLs.CustomPartitioningURLLoader;
 import Utilities.StringManipulator;
 import Utilities.TestClass;
 import Utilities.URLClassPathCreator;
@@ -158,7 +158,7 @@ public class PartitioningURLHelperURLClassPathHelperStaleEntryCompatibilityTest 
 		URL[] urlPath2;
 		urlPath2 = creator2.createURLClassPath();
 		
-		CustomPartitioningURLClassLoader cl = new CustomPartitioningURLClassLoader(urlPath2, this.getClass().getClassLoader());
+		CustomPartitioningURLCL cl = new CustomPartitioningURLCL(urlPath2, this.getClass().getClassLoader());
 		cl.setPartition(partition);
 		for(int classIndex = 0; classIndex < classesToLoad.length; classIndex++){
 			String classToFind = classesToFind[classIndex];
@@ -203,7 +203,7 @@ public class PartitioningURLHelperURLClassPathHelperStaleEntryCompatibilityTest 
 		}
 	}
 	
-	boolean validateReturnedClass(String className, String foundAt, CustomPartitioningURLClassLoader loader){
+	boolean validateReturnedClass(String className, String foundAt, CustomPartitioningURLCL loader){
 		boolean result = false;
 		Class classData = null;
 		classData = loader.getClassFromCache(className);

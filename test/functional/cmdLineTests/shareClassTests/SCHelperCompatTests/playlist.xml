@@ -25,7 +25,7 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<include>variables.mk</include>
 	<test>
-		<testCaseName>cmdLineTester_SCHelperCompatibilityTests_win</testCaseName>
+		<testCaseName>cmdLineTester_SCHelperCompatTests_win</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>	
@@ -53,7 +53,7 @@
 		</impls>
 	</test>
 	<test>
-		<testCaseName>cmdLineTester_SCHelperCompatibilityTests_unix</testCaseName>
+		<testCaseName>cmdLineTester_SCHelperCompatTests_unix</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>	
