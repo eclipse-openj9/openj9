@@ -745,7 +745,7 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
       }
    else if (!isRealTimeGC && size == 0)
       {
-#if (defined(TR_HOST_S390) && defined(TR_TARGET_S390)) || (defined(TR_TARGET_X86) && defined(TR_HOST_X86)) || (defined(TR_TARGET_POWER) && defined(TR_HOST_POWER))
+#if (defined(TR_HOST_S390) && defined(TR_TARGET_S390)) || (defined(TR_TARGET_X86) && defined(TR_HOST_X86)) || (defined(TR_TARGET_POWER) && defined(TR_HOST_POWER)) || (defined(TR_TARGET_ARM64) && defined(TR_HOST_ARM64))
       size = TR::Compiler->om.discontiguousArrayHeaderSizeInBytes();
       if (self()->getOption(TR_TraceCG))
          traceMsg(self(), "inline array allocation @ node %p for size 0\n", node);
