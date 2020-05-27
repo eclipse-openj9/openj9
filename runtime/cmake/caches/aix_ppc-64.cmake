@@ -45,7 +45,6 @@ set(OMR_GC_CONCURRENT_SCAVENGER ON CACHE BOOL "")
 set(OMR_GC_HEAP_CARD_TABLE ON CACHE BOOL "")
 set(OMR_THR_SPIN_WAKE_CONTROL OFF CACHE BOOL "")
 set(OMR_THR_THREE_TIER_LOCKING OFF CACHE BOOL "")
-set(OMR_THR_YIELD_ALG OFF CACHE BOOL "")
 
 # Note: In CMake, 'set's on cache variables only apply if the cache variable
 # is not already set. Thus any cache varaibles set in this file, override

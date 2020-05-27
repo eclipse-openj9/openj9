@@ -21,3 +21,4 @@
 ################################################################################
 
 set(J9VM_GC_ENABLE_DOUBLE_MAP ON CACHE BOOL "")
+set(OMR_THR_YIELD_ALG ON CACHE BOOL "")
