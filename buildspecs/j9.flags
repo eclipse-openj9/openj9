@@ -545,13 +545,6 @@ all data is stored in their own region. It additionaly reduces footprint, mainly
 		<description>Enable Segregated Heap model.</description>
 		<ifRemoved>The Segregated Heap model will not be used</ifRemoved>
 	</flag>
-	<flag id="gc_staccato">
-		<description>Enable Staccato Garbage Collection</description>
-		<ifRemoved>Staccato Garbage Collection is not enabled</ifRemoved>
-		<requires>
-			<require flag="gc_realtime"/>
-		</requires>
-	</flag>
 	<flag id="gc_strictOmr">
 		<description>Enable Strict OMR compile and link for testing</description>
 		<ifRemoved>Compile for JAVA</ifRemoved>
@@ -1409,13 +1402,6 @@ Only available on zOS</description>
 	<flag id="module_gc_realtime">
 		<description>Enables compilation of the gc_realtime module</description>
 		<ifRemoved>The module will not be compiled</ifRemoved>
-	</flag>
-	<flag id="module_gc_staccato">
-		<description>Enables compilation of the gc_staccato module</description>
-		<ifRemoved>The module will not be compiled</ifRemoved>
-		<requires>
-			<require flag="module_gc_realtime"/>
-		</requires>
 	</flag>
 	<flag id="module_gc_stats">
 		<description>Enables compilation of the gc_stats module.</description>
