@@ -454,6 +454,11 @@ ifeq ($(HOST_ARCH),x)
             SOLINK_FLAGS+=-static-libgcc -static-libstdc++
         endif
     endif
+
+    ifeq ($(OS),osx)
+        SOLINK_FLAGS+=-install_name @rpath/lib$(PRODUCT_NAME).dylib
+        SOLINK_FLAGS+=-compatibility_version 1.0.0 -current_version 1.0.0
+    endif
 endif
 
 ifeq ($(HOST_ARCH),p)

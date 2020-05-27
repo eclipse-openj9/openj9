@@ -128,6 +128,7 @@ endif
 
 # https://stackoverflow.com/questions/21907504/how-to-compile-shared-lib-with-clang-on-osx
 UMA_DLL_LINK_FLAGS += -shared -undefined dynamic_lookup -install_name @rpath/lib$(UMA_LIB_NAME).dylib
+UMA_DLL_LINK_FLAGS += -compatibility_version 1.0.0 -current_version 1.0.0
 UMA_DLL_LINK_FLAGS += -Xlinker -rpath -Xlinker @loader_path -Xlinker -rpath -Xlinker @loader_path/..
 
 UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_STATIC_LIBRARIES)
