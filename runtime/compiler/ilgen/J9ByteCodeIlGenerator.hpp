@@ -238,6 +238,7 @@ private:
    void         handleSideEffect(TR::Node *);
    bool         valueMayBeModified(TR::Node *, TR::Node *);
    TR::Node *    genCompressedRefs(TR::Node *, bool genTT = true, int32_t isLoad = 1);
+   void         abortForUnresolvedValueTypeOp(const char* bytecodeName, const char* refType);
 
    // IlGenerator
    //
