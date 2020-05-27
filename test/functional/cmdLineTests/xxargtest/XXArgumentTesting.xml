@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2011, 2018 IBM Corp. and others
+  Copyright (c) 2011, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,4 +72,23 @@
 		<output type="required" caseSensitive="no" regex="no">-Xms11M</output>
 	</test>
 	
+	<test id="Verify -XX:+PrintFlagsFinal">
+		<command>$EXE$ -XX:+PrintFlagsFinal -version</command>
+		<output type="success" caseSensitive="no" regex="no">[Global flags]</output>
+		<output type="required" caseSensitive="no" regex="no">MaxHeapSize</output>
+		<output type="required" caseSensitive="no" regex="no">MaxDirectMemorySize</output>
+	</test>
+
+	<test id="Verify rightmost -XX:+PrintFlagsFinal overrides earlier -XX:-PrintFlagsFinal">
+		<command>$EXE$ -XX:-PrintFlagsFinal -XX:+PrintFlagsFinal -version</command>
+		<output type="success" caseSensitive="no" regex="no">[Global flags]</output>
+		<output type="required" caseSensitive="no" regex="no">MaxHeapSize</output>
+		<output type="required" caseSensitive="no" regex="no">MaxDirectMemorySize</output>
+	</test>
+
+	<test id="Verify rightmost -XX:-PrintFlagsFinal overrides earlier -XX:+PrintFlagsFinal">
+		<command>$EXE$ -XX:+PrintFlagsFinal -XX:-PrintFlagsFinal -version</command>
+		<output type="success" caseSensitive="no" regex="no">Runtime Environment</output>
+		<output type="failure" caseSensitive="no" regex="no">[Global flags]</output>
+	</test>
 </suite>

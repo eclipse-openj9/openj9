@@ -542,6 +542,9 @@ enum INIT_STAGE {
 #define VMOPT_XXSHOW_EXTENDED_NPE_MESSAGE "-XX:+ShowCodeDetailsInExceptionMessages"
 #define VMOPT_XXNOSHOW_EXTENDED_NPE_MESSAGE "-XX:-ShowCodeDetailsInExceptionMessages"
 
+#define VMOPT_XXPRINTFLAGSFINALENABLE "-XX:+PrintFlagsFinal"
+#define VMOPT_XXPRINTFLAGSFINALDISABLE "-XX:-PrintFlagsFinal"
+
 /* Modularity command line options */
 #define VMOPT_MODULE_UPGRADE_PATH "--upgrade-module-path"
 #define VMOPT_MODULE_PATH "--module-path"
