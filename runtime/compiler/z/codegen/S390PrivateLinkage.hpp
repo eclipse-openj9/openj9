@@ -25,7 +25,7 @@
 
 #include "codegen/PrivateLinkage.hpp"
 
-namespace TR { class S390JNICallDataSnippet; }
+namespace TR { class S390JNICallDataSnippet2; }
 namespace TR { class AutomaticSymbol; }
 namespace TR { class CodeGenerator; }
 namespace TR { class RegisterDependencyConditions; }
@@ -125,7 +125,7 @@ protected:
       TR::RealRegister * javaStackPointerRealRegister,
       TR::Register * methodMetaDataVirtualRegister,
       TR::LabelSymbol * returnFromJNICallLabel,
-      TR::S390JNICallDataSnippet *jniCallDataSnippet);
+      TR::S390JNICallDataSnippet2 *jniCallDataSnippet);
 
    };
 
@@ -174,7 +174,7 @@ public:
 
    void checkException(TR::Node * callNode, TR::Register *methodMetaDataVirtualRegister, TR::Register * tempReg);
    void releaseVMAccessMask(TR::Node * callNode, TR::Register * methodMetaDataVirtualRegister,
-         TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::S390JNICallDataSnippet * jniCallDataSnippet, TR::RegisterDependencyConditions * deps);
+         TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::S390JNICallDataSnippet2 * jniCallDataSnippet, TR::RegisterDependencyConditions * deps);
    void acquireVMAccessMask(TR::Node * callNode, TR::Register * javaLitPoolVirtualRegister,
       TR::Register * methodMetaDataVirtualRegister, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg);
 

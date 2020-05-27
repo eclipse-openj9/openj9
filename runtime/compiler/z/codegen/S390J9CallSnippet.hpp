@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -169,6 +169,75 @@ class J9S390InterfaceCallDataSnippet : public TR::S390ConstantDataSnippet
    virtual uint32_t getLastSlotFieldOffset();
    virtual uint32_t getFirstSlotOffset();
    virtual uint32_t getLastSlotOffset();
+   };
+
+class S390JNICallDataSnippet2 : public TR::S390ConstantDataSnippet
+   {
+   /** Base register for this snippet */
+   TR::Register *  _baseRegister;
+
+   //for JNI Callout frame
+   uintptr_t _ramMethod;
+   uintptr_t _JNICallOutFrameFlags;
+   TR::LabelSymbol * _returnFromJNICallLabel;  //for savedCP slot
+   uintptr_t _savedPC; // This is unused, and hence zero
+   uintptr_t _tagBits;
+
+   // VMThread setup
+   uintptr_t _pc;
+   uintptr_t _literals;
+   uintptr_t _jitStackFrameFlags;
+
+   //for releaseVMaccess
+   uintptr_t _constReleaseVMAccessMask;
+   uintptr_t _constReleaseVMAccessOutOfLineMask;
+
+   /** For CallNativeFunction */
+   uintptr_t _targetAddress;
+
+
+   public:
+
+  S390JNICallDataSnippet2(TR::CodeGenerator *,
+                                  TR::Node *);
+
+   virtual Kind getKind() { return IsJNICallData; }
+   virtual uint8_t *emitSnippetBody();
+   virtual void print(TR::FILE *, TR_Debug*);
+   void setBaseRegister(TR::Register * aValue){ _baseRegister = aValue; }
+   TR::Register * getBaseRegister() { return _baseRegister; }
+
+   void setRAMMethod(uintptr_t aValue){ _ramMethod = aValue; }
+   void setJNICallOutFrameFlags(uintptr_t aValue){ _JNICallOutFrameFlags = aValue; }
+   void setReturnFromJNICall( TR::LabelSymbol * aValue){ _returnFromJNICallLabel = aValue; }
+   void setSavedPC(uintptr_t aValue){ _savedPC = aValue; }
+   void setTagBits(uintptr_t aValue){ _tagBits = aValue; }
+
+   void setPC(uintptr_t aValue){ _pc = aValue; }
+   void setLiterals(uintptr_t aValue){ _literals = aValue; }
+   void setJitStackFrameFlags(uintptr_t aValue){ _jitStackFrameFlags = aValue; }
+
+   void setConstReleaseVMAccessMask(uintptr_t aValue){ _constReleaseVMAccessMask = aValue; }
+   void setConstReleaseVMAccessOutOfLineMask(uintptr_t aValue){ _constReleaseVMAccessOutOfLineMask = aValue; }
+   void setTargetAddress(uintptr_t aValue){ _targetAddress = aValue; }
+
+   uint32_t getJNICallOutFrameDataOffset(){ return 0; }
+   uint32_t getRAMMethodOffset(){ return 0; }
+   uint32_t getJNICallOutFrameFlagsOffset();
+   uint32_t getReturnFromJNICallOffset();
+   uint32_t getSavedPCOffset();
+   uint32_t getTagBitsOffset();
+
+   uint32_t getPCOffset();
+   uint32_t getLiteralsOffset();
+   uint32_t getJitStackFrameFlagsOffset();
+
+   uint32_t getConstReleaseVMAccessMaskOffset();
+   uint32_t getConstReleaseVMAccessOutOfLineMaskOffset();
+
+   uint32_t getTargetAddressOffset();
+
+   uint32_t getLength(int32_t estimatedSnippetStart);
    };
 
 
