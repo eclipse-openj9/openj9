@@ -2305,6 +2305,10 @@ public class MethodHandles {
 			return new Lookup(definer.defineClass(initOption), false);
 		}
 
+		Lookup defineHiddenClassWithClassData(byte[] bytes, Object data, ClassOption... classOptions) {
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+
 		ClassDefiner makeHiddenClassDefiner(String name, byte[] template) {
 			ClassDefiner definer = new ClassDefiner(name, template, this);
 			return definer;
@@ -5388,6 +5392,12 @@ public class MethodHandles {
 			return target.invokeWithArguments(newArguments);
 		}
 	}
+
+/*[IF Java15]*/
+	static boolean permuteArgumentChecks(int[] arr, MethodType mt1, MethodType mt2) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF] Java15 */
 
 /*[IF Sidecar18-SE-OpenJ9]*/	
 	static MethodHandle basicInvoker(MethodType mt) {
