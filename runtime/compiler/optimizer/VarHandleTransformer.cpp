@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,7 +125,7 @@ static X VarHandleMethods[] =
       {  TR::java_lang_invoke_VarHandle_getAndBitwiseOr           ,   15, "getAndBitwiseOr",                 (int16_t)-1, "*", 25},
       {  TR::java_lang_invoke_VarHandle_getAndBitwiseOrAcquire    ,   22, "getAndBitwiseOrAcquire",          (int16_t)-1, "*", 26},
       {  TR::java_lang_invoke_VarHandle_getAndBitwiseOrRelease    ,   22, "getAndBitwiseOrRelease",          (int16_t)-1, "*", 27},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXor          ,   16, "getAndBitwiseXOr",                (int16_t)-1, "*", 28},
+      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXor          ,   16, "getAndBitwiseXor",                (int16_t)-1, "*", 28},
       {  TR::java_lang_invoke_VarHandle_getAndBitwiseXorAcquire   ,   23, "getAndBitwiseXorAcquire",         (int16_t)-1, "*", 29},
       {  TR::java_lang_invoke_VarHandle_getAndBitwiseXorRelease   ,   23, "getAndBitwiseXorRelease",         (int16_t)-1, "*", 30},
       {  TR::unknownMethod, 0, 0, 0, 0, -1}
