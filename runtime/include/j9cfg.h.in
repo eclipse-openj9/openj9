@@ -278,6 +278,9 @@ extern "C" {
 #cmakedefine J9VM_THR_PREEMPTIVE
 #cmakedefine J9VM_THR_SMART_DEFLATION
 
+/* CMake build only supports OMR DDR */
+#define J9VM_OPT_USE_OMR_DDR
+
 #if defined(J9VM_ENV_DATA64)
 #define J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
 #endif
