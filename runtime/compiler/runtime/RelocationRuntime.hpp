@@ -179,6 +179,7 @@ class TR_RelocationRuntime {
       virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
       virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual OMRProcessorDesc getProcessorDescription(TR_FrontEnd *fe, J9VMThread *curThread) { TR_ASSERT_FATAL(0, "Error: getProcessorDescription not supported in this relocation runtime"); return OMRProcessorDesc();}
 
       static uintptr_t    getGlobalValue(uint32_t g)
          {
@@ -346,6 +347,7 @@ public:
       virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
       virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual OMRProcessorDesc getProcessorDescription(TR_FrontEnd *fe, J9VMThread *curThread);
 
 private:
       uint32_t getCurrentLockwordOptionHashValue(J9JavaVM *vm) const;
@@ -378,6 +380,7 @@ public:
       virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
       virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
+      virtual OMRProcessorDesc getProcessorDescription(TR_FrontEnd *fe, J9VMThread *curThread) override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return OMRProcessorDesc(); }
 
       static uint8_t *copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe);
 

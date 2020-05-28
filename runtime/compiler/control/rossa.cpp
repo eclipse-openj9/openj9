@@ -1912,6 +1912,10 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
                TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
                }
             }
+         else
+            {
+            TR::Compiler->relocatableTarget.cpu = TR::CPU(compInfo->reloRuntime()->getProcessorDescription(fe, curThread));
+            }
          }
 
       if (TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT))

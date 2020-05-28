@@ -232,7 +232,7 @@ uint8_t* TR::X86AllocPrefetchSnippet::emitSharedBody(uint8_t* prefetchSnippetBuf
    //
    for (int32_t lineOffset = 0; lineOffset < numLines; ++lineOffset)
       {
-      TR_ASSERT_FATAL(comp->isOutOfProcessCompilation() || TR::CodeGenerator::getX86ProcessorInfo().isAMD15h() == comp->target().cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H), "OMR_PROCESSOR_X86_AMDFAMILY15H\n");
+      TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || TR::CodeGenerator::getX86ProcessorInfo().isAMD15h() == comp->target().cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H), "OMR_PROCESSOR_X86_AMDFAMILY15H\n");
       prefetchSnippetBuffer[0] = 0x0F;
       if (comp->target().cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H))
          prefetchSnippetBuffer[1] = 0x0D;
