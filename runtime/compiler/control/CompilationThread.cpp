@@ -8619,7 +8619,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "<EARLY TRANSLATION FAILURE: compilation interrupted by JITClient>");
          that->_methodBeingCompiled->_compErrCode = compilationStreamInterrupted;
-         Trc_JITServerStreamInterrupted(vmThread, that->getCompThreadId(), __FUNCTION__, e.what());
+         Trc_JITServerStreamInterrupted(vmThread, that->getCompThreadId(), __FUNCTION__, "", "", e.what());
          }
 #endif /* defined(J9VM_OPT_JITSERVER) */
       catch (const J9::JITShutdown)
@@ -10041,6 +10041,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                      "compThreadID=%d has failed to compile a new instance thunk", entry->_compInfoPT->getCompThreadId());
                }
+            Trc_JITServerFailedToCompileNewInstanceThunk(vmThread, entry->_compInfoPT->getCompThreadId());
             int8_t compErrCode = entry->_compErrCode;
             if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
                entry->_stream->writeError(compErrCode);
@@ -10091,6 +10092,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                      "compThreadID=%d has failed to compile a DLT method", entry->_compInfoPT->getCompThreadId());
                }
+            Trc_JITServerFailedToCompileDLT(vmThread, entry->_compInfoPT->getCompThreadId());
             int8_t compErrCode = entry->_compErrCode;
             if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
                entry->_stream->writeError(compErrCode);
@@ -10148,6 +10150,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                      "compThreadID=%d has failed to compile a methodHandleThunk method", entry->_compInfoPT->getCompThreadId());
                }
+            Trc_JITServerFailedToCompileMethodHandleThunk(vmThread, entry->_compInfoPT->getCompThreadId());
             int8_t compErrCode = entry->_compErrCode;
             if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
                entry->_stream->writeError(compErrCode);
@@ -10505,7 +10508,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   entry->_compInfoPT->getCompThreadId(), entry->_compErrCode, comp ? comp->signature() : "");
             }
          if (vmThread)
-            Trc_JITServerFailedToCompile(vmThread, entry->_compInfoPT->getCompThreadId(), entry->_compErrCode, comp ? comp->signature() : "");
+            Trc_JITServerFailedToCompile(vmThread, entry->_compInfoPT->getCompThreadId(), entry->_compErrCode,
+                  comp ? comp->signature() : "", comp ? comp->getHotnessName() : "");
 
          static bool breakAfterFailedCompile = feGetEnv("TR_breakAfterFailedCompile") != NULL;
          if (breakAfterFailedCompile)
@@ -10538,7 +10542,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   entry->_compInfoPT->getCompThreadId(), entry->_compErrCode, comp ? comp->signature() : "");
             }
          if (vmThread)
-            Trc_JITServerFailedToRecompile(vmThread, entry->_compInfoPT->getCompThreadId(), entry->_compErrCode, comp ? comp->signature() : "");
+            Trc_JITServerFailedToRecompile(vmThread, entry->_compInfoPT->getCompThreadId(), entry->_compErrCode,
+                  comp ? comp->signature() : "", comp ? comp->getHotnessName() : "");
 
          int8_t compErrCode = entry->_compErrCode;
          if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
@@ -11267,24 +11272,28 @@ TR::CompilationInfoPerThreadBase::processException(
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d JITServer StreamFailure: %s", getCompThreadId(), e.what());
+      Trc_JITServerStreamFailure(vmThread, getCompThreadId(),  __FUNCTION__, compiler->signature(), compiler->getHotnessName(), e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamFailure;
       }
    catch (const JITServer::StreamInterrupted &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d JITServer StreamInterrupted: %s", getCompThreadId(), e.what());
+      Trc_JITServerStreamInterrupted(vmThread, getCompThreadId(),  __FUNCTION__, compiler->signature(), compiler->getHotnessName(), e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamInterrupted;
       }
    catch (const JITServer::StreamVersionIncompatible &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d JITServer StreamVersionIncompatible: %s", getCompThreadId(), e.what());
+      Trc_JITServerStreamVersionIncompatible(vmThread, getCompThreadId(),  __FUNCTION__, compiler->signature(), compiler->getHotnessName(), e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamVersionIncompatible;
       }
    catch (const JITServer::StreamMessageTypeMismatch &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d JITServer StreamMessageTypeMismatch: %s", getCompThreadId(), e.what());
+      Trc_JITServerStreamMessageTypeMismatch(vmThread, getCompThreadId(),  __FUNCTION__, compiler->signature(), compiler->getHotnessName(), e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamMessageTypeMismatch;
       }
    catch (const JITServer::ServerCompilationFailure &e)
