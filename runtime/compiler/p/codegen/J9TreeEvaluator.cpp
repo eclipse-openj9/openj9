@@ -2101,11 +2101,7 @@ TR::Register *J9::Power::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::
          }
       TR::addDependency(dependencies, jumpRegister, TR::RealRegister::gr11, TR_GPR, cg);
       TR::addDependency(dependencies, condReg, TR::RealRegister::cr7, TR_CCR, cg);
-      if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-         // use PPC AS branch hint
-         gcPoint = generateDepConditionalBranchInstruction(cg, TR::InstOpCode::beql, PPCOpProp_BranchUnlikely, node, snippetLabel, condReg, dependencies);
-      else
-         gcPoint = generateDepConditionalBranchInstruction(cg, TR::InstOpCode::beql, node, snippetLabel, condReg, dependencies);
+      gcPoint = generateDepConditionalBranchInstruction(cg, TR::InstOpCode::beql, PPCOpProp_BranchUnlikely, node, snippetLabel, condReg, dependencies);
       gcPoint->setAsyncBranch();
       cg->machine()->setLinkRegisterKilled(true);
 
@@ -2226,10 +2222,7 @@ TR::Register *J9::Power::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR:
 
    generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, lengthReg, contiguousArraySizeMR);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli4, node, condReg, lengthReg, 0);
-   if (cg->comp()->target().cpu.id() >= TR_PPCgp) // Use PPC AS branch hint.
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, PPCOpProp_BranchUnlikely, node, discontiguousArrayLabel, condReg);
-   else
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, discontiguousArrayLabel, condReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, PPCOpProp_BranchUnlikely, node, discontiguousArrayLabel, condReg);
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
 
    // OOL begin.
@@ -2311,11 +2304,7 @@ TR::Register *J9::Power::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::Code
                generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, condReg, srcReg, 0);
             else
                generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli4, node, condReg, srcReg, 0);
-            if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-               // use PPC AS branch hint
-               gcPoint = generateDepConditionalBranchInstruction(cg, TR::InstOpCode::beql, PPCOpProp_BranchUnlikely, node, snippetLabel, condReg, conditions);
-            else
-               gcPoint = generateDepConditionalBranchInstruction(cg, TR::InstOpCode::beql, node, snippetLabel, condReg, conditions);
+            gcPoint = generateDepConditionalBranchInstruction(cg, TR::InstOpCode::beql, PPCOpProp_BranchUnlikely, node, snippetLabel, condReg, conditions);
             cg->stopUsingRegister(condReg);
             }
          cg->stopUsingRegister(jumpReg);
@@ -2351,10 +2340,8 @@ static void genBoundCheck(TR::CodeGenerator *cg, TR::Node *node, TR::Register *i
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli4, node, condReg, arrayLengthReg, indexVal);
 
       // NOTE: Trampoline kills gr11
-      gcPoint =
-            cg->comp()->target().cpu.id() >= TR_PPCgp ? // Use PPC AS branch hint.
-            generateConditionalBranchInstruction(cg, TR::InstOpCode::blel, PPCOpProp_BranchUnlikely, node, boundCheckFailSnippetLabel, condReg) :
-                  generateConditionalBranchInstruction(cg, TR::InstOpCode::blel, node, boundCheckFailSnippetLabel, condReg);
+      gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::blel, PPCOpProp_BranchUnlikely, node, boundCheckFailSnippetLabel, condReg);
+
       }
    else
       {
@@ -2460,11 +2447,7 @@ TR::Register *J9::Power::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::Code
       tmpReg = cg->allocateRegister();
       // trampoline kills gr11
       TR::addDependency(conditions, tmpReg, TR::RealRegister::gr11, TR_GPR, cg);
-      if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-         // use PPC AS branch hint
-         gcPoint = generateDepConditionalBranchInstruction(cg, reversed ? TR::InstOpCode::bgel : TR::InstOpCode::blel, PPCOpProp_BranchUnlikely, node, snippetLabel, cndReg, conditions);
-      else
-         gcPoint = generateDepConditionalBranchInstruction(cg, reversed ? TR::InstOpCode::bgel : TR::InstOpCode::blel, node, snippetLabel, cndReg, conditions);
+      gcPoint = generateDepConditionalBranchInstruction(cg, reversed ? TR::InstOpCode::bgel : TR::InstOpCode::blel, PPCOpProp_BranchUnlikely, node, snippetLabel, cndReg, conditions);
       cg->stopUsingRegister(tmpReg);
       }
 
@@ -2512,11 +2495,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node,
          {
          TR::Register *cndReg = cg->allocateRegister(TR_CCR);
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cndReg, copyIndexReg, firstChild->getInt());
-         if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-            // use PPC AS branch hint
-            gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::bgtl, PPCOpProp_BranchUnlikely, node, snippetLabel, cndReg);
-         else
-            gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::bgtl, node, snippetLabel, cndReg);
+         gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::bgtl, PPCOpProp_BranchUnlikely, node, snippetLabel, cndReg);
          cg->stopUsingRegister(cndReg);
          }
       else
@@ -2534,11 +2513,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node,
             {
             TR::Register *cndReg = cg->allocateRegister(TR_CCR);
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cndReg, boundReg, secondChild->getInt());
-            if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-               // use PPC AS branch hint
-               gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::bltl, PPCOpProp_BranchUnlikely, node, snippetLabel, cndReg);
-            else
-               gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::bltl, node, snippetLabel, cndReg);
+            gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::bltl, PPCOpProp_BranchUnlikely, node, snippetLabel, cndReg);
             cg->stopUsingRegister(cndReg);
             }
          else
@@ -2554,11 +2529,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node,
             {
             TR::Register *cndReg = cg->allocateRegister(TR_CCR);
             generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cndReg, boundReg, copyIndexReg);
-            if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-               // use PPC AS branch hint
-               gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::bltl, PPCOpProp_BranchUnlikely, node, snippetLabel, cndReg);
-            else
-               gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::bltl, node, snippetLabel, cndReg);
+            gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::bltl, PPCOpProp_BranchUnlikely, node, snippetLabel, cndReg);
             cg->stopUsingRegister(cndReg);
             }
          else
@@ -6040,11 +6011,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
 
       generateMemSrc1Instruction(cg, conditionalStoreOpCode, node, new (cg->trHeapMemory()) TR::MemoryReference(baseReg, tempReg, lockSize, cg), threadReg);
 
-      if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-         // use PPC AS branch hint
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, condReg);
-      else
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, loopLabel, condReg);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, condReg);
       generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
 
       generateLabelInstruction(cg, TR::InstOpCode::label, node, decLabel);
@@ -6146,10 +6113,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
 #ifdef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
          iCursor = generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpli, node, condReg, dataSizeReg, J9_GC_MINIMUM_OBJECT_SIZE, iCursor);
          TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-         if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-            iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, PPCOpProp_BranchLikely, node, doneLabel, condReg, iCursor);
-         else
-            iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, doneLabel, condReg, iCursor);
+         iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, PPCOpProp_BranchLikely, node, doneLabel, condReg, iCursor);
          iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, dataSizeReg, J9_GC_MINIMUM_OBJECT_SIZE, iCursor);
          iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, iCursor);
 #endif
@@ -6526,10 +6490,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                   {
                   iCursor = generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpli, node, condReg, sizeReg, J9_GC_MINIMUM_OBJECT_SIZE, iCursor);
                   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-                  if (cg->comp()->target().cpu.id() >= TR_PPCgp)
                   iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, PPCOpProp_BranchLikely, node, doneLabel, condReg, iCursor);
-                  else
-                  iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, doneLabel, condReg, iCursor);
 
                   iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, sizeReg, J9_GC_MINIMUM_OBJECT_SIZE, iCursor);
                   iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, iCursor);
@@ -6706,11 +6667,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                }
 
             // kills temp1Reg and sizeReg
-            if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-               // use PPC AS branch hint
-               iCursor = generateDepConditionalBranchInstruction(cg, TR::InstOpCode::blel, PPCOpProp_BranchUnlikely, node, callLabel, condReg, dependencies, iCursor);
-            else
-               iCursor = generateDepConditionalBranchInstruction(cg, TR::InstOpCode::blel, node, callLabel, condReg, dependencies, iCursor);
+            iCursor = generateDepConditionalBranchInstruction(cg, TR::InstOpCode::blel, PPCOpProp_BranchUnlikely, node, callLabel, condReg, dependencies, iCursor);
 
             cg->machine()->setLinkRegisterKilled(true);
             }
@@ -6785,11 +6742,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
          iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, tryLabel, condReg, iCursor);
          iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stwcx_r, node, new (cg->trHeapMemory()) TR::MemoryReference(dataSizeReg, zeroReg, 4, cg), temp1Reg, iCursor);
 
-         if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-            // use PPC AS branch hint
-            iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, tryLabel, condReg, iCursor);
-         else
-            iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, tryLabel, condReg, iCursor);
+         iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, tryLabel, condReg, iCursor);
          }
       }
    }
@@ -8043,11 +7996,7 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
       else
          opCode = TR::InstOpCode::stwcx_r;
       generateMemSrc1Instruction(cg, opCode, node, new (cg->trHeapMemory()) TR::MemoryReference(baseReg, offsetReg, lockSize, cg), metaReg);
-      if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-         // use PPC AS branch hint
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, cndReg);
-      else
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, loopLabel, cndReg);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, cndReg);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::OR, node, tempMR->getBaseRegister(), tempMR->getBaseRegister(), monitorReg);
       generateTrg1MemInstruction(cg, loadOpCode, node, loadResultReg, tempMR);
       if (needlwsync)
@@ -8075,11 +8024,7 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
       else
          opCode = TR::InstOpCode::stwcx_r;
       generateMemSrc1Instruction(cg, opCode, node, new (cg->trHeapMemory()) TR::MemoryReference(baseReg, offsetReg, lockSize, cg), monitorReg);
-      if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-         // use PPC AS branch hint
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, cndReg);
-      else
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, loopLabel, cndReg);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, cndReg);
       }
 
    if (objectClassReg)
@@ -8393,11 +8338,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
       generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, callLabel, condReg);
       generateMemSrc1Instruction(cg, conditionalStoreOpCode, node, new (cg->trHeapMemory()) TR::MemoryReference(baseReg, offsetReg, lockSize, cg), metaReg);
 
-      if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-         // use PPC AS branch hint
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, condReg);
-      else
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, loopLabel, condReg);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, condReg);
 
       if (cg->comp()->target().isSMP())
          {
@@ -8468,11 +8409,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, monitorReg, monitorReg, 4);
       generateMemSrc1Instruction(cg, conditionalStoreOpCode, node, new (cg->trHeapMemory()) TR::MemoryReference(baseReg, offsetReg, lockSize, cg), monitorReg);
 
-      if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-         // use PPC AS branch hint
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, condReg);
-      else
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, loopLabel, condReg);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, condReg);
 
       if (cg->comp()->target().isSMP())
          {
@@ -8884,10 +8821,7 @@ static TR::Register *genCAS(TR::Node *node, TR::CodeGenerator *cg, TR::Register 
 
    generateMemSrc1Instruction(cg, isLong ? TR::InstOpCode::stdcx_r : TR::InstOpCode::stwcx_r, node, new (cg->trHeapMemory()) TR::MemoryReference(objReg, offsetReg, isLong ? 8 : 4, cg), newVReg);
    // We expect this store is usually successful, i.e., the following branch will not be taken
-   if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, cndReg);
-   else
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, loopLabel, cndReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, cndReg);
 
    // We deviate from the VM helper here: no-store-no-barrier instead of always-barrier
    if (!casWithoutSync)
@@ -9679,10 +9613,7 @@ static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8
          deltaReg);
 
    // We expect this store is usually successful, i.e., the following branch will not be taken
-   if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, cndReg);
-   else
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, loopLabel, cndReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, cndReg);
 
    // We deviate from the VM helper here: no-store-no-barrier instead of always-barrier
    generateInstruction(cg, TR::InstOpCode::sync, node);
@@ -10287,10 +10218,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
             newComposedReg);
 
       /* Expect store to be successful, so this branch is usually not taken */
-      if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, rsvFailLabel, cndReg);
-      else
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, rsvFailLabel, cndReg);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, rsvFailLabel, cndReg);
 
       if (!isWeak)
          generateInstruction(cg, TR::InstOpCode::sync, node);
@@ -10309,10 +10237,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
                new (cg->trHeapMemory()) TR::MemoryReference(valueReg, (fieldOffsetReg->getRegisterPair() ? fieldOffsetReg->getLowOrder() : fieldOffsetReg), size, cg),
                currentReg);
          /* Expect store to be successful, so this branch is usually not taken */
-         if (cg->comp()->target().cpu.id() >= TR_PPCgp)
-            generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, startLabel, cndReg);
-         else
-            generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, startLabel, cndReg);
+         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, startLabel, cndReg);
          }
 
       generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0);
