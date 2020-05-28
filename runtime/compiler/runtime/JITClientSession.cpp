@@ -25,6 +25,7 @@
 #include "control/CompilationRuntime.hpp" // for CompilationInfo
 #include "control/MethodToBeCompiled.hpp" // for TR_MethodToBeCompiled
 #include "control/JITServerHelpers.hpp"
+#include "env/ut_j9jit.h"
 #include "net/ServerStream.hpp" // for JITServer::ServerStream
 #include "runtime/RuntimeAssumptions.hpp" // for TR_AddressSet
 
@@ -108,11 +109,14 @@ void
 ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes, bool updateUnloadedClasses)
    {
    const size_t numOfUnloadedClasses = classes.size();
+   int32_t compThreadID = TR::compInfoPT->getCompThreadId();
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will process a list of %zu unloaded classes for clientUID %llu", 
-         TR::compInfoPT->getCompThreadId(), numOfUnloadedClasses, (unsigned long long)_clientUID);
+         compThreadID, numOfUnloadedClasses, (unsigned long long)_clientUID);
 
+   Trc_JITServerUnloadClasses(TR::compInfoPT->getCompilationThread(), compThreadID, (unsigned long long)numOfUnloadedClasses, (unsigned long long)_clientUID);
+   
    if (numOfUnloadedClasses > 0)
       writeAcquireClassUnloadRWMutex(); //TODO: use RAII style to avoid problems with exceptions
 

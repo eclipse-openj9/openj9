@@ -1,4 +1,4 @@
-// Copyright (c) 2000, 2019 IBM Corp. and others
+// Copyright (c) 2000, 2020 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,3 +83,33 @@ TraceEvent=Trc_JIT_SCCInfo                Group=perfmon Overhead=1 Level=5 Test 
 
 TraceException=Trc_JIT_IProfiler_unrecognized Overhead=1 Level=1 Test Template="Unrecognized bytecode (pc=%p, bc=%u) cursor %p in buffer %p of size %zu"
 
+TraceEvent=Trc_JITServerRemoteCompileRequest     Overhead=1 Level=2 Test Template="JITClient: Client sending compReq seqNo=%u to server for method %s @ %s"
+TraceEvent=Trc_JITServerInterruptRemoteCompile   Overhead=1 Level=2 Test Template="JITClient: Interrupting remote compilation (interruptReason %u) in handleServerMessage(%s) for %s @ %s"
+TraceEvent=Trc_JITServerRemoteCompilationFailure Overhead=1 Level=2 Test Template="JITClient: remoteCompile: compilationFailure statusCode %u"
+TraceEvent=Trc_JITServerMethodSuccessfullyLoaded Overhead=1 Level=2 Test Template="JITClient: Client successfully loaded method %s @ %s following compilation request. [metaData=%p, startPC=%p]"
+TraceEvent=Trc_JITServerMethodFailedToLoad       Overhead=1 Level=2 Test Template="JITClient: Client failed to load method %s @ %s following compilation request"
+TraceEvent=Trc_JITServerServerCompilationFailure Overhead=1 Level=2 Test Template="JITClient: ServerCompilationFailure: errCode %u for %s @ %s"
+TraceEvent=Trc_JITServerRetryLocalCompile        Overhead=1 Level=2 Test Template="JITClient: Server is not available. Retry with local compilation for %s @ %s"
+
+TraceEvent=Trc_JITServerClientSessionData    Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d set clientSessionData=%p for clientUID=%llu seqNo=%u"
+TraceEvent=Trc_JITServerUnloadClasses        Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d will process a list of %llu unloaded classes for clientUID %llu"
+TraceEvent=Trc_JITServerEarlyAbort           Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d did an early abort"
+TraceEvent=Trc_JITServerEarlyAbortClientData Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d did an early abort for clientUID=%llu seqNo=%u"
+TraceEvent=Trc_JITServerCompileEnd           Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d has successfully compiled %s"
+TraceEvent=Trc_JITServerFailedToCompile      Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d has failed to compile: compErrCode %u %s"
+TraceEvent=Trc_JITServerFailedToRecompile    Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d has failed to recompile: compErrCode %u %s"
+
+TraceEvent=Trc_JITServerTimedWait            Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d (entry=%p) doing a timed wait for %d ms"
+TraceEvent=Trc_JITServerParkThread           Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d (entry=%p) is parked. seqNo=%u was notified"
+TraceEvent=Trc_JITServerTimedOut             Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d (entry=%p) timed-out while waiting for seqNo=%d "
+TraceEvent=Trc_JITServerClearedSessionCaches Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d has cleared the session caches for clientUID=%llu expectedSeqNo=%u detachedEntry=%p"
+TraceEvent=Trc_JITServerThreadGoSleep        Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d which previously timed-out will go to sleep again. Possible reasons numActiveThreads=%d waitToBeNotified=%d"
+TraceEvent=Trc_JITServerOutOfSequenceMessage Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d out-of-sequence msg detected for clientUID=%llu seqNo=%u > expectedSeqNo=%u. Parking this thread (entry=%p)"
+TraceEvent=Trc_JITServerDiscardMessage       Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d discarding older msg for clientUID=%llu seqNo=%u < expectedSeqNo=%u"
+
+TraceEvent=Trc_JITServerStreamFailure                Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d (%s) stream failure (compiling %s @ %s): %s"
+TraceEvent=Trc_JITServerStreamVersionIncompatible    Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d (%s) stream version incompatible (compiling %s @ %s): %s"
+TraceEvent=Trc_JITServerStreamMessageTypeMismatch    Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d (%s) stream message type mismatch (compiling %s @ %s): %s"
+TraceEvent=Trc_JITServerStreamConnectionTerminate    Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d (%s) stream connection terminated by JITClient on stream %p: %s"
+TraceEvent=Trc_JITServerStreamClientSessionTerminate Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d (%s) stream client session terminated by JITClient: %s"
+TraceEvent=Trc_JITServerStreamInterrupted            Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d (%s) stream interrupted by JITClient: %s"
