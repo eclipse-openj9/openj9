@@ -6369,21 +6369,26 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 			 *
 			 * OpenJ9 stores both of these values as UDATA, so they will both be printed
 			 * as "size_t" type.
+			 *
+			 * NOTE that Hotspot produces this output on STDOUT, and applications
+			 * expect to parse it there, which means this code does not use j9tty_printf
+			 * like most of the VM (which prints to STDERR). Instead,
+			 * j9file_printf(PORTLIB, J9PORT_TTY_OUT, ...) is used.
 			 */
 
-			j9tty_printf(PORTLIB, "[Global flags]\n");
+			j9file_printf(PORTLIB, J9PORT_TTY_OUT, "[Global flags]\n");
 
 			howset = "ergonomic";
 			if ((findArgInVMArgs( PORTLIB, vm->vmArgsArray, STARTSWITH_MATCH, VMOPT_XMX, NULL, 0) >= 0)) {
 				howset = "command line";
 			}
-			j9tty_printf(PORTLIB, "   size_t MaxHeapSize                              = %-41zu {product} {%s}\n", maxHeapSize, howset);
+			j9file_printf(PORTLIB, J9PORT_TTY_OUT, "   size_t MaxHeapSize                              = %-41zu {product} {%s}\n", maxHeapSize, howset);
 
 			howset = "ergonomic";
 			if ((findArgInVMArgs( PORTLIB, vm->vmArgsArray, STARTSWITH_MATCH, VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS, NULL, 0) >= 0)) {
 				howset = "command line";
 			}
-			j9tty_printf(PORTLIB, " uint64_t MaxDirectMemorySize                      = %-41llu {product} {%s}\n", maxDirectMemorySize, howset);
+			j9file_printf(PORTLIB, J9PORT_TTY_OUT, " uint64_t MaxDirectMemorySize                      = %-41llu {product} {%s}\n", maxDirectMemorySize, howset);
 		}
 	}
 
