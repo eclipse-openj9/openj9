@@ -471,8 +471,38 @@ TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
       {
       return (void *)ptr;
       }
-   TR_ASSERT_FATAL(false, "Shared cache offset out of bounds");
+   TR_ASSERT_FATAL(false, "Shared cache offset %d out of bounds", offset);
    return (void *)ptr;
+   }
+
+void *
+TR_J9SharedCache::romStructureFromOffsetInSharedCache(uintptr_t offset)
+   {
+   void *romStructure = NULL;
+   if (isROMStructureOffsetInSharedCache(offset, &romStructure))
+      {
+      return romStructure;
+      }
+   TR_ASSERT_FATAL(false, "Shared cache ROM Structure offset %d out of bounds", offset);
+   return romStructure;
+   }
+
+J9ROMClass *
+TR_J9SharedCache::romClassFromOffsetInSharedCache(uintptr_t offset)
+   {
+   return reinterpret_cast<J9ROMClass *>(romStructureFromOffsetInSharedCache(offset));
+   }
+
+J9ROMMethod *
+TR_J9SharedCache::romMethodFromOffsetInSharedCache(uintptr_t offset)
+   {
+   return reinterpret_cast<J9ROMMethod *>(romStructureFromOffsetInSharedCache(offset));
+   }
+
+void *
+TR_J9SharedCache::ptrToROMClassesSectionFromOffsetInSharedCache(uintptr_t offset)
+   {
+   return romStructureFromOffsetInSharedCache(offset);
    }
 
 bool
@@ -514,6 +544,63 @@ TR_J9SharedCache::isOffsetInSharedCache(uintptr_t offset, void *ptr)
    return false;
    }
 
+bool
+TR_J9SharedCache::isROMStructureOffsetInSharedCache(uintptr_t offset, void **romStructurePtr)
+   {
+#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
+#if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
+   // The cache descriptor list is linked last to first and is circular, so last->previous == first.
+   J9SharedClassCacheDescriptor *firstCache = getCacheDescriptorList()->previous;
+   J9SharedClassCacheDescriptor *curCache = firstCache;
+   do
+      {
+      if (offset < curCache->cacheSizeBytes)
+         {
+         if (romStructurePtr)
+            {
+            uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress;
+            *romStructurePtr = (void *)(offset + cacheStart);
+            }
+         return true;
+         }
+      offset -= curCache->cacheSizeBytes;
+      curCache = curCache->previous;
+      }
+   while (curCache != firstCache);
+#else // !J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
+   J9SharedClassCacheDescriptor *curCache = getCacheDescriptorList();
+   if (offset < curCache->cacheSizeBytes)
+      {
+      if (romStructurePtr)
+         {
+         uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress;
+         *romStructurePtr = (void *)(offset + cacheStart);
+         }
+      return true;
+      }
+#endif // J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
+#endif
+   return false;
+   }
+
+bool
+TR_J9SharedCache::isROMClassOffsetInSharedCache(uintptr_t offset, J9ROMClass **romClassPtr)
+   {
+   return isROMStructureOffsetInSharedCache(offset, reinterpret_cast<void **>(romClassPtr));
+   }
+
+bool
+TR_J9SharedCache::isROMMethodOffsetInSharedCache(uintptr_t offset, J9ROMMethod **romMethodPtr)
+   {
+   return isROMStructureOffsetInSharedCache(offset, reinterpret_cast<void **>(romMethodPtr));
+   }
+
+bool
+TR_J9SharedCache::isOffsetOfPtrToROMClassesSectionInSharedCache(uintptr_t offset, void **ptr)
+   {
+   return isROMStructureOffsetInSharedCache(offset, ptr);
+   }
+
 uintptr_t
 TR_J9SharedCache::offsetInSharedCacheFromPointer(void *ptr)
    {
@@ -522,8 +609,38 @@ TR_J9SharedCache::offsetInSharedCacheFromPointer(void *ptr)
       {
       return offset;
       }
-   TR_ASSERT_FATAL(false, "Shared cache pointer out of bounds");
+   TR_ASSERT_FATAL(false, "Shared cache pointer %p out of bounds", ptr);
    return offset;
+   }
+
+uintptr_t
+TR_J9SharedCache::offsetInSharedcacheFromROMStructure(void *romStructure)
+   {
+   uintptr_t offset = 0;
+   if (isROMStructureInSharedCache(romStructure, &offset))
+      {
+      return offset;
+      }
+   TR_ASSERT_FATAL(false, "Shared cache ROM Structure pointer %p out of bounds", romStructure);
+   return offset;
+   }
+
+uintptr_t
+TR_J9SharedCache::offsetInSharedCacheFromROMClass(J9ROMClass *romClass)
+   {
+   return offsetInSharedcacheFromROMStructure(romClass);
+   }
+
+uintptr_t
+TR_J9SharedCache::offsetInSharedCacheFromROMMethod(J9ROMMethod *romMethod)
+   {
+   return offsetInSharedcacheFromROMStructure(romMethod);
+   }
+
+uintptr_t
+TR_J9SharedCache::offsetInSharedCacheFromPtrToROMClassesSection(void *ptr)
+   {
+   return offsetInSharedcacheFromROMStructure(ptr);
    }
 
 bool
@@ -564,6 +681,64 @@ TR_J9SharedCache::isPointerInSharedCache(void *ptr, uintptr_t *cacheOffset)
 #endif // J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
 #endif
    return false;
+   }
+
+bool
+TR_J9SharedCache::isROMStructureInSharedCache(void *romStructure, uintptr_t *cacheOffset)
+   {
+#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
+#if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
+   uintptr_t offset = 0;
+   // The cache descriptor list is linked last to first and is circular, so last->previous == first.
+   J9SharedClassCacheDescriptor *firstCache = getCacheDescriptorList()->previous;
+   J9SharedClassCacheDescriptor *curCache = firstCache;
+   do
+      {
+      if (isPointerInCache(curCache, romStructure))
+         {
+         if (cacheOffset)
+            {
+            uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress;
+            *cacheOffset = (uintptr_t)romStructure - cacheStart + offset;
+            }
+         return true;
+         }
+      offset += curCache->cacheSizeBytes;
+      curCache = curCache->previous;
+      }
+   while (curCache != firstCache);
+#else // !J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
+   J9SharedClassCacheDescriptor *curCache = getCacheDescriptorList();
+   if (isPointerInCache(curCache, romStructure))
+      {
+      if (cacheOffset)
+         {
+         uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress;
+         *cacheOffset = (uintptr_t)romStructure - cacheStart;
+         }
+      return true;
+      }
+#endif // J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
+#endif
+   return false;
+   }
+
+bool
+TR_J9SharedCache::isROMClassInSharedCache(J9ROMClass *romClass, uintptr_t *cacheOffset)
+   {
+   return isROMStructureInSharedCache(romClass, cacheOffset);
+   }
+
+bool
+TR_J9SharedCache::isROMMethodInSharedCache(J9ROMMethod *romMethod, uintptr_t *cacheOffset)
+   {
+   return isROMStructureInSharedCache(romMethod, cacheOffset);
+   }
+
+bool
+TR_J9SharedCache::isPtrToROMClassesSectionInSharedCache(void *ptr, uintptr_t *cacheOffset)
+   {
+   return isROMStructureInSharedCache(ptr, cacheOffset);
    }
 
 J9ROMClass *
