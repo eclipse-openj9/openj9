@@ -733,16 +733,8 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
       _exceptionTable->osrInfo = (void *) (((U_8 *)_exceptionTable->osrInfo) + dataRelocationAmount);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
-   #if 0
-      fprintf(stdout, "-> %p", _exceptionTable->ramMethod);
-      if (classReloAmount())
-         {
-         name = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(((J9ROMMethod *)_exceptionTable->ramMethod)));
-         fprintf(stdout, " (%.*s)", name->length, name->data);
-         }
-      fprintf(stdout, "\n");
-      fflush(stdout);
-   #endif
+   // Reset the uninitialized bit
+   _exceptionTable->flags &= ~JIT_METADATA_NOT_INITIALIZED;
    }
 
 

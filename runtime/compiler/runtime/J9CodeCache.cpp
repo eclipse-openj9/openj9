@@ -377,8 +377,23 @@ J9::CodeCache::addFreeBlock(void  *voidMetaData)
       {
       if (config.verboseReclamation())
          {
-         TR_J9VMBase *fe = _manager->fej9();
-         TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,"CC=%p unloading j9method=%p metaData=%p warmBlock=%p size=%d: %.*s.%.*s%.*s", this, metaData->ramMethod,metaData, warmBlock, (int)warmBlock->_size, J9UTF8_LENGTH(metaData->className), J9UTF8_DATA(metaData->className), J9UTF8_LENGTH(metaData->methodName), J9UTF8_DATA(metaData->methodName), J9UTF8_LENGTH(metaData->methodSignature), J9UTF8_DATA(metaData->methodSignature));
+         if (metaData->ramMethod)
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,"CC=%p unloading j9method=%p metaData=%p warmBlock=%p size=%d: %.*s.%.*s%.*s",
+                                           this, metaData->ramMethod,metaData, warmBlock, (int)warmBlock->_size,
+                                           J9UTF8_LENGTH(metaData->className), J9UTF8_DATA(metaData->className),
+                                           J9UTF8_LENGTH(metaData->methodName), J9UTF8_DATA(metaData->methodName),
+                                           J9UTF8_LENGTH(metaData->methodSignature), J9UTF8_DATA(metaData->methodSignature));
+            }
+         else
+            {
+            TR_ASSERT_FATAL(metaData->flags & JIT_METADATA_NOT_INITIALIZED,
+                            "metaData->ramMethod is NULL but metaData (%p) does not have the JIT_METADATA_NOT_INITIALIZED flag set",
+                            metaData);
+
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,"CC=%p unloading metaData=%p warmBlock=%p size=%d",
+                                           this, metaData, warmBlock, (int)warmBlock->_size);
+            }
          }
 
       // When entire method is removed we can remove the jittedBodyInfo as well
