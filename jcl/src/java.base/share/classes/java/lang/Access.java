@@ -413,16 +413,20 @@ final class Access implements JavaLangAccess {
 		return clazz.getProtectionDomain();
 	}
 
+	public Object classData(Class<?> clazz) {
+		return null;
+	}
+
 	public MethodHandle stringConcatHelper(String arg0, MethodType type) {
 		return StringConcatHelper.lookupStatic(arg0, type);
 	}
-	
-	 public long stringConcatInitialCoder() {
-         return StringConcatHelper.initialCoder();
-     }
 
-	public Object classData(Class<?> clazz) {
-		return null;
+	public long stringConcatInitialCoder() {
+		return StringConcatHelper.initialCoder();
+	}
+
+	public long stringConcatMix(long arg0, String string) {
+		return StringConcatHelper.mix(arg0, string);
 	}
 /*[ENDIF] Java15 */
 
