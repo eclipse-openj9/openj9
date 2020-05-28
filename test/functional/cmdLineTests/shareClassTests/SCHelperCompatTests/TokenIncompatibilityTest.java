@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,9 +21,9 @@
  *******************************************************************************/
 import java.net.URL;
 
-import CustomClassloaders.CustomTokenClassLoader;
-import CustomClassloaders.CustomURLClassLoader;
-import CustomClassloaders.CustomURLLoader;
+import CustomCLs.CustomTokenClassLoader;
+import CustomCLs.CustomURLClassLoader;
+import CustomCLs.CustomURLLoader;
 import Utilities.StringManipulator;
 import Utilities.URLClassPathCreator;
 

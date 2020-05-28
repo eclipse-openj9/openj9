@@ -22,14 +22,14 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-<project name="SCHelperCompatibilityTests" default="build" basedir=".">
+<project name="SCHelperCompatTests" default="build" basedir=".">
 	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
-		Build SCHelperCompatibilityTests
+		Build SCHelperCompatTests
 	</description>
 
 	<!-- set properties for this build -->
-	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/shareClassTests/SCHelperCompatibilityTests" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/shareClassTests/SCHelperCompatTests" />
 	<property name="PROJECT_ROOT" location="." />
 	<property name="src" location="."/>
 	<property name="build" location="./bin"/>
