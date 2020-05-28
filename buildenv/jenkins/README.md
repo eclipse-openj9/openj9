@@ -81,9 +81,18 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - OSX on x86-64 with CMake
         - Spec: x86-64_mac_cm
         - Shortname: osxcm or osxcmake
+    - OSX on x86-64 with UMA
+        - Spec: x64_mac_uma
+        - Shortname: osxuma
     - OSX on x86-64 largeheap/non-compressed references
         - Spec: x86-64_mac_xl
         - Shortname: osxlargeheap or osxxl
+    - OSX on x86-64 largeheap/non-compressed references with CMake
+        - Spec: x86-64_mac_xl_cm
+        - Shortname: osxxlcm
+    - OSX on x86-64 largeheap/non-compressed references with UMA
+        - Spec: x86-64_mac_xl_uma
+        - Shortname: osxxluma
     - ALL
         - Launches a subset of 'all' platforms
         - ppc64le_linux, ppc64le_linux_xl, s390x_linux, s390x_linux_xl, x86-64_linux, x86-64_linux_xl, ppc64_aix, x86-64_windows, x86-32_windows, x86-64_mac
