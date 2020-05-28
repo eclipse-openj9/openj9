@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,38 +19,41 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Properties;
 
-import CustomClassloaders.CustomURLClassLoader;
-import CustomClassloaders.CustomURLLoader;
+import CustomCLs.CustomURLClassLoader;
+import CustomCLs.CustomURLLoader;
 import Utilities.StringManipulator;
 import Utilities.URLClassPathCreator;
 
 /**
  * @author Matthew Kilner
  */
-public class URLClassPathHelperURLHelperCompatibilityTest {
+public class URLClassPathHelperURLHelperStaleEntryCompatibilityTest {
 
 	StringManipulator manipulator = new StringManipulator();
 	
 	public static void main(String[] args) {
 	
-		if(args.length != 2){
+		if(args.length != 4){
 			System.out.println("\n Incorrect usage");
-			System.out.println("\n Please specifiy -testfile <filename>");
+			System.out.println("\n Please specifiy -testfile <filename> -javacdir <path to javac>");
 		}
 		
-		URLClassPathHelperURLHelperCompatibilityTest test = new URLClassPathHelperURLHelperCompatibilityTest();
+		URLClassPathHelperURLHelperStaleEntryCompatibilityTest test = new URLClassPathHelperURLHelperStaleEntryCompatibilityTest();
 		
 		String testFile = args[1];
+		String javacdir = args[3];
 		
-		test.run(testFile);
+		test.run(testFile, javacdir);
 		
 	}
 	
-	public void run(String testFile){
+	public void run(String testFile, String javacpath){
 		
 		Properties props = new Properties();
 		try{
@@ -102,7 +105,9 @@ public class URLClassPathHelperURLHelperCompatibilityTest {
 			}
 		}
 		
-		boolean passed = executeTest(classPath, classesToLoad, urls, classesToFind, results);
+		String batchFile = props.getProperty("BatchFileToRun");
+		
+		boolean passed = executeTest(classPath, classesToLoad, urls, classesToFind, results, batchFile, javacpath);
 		
 		if(passed){
 			System.out.println("\nTEST PASSED");
@@ -111,7 +116,7 @@ public class URLClassPathHelperURLHelperCompatibilityTest {
 		}
 	}
 
-	private boolean executeTest(String classPath, String[] classesToLoad, String[] urls, String[][] classesToFind, String[][] results) {
+	private boolean executeTest(String classPath, String[] classesToLoad, String[] urls, String[][] classesToFind, String[][] results, String batchFile, String javacpath) {
 		
 		URLClassPathCreator creator = new URLClassPathCreator(classPath);
 		URL[] urlPath;
@@ -128,6 +133,8 @@ public class URLClassPathHelperURLHelperCompatibilityTest {
 				}
 			}
 		}
+		
+		runBatchFile(batchFile, javacpath);
 		
 		String urlsString = urls[0];
 		for(int index = 1; index < urls.length; index++){
@@ -155,5 +162,30 @@ public class URLClassPathHelperURLHelperCompatibilityTest {
 			}
 		}
 		return result;
+	}
+	
+	private void runBatchFile(String batch, String javacpath){
+		String command = new StringBuffer(batch.length()+javacpath.length()+1).append(batch).append(" ").append(javacpath).toString();
+		System.out.println("\n** Running: "+command);
+		String s = null;
+		try{
+			Process p = Runtime.getRuntime().exec(command);
+			
+			BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+			
+			System.out.println("Here is the standard output of the command:\n");
+            while ((s = stdInput.readLine()) != null) {
+                System.out.println(s);
+            }
+            
+            System.out.println("Here is the standard error of the command (if any):\n");
+            while ((s = stdError.readLine()) != null) {
+                System.out.println(s);
+            }
+			
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 	}
 }

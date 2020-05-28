@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package CustomClassloaders;
+package CustomCLs;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -38,6 +38,7 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.jar.Attributes.Name;
 
+import com.ibm.oti.shared.CannotSetClasspathException;
 import com.ibm.oti.shared.HelperAlreadyDefinedException;
 import com.ibm.oti.shared.Shared;
 import com.ibm.oti.shared.SharedClassHelperFactory;
@@ -48,22 +49,20 @@ import com.ibm.oti.shared.SharedClassURLHelper;
 /**
  * @author Matthew Kilner
  */
-public class CustomTokenClassLoader extends SecureClassLoader {
+public class CustomURLClassLoaderNonConfirming extends SecureClassLoader {
 
 	URL[] urls, orgUrls;
 	
 	private Hashtable jarCache = new Hashtable(32);
 	int loaderType;
 	
-	SharedClassTokenHelper scHelper;
+	SharedClassURLClasspathHelper scHelper;
 	
 	CustomLoaderMetaDataCache[] metaDataArray;
 	
-	String token = null;
-	
-	boolean checkCache = true;
+	FoundAtIndex foundAtIndex = new FoundAtIndex();
 
-	public CustomTokenClassLoader(URL[] passedUrls, ClassLoader parent){
+	public CustomURLClassLoaderNonConfirming(URL[] passedUrls, ClassLoader parent){
 		super(parent);
 		loaderType = ClassLoaderType.CACHEDURL.ord;
 		int urlLength = passedUrls.length;
@@ -80,14 +79,14 @@ public class CustomTokenClassLoader extends SecureClassLoader {
 		SharedClassHelperFactory schFactory = Shared.getSharedClassHelperFactory();
 		if(schFactory != null){
 			try{
-				scHelper = schFactory.getTokenHelper(this);
-			} catch (Exception e){
+				scHelper = schFactory.getURLClasspathHelper(this, passedUrls);
+			} catch (HelperAlreadyDefinedException e){
 				e.printStackTrace();
 			}
 		}
 	}
 	
-	public CustomTokenClassLoader(URL[] passedUrls){
+	public CustomURLClassLoaderNonConfirming(URL[] passedUrls){
 		super();
 		loaderType = ClassLoaderType.CACHEDURL.ord;
 		int urlLength = passedUrls.length;
@@ -104,23 +103,19 @@ public class CustomTokenClassLoader extends SecureClassLoader {
 		SharedClassHelperFactory schFactory = Shared.getSharedClassHelperFactory();
 		if(schFactory != null){
 			try{
-				scHelper = schFactory.getTokenHelper(this);
-			} catch (Exception e){
+				scHelper = schFactory.getURLClasspathHelper(this, passedUrls);
+			} catch (HelperAlreadyDefinedException e){
 				e.printStackTrace();
 			}
 		}
 	}
 	
-	public void setToken(String setTo){
-		token = setTo;
-	}
-	
 	public boolean getHelper(){
 		SharedClassHelperFactory schFactory = Shared.getSharedClassHelperFactory();
-		SharedClassTokenHelper newHelper = null;
+		SharedClassURLClasspathHelper newHelper = null;
 		try{
-			newHelper = schFactory.getTokenHelper(this);
-		} catch (Exception e){
+			newHelper = schFactory.getURLClasspathHelper(this, orgUrls);
+		} catch (HelperAlreadyDefinedException e){
 			return false;
 		}
 		
@@ -131,7 +126,7 @@ public class CustomTokenClassLoader extends SecureClassLoader {
 		}
 	}
 	
-	public void getURLClasspathHelper()throws HelperAlreadyDefinedException {
+	public void getHelper(URL[] urls)throws HelperAlreadyDefinedException {
 		SharedClassHelperFactory schFactory = Shared.getSharedClassHelperFactory();
 		SharedClassURLClasspathHelper newHelper = null;
 		newHelper = schFactory.getURLClasspathHelper(this, urls);
@@ -141,6 +136,12 @@ public class CustomTokenClassLoader extends SecureClassLoader {
 		SharedClassHelperFactory schFactory = Shared.getSharedClassHelperFactory();
 		SharedClassURLHelper newHelper = null;
 		newHelper = schFactory.getURLHelper(this);
+	}
+	
+	public void getTokenHelper()throws Exception {
+		SharedClassHelperFactory schFactory = Shared.getSharedClassHelperFactory();
+		SharedClassTokenHelper newHelper = null;
+		newHelper = schFactory.getTokenHelper(this);
 	}
 	
 	public boolean duplicateStore(String name){
@@ -153,17 +154,16 @@ public class CustomTokenClassLoader extends SecureClassLoader {
 		if (clazz != null){
 			int indexFoundAt = locateClass(name);
 			if(indexFoundAt != -1){
-				scHelper.storeSharedClass(token, clazz);
+				scHelper.storeSharedClass(clazz, indexFoundAt);
 				return true;
 			}
 		}
 		return false;
 	}
 	
-	private void initMetaData(){
-		for(int loopIndex = 0; loopIndex < metaDataArray.length; loopIndex++){
-			metaDataArray[loopIndex] = null;
-		}
+	private static boolean isDirectory(URL url) {
+		String file = url.getFile();
+		return (file.length() > 0 && file.charAt(file.length()-1) == '/');
 	}
 	
 	private URL createSearchURL(URL url) throws MalformedURLException {
@@ -177,76 +177,40 @@ public class CustomTokenClassLoader extends SecureClassLoader {
 		}
 	}
 	
-	private static boolean isDirectory(URL url) {
-		String file = url.getFile();
-		return (file.length() > 0 && file.charAt(file.length()-1) == '/');
+	private void initMetaData(){
+		for(int loopIndex = 0; loopIndex < metaDataArray.length; loopIndex++){
+			metaDataArray[loopIndex] = null;
+		}
 	}
 	
-	public Class findClass(String name) throws ClassNotFoundException {
-		Class clazz = null;
-		int indexFoundAt = locateClass(name);
-		if(checkCache){
-			if(scHelper != null){
-				byte[] classBytes = scHelper.findSharedClass(token, name);
-				if(classBytes != null){
-					if(metaDataArray[indexFoundAt] != null){
-						checkPackage(name, indexFoundAt);
-						CustomLoaderMetaDataCache metadata = metaDataArray[indexFoundAt];
-						CodeSource codeSource = metadata.codeSource;
-						clazz = defineClass(name, classBytes, 0, classBytes.length, codeSource);
-					}
-				}
-			}
-		}
-		if(clazz == null) {
-			if(indexFoundAt != -1){
-				try{
-					byte[] classBytes = loadClassBytes(name, indexFoundAt);
-					checkPackage(name, indexFoundAt);
-					CustomLoaderMetaDataCache metadata = metaDataArray[indexFoundAt];
-					CodeSource codeSource = metadata.codeSource;
-					clazz = defineClass(name, classBytes, 0, classBytes.length, codeSource);
-					if(clazz != null){
-						scHelper.storeSharedClass(token, clazz);
-					}
-				} catch (Exception e){
-					e.printStackTrace();
-				}
-			}
-			if(clazz == null){
-				throw new ClassNotFoundException(name);
-			}
-		}
-		return clazz;
+	private void addMetaDataEntry(){
+		CustomLoaderMetaDataCache[] newArray = new CustomLoaderMetaDataCache[(metaDataArray.length)];
+		System.arraycopy(metaDataArray,0,newArray,0,metaDataArray.length);
+		metaDataArray = newArray;
+		metaDataArray[(metaDataArray.length - 1)] = null;
 	}
 	
-	private void checkPackage(String name, int urlIndex){
-		int index = name.lastIndexOf('.');
-		if(index != -1){
-			String packageString = name.substring(0, index);
-			Manifest manifest = metaDataArray[urlIndex].manifest;
-			CodeSource codeSource = metaDataArray[urlIndex].codeSource;
-			synchronized(this){
-				Package packageInst = getPackage(packageString);
-				if(packageInst == null){
-					if (manifest != null){
-						definePackage(packageString, manifest, codeSource.getLocation());
-					} else {
-						definePackage(packageString, null, null, null, null, null, null, null);
-					}
-				} else {
-					boolean exception = false;
-					if (manifest != null) {
-						String dirName = packageString.replace('.', '/') + "/";
-						if (isSealed(manifest, dirName))
-							exception = !packageInst.isSealed(codeSource.getLocation());
-					} else
-						exception = packageInst.isSealed();
-					if (exception)
-						throw new SecurityException(com.ibm.oti.util.Msg.getString("Package exception"));
-				}	
-			}
-		}		
+	public void addUrl(URL url){
+		URL searchURL = null;
+		try{
+			searchURL = createSearchURL(url);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+		URL[] newOrgUrls = new URL[(orgUrls.length)];
+		System.arraycopy(orgUrls,0,newOrgUrls,0,orgUrls.length);
+		orgUrls = newOrgUrls;
+		orgUrls[(orgUrls.length - 1)] = url;
+		URL[] newUrls = new URL[urls.length];
+		System.arraycopy(urls,0,newUrls,0,urls.length);
+		urls = newUrls;
+		urls[(urls.length - 1)] = searchURL;
+		scHelper.addClasspathEntry(url);
+		addMetaDataEntry();
+	}
+	
+	public URL[] getURLS(){
+		return orgUrls;
 	}
 	
 	private static byte[] getBytes(InputStream is, boolean readAvailable) throws IOException {
@@ -264,43 +228,6 @@ public class CustomTokenClassLoader extends SecureClassLoader {
 		while ((count = is.read(buf)) > 0)
 			bos.write(buf, 0, count);
 		return bos.toByteArray();
-	}
-	
-	private byte[] loadClassBytes(String className, int urlIndex){
-		byte[] bytes = null;
-		String name = className.replace('.','/').concat(".class");
-		URL classLocation = urls[urlIndex];
-		if(classLocation.getProtocol().equals("jar")){
-			JarFile jf = (JarFile)jarCache.get(classLocation);
-			JarEntry entry = jf.getJarEntry(name);
-			try{
-				InputStream stream = jf.getInputStream(entry);
-				bytes = getBytes(stream, true);
-			} catch (Exception e){
-				e.printStackTrace();
-			}
-		} else {
-			String filename = classLocation.getFile();
-			String host = classLocation.getHost();
-			if (host != null && host.length() > 0) {
-				filename = new StringBuffer(host.length() + filename.length() + name.length() + 2).
-					append("//").append(host).append(filename).append(name).toString();
-			} else {
-				filename = new StringBuffer(filename.length() + name.length()).
-					append(filename).append(name).toString();
-			}
-			File file = new File(filename);
-			// Don't throw exceptions for speed
-			if (file.exists()) {
-				try{
-					FileInputStream stream = new FileInputStream(file);
-					bytes = getBytes(stream, true);
-				} catch(Exception e){
-					e.printStackTrace();
-				}
-			}
-		}
-		return bytes;
 	}
 	
 	private int locateClass(String className){
@@ -383,6 +310,108 @@ public class CustomTokenClassLoader extends SecureClassLoader {
 		return classAtEntry;
 	}
 	
+	private byte[] loadClassBytes(String className, int urlIndex){
+		byte[] bytes = null;
+		String name = className.replace('.','/').concat(".class");
+		URL classLocation = urls[urlIndex];
+		if(classLocation.getProtocol().equals("jar")){
+			JarFile jf = (JarFile)jarCache.get(classLocation);
+			JarEntry entry = jf.getJarEntry(name);
+			try{
+				InputStream stream = jf.getInputStream(entry);
+				bytes = getBytes(stream, true);
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+		} else {
+			String filename = classLocation.getFile();
+			String host = classLocation.getHost();
+			if (host != null && host.length() > 0) {
+				filename = new StringBuffer(host.length() + filename.length() + name.length() + 2).
+					append("//").append(host).append(filename).append(name).toString();
+			} else {
+				filename = new StringBuffer(filename.length() + name.length()).
+					append(filename).append(name).toString();
+			}
+			File file = new File(filename);
+			// Don't throw exceptions for speed
+			if (file.exists()) {
+				try{
+					FileInputStream stream = new FileInputStream(file);
+					bytes = getBytes(stream, true);
+				} catch(Exception e){
+					e.printStackTrace();
+				}
+			}
+		}
+		return bytes;
+	}
+	
+	public Class findClass(String name) throws ClassNotFoundException {
+		Class clazz = null;
+		if(scHelper != null){
+			byte[] classBytes = scHelper.findSharedClass(name, foundAtIndex);
+			if(classBytes != null){
+				if(metaDataArray[foundAtIndex.getIndex()] != null){
+					checkPackage(name, foundAtIndex.getIndex());
+					CustomLoaderMetaDataCache metadata = metaDataArray[foundAtIndex.getIndex()];
+					CodeSource codeSource = metadata.codeSource;
+					clazz = defineClass(name, classBytes, 0, classBytes.length, codeSource);
+				}
+			}
+		}
+		if(clazz == null) {
+			int indexFoundAt = locateClass(name);
+			if(indexFoundAt != -1){
+				try{
+					byte[] classBytes = loadClassBytes(name, indexFoundAt);
+					checkPackage(name, indexFoundAt);
+					CustomLoaderMetaDataCache metadata = metaDataArray[indexFoundAt];
+					CodeSource codeSource = metadata.codeSource;
+					clazz = defineClass(name, classBytes, 0, classBytes.length, codeSource);
+					if(clazz != null){
+						scHelper.storeSharedClass(clazz, indexFoundAt);
+					}
+				} catch (Exception e){
+					e.printStackTrace();
+				}
+			}
+			if(clazz == null){
+				throw new ClassNotFoundException(name);
+			}
+		}
+		return clazz;
+	}
+	
+	private void checkPackage(String name, int urlIndex){
+		int index = name.lastIndexOf('.');
+		if(index != -1){
+			String packageString = name.substring(0, index);
+			Manifest manifest = metaDataArray[urlIndex].manifest;
+			CodeSource codeSource = metaDataArray[urlIndex].codeSource;
+			synchronized(this){
+				Package packageInst = getPackage(packageString);
+				if(packageInst == null){
+					if (manifest != null){
+						definePackage(packageString, manifest, codeSource.getLocation());
+					} else {
+						definePackage(packageString, null, null, null, null, null, null, null);
+					}
+				} else {
+					boolean exception = false;
+					if (manifest != null) {
+						String dirName = packageString.replace('.', '/') + "/";
+						if (isSealed(manifest, dirName))
+							exception = !packageInst.isSealed(codeSource.getLocation());
+					} else
+						exception = packageInst.isSealed();
+					if (exception)
+						throw new SecurityException(com.ibm.oti.util.Msg.getString("Package exception"));
+				}	
+			}
+		}		
+	}
+	
 	private boolean isSealed(Manifest manifest, String dirName) {
 		Attributes mainAttributes = manifest.getMainAttributes();
 		String value = mainAttributes.getValue(Attributes.Name.SEALED);
@@ -444,23 +473,22 @@ public class CustomTokenClassLoader extends SecureClassLoader {
 		return definePackage(name, attrs[0], attrs[1], attrs[2], attrs[3], attrs[4], attrs[5], sealedAtURL);
 	}
 	
-	public boolean isClassInSharedCache(String token, String className){
+	public boolean isClassInSharedCache(String className){
 		byte[] sharedClass = null;
 		if (scHelper!=null) {
-			sharedClass = scHelper.findSharedClass(token, className);
+			sharedClass = scHelper.findSharedClass(className, foundAtIndex);
 			if (sharedClass !=null){
 				return true;
 			} else {
 				return false;
 			}
 		}
-		System.out.println("CustomTokenClassLoader::isClassInSharedCache scHelper is null");
 		return false;
 	}
 	
 	public Class getClassFromCache(String name){
 		Class clazz = null;
-		byte[] classBytes = scHelper.findSharedClass(token, name);
+		byte[] classBytes = scHelper.findSharedClass(name, foundAtIndex);
 		if(classBytes != null){
 			CodeSource cs = null;
 			clazz = defineClass(name, classBytes, 0, classBytes.length, cs);
@@ -468,16 +496,46 @@ public class CustomTokenClassLoader extends SecureClassLoader {
 		return clazz;
 	}
 	
-	public Class loadClassNoCache(String name) {
-		Class clazz = null;
-		checkCache = false;
-		try{
-			clazz = this.loadClass(name);
-		}catch(ClassNotFoundException e){
-			e.printStackTrace();
-		}
-		checkCache = true;
-		return clazz;
+	public void confirmAllEntries(){
+		scHelper.confirmAllEntries();
 	}
+	
+	public boolean changeClassPath(URL[] newUrls){
+		boolean changed = true;
+		int urlLength = newUrls.length;
+		urls = new URL[urlLength];
+		orgUrls = new URL[urlLength];
+		for (int i=0; i < urlLength; i++) {
+			try {
+				urls[i] = createSearchURL(newUrls[i]);
+			} catch (MalformedURLException e) {}
+			orgUrls[i] = newUrls[i];
+		}
+		metaDataArray = new CustomLoaderMetaDataCache[urls.length];
+		initMetaData();
+		try{
+			scHelper.setClasspath(newUrls);
+		} catch (CannotSetClasspathException e){
+			changed = false;
+		}
+		return changed;
+	}
+	
+	public static class FoundAtIndex implements SharedClassURLClasspathHelper.IndexHolder {
 
+		int indexFoundAt = -1;
+		
+		public void setIndex(int index) {
+			indexFoundAt = index; 
+		}
+		
+		public int getIndex(){
+			return indexFoundAt;
+		}
+		
+		public void reset(){
+			indexFoundAt = -1;
+		}
+		
+	}
 }
