@@ -3126,8 +3126,17 @@ void TR::CompilationInfo::stopCompilationThreads()
 
       fprintf(stderr, "Number of compilations per level:\n");
       for (int i = 0; i < (int)numHotnessLevels; i++)
+         {	      
          if (_statsOptLevels[i] > 0)
-            fprintf(stderr, "Level=%d\tnumComp=%d\n", i, _statsOptLevels[i]);
+            {		 
+            fprintf(stderr, "Level=%d\tnumComp=%d", i, _statsOptLevels[i]);
+#if defined(J9VM_OPT_JITSERVER)
+            if (_statsRemoteOptLevels[i] > 0)
+               fprintf(stderr, "\tnumRemoteComp=%d", _statsRemoteOptLevels[i]);
+#endif /* defined(J9VM_OPT_JITSERVER) */
+            fprintf(stderr, "\n");
+            }
+         }
 
       if (_statNumJNIMethodsCompiled > 0)
          fprintf(stderr, "NumJNIMethodsCompiled=%u\n", _statNumJNIMethodsCompiled);
@@ -10769,7 +10778,13 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
 
          TR_Hotness h = compiler->getMethodHotness();
          if (h < numHotnessLevels)
+            {
             _compInfo._statsOptLevels[(int32_t)h]++;
+#if defined(J9VM_OPT_JITSERVER)
+            if(_methodBeingCompiled->isRemoteCompReq())
+               _compInfo._statsRemoteOptLevels[(int32_t)h]++;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+            }
          if (compilee->isJNINative())
             _compInfo._statNumJNIMethodsCompiled++;
          const char * hotnessString = compiler->getHotnessName(h);
