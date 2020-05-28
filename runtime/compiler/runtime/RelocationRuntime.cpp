@@ -387,8 +387,11 @@ void TR_RelocationRuntime::relocationFailureCleanup()
       {
       case (RelocationFailure):
          {
-         //remove our code cache entry
-         _codeCache->addFreeBlock(_exceptionTable);
+         /* The compiled copy of the exception table is freed
+          * in CompilationThread.cpp
+          */
+         if (!useCompiledCopy())
+            _codeCache->addFreeBlock(_exceptionTable);
          }
       case RelocationCodeCreateError:
          {
