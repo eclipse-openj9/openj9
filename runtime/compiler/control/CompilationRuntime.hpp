@@ -1142,6 +1142,9 @@ private:
    uint64_t               _lastCompilationsShouldBeInterruptedTime; // RAS
 // statistics
    int32_t                _statsOptLevels[numHotnessLevels]; // will be zeroed with memset
+#if defined(J9VM_OPT_JITSERVER)
+   int32_t                _statsRemoteOptLevels[numHotnessLevels];
+#endif /* defined(J9VM_OPT_JITSERVER) */
    uint32_t               _statNumAotedMethods;
    uint32_t               _statNumMethodsFromSharedCache; // methods whose body was taken from shared cache
    uint32_t               _statNumAotedMethodsRecompiled;
