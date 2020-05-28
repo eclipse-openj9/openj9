@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1095,14 +1095,12 @@ pushDumpFacade(J9JavaVM *vm)
 		/* Install new facade */
 		vm->j9rasDumpFunctions = (J9RASdumpFunctions *)queue;
 
-		/* Note that we need to do the same check in popDumpFacade()
-		 *
-		 * According to the port library SIGABRT (J9PORT_SIG_FLAG_SIGABRT) is an ASYNC signal, so you'd think we should be checking for J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS here.
-		 *  However we want to disable the abortHandler when either of -Xrs / -Xrs:sync are present, so check for J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS instead
-         */
-		if ( (j9sig_get_options() & J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS) == 0 ) {
+		/* Note that we need to do the same check in popDumpFacade().
+		 * Do not install the abort handler if -Xrs, -Xrs:sync or -XX:-HandleSIGABRT are present.
+		 */
+		if (OMR_ARE_NO_BITS_SET(vm->sigFlags, J9_SIG_XRS_SYNC | J9_SIG_NO_SIG_ABRT)) {
 			/* Install RAS abort handler */
-			installAbortHandler( vm );
+			installAbortHandler(vm);
 		}
 
 	} else {
@@ -1121,12 +1119,10 @@ popDumpFacade(J9JavaVM *vm)
 	if ( FIND_DUMP_QUEUE(vm, queue) )
 	{
 		PORT_ACCESS_FROM_JAVAVM(vm);
-		/* Note that we need to do the same check in pushDumpFacade()
-		 *
-		 * According to the port library SIGABRT (J9PORT_SIG_FLAG_SIGABRT) is an ASYNC signal, so you'd think we should be checking for J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS here.
-		 *  However we want to disable the abortHandler when either of -Xrs / -Xrs:sync are present, so check for J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS instead
-         */
-		if ( (j9sig_get_options() & J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS) == 0 ) {
+		/* Note that we need to do the same check in pushDumpFacade().
+		 * Do not install the abort handler if -Xrs, -Xrs:sync or -XX:-HandleSIGABRT are present.
+		 */
+		if (OMR_ARE_NO_BITS_SET(vm->sigFlags, J9_SIG_XRS_SYNC | J9_SIG_NO_SIG_ABRT)) {
 			/* Re-install application abort handler only if we installed our own */
 			OMRSIG_SIGNAL(SIGABRT, SIG_DFL);
 		}

@@ -1970,3 +1970,13 @@ J9NLS_VM_PACKAGE_IS_NULL.system_action=The JVM will throw a java/lang/NullPointe
 J9NLS_VM_PACKAGE_IS_NULL.user_response=Don't pass a NULL package String.
 # END NON-TRANSLATABLE
 
+# Message to use when two incompatible options are used together
+# Arguments 1 and 2 are the incompatible command line options
+J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR=%1$s is not supported with %2$s.
+# START NON-TRANSLATABLE
+J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.sample_input_1=-XX:+HandleSIGABRT
+J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.sample_input_2=-Xrs
+J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.explanation=The two command line options are incompatible. Please refer to their documentation.
+J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.system_action=The JVM will terminate while processing the command line options.
+J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.user_response=Remove one of the incompatible command line options in order to resolve the issue.
+# END NON-TRANSLATABLE
