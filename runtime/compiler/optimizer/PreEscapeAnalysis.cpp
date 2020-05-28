@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,9 +64,11 @@ int32_t TR_PreEscapeAnalysis::perform()
    //
    static char *disableEADefiningMap = feGetEnv("TR_DisableEAEscapeHelperDefiningMap");
 
+   TR::StackMemoryRegion stackMemoryRegion(*comp()->trMemory());
+
    if (!disableEADefiningMap && comp()->getOSRCompilationData())
       {
-      comp()->getOSRCompilationData()->buildDefiningMap();
+      comp()->getOSRCompilationData()->buildDefiningMap(comp()->trMemory()->currentStackRegion());
       }
 
    TR_EscapeAnalysisTools tools(comp());
@@ -94,6 +96,12 @@ int32_t TR_PreEscapeAnalysis::perform()
             break;
             }
          }
+      }
+
+   if (!disableEADefiningMap && comp()->getOSRCompilationData())
+      {
+      // Must discard references to the DefiningMaps when finished with them
+      comp()->getOSRCompilationData()->clearDefiningMap();
       }
 
    if (comp()->trace(OMR::escapeAnalysis))
