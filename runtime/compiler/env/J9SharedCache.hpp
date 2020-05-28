@@ -75,7 +75,7 @@ public:
    virtual bool isMostlyFull();
 
    /**
-    * \brief Converts a shared cache offset into a pointer.
+    * \brief Converts a shared cache offset into the metadata section of the SCC into a pointer.
     *
     * \param[in] offset The offset to convert.
     * \return A pointer. Raises a fatal assertion before returning NULL if the offset is invalid.
@@ -83,12 +83,61 @@ public:
    virtual void *pointerFromOffsetInSharedCache(uintptr_t offset);
 
    /**
-    * \brief Converts a pointer into the shared cache into an offset.
+    * \brief Converts a pointer into the metadata section of the SCC into an offset.
     *
     * \param[in] ptr The pointer to convert.
     * \return An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
     */
    virtual uintptr_t offsetInSharedCacheFromPointer(void *ptr);
+
+   /**
+    * \brief Converts an offset into the ROMClass section into a J9ROMClass *.
+    *
+    * \param[in] offset The offset to convert.
+    * \return A J9ROMClass *. Raises a fatal assertion before returning NULL if the offset is invalid.
+    */
+   virtual J9ROMClass *romClassFromOffsetInSharedCache(uintptr_t offset);
+
+   /**
+    * \brief Converts a J9ROMClass * pointer into the SCC into an offset.
+    *
+    * \param[in] romClass The J9ROMClass * to convert
+    * \return An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
+    */
+   virtual uintptr_t offsetInSharedCacheFromROMClass(J9ROMClass *romClass);
+
+   /**
+    * \brief Converts an offset into the ROMClass section into a J9ROMMethod *.
+    *
+    * \param[in] offset The offset to convert
+    * \return A J9ROMMethod *. Raises a fatal assertion before returning NULL if the offset is invalid.
+    */
+   virtual J9ROMMethod *romMethodFromOffsetInSharedCache(uintptr_t offset);
+
+   /**
+    * \brief Converts a J9ROMMethod * pointer into the SCC into an offset.
+    *
+    * \param[in] romMethod The J9ROMMethod * to convert
+    * \return An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
+    */
+   virtual uintptr_t offsetInSharedCacheFromROMMethod(J9ROMMethod *romMethod);
+
+   /**
+    * \brief Converts an offset into the ROMClass section into a pointer.
+    *
+    * \param[in] offset The offset to convert
+    * \return A pointer. Raises a fatal assertion before returning NULL if the offset is invalid.
+    */
+   virtual void *ptrToROMClassesSectionFromOffsetInSharedCache(uintptr_t offset);
+
+   /**
+    * \brief Converts a pointer into the ROM Classes section of the SCC into an offset.
+    *
+    * \param[in] ptr The pointer to convert
+    * \return  An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
+    */
+   virtual uintptr_t offsetInSharedCacheFromPtrToROMClassesSection(void *ptr);
+
 
    virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp);
    virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *comp);
@@ -117,22 +166,101 @@ public:
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader);
 
    /**
-    * \brief Checks whether the specified pointer points into the shared cache.
+    * \brief Checks whether the specified pointer points into the metadata section
+    *        of the shared cache.
     *
     * \param[in] ptr The pointer to check.
-    * \param[out] cacheOffset If ptr points into the shared cache and this parameter is not NULL the result of converting ptr into an offset will be returned here. If ptr does not point into the shared cache this parameter is ignored.
+    * \param[out] cacheOffset If ptr points into the shared cache and this parameter
+    *             is not NULL the result of converting ptr into an offset will be
+    *             returned here. If ptr does not point into the shared cache this
+    *             parameter is ignored.
     * \return True if the pointer points into the shared cache, false otherwise.
     */
    virtual bool isPointerInSharedCache(void *ptr, uintptr_t *cacheOffset = NULL);
 
    /**
-    * \brief Checks whether the specified offset is within the shared cache.
+    * \brief Checks whether the specified offset is within the metadata section
+    *        of the shared cache.
     *
     * \param[in] offset The offset to check.
-    * \param[out] ptr If offset is within the shared cache and this parameter is not NULL the result of converting offset into a pointer will be returned here. If offset is not within the shared cache this parameter is ignored.
+    * \param[out] ptr If offset is within the shared cache and this parameter is not
+    *             NULL the result of converting offset into a pointer will be returned
+    *             here. If offset is not within the shared cache this parameter is ignored.
     * \return True if the offset is within the shared cache, false otherwise.
     */
    virtual bool isOffsetInSharedCache(uintptr_t offset, void *ptr = NULL);
+
+   /**
+    * \brief Checks whether the specified J9ROMClass exists in the SCC
+    *
+    * \param[in] romClass The J9ROMClass * to check
+    * \param[out] cacheOffset If the J9ROMClass is in the SCC and this parameter
+    *             is not NULL the result of converting romClass into an offset will
+    *             be returned here. If romClass does not point into the SCC, this
+    *             parameter is ignored.
+    * \return True if romClass points into the SCC, false otherwise.
+    */
+   virtual bool isROMClassInSharedCache(J9ROMClass *romClass, uintptr_t *cacheOffset = NULL);
+
+   /**
+    * \brief Checks whether the specified offset is within the ROMClass section
+    *        of the shared cache.
+    *
+    * \param[in] offset The offset to check
+    * \param[out] romClass If offset is within the shared cache and this parameter is not
+    *             NULL the result of converting offset into a J9ROMClass * will be returned
+    *             here. If offset is not within the shared cache this parameter is ignored.
+    * \return True if the offset is within the shared cache, false otherwise.
+    */
+   virtual bool isROMClassOffsetInSharedCache(uintptr_t offset, J9ROMClass **romClassPtr = NULL);
+
+   /**
+    * \brief Checks whether the specified J9ROMMethod exists in the SCC
+    *
+    * \param[in] romMethod The J9ROMMethod * to check
+    * \param[out] cacheOffset If the J9ROMMethod is in the SCC and this parameter
+    *             is not NULL the result of converting romMethod into an offset will
+    *             be returned here. If romMethod does not point into the SCC, this
+    *             parameter is ignored.
+    * \return True if romMethod points into the SCC, false otherwise.
+    */
+   virtual bool isROMMethodInSharedCache(J9ROMMethod *romMethod, uintptr_t *cacheOffset = NULL);
+
+   /**
+    * \brief Checks whether the specified offset is within the ROMClass section
+    *        of the shared cache.
+    * \param[in] offset The offset to check
+    * \param[out] romMethodPtr If offset is within the shared cache and this parameter is not
+    *             NULL the result of converting offset into a J9ROMMethod * will be returned
+    *             here. If offset is not within the shared cache this parameter is ignored.
+    * \return True if the offset is within the shared cache, false otherwise.
+    */
+   virtual bool isROMMethodOffsetInSharedCache(uintptr_t offset, J9ROMMethod **romMethodPtr = NULL);
+
+   /**
+    * \brief Checks whether the specified pointer points into the ROMClass section
+    *        of the shared cache.
+    *
+    * \param[in] ptr The pointer to check
+    * \param[out] cacheOffset If ptr points into the shared cache and this parameter
+    *             is not NULL the result of converting ptr into an offset will be
+    *             returned here. If ptr does not point into the shared cache this
+    *             parameter is ignored.
+    * \return True if the pointer points into the shared cache, false otherwise.
+    */
+   virtual bool isPtrToROMClassesSectionInSharedCache(void *ptr, uintptr_t *cacheOffset = NULL);
+
+   /**
+    * \brief Checks whether the specified offset is within the ROMClass section
+    *        of the shared cache.
+    *
+    * \param[in] offset The offset to check.
+    * \param[out] ptr If offset is within the shared cache and this parameter is not
+    *             NULL the result of converting offset into a pointer will be returned
+    *             here. If offset is not within the shared cache this parameter is ignored.
+    * \return True if the offset is within the shared cache, false otherwise.
+    */
+   virtual bool isOffsetOfPtrToROMClassesSectionInSharedCache(uintptr_t offset, void **ptr = NULL);
 
    J9ROMClass *startingROMClassOfClassChain(UDATA *classChain);
 
@@ -207,6 +335,47 @@ private:
 
    bool romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & chainPtr, UDATA *chainEnd);
    UDATA *findChainForClass(J9Class *clazz, const char *key, uint32_t keyLength);
+
+   /**
+    * \brief Helper Method; Converts an offset into the ROMClass section into a pointer.
+    *
+    * \param offset The offset to convert
+    * \return A pointer. Raises a fatal assertion before returning NULL if the offset is invalid.
+    */
+   void *romStructureFromOffsetInSharedCache(uintptr_t offset);
+
+   /**
+    * \brief Converts a pointer into the ROMClass section of the SCC into an offset.
+    *
+    * \param[in] romStructure The pointer to convert.
+    * \return An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
+    */
+   uintptr_t offsetInSharedcacheFromROMStructure(void *romStructure);
+
+   /**
+    * \brief Checks whether the specified pointer points into the ROMClass section
+    *        of the shared cache.
+    *
+    * \param[in] romStructure The pointer to check
+    * \param[out] cacheOffset If romStructure points into the shared cache and this parameter
+    *             is not NULL the result of converting romStructure into an offset will be
+    *             returned here. If romStructure does not point into the shared cache this
+    *             parameter is ignored.
+    * \return True if the pointer points into the shared cache, false otherwise.
+    */
+   bool isROMStructureInSharedCache(void *romStructure, uintptr_t *cacheOffset = NULL);
+
+   /**
+    * \brief Checks whether the specified offset is within the ROMClass section
+    *        of the shared cache.
+    *
+    * \param[in] offset The offset to check.
+    * \param[out] romStructurePtr If offset is within the shared cache and this parameter is not
+    *             NULL the result of converting offset into a pointer will be returned
+    *             here. If offset is not within the shared cache this parameter is ignored.
+    * \return True if the offset is within the shared cache, false otherwise.
+    */
+   bool isROMStructureOffsetInSharedCache(uintptr_t offset, void **romStructurePtr = NULL);
 
    /**
     * @brief Validates the provided class chain. This method modifies the chainPtr arg.
