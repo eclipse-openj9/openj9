@@ -30,6 +30,7 @@
 #include "env/J2IThunk.hpp"
 #include "env/j9methodServer.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
+#include "env/ut_j9jit.h"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "net/ClientStream.hpp"
@@ -187,6 +188,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in handleServerMessage(%s) for %s @ %s",
                                                           interruptReason, JITServer::messageNames[response], comp->signature(), comp->getHotnessName());
 
+      Trc_JITServerInterruptRemoteCompile(vmThread, interruptReason, JITServer::messageNames[response], comp->signature(), comp->getHotnessName());
       comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
       }
 
@@ -3102,6 +3104,7 @@ remoteCompile(
             if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
                TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
                   "Server is not available. Retry with local compilation for %s @ %s", compiler->signature(), compiler->getHotnessName());
+            Trc_JITServerRetryLocalCompile(vmThread, compiler->signature(), compiler->getHotnessName());
             compiler->failCompilation<JITServer::StreamFailure>("Server is not available, should retry with local compilation.");
             }
          }
@@ -3111,6 +3114,10 @@ remoteCompile(
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
                "JITServer::StreamFailure: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
+
+         Trc_JITServerStreamFailure(vmThread, compInfoPT->getCompThreadId(), __FUNCTION__,
+               compiler->signature(), compiler->getHotnessName(), e.what());
+
          compiler->failCompilation<JITServer::StreamFailure>(e.what());
          }
       catch (const std::bad_alloc &e)
@@ -3172,6 +3179,9 @@ remoteCompile(
             "Client sending compReq seqNo=%u to server for method %s @ %s.",
             seqNo, compiler->signature(), compiler->getHotnessName());
          }
+
+      Trc_JITServerRemoteCompileRequest(vmThread, seqNo, compiler->signature(), compiler->getHotnessName());
+
       client->buildCompileRequest(TR::comp()->getPersistentInfo()->getClientUID(), seqNo, romMethodOffset, method,
                                   clazz, *compInfoPT->getMethodBeingCompiled()->_optimizationPlan, detailsStr,
                                   details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr, recompMethodInfoStr,
@@ -3206,7 +3216,9 @@ remoteCompile(
          auto recv = client->getRecvData<uint32_t>();
          statusCode = std::get<0>(recv);
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "remoteCompile: JITServer::MessageType::compilationFailure statusCode %u\n", statusCode);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "remoteCompile: compilationFailure statusCode %u\n", statusCode);
+
+         Trc_JITServerRemoteCompilationFailure(vmThread, statusCode);
          }
 
       if (statusCode >= compilationMaxError)
@@ -3228,6 +3240,10 @@ remoteCompile(
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
           TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
             "JITServer::StreamFailure: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
+
+      Trc_JITServerStreamFailure(vmThread, compInfoPT->getCompThreadId(), __FUNCTION__,
+               compiler->signature(), compiler->getHotnessName(), e.what());
+
       compiler->failCompilation<JITServer::StreamFailure>(e.what());
       }
    catch (const JITServer::StreamVersionIncompatible &e)
@@ -3240,6 +3256,10 @@ remoteCompile(
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
           TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
             "JITServer::StreamVersionIncompatible: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
+
+      Trc_JITServerStreamVersionIncompatible(vmThread, compInfoPT->getCompThreadId(), __FUNCTION__,
+               compiler->signature(), compiler->getHotnessName(), e.what());
+
       compiler->failCompilation<JITServer::StreamVersionIncompatible>(e.what());
       }
    catch (const JITServer::StreamMessageTypeMismatch &e)
@@ -3247,6 +3267,10 @@ remoteCompile(
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
             "JITServer::StreamMessageTypeMismatch: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
+
+      Trc_JITServerStreamMessageTypeMismatch(vmThread, compInfoPT->getCompThreadId(), __FUNCTION__,
+               compiler->signature(), compiler->getHotnessName(), e.what());
+
       compiler->failCompilation<JITServer::StreamMessageTypeMismatch>(e.what());
       }
 
@@ -3375,6 +3399,8 @@ remoteCompile(
                metaData, (metaData) ? (void *)metaData->startPC : NULL
                );
             }
+         Trc_JITServerMethodSuccessfullyLoaded(vmThread, compiler->signature(),compiler->getHotnessName(),
+            metaData, (metaData) ? (void *)metaData->startPC : NULL);
          }
       catch (const std::exception &e)
          {
@@ -3388,6 +3414,7 @@ remoteCompile(
                compiler->getHotnessName()
                );
             }
+         Trc_JITServerMethodFailedToLoad(vmThread, compiler->signature(),compiler->getHotnessName());
          throw;
          }
       }
@@ -3398,6 +3425,9 @@ remoteCompile(
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
           TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
             "JITServer::ServerCompilationFailure: errCode %u for %s @ %s", statusCode, compiler->signature(), compiler->getHotnessName());
+
+      Trc_JITServerServerCompilationFailure(vmThread, statusCode, compiler->signature(), compiler->getHotnessName());
+
       compiler->failCompilation<JITServer::ServerCompilationFailure>("JITServer compilation failed.");
       }
 

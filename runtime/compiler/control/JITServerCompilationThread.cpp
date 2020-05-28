@@ -29,6 +29,7 @@
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
+#include "env/ut_j9jit.h"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
 #include "runtime/J9VMAccess.hpp"
@@ -116,6 +117,8 @@ outOfProcessCompilationEnd(
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d has successfully compiled %s",
          compInfoPT->getCompThreadId(), compInfoPT->getCompilation()->signature());
       }
+
+   Trc_JITServerCompileEnd(compInfoPT->getCompilationThread(), compInfoPT->getCompThreadId(), compInfoPT->getCompilation()->signature());
    }
 
 TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
@@ -159,6 +162,8 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d (entry=%p) doing a timed wait for %d ms",
          getCompThreadId(), &entry, (int32_t)waitTimeMillis);
 
+      Trc_JITServerTimedWait(getCompilationThread(), getCompThreadId(), &entry, (int32_t)waitTimeMillis);
+
       intptr_t monitorStatus = entry.getMonitor()->wait_timed(waitTimeMillis, 0); // 0 or J9THREAD_TIMED_OUT
       if (monitorStatus == 0) // Thread was notified
          {
@@ -166,17 +171,21 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
          clientSession->getSequencingMonitor()->enter();
 
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Parked compThreadID=%d (entry=%p) seqNo=%u was notified.",
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d (entry=%p) is parked. seqNo=%u was notified",
                getCompThreadId(), &entry, seqNo);
          // Will verify condition again to see if expectedSeqNo has advanced enough
+
+         Trc_JITServerParkThread(getCompilationThread(), getCompThreadId(), &entry, seqNo);
          }
       else
          {
          entry.getMonitor()->exit();
          TR_ASSERT(monitorStatus == J9THREAD_TIMED_OUT, "Unexpected monitor state");
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseJITServer, TR_VerbosePerformance))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d timed-out while waiting for seqNo=%d (entry=%p)",
-               getCompThreadId(), clientSession->getExpectedSeqNo(), &entry);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d (entry=%p) timed-out while waiting for seqNo=%d ",
+               getCompThreadId(), &entry, clientSession->getExpectedSeqNo());
+
+         Trc_JITServerTimedOut(getCompilationThread(), getCompThreadId(), &entry, clientSession->getExpectedSeqNo());
 
          // The simplest thing is to delete the cached data for the session and start fresh
          // However, we must wait for any active threads to drain out
@@ -215,6 +224,8 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                   "compThreadID=%d has cleared the session caches for clientUID=%llu expectedSeqNo=%u detachedEntry=%p",
                   getCompThreadId(), clientSession->getClientUID(), clientSession->getExpectedSeqNo(), detachedEntry);
+
+            Trc_JITServerClearedSessionCaches(getCompilationThread(), getCompThreadId(), clientSession->getClientUID(), clientSession->getExpectedSeqNo(), detachedEntry);
             }
          else
             {
@@ -224,6 +235,8 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                   "compThreadID=%d which previously timed-out will go to sleep again. Possible reasons numActiveThreads=%d waitToBeNotified=%d",
                   getCompThreadId(), clientSession->getNumActiveThreads(), getWaitToBeNotified());
+
+            Trc_JITServerThreadGoSleep(getCompilationThread(), getCompThreadId(), clientSession->getNumActiveThreads(), getWaitToBeNotified());
             }
          }
       } while (seqNo > clientSession->getExpectedSeqNo());
@@ -346,6 +359,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       } // End critical section
 
 
+      Trc_JITServerClientSessionData(compThread, getCompThreadId(), clientSession, (unsigned long long)clientId, seqNo);
       // We must process unloaded classes lists in the same order they were generated at the client
       // Use a sequencing scheme to re-order compilation requests
       //
@@ -355,8 +369,10 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          {
          // Park this request until the missing ones arrive
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Out-of-sequence msg detected for clientUID=%llu seqNo=%u > expectedSeqNo=%u. Parking compThreadID=%d (entry=%p)",
-            (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), getCompThreadId(), &entry);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d out-of-sequence msg detected for clientUID=%llu seqNo=%u > expectedSeqNo=%u. Parking this thread (entry=%p)",
+            getCompThreadId(), (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), &entry);
+
+         Trc_JITServerOutOfSequenceMessage(compThread, getCompThreadId(), (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), &entry);
 
          waitForMyTurn(clientSession, entry);
          }
@@ -367,8 +383,11 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          // In that case, the second message would have created the client session and
          // written its own seqNo into expectedSeqNo. We should avoid processing stale updates
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseJITServer, TR_VerbosePerformance))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Discarding older msg for clientUID=%llu seqNo=%u < expectedSeqNo=%u compThreadID=%d",
-            (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), getCompThreadId());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d discarding older msg for clientUID=%llu seqNo=%u < expectedSeqNo=%u",
+                  getCompThreadId(), (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo());
+
+         Trc_JITServerDiscardMessage(compThread, getCompThreadId(), (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo());
+
          clientSession->getSequencingMonitor()->exit();
          throw JITServer::StreamOOO();
          }
@@ -499,8 +518,10 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    catch (const JITServer::StreamFailure &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Stream failed while compThreadID=%d was reading the compilation request: %s",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d stream failed while reading the compilation request: %s",
             getCompThreadId(), e.what());
+
+      Trc_JITServerStreamFailure(compThread, getCompThreadId(), __FUNCTION__, "", "", e.what());
 
       abortCompilation = true;
       if (!enableJITServerPerCompConn)
@@ -514,7 +535,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    catch (const JITServer::StreamVersionIncompatible &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Stream version incompatible: %s", e.what());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d stream version incompatible: %s", getCompThreadId(), e.what());
+
+      Trc_JITServerStreamVersionIncompatible(compThread,  getCompThreadId(), __FUNCTION__, "", "", e.what());
 
       stream->writeError(compilationStreamVersionIncompatible);
       abortCompilation = true;
@@ -529,7 +552,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    catch (const JITServer::StreamMessageTypeMismatch &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Stream message type mismatch: %s", e.what());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d stream message type mismatch: %s", getCompThreadId(), e.what());
+
+      Trc_JITServerStreamMessageTypeMismatch(compThread, getCompThreadId(), __FUNCTION__, "", "", e.what());
 
       stream->writeError(compilationStreamMessageTypeMismatch);
       abortCompilation = true;
@@ -537,8 +562,10 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    catch (const JITServer::StreamConnectionTerminate &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Stream connection terminated by JITClient on stream %p while compThreadID=%d was reading the compilation request: %s",
-            stream, getCompThreadId(), e.what());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d stream connection terminated by JITClient on stream %p while reading the compilation request: %s",
+         getCompThreadId(), stream, e.what());
+
+      Trc_JITServerStreamConnectionTerminate(compThread, getCompThreadId(), __FUNCTION__, stream, e.what());
 
       abortCompilation = true;
       if (!enableJITServerPerCompConn) // JITServer TODO: remove the perCompConn mode
@@ -551,7 +578,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    catch (const JITServer::StreamClientSessionTerminate &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Stream client session terminated by JITClient on compThreadID=%d: %s", getCompThreadId(), e.what());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d stream client session terminated by JITClient: %s", getCompThreadId(), e.what());
+
+      Trc_JITServerStreamClientSessionTerminate(compThread, getCompThreadId(), __FUNCTION__, e.what());
 
       abortCompilation = true;
       deleteClientSessionData(e.getClientId(), compInfo, compThread);
@@ -566,8 +595,10 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    catch (const JITServer::StreamInterrupted &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Stream interrupted by JITClient while compThreadID=%d was reading the compilation request: %s",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d stream interrupted by JITClient while reading the compilation request: %s",
             getCompThreadId(), e.what());
+
+      Trc_JITServerStreamInterrupted(compThread, getCompThreadId(), __FUNCTION__, e.what());
 
       abortCompilation = true;
       // If the client aborted this compilation it could have happened only while asking for entire 
@@ -613,11 +644,17 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          {
          if (getClientData())
+            {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d did an early abort for clientUID=%llu seqNo=%u",
                getCompThreadId(), getClientData()->getClientUID(), getSeqNo());
+            Trc_JITServerEarlyAbortClientData(compThread, getCompThreadId(), getClientData()->getClientUID(), getSeqNo());
+            }
          else
+            {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d did an early abort",
                getCompThreadId());
+            Trc_JITServerEarlyAbort(compThread, getCompThreadId());
+            }
          }
 
       compInfo->acquireCompMonitor(compThread);
