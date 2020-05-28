@@ -676,6 +676,10 @@ def set_test_misc() {
         TESTS.each { id, target ->
             target['extraTestLabels'] = buildspec.getVectorField("extra_test_labels", target).join('&&') ?: ''
         }
+    } else {
+        TESTS.each { id, target ->
+            target['extraTestLabels'] = ''
+        }
     }
 
     def buildspec = buildspec_manager.getSpec(SPEC)
