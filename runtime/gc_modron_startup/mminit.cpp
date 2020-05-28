@@ -104,7 +104,7 @@
 #include "Scavenger.hpp"
 #include "StringTable.hpp"
 #include "Validator.hpp"
-#if defined(J9VM_GC_IDLE_HEAP_MANAGER)
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
 #include "IdleGCManager.hpp"
 #endif
 
@@ -481,7 +481,7 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 		goto error_no_memory;
 	}
 
-#if defined(J9VM_GC_IDLE_HEAP_MANAGER)
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
 	if (extensions->gcOnIdle) {
 		/* Enable idle tuning only for gencon policy */
 		if (gc_policy_gencon == extensions->configurationOptions._gcPolicy) {

@@ -32,9 +32,9 @@
 
 #include "EnvironmentBase.hpp"
 #include "Forge.hpp"
-#if defined(J9VM_GC_IDLE_HEAP_MANAGER)
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
  #include  "IdleGCManager.hpp"
-#endif /* defined(J9VM_GC_IDLE_HEAP_MANAGER) */
+#endif /* defined(OMR_GC_IDLE_HEAP_MANAGER) */
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
 #include "ObjectModel.hpp"
@@ -124,7 +124,7 @@ MM_GCExtensions::initialize(MM_EnvironmentBase *env)
 		}
 	}
 
-#if defined(J9VM_GC_IDLE_HEAP_MANAGER)
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
 	/* absorbs GC specific idle tuning flags */
 	if (J9_IDLE_TUNING_GC_ON_IDLE == (getJavaVM()->vmRuntimeStateListener.idleTuningFlags & J9_IDLE_TUNING_GC_ON_IDLE)) {
 		gcOnIdle = true;
@@ -133,7 +133,7 @@ MM_GCExtensions::initialize(MM_EnvironmentBase *env)
 		compactOnIdle = true;
 	}
 	idleMinimumFree = getJavaVM()->vmRuntimeStateListener.idleMinFreeHeap;
-#endif /* if defined(J9VM_GC_IDLE_HEAP_MANAGER) */
+#endif /* if defined(OMR_GC_IDLE_HEAP_MANAGER) */
 
 	return true;
 
@@ -172,12 +172,12 @@ MM_GCExtensions::tearDown(MM_EnvironmentBase *env)
 		*tmpHookInterface = NULL; /* avoid issues with double teardowns */
 	}
 
-#if defined(J9VM_GC_IDLE_HEAP_MANAGER)
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
 	if (NULL != idleGCManager) {
 		idleGCManager->kill(env);
 		idleGCManager = NULL;
 	}
-#endif /* defined(J9VM_GC_IDLE_HEAP_MANAGER) */
+#endif /* defined(OMR_GC_IDLE_HEAP_MANAGER) */
 
 	MM_GCExtensionsBase::tearDown(env);
 }
