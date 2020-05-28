@@ -61,6 +61,7 @@
 #include "runtime/codertinit.hpp"
 #include "runtime/IProfiler.hpp"
 #include "runtime/HWProfiler.hpp"
+#include "runtime/RelocationRuntime.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/J2IThunk.hpp"
@@ -1741,6 +1742,8 @@ onLoadInternal(
 #ifdef J9VM_RAS_DUMP_AGENTS
    jitConfig->runJitdump = runJitdump;
 #endif
+
+   jitConfig->printAOTHeaderProcessorFeatures = printAOTHeaderProcessorFeatures;
 
    if (!TR::Compiler->target.cpu.isI386())
       {
