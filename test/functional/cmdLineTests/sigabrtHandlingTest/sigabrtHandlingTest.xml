@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2020, 2020 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="SIGABRT Handling Tests" timeout="2400">
+ <variable name="CP" value="-cp $Q$$RESJAR$$Q$ VMBench.GPTests.GPTest" />
+ 
+ <!-- 
+   The system, JIT, snap and heap dumps are disabled to reduce the memory footprint of
+   the tests. Only a Java dump will be generated when the JVM abort handler is invoked.
+   This should be sufficient to test the -XX:[+|-]HandleSIGABRT option.
+ -->
+ <variable name="DUMP" value="-Xdump:system+heap+snap+jit:none" />
+
+ <test id="Default">
+  <command>$EXE$ $DUMP$ $CP$ abort</command>
+  <output type="success" regex="no">Processing dump event "abort"</output>
+  <output type="required" regex="no">Processed dump event "abort"</output>
+ </test>
+
+ <test id="-XX:+HandleSIGABRT">
+  <command>$EXE$ $DUMP$ -XX:+HandleSIGABRT $CP$ abort</command>
+  <output type="success" regex="no">Processing dump event "abort"</output>
+  <output type="required" regex="no">Processed dump event "abort"</output>
+ </test>
+
+ <test id="-XX:-HandleSIGABRT -XX:+HandleSIGABRT">
+  <command>$EXE$ $DUMP$ -XX:-HandleSIGABRT -XX:+HandleSIGABRT $CP$ abort</command>
+  <output type="success" regex="no">Processing dump event "abort"</output>
+  <output type="required" regex="no">Processed dump event "abort"</output>
+ </test>
+
+ <test id="-XX:-HandleSIGABRT">
+  <command>$EXE$ $DUMP$ -XX:-HandleSIGABRT $CP$ abort</command>
+  <output type="success" regex="no">Invoking abort!</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+ </test>
+
+ <test id="-XX:+HandleSIGABRT -XX:-HandleSIGABRT">
+  <command>$EXE$ $DUMP$ -XX:+HandleSIGABRT -XX:-HandleSIGABRT $CP$ abort</command>
+  <output type="success" regex="no">Invoking abort!</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+ </test>
+
+ <test id="-XX:+HandleSIGABRT -Xrs">
+  <command>$EXE$ $DUMP$ -XX:+HandleSIGABRT -Xrs $CP$ abort</command>
+  <output type="success" regex="no">-XX:+HandleSIGABRT is not supported with -Xrs</output>
+  <output type="failure" regex="no">Invoking abort!</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+ </test>
+
+ <test id="-XX:+HandleSIGABRT -Xrs:sync">
+  <command>$EXE$ $DUMP$ -XX:+HandleSIGABRT -Xrs:sync $CP$ abort</command>
+  <output type="success" regex="no">-XX:+HandleSIGABRT is not supported with -Xrs</output>
+  <output type="failure" regex="no">Invoking abort!</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+ </test>
+
+ <test id="-Xrs">
+  <command>$EXE$ $DUMP$ -Xrs $CP$ abort</command>
+  <output type="success" regex="no">Invoking abort!</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+ </test>
+ 
+ <test id="-XX:-HandleSIGABRT -Xrs">
+  <command>$EXE$ $DUMP$ -XX:-HandleSIGABRT -Xrs $CP$ abort</command>
+  <output type="success" regex="no">Invoking abort!</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+ </test>
+ 
+ <test id="-XX:-HandleSIGABRT -Xrs:sync">
+  <command>$EXE$ $DUMP$ -XX:-HandleSIGABRT -Xrs:sync $CP$ abort</command>
+  <output type="success" regex="no">Invoking abort!</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+ </test>
+</suite>
