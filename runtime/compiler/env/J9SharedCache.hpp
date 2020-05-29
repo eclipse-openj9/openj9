@@ -47,18 +47,27 @@ struct J9SharedDataDescriptor;
 /**
  * \brief An interface to the VM's shared class cache.
  *
- * This class provides an interface to the VM's shared class cache as represented by the the descriptors in J9SharedClassConfig::cacheDescriptorList.
- * The cache descriptor list is a circular linked list. It is doubly linked when J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE is defined
- * or singly linked otherwise.
+ * This class provides an interface to the VM's shared class cache as represented
+ * by the the descriptors in J9SharedClassConfig::cacheDescriptorList.The cache
+ * descriptor list is a circular linked list. It is doubly linked when
+ * J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE is defined or singly linked otherwise.
  *
- * If J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE is not defined, the list consists of a single element who's next pointer refers back to itself.
- * Offsets into the shared cache represent the distance from the start of the cache. Converting between pointers and offsets can be done with
- * simple pointer arithmetic.
+ * If J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE is not defined, the list consists of
+ * a single element who's next pointer refers back to itself. Offsets into the
+ * shared cache represent the distance from the start of the rom classes section or
+ * or start of the metadata section; the offset is then left shifted 1 bit in order
+ * to use the low bit to determine whether the offset is relative to the start of
+ * the rom classes section or the start of the metadata section. Converting between
+ * pointers and offsets can be done with simple pointer arithmetic.
  *
- * If J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE is defined, the head of the list represents the top-most (and therefore writable)
- * layer of the shared class cache, the next element represents the (N-1)th layer, and so on. The element previous to the head represents the base layer.
- * The list of cache layers can be thought of as a single logical cache starting at layer 0 and ending at layer N. Offsets into the shared cache
- * represent the distance from the start of the cache. Converting between pointers and offsets requires traversing the list starting at the base layer.
+ * If J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE is defined, the head of the list
+ * represents the top-most (and therefore writable) layer of the shared class cache,
+ * the next element represents the (N-1)th layer, and so on. The element previous to
+ * the head represents the base layer. The list of cache layers can be thought of as
+ * a single logical cache starting at layer 0 and ending at layer N. Offsets into the
+ * shared cache represent the distance from the start of the cache. Converting
+ * between pointers and offsets requires traversing the list starting at the base
+ * layer.
  *
  * The layout of section of the SCC relevant for this class is:
  *
@@ -93,7 +102,8 @@ public:
    virtual bool isMostlyFull();
 
    /**
-    * \brief Converts a shared cache offset into the metadata section of the SCC into a pointer.
+    * \brief Converts a shared cache offset, calculated from the end of the SCC, into the
+    *        metadata section of the SCC into a pointer.
     *
     * \param[in] offset The offset to convert.
     * \return A pointer. Raises a fatal assertion before returning NULL if the offset is invalid.
@@ -101,7 +111,8 @@ public:
    virtual void *pointerFromOffsetInSharedCache(uintptr_t offset);
 
    /**
-    * \brief Converts a pointer into the metadata section of the SCC into an offset.
+    * \brief Converts a pointer into the metadata section of the SCC into an offset, calculated
+    *        from the end of the SCC.
     *
     * \param[in] ptr The pointer to convert.
     * \return An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
@@ -191,14 +202,15 @@ public:
     * \param[out] cacheOffset If ptr points into the shared cache and this parameter
     *             is not NULL the result of converting ptr into an offset will be
     *             returned here. If ptr does not point into the shared cache this
-    *             parameter is ignored.
+    *             parameter is ignored. The offset is calculated from the end of
+    *             the SCC.
     * \return True if the pointer points into the shared cache, false otherwise.
     */
    virtual bool isPointerInSharedCache(void *ptr, uintptr_t *cacheOffset = NULL);
 
    /**
-    * \brief Checks whether the specified offset is within the metadata section
-    *        of the shared cache.
+    * \brief Checks whether the specified offset, calculated from the end of the SCC,
+    *        is within the metadata section of the shared cache.
     *
     * \param[in] offset The offset to check.
     * \param[out] ptr If offset is within the shared cache and this parameter is not
@@ -206,7 +218,7 @@ public:
     *             here. If offset is not within the shared cache this parameter is ignored.
     * \return True if the offset is within the shared cache, false otherwise.
     */
-   virtual bool isOffsetInSharedCache(uintptr_t offset, void *ptr = NULL);
+   virtual bool isOffsetInSharedCache(uintptr_t encoded_offset, void *ptr = NULL);
 
    /**
     * \brief Checks whether the specified J9ROMClass exists in the SCC
@@ -402,7 +414,7 @@ private:
     *             here. If offset is not within the shared cache this parameter is ignored.
     * \return True if the offset is within the shared cache, false otherwise.
     */
-   bool isROMStructureOffsetInSharedCache(uintptr_t offset, void **romStructurePtr = NULL);
+   bool isROMStructureOffsetInSharedCache(uintptr_t encoded_offset, void **romStructurePtr = NULL);
 
    /**
     * \brief Validates the provided class chain. This method modifies the chainPtr arg.
