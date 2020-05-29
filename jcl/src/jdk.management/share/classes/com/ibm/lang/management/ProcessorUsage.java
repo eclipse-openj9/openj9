@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2019 IBM Corp. and others
+ * Copyright (c) 2013, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,17 +80,33 @@ public class ProcessorUsage {
 	private ProcessorUsage(long user, long system, long idle, long wait,
 			       long busy, int id, int online, long timestamp) throws IllegalArgumentException {
 		super();
-		if ((user < -1) ||
-		   (system < -1) ||
-		   (idle < -1) ||
-		   (wait < -1) ||
-		   (busy < -1) ||
-		   (id < -1) ||
-		   (online < 0) || (online > 1) ||
-		   (timestamp < 0) ||
-		   ((user >= 0) && (system >= 0) && (wait >= 0) && (busy >= 0) && (busy < (user + system + wait))))
-		{
-			throw new IllegalArgumentException();
+		if (user < -1) {
+			throw new IllegalArgumentException("user(" + user + ") < -1: "); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		if (system < -1) {
+			throw new IllegalArgumentException("system(" + system + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		if (idle < -1) {
+			throw new IllegalArgumentException("idle(" + idle + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		if (wait < -1) {
+			throw new IllegalArgumentException("wait(" + wait + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		if (busy < -1) {
+			throw new IllegalArgumentException("busy(" + busy + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		if (id < -1) {
+			throw new IllegalArgumentException("id(" + id + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		if ((online < 0) || (online > 1)) {
+			throw new IllegalArgumentException("online(" + online + ") < 0) || online > 1"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		if (timestamp < 0) {
+			throw new IllegalArgumentException("timestamp(" + timestamp + ") < 0"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		if ((user >= 0) && (system >= 0) && (wait >= 0) && (busy >= 0) && (busy < (user + system + wait))) {
+			throw new IllegalArgumentException("busy(" + busy + ") < user(" + user + //$NON-NLS-1$ //$NON-NLS-2$
+				") + system(" + system + ") + wait(" + wait + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
 		this.user = user;
 		this.system = system;
