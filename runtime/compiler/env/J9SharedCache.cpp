@@ -1196,7 +1196,7 @@ TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR
    if (comp)
       {
       /*
-       * TR_J9SharedCache::offsetInSharedCacheFromPointer asserts if the pointer
+       * TR_J9SharedCache::offsetInSharedCacheFrom* asserts if the pointer
        * passed in does not exist in the SCC. Under HCR, when an agent redefines
        * a class, it causes the J9Class pointer to stay the same, but the
        * J9ROMClass pointer changes. This means that if the compiler has a
@@ -1218,7 +1218,7 @@ TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR
        * compilation. If the ptr is in the SCC, then the cacheOffset will be updated.
        */
       if (!isPointerInSharedCache(classChainIdentifyingLoaderForClazz, &classChainOffsetInSharedCache))
-         comp->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find pointer in SCC");
+         comp->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find pointer %p in SCC", classChainIdentifyingLoaderForClazz);
       }
    else
       {
