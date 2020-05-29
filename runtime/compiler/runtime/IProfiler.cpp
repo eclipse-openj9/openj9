@@ -3146,10 +3146,10 @@ TR_IPBCDataCallGraph::loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage,
       if (store->_csInfo.getClazz(i))
          {
          J9Class *ramClass = NULL;
-         uintptr_t romClass = 0;
+         J9ROMClass *romClass = 0;
 
          uintptr_t csInfoClazzOffset = store->_csInfo.getClazz(i);
-         if (comp->fej9()->sharedCache()->isOffsetInSharedCache(csInfoClazzOffset, &romClass))
+         if (comp->fej9()->sharedCache()->isROMClassOffsetInSharedCache(csInfoClazzOffset, &romClass))
             ramClass = ((TR_J9VM *)comp->fej9())->matchRAMclassFromROMclass((J9ROMClass *)romClass, comp);
 
          if (ramClass)
