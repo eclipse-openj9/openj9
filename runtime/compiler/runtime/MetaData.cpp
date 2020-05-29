@@ -1495,7 +1495,6 @@ createMethodMetaData(
    data->endWarmPC = data->endPC;
    data->codeCacheAlloc = (UDATA)comp->cg()->getBinaryBufferStart();
 
-   data->flags = 0;
    if (fourByteOffsets)
       data->flags |= JIT_METADATA_GC_MAP_32_BIT_OFFSETS;
 

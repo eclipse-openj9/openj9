@@ -538,9 +538,10 @@ typedef struct J9JITExceptionTable {
 	void* riData;
 } J9JITExceptionTable;
 
-#define JIT_METADATA_FLAGS_USED_FOR_SIZE 1
-#define JIT_METADATA_GC_MAP_32_BIT_OFFSETS 2
-#define JIT_METADATA_IS_STUB 4
+#define JIT_METADATA_FLAGS_USED_FOR_SIZE 0x1
+#define JIT_METADATA_GC_MAP_32_BIT_OFFSETS 0x2
+#define JIT_METADATA_IS_STUB 0x4
+#define JIT_METADATA_NOT_INITIALIZED 0x8
 
 typedef struct J9JIT16BitExceptionTableEntry {
 	U_16 startPC;
