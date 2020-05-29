@@ -71,9 +71,22 @@ TR_J9ByteCodeIterator::isThisChanged()
       {
       switch (bc)
          {
+         case J9BCistore0:
+         case J9BClstore0:
+         case J9BCfstore0:
+         case J9BCdstore0:
          case J9BCastore0:
             return true;
+         case J9BCistore:
+         case J9BClstore:
+         case J9BCfstore:
+         case J9BCdstore:
          case J9BCastore:
+         case J9BCistorew:
+         case J9BClstorew:
+         case J9BCfstorew:
+         case J9BCdstorew:
+         case J9BCastorew:
             if (nextByte() == 0)
                return true;
          default:
