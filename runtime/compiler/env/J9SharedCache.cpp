@@ -783,7 +783,7 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
    LOG(1, "rememberClass class %p romClass %p %.*s\n", clazz, romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 
    uintptr_t classOffsetInCache;
-   if (!isPointerInSharedCache(romClass, &classOffsetInCache))
+   if (!isROMClassInSharedCache(romClass, &classOffsetInCache))
       {
       LOG(1,"\trom class not in shared cache, returning\n");
       return NULL;
@@ -913,7 +913,7 @@ bool
 TR_J9SharedCache::writeClassToChain(J9ROMClass *romClass, UDATA * & chainPtr)
    {
    uintptr_t classOffsetInCache;
-   if (!isPointerInSharedCache(romClass, &classOffsetInCache))
+   if (!isROMClassInSharedCache(romClass, &classOffsetInCache))
       {
       LOG(3, "\t\tromclass %p not in shared cache, writeClassToChain returning false\n", romClass);
       return false;
@@ -987,7 +987,7 @@ TR_J9SharedCache::romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & c
    {
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
    UDATA romClassOffset;
-   if (!isPointerInSharedCache(romClass, &romClassOffset))
+   if (!isROMClassInSharedCache(romClass, &romClassOffset))
       return false;
    LOG(3, "\t\tExamining romclass %p (%.*s) offset %d, comparing to %d\n", romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className), romClassOffset, *chainPtr);
    if ((chainPtr > chainEnd) || (romClassOffset != *chainPtr++))
@@ -1093,7 +1093,7 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
    /* If the pointer isn't the SCC, then return false immmediately
     * as the map holds offsets into the SCC of romclasses
     */
-   if (!isPointerInSharedCache(romClass, &classOffsetInCache))
+   if (!isROMClassInSharedCache(romClass, &classOffsetInCache))
       {
       LOG(1, "\tclass not in shared cache, returning false\n");
       return false;
