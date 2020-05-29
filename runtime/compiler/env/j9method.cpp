@@ -2285,6 +2285,9 @@ TR_ResolvedRelocatableJ9Method::allocateException(uint32_t numBytes, TR::Compila
    eTbl->ramMethod = NULL;
    eTbl->constantPool = NULL;
 
+   // This exception table doesn't get initialized until relocation
+   eTbl->flags |= JIT_METADATA_NOT_INITIALIZED;
+
    return (U_8 *) eTbl;
    }
 
