@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2019 IBM Corp. and others
+Copyright (c) 2006, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,8 +70,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="graph_req.os.perf" value="{$spec.property.graph_req.os$}"/>
 		<property name="graph_se_classlib.java5" value="jcl_se.zip"/>
 		<property name="graph_se_classlib.java6" value="jcl_se.zip"/>
-		<property name="graph_tool_script.build" value="msvc100"/>
-		<property name="graph_tool_script.test" value="{$spec.property.graph_tool_script.build$}"/>
+		<property name="graph_tool_script.build" value="msvc140"/>
+		<property name="graph_tool_script.test" value="msvc100"/>
 		<property name="graph_variant.testing_suffix" value=""/>
 		<property name="graph_variant.trailingID" value=""/>
 		<property name="j2seRuntimeDir" value="jre/bin"/>
