@@ -882,7 +882,7 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          {
          // Must be TR::anewarray
          //
-         TR_UNIMPLEMENTED();
+         elementSize = comp->useCompressedPointers() ? TR::Compiler->om.sizeofReferenceField() : TR::Compiler->om.sizeofReferenceAddress();
          }
       // If the array cannot be allocated as a contiguous array, then comp->canAllocateInline should have returned -1.
       // The only exception is when the array length is 0.
@@ -1050,10 +1050,16 @@ J9::ARM64::TreeEvaluator::newArrayEvaluator(TR::Node *node, TR::CodeGenerator *c
 TR::Register *
 J9::ARM64::TreeEvaluator::anewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::ILOpCodes opCode = node->getOpCodeValue();
-   TR::Node::recreate(node, TR::acall);
-   TR::Register *targetRegister = directCallEvaluator(node, cg);
-   TR::Node::recreate(node, opCode);
+   TR::Register *targetRegister = TR::TreeEvaluator::VMnewEvaluator(node, cg);
+   if (!targetRegister)
+      {
+      // Inline array allocation wasn't generated, just generate a call to the helper.
+      //
+      TR::ILOpCodes opCode = node->getOpCodeValue();
+      TR::Node::recreate(node, TR::acall);
+      targetRegister = directCallEvaluator(node, cg);
+      TR::Node::recreate(node, opCode);
+      }
    return targetRegister;
    }
 
