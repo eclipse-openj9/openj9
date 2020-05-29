@@ -748,8 +748,7 @@ TR_J9SharedCache::startingROMClassOfClassChain(UDATA *classChain)
    TR_ASSERT_FATAL(lengthInBytes >= 2 * sizeof (UDATA), "class chain is too short!");
 
    UDATA romClassOffset = classChain[1];
-   void *romClass = pointerFromOffsetInSharedCache(romClassOffset);
-   return static_cast<J9ROMClass*>(romClass);
+   return romClassFromOffsetInSharedCache(romClassOffset);
    }
 
 // convert an offset into a string of 8 characters
@@ -1171,7 +1170,7 @@ TR_OpaqueClassBlock *
 TR_J9SharedCache::lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader)
    {
    UDATA *ptrToRomClassOffset = chainData+1;
-   J9ROMClass *romClass = (J9ROMClass *)pointerFromOffsetInSharedCache(*ptrToRomClassOffset);
+   J9ROMClass *romClass = romClassFromOffsetInSharedCache(*ptrToRomClassOffset);
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    J9VMThread *vmThread = fej9->getCurrentVMThread();
