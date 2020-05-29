@@ -64,7 +64,31 @@ J9::AheadOfTimeCompile::offsetInSharedCacheFromPointer(TR_SharedCache *sharedCac
    if (sharedCache->isPointerInSharedCache(ptr, &offset))
       return offset;
    else
-      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find pointer in SCC");
+      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find pointer %p in SCC", ptr);
+
+   return offset;
+   }
+
+uintptr_t
+J9::AheadOfTimeCompile::offsetInSharedCacheFromROMClass(TR_SharedCache *sharedCache, J9ROMClass *romClass)
+   {
+   uintptr_t offset = 0;
+   if (sharedCache->isROMClassInSharedCache(romClass, &offset))
+      return offset;
+   else
+      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find romClass %p in SCC", romClass);
+
+   return offset;
+   }
+
+uintptr_t
+J9::AheadOfTimeCompile::offsetInSharedCacheFromROMMethod(TR_SharedCache *sharedCache, J9ROMMethod *romMethod)
+   {
+   uintptr_t offset = 0;
+   if (sharedCache->isROMMethodInSharedCache(romMethod, &offset))
+      return offset;
+   else
+      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find romMethod %p in SCC", romMethod);
 
    return offset;
    }
