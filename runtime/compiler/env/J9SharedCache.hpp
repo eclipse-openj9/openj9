@@ -59,6 +59,24 @@ struct J9SharedDataDescriptor;
  * layer of the shared class cache, the next element represents the (N-1)th layer, and so on. The element previous to the head represents the base layer.
  * The list of cache layers can be thought of as a single logical cache starting at layer 0 and ending at layer N. Offsets into the shared cache
  * represent the distance from the start of the cache. Converting between pointers and offsets requires traversing the list starting at the base layer.
+ *
+ * The layout of section of the SCC relevant for this class is:
+ *
+ *        Increasing Address ----->
+ * *-------------*------------------*----------*
+ * | ROM CLASSES |--->   FREE   <---| METADATA |
+ * *-------------*------------------*----------*
+ * ^             ^                  ^          ^
+ * |             |                  |          |
+ * |             |                  |          cacheDesc->metadataStartAddress
+ * |             |                  |
+ * |             |                  UPDATEPTR(cacheDesc->cacheStartAddress)
+ * |             |
+ * |             SEGUPDATEPTR(cacheDesc->cacheStartAddress)
+ * |
+ * cacheDesc->romclassStartAddress
+ *
+ * See CompositeCache.cpp for more details.
  */
 class TR_J9SharedCache : public TR_SharedCache
    {
@@ -311,6 +329,8 @@ private:
       uint16_t data;
       };
 
+   static const uintptr_t OFFSET_FROM_END = 0x1;
+
    J9JITConfig *jitConfig() { return _jitConfig; }
    J9JavaVM *javaVM() { return _javaVM; }
    TR_J9VMBase *fe() { return _fe; }
@@ -335,6 +355,13 @@ private:
 
    bool romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & chainPtr, UDATA *chainEnd);
    UDATA *findChainForClass(J9Class *clazz, const char *key, uint32_t keyLength);
+
+   static inline bool isOffsetFromStart(uintptr_t offset) { return ((offset & OFFSET_FROM_END) != OFFSET_FROM_END); }
+   static inline bool isOffsetFromEnd(uintptr_t offset) { return ((offset & OFFSET_FROM_END) == OFFSET_FROM_END); }
+   static inline uintptr_t encodeOffsetFromStart(uintptr_t offset) { return (offset << 1); }
+   static inline uintptr_t decodeOffsetFromStart(uintptr_t offset) { return (offset >> 1); }
+   static inline uintptr_t encodeOffsetFromEnd(uintptr_t offset) { return ((offset << 1) | OFFSET_FROM_END); }
+   static inline uintptr_t decodeOffsetFromEnd(uintptr_t offset) { return (offset >> 1); }
 
    /**
     * \brief Helper Method; Converts an offset into the ROMClass section into a pointer.
@@ -378,54 +405,104 @@ private:
    bool isROMStructureOffsetInSharedCache(uintptr_t offset, void **romStructurePtr = NULL);
 
    /**
-    * @brief Validates the provided class chain. This method modifies the chainPtr arg.
+    * \brief Validates the provided class chain. This method modifies the chainPtr arg.
     *
-    * @param romClass The J9ROMClass of the class whose chain is to be validated
-    * @param clazz The TR_OpaqueClassBlock of the class whose chain is to be validated
-    * @param chainPtr Pointer to the start of the class chain passed by reference
-    * @param chainEnd Pointer to the end of the class chain
-    * @return true if validation succeeded, false otherwise.
+    * \param[in] romClass The J9ROMClass of the class whose chain is to be validated
+    * \param[in] clazz The TR_OpaqueClassBlock of the class whose chain is to be validated
+    * \param[in,out] chainPtr Pointer to the start of the class chain passed by reference
+    * \param[in] chainEnd Pointer to the end of the class chain
+    * \return true if validation succeeded, false otherwise.
     */
    bool validateClassChain(J9ROMClass *romClass, TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd);
 
    /**
-    * @brief Validates the super classes portion of the class chain. This method modifies the chainPtr arg.
+    * \brief Validates the super classes portion of the class chain. This method modifies the chainPtr arg.
     *
-    * @param clazz The TR_OpaqueClassBlock of the class whose chain is to be validated
-    * @param chainPtr Pointer to the start of super classes portion of the class chain passed by reference
-    * @param chainEnd Pointer to the end of the class chain
-    * @return true if validation succeeded, false otherwise.
+    * \param[in] clazz The TR_OpaqueClassBlock of the class whose chain is to be validated
+    * \param[in,out] chainPtr Pointer to the start of super classes portion of the class chain passed by reference
+    * \param[in] chainEnd Pointer to the end of the class chain
+    * \return true if validation succeeded, false otherwise.
     */
    bool validateSuperClassesInClassChain(TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd);
 
    /**
-    * @brief Validates the interfaces portion of the class chain. This method modifies the chainPtr arg.
+    * \brief Validates the interfaces portion of the class chain. This method modifies the chainPtr arg.
     *
-    * @param clazz The TR_OpaqueClassBlock of the class whose chain is to be validated
-    * @param chainPtr Pointer to the start of interfaces portion of the class chain passed by reference
-    * @param chainEnd Pointer to the end of the class chain
-    * @return true if validation succeeded, false otherwise.
+    * \param[in] clazz The TR_OpaqueClassBlock of the class whose chain is to be validated
+    * \param[in,out] chainPtr Pointer to the start of interfaces portion of the class chain passed by reference
+    * \param[in] chainEnd Pointer to the end of the class chain
+    * \return true if validation succeeded, false otherwise.
     */
    bool validateInterfacesInClassChain(TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd);
 
+   /**
+    * \brief Helper method; used to check if a pointer is within the SCC
+    *
+    * \param[in] cacheDesc the J9SharedClassCacheDescriptor for the cache
+    * \param[in] ptr The pointer to check
+    * \return True if ptr is within the SCC, false otherwise
+    */
    static bool isPointerInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
 
    /**
-    * @brief Gets the cached result of a prior class chain validation
+    * \brief Helper method; used to check if an offset is within the SCC
     *
-    * @param clazz The class to be validated
+    * \param[in] cacheDesc the J9SharedClassCacheDescriptor for the cache
+    * \param[in] offset the offset to check
+    * \return True if offset is within the SCC, false otherwise
+    */
+   static bool isOffsetInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset);
+
+   /**
+    * \brief Helper method; used to check if a pointer is within the metadata section of the SCC
+    * \param[in] cacheDesc the J9SharedClassCacheDescriptor for the cache
+    * \param[in] ptr The pointer to check
+    * \return True if ptr is within the metadata section of the SCC, false otherwise
+    */
+   static bool isPointerInMetadataSectionSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
+
+   /**
+    * \brief Helper method; used to check if an offset is within the metadata section of the SCC
     *
-    * @return The cached CCVResult; CCVResult::notYetValidated if result does not exist.
+    * \param[in] cacheDesc the J9SharedClassCacheDescriptor for the cache
+    * \param[in] offset the offset to check
+    * \return True if offset is within the metadata section of the SCC, false otherwise
+    */
+   static bool isOffsetInMetadataSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset);
+
+   /**
+    * \brief Helper method; used to check if a pointer is within the ROMClass section of the SCC
+    * \param[in] cacheDesc the J9SharedClassCacheDescriptor for the cache
+    * \param[in] ptr The pointer to check
+    * \return True if ptr is within the ROMClass section of the SCC, false otherwise
+    */
+   static bool isPointerInROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
+
+   /**
+    * \brief Helper method; used to check if an offset is within the ROMClass section of the SCC
+    *
+    * \param[in] cacheDesc the J9SharedClassCacheDescriptor for the cache
+    * \param[in] offset the offset to check
+    * \return True if offset is within the ROMClass section of the SCC, false otherwise
+    */
+   static bool isOffsetinROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset);
+
+   /**
+    * \brief Gets the cached result of a prior class chain validation
+    *
+    * \param[in] clazz The class to be validated
+    *
+    * \return The cached CCVResult; CCVResult::notYetValidated if result does not exist.
     */
    const CCVResult getCachedCCVResult(TR_OpaqueClassBlock *clazz);
 
    /**
-    * @brief Caches the result of a class chain validation
+    * \brief Caches the result of a class chain validation
     *
-    * @param clazz The class to be validated
-    * @param result The result represented as a CCVResult
+    * \param[in] clazz The class to be validated
+    * \param[in] result The result represented as a CCVResult
     *
-    * @return The result of the insertion
+    * \return The result of the insertion
     */
    bool cacheCCVResult(TR_OpaqueClassBlock *clazz, CCVResult result);
 
@@ -452,8 +529,8 @@ private:
 
 #if defined(J9VM_OPT_JITSERVER)
 /**
-* @class TR_J9JITServerSharedCache
-* @brief Class used by JITServer for querying client-side SharedCache information
+* \class TR_J9JITServerSharedCache
+* \brief Class used by JITServer for querying client-side SharedCache information
 *
 * This class is an extension of the TR_J9SharedCache class which overrides a number
 * of TR_J9SharedCache's APIs. TR_J9JITServerSharedCache is used by JITServer and

@@ -52,6 +52,10 @@
       log("" format "", ##__VA_ARGS__);          \
       }
 
+// From CompositeCache.cpp
+#define UPDATEPTR(ca) (((uint8_t *)(ca)) + (ca)->updateSRP)
+#define SEGUPDATEPTR(ca) (((uint8_t *)(ca)) + (ca)->segmentSRP)
+
 TR_J9SharedCache::TR_J9SharedCacheDisabledReason TR_J9SharedCache::_sharedCacheState = TR_J9SharedCache::UNINITIALIZED;
 TR_YesNoMaybe TR_J9SharedCache::_sharedCacheDisabledBecauseFull = TR_maybe;
 UDATA TR_J9SharedCache::_storeSharedDataFailedLength = 0;
@@ -455,12 +459,94 @@ TR_J9SharedCache::isPointerInCache(const J9SharedClassCacheDescriptor *cacheDesc
    {
    bool isPointerInCache = false;
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-   uintptr_t ptrValue = (uintptr_t)ptr;
-   uintptr_t cacheStart = (uintptr_t)cacheDesc->cacheStartAddress; // Inclusive
-   uintptr_t cacheEnd = cacheStart + cacheDesc->cacheSizeBytes; // Exclusive
+   uintptr_t ptrValue = reinterpret_cast<uintptr_t>(ptr);
+   uintptr_t cacheStart = reinterpret_cast<uintptr_t>(cacheDesc->cacheStartAddress); // Inclusive
+   uintptr_t cacheEnd = cacheStart + cacheDesc->cacheSizeBytes;    // Exclusive
+
    isPointerInCache = (ptrValue >= cacheStart) && (ptrValue < cacheEnd);
 #endif
    return isPointerInCache;
+   }
+
+bool
+TR_J9SharedCache::isOffsetInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset)
+   {
+   bool isOffsetInCache = false;
+#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
+   uintptr_t decodedOffset = isOffsetFromStart(offset) ? decodeOffsetFromStart(offset) : decodeOffsetFromEnd(offset);
+   isOffsetInCache = (decodedOffset < cacheDesc->cacheSizeBytes);
+#endif
+   return isOffsetInCache;
+   }
+
+bool
+TR_J9SharedCache::isPointerInMetadataSectionSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr)
+   {
+   bool isPointerInMetadataSection = false;
+#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
+   if (isPointerInCache(cacheDesc, ptr))
+      {
+      uintptr_t ptrValue = reinterpret_cast<uintptr_t>(ptr);
+      uintptr_t metadataEndAddress   = reinterpret_cast<uintptr_t>(UPDATEPTR(cacheDesc->cacheStartAddress)); // Inclusive
+      uintptr_t metadataStartAddress = reinterpret_cast<uintptr_t>(cacheDesc->metadataStartAddress);         // Exclusive
+
+      isPointerInMetadataSection = (ptrValue >= metadataEndAddress) && (ptrValue < metadataStartAddress);
+      }
+#endif
+   return isPointerInMetadataSection;
+   }
+
+bool
+TR_J9SharedCache::isOffsetInMetadataSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset)
+   {
+   bool isOffsetInMetadataSection = false;
+#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
+   if (isOffsetFromEnd(offset) && isOffsetInCache(cacheDesc, offset))
+      {
+      uintptr_t metadataEndAddress   = reinterpret_cast<uintptr_t>(UPDATEPTR(cacheDesc->cacheStartAddress));
+      uintptr_t metadataStartAddress = reinterpret_cast<uintptr_t>(cacheDesc->metadataStartAddress);
+
+      uintptr_t metadataEndOffset = metadataStartAddress - metadataEndAddress; // Inclusive
+
+      isOffsetInMetadataSection = ((decodeOffsetFromEnd(offset) > 0 ) && (decodeOffsetFromEnd(offset) <= metadataEndOffset));
+      }
+#endif
+   return isOffsetInMetadataSection;
+   }
+
+bool
+TR_J9SharedCache::isPointerInROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr)
+   {
+   bool isPointerInRomClassesSection = false;
+#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
+   if (isPointerInCache(cacheDesc, ptr))
+      {
+      uintptr_t ptrValue = reinterpret_cast<uintptr_t>(ptr);
+      uintptr_t romclassStartAddress = reinterpret_cast<uintptr_t>(cacheDesc->romclassStartAddress);            // Inclusive
+      uintptr_t romclassEndAddress   = reinterpret_cast<uintptr_t>(SEGUPDATEPTR(cacheDesc->cacheStartAddress)); // Exclusive
+
+      isPointerInRomClassesSection = (ptrValue >= romclassStartAddress) && (ptrValue < romclassEndAddress);
+      }
+#endif
+   return isPointerInRomClassesSection;
+   }
+
+bool
+TR_J9SharedCache::isOffsetinROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset)
+   {
+   bool isOffsetInRomClassesSection = false;
+#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
+   if (isOffsetFromStart(offset) && isOffsetInCache(cacheDesc, offset))
+      {
+      uintptr_t romclassStartAddress = reinterpret_cast<uintptr_t>(cacheDesc->romclassStartAddress);
+      uintptr_t romclassEndAddress   = reinterpret_cast<uintptr_t>(SEGUPDATEPTR(cacheDesc->cacheStartAddress));
+
+      uintptr_t romclassEndOffset = romclassEndAddress - romclassStartAddress; // Exclusive
+
+      isOffsetInRomClassesSection = (decodeOffsetFromStart(offset) < romclassEndOffset);
+      }
+#endif
+   return isOffsetInRomClassesSection;
    }
 
 void *
