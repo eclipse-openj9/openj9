@@ -422,7 +422,7 @@ TR_JProfilingValue::lowerCalls()
  * | quickTestBlock                                |                                   |
  * |-----------------------------------------------|                                   |
  * |  treetop (incIndexTreeTop)                    |                                   |
- * |      l/iselect                                |                                   |
+ * |     l/iselect                                 |                                   |
  * |        l/icmpeq (conditionNode)               |                                   |
  * |           value                               |                                   |
  * |           i/lloadi                            |                                   |
@@ -433,13 +433,12 @@ TR_JProfilingValue::lowerCalls()
  * |                    width                      |                                   |
  * |        => hashIndex                           |                                   |
  * |        otherIndex                             |                                   |
- * |  ifl/ificmpeq goto helper                     |                                   |
- * |     l/ior                                     |                                   |
+ * |  ificmpeq goto helper                         |                                   |
+ * |     ior                                       |                                   |
  * |        => l/icmpeq (conditionNode)            |                                   |
- * |        s2l/s2i                                |                                   |
- * |           scmpge (checkIfTableIsLockedNode)   |                                   |
- * |              => otherIndex                    |                                   |
- * |              sconst 0                         |                                   |
+ * |        scmpge (checkIfTableIsLockedNode)      |                                   |
+ * |           => otherIndex                       |                                   |
+ * |           sconst 0                            |                                   |
  * |-----------------------------------------------|                                   |
  *                         |                                                           |
  *                         |--------------------------------|                          |
@@ -619,9 +618,9 @@ TR_JProfilingValue::addProfilingTrees(
       traceMsg(comp, "\t\t\tQuick Test to check if value is already being profiled is in block_%d\n", quickTestBlock->getNumber());
    
    TR::Node *checkIfTableIsLockedNode = TR::Node::create(value, comp->il.opCodeForCompareGreaterOrEquals(lockType), 2, lock, TR::Node::sconst(value, 0));
-   TR::Node *checkNode = TR::Node::createif(comp->il.opCodeForIfCompareEquals(roundedType),
-      TR::Node::create(value, TR::ILOpCode::orOpCode(roundedType), 2, conditionNode, convertType(checkIfTableIsLockedNode,roundedType)),
-      TR::Node::createConstZeroValue(value, roundedType));
+   TR::Node *checkNode = TR::Node::createif(TR::ificmpeq,
+      TR::Node::create(value, TR::ior, 2, conditionNode, checkIfTableIsLockedNode),
+      TR::Node::iconst(0));
    if (origBlockGlRegDeps != NULL)
       {
       TR::Node *exitGlRegDeps = copyGlRegDeps(comp, origBlockGlRegDeps);
