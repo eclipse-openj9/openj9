@@ -112,7 +112,7 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
     *
     * @param sharedCache pointer to the TR_SharedCache object
     * @param ptr pointer whose offset in the SCC is required
-    * @return he offset into the SCC of ptr
+    * @return The offset into the SCC of ptr
     */
    uintptr_t offsetInSharedCacheFromPointer(TR_SharedCache *sharedCache, void *ptr);
    };

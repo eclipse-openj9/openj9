@@ -1281,7 +1281,7 @@ TR_IProfiler::persistentProfilingSample(TR_OpaqueMethodBlock *method, uint32_t b
       *methodProfileExistsInSCC = true;
       // Compute the pc we are interested in
       uintptr_t pc = getSearchPC(method, byteCodeIndex, comp);
-      store = searchForPersistentSample(store, (uintptr_t)comp->fej9()->sharedCache()->offsetInSharedCacheFromPointer((void *)pc));
+      store = searchForPersistentSample(store, (uintptr_t)comp->fej9()->sharedCache()->offsetInSharedCacheFromPtrToROMClassesSection((void *)pc));
 
       if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableIprofilerChanges) || TR::Options::getJITCmdLineOptions()->getOption(TR_EnableIprofilerChanges))
          {
@@ -1337,7 +1337,7 @@ TR_IProfiler::persistentProfilingSample(TR_OpaqueMethodBlock *method, uint32_t b
 
       *methodProfileExistsInSCC = true;
       void *pc = (void *)getSearchPC(method, byteCodeIndex, comp);
-      store = searchForPersistentSample(store, (uintptr_t)comp->fej9()->sharedCache()->offsetInSharedCacheFromPointer(pc));
+      store = searchForPersistentSample(store, (uintptr_t)comp->fej9()->sharedCache()->offsetInSharedCacheFromPtrToROMClassesSection(pc));
       return store;
       }
    return NULL;
@@ -2627,7 +2627,7 @@ void
 TR_IPBCDataFourBytes::createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
    {
    TR_IPBCDataFourBytesStorage * store = (TR_IPBCDataFourBytesStorage *) storage;
-   uintptr_t offset = (uintptr_t)sharedCache->offsetInSharedCacheFromPointer((void *)_pc);
+   uintptr_t offset = (uintptr_t)sharedCache->offsetInSharedCacheFromPtrToROMClassesSection((void *)_pc);
    TR_ASSERT_FATAL(offset <= UINT_MAX, "Offset too large for TR_IPBCDataFourBytes");
    storage->pc = (uint32_t)offset;
    storage->left = 0;
@@ -2676,7 +2676,7 @@ void
 TR_IPBCDataEightWords::createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
    {
    TR_IPBCDataEightWordsStorage * store = (TR_IPBCDataEightWordsStorage *) storage;
-   uintptr_t offset = (uintptr_t)sharedCache->offsetInSharedCacheFromPointer((void *)_pc);
+   uintptr_t offset = (uintptr_t)sharedCache->offsetInSharedCacheFromPtrToROMClassesSection((void *)_pc);
    TR_ASSERT_FATAL(offset <= UINT_MAX, "Offset too large for TR_IPBCDataEightWords");
    storage->pc = (uint32_t)offset;
    storage->ID = TR_IPBCD_EIGHT_WORDS;
@@ -3077,7 +3077,7 @@ void
 TR_IPBCDataCallGraph::createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
    {
    TR_IPBCDataCallGraphStorage * store = (TR_IPBCDataCallGraphStorage *) storage;
-   uintptr_t offset = (uintptr_t)sharedCache->offsetInSharedCacheFromPointer((void *)_pc);
+   uintptr_t offset = (uintptr_t)sharedCache->offsetInSharedCacheFromPtrToROMClassesSection((void *)_pc);
    TR_ASSERT_FATAL(offset <= UINT_MAX, "Offset too large for TR_IPBCDataCallGraph");
    storage->pc = (uint32_t)offset;
    storage->ID = TR_IPBCD_CALL_GRAPH;
@@ -3113,7 +3113,7 @@ TR_IPBCDataCallGraph::createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPB
              */
             if (sharedCache->isPointerInSharedCache(clazz->romClass))
                {
-               store->_csInfo.setClazz(i, (uintptr_t)sharedCache->offsetInSharedCacheFromPointer(clazz->romClass));
+               store->_csInfo.setClazz(i, (uintptr_t)sharedCache->offsetInSharedCacheFromROMClass(clazz->romClass));
                TR_ASSERT(_csInfo.getClazz(i), "Race condition detected: cached value=%p, pc=%p", clazz, _pc);
                }
             else
