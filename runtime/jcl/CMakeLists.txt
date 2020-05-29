@@ -148,7 +148,6 @@ target_sources(jclse
 		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtmempool.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtos.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtosext.c
-		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtprocessor.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtruntime.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtthread.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/orbvmhelpers.c
