@@ -582,14 +582,26 @@ gcParseXlpOption(J9JavaVM *vm)
 	IDATA xlpGCIndex = -1;
 	UDATA requestedPageSize = 0;
 	UDATA requestedPageFlags = J9PORT_VMEM_PAGE_FLAG_NOT_USED;
+	J9VMInitArgs *j9vm_args = vm->vmArgsArray;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	xlpObjectHeapIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, "-Xlp:objectheap:", NULL);
+	xlpObjectHeapIndex = IS_CONSUMED(j9vm_args, xlpObjectHeapIndex) ? -1 : xlpObjectHeapIndex;
+	xlpIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xlp", NULL);
+	xlpIndex = IS_CONSUMED(j9vm_args, xlpIndex) ? -1 : xlpIndex;
+
+	/* Options used for both codecache and objectheap */
+	if (-1 == xlpObjectHeapIndex) {
+		xlpMemIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, "-Xlp", NULL);
+		xlpMemIndex = IS_CONSUMED(j9vm_args, xlpMemIndex) ? -1 : xlpMemIndex;
+	}
 
 	/* Parse -Xlp option. 
 	 * -Xlp option enables large pages with the default large page size, but will not
 	 * override any -Xlp<size> or -Xlp:objectheap:pagesize=<size> option.
 	 */
-	xlpIndex = option_set(vm, "-Xlp", EXACT_MATCH);
 	if (-1 != xlpIndex) {
+		CONSUME_ARG(j9vm_args, xlpIndex);
 		UDATA defaultLargePageSize = 0;
 		UDATA defaultLargePageFlags = J9PORT_VMEM_PAGE_FLAG_NOT_USED;
 		j9vmem_default_large_page_size_ex(0, &defaultLargePageSize, &defaultLargePageFlags);
@@ -599,20 +611,12 @@ gcParseXlpOption(J9JavaVM *vm)
 		} else {
 			xlpErrorState = XLP_OPTION_NOT_SUPPORTED;
 			xlpError.xlpOptionErrorString = "-Xlp";
-			/* Cannot report error message here,
-			 * as we may find a valid "-Xlp:objectheap" that overwrites this option
-			 */
+			goto _reportXlpError;
 		}
-	}
-
-	/* Parse -Xlp<size> option. It overrides -Xlp option. */
-	xlpMemIndex = FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, "-Xlp", NULL);
-	if (-1 != xlpMemIndex) {
-		/* Reset error state from parsing of previous -Xlp option */
-		xlpErrorState = XLP_NO_ERROR;
-
+	} else if (-1 != xlpMemIndex) {
+		/* Parse -Xlp<size> option */
+		CONSUME_ARG(j9vm_args, xlpMemIndex);
 		/* No need to set requestedPageFlags explicitly. We use the default value J9PORT_VMEM_PAGE_FLAG_NOT_USED */
-
 		/* If the machine does not support large pages, we may fail.
 		 * Page flags for default large page size is not required, just pass NULL.
 		 */
@@ -631,42 +635,34 @@ gcParseXlpOption(J9JavaVM *vm)
 		} else {
 			xlpErrorState = XLP_OPTION_NOT_SUPPORTED;
 			xlpError.xlpOptionErrorString = "-Xlp";
-			/* Cannot report error message here, as we may find a valid "-Xlp:objectheap" that overwrites this option */
+			goto _reportXlpError;
 		}
-	}
-
-	/* Parse -Xlp:objectheap:pagesize=<size> option.
-	 * It overrides -Xlp option.
-	 * It also overrides -Xlp<size> option if it appears to the right of -Xlp<size>
-	 *
-	 * The proper formed -Xlp:objectheap: option must be (in strict order):
-	 * 	For all non-Z platforms:
-	 * 		-Xlp:objectheap:pagesize=<size> or
-	 * 		-Xlp:objectheap:pagesize=<size>,pageable or
-	 * 		-Xlp:objectheap:pagesize=<size>,nonpageable
-	 *
-	 * 	For Z platforms
-	 *		-Xlp:objectheap:pagesize=<size>,pageable or
-	 *		-Xlp:objectheap:pagesize=<size>,nonpageable
-	 */
-	xlpObjectHeapIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, "-Xlp:objectheap:", NULL);
-
-	/* so if -Xlp:objectheap: is specified */
-	if ((-1 != xlpObjectHeapIndex) && (xlpObjectHeapIndex > xlpMemIndex)) {
-		/*
-		 * Parse sub options for -Xlp:objectheap:
+	} else if (-1 != xlpObjectHeapIndex) {
+		/* Parse -Xlp:objectheap:pagesize=<size> option.
+		 * It overrides -Xlp option.
+		 * It also overrides -Xlp<size> option if it appears to the right of -Xlp<size>
+		 *
+		 * The proper formed -Xlp:objectheap: option must be (in strict order):
+		 * 	For all non-Z platforms:
+		 * 		-Xlp:objectheap:pagesize=<size> or
+		 * 		-Xlp:objectheap:pagesize=<size>,pageable or
+		 * 		-Xlp:objectheap:pagesize=<size>,nonpageable
+		 *
+		 * 	For Z platforms
+		 *		-Xlp:objectheap:pagesize=<size>,pageable or
+		 *		-Xlp:objectheap:pagesize=<size>,nonpageable
 		 */
+		CONSUME_ARG(j9vm_args, xlpObjectHeapIndex);
+		/* Parse sub options for -Xlp:objectheap: */
 		xlpErrorState = xlpSubOptionsParser(vm, xlpObjectHeapIndex, &xlpError, &requestedPageSize, &requestedPageFlags, &extensions->largePageFailOnError, &extensions->largePageWarnOnError);
 
+		/* Report Sub Options Parser Errors */
 		if (xlpError.extraCommaWarning) {
 			/* print extra comma ignored warning */
 			j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_GC_OPTIONS_XLP_EXTRA_COMMA);
+		} else if (XLP_NO_ERROR != xlpErrorState) {
+			goto _reportXlpError;
 		}
-	}
-
-	/* If there is a pending error state, report it now */
-	if (XLP_NO_ERROR != xlpErrorState) {
-		goto _reportXlpError;
 	}
 
 	/* If a valid -Xlp<size> or -Xlp:objectheap:pagesize=<size> is present, check if the requested page size is supported */

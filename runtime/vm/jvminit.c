@@ -1665,6 +1665,34 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				exit(0);
 			}
 
+			/* Paging Options */
+			{
+				J9VMInitArgs *j9vm_args = vm->vmArgsArray;
+				IDATA xlpSizeIndex  = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, VMOPT_XLP, NULL);
+				IDATA xlpExactIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XLP, NULL);
+				IDATA xlpCodeCachePageSize = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XLP_CODECACHE_PAGESIZE_EQUALS, NULL);
+				IDATA xlpObjectheapPageSize = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XLP_OBJECTHEAP_PAGESIZE_EQUALS, NULL);
+
+				/* CodeCache: Xlp<Size>, and Xlp:codecache:pagesize=<size>. Right most always impacts */
+				IDATA codecacheIndex = OMR_MAX(xlpSizeIndex, xlpCodeCachePageSize);
+
+				/* ObjectHeap: Xlp, Xlp<Size>, Xlp:objectheap:pageszie=<size> */
+				IDATA objectheapIndex = OMR_MAX(xlpSizeIndex, xlpObjectheapPageSize);
+				/* Xlp is always ignored if any of the other options are passed in. Order is not respected. */
+				if (objectheapIndex == -1)
+					objectheapIndex = xlpExactIndex;
+
+				/* Consume all other paging options */
+				IDATA index = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XLP, NULL);
+				while (index != -1) {
+					char* optString = j9vm_args->actualVMArgs->options[index].optionString;
+					if (index != codecacheIndex && index != objectheapIndex) {
+						CONSUME_ARG(j9vm_args, index);
+					}
+					index = FIND_NEXT_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XLP, NULL, index);
+				}
+			}
+
 #if defined(J9VM_OPT_SHARED_CLASSES)
 			{
 				IDATA argIndex3, argIndex4, argIndex5, argIndex6, argIndex7, argIndex8;

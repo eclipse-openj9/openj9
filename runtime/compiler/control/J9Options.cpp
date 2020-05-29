@@ -1459,12 +1459,17 @@ J9::Options::fePreProcess(void * base)
       UDATA requestedLargeCodePageFlags = J9PORT_VMEM_PAGE_FLAG_NOT_USED;
       UDATA largePageSize = 0;
       UDATA largePageFlags = 0;
+      J9VMInitArgs *j9vm_args = vm->vmArgsArray;
       int32_t xlpCodeCacheIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, "-Xlp:codecache:", NULL);
       int32_t xlpIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, "-Xlp", NULL);
 
-      // Parse -Xlp:codecache:pagesize=<size> as the right most option
-      if (xlpCodeCacheIndex > xlpIndex)
+      xlpCodeCacheIndex = IS_CONSUMED(j9vm_args, xlpCodeCacheIndex) ? -1 : xlpCodeCacheIndex;
+      xlpIndex = IS_CONSUMED(j9vm_args, xlpIndex) ? -1 : xlpIndex;
+
+      // Parse -Xlp:codecache:pagesize=<size>
+      if (-1 != xlpCodeCacheIndex)
          {
+         CONSUME_ARG(j9vm_args, xlpCodeCacheIndex);
          TR_XlpCodeCacheOptions parsingState = XLPCC_PARSING_FIRST_OPTION;
          UDATA optionNumber = 1;
          bool extraCommaWarning = false;
@@ -1686,8 +1691,9 @@ J9::Options::fePreProcess(void * base)
             j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA);
          }
       // Parse Size -Xlp<size>
-      else if (xlpIndex >= 0)
+      else if (-1 != xlpIndex)
          {
+         CONSUME_ARG(j9vm_args, xlpIndex);
          // GET_MEMORY_VALUE macro casts it's second parameter to (char**)&, so a pointer to the option string is passed rather than the string literal.
          char *lpOption = "-Xlp";
          GET_MEMORY_VALUE(xlpIndex, lpOption, requestedLargeCodePageSize);
