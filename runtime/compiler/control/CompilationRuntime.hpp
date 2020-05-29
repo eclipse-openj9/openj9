@@ -297,7 +297,7 @@ class J9Method_HT
       J9Method_HT(TR::PersistentInfo *persistentInfo);
       size_t getNumEntries() const { return _numEntries; }
       // method used by various hooks that perform class unloading
-      void onClassUnloading(J9ClassLoader *unloadedClass);
+      void onClassUnloading();
 
    protected:
       TR::PersistentInfo *getPersistentInfo() const { return _persistentInfo; }
@@ -710,7 +710,7 @@ public:
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
    void *searchForDLTRecord(J9Method *method, int32_t bcIndex);
    void  insertDLTRecord(J9Method *method, int32_t bcIndex, void *dltEntry);
-   void  cleanDLTRecordOnUnload(J9ClassLoader *classloader);
+   void  cleanDLTRecordOnUnload();
    DLTTracking *getDLT_HT() const { return _dltHT; }
    void setDLT_HT(DLTTracking *dltHT) { _dltHT = dltHT; }
 #else
