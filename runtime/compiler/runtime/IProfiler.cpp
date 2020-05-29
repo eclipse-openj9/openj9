@@ -398,9 +398,9 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
       int32_t currentCount = resolvedMethod->getInvocationCount();
 
       // can only persist profile info if the method is in the shared cache
-      if (comp->fej9()->sharedCache()->isPointerInSharedCache(romMethod))
+      if (comp->fej9()->sharedCache()->isROMMethodInSharedCache(romMethod))
         {
-         TR_ASSERT(comp->fej9()->sharedCache()->isPointerInSharedCache((void *)methodStart), "bytecodes not in shared cache");
+         TR_ASSERT(comp->fej9()->sharedCache()->isPtrToROMClassesSectionInSharedCache((void *)methodStart), "bytecodes not in shared cache");
          // check if there is already an entry
          unsigned char storeBuffer[1000];
          uint32_t bufferLength = 1000;
@@ -1259,7 +1259,7 @@ TR_IProfiler::persistentProfilingSample(TR_OpaqueMethodBlock *method, uint32_t b
       void *methodStart = (void *)TR::Compiler->mtd.bytecodeStart(method);
 
       // can only persist profile info if the method is in the shared cache
-      if (!comp->fej9()->sharedCache()->isPointerInSharedCache(methodStart))
+      if (!comp->fej9()->sharedCache()->isPtrToROMClassesSectionInSharedCache(methodStart))
          return NULL;
 
       // check the shared cache
@@ -1332,7 +1332,7 @@ TR_IProfiler::persistentProfilingSample(TR_OpaqueMethodBlock *method, uint32_t b
       void *methodStart = (void *) TR::Compiler->mtd.bytecodeStart(method);
 
       // can only persist profile info if the method is in the shared cache
-      if (!comp->fej9()->sharedCache()->isPointerInSharedCache(methodStart))
+      if (!comp->fej9()->sharedCache()->isPtrToROMClassesSectionInSharedCache(methodStart))
          return NULL;
 
       *methodProfileExistsInSCC = true;
@@ -3062,7 +3062,7 @@ TR_IPBCDataCallGraph::canBePersisted(TR_J9SharedCache *sharedCache, TR::Persiste
             return IPBC_ENTRY_PERSIST_UNLOADED;
             }
 
-         if (!sharedCache->isPointerInSharedCache(clazz->romClass))
+         if (!sharedCache->isROMClassInSharedCache(clazz->romClass))
             {
             releaseEntry(); // release the lock on the entry
             return IPBC_ENTRY_PERSIST_NOTINSCC;
@@ -3111,7 +3111,7 @@ TR_IPBCDataCallGraph::createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPB
              * performance, in order to prevent an issue in loadFromPersistentCopy, check again whether
              * the romClass is within the SCC.
              */
-            if (sharedCache->isPointerInSharedCache(clazz->romClass))
+            if (sharedCache->isROMClassInSharedCache(clazz->romClass))
                {
                store->_csInfo.setClazz(i, (uintptr_t)sharedCache->offsetInSharedCacheFromROMClass(clazz->romClass));
                TR_ASSERT(_csInfo.getClazz(i), "Race condition detected: cached value=%p, pc=%p", clazz, _pc);
