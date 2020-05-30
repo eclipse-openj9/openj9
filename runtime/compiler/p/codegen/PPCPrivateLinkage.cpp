@@ -2621,7 +2621,7 @@ void inlineCharacterIsMethod(TR::Node *node, TR::MethodSymbol* methodSymbol, TR:
          generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, rangeReg, 0x5A41);
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, rangeReg, rangeReg, 0xD6C0);
          generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::cmprb, node, cnd1Reg, srcReg, rangeReg, 1);
-         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, rangeReg, 0xDED8);
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, rangeReg, (int16_t)0xDED8);
          generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::cmprb, node, cnd2Reg, srcReg, rangeReg, 0);
          generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::cror, node, cnd1Reg, cnd2Reg, cnd1Reg, imm);
          break;
