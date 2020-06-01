@@ -3489,6 +3489,12 @@ public String getSimpleName() {
  * @see #isLocalClass()
  */
 public String getCanonicalName() {
+/*[IF Java15]*/
+	if (isHidden()) {
+		/* Canonical name is always null for hidden classes. */
+		return null;
+	}
+/*[ENDIF] Java15 */
 	int arrayCount = 0;
 	Class<?> baseType = this;
 	if (isArray()) {
@@ -4763,9 +4769,14 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 
 	private native String[] permittedSubclassesImpl();
 
-	// TODO: implement support for hidden classes.
+	private native boolean isHiddenImpl();
+	/**
+	 * Returns true if the class is a hidden class.
+	 * 
+	 * @return true for a hidden class, false otherwise
+	 */
 	public boolean isHidden() {
-		return false;
+		return isHiddenImpl(); 
 	}
 /*[ENDIF] Java15 */
 }

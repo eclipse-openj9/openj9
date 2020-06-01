@@ -362,6 +362,9 @@ Java_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_getLast
 /* BBjclNativesCommonClassLoader*/
 jboolean JNICALL Java_java_lang_ClassLoader_isVerboseImpl (JNIEnv *env, jclass clazz);
 jclass JNICALL Java_java_lang_ClassLoader_defineClassImpl (JNIEnv *env, jobject receiver, jstring className, jbyteArray classRep, jint offset, jint length, jobject protectionDomain);
+#if JAVA_SPEC_VERSION >= 15
+jclass JNICALL Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclass hostClass, jstring className, jbyteArray classRep, jobject protectionDomain, jboolean init, jint flags, jobject obj);
+#endif /* JAVA_SPEC_VERSION >= 15 */
 jboolean JNICALL Java_java_lang_ClassLoader_foundJavaAssertOption (JNIEnv *env, jclass ignored);
 jint JNICALL Java_com_ibm_oti_vm_BootstrapClassLoader_addJar(JNIEnv *env, jobject receiver, jbyteArray jarPath);
 
@@ -1049,6 +1052,10 @@ void JNICALL Java_java_lang_Thread_yield(JNIEnv *env, jclass threadClass);
 /* java_lang_Class.c */
 jboolean JNICALL
 Java_java_lang_Class_isClassADeclaredClass(JNIEnv *env, jobject jlClass, jobject aClass);
+#if JAVA_SPEC_VERSION >= 15
+jboolean JNICALL
+Java_java_lang_Class_isHiddenImpl(JNIEnv *env, jobject recv);
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 /* Virtualization_management_HypervisorMXBean */
 extern J9_CFUNC jint JNICALL

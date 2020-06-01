@@ -599,6 +599,24 @@ final Class<?> defineClassInternal(
 	return answer;
 }
 
+/*[IF Java15]*/
+
+private final native Class<?> defineClassImpl1(Class<?> hostClass, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object obj);
+final Class<?> defineClassInternal(
+		Class<?> hostClass, 
+		String className, 
+		byte[] classRep, 
+		ProtectionDomain protectionDomain, 
+		boolean init, 
+		int flags, 
+		Object obj)
+		throws java.lang.ClassFormatError 
+{
+	Class<?> answer = defineClassImpl1(hostClass, className, classRep, protectionDomain, init, flags, obj);
+	return answer;
+}
+/*[ENDIF] Java15 */
+
 /*[IF Sidecar19-SE]*/
 /**
  * This class is a function that maps a package name to a newly created

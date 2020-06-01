@@ -2469,8 +2469,15 @@ recreateRAMClasses(J9VMThread * currentThread, J9HashTable * classHashTable, J9H
 		if (fastHCR) {
 			options |= J9_FINDCLASS_FLAG_FAST_HCR;
 		}
-
-		if (J9_ARE_ALL_BITS_SET(originalRAMClass->classFlags, J9ClassIsAnonymous)) {
+		if (J9ROMCLASS_IS_HIDDEN(originalRAMClass->romClass)) {
+			options |= (J9_FINDCLASS_FLAG_HIDDEN | J9_FINDCLASS_FLAG_UNSAFE | J9_FINDCLASS_FLAG_ANON);
+			if (J9ROMCLASS_IS_OPTIONNESTMATE_SET(originalRAMClass->romClass)) {
+				options |= J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE;
+			}
+			if (J9ROMCLASS_IS_OPTIONSTRONG_SET(originalRAMClass->romClass)) {
+				options |= J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG ;
+			}
+		} else if (J9_ARE_ALL_BITS_SET(originalRAMClass->classFlags, J9ClassIsAnonymous)) {
 			options |= J9_FINDCLASS_FLAG_ANON;
 		}
 
@@ -3440,7 +3447,16 @@ reloadROMClasses(J9VMThread * currentThread, jint class_count, const jvmtiClassD
 			options = options | J9_FINDCLASS_FLAG_UNSAFE;
 		}
 		loadData.classLoader = originalRAMClass->classLoader;
-		if (J9_ARE_ALL_BITS_SET(originalRAMClass->classFlags, J9ClassIsAnonymous)) {
+		if (J9ROMCLASS_IS_HIDDEN(originalRAMClass->romClass)) {
+			options |= (J9_FINDCLASS_FLAG_HIDDEN | J9_FINDCLASS_FLAG_UNSAFE | J9_FINDCLASS_FLAG_ANON);
+			if (J9ROMCLASS_IS_OPTIONNESTMATE_SET(originalRAMClass->romClass)) {
+				options |= J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE;
+			}
+			if (J9ROMCLASS_IS_OPTIONSTRONG_SET(originalRAMClass->romClass)) {
+				options |= J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG ;
+			}
+			loadData.classLoader = vm->anonClassLoader;
+		} else if (J9_ARE_ALL_BITS_SET(originalRAMClass->classFlags, J9ClassIsAnonymous)) {
 			options = options | J9_FINDCLASS_FLAG_ANON;
 			loadData.classLoader = vm->anonClassLoader;
 		} 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,9 +34,10 @@ ROMClassSegmentAllocationStrategy::allocate(UDATA bytesRequired)
 	/* Scan existing segments for one large enough to hold the new ROM class */
 
 	J9MemorySegment* segment = NULL;
-	bool isLoadedByAnonClassLoader = _classLoader == _javaVM->anonClassLoader;
 	/* always make a new segment if its an anonClass */
-	if (!isLoadedByAnonClassLoader) {
+	bool allocNewSegment = ((_allocNewSeg) || (_classLoader == _javaVM->anonClassLoader));
+	
+	if (!allocNewSegment) {
 		J9MemorySegmentList* classSegments = _javaVM->classMemorySegments;
 #ifdef J9VM_THR_PREEMPTIVE
 		omrthread_monitor_enter(classSegments->segmentMutex);
@@ -63,7 +64,7 @@ ROMClassSegmentAllocationStrategy::allocate(UDATA bytesRequired)
 
 	if (NULL == result) {
 		UDATA classAllocationIncrement = _javaVM->romClassAllocationIncrement;
-		if (isLoadedByAnonClassLoader) {
+		if (allocNewSegment) {
 			classAllocationIncrement = 0;
 		}
 		segment = _javaVM->internalVMFunctions->allocateClassMemorySegment(_javaVM, bytesRequired, MEMORY_TYPE_DYNAMIC_LOADED_CLASSES, _classLoader, classAllocationIncrement);
