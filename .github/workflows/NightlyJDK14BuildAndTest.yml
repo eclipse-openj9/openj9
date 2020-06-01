@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-name: "PR build-jdk-openj9 jdk 14"
+name: "nightly build-openj9 jdk 14"
 on:
   schedule:
     - cron:  '30 21 * * 1-5'
@@ -32,7 +32,7 @@ jobs:
       matrix:
         os: [ubuntu-16.04, macos-10.15]
     steps:
-    - uses: sophia-guo/build-jdk-openj9@v1
+    - uses: eclipse/build-openj9@v1
       id: buildJDK
       with: 
         version: 14
