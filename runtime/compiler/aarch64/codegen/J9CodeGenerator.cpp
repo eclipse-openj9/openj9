@@ -118,19 +118,68 @@ void
 J9::ARM64::CodeGenerator::generateBinaryEncodingPrePrologue(TR_ARM64BinaryEncodingData &data)
    {
    TR::Compilation *comp = self()->comp();
-   data.recomp = NULL;
-   data.cursorInstruction = self()->getFirstInstruction();
-   data.i2jEntryInstruction = data.cursorInstruction;
    TR::Node *startNode = comp->getStartTree()->getNode();
 
-   /* save the original JNI native address if a JNI thunk is generated */
-   TR::ResolvedMethodSymbol *methodSymbol = comp->getMethodSymbol();
-   if (methodSymbol->isJNI())
+   data.recomp = comp->getRecompilationInfo();
+   data.cursorInstruction = self()->getFirstInstruction();
+   data.i2jEntryInstruction = data.cursorInstruction;
+
+   if (data.recomp != NULL)
       {
-      uintptr_t methodAddress = reinterpret_cast<uintptr_t>(methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp));
-      uint32_t low = methodAddress & static_cast<uint32_t>(0xffffffff);
-      uint32_t high = (methodAddress >> 32) & static_cast<uint32_t>(0xffffffff);
-      TR::Instruction *cursor = new (self()->trHeapMemory()) TR::ARM64ImmInstruction(TR::InstOpCode::dd, startNode, low, NULL, self());
-      generateImmInstruction(self(), TR::InstOpCode::dd, startNode, high, cursor);
+      data.recomp->generatePrePrologue();
       }
+   else
+      {
+      if (comp->getOption(TR_FullSpeedDebug) || comp->getOption(TR_SupportSwitchToInterpreter))
+         {
+         self()->generateSwitchToInterpreterPrePrologue(NULL, startNode);
+         }
+      else
+         {
+         TR::ResolvedMethodSymbol *methodSymbol = comp->getMethodSymbol();
+         /* save the original JNI native address if a JNI thunk is generated */
+         /* thunk is not recompilable, nor does it support FSD */
+         if (methodSymbol->isJNI())
+            {
+            uintptr_t methodAddress = reinterpret_cast<uintptr_t>(methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp));
+            uint32_t low = methodAddress & static_cast<uint32_t>(0xffffffff);
+            uint32_t high = (methodAddress >> 32) & static_cast<uint32_t>(0xffffffff);
+            TR::Instruction *cursor = new (self()->trHeapMemory()) TR::ARM64ImmInstruction(TR::InstOpCode::dd, startNode, low, NULL, self());
+            generateImmInstruction(self(), TR::InstOpCode::dd, startNode, high, cursor);
+            }
+         }
+      }
+   }
+
+TR::Instruction *
+J9::ARM64::CodeGenerator::generateSwitchToInterpreterPrePrologue(TR::Instruction *cursor, TR::Node *node)
+   {
+   TR::Compilation *comp = self()->comp();
+   TR::Register *x8 = self()->machine()->getRealRegister(TR::RealRegister::x8);
+   TR::Register *lr = self()->machine()->getRealRegister(TR::RealRegister::x30); // link register
+   TR::Register *xzr = self()->machine()->getRealRegister(TR::RealRegister::xzr); // zero register
+   TR::ResolvedMethodSymbol *methodSymbol = comp->getJittedMethodSymbol();
+   TR::SymbolReference *revertToInterpreterSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64revertToInterpreterGlue, false, false, false);
+   uintptr_t ramMethod = (uintptr_t)methodSymbol->getResolvedMethod()->resolvedMethodAddress();
+   TR::SymbolReference *helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, false, false, false);
+   uintptr_t helperAddr = (uintptr_t)helperSymRef->getMethodAddress();
+
+   // x8 must contain the saved LR; see Recompilation.s
+   // cannot use generateMovInstruction() here
+   cursor = new (self()->trHeapMemory()) TR::ARM64Trg1Src2Instruction(TR::InstOpCode::orrx, node, x8, xzr, lr, cursor, self());
+   cursor = self()->getLinkage()->saveParametersToStack(cursor);
+   cursor = generateImmSymInstruction(self(), TR::InstOpCode::bl, node,
+                                      (uintptr_t)revertToInterpreterSymRef->getMethodAddress(),
+                                      new (self()->trHeapMemory()) TR::RegisterDependencyConditions(0, 0, self()->trMemory()),
+                                      revertToInterpreterSymRef, NULL, cursor);
+   cursor = generateRelocatableImmInstruction(self(), TR::InstOpCode::dd, node, (uintptr_t)ramMethod, TR_RamMethod, cursor);
+
+   if (comp->getOption(TR_EnableHCR))
+      comp->getStaticHCRPICSites()->push_front(cursor);
+
+   cursor = generateRelocatableImmInstruction(self(), TR::InstOpCode::dd, node, (uintptr_t)helperAddr, TR_AbsoluteHelperAddress, helperSymRef, cursor);
+   // Used in FSD to store an instruction
+   cursor = generateImmInstruction(self(), TR::InstOpCode::dd, node, 0, cursor);
+
+   return cursor;
    }
