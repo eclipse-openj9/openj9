@@ -35,4 +35,6 @@ j9jit_files(
 	codegen/J9TreeEvaluator.cpp
 	codegen/J9WatchedInstanceFieldSnippet.cpp
 	codegen/J9WatchedStaticFieldSnippet.cpp
+	codegen/MonitorState.cpp
+	codegen/PrivateLinkage.cpp
 )

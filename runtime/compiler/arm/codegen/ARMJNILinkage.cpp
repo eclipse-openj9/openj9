@@ -166,7 +166,7 @@ TR::MemoryReference *J9::ARM::JNILinkage::getOutgoingArgumentMemRef(int32_t     
 printf("JNI: offset %d\n", offset); fflush(stdout);
 #endif
    const TR::ARMLinkageProperties &jniLinkageProperties = getProperties();
-   int32_t                spOffset = offset + jniLinkageProperties.getOffsetToFirstParm();
+   int32_t                spOffset = offset + getOffsetToFirstParm();
    TR::RealRegister    *sp       = cg()->machine()->getRealRegister(jniLinkageProperties.getStackPointerRegister());
    TR::MemoryReference *result   = new (trHeapMemory()) TR::MemoryReference(sp, spOffset, cg());
    memArg.argRegister = argReg;

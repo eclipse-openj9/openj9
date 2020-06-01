@@ -130,6 +130,7 @@ public:
     */
    virtual intptr_t entryPointFromInterpretedMethod();
 
+   virtual void mapIncomingParms(TR::ResolvedMethodSymbol *method);
    };
 
 }
