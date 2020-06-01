@@ -10759,11 +10759,10 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
          }
       else
          {
-         char compilationTypeString[15]={0};
+         char compilationTypeString[15] = { 0 };
          snprintf(compilationTypeString, sizeof(compilationTypeString), "%s%s",
-                 vm.isAOT_DEPRECATED_DO_NOT_USE() ? "AOT " : "",
-                 compiler->isProfilingCompilation() ? "profiled " : ""
-                );
+            vm.isAOT_DEPRECATED_DO_NOT_USE() ? "AOT " : "",
+            compiler->isProfilingCompilation() ? "profiled " : "");
 
          UDATA startPC = 0;
          UDATA endWarmPC = 0;
@@ -11312,6 +11311,14 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
    if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseCompileEnd, TR_VerboseCompFailure))
       {
       uintptr_t translationTime = j9time_usec_clock() - getTimeWhenCompStarted(); //get the time it took to fail the compilation
+      
+      char compilationTypeString[15] = { 0 };
+      snprintf(compilationTypeString, sizeof(compilationTypeString), "%s%s",
+         compiler->fej9()->isAOT_DEPRECATED_DO_NOT_USE() ? "AOT " : "",
+         compiler->isProfilingCompilation() ? "profiled " : "");
+
+      const char *hotnessString = compiler->getHotnessName(compiler->getMethodHotness());
+
       TR_VerboseLog::vlogAcquire();
       if (_methodBeingCompiled->_compErrCode != compilationFailure)
          {
@@ -11323,7 +11330,9 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
             uint64_t freePhysicalMemorySizeB = _compInfo.computeAndCacheFreePhysicalMemory(incomplete);
             if (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE)
                {
-               TR_VerboseLog::write(TR_Vlog_COMPFAIL, "%s time=%dus %s memLimit=%zu KB freePhysicalMemory=%llu MB",
+               TR_VerboseLog::write(TR_Vlog_COMPFAIL, "(%s%s) %s time=%dus %s memLimit=%zu KB freePhysicalMemory=%llu MB",
+                                           compilationTypeString,
+                                           hotnessString,
                                            compiler->signature(),
                                            translationTime,
                                            compilationErrorNames[_methodBeingCompiled->_compErrCode],
@@ -11332,7 +11341,9 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
                }
             else
                {
-               TR_VerboseLog::write(TR_Vlog_COMPFAIL, "%s time=%dus %s memLimit=%zu KB",
+               TR_VerboseLog::write(TR_Vlog_COMPFAIL, "(%s%s) %s time=%dus %s memLimit=%zu KB",
+                                           compilationTypeString,
+                                           hotnessString,
                                            compiler->signature(),
                                            translationTime,
                                            compilationErrorNames[_methodBeingCompiled->_compErrCode],
@@ -11343,9 +11354,11 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
       else
          {
          uintptr_t translationTime = j9time_usec_clock() - getTimeWhenCompStarted(); //get the time it took to fail the compilation
-         TR_VerboseLog::write(TR_Vlog_COMPFAIL, "compThreadID=%d %s time=%dus <TRANSLATION FAILURE: %s>",
-                                        compiler->getCompThreadID(),
+         TR_VerboseLog::write(TR_Vlog_COMPFAIL, "(%s%s) %s compThreadID=%d time=%dus <TRANSLATION FAILURE: %s>",
+                                        compilationTypeString,
+                                        hotnessString,
                                         compiler->signature(),
+                                        compiler->getCompThreadID(),
                                         translationTime,
                                         exceptionName);
          }
