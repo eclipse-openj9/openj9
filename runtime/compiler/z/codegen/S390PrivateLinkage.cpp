@@ -3437,53 +3437,6 @@ J9::Z::PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
    return returnRegister;
    }
 
-////////////////////////////////////////////////////////////////////////////////
-// J9::Z::PrivateLinkage::mapIncomingParms - maps parameters onto the stack for the given method.
-//   This function iterates over the parameters, mapping them onto the stack, either right
-//   to left, or left to right, depending on S390Linkage properties.
-//   This code was removed from J9::Z::PrivateLinkage::mapStack as it is common code that
-//   is now called by J9::Z::PrivateLinkage::mapCompactedStack as well.
-////////////////////////////////////////////////////////////////////////////////
-void
-J9::Z::PrivateLinkage::mapIncomingParms(TR::ResolvedMethodSymbol *method)
-   {
-   ListIterator<TR::ParameterSymbol> parameterIterator(&method->getParameterList());
-   TR::ParameterSymbol * parmCursor = parameterIterator.getFirst();
-   int32_t offsetToFirstParm = getOffsetToFirstParm();
-   if (getRightToLeft())
-      {
-      while (parmCursor != NULL)
-         {
-         parmCursor->setParameterOffset(parmCursor->getParameterOffset() + offsetToFirstParm);
-         parmCursor = parameterIterator.getNext();
-         }
-      }
-   else
-      {
-      uint32_t sizeOfParameterArea = method->getNumParameterSlots() << (cg()->comp()->target().is64Bit() ? 3 : 2);
-      while (parmCursor != NULL)
-         {
-         if (cg()->comp()->target().is64Bit() && parmCursor->getDataType() != TR::Address)
-            // in 64Bit mode: long and double args takes 2x8 byte slots
-            // all other types takes 1x8 byte
-            {
-            parmCursor->setParameterOffset(sizeOfParameterArea -
-                           parmCursor->getParameterOffset() -
-                           parmCursor->getSize() * 2 +
-                           offsetToFirstParm);
-            }
-         else
-            {
-            parmCursor->setParameterOffset(sizeOfParameterArea -
-                           parmCursor->getParameterOffset() -
-                           parmCursor->getSize() +
-                           offsetToFirstParm);
-            }
-         parmCursor = parameterIterator.getNext();
-         }
-      }
-   }
-
 void
 J9::Z::PrivateLinkage::setupBuildArgForLinkage(TR::Node * callNode, TR_DispatchType dispatchType, TR::RegisterDependencyConditions * deps, bool isFastJNI,
       bool isPassReceiver, int64_t & killMask, TR::Node * GlobalRegDeps, bool hasGlRegDeps, TR::SystemLinkage * systemLinkage)

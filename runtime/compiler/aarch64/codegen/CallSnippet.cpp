@@ -58,13 +58,14 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
    {
    uint32_t intArgNum=0, floatArgNum=0, offset;
    TR::Machine *machine = cg->machine();
-   const TR::ARM64LinkageProperties &linkage = cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention())->getProperties();
+   TR::Linkage* linkage = cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention());
+   const TR::ARM64LinkageProperties &linkageProperties = linkage->getProperties();
    int32_t argStart = callNode->getFirstArgumentIndex();
 
-   if (linkage.getRightToLeft())
-      offset = linkage.getOffsetToFirstParm();
+   if (linkageProperties.getRightToLeft())
+      offset = linkage->getOffsetToFirstParm();
    else
-      offset = argSize+linkage.getOffsetToFirstParm();
+      offset = argSize+linkage->getOffsetToFirstParm();
 
    for (int32_t i=argStart; i<callNode->getNumChildren();i++)
       {
@@ -74,58 +75,58 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
          case TR::Int8:
          case TR::Int16:
          case TR::Int32:
-            if (!linkage.getRightToLeft())
+            if (!linkageProperties.getRightToLeft())
                offset -= TR::Compiler->om.sizeofReferenceAddress();
-            if (intArgNum < linkage.getNumIntArgRegs())
+            if (intArgNum < linkageProperties.getNumIntArgRegs())
                {
-               buffer = storeArgumentItem(TR::InstOpCode::strimmw, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
+               buffer = storeArgumentItem(TR::InstOpCode::strimmw, buffer, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
-            if (linkage.getRightToLeft())
+            if (linkageProperties.getRightToLeft())
                offset += TR::Compiler->om.sizeofReferenceAddress();
             break;
          case TR::Address:
-            if (!linkage.getRightToLeft())
+            if (!linkageProperties.getRightToLeft())
                offset -= TR::Compiler->om.sizeofReferenceAddress();
-            if (intArgNum < linkage.getNumIntArgRegs())
+            if (intArgNum < linkageProperties.getNumIntArgRegs())
                {
-               buffer = storeArgumentItem(TR::InstOpCode::strimmx, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
+               buffer = storeArgumentItem(TR::InstOpCode::strimmx, buffer, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
-            if (linkage.getRightToLeft())
+            if (linkageProperties.getRightToLeft())
                offset += TR::Compiler->om.sizeofReferenceAddress();
             break;
          case TR::Int64:
-            if (!linkage.getRightToLeft())
+            if (!linkageProperties.getRightToLeft())
                offset -= 2*TR::Compiler->om.sizeofReferenceAddress();
-            if (intArgNum < linkage.getNumIntArgRegs())
+            if (intArgNum < linkageProperties.getNumIntArgRegs())
                {
-               buffer = storeArgumentItem(TR::InstOpCode::strimmx, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
+               buffer = storeArgumentItem(TR::InstOpCode::strimmx, buffer, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
-            if (linkage.getRightToLeft())
+            if (linkageProperties.getRightToLeft())
                offset += 2*TR::Compiler->om.sizeofReferenceAddress();
             break;
          case TR::Float:
-            if (!linkage.getRightToLeft())
+            if (!linkageProperties.getRightToLeft())
                offset -= TR::Compiler->om.sizeofReferenceAddress();
-            if (floatArgNum < linkage.getNumFloatArgRegs())
+            if (floatArgNum < linkageProperties.getNumFloatArgRegs())
                {
-               buffer = storeArgumentItem(TR::InstOpCode::vstrimms, buffer, machine->getRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
+               buffer = storeArgumentItem(TR::InstOpCode::vstrimms, buffer, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
             floatArgNum++;
-            if (linkage.getRightToLeft())
+            if (linkageProperties.getRightToLeft())
                offset += TR::Compiler->om.sizeofReferenceAddress();
             break;
          case TR::Double:
-            if (!linkage.getRightToLeft())
+            if (!linkageProperties.getRightToLeft())
                offset -= 2*TR::Compiler->om.sizeofReferenceAddress();
-            if (floatArgNum < linkage.getNumFloatArgRegs())
+            if (floatArgNum < linkageProperties.getNumFloatArgRegs())
                {
-               buffer = storeArgumentItem(TR::InstOpCode::vstrimmd, buffer, machine->getRealRegister(linkage.getFloatArgumentRegister(floatArgNum)), offset, cg);
+               buffer = storeArgumentItem(TR::InstOpCode::vstrimmd, buffer, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
             floatArgNum++;
-            if (linkage.getRightToLeft())
+            if (linkageProperties.getRightToLeft())
                offset += 2*TR::Compiler->om.sizeofReferenceAddress();
             break;
          }

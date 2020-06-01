@@ -219,9 +219,11 @@ J9JITConfig * codert_onload(J9JavaVM * javaVM)
    /* Should use portlib */
 #if defined(TR_HOST_X86)
    jitConfig->codeCacheAlignment = 32;
-#elif defined(TR_HOST_64BIT) || defined(TR_HOST_S390)
-   // 390 31-bit may generate 64-bit instruction (i.e. CGRL) which requires
-   // doubleword alignment for its operands
+#elif defined(TR_HOST_S390)
+   // On IBM Z, it can generate load and store quadword instructions from 
+   // Snippet. This requires quadword alignment.
+   jitConfig->codeCacheAlignment = 16;
+#elif defined(TR_HOST_64BIT)
    jitConfig->codeCacheAlignment = 8;
 #else
    jitConfig->codeCacheAlignment = 4;
