@@ -3130,8 +3130,13 @@ TR_RelocationRecordValidateClass::applyRelocation(TR_RelocationRuntime *reloRunt
    bool verified = false;
    if (definingClass)
       {
-      void *classChain = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainOffsetInSharedCache(reloTarget));
-      verified = validateClass(reloRuntime, definingClass, classChain);
+      void *classChainOrROMClass;
+      if (isStaticFieldValidation())
+         classChainOrROMClass = reloRuntime->fej9()->sharedCache()->romClassFromOffsetInSharedCache(classChainOffsetInSharedCache(reloTarget));
+      else
+         classChainOrROMClass = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainOffsetInSharedCache(reloTarget));
+
+      verified = validateClass(reloRuntime, definingClass, classChainOrROMClass);
       }
 
    if (!verified)
