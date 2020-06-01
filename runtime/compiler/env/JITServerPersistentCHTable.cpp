@@ -65,6 +65,10 @@ JITServerPersistentCHTable::initializeCHTable(TR_J9VMBase *fej9, const std::stri
          Trc_JITServerAbortInitCHTable(TR::compInfoPT->getCompilationThread(), TR::compInfoPT->getCompThreadId(),
             TR::compInfoPT->getClientData(), (unsigned long long)TR::compInfoPT->getClientData()->getClientUID(),
             (unsigned long long)data.size(), (unsigned long long)infos.size());
+
+         TR_ASSERT_FATAL(false,"compThreadID=%d clientSessionData=%p clientUID=%llu CHTable is not empty size %llu. Update size %llu",
+            TR::compInfoPT->getCompThreadId(), TR::compInfoPT->getClientData(), (unsigned long long)TR::compInfoPT->getClientData()->getClientUID(),
+            (unsigned long long)data.size(), (unsigned long long)infos.size());
          }
       }
    return false;
@@ -75,23 +79,32 @@ JITServerPersistentCHTable::doUpdate(TR_J9VMBase *fej9, const std::string &remov
    {
    TR::ClassTableCriticalSection doUpdate(fej9);
 
-   Trc_JITServerDoCHTableUpdate(TR::compInfoPT->getCompilationThread(), TR::compInfoPT->getCompThreadId(),
+   auto& data = getData();
+   if (!data.empty()) // make sure it's initialized already
+      {
+      Trc_JITServerDoCHTableUpdate(TR::compInfoPT->getCompilationThread(), TR::compInfoPT->getCompThreadId(),
          TR::compInfoPT->getClientData(), (unsigned long long)TR::compInfoPT->getClientData()->getClientUID(),
          (unsigned long long)modifyStr.size(), (unsigned long long)removeStr.size());
-
-   // TODO: add check if (!data.empty())
-   if (!modifyStr.empty())
-      commitModifications(modifyStr);
-   if (!removeStr.empty())
-      commitRemoves(removeStr);
+   
+      if (!modifyStr.empty())
+         commitModifications(modifyStr);
+      if (!removeStr.empty())
+         commitRemoves(removeStr);
 
 #ifdef COLLECT_CHTABLE_STATS
-   uint32_t nBytes = removeStr.size() + modifyStr.size();
-   CHTABLE_UPDATE_COUNTER(_updateBytes, nBytes);
-   CHTABLE_UPDATE_COUNTER(_numUpdates, 1);
-   uint32_t prevMax = _maxUpdateBytes;
-   _maxUpdateBytes = std::max(nBytes, _maxUpdateBytes);
+      uint32_t nBytes = removeStr.size() + modifyStr.size();
+      CHTABLE_UPDATE_COUNTER(_updateBytes, nBytes);
+      CHTABLE_UPDATE_COUNTER(_numUpdates, 1);
+      uint32_t prevMax = _maxUpdateBytes;
+      _maxUpdateBytes = std::max(nBytes, _maxUpdateBytes);
 #endif
+      }
+   else
+      {
+      TR_ASSERT_FATAL(false, "compThreadID=%d clientSessionData=%p clientUID=%llu CHTable is NOT initialized. Modify %llu, remove %llu\n",
+         TR::compInfoPT->getCompThreadId(), TR::compInfoPT->getClientData(), (unsigned long long)TR::compInfoPT->getClientData()->getClientUID(),
+         (unsigned long long)modifyStr.size(), (unsigned long long)removeStr.size());
+      }
    }
 
 void 

@@ -316,6 +316,15 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    bool useAotCompilation = false;
    uint32_t seqNo = 0;
    ClientSessionData *clientSession = NULL;
+   // numActiveThreads is incremented after it waits for its turn to execute
+   // and before the thread processes unloaded classes and CHTable init and update.
+   // A stream exception could be thrown at any time such as reading the compilation
+   // request (numActiveThreads hasn't been incremented), or an exeption could be
+   // thrown when a message such as MessageType::getUnloadedClassRangesAndCHTable
+   // is sent to the client (numActiveThreads has been incremented).
+   // hasIncNumActiveThreads is used to determine if decNumActiveThreads() should be
+   // called when an exception is thrown.
+   bool hasIncNumActiveThreads = false;
    try
       {
       auto req = stream->readCompileRequest<uint64_t, uint32_t, uint32_t, J9Method *, J9Class*, TR_OptimizationPlan, 
@@ -412,6 +421,11 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          clientSession->getSequencingMonitor()->exit();
          throw JITServer::StreamOOO();
          }
+
+      // Increment the number of active threads before issuing the read for ramClass
+      clientSession->incNumActiveThreads();
+      hasIncNumActiveThreads = true;
+
       // We can release the sequencing monitor now because nobody with a
       // larger sequence number can pass until I increment expectedSeqNo
       clientSession->getSequencingMonitor()->exit();
@@ -473,18 +487,23 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          }
 
       clientSession->getSequencingMonitor()->enter();
-      // Update the expecting sequence number. This will allow subsequent
-      // threads to pass through once we've released the sequencing monitor.
-      TR_ASSERT(seqNo == clientSession->getExpectedSeqNo(), "Unexpected seqNo=%u expected=%u\n", seqNo, clientSession->getExpectedSeqNo());
 
-      //TODO: Might need to set the expectedSeqNo as (seqNo+1) instead of (expectedSeqNo+1)
       if (seqNo != clientSession->getExpectedSeqNo())
+         {
          Trc_JITServerUnexpectedSeqNo(compThread, getCompThreadId(), clientSession,
                (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), clientSession->getNumActiveThreads());
 
+         TR_ASSERT(false, "compThreadID=%d clientSessionData=%p clientUID=%llu (seqNo=%u, expectedSeqNo=%u, numActiveThreads=%d) unexpected seqNo",
+               getCompThreadId(), clientSession, (unsigned long long)clientId,
+               seqNo, clientSession->getExpectedSeqNo(), clientSession->getNumActiveThreads());
+
+         clientSession->setExpectedSeqNo(seqNo);
+         }
+
+      // Update the expecting sequence number. This will allow subsequent
+      // threads to pass through once we've released the sequencing monitor.
       updateSeqNo(clientSession);
-      // Increment the number of active threads before issuing the read for ramClass
-      clientSession->incNumActiveThreads();
+
       // Finally, release the sequencing monitor so that other threads
       // can process their lists of unloaded classes
       clientSession->getSequencingMonitor()->exit();
@@ -632,7 +651,19 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // CHTable and unloaded class address ranges and at that point the seqNo was not updated.
       // We must update seqNo now to allow for blocking threads to pass through.
       clientSession->getSequencingMonitor()->enter();
-      TR_ASSERT(seqNo == clientSession->getExpectedSeqNo(), "Unexpected seqNo");
+
+      if (seqNo != clientSession->getExpectedSeqNo())
+         {
+         Trc_JITServerUnexpectedSeqNo(compThread, getCompThreadId(), clientSession,
+               (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), clientSession->getNumActiveThreads());
+
+         TR_ASSERT(false, "compThreadID=%d clientSessionData=%p clientUID=%llu (seqNo=%u, expectedSeqNo=%u, numActiveThreads=%d) unexpected seqNo",
+               getCompThreadId(), clientSession, (unsigned long long)clientId,
+               seqNo, clientSession->getExpectedSeqNo(), clientSession->getNumActiveThreads());
+
+         clientSession->setExpectedSeqNo(seqNo);
+         }
+
       updateSeqNo(clientSession);
       // Release the sequencing monitor so that other threads can process their lists of unloaded classes
       clientSession->getSequencingMonitor()->exit();
@@ -696,6 +727,13 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // Reset the pointer to the cached client session data
       if (getClientData())
          {
+         if (hasIncNumActiveThreads)
+            {
+            getClientData()->getSequencingMonitor()->enter();
+            getClientData()->decNumActiveThreads();
+            getClientData()->getSequencingMonitor()->exit();
+            }
+
          getClientData()->decInUse();  // We have the compilation monitor so it's safe to access the inUse counter
          if (getClientData()->getInUse() == 0)
             {
