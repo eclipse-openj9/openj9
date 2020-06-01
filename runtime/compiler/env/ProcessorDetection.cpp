@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -629,11 +629,14 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
 void
 TR_J9VM::initializeProcessorType()
    {
+
    TR_ASSERT(_compInfo,"compInfo not defined");
 
    if (TR::Compiler->target.cpu.isZ())
       {
 #if defined(TR_HOST_S390)
+         TR::Compiler->target.cpu.applyUserOptions();
+
          initializeS390ProcessorFeatures();
 
 #if defined(J9ZOS390)
@@ -646,31 +649,31 @@ TR_J9VM::initializeProcessorType()
 #ifdef TR_TARGET_S390
       // For AOT shared classes cache processor compatibility purposes, the following
       // processor settings should not be modified.
-      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zNext))
+      if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp14);
          }
-      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z15))
+      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z15))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp13);
          }
-      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z14))
+      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z14))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp12);
          }
-      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z13))
+      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z13))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp11);
          }
-      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zEC12))
+      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp10);
          }
-      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
+      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp9);
          }
-      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10))
+      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
          {
          TR::Compiler->target.cpu.setProcessor(TR_s370gp8);
          }

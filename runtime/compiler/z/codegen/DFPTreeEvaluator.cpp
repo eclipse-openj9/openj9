@@ -207,7 +207,7 @@ genLoadDFP(
       fprRegister = cg->allocateRegister(TR_FPR);
 
       // move it from GPR to FPR
-      if (cg->comp()->target().cpu.getSupportsFloatingPointExtensionFacility())
+      if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_FPE))
          {
          generateRRInstruction(cg, TR::InstOpCode::LDGR, node, fprRegister, newRegister);
          }
