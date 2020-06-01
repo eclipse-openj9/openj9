@@ -843,7 +843,7 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
    int32_t numMemArgs = 0;
    int32_t memArgSize = 0;
    int32_t from, to, step;
-   int32_t argSize = -properties.getOffsetToFirstParm();
+   int32_t argSize = -getOffsetToFirstParm();
    int32_t totalSize = 0;
    int32_t multiplier;
 
