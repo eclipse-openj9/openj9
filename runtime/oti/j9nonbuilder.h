@@ -2771,6 +2771,7 @@ typedef struct J9GCThreadInfo {
 typedef struct J9ModronThreadLocalHeap {
 	U_8* heapBase;
 	U_8* realHeapAlloc;
+	U_8* realHeapTop;
 	UDATA objectFlags;
 	UDATA refreshSize;
 	void* memorySubSpace;
