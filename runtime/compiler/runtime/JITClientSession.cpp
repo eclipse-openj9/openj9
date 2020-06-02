@@ -115,7 +115,8 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will process a list of %zu unloaded classes for clientUID %llu", 
          compThreadID, numOfUnloadedClasses, (unsigned long long)_clientUID);
 
-   Trc_JITServerUnloadClasses(TR::compInfoPT->getCompilationThread(), compThreadID, (unsigned long long)numOfUnloadedClasses, (unsigned long long)_clientUID);
+   Trc_JITServerUnloadClasses(TR::compInfoPT->getCompilationThread(),
+         compThreadID, this, (unsigned long long)_clientUID, (unsigned long long)numOfUnloadedClasses);
    
    if (numOfUnloadedClasses > 0)
       writeAcquireClassUnloadRWMutex(); //TODO: use RAII style to avoid problems with exceptions
