@@ -23,6 +23,7 @@
 #include "JITServerPersistentCHTable.hpp"
 #include "compile/Compilation.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "env/ut_j9jit.h"
 #include "net/ServerStream.hpp"
 #include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
 #include "control/CompilationThread.hpp"       // for TR::compInfoPT
@@ -51,10 +52,19 @@ JITServerPersistentCHTable::initializeCHTable(TR_J9VMBase *fej9, const std::stri
       auto& data = getData();
       if (data.empty()) // check again to prevent races
          {
+         Trc_JITServerInitCHTable(TR::compInfoPT->getCompilationThread(), TR::compInfoPT->getCompThreadId(),
+            TR::compInfoPT->getClientData(), (unsigned long long)TR::compInfoPT->getClientData()->getClientUID(),
+            (unsigned long long)infos.size());
          for (auto clazz : infos)
             data.insert({ clazz->getClassId(), clazz });
          CHTABLE_UPDATE_COUNTER(_numClassesUpdated, infos.size());
          return true;
+         }
+      else
+         {
+         Trc_JITServerAbortInitCHTable(TR::compInfoPT->getCompilationThread(), TR::compInfoPT->getCompThreadId(),
+            TR::compInfoPT->getClientData(), (unsigned long long)TR::compInfoPT->getClientData()->getClientUID(),
+            (unsigned long long)data.size(), (unsigned long long)infos.size());
          }
       }
    return false;
@@ -64,6 +74,12 @@ void
 JITServerPersistentCHTable::doUpdate(TR_J9VMBase *fej9, const std::string &removeStr, const std::string &modifyStr)
    {
    TR::ClassTableCriticalSection doUpdate(fej9);
+
+   Trc_JITServerDoCHTableUpdate(TR::compInfoPT->getCompilationThread(), TR::compInfoPT->getCompThreadId(),
+         TR::compInfoPT->getClientData(), (unsigned long long)TR::compInfoPT->getClientData()->getClientUID(),
+         (unsigned long long)modifyStr.size(), (unsigned long long)removeStr.size());
+
+   // TODO: add check if (!data.empty())
    if (!modifyStr.empty())
       commitModifications(modifyStr);
    if (!removeStr.empty())

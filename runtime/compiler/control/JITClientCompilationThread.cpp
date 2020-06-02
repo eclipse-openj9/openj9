@@ -2934,9 +2934,10 @@ remoteCompilationEnd(
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                                           "JITServer Relocation failure: %d",
+                                           "JITClient: Relocation failure: %d",
                                            compInfoPT->reloRuntime()->returnCode());
             }
+         Trc_JITServerRelocationFailure(vmThread, compInfoPT->reloRuntime()->returnCode());
          // Relocation failed, fail compilation
          entry->_compErrCode = compInfoPT->reloRuntime()->returnCode();
          comp->failCompilation<J9::AOTRelocationFailed>("Failed to relocate");
@@ -2974,11 +2975,14 @@ remoteCompilationEnd(
             {
             TR_VerboseLog::writeLineLocked(
                TR_Vlog_JITServer,
-               "Applying JITServer remote AOT relocations to newly AOT compiled body for %s @ %s",
+               "JITClient: Applying remote AOT relocations to newly AOT compiled body for %s @ %s",
                comp->signature(),
                comp->getHotnessName()
                );
             }
+
+         Trc_JITServerApplyRemoteAOTRelocation(vmThread, comp->signature(), comp->getHotnessName());
+
          try
             {
             // Need to get a non-shared cache VM to relocate
@@ -3020,9 +3024,12 @@ remoteCompilationEnd(
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                {
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                                              "JITServer Relocation failure: %d",
+                                              "JITClient: AOT Relocation failure: %d",
                                               compInfoPT->reloRuntime()->returnCode());
                }
+
+            Trc_JITServerRelocationAOTFailure(vmThread, compInfoPT->reloRuntime()->returnCode());
+
             // Relocation failed, fail compilation
             // attempt to recompile in non-AOT mode
             entry->_doNotUseAotCodeFromSharedCache = true;
@@ -3366,8 +3373,9 @@ remoteCompile(
 #endif
                if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
                   {
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Failure while committing chtable for %s", compiler->signature());
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "JITClient: Failure while committing chtable for %s", compiler->signature());
                   }
+               Trc_JITServerCommitCHTableFailed(vmThread, compiler->signature());
                compiler->failCompilation<J9::CHTableCommitFailure>("CHTable commit failure");
                }
             }
