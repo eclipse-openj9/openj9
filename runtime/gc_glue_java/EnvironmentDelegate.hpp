@@ -178,6 +178,28 @@ public:
 	 * @return TRUE if inline TLH allocates currently enabled for this thread; FALSE otherwise
 	 */
 	bool isInlineTLHAllocateEnabled();
+
+	/**
+	 * Set TLH Sampling Top by hiding the real heap top address from
+	 * JIT/Interpreter in realHeapTop and setting HeapTop = (HeapAlloc + size) if size < (HeapTop - HeapAlloc)
+	 * so out of line allocate would happen at TLH Sampling Top.
+	 * If size >= (HeapTop - HeapAlloc) resetTLHSamplingTop()
+	 *
+	 * @param size the number of bytes to next sampling point
+	 */
+	void setTLHSamplingTop(uintptr_t size) {}
+
+	/**
+	 * Restore heapTop from realHeapTop if realHeapTop != NULL
+	 */
+	void resetTLHSamplingTop() {}
+
+	/**
+	 * Retrieve allocation size inside TLH Cache.
+	 * @return (heapAlloc - heapBase)
+	 */
+	uintptr_t getAllocatedSizeInsideTLH() { return 0; }
+
 #endif /* OMR_GC_THREAD_LOCAL_HEAP */
 
 	MM_EnvironmentDelegate()
