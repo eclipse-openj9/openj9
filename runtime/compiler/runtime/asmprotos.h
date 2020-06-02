@@ -86,6 +86,13 @@ JIT_HELPER(jitMonitorExit);  // asm calling-convention helper
 JIT_HELPER(jitNewArray);  // asm calling-convention helper
 JIT_HELPER(jitNewInstanceImplAccessCheck);  // asm calling-convention helper
 JIT_HELPER(jitNewObject);  // asm calling-convention helper
+JIT_HELPER(jitGetFlattenableField);  // asm calling-convention helper
+JIT_HELPER(jitWithFlattenableField);  // asm calling-convention helper
+JIT_HELPER(jitPutFlattenableField);  // asm calling-convention helper
+JIT_HELPER(jitGetFlattenableStaticField);  // asm calling-convention helper
+JIT_HELPER(jitPutFlattenableStaticField);  // asm calling-convention helper
+JIT_HELPER(jitLoadFlattenableArrayElement);  // asm calling-convention helper
+JIT_HELPER(jitStoreFlattenableArrayElement);  // asm calling-convention helper
 JIT_HELPER(jitAcmpHelper);  // asm calling-convention helper
 JIT_HELPER(jitNewValue);  // asm calling-convention helper
 JIT_HELPER(jitObjectHashCode);  // asm calling-convention helper

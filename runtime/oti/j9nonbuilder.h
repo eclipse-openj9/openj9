@@ -3594,6 +3594,13 @@ typedef struct J9JITConfig {
 	void *old_slow_jitNewInstanceImplAccessCheck;
 	void *old_slow_jitTranslateNewInstanceMethod;
 	void *old_slow_jitReportFinalFieldModified;
+	void *old_fast_jitGetFlattenableField;
+	void *old_fast_jitWithFlattenableField;
+	void *old_fast_jitPutFlattenableField;
+	void *old_fast_jitGetFlattenableStaticField;
+	void *old_fast_jitPutFlattenableStaticField;
+	void *old_fast_jitLoadFlattenableArrayElement;
+	void *old_fast_jitStoreFlattenableArrayElement;
 	void *old_fast_jitAcmpHelper;
 	void *fast_jitNewValue;
 	void *fast_jitNewValueNoZeroInit;

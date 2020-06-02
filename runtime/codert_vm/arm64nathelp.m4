@@ -284,6 +284,13 @@ SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportInstanceFieldWrite,3)
 SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportStaticFieldRead,1)
 SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportStaticFieldWrite,2)
 FAST_PATH_ONLY_HELPER(jitAcmpHelper,2)
+OLD_DUAL_MODE_HELPER(jitGetFlattenableField,2)
+OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE(jitWithFlattenableField,3)
+OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE(jitPutFlattenableField,3)
+OLD_DUAL_MODE_HELPER(jitGetFlattenableStaticField,2)
+OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE(jitPutFlattenableStaticField,3)
+OLD_DUAL_MODE_HELPER(jitLoadFlattenableArrayElement,2)
+OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE(jitStoreFlattenableArrayElement,3)
 
 dnl Trap handlers
 

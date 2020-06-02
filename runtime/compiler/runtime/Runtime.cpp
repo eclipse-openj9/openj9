@@ -1016,6 +1016,14 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_newValueNoZeroInit,        (void *)jitNewValueNoZeroInit, TR_CHelper);
    SET(TR_newArrayNoZeroInit,         (void *)jitNewArrayNoZeroInit,  TR_CHelper);
    SET(TR_aNewArrayNoZeroInit,        (void *)jitANewArrayNoZeroInit, TR_CHelper);
+
+   SET(TR_getFlattenableField,        (void *)jitGetFlattenableField, TR_CHelper);
+   SET(TR_withFlattenableField,        (void *)jitWithFlattenableField, TR_CHelper);
+   SET(TR_putFlattenableField,        (void *)jitPutFlattenableField, TR_CHelper);
+   SET(TR_getFlattenableStaticField,        (void *)jitGetFlattenableStaticField, TR_CHelper);
+   SET(TR_putFlattenableStaticField,        (void *)jitPutFlattenableStaticField, TR_CHelper);
+   SET(TR_ldFlattenableArrayElement,        (void *)jitLoadFlattenableArrayElement, TR_CHelper);
+   SET(TR_strFlattenableArrayElement,        (void *)jitStoreFlattenableArrayElement, TR_CHelper);
 #else
    SET(TR_newObject,                  (void *)jitNewObject,              TR_Helper);
    SET(TR_newValue,                  (void *)jitNewValue,              TR_Helper);
@@ -1026,6 +1034,14 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_newValueNoZeroInit,        (void *)jitNewValueNoZeroInit, TR_Helper);
    SET(TR_newArrayNoZeroInit,         (void *)jitNewArrayNoZeroInit,  TR_Helper);
    SET(TR_aNewArrayNoZeroInit,        (void *)jitANewArrayNoZeroInit, TR_Helper);
+
+   SET(TR_getFlattenableField,        (void *)jitGetFlattenableField, TR_Helper);
+   SET(TR_withFlattenableField,        (void *)jitWithFlattenableField, TR_Helper);
+   SET(TR_putFlattenableField,        (void *)jitPutFlattenableField, TR_Helper);
+   SET(TR_getFlattenableStaticField,        (void *)jitGetFlattenableStaticField, TR_Helper);
+   SET(TR_putFlattenableStaticField,        (void *)jitPutFlattenableStaticField, TR_Helper);
+   SET(TR_ldFlattenableArrayElement,        (void *)jitLoadFlattenableArrayElement, TR_Helper);
+   SET(TR_strFlattenableArrayElement,        (void *)jitStoreFlattenableArrayElement, TR_Helper);
 #endif
 
    SET(TR_acmpHelper,                  (void *)jitAcmpHelper, TR_Helper);
