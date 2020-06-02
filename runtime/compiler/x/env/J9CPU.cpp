@@ -63,12 +63,6 @@ CPU::getProcessorSignature()
    }
 
 bool
-CPU::testOSForSSESupport()
-   {
-   return true; // VM guarantees SSE/SSE2 are available
-   }
-
-bool
 CPU::hasPopulationCountInstruction()
    {
    if ((self()->getX86ProcessorFeatureFlags2() & TR_POPCNT) != 0x00000000)
