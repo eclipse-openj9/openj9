@@ -5539,7 +5539,7 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR
    generateLabelInstruction(cg, TR::InstOpCode::label, node, resLabel);
    generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpli, node, cndReg, monitorReg, 0);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, reserved_checkLabel, cndReg);
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, lwOffset & 0x0000FFFF);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, lwOffset);
    if (!isPrimitive)
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valReg, metaReg, LOCK_RESERVATION_BIT | LOCK_INC_DEC_VALUE);
    generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
