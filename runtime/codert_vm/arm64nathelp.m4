@@ -823,3 +823,26 @@ START_PROC(jitDecompileOnReturnL)
 	CALL_C_WITH_VMTHREAD(c_jitDecompileOnReturn)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitDecompileOnReturnL)
+
+dnl Expects x0 to already contain the vmThread.
+dnl Expects x1 to already contain the address being loaded from.
+START_PROC(jitSoftwareReadBarrier)
+ifdef({OMR_GC_CONCURRENT_SCAVENGER},{
+	SAVE_FPLR
+	SWITCH_TO_C_STACK
+	SAVE_C_VOLATILE_REGS
+
+	ldr x2,[J9VMTHREAD,{#}J9TR_VMThread_javaVM]
+	ldr x2,[x2,{#}J9TR_JavaVM_memoryManagerFunctions]
+	ldr x2,[x2,{#}J9TR_J9MemoryManagerFunctions_J9ReadBarrier]
+	blr x2
+
+	RESTORE_C_VOLATILE_REGS
+	RESTORE_FPLR
+	SWITCH_TO_JAVA_STACK
+	ret
+},{
+dnl jitSoftwareReadBarrier is not supported if OMR_GC_CONCURRENT_SCAVENGER is not set
+	hlt {#}0
+})
+END_PROC(jitSoftwareReadBarrier)
