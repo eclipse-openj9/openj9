@@ -6426,7 +6426,15 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                   int32_t arrayletLeafSize = TR::Compiler->om.arrayletLeafSize();
                   int32_t maxContiguousArrayletLeafSizeInBytes = arrayletLeafSize - TR::Compiler->om.sizeofReferenceAddress(); //need to add definition
                   int32_t maxArrayletSizeInElements = maxContiguousArrayletLeafSizeInBytes / elementSize;
-                  iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, enumReg, maxArrayletSizeInElements, iCursor);
+                  if (maxArrayletSizeInElements <= UPPER_IMMED)
+                     {
+                     iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, enumReg, maxArrayletSizeInElements, iCursor);
+                     }
+                  else
+                     {
+                     iCursor = loadConstant(cg, node, maxArrayletSizeInElements, temp1Reg, iCursor);
+                     iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, condReg, enumReg, temp1Reg, iCursor);
+                     }
                   static const char *p = feGetEnv("TR_TarokPreLeafSizeCheckVarBreak");
                   if (p)
                      generateInstruction(cg, TR::InstOpCode::bad, node);
