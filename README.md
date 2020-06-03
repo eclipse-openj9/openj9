@@ -94,6 +94,7 @@ What repos are part of the project?
 - https://github.com/eclipse/openj9-systemtest : OpenJ9-specific system tests
 - https://github.com/eclipse/openj9-website : OpenJ9 website repo
 - https://github.com/eclipse/openj9-docs : OpenJ9 documentation repo
+- https://github.com/eclipse/build-openj9 : OpenJ9 GitHub actions repo
 
 
 Where can I learn more?
