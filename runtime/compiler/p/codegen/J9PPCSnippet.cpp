@@ -412,7 +412,9 @@ static uint8_t* initializeCCPreLoadedPrefetch(uint8_t *buffer, void **CCPreLoade
       const uint32_t skipLines = TR::Options::_TLHPrefetchStaggeredLineCount > 0  ? TR::Options::_TLHPrefetchStaggeredLineCount : 4;
       helperSize = (linesToPrefetch + 1) / 2 * 4;
 
-      TR_ASSERT( skipLines * ppcCacheLineSize <= UPPER_IMMED, "Cache line size too big for immediate");
+      TR_ASSERT_FATAL( (skipLines + 1) * ppcCacheLineSize <= UPPER_IMMED, "tlhPrefetchStaggeredLineCount (%u) is too high. Will cause imm field to overflow.", skipLines);
+      TR_ASSERT_FATAL( restartAfterLines * ppcCacheLineSize <= UPPER_IMMED, "tlhPrefetchBoundaryLineCount (%u) is too high. Will cause imm field to overflow.", restartAfterLines);
+
       cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, n, r10, r8, skipLines * ppcCacheLineSize, cursor);
       cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, n, r11, r8, (skipLines + 1) * ppcCacheLineSize, cursor);
       cursor = generateMemInstruction(cg, TR::InstOpCode::dcbtst, n, new (cg->trHeapMemory()) TR::MemoryReference(NULL, r10, 4, cg), cursor);
@@ -441,6 +443,9 @@ static uint8_t* initializeCCPreLoadedPrefetch(uint8_t *buffer, void **CCPreLoade
       const uint32_t restartAfterLines = TR::Options::_TLHPrefetchBoundaryLineCount > 0 ?  TR::Options::_TLHPrefetchBoundaryLineCount : 4;
       const uint32_t skipLines = TR::Options::_TLHPrefetchStaggeredLineCount > 0  ? TR::Options::_TLHPrefetchStaggeredLineCount : 4;
       helperSize = 4 + (linesToLdPrefetch + 1) / 2 * 4 + 1 + (l3SkipLines ? 2 : 0) + (linesToStPrefetch + 1) / 2 * 4;
+
+      TR_ASSERT_FATAL( (skipLines + 1) * ppcCacheLineSize <= UPPER_IMMED, "tlhPrefetchStaggeredLineCount (%u) is too high. Will cause imm field to overflow.", skipLines);
+      TR_ASSERT_FATAL( restartAfterLines * ppcCacheLineSize <= UPPER_IMMED, "tlhPrefetchBoundaryLineCount (%u) is too high. Will cause imm field to overflow.", restartAfterLines);
 
       cursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, n, r10,
                                           new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, debugEventData3), TR::Compiler->om.sizeofReferenceAddress(), cg),
@@ -472,6 +477,7 @@ static uint8_t* initializeCCPreLoadedPrefetch(uint8_t *buffer, void **CCPreLoade
 
       if (l3SkipLines > 0)
          {
+         TR_ASSERT_FATAL( ppcCacheLineSize * l3SkipLines <= UPPER_IMMED, "TR_l3SkipLines (%u) is too high. Will cause imm field to overflow.", l3SkipLines);
          cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, n, r10, r10, ppcCacheLineSize * l3SkipLines, cursor);
          cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, n, r11, r11, ppcCacheLineSize * l3SkipLines, cursor);
          }
@@ -538,7 +544,9 @@ static uint8_t* initializeCCPreLoadedNonZeroPrefetch(uint8_t *buffer, void **CCP
       const uint32_t skipLines = TR::Options::_TLHPrefetchStaggeredLineCount > 0  ? TR::Options::_TLHPrefetchStaggeredLineCount : 4;
       helperSize = (linesToPrefetch + 1) / 2 * 4;
 
-      TR_ASSERT( skipLines * ppcCacheLineSize <= UPPER_IMMED,"Cache line size too big for immediate");
+      TR_ASSERT_FATAL( (skipLines + 1) * ppcCacheLineSize <= UPPER_IMMED, "tlhPrefetchStaggeredLineCount (%u) is too high. Will cause imm field to overflow.", skipLines);
+      TR_ASSERT_FATAL( restartAfterLines * ppcCacheLineSize <= UPPER_IMMED, "tlhPrefetchBoundaryLineCount (%u) is too high. Will cause imm field to overflow.", restartAfterLines);
+
       cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, n, r10, r8, skipLines * ppcCacheLineSize, cursor);
       cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, n, r11, r8, (skipLines + 1) * ppcCacheLineSize, cursor);
       cursor = generateMemInstruction(cg, TR::InstOpCode::dcbtst, n, new (cg->trHeapMemory()) TR::MemoryReference(NULL, r10, 4, cg), cursor);
@@ -567,6 +575,9 @@ static uint8_t* initializeCCPreLoadedNonZeroPrefetch(uint8_t *buffer, void **CCP
       const uint32_t restartAfterLines = TR::Options::_TLHPrefetchBoundaryLineCount > 0 ?  TR::Options::_TLHPrefetchBoundaryLineCount : 4;
       const uint32_t skipLines = TR::Options::_TLHPrefetchStaggeredLineCount > 0  ? TR::Options::_TLHPrefetchStaggeredLineCount : 4;
       helperSize = 4 + (linesToLdPrefetch + 1) / 2 * 4 + 1 + (l3SkipLines ? 2 : 0) + (linesToStPrefetch + 1) / 2 * 4;
+
+      TR_ASSERT_FATAL( (skipLines + 1) * ppcCacheLineSize <= UPPER_IMMED, "tlhPrefetchStaggeredLineCount (%u) is too high. Will cause imm field to overflow.", skipLines);
+      TR_ASSERT_FATAL( restartAfterLines * ppcCacheLineSize <= UPPER_IMMED, "tlhPrefetchBoundaryLineCount (%u) is too high. Will cause imm field to overflow.", restartAfterLines);
 
       cursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, n, r10,
                                           new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, debugEventData3), TR::Compiler->om.sizeofReferenceAddress(), cg),
@@ -598,6 +609,7 @@ static uint8_t* initializeCCPreLoadedNonZeroPrefetch(uint8_t *buffer, void **CCP
 
       if (l3SkipLines > 0)
          {
+         TR_ASSERT_FATAL( ppcCacheLineSize * l3SkipLines <= UPPER_IMMED, "TR_l3SkipLines (%u) is too high. Will cause imm field to overflow.", l3SkipLines);
          cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, n, r10, r10, ppcCacheLineSize * l3SkipLines, cursor);
          cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, n, r11, r11, ppcCacheLineSize * l3SkipLines, cursor);
          }
@@ -627,6 +639,7 @@ static uint8_t* initializeCCPreLoadedNonZeroPrefetch(uint8_t *buffer, void **CCP
 static TR::Instruction* genZeroInit(TR::CodeGenerator *cg, TR::Node *n, TR::Register *objStartReg, TR::Register *objEndReg, TR::Register *needsZeroInitCondReg,
                                    TR::Register *iterReg, TR::Register *zeroReg, TR::Register *condReg, uint32_t initOffset, TR::Instruction *cursor)
    {
+   TR_ASSERT_FATAL_WITH_NODE(n, initOffset <= UPPER_IMMED, "initOffset (%u) is too big to fit in a signed immediate field.", initOffset);
    // Generates 24 instructions (+6 if DEBUG)
 #if defined(DEBUG)
    // Fill the object with junk to make sure zero-init is working
@@ -730,8 +743,9 @@ static uint8_t* initializeCCPreLoadedWriteBarrier(uint8_t *buffer, void **CCPreL
    TR::Register *cr0 = cg->machine()->getRealRegister(TR::RealRegister::cr0);
    TR::Register *cr1 = cg->machine()->getRealRegister(TR::RealRegister::cr1);
 
-   TR_ASSERT((J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST <= UPPER_IMMED && J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST >= LOWER_IMMED) ||
+   TR_ASSERT_FATAL((J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST <= UPPER_IMMED && J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST >= LOWER_IMMED) ||
            (J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST & 0xffff) == 0, "Expecting J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST to fit in immediate field");
+   TR_ASSERT_FATAL( rememberedClassMask <= 0xFFFF, "Expecting rememberedClassMask (%u) to fit in an unsigned immediate field.", rememberedClassMask);
 
    const bool constHeapBase = !comp->getOptions()->isVariableHeapBaseForBarrierRange0();
    const bool constHeapSize = !comp->getOptions()->isVariableHeapSizeForBarrierRange0();
@@ -833,10 +847,12 @@ static uint8_t* initializeCCPreLoadedWriteBarrierAndCardMark(uint8_t *buffer, vo
    TR::Register *cr0 = cg->machine()->getRealRegister(TR::RealRegister::cr0);
    TR::Register *cr1 = cg->machine()->getRealRegister(TR::RealRegister::cr1);
 
-   TR_ASSERT((J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE <= UPPER_IMMED && J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE >= LOWER_IMMED) ||
+   TR_ASSERT_FATAL((J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE <= UPPER_IMMED && J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE >= LOWER_IMMED) ||
            (J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE & 0xffff) == 0, "Expecting J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE to fit in immediate field");
-   TR_ASSERT((J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST <= UPPER_IMMED && J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST >= LOWER_IMMED) ||
+   TR_ASSERT_FATAL((J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST <= UPPER_IMMED && J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST >= LOWER_IMMED) ||
            (J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST & 0xffff) == 0, "Expecting J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST to fit in immediate field");
+   TR_ASSERT_FATAL( cmActiveMask <= 0xFFFF, "Expecting cmActiveMask (%u) to fit in an unsigned immediate field.", cmActiveMask);
+   TR_ASSERT_FATAL( rememberedClassMask <= 0xFFFF, "Expecting rememberedClassMask (%u) to fit in an unsigned immediate field.", rememberedClassMask);
 
    const bool constHeapBase = !comp->getOptions()->isVariableHeapBaseForBarrierRange0();
    const bool constHeapSize = !comp->getOptions()->isVariableHeapSizeForBarrierRange0();
@@ -941,8 +957,9 @@ static uint8_t* initializeCCPreLoadedCardMark(uint8_t *buffer, void **CCPreLoade
    TR::Register *r11 = cg->machine()->getRealRegister(TR::RealRegister::gr11);
    TR::Register *cr0 = cg->machine()->getRealRegister(TR::RealRegister::cr0);
 
-   TR_ASSERT((J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE <= UPPER_IMMED && J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE >= LOWER_IMMED) ||
+   TR_ASSERT_FATAL((J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE <= UPPER_IMMED && J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE >= LOWER_IMMED) ||
                        (J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE & 0xffff) == 0, "Expecting J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE to fit in immediate field");
+   TR_ASSERT_FATAL( cmActiveMask <= 0xFFFF, "Expecting cmActiveMask (%u) to fit in an unsigned immediate field.", cmActiveMask);
 
    cursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, n, r5,
                                        new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(struct J9VMThread, heapBaseForBarrierRange0), TR::Compiler->om.sizeofReferenceAddress(), cg),
@@ -1055,7 +1072,7 @@ static uint8_t* initializeCCPreLoadedArrayStoreCHK(uint8_t *buffer, void **CCPre
                                        new (cg->trHeapMemory()) TR::MemoryReference(r7, offsetof(J9ROMClass, modifiers), 4, cg),
                                        cursor);
    cursor = generateShiftRightLogicalImmediate(cg, n, r7, r7, 1, cursor);
-   TR_ASSERT(!(((J9AccClassArray | J9AccInterface) >> 1) & ~0xffff),
+   TR_ASSERT_FATAL(!(((J9AccClassArray | J9AccInterface) >> 1) & ~0xffff),
            "Expecting shifted ROM class modifiers to fit in immediate");
    cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, n, r7, r7, cr0, (J9AccClassArray | J9AccInterface) >> 1, cursor);
    cursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, n, skipSuperclassTestLabel, cr0, cursor);
@@ -1063,7 +1080,7 @@ static uint8_t* initializeCCPreLoadedArrayStoreCHK(uint8_t *buffer, void **CCPre
    cursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, n, r7,
                                        new (cg->trHeapMemory()) TR::MemoryReference(r6, offsetof(J9Class, classDepthAndFlags), TR::Compiler->om.sizeofReferenceAddress(), cg),
                                        cursor);
-   TR_ASSERT(!(J9AccClassDepthMask & ~0xffff),
+   TR_ASSERT_FATAL(!(J9AccClassDepthMask & ~0xffff),
            "Expecting class depth mask to fit in immediate");
    cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, n, r7, r7, cr0, J9AccClassDepthMask, cursor);
    cursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, n, skipSuperclassTestLabel, cr0, cursor);
