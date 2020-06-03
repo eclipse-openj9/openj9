@@ -33,7 +33,7 @@ Build instructions are available for the following platforms:
 - [Linux :penguin:](#linux)
 - [AIX :blue_book:](#aix)
 - [Windows :ledger:](#windows)
-- [MacOS :apple:](#macos)
+- [macOS :apple:](#macOS)
 - [ARM :iphone:](#arm)
 - [AArch64](#aarch64)
 
@@ -536,28 +536,27 @@ JCL      - 7f27c537a8 based on jdk8u172-b11)
 
 ## macOS
 :apple:
-The following instructions guide you through the process of building a macOS **OpenJDK V8** binary that contains Eclipse OpenJ9. This process can be used to build binaries to run on macOSX 10.9.0 or later. This process is compatible only on MacOSX 10.10 (Yosemite) and 10.11 (El Capitan). The Xcode tools might not work on other MacOSX versions.
+The following instructions guide you through the process of building a macOS **OpenJDK V8** binary that contains Eclipse OpenJ9. This process can be used to build binaries to run on macOS 10.9.0 or later.
 
 ### 1. Prepare your system
 :apple:
 You must install a number of software dependencies to create a suitable build environment on your system:
 
-- [Xcode 4.6.3]( https://developer.apple.com/downloads) (requires an Apple account to log in): Download the \*.dmg file. From the **Downloads** directory, drag the Xcode.app icon into a new directory, `/Applications/Xcode4`. You must accept the license for Xcode to work. Switch to the active developer directory for Xcode4 by typing `sudo xcode-select -switch /Applications/Xcode4/Xcode.app` and accept the license by typing `sudo xcodebuild -license accept`.
-- [Xcode 7.2.1]( https://developer.apple.com/downloads) (requires an Apple account to log in): Download the \*.dmg file. From the **Downloads** directory, drag the Xcode.app icon into a new directory, `/Applications/Xcode7`. You must switch the active developer directory to Xcode7, by running `sudo xcode-select -switch /Applications/Xcode7/Xcode.app`. Accept the license by typing `sudo xcodebuild -license accept`.
-- [macOS OpenJDK 8](https://adoptopenjdk.net/archive.html?variant=openjdk8&jvmVariant=hotspot), which is used as the boot JDK.
+- [Xcode >= 11.4](https://developer.apple.com/download/more/) (requires an Apple account to log in).
+- [macOS OpenJDK 8](https://api.adoptopenjdk.net/v3/binary/latest/8/ga/mac/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 
-The following dependencies can be installed by using [Homebrew](https://brew.sh/):
+The following dependencies can be installed by using [Homebrew](https://brew.sh/) (the specified versions are minimums):
 
 - [autoconf 2.6.9](https://formulae.brew.sh/formula/autoconf)
 - [bash 4.4.23](https://formulae.brew.sh/formula/bash)
 - [binutils 2.32](https://formulae.brew.sh/formula/binutils)
+- [cmake 3.4](https://formulae.brew.sh/formula/cmake)
 - [freetype 2.9.1](https://formulae.brew.sh/formula/freetype)
 - [git 2.19.2](https://formulae.brew.sh/formula/git)
 - [gnu-tar 1.3](https://formulae.brew.sh/formula/gnu-tar)
-- [gnu-sed 4.5](https://formulae.brew.sh/formula/gnu-sed)
 - [nasm 2.13.03](https://formulae.brew.sh/formula/nasm)
 - [pkg-config 0.29.2](https://formulae.brew.sh/formula/pkg-config)
-- [wget 1.19.5 ](https://formulae.brew.sh/formula/wget)
+- [wget 1.19.5](https://formulae.brew.sh/formula/wget)
 
 [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) is also required, which can be obtained and installed with the following commands:
 
@@ -580,26 +579,6 @@ dscl . -change <USERNAME> UserShell <CURRENT_SHELL> /usr/local/bin/bash
 dscl . -read <USERNAME> UserShell
 ```
 
-Set the following environment variables:
-
-```
-export SED=/usr/local/bin/gsed
-export TAR=/usr/local/bin/gtar
-export MACOSX_DEPLOYMENT_TARGET=10.9.0
-export SDKPATH=/Applications/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk
-export JAVA_HOME=<PATH_TO_BOOT_JDK>
-```
-
-If your build system is on OSX10.10 (Yosemite) you must update line 143 (`typedef void (^dispatch_block_t)(void);`) in `/usr/include/dispatch/object.h` to include the following lines of code:
-
-```
-#ifdef __clang__
-typedef void (^dispatch_block_t)(void);
-#else
-typedef void* dispatch_block_t;
-#endif
-```
-
 ### 2. Get the source
 :apple:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches.
@@ -610,12 +589,12 @@ git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd ./openj9-openjdk-jdk8
+cd openj9-openjdk-jdk8
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
 ```
-bash ./get_source.sh
+bash get_source.sh
 ```
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v1.1.x available locally, you must obtain a prebuilt OpenSSL v1.1.x binary.
@@ -625,12 +604,13 @@ bash ./get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 
 ```
-bash ./configure \
+bash configure \
+    TAR=gtar \
+    --with-boot-jdk=<path_to_boot_JDK8> \
     --with-freemarker-jar=<PATH_TO_FREEMARKER_JAR> \
-    --with-xcode-path=/Applications/Xcode4/Xcode.app \
-    --with-openj9-cc=/Applications/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang \
-    --with-openj9-cxx=/Applications/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ \
-    --with-openj9-developer-dir=/Applications/Xcode7/Xcode.app/Contents/Developer
+    --with-freetype-include=/usr/local/include/freetype2 \
+    --with-freetype-lib=/usr/local/lib \
+    --with-toolchain-type=clang
 ```
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
@@ -651,19 +631,18 @@ If you want to specify `make` instead of `make all`, you must add `--default-mak
 
 Four Java builds are produced, which include two full developer kits (jdk) and two runtime environments (jre):
 
-- **build/macos-x86_64-normal-server-release/images/j2sdk-image**
-- **build/macos-x86_64-normal-server-release/images/j2re-image**
-- **build/macos-x86_64-normal-server-release/images/j2sdk-bundle**
-- **build/macos-x86_64-normal-server-release/images/j2re-bundle**
+- **build/macosx-x86_64-normal-server-release/images/j2sdk-image**
+- **build/macosx-x86_64-normal-server-release/images/j2re-image**
+- **build/macosx-x86_64-normal-server-release/images/j2sdk-bundle**
+- **build/macosx-x86_64-normal-server-release/images/j2re-bundle**
 
 :pencil:For running applications such as Eclipse, use the **-bundle** versions.
 
 ### 5. Test
 :apple:
-For a simple test, try running the `java -version` command.
-Change to the /j2re-image directory:
+For a simple test, try running the `java -version` command. Change to the j2re-image directory:
 ```
-cd build/macos-x86_64-normal-server-release/images/j2re-image
+cd build/macosx-x86_64-normal-server-release/images/j2re-image
 ```
 Run:
 ```
@@ -671,7 +650,6 @@ Run:
 ```
 
 Here is some sample output:
-
 ```
 openjdk version "1.8.0_192-internal"
 OpenJDK Runtime Environment (build 1.8.0_192-internal-jenkins_2018_10_17_11_24-b00)
