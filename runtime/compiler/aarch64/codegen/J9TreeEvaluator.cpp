@@ -128,7 +128,7 @@ static void wrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *
    // nullcheck store - skip write barrier if null being written in
    if (!srcNonNull)
       {
-      generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, srcReg, doneLabel, NULL);
+      generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, srcReg, doneLabel);
       }
    generateImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptr_t)wbRef->getMethodAddress(),
                                         new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t)0, 0, cg->trMemory()),
@@ -372,7 +372,7 @@ J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          {
          TR::Register *divisorReg = cg->evaluate(divisor);
          TR::InstOpCode::Mnemonic compareOp = is64Bit ? TR::InstOpCode::cbzx : TR::InstOpCode::cbzw;
-         gcPoint = generateCompareBranchInstruction(cg, compareOp, node, divisorReg, snippetLabel, NULL);
+         gcPoint = generateCompareBranchInstruction(cg, compareOp, node, divisorReg, snippetLabel);
          }
       gcPoint->ARM64NeedsGCMap(cg, 0xffffffff);
       snippet->gcMap().setGCRegisterMask(0xffffffff);
@@ -1103,11 +1103,11 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    op = fej9->generateCompressedLockWord() ? TR::InstOpCode::ldxrw : TR::InstOpCode::ldxrx;
    generateTrg1MemInstruction(cg, op, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
-   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, dataReg, incLabel, NULL);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, dataReg, incLabel);
 
    op = fej9->generateCompressedLockWord() ? TR::InstOpCode::stxrw : TR::InstOpCode::stxrx;
    generateTrg1MemSrc1Instruction(cg, op, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), metaReg);
-   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tempReg, loopLabel, NULL);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tempReg, loopLabel);
 
    generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF); // dmb SY
 
@@ -1722,7 +1722,7 @@ J9::ARM64::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, boo
    TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), NULL);
    cg->addSnippet(snippet);
    TR::Register *referenceReg = cg->evaluate(reference);
-   TR::Instruction *cbzInstruction = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, referenceReg, snippetLabel, NULL);
+   TR::Instruction *cbzInstruction = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, referenceReg, snippetLabel);
    cbzInstruction->setNeedsGCMap(0xffffffff);
    snippet->gcMap().setGCRegisterMask(0xffffffff);
 
