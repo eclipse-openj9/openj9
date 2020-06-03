@@ -573,7 +573,8 @@ static TR::Instruction *generatePrefetchAfterHeaderAccess(TR::Node              
    TR::Instruction *instr = NULL;
 
    static const char *prefetch = feGetEnv("TR_EnableSoftwarePrefetch");
-   if (prefetch && cg->comp()->getMethodHotness()>=scorching && cg->getX86ProcessorInfo().isIntelCore2())
+   TR_ASSERT_FATAL(cg->comp()->target().cpu.is(OMR_PROCESSOR_X86_INTELCORE2) == cg->getX86ProcessorInfo().isIntelCore2(), "isIntelCore2() failed\n");
+   if (prefetch && cg->comp()->getMethodHotness()>=scorching && cg->comp()->target().cpu.is(OMR_PROCESSOR_X86_INTELCORE2))
       {
       int32_t fieldOffset = 0;
       if (TR::TreeEvaluator::loadLookaheadAfterHeaderAccess(node, fieldOffset, cg))
@@ -4643,7 +4644,8 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          }
       }
 
-   if (cg->comp()->target().is64Bit() && cg->getX86ProcessorInfo().supportsHLE() && comp->getOption(TR_X86HLE))
+   TR_ASSERT_FATAL(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) == cg->getX86ProcessorInfo().supportsHLE(), "supportsHLE() failed\n");
+   if (cg->comp()->target().is64Bit() && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) && comp->getOption(TR_X86HLE))
       {
       TR::LabelSymbol *JITMonitorEntrySnippetLabel = generateLabelSymbol(cg);
       TR::TreeEvaluator::transactionalMemoryJITMonitorEntry(node, cg, startLabel, snippetLabel, JITMonitorEntrySnippetLabel, objectReg, lwOffset);
@@ -4698,13 +4700,15 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    if (cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord())
       {
       op = cg->comp()->target().isSMP() ? LCMPXCHG8MemReg : CMPXCHG8MemReg;
-      if (cg->getX86ProcessorInfo().supportsHLE() && comp->getOption(TR_X86HLE))
+      TR_ASSERT_FATAL(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) == cg->getX86ProcessorInfo().supportsHLE(), "supportsHLE() failed!\n");
+      if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) && comp->getOption(TR_X86HLE))
          op = cg->comp()->target().isSMP() ? XALCMPXCHG8MemReg : XACMPXCHG8MemReg;
       }
    else
       {
       op = cg->comp()->target().isSMP() ? LCMPXCHG4MemReg : CMPXCHG4MemReg;
-      if (cg->getX86ProcessorInfo().supportsHLE() && comp->getOption(TR_X86HLE))
+      TR_ASSERT_FATAL(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) == cg->getX86ProcessorInfo().supportsHLE(), "supportsHLE() failed!\n");
+      if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) && comp->getOption(TR_X86HLE))
          op = cg->comp()->target().isSMP() ? XALCMPXCHG4MemReg : XACMPXCHG4MemReg;
       }
 
@@ -5530,7 +5534,8 @@ TR::Register
 
    if (!node->isReadMonitor() && !reservingLock)
       {
-      if (cg->getX86ProcessorInfo().supportsHLE() && comp->getOption(TR_X86HLE))
+      TR_ASSERT_FATAL(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) == cg->getX86ProcessorInfo().supportsHLE(), "supportsHLE() failed!\n");
+      if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) && comp->getOption(TR_X86HLE))
          generateMemImmInstruction(XRSMemImm4(gen64BitInstr),
             node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
       else
@@ -9095,7 +9100,8 @@ static TR::Register* inlineStringHashCode(TR::Node* node, bool isCompressed, TR:
       generateRegMemInstruction(LEARegMem(), node, tmp, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, isCompressed ? MASKCOMPRESSED : MASKDECOMPRESSED), cg), cg);
 
       auto mr = generateX86MemoryReference(tmp, index, shift, 0, cg);
-      if (cg->getX86ProcessorInfo().supportsAVX())
+      TR_ASSERT_FATAL(cg->getX86ProcessorInfo().supportsAVX() == cg->comp()->target().cpu.supportsAVX(), "supportsAVX() failed\n");
+      if (cg->comp()->target().cpu.supportsAVX())
          {
          generateRegMemInstruction(PANDRegMem, node, hashXMM, mr, cg);
          }
@@ -9504,7 +9510,8 @@ inlineCompareAndSwapNative(
       }
    else
       {
-      if (!cg->getX86ProcessorInfo().supportsCMPXCHG8BInstruction())
+      TR_ASSERT_FATAL(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_CX8) == cg->getX86ProcessorInfo().supportsCMPXCHG8BInstruction(), "supportsCMPXCHG8BInstruction() failed\n");
+      if (!cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_CX8))
          return false;
 
       op = LCMPXCHG8BMem;
@@ -9925,7 +9932,8 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
 
          case TR::java_util_concurrent_atomic_Fences_orderAccesses:
             {
-            if (cg->getX86ProcessorInfo().supportsMFence())
+            TR_ASSERT_FATAL(cg->comp()->target().cpu.supportsMFence() == cg->getX86ProcessorInfo().supportsMFence(), "supportsMFence() failed\n");
+            if (cg->comp()->target().cpu.supportsMFence())
                {
                TR_X86OpCode fenceOp;
                fenceOp.setOpCodeValue(MFENCE);
@@ -9938,8 +9946,11 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
 
          case TR::java_util_concurrent_atomic_Fences_orderReads:
             {
-            if (cg->getX86ProcessorInfo().requiresLFENCE() &&
-                cg->getX86ProcessorInfo().supportsLFence())
+            TR_ASSERT_FATAL(cg->comp()->target().cpu.requiresLFence() == cg->getX86ProcessorInfo().requiresLFENCE(), "requiresLFence() failed\n");
+            TR_ASSERT_FATAL(cg->comp()->target().cpu.supportsLFence() == cg->getX86ProcessorInfo().supportsLFence(), "supportsLFence() failed\n");
+
+            if (cg->comp()->target().cpu.requiresLFence() &&
+                cg->comp()->target().cpu.supportsLFence())
                {
                TR_X86OpCode fenceOp;
                fenceOp.setOpCodeValue(LFENCE);
@@ -9952,7 +9963,9 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
 
          case TR::java_util_concurrent_atomic_Fences_orderWrites:
             {
-            if (cg->getX86ProcessorInfo().supportsSFence())
+            TR_ASSERT_FATAL(cg->comp()->target().cpu.supportsSFence() == cg->getX86ProcessorInfo().supportsSFence(), "supportsSFence() failed\n");
+            
+            if (cg->comp()->target().cpu.supportsSFence())
                {
                TR_X86OpCode fenceOp;
                fenceOp.setOpCodeValue(SFENCE);

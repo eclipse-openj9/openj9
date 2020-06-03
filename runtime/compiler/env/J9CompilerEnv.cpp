@@ -37,7 +37,6 @@ J9::CompilerEnv::CompilerEnv(J9JavaVM *vm, TR::RawAllocator raw, const TR::Persi
    {
    }
 
-
 void
 J9::CompilerEnv::initializeTargetEnvironment()
    {

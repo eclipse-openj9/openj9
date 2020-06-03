@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,7 +107,7 @@ class X86AllocPrefetchSnippet  : public TR::X86RestartSnippet
 
    static TR_X86AllocPrefetchGeometry generatePrefetchGeometry();
    template <TR::HeapTypes::Type HEAP_TYPE, bool is64Bit> static int32_t sizeOfSharedBody();
-   template <TR::HeapTypes::Type HEAP_TYPE, bool is64Bit> static uint8_t* emitSharedBody(uint8_t *, TR_X86ProcessorInfo &);
+   template <TR::HeapTypes::Type HEAP_TYPE, bool is64Bit> static uint8_t* emitSharedBody(uint8_t *, TR::Compilation*);
 
    friend void TR::createCCPreLoadedCode(uint8_t *CCPreLoadedCodeBase, uint8_t *CCPreLoadedCodeTop, void ** CCPreLoadedCodeTable, TR::CodeGenerator *cg);
    friend uint32_t TR::getCCPreLoadedCodeSize();
