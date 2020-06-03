@@ -6381,6 +6381,9 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
    
    int32_t snippetSizeInBytes = ((cacheCastClass ? 2 : 1) * maxOnsiteCacheSlots * sizeofJ9ClassFieldWithinReference) + (sizeofJ9ClassFieldWithinReference * (maxOnsiteCacheSlots != 1) * (cacheCastClass ? 2 : 1));
    TR::Register *dynamicCacheReg = NULL;
+   TR::Register *cachedObjectClass = NULL;
+   TR::Register *cachedCastClass = NULL;
+   TR::RegisterPair *cachedClassDataRegPair = NULL;
    
    if (generateDynamicCache)
       {
@@ -6408,9 +6411,6 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
       // For 64-Bit Non Compressedrefs JVM, we need to make sure that we are loading associated class data from the cache that appears quadwoerd concurrent as observed by other CPUs/
       // For that reason, We need to use LPQ/STPQ instruction which needs register pair.
       // In case of 64 bit compressedrefs or 31-Bit JVM, size of J9Class pointer takes 4 bytes only, so in loading associated class data from the cache we can use instruction for 8 byte load/store.
-      TR::Register *cachedObjectClass = NULL;
-      TR::Register *cachedCastClass = NULL;
-      TR::RegisterPair *cachedClassDataRegPair = NULL;
       if (cacheCastClass && isTarget64Bit && !isCompressedRef)
          {
          cachedObjectClass = cg->allocateRegister();
@@ -6514,20 +6514,15 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
    
    if (generateDynamicCache)
       {
-      TR::RegisterDependencyConditions *OOLConditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 7, cg);
-      TR::RegisterPair *storeClassDataRegPair = NULL;
+      TR::RegisterDependencyConditions *OOLConditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 9, cg);
       if (cacheCastClass && isTarget64Bit && !comp->useCompressedPointers())
          {
-         storeClassDataRegPair =  cg->allocateConsecutiveRegisterPair(castClassReg, objClassReg);
-         OOLConditions->addPostCondition(objClassReg, TR::RealRegister::LegalEvenOfPair);
-         OOLConditions->addPostCondition(castClassReg, TR::RealRegister::LegalOddOfPair);
-         OOLConditions->addPostCondition(storeClassDataRegPair, TR::RealRegister::EvenOddPair);
+         OOLConditions->addPostCondition(cachedObjectClass, TR::RealRegister::LegalEvenOfPair);
+         OOLConditions->addPostCondition(cachedCastClass, TR::RealRegister::LegalOddOfPair);
+         OOLConditions->addPostCondition(cachedClassDataRegPair, TR::RealRegister::EvenOddPair);
          }
-      else
-         {
-         OOLConditions->addPostCondition(objClassReg, TR::RealRegister::AssignAny);
-         OOLConditions->addPostCondition(castClassReg, TR::RealRegister::AssignAny);
-         }
+      OOLConditions->addPostCondition(objClassReg, TR::RealRegister::AssignAny);
+      OOLConditions->addPostCondition(castClassReg, TR::RealRegister::AssignAny);
       OOLConditions->addPostCondition(resultReg, TR::RealRegister::AssignAny);
       OOLConditions->addPostCondition(dynamicCacheReg, TR::RealRegister::AssignAny);
       
@@ -6559,7 +6554,9 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
          {
          if (isTarget64Bit && !isCompressedRef)
             {
-            generateRXInstruction(cg, TR::InstOpCode::STPQ, node, storeClassDataRegPair, updateMemRef);
+            generateRRInstruction(cg, TR::InstOpCode::LGR, node, cachedObjectClass, objClassReg);
+            generateRRInstruction(cg, TR::InstOpCode::LGR, node, cachedCastClass, castClassReg);
+            generateRXInstruction(cg, TR::InstOpCode::STPQ, node, cachedClassDataRegPair, updateMemRef);
             }
          else
             {
@@ -6595,8 +6592,6 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneCacheUpdateLabel, OOLConditions);
       doneCacheUpdateLabel->setEndInternalControlFlow();
       srm->reclaimScratchRegister(dynamicCacheReg);
-      if (storeClassDataRegPair != NULL)
-         cg->stopUsingRegister(storeClassDataRegPair);
       if (offsetRegister != NULL)
          cg->stopUsingRegister(offsetRegister);
       }
@@ -6931,7 +6926,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
       ++iter;
       }
 
-   TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(graDeps, 0, 7+srm->numAvailableRegisters(), cg);
+   TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(graDeps, 0, 8+srm->numAvailableRegisters(), cg);
    if (numSequencesRemaining > 0 && *iter == HelperCall)
       genInstanceOfDynamicCacheAndHelperCall(node, cg, castClassReg, objClassReg, resultReg, conditions, srm, doneLabel, callLabel, dynamicCacheTestLabel, branchLabel, trueLabel, falseLabel, dynamicCastClass, generateDynamicCache, cacheCastClass, ifInstanceOf, trueFallThrough);
 
@@ -6942,7 +6937,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
       }
 
    if (objClassReg)
-      conditions->addPostCondition(objClassReg, TR::RealRegister::AssignAny);
+      conditions->addPostConditionIfNotAlreadyInserted(objClassReg, TR::RealRegister::AssignAny);
    if (needResult)
       conditions->addPostCondition(resultReg, TR::RealRegister::AssignAny);
    conditions->addPostConditionIfNotAlreadyInserted(objectReg, TR::RealRegister::AssignAny);
