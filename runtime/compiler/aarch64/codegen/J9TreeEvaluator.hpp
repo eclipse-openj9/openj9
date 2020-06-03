@@ -51,6 +51,11 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
+   static TR::Register *irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *irdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *ardbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
    static TR::Register *DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *flushEvaluator(TR::Node *node, TR::CodeGenerator *cg);
