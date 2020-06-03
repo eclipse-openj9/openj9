@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2006, 2019 IBM Corp. and others
+  Copyright (c) 2006, 2020 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,6 @@
 		<flag id="gc_objectAccessBarrier" value="true"/>
 		<flag id="gc_realtime" value="true"/>
 		<flag id="gc_segregatedHeap" value="true"/>
-		<flag id="gc_staccato" value="true"/>
 		<flag id="gc_threadLocalHeap" value="true"/>
 		<flag id="gc_tiltedNewSpace" value="true"/>
 		<flag id="gc_useInlineAllocate" value="true"/>
@@ -62,7 +61,6 @@
 		<flag id="module_gc_check" value="true"/>
 		<flag id="module_gc_modron_standard" value="true"/>
 		<flag id="module_gc_realtime" value="true"/>
-		<flag id="module_gc_staccato" value="true"/>
 		<flag id="module_gc_trace" value="true"/>
 		<flag id="module_gcchk" value="true"/>
 		<flag id="opt_noClassloaders" value="false"/>
