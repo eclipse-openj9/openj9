@@ -33,7 +33,7 @@ Build instructions are available for the following platforms:
 - [Linux :penguin:](#linux)
 - [AIX :blue_book:](#aix)
 - [Windows :ledger:](#windows)
-- [macOS :apple:](#macos)
+- [macOS :apple:](#macOS)
 - [ARM :iphone:](#arm)
 - [AArch64](#aarch64)
 
@@ -491,21 +491,21 @@ The following instructions guide you through the process of building a macOS **O
 :apple:
 You must install a number of software dependencies to create a suitable build environment on your system:
 
-- [Xcode 9.4]( https://developer.apple.com/download/more/) (requires an Apple account to log in).
+- [Xcode >= 11.4](https://developer.apple.com/download/more/) (requires an Apple account to log in).
 - [macOS OpenJDK 14](https://api.adoptopenjdk.net/v3/binary/latest/14/ga/mac/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 
-The following dependencies can be installed by using [Homebrew](https://brew.sh/):
+The following dependencies can be installed by using [Homebrew](https://brew.sh/) (the specified versions are minimums):
 
 - [autoconf 2.6.9](https://formulae.brew.sh/formula/autoconf)
 - [bash 4.4.23](https://formulae.brew.sh/formula/bash)
 - [binutils 2.32](https://formulae.brew.sh/formula/binutils)
+- [cmake 3.4](https://formulae.brew.sh/formula/cmake)
 - [freetype 2.9.1](https://formulae.brew.sh/formula/freetype)
 - [git 2.19.2](https://formulae.brew.sh/formula/git)
 - [gnu-tar 1.3](https://formulae.brew.sh/formula/gnu-tar)
-- [gnu-sed 4.5](https://formulae.brew.sh/formula/gnu-sed)
 - [nasm 2.13.03](https://formulae.brew.sh/formula/nasm)
 - [pkg-config 0.29.2](https://formulae.brew.sh/formula/pkg-config)
-- [wget 1.19.5 ](https://formulae.brew.sh/formula/wget)
+- [wget 1.19.5](https://formulae.brew.sh/formula/wget)
 
 [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) is also required, which can be obtained and installed with the following commands:
 
@@ -516,7 +516,7 @@ tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
 rm -f freemarker.tgz
 ```
 
-Bash version 4 is required by the `./get_source.sh` script that you will use in step 2, which is installed to `/usr/local/bin/bash`. To prevent problems during the build process, make Bash v4 your default shell by typing the following commands:
+Bash version 4 is required by the `get_source.sh` script that you will use in step 2, which is installed to `/usr/local/bin/bash`. To prevent problems during the build process, make Bash v4 your default shell by typing the following commands:
 
 ```
 # Find the <CURRENT_SHELL> for <USERNAME>
@@ -527,13 +527,6 @@ dscl . -change <USERNAME> UserShell <CURRENT_SHELL> /usr/local/bin/bash
 
 # Verify that the shell has been changed
 dscl . -read <USERNAME> UserShell
-```
-
-Set the following environment variables:
-
-```
-export SED=/usr/local/bin/gsed
-export TAR=/usr/local/bin/gtar
 ```
 
 ### 2. Get the source
@@ -551,7 +544,7 @@ cd openj9-openjdk-jdk14
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
 ```
-bash ./get_source.sh
+bash get_source.sh
 ```
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v1.0.2 or v1.1.x available locally, you must obtain a prebuilt OpenSSL binary.
@@ -561,11 +554,11 @@ bash ./get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 
 ```
-bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
-               --with-boot-jdk=<path_to_boot_JDK14> \
-               --disable-warnings-as-errors
+bash configure \
+    --with-boot-jdk=<path_to_boot_JDK14> \
+    --with-freemarker-jar=/<my_home_dir>/freemarker.jar
 ```
-
+	
 :pencil: Modify the paths for freemarker and the macOS boot JDK that you installed in step 1. If `configure` is unable to detect Freetype, add the option `--with-freetype=<path to freetype>`, where `<path to freetype>` is typically `/usr/local/Cellar/freetype/2.9.1/`.
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
@@ -584,19 +577,18 @@ If you want to specify `make` instead of `make all`, you must add `--default-mak
 
 Two builds of OpenJDK with Eclipse OpenJ9 are built and stored in the following directories:
 
-- **build/macos-x86_64-server-release/images/jdk**
-- **build/macos-x86_64-server-release/images/jdk-bundle**
+- **build/macosx-x86_64-server-release/images/jdk**
+- **build/macosx-x86_64-server-release/images/jdk-bundle**
 
     :pencil: For running applications such as Eclipse, use the **-bundle** version.
 
-    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/macos-x86_64-server-release/images/jre** directory.
+    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/macosx-x86_64-server-release/images/jre** directory.
 
 ### 5. Test
 :apple:
-For a simple test, try running the `java -version` command.
-Change to the /jdk directory:
+For a simple test, try running the `java -version` command. Change to the jdk directory:
 ```
-cd build/macos-x86_64-server-release/images/jdk
+cd build/macosx-x86_64-server-release/images/jdk
 ```
 Run:
 ```
