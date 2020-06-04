@@ -640,8 +640,9 @@ J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator 
    TR::Node *firstChild = testNode->getFirstChild();
    TR::Register *src1Reg = cg->evaluate(firstChild);
    TR::Node *secondChild = testNode->getSecondChild();
+   TR::Register *src2Reg = cg->evaluate(secondChild);
 
-   TR_ASSERT(testNode->getOpCodeValue() == TR::lcmpeq && secondChild->getLongInt() == -1L, "asynccheck bad format");
+   TR_ASSERT(testNode->getOpCodeValue() == TR::lcmpeq, "asynccheck bad format");
 
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
@@ -649,7 +650,9 @@ J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator 
    TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, asynccheckHelper, doneLabel);
    cg->addSnippet(snippet);
 
-   generateCompareImmInstruction(cg, node, src1Reg, secondChild->getLongInt(), true); // 64-bit compare
+   // ToDo:
+   // Optimize this using "cmp (immediate)" instead of "cmp (register)" when possible
+   generateCompareInstruction(cg, node, src1Reg, src2Reg, true); // 64-bit compare
 
    TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_EQ);
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
@@ -918,13 +921,42 @@ static void
 genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *clazz, TR::Register *objectReg, TR::Register *classReg, TR::Register *tempReg1)
    {
    TR_ASSERT(clazz, "Cannot have a null OpaqueClassBlock\n");
+   TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(cg->fe());
+   TR::Compilation *comp = cg->comp();
    TR::Register * clzReg = classReg;
+   TR::Register *metaReg = cg->getMethodMetaDataRegister();
 
    // For newarray/anewarray, classReg holds the class pointer of array elements
    // Prepare valid class pointer for arrays
    if (node->getOpCodeValue() != TR::New)
       {
-      loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(clazz), tempReg1, NULL, true, TR_ClassPointer);
+      if (cg->needClassAndMethodPointerRelocations())
+         {
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            loadAddressConstantInSnippet(cg, node, reinterpret_cast<intptr_t>(clazz), tempReg1, TR_ClassPointer);
+            }
+         else
+            {
+            if (node->getOpCodeValue() == TR::newarray)
+               {
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tempReg1,
+                  new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, javaVM), cg));
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tempReg1,
+                  new (cg->trHeapMemory()) TR::MemoryReference(tempReg1,
+                     fej9->getPrimitiveArrayOffsetInJavaVM(node->getSecondChild()->getInt()), cg));
+               }
+            else
+               {
+               generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tempReg1,
+                  new (cg->trHeapMemory()) TR::MemoryReference(classReg, offsetof(J9Class, arrayClass), cg));
+               }
+            }
+         }
+      else
+         {
+         loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(clazz), tempReg1);
+         }
       clzReg = tempReg1;
       }
 
