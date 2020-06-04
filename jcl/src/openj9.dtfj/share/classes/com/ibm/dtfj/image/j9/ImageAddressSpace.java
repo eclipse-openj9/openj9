@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
  *******************************************************************************/
 package com.ibm.dtfj.image.j9;
 
+import java.nio.ByteOrder;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.Vector;
@@ -48,6 +49,12 @@ public class ImageAddressSpace implements com.ibm.dtfj.image.ImageAddressSpace
 	{
 		_shadow = memory;
 		_asid = asid;
+	}
+
+	@Override
+	public ByteOrder getByteOrder()
+	{
+		return _shadow.getByteOrder();
 	}
 
 	/* (non-Javadoc)

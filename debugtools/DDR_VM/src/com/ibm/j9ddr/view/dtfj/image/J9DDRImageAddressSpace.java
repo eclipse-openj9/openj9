@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,7 @@
  *******************************************************************************/
 package com.ibm.j9ddr.view.dtfj.image;
 
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -48,6 +49,11 @@ public class J9DDRImageAddressSpace implements ImageAddressSpace {
 	
 	public IAddressSpace getIAddressSpace() {
 		return as;
+	}
+
+	@Override
+	public ByteOrder getByteOrder() {
+		return as.getByteOrder();
 	}
 	
 	public J9DDRImageProcess getCurrentProcess() {

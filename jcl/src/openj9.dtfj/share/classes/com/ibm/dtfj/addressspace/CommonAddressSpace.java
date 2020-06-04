@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,8 @@
  *******************************************************************************/
 package com.ibm.dtfj.addressspace;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -54,11 +56,10 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 	
 	private static MemoryRange[] _sortRanges(MemoryRange[] ranges)
 	{
-		Arrays.sort(ranges, new Comparator(){
-			public int compare(Object arg0, Object arg1)
+		Arrays.sort(ranges, new Comparator<MemoryRange>() {
+			@Override
+			public int compare(MemoryRange one, MemoryRange two)
 			{
-				MemoryRange one = (MemoryRange)arg0;
-				MemoryRange two = (MemoryRange)arg1;
 				return compareAddress(one.getAsid(), one.getVirtualAddress(), two.getAsid(), two.getVirtualAddress()); 
 			}
 		});
@@ -101,7 +102,7 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 	{
 		return Arrays.asList(_translations).iterator();
 	}
-	
+
 	protected MemoryRange _residentRange(int asid, long address) throws MemoryAccessException
 	{
 		int range = findWhichMemoryRange(asid, address, _translations, _lastTranslationUsed, true);
@@ -263,11 +264,17 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 		return rc;
 	}
 
+	@Override
+	public ByteOrder getByteOrder() {
+		return _isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN;
+	}
+
+	@Override
 	public byte[] getMemoryBytes(long vaddr, int size)
 	{
 		return getMemoryBytes(lastAsid, vaddr, size);
 	}
-		
+
 	public byte[] getMemoryBytes(int asid, long vaddr, int size)
 	{
 		// CMVC 125071 - jextract failing with OOM error
@@ -389,99 +396,77 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.addressspace.IAbstractAddressSpace#getLongAt(int, long)
 	 */
+	@Override
 	public long getLongAt(int asid, long address) throws MemoryAccessException
 	{
-		//allocate 8 bytes, do the read, then byte-swap if little endian
 		byte buffer[] = new byte[8];
 		getBytesAt(asid, address, buffer);
-		_byteSwap(buffer);
-		//by this point, the buffer is in big endian
-		return    (0xFF00000000000000L & (((long) buffer[0]) << 56))
-				| (0x00FF000000000000L & (((long) buffer[1]) << 48)) 
-				| (0x0000FF0000000000L & (((long) buffer[2]) << 40)) 
-				| (0x000000FF00000000L & (((long) buffer[3]) << 32)) 
-				| (0x00000000FF000000L & (((long) buffer[4]) << 24)) 
-				| (0x0000000000FF0000L & (((long) buffer[5]) << 16)) 
-				| (0x000000000000FF00L & (((long) buffer[6]) << 8)) 
-				| (0x00000000000000FFL & (buffer[7]));
+		return ByteBuffer.wrap(buffer).order(getByteOrder()).getLong();
 	}
 
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.addressspace.IAbstractAddressSpace#getIntAt(int, long)
 	 */
+	@Override
 	public int getIntAt(int asid, long address) throws MemoryAccessException
 	{
-		//allocate 4 bytes, do the read, then byte-swap if little endian
 		byte buffer[] = new byte[4];
 		getBytesAt(asid, address, buffer);
-		_byteSwap(buffer);
-		//by this point, the buffer is in big endian
-		return ((0xFF & buffer[0]) << 24) | ((0xFF & buffer[1]) << 16) | ((0xFF & buffer[2]) << 8) | (0xFF & buffer[3]);
+		return ByteBuffer.wrap(buffer).order(getByteOrder()).getInt();
 	}
 
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.addressspace.IAbstractAddressSpace#getShortAt(int, long)
 	 */
-	public short getShortAt(int asid, long address)
-			throws MemoryAccessException
+	@Override
+	public short getShortAt(int asid, long address) throws MemoryAccessException
 	{
-		//allocate 2 bytes, do the read, then byte-swap if little endian
 		byte buffer[] = new byte[2];
 		getBytesAt(asid, address, buffer);
-		_byteSwap(buffer);
-		//by this point, the buffer is in big endian
-		return (short)(((0xFF & buffer[0]) << 8) | (0xFF & buffer[1]));
+		return ByteBuffer.wrap(buffer).order(getByteOrder()).getShort();
 	}
 
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.addressspace.IAbstractAddressSpace#getByteAt(int, long)
 	 */
+	@Override
 	public byte getByteAt(int asid, long address) throws MemoryAccessException
 	{
-		//allocate 1 byte
 		byte buffer[] = new byte[1];
 		getBytesAt(asid, address, buffer);
-		//by this point, the buffer is in big endian
 		return buffer[0];
 	}
-	
-	private void _byteSwap(byte[] buffer)
-	{
-		if (_isLittleEndian) {
-			int halfLength = buffer.length / 2;
-			for (int x= 0; x <halfLength; x++) {
-				byte temp = buffer[buffer.length - 1 -x];
-				buffer[buffer.length - 1 -x] = buffer[x];
-				buffer[x] = temp;
-			}
-		}
-	}
 
+	@Override
 	public long getPointerAt(int asid, long address) throws MemoryAccessException
 	{
-		long ptr = 0;
-		
+		long ptr;
 		if (bytesPerPointer(asid) == 8) {
 			ptr = getLongAt(asid, address);
 		} else {
-			ptr = (0xFFFFFFFFL & getIntAt(asid, address));
+			ptr = getIntAt(asid, address) & 0xFFFFFFFFL;
 		}
 		return ptr;
 	}
-	
+
+	@Override
 	public abstract int getBytesAt(int asid, long address, byte[] buffer) throws MemoryAccessException;
 
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.addressspace.IAbstractAddressSpace#bytesPerPointer()
 	 */
+	@Override
 	public int bytesPerPointer(int asid)
 	{
-		// No 64-bit addresses
-		if (!_is64Bit || _is64BitAsid == null) return 4;
-		// Search the list of 64-bit ASIDs
-		for (int i = 0; i < _is64BitAsid.length; ++i) {
-			if (_is64BitAsid[i] == asid) return 8;
+		if (_is64Bit && _is64BitAsid != null) {
+			// Search the list of 64-bit ASIDs
+			for (int i = 0; i < _is64BitAsid.length; ++i) {
+				if (_is64BitAsid[i] == asid) {
+					return 8;
+				}
+			}
 		}
 		return 4;
 	}
+
 }
