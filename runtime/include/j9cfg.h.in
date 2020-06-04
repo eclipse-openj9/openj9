@@ -118,7 +118,6 @@ extern "C" {
 #cmakedefine J9VM_GC_FRAGMENTED_HEAP
 #cmakedefine J9VM_GC_GENERATIONAL
 #cmakedefine J9VM_GC_HEAP_CARD_TABLE
-#cmakedefine J9VM_GC_IDLE_HEAP_MANAGER
 #cmakedefine J9VM_GC_INLINED_ALLOC_FIELDS
 #cmakedefine J9VM_GC_JNI_ARRAY_CACHE
 #cmakedefine J9VM_GC_LARGE_OBJECT_AREA

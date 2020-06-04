@@ -137,7 +137,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="env_littleEndian" value="true"/>
 		<flag id="gc_batchClearTLH" value="true"/>
 		<flag id="gc_debugAsserts" value="true"/>
-		<flag id="gc_idleHeapManager" value="true"/>
 		<flag id="gc_inlinedAllocFields" value="true"/>
 		<flag id="gc_minimumObjectSize" value="true"/>
 		<flag id="gc_tlhPrefetchFTA" value="true"/>

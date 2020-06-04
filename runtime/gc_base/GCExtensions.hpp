@@ -69,7 +69,7 @@ class GC_FinalizeListManager;
 class MM_ReferenceObjectList;
 #endif /* J9VM_GC_REALTIME */
 
-#if defined(J9VM_GC_IDLE_HEAP_MANAGER)
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
 class MM_IdleGCManager;
 #endif
 
@@ -180,7 +180,7 @@ public:
 
 	bool _HeapManagementMXBeanBackCompatibilityEnabled;
 
-#if defined(J9VM_GC_IDLE_HEAP_MANAGER)
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
 	MM_IdleGCManager* idleGCManager; /**< Manager which registers for VM Runtime State notification & manages free heap on notification */
 #endif
 
@@ -312,7 +312,7 @@ public:
 		, _asyncCallbackKey(-1)
 		, _TLHAsyncCallbackKey(-1)
 		, _HeapManagementMXBeanBackCompatibilityEnabled(false)
-#if defined(J9VM_GC_IDLE_HEAP_MANAGER)
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
 		, idleGCManager(NULL)
 #endif
 		, maxRAMPercent(0.0) /* this would get overwritten by user specified value */
