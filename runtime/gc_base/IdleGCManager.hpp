@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@
 #define IDLERESOURCEMANAGERHPP_
 #include "j9.h"
 #include "j9cfg.h"
-#if defined(J9VM_GC_IDLE_HEAP_MANAGER)
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
 #include "BaseNonVirtual.hpp"
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
@@ -90,5 +90,5 @@ public:
 		_typeId = __FUNCTION__;
 	}
 };
-#endif /* defined(J9VM_GC_IDLE_HEAP_MANAGER) */
+#endif /* defined(OMR_GC_IDLE_HEAP_MANAGER) */
 #endif /* IDLERESOURCEMANAGERHPP_ */

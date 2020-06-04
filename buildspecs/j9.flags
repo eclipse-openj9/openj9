@@ -424,14 +424,6 @@ all data is stored in their own region. It additionaly reduces footprint, mainly
 			<require flag="gc_modronGC"/>
 		</requires>
 	</flag>
-	<flag id="gc_idleHeapManager">
-		<description>Enable VM idle java heap management(decommit excess free java heap pages)</description>
-		<ifRemoved>GC on VM idle not supported</ifRemoved>
-		<requires>
-			<require flag="gc_modronGC"/>
-			<require flag="gc_generational"/>
-		</requires>
-	</flag>
 	<flag id="gc_inlinedAllocFields">
 		<description>Inlined allocation fields</description>
 		<ifRemoved>Inlined allocation fields not supported</ifRemoved>

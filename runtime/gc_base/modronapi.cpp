@@ -723,7 +723,7 @@ j9gc_get_gc_cause(OMR_VMThread *omrVMthread)
 		case J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT :
 			ret = "a dump agent has requested compaction";
 			break;
-#if defined(J9VM_GC_IDLE_HEAP_MANAGER)
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
 		case J9MMCONSTANT_EXPLICIT_GC_IDLE_GC:
 			ret = "collect due to JVM becomes idle";
 			break;
