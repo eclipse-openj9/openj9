@@ -8635,8 +8635,7 @@ TR_J9SharedCacheVM::supportAllocationInlining(TR::Compilation *comp, TR::Node *n
 
    if ((comp->target().cpu.isX86() ||
         comp->target().cpu.isPower() ||
-        comp->target().cpu.isZ() ||
-        comp->target().cpu.isARM64()) &&
+        comp->target().cpu.isZ()) &&
        !comp->getOption(TR_DisableAllocationInlining))
       return true;
 
