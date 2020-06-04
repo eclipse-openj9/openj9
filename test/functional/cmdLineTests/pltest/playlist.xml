@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2016, 2019 IBM Corp. and others
+Copyright (c) 2016, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
-	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest $(_JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
+	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<!-- temporarily disable this test on windows; https://github.com/eclipse/openj9/issues/3212 -->
@@ -59,7 +59,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
-	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -exclude:j9sock $(_JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
+	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -exclude:j9sock $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>os.osx</platformRequirements>
@@ -89,7 +89,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
-	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -exclude:j9process $(_JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
+	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -exclude:j9process $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>os.aix</platformRequirements>
@@ -119,7 +119,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
-	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest $(_JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
+	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>os.zos,bits.31</platformRequirements>
@@ -181,7 +181,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
-	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:j9numcpus $(_JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
+	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:j9numcpus $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>os.win</platformRequirements>
@@ -214,7 +214,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	export myCPU=`grep Cpus_allowed_list /proc/self/status | sed -e $(SQ)s/[-,].*//;s/Cpus_allowed_list:[^0-9]*//$(SQ)`; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
-	-DEXE=$(Q)taskset -c $$myCPU $(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:j9numcpus -boundcpus:1 $(_JVM_OPTIONS)$(Q) -jar $(CMDLINETESTER_JAR) \
+	-DEXE=$(Q)taskset -c $$myCPU $(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:j9numcpus -boundcpus:1 $(JVM_OPTIONS)$(Q) -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)pltest_numcpus_bound.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
@@ -279,7 +279,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
-	-DEXE=$(SQ)execrset -c 1 -e $(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:j9numcpus -boundcpus:1 $(_JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) \
+	-DEXE=$(SQ)execrset -c 1 -e $(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:j9numcpus -boundcpus:1 $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)pltest_numcpus_bound.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
@@ -310,7 +310,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
-	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:j9hypervisor -hypervisor:vmware $(_JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) \
+	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:j9hypervisor -hypervisor:vmware $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
@@ -342,7 +342,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
-	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:j9hypervisor -hypervisor:kvm $(_JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) \
+	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:j9hypervisor -hypervisor:kvm $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
@@ -365,6 +365,35 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<subset>8</subset>
 			<subset>9</subset>
 			<subset>11+</subset>
+		</subsets>
+	</test>
+	<test>
+		<testCaseName>cmdLineTester_pltest_j9sig_ext</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
+	-DEXE=$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -inlcude:j9sig_extended $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
+	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>os.linux</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+		<subsets>
+			<subset>8+</subset>
 		</subsets>
 	</test>
 </playlist>
