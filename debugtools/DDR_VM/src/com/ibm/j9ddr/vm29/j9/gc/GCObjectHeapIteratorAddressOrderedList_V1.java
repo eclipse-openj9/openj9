@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,9 +75,9 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 						excludedRangeList.add(new U8Pointer[] {heapAlloc, heapTop});
 					} else {
 						/* Might be an instrumented VM */
-						U8Pointer realHeapAlloc = adjustedToRange(vmThread.allocateThreadLocalHeap().realHeapAlloc(), base, top);
-						if(realHeapAlloc.notNull() && isSomethingToAdd(realHeapAlloc, heapTop)) {
-							excludedRangeList.add(new U8Pointer[] {realHeapAlloc, heapTop});
+						U8Pointer realHeapTop = adjustedToRange(vmThread.allocateThreadLocalHeap().realHeapTop(), base, top);
+						if(realHeapTop.notNull() && isSomethingToAdd(heapAlloc, realHeapTop)) {
+							excludedRangeList.add(new U8Pointer[] {heapAlloc, realHeapTop});
 						}
 					}
 				}
@@ -91,9 +91,9 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 							excludedRangeList.add(new U8Pointer[] {heapAlloc, heapTop});
 						} else {
 							/* Might be an instrumented VM */
-							U8Pointer realHeapAlloc = adjustedToRange(vmThread.nonZeroAllocateThreadLocalHeap().realHeapAlloc(), base, top);
-							if(realHeapAlloc.notNull() && isSomethingToAdd(realHeapAlloc, heapTop)) {
-								excludedRangeList.add(new U8Pointer[] {realHeapAlloc, heapTop});
+							U8Pointer realHeapTop = adjustedToRange(vmThread.nonZeroAllocateThreadLocalHeap().realHeapTop(), base, top);
+							if(realHeapTop.notNull() && isSomethingToAdd(heapAlloc, realHeapTop)) {
+								excludedRangeList.add(new U8Pointer[] {heapAlloc, realHeapTop});
 							}
 						}
 					}
