@@ -233,10 +233,10 @@ void
 J9::KnownObjectTable::updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocationClient)
    {
    TR_ASSERT_FATAL(self()->comp()->isOutOfProcessCompilation(), "updateKnownObjectTableAtServer should only be called at the server");
-   TR_ASSERT(objectReferenceLocationClient, "objectReferenceLocationClient should not be NULL");
-
    if (index == TR::KnownObjectTable::UNKNOWN)
       return;
+
+   TR_ASSERT(objectReferenceLocationClient || (index == 0), "objectReferenceLocationClient should not be NULL (index=%d)", index);
 
    uint32_t nextIndex = self()->getEndIndex();
 
