@@ -1717,12 +1717,48 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	 * trying to load application native libraries that are linked against
 	 * libraries in /usr/lib we could fail to find those libraries if /usr/lib
 	 * is not on the LIBPATH.
-	 * */
-	addToLibpath("/usr/lib", FALSE);
+	 */
+	{
+		/* github #8504 shows tests fail if the libpath is modified
+		 * when creating a new process from Java.  The easy fix is to only
+		 * append to the libpath if /usr/lib isn't already present.
+		 * Example libpath:
+		 * LIBPATH=/jre/lib/ppc64/j9vm:/jre/lib/ppc64:/jre/lib/ppc64/jli:/jre/../lib/ppc64:/usr/lib
+		 */
+
+		const char *currentLibPath = getenv("LIBPATH");
+		BOOLEAN appendToLibPath = TRUE;
+		if (NULL != currentLibPath) {
+			const size_t currentLibPathLength = strlen(currentLibPath);
+			const char *usrLib = "/usr/lib";
+			const UDATA usrLibLength = LITERAL_STRLEN("/usr/lib");
+			const char *needle = strstr(currentLibPath, usrLib);
+			while (NULL != needle) {
+				/* Note, inside the loop we're guaranteed to have
+				 * usrLibLength of string to operate on so we can
+				 * always peek needle[usrLibLength] and will get
+				 * either a value or '\0'
+				 */
+				const ptrdiff_t offsetFromStart = needle - currentLibPath;
+				if ((0 == offsetFromStart) || (':' == needle[-1])) {
+					if  ((':' == needle[usrLibLength]) || ('\0' == needle[usrLibLength])) {
+						/* Found a match */
+						appendToLibPath = FALSE;
+						break;
+					}
+				}
+				needle = strstr(needle + usrLibLength, usrLib);
+			}
+		}
+		if (appendToLibPath) {
+			addToLibpath("/usr/lib", FALSE);
+		}
+	}
 	/* CMVC 135358.
 	 * This function modifies LIBPATH while dlopen()ing J9 shared libs.
-	 * Save the original so that it can be restored at the end of the
-	 * function.
+	 * Save the original, with appended /usr/lib so that it can be
+	 * restored at the end of the function.  Can't reuse the getenv
+	 * result from above.
 	 */
 	origLibpath = getenv("LIBPATH");
 #endif
