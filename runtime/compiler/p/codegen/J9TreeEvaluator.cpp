@@ -4272,7 +4272,7 @@ void genInstanceOfOrCheckCastHelperCall(TR::Node *node, TR::Register *objectReg,
    deps->stopUsingDepRegs(cg, 3, nodeRegs);
    }
 
-TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator2(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation                      *comp = cg->comp();
    TR_J9VMBase                          *fej9 = reinterpret_cast<TR_J9VMBase *>(comp->fe());
@@ -4430,7 +4430,7 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator2(TR::Node *node, TR
    return NULL;
    }
 
-TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator2(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation                      *comp = cg->comp();
    TR_OpaqueClassBlock                  *compileTimeGuessClass;
