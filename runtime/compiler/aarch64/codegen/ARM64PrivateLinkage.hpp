@@ -148,7 +148,7 @@ class PrivateLinkage : public J9::PrivateLinkage
     *
     * @return : the instruction cursor after the load sequence
     */
-   TR::Instruction *loadStackParametersToLinkageRegisters(TR::Instruction *cursor);
+   virtual TR::Instruction *loadStackParametersToLinkageRegisters(TR::Instruction *cursor);
 
    /**
     * @brief Stores parameters passed in linkage registers to the stack. This method is used only in FSD mode.
@@ -157,7 +157,7 @@ class PrivateLinkage : public J9::PrivateLinkage
     *
     * @return The instruction cursor after copies inserted.
     */
-   TR::Instruction *saveParametersToStack(TR::Instruction *cursor);
+   virtual TR::Instruction *saveParametersToStack(TR::Instruction *cursor);
 
    /**
     * @brief Builds method arguments
