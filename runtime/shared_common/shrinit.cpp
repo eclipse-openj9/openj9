@@ -3517,6 +3517,7 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 
 		config->getCacheSizeBytes = j9shr_getCacheSizeBytes;
 		config->getTotalUsableCacheBytes = j9shr_getTotalUsableCacheBytes;
+		config->getSharedClassCacheMode = j9shr_getSharedClassCacheMode;
 		config->getMinMaxBytes = j9shr_getMinMaxBytes;
 		config->setMinMaxBytes = j9shr_setMinMaxBytes;
 		config->increaseUnstoredBytes = j9shr_increaseUnstoredBytes;
@@ -3949,6 +3950,30 @@ j9shr_getCacheSizeBytes(J9JavaVM *vm)
 		ret = (U_32)j9shr_getTotalUsableCacheBytes(vm);
 	}
 
+	return ret;
+}
+
+/**
+ * Determine the type of shared class cache that is enabled. Either the current default (Bootstrap Classes Only), 
+ * or user defined shared cache, enabled via "-Xshareclasses" on the command line. 
+ * 
+ * @param [in] vm Pointer to the VM structure for the JVM
+ *
+ * @return J9SharedClassCacheMode enum that indicates the Shared Class Cache that is in effect
+ * 
+ */
+J9SharedClassCacheMode
+j9shr_getSharedClassCacheMode(J9JavaVM *vm)
+{
+	J9SharedClassCacheMode ret = J9SharedClassCacheBootstrapOnly;
+	/* Only bootstrap classes are shared by default */
+	if (J9_ARE_ALL_BITS_SET(vm->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHEBOOTCLASSES)) {
+		if (J9_ARE_ALL_BITS_SET(vm->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES)) {
+			ret = J9SharedClassCacheUserDefined;
+		} else {
+			ret = J9SharedClassCacheBootstrapOnly;
+		}
+	}
 	return ret;
 }
 

@@ -867,6 +867,12 @@ typedef struct J9CudaGlobals {
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 
+typedef enum J9SharedClassCacheMode {
+	J9SharedClassCacheBootstrapOnly,
+	J9SharedClassCacheBoostrapAndExtension,
+	J9SharedClassCacheUserDefined
+} J9SharedClassCacheMode;
+
 typedef struct J9SharedClassTransaction {
 	struct J9VMThread* ownerThread;
 	struct J9ClassLoader* classloader;
@@ -1227,6 +1233,7 @@ typedef struct J9SharedClassConfig {
 	const char* ctrlDirName;
 	UDATA  ( *getCacheSizeBytes)(struct J9JavaVM* vm) ;
 	UDATA  ( *getTotalUsableCacheBytes)(struct J9JavaVM* vm);
+	J9SharedClassCacheMode ( *getSharedClassCacheMode)(struct J9JavaVM* vm);
 	void  ( *getMinMaxBytes)(struct J9JavaVM* vm, U_32 *softmx, I_32 *minAOT, I_32 *maxAOT, I_32 *minJIT, I_32 *maxJIT);
 	I_32  ( *setMinMaxBytes)(struct J9JavaVM* vm, U_32 softmx, I_32 minAOT, I_32 maxAOT, I_32 minJIT, I_32 maxJIT);
 	void (* increaseUnstoredBytes)(struct J9JavaVM *vm, U_32 aotBytes, U_32 jitBytes);
