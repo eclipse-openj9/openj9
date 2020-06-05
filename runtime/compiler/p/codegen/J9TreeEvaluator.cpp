@@ -2488,7 +2488,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node,
       {
       gcPoint = generateLabelInstruction(cg, TR::InstOpCode::bl, node, snippetLabel);
       }
-   else if (firstChild->getOpCode().isLoadConst() && firstChild->getInt() <= UPPER_IMMED && firstChild->getRegister() == NULL)
+   else if (firstChild->getOpCode().isLoadConst() && firstChild->getInt() >= LOWER_IMMED && firstChild->getInt() <= UPPER_IMMED && firstChild->getRegister() == NULL)
       {
       TR::Register *copyIndexReg = cg->evaluate(secondChild);
       if (noTrap)
@@ -2507,7 +2507,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node,
    else
       {
       TR::Register *boundReg = cg->evaluate(firstChild);
-      if (secondChild->getOpCode().isLoadConst() && secondChild->getInt() <= UPPER_IMMED)
+      if (secondChild->getOpCode().isLoadConst() && secondChild->getInt() >= LOWER_IMMED && secondChild->getInt() <= UPPER_IMMED)
          {
          if (noTrap)
             {
