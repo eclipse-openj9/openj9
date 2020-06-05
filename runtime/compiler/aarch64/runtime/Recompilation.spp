@@ -20,6 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "jilconsts.inc"
+
 	.file "Recompilation.s"
 
 	.globl	_countingRecompileMethod
@@ -30,8 +32,21 @@
 	.globl	_revertToInterpreterGlue
 	.globl	_initialInvokeExactThunkGlue
 
-	.extern	initialInvokeExactThunk_unwrapper
 	.extern	jitCallCFunction
+	.extern	jitRetranslateMethod // in cnathelp.cpp
+	.extern	mcc_callPointPatching_unwrapper // in J9CodeCache.cpp
+	.extern	arm64IndirectCallPatching_unwrapper // in Recomp.cpp
+	.extern	induceRecompilation_unwrapper // in JitRuntime.cpp
+	.extern	initialInvokeExactThunk_unwrapper // in JitRuntime.cpp
+
+	.set	J9TR_CountingLR_BodyInfo, 0
+	.set	J9TR_CountingLR_StartPC, 8
+	.set	J9TR_CountingPrologueSize, 40 // 10 instructions
+	.set	J9TR_SamplingLR_BodyInfo, 0
+	.set	J9TR_SamplingLR_StartPC, 16
+	.set	J9TR_BodyInfo_MethodInfo, 8
+	.set	J9TR_MethodInfo_J9Method, 0
+	.set	J9TR_InterpreterEntryOffset, -2 // always little endian
 
 #define J9VMTHREAD x19
 #define J9SP x20
@@ -39,20 +54,158 @@
 _countingRecompileMethod:
 	hlt	#0	// Not implemented yet
 
+// _samplingRecompileMethod
+//
+// Trash:	x10
+
+// method preprologue calls this
+//  0	mov	x8, lr
+//  4	bl	_samplingRecompileMethod
+//  8	.dword	jittedBodyInfo <-- LR points here
+// 16	.word	0 ; space for preserving original jitEntry instruction
+// 20	magic word
+// 24	startPC (entry from interpreter)
+
 _samplingRecompileMethod:
-	hlt	#0	// Not implemented yet
+	// on entry, x8 contains the saved LR, x9 may contain a vtable offset
+	// normal parameter registers also live
+	add	x10, x30, #J9TR_SamplingLR_StartPC	// interpreter entry prologue start address, J9TR_SamplingLR_StartPC = 16
+	str	x10, [J9SP, #-8]!			// save old startPC
+	stp	x8, x9, [J9SP, #-16]!			// preserve saved LR and vtable offset
+	stp	x1, x0, [J9SP, #-16]!			// preserve argument registers x0-x7, must be in this order
+	stp	x3, x2, [J9SP, #-16]!
+	stp	x5, x4, [J9SP, #-16]!
+	stp	x7, x6, [J9SP, #-16]!
+	ldr	x7, [x30, #J9TR_SamplingLR_BodyInfo]	// J9TR_SamplingLR_BodyInfo = 0
+	ldr	x7, [x7, #J9TR_BodyInfo_MethodInfo]	// fetch method info
+	ldr	x0, [x7, #J9TR_MethodInfo_J9Method]	// x0 is the rammethod (first arg to jitRetranslateMethod)
+	ldr	x7, const_jitRetranslateMethod		// load helper address
+	mov	x1, x10					// old startPC is the second arg to jitRetranslateMethod
+	mov	x2, x8					// saved LR is the third arg to jitRetranslateMethod
+	blr	x7					// call jitRetranslateMethod
+	cbnz	x0, L_samplingGotNewAddress		// if return value is 0 then no recompilation was performed
+	ldr	x1, [J9SP, #80]				// fetch old startPC
+	ldurh	w2, [x1, #J9TR_InterpreterEntryOffset]	// fetch interpreter entry prologue size
+	add	x10, x1, w2, UXTH			// x10 = old startPC + interpreter entry prologue size
+	b	L_samplingRestoreAndDispatch
+L_samplingGotNewAddress:
+	ldurh	w1, [x0, #J9TR_InterpreterEntryOffset]	// fetch interpreter entry prologue size
+	add	x10, x0, w1, UXTH			// x10 = new startPC + interpreter entry prologue size
+L_samplingRestoreAndDispatch:
+	ldp	x7, x6, [J9SP], #16			// restore argument registers
+	ldp	x5, x4, [J9SP], #16
+	ldp	x3, x2, [J9SP], #16
+	ldp	x1, x0, [J9SP], #16
+	ldp	x30, x9, [J9SP], #24			// restore saved LR and vtable offset
+	br	x10
+
+	.align	3
+const_jitRetranslateMethod:
+	.dword	jitRetranslateMethod
 
 _countingPatchCallSite:
 	hlt	#0	// Not implemented yet
 
+// _samplingPatchCallSite
+
+// method preprologue calls this after patched by methodHasBeenRecompiled()
+//  0	mov	x8, lr
+//  4	bl	_samplingPatchCallSite  ; patched by methodHasBeenRecompiled()
+//  8	.dword	jittedBodyInfo <-- LR points here
+// 16	.word	0 ; space for preserving original jitEntry instruction
+// 20	magic word
+// 24	startPC (entry from interpreter)
+
 _samplingPatchCallSite:
-	hlt	#0	// Not implemented yet
+	// on entry, x8 contains the saved LR, x9 may contain a vtable offset
+	// normal parameter registers also live
+	stp	x0, x1, [J9SP, #-72]!			// save registers
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	str	x9, [J9SP, #64]
+	ldr	x2, [x30, #J9TR_SamplingLR_BodyInfo]
+	ldr	x3, [x2, #J9TR_BodyInfo_MethodInfo]	// fetch method info, first arg to commonPatchPoint
+
+	// HCR
+	ldr	x2, [x3, #J9TR_MethodInfo_J9Method]
+	ldr	x2, [x2, #J9TR_MethodPCStartOffset]
+	tst	x2, #J9TR_MethodNotCompiledBit
+	beq	L_commonPatchPoint
+	// method is not compiled
+	ldp	x0, x1, [J9SP], #16			// restore registers
+	ldp	x2, x3, [J9SP], #16
+	ldp	x4, x5, [J9SP], #16
+	ldp	x6, x7, [J9SP], #16
+	ldr	x9, [J9SP], #8				// restore vtable offset
+	b	_samplingRecompileMethod
+
+L_commonPatchPoint:
+	// on entry x3 = methodInfo, x8 = savedLR
+	// Trash: x10
+	ldr	x3, [x3, #J9TR_MethodInfo_J9Method]
+	ldr	x5, [x3, #J9TR_MethodPCStartOffset]	// new startPC
+	sub	x8, x8, 4
+	ldr	w1, [x8]				// instruction before the savedLR, the branch to the recompiled method
+	asr	w1, w1, #24
+	and	w1, w1, #0xFC
+	cmp	w1, #0x94				// check BL instruction (0x94000000 with imm26)
+	ldr	x0, const_mcc_callPointPatching_unwrapper
+	beq	L_directCallPatching
+	ldr	x0, const_arm64IndirectCallPatching_unwrapper
+L_directCallPatching:
+	str	x5, [J9SP, #-8]!			// push:	new startPC
+	str	x8, [J9SP, #-8]!			// 		call site
+	str	x3, [J9SP, #-8]!			// 		method
+	mov	x1, J9SP				// addr of the first arg for patchCallPoint
+	mov	x2, J9SP				// where to put the return value
+	ldurh	w10, [x5, #J9TR_InterpreterEntryOffset]	// fetch interpreter entry prologue size
+	add	x10, x5, w10, UXTH			// x10 = new jitEntry, preserved in jitCallCFunction
+	bl	jitCallCFunction
+	add	x30, x8, #4				// point to return address; x8 was decremented above to point to call site
+	add	J9SP, J9SP, #24				// pop args to jitCallCFunction off stack
+	ldp	x0, x1, [J9SP], #16			// restore registers
+	ldp	x2, x3, [J9SP], #16
+	ldp	x4, x5, [J9SP], #16
+	ldp	x6, x7, [J9SP], #16
+	ldr	x9, [J9SP], #8				// restore vtable offset
+	br	x10					// jump to the new jitEntry
+
+	.align	3
+const_mcc_callPointPatching_unwrapper:
+	.dword	mcc_callPointPatching_unwrapper
+const_arm64IndirectCallPatching_unwrapper:
+	.dword	arm64IndirectCallPatching_unwrapper
+
+// _induceRecompilation
 
 _induceRecompilation:
-	hlt	#0	// Not implemented yet
+	// on entry, x0 contains the startPC of the method to be recompiled
+	str	x0, [J9SP, #-24]!			// first argument is startPC in x0
+	str	J9VMTHREAD, [J9SP, #8]			// second argument is VMThread
+	str	x30, [J9SP, #16]			// save LR
+	ldr	x0, const_induceRecompilation_unwrapper
+	mov	x1, J9SP
+	movz	x2, #0					// result pointer (not used)
+	bl	jitCallCFunction
+	ldr	x30, [J9SP, #16]			// restore LR
+	add	J9SP, J9SP, #24
+	ret
+
+	.align	3
+const_induceRecompilation_unwrapper:
+	.dword	induceRecompilation_unwrapper
+
+// revertToInterpreterGlue
 
 _revertToInterpreterGlue:
-	hlt	#0	// Not implemented yet
+	// on entry, x8 contains the saved LR (see OMRCodeGenerator.cpp)
+	// current LR points to a data area to set up the interpreter call
+	// all parameters have been saved in the Java stack
+	ldr	x1, [x30, #8]		// x1 contains the helper address to jump to
+	ldr	x0, [x30]		// put ramMethod to the first argument
+	mov	x30, x8
+	br	x1
 
 // _initialInvokeExactThunkGlue
 //
@@ -66,10 +219,9 @@ _initialInvokeExactThunkGlue:
 	mov	x1, J9SP		// argument array
 	mov	x2, J9SP		// result pointer
 	bl	jitCallCFunction
-	ldr	x8, [J9SP]		// thunk address
-	ldp	x0, x1, [J9SP, #16]	// restore regs
-	ldp	x2, x30, [J9SP, #32]
-	add	J9SP, J9SP, #48
+	ldr	x8, [J9SP], #16		// thunk address
+	ldp	x0, x1, [J9SP], #16	// restore regs
+	ldp	x2, x30, [J9SP], #16
 	br	x8			// jump to thunk
 
 	.align	3
