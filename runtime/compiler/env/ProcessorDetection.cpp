@@ -269,6 +269,20 @@ TR_Processor mapJ9Processor(J9ProcessorArchitecture j9processor)
       case PROCESSOR_PPC_P9:
          tp = TR_PPCp9;
          break;
+      case PROCESSOR_PPC_P10:
+         // P10 support is not yet well-tested, so it's currently gated behind an environment
+         // variable to prevent it from being used by accident by users who use old versions of
+         // OpenJ9 once P10 chips become available.
+         if (jitConfig)
+            {
+            static bool enableP10 = feGetEnv("TR_EnableExperimentalPower10Support");
+            tp = enableP10 ? TR_PPCp10 : TR_PPCp9;
+            }
+         else
+            {
+            tp = TR_PPCp9;
+            }
+         break;
 
       case PROCESSOR_X86_UNKNOWN:
          tp = TR_DefaultX86Processor;
@@ -514,6 +528,10 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
 
          case TR_PPCp9:
             sourceString = "PPCp9";
+            break;
+
+         case TR_PPCp10:
+            sourceString = "PPCp10";
             break;
 
          case TR_PPCpulsar:
