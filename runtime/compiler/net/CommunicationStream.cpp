@@ -29,6 +29,9 @@
 namespace JITServer
 {
 uint32_t CommunicationStream::CONFIGURATION_FLAGS = 0;
+#ifdef MESSAGE_SIZE_STATS
+TR_Stats JITServer::CommunicationStream::collectMsgStat[];
+#endif
 
 void
 CommunicationStream::initConfigurationFlags()
@@ -73,6 +76,11 @@ CommunicationStream::readMessage(Message &msg)
 
    // rebuild the message
    msg.deserialize();
+
+   // collect message size
+#ifdef MESSAGE_SIZE_STATS
+   collectMsgStat[int(msg.type())].update(messageSize);
+#endif
    }
 
 void
