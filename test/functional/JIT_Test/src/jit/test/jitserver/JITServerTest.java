@@ -128,7 +128,11 @@ public class JITServerTest {
 
 		p.destroy();
 
-		Thread.sleep(PROCESS_DESTROY_WAIT_TIME_MS);
+		int waitCount = 0;
+		while (p.isAlive() && (waitCount <= 3)) {
+			Thread.sleep(PROCESS_DESTROY_WAIT_TIME_MS);
+			waitCount++;
+		}
 
 		final int exitValue = p.exitValue();
 

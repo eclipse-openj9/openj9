@@ -26,6 +26,9 @@
 #include "control/JITServerCompilationThread.hpp"
 #include "control/MethodToBeCompiled.hpp"
 #include "infra/CriticalSection.hpp"
+#include "infra/Statistics.hpp"
+#include "net/CommunicationStream.hpp"
+
 
 
 uint32_t     JITServerHelpers::serverMsgTypeCount[] = {};
@@ -123,12 +126,22 @@ JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig)
    int totalMsgCount = 0;	   
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    j9tty_printf(PORTLIB, "JITServer Message Type Statistics:\n");
-   j9tty_printf(PORTLIB, "Type# #called TypeName\n");
+   j9tty_printf(PORTLIB, "Type# #called");
+#ifdef MESSAGE_SIZE_STATS
+   j9tty_printf(PORTLIB, "\t\tMax\t\tMin\t\tMean\t\tStdDev\t\tSum");
+#endif
+   j9tty_printf(PORTLIB, "\t\tTypeName\n");
    for (int i = 0; i < JITServer::MessageType_ARRAYSIZE; ++i)
       {
       if (JITServerHelpers::serverMsgTypeCount[i] > 0)
          {
-         j9tty_printf(PORTLIB, "#%04d %7u %s\n", i, JITServerHelpers::serverMsgTypeCount[i], JITServer::messageNames[i]);
+         j9tty_printf(PORTLIB, "#%04d %7u", i, JITServerHelpers::serverMsgTypeCount[i]);
+#ifdef MESSAGE_SIZE_STATS            
+         j9tty_printf(PORTLIB, "\t%f\t%f\t%f\t%f\t%f", JITServer::CommunicationStream::collectMsgStat[i].maxVal(), 
+                     JITServer::CommunicationStream::collectMsgStat[i].minVal(), JITServer::CommunicationStream::collectMsgStat[i].mean(),
+                     JITServer::CommunicationStream::collectMsgStat[i].stddev(), JITServer::CommunicationStream::collectMsgStat[i].sum());
+#endif
+         j9tty_printf(PORTLIB, "\t\t%s\n", JITServer::messageNames[i]);
          totalMsgCount += JITServerHelpers::serverMsgTypeCount[i];
          }
       }
