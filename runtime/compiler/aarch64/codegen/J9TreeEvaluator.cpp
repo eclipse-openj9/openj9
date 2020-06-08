@@ -1067,7 +1067,6 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    if (!performTransformation(comp, "O^O <%3d> Inlining Allocation of %s [0x%p].\n", count++, node->getOpCode().getName(), node))
       return NULL;
 
-   TR::Instruction *firstInstruction = cg->getAppendInstruction();
 
    // 1. Evaluate children
    int32_t headerSize;
@@ -1107,6 +1106,7 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       classReg = cg->gprClobberEvaluate(secondChild);
       }
 
+   TR::Instruction *firstInstructionAfterClassAndLengthRegsAreReady = cg->getAppendInstruction();
    // 2. Calculate allocation size
    int32_t allocateSize = (objectSize + TR::Compiler->om.objectAlignmentInBytes() - 1) & (-TR::Compiler->om.objectAlignmentInBytes());
 
@@ -1151,7 +1151,7 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    // 9. Setup AOT relocation
    if (cg->comp()->compileRelocatableCode() && (opCode == TR::New || opCode == TR::anewarray))
       {
-      firstInstruction = firstInstruction->getNext();
+      TR::Instruction *firstInstruction = firstInstructionAfterClassAndLengthRegsAreReady->getNext();
       TR_OpaqueClassBlock *classToValidate = clazz;
 
       TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation *) comp->trMemory()->allocateMemory(sizeof(TR_RelocationRecordInformation), heapAlloc);
