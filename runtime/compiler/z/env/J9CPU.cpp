@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "control/Options.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/CPU.hpp"
 #include "infra/Assert.hpp"
@@ -383,26 +384,32 @@ J9::Z::CPU::initializeS390ProcessorFeatures()
       }
    }
 
-TR_ProcessorFeatureFlags
-J9::Z::CPU::getProcessorFeatureFlags()
-   {
-   TR_ProcessorFeatureFlags processorFeatureFlags = { {_flags.getValue()} };
-   return processorFeatureFlags;
-   }
-
 bool
-J9::Z::CPU::isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags)
+J9::Z::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    {
-   if (self()->id() < processorSignature)
+   if (!self()->isAtLeast(processorDescription.processor))
       {
       return false;
       }
-   for (int i = 0; i < PROCESSOR_FEATURES_SIZE; i++)
+   for (int i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
       {
       // Check to see if the current processor contains all the features that code cache's processor has
-      if ((processorFeatureFlags.featureFlags[i] & self()->getProcessorFeatureFlags().featureFlags[i]) != processorFeatureFlags.featureFlags[i])
+      if ((processorDescription.features[i] & self()->getProcessorDescription().features[i]) != processorDescription.features[i])
          return false;
       }
    return true;
+   }
+
+OMRProcessorDesc
+J9::Z::CPU::getProcessorDescription()
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_processorDescription;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   return _processorDescription;
    }
 

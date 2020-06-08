@@ -36,14 +36,8 @@
 // Without this definition, we get an undefined symbol of JITConfig::instance() at runtime
 TR::JitConfig * TR::JitConfig::instance() { return NULL; }
 
-namespace J9
-{
-
-namespace X86
-{
-
 TR_X86CPUIDBuffer *
-CPU::queryX86TargetCPUID()
+J9::X86::CPU::queryX86TargetCPUID()
    {
    static TR_X86CPUIDBuffer buf = { {'U','n','k','n','o','w','n','B','r','a','n','d'} };
    jitGetCPUID(&buf);
@@ -51,19 +45,19 @@ CPU::queryX86TargetCPUID()
    }
 
 const char *
-CPU::getProcessorVendorId()
+J9::X86::CPU::getProcessorVendorId()
    {
    return self()->getX86ProcessorVendorId();
    }
 
 uint32_t
-CPU::getProcessorSignature()
+J9::X86::CPU::getProcessorSignature()
    {
    return self()->getX86ProcessorSignature();
    }
 
 bool
-CPU::hasPopulationCountInstruction()
+J9::X86::CPU::hasPopulationCountInstruction()
    {
    if ((self()->getX86ProcessorFeatureFlags2() & TR_POPCNT) != 0x00000000)
       return true;
@@ -71,70 +65,69 @@ CPU::hasPopulationCountInstruction()
       return false;
    }
 
-TR_ProcessorFeatureFlags
-CPU::getProcessorFeatureFlags()
-   {
-#if defined(J9VM_OPT_JITSERVER)
-   if (auto stream = TR::CompilationInfo::getStream())
-      {
-      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-      return vmInfo->_processorFeatureFlags;
-      }
-#endif /* defined(J9VM_OPT_JITSERVER) */
-   TR_ProcessorFeatureFlags processorFeatureFlags = { {self()->getX86ProcessorFeatureFlags(), self()->getX86ProcessorFeatureFlags2(), self()->getX86ProcessorFeatureFlags8()} };
-   return processorFeatureFlags;
-   }
-
 bool
-CPU::isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags)
+J9::X86::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    {
-   for (int i = 0; i < PROCESSOR_FEATURES_SIZE; i++)
+   for (int i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
       {
       // Check to see if the current processor contains all the features that code cache's processor has
-      if ((processorFeatureFlags.featureFlags[i] & self()->getProcessorFeatureFlags().featureFlags[i]) != processorFeatureFlags.featureFlags[i])
+      if ((processorDescription.features[i] & self()->getProcessorDescription().features[i]) != processorDescription.features[i])
          return false;
       }
    return true;
    }
 
-uint32_t
-CPU::getX86ProcessorFeatureFlags()
+OMRProcessorDesc
+J9::X86::CPU::getProcessorDescription()
    {
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-      return vmInfo->_processorFeatureFlags.featureFlags[0];
+      return vmInfo->_processorDescription;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   return _processorDescription;
+   }
+
+uint32_t
+J9::X86::CPU::getX86ProcessorFeatureFlags()
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_processorDescription.features[0];
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    return self()->queryX86TargetCPUID()->_featureFlags;
    }
 
 uint32_t
-CPU::getX86ProcessorFeatureFlags2()
+J9::X86::CPU::getX86ProcessorFeatureFlags2()
    {
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-      return vmInfo->_processorFeatureFlags.featureFlags[1];
+      return vmInfo->_processorDescription.features[1];
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    return self()->queryX86TargetCPUID()->_featureFlags2;
    }
 
 uint32_t
-CPU::getX86ProcessorFeatureFlags8()
+J9::X86::CPU::getX86ProcessorFeatureFlags8()
    {
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-      return vmInfo->_processorFeatureFlags.featureFlags[2];
+      return vmInfo->_processorDescription.features[3];
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    return self()->queryX86TargetCPUID()->_featureFlags8;
    }
 
-}
-}
+
+
