@@ -20,19 +20,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "control/CompilationRuntime.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/CPU.hpp"
 #include "j9.h"
 #include "j9port.h"
 
-namespace J9
-{
-
-namespace Power
-{
 
 bool
-CPU::getPPCSupportsVMX()
+J9::Power::CPU::getPPCSupportsVMX()
    {
 #if defined(J9OS_I5) && defined(J9OS_I5_V5R4)
    return FALSE;
@@ -45,7 +41,7 @@ CPU::getPPCSupportsVMX()
    }
 
 bool
-CPU::getPPCSupportsVSX()
+J9::Power::CPU::getPPCSupportsVSX()
    {
 #if defined(J9OS_I5) && defined(J9OS_I5_V5R4)
    return FALSE;
@@ -58,7 +54,7 @@ CPU::getPPCSupportsVSX()
    }
 
 bool
-CPU::getPPCSupportsAES()
+J9::Power::CPU::getPPCSupportsAES()
    {
 #if defined(J9OS_I5) && defined(J9OS_I5_V5R4)
    return FALSE;
@@ -73,7 +69,7 @@ CPU::getPPCSupportsAES()
    }
 
 bool
-CPU::getPPCSupportsTM()
+J9::Power::CPU::getPPCSupportsTM()
    {
 #if defined(J9OS_I5) && defined(J9OS_I5_V5R4)
    return FALSE;
@@ -88,7 +84,7 @@ CPU::getPPCSupportsTM()
 // Double check with os400 team to see if we can enable popcnt on I
 //
 bool 
-CPU::hasPopulationCountInstruction()
+J9::Power::CPU::hasPopulationCountInstruction()
    {
 #if defined(J9OS_I5)
    return false;
@@ -98,7 +94,7 @@ CPU::hasPopulationCountInstruction()
    }
 
 bool
-CPU::supportsDecimalFloatingPoint()
+J9::Power::CPU::supportsDecimalFloatingPoint()
    {
 #if !defined(TR_HOST_POWER) || (defined(J9OS_I5) && defined(J9OS_I5_V5R4))
    return FALSE;
@@ -110,33 +106,36 @@ CPU::supportsDecimalFloatingPoint()
 #endif
    }
 
-TR_ProcessorFeatureFlags
-CPU::getProcessorFeatureFlags()
-   {
-   TR_ProcessorFeatureFlags processorFeatureFlags = { {0} };
-   return processorFeatureFlags;
-   }
-
 bool
-CPU::isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags)
+J9::Power::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    {
-   TR_Processor targetProcessor = self()->id();
+   OMRProcessorArchitecture targetProcessor = self()->getProcessorDescription().processor;
+   OMRProcessorArchitecture processor = processorDescription.processor;
    // Backwards compatibility only applies to p4,p5,p6,p7 and onwards
    // Looks for equality otherwise
-   if ((processorSignature == TR_PPCgp 
-       || processorSignature == TR_PPCgr 
-       || processorSignature == TR_PPCp6 
-       || (processorSignature >= TR_PPCp7 && processorSignature <= TR_LastPPCProcessor))
-       && (targetProcessor == TR_PPCgp 
-        || targetProcessor == TR_PPCgr 
-        || targetProcessor == TR_PPCp6 
-        || targetProcessor >= TR_PPCp7 && targetProcessor <= TR_LastPPCProcessor))
+   if ((processor == OMR_PROCESSOR_PPC_GP
+       || processor == OMR_PROCESSOR_PPC_GR 
+       || processor == OMR_PROCESSOR_PPC_P6 
+       || (processor >= OMR_PROCESSOR_PPC_P7 && processor <= OMR_PROCESSOR_PPC_LAST))
+       && (targetProcessor == OMR_PROCESSOR_PPC_GP 
+        || targetProcessor == OMR_PROCESSOR_PPC_GR 
+        || targetProcessor == OMR_PROCESSOR_PPC_P6 
+        || targetProcessor >= OMR_PROCESSOR_PPC_P7 && targetProcessor <= OMR_PROCESSOR_PPC_LAST))
       {
-      return targetProcessor >= processorSignature;
+      return targetProcessor >= processor;
       }
-   return targetProcessor == processorSignature;
+   return targetProcessor == processor;
    }
-   
-}
 
-}
+OMRProcessorDesc
+J9::Power::CPU::getProcessorDescription()
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_processorDescription;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   return _processorDescription;
+   }
