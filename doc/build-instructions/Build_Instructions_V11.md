@@ -710,6 +710,8 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
 
 :pencil: **DDR support:** You can build DDR support only on AArch64 Linux.  If you are building in a cross-compilation environment, you need the `--disable-ddr` option.
 
+:pencil: **CUDA support:** You can enable CUDA support if you are building on NVIDIA Jetson Developer Kit series.  Add `--enable-cuda --with-cuda=/usr/local/cuda` when you run `configure`.  The path `/usr/local/cuda` may be different depending on the version of JetPack.
+
 :pencil: You may need to add `--disable-warnings-as-errors-openj9` depending on the toolchain version.
 
 ### 6. Build
