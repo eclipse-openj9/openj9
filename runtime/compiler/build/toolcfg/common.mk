@@ -60,10 +60,6 @@ ifdef ENABLE_GPU
         $(error You must set CUDA_HOME if ENABLE_GPU is set)
     endif
 
-    ifeq (,$(GDK_HOME))
-        $(error You must set GDK_HOME if ENABLE_GPU is set)
-    endif
-
     PRODUCT_INCLUDES+=$(CUDA_HOME)/include $(CUDA_HOME)/nvvm/include $(GDK_HOME)
     PRODUCT_DEFINES+=ENABLE_GPU
 endif
