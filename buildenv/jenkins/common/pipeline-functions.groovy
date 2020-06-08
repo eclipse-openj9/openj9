@@ -426,7 +426,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 PARALLEL = "Subdir"
             }
 
-            def NUM_MACHINES = "1"
+            def NUM_MACHINES = ""
             if (testJobName.contains("functional")) {
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "2"

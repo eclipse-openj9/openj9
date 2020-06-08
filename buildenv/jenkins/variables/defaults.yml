@@ -116,8 +116,6 @@ cmake:
   excluded_tests:
     8:
       - special.system
-    11:
-      - special.system
 #========================================#
 # Build with uma
 #========================================#
@@ -301,6 +299,7 @@ x86-64_linux:
 x86-64_linux_cm:
   extends: ['x86-64_linux', 'cmake']
   excluded_tests:
+    8:
       - extended.functional
       - sanity.system
       - extended.system
