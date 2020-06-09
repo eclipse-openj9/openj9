@@ -1719,6 +1719,17 @@ j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, const J9CacheInfoQue
 	case J9PORT_CACHEINFO_QUERY_LINESIZE:
 	case J9PORT_CACHEINFO_QUERY_CACHESIZE:
 		result =  getCacheSize(portLibrary, query->cpu, query->level, query->cacheType, query->cmd);
+
+#if defined(RISCV64)
+	/* The L1 data cache at "cache/index1" is set up from "/sys/devices/system/cpu/cpu1" on some Linux distro
+	 * (e.g. Debian_riscv) rather than "/sys/devices/system/cpu/cpu0" in which "cache/index1" doesn't exist.
+	 * Note: this is a temporary solution specific to Debian_riscv which won't be used or simply
+	 * removed once we confirm "cpu0/cache/index1" does exist on the latest version of Debian_riscv.
+	 */
+	if (result < 0) {
+		result =  getCacheSize(portLibrary, query->cpu + 1, query->level, query->cacheType, query->cmd);
+	}
+#endif /* defined(RISCV64) */
 		break;
 	case J9PORT_CACHEINFO_QUERY_TYPES:
 		result =  getCacheTypes(portLibrary, query->cpu, query->level);
