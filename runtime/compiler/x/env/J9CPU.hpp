@@ -64,6 +64,9 @@ public:
    uint32_t getX86ProcessorFeatureFlags();
    uint32_t getX86ProcessorFeatureFlags2();
    uint32_t getX86ProcessorFeatureFlags8();
+
+   bool is_test(OMRProcessorArchitecture p);
+   bool supports_feature_test(uint32_t feature);
    };
 
 }
