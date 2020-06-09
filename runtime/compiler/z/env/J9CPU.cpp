@@ -385,6 +385,81 @@ J9::Z::CPU::initializeS390ProcessorFeatures()
    }
 
 bool
+J9::Z::CPU::is_at_least_test(OMRProcessorArchitecture p)
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (TR::CompilationInfo::getStream())
+      return true;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   switch(p)
+      {
+      case OMR_PROCESSOR_S390_Z10:
+         return (self()->getSupportsArch(TR::CPU::z10) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_Z196:
+         return (self()->getSupportsArch(TR::CPU::z196) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_ZEC12:
+         return (self()->getSupportsArch(TR::CPU::zEC12) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_Z13:
+         return (self()->getSupportsArch(TR::CPU::z13) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_Z14:
+         return (self()->getSupportsArch(TR::CPU::z14) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_Z15:
+         return (self()->getSupportsArch(TR::CPU::z15) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_ZNEXT:
+         return (self()->getSupportsArch(TR::CPU::zNext) == (_processorDescription.processor >= p));
+      default:
+         return false;
+      }
+   return false;
+   }
+
+bool
+J9::Z::CPU::supports_feature_test(uint32_t feature)
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (TR::CompilationInfo::getStream())
+      return true;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+   bool ans = (TRUE == omrsysinfo_processor_has_feature(&_processorDescription, feature));
+
+   switch(feature)
+      {
+      case OMR_FEATURE_S390_HIGH_WORD:
+         return (self()->getSupportsHighWordFacility() == ans);
+      case OMR_FEATURE_S390_DFP:
+         return (self()->getSupportsDecimalFloatingPointFacility() == ans);
+      case OMR_FEATURE_S390_FPE:
+         return (self()->getSupportsFloatingPointExtensionFacility() == ans);
+      case OMR_FEATURE_S390_TE:
+         return (self()->getSupportsTransactionalMemoryFacility() == ans);
+      case OMR_FEATURE_S390_RI:
+         return (self()->getSupportsRuntimeInstrumentationFacility() == ans);
+      case OMR_FEATURE_S390_VECTOR_FACILITY:
+         return (self()->getSupportsVectorFacility() == ans);
+      case OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL:
+         return (self()->getSupportsVectorPackedDecimalFacility() == ans);
+      case OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3:
+         return (self()->getSupportsMiscellaneousInstructionExtensions3Facility() == ans);
+      case OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2:
+         return (self()->getSupportsVectorFacilityEnhancement2() == ans);
+      case OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY:
+         return (self()->getSupportsVectorPackedDecimalEnhancementFacility() == ans);
+      case OMR_FEATURE_S390_GUARDED_STORAGE:
+         return (self()->getSupportsGuardedStorageFacility() == ans);
+      case OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_2:
+         return (self()->getSupportsMiscellaneousInstructionExtensions2Facility() == ans);
+      case OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1:
+         return (self()->getSupportsVectorFacilityEnhancement1() == ans);
+      default:
+         return false;
+      }
+   return false;
+   }
+
+bool
 J9::Z::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    {
    if (!self()->isAtLeast(processorDescription.processor))
