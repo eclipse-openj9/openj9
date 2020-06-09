@@ -86,8 +86,8 @@ J9::X86::CodeGenerator::CodeGenerator() :
    cg->setSupportsInliningOfTypeCoersionMethods();
    cg->setSupportsNewInstanceImplOpt();
    
-   TR_ASSERT_FATAL(comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) == cg->getX86ProcessorInfo().supportsSSE4_1(), "supportsSSE4_1() failed\n");
-   TR_ASSERT_FATAL(comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSSE3) == cg->getX86ProcessorInfo().supportsSSSE3(), "supportsSSSE3() failed\n");
+   TR_ASSERT_FATAL(comp->isOutOfProcessCompilation() || comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) == cg->getX86ProcessorInfo().supportsSSE4_1(), "supportsSSE4_1() failed\n");
+   TR_ASSERT_FATAL(comp->isOutOfProcessCompilation() || comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSSE3) == cg->getX86ProcessorInfo().supportsSSSE3(), "supportsSSSE3() failed\n");
    
    if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) &&
        !comp->getOption(TR_DisableSIMDStringCaseConv) &&
@@ -379,7 +379,7 @@ J9::X86::CodeGenerator::nopsAlsoProcessedByRelocations()
 bool
 J9::X86::CodeGenerator::enableAESInHardwareTransformations()
    {
-   TR_ASSERT_FATAL(self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_AESNI) == TR::CodeGenerator::getX86ProcessorInfo().supportsAESNI(), "supportsAESNI() failed\n");
+   TR_ASSERT_FATAL(self()->comp()->isOutOfProcessCompilation() || self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_AESNI) == TR::CodeGenerator::getX86ProcessorInfo().supportsAESNI(), "supportsAESNI() failed\n");
    if (self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_AESNI) && !self()->comp()->getOption(TR_DisableAESInHardware) && !self()->comp()->getCurrentMethod()->isJNINative())
       return true;
    else

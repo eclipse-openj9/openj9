@@ -26,6 +26,7 @@
 #include "env/VMJ9.h"
 #include "x/runtime/X86Runtime.hpp"
 #include "env/JitConfig.hpp"
+#include "codegen/CodeGenerator.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
