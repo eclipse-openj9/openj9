@@ -633,6 +633,13 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportStaticFieldRead", offsetof(J9JITConfig, old_slow_jitReportStaticFieldRead)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportStaticFieldWrite", offsetof(J9JITConfig, old_slow_jitReportStaticFieldWrite)) |
 
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitGetFlattenableField", offsetof(J9JITConfig, old_fast_jitGetFlattenableField)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitWithFlattenableField", offsetof(J9JITConfig, old_fast_jitWithFlattenableField)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitPutFlattenableField", offsetof(J9JITConfig, old_fast_jitPutFlattenableField)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitGetFlattenableStaticField", offsetof(J9JITConfig, old_fast_jitGetFlattenableStaticField)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitPutFlattenableStaticField", offsetof(J9JITConfig, old_fast_jitPutFlattenableStaticField)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitLoadFlattenableArrayElement", offsetof(J9JITConfig, old_fast_jitLoadFlattenableArrayElement)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitStoreFlattenableArrayElement", offsetof(J9JITConfig, old_fast_jitStoreFlattenableArrayElement)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitAcmpHelper", offsetof(J9JITConfig, old_fast_jitAcmpHelper)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_fast_jitNewValue", offsetof(J9JITConfig, fast_jitNewValue)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_fast_jitNewValueNoZeroInit", offsetof(J9JITConfig, fast_jitNewValueNoZeroInit)) |
