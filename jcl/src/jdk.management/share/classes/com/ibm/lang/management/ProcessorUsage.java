@@ -81,31 +81,31 @@ public class ProcessorUsage {
 			       long busy, int id, int online, long timestamp) throws IllegalArgumentException {
 		super();
 		if (user < -1) {
-			throw new IllegalArgumentException("user(" + user + ") < -1: "); //$NON-NLS-1$ //$NON-NLS-2$
+			throw new IllegalArgumentException("For id(" + id + "), user(" + user + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
 		if (system < -1) {
-			throw new IllegalArgumentException("system(" + system + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$
+			throw new IllegalArgumentException("For id(" + id + "), system(" + system + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
 		if (idle < -1) {
-			throw new IllegalArgumentException("idle(" + idle + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$
+			throw new IllegalArgumentException("For id(" + id + "), idle(" + idle + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
 		if (wait < -1) {
-			throw new IllegalArgumentException("wait(" + wait + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$
+			throw new IllegalArgumentException("For id(" + id + "), wait(" + wait + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
 		if (busy < -1) {
-			throw new IllegalArgumentException("busy(" + busy + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$
+			throw new IllegalArgumentException("For id(" + id + "), busy(" + busy + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
 		if (id < -1) {
 			throw new IllegalArgumentException("id(" + id + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		if ((online < 0) || (online > 1)) {
-			throw new IllegalArgumentException("online(" + online + ") < 0) || online > 1"); //$NON-NLS-1$ //$NON-NLS-2$
+			throw new IllegalArgumentException("For id(" + id + "), online(" + online + ") not in [0,1]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
 		if (timestamp < 0) {
-			throw new IllegalArgumentException("timestamp(" + timestamp + ") < 0"); //$NON-NLS-1$ //$NON-NLS-2$
+			throw new IllegalArgumentException("For id(" + id + "), timestamp(" + timestamp + ") < 0"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
 		if ((user >= 0) && (system >= 0) && (wait >= 0) && (busy >= 0) && (busy < (user + system + wait))) {
-			throw new IllegalArgumentException("busy(" + busy + ") < user(" + user + //$NON-NLS-1$ //$NON-NLS-2$
+			throw new IllegalArgumentException("For id(" + id + "), busy(" + busy + ") < user(" + user + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				") + system(" + system + ") + wait(" + wait + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
 		this.user = user;
