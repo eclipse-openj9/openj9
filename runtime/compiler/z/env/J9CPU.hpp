@@ -67,6 +67,9 @@ class OMR_EXTENSIBLE CPU : public J9::CPU
    void initializeS390ProcessorFeatures();
    bool isCompatible(const OMRProcessorDesc& processorDescription);
    OMRProcessorDesc getProcessorDescription();
+
+   bool is_at_least_test(OMRProcessorArchitecture p);
+   bool supports_feature_test(uint32_t feature);
    };
 
 }
