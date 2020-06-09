@@ -2183,9 +2183,17 @@ j9sysinfo_test_get_l1dcache_line_size(struct J9PortLibrary *portLibrary)
 	cQuery.level = 1;
 	cQuery.cacheType = J9PORT_CACHEINFO_DCACHE;
 	rc = j9sysinfo_get_cache_info(&cQuery);
-#if !(defined(J9ARM) || defined(RISCV64))
+#if !defined(J9ARM)
 	if (rc < 0) {
+#if defined(RISCV64)
+		outputComment(PORTLIB, "j9sysinfo_get_cache_info is not supported on this platform\n");
+		if (J9PORT_ERROR_SYSINFO_NOT_SUPPORTED != rc) {
+			outputErrorMessage(PORTTEST_ERROR_ARGS, "j9sysinfo_get_cache_info should have returned %d but returned %d\n", 
+				J9PORT_ERROR_SYSINFO_NOT_SUPPORTED, rc);
+		}
+#else /* defined(RISCV64) */
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9sysinfo_get_cache_info returned %d\n", rc);
+#endif /* defined(RISCV64) */
 	} else {
 		l1DcacheSize = rc;
 		outputComment(PORTLIB, "DCache line size = %d\n",l1DcacheSize);
@@ -2199,13 +2207,13 @@ j9sysinfo_test_get_l1dcache_line_size(struct J9PortLibrary *portLibrary)
 					l1DcacheSize, rc);
 		}
 	}
-#else /* !(defined(J9ARM) || defined(RISCV64)) */
+#else /* !defined(J9ARM) */
 	outputComment(PORTLIB, "j9sysinfo_get_cache_info is not supported on this platform\n");
 	if (J9PORT_ERROR_SYSINFO_NOT_SUPPORTED != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9sysinfo_get_cache_info should have returned %d but returned %d\n", 
 			J9PORT_ERROR_SYSINFO_NOT_SUPPORTED, rc);
 	}
-#endif /* !(defined(J9ARM) || defined(RISCV64)) */
+#endif /* !defined(J9ARM) */
 
 	return reportTestExit(portLibrary, testName);
 }
