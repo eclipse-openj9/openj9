@@ -2581,6 +2581,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::CHTable_clearReservable:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
+         client->write(response, JITServer::Void());
          auto table = (JITClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
          auto info = table->findClassInfoAfterLocking(clazz, comp);
          info->setReservable(false);

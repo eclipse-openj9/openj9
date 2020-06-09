@@ -184,14 +184,24 @@ public:
 
       If requiredSize is greater than _capacity, allocates a new buffer of size
       requiredSize * 2 (to prevent frequent reallocations),
-      copies all existing data there, and frees the old buffer.
+      copies all existing data based on _curPtr location to the new buffer,
+      and frees the old buffer.
 
       @param requiredSize the number of bytes the buffer needs to fit.
    */
    void expandIfNeeded(uint32_t requiredSize);
 
+   /**
+      @brief Expand the underlying buffer to requiredSize and copy numBytesToCopy
+      from the old buffer to the new buffer when requiredSize is greater than
+      the capacity, and free the old buffer.
+   */
+   void expand(uint32_t requiredSize, uint32_t numBytesToCopy);
+
+   uint32_t getCapacity() const { return _capacity; }
+
 private:
-   static const size_t INITIAL_BUFFER_SIZE = 10000;
+   static const size_t INITIAL_BUFFER_SIZE = 18000;
    uint32_t offset(char *addr) const { return addr - _storage; }
 
    uint32_t _capacity;

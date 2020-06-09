@@ -41,7 +41,6 @@ MessageBuffer::expandIfNeeded(uint32_t requiredSize)
    // expand the storage
    if (requiredSize > _capacity)
       {
-      char *oldPtr = _curPtr;
       _capacity = requiredSize * 2;
       char *newStorage = static_cast<char *>(TR_Memory::jitPersistentAlloc(_capacity));
       if (!newStorage)
@@ -52,6 +51,26 @@ MessageBuffer::expandIfNeeded(uint32_t requiredSize)
       _storage = newStorage;
       _curPtr = _storage + curSize;
       }
+   }
+
+void
+MessageBuffer::expand(uint32_t requiredSize, uint32_t numBytesToCopy)
+   {
+   TR_ASSERT_FATAL((requiredSize > _capacity), "requiredSize %u has to be greater than _capacity %u", requiredSize, _capacity);
+   TR_ASSERT_FATAL((numBytesToCopy <= _capacity), "numBytesToCopy %u has to be less than _capacity %u", numBytesToCopy, _capacity);
+
+   _capacity = requiredSize;
+   uint32_t curSize = size();
+
+   char *newStorage = static_cast<char *>(TR_Memory::jitPersistentAlloc(_capacity));
+   if (!newStorage)
+      throw std::bad_alloc();
+
+   memcpy(newStorage, _storage, numBytesToCopy);
+
+   TR_Memory::jitPersistentFree(_storage);
+   _storage = newStorage;
+   _curPtr = _storage + curSize;
    }
 
 uint32_t

@@ -1264,7 +1264,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
             if (auto stream = TR::CompilationInfo::getStream())
                {
                stream->write(JITServer::MessageType::CHTable_clearReservable, classPointer);
-               // No response necessary - we can continue concurrently
+               stream->read<JITServer::Void>();
                }
 #endif /* defined(J9VM_OPT_JITSERVER) */
             }
