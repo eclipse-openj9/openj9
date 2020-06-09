@@ -679,6 +679,90 @@ old_fast_jitNewObjectNoZeroInit(J9VMThread *currentThread)
 	return slowPath;
 }
 
+void* J9FASTCALL
+old_slow_jitGetFlattenableField(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
+void* J9FASTCALL
+old_fast_jitGetFlattenableField(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
+void* J9FASTCALL
+old_slow_jitWithFlattenableField(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
+void* J9FASTCALL
+old_fast_jitWithFlattenableField(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
+void* J9FASTCALL
+old_slow_jitPutFlattenableField(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
+void* J9FASTCALL
+old_fast_jitPutFlattenableField(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
+void* J9FASTCALL
+old_slow_jitGetFlattenableStaticField(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
+void* J9FASTCALL
+old_fast_jitGetFlattenableStaticField(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
+void* J9FASTCALL
+old_slow_jitPutFlattenableStaticField(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
+void* J9FASTCALL
+old_fast_jitPutFlattenableStaticField(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
+void* J9FASTCALL
+old_slow_jitLoadFlattenableArrayElement(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
+void* J9FASTCALL
+old_fast_jitLoadFlattenableArrayElement(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
+void* J9FASTCALL
+old_slow_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
+void* J9FASTCALL
+old_fast_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
+{
+	return NULL;
+}
+
 static VMINLINE bool
 fast_jitANewArrayImpl(J9VMThread *currentThread, J9Class *elementClass, I_32 size, bool nonZeroTLH)
 {
@@ -3479,6 +3563,13 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->old_slow_jitNewInstanceImplAccessCheck = (void*)old_slow_jitNewInstanceImplAccessCheck;
 	jitConfig->old_slow_jitTranslateNewInstanceMethod = (void*)old_slow_jitTranslateNewInstanceMethod;
 	jitConfig->old_slow_jitReportFinalFieldModified = (void*)old_slow_jitReportFinalFieldModified;
+	jitConfig->old_fast_jitGetFlattenableField = (void*) old_fast_jitGetFlattenableField;
+	jitConfig->old_fast_jitWithFlattenableField = (void*) old_fast_jitWithFlattenableField;
+	jitConfig->old_fast_jitPutFlattenableField = (void*) old_fast_jitPutFlattenableField;
+	jitConfig->old_fast_jitGetFlattenableStaticField = (void*) old_fast_jitGetFlattenableStaticField;
+	jitConfig->old_fast_jitPutFlattenableStaticField = (void*) old_fast_jitPutFlattenableStaticField;
+	jitConfig->old_fast_jitLoadFlattenableArrayElement = (void*) old_fast_jitLoadFlattenableArrayElement;
+	jitConfig->old_fast_jitStoreFlattenableArrayElement = (void*) old_fast_jitStoreFlattenableArrayElement;
 	jitConfig->old_fast_jitAcmpHelper = (void*)old_fast_jitAcmpHelper;
 	jitConfig->fast_jitNewValue = (void*)fast_jitNewValue;
 	jitConfig->fast_jitNewValueNoZeroInit = (void*)fast_jitNewValueNoZeroInit;
