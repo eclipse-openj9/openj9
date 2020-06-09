@@ -39,6 +39,7 @@
 
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
+#include "vm_api.h"
 
 class VM_ValueTypeHelpers {
 	/*

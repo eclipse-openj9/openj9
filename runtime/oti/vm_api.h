@@ -2343,6 +2343,64 @@ UDATA
 findIndexInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, J9ROMNameAndSignature *nameAndSignature);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
+/**
+ * Returns the offset of a qtype field.
+ *
+ * @param[in] fieldOwner the J9class that defines the field
+ * @param[in] field romfieldshape of the field
+ *
+ * @return field offset
+ */
+UDATA
+getFlattenableFieldOffset(J9Class *fieldOwner, J9ROMFieldShape *field);
+
+/**
+ * Returns if a field is flattened. `J9_IS_J9CLASS_FLATTENED` will be deprecated.
+ * This helper assumes field is a qtype.
+ *
+ * @param[in] fieldOwner the J9class that defines the field
+ * @param[in] field romfieldshape of the field
+ *
+ * @return TRUE if field is flattened, false otherwise
+ */
+BOOLEAN
+isFlattenableFieldFlattened(J9Class *fieldOwner, J9ROMFieldShape *field);
+
+/**
+ * Returns the type of an instance field. `J9_IS_J9CLASS_FLATTENED` will be deprecated.
+ * This helper assumes field is a qtype.
+ *
+ * @param[in] fieldOwner the J9class that defines the field
+ * @param[in] field romfieldshape of the field
+ *
+ * @return TRUE if field is flattened, false otherwise
+ */
+J9Class *
+getFlattenableFieldType(J9Class *fieldOwner, J9ROMFieldShape *field);
+
+/**
+ * Returns the size of an instance field. `J9_VALUETYPE_FLATTENED_SIZE` will be deprecated.
+ * This helper assumes field is a qtype.
+ *
+ * @param[in] currentThread thread token
+ * @param[in] fieldOwner the J9class that defines the field
+ * @param[in] fieldref cp ref of the field
+ *
+ * @return TRUE if field is flattened, false otherwise
+ */
+UDATA
+getFlattenableFieldSize(J9VMThread *currentThread, J9Class *fieldOwner, J9ROMFieldShape *field);
+
+/**
+ * Returns the size of an array element field. `J9_VALUETYPE_FLATTENED_SIZE`
+ * will be deprecated.
+ *
+ * @param[in] arrayClass containing elements
+ *
+ * @return size of the array element
+ */
+UDATA
+arrayElementSize(J9ArrayClass* arrayClass);
 
 /**
 * @brief

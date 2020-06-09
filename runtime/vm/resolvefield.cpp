@@ -578,47 +578,6 @@ addHiddenInstanceField(J9JavaVM *vm, const char *className, const char *fieldNam
 	return 0;
 }
 
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
-J9Class *
-findJ9ClassInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, U_8 *className, UDATA classNameLength)
-{
-	/* first field indicates the number of classes in the cache */
-	UDATA length = flattenedClassCache->numberOfEntries;
-	J9Class *clazz = NULL;
-
-	for (UDATA i = 0; i < length; i++) {
-		J9UTF8* currentClassName = J9ROMCLASS_CLASSNAME(J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->clazz->romClass);
-		if (J9UTF8_DATA_EQUALS(J9UTF8_DATA(currentClassName), J9UTF8_LENGTH(currentClassName), className, classNameLength)) {
-			clazz = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->clazz;
-			break;
-		}
-	}
-
-	Assert_VM_notNull(clazz);
-	return clazz;
-}
-
-UDATA
-findIndexInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, J9ROMNameAndSignature *nameAndSignature)
-{
-	/* first field indicates the number of classes in the cache */
-	UDATA index = UDATA_MAX;
-	UDATA length = flattenedClassCache->numberOfEntries;
-	J9ROMFieldShape *fccEntryField = NULL;
-
-	for (UDATA i = 0; i < length; i++) {
-		fccEntryField = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->field;
-		if (J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature), J9ROMFIELDSHAPE_NAME(fccEntryField))
-			&& J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature), J9ROMFIELDSHAPE_SIGNATURE(fccEntryField))
-		) {
-			index = i;
-			break;
-		}
-	}
-	return index;
-}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-
 J9ROMFieldOffsetWalkResult *
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9ROMFieldOffsetWalkState *state, U_32 flags, J9FlattenedClassCache *flattenedClassCache)
