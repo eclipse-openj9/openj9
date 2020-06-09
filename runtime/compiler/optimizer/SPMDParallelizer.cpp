@@ -698,8 +698,9 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
 
 	       if (trace && !platformSupport)
                   traceMsg(comp, "   Found use of induction variable at node [%p] - platform does not support this vectorization\n", node);
-
-               return platformSupport;
+               if (trace && platformSupport)
+                  traceMsg(comp, "   Found use of induction variable at node [%p] - vectorization disabled for now\n", node);
+               return false;  // see : eclipse/openj9/9446
                }
             }
          }
