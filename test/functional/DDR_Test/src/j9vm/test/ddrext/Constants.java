@@ -273,7 +273,7 @@ public class Constants {
 
 	public static final String SHRC_JITHFOR = "jithfor";
 	public static final String SHRC_JITHFOR_METHODNAME = "<init>";
-	public static final String SHRC_JITHFOR_SUCCESS_KEY = "<init>\\(.*\\),JITHINT data !j9x,(java|sun)/.*";
+	public static final String SHRC_JITHFOR_SUCCESS_KEY = "<init>\\(.*\\),JITHINT data !j9x,(java|sun|internal)/.*";
 	public static final String SHRC_JITHFOR_FAILURE_KEY = "No entry found in the cache";
 
 	public static final String SHRC_RTFLAGS = "rtflags";
