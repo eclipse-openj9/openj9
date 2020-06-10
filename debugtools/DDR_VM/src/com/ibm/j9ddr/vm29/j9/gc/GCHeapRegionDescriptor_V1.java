@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -191,8 +191,11 @@ class GCHeapRegionDescriptor_V1 extends GCHeapRegionDescriptor
 			AlgorithmVersion version = AlgorithmVersion.getVersionOf(AlgorithmVersion.GC_OBJECT_HEAP_ITERATOR_ADDRESS_ORDERED_LIST_VERSION);
 			switch (version.getAlgorithmVersion()) {
 				// Add case statements for new algorithm versions
-				default:
+				case 0:
 					iterator = new GCObjectHeapIteratorAddressOrderedList_V1(U8Pointer.cast(getLowAddress()), U8Pointer.cast(getWalkableHighAddress()), includeLiveObjects, includeDeadObjects);
+					break;
+				default:
+					iterator = new GCObjectHeapIteratorAddressOrderedList_V2(U8Pointer.cast(getLowAddress()), U8Pointer.cast(getWalkableHighAddress()), includeLiveObjects, includeDeadObjects);
 			}
 		} else {
 			//there is nothing we can walk here (generally means it is either free, uncommitted, or an arraylet leaf)
