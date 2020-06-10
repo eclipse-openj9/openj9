@@ -23,6 +23,8 @@ package com.ibm.j9ddr.vm29.j9.gc;
 
 import static com.ibm.j9ddr.vm29.events.EventManager.raiseCorruptDataEvent;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,6 +33,7 @@ import java.util.NoSuchElementException;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.ObjectModel;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ModronThreadLocalHeapPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
@@ -41,6 +44,8 @@ import com.ibm.j9ddr.vm29.types.UDATA;
 
 class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 {
+	private static Method realHeapAllocMethod = null;
+
 	protected J9ObjectPointer currentObject;
 	protected U8Pointer  scanPtr;
 	protected U8Pointer scanPtrTop;
@@ -75,9 +80,12 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 						excludedRangeList.add(new U8Pointer[] {heapAlloc, heapTop});
 					} else {
 						/* Might be an instrumented VM */
-						U8Pointer realHeapTop = adjustedToRange(vmThread.allocateThreadLocalHeap().realHeapTop(), base, top);
-						if(realHeapTop.notNull() && isSomethingToAdd(heapAlloc, realHeapTop)) {
-							excludedRangeList.add(new U8Pointer[] {heapAlloc, realHeapTop});
+						/* realHeapAlloc = allocateThreadLocalHeap.realHeapAlloc in V1, = heapAlloc in V2 */
+						U8Pointer realHeapAlloc = adjustedToRange(getRealHeapAlloc(vmThread.allocateThreadLocalHeap(), heapAlloc), base, top);
+						/* realHeapTop = heapTop in V1, = allocateThreadLocalHeap.realHeapTop in V2 */
+						U8Pointer realHeapTop = adjustedToRange(getRealHeapTop(vmThread.allocateThreadLocalHeap(), heapTop), base, top);
+						if(realHeapAlloc.notNull() && realHeapTop.notNull() && isSomethingToAdd(realHeapAlloc, realHeapTop)) {
+							excludedRangeList.add(new U8Pointer[] {realHeapAlloc, realHeapTop});
 						}
 					}
 				}
@@ -91,9 +99,10 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 							excludedRangeList.add(new U8Pointer[] {heapAlloc, heapTop});
 						} else {
 							/* Might be an instrumented VM */
-							U8Pointer realHeapTop = adjustedToRange(vmThread.nonZeroAllocateThreadLocalHeap().realHeapTop(), base, top);
-							if(realHeapTop.notNull() && isSomethingToAdd(heapAlloc, realHeapTop)) {
-								excludedRangeList.add(new U8Pointer[] {heapAlloc, realHeapTop});
+							U8Pointer realHeapAlloc = adjustedToRange(getRealHeapAlloc(vmThread.nonZeroAllocateThreadLocalHeap(), heapAlloc), base, top);
+							U8Pointer realHeapTop = adjustedToRange(getRealHeapTop(vmThread.nonZeroAllocateThreadLocalHeap(), heapTop), base, top);
+							if(realHeapAlloc.notNull() && realHeapTop.notNull() && isSomethingToAdd(realHeapAlloc, realHeapTop)) {
+								excludedRangeList.add(new U8Pointer[] {realHeapAlloc, realHeapTop});
 							}
 						}
 					}
@@ -133,11 +142,43 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 					return o1[0].compare(o2[0]);
 				}
 			});
-		excludedRanges = new U8Pointer[excludedRangeList.size()][2];
+		excludedRanges = new U8Pointer[excludedRangeList.size()][];
 		excludedRangeList.toArray(excludedRanges);
 		currentExcludedRange = 0;
 	}
-	
+
+	protected U8Pointer getRealHeapTop(J9ModronThreadLocalHeapPointer threadLocalHeap, U8Pointer heapTop) throws CorruptDataException
+	{
+		return heapTop;
+	}
+
+	protected U8Pointer getRealHeapAlloc(J9ModronThreadLocalHeapPointer threadLocalHeap, U8Pointer heapAlloc) throws CorruptDataException
+	{
+		Exception exception;
+		try {
+			if (null == realHeapAllocMethod) {
+				realHeapAllocMethod = threadLocalHeap.getClass().getMethod("realHeapAlloc");
+			}
+			return (U8Pointer) realHeapAllocMethod.invoke(threadLocalHeap);
+		} catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException e) {
+			exception = e;
+		} catch (InvocationTargetException e1) {
+			Throwable cause = e1.getCause();
+			if (cause instanceof CorruptDataException) {
+				throw (CorruptDataException)cause;
+			} else if (cause instanceof RuntimeException) {
+				throw (RuntimeException)cause;
+			} else if (cause instanceof Error) {
+				throw (Error)cause;
+			}
+			exception = e1;
+		}
+		
+		/* unexpected exception using reflection */
+		CorruptDataException cd = new CorruptDataException(exception.toString(), exception);
+		throw cd;
+	}
+
 	private U8Pointer adjustedToRange(U8Pointer ptr, U8Pointer base, U8Pointer top)
 	{
 		U8Pointer result = ptr;
