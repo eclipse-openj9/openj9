@@ -1860,7 +1860,7 @@ monitorEnter(JNIEnv* env, jobject obj)
 	j9object_t object = *(j9object_t*)obj;
 	UDATA monstatus = objectMonitorEnter(vmThread, object);
 
-	if (monstatus < J9_OBJECT_MONITOR_BLOCKING) {
+	if (J9_OBJECT_MONITOR_ENTER_FAILED(monstatus)) {
 fail:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monstatus) {
