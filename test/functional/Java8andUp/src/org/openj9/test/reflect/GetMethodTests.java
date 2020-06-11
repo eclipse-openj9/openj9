@@ -1,5 +1,6 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 Felipe Pontes
+ * Copyright (c) 2018, 2020 Felipe Pontes
+ * Copyright (c) 2020, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +37,7 @@ public class GetMethodTests {
 		} catch (Exception e) {
 		} finally {
 			Method method = B.class.getMethod("m");
-			String expectedMethodSignature = "public void org.openj9.resources.reflect.B.m()";
+			String expectedMethodSignature = "public void org.openj9.resources.reflect.B.m()"; //$NON-NLS-1$
 			String actualMethodSignature = method.toString();
 			Assert.assertEquals(expectedMethodSignature, actualMethodSignature, "wrong signatures for method");
 		}
