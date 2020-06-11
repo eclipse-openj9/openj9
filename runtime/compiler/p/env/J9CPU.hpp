@@ -39,19 +39,6 @@ namespace J9 { typedef J9::Power::CPU CPUConnector; }
 #include "infra/Assert.hpp"
 #include "infra/Flags.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define PROCESSOR_FEATURES_SIZE 1
-typedef struct TR_ProcessorFeatureFlags {
-  uint32_t featureFlags[PROCESSOR_FEATURES_SIZE];
-} TR_ProcessorFeatureFlags;
-
-#ifdef __cplusplus
-}
-#endif
-
 namespace J9
 {
 
@@ -74,9 +61,8 @@ public:
    bool hasPopulationCountInstruction();
    bool supportsDecimalFloatingPoint();
 
-   TR_ProcessorFeatureFlags getProcessorFeatureFlags();
-   bool isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags);
-
+   bool isCompatible(const OMRProcessorDesc& processorDescription);
+   OMRProcessorDesc getProcessorDescription();
    };
 
 }

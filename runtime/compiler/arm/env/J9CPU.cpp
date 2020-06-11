@@ -23,25 +23,37 @@
 #include "env/CompilerEnv.hpp"
 #include "env/CPU.hpp"
 
-namespace J9
-{
-
-namespace ARM 
-{
-
-TR_ProcessorFeatureFlags
-CPU::getProcessorFeatureFlags()
-   {
-   TR_ProcessorFeatureFlags processorFeatureFlags = { {0} };
-   return processorFeatureFlags;
-   }
-
 bool
-CPU::isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags)
+J9::ARM::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    {
-   return self()->id() == processorSignature;
+   return self()->getProcessorDescription().processor == processorDescription.processor;
    }
-   
-}
 
-}
+OMRProcessorDesc
+J9::ARM::CPU::getProcessorDescription()
+   {
+   static bool initialized = false;
+   if (!initialized)
+      {
+      memset(_processorDescription.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
+      switch (self()->id())
+         {
+         case TR_DefaultARMProcessor:
+            _processorDescription.processor = OMR_PROCESSOR_ARM_UNKNOWN;
+            break;
+         case TR_ARMv6:
+            _processorDescription.processor = OMR_PROCESSOR_ARM_V6;
+            break;
+         case TR_ARMv7:
+            _processorDescription.processor = OMR_PROCESSOR_ARM_V7;
+            break;
+         default:
+            TR_ASSERT_FATAL(false, "Invalid ARM64 Processor ID");
+         }
+      _processorDescription.physicalProcessor = _processorDescription.processor;
+      initialized = true;
+      }
+   return _processorDescription;
+   }
+
+

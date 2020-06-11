@@ -949,7 +949,7 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_AOTHeader *hdrInCache, i
    {
    bool defaultMessage = true;
 
-   if (!TR::Compiler->target.cpu.isCompatible((TR_Processor)hdrInCache->processorSignature, hdrInCache->processorFeatureFlags))
+   if (!TR::Compiler->target.cpu.isCompatible(hdrInCache->processorDescription))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE, "AOT header validation failed: Processor incompatible.");
    if ((featureFlags & TR_FeatureFlag_sanityCheckBegin) != (hdrInCache->featureFlags & TR_FeatureFlag_sanityCheckBegin))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_START_SANITY_BIT_MANGLED, "AOT header validation failed: Processor feature sanity bit mangled.");
@@ -1045,7 +1045,7 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *
          }
       else if
          (hdrInCache->featureFlags != featureFlags ||
-          !TR::Compiler->target.cpu.isCompatible((TR_Processor)hdrInCache->processorSignature, hdrInCache->processorFeatureFlags)
+          !TR::Compiler->target.cpu.isCompatible(hdrInCache->processorDescription)
          )
          {
          checkAOTHeaderFlags(hdrInCache, featureFlags);
@@ -1115,12 +1115,10 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(TR_FrontEnd *fe)
       strncpy(aotHeaderVersion->vmBuildVersion, EsBuildVersionString, sizeof(EsBuildVersionString));
       strncpy(aotHeaderVersion->jitBuildVersion, TR_BUILD_NAME, std::min(strlen(TR_BUILD_NAME), sizeof(aotHeaderVersion->jitBuildVersion)));
 
-      aotHeader->processorSignature = TR::Compiler->target.cpu.id();
       aotHeader->gcPolicyFlag = javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM());
       aotHeader->lockwordOptionHashValue = getCurrentLockwordOptionHashValue(javaVM());
       aotHeader->compressedPointerShift = javaVM()->memoryManagerFunctions->j9gc_objaccess_compressedPointersShift(javaVM()->internalVMFunctions->currentVMThread(javaVM()));
-
-      aotHeader->processorFeatureFlags = TR::Compiler->target.cpu.getProcessorFeatureFlags();
+      aotHeader->processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
 
       // Set up other feature flags
       aotHeader->featureFlags = generateFeatureFlags(fe);
