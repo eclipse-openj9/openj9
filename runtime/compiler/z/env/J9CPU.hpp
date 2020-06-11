@@ -39,19 +39,6 @@ namespace J9 { typedef J9::Z::CPU CPUConnector; }
 #include "infra/Assert.hpp"
 #include "infra/Flags.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define PROCESSOR_FEATURES_SIZE 1
-typedef struct TR_ProcessorFeatureFlags {
-  uint32_t featureFlags[PROCESSOR_FEATURES_SIZE];
-} TR_ProcessorFeatureFlags;
-
-#ifdef __cplusplus
-}
-#endif
-
 namespace J9
 {
 
@@ -78,9 +65,8 @@ class OMR_EXTENSIBLE CPU : public J9::CPU
 
    void applyUserOptions();
    void initializeS390ProcessorFeatures();
-
-   TR_ProcessorFeatureFlags getProcessorFeatureFlags();
-   bool isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags);
+   bool isCompatible(const OMRProcessorDesc& processorDescription);
+   OMRProcessorDesc getProcessorDescription();
    };
 
 }

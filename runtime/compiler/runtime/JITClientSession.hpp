@@ -26,7 +26,6 @@
 #include "infra/Monitor.hpp"  // TR::Monitor
 #include "env/PersistentCollections.hpp" // for PersistentUnorderedMap
 #include "il/DataTypes.hpp" // for DataType
-#include "env/J9CPU.hpp" // for TR_ProcessorFeatureFlags
 #include "env/VMJ9.h" // for TR_StaticFinalData
 
 class J9ROMClass;
@@ -316,7 +315,7 @@ class ClientSessionData
       MM_GCReadBarrierType _readBarrierType;
       MM_GCWriteBarrierType _writeBarrierType;
       bool _compressObjectReferences;
-      TR_ProcessorFeatureFlags _processorFeatureFlags;
+      OMRProcessorDesc _processorDescription;
       J9Method *_invokeWithArgumentsHelperMethod;
       void *_noTypeInvokeExactThunkHelper;
       void *_int64InvokeExactThunkHelper;
