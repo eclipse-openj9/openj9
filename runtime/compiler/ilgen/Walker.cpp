@@ -473,8 +473,8 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
          case J9BCificmpge:  _bcIndex = genIfTwoOperand(TR::ificmpge); break;
          case J9BCificmpgt:  _bcIndex = genIfTwoOperand(TR::ificmpgt); break;
          case J9BCificmple:  _bcIndex = genIfTwoOperand(TR::ificmple); break;
-         case J9BCifacmpeq:  _bcIndex = genIfTwoOperand(TR::ifacmpeq); break;
-         case J9BCifacmpne:  _bcIndex = genIfTwoOperand(TR::ifacmpne); break;
+         case J9BCifacmpeq:  _bcIndex = genIfAcmpEqNe(TR::ifacmpeq); break;
+         case J9BCifacmpne:  _bcIndex = genIfAcmpEqNe(TR::ifacmpne); break;
 
          case J9BClcmp:  _bcIndex = cmp(TR::lcmp,  _lcmpOps,  lastIndex); break;
          case J9BCfcmpl: _bcIndex = cmp(TR::fcmpl, _fcmplOps, lastIndex); break;
@@ -2638,6 +2638,49 @@ TR_J9ByteCodeIlGenerator::genIfTwoOperand(TR::ILOpCodes nodeop)
       genAsyncCheck();
 
    return genIfImpl(nodeop);
+   }
+
+/** \brief
+ *     Generates IL for a conditional branch bytecode that compares two
+ *     address-typed operands as for bytecode instructions if_acmp{eq,ne}.
+ *     Also generates an asynccheck if the bytecode branches backwards.
+ *
+ *     If value types are not enabled, then a regulare acmp operation is
+ *     generated instead.
+ *
+ *  \param nodeop
+ *     The IL opcode that would be used for non-value references. This opcode
+ *     must be either ifacmpeq or ifacmpne.
+ *
+ *  \return
+ *     The index of the next bytecode to generate.
+ */
+int32_t
+TR_J9ByteCodeIlGenerator::genIfAcmpEqNe(TR::ILOpCodes ifacmpOp)
+   {
+   if (!TR::Compiler->om.areValueTypesEnabled())
+      return genIfTwoOperand(ifacmpOp);
+
+   int32_t branchBC = _bcIndex + next2BytesSigned();
+
+   if (branchBC <= _bcIndex)
+      genAsyncCheck();
+
+   TR::Node *rhs = pop();
+   TR::Node *lhs = pop();
+
+   TR::SymbolReference *comparisonNonHelper =
+      comp()->getSymRefTab()->findOrCreateObjectEqualityComparisonSymbolRef();
+
+   TR::Node *substitutabilityTest =
+      TR::Node::createWithSymRef(TR::icall, 2, 2, lhs, rhs, comparisonNonHelper);
+
+   substitutabilityTest->getByteCodeInfo().setDoNotProfile(true);
+   genTreeTop(substitutabilityTest);
+
+   push(substitutabilityTest);
+   push(TR::Node::iconst(0));
+   return genIfImpl(ifacmpOp == TR::ifacmpeq ? TR::ificmpne : TR::ificmpeq);
    }
 
 //----------------------------------------------

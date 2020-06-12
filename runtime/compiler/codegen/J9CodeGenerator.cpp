@@ -68,8 +68,6 @@
 
 #define OPT_DETAILS "O^O CODE GENERATION: "
 
-
-
 J9::CodeGenerator::CodeGenerator() :
       OMR::CodeGeneratorConnector(),
    _gpuSymbolMap(TR::comp()->allocator()),
@@ -153,6 +151,171 @@ static TR::Node *lowerCASValues(
    parent->setAndIncChild(childNum, l2iNode);
    address->recursivelyDecReferenceCount();
    return l2iNode;
+   }
+
+
+/**
+ * @brief Add checks to skip (fast-path) acmpHelper call
+ *
+ * @details
+ *
+ * This transformation adds checks for the cases where the acmp can be performed
+ * without calling the VM helper. The trasformed Trees represen the following operation:
+ *
+ * 1. If the address of lhs and rhs are the same, produce an eq (true) result
+ *    and skip the call (note the two objects must be the same regardless of
+ *    whether they are value types are reference types)
+ * 2. Otherwise, do VM helper call
+ *
+ * The transformation looks as follows:
+ *
+ *  +----------------------+
+ *  |ttprev                |
+ *  |treetop               |
+ *  |  icall acmpHelper    |
+ *  |    aload lhs         |
+ *  |    aload rhs         |
+ *  |ificmpeq --> ...      |
+ *  |  ==> icall           |
+ *  |  iconst 0            |
+ *  |BBEnd                 |
+ *  +----------------------+
+ *
+ *  ...becomes...
+ *
+ *  +----------------------+
+ *  |ttprev                |
+ *  |iRegStore x           |
+ *  |  iconst 1            |
+ *  |ifacmpeq  -->---------*---------+
+ *  |  aload lhs           |         |
+ *  |  aload rhs           |         |
+ *  |BBEnd                 |         |
+ *  +----------------------+         |
+ *  |BBStart (extension)   |         |
+ *  |iRegStore x           |         |
+ *  |  icall acmpHelper    |         |
+ *  |    aload lhs         |         |
+ *  |    aload rhs         |         |
+ *  |BBEnd                 |         |
+ *  +----------------------+         |
+ *        |                          |
+ *        +--------------------------+
+ *        |
+ *        v
+ *  +-----------------+
+ *  |BBStart
+ *  |ificmpeq --> ... |
+ *  |  iRegLoad x     |
+ *  |  iconst 0       |
+ *  |BBEnd            |
+ *  +-----------------+
+ *
+ */
+void
+J9::CodeGenerator::fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt, const bool trace)
+   {
+   TR::Compilation* comp = self()->comp();
+   TR::CFG* cfg = comp->getFlowGraph();
+   cfg->invalidateStructure();
+
+   // anchor call node after split point to ensure the returned value goes into
+   // either a temp or a global register
+   auto* anchoredCallTT = TR::TreeTop::create(comp, tt, TR::Node::create(TR::treetop, 1, node));
+   if (trace)
+      traceMsg(comp, "Anchoring call node under treetop n%dn (0x%p)\n", anchoredCallTT->getNode()->getGlobalIndex(), anchoredCallTT->getNode());
+
+   // anchor the call arguments just before the call
+   // this ensures the values are live before the call so that we can
+   // propagate their values in global registers if needed
+   auto* anchoredCallArg1TT = TR::TreeTop::create(comp, tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, node->getFirstChild()));
+   auto* anchoredCallArg2TT = TR::TreeTop::create(comp, tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, node->getSecondChild()));
+   if (trace)
+      {
+      traceMsg(comp, "Anchoring call arguments n%dn and n%dn under treetops n%dn and n%dn\n",
+         node->getFirstChild()->getGlobalIndex(), node->getSecondChild()->getGlobalIndex(), anchoredCallArg1TT->getNode()->getGlobalIndex(), anchoredCallArg2TT->getNode()->getGlobalIndex());
+      }
+
+   // put non-helper call in its own block by block splitting at the
+   // next treetop and then at the current one
+   TR::Block* prevBlock = tt->getEnclosingBlock();
+   TR::Block* targetBlock = prevBlock->splitPostGRA(tt->getNextTreeTop(), cfg, true, NULL);
+   TR::Block* callBlock = prevBlock->split(tt, cfg);
+   callBlock->setIsExtensionOfPreviousBlock(true);
+   if (trace)
+      traceMsg(comp, "Isolated call node n%dn in block_%d\n", node->getGlobalIndex(), callBlock->getNumber());
+
+   // insert store of constant 1
+   // the value must go wherever the value returned by the helper call goes
+   // so that the code in the target block picks up the constant if we fast-path
+   // (i.e. jump around) the call
+   TR::Node* anchoredNode = anchoredCallTT->getNode()->getFirstChild(); // call node is under a treetop node
+   if (trace)
+      traceMsg(comp, "Anchored call has been transformed into %s node n%dn\n", anchoredNode->getOpCode().getName(), anchoredNode->getGlobalIndex());
+   auto* const1Node = TR::Node::iconst(1);
+   TR::Node* storeNode = NULL;
+   if (anchoredNode->getOpCodeValue() == TR::iRegLoad)
+      {
+      if (trace)
+         traceMsg(comp, "Storing constant 1 in register %s\n", comp->getDebug()->getGlobalRegisterName(anchoredNode->getGlobalRegisterNumber()));
+      storeNode = TR::Node::create(TR::iRegStore, 1, const1Node);
+      storeNode->setGlobalRegisterNumber(anchoredNode->getGlobalRegisterNumber());
+      }
+   else if (anchoredNode->getOpCodeValue() == TR::iload)
+      {
+      if (trace)
+         traceMsg(comp, "Storing constant 1 to symref %d (%s)\n", anchoredNode->getSymbolReference()->getReferenceNumber(), anchoredNode->getSymbolReference()->getName(comp->getDebug()));
+      storeNode = TR::Node::create(TR::istore, 1, const1Node);
+      storeNode->setSymbolReference(anchoredNode->getSymbolReference());
+      }
+   else
+      TR_ASSERT_FATAL(false, "Anchord call has been turned into unexpected opcode %s\n", anchoredNode->getOpCode().getName());
+   prevBlock->append(TR::TreeTop::create(comp, storeNode));
+
+   // instert acmpeq for fastpath, taking care to set the proper register dependencies
+   auto* ifacmpeqNode = TR::Node::createif(TR::ifacmpeq, anchoredCallArg1TT->getNode()->getFirstChild(), anchoredCallArg2TT->getNode()->getFirstChild(), targetBlock->getEntry());
+   if (anchoredNode->getOpCodeValue() == TR::iRegLoad)
+      {
+      auto* depNode = TR::Node::create(TR::PassThrough, 1, storeNode->getChild(0));
+      depNode->setGlobalRegisterNumber(storeNode->getGlobalRegisterNumber());
+
+      TR::Node* glRegDeps = TR::Node::create(TR::GlRegDeps);
+      glRegDeps->addChildren(&depNode, 1);
+      ifacmpeqNode->addChildren(&glRegDeps, 1);
+
+      if (callBlock->getExit()->getNode()->getNumChildren() > 0)
+         {
+         TR::Node* expectedDeps = callBlock->getExit()->getNode()->getFirstChild();
+         for (int i = 0; i < expectedDeps->getNumChildren(); ++i)
+            {
+            TR::Node* temp = expectedDeps->getChild(i);
+            if (temp->getGlobalRegisterNumber() == depNode->getGlobalRegisterNumber())
+               continue;
+            glRegDeps->addChildren(&temp, 1);
+            }
+         }
+      }
+   prevBlock->append(TR::TreeTop::create(comp, ifacmpeqNode));
+   }
+
+void
+J9::CodeGenerator::lowerNonhelperCallIfNeeded(TR::Node *node, TR::TreeTop *tt)
+   {
+   TR::Compilation* comp = self()->comp();
+
+   if (TR::Compiler->om.areValueTypesEnabled() &&
+       comp->getSymRefTab()->isNonHelper(
+       node->getSymbolReference(),
+       TR::SymbolReferenceTable::objectEqualityComparisonSymbol))
+      {
+      // turn the non-helper call into a VM helper call
+      node->setSymbolReference(comp->getSymRefTab()->findOrCreateAcmpHelperSymbolRef());
+      static const bool disableAcmpFastPath =  NULL != feGetEnv("TR_DisableAcmpFastpath");
+      if (!disableAcmpFastPath)
+         {
+         self()->fastpathAcmpHelper(node, tt, comp->getOption(TR_TraceCG));
+         }
+      }
    }
 
 
@@ -808,6 +971,11 @@ J9::CodeGenerator::lowerTreeIfNeeded(
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->comp()->fe());
    OMR::CodeGeneratorConnector::lowerTreeIfNeeded(node, childNumberOfNode, parent, tt);
+
+   if (node->getOpCode().isCall())
+      {
+      self()->lowerNonhelperCallIfNeeded(node, tt);
+      }
 
    // J9
    //

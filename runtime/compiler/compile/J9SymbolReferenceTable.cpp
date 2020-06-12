@@ -244,6 +244,13 @@ J9::SymbolReferenceTable::findOrCreateWriteBarrierBatchStoreSymbolRef(TR::Resolv
 
 
 TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateAcmpHelperSymbolRef(TR::ResolvedMethodSymbol * owningMEthodSymbol)
+   {
+   return findOrCreateRuntimeHelper(TR_acmpHelper, true, false, true);
+   }
+
+
+TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateFloatSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
    {
    void * dataAddress = owningMethodSymbol->getResolvedMethod()->floatConstant(cpIndex);
@@ -2344,6 +2351,18 @@ J9::SymbolReferenceTable::findOrCreateArrayComponentTypeSymbolRef()
    return element(componentClassSymbol);
    }
 
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateObjectEqualityComparisonSymbolRef()
+   {
+   TR::SymbolReference *symRef = element(objectEqualityComparisonSymbol);
+   if (symRef != NULL)
+      return symRef;
+
+   symRef = self()->findOrCreateCodeGenInlinedHelper(objectEqualityComparisonSymbol);
+   symRef->setCanGCandReturn();
+   symRef->setCanGCandExcept();
+   return symRef;
+   }
 
 TR::ParameterSymbol *
 J9::SymbolReferenceTable::createParameterSymbol(
