@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2020 IBM Corp. and others
  *
@@ -473,7 +472,6 @@ process(J9VMThread *vmThread, const GC_FinalizeJob *finalizeJob, jclass j9VMInte
 static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 {
 	struct finalizeSlaveData *slaveData = (struct finalizeSlaveData *)arg;
-	jint result;
 	J9VMThread *env;
 	const GC_FinalizeJob *finalizeJob;
 	GC_FinalizeJob localJob;
@@ -485,24 +483,19 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 	J9JavaVM *vm = (J9JavaVM *)(slaveData->vm);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
 	MM_Forge *forge = extensions->getForge();
-	JavaVMAttachArgs attachArgs;
 
 	fns = vm->internalVMFunctions;
 	monitor = slaveData->monitor;
 
 	finalizeListManager = extensions->finalizeListManager;
-	
-	attachArgs.version = JNI_VERSION_1_2;
-	attachArgs.name = (char *)"Finalizer thread";
-	attachArgs.group = (jobject)vm->systemThreadGroupRef;
-	result = ((JavaVM*)vm)->AttachCurrentThreadAsDaemon((void **)&env, (void*)&attachArgs);
-	if(result != JNI_OK) {
-			/* Failed to attach the thread - very bad, most likely out of memory */
-			slaveData->vmThread = (J9VMThread *)NULL;
-			omrthread_monitor_enter(monitor);
-			omrthread_monitor_notify_all(monitor);
-			omrthread_monitor_exit(monitor);
-			return 0;
+
+	if (JNI_OK != vm->internalVMFunctions->attachSystemDaemonThread(vm, &env, "Finalizer thread")) {
+		/* Failed to attach the thread - very bad, most likely out of memory */
+		slaveData->vmThread = (J9VMThread *)NULL;
+		omrthread_monitor_enter(monitor);
+		omrthread_monitor_notify_all(monitor);
+		omrthread_monitor_exit(monitor);
+		return 0;
 	}
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
