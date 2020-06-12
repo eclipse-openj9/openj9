@@ -324,3 +324,11 @@ _IF([JAVA_SPEC_VERSION >= 14],
 	[_X(JVM_GetExtendedNPEMessage, JNICALL, false, jstring, JNIEnv *env, jthrowable throwableObj)])
 _IF([JAVA_SPEC_VERSION >= 15],
 	[_X(JVM_GetRandomSeedForCDSDump, JNICALL, false, jlong)])
+_IF([JAVA_SPEC_VERSION >= 15],
+	[_X(JVM_RegisterLambdaProxyClassForArchiving, JNICALL, false, void, JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6, jclass arg7)])
+_IF([JAVA_SPEC_VERSION >= 15],
+	[_X(JVM_LookupLambdaProxyClassFromArchive, JNICALL, false, jclass, JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6, jboolean arg7)])
+_IF([JAVA_SPEC_VERSION >= 15],
+	[_X(JVM_IsCDSDumpingEnabled, JNICALL, false, jboolean, JNIEnv *env)])
+_IF([JAVA_SPEC_VERSION >= 15],
+	[_X(JVM_IsCDSSharingEnabled, JNICALL, false, jboolean, JNIEnv *env)])

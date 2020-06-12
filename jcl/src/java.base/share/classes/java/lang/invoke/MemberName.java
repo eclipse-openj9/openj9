@@ -86,18 +86,19 @@ final class MemberName {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
-	/*[IF Java10]*/
+	/*[IF Java11]*/
 	public MethodType getMethodType() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	String getMethodDescriptor() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 	public Class<?> getDeclaringClass() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[IF Java11]*/
+
 	public boolean isFinal() {
 		if (mh instanceof FieldHandle) {
 			return ((FieldHandle)mh).isFinal();
@@ -105,6 +106,11 @@ final class MemberName {
 		/*[MSG "K0675", "Unexpected MethodHandle instance: {0} with {1}"]*/
 		throw new InternalError(com.ibm.oti.util.Msg.getString("K0675", mh, mh.getClass())); //$NON-NLS-1$
 	}
-	/*[ENDIF]*/
-	/*[ENDIF]*/
+	/*[ENDIF] Java11 */
+	
+	/*[IF Java15]*/
+	public byte getReferenceKind() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	/*[ENDIF] Java15 */
 }

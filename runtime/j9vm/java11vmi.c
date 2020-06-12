@@ -1744,4 +1744,31 @@ JVM_GetRandomSeedForCDSDump()
 	/* OpenJ9 does not support -Xshare:dump, so we return zero unconditionally. */
 	return 0;
 }
+
+JNIEXPORT void JNICALL
+JVM_RegisterLambdaProxyClassForArchiving(JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6, jclass arg7)
+{
+	assert(!"JVM_RegisterLambdaProxyClassForArchiving unimplemented");
+}
+
+JNIEXPORT jclass JNICALL
+JVM_LookupLambdaProxyClassFromArchive(JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6, jboolean arg7)
+{
+	assert(!"JVM_LookupLambdaProxyClassFromArchive unimplemented");
+	return NULL;
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_IsCDSDumpingEnabled(JNIEnv *env)
+{
+	/* OpenJ9 does not support -Xshare:dump, so we return false unconditionally. */
+	return JNI_FALSE;
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_IsCDSSharingEnabled(JNIEnv *env)
+{
+	/* OpenJ9 does not support -Xshare:dump, so we return false unconditionally. */
+	return JNI_FALSE;
+}
 #endif /* JAVA_SPEC_VERSION >= 15 */

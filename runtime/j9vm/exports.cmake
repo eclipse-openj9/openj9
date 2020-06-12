@@ -355,6 +355,10 @@ if(NOT JAVA_SPEC_VERSION LESS 15)
 	jvm_add_exports(jvm
 		# Additions for Java 15 (General)
 		JVM_GetRandomSeedForCDSDump
+		JVM_RegisterLambdaProxyClassForArchiving
+		JVM_LookupLambdaProxyClassFromArchive
+		JVM_IsCDSDumpingEnabled
+		JVM_IsCDSSharingEnabled
 	)
 endif()
 
