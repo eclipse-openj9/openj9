@@ -1234,8 +1234,7 @@ VM_MHInterpreter::collectForAsCollector(j9object_t methodHandle, BOOLEAN * found
 	J9Class *posArgumentClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, posArgumentType);
 	J9Class *arrayComponentClass = ((J9ArrayClass *)posArgumentClass)->componentType;
 
-	j9object_t collectedArgsArrayRef =
-			_objectAllocate->inlineAllocateIndexableObject(_currentThread, posArgumentClass, collectArraySize);
+	j9object_t collectedArgsArrayRef = VM_VMHelpers::inlineAllocateIndexableObject(_currentThread, _objectAllocate, posArgumentClass, collectArraySize);
 	if (NULL == collectedArgsArrayRef) {
 		UDATA *spPriorToFrameBuild = _currentThread->sp;
 		J9SFMethodTypeFrame * frame = buildMethodTypeFrame(_currentThread, currentType);
