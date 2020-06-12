@@ -183,6 +183,14 @@ J9::Compilation::Compilation(int32_t id,
 #endif /* defined(J9VM_OPT_JITSERVER) */
    _osrProhibitedOverRangeOfTrees(false)
    {
+
+#if defined(J9VM_OPT_JITSERVER)
+   // In JITServer, we would like to use JITClient's processor info for the compilation
+   // The following code effectively replaces the cpu with client's cpu through the getProcessorDescription() that has JITServer support
+   if (self()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      _target.cpu = TR::CPU(TR::Compiler->target.cpu.getProcessorDescription());
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
 
    _aotClassClassPointer = NULL;

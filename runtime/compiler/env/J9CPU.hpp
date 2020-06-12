@@ -51,6 +51,8 @@ public:
 
    const char *getProcessorVendorId() { TR_ASSERT(false, "Vendor ID not defined for this platform!"); return NULL; }
    uint32_t getProcessorSignature() { TR_ASSERT(false, "Processor Signature not defined for this platform!"); return 0; }
+
+   OMRProcessorArchitecture getProcessor() { return _processorDescription.processor; }
    };
 }
 

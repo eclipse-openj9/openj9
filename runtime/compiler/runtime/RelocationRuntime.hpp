@@ -95,14 +95,13 @@ typedef struct TR_AOTHeader {
     uintptr_t *relativeMethodMetaDataTable;
     uintptr_t architectureAndOs;
     uintptr_t endiannessAndWordSize;
-    uintptr_t processorSignature;
     uintptr_t featureFlags;
     uintptr_t vendorId;
     uintptr_t gcPolicyFlag;
     uintptr_t compressedPointerShift;
     uint32_t lockwordOptionHashValue;
     int32_t   arrayLetLeafSize;
-    TR_ProcessorFeatureFlags processorFeatureFlags;
+    OMRProcessorDesc processorDescription;
 } TR_AOTHeader;
 
 typedef struct TR_AOTRuntimeInfo {

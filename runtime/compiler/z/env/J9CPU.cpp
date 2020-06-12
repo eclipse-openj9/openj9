@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "control/Options.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/CPU.hpp"
 #include "infra/Assert.hpp"
@@ -383,26 +384,107 @@ J9::Z::CPU::initializeS390ProcessorFeatures()
       }
    }
 
-TR_ProcessorFeatureFlags
-J9::Z::CPU::getProcessorFeatureFlags()
+bool
+J9::Z::CPU::is_at_least_test(OMRProcessorArchitecture p)
    {
-   TR_ProcessorFeatureFlags processorFeatureFlags = { {_flags.getValue()} };
-   return processorFeatureFlags;
+#if defined(J9VM_OPT_JITSERVER)
+   if (TR::CompilationInfo::getStream())
+      return true;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   switch(p)
+      {
+      case OMR_PROCESSOR_S390_Z10:
+         return (self()->getSupportsArch(TR::CPU::z10) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_Z196:
+         return (self()->getSupportsArch(TR::CPU::z196) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_ZEC12:
+         return (self()->getSupportsArch(TR::CPU::zEC12) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_Z13:
+         return (self()->getSupportsArch(TR::CPU::z13) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_Z14:
+         return (self()->getSupportsArch(TR::CPU::z14) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_Z15:
+         return (self()->getSupportsArch(TR::CPU::z15) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_ZNEXT:
+         return (self()->getSupportsArch(TR::CPU::zNext) == (_processorDescription.processor >= p));
+      default:
+         return false;
+      }
+   return false;
    }
 
 bool
-J9::Z::CPU::isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags)
+J9::Z::CPU::supports_feature_test(uint32_t feature)
    {
-   if (self()->id() < processorSignature)
+#if defined(J9VM_OPT_JITSERVER)
+   if (TR::CompilationInfo::getStream())
+      return true;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+   bool ans = (TRUE == omrsysinfo_processor_has_feature(&_processorDescription, feature));
+
+   switch(feature)
+      {
+      case OMR_FEATURE_S390_HIGH_WORD:
+         return (self()->getSupportsHighWordFacility() == ans);
+      case OMR_FEATURE_S390_DFP:
+         return (self()->getSupportsDecimalFloatingPointFacility() == ans);
+      case OMR_FEATURE_S390_FPE:
+         return (self()->getSupportsFloatingPointExtensionFacility() == ans);
+      case OMR_FEATURE_S390_TE:
+         return (self()->getSupportsTransactionalMemoryFacility() == ans);
+      case OMR_FEATURE_S390_RI:
+         return (self()->getSupportsRuntimeInstrumentationFacility() == ans);
+      case OMR_FEATURE_S390_VECTOR_FACILITY:
+         return (self()->getSupportsVectorFacility() == ans);
+      case OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL:
+         return (self()->getSupportsVectorPackedDecimalFacility() == ans);
+      case OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3:
+         return (self()->getSupportsMiscellaneousInstructionExtensions3Facility() == ans);
+      case OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2:
+         return (self()->getSupportsVectorFacilityEnhancement2() == ans);
+      case OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY:
+         return (self()->getSupportsVectorPackedDecimalEnhancementFacility() == ans);
+      case OMR_FEATURE_S390_GUARDED_STORAGE:
+         return (self()->getSupportsGuardedStorageFacility() == ans);
+      case OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_2:
+         return (self()->getSupportsMiscellaneousInstructionExtensions2Facility() == ans);
+      case OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1:
+         return (self()->getSupportsVectorFacilityEnhancement1() == ans);
+      default:
+         return false;
+      }
+   return false;
+   }
+
+bool
+J9::Z::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
+   {
+   if (!self()->isAtLeast(processorDescription.processor))
       {
       return false;
       }
-   for (int i = 0; i < PROCESSOR_FEATURES_SIZE; i++)
+   for (int i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
       {
       // Check to see if the current processor contains all the features that code cache's processor has
-      if ((processorFeatureFlags.featureFlags[i] & self()->getProcessorFeatureFlags().featureFlags[i]) != processorFeatureFlags.featureFlags[i])
+      if ((processorDescription.features[i] & self()->getProcessorDescription().features[i]) != processorDescription.features[i])
          return false;
       }
    return true;
+   }
+
+OMRProcessorDesc
+J9::Z::CPU::getProcessorDescription()
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_processorDescription;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   return _processorDescription;
    }
 
