@@ -768,6 +768,38 @@ done:
 	{
 		j9object_t instance = NULL;
 
+		instance = inlineAllocateIndexableObject(currentThread, objectAllocate, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
+
+		if (NULL == instance) {
+			instance = currentThread->javaVM->memoryManagerFunctions->J9AllocateIndexableObject(currentThread, arrayClass, size, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+			if (J9_UNEXPECTED(NULL == instance)) {
+				setHeapOutOfMemoryError(currentThread);
+			}
+		}
+		return instance;
+	}
+
+	/**
+	 *
+	 * Perform a non-instrumentable allocation of an indexable flattened or unflattened class.
+	 *
+	 * Unflattened array classes that contain the J9ClassContainsUnflattenedFlattenables flag will return NULL
+	 * 
+	 * @param currentThread[in] the current J9VMThread
+	 * @param objectAllocate[in] instance of MM_ObjectAllocationAPI created on the current thread
+	 * @param arrayClass[in] the indexable J9Class to instantiate
+	 * @param size[in] the desired size of the array
+	 * @param initializeSlots[in] whether or not to initialize the slots (default true)
+	 * @param memoryBarrier[in] whether or not to issue a write barrier (default true)
+	 * @param sizeCheck[in] whether or not to perform the maximum size check (default true)
+	 *
+	 * @returns the new object, or NULL if allocation failed
+	 */
+	static VMINLINE j9object_t
+	inlineAllocateIndexableObject(J9VMThread *currentThread, MM_ObjectAllocationAPI *objectAllocate, J9Class *arrayClass, U_32 size, bool initializeSlots = true, bool memoryBarrier = true, bool sizeCheck = true)
+	{
+		j9object_t instance = NULL;
+
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
 			instance = objectAllocate->inlineAllocateIndexableValueTypeObject(currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
@@ -775,13 +807,6 @@ done:
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		{
 			instance = objectAllocate->inlineAllocateIndexableObject(currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
-		}
-
-		if (NULL == instance) {
-			instance = currentThread->javaVM->memoryManagerFunctions->J9AllocateIndexableObject(currentThread, arrayClass, size, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-			if (J9_UNEXPECTED(NULL == instance)) {
-				setHeapOutOfMemoryError(currentThread);
-			}
 		}
 		return instance;
 	}
