@@ -110,6 +110,8 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateWriteBarrierClassStoreRealTimeGCSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = 0);
    TR::SymbolReference * findOrCreateWriteBarrierBatchStoreSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = 0);
 
+   TR::SymbolReference * findOrCreateAcmpHelperSymbolRef(TR::ResolvedMethodSymbol * owningMEthodSymbol = NULL);
+
    TR::SymbolReference * findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool isStore);
    TR::SymbolReference * findOrFabricateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::Symbol::RecognizedField recognizedField, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal, char* name = NULL);
 
@@ -267,6 +269,15 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateImmutableGenericIntShadowSymbolReference(intptr_t offset); // "Immutable" means no aliasing issues; ie. reads from these shadows can be freely reordered wrt anything else
 
    TR::SymbolReference * findOrCreateCheckCastForArrayStoreSymbolRef(TR::ResolvedMethodSymbol *owningMethodSymbol);
+
+   /** \brief
+    *     Finds the <objectEqualityComparison> "nonhelper" symbol reference,
+    *     creating it if necessary.
+    *
+    *  \return
+    *     The <objectEqualityComparison> symbol reference.
+    */
+   TR::SymbolReference *findOrCreateObjectEqualityComparisonSymbolRef();
 
    /**
     * \brief

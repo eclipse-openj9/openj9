@@ -79,6 +79,9 @@ public:
 
    void lowerTreeIfNeeded(TR::Node *node, int32_t childNumber, TR::Node *parent, TR::TreeTop *tt);
 
+   void lowerNonhelperCallIfNeeded(TR::Node *node, TR::TreeTop *tt);
+   void fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt, bool trace);
+
    void lowerDualOperator(TR::Node *parent, int32_t childNumber, TR::TreeTop *treeTop);
 
    bool collectSymRefs(TR::Node *node, TR_BitVector *symRefs, vcount_t secondVisitCount);

@@ -94,6 +94,7 @@ private:
    int32_t      genGoto(int32_t);
    int32_t      genIfOneOperand(TR::ILOpCodes);
    int32_t      genIfTwoOperand(TR::ILOpCodes);
+   int32_t      genIfAcmpEqNe(TR::ILOpCodes);
    int32_t      genIfImpl(TR::ILOpCodes);
 
    /** \brief
