@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,12 +75,16 @@ class TR_EscapeAnalysisTools
     *
     * \param[in] rms The method whose live autos and pending pushes are to be
     *                processed
+    * \param[in] induceDefiningMap \ref DefiningMap mapping from live symbol
+    *                references captured during the OSR def liveness analysis
+    *                to symbol references defining those symbols in the current
+    *                trees
     * \param[in] methodData \ref TR_OSRMethodData at this point in the
     *                relevant method
     * \param[in] byteCodeIndex The bytecode index at this point inside the
     *                relevant method
     */
-   void processAutosAndPendingPushes(TR::ResolvedMethodSymbol *rms, TR_OSRMethodData *methodData, int32_t byteCodeIndex);
+   void processAutosAndPendingPushes(TR::ResolvedMethodSymbol *rms, DefiningMap *induceDefiningMap, TR_OSRMethodData *methodData, int32_t byteCodeIndex);
 
    /**
     * Create \c aload references to each live symbol reference among those
@@ -90,11 +94,15 @@ class TR_EscapeAnalysisTools
     *
     * \param[in] symbolReferences \ref TR_Array<> of symbol references for
     *               autos or pending pushes
+    * \param[in] induceDefiningMap \ref DefiningMap mapping from live symbol
+    *               references captured during the OSR def liveness analysis
+    *               to symbol references defining those symbols in the current
+    *               trees
     * \param[in] deadSymRefs Liveness info for \c symbolReferences - a
     *               \ref TR_BitVector of symbols that are not live at the
     *               relevant point
     */
-   void processSymbolReferences(TR_Array<List<TR::SymbolReference>> *symbolReferences, TR_BitVector *deadSymRefs);
+   void processSymbolReferences(TR_Array<List<TR::SymbolReference>> *symbolReferences, DefiningMap *induceDefiningMap, TR_BitVector *deadSymRefs);
    };
 
 #endif

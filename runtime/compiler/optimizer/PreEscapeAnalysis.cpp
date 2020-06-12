@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,11 +42,11 @@ int32_t TR_PreEscapeAnalysis::perform()
       return 0;
       }
 
-   if (comp()->getOSRMode() != TR::voluntaryOSR)
+   if (comp()->getOSRMode() != TR::voluntaryOSR || comp()->getOption(TR_DisableOSRLiveRangeAnalysis))
       {
       if (comp()->trace(OMR::escapeAnalysis))
          {
-         traceMsg(comp(), "Special handling of OSR points is not possible outside of voluntary OSR - nothing to do\n");
+         traceMsg(comp(), "Special handling of OSR points is not possible outside of voluntary OSR or if OSR Liveness is not available - nothing to do\n");
          }
       return 0;
       }
@@ -57,6 +57,18 @@ int32_t TR_PreEscapeAnalysis::perform()
          traceMsg(comp(), "EA has self-enabled, setup not required on subsequent passes - skipping preEscapeAnalysis\n");
          }
       return 0;
+      }
+
+   // Gather map of sym refs that were known during OSR Liveness analysis to
+   // the sym refs that occur in the current trees
+   //
+   static char *disableEADefiningMap = feGetEnv("TR_DisableEAEscapeHelperDefiningMap");
+
+   TR::StackMemoryRegion stackMemoryRegion(*comp()->trMemory());
+
+   if (!disableEADefiningMap && comp()->getOSRCompilationData())
+      {
+      comp()->getOSRCompilationData()->buildDefiningMap(comp()->trMemory()->currentStackRegion());
       }
 
    TR_EscapeAnalysisTools tools(comp());
@@ -84,6 +96,12 @@ int32_t TR_PreEscapeAnalysis::perform()
             break;
             }
          }
+      }
+
+   if (!disableEADefiningMap && comp()->getOSRCompilationData())
+      {
+      // Must discard references to the DefiningMaps when finished with them
+      comp()->getOSRCompilationData()->clearDefiningMap();
       }
 
    if (comp()->trace(OMR::escapeAnalysis))
