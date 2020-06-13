@@ -748,10 +748,18 @@ MM_ScavengerDelegate::signalThreadsToFlushCaches(MM_EnvironmentBase *currentEnvB
 
 		if (0 == (walkThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
 			/* For threads that do not hold VM access, we should not wait, but flush on their behalf right now.
-			 * Hold public mutex to prevent target thread acquiring VM access and racing with our flush. */
+			 * Hold public mutex to serialize with pair (not to jump in a middle) of reset_VM_access_flag & releaseVMAccessHook,
+			 * that could otherwise have this thread see walk thread as not having VM access but still having active survivor/tenure cache
+			 * and have this thread attempt to clear cache (create remainders, what is a two step non-atomic operation) therefore could race with
+			 * the target thread while trying to activate those caches (consume those remainders). This mutex will not necessarily prevent target
+			 * thread from acquiring mutex fast path, it will just prevent this thread from incorrectly seeing active cache while observing the thread
+			 * not having VM access. This thread will not deal with target thread local resource (clear remainders) unless atomically acquire
+			 * those resources (win inactive cache to push for scanning) */
 			MM_EnvironmentStandard *walkEnv = MM_EnvironmentStandard::getEnvironment(walkThread->omrVMThread);
 			omrthread_monitor_enter(walkThread->publicFlagsMutex);
-			walkEnv->flushGCCaches(false);
+			if (0 == (walkThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
+				walkEnv->flushGCCaches(false);
+			}
 			omrthread_monitor_exit(walkThread->publicFlagsMutex);
 		}
 	}
