@@ -178,18 +178,18 @@ jvmtiGetVersionNumber(jvmtiEnv* env,
 	jint* version_ptr)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 	jint rv_version = JVMTI_1_2_3_SPEC_VERSION;
 
 	Trc_JVMTI_jvmtiGetVersionNumber_Entry(env);
 
 	ENSURE_NON_NULL(version_ptr);
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (J2SE_VERSION(vm) >= J2SE_V15) {
+		rv_version = JVMTI_VERSION_15;
+	} else if (J2SE_VERSION(vm) >= J2SE_V11) {
 		rv_version = JVMTI_VERSION_11;
 	}
-
-	rc = JVMTI_ERROR_NONE;
 
 done:
 	if (NULL != version_ptr) {
