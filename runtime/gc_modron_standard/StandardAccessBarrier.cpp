@@ -492,6 +492,10 @@ MM_StandardAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 			isCompressed = true;
 			shouldCopy = true;
 		}
+	} else if (_extensions->isConcurrentScavengerEnabled()) {
+		/* reading value field from String object may trigger object movement */
+		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+		hasVMAccess = true;
 	}
 
 	if (shouldCopy) {
