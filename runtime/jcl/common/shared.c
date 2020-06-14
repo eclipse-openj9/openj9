@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1082,13 +1082,9 @@ Java_com_ibm_oti_shared_SharedClassTokenHelperImpl_findSharedClassImpl2(JNIEnv* 
 	}
 
 	omrthread_monitor_exit(jclCacheMutex);
-	
-	omrthread_monitor_enter(vm->classTableMutex);
-	omrthread_monitor_enter(vm->classMemorySegments->segmentMutex);
 	ALWAYS_TRIGGER_J9HOOK_VM_FIND_LOCALLY_DEFINED_CLASS(vm->hookInterface, (J9VMThread*)env, classloader, NULL,
 			(const char*)nameChars, (UDATA)nameLen, token, 1, -1, NULL, !doFind, !doStore, NULL, romClass);
-	omrthread_monitor_exit(vm->classMemorySegments->segmentMutex);
-	omrthread_monitor_exit(vm->classTableMutex);
+
 
 	releaseStringPair(env, classNameObj, nameChars, tokenObj, tokenChars);
 
@@ -1290,12 +1286,8 @@ Java_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl3(JNIEnv* en
 		config->updateClasspathOpenState(vm, urlEntry, 0, 1, TRUE);
 	}
 
-	omrthread_monitor_enter(vm->classTableMutex);
-	omrthread_monitor_enter(vm->classMemorySegments->segmentMutex);
 	ALWAYS_TRIGGER_J9HOOK_VM_FIND_LOCALLY_DEFINED_CLASS(vm->hookInterface, (J9VMThread*)env, classloader, NULL,
 			(const char*)nameChars, (UDATA)nameLen, urlEntry, 1, -1, partition, !doFind, !doStore, NULL, romClass);
-	omrthread_monitor_exit(vm->classMemorySegments->segmentMutex);
-	omrthread_monitor_exit(vm->classTableMutex);
 
 	releaseStringPair(env, urlElements.pathObj, urlElements.pathChars, urlElements.protocolObj, urlElements.protocolChars);
 	releaseStringPair(env, classNameObj, nameChars, partitionObj, partitionChars);
@@ -1698,12 +1690,8 @@ Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl2(J
 
 	omrthread_monitor_exit(jclCacheMutex);
 
-	omrthread_monitor_enter(vm->classTableMutex);
-	omrthread_monitor_enter(vm->classMemorySegments->segmentMutex);
 	ALWAYS_TRIGGER_J9HOOK_VM_FIND_LOCALLY_DEFINED_CLASS(vm->hookInterface, (J9VMThread*)env, classloader, NULL,
 			(const char*)nameChars, (UDATA)nameLen, cpEntries, entryCount, confirmedCount, partition, !doFind, !doStore, &indexFoundAt, romClass);
-	omrthread_monitor_exit(vm->classMemorySegments->segmentMutex);
-	omrthread_monitor_exit(vm->classTableMutex);
 
 	if (NULL != urlArrayElements) {
 		for (i = 0; i < urlCount; i++) {

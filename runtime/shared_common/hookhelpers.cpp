@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,6 +54,7 @@ ClasspathItem*
 getBootstrapClasspathItem(J9VMThread* currentThread, J9ClassPathEntry* bootstrapCPE, UDATA entryCount)
 {
 	J9JavaVM* vm = currentThread->javaVM;
+	Trc_SHR_Assert_ShouldHaveLocalMutex(vm->classMemorySegments->segmentMutex);
 
 	if (bootstrapCPE == vm->sharedClassConfig->lastBootstrapCPE) {
 		ClasspathItem* cpi = (ClasspathItem*) vm->sharedClassConfig->bootstrapCPI;
@@ -223,6 +224,7 @@ createClasspath(J9VMThread* currentThread, J9ClassPathEntry* classPathEntries, U
 {
 	ClasspathItem *classpath;
 	PORT_ACCESS_FROM_VMC(currentThread);
+	Trc_SHR_Assert_ShouldHaveLocalMutex(currentThread->javaVM->classMemorySegments->segmentMutex);
 
 	I_16 supportedEntries = (I_16)entryCount;
 	

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -782,16 +782,16 @@ CorruptCacheTest::findDummyROMClass(J9JavaVM *vm, const char *romClassName)
 	cpEntry.pathLength = 1;
 	cpEntry.type = CPE_TYPE_DIRECTORY;
 
+	cacheMap = (SH_CacheMap *)vm->sharedClassConfig->sharedClassCache;
+	cacheMap->enterLocalMutex(vm->mainThread, vm->classMemorySegments->segmentMutex, "class segment mutex", "findDummyROMClass");
 	cpi = createClasspath(vm->mainThread, &cpEntry, 1, 0, CP_TYPE_CLASSPATH, 0);
+	cacheMap->exitLocalMutex(vm->mainThread, vm->classMemorySegments->segmentMutex, "class segment mutex", "findDummyROMClass");
 	if (NULL == cpi) {
 		j9tty_printf(PORTLIB, "testCorruptCache: failed to create dummy classpath\n");
 		return FAIL;
 	}
 
-	cacheMap = (SH_CacheMap *)vm->sharedClassConfig->sharedClassCache;
-	cacheMap->enterLocalMutex(vm->mainThread, vm->classMemorySegments->segmentMutex, "class segment mutex", "findDummyROMClass");
-	cacheMap->findROMClass(vm->mainThread, romClassName, cpi, NULL, NULL, -1, NULL);
-	cacheMap->exitLocalMutex(vm->mainThread, vm->classMemorySegments->segmentMutex, "class segment mutex", "findDummyROMClass");
+	cacheMap->findROMClass(vm->mainThread, romClassName, cpi, NULL, NULL, -1, NULL);	
 
 	return rc;
 }
