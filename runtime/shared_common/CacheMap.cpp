@@ -914,7 +914,7 @@ SH_CacheMap::createNewSegment(J9VMThread* currentThread, UDATA type, J9MemorySeg
  * Updates the heapAlloc of the current ROMClass segment and creates a new segment if this is required.
  * Should be called whenever a cache update has occurred or after a ROMClass has been added to the cache 
  * THREADING: The only time that hasClassSegmentMutex can be false is if the caller does not hold the write mutex
- * findROMClass and storeROMClass prereq that the class segment mutex is held. 
+ * storeROMClass prereq that the class segment mutex is held. 
  * Therefore, we can enter the write mutex if we have the class segment mutex, but NOT vice-versa.
  * 
  * @param [in] currentThread  The current thread
@@ -932,6 +932,7 @@ SH_CacheMap::updateROMSegmentList(J9VMThread* currentThread, bool hasClassSegmen
 #if defined(J9VM_THR_PREEMPTIVE)
 	if (!hasClassSegmentMutex) {
 		Trc_SHR_Assert_ShouldNotHaveLocalMutex(classSegmentMutex);
+		Trc_SHR_Assert_False(_ccHead->hasWriteMutex(currentThread));
 		enterLocalMutex(currentThread, classSegmentMutex, "class segment mutex", "updateROMSegmentList");
 	} else {
 		Trc_SHR_Assert_ShouldHaveLocalMutex(classSegmentMutex);
@@ -1729,15 +1730,14 @@ SH_CacheMap::addClasspathToCache(J9VMThread* currentThread, ClasspathItem* obj)
 
 /* Should be run before any find/store operation on the cache. 
  * THREADING: Should be called with either the read mutex or the write mutex held.
- * If write mutex is held, hasWriteMutex must be true
- * If VM class segment is held, hasClassSegmentMutex must be true
  * 
  * @return the number of items read, or -1 on error
  */
 IDATA 
-SH_CacheMap::runEntryPointChecks(J9VMThread* currentThread, void* address, const char** p_subcstr)
+SH_CacheMap::runEntryPointChecks(J9VMThread* currentThread, void* address, const char** p_subcstr, bool acquireClassSegmentMutex)
 {
-	bool hasClassSegmentMutex;
+	bool hasClassSegmentMutex = false;
+	bool classSegmentMutexAcquired = false;
 	IDATA itemsAdded;
 	IDATA rc;
 	
@@ -1775,8 +1775,21 @@ SH_CacheMap::runEntryPointChecks(J9VMThread* currentThread, void* address, const
 			}
 		}
 	}
+	
+	if (!hasClassSegmentMutex) {
+		if (acquireClassSegmentMutex) {
+			Trc_SHR_Assert_False(_ccHead->hasWriteMutex(currentThread));
+			enterLocalMutex(currentThread, currentThread->javaVM->classMemorySegments->segmentMutex, "class segment mutex", "CM runEntryPointChecks");
+			classSegmentMutexAcquired = true;
+			hasClassSegmentMutex = true;
+		}
+	}
+	itemsAdded = refreshHashtables(currentThread, hasClassSegmentMutex);
+	if (classSegmentMutexAcquired) {
+		exitLocalMutex(currentThread, currentThread->javaVM->classMemorySegments->segmentMutex, "class segment mutex", "CM runEntryPointChecks");
+	}
 
-	if ((itemsAdded = refreshHashtables(currentThread, hasClassSegmentMutex)) == -1) {
+	if (-1 == itemsAdded) {
 		/* Error reported */
 		if (NULL != p_subcstr) {
 			*p_subcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG),  J9NLS_SHRC_CM_CACHE_REFRESH_FAILED, "cache refresh failed");
@@ -2678,7 +2691,7 @@ SH_CacheMap::getStringTableBase(void)
  *
  * @return If the class is found, pointer to the J9ROMClass structure for the class, NULL otherwise
  * 
- * THREADING: This function can be called multi-threaded. Caller must have VM class segment mutex.
+ * THREADING: This function can be called multi-threaded.
  */
 const J9ROMClass*
 SH_CacheMap::findROMClass(J9VMThread* currentThread, const char* path, ClasspathItem* cp, const J9UTF8* partition, const J9UTF8* modContext, IDATA confirmedEntries, IDATA* foundAtIndex)
@@ -2691,8 +2704,6 @@ SH_CacheMap::findROMClass(J9VMThread* currentThread, const char* path, Classpath
 	SH_ROMClassManager* localRCM;
 	UDATA hash = 0;
 	bool useWriteHash = _ccHead->isUsingWriteHash();
-
-	Trc_SHR_Assert_ShouldHaveLocalMutex(currentThread->javaVM->classMemorySegments->segmentMutex);
 
 	Trc_SHR_CM_findROMClass_Entry(currentThread, path, cp->getHelperID());
 	
@@ -2722,7 +2733,7 @@ SH_CacheMap::findROMClass(J9VMThread* currentThread, const char* path, Classpath
 		return NULL;
 	}
 
-	if (runEntryPointChecks(currentThread, NULL, NULL) == -1) {
+	if (runEntryPointChecks(currentThread, NULL, NULL, true) == -1) {
 		_ccHead->exitReadMutex(currentThread, fnName);
 		/* trace event is at level 1 and trace exit message is at level 2 as per CMVC 155318/157683 */
 		Trc_SHR_CM_findROMClass_Exit_Null_Event(currentThread, path, cp->getHelperID());
@@ -2810,7 +2821,16 @@ SH_CacheMap::findROMClass(J9VMThread* currentThread, const char* path, Classpath
 							Trc_SHR_CM_findROMClass_FailedMutex(currentThread, path, cp->getHelperID());
 							break;
 						}
-						IDATA rv = refreshHashtables(currentThread, true);		/* We do have the class segment mutex - this is a prereq of findROMClass */
+						bool segmentMutexEntered = false;
+						if (0 == omrthread_monitor_owned_by_self(currentThread->javaVM->classMemorySegments->segmentMutex)) {
+							Trc_SHR_Assert_False(_ccHead->hasWriteMutex(currentThread));
+							enterLocalMutex(currentThread, currentThread->javaVM->classMemorySegments->segmentMutex, "class segment mutex", "CM findROMClass");
+							segmentMutexEntered = true;
+						}
+						IDATA rv = refreshHashtables(currentThread, true);
+						if (segmentMutexEntered) {
+							exitLocalMutex(currentThread, currentThread->javaVM->classMemorySegments->segmentMutex, "class segment mutex", "CM findROMClass");
+						}
 						if (-1 == rv) {
 							_ccHead->exitReadMutex(currentThread, fnName);
 							break;
@@ -2913,7 +2933,7 @@ SH_CacheMap::findROMClass(J9VMThread* currentThread, const char* path, Classpath
 
 	if (returnVal) {
 		/* Call updateROMSegmentList() to ensure that heapAlloc of the romClass segment is always updated to include the returned romClass */
-		updateROMSegmentList(currentThread, true);
+		updateROMSegmentList(currentThread, omrthread_monitor_owned_by_self(currentThread->javaVM->classMemorySegments->segmentMutex) != 0);
 		updateBytesRead(returnVal->romSize);		/* This is kind of inaccurate as the strings are all external to the ROMClass */
 		/* trace event is at level 1 and trace exit message is at level 2 as per CMVC 155318/157683 */
 		Trc_SHR_CM_findROMClass_Exit_Found_Event(currentThread, path, returnVal, locateResult.foundAtIndex, cp->getHelperID());
@@ -4569,7 +4589,7 @@ SH_CacheMap::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescriptor* 
  * Note that this function may be called more than once on same ClasspathEntryItem
  * because we don't hold mutex forever on a find. This is OK though as we set a flag
  * to prevent stale marking happening twice. 
- * THREADING: Caller must have VM class segment mutex.*/
+ */
 IDATA 
 SH_CacheMap::markStale(J9VMThread* currentThread, ClasspathEntryItem* cpei, bool hasWriteMutex) 
 {

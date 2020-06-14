@@ -2987,3 +2987,6 @@ TraceEvent=Trc_SHR_CC_startup_getCacheUniqueID_after Overhead=1 Level=7 Template
 
 TraceEvent=Trc_SHR_API_j9shr_classStoreTransaction_start_cacheFull_Event Overhead=1 Level=3 Template="API j9shr_classStoreTransaction_start : J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL is set. The shared cache is full"
 TraceEvent=Trc_SHR_API_j9shr_classStoreTransaction_start_cacheSoftFull_Event Overhead=1 Level=3 Template="API j9shr_classStoreTransaction_start : J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL is set. The shared cache is soft full"
+
+TraceExit-Exception=Trc_SHR_CMI_Update_Exit5 Overhead=1 Level=2 Template="CMI Update: StoreIdentified failed to acquire _identifiedMutex. Returning -1."
+TraceExit-Exception=Trc_SHR_CMI_validate_Exit_IdentifiedMutex_Failed Overhead=1 Level=2 Template="CMI validate: Failed to acquire _identifiedMutex. Returning -1."
