@@ -49,6 +49,10 @@
 #include "infra/Bit.hpp"               //for trailingZeroes
 #include "env/JSR292Methods.h"
 
+#if defined(J9VM_OPT_JITSERVER)
+#include "env/j9methodServer.hpp"
+#endif
+
 #define BDCLASSLEN 20
 #define BDCLASS "java/math/BigDecimal"
 #define BDFIELDLEN 6
@@ -213,6 +217,21 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
          traceMsg(comp(), " argPlaceholderSlot=%d", _argPlaceholderSlot);
       traceMsg(comp(), "\n");
       }
+
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (comp()->isOutOfProcessCompilation() && comp()->getMethodBeingCompiled())
+      {
+      // Every J9BCinvoke* bytecode requires a corresponding resolved method for its method symbol.
+      // Prefetch resolved methods in one message.
+      // For unresolved methods, allow the next 2 requests to return NULL without asking the client,
+      // since they happen almost immediately after this one and method is unlikely to become resolved.
+      //
+      // NOTE: first request occurs in the switch statement over bytecodes,
+      // second request occurs in stashArgumentsForOSR
+      static_cast<TR_ResolvedJ9JITServerMethod *>(comp()->getMethodBeingCompiled())->cacheResolvedMethodsCallees(2);
+      }
+#endif
 
    while (_bcIndex < _maxByteCodeIndex)
       {

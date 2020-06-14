@@ -1790,7 +1790,7 @@ TR_ResolvedJ9JITServerMethod::addValidationRecordForCachedResolvedMethod(const T
    }
 
 void
-TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees()
+TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees(int32_t ttlForUnresolved)
    {
    // 1. Iterate through bytecodes and look for method invokes.
    // If resolved method corresponding to an invoke is not cached, add it
@@ -1832,6 +1832,11 @@ TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees()
             type = TR_ResolvedMethodType::Special;
             break;
             }
+         case J9BCinvokeinterface:
+            {
+            type = TR_ResolvedMethodType::ImproperInterface;
+            break;
+            }
          default:
             {
             // do nothing
@@ -1862,17 +1867,16 @@ TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees()
    auto recv = _stream->read<std::vector<J9Method *>, std::vector<uint32_t>, std::vector<TR_ResolvedJ9JITServerMethodInfo>>();
 
    // 3. Cache all received resolved methods
-   auto ramMethods = std::get<0>(recv);
-   auto vTableOffsets = std::get<1>(recv);
-   auto methodInfos = std::get<2>(recv);
+   auto &ramMethods = std::get<0>(recv);
+   auto &vTableOffsets = std::get<1>(recv);
+   auto &methodInfos = std::get<2>(recv);
    TR_ASSERT(numMethods == ramMethods.size(), "Number of received methods does not match the number of requested methods");
    for (int32_t i = 0; i < numMethods; ++i)
       {
       TR_ResolvedMethodType type = methodTypes[i];
       TR_ResolvedMethod *resolvedMethod;
       TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(type, (TR_OpaqueClassBlock *) _ramClass, cpIndices[i]);
-      if (std::get<0>(methodInfos[i]).remoteMirror &&
-         !compInfoPT->getCachedResolvedMethod(
+      if (!compInfoPT->getCachedResolvedMethod(
              key,
              this,
              &resolvedMethod))
@@ -1881,7 +1885,8 @@ TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees()
             key,
             (TR_OpaqueMethodBlock *) ramMethods[i],
             vTableOffsets[i],
-            methodInfos[i]);
+            methodInfos[i],
+            ttlForUnresolved);
          }
       }
    }

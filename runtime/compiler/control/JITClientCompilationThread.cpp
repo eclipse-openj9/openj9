@@ -1783,7 +1783,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                {
                case TR_ResolvedMethodType::VirtualFromCP:
                   {
-                  ramMethod = (J9Method *) TR_ResolvedJ9Method::getVirtualMethod(fe, owningMethod->cp(), cpIndex, (UDATA *) &vTableOffset, NULL);
+                  UDATA offset;
+                  ramMethod = (J9Method *) TR_ResolvedJ9Method::getVirtualMethod(fe, owningMethod->cp(), cpIndex, &offset, NULL);
+                  vTableOffset = offset;
                   if (ramMethod && vTableOffset) createMethod = true;
                   break;
                   }
@@ -1803,6 +1805,19 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                      TR::VMAccessCriticalSection resolveSpecialMethodRef(fe);
                      ramMethod = jitResolveSpecialMethodRef(fe->vmThread(), owningMethod->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
                      }
+                  if (ramMethod) createMethod = true;
+                  break;
+                  }
+               case TR_ResolvedMethodType::ImproperInterface:
+                  {
+                  TR::VMAccessCriticalSection getResolvedHandleMethod(fe);
+                  UDATA offset;
+                  ramMethod = jitGetImproperInterfaceMethodFromCP(
+                     fe->vmThread(),
+                     owningMethod->cp(),
+                     cpIndex,
+                     &offset);
+                  vTableOffset = offset;
                   if (ramMethod) createMethod = true;
                   break;
                   }
