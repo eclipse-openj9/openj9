@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2001, 2019 IBM Corp. and others
+  Copyright (c) 2001, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -224,6 +224,13 @@
  	<echo value="CMVC 148977:  Excessive GC throws OOM may fail if there is other activity on the machine - at least 5 GCs are required, in the 20 second test" />
  	<!-- does the test fail to run (thus implying that we encountered excessive GC)? -->
  	<command>$EXE$ $XINT$ $ARGS_FOR_ALL_TESTS$ -Xdump:none -Xms8m -Xmx8m -Xgc:fvtest=forceExcessiveAllocFailureAfter=5 -verbose:gc -Xverbosegclog:foo.log $CP$ com.ibm.tests.garbagecollector.SpinAllocate 20</command>
+ 	<output regex="no" type="failure">Test ran to completion</output>
+ 	<output regex="no" type="success">java.lang.OutOfMemoryError</output>
+ </test>
+ <test id="Excessive GC throws OOM on RISC-V">
+ 	<echo value="CMVC 148977:  Excessive GC throws OOM may fail if there is other activity on the machine - at least 5 GCs are required, in the 20 second test" />
+ 	<!-- does the test fail to run (thus implying that we encountered excessive GC)? -->
+ 	<command>$EXE$ $XINT$ $ARGS_FOR_ALL_TESTS$ -Xdump:none -Xms2m -Xmx2m -Xgc:fvtest=forceExcessiveAllocFailureAfter=5 -verbose:gc -Xverbosegclog:foo.log $CP$ com.ibm.tests.garbagecollector.SpinAllocate 20</command>
  	<output regex="no" type="failure">Test ran to completion</output>
  	<output regex="no" type="success">java.lang.OutOfMemoryError</output>
  </test>
