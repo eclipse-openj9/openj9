@@ -124,16 +124,31 @@ public:
    bool isString(TR::Compilation *comp, uintptr_t objectPointer);
    bool jitStaticsAreSame(TR::Compilation *comp, TR_ResolvedMethod * method1, int32_t cpIndex1, TR_ResolvedMethod * method2, int32_t cpIndex2);
    bool jitFieldsAreSame(TR::Compilation *comp, TR_ResolvedMethod * method1, int32_t cpIndex1, TR_ResolvedMethod * method2, int32_t cpIndex2, int32_t isStatic);
+   /*
+    * \brief
+    *    Tells whether a class reference entry in the constant pool represents a value type class.
+    *
+    * \param cpContextClass
+    *    The class whose constant pool contains the class reference entry being looked at. In another words,
+    *    it's the class of the method referring to the class reference entry.
+    *
+    * \param cpIndex
+    *    The constant pool index of the class reference entry.
+    *
+    * \note
+    *    The class reference entry doesn't need to be resolved because the information is encoded in class name string
+    */
+   bool isClassRefValueType(TR::Compilation *comp, TR_OpaqueClassBlock *cpContextClass, int32_t cpIndex);
 
    /** \brief
     *	    Populates a TypeLayout object.
     *
     *  \param region
     *     The region used to allocate TypeLayout.
-    * 
+    *
     *  \param opaqueClazz
     *     Class of the type whose layout needs to be populated.
-    * 
+    *
     *  \return
     *     Returns a pointer to the TypeLayout object populated.
     */
@@ -176,7 +191,7 @@ public:
     * @brief Determine if a list of classes contains less than two concrete classes.
     * A class is considered concrete if it is not an interface or an abstract class
     * @param subClasses List of subclasses to be checked.
-    * @return Returns 'true' if the given list of classes contains less than 
+    * @return Returns 'true' if the given list of classes contains less than
     * 2 concrete classses and false otherwise.
     */
    bool containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_PersistentClassInfo>* subClasses);
