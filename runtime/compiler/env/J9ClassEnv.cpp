@@ -731,3 +731,11 @@ J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_Pers
       }
    return true;
    }
+
+bool
+J9::ClassEnv::isClassRefValueType(TR::Compilation *comp, TR_OpaqueClassBlock *cpContextClass, int32_t cpIndex)
+   {
+   J9Class * j9class = reinterpret_cast<J9Class *>(cpContextClass);
+   J9JavaVM *vm = getJ9JitConfigFromFE(comp->fej9())->javaVM;
+   return vm->internalVMFunctions->isClassRefQtype(j9class, cpIndex);
+   }
