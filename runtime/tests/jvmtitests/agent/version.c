@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@ const static char *versionNames[] =
 	"JVMTI 1.2",
 	"JVMTI 9.0",
 	"JVMTI 11",
+	"JVMTI 15",
 	"unknown"
 };
 
@@ -64,6 +65,8 @@ getVersionName(agentEnv * agent_env, jint version)
 			return versionNames[3];
 		case JVMTI_VERSION_11:
 			return versionNames[4];
+		case JVMTI_VERSION_15:
+			return versionNames[5];
 		default:
 			error(agent_env, JVMTI_ERROR_UNSUPPORTED_VERSION, "Query for an unknown version");
 	}
