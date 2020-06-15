@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2019 IBM Corp. and others
+ * Copyright (c) 2010, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@ import java.io.InputStream;
 
 import java.util.*;
 import java.io.*;
+import java.util.concurrent.*;
 
 /** 
  * Instances of StreamGobbler are used to capture output from the spawned process
@@ -118,6 +119,9 @@ public class RunCommand {
 	public static String[] lastCommandStderrLines;
 	public static boolean logCommands = false;
 	public static int processRunawayTimeout = 120000; // 2 min timer, kill process if its taking longer!
+	
+	private static String archName = System.getProperty("os.arch");
+	private static boolean isRiscv = archName.toLowerCase().contains("riscv");
 	
 	/* if the process executed last is still running, it returns the process object, else returns null */
 	public static Process getLastProcess() {
@@ -243,6 +247,14 @@ public class RunCommand {
 	        	outputGobbler.ignoreRest = true;
                 errorGobbler.ignoreRest = true;
 	        }
+        	/* Set up 1 minute for the command (seperate JVM process without JIT) to finish
+        	 * on the RISC-V hardware before the next command shows up so as to avoid competing
+        	 * for the I/O resources with the test framework on the SD-card due to the 
+        	 * limited capability of RISC-V.
+        	 */
+        	if (isRiscv) {
+        		TimeUnit.MINUTES.sleep(1);
+        	}
         } catch (IOException ioe) {
         	throw new RuntimeException("Problem invoking command: "+ioe.toString());
         } catch (InterruptedException ie) {
