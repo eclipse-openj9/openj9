@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,9 @@ class TestConfigParser {
 	private int _outputLimit;
 	private boolean _debugCmdOnTimeout = false;
 	private String _modeHints;
+	
+	static String archName = System.getProperty("os.arch");
+	static boolean isRiscv = archName.toLowerCase().contains("riscv");
 	
 	/**
 	 * If true, the test suite will print out the full output for each test case, regardless of whether
@@ -156,6 +159,10 @@ class TestConfigParser {
 					String modeHints = (String)attributes.get("modeHints");
 					if (hasAllowedHints(modeHints)) {
 						String timeout = (String)attributes.get("timeout");
+						
+						/* Set 16 hours (57600 secs) for timeout on RISC-V due to the lack of JIT */
+						timeout = (isRiscv) ? "57600" : timeout;
+						
 						_currentTest = new Test( id, timeout, _debugCmdOnTimeout );
 					} else {
 						if ((_modeHints == null) || (_modeHints.matches("\\s*"))) {
