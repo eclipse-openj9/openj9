@@ -70,7 +70,7 @@ J9::Z::zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode,
 	TR::LabelSymbol * returnFromJNICallLabel,
 	TR::Snippet * callDataSnippet, bool isJNIGCPoint)
    {
-   TR::S390JNICallDataSnippet2 * jniCallDataSnippet = static_cast<TR::S390JNICallDataSnippet2 *>(callDataSnippet);
+   TR::S390JNICallDataSnippet * jniCallDataSnippet = static_cast<TR::S390JNICallDataSnippet *>(callDataSnippet);
    TR::CodeGenerator * codeGen = cg();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(codeGen->fe());
    J9::Z::PrivateLinkage * privateLinkage = static_cast<J9::Z::PrivateLinkage *>(cg()->getLinkage(TR_Private));

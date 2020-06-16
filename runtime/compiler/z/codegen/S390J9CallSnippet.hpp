@@ -171,7 +171,7 @@ class J9S390InterfaceCallDataSnippet : public TR::S390ConstantDataSnippet
    virtual uint32_t getLastSlotOffset();
    };
 
-class S390JNICallDataSnippet2 : public TR::S390ConstantDataSnippet
+class S390JNICallDataSnippet : public TR::S390ConstantDataSnippet
    {
    /** Base register for this snippet */
    TR::Register *  _baseRegister;
@@ -198,7 +198,7 @@ class S390JNICallDataSnippet2 : public TR::S390ConstantDataSnippet
 
    public:
 
-  S390JNICallDataSnippet2(TR::CodeGenerator *,
+  S390JNICallDataSnippet(TR::CodeGenerator *,
                                   TR::Node *);
 
    virtual Kind getKind() { return IsJNICallData; }
