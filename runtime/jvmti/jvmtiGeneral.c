@@ -177,19 +177,26 @@ jvmtiError JNICALL
 jvmtiGetVersionNumber(jvmtiEnv* env,
 	jint* version_ptr)
 {
+#if JAVA_SPEC_VERSION >= 11
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
+#endif /* JAVA_SPEC_VERSION >= 11 */
+	jvmtiError rc = JVMTI_ERROR_NONE;
 	jint rv_version = JVMTI_1_2_3_SPEC_VERSION;
 
 	Trc_JVMTI_jvmtiGetVersionNumber_Entry(env);
 
 	ENSURE_NON_NULL(version_ptr);
 
+#if JAVA_SPEC_VERSION >= 11
+#if JAVA_SPEC_VERSION >= 15
+	if (J2SE_VERSION(vm) >= J2SE_V15) {
+		rv_version = JVMTI_VERSION_15;
+	} else
+#endif /* JAVA_SPEC_VERSION >= 15 */
 	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		rv_version = JVMTI_VERSION_11;
 	}
-
-	rc = JVMTI_ERROR_NONE;
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 done:
 	if (NULL != version_ptr) {
