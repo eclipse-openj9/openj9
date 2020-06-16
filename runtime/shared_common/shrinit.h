@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,6 +46,7 @@ void hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* 
 void hookSerializeSharedCache(J9HookInterface** hookInterface, UDATA eventNum, void* voidData, void* userData);
 void hookStoreSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidData, void* userData);
 UDATA j9shr_getCacheSizeBytes(J9JavaVM *vm);
+J9SharedClassCacheMode j9shr_getSharedClassCacheMode(J9JavaVM *vm);
 UDATA j9shr_getTotalUsableCacheBytes(J9JavaVM *vm);
 void j9shr_getMinMaxBytes(J9JavaVM *vm, U_32 *softmx, I_32 *minAOT, I_32 *maxAOT, I_32 *minJIT, I_32 *maxJIT);
 I_32 j9shr_setMinMaxBytes(J9JavaVM *vm, U_32 softmx, I_32 minAOT, I_32 maxAOT, I_32 minJIT, I_32 maxJIT);
