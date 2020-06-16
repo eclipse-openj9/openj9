@@ -72,10 +72,9 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 		break;
 
 	case GC_ArrayletObjectModel::Discontiguous:
-		Assert_MM_true(0 < _numberOfArraylets);
 		/* non-empty discontiguous arrays require slow-path allocate */
 		if (isGCAllowed() || (0 == _numberOfIndexedFields)) {
-			/* _numberOfArraylets discontiguous leaves, all but last contains leaf size bytes */
+			/* _numberOfArraylets discontiguous leaves, all contains leaf size bytes */
 			layoutSizeInBytes = _dataSize;
 			_allocateDescription.setChunkedArray(true);
 			Trc_MM_allocateAndConnectNonContiguousArraylet_Entry(env->getLanguageVMThread(),
@@ -217,6 +216,7 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 	Assert_MM_true(_numberOfArraylets == _allocateDescription.getNumArraylets());
 
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	GC_ArrayObjectModel *indexableObjectModel = &extensions->indexableObjectModel;
 	bool const compressed = env->compressObjectReferences();
 
 	/* determine how many bytes to allocate outside of the spine (in arraylet leaves) */
@@ -228,7 +228,7 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 
 	/* allocate leaf for each arraylet and attach it to its leaf pointer in the spine */
 	uintptr_t arrayoidIndex = 0;
-	fj9object_t *arrayoidPtr = extensions->indexableObjectModel.getArrayoidPointer(spine);
+	fj9object_t *arrayoidPtr = indexableObjectModel->getArrayoidPointer(spine);
 	while (0 < bytesRemaining) {
 		/* allocate the next arraylet leaf */
 		void *leaf = env->_objectAllocationInterface->allocateArrayletLeaf(env, &_allocateDescription,
@@ -245,7 +245,7 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 
 		/* refresh the spine -- it might move if we GC while allocating the leaf */
 		spine = _allocateDescription.getSpine();
-		arrayoidPtr = extensions->indexableObjectModel.getArrayoidPointer(spine);
+		arrayoidPtr = indexableObjectModel->getArrayoidPointer(spine);
 
 		/* set the arrayoid pointer in the spine to point to the new leaf */
 		GC_SlotObject slotObject(env->getOmrVM(), GC_SlotObject::addToSlotAddress(arrayoidPtr, arrayoidIndex, compressed));
@@ -258,22 +258,15 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 	if (NULL != spine) {
 		switch (_layout) {
 		case GC_ArrayletObjectModel::Discontiguous:
-			/* if last arraylet leaf is empty (contains 0 bytes) arrayoid pointer is set to NULL */
-			if (arrayoidIndex == (_numberOfArraylets - 1)) {
-				Assert_MM_true(0 == (_dataSize % arrayletLeafSize));
-				GC_SlotObject slotObject(env->getOmrVM(), GC_SlotObject::addToSlotAddress(arrayoidPtr, arrayoidIndex, compressed));
-				slotObject.writeReferenceToSlot(NULL);
-			} else {
-				Assert_MM_true(0 != (_dataSize % arrayletLeafSize));
-				Assert_MM_true(arrayoidIndex == _numberOfArraylets);
-			}
+			indexableObjectModel->AssertArrayletIsDiscontiguous(spine);
+			Assert_MM_true(arrayoidIndex == _numberOfArraylets);
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-			if (extensions->indexableObjectModel.isDoubleMappingEnabled()) {
+			if (indexableObjectModel->isDoubleMappingEnabled()) {
 				/**
 				 * There are some special cases where double mapping an arraylet is
 				 * not necessary; isArrayletDataDiscontiguous() details those cases.
 				 */
-				if (extensions->indexableObjectModel.isArrayletDataDiscontiguous(spine)) {
+				if (indexableObjectModel->isArrayletDataDiscontiguous(spine)) {
 					doubleMapArraylets(env, (J9Object *)spine);
 				}
 			}
@@ -283,7 +276,7 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 		case GC_ArrayletObjectModel::Hybrid:
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 			/* Unreachable if double map is enabled */
-			if (extensions->indexableObjectModel.isDoubleMappingEnabled()) {
+			if (indexableObjectModel->isDoubleMappingEnabled()) {
 				Assert_MM_double_map_unreachable();
 			}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
@@ -346,11 +339,6 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 
 	while (NULL != (slotObject = arrayletLeafIterator.nextLeafPointer())) {
 		void *currentLeaf = slotObject->readReferenceFromSlot();
-		/* In some corner cases the last leaf might be NULL therefore we must ignore it */
-		if (NULL == currentLeaf) {
-			Trc_MM_double_map_TraverseLeavesNULLPointer(env->getLanguageVMThread());
-			break;
-		}
 		arrayletLeaveAddrs[count] = currentLeaf;
 		count++;
 	}
