@@ -54,17 +54,19 @@ protected:
 
 public:
 
+   // supportsFeature, is, isAtLeast, isAtMost and supports_feature_test will go away once the old set of cpu APIs gets removed
    bool supportsFeature(uint32_t feature);
-   bool supports_feature_test(uint32_t feature);
-
-   bool isCompatible(const OMRProcessorDesc& processorDescription);
-   OMRProcessorDesc getProcessorDescription();
-
    bool is(OMRProcessorArchitecture p);
    bool isAtLeast(OMRProcessorArchitecture p);
    bool isAtMost(OMRProcessorArchitecture p);
 
+   bool isCompatible(const OMRProcessorDesc& processorDescription);
+   OMRProcessorDesc getProcessorDescription();
    bool getPPCSupportsVSX();
+
+private:
+   bool supports_feature_test(uint32_t feature);
+
    };
 
 }
