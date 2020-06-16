@@ -2098,6 +2098,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, std::string((char *) classRefName, classRefLen));
          }
          break;
+      case MessageType::ClassEnv_isClassRefValueType:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, int32_t>();
+         auto clazz = std::get<0>(recv);
+         auto cpIndex = std::get<1>(recv);
+         client->write(response, TR::Compiler->cls.isClassRefValueType(comp, clazz, cpIndex));
+         }
+         break;
       case MessageType::SharedCache_getClassChainOffsetInSharedCache:
          {
          auto j9class = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());

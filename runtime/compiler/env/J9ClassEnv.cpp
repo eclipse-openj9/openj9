@@ -735,7 +735,17 @@ J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_Pers
 bool
 J9::ClassEnv::isClassRefValueType(TR::Compilation *comp, TR_OpaqueClassBlock *cpContextClass, int32_t cpIndex)
    {
-   J9Class * j9class = reinterpret_cast<J9Class *>(cpContextClass);
-   J9JavaVM *vm = getJ9JitConfigFromFE(comp->fej9())->javaVM;
-   return vm->internalVMFunctions->isClassRefQtype(j9class, cpIndex);
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      stream->write(JITServer::MessageType::ClassEnv_isClassRefValueType, cpContextClass, cpIndex);
+      return std::get<0>(stream->read<bool>());
+      }
+   else // non-jitserver
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      {
+      J9Class * j9class = reinterpret_cast<J9Class *>(cpContextClass);
+      J9JavaVM *vm = comp->fej9()->getJ9JITConfig()->javaVM;
+      return vm->internalVMFunctions->isClassRefQtype(j9class, cpIndex);
+      }
    }

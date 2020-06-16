@@ -293,6 +293,8 @@ enum MessageType : uint16_t
    KnownObjectTable_getReferenceField,
    KnownObjectTable_invokeDirectHandleDirectCall,
    KnownObjectTable_getKnownObjectTableDumpInfo,
+
+   ClassEnv_isClassRefValueType, // 243
    MessageType_MAXTYPE
    };
 
@@ -542,7 +544,8 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "KnownObjectTable_createSymRefWithKnownObject", // 239
    "KnownObjectTable_getReferenceField", // 240
    "KnownObjectTable_invokeDirectHandleDirectCall", // 241
-   "KnownObjectTable_getKnownObjectTableDumpInfo" // 242
+   "KnownObjectTable_getKnownObjectTableDumpInfo", // 242
+   "ClassEnv_isClassRefValueType" // 243
    };
    }; // namespace JITServer
 #endif // MESSAGE_TYPES_HPP
