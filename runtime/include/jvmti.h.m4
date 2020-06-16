@@ -47,9 +47,8 @@ JNIEXPORT jint JNICALL Agent_OnAttach(JavaVM* vm, char *options, void *reserved)
 #define JVMTI_VERSION_1 (JVMTI_VERSION_1_0)
 #define JVMTI_VERSION_9  0x30090000
 #define JVMTI_VERSION_11 0x300b0000
-#define JVMTI_VERSION_15 0x300f0000
 
-#define JVMTI_VERSION JVMTI_VERSION_15
+#define JVMTI_VERSION JVMTI_VERSION_11
 
 #define JVMTI_1_0_SPEC_VERSION           (JVMTI_VERSION_1_0 + 37)	/* Spec version is 1.0.37 */
 #define JVMTI_1_1_SPEC_VERSION           (JVMTI_VERSION_1_1 + 102)	/* Spec version is 1.1.102 */
