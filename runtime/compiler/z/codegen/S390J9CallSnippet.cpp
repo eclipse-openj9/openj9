@@ -1276,73 +1276,73 @@ TR::J9S390InterfaceCallDataSnippet::getLength(int32_t)
 
 
 uint32_t
-TR::S390JNICallDataSnippet2::getJNICallOutFrameFlagsOffset()
+TR::S390JNICallDataSnippet::getJNICallOutFrameFlagsOffset()
    {
    return TR::Compiler->om.sizeofReferenceAddress();
    }
 
 uint32_t
-TR::S390JNICallDataSnippet2::getReturnFromJNICallOffset()
+TR::S390JNICallDataSnippet::getReturnFromJNICallOffset()
    {
    return 2 * TR::Compiler->om.sizeofReferenceAddress();
    }
 
 uint32_t
-TR::S390JNICallDataSnippet2::getSavedPCOffset()
+TR::S390JNICallDataSnippet::getSavedPCOffset()
    {
    return 3 * TR::Compiler->om.sizeofReferenceAddress();
    }
 
 uint32_t
-TR::S390JNICallDataSnippet2::getTagBitsOffset()
+TR::S390JNICallDataSnippet::getTagBitsOffset()
    {
    return 4 * TR::Compiler->om.sizeofReferenceAddress();
    }
 
 uint32_t
-TR::S390JNICallDataSnippet2::getPCOffset()
+TR::S390JNICallDataSnippet::getPCOffset()
    {
    return 5 * TR::Compiler->om.sizeofReferenceAddress();
    }
 
 uint32_t
-TR::S390JNICallDataSnippet2::getLiteralsOffset()
+TR::S390JNICallDataSnippet::getLiteralsOffset()
    {
    return 6 * TR::Compiler->om.sizeofReferenceAddress();
    }
 
 uint32_t
-TR::S390JNICallDataSnippet2::getJitStackFrameFlagsOffset()
+TR::S390JNICallDataSnippet::getJitStackFrameFlagsOffset()
    {
    return 7 * TR::Compiler->om.sizeofReferenceAddress();
    }
 
 uint32_t
-TR::S390JNICallDataSnippet2::getConstReleaseVMAccessMaskOffset()
+TR::S390JNICallDataSnippet::getConstReleaseVMAccessMaskOffset()
    {
    return 8 * TR::Compiler->om.sizeofReferenceAddress();
    }
 
 uint32_t
-TR::S390JNICallDataSnippet2::getConstReleaseVMAccessOutOfLineMaskOffset()
+TR::S390JNICallDataSnippet::getConstReleaseVMAccessOutOfLineMaskOffset()
    {
    return 9 * TR::Compiler->om.sizeofReferenceAddress();
    }
 
 uint32_t
-TR::S390JNICallDataSnippet2::getTargetAddressOffset()
+TR::S390JNICallDataSnippet::getTargetAddressOffset()
    {
    return 10 * TR::Compiler->om.sizeofReferenceAddress();
    }
 
 uint32_t
-TR::S390JNICallDataSnippet2::getLength(int32_t estimatedSnippetStart)
+TR::S390JNICallDataSnippet::getLength(int32_t estimatedSnippetStart)
    {
    return 12 * TR::Compiler->om.sizeofReferenceAddress(); /*one ptr more for possible padding */
    }
 
 
-TR::S390JNICallDataSnippet2::S390JNICallDataSnippet2(TR::CodeGenerator * cg,
+TR::S390JNICallDataSnippet::S390JNICallDataSnippet(TR::CodeGenerator * cg,
                                TR::Node * node)
 : TR::S390ConstantDataSnippet(cg, node, generateLabelSymbol(cg),0),
  _baseRegister(0),
@@ -1362,11 +1362,11 @@ TR::S390JNICallDataSnippet2::S390JNICallDataSnippet2(TR::CodeGenerator * cg,
    }
 
 uint8_t *
-TR::S390JNICallDataSnippet2::emitSnippetBody()
+TR::S390JNICallDataSnippet::emitSnippetBody()
    {
    uint8_t * cursor = cg()->getBinaryBufferCursor();
 
-   /* TR::S390JNICallDataSnippet2 Layout: all fields are pointer sized
+   /* TR::S390JNICallDataSnippet Layout: all fields are pointer sized
        ramMethod
        JNICallOutFrameFlags
        returnFromJNICall
@@ -1381,7 +1381,7 @@ TR::S390JNICallDataSnippet2::emitSnippetBody()
    */
       TR::Compilation *comp = cg()->comp();
 
-      AOTcgDiag1(comp, "TR::S390JNICallDataSnippet2::emitSnippetBody cursor=%x\n", cursor);
+      AOTcgDiag1(comp, "TR::S390JNICallDataSnippet::emitSnippetBody cursor=%x\n", cursor);
       // Ensure pointer sized alignment
       int32_t alignSize = TR::Compiler->om.sizeofReferenceAddress();
       int32_t padBytes = ((intptr_t)cursor + alignSize -1) / alignSize * alignSize - (intptr_t)cursor;
@@ -1488,7 +1488,7 @@ TR::S390JNICallDataSnippet2::emitSnippetBody()
    }
 
 void
-TR::S390JNICallDataSnippet2::print(TR::FILE *pOutFile, TR_Debug *debug)
+TR::S390JNICallDataSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    {
 /*
        ramMethod
