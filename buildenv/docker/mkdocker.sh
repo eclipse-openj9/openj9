@@ -623,9 +623,9 @@ add_git_remote() {
 
 create_git_cache() {
   local git_cache_dir=/home/$user/openjdk_cache
-  # The jdk14 remote is fetched first because that repository was subjected to
+  # The jdk15 remote is fetched first because that repository was subjected to
   # 'git gc --aggressive --prune=all' before it was first published making it much
-  # smaller than the other jdk repositories. There is a large degree of overlap
+  # smaller than some other jdk repositories. There is a large degree of overlap
   # among the jdk repositories so a relatively small number of commits must be
   # fetched from the others.
   echo ""
@@ -636,14 +636,15 @@ create_git_cache() {
   add_git_remote jdk8    https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
   add_git_remote jdk11   https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
   add_git_remote jdk14   https://github.com/ibmruntimes/openj9-openjdk-jdk14.git
+  add_git_remote jdk15   https://github.com/ibmruntimes/openj9-openjdk-jdk15.git
   add_git_remote jdknext https://github.com/ibmruntimes/openj9-openjdk-jdk.git
   add_git_remote omr     https://github.com/eclipse/openj9-omr.git
   add_git_remote openj9  https://github.com/eclipse/openj9.git
   echo " && echo Fetching repository cache... \\"
-  echo " && git fetch jdk14 \\"
+  echo " && git fetch jdk15 \\"
   echo " && git fetch --all \\"
   echo " && echo Shrinking repository cache... \\"
-  echo " && git gc --aggressive --prune=all"
+  echo " && git repack -a -d -f --depth=50 --window=250 --threads=1"
 }
 
 configure_ssh() {
