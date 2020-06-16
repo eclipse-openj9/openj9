@@ -323,6 +323,26 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 	Trc_JNIinv_protectedDestroyJavaVM_FinishedThreadWait();
 
+	/* Prevents daemon threads from exiting */
+	if (vm->runtimeFlagsMutex != NULL) {
+		omrthread_monitor_enter(vm->runtimeFlagsMutex);
+	}
+
+	if (vm->runtimeFlags & J9_RUNTIME_EXIT_STARTED) {
+		if (vm->runtimeFlagsMutex != NULL) {
+			omrthread_monitor_exit(vm->runtimeFlagsMutex);
+		}
+		/* Do not acquire exclusive here as it may cause deadlocks with
+		 * the other thread shutting down.
+		 */
+		return JNI_ERR;
+	}
+
+	vm->runtimeFlags |= J9_RUNTIME_EXIT_STARTED;
+	if (vm->runtimeFlagsMutex != NULL) {
+		omrthread_monitor_exit(vm->runtimeFlagsMutex);
+	}
+
 	/* run exit hooks */
 	sidecarShutdown(vmThread);
 
@@ -368,26 +388,6 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 	if (terminateRemainingThreads(vmThread)) {
 		Trc_JNIinv_protectedDestroyJavaVM_terminateRemainingThreadsFailed();
-
-		/* Prevents daemon threads from exiting */
-		if (vm->runtimeFlagsMutex != NULL) {
-			omrthread_monitor_enter(vm->runtimeFlagsMutex);
-		}
-
-		if (vm->runtimeFlags & J9_RUNTIME_EXIT_STARTED) {
-			if (vm->runtimeFlagsMutex != NULL) {
-				omrthread_monitor_exit(vm->runtimeFlagsMutex);
-			}
-			/* Do not acquire exclusive here as it may cause deadlocks with
-			 * the other thread shutting down.
-			 */
-			return JNI_ERR;
-		}
-
-		vm->runtimeFlags |= J9_RUNTIME_EXIT_STARTED;
-		if (vm->runtimeFlagsMutex != NULL) {
-			omrthread_monitor_exit(vm->runtimeFlagsMutex);
-		}
 
 		/* If we cannot shut down, at least run exit code in loaded modules */
 		runExitStages(vm, vmThread);
@@ -551,16 +551,21 @@ jint JNICALL DetachCurrentThread(JavaVM * javaVM)
 	UDATA result = 0;
 	PORT_ACCESS_FROM_PORT(vm->portLibrary);
 
-	/* we should return here to avoid the detaching operations after the destroy call to avoid
-	 * the unexpected hang caused by the checking of exclusive VM access in deallocateVMThread()
-	 */
-	if (J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_EXIT_STARTED)) {
-		return JNI_OK;
-	}
-
 	/* Verify that the current thread is allowed to detach from the VM */
 
-	if ((result = (UDATA) verifyCurrentThreadAttached(vm, &vmThread)) == JNI_OK) {
+	result = (UDATA) verifyCurrentThreadAttached(vm, &vmThread);
+	if (JNI_OK == result) {
+		/* If exit has started, do not perform the detach operation to avoid
+		 * the unexpected hang caused by the checking of exclusive VM access in deallocateVMThread()
+		 *
+		 * Allow system threads (those forked internally by the VM) to detach if exit has
+		 * started (VM shutdown itself will detach system threads).
+		 */
+		if (J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_EXIT_STARTED)) {
+			if (J9_ARE_NO_BITS_SET(vmThread->privateFlags, J9_PRIVATE_FLAGS_SYSTEM_THREAD)) {
+				goto done;	
+			}
+		}
 
 		Trc_JNIinv_DetachCurrentThread(vmThread);
 
@@ -581,6 +586,7 @@ jint JNICALL DetachCurrentThread(JavaVM * javaVM)
 		}
 	}
 
+done:
 	return (jint) result;
 }
 
@@ -1072,20 +1078,38 @@ jint JNICALL AttachCurrentThreadAsDaemon(JavaVM * vm, void ** p_env, void * thr_
 
 #if (defined(J9VM_OPT_SIDECAR)) 
 /* run the shutdown method in java.lang.Shutdown */
-void sidecarShutdown(J9VMThread* shutdownThread) {
+void sidecarShutdown(J9VMThread* shutdownThread)
+{
 	J9JavaVM * vm = shutdownThread->javaVM;
+	omrthread_monitor_t mutex = vm->runtimeFlagsMutex;
+	J9NameAndSignature nas;
 
-	if (!(vm->runtimeFlags & J9_RUNTIME_CLEANUP)) {
-		J9NameAndSignature nas;
+	nas.name = (J9UTF8*)&j9_shutdown;
+	nas.signature = (J9UTF8*)&j9_void_void;
 
-		nas.name = (J9UTF8*)&j9_shutdown;
-		nas.signature = (J9UTF8*)&j9_void_void;
+	/* Set a flag to allow System.exit to run from within finalizers run by the shutdown code */
 
-		vm->runtimeFlags |= J9_RUNTIME_CLEANUP;
-		enterVMFromJNI(shutdownThread);
-		runStaticMethod(shutdownThread, (U_8*)"java/lang/Shutdown", &nas, 0, NULL);
-		internalExceptionDescribe(shutdownThread);
-		releaseVMAccess(shutdownThread);
+	if (NULL != mutex) {
+		omrthread_monitor_enter(mutex);
+	}
+	vm->runtimeFlags |= J9_RUNTIME_CLEANUP;
+	if (NULL != mutex) {
+		omrthread_monitor_exit(mutex);
+	}
+
+	enterVMFromJNI(shutdownThread);
+	runStaticMethod(shutdownThread, (U_8*)"java/lang/Shutdown", &nas, 0, NULL);
+	internalExceptionDescribe(shutdownThread);
+	releaseVMAccess(shutdownThread);
+
+	/* Unset the flag so System.exit is no longer allowed (particularly while the VMDeath JMVTI event is in progress) */
+
+	if (NULL != mutex) {
+		omrthread_monitor_enter(mutex);
+	}
+	vm->runtimeFlags &= ~J9_RUNTIME_CLEANUP;
+	if (NULL != mutex) {
+		omrthread_monitor_exit(mutex);
 	}
 }
 #endif /* J9VM_OPT_SIDECAR */
