@@ -471,7 +471,10 @@ int32_t TR_UnsafeFastPath::perform()
             }
 
          // Unsafes for other recognized methods
-         TR::Node *offset = NULL, *index = NULL, *object = NULL, *value = NULL;
+         TR::Node *offset = NULL, *index = NULL;
+         TR::Node *value = NULL;  // the value to be written
+         TR::Node *object = NULL; // the owning object to be written to or read from in original unsafe call
+         TR::Node *base = NULL; // the base used to calcluate address for the new store / load
          TR::DataType type = TR::NoType;
          bool isVolatile = false;
          bool isArrayOperation = false;
@@ -717,7 +720,6 @@ int32_t TR_UnsafeFastPath::perform()
 
          if (type != TR::NoType && performTransformation(comp(), "%s Found unsafe/JITHelpers calls, turning node [" POINTER_PRINTF_FORMAT "] into a load/store\n", optDetailString(), node))
             {
-
             if (TR_J9MethodBase::isUnsafeGetPutBoolean(calleeMethod))
                {
                TR::TransformUtil::truncateBooleanForUnsafeGetPut(comp(), tt);
@@ -734,10 +736,11 @@ int32_t TR_UnsafeFastPath::perform()
                   break;
                }
 
-            // Change the object child to the starting address of static fields in J9Class
+            object = node->getChild(objectChild);
+            object->setIsNonNull(true);
             if (isStatic)
                {
-               TR::Node *jlClass = node->getChild(objectChild);
+               TR::Node *jlClass = object;
                TR::Node *j9Class =
                   TR::Node::createWithSymRef(TR::aloadi, 1, 1, jlClass,
                                   comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
@@ -753,15 +756,13 @@ int32_t TR_UnsafeFastPath::perform()
                                   TR::Node::lconst(offset, ~1));
                node->setAndIncChild(offsetChild, newOffset);
                offset->recursivelyDecReferenceCount();
+               base = ramStatics;
                }
+            else
+               base = object;
 
             // Anchor children of the call node to preserve their values
             anchorAllChildren(node, tt);
-
-            // When accessing a static field, object is the starting address of static fields
-            object = node->getChild(objectChild);
-            if (!isStatic)
-               object->setIsNonNull(true);
 
             if (isByIndex)
                {
@@ -791,9 +792,9 @@ int32_t TR_UnsafeFastPath::perform()
 
                // Calculate element address
                if (comp()->target().is64Bit())
-                  addrCalc = TR::Node::create(TR::aladd, 2, object, offset);
+                  addrCalc = TR::Node::create(TR::aladd, 2, base, offset);
                else
-                  addrCalc = TR::Node::create(TR::aiadd, 2, object, TR::Node::create(TR::l2i, 1, offset));
+                  addrCalc = TR::Node::create(TR::aiadd, 2, base, TR::Node::create(TR::l2i, 1, offset));
 
                addrCalc->setIsInternalPointer(true);
 
@@ -809,7 +810,7 @@ int32_t TR_UnsafeFastPath::perform()
                if (value)
                   {
                   // This is a store
-                  if (!isStatic && type == TR::Address && (TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_none))
+                  if (type == TR::Address && (TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_none))
                      {
                      node = TR::Node::recreateWithoutProperties(node, TR::awrtbari, 3, addrCalc, value, object, unsafeSymRef);
                      spineCHK->setAndIncChild(0, addrCalc);
@@ -894,15 +895,17 @@ int32_t TR_UnsafeFastPath::perform()
 
                // Calculate element address
                if (comp()->target().is64Bit())
-                  addrCalc = TR::Node::create(TR::aladd, 2, object, offset);
+                  addrCalc = TR::Node::create(TR::aladd, 2, base, offset);
                else
-                  addrCalc = TR::Node::create(TR::aiadd, 2, object, TR::Node::create(TR::l2i, 1, offset));
+                  addrCalc = TR::Node::create(TR::aiadd, 2, base, TR::Node::create(TR::l2i, 1, offset));
 
                if (value)
                   {
                   // This is a store
-                  if (!isStatic && type == TR::Address && (TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_none))
+                  if (type == TR::Address && (TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_none))
+                     {
                      node = TR::Node::recreateWithoutProperties(node, TR::awrtbari, 3, addrCalc, value, object, unsafeSymRef);
+                     }
                   else
                      {
                      if (value->getDataType() != type)
