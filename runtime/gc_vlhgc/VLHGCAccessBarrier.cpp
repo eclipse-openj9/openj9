@@ -316,11 +316,11 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 				GC_SlotObject objectSlot(env->getOmrVM(), arrayoidPtr);
 				data = objectSlot.readReferenceFromSlot();
 			} else {
-				/* Possible to reach here if arraylet leaf has one leaf and no elements in it.
+				/* Possible to reach here if arraylet has no leaves.
 				 * Even though there are no elements in it the caller expects a non NULL value
 				 * therefore we just return the address after the object header. */
-				data = (void *)GC_SlotObject::addToSlotAddress((fomrobject_t*)arrayoidPtr, 1, env->compressObjectReferences());
-				Assert_MM_true((1 == indexableObjectModel->numArraylets(arrayObject)) && (0 == indexableObjectModel->getSizeInElements(arrayObject)));
+				data = (void *)arrayoidPtr;
+				Assert_MM_true((0 == indexableObjectModel->numArraylets(arrayObject)) && (0 == indexableObjectModel->getSizeInElements(arrayObject)));
 			}
 		} else
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
@@ -408,8 +408,8 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 				}
 				MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
 			} else {
-				/* Possible to reach here if arraylet leaf has one leaf and no elements in it */
-				Assert_MM_true((1 == indexableObjectModel->numArraylets(arrayObject)) && (0 == indexableObjectModel->getSizeInElements(arrayObject)));
+				/* Possible to reach here if arraylet has no leaves */
+				Assert_MM_true((0 == indexableObjectModel->numArraylets(arrayObject)) && (0 == indexableObjectModel->getSizeInElements(arrayObject)));
 			}
 		} else
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
@@ -511,11 +511,11 @@ MM_VLHGCAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str, j
 				GC_SlotObject objectSlot(env->getOmrVM(), arrayoidPtr);
 				data = (jchar *)objectSlot.readReferenceFromSlot();
 			} else {
-				/* Possible to reach here if arraylet leaf has one leaf and no elements in it.
+				/* Possible to reach here if arraylet has no leaves.
 				 * Even though there are no elements in it the caller expects a non NULL value
 				 * therefore we just return the address after the object header. */
-				data = (jchar *)GC_SlotObject::addToSlotAddress((fomrobject_t*)arrayoidPtr, 1, env->compressObjectReferences());
-				Assert_MM_true((1 == indexableObjectModel->numArraylets(valueObject)) && (0 == indexableObjectModel->getSizeInElements(valueObject)));
+				data = (jchar *)arrayoidPtr;
+				Assert_MM_true((0 == indexableObjectModel->numArraylets(valueObject)) && (0 == indexableObjectModel->getSizeInElements(valueObject)));
 			}
 		} else
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
@@ -588,8 +588,8 @@ MM_VLHGCAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring st
 				/* Solo arraylet leaf is contiguous so nothing to do besides exiting critical section */
 				MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
 			} else {
-				/* Possible to reach here if arraylet leaf has one leaf and no elements in it */
-				Assert_MM_true((1 == indexableObjectModel->numArraylets(valueObject)) && (0 == indexableObjectModel->getSizeInElements(valueObject)));
+				/* Possible to reach here if arraylet has no leaves */
+				Assert_MM_true((0 == indexableObjectModel->numArraylets(valueObject)) && (0 == indexableObjectModel->getSizeInElements(valueObject)));
 			}
 		} else
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */

@@ -52,18 +52,6 @@ public:
 */
 private:
 	void AssertBadElementSize();
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	void AssertNotEmptyArrayletLeaves(UDATA sizeInElements, UDATA arrayletLeafCount);
-	MMINLINE bool
-	isOneArrayletLeafWithNULL(J9IndexableObject *spine, UDATA arrayletLeafCount, UDATA sizeInElements)
-	{
-		UDATA arrayletLeafSize = _omrVM->_arrayletLeafSize;
-		UDATA dataSize = getDataSizeInBytes(spine);
-		AssertNotEmptyArrayletLeaves(sizeInElements, arrayletLeafCount);
-
-		return (2 == arrayletLeafCount) && (0 == (dataSize % arrayletLeafSize));
-	}
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 protected:
 	/* forward declare methods from parent class to avoid namespace issues */
 	MMINLINE UDATA
@@ -173,10 +161,8 @@ public:
 			/* last arrayoid pointer points into spine (remainder data is contiguous with header) */
 			numberArraylets -= 1;
 		} else if (layout == Discontiguous) {
-			/* last arrayoid pointer is NULL if data fits exactly within a whole number of arraylets */
-			if (0 == (getDataSizeInBytes(objPtr) & (_omrVM->_arrayletLeafSize - 1))) {
-				numberArraylets -= 1;
-			}
+			/* Data fits exactly within a whole number of arraylets */
+			AssertArrayletIsDiscontiguous(objPtr);
 		}
 
 		return numberArraylets;
@@ -281,8 +267,7 @@ public:
 	 *		size. Small enough to make the arraylet layout contiguous,
 	 *		in which case this function is unreachable.
 	 * 2: The total data size in arraylet is exacly the same size
-	 *		of a region, in which case the arraylet will contain an
-	 *		extra NULL arrayoid. In this case we do not need to double
+	 *		of a region. In this case we do not need to double
 	 *		map since we already have a contiguous representation of the
 	 *		data at first leaf.
 	 * 3: Similar to first case, the data portion is slightly smaller than
@@ -295,8 +280,7 @@ public:
 	 *		therefore we always double map.
 	 * 5: The total data size in arraylet is stricly greater than one region and
 	 *		multiple of region size. Here we would have 2 or more arraylet leaves
-	 *		containing data and the last leaf pointing to NULL. Nonetheless, we
-	 *		always double map in this case
+	 *		containing data. We always double map in this case.
 	 *
 	 * @param spine Pointer to an array indexable object spine
 	 * @return false in case corner cases 0, 2 or 3 are valid. On the other hand,
@@ -305,9 +289,7 @@ public:
 	MMINLINE bool
 	isArrayletDataDiscontiguous(J9IndexableObject *spine)
 	{
-		UDATA arrayletLeafCount = numArraylets(spine);
-		UDATA sizeInElements = getSizeInElements(spine);
-		return (arrayletLeafCount > 1) && !isOneArrayletLeafWithNULL(spine, arrayletLeafCount, sizeInElements);
+		return numArraylets(spine) > 1;
 	}
 
 	/**
@@ -320,10 +302,7 @@ public:
 	MMINLINE bool
 	isArrayletDataContiguous(J9IndexableObject *spine)
 	{
-		UDATA arrayletLeafCount = numArraylets(spine);
-		UDATA sizeInElements = getSizeInElements(spine);
-		return ((1 == arrayletLeafCount) || isOneArrayletLeafWithNULL(spine, arrayletLeafCount, sizeInElements))
-				&& (sizeInElements > 0);
+		return (1 == numArraylets(spine)) && (getSizeInElements(spine) > 0);
 	}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
@@ -964,5 +943,10 @@ public:
 	 * Tear down the receiver
 	 */
 	void tearDown(MM_GCExtensionsBase *extensions);
+
+	/**
+	 * Asserts that an Arraylet has indeed discontiguous layout
+	 */
+	void AssertArrayletIsDiscontiguous(J9IndexableObject *objPtr);
 };
 #endif /* ARRAYLETOBJECTMODEL_ */

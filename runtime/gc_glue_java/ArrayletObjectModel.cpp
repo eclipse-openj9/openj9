@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,13 +43,21 @@ GC_ArrayletObjectModel::AssertBadElementSize()
 	Assert_MM_unreachable();
 }
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 void
-GC_ArrayletObjectModel::AssertNotEmptyArrayletLeaves(UDATA sizeInElements, UDATA arrayletLeafCount)
+GC_ArrayletObjectModel::AssertArrayletIsDiscontiguous(J9IndexableObject *objPtr)
 {
-	Assert_MM_true((0 == sizeInElements) || (arrayletLeafCount > 0));
-}
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	if (!isDoubleMappingEnabled())
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+	{
+		MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
+		UDATA arrayletLeafSize = _omrVM->_arrayletLeafSize;
+		UDATA remainderBytes = getDataSizeInBytes(objPtr) % arrayletLeafSize;
+		if (0 != remainderBytes) {
+			Assert_MM_true((getSpineSize(objPtr) + remainderBytes + extensions->getObjectAlignmentInBytes()) > arrayletLeafSize);
+		}
+	}
+}
 
 GC_ArrayletObjectModel::ArrayLayout
 GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes, UDATA largestDesirableSpine)
