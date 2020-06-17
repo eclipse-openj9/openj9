@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -883,6 +883,7 @@ public class Test_Thread {
 			AssertJUnit.assertTrue("Joined thread is not alive", t.isAlive());
 			t.interrupt();
 		} catch (Exception e) {
+			e.printStackTrace();
 			AssertJUnit.assertTrue("Exception during test: " + e.toString(), false);
 		}
 
