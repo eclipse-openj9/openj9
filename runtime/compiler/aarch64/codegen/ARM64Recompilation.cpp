@@ -52,7 +52,7 @@ TR_PersistentMethodInfo *TR_ARM64Recompilation::getExistingMethodInfo(TR_Resolve
 
 TR::Instruction *TR_ARM64Recompilation::generatePrePrologue()
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(_compilation->fe());
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
 
    // If in Full Speed Debug, allow to go through
    if (!couldBeCompiledAgain() && !_compilation->getOption(TR_FullSpeedDebug))
@@ -65,7 +65,7 @@ TR::Instruction *TR_ARM64Recompilation::generatePrePrologue()
    TR::Register *x8 = machine->getRealRegister(TR::RealRegister::x8);
    TR::Register *lr = machine->getRealRegister(TR::RealRegister::lr); // Link Register
    TR::Register *xzr = machine->getRealRegister(TR::RealRegister::xzr); // zero register
-   TR::Node *firstNode = _compilation->getStartTree()->getNode();
+   TR::Node *firstNode = comp()->getStartTree()->getNode();
    TR::SymbolReference *recompileMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64samplingRecompileMethod, false, false, false);
    TR_PersistentJittedBodyInfo *info = getJittedBodyInfo();
 
@@ -85,7 +85,7 @@ TR::Instruction *TR_ARM64Recompilation::generatePrePrologue()
                                          new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, 0, cg()->trMemory()),
                                          recompileMethodSymRef, NULL, cursor);
       cursor = generateRelocatableImmInstruction(cg(), TR::InstOpCode::dd, firstNode, (uintptr_t)info, TR_BodyInfoAddress, cursor);
-      cursor->setNeedsAOTRelocation();
+
       // space for preserving original jitEntry instruction
       cursor = generateImmInstruction(cg(), TR::InstOpCode::dd, firstNode, 0, cursor);
       }
@@ -95,6 +95,11 @@ TR::Instruction *TR_ARM64Recompilation::generatePrePrologue()
 
 TR::Instruction *TR_ARM64Recompilation::generatePrologue(TR::Instruction *cursor)
    {
-   TR_UNIMPLEMENTED();
+   TR::Recompilation *recomp = comp()->getRecompilationInfo();
+   if (!recomp->useSampling())
+      {
+      // counting recompilation
+      TR_UNIMPLEMENTED();
+      }
    return cursor;
    }

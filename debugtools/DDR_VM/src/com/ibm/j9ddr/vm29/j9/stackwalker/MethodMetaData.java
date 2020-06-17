@@ -1060,6 +1060,22 @@ public class MethodMetaData
 				XX:	<linkage area>						<== unwindSP should point here
 				*/
 				return 3;
+			} else if (J9ConfigFlags.arch_aarch64) {
+				/* AArch64 recompilation resolve shape
+				0:	x7 (arg register)
+				1:	x6 (arg register)
+				2:	x5 (arg register)
+				3:	x4 (arg register)
+				4:	x3 (arg register)
+				5:	x2 (arg register)
+				6:	x1 (arg register)
+				7:	x0 (arg register)
+				8:	x8 return PC		<== unwindSP points here
+				9:	x9
+				10:	old startPC
+				XX:	<linkage area>		<== unwindSP should point here
+				*/
+				return 3;
 			} else {
 				return 0;
 			}
