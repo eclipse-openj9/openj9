@@ -1711,7 +1711,8 @@ releaseLockCheck:
 	}
 	if (rc == CC_STARTUP_OK) {
 		_started = true;
-		if (NULL == cacheMemory) {
+		/* We don't need to compute the cache id for the top layer. */
+		if ((NULL == cacheMemory) && (NULL != _previous)) {
 			Trc_SHR_CC_startup_getCacheUniqueID_before(currentThread, getCreateTime(), getMetadataBytes(), getClassesBytes(), getLineNumberTableBytes(), getLocalVariableTableBytes());
 			const char* uniqueId = getCacheUniqueID(currentThread);
 			Trc_SHR_CC_startup_getCacheUniqueID_after(currentThread, uniqueId);

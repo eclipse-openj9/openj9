@@ -8184,13 +8184,12 @@ SH_CacheMap::storeCacheUniqueID(J9VMThread* currentThread, const char* cacheDir,
 	}
 
 	Trc_SHR_CM_storeCacheUniqueID_generateCacheUniqueID_before(currentThread, createtime, metadataBytes, classesBytes, lineNumTabBytes, varTabBytes);
-	SH_OSCache::generateCacheUniqueID(currentThread, cacheDir, _cacheName, layer - 1, getCacheTypeFromRuntimeFlags(*_runtimeFlags), key, sizeof(key), createtime, metadataBytes, classesBytes, lineNumTabBytes, varTabBytes);
-	UDATA keylen = strlen(key);
+	UDATA keylen = SH_OSCache::generateCacheUniqueID(currentThread, cacheDir, _cacheName, layer - 1, getCacheTypeFromRuntimeFlags(*_runtimeFlags), key, sizeof(key), createtime, metadataBytes, classesBytes, lineNumTabBytes, varTabBytes);
 	Trc_SHR_CM_storeCacheUniqueID_generateCacheUniqueID_after(currentThread, keylen, key);
 
 	J9UTF8* utfKeyStruct = (J9UTF8*)utfKeyPtr;
 	J9UTF8_SET_LENGTH(utfKeyStruct, (U_16)keylen);
-	memcpy((char*)J9UTF8_DATA(utfKeyStruct), (char*)key, keylen);
+	memcpy((char*)J9UTF8_DATA(utfKeyStruct), key, keylen);
 
 	tokenKey = addScopeToCache(currentThread, utfKeyStruct, TYPE_PREREQ_CACHE);
 	if (NULL == tokenKey) {

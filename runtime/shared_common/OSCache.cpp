@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -425,7 +425,7 @@ SH_OSCache::commonStartup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirP
 	 * or a hidden bug. strlen() function is intentionally not used since buffer might have overflowed
 	 * and NULL character might have been overwritten in the case of a bug.
 	 *
-	 * Note that cacheNameLen can be less than CACHE_ROOT_MAXLEN , hence the 'min' macro is used.
+	 * Note that cacheNameLen can be less than CACHE_ROOT_MAXLEN, hence the 'min' macro is used.
 	 * Simply check for presence of '\0 char before index CACHE_ROOT_MAXLEN for isolating the bug.
 	 */
 	Trc_SHR_Assert_True(_cacheNameWithVGen[OMR_MIN(cacheNameLen, CACHE_ROOT_MAXLEN) - 1] == '\0');
@@ -1378,7 +1378,7 @@ SH_OSCache::getCacheUniqueID(J9VMThread* currentThread, U_64 createtime, UDATA m
  * @param[in] lineNumTabBytes  The size of the line number table section of current oscache.
  * @param[in] varTabBytes  The size of the variable table section of current oscache.
  *
- * @return If buf is not NULL, the number of characters printed into buf is returned , not including the NUL terminator.
+ * @return If buf is not NULL, the number of characters printed into buf is returned, not including the NUL terminator.
  *          If buf is NULL, the size of the buffer required to print to the unique ID, including the NUL terminator is returned.
  */
 UDATA
@@ -1393,15 +1393,24 @@ SH_OSCache::generateCacheUniqueID(J9VMThread* currentThread, const char* cacheDi
 	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
 	versionData.cacheType = cacheType;
 
-	getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, J9SH_MAXPATH, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, true, layer);
-	/* Directory is included here, so if the cache directory is renamed, caches with layer > 0 becomes unusable */
-	getCachePathName(PORTLIB, cacheDirName, cacheFilePathName, J9SH_MAXPATH, nameWithVGen);
+	getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, sizeof(nameWithVGen), cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, true, layer);
+	/* Directory is included here, so if the cache directory is renamed, caches with layer > 0 becomes unusable. */
+	getCachePathName(PORTLIB, cacheDirName, cacheFilePathName, sizeof(cacheFilePathName), nameWithVGen);
+	/*
+	 * Use a format with fixed field widths so the length of the unique id does not
+	 * depend on things like the length of the lower layer cache file.
+	 */
+#if defined(J9VM_ENV_DATA64)
+	const char * const format = "%s-%016llx_%016llx_%016zx_%016zx_%016zx_%016zx";
+#else
+	const char * const format = "%s-%016llx_%016llx_%08zx_%08zx_%08zx_%08zx";
+#endif
 	I_64 fileSize = j9file_length(cacheFilePathName);
 	if (NULL != buf) {
-		UDATA bufLenrequired = j9str_printf(PORTLIB, NULL, 0, "%s-%llx_%llx_%zx_%zx_%zx_%zx", cacheFilePathName, fileSize, createtime, metadataBytes, classesBytes, lineNumTabBytes, varTabBytes);
-		Trc_SHR_Assert_True(bufLenrequired <= bufLen);
+		UDATA bufLenRequired = j9str_printf(PORTLIB, NULL, 0, format, cacheFilePathName, fileSize, createtime, metadataBytes, classesBytes, lineNumTabBytes, varTabBytes);
+		Trc_SHR_Assert_True(bufLenRequired <= bufLen);
 	}
-	return j9str_printf(PORTLIB, buf, bufLen, "%s-%llx_%llx_%zx_%zx_%zx_%zx", cacheFilePathName, fileSize, createtime, metadataBytes, classesBytes, lineNumTabBytes, varTabBytes);
+	return j9str_printf(PORTLIB, buf, bufLen, format, cacheFilePathName, fileSize, createtime, metadataBytes, classesBytes, lineNumTabBytes, varTabBytes);
 }
 
 /**
