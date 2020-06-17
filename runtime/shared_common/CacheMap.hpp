@@ -39,7 +39,18 @@
 #define CM_CACHE_CORRUPT -2
 #define CM_CACHE_STORE_PREREQ_ID_FAILED -3
 
-#define J9SHR_UNIQUE_CACHE_ID_BUFSIZE  (J9SH_MAXPATH + 35)
+/*
+ * The maximum width of the hexadecimal representation of a value of type 'T'.
+ */
+#define J9HEX_WIDTH(T) (2 * sizeof(T))
+
+/*
+ * A unique cache id is a path followed by six hexadecimal values,
+ * the first two of which express 64-bits values and the remaining
+ * four express UDATA values. Additionally, there are six separator
+ * characters and a terminating NUL character.
+ */
+#define J9SHR_UNIQUE_CACHE_ID_BUFSIZE (J9SH_MAXPATH + (2 * J9HEX_WIDTH(U_64)) + (4 * J9HEX_WIDTH(UDATA)) + 6 + 1)
 
 typedef struct MethodSpecTable {
 	char* className;
