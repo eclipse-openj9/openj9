@@ -167,6 +167,54 @@ Scratch registers are not preserved across calls, while non-volatile registers a
 1. The JIT linkage uses the following conventions for high-word registers (HPRs) z196 support is enabled:
     * On 31-bit platforms, all HPRs are volatile.
     * On 64-bit platforms, HPR6 through HPR12 are preserved, and all other HPRs are volatile.
-    
+
+# 32-bit Arm
+
+Scratch registers are not preserved across calls, while non-volatile registers are preserved by called functions.
+Usage of the VFP registers in this table assumes hard-float ABI.
+
+|Register|JIT Private Linkage|
+|--|--|
+|R0|1st argument / return value|
+|R1|2nd argument / return value|
+|R2-3|3rd-4th arguments|
+|R4-5|Scratch|
+|R6|Java BP|
+|R7|Java stack pointer|
+|R8|vmThread|
+|R9-10|Non-volatile|
+|R11|Scratch|
+|R12|Untouched|
+|R13|Untouched except for JNI setup|
+|R14|Link Register (LR)|
+|R15|Program Counter (PC)|
+|D0-15|Scratch<sup>1</sup>|
+|D16-D31|Untouched<sup>2</sup>|
+
+<hr/>
+
+1. Floating point arguments and return value are passed in GPRs in JIT Private Linkage.
+2. Unavailable in some VFP versions
 
 
+# AArch64 (64-bit Arm)
+
+Scratch registers are not preserved across calls, while non-volatile registers are preserved by called functions.
+
+|Register|JIT Private Linkage|
+|--|--|
+|R0|1st argument / return value|
+|R1-7|2nd-8th arguments|
+|R8-15|Scratch|
+|R16-17|Untouched|
+|R18|Scratch|
+|R19|vmThread|
+|R20|Java stack pointer|
+|R21-28|Non-volatile|
+|R29|Untouched|
+|R30|Link Register (LR)|
+|SP|Untouched except for JNI setup|
+|PC|Program Counter (PC)|
+|V0|1st floating point argument / floating point return value|
+|V1-7|2nd-8th floating point arguments|
+|V8-31|Scratch|
