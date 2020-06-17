@@ -147,7 +147,7 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_
             'xlinuxcm' : ['x86-64_linux_cm'],
             'xlinuxuma' : ['x86-64_linux_uma'],
             'xlinuxxlcm' : ['x86-64_linux_xl_cm'],
-            'xlinuxxluma' : ['x86-64_linux_xl_uma']
+            'xlinuxxluma' : ['x86-64_linux_xl_uma'],
             'xlinuxjit' : ['x86-64_linux_jit'],
             'xlinuxval' : ['x86-64_linux_valhalla'],
             'win32' : ['x86-32_windows'],
