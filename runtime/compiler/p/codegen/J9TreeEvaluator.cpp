@@ -1235,6 +1235,7 @@ void loadFieldWatchSnippet(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *d
       {
       if (beginIndex<LOWER_IMMED || beginIndex>UPPER_IMMED)
          {
+         TR_ASSERT_FATAL_WITH_NODE(node, 0x00008000 != HI_VALUE(beginIndex), "TOC offset (0x%x) is unexpectedly high. Can not encode upper 16 bits into an addis instruction.", beginIndex);
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, scratchReg, cg->getTOCBaseRegister(), HI_VALUE(beginIndex));
          generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, snippetReg, new (cg->trHeapMemory()) TR::MemoryReference(scratchReg, LO_VALUE(beginIndex), TR::Compiler->om.sizeofReferenceAddress(), cg));
          }
@@ -2695,7 +2696,7 @@ static TR::Register *addConstantToLongWithTempReg(TR::Node * node, TR::Register 
       {
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, trgReg, srcReg, value >> 16);
       if (value & 0xffff)
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, trgReg, trgReg, value);
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, trgReg, trgReg, LO_VALUE(value));
       }
    else
       {
@@ -4111,20 +4112,32 @@ void genInstanceOfOrCheckCastSuperClassTest(TR::Node *node, TR::Register *condRe
    //
    TR::Register *instanceClassSuperClassesArrayReg = srm->findOrCreateScratchRegister();
    TR::Register *instanceClassSuperClassReg = srm->findOrCreateScratchRegister();
+
    generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, instanceClassSuperClassesArrayReg,
                               new (cg->trHeapMemory()) TR::MemoryReference(instanceClassReg, offsetof(J9Class, superclasses), TR::Compiler->om.sizeofReferenceAddress(), cg));
+
    int32_t castClassDepthOffset = castClassDepth * TR::Compiler->om.sizeofReferenceAddress();
    if (castClassDepthOffset <= UPPER_IMMED && castClassDepthOffset >= LOWER_IMMED)
+      {
       generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, instanceClassSuperClassReg,
                                  new (cg->trHeapMemory()) TR::MemoryReference(instanceClassSuperClassesArrayReg, castClassDepthOffset, TR::Compiler->om.sizeofReferenceAddress(), cg));
+      }
    else
       {
       if (!castClassDepthReg)
          {
          castClassDepthReg = srm->findOrCreateScratchRegister();
-         generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, castClassDepthReg, HI_VALUE(castClassDepthOffset));
+         if (0x00008000 == HI_VALUE(castClassDepthOffset))
+            {
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, castClassDepthReg, instanceClassSuperClassesArrayReg, 0x7FFF);
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, castClassDepthReg, castClassDepthReg, 0x1);
+            }
+         else
+            {
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, castClassDepthReg, instanceClassSuperClassesArrayReg, HI_VALUE(castClassDepthOffset));
+            }
          generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, instanceClassSuperClassReg,
-                                    new (cg->trHeapMemory()) TR::MemoryReference(instanceClassSuperClassesArrayReg, LO_VALUE(castClassDepthOffset), TR::Compiler->om.sizeofReferenceAddress(), cg));
+                                    new (cg->trHeapMemory()) TR::MemoryReference(castClassDepthReg, LO_VALUE(castClassDepthOffset), TR::Compiler->om.sizeofReferenceAddress(), cg));
          }
       else
          {
@@ -6367,8 +6380,16 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
          iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, zeroReg, 0, iCursor);
          if (sizeInReg)
             {
-            iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, sizeReg, (allocSize >> 16) + ((allocSize & (1 << 15)) ? 1 : 0), iCursor);
-            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, sizeReg, sizeReg, allocSize & 0x0000FFFF, iCursor);
+            if (0x00008000 == HI_VALUE(allocSize))
+               {
+               iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, sizeReg, 0x7FFF, iCursor);
+               iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, sizeReg, sizeReg, 0x1, iCursor);
+               }
+            else
+               {
+               iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, sizeReg, HI_VALUE(allocSize), iCursor);
+               }
+            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, sizeReg, sizeReg, LO_VALUE(allocSize), iCursor);
             }
 
          // Try to allocate
@@ -6486,6 +6507,7 @@ static void genInitObjectHeader(TR::Node *node, TR::Instruction *&iCursor, TR_Op
             TR_PPCTableOfConstants::setTOCSlot(offset, (int64_t)clazz);
             if (offset<LOWER_IMMED||offset>UPPER_IMMED)
                {
+               TR_ASSERT_FATAL_WITH_NODE(node, 0x00008000 != HI_VALUE(offset), "TOC offset (0x%x) is unexpectedly high. Can not encode upper 16 bits into an addis instruction.", offset);
                iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, temp1Reg, cg->getTOCBaseRegister(), HI_VALUE(offset), iCursor);
                iCursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, temp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(temp1Reg, LO_VALUE(offset), TR::Compiler->om.sizeofReferenceAddress(), cg), iCursor);
                }
