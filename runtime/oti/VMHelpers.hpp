@@ -1704,6 +1704,24 @@ exit:
 		}
 		return method;
 	}
+	static VMINLINE bool
+	objectArrayStoreAllowed(j9object_t array, j9object_t storeValue)
+	{
+		bool rc = true;
+		if (NULL != storeValue) {
+			J9Class *valueClass = J9OBJECT_CLAZZ(_currentThread, storeValue);
+			J9Class *componentType = ((J9ArrayClass*)J9OBJECT_CLAZZ(_currentThread, array))->componentType;
+			/* quick check -- is this a store of a C into a C[]? */
+			if (valueClass != componentType) {
+				/* quick check -- is this a store of a C into a java.lang.Object[]? */
+				if (0 != J9CLASS_DEPTH(componentType)) {
+					rc = inlineCheckCast(valueClass, componentType);
+				}
+			}
+		}
+		return rc;
+	}
+
 };
 
 #endif /* VMHELPERS_HPP_ */
