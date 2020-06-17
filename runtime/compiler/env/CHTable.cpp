@@ -51,7 +51,8 @@
 #include "optimizer/PreExistence.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "env/j9methodServer.hpp"
-#endif
+#include "control/JITServerCompilationThread.hpp"
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 void
 TR_PreXRecompile::dumpInfo()
@@ -257,7 +258,7 @@ bool TR_CHTable::commit(TR::Compilation *comp)
       {
       return true; // Handled in outOfProcessCompilationEnd instead
       }
-#endif
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::list<TR_VirtualGuard*> &vguards = comp->getVirtualGuards();
    TR::list<TR_VirtualGuardSite*> *sideEffectPatchSites = comp->getSideEffectGuardPatchSites();
@@ -862,7 +863,7 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
                           classesForStaticFinalFieldModification,
                           startPC);
    }
-#endif
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 // class used to collect all different implementations of a method
 class CollectImplementors : public TR_SubclassVisitor
@@ -886,8 +887,11 @@ public:
 
    virtual bool visitSubclass(TR_PersistentClassInfo *cl);
    int32_t getCount() const { return _count;}
+   bool isInterface();
 
 protected:
+   bool addImplementor(TR_ResolvedMethod *implementor);
+
    TR_OpaqueClassBlock * _topClassId;
    TR_ResolvedMethod **  _implArray;
    TR_ResolvedMethod *   _callerMethod;
@@ -900,8 +904,19 @@ protected:
    TR_YesNoMaybe         _useGetResolvedInterfaceMethod;
    };// end of class CollectImplementors
 
+bool
+CollectImplementors::isInterface()
+   {
+   bool useGetResolvedInterfaceMethod = _topClassIsInterface;
 
-bool CollectImplementors::visitSubclass(TR_PersistentClassInfo *cl)
+   // refine if requested by a caller
+   if (_useGetResolvedInterfaceMethod != TR_maybe)
+      useGetResolvedInterfaceMethod = _useGetResolvedInterfaceMethod == TR_yes ? true : false;
+   return useGetResolvedInterfaceMethod;
+   }
+
+bool
+CollectImplementors::visitSubclass(TR_PersistentClassInfo *cl)
    {
    TR_OpaqueClassBlock *classId = cl->getClassId();
    // verify that our subclass meets all conditions
@@ -911,13 +926,7 @@ bool CollectImplementors::visitSubclass(TR_PersistentClassInfo *cl)
       char *clazzName = TR::Compiler->cls.classNameChars(comp(), classId, length);
       TR_ResolvedMethod *method;
 
-      bool useGetResolvedInterfaceMethod = _topClassIsInterface;
-
-      //refine if requested by a caller
-      if (_useGetResolvedInterfaceMethod != TR_maybe)
-         useGetResolvedInterfaceMethod = _useGetResolvedInterfaceMethod == TR_yes ? true : false;
-
-      if (useGetResolvedInterfaceMethod)
+      if (isInterface())
          {
          method = _callerMethod->getResolvedInterfaceMethod(comp(), classId, _slotOrIndex);
          }
@@ -934,18 +943,29 @@ bool CollectImplementors::visitSubclass(TR_PersistentClassInfo *cl)
          stopTheWalk();
          return false;
          }
-      // check to see if there are any duplicates
-      int32_t i;
-      for (i=0; i < _count; i++)
-         if (method->isSameMethod(_implArray[i]))
-            break;  // we already listed this method
-      if (i >= _count) // brand new implementer
-         {
-         _implArray[_count++] = method;
-         if (_count >= _maxCount)
-            stopTheWalk();
-         }
+
+      bool added = addImplementor(method);
+      if (added && _count >= _maxCount)
+         stopTheWalk();
       }
+   return true;
+   }
+
+bool 
+CollectImplementors::addImplementor(TR_ResolvedMethod *implementor)
+   {
+   TR_ASSERT_FATAL(_count < _maxCount, "Max implementor count exceeded: _maxCount = %d, _count = %d", _maxCount, _count);
+
+   // cannot add an unresolved implementor
+   if (!implementor)
+      return false;
+   // check to see if there are any duplicates
+   int32_t i;
+   for (i = 0; i < _count; ++i)
+      if (implementor->isSameMethod(_implArray[i]))
+         return false;  // we already listed this method
+   // brand new implementor
+   _implArray[_count++] = implementor;
    return true;
    }
 
@@ -991,6 +1011,146 @@ bool CollectCompiledImplementors::visitSubclass(TR_PersistentClassInfo *cl)
    return false;
    }
 
+#if defined(J9VM_OPT_JITSERVER)
+class CollectResolvedImplementors: public CollectImplementors
+   {
+public:
+   CollectResolvedImplementors(TR::Compilation * comp,
+                           TR_OpaqueClassBlock *topClassId,
+                           TR_ResolvedMethod **implArray,
+                           int32_t maxCount,
+                           TR_ResolvedMethod *callerMethod,
+                           int32_t slotOrIndex,
+                           TR_YesNoMaybe useGetResolvedInterfaceMethod = TR_maybe) :
+      CollectImplementors(comp, topClassId, implArray, maxCount, callerMethod, slotOrIndex, useGetResolvedInterfaceMethod)
+      {
+      TR_ASSERT_FATAL(comp->isOutOfProcessCompilation(), "Must only be called on JITServer server-side");
+      }
+
+   virtual bool visitSubclass(TR_PersistentClassInfo *cl) override;
+   void cacheResolvedMethods();
+
+private:
+   std::vector<TR_OpaqueClassBlock *> _subClasses;
+   };
+
+bool
+CollectResolvedImplementors::visitSubclass(TR_PersistentClassInfo *cl)
+   {
+   TR_ASSERT_FATAL(comp()->isOutOfProcessCompilation(), "Must only be called on JITServer server-side");
+   if (_count >= _maxCount)
+      {
+      stopTheWalk();
+      return false;
+      }
+
+   auto callerMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(_callerMethod);
+
+   // verify that our subclass meets all conditions
+   TR_OpaqueClassBlock *classId = cl->getClassId();
+   if (!TR::Compiler->cls.isAbstractClass(comp(), classId)
+      && !TR::Compiler->cls.isInterfaceClass(comp(), classId))
+      {
+      ++_numVisitedSubClasses;
+      if (_numVisitedSubClasses > _maxNumVisitedSubClasses)
+         {
+         // too many classes visited.
+         // set count greater than maxCount, to indicate failure and force exit
+         _count = _maxCount + 1;
+         stopTheWalk();
+         return false;
+         }
+
+      // if the implementor hasn't been cached yet,
+      // add the corresponding subclass to the list
+      TR_ResolvedMethod *resolvedMethod;
+      TR_ResolvedMethodType type = isInterface() ?
+         TR_ResolvedMethodType::Interface :
+         TR_ResolvedMethodType::VirtualFromOffset;
+      auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(static_cast<TR_J9VMBase *>(fe())->_compInfoPT);
+      TR_ResolvedMethodKey key =
+         compInfoPT->getResolvedMethodKey(
+            type,
+            reinterpret_cast<TR_OpaqueClassBlock *>(callerMethod->constantPoolHdr()),
+            _slotOrIndex,
+            classId);
+      if (!compInfoPT->getCachedResolvedMethod(
+             key,
+             callerMethod,
+             &resolvedMethod))
+         {
+         _subClasses.push_back(classId);
+         }
+      else if (resolvedMethod)
+         {
+         bool added = addImplementor(resolvedMethod);
+         if (added && _count >= _maxCount)
+            stopTheWalk();
+         }
+      else
+         {
+         // unresolved cached method found.
+         // set count greater than maxCount, to indicate failure and force exit
+         _count = _maxCount + 1;
+         stopTheWalk();
+         return false;
+         }
+      }
+
+   return true;
+   }
+
+void
+CollectResolvedImplementors::cacheResolvedMethods()
+   {
+   TR_ASSERT_FATAL(comp()->isOutOfProcessCompilation(), "Must only be called on JITServer server-side");
+   // _count >= _maxCount indicates that either all required implementors
+   // are already cached or that too many subclasses were visited.
+   // Remote call not needed.
+   if (_count >= _maxCount)
+      {
+      return;
+      }
+
+   auto callerMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(_callerMethod);
+   callerMethod->cacheImplementorMethods(
+      _subClasses,
+      _slotOrIndex,
+      isInterface(),
+      2);
+
+   // now, add the cached methods to _implArray
+   TR_ResolvedMethod *resolvedMethod;
+   TR_ResolvedMethodType type = isInterface() ?
+      TR_ResolvedMethodType::Interface :
+      TR_ResolvedMethodType::VirtualFromOffset;
+   auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(static_cast<TR_J9VMBase *>(fe())->_compInfoPT);
+   for (auto it = _subClasses.begin(); it != _subClasses.end(); ++it)
+      {
+      TR_ResolvedMethodKey key =
+         compInfoPT->getResolvedMethodKey(
+            type,
+            reinterpret_cast<TR_OpaqueClassBlock *>(callerMethod->constantPoolHdr()),
+            _slotOrIndex,
+            *it);
+      if (compInfoPT->getCachedResolvedMethod(
+             key,
+             callerMethod,
+             &resolvedMethod))
+         {
+         bool added = addImplementor(resolvedMethod);
+         if (added && _count >= _maxCount)
+            break;
+         if (!resolvedMethod)
+            {
+            _count = _maxCount + 1;
+            break;
+            }
+         }
+      }
+   }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
 void
 TR_ClassQueries::getSubClasses(TR_PersistentClassInfo *clazz,
                                TR_ScratchList<TR_PersistentClassInfo> &list, TR_FrontEnd *fe, bool locked)
@@ -1015,10 +1175,24 @@ TR_ClassQueries::collectImplementorsCapped(TR_PersistentClassInfo *clazz,
    {
    if (comp->getOption(TR_DisableCHOpts))
       return maxCount+1; // fail the collection
-   CollectImplementors collector(comp, clazz->getClassId(), implArray, maxCount, callerMethod, slotOrIndex, useGetResolvedInterfaceMethod);
-   collector.visitSubclass(clazz);
-   collector.visit(clazz->getClassId(), locked);
-   return collector.getCount(); // return the number of implementers in the implArray
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (comp->isOutOfProcessCompilation())
+      {
+      CollectResolvedImplementors collector(comp, clazz->getClassId(), implArray, maxCount, callerMethod, slotOrIndex, useGetResolvedInterfaceMethod);
+      collector.visitSubclass(clazz);
+      collector.visit(clazz->getClassId(), locked);
+      collector.cacheResolvedMethods();
+      return collector.getCount();
+      }
+   else
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      {
+      CollectImplementors collector(comp, clazz->getClassId(), implArray, maxCount, callerMethod, slotOrIndex, useGetResolvedInterfaceMethod);
+      collector.visitSubclass(clazz);
+      collector.visit(clazz->getClassId(), locked);
+      return collector.getCount(); // return the number of implementers in the implArray
+      }
    }
 
 int32_t
@@ -1253,4 +1427,3 @@ TR_SubclassVisitor::visitSubclasses(TR_PersistentClassInfo * classInfo, TR_CHTab
       }
    --_depth;
    }
-

@@ -32,6 +32,10 @@
 struct
 TR_ResolvedJ9JITServerMethodInfoStruct
    {
+   TR_ResolvedJ9JITServerMethodInfoStruct() :
+      remoteMirror(NULL)
+      {}
+
    TR_ResolvedJ9Method *remoteMirror;
    J9RAMConstantPoolItem *literals;
    J9Class *ramClass;
@@ -219,6 +223,7 @@ public:
    bool addValidationRecordForCachedResolvedMethod(const TR_ResolvedMethodKey &key, TR_OpaqueMethodBlock *method);
    void cacheResolvedMethodsCallees(int32_t ttlForUnresolved = 2);
    void cacheFields();
+   void cacheImplementorMethods(std::vector<TR_OpaqueClassBlock *> &subClasses, int32_t cpIndexOrOffset, bool isInterface, int32_t ttlForUnresolved = 2);
 
 protected:
    JITServer::ServerStream *_stream;
