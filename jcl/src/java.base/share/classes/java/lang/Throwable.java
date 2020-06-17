@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2020 IBM Corp. and others
  *
@@ -283,16 +283,19 @@ private static int countDuplicates(StackTraceElement[] currentStack, StackTraceE
  * @return an array of StackTraceElement representing the stack
  */
 StackTraceElement[] getInternalStackTrace() {
-
 	if (disableWritableStackTrace) {
 		return	ZeroStackTraceElementArray;
 	}
 
-	if (stackTrace == null) {
-		stackTrace = J9VMInternals.getStackTrace(this, true);
+	StackTraceElement[] localStackTrace = stackTrace;
+	if (localStackTrace == null) {
+		// Assign the result to a local variable to avoid refetching
+		// the instance variable and any memory ordering issues
+		localStackTrace = J9VMInternals.getStackTrace(this, true);
+		stackTrace = localStackTrace;
 	} 
 	
-	return stackTrace;
+	return localStackTrace;
 }
 
 /**
