@@ -198,6 +198,11 @@ ppc64le_linux:
 ppc64le_linux_cm:
   extends: ['ppc64le_linux', 'cmake']
 #========================================#
+# Linux PPCLE 64bits Compressed Pointers /w uma
+#========================================#
+ppc64le_linux_uma:
+  extends: ['ppc64le_linux', 'uma']
+#========================================#
 # Linux PPCLE 64bits Large Heap
 #========================================#
 ppc64le_linux_xl:
@@ -207,6 +212,16 @@ ppc64le_linux_xl:
       - special.system
     11:
       - special.system
+#========================================#
+# Linux PPCLE 64bits Large Heap /w cmake
+#========================================#
+ppc64le_linux_xl_cm:
+  extends: ['ppc64le_linux_xl', 'cmake']
+#========================================#
+# Linux PPCLE 64bits Large Heap /w uma
+#========================================#
+ppc64le_linux_xl_uma:
+  extends: ['ppc64le_linux_xl', 'uma']
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers /w JITSERVER
 #========================================#
@@ -234,6 +249,16 @@ s390x_linux:
   build_env:
     cmd: 'source /home/jenkins/set_gcc7.5.0_env'
 #========================================#
+# Linux S390 64bits Compressed Pointers /w cmake
+#========================================#
+s390x_linux_cm:
+  extends: ['s390x_linux', 'cmake']
+#========================================#
+# Linux S390 64bits Compressed Pointers /w uma
+#========================================#
+s390x_linux_uma:
+  extends: ['s390x_linux', 'uma']
+#========================================#
 # Linux S390 64bits Large Heap
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
 # IBM 7 for the bootJDK or compiling corba will fail to find Object.
@@ -243,6 +268,16 @@ s390x_linux_xl:
   excluded_tests:
      11:
       - special.system
+#========================================#
+# Linux S390 64bits Large Heap /w cmake
+#========================================#
+s390x_linux_xl_cm:
+  extends: ['s390x_linux_xl', 'cmake']
+#========================================#
+# Linux S390 64bits Large Heap /w uma
+#========================================#
+s390x_linux_xl_uma:
+  extends: ['s390x_linux_xl', 'uma']
 #========================================#
 # Linux S390 64bits Compressed Pointers /w JITSERVER
 #========================================#
@@ -315,6 +350,11 @@ x86-64_linux_cm:
       - sanity.system
       - extended.system
 #========================================#
+# Linux x86 64bits Compressed Pointers /w uma
+#========================================#
+x86-64_linux_uma:
+  extends: ['x86-64_linux', 'uma']
+#========================================#
 # Linux x86 64bits Large Heap /w CMake
 #========================================#
 x86-64_linux_xl_cm:
@@ -323,6 +363,11 @@ x86-64_linux_xl_cm:
       - extended.functional
       - sanity.system
       - extended.system
+#========================================#
+# Linux x86 64bits Large Heap /w uma
+#========================================#
+x86-64_linux_xl_uma:
+  extends: ['x86-64_linux_xl', 'uma']
 #========================================#
 # Linux x86 64bits Compressed Pointers /w JITSERVER
 #========================================#
@@ -356,10 +401,30 @@ aarch64_linux:
   build_env:
     vars: 'PATH+TOOLS=/usr/local/gcc-7.5.0/bin'
 #========================================#
+# Linux Aarch 64bits Compressed Pointers /w cmake
+#========================================#
+aarch64_linux_cm:
+  extends: ['aarch64_linux', 'cmake']
+#========================================#
+# Linux Aarch 64bits Compressed Pointers /w uma
+#========================================#
+aarch64_linux_uma:
+  extends: ['aarch64_linux', 'uma']
+#========================================#
 # Linux Aarch 64bits Large Heap
 #========================================#
 aarch64_linux_xl:
   extends: ['aarch64_linux', 'largeheap']
+#========================================#
+# Linux Aarch 64bits Large Heap /w cmake
+#========================================#
+aarch64_linux_xl_cm:
+  extends: ['aarch64_linux_xl', 'cmake']
+#========================================#
+# Linux Aarch 64bits Large Heap /w uma
+#========================================#
+aarch64_linux_xl_uma:
+  extends: ['aarch64_linux_xl', 'uma']
 #========================================#
 # Windows x86 64bits Compressed Pointers
 #========================================#
@@ -391,10 +456,30 @@ x86-64_windows:
     11:
       - special.system
 #========================================#
+# Windows x86 64bits Compressed Pointers /w cmake
+#========================================#
+x86-64_windows_cm:
+   extends: ['x86-64_windows', 'cmake']
+#========================================#
+# Windows x86 64bits Compressed Pointers /w uma
+#========================================#
+x86-64_windows_uma:
+   extends: ['x86-64_windows', 'uma']
+#========================================#
 # Windows x86 64bits Large Heap
 #========================================#
 x86-64_windows_xl:
   extends: ['x86-64_windows', 'largeheap']
+#========================================#
+# Windows x86 64bits Large Heap /w cmake
+#========================================#
+x86-64_windows_xl_cm:
+  extends: ['x86-64_windows_xl', 'cmake']
+#========================================#
+# Windows x86 64bits Large Heap /w uma
+#========================================#
+x86-64_windows_xl_uma:
+  extends: ['x86-64_windows_xl', 'uma']
 #========================================#
 # Windows x86 32bits
 #========================================#
@@ -416,6 +501,16 @@ x86-32_windows:
   excluded_tests:
     8:
       - special.system
+#========================================#
+# Windows x86 32bits /w cmake
+#========================================#
+x86-32_windows_cm:
+   extends: ['x86-32_windows', 'cmake']
+#========================================#
+# Windows x86 32bits /w uma
+#========================================#
+x86-32_windows_uma:
+   extends: ['x86-32_windows', 'uma']
 #========================================#
 # OSX x86 64bits Compressed Pointers
 #========================================#
