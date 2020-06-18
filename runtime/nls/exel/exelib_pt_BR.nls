@@ -507,7 +507,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.user_response=Conta
 # END NON-TRANSLATABLE
 
 # VM and UTF are not translatable
-J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING=Erro interno da VM: Falta de mem\u00f3ria ao converter a cadeia em caracteres UTF para o nome de classe %s
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING=Erro interno da VM: Falta de mem\u00f3ria ao converter a sequ\u00eancia em caracteres UTF para o nome de classe %s
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.sample_input_1=Main
 J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.explanation=Amount of available memory is too low.

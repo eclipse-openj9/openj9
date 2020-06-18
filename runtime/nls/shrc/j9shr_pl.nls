@@ -6766,8 +6766,9 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=Sprawdzaj datowniki adres\u00f3w
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
+# END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destroy all shared cache layers of the same name (use name parm or default)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Zniszcz wszystkie warstwy wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej o tej samej nazwie (u\u017cyj parametru nazwy lub nazwy domy\u015blnej)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
@@ -6895,7 +6896,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED=Warstwa najwy\u017csza (warstwa %d) pami\u0119ci podr\u0119cznej jest zniszczona.  Wykryto modyfikacj\u0119 warstwy %d wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej. Oczekiwany unikalny identyfikator pami\u0119ci podr\u0119cznej: %s, bie\u017c\u0105cy unikalny identyfikator pami\u0119ci podr\u0119cznej: %s.
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED=Warstwa najwy\u017csza (warstwa %d) pami\u0119ci podr\u0119cznej jest zniszczona. Wykryto modyfikacj\u0119 warstwy %d wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej. Oczekiwany unikalny identyfikator pami\u0119ci podr\u0119cznej: %s, bie\u017c\u0105cy unikalny identyfikator pami\u0119ci podr\u0119cznej: %s.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_1=1
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_2=0

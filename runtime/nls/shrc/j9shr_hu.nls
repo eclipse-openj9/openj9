@@ -4243,7 +4243,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_INVALID_CACHEDIR_PERM.system_action=The JVM terminate
 J9NLS_SHRC_SHRINIT_FAILURE_INVALID_CACHEDIR_PERM.user_response=Rerun the command with a valid cacheDirPerm value. This must be unix style file permission in the range of 0700 - 0777 or 1700 - 1777 (in octal representation).
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED=Nem siker\u00fclt megszerezni az alap\u00e9rtelmezett gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rat.
+J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED=Nem siker\u00fclt lek\u00e9rdezni az alap\u00e9rtelmezett gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rat.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED.system_action=The JVM terminates.
@@ -6659,7 +6659,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_FATAL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_FATAL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY=%1$d: 0x%2$p STARTUP HINTS KEY: %4$.*3$s C\u00edm: 0x%5$p Size: %6$d
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY=%1$d: 0x%2$p IND\u00cdT\u00c1SI TIPPEK KULCS: %4$.*3$s C\u00edm: 0x%5$p Size: %6$d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.sample_input_2=042F71F8
@@ -6672,7 +6672,7 @@ J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL=STARTUP HINTS DETAIL kapcsol\u00f3k: %1$zu DATA1: %2$zu DATA2: %3$zu
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL=IND\u00cdT\u00c1SI TIPPEK R\u00c9SZLETEI kapcsol\u00f3k: %1$zu DATA1: %2$zu DATA2: %3$zu
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.sample_input_2=1024
@@ -6716,21 +6716,21 @@ J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.system_action=The JVM terminates, unless you hav
 J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.user_response=Please try using a shorter shared cache directory.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rk\u00e9nt. A saj\u00e1t k\u00f6nyvt\u00e1r nem k\u00e9rdezhet\u0151 le. \u00c1ll\u00edtson b m\u00e1sik k\u00f6nyvt\u00e1rat a "HOME" k\u00f6rnyezeti v\u00e1ltoz\u00f3n vagy a "cacheDir=" parancssori param\u00e9teren kereszt\u00fcl, vagy jav\u00edtsa ki a saj\u00e1t k\u00f6nyvt\u00e1rat a jelsz\u00f3f\u00e1jl bejegyz\u00e9sben.
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rk\u00e9nt. A saj\u00e1t k\u00f6nyvt\u00e1r nem k\u00e9rdezhet\u0151 le. \u00c1ll\u00edtson be m\u00e1sik k\u00f6nyvt\u00e1rat a "HOME" k\u00f6rnyezeti v\u00e1ltoz\u00f3n vagy a "cacheDir=" parancssori param\u00e9teren kereszt\u00fcl, vagy jav\u00edtsa ki a saj\u00e1t k\u00f6nyvt\u00e1rat a jelsz\u00f3f\u00e1jl bejegyz\u00e9sben.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.explanation=An error occurred getting user's home directory.
 J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rk\u00e9nt. Az \u00fatvonal t\u00fal hossz\u00fa. A saj\u00e1t k\u00f6nyvt\u00e1r nem k\u00e9rdezhet\u0151 le. \u00c1ll\u00edtson b m\u00e1sik k\u00f6nyvt\u00e1rat a "HOME" k\u00f6rnyezeti v\u00e1ltoz\u00f3n vagy a "cacheDir=" parancssori param\u00e9teren kereszt\u00fcl, vagy jav\u00edtsa ki a saj\u00e1t k\u00f6nyvt\u00e1rat a jelsz\u00f3f\u00e1jl bejegyz\u00e9sben.
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rk\u00e9nt. Az \u00fatvonal t\u00fal hossz\u00fa. A saj\u00e1t k\u00f6nyvt\u00e1r nem k\u00e9rdezhet\u0151 le. \u00c1ll\u00edtson be m\u00e1sik k\u00f6nyvt\u00e1rat a "HOME" k\u00f6rnyezeti v\u00e1ltoz\u00f3n vagy a "cacheDir=" parancssori param\u00e9teren kereszt\u00fcl, vagy jav\u00edtsa ki a saj\u00e1t k\u00f6nyvt\u00e1rat a jelsz\u00f3f\u00e1jl bejegyz\u00e9sben.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.explanation=The length of user's home directory is greater than the internal buffer space.
 J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_HOME_ON_NFS=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rk\u00e9nt. Az H\u00e1l\u00f3zati f\u00e1jlrendszeren tal\u00e1lhat\u00f3. A saj\u00e1t k\u00f6nyvt\u00e1r nem k\u00e9rdezhet\u0151 le. \u00c1ll\u00edtson b m\u00e1sik k\u00f6nyvt\u00e1rat a "HOME" k\u00f6rnyezeti v\u00e1ltoz\u00f3n vagy a "cacheDir=" parancssori param\u00e9teren kereszt\u00fcl, vagy jav\u00edtsa ki a saj\u00e1t k\u00f6nyvt\u00e1rat a jelsz\u00f3f\u00e1jl bejegyz\u00e9sben.
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS=Nem siker\u00fclt a felhaszn\u00e1l\u00f3 saj\u00e1t k\u00f6nyvt\u00e1r\u00e1t haszn\u00e1lni alap\u00e9rtelmezett megosztott gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1rk\u00e9nt. Az H\u00e1l\u00f3zati f\u00e1jlrendszeren tal\u00e1lhat\u00f3. A saj\u00e1t k\u00f6nyvt\u00e1r nem k\u00e9rdezhet\u0151 le. \u00c1ll\u00edtson be m\u00e1sik k\u00f6nyvt\u00e1rat a "HOME" k\u00f6rnyezeti v\u00e1ltoz\u00f3n vagy a "cacheDir=" parancssori param\u00e9teren kereszt\u00fcl, vagy jav\u00edtsa ki a saj\u00e1t k\u00f6nyvt\u00e1rat a jelsz\u00f3f\u00e1jl bejegyz\u00e9sben.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_HOME_ON_NFS.explanation=The shared cache directory cannot be on a Network File System.
 J9NLS_SHRC_GET_DIR_HOME_ON_NFS.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -6764,8 +6764,9 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=Ellen\u0151rizze a nem-bootstrap
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
+# END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destroy all shared cache layers of the same name (use name parm or default)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Az \u00f6sszes azonos nev\u0171 megosztott gyors\u00edt\u00f3t\u00e1rr\u00e9teg megsemmis\u00edt\u00e9se (a name param\u00e9tert vagy az alap\u00e9rtelmez\u00e9st haszn\u00e1lja)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
@@ -6815,7 +6816,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=Invalid layer number %d found for \"%s\". A r\u00e9tegsz\u00e1mnak %d \u00e9rt\u00e9kn\u00e9l kisebbnek kell lennie.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=A(z) %d \u00e9rv\u00e9nytelen r\u00e9tegsz\u00e1m \u00e9rhet\u0151 el a(z) \"%s\" eset\u00e9n. A r\u00e9tegsz\u00e1mnak %d \u00e9rt\u00e9kn\u00e9l kisebbnek kell lennie.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=
@@ -6870,14 +6871,14 @@ J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS=Statisztika nyomtat\u00e1sa csak a legfels\u0151 gyors\u00edt\u00f3t\u00e1rr\u00e9tegb\u0151l. A printTopLayerStats=help seg\u00edts\u00e9g\u00e9vel megtekintheti a rendelkez\u00e9sre \u00e1ll\u00f3 be\u00e1ll\u00edt\u00e1sokat.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS=Gyors\u00edt\u00f3t\u00e1r-statisztik\u00e1k \u00f6sszegz\u00e9s\u00e9nek ki\u00edr\u00e1sa csak a legfels\u0151 gyors\u00edt\u00f3t\u00e1rr\u00e9tegb\u0151l. A printTopLayerStats=help seg\u00edts\u00e9g\u00e9vel megtekintheti a rendelkez\u00e9sre \u00e1ll\u00f3 opci\u00f3kat.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1= -Xshareclasses:%1$s<param\u00e9terek> rendelkez\u00e9sre \u00e1ll\u00f3 be\u00e1ll\u00edt\u00e1sai. T\u00f6bb opci\u00f3 megad\u00e1s\u00e1hoz haszn\u00e1ljon '+' jelet. P\u00e9ld\u00e1ul %2$saot+url \n
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1= -Xshareclasses:%1$s<param\u00e9terek> rendelkez\u00e9sre \u00e1ll\u00f3 opci\u00f3i. T\u00f6bb opci\u00f3 megad\u00e1s\u00e1hoz haszn\u00e1ljon '+' jelet. P\u00e9ld\u00e1ul %2$saot+url \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_1=printStats=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_2=printStats=

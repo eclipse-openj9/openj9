@@ -579,14 +579,14 @@ J9NLS_VM_MONITOR_CACHE_LIMIT_EXCEEDED.system_action=The JVM will throw a Realtim
 J9NLS_VM_MONITOR_CACHE_LIMIT_EXCEEDED.user_response=Modify the application code to stay within the required limits.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XSCMINAOT_IGNORED=-Xscminaot es passa per alt si no s'especifica -Xshareclasses
+J9NLS_VM_XSCMINAOT_IGNORED=-Xscminaot s'ignora si no s'especifica -Xshareclasses
 # START NON-TRANSLATABLE
 J9NLS_VM_XSCMINAOT_IGNORED.explanation=The command line option -Xscminaot is not meaningful when the command line option -Xshareclasses is not specified. As such it is ignored.
 J9NLS_VM_XSCMINAOT_IGNORED.system_action=The JVM will ignore the -Xscminaot command line option and continue.
 J9NLS_VM_XSCMINAOT_IGNORED.user_response=Determine if -Xscminaot should be removed, or if -Xshareclasses should be added.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XSCMAXAOT_IGNORED=-Xscmaxaot es passa per alt si no s'especifica -Xshareclasses
+J9NLS_VM_XSCMAXAOT_IGNORED=-Xscmaxaot s'ignora si no s'especifica -Xshareclasses
 # START NON-TRANSLATABLE
 J9NLS_VM_XSCMAXAOT_IGNORED.explanation=The command line option -Xscmaxaot is not meaningful when the command line option -Xshareclasses is not specified. As such it is ignored.
 J9NLS_VM_XSCMAXAOT_IGNORED.system_action=The JVM will ignore the -Xscmaxaot command line option and continue.
@@ -1955,7 +1955,7 @@ J9NLS_VM_CLASS_RELATIONSHIP_INVALID.user_response=Ensure that all class relation
 # END NON-TRANSLATABLE
 
 # No arguments
-J9NLS_VM_PACKAGES_IS_NULL=La matriu \u00e9s nul\u00b7la.
+J9NLS_VM_PACKAGES_IS_NULL=La matriu del paquet \u00e9s nul\u00b7la.
 # START NON-TRANSLATABLE
 J9NLS_VM_PACKAGES_IS_NULL.explanation=Incoming package array can't be NULL.
 J9NLS_VM_PACKAGES_IS_NULL.system_action=The JVM will throw a java/lang/NullPointerException.
@@ -1963,7 +1963,7 @@ J9NLS_VM_PACKAGES_IS_NULL.user_response=Don't pass a NULL package array.
 # END NON-TRANSLATABLE
 
 # No arguments
-J9NLS_VM_PACKAGE_IS_NULL=La cadena de matrius \u00e9s nul\u00b7la.
+J9NLS_VM_PACKAGE_IS_NULL=La cadena del paquet \u00e9s nul\u00b7la.
 # START NON-TRANSLATABLE
 J9NLS_VM_PACKAGE_IS_NULL.explanation=Incoming package String can't be NULL.
 J9NLS_VM_PACKAGE_IS_NULL.system_action=The JVM will throw a java/lang/NullPointerException.

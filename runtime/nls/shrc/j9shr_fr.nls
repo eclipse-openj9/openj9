@@ -271,7 +271,7 @@ J9NLS_SHRC_OSCACHE_ERROR_SHSEM_NOSPACE.system_action=The JVM terminates, unless 
 J9NLS_SHRC_OSCACHE_ERROR_SHSEM_NOSPACE.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_WRONG_EYECATCHER=L'en-t\u00eate du cache de classes partag\u00e9es auquel vous tentez de vous connecter est incorrect.
+J9NLS_SHRC_OSCACHE_ERROR_WRONG_EYECATCHER=Le cache de classes partag\u00e9es que vous tentez de connecter a un en-t\u00eate non valide.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_WRONG_EYECATCHER.explanation=The shared class cache you are trying to use is invalid.
 J9NLS_SHRC_OSCACHE_ERROR_WRONG_EYECATCHER.system_action=If the cache is corrupt, the JVM will attempt to re-create it. Otherwise the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -1953,21 +1953,21 @@ J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ATTACHED.system_action=The JVM continues, this is
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ATTACHED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER=Erreur : l'identificateur de l'en-t\u00eate du fichier de cache de classes partag\u00e9es est incorrect
+J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER=Erreur : l'identificateur de l'en-t\u00eate du fichier de cache de classes partag\u00e9es n'est pas valide
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION=Erreur : la version de l'en-t\u00eate du fichier de cache de classes partag\u00e9es est incorrecte
+J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION=Erreur : la version de l'en-t\u00eate du fichier de cache de classes partag\u00e9es n'est pas validee
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_MODLEVEL=Erreur : le niveau de modification de l'en-t\u00eate du fichier de cache de classes partag\u00e9es est incorrect
+J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_MODLEVEL=Erreur : le niveau de modification de l'en-t\u00eate du fichier de cache de classes partag\u00e9es n'est pas valide
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_MODLEVEL.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_MODLEVEL.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -4669,7 +4669,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CROSSGUEST.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_CROSSGUEST.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_ISCACHEHEADERVALID_EYECATCHER=L'identificateur de l'en-t\u00eate du cache de classes partag\u00e9es interinvit\u00e9 est incorrect
+J9NLS_SHRC_OSCACHE_VIRT_ISCACHEHEADERVALID_EYECATCHER=L'identificateur de l'en-t\u00eate du cache de classes partag\u00e9es interinvit\u00e9 n'est pas valide
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_ISCACHEHEADERVALID_EYECATCHER.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_ISCACHEHEADERVALID_EYECATCHER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -6783,8 +6783,9 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=V\u00e9rifier les horodatages de
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
+# END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destroy all shared cache layers of the same name (use name parm or default)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=D\u00e9truire toutes les couches de cache partag\u00e9 ayant le m\u00eame nom (utiliser le param\u00e8tre de nom ou la valeur par d\u00e9faut)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
@@ -6820,21 +6821,21 @@ J9NLS_SHRC_CM_FAILED_TO_START_UP.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_FAILED_TO_START_UP.user_response=Previous error messages may indicate the reason.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Indiquez le num\u00e9ro de couche sup\u00e9rieure. Cr\u00e9ez une couche de cache partag\u00e9 si la couche indiqu\u00e9e n'existe pas.
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Indiquez le num\u00e9ro de couche sup\u00e9rieure. Cr\u00e9ez une couche de cache partag\u00e9e si la couche indiqu\u00e9e n'existe pas.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER=Cr\u00e9ez une couche de cache partag\u00e9.
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER=Cr\u00e9ez une nouvelle couche de cache partag\u00e9e.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=Le num\u00e9ro de couche %d d\u00e9tect\u00e9 pour \"%s\" est incorrect. Le num\u00e9ro de couche doit \u00eatre inf\u00e9rieur \u00e0 %d.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=Le num\u00e9ro de couche %d d\u00e9tect\u00e9 pour \"%s\" n'est pas valide. Le num\u00e9ro de couche doit \u00eatre inf\u00e9rieur \u00e0 %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=
@@ -6844,7 +6845,7 @@ J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.system_action=The JVM terminates.
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.user_response=Correct or remove the invalid command-line option and rerun.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER=Le num\u00e9ro de couche %d est incorrect. La couche sup\u00e9rieure existante est %d. Le nouveau num\u00e9ro de couche doit \u00eatre %d.
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER=Le num\u00e9ro de couche %d n'est pas valide. La couche sup\u00e9rieure existante est %d. Le nouveau num\u00e9ro de couche doit \u00eatre %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_1=3
 J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_2=1
@@ -6862,7 +6863,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE=\n\
-Statistiques actuelles de la couche sup\u00e9rieure du cache \"%s\" : \n
+Statistiques actuelles pour la couche sup\u00e9rieure du cache \"%s\" : \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.sample_input_1=myCache
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.explanation=NOTAG
@@ -6870,7 +6871,7 @@ J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER=couche sup\u00e9rieure                 %*.c= %d
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER=couche de cache                         %*.c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_2=
@@ -6881,7 +6882,7 @@ J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE=\n\
-Statistiques actuelles de toutes les couches du cache \"%s\" : \n
+Statistiques actuelles pour toutes les couches du cache \"%s\" : \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.sample_input_1=myCache
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.explanation=NOTAG
