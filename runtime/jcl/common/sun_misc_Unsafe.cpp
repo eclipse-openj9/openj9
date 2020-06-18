@@ -98,12 +98,11 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 	jobject hostClassLoaderLocalRef = vmFuncs->j9jni_createLocalRef(env, hostClassLoader);
 
 	J9ClassPatchMap cpPatchMap = {0, NULL};
-	j9array_t patchArray = NULL;
 	PORT_ACCESS_FROM_ENV(env);
 
 	U_16 indexMap[BUFFER_SIZE];
 	if (constPatches != NULL) {
-		patchArray = (j9array_t)J9_JNI_UNWRAP_REFERENCE(constPatches);
+		j9array_t patchArray = (j9array_t)J9_JNI_UNWRAP_REFERENCE(constPatches);
 		cpPatchMap.size = (U_16)J9INDEXABLEOBJECT_SIZE(currentThread, patchArray);
 		if (cpPatchMap.size <= BUFFER_SIZE) {
 			cpPatchMap.indexMap = indexMap;
@@ -133,6 +132,7 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 
 	if (constPatches != NULL) {
 		vmFuncs->internalEnterVMFromJNI(currentThread);
+		j9array_t patchArray = (j9array_t)J9_JNI_UNWRAP_REFERENCE(constPatches);
 		J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(anonClass));
 		U_32 *cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(clazz->romClass);
 		J9ConstantPool *ramCP = J9_CP_FROM_CLASS(clazz);
