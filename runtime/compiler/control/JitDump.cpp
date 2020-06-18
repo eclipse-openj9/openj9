@@ -28,6 +28,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "env/ut_j9jit.h"
+#include "env/VMAccessCriticalSection.hpp"
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/JITServerHelpers.hpp"
@@ -656,6 +657,13 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                void *oldStartPC = 0;
                if (currentMethodBeingCompiled)
                   oldStartPC = currentMethodBeingCompiled->_oldStartPC;
+
+               // The current thread is a compilation thread which may or may not currently hold VM access. The request
+               // for recompilation to generate the jitdump will be performed synchronously for which the code path we
+               // will take will be the same as if we were an application thread. We will take the synchronous request
+               // path in `compileOnSeparateThread` which ends up releasing VM access prior to waiting on the diagnostic
+               // thread to finish the queued compile. To avoid deadlocks we must acquire VM access here.
+               TR::VMAccessCriticalSection requestSynchronousCompilation(TR_J9VMBase::get(jitConfig, crashedThread));
 
                // request the compilation
                TR_CompilationErrorCode compErrCode;
