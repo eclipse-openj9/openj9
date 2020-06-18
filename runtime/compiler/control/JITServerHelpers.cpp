@@ -121,33 +121,56 @@ JITServerHelpers::insertIntoOOSequenceEntryList(ClientSessionData *clientData, T
    }
 
 void
-JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig)
+JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
    {
-   int totalMsgCount = 0;	   
+   unsigned totalMsgCount = 0;	   
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    j9tty_printf(PORTLIB, "JITServer Message Type Statistics:\n");
    j9tty_printf(PORTLIB, "Type# #called");
-#ifdef MESSAGE_SIZE_STATS
+#ifdef MESSAGE_SIZE_STATS  
    j9tty_printf(PORTLIB, "\t\tMax\t\tMin\t\tMean\t\tStdDev\t\tSum");
-#endif
+#endif // defined(MESSAGE_SIZE_STATS)
    j9tty_printf(PORTLIB, "\t\tTypeName\n");
-   for (int i = 0; i < JITServer::MessageType_ARRAYSIZE; ++i)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
-      if (JITServerHelpers::serverMsgTypeCount[i] > 0)
+      for (int i = 0; i < JITServer::MessageType_ARRAYSIZE; ++i)
          {
-         j9tty_printf(PORTLIB, "#%04d %7u", i, JITServerHelpers::serverMsgTypeCount[i]);
+         if (JITServerHelpers::serverMsgTypeCount[i] > 0)
+            {
+            j9tty_printf(PORTLIB, "#%04d %7u", i, JITServerHelpers::serverMsgTypeCount[i]);
 #ifdef MESSAGE_SIZE_STATS            
-         j9tty_printf(PORTLIB, "\t%f\t%f\t%f\t%f\t%f", JITServer::CommunicationStream::collectMsgStat[i].maxVal(), 
+            j9tty_printf(PORTLIB, "\t%f\t%f\t%f\t%f\t%f", JITServer::CommunicationStream::collectMsgStat[i].maxVal(), 
                      JITServer::CommunicationStream::collectMsgStat[i].minVal(), JITServer::CommunicationStream::collectMsgStat[i].mean(),
                      JITServer::CommunicationStream::collectMsgStat[i].stddev(), JITServer::CommunicationStream::collectMsgStat[i].sum());
-#endif
-         j9tty_printf(PORTLIB, "\t\t%s\n", JITServer::messageNames[i]);
-         totalMsgCount += JITServerHelpers::serverMsgTypeCount[i];
+#endif // defined(MESSAGE_SIZE_STATS)
+            j9tty_printf(PORTLIB, "\t\t%s\n", JITServer::messageNames[i]);
+            totalMsgCount += JITServerHelpers::serverMsgTypeCount[i];
+            }
          }
+      if (JITServerHelpers::serverMsgTypeCount[0])
+         j9tty_printf(PORTLIB, "Total number of messages: %d. Average number of messages per compilation:%f\n", totalMsgCount, totalMsgCount/float(JITServerHelpers::serverMsgTypeCount[0]));
       }
-   if (JITServerHelpers::serverMsgTypeCount[0])
-       j9tty_printf(PORTLIB, "Total number of messages: %d. Average number of messages per compilation:%f\n", totalMsgCount, totalMsgCount/float(JITServerHelpers::serverMsgTypeCount[0]));
+   else if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      // to print in server, run ./jitserver -Xdump:jit:events=user
+      // then kill -3 <pidof jitserver>
+#ifdef MESSAGE_SIZE_STATS  
+      for (int i = 0; i < JITServer::MessageType_ARRAYSIZE; ++i)
+         {
+         if (JITServer::CommunicationStream::collectMsgStat[i].samples() > 0)
+            { 
+            j9tty_printf(PORTLIB, "#%04d %7u", i, JITServer::CommunicationStream::collectMsgStat[i].samples());            
+            j9tty_printf(PORTLIB, "\t%f\t%f\t%f\t%f\t%f", JITServer::CommunicationStream::collectMsgStat[i].maxVal(), 
+                     JITServer::CommunicationStream::collectMsgStat[i].minVal(), JITServer::CommunicationStream::collectMsgStat[i].mean(),
+                     JITServer::CommunicationStream::collectMsgStat[i].stddev(), JITServer::CommunicationStream::collectMsgStat[i].sum());
 
+            j9tty_printf(PORTLIB, "\t\t%s\n", JITServer::messageNames[i]);
+            totalMsgCount += JITServer::CommunicationStream::collectMsgStat[i].samples();
+            }
+         }
+      j9tty_printf(PORTLIB, "Total number of messages: %u\n", totalMsgCount);
+#endif // defined(MESSAGE_SIZE_STATS)
+      }
    }
 
 void

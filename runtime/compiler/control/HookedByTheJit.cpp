@@ -4164,8 +4164,8 @@ void JitShutdown(J9JITConfig * jitConfig)
 
 #if defined(J9VM_OPT_JITSERVER)
    static char * isPrintJITServerMsgStats = feGetEnv("TR_PrintJITServerMsgStats");
-   if (isPrintJITServerMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-      JITServerHelpers::printJITServerMsgStats(jitConfig);
+   if (isPrintJITServerMsgStats)
+      JITServerHelpers::printJITServerMsgStats(jitConfig, compInfo);
    static char * isPrintJITServerCHTableStats = feGetEnv("TR_PrintJITServerCHTableStats");
    if (isPrintJITServerCHTableStats)
       JITServerHelpers::printJITServerCHTableStats(jitConfig, compInfo);
