@@ -268,7 +268,7 @@ J9NLS_CFR_ERR_CONSTANT_POOL_EMPTY.user_response=Contact the provider of the clas
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_BAD_CLASS_INDEX=o nome da classe deve ser uma cadeia
+J9NLS_CFR_ERR_BAD_CLASS_INDEX=o nome da classe deve ser uma sequ\u00eancia
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_CLASS_INDEX.explanation=The constant pool entry is the wrong type for its use.
 J9NLS_CFR_ERR_BAD_CLASS_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -493,7 +493,7 @@ J9NLS_CFR_ERR_INTERFACE_METHOD.user_response=Contact the provider of the classfi
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_BAD_STRING_INDEX=a constante da cadeia deve ser uma cadeia
+J9NLS_CFR_ERR_BAD_STRING_INDEX=a constante da sequ\u00eancia deve ser uma sequ\u00eancia
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_STRING_INDEX.explanation=A string constant must refer to a CONSTANT_Utf8_info.
 J9NLS_CFR_ERR_BAD_STRING_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -578,7 +578,7 @@ J9NLS_CFR_ERR_HANDLER_END_TARGET.user_response=Contact the provider of the class
 # END NON-TRANSLATABLE
 
 # UTF8 is not translatable
-J9NLS_CFR_ERR_BAD_NAME_INDEX=o nome deve ser uma cadeia UTF8
+J9NLS_CFR_ERR_BAD_NAME_INDEX=o nome deve ser uma sequ\u00eancia UTF8
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_NAME_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_BAD_NAME_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -604,7 +604,7 @@ J9NLS_CFR_ERR_BC_METHOD_INVALID.user_response=Contact the provider of the classf
 # END NON-TRANSLATABLE
 
 # UTF8 is not translatable
-J9NLS_CFR_ERR_BAD_DESCRIPTOR_INDEX=o descritor deve ser uma cadeia UTF8
+J9NLS_CFR_ERR_BAD_DESCRIPTOR_INDEX=o descritor deve ser uma sequ\u00eancia UTF8
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_DESCRIPTOR_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_BAD_DESCRIPTOR_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -780,7 +780,7 @@ J9NLS_CFR_ERR_NO_ERROR.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_INNER_NAME_NOT_UTF8=o nome interno deve ser uma cadeia
+J9NLS_CFR_ERR_INNER_NAME_NOT_UTF8=o nome interno deve ser uma sequ\u00eancia
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INNER_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_INNER_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -806,7 +806,7 @@ J9NLS_CFR_ERR_BC_NOT_INTERFACEMETHODREF.user_response=Contact the provider of th
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8=o nome da vari\u00e1vel local deve ser uma cadeia
+J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8=o nome da vari\u00e1vel local deve ser uma sequ\u00eancia
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -890,7 +890,7 @@ J9NLS_CFR_ERR_DUPLICATE_INNER_CLASS_ENTRY.user_response=Contact the provider of 
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8=a assinatura de vari\u00e1vel local deve ser uma cadeia
+J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8=a assinatura de vari\u00e1vel local deve ser uma sequ\u00eancia
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1519,4 +1519,13 @@ J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=O registro \u00e9 implicitamente final
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# LocalVariableTypeTable is not translatable
+# LocalVariableTable is not translatable
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT=A entrada LocalVariableTypeTable n\u00e3o corresponde a nenhuma entrada LocalVariableTable
+# START NON-TRANSLATABLE
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

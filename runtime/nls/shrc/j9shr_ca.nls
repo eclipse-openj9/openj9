@@ -354,7 +354,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY=Destruir la mem\u00f2ria cau compartida (parm de nom d'\u00fas o per defecte)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY=Destrueix la mem\u00f2ria cau compartida (utilitza el par\u00e0metre name o el valor per defecte)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY.system_action=
@@ -5638,7 +5638,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_SNAPSHOTCACHE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_SNAPSHOTCACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYSNAPSHOT=Destrueix la instant\u00e0nia d'una mem\u00f2ria cau compartida (utilitza el par\u00e0metre de nom o el valor per defecte)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYSNAPSHOT=Destrueix la instant\u00e0nia d'una mem\u00f2ria cau compartida (utilitza el par\u00e0metre name o el valor per defecte)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYSNAPSHOT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYSNAPSHOT.system_action=
@@ -6761,8 +6761,9 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=Comproveu les marques hor\u00e0r
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
+# END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destroy all shared cache layers of the same name (use name parm or default)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destrueix totes les capes de mem\u00f2ria cau compartida amb el mateix nom (utilitza el par\u00e0metre name o el valor per defecte)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
@@ -6776,7 +6777,7 @@ J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.system_action=The JVM terminates, unless y
 J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=No s'ha pogut iniciar la mem\u00f2ria cau compartida. S'ha detectat la modificaci\u00f3 a una mem\u00f2ria cau compartida de capa inferior. L'ID de mem\u00f2ria cau \u00fanic esperat \u00e9s %s
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=No s'ha pogut iniciar la mem\u00f2ria cau compartida. S'ha detectat una modificaci\u00f3 a una mem\u00f2ria cau compartida de capa inferior. L'ID de mem\u00f2ria cau \u00fanic esperat \u00e9s %s
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.sample_input_1=foo
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layer shared caches built on top of it.
@@ -6784,7 +6785,7 @@ J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.system_action=The JVM terminates, unless yo
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.user_response=Use -Xshareclasses:name=<cacheName>,destroyAllLayers to destroy all layers and retry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED=No s'ha pogut iniciar la mem\u00f2ria cau compartida. S'ha produ\u00eft un error en obtenir l'ID \u00fanic d'una mem\u00f2ria cau de prerequisits de capa inferior.
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED=No s'ha pogut iniciar la mem\u00f2ria cau compartida. S'ha produ\u00eft un error en obtenir l'ID \u00fanic d'una mem\u00f2ria cau de prerequisit d'una capa inferior.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.explanation=Cannot get the unique ID of a lower layer prerequisite cache.
 J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -6798,7 +6799,7 @@ J9NLS_SHRC_CM_FAILED_TO_START_UP.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_FAILED_TO_START_UP.user_response=Previous error messages may indicate the reason.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Especifiqueu el nombre de capes superiors. Creeu una nova capa de mem\u00f2ria cau compartida si la capa especificada no existeix.
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Especifiqueu el n\u00famero de la capa superior. Creeu una nova capa de mem\u00f2ria cau compartida si la capa especificada no existeix.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.system_action=
@@ -6812,7 +6813,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=Nombre de capes (%d) no v\u00e0lid detectat per a \"%s\". El nombre de capa hauria de ser inferior a %d.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=N\u00famero de capa (%d) no v\u00e0lid detectat per a \"%s\". El n\u00famero de capa hauria de ser inferior a %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=
@@ -6822,7 +6823,7 @@ J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.system_action=The JVM terminates.
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.user_response=Correct or remove the invalid command-line option and rerun.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER=Nombre de capes no v\u00e0lid (%d). La capa superior existent \u00e9s %d. El nombre de capes noves hauria de ser %d.
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER=N\u00famero de capa no v\u00e0lid (%d). La capa superior existent \u00e9s %d. El n\u00famero de la capa nova hauria de ser %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_1=3
 J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_2=1
@@ -6832,7 +6833,7 @@ J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.system_action=The JVM terminates, unl
 J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.user_response=Correct the layer number in the command line and retry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK=No comproveu l'espai de disc lliure abans de crear la mem\u00f2ria cau persistent.
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK=No comprovis l'espai de disc lliure abans de crear la mem\u00f2ria cau persistent.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.system_action=
@@ -6890,7 +6891,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED=La capa superior (capa %d) de la mem\u00f2ria cau es destrueix. S'ha detectat una modificaci\u00f3 a la capa %d de la mem\u00f2ria cau compartida. L'ID \u00fanic de la mem\u00f2ria cau esperat \u00e9s %s, l'ID \u00fanic de la mem\u00f2ria cau actual \u00e9s %s.
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED=La capa superior (capa %d) de la mem\u00f2ria cau es destrueix. S'ha detectat una modificaci\u00f3 a la capa %d de la mem\u00f2ria cau compartida. L'ID \u00fanic de mem\u00f2ria cau esperat \u00e9s %s, l'ID \u00fanic de mem\u00f2ria cau actual \u00e9s %s.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_1=1
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_2=0

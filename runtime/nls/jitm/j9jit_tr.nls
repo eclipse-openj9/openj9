@@ -290,7 +290,7 @@ J9NLS_JIT_OPTIONS_XLP_INCOMPLETE_OPTION.sample_input_1=-Xlp:codecache:
 J9NLS_JIT_OPTIONS_XLP_INCOMPLETE_OPTION.sample_input_2=[non]pageable
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA='-Xlp' se\u00e7ene\u011finde fazladan virg\u00fcl karakterleri saptand\u0131 - yoksya\u0131ld\u0131
+J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA='-Xlp' se\u00e7ene\u011finde fazladan virg\u00fcl karakterleri saptand\u0131 - yoksay\u0131ld\u0131
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA.explanation=Extra comma characters are discovered in '-Xlp' option
 J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA.system_action=The JVM will ignore extra comma characters
@@ -320,7 +320,7 @@ J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_4
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_5=pageable
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE=B\u00fcy\u00fck sayfa b\u00fcy\u00fckl\u00fc\u011f\u00fc %1$zu%2$s %3$s JIT kod \u00f6nelle\u011fi i\u00e7in desteklenen bir sayfa b\u00fcy\u00fckl\u00fc\u011f\u00fc de\u011fil; onun yerine %4$zu%5$s kullan\u0131l\u0131yor
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE=B\u00fcy\u00fck sayfa b\u00fcy\u00fckl\u00fc\u011f\u00fc %1$zu%2$s %3$s JIT kod \u00f6nbelle\u011fi i\u00e7in desteklenen bir sayfa b\u00fcy\u00fckl\u00fc\u011f\u00fc de\u011fil; onun yerine %4$zu%5$s kullan\u0131l\u0131yor
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.explanation=The specified large page size is not supported by the operating system. A suitable page size will be used.
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size

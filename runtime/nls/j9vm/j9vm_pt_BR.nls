@@ -677,7 +677,7 @@ J9NLS_VM_SHARESTRING_WITHOUT_SHARECLASSES.user_response=Enable shared classes, o
 # arguments 4 and 5 are the loaded class name
 # arguments 6 and 7 are the defining loader class name
 # argument 8 is the defining loader identity hash code
-J9NLS_VM_LOADING_CONSTRAINT_VIOLATION=carregando a viola\u00e7\u00e3o de restri\u00e7\u00e3o: o utilit\u00e1rio de carga \"%2$.*1$s@%3$x\" iniciou anteriormente o carregamento de um tipo diferente com o nome \"%5$.*4$s\" definido pelo utilit\u00e1rio de carga \"%7$.*6$s@%8$x\"
+J9NLS_VM_LOADING_CONSTRAINT_VIOLATION=viola\u00e7\u00e3o de restri\u00e7\u00e3o de carregamento: o carregador de classes \"%2$.*1$s@%3$x\" iniciou anteriormente o carregamento de um tipo diferente com o nome \"%5$.*4$s\" definido pelo carregador de classes \"%7$.*6$s@%8$x\"
 # START NON-TRANSLATABLE
 J9NLS_VM_LOADING_CONSTRAINT_VIOLATION.sample_input_1=9
 J9NLS_VM_LOADING_CONSTRAINT_VIOLATION.sample_input_2=MyLoader
@@ -940,7 +940,7 @@ J9NLS_VM_THREAD_PREVENTING_SHUTDOWN.sample_input_1=Attach API
 # arguments 12 and 13 are the other classloader name
 # argument 14 is the other classloader's identity hashcode
 # arguments 15 and 16 are the other classloader's class
-J9NLS_VM_LOADING_CONSTRAINT_SIG_VIOLATION=viola\u00e7\u00e3o de restri\u00e7\u00e3o de carregamento ao resolver o m\u00e9todo \"%2$.*1$s.%4$.*3$s%6$.*5$s\" : o utilit\u00e1rio de carga \"%8$.*7$s@%9$x\" da classe \"%11$.*10$s\" e o utilit\u00e1rio de carga \"%13$.*12$s@%14$x\" da classe \"%16$.*15$s\" possuem tipos diferentes para a assinatura de m\u00e9todo
+J9NLS_VM_LOADING_CONSTRAINT_SIG_VIOLATION=viola\u00e7\u00e3o de restri\u00e7\u00e3o de carregamento ao resolver o m\u00e9todo \"%2$.*1$s.%4$.*3$s%6$.*5$s\" : o carregador de classes \"%8$.*7$s@%9$x\" da classe \"%11$.*10$s\" e o carregador de classes \"%13$.*12$s@%14$x\" da classe \"%16$.*15$s\" possuem tipos diferentes para a assinatura de m\u00e9todo
 # START NON-TRANSLATABLE
 J9NLS_VM_LOADING_CONSTRAINT_SIG_VIOLATION.sample_input_1=4
 J9NLS_VM_LOADING_CONSTRAINT_SIG_VIOLATION.sample_input_2=Main
@@ -1963,7 +1963,7 @@ J9NLS_VM_PACKAGES_IS_NULL.user_response=Don't pass a NULL package array.
 # END NON-TRANSLATABLE
 
 # No arguments
-J9NLS_VM_PACKAGE_IS_NULL=A String String \u00e9 nula.
+J9NLS_VM_PACKAGE_IS_NULL=A sequ\u00eancia do pacote \u00e9 nula.
 # START NON-TRANSLATABLE
 J9NLS_VM_PACKAGE_IS_NULL.explanation=Incoming package String can't be NULL.
 J9NLS_VM_PACKAGE_IS_NULL.system_action=The JVM will throw a java/lang/NullPointerException.
@@ -1972,7 +1972,7 @@ J9NLS_VM_PACKAGE_IS_NULL.user_response=Don't pass a NULL package String.
 
 # Message to use when two incompatible options are used together
 # Arguments 1 and 2 are the incompatible command line options
-J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR=O %1$s n\u00e3o \u00e9 suportado com %2$s.
+J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR=%1$s n\u00e3o \u00e9 suportado com %2$s.
 # START NON-TRANSLATABLE
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.sample_input_1=-XX:+HandleSIGABRT
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.sample_input_2=-Xrs

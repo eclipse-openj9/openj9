@@ -490,7 +490,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_CREATE_CPI_FIND.system_action=The JVM fails to store 
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_CPI_FIND.user_response=System is running low on memory resource for the JVM to work properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_CREATE_STRBUF_FIND=N\u00e3o \u00e9 poss\u00edvel alocar mem\u00f3ria para o buffer de cadeia em shrinit::hookFindSharedClass
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_STRBUF_FIND=N\u00e3o \u00e9 poss\u00edvel alocar mem\u00f3ria para o buffer de sequ\u00eancia em shrinit::hookFindSharedClass
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_STRBUF_FIND.explanation=The system is unable to obtain sufficient native memory to allocate internal data structures.
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_STRBUF_FIND.system_action=The JVM would not be able to locate class in the shared class cache.
@@ -1004,7 +1004,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_FULL.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_FULL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_FAILED_STRINGBUF_ALLOC=N\u00e3o foi poss\u00edvel alocar mem\u00f3ria para o buffer de cadeia em SH_CacheMap
+J9NLS_SHRC_CM_FAILED_STRINGBUF_ALLOC=N\u00e3o foi poss\u00edvel alocar mem\u00f3ria para o buffer de sequ\u00eancia em SH_CacheMap
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_FAILED_STRINGBUF_ALLOC.explanation=The system is unable to obtain sufficient native memory to allocate internal data structures.
 J9NLS_SHRC_CM_FAILED_STRINGBUF_ALLOC.system_action=The JVM may fail to locate class in shared class cache.
@@ -1418,7 +1418,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_KEEP.system_action=The JVM does not delete the memor
 J9NLS_SHRC_SHRINIT_HELPTEXT_KEEP.user_response=None - this is a private unpublished option
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INVARIANT_RELOCATION_ENABLED=Reloca\u00e7\u00e3o invari\u00e1vel de cadeia ativada
+J9NLS_SHRC_SHRINIT_INVARIANT_RELOCATION_ENABLED=Reloca\u00e7\u00e3o invari\u00e1vel de sequ\u00eancia ativada
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INVARIANT_RELOCATION_ENABLED.explanation=NOTISSUED
 J9NLS_SHRC_SHRINIT_INVARIANT_RELOCATION_ENABLED.system_action=
@@ -2056,7 +2056,7 @@ J9NLS_SHRC_BDMI_FAILED_CREATE_POOL.system_action=The JVM fails to complete the o
 J9NLS_SHRC_BDMI_FAILED_CREATE_POOL.user_response=System is running low on memory resource for the JVM to work properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_VERBOSE_INTERN=Ativar sa\u00edda detalhada interna de cadeia
+J9NLS_SHRC_SHRINIT_HELPTEXT_VERBOSE_INTERN=Ativar sa\u00edda detalhada interna de sequ\u00eancia
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_VERBOSE_INTERN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_VERBOSE_INTERN.system_action=
@@ -2565,7 +2565,7 @@ J9NLS_SHRC_SYSVIPC_ERROR.system_action=The JVM terminates, unless you have speci
 J9NLS_SHRC_SYSVIPC_ERROR.user_response=Contact your service representative if this problem persists.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_FAILED_ENTER_READ_WRITE_AREA_MUTEX=SH_CompositeCacheImpl::enterReadWriteAreaMutex falhou ao adquirir o mutex de tabela da cadeia (c\u00f3digo de retorno %d).
+J9NLS_SHRC_CC_FAILED_ENTER_READ_WRITE_AREA_MUTEX=SH_CompositeCacheImpl::enterReadWriteAreaMutex falhou ao adquirir o mutex de tabela da sequ\u00eancia (c\u00f3digo de retorno %d).
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_FAILED_ENTER_READ_WRITE_AREA_MUTEX.sample_input_1=-1
 J9NLS_SHRC_CC_FAILED_ENTER_READ_WRITE_AREA_MUTEX.explanation=An error has prevented updates to the shared class cache.
@@ -6892,8 +6892,9 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=Verifique os registros de data e
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
+# END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destroy all shared cache layers of the same name (use name parm or default)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destrua todas as camadas de cache com o mesmo nome (use o par\u00e2metro ou o padr\u00e3o de nome)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
@@ -6907,7 +6908,7 @@ J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.system_action=The JVM terminates, unless y
 J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=Falha ao iniciar o cache compartilhado. A modifica\u00e7\u00e3o em um cache compartilhado da camada inferior foi detectada. O ID exclusivo de cache esperado \u00e9 %s
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=Falha ao iniciar o cache compartilhado. Foi detectada uma modifica\u00e7\u00e3o no cache compartilhado da camada inferior. O ID exclusivo de cache esperado \u00e9 %s
 
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.sample_input_1=foo
@@ -6930,14 +6931,14 @@ J9NLS_SHRC_CM_FAILED_TO_START_UP.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_FAILED_TO_START_UP.user_response=Previous error messages may indicate the reason.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Especifique o n\u00famero da camada superior. Crie uma camada de cache compartilhado se a camada especificada n\u00e3o existir.
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Especifique o n\u00famero da camada superior. Crie uma nova camada de cache compartilhado se a camada especificada n\u00e3o existir.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER=Crie uma camada de cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER=Crie uma nova camada de cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
@@ -6954,7 +6955,7 @@ J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.system_action=The JVM terminates.
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.user_response=Correct or remove the invalid command-line option and rerun.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER=O n\u00famero da camada inv\u00e1lido \u00e9 %d. A camada superior existente \u00e9 %d. O n\u00famero da nova camada deve ser %d.
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER=N\u00famero de camada %d inv\u00e1lido. A camada superior existente \u00e9 %d. O n\u00famero da nova camada deve ser %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_1=3
 J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_2=1
@@ -6980,7 +6981,7 @@ J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER=camada de cache %*.c= %d
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER=camada de cache                     %*.c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_2=
@@ -7023,7 +7024,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED=A camada superior (camada %d) do cache est\u00e1 destru\u00edda. A modifica\u00e7\u00e3o para a camada %d do cache compartilhado foi detectada. O ID exclusivo de cache esperado \u00e9 %s, o ID exclusivo de cache atual \u00e9 %s.
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED=A camada superior (camada %d) do cache est\u00e1 destru\u00edda. Foi detectada uma modifica\u00e7\u00e3o na camada %d do cache compartilhado. O ID exclusivo de cache esperado \u00e9 %s, o ID exclusivo de cache atual \u00e9 %s.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_1=1
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_2=0

@@ -671,7 +671,7 @@ J9NLS_CFR_ERR_CODE_ARRAY_EMPTY.user_response=Contact the provider of the classfi
 # END NON-TRANSLATABLE
 
 # lookupswitch is not translatable
-J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED=las entradas no est\u00e1n ordenadas en el c\u00f3digos de bytes de lookupswitch
+J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED=Las entradas no est\u00e1n ordenadas en el c\u00f3digo de bytes de lookupswitch
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1452,14 +1452,14 @@ J9NLS_CFR_ERR_PREVIEW_VERSION.system_action=The JVM will throw a verification or
 J9NLS_CFR_ERR_PREVIEW_VERSION.user_response=Run with the correct Java runtime version and use --enable-preview.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_LVT_INDEX_OUTOFRANGE=El \u00edndice en LocalVariableTable est\u00e1 fuera del rango
+J9NLS_CFR_LVT_INDEX_OUTOFRANGE=El \u00edndice en LocalVariableTable est\u00e1 fuera de rango
 # START NON-TRANSLATABLE
 J9NLS_CFR_LVT_INDEX_OUTOFRANGE.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_LVT_INDEX_OUTOFRANGE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_LVT_INDEX_OUTOFRANGE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_LVTT_INDEX_OUTOFRANGE=El \u00edndice en LocalVariableTypeTable est\u00e1 fuera del rango
+J9NLS_CFR_LVTT_INDEX_OUTOFRANGE=El \u00edndice en LocalVariableTypeTable est\u00e1 fuera de rango
 # START NON-TRANSLATABLE
 J9NLS_CFR_LVTT_INDEX_OUTOFRANGE.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_LVTT_INDEX_OUTOFRANGE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1482,7 +1482,7 @@ J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.user_response=Contact the provider of t
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=Las clases de registro no puede ser abstracta
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=Las clases de Record no pueden ser abstractas
 # START NON-TRANSLATABLE
 J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1490,7 +1490,7 @@ J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.user_response=Contact the provider of 
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8=El nombre de registro debe ser una serie
+J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8=El nombre de Record debe ser una serie
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1514,9 +1514,18 @@ J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8.user_response=Contact the pro
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=El registro es completamente final
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=Record es impl\u00edcitamente final
 # START NON-TRANSLATABLE
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# LocalVariableTypeTable is not translatable
+# LocalVariableTable is not translatable
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT=La entrada LocalVariableTypeTable no coincide con ninguna entrada LocalVariableTable
+# START NON-TRANSLATABLE
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

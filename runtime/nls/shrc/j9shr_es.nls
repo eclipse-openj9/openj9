@@ -1431,7 +1431,7 @@ J9NLS_SHRC_SHRINIT_CANNOT_USE_SAFEMODE.system_action=Safemode is disabled and th
 J9NLS_SHRC_SHRINIT_CANNOT_USE_SAFEMODE.user_response=None - this is a consequence of using a private unpublished option
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_IGNORING_NOINCREMENTALUPDATES=Ignorando la opci\u00f3n noIncrementalUpdates debido al uso de singleJVM
+J9NLS_SHRC_SHRINIT_IGNORING_NOINCREMENTALUPDATES=Se ignorar\u00e1 la opci\u00f3n noIncrementalUpdates debido al uso de singleJVM
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_IGNORING_NOINCREMENTALUPDATES.explanation=NOTISSUED
 J9NLS_SHRC_SHRINIT_IGNORING_NOINCREMENTALUPDATES.system_action=
@@ -5779,7 +5779,7 @@ J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.system_action=The JVM fails to comp
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.user_response=Previous error messages may indicate the reason. The disk may be full. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK=No se ha podido ubicar de nuevo el desplazamiento del del descriptor de archivo en el archivo de instant\u00e1nea de memoria cach\u00e9 compartida no persistente \"%s\"
+J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK=No se ha podido ubicar de nuevo el desplazamiento del descriptor de archivo en el archivo de instant\u00e1nea de memoria cach\u00e9 compartida no persistente \"%s\"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK.explanation=An error has occurred in repositioning the offset of the file descriptor in the non-persistent shared cache snapshot file
@@ -6760,8 +6760,9 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=Compruebe las indicaciones de fe
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
+# END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destroy all shared cache layers of the same name (use name parm or default)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destruir todas las capas de memoria cach\u00e9 compartida con el mismo nombre (utilizar el par\u00e1metro name o el valor predeterminado)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
@@ -6775,7 +6776,7 @@ J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.system_action=The JVM terminates, unless y
 J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=No se ha podido iniciar la memoria compartida. Se ha detectado la modificaci\u00f3n a una memoria cach\u00e9 compartida de capa inferior. El ID de memoria cach\u00e9 exclusivo esperado es %s
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=No se ha podido iniciar la memoria compartida. Se ha detectado una modificaci\u00f3n en una memoria cach\u00e9 compartida de capa inferior. El ID de memoria cach\u00e9 exclusivo esperado es %s
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.sample_input_1=foo
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layer shared caches built on top of it.
@@ -6783,7 +6784,7 @@ J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.system_action=The JVM terminates, unless yo
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.user_response=Use -Xshareclasses:name=<cacheName>,destroyAllLayers to destroy all layers and retry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED=No se ha podido iniciar la memoria compartida. Se ha producido un error al obtener el ID exclusivo de una memoria cach\u00e9 de prerrequisitos de capa inferior.
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED=No se ha podido iniciar la memoria compartida. Se ha producido un error al obtener el ID exclusivo de una memoria cach\u00e9 de prerrequisito de una capa inferior.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.explanation=Cannot get the unique ID of a lower layer prerequisite cache.
 J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -6797,7 +6798,7 @@ J9NLS_SHRC_CM_FAILED_TO_START_UP.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_FAILED_TO_START_UP.user_response=Previous error messages may indicate the reason.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Especifique el n\u00famero de capa superior. Cree una nueva capa de memoria cach\u00e9 compartida si la capa especificada no existe.
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Especifique el n\u00famero de la capa superior. Cree una nueva capa de memoria cach\u00e9 compartida si la capa especificada no existe.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.system_action=
@@ -6811,7 +6812,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=N\u00famero de capa no v\u00e1lido %d encontrado para \"%s\". El n\u00famero de capa deber\u00eda ser menos que %d.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=N\u00famero de capa no v\u00e1lido %d encontrado para \"%s\". El n\u00famero de capa deber\u00eda ser inferior a %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=
@@ -6831,7 +6832,7 @@ J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.system_action=The JVM terminates, unl
 J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.user_response=Correct the layer number in the command line and retry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK=No compruebe el espacio libre de disco antes de crear una cach\u00e9 permanente.
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK=No comprobar el espacio libre de disco antes de crear una cach\u00e9 permanente.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.system_action=
@@ -6839,7 +6840,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE=\n\
-Estad\u00edsticas actuales para la capa superior de memoria cach\u00e9 \"%s\": \n
+Estad\u00edsticas actuales para la capa superior de la memoria cach\u00e9 \"%s\": \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.sample_input_1=myCache
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.explanation=NOTAG
@@ -6858,7 +6859,7 @@ J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE=\n\
-Estad\u00edsticas actuales para todas las capas de memoria cach\u00e9 \"%s\": \n
+Estad\u00edsticas actuales para todas las capas de la memoria cach\u00e9 \"%s\": \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.sample_input_1=myCache
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.explanation=NOTAG
@@ -6866,7 +6867,7 @@ J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS=Imprimir resumen de las estad\u00edsticas de memoria cach\u00e9 solo desde la capa superior. Utilice printTopLayerStats=help para ver las opciones disponibles.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS=Imprimir resumen de las estad\u00edsticas de memoria cach\u00e9 solo desde la capa superior. UtilizarprintTopLayerStats=help para ver las opciones disponibles.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.system_action=

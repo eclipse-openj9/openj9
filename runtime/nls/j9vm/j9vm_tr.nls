@@ -1362,7 +1362,7 @@ J9NLS_VM_XOPTION_NO_LONGER_SUPPORTED.explanation=IBM SDK %s se\u00e7ene\u011fini
 J9NLS_VM_XOPTION_NO_LONGER_SUPPORTED.system_action=JVM ba\u015flamaz.
 J9NLS_VM_XOPTION_NO_LONGER_SUPPORTED.user_response=%s i\u015flevi gerekliyse IBM servisine ba\u015fvurun, tersi durumda se\u00e7ene\u011fi kald\u0131r\u0131n.
 
-J9NLS_VM_TOO_MANY_ARGUMENTS=\u00e7ok fazla de\u011fi\u015ftirge var: 255 + 1
+J9NLS_VM_TOO_MANY_ARGUMENTS=\u00e7ok fazla parametre var: 255 + 1
 # START NON-TRANSLATABLE
 J9NLS_VM_TOO_MANY_ARGUMENTS.explanation=The signature requires more than 255 argument slots plus one for the receiver.
 J9NLS_VM_TOO_MANY_ARGUMENTS.system_action=The JVM will throw java/lang/LinkageError.
