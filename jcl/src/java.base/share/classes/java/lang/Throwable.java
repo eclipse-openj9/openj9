@@ -231,8 +231,9 @@ public void setStackTrace(StackTraceElement[] trace) {
 	if (trace == null) {
 		throw new NullPointerException();
 	}
-	for (int i=0; i<trace.length; i++)	{
-		if (trace[i] == null) {
+	StackTraceElement[] localCopy = trace.clone();
+	for (int i=0; i<localCopy.length; i++)	{
+		if (localCopy[i] == null) {
 			throw new NullPointerException();
 		}
 	}
@@ -241,7 +242,7 @@ public void setStackTrace(StackTraceElement[] trace) {
 		return;
 	}
 	
-	stackTrace = (StackTraceElement[])trace.clone();
+	stackTrace = localCopy;
 }
 
 /**
