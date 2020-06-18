@@ -208,7 +208,7 @@ J9NLS_RELOCATABLE_CODE_TM_MISMATCH.user_response=Destroy and recreate the AOT co
 J9NLS_RELOCATABLE_CODE_TM_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH=Lockword \u7279\u6027\u4e0d\u7b26\u3002\u5ffd\u7565\u5171\u7528\u985e\u5225\u5feb\u53d6\u4e2d\u7684 AOT \u7a0b\u5f0f\u78bc\u3002
+J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH=Lockword \u4e0d\u7b26\u3002\u5ffd\u7565\u5171\u7528\u985e\u5225\u5feb\u53d6\u4e2d\u7684 AOT \u7a0b\u5f0f\u78bc\u3002
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH.explanation=The JVM is not running with the same Lockword as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -216,7 +216,7 @@ J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH.user_response=Destroy and recreate the 
 J9NLS_RELOCATABLE_CODE_LOCKWORD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH=Arraylet \u5927\u5c0f\u7279\u6027\u4e0d\u7b26\u3002\u5ffd\u7565\u5171\u7528\u985e\u5225\u5feb\u53d6\u4e2d\u7684 AOT \u7a0b\u5f0f\u78bc\u3002
+J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH=Arraylet \u5927\u5c0f\u4e0d\u7b26\u3002\u5ffd\u7565\u5171\u7528\u985e\u5225\u5feb\u53d6\u4e2d\u7684 AOT \u7a0b\u5f0f\u78bc\u3002
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH.explanation=The JVM is not running with the same Arraylet Size as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_ARRAYLET_SIZE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.

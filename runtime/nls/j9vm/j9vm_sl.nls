@@ -1790,7 +1790,7 @@ J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.user_response=Load class and nest host class w
 # END NON-TRANSLATABLE
 
 # No arguments
-J9NLS_VM_MODULE_IS_NULL=Modul je ni\u010deln
+J9NLS_VM_MODULE_IS_NULL=Modul je ni\u010deln.
 # START NON-TRANSLATABLE
 J9NLS_VM_MODULE_IS_NULL.explanation=Incoming module can't be NULL.
 J9NLS_VM_MODULE_IS_NULL.system_action=The JVM will throw a java/lang/NullPointerExceptions.

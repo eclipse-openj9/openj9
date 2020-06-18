@@ -1466,7 +1466,7 @@ J9NLS_CFR_LVTT_INDEX_OUTOFRANGE.system_action=The JVM will throw a verification 
 J9NLS_CFR_LVTT_INDEX_OUTOFRANGE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_LVTT_DUPLICATE=\u4e0d\u5bb9\u8a31 LocalVariableTypeTable \u4e2d\u7684\u91cd\u8907\u9805\u76ee
+J9NLS_CFR_LVTT_DUPLICATE=\u4e0d\u5bb9\u8a31 LocalVariableTypeTable \u4e2d\u5b58\u5728\u91cd\u8907\u9805\u76ee
 # START NON-TRANSLATABLE
 J9NLS_CFR_LVTT_DUPLICATE.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_LVTT_DUPLICATE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1519,4 +1519,13 @@ J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=\u8a18\u9304\u672a\u660e\u78ba\u7d50\u675f
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# LocalVariableTypeTable is not translatable
+# LocalVariableTable is not translatable
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT=LocalVariableTypeTable \u9805\u76ee\u8207\u4efb\u610f LocalVariableTable \u9805\u76ee\u90fd\u4e0d\u76f8\u7b26
+# START NON-TRANSLATABLE
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

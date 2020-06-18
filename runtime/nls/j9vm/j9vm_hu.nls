@@ -1840,7 +1840,7 @@ J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.system_action=The JVM will throw an Inco
 J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.user_response=Load class and nest host class with same classloader.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE=rossz oszt\u00e1ly %2$.*1$s: A Qtype p\u00e9ld\u00e1ny mez\u0151 nem \u00e9rt\u00e9kt\u00edpus
+J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE=rossz oszt\u00e1ly %2$.*1$s: A Qtype p\u00e9ld\u00e1ny mez\u0151 nem \u00e9rt\u00e9k t\u00edpus\u00fa
 # START NON-TRANSLATABLE
 J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE.sample_input_1=3
 J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE.sample_input_2=Foo
@@ -1849,7 +1849,7 @@ J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE.system_action=The JVM will throw a Incompati
 J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE=rossz oszt\u00e1ly %2$.*1$s: A nem \u00e9rt\u00e9kt\u00edpus
+J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE=rossz oszt\u00e1ly %2$.*1$s: Az oszt\u00e1lyhivatkoz\u00e1s nem \u00e9rt\u00e9k t\u00edpus\u00fa
 # START NON-TRANSLATABLE
 J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE.sample_input_1=3
 J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE.sample_input_2=Foo
@@ -1858,7 +1858,7 @@ J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE.system_action=The JVM will t
 J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE=rossz objektumt\u00edpus %2$.*1$s: a veremben l\u00e9v\u0151 objektum nem \u00e9rt\u00e9kt\u00edpus
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE=rossz objektumt\u00edpus %2$.*1$s: a veremben l\u00e9v\u0151 objektum nem \u00e9rt\u00e9k t\u00edpus\u00fa
 # START NON-TRANSLATABLE
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE.sample_input_1=3
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE.sample_input_2=Foo
@@ -1867,7 +1867,7 @@ J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE.system_action=The JVM will 
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE=rossz objektumt\u00edpus %2$.*1$s: a szinkroniz\u00e1lt objektum \u00e9rt\u00e9kt\u00edpus
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE=rossz objektumt\u00edpus %2$.*1$s: a szinkroniz\u00e1lt objektum \u00e9rt\u00e9k t\u00edpus\u00fa
 # START NON-TRANSLATABLE
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.sample_input_1=3
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.sample_input_2=Foo

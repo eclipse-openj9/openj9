@@ -515,7 +515,7 @@ J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.user_response=Combine dump types, event types, a
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.link=
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_EXIT_SHUTDOWN=Virtu\u00e1ln\u00ed po\u010d\u00edta\u010d se ukon\u010duje. P\u0159\u00ed\u010dina: %2$.*1$s
+J9NLS_DMP_EXIT_SHUTDOWN=\u010cinnost virtu\u00e1ln\u00edho po\u010d\u00edta\u010de se ukon\u010duje. P\u0159\u00ed\u010dina: %2$.*1$s
 # START NON-TRANSLATABLE
 J9NLS_DMP_EXIT_SHUTDOWN.explanation=User requested to exit
 J9NLS_DMP_EXIT_SHUTDOWN.system_action=The JVM exits.
@@ -523,7 +523,7 @@ J9NLS_DMP_EXIT_SHUTDOWN.user_response=This exit was requested by the user.
 J9NLS_DMP_EXIT_SHUTDOWN.link=
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN=Virtu\u00e1ln\u00ed po\u010d\u00edta\u010d se ukon\u010duje. P\u0159\u00ed\u010dina: Nezn\u00e1m\u00e1
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN=\u010cinnost virtu\u00e1ln\u00edho po\u010d\u00edta\u010de se ukon\u010duje. P\u0159\u00ed\u010dina: Nezn\u00e1m\u00e1
 # START NON-TRANSLATABLE
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.explanation=User requested to exit
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.system_action=The JVM exits.

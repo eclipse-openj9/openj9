@@ -1191,7 +1191,7 @@ J9NLS_CFR_ERR_TWO_METHOD_PARAMETERS_ATTRIBUTES.user_response=Contact the provide
 # END NON-TRANSLATABLE
 
 #Invalid method parameter flag
-J9NLS_CFR_ERR_INVALID_METHOD_PARAMETER_FLAG=Y\u00f6ntem de\u011fi\u015ftirgesinin i\u015fareti ge\u00e7ersiz.
+J9NLS_CFR_ERR_INVALID_METHOD_PARAMETER_FLAG=Y\u00f6ntem parametresinin i\u015fareti ge\u00e7ersiz.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INVALID_METHOD_PARAMETER_FLAG.explanation=Invalid method parameter flag
 J9NLS_CFR_ERR_INVALID_METHOD_PARAMETER_FLAG.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1200,7 +1200,7 @@ J9NLS_CFR_ERR_INVALID_METHOD_PARAMETER_FLAG.user_response=Contact the provider o
 # END NON-TRANSLATABLE
 
 #Method parameter name is not UTF8
-J9NLS_CFR_ERR_METHOD_PARAMETER_NAME_NOT_UTF8=Y\u00f6ntem de\u011fi\u015ftirgesi ad\u0131 UTF8 de\u011fil
+J9NLS_CFR_ERR_METHOD_PARAMETER_NAME_NOT_UTF8=Y\u00f6ntem parametresi ad\u0131 UTF8 de\u011fil
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_METHOD_PARAMETER_NAME_NOT_UTF8.explanation=Invalid method parameter name type
 J9NLS_CFR_ERR_METHOD_PARAMETER_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1519,4 +1519,13 @@ J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=Record dolayl\u0131 olarak final
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# LocalVariableTypeTable is not translatable
+# LocalVariableTable is not translatable
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT=LocalVariableTypeTable giri\u015fi herhangi bir LocalVariableTable giri\u015fiyle e\u015fle\u015fmiyor
+# START NON-TRANSLATABLE
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

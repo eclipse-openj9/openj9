@@ -354,7 +354,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY=Payla\u015f\u0131lan \u00f6nbelle\u011fi yok eder (ad de\u011fi\u015ftirgesini ya da varsay\u0131lan\u0131 kullan\u0131n)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY=Payla\u015f\u0131lan \u00f6nbelle\u011fi yok eder (ad parametresini ya da varsay\u0131lan\u0131 kullan\u0131n)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY.system_action=
@@ -469,7 +469,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_EXPIRE_WRONG_PARAM=S\u00fcre bitimi se\u00e7ene\u011fi i\u00e7in yanl\u0131\u015f de\u011fi\u015ftirgeler
+J9NLS_SHRC_SHRINIT_EXPIRE_WRONG_PARAM=S\u00fcre bitimi se\u00e7ene\u011fi i\u00e7in yanl\u0131\u015f parametreler
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_EXPIRE_WRONG_PARAM.explanation=The value specified for the expire parameter of -Xshareclasses is invalid.
 J9NLS_SHRC_SHRINIT_EXPIRE_WRONG_PARAM.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -5637,7 +5637,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_SNAPSHOTCACHE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_SNAPSHOTCACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYSNAPSHOT=Payla\u015f\u0131lan \u00f6nbelle\u011fin anl\u0131k g\u00f6r\u00fcn\u00fcm\u00fcn\u00fc yok eder (ad de\u011fi\u015ftirgesini ya da varsay\u0131lan\u0131 kullan\u0131n)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYSNAPSHOT=Payla\u015f\u0131lan \u00f6nbelle\u011fin anl\u0131k g\u00f6r\u00fcn\u00fcm\u00fcn\u00fc yok eder (ad parametresini ya da varsay\u0131lan\u0131 kullan\u0131n)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYSNAPSHOT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYSNAPSHOT.system_action=
@@ -5993,7 +5993,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Y\u00f6ntem belirtimleriyle e\u015fle\u015fen AOT y\u00f6ntemlerini yazd\u0131r\u0131r.\n\
-\t<y\u00f6ntem_belirtimi> \u015fu \u015fekilde tan\u0131mlan\u0131r: [!]{*|[*]<paketad\u0131/s\u0131n\u0131fad\u0131>[*]}[.{*|[*]<y\u00f6ntemad\u0131>[*]}][({*|[*]<de\u011fi\u015ftirgeler>[*]})]].
+\t<y\u00f6ntem_belirtimi> \u015fu \u015fekilde tan\u0131mlan\u0131r: [!]{*|[*]<paketad\u0131/s\u0131n\u0131fad\u0131>[*]}[.{*|[*]<y\u00f6ntemad\u0131>[*]}][({*|[*]<parametreler>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6015,7 +6015,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=<y\u00f6ntem_belirtimi> bi\u00e7imi \u015f\u00f6yledir: [!]{*|[*]<paketad\u0131/s\u0131n\u0131fad\u0131>[*]}[.{*|[*]<y\u00f6ntemad\u0131>[*]}][({*|[*]<de\u011fi\u015ftirgeler>[*]})]], \u00f6rn.:\n\
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=<y\u00f6ntem_belirtimi> bi\u00e7imi \u015f\u00f6yledir: [!]{*|[*]<paketad\u0131/s\u0131n\u0131fad\u0131>[*]}[.{*|[*]<y\u00f6ntemad\u0131>[*]}][({*|[*]<parametreler>[*]})]], \u00f6rn.:\n\
 \n\
 \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
@@ -6764,8 +6764,9 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=Her s\u0131n\u0131f y\u00fck\u00
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
+# END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destroy all shared cache layers of the same name (use name parm or default)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Ayn\u0131 adl\u0131 t\u00fcm payla\u015f\u0131lan \u00f6nbellek katmanlar\u0131n\u0131 yok eder (ad parametresini veya varsay\u0131lan\u0131 kullan\u0131n)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
