@@ -93,7 +93,7 @@ class JITServerHelpers
    static void postStreamConnectionSuccess();
    static bool isServerAvailable() { return _serverAvailable; }
 
-   static void printJITServerMsgStats(J9JITConfig *);
+   static void printJITServerMsgStats(J9JITConfig *, TR::CompilationInfo *);
    static void printJITServerCHTableStats(J9JITConfig *, TR::CompilationInfo *);
    static void printJITServerCacheStats(J9JITConfig *, TR::CompilationInfo *);
 

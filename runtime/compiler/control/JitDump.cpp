@@ -356,8 +356,8 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
       if (compInfo)
          {
          static char * isPrintJITServerMsgStats = feGetEnv("TR_PrintJITServerMsgStats");
-         if (isPrintJITServerMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-            JITServerHelpers::printJITServerMsgStats(jitConfig);
+         if (isPrintJITServerMsgStats)
+            JITServerHelpers::printJITServerMsgStats(jitConfig, compInfo);
          if (feGetEnv("TR_PrintJITServerCHTableStats"))
             JITServerHelpers::printJITServerCHTableStats(jitConfig, compInfo);
          if (feGetEnv("TR_PrintJITServerIPMsgStats"))
