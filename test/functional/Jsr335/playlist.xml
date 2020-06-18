@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,6 +88,31 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>jsr335tests_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)Jsr335.jar$(P).$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames jsr335 \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
 
 	<test>
 		<testCaseName>jsr335tests_openj9_none_SCC</testCaseName>
@@ -109,6 +134,31 @@
 	$(TEST_STATUS)</command>
 		<subsets>
 			<subset>9+</subset>
+		</subsets>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>jsr335tests_openj9_none_SCC_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)Jsr335.jar$(P).$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames jsr335 \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<subsets>
+			<subset>11</subset>
 		</subsets>
 		<levels>
 			<level>sanity</level>
@@ -166,6 +216,29 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>jsr335tests_defendersupersends_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)Jsr335.jar$(P).$(Q) \
+	org.openj9.test.jsr335.defendersupersends.TestDefenderSupersends; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
 		</impls>
 	</test>
 </playlist>

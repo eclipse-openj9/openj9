@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2009, 2018 IBM Corp. and others
+  Copyright (c) 2009, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,6 +48,12 @@
 <exclude id="-Xthr:noAdaptSpin on command line" platform=".*_hrt.*" shouldFix="false"><reason>Adaptive Spin not supported on hard realtime</reason></exclude>
 <exclude id="-Xthr:noSecondarySpinForObjectMonitors on command line" platform="aix.*" shouldFix="false"><reason>Only for platforms that three tier spin is enabled</reason></exclude>
 <exclude id="-Xthr:secondarySpinForObjectMonitors on command line" platform="aix.*" shouldFix="false"><reason>Only for platforms that three tier spin is enabled</reason></exclude>
+
+<exclude id="Test option -Xjit:count=0,disableZ196" platform="linux_riscv.*" shouldFix="true"><reason>JIT has not yet been implemented on RISC-V for the moment</reason></exclude>
+<exclude id="Test option -Xjit:count=0,disableZEC12" platform="linux_riscv.*" shouldFix="true"><reason>JIT has not yet been implemented on RISC-V for the moment</reason></exclude>
+<exclude id="Test option -Xjit:count=0,disableZ13" platform="linux_riscv.*" shouldFix="true"><reason>JIT has not yet been implemented on RISC-V for the moment</reason></exclude>
+<exclude id="Test option -Xjit:count=0,disableZ14" platform="linux_riscv.*" shouldFix="true"><reason>JIT has not yet been implemented on RISC-V for the moment</reason></exclude>
+<exclude id="Test option -Xjit:count=0,disableZ15" platform="linux_riscv.*" shouldFix="true"><reason>JIT has not yet been implemented on RISC-V for the moment</reason></exclude>
 
 <include id="-Xpreloaduser32" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
 <include id="-Xpreloaduser32 -Xprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>

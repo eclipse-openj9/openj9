@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,6 +82,33 @@
 		</impls>
 	</test>
 	<test>
+		<testCaseName>SCURLClassLoaderTests_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>cp -r $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.jar$(Q) .; \
+	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) -xf URLClassLoaderTests.jar; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DPATHSEP=$(Q)$(D)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DCPDL=$(Q)$(P)$(Q) -DSCMODE=210 -DTEST_JVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.xml$(Q) -xids all,$(PLATFORM),$(JCL_VERSION),$(JDK_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+	-nonZeroExitWhenError \
+	-outputLimit 300; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	<test>
 		<testCaseName>SCURLClassLoaderNPTests_SE80</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -137,6 +164,33 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>SCURLClassLoaderNPTests_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>cp -r $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.jar$(Q) .; \
+	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) -xf URLClassLoaderTests.jar; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DPATHSEP=$(Q)$(D)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DCPDL=$(Q)$(P)$(Q) -DSCMODE=211 -DTEST_JVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.xml$(Q) -xids all,$(PLATFORM),$(JCL_VERSION),$(JDK_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+	-nonZeroExitWhenError \
+	-outputLimit 300; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
 		</impls>
 	</test>
 </playlist>

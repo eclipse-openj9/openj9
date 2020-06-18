@@ -64,6 +64,39 @@
 		</impls>
 	</test>
 	<test>
+		<testCaseName>cmdLineTester_jvmtitests_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
+	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(Q) \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
+	-DMODE_HINTS=$(Q)$(MODE_HINTS)$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests.xml$(Q) \
+	-explainExcludes \
+	-xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_SE80</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -149,6 +182,38 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>cmdLineTester_jvmtitests_hcr_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
+	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
+	-DEXTRA_Add_OPEN_OPTION=$(SQ)--add-opens=java.base/java.lang.reflect=ALL-UNNAMED$(SQ) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_hcr.xml$(Q) \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
 
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_openi9_none_SCC</testCaseName>
@@ -187,6 +252,38 @@
 		</types>
 		<subsets>
 			<subset>11+</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>cmdLineTester_jvmtitests_hcr_openi9_none_SCC_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
+	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
+	-DEXTRA_Add_OPEN_OPTION=$(SQ)--add-opens=java.base/java.lang.reflect=ALL-UNNAMED$(SQ) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_hcr.xml$(Q) \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11</subset>
 		</subsets>
 		<impls>
 			<impl>openj9</impl>
@@ -233,6 +330,37 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>cmdLineTester_jvmtitests_debug_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
+	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_extended.xml$(Q) \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
 
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_debug_openj9_none_SCC</testCaseName>
@@ -269,6 +397,37 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>cmdLineTester_jvmtitests_debug_openj9_none_SCC_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
+	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_extended.xml$(Q) \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
 		<impls>
 			<impl>openj9</impl>
 		</impls>
@@ -332,7 +491,7 @@
 	-xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<!-- Option -XX:+JitInlineWatches is currently unsupported on arm and aarch64 -->
-		<platformRequirements>^arch.arm,^arch.aarch64</platformRequirements>
+		<platformRequirements>^arch.arm,^arch.aarch64,^arch.riscv</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -435,7 +594,38 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
+	<test>
+		<testCaseName>cmdLineTester_jvmtitests_hcr_nongold_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-DTEST_ROOT$(Q)$(TEST_RESROOT)$(Q) \
+	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
+	-DEXTRA_Add_OPEN_OPTION=$(SQ)--add-opens=java.base/java.lang.reflect=ALL-UNNAMED$(SQ) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_hcr.xml$(Q) \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
 
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_OSRG_nongold_SE80</testCaseName>
@@ -582,6 +772,37 @@
 		</impls>
 	</test>
 	<test>
+		<testCaseName>cmdLineTester_decompilationTests_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-DTEST_ROOT$(Q)$(TEST_RESROOT)$(Q) \
+	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(Q) \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -Xgcthreads1 $(SQ) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)decompilationtests.xml$(Q) \
+	-explainExcludes -xids all,linux_ppc,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)decompilationtests_excludes_$(JDK_VERSION).xml$(Q) -verbose -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	<test>
 		<testCaseName>cmdLineTester_decompilationTests_nongold</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -622,7 +843,7 @@
 	-XXdecomp:forceDecompile $(Q)-Xjit:count=0,limit={*.test*},rtresolve$(Q) -Xrunjdwp:transport=dt_socket,address=8888,server=y,onthrow=no.pkg.foo,launch=echo \
 	-cp $(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(Q) com.ibm.jvmti.tests.decompileAtMethodResolve.ResolveTest; \
 	${TEST_STATUS}</command>
-		<platformRequirements>^arch.arm</platformRequirements>
+		<platformRequirements>^arch.arm,^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -669,6 +890,39 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>cmdLineTester_jvmtitests_soae_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
+	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(Q) \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
+	-DMODE_HINTS=$(Q)$(MODE_HINTS)$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_soae.xml$(Q) \
+	-explainExcludes \
+	-xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
 		</impls>
 	</test>
 </playlist>

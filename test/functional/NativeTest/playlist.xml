@@ -77,6 +77,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(TEST_RESROOT)$(D)jniargtests$(D)jniargtests.jar$(Q) JniArgTests jniargtests; \
 			$(TEST_STATUS)</command>
+		<platformRequirements>^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -91,6 +92,35 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>jniargtests_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>
+			$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+			$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(TEST_RESROOT)$(D)jniargtests$(D)jniargtests.jar$(Q) JniArgTests jniargtests; \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	
 	<test>
 		<testCaseName>jniargtestssystemlink</testCaseName>
 		<variations>
@@ -166,6 +196,34 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>jsigjnitest_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+			$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)jsigjnitest$(SQ) \
+			$(SQ)$(J9VM_PATH)$(SQ) $(JVM_OPTIONS) ; \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	
 	<test>
 		<testCaseName>gc_rwlocktest</testCaseName>
 		<variations>
@@ -244,6 +302,34 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</subsets>
 		<aot>explicit</aot>
 	</test>
+	<test>
+		<testCaseName>shrtest_linux_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)shrtest$(SQ) $(JVM_OPTIONS) -Djava.home=$(SQ)$(TEST_JDK_HOME)$(D)$(SQ) $(SQ)-Xbootclasspath/a:$(Q)dummy1$(P)dummy2$(P)dummy3$(Q)$(SQ) ; \
+	$(TEST_STATUS)
+	</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	
 	<test>
 		<testCaseName>shrtest_zos</testCaseName>
 		<variations>
@@ -510,6 +596,33 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>thrstatetest_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+			$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)thrstatetest$(SQ) $(JVM_OPTIONS) -Djava.home=$(SQ)$(TEST_JDK_HOME)$(D)$(SQ) -Dcom.ibm.tools.attach.enable=no -Dibm.java9.forceCommonCleanerShutdown=true ; \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	
 	<test>
 		<testCaseName>vmLifecyleTests</testCaseName>
 		<variations>

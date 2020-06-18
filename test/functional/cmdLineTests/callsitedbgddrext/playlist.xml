@@ -92,7 +92,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-config $(Q)$(TEST_RESROOT)$(D)callsiteddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<!-- temporarily disable this test on z/OS; github.com/eclipse/openj9/issues/1511 -->
-		<platformRequirements>^os.zos</platformRequirements>
+		<platformRequirements>^os.zos,^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>

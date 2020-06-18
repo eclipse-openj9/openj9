@@ -35,6 +35,7 @@
 	-testnames finalizerTest -groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -58,6 +59,7 @@
 	-testnames stringConcatOptTest -groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -106,6 +108,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -131,6 +134,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -179,6 +183,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -253,6 +258,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -295,7 +301,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>^arch.arm</platformRequirements>
+		<platformRequirements>^arch.arm,^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -321,7 +327,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>^arch.arm</platformRequirements>
+		<platformRequirements>^arch.arm,^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -351,7 +357,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>^arch.arm</platformRequirements>
+		<platformRequirements>^arch.arm,^arch.riscv</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -377,7 +383,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>os.linux,^vm.cmprssptrs,^arch.arm</platformRequirements>
+		<platformRequirements>os.linux,^vm.cmprssptrs,^arch.arm,^arch.riscv</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -406,7 +412,7 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>^arch.arm</platformRequirements>
+		<platformRequirements>^arch.arm,^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -451,6 +457,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -481,6 +488,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -490,6 +498,33 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>jit_recognizedMethod_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames \
+	RecognizedMethodTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
 		</impls>
 	</test>
 

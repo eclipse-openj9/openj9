@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2016, 2019 IBM Corp. and others
+Copyright (c) 2016, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,22 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<property name="ADDITIONALEXPORTS" value="" />
 	<property name="TCK_CR_VM_ARG" value="${TCK_CR_VM_ARG}"/>
 	<property name="TESTNUM" value="${TESTNUM}"/>
+	<property name="SPEC" value="${SPEC}"/>
+	
+	<if>
+		<or>
+			<equals arg1="${SPEC}" arg2="linux_riscv64_cmprssptrs"/>
+			<equals arg1="${SPEC}" arg2="linux_riscv64"/>
+		</or>
+		<then>
+			<property name="SCC_JIT_OPTION" value="-Xshareclasses:name=ddrextjunitSCC" />
+			<property name="ARG_CMDLINE" value="-Xint"/>
+		</then>
+		<else>
+			<property name="SCC_JIT_OPTION" value="-Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit:count=0 -Xaot:forceaot,count=5,disableAsyncCompilation" />
+			<property name="ARG_CMDLINE" value="-Xjit:{j9vm/test/corehelper/CoreGen.main*}(count=0)"/>
+		</else>
+	</if>
 
 	<if>
 		<equals arg1="${JDK_VERSION}" arg2="8"/>
@@ -61,7 +77,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</if>
 		</then>
 		<else>
-			<property name="DUMP_OPTION" value="-Xdump:system:defaults:label=${system.dump},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit:count=0 -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M" />
+			<property name="DUMP_OPTION" value="-Xdump:system:defaults:label=${system.dump},request=exclusive+compact+prepwalk -Xscmx16m -Xmx512M ${SCC_JIT_OPTION}" />
 		</else>
 	</if>
 
@@ -129,6 +145,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<target name="TCK.generate.dump" depends="TCK.initialize.cache">
 		<echo>Generate dump file</echo>
 		<echo>JAVA_COMMAND: ${JAVA_COMMAND}</echo>
+		<echo>SPEC: ${SPEC}</echo>
 		<echo>DUMP_OPTION: ${DUMP_OPTION}</echo>
 		<echo>EXTRADUMPOPT: ${EXTRADUMPOPT}</echo>
 
@@ -145,7 +162,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<arg line="${DUMP_OPTION}" />
 			<arg line="-Xitsn1000" />
 			<arg line="${EXTRADUMPOPT}" />
-			<arg value="-Xjit:{j9vm/test/corehelper/CoreGen.main*}(count=0)"/>
+			<arg value="${ARG_CMDLINE}"/>
 			<arg value="-cp" />
 			<arg value="${TEST_RESROOT}/DDR_Test.jar" />
 			<arg value="j9vm.test.corehelper.CoreGen" />

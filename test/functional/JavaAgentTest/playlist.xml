@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -200,6 +200,34 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>TestGCClassWithStaticRetransformInGencon_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xgc:scvTenureAge=14,scvNoAdaptiveTenure \
+	--add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED  --add-opens=java.base/java.lang=ALL-UNNAMED \
+	--add-exports=java.base/jdk.internal.org.objectweb.asm.commons=ALL-UNNAMED --add-exports=java.base/com.ibm.oti.vm=ALL-UNNAMED \
+	-javaagent:$(Q)$(TEST_RESROOT)$(D)javaagenttest.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GCRetransformTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
 		</impls>
 	</test>
 

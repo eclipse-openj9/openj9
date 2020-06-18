@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DCPDL=$(Q)$(P)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) -DJDK_VERSION=$(Q)$(JDK_VERSION)$(Q) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)loopReduction.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
-		<platformRequirements>^arch.arm</platformRequirements>
+		<platformRequirements>^arch.arm,^arch.riscv</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>

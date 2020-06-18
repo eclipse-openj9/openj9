@@ -77,6 +77,37 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</impls>
 	</test>
 	<test>
+		<testCaseName>cmdLineTester_classesdbgddrext_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1G \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
+	-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
+	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)classesddrtests_riscv.xml$(Q) \
+	-outputLimit 1000 -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) \
+	-xlist $(Q)$(TEST_RESROOT)$(D)dbgextddrtests_excludes.xml$(Q) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	
+	<test>
 		<testCaseName>cmdLineTester_classesdbgddrext_aix</testCaseName>
 		<variations>
 			<variation>Mode110</variation>

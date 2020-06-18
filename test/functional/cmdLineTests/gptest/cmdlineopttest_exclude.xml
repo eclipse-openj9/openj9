@@ -115,6 +115,9 @@
 <exclude id="hardwareFloat  " platform="(.*ppc.*)" shouldFix="true"><reason>mechanism to trigger hardware float does not work on PPC</reason></exclude>
 <exclude id="hardwareFloat thread" platform="(.*ppc.*)" shouldFix="true"><reason>mechanism to trigger hardware float dose not work on PPC</reason></exclude>
 
+<exclude id="hardwareFloat  " platform="linux_riscv.*" shouldFix="false"><reason>mechanism to trigger hardware float does not work on riscv64</reason></exclude>
+<exclude id="hardwareFloat thread" platform="linux_riscv.*" shouldFix="false"><reason>mechanism to trigger hardware float dose not work riscv64</reason></exclude>
+
 <exclude id="hardwareFloat  " platform=".*aarch64.*" shouldFix="false"><reason>mechanism to trigger hardware float does not work on AArch64</reason></exclude>
 <exclude id="hardwareFloat thread" platform=".*aarch64.*" shouldFix="false"><reason>mechanism to trigger hardware float dose not work on AArch64</reason></exclude>
 

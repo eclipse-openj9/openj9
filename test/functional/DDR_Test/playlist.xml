@@ -43,7 +43,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<testCaseName>testDDRExt_General_openj9</testCaseName>
 		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
-	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
+	-DSPEC=${SPEC} -Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
 		<!-- temporarily disable this test on z/OS; github.com/eclipse/openj9/issues/1511 -->
 		<platformRequirements>^os.zos</platformRequirements>
@@ -79,10 +79,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<testCaseName>testDDRExt_Callsites_openj9</testCaseName>
 		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
-	-Dtest.list=$(Q)TestCallsites$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
+	-DSPEC=${SPEC} -Dtest.list=$(Q)TestCallsites$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
 		<!-- temporarily disable this test on z/OS; github.com/eclipse/openj9/issues/1511 -->
-		<platformRequirements>^os.zos</platformRequirements>
+		<platformRequirements>^os.zos,^arch.riscv</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -118,7 +118,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-Dtest.list=$(Q)TestJITExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -DEXTRADUMPOPT=$(Q)-Xjit:count=0$(Q) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
 		<!-- temporarily disable this test on z/OS; github.com/eclipse/openj9/issues/1511 -->
-		<platformRequirements>^os.zos</platformRequirements>
+		<platformRequirements>^os.zos,^arch.riscv</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -151,10 +151,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<testCaseName>testDDRExt_SharedClasses_openj9</testCaseName>
 		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
-	-Dtest.list=$(Q)TestSharedClassesExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
+	-DSPEC=${SPEC} -Dtest.list=$(Q)TestSharedClassesExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
 		<!-- temporarily disable this test on z/OS; github.com/eclipse/openj9/issues/1511 -->
-		<platformRequirements>^os.zos</platformRequirements>
+		<platformRequirements>^os.zos,^arch.riscv</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>

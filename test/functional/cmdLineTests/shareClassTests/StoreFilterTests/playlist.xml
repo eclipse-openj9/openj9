@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,6 +74,33 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
-		</impls>		
+		</impls>
+	</test>
+	<test>
+		<testCaseName>cmdLineTester_StoreFilterTests_unix_RISCV</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>cp $(Q)$(TEST_RESROOT)$(D)StoreFilterTests.jar$(Q) .; \
+	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(Q) xf StoreFilterTests.jar; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DPD=$(Q)/$(Q) -DTEST_JDK_HOME=$(Q)$(TEST_JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(Q)sh$(Q) -DSCRIPT_SUFFIX=.sh -DSCMODE=204 \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)StoreFilterTests$(XMLSUFFIX).xml$(Q) \
+	-nonZeroExitWhenError \
+	-outputLimit 300; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>arch.riscv</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
 	</test>
 </playlist>
