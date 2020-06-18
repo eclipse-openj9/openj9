@@ -32,8 +32,11 @@ static int values = 0;
 
 static UDATA writeConstant(OMRPortLibrary *OMRPORTLIB, IDATA fd, char const *name, UDATA value);
 static jint writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd);
-static jint writeMacros(OMRPortLibrary *OMRPORTLIB, IDATA fd);
 static IDATA createConstant(OMRPortLibrary *OMRPORTLIB, char const *name, UDATA value);
+
+#if defined(J9VM_ARCH_X86)
+static jint writeMacros(OMRPortLibrary *OMRPORTLIB, IDATA fd);
+#endif
 
 static jint
 writeHeader(OMRPortLibrary *OMRPORTLIB, IDATA fd)
