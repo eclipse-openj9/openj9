@@ -6797,7 +6797,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
    if (comp->getOption(TR_DisableTarokInlineArrayletAllocation) && (node->getOpCodeValue() == TR::anewarray || node->getOpCodeValue() == TR::newarray))
       doInline = false;
 
-   bool usingTLH = (TR_noThreadLocalHeap == NULL);
+   bool usingTLH = !TR_noThreadLocalHeap;
    bool needZeroInit = (!usingTLH || !fej9->tlhHasBeenCleared()) || comp->getOptions()->realTimeGC();
    bool isDualTLH = cg->isDualTLH();
 
