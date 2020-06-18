@@ -124,7 +124,7 @@ J9NLS_CFR_ERR_INVALID_STACK_MAP_ATTRIBUTE.user_response=Contact the provider of 
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_BAD_FIELD_DESCRIPTOR=signature de champ incorrecte
+J9NLS_CFR_ERR_BAD_FIELD_DESCRIPTOR=signature de champ non valide
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_FIELD_DESCRIPTOR.explanation=The field signature is invalid.
 J9NLS_CFR_ERR_BAD_FIELD_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1474,7 +1474,7 @@ J9NLS_CFR_LVTT_DUPLICATE.user_response=Contact the provider of the classfile for
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES=plusieurs attributs d'enregistrement
+J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES=plusieurs attributs Record
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1482,7 +1482,7 @@ J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.user_response=Contact the provider of t
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=Les classes d'enregistrement ne peuvent pas \u00eatre de type abstract
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=Les classes Record ne peuvent pas \u00eatre abstraites
 # START NON-TRANSLATABLE
 J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1490,7 +1490,7 @@ J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.user_response=Contact the provider of 
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8=Le nom d'enregistrement doit \u00eatre une cha\u00eene
+J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8=Le nom Record doit \u00eatre une cha\u00eene
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1514,9 +1514,18 @@ J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8.user_response=Contact the pro
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=L'enregistrement est implicitement final
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=Record est implicitement final
 # START NON-TRANSLATABLE
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# LocalVariableTypeTable is not translatable
+# LocalVariableTable is not translatable
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT=L'entr\u00e9e LocalVariableTypeTable ne correspond \u00e0 aucune entr\u00e9e LocalVariableTable
+# START NON-TRANSLATABLE
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

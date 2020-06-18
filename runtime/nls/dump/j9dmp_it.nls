@@ -515,7 +515,7 @@ J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.user_response=Combine dump types, event types, a
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.link=
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_EXIT_SHUTDOWN=La VM \u00e8 in fase di arresto Motivo: %2$.*1$s
+J9NLS_DMP_EXIT_SHUTDOWN=La VM \u00e8 in fase di arresto. Motivo: %2$.*1$s
 # START NON-TRANSLATABLE
 J9NLS_DMP_EXIT_SHUTDOWN.explanation=User requested to exit
 J9NLS_DMP_EXIT_SHUTDOWN.system_action=The JVM exits.
@@ -523,7 +523,7 @@ J9NLS_DMP_EXIT_SHUTDOWN.user_response=This exit was requested by the user.
 J9NLS_DMP_EXIT_SHUTDOWN.link=
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN=La VM \u00e8 in fase di arresto Motivo: sconosciuto
+J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN=La VM \u00e8 in fase di arresto. Motivo: sconosciuto
 # START NON-TRANSLATABLE
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.explanation=User requested to exit
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.system_action=The JVM exits.
