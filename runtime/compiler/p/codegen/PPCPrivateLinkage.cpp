@@ -707,6 +707,7 @@ static TR::Instruction *unrollPrologueInitLoop(TR::CodeGenerator *cg, TR::Node *
          int32_t loopIterations = wordsToUnroll / wordsUnrolledPerIteration;
          wordsToUnroll = wordsToUnroll % wordsUnrolledPerIteration;
 
+         TR_ASSERT_FATAL( initSlotOffset <= UPPER_IMMED, "initSlotOffset (%d) is too big to fit in a signed immediate field", initSlotOffset);
          cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, gr12, baseInitReg, initSlotOffset, cursor);
          baseInitReg = gr12;
          initSlotOffset = 0;

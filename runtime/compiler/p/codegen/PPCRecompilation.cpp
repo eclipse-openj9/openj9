@@ -132,31 +132,24 @@ TR::Instruction *TR_PPCRecompilation::generatePrologue(TR::Instruction *cursor)
 
       if (cg()->comp()->target().is64Bit())
          {
-         intptr_t  adjustedAddr =  ((addr>>16) + ((addr&0x00008000)==0?0:1)) << 16 ;
+         intptr_t adjustedAddr = HI_VALUE(addr);
          // lis gr11, upper 16-bits
-         cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::lis, firstNode, gr11,
-               ((adjustedAddr>>48) & 0x0000FFFF), cursor );
+         cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::lis, firstNode, gr11, (int16_t)adjustedAddr>>32, cursor );
          // ori gr11, gr11, next 16-bit
-         cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::ori, firstNode, gr11, gr11,
-               ((adjustedAddr>>32) & 0x0000FFFF), cursor);
+         cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::ori, firstNode, gr11, gr11, ((adjustedAddr>>16) & 0x0000FFFF), cursor);
          // rldicr gr11, gr11, 32, 31
          cursor = generateTrg1Src1Imm2Instruction(cg(), TR::InstOpCode::rldicr, firstNode, gr11, gr11, 32, CONSTANT64(0xFFFFFFFF00000000), cursor);
          // oris  gr11, gr11, next 16-bits
-         cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::oris, firstNode, gr11, gr11,
-               ((adjustedAddr>>16) & 0x0000FFFF), cursor);
-
-         // lwzu  gr0, last 16-bits(gr11)
-         cursor = generateTrg1MemInstruction(cg(), (!isProfilingCompilation())?TR::InstOpCode::lwzu:TR::InstOpCode::lwz, firstNode, gr0,
-               new (cg()->trHeapMemory()) TR::MemoryReference(gr11, ((addr & 0x0000FFFF)<<48)>>48, 4, cg()), cursor);
+         cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::oris, firstNode, gr11, gr11, (adjustedAddr & 0x0000FFFF), cursor);
          }
       else
          {
-         cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::lis, firstNode, gr11,
-               ((addr>>16) + ((addr&0x00008000)==0?0:1)) & 0x0000FFFF, cursor);
-
-         cursor = generateTrg1MemInstruction(cg(), (!isProfilingCompilation())?TR::InstOpCode::lwzu:TR::InstOpCode::lwz, firstNode, gr0,
-               new (cg()->trHeapMemory()) TR::MemoryReference(gr11, ((addr & 0x0000FFFF)<<16)>>16, 4, cg()), cursor);
+         cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::lis, firstNode, gr11, (int16_t)HI_VALUE(addr), cursor);
          }
+
+         // lwzu  gr0, last 16-bits(gr11)
+         cursor = generateTrg1MemInstruction(cg(), (!isProfilingCompilation())?TR::InstOpCode::lwzu:TR::InstOpCode::lwz, firstNode, gr0,
+               new (cg()->trHeapMemory()) TR::MemoryReference(gr11, LO_VALUE(addr), 4, cg()), cursor);
 
       if (!isProfilingCompilation())
          {
@@ -169,7 +162,7 @@ TR::Instruction *TR_PPCRecompilation::generatePrologue(TR::Instruction *cursor)
          // This only applies to JitProfiling, as JProfiling uses sampling
          TR_ASSERT(_compilation->getProfilingMode() == JitProfiling, "JProfiling should not use counting mechanism to trip recompilation");
 
-         cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, firstNode, cr0, gr0,   0, cursor);
+         cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, firstNode, cr0, gr0, 0, cursor);
          // this is just padding for consistent code length
          cursor = generateTrg1Src2Instruction   (cg(), TR::InstOpCode::OR,    firstNode, gr11,  gr11, gr11, cursor);
          }

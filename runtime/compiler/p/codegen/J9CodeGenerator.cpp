@@ -707,7 +707,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
          if (baseReg && indexReg && loopSize > 0)
             {
             TR::Register *tempReg = self()->allocateRegister();
-            generateTrg1Src1ImmInstruction(self(), TR::InstOpCode::addi, node, tempReg, indexReg, (int32_t)(prefetchElementStride * TR::Compiler->om.sizeofReferenceField()));
+            generateTrg1Src1ImmInstruction(self(), TR::InstOpCode::addi, node, tempReg, indexReg, prefetchElementStride * TR::Compiler->om.sizeofReferenceField());
             if (self()->comp()->target().is64Bit() && !comp()->useCompressedPointers())
                {
                TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(baseReg, tempReg, 8, self());
