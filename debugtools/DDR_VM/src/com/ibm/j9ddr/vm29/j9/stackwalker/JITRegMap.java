@@ -21,7 +21,6 @@
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.j9.stackwalker;
 
-import com.ibm.j9ddr.vm29.j9.J9ConfigFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 
 /**
@@ -40,7 +39,7 @@ public class JITRegMap {
 	static final int jitCalleeSavedRegisterList[];
 
 	static {
-		if (J9ConfigFlags.arch_x86) {
+		if (J9BuildFlags.arch_x86) {
 			if (!J9BuildFlags.env_data64) {
 				jitRegisterNames = new String[] {
 						"jit_eax",
@@ -106,7 +105,7 @@ public class JITRegMap {
 						0x09    /* jit_r9 */
 				};
 			}
-		} else if (J9ConfigFlags.arch_power) {
+		} else if (J9BuildFlags.arch_power) {
 			if (!J9BuildFlags.env_data64) {
 				jitRegisterNames = new String[] {
 						"jit_r0",
@@ -254,7 +253,7 @@ public class JITRegMap {
 						0x10    /* jit_r16 */
 				};
 			}
-		} else if (J9ConfigFlags.arch_s390) {
+		} else if (J9BuildFlags.arch_s390) {
 			if (!J9BuildFlags.env_data64) {
 				jitRegisterNames = new String[] {
 						"jit_r0",
@@ -371,7 +370,7 @@ public class JITRegMap {
 						0x06	/* jit_r6 */
 				};
 			}
-		} else if (J9ConfigFlags.arch_aarch64) {
+		} else if (J9BuildFlags.arch_aarch64) {
 			/* 64 bit only */
 			jitRegisterNames = new String[] {
 					"jit_r0",

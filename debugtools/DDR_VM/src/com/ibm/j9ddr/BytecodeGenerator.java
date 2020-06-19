@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,11 @@
 package com.ibm.j9ddr;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 import com.ibm.j9ddr.StructureReader.ConstantDescriptor;
@@ -43,6 +46,59 @@ import jdk.internal.org.objectweb.asm.Type;
  * the structures and pointers described by the blob.
  */
 public class BytecodeGenerator {
+
+	private static void addFlagAlias(Map<String, String> map, String name, String alias) {
+		if (map.get(name) == null) {
+			map.put(name, alias);
+		}
+	}
+
+	private static Map<String, String> addFlagAliasesFor(Map<String, String> map, String className) {
+		/*
+		 * The DDR tools from OMR, normally generate constants with names as they
+		 * appear in the source code. Unfortunately, the legacy tools used in IBM
+		 * builds yield different names for 'build flags'. A field override was
+		 * added to provide compatibility with those legacy tools for s390
+		 *   J9VM_ARCH_S390=arch_s390
+		 * but not for other architectures. J9ConfigFlags was introduced in an
+		 * attempt to handle this difference in naming convention, but it
+		 * incorrectly assumed the fields it referenced would be dynamically
+		 * generated according to the blob found in the associated core file,
+		 * rather than being fixed at build time. The set of aliases here replaces
+		 * the ineffective mapping in J9ConfigFlags.
+		 * The result is that OpenJ9 builds have additional fields in J9BuildFlags
+		 * that are copied from the OMR-derived names. For example, arch_x86 is
+		 * present when the legacy tools are used; when OMR tools are used, arch_x86
+		 * is a copy of J9VM_ARCH_X86.
+		 *
+		 * Note: Do not add new aliases to this map. Instead, add overrides like
+		 * was done for arch_s390 to retain compatibility with the legacy tools.
+		 */
+		if (className.equals("J9BuildFlags")) {
+			addFlagAlias(map, "arch_arm", "J9VM_ARCH_ARM");
+			addFlagAlias(map, "arch_aarch64", "J9VM_ARCH_AARCH64");
+			addFlagAlias(map, "arch_power", "J9VM_ARCH_POWER");
+			addFlagAlias(map, "arch_riscv", "J9VM_ARCH_RISCV");
+			addFlagAlias(map, "arch_x86", "J9VM_ARCH_X86");
+		}
+		return map;
+	}
+
+	static Map<String, String> getFlagAliasesFor(String className) {
+		return addFlagAliasesFor(new HashMap<String, String>(), className);
+	}
+
+	public static Map<String, String> getConstantsAndAliases(StructureDescriptor structure) {
+		Map<String, String> map = new TreeMap<>();
+
+		for (ConstantDescriptor constant : structure.getConstants()) {
+			String name = constant.getName();
+
+			map.put(name, null);
+		}
+
+		return addFlagAliasesFor(map, structure.getName());
+	}
 
 	public static byte[] getPointerClassBytes(StructureReader reader, StructureTypeManager typeManager,
 			StructureDescriptor structure, String className) {
@@ -70,12 +126,39 @@ final class FlagsHelper extends HelperBase {
 
 		clinit.visitCode();
 
+		Map<String, Boolean> values = new TreeMap<>();
+
 		for (ConstantDescriptor constant : structure.getConstants()) {
 			String name = constant.getName();
 
+			values.put(name, Boolean.valueOf(constant.getValue() != 0));
+		}
+
+		Map<String, String> aliases = BytecodeGenerator.getFlagAliasesFor(structure.getName());
+
+		for (Map.Entry<String, String> entry : aliases.entrySet()) {
+			String name = entry.getKey();
+
+			if (Boolean.TRUE.equals(values.get(name))) {
+				continue;
+			}
+
+			Boolean value = values.get(entry.getValue());
+
+			if (value == null) {
+				value = Boolean.FALSE;
+			}
+
+			values.put(name, value);
+		}
+
+		for (Map.Entry<String, Boolean> entry : values.entrySet()) {
+			String name = entry.getKey();
+			Boolean value = entry.getValue();
+
 			clazz.visitField(ACC_PUBLIC | ACC_FINAL | ACC_STATIC, name, "Z", null, null).visitEnd();
 
-			clinit.visitInsn(constant.getValue() == 0 ? ICONST_0 : ICONST_1);
+			clinit.visitInsn(value.booleanValue() ? ICONST_1 : ICONST_0);
 			clinit.visitFieldInsn(PUTSTATIC, className, name, Type.BOOLEAN_TYPE.getDescriptor());
 		}
 
