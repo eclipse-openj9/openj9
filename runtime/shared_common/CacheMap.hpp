@@ -273,7 +273,7 @@ public:
 
 	bool isCacheCorruptReported(void);
 
-	IDATA runEntryPointChecks(J9VMThread* currentThread, void* isAddressInCache, const char** subcstr, bool acquireClassSegmentMutex = false);
+	IDATA runEntryPointChecks(J9VMThread* currentThread, void* isAddressInCache, const char** subcstr);
 
 	void protectPartiallyFilledPages(J9VMThread *currentThread);
 
