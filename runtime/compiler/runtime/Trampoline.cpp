@@ -44,8 +44,6 @@
 #define OFFSET_IPIC_TO_CALL   32
 #endif
 
-extern TR_Processor portLibCall_getProcessorType();
-
 #ifdef TR_HOST_POWER
 extern void     ppcCodeSync(uint8_t *, uint32_t);
 #endif
@@ -61,8 +59,6 @@ void ppcCreateHelperTrampolines(uint8_t *trampPtr, int32_t numHelpers)
    {
    TR::CodeCacheConfig &config = TR::CodeCacheManager::instance()->codeCacheConfig();
    static bool customP4 =  feGetEnv("TR_CustomP4Trampoline") ? true : false;
-   static TR_Processor proc = customP4 ? portLibCall_getProcessorType() :
-      TR_DefaultPPCProcessor;
 
    uint8_t *bufferStart = trampPtr, *buffer;
    for (int32_t cookie=1; cookie<numHelpers; cookie++)
@@ -80,7 +76,7 @@ void ppcCreateHelperTrampolines(uint8_t *trampPtr, int32_t numHelpers)
 #else
          // For POWER4 which has a problem with the CTR/LR cache when the upper
          // bits are not 0 extended.. Use li/oris when the 16th bit is off
-         if( !(helper & 0x00008000) )
+         if (!(helper & 0x00008000) )
             {
             // li r11, lower
             *(int32_t *)buffer = 0x39600000 | (helper & 0x0000ffff);
@@ -101,7 +97,7 @@ void ppcCreateHelperTrampolines(uint8_t *trampPtr, int32_t numHelpers)
 
             // Now, if highest bit is on we need to clear the sign extend bits on 64bit CPUs
             // ** POWER4 pref fix **
-            if( (helper & 0x80000000) && (!customP4 || proc == TR_PPCgp))
+            if ((helper & 0x80000000) && (!customP4 || TR::comp()->target().cpu.is(OMR_PROCESSOR_PPC_GP)))
                {
                // rlwinm r11,r11,sh=0,mb=0,me=31
                *(int32_t *)buffer = 0x556b003e;
@@ -128,80 +124,76 @@ void ppcCreateHelperTrampolines(uint8_t *trampPtr, int32_t numHelpers)
 void ppcCreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
    {
    static bool customP4 =  feGetEnv("TR_CustomP4Trampoline") ? true : false;
-   static TR_Processor proc = customP4 ? portLibCall_getProcessorType() :
-      TR_DefaultPPCProcessor;
    uint8_t *buffer = (uint8_t *)trampPtr;
    J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    intptr_t dispatcher = (intptr_t)((uint8_t *)startPC + linkInfo->getReservedWord());
 
-      // Take advantage of both gr0 and gr11 ...
+   // Take advantage of both gr0 and gr11 ...
 #if defined(TR_TARGET_64BIT)
-      // lis gr0, upper 16-bits
-      *(int32_t *)buffer = 0x3c000000 | ((dispatcher>>48) & 0x0000ffff);
-      buffer += 4;
+   // lis gr0, upper 16-bits
+   *(int32_t *)buffer = 0x3c000000 | ((dispatcher>>48) & 0x0000ffff);
+   buffer += 4;
 
-      // lis gr11, bits 32--47
-      *(int32_t *)buffer = 0x3d600000 | ((dispatcher>>16) & 0x0000ffff);
-      buffer += 4;
+   // lis gr11, bits 32--47
+   *(int32_t *)buffer = 0x3d600000 | ((dispatcher>>16) & 0x0000ffff);
+   buffer += 4;
 
-      // ori gr0, gr0, bits 16-31
-      *(int32_t *)buffer = 0x60000000 | ((dispatcher>>32) & 0x0000ffff);
-      buffer += 4;
+   // ori gr0, gr0, bits 16-31
+   *(int32_t *)buffer = 0x60000000 | ((dispatcher>>32) & 0x0000ffff);
+   buffer += 4;
 
-      // ori gr11, gr11, bits 48--63
-      *(int32_t *)buffer = 0x616b0000 | (dispatcher & 0x0000ffff);
-      buffer += 4;
+   // ori gr11, gr11, bits 48--63
+   *(int32_t *)buffer = 0x616b0000 | (dispatcher & 0x0000ffff);
+   buffer += 4;
 
-      // rldimi gr11, gr0, 32, 0
-      *(int32_t *)buffer = 0x780b000e;
-      buffer += 4;
+   // rldimi gr11, gr0, 32, 0
+   *(int32_t *)buffer = 0x780b000e;
+   buffer += 4;
 #else
-      // For POWER4 which has a problem with the CTR/LR cache when the upper
-      // bits are not 0 extended. Use li/oris when the 16th bit is off
-      if (customP4)
+   // For POWER4 which has a problem with the CTR/LR cache when the upper
+   // bits are not 0 extended. Use li/oris when the 16th bit is off
+   if (customP4)
+      {
+      if (!(dispatcher & 0x00008000))
          {
-         if ( !(dispatcher & 0x00008000) )
-            {
-            // li r11, lower
-            *(int32_t *)buffer = 0x39600000 | (dispatcher & 0x0000ffff);
-            buffer += 4;
+         // li r11, lower
+         *(int32_t *)buffer = 0x39600000 | (dispatcher & 0x0000ffff);
+         buffer += 4;
 
-            // oris r11, r11, upper
-            *(int32_t *)buffer = 0x656b0000 | ((dispatcher>>16) & 0x0000ffff);
-            buffer += 4;
-            }
-         else
-            {
-            // lis gr11, upper
-            *(int32_t *)buffer = 0x3d600000 |
-               (((dispatcher>>16) + (dispatcher&(1<<15)?1:0)) & 0x0000ffff);
-            buffer += 4;
-
-            // addi gr11, gr11, lower
-            *(int32_t *)buffer = 0x396b0000 | (dispatcher & 0x0000ffff);
-            buffer += 4;
-
-            // Now, if highest bit is on we need to clear the sign extend bits on 64bit CPUs
-            // ** POWER4 pref fix **
-            if ( (dispatcher & 0x80000000) && proc == TR_PPCgp)
-               {
-               // rlwinm r11,r11,sh=0,mb=0,me=31
-               *(int32_t *)buffer = 0x556b003e;
-               buffer += 4;
-               }
-            }
+         // oris r11, r11, upper
+         *(int32_t *)buffer = 0x656b0000 | ((dispatcher>>16) & 0x0000ffff);
+         buffer += 4;
          }
       else
          {
          // lis gr11, upper
-         *(int32_t *)buffer = 0x3d600000 |
-            (((dispatcher>>16) + (dispatcher&(1<<15)?1:0)) & 0x0000ffff);
+         *(int32_t *)buffer = 0x3d600000 | (((dispatcher>>16) + (dispatcher&(1<<15)?1:0)) & 0x0000ffff);
          buffer += 4;
 
          // addi gr11, gr11, lower
          *(int32_t *)buffer = 0x396b0000 | (dispatcher & 0x0000ffff);
          buffer += 4;
+
+         // Now, if highest bit is on we need to clear the sign extend bits on 64bit CPUs
+         // ** POWER4 pref fix **
+         if ((dispatcher & 0x80000000) && (customP4 && TR::comp()->target().cpu.is(OMR_PROCESSOR_PPC_GP)))
+            {
+            // rlwinm r11,r11,sh=0,mb=0,me=31
+            *(int32_t *)buffer = 0x556b003e;
+            buffer += 4;
+            }
          }
+      }
+   else
+      {
+      // lis gr11, upper
+      *(int32_t *)buffer = 0x3d600000 | (((dispatcher>>16) + (dispatcher&(1<<15)?1:0)) & 0x0000ffff);
+      buffer += 4;
+
+      // addi gr11, gr11, lower
+      *(int32_t *)buffer = 0x396b0000 | (dispatcher & 0x0000ffff);
+      buffer += 4;
+      }
 #endif
 
    // mtctr gr11
@@ -474,7 +466,7 @@ void ppcCodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *
 #else
    if (customP4)
       {
-      *trampolineSize = portLibCall_getProcessorType() == TR_PPCgp ? TRAMPOLINE_SIZE + 4 : TRAMPOLINE_SIZE;
+      *trampolineSize = TR::comp()->target().cpu.is(OMR_PROCESSOR_PPC_GP) ? TRAMPOLINE_SIZE + 4 : TRAMPOLINE_SIZE;
       }
    else
       {

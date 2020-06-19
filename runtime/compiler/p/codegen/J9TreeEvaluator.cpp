@@ -1374,7 +1374,7 @@ TR::Register *J9::Power::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::Cod
 
    if (comp->isOptServer() && !comp->compileRelocatableCode() && !comp->getOptions()->realTimeGC())
       {
-      if (cg->comp()->target().cpu.id() < TR_PPCp8)
+      if (!cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8))
          {
          static bool disableOutlinedWrtbar = feGetEnv("TR_ppcDisableOutlinedWriteBarrier") != NULL;
          if (!disableOutlinedWrtbar)
@@ -1754,7 +1754,7 @@ TR::Register *iGenerateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg
    //TODO: Patching code needs to be updated to be able to patch out these new sync instructions.
    if (needSync)
       {
-      generateInstruction(cg, cg->comp()->target().cpu.id() >= TR_PPCp7 ? TR::InstOpCode::lwsync : TR::InstOpCode::isync, node);
+      generateInstruction(cg, cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7) ? TR::InstOpCode::lwsync : TR::InstOpCode::isync, node);
       }
 
    cg->insertPrefetchIfNecessary(node, objReg);
@@ -1874,7 +1874,7 @@ TR::Register *aGenerateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg
    //TODO: Patching code needs to be updated to be able to patch out these new sync instructions.
    if (needSync)
       {
-      generateInstruction(cg, cg->comp()->target().cpu.id() >= TR_PPCp7 ? TR::InstOpCode::lwsync : TR::InstOpCode::isync, node);
+      generateInstruction(cg, cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7) ? TR::InstOpCode::lwsync : TR::InstOpCode::isync, node);
       }
 
    tempMR->decNodeReferenceCounts(cg);
@@ -2342,7 +2342,6 @@ static void genBoundCheck(TR::CodeGenerator *cg, TR::Node *node, TR::Register *i
 
       // NOTE: Trampoline kills gr11
       gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::blel, PPCOpProp_BranchUnlikely, node, boundCheckFailSnippetLabel, condReg);
-
       }
    else
       {
@@ -3904,7 +3903,7 @@ TR::Register *J9::Power::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeG
       {
       if (opCode == TR::loadFence)
          {
-         if (cg->comp()->target().cpu.id() == TR_PPCp7)
+         if (cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_P7))
             generateInstruction(cg, TR::InstOpCode::lwsync, node);
          else
             generateInstruction(cg, TR::InstOpCode::isync, node);
@@ -7652,7 +7651,7 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
    if (objectClassReg)
       baseReg = objectClassReg;
 
-   bool altsequence = (cg->comp()->target().cpu.id() == TR_PPCgp || cg->comp()->target().cpu.id() == TR_PPCgr) && tempMR->getBaseRegister() == objReg;
+   bool altsequence = (cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_GP) || cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_GR)) && tempMR->getBaseRegister() == objReg;
 
    TR::LabelSymbol *loopLabel, *restartLabel, *recurCheckLabel, *monExitCallLabel;
    loopLabel = generateLabelSymbol(cg);
@@ -8040,7 +8039,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
          // following loads from executing out-of-order
          // on nstar and pulsar a sync is cheaper, while an isync is
          // cheaper on other processors
-         if (cg->comp()->target().cpu.id() == TR_PPCnstar || cg->comp()->target().cpu.id() == TR_PPCpulsar)
+         if (cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_NSTAR) || cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_PULSAR))
             generateInstruction(cg, TR::InstOpCode::sync, node);
          else
             generateInstruction(cg, TR::InstOpCode::isync, node);
@@ -8111,7 +8110,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
          // following loads from executing out-of-order
          // on nstar and pulsar a sync is cheaper, while an isync is
          // cheaper on other processors
-         if (cg->comp()->target().cpu.id() == TR_PPCnstar || cg->comp()->target().cpu.id() == TR_PPCpulsar)
+         if (cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_NSTAR) || cg->comp()->target().cpu.is(OMR_PROCESSOR_PPC_PULSAR))
             generateInstruction(cg, TR::InstOpCode::sync, node);
          else
             generateInstruction(cg, TR::InstOpCode::isync, node);
@@ -10066,7 +10065,7 @@ static TR::Register *inlineShortReverseBytes(TR::Node *node, TR::CodeGenerator *
       {
       TR::Register *srcRegister = cg->evaluate(firstChild);
 
-      if (cg->comp()->target().cpu.id() >= TR_PPCp10)
+      if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
          {
          generateTrg1Src1Instruction(cg, TR::InstOpCode::brh, node, tgtRegister, srcRegister);
          }
@@ -10109,7 +10108,7 @@ static TR::Register *inlineLongReverseBytes(TR::Node *node, TR::CodeGenerator *c
       TR::Node *firstChild = node->getFirstChild();
       TR::Register *tgtRegister = cg->allocateRegister();
 
-      if (cg->comp()->target().cpu.id() >= TR_PPCp7 &&
+      if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7) &&
           !firstChild->getRegister() &&
           firstChild->getOpCode().isMemoryReference() &&
           firstChild->getReferenceCount() == 1)
@@ -10123,7 +10122,7 @@ static TR::Register *inlineLongReverseBytes(TR::Node *node, TR::CodeGenerator *c
          {
          TR::Register *srcLRegister = cg->evaluate(firstChild);
 
-         if (cg->comp()->target().cpu.id() >= TR_PPCp10)
+         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
             {
             generateTrg1Src1Instruction(cg, TR::InstOpCode::brd, node, tgtRegister, srcLRegister);
             }
@@ -10173,7 +10172,7 @@ static TR::Register *inlineLongReverseBytes(TR::Node *node, TR::CodeGenerator *c
       TR::RegisterPair *tgtRegister = cg->allocateRegisterPair(cg->allocateRegister(), cg->allocateRegister());
       TR::Register *srcRegister = cg->evaluate(firstChild);
 
-      if (cg->comp()->target().cpu.id() >= TR_PPCp10)
+      if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
          {
          generateTrg1Src1Instruction(cg, TR::InstOpCode::brw, node, tgtRegister->getLowOrder(), srcRegister->getHighOrder());
          generateTrg1Src1Instruction(cg, TR::InstOpCode::brw, node, tgtRegister->getHighOrder(), srcRegister->getLowOrder());
@@ -11682,8 +11681,7 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
    int32_t groups, residual;
 
    static bool disableLEArrayCopyInline = (feGetEnv("TR_disableLEArrayCopyInline") != NULL);
-   TR_Processor processor = cg->comp()->target().cpu.id();
-   bool supportsLEArrayCopyInline = (processor >= TR_PPCp8) && !disableLEArrayCopyInline && cg->comp()->target().cpu.isLittleEndian() && cg->comp()->target().cpu.hasFPU() && cg->comp()->target().is64Bit();
+   bool supportsLEArrayCopyInline = (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8)) && !disableLEArrayCopyInline && cg->comp()->target().cpu.isLittleEndian() && cg->comp()->target().cpu.hasFPU() && cg->comp()->target().is64Bit();
 
    if (cg->comp()->target().is64Bit())
       {
@@ -12467,7 +12465,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          return true;
 
       case TR::java_lang_String_hashCodeImplDecompressed:
-         if (!TR::Compiler->om.canGenerateArraylets() && cg->comp()->target().cpu.id() >= TR_PPCp8 && cg->comp()->target().cpu.getPPCSupportsVSX() && !cg->comp()->compileRelocatableCode()
+         if (!TR::Compiler->om.canGenerateArraylets() && cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) && !cg->comp()->compileRelocatableCode()
 #ifdef J9VM_OPT_JITSERVER
                && !cg->comp()->isOutOfProcessCompilation()
 #endif
@@ -12480,7 +12478,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Little:
-         if (cg->comp()->target().cpu.id() >= TR_PPCp7 && cg->comp()->target().cpu.getPPCSupportsVSX())
+         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7) && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX))
             {
             resultReg = inlineEncodeUTF16(node, cg);
             return true;
@@ -13253,8 +13251,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
          int32_t groups;
 
          static bool disableLEArrayCopyInline = (feGetEnv("TR_disableLEArrayCopyInline") != NULL);
-         TR_Processor processor = cg->comp()->target().cpu.id();
-         bool supportsLEArrayCopyInline = (processor >= TR_PPCp8) &&
+         bool supportsLEArrayCopyInline = (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8)) &&
                                           !disableLEArrayCopyInline &&
                                           cg->comp()->target().cpu.isLittleEndian() &&
                                           cg->comp()->target().cpu.hasFPU() &&
@@ -13455,9 +13452,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
    static bool disableLEArrayCopyHelper = (feGetEnv("TR_disableLEArrayCopyHelper") != NULL);
    static bool disableVSXArrayCopyInlining = (feGetEnv("TR_enableVSXArrayCopyInlining") == NULL); // Disabling due to a performance regression
 
-   TR_Processor processor = cg->comp()->target().cpu.id();
-
-   bool supportsVSX = (processor >= TR_PPCp8) && !disableVSXArrayCopy && cg->comp()->target().cpu.getPPCSupportsVSX();
+   bool supportsVSX = (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8)) && !disableVSXArrayCopy && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX);
    bool supportsLEArrayCopy = !disableLEArrayCopyHelper && cg->comp()->target().cpu.isLittleEndian() && cg->comp()->target().cpu.hasFPU();
 
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
@@ -13480,7 +13475,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
     */
    int32_t numDeps = 8 + 5;
 
-   if (processor >= TR_PPCp8 && supportsVSX)
+   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && supportsVSX)
       {
       vec0Reg = cg->allocateRegister(TR_VRF);
       vec1Reg = cg->allocateRegister(TR_VRF);
@@ -13508,7 +13503,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
          numDeps += 4;
          }
       }
-   else if (processor >= TR_PPCp6)
+   else if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
       {
       numDeps += 4;
       }
@@ -13532,7 +13527,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
    TR::addDependency(deps, tmp3Reg, TR::RealRegister::gr0, TR_GPR, cg);
    TR::addDependency(deps, tmp4Reg, TR::RealRegister::gr11, TR_GPR, cg); // Trampoline kills gr11.
 
-   if (processor >= TR_PPCp8 && supportsVSX)
+   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && supportsVSX)
       {
       TR::addDependency(deps, vec0Reg, TR::RealRegister::vr0, TR_VRF, cg);
       TR::addDependency(deps, vec1Reg, TR::RealRegister::vr1, TR_VRF, cg);
@@ -13562,7 +13557,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
          TR::addDependency(deps, NULL, TR::RealRegister::fp11, TR_FPR, cg);
          }
       }
-   else if (processor >= TR_PPCp6)
+   else if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
       {
       // stfdp arrayCopy used
       TR::addDependency(deps, NULL, TR::RealRegister::fp8, TR_FPR, cg);
@@ -13606,27 +13601,27 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
 
       if (node->isForwardArrayCopy())
          {
-         if (processor >= TR_PPCp8 && supportsVSX)
+         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && supportsVSX)
             {
             helper = TR_PPCforwardQuadWordArrayCopy_vsx;
             }
          else if (node->isWordElementArrayCopy())
             {
-            if (processor >= TR_PPCp6)
+            if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
                helper = TR_PPCforwardWordArrayCopy_dp;
             else
                helper = TR_PPCforwardWordArrayCopy;
             }
          else if (node->isHalfWordElementArrayCopy())
             {
-            if (processor >= TR_PPCp6 )
+            if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
                helper = TR_PPCforwardHalfWordArrayCopy_dp;
             else
                helper = TR_PPCforwardHalfWordArrayCopy;
             }
          else
             {
-            if (processor >= TR_PPCp6)
+            if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
                helper = TR_PPCforwardArrayCopy_dp;
             else
                {
@@ -13636,27 +13631,27 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
          }
       else // We are not sure it is forward or we have to do backward.
          {
-         if(processor >= TR_PPCp8 && supportsVSX)
+         if(cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && supportsVSX)
             {
             helper = TR_PPCquadWordArrayCopy_vsx;
             }
          else if (node->isWordElementArrayCopy())
             {
-            if (processor >= TR_PPCp6)
+            if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
                helper = TR_PPCwordArrayCopy_dp;
             else
                helper = TR_PPCwordArrayCopy;
             }
          else if (node->isHalfWordElementArrayCopy())
             {
-            if (processor >= TR_PPCp6)
+            if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
                helper = TR_PPChalfWordArrayCopy_dp;
             else
                helper = TR_PPChalfWordArrayCopy;
             }
          else
             {
-            if (processor >= TR_PPCp6)
+            if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
                helper = TR_PPCarrayCopy_dp;
             else
                {

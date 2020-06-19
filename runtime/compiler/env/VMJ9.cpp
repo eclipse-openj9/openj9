@@ -1275,15 +1275,15 @@ void TR_J9VMBase::printVerboseLogHeader(TR::Options *cmdLineOptions)
    getCompInfo(processorName, size);
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"Processor Information:");
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Platform Info:%s", processorName);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports HardwareSQRT:%d", TR::Compiler->target.cpu.getSupportsHardwareSQRT());
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports HardwareRound:%d", TR::Compiler->target.cpu.getSupportsHardwareRound());
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports HardwareCopySign:%d", TR::Compiler->target.cpu.getSupportsHardwareCopySign());
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports HardwareSQRT:%d", TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_HW_SQRT_FIRST));
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports HardwareRound:%d", TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_HW_ROUND_FIRST));
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports HardwareCopySign:%d", TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_HW_COPY_SIGN_FIRST));
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports FPU:%d", TR::Compiler->target.cpu.hasFPU());
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports DFP:%d", TR::Compiler->target.cpu.supportsDecimalFloatingPoint());
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports VMX:%d", TR::Compiler->target.cpu.getPPCSupportsVMX());
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports VSX:%d", TR::Compiler->target.cpu.getPPCSupportsVSX());
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports VMX:%d", TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_HAS_ALTIVEC));
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports VSX:%d", TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX));
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports AES:%d", TR::Compiler->target.cpu.getPPCSupportsAES());
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports  TM:%d", TR::Compiler->target.cpu.getPPCSupportsTM());
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports  TM:%d", TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_HTM));
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Vendor:%s",vendorId);
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     numProc=%u",TR::Compiler->target.numberOfProcessors());
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"");
@@ -2923,7 +2923,7 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
              * for java_lang_String_hashCodeImplCompressed instead of using a fallthrough.
              */
             if (!TR::Compiler->om.canGenerateArraylets() &&
-                comp->target().cpu.isPower() && comp->target().cpu.id() >= TR_PPCp8 && getPPCSupportsVSXRegisters() && !comp->compileRelocatableCode())
+                comp->target().cpu.isPower() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && getPPCSupportsVSXRegisters() && !comp->compileRelocatableCode())
                   {
                   dontInlineRecognizedMethod = true;
                   break;
