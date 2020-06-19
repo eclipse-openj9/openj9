@@ -433,8 +433,8 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 
       // push flags: use lis instead of lis/ori pair since this is a constant. Save one instr
       aValue = fej9->constJNICallOutFrameFlags();
-      TR_ASSERT((aValue & ~0x7FFF0000) == 0, "Length assumption broken.");
-      generateTrg1ImmInstruction(cg(), TR::InstOpCode::lis, callNode, gr11Reg, (aValue>>16)&0x0000FFFF);
+      TR_ASSERT_FATAL((aValue & ~0x7FFF0000) == 0, "Length assumption broken.");
+      generateTrg1ImmInstruction(cg(), TR::InstOpCode::lis, callNode, gr11Reg, aValue>>16);
       generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_stu, callNode,  new (trHeapMemory()) TR::MemoryReference(stackPtr, -TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress(), cg()),gr11Reg);
 
       // push the RAM method for the native
