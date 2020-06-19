@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright (c) 2006, 2020 IBM Corp. and others
+   Copyright (c) 2006, 2019 IBM Corp. and others
 
    This program and the accompanying materials are made available under
    the terms of the Eclipse Public License 2.0 which accompanies this
@@ -220,7 +220,14 @@
 		</includes>
 
 		<makefilestubs>
-			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1">
+				<exclude-if condition="spec.linux_ppc.*"/>
+
+				<!--  Provisionally ignore the warning until RTC #132065 is resolved. -->
+				<exclude-if condition="spec.linux_390.*" />
+				<exclude-if condition="spec.linux_390-64.*" />
+			</makefilestub>
+
 			<makefilestub data="OMRPORT_SRCDIR=$(OMR_DIR)/port/" />
 
 			<makefilestub data="ifdef I5_VERSION">
