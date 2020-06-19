@@ -2115,7 +2115,12 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
 #if defined(J9VM_OPT_JITSERVER)
    // Add to JITServer unload list
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+      {
       compInfo->getUnloadedClassesTempList()->push_back(clazz);
+      // Loop through the set to find the class that needs to be purged.
+      // Once found erase from the set.
+      compInfo->getclassesCachedAtServer().erase(unloadedEvent->clazz);      
+      }
 #endif
    }
 #endif /* defined (J9VM_GC_DYNAMIC_CLASS_UNLOADING)*/

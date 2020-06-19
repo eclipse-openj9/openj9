@@ -71,11 +71,12 @@ class JITServerHelpers
       uintptr_t, std::vector<J9ROMMethod *>                          // 20: _classChainOffsetOfIdentifyingLoaderForClazz 21. _origROMMethods
       >;
 
-   static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory);
+   static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory, bool serializeClass);
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple);
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, ClientSessionData::ClassInfo &classInfo);
    static J9ROMClass *getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz);
    static J9ROMClass *getRemoteROMClass(J9Class *, JITServer::ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple);
+   static J9ROMClass *getRemoteROMClass(J9Class *, JITServer::ServerStream *stream, TR_PersistentMemory *trMemory, ClassInfoTuple *classInfoTuple);
    static J9ROMClass *romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory);
    static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType, void *data);
    static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1,

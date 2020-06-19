@@ -44,7 +44,6 @@
 #include "vmaccess.h"
 
 extern TR::Monitor *assumptionTableMutex;
-
 // TODO: This method is copied from runtime/jit_vm/ctsupport.c,
 // in the future it's probably better to make that method publicly accessible
 static UDATA
@@ -162,6 +161,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
    J9VMThread *vmThread = compInfoPT->getCompilationThread();
    TR_Memory  *trMemory = compInfoPT->getCompilation()->trMemory();
    TR::Compilation *comp = compInfoPT->getCompilation();
+   TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
 
    TR_ASSERT(TR::MonitorTable::get()->getClassUnloadMonitorHoldCount(compInfoPT->getCompThreadId()) == 0, "Must not hold classUnloadMonitor");
    TR::MonitorTable *table = TR::MonitorTable::get();
@@ -216,6 +216,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          std::string encoded = FlatPersistentClassInfo::serializeHierarchy(table);
 
          client->write(response, ranges, unloadedClasses->getMaxRanges(), encoded);
+            { 
+            OMR::CriticalSection romClassCache(compInfo->getclassesCachedAtServerMonitor());  
+            compInfo->getclassesCachedAtServer().clear();
+            }
          break;
          }
 
@@ -1137,7 +1141,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::ResolvedMethod_getRemoteROMClassAndMethods:
          {
          J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
-         client->write(response, JITServerHelpers::packRemoteROMClassInfo(clazz, fe->vmThread(), trMemory));
+         client->write(response, JITServerHelpers::packRemoteROMClassInfo(clazz, fe->vmThread(), trMemory, true));
          }
          break;
       case MessageType::ResolvedMethod_isJNINative:
@@ -3135,7 +3139,21 @@ remoteCompile(
 
    if (compiler->isOptServer())
       compiler->setOption(TR_Server);
-   auto classInfoTuple = JITServerHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm()->vmThread(), compiler->trMemory());
+
+      // Check the _classesCachedAtServer set to determine whether JITServer is likely to have this class already cached.
+      // If so, do not send the ROMClass content to save network traffic. 
+      bool serializeClass = false;
+      {
+      OMR::CriticalSection romClassCache(compInfo->getclassesCachedAtServerMonitor());
+      if (compInfo->getclassesCachedAtServer().find(clazz) == compInfo->getclassesCachedAtServer().end())
+         {
+         // clazz not found. Send the romClass to JITServer.
+         compInfo->getclassesCachedAtServer().insert(clazz);
+         serializeClass = true;
+         }
+      }
+
+   auto classInfoTuple = JITServerHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm()->vmThread(), compiler->trMemory(), serializeClass);   
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
    std::string recompMethodInfoStr = compiler->isRecompilationEnabled() ? std::string((char *) compiler->getRecompilationInfo()->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
 
