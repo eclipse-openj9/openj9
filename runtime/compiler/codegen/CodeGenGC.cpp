@@ -300,7 +300,7 @@ J9::CodeGenerator::createStackAtlas()
             // the same GC index.
             //
             TR_IGNode * igNode;
-            if (igNode = self()->getLocalsIG()->getIGNodeForEntity(localCursor))
+            if ((igNode = self()->getLocalsIG()->getIGNodeForEntity(localCursor)) != NULL)
                {
                IGNodeColour colour = igNode->getColour();
 
@@ -350,7 +350,7 @@ J9::CodeGenerator::createStackAtlas()
             // the same GC index.
             //
             TR_IGNode * igNode;
-            if (igNode = self()->getLocalsIG()->getIGNodeForEntity(localCursor))
+            if ((igNode = self()->getLocalsIG()->getIGNodeForEntity(localCursor)) != NULL)
                {
                IGNodeColour colour = igNode->getColour();
 
