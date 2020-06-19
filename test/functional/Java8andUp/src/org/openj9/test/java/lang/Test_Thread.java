@@ -163,7 +163,7 @@ public class Test_Thread {
 			ct = new Thread(new SimpleThread(10));
 			ct.start();
 		} catch (Exception e) {
-			AssertJUnit.assertTrue("Failed to create subthread", false);
+			Assert.fail("Failed to create subthread", e);
 		}
 	}
 
@@ -273,7 +273,7 @@ public class Test_Thread {
 			st.checkAccess();
 			AssertJUnit.assertTrue("CheckAccess passed", true);
 		} catch (SecurityException e) {
-			AssertJUnit.assertTrue("CheckAccess failed", false);
+			Assert.fail("CheckAccess failed", e);
 		}
 		st.start();
 		try {
@@ -342,7 +342,7 @@ public class Test_Thread {
 			try {
 				st.join(10000);
 			} catch (InterruptedException e) {
-				Assert.fail("Join failed ");
+				Assert.fail("Join failed ", e);
 			}
 		} finally {
 			System.setSecurityManager(null);
@@ -421,7 +421,7 @@ public class Test_Thread {
 			try {
 				enumerateHelper.wait();
 			} catch (InterruptedException e) {
-				Assert.fail("Unexpected interrupt 2");
+				Assert.fail("Unexpected interrupt 2", e);
 			}
 		}
 
@@ -434,7 +434,7 @@ public class Test_Thread {
 			try {
 				enumerateHelper.wait();
 			} catch (InterruptedException e) {
-				Assert.fail("Unexpected interrupt 2");
+				Assert.fail("Unexpected interrupt 2", e);
 			}
 			int newCount = enumerateHelper.getEnumerateCount();
 			AssertJUnit.assertEquals("initial count should be 1", 1, newCount);
@@ -451,7 +451,7 @@ public class Test_Thread {
 			try {
 				enumerateHelper.wait();
 			} catch (InterruptedException e) {
-				Assert.fail("Unexpected interrupt 2");
+				Assert.fail("Unexpected interrupt 2", e);
 			}
 			int newCount = enumerateHelper.getEnumerateCount();
 			AssertJUnit.assertEquals("Simple Thread 1 not added to enumeration", 2, newCount);
@@ -469,7 +469,7 @@ public class Test_Thread {
 			try {
 				enumerateHelper.wait();
 			} catch (InterruptedException e) {
-				Assert.fail("Unexpected interrupt 4");
+				Assert.fail("Unexpected interrupt 4", e);
 			}
 			int newCount = enumerateHelper.getEnumerateCount();
 			AssertJUnit.assertEquals("Simple Thread 2 not added to enumeration", 3, newCount);
@@ -707,7 +707,7 @@ public class Test_Thread {
 		try {
 			st.join();
 		} catch (InterruptedException e) {
-			AssertJUnit.assertTrue("Thread did not die", false);
+			Assert.fail("Thread did not die", e);
 		}
 		AssertJUnit.assertTrue("Stopped thread returned true", !st.isAlive());
 	}
@@ -775,22 +775,15 @@ public class Test_Thread {
 			}
 			st.join();
 		} catch (InterruptedException e) {
-			Assert.fail("Join failed ");
+			Assert.fail("Join failed ", e);
 		}
 		AssertJUnit.assertTrue("Joined thread is still alive", !st.isAlive());
-		boolean result = true;
 		Thread th = new Thread("test");
 		try {
-			// synchronized(lock) {
-			// killer.start();
-			// lock.wait();
-			// }
 			th.join();
 		} catch (InterruptedException e) {
-			result = false;
+			Assert.fail("Hung joining a non-started thread", e);
 		}
-		// killer.interrupt();
-		AssertJUnit.assertTrue("Hung joining a non-started thread", result);
 		th.start();
 	}
 
@@ -814,7 +807,7 @@ public class Test_Thread {
 			}
 			st.join(10);
 		} catch (InterruptedException e) {
-			Assert.fail("Join failed ");
+			Assert.fail("Join failed ", e);
 		}
 		AssertJUnit.assertTrue("Join failed to timeout", st.isAlive());
 
@@ -827,7 +820,7 @@ public class Test_Thread {
 			}
 			st.join(1000);
 		} catch (InterruptedException e) {
-			AssertJUnit.assertTrue("Join failed ", false);
+			Assert.fail("Join failed ", e);
 			return;
 		}
 		AssertJUnit.assertTrue("Joined thread is still alive", !st.isAlive());
@@ -847,7 +840,6 @@ public class Test_Thread {
 				main.interrupt();
 			}
 		});
-		boolean result = true;
 		Thread th = new Thread("test");
 		try {
 			synchronized (lock) {
@@ -856,10 +848,10 @@ public class Test_Thread {
 			}
 			th.join(200);
 		} catch (InterruptedException e) {
-			result = false;
+			killer.interrupt();
+			Assert.fail("Hung joining a non-started thread", e);
 		}
 		killer.interrupt();
-		AssertJUnit.assertTrue("Hung joining a non-started thread", result);
 		th.start();
 	}
 
@@ -883,8 +875,7 @@ public class Test_Thread {
 			AssertJUnit.assertTrue("Joined thread is not alive", t.isAlive());
 			t.interrupt();
 		} catch (Exception e) {
-			e.printStackTrace();
-			AssertJUnit.assertTrue("Exception during test: " + e.toString(), false);
+			Assert.fail("Exception during test: " + e.toString(), e);
 		}
 
 		final Object lock = new Object();
@@ -902,7 +893,6 @@ public class Test_Thread {
 				main.interrupt();
 			}
 		});
-		boolean result = true;
 		Thread th = new Thread("test");
 		try {
 			synchronized (lock) {
@@ -911,10 +901,10 @@ public class Test_Thread {
 			}
 			th.join(2000, 20);
 		} catch (InterruptedException e) {
-			result = false;
+			killer.interrupt();
+			Assert.fail("Hung joining a non-started thread", e);
 		}
 		killer.interrupt();
-		AssertJUnit.assertTrue("Hung joining a non-started thread", result);
 		th.start();
 	}
 
@@ -945,7 +935,7 @@ public class Test_Thread {
 			AssertJUnit.assertTrue("Failed to resume thread", orgval != t.getCheckVal());
 			ct.interrupt();
 		} catch (InterruptedException e) {
-			AssertJUnit.assertTrue("Unexpected interrupt occurred", false);
+			Assert.fail("Unexpected interrupt occurred", e);
 		}
 	}
 
@@ -1030,7 +1020,7 @@ public class Test_Thread {
 			Thread.currentThread().sleep(1000);
 			ftime = System.currentTimeMillis();
 		} catch (InterruptedException e) {
-			AssertJUnit.assertTrue("Unexpected interrupt received", false);
+			Assert.fail("Unexpected interrupt received", e);
 		}
 		AssertJUnit.assertTrue("Failed to sleep long enough", (ftime - stime) >= 800);
 	}
@@ -1059,7 +1049,7 @@ public class Test_Thread {
 			AssertJUnit.assertTrue("Thread is not running2", orgval != t.getCheckVal());
 			ct.interrupt();
 		} catch (InterruptedException e) {
-			AssertJUnit.assertTrue("Unexpected interrupt occurred", false);
+			Assert.fail("Unexpected interrupt occurred", e);
 		}
 	}
 
@@ -1109,7 +1099,7 @@ public class Test_Thread {
 			AssertJUnit.assertTrue(testThrStart.getTestResult(), testThrStart.getTestResult() == null);
 		} catch (InterruptedException e) {
 			myGroup.destroy();
-			AssertJUnit.assertTrue("Unexpected interrupt occurred", false);
+			Assert.fail("Unexpected interrupt occurred", e);
 		}
 	}
 
@@ -1160,7 +1150,7 @@ public class Test_Thread {
 			}
 
 		} catch (InterruptedException e) {
-			AssertJUnit.assertTrue("Unexpected interrupt received", false);
+			Assert.fail("Unexpected interrupt received", e);
 		}
 		st.stop();
 
@@ -1174,7 +1164,7 @@ public class Test_Thread {
 			st.join(10000);
 		} catch (InterruptedException e1) {
 			st.interrupt();
-			Assert.fail("Failed to stopThread before 10000 timeout");
+			Assert.fail("Failed to stopThread before 10000 timeout", e1);
 		}
 		AssertJUnit.assertTrue("Failed to stopThread", !st.isAlive());
 	}
@@ -1240,7 +1230,7 @@ public class Test_Thread {
 				AssertJUnit.assertFalse("thread should not run if stop called before start, stop()", t.failed);
 			}
 		} catch (Exception e) {
-			Assert.fail("Unexpected exception:" + e);
+			Assert.fail("Unexpected exception:", e);
 		}
 	}
 
@@ -1270,7 +1260,7 @@ public class Test_Thread {
 			AssertJUnit.assertTrue("Failed to resume thread", orgval != t.getCheckVal());
 			ct.interrupt();
 		} catch (InterruptedException e) {
-			AssertJUnit.assertTrue("Unexpected interrupt occurred", false);
+			Assert.fail("Unexpected interrupt occurred", e);
 		}
 
 		/*
