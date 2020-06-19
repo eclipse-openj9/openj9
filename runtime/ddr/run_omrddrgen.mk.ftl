@@ -92,7 +92,7 @@ DDR_MACRO_LIST := $(TOP_DIR)/macroList
 DDR_OPTIONS := \
 	--blob $(DDR_BLOB) \
 	--superset $(DDR_SUPERSET_FILE) \
-	--blacklist blacklist \
+	--excludes excludes \
 	--macrolist $(DDR_MACRO_LIST) \
 	--overrides overrides \
 	--show-empty \
@@ -112,7 +112,7 @@ all : $(DDR_BLOB)
 clean :
 	rm -f $(DDR_PRODUCTS)
 
-$(DDR_BLOB) : $(TOP_DIR)/ddrgen$(UMA_DOT_EXE) $(DDR_MACRO_LIST) blacklist $(wildcard overrides*)
+$(DDR_BLOB) : $(TOP_DIR)/ddrgen$(UMA_DOT_EXE) $(DDR_MACRO_LIST) excludes $(wildcard overrides*)
 	@echo "Running ddrgen to generate $(notdir $@) and $(notdir $(DDR_SUPERSET_FILE))"
 	@$(DDR_LIB_PATH) $(TOP_DIR)/ddrgen $(DDR_OPTIONS) \
 		$(DDR_INPUT_FILES)

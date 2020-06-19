@@ -343,7 +343,7 @@ if(OMR_DDR)
 	make_ddr_set(j9ddr)
 	ddr_set_add_targets(j9ddr omrddr)
 	set_target_properties(j9ddr PROPERTIES
-		BLACKLIST "${CMAKE_CURRENT_SOURCE_DIR}/ddr/blacklist"
+		EXCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/ddr/excludes"
 		OVERRIDES_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ddr/overrides"
 		BLOB "${CMAKE_CURRENT_BINARY_DIR}/j9ddr.dat"
 		SUPERSET "${CMAKE_BINARY_DIR}/superset.dat"
