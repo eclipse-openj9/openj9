@@ -1810,9 +1810,9 @@ J9::Options::fePreProcess(void * base)
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)
    bool preferTLHPrefetch;
 #if defined(TR_HOST_POWER)
-   TR_Processor proc = TR_J9VMBase::getPPCProcessorType();
-   preferTLHPrefetch = proc >= TR_PPCp6 && proc <= TR_PPCp7;
+   preferTLHPrefetch = TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P6) && TR::Compiler->target.cpu.isAtMost(OMR_PROCESSOR_PPC_P7);
 #elif defined(TR_HOST_S390)
+   // TODO: processor arch is not initialized at this point. Once we switch to the new api this problem will go away
    preferTLHPrefetch = TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10);
 #else // TR_HOST_X86
    preferTLHPrefetch = true;
