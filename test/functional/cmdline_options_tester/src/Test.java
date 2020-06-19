@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,6 +70,9 @@ class Test {
 	 * The default is one minute.
 	 */
 	static final long CORE_SPACING_MILLIS = Long.getLong("cmdline.coreintervalms", 60 * 1000).longValue();
+	
+	static String archName = System.getProperty("os.arch");
+	static boolean isRiscv = archName.toLowerCase().contains("riscv");
 
 	/**
 	 * Create a new test case with the given id.
@@ -409,7 +412,7 @@ class Test {
 
 	public static int getUnixPID(Process process) throws Exception {
 		Class<?> cl = process.getClass();
-		if (!cl.getName().equals("java.lang.UNIXProcess")) {
+		if (!cl.getName().equals("java.lang.UNIXProcess") || isRiscv) {
 			return 0;
 		}
 		Field field = cl.getDeclaredField("pid");
@@ -578,7 +581,7 @@ class Test {
 				// Make sure we are on linux, otherwise there is no gdb.
 				int pid = getUnixPID(_proc);
 
-				if (0 == pid) {
+				if ((0 == pid) && !isRiscv) {
 					System.out.print("INFO: getUnixPID() has failed indicating this is not a UNIX System.");
 					System.out.println("'Debug on timeout' is currently only supported on Linux.");
 					return;
