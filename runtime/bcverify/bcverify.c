@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -954,8 +954,15 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 					/* Merge when either the source or target not an object */
 					if ((sourceItem | targetItem) & (BCV_BASE_OR_SPECIAL)) {
 
-						/* Mismatch results in undefined local - rewalk if modified stack */
-						if (*targetStackPtr != (UDATA) (BCV_BASE_TYPE_TOP)) {
+						/* Mismatch results in undefined local - rewalk if modified stack
+						 * Note: BCV_SPECIAL (specifically BCV_SPECIAL_INIT) must be reserved
+						 * to flag the uninitialized_this object existing in the stackmap frame
+						 * when invoking setInitializedThisStatus() after the stackmaps is
+						 * successfully built.
+						 */
+						if ((targetItem != (UDATA) (BCV_BASE_TYPE_TOP))
+						&& ((targetItem & BCV_SPECIAL) == 0)
+						) {
 							*targetStackPtr = (UDATA) (BCV_BASE_TYPE_TOP);
 							rewalk = TRUE;
 						}

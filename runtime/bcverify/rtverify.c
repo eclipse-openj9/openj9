@@ -310,18 +310,10 @@ matchStack(J9BytecodeVerificationData * verifyData, J9BranchTargetStack *liveSta
 		goto _errorLocation;
 	}
 
-	/* The check on the uninitializedThis flag is only applied to the class files
-	 * with stackmaps (class version >= 51) which was introduced since Java 7.
-	 * For the old class files without stackmaps (class version < 51), such check
-	 * on the generated stackmaps is ignored so as to match the RI's behavior.
-	 * (See Jazz103: 120689 for details)
-	 */
-	if (!verifyData->createdStackMap) {
-		/* Target stack frame flag needs to be subset of ours. See JVM sepc 4.10.1.4 */
-		if (liveStack->uninitializedThis && !targetStack->uninitializedThis) {
-			rc = BCV_FAIL;
-			goto _finished;
-		}
+	/* Note: Target stack frame flag needs to be subset of ours. See JVM sepc 4.10.1.4 */
+	if (liveStack->uninitializedThis && !targetStack->uninitializedThis) {
+		rc = BCV_FAIL;
+		goto _finished;
 	}
 
 	while (livePtr != liveTop) {
@@ -355,16 +347,22 @@ matchStack(J9BytecodeVerificationData * verifyData, J9BranchTargetStack *liveSta
 					}
 				}
 			} else if (*targetPtr != BCV_BASE_TYPE_TOP) {
-				Trc_RTV_matchStack_PrimitiveMismatchException(verifyData->vmStruct,
-						(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
-						J9UTF8_DATA(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
-						(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_NAME(verifyData->romMethod)),
-						J9UTF8_DATA(J9ROMMETHOD_NAME(verifyData->romMethod)),
-						(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(verifyData->romMethod)),
-						J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(verifyData->romMethod)),
-						(livePtr - liveStack->stackElements), *livePtr, *targetPtr);
-				rc = BCV_FAIL; /* fail - primitive or special mismatch */
-				goto _incompatibleType;
+				if ((*targetPtr & BCV_SPECIAL) && verifyData->createdStackMap) {
+					/* Generated stackmaps can skip the check on the target slot with BCV_SPECIAL
+					 * as this slot is set up based on the bytecode itself rather than decompressed stackmaps.
+					 */
+				} else {
+					Trc_RTV_matchStack_PrimitiveOrSpecialMismatchException(verifyData->vmStruct,
+							(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
+							J9UTF8_DATA(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
+							(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_NAME(verifyData->romMethod)),
+							J9UTF8_DATA(J9ROMMETHOD_NAME(verifyData->romMethod)),
+							(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(verifyData->romMethod)),
+							J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(verifyData->romMethod)),
+							(livePtr - liveStack->stackElements), *livePtr, *targetPtr);
+					rc = BCV_FAIL; /* fail - primitive or special mismatch */
+					goto _incompatibleType;
+				}
 			}
 		}
 		livePtr++;
