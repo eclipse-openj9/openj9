@@ -2404,6 +2404,8 @@ SH_CompositeCacheImpl::decReaderCount(J9VMThread* currentThread)
  * @param [in] caller  A string representing the caller of this method
  *
  * @return 0 if call succeeded and -1 for failure
+ * 
+ * THREADING: Do not acquire class segment mutex inside read mutex.
  */
 IDATA
 SH_CompositeCacheImpl::enterReadMutex(J9VMThread* currentThread, const char* caller)
@@ -2477,6 +2479,8 @@ SH_CompositeCacheImpl::enterReadMutex(J9VMThread* currentThread, const char* cal
  *
  * @param [in] currentThread  Pointer to J9VMThread structure for the current thread
  * @param [in] caller  A string representing the caller of this method
+ * 
+ * THREADING: Do not acquire class segment mutex inside read mutex.
  */
 void
 SH_CompositeCacheImpl::exitReadMutex(J9VMThread* currentThread, const char* caller)
