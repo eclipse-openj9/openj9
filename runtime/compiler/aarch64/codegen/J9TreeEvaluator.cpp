@@ -372,6 +372,8 @@ J9::ARM64::TreeEvaluator::conditionalHelperEvaluator(TR::Node *node, TR::CodeGen
    TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, cc, conditions);
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
    snippet->gcMap().setGCRegisterMask(0xffffffff);
+   // ARM64HelperCallSnippet generates "bl" instruction
+   cg->machine()->setLinkRegisterKilled(true);
 
    for (i = numArgs - 1; i >= 0; i--)
       cg->decReferenceCount(callNode->getChild(i));
@@ -567,6 +569,8 @@ J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    cg->evaluate(node->getFirstChild());
    cg->decReferenceCount(node->getFirstChild());
+   // ARM64HelperCallSnippet generates "bl" instruction
+   cg->machine()->setLinkRegisterKilled(true);
    return NULL;
    }
 
@@ -1625,7 +1629,8 @@ J9::ARM64::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
    snippet->gcMap().setGCRegisterMask(0xffffffff);
    cg->decReferenceCount(node->getFirstChild());
-
+   // ARM64HelperCallSnippet generates "bl" instruction
+   cg->machine()->setLinkRegisterKilled(true);
    return NULL;
    }
 
@@ -1689,6 +1694,8 @@ J9::ARM64::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->decReferenceCount(firstChild);
    cg->decReferenceCount(secondChild);
    secondChild->setIsNonNegative(true);
+   // ARM64HelperCallSnippet generates "bl" instruction
+   cg->machine()->setLinkRegisterKilled(true);
    return (NULL);
    }
 
@@ -2176,6 +2183,8 @@ J9::ARM64::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, boo
    TR::Instruction *cbzInstruction = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, referenceReg, snippetLabel);
    cbzInstruction->setNeedsGCMap(0xffffffff);
    snippet->gcMap().setGCRegisterMask(0xffffffff);
+   // ARM64HelperCallSnippet generates "bl" instruction
+   cg->machine()->setLinkRegisterKilled(true);
 
    if (comp->useCompressedPointers()
          && reference->getOpCodeValue() == TR::l2a)
