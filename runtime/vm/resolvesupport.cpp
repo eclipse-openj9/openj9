@@ -33,6 +33,7 @@
 #include "stackwalk.h"
 #include "j9modifiers_api.h"
 #include "VMHelpers.hpp"
+#include "vm_api.h"
 
 #define MAX_STACK_SLOTS 255
 

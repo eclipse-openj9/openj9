@@ -377,4 +377,9 @@ J9InternalVMFunctions J9InternalFunctions = {
 	createJoinableThreadWithCategory,
 	valueTypeCapableAcmp,
 	isClassRefQtype,
+	getFlattenableFieldOffset,
+	isFlattenableFieldFlattened,
+	getFlattenableFieldType,
+	getFlattenableFieldSize,
+	arrayElementSize,
 };

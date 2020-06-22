@@ -25,6 +25,7 @@
 #include "j9.h"
 #include "ut_j9vm.h"
 #include "ObjectAccessBarrierAPI.hpp"
+#include "vm_api.h"
 
 extern "C" {
 void
@@ -69,4 +70,103 @@ isClassRefQtype(J9Class *cpContextClass, U_16 cpIndex)
 {
 	return VM_ValueTypeHelpers::isClassRefQtype((J9ConstantPool *) cpContextClass->ramConstantPool, cpIndex);
 }
+UDATA
+findIndexInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, J9ROMNameAndSignature *nameAndSignature)
+{
+        UDATA index = UDATA_MAX;
+        UDATA length = flattenedClassCache->numberOfEntries;
+
+        for (UDATA i = 0; i < length; i++) {
+                J9ROMFieldShape *fccEntryField = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->field;
+                if (J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature), J9ROMFIELDSHAPE_NAME(fccEntryField))
+                        && J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature), J9ROMFIELDSHAPE_SIGNATURE(fccEntryField))
+                ) {
+                        index = i;
+                        break;
+                }
+        }
+        return index;
+}
+
+J9Class *
+findJ9ClassInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, U_8 *className, UDATA classNameLength)
+{
+        UDATA length = flattenedClassCache->numberOfEntries;
+        J9Class *clazz = NULL;
+
+        for (UDATA i = 0; i < length; i++) {
+                J9UTF8* currentClassName = J9ROMCLASS_CLASSNAME(J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->clazz->romClass);
+                if (J9UTF8_DATA_EQUALS(J9UTF8_DATA(currentClassName), J9UTF8_LENGTH(currentClassName), className, classNameLength)) {
+                        clazz = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->clazz;
+                        break;
+                }
+        }
+
+        Assert_VM_notNull(clazz);
+        return clazz;
+}
+
+UDATA
+getFlattenableFieldOffset(J9Class *fieldOwner, J9ROMFieldShape *field)
+{
+        Assert_VM_notNull(fieldOwner);
+        Assert_VM_notNull(field);
+
+        J9FlattenedClassCache *flattenedClassCache = fieldOwner->flattenedClassCache;
+        J9ROMNameAndSignature *nameAndSig = &field->nameAndSignature;
+        UDATA fieldIndex = findIndexInFlattenedClassCache(flattenedClassCache, nameAndSig);
+        Assert_VM_unequal(UDATA_MAX, fieldIndex);
+        J9FlattenedClassCacheEntry * flattenedClassCacheEntry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, fieldIndex);
+        UDATA fieldOffset = flattenedClassCacheEntry->offset;
+        return fieldOffset;
+}
+
+BOOLEAN
+isFlattenableFieldFlattened(J9Class *fieldOwner, J9ROMFieldShape *field)
+{
+        Assert_VM_notNull(fieldOwner);
+        Assert_VM_notNull(field);
+
+        J9Class* clazz = getFlattenableFieldType(fieldOwner, field);
+        BOOLEAN fieldFlattened = J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsFlattened);
+
+        return fieldFlattened;
+}
+
+J9Class *
+getFlattenableFieldType(J9Class *fieldOwner, J9ROMFieldShape *field)
+{
+        Assert_VM_notNull(fieldOwner);
+        Assert_VM_notNull(field);
+
+        J9FlattenedClassCache *flattenedClassCache = fieldOwner->flattenedClassCache;
+        J9ROMNameAndSignature *nameAndSig = &field->nameAndSignature;
+        UDATA fieldIndex = findIndexInFlattenedClassCache(flattenedClassCache, nameAndSig);
+        Assert_VM_unequal(UDATA_MAX, fieldIndex);
+        J9Class * fieldType = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, fieldIndex)->clazz;
+
+        return fieldType;
+}
+
+UDATA
+getFlattenableFieldSize(J9VMThread *currentThread, J9Class *fieldOwner, J9ROMFieldShape *field)
+{
+        Assert_VM_notNull(fieldOwner);
+        Assert_VM_notNull(field);
+
+        UDATA instanceSize = J9VMTHREAD_REFERENCE_SIZE(currentThread);
+        if (isFlattenableFieldFlattened(fieldOwner, field)) {
+                J9Class* clazz = getFlattenableFieldType(fieldOwner, field);
+                instanceSize = (clazz)->totalInstanceSize - (clazz)->backfillOffset;
+        }
+        return instanceSize;
+}
+
+UDATA
+arrayElementSize(J9ArrayClass* arrayClass)
+{
+        Assert_VM_notNull(arrayClass);
+        return arrayClass->flattenedElementSize;
+}
+
 } /* extern "C" */
