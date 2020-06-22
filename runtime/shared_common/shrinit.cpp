@@ -1429,9 +1429,6 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 	bool releaseSegmentMutex = false;
 	omrthread_monitor_t classSegmentMutex = vm->classMemorySegments->segmentMutex;
 	IDATA* entryIndex = eventData->foundAtIndex;
-#ifdef LINUXPPC
-	U_64 compilerBugWorkaround;
-#endif
 
 	/* default values for bootstrap: */
 	IDATA helperID = 0;
@@ -1471,15 +1468,11 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 		testForBytecodeModification(vm);
 	}
 
-#ifdef LINUXPPC
-	compilerBugWorkaround = localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE;
-#endif
-
-	if (!(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE) ||
-		(localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_ACCESS) ||
-		((localRuntimeFlags & J9SHR_RUNTIMEFLAG_BYTECODE_AGENT_RUNNING) &&
-		(sharedClassConfig->modContext==NULL) &&
-		(0 == (localRuntimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_BCI)))
+	if (J9_ARE_NO_BITS_SET(localRuntimeFlags, J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE) ||
+		J9_ARE_ANY_BITS_SET(localRuntimeFlags, J9SHR_RUNTIMEFLAG_DENY_CACHE_ACCESS) ||
+		(J9_ARE_ANY_BITS_SET(localRuntimeFlags, J9SHR_RUNTIMEFLAG_BYTECODE_AGENT_RUNNING) &&
+		(NULL == sharedClassConfig->modContext) &&
+		J9_ARE_NO_BITS_SET(localRuntimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_BCI))
 	) {
 		/* trace event is at level 1 and trace exit message is at level 2 as per CMVC 155318/157683  */
 		Trc_SHR_INIT_hookFindSharedClass_BadRunTimeFlags_Event(currentThread, localRuntimeFlags);
