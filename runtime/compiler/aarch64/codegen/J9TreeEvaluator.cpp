@@ -2229,7 +2229,7 @@ J9::ARM64::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, boo
          if (firstChild->getOpCode().isStoreIndirect()
                && firstChild->getReferenceCount() > 1)
             {
-            firstChild->decReferenceCount();
+            cg->decReferenceCount(firstChild);
             fixRefCount = true;
             }
          cg->evaluate(firstChild);
