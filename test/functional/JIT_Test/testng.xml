@@ -434,7 +434,12 @@
       <class name="jit.test.tr.signExtensionA.SignExtElimTest" />
     </classes>
   </test>
-  <test name="StringPeepholeTest">
+  <test name="SIMDOptTest">
+	 <classes>
+	   <class name="jit.test.tr.SIMDOpts.SIMDOptTest" />
+	 </classes>
+  </test>
+	<test name="StringPeepholeTest">
     <classes>
       <class name="jit.test.tr.stringPeephole.BigDecimalToStringTest" />
     </classes>
