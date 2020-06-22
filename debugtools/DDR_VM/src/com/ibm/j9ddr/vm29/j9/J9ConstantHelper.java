@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,7 @@ public final class J9ConstantHelper {
 			throw new InternalError("unexpected exception", e);
 		}
 	}
-	
+
 	/**
 	 * Using reflection, read the value of a public static final long field from the given
 	 * class or, if the field is not present, return the default value provided.
@@ -86,5 +86,25 @@ public final class J9ConstantHelper {
 			return defaultValue;
 		}
 	}
-	
+
+	/**
+	 * Using reflection, read the value of a public static final int field from the given
+	 * class or, if the field is not present, return the default value provided.
+	 *
+	 * @param clazz the class which owns the field of interest
+	 * @param name the name of the field
+	 * @param defaultValue the value to be returned if the field is not present
+	 * @return the value of the field, or the default value
+	 */
+	public static int getInt(Class<?> clazz, String name, int defaultValue) {
+		try {
+			return getStaticFinalField(clazz, name, int.class).getInt(null);
+		} catch (IllegalAccessException e) {
+			// this should not happen - the field is public static
+			throw new InternalError("unexpected exception", e);
+		} catch (NoSuchFieldException e) {
+			return defaultValue;
+		}
+	}
+
 }

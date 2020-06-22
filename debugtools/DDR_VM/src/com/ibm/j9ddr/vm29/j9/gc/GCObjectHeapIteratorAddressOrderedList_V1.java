@@ -31,20 +31,22 @@ import java.util.Comparator;
 import java.util.NoSuchElementException;
 
 import com.ibm.j9ddr.CorruptDataException;
+import com.ibm.j9ddr.vm29.j9.J9ConstantHelper;
 import com.ibm.j9ddr.vm29.j9.ObjectModel;
+import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9ModronThreadLocalHeapPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ModronThreadLocalHeapPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.MM_CopyScanCachePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.MM_EnvironmentStandardPointer;
+import com.ibm.j9ddr.vm29.structure.J9ModronThreadLocalHeap;
 import com.ibm.j9ddr.vm29.types.UDATA;
-
 
 class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 {
-	private static Method realHeapAllocMethod = null;
+	private static final int realHeapAllocOffset = J9ConstantHelper.getInt(J9ModronThreadLocalHeap.class, "_realHeapAllocOffset_", -1);
 
 	protected J9ObjectPointer currentObject;
 	protected U8Pointer  scanPtr;
@@ -154,29 +156,13 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 
 	protected U8Pointer getRealHeapAlloc(J9ModronThreadLocalHeapPointer threadLocalHeap, U8Pointer heapAlloc) throws CorruptDataException
 	{
-		Exception exception;
-		try {
-			if (null == realHeapAllocMethod) {
-				realHeapAllocMethod = threadLocalHeap.getClass().getMethod("realHeapAlloc");
-			}
-			return (U8Pointer) realHeapAllocMethod.invoke(threadLocalHeap);
-		} catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException e) {
-			exception = e;
-		} catch (InvocationTargetException e1) {
-			Throwable cause = e1.getCause();
-			if (cause instanceof CorruptDataException) {
-				throw (CorruptDataException)cause;
-			} else if (cause instanceof RuntimeException) {
-				throw (RuntimeException)cause;
-			} else if (cause instanceof Error) {
-				throw (Error)cause;
-			}
-			exception = e1;
+		if (realHeapAllocOffset < 0) {
+			throw new CorruptDataException("No such field: realHeapAlloc");
 		}
-		
-		/* unexpected exception using reflection */
-		CorruptDataException cd = new CorruptDataException(exception.toString(), exception);
-		throw cd;
+
+		PointerPointer realHeapAllocEA = PointerPointer.cast(threadLocalHeap).addOffset(realHeapAllocOffset);
+
+		return U8Pointer.cast(realHeapAllocEA.at(0));
 	}
 
 	private U8Pointer adjustedToRange(U8Pointer ptr, U8Pointer base, U8Pointer top)
@@ -311,4 +297,3 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 		}		
 	}
 }
-
