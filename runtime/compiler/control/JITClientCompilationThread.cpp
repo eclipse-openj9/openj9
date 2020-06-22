@@ -3279,6 +3279,10 @@ remoteCompile(
       }
    catch (const JITServer::StreamMessageTypeMismatch &e)
       {
+      client->~ClientStream();
+      TR_Memory::jitPersistentFree(client);
+      compInfoPT->setClientStream(NULL);
+
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
             "JITServer::StreamMessageTypeMismatch: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
@@ -3287,6 +3291,18 @@ remoteCompile(
                compiler->signature(), compiler->getHotnessName(), e.what());
 
       compiler->failCompilation<JITServer::StreamMessageTypeMismatch>(e.what());
+      }
+   catch (const TR::CompilationInterrupted &e)
+      {
+      throw; // rethrow the exception
+      }
+   catch (...)
+      {
+      // For any other type of exception disconnect the socket 
+      client->~ClientStream();
+      TR_Memory::jitPersistentFree(client);
+      compInfoPT->setClientStream(NULL);
+      throw; // rethrow the exception
       }
 
    TR_MethodMetaData *metaData = NULL;
