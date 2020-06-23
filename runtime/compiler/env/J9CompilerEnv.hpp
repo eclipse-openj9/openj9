@@ -54,6 +54,8 @@ public:
    void initializeTargetEnvironment();
 
    bool isCodeTossed();
+
+   TR::Environment getTargetEnvironment();
    };
 
 }

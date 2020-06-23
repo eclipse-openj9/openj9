@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "control/CompilationRuntime.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/RawAllocator.hpp"
 #include "env/defines.h"
@@ -65,4 +66,17 @@ J9::CompilerEnv::isCodeTossed()
       }
 
    return false;
+   }
+
+TR::Environment
+J9::CompilerEnv::getTargetEnvironment()
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_clientEnvironment;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   return target;
    }
