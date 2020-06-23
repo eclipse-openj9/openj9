@@ -45,6 +45,7 @@
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "env/VMJ9.h"
+#include "runtime/Runtime.hpp"
 #include "x/codegen/CheckFailureSnippet.hpp"
 #include "x/codegen/IA32LinkageUtils.hpp"
 #include "x/codegen/X86Instruction.hpp"
@@ -169,9 +170,9 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
 
       // Push the RAM method for the native.
       //
-      static const int reloTypes[] = {TR_VirtualRamMethodConst, 0 /*Interfaces*/, TR_StaticRamMethodConst, TR_SpecialRamMethodConst};
+      static const TR_ExternalRelocationTargetKind reloTypes[] = {TR_VirtualRamMethodConst, TR_NoRelocation /*Interfaces*/, TR_StaticRamMethodConst, TR_SpecialRamMethodConst};
       int rType = resolvedMethodSymbol->getMethodKind()-1; //method kinds are 1-based
-      TR_ASSERT(reloTypes[rType], "There shouldn't be direct JNI interface calls!");
+      TR_ASSERT(reloTypes[rType] != TR_NoRelocation, "There shouldn't be direct JNI interface calls!");
       generateImmInstruction(PUSHImm4, callNode, (uintptr_t) resolvedMethod->resolvedMethodAddress(), cg(), reloTypes[rType]);
 
       // Store out pc and literals values indicating the callout frame.

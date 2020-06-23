@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 #include "codegen/Relocation.hpp"
 
 #include "codegen/Instruction.hpp"
+#include "runtime/Runtime.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class Instruction; }
@@ -84,14 +85,14 @@ class S390EncodingRelocation
    {
    public:
    TR_ALLOC(TR_Memory::S390EncodingRelocation)
-   S390EncodingRelocation(uint32_t             rt,
+   S390EncodingRelocation(TR_ExternalRelocationTargetKind rt,
                           TR::SymbolReference  *sr,
                           uintptr_t inlinedSiteIndex = -1)
       : _reloType(rt),
         _symbolReference(sr),
         _inlinedSiteIndex(inlinedSiteIndex) {}
 
-   uint32_t                      _reloType;
+   TR_ExternalRelocationTargetKind _reloType;
    TR::SymbolReference*           _symbolReference;
    uintptr_t                     _inlinedSiteIndex;
 
@@ -101,8 +102,8 @@ class S390EncodingRelocation
       return _symbolReference = sr;
       }
 
-   uint32_t            getReloType() { return _reloType;}
-   uint32_t            setReloType(uint32_t rt)
+   TR_ExternalRelocationTargetKind getReloType() { return _reloType;}
+   TR_ExternalRelocationTargetKind setReloType(TR_ExternalRelocationTargetKind rt)
       {
       return _reloType = rt;
       }
