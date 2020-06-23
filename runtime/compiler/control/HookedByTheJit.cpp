@@ -4336,10 +4336,14 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
           // after 10 minutes or STEADY_STATE switch to DEEPSTEADY_STATE
           // The 10 minutes may be shorter when multiple threads are running full speed
           // or longer when there isn't much work to be done
-          oldState == STEADY_STATE && (persistentInfo->getJitTotalSampleCount() - persistentInfo->getJitSampleCountWhenActiveStateEntered() > 60000))
+          ((oldState == STEADY_STATE) && ((persistentInfo->getJitTotalSampleCount() - persistentInfo->getJitSampleCountWhenActiveStateEntered()) > 60000)))
+         {
          newState = DEEPSTEADY_STATE;
+         }
       else
+         {
          newState = STEADY_STATE;
+         }
       }
    // A surge in compilations can make the transition back to STARTUP
    //t= 98186 oldState=3 newState=2 cSamples=125 iSamples= 11 comp=239 recomp=  4, Q_SZ=114

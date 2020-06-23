@@ -1428,7 +1428,7 @@ J9::SymbolReferenceTable::findJavaLangReferenceReferentShadowSymbol(TR_ResolvedM
    TR::SymbolReference * symRef;
    TR_SymRefIterator i(type == TR::Address ? aliasBuilder.addressShadowSymRefs() :
                                             (type == TR::Int32 ? aliasBuilder.intShadowSymRefs() : aliasBuilder.nonIntPrimitiveShadowSymRefs()), self());
-   while (symRef = i.getNext())
+   while ((symRef = i.getNext()) != NULL)
       if (symRef->getSymbol()->getDataType() == type &&
           symRef->getOffset() == offset &&
           symRef->getOwningMethod(comp()) == owningMethod)
@@ -2295,7 +2295,7 @@ J9::SymbolReferenceTable::findShadowSymbol(TR_ResolvedMethod * owningMethod, int
    TR::SymbolReference * symRef;
    TR_SymRefIterator i(type == TR::Address ? aliasBuilder.addressShadowSymRefs() :
                                             (type == TR::Int32 ? aliasBuilder.intShadowSymRefs() : aliasBuilder.nonIntPrimitiveShadowSymRefs()), self());
-   while (symRef = i.getNext())
+   while ((symRef = i.getNext()) != NULL)
       {
       if ((recognizedField &&
           *recognizedField != TR::Symbol::UnknownField &&
