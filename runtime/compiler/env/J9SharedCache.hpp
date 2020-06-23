@@ -31,6 +31,7 @@
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
 #include "runtime/J9Runtime.hpp"
+#include "runtime/RuntimeAssumptions.hpp"
 
 class TR_J9VMBase;
 class TR_ResolvedMethod;
@@ -170,13 +171,6 @@ public:
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo);
    static void setStoreSharedDataFailedLength(UDATA length) {_storeSharedDataFailedLength = length; }
 
-   /**
-    * @brief Initializes the monitor and map used to cache the result of a class chain validation
-    *
-    * @return true if initialization succeeded, false otherwise
-    */
-   static bool initCCVCaching();
-
    virtual J9SharedClassCacheDescriptor *getCacheDescriptorList();
 
 private:
@@ -187,13 +181,6 @@ private:
       void clear() { flags = 0; data = 0; }
       uint16_t flags;
       uint16_t data;
-      };
-
-   enum CCVResult
-      {
-      notYetValidated,
-      success,
-      failure
       };
 
    J9JITConfig *jitConfig() { return _jitConfig; }
@@ -256,18 +243,22 @@ private:
 
    /**
     * @brief Gets the cached result of a prior class chain validation
-    * @param classOffsetInCache Offset into the SCC of the class to be validated
-    * @return The CCVResult stored in the map; CCVResult::notYetValidated if result does not exist.
+    *
+    * @param clazz The class to be validated
+    *
+    * @return The cached CCVResult; CCVResult::notYetValidated if result does not exist.
     */
-   static CCVResult getCachedCCVResult(uintptr_t classOffsetInCache);
+   const CCVResult getCachedCCVResult(TR_OpaqueClassBlock *clazz);
 
    /**
     * @brief Caches the result of a class chain validation
-    * @param classOffsetInCache Offset into the SCC of the class to be validated
+    *
+    * @param clazz The class to be validated
     * @param result The result represented as a CCVResult
-    * @return The result of the insertion.
+    *
+    * @return The result of the insertion
     */
-   static bool cacheCCVResult(uintptr_t classOffsetInCache, CCVResult result);
+   bool cacheCCVResult(TR_OpaqueClassBlock *clazz, CCVResult result);
 
    uint16_t _initialHintSCount;
    uint16_t _hintsEnabledMask;
@@ -287,13 +278,6 @@ private:
    static TR_J9SharedCacheDisabledReason _sharedCacheState;
    static TR_YesNoMaybe                  _sharedCacheDisabledBecauseFull;
    static UDATA                          _storeSharedDataFailedLength;
-
-   typedef TR::typed_allocator<std::pair<uintptr_t const, CCVResult>, TrackedPersistentAllocator&> CCVAllocator;
-   typedef std::less<uintptr_t> CCVComparator;
-   typedef std::map<uintptr_t, CCVResult, CCVComparator, CCVAllocator> CCVMap;
-
-   static CCVMap                        *_ccvMap;
-   static TR::Monitor                   *_classChainValidationMutex;
    };
 
 
