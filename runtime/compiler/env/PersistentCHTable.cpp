@@ -738,3 +738,20 @@ TR_PersistentCHTable::collectAllSubClassesLocked(TR_PersistentClassInfo *clazz, 
          }
       }
    }
+
+void
+TR_PersistentCHTable::resetCachedCCVResult(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz)
+   {
+   TR::ClassTableCriticalSection collectSubClasses(fej9);
+
+   ClassList classList(TR::Compiler->persistentAllocator());
+   TR_PersistentClassInfo *classInfo = findClassInfo(clazz);
+
+   classList.push_front(classInfo);
+   collectAllSubClasses(classInfo, classList, fej9, true);
+
+   for (auto iter = classList.begin(); iter != classList.end(); iter++)
+      {
+      (*iter)->setCCVResult(CCVResult::notYetValidated);
+      }
+   }

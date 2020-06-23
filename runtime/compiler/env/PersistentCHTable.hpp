@@ -122,6 +122,15 @@ class TR_PersistentCHTable
     */
    void collectAllSubClasses(TR_PersistentClassInfo *clazz, ClassList &classList, TR_J9VMBase *fej9, bool locked = false);
 
+   /**
+    * @brief Resets the Cached CCV Result for class passed in as well as all
+    *        subclasses
+    *
+    * @param fej9 TR_J9VMBase object
+    * @param clazz The class whose cached CCV Result (as well as those of its subclasses) is to be reset.
+    */
+   void resetCachedCCVResult(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz);
+
 #ifdef DEBUG
    void dumpStats(TR_FrontEnd *);
 #endif
