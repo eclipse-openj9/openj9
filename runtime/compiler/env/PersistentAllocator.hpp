@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,6 +60,12 @@ public:
    friend bool operator !=(const PersistentAllocator &left, const PersistentAllocator &right)
       {
       return !operator ==(left, right);
+      }
+
+   // Enable automatic conversion into a form compatible with C++ standard library containers
+   template<typename T> operator TR::typed_allocator<T, PersistentAllocator& >()
+      {
+      return TR::typed_allocator<T, PersistentAllocator& >(*this);
       }
 
 private:
