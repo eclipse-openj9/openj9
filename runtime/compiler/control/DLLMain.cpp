@@ -435,6 +435,14 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                TR::Options::getAOTCmdLineOptions()->setOption(TR_DisableGuardedCountingRecompilations);
                }
 
+            if (isAOT
+                && TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching)
+                && (!TR::Options::getCmdLineOptions()->allowRecompilation()
+                    || TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)))
+               {
+               TR::Options::getAOTCmdLineOptions()->setOption(TR_EnableClassChainValidationCaching, false);
+               }
+
             if (rv == -1)
                {
                // cannot free JIT config because shutdown stage expects it to exist
