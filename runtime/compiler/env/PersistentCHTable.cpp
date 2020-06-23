@@ -713,3 +713,28 @@ TR_PersistentCHTable::classGotLoaded(
       }
    return clazz;
    }
+
+void
+TR_PersistentCHTable::collectAllSubClasses(TR_PersistentClassInfo *clazz, ClassList &classList, TR_J9VMBase *fej9, bool locked)
+   {
+   TR::ClassTableCriticalSection collectSubClasses(fej9, locked);
+
+   VisitTracker<> marked(TR::Compiler->persistentAllocator());
+
+   collectAllSubClassesLocked(clazz, classList, marked);
+   }
+
+void
+TR_PersistentCHTable::collectAllSubClassesLocked(TR_PersistentClassInfo *clazz, ClassList &classList, VisitTracker<> &marked)
+   {
+   for (auto subClass = clazz->getFirstSubclass(); subClass; subClass = subClass->getNext())
+      {
+      if (!subClass->getClassInfo()->hasBeenVisited())
+         {
+         TR_PersistentClassInfo *sc = subClass->getClassInfo();
+         classList.push_front(sc);
+         marked.visit(sc);
+         collectAllSubClassesLocked(sc, classList, marked);
+         }
+      }
+   }

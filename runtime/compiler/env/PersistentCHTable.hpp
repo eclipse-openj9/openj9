@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,9 +25,12 @@
 
 #include <stdint.h>
 #include "compile/CompilationTypes.hpp"
+#include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "il/DataTypes.hpp"
 #include "infra/Link.hpp"
+#include "infra/TRlist.hpp"
+#include "runtime/RuntimeAssumptions.hpp"
 
 #define CLASSHASHTABLE_SIZE  (4001) // close to 8000 classes will be loaded in WebSphere
 
@@ -84,6 +87,41 @@ class TR_PersistentCHTable
    virtual void removeClass(TR_FrontEnd *, TR_OpaqueClassBlock *classId, TR_PersistentClassInfo *info, bool removeInfo);
    virtual void resetVisitedClasses(); // highly time consuming
 
+
+   template <class Alloc = TR::PersistentAllocator>
+   class VisitTracker
+      {
+      public:
+      VisitTracker(Alloc &alloc) : _visited(alloc) {}
+      ~VisitTracker()
+         {
+         for (auto iter = _visited.begin(); iter != _visited.end(); iter++)
+            {
+            (*iter)->resetVisited();
+            }
+         }
+      void visit(TR_PersistentClassInfo* info)
+         {
+         _visited.push_front(info);
+         info->setVisited();
+         }
+
+      private:
+      TR::list<TR_PersistentClassInfo *, Alloc&> _visited;
+      };
+
+   typedef TR::list<TR_PersistentClassInfo *, TR::PersistentAllocator&> ClassList;
+
+   /**
+    * @brief Collects all subclasses of a given class into the ClassList container passed in
+    *
+    * @param clazz The class whose list of subclasses is required
+    * @param classList the container to hold the list of subclasses
+    * @param comp TR_J9VMBase object
+    * @param locked indicates where the class hierarchy mutex has already been acquired
+    */
+   void collectAllSubClasses(TR_PersistentClassInfo *clazz, ClassList &classList, TR_J9VMBase *fej9, bool locked = false);
+
 #ifdef DEBUG
    void dumpStats(TR_FrontEnd *);
 #endif
@@ -93,6 +131,16 @@ class TR_PersistentCHTable
    TR_LinkHead<TR_PersistentClassInfo> *getClasses() const { return _classes; }
 
    private:
+   /**
+    * @brief Collects all subclasses of a given class into the ClassList container passed in; assumes
+    *        that the class hierarchy mutex has been acquired
+    *
+    * @param clazz The class whose list of subclasses is required
+    * @param classList the container to hold the list of subclasses
+    * @param marked structure to track visited subclasses
+    */
+   void collectAllSubClassesLocked(TR_PersistentClassInfo *clazz, ClassList &classList, VisitTracker<> &marked);
+
    uint8_t _buffer[sizeof(TR_LinkHead<TR_PersistentClassInfo>) * (CLASSHASHTABLE_SIZE + 1)];
    TR_LinkHead<TR_PersistentClassInfo> *_classes;
    TR_PersistentMemory *_trPersistentMemory;
