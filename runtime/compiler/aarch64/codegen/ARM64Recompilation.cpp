@@ -85,7 +85,7 @@ TR::Instruction *TR_ARM64Recompilation::generatePrePrologue()
                                          new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, 0, cg()->trMemory()),
                                          recompileMethodSymRef, NULL, cursor);
       cursor = generateRelocatableImmInstruction(cg(), TR::InstOpCode::dd, firstNode, (uintptr_t)info, TR_BodyInfoAddress, cursor);
-      cursor->setNeedsAOTRelocation();
+
       // space for preserving original jitEntry instruction
       cursor = generateImmInstruction(cg(), TR::InstOpCode::dd, firstNode, 0, cursor);
       }
