@@ -303,7 +303,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, clazz);
          }
          break;
-      case MessageType::VM_jitFieldsAreSame:
+      case MessageType::VM_jitFieldsOrStaticsAreSame:
          {
          auto recv = client->getRecvData<TR_ResolvedMethod*, int32_t, TR_ResolvedMethod *, int32_t, int32_t>();
          TR_ResolvedMethod *method1 = std::get<0>(recv);
@@ -312,73 +312,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          int32_t cpIndex2 = std::get<3>(recv);
          int32_t isStatic = std::get<4>(recv);
          bool identical = false;
-         bool compareFields = false;
          UDATA f1 = 0, f2 = 0;
          J9Class *declaringClass1 = NULL, *declaringClass2 = NULL;
          J9ConstantPool *cp1 = (J9ConstantPool *) method1->ramConstantPool();
          J9ConstantPool *cp2 = (J9ConstantPool *) method2->ramConstantPool();
 
-         // The following code is mostly a copy of jitFieldsAreIdentical from runtime/jit_vm/ctsupport.c
-         // If that code changes, this will also need to change
-         J9RAMFieldRef *ramRef1 = (J9RAMFieldRef*) &(((J9RAMConstantPoolItem *)cp1)[cpIndex1]);
-
-         if (!isStatic)
-            {
-            if (!J9RAMFIELDREF_IS_RESOLVED(ramRef1))
-               {
-               compareFields = true;
-               }
-            else
-               {
-               J9RAMFieldRef *ramRef2 = (J9RAMFieldRef*) &(((J9RAMConstantPoolItem *)cp2)[cpIndex2]);
-               if (!J9RAMFIELDREF_IS_RESOLVED(ramRef2))
-                  {
-                  compareFields = true;
-                  }
-               else if (ramRef1->valueOffset == ramRef2->valueOffset)
-                  {
-                  compareFields = true;
-                  }
-               }
-            }
-         else
-            {
-            J9RAMStaticFieldRef *ramRef1 = ((J9RAMStaticFieldRef*) cp1) + cpIndex1;
-
-            if (!J9RAMSTATICFIELDREF_IS_RESOLVED(ramRef1))
-               {
-               compareFields = true;
-               }
-            else
-               {
-               J9RAMStaticFieldRef *ramRef2 = ((J9RAMStaticFieldRef*) cp2) + cpIndex2;
-               if (!J9RAMSTATICFIELDREF_IS_RESOLVED(ramRef2))
-                  {
-                  compareFields = true;
-                  }
-               else if (ramRef1->valueOffset == ramRef2->valueOffset)
-                  {
-                  compareFields = true;
-                  }
-               }
-            }
-         if (compareFields)
-            {
-             f1 = findField(fe->vmThread(), cp1, cpIndex1, isStatic, &declaringClass1);
-             if (f1)
-                f2 = findField(fe->vmThread(), cp2, cpIndex2, isStatic, &declaringClass2);
-            }
+         f1 = findField(fe->vmThread(), cp1, cpIndex1, isStatic, &declaringClass1);
+         f2 = findField(fe->vmThread(), cp2, cpIndex2, isStatic, &declaringClass2);
          client->write(response, declaringClass1, declaringClass2, f1, f2);
-         };
-         break;
-      case MessageType::VM_jitStaticsAreSame:
-         {
-         auto recv = client->getRecvData<TR_ResolvedMethod*, int32_t, TR_ResolvedMethod *, int32_t>();
-         TR_ResolvedMethod *method1 = std::get<0>(recv);
-         int32_t cpIndex1 = std::get<1>(recv);
-         TR_ResolvedMethod *method2 = std::get<2>(recv);
-         int32_t cpIndex2 = std::get<3>(recv);
-         client->write(response, fe->jitStaticsAreSame(method1, cpIndex1, method2, cpIndex2));
          };
          break;
       case MessageType::VM_compiledAsDLTBefore:
@@ -1150,6 +1091,31 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          auto recv = client->getRecvData<uintptr_t>();
          client->write(response, fe->getObjectSizeClass(std::get<0>(recv)));
+         }
+         break;
+      case MessageType::VM_getFields:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, std::vector<int32_t>, std::vector<uint8_t>>();
+         TR_ResolvedJ9Method *owningMethod = std::get<0>(recv);
+         auto &cpIndices = std::get<1>(recv);
+         auto &isStatic = std::get<2>(recv);
+
+         int32_t numFields = cpIndices.size();
+         std::vector<J9Class *> declaringClasses;
+         std::vector<UDATA> fields;
+         declaringClasses.reserve(numFields);
+         fields.reserve(numFields);
+
+         J9ConstantPool *cp = reinterpret_cast<J9ConstantPool *>(owningMethod->ramConstantPool());
+         for (int32_t i = 0; i < numFields; ++i)
+            {
+            J9Class *declaringClass;
+            // do we need to check if the field is resolved?
+            UDATA field = findField(fe->vmThread(), cp, cpIndices[i], isStatic[i], &declaringClass);
+            declaringClasses.push_back(declaringClass);
+            fields.push_back(field);
+            }
+         client->write(response, declaringClasses, fields);
          }
          break;
       case MessageType::mirrorResolvedJ9Method:

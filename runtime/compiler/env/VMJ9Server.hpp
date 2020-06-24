@@ -191,14 +191,16 @@ public:
    virtual uintptr_t getCellSizeForSizeClass(uintptr_t) override;
    virtual uintptr_t getObjectSizeClass(uintptr_t) override;
 
+   bool getCachedField(J9Class *ramClass, int32_t cpIndex, J9Class **declaringClass, UDATA *field);
+   void cacheField(J9Class *ramClass, int32_t cpIndex, J9Class *declaringClass, UDATA field);
+
 private:
    bool instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* castClass, bool cacheUpdate);
    bool checkCHTableIfClassInfoExistsAndHasBeenExtended(TR_OpaqueClassBlock *clazz, bool &bClassHasBeenExtended);
 
 protected:
    void getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods);
-   bool getCachedField(J9Class *ramClass, int32_t cpIndex, J9Class **declaringClass, UDATA *field);
-   void cacheField(J9Class *ramClass, int32_t cpIndex, J9Class *declaringClass, UDATA field);
+   bool jitFieldsOrStaticsAreIdentical(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_ResolvedMethod * method2, I_32 cpIndex2, int32_t isStatic);
    };
 
 /**
