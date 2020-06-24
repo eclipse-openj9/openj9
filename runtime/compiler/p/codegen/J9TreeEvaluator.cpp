@@ -70,6 +70,7 @@
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/PPCTableOfConstants.hpp"
 #include "runtime/CodeCache.hpp"
+#include "runtime/Runtime.hpp"
 #include "env/VMJ9.h"
 
 #define MAX_PPC_ARRAYCOPY_INLINE 256
@@ -9416,7 +9417,7 @@ static TR::Register *inlineFPTrg1Src3(TR::Node *node, TR::InstOpCode::Mnemonic o
       targetRegister = cg->allocateSinglePrecisionRegister();
    else
       targetRegister = cg->allocateRegister(TR_FPR);
-   
+
    generateTrg1Src3Instruction(cg, op, node, targetRegister, src1Register, src2Register, src3Register);
 
    node->setRegister(targetRegister);
@@ -9424,7 +9425,7 @@ static TR::Register *inlineFPTrg1Src3(TR::Node *node, TR::InstOpCode::Mnemonic o
    cg->decReferenceCount(secondChild);
    cg->decReferenceCount(thirdChild);
    return targetRegister;
-   } 
+   }
 
 static TR::Register *inlineDoublePrecisionFP(TR::Node *node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator *cg)
    {
@@ -12807,7 +12808,7 @@ TR::Instruction *loadAddressRAM32(TR::CodeGenerator *cg, TR::Node * node, int32_
 
    if (value != 0x0)
       {
-      uint32_t reloType;
+      TR_ExternalRelocationTargetKind reloType;
       if (node->getSymbol()->castToResolvedMethodSymbol()->isSpecial())
          reloType = TR_SpecialRamMethodConst;
       else if (node->getSymbol()->castToResolvedMethodSymbol()->isStatic())
@@ -12822,7 +12823,7 @@ TR::Instruction *loadAddressRAM32(TR::CodeGenerator *cg, TR::Node * node, int32_
       if(isAOT)
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
                node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
-                  (TR_ExternalRelocationTargetKind) reloType, cg),
+                  reloType, cg),
                   __FILE__, __LINE__, node);
       }
 
@@ -12849,7 +12850,7 @@ TR::Instruction *loadAddressRAM(TR::CodeGenerator *cg, TR::Node * node, intptr_t
    cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, trgReg, isAOT? 0: (value>>48) , cursor);
    if (value != 0x0)
       {
-      uint32_t reloType;
+      TR_ExternalRelocationTargetKind reloType;
       if (node->getSymbol()->castToResolvedMethodSymbol()->isSpecial())
          reloType = TR_SpecialRamMethodConst;
       else if (node->getSymbol()->castToResolvedMethodSymbol()->isStatic())
@@ -12864,7 +12865,7 @@ TR::Instruction *loadAddressRAM(TR::CodeGenerator *cg, TR::Node * node, intptr_t
       if(isAOT)
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
                node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
-                  (TR_ExternalRelocationTargetKind) reloType, cg),
+                  reloType, cg),
                   __FILE__,__LINE__, node);
       }
    // ori trgReg, trgReg, next 16-bits
@@ -12895,7 +12896,7 @@ TR::Instruction *loadAddressJNI32(TR::CodeGenerator *cg, TR::Node * node, int32_
 
    if (value != 0x0)
       {
-      uint32_t reloType;
+      TR_ExternalRelocationTargetKind reloType;
       if (node->getSymbol()->castToResolvedMethodSymbol()->isSpecial())
          reloType = TR_JNISpecialTargetAddress;
       else if (node->getSymbol()->castToResolvedMethodSymbol()->isStatic())
@@ -12910,7 +12911,7 @@ TR::Instruction *loadAddressJNI32(TR::CodeGenerator *cg, TR::Node * node, int32_
       if(isAOT)
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
                node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
-                  (TR_ExternalRelocationTargetKind) reloType, cg),
+                  reloType, cg),
                   __FILE__, __LINE__, node);
       }
 
@@ -12937,7 +12938,7 @@ TR::Instruction *loadAddressJNI(TR::CodeGenerator *cg, TR::Node * node, intptr_t
    cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, trgReg, isAOT? 0: (value>>48) , cursor);
    if (value != 0x0)
       {
-      uint32_t reloType;
+      TR_ExternalRelocationTargetKind reloType;
       if (node->getSymbol()->castToResolvedMethodSymbol()->isSpecial())
          reloType = TR_JNISpecialTargetAddress;
       else if (node->getSymbol()->castToResolvedMethodSymbol()->isStatic())
@@ -12952,7 +12953,7 @@ TR::Instruction *loadAddressJNI(TR::CodeGenerator *cg, TR::Node * node, intptr_t
       if(isAOT)
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
                node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
-                  (TR_ExternalRelocationTargetKind) reloType, cg),
+                  reloType, cg),
                   __FILE__,__LINE__, node);
       }
    // ori trgReg, trgReg, next 16-bits

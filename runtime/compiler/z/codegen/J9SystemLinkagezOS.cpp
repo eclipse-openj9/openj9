@@ -42,6 +42,7 @@
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
+#include "runtime/Runtime.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "z/codegen/CallSnippet.hpp"
 #include "z/codegen/OpMemToMem.hpp"
@@ -120,7 +121,7 @@ J9::Z::zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::Re
       {
       if (codeGen->needClassAndMethodPointerRelocations() && callNode->isPreparedForDirectJNI())
          {
-         uint32_t reloType;
+         TR_ExternalRelocationTargetKind reloType;
          if (callNode->getSymbol()->castToResolvedMethodSymbol()->isSpecial())
             reloType = TR_JNISpecialTargetAddress;
          else if (callNode->getSymbol()->castToResolvedMethodSymbol()->isStatic())

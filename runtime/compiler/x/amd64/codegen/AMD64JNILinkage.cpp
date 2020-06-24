@@ -47,6 +47,7 @@
 #include "il/SymbolReference.hpp"
 #include "infra/Assert.hpp"
 #include "env/VMJ9.h"
+#include "runtime/Runtime.hpp"
 #include "x/codegen/CheckFailureSnippet.hpp"
 #include "x/codegen/HelperCallSnippet.hpp"
 #include "x/codegen/X86Instruction.hpp"
@@ -576,9 +577,9 @@ void J9::X86::AMD64::JNILinkage::buildJNICallOutFrame(
       if (!scratchReg)
          scratchReg = cg()->allocateRegister();
 
-      static const int reloTypes[] = { TR_VirtualRamMethodConst, 0 /*Interfaces*/, TR_StaticRamMethodConst, TR_SpecialRamMethodConst };
+      static const TR_ExternalRelocationTargetKind reloTypes[] = { TR_VirtualRamMethodConst, TR_NoRelocation /*Interfaces*/, TR_StaticRamMethodConst, TR_SpecialRamMethodConst };
       int reloType = callSymbol->getMethodKind() - 1; //method kinds are 1-based!!
-      TR_ASSERT(reloTypes[reloType], "There shouldn't be direct JNI interface calls!");
+      TR_ASSERT(reloTypes[reloType] != TR_NoRelocation, "There shouldn't be direct JNI interface calls!");
       generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg, methodAddr, cg(), reloTypes[reloType]);
       generateRegInstruction(PUSHReg, callNode, scratchReg, cg());
       }
@@ -779,10 +780,10 @@ J9::X86::AMD64::JNILinkage::generateMethodDispatch(
    //
 
 
-   static const int reloTypes[] = {TR_JNIVirtualTargetAddress, 0 /*Interfaces*/, TR_JNIStaticTargetAddress, TR_JNISpecialTargetAddress};
+   static const TR_ExternalRelocationTargetKind reloTypes[] = {TR_JNIVirtualTargetAddress, TR_NoRelocation /*Interfaces*/, TR_JNIStaticTargetAddress, TR_JNISpecialTargetAddress};
    int reloType = callSymbol->getMethodKind()-1;  //method kinds are 1-based!!
 
-   TR_ASSERT(reloTypes[reloType], "There shouldn't be direct JNI interface calls!");
+   TR_ASSERT(reloTypes[reloType] != TR_NoRelocation, "There shouldn't be direct JNI interface calls!");
 
    TR::X86RegInstruction *patchedInstr=
    generateRegImm64Instruction(
