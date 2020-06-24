@@ -35,6 +35,7 @@
 #include "il/Node_inlines.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/Runtime.hpp"
+#include "runtime/RuntimeAssumptions.hpp"
 
 uint8_t *
 TR::S390J9CallSnippet::generateVIThunk(TR::Node * callNode, int32_t argSize, TR::CodeGenerator * cg)
@@ -1461,7 +1462,20 @@ TR::S390JNICallDataSnippet::emitSnippetBody()
       // _targetAddress/function pointer of native method
       *(intptr_t *) cursor = (intptr_t) _targetAddress;
       TR_OpaqueMethodBlock *method = getNode()->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier();
-      TR_PatchJNICallSite::make(cg()->fe(), cg()->trPersistentMemory(), (uintptr_t) method, cursor, comp->getMetadataAssumptionList());
+
+#ifdef J9VM_OPT_JITSERVER
+      if (comp->isOutOfProcessCompilation())
+         {
+         // For JITServer we need to build a list of assumptions that will be sent to client at end of compilation
+         intptr_t offset = cursor - cg()->getBinaryBufferStart();
+         SerializedRuntimeAssumption* sar = new (cg()->trHeapMemory()) SerializedRuntimeAssumption(RuntimeAssumptionOnRegisterNative, (uintptr_t)method, offset);
+         comp->getSerializedRuntimeAssumptions().push_front(sar);
+         }
+      else
+#endif // J9VM_OPT_JITSERVER
+         {
+         TR_PatchJNICallSite::make(cg()->fe(), cg()->trPersistentMemory(), (uintptr_t) method, cursor, comp->getMetadataAssumptionList());
+         }
 
       if (getNode()->getSymbol()->castToResolvedMethodSymbol()->isSpecial())
          reloType = TR_JNISpecialTargetAddress;
