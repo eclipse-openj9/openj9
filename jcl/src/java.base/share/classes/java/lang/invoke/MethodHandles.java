@@ -74,6 +74,10 @@ import java.lang.reflect.Module;
 import sun.reflect.CallerSensitive;
 /*[ENDIF] Sidecar19-SE*/
 
+/*[IF Java15]*/
+import jdk.internal.misc.Unsafe;
+/*[ENDIF] Java15 */
+
 /**
  * Factory class for creating and adapting MethodHandles.
  * 
@@ -2312,6 +2316,22 @@ public class MethodHandles {
 		ClassDefiner makeHiddenClassDefiner(String name, byte[] template) {
 			ClassDefiner definer = new ClassDefiner(name, template, this);
 			return definer;
+		}
+		
+		public Class<?> ensureInitialized(Class<?> cls) throws IllegalArgumentException, IllegalAccessException {
+			if (cls.isArray()) {
+				/*[MSG "K0683", "Target class '{0}' cannot be an array class"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0683", cls));
+			} else if (cls.isPrimitive()) {
+				/*[MSG "K0684", "Target class '{0}' cannot be a primitive class"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0684", cls));
+			} else if (!isClassAccessible(cls)) {
+				/*[MSG "K0685", "Target class '{0}' cannot be accessed from Lookup class '{1}'"]*/
+				throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0685", cls, this));
+			} else {
+				Unsafe.getUnsafe().ensureClassInitialized(cls);
+			}
+			return cls;
 		}
 		/*[ENDIF] Java15 */		
 	}
@@ -5393,15 +5413,19 @@ public class MethodHandles {
 		}
 	}
 
-/*[IF Java15]*/
+	/*[IF Java15]*/
 	static boolean permuteArgumentChecks(int[] arr, MethodType mt1, MethodType mt2) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-/*[ENDIF] Java15 */
+	
+	static MethodHandle collectReturnValue(MethodHandle mh1, MethodHandle mh2) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	/*[ENDIF] Java15 */
 
-/*[IF Sidecar18-SE-OpenJ9]*/	
+	/*[IF Sidecar18-SE-OpenJ9]*/	
 	static MethodHandle basicInvoker(MethodType mt) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-/*[ENDIF]*/	
+	/*[ENDIF]*/	
 }

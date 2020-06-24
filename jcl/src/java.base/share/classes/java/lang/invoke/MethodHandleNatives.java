@@ -22,11 +22,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 /*[IF Java11]*/
-
 package java.lang.invoke;
 
 class MethodHandleNatives {
-
 	static LinkageError mapLookupExceptionToError(ReflectiveOperationException roe) {
 		String exMsg = roe.getMessage();
 		LinkageError linkageErr;
@@ -44,7 +42,7 @@ class MethodHandleNatives {
 		return linkageErr;
 	}
 
-/*[IF Java14]*/
+	/*[IF Java14]*/
 	static long objectFieldOffset(MemberName memberName) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -56,7 +54,20 @@ class MethodHandleNatives {
 	static Object staticFieldBase(MemberName memberName) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-/*[ENDIF] Java14 */
+	/*[ENDIF] Java14 */
+	
+	/*[IF Java15]*/
+	static boolean refKindIsMethod(byte kind) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	
+	static boolean refKindIsField(byte kind) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	
+	static boolean refKindIsConstructor(byte kind) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	/*[ENDIF] Java15 */
 }
-
 /*[ENDIF] Java11 */

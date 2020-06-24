@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,3 +21,47 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+/*[IF Java15]*/
+package java.lang.invoke;
+
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.reflect.Member;
+
+class InfoFromMemberName implements MethodHandleInfo {
+	InfoFromMemberName(Lookup lookup, MemberName member, byte kind) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	@Override
+	public Class<?> getDeclaringClass() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	@Override
+	public String getName() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	@Override
+	public MethodType getMethodType() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+
+	}
+
+	@Override
+	public int getModifiers() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	@Override
+	public int getReferenceKind() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	@Override
+	public <T extends Member> T reflectAs(Class<T> expected, Lookup lookup) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+}
+/*[ENDIF] Java15 */
+
