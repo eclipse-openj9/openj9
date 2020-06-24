@@ -2433,9 +2433,6 @@ SH_CompositeCacheImpl::enterReadMutex(J9VMThread* currentThread, const char* cal
 	}
 
 	Trc_SHR_Assert_NotEquals(currentThread, _commonCCInfo->hasWriteMutexThread);
-	if (UnitTest::COMPOSITE_CACHE_TEST != UnitTest::unitTest) {
-		Trc_SHR_Assert_False(hasReadMutex(currentThread));
-	}
 
 	/* THREADING: Important to increment readerCount before checking isLocked(), as the incremented
 	 * reader count prevents a lock from occurring.
@@ -2473,8 +2470,6 @@ SH_CompositeCacheImpl::enterReadMutex(J9VMThread* currentThread, const char* cal
 			}
 		}
 	}
-	
-	currentThread->privateFlags2 |= J9_PRIVATE_FLAGS2_IN_SHARED_CACHE_READ_MUTEX;
 	Trc_SHR_CC_enterReadMutex_Exit(currentThread, caller, rc);
 	return rc;
 }
@@ -2503,12 +2498,8 @@ SH_CompositeCacheImpl::exitReadMutex(J9VMThread* currentThread, const char* call
 	}
 
 	Trc_SHR_Assert_NotEquals(currentThread, _commonCCInfo->hasWriteMutexThread);
-	if (UnitTest::COMPOSITE_CACHE_TEST != UnitTest::unitTest) {
-		Trc_SHR_Assert_True(hasReadMutex(currentThread));
-	}
 
 	decReaderCount(currentThread);
-	currentThread->privateFlags2 &= ~J9_PRIVATE_FLAGS2_IN_SHARED_CACHE_READ_MUTEX;
 	Trc_SHR_CC_exitReadMutex_Exit(currentThread, caller);
 }
 
@@ -7325,10 +7316,4 @@ U_64
 SH_CompositeCacheImpl::getCreateTime(void) const
 {
 	return _oscache->getCreateTime();
-}
-
-bool
-SH_CompositeCacheImpl::hasReadMutex(J9VMThread* currentThread) const
-{
-	return J9_ARE_ALL_BITS_SET(currentThread->privateFlags2, J9_PRIVATE_FLAGS2_IN_SHARED_CACHE_READ_MUTEX);
 }
