@@ -36,7 +36,6 @@ import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.AlgorithmPicker;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
-import com.ibm.j9ddr.vm29.j9.J9ConfigFlags;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.U16Pointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
@@ -351,7 +350,7 @@ public class MethodMetaData
 	private static class MethodMetaData_29_V0 extends com.ibm.j9ddr.vm29.j9.BaseAlgorithm implements MethodMetaDataImpl
 	{
 
-		private static boolean alignStackMaps = J9ConfigFlags.arch_arm || TRBuildFlags.host_SH4 || TRBuildFlags.host_MIPS;
+		private static boolean alignStackMaps = J9BuildFlags.arch_arm || TRBuildFlags.host_SH4 || TRBuildFlags.host_MIPS;
 
 		protected MethodMetaData_29_V0() {
 			super(90,0);
@@ -389,7 +388,7 @@ public class MethodMetaData
 		
 		private static UDATA getJitSlotsBeforeSavesInDataResolve()
 		{
-			if (J9ConfigFlags.arch_x86) {
+			if (J9BuildFlags.arch_x86) {
 				if (J9BuildFlags.env_data64) {
 					/* AMD64 data resolve shape
 					 16 slots of XMM registers
@@ -430,7 +429,7 @@ public class MethodMetaData
 			J9JITExceptionTablePointer md = walkState.jitInfo;
 			UDATA registerSaveDescription = walkState.jitInfo.registerSaveDescription();
 
-			if (J9ConfigFlags.arch_x86) {
+			if (J9BuildFlags.arch_x86) {
 				UDATA prologuePushes = new UDATA(getJitProloguePushes(walkState.jitInfo));
 				U8 i = new U8(1); 
 
@@ -451,8 +450,8 @@ public class MethodMetaData
 					}
 					while (! registerSaveDescription.eq(0));
 				}
-			} else if (J9ConfigFlags.arch_power || TRBuildFlags.host_MIPS) {
-				if (J9ConfigFlags.arch_power) {
+			} else if (J9BuildFlags.arch_power || TRBuildFlags.host_MIPS) {
+				if (J9BuildFlags.arch_power) {
 					/*
 					 * see PPCLinkage for a description of the RSD 
 					 * the save offset is located from bits 18-32 
@@ -470,7 +469,7 @@ public class MethodMetaData
 				}
 				saveCursor = walkState.bp.subOffset(saveOffset);
 
-				if (J9ConfigFlags.arch_power) {
+				if (J9BuildFlags.arch_power) {
 					mapCursor += lowestRegister.intValue(); /* access gpr15 in the vm register state */
 					U8 i = new U8(lowestRegister.add(1));
 					do 
@@ -494,7 +493,7 @@ public class MethodMetaData
 						savedGPRs = savedGPRs.sub(1);
 					}
 				}
-			} else if (J9ConfigFlags.arch_arm || TRBuildFlags.host_SH4 || J9ConfigFlags.arch_s390) {
+			} else if (J9BuildFlags.arch_arm || TRBuildFlags.host_SH4 || J9BuildFlags.arch_s390) {
 				savedGPRs = registerSaveDescription.bitAnd(new UDATA(0xFFFF));
 
 				if (! savedGPRs.eq(0))
@@ -516,7 +515,7 @@ public class MethodMetaData
 					}
 					while (! savedGPRs.eq(0));
 				}
-			} else if (J9ConfigFlags.arch_aarch64) {
+			} else if (J9BuildFlags.arch_aarch64) {
 				savedGPRs = registerSaveDescription.bitAnd(0xFFFF0000L);
 
 				if (! savedGPRs.eq(0)) {
@@ -557,7 +556,7 @@ public class MethodMetaData
 		}
 		
 		public UDATA getJitDataResolvePushes() throws CorruptDataException {
-			if (J9ConfigFlags.arch_x86) {
+			if (J9BuildFlags.arch_x86) {
 				if (J9BuildFlags.env_data64) {
 					/* AMD64 data resolve shape
 					   16 slots of XMM registers
@@ -579,17 +578,17 @@ public class MethodMetaData
 					*/
 					return new UDATA(32);
 				}
-			} else if (J9ConfigFlags.arch_arm) {
+			} else if (J9BuildFlags.arch_arm) {
 				/* ARM data resolve shape
 				   12 slots saved integer registers
 				*/
 				return new UDATA(12);
-			} else if (J9ConfigFlags.arch_aarch64) {
+			} else if (J9BuildFlags.arch_aarch64) {
 				/* AArch64 data resolve shape
 				 * 29 integer registers (not saving x29/x30/x31)
 				 */
 				return new UDATA(29);
-			} else if (J9ConfigFlags.arch_s390) {
+			} else if (J9BuildFlags.arch_s390) {
 				/* 390 data resolve shape
 				   16 integer registers
 				*/
@@ -598,7 +597,7 @@ public class MethodMetaData
 				} else {
 					return new UDATA(16);
 				}
-			} else if (J9ConfigFlags.arch_power) {
+			} else if (J9BuildFlags.arch_power) {
 				/* PPC data resolve shape
 				   32 integer registers
 				   CR
@@ -1004,7 +1003,7 @@ public class MethodMetaData
 		   Do not include the slot for return address for call from picbuilder to resolve helper.
 		*/
 		public int getJitRecompilationResolvePushes() {
-			if (J9ConfigFlags.arch_x86) {
+			if (J9BuildFlags.arch_x86) {
 				if (J9BuildFlags.env_data64) {
 					/* AMD64 recompilation resolve shape
 					0: rcx (arg register)
@@ -1029,7 +1028,7 @@ public class MethodMetaData
 					*/
 					return 3;
 				}
-			} else if (J9ConfigFlags.arch_s390) {
+			} else if (J9BuildFlags.arch_s390) {
 				/* 390 recompilation resolve shape
 				0:		r3 (arg register)
 				1:		r2 (arg register)
@@ -1044,7 +1043,7 @@ public class MethodMetaData
 				XX:	<linkage area>							<== unwindSP should point here
 				*/
 				return 7 + (64 / UDATA.SIZEOF);
-			} else if (J9ConfigFlags.arch_power) {
+			} else if (J9BuildFlags.arch_power) {
 				/* PPC recompilation resolve shape
 				0:		r10 (arg register)
 				1:		r9 (arg register)
@@ -1060,7 +1059,7 @@ public class MethodMetaData
 				XX:	<linkage area>						<== unwindSP should point here
 				*/
 				return 3;
-			} else if (J9ConfigFlags.arch_aarch64) {
+			} else if (J9BuildFlags.arch_aarch64) {
 				/* AArch64 recompilation resolve shape
 				0:	x7 (arg register)
 				1:	x6 (arg register)
@@ -1087,7 +1086,7 @@ public class MethodMetaData
 		   Do not include the slot for return address for call from picbuilder to resolve helper.
 		*/
 		public int getJitVirtualMethodResolvePushes() {
-			if (J9ConfigFlags.arch_x86) {
+			if (J9BuildFlags.arch_x86) {
 				if (J9BuildFlags.env_data64) {
 					/* AMD64 virtual resolve shape
 					0: ret addr to picbuilder
@@ -1113,7 +1112,7 @@ public class MethodMetaData
 					 */
 					return 4;
 				}
-			} else if (J9ConfigFlags.arch_power) {
+			} else if (J9BuildFlags.arch_power) {
 				/* PPC doesn't save anything extra */
 				return 0;
 			} else if (TRBuildFlags.host_SH4) {
@@ -1138,7 +1137,7 @@ public class MethodMetaData
 		   Do not include the slot for return address for call from picbuilder to resolve helper.
 		*/
 		public int getJitStaticMethodResolvePushes() {
-			if (J9ConfigFlags.arch_x86) {
+			if (J9BuildFlags.arch_x86) {
 				if (J9BuildFlags.env_data64) {
 					/* AMD64 static resolve shape
 					0: ret addr to picbuilder
@@ -1468,7 +1467,7 @@ public class MethodMetaData
 		
 		private boolean isPatchedValue(J9MethodPointer m)
 		{
-			if ((J9ConfigFlags.arch_power && m.anyBitsIn(0x1))   ||  UDATA.cast(m).bitNot().eq(0)) {
+			if ((J9BuildFlags.arch_power && m.anyBitsIn(0x1)) || UDATA.cast(m).bitNot().eq(0)) {
 				return true;
 			}
 

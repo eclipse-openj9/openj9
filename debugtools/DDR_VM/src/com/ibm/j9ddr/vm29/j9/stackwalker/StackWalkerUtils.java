@@ -38,7 +38,6 @@ import java.util.logging.Logger;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
-import com.ibm.j9ddr.vm29.j9.J9ConfigFlags;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
 import com.ibm.j9ddr.vm29.pointer.VoidPointer;
@@ -85,22 +84,22 @@ public class StackWalkerUtils
 	static final int jitArgumentRegisterNumbers[];
 	
 	static {
-		if (J9ConfigFlags.arch_x86) {
+		if (J9BuildFlags.arch_x86) {
 			if (J9BuildFlags.env_data64) {
 				jitArgumentRegisterNumbers = new int[] { 0, 5, 3, 2 };
 			} else {
 				// 32 bit X86 doesn't use jitArgumentRegisterNumbers
 				jitArgumentRegisterNumbers = new int[0];
 			}
-		} else if (J9ConfigFlags.arch_arm) {
+		} else if (J9BuildFlags.arch_arm) {
 			jitArgumentRegisterNumbers = new int[] { 0, 1, 2, 3 };
-		} else if (J9ConfigFlags.arch_aarch64) {
+		} else if (J9BuildFlags.arch_aarch64) {
 			jitArgumentRegisterNumbers = new int[] { 0, 1, 2, 3, 4, 5, 6, 7 };
-		} else if (J9ConfigFlags.arch_power) {
+		} else if (J9BuildFlags.arch_power) {
 			jitArgumentRegisterNumbers = new int[] { 3, 4, 5, 6, 7, 8, 9, 10 };
-		} else if (J9ConfigFlags.arch_s390) {
+		} else if (J9BuildFlags.arch_s390) {
 			jitArgumentRegisterNumbers = new int[] { 1, 2, 3 };
-		} else if (J9ConfigFlags.arch_riscv) {
+		} else if (J9BuildFlags.arch_riscv) {
 			/* The setting is based on the description of RISC-V Spec as follows:
 			 * Register  ABI Name  Description                      Saver
 			 * x10~11     a0~1     Function arguments/return values Caller
@@ -261,7 +260,7 @@ public class StackWalkerUtils
 	
 	public static UDATA JIT_RESOLVE_PARM(WalkState walkState, int parmNumber) throws CorruptDataException
 	{
-		if (J9ConfigFlags.arch_x86 && !J9BuildFlags.env_data64) {
+		if (J9BuildFlags.arch_x86 && !J9BuildFlags.env_data64) {
 			return walkState.bp.at(parmNumber);
 		} else {
 			return walkState.walkedEntryLocalStorage.jitGlobalStorageBase().at(jitArgumentRegisterNumbers[parmNumber - 1]);
