@@ -2239,6 +2239,22 @@ UDATA getJitRecompilationResolvePushes()
       XX: (linkage area)                                 <== unwindSP should point here
    */
    return 2;
+#elif defined(TR_HOST_ARM64)
+   /* AArch64 recompilation resolve shape
+      0:  x7 (arg register)
+      1:  x6 (arg register)
+      2:  x5 (arg register)
+      3:  x4 (arg register)
+      4:  x3 (arg register)
+      5:  x2 (arg register)
+      6:  x1 (arg register)
+      7:  x0 (arg register)
+      8:  x8 return PC (caller of recompiled method)     <== unwindSP points here
+      9:  x9
+      10: old startPC
+      XX: (linkage area)                                 <== unwindSP should point here
+   */
+   return 3;
 #else
    return 0;
 #endif
