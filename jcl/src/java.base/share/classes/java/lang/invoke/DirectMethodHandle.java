@@ -29,6 +29,8 @@ package java.lang.invoke;
  */
 
 class DirectMethodHandle extends MethodHandle {
+	MemberName member;
+	
 	DirectMethodHandle(MethodType mt, LambdaForm lf) {
 		super(mt, lf);
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();

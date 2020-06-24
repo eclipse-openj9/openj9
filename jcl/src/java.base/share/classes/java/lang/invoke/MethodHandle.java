@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1609,7 +1609,7 @@ public abstract class MethodHandle
 	}
 	
 	MethodHandle viewAsType(MethodType mt, boolean flag) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		return this.cloneWithNewType(mt);
 	}
 	
 	MemberName internalMemberName() {

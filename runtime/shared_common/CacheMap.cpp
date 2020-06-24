@@ -933,6 +933,7 @@ SH_CacheMap::updateROMSegmentList(J9VMThread* currentThread, bool hasClassSegmen
 	if (!hasClassSegmentMutex) {
 		Trc_SHR_Assert_ShouldNotHaveLocalMutex(classSegmentMutex);
 		Trc_SHR_Assert_False(_ccHead->hasWriteMutex(currentThread));
+		Trc_SHR_Assert_False(_ccHead->hasReadMutex(currentThread));
 		enterLocalMutex(currentThread, classSegmentMutex, "class segment mutex", "updateROMSegmentList");
 	} else {
 		Trc_SHR_Assert_ShouldHaveLocalMutex(classSegmentMutex);

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,26 +36,39 @@ import com.ibm.java.diagnostics.utils.plugins.Annotation;
 import com.ibm.java.diagnostics.utils.plugins.ClassInfo;
 import com.ibm.java.diagnostics.utils.plugins.ClassListener;
 
-public class ClassScanner extends  ClassVisitor {
+public class ClassScanner extends ClassVisitor {
+
 	private ClassInfo info;
 	private Annotation currentAnnotation = null;
-	private final URL url;			//where the class is being scanned from
+	private final URL url; // where the class is being scanned from
 	private final Set<ClassListener> listeners;
-	
+
 	public ClassScanner(URL url, Set<ClassListener> listeners) {
-		super(Opcodes.ASM4, null);
+		/*[IF Java15]*/
+		super(Opcodes.ASM8, null);
+		/*[ELSE]*/
+		/*[IF Java14]*/
+		super(Opcodes.ASM7, null);
+		/*[ELSE]*/
+		/*[IF Java11]*/
+		super(Opcodes.ASM6, null);
+		/*[ELSE]*/
+		super(Opcodes.ASM5, null);
+		/*[ENDIF] Java11 */
+		/*[ENDIF] Java14 */
+		/*[ENDIF] Java15 */
 		this.url = url;
 		this.listeners = listeners;
 	}
 
 	public AnnotationVisitor visitAnnotation(String classname, boolean visible) {
 		currentAnnotation = info.addAnnotation(classname);
-		for(ClassListener listener : listeners) {
+		for (ClassListener listener : listeners) {
 			listener.visitAnnotation(classname, visible);
 		}
 		return new ClassScannerAnnotation(Opcodes.ASM4);
 	}
-	
+
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		String dotName = name.replace('/', '.');
 		String dotSuperName = superName.replace('/', '.');
