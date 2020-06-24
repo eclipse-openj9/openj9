@@ -35,7 +35,7 @@
 #include "SCQueryFunctions.h"
 #include "j9jclnls.h"
 
-#if (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT))  /* File Level Build Flags */
+#if defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT) /* File Level Build Flags */
 
 static UDATA classCouldPossiblyBeShared(J9VMThread * vmThread, J9LoadROMClassData * loadData);
 static J9ROMClass * createROMClassFromClassFile (J9VMThread *currentThread, J9LoadROMClassData * loadData, J9TranslationLocalBuffer *localBuffer);
@@ -541,7 +541,9 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 
 	/* Determine allowed class file version */
 #ifdef J9VM_OPT_SIDECAR
-	if (J2SE_VERSION(vm) >= J2SE_V15) {
+	if (J2SE_VERSION(vm) >= J2SE_V16) {
+		translationFlags |= BCT_Java16MajorVersionShifted;
+	} else if (J2SE_VERSION(vm) >= J2SE_V15) {
 		translationFlags |= BCT_Java15MajorVersionShifted;
 	} else if (J2SE_VERSION(vm) >= J2SE_V14) {
 		translationFlags |= BCT_Java14MajorVersionShifted;
@@ -851,7 +853,7 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 		case BCT_ERR_UNKNOWN_ANNOTATION:
 			exceptionNumber = J9VMCONSTANTPOOL_JAVALANGVERIFYERROR;
 			break;
-			
+
 		case BCT_ERR_INVALID_ANNOTATION:
 			errorUTF = vm->dynamicLoadBuffers->classFileError;
 			exceptionNumber = J9VMCONSTANTPOOL_JAVALANGVERIFYERROR;
@@ -868,7 +870,7 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 
 		/*
 		 * Error messages are contents of vm->dynamicLoadBuffers->classFileError with class name appended.
-		 * 
+		 *
 		 * We don't free vm->dynamicLoadBuffers->classFileError because it is also used as a classFileBuffer in ROMClassBuilder.
 		 */
 		case BCT_ERR_CLASS_READ:
@@ -876,21 +878,21 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 			/* FALLTHROUGH */
 
 		case BCT_ERR_GENERIC_ERROR_CUSTOM_MSG: {
-			/* default value for exceptionNumber (J9VMCONSTANTPOOL_JAVALANGCLASSFORMATERROR) assigned before switch */		
+			/* default value for exceptionNumber (J9VMCONSTANTPOOL_JAVALANGCLASSFORMATERROR) assigned before switch */
 			errorUTF = (U_8 *)buildVerifyErrorString(vm, (J9CfrError *)vm->dynamicLoadBuffers->classFileError, className, classNameLength);
 			break;
 		}
 
 		/*
-		 * Error messages are contents of vm->dynamicLoadBuffers->classFileError if anything is assigned 
+		 * Error messages are contents of vm->dynamicLoadBuffers->classFileError if anything is assigned
 		 * otherwise just the classname.
 		 */
 		case BCT_ERR_CLASS_NAME_MISMATCH:
 			exceptionNumber = J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR;
 			/* FALLTHROUGH */
-			
+
 		default:
-			/* BCT_ERR_GENERIC_ERROR: default value for exceptionNumber (J9VMCONSTANTPOOL_JAVALANGCLASSFORMATERROR) 
+			/* BCT_ERR_GENERIC_ERROR: default value for exceptionNumber (J9VMCONSTANTPOOL_JAVALANGCLASSFORMATERROR)
 			 * assigned before switch */
 			errorUTF = vm->dynamicLoadBuffers->classFileError;
 			if (NULL == errorUTF) {
@@ -932,7 +934,7 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 	return NULL;
 }
 
-static UDATA 
+static UDATA
 classCouldPossiblyBeShared(J9VMThread * vmThread, J9LoadROMClassData * loadData)
 {
 	J9JavaVM * vm = vmThread->javaVM;
