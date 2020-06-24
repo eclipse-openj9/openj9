@@ -34,6 +34,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "runtime/CodeCacheManager.hpp"
+#include "runtime/Runtime.hpp"
 
 uint8_t *
 TR::S390J9CallSnippet::generateVIThunk(TR::Node * callNode, int32_t argSize, TR::CodeGenerator * cg)
@@ -1396,7 +1397,7 @@ TR::S390JNICallDataSnippet::emitSnippetBody()
       // _ramMethod
       *(intptr_t *) cursor = (intptr_t) _ramMethod;
 
-      uint32_t reloType;
+      TR_ExternalRelocationTargetKind reloType;
       if (getNode()->getSymbol()->castToResolvedMethodSymbol()->isSpecial())
          reloType = TR_SpecialRamMethodConst;
       else if (getNode()->getSymbol()->castToResolvedMethodSymbol()->isStatic())
@@ -1414,7 +1415,7 @@ TR::S390JNICallDataSnippet::emitSnippetBody()
          {
          cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) callNode->getSymbolReference(),
                callNode  ? (uint8_t *)(intptr_t)callNode->getInlinedSiteIndex() : (uint8_t *)-1,
-                     (TR_ExternalRelocationTargetKind) reloType, cg()),
+                     reloType, cg()),
                      __FILE__, __LINE__, callNode);
          }
 
@@ -1478,7 +1479,7 @@ TR::S390JNICallDataSnippet::emitSnippetBody()
          {
          cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) callNode->getSymbolReference(),
                callNode  ? (uint8_t *)(intptr_t)callNode->getInlinedSiteIndex() : (uint8_t *)-1,
-                     (TR_ExternalRelocationTargetKind) reloType, cg()),
+                     reloType, cg()),
                      __FILE__, __LINE__, callNode);
          }
 
