@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -443,8 +443,6 @@ public:
 	void setMetadataMemorySegment(J9MemorySegment** segment);
 	
 	const char* getCacheNameWithVGen(void) const;
-	
-	bool hasReadMutex(J9VMThread* currentThread) const;
 
 private:
 	J9SharedClassConfig* _sharedClassConfig;
