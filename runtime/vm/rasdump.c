@@ -38,6 +38,10 @@
 #include <WinBase.h>
 #endif /* defined(WIN32) || defined(WIN64) */
 
+#if defined(OSX)
+#include <crt_externs.h>
+#endif /* defined(OSX) */
+
 #define PRIMORDIAL_DUMP_ATTACHED_THREAD 0x01
 
 #define RAS_NETWORK_WARNING_TIME 60000
@@ -289,7 +293,12 @@ configureRasDump(J9JavaVM *vm)
 void
 J9RASInitialize(J9JavaVM* javaVM)
 {
+#if defined(OSX)
+	char **environ = *_NSGetEnviron();
+#else /* defined(OSX) */
 	extern char **environ;
+#endif /* defined(OSX) */
+
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 	const char *osarch = j9sysinfo_get_CPU_architecture();
 	const char *osname = j9sysinfo_get_OS_type();
