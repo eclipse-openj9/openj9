@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,14 +59,17 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.ibm.j9ddr.BytecodeGenerator;
 import com.ibm.j9ddr.CTypeParser;
 import com.ibm.j9ddr.StructureReader;
 import com.ibm.j9ddr.StructureReader.ConstantDescriptor;
@@ -186,20 +189,23 @@ public class PointerGenerator {
 
 		ByteArrayOutputStream newContents = new ByteArrayOutputStream(length);
 		PrintWriter writer = new PrintWriter(newContents);
+		String className = structure.getName();
+		Map<String, String> constants = BytecodeGenerator.getConstantsAndAliases(structure);
+
 		writeCopyright(writer);
 		writer.format("package %s;%n", opts.get("-p"));
 		writeBuildFlagImports(writer);
 		writer.println();
-		writeClassComment(writer, structure.getName());
-		writer.format("public final class %s {%n", structure.getName());
+		writeClassComment(writer, className);
+		writer.format("public final class %s {%n", className);
 		writer.println();
 		writer.println("\t// Do not instantiate constant classes");
-		writer.format("\tprivate %s() {%n", structure.getName());
+		writer.format("\tprivate %s() {%n", className);
 		writer.format("\t}%n");
 		writer.println();
-		writeBuildFlags(writer, structure);
+		writeBuildFlags(writer, constants.keySet());
 		writer.println();
-		writeBuildFlagsStaticInitializer(writer, structure);
+		writeBuildFlagsStaticInitializer(writer, className, constants);
 		writer.println("}");
 		writer.close();
 
@@ -211,41 +217,40 @@ public class PointerGenerator {
 		}
 	}
 
-	private static void writeBuildFlagsStaticInitializer(PrintWriter writer, StructureDescriptor structure) {
-		Collections.sort(structure.getConstants());
-
+	private static void writeBuildFlagsStaticInitializer(PrintWriter writer, String className, Map<String, String> constants) {
 		writer.println("\tstatic {");
-		writer.println("\t\tHashMap<String, Boolean> defaultValues = new HashMap<>();");
+		writer.println("\t\tHashSet<String> flags$ = new HashSet<>();");
 		writer.println();
-		writer.println("\t\t// Edit default values here");
 
-		for (ConstantDescriptor constant : structure.getConstants()) {
-			writer.format("\t\tdefaultValues.put(\"%s\", Boolean.FALSE);%n", constant.getName());
-		}
-
-		writer.println();
 		writer.println("\t\ttry {");
-		writer.println("\t\t\tClassLoader loader = " + structure.getName() + ".class.getClassLoader();");
-		writer.println("\t\t\tif (!(loader instanceof com.ibm.j9ddr.J9DDRClassLoader)) {");
+		writer.println("\t\t\tClassLoader loader$ = " + className + ".class.getClassLoader();");
+		writer.println("\t\t\tif (!(loader$ instanceof com.ibm.j9ddr.J9DDRClassLoader)) {");
 		writer.println("\t\t\t\tthrow new IllegalArgumentException(\"Cannot determine the runtime loader\");");
 		writer.println("\t\t\t}");
-		writer.println("\t\t\tClass<?> runtimeClass = ((com.ibm.j9ddr.J9DDRClassLoader) loader).loadClassRelativeToStream(\"structure." + structure.getName() + "\", false);");
-		writer.println("\t\t\tField[] fields = runtimeClass.getFields();");
-		writer.println("\t\t\tfor (int i = 0; i < fields.length; i++) {");
-		writer.println("\t\t\t\tField field = fields[i];");
-		writer.println("\t\t\t\t// Overwrite default value with real value if it exists.");
-		writer.println("\t\t\t\tdefaultValues.put(field.getName(), field.getLong(runtimeClass) != 0);");
+		writer.println("\t\t\tClass<?> runtimeClass = ((com.ibm.j9ddr.J9DDRClassLoader) loader$).loadClassRelativeToStream(\"structure." + className + "\", false);");
+		writer.println("\t\t\tfor (Field field : runtimeClass.getFields()) {");
+		writer.println("\t\t\t\tif (field.getLong(runtimeClass) != 0) {");
+		writer.println("\t\t\t\t\tflags$.add(field.getName());");
+		writer.println("\t\t\t\t}");
 		writer.println("\t\t\t}");
-		writer.println("\t\t} catch (ClassNotFoundException e) {");
-		writer.println("\t\t\tthrow new IllegalArgumentException(String.format(\"Can not initialize flags from core file.%n%s\", e.getMessage()));");
-		writer.println("\t\t} catch (IllegalAccessException e) {");
+		writer.println("\t\t} catch (ClassNotFoundException | IllegalAccessException e) {");
 		writer.println("\t\t\tthrow new IllegalArgumentException(String.format(\"Can not initialize flags from core file.%n%s\", e.getMessage()));");
 		writer.println("\t\t}");
 		writer.println();
 
-		for (ConstantDescriptor constant : structure.getConstants()) {
-			writer.format("\t\t%s = defaultValues.get(\"%s\");%n", constant.getName(), constant.getName());
+		for (Map.Entry<String, String> entry : constants.entrySet()) {
+			String name = entry.getKey();
+			String alternate = entry.getValue();
+
+			writer.format("\t\t%s = flags$.contains(\"%s\")", name, name);
+
+			if (alternate != null) {
+				writer.format(" || flags$.contains(\"%s\")", alternate);
+			}
+
+			writer.println(";");
 		}
+
 		writer.println("\t}");
 	}
 
@@ -405,11 +410,10 @@ public class PointerGenerator {
 		}
 	}
 
-	private static void writeBuildFlags(PrintWriter writer, StructureDescriptor structure) {
+	private static void writeBuildFlags(PrintWriter writer, Collection<String> names) {
 		writer.println("\t// Build Flags");
-		Collections.sort(structure.getConstants());
-		for (ConstantDescriptor constant : structure.getConstants()) {
-			writer.format("\tpublic static final boolean %s;%n", constant.getName());
+		for (String name : names) {
+			writer.format("\tpublic static final boolean %s;%n", name);
 		}
 	}
 
@@ -1545,8 +1549,8 @@ public class PointerGenerator {
 	}
 
 	private static void writeBuildFlagImports(PrintWriter writer) {
-		writer.println("import java.util.HashMap;");
 		writer.println("import java.lang.reflect.Field;");
+		writer.println("import java.util.HashSet;");
 	}
 
 	private void parseArgs(String[] args) {
