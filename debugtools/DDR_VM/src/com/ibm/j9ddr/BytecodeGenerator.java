@@ -85,7 +85,7 @@ public class BytecodeGenerator {
 	}
 
 	static Map<String, String> getFlagAliasesFor(String className) {
-		return addFlagAliasesFor(new HashMap<>(), className);
+		return addFlagAliasesFor(new HashMap<String, String>(), className);
 	}
 
 	public static Map<String, String> getConstantsAndAliases(StructureDescriptor structure) {
