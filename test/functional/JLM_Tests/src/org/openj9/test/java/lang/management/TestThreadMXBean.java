@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,7 +84,7 @@ public class TestThreadMXBean {
 		attribs.put("ThreadCpuTimeSupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
 		attribs.put("ObjectMonitorUsageSupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
 		attribs.put("SynchronizerUsageSupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
-	}// end static initializer
+	} // end static initializer
 
 	private ThreadMXBean tb;
 
@@ -1319,10 +1319,10 @@ public class TestThreadMXBean {
 		AssertJUnit.assertEquals(0, constructors.length);
 
 		int opNbr;
-		if (org.openj9.test.util.VersionCheck.major() >=14) {
+		if (org.openj9.test.util.VersionCheck.major() >= 10) {
 			opNbr = 16;
 		} else {
-			// Java 8 - 13
+			// Java 8 - 9
 			opNbr = 14;
 		}
 		MBeanOperationInfo[] operations = mbi.getOperations();

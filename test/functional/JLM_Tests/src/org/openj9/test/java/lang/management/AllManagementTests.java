@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,30 +19,32 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package org.openj9.test.java.lang.management;
 
 import org.testng.AssertJUnit;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.Map;
 
 import javax.management.MBeanAttributeInfo;
 
 public class AllManagementTests {
 
-	public static void validateAttributeInfo(MBeanAttributeInfo info, HashSet<String> ignoredAttributes,
+	public static void validateAttributeInfo(MBeanAttributeInfo info, Collection<String> ignoredAttributes,
 			Map<String, AttributeData> attribs) {
-
 		String attrName = info.getName();
+
 		if (ignoredAttributes.contains(attrName)) {
 			return;
 		}
+
 		String msg = "Invalid attribute " + attrName;
 		AttributeData example = attribs.get(attrName);
+
 		AssertJUnit.assertNotNull(msg, example);
-		AssertJUnit.assertTrue(msg, info.getType().equals(example.type));
-		AssertJUnit.assertTrue(msg, info.isReadable() == example.readable);
-		AssertJUnit.assertTrue(msg, info.isWritable() == example.writable);
-		AssertJUnit.assertTrue(msg, info.isIs() == example.isAccessor);
+		AssertJUnit.assertEquals(msg + " (type)", example.type, info.getType());
+		AssertJUnit.assertEquals(msg + " (readable)", example.readable, info.isReadable());
+		AssertJUnit.assertEquals(msg + " (writable)", example.writable, info.isWritable());
+		AssertJUnit.assertEquals(msg + " (isAccessor)", example.isAccessor, info.isIs());
 	}
+
 }
