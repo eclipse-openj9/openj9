@@ -682,37 +682,180 @@ old_fast_jitNewObjectNoZeroInit(J9VMThread *currentThread)
 void* J9FASTCALL
 old_slow_jitGetFlattenableField(J9VMThread *currentThread)
 {
-	return NULL;
+	SLOW_JIT_HELPER_PROLOGUE();
+	J9RAMFieldRef* cpEntry = (J9RAMFieldRef*) currentThread->floatTemp1;
+	j9object_t receiver = (j9object_t) currentThread->floatTemp2;
+	j9object_t returnObject = NULL;
+	void *rc = NULL;
+	void *oldPC = currentThread->jitReturnAddress;
+
+	if (NULL == receiver) {
+		buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+		rc = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+		goto done;
+	}
+
+	buildJITResolveFrameWithPC(currentThread, J9_STACK_FLAGS_JIT_ALLOCATION_RESOLVE | J9_SSF_JIT_RESOLVE, parmCount, true, 0, oldPC);
+	returnObject = currentThread->javaVM->internalVMFunctions->getFlattenableField(currentThread, cpEntry, receiver, FALSE);
+	if (NULL == returnObject) {
+		rc = setHeapOutOfMemoryErrorFromJIT(currentThread);
+		goto done;
+	}
+
+	currentThread->floatTemp1 = (void*)returnObject; // in case of decompile
+	rc = restoreJITResolveFrame(currentThread, oldPC, false, false);
+	if (NULL != rc) {
+		goto done;
+	}
+
+	JIT_RETURN_UDATA(returnObject);
+
+done:
+	SLOW_JIT_HELPER_EPILOGUE();
+	return rc;
 }
 
 void* J9FASTCALL
 old_fast_jitGetFlattenableField(J9VMThread *currentThread)
 {
-	return NULL;
+	OLD_JIT_HELPER_PROLOGUE(2);
+	DECLARE_JIT_PARM(J9RAMFieldRef*, cpEntry, 1);
+	DECLARE_JIT_PARM(j9object_t, receiver, 2);
+	j9object_t returnObject = NULL;
+	void *rc = NULL;
+
+	if (NULL == receiver) {
+		goto slow;
+	}
+
+	returnObject = currentThread->javaVM->internalVMFunctions->getFlattenableField(currentThread, cpEntry, receiver, TRUE);
+	if (J9_UNEXPECTED(NULL == returnObject)) {
+		goto slow;
+	}
+	JIT_RETURN_UDATA(returnObject);
+
+done:
+	return rc;
+
+slow:
+	currentThread->floatTemp1 = (void*)cpEntry;
+	currentThread->floatTemp2 = (void*)receiver;
+	rc = (void *) old_slow_jitGetFlattenableField;
+	goto done;
 }
 
 void* J9FASTCALL
 old_slow_jitWithFlattenableField(J9VMThread *currentThread)
 {
-	return NULL;
+	SLOW_JIT_HELPER_PROLOGUE();
+	J9RAMFieldRef* cpEntry = (J9RAMFieldRef*) currentThread->floatTemp1;
+	j9object_t receiver = (j9object_t) currentThread->floatTemp2;
+	j9object_t paramObject = (j9object_t) currentThread->floatTemp3;
+	j9object_t returnObject = NULL;
+	void *rc = NULL;
+	void *oldPC = currentThread->jitReturnAddress;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+
+	if (NULL == receiver) {
+		buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+		rc = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+		goto done;
+	}
+
+	buildJITResolveFrameWithPC(currentThread, J9_STACK_FLAGS_JIT_ALLOCATION_RESOLVE | J9_SSF_JIT_RESOLVE, parmCount, true, 0, oldPC);
+	returnObject = vmFuncs->cloneValueType(currentThread, J9OBJECT_CLAZZ(currentThread, receiver), receiver, FALSE);
+	if (J9_UNEXPECTED(NULL == returnObject)) {
+		rc = setHeapOutOfMemoryErrorFromJIT(currentThread);
+		goto done;
+	}
+
+	vmFuncs->putFlattenableField(currentThread, cpEntry, returnObject, paramObject);
+
+	currentThread->floatTemp1 = (void*)returnObject; // in case of decompile
+	rc = restoreJITResolveFrame(currentThread, oldPC, false, false);
+	if (NULL != rc) {
+		goto done;
+	}
+
+	JIT_RETURN_UDATA(returnObject);
+
+done:
+	SLOW_JIT_HELPER_EPILOGUE();
+	return rc;
+
 }
 
 void* J9FASTCALL
 old_fast_jitWithFlattenableField(J9VMThread *currentThread)
 {
-	return NULL;
+	OLD_JIT_HELPER_PROLOGUE(3);
+	DECLARE_JIT_PARM(J9RAMFieldRef*, cpEntry, 1);
+	DECLARE_JIT_PARM(j9object_t, receiver, 2);
+	DECLARE_JIT_PARM(j9object_t, paramObject, 3);
+	j9object_t returnObject = NULL;
+	void *rc = NULL;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+
+	if (NULL == receiver) {
+		goto slow;
+	}
+
+	returnObject = vmFuncs->cloneValueType(currentThread, J9OBJECT_CLAZZ(currentThread, receiver), receiver, TRUE);
+	if (J9_UNEXPECTED(NULL == returnObject)) {
+		goto slow;
+	}
+
+	vmFuncs->putFlattenableField(currentThread, cpEntry, returnObject, paramObject);
+
+	JIT_RETURN_UDATA(returnObject);
+
+done:
+	return rc;
+
+slow:
+	currentThread->floatTemp1 = (void*)cpEntry;
+	currentThread->floatTemp2 = (void*)receiver;
+	currentThread->floatTemp3 = (void*)paramObject;
+	rc = (void *) old_slow_jitWithFlattenableField;
+	goto done;
 }
 
 void* J9FASTCALL
 old_slow_jitPutFlattenableField(J9VMThread *currentThread)
 {
-	return NULL;
+	/* can only get here if we are throwing an exception */
+	SLOW_JIT_HELPER_PROLOGUE();
+	void *rc = NULL;
+
+	buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+	rc = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+
+	SLOW_JIT_HELPER_EPILOGUE();
+	return rc;
 }
 
 void* J9FASTCALL
 old_fast_jitPutFlattenableField(J9VMThread *currentThread)
 {
-	return NULL;
+	OLD_JIT_HELPER_PROLOGUE(3);
+	DECLARE_JIT_PARM(J9RAMFieldRef*, cpEntry, 1);
+	DECLARE_JIT_PARM(j9object_t, receiver, 2);
+	DECLARE_JIT_PARM(j9object_t, paramObject, 3);
+	j9object_t returnObject = NULL;
+	void *rc = NULL;
+
+	if (NULL == receiver) {
+		goto slow;
+	}
+
+	currentThread->javaVM->internalVMFunctions->putFlattenableField(currentThread, cpEntry, receiver, paramObject);
+
+done:
+	return rc;
+
+slow:
+	rc = (void *) old_slow_jitPutFlattenableField;
+	goto done;
 }
 
 void* J9FASTCALL

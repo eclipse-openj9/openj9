@@ -2469,6 +2469,49 @@ UDATA
 arrayElementSize(J9ArrayClass* arrayClass);
 
 /**
+ * Performs a getfield operation on an object. Handles flattened and non-flattened cases.
+ * This helper assumes that the cpIndex points to the fieldRef of a resolved Qtype. This helper
+ * also assumes that the cpIndex points to an instance field.
+ *
+ * @param currentThread thread token
+ * @param cpEntry the RAM cpEntry for the field, needs to be resolved
+ * @param receiver receiver object
+ * @param fastPath performs fastpath allocation, no GC. If this is false
+ * 			frame must be built before calling as GC may occur
+ *
+ * @return NULL if allocation fails, valuetype otherwise
+ */
+j9object_t
+getFlattenableField(J9VMThread *currentThread, J9RAMFieldRef *cpEntry, j9object_t receiver, BOOLEAN fastPath);
+
+/**
+ * Performs a clone operation on an object.
+ *
+ * @param currentThread thread token
+ * @param receiverClass j9class of original object
+ * @param original object to be cloned
+ * @param fastPath performs fastpath allocation, no GC. If this is false
+ * 			frame must be built before calling as GC may occur
+ *
+ * @return NULL if allocation fails, valuetype otherwise
+ */
+j9object_t
+cloneValueType(J9VMThread *currentThread, J9Class *receiverClass, j9object_t original, BOOLEAN fastPath);
+
+/**
+ * Performs a putfield operation on an object. Handles flattened and non-flattened cases.
+ * This helper assumes that the cpIndex points to the fieldRef of a resolved Qtype. This helper
+ * also assumes that the cpIndex points to an instance field.
+ *
+ * @param currentThread thread token
+ * @param cpEntry the RAM cpEntry for the field, needs to be resolved
+ * @param receiver receiver object
+ * @param paramObject parameter object
+ */
+void
+putFlattenableField(J9VMThread *currentThread, J9RAMFieldRef *cpEntry, j9object_t receiver, j9object_t paramObject);
+
+/**
 * @brief
 * @param *vmStruct
 * @param *clazz

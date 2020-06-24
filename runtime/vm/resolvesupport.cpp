@@ -997,7 +997,7 @@ illegalAccess:
 							J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, fieldIndex)->offset = valueOffset;
 						}
 						modifiers |= J9FieldFlagFlattened;
-						valueOffset = fieldIndex;
+						valueOffset = (UDATA) J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, fieldIndex);
 						/* offset must be written to flattenedClassCache before fieldref is marked as resolved */
 						issueWriteBarrier();
 					}
