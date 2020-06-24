@@ -959,7 +959,7 @@ TR::CompilationInfoPerThreadRemote::getCachedIProfilerInfo(TR_OpaqueMethodBlock 
  */
 void
 TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, 
-                                                        uint32_t vTableSlot, const TR_ResolvedJ9JITServerMethodInfo &methodInfo)
+                                                        uint32_t vTableSlot, const TR_ResolvedJ9JITServerMethodInfo &methodInfo, int32_t ttlForUnresolved)
    {
    static bool useCaching = !feGetEnv("TR_DisableResolvedMethodsCaching");
    if (!useCaching)
@@ -996,6 +996,10 @@ TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key
    cacheEntry.persistentMethodInfo = pMethodInfo;
    cacheEntry.IPMethodInfo = entry;
 
+   // time-to-live for cached unresolved methods.
+   // Irrelevant for resolved methods.
+   cacheEntry.ttlForUnresolved = ttlForUnresolved;
+
    cacheToPerCompilationMap(_resolvedMethodInfoMap, key, cacheEntry);
    }
 
@@ -1024,8 +1028,17 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
       auto comp = getCompilation();
       TR_OpaqueMethodBlock *method = methodCacheEntry.method;
 
-      if (!method)
+      // if remoteMirror == NULL means we have cached an unresolved method;
+      // purge the cached entry if time-to-live has expired.
+      if (!methodCacheEntry.methodInfoStruct.remoteMirror)
+         {
+         // decrement time-to-live of this unresolved entry
+         methodCacheEntry.ttlForUnresolved--;
+
+         if (methodCacheEntry.ttlForUnresolved <= 0)
+            _resolvedMethodInfoMap->erase(key);
          return true;
+         }
 
       uint32_t vTableSlot = methodCacheEntry.vTableSlot;
       auto methodInfoStruct = methodCacheEntry.methodInfoStruct;

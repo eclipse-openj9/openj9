@@ -443,8 +443,15 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
       // JITServer optimization:
       // request this resolved method to create all of its callee resolved methods
       // in a single query.
+      //
+      // If the method is unresolved, return NULL for 2 requests without asking the client,
+      // since they are called almost immediately after this request and are unlikely to
+      // become resolved.
+      //
+      // NOTE: first request occurs in the for loop over bytecodes, immediately after this request,
+      // second request occurs in InterpreterEmulator::findAndCreateCallsitesFromBytecodes
       auto calleeMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(calltarget->_calleeMethod);
-      calleeMethod->cacheResolvedMethodsCallees();
+      calleeMethod->cacheResolvedMethodsCallees(2);
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

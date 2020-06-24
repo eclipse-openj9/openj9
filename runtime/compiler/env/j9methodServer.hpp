@@ -118,6 +118,7 @@ TR_ResolvedMethodCacheEntry
    TR_PersistentJittedBodyInfo *persistentBodyInfo;
    TR_PersistentMethodInfo *persistentMethodInfo;
    TR_ContiguousIPMethodHashTableEntry *IPMethodInfo;
+   int32_t ttlForUnresolved;
    };
 
 using TR_ResolvedMethodInfoCache = UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry>;
@@ -216,7 +217,7 @@ public:
    static void createResolvedMethodMirror(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
    static void createResolvedMethodFromJ9MethodMirror(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
    bool addValidationRecordForCachedResolvedMethod(const TR_ResolvedMethodKey &key, TR_OpaqueMethodBlock *method);
-   void cacheResolvedMethodsCallees();
+   void cacheResolvedMethodsCallees(int32_t ttlForUnresolved = 2);
 
 protected:
    JITServer::ServerStream *_stream;
