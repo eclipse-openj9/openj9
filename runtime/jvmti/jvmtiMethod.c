@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -597,6 +597,7 @@ jvmtiGetBytecodes(jvmtiEnv* env,
 				case JBnewdup:
 				case JBinvokehandle:
 				case JBinvokehandlegeneric:
+				case JBinvokehandlebasic:
 				case JBinvokestaticsplit:
 				case JBinvokespecialsplit:
 				case JBinvokedynamic:
@@ -624,6 +625,7 @@ jvmtiGetBytecodes(jvmtiEnv* env,
 							break;
 						case JBinvokehandle:
 						case JBinvokehandlegeneric:
+						case JBinvokehandlebasic:
 							bytecodes[index] = CFR_BC_invokevirtual;
 							/* intentional fall-through */
 						default:

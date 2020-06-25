@@ -6624,6 +6624,7 @@ static void j9_formatBytecodes(J9ROMClass* romClass, J9ROMMethod* method, U_8* b
 				case JBinvokeinterface:
 				case JBinvokehandle:
 				case JBinvokehandlegeneric:
+				case JBinvokehandlebasic:
 				case JBinvokestaticsplit:
 				case JBinvokespecialsplit:
 					j9_formatBytecode(romClass, method, bytecodes, bcIndex, bc, 3, CFR_DECODE_J9_METHODREF, formatString, stringLength, flags);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,7 +79,7 @@ enum TR_J9ByteCode
    J9BCgenericReturn,
    J9BCgetstatic, J9BCputstatic,
    J9BCgetfield, J9BCputfield,
-   J9BCinvokevirtual, J9BCinvokespecial, J9BCinvokestatic, J9BCinvokeinterface, J9BCinvokedynamic, J9BCinvokehandle, J9BCinvokehandlegeneric,J9BCinvokespecialsplit, 
+   J9BCinvokevirtual, J9BCinvokespecial, J9BCinvokestatic, J9BCinvokeinterface, J9BCinvokedynamic, J9BCinvokehandle, J9BCinvokehandlegeneric, J9BCinvokespecialsplit, J9BCinvokehandlebasic,
 
    /** \brief
     *      Pops 1 int32_t argument off the stack and truncates to a uint16_t.

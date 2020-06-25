@@ -404,6 +404,7 @@ fixReturns(UDATA *scratch, U_8 * map, J9ROMClass * romClass, J9ROMMethod * romMe
 
 			case JBinvokehandle:
 			case JBinvokehandlegeneric:
+			case JBinvokehandlebasic:
 			case JBinvokevirtual:
 			case JBinvokespecial:
 			case JBinvokespecialsplit:
@@ -633,6 +634,7 @@ fixReturnsWithStackMaps(J9ROMClass * romClass, J9ROMMethod * romMethod, U_32 * s
 
 			case JBinvokehandle:
 			case JBinvokehandlegeneric:
+			case JBinvokehandlebasic:
 			case JBinvokevirtual:
 			case JBinvokespecial:
 			case JBinvokeinterface:

@@ -1302,7 +1302,8 @@ obj:
 				_pc -= 2;
 				break;
 			case JBinvokehandle:
-			case JBinvokehandlegeneric: {
+			case JBinvokehandlegeneric:
+			case JBinvokehandlebasic: {
 				/* The MH object gets eaten during invokehandle calls. Upon restart, unwindSP (savedMethod) is the
 				 * 'would be' slot of MH. We must decrement sp and clear all the slots above unwindSP so that we throw a NPE
 				 * instead of trying to run using the saved method slot. All the slots must be cleared because when the sp is
@@ -8110,6 +8111,31 @@ done:
 	}
 
 	VMINLINE VM_BytecodeAction
+	invokehandlebasic(REGISTER_ARGS_LIST)
+	{
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		U_16 index = *(U_16*)(_pc + 1);
+		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
+		J9RAMMethodRef *ramMethodRef = ((J9RAMMethodRef*)ramConstantPool) + index;
+		UDATA volatile methodIndexAndArgCount = ramMethodRef->methodIndexAndArgCount;
+
+		j9object_t mhReceiver = ((j9object_t*)_sp)[methodIndexAndArgCount & 0xFF];
+		if (J9_UNEXPECTED(NULL == mhReceiver)) {
+			return THROW_NPE;
+		}
+
+		j9object_t lambdaForm = J9VMJAVALANGINVOKEMETHODHANDLE_FORM(_currentThread, mhReceiver);
+		j9object_t memberName = J9VMJAVALANGINVOKELAMBDAFORM_VMENTRY(_currentThread, lambdaForm);
+		_sendMethod = (J9Method *)J9OBJECT_ADDRESS_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
+
+		return GOTO_RUN_METHOD;
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	Assert_VM_unreachable();
+	return EXECUTE_BYTECODE;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	}
+
+	VMINLINE VM_BytecodeAction
 	invokehandlegeneric(REGISTER_ARGS_LIST)
 	{
 #if defined(J9VM_OPT_METHOD_HANDLE)
@@ -8820,7 +8846,7 @@ public:
 		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xE3(227) */
 		JUMP_TABLE_ENTRY(JBreturnFromConstructor), /* 0xE4(228) */
 		JUMP_TABLE_ENTRY(JBgenericReturn), /* 0xE5(229) */
-		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xE6(230) */
+		JUMP_TABLE_ENTRY(JBinvokehandlebasic), /* 0xE6(230) */
 		JUMP_TABLE_ENTRY(JBinvokeinterface2), /* 0xE7(231) */
 		JUMP_TABLE_ENTRY(JBinvokehandle), /* 0xE8(232) */
 		JUMP_TABLE_ENTRY(JBinvokehandlegeneric), /* 0xE9(233) */
@@ -10325,6 +10351,9 @@ executeBytecodeFromLocal:
 		JUMP_TARGET(JBinvokehandlegeneric):
 			SINGLE_STEP();
 			PERFORM_ACTION(invokehandlegeneric(REGISTER_ARGS));
+		JUMP_TARGET(JBinvokehandlebasic):
+			SINGLE_STEP();
+			PERFORM_ACTION(invokehandlebasic(REGISTER_ARGS));
 		JUMP_TARGET(JBinvokestaticsplit):
 			SINGLE_STEP();
 			PERFORM_ACTION(invokestaticsplit(REGISTER_ARGS));

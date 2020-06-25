@@ -46,6 +46,7 @@ static const struct { \
 	U_8 data[sizeof(name) - 1]; \
 } instanceName = { sizeof(name) - 1, name }
 
+DECLARE_CLASSNAME_LIST_DATA(MH_invokeBasic_utf, "invokeBasic");
 DECLARE_CLASSNAME_LIST_DATA(MH_invokeExact_utf, "invokeExact");
 DECLARE_CLASSNAME_LIST_DATA(MH_invoke_utf, "invoke");
 DECLARE_CLASSNAME_LIST_DATA(MH_methodHandle_utf, "java.lang.invoke.MethodHandle");
@@ -2155,6 +2156,7 @@ jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, jvmtiGcp_tra
 				case CFR_CONSTANT_MethodType:
 					{
 						U_16 origin = htEntry->type.methodType.methodType->cpType >> J9DescriptionCpTypeShift;
+						J9UTF8 *invokeMethodName = NULL;
 						switch(origin) {
 						case J9_METHOD_TYPE_ORIGIN_LDC:
 							/* Add and Bind the UTF8 used by this MethodType item */
@@ -2166,6 +2168,7 @@ jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, jvmtiGcp_tra
 
 						case J9_METHOD_TYPE_ORIGIN_INVOKE:
 						case J9_METHOD_TYPE_ORIGIN_INVOKE_EXACT:
+						case J9_METHOD_TYPE_ORIGIN_INVOKE_BASIC:
 							/* Add the referenced Class item to the HT, we explicitly do it here in case the referred class
 							 * has not yet been added. Deferring it to be done via the CFR_CONSTANT_Class case would
 							 * prevent us from being able to save the index in htEntry->type.methodType.classIndex (ie another
@@ -2176,13 +2179,22 @@ jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, jvmtiGcp_tra
 								return rc;
 							}
 
+							if (origin == J9_METHOD_TYPE_ORIGIN_INVOKE_EXACT) {
+								invokeMethodName = (J9UTF8 *)&MH_invokeExact_utf;
+							} else if (origin == J9_METHOD_TYPE_ORIGIN_INVOKE_BASIC) {
+								invokeMethodName = (J9UTF8 *)&MH_invokeBasic_utf;
+							} else {
+								invokeMethodName = (J9UTF8 *)&MH_invoke_utf;
+							}
+
 							/* Add the referenced NameAndSignature item to the HT */
 							rc = jvmtiGetConstantPool_addNAS_name_sig(translation,
 									(void *)(((U_8 *)htEntry->type.methodType.utf8) + 1),  /* Key for this is 1 off the sig utf8 */
-									(origin == J9_METHOD_TYPE_ORIGIN_INVOKE_EXACT ? (J9UTF8 *)&MH_invokeExact_utf : (J9UTF8 *)&MH_invoke_utf),
+									invokeMethodName,
 									htEntry->type.methodType.utf8,
 									&sunCpIndex,
 									&htEntry->type.ref.nameAndTypeIndex);
+
 							if (rc != JVMTI_ERROR_NONE) {
 								return rc;
 							}
@@ -2342,7 +2354,7 @@ jvmtiGetConstantPool_writeConstants(jvmtiGcp_translation *translation, unsigned 
 					GCP_WRITE_U8 (constantPoolBufIndex, CFR_CONSTANT_MethodType);
 					GCP_WRITE_U16(constantPoolBufIndex, htEntry->type.methodType.methodTypeIndex);
 				} else {
-					/* invokehandle or invokehandlegeneric: MethodType mapped to MethodRef */
+					/* invokehandle, invokehandlebasic or invokehandlegeneric: MethodType mapped to MethodRef */
 					jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <MethodRef from MethodType> UTF8 %d->[%s]\n",
 														  htEntry->cpType, htEntry->type.methodType.methodTypeIndex, ""));
 					GCP_WRITE_U8 (constantPoolBufIndex, CFR_CONSTANT_Methodref);

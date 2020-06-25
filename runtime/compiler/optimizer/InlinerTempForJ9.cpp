@@ -5291,7 +5291,8 @@ bool TR_J9InlinerUtil::needTargetedInlining(TR::ResolvedMethodSymbol *callee)
    // so there may be some calls things that inliner missed.
    //
    // Tactically, we also inline again based on hasMethodHandleInvokes because EstimateCodeSize
-   // doesn't yet cope with invokeHandle, invokeHandleGeneric, and invokeDynamic (but it should).
+   // doesn't yet cope with invokeHandle, invokeHandleGeneric, invokeHandleBasic, and invokeDynamic
+   // (but it should).
    //
    if (callee->getMethod()->isArchetypeSpecimen() ||
        callee->hasMethodHandleInvokes())

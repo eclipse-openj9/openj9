@@ -152,7 +152,7 @@ TR_J9ByteCodeIterator::findFloatingPointInstruction()
                return bcIndex();
             break;
          case J9BCinvokestatic:  case J9BCinvokevirtual: case J9BCinvokespecial: case J9BCinvokeinterface:
-         case J9BCinvokedynamic: case J9BCinvokehandle:  case J9BCinvokehandlegeneric:
+         case J9BCinvokedynamic: case J9BCinvokehandle:  case J9BCinvokehandlegeneric:  case J9BCinvokehandlebasic:
          case J9BCinvokestaticsplit: case J9BCinvokespecialsplit:
              {
             int32_t index = next2Bytes();
@@ -275,6 +275,7 @@ TR_J9ByteCodeIterator::printByteCode()
       case J9BCinvokedynamic: // Could eventually need next3bytes
       case J9BCinvokehandle:
       case J9BCinvokehandlegeneric:
+      case J9BCinvokehandlebasic:
       case J9BCinvokespecialsplit:
       case J9BCinvokestaticsplit:
          printFirst(next2Bytes());
@@ -381,7 +382,7 @@ const TR_J9ByteCode TR_J9ByteCodeIterator::_opCodeToByteCodeEnum[] =
    /* 217 */ J9BCiloadw, J9BClloadw, J9BCfloadw, J9BCdloadw, J9BCaloadw,
    /* 222 */ J9BCistorew, J9BClstorew, J9BCfstorew, J9BCdstorew, J9BCastorew,
    /* 227 */ J9BCunknown,
-   /* 228 */ J9BCgenericReturn, J9BCgenericReturn, J9BCunknown, J9BCinvokeinterface2,
+   /* 228 */ J9BCgenericReturn, J9BCgenericReturn, J9BCinvokehandlebasic, J9BCinvokeinterface2,
    /* 232 */ J9BCinvokehandle, J9BCinvokehandlegeneric,
    /* 234 */ J9BCinvokestaticsplit, J9BCinvokespecialsplit,
    /* 236 */ J9BCReturnC, J9BCReturnS, J9BCReturnB, J9BCReturnZ,
@@ -592,6 +593,7 @@ const uint8_t TR_J9ByteCodeIterator::_byteCodeFlags[] =
                              0x03, // J9BCinvokehandle
                              0x03, // J9BCinvokehandlegeneric
                              0x03, // J9BCinvokespecialsplit
+							 0x03, // J9BCinvokehandlebasic
                              0x01, // J9BCReturnC
                              0x01, // J9BCReturnS
                              0x01, // J9BCReturnB
@@ -816,6 +818,7 @@ const uint8_t TR_J9ByteCodeIterator::_estimatedCodeSize[] =
   20, // J9BCinvokehandle
   30, // J9BCinvokehandlegeneric
    6, // J9BCinvokespecialsplit
+  20, // J9BCinvokehandlebasic
   25, // J9BCReturnC
   25, // J9BCReturnS
   25, // J9BCReturnB

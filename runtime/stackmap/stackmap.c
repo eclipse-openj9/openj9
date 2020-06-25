@@ -447,6 +447,7 @@ mapStack(UDATA *scratch, UDATA totalStack, U_8 * map, J9ROMClass * romClass, J9R
 
 			case JBinvokehandle:
 			case JBinvokehandlegeneric:
+			case JBinvokehandlebasic:
 			case JBinvokevirtual:
 			case JBinvokespecial:
 			case JBinvokeinterface:

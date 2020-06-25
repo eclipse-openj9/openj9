@@ -1151,6 +1151,7 @@ private:
 	VMINLINE void markMethodRefAsUsedByInvokeInterface(U_16 methodRefCPIndex);
 	VMINLINE void markMethodRefAsUsedByInvokeHandle(U_16 methodRefCPIndex);
 	VMINLINE void markMethodRefAsUsedByInvokeHandleGeneric(U_16 methodRefCPIndex);
+	VMINLINE void markMethodRefAsUsedByInvokeHandleBasic(U_16 methodRefCPIndex);
 	VMINLINE void markConstantBasedOnCpType(U_16 cpIndex, bool assertNotDoubleOrLong);
 
 

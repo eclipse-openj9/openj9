@@ -124,6 +124,7 @@ private:
    void         genInvokeDynamic(int32_t callSiteIndex);
    TR::Node *    genInvokeHandle(int32_t cpIndex);
    TR::Node *    genInvokeHandleGeneric(int32_t cpIndex);
+   TR::Node *    genInvokeHandleBasic(int32_t cpIndex);
 
    TR::Node *    genHandleTypeCheck(TR::Node *handle, TR::Node *expectedType);
 
@@ -295,6 +296,7 @@ private:
    void expandInvokeExact(TR::TreeTop *tree);
    void expandInvokeDynamic(TR::TreeTop *tree);
    void expandInvokeHandleGeneric(TR::TreeTop *tree);
+   void expandInvokeHandleBasic(TR::TreeTop *tree);
    void expandMethodHandleInvokeCall(TR::TreeTop *tree);
    void insertCustomizationLogicTreeIfEnabled(TR::TreeTop *tree, TR::Node* methodHandle);
    TR::Node* loadCallSiteMethodTypeFromCP(TR::Node* methodHandleInvokeCall);
@@ -387,6 +389,7 @@ private:
    TR_BitVector                     *_methodHandleInvokeCalls;
    TR_BitVector                     *_invokeHandleCalls;
    TR_BitVector                     *_invokeHandleGenericCalls;
+   TR_BitVector                     *_invokeHandleBasicCalls;
    TR_BitVector                     *_invokeDynamicCalls;
    TR_BitVector                     *_ilGenMacroInvokeExactCalls;
 

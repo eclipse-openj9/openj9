@@ -1365,6 +1365,7 @@ ClassFileWriter::rewriteBytecode(J9ROMMethod * method, U_32 length, U_8 * code)
 
 		case JBinvokehandle:
 		case JBinvokehandlegeneric:
+		case JBinvokehandlebasic:
 			code[index] = CFR_BC_invokevirtual;
 			flip16bit(code + index + 1);
 			break;

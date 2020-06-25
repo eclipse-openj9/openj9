@@ -142,6 +142,7 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 		}
 		case JBinvokehandle: /* FALLTHROUGH */
 		case JBinvokehandlegeneric: /* FALLTHROUGH */
+		case JBinvokehandlebasic: /* FALLTHROUGH */
 		case JBinvokeinterface2: /* FALLTHROUGH */
 		case JBinvokeinterface: /* FALLTHROUGH */
 		case JBinvokespecial: /* FALLTHROUGH */

@@ -249,7 +249,10 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 						} else {
 							_romConstantPoolTypes[romCPIndex] = J9CPTYPE_INSTANCE_METHOD;
 						}
-					} else if (isMarked(cfrCPIndex, INVOKE_HANDLEEXACT) || isMarked(cfrCPIndex, INVOKE_HANDLEGENERIC)) {
+					} else if (isMarked(cfrCPIndex, INVOKE_HANDLEEXACT)
+							|| isMarked(cfrCPIndex, INVOKE_HANDLEGENERIC)
+							|| isMarked(cfrCPIndex, INVOKE_HANDLEBASIC)
+					) {
 						_romConstantPoolTypes[romCPIndex] = J9CPTYPE_HANDLE_METHOD;
 					} else if (isMarked(cfrCPIndex, INVOKE_STATIC)) {
 						if (CFR_CONSTANT_InterfaceMethodref == cpTag) {
@@ -503,8 +506,11 @@ ConstantPoolMap::constantPoolDo(ConstantPoolVisitor *visitor)
 				if (CFR_CONSTANT_Methodref == getCPTag(cfrCPIndex)) {
 					/* Will be a MethodRef { class, nas } - dig out nas->slot2 */
 					U_32 methodTypeOriginFlags = 0;
-					if (_classFileOracle->getUTF8Length(getCPSlot1(slot2)) == (sizeof("invokeExact") - 1)) {
+					const char *invokeMethodName = (const char *)_classFileOracle->getUTF8Data(getCPSlot1(slot2));
+					if (0 == strcmp(invokeMethodName, "invokeExact")) {
 						methodTypeOriginFlags = J9_METHOD_TYPE_ORIGIN_INVOKE_EXACT;
+					} else if (0 == strcmp(invokeMethodName, "invokeBasic")) {
+						methodTypeOriginFlags = J9_METHOD_TYPE_ORIGIN_INVOKE_BASIC;
 					} else {
 						methodTypeOriginFlags = J9_METHOD_TYPE_ORIGIN_INVOKE;
 					}

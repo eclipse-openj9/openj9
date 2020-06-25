@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -254,6 +254,7 @@ extern J9_CDATA char * const sunJavaBCNames[];
 #define JBastorew 226
 #define JBreturnFromConstructor 228
 #define JBgenericReturn 229
+#define JBinvokehandlebasic 230
 #define JBinvokeinterface2 231
 #define JBinvokehandle 232
 #define JBinvokehandlegeneric 233

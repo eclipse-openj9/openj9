@@ -1499,7 +1499,7 @@ _illegalPrimitiveReturn:
 		}
 
 		case RTV_SEND:
-			if ((bc == JBinvokehandle) || (bc == JBinvokehandlegeneric)) {
+			if ((bc == JBinvokehandle) || (bc == JBinvokehandlegeneric) || (bc == JBinvokehandlebasic)) {
 				IDATA reasonCode = 0;
 
 				index = PARAM_16(bcIndex, 1);

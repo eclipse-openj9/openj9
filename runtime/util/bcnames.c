@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -254,7 +254,7 @@ const char * const JavaBCNames[] = {
 "JBunimplemented" /* 227 */,
 "JBreturnFromConstructor" /* 228 */,
 "JBgenericReturn" /* 229 */,
-"JBunimplemented" /* 230 */,
+"JBinvokehandlebasic" /* 230 */,
 "JBinvokeinterface2" /* 231 */,
 "JBinvokehandle" /* 232 */,
 "JBinvokehandlegeneric" /* 233 */,

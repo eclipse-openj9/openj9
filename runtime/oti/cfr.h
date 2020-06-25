@@ -801,6 +801,7 @@ typedef struct J9CfrMethod {
 #define CFR_BC_withfield 204
 #define CFR_BC_impdep1 254
 #define CFR_BC_impdep2 255
+#define CFR_BC_invokehandlebasic 230
 #define CFR_BC_invokehandle 232 		/* JSR 292 internals */
 #define CFR_BC_invokehandlegeneric 233
 #define CFR_BC_invokestaticsplit 234 	/* Constant pool splitting / sidetable invokes */

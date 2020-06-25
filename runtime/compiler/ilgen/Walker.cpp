@@ -474,6 +474,9 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
          case J9BCinvokehandlegeneric:
             genInvokeHandleGeneric(next2Bytes());
             _bcIndex += 3; break;
+         case J9BCinvokehandlebasic:
+			 genInvokeHandleBasic(next2Bytes());
+			 _bcIndex += 3; break;
          case J9BCinvokespecialsplit:   genInvokeSpecial(next2Bytes() | J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG);   _bcIndex += 3; break;
          case J9BCinvokestaticsplit:    genInvokeStatic(next2Bytes() | J9_STATIC_SPLIT_TABLE_INDEX_FLAG);     _bcIndex += 3; break;
 
@@ -1650,6 +1653,7 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
          break;
       case J9BCinvokehandle:
       case J9BCinvokehandlegeneric:
+      case J9BCinvokehandlebasic:
          symRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, next2Bytes());
          break;
       case J9BCinvokestaticsplit:
@@ -3401,6 +3405,13 @@ TR_J9ByteCodeIlGenerator::genInvokeHandleGeneric(int32_t cpIndex)
 
    _invokeHandleGenericCalls->set(_bcIndex);
    return callNode;
+   }
+
+TR::Node *
+TR_J9ByteCodeIlGenerator::genInvokeHandleBasic(int32_t cpIndex)
+   {
+   /* TODO: Implement */
+   return NULL;
    }
 
 TR::Node*

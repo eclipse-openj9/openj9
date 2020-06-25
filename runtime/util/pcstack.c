@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -253,7 +253,7 @@ const unsigned char J9JavaInstructionSizeAndBranchActionTable[] = {
 0x00 /* JBunimplemented = 227 */,
 0x41 /* JBreturnFromConstructor = 228 */,
 0x41 /* JBgenericReturn = 229 */,
-0x40 /* JBunimplemented = 230 */,
+0x03 /* JBinvokehandlebasic = 230 */,
 0x65 /* JBinvokeinterface2 = 231 */,
 0x03 /* JBinvokehandle = 232 */,
 0x03 /* JBinvokehandlegeneric = 233 */,
@@ -518,7 +518,7 @@ const unsigned char JavaStackActionTable[] = {
 0x00 /* JBunimplemented = 227  -- pops: 0 pushes: 0*/ ,
 0x00 /* JBreturnFromConstructor = 228  -- pops: 0 pushes: 0*/ ,
 0x00 /* JBgenericReturn = 229  -- pops: 0 pushes: 0*/ ,
-0x00 /* JBunimplemented = 230  -- pops: 0 pushes: 0*/ ,
+0x80 /* JBinvokehandlebasic = 230  -- pops: 0 pushes: 0*/ ,
 0x80 /* JBinvokeinterface2 = 231  -- pops: 0 pushes: 0*/ ,
 0x80 /* JBinvokehandle = 232  -- pops: 0 pushes: 0*/ ,
 0x80 /* JBinvokehandlegeneric = 233  -- pops: 0 pushes: 0*/ ,
@@ -786,7 +786,7 @@ const unsigned char J9BytecodeSlotUseTable[] = {
 	0x0 /* JBunimplemented (16rE3) */,
 	0x0 /* JBreturnFromConstructor (16rE4) */,
 	0x0 /* JBgenericReturn (16rE5) */,
-	0x0 /* JBunimplemented (16rE6) */,
+	0x0 /* JBinvokehandlebasic (16rE6) */,
 	0x0 /* JBinvokeinterface2 (16rE7) */,
 	0x0 /* JBinvokehandle (16rE8) */,
 	0x0 /* JBinvokehandlegeneric (16rE9) */,

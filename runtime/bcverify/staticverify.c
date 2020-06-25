@@ -846,7 +846,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 		case CFR_BC_invokespecial:
 		case CFR_BC_invokevirtual:
 		case CFR_BC_invokestatic:
-			/* Implicitly includes invokehandle & invokehandlegeneric bytecodes
+			/* Implicitly includes invokehandle, invokehandlegeneric & invokehandlebasic bytecodes
 			 * as they haven't been split from invokevirtual yet */
 			NEXT_U16(index, bcIndex);
 			if ((!index) || (index >= cpCount)) {

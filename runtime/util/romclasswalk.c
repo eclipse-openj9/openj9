@@ -498,6 +498,7 @@ static void allSlotsInBytecodesDo(J9ROMClass* romClass, J9ROMMethod* method, J9R
 			case JBinvokestatic:
 			case JBinvokehandle:
 			case JBinvokehandlegeneric:
+			case JBinvokehandlebasic:
 			case JBnew:
 			case JBnewdup:
 			case JBanewarray:

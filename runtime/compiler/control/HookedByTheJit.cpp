@@ -882,7 +882,7 @@ void DLTLogic(J9VMThread* vmThread, TR::CompilationInfo *compInfo)
    if ((walkState.unwindSP - walkState.walkSP) == 0 && bc != J9BCinvokevirtual &&
       bc != J9BCinvokespecial && bc != J9BCinvokestatic && bc != J9BCinvokeinterface &&
       bc != J9BCinvokedynamic && bc != J9BCinvokehandle && bc != J9BCinvokehandlegeneric &&
-      bc != J9BCinvokespecialsplit && bc != J9BCinvokestaticsplit)
+	  bc != J9BCinvokehandlebasic && bc != J9BCinvokespecialsplit && bc != J9BCinvokestaticsplit)
       {
       int32_t numHitsInDLTBuffer = -1;
       TR_YesNoMaybe answer = shouldInitiateDLT(dltBlock, idx, &bcRepeats, &numHitsInDLTBuffer);

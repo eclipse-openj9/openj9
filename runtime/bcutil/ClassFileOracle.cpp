@@ -1780,6 +1780,11 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 				addBytecodeFixupEntry(entry++, codeIndex + 1, cpIndex, ConstantPoolMap::INVOKE_HANDLEEXACT);
 				markMethodRefAsUsedByInvokeHandle(cpIndex);
 				_methodsInfo[methodIndex].modifiers |= J9AccMethodHasMethodHandleInvokes;
+			} else if (methodHandleInvocation == CFR_BC_invokehandlebasic) {
+				code[codeIndex + 0] = CFR_BC_invokehandlebasic;
+				addBytecodeFixupEntry(entry++, codeIndex + 1, cpIndex, ConstantPoolMap::INVOKE_HANDLEBASIC);
+				markMethodRefAsUsedByInvokeHandleBasic(cpIndex);
+				_methodsInfo[methodIndex].modifiers |= J9AccMethodHasMethodHandleInvokes;
 			} else if (shouldConvertInvokeVirtualToInvokeSpecialForMethodRef(cpIndex)) {
 				code[codeIndex + 0] = CFR_BC_invokespecial;
 				addBytecodeFixupEntry(entry++, codeIndex + 1, cpIndex, ConstantPoolMap::INVOKE_SPECIAL);
@@ -2318,13 +2323,16 @@ ClassFileOracle::methodIsNonStaticNonAbstract(U_16 methodIndex)
 
 /**
  * Method to determine if an invokevirtual instruction should be re-written to be an
- * invokehandle or invokehandlegeneric bytecode.  Modifications as follows:
+ * invokehandle or invokehandlegeneric or invokehandlebasic bytecode.
+ * Modifications as follows:
  * 	invokevirtual MethodHandle.invokeExact(any signature) --> invokehandle
  * 	invokevirtual MethodHandle.invoke(any signature) --> invokehandlegeneric
+ * 	invokevirtual MethodHandle.invokeBasic(any signature) --> invokehandlebasic
  *
  * @param methodRefCPIndex - the constantpool index used in the invokevirtual bytecode
- * @return the invoke* bytecode to be used if it needs to be rewritten or 0
- * 	ie: One of: CFR_BC_invokehandlegeneric, CFR_BC_invokehandle, 0
+ *
+ * @return the invoke* bytecode to be used if it needs to be rewritten or 0 i.e. One of:
+ * CFR_BC_invokehandlegeneric, CFR_BC_invokehandle, CFR_BC_invokehandlebasic, 0
  */
 UDATA
 ClassFileOracle::shouldConvertInvokeVirtualToMethodHandleBytecodeForMethodRef(U_16 methodRefCPIndex)
@@ -2343,6 +2351,9 @@ ClassFileOracle::shouldConvertInvokeVirtualToMethodHandleBytecodeForMethodRef(U_
 		} else if (J9UTF8_LITERAL_EQUALS(name->bytes, name->slot1, "invoke")) {
 			/* MethodHandle.invoke */
 			result = CFR_BC_invokehandlegeneric;
+		} else if (J9UTF8_LITERAL_EQUALS(name->bytes, name->slot1, "invokeBasic")) {
+			/* MethodHandle.invokeBasic */
+			result = CFR_BC_invokehandlebasic;
 		}
 	}
 
@@ -2494,7 +2505,7 @@ ClassFileOracle::markMethodRefAsReferenced(U_16 cpIndex)
 }
 
 /* Mark the parts of a MethodRef used for a MethodTypeRef - just the signature of the methodref's nas.
- * The invokehandle/invokehandlegeneric instruction will only ever preserve the signature.
+ * The invokehandle/invokehandlegeneric/invokehandlebasic instruction will only ever preserve the signature.
  */
 void
 ClassFileOracle::markMethodRefForMHInvocationAsReferenced(U_16 cpIndex)
@@ -2682,6 +2693,13 @@ ClassFileOracle::markMethodRefAsUsedByInvokeHandleGeneric(U_16 methodRefCPIndex)
 {
 	markMethodRefForMHInvocationAsReferenced(methodRefCPIndex);
 	_constantPoolMap->markMethodRefAsUsedByInvokeHandleGeneric(methodRefCPIndex);
+}
+
+void
+ClassFileOracle::markMethodRefAsUsedByInvokeHandleBasic(U_16 methodRefCPIndex)
+{
+	markMethodRefForMHInvocationAsReferenced(methodRefCPIndex);
+	_constantPoolMap->markMethodRefAsUsedByInvokeHandleBasic(methodRefCPIndex);
 }
 
 void

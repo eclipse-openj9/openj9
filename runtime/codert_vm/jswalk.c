@@ -1083,6 +1083,7 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 		case JBinvokeinterface:
 		case JBinvokehandle:
 		case JBinvokehandlegeneric:
+		case JBinvokehandlebasic:
 			walkStackedReceiver = TRUE;
 			/* Intentional fall-through */
 		case JBinvokestatic: {

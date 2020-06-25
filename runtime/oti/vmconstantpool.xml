@@ -131,6 +131,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/invoke/VarHandle" versions="9-"/>
 	<classref name="java/lang/invoke/VarHandleInvokeHandle" versions="9-"/>
 	<classref name="java/lang/invoke/FieldVarHandle" versions="9-"/>
+	<classref name="java/lang/invoke/MemberName" flags="opt_openjdk_methodhandle"/>
+	<classref name="java/lang/invoke/LambdaForm" flags="opt_openjdk_methodhandle"/>
 
 	<fieldref class="java/lang/ClassLoader" name="parent" signature="Ljava/lang/ClassLoader;"/>
 	<fieldref class="java/lang/ClassLoader" name="vmRef" signature="J" cast="struct J9ClassLoader *"/>
@@ -330,7 +332,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="operation" signature="I" versions="9-"/>
 	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="accessModeType" signature="Ljava/lang/invoke/MethodType;" versions="9-"/>
 	<fieldref class="java/lang/invoke/FieldVarHandle" name="definingClass" signature="Ljava/lang/Class;" versions="9-"/>
-
+	<fieldref class="java/lang/invoke/MethodHandle" name="form" signature="Ljava/lang/invoke/LambdaForm;" flags="opt_openjdk_methodhandle"/>
+	<fieldref class="java/lang/invoke/LambdaForm" name="vmentry" signature="Ljava/lang/invoke/MemberName;" flags="opt_openjdk_methodhandle"/>
+	
 	<fieldref class="java/lang/Module" name="loader" signature="Ljava/lang/ClassLoader;" flags="opt_module" versions="9-"/>
 	<fieldref class="java/lang/Module" name="name" signature="Ljava/lang/String;" flags="opt_module" versions="9-"/>
 
