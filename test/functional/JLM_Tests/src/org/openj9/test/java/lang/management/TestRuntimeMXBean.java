@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package org.openj9.test.java.lang.management;
 
 import org.testng.annotations.AfterClass;
@@ -89,6 +88,10 @@ public class TestRuntimeMXBean {
 		attribs.put("VmVersion", new AttributeData(String.class.getName(), true, false, false));
 		attribs.put("BootClassPathSupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
 
+		if (org.openj9.test.util.VersionCheck.major() >= 10) {
+			attribs.put("Pid", new AttributeData(Long.TYPE.getName(), true, false, false));
+		}
+
 		// IBM specific APIs
 		attribs.put("CPULoad", new AttributeData(Double.TYPE.getName(), true, false, false));
 		attribs.put("ProcessID", new AttributeData(Long.TYPE.getName(), true, false, false));
@@ -98,7 +101,7 @@ public class TestRuntimeMXBean {
 		attribs.put("AttachApiInitialized", new AttributeData(Boolean.TYPE.getName(), true, false, true)); //$NON-NLS-1$
 		attribs.put("AttachApiTerminated", new AttributeData(Boolean.TYPE.getName(), true, false, true)); //$NON-NLS-1$
 		attribs.put("VmId", new AttributeData(String.class.getName(), true, false, false)); //$NON-NLS-1$
-	}// end static initializer
+	} // end static initializer
 
 	private RuntimeMXBean rb;
 
@@ -627,18 +630,18 @@ public class TestRuntimeMXBean {
 		MBeanAttributeInfo[] attributes = mbi.getAttributes();
 		AssertJUnit.assertNotNull(attributes);
 		int attrNbr;
-		if (org.openj9.test.util.VersionCheck.major() >=14) {
+		if (org.openj9.test.util.VersionCheck.major() >= 10) {
+			// Pid added in Java 10
 			attrNbr = 26;
 		} else {
-			// Java 8 - 13
+			// Java 8 - 9
 			attrNbr = 25;
 		}
 		org.testng.Assert.assertEquals(attributes.length, attrNbr, "wrong number of attributes");
-		for (int i = 0; i < attributes.length; i++) {
-			MBeanAttributeInfo info = attributes[i];
+		for (MBeanAttributeInfo info : attributes) {
 			AssertJUnit.assertNotNull(info);
 			AllManagementTests.validateAttributeInfo(info, TestRuntimeMXBean.ignoredAttributes, attribs);
-		} // end for
+		}
 	}
 
 	@Test

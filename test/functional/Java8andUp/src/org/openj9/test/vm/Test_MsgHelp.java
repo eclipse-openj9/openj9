@@ -1,7 +1,5 @@
-package org.openj9.test.vm;
-
 /*******************************************************************************
- * Copyright (c) 2006, 2018 IBM Corp. and others
+ * Copyright (c) 2006, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +19,7 @@ package org.openj9.test.vm;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package org.openj9.test.vm;
 
 import org.testng.annotations.Test;
 import org.testng.Assert;
@@ -40,7 +39,7 @@ public class Test_MsgHelp {
 		try {
 			messages = MsgHelp.loadMessages("org/openj9/resources/openj9tr_ExternalTestMessages");
 		} catch (IOException e) {
-			Assert.fail("Cannot load message org/openj9/resources/openj9tr_ExternalTestMessages: " + e.toString());
+			Assert.fail("Cannot load message org/openj9/resources/openj9tr_ExternalTestMessages:", e);
 		}
 	}
 
@@ -52,15 +51,12 @@ public class Test_MsgHelp {
 		String msg;
 
 		msg = Test_MsgHelp.getString("K0001", 1);
-		AssertJUnit.assertFalse("Message returned cannot be null, should return 'K0001' if msg not found.",
-				msg == null);
-		AssertJUnit.assertTrue("Expected 'Error message 1: 1', found " + msg, msg.compareTo("Error message 1: 1") == 0);
+		AssertJUnit.assertNotNull("Message returned cannot be null, should return 'K0001' if msg not found.", msg);
+		AssertJUnit.assertEquals("Expected 'Error message 1: 1', found ", "Error message 1: 1", msg);
 
 		msg = Test_MsgHelp.getString("K0002");
-		AssertJUnit.assertFalse("Message returned cannot be null, should return 'K0002' if msg not found.",
-				msg == null);
-		AssertJUnit.assertTrue("Expected 'Error message 2', found " + msg, msg.compareTo("Error message 2") == 0);
-
+		AssertJUnit.assertNotNull("Message returned cannot be null, should return 'K0002' if msg not found.", msg);
+		AssertJUnit.assertEquals("Expected 'Error message 2', found ", "Error message 2", msg);
 	}
 
 	/**
@@ -142,7 +138,7 @@ public class Test_MsgHelp {
 		try {
 			messages = MsgHelp.loadMessages("org/openj9/resources/openj9tr_ExternalTestMessages");
 		} catch (IOException e) {
-			Assert.fail("Cannot load message org/openj9/resources/openj9tr_ExternalTestMessages: " + e.toString());
+			Assert.fail("Cannot load message org/openj9/resources/openj9tr_ExternalTestMessages: ", e);
 		}
 	}
 
