@@ -416,7 +416,6 @@ try {
     draw_summary_table()
 }
 
-
 def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION, ARCHIVE_JAVADOC) {
     stage ("${JOB_NAME}") {
         JOB = build job: JOB_NAME,
@@ -482,7 +481,7 @@ def get_node_labels(NODE_LABELS, SPECS) {
         return LABELS
     }
 
-    if ((SPECS.size() == 1) && (NODE_LABELS.indexOf("=") == -1) ){
+    if ((SPECS.size() == 1) && (NODE_LABELS.indexOf("=") == -1)) {
         // single platform labels, e.g. NODE_LABELS = label1 && label2
         LABELS.put(SPECS[0], NODE_LABELS.trim())
     } else {
@@ -517,8 +516,8 @@ def get_pipeline_name(spec, version) {
 }
 
 /*
-* Returns an HTML summary table for the downstream builds.
-*/
+ * Returns an HTML summary table for the downstream builds.
+ */
 def get_summary_table(identifier) {
     // fetch the downstream builds of the current build
     if (!buildFile) {
@@ -549,7 +548,7 @@ def get_summary_table(identifier) {
     // table body
     summaryText += "<tbody>"
 
-    for (spec in BUILD_SPECS.keySet().sort()){
+    for (spec in BUILD_SPECS.keySet().sort()) {
         if (!VARIABLES."${spec}") {
             // unsupported spec (is not defined in variables file), skip it
             continue
@@ -653,8 +652,8 @@ def get_summary_table(identifier) {
 }
 
 /*
-* Returns the sorted build releases.
-*/
+ * Returns the sorted build releases.
+ */
 def get_sorted_releases() {
     // not using comparator due to https://issues.jenkins-ci.org/browse/JENKINS-44924
 
@@ -689,7 +688,7 @@ def draw_summary_table() {
 }
 
 def refresh_summary_table() {
-    while(pipelinesStatus.values().isEmpty() || pipelinesStatus.values().contains('RUNNING')) {
+    while (pipelinesStatus.values().isEmpty() || pipelinesStatus.values().contains('RUNNING')) {
         sleep(time: SUMMARY_AUTO_REFRESH_TIME.toInteger(), unit: 'MINUTES')
         draw_summary_table()
     }

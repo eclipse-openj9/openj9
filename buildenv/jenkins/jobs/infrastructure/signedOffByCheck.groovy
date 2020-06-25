@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,28 +56,28 @@ timeout(time: 6, unit: 'HOURS') {
                             def WRONG_COMMIT = true
                             def splitCommit = COMMIT.split("\\r?\\n")
                             def lastBlankLine = 0
-                            if (splitCommit[-1] ==~ /[ ]{4}This reverts commit [0-9a-f]{40}[\.]/){
-                            	echo "The following commit appears to be a revert, does not need sign-off:\n${COMMIT}" 
-                            	WRONG_COMMIT = false
-                            }else{
-	                            for (int i = splitCommit.size() - 1; i >= 0; i--) {
-	                                if ( splitCommit[i] ==~ /^\s*$/ ) {
-	                                    lastBlankLine = i
-	                                    break  
-	                                }
-	                            }
-	                            for (int j = splitCommit.size() - 1; j > lastBlankLine; j-- ) {
-	                                if ( splitCommit[j] ==~ /\s*Signed\-off\-by\:\s+[^<]+\s+\<[^@]+@[^@]+\.[^@]+\>/ ) {
-	                                    echo "The following commit appears to have a proper sign-off:\n${COMMIT}" 
-	                                    WRONG_COMMIT = false
-	                                    break
-	                                }
-	                            }
-	                            if ( WRONG_COMMIT ) {
-	                                echo "FAILURE - The following commit appears to have an incorrect sign-off:\n${COMMIT}"
-	                                BAD_COMMITS << "${COMMIT}"
-	                                FAIL = true
-	                            }
+                            if (splitCommit[-1] ==~ /[ ]{4}This reverts commit [0-9a-f]{40}[\.]/) {
+                                echo "The following commit appears to be a revert, does not need sign-off:\n${COMMIT}"
+                                WRONG_COMMIT = false
+                            } else {
+                                for (int i = splitCommit.size() - 1; i >= 0; i--) {
+                                    if (splitCommit[i] ==~ /^\s*$/) {
+                                        lastBlankLine = i
+                                        break
+                                    }
+                                }
+                                for (int j = splitCommit.size() - 1; j > lastBlankLine; j--) {
+                                    if (splitCommit[j] ==~ /\s*Signed\-off\-by\:\s+[^<]+\s+\<[^@]+@[^@]+\.[^@]+\>/) {
+                                        echo "The following commit appears to have a proper sign-off:\n${COMMIT}"
+                                        WRONG_COMMIT = false
+                                        break
+                                    }
+                                }
+                                if (WRONG_COMMIT) {
+                                    echo "FAILURE - The following commit appears to have an incorrect sign-off:\n${COMMIT}"
+                                    BAD_COMMITS << "${COMMIT}"
+                                    FAIL = true
+                                }
                             }
                         }
                         if (FAIL) {
@@ -99,4 +99,3 @@ timeout(time: 6, unit: 'HOURS') {
         }
     }
 }
-

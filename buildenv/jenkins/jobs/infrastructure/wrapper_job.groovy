@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,12 +18,12 @@
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
-*******************************************************************************/
+ *******************************************************************************/
 
-timeout(time: 6, unit: 'HOURS'){
+timeout(time: 6, unit: 'HOURS') {
     timestamps {
         label = (params.LABEL ? params.LABEL : 'worker')
-        node (label){
+        node (label) {
             checkout scm
 
             // This yaml file contains the specifications for the pipeline that will be created
@@ -32,10 +32,10 @@ timeout(time: 6, unit: 'HOURS'){
             // The parameters should be a boolean. This will cycle through all of the parameters
             params.each { param ->
                 // If the boolean parameter is true, it will create the specified wrapper job
-                if (param.value == true){
+                if (param.value == true) {
                     def name
                     def version
-                    if (param.key.contains('OpenJDK')){
+                    if (param.key.contains('OpenJDK')) {
                         def versionStartIndex = param.key.indexOf('OpenJDK') + 7 // 7 is the length og OpenJDK
                         def versionLastIndex = param.key.length()
                         version = param.key.substring(versionStartIndex, versionLastIndex)
@@ -44,13 +44,13 @@ timeout(time: 6, unit: 'HOURS'){
                         name = param.key
                     }
                     def specifications = VARIABLES.get(name)
-                    if (version){
+                    if (version) {
                         specifications.job_name = specifications.job_name + version
                     }
-                    if (specifications){
-                        if (specifications.triggers && specifications.triggers.pull_request_builder){
+                    if (specifications) {
+                        if (specifications.triggers && specifications.triggers.pull_request_builder) {
                             specifications.triggers.pull_request_builder.admin_list = getAdminList(specifications.triggers.pull_request_builder.admin_list)
-                            if (version){
+                            if (version) {
                                 specifications.github_project = specifications.github_project + version
                                 specifications.triggers.pull_request_builder.context = specifications.triggers.pull_request_builder.context + version
                             }
@@ -65,8 +65,8 @@ timeout(time: 6, unit: 'HOURS'){
     }
 }
 
-def createWrapper(GENERAL_SPECIFICATIONS, SPECIFICATIONS){
-    stage("Build ${SPECIFICATIONS.job_name}"){
+def createWrapper(GENERAL_SPECIFICATIONS, SPECIFICATIONS) {
+    stage("Build ${SPECIFICATIONS.job_name}") {
         def parameters = [:]
 
         parameters = GENERAL_SPECIFICATIONS + SPECIFICATIONS
@@ -75,11 +75,11 @@ def createWrapper(GENERAL_SPECIFICATIONS, SPECIFICATIONS){
     }
 }
 
-def getAdminList(admin_list_spec){
+def getAdminList(admin_list_spec) {
     def admin_list = []
     def all_admin_lists = readYaml file: 'buildenv/jenkins/variables/admin_list.yml'
 
-    switch(admin_list_spec) {
+    switch (admin_list_spec) {
         case 'Extensions':
             admin_list.addAll(all_admin_lists.extensions)
             admin_list.addAll(all_admin_lists.openj9)

@@ -31,8 +31,8 @@ class Buildspec {
      * Helper function to check if a variable is a map.
      * This is needed because .isMap() is not on the default jenkins whitelist
      */
-    private static boolean isMap(x){
-        switch(x){
+    private static boolean isMap(x) {
+        switch (x) {
         case Map:
             return true
         default:
@@ -44,11 +44,11 @@ class Buildspec {
      * If x can be converted to integer, return the result.
      * else return x
      */
-    private static toKey(x){
+    private static toKey(x) {
         def key = x
-        try{
+        try {
             key = x as int
-        } catch (def e){ }
+        } catch (def e) { }
         return key
     }
 
@@ -57,15 +57,15 @@ class Buildspec {
      * my_def['foo']['bar']['baz'], with the added benefit that if any lookup
      * along the path fails, null is returned rather than throwing an exception
      */
-    private getNestedField(String full_name){
+    private getNestedField(String full_name) {
         def names = full_name.split("\\.")
         def value = my_def
         // note we don't really want to find, but we use this as a verson of .each which we can abort
-        if (names.size() == 0){
+        if (names.size() == 0) {
             return null
         }
         names.find { element_name ->
-            if (value.containsKey(element_name)){
+            if (value.containsKey(element_name)) {
                 value = value[element_name]
                 return false // continue iterating the list
             } else {
@@ -84,19 +84,19 @@ class Buildspec {
      * else:
      *    - <name>
      *  - <parent>.getScalarField()
-     *  with the parents being evaluated in the the order they are listed in the yaml file
+     * with the parents being evaluated in the the order they are listed in the yaml file
      */
-    public getScalarField(name, sdk_ver){
+    public getScalarField(name, sdk_ver) {
         def sdk_key = toKey(sdk_ver)
         def field = getNestedField(name)
-        if(field == null){
+        if (field == null) {
             field = parents.findResult {it.getScalarField(name, sdk_ver)}
         }
 
         // Does this entry specify different values for different sdk versions?
-        if (null != field && isMap(field)){
+        if (null != field && isMap(field)) {
             // If we have an sdk specific value use that
-            if (field.containsKey(sdk_key)){
+            if (field.containsKey(sdk_key)) {
                 field = field[sdk_key]
             } else {
                 // else fall back to the "all" key
@@ -105,7 +105,6 @@ class Buildspec {
         }
         return field
     }
-
 
     /* Get a list of values composed by concatinating the values of the
      * following fields in order:
@@ -127,11 +126,11 @@ class Buildspec {
             field_value += parent.getVectorField(name, sdk_ver);
         }
         def my_value = getNestedField(name)
-        if (my_value != null){
+        if (my_value != null) {
             // Do we specify different values for different SDK versions?
-            if (isMap(my_value)){
+            if (isMap(my_value)) {
                 // If there is an "all" definition put that first
-                if (my_value.containsKey('all')){
+                if (my_value.containsKey('all')) {
                     field_value += my_value['all']
                 }
                 // If we have an SDK specific value, add that as well
@@ -139,7 +138,7 @@ class Buildspec {
                     def sdk_val = my_value[sdk_key]
                     // Special case handling for old style variables where
                     // excluded tests are stored as a map rather than a list
-                    if(isMap(sdk_val)){
+                    if (isMap(sdk_val)) {
                         field_value += sdk_val.keySet()
                     } else {
                         field_value += sdk_val
@@ -157,10 +156,10 @@ class Buildspec {
      * cfg - Collection returned from yaml corresponding to this buildspec.
      *       Typically this would be VARIABLES[<build_spec_name>]
      */
-    public Buildspec(mgr, cfg){
+    public Buildspec(mgr, cfg) {
         my_def = cfg
         parents = []
-        if(my_def.containsKey('extends')) {
+        if (my_def.containsKey('extends')) {
             my_def['extends'].each { parent_name ->
                 parents << mgr.getSpec(parent_name)
             }
@@ -180,18 +179,17 @@ class BuildspecManager {
      * vars_ - Collection that the buildspec info should be pulled from
      *         Typically this would be VARIABLES.
      */
-    public BuildspecManager(vars_){
+    public BuildspecManager(vars_) {
         vars = vars_
         buildspecs = [:]
     }
-
 
     /*
      * Get a Buildspec for a given name.
      */
     @NonCPS
-    public getSpec(name){
-        if(!buildspecs.containsKey(name)){
+    public getSpec(name) {
+        if (!buildspecs.containsKey(name)) {
             buildspecs[name] = new Buildspec(this, vars[name])
         }
         return buildspecs[name]
@@ -203,13 +201,13 @@ def buildspec_manager
 pipelineFunctions = load 'buildenv/jenkins/common/pipeline-functions.groovy'
 
 /*
-* Parses the Jenkins job variables file and populates the VARIABLES collection.
-* If a variables file is not set, parse the default variables file.
-* The variables file is in YAML format and contains configuration settings
-* required to compile and test the OpenJ9 extensions for OpenJDK on multiple
-* platforms.
-*/
-def parse_variables_file(){
+ * Parses the Jenkins job variables file and populates the VARIABLES collection.
+ * If a variables file is not set, parse the default variables file.
+ * The variables file is in YAML format and contains configuration settings
+ * required to compile and test the OpenJ9 extensions for OpenJDK on multiple
+ * platforms.
+ */
+def parse_variables_file() {
     DEFAULT_VARIABLE_FILE = "buildenv/jenkins/variables/defaults.yml"
 
     // check if a variable file is passed as a Jenkins build parameter
@@ -229,8 +227,8 @@ def parse_variables_file(){
 }
 
 /*
-* Fetch the user provided variable file.
-*/
+ * Fetch the user provided variable file.
+ */
 def get_variables_file() {
     VARIABLE_FILE = (params.VARIABLE_FILE) ? params.VARIABLE_FILE : ""
     echo "VARIABLE_FILE:'${VARIABLE_FILE}'"
@@ -253,8 +251,8 @@ def get_variables_file() {
 }
 
 /*
-* Check out the user variable file.
-*/
+ * Check out the user variable file.
+ */
 def checkout_file() {
     sh "git config remote.vendor.url ${VENDOR_REPO}"
     sh "git config remote.vendor.fetch +refs/heads/${VENDOR_BRANCH}:refs/remotes/vendor/${VENDOR_BRANCH}"
@@ -263,12 +261,12 @@ def checkout_file() {
 }
 
 /*
-* Sets the Git repository URLs and branches for all sources required to build
-* the OpenJ9 extensions for OpenJDK.
-* Initializes variables to the value passed as build parameters.
-* When no values are available as build parameters set them to the values
-* available with the variable file otherwise set them to empty strings.
-*/
+ * Sets the Git repository URLs and branches for all sources required to build
+ * the OpenJ9 extensions for OpenJDK.
+ * Initializes variables to the value passed as build parameters.
+ * When no values are available as build parameters set them to the values
+ * available with the variable file otherwise set them to empty strings.
+ */
 def set_repos_variables(BUILD_SPECS=null) {
     // check if passed as Jenkins build parameters
     // if not set as params, check the variables file
@@ -323,11 +321,11 @@ def set_repos_variables(BUILD_SPECS=null) {
 }
 
 /*
-* Initializes OpenJDK repository URL, branch, SHA for given release and returns
-* them as a map.
-* Build parameters take precedence over custom variables (see variables file).
-* Throws an error if repository URL or branch are not provided.
-*/
+ * Initializes OpenJDK repository URL, branch, SHA for given release and returns
+ * them as a map.
+ * Build parameters take precedence over custom variables (see variables file).
+ * Throws an error if repository URL or branch are not provided.
+ */
 def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
     // map to store git repository information by spec
     def openjdk_info = [:]
@@ -397,12 +395,12 @@ def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
 }
 
 /*
-* Initializes the OpenJ9 and OMR repositories variables with values from
-* the variables file if they are not set as build parameters.
-* If no values available in the variable file then initialize these variables
-* with default values, otherwise set them to empty strings (to avoid
-* downstream builds errors - Jenkins build parameters should not be null).
-*/
+ * Initializes the OpenJ9 and OMR repositories variables with values from
+ * the variables file if they are not set as build parameters.
+ * If no values available in the variable file then initialize these variables
+ * with default values, otherwise set them to empty strings (to avoid
+ * downstream builds errors - Jenkins build parameters should not be null).
+ */
 def set_extensions_variables(defaults=null) {
     OPENJ9_REPO = params.OPENJ9_REPO
     if (!OPENJ9_REPO) {
@@ -472,9 +470,9 @@ def set_extensions_variables(defaults=null) {
 }
 
 /*
-* Returns the value of the element identified by the given key or an empty string
-* if the map contains no mapping for the key.
-*/
+ * Returns the value of the element identified by the given key or an empty string
+ * if the map contains no mapping for the key.
+ */
 def get_value(MAP, KEY) {
     if (MAP != null) {
         for (item in MAP) {
@@ -493,27 +491,27 @@ def get_value(MAP, KEY) {
 }
 
 /*
-* Returns Jenkins credentials ID required to connect to GitHub using
-* the ssh protocol.
-* Returns empty string if no values is provided in the variables file (not
-* required for public repositories).
-*/
+ * Returns Jenkins credentials ID required to connect to GitHub using
+ * the ssh protocol.
+ * Returns empty string if no values is provided in the variables file (not
+ * required for public repositories).
+ */
 def get_git_user_credentials_id() {
     return get_user_credentials_id("git")
 }
 
 /*
-* Returns Jenkins credentials ID required to connect to GitHub using
-* API (username & password)
-* Returns empty string if no values is provided in the variables file
-*/
+ * Returns Jenkins credentials ID required to connect to GitHub using
+ * API (username & password)
+ * Returns empty string if no values is provided in the variables file
+ */
 def get_github_user_credentials_id() {
     return get_user_credentials_id("github")
 }
 
 /*
-* Returns Jenkins credentials ID from the variable file for given key.
-*/
+ * Returns Jenkins credentials ID from the variable file for given key.
+ */
 def get_user_credentials_id(KEY) {
     if (VARIABLES.credentials && VARIABLES.credentials."${KEY}") {
         return VARIABLES.credentials."${KEY}"
@@ -523,13 +521,13 @@ def get_user_credentials_id(KEY) {
 }
 
 /*
-* Sets the NODE variable to the labels identifying nodes by platform suitable
-* to run a Jenkins job.
-* Fetches the labels from the variables file when the node is not set as build
-* parameter.
-* The node's labels could be a single label - e.g. label1 - or a boolean
-* expression - e.g. label1 && label2 || label3.
-*/
+ * Sets the NODE variable to the labels identifying nodes by platform suitable
+ * to run a Jenkins job.
+ * Fetches the labels from the variables file when the node is not set as build
+ * parameter.
+ * The node's labels could be a single label - e.g. label1 - or a boolean
+ * expression - e.g. label1 && label2 || label3.
+ */
 def set_node(job_type) {
     // fetch labels for given platform/spec
     NODE = ''
@@ -552,23 +550,23 @@ def set_node(job_type) {
 }
 
 /*
-* Set the RELEASE variable with the value provided in the variables file.
-*/
+ * Set the RELEASE variable with the value provided in the variables file.
+ */
 def set_release() {
     RELEASE = buildspec_manager.getSpec(SPEC).getScalarField("release", SDK_VERSION)
 }
 
 /*
-* Set the JDK_FOLDER variable with the value provided in the variables file.
-*/
+ * Set the JDK_FOLDER variable with the value provided in the variables file.
+ */
 def set_jdk_folder() {
     JDK_FOLDER = buildspec_manager.getSpec('misc').getScalarField("jdk_image_dir", SDK_VERSION)
 }
 
 /*
-* Sets variables for a job that builds the OpenJ9 extensions for OpenJDK for a
-* given platform and version.
-*/
+ * Sets variables for a job that builds the OpenJ9 extensions for OpenJDK for a
+ * given platform and version.
+ */
 def set_build_variables() {
     set_repos_variables()
 
@@ -641,8 +639,8 @@ def get_date() {
 }
 
 /*
-* Set TESTS_TARGETS, indicating the level of testing.
-*/
+ * Set TESTS_TARGETS, indicating the level of testing.
+ */
 def set_test_targets() {
     // Map of Maps
     TESTS = [:]
@@ -668,10 +666,10 @@ def set_test_targets() {
 }
 
 /*
-* Set TEST_FLAG for all targets if defined in variable file.
-* Set EXCLUDED_TESTS if defined in variable file.
-* Set EXTRA_TEST_LABELS map if defined in variable file.
-*/
+ * Set TEST_FLAG for all targets if defined in variable file.
+ * Set EXCLUDED_TESTS if defined in variable file.
+ * Set EXTRA_TEST_LABELS map if defined in variable file.
+ */
 def set_test_misc() {
     if (!params.TEST_NODE) {
         // Only add extra test labels if the user has not specified a specific TEST_NODE
@@ -712,7 +710,6 @@ def set_test_misc() {
     echo "TESTS:'${TESTS}'"
 }
 
-
 def set_slack_channel() {
     SLACK_CHANNEL = params.SLACK_CHANNEL
     if (!SLACK_CHANNEL && (!params.PERSONAL_BUILD || params.PERSONAL_BUILD != 'true')) {
@@ -735,7 +732,7 @@ def set_artifactory_config(id="Nightly") {
             ARTIFACTORY_CONFIG[geo] = [:]
             ARTIFACTORY_CONFIG[geo]['server'] = get_value(VARIABLES.artifactory.server, geo)
             def numArtifacts = get_value(VARIABLES.artifactory.numArtifacts, geo)
-            if (!numArtifacts ){
+            if (!numArtifacts) {
                 numArtifacts = get_value(VARIABLES.build_discarder.logs, pipelineFunctions.convert_build_identifier(id))
             }
             ARTIFACTORY_CONFIG[geo]['numArtifacts'] = numArtifacts.toInteger()
@@ -808,7 +805,7 @@ def get_node_platform(nodeLabels) {
     if (nodeLabels.contains('hw.arch.') && nodeLabels.contains('sw.os.')) {
         labelArray = nodeLabels.tokenize()
         for (label in labelArray) {
-            switch(label) {
+            switch (label) {
                 case ~/hw\.arch\.[a-z0-9]+/:
                     arch = label.substring(8)
                     //println arch
@@ -824,12 +821,12 @@ def get_node_platform(nodeLabels) {
         echo "WARNING: Unable to determine node arch/os:'${nodeLabels}'"
         return ''
     }
-    switch(baseOS) {
+    switch (baseOS) {
         case ['aix', 'windows', 'osx', 'zos']:
             return baseOS
             break
         case ['linux', 'ubuntu', 'rhel', 'cent', 'sles'] :
-            switch(arch) {
+            switch (arch) {
                 case 'x86':
                     return 'xlinux'
                     break
@@ -887,16 +884,16 @@ def set_build_identifier() {
 }
 
 def set_custom_description() {
-    if (params.CUSTOM_DESCRIPTION){
+    if (params.CUSTOM_DESCRIPTION) {
         def TMP_DESC = (currentBuild.description) ? "<br>" + currentBuild.description : ""
         currentBuild.description = CUSTOM_DESCRIPTION + TMP_DESC
     }
 }
 
 /*
-* Adds a String type Parameter
-* Takes a Key-Value map which are used as the param name and default value
-*/
+ * Adds a String type Parameter
+ * Takes a Key-Value map which are used as the param name and default value
+ */
 def add_string_params(PARAMETERS_TO_ADD) {
     PARAMETERS_TO_ADD.each { key, value ->
         PARAMETERS.add(string(name: key, defaultValue: value, description: '', trim: true))
@@ -921,7 +918,7 @@ def setup() {
             SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_SHAS_MAP)
             BUILD_NAME = buildFile.get_build_job_name(SPEC, SDK_VERSION, BUILD_IDENTIFIER)
             // Stash DSL file so we can quickly load it on master
-            if (params.AUTOMATIC_GENERATION != 'false'){
+            if (params.AUTOMATIC_GENERATION != 'false') {
                 stash includes: 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy', name: 'DSL'
             }
             break
@@ -934,8 +931,8 @@ def setup() {
 }
 
 /*
-* Initializes all of the required variables for a Jenkins job by given job type.
-*/
+ * Initializes all of the required variables for a Jenkins job by given job type.
+ */
 def set_job_variables(job_type) {
 
     // initialize VARIABLES
@@ -950,7 +947,7 @@ def set_job_variables(job_type) {
     // check mandatory parameters if any
     try {
         validate_arguments(ARGS)
-    } catch(MissingPropertyException e){
+    } catch (MissingPropertyException e) {
         // ignore when ARGS is not set
     }
 
@@ -997,8 +994,8 @@ def set_job_variables(job_type) {
 }
 
 /*
-* Checks if mandatory arguments are set.
-*/
+ * Checks if mandatory arguments are set.
+ */
 def validate_arguments(ARGS) {
     for (arg in ARGS) {
         if (!params.get(arg)) {
@@ -1016,8 +1013,8 @@ def validate_arguments(ARGS) {
 }
 
 /*
-* Prints the error stack trace.
-*/
+ * Prints the error stack trace.
+ */
 def printStackTrace(e) {
     def writer = new StringWriter()
     e.printStackTrace(new PrintWriter(writer))
@@ -1025,9 +1022,9 @@ def printStackTrace(e) {
 }
 
 /*
-* Sets USER_CREDENTIALS_ID to the value provided in the variables file or an
-* empty string.
-*/
+ * Sets USER_CREDENTIALS_ID to the value provided in the variables file or an
+ * empty string.
+ */
 def set_user_credentials() {
     USER_CREDENTIALS_ID = get_git_user_credentials_id()
     if (!USER_CREDENTIALS_ID) {
@@ -1040,9 +1037,9 @@ def set_user_credentials() {
 }
 
 /*
-* Converts from SSH to HTTPS protocol the public Git repository URL and from
-* HTTPS to SSH the private repositories.
-*/
+ * Converts from SSH to HTTPS protocol the public Git repository URL and from
+ * HTTPS to SSH the private repositories.
+ */
 def convert_url(value) {
     if ((value && value.contains('git@')) && !USER_CREDENTIALS_ID) {
         // external repos, no credentials, use HTTPS protocol
@@ -1058,10 +1055,10 @@ def convert_url(value) {
 }
 
 /*
-* Checks for vendor test sources and initializes variables required to clone the
-* vendor test source Git repositories. Uses variable files when build parameters
-* are not provided.
-*/
+ * Checks for vendor test sources and initializes variables required to clone the
+ * vendor test source Git repositories. Uses variable files when build parameters
+ * are not provided.
+ */
 def set_vendor_variables() {
     VENDOR_TEST_REPOS_MAP = [:]
     VENDOR_TEST_BRANCHES_MAP = [:]
@@ -1150,15 +1147,15 @@ def set_vendor_variables() {
 }
 
 /*
-*  Extracts the Git repository name from URL and converts it to upper case.
-*/
+ * Extracts the Git repository name from URL and converts it to upper case.
+ */
 def get_repo_name_from_url(URL) {
     return URL.substring(URL.lastIndexOf('/') + 1, URL.lastIndexOf('.git')).toUpperCase()
 }
 
 /*
-* Returns a list of releases to build.
-*/
+ * Returns a list of releases to build.
+ */
 def get_build_releases(releases_by_specs) {
     def build_releases = []
 
@@ -1171,8 +1168,8 @@ def get_build_releases(releases_by_specs) {
 }
 
 /*
-* Returns a list of specs for a given version.
-*/
+ * Returns a list of specs for a given version.
+ */
 def get_build_specs_by_release(version, specs) {
     def specs_by_release = []
 
@@ -1194,7 +1191,7 @@ def get_specs(SUPPORTED_SPECS) {
 
     if (!RELEASES) {
         // get releases
-        params.each { key, value  ->
+        params.each { key, value ->
             if ((key.indexOf('Java') != -1) && (value == true)) {
                 RELEASES.add(key.substring(4))
             }
@@ -1245,8 +1242,8 @@ def get_specs(SUPPORTED_SPECS) {
 }
 
 /*
-* Set build extra options
-*/
+ * Set build extra options
+ */
 def set_build_extra_options(build_specs=null) {
     if (!build_specs) {
         buildspec = buildspec_manager.getSpec(SPEC)
@@ -1341,8 +1338,8 @@ def set_build_extra_options(build_specs=null) {
 }
 
 /*
-* Set the Git repository URL and branch for the AdoptOpenJDK Testing material.
-*/
+ * Set the Git repository URL and branch for the AdoptOpenJDK Testing material.
+ */
 def set_adoptopenjdk_tests_repository(build_releases=null) {
     ADOPTOPENJDK_MAP = [:]
 
@@ -1391,7 +1388,7 @@ def set_adoptopenjdk_tests_repository(build_releases=null) {
 }
 
 // Creates a job using the job DSL plugin on Jenkins
-def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
+def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id) {
 
     // NOTE: The following 4 DEFAULT variables can be configured in the Jenkins Global Config.
     // This allows us to know what the default values are without being told explicitly.
@@ -1427,8 +1424,8 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
     params.put('SCM_BRANCH', SCM_BRANCH)
 
     def templatePath = 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy'
-    pipelineFunctions.retry_and_delay({
-        jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params},
+    pipelineFunctions.retry_and_delay(
+        { jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params },
         3, 120)
 }
 

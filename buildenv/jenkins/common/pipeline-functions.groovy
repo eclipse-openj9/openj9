@@ -148,16 +148,16 @@ def git_push_auth(REPO, OPTION, CRED_ID) {
 }
 
 /*
-* Set Github Commit Status
-*
-* Args:
-* - REPO: Repository to update status
-* - CONTEXT: Usually Build Name
-* - SHA: Git commit to update
-* - URL: Link to build details
-* - STATE: Build Result, one of PENDING, SUCCESS, FAILURE, ERROR
-* - MESSAGE: Build result message
-*/
+ * Set Github Commit Status
+ *
+ * Args:
+ * - REPO: Repository to update status
+ * - CONTEXT: Usually Build Name
+ * - SHA: Git commit to update
+ * - URL: Link to build details
+ * - STATE: Build Result, one of PENDING, SUCCESS, FAILURE, ERROR
+ * - MESSAGE: Build result message
+ */
 def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
     step([
         $class: "GitHubCommitStatusSetter",
@@ -169,7 +169,6 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
         statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: MESSAGE, state: STATE]] ]
     ]);
 }
-
 
 def cancel_running_builds(JOB_NAME, BUILD_IDENTIFIER) {
     echo "Looking to stop running jobs:'${JOB_NAME}' from build:'${BUILD_IDENTIFIER}'"
@@ -408,7 +407,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         echo "Using VENDOR_TEST_REPOS = ${VENDOR_TEST_REPOS}, VENDOR_TEST_BRANCHES = ${VENDOR_TEST_BRANCHES}, VENDOR_TEST_SHAS = ${VENDOR_TEST_SHAS}, VENDOR_TEST_DIRS = ${VENDOR_TEST_DIRS}"
 
         // For PullRequest Builds, overwrite the OpenJ9 sha for test jobs so they checkout the PR (OpenJ9 PRs only)
-        if (params.ghprbPullId && params.ghprbGhRepository == 'eclipse/openj9' ) {
+        if (params.ghprbPullId && params.ghprbGhRepository == 'eclipse/openj9') {
             SHAS['OPENJ9'] = "origin/pr/${params.ghprbPullId}/merge"
         }
 
@@ -479,12 +478,13 @@ def convert_build_identifier(val) {
             return "Personal"
     }
 }
+
 /*
-* Finds the downstream builds of a build.
-* Limits the search only to the downstream builds with given names.
-* Returns a map of builds by job name, where builds is a list of builds in
-* descending order.
-*/
+ * Finds the downstream builds of a build.
+ * Limits the search only to the downstream builds with given names.
+ * Returns a map of builds by job name, where builds is a list of builds in
+ * descending order.
+ */
 def get_downstream_builds(upstreamBuild, upstreamJobName, downstreamJobNames) {
     def downstreamBuilds = [:]
     def pattern = /.*${upstreamJobName}.*${upstreamBuild.number}.*/
@@ -516,9 +516,9 @@ def get_downstream_builds(upstreamBuild, upstreamJobName, downstreamJobNames) {
 }
 
 /*
-* Returns the build status icon.
-* Requires Embeddable Build Status plugin.
-*/
+ * Returns the build status icon.
+ * Requires Embeddable Build Status plugin.
+ */
 def get_build_embedded_status_link(build) {
     if (build) {
         def buildLink = "${JENKINS_URL}${build.getUrl()}"
@@ -528,15 +528,15 @@ def get_build_embedded_status_link(build) {
 }
 
 /*
-* Returns a map storing the downstream job names for given version and spec.
-*/
+ * Returns a map storing the downstream job names for given version and spec.
+ */
 def get_downstream_job_names(spec, version, identifier) {
-    /* e.g. [build:                 Build-JDK11-linux_390-64_cmprssptrs,
-             extended.functional:   Test-extended.functional-JDK11-linux_390-64_cmprssptrs,
-             extended.system:       Test-extended.system-JDK11-linux_390-64_cmprssptrs,
-             sanity.functional:     Test-sanity.functional-JDK11-linux_390-64_cmprssptrs,
-             sanity.system:         Test-sanity.system-JDK11-linux_390-64_cmprssptrs]
-    */
+    /* e.g. [build:               Build-JDK11-linux_390-64_cmprssptrs,
+     *       extended.functional: Test-extended.functional-JDK11-linux_390-64_cmprssptrs,
+     *       extended.system:     Test-extended.system-JDK11-linux_390-64_cmprssptrs,
+     *       sanity.functional:   Test-sanity.functional-JDK11-linux_390-64_cmprssptrs,
+     *       sanity.system:       Test-sanity.system-JDK11-linux_390-64_cmprssptrs]
+     */
 
     downstreamJobNames = [:]
     downstreamJobNames['build'] = get_build_job_name(spec, version, identifier)
@@ -604,19 +604,19 @@ def generate_test_jobs(TESTS, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO) {
 }
 
 /*
-* Use curly brackets to wrap the parameter, command.
-* Use a semicolon to separate each command if there are mutiple commands.
-* The parameters, numRetries and waitTime, are integers.
-* The parameter, units, is a string.
-* The parameter, units, can be 'NANOSECONDS', 'MICROSECONDS', 'MILLISECONDS',
-* 'SECONDS', 'MINUTES', 'HOURS', 'DAYS'
-* Example:
-* retry_and_delay({println "This is an example"})
-* retry_and_delay({println "This is an example"}, 4)
-* retry_and_delay({println "This is an example"}, 4, 120)
-* retry_and_delay({println "This is an example"}, 4, 3, 'MINUTES')
-* retry_and_delay({println "This is an example"; println "Another example"})
-*/
+ * Use curly brackets to wrap the parameter, command.
+ * Use a semicolon to separate each command if there are mutiple commands.
+ * The parameters, numRetries and waitTime, are integers.
+ * The parameter, units, is a string.
+ * The parameter, units, can be 'NANOSECONDS', 'MICROSECONDS', 'MILLISECONDS',
+ * 'SECONDS', 'MINUTES', 'HOURS', 'DAYS'
+ * Example:
+ * retry_and_delay({println "This is an example"})
+ * retry_and_delay({println "This is an example"}, 4)
+ * retry_and_delay({println "This is an example"}, 4, 120)
+ * retry_and_delay({println "This is an example"}, 4, 3, 'MINUTES')
+ * retry_and_delay({println "This is an example"; println "Another example"})
+ */
 def retry_and_delay(command, numRetries = 3, waitTime = 60, units = 'SECONDS') {
     def ret = false
     retry(numRetries) {
@@ -654,15 +654,15 @@ def setup_pull_request_single_comment(parsedComment) {
     // Jenkins compile <platform>*
     // Jenkins test <comma_separated_test_target> <platform> *
     /*
-    * Comment indexes - '+' is an offset of 0/1 if running tests or not
-    * 0 - Jenkins
-    * 1 - test / compile
-    * 1+ - test target
-    * 2+ - platforms
-    * 3+ - jdk versions
-    *
-    * Note: Depends logic is already part of the build/compile job and is located in the checkout_pullrequest() function.
-    */
+     * Comment indexes - '+' is an offset of 0/1 if running tests or not
+     * 0 - Jenkins
+     * 1 - test / compile
+     * 1+ - test target
+     * 2+ - platforms
+     * 3+ - jdk versions
+     *
+     * Note: Depends logic is already part of the build/compile job and is located in the checkout_pullrequest() function.
+     */
     // Don't both checking parsedComment[0] since it is hardcoded in the trigger regex of the Jenkins job.
 
     // Setup TESTS_TARGETS
@@ -800,8 +800,8 @@ def build_all() {
 }
 
 /*
-* Adds status badges for the given downstream build.
-*/
+ * Adds status badges for the given downstream build.
+ */
 def add_badges(downstreamBuilds) {
     downstreamBuilds.entrySet().each { entry ->
         // entry.value is a list of builds in descending order
@@ -833,9 +833,9 @@ def add_badges(downstreamBuilds) {
 }
 
 /*
-* Adds a summary badge.
-* Requires Groovy Postbuild plugin.
-*/
+ * Adds a summary badge.
+ * Requires Groovy Postbuild plugin.
+ */
 def add_summary_badge(downstreamBuilds) {
     def summaryText = "Downstream Jobs Status:<br/>"
     summaryText += "<table>"

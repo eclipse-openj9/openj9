@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,7 @@ timeout(time: 6, unit: 'HOURS') {
                         script: "date +%Y",
                         returnStdout: true
                     ).trim()
-                    
+
                     // Set a different Copyright regex depending on the Repo the PR is from
                     REGEX = "\'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR}\'"
 
@@ -71,7 +71,7 @@ timeout(time: 6, unit: 'HOURS') {
                             RESULT = sh (
                                 script: "grep -qE ${REGEX} '${it}'",
                                 returnStatus: true)
-                            if(RESULT != 0) {
+                            if (RESULT != 0) {
                                 echo "FAILURE - Copyright date in file: '${it}' appears to be incorrect"
                                 FAIL = true
                                 BAD_FILES << "${it}"

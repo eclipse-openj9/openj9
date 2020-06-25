@@ -18,7 +18,7 @@
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
-*******************************************************************************/
+ *******************************************************************************/
 
 /**
  * This script deletes old artifacts off the Artifactory server
@@ -58,7 +58,7 @@ timestamps {
                 } else {
                     ret = true
                 }
-                switch(params.JOB_TYPE) {
+                switch (params.JOB_TYPE) {
                     case 'TIME':
                         cleanupTime(ARTIFACTORY_SERVER_URL, ARTIFACTORY_REPO, ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS, artifactoryCreds)
                     break
@@ -131,7 +131,7 @@ def cleanupBuilds(artifactory_server, artifactory_repo, jobToCheck, artifactory_
 def getFolderNumbers(folderURI) {
     def folderNumbers = []
     folderURI.each {
-        folderNumbers.add(it.minus('/') as int )
+        folderNumbers.add(it.minus('/') as int)
     }
     return folderNumbers.sort()
 }

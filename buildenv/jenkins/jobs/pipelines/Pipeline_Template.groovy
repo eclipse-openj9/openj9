@@ -18,7 +18,7 @@
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
-*******************************************************************************/
+ *******************************************************************************/
 
 if (!binding.hasVariable('SDK_VERSION')) SDK_VERSION = ''
 if (!binding.hasVariable('PLATFORM')) PLATFORM = ''
@@ -94,7 +94,7 @@ pipelineJob("$JOB_NAME") {
         stringParam('SCM_REFSPEC')
         booleanParam('ARCHIVE_JAVADOC', false)
 
-        if (jobType == 'pipeline'){
+        if (jobType == 'pipeline') {
             stringParam('TESTS_TARGETS')
             stringParam('BUILD_NODE')
             stringParam('TEST_NODE')
@@ -103,7 +103,7 @@ pipelineJob("$JOB_NAME") {
             stringParam('RESTART_TIMEOUT_UNITS')
             choiceParam('AUTOMATIC_GENERATION', ['true', 'false'])
             choiceParam('JOB_TYPE', ['pipeline'])
-        } else if (jobType == 'build'){
+        } else if (jobType == 'build') {
             stringParam('NODE')
             choiceParam('JOB_TYPE', ['build'])
         }
