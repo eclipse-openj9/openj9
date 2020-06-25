@@ -326,9 +326,30 @@ public:
    */
    void setSerializedSize(uint32_t serializedSize)
       {
-      _buffer.expandIfNeeded(serializedSize);
       _buffer.writeValue(serializedSize);
       }
+
+   /**
+      @brief Expand the internal buffer when requiredSize is greater than the capacity
+
+      If expansion occurred, this method copies the number of bytes from the beginning
+      of the buffer to _curPtr from the old buffer to the new buffer.
+   */
+   void expandBufferIfNeeded(uint32_t requiredSize)
+      {
+      _buffer.expandIfNeeded(requiredSize);
+      }
+
+   /**
+      @brief Expand the internal buffer to requiredSize and copy numBytesToCopy
+      from the old buffer into the new one
+   */
+   void expandBuffer(uint32_t requiredSize, uint32_t numBytesToCopy)
+      {
+      _buffer.expand(requiredSize, numBytesToCopy);
+      }
+
+   uint32_t getBufferCapacity() const { return _buffer.getCapacity(); }
 
    /**
       @brief Get the pointer to the start of the buffer.

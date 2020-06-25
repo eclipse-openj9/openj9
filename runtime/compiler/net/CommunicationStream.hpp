@@ -44,7 +44,7 @@ class CommunicationStream
 public:
    static bool useSSL();
    static void initSSL();
-   
+
 #ifdef MESSAGE_SIZE_STATS
    static TR_Stats collectMsgStat[JITServer::MessageType_ARRAYSIZE];
 #endif
@@ -86,7 +86,12 @@ protected:
       _ssl = ssl;
       }
 
+   // Build a message sent by a remote party by reading from the socket
+   // as much as possible (up to internal buffer capacity)
    void readMessage(Message &msg);
+   // Build a message sent by a remote party by first reading the message
+   // size and then reading the rest of the message
+   void readMessage2(Message &msg);
    void writeMessage(Message &msg);
 
    int getConnFD() const { return _connfd; }
@@ -97,7 +102,7 @@ protected:
    ClientMessage _cMsg;
 
    static const uint8_t MAJOR_NUMBER = 1;
-   static const uint16_t MINOR_NUMBER = 6;
+   static const uint16_t MINOR_NUMBER = 7;
    static const uint8_t PATCH_NUMBER = 0;
    static uint32_t CONFIGURATION_FLAGS;
 
@@ -141,6 +146,29 @@ private:
             totalBytesRead += bytesRead;
             }
          }
+      }
+
+   int32_t readOnceBlocking(char *data, size_t size)
+      {
+      int32_t bytesRead = -1;
+      if (_ssl)
+         {
+         bytesRead = (*OBIO_read)(_ssl, data, size);
+         }
+      else
+         {
+         bytesRead = read(_connfd, data, size);
+         }
+
+      if (bytesRead <= 0)
+         {
+         if (_ssl)
+            {
+            (*OERR_print_errors_fp)(stderr);
+            }
+         throw JITServer::StreamFailure("JITServer I/O error: read error");
+         }
+      return bytesRead;
       }
 
    template <typename T>

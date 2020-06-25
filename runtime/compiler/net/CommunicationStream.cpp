@@ -61,13 +61,15 @@ void CommunicationStream::initSSL()
    }
 
 void
-CommunicationStream::readMessage(Message &msg)
+CommunicationStream::readMessage2(Message &msg)
    {
    msg.clearForRead();
 
    // read message size
    uint32_t serializedSize;
    readBlocking(serializedSize);
+
+   msg.expandBufferIfNeeded(serializedSize);
    msg.setSerializedSize(serializedSize);
 
    // read the rest of the message
@@ -79,7 +81,60 @@ CommunicationStream::readMessage(Message &msg)
 
    // collect message size
 #ifdef MESSAGE_SIZE_STATS
-   collectMsgStat[int(msg.type())].update(messageSize);
+   collectMsgStat[int(msg.type())].update(serializedSize);
+#endif
+   }
+
+void
+CommunicationStream::readMessage(Message &msg)
+   {
+   msg.clearForRead();
+
+   // The message buffer storage and its capacity could be
+   // changed when the serialized size is set.
+   char *buffer = msg.getBufferStartForRead();
+   uint32_t bufferCapacity = msg.getBufferCapacity();
+
+   int32_t bytesRead = readOnceBlocking(buffer, bufferCapacity);
+
+   // bytesRead should be greater than 0 here, readOnceBlocking() throws
+   // an exception already if (bytesRead <= 0).
+   if (bytesRead < sizeof(uint32_t))
+      {
+      throw JITServer::StreamFailure("JITServer I/O error: fail to read the size of the message");
+      }
+
+   // bytesRead >= sizeof(uint32_t)
+   uint32_t serializedSize = ((uint32_t *)buffer)[0];
+   if (bytesRead > serializedSize)
+      {
+      throw JITServer::StreamFailure("JITServer I/O error: read more than the message size");
+      }
+
+   // serializedSize >= bytesRead
+   uint32_t bytesLeftToRead = serializedSize - bytesRead;
+
+   if (bytesLeftToRead > 0)
+      {
+      if (serializedSize > bufferCapacity)
+         {
+         // bytesRead could be less than the buffer capacity.
+         msg.expandBuffer(serializedSize, bytesRead);
+
+         // The buffer storage will change after the buffer is expanded.
+         buffer = msg.getBufferStartForRead();
+         }
+
+      readBlocking(buffer + bytesRead, bytesLeftToRead);
+      }
+
+   msg.setSerializedSize(serializedSize);
+
+   // rebuild the message
+   msg.deserialize();
+
+#ifdef MESSAGE_SIZE_STATS
+   collectMsgStat[int(msg.type())].update(serializedSize);
 #endif
    }
 
