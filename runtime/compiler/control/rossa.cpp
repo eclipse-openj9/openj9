@@ -278,20 +278,22 @@ j9jit_testarossa_err(
       J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(oldStartPC);
       TR_PersistentJittedBodyInfo* jbi = TR::Recompilation::getJittedBodyInfoFromPC(oldStartPC);
 
-      if (jbi)
+      if (!jbi)
          {
-         TR_PersistentMethodInfo *pmi = jbi->getMethodInfo();
-
-         if (pmi && pmi->hasBeenReplaced()) // HCR
-            {
-            // Obsolete method bodies are invalid.
-            //
-            TR::Recompilation::fixUpMethodCode(oldStartPC);
-            jbi->setIsInvalidated();
-            }
+         return 0;
          }
 
-      if (jbi && jbi->getIsInvalidated())
+      TR_PersistentMethodInfo *pmi = jbi->getMethodInfo();
+
+      if (pmi && pmi->hasBeenReplaced()) // HCR
+         {
+         // Obsolete method bodies are invalid.
+         //
+         TR::Recompilation::fixUpMethodCode(oldStartPC);
+         jbi->setIsInvalidated();
+         }
+
+      if (jbi->getIsInvalidated())
          {
          event._eventType = TR_MethodEvent::MethodBodyInvalidated;
          async = TR_no;
@@ -315,7 +317,7 @@ j9jit_testarossa_err(
          // If PersistentJittedBody contains the profile Info and has BlockFrequencyInfo, it will set the
          // isQueuedForRecompilation field which can be used by the jitted code at runtime to skip the profiling
          // code if it has made request to recompile this method.
-         if (jbi && jbi->getProfileInfo() != NULL && jbi->getProfileInfo()->getBlockFrequencyInfo() != NULL)
+         if (jbi->getProfileInfo() != NULL && jbi->getProfileInfo()->getBlockFrequencyInfo() != NULL)
             jbi->getProfileInfo()->getBlockFrequencyInfo()->setIsQueuedForRecompilation();
 
          event._eventType = TR_MethodEvent::OtherRecompilationTrigger;
