@@ -44,7 +44,7 @@ import com.ibm.j9ddr.vm29.structure.J9Object;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
-public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel 
+public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel 
 {
 	protected GC_ArrayletObjectModelPointer arrayletObjectModel;
 	protected VoidPointer arrayletRangeBase;
@@ -54,7 +54,7 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	protected UDATA arrayletLeafLogSize;
 	protected UDATA arrayletLeafSizeMask;
 
-	public GCArrayletObjectModelBase_V1() throws CorruptDataException 
+	public GCArrayletObjectModelBase() throws CorruptDataException 
 	{
 		arrayletObjectModel = GC_ArrayletObjectModelPointer.cast(GCBase.getExtensions().indexableObjectModel());
 		arrayletRangeBase = arrayletObjectModel._arrayletRangeBase();

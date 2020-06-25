@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,8 +45,11 @@ abstract class GCArrayObjectModel extends GCBase
 		AlgorithmVersion version = AlgorithmVersion.getVersionOf(AlgorithmVersion.GC_ARRAYLET_OBJECT_MODEL_VERSION);
 		switch (version.getAlgorithmVersion()) {
 			// Add case statements to handle new algorithm versions
-			default:
+			case 0:
+			case 1:
 				return new GCArrayletObjectModel_V1();
+			default:
+				return new GCArrayletObjectModel_V2();
 		}
 	}
 
