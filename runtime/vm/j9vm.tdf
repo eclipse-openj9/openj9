@@ -274,10 +274,10 @@ TraceException=Trc_VM_allocateMemorySegmentInList_AllocFailed NoEnv Overhead=1 L
 TraceEvent=Trc_VM_allocateMemorySegmentInList_Alloc NoEnv Overhead=1 Level=3 Template="allocateMemorySegmentInList %p (%p-%p type=%x)"
 TraceExit=Trc_VM_allocateMemorySegmentInList_Exit NoEnv Overhead=1 Level=3 Template="allocateMemorySegmentInList result=%p"
 
-TraceEvent=Trc_VM_startJavaThread_failedToCreateOSThreadOBSOLETE Overhead=1 Level=1 Template="startJavaThread omrthread_create failed (retVal=%d)"
-TraceEvent=Trc_VM_startJavaThread_failedVMThreadAlloc Overhead=1 Level=1 Template="startJavaThread vm thread alloc failed"
-TraceEvent=Trc_VM_startJavaThread_failedOOMAlloc Overhead=1 Level=1 Template="startJavaThread OOM error alloc failed"
-TraceEvent=Trc_VM_startJavaThread_failedLockAlloc Overhead=1 Level=1 Template="startJavaThread lock obj alloc failed"
+TraceEvent=Trc_VM_startJavaThread_failedToCreateOSThreadOBSOLETE Obsolete Overhead=1 Level=1 Template="startJavaThread omrthread_create failed (retVal=%d)"
+TraceException=Trc_VM_startJavaThread_failedVMThreadAlloc Overhead=1 Level=1 Template="startJavaThread vm thread alloc failed"
+TraceException=Trc_VM_startJavaThread_failedOOMAlloc Overhead=1 Level=1 Template="startJavaThread OOM error alloc failed"
+TraceException=Trc_VM_startJavaThread_failedLockAlloc Overhead=1 Level=1 Template="startJavaThread lock obj alloc failed"
 
 TraceEntry=Trc_VM_sendVerify_Entry Obsolete Overhead=1 Level=2 Template="sendVerify"
 TraceEvent=Trc_VM_checkRomClassForError_ErrorFound Overhead=1 Level=1 Template="checkRomClassForError found error at %x"
