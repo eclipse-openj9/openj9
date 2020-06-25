@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1385,11 +1385,12 @@ generatePTX(int tracing, const char *programSource, int deviceId, TR::Persistent
 
    if (detailsTrace)
       {
-      TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tCompiling NVVM program with options:");
+      TR_VerboseLog::write(TR_Vlog_GPU, "\tCompiling NVVM program with options:");
       for (int i = 0; i < optionLength; i++)
          {
          TR_VerboseLog::write(" %s", options[i]);
          }
+      TR_VerboseLog::writeLine("");
       fflush(NULL);
       }
 

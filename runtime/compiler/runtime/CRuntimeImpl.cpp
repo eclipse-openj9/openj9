@@ -177,7 +177,7 @@ void _prepareForOSR(uintptr_t vmThreadArg, int32_t currentInlinedSiteIndex, int3
                if (details)
                   {
                   TR_VerboseLog::vlogAcquire();
-                  TR_VerboseLog::writeLine(TR_Vlog_OSRD, "%X     Symbol #%d osrFrameDataOffset=%d scratchBufferOffset=%d size=%d data:", (int)vmThreadArg,
+                  TR_VerboseLog::write(TR_Vlog_OSRD, "%X     Symbol #%d osrFrameDataOffset=%d scratchBufferOffset=%d size=%d data:", (int)vmThreadArg,
                      i, osrFrameDataOffset, scratchBufferOffset, symSize);
                   switch (symSize)
                      {
@@ -191,6 +191,7 @@ void _prepareForOSR(uintptr_t vmThreadArg, int32_t currentInlinedSiteIndex, int3
                         // TODO: Dump binary
                         break;
                      }
+                  TR_VerboseLog::writeLine("");
                   TR_VerboseLog::vlogRelease();
                   }
                memcpy(

@@ -22,77 +22,42 @@
 package com.ibm.j9ddr.vm29.j9.gc;
 
 import com.ibm.j9ddr.CorruptDataException;
-import com.ibm.j9ddr.vm29.pointer.ObjectReferencePointer;
-import com.ibm.j9ddr.vm29.pointer.VoidPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9ArrayClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectPointer;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
-class GCArrayletObjectModel_V1 extends GCArrayletObjectModelBase
+class GCArrayletObjectModel_V2 extends GCArrayletObjectModelBase
 {
 	
-	public GCArrayletObjectModel_V1() throws CorruptDataException 
+	public GCArrayletObjectModel_V2() throws CorruptDataException 
 	{		
-	}
-	
-	@Override
-	protected long getArrayLayout(J9IndexableObjectPointer array) throws CorruptDataException
-	{
-		return super.getArrayLayout(array);
-	}
-	
-	@Override
-	protected long getArrayLayout(J9ArrayClassPointer clazz, UDATA dataSizeInBytes) throws CorruptDataException
-	{
-		return super.getArrayLayout(clazz, dataSizeInBytes);
-	}
-	
-	@Override
-	public UDATA getHeaderSize(J9IndexableObjectPointer array) throws CorruptDataException
-	{		
-		return super.getHeaderSize(array);
-	}
-
-	@Override
-	protected UDATA getSpineSize(J9IndexableObjectPointer array) throws CorruptDataException
-	{
-		return super.getSpineSize(array);
 	}
 
 	@Override
 	public UDATA getSizeInBytesWithHeader(J9IndexableObjectPointer array) throws CorruptDataException
 	{
-		return getSpineSize(array);
-	}
-	
-	@Override
-	public UDATA getHashcodeOffset(J9IndexableObjectPointer array) throws CorruptDataException
-	{
-		return super.getHashcodeOffset(array);
-	}
-	
-	@Override
-	public UDATA getDataSizeInBytes(J9IndexableObjectPointer array) throws CorruptDataException
-	{
-		return super.getDataSizeInBytes(array);
-	}
-	
-	@Override
-	public ObjectReferencePointer getArrayoidPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException 
-	{
-		return super.getArrayoidPointer(arrayPtr);
-	}
-	
-	@Override
-	public VoidPointer getDataPointerForContiguous(J9IndexableObjectPointer arrayPtr) throws CorruptDataException
-	{
-		return super.getDataPointerForContiguous(arrayPtr);
+		return super.getSpineSize(array);
 	}
 
+	/**
+	 * Return the total number of arraylets for an indexable object with a size of dataInSizeByte, including a (possibly empty) leaf in the spine.
+	 * @param dataSizeInBytes size of an array in bytes (not elements)
+	 * @return the number of arraylets used for an array of dataSizeInBytes bytes
+	 */
 	@Override
-	public VoidPointer getElementAddress(J9IndexableObjectPointer array, int elementIndex, int elementSize) throws CorruptDataException
-	{	
-		return super.getElementAddress(array, elementIndex, elementSize);
+	protected UDATA numArraylets(UDATA dataSizeInBytes) throws CorruptDataException
+	{
+		UDATA numberOfArraylets = new UDATA(1);
+		if (!UDATA.MAX.eq(arrayletLeafSize)) {
+			/* CMVC 135307 : following logic for calculating the leaf count would not overflow dataSizeInBytes.
+			 * the assumption is leaf size is order of 2. It's identical to:
+			 * if (dataSizeInBytes % leafSize) is 0
+			 * 	leaf count = dataSizeInBytes >> leafLogSize
+			 * else
+			 * 	leaf count = (dataSizeInBytes >> leafLogSize) + 1
+			 */
+			numberOfArraylets = dataSizeInBytes.rightShift(arrayletLeafLogSize).add(dataSizeInBytes.bitAnd(arrayletLeafSizeMask).add(arrayletLeafSizeMask).rightShift(arrayletLeafLogSize));
+		}
+		return numberOfArraylets;
 	}
 
 	@Override
