@@ -69,7 +69,7 @@ artifactory:
   numArtifacts:
     unb: 5
   daysToKeepArtifacts:
-    osu: 50
+    osu: 40
     unb: 2
   manualCleanup:
     osu: true
@@ -94,15 +94,15 @@ test_dependencies_job_name: 'test.getDependency'
 slack_channel: '#jenkins'
 build_discarder:
   logs:
-    Nightly: 40
+    Nightly: 35
     Release: 5
     OMR: 15
-    OpenJDK8: 10
-    OpenJDK11: 10
-    OpenJDK14: 10
+    OpenJDK8: 5
+    OpenJDK11: 5
+    OpenJDK14: 5
     OpenJDK15: 10
     OpenJDK: 10
-    Personal: 50
+    Personal: 30
     Pipeline: 100
 restart_timeout:
   time: '5'
