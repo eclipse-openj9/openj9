@@ -1361,7 +1361,7 @@ J9::Options::fePreProcess(void * base)
                mRegex = TR::SimpleRegex::create(optValue);
                if (!mRegex || *optValue != 0)
                   {
-                  TR_VerboseLog::write("<JNI: Bad regular expression at --> '%s'>\n", optValue);
+                  TR_VerboseLog::writeLine(TR_Vlog_FAILURE, "Bad regular expression at --> '%s'", optValue);
                   }
                else
                   {
@@ -3215,13 +3215,13 @@ J9::Options::setCounts()
 
    if (!_countString)
       {
-      TR_VerboseLog::write("<JIT: Count string could not be allocated>\n");
+      TR_VerboseLog::writeLine(TR_Vlog_FAILURE, "Count string could not be allocated");
       return dummy_string;
       }
 
    if (_initialCount == -1 || _initialBCount == -1 || _initialMILCount == -1)
       {
-      TR_VerboseLog::write("<JIT: Bad string count: %s>\n", _countString);
+      TR_VerboseLog::writeLine(TR_Vlog_FAILURE, "Bad string count: '%s'", _countString);
       return _countString;
       }
 

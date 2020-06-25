@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -447,30 +447,27 @@ void vlogReclamation(const char * prefix, J9JITExceptionTable *metaData, size_t 
       {
 
       TR_VerboseLog::vlogAcquire();
-      TR_VerboseLog::writeLine(
-      TR_Vlog_RECLAMATION,
-      "%s %.*s.%.*s%.*s @ %s [" POINTER_PRINTF_FORMAT "-",
-      prefix,
-      J9UTF8_LENGTH(metaData->className), J9UTF8_DATA(metaData->className),
-      J9UTF8_LENGTH(metaData->methodName), J9UTF8_DATA(metaData->methodName),
-      J9UTF8_LENGTH(metaData->methodSignature), J9UTF8_DATA(metaData->methodSignature),
-      TR::Compilation::getHotnessName(TR_Hotness(metaData->hotness)),
-      metaData->startPC + bytesToSaveAtStart
-      );
+      TR_VerboseLog::write(
+         TR_Vlog_RECLAMATION,
+         "%s %.*s.%.*s%.*s @ %s [" POINTER_PRINTF_FORMAT "-",
+         prefix,
+         J9UTF8_LENGTH(metaData->className), J9UTF8_DATA(metaData->className),
+         J9UTF8_LENGTH(metaData->methodName), J9UTF8_DATA(metaData->methodName),
+         J9UTF8_LENGTH(metaData->methodSignature), J9UTF8_DATA(metaData->methodSignature),
+         TR::Compilation::getHotnessName(TR_Hotness(metaData->hotness)),
+         metaData->startPC + bytesToSaveAtStart);
 
       if (metaData->startColdPC)
          {
          TR_VerboseLog::write(
-         POINTER_PRINTF_FORMAT "] & [" POINTER_PRINTF_FORMAT "-",
-         metaData->endWarmPC,
-         metaData->startColdPC
-         );
+            POINTER_PRINTF_FORMAT "] & [" POINTER_PRINTF_FORMAT "-",
+            metaData->endWarmPC,
+            metaData->startColdPC);
          }
 
-      TR_VerboseLog::write(
-      POINTER_PRINTF_FORMAT "]",
-      metaData->endPC
-      );
+      TR_VerboseLog::writeLine(
+         POINTER_PRINTF_FORMAT "]",
+         metaData->endPC);
 
       TR_VerboseLog::vlogRelease();
       }

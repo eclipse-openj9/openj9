@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -273,7 +273,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                }
             else
                {
-               TR_VerboseLog::write("<JIT: non-fatal error: failed to allocate %d Kb data cache>\n", _jitConfig->dataCacheKB);
+               TR_VerboseLog::writeLine(TR_Vlog_INFO, "Failed to allocate %d Kb data cache", _jitConfig->dataCacheKB);
                j9mem_free_memory(dataCache);
                dataCache = NULL;
                _jitConfig->runtimeFlags |= J9JIT_DATA_CACHE_FULL;  // prevent future allocations
@@ -284,7 +284,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
             }
          else // cannot allocate even a bit of memory from the JVM
             {
-            TR_VerboseLog::write("<JIT: non-fatal error: failed to allocate %d bytes for data cache>\n", sizeof(TR_DataCache));
+            TR_VerboseLog::writeLine(TR_Vlog_INFO, "Failed to allocate %d bytes for data cache", sizeof(TR_DataCache));
             _jitConfig->runtimeFlags |= J9JIT_DATA_CACHE_FULL;  // prevent future allocations
 #ifdef DATA_CACHE_DEBUG
             fprintf(stderr, "Memory allocation for TR_DataCache failed\n");

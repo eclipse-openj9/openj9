@@ -1519,7 +1519,7 @@ uint8_t *compileMethodHandleThunk(j9object_t methodHandle, j9object_t arg, J9VMT
    if (verbose)
       {
       TR_VerboseLog::vlogAcquire();
-      TR_VerboseLog::writeLine(TR_Vlog_MH, "%p Starting compileMethodHandleThunk on MethodHandle %p", vmThread, methodHandle);
+      TR_VerboseLog::write(TR_Vlog_MH, "%p Starting compileMethodHandleThunk on MethodHandle %p", vmThread, methodHandle);
       if (arg)
          TR_VerboseLog::write(" arg %p", arg);
       static const char *flagNames[] = { "CUSTOM", "SYNCHRONOUS" };
@@ -1529,6 +1529,7 @@ uint8_t *compileMethodHandleThunk(j9object_t methodHandle, j9object_t arg, J9VMT
          if (flags & flag)
             TR_VerboseLog::write(" %s", flagNames[i]);
          }
+      TR_VerboseLog::writeLine("");
       TR_VerboseLog::vlogRelease();
       }
    bool disabled = false;
