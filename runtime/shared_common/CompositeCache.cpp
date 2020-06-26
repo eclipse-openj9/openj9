@@ -2470,12 +2470,13 @@ SH_CompositeCacheImpl::enterReadMutex(J9VMThread* currentThread, const char* cal
 			if (rc != 0) {
 				PORT_ACCESS_FROM_PORT(_portlib);
 				CC_ERR_TRACE1(J9NLS_SHRC_CC_FAILED_EXIT_MUTEX, rc);
+				decReaderCount(currentThread);
 			}
 		}
 	}
-
-	currentThread->privateFlags2 |= J9_PRIVATE_FLAGS2_IN_SHARED_CACHE_READ_MUTEX;
-
+	if (0 == rc) {
+		currentThread->privateFlags2 |= J9_PRIVATE_FLAGS2_IN_SHARED_CACHE_READ_MUTEX;
+	}
 	Trc_SHR_CC_enterReadMutex_Exit(currentThread, caller, rc);
 	return rc;
 }
