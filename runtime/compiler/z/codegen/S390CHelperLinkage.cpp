@@ -58,6 +58,8 @@
 J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions elc, TR_LinkageConventions lc)
    : TR::Linkage(codeGen,elc,lc)
    {
+   TR::Compilation *comp = codeGen->comp();
+
    // Common Linux on Z and z/OS linkage settings
    setRegisterFlag(TR::RealRegister::GPR8, Preserved);
    setRegisterFlag(TR::RealRegister::GPR9, Preserved);
@@ -69,7 +71,7 @@ J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Linkage
 #if defined(ENABLE_PRESERVED_FPRS)
    // In case of 32bit Linux on Z, System Linkage only preserves FPR4 and FPR6. For all other targets, FPR8-FPR15 is
    // preserved.
-   if (codeGen->comp()->target().isLinux() && codeGen->comp()->target().is32Bit())
+   if (comp->target().isLinux() && comp->target().is32Bit())
       {
       setRegisterFlag(TR::RealRegister::FPR4, Preserved);
       setRegisterFlag(TR::RealRegister::FPR6, Preserved);
@@ -88,7 +90,7 @@ J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Linkage
 #endif
 
    // Platform specific linkage settings
-   if (codeGen->comp()->target().isLinux())
+   if (comp->target().isLinux())
       {
       setRegisterFlag(TR::RealRegister::GPR6, Preserved);
       setRegisterFlag(TR::RealRegister::GPR7, Preserved);
@@ -113,11 +115,11 @@ J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Linkage
       setNumIntegerArgumentRegisters(3);
       }
 
-   if (codeGen->comp()->target().isZOS())
+   if (comp->target().isZOS())
       {
       setRegisterFlag(TR::RealRegister::GPR14, Preserved);
 
-      if (codeGen->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          {
          setRegisterFlag(TR::RealRegister::GPR12, Preserved);
 
@@ -297,7 +299,7 @@ TR::Register * J9::Z::CHelperLinkage::buildDirectDispatch(TR::Node * callNode, T
 #if defined(J9ZOS390)
    TR::Register *DSAPointerReg = NULL;
    uint32_t offsetOfSSP = static_cast<uint32_t>(offsetof(J9VMThread, systemStackPointer));
-   uint32_t pointerSize = cg()->comp()->target().is64Bit() ? 7 : 3;
+   uint32_t pointerSize = comp()->target().is64Bit() ? 7 : 3;
 #endif
 
    TR::RegisterDependencyConditions * postDeps = RealRegisters.buildRegisterDependencyConditions(regRANum);
@@ -345,7 +347,7 @@ TR::Register * J9::Z::CHelperLinkage::buildDirectDispatch(TR::Node * callNode, T
       padding += 2;
       // Loading CAA Pointer Register
       TR::Register *CAAPointerReg = RealRegisters.use(getCAAPointerRegister());
-      TR_J9VMBase *fej9 = (TR_J9VMBase *) cg()->comp()->fe();
+      TR_J9VMBase *fej9 = (TR_J9VMBase *) comp()->fe();
       int32_t J9TR_CAA_save_offset = fej9->getCAASaveOffset();
       generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, CAAPointerReg, generateS390MemoryReference(DSAPointerReg, J9TR_CAA_save_offset, cg()));
 #endif

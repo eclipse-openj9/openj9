@@ -271,7 +271,7 @@ genStoreDFP(
    /*if (TR::TreeEvaluator::dfpFieldSymbolReference) // re-use
       dfpMR->setSymbolReference(TR::TreeEvaluator::dfpFieldSymbolReference);
    else //create our own (generic long shadow)
-      dfpMR->setSymbolReference(cg->comp()->getSymRefTab()->
+      dfpMR->setSymbolReference(comp->getSymRefTab()->
                                    findOrCreateGenericLongShadowSymbolReference(
                                    dfpFieldOffset, node->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()));
    */

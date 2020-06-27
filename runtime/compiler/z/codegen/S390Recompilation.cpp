@@ -111,7 +111,7 @@ TR_S390Recompilation::generatePrePrologue()
       return NULL;
       }
 
-   TR::Compilation* comp = TR::comp();
+   TR::Compilation *comp = this->comp();
 
    TR::CodeGenerator* cg = comp->cg();
 
@@ -192,14 +192,12 @@ TR_S390Recompilation::generatePrePrologue()
       // AOT relocation for the interpreter glue address
       TR::S390EncodingRelocation* encodingRelocation = new (cg->trHeapMemory()) TR::S390EncodingRelocation(TR_AbsoluteHelperAddress, helperSymRef);
 
-      TR::Compilation* comp = cg->comp();
-
       AOTcgDiag4(comp, "Add encodingRelocation = %p reloType = %p symbolRef = %p helperId = %x\n", encodingRelocation, encodingRelocation->getReloType(), encodingRelocation->getSymbolReference(), TR_S390samplingRecompileMethod);
 
       const intptr_t samplingRecompileMethodAddress = reinterpret_cast<intptr_t>(helperSymRef->getMethodAddress());
 
       // Encode the address of the sampling method
-      if (cg->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          {
          cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, UPPER_4_BYTES(samplingRecompileMethodAddress), cursor);
          cursor->setEncodingRelocation(encodingRelocation);
@@ -244,7 +242,7 @@ TR_S390Recompilation::generatePrePrologue()
 
    // Encode the persistent body info address. Note that we must generate this irregardless of whether we are sampling
    // or not as the counting recompilation generated in the prologue will use this location.
-   if (cg->comp()->target().is64Bit())
+   if (comp->target().is64Bit())
       {
       cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, UPPER_4_BYTES(bodyInfoAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);
@@ -315,7 +313,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
       return cursor;
       }
 
-   TR::Compilation* comp = TR::comp();
+   TR::Compilation *comp = this->comp();
 
    TR::CodeGenerator* cg = comp->cg();
 
@@ -412,7 +410,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
 
    const intptr_t countingRecompileMethodAddress = reinterpret_cast<intptr_t>(helperSymRef->getMethodAddress());
 
-   if (cg->comp()->target().is64Bit())
+   if (comp->target().is64Bit())
       {
       cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, UPPER_4_BYTES(countingRecompileMethodAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);
@@ -497,7 +495,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
 
    const intptr_t countingPatchCallSiteAddress = reinterpret_cast<intptr_t>(helperSymRef->getMethodAddress());
 
-   if (cg->comp()->target().is64Bit())
+   if (comp->target().is64Bit())
       {
       cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, UPPER_4_BYTES(countingPatchCallSiteAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);

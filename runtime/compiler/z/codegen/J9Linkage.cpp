@@ -23,21 +23,23 @@
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/S390GenerateInstructions.hpp"
+#include "compile/Compilation.hpp"
 #include "il/ParameterSymbol.hpp"
 
 TR::Instruction *
 J9::Z::Linkage::loadUpArguments(TR::Instruction * cursor)
    {
+   TR::Compilation *comp = self()->comp();
    TR::RealRegister * stackPtr = self()->getStackPointerRealRegister();
-   TR::ResolvedMethodSymbol * bodySymbol = self()->comp()->getJittedMethodSymbol();
+   TR::ResolvedMethodSymbol * bodySymbol = comp->getJittedMethodSymbol();
    ListIterator<TR::ParameterSymbol> paramIterator(&(bodySymbol->getParameterList()));
    TR::ParameterSymbol * paramCursor = paramIterator.getFirst();
-   TR::Node * firstNode = self()->comp()->getStartTree()->getNode();
+   TR::Node * firstNode = comp->getStartTree()->getNode();
    int32_t numIntArgs = 0, numFloatArgs = 0;
    uint32_t binLocalRegs = 0x1<<14;   // Binary pattern representing reg14 as free for local alloc
 
    bool isRecompilable = false;
-   if (self()->comp()->getRecompilationInfo() && self()->comp()->getRecompilationInfo()->couldBeCompiledAgain())
+   if (comp->getRecompilationInfo() && comp->getRecompilationInfo()->couldBeCompiledAgain())
       {
       isRecompilable = true;
       }
@@ -49,7 +51,7 @@ J9::Z::Linkage::loadUpArguments(TR::Instruction * cursor)
 
       // If FSD, the JIT will conservatively store all parameters to stack later in saveArguments.
       // Hence, we need to load the value into a parameter register for I2J transitions.
-      bool hasToLoadFromStack = paramCursor->isReferencedParameter() || paramCursor->isParmHasToBeOnStack() || self()->comp()->getOption(TR_FullSpeedDebug);
+      bool hasToLoadFromStack = paramCursor->isReferencedParameter() || paramCursor->isParmHasToBeOnStack() || comp->getOption(TR_FullSpeedDebug);
 
       switch (paramCursor->getDataType())
          {
@@ -86,7 +88,7 @@ J9::Z::Linkage::loadUpArguments(TR::Instruction * cursor)
                cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(), firstNode, argRegister,
                            memRef, cursor);
                cursor->setBinLocalFreeRegs(binLocalRegs);
-               if (self()->cg()->comp()->target().is32Bit() && numIntArgs < self()->getNumIntegerArgumentRegisters() - 1)
+               if (comp->target().is32Bit() && numIntArgs < self()->getNumIntegerArgumentRegisters() - 1)
                   {
                   argRegister = self()->getRealRegister(self()->getIntegerArgumentRegister(numIntArgs + 1));
                   cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::L, firstNode, argRegister,
@@ -94,7 +96,7 @@ J9::Z::Linkage::loadUpArguments(TR::Instruction * cursor)
                   cursor->setBinLocalFreeRegs(binLocalRegs);
                   }
                }
-            numIntArgs += (self()->cg()->comp()->target().is64Bit()) ? 1 : 2;
+            numIntArgs += (comp->target().is64Bit()) ? 1 : 2;
             break;
          case TR::Float:
          case TR::DecimalFloat:
