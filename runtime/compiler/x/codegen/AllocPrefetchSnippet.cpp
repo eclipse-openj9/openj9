@@ -316,21 +316,22 @@ uint32_t TR::getCCPreLoadedCodeSize()
 
 void TR::createCCPreLoadedCode(uint8_t *CCPreLoadedCodeBase, uint8_t *CCPreLoadedCodeTop, void ** CCPreLoadedCodeTable, TR::CodeGenerator *cg)
    {
+   TR::Compilation *comp = cg->comp();
    uint8_t *cursor = CCPreLoadedCodeBase;
 
    CCPreLoadedCodeTable[TR_CCPreLoadedCode::TR_AllocPrefetch] = static_cast<void *>(cursor);
-   if (cg->comp()->target().is64Bit())
-      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::ZeroedHeap, true>(cursor, cg->comp());
+   if (comp->target().is64Bit())
+      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::ZeroedHeap, true>(cursor, comp);
    else
-      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::ZeroedHeap, false>(cursor, cg->comp());
+      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::ZeroedHeap, false>(cursor, comp);
 
    cursor = static_cast<uint8_t *>( TR::alignAllocation<32>(cursor) );
 
    CCPreLoadedCodeTable[TR_CCPreLoadedCode::TR_NonZeroAllocPrefetch] = static_cast<void *>(cursor);
-   if (cg->comp()->target().is64Bit())
-      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::NonZeroedHeap, true>(cursor, cg->comp());
+   if (comp->target().is64Bit())
+      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::NonZeroedHeap, true>(cursor, comp);
    else
-      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::NonZeroedHeap, false>(cursor, cg->comp());
+      cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::NonZeroedHeap, false>(cursor, comp);
 
    cursor = static_cast<uint8_t *>( TR::alignAllocation<32>(cursor) );
 

@@ -59,6 +59,7 @@ void J9LinkageUtils::cleanupReturnValue(
       TR_X86OpCodes op;
       TR::ResolvedMethodSymbol *callSymbol = callNode->getSymbol()->castToResolvedMethodSymbol();
       TR_ResolvedMethod *resolvedMethod = callSymbol->getResolvedMethod();
+      TR::Compilation *comp = cg->comp();
 
       bool isUnsigned = resolvedMethod->returnTypeIsUnsigned();
       switch (resolvedMethod->returnType())
@@ -66,21 +67,21 @@ void J9LinkageUtils::cleanupReturnValue(
          case TR::Int8:
             if (isUnsigned)
                {
-               op = cg->comp()->target().is64Bit() ? MOVZXReg8Reg1 : MOVZXReg4Reg1;
+               op = comp->target().is64Bit() ? MOVZXReg8Reg1 : MOVZXReg4Reg1;
                }
             else
                {
-               op = cg->comp()->target().is64Bit() ? MOVSXReg8Reg1 : MOVSXReg4Reg1;
+               op = comp->target().is64Bit() ? MOVSXReg8Reg1 : MOVSXReg4Reg1;
                }
             break;
          case TR::Int16:
             if (isUnsigned)
                {
-               op = cg->comp()->target().is64Bit() ? MOVZXReg8Reg2 : MOVZXReg4Reg2;
+               op = comp->target().is64Bit() ? MOVZXReg8Reg2 : MOVZXReg4Reg2;
                }
             else
                {
-               op = cg->comp()->target().is64Bit() ? MOVSXReg8Reg2 : MOVSXReg4Reg2;
+               op = comp->target().is64Bit() ? MOVSXReg8Reg2 : MOVSXReg4Reg2;
                }
             break;
          default:
