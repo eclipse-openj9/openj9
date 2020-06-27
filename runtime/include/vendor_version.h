@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,6 +45,7 @@
 #define vendor_version_h
 
 #include "openj9_version_info.h"
+#include "j9cfg.h"
 
 #define VENDOR_SHORT_NAME "OpenJ9"
 
