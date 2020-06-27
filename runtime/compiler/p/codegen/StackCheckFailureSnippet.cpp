@@ -152,7 +152,7 @@ uint8_t *TR::PPCStackCheckFailureSnippet::emitSnippetBody()
 
    if (saveLR)
       {
-      if (cg()->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
         // std [gr14, 0], gr0
         *(int32_t *)buffer = 0xf80e0000;
       else
@@ -165,7 +165,7 @@ uint8_t *TR::PPCStackCheckFailureSnippet::emitSnippetBody()
    if (cg()->directCallRequiresTrampoline(helperAddress, (intptr_t)buffer))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(sofRef->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)buffer), "Helper address is out of range");
+      TR_ASSERT_FATAL(comp->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)buffer), "Helper address is out of range");
       }
 
    // bl distance
@@ -182,7 +182,7 @@ uint8_t *TR::PPCStackCheckFailureSnippet::emitSnippetBody()
       // For FSD, we have to reload the return address
       if (comp->getOption(TR_FullSpeedDebug))
 	 {
-         if (cg()->comp()->target().is64Bit())
+         if (comp->target().is64Bit())
             // ld gr0, [gr14, 0]
             *(int32_t *)buffer = 0xe80e0000;
          else
