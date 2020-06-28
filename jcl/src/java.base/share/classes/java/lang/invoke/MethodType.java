@@ -902,7 +902,7 @@ public final class MethodType implements Serializable
 		return arguments.length;
 	}
 
-/*[IF Java12]*/
+/*[IF Sidecar19-SE]*/
 	/**
 	 * Method to return array of arguments
 	 *
@@ -911,7 +911,7 @@ public final class MethodType implements Serializable
 	Class<?>[] ptypes() {
 		return arguments;
 	}
-/*[ENDIF]*/
+/*[ENDIF] Sidecar19-SE */
 
 	/**
 	 * Helper method to return the parameter types in a List.
