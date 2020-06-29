@@ -4960,7 +4960,7 @@ TR_InlinerFailureReason
       }
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
-   if (inlineRecognizedCryptoMethod(target, comp))
+   if (comp->fej9()->inlineRecognizedCryptoMethod(target, comp))
       {
       return Recognized_Callee;
       }
