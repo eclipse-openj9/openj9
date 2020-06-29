@@ -644,7 +644,7 @@ create_git_cache() {
   echo " && git fetch jdk15 \\"
   echo " && git fetch --all \\"
   echo " && echo Shrinking repository cache... \\"
-  echo " && git repack -a -d -f --depth=50 --window=250 --threads=1"
+  echo " && git gc --aggressive --prune=all"
 }
 
 configure_ssh() {
