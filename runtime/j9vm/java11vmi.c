@@ -459,16 +459,27 @@ static BOOLEAN
 areNoPackagesDefined(J9VMThread * currentThread, J9ClassLoader * classLoader, const char* const* packages, U_32 numPackages)
 {
 	BOOLEAN success = TRUE;
+	J9JavaVM * vm = currentThread->javaVM;
+	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+
+	 /*
+	 * This check will be ignored for calls to this method that occur before java.base is defined. 
+	 * Classes are loaded before java.base is created that are added to the classHashTable. 
+	 * These classes will eventually be fixed up to be part of java.base, but should not be considered duplicate packages
+	 * before that happens.
+	 */
+	BOOLEAN checkDefinedPackages = J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED);
 
 	if (NULL != packages) {
 		U_32 const arrayLength = numPackages;
 		if (0 != arrayLength) {
 			U_32 i = 0;
-			for (i = 0; i < arrayLength; i++) {
+			for (i = 0; success && (i < arrayLength); i++) {
 				const char *packageName = packages[i];
-				if (isPackageDefined(currentThread, classLoader, packageName)) {
+				if (checkDefinedPackages
+				&& vmFuncs->isAnyClassLoadedFromPackage(classLoader, (U_8*) packageName, strlen(packageName))
+				) {
 					success = FALSE;
-					break;
 				}
 			}
 		}
@@ -571,6 +582,7 @@ isModuleNameValid(j9object_t moduleName)
 	BOOLEAN retval = FALSE;
 
 	if (NULL != moduleName) {
+		retval = TRUE;
 		if (!isModuleJavaBase(moduleName)) {
 			retval = isModuleNameGood(moduleName);
 		}
