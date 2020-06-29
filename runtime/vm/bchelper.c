@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,7 +85,7 @@ helperMultiANewArray(J9VMThread *vmStruct, J9ArrayClass *classPtr, UDATA dimensi
 
 	/* call the recursive routine to fill in the elements */
 	PUSH_OBJECT_IN_SPECIAL_FRAME(vmStruct, saveTable);
-	result = allocate_dimension(vmStruct, (J9ArrayClass*)(classPtr->componentType), dimensions, dimensions - 1, (U_32 *)dimensionArray, allocationType);
+	result = allocate_dimension(vmStruct, classPtr, dimensions, dimensions - 1, (U_32 *)dimensionArray, allocationType);
 	DROP_OBJECT_IN_SPECIAL_FRAME(vmStruct);
 
 	/* The resulting object may have been tenured (and possibly remembered)

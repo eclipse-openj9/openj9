@@ -981,21 +981,11 @@ old_slow_jitAMultiNewArray(J9VMThread *currentThread)
 	DECLARE_JIT_CLASS_PARM(elementClass, 1);
 	DECLARE_JIT_INT_PARM(dimensions, 2);
 	DECLARE_JIT_PARM(I_32*, dimensionsArray, 3);
-	J9Class *arrayClass = elementClass->arrayClass;
 	j9object_t obj = NULL;
 	void *oldPC = currentThread->jitReturnAddress;
 	void *addr = NULL;
-	if (NULL == arrayClass) {
-		buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
-		J9JavaVM *vm = currentThread->javaVM;
-		arrayClass = vm->internalVMFunctions->internalCreateArrayClass(currentThread, (J9ROMArrayClass*)J9ROMIMAGEHEADER_FIRSTCLASS(vm->arrayROMClasses), elementClass);
-		addr = restoreJITResolveFrame(currentThread, oldPC);
-		if (NULL != addr) {
-			goto done;
-		}
-	}
 	buildJITResolveFrameWithPC(currentThread, J9_STACK_FLAGS_JIT_ALLOCATION_RESOLVE | J9_SSF_JIT_RESOLVE, parmCount, true, 0, oldPC);
-	obj = currentThread->javaVM->internalVMFunctions->helperMultiANewArray(currentThread, (J9ArrayClass*)arrayClass, (UDATA)dimensions, dimensionsArray, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
+	obj = currentThread->javaVM->internalVMFunctions->helperMultiANewArray(currentThread, (J9ArrayClass*)elementClass, (UDATA)dimensions, dimensionsArray, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
 	currentThread->floatTemp1 = (void*)obj; // in case of decompile
 	addr = restoreJITResolveFrame(currentThread, oldPC);
 	if (NULL != addr) {

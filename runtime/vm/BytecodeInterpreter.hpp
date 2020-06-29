@@ -7788,20 +7788,8 @@ retry:
 		J9RAMClassRef *ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
 		J9Class* volatile resolvedClass = ramCPEntry->value;
 		if (NULL != resolvedClass) {
-			J9Class *arrayClass = resolvedClass->arrayClass;
 			j9object_t instance = NULL;
 			I_32 *dimensionsArray = NULL;
-			if (NULL == arrayClass) {
-				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-				updateVMStruct(REGISTER_ARGS);
-				arrayClass = internalCreateArrayClass(_currentThread, (J9ROMArrayClass*)J9ROMIMAGEHEADER_FIRSTCLASS(_vm->arrayROMClasses), resolvedClass);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				restoreGenericSpecialStackFrame(REGISTER_ARGS);
-				if (VM_VMHelpers::exceptionPending(_currentThread) ) {
-					rc = GOTO_THROW_CURRENT_EXCEPTION;
-					goto done;
-				}
-			}
 #if defined(J9VM_ENV_DATA64)
 			for (UDATA i = 1; i <= dimensions; ++i) {
 				((I_32*)_sp)[i] = ((I_32*)_sp)[i*2];
@@ -7810,7 +7798,7 @@ retry:
 			dimensionsArray = (I_32*)_sp;
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
-			instance = helperMultiANewArray(_currentThread, (J9ArrayClass*)arrayClass, dimensions, dimensionsArray, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
+			instance = helperMultiANewArray(_currentThread, (J9ArrayClass*)resolvedClass, dimensions, dimensionsArray, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			restoreGenericSpecialStackFrame(REGISTER_ARGS);
 			if (VM_VMHelpers::exceptionPending(_currentThread)) {
