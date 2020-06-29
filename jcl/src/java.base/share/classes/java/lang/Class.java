@@ -4732,6 +4732,13 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 /*[ENDIF] Java14 */
 
 /*[IF Java15]*/
+	/**
+	 * Returns true if class or interface is sealed.
+	 * 
+	 * @return true if class is sealed, false otherwise
+	 */
+	public native boolean isSealed();
+
 	// TODO: implement support for hidden classes.
 	public boolean isHidden() {
 		return false;

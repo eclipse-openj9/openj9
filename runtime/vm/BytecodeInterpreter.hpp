@@ -2833,6 +2833,14 @@ done:
 		return EXECUTE_BYTECODE;
 	}
 
+	/* java.lang.Class: public native boolean isSealed(); */
+	VMINLINE VM_BytecodeAction
+	inlClassIsSealed(REGISTER_ARGS_LIST)
+	{
+		J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, *(j9object_t*)_sp);
+		returnSingleFromINL(REGISTER_ARGS, (J9ROMCLASS_IS_SEALED(receiverClazz->romClass) ? 1 : 0), 1);
+		return EXECUTE_BYTECODE;
+	}
 
 	/* java.lang.System: public static native void arraycopy(Object src, int srcPos, Object dest, int destPos, int length); */
 	VMINLINE VM_BytecodeAction
@@ -8979,6 +8987,7 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_OUT_OF_LINE_INL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_CLASS_ARRAY_TYPE_IMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_CLASS_IS_RECORD),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_CLASS_IS_SEALED),
 	};
 #endif /* !defined(USE_COMPUTED_GOTO) */
 
@@ -9549,6 +9558,8 @@ runMethod: {
 		PERFORM_ACTION(inlClassArrayTypeImpl(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_CLASS_IS_RECORD):
 		PERFORM_ACTION(inlClassIsRecord(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_CLASS_IS_SEALED):
+		PERFORM_ACTION(inlClassIsSealed(REGISTER_ARGS));
 #if !defined(USE_COMPUTED_GOTO)
 	default:
 		Assert_VM_unreachable();
