@@ -40,9 +40,7 @@ class TR_SignExtendLoads : public TR::Optimization
    public:
    TR_SignExtendLoads(TR::OptimizationManager *manager)
       : TR::Optimization(manager)
-      {
-      setTrace(comp()->getOption(TR_TraceSEL));
-      }
+      {}
    static TR::Optimization *create(TR::OptimizationManager *manager)
       {
       return new (manager->allocator()) TR_SignExtendLoads(manager);

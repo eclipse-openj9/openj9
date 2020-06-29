@@ -177,7 +177,7 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
       TR_J9InlinerPolicy(TR::Compilation *comp);
       virtual bool inlineRecognizedMethod(TR::RecognizedMethod method);
       virtual bool tryToInlineTrivialMethod (TR_CallStack* callStack, TR_CallTarget* calltarget);
-      static bool isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode);
+      bool isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode);
       virtual bool alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::Node *callNode);
       bool adjustFanInSizeInExceedsSizeThreshold(int bytecodeSize,
                                                       uint32_t& calculatedSize,
