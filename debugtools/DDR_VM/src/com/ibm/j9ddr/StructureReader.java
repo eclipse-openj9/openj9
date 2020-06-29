@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -215,7 +216,7 @@ public class StructureReader {
 	}
 
 	private void applyAliases() throws IOException {
-		Map<String, String> aliasMap = loadAliasMap();
+		Map<String, String> aliasMap = loadAliasMap(() -> getAliasVersion());
 
 		for (StructureDescriptor thisStruct : structures.values()) {
 			for (FieldDescriptor thisField : thisStruct.fields) {
@@ -224,8 +225,12 @@ public class StructureReader {
 		}
 	}
 
-	private Map<String, String> loadAliasMap() throws IOException {
-		String mapData = loadAliasMapData();
+	public static Map<String, String> loadAliasMap(long version) throws IOException {
+		return loadAliasMap(() -> Long.toString(version));
+	}
+
+	private static Map<String, String> loadAliasMap(Supplier<String> versionSupplier) throws IOException {
+		String mapData = loadAliasMapData(versionSupplier);
 
 		mapData = stripComments(mapData);
 
@@ -248,12 +253,11 @@ public class StructureReader {
 		return mapData;
 	}
 
-	private String loadAliasMapData() throws IOException {
-		String resourceNameFormat = "/com/ibm/j9ddr/StructureAliases%d%s.dat";
+	private String getAliasVersion() {
+		long version = packageVersion.longValue();
 		String variant = "";
 
-		if ((packageVersion.longValue() == 29)
-				&& !getBuildFlagValue("J9BuildFlags", "J9VM_OPT_USE_OMR_DDR", false)) {
+		if ((version == 29) && !getBuildFlagValue("J9BuildFlags", "J9VM_OPT_USE_OMR_DDR", false)) {
 			/*
 			 * For blobs generated from the current stream but with legacy tools,
 			 * load a variant of the alias map.
@@ -261,7 +265,11 @@ public class StructureReader {
 			variant = "-edg";
 		}
 
-		String streamAliasMapResource = String.format(resourceNameFormat, packageVersion, variant);
+		return version + variant;
+	}
+
+	private static String loadAliasMapData(Supplier<String> versionSupplier) throws IOException {
+		String streamAliasMapResource = "/com/ibm/j9ddr/StructureAliases" + versionSupplier.get() + ".dat";
 		InputStream is = StructureReader.class.getResourceAsStream(streamAliasMapResource);
 
 		if (null == is) {
