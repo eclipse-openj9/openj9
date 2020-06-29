@@ -205,7 +205,7 @@ end Block_F
 */
 void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop, TR::SymbolReferenceTable::CommonNonhelperSymbol helper, bool needsNullCheck)
    {
-   bool enableTrace = trace() || comp()->getOption(TR_TraceUnsafeInlining);
+   bool enableTrace = trace();
    bool isNotStaticField = !strncmp(comp()->getCurrentMethod()->classNameChars(), "java/util/concurrent/atomic/", strlen("java/util/concurrent/atomic/"));
    bool fixupCommoning = true;
    TR::Node* unsafeCall = treetop->getNode()->getFirstChild();
