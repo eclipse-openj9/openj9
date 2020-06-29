@@ -1529,3 +1529,34 @@ J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.explanation=Please consult the Java Virtual Ma
 J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+# PermittedSubclasses is not translatable
+J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES=multiple PermittedSubclasses attributes
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED=final classes cannot be sealed
+# START NON-TRANSLATABLE
+J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# PermittedSubclasses is not translatable
+J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8=PermittedSubclasses name must be a string
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# PermittedSubclasses is not translatable
+J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE=PermittedSubclasses class entry is not a class type
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

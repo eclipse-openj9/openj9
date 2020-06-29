@@ -973,6 +973,16 @@ class RecordComponentIterator
 	bool needsStaticConstantInit() const { return _needsStaticConstantInit; }
 	bool isRecord() const { return _isRecord; }
 	U_16 getRecordComponentCount() const { return _recordComponentCount; }
+	bool isSealed() const { return _isSealed; }
+	U_16 getPermittedSubclassesClassCount() const { return _isSealed ? _permittedSubclassesAttribute->numberOfClasses : 0; }
+
+	U_16 getPermittedSubclassesClassNameAtIndex(U_16 index) const {
+		if (!_isSealed) return 0;
+
+		U_16 classCpIndex = _permittedSubclassesAttribute->classes[index];
+		return U_16(_classFile->constantPool[classCpIndex].slot1);
+	}
+
 
 	U_8 constantDynamicType(U_16 cpIndex) const
 	{
@@ -1050,6 +1060,7 @@ private:
 	bool _isInnerClass;
 	bool _needsStaticConstantInit;
 	bool _isRecord;
+	bool _isSealed;
 
 	FieldInfo *_fieldsInfo;
 	MethodInfo *_methodsInfo;
@@ -1063,6 +1074,7 @@ private:
 	J9CfrAttributeRuntimeVisibleTypeAnnotations *_typeAnnotationsAttribute;
 	J9CfrAttributeInnerClasses *_innerClasses;
 	J9CfrAttributeBootstrapMethods *_bootstrapMethodsAttribute;
+	J9CfrAttributePermittedSubclasses *_permittedSubclassesAttribute;
 #if JAVA_SPEC_VERSION >= 11
 	J9CfrAttributeNestMembers *_nestMembers;
 #endif /* JAVA_SPEC_VERSION >= 11 */

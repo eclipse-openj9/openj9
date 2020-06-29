@@ -145,6 +145,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 	J9CfrAttributeStackMap *stackMap;
 	J9CfrAttributeBootstrapMethods *bootstrapMethods;
 	J9CfrAttributeRecord *record;
+	J9CfrAttributePermittedSubclasses *permittedSubclasses;
 #if JAVA_SPEC_VERSION >= 11
 	J9CfrAttributeNestHost *nestHost;
 	J9CfrAttributeNestMembers *nestMembers;
@@ -166,6 +167,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 	BOOLEAN visibleParameterAnnotationsRead  = FALSE;
 	BOOLEAN invisibleParameterAnnotationsRead  = FALSE;
 	BOOLEAN recordAttributeRead = FALSE;
+	BOOLEAN permittedSubclassesAttributeRead = FALSE;
 #if JAVA_SPEC_VERSION >= 11
 	BOOLEAN nestAttributeRead = FALSE;
 #endif /* JAVA_SPEC_VERSION >= 11 */
@@ -877,6 +879,32 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 				}
 			}
 			break;
+		case CFR_ATTRIBUTE_PermittedSubclasses:
+			/* JVMS: There may be at most one PermittedSubclasses attribute in the attributes table of a ClassFile structure... */
+			if (permittedSubclassesAttributeRead) {
+				errorCode = J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES__ID;
+				offset = address;
+				goto _errorFound;
+			}
+			permittedSubclassesAttributeRead = TRUE;
+
+			if (!ALLOC(permittedSubclasses, J9CfrAttributePermittedSubclasses)) {
+				return -2;
+			}
+			attrib = (J9CfrAttribute*)permittedSubclasses;
+
+			CHECK_EOF(2);
+			NEXT_U16(permittedSubclasses->numberOfClasses, index);
+
+			if (!ALLOC_ARRAY(permittedSubclasses->classes, permittedSubclasses->numberOfClasses, U_16)) {
+				return -2;
+			}
+			for (j = 0; j < permittedSubclasses->numberOfClasses; j++) {
+				CHECK_EOF(2);
+				NEXT_U16(permittedSubclasses->classes[j], index);
+			}
+			break;
+
 #if JAVA_SPEC_VERSION >= 11
 		case CFR_ATTRIBUTE_NestHost:
 			if (nestAttributeRead) {
@@ -2281,6 +2309,36 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				}
 			}
 
+			break;
+
+		case CFR_ATTRIBUTE_PermittedSubclasses:
+			/* JVMS: If the ACC_FINAL flag is set, then the ClassFile structure must not have a PermittedSubclasses attribute. */
+			if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_FINAL)) {
+				errorCode = J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED__ID;
+				goto _errorFound;
+			}
+			
+			value = ((J9CfrAttributePermittedSubclasses*)attrib)->nameIndex;
+			if ((0 == value) || (value > cpCount)) {
+				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
+				goto _errorFound;
+			}
+			if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Utf8)) {
+				errorCode = J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8__ID;
+				goto _errorFound;
+			}
+
+			for (j = 0; j < ((J9CfrAttributePermittedSubclasses*)attrib)->numberOfClasses; j++) {
+				value = ((J9CfrAttributePermittedSubclasses*)attrib)->classes[j];
+				if ((0 == value) || (value > cpCount)) {
+					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
+					goto _errorFound;
+				}
+				if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Class)) {
+					errorCode = J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE__ID;
+					goto _errorFound;
+				}
+			}
 			break;
 
 #if JAVA_SPEC_VERSION >= 11

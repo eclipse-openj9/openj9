@@ -309,7 +309,8 @@ ROMClassWriter::ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *cl
 	_callSiteDataSRPKey(srpKeyProducer->generateKey()),
 	_staticSplitTableSRPKey(srpKeyProducer->generateKey()),
 	_specialSplitTableSRPKey(srpKeyProducer->generateKey()),
-	_varHandleMethodTypeLookupTableSRPKey(srpKeyProducer->generateKey())
+	_varHandleMethodTypeLookupTableSRPKey(srpKeyProducer->generateKey()),
+	_permittedSubclassesInfoSRPKey(srpKeyProducer->generateKey())
 {
 	_methodNotes = (MethodNotes *) _bufferManager->alloc(classFileOracle->getMethodsCount() * sizeof(MethodNotes));
 	if (NULL == _methodNotes) {
@@ -427,6 +428,7 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	writeAnnotationInfo(cursor);
 	writeSourceDebugExtension(cursor);
 	writeRecordComponents(cursor, markAndCountOnly);
+	writePermittedSubclasses(cursor, markAndCountOnly);
 	writeOptionalInfo(cursor);
 	writeCallSiteData(cursor, markAndCountOnly);
 	writeVarHandleMethodTypeLookupTable(cursor, markAndCountOnly);
@@ -1734,6 +1736,36 @@ ROMClassWriter::writeRecordComponents(Cursor *cursor, bool markAndCountOnly)
 	}
 }
 
+/*
+ * PermittedSubclasses ROM class layout:
+ * 4 bytes for number of classes (actually takes up two, but use 4 for alignment)
+ * for number of classes:
+ *   4 byte SRP to class name
+ */
+void
+ROMClassWriter::writePermittedSubclasses(Cursor *cursor, bool markAndCountOnly)
+{
+	if (_classFileOracle->isSealed()) {
+		cursor->mark(_permittedSubclassesInfoSRPKey);
+
+		U_16 classCount = _classFileOracle->getPermittedSubclassesClassCount();
+		if (markAndCountOnly) {
+			cursor->skip(sizeof(U_32));
+		} else {
+			cursor->writeU32(classCount, Cursor::GENERIC);
+		}
+
+		for (U_16 index = 0; index < classCount; index++) {
+			if (markAndCountOnly) {
+				cursor->skip(sizeof(J9SRP));
+			} else {
+				U_16 classNameCpIndex = _classFileOracle->getPermittedSubclassesClassNameAtIndex(index);
+				cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(classNameCpIndex), Cursor::SRP_TO_UTF8);
+			}
+		}
+	}
+}
+
 void
 ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 {
@@ -1769,6 +1801,7 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 	 * SRP to class annotations
 	 * SRP to class Type Annotations
 	 * SRP to record class component attributes
+	 * SRP to PermittedSubclasses attribute
 	 */
 	cursor->mark(_optionalInfoSRPKey);
 
@@ -1806,6 +1839,9 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 	}
 	if (_classFileOracle->isRecord()) {
 		cursor->writeSRP(_recordInfoSRPKey, Cursor::SRP_TO_GENERIC);
+	}
+	if (_classFileOracle->isSealed()) {
+		cursor->writeSRP(_permittedSubclassesInfoSRPKey, Cursor::SRP_TO_GENERIC);
 	}
 }
 

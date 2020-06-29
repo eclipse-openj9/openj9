@@ -1062,7 +1062,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                               + UNUSED
  *
  *                             + UNUSED
- *                            + UNUSED
+ *                            + AccSealed
  *                           + AccRecord
  *                          + AccClassAnonClass
  *
@@ -1205,6 +1205,10 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 		modifiers |= J9AccRecord;
 	}
 
+	if (classFileOracle->isSealed()) {
+		modifiers |= J9AccSealed;
+	}
+
 	return modifiers;
 }
 
@@ -1241,6 +1245,9 @@ ROMClassBuilder::computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClass
 	}
 	if (classFileOracle->isRecord()) {
 		optionalFlags |= J9_ROMCLASS_OPTINFO_RECORD_ATTRIBUTE;
+	}
+	if (classFileOracle->isSealed()) {
+		optionalFlags |= J9_ROMCLASS_OPTINFO_PERMITTEDSUBCLASSES_ATTRIBUTE;
 	}
 	return optionalFlags;
 }

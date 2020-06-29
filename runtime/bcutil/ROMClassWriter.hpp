@@ -144,6 +144,7 @@ private:
 	void writeByteCodes(Cursor *cursor, ClassFileOracle::MethodIterator *methodIterator);
 	U_32 computeNativeSignatureSize(U_8 *methodDescriptor);
 	void writeNativeSignature(Cursor *cursor, U_8 *methodDescriptor, U_8 nativeArgCount);
+	void writePermittedSubclasses(Cursor *cursor, bool markAndCountOnly);
 
 	BufferManager *_bufferManager;
 	ClassFileOracle *_classFileOracle;
@@ -173,6 +174,7 @@ private:
 	UDATA _staticSplitTableSRPKey;
 	UDATA _specialSplitTableSRPKey;
 	UDATA _recordInfoSRPKey;
+	UDATA _permittedSubclassesInfoSRPKey;
 };
 
 #endif /* ROMCLASSWRITER_HPP_ */

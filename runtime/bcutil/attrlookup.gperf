@@ -71,3 +71,4 @@ MethodParameters, CFR_ATTRIBUTE_MethodParameters, CFR_ATTRIBUTE_MethodParameters
 NestMembers, CFR_ATTRIBUTE_NestMembers, CFR_ATTRIBUTE_NestMembers
 NestHost, CFR_ATTRIBUTE_NestHost, CFR_ATTRIBUTE_NestHost
 Record, CFR_ATTRIBUTE_Record, CFR_ATTRIBUTE_Record
+PermittedSubclasses, CFR_ATTRIBUTE_PermittedSubclasses, CFR_ATTRIBUTE_PermittedSubclasses

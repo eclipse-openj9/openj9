@@ -188,7 +188,9 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_isInnerClass(false),
 	_needsStaticConstantInit(false),
 	_isRecord(false),
-	_recordComponentCount(0)
+	_recordComponentCount(0),
+	_permittedSubclassesAttribute(NULL),
+	_isSealed(false)
 {
 	Trc_BCU_Assert_NotEquals( classFile, NULL );
 
@@ -492,6 +494,15 @@ ClassFileOracle::walkAttributes()
 		case CFR_ATTRIBUTE_Record: {
 			_isRecord = true;
 			walkRecordComponents((J9CfrAttributeRecord *)attrib);
+			break;
+		}
+		case CFR_ATTRIBUTE_PermittedSubclasses: {
+			_isSealed = true;
+			_permittedSubclassesAttribute = (J9CfrAttributePermittedSubclasses *)attrib;
+			for (U_16 numberOfClasses = 0; numberOfClasses < _permittedSubclassesAttribute->numberOfClasses; numberOfClasses++) {
+				U_16 classCpIndex = _permittedSubclassesAttribute->classes[numberOfClasses];
+				markClassAsReferenced(classCpIndex);
+			}
 			break;
 		}
 #if JAVA_SPEC_VERSION >= 11
