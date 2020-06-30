@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,6 +80,10 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 
 		omrthread_monitor_init_with_name(&vm->constantDynamicMutex, 0, "Wait mutex for constantDynamic during resolve") ||
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		omrthread_monitor_init_with_name(&vm->valueTypeVerificationMutex, 0, "Wait mutex for verifying valuetypes") ||
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 		initializeMonitorTable(vm)
 	)
 	{
@@ -156,7 +160,9 @@ void terminateVMThreading(J9JavaVM *vm)
 	if (vm->nativeLibraryMonitor) omrthread_monitor_destroy(vm->nativeLibraryMonitor);
 	if (vm->vmRuntimeStateListener.runtimeStateListenerMutex) omrthread_monitor_destroy(vm->vmRuntimeStateListener.runtimeStateListenerMutex);
 	if (vm->constantDynamicMutex) omrthread_monitor_destroy(vm->constantDynamicMutex);
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (vm->valueTypeVerificationMutex) omrthread_monitor_destroy(vm->valueTypeVerificationMutex);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	destroyMonitorTable(vm);
 }
 

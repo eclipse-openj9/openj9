@@ -62,6 +62,33 @@ static char const *statusNames[] = {
 static j9object_t setInitStatus(J9VMThread *currentThread, J9Class *clazz, UDATA status, j9object_t initializationLock);
 static void classInitStateMachine(J9VMThread *currentThread, J9Class *clazz, J9ClassInitState desiredState);
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+static BOOLEAN
+compareRAMClasses(void *item, J9StackElement *currentElement)
+{
+	BOOLEAN rc = FALSE;
+
+	if (currentElement->element == item) {
+		rc = TRUE;
+	}
+
+	return rc;
+}
+
+static BOOLEAN
+checkForCyclicalVerification(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Class *ramClass)
+{
+	J9JavaVM *javaVM = currentThread->javaVM;
+	return verifyLoadingOrLinkingStack(currentThread, classLoader, ramClass, &currentThread->verificationStack, &compareRAMClasses, javaVM->verificationMaxStack, javaVM->valueTypeVerificationStackPool, FALSE, FALSE);
+}
+
+static void
+popFromVerificationStack(J9VMThread *currentThread)
+{
+	popLoadingOrLinkingStack(currentThread, &currentThread->verificationStack, currentThread->javaVM->valueTypeVerificationStackPool);
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 void
 initializeImpl(J9VMThread *currentThread, J9Class *clazz)
 {
@@ -373,17 +400,77 @@ doVerify:
 				}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				/* verify flattened fields */
+				/* verify flattenable fields */
 				if (NULL != clazz->flattenedClassCache) {
 					UDATA numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
 
+					calculateFlattenedFieldAddresses(currentThread, clazz);
+
 					for (UDATA i = 0; i < numberOfFlattenedFields; i++) {
 						J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, i);
-						Trc_VM_classInitStateMachine_verifyFlattenableField(currentThread, entry->clazz);
+						J9Class *entryClazz = NULL;
+						bool isStatic = J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry);
+
+						if (isStatic) {
+							J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(entry->field);
+							U_8 *signatureChars = J9UTF8_DATA(signature);
+
+							PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
+							J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, J9UTF8_LENGTH(signature) - 2, clazz->classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+							initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+							clazz = VM_VMHelpers::currentClass(clazz);
+							if (NULL == valueClass) {
+								initializationLock = setInitStatus(currentThread, clazz, J9ClassInitUnverified, initializationLock);
+								clazz = VM_VMHelpers::currentClass(clazz);
+								goto done;
+							}
+
+							/* need to check if it has access */
+							J9ROMClass *valueROMClass = valueClass->romClass;
+							bool classIsPublic = J9_ARE_ALL_BITS_SET(valueROMClass->modifiers, J9AccPublic);
+
+							if ((!classIsPublic && (clazz->packageID != valueClass->packageID))
+								|| (classIsPublic && (J9_VISIBILITY_ALLOWED != checkModuleAccess(currentThread, vm, clazz->romClass, clazz->module, valueROMClass, valueClass->module, valueClass->packageID, 0)))
+							) {
+								J9UTF8 *romClassName = J9ROMCLASS_CLASSNAME(valueROMClass);
+								PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
+								setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_CLASS_OR_INTERFACE, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, J9UTF8_LENGTH(romClassName), J9UTF8_DATA(romClassName));
+								initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+								clazz = VM_VMHelpers::currentClass(clazz);
+								initializationLock = setInitStatus(currentThread, clazz, J9ClassInitUnverified, initializationLock);
+								clazz = VM_VMHelpers::currentClass(clazz);
+								goto done;
+							}
+
+							entry->clazz = (J9Class *)((UDATA)valueClass | (UDATA)entry->clazz);
+						}
+						entryClazz = J9_VM_FCC_CLASS_FROM_ENTRY(entry);
+
+						if (isStatic) {
+							omrthread_monitor_enter(vm->valueTypeVerificationMutex);
+							BOOLEAN cycleDetected = checkForCyclicalVerification(currentThread, entryClazz->classLoader, entryClazz);
+							omrthread_monitor_exit(vm->valueTypeVerificationMutex);
+
+							/* It is legal for verification cycles to occur when verifying static flattenable fields
+							 * as direct and indirect recursive definitions of flattenable static fields are allowed.
+							 * When a cycle is detected skip the verification so we don't stack overflow.
+							 */
+							if (cycleDetected) {
+								continue;
+							}
+						}
+
+						Trc_VM_classInitStateMachine_verifyFlattenableField(currentThread, entryClazz);
 						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-						classInitStateMachine(currentThread, entry->clazz, J9_CLASS_INIT_VERIFIED);
+						classInitStateMachine(currentThread, entryClazz, J9_CLASS_INIT_VERIFIED);
 						initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 						clazz = VM_VMHelpers::currentClass(clazz);
+
+						if (isStatic) {
+							omrthread_monitor_enter(vm->valueTypeVerificationMutex);
+							popFromVerificationStack(currentThread);
+							omrthread_monitor_exit(vm->valueTypeVerificationMutex);
+						}
 
 						if (VM_VMHelpers::exceptionPending(currentThread)) {
 							initializationLock = setInitStatus(currentThread, clazz, J9ClassInitUnverified, initializationLock);
@@ -493,23 +580,61 @@ doVerify:
 				}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				/* prepare flattened fields */
+				/* prepare flattenable fields */
 				if (NULL != clazz->flattenedClassCache) {
 					UDATA numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
 
 					for (UDATA i = 0; i < numberOfFlattenedFields; i++) {
 						J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, i);
-						Trc_VM_classInitStateMachine_prepareFlattenableField(currentThread, entry->clazz);
+						J9Class *entryClazz = J9_VM_FCC_CLASS_FROM_ENTRY(entry);
+
+						bool isStatic = J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry);
+
+						if (isStatic) {
+							initializationLock = enterInitializationLock(currentThread, initializationLock);
+							clazz = VM_VMHelpers::currentClass(clazz);
+
+							if (NULL == initializationLock) {
+								goto done;
+							}
+
+							clazz->initializeStatus = (UDATA)currentThread | J9ClassInitUnprepared;
+							VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
+						}
+
+						Trc_VM_classInitStateMachine_prepareFlattenableField(currentThread, entryClazz);
+
 						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-						classInitStateMachine(currentThread, entry->clazz, J9_CLASS_INIT_PREPARED);
+						classInitStateMachine(currentThread, entryClazz, J9_CLASS_INIT_PREPARED);
 						initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 						clazz = VM_VMHelpers::currentClass(clazz);
+
+						j9object_t exception = currentThread->currentException;
+						if (isStatic) {
+							PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, exception);
+							initializationLock = enterInitializationLock(currentThread, initializationLock);
+							clazz = VM_VMHelpers::currentClass(clazz);
+
+							if (NULL == initializationLock) {
+								goto done;
+							}
+
+							clazz->initializeStatus = J9ClassInitUnprepared;
+							VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
+							exception = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+						}
+						currentThread->currentException = exception;
 
 						if (VM_VMHelpers::exceptionPending(currentThread)) {
 							goto done;
 						}
+
+						if (isStatic) {
+							classPrepareWithWithUnflattenedFlattenables(currentThread, clazz, entry, entryClazz);
+						}
 					}
 				}
+
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 				/* Prepare this class */
@@ -610,15 +735,16 @@ doVerify:
 				}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				/* init flattened fields */
+				/* init flattenable fields */
 				if (NULL != clazz->flattenedClassCache) {
 					UDATA numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
 
 					for (UDATA i = 0; i < numberOfFlattenedFields; i++) {
 						J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, i);
-						Trc_VM_classInitStateMachine_initFlattenableField(currentThread, entry->clazz);
+						J9Class *entryClazz = J9_VM_FCC_CLASS_FROM_ENTRY(entry);
+						Trc_VM_classInitStateMachine_initFlattenableField(currentThread, entryClazz);
 						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-						classInitStateMachine(currentThread, entry->clazz, J9_CLASS_INIT_INITIALIZED);
+						classInitStateMachine(currentThread, entryClazz, J9_CLASS_INIT_INITIALIZED);
 						initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 						clazz = VM_VMHelpers::currentClass(clazz);
 

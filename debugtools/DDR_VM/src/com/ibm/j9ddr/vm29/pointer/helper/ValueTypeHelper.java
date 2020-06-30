@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,7 @@ import com.ibm.j9ddr.logging.LoggerNames;
 import com.ibm.j9ddr.vm29.j9.J9ConstantHelper;
 import com.ibm.j9ddr.vm29.pointer.AbstractPointer;
 import com.ibm.j9ddr.vm29.pointer.StructurePointer;
+import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
@@ -59,6 +60,8 @@ public class ValueTypeHelper {
 		private static final long J9ClassLargestAlignmentConstraintDouble = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassLargestAlignmentConstraintDouble", 0);
 		private static final long J9ClassLargestAlignmentConstraintReference = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassLargestAlignmentConstraintReference", 0);
 		private static final long J9ClassIsFlattened = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassIsFlattened", 0);
+		private static final UDATA J9ClassFlagsMask = new UDATA(0xFF);
+		private static final UDATA J9ClazzInEntryMask = new UDATA(J9ClassFlagsMask.bitNot());
 		private MethodHandle getFlattenedClassCachePointer = null;
 		private Class<?> flattenedClassCachePointer = null;
 		private MethodHandle flattenedClassCache_numberOfEntries = null;
@@ -116,6 +119,8 @@ public class ValueTypeHelper {
 					String field = J9UTF8Helper.stringValue(((J9ROMFieldShapePointer)flattenedClassCacheEntry_field.invoke(entry)).nameAndSignature().name());
 					if (field.equals(fieldName)) {
 						resultClazz = (J9ClassPointer) flattenedClassCacheEntry_clazz.invoke(entry);
+						UDATA clazzUDATA = UDATA.cast(resultClazz);
+						resultClazz = J9ClassPointer.cast(clazzUDATA.bitAnd(J9ClazzInEntryMask));
 						break;
 					}
 					entry = (StructurePointer) entry.add(1);
@@ -161,6 +166,8 @@ public class ValueTypeHelper {
 					field = field.substring(1,  field.length() - 1);
 					if (field.equals(fieldSig)) {
 						resultClazz = (J9ClassPointer) flattenedClassCacheEntry_clazz.invoke(entry);
+						UDATA clazzUDATA = UDATA.cast(resultClazz);
+						resultClazz = J9ClassPointer.cast(clazzUDATA.bitAnd(J9ClazzInEntryMask));
 						break;
 					}
 					entry = (StructurePointer) entry.add(1);

@@ -28,34 +28,55 @@
 #include "vm_api.h"
 
 extern "C" {
+
+void
+calculateFlattenedFieldAddresses(J9VMThread *currentThread, J9Class *clazz)
+{
+	UDATA length = clazz->flattenedClassCache->numberOfEntries;
+
+	for (UDATA index = 0; index < length; index++) {
+		J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, index);
+		J9Class *definingClass = NULL;
+		J9ROMFieldShape *field = NULL;
+		J9ROMFieldShape *entryField = entry->field;
+		J9UTF8 *name = J9ROMFIELDSHAPE_NAME(entryField);
+		J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(entryField);
+
+		if (J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry)) {
+			entry->offset = (UDATA) staticFieldAddress(currentThread, clazz, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, 0, clazz);
+		} else {
+			entry->offset = instanceFieldOffset(currentThread, clazz, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, 0);
+		}
+		Assert_VM_unequal(UDATA_MAX, entry->offset);
+	}
+}
+
 void
 defaultValueWithUnflattenedFlattenables(J9VMThread *currentThread, J9Class *clazz, j9object_t instance)
 {
-        J9FlattenedClassCacheEntry * entry = NULL;
-        J9Class * entryClazz = NULL;
-        UDATA length = clazz->flattenedClassCache->numberOfEntries;
-        UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
-        for (UDATA index = 0; index < length; index++) {
-                entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, index);
-                entryClazz = entry->clazz;
-                if (J9_ARE_NO_BITS_SET(J9ClassIsFlattened, entryClazz->classFlags)) {
-                        if (entry->offset == UDATA_MAX) {
-                                J9Class *definingClass = NULL;
-                                J9ROMFieldShape *field = NULL;
-                                J9ROMFieldShape *entryField = entry->field;
-                                J9UTF8 *name = J9ROMFIELDSHAPE_NAME(entryField);
-                                J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(entryField);
-                                entry->offset = instanceFieldOffset(currentThread, clazz, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, 0);
-                                Assert_VM_notNull(field);
-                        }
-                        MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
-                        objectAccessBarrier.inlineMixedObjectStoreObject(currentThread, 
-                                                                                instance, 
-                                                                                entry->offset + objectHeaderSize, 
-                                                                                entryClazz->flattenedClassCache->defaultValue, 
-                                                                                false);
-                }
-        }
+	J9FlattenedClassCacheEntry * entry = NULL;
+	J9Class * entryClazz = NULL;
+	UDATA length = clazz->flattenedClassCache->numberOfEntries;
+	UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
+	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+	for (UDATA index = 0; index < length; index++) {
+		entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, index);
+		entryClazz = J9_VM_FCC_CLASS_FROM_ENTRY(entry);
+		if (!J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry) && J9_ARE_NO_BITS_SET(J9ClassIsFlattened, entryClazz->classFlags)) {
+			objectAccessBarrier.inlineMixedObjectStoreObject(currentThread,
+												instance,
+												entry->offset + objectHeaderSize,
+												entryClazz->flattenedClassCache->defaultValue,
+												false);
+		}
+	}
+}
+
+void
+classPrepareWithWithUnflattenedFlattenables(J9VMThread *currentThread, J9Class *clazz, J9FlattenedClassCacheEntry *entry, J9Class *entryClazz)
+{
+	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+	objectAccessBarrier.inlineStaticStoreObject(currentThread, clazz, (j9object_t *)entry->offset, entryClazz->flattenedClassCache->defaultValue);
 }
 
 BOOLEAN
@@ -97,7 +118,7 @@ findJ9ClassInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, U_8
         for (UDATA i = 0; i < length; i++) {
                 J9UTF8* currentClassName = J9ROMCLASS_CLASSNAME(J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->clazz->romClass);
                 if (J9UTF8_DATA_EQUALS(J9UTF8_DATA(currentClassName), J9UTF8_LENGTH(currentClassName), className, classNameLength)) {
-                        clazz = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->clazz;
+                        clazz = J9_VM_FCC_CLASS_FROM_ENTRY(J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i));
                         break;
                 }
         }
@@ -143,7 +164,7 @@ getFlattenableFieldType(J9Class *fieldOwner, J9ROMFieldShape *field)
         J9ROMNameAndSignature *nameAndSig = &field->nameAndSignature;
         UDATA fieldIndex = findIndexInFlattenedClassCache(flattenedClassCache, nameAndSig);
         Assert_VM_unequal(UDATA_MAX, fieldIndex);
-        J9Class * fieldType = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, fieldIndex)->clazz;
+        J9Class * fieldType = J9_VM_FCC_CLASS_FROM_ENTRY(J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, fieldIndex));
 
         return fieldType;
 }
