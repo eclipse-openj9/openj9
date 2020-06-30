@@ -432,6 +432,35 @@ contendedLoadTableFree(J9JavaVM* vm);
 #define J9_CP_INDEX_NONE -1
 
 /**
+ * Checks stack to see if element exists, if not adds the new element and returns TRUE. Otherwise, returns FALSE
+ *
+ * @param vmThread vmthread token
+ * @param classloader loader associated with current element
+ * @param clazz either romclass or ramclass
+ * @param stack the loading or linking stack
+ * @param comparator handle to function that will compare elements
+ * @param maxStack maximum concurrent classloads or class linkage
+ * @param stackpool pool for stack elements
+ * @param throwException flag to indicate if exception should be thrown in the case of cirularity
+ * @param ownsClassTableMutex flag to indicate if class table mutex is being held
+ * @result TRUE is element exists in stack, FALSE otherwise
+ */
+BOOLEAN
+verifyLoadingOrLinkingStack(J9VMThread *vmThread, J9ClassLoader *classLoader, void *clazz,
+		J9StackElement **stack, BOOLEAN (*comparator)(void *, J9StackElement *), UDATA maxStack,
+		J9Pool *stackpool, BOOLEAN throwException, BOOLEAN ownsClassTableMutex);
+
+/**
+ * Pops entry from stack
+ *
+ * @param vmThread vmthread token
+ * @param stack the loading or linking stack
+ * @param stackpool pool for stack elements
+ */
+void
+popLoadingOrLinkingStack(J9VMThread *vmThread, J9StackElement **stack, J9Pool *stackpool);
+
+/**
 * @brief
 * @param *vmThread
 * @param *classLoader
@@ -2252,6 +2281,17 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 #endif
 
 /**
+ * Initialize fields offsets into FCC
+ *
+ * @param[in] *currentThread the current thread
+ * @param[in] *clazz class
+ *
+ * @returns void
+ */
+void
+calculateFlattenedFieldAddresses(J9VMThread *currentThread, J9Class *clazz);
+
+/**
  * Initialize fields to default values when the class
  * contains unflattened flattenables.
  *
@@ -2264,6 +2304,19 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 void
 defaultValueWithUnflattenedFlattenables(J9VMThread *currentThread, J9Class *clazz, j9object_t instance);
 
+/**
+ * Initialize static fields to default values when the class
+ * contains flattenable statics. Currently none of the static fields are flattened.
+ *
+ * @param[in] currentThread the current thread
+ * @param[in] clazz the class being loaded
+ * @param[in] entry The FCC entry for the static field
+ * @param[in] entryClazz the clazz in the FCC entry for the static field
+ *
+ * @returns void
+ */
+void
+classPrepareWithWithUnflattenedFlattenables(J9VMThread *currentThread, J9Class *clazz, J9FlattenedClassCacheEntry *entry, J9Class *entryClazz);
 
 /**
  * Compare two objects for equality. This helper will perform a

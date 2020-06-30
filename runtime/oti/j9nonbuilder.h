@@ -1695,6 +1695,10 @@ typedef struct J9ModuleExtraInfo {
  *                    |                       |                *
  *      clazz N       |   Name & Signature N  |     offset N   *
  ***************************************************************/
+
+#define J9_VM_FCC_CLASS_FLAGS_MASK ((UDATA) 0xFF)
+#define J9_VM_FCC_CLASS_FLAGS_STATIC_FIELD ((UDATA)0x1)
+
 typedef struct J9FlattenedClassCacheEntry {
 	struct J9Class* clazz;
 	struct J9ROMFieldShape * field;
@@ -1708,6 +1712,8 @@ typedef struct J9FlattenedClassCache {
 
 #define J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, index) (((J9FlattenedClassCacheEntry *)((flattenedClassCache) + 1)) + (index))
 #define J9_VM_FCC_ENTRY_FROM_CLASS(clazz, index) J9_VM_FCC_ENTRY_FROM_FCC((clazz)->flattenedClassCache, index)
+#define J9_VM_FCC_CLASS_FROM_ENTRY(entry) ((J9Class *)((UDATA)(entry)->clazz & ~J9_VM_FCC_CLASS_FLAGS_MASK))
+#define J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry) J9_ARE_ALL_BITS_SET((UDATA)(entry)->clazz, J9_VM_FCC_CLASS_FLAGS_STATIC_FIELD)
 
 struct J9TranslationBufferSet;
 typedef struct J9VerboseStruct {
@@ -1725,11 +1731,11 @@ typedef struct J9InternHashTableEntry {
 	struct J9InternHashTableEntry* nextNode;
 } J9InternHashTableEntry;
 
-typedef struct J9ClassLoadingStackElement {
-	struct J9ClassLoadingStackElement* previous;
-	struct J9ROMClass* romClass;
+typedef struct J9StackElement {
+	struct J9StackElement* previous;
 	struct J9ClassLoader* classLoader;
-} J9ClassLoadingStackElement;
+	void* element;
+} J9StackElement;
 
 typedef struct J9SubclassWalkState {
 	struct J9Class* currentClass;
@@ -4653,7 +4659,10 @@ typedef struct J9VMThread {
 	UDATA debugEventData6;
 	UDATA debugEventData7;
 	UDATA debugEventData8;
-	struct J9ClassLoadingStackElement* classLoadingStack;
+	struct J9StackElement* classLoadingStack;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	struct J9StackElement* verificationStack;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	UDATA jitTransitionJumpSlot;
 	omrthread_monitor_t gcClassUnloadingMutex;
 	struct J9VMThread* gcClassUnloadingThreadPrevious;
@@ -5219,6 +5228,9 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t constantDynamicMutex;
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 	UDATA valueFlatteningThreshold;
+	omrthread_monitor_t valueTypeVerificationMutex;
+	struct J9Pool* valueTypeVerificationStackPool;
+	UDATA verificationMaxStack;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	UDATA dCacheLineSize;
 	/* Indicates processor support for committing cache lines to memory. On X86,

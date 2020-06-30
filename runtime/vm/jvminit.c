@@ -787,6 +787,13 @@ freeJavaVM(J9JavaVM * vm)
 		vm->classLoadingStackPool = NULL;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (NULL != vm->valueTypeVerificationStackPool) {
+		pool_kill(vm->valueTypeVerificationStackPool);
+		vm->valueTypeVerificationStackPool = NULL;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	j9mem_free_memory(vm->vTableScratch);
 	vm->vTableScratch = NULL;
 
@@ -2133,8 +2140,13 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			if (NULL == (vm->jniWeakGlobalReferences = pool_new(sizeof(UDATA), 0, 0, POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(vm->portLibrary))))
 				goto _error;
 
-			if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9ClassLoadingStackElement),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
+			if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9StackElement),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
 				goto _error;
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (NULL == (vm->valueTypeVerificationStackPool = pool_new(sizeof(J9StackElement),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
+				goto _error;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES)*/
 
 			if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
 				goto _error;
