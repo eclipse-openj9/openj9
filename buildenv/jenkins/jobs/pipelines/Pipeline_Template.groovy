@@ -20,6 +20,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+/*
+ * Please note:
+ *
+ * Changing this file will require a Jenkins admin to approve the DSL script.
+ * To avoid this approval each time, under "Configure Global Security"
+ * uncheck "Enable script security for Job DSL scripts". This has been done
+ * on the Eclipse OpenJ9 Jenkins instance.
+ */
+
 if (!binding.hasVariable('SDK_VERSION')) SDK_VERSION = ''
 if (!binding.hasVariable('PLATFORM')) PLATFORM = ''
 if (!binding.hasVariable('VARIABLE_FILE_DEFAULT')) VARIABLE_FILE_DEFAULT = ''
