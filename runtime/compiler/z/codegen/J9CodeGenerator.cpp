@@ -94,6 +94,13 @@ J9::Z::CodeGenerator::CodeGenerator() :
       cg->setSupportsInlineConcurrentLinkedQueue();
       }
 
+   // Similar to AOT, array translate instructions are not supported for remote compiles because instructions such as
+   // TRTO allocate lookup tables in persistent memory that cannot be relocated.
+   if (comp->isOutOfProcessCompilation())
+      {
+      cg->resetSupportsArrayTranslateTRxx();
+      }
+
    // Let's turn this on.  There is more work needed in the opt
    // to catch the case where the BNDSCHK is inserted after
    //
