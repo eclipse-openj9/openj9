@@ -146,7 +146,7 @@ def checkout_pullrequest() {
         for (DEPEND in DEPENDS_ARRAY) {
             String REPO = DEPEND.substring(DEPEND.indexOf("/") + 1, DEPEND.indexOf("#"));
             String PR_ID = DEPEND.substring(DEPEND.indexOf("#") + 1, DEPEND.length());
-            switch(REPO) {
+            switch (REPO) {
                 case "omr":
                 case "openj9-omr":
                     if (omr_bool) {
@@ -224,7 +224,7 @@ def checkout_pullrequest(ID, REPO) {
     try {
         if (ID.isNumber()) {
             try {
-                fetchRef("pull/${ID}/merge", "pr/${ID}/merge" )
+                fetchRef("pull/${ID}/merge", "pr/${ID}/merge")
                 checkoutRef ("pr/${ID}/merge")
             } catch (e) {
                 // If merge ref doesn't exist, checkout PR base branch.
@@ -245,7 +245,7 @@ def checkout_pullrequest(ID, REPO) {
             fetchRef ("heads/${ID}", ID)
             checkoutRef (ID)
         }
-    } catch(e) {
+    } catch (e) {
         error("Fatal: Unable to checkout '${ID}'. If checking out a branch, please ensure the branch exists and the spelling is correct. If checking out a PullRequest, please ensure the PR is open, unmerged and has no merge conflicts.")
     }
 }
@@ -258,7 +258,6 @@ def checkoutRef (REF) {
     sh "git checkout refs/remotes/origin/${REF}"
 }
 
-
 def build() {
     stage('Compile') {
         // 'all' target dependencies broken for zos, use 'images test-image-openj9'
@@ -268,7 +267,7 @@ def build() {
             dir(OPENJDK_CLONE_DIR) {
                 try {
                     sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar='$FREEMARKER' --with-boot-jdk='$BOOT_JDK' $EXTRA_CONFIGURE_OPTIONS && make $EXTRA_MAKE_OPTIONS ${make_target}"
-                } catch(e) {
+                } catch (e) {
                     archive_diagnostics()
                     throw e
                 }
@@ -406,14 +405,14 @@ def archive_sdk() {
 }
 
 /*
-* When crash occurs in java, there will be an output in the log: IEATDUMP success for DSN='JENKINS.JVM.JENKIN*.*.*.X&DS'.
-* The X&DS is a macro that is passed to the IEATDUMP service on z/OS.
-* The dump is split into multiple files by the macro if the address space is large.
-* Each dataset is named in a similar way but there is a distinct suffix to specify the order.
-* For example, JVM.*.*.*.001, JVM.*.*.*.002, and JVM.*.*.*.003.
-* The function fetchFile moves each dataset into the current directory of the machine, and appends the data to the core.xxx.dmp at the same time.
-* The file core.xxx.dmp is uploaded to artifactory for triage.
-*/
+ * When crash occurs in java, there will be an output in the log: IEATDUMP success for DSN='JENKINS.JVM.JENKIN*.*.*.X&DS'.
+ * The X&DS is a macro that is passed to the IEATDUMP service on z/OS.
+ * The dump is split into multiple files by the macro if the address space is large.
+ * Each dataset is named in a similar way but there is a distinct suffix to specify the order.
+ * For example, JVM.*.*.*.001, JVM.*.*.*.002, and JVM.*.*.*.003.
+ * The function fetchFile moves each dataset into the current directory of the machine, and appends the data to the core.xxx.dmp at the same time.
+ * The file core.xxx.dmp is uploaded to artifactory for triage.
+ */
 def fetchFile(src, dest) {
     // remove the user name from the dataset name
     def offset = USER.length() + 1
@@ -455,8 +454,8 @@ def archive_diagnostics() {
         }
         // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
         sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | pax -wzf ${DIAGNOSTICS_FILENAME}"
-    } else if(SPEC.endsWith("_cm")) {
-        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp'  -o -name ddr_info  -o -name superset.dat -o -name j9ddr.dat -o -name '*.stub.h' -o -name '*.annt.h' | sed 's#^./##' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"
+    } else if (SPEC.endsWith("_cm")) {
+        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' -o -name ddr_info -o -name superset.dat -o -name j9ddr.dat -o -name '*.stub.h' -o -name '*.annt.h' | sed 's#^./##' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"
     } else {
         sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"
     }
@@ -517,7 +516,7 @@ def upload_artifactory_core(geo, uploadSpec) {
     //Retry uploading to Artifactory if errors occur
     pipelineFunctions.retry_and_delay({
         server.upload spec: uploadSpec, buildInfo: buildInfo;
-        if (!ARTIFACTORY_CONFIG[geo]['vpn']){server.publishBuildInfo buildInfo}},
+        if (!ARTIFACTORY_CONFIG[geo]['vpn']) { server.publishBuildInfo buildInfo } },
         3, 300)
 
     ARTIFACTORY_CONFIG[geo]['url'] = server.getUrl()

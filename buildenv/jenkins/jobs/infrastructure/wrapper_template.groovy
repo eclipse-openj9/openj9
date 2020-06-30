@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,7 +18,7 @@
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
-*******************************************************************************/
+ *******************************************************************************/
 
 if (!binding.hasVariable('extra_git_options')) extra_git_options = null
 if (!binding.hasVariable('build_discarder_logs')) build_discarder_logs = 0
@@ -28,23 +28,22 @@ if (!binding.hasVariable('github_project')) github_project = null
 if (!binding.hasVariable('parameters')) parameters = null
 if (!binding.hasVariable('quiet_period')) quiet_period = 0
 
-
-pipelineJob(job_name){
-    if (quiet_period > 0){
+pipelineJob(job_name) {
+    if (quiet_period > 0) {
         quietPeriod(quiet_period)
     }
     description(job_description)
-    definition{
-        cpsScm{
-            scm{
-                git{
-                    remote{
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote {
                         url(repository_url)
                     }
                     branch(repository_branch)
-                    if (extra_git_options){
-                        extensions{
-                            cloneOption{
+                    if (extra_git_options) {
+                        extensions {
+                            cloneOption {
                                 depth(extra_git_options.depth)
                                 reference(extra_git_options.reference_repo)
                                 noTags(extra_git_options.no_tags)
@@ -59,40 +58,40 @@ pipelineJob(job_name){
             lightweight(true)
         }
     }
-    if (build_discarder_logs || build_discarder_artifacts){
-        logRotator{
-            if (build_discarder_logs){
+    if (build_discarder_logs || build_discarder_artifacts) {
+        logRotator {
+            if (build_discarder_logs) {
                 numToKeep(build_discarder_logs)
             }
-            if (build_discarder_artifacts){
+            if (build_discarder_artifacts) {
                 artifactNumToKeep(build_discarder_artifacts)
             }
         }
     }
-    if (github_project){
+    if (github_project) {
         properties {
             githubProjectUrl(github_project)
         }
     }
-    if (parameters){
+    if (parameters) {
         parameters {
-            parameters.boolean_parameters.each{ boolean_parameter ->
-                booleanParam{
+            parameters.boolean_parameters.each { boolean_parameter ->
+                booleanParam {
                     name(boolean_parameter.key)
                     defaultValue(boolean_parameter.value)
                     description(parameter_descriptions.get(boolean_parameter.key))
                 }
             }
             parameters.string_parameters.each { string_parameter ->
-                stringParam{
+                stringParam {
                     name(string_parameter.key)
                     defaultValue(string_parameter.value)
                     description(parameter_descriptions.get(string_parameter.key))
                     trim(true)
                 }
             }
-            parameters.choice_parameters.each{ choice_parameter ->
-                choiceParam{
+            parameters.choice_parameters.each { choice_parameter ->
+                choiceParam {
                     name(choice_parameter.key)
                     choices(choice_parameter.value)
                     description(parameter_descriptions.get(choice_parameter.key))
@@ -100,12 +99,12 @@ pipelineJob(job_name){
             }
         }
     }
-    if (triggers){
-        triggers{
-            if (triggers.cron){
+    if (triggers) {
+        triggers {
+            if (triggers.cron) {
                 cron(triggers.cron)
             }
-            if (triggers.pull_request_builder){
+            if (triggers.pull_request_builder) {
                 githubPullRequest {
                     admins(triggers.pull_request_builder.admin_list)
                     blackListCommitAuthor(triggers.pull_request_builder.blacklist)

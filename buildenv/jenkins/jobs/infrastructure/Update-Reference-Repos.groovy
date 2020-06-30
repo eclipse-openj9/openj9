@@ -42,7 +42,7 @@ def jobs = [:]
 timeout(time: 6, unit: 'HOURS') {
     timestamps {
         node(SETUP_LABEL) {
-            try{
+            try {
                 def gitConfig = scm.getUserRemoteConfigs().get(0)
                 def remoteConfigParameters = [url: "${gitConfig.getUrl()}"]
 
@@ -96,7 +96,7 @@ timeout(time: 6, unit: 'HOURS') {
                         setupNodesNames.add(sNodeName)
 
                         jobs["${sNodeName}"] = {
-                            node("${sNodeName}"){
+                            node("${sNodeName}") {
                                 stage("${sNodeName} - Update Reference Repo") {
                                     refresh(sNodeName, "${HOME}/openjdk_cache", [[name: "openj9", url: VARIABLES.openj9.get('default').get('repoUrl')]], true)
                                 }
@@ -149,7 +149,7 @@ timeout(time: 6, unit: 'HOURS') {
                         repos.unique()
 
                         jobs["${nodeName}"] = {
-                            node("${nodeName}"){
+                            node("${nodeName}") {
                                 stage("${nodeName} - Update Reference Repo") {
                                     refresh(nodeName, "${HOME}/openjdk_cache", repos, foundLabel)
                                 }
@@ -171,8 +171,8 @@ timeout(time: 6, unit: 'HOURS') {
 }
 
 /*
-* Creates and updates the git reference repository cache on the node.
-*/
+ * Creates and updates the git reference repository cache on the node.
+ */
 def refresh(node, cacheDir, repos, isKnownOs) {
     if (CLEAN_CACHE_DIR) {
         sh "rm -fr ${cacheDir}"
@@ -201,17 +201,17 @@ def refresh(node, cacheDir, repos, isKnownOs) {
 }
 
 /*
-* Add a git remote.
-*/
+ * Add a git remote.
+ */
 def config(remoteName, remoteUrl) {
     sh "git config remote.${remoteName}.url ${remoteUrl}"
     sh "git config remote.${remoteName}.fetch +refs/heads/*:refs/remotes/${remoteName}/*"
 }
 
 /*
-* Parses openjdk map from variables file and fetch the URL of the extensions
-* repositories for the supported releases. Returns an array.
-*/
+ * Parses openjdk map from variables file and fetch the URL of the extensions
+ * repositories for the supported releases. Returns an array.
+ */
 def get_openjdk_repos(openJdkMap, useDefault) {
     def repos = []
 
