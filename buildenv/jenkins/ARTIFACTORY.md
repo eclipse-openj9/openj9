@@ -71,7 +71,7 @@ This is the copy that is currently being used
 server {
     server_name 140-211-168-230-openstack.osuosl.org;
     if ($http_x_forwarded_proto = '') {
-        set $http_x_forwarded_proto  $scheme;
+        set $http_x_forwarded_proto $scheme;
     }
 
     ## Application specific logs
@@ -85,10 +85,10 @@ server {
         proxy_read_timeout  900;
         proxy_pass_header   Server;
         proxy_cookie_path   ~*^/.* /;
-        if ( $request_uri ~ ^/artifactory/(.*)$ ) {
-            proxy_pass          http://localhost:8081/artifactory/$1;
+        if ($request_uri ~ ^/artifactory/(.*)$) {
+            proxy_pass      http://localhost:8081/artifactory/$1;
         }
-        proxy_pass         http://localhost:8081/artifactory/;
+        proxy_pass          http://localhost:8081/artifactory/;
         proxy_set_header    X-Artifactory-Override-Base-Url $http_x_forwarded_proto://$host:$server_port/artifactory;
         proxy_set_header    X-Forwarded-Port  $server_port;
         proxy_set_header    X-Forwarded-Proto $http_x_forwarded_proto;
@@ -129,13 +129,13 @@ server {
 
     server_name _;
     if ($http_x_forwarded_proto = '') {
-        set $http_x_forwarded_proto  $scheme;
+        set $http_x_forwarded_proto $scheme;
     }
 
     ## add ssl entries when https has been set in config
-    ssl_certificate      /etc/nginx/ssl/artifactory.crt;
-    ssl_certificate_key  /etc/nginx/ssl/artifactory.key;
-    ssl_session_cache shared:SSL:1m;
+    ssl_certificate             /etc/nginx/ssl/artifactory.crt;
+    ssl_certificate_key         /etc/nginx/ssl/artifactory.key;
+    ssl_session_cache           shared:SSL:1m;
     ssl_prefer_server_ciphers   on;
 
     ## Application specific logs
@@ -146,18 +146,18 @@ server {
     chunked_transfer_encoding on;
     client_max_body_size 0;
     location / {
-    proxy_read_timeout  900;
-    proxy_pass_header   Server;
-    proxy_cookie_path   ~*^/.* /;
-    if ( $request_uri ~ ^/artifactory/(.*)$ ) {
-        proxy_pass          http://localhost:8081/artifactory/$1;
-    }
-    proxy_pass         http://localhost:8081/artifactory/;
-    proxy_set_header   Host $host;
-    proxy_set_header    X-Forwarded-Port  $server_port;
-    proxy_set_header    X-Forwarded-Proto $http_x_forwarded_proto;
-    proxy_set_header    Host              $http_host;
-    proxy_set_header    X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_read_timeout  900;
+        proxy_pass_header   Server;
+        proxy_cookie_path   ~*^/.* /;
+        if ($request_uri ~ ^/artifactory/(.*)$) {
+            proxy_pass      http://localhost:8081/artifactory/$1;
+        }
+        proxy_pass          http://localhost:8081/artifactory/;
+        proxy_set_header    Host $host;
+        proxy_set_header    X-Forwarded-Port  $server_port;
+        proxy_set_header    X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header    Host              $http_host;
+        proxy_set_header    X-Forwarded-For   $proxy_add_x_forwarded_for;
     }
 }
 ```
@@ -277,7 +277,7 @@ Substitute whatever JAVA_HOME the node agent is running.
 Enter keystore password:changeit
 ```
 ```
-Trust this certificate? [no]:  y
+Trust this certificate? [no]: y
 ```
 
 # Useful Links

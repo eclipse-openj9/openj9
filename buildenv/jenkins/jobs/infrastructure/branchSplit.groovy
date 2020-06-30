@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@ def clone_branch_push(REPO, NEW_BRANCH, SPLIT_SHA) {
 
 branches = [:]
 
-branches['OMR'] = { 
+branches['OMR'] = {
     stage('Branch OMR') {
         timestamps {
             clone_branch_push(OMR_REPO, NEW_BRANCH_NAME, OMR_SHA)
@@ -70,7 +70,7 @@ branches['OMR'] = {
     }
 }
 
-branches['OpenJ9'] = { 
+branches['OpenJ9'] = {
     stage('Branch OpenJ9') {
         timestamps {
             clone_branch_push(OPENJ9_REPO, NEW_BRANCH_NAME, OPENJ9_SHA)

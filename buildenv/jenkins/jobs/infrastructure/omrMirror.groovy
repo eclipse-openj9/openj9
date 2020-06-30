@@ -59,17 +59,17 @@ timestamps {
                             def default_sha = [omr_sha: 'Default']
                             def previous = readProperties defaults: default_sha, file: "${ARCHIVE_FILE}"
                             echo "Previous SHA:${previous.omr_sha}\nCurrent SHA:${current_sha}"
-                            if ( previous.omr_sha != current_sha ) {
+                            if (previous.omr_sha != current_sha) {
                                 build job: 'Pipeline-OMR-Acceptance', propagate: false, wait: false
                                 writeFile file: "${ARCHIVE_FILE}", text: "omr_sha=${current_sha}"
                             }
                             archiveArtifacts "${ARCHIVE_FILE}"
-                        } catch(e) {
+                        } catch (e) {
                             cleanWs()
                             throw e
                         }
                     }
-                } catch(e) {
+                } catch (e) {
                     slackSend channel: '#jenkins', color: 'danger', message: "Failed: ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)"
                     throw e
                 }

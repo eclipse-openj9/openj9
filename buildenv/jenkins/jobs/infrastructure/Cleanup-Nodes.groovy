@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,7 +86,7 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKe
             pipelineTriggers([cron('''# Daily at 8am, 12pm, 4pm, 11pm (before nightly build)
                                         0 8,12,16,23 * * *''')]),
             parameters(PARAMETERS)])
-*/
+ */
 
 jobs = [:]
 offlineSlaves = [:]
@@ -172,9 +172,9 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                                 ipcs -ma
                                                 ipcs -ma | awk '/^m / { if (\$9 == 0) { print \$2 }}' | xargs -n 1 ipcrm -m
                                                 ipcs -ma
-						du -sh /cores
-						rm -rf /cores/*
-						du -sh /cores
+                                                du -sh /cores
+                                                rm -rf /cores/*
+                                                du -sh /cores
                                             """
                                         }
                                     }
@@ -215,7 +215,7 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                     println("Offline slaves: ${offlineSlaves.toString()}")
                 }
 
-            } catch(e) {
+            } catch (e) {
                 if (SLACK_CHANNEL) {
                     slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
                 }
@@ -258,8 +258,8 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
 }
 
 /*
-* Return a list of workspace directories (current build workspace excluded)
-*/
+ * Return a list of workspace directories (current build workspace excluded)
+ */
 def get_other_workspaces(workspaceDir) {
     // fetch all directories in workspaceDir (this should not fail)
     def workspaces = sh(script: "ls ${workspaceDir}", returnStdout: true).trim().tokenize(System.lineSeparator())
@@ -270,8 +270,8 @@ def get_other_workspaces(workspaceDir) {
 }
 
 /*
-* Kill all processes and reconnect a Jenkins node
-*/
+ * Kill all processes and reconnect a Jenkins node
+ */
 def sanitize_node(nodeName) {
     def workingNode = jenkins.model.Jenkins.instance.getNode(nodeName)
     def workingComputer = workingNode.toComputer()
@@ -297,7 +297,7 @@ def sanitize_node(nodeName) {
         // execute command
         sh "${cmd}"
 
-    } catch(e) {
+    } catch (e) {
         println(e.getMessage())
     }
 

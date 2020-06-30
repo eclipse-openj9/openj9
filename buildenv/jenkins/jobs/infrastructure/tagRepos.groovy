@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,6 @@
 HTTP = 'https://'
 OMR_REPO = 'github.com/eclipse/openj9-omr.git'
 OPENJ9_REPO = 'github.com/eclipse/openj9.git'
-
 
 def clone_branch_push(REPO, TAG_NAME, TAG_ANNOTATION, TAG_POINT, POINT_TYPE) {
     timeout(time: 3, unit: 'HOURS') {
