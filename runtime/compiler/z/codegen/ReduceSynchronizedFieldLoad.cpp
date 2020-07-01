@@ -48,6 +48,7 @@
 void
 ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::CodeGenerator* cg)
    {
+   TR::Compilation *comp = cg->comp();
    TR::Node* synchronizedObjectNode = node->getChild(0);
 
    // Materialize the object register first because LPD can only deal with base-displacement type memory references and
@@ -72,7 +73,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, slowPathLabel);
 
    // Generate a dynamic debug counter for the fallback path whose execution should be extremely rare
-   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/success/OOL/%s", cg->comp()->signature()));
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "codegen/z/ReduceSynchronizedFieldLoad/success/OOL/%s", comp->signature()));
 
    J9::Z::CHelperLinkage* helperLink = static_cast<J9::Z::CHelperLinkage*>(cg->getLinkage(TR_CHelper));
 
@@ -117,9 +118,9 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
 
    TR::MemoryReference* lockMemoryReference = generateS390MemoryReference(objectRegister, lockWordOffset, cg);
 
-   const bool generateCompressedLockWord = static_cast<TR_J9VMBase*>(cg->comp()->fe())->generateCompressedLockWord();
+   const bool generateCompressedLockWord = static_cast<TR_J9VMBase*>(comp->fe())->generateCompressedLockWord();
 
-   const bool is32BitLock = cg->comp()->target().is32Bit() || generateCompressedLockWord;
+   const bool is32BitLock = comp->target().is32Bit() || generateCompressedLockWord;
    const bool is32BitLoad = J9::DataType::getSize(loadNode->getDataType()) == 4;
 
    bool lockRegisterRequiresZeroExt = false;
@@ -273,9 +274,10 @@ ReduceSynchronizedFieldLoad::perform()
 bool
 ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::TreeTop* endTreeTop)
    {
+   TR::Compilation *comp = cg->comp();
    bool transformed = false;
 
-   for (TR::TreeTopIterator iter(startTreeTop, cg->comp()); iter != endTreeTop; ++iter)
+   for (TR::TreeTopIterator iter(startTreeTop, comp); iter != endTreeTop; ++iter)
       {
       if (iter.currentNode()->getOpCodeValue() == TR::monent ||
           iter.currentNode()->getOpCodeValue() == TR::treetop && iter.currentNode()->getFirstChild()->getOpCodeValue() == TR::monent)
@@ -287,9 +289,9 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
          // Locking on value types is prohibited by the spec., so this optimization can only be performed if we are certain (at compile time) the locking object is not a value type
          if (TR::Compiler->om.areValueTypesEnabled() && cg->isMonitorValueType(monentNode) != TR_no)
             continue;
-         if (cg->comp()->getOption(TR_TraceCG))
+         if (comp->getOption(TR_TraceCG))
             {
-            traceMsg(cg->comp(), "Found monent [%p]\n", monentNode);
+            traceMsg(comp, "Found monent [%p]\n", monentNode);
             }
 
          for (++iter; iter != endTreeTop; ++iter)
@@ -301,18 +303,18 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                TR::Node* monexitNode = iter.currentNode()->getOpCodeValue() == TR::monexit ?
                   iter.currentNode() :
                   iter.currentNode()->getFirstChild();
-               if (cg->comp()->getOption(TR_TraceCG))
+               if (comp->getOption(TR_TraceCG))
                   {
-                  traceMsg(cg->comp(), "Found monexit [%p]\n", monexitNode);
+                  traceMsg(comp, "Found monexit [%p]\n", monexitNode);
                   }
 
                TR::Node* synchronizedObjectNode = monentNode->getFirstChild();
 
                if (synchronizedObjectNode == monexitNode->getFirstChild())
                   {
-                  if (cg->comp()->getOption(TR_TraceCG))
+                  if (comp->getOption(TR_TraceCG))
                      {
-                     traceMsg(cg->comp(), "Children of monent and monexit are synchronizing on the same object\n", monexitNode);
+                     traceMsg(comp, "Children of monent and monexit are synchronizing on the same object\n", monexitNode);
                      }
 
                   TR::Node* loadNode = findLoadInSynchornizedRegion(startTreeTop, endTreeTop, monentTreeTop, monexitTreeTop, synchronizedObjectNode);
@@ -320,9 +322,9 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                   if (loadNode != NULL)
                      {
                      // Disallow this optimization for 64-bit loads on 31-bit JVM due to register pairs
-                     if (cg->comp()->target().is32Bit() && J9::DataType::getSize(loadNode->getDataType()) == 8)
+                     if (comp->target().is32Bit() && J9::DataType::getSize(loadNode->getDataType()) == 8)
                         {
-                        TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/31-bit-register-pairs/%s", cg->comp()->signature()));
+                        TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "codegen/z/ReduceSynchronizedFieldLoad/failure/31-bit-register-pairs/%s", comp->signature()));
 
                         break;
                         }
@@ -332,27 +334,27 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                      // out for object reference loads under concurrent scavenge.
                      if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none && loadNode->getDataType().isAddress())
                         {
-                        TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/read-barrier/%s", cg->comp()->signature()));
+                        TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "codegen/z/ReduceSynchronizedFieldLoad/failure/read-barrier/%s", comp->signature()));
 
                         break;
                         }
 
-                     int32_t lockWordOffset = static_cast<TR_J9VMBase*>(cg->comp()->fe())->getByteOffsetToLockword(static_cast<TR_OpaqueClassBlock*>(cg->getMonClass(monentNode)));
+                     int32_t lockWordOffset = static_cast<TR_J9VMBase*>(comp->fe())->getByteOffsetToLockword(static_cast<TR_OpaqueClassBlock*>(cg->getMonClass(monentNode)));
 
-                     if (cg->comp()->getOption(TR_TraceCG))
+                     if (comp->getOption(TR_TraceCG))
                         {
-                        traceMsg(cg->comp(), "Lock word offset = %d\n", lockWordOffset);
+                        traceMsg(comp, "Lock word offset = %d\n", lockWordOffset);
                         }
 
                      // LPD(G) is an SSF instruction with a 12-bit displacement
                      if (lockWordOffset > 0 && lockWordOffset < 4096)
                         {
-                        if (performTransformation(cg->comp(), "%sReplacing monent [%p] - monexit [%p] synchronized region on load [%p] with fabricated call\n", OPT_DETAILS, monentNode, monexitNode, loadNode))
+                        if (performTransformation(comp, "%sReplacing monent [%p] - monexit [%p] synchronized region on load [%p] with fabricated call\n", OPT_DETAILS, monentNode, monexitNode, loadNode))
                            {
                            transformed = true;
 
                            // Fabricate a special codegen inlined method call symbol reference
-                           TR::SymbolReference* methodSymRef = cg->comp()->getSymRefTab()->findOrCreateCodeGenInlinedHelper(TR::SymbolReferenceTable::synchronizedFieldLoadSymbol);
+                           TR::SymbolReference* methodSymRef = comp->getSymRefTab()->findOrCreateCodeGenInlinedHelper(TR::SymbolReferenceTable::synchronizedFieldLoadSymbol);
 
                            TR::Node* callNode = TR::Node::createWithSymRef(loadNode, TR::call, 5, methodSymRef);
 
@@ -371,7 +373,7 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
 
                            TR::Node* treeTopNode = TR::Node::create(loadNode, TR::treetop, 1, callNode);
 
-                           TR::TreeTop* callTreeTop = TR::TreeTop::create(cg->comp(), treeTopNode);
+                           TR::TreeTop* callTreeTop = TR::TreeTop::create(comp, treeTopNode);
 
                            // Insert fabricated call treetop
                            monentTreeTop->insertBefore(callTreeTop);
@@ -380,22 +382,22 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                            monentTreeTop->unlink(true);
                            monexitTreeTop->unlink(true);
 
-                           TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/success/%s", cg->comp()->signature()));
+                           TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "codegen/z/ReduceSynchronizedFieldLoad/success/%s", comp->signature()));
                            }
                         }
                      else
                         {
-                        TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/lockword-out-of-bounds/%s", cg->comp()->signature()));
+                        TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "codegen/z/ReduceSynchronizedFieldLoad/failure/lockword-out-of-bounds/%s", comp->signature()));
                         }
                      }
                   else
                      {
-                     TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/load-not-found/%s", cg->comp()->signature()));
+                     TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "codegen/z/ReduceSynchronizedFieldLoad/failure/load-not-found/%s", comp->signature()));
                      }
                   }
                else
                   {
-                  TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/monexit-synchronized-object-mismatch/%s", cg->comp()->signature()));
+                  TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "codegen/z/ReduceSynchronizedFieldLoad/failure/monexit-synchronized-object-mismatch/%s", comp->signature()));
                   }
 
                break;
@@ -415,7 +417,8 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
 TR::Node*
 ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTreeTop, TR::TreeTop* endTreeTop, TR::TreeTop* monentTreeTop, TR::TreeTop* monexitTreeTop, TR::Node* synchronizedObjectNode)
    {
-   TR::PreorderNodeIterator iter(startTreeTop, cg->comp());
+   TR::Compilation *comp = cg->comp();
+   TR::PreorderNodeIterator iter(startTreeTop, comp);
 
    // First iterate through all the nodes from the start treetop until we reach the monitor provided so that all nodes
    // seen thus far would have already been visited, and hence we will not recurse into them in the subsequent for loop
@@ -426,9 +429,9 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
       {
       TR::Node* currentNode = iter.currentNode();
 
-      if (cg->comp()->getOption(TR_TraceCG))
+      if (comp->getOption(TR_TraceCG))
          {
-         traceMsg(cg->comp(), "Iterating node [%p] outside the monitored region\n", currentNode);
+         traceMsg(comp, "Iterating node [%p] outside the monitored region\n", currentNode);
          }
       }
 
@@ -438,9 +441,9 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
       {
       TR::Node* currentNode = iter.currentNode();
 
-      if (cg->comp()->getOption(TR_TraceCG))
+      if (comp->getOption(TR_TraceCG))
          {
-         traceMsg(cg->comp(), "Iterating node [%p] inside the monitored region\n", currentNode);
+         traceMsg(comp, "Iterating node [%p] inside the monitored region\n", currentNode);
          }
 
       TR::ILOpCode opcode = currentNode->getOpCode();
@@ -451,18 +454,18 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
             opcode.isLoadIndirect() && (opcode.isRef() || opcode.isInt() || opcode.isLong()) &&
             currentNode->getFirstChild() == synchronizedObjectNode)
             {
-            if (cg->comp()->getOption(TR_TraceCG))
+            if (comp->getOption(TR_TraceCG))
                {
-               traceMsg(cg->comp(), "Found load node [%p]\n", currentNode);
+               traceMsg(comp, "Found load node [%p]\n", currentNode);
                }
 
             loadNode = currentNode;
             }
          else
             {
-            if (cg->comp()->getOption(TR_TraceCG))
+            if (comp->getOption(TR_TraceCG))
                {
-               traceMsg(cg->comp(), "Found sideeffect node [%p] within the monitored region\n", currentNode);
+               traceMsg(comp, "Found sideeffect node [%p] within the monitored region\n", currentNode);
                }
 
             loadNode = NULL;

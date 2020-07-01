@@ -42,7 +42,7 @@ TR::S390J9CallSnippet::generateVIThunk(TR::Node * callNode, int32_t argSize, TR:
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-   int32_t lengthOfVIThunk = (cg->comp()->target().is64Bit()) ? 18 : 12;
+   int32_t lengthOfVIThunk = (comp->target().is64Bit()) ? 18 : 12;
    int32_t codeSize = instructionCountForArguments(callNode, cg) + lengthOfVIThunk;
    uint32_t rEP = (uint32_t) cg->getEntryPointRegister() - 1;
 
@@ -67,7 +67,7 @@ TR::S390J9CallSnippet::generateVIThunk(TR::Node * callNode, int32_t argSize, TR:
          dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtual1, false, false, false);
          break;
       case TR::Address:
-         if (cg->comp()->target().is64Bit())
+         if (comp->target().is64Bit())
             {
             dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtualJ, false, false, false);
             }
@@ -107,7 +107,7 @@ TR::S390J9CallSnippet::generateVIThunk(TR::Node * callNode, int32_t argSize, TR:
 
    *(int16_t *) cursor = 0x0d00 + (((int16_t) rEP) << 4);             // BASR   rEP,0
    cursor += 2;
-   if (cg->comp()->target().is64Bit())
+   if (comp->target().is64Bit())
       {
       *(uint32_t *) cursor = 0xe3000008 + (rEP << 12) + (rEP << 20);  // LG      rEP,8(,rEP)
       cursor += 4;
@@ -142,7 +142,7 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    bool verbose = comp->getOptions()->getVerboseOption(TR_VerboseJ2IThunks);
    int32_t finalCallLength = verbose? 6 : 2;
-   int32_t lengthOfIEThunk = finalCallLength + (cg->comp()->target().is64Bit() ? 16 : 10);
+   int32_t lengthOfIEThunk = finalCallLength + (comp->target().is64Bit() ? 16 : 10);
    int32_t codeSize = instructionCountForArguments(callNode, cg) + lengthOfIEThunk;
    // TODO:JSR292: VI thunks have code to ensure they are double-word aligned.  Do we need that here?
 
@@ -160,7 +160,7 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
          dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1, false, false, false);
          break;
       case TR::Address:
-         if (cg->comp()->target().is64Bit())
+         if (comp->target().is64Bit())
             dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactJ, false, false, false);
          else
             dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1, false, false, false);
@@ -195,7 +195,7 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
 
    *(int16_t *) cursor = 0x0d00 + (((int16_t) rEP) << 4);             // BASR   rEP,0
    cursor += 2;
-   if (cg->comp()->target().is64Bit())
+   if (comp->target().is64Bit())
       {
       *(uint32_t *) cursor = 0xe3000006 + finalCallLength + (rEP << 12) + (rEP << 20);  // LG      rEP,8(,rEP)
       cursor += 4;
@@ -300,7 +300,7 @@ TR::S390J9CallSnippet::emitSnippetBody()
       *(int16_t *) cursor = 0x0000;                     // padding 2-bytes
       cursor += 2;
       }
-   else if (cg()->comp()->target().is64Bit())
+   else if (comp->target().is64Bit())
       {
       if (pad_bytes == 4)                                // padding 4-bytes
       {
@@ -364,7 +364,7 @@ TR::S390J9CallSnippet::emitSnippetBody()
          if (comp->getOption(TR_EnableHCR))
             cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);
          AOTcgDiag1(comp, "add TR_MethodObject cursor=%x\n", cursor);
-         if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
+         if (comp->getOption(TR_UseSymbolValidationManager))
             {
             TR_ASSERT_FATAL(ramMethod, "cursor = %x, ramMehtod can not be null", cursor);
             cg()->addExternalRelocation( new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
@@ -410,7 +410,7 @@ TR::S390UnresolvedCallSnippet::emitSnippetBody()
          helperLookupOffset = TR::Compiler->om.sizeofReferenceAddress();
          break;
       case TR::Address:
-         if (cg()->comp()->target().is64Bit())
+         if (comp->target().is64Bit())
             {
             helperLookupOffset = 2 * TR::Compiler->om.sizeofReferenceAddress();
             }
@@ -1137,7 +1137,7 @@ TR::J9S390InterfaceCallDataSnippet::emitSnippetBody()
     // Cursor must be double word aligned by this point
     // so that 64-bit single dynamic slot can use LPQ to concurrently load a quadword.
     TR_ASSERT_FATAL( (!isSingleDynamic && (intptr_t)cursor % 8 == 0)
-                     || (cg()->comp()->target().is64Bit() && isSingleDynamic && (intptr_t)cursor % 16 == 0),
+                     || (comp->target().is64Bit() && isSingleDynamic && (intptr_t)cursor % 16 == 0),
                      "Interface Call Data Snippet Class Ptr is not double word aligned.");
 
     bool updateField = false;
@@ -1152,7 +1152,7 @@ TR::J9S390InterfaceCallDataSnippet::emitSnippetBody()
                  (TR_OpaqueClassBlock *)(*valuesIt), methodSymRef->getCPIndex());
            numInterfaceCallCacheSlots--;
            updateField = true;
-           if (cg()->comp()->target().is64Bit() && TR::Compiler->om.generateCompressedObjectHeaders())
+           if (comp->target().is64Bit() && TR::Compiler->om.generateCompressedObjectHeaders())
               *(uintptr_t *) cursor = (uintptr_t) (*valuesIt) << 32;
            else
               *(uintptr_t *) cursor = (uintptr_t) (*valuesIt);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,6 @@
 #include "codegen/Instruction.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
-#include "infra/SimpleRegex.hpp"
 #include "il/SymbolReference.hpp"
 
 namespace TR { class CodeGenerator; }
@@ -83,21 +82,8 @@ class X86CheckFailureSnippet : public TR::Snippet
    uint8_t *emitCheckFailureSnippetBody(uint8_t *buffer);
 
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
-   void checkBreakOnThrowOption()
-      {
-      TR::Compilation *comp = TR::comp();
-      TR::SimpleRegex *r = comp->getOptions()->getBreakOnThrow();
-      if (r && (TR::SimpleRegex::matchIgnoringLocale(r, "java/lang/NullPointerException")
-                   || TR::SimpleRegex::matchIgnoringLocale(r, "NPE", false)))
-         {
-         _breakOnThrowType|=TR_BREAKONTHROW_NPE;
-         }
-      if (r && (TR::SimpleRegex::matchIgnoringLocale(r, "java/lang/ArrayIndexOutOfBoundsException")
-                  || TR::SimpleRegex::matchIgnoringLocale(r, "AIOB", false)))
-         {
-         _breakOnThrowType|=TR_BREAKONTHROW_AIOB;
-         }
-      }
+   void checkBreakOnThrowOption();
+
    };
 
 

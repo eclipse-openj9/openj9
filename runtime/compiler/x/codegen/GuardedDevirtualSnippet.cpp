@@ -74,7 +74,7 @@ uint8_t *TR::X86GuardedDevirtualSnippet::emitSnippetBody()
 
    if (_classObjectRegister == NULL)
       {
-      if (cg()->comp()->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders())
+      if (comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders())
          *buffer++ = 0x48; // Rex prefix for 64-bit mov
 
       *(uint16_t *)buffer = 0x788b; // prepare for mov edi, [eax + class_offset]
@@ -86,7 +86,7 @@ uint8_t *TR::X86GuardedDevirtualSnippet::emitSnippetBody()
       uintptr_t vftMask = TR::Compiler->om.maskOfObjectVftField();
       if (~vftMask != 0)
          {
-         if (cg()->comp()->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders())
+         if (comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders())
             *buffer++ = 0x48; // Rex prefix
 
          // and edi, vftMask
@@ -103,7 +103,7 @@ uint8_t *TR::X86GuardedDevirtualSnippet::emitSnippetBody()
       }
    else
       {
-      if (cg()->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          {
          uint8_t rex = toRealRegister(_classObjectRegister)->rexBits(TR::RealRegister::REX_B, false);
          if (rex)
@@ -207,11 +207,12 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86GuardedDevirtualSnippet  * snippet)
 
 uint32_t TR::X86GuardedDevirtualSnippet::getLength(int32_t estimatedSnippetStart)
    {
+   TR::Compilation *comp = cg()->comp();
    uint32_t fixedLength;
    if (_classObjectRegister)
       {
       fixedLength = 6 + (toRealRegister(_classObjectRegister)->needsSIB()? 1 : 0);
-      if (cg()->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          {
          uint8_t rex = toRealRegister(_classObjectRegister)->rexBits(TR::RealRegister::REX_B, false);
          if (rex)
@@ -222,12 +223,11 @@ uint32_t TR::X86GuardedDevirtualSnippet::getLength(int32_t estimatedSnippetStart
       {
       int32_t delta = 0;
       delta = 1;
-      TR::Compilation *comp = cg()->comp();
       uintptr_t vftMask = TR::Compiler->om.maskOfObjectVftField();
       if (~vftMask != 0)
-         delta += 6 + (cg()->comp()->target().is64Bit()? 1 /* Rex */ : 0);
+         delta += 6 + (comp->target().is64Bit()? 1 /* Rex */ : 0);
 
-      fixedLength = 8 + delta + (cg()->comp()->target().is64Bit()? 1 /* Rex */ : 0);
+      fixedLength = 8 + delta + (comp->target().is64Bit()? 1 /* Rex */ : 0);
       }
    return fixedLength + estimateRestartJumpLength(estimatedSnippetStart + fixedLength);
    }

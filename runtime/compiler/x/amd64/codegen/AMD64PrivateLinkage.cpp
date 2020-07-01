@@ -534,7 +534,7 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::generateVirtualIndirectThunk(TR::Node *
    uint8_t             *thunk;
    uint8_t             *thunkEntry;
    uint8_t             *cursor;
-   TR::Compilation * comp = cg()->comp();
+   TR::Compilation *comp = cg()->comp();
 
    (void)storeArguments(callNode, NULL, true, &codeSize);
    codeSize += 12;  // +10 MOV8RegImm64 +2 JMPReg
@@ -610,7 +610,7 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::generateVirtualIndirectThunk(TR::Node *
 
 TR_J2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::Node *callNode, char *signature)
    {
-   TR::Compilation * comp = cg()->comp();
+   TR::Compilation *comp = cg()->comp();
 
    // Allocate thunk storage
    //

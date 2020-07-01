@@ -69,9 +69,9 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
    uint8_t * callSite = cursor;
    uint8_t * returnLocationInSnippet;
    uint32_t rEP = (uint32_t) cg()->getEntryPointRegister() - 1;
-   bool is64BitTarget = cg()->comp()->target().is64Bit();
+   TR::Compilation *comp = cg()->comp();
+   bool is64BitTarget = comp->target().is64Bit();
    TR::Linkage * linkage = cg()->getS390Linkage();
-   TR::Compilation* comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
 
    TR_ASSERT(_reStartLabel != NULL, "Missing restart label in StackCheckFailureSnippet \n");
@@ -183,7 +183,7 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
       }                                                                                  // --- End of Big Frame ---
 
    // If Full Speed Debug, save the arguments back onto the stack.
-   if (TR::comp()->getOption(TR_FullSpeedDebug))
+   if (comp->getOption(TR_FullSpeedDebug))
       {
       uint8_t *prevCursor = cursor;
       cursor = (uint8_t *) cg()->getS390Linkage()->saveArguments(cursor, true, true, getFrameSize());
@@ -255,7 +255,7 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
    this->setSnippetDestAddr(destAddr);
 
    *(int32_t *) cursor = (int32_t)((destAddr - (intptr_t)(cursor - 2)) / 2);
-   AOTcgDiag5(cg()->comp(), "cursor=%x destAddr=%x TR_HelperAddress=%x cg=%x %x\n",
+   AOTcgDiag5(comp, "cursor=%x destAddr=%x TR_HelperAddress=%x cg=%x %x\n",
    cursor, getDestination()->getSymbol(), TR_HelperAddress, cg(), *((int*) cursor) );
    cg()->addProjectSpecializedRelocation(cursor, (uint8_t*) getDestination(), NULL, TR_HelperAddress,
                              __FILE__, __LINE__, getNode());

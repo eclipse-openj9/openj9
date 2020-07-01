@@ -55,7 +55,7 @@ uint8_t *TR::PPCRecompilationSnippet::emitSnippetBody()
    if (cg()->directCallRequiresTrampoline(helperAddress, (intptr_t)buffer))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(countingRecompMethodSymRef->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)buffer), "Helper address is out of range");
+      TR_ASSERT_FATAL(comp->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)buffer), "Helper address is out of range");
       }
 
    // bl distance

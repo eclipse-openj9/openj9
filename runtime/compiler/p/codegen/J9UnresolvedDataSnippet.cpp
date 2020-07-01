@@ -136,7 +136,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    if (cg()->directCallRequiresTrampoline(helperAddress, (intptr_t)cursor))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
-      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)cursor), "Helper address is out of range");
+      TR_ASSERT_FATAL(comp->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptr_t)cursor), "Helper address is out of range");
       }
 
    // bl distance
@@ -222,7 +222,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
 	    }
          else
 	    {
-       *(int32_t *)cursor = cg()->comp()->target().is64Bit()?0xe8000000:0x80000000;
+       *(int32_t *)cursor = comp->target().is64Bit()?0xe8000000:0x80000000;
             getDataRegister()->setRegisterFieldRT((uint32_t *)cursor);
 	    }
          cg()->getTOCBaseRegister()->setRegisterFieldRA((uint32_t *)cursor);
@@ -255,7 +255,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    *(int32_t *)cursor = 0xdeadbeef; // Patched with lis via runtime code
    cursor += 4;
    intptr_t targetAddress = (intptr_t)getAddressOfDataReference()+4;
-   TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(targetAddress, (intptr_t)cursor),
+   TR_ASSERT_FATAL(comp->target().cpu.isTargetWithinIFormBranchRange(targetAddress, (intptr_t)cursor),
                    "Return address is out of range");
    *(int32_t *)cursor = 0x48000000 | ((targetAddress - (intptr_t)cursor) & 0x03fffffc);
 
@@ -365,6 +365,5 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
 
 uint32_t J9::Power::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   TR::Compilation* comp = cg()->comp();
    return 28+2*TR::Compiler->om.sizeofReferenceAddress();
    }

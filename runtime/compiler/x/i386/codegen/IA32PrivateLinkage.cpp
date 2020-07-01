@@ -337,7 +337,6 @@ TR::UnresolvedDataSnippet *J9::X86::I386::PrivateLinkage::generateX86UnresolvedD
 
 TR::Register *J9::X86::I386::PrivateLinkage::pushIntegerWordArg(TR::Node *child)
    {
-   TR::Compilation *comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    if (child->getRegister() == NULL)
       {
@@ -390,7 +389,7 @@ TR::Register *J9::X86::I386::PrivateLinkage::pushIntegerWordArg(TR::Node *child)
                if ((sym->isClassObject() || sym->isAddressOfClassObject())
                    && cg()->wantToPatchClassPointer((TR_OpaqueClassBlock*)sym->getStaticAddress(), child))
                   {
-                  comp->getStaticHCRPICSites()->push_front(instr);
+                  comp()->getStaticHCRPICSites()->push_front(instr);
                   }
                }
 
