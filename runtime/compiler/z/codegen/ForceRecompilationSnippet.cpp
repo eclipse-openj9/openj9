@@ -37,7 +37,8 @@ TR::S390ForceRecompilationSnippet::emitSnippetBody()
    {
    uint8_t * cursor = cg()->getBinaryBufferCursor();
    getSnippetLabel()->setCodeLocation(cursor);
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->comp()->fe());
+   TR::Compilation *comp = cg()->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
    uint32_t rEP = (uint32_t) cg()->getEntryPointRegister() - 1;
    TR::SymbolReference * glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390induceRecompilation, false, false, false);
