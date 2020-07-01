@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,9 +127,9 @@ void J9::X86::Linkage::alignLocalObjectWithoutCollectedFields(uint32_t & stackIn
    if (localObjectAlignment <= TR::Compiler->om.sizeofReferenceAddress())
       return;
    // Align uncollected local object
-   traceMsg(self()->cg()->comp(), "\nLOCAL OBJECT ALIGNMENT: stack offset before alignment: %d,", stackIndex);
+   traceMsg(self()->comp(), "\nLOCAL OBJECT ALIGNMENT: stack offset before alignment: %d,", stackIndex);
 
    self()->alignOffset(stackIndex, localObjectAlignment);
 
-   traceMsg(self()->cg()->comp(), " after alignment: %d\n", stackIndex);
+   traceMsg(self()->comp(), " after alignment: %d\n", stackIndex);
    }

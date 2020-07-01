@@ -37,6 +37,7 @@
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
+#include "infra/SimpleRegex.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 uint32_t TR::X86CheckFailureSnippet::getLength(int32_t estimatedSnippetStart)
@@ -188,6 +189,22 @@ uint8_t *TR::X86CheckFailureSnippet::emitCheckFailureSnippetBody(uint8_t *buffer
       }
 
    return buffer;
+   }
+
+
+void TR::X86CheckFailureSnippet::checkBreakOnThrowOption()
+   {
+   TR::SimpleRegex *r = cg()->comp()->getOptions()->getBreakOnThrow();
+   if (r && (TR::SimpleRegex::matchIgnoringLocale(r, "java/lang/NullPointerException")
+                || TR::SimpleRegex::matchIgnoringLocale(r, "NPE", false)))
+      {
+      _breakOnThrowType|=TR_BREAKONTHROW_NPE;
+      }
+   if (r && (TR::SimpleRegex::matchIgnoringLocale(r, "java/lang/ArrayIndexOutOfBoundsException")
+               || TR::SimpleRegex::matchIgnoringLocale(r, "AIOB", false)))
+      {
+      _breakOnThrowType|=TR_BREAKONTHROW_AIOB;
+      }
    }
 
 

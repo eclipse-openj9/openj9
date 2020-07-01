@@ -105,7 +105,7 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
          }
       else
          {
-         if (cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(imm, (intptr_t)cursor))
+         if (comp->target().cpu.isTargetWithinIFormBranchRange(imm, (intptr_t)cursor))
             {
             *(int32_t *)cursor |= (imm - (intptr_t)cursor) & 0x03fffffc;
             }
@@ -131,18 +131,18 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
                targetAddress = (intptr_t)fej9->methodTrampolineLookup(comp, getSymbolReference(), (void *)cursor);
                }
 
-            TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(targetAddress, (intptr_t)cursor),
+            TR_ASSERT_FATAL(comp->target().cpu.isTargetWithinIFormBranchRange(targetAddress, (intptr_t)cursor),
                             "Call target address is out of range");
             *(int32_t *)cursor |= (targetAddress - (intptr_t)cursor) & 0x03fffffc;
             }
          }
 
-      if ((cg()->comp()->compileRelocatableCode() 
-          #ifdef J9VM_OPT_JITSERVER 
-             || cg()->comp()->isOutOfProcessCompilation()
+      if ((comp->compileRelocatableCode()
+          #ifdef J9VM_OPT_JITSERVER
+             || comp->isOutOfProcessCompilation()
           #endif
           ) &&
-          label == NULL && 
+          label == NULL &&
           !callToSelf)
          {
          bool callIsJ2ITransition = runtimeHelperValue(TR_j2iTransition) == getSymbolReference()->getMethodAddress();
@@ -172,4 +172,3 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
    cg()->addAccumulatedInstructionLengthError(getEstimatedBinaryLength() - getBinaryLength());
    return cursor;
    }
-

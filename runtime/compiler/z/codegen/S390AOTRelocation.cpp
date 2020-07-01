@@ -53,7 +53,7 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
    if (_reloType==TR_ClassAddress)
       {
       AOTcgDiag2(  comp, "TR_ClassAddress cursor=%x symbolReference=%x\n", cursor, _symbolReference);
-      if (cg->comp()->getOption(TR_UseSymbolValidationManager))
+      if (comp->getOption(TR_UseSymbolValidationManager))
          {
          TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock*)(*((uintptr_t*)cursor));
          TR_ASSERT_FATAL(clazz, "TR_ClassAddress relocation : cursor = %x, clazz can not be null", cursor);
@@ -75,7 +75,7 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
    else if (_reloType==TR_RamMethod)
       {
       AOTcgDiag1(  comp, "TR_RamMethod cursor=%x\n", cursor);
-      if (cg->comp()->getOption(TR_UseSymbolValidationManager))
+      if (comp->getOption(TR_UseSymbolValidationManager))
          {
          TR::ResolvedMethodSymbol *methodSym = (TR::ResolvedMethodSymbol*) _symbolReference->getSymbol();
          uint8_t * j9Method = (uint8_t *) (reinterpret_cast<intptr_t>(methodSym->getResolvedMethod()->resolvedMethodAddress()));
@@ -107,7 +107,7 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
    else if (_reloType==TR_ConstantPool)
       {
       AOTcgDiag1(  comp, "TR_ConstantPool cursor=%x\n", cursor);
-      if (cg->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          {
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) *((uint64_t*) cursor), (uint8_t *)_inlinedSiteIndex, TR_ConstantPool, cg),
                               file, line, node);
@@ -136,7 +136,7 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
    else if (_reloType==TR_BodyInfoAddress)
       {
       AOTcgDiag1(  comp, "TR_BodyInfoAddress cursor=%x\n", cursor);
-      if (cg->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          {
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) *((uint64_t*) cursor), TR_BodyInfoAddress, cg),
                               file, line, node);
@@ -149,12 +149,12 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
       }
    else if (_reloType==TR_DebugCounter)
       {
-      TR::DebugCounterBase *counter = cg->comp()->getCounterFromStaticAddress(_symbolReference);
+      TR::DebugCounterBase *counter = comp->getCounterFromStaticAddress(_symbolReference);
       if (counter == NULL)
          {
-         cg->comp()->failCompilation<TR::CompilationException>("Could not generate relocation for debug counter in TR::S390EncodingRelocation::addRelocation\n");
+         comp->failCompilation<TR::CompilationException>("Could not generate relocation for debug counter in TR::S390EncodingRelocation::addRelocation\n");
          }
-      TR::DebugCounter::generateRelocation(cg->comp(),
+      TR::DebugCounter::generateRelocation(comp,
                                            cursor,
                                            node,
                                            counter);

@@ -26,6 +26,7 @@
 
 
 #include "codegen/UnresolvedDataSnippet.hpp"
+#include "codegen/UnresolvedDataSnippet_inlines.hpp"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -245,7 +246,7 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
    *(int16_t *) cursor = 0x0de0;                              // BASR   r14,0
    cursor += 2;
 
-   if (cg()->comp()->target().is64Bit())
+   if (comp->target().is64Bit())
       {
       // LG     r14,8(,r14)
       *(uint32_t *) cursor = 0xe3e0e008;
@@ -361,7 +362,7 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
       // Load the resolved offset into R14.
       // Add the resolved offset into base register.
       uint8_t* offsetLoad = cursor;
-      if (cg()->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          {
          *(int32_t *) cursor = 0xe3e0e000;                       // 64Bit: LGF R14, (R14)
          cursor += sizeof(int32_t);
@@ -415,10 +416,11 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
 uint32_t
 J9::Z::UnresolvedDataSnippet::getLength(int32_t  estimatedSnippetStart)
    {
-   uint32_t length = (cg()->comp()->target().is64Bit() ? (14 + 5 * sizeof(uintptr_t)) : (12 + 5 * sizeof(uintptr_t)));
+   TR::Compilation *comp = cg()->comp();
+   uint32_t length = (comp->target().is64Bit() ? (14 + 5 * sizeof(uintptr_t)) : (12 + 5 * sizeof(uintptr_t)));
    // For instance snippets, we have the out-of-line sequence
    if (isInstanceData())
-      length += (cg()->comp()->target().is64Bit()) ? 36 : 28;
+      length += (comp->target().is64Bit()) ? 36 : 28;
 
 #if !defined(PUBLIC_BUILD)
    length += getRuntimeInstrumentationOnOffInstructionLength(cg());

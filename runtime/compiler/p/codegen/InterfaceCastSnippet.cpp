@@ -40,6 +40,7 @@ TR::PPCInterfaceCastSnippet::PPCInterfaceCastSnippet(TR::CodeGenerator * cg, TR:
 uint8_t *
 TR::PPCInterfaceCastSnippet::emitSnippetBody()
    {
+   TR::Compilation *comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
 
    uint8_t * cursor = cg()->getBinaryBufferCursor();
@@ -74,7 +75,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
       //    b doneLabel
       // 8: b _callLabel
 
-      if (cg()->comp()->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders())
+      if (comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders())
          opcode.setOpCodeValue(TR::InstOpCode::ld);
       else
          opcode.setOpCodeValue(TR::InstOpCode::lwz);
@@ -84,7 +85,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
       *(int32_t *)cursor |= _offsetClazz & 0xffff;
       cursor += PPC_INSTRUCTION_LENGTH;
 
-      if (cg()->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          opcode.setOpCodeValue(TR::InstOpCode::ld);
       else
          opcode.setOpCodeValue(TR::InstOpCode::lwz);
@@ -94,7 +95,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
       *(int32_t *)cursor |= _offsetCastClassCache & 0xffff;
       cursor += PPC_INSTRUCTION_LENGTH;
 
-      if (cg()->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          opcode.setOpCodeValue(TR::InstOpCode::cmpl8);
       else
          opcode.setOpCodeValue(TR::InstOpCode::cmpl4);
@@ -116,7 +117,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
          opcode.setOpCodeValue(TR::InstOpCode::b);
          cursor = opcode.copyBinaryToBuffer(cursor);
          branchDistance = (intptr_t)getReStartLabel()->getCodeLocation() - (intptr_t)cursor;
-         TR_ASSERT(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptr_t)getReStartLabel()->getCodeLocation(), (intptr_t)cursor),
+         TR_ASSERT(comp->target().cpu.isTargetWithinIFormBranchRange((intptr_t)getReStartLabel()->getCodeLocation(), (intptr_t)cursor),
                    "backward jump in Interface Cache is too long\n");
          *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
          cursor += PPC_INSTRUCTION_LENGTH;
@@ -124,7 +125,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
          opcode.setOpCodeValue(TR::InstOpCode::b);
          cursor = opcode.copyBinaryToBuffer(cursor);
          branchDistance = (intptr_t)_doneLabel->getCodeLocation() - (intptr_t)cursor;
-         TR_ASSERT(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_doneLabel->getCodeLocation(), (intptr_t)cursor),
+         TR_ASSERT(comp->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_doneLabel->getCodeLocation(), (intptr_t)cursor),
                    "backward jump in Interface Cache is too long\n");
          *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
          cursor += PPC_INSTRUCTION_LENGTH;
@@ -141,7 +142,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
          opcode.setOpCodeValue(TR::InstOpCode::b);
          cursor = opcode.copyBinaryToBuffer(cursor);
          branchDistance = (intptr_t)getDoneLabel()->getCodeLocation() - (intptr_t)cursor;
-         TR_ASSERT(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptr_t)getDoneLabel()->getCodeLocation(), (intptr_t)cursor),
+         TR_ASSERT(comp->target().cpu.isTargetWithinIFormBranchRange((intptr_t)getDoneLabel()->getCodeLocation(), (intptr_t)cursor),
                    "backward jump in Interface Cache is too long\n");
          *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
          cursor += PPC_INSTRUCTION_LENGTH;
@@ -149,7 +150,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
          opcode.setOpCodeValue(TR::InstOpCode::b);
          cursor = opcode.copyBinaryToBuffer(cursor);
          branchDistance = (intptr_t)_callLabel->getCodeLocation() - (intptr_t)cursor;
-         TR_ASSERT(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_callLabel->getCodeLocation(), (intptr_t)cursor),
+         TR_ASSERT(comp->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_callLabel->getCodeLocation(), (intptr_t)cursor),
                    "backward jump in Interface Cache is too long\n");
          *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
          cursor += PPC_INSTRUCTION_LENGTH;
@@ -169,7 +170,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
       // instanceof
 
       // lwz/ld   scratch2Reg, objClassReg(_offsetCastClassCache)
-      // if (cg()->comp()->target().is64Bit())
+      // if (comp->target().is64Bit())
       //    sh=0
       //    me=62
       //    rldicr scratch1Reg, scratch2Reg, 0, 0x3d
@@ -205,12 +206,12 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
 
       // TODO: this code is set on 390.
       // int32_t offset = _offsetCastClassCache;
-      // if (cg()->comp()->target().is64Bit())
+      // if (comp->target().is64Bit())
       //    {
       //    offset += 4;
       //    }
 
-      if (cg()->comp()->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders())
+      if (comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders())
          opcode.setOpCodeValue(TR::InstOpCode::ld);
       else
          opcode.setOpCodeValue(TR::InstOpCode::lwz);
@@ -220,7 +221,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
       *(int32_t *)cursor |= _offsetCastClassCache & 0xffff;
       cursor += PPC_INSTRUCTION_LENGTH;
 
-      if (cg()->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          {
          opcode.setOpCodeValue(TR::InstOpCode::rldicr);
          cursor = opcode.copyBinaryToBuffer(cursor);
@@ -238,7 +239,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
          }
       cursor += PPC_INSTRUCTION_LENGTH;
 
-      if (cg()->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          opcode.setOpCodeValue(TR::InstOpCode::cmpl8);
       else
          opcode.setOpCodeValue(TR::InstOpCode::cmpl4);
@@ -260,7 +261,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
          opcode.setOpCodeValue(TR::InstOpCode::b);
          cursor = opcode.copyBinaryToBuffer(cursor);
          branchDistance = (intptr_t)getReStartLabel()->getCodeLocation() - (intptr_t)cursor;
-         TR_ASSERT(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptr_t)getReStartLabel()->getCodeLocation(), (intptr_t)cursor),
+         TR_ASSERT(comp->target().cpu.isTargetWithinIFormBranchRange((intptr_t)getReStartLabel()->getCodeLocation(), (intptr_t)cursor),
                    "backward jump in Interface Cache is too long\n");
          *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
          cursor += PPC_INSTRUCTION_LENGTH;
@@ -277,7 +278,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
          opcode.setOpCodeValue(TR::InstOpCode::b);
          cursor = opcode.copyBinaryToBuffer(cursor);
          branchDistance = (intptr_t)_callLabel->getCodeLocation() - (intptr_t)cursor;
-         TR_ASSERT(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_callLabel->getCodeLocation(), (intptr_t)cursor),
+         TR_ASSERT(comp->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_callLabel->getCodeLocation(), (intptr_t)cursor),
                    "backward jump in Interface Cache is too long\n");
          *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
          cursor += PPC_INSTRUCTION_LENGTH;
@@ -318,7 +319,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
             opcode.setOpCodeValue(TR::InstOpCode::b);
             cursor = opcode.copyBinaryToBuffer(cursor);
             branchDistance = (intptr_t)_trueLabel->getCodeLocation() - (intptr_t)cursor;
-            TR_ASSERT(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_trueLabel->getCodeLocation(), (intptr_t)cursor),
+            TR_ASSERT(comp->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_trueLabel->getCodeLocation(), (intptr_t)cursor),
                       "backward jump in Interface Cache is too long\n");
             *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
             cursor += PPC_INSTRUCTION_LENGTH;
@@ -326,7 +327,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
             opcode.setOpCodeValue(TR::InstOpCode::b);
             cursor = opcode.copyBinaryToBuffer(cursor);
             branchDistance = (intptr_t)_falseLabel->getCodeLocation() - (intptr_t)cursor;
-            TR_ASSERT(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_falseLabel->getCodeLocation(), (intptr_t)cursor),
+            TR_ASSERT(comp->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_falseLabel->getCodeLocation(), (intptr_t)cursor),
                       "backward jump in Interface Cache is too long\n");
             *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
             cursor += PPC_INSTRUCTION_LENGTH;
@@ -336,7 +337,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
             opcode.setOpCodeValue(TR::InstOpCode::b);
             cursor = opcode.copyBinaryToBuffer(cursor);
             branchDistance = (intptr_t)_doneLabel->getCodeLocation() - (intptr_t)cursor;
-            TR_ASSERT(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_doneLabel->getCodeLocation(), (intptr_t)cursor),
+            TR_ASSERT(comp->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_doneLabel->getCodeLocation(), (intptr_t)cursor),
                       "backward jump in Interface Cache is too long\n");
             *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
             cursor += PPC_INSTRUCTION_LENGTH;
@@ -370,7 +371,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
             opcode.setOpCodeValue(TR::InstOpCode::b);
             cursor = opcode.copyBinaryToBuffer(cursor);
             branchDistance = (intptr_t)_trueLabel->getCodeLocation() - (intptr_t)cursor;
-            TR_ASSERT(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_trueLabel->getCodeLocation(), (intptr_t)cursor),
+            TR_ASSERT(comp->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_trueLabel->getCodeLocation(), (intptr_t)cursor),
                       "backward jump in Interface Cache is too long\n");
             *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
             cursor += PPC_INSTRUCTION_LENGTH;
@@ -378,7 +379,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
             opcode.setOpCodeValue(TR::InstOpCode::b);
             cursor = opcode.copyBinaryToBuffer(cursor);
             branchDistance = (intptr_t)_falseLabel->getCodeLocation() - (intptr_t)cursor;
-            TR_ASSERT(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_falseLabel->getCodeLocation(), (intptr_t)cursor),
+            TR_ASSERT(comp->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_falseLabel->getCodeLocation(), (intptr_t)cursor),
                       "backward jump in Interface Cache is too long\n");
             *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
             cursor += PPC_INSTRUCTION_LENGTH;
@@ -388,7 +389,7 @@ TR::PPCInterfaceCastSnippet::emitSnippetBody()
             opcode.setOpCodeValue(TR::InstOpCode::b);
             cursor = opcode.copyBinaryToBuffer(cursor);
             branchDistance = (intptr_t)_doneLabel->getCodeLocation() - (intptr_t)cursor;
-            TR_ASSERT(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_doneLabel->getCodeLocation(), (intptr_t)cursor),
+            TR_ASSERT(comp->target().cpu.isTargetWithinIFormBranchRange((intptr_t)_doneLabel->getCodeLocation(), (intptr_t)cursor),
                       "backward jump in Interface Cache is too long\n");
             *(int32_t *)cursor |= (branchDistance & 0x03fffffc);
             cursor += PPC_INSTRUCTION_LENGTH;

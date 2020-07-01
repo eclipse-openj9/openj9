@@ -71,10 +71,11 @@ TR_PersistentMethodInfo *TR_PPCRecompilation::getExistingMethodInfo(TR_ResolvedM
 
 TR::Instruction *TR_PPCRecompilation::generatePrePrologue()
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(_compilation->fe());
+   TR::Compilation *comp = cg()->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
    // If in Full Speed Debug, allow to go through
-   if (!couldBeCompiledAgain() && !_compilation->getOption(TR_FullSpeedDebug))
+   if (!couldBeCompiledAgain() && !comp->getOption(TR_FullSpeedDebug))
       return(NULL);
 
    // gr12 may contain the vtable offset, and must be preserved here
@@ -82,10 +83,9 @@ TR::Instruction *TR_PPCRecompilation::generatePrePrologue()
    TR::Instruction *cursor=NULL;
    TR::Machine *machine = cg()->machine();
    TR::Register   *gr0 = machine->getRealRegister(TR::RealRegister::gr0);
-   TR::Node       *firstNode = _compilation->getStartTree()->getNode();
+   TR::Node       *firstNode = comp->getStartTree()->getNode();
    TR::SymbolReference *recompileMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCsamplingRecompileMethod, false, false, false);
    TR_PersistentJittedBodyInfo *info = getJittedBodyInfo();
-   TR::Compilation* comp = cg()->comp();
    // force creation of switch to interpreter pre prologue if in Full Speed Debug
    if (cg()->mustGenerateSwitchToInterpreterPrePrologue())
       {
@@ -97,13 +97,13 @@ TR::Instruction *TR_PPCRecompilation::generatePrePrologue()
       // gr0 must contain the saved LR; see Recompilation.s
       cursor = new (cg()->trHeapMemory()) TR::PPCTrg1Instruction(TR::InstOpCode::mflr, firstNode, gr0, cursor, cg());
       cursor = generateDepImmSymInstruction(cg(), TR::InstOpCode::bl, firstNode, (uintptr_t)recompileMethodSymRef->getMethodAddress(), new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0,0, cg()->trMemory()), recompileMethodSymRef, NULL, cursor);
-      if (cg()->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          {
          int32_t highBits = (int32_t)((intptr_t)info>>32), lowBits = (int32_t)((intptr_t)info);
          cursor = generateImmInstruction(cg(), TR::InstOpCode::dd, firstNode,
-            cg()->comp()->target().cpu.isBigEndian()?highBits:lowBits, TR_BodyInfoAddress, cursor);
+            comp->target().cpu.isBigEndian()?highBits:lowBits, TR_BodyInfoAddress, cursor);
          cursor = generateImmInstruction(cg(), TR::InstOpCode::dd, firstNode,
-            cg()->comp()->target().cpu.isBigEndian()?lowBits:highBits, cursor);
+            comp->target().cpu.isBigEndian()?lowBits:highBits, cursor);
          }
       else
          {
@@ -122,15 +122,16 @@ TR::Instruction *TR_PPCRecompilation::generatePrologue(TR::Instruction *cursor)
       {
       // gr12 may contain the vtable offset, and must be preserved here
       // see PicBuilder.s and Recompilation.s
+      TR::Compilation *comp = cg()->comp();
       TR::Machine *machine = cg()->machine();
       TR::Register   *gr0 = machine->getRealRegister(TR::RealRegister::gr0);
       TR::Register   *gr11 = machine->getRealRegister(TR::RealRegister::gr11);
       TR::Register   *cr0 = machine->getRealRegister(TR::RealRegister::cr0);
-      TR::Node       *firstNode = _compilation->getStartTree()->getNode();
+      TR::Node       *firstNode = comp->getStartTree()->getNode();
       intptr_t        addr = (intptr_t)getCounterAddress();          // What is the RL category?
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
 
-      if (cg()->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          {
          intptr_t adjustedAddr = HI_VALUE(addr);
          // lis gr11, upper 16-bits
@@ -160,7 +161,7 @@ TR::Instruction *TR_PPCRecompilation::generatePrologue(TR::Instruction *cursor)
       else
          {
          // This only applies to JitProfiling, as JProfiling uses sampling
-         TR_ASSERT(_compilation->getProfilingMode() == JitProfiling, "JProfiling should not use counting mechanism to trip recompilation");
+         TR_ASSERT(comp->getProfilingMode() == JitProfiling, "JProfiling should not use counting mechanism to trip recompilation");
 
          cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, firstNode, cr0, gr0, 0, cursor);
          // this is just padding for consistent code length

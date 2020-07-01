@@ -51,7 +51,7 @@ J9::Power::AheadOfTimeCompile::AheadOfTimeCompile(TR::CodeGenerator *cg) :
 
 void J9::Power::AheadOfTimeCompile::processRelocations()
    {
-   TR::Compilation* comp = _cg->comp();
+   TR::Compilation *comp = _cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
    TR::IteratedExternalRelocation *r;
 
@@ -75,7 +75,7 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
    // Note that when using the SymbolValidationManager, the well-known classes
    // must be checked even if no explicit records were generated, since they
    // might be responsible for the lack of records.
-   bool useSVM = self()->comp()->getOption(TR_UseSymbolValidationManager);
+   bool useSVM = comp->getOption(TR_UseSymbolValidationManager);
    if (self()->getSizeOfAOTRelocations() != 0 || useSVM)
       {
       // It would be more straightforward to put the well-known classes offset
@@ -85,7 +85,7 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
       uintptr_t reloBufferSize =
          self()->getSizeOfAOTRelocations() + SIZEPOINTER + wellKnownClassesOffsetSize;
       uint8_t *relocationDataCursor = self()->setRelocationData(
-         fej9->allocateRelocationData(self()->comp(), reloBufferSize));
+         fej9->allocateRelocationData(comp, reloBufferSize));
       // set up the size for the region
       *(uintptr_t*)relocationDataCursor = reloBufferSize;
       relocationDataCursor += SIZEPOINTER;
@@ -93,7 +93,7 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
       if (useSVM)
          {
          TR::SymbolValidationManager *svm =
-            self()->comp()->getSymbolValidationManager();
+            comp->getSymbolValidationManager();
          void *offsets = const_cast<void*>(svm->wellKnownClassChainOffsets());
          *(uintptr_t *)relocationDataCursor =
             self()->offsetInSharedCacheFromPointer(fej9->sharedCache(), offsets);
@@ -113,7 +113,7 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
 
 uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
    {
-   TR::Compilation* comp = TR::comp();
+   TR::Compilation *comp = _cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
    TR_SharedCache *sharedCache = fej9->sharedCache();
    TR::SymbolValidationManager *symValManager = comp->getSymbolValidationManager();

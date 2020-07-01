@@ -27,19 +27,20 @@
 
 uint8_t* TR::J9PPCWatchedStaticFieldSnippet::emitSnippetBody()
    {
+   TR::Compilation *comp = cg()->comp();
 
-   if (cg()->comp()->compileRelocatableCode() && !cg()->comp()->getOption(TR_UseSymbolValidationManager))
+   if (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager))
       {
       TR_ASSERT_FATAL(false, "Field Watch and AOT are not supported.");
       }
-   
+
    // Call Base class's emitSnippetBody() to populate the snippet
    // Here Binary Buffer will be ahead by the size of the struct J9JITWatchedStaticFieldData
    uint8_t *snippetLocation = (TR::J9WatchedStaticFieldSnippet::emitSnippetBody() - TR::J9WatchedStaticFieldSnippet::getLength(0));
 
    // Insert the Snippet Address into TOC or patch the materalisation instructions
-   // Insert into TOC 
-   if (cg()->comp()->target().is64Bit() && getTOCOffset() != PTOC_FULL_INDEX)
+   // Insert into TOC
+   if (comp->target().is64Bit() && getTOCOffset() != PTOC_FULL_INDEX)
       {
       TR_PPCTableOfConstants::setTOCSlot(getTOCOffset(), reinterpret_cast<uintptr_t>(snippetLocation));
       }
@@ -49,7 +50,7 @@ uint8_t* TR::J9PPCWatchedStaticFieldSnippet::emitSnippetBody()
       int32_t *patchAddr = reinterpret_cast<int32_t *>(getLowerInstruction()->getBinaryEncoding());
       intptr_t addrValue = reinterpret_cast<intptr_t>(snippetLocation);
 
-      if (cg()->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          {
          *patchAddr |= LO_VALUE(addrValue) & 0x0000ffff;
          addrValue = cg()->hiValue(addrValue);

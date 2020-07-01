@@ -216,14 +216,15 @@ J9::Z::TreeEvaluator::ud2pdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
 TR::Register *
 J9::Z::TreeEvaluator::ud2pdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
+   TR::Compilation *comp = cg->comp();
    cg->traceBCDEntry("ud2pd",node);
-   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "PD-Op/%s", node->getOpCode().getName()),
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "PD-Op/%s", node->getOpCode().getName()),
                             1, TR::DebugCounter::Cheap);
    TR::Register* targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) &&
-           !cg->comp()->getOption(TR_DisableVectorBCD) ||
+   if(comp->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) &&
+           !comp->getOption(TR_DisableVectorBCD) ||
            isVectorBCDEnv)
       {
       targetReg = ud2pdVectorEvaluatorHelper(node, cg);
@@ -252,7 +253,7 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
    cg->traceBCDEntry("udsl2pd",node);
-   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "PD-Op/%s", node->getOpCode().getName()),
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "PD-Op/%s", node->getOpCode().getName()),
                             1, TR::DebugCounter::Cheap);
    TR_PseudoRegister *targetReg = cg->allocatePseudoRegister(node->getDataType());
    TR::Node *child = node->getFirstChild();
@@ -299,7 +300,7 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          // code is present. Because of this deviation from the COBOL treatment of sign codes we must
          // take a specialized control path when generating instructions for Java.
 
-         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
+         if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
             {
             generateSILInstruction(cg, TR::InstOpCode::CLHHSI, node, generateS390LeftAlignedMemoryReference(*sourceMR, node, 0, cg, sourceSignEndByte), 0x002D);
             generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, cFlowRegionEnd);
@@ -348,8 +349,8 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    //at this point targetReg is PseudoRegister that has converted Packed decimal value.
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) &&
-           !cg->comp()->getOption(TR_DisableVectorBCD) ||
+   if (comp->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) &&
+           !comp->getOption(TR_DisableVectorBCD) ||
            isVectorBCDEnv)
       {
       TR::Register * pdVectorTargetReg = cg->allocateRegister(TR_VRF);
@@ -391,7 +392,7 @@ J9::Z::TreeEvaluator::pd2udslEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR_StorageReference* pdStorageRef = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) && !comp->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(comp->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) && !comp->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       // Perform an intermediate vector store. See pd2udVectorEvaluateHelper().
       TR::Register* pdValueReg = cg->evaluate(childNode);
@@ -1991,12 +1992,12 @@ J9::Z::TreeEvaluator::df2zdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    cg->traceBCDExit("df2zd",node);
 
-   TR_ASSERT( cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12),"CDZT/CXZT only valid on >= arch(10)\n");
+   TR::Compilation *comp = cg->comp();
+   TR_ASSERT( comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12),"CDZT/CXZT only valid on >= arch(10)\n");
    TR_ASSERT(node->getDecimalFraction() == 0,"frac should be 0 and not %d\n",node->getDecimalFraction());
 
    TR::Node *srcNode = node->getFirstChild();
    TR::Register *srcFPReg = cg->evaluate(srcNode);
-   TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
    bool isFloat      = srcNode->getDataType() == TR::DecimalFloat;
@@ -2264,7 +2265,8 @@ J9::Z::TreeEvaluator::zd2ddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    cg->traceBCDEntry("zd2dd",node);
 
-   TR_ASSERT( cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12),"CDZT/CXZT only valid on >= arch(10)\n");
+   TR::Compilation *comp = cg->comp();
+   TR_ASSERT( comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12),"CDZT/CXZT only valid on >= arch(10)\n");
    TR_ASSERT(node->getDataType() == TR::DecimalDouble || node->getDataType() == TR::DecimalLongDouble,"expecting op to be zd2dd or zd2de and not %d\n",node->getOpCodeValue());
    TR_ASSERT(node->getDecimalFraction() == 0,"frac should be 0 and not %d\n",node->getDecimalFraction());
 
@@ -2272,7 +2274,6 @@ J9::Z::TreeEvaluator::zd2ddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    bool isLongDouble = node->getDataType() == TR::DecimalLongDouble;
    uint8_t mask = isAbs ? TR_ZONED_TO_DFP_UNSIGNED : TR_ZONED_TO_DFP_SIGNED;
 
-   TR::Compilation *comp = cg->comp();
    TR::Node *srcNode = node->getFirstChild();
    TR_PseudoRegister *srcReg = cg->evaluateBCDNode(srcNode);
    TR_StorageReference *srcStorageReference = srcReg->getStorageReference();
@@ -2320,7 +2321,6 @@ J9::Z::TreeEvaluator::isZonedOperationAnEffectiveNop(TR::Node * node, int32_t sh
    bool signToSetIsZone          = signToSet == zone;
    bool signToSetIsIgnored       = signToSet == TR::DataType::getIgnoredSignCode();
    bool signToSetIsZoneOrIgnored = signToSetIsZone || signToSetIsIgnored;
-   TR::Compilation *comp = cg->comp();
 
    TR_ASSERT(!node->getOpCode().isRightShift() || shiftAmount > 0,"shiftAmount should be > 0 for zoned right shifts and not a %d\n",shiftAmount);
    switch (node->getOpCodeValue())
@@ -2403,6 +2403,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
                                           bool isUseVector,
                                           bool isVariableParam)
    {
+   TR::Compilation *comp = cg->comp();
    TR_Debug* debugObj = cg->getDebug();
    TR::Node* pdopNode = node->getFirstChild();
    TR::Node* secondChild = node->getSecondChild();
@@ -2453,7 +2454,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
       }
 
    // start of OOL section
-   traceMsg(cg->comp(), "starting OOL section generation.\n");
+   traceMsg(comp, "starting OOL section generation.\n");
    TR_S390OutOfLineCodeSection* outlinedHelperCall = new (INSN_HEAP) TR_S390OutOfLineCodeSection(handlerLabel, passThroughLabel, cg);
    cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
    outlinedHelperCall->swapInstructionListsWithCompilation();
@@ -2466,7 +2467,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
       }
 
    // Debug counter for tracking how often we fall back to the OOL path of the DAA intrinsic
-   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "DAA/OOL/(%s)/%p", cg->comp()->signature(), node), 1, TR::DebugCounter::Undetermined);
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "DAA/OOL/(%s)/%p", comp->signature(), node), 1, TR::DebugCounter::Undetermined);
 
    // Evaluate the callNode, duplicate and evaluate the address node, and then copy the
    // correct results back to the mainline storage ref or register
@@ -2526,7 +2527,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
       debugObj->addInstructionComment(cursor, "End of BCDCHK OOL sequence: return to mainline");
       }
 
-   traceMsg(cg->comp(), "Finished OOL section generation.\n");
+   traceMsg(comp, "Finished OOL section generation.\n");
 
    // ***Done using OOL with manual code generation *** //
    outlinedHelperCall->swapInstructionListsWithCompilation();
@@ -2542,6 +2543,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
 TR::Register *
 J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
+   TR::Compilation *comp = cg->comp();
    TR::Node* pdopNode = node->getFirstChild();
    TR::Register* resultReg = pdopNode->getRegister();
    bool isResultPD = pdopNode->getDataType() == TR::PackedDecimal;
@@ -2549,8 +2551,8 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    uint32_t firstCallParamIndex = 0;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   bool isEnableVectorBCD = cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL)
-                               && !cg->comp()->getOption(TR_DisableVectorBCD)
+   bool isEnableVectorBCD = comp->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL)
+                               && !comp->getOption(TR_DisableVectorBCD)
                                || isVectorBCDEnv;
 
    // Validate PD operations under BCDCHK node
@@ -2624,7 +2626,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                          pdopNode,
                          pdopNode->getOpCode().getName());
 
-         traceMsg(cg->comp(), "BCDCHK node n%dn has non-PD operation %s\n",
+         traceMsg(comp, "BCDCHK node n%dn has non-PD operation %s\n",
                   node->getGlobalIndex(), pdopNode->getOpCode().getName());
          }
       }
@@ -2668,7 +2670,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             cg->decReferenceCount(node->getChild(i));
          }
 
-      traceMsg(cg->comp(), "Skipped BCDCHK node n%dn\n", node->getGlobalIndex());
+      traceMsg(comp, "Skipped BCDCHK node n%dn\n", node->getGlobalIndex());
       }
    else
       {
@@ -3782,7 +3784,7 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
 
    // byteLength = precision/2 + 1. Note that the length codes of all instructions are (byteLength-1).
    // Thus, lengthCode = precision/2
-   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
+   if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
       {
       generateRSInstruction(cg, TR::InstOpCode::SRAK, pdOpNode, lengthReg, precisionReg, 0x1, NULL);
       }
@@ -3811,7 +3813,7 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
 
       uint8_t ignoreOverflowMask = 0;
 
-      if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY) && cg->getIgnoreDecimalOverflowException())
+      if (comp->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY) && cg->getIgnoreDecimalOverflowException())
          {
          ignoreOverflowMask = 0x8;
          }
@@ -3866,7 +3868,7 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
          {
          TR::Register* tempLengthForTP = cg->allocateRegister();
 
-         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
+         if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
             {
             generateRSInstruction(cg, TR::InstOpCode::SLAK, node, tempLengthForTP, lengthReg, 4);
             }
@@ -3911,9 +3913,9 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
    pdOpNode->setRegister(returnReg);
 
    // Create a debug counter to track how often we execute the inline path for variable operations
-   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(),
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp,
                                                                "DAA/variable/inline/(%s)/%p",
-                                                               cg->comp()->signature(), node),
+                                                               comp->signature(), node),
                             1, TR::DebugCounter::Undetermined);
 
    cg->traceBCDExit("pd2lVariableEvaluator",node);
@@ -4100,7 +4102,7 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    // also do for assumed (PFD) preferred and clean signs?
    int32_t srcSign = srcReg->hasKnownOrAssumedSignCode() ? srcReg->getKnownOrAssumedSignCode() : TR::DataType::getInvalidSignCode();
-   bool useRegBasedSequence = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && srcReg->hasKnownValidSign();
+   bool useRegBasedSequence = comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && srcReg->hasKnownValidSign();
    bool isSrcSign0xF     = srcSign == 0xf;
    bool isSimpleSignFlip = srcSign == TR::DataType::getPreferredPlusCode() ||
                            srcSign == TR::DataType::getPreferredMinusCode() ||
@@ -4187,12 +4189,12 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       if (targetReg->getDataType() == TR::PackedDecimal && targetReg->isEvenPrecision())
          cg->genZeroLeftMostDigitsIfNeeded(node, targetReg, targetReg->getSize(), 1, destMR);
 
-      if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12))
+      if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12))
          generateRIEInstruction(cg, TR::InstOpCode::RISBGN, node, targetData, tempSign, 63, 63, 64-3);
       else
          generateRIEInstruction(cg, TR::InstOpCode::RISBG, node, targetData, tempSign, 63, 63, 64-3);
 
-      generateRRInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::NGR : TR::InstOpCode::NR, node, targetSign, targetData);
+      generateRRInstruction(cg, comp->target().is64Bit() ? TR::InstOpCode::NGR : TR::InstOpCode::NR, node, targetSign, targetData);
       generateRILInstruction(cg, TR::InstOpCode::XILF, node, targetSign, 13);
 
       generateRXInstruction(cg, TR::InstOpCode::STC, node, targetSign, reuseS390LeftAlignedMemoryReference(destMR, node, targetReg->getStorageReference(), cg, 1));
@@ -4210,7 +4212,7 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       TR::Register *sourceSign = cg->allocateRegister();
       TR::Register *regMask = NULL;
 
-      generateRXInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::LLGC : TR::InstOpCode::LLC,
+      generateRXInstruction(cg, comp->target().is64Bit() ? TR::InstOpCode::LLGC : TR::InstOpCode::LLC,
            node, sourceSign, reuseS390LeftAlignedMemoryReference(sourceMR, srcNode, srcReg->getStorageReference(), cg, 1));
 
       uint8_t signCodes[TR_NUM_DECIMAL_CODES];
@@ -4241,7 +4243,7 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
       generateRIInstruction(cg, TR::InstOpCode::NILL, node, sourceSign, 0x0F);
 
-      generateRRInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::ALGR : TR::InstOpCode::ALR, node, litPoolBaseReg, sourceSign);
+      generateRRInstruction(cg, comp->target().is64Bit() ? TR::InstOpCode::ALGR : TR::InstOpCode::ALR, node, litPoolBaseReg, sourceSign);
 
       if (targetReg->getDataType() == TR::PackedDecimal && targetReg->isEvenPrecision())
          cg->genZeroLeftMostDigitsIfNeeded(node, targetReg, targetReg->getSize(), 1, destMR);
@@ -5806,7 +5808,7 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
    cg->decReferenceCount(valueChild);
    cg->decReferenceCount(addressNode);
 
-   traceMsg(cg->comp(), "DAA: Exiting pdstoreVectorEvaluator %d\n", __LINE__);
+   traceMsg(comp, "DAA: Exiting pdstoreVectorEvaluator %d\n", __LINE__);
    return NULL;
    }
 
@@ -6314,15 +6316,16 @@ J9::Z::TreeEvaluator::pdclearEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 TR::Register *
 J9::Z::TreeEvaluator::pdchkEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
+   TR::Compilation *comp = cg->comp();
    TR::Register *chkResultReg  = cg->allocateRegister(TR_GPR);
-   generateRRInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::XGR : TR::InstOpCode::XR, node, chkResultReg, chkResultReg);
+   generateRRInstruction(cg, comp->target().is64Bit() ? TR::InstOpCode::XGR : TR::InstOpCode::XR, node, chkResultReg, chkResultReg);
 
    TR::Node * pdloadNode = node->getFirstChild();
    TR::Register* pdReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) &&
-           !cg->comp()->getOption(TR_DisableVectorBCD) ||
+   if(comp->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) &&
+           !comp->getOption(TR_DisableVectorBCD) ||
            isVectorBCDEnv)
       {
       pdReg = cg->evaluate(pdloadNode);
@@ -6338,7 +6341,7 @@ J9::Z::TreeEvaluator::pdchkEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    generateRRInstruction(cg, TR::InstOpCode::IPM, node, chkResultReg, chkResultReg);
 
-   if(cg->comp()->target().is64Bit())
+   if(comp->target().is64Bit())
       {
       generateRRInstruction(cg, TR::InstOpCode::LLGTR, node, chkResultReg, chkResultReg);
       generateRSInstruction(cg, TR::InstOpCode::SRLG, node, chkResultReg, chkResultReg, 28);

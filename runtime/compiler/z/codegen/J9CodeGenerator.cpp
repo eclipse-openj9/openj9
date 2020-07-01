@@ -129,7 +129,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
    cg->setSupportsCompactedLocals();
 
    // Enable Implicit NULL Checks on zLinux.  On zOS, page zero is readable, so we need explicit checks.
-   cg->setSupportsImplicitNullChecks(cg->comp()->target().isLinux() && cg->getHasResumableTrapHandler() && !comp->getOption(TR_DisableZImplicitNullChecks));
+   cg->setSupportsImplicitNullChecks(comp->target().isLinux() && cg->getHasResumableTrapHandler() && !comp->getOption(TR_DisableZImplicitNullChecks));
 
    // Enable Monitor cache lookup for monent/monexit
    static char *disableMonitorCacheLookup = feGetEnv("TR_disableMonitorCacheLookup");
@@ -145,7 +145,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
    // Hardware clock, however, can be used for calculating System.nanoTime() on zLinux
    // since java/lang/System.nanoTime() returns an arbitrary number, rather than the current time
    // (see the java/lang/System.nanoTime() spec for details).
-   if (cg->comp()->target().isZOS())
+   if (comp->target().isZOS())
       cg->setSupportsMaxPrecisionMilliTime();
 
    // Support BigDecimal Long Lookaside versioning optimizations.
@@ -155,8 +155,8 @@ J9::Z::CodeGenerator::CodeGenerator() :
    // RI support
    if (comp->getOption(TR_HWProfilerDisableRIOverPrivateLinkage)
        && comp->getPersistentInfo()->isRuntimeInstrumentationEnabled()
-       && cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12)
-       && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_RI))
+       && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12)
+       && comp->target().cpu.supportsFeature(OMR_FEATURE_S390_RI))
       {
       cg->setSupportsRuntimeInstrumentation();
       cg->setEnableRIOverPrivateLinkage(false);  // Disable RI over private linkage, since RION/OFF will be controlled over J2I / I2J.
@@ -175,7 +175,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
 
    cg->getS390Linkage()->initS390RealRegisterLinkage();
 
-   const bool accessStaticsIndirectly = !cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) ||
+   const bool accessStaticsIndirectly = !comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) ||
          comp->getOption(TR_DisableDirectStaticAccessOnZ) ||
          (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager));
 
@@ -259,15 +259,16 @@ J9::Z::CodeGenerator::constLoadNeedsLiteralFromPool(TR::Node *node)
 TR::Recompilation *
 J9::Z::CodeGenerator::allocateRecompilationInfo()
    {
-   if(self()->comp()->getJittedMethodSymbol()->isJNI() &&
-      !self()->comp()->getOption(TR_FullSpeedDebug))
+   TR::Compilation *comp = self()->comp();
+   if(comp->getJittedMethodSymbol()->isJNI() &&
+      !comp->getOption(TR_FullSpeedDebug))
      {
-     traceMsg(self()->comp(), "\n====== THIS METHOD IS VIRTUAL JNI THUNK. IT WILL NOT BE RECOMPILED====\n");
+     traceMsg(comp, "\n====== THIS METHOD IS VIRTUAL JNI THUNK. IT WILL NOT BE RECOMPILED====\n");
      return NULL;
      }
    else
      {
-     return TR_S390Recompilation::allocate(self()->comp());
+     return TR_S390Recompilation::allocate(comp);
      }
    }
 
@@ -346,9 +347,10 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
       TR::Node *parent,
       TR::TreeTop *tt)
    {
+   TR::Compilation *comp = self()->comp();
    J9::CodeGenerator::lowerTreeIfNeeded(node, childNumberOfNode, parent, tt);
 
-   if (self()->comp()->cg()->yankIndexScalingOp() &&
+   if (self()->yankIndexScalingOp() &&
        (node->getOpCodeValue() == TR::aiadd || node->getOpCodeValue() == TR::aladd ) )
       {
       // 390 sees a lot of scaling ops getting stuck between BNDSchk and array read/write
@@ -417,9 +419,9 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
             mulNode = node->getSecondChild()->getFirstChild();
 
          if ((mulNode->getOpCodeValue() == TR::imul || mulNode->getOpCodeValue() == TR::ishl || mulNode->getOpCodeValue() == TR::lmul || mulNode->getOpCodeValue() == TR::lshl) &&
-             (performTransformation(self()->comp(), "%sYank mul above ArrayStoreChk [%p] \n", OPT_DETAILS, node)))
+             (performTransformation(comp, "%sYank mul above ArrayStoreChk [%p] \n", OPT_DETAILS, node)))
             {
-            TR::TreeTop * ttNew = TR::TreeTop::create(self()->comp(), TR::Node::create(TR::treetop, 1, mulNode));
+            TR::TreeTop * ttNew = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, mulNode));
             tt->getPrevTreeTop()->insertAfter(ttNew);
             }
          }
@@ -471,9 +473,9 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
                   (bndchkIndex->getNumChildren() >= 1 &&
                    mulNode->getFirstChild() == bndchkIndex->getFirstChild())) ));
 
-         if (doIt && performTransformation(self()->comp(), "%sYank mul [%p] \n", OPT_DETAILS, node))
+         if (doIt && performTransformation(comp, "%sYank mul [%p] \n", OPT_DETAILS, node))
             {
-            TR::TreeTop * ttNew = TR::TreeTop::create(self()->comp(), TR::Node::create(TR::treetop, 1, mulNode));
+            TR::TreeTop * ttNew = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, mulNode));
             prevPrevTT->insertAfter(ttNew);
             }
          }
@@ -483,14 +485,14 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
    // J9, Z
    //
    // On zseries, convert aconst to iaload of aconst 0 and move it to its own new treetop
-   if (self()->comp()->target().cpu.isZ() && !self()->comp()->cg()->profiledPointersRequireRelocation() &&
+   if (comp->target().cpu.isZ() && !self()->profiledPointersRequireRelocation() &&
          node->getOpCodeValue() == TR::aconst && node->isClassUnloadingConst())
       {
       TR::Node * dummyNode = TR::Node::create(node, TR::aconst, 0);
       TR::Node *constCopy;
       TR::SymbolReference *intShadow;
 
-      dumpOptDetails(self()->comp(), "transforming unloadable aconst %p \n", node);
+      dumpOptDetails(comp, "transforming unloadable aconst %p \n", node);
 
       constCopy =TR::Node::copy(node);
       intShadow = self()->symRefTab()->findOrCreateGenericIntShadowSymbolReference((intptr_t)constCopy);
@@ -502,14 +504,14 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
       node->setAndIncChild(0,dummyNode);
 
 
-      tt->getPrevTreeTop()->insertAfter(TR::TreeTop::create(self()->comp(),TR::Node::create(TR::treetop, 1, node)));
+      tt->getPrevTreeTop()->insertAfter(TR::TreeTop::create(comp,TR::Node::create(TR::treetop, 1, node)));
       node->decReferenceCount();
       parent->setAndIncChild(childNumberOfNode, node);
       }
 
    // J9, Z
    //
-   if (self()->comp()->target().cpu.isZ() && node->getOpCodeValue() == TR::aloadi && node->isUnneededIALoad())
+   if (comp->target().cpu.isZ() && node->getOpCodeValue() == TR::aloadi && node->isUnneededIALoad())
       {
       ListIterator<TR_Pair<TR::Node, int32_t> > listIter(&_ialoadUnneeded);
       TR_Pair<TR::Node, int32_t> *ptr;
@@ -920,6 +922,8 @@ template <class TR_AliasSetInterface>
 bool
 J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Node *node, TR::Node *store,TR_AliasSetInterface &storeAliases, TR::list<TR::Node*> *conflictingAddressNodes, bool justLookForConflictingAddressNodes, bool isChainOfFirstChildren, bool mustCheckAllNodes)
    {
+   TR::Compilation *comp = self()->comp();
+
    // A note on isChainOfFirstChildren:
    // In RTC 75858, we saw the following trees for the following COBOL statements, where X is packed decimal:
    // COMPUTE X = X - 2.
@@ -937,15 +941,15 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
    //
    // To solve this, isChainOfFirstChildren is used. It is set to true initially, and it will only remain true when called for a node's first child
    // if it was already true. In the example above, it would be true for the pdsub and the pdconst +999 and false for any other nodes.
-   LexicalTimer foldTimer("canUseSingleStore", self()->comp()->phaseTimer());
+   LexicalTimer foldTimer("canUseSingleStore", comp->phaseTimer());
 
    if (self()->traceBCDCodeGen())
-      traceMsg(self()->comp(),"\t\texamining node %s (%p) (usage/budget = %d/%d)\n",node->getOpCode().getName(),node,self()->getAccumulatorNodeUsage(),TR_ACCUMULATOR_NODE_BUDGET);
+      traceMsg(comp,"\t\texamining node %s (%p) (usage/budget = %d/%d)\n",node->getOpCode().getName(),node,self()->getAccumulatorNodeUsage(),TR_ACCUMULATOR_NODE_BUDGET);
 
    if (self()->getAccumulatorNodeUsage() > TR_ACCUMULATOR_NODE_BUDGET)
       {
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\t\ta^a : disallow useAccum=false as node budget %d exceeded for store %s (%p)\n",
+         traceMsg(comp,"\t\ta^a : disallow useAccum=false as node budget %d exceeded for store %s (%p)\n",
             TR_ACCUMULATOR_NODE_BUDGET,store->getOpCode().getName(),store);
       return false;
       }
@@ -955,7 +959,7 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
       if (self()->endAccumulatorSearchOnOperation(node))
          {
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\t\t\tallow -- found node %s (%p) with endSearch = yes\n",node->getOpCode().getName(),node);
+            traceMsg(comp,"\t\t\tallow -- found node %s (%p) with endSearch = yes\n",node->getOpCode().getName(),node);
          if (conflictingAddressNodes->empty())
             {
             return true;
@@ -964,7 +968,7 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
             {
             // do not have to worry about overlaps but still must descend to look for conflictingAddressNodes
             if (self()->traceBCDCodeGen())
-               traceMsg(self()->comp(),"\t\tconflictingAddressNodes list is not empty so continue searching for conflictingAddressNodes\n");
+               traceMsg(comp,"\t\tconflictingAddressNodes list is not empty so continue searching for conflictingAddressNodes\n");
             justLookForConflictingAddressNodes = true;
             }
          }
@@ -986,7 +990,7 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
          // the pdload was evaluated. Now, we'll set mustCheckAllNodes to true when we hit the pdsub, and the code that won't let us
          // accumulate because the pdload "a" isn't on a chain of first children will kick in, and we won't accumulate to "a".
          if (!mustCheckAllNodes && self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\t\tFound a node that could clobber the accumulator before use; must check all children\n");
+            traceMsg(comp,"\t\tFound a node that could clobber the accumulator before use; must check all children\n");
 
          mustCheckAllNodes = true;
          }
@@ -1004,19 +1008,19 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
          {
          TR_StorageReference *storageRef = node->getOpaquePseudoRegister()->getStorageReference();
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\t\tfound evaluated reg %s : storageRef #%d ",self()->getDebug()->getName(node->getOpaquePseudoRegister()),storageRef->getReferenceNumber());
+            traceMsg(comp,"\t\tfound evaluated reg %s : storageRef #%d ",self()->getDebug()->getName(node->getOpaquePseudoRegister()),storageRef->getReferenceNumber());
          if (storageRef->isTemporaryBased())
             {
-            if (self()->traceBCDCodeGen()) traceMsg(self()->comp(),"(tempBased)\n");
+            if (self()->traceBCDCodeGen()) traceMsg(comp,"(tempBased)\n");
             TR::SymbolReference *tempSymRef = storageRef->getTemporarySymbolReference();
             // the rest of the code below expects a node but there is not one for tempBased storageRefs so construct/reuse one on the fly
             if (_dummyTempStorageRefNode == NULL)
                {
-               _dummyTempStorageRefNode = TR::Node::createWithSymRef(node, self()->comp()->il.opCodeForDirectLoad(node->getDataType()), 0, tempSymRef);
+               _dummyTempStorageRefNode = TR::Node::createWithSymRef(node, comp->il.opCodeForDirectLoad(node->getDataType()), 0, tempSymRef);
                }
             else
                {
-               TR::Node::recreate(_dummyTempStorageRefNode, self()->comp()->il.opCodeForDirectLoad(node->getDataType()));
+               TR::Node::recreate(_dummyTempStorageRefNode, comp->il.opCodeForDirectLoad(node->getDataType()));
                _dummyTempStorageRefNode->setSymbolReference(tempSymRef);
                }
             if (node->getType().isBCD())
@@ -1027,14 +1031,14 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
             }
          else if (storageRef->isNonConstantNodeBased())
             {
-            if (self()->traceBCDCodeGen()) traceMsg(self()->comp(),"(nodeBased storageRefNode %s (%p))\n",storageRef->getNode()->getOpCode().getName(),storageRef->getNode());
+            if (self()->traceBCDCodeGen()) traceMsg(comp,"(nodeBased storageRefNode %s (%p))\n",storageRef->getNode()->getOpCode().getName(),storageRef->getNode());
             TR_ASSERT(storageRef->getNode()->getOpCode().hasSymbolReference(),"storageRef node %s (%p) should have a symRef\n",
                storageRef->getNode()->getOpCode().getName(),storageRef->getNode());
             nodeForAliasing   = storageRef->getNode();
             }
          else
             {
-            if (self()->traceBCDCodeGen()) traceMsg(self()->comp(),"(constNodeBased storageRefNode %s (%p))\n",storageRef->getNode()->getOpCode().getName(),storageRef->getNode());
+            if (self()->traceBCDCodeGen()) traceMsg(comp,"(constNodeBased storageRefNode %s (%p))\n",storageRef->getNode()->getOpCode().getName(),storageRef->getNode());
             TR_ASSERT(storageRef->isConstantNodeBased(),"expecting storageRef #%d to be constant node based\n",storageRef->getReferenceNumber());
             }
          }
@@ -1051,21 +1055,21 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
       symRefForAliasing = nodeForAliasing->getSymbolReference();
 
    if (self()->traceBCDCodeGen() && nodeForAliasing && symRefForAliasing)
-      traceMsg(self()->comp(),"\t\tgot nodeForAliasing %s (%p), symRefForAliasing #%d\n",
+      traceMsg(comp,"\t\tgot nodeForAliasing %s (%p), symRefForAliasing #%d\n",
          nodeForAliasing->getOpCode().getName(),nodeForAliasing,symRefForAliasing?symRefForAliasing->getReferenceNumber():-1);
 
    bool useAliasing = true;
-   if (self()->traceBCDCodeGen() && useAliasing && !storeAliases.isZero(self()->comp()) && symRefForAliasing)
+   if (self()->traceBCDCodeGen() && useAliasing && !storeAliases.isZero(comp) && symRefForAliasing)
       {
-      if (self()->comp()->getOption(TR_TraceAliases) && !symRefForAliasing->getUseDefAliases().isZero(self()->comp()))
+      if (comp->getOption(TR_TraceAliases) && !symRefForAliasing->getUseDefAliases().isZero(comp))
          {
-         traceMsg(self()->comp(), "\t\t\taliases for #%d: ",symRefForAliasing->getReferenceNumber());
-         TR::SparseBitVector aliases(self()->comp()->allocator());
+         traceMsg(comp, "\t\t\taliases for #%d: ",symRefForAliasing->getReferenceNumber());
+         TR::SparseBitVector aliases(comp->allocator());
          symRefForAliasing->getUseDefAliases().getAliases(aliases);
-         (*self()->comp()) << aliases << "\n";
+         (*comp) << aliases << "\n";
          }
-      traceMsg(self()->comp(),"\t\t\tsymRefForAliasing #%d isSet in storeAliases = %s\n",
-         symRefForAliasing->getReferenceNumber(),storeAliases.contains(symRefForAliasing->getReferenceNumber(), self()->comp()) ? "yes":"no");
+      traceMsg(comp,"\t\t\tsymRefForAliasing #%d isSet in storeAliases = %s\n",
+         symRefForAliasing->getReferenceNumber(),storeAliases.contains(symRefForAliasing->getReferenceNumber(), comp) ? "yes":"no");
       }
 
    if (symRefForAliasing &&
@@ -1080,7 +1084,7 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
           self()->loadOrStoreAddressesMatch(store, nodeForAliasing))
          {
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\t\t\tallow hint (loadVar case) %s (%p) -- store %s #%d (%p) location = nodeForAliasing %s #%d (%p) location\n",
+            traceMsg(comp,"\t\t\tallow hint (loadVar case) %s (%p) -- store %s #%d (%p) location = nodeForAliasing %s #%d (%p) location\n",
                parent->getOpCode().getName(),parent,
                store->getOpCode().getName(),store->getSymbolReference()->getReferenceNumber(),store,
                nodeForAliasing->getOpCode().getName(),symRefForAliasing->getReferenceNumber(),nodeForAliasing);
@@ -1103,7 +1107,7 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
          //    zdTrMultipleB         <- parent
          //       ==>zdTrMultipleA   <- node with nodeForAliasing zdstoreA
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\t\t\tallow hint (storeVar case) %s (%p) -- store %s #%d (%p) location = nodeForAliasing %s #%d (%p) location\n",
+            traceMsg(comp,"\t\t\tallow hint (storeVar case) %s (%p) -- store %s #%d (%p) location = nodeForAliasing %s #%d (%p) location\n",
                parent->getOpCode().getName(),parent,
                store->getOpCode().getName(),store->getSymbolReference()->getReferenceNumber(),store,
                nodeForAliasing->getOpCode().getName(),symRefForAliasing->getReferenceNumber(),nodeForAliasing);
@@ -1118,7 +1122,7 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
       else if (self()->isAcceptableDestructivePDShiftRight(store, nodeForAliasing))
          {
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\t\t\tallow hint (pdshr in place case) %s (%p) -- store %s #%d (%p) location = nodeForAliasing %s #%d (%p) location\n",
+            traceMsg(comp,"\t\t\tallow hint (pdshr in place case) %s (%p) -- store %s #%d (%p) location = nodeForAliasing %s #%d (%p) location\n",
                parent->getOpCode().getName(),parent,
                store->getOpCode().getName(),store->getSymbolReference()->getReferenceNumber(),store,
                nodeForAliasing->getOpCode().getName(),symRefForAliasing->getReferenceNumber(),nodeForAliasing);
@@ -1128,7 +1132,7 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
       else if (self()->isAcceptableDestructivePDModPrecision(store, nodeForAliasing))
          {
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\t\t\tallow hint (pdMod in place case) %s (%p) -- store %s #%d (%p) location = nodeForAliasing %s #%d (%p) location\n",
+            traceMsg(comp,"\t\t\tallow hint (pdMod in place case) %s (%p) -- store %s #%d (%p) location = nodeForAliasing %s #%d (%p) location\n",
                parent->getOpCode().getName(),parent,
                store->getOpCode().getName(),store->getSymbolReference()->getReferenceNumber(),store,
                nodeForAliasing->getOpCode().getName(),symRefForAliasing->getReferenceNumber(),nodeForAliasing);
@@ -1143,13 +1147,13 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
             // get a second opinion -- the aliasing says the operations overlap but perhaps it is too conservative
             // so do pattern matching based test to see if the operations are actually disjoint
             if (self()->traceBCDCodeGen())
-               traceMsg(self()->comp(),"\t\t\tcheck children -- useAccum=true aliasing test failed but pattern match passed for nodeForAliasing %s (%p) with symRefForAliasing #%d\n",
+               traceMsg(comp,"\t\t\tcheck children -- useAccum=true aliasing test failed but pattern match passed for nodeForAliasing %s (%p) with symRefForAliasing #%d\n",
                   nodeForAliasing->getOpCode().getName(),nodeForAliasing,symRefForAliasing->getReferenceNumber());
             }
          else
             {
             if (self()->traceBCDCodeGen())
-               traceMsg(self()->comp(),"\t\t\tdisallow -- useAccum=false for nodeForAliasing %s (%p) with symRefForAliasing #%d\n",
+               traceMsg(comp,"\t\t\tdisallow -- useAccum=false for nodeForAliasing %s (%p) with symRefForAliasing #%d\n",
                   nodeForAliasing->getOpCode().getName(),nodeForAliasing,symRefForAliasing->getReferenceNumber());
             return false;
             }
@@ -1162,7 +1166,7 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
    if (node->getOpCode().isLoad())
       {
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\t\t\t%s -- found load %s (%p) under store %s (%p)\n", (mustCheckAllNodes ? "check children" : "allow"),
+         traceMsg(comp,"\t\t\t%s -- found load %s (%p) under store %s (%p)\n", (mustCheckAllNodes ? "check children" : "allow"),
             node->getOpCode().getName(),node,store->getOpCode().getName(),store);
       if (!mustCheckAllNodes)
          return true;
@@ -1170,7 +1174,7 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
    else if (node->getRegister())
       {
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\t\t\tallow -- found base case evaluated reg %s on node %s (%p) under store %s (%p)\n",
+         traceMsg(comp,"\t\t\tallow -- found base case evaluated reg %s on node %s (%p) under store %s (%p)\n",
             self()->getDebug()->getName(node->getRegister()),node->getOpCode().getName(),node,store->getOpCode().getName(),store);
       return true;
       }
@@ -1181,7 +1185,7 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
       // The problem is that if the store is used an accum then there will be a circular evaluation as the value child will have to evaluate
       // the address child in order to the get accumulated store address
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\t\t\ta^a: disallow -- useAccum=false because node %s (%p) was found commoned from address tree on %s (%p)\n",
+         traceMsg(comp,"\t\t\ta^a: disallow -- useAccum=false because node %s (%p) was found commoned from address tree on %s (%p)\n",
             node->getOpCode().getName(),node,store->getOpCode().getName(),store);
       return false;
       }
@@ -1195,7 +1199,7 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
          // The problem is that if the store is used an accum then there will be a circular evaluation as the value child will have to evaluate
          // the address child in order to the get accumulated store address
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\t\t\ta^a: disallow -- useAccum=false because node %s (%p) was found commoned from address tree on %s (%p)\n",
+            traceMsg(comp,"\t\t\ta^a: disallow -- useAccum=false because node %s (%p) was found commoned from address tree on %s (%p)\n",
                child->getOpCode().getName(),child,store->getOpCode().getName(),store);
          return false;
          }
@@ -1214,7 +1218,7 @@ J9::Z::CodeGenerator::canUseSingleStoreAsAnAccumulator(TR::Node *parent, TR::Nod
             if (!justLookForConflictingAddressNodes && self()->endHintOnOperation(node))
                {
                if (self()->traceBCDCodeGen())
-                  traceMsg(self()->comp(),"\t\t\ta^a: : endHint mismatch -- node %s (%p)\n",node->getOpCode().getName(),node);
+                  traceMsg(comp,"\t\t\ta^a: : endHint mismatch -- node %s (%p)\n",node->getOpCode().getName(),node);
                }
             return false;
             }
@@ -1394,25 +1398,26 @@ J9::Z::CodeGenerator::getAddressOneToAddressTwoOffset(bool *canGetOffset,
                                                        TR::list<TR::Node*> *_baseLoadsThatAreNotKilled,
                                                        bool trace) // _baseLoadsThatAreNotKilled can be NULL
    {
+   TR::Compilation *comp = self()->comp();
    int64_t offset64 = 0;
    *canGetOffset = false;
    *offset=0;
    bool foundOffset = false;
 
    if (!foundOffset &&
-       self()->comp()->cg()->addressesMatch(addr1, addr2))
+       self()->addressesMatch(addr1, addr2))
       {
       foundOffset = true;
       offset64 = (addr2ExtraOffset - addr1ExtraOffset);
       if (trace)
-         traceMsg(self()->comp(),"\t\t(addr2 %s (%p) + %lld) = (addr1 %s (%p) + %lld) + offset (%lld) : node matches case\n",
+         traceMsg(comp,"\t\t(addr2 %s (%p) + %lld) = (addr1 %s (%p) + %lld) + offset (%lld) : node matches case\n",
             addr2->getOpCode().getName(),addr2,addr2ExtraOffset,addr1->getOpCode().getName(),addr1,addr1ExtraOffset,offset64);
       }
 
    if (!foundOffset &&
-       self()->comp()->cg()->isSupportedAdd(addr1) &&
-       self()->comp()->cg()->isSupportedAdd(addr2) &&
-       self()->comp()->cg()->addressesMatch(addr1->getFirstChild(), addr2->getFirstChild()))
+       self()->isSupportedAdd(addr1) &&
+       self()->isSupportedAdd(addr2) &&
+       self()->addressesMatch(addr1->getFirstChild(), addr2->getFirstChild()))
       {
       if (addr1->getSecondChild()->getOpCode().isIntegralConst() &&
           addr2->getSecondChild()->getOpCode().isIntegralConst())
@@ -1422,7 +1427,7 @@ J9::Z::CodeGenerator::getAddressOneToAddressTwoOffset(bool *canGetOffset,
          int64_t addr2Offset = addr2->getSecondChild()->get64bitIntegralValue() + addr2ExtraOffset;
          offset64 = (addr2Offset - addr1Offset);
          if (trace)
-            traceMsg(self()->comp(),"\t\t(addr2 %s (%p) + %lld) = (addr1 %s (%p) + %lld) + offset (%lld) : both adds case\n",
+            traceMsg(comp,"\t\t(addr2 %s (%p) + %lld) = (addr1 %s (%p) + %lld) + offset (%lld) : both adds case\n",
                addr2->getOpCode().getName(),addr2,addr2ExtraOffset,addr1->getOpCode().getName(),addr1,addr1ExtraOffset,offset64);
          }
       }
@@ -1434,23 +1439,23 @@ J9::Z::CodeGenerator::getAddressOneToAddressTwoOffset(bool *canGetOffset,
    //    iconst 8
    //
    if (!foundOffset &&
-       self()->comp()->cg()->isSupportedAdd(addr2) &&
+       self()->isSupportedAdd(addr2) &&
        addr2->getSecondChild()->getOpCode().isIntegralConst() &&
-       self()->comp()->cg()->addressesMatch(addr1, addr2->getFirstChild()))
+       self()->addressesMatch(addr1, addr2->getFirstChild()))
       {
       foundOffset = true;
       int64_t addr2Offset = addr2->getSecondChild()->get64bitIntegralValue() + addr2ExtraOffset;
       offset64 = addr2Offset;
       if (trace)
-         traceMsg(self()->comp(),"\t\t(addr2 %s (%p) + %lld) = addr1 %s (%p) + offset (%lld) : 2nd add case\n",
+         traceMsg(comp,"\t\t(addr2 %s (%p) + %lld) = addr1 %s (%p) + offset (%lld) : 2nd add case\n",
             addr2->getOpCode().getName(),addr2,addr2ExtraOffset,addr1->getOpCode().getName(),addr1,offset64);
       }
 
    if (!foundOffset &&
        _baseLoadsThatAreNotKilled &&
        !_baseLoadsThatAreNotKilled->empty() &&
-       self()->comp()->cg()->isSupportedAdd(addr1) &&
-       self()->comp()->cg()->isSupportedAdd(addr2) &&
+       self()->isSupportedAdd(addr1) &&
+       self()->isSupportedAdd(addr2) &&
        addr1->getSecondChild()->getOpCode().isIntegralConst() &&
        addr2->getSecondChild()->getOpCode().isIntegralConst())
       {
@@ -1467,7 +1472,7 @@ J9::Z::CodeGenerator::getAddressOneToAddressTwoOffset(bool *canGetOffset,
          int64_t addr2Offset = addr2->getSecondChild()->get64bitIntegralValue() + addr2ExtraOffset;
          offset64 = (addr2Offset - addr1Offset);
          if (trace)
-            traceMsg(self()->comp(),"\t\t(addr2 %s (%p) + %lld) = (addr1 %s (%p) + %lld) + offset (%lld) : baseLoad1 %s (%p) in notKilledList, both adds case\n",
+            traceMsg(comp,"\t\t(addr2 %s (%p) + %lld) = (addr1 %s (%p) + %lld) + offset (%lld) : baseLoad1 %s (%p) in notKilledList, both adds case\n",
                addr2->getOpCode().getName(),addr2,addr2ExtraOffset,
                addr1->getOpCode().getName(),addr1,addr1ExtraOffset,
                offset64,
@@ -1531,6 +1536,7 @@ J9::Z::CodeGenerator::examineNode(
       int32_t &storeSize,
       TR::list<TR::Node*> &leftMostNodesList)
    {
+   TR::Compilation *comp = self()->comp();
    TR::Node *checkNode = node;
    bool isAccumStore = node->getOpCode().canUseStoreAsAnAccumulator();
    bool isLoad = node->getOpCode().isLoad();
@@ -1543,7 +1549,7 @@ J9::Z::CodeGenerator::examineNode(
    if (!node->hasBeenVisitedForHints()) // check other nodes using hasBeenVisitedForHints
       {
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\tvisiting node - %s (%p), bestNode - %s (%p) (endHintOnNode=%s)\n",
+         traceMsg(comp,"\tvisiting node - %s (%p), bestNode - %s (%p) (endHintOnNode=%s)\n",
             node->getOpCode().getName(),node,bestNode?bestNode->getOpCode().getName():"NULL",bestNode,endHintOnNode?"true":"false");
 
       node->setHasBeenVisitedForHints();
@@ -1588,7 +1594,7 @@ J9::Z::CodeGenerator::examineNode(
          //       zd2pd <- node (endHintOnNode=true and ud2pd size <= store size) <- tag this list node with the pdstore hint
          //
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\t\tendHintOnNode=true so call processNodeList before examining ending hint node %p\n",node);
+            traceMsg(comp,"\t\tendHintOnNode=true so call processNodeList before examining ending hint node %p\n",node);
          // processNodeList will reset storeSize so save and restore the current storeSize value so it will persist for the current node
          // pd2ud    <-sets storeSize to 16
          //    zd2pd <-node (should also use storeSize=16)
@@ -1613,10 +1619,10 @@ J9::Z::CodeGenerator::examineNode(
                if (self()->traceBCDCodeGen())
                   {
                   if (isAccumStore)
-                     traceMsg(self()->comp(),"\t\tfound new store (canUse = %s) bestNode - %s (%p) with actual size %d and storageRefResultSize %d\n",
+                     traceMsg(comp,"\t\tfound new store (canUse = %s) bestNode - %s (%p) with actual size %d and storageRefResultSize %d\n",
                         bestNode->useStoreAsAnAccumulator() ? "yes":"no", bestNode->getOpCode().getName(),bestNode, bestNode->getSize(),bestNode->getStorageReferenceSize());
                   else
-                     traceMsg(self()->comp(),"\t\tfound new non-store bestNode - %s (%p) (isConversionToNonAggrOrNonBCD=%s, isForcedTemp=%s) with actual size %d and storageRefResultSize %d\n",
+                     traceMsg(comp,"\t\tfound new non-store bestNode - %s (%p) (isConversionToNonAggrOrNonBCD=%s, isForcedTemp=%s) with actual size %d and storageRefResultSize %d\n",
                         bestNode->getOpCode().getName(),bestNode,isConversionToNonAggrOrNonBCD?"yes":"no",self()->nodeRequiresATemporary(node)?"yes":"no",bestNode->getSize(),bestNode->getStorageReferenceSize());
                   }
                }
@@ -1625,7 +1631,7 @@ J9::Z::CodeGenerator::examineNode(
          if (!isAccumStore && !isConversionToNonAggrOrNonBCD && !isLoad) // don't add stores or bcd2x or load nodes to the list
             {
             if (self()->traceBCDCodeGen())
-               traceMsg(self()->comp(),"\t\tadd node - %s (%p) to list\n",node->getOpCode().getName(),node);
+               traceMsg(comp,"\t\tadd node - %s (%p) to list\n",node->getOpCode().getName(),node);
             leftMostNodesList.push_front(node);
             }
          }
@@ -1652,7 +1658,7 @@ J9::Z::CodeGenerator::examineNode(
             }
 
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\t\tendHintOnNode=true for node - %s (%p) setting storeSize to %d\n",node->getOpCode().getName(),node,storeSize);
+            traceMsg(comp,"\t\tendHintOnNode=true for node - %s (%p) setting storeSize to %d\n",node->getOpCode().getName(),node,storeSize);
          }
 
       // visit value child first for indirect stores so the possible store hint is not lost on the address child
@@ -1676,18 +1682,18 @@ J9::Z::CodeGenerator::examineNode(
       {
       checkNode = parent;
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\tnot descending node - %s (%p) because it has been visited already\n",node->getOpCode().getName(),node);
+         traceMsg(comp,"\tnot descending node - %s (%p) because it has been visited already\n",node->getOpCode().getName(),node);
       TR_OpaquePseudoRegister *reg = node->getOpCodeValue() == TR::BBStart ? NULL : node->getOpaquePseudoRegister();
       if (reg)
          {
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\t\tnode - %s (%p) with reg %s is an already evaluated bcd node with refCount=%d\n",
+            traceMsg(comp,"\t\tnode - %s (%p) with reg %s is an already evaluated bcd node with refCount=%d\n",
                node->getOpCode().getName(),node,self()->getDebug()->getName(static_cast<TR::Register*>(reg)),node->getReferenceCount());
 
          if (!reg->getStorageReference()->isTemporaryBased())
             {
             if (self()->traceBCDCodeGen())
-               traceMsg(self()->comp(),"\t\t\treg storageRef #%d is not a temp so do not update bestNode with node - %s (%p) but do reset reg %s isInit to false\n",
+               traceMsg(comp,"\t\t\treg storageRef #%d is not a temp so do not update bestNode with node - %s (%p) but do reset reg %s isInit to false\n",
                   reg->getStorageReference()->getReferenceNumber(),node->getOpCode().getName(),node,self()->getDebug()->getName(reg));
             // setting to false here forces the commoned expression to re-initialize the register to the new hint for one of two reasons:
             // 1) functionally required for non-temps as these storage references can not be clobbered (they are program variables or constants)
@@ -1697,13 +1703,13 @@ J9::Z::CodeGenerator::examineNode(
          else if (bestNode && bestNode->getOpCode().isStore() && node->getReferenceCount() >= 1) // use >= 1 so useNewStoreHint can always be used for ZAP widening on initializations
             {
             if (self()->traceBCDCodeGen())
-               traceMsg(self()->comp(),"\t\t\treg storageRef #%d with a store bestNode so do not update bestNode with node - %s (%p) refCount=%d\n",
+               traceMsg(comp,"\t\t\treg storageRef #%d with a store bestNode so do not update bestNode with node - %s (%p) refCount=%d\n",
                   reg->getStorageReference()->getReferenceNumber(),node->getOpCode().getName(),node,node->getReferenceCount());
             }
          else
             {
             if (self()->traceBCDCodeGen())
-               traceMsg(self()->comp(),"\t\t\treg storageRef #%d is a final-use (refCount==1) temp so set bestNode to node - %s (%p) reg->isInit=%s (and reuse temp storageRef))\n",
+               traceMsg(comp,"\t\t\treg storageRef #%d is a final-use (refCount==1) temp so set bestNode to node - %s (%p) reg->isInit=%s (and reuse temp storageRef))\n",
                   reg->getStorageReference()->getReferenceNumber(),node->getOpCode().getName(),node,reg->isInitialized()?"yes":"no");
             if (bestNode)
                storeSize = bestNode->getSize();
@@ -1717,19 +1723,19 @@ J9::Z::CodeGenerator::examineNode(
       {
       if (self()->traceBCDCodeGen())
          {
-         traceMsg(self()->comp(),"\t\tdetected the end of a left most path because ");
+         traceMsg(comp,"\t\tdetected the end of a left most path because ");
          if ((!leftMostNodesList.empty()) && (checkNode == leftMostNodesList.front()))
-            traceMsg(self()->comp(),"checkNode - %s (%p) matches head of list %p\n",checkNode?checkNode->getOpCode().getName():"NULL",checkNode,leftMostNodesList.front());
+            traceMsg(comp,"checkNode - %s (%p) matches head of list %p\n",checkNode?checkNode->getOpCode().getName():"NULL",checkNode,leftMostNodesList.front());
          else if (leftMostNodesList.empty()) // i.e. bestNode is your only node so you haven't seen any other higher up nodes to add to the list
-            traceMsg(self()->comp(),"bestNode - %s (%p) is set and the head of list is NULL for node - %s (%p)\n",
+            traceMsg(comp,"bestNode - %s (%p) is set and the head of list is NULL for node - %s (%p)\n",
                (bestNode ? bestNode->getOpCode().getName():"NULL"),bestNode,node->getOpCode().getName(),node);
          else
-            traceMsg(self()->comp(),"of an unknown reason for node - %s (%p) (FIXME - add a reason) \n",node->getOpCode().getName(),node);
+            traceMsg(comp,"of an unknown reason for node - %s (%p) (FIXME - add a reason) \n",node->getOpCode().getName(),node);
          }
       if (leftMostNodesList.empty())
          {
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\tleftMostNodesList is empty so clear bestNode - %s (%p->NULL) for current node - %s (%p)\n",
+            traceMsg(comp,"\tleftMostNodesList is empty so clear bestNode - %s (%p->NULL) for current node - %s (%p)\n",
                bestNode?bestNode->getOpCode().getName():"NULL",bestNode,node->getOpCode().getName(),node);
          bestNode = NULL;
          storeSize = 0;
@@ -1737,7 +1743,7 @@ J9::Z::CodeGenerator::examineNode(
       else
          {
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\tcalling processNodeList with bestNode - %s (%p) because leftMostNodesList is not empty for current node - %s (%p)\n",
+            traceMsg(comp,"\tcalling processNodeList with bestNode - %s (%p) because leftMostNodesList is not empty for current node - %s (%p)\n",
                bestNode?bestNode->getOpCode().getName():"NULL",bestNode,node->getOpCode().getName(),node);
          self()->processNodeList(bestNode, storeSize, leftMostNodesList);
          }
@@ -1752,6 +1758,8 @@ J9::Z::CodeGenerator::processNodeList(
       int32_t &storeSize,
       TR::list<TR::Node*> &leftMostNodesList)
    {
+   TR::Compilation *comp = self()->comp();
+
    if (bestNode)
       {
       bool keepTrackOfSharedNodes = false;
@@ -1761,14 +1769,14 @@ J9::Z::CodeGenerator::processNodeList(
          {
          TR_OpaquePseudoRegister *reg = bestNode->getOpaquePseudoRegister();
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\t\tbestNode - %s (%p) already has a register (%s) so use reg->getStorageReference #%d and %s\n",
+            traceMsg(comp,"\t\tbestNode - %s (%p) already has a register (%s) so use reg->getStorageReference #%d and %s\n",
                bestNode->getOpCode().getName(),bestNode,self()->getDebug()->getName(reg),reg->getStorageReference()->getReferenceNumber(),
                self()->getDebug()->getName(reg->getStorageReference()->getSymbol()));
          if (reg->getStorageReference()->isTemporaryBased() &&
              storeSize > reg->getLiveSymbolSize())
             {
             if (self()->traceBCDCodeGen())
-               traceMsg(self()->comp(),"\t\treg->getStorageReference #%d is tempBased and requested storeSize %d > regLiveSymSize %d so increase tempSize\n",
+               traceMsg(comp,"\t\treg->getStorageReference #%d is tempBased and requested storeSize %d > regLiveSymSize %d so increase tempSize\n",
                   reg->getStorageReference()->getReferenceNumber(),storeSize,reg->getLiveSymbolSize());
             reg->increaseTemporarySymbolSize(storeSize-reg->getLiveSymbolSize());
             }
@@ -1777,9 +1785,9 @@ J9::Z::CodeGenerator::processNodeList(
       else if (bestNode->getOpCode().isStore())
          {
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\t\tbestNode - %s (%p) is a store so create a new node based storage reference #%d\n",
+            traceMsg(comp,"\t\tbestNode - %s (%p) is a store so create a new node based storage reference #%d\n",
                bestNode->getOpCode().getName(),bestNode,bestNode->getSymbolReference()->getReferenceNumber());
-         storageRefHint = TR_StorageReference::createNodeBasedHintStorageReference(bestNode, self()->comp());
+         storageRefHint = TR_StorageReference::createNodeBasedHintStorageReference(bestNode, comp);
          }
       else
          {
@@ -1789,29 +1797,29 @@ J9::Z::CodeGenerator::processNodeList(
             int32_t tempSize = std::max(storeSize, bestNodeSize);
             if (self()->traceBCDCodeGen())
                {
-               traceMsg(self()->comp(),"\t\tbestNode - %s (%p) is a BCD arithmetic or conversion op (isBCDToNonBCDConversion %s) and list is not empty so allocate a new temporary based storage reference\n",
+               traceMsg(comp,"\t\tbestNode - %s (%p) is a BCD arithmetic or conversion op (isBCDToNonBCDConversion %s) and list is not empty so allocate a new temporary based storage reference\n",
                   bestNode->getOpCode().getName(),bestNode,bestNode->getOpCode().isBCDToNonBCDConversion()?"yes":"no");
-               traceMsg(self()->comp(),"\t\tsize of temp is max(storeSize,bestNodeSize) = max(%d,%d) = %d\n", storeSize, bestNodeSize, tempSize);
+               traceMsg(comp,"\t\tsize of temp is max(storeSize,bestNodeSize) = max(%d,%d) = %d\n", storeSize, bestNodeSize, tempSize);
                }
-            storageRefHint = TR_StorageReference::createTemporaryBasedStorageReference(tempSize, self()->comp());
+            storageRefHint = TR_StorageReference::createTemporaryBasedStorageReference(tempSize, comp);
             if (tempSize == bestNodeSize)
                {
                keepTrackOfSharedNodes=true;
                if (self()->traceBCDCodeGen())
-                  traceMsg(self()->comp(),"\t\tsetting keepTrackOfSharedNodes=true because hintSize is based on a non-store operation (bestNode %s - %p)\n",
+                  traceMsg(comp,"\t\tsetting keepTrackOfSharedNodes=true because hintSize is based on a non-store operation (bestNode %s - %p)\n",
                      bestNode->getOpCode().getName(),bestNode);
                }
             }
          else if (self()->traceBCDCodeGen())
             {
-            traceMsg(self()->comp(),"\t\tbestNode %p is a BCD arithmetic or conversion op but list is empty so do not allocate a new temporary based storage reference\n",bestNode);
+            traceMsg(comp,"\t\tbestNode %p is a BCD arithmetic or conversion op but list is empty so do not allocate a new temporary based storage reference\n",bestNode);
             }
          }
       for (auto listIt = leftMostNodesList.begin(); listIt != leftMostNodesList.end(); ++listIt)
          {
          TR_ASSERT(!(*listIt)->getOpCode().isStore(),"stores should not be in the list\n");
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\ttag (*listIt) - %s (%p) with storageRefHint #%d (%s)\n",
+            traceMsg(comp,"\ttag (*listIt) - %s (%p) with storageRefHint #%d (%s)\n",
                (*listIt)->getOpCode().getName(),*listIt,storageRefHint->getReferenceNumber(),self()->getDebug()->getName(storageRefHint->getSymbol()));
          (*listIt)->setStorageReferenceHint(storageRefHint);
          if (keepTrackOfSharedNodes)
@@ -1826,7 +1834,7 @@ J9::Z::CodeGenerator::processNodeList(
                 storageRefHint->getSymbolSize() > TR::DataType::getSizeFromBCDPrecision((*listIt)->getDataType(), firstChild->getDecimalPrecision()))
                {
                if (self()->traceBCDCodeGen())
-                  traceMsg(self()->comp(),"\tUnset skipPadByteClearing on node %s (%p): storage ref hint has size %d and converted node has size %d\n",
+                  traceMsg(comp,"\tUnset skipPadByteClearing on node %s (%p): storage ref hint has size %d and converted node has size %d\n",
                            firstChild->getOpCode().getName(),firstChild,storageRefHint->getSymbolSize(),TR::DataType::getSizeFromBCDPrecision((*listIt)->getDataType(), firstChild->getDecimalPrecision()));
                firstChild->setSkipPadByteClearing(false);
                }
@@ -1845,15 +1853,16 @@ J9::Z::CodeGenerator::processNodeList(
 void
 J9::Z::CodeGenerator::markStoreAsAnAccumulator(TR::Node *node)
    {
-   LexicalTimer foldTimer("markStoreAsAccumulator", self()->comp()->phaseTimer());
+   TR::Compilation *comp = self()->comp();
+   LexicalTimer foldTimer("markStoreAsAccumulator", comp->phaseTimer());
 
    if (!node->getOpCode().isStore())
       return;
 
    if (self()->traceBCDCodeGen())
-      traceMsg(self()->comp(),"markStoreAsAnAccumulator for node %s (%p) - useAliasing=%s\n",node->getOpCode().getName(),node,"yes");
+      traceMsg(comp,"markStoreAsAnAccumulator for node %s (%p) - useAliasing=%s\n",node->getOpCode().getName(),node,"yes");
 
-   TR::list<TR::Node*> conflictingAddressNodes(getTypedAllocator<TR::Node*>(self()->comp()->allocator()));
+   TR::list<TR::Node*> conflictingAddressNodes(getTypedAllocator<TR::Node*>(comp->allocator()));
 
    if (node->getOpCode().canUseStoreAsAnAccumulator())
       {
@@ -1861,37 +1870,37 @@ J9::Z::CodeGenerator::markStoreAsAnAccumulator(TR::Node *node)
 
       if (self()->traceBCDCodeGen())
          {
-         traceMsg(self()->comp(), "\nUseAsAnAccumulator check for store %s (%p) #%d",node->getOpCode().getName(),node,node->getSymbolReference()->getReferenceNumber());
-         if (self()->comp()->getOption(TR_TraceAliases) && !aliases.isZero(self()->comp()))
+         traceMsg(comp, "\nUseAsAnAccumulator check for store %s (%p) #%d",node->getOpCode().getName(),node,node->getSymbolReference()->getReferenceNumber());
+         if (comp->getOption(TR_TraceAliases) && !aliases.isZero(comp))
             {
-            traceMsg(self()->comp(), ", storeAliases : ");
-            TR::SparseBitVector printAliases(self()->comp()->allocator());
+            traceMsg(comp, ", storeAliases : ");
+            TR::SparseBitVector printAliases(comp->allocator());
             aliases.getAliases(printAliases);
-            (*self()->comp()) << printAliases;
+            (*comp) << printAliases;
             }
-         traceMsg(self()->comp(),"\n");
+         traceMsg(comp,"\n");
          }
 
       if (node->getOpCode().isIndirect())
          {
          conflictingAddressNodes.clear();
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\tlook for conflicting nodes in address subtree starting at %s (%p)\n",node->getFirstChild()->getOpCode().getName(),node->getFirstChild());
+            traceMsg(comp,"\tlook for conflicting nodes in address subtree starting at %s (%p)\n",node->getFirstChild()->getOpCode().getName(),node->getFirstChild());
          self()->collectConflictingAddressNodes(node, node->getFirstChild(), &conflictingAddressNodes);
          }
 
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\n\texamine nodes in value subtree starting at %s [%s]\n",node->getValueChild()->getOpCode().getName(),node->getValueChild()->getName(self()->comp()->getDebug()));
+         traceMsg(comp,"\n\texamine nodes in value subtree starting at %s [%s]\n",node->getValueChild()->getOpCode().getName(),node->getValueChild()->getName(comp->getDebug()));
 
       self()->setAccumulatorNodeUsage(0);
       // parent=NULL, justLookForConflictingAddressNodes=false, isChainOfFirstChildren=true, mustCheckAllNodes=false
       bool canUse = self()->canUseSingleStoreAsAnAccumulator(NULL, node->getValueChild(), node, aliases, &conflictingAddressNodes, false, true, false);
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\tfinal accumulatorNodeUsage = %d/%d\n",self()->getAccumulatorNodeUsage(),TR_ACCUMULATOR_NODE_BUDGET);
+         traceMsg(comp,"\tfinal accumulatorNodeUsage = %d/%d\n",self()->getAccumulatorNodeUsage(),TR_ACCUMULATOR_NODE_BUDGET);
       self()->setAccumulatorNodeUsage(0);
 
       if (canUse &&
-          performTransformation(self()->comp(), "%sset new UseStoreAsAnAccumulator=true on %s [%s]\n", OPT_DETAILS, node->getOpCode().getName(),node->getName(self()->comp()->getDebug())))
+          performTransformation(comp, "%sset new UseStoreAsAnAccumulator=true on %s [%s]\n", OPT_DETAILS, node->getOpCode().getName(),node->getName(comp->getDebug())))
          {
          node->setUseStoreAsAnAccumulator(canUse);
          }
@@ -1952,6 +1961,7 @@ int32_t
 J9::Z::CodeGenerator::genSignCodeSetting(TR::Node *node, TR_PseudoRegister *targetReg, int32_t endByte, TR::MemoryReference *targetMR, int32_t sign, TR_PseudoRegister *srcReg, int32_t digitsToClear, bool numericNibbleIsZero)
    {
    TR::CodeGenerator *cg = self();
+   TR::Compilation *comp = cg->comp();
    int32_t digitsCleared = 0;
    int32_t signCodeOffset = TR::DataType::getSignCodeOffset(node->getDataType(), endByte);
 
@@ -1960,7 +1970,7 @@ J9::Z::CodeGenerator::genSignCodeSetting(TR::Node *node, TR_PseudoRegister *targ
    if (sign == TR::DataType::getIgnoredSignCode())
       {
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\tgenSignCodeSetting: node=%p, sign==ignored case srcReg %s, targetReg %s, srcReg->isSignInit %d, targetReg->isSignInit %d\n",
+         traceMsg(comp,"\tgenSignCodeSetting: node=%p, sign==ignored case srcReg %s, targetReg %s, srcReg->isSignInit %d, targetReg->isSignInit %d\n",
             node,srcReg?cg->getDebug()->getName(srcReg):"NULL",targetReg?cg->getDebug()->getName(targetReg):"NULL",srcReg?srcReg->signStateInitialized():0,targetReg?targetReg->signStateInitialized():0);
       if (targetReg != srcReg)
          {
@@ -1974,7 +1984,7 @@ J9::Z::CodeGenerator::genSignCodeSetting(TR::Node *node, TR_PseudoRegister *targ
                {
                targetReg->setHasKnownBadSignCode();
                if (cg->traceBCDCodeGen())
-                  traceMsg(self()->comp(),"\tsign==ignored case and srcReg==NULL so setHasKnownBadSignCode=true on targetReg %s\n",cg->getDebug()->getName(targetReg));
+                  traceMsg(comp,"\tsign==ignored case and srcReg==NULL so setHasKnownBadSignCode=true on targetReg %s\n",cg->getDebug()->getName(targetReg));
                }
             }
          }
@@ -1994,7 +2004,7 @@ J9::Z::CodeGenerator::genSignCodeSetting(TR::Node *node, TR_PseudoRegister *targ
    bool isEffectiveNop = (srcSign == sign);
 
    if (self()->traceBCDCodeGen())
-      traceMsg(self()->comp(),"\tgenSignCodeSetting: node=%p, endByte=%d, sign=0x%x, signCodeOffset=%d, srcReg=%s, digitsToClear=%d, numericNibbleIsZero=%s (srcSign=0x%x, hasCleanSign=%s, hasPrefSign=%s, isEffectiveNop=%s)\n",
+      traceMsg(comp,"\tgenSignCodeSetting: node=%p, endByte=%d, sign=0x%x, signCodeOffset=%d, srcReg=%s, digitsToClear=%d, numericNibbleIsZero=%s (srcSign=0x%x, hasCleanSign=%s, hasPrefSign=%s, isEffectiveNop=%s)\n",
          node,endByte,sign,signCodeOffset,srcReg ? self()->getDebug()->getName(srcReg):"NULL",digitsToClear,numericNibbleIsZero ?"yes":"no",
          srcSign,srcReg && srcReg->hasKnownOrAssumedCleanSign()?"true":"false",
          srcReg && srcReg->hasKnownOrAssumedPreferredSign()?"true":"false",isEffectiveNop?"yes":"no");
@@ -2038,7 +2048,7 @@ J9::Z::CodeGenerator::genSignCodeSetting(TR::Node *node, TR_PseudoRegister *targ
       case TR::ZonedDecimal:
       case TR::ZonedDecimalSignLeadingEmbedded:
          {
-         if (self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && isPacked && digitsToClear >= 3)
+         if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && isPacked && digitsToClear >= 3)
             {
             int32_t bytesToSet = (digitsToClear+1)/2;
             int32_t leftMostByte = 0;
@@ -2069,14 +2079,14 @@ J9::Z::CodeGenerator::genSignCodeSetting(TR::Node *node, TR_PseudoRegister *targ
             signCodeMR->setLeftMostByte(leftMostByte);
             generateSILInstruction(cg, op, node, signCodeMR, sign);
             if (self()->traceBCDCodeGen())
-               traceMsg(self()->comp(),"\t\tusing %d byte move imm (%s) for sign setting : set digitsCleared=%d\n",
+               traceMsg(comp,"\t\tusing %d byte move imm (%s) for sign setting : set digitsCleared=%d\n",
                   leftMostByte,leftMostByte==8?"MVGHI":(leftMostByte==4)?"MVHI":"MVHHI",digitsCleared);
             }
          else if (numericNibbleIsZero || digitsToClear >= 1)
             {
             generateSIInstruction(cg, TR::InstOpCode::MVI, node, signCodeMR, isPacked ? sign : sign << 4);
             digitsCleared = 1;
-            if (self()->traceBCDCodeGen()) traceMsg(self()->comp(),"\t\tusing MVI for sign setting : set digitsCleared=1\n");
+            if (self()->traceBCDCodeGen()) traceMsg(comp,"\t\tusing MVI for sign setting : set digitsCleared=1\n");
             }
          else
             {
@@ -2338,8 +2348,9 @@ J9::Z::CodeGenerator::initializeStorageReference(TR::Node *node,
                                                  bool alwaysLegalToCleanSign,
                                                  bool trackSignState)
    {
+   TR::Compilation *comp = self()->comp();
    if (self()->traceBCDCodeGen())
-      traceMsg(self()->comp(),"\tinitializeStorageReference for %s (%p), destReg %s, srcReg %s, sourceSize %d, destSize %d, performExplicitWidening=%s, trackSignState=%s\n",
+      traceMsg(comp,"\tinitializeStorageReference for %s (%p), destReg %s, srcReg %s, sourceSize %d, destSize %d, performExplicitWidening=%s, trackSignState=%s\n",
          node->getOpCode().getName(),node,
          destReg ? self()->getDebug()->getName(destReg):"NULL",srcReg ? self()->getDebug()->getName(srcReg):"NULL",sourceSize,destSize,performExplicitWidening?"yes":"no",trackSignState?"yes":"no");
 
@@ -2380,7 +2391,7 @@ J9::Z::CodeGenerator::initializeStorageReference(TR::Node *node,
       bool srcCastedToBCD = srcReg->getStorageReference()->isNodeBased() && srcReg->getStorageReference()->getNode()->castedToBCD();
 
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\t\tnode %p : srcReg %s (hasBadSign %s) on srcNode %p has bytes %d->%d %salready clear (bytesToClear=%d), srcCastedToBCD=%d\n",
+         traceMsg(comp,"\t\tnode %p : srcReg %s (hasBadSign %s) on srcNode %p has bytes %d->%d %salready clear (bytesToClear=%d), srcCastedToBCD=%d\n",
             node,self()->getDebug()->getName(srcReg),srcPseudoReg ? (srcPseudoReg->hasKnownBadSignCode()?"yes":"no") : "no",
             srcNode,sourceSize,destSize,bytesToClear==0?"":"not ",bytesToClear,srcCastedToBCD);
 
@@ -2391,11 +2402,11 @@ J9::Z::CodeGenerator::initializeStorageReference(TR::Node *node,
          if (destReg)
             destReg->addRangeOfZeroBytes(sourceSize,destSize);
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\tincrease mvcSize %d->%d to account for already cleared %d bytes\n",sourceSize,mvcSize,bytesToClear);
+            traceMsg(comp,"\tincrease mvcSize %d->%d to account for already cleared %d bytes\n",sourceSize,mvcSize,bytesToClear);
          }
 
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\t\tgen MVC/memcpy to initialize storage reference with size = %d\n",mvcSize);
+         traceMsg(comp,"\t\tgen MVC/memcpy to initialize storage reference with size = %d\n",mvcSize);
 
       TR::MemoryReference *initDstMR = NULL;
       TR::MemoryReference *initSrcMR = NULL;
@@ -2426,7 +2437,7 @@ J9::Z::CodeGenerator::initializeStorageReference(TR::Node *node,
          targetPrecision = TR::DataType::getBCDPrecisionFromSize(node->getDataType(), destSize);
       destPseudoReg->setDecimalPrecision(targetPrecision);
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\tset destReg targetPrecision to %d (from %s for node dt %s)\n",
+         traceMsg(comp,"\tset destReg targetPrecision to %d (from %s for node dt %s)\n",
             targetPrecision,destSize >= sourceSize?"srcReg precision":"destSize",node->getDataType().toString());
       }
    if (destReg)
@@ -2483,17 +2494,18 @@ TR_OpaquePseudoRegister *
 J9::Z::CodeGenerator::privatizePseudoRegister(TR::Node *node, TR_OpaquePseudoRegister *reg, TR_StorageReference *storageRef, size_t sizeOverride)
    {
    TR::CodeGenerator *cg = self();
+   TR::Compilation *comp = cg->comp();
    size_t regSize = reg->getSize();
    if (self()->traceBCDCodeGen())
       {
       if (sizeOverride != 0 && sizeOverride != regSize)
-         traceMsg(self()->comp(),"\tsizeOverride=%d : use this as the size for privatizing reg %s (instead of regSize %d)\n",sizeOverride,cg->getDebug()->getName(reg),reg->getSize());
+         traceMsg(comp,"\tsizeOverride=%d : use this as the size for privatizing reg %s (instead of regSize %d)\n",sizeOverride,cg->getDebug()->getName(reg),reg->getSize());
       else
-         traceMsg(self()->comp(),"\tsizeOverride=0 : use reg %s regSize %d as the size for privatizing\n",cg->getDebug()->getName(reg),reg->getSize());
+         traceMsg(comp,"\tsizeOverride=0 : use reg %s regSize %d as the size for privatizing\n",cg->getDebug()->getName(reg),reg->getSize());
       }
    size_t size = sizeOverride == 0 ? regSize : sizeOverride;
    bool isBCD = node->getType().isBCD();
-   TR_StorageReference *tempStorageReference = TR_StorageReference::createTemporaryBasedStorageReference(size, self()->comp());
+   TR_StorageReference *tempStorageReference = TR_StorageReference::createTemporaryBasedStorageReference(size, comp);
    tempStorageReference->setIsSingleUseTemporary();
    TR::MemoryReference *origSrcMR = NULL;
    TR::MemoryReference *copyMR = NULL;
@@ -2509,11 +2521,11 @@ J9::Z::CodeGenerator::privatizePseudoRegister(TR::Node *node, TR_OpaquePseudoReg
       }
 
    if (self()->traceBCDCodeGen())
-      traceMsg(self()->comp(),"\ta^a : gen memcpy of size = %d to privatize node %s (%p) with storageRef #%d (%s) to #%d (%s) on line_no=%d\n",
+      traceMsg(comp,"\ta^a : gen memcpy of size = %d to privatize node %s (%p) with storageRef #%d (%s) to #%d (%s) on line_no=%d\n",
          size,node->getOpCode().getName(),node,
          storageRef->getReferenceNumber(),self()->getDebug()->getName(storageRef->getSymbol()),
          tempStorageReference->getReferenceNumber(),self()->getDebug()->getName(tempStorageReference->getSymbol()),
-         self()->comp()->getLineNumber(node));
+         comp->getLineNumber(node));
 
    // allocate a new register so any storageRef dep state (like leftAlignedZeroDigits) is cleared (as the mempcy isn't going transfer these over to copyMR)
    TR_OpaquePseudoRegister *tempRegister = isBCD ? cg->allocatePseudoRegister(reg->getPseudoRegister()) : cg->allocateOpaquePseudoRegister(reg);
@@ -2528,6 +2540,7 @@ J9::Z::CodeGenerator::privatizePseudoRegister(TR::Node *node, TR_OpaquePseudoReg
 TR_OpaquePseudoRegister*
 J9::Z::CodeGenerator::privatizePseudoRegisterIfNeeded(TR::Node *parent, TR::Node *child, TR_OpaquePseudoRegister *childReg)
    {
+   TR::Compilation *comp = self()->comp();
    TR_OpaquePseudoRegister *outReg = childReg;
    TR_StorageReference *hint = parent->getStorageReferenceHint();
    if (hint && hint->isNodeBased())
@@ -2535,7 +2548,7 @@ J9::Z::CodeGenerator::privatizePseudoRegisterIfNeeded(TR::Node *parent, TR::Node
       TR::Node *hintNode = hint->getNode();
       TR_StorageReference *childStorageRef = childReg->getStorageReference();
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\tprivatizePseudoRegisterIfNeeded for %s (%p) with hint %s (%p) (isInMemoryCopyProp=%s) and child %s (%p) (child storageRef isNonConstNodeBased=%s)\n",
+         traceMsg(comp,"\tprivatizePseudoRegisterIfNeeded for %s (%p) with hint %s (%p) (isInMemoryCopyProp=%s) and child %s (%p) (child storageRef isNonConstNodeBased=%s)\n",
             parent->getOpCode().getName(),parent,
             hintNode->getOpCode().getName(),hintNode,hintNode->isInMemoryCopyProp()?"yes":"no",
             child->getOpCode().getName(),child,
@@ -2549,7 +2562,7 @@ J9::Z::CodeGenerator::privatizePseudoRegisterIfNeeded(TR::Node *parent, TR::Node
          bool isUsingStorageRefFromAnotherStore = childStorageRefNode->getOpCode().isStore() && childStorageRefNode != hintNode;
          bool childRegHasDeadOrIgnoredBytes = childReg->getRightAlignedIgnoredBytes() > 0;
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\tisInMemoryCopyProp=%s, isUsingStorageRefFromAnotherStore=%s, childRegHasDeadOrIgnoredBytes=%s : childStorageRef %s (%p), hintNode %s (%p)\n",
+            traceMsg(comp,"\tisInMemoryCopyProp=%s, isUsingStorageRefFromAnotherStore=%s, childRegHasDeadOrIgnoredBytes=%s : childStorageRef %s (%p), hintNode %s (%p)\n",
                hintNode->isInMemoryCopyProp() ? "yes":"no",
                isUsingStorageRefFromAnotherStore ? "yes":"no",
                childRegHasDeadOrIgnoredBytes ? "yes":"no",
@@ -2559,7 +2572,7 @@ J9::Z::CodeGenerator::privatizePseudoRegisterIfNeeded(TR::Node *parent, TR::Node
             {
             bool useAliasing = true;
             if (self()->traceBCDCodeGen())
-               traceMsg(self()->comp(),"\tcheck overlap between store hint %s (%p) and childStorageRefNode %s (%p)\n",
+               traceMsg(comp,"\tcheck overlap between store hint %s (%p) and childStorageRefNode %s (%p)\n",
                   hintNode->getOpCode().getName(),hintNode,childStorageRefNode->getOpCode().getName(),childStorageRefNode);
             if (self()->loadAndStoreMayOverlap(hintNode,
                                        hintNode->getSize(),
@@ -2568,14 +2581,14 @@ J9::Z::CodeGenerator::privatizePseudoRegisterIfNeeded(TR::Node *parent, TR::Node
                {
                bool needsPrivitization = true;
                if (self()->traceBCDCodeGen())
-                  traceMsg(self()->comp(),"\toverlap=true (from %s test) -- privatize the source memref to a temp memref\n",useAliasing?"aliasing":"pattern");
+                  traceMsg(comp,"\toverlap=true (from %s test) -- privatize the source memref to a temp memref\n",useAliasing?"aliasing":"pattern");
                if (useAliasing && // checking useAliasing here because in the no info case the above loadAndStoreMayOverlap already did the pattern match
                    self()->storageMayOverlap(hintNode, hintNode->getSize(), childStorageRefNode, childStorageRefNode->getSize()) == TR_NoOverlap)
                   {
                   // get a second opinion -- the aliasing says the operations overlap but perhaps it is too conservative
                   // so do pattern matching based test to see if the operations are actually disjoint
                   if (self()->traceBCDCodeGen())
-                     traceMsg(self()->comp(),"\t\t but overlap=false (from 2nd opinion pattern test) -- set needsPrivitization to false\n");
+                     traceMsg(comp,"\t\t but overlap=false (from 2nd opinion pattern test) -- set needsPrivitization to false\n");
                   needsPrivitization = false;
                   }
 
@@ -2584,31 +2597,31 @@ J9::Z::CodeGenerator::privatizePseudoRegisterIfNeeded(TR::Node *parent, TR::Node
                   if (self()->traceBCDCodeGen())
                      {
                      if (hintNode->isInMemoryCopyProp())
-                        traceMsg(self()->comp(),"\ta^a : privatize needed due to isInMemoryCopyProp hintNode %s (%p) on line_no=%d (privatizeCase)\n",
-                           hintNode->getOpCode().getName(),hintNode,self()->comp()->getLineNumber(hintNode));
+                        traceMsg(comp,"\ta^a : privatize needed due to isInMemoryCopyProp hintNode %s (%p) on line_no=%d (privatizeCase)\n",
+                           hintNode->getOpCode().getName(),hintNode,comp->getLineNumber(hintNode));
                      if (isUsingStorageRefFromAnotherStore)
-                        traceMsg(self()->comp(),"\ta^a : privatize needed due to isUsingStorageRefFromAnotherStore childStorageRefNode %s (%p) on line_no=%d (privatizeCase)\n",
-                           childStorageRefNode->getOpCode().getName(),childStorageRefNode,self()->comp()->getLineNumber(hintNode));
+                        traceMsg(comp,"\ta^a : privatize needed due to isUsingStorageRefFromAnotherStore childStorageRefNode %s (%p) on line_no=%d (privatizeCase)\n",
+                           childStorageRefNode->getOpCode().getName(),childStorageRefNode,comp->getLineNumber(hintNode));
                      if (childRegHasDeadOrIgnoredBytes)
-                        traceMsg(self()->comp(),"\ta^a : privatize needed due to childRegHasDeadOrIgnoredBytes valueReg %s child %s (%p) on line_no=%d (privatizeCase)\n",
-                           self()->getDebug()->getName(childReg),child->getOpCode().getName(),child,self()->comp()->getLineNumber(hintNode));
+                        traceMsg(comp,"\ta^a : privatize needed due to childRegHasDeadOrIgnoredBytes valueReg %s child %s (%p) on line_no=%d (privatizeCase)\n",
+                           self()->getDebug()->getName(childReg),child->getOpCode().getName(),child,comp->getLineNumber(hintNode));
                      }
 
                   outReg = self()->privatizePseudoRegister(child, childReg, childStorageRef);
-                  TR_ASSERT(!self()->comp()->getOption(TR_EnablePerfAsserts),"gen overlap copy for hintNode %s (%p) on line_no=%d (privatePseudoCase)\n",
-                     hintNode->getOpCode().getName(),hintNode,self()->comp()->getLineNumber(hintNode));
+                  TR_ASSERT(!comp->getOption(TR_EnablePerfAsserts),"gen overlap copy for hintNode %s (%p) on line_no=%d (privatePseudoCase)\n",
+                     hintNode->getOpCode().getName(),hintNode,comp->getLineNumber(hintNode));
                   }
                }
             else
                {
                if (self()->traceBCDCodeGen())
-                  traceMsg(self()->comp(),"\toverlap=false (from %s test) -- do not privatize the source memref\n",useAliasing?"aliasing":"pattern");
+                  traceMsg(comp,"\toverlap=false (from %s test) -- do not privatize the source memref\n",useAliasing?"aliasing":"pattern");
                }
             }
          else
             {
             if (self()->traceBCDCodeGen())
-               traceMsg(self()->comp(),"y^y : temp copy saved isInMemoryCopyProp = false on %s (%p) (privatizeCase)\n",hintNode->getOpCode().getName(),hintNode);
+               traceMsg(comp,"y^y : temp copy saved isInMemoryCopyProp = false on %s (%p) (privatizeCase)\n",hintNode->getOpCode().getName(),hintNode);
             }
          }
       }
@@ -2627,6 +2640,8 @@ J9::Z::CodeGenerator::privatizeBCDRegisterIfNeeded(TR::Node *parent, TR::Node *c
 TR_StorageReference *
 J9::Z::CodeGenerator::privatizeStorageReference(TR::Node *node, TR_OpaquePseudoRegister *reg, TR::MemoryReference *memRef)
    {
+   TR::Compilation *comp = self()->comp();
+
    // Copy a node-based storageReference with a refCount > 1 to a temporary as the underlying symRef may be killed before the next commoned reference
    // to the node.
    // The flag skipCopyOnLoad is set in lowerTrees to prevent unnecessary copies when the symRef is known not to be killed for any commoned reference.
@@ -2634,7 +2649,7 @@ J9::Z::CodeGenerator::privatizeStorageReference(TR::Node *node, TR_OpaquePseudoR
    TR_StorageReference *tempStorageRef = NULL;
    bool isPassThruCase = node != storageRef->getNode();
    if (self()->traceBCDCodeGen())
-      traceMsg(self()->comp(),"privatizeStorageReference: %s (%p) refCount %d :: storageRef #%d, storageRefNode %s (%p) nodeRefCount %d, isNodeBased %s\n",
+      traceMsg(comp,"privatizeStorageReference: %s (%p) refCount %d :: storageRef #%d, storageRefNode %s (%p) nodeRefCount %d, isNodeBased %s\n",
          node->getOpCode().getName(),
          node,
          node->getReferenceCount(),
@@ -2644,7 +2659,7 @@ J9::Z::CodeGenerator::privatizeStorageReference(TR::Node *node, TR_OpaquePseudoR
          storageRef->isNodeBased()?storageRef->getNodeReferenceCount():-99,
          storageRef->isNodeBased()?"yes":"no");
 
-   bool force = self()->comp()->getOption(TR_ForceBCDInit) && node->getOpCode().isBCDLoad();
+   bool force = comp->getOption(TR_ForceBCDInit) && node->getOpCode().isBCDLoad();
    if (force ||
        (storageRef->isNodeBased() &&
        node->getReferenceCount() > 1 &&
@@ -2652,12 +2667,12 @@ J9::Z::CodeGenerator::privatizeStorageReference(TR::Node *node, TR_OpaquePseudoR
       {
       if (self()->traceBCDCodeGen())
          {
-         traceMsg(self()->comp(),"\tnode %p (%s) with skipCopyOnLoad=false does need to be privatized for node based storageRef node %p (%s-based) (force=%s)\n",
+         traceMsg(comp,"\tnode %p (%s) with skipCopyOnLoad=false does need to be privatized for node based storageRef node %p (%s-based) (force=%s)\n",
             node,node->getOpCode().getName(),storageRef->getNode(),storageRef->getNode()->getOpCode().isStore()?"store":"load",force?"yes":"no");
-         traceMsg(self()->comp(),"\tb^b : gen memcpy of size = %d to privatizeStorageReference node %s (%p) with storageRef #%d (%s) on line_no=%d\n",
+         traceMsg(comp,"\tb^b : gen memcpy of size = %d to privatizeStorageReference node %s (%p) with storageRef #%d (%s) on line_no=%d\n",
             reg->getSize(),node->getOpCode().getName(),node,
             storageRef->getReferenceNumber(),self()->getDebug()->getName(storageRef->getSymbol()),
-            self()->comp()->getLineNumber(node));
+            comp->getLineNumber(node));
          }
 
       if (force && storageRef->getNodeReferenceCount() == 1)
@@ -2684,7 +2699,7 @@ J9::Z::CodeGenerator::privatizeStorageReference(TR::Node *node, TR_OpaquePseudoR
       }
    else if (self()->traceBCDCodeGen())
       {
-      traceMsg(self()->comp(),"\t%s (%p) does NOT need to be privatised because isTemp (%s) and/or refCount %d <= 1 and/or skipCopyOnLoad=true (flag is %s)\n",
+      traceMsg(comp,"\t%s (%p) does NOT need to be privatised because isTemp (%s) and/or refCount %d <= 1 and/or skipCopyOnLoad=true (flag is %s)\n",
          node->getOpCode().getName(),node,storageRef->isTemporaryBased()?"yes":"no",node->getReferenceCount(),node->skipCopyOnLoad()?"true":"false");
       }
    return tempStorageRef;
@@ -2707,9 +2722,11 @@ J9::Z::CodeGenerator::materializeFullBCDValue(TR::Node *node,
                                               bool updateStorageReference,
                                               bool alwaysEnforceSSLimits)
    {
+   TR::Compilation *comp = self()->comp();
+
    int32_t regSize = reg->getSize();
    if (self()->traceBCDCodeGen())
-      traceMsg(self()->comp(),"\tmaterializeFullBCDValue evaluated %s (%p) (nodeSize %d, requested resultSize %d) to reg %s (regSize %d), clearSize=%d, updateStorageReference=%s\n",
+      traceMsg(comp,"\tmaterializeFullBCDValue evaluated %s (%p) (nodeSize %d, requested resultSize %d) to reg %s (regSize %d), clearSize=%d, updateStorageReference=%s\n",
          node->getOpCode().getName(),node,node->getStorageReferenceSize(),resultSize,self()->getDebug()->getName(reg),regSize,clearSize,updateStorageReference?"yes":"no");
 
    TR_ASSERT(clearSize >= 0,"invalid clearSize %d for node %p\n",clearSize,node);
@@ -2717,14 +2734,14 @@ J9::Z::CodeGenerator::materializeFullBCDValue(TR::Node *node,
       {
       clearSize = resultSize;
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\tspecific clearSize not requested : set clearSize=resultSize=%d\n",resultSize);
+         traceMsg(comp,"\tspecific clearSize not requested : set clearSize=resultSize=%d\n",resultSize);
       }
    else
       {
       // enforce this condition : regSize <= clearSize <= resultSize
       TR_ASSERT(clearSize <= resultSize,"clearSize %d should be <= resultSize %d on node %p\n",clearSize,resultSize,node);
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\tupdate clearSize %d to max(clearSize, regSize) = max(%d,%d) = %d\n",clearSize,clearSize,regSize,std::max(clearSize, regSize));
+         traceMsg(comp,"\tupdate clearSize %d to max(clearSize, regSize) = max(%d,%d) = %d\n",clearSize,clearSize,regSize,std::max(clearSize, regSize));
       clearSize = std::max(clearSize, regSize);
       }
 
@@ -2734,13 +2751,13 @@ J9::Z::CodeGenerator::materializeFullBCDValue(TR::Node *node,
        reg->getBytesToClear(regSize, clearSize) == 0)
       {
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\tbytes regSize->clearSize (%d->%d) are already clear -- no work to do to materializeFullBCDValue\n",regSize,clearSize);
+         traceMsg(comp,"\tbytes regSize->clearSize (%d->%d) are already clear -- no work to do to materializeFullBCDValue\n",regSize,clearSize);
       memRef = reuseS390RightAlignedMemoryReference(memRef, node, reg->getStorageReference(), self(), alwaysEnforceSSLimits);
       }
    else if (regSize < resultSize)
       {
       if (self()->traceBCDCodeGen())
-         traceMsg(self()->comp(),"\treg->getSize() < resultSize (%d < %d) so check liveSymSize on reg\n",regSize,resultSize);
+         traceMsg(comp,"\treg->getSize() < resultSize (%d < %d) so check liveSymSize on reg\n",regSize,resultSize);
       int32_t liveSymSize = reg->getLiveSymbolSize();
       int32_t bytesToClear = clearSize-regSize;
       bool enforceSSLimitsForClear = alwaysEnforceSSLimits || bytesToClear > 1;
@@ -2765,14 +2782,14 @@ J9::Z::CodeGenerator::materializeFullBCDValue(TR::Node *node,
       if (reg->isInitialized() && reg->trackZeroDigits() && liveSymSize >= resultSize)
          {
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\treg->getLiveSymbolSize() >= resultSize (%d >= %d) so call clearByteRangeIfNeeded\n",liveSymSize,resultSize);
+            traceMsg(comp,"\treg->getLiveSymbolSize() >= resultSize (%d >= %d) so call clearByteRangeIfNeeded\n",liveSymSize,resultSize);
          memRef = reuseS390RightAlignedMemoryReference(memRef, node, reg->getStorageReference(), self(), enforceSSLimitsForClear);
          self()->clearByteRangeIfNeeded(node, reg, memRef, regSize, clearSize);
          }
       else if (reg->isInitialized() && reg->trackZeroDigits() && reg->getStorageReference()->isTemporaryBased())
          {
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\treg->getLiveSymbolSize() < resultSize (%d < %d) so call increaseTemporarySymbolSize but first check for already cleared bytes\n",liveSymSize,resultSize);
+            traceMsg(comp,"\treg->getLiveSymbolSize() < resultSize (%d < %d) so call increaseTemporarySymbolSize but first check for already cleared bytes\n",liveSymSize,resultSize);
          //int32_t bytesToClear = clearSize-regSize;                      // e.g. clearSize=16, regSize=3 so bytesToClear=13, liveSymSize=15
          int32_t alreadyClearedBytes = 0;
          int32_t endByteForClearCheck = 0;
@@ -2785,7 +2802,7 @@ J9::Z::CodeGenerator::materializeFullBCDValue(TR::Node *node,
             alreadyClearedBytes = endByteForClearCheck-regSize;         // endByteForClearCheck=15,regSize=3 so alreadyClearedBytes=12
 
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\tfound %d alreadyClearedBytes : adjust bytesToClear %d -> %d\n",alreadyClearedBytes,bytesToClear,bytesToClear-alreadyClearedBytes);
+            traceMsg(comp,"\tfound %d alreadyClearedBytes : adjust bytesToClear %d -> %d\n",alreadyClearedBytes,bytesToClear,bytesToClear-alreadyClearedBytes);
          bytesToClear-=alreadyClearedBytes;                             // bytesToClear = bytesToClear-alreadyClearedBytes = 13-12 = 1
          if (bytesToClear < 0)
             {
@@ -2809,20 +2826,20 @@ J9::Z::CodeGenerator::materializeFullBCDValue(TR::Node *node,
                newLeftAlignedZeroDigits++;
             reg->setLeftAlignedZeroDigits(newLeftAlignedZeroDigits);
             if (self()->traceBCDCodeGen())
-               traceMsg(self()->comp(),"\tset leftAlignedZeroDigits to %d after temporarySymbolSize increase\n",newLeftAlignedZeroDigits);
+               traceMsg(comp,"\tset leftAlignedZeroDigits to %d after temporarySymbolSize increase\n",newLeftAlignedZeroDigits);
             }
          else // if not clearing all the new bytes than the zero digits will not be left aligned
             {
             // TODO: when actual zero ranges are tracked can transfer the range on the reg from before the increaseTemporarySymbolSize
             // to now in the clearSize < resultSize case
             if (self()->traceBCDCodeGen() && savedLeftAlignedZeroDigits > 0)
-               traceMsg(self()->comp(),"x^x : missed transferring savedLeftAlignedZeroDigits %d on matFull, node %p\n",savedLeftAlignedZeroDigits,node);
+               traceMsg(comp,"x^x : missed transferring savedLeftAlignedZeroDigits %d on matFull, node %p\n",savedLeftAlignedZeroDigits,node);
             }
          }
       else
          {
          if (self()->traceBCDCodeGen())
-            traceMsg(self()->comp(),"\tstorageReference #%d is not tempBased (or is not packed) and reg->getLiveSymbolSize() < resultSize (%d < %d) so alloc a new temporary reference\n",
+            traceMsg(comp,"\tstorageReference #%d is not tempBased (or is not packed) and reg->getLiveSymbolSize() < resultSize (%d < %d) so alloc a new temporary reference\n",
                reg->getStorageReference()->getReferenceNumber(),liveSymSize,resultSize);
          memRef = reuseS390RightAlignedMemoryReference(memRef, node, reg->getStorageReference(), self(), enforceSSLimitsForClear);
          TR_PseudoRegister *destReg = NULL;
@@ -3186,36 +3203,38 @@ J9::Z::CodeGenerator::useMoveImmediateCommon(TR::Node *node,
 bool
 J9::Z::CodeGenerator::inlineSmallLiteral(size_t srcSize, char *srcLiteral, size_t destSize, bool trace)
    {
+   TR::Compilation *comp = self()->comp();
+
    bool inlineLiteral = false;
    if (srcSize != destSize)
       {
       inlineLiteral = false;
       if (trace)
-         traceMsg(self()->comp(),"\t\tinlineLiteral=false : srcSize %d != destSize %d\n",srcSize,destSize);
+         traceMsg(comp,"\t\tinlineLiteral=false : srcSize %d != destSize %d\n",srcSize,destSize);
       }
    else if (srcSize == 1)
       {
       inlineLiteral = true;
       if (trace)
-         traceMsg(self()->comp(),"\t\tinlineLiteral=true : srcSize == 1 (destSize %d)\n",destSize);
+         traceMsg(comp,"\t\tinlineLiteral=true : srcSize == 1 (destSize %d)\n",destSize);
       }
    else if (destSize <= 2)
       {
       inlineLiteral = true;
       if (trace)
-         traceMsg(self()->comp(),"\t\tinlineLiteral=true : destSize %d <= 2 (srcSize %d)\n",destSize,srcSize);
+         traceMsg(comp,"\t\tinlineLiteral=true : destSize %d <= 2 (srcSize %d)\n",destSize,srcSize);
       }
    else if (self()->canCopyWithOneOrTwoInstrs(srcLiteral, srcSize))
       {
       inlineLiteral = true;
       if (trace)
-         traceMsg(self()->comp(),"\t\tinlineLiteral=true : canCopyWithOneOrTwoInstrs = true (srcSize %d, destSize %d)\n",srcSize,destSize);
+         traceMsg(comp,"\t\tinlineLiteral=true : canCopyWithOneOrTwoInstrs = true (srcSize %d, destSize %d)\n",srcSize,destSize);
       }
    else
       {
       inlineLiteral = false;
       if (trace)
-         traceMsg(self()->comp(),"\t\tinlineSmallLiteral=false : unhandled case (srcSize %d, destSize %d)\n",srcSize,destSize);
+         traceMsg(comp,"\t\tinlineSmallLiteral=false : unhandled case (srcSize %d, destSize %d)\n",srcSize,destSize);
       }
    return inlineLiteral;
    }
@@ -3602,7 +3621,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
    const intptr_t vmCallHelperAddress = reinterpret_cast<intptr_t>(helperSymRef->getMethodAddress());
 
    // Encode the address of the VM call helper
-   if (self()->comp()->target().is64Bit())
+   if (comp->target().is64Bit())
       {
       cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, UPPER_4_BYTES(vmCallHelperAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);
@@ -3625,7 +3644,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
 
    const intptr_t j9MethodAddress = reinterpret_cast<intptr_t>(methodSymbol->getResolvedMethod()->resolvedMethodAddress());
 
-   if (self()->comp()->target().is64Bit())
+   if (comp->target().is64Bit())
       {
       cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, UPPER_4_BYTES(j9MethodAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);
@@ -3675,7 +3694,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperPrePrologue(TR::Instr
    cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, 0xdeafbeef, cursor);
 
    // Generated a pad for the body info address to keep offsets in PreprologueConst.hpp constant for simplicity
-   if (self()->comp()->target().is64Bit())
+   if (comp->target().is64Bit())
       {
       cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, 0x00000000, cursor);
       cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, 0x00000000, cursor);
@@ -3691,10 +3710,12 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperPrePrologue(TR::Instr
 bool
 J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
    {
+   TR::Compilation *comp = self()->comp();
+
    if (self()->isMethodInAtomicLongGroup(method))
       return true;
 
-   if (!self()->comp()->compileRelocatableCode() && !self()->comp()->getOption(TR_DisableDFP) && self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP))
+   if (!comp->compileRelocatableCode() && !comp->getOption(TR_DisableDFP) && comp->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP))
       {
       if (method == TR::java_math_BigDecimal_DFPIntConstructor ||
           method == TR::java_math_BigDecimal_DFPLongConstructor ||
@@ -3733,10 +3754,10 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
          {
          return true;
          }
-      if (self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1) &&
+      if (comp->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1) &&
             (method == TR::java_lang_Math_fma_F ||
              method == TR::java_lang_StrictMath_fma_F))
-         { 
+         {
          return true;
          }
    }
@@ -3850,11 +3871,10 @@ J9::Z::CodeGenerator::inlineDirectCall(
       TR::Register *&resultReg)
    {
    TR::CodeGenerator *cg = self();
-
-   TR::MethodSymbol * methodSymbol = node->getSymbol()->getMethodSymbol();
-
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+
+   TR::MethodSymbol * methodSymbol = node->getSymbol()->getMethodSymbol();
 
    // If the method to be called is marked as an inline method, see if it can
    // actually be generated inline.
@@ -3896,7 +3916,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
          if (!methodSymbol->isNative())
             break;
 
-         if (self()->comp()->target().is64Bit() && (!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
+         if (comp->target().is64Bit() && (!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
             {
             resultReg = VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CSG, IS_NOT_OBJ);
             return true;
@@ -3952,7 +3972,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
       case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         if (cg->checkFieldAlignmentForAtomicLong() && self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
+         if (cg->checkFieldAlignmentForAtomicLong() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
             {
             // TODO: I'm not sure we need the z196 restriction here given that the function already checks for z196 and
             // has a compare and swap fallback path
@@ -3967,7 +3987,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
       case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         if (cg->checkFieldAlignmentForAtomicLong() && self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
+         if (cg->checkFieldAlignmentForAtomicLong() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
             {
             // TODO: I'm not sure we need the z196 restriction here given that the function already checks for z196 and
             // has a compare and swap fallback path
@@ -4162,7 +4182,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
         }
 
    if (!comp->compileRelocatableCode() && !comp->getOption(TR_DisableDFP) &&
-       self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP))
+       comp->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP))
       {
       TR_ASSERT( methodSymbol, "require a methodSymbol for DFP on Z\n");
       if (methodSymbol)
@@ -4259,3 +4279,11 @@ J9::Z::CodeGenerator::arithmeticNeedsLiteralFromPool(TR::Node *node)
    int64_t value = getIntegralValue(node);
    return value > GE_MAX_IMMEDIATE_VAL || value < GE_MIN_IMMEDIATE_VAL;
    }
+
+
+bool
+J9::Z::CodeGenerator::supportsTrapsInTMRegion()
+   {
+   return self()->comp()->target().isZOS();
+   }
+

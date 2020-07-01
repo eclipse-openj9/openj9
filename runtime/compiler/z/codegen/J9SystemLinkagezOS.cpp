@@ -148,7 +148,7 @@ J9::Z::zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::Re
    //save litpool reg GPR6
    generateRRInstruction(codeGen, TR::InstOpCode::getLoadRegOpCode(), callNode, javaLitOffsetReg, systemEntryPointRegister);
 
-   if (cg()->comp()->target().is64Bit())
+   if (comp->target().is64Bit())
       {
       //Load Environment Pointer in R5 and entry point of the JNI function in R6
       generateRSInstruction(codeGen, TR::InstOpCode::getLoadMultipleOpCode(), callNode, systemEnvironmentRegister,
@@ -170,7 +170,7 @@ J9::Z::zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::Re
       {
       auto* systemSPOffsetMR = generateS390MemoryReference(methodMetaDataVirtualRegister, static_cast<int32_t>(fej9->thisThreadGetSystemSPOffset()), codeGen);
 
-      if (cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
+      if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
          {
          generateSILInstruction(codeGen, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode, systemSPOffsetMR, 0);
          }

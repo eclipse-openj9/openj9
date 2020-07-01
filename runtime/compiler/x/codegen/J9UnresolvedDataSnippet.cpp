@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "codegen/UnresolvedDataSnippet.hpp"
+#include "codegen/UnresolvedDataSnippet_inlines.hpp"
 
 #include <algorithm>
 #include "codegen/CodeGenerator.hpp"
@@ -177,7 +178,6 @@ J9::X86::UnresolvedDataSnippet::emitResolveHelperCall(uint8_t *cursor)
 uint32_t
 J9::X86::UnresolvedDataSnippet::getUnresolvedStaticStoreDeltaWithMemBarrier()
    {
-   TR::Compilation *comp = cg()->comp();
    // If the this is not a store operation on an unresolved static field, return.
    //
    if (getDataSymbol()->isClassObject() || getDataSymbol()->isConstObjectRef())
@@ -193,7 +193,7 @@ J9::X86::UnresolvedDataSnippet::getUnresolvedStaticStoreDeltaWithMemBarrier()
    instIter = instIter->getNext();
    uint8_t delta = instIter->getBinaryEncoding() - dataRefInstOffset;
 
-   if (comp->getOption(TR_X86UseMFENCE))
+   if (cg()->comp()->getOption(TR_X86UseMFENCE))
       {
       while ( instIter->getOpCode().getOpCodeValue() != MFENCE && delta <= 20)
          {
@@ -253,7 +253,6 @@ J9::X86::UnresolvedDataSnippet::emitUnresolvedInstructionDescriptor(uint8_t *cur
    if (cg()->comp()->target().is64Bit() && !getDataSymbol()->isShadow())
       return cursor;
 
-
    // Descriptor
    // Bits:
    //    7-4: template instruction length
@@ -279,7 +278,7 @@ uint8_t *
 J9::X86::UnresolvedDataSnippet::emitConstantPoolAddress(uint8_t *cursor)
    {
    TR::Compilation *comp = cg()->comp();
-   if (cg()->comp()->target().is32Bit())
+   if (comp->target().is32Bit())
       {
       *cursor++ = 0x68;  // push imm4
       }
@@ -347,7 +346,7 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
       }
 
    if (getNumLiveX87Registers() > 0) cpIndex |= (getNumLiveX87Registers() << 24);
-   if (hasLiveXMMRegisters() && cg()->comp()->target().is32Bit()) cpIndex |= cpIndex_hasLiveXMMRegisters;
+   if (hasLiveXMMRegisters() && comp->target().is32Bit()) cpIndex |= cpIndex_hasLiveXMMRegisters;
 
    // For unresolved object refs, the snippet need not be patched because its
    // data is already correct.
@@ -363,11 +362,11 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
 
    if (resolveMustPatch8Bytes())
       {
-      TR_ASSERT(cg()->comp()->target().is64Bit(), "resolveMustPatch8Bytes must only be set on 64-bit");
+      TR_ASSERT(comp->target().is64Bit(), "resolveMustPatch8Bytes must only be set on 64-bit");
       cpIndex |= cpIndex_patch8ByteResolution;
       }
 
-   if (cg()->comp()->target().is32Bit())
+   if (comp->target().is32Bit())
       {
       if (getDataSymbolReference()->getOffset() == 4)
          {
@@ -388,13 +387,13 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
 
       // If this is a store operation on an unresolved field, set the volatility check flag.
       //
-      if (cg()->comp()->target().isSMP())
+      if (comp->target().isSMP())
          {
          if (!getDataSymbol()->isClassObject() && !getDataSymbol()->isConstObjectRef() &&  isUnresolvedStore() && opCode != CMPXCHG8BMem && getDataSymbol()->isVolatile())
             {
             cpIndex |= cpIndex_checkVolatility;
 
-            if (cg()->comp()->target().is64Bit() && ((TR::X86MemInstruction *)dataRefInst)->getMemoryReference())
+            if (comp->target().is64Bit() && ((TR::X86MemInstruction *)dataRefInst)->getMemoryReference())
                {
                if (((TR::X86MemInstruction *)dataRefInst)->getMemoryReference()->processAsFPVolatile())
                   {
@@ -402,7 +401,7 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
                   }
                }
 
-            if (cg()->comp()->target().is64Bit() && !getDataSymbol()->isShadow())
+            if (comp->target().is64Bit() && !getDataSymbol()->isShadow())
                {
                //If this is a store into a static field, we need to know the offset between the start of the store instruction and the memory barrier.
                //
@@ -410,7 +409,7 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
                }
             }
 
-         if (cg()->comp()->target().is32Bit())
+         if (comp->target().is32Bit())
             {
             // If this is a portion of a long store, flag which half of the long
             // is being stored
@@ -430,7 +429,7 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
          }
       }
 
-   if (cg()->comp()->target().is32Bit())
+   if (comp->target().is32Bit())
       {
       if (cpIndex <= 127 && cpIndex >= -128)
          {
@@ -493,7 +492,7 @@ J9::X86::UnresolvedDataSnippet::fixupDataReferenceInstruction(uint8_t *cursor)
       }
    else
       {
-      if (cg()->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          {
          // Unresolved instance fields require 4 byte patching at a variable instruction
          // offset so the 8 bytes following the start of the instruction need to be
@@ -524,11 +523,11 @@ J9::X86::UnresolvedDataSnippet::fixupDataReferenceInstruction(uint8_t *cursor)
       // This assumes that the string reference instruction is a MOV Reg, Imm32 (32-bit)
       // or a MOV Reg, Imm64 (64-bit) instruction.
       //
-      if (cg()->comp()->target().is32Bit() && getDataSymbol()->isConstObjectRef())
+      if (comp->target().is32Bit() && getDataSymbol()->isConstObjectRef())
          {
          uint8_t *stringConstantPtr = (cursor - bytesToCopy) + getDataReferenceInstruction()->getBinaryLength() - TR::Compiler->om.sizeofReferenceAddress();
 
-         cg()->addProjectSpecializedRelocation(stringConstantPtr, (uint8_t *)getDataSymbolReference()->getOwningMethod(TR::comp())->constantPool(),
+         cg()->addProjectSpecializedRelocation(stringConstantPtr, (uint8_t *)getDataSymbolReference()->getOwningMethod(comp)->constantPool(),
                getDataReferenceInstruction()->getNode() ? (uint8_t *)(uintptr_t)getDataReferenceInstruction()->getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool,
                     __FILE__, __LINE__, getDataReferenceInstruction()->getNode());
          }

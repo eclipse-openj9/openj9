@@ -47,10 +47,12 @@
 
 void J9::X86::AheadOfTimeCompile::processRelocations()
    {
+   TR::Compilation *comp = _cg->comp();
+
    // calculate the amount of memory needed to hold the relocation data
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
 
-   if (_cg->comp()->target().is64Bit()
+   if (comp->target().is64Bit()
        && TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines()
        && _cg->getPicSlotCount())
       {
@@ -79,7 +81,7 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
    // Note that when using the SymbolValidationManager, the well-known classes
    // must be checked even if no explicit records were generated, since they
    // might be responsible for the lack of records.
-   bool useSVM = self()->comp()->getOption(TR_UseSymbolValidationManager);
+   bool useSVM = comp->getOption(TR_UseSymbolValidationManager);
    if (self()->getSizeOfAOTRelocations() != 0 || useSVM)
       {
       // It would be more straightforward to put the well-known classes offset
@@ -89,15 +91,14 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
       uintptr_t reloBufferSize =
          self()->getSizeOfAOTRelocations() + SIZEPOINTER + wellKnownClassesOffsetSize;
       uint8_t *relocationDataCursor = self()->setRelocationData(
-         fej9->allocateRelocationData(self()->comp(), reloBufferSize));
+         fej9->allocateRelocationData(comp, reloBufferSize));
       // set up the size for the region
       *(uintptr_t *)relocationDataCursor = reloBufferSize;
       relocationDataCursor += SIZEPOINTER;
 
       if (useSVM)
          {
-         TR::SymbolValidationManager *svm =
-            self()->comp()->getSymbolValidationManager();
+         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
          void *offsets = const_cast<void*>(svm->wellKnownClassChainOffsets());
          *(uintptr_t *)relocationDataCursor =
             self()->offsetInSharedCacheFromPointer(fej9->sharedCache(), offsets);
@@ -121,7 +122,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
    TR_SharedCache *sharedCache = fej9->sharedCache();
-   TR::Compilation * comp = _cg->comp();
+   TR::Compilation *comp = _cg->comp();
    TR::SymbolValidationManager *symValManager = comp->getSymbolValidationManager();
    uintptr_t numTrampolines;
    TR::LabelSymbol *label;
@@ -254,7 +255,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
       case TR_PicTrampolines:
          {
-         TR_ASSERT(_cg->comp()->target().is64Bit(), "TR_PicTrampolines not supported on 32-bit");
+         TR_ASSERT(comp->target().is64Bit(), "TR_PicTrampolines not supported on 32-bit");
          numTrampolines = (uintptr_t)relocation->getTargetAddress();
          *wordAfterHeader = numTrampolines;
          cursor = (uint8_t*)wordAfterHeader;
