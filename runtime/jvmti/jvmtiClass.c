@@ -202,12 +202,8 @@ jvmtiGetClassLoaderClasses(jvmtiEnv* env,
 	jclass** classes_ptr)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	J9VMThread * currentThread;
-	J9ClassLoader * loader;
-	jvmtiError rc;
-	J9HashTableState walkState;
-	J9Class* clazz;
-	PORT_ACCESS_FROM_JAVAVM(vm);
+	J9VMThread * currentThread = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 	jint rv_class_count = 0;
 	jclass *rv_classes = NULL;
 
@@ -215,9 +211,15 @@ jvmtiGetClassLoaderClasses(jvmtiEnv* env,
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
-		J9JVMTIClassStats stats;
+		J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+		J9ClassLoader *loader = NULL;
+		J9Class *clazz = NULL;
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		J9JVMTIClassStats stats = {0};
+		J9HashTableState hashWalkState = {0};
+		J9Class **primitiveArray = NULL;
 
-		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+		vmFuncs->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_PHASE_LIVE(env);
 
@@ -237,39 +239,50 @@ jvmtiGetClassLoaderClasses(jvmtiEnv* env,
 
 		omrthread_monitor_enter(vm->classTableMutex);
 
-		memset(&stats, 0, sizeof(J9JVMTIClassStats));
-
 		stats.vm = vm;
 		stats.currentThread = currentThread;
 
 		/* Search for classes who have this class loader as the initiating loader (wind up count) */
-		clazz = vm->internalVMFunctions->hashClassTableStartDo(loader, &walkState);
+		clazz = vmFuncs->hashClassTableStartDo(loader, &hashWalkState);
 		while (clazz != NULL) {
 			countInitiatedClass(clazz, &stats);
-			clazz = vm->internalVMFunctions->hashClassTableNextDo(&walkState);
+			clazz = vmFuncs->hashClassTableNextDo(&hashWalkState);
 		}
+
+		/* The base type primitive array classes must also be added */
+		primitiveArray = &vm->booleanArrayClass;
+		do {
+			countInitiatedClass(*primitiveArray, &stats);
+			primitiveArray += 1;
+		} while (primitiveArray <= &vm->longArrayClass);
 
 		stats.classRefs = j9mem_allocate_memory(stats.classCount * sizeof(jclass), J9MEM_CATEGORY_JVMTI_ALLOCATE);
 		if (stats.classRefs == NULL) {
 			rc = JVMTI_ERROR_OUT_OF_MEMORY;
 		} else {
-
 			/* Save count before it gets modified below... */
 			rv_class_count = (jint) stats.classCount;
 			rv_classes = stats.classRefs;
 
 			/* Record classes who have this class loader as the initiating loader (wind down count) */
-			clazz = vm->internalVMFunctions->hashClassTableStartDo(loader, &walkState);
+			clazz = vmFuncs->hashClassTableStartDo(loader, &hashWalkState);
 			while (clazz != NULL) {
 				copyInitiatedClass(clazz, &stats);
-				clazz = vm->internalVMFunctions->hashClassTableNextDo(&walkState);
+				clazz = vmFuncs->hashClassTableNextDo(&hashWalkState);
 			}
+
+			/* The base type primitive array classes must also be added */
+			primitiveArray = &vm->booleanArrayClass;
+			do {
+				copyInitiatedClass(*primitiveArray, &stats);
+				primitiveArray += 1;
+			} while (primitiveArray <= &vm->longArrayClass);
 		}
 
 		omrthread_monitor_exit(vm->classTableMutex);
 
 done:
-		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
 	if (NULL != class_count_ptr) {
@@ -1351,7 +1364,10 @@ countInitiatedClass(J9Class * clazz, J9JVMTIClassStats * results)
 	if (((J9CLASS_FLAGS(clazz) & J9AccClassHotSwappedOut) == 0) &&
 		((J9ROMCLASS_IS_PRIMITIVE_TYPE(clazz->romClass)) == 0)) {
 
-		results->classCount++;
+		do {
+			results->classCount += 1;
+			clazz = clazz->arrayClass;
+		} while (NULL != clazz);
 	}
 
 	return 0;
@@ -1366,16 +1382,22 @@ copyInitiatedClass(J9Class * clazz, J9JVMTIClassStats * results)
 		(J9ROMCLASS_IS_PRIMITIVE_TYPE(clazz->romClass) == 0)) {
 
 		J9JavaVM * vm = results->vm;
+		J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 		JNIEnv * jniEnv = (JNIEnv *)results->currentThread;
-		jint slot = (jint)results->classCount - 1;
 
-		/* Reverse fill */
-		if (slot >= 0) {
-			j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
-			
-			results->classRefs[slot] = (jclass)vm->internalVMFunctions->j9jni_createLocalRef(jniEnv, classObject);
-			results->classCount = slot;
-		}
+		do {
+			jint slot = (jint)results->classCount - 1;
+
+			/* Reverse fill */
+			if (slot >= 0) {
+				j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
+				
+				results->classRefs[slot] = (jclass)vmFuncs->j9jni_createLocalRef(jniEnv, classObject);
+				results->classCount = slot;
+			}
+
+			clazz = clazz->arrayClass;
+		} while (NULL != clazz);
 	}
 
 	return 0;

@@ -93,7 +93,7 @@ def get_sources() {
         checkout_pullrequest()
     } else {
         sh "git checkout ${OPENJDK_SHA}"
-        sh "bash ./get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OPENJ9_REFERENCE} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION} ${OMR_REFERENCE}"
+        sh "bash get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OPENJ9_REFERENCE} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION} ${OMR_REFERENCE}"
     }
 }
 
@@ -200,7 +200,7 @@ def checkout_pullrequest() {
         checkout_pullrequest(OPENJDK_PR, "ibmruntimes/openj9-openjdk-jdk${JDK_REPO_SUFFIX}")
     }
 
-    sh "bash ./get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OPENJ9_REFERENCE} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION} ${OMR_REFERENCE}"
+    sh "bash get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OPENJ9_REFERENCE} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION} ${OMR_REFERENCE}"
 
     // Checkout dependent PRs, if any were specified
     if (openj9_bool) {
@@ -288,7 +288,11 @@ def archive_sdk() {
         def testDir = "test"
 
         dir(OPENJDK_CLONE_DIR) {
-            sh "tar -C ${buildDir} -zcvf ${SDK_FILENAME} ${JDK_FOLDER}"
+            // The archiver receives pathnames on stdin and writes to stdout.
+            def archiveCmd = SPEC.contains('zos') ? 'pax -wvz' : 'tar -cvz -T -'
+            // Filter out unwanted files (most of which are available in the debug-image).
+            def filterCmd = "sed -e '/\\.dbg\$/d' -e '/\\.debuginfo\$/d' -e '/\\.diz\$/d' -e '/\\.dSYM\\//d' -e '/\\.map\$/d' -e '/\\.pdb\$/d'"
+            sh "( cd ${buildDir} && find ${JDK_FOLDER} -type f | ${filterCmd} | ${archiveCmd} ) > ${SDK_FILENAME}"
             // test if the test natives directory is present, only in JDK11+
             if (fileExists("${buildDir}${testDir}")) {
                 if (SPEC.contains('zos')) {
