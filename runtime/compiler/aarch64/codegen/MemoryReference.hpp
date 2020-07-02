@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,18 +56,31 @@ class OMR_EXTENSIBLE MemoryReference : public J9::MemoryReferenceConnector
          TR::CodeGenerator *cg)
       : J9::MemoryReferenceConnector(br, disp, cg) {}
 
+   // To be obsoleted
    MemoryReference(
          TR::Node *node,
          uint32_t len,
          TR::CodeGenerator *cg)
-      : J9::MemoryReferenceConnector(node, len, cg) {}
+      : J9::MemoryReferenceConnector(node, cg) {}
 
+   // To be obsoleted
    MemoryReference(
          TR::Node *node,
          TR::SymbolReference *symRef,
          uint32_t len,
          TR::CodeGenerator *cg)
-      : J9::MemoryReferenceConnector(node, symRef, len, cg) {}
+      : J9::MemoryReferenceConnector(node, symRef, cg) {}
+
+   MemoryReference(
+         TR::Node *node,
+         TR::CodeGenerator *cg)
+      : J9::MemoryReferenceConnector(node, cg) {}
+
+   MemoryReference(
+         TR::Node *node,
+         TR::SymbolReference *symRef,
+         TR::CodeGenerator *cg)
+      : J9::MemoryReferenceConnector(node, symRef, cg) {}
    };
 
 } // TR

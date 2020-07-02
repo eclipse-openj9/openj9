@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,19 +96,17 @@ public:
    /**
     * @brief Constructor
     * @param[in] node : load or store node
-    * @param[in] len : length
     * @param[in] cg : CodeGenerator object
     */
-   MemoryReference(TR::Node *node, uint32_t len, TR::CodeGenerator *cg);
+   MemoryReference(TR::Node *node, TR::CodeGenerator *cg);
 
    /**
     * @brief Constructor
     * @param[in] node : node
     * @param[in] symRef : symbol reference
-    * @param[in] len : length
     * @param[in] cg : CodeGenerator object
     */
-   MemoryReference(TR::Node *node, TR::SymbolReference *symRef, uint32_t len, TR::CodeGenerator *cg);
+   MemoryReference(TR::Node *node, TR::SymbolReference *symRef, TR::CodeGenerator *cg);
 
    /**
     * @brief Adjustment for resolution

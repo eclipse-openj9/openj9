@@ -153,7 +153,7 @@ generateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg, bool isArdbar
 
    node->setRegister(tempReg);
 
-   tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, isArdbari ? 8 : 4, cg);
+   tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, cg);
    if (tempMR->getUnresolvedSnippet() != NULL)
       {
       generateTrg1MemInstruction(cg, TR::InstOpCode::addx, node, locationReg, tempMR);
@@ -417,7 +417,7 @@ J9::ARM64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg
    else
       sourceRegister = valueReg;
 
-   TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, TR::Compiler->om.sizeofReferenceAddress(), cg);
+   TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, cg);
 
    if (needSync)
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xE);
@@ -514,9 +514,8 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
 
    TR::InstOpCode::Mnemonic storeOp = usingCompressedPointers ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
    TR::Register *translatedSrcReg = usingCompressedPointers ? cg->evaluate(node->getSecondChild()) : sourceRegister;
-   int32_t sizeofMR = usingCompressedPointers ? TR::Compiler->om.sizeofReferenceField() : TR::Compiler->om.sizeofReferenceAddress();
 
-   TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, sizeofMR, cg);
+   TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, cg);
 
    if (needSync)
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xE);
@@ -1822,9 +1821,8 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
       }
    TR::InstOpCode::Mnemonic storeOp = usingCompressedPointers ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
    TR::Register *translatedSrcReg = usingCompressedPointers ? cg->evaluate(firstChild->getSecondChild()) : srcReg;
-   int32_t sizeofMR = usingCompressedPointers ? TR::Compiler->om.sizeofReferenceField() : TR::Compiler->om.sizeofReferenceAddress();
 
-   TR::MemoryReference *storeMR = new (cg->trHeapMemory()) TR::MemoryReference(firstChild, sizeofMR, cg);
+   TR::MemoryReference *storeMR = new (cg->trHeapMemory()) TR::MemoryReference(firstChild, cg);
    generateMemSrc1Instruction(cg, storeOp, node, storeMR, translatedSrcReg);
 
    if (!sourceChild->isNull())
@@ -1992,7 +1990,7 @@ J9::ARM64::TreeEvaluator::loadaddrEvaluator(TR::Node *node, TR::CodeGenerator *c
    TR::Register *resultReg;
    TR::Symbol *sym = node->getSymbol();
    TR::Compilation *comp = cg->comp();
-   TR::MemoryReference *mref = new (cg->trHeapMemory()) TR::MemoryReference(node, node->getSymbolReference(), 0, cg);
+   TR::MemoryReference *mref = new (cg->trHeapMemory()) TR::MemoryReference(node, node->getSymbolReference(), cg);
 
    if (mref->getUnresolvedSnippet() != NULL)
       {

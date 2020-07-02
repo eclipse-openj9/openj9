@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,9 +28,8 @@
 
 J9::ARM64::MemoryReference::MemoryReference(
       TR::Node *node,
-      uint32_t len,
       TR::CodeGenerator *cg)
-   : OMR::MemoryReferenceConnector(node, len, cg)
+   : OMR::MemoryReferenceConnector(node, cg)
    {
    if (self()->getUnresolvedSnippet())
       self()->adjustForResolution(cg);
@@ -39,9 +38,8 @@ J9::ARM64::MemoryReference::MemoryReference(
 J9::ARM64::MemoryReference::MemoryReference(
       TR::Node *node,
       TR::SymbolReference *symRef,
-      uint32_t len,
       TR::CodeGenerator *cg)
-   : OMR::MemoryReferenceConnector(node, symRef, len, cg)
+   : OMR::MemoryReferenceConnector(node, symRef, cg)
    {
    if (self()->getUnresolvedSnippet())
       self()->adjustForResolution(cg);
