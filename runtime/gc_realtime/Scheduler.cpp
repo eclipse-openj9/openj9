@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -724,7 +724,19 @@ void MM_Scheduler::yieldFromGC(MM_EnvironmentRealtime *env, bool distanceChecked
 void
 MM_Scheduler::prepareThreadsForTask(MM_EnvironmentBase *env, MM_Task *task, uintptr_t threadCount)
 {
-	MM_ParallelDispatcher::prepareThreadsForTask(env, task, threadCount);
+	omrthread_monitor_enter(_slaveThreadMutex);
+	_slaveThreadsReservedForGC = true;
+
+	task->setSynchronizeMutex(_synchronizeMutex);
+
+	for (uintptr_t index=0; index < threadCount; index++) {
+		_statusTable[index] = slave_status_reserved;
+		_taskTable[index] = task;
+	}
+
+	wakeUpThreads(threadCount);
+	omrthread_monitor_exit(_slaveThreadMutex);
+
 	pushYieldCollaborator(((MM_IncrementalParallelTask *)task)->getYieldCollaborator());
 }
 
