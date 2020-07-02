@@ -1200,8 +1200,8 @@ Java_java_lang_reflect_Array_multiNewArrayImpl(JNIEnv *env, jclass unusedClass, 
 	if (NULL != componentTypeClassObject) {
 		J9Class *componentTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, componentTypeClassObject);
 
-		/* create an array class with one greater arity than desired */
-		UDATA count = dimensions + 1;
+		/* create an array class with the desired arity */
+		UDATA count = dimensions;
 		BOOLEAN exceptionIsPending = FALSE;
 
 		if (J9ROMCLASS_IS_ARRAY(componentTypeClass->romClass) && ((((J9ArrayClass *)componentTypeClass)->arity + dimensions) > J9_ARRAY_DIMENSION_LIMIT)) {

@@ -1768,9 +1768,9 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
 	
 			if (NULL != componentTypeClassObject) {
 				J9Class *componentTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, componentTypeClassObject);
-				
-				/* create an array class with one greater arity than desired */
-				UDATA count = dimensions + 1;
+
+				/* create an array class with the desired arity */
+				UDATA count = dimensions;
 				J9Class *componentArrayClass = componentTypeClass;
 				BOOLEAN exceptionIsPending = FALSE;
 	
