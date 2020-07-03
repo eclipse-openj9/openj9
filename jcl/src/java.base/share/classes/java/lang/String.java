@@ -8454,8 +8454,9 @@ written authorization of the copyright holder.
 	 * @return the formatted result
 	 *
 	 * @see #format(String, Object...)
+	 * 
+	 * @since 15
 	 */
-	@Deprecated(forRemoval=true, since="13")
 	public String formatted(Object... args) {
 		return String.format(this, args);
 	}
@@ -8465,8 +8466,9 @@ written authorization of the copyright holder.
 	 * removes the trailing spaces in every line from the string
 	 *
 	 * @return this string with incidental whitespaces removed from every line
+	 * 
+	 * @since 15 
 	 */
-	@Deprecated(forRemoval=true, since="13")
 	public String stripIndent() {
 		if (isEmpty()) {
 			return this;
@@ -8533,8 +8535,9 @@ written authorization of the copyright holder.
 	 *
 	 * @throws IllegalArgumentException
 	 *          If invalid escape sequence is detected
+	 * 
+	 * @since 15
 	 */
-	@Deprecated(forRemoval=true, since="13")
 	public String translateEscapes() {
 		StringBuilder builder = new StringBuilder();
 		char[] charArray = toCharArray();
