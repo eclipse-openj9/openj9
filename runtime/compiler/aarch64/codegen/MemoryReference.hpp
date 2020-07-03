@@ -56,21 +56,6 @@ class OMR_EXTENSIBLE MemoryReference : public J9::MemoryReferenceConnector
          TR::CodeGenerator *cg)
       : J9::MemoryReferenceConnector(br, disp, cg) {}
 
-   // To be obsoleted
-   MemoryReference(
-         TR::Node *node,
-         uint32_t len,
-         TR::CodeGenerator *cg)
-      : J9::MemoryReferenceConnector(node, cg) {}
-
-   // To be obsoleted
-   MemoryReference(
-         TR::Node *node,
-         TR::SymbolReference *symRef,
-         uint32_t len,
-         TR::CodeGenerator *cg)
-      : J9::MemoryReferenceConnector(node, symRef, cg) {}
-
    MemoryReference(
          TR::Node *node,
          TR::CodeGenerator *cg)
