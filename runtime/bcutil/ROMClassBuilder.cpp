@@ -272,8 +272,10 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda)
 	/* Find if there are any Constant_String or CFR_CONSTANT_NameAndType references to the className.
 	 * If there are none we don't need to make a new cpEntry, we can overwrite the existing
 	 * one since the only reference to it is the classRef
+	 * Note: The check only applies to the existing cpEntries of the constant pool rather than
+	 * the last cpEntry (not yet initialized) for the anonClassName.
 	 */
-	for (i = 0; i < classfile->constantPoolCount; i++) {
+	for (i = 0; i < newUtfCPEntry; i++) {
 		if ((CFR_CONSTANT_String == constantPool[i].tag)
 			|| (CFR_CONSTANT_NameAndType == constantPool[i].tag)
 		) {

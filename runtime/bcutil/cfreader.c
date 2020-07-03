@@ -2640,6 +2640,10 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 		return -1;
 	}
 
+	if (J9_ARE_ANY_BITS_SET(findClassFlags, J9_FINDCLASS_FLAG_UNSAFE)) {
+		flags |= BCT_Unsafe;
+	}
+
 	/* Make sure the structure and static verification below uses the class file version
 	 * number. VM version is maintained in vmVersionShifted.
 	 */
@@ -2690,8 +2694,6 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 	endOfConstantPool = index;
 	VERBOSE_END(ParseClassFileConstantPool);
-
-	classfile->constantPoolCount = constantPoolAllocationSize;
 
 	CHECK_EOF(8);
 	classfile->accessFlags = NEXT_U16(classfile->accessFlags, index);
@@ -2859,6 +2861,13 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 		}
 	}
 	VERBOSE_END(ParseClassFileVerifyClass);
+
+	/* Set constantPoolCount here to take into account the extra cpEntry for the anonClass name.
+	 * This needs to occur after static verification as the new (last) cpEntry intended for
+	 * the anonClassName is not initialized until ROMClassBuilder::handleAnonClassName() is
+	 * invoked later in building the corresponding ROMClass.
+	 */
+	classfile->constantPoolCount = constantPoolAllocationSize;
 
 	VERBOSE_START(ParseClassFileInlineJSRs);
 	/* perform jsr inlining in necessary */

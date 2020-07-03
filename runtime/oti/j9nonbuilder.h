@@ -1965,6 +1965,7 @@ typedef struct J9BCTranslationData {
 #define BCT_RetainRuntimeInvisibleAttributes  0x80000
 #define BCT_AnyPreviewVersion  0x100000
 #define BCT_EnablePreview 0x200000
+#define BCT_Unsafe  0x400000
 #define BCT_DumpMaps  0x40000000
 
 #define BCT_J9DescriptionCpTypeScalar  0
