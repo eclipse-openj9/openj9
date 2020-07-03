@@ -857,9 +857,9 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			}
 			info = &(classfile->constantPool[index]);
 			if (info->tag != CFR_CONSTANT_Methodref) {
-				if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java8MajorVersionShifted)
-				&& (bc != CFR_BC_invokevirtual) && (info->tag == CFR_CONSTANT_InterfaceMethodref)
-				) {
+				BOOLEAN isJava8orLater = ((flags & BCT_MajorClassFileVersionMask) >= BCT_Java8MajorVersionShifted) || J9_ARE_ANY_BITS_SET(flags, BCT_Unsafe);
+
+				if (isJava8orLater && (bc != CFR_BC_invokevirtual) && (info->tag == CFR_CONSTANT_InterfaceMethodref)) {
 					/* JVMS 4.9.1 Static Constraints:
 					 * The indexbyte operands of each invokespecial and invokestatic instruction must represent
 					 * a valid index into the constant_pool table. The constant pool entry referenced by that

@@ -511,8 +511,7 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 		translationFlags |= stripFlags;
 	}
 
-	if ((0 == (loadData->options & J9_FINDCLASS_FLAG_UNSAFE)) &&
-		(0 != (vm->runtimeFlags & J9_RUNTIME_VERIFY))) {
+	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_VERIFY)) {
 		translationFlags |= BCT_StaticVerification;
 	}
 
