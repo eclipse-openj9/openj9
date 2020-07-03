@@ -1565,7 +1565,7 @@ obj:
 					rc = GOTO_ASYNC_CHECK;
 					goto done;
 				}
-				if (monitorRC < J9_OBJECT_MONITOR_BLOCKING) {
+				if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
 					/* Monitor was not entered - hide the frame to prevent exception throw from processing it */
 					if (j2i) {
 						((UDATA*)(((J9SFJ2IFrame*)_sp) + 1))[-1] |= J9SF_A0_INVISIBLE_TAG;
@@ -1638,7 +1638,7 @@ done:
 			goto done;
 		}
 
-		if (monitorRC < J9_OBJECT_MONITOR_BLOCKING) {
+		if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
 			*bp |= J9SF_A0_INVISIBLE_TAG;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
@@ -1763,7 +1763,7 @@ throwStackOverflow:
 					rc = GOTO_ASYNC_CHECK;
 					goto done;
 				}
-				if (monitorRC < J9_OBJECT_MONITOR_BLOCKING) {
+				if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
 					/* Monitor was not entered - hide the frame to prevent exception throw from processing it */
 					*(_arg0EA + relativeBP) |= J9SF_A0_INVISIBLE_TAG;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
@@ -2129,7 +2129,7 @@ done:
 			UDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, receiver);
 			// No immediate async possible due to the current frame being for a native method.
 			bp = _arg0EA - relativeBP;
-			if (monitorRC < J9_OBJECT_MONITOR_BLOCKING) {
+			if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
 					_currentThread->tempSlot = (UDATA) receiver;
@@ -7724,7 +7724,7 @@ done:
 			 * release VM access, so the immediate async and failed enter cases are
 			 * mutually exclusive.
 			 */
-			if (monitorRC < J9_OBJECT_MONITOR_BLOCKING) {
+			if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
 					_currentThread->tempSlot = (UDATA) obj;
