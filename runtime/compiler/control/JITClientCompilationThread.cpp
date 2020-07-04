@@ -3308,10 +3308,6 @@ remoteCompile(
 
       compiler->failCompilation<JITServer::StreamMessageTypeMismatch>(e.what());
       }
-   catch (const TR::CompilationInterrupted &e)
-      {
-      throw; // rethrow the exception
-      }
    catch (...)
       {
       // For any other type of exception disconnect the socket 
