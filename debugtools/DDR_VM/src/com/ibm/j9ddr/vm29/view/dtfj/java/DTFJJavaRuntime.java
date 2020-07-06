@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -758,8 +758,8 @@ public class DTFJJavaRuntime implements JavaRuntime {
 				throw new IllegalArgumentException("Object address " + address + " is not in any heap");			
 			}
 		} catch (Throwable t) {
-			Class<?>[] whitelist = new Class<?>[]{IllegalArgumentException.class}; // white list can only contain RTEs
-			throw J9DDRDTFJUtils.handleAllButMemAccExAndDataUnavailAsCorruptDataException(DTFJContext.getProcess(), t, whitelist);
+			Class<?>[] allowlist = new Class<?>[]{IllegalArgumentException.class}; // allow list can only contain RTEs
+			throw J9DDRDTFJUtils.handleAllButMemAccExAndDataUnavailAsCorruptDataException(DTFJContext.getProcess(), t, allowlist);
 		}
 	}
 	

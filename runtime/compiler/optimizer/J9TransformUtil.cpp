@@ -956,7 +956,7 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
    }
 
 /** \brief
- *     Entry point for folding whitelist'd static final fields.
+ *     Entry point for folding allowlist'd static final fields.
  *     These typically belong to fundamental system/bootstrap classes.
  *
  *  \param comp
@@ -1014,7 +1014,7 @@ J9::TransformUtil::foldStaticFinalFieldAssumingProtection(TR::Compilation *comp,
  *     The node which is a load of a static final field.
  *
  *  \return
- *    True TR_yes if the field is whitelisted and can be folded.
+ *    True TR_yes if the field is allowlisted and can be folded.
  *    True TR_maybe if the field is a generic static final and can be folded with protection.
  *    True TR_no if the field is cannot be folded due to being unresolved, already been written post initialization, or owning class uninitialized, etc.
  */

@@ -59,7 +59,7 @@ import com.ibm.j9ddr.vm29.view.dtfj.DTFJContext;
 import com.ibm.j9ddr.vm29.view.dtfj.java.corrupt.CorruptJavaObject;
 
 public class DTFJJavaObject implements JavaObject {
-	private static final Class<?>[] whitelist = new Class<?>[]{NullPointerException.class, ArrayIndexOutOfBoundsException.class, IllegalArgumentException.class};
+	private static final Class<?>[] allowlist = new Class<?>[]{NullPointerException.class, ArrayIndexOutOfBoundsException.class, IllegalArgumentException.class};
 	protected final J9ObjectPointer object;
 	protected DTFJJavaHeap heap;
 	protected J9ArrayClassPointer arrayptr = null;
@@ -132,7 +132,7 @@ public class DTFJJavaObject implements JavaObject {
 			}
 
 		} catch (Throwable t) {
-			throw J9DDRDTFJUtils.handleAllButMemAccExAsCorruptDataException(DTFJContext.getProcess(), t, whitelist);
+			throw J9DDRDTFJUtils.handleAllButMemAccExAsCorruptDataException(DTFJContext.getProcess(), t, allowlist);
 		}
 	}
 
