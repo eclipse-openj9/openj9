@@ -25,6 +25,13 @@
 
 /*[IF PLATFORM-mz31 | PLATFORM-mz64 | PLATFORM-xz64]*/
 exports com.ibm.jit.crypto to ibm.crypto.hdwrcca;
+exports jdk.internal.misc to ibm.security.pkcs;
+exports sun.net.util to ibm.security.pkcs;
+exports sun.net.www to ibm.security.pkcs;
+exports sun.security.action to ibm.security.pkcs;
+exports sun.security.provider to ibm.security.pkcs;
+exports sun.security.provider.certpath to ibm.security.pkcs;
+exports sun.security.util to ibm.security.pkcs;
 /*[ENDIF]*/
 exports com.ibm.sharedclasses.spi to openj9.sharedclasses, java.management, java.rmi;
 exports com.ibm.oti.vm to java.management, jdk.attach, jdk.management, openj9.cuda, openj9.gpu, openj9.jvm, openj9.sharedclasses;
