@@ -34,6 +34,7 @@
 #include "exceptions/AOTFailure.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "env/J2IThunk.hpp"
+#include "ilgen/J9ByteCodeIterator.hpp"
 
 void
 TR_J9ServerVM::getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods)
@@ -343,20 +344,62 @@ TR_J9ServerVM::getSystemClassLoader()
    }
 
 bool
-TR_J9ServerVM::jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_ResolvedMethod * method2, I_32 cpIndex2, int32_t isStatic)
+TR_J9ServerVM::jitFieldsOrStaticsAreIdentical(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_ResolvedMethod * method2, I_32 cpIndex2, int32_t isStatic)
    {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-
-   // Pass pointers to client mirrors of the ResolvedMethod objects instead of local objects
-   TR_ResolvedJ9JITServerMethod *serverMethod1 = static_cast<TR_ResolvedJ9JITServerMethod*>(method1);
-   TR_ResolvedJ9JITServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JITServerMethod*>(method2);
-   TR_ResolvedMethod *clientMethod1 = serverMethod1->getRemoteMirror();
-   TR_ResolvedMethod *clientMethod2 = serverMethod2->getRemoteMirror();
+   auto serverMethod1 = static_cast<TR_ResolvedJ9JITServerMethod*>(method1);
+   auto serverMethod2 = static_cast<TR_ResolvedJ9JITServerMethod*>(method2);
+   J9Class *ramClass1 = serverMethod1->constantPoolHdr();
+   J9Class *ramClass2 = serverMethod2->constantPoolHdr();
+   UDATA field1 = 0, field2 = 0;
+   J9Class *declaringClass1 = NULL, *declaringClass2 = NULL;
 
    bool result = false;
+   bool needRemoteCall = true;
+   bool cached =
+      getCachedField(ramClass1, cpIndex1, &declaringClass1, &field1) &&
+      getCachedField(ramClass2, cpIndex2, &declaringClass2, &field2);
+   if (cached)
+      {
+      needRemoteCall = false;
+      result = declaringClass1 == declaringClass2 && field1 == field2;
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+      // validate cached result
+      needRemoteCall = true;
+#endif
+      }
+   if (needRemoteCall)
+      {
+      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      // Pass pointers to client mirrors of the ResolvedMethod objects instead of local objects
+      TR_ResolvedMethod *clientMethod1 = serverMethod1->getRemoteMirror();
+      TR_ResolvedMethod *clientMethod2 = serverMethod2->getRemoteMirror();
 
+      stream->write(JITServer::MessageType::VM_jitFieldsOrStaticsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2, isStatic);
+      auto recv = stream->read<J9Class *, J9Class *, UDATA, UDATA>();
+      declaringClass1 = std::get<0>(recv);
+      declaringClass2 = std::get<1>(recv);
+      field1 = std::get<2>(recv);
+      field2 = std::get<3>(recv);
+      cacheField(ramClass1, cpIndex1, declaringClass1, field1);
+      cacheField(ramClass2, cpIndex2, declaringClass2, field2);
+      bool remoteResult = false;
+      if (field1 && field2)
+         {
+         remoteResult = (declaringClass1 == declaringClass2) && (field1 == field2);
+         }
+      TR_ASSERT(!cached || result == remoteResult, "JIT fields are not same");
+      result = remoteResult;
+      }
+   return result;
+   }
+
+
+bool
+TR_J9ServerVM::jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_ResolvedMethod * method2, I_32 cpIndex2, int32_t isStatic)
+   {
+   bool result = false;
    bool sigSame = true;
-   if (serverMethod1->fieldsAreSame(cpIndex1, serverMethod2, cpIndex2, sigSame))
+   if (method1->fieldsAreSame(cpIndex1, method2, cpIndex2, sigSame))
       {
       result = true;
       }
@@ -365,43 +408,27 @@ TR_J9ServerVM::jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_R
       if (sigSame)
          {
          // if name and signature comparison is inconclusive, check cache or make a remote call
-         auto *resolvedMethod1 = static_cast<TR_ResolvedJ9Method *>(method1);
-         auto *resolvedMethod2 = static_cast<TR_ResolvedJ9Method *>(method2);
-         J9Class *ramClass1 = resolvedMethod1->constantPoolHdr();
-         J9Class *ramClass2 = resolvedMethod2->constantPoolHdr();
-         UDATA field1 = 0, field2 = 0;
-         J9Class *declaringClass1 = NULL, *declaringClass2 = NULL;
+         result = jitFieldsOrStaticsAreIdentical(method1, cpIndex1, method2, cpIndex2, isStatic);
+         }
+      }
+   return result;
+   }
 
-         bool needRemoteCall = true;
-         bool cached = getCachedField(ramClass1, cpIndex1, &declaringClass1, &field1);
-         cached &= getCachedField(ramClass2, cpIndex2, &declaringClass2, &field2);
-         if (cached)
-            {
-            needRemoteCall = false;
-            result = declaringClass1 == declaringClass2 && field1 == field2;
-#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
-            // validate cached result
-            needRemoteCall = true;
-#endif
-            }
-         if (needRemoteCall)
-            {
-            stream->write(JITServer::MessageType::VM_jitFieldsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2, isStatic);
-            auto recv = stream->read<J9Class *, J9Class *, UDATA, UDATA>();
-            declaringClass1 = std::get<0>(recv);
-            declaringClass2 = std::get<1>(recv);
-            field1 = std::get<2>(recv);
-            field2 = std::get<3>(recv);
-            bool remoteResult = false;
-            if (declaringClass1 && declaringClass2 && field1 && field2)
-               {
-               remoteResult = (declaringClass1 == declaringClass2) && (field1 == field2);
-               cacheField(ramClass1, cpIndex1, declaringClass1, field1);
-               cacheField(ramClass2, cpIndex2, declaringClass2, field2);
-               }
-            TR_ASSERT(!cached || result == remoteResult, "JIT fields are not same");
-            result = remoteResult;
-            }
+bool
+TR_J9ServerVM::jitStaticsAreSame(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_ResolvedMethod *method2, I_32 cpIndex2)
+   {
+   bool result = false;
+   bool sigSame = true;
+   if (method1->staticsAreSame(cpIndex1, method2, cpIndex2, sigSame))
+      {
+      result = true;
+      }
+   else
+      {
+      if (sigSame)
+         {
+         // if name and signature comparison is inconclusive, make a remote call
+         result = jitFieldsOrStaticsAreIdentical(method1, cpIndex1, method2, cpIndex2, true);
          }
       }
    return result;
@@ -429,6 +456,9 @@ TR_J9ServerVM::getCachedField(J9Class *ramClass, int32_t cpIndex, J9Class **decl
 void
 TR_J9ServerVM::cacheField(J9Class *ramClass, int32_t cpIndex, J9Class *declaringClass, UDATA field)
    {
+   // Do not cache unresolved fields
+   if (field == 0)
+      return;
    OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
    auto it = _compInfoPT->getClientData()->getROMClassMap().find(ramClass);
    if (it != _compInfoPT->getClientData()->getROMClassMap().end())
@@ -436,36 +466,6 @@ TR_J9ServerVM::cacheField(J9Class *ramClass, int32_t cpIndex, J9Class *declaring
       auto &jitFieldsCache = it->second._jitFieldsCache;
       jitFieldsCache.insert({cpIndex, std::make_pair(declaringClass, field)});
       }
-   }
-
-bool
-TR_J9ServerVM::jitStaticsAreSame(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_ResolvedMethod *method2, I_32 cpIndex2)
-   {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-
-   // Pass pointers to client mirrors of the ResolvedMethod objects instead of local objects
-   TR_ResolvedJ9JITServerMethod *serverMethod1 = static_cast<TR_ResolvedJ9JITServerMethod*>(method1);
-   TR_ResolvedJ9JITServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JITServerMethod*>(method2);
-   TR_ResolvedMethod *clientMethod1 = serverMethod1->getRemoteMirror();
-   TR_ResolvedMethod *clientMethod2 = serverMethod2->getRemoteMirror();
-
-   bool result = false;
-
-   bool sigSame = true;
-   if (serverMethod1->staticsAreSame(cpIndex1, serverMethod2, cpIndex2, sigSame))
-      {
-      result = true;
-      }
-   else
-      {
-      if (sigSame)
-         {
-         // if name and signature comparison is inconclusive, make a remote call
-         stream->write(JITServer::MessageType::VM_jitStaticsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2);
-         result = std::get<0>(stream->read<bool>());
-         }
-      }
-   return result;
    }
 
 TR_OpaqueClassBlock *

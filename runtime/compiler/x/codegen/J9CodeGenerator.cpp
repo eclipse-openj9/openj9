@@ -361,14 +361,6 @@ J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
    return prev;
    }
 
-
-bool
-J9::X86::CodeGenerator::allowGuardMerging()
-   {
-   return self()->fej9()->supportsGuardMerging();
-   }
-
-
 bool
 J9::X86::CodeGenerator::nopsAlsoProcessedByRelocations()
    {
