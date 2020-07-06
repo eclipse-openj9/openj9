@@ -34,7 +34,7 @@
 	<sourceControl>
 		<repositoryBranch id="fips.repo" name="git@github.ibm.com:runtimes/fips.git"/>
 		<repositoryBranch id="fips.branch" name="master"/>
-		<repositoryBranch id="fips.sha" name="3dc909b"/>
+		<repositoryBranch id="fips.sha" name="7f6fae8a"/>
 		<repositoryBranch id="jit_release" name="tr.dev"/>
 		<repositoryBranch id="rtc_product_stream" name="jvm.29"/>
 		<repositoryBranch id="san_hursley" name="foreman@java-bin.hursley.ibm.com"/>
