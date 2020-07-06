@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,7 +49,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
 import com.ibm.j9ddr.vm29.view.dtfj.DTFJContext;
 
 public abstract class DTFJJavaField implements JavaField, IDTFJJavaField {
-	protected static final Class<?>[] whitelist = new Class<?>[]{IllegalArgumentException.class};
+	protected static final Class<?>[] allowlist = new Class<?>[]{IllegalArgumentException.class};
 	protected static final int FIELD_BOOLEAN = 0x1;
 	protected static final int FIELD_BYTE = 0x2;
 	protected static final int FIELD_SHORT = 0x4;

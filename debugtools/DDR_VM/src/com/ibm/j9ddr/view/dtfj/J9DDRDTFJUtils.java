@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,9 +107,9 @@ public class J9DDRDTFJUtils
 
 	/**
 	 * Go through the standard handleAsCorruptDataException method to convert the supplied error condition 
-	 * into a corrupt data exception as long as it is not present in the white list 
+	 * into a corrupt data exception as long as it is not present in the allow list 
 	 * AND especially for this method, if it is not a DataUnavailable. 
-	 * The white list is a set of run time exceptions which must not be intercepted and must be re-thrown.  
+	 * The allow list is a set of run time exceptions which must not be intercepted and must be re-thrown.  
 	 * Typically this is where the DTFJ API allows RTE's to be thrown as well as checked exceptions.
 	 * Likewise, DataUnavailable is an exception that must be re-thrown and
 	 * not converted to CorruptDataException, hence this method's distinctive name.
@@ -128,41 +128,41 @@ public class J9DDRDTFJUtils
 	
 	/**
 	 * Go through the standard handleAsCorruptDataException method to convert the supplied error condition 
-	 * into a corrupt data exception as long as it is not present in the white list 
+	 * into a corrupt data exception as long as it is not present in the allow list 
 	 * AND especially for this method, if it is not a MemoryAccessException. 
-	 * The white list is a set of run time exceptions which must not be intercepted and must be re-thrown.  
+	 * The allow list is a set of run time exceptions which must not be intercepted and must be re-thrown.  
 	 * Typically this is where the DTFJ API allows RTE's to be thrown as well as checked exceptions.
 	 * Likewise, MemoryAccessException is an exception that must be re-thrown and
 	 * not converted to CorruptDataException, hence this method's distinctive name.
 	 * 
 	 * @param p the process from the dtfj context
 	 * @param t the error condition to handle
-	 * @param whitelist runtime exceptions which should be ignored and re-thrown
+	 * @param allowlist runtime exceptions which should be ignored and re-thrown
 	 * @return the error condition expressed as a CDE
 	 */
-	public static com.ibm.dtfj.image.CorruptDataException handleAllButMemAccExAsCorruptDataException(IProcess p, Throwable t, Class<?>[] whitelist) 
+	public static com.ibm.dtfj.image.CorruptDataException handleAllButMemAccExAsCorruptDataException(IProcess p, Throwable t, Class<?>[] allowlist) 
 	throws MemoryAccessException {
 		if (t instanceof MemoryAccessException) {
 			throw (MemoryAccessException) t;
 		}
-		return handleAsCorruptDataException(p,t,whitelist);
+		return handleAsCorruptDataException(p,t,allowlist);
 	}
 	
 	/**
 	 * Go through the standard handleAsCorruptDataException method to convert the supplied error condition 
-	 * into a corrupt data exception as long as it is not present in the white list 
+	 * into a corrupt data exception as long as it is not present in the allow list 
 	 * AND especially for this method, if it is neither MemoryAccessException or DataUnavailable. 
-	 * The white list is a set of run time exceptions which must not be intercepted and must be re-thrown.  
+	 * The allow list is a set of run time exceptions which must not be intercepted and must be re-thrown.  
 	 * Typically this is where the DTFJ API allows RTE's to be thrown as well as checked exceptions.
 	 * Likewise, MemoryAccessException and DataUnavailable are exceptions that must be re-thrown and
 	 * not converted to CorruptDataException, hence this method's distinctive name.
 	 * 
 	 * @param p the process from the dtfj context
 	 * @param t the error condition to handle
-	 * @param whitelist runtime exceptions which should be ignored and re-thrown
+	 * @param allowlist runtime exceptions which should be ignored and re-thrown
 	 * @return the error condition expressed as a CDE
 	 */
-	public static com.ibm.dtfj.image.CorruptDataException handleAllButMemAccExAndDataUnavailAsCorruptDataException(IProcess p, Throwable t, Class<?>[] whitelist) 
+	public static com.ibm.dtfj.image.CorruptDataException handleAllButMemAccExAndDataUnavailAsCorruptDataException(IProcess p, Throwable t, Class<?>[] allowlist) 
 	throws MemoryAccessException, DataUnavailable{
 		if (t instanceof MemoryAccessException) {
 			throw (MemoryAccessException) t;
@@ -170,29 +170,29 @@ public class J9DDRDTFJUtils
 		if (t instanceof DataUnavailable) {
 			throw (DataUnavailable) t;
 		}
-		return handleAsCorruptDataException(p,t,whitelist);
+		return handleAsCorruptDataException(p,t,allowlist);
 	}
 	
 	/**
 	 * Go through the standard handleAsCorruptDataException method to convert the supplied error condition 
-	 * into a corrupt data exception as long as it is not present in the white list. 
-	 * The white list is a set of run time exceptions which must not be intercepted and must be re-thrown.  
+	 * into a corrupt data exception as long as it is not present in the allow list. 
+	 * The allow list is a set of run time exceptions which must not be intercepted and must be re-thrown.  
 	 * Typically this is where the DTFJ API allows RTE's to be thrown as well as checked exceptions.
 	 * 
 	 * @param p the process from the dtfj context
 	 * @param t the error condition to handle
-	 * @param whitelist runtime exceptions which should be ignored and re-thrown
+	 * @param allowlist runtime exceptions which should be ignored and re-thrown
 	 * @return the error condition expressed as a CDE
 	 */
-	public static com.ibm.dtfj.image.CorruptDataException handleAsCorruptDataException(IProcess p, Throwable t, Class<?>[] whitelist) {
-		boolean isInWhitelist = false;
-		for(Class<?> clazz : whitelist) {
-			if(RuntimeException.class.isAssignableFrom(clazz) && (isInWhitelist = t.getClass().equals(clazz))) {
-				//this exception is in the whitelist
+	public static com.ibm.dtfj.image.CorruptDataException handleAsCorruptDataException(IProcess p, Throwable t, Class<?>[] allowlist) {
+		boolean isInAllowlist = false;
+		for(Class<?> clazz : allowlist) {
+			if(RuntimeException.class.isAssignableFrom(clazz) && (isInAllowlist = t.getClass().equals(clazz))) {
+				//this exception is in the allowlist
 				break;
 			}
 		}
-		if(isInWhitelist) {
+		if(isInAllowlist) {
 			throw (RuntimeException) t;
 		} else {
 			return handleAsCorruptDataException(p, t);

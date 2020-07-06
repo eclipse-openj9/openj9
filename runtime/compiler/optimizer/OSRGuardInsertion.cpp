@@ -635,7 +635,7 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
          }
       else if (cursor->getNode()->getOpCodeValue() == TR::asynccheck)
          {
-         TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "osrGuardSummary/whitelist/asynccheck/%s/=%d", comp()->getHotnessName(comp()->getMethodHotness()), block->getFrequency()), cursor);
+         TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "osrGuardSummary/allowlist/asynccheck/%s/=%d", comp()->getHotnessName(comp()->getMethodHotness()), block->getFrequency()), cursor);
          }
       else
          {
