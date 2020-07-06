@@ -21,8 +21,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-/*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
-
 /** 
  * Defines the jdmpview tool for reading system core and java core diagnostic files.
  */

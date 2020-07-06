@@ -21,8 +21,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-/*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
-
 /**
  * Defines API for creating diagnostic dump files, querying and controlling OS logging,
  * querying Java heap and OS memory stats, and controlling and logging trace file output. 
