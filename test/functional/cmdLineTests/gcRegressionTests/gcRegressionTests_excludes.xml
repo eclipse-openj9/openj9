@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2001, 2018 IBM Corp. and others
+  Copyright (c) 2001, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,5 +43,8 @@
 <exclude id="Excessive GC throws OOM" platform="Mode301" shouldFix="true"><reason>Metronome and Staccato do not use excessive GC</reason></exclude>
 <exclude id="Excessive GC appears in verbose log" platform="Mode301" shouldFix="true"><reason>Metronome and Staccato do not use excessive GC</reason></exclude>
 
+<!-- only Gencon GC is supported on RISC-V -->
+<exclude id="Excessive GC throws OOM" platform="linux_riscv.*" shouldFix="false"><reason>The initial memory setting does not work on RISC-V</reason></exclude>
+<include id="Excessive GC throws OOM on RISC-V" platform="linux_riscv.*" shouldFix="false"><reason>The initial memory setting is only used to trigger the OOM on RISC-V</reason></include>
 </suite>
 
