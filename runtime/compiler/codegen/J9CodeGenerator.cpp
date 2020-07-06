@@ -2447,6 +2447,12 @@ J9::CodeGenerator::doInstructionSelection()
       diagnostic("</selection>\n");
    }
 
+bool
+J9::CodeGenerator::allowGuardMerging()
+   {
+   return self()->fej9()->supportsGuardMerging();
+   }
+
 void
 J9::CodeGenerator::populateOSRBuffer()
    {

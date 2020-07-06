@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,8 +54,6 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    int32_t getStackFramePaddingSizeInBytes() {return _stackFramePaddingSizeInBytes;}
    int32_t setStackFramePaddingSizeInBytes(int32_t s) {return (_stackFramePaddingSizeInBytes = s);}
    int32_t _stackFramePaddingSizeInBytes;
-
-   bool allowGuardMerging();
 
    bool nopsAlsoProcessedByRelocations();
 
