@@ -134,18 +134,9 @@ if(J9VM_OPT_JITSERVER)
 	add_subdirectory(net)
 endif()
 
-# Should this be conditional?
-if(TR_HOST_ARCH STREQUAL "x" OR TR_TARGET_ARCH STREQUAL "x")
-	add_subdirectory(x)
-endif()
-if(TR_HOST_ARCH STREQUAL "p" OR TR_TARGET_ARCH STREQUAL "p")
-	add_subdirectory(p)
-endif()
-if(TR_HOST_ARCH STREQUAL "z" OR TR_TARGET_ARCH STREQUAL "z")
-	add_subdirectory(z)
-endif()
-if(TR_HOST_ARCH STREQUAL "arm" OR TR_TARGET_ARCH STREQUAL "arm")
-	add_subdirectory(arm)
+add_subdirectory(${TR_HOST_ARCH})
+if(NOT TR_TARGET_ARCH STREQUAL TR_HOST_ARCH)
+	add_subdirectory(${TR_TARGET_ARCH})
 endif()
 
 # Some files in OMR provide duplicate or extra functionality not needed
