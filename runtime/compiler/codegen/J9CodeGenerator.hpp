@@ -207,6 +207,7 @@ public:
    TR::SymbolReference *getFreeVariableSizeSymRef(int byteLength);
    void checkForUnfreedVariableSizeSymRefs();
 
+   bool allowGuardMerging();
    void  registerAssumptions();
 
    void jitAddPicToPatchOnClassUnload(void *classPointer, void *addressToBePatched);
