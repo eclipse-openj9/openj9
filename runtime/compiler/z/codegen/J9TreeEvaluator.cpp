@@ -4845,7 +4845,7 @@ VMarrayStoreCHKEvaluator(
    if (debugObj)
       debugObj->addInstructionComment(cursor, "Check if src.type == array.type");
 
-   intptr_t objectClass = (intptr_t) fej9->getSystemClassFromClassName("java/lang/Object", 16, true);
+   intptr_t objectClass = (intptr_t) fej9->getSystemClassFromClassName("java/lang/Object", 16, !cg->comp()->isOutOfProcessCompilation());
    /*
     * objectClass is used for Object arrays check optimization: when we are storing to Object arrays we can skip all other array store checks
     * However, TR_J9SharedCacheVM::getSystemClassFromClassName can return 0 when it's impossible to relocate j9class later for AOT loads
