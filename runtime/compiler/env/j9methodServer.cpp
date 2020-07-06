@@ -1891,6 +1891,69 @@ TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees(int32_t ttlForUnresolv
       }
    }
 
+void
+TR_ResolvedJ9JITServerMethod::cacheFields()
+   {
+   // 1. Iterate through bytecodes and look for loads/stores
+   // If the corresponding field or static is not cached, add it
+   // to the list of fields that will be sent to the client in one batch.
+   auto serverVM = static_cast<TR_J9ServerVM *>(_fe);
+   auto compInfoPT = _fe->_compInfoPT;
+   TR_J9ByteCodeIterator bci(0, this, _fe, compInfoPT->getCompilation());
+   std::vector<int32_t> cpIndices;
+   std::vector<uint8_t> isStaticField;
+   J9Class *ramClass = constantPoolHdr();
+   for(TR_J9ByteCode bc = bci.first(); bc != J9BCunknown; bc = bci.next())
+      {
+      bool isField = false;
+      bool isStatic;
+      if (bc == J9BCgetfield || bc == J9BCputfield)
+         {
+         isField = true;
+         isStatic = false;
+         }
+      else if (bc == J9BCgetstatic || bc == J9BCputstatic)
+         {
+         isField = true;
+         isStatic = true;
+         }
+
+      J9Class *declaringClass;
+      UDATA field;
+      int32_t cpIndex = bci.next2Bytes();
+      if (isField && !serverVM->getCachedField(ramClass, cpIndex, &declaringClass, &field))
+         {
+         cpIndices.push_back(cpIndex);
+         isStaticField.push_back(isStatic);
+         }
+      }
+
+   // If there's just one field, it's faster to get it through regular means,
+   // to avoid overhead of vectors
+   int32_t numFields = cpIndices.size();
+   if (numFields < 2)
+      return;
+
+   // 2. Send a message to get info for all fields
+   JITServer::ServerStream *stream = compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(
+      JITServer::MessageType::VM_getFields,
+      getRemoteMirror(),
+      cpIndices,
+      isStaticField);
+   auto recv = stream->read<std::vector<J9Class *>, std::vector<UDATA>>();
+
+   // 3. Cache all received fields
+   auto &declaringClasses = std::get<0>(recv);
+   auto &fields = std::get<1>(recv);
+   TR_ASSERT(numFields == declaringClasses.size(), "Number of received fields does not match the requested number");
+   OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+   for (int32_t i = 0; i < numFields; ++i)
+      {
+      serverVM->cacheField(ramClass, cpIndices[i], declaringClasses[i], fields[i]);
+      }
+   }
+
 bool
 TR_ResolvedJ9JITServerMethod::validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation)
    {

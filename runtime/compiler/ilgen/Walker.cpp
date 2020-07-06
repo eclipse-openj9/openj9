@@ -220,7 +220,7 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
 
 
 #if defined(J9VM_OPT_JITSERVER)
-   if (comp()->isOutOfProcessCompilation() && comp()->getMethodBeingCompiled())
+   if (prevBlock == 0 && comp()->isOutOfProcessCompilation() && _methodSymbol->getResolvedMethod())
       {
       // Every J9BCinvoke* bytecode requires a corresponding resolved method for its method symbol.
       // Prefetch resolved methods in one message.
@@ -229,7 +229,13 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
       //
       // NOTE: first request occurs in the switch statement over bytecodes,
       // second request occurs in stashArgumentsForOSR
-      static_cast<TR_ResolvedJ9JITServerMethod *>(comp()->getMethodBeingCompiled())->cacheResolvedMethodsCallees(2);
+      if (_methodSymbol->getResolvedMethod() == comp()->getMethodBeingCompiled())
+         static_cast<TR_ResolvedJ9JITServerMethod *>(_methodSymbol->getResolvedMethod())->cacheResolvedMethodsCallees(2);
+      
+
+      // Cache field info for every field/static loaded/stored in this method, which are later used by
+      // jitFieldsAreSame/jitStaticAreSame when creating symbol references. 
+      static_cast<TR_ResolvedJ9JITServerMethod *>(_methodSymbol->getResolvedMethod())->cacheFields();
       }
 #endif
 
