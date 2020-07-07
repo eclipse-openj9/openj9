@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -351,7 +351,11 @@ int32_t TR::MonitorElimination::perform()
 
    if (trace())
       {
-      traceMsg(comp(), "Starting Monitor Elimination for %s\n", comp()->signature());
+      traceMsg(
+         comp(),
+         "Starting Monitor Elimination for %s\n"
+         "Warning: limiting lastOptSubIndex in Monitor Elimination may leave monitors in an unbalanced state.\n",
+         comp()->signature());
       comp()->dumpMethodTrees("Trees before Monitor Elimination");
       }
 
