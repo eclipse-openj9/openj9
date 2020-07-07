@@ -30,9 +30,4 @@
             <class name="org.openj9.test.records.RecordClassTests" />
         </classes>
     </test>
-    <test name="ThreadInterruptImplTest">
-        <classes>
-            <class name="org.openj9.test.java.lang.Test_Thread"/>
-        </classes>
-    </test>
 </suite>

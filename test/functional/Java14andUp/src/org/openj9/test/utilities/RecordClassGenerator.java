@@ -32,13 +32,14 @@ import org.objectweb.asm.*;
         cw.visit(V14 | V_PREVIEW, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
 
         /* add record component */
-        RecordComponentVisitor rcv = cw.visitRecordComponent(
+        RecordComponentVisitor rcv = cw.visitRecordComponentExperimental(
+                ACC_DEPRECATED,
                 rcName,
                 rcType,
                 rcSignature
             );
 
-        rcv.visitEnd();
+        rcv.visitEndExperimental();
 
         /* add accessor method for record component */
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, rcName, "()" + rcType, null, null);
@@ -68,13 +69,14 @@ import org.objectweb.asm.*;
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         cw.visit(V14 | V_PREVIEW, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
 
-        RecordComponentVisitor rcv = cw.visitRecordComponent(
+        RecordComponentVisitor rcv = cw.visitRecordComponentExperimental(
+                ACC_DEPRECATED,
                 rcName,
                 rcType,
                 null
             );
 
-        rcv.visitEnd();
+        rcv.visitEndExperimental();
 
         cw.visitEnd();
         return cw.toByteArray();
@@ -84,13 +86,14 @@ import org.objectweb.asm.*;
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         cw.visit(V14 | V_PREVIEW, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
 
-        RecordComponentVisitor rcv = cw.visitRecordComponent(
+        RecordComponentVisitor rcv = cw.visitRecordComponentExperimental(
+                ACC_DEPRECATED,
                 rcName,
                 rcType,
                 null
             );
 
-        rcv.visitEnd();
+        rcv.visitEndExperimental();
 
         /* add invalid method for record component */
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, rcName, "()" + invalidType, null, null);
