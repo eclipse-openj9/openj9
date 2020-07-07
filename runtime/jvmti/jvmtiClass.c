@@ -1172,107 +1172,106 @@ redefineClassesCommon(jvmtiEnv* env,
 		/* Recreate the RAM classes for all classes */
 
 		rc = recreateRAMClasses(currentThread, classPairs, methodPairs, extensionsUsed, !extensionsEnabled);
-		if (rc == JVMTI_ERROR_NONE) {
+		if (rc != JVMTI_ERROR_NONE) {
+			goto failedWithVMAccess;
+		}
+		if (!extensionsEnabled) {
+			/* Fast HCR path - where the J9Class is redefined in place. */
 
-			if (!extensionsEnabled) {
-				/* Fast HCR path - where the J9Class is redefined in place. */
+			/* Add method equivalences for the methods that were re-defined (reverse of before!). Propagate any equivalent resolved callsites. */
+			rc = fixMethodEquivalencesAndCallSites(currentThread, classPairs, jitEventDataPtr, TRUE, &methodEquivalences, extensionsUsed);
+			if (rc != JVMTI_ERROR_NONE) {
+				goto failedWithVMAccess;
+			}
+			/* Fix the vTables of all subclasses */
+			fixVTables_forNormalRedefine(currentThread, classPairs, methodPairs, TRUE, &methodEquivalences);
 
-				/* Add method equivalences for the methods that were re-defined (reverse of before!). Propagate any equivalent resolved callsites. */
-				rc = fixMethodEquivalencesAndCallSites(currentThread, classPairs, jitEventDataPtr, TRUE, &methodEquivalences, extensionsUsed);
-				if (rc != JVMTI_ERROR_NONE) {
-					goto failed;
-				}
-				/* Fix the vTables of all subclasses */
-				fixVTables_forNormalRedefine(currentThread, classPairs, methodPairs, TRUE, &methodEquivalences);
+			/* Update method references in DirectHandles */
+			fixDirectHandles(currentThread, classPairs, methodPairs);
 
-				/* Update method references in DirectHandles */
-				fixDirectHandles(currentThread, classPairs, methodPairs);
+			/* Fix JNI */
+			fixJNIRefs(currentThread, classPairs, TRUE, extensionsUsed);
 
-				/* Fix JNI */
-				fixJNIRefs(currentThread, classPairs, TRUE, extensionsUsed);
+			/* Fix resolved constant pool references to point to new methods. */
+			fixConstantPoolsForFastHCR(currentThread, classPairs, methodPairs);
 
-				/* Fix resolved constant pool references to point to new methods. */
-				fixConstantPoolsForFastHCR(currentThread, classPairs, methodPairs);
+			/* Flush the reflect method cache */
+			flushClassLoaderReflectCache(currentThread, classPairs);
 
-				/* Flush the reflect method cache */
-				flushClassLoaderReflectCache(currentThread, classPairs);
+			/* Store the method remap indices for redefined interface classes */
+			updateInterfaceMethodOrdering(currentThread, class_count, specifiedClasses);
 
-				/* Store the method remap indices for redefined interface classes */
-				updateInterfaceMethodOrdering(currentThread, class_count, specifiedClasses);
+			/* Indicate that a redefine has occurred */
+			vm->hotSwapCount += 1;
 
-				/* Indicate that a redefine has occurred */
-				vm->hotSwapCount += 1;
+			/* Notify the JIT about redefined classes */
+			jitClassRedefineEvent(currentThread, &jitEventData, FALSE);
 
-				/* Notify the JIT about redefined classes */
-				jitClassRedefineEvent(currentThread, &jitEventData, FALSE);
+		} else {
 
-			} else {
+			/* Clear/suspend all breakpoints in the classes being replaced */
+			clearBreakpointsInClasses(currentThread, classPairs);
 
-				/* Clear/suspend all breakpoints in the classes being replaced */
-				clearBreakpointsInClasses(currentThread, classPairs);
+			/* Fix static refs */
+			fixStaticRefs(currentThread, classPairs, extensionsUsed);
 
-				/* Fix static refs */
-				fixStaticRefs(currentThread, classPairs, extensionsUsed);
- 
-				/* Update heap references */
-				fixHeapRefs(vm, classPairs);
+			/* Update heap references */
+			fixHeapRefs(vm, classPairs);
 
-				/* Update method references in DirectHandles */
-				fixDirectHandles(currentThread, classPairs, methodPairs);
- 
-				/* Copy preserved values */
-				copyPreservedValues(currentThread, classPairs, extensionsUsed);
+			/* Update method references in DirectHandles */
+			fixDirectHandles(currentThread, classPairs, methodPairs);
 
-				/* Update the componentType and leafComponentType fields of array classes */
-				fixArrayClasses(currentThread, classPairs);
+			/* Copy preserved values */
+			copyPreservedValues(currentThread, classPairs, extensionsUsed);
 
-				/* Fix JNI */
-				fixJNIRefs(currentThread, classPairs, FALSE, extensionsUsed);
+			/* Update the componentType and leafComponentType fields of array classes */
+			fixArrayClasses(currentThread, classPairs);
 
-				/* Update the iTables of any classes which implement a replaced interface */
-				fixITables(currentThread, classPairs);
+			/* Fix JNI */
+			fixJNIRefs(currentThread, classPairs, FALSE, extensionsUsed);
 
-				/* Fix subclass hierarchy */
-				fixSubclassHierarchy(currentThread, classPairs);
- 
-				/* Unresolve all classes */
-				unresolveAllClasses(currentThread, classPairs, methodPairs, extensionsUsed);
- 
-				/* Update method equivalences. Propagate any equivalent resolved callsites. */
-				rc = fixMethodEquivalencesAndCallSites(currentThread, classPairs, jitEventDataPtr, FALSE, &methodEquivalences, extensionsUsed);
-				if (rc != JVMTI_ERROR_NONE) {
-					goto failed;
-				}
-				/* Fix the vTables of all subclasses */
-				if (!extensionsUsed) {
-					fixVTables_forNormalRedefine(currentThread, classPairs, methodPairs, FALSE, &methodEquivalences);
-				}
+			/* Update the iTables of any classes which implement a replaced interface */
+			fixITables(currentThread, classPairs);
 
-				/* Restore breakpoints in the implicitly replaced classes */
-				restoreBreakpointsInClasses(currentThread, classPairs);
+			/* Fix subclass hierarchy */
+			fixSubclassHierarchy(currentThread, classPairs);
 
-				/* Flush the reflect method cache */
-				flushClassLoaderReflectCache(currentThread, classPairs);
+			/* Unresolve all classes */
+			unresolveAllClasses(currentThread, classPairs, methodPairs, extensionsUsed);
 
-				/* Fix watched fields */
-				fixWatchedFields(vm, classPairs);
+			/* Update method equivalences. Propagate any equivalent resolved callsites. */
+			rc = fixMethodEquivalencesAndCallSites(currentThread, classPairs, jitEventDataPtr, FALSE, &methodEquivalences, extensionsUsed);
+			if (rc != JVMTI_ERROR_NONE) {
+				goto failedWithVMAccess;
+			}
+			/* Fix the vTables of all subclasses */
+			if (!extensionsUsed) {
+				fixVTables_forNormalRedefine(currentThread, classPairs, methodPairs, FALSE, &methodEquivalences);
+			}
 
-				/* Indicate that a redefine has occurred */
-				vm->hotSwapCount += 1;
+			/* Restore breakpoints in the implicitly replaced classes */
+			restoreBreakpointsInClasses(currentThread, classPairs);
+
+			/* Flush the reflect method cache */
+			flushClassLoaderReflectCache(currentThread, classPairs);
+
+			/* Fix watched fields */
+			fixWatchedFields(vm, classPairs);
+
+			/* Indicate that a redefine has occurred */
+			vm->hotSwapCount += 1;
 
 #if JAVA_SPEC_VERSION >= 11
-				/* Update nests with redefined nest tops */
-				fixNestMembers(currentThread, classPairs);
+			/* Update nests with redefined nest tops */
+			fixNestMembers(currentThread, classPairs);
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
-				/* Notify the JIT about redefined classes */
-				jitClassRedefineEvent(currentThread, &jitEventData, extensionsEnabled);
+			/* Notify the JIT about redefined classes */
+			jitClassRedefineEvent(currentThread, &jitEventData, extensionsEnabled);
 #endif
-			}
 		}
 		notifyGCOfClassReplacement(currentThread, classPairs, !extensionsEnabled);
-		hashTableFree(classPairs);
 	}
 
 	J9JVMTI_DATA_FROM_VM(vm)->flags = J9JVMTI_DATA_FROM_VM(vm)->flags & ~J9JVMTI_FLAG_REDEFINE_CLASS_EXTENSIONS_USED;
@@ -1280,6 +1279,10 @@ redefineClassesCommon(jvmtiEnv* env,
 	if (rc == JVMTI_ERROR_NONE) {
 		TRIGGER_J9HOOK_VM_CLASSES_REDEFINED(vm->hookInterface, currentThread);
 	}
+
+failedWithVMAccess:
+
+	hashTableFree(classPairs);
 
 	if (safePoint) {
 		vm->internalVMFunctions->releaseSafePointVMAccess(currentThread);
