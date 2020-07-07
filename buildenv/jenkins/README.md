@@ -60,6 +60,9 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - AIX on ppc64
         - Spec: ppc64_aix
         - Shortname: aix
+    - AIX on ppc64 largeheap/non-compressed references
+        - Spec: ppc64_aix_xl
+        - Shortname: aixlargeheap or aixxl
     - Windows on x86-64
         - Spec: x86-64_windows
         - shortname: win

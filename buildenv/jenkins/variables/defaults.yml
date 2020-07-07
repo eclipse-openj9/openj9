@@ -322,6 +322,11 @@ ppc64_aix:
       15: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
 #========================================#
+# AIX PPC 64bits Large Heap
+#========================================#
+ppc64_aix_xl:
+  extends: ['ppc64_aix', 'largeheap']
+#========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
 x86-64_linux:
