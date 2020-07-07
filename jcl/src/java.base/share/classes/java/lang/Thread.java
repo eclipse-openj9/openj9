@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,14 +80,6 @@ public class Thread implements Runnable {
 	// Instance variables
 	private long threadRef;									// Used by the VM
 	long stackSize = 0;
-	/*[IF Java14]*/
-	/* deadInterrupt tracks the thread interrupt state when threadRef has no reference (ie thread is not alive). 
-	 * Note that this value need not be updated while the thread is running since the interrupt state will be 
-	 * tracked by the vm during that time. Because of this the value should not be used over calling
-	 * isInterrupted() or interrupted().
-	 */
-	private volatile boolean deadInterrupt;
-	/*[ENDIF] Java14 */
 	private volatile boolean started;				// If !isAlive(), tells if Thread died already or hasn't even started
 	private String name;						// The Thread's name
 	private int priority = NORM_PRIORITY;			// The Thread's current priority
@@ -685,10 +677,6 @@ public final ThreadGroup getThreadGroup() {
 
 /**
  * Posts an interrupt request to the receiver
- * 
-/*[IF Java14]
- * From Java 14, the interrupt state for threads that are not alive is tracked.
-/*[ENDIF]
  *
  * @exception	SecurityException
  *					if <code>group.checkAccess()</code> fails with a SecurityException
@@ -712,12 +700,7 @@ public void interrupt() {
 		sun.nio.ch.Interruptible localBlockOn = blockOn;
 		if (localBlockOn != null) {
 			localBlockOn.interrupt(this);
-        }
-        /*[IF Java14]*/
-        if (!isAlive()) {
-		deadInterrupt = true;
-        }
-        /*[ENDIF] Java 14 */
+		}
 	}
 }
 
@@ -738,10 +721,6 @@ public static native boolean interrupted();
 
 /**
  * Posts an interrupt request to the receiver
- * 
-/*[IF Java14]
- * From Java 14, the interrupt state for threads that are not alive is tracked.
-/*[ENDIF]
  *
  * @see			Thread#interrupted
  * @see			Thread#isInterrupted 
@@ -809,11 +788,6 @@ public final boolean isDaemon() {
  */
 public boolean isInterrupted() {
 	synchronized(lock) {
-		/*[IF Java14]*/
-		if (!isAlive()) {
-			return deadInterrupt;
-		}
-		/*[ENDIF] Java14 */
 		return isInterruptedImpl();
 	}
 }
@@ -1551,11 +1525,6 @@ void uncaughtException(Throwable e) {
  * @see J9VMInternals#threadCleanup()
  */
 void cleanup() {
-/*[IF Java14]*/
-	/* Refresh deadInterrupt value so it is accurate when thread reference is removed. */	
-	deadInterrupt = interrupted();
-/*[ENDIF]*/
-
 /*[IF Java11]*/
 	if (threadLocals != null && TerminatingThreadLocal.REGISTRY.isPresent()) {
 		TerminatingThreadLocal.threadTerminated();
