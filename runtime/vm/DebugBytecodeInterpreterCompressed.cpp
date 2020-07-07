@@ -24,7 +24,7 @@
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 #define DEBUG_VERSION
-#define J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES 1
+#define OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES 1
 #define LOOP_NAME debugBytecodeLoopCompressed
 #define INTERPRETER_CLASS VM_DebugBytecodeInterpreterCompressed
 #include "BytecodeInterpreter.inc"
