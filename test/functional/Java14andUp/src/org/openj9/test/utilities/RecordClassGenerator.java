@@ -23,13 +23,16 @@ package org.openj9.test.utilities;
  *******************************************************************************/
 
 import org.objectweb.asm.*;
+import org.openj9.test.util.VersionCheck;
 
  public class RecordClassGenerator implements Opcodes {
+
+    static final int classVersion = VersionCheck.classFile();
 
     /* Generata a valid record with optional attributes */
     public static byte[] generateRecordAttributes(String className, String rcName, String rcType, String rcSignature) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        cw.visit(V14 | V_PREVIEW, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
+        cw.visit(classVersion | V_PREVIEW, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
 
         /* add record component */
         RecordComponentVisitor rcv = cw.visitRecordComponent(
@@ -59,14 +62,14 @@ import org.objectweb.asm.*;
 
     private static byte[] generateRecordWithCustomOpcodes(String className, int access) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        cw.visit(V14 | V_PREVIEW, access, className, null, "java/lang/Record", null);
+        cw.visit(classVersion | V_PREVIEW, access, className, null, "java/lang/Record", null);
         cw.visitEnd();
         return cw.toByteArray();
     }
 
     public static byte[] generateRecordAttributesWithNoAccessor(String className, String rcName, String rcType) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        cw.visit(V14 | V_PREVIEW, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
+        cw.visit(classVersion | V_PREVIEW, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
 
         RecordComponentVisitor rcv = cw.visitRecordComponent(
                 rcName,
@@ -82,7 +85,7 @@ import org.objectweb.asm.*;
 
     public static byte[] generateRecordAttributesWithInvalidAccessor(String className, String rcName, String rcType, String invalidType) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        cw.visit(V14 | V_PREVIEW, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
+        cw.visit(classVersion | V_PREVIEW, ACC_FINAL | ACC_SUPER, className, null, "java/lang/Record", null);
 
         RecordComponentVisitor rcv = cw.visitRecordComponent(
                 rcName,
