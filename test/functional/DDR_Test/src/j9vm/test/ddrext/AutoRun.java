@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -429,6 +429,7 @@ public class AutoRun {
 			suite.addTestSuite(TestDDRExtensionGeneral.class);
 			suite.addTestSuite(TestFindExt.class);
 			suite.addTestSuite(TestTypeResolution.class);
+			suite.addTestSuite(TestCollisionResilientHashtable.class);
 		} else {
 			String[] testCases = testCaseList.split(",");
 			for (String aTest : testCases) {
@@ -441,7 +442,7 @@ public class AutoRun {
 					suite.addTestSuite(TestSharedClassesExt.class);
 				} else if (aTest.trim().equalsIgnoreCase("TestClassExt")) {
 					suite.addTestSuite(TestClassExt.class);
-				} else if (aTest.trim().equalsIgnoreCase("CollisionResilientHashtable")) {
+				} else if (aTest.trim().equalsIgnoreCase("TestCollisionResilientHashtable")) {
 					suite.addTestSuite(TestCollisionResilientHashtable.class);
 				} else if (aTest.trim().equalsIgnoreCase("TestCallsites")) {
 					suite.addTestSuite(TestCallsites.class);
