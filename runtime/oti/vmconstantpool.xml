@@ -208,6 +208,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/reflect/Field" name="type" signature="Ljava/lang/Class;"/>
 	<fieldref class="java/lang/reflect/Field" name="signature" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/reflect/Field" name="modifiers" signature="I"/>
+	<fieldref class="java/lang/reflect/Field" name="trustedFinal" signature="Z" versions="15-"/>
 	<fieldref class="java/lang/reflect/Field" name="annotations" signature="[B"/>
 	<fieldref class="java/lang/reflect/Field" name="intFieldID" signature="I">
 		<fieldalias name="slot"/>

@@ -829,6 +829,11 @@ createField(struct J9VMThread *vmThread, jfieldID fieldID)
 	J9VMJAVALANGREFLECTFIELD_SET_DECLARINGCLASS(vmThread, fieldObject, J9VM_J9CLASS_TO_HEAPCLASS(j9FieldID->declaringClass));
 #if defined(USE_SUN_REFLECT)
 	J9VMJAVALANGREFLECTFIELD_SET_MODIFIERS(vmThread, fieldObject, j9FieldID->field->modifiers & CFR_FIELD_ACCESS_MASK);
+#if JAVA_SPEC_VERSION >= 15
+	if (J9_ARE_ALL_BITS_SET(j9FieldID->field->modifiers, J9AccFinal | J9AccStatic)) {
+		J9VMJAVALANGREFLECTFIELD_SET_TRUSTEDFINAL(vmThread, fieldObject, JNI_TRUE);
+	}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 #endif
 
 	return fieldObject;
