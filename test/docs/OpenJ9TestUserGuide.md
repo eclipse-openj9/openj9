@@ -201,7 +201,7 @@ Above command will run [all possible variations in _testExample](https://github.
 target
 
 #### Run a list of tests <br />
-make _testList TESTLIST=_testTargetName1,_testTargetName2,_testTargetName3 <br />
+make _testList TESTLIST=testTargetName1,testTargetName2,testTargetName3 <br />
 e.g.,
 ```
 make _testList TESTLIST=jit_jitt,jit_recognizedMethod,testSCCMLTests2_1
