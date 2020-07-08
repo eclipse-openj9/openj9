@@ -628,6 +628,10 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
    cg->addSnippet(snippet);
    doneLabel->setEndInternalControlFlow();
 
+   cg->stopUsingRegister(dataReg);
+   cg->stopUsingRegister(addrReg);
+   cg->stopUsingRegister(tempReg);
+
    cg->decReferenceCount(objNode);
    cg->machine()->setLinkRegisterKilled(true);
    return NULL;
@@ -1570,6 +1574,10 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64MonitorEnterSnippet(cg, node, incLabel, callLabel, doneLabel);
    cg->addSnippet(snippet);
    doneLabel->setEndInternalControlFlow();
+
+   cg->stopUsingRegister(dataReg);
+   cg->stopUsingRegister(addrReg);
+   cg->stopUsingRegister(tempReg);
 
    cg->decReferenceCount(objNode);
    cg->machine()->setLinkRegisterKilled(true);
