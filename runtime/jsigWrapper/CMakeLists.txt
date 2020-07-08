@@ -60,11 +60,9 @@ if(OMR_OS_LINUX)
 	)
 endif()
 
-if(J9VM_IS_NON_STAGING)
-	set_target_properties(jsig PROPERTIES
-		ARCHIVE_OUTPUT_DIRECTORY ${j9vm_BINARY_DIR}/lib
-	)
-endif()
+set_target_properties(jsig PROPERTIES
+	ARCHIVE_OUTPUT_DIRECTORY ${j9vm_BINARY_DIR}/lib
+)
 
 install(
 	TARGETS jsig

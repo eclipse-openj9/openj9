@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2018, 2019 IBM Corp. and others
+# Copyright (c) 2018, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,9 +39,6 @@ find_program(CMAKE_Java_AR       NAMES jar   PATHS ${BOOT_JDK}/bin NO_DEFAULT_PA
 set(Java_JAVA_EXECUTABLE ${CMAKE_Java_RUNTIME})
 set(Java_JAVAC_EXECUTABLE ${CMAKE_Java_COMPILER})
 set(Java_JAR_EXECUTABLE ${CMAKE_Java_AR})
-
-# Note: this is a temporary transition variable.
-set(J9VM_IS_NON_STAGING TRUE)
 
 add_subdirectory(sourcetools)
 add_subdirectory(runtime)
