@@ -298,6 +298,13 @@ J9::CodeGenerator::fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt, const boo
    prevBlock->append(TR::TreeTop::create(comp, ifacmpeqNode));
    }
 
+bool J9::CodeGenerator::supportsMergingGuards()
+   {
+   return self()->getSupportsVirtualGuardNOPing() &&
+          self()->comp()->performVirtualGuardNOPing() &&
+          self()->allowGuardMerging();
+   }
+
 void
 J9::CodeGenerator::lowerNonhelperCallIfNeeded(TR::Node *node, TR::TreeTop *tt)
    {

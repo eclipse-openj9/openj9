@@ -125,6 +125,8 @@ public:
    */
    bool willGenerateNOPForVirtualGuard(TR::Node* node);
 
+   bool supportsMergingGuards();
+
    void zeroOutAutoOnEdge(TR::SymbolReference * liveAutoSym, TR::Block *block, TR::Block *succBlock, TR::list<TR::Block*> *newBlocks, TR_ScratchList<TR::Node> *fsdStores);
 
    TR::Linkage *createLinkageForCompilation();
