@@ -21,14 +21,49 @@
 ################################################################################
 
 omr_add_tracegen(j9vm.tdf)
-j9vm_add_library(j9vm SHARED
-	OUTPUT_NAME j9vm${J9VM_VERSION_SUFFIX}
+
+set(interp_flags_to_remove) # list of flags removed when compiling the interpreter
+set(interp_new_flags) # flags to be added when compiling the interpreter
+
+# Note: the uma makefiles also specify this for pLinux, however it appears we no longer
+# support building the interpreter with xlc on linux
+if(OMR_ARCH_POWER AND OMR_OS_AIX)
+	if(OMR_TOOLCONFIG STREQUAL "xlc")
+		list(APPEND interp_flags_to_remove "-O3")
+		list(APPEND interp_new_flags "-O2" "-qdebug=lincomm:ptranl:tfbagg")
+		# Note: the following code is specified in the UMA builds, however,
+		# it isn't currently reachable, so it is block commneted out ( #[[ ]] )
+		#[[
+		if(OMR_OS_LINUX)
+			# TODO -qpic=large -> -qpic
+			# however at the moment all plinux builds with xlc use -qpic anyway
+			list(APPEND interp_new_flags "-qmaxmem=-1")
+		endif()
+		]]
+	endif()
+
+endif()
+
+if(interp_flags_to_remove)
+	# Keep track of which flags we have actually removed from CMAKE_CXX_FLAGS,
+	# so that later we don't try re-adding flags that never existed
+	set(removed_flags)
+	foreach(flag IN LISTS interp_flags_to_remove)
+		set(old_cxx_flags ${CMAKE_CXX_FLAGS})
+		omr_remove_flags(CMAKE_CXX_FLAGS "${flag}")
+		if(NOT old_cxx_flags STREQUAL CMAKE_CXX_FLAGS)
+			list(APPEND removed_flags "${flag}")
+		endif()
+	endforeach()
+
+	set(interp_flags_to_remove ${removed_flags})
+endif()
+
+set(main_sources
 	annsup.c
 	AsyncMessageHandler.cpp
 	bchelper.c
 	bindnatv.cpp
-	BytecodeInterpreterFull.cpp
-	BytecodeInterpreterCompressed.cpp
 	callin.cpp
 	classallocation.c
 	ClassInitialization.cpp
@@ -36,8 +71,6 @@ j9vm_add_library(j9vm SHARED
 	classseg.c
 	classsupport.c
 	createramclass.cpp
-	DebugBytecodeInterpreterFull.cpp
-	DebugBytecodeInterpreterCompressed.cpp
 	description.c
 	dllsup.c
 	drophelp.c
@@ -86,8 +119,6 @@ j9vm_add_library(j9vm SHARED
 	logsupport.c
 	lookuphelper.c
 	lookupmethod.c
-	MHInterpreterCompressed.cpp
-	MHInterpreterFull.cpp
 	ModularityHashTables.c
 	monhelpers.c
 	montable.c
@@ -129,6 +160,42 @@ j9vm_add_library(j9vm SHARED
 
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vm.c
 )
+set(interpreter_sources
+	BytecodeInterpreterCompressed.cpp
+	BytecodeInterpreterFull.cpp
+	DebugBytecodeInterpreterCompressed.cpp
+	DebugBytecodeInterpreterFull.cpp
+	MHInterpreterCompressed.cpp
+	MHInterpreterFull.cpp
+)
+
+j9vm_add_library(j9vm SHARED
+	OUTPUT_NAME j9vm${J9VM_VERSION_SUFFIX}
+	${main_sources}
+	${interpreter_sources}
+)
+
+if(interp_flags_to_remove)
+	# Since we removed the flags from CMAKE_CXX_FLAGS, we need to add them back
+	# to everything except the compiler
+	set(cpp_sources)
+	foreach(srcfile IN LISTS main_sources)
+		get_filename_component(extension "${srcfile}" EXT)
+		if(extension STREQUAL ".cpp")
+			list(APPEND cpp_sources "${srcfile}")
+		endif()
+	endforeach()
+
+	# COMPILE_FLAGS property expects a string, not a list
+	omr_stringify(flags_str ${interp_flags_to_remove})
+	set_property(SOURCE ${cpp_sources} APPEND_STRING PROPERTY COMPILE_FLAGS " ${flags_str}")
+endif()
+
+if(interp_new_flags)
+	# COMPILE_FLAGS property expects a string, not a list
+	omr_stringify(flags_str ${interp_new_flags})
+	set_property(SOURCE ${interpreter_sources} APPEND_STRING PROPERTY COMPILE_FLAGS " ${flags_str}")
+endif()
 
 
 # JIT helper methods require us to disable buffer security checks on Windows
