@@ -663,6 +663,12 @@ def set_test_targets() {
         }
     }
     echo "TESTS:'${TESTS}'"
+
+    // Set SDK Implementation, default to OpenJ9
+    SDK_IMPL = buildspec.getScalarField("sdk_impl", 'all') ?: 'openj9'
+    SDK_IMPL_SHORT = buildspec.getScalarField("sdk_impl_short", 'all') ?: 'j9'
+    echo "SDK_IMPL:'${SDK_IMPL}'"
+    echo "SDK_IMPL_SHORT:'${SDK_IMPL_SHORT}'"
 }
 
 /*

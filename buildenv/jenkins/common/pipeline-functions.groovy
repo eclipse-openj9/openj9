@@ -462,7 +462,7 @@ def get_test_job_name(targetName, spec, version, identifier) {
     if (spec ==~ /.*_valhalla/) {
         version = 'valhalla'
     }
-    return "Test_openjdk${version}_j9_${targetName}_${spec}_${id}"
+    return "Test_openjdk${version}_${SDK_IMPL_SHORT}_${targetName}_${spec}_${id}"
 }
 
 def convert_build_identifier(val) {
@@ -593,7 +593,7 @@ def generate_test_jobs(TESTS, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO) {
             string(name: 'JDK_VERSIONS', value: sdk_version),
             string(name: 'SUFFIX', value: "_${spec_id['id']}"),
             string(name: 'ARCH_OS_LIST', value: spec_id['spec']),
-            string(name: 'JDK_IMPL', value: 'openj9'),
+            string(name: 'JDK_IMPL', value: SDK_IMPL),
             string(name: 'ARTIFACTORY_SERVER', value: ARTIFACTORY_SERVER),
             string(name: 'ARTIFACTORY_REPO', value: ARTIFACTORY_REPO),
             string(name: 'BUILDS_TO_KEEP', value: DISCARDER_NUM_BUILDS),
