@@ -673,6 +673,24 @@ getLineNumberForROMClassFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9RO
 	return number;
 }
 
+U_32*
+getNumberOfPermittedSubclassesPtr(J9ROMClass *romClass)
+{
+	U_32 *ptr = getSRPPtr(J9ROMCLASS_OPTIONALINFO(romClass), romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PERMITTEDSUBCLASSES_ATTRIBUTE);
+
+	Assert_VMUtil_true(ptr != NULL);
+
+	return SRP_PTR_GET(ptr, U_32*);
+}
+
+J9UTF8*
+permittedSubclassesNameAtIndex(U_32* permittedSubclassesCountPtr, U_32 index) {
+	/* SRPs to PermittedSubclass name constant pool entries start after the permittedSubclassCountPtr */
+	U_32* permittedSubclassPtr = permittedSubclassesCountPtr + 1 + index;
+
+	return NNSRP_PTR_GET(permittedSubclassPtr, J9UTF8*);
+}
+
 U_32
 getNumberOfRecordComponents(J9ROMClass *romClass)
 {

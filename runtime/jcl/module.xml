@@ -36,6 +36,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<xi:include href="uma/se9_exports.xml"></xi:include>
 	<xi:include href="uma/se11_exports.xml"></xi:include>
 	<xi:include href="uma/se14_exports.xml"></xi:include>
+	<xi:include href="uma/se15_exports.xml"></xi:include>
 
 	<xi:include href="uma/vendor_jcl_exports.xml">
 		<xi:fallback/>
@@ -98,6 +99,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</group>
 			<group name="se14">
 				<include-if condition="spec.java14"/>
+			</group>
+			<group name="se15">
+				<include-if condition="spec.java15"/>
 			</group>
 		</exports>
 

@@ -4739,6 +4739,32 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	 */
 	public native boolean isSealed();
 
+	/**
+	 * Returns an array of permitted subclasses as ClassDesc objects related to the calling class.
+	 * 
+	 * @return array of ClassDesc objects.
+	 * For a class that is not sealed, an empty array is returned.
+	 */
+	@CallerSensitive
+	public ClassDesc[] permittedSubclasses() {
+		if (!isSealed()) {
+			return new ClassDesc[0];
+		}
+
+		String[] permittedSubclassesNames = permittedSubclassesImpl();
+		ClassDesc[] permittedSubclasses = new ClassDesc[permittedSubclassesNames.length];
+
+		for (int i = 0; i < permittedSubclassesNames.length; i++) {
+			String subclassName = permittedSubclassesNames[i];
+			/* ClassDesc.of requires a dot separated name. */
+			subclassName = subclassName.replace('/', '.');
+			permittedSubclasses[i] = ClassDesc.of(subclassName);
+		}
+		return permittedSubclasses;
+	}
+
+	private native String[] permittedSubclassesImpl();
+
 	// TODO: implement support for hidden classes.
 	public boolean isHidden() {
 		return false;
