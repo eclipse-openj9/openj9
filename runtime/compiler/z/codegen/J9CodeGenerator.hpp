@@ -76,6 +76,7 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
 
    bool alwaysGeneratesAKnownCleanSign(TR::Node *node);
    bool alwaysGeneratesAKnownPositiveCleanSign(TR::Node *node);
+   bool canUseRelativeLongInstructions(int64_t value);
    TR_RawBCDSignCode alwaysGeneratedSign(TR::Node *node);
 
    uint32_t getPDMulEncodedSize(TR::Node *pdmul, TR_PseudoRegister *multiplicand, TR_PseudoRegister *multiplier);
