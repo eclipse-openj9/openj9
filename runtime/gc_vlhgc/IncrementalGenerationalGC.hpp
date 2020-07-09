@@ -42,7 +42,7 @@
 #include "GCExtensions.hpp"
 #include "GlobalCollector.hpp"
 #include "GlobalMarkDelegate.hpp"
-#include "MasterGCThread.hpp"
+#include "MainGCThread.hpp"
 #include "ModronTypes.hpp"
 #include "PartialMarkDelegate.hpp"
 #include "ProjectedSurvivalCollectionSetDelegate.hpp"
@@ -103,7 +103,7 @@ private:
 	UDATA _taxationThreshold;	/**< The number of bytes which can be allocated between taxation points */
 	UDATA _allocatedSinceLastPGC;	/**< The number of bytes which can be allocated between PGCs */
 
-	MM_MasterGCThread _masterGCThread; /**< An object which manages the state of the master GC thread */ 
+	MM_MainGCThread _masterGCThread; /**< An object which manages the state of the master GC thread */ 
 	
 	MM_CycleStateVLHGC _persistentGlobalMarkPhaseState; /**< Since the GMP can be fragmented into increments running across several pauses, we need to store the cycle state data */
 	volatile bool _forceConcurrentTermination;	/**< Setting this to true will cause any concurrent GMP work being done for this collector to stop and return.  It is volatile because it is shared state between this and the concurrent task's increment manager */
@@ -422,7 +422,7 @@ public:
 
 	MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager);
 
-	friend class MM_MasterGCThread;
+	friend class MM_MainGCThread;
 
 protected:
 	virtual void reportGCStart(MM_EnvironmentBase *env);
