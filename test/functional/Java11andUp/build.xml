@@ -56,7 +56,7 @@
 			<include name="**/condy/BootstrapMethods.java" />
 			<include name="**/condy/CondyGenerator.java" />
 			<classpath>
-				<pathelement location="${LIB_DIR}/asm-8.0.1.jar" />
+				<pathelement location="${LIB_DIR}/asm.jar" />
 			</classpath>
 		</javac>
 	</target>
@@ -67,7 +67,7 @@
 		<java classname="org.openj9.test.condy.CondyGenerator" fork="true" failonerror="true" logError="true" jvm="${javaexecutable.java}">
 			<jvmarg value="-Xverify:none" />
 			<classpath>
-				<pathelement location="${LIB_DIR}/asm-8.0.1.jar" />
+				<pathelement location="${LIB_DIR}/asm.jar" />
 				<pathelement location="${build}" />
 			</classpath>
 		</java>
@@ -94,7 +94,7 @@
 			<classpath>
 				<pathelement location="${LIB_DIR}/testng.jar"/>
 				<pathelement location="${LIB_DIR}/jcommander.jar"/>
-				<pathelement location="${LIB_DIR}/asm-8.0.1.jar" />
+				<pathelement location="${LIB_DIR}/asm.jar" />
 				<pathelement location="${build}" />
 			</classpath>
 		</javac>
