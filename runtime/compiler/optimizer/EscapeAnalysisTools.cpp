@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,7 @@ void TR_EscapeAnalysisTools::insertFakeEscapeForOSR(TR::Block *block, TR::Node *
    {
    if (_loads == NULL)
       _loads = new (_comp->trMemory()->currentStackRegion()) NodeDeque(NodeDequeAllocator(_comp->trMemory()->currentStackRegion()));
-   else   
+   else
       _loads->clear();
 
    TR_ByteCodeInfo &bci = induceCall->getByteCodeInfo();
@@ -62,33 +62,59 @@ void TR_EscapeAnalysisTools::insertFakeEscapeForOSR(TR::Block *block, TR::Node *
    int32_t byteCodeIndex = bci.getByteCodeIndex();
    TR_OSRCompilationData *osrCompilationData = _comp->getOSRCompilationData();
 
+   // The symrefs provided through OSR liveness data are only valid at the
+   // point of the OSR liveness analysis.  After transformations have been
+   // applied to the trees, stores to those original symbols might have been
+   // eliminated, so they cannot be relied upon directly on the eaEscapeHelper
+   // call.  Instead, we use the DefiningMaps which provide a map from each
+   // symref in the OSR liveness data to the symrefs whose definitions in the
+   // current trees correspond to the definition of the original symref at the
+   // point of the OSR liveness analysis.
+   //
+   // Setting the TR_DisableEAEscapeHelperDefiningMap environment variable
+   // prevents the use of DefiningMaps in setting up the eaEscapeHelper call.
+   // This might be used to help identify problems in the DefiningMaps, but
+   // setting it will fall back to using the original OSR liveness data
+   // instead, which itself may very well be incorrect.  Setting this
+   // environment variable should not be relied upon as a work around.
+   //
+   TR_OSRMethodData *osrMethodData  = _comp->getOSRCompilationData()->getOSRMethodDataArray()[inlinedIndex + 1];
+   static char *disableEADefiningMap = feGetEnv("TR_DisableEAEscapeHelperDefiningMap");
+   DefiningMap *induceDefiningMap = !disableEADefiningMap ? osrMethodData->getDefiningMap() : NULL;
+
+   if (_comp->trace(OMR::escapeAnalysis) && induceDefiningMap)
+      {
+      traceMsg(_comp, "definingMap at induceCall n%dn %d:%d\n", induceCall->getGlobalIndex(), induceCall->getByteCodeInfo().getCallerIndex(), induceCall->getByteCodeInfo().getByteCodeIndex());
+      _comp->getOSRCompilationData()->printMap(induceDefiningMap);
+      }
+
    // Gather all live autos and pending pushes at this point for inlined methods in _loads
    // This ensures objects that EA can stack allocate will be heapified if OSR is induced
    while (inlinedIndex > -1)
       {
       TR::ResolvedMethodSymbol *rms = _comp->getInlinedResolvedMethodSymbol(inlinedIndex);
-      TR_ASSERT_FATAL(rms, "Unknwon resolved method during escapetools");
+      TR_ASSERT_FATAL(rms, "Unknown resolved method during escapetools");
       TR_OSRMethodData *methodData = osrCompilationData->findOSRMethodData(inlinedIndex, rms);
-      processAutosAndPendingPushes(rms, methodData, byteCodeIndex);
+      processAutosAndPendingPushes(rms, induceDefiningMap, methodData, byteCodeIndex);
       byteCodeIndex = _comp->getInlinedCallSite(inlinedIndex)._byteCodeInfo.getByteCodeIndex();
       inlinedIndex = _comp->getInlinedCallSite(inlinedIndex)._byteCodeInfo.getCallerIndex();
       }
 
-   // handle the outter most method
+   // handle the outermost method
       {
       TR_OSRMethodData *methodData = osrCompilationData->findOSRMethodData(-1, _comp->getMethodSymbol());
-      processAutosAndPendingPushes(_comp->getMethodSymbol(), methodData, byteCodeIndex);
+      processAutosAndPendingPushes(_comp->getMethodSymbol(), induceDefiningMap, methodData, byteCodeIndex);
       }
    insertFakeEscapeForLoads(block, induceCall, _loads);
    }
 
-void TR_EscapeAnalysisTools::processAutosAndPendingPushes(TR::ResolvedMethodSymbol *rms, TR_OSRMethodData *methodData, int32_t byteCodeIndex)
+void TR_EscapeAnalysisTools::processAutosAndPendingPushes(TR::ResolvedMethodSymbol *rms, DefiningMap *induceDefiningMap, TR_OSRMethodData *methodData, int32_t byteCodeIndex)
    {
-   processSymbolReferences(rms->getAutoSymRefs(), methodData->getLiveRangeInfo(byteCodeIndex));
-   processSymbolReferences(rms->getPendingPushSymRefs(), methodData->getPendingPushLivenessInfo(byteCodeIndex));
+   processSymbolReferences(rms->getAutoSymRefs(), induceDefiningMap, methodData->getLiveRangeInfo(byteCodeIndex));
+   processSymbolReferences(rms->getPendingPushSymRefs(), induceDefiningMap, methodData->getPendingPushLivenessInfo(byteCodeIndex));
    }
 
-void TR_EscapeAnalysisTools::processSymbolReferences(TR_Array<List<TR::SymbolReference>> *symbolReferences, TR_BitVector *deadSymRefs)
+void TR_EscapeAnalysisTools::processSymbolReferences(TR_Array<List<TR::SymbolReference>> *symbolReferences, DefiningMap *induceDefiningMap, TR_BitVector *deadSymRefs)
    {
    for (int i = 0; symbolReferences && i < symbolReferences->size(); i++)
       {
@@ -96,10 +122,40 @@ void TR_EscapeAnalysisTools::processSymbolReferences(TR_Array<List<TR::SymbolRef
       ListIterator<TR::SymbolReference> autosIt(&autosList);
       for (TR::SymbolReference* symRef = autosIt.getFirst(); symRef; symRef = autosIt.getNext())
          {
-         TR::AutomaticSymbol *p = symRef->getSymbol()->getAutoSymbol();
-         if (p && p->getDataType() == TR::Address && (deadSymRefs == NULL || !deadSymRefs->isSet(symRef->getReferenceNumber())))
+         TR::Symbol *p = symRef->getSymbol();
+         if ((p->isAuto() || p->isParm()) && p->getDataType() == TR::Address)
             {
-            _loads->push_back(TR::Node::createWithSymRef(TR::aload, 0, symRef));
+            // If no DefiningMap is available for the current sym ref, or the
+            // DefiningMap is empty, simply use the sym ref on the
+            // eaEscapeHelper if it's live.  Otherwise, walk through the
+            // DefiningMap and place all the sym refs for autos and parameters
+            // whose definitions map to the sym ref from the OSR
+            // liveness data that we're currently looking at.
+            if (!induceDefiningMap
+                || induceDefiningMap->find(symRef->getReferenceNumber()) == induceDefiningMap->end())
+               {
+               if (deadSymRefs == NULL || !deadSymRefs->isSet(symRef->getReferenceNumber()))
+                  {
+                  _loads->push_back(TR::Node::createWithSymRef(TR::aload, 0, symRef));
+                  }
+               }
+            else
+               {
+               TR_BitVector *definingSyms = (*induceDefiningMap)[symRef->getReferenceNumber()];
+               TR_BitVectorIterator definingSymsIt(*definingSyms);
+               while (definingSymsIt.hasMoreElements())
+                  {
+                  int32_t definingSymRefNum = definingSymsIt.getNextElement();
+                  TR::SymbolReference *definingSymRef = _comp->getSymRefTab()->getSymRef(definingSymRefNum);
+                  TR::Symbol *definingSym = definingSymRef->getSymbol();
+
+                  if ((definingSym->isAuto() || definingSym->isParm())
+                      && (deadSymRefs == NULL || !deadSymRefs->isSet(definingSymRefNum)))
+                     {
+                     _loads->push_back(TR::Node::createWithSymRef(TR::aload, 0, definingSymRef));
+                     }
+                  }
+               }
             }
          }
       }
