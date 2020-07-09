@@ -26,5 +26,5 @@ ASM_JAR=$(LIB_DIR)$(D)asm-all.jar
 # if JDK_VERSION is not 8
 ifeq ($(filter 8, $(JDK_VERSION)),)
  ADD_EXPORTS=--add-exports=java.base/com.ibm.oti.vm=ALL-UNNAMED
- ASM_JAR=$(LIB_DIR)$(D)asm-8.0.1.jar
+ ASM_JAR=$(LIB_DIR)$(D)asm.jar
 endif
