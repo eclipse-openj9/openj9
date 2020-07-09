@@ -1,49 +1,49 @@
-<#-- 
-	Copyright (c) 1998, 2020 IBM Corp. and others
-	
-	This program and the accompanying materials are made available under
-	the terms of the Eclipse Public License 2.0 which accompanies this
-	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-	or the Apache License, Version 2.0 which accompanies this distribution and
-	is available at https://www.apache.org/licenses/LICENSE-2.0.
-	
-	This Source Code may also be made available under the following
-	Secondary Licenses when the conditions for such availability set
-	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-	General Public License, version 2 with the GNU Classpath
-	Exception [1] and GNU General Public License, version 2 with the
-	OpenJDK Assembly Exception [2].
-	
-	[1] https://www.gnu.org/software/classpath/license.html
-	[2] http://openjdk.java.net/legal/assembly-exception.html
+<#--
+Copyright (c) 1998, 2020 IBM Corp. and others
 
-	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <#assign lib_target_rule>
 UMA_BYPRODUCTS+=$($(UMA_TARGET_NAME)_pdb)
-$(UMA_LIBTARGET):  $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
+$(UMA_LIBTARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 	$(IMPLIB) -out:$@ $(UMA_OBJECTS) $(UMA_LINK_LIBRARIES)
 </#assign>
 <#assign dll_target_rule>
 UMA_BYPRODUCTS+=$($(UMA_TARGET_NAME)_exp) $($(UMA_TARGET_NAME)_pdb)
-		
-$(UMA_LIBTARGET):  $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)  $(UMA_TARGET_NAME).def
+
+$(UMA_LIBTARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES) $(UMA_TARGET_NAME).def
 	$(IMPLIB) -subsystem:$(UMA_SUBSYSTEM_TYPE) -out:$@ -def:$(UMA_TARGET_NAME).def $(UMA_LIBRARIAN_OPTIONS) $(UMA_OBJECTS) $(UMA_LINK_PATH) $(UMA_LINK_LIBRARIES)
-						
-$(UMA_DLLTARGET): $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES) $(UMA_LIBTARGET)
+
+$(UMA_DLLTARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES) $(UMA_LIBTARGET)
 	$(LINK) $(VMLINK) $(UMA_VMLINK_OPTIONS) $(DLLFLAGS) $(DLLBASEADDRESS) -machine:$(UMA_CPU) \
-	  -subsystem:$(UMA_SUBSYSTEM_TYPE) -out:$@ -map:$(UMA_TARGET_NAME).map \
+	  -subsystem:$(UMA_SUBSYSTEM_TYPE) -out:$@ -map:$(@:.dll=.map) \
 	  $(UMA_DELAYLOAD_INSTRUCTIONS) $(UMA_OBJECTS) $(UMA_LINK_PATH) $(UMA_LINK_LIBRARIES) $(UMA_DLL_LINK_FLAGS) \
 	  $(UMA_EXTRA_SYSTEM_LIBRARIES) $($(UMA_TARGET_NAME)_exp)
 ifeq ($(UMA_SINGLE_REBASE),1)
-	$(warning UMA_SINGLE_REBASE specified, suppressing per-directory rebase.) 
+	$(warning UMA_SINGLE_REBASE specified, suppressing per-directory rebase.)
 else
 	$(MAKE) -C $(UMA_PATH_TO_ROOT) rebase
 endif
 </#assign>
 <#assign exe_target_rule>
-$(UMA_EXETARGET): $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
+$(UMA_EXETARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 	$(LINK) $(UMA_EXEFLAGS) $(UMA_VMLINK_OPTIONS) $(VMLINK) -out:$@ -subsystem:$(UMA_SUBSYSTEM_TYPE) \
 	 -machine:$(UMA_CPU) $(UMA_EXE_LINK_FLAGS) $(UMA_OBJECTS) $(UMA_LINK_LIBRARIES) $(UMA_EXELIBS) \
 	 $(UMA_EXTRA_SYSTEM_LIBRARIES)
@@ -52,7 +52,7 @@ $(UMA_EXETARGET): $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 
 UMA_LIBRARIAN_OPTIONS+=-machine:$(UMA_CPU)
 
-DLLFLAGS+=/INCREMENTAL:NO /NOLOGO 
+DLLFLAGS+=/INCREMENTAL:NO /NOLOGO
 <#if uma.spec.processor.x86>
 DLLFLAGS+=-entry:_DllMainCRTStartup@12
 <#elseif uma.spec.processor.amd64>
@@ -83,7 +83,7 @@ endif
 </#if>
 
 <#if uma.spec.flags.size_smallCode.enabled>
-UMA_VMLINK_OPTIONS+=/opt:nowin98 $(UMA_SAFESEH) /opt:icf,10 /opt:ref /map:$(UMA_TARGET_NAME).map
+UMA_VMLINK_OPTIONS+=/opt:nowin98 $(UMA_SAFESEH) /opt:icf,10 /opt:ref /map:$$(@:.dll=.map)
 <#else>
 UMA_VMLINK_OPTIONS+=/debug $(UMA_SAFESEH) /opt:icf /opt:ref
 </#if>
@@ -212,7 +212,6 @@ CXXFLAGS+=-MD -D_DLL
 	CLANG_CXXFLAGS+=-D_DLL
   endif
 endif # ifeq ($(UMA_NO_CRT),1)
-
 
 <#if !uma.spec.properties.uma_does_not_require_resource_files.defined>
 ifeq ($(UMA_TARGET_TYPE),EXE)
