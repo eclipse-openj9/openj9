@@ -1914,10 +1914,6 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
             }
          }
 
-      if (TR::Options::sharedClassCache() && TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching))
-         if (!TR_J9SharedCache::initCCVCaching())
-            return -1;
-
       if (TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT))
          {
          javaVM->sharedClassConfig->runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_AOT;

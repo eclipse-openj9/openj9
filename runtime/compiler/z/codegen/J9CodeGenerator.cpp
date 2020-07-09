@@ -3675,6 +3675,15 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
    return cursor;
    }
 
+bool J9::Z::CodeGenerator::canUseRelativeLongInstructions(int64_t value)
+   {
+   if (self()->comp()->isOutOfProcessCompilation())
+      {
+      return false;
+      }
+   return OMR::CodeGeneratorConnector::canUseRelativeLongInstructions(value);
+   }
+
 TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperPrePrologue(TR::Instruction* cursor)
    {
    TR::Compilation* comp = self()->comp();
