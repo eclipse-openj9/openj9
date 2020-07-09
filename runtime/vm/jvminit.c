@@ -575,7 +575,6 @@ void OMRNORETURN exitJavaVM(J9VMThread * vmThread, IDATA rc)
 
 #if defined(WIN32)
 		/* Do not attempt to exit while a JNI shared library open is in progress */
-		omrthread_monitor_enter(vm->nativeLibraryMonitor);
 		omrthread_monitor_enter(vm->classLoaderBlocksMutex);
 #endif
 
