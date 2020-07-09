@@ -24,19 +24,22 @@
 
 #include <algorithm>
 #include "j9cfg.h"
+#include "control/CompilationRuntime.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "compile/ResolvedMethod.hpp"
+#include "env/ClassLoaderTable.hpp"
+#include "env/ClassTableCriticalSection.hpp"
 #include "env/jittypes.h"
+#include "env/j9method.h"
+#include "env/PersistentCHTable.hpp"
 #include "env/VMAccessCriticalSection.hpp"
+#include "env/VMJ9.h"
 #include "exceptions/PersistenceFailure.hpp"
 #include "infra/CriticalSection.hpp"
 #include "runtime/CodeRuntime.hpp"
-#include "control/CompilationRuntime.hpp"
-#include "env/VMJ9.h"
-#include "env/j9method.h"
 #include "runtime/IProfiler.hpp"
-#include "env/ClassLoaderTable.hpp"
+#include "runtime/RuntimeAssumptions.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationThread.hpp" // for TR::compInfoPT
 #include "control/JITServerHelpers.hpp"
@@ -52,9 +55,6 @@
 TR_J9SharedCache::TR_J9SharedCacheDisabledReason TR_J9SharedCache::_sharedCacheState = TR_J9SharedCache::UNINITIALIZED;
 TR_YesNoMaybe TR_J9SharedCache::_sharedCacheDisabledBecauseFull = TR_maybe;
 UDATA TR_J9SharedCache::_storeSharedDataFailedLength = 0;
-
-TR_J9SharedCache::CCVMap *TR_J9SharedCache::_ccvMap = NULL;
-TR::Monitor *TR_J9SharedCache::_classChainValidationMutex = NULL;
 
 TR_YesNoMaybe TR_J9SharedCache::isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo)
    {
@@ -100,47 +100,33 @@ TR_YesNoMaybe TR_J9SharedCache::isSharedCacheDisabledBecauseFull(TR::Compilation
    return _sharedCacheDisabledBecauseFull;
    }
 
-bool
-TR_J9SharedCache::initCCVCaching()
+const CCVResult
+TR_J9SharedCache::getCachedCCVResult(TR_OpaqueClassBlock *clazz)
    {
-   if (!_classChainValidationMutex)
+   if (TR::Options::getCmdLineOptions()->allowRecompilation()
+       && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
       {
-      if (!(_classChainValidationMutex = TR::Monitor::create("JIT-ClassChainValidationMutex")))
-         return false;
+      TR::ClassTableCriticalSection cacheResult(_fe);
+      TR_PersistentCHTable *table = _compInfo->getPersistentInfo()->getPersistentCHTable();
+      TR_PersistentClassInfo *classInfo = table->findClassInfo(clazz);
+      return classInfo->getCCVResult();
       }
-
-   if (!_ccvMap)
-      {
-      void *storage = jitPersistentAlloc(sizeof(CCVMap));
-      if (!storage)
-         return false;
-
-      _ccvMap = new (storage) CCVMap(CCVComparator(), getPersistentAllocator());
-      }
-
-   return true;
-   }
-
-TR_J9SharedCache::CCVResult
-TR_J9SharedCache::getCachedCCVResult(uintptr_t classOffsetInCache)
-   {
-   OMR::CriticalSection getCachedResult(_classChainValidationMutex);
-
-   auto iter = _ccvMap->find(classOffsetInCache);
-   if (iter == _ccvMap->end())
-      return CCVResult::notYetValidated;
-   else
-      return iter->second;
+   return CCVResult::notYetValidated;
    }
 
 bool
-TR_J9SharedCache::cacheCCVResult(uintptr_t classOffsetInCache, CCVResult result)
+TR_J9SharedCache::cacheCCVResult(TR_OpaqueClassBlock *clazz, CCVResult result)
    {
-   OMR::CriticalSection cacheResult(_classChainValidationMutex);
-
-   auto res = _ccvMap->insert(std::make_pair(classOffsetInCache, result));
-
-   return res.second;
+   if (TR::Options::getCmdLineOptions()->allowRecompilation()
+       && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+      {
+      TR::ClassTableCriticalSection cacheResult(_fe);
+      TR_PersistentCHTable *table = _compInfo->getPersistentInfo()->getPersistentCHTable();
+      TR_PersistentClassInfo *classInfo = table->findClassInfo(clazz);
+      classInfo->setCCVResult(result);
+      return true;
+      }
+   return false;
    }
 
 TR_J9SharedCache::TR_J9SharedCache(TR_J9VMBase *fe)
@@ -944,7 +930,7 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
     */
    if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching))
       {
-      auto result = getCachedCCVResult(classOffsetInCache);
+      auto result = getCachedCCVResult(reinterpret_cast<TR_OpaqueClassBlock *>(clazz));
       if (result == CCVResult::success)
          {
          LOG(1, "\tcached result: validation succeeded\n");
@@ -980,7 +966,7 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
       {
       LOG(1, "\tno stored chain, returning false\n");
       if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching))
-         cacheCCVResult(classOffsetInCache, CCVResult::failure);
+         cacheCCVResult(reinterpret_cast<TR_OpaqueClassBlock *>(clazz), CCVResult::failure);
 
       return false;
       }
@@ -997,7 +983,7 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
    if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching))
       {
       auto result = success ? CCVResult::success : CCVResult::failure;
-      cacheCCVResult(classOffsetInCache, result);
+      cacheCCVResult(reinterpret_cast<TR_OpaqueClassBlock *>(clazz), result);
       }
 
    if (success)

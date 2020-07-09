@@ -45,6 +45,16 @@ class TR_PreXRecompile;
 class TR_RedefinedClassPicSite;
 class TR_UnloadedClassPicSite;
 
+/**
+ * @brief Enum to describe the result of a Class Chain Validation (CCV).
+ */
+enum CCVResult : uint8_t
+   {
+   notYetValidated,
+   success,
+   failure
+   };
+
 class TR_SubClass : public TR_Link0<TR_SubClass>
    {
 public:
@@ -60,7 +70,10 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    {
    public:
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentInfo);
-   TR_PersistentClassInfo(TR_OpaqueClassBlock *id) : _classId(id), _fieldInfo(0), _prexAssumptions(0), _timeStamp(0), _nameLength(-1)
+   TR_PersistentClassInfo(TR_OpaqueClassBlock *id) :
+      _classId(id), _fieldInfo(0),
+      _prexAssumptions(0), _timeStamp(0),
+      _nameLength(-1), _ccvResult(notYetValidated)
     {
     uintptr_t classPointerValue = (uintptr_t) id;
 
@@ -147,6 +160,9 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    int32_t getNameLength()                       { return _nameLength; }
    virtual void setNameLength(int32_t length)            { _nameLength = length; }
 
+   void setCCVResult(CCVResult result) { _ccvResult = result; }
+   CCVResult getCCVResult() const { return _ccvResult; }
+
    private:
 
    enum // flag bits
@@ -180,6 +196,7 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    int32_t                             _nameLength;
    flags8_t                            _flags;
    flags8_t                            _shouldNotBeNewlyExtended; // one bit for each possible compilation thread
+   CCVResult                           _ccvResult;
    };
 
 class TR_AddressRange
