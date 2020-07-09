@@ -118,7 +118,9 @@ SPECS = ['ppc64_aix'      : CURRENT_RELEASES,
          'x86-64_windows' : CURRENT_RELEASES,
          'x86-64_windows_xl' : CURRENT_RELEASES,
          'aarch64_linux' : ['11'],
-         'aarch64_linux_xl' : ['11']]
+         'aarch64_linux_cm': ['11'],
+         'aarch64_linux_xl' : ['11'],
+         'aarch64_linux_xl_cm': ['11']]
 
 // SHORT_NAMES is used for PullRequest triggers
 // TODO Combine SHORT_NAMES and SPECS
