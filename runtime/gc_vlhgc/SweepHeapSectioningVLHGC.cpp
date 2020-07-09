@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,12 +26,12 @@
 
 #include "SweepHeapSectioningVLHGC.hpp"
 
-#include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "HeapRegionManager.hpp"
 #include "MemorySubSpace.hpp"
+#include "ParallelDispatcher.hpp"
 
 /**
  * Return the expected total sweep chunks that will be used in the system.

@@ -42,7 +42,6 @@
 #include "CompactGroupManager.hpp"
 #include "CompactGroupPersistentStats.hpp"
 #include "CompactStats.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentVLHGC.hpp"
 #include "GlobalAllocationManagerTarok.hpp"
 #include "InterRegionRememberedSet.hpp"
@@ -52,6 +51,7 @@
 #include "HeapRegionManagerTarok.hpp"
 #include "MemoryPoolBumpPointer.hpp"
 #include "ObjectAllocationInterface.hpp"
+#include "ParallelDispatcher.hpp"
 #include "ParallelSweepSchemeVLHGC.hpp"
 #include "VMThreadListIterator.hpp"
 #include "WriteOnceCompactor.hpp"
@@ -80,7 +80,7 @@ MM_ReclaimDelegate::initialize(MM_EnvironmentVLHGC *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	_dispatcher = extensions->dispatcher;
+	_dispatcher = ((MM_ParallelDispatcher *)extensions->dispatcher);
 	UDATA regionCount = extensions->getHeap()->getHeapRegionManager()->getTableRegionCount();
 
 	if(NULL == (_sweepScheme = MM_ParallelSweepSchemeVLHGC::newInstance(env))) {

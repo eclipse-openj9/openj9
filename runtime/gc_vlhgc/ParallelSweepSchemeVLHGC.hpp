@@ -44,10 +44,10 @@
 #include "ParallelTask.hpp"
 
 class MM_AllocateDescription;
-class MM_Dispatcher;
 class MM_MarkMap;
 class MM_MemoryPool;
 class MM_MemorySubSpace;
+class MM_ParallelDispatcher;
 class MM_ParallelSweepChunk;
 class MM_ParallelSweepSchemeVLHGC;
 class MM_SweepHeapSectioning;
@@ -84,7 +84,7 @@ public:
 	/**
 	 * Create a ParallelSweepTaskVLHGC object.
 	 */
-	MM_ParallelSweepVLHGCTask(MM_EnvironmentBase *env, MM_Dispatcher *dispatcher, MM_ParallelSweepSchemeVLHGC *sweepScheme, MM_CycleState *cycleState) :
+	MM_ParallelSweepVLHGCTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher, MM_ParallelSweepSchemeVLHGC *sweepScheme, MM_CycleState *cycleState) :
 		MM_ParallelTask(env, dispatcher),
 		_sweepScheme(sweepScheme),
 		_cycleState(cycleState)
@@ -105,7 +105,7 @@ class MM_ParallelSweepSchemeVLHGC : public MM_BaseVirtual
 private:
 	UDATA _chunksPrepared; 
 	MM_GCExtensions *_extensions;
-	MM_Dispatcher *_dispatcher;
+	MM_ParallelDispatcher *_dispatcher;
 	MM_CycleState _cycleState;  /**< Current cycle state information used to formulate receiver state for any operations  */
 	U_8 *_currentSweepBits;	/**< The base address of the raw bits used by the _currentMarkMap (sweep knows about this in order to perform some optimized types of map walking) */
 	MM_HeapRegionManager *_regionManager; /**< A cached pointer to the global heap region manager */

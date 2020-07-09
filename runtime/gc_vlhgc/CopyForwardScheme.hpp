@@ -47,7 +47,7 @@ class MM_CopyForwardCompactGroup;
 class MM_CopyForwardGMPCardCleaner;
 class MM_CopyForwardNoGMPCardCleaner;
 class MM_CopyForwardVerifyScanner;
-class MM_Dispatcher;
+class MM_ParallelDispatcher;
 class MM_HeapRegionManager;
 class MM_HeapRegionDescriptorVLHGC;
 class MM_InterRegionRememberedSet;
@@ -114,7 +114,7 @@ private:
 	UDATA _minCacheSize;  /**< Minimum size in bytes that will be returned as a general purpose cache area */
 	UDATA _maxCacheSize;  /**< Maximum size in bytes that will be requested for a general purpose cache area */
 
-	MM_Dispatcher *_dispatcher;
+	MM_ParallelDispatcher *_dispatcher;
 	
 	MM_CopyScanCacheListVLHGC _cacheFreeList;  /**< Caches which are not bound to heap memory and available to be populated */
 	MM_CopyScanCacheListVLHGC *_cacheScanLists;  /**< An array of per-node caches which contains objects still to be scanned (1+node_count elements in array)*/

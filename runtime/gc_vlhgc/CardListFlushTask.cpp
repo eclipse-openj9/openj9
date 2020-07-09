@@ -31,11 +31,11 @@
 
 #include "CardTable.hpp"
 #include "CycleState.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentVLHGC.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
 #include "HeapRegionManager.hpp"
 #include "InterRegionRememberedSet.hpp"
+#include "ParallelDispatcher.hpp"
 #include "RememberedSetCardListBufferIterator.hpp"
 #include "RememberedSetCardListCardIterator.hpp"
 #include "MarkMap.hpp"

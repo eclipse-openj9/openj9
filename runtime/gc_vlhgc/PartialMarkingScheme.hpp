@@ -48,10 +48,10 @@
 class MM_CardCleaner;
 class MM_Collector;
 class MM_CycleState;
-class MM_Dispatcher;
 class MM_GlobalGCStats;
 class MM_InterRegionRememberedSet;
 class MM_MarkMap;
+class MM_ParallelDispatcher;
 class MM_PartialMarkingScheme;
 class MM_PartialMarkingSchemeRootClearer;
 class MM_PartialMarkingSchemeRootMarker;
@@ -89,7 +89,7 @@ public:
 	/**
 	 * Create a ParallelMarkTask object.
 	 */
-	MM_ParallelPartialMarkTask(MM_EnvironmentBase *env, MM_Dispatcher *dispatcher, MM_PartialMarkingScheme *markingScheme, MM_CycleState *cycleState)
+	MM_ParallelPartialMarkTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher, MM_PartialMarkingScheme *markingScheme, MM_CycleState *cycleState)
 		: MM_ParallelTask(env, dispatcher)
 		,_markingScheme(markingScheme)
 		,_cycleState(cycleState)

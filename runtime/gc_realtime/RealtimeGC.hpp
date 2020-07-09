@@ -41,7 +41,7 @@
 #include "Scheduler.hpp"
 #include "WorkPacketsRealtime.hpp"
 
-class MM_Dispatcher;
+class MM_ParallelDispatcher;
 class MM_EnvironmentBase;
 class MM_MemorySubSpaceMetronome;
 class MM_RealtimeMarkingScheme;

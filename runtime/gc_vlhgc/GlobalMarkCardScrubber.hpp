@@ -212,7 +212,7 @@ public:
 	 * Create a ParallelMarkTask object.
 	 */
 	MM_ParallelScrubCardTableTask(MM_EnvironmentBase *env,
-			MM_Dispatcher *dispatcher, 
+			MM_ParallelDispatcher *dispatcher, 
 			I_64 timeThreshold,
 			MM_CycleState *cycleState) :
 		MM_ParallelTask(env, dispatcher)

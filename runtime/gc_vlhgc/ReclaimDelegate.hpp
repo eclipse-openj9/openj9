@@ -53,7 +53,7 @@ public:
 protected:
 private:
 	MM_HeapRegionManager *_regionManager; /**< A cached pointer to the global heap region manager */	
-	MM_Dispatcher *_dispatcher;  /**< A cached pointer to the global dispatcher used for tasks */
+	MM_ParallelDispatcher *_dispatcher;  /**< A cached pointer to the global dispatcher used for tasks */
 	MM_ParallelSweepSchemeVLHGC *_sweepScheme;	/**< The sweep scheme component which this delegate owns and uses to reclaim memory */
 #if defined(J9VM_GC_MODRON_COMPACTION)
 	MM_WriteOnceCompactor *_writeOnceCompactor;	/**< The compactor used when reclaiming memory */

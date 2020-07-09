@@ -27,12 +27,12 @@
 #if defined(OMR_GC_MODRON_SCAVENGER)
 #include "CollectorLanguageInterfaceImpl.hpp"
 #include "ConfigurationDelegate.hpp"
-#include "Dispatcher.hpp"
 #include "FinalizableReferenceBuffer.hpp"
 #include "FinalizableObjectBuffer.hpp"
 #include "HeapRegionDescriptorStandard.hpp"
 #include "HeapRegionIteratorStandard.hpp"
 #include "ObjectAccessBarrier.hpp"
+#include "ParallelDispatcher.hpp"
 #include "ReferenceObjectBuffer.hpp"
 #include "ReferenceObjectList.hpp"
 #include "ReferenceStats.hpp"

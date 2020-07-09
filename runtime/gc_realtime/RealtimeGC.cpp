@@ -30,7 +30,6 @@
 
 #include "AllocateDescription.hpp"
 #include "CycleState.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentRealtime.hpp"
 #include "GlobalAllocationManagerSegregated.hpp"
 #include "Heap.hpp"
@@ -40,6 +39,7 @@
 #include "modronapicore.hpp"
 #include "OMRVMInterface.hpp"
 #include "OSInterface.hpp"
+#include "ParallelDispatcher.hpp"
 #include "RealtimeMarkingScheme.hpp"
 #include "RealtimeMarkTask.hpp"
 #include "RealtimeSweepTask.hpp"

@@ -104,7 +104,7 @@ public:
 	/**
 	 * Create a CopyForwardSchemeTask object.
 	 */
-	MM_CopyForwardSchemeTask(MM_EnvironmentVLHGC *env, MM_Dispatcher *dispatcher, MM_CopyForwardScheme *copyForwardScheme, MM_CycleState *cycleState) :
+	MM_CopyForwardSchemeTask(MM_EnvironmentVLHGC *env, MM_ParallelDispatcher *dispatcher, MM_CopyForwardScheme *copyForwardScheme, MM_CycleState *cycleState) :
 		MM_ParallelTask((MM_EnvironmentBase *)env, dispatcher)
 		, _copyForwardScheme(copyForwardScheme)
 		, _cycleState(cycleState)
