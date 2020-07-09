@@ -117,6 +117,18 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 	UDATA doubleSlotCount = 0;
 	UDATA cfrCPCount = _classFileOracle->getConstantPoolCount();
 
+	/* Mark all patch entries as referenced, forces the entry to be added to ROM constantpool */
+	J9ClassPatchMap *map = _context->patchMap();
+	if (map != NULL) {
+		Trc_BCU_Assert_Equals(map->size, cfrCPCount);
+		for (U_16 cfrCPIndex = 0; cfrCPIndex < cfrCPCount; cfrCPIndex++) {
+			if (map->indexMap[cfrCPIndex] == 1) {
+				_constantPoolEntries[cfrCPIndex].isReferenced = true;
+				map->indexMap[cfrCPIndex] = 0;
+			}
+		}
+	}
+
 	for (U_16 cfrCPIndex = 0; cfrCPIndex < cfrCPCount; cfrCPIndex++) {
 		if (_constantPoolEntries[cfrCPIndex].isUsedByLDC) {
 			ldcSlotCount += 1;
@@ -303,15 +315,12 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 		}
 	}
 
-	J9ClassPatchMap *map = _context->patchMap();
-
 	/**
 	 * If a valid patchMap structure is passed, this class requires ConstantPool patching.
 	 * Record the index mapping from Classfile to J9Class constantpool to allow patching
 	 * the RAM CP after it is created by VM.
 	 */
 	if (map != NULL) {
-		Trc_BCU_Assert_Equals(map->size, cfrCPCount);
 		for (U_16 cfrCPIndex = 0; cfrCPIndex < cfrCPCount; cfrCPIndex++) {
 			map->indexMap[cfrCPIndex] = _constantPoolEntries[cfrCPIndex].romCPIndex;
 		}
