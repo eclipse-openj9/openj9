@@ -451,17 +451,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
          }
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
-
-   // if some thread holds exclusive VM access we cannot do much
-   if (J9_XACCESS_NONE != jitConfig->javaVM->exclusiveAccessState)
-      {
-      jitDumpFailedBecause(crashedThread, "some thread is holding exclusive VM access");
-      trfprintf(logFile, "Some thread is holding exclusive VM access. No log created.\n");
-      trfclose(logFile);
-      return OMR_ERROR_NONE;
-      }
-
-
+   
    // to avoid deadlock, release compilation monitor until we are no longer holding it
    while (compInfo->getCompilationMonitor()->owned_by_self())
       compInfo->releaseCompMonitor(crashedThread);
