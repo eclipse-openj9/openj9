@@ -42,19 +42,19 @@ import java.lang.constant.ClassDesc;
     /* Test classes */
     class TestClassNotSealed {}
 
-    sealed class TestClassSealed permits TestClassSubtype {}
-    non-sealed class TestClassSubtype extends TestClassSealed {}
+    sealed class TestClassSealed permits TestSubclass {}
+    non-sealed class TestSubclass extends TestClassSealed {}
 
-    sealed class TestClassSealedMulti permits TestClassSubtype1, TestClassSubtype2, TestClassSubtype3 {}
-    non-sealed class TestClassSubtype1 extends TestClassSealedMulti {}
-    non-sealed class TestClassSubtype2 extends TestClassSealedMulti {}
-    non-sealed class TestClassSubtype3 extends TestClassSealedMulti {}
+    sealed class TestClassSealedMulti permits TestSubclass1, TestSubclass2, TestSubclass3 {}
+    non-sealed class TestSubclass1 extends TestClassSealedMulti {}
+    non-sealed class TestSubclass2 extends TestClassSealedMulti {}
+    non-sealed class TestSubclass3 extends TestClassSealedMulti {}
 
     @Test
     public void test_isSealed() {
         AssertJUnit.assertFalse("TestClassNotSealed is not a sealed class", TestClassNotSealed.class.isSealed());
         AssertJUnit.assertTrue("TestClassSealed is a sealed class", TestClassSealed.class.isSealed());
-        AssertJUnit.assertFalse("TestClassSubtype is not a sealed class", TestClassSubtype.class.isSealed());
+        AssertJUnit.assertFalse("TestSubclass is not a sealed class", TestSubclass.class.isSealed());
         AssertJUnit.assertFalse("Primitive type is not a sealed class", int.class.isSealed());
         TestClassSealed[] sealedArray = new TestClassSealed[1];
         AssertJUnit.assertFalse("Array class is not a sealed class", sealedArray.getClass().isSealed());
@@ -74,7 +74,7 @@ import java.lang.constant.ClassDesc;
         AssertJUnit.assertEquals(1, subclassList.length);
 
         /* verify ClassDesc content */
-        ClassDesc desc = TestClassSubtype.class.describeConstable().get();
+        ClassDesc desc = TestSubclass.class.describeConstable().get();
         AssertJUnit.assertEquals(desc, subclassList[0]);
     }
 
@@ -85,11 +85,11 @@ import java.lang.constant.ClassDesc;
         AssertJUnit.assertEquals(3, multiSubclassesList.length);
 
         /* verify ClassDesc content */
-        ClassDesc desc1 = TestClassSubtype1.class.describeConstable().get();
+        ClassDesc desc1 = TestSubclass1.class.describeConstable().get();
         AssertJUnit.assertEquals(desc1, multiSubclassesList[0]);
-        ClassDesc desc2 = TestClassSubtype2.class.describeConstable().get();
+        ClassDesc desc2 = TestSubclass2.class.describeConstable().get();
         AssertJUnit.assertEquals(desc2, multiSubclassesList[1]);
-        ClassDesc desc3 = TestClassSubtype3.class.describeConstable().get();
+        ClassDesc desc3 = TestSubclass3.class.describeConstable().get();
         AssertJUnit.assertEquals(desc3, multiSubclassesList[2]);
     }
  }
