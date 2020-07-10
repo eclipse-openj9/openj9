@@ -2,7 +2,7 @@
 package com.ibm.tools.attach.attacher;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,13 +127,13 @@ public class OpenJ9AttachProvider extends AttachProvider {
 		}
 
 		try {
-			CommonDirectory.obtainMasterLock(); /*[PR 164751 avoid scanning the directory when an attach API is launching ]*/
+			CommonDirectory.obtainControllerLock(); /*[PR 164751 avoid scanning the directory when an attach API is launching ]*/
 		} catch (IOException e) { /*[PR 164751 avoid scanning the directory when an attach API is launching ]*/
 			/* 
 			 * IOException is thrown if we already have the lock. The only other cases where we lock this file are during startup and shutdown.
 			 * The attach API startup is complete, thanks to waitForAttachApiInitialization() and threads using this method terminate before shutdown. 
 			 */ 
-			IPC.logMessage("listVirtualMachines() IOError on master lock : ", e.toString()); //$NON-NLS-1$
+			IPC.logMessage("listVirtualMachines() IOError on controller lock : ", e.toString()); //$NON-NLS-1$
 			return descriptors; /* An error has occurred. Since the attach API is not working correctly, be conservative and don't list and targets */
 		}
 		try {
@@ -183,7 +183,7 @@ public class OpenJ9AttachProvider extends AttachProvider {
 				}
 			}
 		} finally {
-			CommonDirectory.releaseMasterLock(); /* guarantee that we unlock the file */
+			CommonDirectory.releaseControllerLock(); /* guarantee that we unlock the file */
 		}
 		return descriptors;
 	}
