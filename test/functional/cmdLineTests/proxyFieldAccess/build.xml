@@ -48,15 +48,9 @@
 				</javac>
 			</then>
 			<else>
-				<property name="CompileArgs1" value='-Xmodule:java.base --add-modules jdk.unsupported --add-reads java.base=jdk.unsupported' />
-				<property name="CompileArgs2" value='--patch-module java.base=${src.dir} --add-reads java.base=jdk.unsupported' />
-				<javac srcdir="${src.dir}/java" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src.dir}/java" />
-					<compilerarg line='${CompileArgs1}' />
-				</javac>
-				<javac srcdir="${src.dir}/defect" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src.dir}/defect" />
-					<compilerarg line='${CompileArgs2}' />
+				<javac srcdir="${src.dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${src.dir}" />
+					<compilerarg line='--patch-module java.base=${src.dir} --add-modules jdk.unsupported --add-reads java.base=jdk.unsupported' />
 				</javac>
 			</else>
 		</if>
@@ -85,11 +79,6 @@
 	</target>
 	
 	<target name="build">
-		<if>
-			<equals arg1="${JDK_IMPL}" arg2="ibm" />
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		<antcall target="clean" inheritall="true" />
 	</target>
 </project>
