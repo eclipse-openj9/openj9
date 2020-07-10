@@ -942,6 +942,7 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 		break;
 	case BCV_ERR_BYTECODE_ERROR:
 		printMessage(&msgBuf, "Error exists in the bytecode.");
+		break;
 	default:
 		Assert_VRB_ShouldNeverHappen();
 		break;
