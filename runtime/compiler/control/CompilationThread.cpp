@@ -7462,6 +7462,14 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
          }
       }
 
+   if (_compiler)
+      {
+      // The KOT needs to survive at least until we're done committing virtual guards and we must not be holding the
+      // comp monitor prior to freeing the KOT because it requires VM access.
+      if (_compiler->getKnownObjectTable())
+         _compiler->freeKnownObjectTable();
+      }
+
    // Re-acquire the compilation monitor so that we can update the J9Method.
    //
    _compInfo.debugPrint(vmThread, "\tacquiring compilation monitor\n");
@@ -7656,11 +7664,6 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
 
    if (_compiler)
       {
-      // The KOT needs to survive at least until we're done committing virtual guards
-      //
-      if (_compiler->getKnownObjectTable())
-         _compiler->freeKnownObjectTable();
-
       _compiler->~Compilation();
       }
 
@@ -7862,6 +7865,8 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 #endif /* defined(J9VM_OPT_JITSERVER) */
       if (getCompilation())
          {
+         // The KOT needs to survive at least until we're done committing virtual guards and we must not be holding the
+         // comp monitor prior to freeing the KOT because it requires VM access.
          if (getCompilation()->getKnownObjectTable())
             getCompilation()->freeKnownObjectTable();
 
@@ -8654,6 +8659,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
       if (compiler)
          {
+         // The KOT needs to survive at least until we're done committing virtual guards and we must not be holding the
+         // comp monitor prior to freeing the KOT because it requires VM access.
          if (compiler->getKnownObjectTable())
             compiler->freeKnownObjectTable();
 
