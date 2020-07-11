@@ -525,10 +525,23 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          }
       // Get the ROMClass for the method to be compiled if it is already cached
       // Or read it from the compilation request and cache it otherwise
-      J9ROMClass *romClass = NULL;
+      J9ROMClass *romClass = NULL; 
       if (!(romClass = JITServerHelpers::getRemoteROMClassIfCached(clientSession, clazz)))
          {
-         romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), compInfo->persistentMemory());
+         // Check whether the first argument of the classInfoTuple is an empty string
+         // If it's an empty string then I dont't need to cache it 
+         if(!(std::get<0>(classInfoTuple).empty()))
+            {
+            romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), compInfo->persistentMemory());
+            }
+         else
+            {
+            // When I receive an empty string I need to check whether the server had the class caches
+            // It could be a renewed connection, so that's a new server because old one was shutdown
+            // When the server receives an empty ROM class it would check if it actually has this class cached, 
+            // And if it it's not cached, send a request to the client 
+            romClass = JITServerHelpers::getRemoteROMClass(clazz, stream, compInfo->persistentMemory(), &classInfoTuple);
+            }
          JITServerHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
          }
 

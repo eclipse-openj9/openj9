@@ -1058,6 +1058,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
 #if defined(J9VM_OPT_JITSERVER)
    _sslKeys(decltype(_sslKeys)::allocator_type(TR::Compiler->persistentAllocator())),
    _sslCerts(decltype(_sslCerts)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classesCachedAtServer(decltype(_classesCachedAtServer)::allocator_type(TR::Compiler->persistentAllocator())),
 #endif /* defined(J9VM_OPT_JITSERVER) */
    _persistentMemory(pointer_cast<TR_PersistentMemory *>(jitConfig->scratchSegment)),
    _sharedCacheReloRuntime(jitConfig),
@@ -1158,6 +1159,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _illegalFinalFieldModificationList = NULL;
    _newlyExtendedClasses = NULL;
    _sequencingMonitor = TR::Monitor::create("JIT-SequencingMonitor");
+   _classesCachedAtServerMonitor = TR::Monitor::create("JIT-ClassesCachedAtServerMonitor");
    _compReqSeqNo = 0;
    _chTableUpdateFlags = 0;
    _localGCCounter = 0;

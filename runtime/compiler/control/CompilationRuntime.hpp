@@ -41,6 +41,7 @@
 #include "control/rossa.h"
 #include "runtime/RelocationRuntime.hpp"
 #if defined(J9VM_OPT_JITSERVER)
+#include "control/JITServerHelpers.hpp"
 #include "env/PersistentCollections.hpp"
 #include "net/ServerStream.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -1009,6 +1010,7 @@ public:
       }
    void setNewlyExtendedClasses(PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *it) { _newlyExtendedClasses = it; }
 
+   TR::Monitor *getclassesCachedAtServerMonitor() const { return _classesCachedAtServerMonitor; }
    TR::Monitor *getSequencingMonitor() const { return _sequencingMonitor; }
    uint32_t getCompReqSeqNo() const { return _compReqSeqNo; }
    uint32_t incCompReqSeqNo() { return ++_compReqSeqNo; }
@@ -1017,6 +1019,7 @@ public:
    uint8_t getCHTableUpdateDone() const { return _chTableUpdateFlags; }
 
    const PersistentVector<std::string> &getJITServerSslKeys() const { return _sslKeys; }
+   PersistentUnorderedSet<J9Class*> & getclassesCachedAtServer() { return _classesCachedAtServer; }
    void  addJITServerSslKey(const std::string &key) { _sslKeys.push_back(key); }
    const PersistentVector<std::string> &getJITServerSslCerts() const { return _sslCerts; }
    void  addJITServerSslCert(const std::string &cert) { _sslCerts.push_back(cert); }
@@ -1227,6 +1230,8 @@ private:
 
 #if defined(J9VM_OPT_JITSERVER)
    ClientSessionHT               *_clientSessionHT; // JITServer hashtable that holds session information about JITClients
+   PersistentUnorderedSet<J9Class*> _classesCachedAtServer;
+   TR::Monitor *_classesCachedAtServerMonitor;
    PersistentVector<TR_OpaqueClassBlock*> *_unloadedClassesTempList; // JITServer list of classes unloaded
    PersistentVector<TR_OpaqueClassBlock*> *_illegalFinalFieldModificationList; // JITServer list of classes that have J9ClassHasIllegalFinalFieldModifications is set
    TR::Monitor                   *_sequencingMonitor; // Used for ordering outgoing messages at the client

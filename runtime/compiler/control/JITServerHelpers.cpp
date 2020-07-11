@@ -282,7 +282,7 @@ JITServerHelpers::getRemoteROMClassIfCached(ClientSessionData *clientSessionData
    }
 
 JITServerHelpers::ClassInfoTuple
-JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory)
+JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory, bool serializeClass)
    {
    // Always use the base VM here.
    // If this method is called inside AOT compilation, TR_J9SharedCacheVM will
@@ -324,7 +324,7 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
    uintptr_t classChainOffsetOfIdentifyingLoaderForClazz = fe->sharedCache() ? 
       fe->sharedCache()->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCacheNoFail((TR_OpaqueClassBlock *)clazz) : 0;
 
-   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass,
+   return std::make_tuple(serializeClass ? packROMClass(clazz->romClass, trMemory) : std::string(), methodsOfClass, baseClass, numDims, parentClass,
                           TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo,
                           classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword,
                           leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize,
@@ -348,6 +348,15 @@ JITServerHelpers::getRemoteROMClass(J9Class *clazz, JITServer::ServerStream *str
    const auto &recv = stream->read<ClassInfoTuple>();
    *classInfoTuple = std::get<0>(recv);
    return romClassFromString(std::get<0>(*classInfoTuple), trMemory->trPersistentMemory());
+   }
+
+J9ROMClass *
+JITServerHelpers::getRemoteROMClass(J9Class *clazz, JITServer::ServerStream *stream, TR_PersistentMemory *trMemory, ClassInfoTuple *classInfoTuple)
+   {
+   stream->write(JITServer::MessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
+   const auto &recv = stream->read<ClassInfoTuple>();
+   *classInfoTuple = std::get<0>(recv);
+   return romClassFromString(std::get<0>(*classInfoTuple), trMemory);
    }
 
 // Return true if able to get data from cache, return false otherwise.
