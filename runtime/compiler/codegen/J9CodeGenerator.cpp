@@ -1455,6 +1455,13 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       }
 
    // J9
+   if (node->getOpCodeValue() == TR::ArrayStoreCHK
+       && TR::Compiler->om.areValueTypesEnabled())
+      {
+      self()->lowerArrayStoreCHK(node, tt);
+      }
+
+   // J9
    //
    //Anchoring node to either extract register pressure(performance)
    //or ensure instanceof doesn't have a parent node of CALL (correctness)
@@ -1501,6 +1508,196 @@ J9::CodeGenerator::lowerTreeIfNeeded(
 
    }
 
+
+/*
+ * If value types are enabled, and the value that is being assigned to the array
+ * element might be a null reference, lower the ArrayStoreCHK by splitting the
+ * block before the ArrayStoreCHK, and inserting a NULLCHK guarded by a check
+ * of whether the array's component type is a value type.
+ */
+void
+J9::CodeGenerator::lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt)
+   {
+   TR::Node *destChild;
+   TR::Node *sourceChild;
+
+   // Pattern match the ArrayStoreCHK operands to get the source of the assignment
+   // (sourceChild) and the array to which an element will have a value assigned (destChild)
+   self()->findArrayStoreCHKOperands(node, destChild, sourceChild);
+
+   // Only need to lower if it is possible that the value is a null reference
+   if (!sourceChild->isNonNull())
+      {
+      TR::CFG * cfg = self()->comp()->getFlowGraph();
+      cfg->invalidateStructure();
+
+      TR::Block *prevBlock = tt->getEnclosingBlock();
+
+      performTransformation(self()->comp(), "%sTransforming ArrayStoreCHK n%dn [%p] by splitting block block_%d, and inserting a NULLCHK guarded with a check of whether the component type of the array is a value type\n", OPT_DETAILS, node->getGlobalIndex(), node, prevBlock->getNumber());
+
+      // Anchor the node containing the source of the array element
+      // assignment and the node that contains the destination array
+      // to ensure they are available for the ificmpeq and NULLCHK
+      TR::TreeTop *anchoredArrayTT = TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, destChild));
+      TR::TreeTop *anchoredSourceTT = TR::TreeTop::create(self()->comp(), anchoredArrayTT, TR::Node::create(TR::treetop, 1, sourceChild));
+
+      // Transform
+      //   +--------------------------------+
+      //   | ttprev                         |
+      //   | ArrayStoreCHK                  |
+      //   |   astorei/awrtbari             |
+      //   |     aladd                      |
+      //   |       <array-reference>        |
+      //   |       index-offset-calculation |
+      //   |     <value-reference>          |
+      //   +--------------------------------+
+      //
+      // into
+      //   +--------------------------------+
+      //   | treetop                        |
+      //   |   <array-reference>            |
+      //   | treetop                        |
+      //   |   <value-reference>            |
+      //   | ificmpeq  -->------------------*---------+
+      //   |   iand                         |         |
+      //   |     iloadi <isClassFlags>      |         |
+      //   |       aloadi <componentClass>  |         |
+      //   |         aloadi <vft-symbol>    |         |
+      //   |           <array-reference>    |         |
+      //   |     iconst J9ClassIsValueType  |         |
+      //   |   iconst 0                     |         |
+      //   | BBEnd                          |         |
+      //   +--------------------------------+         |
+      //   | BBStart (Extension)            |         |
+      //   | NULLCHK                        |         |
+      //   |   Passthrough                  |         |
+      //   |     <value-reference>          |         |
+      //   | BBEnd                          |         |
+      //   +--------------------------------+         |
+      //                   |                          |
+      //                   +--------------------------+
+      //                   |
+      //                   v
+      //   +--------------------------------+
+      //   | BBStart                        |
+      //   | ArrayStoreCHK                  |
+      //   |   astorei/awrtbari             |
+      //   |     aladd                      |
+      //   |       aload <array>            |
+      //   |       index-offset-calculation |
+      //   |     aload <value>              |
+      //   +--------------------------------+
+      //
+      TR::SymbolReference *vftSymRef = self()->comp()->getSymRefTab()->findOrCreateVftSymbolRef();
+      TR::SymbolReference *arrayCompSymRef = self()->comp()->getSymRefTab()->findOrCreateArrayComponentTypeSymbolRef();
+      TR::SymbolReference *classFlagsSymRef = self()->comp()->getSymRefTab()->findOrCreateClassFlagsSymbolRef();
+
+      TR::Node *vft = TR::Node::createWithSymRef(node, TR::aloadi, 1, anchoredArrayTT->getNode()->getFirstChild(), vftSymRef);
+      TR::Node *arrayCompClass = TR::Node::createWithSymRef(node, TR::aloadi, 1, vft, arrayCompSymRef);
+      TR::Node *loadClassFlags = TR::Node::createWithSymRef(node, TR::iloadi, 1, arrayCompClass, classFlagsSymRef);
+      TR::Node *isValueTypeNode = TR::Node::create(node, TR::iand, 2, loadClassFlags, TR::Node::iconst(node, J9ClassIsValueType));
+
+      TR::Node *ifNode = TR::Node::createif(TR::ificmpeq, isValueTypeNode, TR::Node::iconst(node, 0));
+      ifNode->copyByteCodeInfo(node);
+
+      TR::Node *passThru  = TR::Node::create(node, TR::PassThrough, 1, sourceChild);
+      TR::ResolvedMethodSymbol *currentMethod = self()->comp()->getMethodSymbol();
+
+      TR::Block *arrayStoreCheckBlock = prevBlock->splitPostGRA(tt, cfg);
+
+      ifNode->setBranchDestination(arrayStoreCheckBlock->getEntry());
+
+      // Copy register dependencies from the end of the block split before the
+      // ArrayStoreCHK to the ificmpeq that's being added to the end of that block
+      if (prevBlock->getExit()->getNode()->getNumChildren() != 0)
+         {
+         TR::Node *blkDeps = prevBlock->getExit()->getNode()->getFirstChild();
+         TR::Node *ifDeps = TR::Node::create(blkDeps, TR::GlRegDeps);
+
+         for (int i = 0; i < blkDeps->getNumChildren(); i++)
+            {
+            TR::Node *regDep = blkDeps->getChild(i);
+
+            if (regDep->getOpCodeValue() == TR::PassThrough)
+               {
+               TR::Node *orig= regDep;
+               regDep = TR::Node::create(orig, TR::PassThrough, 1, orig->getFirstChild());
+               regDep->setLowGlobalRegisterNumber(orig->getLowGlobalRegisterNumber());
+               regDep->setHighGlobalRegisterNumber(orig->getHighGlobalRegisterNumber());
+               }
+
+            ifDeps->addChildren(&regDep, 1);
+            }
+
+         ifNode->addChildren(&ifDeps, 1);
+         }
+
+      prevBlock->append(TR::TreeTop::create(self()->comp(), ifNode));
+
+      TR::Node *nullCheck = TR::Node::createWithSymRef(node, TR::NULLCHK, 1, passThru,
+                               self()->symRefTab()->findOrCreateNullCheckSymbolRef(currentMethod));
+      TR::TreeTop *nullCheckTT = prevBlock->append(TR::TreeTop::create(self()->comp(), nullCheck));
+
+      TR::Block *nullCheckBlock = prevBlock->split(nullCheckTT, cfg);
+
+      nullCheckBlock->setIsExtensionOfPreviousBlock(true);
+
+      cfg->addEdge(prevBlock, arrayStoreCheckBlock);
+      }
+   }
+
+void
+J9::CodeGenerator::findArrayStoreCHKOperands(TR::Node *node, TR::Node *&destination, TR::Node *&source)
+   {
+   TR::Node *firstChild = node->getFirstChild();
+
+   source = firstChild->getSecondChild();
+   destination = firstChild->getChild(2);
+
+   if (self()->comp()->useCompressedPointers() && firstChild->getOpCode().isIndirect())
+      {
+      TR::Node *translatedNode = source;
+      bool usingLowMemHeap = false;
+      bool usingCompressedPointers = false;
+      bool useShiftedOffsets = (TR::Compiler->om.compressedReferenceShiftOffset() != 0);
+
+      if (translatedNode->getOpCode().isConversion())
+         {
+         translatedNode = translatedNode->getFirstChild();
+         }
+      if (translatedNode->getOpCode().isRightShift()) //optional
+         {
+         translatedNode = translatedNode->getFirstChild();
+         }
+
+      if ((TR::Compiler->vm.heapBaseAddress() == 0) ||
+            source->isNull())
+         {
+         usingLowMemHeap = true;
+         }
+
+      if (translatedNode->getOpCode().isSub() || usingLowMemHeap)
+         {
+         usingCompressedPointers = true;
+         }
+
+      if (usingCompressedPointers)
+         {
+         if (!usingLowMemHeap || useShiftedOffsets)
+            {
+            while ((source->getNumChildren() > 0) &&
+                     (source->getOpCodeValue() != TR::a2l))
+               {
+               source = source->getFirstChild();
+               }
+            if (source->getOpCodeValue() == TR::a2l)
+               {
+               source = source->getFirstChild();
+               }
+            }
+         }
+      }
+   }
 
 static bool isArraySizeSymbolRef(TR::SymbolReference *s, TR::SymbolReferenceTable *symRefTab)
    {
