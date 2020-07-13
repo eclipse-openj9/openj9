@@ -1973,6 +1973,7 @@ permittedSubclassesHelper(JNIEnv *env, jobject cls)
 	J9Class *stringArrayClass = NULL;
 	U_32 *permittedSubclassesCountPtr = 0;
 	j9array_t stringArrayObject = NULL;
+	U_32 index = 0;
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
 
@@ -1998,16 +1999,14 @@ permittedSubclassesHelper(JNIEnv *env, jobject cls)
 	}
 
 	result = vmFuncs->j9jni_createLocalRef(env, (j9object_t)stringArrayObject);
-	if (NULL == result) {
-		goto nativeoutofmemory;
-	}
 
-	for (U_32 index = 0; index < *permittedSubclassesCountPtr; index++) {
+	for (; index < *permittedSubclassesCountPtr; index++) {
 		J9UTF8* nameUTF = NULL;
 		j9object_t nameString = NULL;
 
 		nameUTF = permittedSubclassesNameAtIndex(permittedSubclassesCountPtr, index);
-		nameString = mmFuncs->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(nameUTF), (U_32) J9UTF8_LENGTH(nameUTF), J9_STR_INTERN);
+		/* Translates string to a dot seperated name which is needed for ClassDesc.of in Java code. */
+		nameString = mmFuncs->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(nameUTF), (U_32) J9UTF8_LENGTH(nameUTF), J9_STR_INTERN | J9_STR_XLAT);
 		if (NULL == nameString) {
 			goto heapoutofmemory;
 		}
@@ -2016,9 +2015,6 @@ permittedSubclassesHelper(JNIEnv *env, jobject cls)
 	}
 	goto done;
 
-nativeoutofmemory:
-	vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
-	goto done;
 heapoutofmemory:
 	vmFuncs->setHeapOutOfMemoryError(vmThread);
 	goto done;

@@ -977,10 +977,12 @@ class RecordComponentIterator
 	U_16 getPermittedSubclassesClassCount() const { return _isSealed ? _permittedSubclassesAttribute->numberOfClasses : 0; }
 
 	U_16 getPermittedSubclassesClassNameAtIndex(U_16 index) const {
-		if (!_isSealed) return 0;
-
-		U_16 classCpIndex = _permittedSubclassesAttribute->classes[index];
-		return U_16(_classFile->constantPool[classCpIndex].slot1);
+		U_16 result = 0;
+		if (_isSealed) {
+			U_16 classCpIndex = _permittedSubclassesAttribute->classes[index];
+			result = _classFile->constantPool[classCpIndex].slot1;
+		}
+		return result;
 	}
 
 

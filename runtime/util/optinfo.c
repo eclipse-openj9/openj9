@@ -684,7 +684,8 @@ getNumberOfPermittedSubclassesPtr(J9ROMClass *romClass)
 }
 
 J9UTF8*
-permittedSubclassesNameAtIndex(U_32* permittedSubclassesCountPtr, U_32 index) {
+permittedSubclassesNameAtIndex(U_32* permittedSubclassesCountPtr, U_32 index)
+{
 	/* SRPs to PermittedSubclass name constant pool entries start after the permittedSubclassCountPtr */
 	U_32* permittedSubclassPtr = permittedSubclassesCountPtr + 1 + index;
 

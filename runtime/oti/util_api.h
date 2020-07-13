@@ -1276,7 +1276,7 @@ void validateLibrary(J9JavaVM *javaVM, J9NativeLibrary *library);
 
 /**
  * Retrieves number of permitted subclasses in this sealed class. Assumes that 
- * ROM class parameter references a record class.
+ * ROM class parameter references a sealed class.
  * 
  * @param J9ROMClass sealed class
  * @return U_32 number of permitted subclasses in optionalinfo
@@ -1288,7 +1288,8 @@ getNumberOfPermittedSubclassesPtr(J9ROMClass *romClass);
  * Find the permitted subclass name constant pool entry at index in the optional data of the ROM class parameter.
  * This method assumes there is at least one permitted subclass in the ROM class.
  * 
- * @param J9UTF8* sealed class
+ * @param U_32* permittedSubclassesCountPtr
+ * @param U_32 class index
  * @return the permitted subclass name at index from ROM class
  */
 J9UTF8*
