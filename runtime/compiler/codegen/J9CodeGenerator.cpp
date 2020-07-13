@@ -291,6 +291,15 @@ J9::CodeGenerator::fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt, const boo
             TR::Node* temp = expectedDeps->getChild(i);
             if (temp->getGlobalRegisterNumber() == depNode->getGlobalRegisterNumber())
                continue;
+            else if (temp->getOpCodeValue() == TR::PassThrough)
+               {
+               // PassThrough nodes cannot be commoned because doing so does not
+               // actually anchor the child, causing it's lifetime to not be extended
+               TR::Node* original = temp;
+               temp = TR::Node::create(original, TR::PassThrough, 1, original->getFirstChild());
+               temp->setLowGlobalRegisterNumber(original->getLowGlobalRegisterNumber());
+               temp->setHighGlobalRegisterNumber(original->getHighGlobalRegisterNumber());
+               }
             glRegDeps->addChildren(&temp, 1);
             }
          }
