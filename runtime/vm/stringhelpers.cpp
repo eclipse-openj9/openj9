@@ -373,33 +373,74 @@ getStringUTF8Length(J9VMThread *vmThread, j9object_t string)
 UDATA 
 verifyQualifiedName(J9VMThread *vmThread, j9object_t string)
 {
-	J9JavaVM* vm = vmThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	UDATA unicodeLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string);
-	char utf8NameStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-	J9CfrConstantPoolInfo classNameInfo = {0, 0, 0, 0, 0, NULL, 0};
+	j9object_t unicodeBytes = J9VMJAVALANGSTRING_VALUE(vmThread, string);
+	BOOLEAN isStringCompressed = IS_STRING_COMPRESSED(vmThread, string);
+	UDATA remainingLength = unicodeLength;
+	BOOLEAN separator = FALSE;
+	BOOLEAN unCheckedChar = FALSE;
+	U_8 currentChar = 0;
 	IDATA arity = 0;
+	UDATA i = 0;
 
-	PORT_ACCESS_FROM_JAVAVM(vm);
+	/* strip leading ['s for array classes */
+	for (i = 0; i < unicodeLength; i++) {
+		currentChar = isStringCompressed ? J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i) : (U_8)J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, i);
+		if ('[' == currentChar) {
+			arity += 1;
+		} else {
+			unCheckedChar = TRUE;
+			break;
+		}
+	}
+	remainingLength -= arity;
 
-	if (0 == unicodeLength) {
+	if (0 == remainingLength) {
+		/* Name must be more than just [s.  Also catches empty string case */
 		return CLASSNAME_INVALID;
 	}
 
-	classNameInfo.bytes = (U_8*)copyStringToUTF8WithMemAlloc(vmThread, string,
-									J9_STR_NULL_TERMINATE_RESULT, "", 0,
-									utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &unicodeLength);
-	classNameInfo.slot1 = (U_32)unicodeLength;
-	if (NULL == classNameInfo.bytes) {
-		vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
-		return CLASSNAME_INVALID;
+	/* check invalid characters in the class name */
+	for (; i < unicodeLength; i++) {
+		if (unCheckedChar) {
+			unCheckedChar = FALSE;
+		} else {
+			currentChar = isStringCompressed ? J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i) : (U_8)J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, i);
+		}
+
+		/* check for illegal characters:  46(.) 47(/) 59(;) 60(<) 70(>) 91([) */
+		switch (currentChar) {
+		case '.': /* Fall through */
+		case '/':
+			/* Only valid between identifiers and not at end if not in loading classes */
+			if (('/' == currentChar) || separator) {
+				return CLASSNAME_INVALID;
+			}
+			separator = TRUE;
+			break;
+		case ';':
+			/* Valid at the end of array classes */
+			if (arity && (1 == remainingLength)) {
+				break;
+			}
+			return CLASSNAME_INVALID;
+		case '<': /* Fall through */
+		case '>':
+			separator = FALSE; /* allow /<>/ as a pattern, per test suites */
+			break;
+		case '[':
+			return CLASSNAME_INVALID;
+		default:
+			/* Do Nothing */
+			separator = FALSE;
+		}
+
+		remainingLength -= 1;
 	}
 
-	/* keep checking other invalid characters in the class name */
-	arity = bcvCheckClassNameInLoading(&classNameInfo);
-	if ((NULL != classNameInfo.bytes) && ((U_8*)utf8NameStackBuffer != classNameInfo.bytes)) {
-		j9mem_free_memory(classNameInfo.bytes);
-		classNameInfo.bytes = NULL;
+	/* the separator shouldn't exist at the end of name, regardless of class and method */
+	if (separator) {
+		return CLASSNAME_INVALID;
 	}
 
 	/* map the return code against the arity value from checkNameImpl (called by bcvCheckClassName):
