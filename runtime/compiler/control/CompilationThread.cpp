@@ -7058,6 +7058,10 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                                                       bool &eligibleForRelocatableCompile,
                                                       TR_RelocationRuntime *reloRuntime)
    {
+   TR_J9VMBase *fe = TR_J9VMBase::get(_jitConfig, vmThread);
+   if (NULL == fe)
+      throw std::bad_alloc();
+
    // Check to see if we find an AOT version in the shared cache
    //
    entry->setAotCodeToBeRelocated(NULL);  // make sure decision to load AOT comes from below and not previous compilation/relocation pass
@@ -7068,7 +7072,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
        !TR::CompilationInfo::isCompiled(method) &&
        !entry->_doNotUseAotCodeFromSharedCache &&
        !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) &&
-       !(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
+       !(_jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
       {
       // Determine whether the compilation filters allows me to relocate
       // Filters should not be applied to out-of-process compilations
@@ -7081,12 +7085,6 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          setCompilationShouldBeInterrupted(0); // zero the flag because createResolvedMethod calls
                                                // acquire/releaseVMaccessIfNeeded and may see the flag set by previous compilation
          TR_FilterBST *filter = NULL;
-         TR_J9VMBase *fe = TR_J9VMBase::get(_jitConfig, vmThread);
-
-         if (NULL == fe)
-            {
-            throw std::bad_alloc();
-            }
 
          TR_ResolvedMethod *resolvedMethod = fe->createResolvedMethod(&trMemory, (TR_OpaqueMethodBlock *)method);
          if (!debug->methodCanBeRelocated(&trMemory, resolvedMethod, filter) ||
@@ -7099,6 +7097,21 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          // Find the AOT body in the SCC
          //
          *aotCachedMethod = findAotBodyInSCC(vmThread, entry->getMethodDetails().getRomMethod());
+
+         // Validate the class chain of the class of the method being AOT loaded
+         if (*aotCachedMethod && !fe->sharedCache()->classMatchesCachedVersion(J9_CLASS_FROM_METHOD(method)))
+            {
+            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+               {
+               TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                                              "Failed to validate the class chain of the class of method %p",
+                                              method);
+               }
+            *aotCachedMethod = NULL;
+            canRelocateMethod = false;
+            entry->_doNotUseAotCodeFromSharedCache = true;
+            }
+
          if (*aotCachedMethod)
             {
 #ifdef COMPRESS_AOT_DATA
@@ -7229,10 +7242,11 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             !TR::CompilationInfo::isCompiled(method) &&
             !entry->isDLTCompile() &&
             !entry->_doNotUseAotCodeFromSharedCache &&
-            TR_J9VMBase::get(_jitConfig, vmThread)->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass) &&
+            fe->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass) &&
             !isMethodIneligibleForAot(method) &&
             (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) ||
-               TR_J9VMBase::get(_jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true);
+               fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true) &&
+            (NULL != fe->sharedCache()->rememberClass(J9_CLASS_FROM_METHOD(method)));
          }
 
       bool sharedClassTest = eligibleForRelocatableCompile &&
