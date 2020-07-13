@@ -31,24 +31,29 @@
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/proxyFieldAccess" />
 	<property name="PROJECT_ROOT" location="." />
-	<property name="src.dir" location="${PROJECT_ROOT}/src"/>
+	<property name="src.dir" location="${PROJECT_ROOT}/src" />
+	<property name="build" location="${PROJECT_ROOT}/bin" />
 
-	<target name="compile" description="using java ${JDK_VERSION} to compile the source ">
+	<target name="init">
+		<mkdir dir="${build}" />
+	</target>
+
+	<target name="compile" depends="init" description="using java ${JDK_VERSION} to compile the source ">
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
-		<echo>===destdir:                      ${DEST}</echo>
+		<echo>===destdir:                      ${build}</echo>
 		<if>
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
-				<javac srcdir="${src.dir}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${src.dir}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${src.dir}" />
 				</javac>
 			</then>
 			<else>
-				<javac srcdir="${src.dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+				<javac srcdir="${src.dir}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src.dir}" />
 					<compilerarg line='--patch-module java.base=${src.dir} --add-modules jdk.unsupported --add-reads java.base=jdk.unsupported' />
 				</javac>
@@ -62,7 +67,7 @@
 			<manifest>
 				<attribute name="Main-Class" value="defect.cmvc198986.TestProxyFieldAccess"/>
 			</manifest>
-			<fileset dir="${src.dir}" />
+			<fileset dir="${build}" />
 			<fileset dir="${PROJECT_ROOT}" includes="*.properties,*.xml,*.mk" />
 		</jar>
 		<copy todir="${DEST}">
@@ -73,9 +78,7 @@
 	
 	<target name="clean" depends="dist" description="clean up">
 		<!-- Delete the ${build} directory trees -->
-		<delete>
-			<fileset dir="${src.dir}" includes="**/*.class"/>
-		</delete>
+		<delete dir="${build}" />
 	</target>
 	
 	<target name="build">
