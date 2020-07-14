@@ -183,7 +183,7 @@ ifeq ($(HOST_ARCH),z)
 endif
 
 ifeq ($(HOST_ARCH),arm)
-    CX_DEFINES+=ARMGNU ARMGNUEABI FIXUP_UNALIGNED HARDHAT
+    CX_DEFINES+=ARMGNU ARMGNUEABI FIXUP_UNALIGNED HARDHAT __STDC_LIMIT_MACROS
     CX_FLAGS+=-fPIC -mfloat-abi=hard -mfpu=vfp -march=armv6 -marm
 endif
 
