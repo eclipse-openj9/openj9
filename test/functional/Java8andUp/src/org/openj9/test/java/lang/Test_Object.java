@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,77 +39,6 @@ public class Test_Object {
 	 */
 	volatile int status = 0;
 	volatile int ready = 0;
-
-	/**
-	 * The static variables below are used for the testNotifyAndInterrupt()
-	 * method
-	 */
-	public volatile static int errorCount; // number of errors
-	public static final int NSLAVES = 20; // number of slaves created
-	static int slaveEnterCount; // number of slaves in run method
-	static Object MS = new Object(); // sync with master thead
-	static Object MM = new Object(); // syn with slave threads
-	static int notifyCount; // count of notify() calls
-	static int interruptedCount; // count of interrupt() calls
-	static int processedNotifyCount; // current processed notify count
-	static int processedInterruptedCount; // current processed interrupt count
-	static boolean notifyallSent; // master sent notifyAll()
-	static volatile boolean slavesCompleted;// slaves completed ok
-
-	/**
-	 * The static variables below are used by the testNotify2 method
-	 */
-	// Tunable input parameters - teste are the defaults
-	public static int NSLAVES2 = 2000; // number of slaves created
-	public static int MODULO_NOTIFY = 5; // notifyall every n'th time
-	public static int MASTER_SLEEP_SECS = 10;
-	public static int WAIT_ON_ERROR = 0;
-	public volatile static int errorCount2; // number of errors
-	static int slaveEnterCount2; // number of slaves in run method
-	static int slaveWakeCount; // number of threads awakened
-	static Object MS2 = new Object(); // sync with master thead
-	static Object MM2 = new Object(); // syn with slave threads
-	static int notifyCount2; // count of notify() calls
-	static int slaveExitCount; // slaves completed ok
-
-	/**
-	 * The static variables below are used by the testNotify3 method
-	 */
-	// Tunable input parameters - teste are the defaults
-	public static int MASTER_SLEEP_SECS3 = 1;
-	public static int maxPrio = 38; // <--- These 3 variables
-	public static int minPrio = 12; // <--- are also used by
-	public static int NSLAVES3 = maxPrio - minPrio + 1; // <--- testNotify4
-	public volatile static int errorCount3; // number of errors
-	static int slaveEnterCount3; // number of slaves in run method
-	static Object MS3 = new Object(); // sync with master thead
-	static Object MM3 = new Object(); // syn with slave threads
-	static int notifyCount3; // count of notify() calls
-	static int slaveExitCount3; // slaves completed ok
-
-	/**
-	 * The static variables below are used by the testNotify4 method
-	 */
-	// Tunable input parameters - teste are the defaults
-	public static int MASTER_SLEEP_SECS4 = 1;
-	public volatile static int errorCount4; // number of errors
-	static int slaveEnterCount4; // number of slaves in run method
-	static Object MS4 = new Object(); // sync with master thead
-	static Object MM4 = new Object(); // syn with slave threads
-	static int notifyCount4; // count of notify() calls
-	static int slaveExitCount4; // slaves completed ok
-
-	/**
-	 * The static variables below are used by the testNotify5 method
-	 */
-	public static int MASTER_SLEEP_SECS5 = 1;
-	public static int N = 4; // set to how vary the priority of threads in wait
-	public volatile static int errorCount5; // number of errors
-	static int slaveEnterCount5; // number of slaves in run method
-	static Object MS5 = new Object(); // sync with master thead
-	static Object MM5 = new Object(); // syn with slave threads
-	static int notifyCount5; // count of notify() calls
-	static int slaveExitCount5; // slaves completed ok
 
 	/**
 	 * @tests java.lang.Object#Object()
