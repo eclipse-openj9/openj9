@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -131,7 +131,7 @@ public:
 	 * The J9_GC_CLASS_LOADER_DEAD bit is set for each class loader that will be unloaded.
 	 * J9HOOK_VM_CLASSES_UNLOAD is triggered if any classes will be unloaded.
 	 * 
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 * @param classLoaderUnloadList[in] the linked list of loaders to unload, connected through the unloadLink field
 	 * @param markMap[in] the markMap to use to test for class loader and classes liveness
 	 * @param classUnloadStats[out] returns the class unloading statistics for classes about to be unloaded

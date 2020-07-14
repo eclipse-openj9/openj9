@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -164,7 +164,7 @@ private:
 	/**
 	 * Using the region reclaimability and consumption data collected after the most recent PGC, 
 	 * estimate the number of PGCs remaining until allocation failure will occur. 
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @return the estimated number of PGCs remaining before AF (anything from 0 to UDATA_MAX)
 	 */
 	UDATA estimatePartialGCsRemaining(MM_EnvironmentVLHGC *env) const;
@@ -172,7 +172,7 @@ private:
 	/**
 	 * Called after a PGC has been completed in order to measure the region consumption and update
 	 * the consumption rate.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param currentReclaimableRegions the estimated number of reclaimable regions
 	 * @param defragmentReclaimableRegions he estimated number of reclaimable defragment regions
 	 */
@@ -182,14 +182,14 @@ private:
 	 * Called after marking to update statistics related to the scan rate. This data is used
 	 * to estimate how long a GMP will take.
 	 * param historicWeight weight used for historic data when averaging
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 */
 	void measureScanRate(MM_EnvironmentVLHGC *env, double historicWeight);
 	
 	/**
 	 * Recalculate the intermission until kick-off based on current estimates, if automatic
 	 * intermissions are enabled. Store the result in _remainingGMPIntermissionIntervals.
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 */
 	void calculateAutomaticGMPIntermission(MM_EnvironmentVLHGC *env);
 	
@@ -197,7 +197,7 @@ private:
 	 * Following a GC, recalculate the Eden size for the next PGC.
 	 * This is typically the same as GCExtensions->tarokeEdenSize, but may be smaller if 
 	 * insufficient memory is available
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 */
 	void calculateEdenSize(MM_EnvironmentVLHGC *env);
 
@@ -206,7 +206,7 @@ private:
 	 * Attempt to keep the GMP times in line with the times in PGC.  Keep track of a weighted
 	 * historic average and set the new GMP increment time to be a result of the adjusted
 	 * calculations.
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 * @param pgcTime[in] New PGC-time to update weighted average with
 	 */
 	void calculateGlobalMarkIncrementTimeMillis(MM_EnvironmentVLHGC *env, U_64 pgcTime);
@@ -221,25 +221,25 @@ private:
 
 	/**
 	 * Get number of GMP increments we wish to have as headroom to ensure that the GMP cycle finishes before AF with the desired pause time.
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 */
 	UDATA calculateGlobalMarkIncrementHeadroom(MM_EnvironmentVLHGC *env) const;
 
 	/**
 	 * Called after a GMP completes to update GMP-related statistics necessary for scheduling.  This is done by examining env->cycleState.
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 */
 	void updateGMPStats(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Called after a copy forward rate to update the averageCopyForwardRate
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 */
 	double calculateAverageCopyForwardRate(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Estimate total free memory
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 * @oaram freeRegionMemory[in]
 	 * @param defragmentedMemory[in]
 	 * @oaram reservedFreeMemory[in]
@@ -274,7 +274,7 @@ public:
 	/**
 	 * Determine what work should be performed during the current increment.
 	 * 
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 * @param doPartialGarbageCollection[out] set to true if a PGC should be performed, false otherwise
 	 * @param doGlobalMarkPhase[out] set to true if a GMP increment should be performed, false otherwise
 	 */
@@ -331,14 +331,14 @@ public:
 
 	/**
 	 * Calculate compact-bytes/free-bytes ratio after global sweep, to be used for determining amount of compact work on each PGC
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param edenSizeInBytes[in] The size of the Eden space which preceded this PGC, in bytes
 	 */
 	void calculatePGCCompactionRate(MM_EnvironmentVLHGC *env, UDATA edenSizeInBytes);
 
 	/**
 	 * Calculate ratio of scannable bytes vs total live set (scannable + non-scannable)
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void calculateScannableBytesRatio(MM_EnvironmentVLHGC *env);
 
@@ -358,7 +358,7 @@ public:
 
 	/**
 	 * Calculate desired amount of work to be compacted this PGC cycle
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 * @return desired bytes to be compacted
 	 */
 	UDATA getDesiredCompactWork();
@@ -384,25 +384,25 @@ public:
 
 	/**
 	 * Inform the receiver that a copy-forward cycle has completed
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 */
 	void copyForwardCompleted(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Inform the receiver that a Global Mark Phase has completed and that a GMP intermission should begin
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 */
 	void globalMarkPhaseCompleted(MM_EnvironmentVLHGC *env);
 	
 	/**
 	 * Inform the receiver that an increment in the Global Mark Phase, or the mark portion of a global collect, has completed
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 */
 	void globalMarkIncrementCompleted(MM_EnvironmentVLHGC *env);
 	
 	/**
 	 * Inform the receiver that a Global GC has completed.
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 * @param reclaimableRegions[in] an estimate of the reclaimable memory
 	 * @param defragmentReclaimableRegions[in] an estimate of the reclaimable defragment memory
 	 */
@@ -410,13 +410,13 @@ public:
 	
 	/**
 	 * Inform the receiver that a Partial GC has started.
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 */
 	void partialGarbageCollectStarted(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Inform the receiver that a Partial GC has completed.
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 * @param reclaimableRegions[in] an estimate of the reclaimable memory
 	 * @param defragmentReclaimableRegions[in] an estimate of the reclaimable defragment memory
 	 */
@@ -425,27 +425,27 @@ public:
 	/**
 	 * Determine what type of PGC should be run next PGC cycle (Copy-Forward, Mark-Sweep-Compact etc)
 	 * The result is not explicitly returned, but implicitly through CycleState, class member flag etc.
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 */
 	void determineNextPGCType(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Answer the current expected time to be spent in a Global Mark Phase (GMP) increment.
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 * @return Time in milliseconds for Global Mark increment
 	 */
 	UDATA currentGlobalMarkIncrementTimeMillis(MM_EnvironmentVLHGC *env) const;
 
 	/**
 	 * Used to request the size, in bytes, of the active calculated Eden space.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @return The current size of Eden, in bytes
 	 */
 	UDATA getCurrentEdenSizeInBytes(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Used to request the size, in regions, of the active calculated Eden space.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @return The current size of Eden, in regions
 	 */
 	UDATA getCurrentEdenSizeInRegions(MM_EnvironmentVLHGC *env);

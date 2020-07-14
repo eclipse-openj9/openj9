@@ -145,13 +145,13 @@ MM_WorkPacketsRealtime::getInputPacket(MM_EnvironmentBase *envBase)
 			} else {
 				while(!inputPacketAvailable(env) && (_inputListDoneIndex == doneIndex)) {
 
-					/* if all GC threads are blocked or yielded (at least one yielded), it's time for master to know about it */
+					/* if all GC threads are blocked or yielded (at least one yielded), it's time for main to know about it */
 					if (_yieldCollaborator.getYieldCount() + _inputListWaitCount >= env->_currentTask->getThreadCount() && _yieldCollaborator.getYieldCount() > 0) {
-						if (env->isMasterThread()) {
+						if (env->isMainThread()) {
 							((MM_Scheduler *)(_extensions->dispatcher))->condYieldFromGC(env);
 						} else {
-							/* notify master last thread synced/yielded */
-							_yieldCollaborator.setResumeEvent(MM_YieldCollaborator::notifyMaster);
+							/* notify main last thread synced/yielded */
+							_yieldCollaborator.setResumeEvent(MM_YieldCollaborator::notifyMain);
 							omrthread_monitor_notify_all(_inputListMonitor);
 						}
 					}
@@ -164,7 +164,7 @@ MM_WorkPacketsRealtime::getInputPacket(MM_EnvironmentBase *envBase)
 						env->reportScanningSuspended();
 						omrthread_monitor_wait(_inputListMonitor);
 						env->reportScanningResumed();
-					} while ((_inputListDoneIndex == doneIndex) && !env->isMasterThread() && ((_yieldCollaborator.getResumeEvent() == MM_YieldCollaborator::notifyMaster) || (_yieldCollaborator.getResumeEvent() == MM_YieldCollaborator::fromYield)));
+					} while ((_inputListDoneIndex == doneIndex) && !env->isMainThread() && ((_yieldCollaborator.getResumeEvent() == MM_YieldCollaborator::notifyMain) || (_yieldCollaborator.getResumeEvent() == MM_YieldCollaborator::fromYield)));
 				}
 			}
 		}

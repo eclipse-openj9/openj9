@@ -83,7 +83,7 @@
 #include "WorkStack.hpp"
 
 void
-MM_ParallelPartialMarkTask::masterSetup(MM_EnvironmentBase *env)
+MM_ParallelPartialMarkTask::mainSetup(MM_EnvironmentBase *env)
 {
 	bool dynamicClassUnloadingEnabled = false;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
@@ -93,7 +93,7 @@ MM_ParallelPartialMarkTask::masterSetup(MM_EnvironmentBase *env)
 }
 
 void
-MM_ParallelPartialMarkTask::masterCleanup(MM_EnvironmentBase *envBase)
+MM_ParallelPartialMarkTask::mainCleanup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 
@@ -120,7 +120,7 @@ void
 MM_ParallelPartialMarkTask::setup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	if (!env->isMasterThread()) {
+	if (!env->isMainThread()) {
 		Assert_MM_true(NULL == env->_cycleState);
 		env->_cycleState = _cycleState;
 	} else {
@@ -143,7 +143,7 @@ MM_ParallelPartialMarkTask::cleanup(MM_EnvironmentBase *envBase)
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats.merge(&env->_markVLHGCStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.merge(&env->_workPacketStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._irrsStats.merge(&env->_irrsStats);
-	if(!env->isMasterThread()) {
+	if(!env->isMainThread()) {
 		env->_cycleState = NULL;
 	}
 	env->_lastOverflowedRsclWithReleasedBuffers = NULL;
@@ -177,12 +177,12 @@ MM_ParallelPartialMarkTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, co
 }
 
 bool
-MM_ParallelPartialMarkTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *envBase, const char *id)
+MM_ParallelPartialMarkTask::synchronizeGCThreadsAndReleaseMain(MM_EnvironmentBase *envBase, const char *id)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	U_64 startTime = j9time_hires_clock();
-	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMaster(env, id);
+	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMain(env, id);
 	U_64 endTime = j9time_hires_clock();
 	env->_markVLHGCStats.addToSyncStallTime(startTime, endTime);
 	
@@ -304,7 +304,7 @@ MM_PartialMarkingScheme::heapRemoveRange(MM_EnvironmentVLHGC *env, MM_MemorySubS
  ****************************************
  */
 void
-MM_PartialMarkingScheme::masterSetupForGC(MM_EnvironmentVLHGC *env)
+MM_PartialMarkingScheme::mainSetupForGC(MM_EnvironmentVLHGC *env)
 {
 	/* Initialize the marking stack */
 	env->_cycleState->_workPackets->reset(env);
@@ -335,7 +335,7 @@ MM_PartialMarkingScheme::masterSetupForGC(MM_EnvironmentVLHGC *env)
 }
 
 void
-MM_PartialMarkingScheme::masterCleanupAfterGC(MM_EnvironmentVLHGC *env)
+MM_PartialMarkingScheme::mainCleanupAfterGC(MM_EnvironmentVLHGC *env)
 {
 	Assert_MM_true(static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._ownableSynchronizerCandidates >= static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._ownableSynchronizerSurvived);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._ownableSynchronizerCleared = static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._ownableSynchronizerCandidates - static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._ownableSynchronizerSurvived;
@@ -1565,7 +1565,7 @@ MM_PartialMarkingScheme::handleOverflow(MM_EnvironmentVLHGC *env)
 	
 	if (packets->getOverflowFlag()) {
 		result = true;
-		if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+		if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
 			packets->clearOverflowFlag();
 			env->_currentTask->releaseSynchronizedGCThreads(env);
 		}

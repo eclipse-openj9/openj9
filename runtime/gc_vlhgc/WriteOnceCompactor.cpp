@@ -96,7 +96,7 @@ void
 MM_ParallelWriteOnceCompactTask::setup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	if (!env->isMasterThread()) {
+	if (!env->isMainThread()) {
 		env->_cycleState = _cycleState;
 	}
 	env->_compactVLHGCStats.clear();
@@ -110,7 +110,7 @@ MM_ParallelWriteOnceCompactTask::cleanup(MM_EnvironmentBase *envBase)
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._compactStats.merge(&env->_compactVLHGCStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._irrsStats.merge(&env->_irrsStats);
 
-	if(!env->isMasterThread()) {
+	if(!env->isMainThread()) {
 		env->_cycleState = NULL;
 	}
 
@@ -118,11 +118,11 @@ MM_ParallelWriteOnceCompactTask::cleanup(MM_EnvironmentBase *envBase)
 }
 
 void
-MM_ParallelWriteOnceCompactTask::masterSetup(MM_EnvironmentBase *envBase)
+MM_ParallelWriteOnceCompactTask::mainSetup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 	_compactScheme->setCycleState(_cycleState, _nextMarkMap);
-	_compactScheme->masterSetupForGC(env);
+	_compactScheme->mainSetupForGC(env);
 #if defined(DEBUG)
 	_compactScheme->verifyHeap(env, true);
 #endif /* DEBUG */
@@ -130,7 +130,7 @@ MM_ParallelWriteOnceCompactTask::masterSetup(MM_EnvironmentBase *envBase)
 }
 
 void
-MM_ParallelWriteOnceCompactTask::masterCleanup(MM_EnvironmentBase *envBase)
+MM_ParallelWriteOnceCompactTask::mainCleanup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 
@@ -440,7 +440,7 @@ MM_WriteOnceCompactor::clearCycleState()
 }
 
 void
-MM_WriteOnceCompactor::masterSetupForGC(MM_EnvironmentVLHGC *env)
+MM_WriteOnceCompactor::mainSetupForGC(MM_EnvironmentVLHGC *env)
 {
 	_compactTable = (WriteOnceCompactTableEntry*)_nextMarkMap->getMarkBits();
 	/* the move work stack is a simple structure shared by all threads so set it up prior to going multi-threaded */
@@ -2320,7 +2320,7 @@ MM_WriteOnceCompactor::doPlanSlide(MM_EnvironmentVLHGC *env, void *copyDestinati
 void
 MM_WriteOnceCompactor::setupMoveWorkStack(MM_EnvironmentVLHGC *env)
 {
-	Assert_MM_true(env->isMasterThread());
+	Assert_MM_true(env->isMainThread());
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *endOfQueue = NULL;

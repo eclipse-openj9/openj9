@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,7 +90,7 @@ public:
 
 	/**
 	 * Set initial state for incremental Mark
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void performMarkSetInitialState(MM_EnvironmentVLHGC *env);
 
@@ -98,14 +98,14 @@ public:
 	 * Execute complete Mark operation.
 	 * Try to use results of Incremental Mark steps done before if any
 	 * 
-	 * @param env[in] The thread which called driveGlobalCollectMasterThread
+	 * @param env[in] The thread which called driveGlobalCollectMainThread
 	 */
 	void performMarkForGlobalGC(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Execute one step of incremental Mark.
 	 * 
-	 * @param env[in] The thread which called driveGlobalCollectMasterThread
+	 * @param env[in] The thread which called driveGlobalCollectMainThread
 	 * @param markIncrementEndTime[in] end of time interval scheduled for step (as observed by current_time_millis)
 	 * @return true if last step of incremental Mark has been executed
 	 */
@@ -114,7 +114,7 @@ public:
 	/**
 	 * Execute one step of concurrent GMP Mark.
 	 * 
-	 * @param env[in] The master GC thread for the concurrent operation
+	 * @param env[in] The main GC thread for the concurrent operation
 	 * @param totalBytesToScan[in] The number of bytes which must be scanned by the concurrent task before it stops attempting to do more work
 	 * @param forceExit[in] A "kill switch" which, when set to true, implies that the concurrent operation should terminate (volatile as it is written by another thread)
 	 * @return The number of bytes scanned by the concurrent mark task
@@ -125,7 +125,7 @@ public:
 	 * Executes mark initialization only and advances the mark state machine to the root step.  The caller must ensure that the mark state
 	 * machine is set to the initial state, prior to calling this method (otherwise, it will assert).
 	 * 
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void performMarkInit(MM_EnvironmentVLHGC *env);
 
@@ -133,7 +133,7 @@ public:
 	 * Perform cleanup after mark.
 	 * This includes reporting object delete events, unloading classes and starting finalization
 	 *
-	 * @param env[in] The master thread
+	 * @param env[in] The main thread
 	 */
 	void postMarkCleanup(MM_EnvironmentVLHGC *env);
 

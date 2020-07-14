@@ -321,7 +321,7 @@ MM_ParallelScrubCardTableTask::run(MM_EnvironmentBase *envBase)
 void
 MM_ParallelScrubCardTableTask::setup(MM_EnvironmentBase *env)
 {
-	if (!env->isMasterThread()) {
+	if (!env->isMainThread()) {
 		Assert_MM_true(NULL == env->_cycleState);
 		env->_cycleState = _cycleState;
 	} else {
@@ -332,7 +332,7 @@ MM_ParallelScrubCardTableTask::setup(MM_EnvironmentBase *env)
 void
 MM_ParallelScrubCardTableTask::cleanup(MM_EnvironmentBase *env)
 {
-	if (!env->isMasterThread()) {
+	if (!env->isMainThread()) {
 		env->_cycleState = NULL;
 	}
 }
@@ -360,11 +360,11 @@ MM_ParallelScrubCardTableTask::synchronizeGCThreads(MM_EnvironmentBase *env, con
 }
 
 bool
-MM_ParallelScrubCardTableTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *env, const char *id)
+MM_ParallelScrubCardTableTask::synchronizeGCThreadsAndReleaseMain(MM_EnvironmentBase *env, const char *id)
 {
 	/* this task doesn't use synchronization */
 	Assert_MM_unreachable();
-	return MM_ParallelTask::synchronizeGCThreadsAndReleaseMaster(env, id);
+	return MM_ParallelTask::synchronizeGCThreadsAndReleaseMain(env, id);
 }
 
 bool

@@ -86,8 +86,8 @@ public:
 	bool isFinalizationRequired() { return _finalizationRequired; }
 #endif /* J9VM_GC_FINALIZATION */
 
-	void masterSetupForGC(MM_EnvironmentBase *env);
-	void masterCleanupAfterGC(MM_EnvironmentBase *env);
+	void mainSetupForGC(MM_EnvironmentBase *env);
+	void mainCleanupAfterGC(MM_EnvironmentBase *env);
 	void incrementalCollectStart(MM_EnvironmentRealtime *env);
 	void incrementalCollect(MM_EnvironmentRealtime *env);
 	void doAuxiliaryGCWork(MM_EnvironmentBase *env);
@@ -112,7 +112,7 @@ public:
 	 * The J9_GC_CLASS_LOADER_DEAD bit is set for each class loader that will be unloaded.
 	 * J9HOOK_VM_CLASSES_UNLOAD is triggered if any classes will be unloaded.
 	 *
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 * @param classUnloadCountResult[out] returns the number of classes about to be unloaded
 	 * @param anonymousClassUnloadCount[out] returns the number of anonymous classes about to be unloaded
 	 * @param classLoaderUnloadCountResult[out] returns the number of class loaders about to be unloaded

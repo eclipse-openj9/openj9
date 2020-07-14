@@ -75,8 +75,8 @@ public:
 	virtual void setup(MM_EnvironmentBase *env);
 	virtual void cleanup(MM_EnvironmentBase *env);
 
-	void masterSetup(MM_EnvironmentBase *env);
-	void masterCleanup(MM_EnvironmentBase *env);
+	void mainSetup(MM_EnvironmentBase *env);
+	void mainCleanup(MM_EnvironmentBase *env);
 
 	/**
 	 * Create an ParallelCompactTask object.
@@ -308,7 +308,7 @@ private:
 	 * Called to rebuild the given mark map from references in the given work packets.  Any packet slot which points into
 	 * the compact set is marked in the given mark map.
 	 * 
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param packets[in] The work packets for the in-progress GMP cycle
 	 * @param markMap[in] The mark map for the in-progress GMP cycle
 	 */
@@ -318,7 +318,7 @@ private:
 	 * Part of planning refactoring (JAZZ 21595).
 	 * This function is analogous to moveObjects.  It is meant to be the non-moving equivalent which only performs planning actions
 	 * but does not move objects or write to the heap.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param objectCount[in/out] The number of objects the receiver planned to move
 	 * @param byteCount[in/out] The number of bytes the receiver planned to move
 	 * @param skippedObjectCount[in/out] The number of objects the receiver planned to skip
@@ -352,7 +352,7 @@ private:
 	 * Part of planning refactoring (JAZZ 21595).
 	 * This function is analogous to doCompact.  It is meant to be the non-moving equivalent which only performs planning actions
 	 * but does not move objects or write to the heap.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param copyDestinationBase[in/out] The base address of object copy destinations.  This is updated to the byte after the space consumed by the copy before this method returns
 	 * @param copyDestinationTop[in] The end address of object copy destinations
 	 * @param firstTopCopy[in] The first object to try to copy
@@ -365,7 +365,7 @@ private:
 	 * Part of planning refactoring (JAZZ 21595).
 	 * This function is analogous to doCompact.  It is meant to be the non-moving equivalent which only performs planning actions
 	 * but does not move objects or write to the heap.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param copyDestinationBase[in] The base address of object copy destinations
 	 * @param firstTopCopy[in] The first object to try to copy
 	 * @param endOfCopyBlock[in] The first byte after the last object which should be copied
@@ -385,7 +385,7 @@ private:
 	/**
 	 * Walks the previous mark map to find all objects in regions to be compacted and then, using forwarding pointer data,
 	 * finds their new locations and copies them.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void moveObjects(MM_EnvironmentVLHGC *env);
 
@@ -415,8 +415,8 @@ private:
 	UDATA movedPageSize(MM_EnvironmentVLHGC *env, void *page);
 
 	/**
-	 * Called in the master thread to do the initial population of the move work stack.  This call must be made prior to moveObjects().
-	 * @param env[in] The master GC thread
+	 * Called in the main thread to do the initial population of the move work stack.  This call must be made prior to moveObjects().
+	 * @param env[in] The main GC thread
 	 */
 	void setupMoveWorkStack(MM_EnvironmentVLHGC *env);
 
@@ -553,7 +553,7 @@ public:
 	static MM_WriteOnceCompactor *newInstance(MM_EnvironmentVLHGC *env);
 	void kill(MM_EnvironmentVLHGC *env);
 
-	void masterSetupForGC(MM_EnvironmentVLHGC *env);
+	void mainSetupForGC(MM_EnvironmentVLHGC *env);
 	void compact(MM_EnvironmentVLHGC *env);
 
 	J9Object *getForwardingPtr(J9Object *objectPtr) const;

@@ -33,7 +33,7 @@ MM_IncrementalParallelTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, co
 	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
 	if(1 < _totalThreadCount) {
 		
-		if (env->isMasterThread()) {
+		if (env->isMainThread()) {
 			/* ignore nested sync points */
 			if (_entryCount >= 1) {
 				return;
@@ -61,11 +61,11 @@ MM_IncrementalParallelTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, co
 			
 			do {
 				if (_yieldCollaborator.getYieldCount() + _synchronizeCount >= _threadCount && _yieldCollaborator.getYieldCount() > 0) {					
-					if (env->isMasterThread()) {
+					if (env->isMainThread()) {
 						((MM_Scheduler*)_dispatcher)->condYieldFromGC(env);
 					} else {
-						/* notify master last thread synced/yielded */
-						_yieldCollaborator.setResumeEvent(MM_YieldCollaborator::notifyMaster);
+						/* notify main last thread synced/yielded */
+						_yieldCollaborator.setResumeEvent(MM_YieldCollaborator::notifyMain);
 						omrthread_monitor_notify_all(_synchronizeMutex);
 					}
 				}
@@ -78,7 +78,7 @@ MM_IncrementalParallelTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, co
 					env->reportScanningSuspended();
 					omrthread_monitor_wait(_synchronizeMutex);
 					env->reportScanningResumed();
-				} while ((index == _synchronizeIndex) && !env->isMasterThread() && (_yieldCollaborator.getResumeEvent() != MM_YieldCollaborator::synchedThreads));
+				} while ((index == _synchronizeIndex) && !env->isMainThread() && (_yieldCollaborator.getResumeEvent() != MM_YieldCollaborator::synchedThreads));
 
 			} while(index == _synchronizeIndex);
 		}
@@ -87,19 +87,19 @@ MM_IncrementalParallelTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, co
 }
 
 bool
-MM_IncrementalParallelTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *envBase, const char *id)
+MM_IncrementalParallelTask::synchronizeGCThreadsAndReleaseMain(MM_EnvironmentBase *envBase, const char *id)
 {
 	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
-	bool isMasterThread = false;
+	bool isMainThread = false;
 
 	if(1 < _totalThreadCount) {
 		volatile uintptr_t index = _synchronizeIndex;
 
-		if (env->isMasterThread()) {
-			/* This function only has to be re-entrant for the master thread */
+		if (env->isMainThread()) {
+			/* This function only has to be re-entrant for the main thread */
 			_entryCount += 1;
 			if (_entryCount > 1) {
-				isMasterThread = true;
+				isMainThread = true;
 				goto done;
 			}
 		}
@@ -115,31 +115,31 @@ MM_IncrementalParallelTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentB
 
 		_synchronizeCount += 1;
 		if(_synchronizeCount == _threadCount) {
-			if(env->isMasterThread()) {
+			if(env->isMainThread()) {
 				omrthread_monitor_exit(_synchronizeMutex);
-				isMasterThread = true;
+				isMainThread = true;
 				_synchronized = true;
 				goto done;
 			}
-			/* notify master last thread synced */
-			_yieldCollaborator.setResumeEvent(MM_YieldCollaborator::notifyMaster);
+			/* notify main last thread synced */
+			_yieldCollaborator.setResumeEvent(MM_YieldCollaborator::notifyMain);
 			omrthread_monitor_notify_all(_synchronizeMutex);
 		}
 		
 		while(index == _synchronizeIndex) {
-			if(env->isMasterThread() && (_synchronizeCount == _threadCount)) {
+			if(env->isMainThread() && (_synchronizeCount == _threadCount)) {
 				omrthread_monitor_exit(_synchronizeMutex);
-				isMasterThread = true;
+				isMainThread = true;
 				_synchronized = true;
 				goto done;
 			}
 			
 			if ((_yieldCollaborator.getYieldCount() + _synchronizeCount >= _threadCount) && (_yieldCollaborator.getYieldCount() > 0)) {
-				if (env->isMasterThread()) {
+				if (env->isMainThread()) {
 					((MM_Scheduler*)_dispatcher)->condYieldFromGC(env);
 				} else {
-					/* notify master last thread synced/yielded */
-					_yieldCollaborator.setResumeEvent(MM_YieldCollaborator::notifyMaster);
+					/* notify main last thread synced/yielded */
+					_yieldCollaborator.setResumeEvent(MM_YieldCollaborator::notifyMain);
 					omrthread_monitor_notify_all(_synchronizeMutex);
 				}
 			}
@@ -152,15 +152,15 @@ MM_IncrementalParallelTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentB
 				env->reportScanningSuspended();
 				omrthread_monitor_wait(_synchronizeMutex);
 				env->reportScanningResumed();
-			} while ((index == _synchronizeIndex) && !env->isMasterThread() && (_yieldCollaborator.getResumeEvent() != MM_YieldCollaborator::synchedThreads));
+			} while ((index == _synchronizeIndex) && !env->isMainThread() && (_yieldCollaborator.getResumeEvent() != MM_YieldCollaborator::synchedThreads));
 		}
 		omrthread_monitor_exit(_synchronizeMutex);
 	} else {
-		isMasterThread = true;
+		isMainThread = true;
 	}
 
 done:
-	return isMasterThread;	
+	return isMainThread;	
 }
 
 bool
@@ -168,7 +168,7 @@ MM_IncrementalParallelTask::synchronizeGCThreadsAndReleaseSingleThread(MM_Enviro
 {
 	/* this task doesn't support synchronizeGCThreadsAndReleaseSingleThread currently */
 	Assert_MM_unreachable();
-	/* TODO if implementing make sure to fix the isMaster check in releaseSynchronizedGCThreads */
+	/* TODO if implementing make sure to fix the isMain check in releaseSynchronizedGCThreads */
 	return MM_ParallelTask::synchronizeGCThreadsAndReleaseSingleThread(env, id);
 }
 
@@ -179,7 +179,7 @@ MM_IncrementalParallelTask::releaseSynchronizedGCThreads(MM_EnvironmentBase *env
 		return;
 	}
 	
-	if(env->isMasterThread()) {
+	if(env->isMainThread()) {
 		/* sync/release sequence actually takes time (excluding the work within the sync/release pair).
 		 * Take advantage of the fact the all workers are blocked to check if it is time to yield */
 		((MM_Scheduler*)_dispatcher)->condYieldFromGC(env);

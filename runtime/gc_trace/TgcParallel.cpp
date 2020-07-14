@@ -148,25 +148,25 @@ tgcHookGlobalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, 
 	uint64_t sweepTotalTime = parallelExtensions->sweepEndTime - parallelExtensions->sweepStartTime;
 
 	if (0 != sweepTotalTime) {
-		intptr_t masterSweepChunksTotal = 0;
-		uint64_t masterSweepMergeTime = 0;
+		intptr_t mainSweepChunksTotal = 0;
+		uint64_t mainSweepMergeTime = 0;
 		if (extensions->isVLHGC()) {
 #if defined(J9VM_GC_VLHGC)
-			MM_EnvironmentVLHGC *masterEnv = MM_EnvironmentVLHGC::getEnvironment(vmThread);
-			masterSweepChunksTotal = masterEnv->_sweepVLHGCStats.sweepChunksTotal;
-			masterSweepMergeTime = masterEnv->_sweepVLHGCStats.mergeTime;
+			MM_EnvironmentVLHGC *mainEnv = MM_EnvironmentVLHGC::getEnvironment(vmThread);
+			mainSweepChunksTotal = mainEnv->_sweepVLHGCStats.sweepChunksTotal;
+			mainSweepMergeTime = mainEnv->_sweepVLHGCStats.mergeTime;
 #endif /* J9VM_GC_VLHGC */
 		} else if (extensions->isStandardGC()) {
 #if defined(J9VM_GC_MODRON_STANDARD)
-			MM_EnvironmentBase *masterEnv = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
-			masterSweepChunksTotal = masterEnv->_sweepStats.sweepChunksTotal;
-			masterSweepMergeTime = masterEnv->_sweepStats.mergeTime;
+			MM_EnvironmentBase *mainEnv = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+			mainSweepChunksTotal = mainEnv->_sweepStats.sweepChunksTotal;
+			mainSweepMergeTime = mainEnv->_sweepStats.mergeTime;
 #endif /* defined(J9VM_GC_MODRON_STANDARD) */
 		}
 
 		tgcExtensions->printf("Sweep:  busy   idle sections %zu  merge %llu\n",
-			masterSweepChunksTotal,
-			j9time_hires_delta(0, masterSweepMergeTime, J9PORT_TIME_DELTA_IN_MILLISECONDS));
+			mainSweepChunksTotal,
+			j9time_hires_delta(0, mainSweepMergeTime, J9PORT_TIME_DELTA_IN_MILLISECONDS));
 
 
 		GC_VMThreadListIterator sweepThreadListIterator(vmThread);
@@ -362,7 +362,7 @@ tgcHookCopyForwardEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventDat
 {
 	MM_LocalGCStartEvent* event = (MM_LocalGCStartEvent*)eventData;
 	J9VMThread* vmThread = (J9VMThread*)event->currentThread->_language_vmthread;
-	MM_EnvironmentVLHGC *masterEnv = MM_EnvironmentVLHGC::getEnvironment(vmThread);
+	MM_EnvironmentVLHGC *mainEnv = MM_EnvironmentVLHGC::getEnvironment(vmThread);
 	MM_TgcExtensions *tgcExtensions = MM_TgcExtensions::getExtensions(vmThread);
 
 	J9VMThread *walkThread;
@@ -373,7 +373,7 @@ tgcHookCopyForwardEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventDat
 	tgcExtensions->printf("        busy    stall   | stall   | stall   acquire   release   acquire   release    split terminate | stall   acquire   release   exchange   split\n");
 	tgcExtensions->printf("         (ms)    (ms)   |  (ms)   |  (ms)   freelist  freelist  scanlist  scanlist   arrays   (ms)   |  (ms)   packets   packets   packets    arrays\n");
 
-	MM_CopyForwardStats *copyForwardStats = &static_cast<MM_CycleStateVLHGC*>(masterEnv->_cycleState)->_vlhgcIncrementStats._copyForwardStats;
+	MM_CopyForwardStats *copyForwardStats = &static_cast<MM_CycleStateVLHGC*>(mainEnv->_cycleState)->_vlhgcIncrementStats._copyForwardStats;
 	copyForwardTotalTime = copyForwardStats->_endTime - copyForwardStats->_startTime;
 
 	GC_VMThreadListIterator threadListIterator(vmThread);

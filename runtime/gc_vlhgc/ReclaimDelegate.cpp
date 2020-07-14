@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -674,7 +674,7 @@ void
 MM_ReclaimDelegate::postCompactCleanup(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *activeSubSpace, MM_GCCode gcCode)
 {
 	/* Restart the allocation caches associated to all threads */
-	masterThreadRestartAllocationCaches(env);
+	mainThreadRestartAllocationCaches(env);
 
 	/* ----- start of cleanupAfterCollect ------*/
 	
@@ -797,7 +797,7 @@ MM_ReclaimDelegate::compactAndCorrectStats(MM_EnvironmentVLHGC *env, MM_Allocate
 	 */
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._compactStats.clear();
 	/* run the compactor and we will read the stats, afterward */
-	masterThreadCompact(env, allocDescription, nextMarkMap);
+	mainThreadCompact(env, allocDescription, nextMarkMap);
 }
 #endif /* defined(J9VM_GC_MODRON_COMPACTION) */	
 
@@ -833,7 +833,7 @@ MM_ReclaimDelegate::deleteSweepPoolState(MM_EnvironmentBase *env, void *sweepPoo
 
 #if defined(J9VM_GC_MODRON_COMPACTION)
 void
-MM_ReclaimDelegate::masterThreadCompact(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MarkMap *nextMarkMap)
+MM_ReclaimDelegate::mainThreadCompact(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MarkMap *nextMarkMap)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
@@ -852,7 +852,7 @@ MM_ReclaimDelegate::masterThreadCompact(MM_EnvironmentVLHGC *env, MM_AllocateDes
 #endif /* J9VM_GC_MODRON_COMPACTION */
 
 void
-MM_ReclaimDelegate::masterThreadRestartAllocationCaches(MM_EnvironmentVLHGC *env)
+MM_ReclaimDelegate::mainThreadRestartAllocationCaches(MM_EnvironmentVLHGC *env)
 {
 	GC_VMThreadListIterator vmThreadListIterator((J9JavaVM *)env->getLanguageVM());
 	J9VMThread *walkThread;

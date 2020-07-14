@@ -55,7 +55,7 @@ private:
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	MM_MarkMap *_markMap;							/**< This is set when dynamic class loading is enabled, NULL otherwise */
 	volatile bool _anotherClassMarkPass;			/**< Used in completeClassMark for another scanning request*/
-	volatile bool _anotherClassMarkLoopIteration;	/**< Used in completeClassMark for another loop iteration request (set by the Master thread)*/
+	volatile bool _anotherClassMarkLoopIteration;	/**< Used in completeClassMark for another loop iteration request (set by the Main thread)*/
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 
 
@@ -103,9 +103,9 @@ public:
 	void workerSetupForGC(MM_EnvironmentBase *env);
 	void workerCompleteGC(MM_EnvironmentBase *env);
 	void workerCleanupAfterGC(MM_EnvironmentBase *env);
-	void masterSetupForGC(MM_EnvironmentBase *env);
-	void masterSetupForWalk(MM_EnvironmentBase *env);
-	void masterCleanupAfterGC(MM_EnvironmentBase *env);
+	void mainSetupForGC(MM_EnvironmentBase *env);
+	void mainSetupForWalk(MM_EnvironmentBase *env);
+	void mainCleanupAfterGC(MM_EnvironmentBase *env);
 	void scanRoots(MM_EnvironmentBase *env);
 	void completeMarking(MM_EnvironmentBase *env);
 

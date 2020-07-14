@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,7 +135,7 @@ MM_UtilizationTracker::compactTimeSliceWindowAndUpdateCurrentUtil(MM_Environment
 U_64
 MM_UtilizationTracker::addTimeSlice(MM_EnvironmentRealtime *env, MM_Timer *timer, bool isMutator)
 {
-	assert1(env->isMasterThread());
+	assert1(env->isMainThread());
 	U_64 currentTime = timer->getTimeInNanos();
 	double elapsed = 0;
 	if (currentTime >= _lastUpdateTime) {

@@ -933,27 +933,27 @@ j9gc_get_bytes_allocated_by_thread(J9VMThread *vmThread)
 
 /**
  * Return information about the total CPU time consumed by GC threads, as well
- * as the number of GC threads. The time for the master and worker threads is
+ * as the number of GC threads. The time for the main and worker threads is
  * reported separately, with the worker threads returned as a total.
  * 
  * @parm[in] vm The J9JavaVM
- * @parm[out] masterCpuMillis The amount of CPU time spent in the GC by the master thread, in milliseconds
+ * @parm[out] mainCpuMillis The amount of CPU time spent in the GC by the main thread, in milliseconds
  * @parm[out] workerCpuMillis The amount of CPU time spent in the GC by the all worker threads, in milliseconds
  * @parm[out] maxThreads The maximum number of GC worker threads
  * @parm[out] currentThreads The number of GC worker threads that participated in the last collection
  */
 void
-j9gc_get_CPU_times(J9JavaVM *javaVM, U_64 *masterCpuMillis, U_64 *workerCpuMillis, U_32 *maxThreads, U_32 *currentThreads)
+j9gc_get_CPU_times(J9JavaVM *javaVM, U_64 *mainCpuMillis, U_64 *workerCpuMillis, U_32 *maxThreads, U_32 *currentThreads)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
 	GC_VMThreadListIterator iterator(javaVM);
-	U_64 masterMillis = 0;
+	U_64 mainMillis = 0;
 	U_64 workerMillis = 0;
 	U_64 workerNanos = 0;
 	J9VMThread *vmThread = iterator.nextVMThread();
 	while(NULL != vmThread) {
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
-		if(!env->isMasterThread()) {
+		if(!env->isMainThread()) {
 			/* For a large number of worker threads and very long runs, a sum of 
 			 * nanos might overflow a U_64. Sum the millis and nanos separately.
 			 */
@@ -969,14 +969,14 @@ j9gc_get_CPU_times(J9JavaVM *javaVM, U_64 *masterCpuMillis, U_64 *workerCpuMilli
 		workerMillis += 1;
 	}
 
-	/* Adjust the master millis by the nanos, rounding up. */
-	masterMillis = extensions->_masterThreadCpuTimeNanos / 1000000;
-	if((extensions->_masterThreadCpuTimeNanos % 1000000) > 500000) {
-		masterMillis += 1;
+	/* Adjust the main millis by the nanos, rounding up. */
+	mainMillis = extensions->_mainThreadCpuTimeNanos / 1000000;
+	if((extensions->_mainThreadCpuTimeNanos % 1000000) > 500000) {
+		mainMillis += 1;
 	}
 	
 	/* Store the results */
-	*masterCpuMillis = masterMillis;
+	*mainCpuMillis = mainMillis;
 	*workerCpuMillis = workerMillis;
 	*maxThreads = (U_32)extensions->dispatcher->threadCountMaximum();	
 	*currentThreads = (U_32)extensions->dispatcher->activeThreadCount();

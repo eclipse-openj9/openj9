@@ -458,7 +458,7 @@ MM_InterRegionRememberedSet::releaseCardBufferControlBlockLocalPools(MM_Environm
 		}
 	}
 
-	/* do the same for master-GC-thread */
+	/* do the same for main-GC-thread */
 	releaseCardBufferControlBlockListForThread(env, env);
 
 	_overflowedListHead = NULL;

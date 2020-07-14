@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,9 +73,9 @@ private:
 	UDATA _nonDeterministicSweepConsecutiveMax; /**< The maximum of all longest streaks, between two heartbeats */
 	U_64 _nonDeterministicSweepDelayMax;		/**< The longest delay caused by non deterministic sweep among all allocs between two heartbeats */
 
-	U_64 _maxExclusiveAccessTime;		 /**< The maximum time (of all events of the chain) GC master thread spent stopping mutators */
-	U_64 _minExclusiveAccessTime;		 /**< The minimum time (of all events of the chain) GC master thread spent stopping mutators */
-	U_64 _totalExclusiveAccessTime;		 /**< The average time (of all events of the chain) GC master thread spent stopping mutators */
+	U_64 _maxExclusiveAccessTime;		 /**< The maximum time (of all events of the chain) GC main thread spent stopping mutators */
+	U_64 _minExclusiveAccessTime;		 /**< The minimum time (of all events of the chain) GC main thread spent stopping mutators */
+	U_64 _totalExclusiveAccessTime;		 /**< The average time (of all events of the chain) GC main thread spent stopping mutators */
 
 	UDATA _maxStartPriority; /**< The maximum start priority of all increments in the event chain. Only used for the last event in the chain. */
 	UDATA _minStartPriority; /**< The minimum start priority of all increments in the event chain. Only used for the last event in the chain. */

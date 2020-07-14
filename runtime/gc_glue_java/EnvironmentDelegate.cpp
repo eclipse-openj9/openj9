@@ -153,12 +153,12 @@ MM_EnvironmentDelegate::flushNonAllocationCaches()
 }
 
 void
-MM_EnvironmentDelegate::setGCMasterThread(bool isMasterThread)
+MM_EnvironmentDelegate::setGCMainThread(bool isMainThread)
 {
-	if (isMasterThread) {
-		_vmThread->privateFlags |= J9_PRIVATE_FLAGS_GC_MASTER_THREAD;
+	if (isMainThread) {
+		_vmThread->privateFlags |= J9_PRIVATE_FLAGS_GC_MAIN_THREAD;
 	} else {
-		_vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_GC_MASTER_THREAD;
+		_vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_GC_MAIN_THREAD;
 	}
 }
 

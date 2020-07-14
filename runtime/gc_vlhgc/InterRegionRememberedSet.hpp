@@ -85,7 +85,7 @@ public:
 	UDATA _cardToRegionDisplacement;						/**< the displacement value to use against RememberedSetcards to determine the corresponding region index */
 	MM_CardTable *_cardTable;								/**< cached copy of card table */
 
-	MM_RememberedSetCardBucket *_rememberedSetCardBucketPool; /**< RS bucket pool (for all regions) for Master thread or any other thread that caused GC in absence of Master thread */
+	MM_RememberedSetCardBucket *_rememberedSetCardBucketPool; /**< RS bucket pool (for all regions) for Main thread or any other thread that caused GC in absence of Main thread */
 
 private:
 
@@ -584,7 +584,7 @@ public:
 
 	/**
 	 * Initialize Thread local resources for RS CardLists for all threads
-	 * @param env master GC thread
+	 * @param env main GC thread
 	 */
 	void threadLocalInitialize(MM_EnvironmentVLHGC* env);
 
@@ -604,10 +604,10 @@ public:
 	}
 	
 	/**
-	 * set RememberedSetCardBucketPool for gcMasterThread or the thread acting as gcMasterThread
+	 * set RememberedSetCardBucketPool for gcMainThread or the thread acting as gcMainThread
 	 * @param env[in] the current thread
 	 */
-	MMINLINE void setRememberedSetCardBucketPoolForMasterThread(MM_EnvironmentVLHGC *env)
+	MMINLINE void setRememberedSetCardBucketPoolForMainThread(MM_EnvironmentVLHGC *env)
 	{
 		env->_rememberedSetCardBucketPool = &_rememberedSetCardBucketPool[0];
 	}

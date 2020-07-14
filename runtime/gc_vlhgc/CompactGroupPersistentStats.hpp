@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,7 +94,7 @@ private:
 	/**
 	 * Update survival rate stats at the end of a PGC.  This method depends on the before/after data for the given persistent stats
 	 * structure being populated by the component which performed the PGC but then acts on those, generically.
-	 * @param env[in] The Master GC thread
+	 * @param env[in] The Main GC thread
 	 * @param persistentStats[in] The persistent stats array
 	 * @param compactGroup[in] compactGroup for which instantaneousSurvivalRate is calculated
 	 */
@@ -102,7 +102,7 @@ private:
 	
 	/**
 	 * Auxiliary function used by updateProjectedSurvivalRate. If an age group is at the boundary of Eden, it returns the size fractions on either sides.
- 	 * @param env[in] The Master GC thread
+ 	 * @param env[in] The Main GC thread
 	 * @param ageInThisAgeGroup[in] Age-size of the age group
 	 * @param ageInThisCompactGroup[in] Age-size of the compact group
 	 * @param currentAge[in] Current age of objects in this group
@@ -113,7 +113,7 @@ private:
 
 	/* Reset live bytes stats.  Should be done at the start of every gc cycle.
 	 *
-	 * @param env[in] The Master GC thread
+	 * @param env[in] The Main GC thread
 	 * @param persistentStats[in] The list of per-compact group persistent stats
 	 */
 	static void resetLiveBytesStats(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats);
@@ -123,7 +123,7 @@ private:
 	 * The init value is set to current consumed space (according to memory pool).
 	 *
 	 * TODO: Create a new class for this as it's not really tied to compact groups
- 	 * @param env[in] The Master GC thread
+ 	 * @param env[in] The Main GC thread
 	 */
 	static void initProjectedLiveBytes(MM_EnvironmentVLHGC *env);
 
@@ -131,7 +131,7 @@ private:
 	 * Updates the projectedLiveBytes for all regions by multiplying by their compact group's instantaneous survivor rate
 	 *
 	 * TODO: Create a new class for this as it's not really tied to compact groups
- 	 * @param env[in] The Master GC thread
+ 	 * @param env[in] The Main GC thread
 	 */
 	static void decayProjectedLiveBytesForRegions(MM_EnvironmentVLHGC *env);
 	
@@ -147,7 +147,7 @@ private:
 
 	/**
 	 * Auxiliary function to calculation various values for measured/projected live bytes before current/after previous PGC, invoked for each region in Collection Set
-  	 * @param env[in] The Master GC thread
+  	 * @param env[in] The Main GC thread
 	 * @param persistentStats[in] The list of per-compact group persistent stats
 	 * @param region[in] The region for which we take measured/projected live bytes values
 	 * @param measuredLiveBytes Passing in the actual value for measuredLiveBytes (already calculated by the caller for its own purpose)
@@ -176,7 +176,7 @@ public:
 	 * Stats are only updated on the first collection operation (copy forward,sweep...).  This side-steps annoying double-counting of live bytes
 	 * between different collection operations (though it possibly lowers our sample set).
 	 *
-	 * @param env[in] The Master GC thread
+	 * @param env[in] The Main GC thread
 	 * @param persistentStats[in] The list of per-compact group persistent stats
 	 */
 	static void updateStatsBeforeCopyForward(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats);
@@ -186,7 +186,7 @@ public:
 	 * Stats are only updated on the first collection operation (copy forward,sweep...).  This side-steps annoying double-counting of live bytes
 	 * between different collection operations (though it possibly lowers our sample set).
 	 *
-	 * @param env[in] The Master GC thread
+	 * @param env[in] The Main GC thread
 	 * @param persistentStats[in] The list of per-compact group persistent stats
 	 */
 	static void updateStatsAfterCopyForward(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats);
@@ -196,7 +196,7 @@ public:
 	 * Stats are only updated on the first collection operation (copy forward,sweep,compact).  This side-steps annoying double-counting of live bytes
 	 * between different collection operations (though it possibly lowers our sample set).
 	 *
-	 * @param env[in] The Master GC thread
+	 * @param env[in] The Main GC thread
 	 * @param persistentStats[in] The list of per-compact group persistent stats
 	 */
 	static void updateStatsBeforeSweep(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats);
@@ -206,7 +206,7 @@ public:
 	 * Stats are only updated on the first collection operation (copy forward,sweep,compact).  This side-steps annoying double-counting of live bytes
 	 * between different collection operations (though it possibly lowers our sample set).
 	 *
-	 * @param env[in] The Master GC thread
+	 * @param env[in] The Main GC thread
 	 * @param persistentStats[in] The list of per-compact group persistent stats
 	 */
 	static void updateStatsAfterSweep(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats);
@@ -216,7 +216,7 @@ public:
 	 * Stats are only updated on the first collection operation (copy forward,sweep,compact).  This side-steps annoying double-counting of live bytes
 	 * between different collection operations (though it possibly lowers our sample set).
 	 *
-	 * @param env[in] The Master GC thread
+	 * @param env[in] The Main GC thread
 	 * @param persistentStats[in] The list of per-compact group persistent stats
 	 */
 	static void updateStatsBeforeCompact(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats);
@@ -226,7 +226,7 @@ public:
 	 * Stats are only updated on the first collection operation (copy forward,sweep,compact).  This side-steps annoying double-counting of live bytes
 	 * between different collection operations (though it possibly lowers our sample set).
 	 *
-	 * @param env[in] The Master GC thread
+	 * @param env[in] The Main GC thread
 	 * @param persistentStats[in] The list of per-compact group persistent stats
 	 */
 	static void updateStatsAfterCompact(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats);
@@ -234,7 +234,7 @@ public:
 	/*
 	 * Does any book-keeping/updating of stats before any gc operations happen
 	 *
-	 * @param env[in] The Master GC thread
+	 * @param env[in] The Main GC thread
 	 * @param persistentStats[in] The list of per-compact group persistent stats
 	 */
 	static void updateStatsBeforeCollect(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats);
@@ -242,7 +242,7 @@ public:
 	/**
 	 * Updates projectedLiveBytes, projectedLiveBytesDeviation and regionCount fields by iterating through all regions and updating
 	 * their compact group's stats.
-	 * @param env[in] The Master GC thread
+	 * @param env[in] The Main GC thread
 	 * @param persistentStats[in] The list of per-compact group persistent stats
 	 */
 	static void deriveProjectedLiveBytesStats(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats);

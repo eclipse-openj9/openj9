@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,12 +85,12 @@ public:
 
 	bool *_threadResumedTable; /**< Used to keep track of threads taken out of the suspended state when wakeUpThreads is called */
 
-	bool _masterThreadMustShutDown; /**< Set when the master thread must shutdown */
+	bool _mainThreadMustShutDown; /**< Set when the main thread must shutdown */
 	
-	bool _exclusiveVMAccessRequired; /**< This flag is used by the master thread to see if it needs to get exclusive vm access */
+	bool _exclusiveVMAccessRequired; /**< This flag is used by the main thread to see if it needs to get exclusive vm access */
 
 	MM_MetronomeAlarmThread *_alarmThread;
-	MM_EnvironmentRealtime *_threadWaitingOnMasterThreadMonitor;
+	MM_EnvironmentRealtime *_threadWaitingOnMainThreadMonitor;
 	uintptr_t _mutatorCount;
 
 	MM_RealtimeGC *_gc;
@@ -100,25 +100,25 @@ public:
 
 	U_32 _gcOn;      /* Are we in some long GC cycle? */
 	typedef enum {
-		MUTATOR = 0,  /* master blocked on a monitor, mutators running */
+		MUTATOR = 0,  /* main blocked on a monitor, mutators running */
 		WAKING_GC,
-		STOP_MUTATOR, /* master thread awake - waiting for mut threads to reach safe point */
+		STOP_MUTATOR, /* main thread awake - waiting for mut threads to reach safe point */
 		AWAIT_GC, /* waiting for other gc threads to reach initial barrier */
 		RUNNING_GC,
-		WAKING_MUTATOR, /* master thread still awake, mutators running */
+		WAKING_MUTATOR, /* main thread still awake, mutators running */
 		NUM_MODES
 	} Mode;
 	Mode _mode;
 	uintptr_t _gcPhaseSet;
 	/* requests (typically by a mutator) to complete GC synchronously */
 	bool _completeCurrentGCSynchronously;
-	/* copy of the request made by Master Thread at the beginning of very next GC increment */
-	bool _completeCurrentGCSynchronouslyMasterThreadCopy;
+	/* copy of the request made by Main Thread at the beginning of very next GC increment */
+	bool _completeCurrentGCSynchronouslyMainThreadCopy;
 	GCReason _completeCurrentGCSynchronouslyReason;
 	uintptr_t _completeCurrentGCSynchronouslyReasonParameter;
-	/* monitor used to suspend/resume master thread,
+	/* monitor used to suspend/resume main thread,
 	 * but also to ensure atomic access/change of _completeCurrentGCSynchronously/_mode */
-	omrthread_monitor_t _masterThreadMonitor;
+	omrthread_monitor_t _mainThreadMonitor;
 
 	MM_OSInterface *_osInterface;
 
@@ -143,19 +143,19 @@ protected:
 	virtual uintptr_t getThreadPriority();
 
 	/**
-	 * @copydoc MM_ParallelDispatcher::useSeparateMasterThread()
+	 * @copydoc MM_ParallelDispatcher::useSeparateMainThread()
 	 * Because Metronome requires all GC threads to begin an increment
 	 * at the same location where they left off, it uses a separate
-	 * thread as the GC master thread, instead of using one of the
+	 * thread as the GC main thread, instead of using one of the
 	 * mutator threads.
 	 */
-	virtual bool useSeparateMasterThread() { return true; }
+	virtual bool useSeparateMainThread() { return true; }
 
 	virtual void wakeUpThreads(uintptr_t count);
 	void wakeUpWorkerThreads(uintptr_t count);
 
 	virtual void workerEntryPoint(MM_EnvironmentBase *env);
-	virtual void masterEntryPoint(MM_EnvironmentBase *env);
+	virtual void mainEntryPoint(MM_EnvironmentBase *env);
 
 	bool internalShouldGCYield(MM_EnvironmentRealtime *env, U_64 timeSlack);
 
@@ -170,7 +170,7 @@ public:
 	}
 
 	void shutDownWorkerThreads();
-	void shutDownMasterThread();
+	void shutDownMainThread();
 	void startGCIfTimeExpired(MM_EnvironmentBase *env);
 
 	virtual bool condYieldFromGCWrapper(MM_EnvironmentBase *env, U_64 timeSlack = 0);
@@ -249,10 +249,10 @@ public:
 		_shouldGCYield(false),
 		_currentConsecutiveBeats(0),
 		_threadResumedTable(NULL),
-		_masterThreadMustShutDown(false),
+		_mainThreadMustShutDown(false),
 		_exclusiveVMAccessRequired(true),
 		_alarmThread(NULL),
-		_threadWaitingOnMasterThreadMonitor(NULL),
+		_threadWaitingOnMainThreadMonitor(NULL),
 		_mutatorCount(0),
 		_gc(NULL),
 		_vm(env->getOmrVM()),
@@ -262,10 +262,10 @@ public:
 		_mode(MUTATOR),
 		_gcPhaseSet(GC_PHASE_IDLE),
 		_completeCurrentGCSynchronously(false),
-		_completeCurrentGCSynchronouslyMasterThreadCopy(false),
+		_completeCurrentGCSynchronouslyMainThreadCopy(false),
 		_completeCurrentGCSynchronouslyReason(UNKOWN_REASON),
 		_completeCurrentGCSynchronouslyReasonParameter(0),
-		_masterThreadMonitor(NULL),
+		_mainThreadMonitor(NULL),
 		_osInterface(NULL),
 		window(),
 		beat(),

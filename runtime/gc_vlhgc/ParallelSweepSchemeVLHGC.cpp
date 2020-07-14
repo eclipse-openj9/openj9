@@ -91,7 +91,7 @@ void
 MM_ParallelSweepVLHGCTask::setup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	if (!env->isMasterThread()) {
+	if (!env->isMainThread()) {
 		Assert_MM_true(NULL == env->_cycleState);
 		env->_cycleState = _cycleState;
 	} else {
@@ -114,7 +114,7 @@ MM_ParallelSweepVLHGCTask::cleanup(MM_EnvironmentBase *envBase)
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._sweepStats.merge(&env->_sweepVLHGCStats);
-	if(!env->isMasterThread()) {
+	if(!env->isMainThread()) {
 		env->_cycleState = NULL;
 	}
 	
@@ -127,13 +127,13 @@ MM_ParallelSweepVLHGCTask::cleanup(MM_EnvironmentBase *envBase)
 }
 
 void
-MM_ParallelSweepVLHGCTask::masterSetup(MM_EnvironmentBase *env)
+MM_ParallelSweepVLHGCTask::mainSetup(MM_EnvironmentBase *env)
 {
 	_sweepScheme->setCycleState(_cycleState);
 }
 
 void
-MM_ParallelSweepVLHGCTask::masterCleanup(MM_EnvironmentBase *envBase)
+MM_ParallelSweepVLHGCTask::mainCleanup(MM_EnvironmentBase *envBase)
 {
 	/* now that sweep is finished, walk the list of regions and recycle any which are completely empty */
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
@@ -160,12 +160,12 @@ MM_ParallelSweepVLHGCTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, con
  * Stats gathering for synchronizing threads during sweep.
  */
 bool
-MM_ParallelSweepVLHGCTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *envBase, const char *id)
+MM_ParallelSweepVLHGCTask::synchronizeGCThreadsAndReleaseMain(MM_EnvironmentBase *envBase, const char *id)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	U_64 startTime = j9time_hires_clock();
-	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMaster(env, id);
+	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMain(env, id);
 	U_64 endTime = j9time_hires_clock();
 	env->_sweepVLHGCStats.addToIdleTime(startTime, endTime);
 	
@@ -366,7 +366,7 @@ MM_ParallelSweepSchemeVLHGC::heapReconfigured(MM_EnvironmentVLHGC *env)
 /**
  * Initialize all internal structures in order to perform a parallel sweep.
  * 
- * @note called by the master thread only
+ * @note called by the main thread only
  */
 void
 MM_ParallelSweepSchemeVLHGC::setupForSweep(MM_EnvironmentVLHGC *env)
@@ -854,8 +854,8 @@ MM_ParallelSweepSchemeVLHGC::flushAllFinalChunks(MM_EnvironmentBase *env)
 void
 MM_ParallelSweepSchemeVLHGC::internalSweep(MM_EnvironmentVLHGC *env)
 {
-	/* master thread does initialization */
-	if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+	/* main thread does initialization */
+	if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
 		/* Reset all memory pools within the sweep set as a precursor to sweeping. */
 		GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 		MM_HeapRegionDescriptorVLHGC *region = NULL;
@@ -877,8 +877,8 @@ MM_ParallelSweepSchemeVLHGC::internalSweep(MM_EnvironmentVLHGC *env)
 	/* ..all threads now join in to do actual sweep */
 	sweepAllChunks(env, _chunksPrepared);
 	
-	/* ..and then master thread finishes off by connecting all the chunks */
-	if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+	/* ..and then main thread finishes off by connecting all the chunks */
+	if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 		U_64 mergeStartTime, mergeEndTime;
 		PORT_ACCESS_FROM_ENVIRONMENT(env);

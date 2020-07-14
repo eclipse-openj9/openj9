@@ -54,7 +54,7 @@ MM_RealtimeMarkTask::setup(MM_EnvironmentBase *envBase)
 	env->_markStats._gcCount = extensions->globalGCStats.gcCount;
 	env->_workPacketStats._gcCount = extensions->globalGCStats.gcCount;
 
-	if(env->isMasterThread()) {
+	if(env->isMainThread()) {
 		Assert_MM_true(_cycleState == env->_cycleState);
 	} else {
 		Assert_MM_true(NULL == env->_cycleState);
@@ -72,7 +72,7 @@ MM_RealtimeMarkTask::cleanup(MM_EnvironmentBase *envBase)
 
 	delegate->mergeGCStats(env);
 
-	if (env->isMasterThread()) {
+	if (env->isMainThread()) {
 		Assert_MM_true(_cycleState == env->_cycleState);
 	} else {
 		env->_cycleState = NULL;

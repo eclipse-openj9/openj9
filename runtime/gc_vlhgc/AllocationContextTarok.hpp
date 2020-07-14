@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,7 +92,7 @@ public:
 	
 	/**
 	 * Called when the given region has been deemed empty, but is not a FREE region.  The receiver is responsible for changing the region type and ensuring that it is appropriately stored.
-	 * @param env[in] The calling thread (typically the master GC thread)
+	 * @param env[in] The calling thread (typically the main GC thread)
 	 * @param region[in] The region to recycle
 	 */
 	virtual void recycleRegion(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region) = 0;
@@ -100,7 +100,7 @@ public:
 	/**
 	 * Called during tear down of a subspace to discard any regions which comprise the subspace.
 	 * The region should be FREE (not IDLE!) on completion of this call.
-	 * @param env[in] The calling thread (typically the master GC thread)
+	 * @param env[in] The calling thread (typically the main GC thread)
 	 * @param region[in] The region to tear down
 	 */
 	virtual void tearDownRegion(MM_EnvironmentBase *env, MM_HeapRegionDescriptorVLHGC *region) = 0;

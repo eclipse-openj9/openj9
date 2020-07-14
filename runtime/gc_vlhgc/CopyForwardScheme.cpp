@@ -1385,10 +1385,10 @@ MM_CopyForwardScheme::copyAndForwardObjectClass(MM_EnvironmentVLHGC *env, MM_All
 
 /**
  * Cleanup after CopyForward work is complete.
- * This should only be called once per collection by the master thread.
+ * This should only be called once per collection by the main thread.
  */
 void
-MM_CopyForwardScheme::masterCleanupForCopyForward(MM_EnvironmentVLHGC *env)
+MM_CopyForwardScheme::mainCleanupForCopyForward(MM_EnvironmentVLHGC *env)
 {
 	/* make sure that we have dropped any remaining references to any on-heap scan caches which we would have allocated if we hit overflow */
 	_cacheFreeList.removeAllHeapAllocatedChunks(env);
@@ -1404,10 +1404,10 @@ MM_CopyForwardScheme::masterCleanupForCopyForward(MM_EnvironmentVLHGC *env)
 /**
  * Initialize the copy forward scheme for a garbage collection.
  * Initialize all internal values to start a garbage collect. This should only be
- * called once per collection by the master thread.
+ * called once per collection by the main thread.
  */
 void
-MM_CopyForwardScheme::masterSetupForCopyForward(MM_EnvironmentVLHGC *env)
+MM_CopyForwardScheme::mainSetupForCopyForward(MM_EnvironmentVLHGC *env)
 {
 	clearAbortFlag();
 	_abortInProgress = false;
@@ -1603,14 +1603,14 @@ MM_CopyForwardScheme::copyForwardCollectionSet(MM_EnvironmentVLHGC *env)
 		_workQueueMonitorPtr = env->_cycleState->_workPackets->getInputListMonitorPtr();
 		_workQueueWaitCountPtr = env->_cycleState->_workPackets->getInputListWaitCountPtr();
 	}
-	/* Perform any master-specific setup */
-	masterSetupForCopyForward(env);
+	/* Perform any main-specific setup */
+	mainSetupForCopyForward(env);
 
 	/* And perform the copy forward */
 	MM_CopyForwardSchemeTask copyForwardTask(env, _dispatcher, this, env->_cycleState);
 	_dispatcher->run(env, &copyForwardTask);
 
-	masterCleanupForCopyForward(env);
+	mainCleanupForCopyForward(env);
 	
 	/* Record the completion time of the copy forward cycle */
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._endTime = j9time_hires_clock();
@@ -1633,7 +1633,7 @@ MM_CopyForwardScheme::copyForwardCollectionSet(MM_EnvironmentVLHGC *env)
 		_workQueueWaitCountPtr = &_scanCacheWaitCount;
 	}
 
-	/* Do any final work to regions in order to release them back to the master collector implementation */
+	/* Do any final work to regions in order to release them back to the main collector implementation */
 	postProcessRegions(env);
 
 	return copyForwardCompletedSuccessfully(env);
@@ -1656,7 +1656,7 @@ MM_CopyForwardScheme::copyForwardCompletedSuccessfully(MM_EnvironmentVLHGC *env)
  */
 
 /* getFreeCache makes the assumption that there will be at least 1 entry on the scan list if there are no entries on the free list.
- * This requires that there be at (N * _cachesPerThread) scan cache entries, where N is the number of threads (Master + workers)
+ * This requires that there be at (N * _cachesPerThread) scan cache entries, where N is the number of threads (Main + workers)
  */
 MM_CopyScanCacheVLHGC *
 MM_CopyForwardScheme::getFreeCache(MM_EnvironmentVLHGC *env)
@@ -3216,7 +3216,7 @@ MM_CopyForwardScheme::handleOverflow(MM_EnvironmentVLHGC *env)
 
 	if (packets->getOverflowFlag()) {
 		result = true;
-		if (((MM_CopyForwardSchemeTask*)env->_currentTask)->synchronizeGCThreadsAndReleaseMasterForMark(env, UNIQUE_ID)) {
+		if (((MM_CopyForwardSchemeTask*)env->_currentTask)->synchronizeGCThreadsAndReleaseMainForMark(env, UNIQUE_ID)) {
 			packets->clearOverflowFlag();
 			env->_currentTask->releaseSynchronizedGCThreads(env);
 		}
@@ -3304,7 +3304,7 @@ MM_CopyForwardScheme::completeScan(MM_EnvironmentVLHGC *env)
 	/* flush Mark Map caches before we start draining Work Stack (in case of Abort) */
 	addCopyCachesToFreeList(env);
 
-	if (((MM_CopyForwardSchemeTask*)env->_currentTask)->synchronizeGCThreadsAndReleaseMasterForAbort(env, UNIQUE_ID)) {
+	if (((MM_CopyForwardSchemeTask*)env->_currentTask)->synchronizeGCThreadsAndReleaseMainForAbort(env, UNIQUE_ID)) {
 		if (abortFlagRaised()) {
 			_abortInProgress = true;
 		}

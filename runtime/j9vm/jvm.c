@@ -275,7 +275,7 @@ static void testBackupAndRestoreLibpath(void);
 #endif  /* AIXPPC */
 
 /* Defined in j9memcategories.c */
-extern OMRMemCategorySet j9MasterMemCategorySet;
+extern OMRMemCategorySet j9MainMemCategorySet;
 
 void exitHook(J9JavaVM *vm);
 static jint JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITServer);
@@ -1873,9 +1873,9 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	/* Get the thread library memory categories */
 	{
 #if CALL_BUNDLED_FUNCTIONS_DIRECTLY
-		IDATA threadCategoryResult = omrthread_lib_control(J9THREAD_LIB_CONTROL_GET_MEM_CATEGORIES, (UDATA)&j9MasterMemCategorySet);
+		IDATA threadCategoryResult = omrthread_lib_control(J9THREAD_LIB_CONTROL_GET_MEM_CATEGORIES, (UDATA)&j9MainMemCategorySet);
 #else
-		IDATA threadCategoryResult = f_threadLibControl(J9THREAD_LIB_CONTROL_GET_MEM_CATEGORIES, (UDATA)&j9MasterMemCategorySet);
+		IDATA threadCategoryResult = f_threadLibControl(J9THREAD_LIB_CONTROL_GET_MEM_CATEGORIES, (UDATA)&j9MainMemCategorySet);
 #endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 
 		if (threadCategoryResult) {
@@ -1892,7 +1892,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		}
 	}
 	/* Register the J9 memory categories with the port library */
-	j9portLibrary.omrPortLibrary.port_control(&j9portLibrary.omrPortLibrary, J9PORT_CTLDATA_MEM_CATEGORIES_SET, (UDATA)&j9MasterMemCategorySet);
+	j9portLibrary.omrPortLibrary.port_control(&j9portLibrary.omrPortLibrary, J9PORT_CTLDATA_MEM_CATEGORIES_SET, (UDATA)&j9MainMemCategorySet);
 
 	Assert_SC_true(J2SE_CURRENT_VERSION >= J2SE_18);
 	setNLSCatalog(&j9portLibrary);
@@ -4419,8 +4419,8 @@ JVM_RaiseSignal(jint sigNum)
  *
  * If handler has the special value of J9_PRE_DEFINED_HANDLER_CHECK (2),
  * then the predefinedHandlerWrapper is registered with asynchSignalReporterThread
- * in OMR. masterASynchSignalHandler notifies asynchSignalReporterThread whenever a
- * signal is received. If the old OS handler is a master signal handler, then a
+ * in OMR. mainASynchSignalHandler notifies asynchSignalReporterThread whenever a
+ * signal is received. If the old OS handler is a main signal handler, then a
  * Java signal handler was previously registered with the signal. In this case,
  * J9_USE_OLD_JAVA_SIGNAL_HANDLER must be returned. sun.misc.Signal.handle(...) or
  * jdk.internal.misc.Signal.handle(...) will return the old Java signal handler if
@@ -4487,7 +4487,7 @@ JVM_RegisterSignal(jint sigNum, void *handler)
 		}
 	}
 
-	/* If oldHandler is a master handler, then a Java signal handler was previously registered with
+	/* If oldHandler is a main handler, then a Java signal handler was previously registered with
 	 * the signal. sun.misc.Signal.handle(...) or jdk.internal.misc.Signal.handle(...) will return
 	 * the old Java signal handler if JVM_RegisterSignal returns J9_USE_OLD_JAVA_SIGNAL_HANDLER.
 	 * Otherwise, an instance of NativeHandler is returned with the oldHandler's address stored in
@@ -4495,7 +4495,7 @@ JVM_RegisterSignal(jint sigNum, void *handler)
 	 * NativeHandler.handler, which represents the address of the native signal handler function. In
 	 * Java 9, NativeHandler.handle() will throw UnsupportedOperationException.
 	 */
-	if (j9sig_is_master_signal_handler(oldHandler)) {
+	if (j9sig_is_main_signal_handler(oldHandler)) {
 		oldHandler = (void *)J9_USE_OLD_JAVA_SIGNAL_HANDLER;
 	}
 

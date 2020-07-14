@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,7 +88,7 @@ public:
 	 * Execute complete Mark operation.
 	 * Try to use results of Incremental Mark steps done before if any
 	 * 
-	 * @param env[in] The thread which called driveGlobalCollectMasterThread
+	 * @param env[in] The thread which called driveGlobalCollectMainThread
 	 */
 	void performMarkForPartialGC(MM_EnvironmentVLHGC *env);
 
@@ -96,7 +96,7 @@ public:
 	 * Perform cleanup after mark.
 	 * This includes reporting object delete events, unloading classes and starting finalization
 	 *
-	 * @param env[in] The master thread
+	 * @param env[in] The main thread
 	 */
 	void postMarkCleanup(MM_EnvironmentVLHGC *env);
 

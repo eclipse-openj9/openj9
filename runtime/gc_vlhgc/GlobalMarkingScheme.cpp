@@ -87,7 +87,7 @@
 #include "WorkStack.hpp"
 
 void
-MM_ParallelGlobalMarkTask::masterSetup(MM_EnvironmentBase *env)
+MM_ParallelGlobalMarkTask::mainSetup(MM_EnvironmentBase *env)
 {
 	bool dynamicClassUnloadingEnabled = false;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
@@ -97,7 +97,7 @@ MM_ParallelGlobalMarkTask::masterSetup(MM_EnvironmentBase *env)
 }
 
 void
-MM_ParallelGlobalMarkTask::masterCleanup(MM_EnvironmentBase *envBase)
+MM_ParallelGlobalMarkTask::mainCleanup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 
@@ -149,7 +149,7 @@ void
 MM_ParallelGlobalMarkTask::setup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	if (!env->isMasterThread()) {
+	if (!env->isMainThread()) {
 		Assert_MM_true(NULL == env->_cycleState);
 		env->_cycleState = _cycleState;
 	} else {
@@ -171,7 +171,7 @@ MM_ParallelGlobalMarkTask::cleanup(MM_EnvironmentBase *envBase)
 	
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats.merge(&env->_markVLHGCStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.merge(&env->_workPacketStats);
-	if(!env->isMasterThread()) {
+	if(!env->isMainThread()) {
 		env->_cycleState = NULL;
 	}
 
@@ -220,12 +220,12 @@ MM_ParallelGlobalMarkTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, con
 }
 
 bool
-MM_ParallelGlobalMarkTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *envBase, const char *id)
+MM_ParallelGlobalMarkTask::synchronizeGCThreadsAndReleaseMain(MM_EnvironmentBase *envBase, const char *id)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	U_64 startTime = j9time_hires_clock();
-	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMaster(env, id);
+	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMain(env, id);
 	U_64 endTime = j9time_hires_clock();
 	env->_markVLHGCStats.addToSyncStallTime(startTime, endTime);
 	
@@ -347,7 +347,7 @@ MM_GlobalMarkingScheme::heapRemoveRange(MM_EnvironmentVLHGC *env, MM_MemorySubSp
  ****************************************
  */
 void
-MM_GlobalMarkingScheme::masterSetupForGC(MM_EnvironmentVLHGC *env)
+MM_GlobalMarkingScheme::mainSetupForGC(MM_EnvironmentVLHGC *env)
 {
 	/* Initialize the marking stack */
 	env->_cycleState->_workPackets->reset(env);
@@ -357,7 +357,7 @@ MM_GlobalMarkingScheme::masterSetupForGC(MM_EnvironmentVLHGC *env)
 }
 
 void
-MM_GlobalMarkingScheme::masterCleanupAfterGC(MM_EnvironmentVLHGC *env)
+MM_GlobalMarkingScheme::mainCleanupAfterGC(MM_EnvironmentVLHGC *env)
 {
 	_interRegionRememberedSet->setRegionsAsRebuildingComplete(env);
 }
@@ -1386,7 +1386,7 @@ MM_GlobalMarkingScheme::markLiveObjectsRoots(MM_EnvironmentVLHGC *env)
 		/* Setting the permanent class loaders to scanned without a locked operation is safe
 		 * Class loaders will not be rescanned until a thread synchronize is executed
 		 */
-		if(env->isMasterThread()) {
+		if(env->isMainThread()) {
 			scanClassLoaderSlots(env, _javaVM->systemClassLoader);
 			scanClassLoaderSlots(env, _javaVM->applicationClassLoader);
 		}
@@ -1455,7 +1455,7 @@ MM_GlobalMarkingScheme::handleOverflow(MM_EnvironmentVLHGC *env)
 	
 	if (packets->getOverflowFlag()) {
 		result = true;
-		if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+		if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
 			packets->clearOverflowFlag();
 			env->_currentTask->releaseSynchronizedGCThreads(env);
 		}

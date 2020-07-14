@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -105,14 +105,14 @@ MM_PartialMarkDelegate::performMarkForPartialGC(MM_EnvironmentVLHGC *env)
 void
 MM_PartialMarkDelegate::markAll(MM_EnvironmentVLHGC *env)
 {
-	_markingScheme->masterSetupForGC(env);
+	_markingScheme->mainSetupForGC(env);
 
 	/* run the mark */
 	MM_ParallelPartialMarkTask markTask(env, _dispatcher, _markingScheme, env->_cycleState);
 	_dispatcher->run(env, &markTask);
 
 	/* Do any post mark checks */
-	_markingScheme->masterCleanupAfterGC(env);
+	_markingScheme->mainCleanupAfterGC(env);
 }
 
 void 

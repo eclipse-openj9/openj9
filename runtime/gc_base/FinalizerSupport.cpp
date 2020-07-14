@@ -178,11 +178,11 @@ struct finalizeWorkerData {
 };
 
 static int J9THREAD_PROC FinalizeWorkerThread(void *arg);
-IDATA FinalizeMasterRunFinalization(J9JavaVM * vm, omrthread_t * indirectWorkerThreadHandle, struct finalizeWorkerData **indirectWorkerData, IDATA finalizeCycleLimit, IDATA mode);
-static int J9THREAD_PROC FinalizeMasterThread(void *javaVM);
+IDATA FinalizeMainRunFinalization(J9JavaVM * vm, omrthread_t * indirectWorkerThreadHandle, struct finalizeWorkerData **indirectWorkerData, IDATA finalizeCycleLimit, IDATA mode);
+static int J9THREAD_PROC FinalizeMainThread(void *javaVM);
 static int  J9THREAD_PROC gpProtectedFinalizeWorkerThread(void *entryArg);
 
-static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
+static int J9THREAD_PROC FinalizeMainThread(void *javaVM)
 {
 	J9JavaVM *vm = (J9JavaVM *)javaVM;
 	omrthread_t workerThreadHandle;
@@ -190,15 +190,15 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 	struct finalizeWorkerData *workerData = NULL;
 	IDATA finalizeCycleInterval, finalizeCycleLimit, currentWaitTime, finalizableListUsed;
 	IDATA cycleIntervalWaitResult;
-	UDATA workerMode, savedFinalizeMasterFlags;
+	UDATA workerMode, savedFinalizeMainFlags;
 	GC_FinalizeListManager *finalizeListManager;
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(vm->omrVM);
 	MM_Forge *forge = extensions->getForge();
 
-	/* explicitly set the name for master finalizer thread as it is not attached to VM */
-	omrthread_set_name(omrthread_self(), "Finalizer master");
+	/* explicitly set the name for main finalizer thread as it is not attached to VM */
+	omrthread_set_name(omrthread_self(), "Finalizer main");
 
-	vm->finalizeMasterThread = omrthread_self();
+	vm->finalizeMainThread = omrthread_self();
 	workerThreadHandle = NULL;
 	noCycleWait = 0;
 
@@ -210,35 +210,35 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	if(NULL != vm->javaOffloadSwitchOnNoEnvWithReasonFunc) {
-		(*vm->javaOffloadSwitchOnNoEnvWithReasonFunc)(vm, vm->finalizeMasterThread, J9_JNI_OFFLOAD_SWITCH_GC_FINALIZE_MASTER_THREAD);
+		(*vm->javaOffloadSwitchOnNoEnvWithReasonFunc)(vm, vm->finalizeMainThread, J9_JNI_OFFLOAD_SWITCH_GC_FINALIZE_MAIN_THREAD);
 	}
 #endif
 
 	currentWaitTime = 0;
-	omrthread_monitor_enter(vm->finalizeMasterMonitor);
-	vm->finalizeMasterFlags |= J9_FINALIZE_FLAGS_ACTIVE;
-	omrthread_monitor_notify_all(vm->finalizeMasterMonitor);
+	omrthread_monitor_enter(vm->finalizeMainMonitor);
+	vm->finalizeMainFlags |= J9_FINALIZE_FLAGS_ACTIVE;
+	omrthread_monitor_notify_all(vm->finalizeMainMonitor);
 
 	do {
 		if(currentWaitTime != -1 && !noCycleWait) {
-			if(!(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_MASTER_WORK_REQUEST)) {
+			if(!(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_MAIN_WORK_REQUEST)) {
 				if(currentWaitTime == -2) {
 					omrthread_yield();
 				} else {
 					do {
-						cycleIntervalWaitResult = omrthread_monitor_wait_timed(vm->finalizeMasterMonitor, currentWaitTime, 0);
-					} while(!(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_MASTER_WORK_REQUEST) && cycleIntervalWaitResult != J9THREAD_TIMED_OUT);
+						cycleIntervalWaitResult = omrthread_monitor_wait_timed(vm->finalizeMainMonitor, currentWaitTime, 0);
+					} while(!(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_MAIN_WORK_REQUEST) && cycleIntervalWaitResult != J9THREAD_TIMED_OUT);
 				}
 			}
 		}
 
 		/* Check for a shutdown request, which overrides all other requests */
-		if(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_SHUTDOWN)
+		if(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_SHUTDOWN)
 			break;
 
 		/* Check for a wake up request, which means the garbage collector has placed objects on the finalizable queue for processing */
-		if(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_MASTER_WAKE_UP) {
-			vm->finalizeMasterFlags &= ~J9_FINALIZE_FLAGS_MASTER_WAKE_UP;
+		if(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_MAIN_WAKE_UP) {
+			vm->finalizeMainFlags &= ~J9_FINALIZE_FLAGS_MAIN_WAKE_UP;
 			currentWaitTime = finalizeCycleInterval;
 		}
 
@@ -251,7 +251,7 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 		}
 
 		/* If RUN_FINALIZATION is set, make the interval time is set to -1 -> This will override any "wake up" request made by the garbage collector */
-		if(vm->finalizeMasterFlags & (J9_FINALIZE_FLAGS_RUN_FINALIZATION
+		if(vm->finalizeMainFlags & (J9_FINALIZE_FLAGS_RUN_FINALIZATION
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 			 | J9_FINALIZE_FLAGS_FORCE_CLASS_LOADER_UNLOAD
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
@@ -260,7 +260,7 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 
 		/* There is work to be done - run one finalization cycle */
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-			if(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_FORCE_CLASS_LOADER_UNLOAD) {
+			if(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_FORCE_CLASS_LOADER_UNLOAD) {
 				workerMode = FINALIZE_WORKER_MODE_CL_UNLOAD;
 			} else {
 				workerMode = FINALIZE_WORKER_MODE_NORMAL;
@@ -269,9 +269,9 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 				workerMode = FINALIZE_WORKER_MODE_NORMAL;
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
-		savedFinalizeMasterFlags = vm->finalizeMasterFlags;
+		savedFinalizeMainFlags = vm->finalizeMainFlags;
 
-		IDATA result = FinalizeMasterRunFinalization(vm, &workerThreadHandle, &workerData, finalizeCycleLimit, workerMode);
+		IDATA result = FinalizeMainRunFinalization(vm, &workerThreadHandle, &workerData, finalizeCycleLimit, workerMode);
 		if(result < 0) {
 			/* give up this run and hope next time will be better */
 			currentWaitTime = 0;
@@ -285,11 +285,11 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 			if(workerData->noWorkDone) {
 				workerData->noWorkDone = 0;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-				if(!(savedFinalizeMasterFlags & J9_FINALIZE_FLAGS_FORCE_CLASS_LOADER_UNLOAD)) {
+				if(!(savedFinalizeMainFlags & J9_FINALIZE_FLAGS_FORCE_CLASS_LOADER_UNLOAD)) {
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 					currentWaitTime = 0;
-					if(savedFinalizeMasterFlags & J9_FINALIZE_FLAGS_RUN_FINALIZATION) {
-						vm->finalizeMasterFlags &= ~J9_FINALIZE_FLAGS_RUN_FINALIZATION;
+					if(savedFinalizeMainFlags & J9_FINALIZE_FLAGS_RUN_FINALIZATION) {
+						vm->finalizeMainFlags &= ~J9_FINALIZE_FLAGS_RUN_FINALIZATION;
 						omrthread_monitor_enter(vm->finalizeRunFinalizationMutex);
 						omrthread_monitor_notify_all(vm->finalizeRunFinalizationMutex);
 						omrthread_monitor_exit(vm->finalizeRunFinalizationMutex);
@@ -304,16 +304,16 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 			workerThreadHandle = NULL;
 		}
 		omrthread_monitor_exit(workerData->monitor);
-	} while(!(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_SHUTDOWN));
+	} while(!(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_SHUTDOWN));
 
 	/* Check if finalizers should be run on exit */
-	if(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_RUN_FINALIZERS_ON_EXIT) {
+	if(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_RUN_FINALIZERS_ON_EXIT) {
 		doneRunFinalizersOnExit = 0;
 		while(!doneRunFinalizersOnExit) {
 			IDATA result = 0;
 			do {
 				/* Keep trying, even if a worker requests that it be abandoned */
-				result = FinalizeMasterRunFinalization(vm, &workerThreadHandle, &workerData, finalizeCycleLimit, FINALIZE_WORKER_MODE_FORCED);
+				result = FinalizeMainRunFinalization(vm, &workerThreadHandle, &workerData, finalizeCycleLimit, FINALIZE_WORKER_MODE_FORCED);
 			} while(result == -2);
 
 			if(result == -1) {
@@ -338,7 +338,7 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 
 	/* We've been told to die */
 	if(NULL != workerThreadHandle) {
-		omrthread_monitor_exit((omrthread_monitor_t)vm->finalizeMasterMonitor);
+		omrthread_monitor_exit((omrthread_monitor_t)vm->finalizeMainMonitor);
 		omrthread_monitor_enter(workerData->monitor);
 		workerData->die = FINALIZE_WORKER_SHOULD_DIE;
 		omrthread_monitor_notify_all(workerData->monitor);
@@ -346,29 +346,29 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 		omrthread_monitor_exit(workerData->monitor);
 		omrthread_monitor_destroy(workerData->monitor);
 		forge->free(workerData);
-		omrthread_monitor_enter((omrthread_monitor_t)vm->finalizeMasterMonitor);
+		omrthread_monitor_enter((omrthread_monitor_t)vm->finalizeMainMonitor);
 	}
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	if(NULL != vm->javaOffloadSwitchOffNoEnvWithReasonFunc) {
-		(*vm->javaOffloadSwitchOffNoEnvWithReasonFunc)(vm, vm->finalizeMasterThread, J9_JNI_OFFLOAD_SWITCH_GC_FINALIZE_MASTER_THREAD);
+		(*vm->javaOffloadSwitchOffNoEnvWithReasonFunc)(vm, vm->finalizeMainThread, J9_JNI_OFFLOAD_SWITCH_GC_FINALIZE_MAIN_THREAD);
 	}
 #endif
 
 	/* Notify the main thread that we have shut down */
-	vm->finalizeMasterFlags |= J9_FINALIZE_FLAGS_SHUTDOWN_COMPLETE;
-	vm->finalizeMasterFlags &= ~J9_FINALIZE_FLAGS_ACTIVE;
-	omrthread_monitor_notify_all((omrthread_monitor_t)vm->finalizeMasterMonitor);
+	vm->finalizeMainFlags |= J9_FINALIZE_FLAGS_SHUTDOWN_COMPLETE;
+	vm->finalizeMainFlags &= ~J9_FINALIZE_FLAGS_ACTIVE;
+	omrthread_monitor_notify_all((omrthread_monitor_t)vm->finalizeMainMonitor);
 
 	/* If anyone is left waiting for forced finalization to complete, wake them up */
-	if(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_RUN_FINALIZATION) {
-		vm->finalizeMasterFlags &= ~J9_FINALIZE_FLAGS_RUN_FINALIZATION;
+	if(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_RUN_FINALIZATION) {
+		vm->finalizeMainFlags &= ~J9_FINALIZE_FLAGS_RUN_FINALIZATION;
 		omrthread_monitor_enter(vm->finalizeRunFinalizationMutex);
 		omrthread_monitor_notify_all(vm->finalizeRunFinalizationMutex);
 		omrthread_monitor_exit(vm->finalizeRunFinalizationMutex);
 	}
 
-	omrthread_exit((omrthread_monitor_t)vm->finalizeMasterMonitor);	/* exit the monitor and terminate the thread */
+	omrthread_exit((omrthread_monitor_t)vm->finalizeMainMonitor);	/* exit the monitor and terminate the thread */
 
 	/* NO GUARANTEED EXECUTION BEYOND THIS POINT */
 
@@ -633,7 +633,7 @@ static int J9THREAD_PROC FinalizeWorkerThread(void *arg)
 
 		workerData->finished = 1;
 
-		/* Notify the master that the work is complete */
+		/* Notify the main that the work is complete */
 		omrthread_monitor_enter(monitor);
 		omrthread_monitor_notify_all(monitor);
 	} while(workerData->die == FINALIZE_WORKER_STAY_ALIVE);
@@ -652,10 +652,10 @@ static int J9THREAD_PROC FinalizeWorkerThread(void *arg)
 
 	switch(workerData->die) {
 		case FINALIZE_WORKER_SHOULD_ABANDON:
-			/* Poke the master in case it missed the notify */
+			/* Poke the main in case it missed the notify */
 			omrthread_monitor_notify_all(workerData->monitor);
 
-			/* Now wait for the master to give us the OK to die */
+			/* Now wait for the main to give us the OK to die */
 			while(FINALIZE_WORKER_SHOULD_ABANDON == workerData->die) {
 				omrthread_monitor_wait(workerData->monitor);
 			}
@@ -681,13 +681,13 @@ static int J9THREAD_PROC FinalizeWorkerThread(void *arg)
 
 /*
  * Preconditions:
- * 	holds finalizeMasterMonitor
+ * 	holds finalizeMainMonitor
  * 	does not hold workerData->monitor
  * Postconditions:
- * 	holds finalizeMasterMonitor
+ * 	holds finalizeMainMonitor
  * 	does not hold workerData->monitor
  */
-IDATA FinalizeMasterRunFinalization(J9JavaVM * vm, omrthread_t * indirectWorkerThreadHandle,
+IDATA FinalizeMainRunFinalization(J9JavaVM * vm, omrthread_t * indirectWorkerThreadHandle,
 										   struct finalizeWorkerData **indirectWorkerData, IDATA finalizeCycleLimit,
 										   IDATA mode)
 {
@@ -720,14 +720,14 @@ IDATA FinalizeMasterRunFinalization(J9JavaVM * vm, omrthread_t * indirectWorkerT
 			/* What should be done here! */
 			return -1;
 		}
-		omrthread_monitor_exit(vm->finalizeMasterMonitor);
+		omrthread_monitor_exit(vm->finalizeMainMonitor);
 		omrthread_monitor_enter(workerData->monitor);
 
 		/* Fork the worker thread */
 		IDATA result = vm->internalVMFunctions->createThreadWithCategory(
 							&workerThreadHandle,
 							vm->defaultOSStackSize,
-							MM_GCExtensions::getExtensions(vm)->finalizeSlavePriority,
+							MM_GCExtensions::getExtensions(vm)->finalizeWorkerPriority,
 							0,
 							&gpProtectedFinalizeWorkerThread,
 							workerData,
@@ -737,7 +737,7 @@ IDATA FinalizeMasterRunFinalization(J9JavaVM * vm, omrthread_t * indirectWorkerT
 			omrthread_monitor_exit(workerData->monitor);
 			omrthread_monitor_destroy(workerData->monitor);			
 			forge->free(workerData);
-			omrthread_monitor_enter(vm->finalizeMasterMonitor);
+			omrthread_monitor_enter(vm->finalizeMainMonitor);
 			return -1;
 		}
 		omrthread_monitor_wait(workerData->monitor);
@@ -746,11 +746,11 @@ IDATA FinalizeMasterRunFinalization(J9JavaVM * vm, omrthread_t * indirectWorkerT
 			omrthread_monitor_exit(workerData->monitor);
 			omrthread_monitor_destroy(workerData->monitor);
 			forge->free(workerData);
-			omrthread_monitor_enter(vm->finalizeMasterMonitor);
+			omrthread_monitor_enter(vm->finalizeMainMonitor);
 			return -1;
 		}
 		omrthread_monitor_exit(workerData->monitor);
-		omrthread_monitor_enter(vm->finalizeMasterMonitor);
+		omrthread_monitor_enter(vm->finalizeMainMonitor);
 
 		*indirectWorkerData = workerData;
 		*indirectWorkerThreadHandle = workerThreadHandle;
@@ -760,7 +760,7 @@ IDATA FinalizeMasterRunFinalization(J9JavaVM * vm, omrthread_t * indirectWorkerT
 	}
 
 	/* A worker exists - set it to work */
-	omrthread_monitor_exit(vm->finalizeMasterMonitor);
+	omrthread_monitor_exit(vm->finalizeMainMonitor);
 
 	omrthread_monitor_enter(workerData->monitor);
 	workerData->wakeUp = 1;
@@ -779,7 +779,7 @@ IDATA FinalizeMasterRunFinalization(J9JavaVM * vm, omrthread_t * indirectWorkerT
 			!workerData->finished) || (workerWaitResult != J9THREAD_TIMED_OUT && !workerData->finished));
 	omrthread_monitor_exit(workerData->monitor);
 
-	omrthread_monitor_enter(vm->finalizeMasterMonitor);
+	omrthread_monitor_enter(vm->finalizeMainMonitor);
 
 	if(FINALIZE_WORKER_SHOULD_ABANDON == workerData->die) {
 		/* The worker thread has requested that we abandon it */
@@ -828,16 +828,16 @@ j9gc_finalizer_completeFinalizersOnExit(J9VMThread* vmThread)
 	J9JavaVM* vm = vmThread->javaVM;
 
 	/* If finalization has already been shut down, do nothing */
-	if (!J9_ARE_ALL_BITS_SET(vm->finalizeMasterFlags, J9_FINALIZE_FLAGS_ACTIVE)) {
+	if (!J9_ARE_ALL_BITS_SET(vm->finalizeMainFlags, J9_FINALIZE_FLAGS_ACTIVE)) {
 		return;
 	}
 
 	/* Set the run finalizers on exit flag and initiate finalizer shutdown. */
-	omrthread_monitor_enter(vm->finalizeMasterMonitor);
-	vm->finalizeMasterFlags |= J9_FINALIZE_FLAGS_RUN_FINALIZERS_ON_EXIT;
-	if (!J9_ARE_ALL_BITS_SET(vm->finalizeMasterFlags, J9_FINALIZE_FLAGS_SHUTDOWN)) {
-		vm->finalizeMasterFlags |= J9_FINALIZE_FLAGS_SHUTDOWN;
-		omrthread_monitor_notify_all(vm->finalizeMasterMonitor);
+	omrthread_monitor_enter(vm->finalizeMainMonitor);
+	vm->finalizeMainFlags |= J9_FINALIZE_FLAGS_RUN_FINALIZERS_ON_EXIT;
+	if (!J9_ARE_ALL_BITS_SET(vm->finalizeMainFlags, J9_FINALIZE_FLAGS_SHUTDOWN)) {
+		vm->finalizeMainFlags |= J9_FINALIZE_FLAGS_SHUTDOWN;
+		omrthread_monitor_notify_all(vm->finalizeMainMonitor);
 	}
 	/* Is there an active worker thread? */
 	if (NULL != vm->finalizeWorkerData) {
@@ -857,37 +857,37 @@ j9gc_finalizer_completeFinalizersOnExit(J9VMThread* vmThread)
 	}
 
 	/* Now block until finalizer shutdown is complete */
-	omrthread_monitor_notify_all(vm->finalizeMasterMonitor);
-	while (!(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_SHUTDOWN_COMPLETE)) {
-		omrthread_monitor_wait(vm->finalizeMasterMonitor);
+	omrthread_monitor_notify_all(vm->finalizeMainMonitor);
+	while (!(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_SHUTDOWN_COMPLETE)) {
+		omrthread_monitor_wait(vm->finalizeMainMonitor);
 	}
-	omrthread_monitor_exit(vm->finalizeMasterMonitor);
+	omrthread_monitor_exit(vm->finalizeMainMonitor);
 }
 
 int j9gc_finalizer_startup(J9JavaVM * vm)
 {
 	IDATA result;
 
-	omrthread_monitor_enter(vm->finalizeMasterMonitor);
+	omrthread_monitor_enter(vm->finalizeMainMonitor);
 
 	result = vm->internalVMFunctions->createThreadWithCategory(
 				NULL,
 				vm->defaultOSStackSize,
-				MM_GCExtensions::getExtensions(vm)->finalizeMasterPriority,
+				MM_GCExtensions::getExtensions(vm)->finalizeMainPriority,
 				0,
-				&FinalizeMasterThread,
+				&FinalizeMainThread,
 				vm,
 				J9THREAD_CATEGORY_SYSTEM_GC_THREAD);
 
 	if (0 != result) {
-		omrthread_monitor_exit(vm->finalizeMasterMonitor);
+		omrthread_monitor_exit(vm->finalizeMainMonitor);
 		return -1;
 	}
 
-	while (!(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_ACTIVE)) {
-		omrthread_monitor_wait(vm->finalizeMasterMonitor);
+	while (!(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_ACTIVE)) {
+		omrthread_monitor_wait(vm->finalizeMainMonitor);
 	}
-	omrthread_monitor_exit(vm->finalizeMasterMonitor);
+	omrthread_monitor_exit(vm->finalizeMainMonitor);
 
 	return 0;
 }
@@ -919,15 +919,15 @@ void j9gc_finalizer_shutdown(J9JavaVM * vm)
 {
 	J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
 
-	omrthread_monitor_enter(vm->finalizeMasterMonitor);
-	if(!(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_SHUTDOWN)) {
-		if ( (vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_ACTIVE)
+	omrthread_monitor_enter(vm->finalizeMainMonitor);
+	if(!(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_SHUTDOWN)) {
+		if ( (vm->finalizeMainFlags & J9_FINALIZE_FLAGS_ACTIVE)
 				&& ( (vmThread && !(vmThread->privateFlags & J9_PRIVATE_FLAGS_FINALIZE_WORKER)) || !vmThread) ) {
 			bool waitForFinalizer = true;
 			struct finalizeWorkerData *workerData = (struct finalizeWorkerData*)vm->finalizeWorkerData;
 
-			vm->finalizeMasterFlags |= J9_FINALIZE_FLAGS_SHUTDOWN;
-			omrthread_monitor_notify_all(vm->finalizeMasterMonitor);
+			vm->finalizeMainFlags |= J9_FINALIZE_FLAGS_SHUTDOWN;
+			omrthread_monitor_notify_all(vm->finalizeMainMonitor);
 			if ((NULL != workerData) && (NULL != workerData->vmThread)
 					&& J9_ARE_ANY_BITS_SET(workerData->vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)) {
 				/*
@@ -937,13 +937,13 @@ void j9gc_finalizer_shutdown(J9JavaVM * vm)
 				waitForFinalizer = false;
 			}
 			if (waitForFinalizer) {
-				while (!(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_SHUTDOWN_COMPLETE)) {
-					omrthread_monitor_wait(vm->finalizeMasterMonitor);
+				while (!(vm->finalizeMainFlags & J9_FINALIZE_FLAGS_SHUTDOWN_COMPLETE)) {
+					omrthread_monitor_wait(vm->finalizeMainMonitor);
 				}
 			}
 		}
 	}
-	omrthread_monitor_exit(vm->finalizeMasterMonitor);
+	omrthread_monitor_exit(vm->finalizeMainMonitor);
 }
 
 /**
@@ -975,31 +975,31 @@ runFinalization(J9VMThread *vmThread)
 
 	Assert_MM_mustNotHaveVMAccess(vmThread);
 	
-	/* Bump the run finalizers count and signal the master finalize thread if necessary */
-	omrthread_monitor_enter(jvm->finalizeMasterMonitor);
+	/* Bump the run finalizers count and signal the main finalize thread if necessary */
+	omrthread_monitor_enter(jvm->finalizeMainMonitor);
 	if ( 0 == jvm->finalizeRunFinalizationCount ) {
-		omrthread_monitor_notify_all(jvm->finalizeMasterMonitor);
+		omrthread_monitor_notify_all(jvm->finalizeMainMonitor);
 	}
-	jvm->finalizeMasterFlags |= J9_FINALIZE_FLAGS_RUN_FINALIZATION;
+	jvm->finalizeMainFlags |= J9_FINALIZE_FLAGS_RUN_FINALIZATION;
 	jvm->finalizeRunFinalizationCount += 1;
-	omrthread_monitor_exit(jvm->finalizeMasterMonitor);
+	omrthread_monitor_exit(jvm->finalizeMainMonitor);
 	
-	/* The master flags are checked without mutex protection, but no writes, so it's safe */
+	/* The main flags are checked without mutex protection, but no writes, so it's safe */
 	omrthread_monitor_enter(jvm->finalizeRunFinalizationMutex);
-	if ( 0 != (jvm->finalizeMasterFlags & J9_FINALIZE_FLAGS_RUN_FINALIZATION) ) {
+	if ( 0 != (jvm->finalizeMainFlags & J9_FINALIZE_FLAGS_RUN_FINALIZATION) ) {
 		/* TODO: The 1000ms wait time arbitrary. This number should probably come from somewhere else. */
 		omrthread_monitor_wait_timed(jvm->finalizeRunFinalizationMutex,1000,0);
 	}
 	omrthread_monitor_exit(jvm->finalizeRunFinalizationMutex);
 	
-	/* stop the run finalizers request and signal the master monitor if necessary */
-	omrthread_monitor_enter(jvm->finalizeMasterMonitor);
+	/* stop the run finalizers request and signal the main monitor if necessary */
+	omrthread_monitor_enter(jvm->finalizeMainMonitor);
 	jvm->finalizeRunFinalizationCount -= 1;
 	if ( 0 == jvm->finalizeRunFinalizationCount ) {
-		jvm->finalizeMasterFlags &= ~((UDATA)J9_FINALIZE_FLAGS_RUN_FINALIZATION);
-		omrthread_monitor_notify_all(jvm->finalizeMasterMonitor);
+		jvm->finalizeMainFlags &= ~((UDATA)J9_FINALIZE_FLAGS_RUN_FINALIZATION);
+		omrthread_monitor_notify_all(jvm->finalizeMainMonitor);
 	}
-	omrthread_monitor_exit(jvm->finalizeMasterMonitor);
+	omrthread_monitor_exit(jvm->finalizeMainMonitor);
 	
 	Trc_FinalizeSupport_runFinalization_Exit(vmThread);
 }
@@ -1053,11 +1053,11 @@ forceClassLoaderUnload(J9VMThread *vmThread, J9ClassLoader *classLoader)
 			
 			/* If we need to signal the finalzer to force unloading a class loader, do so */
 			if ( setForceFlag ) {
-				omrthread_monitor_enter(jvm->finalizeMasterMonitor);
-				jvm->finalizeMasterFlags |= J9_FINALIZE_FLAGS_FORCE_CLASS_LOADER_UNLOAD;
+				omrthread_monitor_enter(jvm->finalizeMainMonitor);
+				jvm->finalizeMainFlags |= J9_FINALIZE_FLAGS_FORCE_CLASS_LOADER_UNLOAD;
 				jvm->finalizeForceClassLoaderUnloadCount += 1;
-				omrthread_monitor_notify_all(jvm->finalizeMasterMonitor);
-				omrthread_monitor_exit(jvm->finalizeMasterMonitor);
+				omrthread_monitor_notify_all(jvm->finalizeMainMonitor);
+				omrthread_monitor_exit(jvm->finalizeMainMonitor);
 			}
 			
 			/* Wait for notification that the class loader has finished unloading */
@@ -1070,13 +1070,13 @@ forceClassLoaderUnload(J9VMThread *vmThread, J9ClassLoader *classLoader)
 			
 			/* If force finalize flag was set, remove 1 from the count and clear the flag if necessary */
 			if ( setForceFlag ) {
-				omrthread_monitor_enter(jvm->finalizeMasterMonitor);
+				omrthread_monitor_enter(jvm->finalizeMainMonitor);
 				jvm->finalizeForceClassLoaderUnloadCount -= 1;
 				if ( 0 == jvm->finalizeForceClassLoaderUnloadCount ) {
-					jvm->finalizeMasterFlags |= J9_FINALIZE_FLAGS_FORCE_CLASS_LOADER_UNLOAD;
+					jvm->finalizeMainFlags |= J9_FINALIZE_FLAGS_FORCE_CLASS_LOADER_UNLOAD;
 				}
-				omrthread_monitor_notify_all(jvm->finalizeMasterMonitor);
-				omrthread_monitor_exit(jvm->finalizeMasterMonitor);
+				omrthread_monitor_notify_all(jvm->finalizeMainMonitor);
+				omrthread_monitor_exit(jvm->finalizeMainMonitor);
 			}
 			
 			if ( J9THREAD_TIMED_OUT == waitResult ) {
@@ -1135,13 +1135,13 @@ j9gc_runFinalizersOnExit(J9VMThread* vmThread, UDATA run)
 {
 	J9JavaVM* jvm = vmThread->javaVM;
 	
-	omrthread_monitor_enter(jvm->finalizeMasterMonitor);
+	omrthread_monitor_enter(jvm->finalizeMainMonitor);
 	if (FALSE == run) {
-		jvm->finalizeMasterFlags &= ~(UDATA)J9_FINALIZE_FLAGS_RUN_FINALIZERS_ON_EXIT;
+		jvm->finalizeMainFlags &= ~(UDATA)J9_FINALIZE_FLAGS_RUN_FINALIZERS_ON_EXIT;
 	} else {
-		jvm->finalizeMasterFlags |= (UDATA)J9_FINALIZE_FLAGS_RUN_FINALIZERS_ON_EXIT;
+		jvm->finalizeMainFlags |= (UDATA)J9_FINALIZE_FLAGS_RUN_FINALIZERS_ON_EXIT;
 	}
-	omrthread_monitor_exit(jvm->finalizeMasterMonitor);
+	omrthread_monitor_exit(jvm->finalizeMainMonitor);
 }
 
 #endif /* J9VM_GC_FINALIZATION */
