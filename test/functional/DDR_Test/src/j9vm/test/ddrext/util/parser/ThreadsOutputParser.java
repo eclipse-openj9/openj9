@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,10 +58,10 @@ public class ThreadsOutputParser {
 	 * !j9vmthread 0x0566e100 !j9thread 0x0566a270 tid 0x3f07 (16135) (IProfiler) 
 	 * !stack 0x2aaad0092000 !j9vmthread 0x2aaad0092000 !j9thread 0x2aaad008de60 tid 0x3f08 (16136) // (Signal Dispatcher) 
 	 * !stack 0x0588e400 !j9vmthread 0x0588e400 !j9thread 0x2aaad00aea50 tid 0x3f0a (16138) // (Concurrent Mark Helper) 
-	 * !stack 0x05b0a100 !j9vmthread 0x05b0a100 !j9thread 0x2aaad00aefd0 tid 0x3f0b (16139) // (GC Slave)
-	 * !stack 0x05b14300 !j9vmthread 0x05b14300 !j9thread 0x2aaad00afa60 tid 0x3f0c (16140) // (GC Slave) 
-	 * !stack 0x05b2e600 !j9vmthread 0x05b2e600 !j9thread 0x2aaad00affe0 tid 0x3f0d (16141) // (GC Slave) 
-	 * !stack 0x05b49800 !j9vmthread 0x05b49800 !j9thread 0x05b35690 tid 0x3f0e (16142) // (GC Slave) 
+	 * !stack 0x05b0a100 !j9vmthread 0x05b0a100 !j9thread 0x2aaad00aefd0 tid 0x3f0b (16139) // (GC Worker)
+	 * !stack 0x05b14300 !j9vmthread 0x05b14300 !j9thread 0x2aaad00afa60 tid 0x3f0c (16140) // (GC Worker) 
+	 * !stack 0x05b2e600 !j9vmthread 0x05b2e600 !j9thread 0x2aaad00affe0 tid 0x3f0d (16141) // (GC Worker) 
+	 * !stack 0x05b49800 !j9vmthread 0x05b49800 !j9thread 0x05b35690 tid 0x3f0e (16142) // (GC Worker) 
 	 * !stack 0x2aaad01faf00 !j9vmthread 0x2aaad01faf00 !j9thread 0x05b1a5d0 tid 0x3f1b (16155) // (Attach API wait loop) 
 	 * !stack 0x05b1e200 !j9vmthread 0x05b1e200 !j9thread 0x05b1a050 tid 0x3f1c (16156) // (Finalizer thread)
 	 */

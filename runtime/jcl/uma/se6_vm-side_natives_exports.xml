@@ -133,8 +133,8 @@
 	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_isVerboseImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setMaxHeapSizeImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setVerboseImpl" />
-	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCMasterThreadCpuUsedImpl" />
-	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCSlaveThreadsCpuUsedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCMainThreadCpuUsedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCWorkerThreadsCpuUsedImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaximumGCThreadsImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getCurrentGCThreadsImpl" />
 	<export name="Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificationLoop" />

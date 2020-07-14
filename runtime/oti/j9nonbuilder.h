@@ -749,8 +749,8 @@ typedef struct J9JavaLangManagementData {
 	U_32 threadCpuTimeEnabledFlag;
 	U_32 isThreadCpuTimeSupported;
 	U_32 isCurrentThreadCpuTimeSupported;
-	U_64 gcMasterCpuTime;
-	U_64 gcSlaveCpuTime;
+	U_64 gcMainCpuTime;
+	U_64 gcWorkerCpuTime;
 	U_32 gcMaxThreads;
 	U_32 gcCurrentThreads;
 	char counterPath[2048];

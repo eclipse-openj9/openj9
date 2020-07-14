@@ -67,10 +67,10 @@ static DestroyVM globalDestroyVM=NULL;
 static JavaVM * globalVM = NULL;
 
 #if defined(AIXPPC)
-/* Used to keep track of whether or not opening of the "master redirector" has been attempted. 
+/* Used to keep track of whether or not opening of the "main redirector" has been attempted. 
  * Avoiding an infinite loop when libjvm.a is soft linked to libjvm.so
  */
-static int attempted_to_open_master = 0;
+static int attempted_to_open_main = 0;
 
 int openLibraries(const char *libraryDir);
 #else /* defined(AIXPPC) */
@@ -1024,8 +1024,8 @@ findDir(const char *libraryDir) {
 	/* It is possible to open multiple redirectors on AIX.
 	 * This leads to issues with global function static being properly initialized.
 	 * To avoid those problems, designate the redirector in jre/lib/<arch>/j9vm/libjvm.so
-	 * as the master redirector.  If a redirector is not this one, it will try and open
-	 * the master and redirect to it instead of trying to open the target libjvm.so.
+	 * as the main redirector.  If a redirector is not this one, it will try and open
+	 * the main and redirect to it instead of trying to open the target libjvm.so.
 	 *
 	 * NOTE: it is possible that jre/lib/<arch>/j9vm/libjvm.a is a soft link to
 	 * jre/lib/<arch>/j9vm/libjvm.so.  If this happens and libjvm.a is opened before libjvm.so
@@ -1033,15 +1033,15 @@ findDir(const char *libraryDir) {
 	 * We need to detect this case and avoid it.
 	 * We can't simply check for libjvm.a and not try libjvm.so since if they are not soft linked there
 	 * would be uninitialized function pointers in the function table.
-	 * So, try to get to the master at least once.  If we detect that we have tried to open the master
-	 * then we are the master so don't try again.*/
+	 * So, try to get to the main at least once.  If we detect that we have tried to open the main
+	 * then we are the main so don't try again.*/
 	libraryNameWithPath = getLibraryNameWithPath(libraryNameWithPath);
-	if ((0 == attempted_to_open_master) && (NULL == strstr(jvmBufferData(libraryNameWithPath), J9VM_LIB_ARCH_DIR "j9vm/libjvm.so"))) {
+	if ((0 == attempted_to_open_main) && (NULL == strstr(jvmBufferData(libraryNameWithPath), J9VM_LIB_ARCH_DIR "j9vm/libjvm.so"))) {
 		J9StringBuffer *tmpBuffer = jvmBufferCat(NULL, jvmBufferData(buffer));
 		char *tmpBufferData = jvmBufferData(tmpBuffer);
 
-		/* mark that we tried to open the master redirector */
-		attempted_to_open_master = 1;
+		/* mark that we tried to open the main redirector */
+		attempted_to_open_main = 1;
 
 		/* strip back the path */
 		truncatePath(tmpBufferData, FALSE); /* at jre/bin/classic -or- jre/lib/<arch>/classic */
@@ -1076,7 +1076,7 @@ findDir(const char *libraryDir) {
  * as this directory.  Sets the global function pointers up for
  * passthrough.
  * 
- * on AIX this function is used in the generated.c functions to find the 'master' 
+ * on AIX this function is used in the generated.c functions to find the 'main' 
  * redirector (see details in findDir()).
  */
 #if defined(AIXPPC)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -481,28 +481,28 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCModeImpl(JNIEnv
 }
 
 jlong JNICALL
-Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCMasterThreadCpuUsedImpl(JNIEnv *env, jobject beanInstance)
+Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCMainThreadCpuUsedImpl(JNIEnv *env, jobject beanInstance)
 {
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 	jlong result = 0;
 
 	omrthread_rwmutex_enter_read(mgmt->managementDataLock);
-	result = (jlong)mgmt->gcMasterCpuTime;
+	result = (jlong)mgmt->gcMainCpuTime;
 	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 
 	return result;
 }
 
 jlong JNICALL
-Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCSlaveThreadsCpuUsedImpl(JNIEnv *env, jobject beanInstance)
+Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCWorkerThreadsCpuUsedImpl(JNIEnv *env, jobject beanInstance)
 {
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 	jlong result = 0;
 
 	omrthread_rwmutex_enter_read(mgmt->managementDataLock);
-	result = (jlong) mgmt->gcSlaveCpuTime;
+	result = (jlong) mgmt->gcWorkerCpuTime;
 	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 
 	return result;

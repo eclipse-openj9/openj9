@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,8 +107,8 @@ public class TestMemoryMXBean {
 				new AttributeData(Long.TYPE.getName(), true, false, false));
 		attribs.put("SharedClassCacheFreeSpace", new AttributeData(Long.TYPE.getName(), true, false, false));
 		attribs.put("GCMode", new AttributeData(String.class.getName(), true, false, false));
-		attribs.put("GCMasterThreadCpuUsed", new AttributeData(Long.TYPE.getName(), true, false, false));
-		attribs.put("GCSlaveThreadsCpuUsed", new AttributeData(Long.TYPE.getName(), true, false, false));
+		attribs.put("GCMainThreadCpuUsed", new AttributeData(Long.TYPE.getName(), true, false, false));
+		attribs.put("GCWorkerThreadsCpuUsed", new AttributeData(Long.TYPE.getName(), true, false, false));
 		attribs.put("MaximumGCThreads", new AttributeData(Integer.TYPE.getName(), true, false, false));
 		attribs.put("CurrentGCThreads", new AttributeData(Integer.TYPE.getName(), true, false, false));
 	}// end static initializer

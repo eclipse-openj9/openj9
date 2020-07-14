@@ -4038,8 +4038,8 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
 
    J9JavaVM * javaVM = _compInfo->getJITConfig()->javaVM;
 
-   int32_t skipCountMaster = 20+(rand()%10); // TODO: Use the master TR_RandomGenerator from jitconfig?
-   int32_t skipCount = skipCountMaster;
+   int32_t skipCountMain = 20+(rand()%10); // TODO: Use the main TR_RandomGenerator from jitconfig?
+   int32_t skipCount = skipCountMain;
    bool profileFlag = true;
 
    while (cursor < dataStart + size)
@@ -4051,7 +4051,7 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
          // replenish skipCount if it has been exhausted
          if (skipCount <= 0)
             {
-            skipCount = skipCountMaster;
+            skipCount = skipCountMain;
             profileFlag = !profileFlag;  // flip profiling flag
             if (profileFlag)
                {

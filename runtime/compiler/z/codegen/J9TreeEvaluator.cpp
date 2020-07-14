@@ -223,7 +223,7 @@ doubleMaxMinHelper(TR::Node *node, TR::CodeGenerator *cg, bool isMaxOp)
  * \details
  *
  * The vector sequence searches for the first character of the sub-string
- * inside the source/master string. If the first character is located, it'll
+ * inside the source/main string. If the first character is located, it'll
  * perform iterative vector binary compares to match the rest of the sub-string
  * starting from the first character position.
  *
