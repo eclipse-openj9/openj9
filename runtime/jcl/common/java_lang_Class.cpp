@@ -1179,6 +1179,12 @@ Java_java_lang_Class_getRecordComponentsImpl(JNIEnv *env, jobject cls)
 	return getRecordComponentsHelper(env, cls);
 }
 
+jarray JNICALL
+Java_java_lang_Class_permittedSubclassesImpl(JNIEnv *env, jobject cls)
+{
+	return permittedSubclassesHelper(env, cls);
+}
+
 static UDATA
 frameIteratorGetAccSnapshotHelper(J9VMThread * currentThread, J9StackWalkState * walkState, j9object_t acc, j9object_t perm)
 {

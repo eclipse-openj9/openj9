@@ -59,12 +59,12 @@ struct AttribType
 	U_8 strippedAttribCode;
 };
 
-#define TOTAL_KEYWORDS 27
+#define TOTAL_KEYWORDS 28
 #define MIN_WORD_LENGTH 4
 #define MAX_WORD_LENGTH 36
 #define MIN_HASH_VALUE 4
-#define MAX_HASH_VALUE 37
-/* maximum key range = 34, duplicates = 0 */
+#define MAX_HASH_VALUE 50
+/* maximum key range = 47, duplicates = 0 */
 
 #ifdef __GNUC__
 __inline
@@ -78,32 +78,32 @@ attributeHash (register const char *str, register unsigned int len)
 {
   static const unsigned char asso_values[] =
     {
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38,  1, 38, 38, 38, 15, 38, 38, 38, 38,
-      20,  0, 38, 38, 38, 38, 15,  0, 38, 38,
-       5,  5, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38, 38, 38, 38, 38,
-      38, 38, 38, 38, 38, 38
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 31, 51, 51, 51, 15, 51, 51, 51, 51,
+       0,  0, 51, 51, 51, 51, 15,  0, 51, 51,
+      25,  0, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+      51, 51, 51, 51, 51, 51
     };
   return len + asso_values[(unsigned char)str[1]];
 }
@@ -121,26 +121,20 @@ lookupKnownAttribute (register const char *str, register unsigned int len)
     {
 #line 47 "attrlookup.gperf"
       {"Code", CFR_ATTRIBUTE_Code, CFR_ATTRIBUTE_Code},
-#line 73 "attrlookup.gperf"
-      {"Record", CFR_ATTRIBUTE_Record, CFR_ATTRIBUTE_Record},
-#line 72 "attrlookup.gperf"
-      {"NestHost", CFR_ATTRIBUTE_NestHost, CFR_ATTRIBUTE_NestHost},
-#line 53 "attrlookup.gperf"
-      {"SourceFile", CFR_ATTRIBUTE_SourceFile, CFR_ATTRIBUTE_SourceFile},
-#line 51 "attrlookup.gperf"
-      {"Deprecated", CFR_ATTRIBUTE_Deprecated, CFR_ATTRIBUTE_Deprecated},
-#line 71 "attrlookup.gperf"
-      {"NestMembers", CFR_ATTRIBUTE_NestMembers, CFR_ATTRIBUTE_NestMembers},
-#line 55 "attrlookup.gperf"
-      {"ConstantValue", CFR_ATTRIBUTE_ConstantValue, CFR_ATTRIBUTE_ConstantValue},
 #line 49 "attrlookup.gperf"
       {"Synthetic", CFR_ATTRIBUTE_Synthetic, CFR_ATTRIBUTE_Synthetic},
-#line 52 "attrlookup.gperf"
-      {"Exceptions", CFR_ATTRIBUTE_Exceptions, CFR_ATTRIBUTE_Exceptions},
+#line 53 "attrlookup.gperf"
+      {"SourceFile", CFR_ATTRIBUTE_SourceFile, CFR_ATTRIBUTE_SourceFile},
+#line 54 "attrlookup.gperf"
+      {"InnerClasses", CFR_ATTRIBUTE_InnerClasses, CFR_ATTRIBUTE_InnerClasses},
+#line 55 "attrlookup.gperf"
+      {"ConstantValue", CFR_ATTRIBUTE_ConstantValue, CFR_ATTRIBUTE_ConstantValue},
+#line 57 "attrlookup.gperf"
+      {"EnclosingMethod", CFR_ATTRIBUTE_EnclosingMethod, CFR_ATTRIBUTE_EnclosingMethod},
 #line 59 "attrlookup.gperf"
       {"BootstrapMethods", CFR_ATTRIBUTE_BootstrapMethods, CFR_ATTRIBUTE_BootstrapMethods},
-#line 70 "attrlookup.gperf"
-      {"MethodParameters", CFR_ATTRIBUTE_MethodParameters, CFR_ATTRIBUTE_MethodParameters},
+#line 60 "attrlookup.gperf"
+      {"AnnotationDefault", CFR_ATTRIBUTE_AnnotationDefault, CFR_ATTRIBUTE_AnnotationDefault},
 #line 61 "attrlookup.gperf"
       {"LocalVariableTable", CFR_ATTRIBUTE_LocalVariableTable, CFR_ATTRIBUTE_StrippedLocalVariableTable},
 #line 62 "attrlookup.gperf"
@@ -163,23 +157,32 @@ lookupKnownAttribute (register const char *str, register unsigned int len)
       {"LineNumberTable", CFR_ATTRIBUTE_LineNumberTable, CFR_ATTRIBUTE_StrippedLineNumberTable},
 #line 67 "attrlookup.gperf"
       {"RuntimeInvisibleTypeAnnotations", CFR_ATTRIBUTE_RuntimeInvisibleTypeAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleTypeAnnotations},
-#line 54 "attrlookup.gperf"
-      {"InnerClasses", CFR_ATTRIBUTE_InnerClasses, CFR_ATTRIBUTE_InnerClasses},
 #line 68 "attrlookup.gperf"
       {"RuntimeVisibleParameterAnnotations", CFR_ATTRIBUTE_RuntimeVisibleParameterAnnotations, CFR_ATTRIBUTE_RuntimeVisibleParameterAnnotations},
-#line 57 "attrlookup.gperf"
-      {"EnclosingMethod", CFR_ATTRIBUTE_EnclosingMethod, CFR_ATTRIBUTE_EnclosingMethod},
+#line 52 "attrlookup.gperf"
+      {"Exceptions", CFR_ATTRIBUTE_Exceptions, CFR_ATTRIBUTE_Exceptions},
 #line 69 "attrlookup.gperf"
       {"RuntimeInvisibleParameterAnnotations", CFR_ATTRIBUTE_RuntimeInvisibleParameterAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleParameterAnnotations},
-#line 60 "attrlookup.gperf"
-      {"AnnotationDefault", CFR_ATTRIBUTE_AnnotationDefault, CFR_ATTRIBUTE_AnnotationDefault}
+#line 73 "attrlookup.gperf"
+      {"Record", CFR_ATTRIBUTE_Record, CFR_ATTRIBUTE_Record},
+#line 72 "attrlookup.gperf"
+      {"NestHost", CFR_ATTRIBUTE_NestHost, CFR_ATTRIBUTE_NestHost},
+#line 51 "attrlookup.gperf"
+      {"Deprecated", CFR_ATTRIBUTE_Deprecated, CFR_ATTRIBUTE_Deprecated},
+#line 71 "attrlookup.gperf"
+      {"NestMembers", CFR_ATTRIBUTE_NestMembers, CFR_ATTRIBUTE_NestMembers},
+#line 70 "attrlookup.gperf"
+      {"MethodParameters", CFR_ATTRIBUTE_MethodParameters, CFR_ATTRIBUTE_MethodParameters},
+#line 74 "attrlookup.gperf"
+      {"PermittedSubclasses", CFR_ATTRIBUTE_PermittedSubclasses, CFR_ATTRIBUTE_PermittedSubclasses}
     };
 
   static const signed char lookup[] =
     {
-      -1, -1, -1, -1,  0, -1, -1,  1, -1,  2,  3,  4,  5,  6,
-       7,  8,  9, 10, 11, -1, 12, -1, 13, 14, 15, 16, -1, 17,
-      18, 19, 20, 21, 22, -1, 23, 24, 25, 26
+      -1, -1, -1, -1,  0, -1, -1, -1, -1,  1,  2, -1,  3,  4,
+      -1,  5,  6,  7,  8, -1,  9, -1, 10, 11, 12, 13, -1, 14,
+      15, 16, 17, 18, -1, -1, 19, 20, 21, 22, -1, 23, -1, 24,
+      25, -1, -1, -1, -1, 26, -1, -1, 27
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)

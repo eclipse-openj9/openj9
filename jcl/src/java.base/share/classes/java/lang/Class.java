@@ -4732,6 +4732,37 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 /*[ENDIF] Java14 */
 
 /*[IF Java15]*/
+	/**
+	 * Returns true if class or interface is sealed.
+	 * 
+	 * @return true if class is sealed, false otherwise
+	 */
+	public native boolean isSealed();
+
+	/**
+	 * Returns an array of permitted subclasses as ClassDesc objects related to the calling class.
+	 * 
+	 * @return array of ClassDesc objects.
+	 * For a class that is not sealed, an empty array is returned.
+	 */
+	@CallerSensitive
+	public ClassDesc[] permittedSubclasses() {
+		if (!isSealed()) {
+			return new ClassDesc[0];
+		}
+
+		String[] permittedSubclassesNames = permittedSubclassesImpl();
+		ClassDesc[] permittedSubclasses = new ClassDesc[permittedSubclassesNames.length];
+
+		for (int i = 0; i < permittedSubclassesNames.length; i++) {
+			String subclassName = permittedSubclassesNames[i];
+			permittedSubclasses[i] = ClassDesc.of(permittedSubclassesNames[i]);
+		}
+		return permittedSubclasses;
+	}
+
+	private native String[] permittedSubclassesImpl();
+
 	// TODO: implement support for hidden classes.
 	public boolean isHidden() {
 		return false;
