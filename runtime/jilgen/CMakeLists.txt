@@ -20,6 +20,11 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
+if(OMR_OS_AIX)
+	# We need to set the libpath on aix, so that when we run constgen it can find
+	# the thread library
+	set(CMAKE_INSTALL_RPATH .)
+endif()
 j9vm_add_executable(constgen
     jilconsts.c
 )
