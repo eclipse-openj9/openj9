@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,12 +64,12 @@ MM_ConfigurationRealtime::initialize(MM_EnvironmentBase *env)
 	if (MM_Configuration::initialize(env)) {
 		/*
 		 * The split available lists are populated during sweep by GC threads,
-		 * each slave inserts into its corresponding split list as it finishes sweeping a region,
+		 * each worker inserts into its corresponding split list as it finishes sweeping a region,
 		 * which also removes the contention when inserting to a global list.
 		 * So the split count equals the number of gc threads.
-		 * NOTE: The split available list mechanism assumes the slave IDs are in the range of [0, gcThreadCount-1].
-		 * This is currently the case, as _statusTable in ParallelDispatcher also replies on slave IDs be in this range
-		 * as it uses the slave ID as index into the status array. If slave IDs ever fall out of the above range,
+		 * NOTE: The split available list mechanism assumes the worker IDs are in the range of [0, gcThreadCount-1].
+		 * This is currently the case, as _statusTable in ParallelDispatcher also replies on worker IDs be in this range
+		 * as it uses the worker ID as index into the status array. If worker IDs ever fall out of the above range,
 		 * split available list would likely loose the performance advantage.
 		 */
 		extensions->splitAvailableListSplitAmount = extensions->gcThreadCount;

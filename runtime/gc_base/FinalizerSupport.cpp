@@ -157,16 +157,16 @@ finalizeForcedUnfinalizedToFinalizable(J9VMThread *vmThread)
 #endif /* J9VM_GC_FINALIZATION */
 }
 
-#define FINALIZE_SLAVE_STAY_ALIVE 0
-#define FINALIZE_SLAVE_SHOULD_DIE 1
-#define FINALIZE_SLAVE_ABANDONED 2
-#define FINALIZE_SLAVE_SHOULD_ABANDON 3
+#define FINALIZE_WORKER_STAY_ALIVE 0
+#define FINALIZE_WORKER_SHOULD_DIE 1
+#define FINALIZE_WORKER_ABANDONED 2
+#define FINALIZE_WORKER_SHOULD_ABANDON 3
 
-#define FINALIZE_SLAVE_MODE_NORMAL 0
-#define FINALIZE_SLAVE_MODE_FORCED 1
-#define FINALIZE_SLAVE_MODE_CL_UNLOAD 2
+#define FINALIZE_WORKER_MODE_NORMAL 0
+#define FINALIZE_WORKER_MODE_FORCED 1
+#define FINALIZE_WORKER_MODE_CL_UNLOAD 2
 
-struct finalizeSlaveData {
+struct finalizeWorkerData {
 	omrthread_monitor_t monitor;
 	J9JavaVM *vm;
 	J9VMThread *vmThread;
@@ -177,20 +177,20 @@ struct finalizeSlaveData {
 	IDATA wakeUp;
 };
 
-static int J9THREAD_PROC FinalizeSlaveThread(void *arg);
-IDATA FinalizeMasterRunFinalization(J9JavaVM * vm, omrthread_t * indirectSlaveThreadHandle, struct finalizeSlaveData **indirectSlaveData, IDATA finalizeCycleLimit, IDATA mode);
+static int J9THREAD_PROC FinalizeWorkerThread(void *arg);
+IDATA FinalizeMasterRunFinalization(J9JavaVM * vm, omrthread_t * indirectWorkerThreadHandle, struct finalizeWorkerData **indirectWorkerData, IDATA finalizeCycleLimit, IDATA mode);
 static int J9THREAD_PROC FinalizeMasterThread(void *javaVM);
-static int  J9THREAD_PROC gpProtectedFinalizeSlaveThread(void *entryArg);
+static int  J9THREAD_PROC gpProtectedFinalizeWorkerThread(void *entryArg);
 
 static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 {
 	J9JavaVM *vm = (J9JavaVM *)javaVM;
-	omrthread_t slaveThreadHandle;
+	omrthread_t workerThreadHandle;
 	int doneRunFinalizersOnExit, noCycleWait;
-	struct finalizeSlaveData *slaveData = NULL;
+	struct finalizeWorkerData *workerData = NULL;
 	IDATA finalizeCycleInterval, finalizeCycleLimit, currentWaitTime, finalizableListUsed;
 	IDATA cycleIntervalWaitResult;
-	UDATA slaveMode, savedFinalizeMasterFlags;
+	UDATA workerMode, savedFinalizeMasterFlags;
 	GC_FinalizeListManager *finalizeListManager;
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(vm->omrVM);
 	MM_Forge *forge = extensions->getForge();
@@ -199,7 +199,7 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 	omrthread_set_name(omrthread_self(), "Finalizer master");
 
 	vm->finalizeMasterThread = omrthread_self();
-	slaveThreadHandle = NULL;
+	workerThreadHandle = NULL;
 	noCycleWait = 0;
 
 	finalizeListManager = extensions->finalizeListManager;
@@ -261,17 +261,17 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 		/* There is work to be done - run one finalization cycle */
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 			if(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_FORCE_CLASS_LOADER_UNLOAD) {
-				slaveMode = FINALIZE_SLAVE_MODE_CL_UNLOAD;
+				workerMode = FINALIZE_WORKER_MODE_CL_UNLOAD;
 			} else {
-				slaveMode = FINALIZE_SLAVE_MODE_NORMAL;
+				workerMode = FINALIZE_WORKER_MODE_NORMAL;
 			}
 #else /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-				slaveMode = FINALIZE_SLAVE_MODE_NORMAL;
+				workerMode = FINALIZE_WORKER_MODE_NORMAL;
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 		savedFinalizeMasterFlags = vm->finalizeMasterFlags;
 
-		IDATA result = FinalizeMasterRunFinalization(vm, &slaveThreadHandle, &slaveData, finalizeCycleLimit, slaveMode);
+		IDATA result = FinalizeMasterRunFinalization(vm, &workerThreadHandle, &workerData, finalizeCycleLimit, workerMode);
 		if(result < 0) {
 			/* give up this run and hope next time will be better */
 			currentWaitTime = 0;
@@ -279,11 +279,11 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 			continue;
 		}
 
-		/* Determine whether the slave actually did finish it's work */
-		omrthread_monitor_enter(slaveData->monitor);
-		if(slaveData->finished) {
-			if(slaveData->noWorkDone) {
-				slaveData->noWorkDone = 0;
+		/* Determine whether the worker actually did finish it's work */
+		omrthread_monitor_enter(workerData->monitor);
+		if(workerData->finished) {
+			if(workerData->noWorkDone) {
+				workerData->noWorkDone = 0;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 				if(!(savedFinalizeMasterFlags & J9_FINALIZE_FLAGS_FORCE_CLASS_LOADER_UNLOAD)) {
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
@@ -299,11 +299,11 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 			}
 		} else {
-			/* The slave never finished during the allocated time - abandon it */
-			slaveData->die = FINALIZE_SLAVE_ABANDONED;
-			slaveThreadHandle = NULL;
+			/* The worker never finished during the allocated time - abandon it */
+			workerData->die = FINALIZE_WORKER_ABANDONED;
+			workerThreadHandle = NULL;
 		}
-		omrthread_monitor_exit(slaveData->monitor);
+		omrthread_monitor_exit(workerData->monitor);
 	} while(!(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_SHUTDOWN));
 
 	/* Check if finalizers should be run on exit */
@@ -312,8 +312,8 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 		while(!doneRunFinalizersOnExit) {
 			IDATA result = 0;
 			do {
-				/* Keep trying, even if a slave requests that it be abandoned */
-				result = FinalizeMasterRunFinalization(vm, &slaveThreadHandle, &slaveData, finalizeCycleLimit, FINALIZE_SLAVE_MODE_FORCED);
+				/* Keep trying, even if a worker requests that it be abandoned */
+				result = FinalizeMasterRunFinalization(vm, &workerThreadHandle, &workerData, finalizeCycleLimit, FINALIZE_WORKER_MODE_FORCED);
 			} while(result == -2);
 
 			if(result == -1) {
@@ -321,31 +321,31 @@ static int J9THREAD_PROC FinalizeMasterThread(void *javaVM)
 				break;
 			}
 	
-			omrthread_monitor_enter(slaveData->monitor);
-			if(slaveData->finished && slaveData->noWorkDone) {
+			omrthread_monitor_enter(workerData->monitor);
+			if(workerData->finished && workerData->noWorkDone) {
 				/* No more work to be done */
 				doneRunFinalizersOnExit = 1;
 			}
-			if(!slaveData->finished) {
-				/* The slave seems to be hung - just quit */
+			if(!workerData->finished) {
+				/* The worker seems to be hung - just quit */
 				doneRunFinalizersOnExit = 1;
-				slaveData->die = FINALIZE_SLAVE_ABANDONED;
-				slaveThreadHandle = NULL;
+				workerData->die = FINALIZE_WORKER_ABANDONED;
+				workerThreadHandle = NULL;
 			}
-			omrthread_monitor_exit(slaveData->monitor);
+			omrthread_monitor_exit(workerData->monitor);
 		}
 	}
 
 	/* We've been told to die */
-	if(NULL != slaveThreadHandle) {
+	if(NULL != workerThreadHandle) {
 		omrthread_monitor_exit((omrthread_monitor_t)vm->finalizeMasterMonitor);
-		omrthread_monitor_enter(slaveData->monitor);
-		slaveData->die = FINALIZE_SLAVE_SHOULD_DIE;
-		omrthread_monitor_notify_all(slaveData->monitor);
-		omrthread_monitor_wait(slaveData->monitor);
-		omrthread_monitor_exit(slaveData->monitor);
-		omrthread_monitor_destroy(slaveData->monitor);
-		forge->free(slaveData);
+		omrthread_monitor_enter(workerData->monitor);
+		workerData->die = FINALIZE_WORKER_SHOULD_DIE;
+		omrthread_monitor_notify_all(workerData->monitor);
+		omrthread_monitor_wait(workerData->monitor);
+		omrthread_monitor_exit(workerData->monitor);
+		omrthread_monitor_destroy(workerData->monitor);
+		forge->free(workerData);
 		omrthread_monitor_enter((omrthread_monitor_t)vm->finalizeMasterMonitor);
 	}
 
@@ -467,11 +467,11 @@ process(J9VMThread *vmThread, const GC_FinalizeJob *finalizeJob, jclass j9VMInte
 }
 
 /**
- * Slave thread consumes jobs from Finalize List Manager and process them
+ * Worker thread consumes jobs from Finalize List Manager and process them
  */
-static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
+static int J9THREAD_PROC FinalizeWorkerThread(void *arg)
 {
-	struct finalizeSlaveData *slaveData = (struct finalizeSlaveData *)arg;
+	struct finalizeWorkerData *workerData = (struct finalizeWorkerData *)arg;
 	J9VMThread *env;
 	const GC_FinalizeJob *finalizeJob;
 	GC_FinalizeJob localJob;
@@ -480,18 +480,18 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 	J9InternalVMFunctions* fns;
 	omrthread_monitor_t monitor;
 	GC_FinalizeListManager *finalizeListManager;
-	J9JavaVM *vm = (J9JavaVM *)(slaveData->vm);
+	J9JavaVM *vm = (J9JavaVM *)(workerData->vm);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
 	MM_Forge *forge = extensions->getForge();
 
 	fns = vm->internalVMFunctions;
-	monitor = slaveData->monitor;
+	monitor = workerData->monitor;
 
 	finalizeListManager = extensions->finalizeListManager;
 
 	if (JNI_OK != vm->internalVMFunctions->attachSystemDaemonThread(vm, &env, "Finalizer thread")) {
 		/* Failed to attach the thread - very bad, most likely out of memory */
-		slaveData->vmThread = (J9VMThread *)NULL;
+		workerData->vmThread = (J9VMThread *)NULL;
 		omrthread_monitor_enter(monitor);
 		omrthread_monitor_notify_all(monitor);
 		omrthread_monitor_exit(monitor);
@@ -500,13 +500,13 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	if( vm->javaOffloadSwitchOnWithReasonFunc != NULL ) {
-		(*vm->javaOffloadSwitchOnWithReasonFunc)((J9VMThread *)env, J9_JNI_OFFLOAD_SWITCH_FINALIZE_SLAVE_THREAD);
+		(*vm->javaOffloadSwitchOnWithReasonFunc)((J9VMThread *)env, J9_JNI_OFFLOAD_SWITCH_FINALIZE_WORKER_THREAD);
 		((J9VMThread *)env)->javaOffloadState = 1;
 	}
 #endif
 
 	fns->internalEnterVMFromJNI(env);
-	env->privateFlags |= (J9_PRIVATE_FLAGS_FINALIZE_SLAVE | J9_PRIVATE_FLAGS_USE_BOOTSTRAP_LOADER);
+	env->privateFlags |= (J9_PRIVATE_FLAGS_FINALIZE_WORKER | J9_PRIVATE_FLAGS_USE_BOOTSTRAP_LOADER);
 	fns->internalReleaseVMAccess(env);
 
 	/* Remember that the thread was gpProtected -- important for the JIT */
@@ -533,19 +533,19 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 			((JNIEnv *)env)->ExceptionClear();
 		}
 	}		
-	slaveData->vmThread = env;
+	workerData->vmThread = env;
 
-	/* Notify that the slave has come on line (We should check the result from above) */
+	/* Notify that the worker has come on line (We should check the result from above) */
 	omrthread_monitor_enter(monitor);
 	omrthread_monitor_notify_all(monitor);
 
 	do {
-		if(!slaveData->wakeUp) {
+		if(!workerData->wakeUp) {
 			omrthread_monitor_wait(monitor);
 		}
-		slaveData->wakeUp = 0;
+		workerData->wakeUp = 0;
 
-		if(slaveData->die != FINALIZE_SLAVE_STAY_ALIVE) {
+		if(workerData->die != FINALIZE_WORKER_STAY_ALIVE) {
 			continue;
 		}
 
@@ -554,7 +554,7 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 		fns->internalEnterVMFromJNI(env);
 		
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		if(slaveData->mode != FINALIZE_SLAVE_MODE_CL_UNLOAD)
+		if(workerData->mode != FINALIZE_WORKER_MODE_CL_UNLOAD)
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 		{
 			if ((NULL != vm->processReferenceMonitor) && (0 != finalizeListManager->getReferenceCount())) {
@@ -567,7 +567,7 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 		do {
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-			if(slaveData->mode == FINALIZE_SLAVE_MODE_CL_UNLOAD) {
+			if(workerData->mode == FINALIZE_WORKER_MODE_CL_UNLOAD) {
 				
 				if (NULL == (localJob.classLoader = (J9ClassLoader *)finalizeForcedClassLoaderUnload((J9VMThread *)env))) {
 					break;
@@ -584,7 +584,7 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 				
 				finalizeJob = finalizeListManager->consumeJob(env, &localJob);
 				if(finalizeJob == NULL) {
-					if(slaveData->mode == FINALIZE_SLAVE_MODE_FORCED) {
+					if(workerData->mode == FINALIZE_WORKER_MODE_FORCED) {
 						finalizeForcedUnfinalizedToFinalizable(env);
 						finalizeJob = finalizeListManager->consumeJob(env, &localJob);
 					}
@@ -593,9 +593,9 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 				finalizeListManager->unlock();
 				
 				if(NULL != finalizeJob) {
-					slaveData->noWorkDone = 0;
+					workerData->noWorkDone = 0;
 				} else {
-					slaveData->noWorkDone = 1;
+					workerData->noWorkDone = 1;
 					break;				
 				}
 				
@@ -623,7 +623,7 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 
 			fns->jniResetStackReferences((JNIEnv *)env);
 
-			if(FINALIZE_SLAVE_SHOULD_ABANDON == slaveData->die) {
+			if(FINALIZE_WORKER_SHOULD_ABANDON == workerData->die) {
 				/* We've been abandoned, finish up */
 				break;
 			}
@@ -631,12 +631,12 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 
 		fns->internalReleaseVMAccess(env);
 
-		slaveData->finished = 1;
+		workerData->finished = 1;
 
 		/* Notify the master that the work is complete */
 		omrthread_monitor_enter(monitor);
 		omrthread_monitor_notify_all(monitor);
-	} while(slaveData->die == FINALIZE_SLAVE_STAY_ALIVE);
+	} while(workerData->die == FINALIZE_WORKER_STAY_ALIVE);
 	
 	if (j9VMInternalsClass) {
 		((JNIEnv *)env)->DeleteGlobalRef(j9VMInternalsClass);
@@ -646,31 +646,31 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	if( vm->javaOffloadSwitchOffNoEnvWithReasonFunc != NULL ) {
-		(*vm->javaOffloadSwitchOffNoEnvWithReasonFunc)(vm, omrthread_self(), J9_JNI_OFFLOAD_SWITCH_FINALIZE_SLAVE_THREAD);
+		(*vm->javaOffloadSwitchOffNoEnvWithReasonFunc)(vm, omrthread_self(), J9_JNI_OFFLOAD_SWITCH_FINALIZE_WORKER_THREAD);
 	}
 #endif
 
-	switch(slaveData->die) {
-		case FINALIZE_SLAVE_SHOULD_ABANDON:
+	switch(workerData->die) {
+		case FINALIZE_WORKER_SHOULD_ABANDON:
 			/* Poke the master in case it missed the notify */
-			omrthread_monitor_notify_all(slaveData->monitor);
+			omrthread_monitor_notify_all(workerData->monitor);
 
 			/* Now wait for the master to give us the OK to die */
-			while(FINALIZE_SLAVE_SHOULD_ABANDON == slaveData->die) {
-				omrthread_monitor_wait(slaveData->monitor);
+			while(FINALIZE_WORKER_SHOULD_ABANDON == workerData->die) {
+				omrthread_monitor_wait(workerData->monitor);
 			}
-			Assert_MM_true(FINALIZE_SLAVE_ABANDONED == slaveData->die);
+			Assert_MM_true(FINALIZE_WORKER_ABANDONED == workerData->die);
 			/* Fallthrough to the abandoned case */
 
-		case FINALIZE_SLAVE_ABANDONED:
+		case FINALIZE_WORKER_ABANDONED:
 			/* Clean up communication data structures data structures */
-			omrthread_monitor_exit(slaveData->monitor);
-			omrthread_monitor_destroy(slaveData->monitor);
-			forge->free(slaveData);
+			omrthread_monitor_exit(workerData->monitor);
+			omrthread_monitor_destroy(workerData->monitor);
+			forge->free(workerData);
 			break;
-		case FINALIZE_SLAVE_SHOULD_DIE:
-			omrthread_monitor_notify_all(slaveData->monitor);
-			omrthread_exit(slaveData->monitor);		/* exit the monitor, and terminate the thread */
+		case FINALIZE_WORKER_SHOULD_DIE:
+			omrthread_monitor_notify_all(workerData->monitor);
+			omrthread_exit(workerData->monitor);		/* exit the monitor, and terminate the thread */
 			/* NO EXECUTION GUARANTEE BEYOND THIS POINT */
 	}
 
@@ -682,140 +682,140 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 /*
  * Preconditions:
  * 	holds finalizeMasterMonitor
- * 	does not hold slaveData->monitor
+ * 	does not hold workerData->monitor
  * Postconditions:
  * 	holds finalizeMasterMonitor
- * 	does not hold slaveData->monitor
+ * 	does not hold workerData->monitor
  */
-IDATA FinalizeMasterRunFinalization(J9JavaVM * vm, omrthread_t * indirectSlaveThreadHandle,
-										   struct finalizeSlaveData **indirectSlaveData, IDATA finalizeCycleLimit,
+IDATA FinalizeMasterRunFinalization(J9JavaVM * vm, omrthread_t * indirectWorkerThreadHandle,
+										   struct finalizeWorkerData **indirectWorkerData, IDATA finalizeCycleLimit,
 										   IDATA mode)
 {
-	omrthread_t slaveThreadHandle;
-	struct finalizeSlaveData *slaveData;
-	IDATA slaveWaitResult;
+	omrthread_t workerThreadHandle;
+	struct finalizeWorkerData *workerData;
+	IDATA workerWaitResult;
 	UDATA publicFlags;
 	MM_Forge *forge = MM_GCExtensionsBase::getExtensions(vm->omrVM)->getForge();
 	
-	slaveThreadHandle = *indirectSlaveThreadHandle;
-	slaveData = *indirectSlaveData;
+	workerThreadHandle = *indirectWorkerThreadHandle;
+	workerData = *indirectWorkerData;
 
-	/* There is work to be done - if no slave thread exists, create one */
-	if (NULL == slaveThreadHandle) {
-		/* Initialize a slaveData structure */
-		slaveData = (struct finalizeSlaveData *) forge->allocate(sizeof(struct finalizeSlaveData), MM_AllocationCategory::FINALIZE, J9_GET_CALLSITE());
-		if (NULL == slaveData) {
+	/* There is work to be done - if no worker thread exists, create one */
+	if (NULL == workerThreadHandle) {
+		/* Initialize a workerData structure */
+		workerData = (struct finalizeWorkerData *) forge->allocate(sizeof(struct finalizeWorkerData), MM_AllocationCategory::FINALIZE, J9_GET_CALLSITE());
+		if (NULL == workerData) {
 			/* What should be done here! */
 			return -1;
 		}
-		slaveData->vm = vm;
-		slaveData->die = FINALIZE_SLAVE_STAY_ALIVE;
-		slaveData->noWorkDone = 0;
-		slaveData->mode = FINALIZE_SLAVE_MODE_NORMAL;
-		slaveData->wakeUp = 0;
+		workerData->vm = vm;
+		workerData->die = FINALIZE_WORKER_STAY_ALIVE;
+		workerData->noWorkDone = 0;
+		workerData->mode = FINALIZE_WORKER_MODE_NORMAL;
+		workerData->wakeUp = 0;
 
-		if (0 != omrthread_monitor_init(&(slaveData->monitor), 0)) {
-			forge->free(slaveData);
+		if (0 != omrthread_monitor_init(&(workerData->monitor), 0)) {
+			forge->free(workerData);
 
 			/* What should be done here! */
 			return -1;
 		}
 		omrthread_monitor_exit(vm->finalizeMasterMonitor);
-		omrthread_monitor_enter(slaveData->monitor);
+		omrthread_monitor_enter(workerData->monitor);
 
-		/* Fork the slave thread */
+		/* Fork the worker thread */
 		IDATA result = vm->internalVMFunctions->createThreadWithCategory(
-							&slaveThreadHandle,
+							&workerThreadHandle,
 							vm->defaultOSStackSize,
 							MM_GCExtensions::getExtensions(vm)->finalizeSlavePriority,
 							0,
-							&gpProtectedFinalizeSlaveThread,
-							slaveData,
+							&gpProtectedFinalizeWorkerThread,
+							workerData,
 							J9THREAD_CATEGORY_APPLICATION_THREAD);
 
 		if (result != 0) {
-			omrthread_monitor_exit(slaveData->monitor);
-			omrthread_monitor_destroy(slaveData->monitor);			
-			forge->free(slaveData);
+			omrthread_monitor_exit(workerData->monitor);
+			omrthread_monitor_destroy(workerData->monitor);			
+			forge->free(workerData);
 			omrthread_monitor_enter(vm->finalizeMasterMonitor);
 			return -1;
 		}
-		omrthread_monitor_wait(slaveData->monitor);
-		if (!slaveData->vmThread) {
-			/* The slave thread failed to initialize/attach - this is really bad */
-			omrthread_monitor_exit(slaveData->monitor);
-			omrthread_monitor_destroy(slaveData->monitor);
-			forge->free(slaveData);
+		omrthread_monitor_wait(workerData->monitor);
+		if (!workerData->vmThread) {
+			/* The worker thread failed to initialize/attach - this is really bad */
+			omrthread_monitor_exit(workerData->monitor);
+			omrthread_monitor_destroy(workerData->monitor);
+			forge->free(workerData);
 			omrthread_monitor_enter(vm->finalizeMasterMonitor);
 			return -1;
 		}
-		omrthread_monitor_exit(slaveData->monitor);
+		omrthread_monitor_exit(workerData->monitor);
 		omrthread_monitor_enter(vm->finalizeMasterMonitor);
 
-		*indirectSlaveData = slaveData;
-		*indirectSlaveThreadHandle = slaveThreadHandle;
+		*indirectWorkerData = workerData;
+		*indirectWorkerThreadHandle = workerThreadHandle;
 
-		/* Connect the slave */
-		vm->finalizeSlaveData = slaveData;
+		/* Connect the worker */
+		vm->finalizeWorkerData = workerData;
 	}
 
-	/* A slave exists - set it to work */
+	/* A worker exists - set it to work */
 	omrthread_monitor_exit(vm->finalizeMasterMonitor);
 
-	omrthread_monitor_enter(slaveData->monitor);
-	slaveData->wakeUp = 1;
-	slaveData->mode = mode;
-	slaveData->finished = 0;
-	omrthread_monitor_notify_all(slaveData->monitor);	/* Wake slave up */
+	omrthread_monitor_enter(workerData->monitor);
+	workerData->wakeUp = 1;
+	workerData->mode = mode;
+	workerData->finished = 0;
+	omrthread_monitor_notify_all(workerData->monitor);	/* Wake worker up */
 	do {
-		slaveWaitResult = omrthread_monitor_wait_timed(slaveData->monitor, finalizeCycleLimit, 0);
+		workerWaitResult = omrthread_monitor_wait_timed(workerData->monitor, finalizeCycleLimit, 0);
 
-		omrthread_monitor_enter(slaveData->vmThread->publicFlagsMutex);
-		publicFlags = slaveData->vmThread->publicFlags;
-		omrthread_monitor_exit(slaveData->vmThread->publicFlagsMutex);
+		omrthread_monitor_enter(workerData->vmThread->publicFlagsMutex);
+		publicFlags = workerData->vmThread->publicFlags;
+		omrthread_monitor_exit(workerData->vmThread->publicFlagsMutex);
 	}
 	while (
-		   (slaveWaitResult == J9THREAD_TIMED_OUT && publicFlags & J9_PUBLIC_FLAGS_HALT_VM_DUTIES &&
-			!slaveData->finished) || (slaveWaitResult != J9THREAD_TIMED_OUT && !slaveData->finished));
-	omrthread_monitor_exit(slaveData->monitor);
+		   (workerWaitResult == J9THREAD_TIMED_OUT && publicFlags & J9_PUBLIC_FLAGS_HALT_VM_DUTIES &&
+			!workerData->finished) || (workerWaitResult != J9THREAD_TIMED_OUT && !workerData->finished));
+	omrthread_monitor_exit(workerData->monitor);
 
 	omrthread_monitor_enter(vm->finalizeMasterMonitor);
 
-	if(FINALIZE_SLAVE_SHOULD_ABANDON == slaveData->die) {
-		/* The slave thread has requested that we abandon it */
+	if(FINALIZE_WORKER_SHOULD_ABANDON == workerData->die) {
+		/* The worker thread has requested that we abandon it */
 
-		/* Disconnect the slave */
-		vm->finalizeSlaveData = NULL;
-		*indirectSlaveThreadHandle = NULL;
-		*indirectSlaveData = NULL;
+		/* Disconnect the worker */
+		vm->finalizeWorkerData = NULL;
+		*indirectWorkerThreadHandle = NULL;
+		*indirectWorkerData = NULL;
 
-		/* Let the abandoned slave know that it can clean up */
-		omrthread_monitor_enter(slaveData->monitor);
-		slaveData->die = FINALIZE_SLAVE_ABANDONED;
-		omrthread_monitor_notify_all(slaveData->monitor);
-		omrthread_monitor_exit(slaveData->monitor);
+		/* Let the abandoned worker know that it can clean up */
+		omrthread_monitor_enter(workerData->monitor);
+		workerData->die = FINALIZE_WORKER_ABANDONED;
+		omrthread_monitor_notify_all(workerData->monitor);
+		omrthread_monitor_exit(workerData->monitor);
 
 		return -2;
 	}
 
-	return slaveWaitResult;
+	return workerWaitResult;
 }
 
 static UDATA
-FinalizeSlaveThreadGlue(J9PortLibrary* portLib, void* userData)
+FinalizeWorkerThreadGlue(J9PortLibrary* portLib, void* userData)
 {
-	return FinalizeSlaveThread(userData);	
+	return FinalizeWorkerThread(userData);	
 }
 
 static int J9THREAD_PROC 
-gpProtectedFinalizeSlaveThread(void *entryArg)
+gpProtectedFinalizeWorkerThread(void *entryArg)
 {
-	struct finalizeSlaveData *slaveData = (struct finalizeSlaveData *) entryArg;
-	PORT_ACCESS_FROM_PORT(slaveData->vm->portLibrary);
+	struct finalizeWorkerData *workerData = (struct finalizeWorkerData *) entryArg;
+	PORT_ACCESS_FROM_PORT(workerData->vm->portLibrary);
 	UDATA rc;
 
-	j9sig_protect(FinalizeSlaveThreadGlue, slaveData, 
-		slaveData->vm->internalVMFunctions->structuredSignalHandlerVM, slaveData->vm,
+	j9sig_protect(FinalizeWorkerThreadGlue, workerData, 
+		workerData->vm->internalVMFunctions->structuredSignalHandlerVM, workerData->vm,
 		J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_CONTINUE_EXECUTION, 
 		&rc);
 
@@ -839,20 +839,20 @@ j9gc_finalizer_completeFinalizersOnExit(J9VMThread* vmThread)
 		vm->finalizeMasterFlags |= J9_FINALIZE_FLAGS_SHUTDOWN;
 		omrthread_monitor_notify_all(vm->finalizeMasterMonitor);
 	}
-	/* Is there an active slave thread? */
-	if (NULL != vm->finalizeSlaveData) {
-		struct finalizeSlaveData *slaveData = (struct finalizeSlaveData*)vm->finalizeSlaveData;
-		if ((NULL != slaveData) && (0 == slaveData->finished)) {
-			/* An active slave thread exists (possibly the current thread).
-			 * Abandon it so that a new slave can be created.
+	/* Is there an active worker thread? */
+	if (NULL != vm->finalizeWorkerData) {
+		struct finalizeWorkerData *workerData = (struct finalizeWorkerData*)vm->finalizeWorkerData;
+		if ((NULL != workerData) && (0 == workerData->finished)) {
+			/* An active worker thread exists (possibly the current thread).
+			 * Abandon it so that a new worker can be created.
 			 */
-			omrthread_monitor_enter(slaveData->monitor);
-			if (0 == slaveData->finished) {
-				slaveData->finished = 1;
-				slaveData->die = FINALIZE_SLAVE_SHOULD_ABANDON;
-				omrthread_monitor_notify_all(slaveData->monitor);
+			omrthread_monitor_enter(workerData->monitor);
+			if (0 == workerData->finished) {
+				workerData->finished = 1;
+				workerData->die = FINALIZE_WORKER_SHOULD_ABANDON;
+				omrthread_monitor_notify_all(workerData->monitor);
 			}
-			omrthread_monitor_exit(slaveData->monitor);
+			omrthread_monitor_exit(workerData->monitor);
 		}
 	}
 
@@ -922,14 +922,14 @@ void j9gc_finalizer_shutdown(J9JavaVM * vm)
 	omrthread_monitor_enter(vm->finalizeMasterMonitor);
 	if(!(vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_SHUTDOWN)) {
 		if ( (vm->finalizeMasterFlags & J9_FINALIZE_FLAGS_ACTIVE)
-				&& ( (vmThread && !(vmThread->privateFlags & J9_PRIVATE_FLAGS_FINALIZE_SLAVE)) || !vmThread) ) {
+				&& ( (vmThread && !(vmThread->privateFlags & J9_PRIVATE_FLAGS_FINALIZE_WORKER)) || !vmThread) ) {
 			bool waitForFinalizer = true;
-			struct finalizeSlaveData *slaveData = (struct finalizeSlaveData*)vm->finalizeSlaveData;
+			struct finalizeWorkerData *workerData = (struct finalizeWorkerData*)vm->finalizeWorkerData;
 
 			vm->finalizeMasterFlags |= J9_FINALIZE_FLAGS_SHUTDOWN;
 			omrthread_monitor_notify_all(vm->finalizeMasterMonitor);
-			if ((NULL != slaveData) && (NULL != slaveData->vmThread)
-					&& J9_ARE_ANY_BITS_SET(slaveData->vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)) {
+			if ((NULL != workerData) && (NULL != workerData->vmThread)
+					&& J9_ARE_ANY_BITS_SET(workerData->vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)) {
 				/*
 				 * PR 87639 - don't wait for the finalizer if it has been suspended.
 				 * This will cause jniinv:terminateRemainingThreads() to fail.

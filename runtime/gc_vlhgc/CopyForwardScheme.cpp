@@ -870,7 +870,7 @@ MM_CopyForwardScheme::reserveMemoryForObject(MM_EnvironmentVLHGC *env, UDATA com
 	MM_AllocateDescription allocDescription(objectSize, 0, false, false);
 	UDATA sublistCount = _reservedRegionList[compactGroup]._sublistCount;
 	Assert_MM_true(sublistCount <= MM_ReservedRegionListHeader::MAX_SUBLISTS);
-	UDATA sublistIndex = env->getSlaveID() % sublistCount;
+	UDATA sublistIndex = env->getWorkerID() % sublistCount;
 	MM_ReservedRegionListHeader::Sublist *regionList = &_reservedRegionList[compactGroup]._sublists[sublistIndex];
 	void *result = NULL;
 
@@ -959,7 +959,7 @@ MM_CopyForwardScheme::reserveMemoryForCache(MM_EnvironmentVLHGC *env, UDATA comp
 	bool result = false;
 	UDATA sublistCount = _reservedRegionList[compactGroup]._sublistCount;
 	Assert_MM_true(sublistCount <= MM_ReservedRegionListHeader::MAX_SUBLISTS);
-	UDATA sublistIndex = env->getSlaveID() % sublistCount;
+	UDATA sublistIndex = env->getWorkerID() % sublistCount;
 	MM_ReservedRegionListHeader::Sublist *regionList = &_reservedRegionList[compactGroup]._sublists[sublistIndex];
 
 	/* Measure the number of acquires before and after we acquire the lock. If it changed, then there is probably contention on the lock. */
@@ -1464,7 +1464,7 @@ MM_CopyForwardScheme::workerSetupForCopyForward(MM_EnvironmentVLHGC *env)
 	/* install this thread's compact group structures */
 	Assert_MM_true(NULL == env->_copyForwardCompactGroups);
 	Assert_MM_true(NULL != _compactGroupBlock);
-	env->_copyForwardCompactGroups = &_compactGroupBlock[env->getSlaveID() * _compactGroupMaxCount];
+	env->_copyForwardCompactGroups = &_compactGroupBlock[env->getWorkerID() * _compactGroupMaxCount];
 	
 	for (UDATA compactGroup = 0; compactGroup < _compactGroupMaxCount; compactGroup++) {
 		env->_copyForwardCompactGroups[compactGroup].initialize(env);
@@ -1551,7 +1551,7 @@ MM_CopyForwardScheme::mergeGCStats(MM_EnvironmentVLHGC *env)
 	/* record the thread-specific parallelism stats in the trace buffer. This partially duplicates info in -Xtgc:parallel */ 
 	Trc_MM_CopyForwardScheme_parallelStats(
 		env->getLanguageVMThread(),
-		(U_32)env->getSlaveID(),
+		(U_32)env->getWorkerID(),
 		(U_32)j9time_hires_delta(0, env->_copyForwardStats._workStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 		(U_32)j9time_hires_delta(0, env->_copyForwardStats._completeStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 		(U_32)j9time_hires_delta(0, env->_copyForwardStats._syncStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
@@ -1569,7 +1569,7 @@ MM_CopyForwardScheme::mergeGCStats(MM_EnvironmentVLHGC *env)
 	if (env->_copyForwardStats._aborted) {
 		Trc_MM_CopyForwardScheme_parallelStatsForAbort(
 			env->getLanguageVMThread(),
-			(U_32)env->getSlaveID(),
+			(U_32)env->getWorkerID(),
 			(U_32)j9time_hires_delta(0, env->_workPacketStats._workStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 			(U_32)j9time_hires_delta(0, env->_workPacketStats._completeStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 			(U_32)j9time_hires_delta(0, env->_copyForwardStats._markStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),

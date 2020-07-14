@@ -39,7 +39,7 @@ typedef struct TgcNumaExtensions {
 		UDATA committedRegions; /**< number of committed regions with affinity to the node */
 		UDATA freeRegions; /**< number of free regions with affinity to the node */
 		UDATA threads; /**< number of threads with affinity to the node */
-		UDATA gcThreads; /**< number of GC threads (slaves/master) with affinity to the node */
+		UDATA gcThreads; /**< number of GC threads (workers/master) with affinity to the node */
 	} *nodeData;
 } TgcNumaExtensions;
 	

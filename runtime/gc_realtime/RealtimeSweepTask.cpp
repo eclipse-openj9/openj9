@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,7 +58,7 @@ MM_RealtimeSweepTask::cleanup(MM_EnvironmentBase *envBase)
 
 	Trc_MM_RealtimeSweepTask_parallelStats(
 		env->getLanguageVMThread(),
-		(U_32)env->getSlaveID(), 
+		(U_32)env->getWorkerID(), 
 		(U_32)omrtime_hires_delta(0, env->_sweepStats.idleTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS),
 		env->_sweepStats.sweepChunksProcessed, 
 		(U_32)omrtime_hires_delta(0, env->_sweepStats.mergeTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS));

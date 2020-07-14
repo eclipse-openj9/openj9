@@ -450,10 +450,10 @@ MM_InterRegionRememberedSet::releaseCardBufferControlBlockLocalPools(MM_Environm
 	GC_VMThreadListIterator vmThreadListIterator((J9JavaVM *)env->getLanguageVM());
 	J9VMThread *aThread;
 
-	/* release all slave-GC-thread local buffers */
+	/* release all worker-GC-thread local buffers */
 	while((aThread = vmThreadListIterator.nextVMThread()) != NULL) {
 		MM_EnvironmentVLHGC *threadEnvironment = MM_EnvironmentVLHGC::getEnvironment(aThread);
-		if (GC_SLAVE_THREAD == threadEnvironment->getThreadType()) {
+		if (GC_WORKER_THREAD == threadEnvironment->getThreadType()) {
 			releaseCardBufferControlBlockListForThread(env, threadEnvironment);
 		}
 	}

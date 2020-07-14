@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 #include "Task.hpp"
 
 void
-MM_YieldCollaborator::resumeSlavesFromYield(MM_EnvironmentBase *env)
+MM_YieldCollaborator::resumeWorkersFromYield(MM_EnvironmentBase *env)
 {
 	omrthread_monitor_enter(*_mutex);
 	_yieldCount = 0;
@@ -46,11 +46,11 @@ MM_YieldCollaborator::yield(MM_EnvironmentBase *env)
 	/* because of sync sections nesting we have to do >= (instead of ==) */
 	if (_yieldCount + *_count >= env->_currentTask->getThreadCount() || env->_currentTask->isSynchronized() /* only master active */) {
 		/* CMVC 142132 We change the resume event, even if we are master thread (ie we do not explicitly notify ourselves).
-		 * This is to "clear" any pending event (like newPacket) that may wake up slave after this point
+		 * This is to "clear" any pending event (like newPacket) that may wake up worker after this point
 		 * (when master thread thinks that every other GC thread is blocked) */
 		_resumeEvent = notifyMaster;
 		if (env->isMasterThread()) {
-			/* all slaves yielded/blocked - return right away */
+			/* all workers yielded/blocked - return right away */
 			omrthread_monitor_exit(*_mutex);
 			return;
 		} else {
@@ -62,12 +62,12 @@ MM_YieldCollaborator::yield(MM_EnvironmentBase *env)
 	/* yielding */
 	if (env->isMasterThread()) {
 		do {
-			/* master waiting for slaves to notify all of them synced/yielded */
+			/* master waiting for workers to notify all of them synced/yielded */
 			omrthread_monitor_wait(*_mutex);
 		} while (_resumeEvent != notifyMaster);
 	} else {
 		do {
-			/* slaves waiting for master to notify about the start of new quantum */
+			/* workers waiting for master to notify about the start of new quantum */
 			omrthread_monitor_wait(*_mutex);
 		} while (index == _yieldIndex);	
 	}

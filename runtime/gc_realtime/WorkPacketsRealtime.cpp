@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -156,7 +156,7 @@ MM_WorkPacketsRealtime::getInputPacket(MM_EnvironmentBase *envBase)
 						}
 					}
 
-					/* A slave is only interested in synchedThreads and newPacket event. For any other event it remains to be blocked */
+					/* A worker is only interested in synchedThreads and newPacket event. For any other event it remains to be blocked */
 					/* We check doneIndex, so we can exit this iteration ASAP before synchedThreads is overwritten by another event in the next iteration
 					 * (We may be overly cautious here, since we are not that sure that overlap between iterations may even happen)
 					 */

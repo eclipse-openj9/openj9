@@ -32,7 +32,7 @@ class MM_YieldCollaborator : public MM_BaseNonVirtual {
 public:
 	
 	enum ResumeEvent {
-		fromYield = 1, /* master notifies slaves to start working */
+		fromYield = 1, /* master notifies workers to start working */
 		synchedThreads = 2,  /* one GC thread notifies other threads, it's the last one to reach blocking or yield point */
 		notifyMaster = 3, /* notify only master that all other GC threads synched or yielded */
 		newPacket = 4 /* notify a GC thread that a new packeted is created */
@@ -73,9 +73,9 @@ public:
 		return _prev;
 	}
 	
-	/* master notifies slaves it's time to start a new GC quantum */
-	void resumeSlavesFromYield(MM_EnvironmentBase *env);
-	/* used by either slaves to yield or master to wait for slaves to yield (or reach sync barrier) */	
+	/* master notifies workers it's time to start a new GC quantum */
+	void resumeWorkersFromYield(MM_EnvironmentBase *env);
+	/* used by either workers to yield or master to wait for workers to yield (or reach sync barrier) */	
 	void yield(MM_EnvironmentBase *env);
 	
 	MM_YieldCollaborator(omrthread_monitor_t *mutex, volatile UDATA *count, CollaboratorID collaboratorID) :

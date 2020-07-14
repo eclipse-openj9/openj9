@@ -62,7 +62,7 @@ tgcHookGlobalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, 
 		J9VMThread *walkThread = NULL;
 		while ((walkThread = markThreadListIterator.nextVMThread()) != NULL) {
 			MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(walkThread->omrVMThread);
-			if ((walkThread == vmThread) || (env->getThreadType() == GC_SLAVE_THREAD)) {
+			if ((walkThread == vmThread) || (env->getThreadType() == GC_WORKER_THREAD)) {
 				bool shouldIncludeThread = true;
 				if (extensions->isStandardGC()) {
 #if defined(J9VM_GC_MODRON_STANDARD)
@@ -73,7 +73,7 @@ tgcHookGlobalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, 
 				}
 				if (shouldIncludeThread) {
 					tgcExtensions->printf("%4zu:  %5llu  %5llu   %5zu     %5zu     %5zu\n",
-						env->getSlaveID(),
+						env->getWorkerID(),
 						j9time_hires_delta(parallelExtensions->RSScanStartTime, env->_workPacketStatsRSScan.getStallTime(), J9PORT_TIME_DELTA_IN_MILLISECONDS),
 						j9time_hires_delta(env->_workPacketStatsRSScan.getStallTime(), parallelExtensions->RSScanEndTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 						env->_workPacketStatsRSScan.workPacketsAcquired,
@@ -94,7 +94,7 @@ tgcHookGlobalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, 
 		while ((walkThread = markThreadListIterator.nextVMThread()) != NULL) {
 			/* TODO: Are we guaranteed to get the threads in the right order? */
 			MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(walkThread);
-			if ((walkThread == vmThread) || (env->getThreadType() == GC_SLAVE_THREAD)) {
+			if ((walkThread == vmThread) || (env->getThreadType() == GC_WORKER_THREAD)) {
 				uint64_t markStatsStallTime = 0;
 				intptr_t splitArraysProcessed = 0;
 				intptr_t splitArraysAmount = 0;
@@ -120,7 +120,7 @@ tgcHookGlobalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, 
 						avgSplitSize = splitArraysAmount / splitArraysProcessed;
 					}
 					tgcExtensions->printf("%4zu:  %5llu  %5llu    %5zu     %5zu     %5zu       %5zu     %7zu\n",
-						env->getSlaveID(),
+						env->getWorkerID(),
 						j9time_hires_delta(0, markTotalTime - (markStatsStallTime + env->_workPacketStats.getStallTime()), J9PORT_TIME_DELTA_IN_MILLISECONDS),
 						j9time_hires_delta(0, markStatsStallTime + env->_workPacketStats.getStallTime(), J9PORT_TIME_DELTA_IN_MILLISECONDS),
 						env->_workPacketStats.workPacketsAcquired,
@@ -133,7 +133,7 @@ tgcHookGlobalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, 
 				/* TODO: VLHGC doesn't record gc count yet, allowing us to determine if thread participated */			
 				if (extensions->isVLHGC()) {
 					/* TODO: Must reset thread-local stats after using them -- is there another answer? */
-					/* When it becomes possible for a GC to not use all of the slave threads, this becomes
+					/* When it becomes possible for a GC to not use all of the worker threads, this becomes
 					 * necessary, otherwise we might use outdated stats.
 					 */
 					env->_workPacketStats.clear();
@@ -174,7 +174,7 @@ tgcHookGlobalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, 
 		while ((walkThread = sweepThreadListIterator.nextVMThread()) != NULL) {
 			/* TODO: Are we guaranteed to get the threads in the right order? */
 			MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(walkThread);
-			if ((walkThread == vmThread) || (env->getThreadType() == GC_SLAVE_THREAD)) {
+			if ((walkThread == vmThread) || (env->getThreadType() == GC_WORKER_THREAD)) {
 				uint64_t sweepIdleTime = 0;
 				intptr_t sweepChunksProcessed = 0;
 				bool shouldIncludeThread = true;
@@ -197,7 +197,7 @@ tgcHookGlobalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, 
 
 				if (shouldIncludeThread) {
 					tgcExtensions->printf("%4zu: %6llu %6llu %8zu\n",
-						env->getSlaveID(),
+						env->getWorkerID(),
 						j9time_hires_delta(0, sweepTotalTime - sweepIdleTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 						j9time_hires_delta(0, sweepIdleTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 						sweepChunksProcessed);
@@ -260,7 +260,7 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 	while ((walkThread = scavengeThreadListIterator.nextVMThread()) != NULL) {
 		/* TODO: Are we guaranteed to get the threads in the right order? */
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(walkThread->omrVMThread);
-		if ((walkThread == vmThread) || (env->getThreadType() == GC_SLAVE_THREAD)) {
+		if ((walkThread == vmThread) || (env->getThreadType() == GC_WORKER_THREAD)) {
 			/* check if this thread participated in the GC */ 
 			if (env->_scavengerStats._gcCount == extensions->scavengerStats._gcCount) {
 				intptr_t avgArraySplitAmount = 0;
@@ -269,7 +269,7 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 				}
 				tgcExtensions->printf("SCV.T %6zu  %4zu %8llu %8llu     %5zu     %5zu     %5zu     %5zu     %5zu     %5zu     %5zu   %7zu  %6zu     %6zu  %6zu \n",
 					gcCount,
-					env->getSlaveID(),
+					env->getWorkerID(),
 					j9time_hires_delta(0, scavengeTotalTime - env->_scavengerStats.getStallTime(), J9PORT_TIME_DELTA_IN_MICROSECONDS),
 					j9time_hires_delta(0, env->_scavengerStats.getStallTime(), J9PORT_TIME_DELTA_IN_MICROSECONDS),
 					env->_scavengerStats._acquireFreeListCount,
@@ -380,11 +380,11 @@ tgcHookCopyForwardEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventDat
 	while ((walkThread = threadListIterator.nextVMThread()) != NULL) {
 		/* TODO: Are we guaranteed to get the threads in the right order? */
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(walkThread);
-		if ((walkThread == vmThread) || (env->getThreadType() == GC_SLAVE_THREAD)) {
+		if ((walkThread == vmThread) || (env->getThreadType() == GC_WORKER_THREAD)) {
 			if (env->_copyForwardStats._gcCount == MM_GCExtensions::getExtensions(env)->globalVLHGCStats.gcCount) {
 				uint64_t totalStallTime = env->_copyForwardStats.getStallTime() + env->_workPacketStats.getStallTime();
 				tgcExtensions->printf("%4zu:   %5llu   %5llu     %5llu     %5llu    %5zu     %5zu     %5zu     %5zu    %5zu    %5llu     %5llu    %5zu     %5zu     %5zu     %5zu\n",
-					env->getSlaveID(),
+					env->getWorkerID(),
 					j9time_hires_delta(0, copyForwardTotalTime - totalStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 					j9time_hires_delta(0, totalStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 					j9time_hires_delta(0, env->_copyForwardStats._irrsStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),

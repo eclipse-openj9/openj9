@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -312,7 +312,7 @@ MM_ParallelScrubCardTableTask::run(MM_EnvironmentBase *envBase)
 	env->_cardCleaningStats.addToCardCleaningTime(cleanStartTime, cleanEndTime);
 	
 	Trc_MM_ParallelScrubCardTableTask_scrubCardTable_Exit(env->getLanguageVMThread(),
-		env->getSlaveID(),
+		env->getWorkerID(),
 		scrubber.getScrubbedObjects(), scrubber.getScrubbedCards(), scrubber.getDirtyCards(), scrubber.getGMPMustScanCards(),
 		j9time_hires_delta(cleanStartTime, cleanEndTime, J9PORT_TIME_DELTA_IN_MICROSECONDS),
 		didTimeout() ? "true" : "false");

@@ -152,9 +152,9 @@ protected:
 	virtual bool useSeparateMasterThread() { return true; }
 
 	virtual void wakeUpThreads(uintptr_t count);
-	void wakeUpSlaveThreads(uintptr_t count);
+	void wakeUpWorkerThreads(uintptr_t count);
 
-	virtual void slaveEntryPoint(MM_EnvironmentBase *env);
+	virtual void workerEntryPoint(MM_EnvironmentBase *env);
 	virtual void masterEntryPoint(MM_EnvironmentBase *env);
 
 	bool internalShouldGCYield(MM_EnvironmentRealtime *env, U_64 timeSlack);
@@ -169,7 +169,7 @@ public:
 		_yieldCollaborator = _yieldCollaborator->pop();
 	}
 
-	void shutDownSlaveThreads();
+	void shutDownWorkerThreads();
 	void shutDownMasterThread();
 	void startGCIfTimeExpired(MM_EnvironmentBase *env);
 

@@ -180,7 +180,7 @@ MM_ParallelGlobalMarkTask::cleanup(MM_EnvironmentBase *envBase)
 	/* record the thread-specific parallelism stats in the trace buffer. This partially duplicates info in -Xtgc:parallel */ 
 	Trc_MM_ParallelGlobalMarkTask_parallelStats(
 			env->getLanguageVMThread(),
-			(U_32)env->getSlaveID(),
+			(U_32)env->getWorkerID(),
 			(U_32)j9time_hires_delta(0, env->_workPacketStats._workStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 			(U_32)j9time_hires_delta(0, env->_workPacketStats._completeStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 			(U_32)j9time_hires_delta(0, env->_markVLHGCStats._syncStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),

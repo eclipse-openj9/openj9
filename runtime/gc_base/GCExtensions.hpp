@@ -141,7 +141,7 @@ public:
 
 #if defined(J9VM_GC_FINALIZATION)
 	UDATA finalizeMasterPriority; /**< cmd line option to set finalize master thread priority */
-	UDATA finalizeSlavePriority; /**< cmd line option to set finalize slave thread priority */
+	UDATA finalizeSlavePriority; /**< cmd line option to set finalize worker thread priority */
 #endif /* J9VM_GC_FINALIZATION */
 
 	MM_ClassLoaderManager* classLoaderManager; /**< Pointer to the gc's classloader manager to process classloaders/classes */

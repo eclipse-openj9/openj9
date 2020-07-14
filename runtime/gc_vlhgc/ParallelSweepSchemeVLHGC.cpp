@@ -1,7 +1,7 @@
 
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -120,7 +120,7 @@ MM_ParallelSweepVLHGCTask::cleanup(MM_EnvironmentBase *envBase)
 	
 	Trc_MM_ParallelSweepVLHGCTask_parallelStats(
 		env->getLanguageVMThread(),
-		(U_32)env->getSlaveID(), 
+		(U_32)env->getWorkerID(), 
 		(U_32)j9time_hires_delta(0, env->_sweepVLHGCStats.idleTime, J9PORT_TIME_DELTA_IN_MILLISECONDS), 
 		env->_sweepVLHGCStats.sweepChunksProcessed, 
 		(U_32)j9time_hires_delta(0, env->_sweepVLHGCStats.mergeTime, J9PORT_TIME_DELTA_IN_MILLISECONDS));
@@ -907,7 +907,7 @@ MM_ParallelSweepSchemeVLHGC::internalSweep(MM_EnvironmentVLHGC *env)
  * 
  * @param cycleState Cycle state used for any operation relative to the current collection cycle.
  *
- * @note Expect to have the dispatcher and slave threads available for work
+ * @note Expect to have the dispatcher and worker threads available for work
  * @note Expect to have exclusive access
  * @note Expect to have a valid mark map for all live objects
  */
@@ -926,7 +926,7 @@ MM_ParallelSweepSchemeVLHGC::sweep(MM_EnvironmentVLHGC *env)
  * Complete any sweep work after a basic sweep operation.
  * Completing the sweep is a noop - the basic sweep operation consists of a full sweep.
  * 
- * @note Expect to have the dispatcher and slave threads available for work
+ * @note Expect to have the dispatcher and worker threads available for work
  * @note Expect to have exclusive access
  * @note Expect to have a valid mark map for all live objects
  * @note Expect basic sweep work to have been completed

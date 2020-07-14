@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,7 +70,7 @@ MM_IncrementalParallelTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, co
 					}
 				}
 				
-				/* A slave is only interested in synchedThreads event. For any other events it remains to be blocked */		
+				/* A worker is only interested in synchedThreads event. For any other events it remains to be blocked */		
 				/* We check synchronizeIndex, so we can exit this iteration ASAP before synchedThreads is overwritten by another event in the next iteration
 				 * (We may be overly cautious here, since we are not that sure that overlap between iterations may even happen)
 				 */				
@@ -144,7 +144,7 @@ MM_IncrementalParallelTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentB
 				}
 			}
 			
-			/* A slave is only interested in synchedThreads event. For any other events it remains to be blocked */
+			/* A worker is only interested in synchedThreads event. For any other events it remains to be blocked */
 			/* We check synchronizeIndex, so we can exit this iteration ASAP before synchedThreads is overwritten by another event in the next iteration
 			 * (We may be overly cautious here, since we are not that sure that overlap between iterations may even happen)
 			 */
@@ -181,7 +181,7 @@ MM_IncrementalParallelTask::releaseSynchronizedGCThreads(MM_EnvironmentBase *env
 	
 	if(env->isMasterThread()) {
 		/* sync/release sequence actually takes time (excluding the work within the sync/release pair).
-		 * Take advantage of the fact the all slaves are blocked to check if it is time to yield */
+		 * Take advantage of the fact the all workers are blocked to check if it is time to yield */
 		((MM_Scheduler*)_dispatcher)->condYieldFromGC(env);
 		
 		/* Could not have gotten here unless all other threads are sync'd - don't check, just release */

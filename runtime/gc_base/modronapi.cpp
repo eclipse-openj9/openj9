@@ -933,40 +933,40 @@ j9gc_get_bytes_allocated_by_thread(J9VMThread *vmThread)
 
 /**
  * Return information about the total CPU time consumed by GC threads, as well
- * as the number of GC threads. The time for the master and slave threads is
- * reported separately, with the slave threads returned as a total.
+ * as the number of GC threads. The time for the master and worker threads is
+ * reported separately, with the worker threads returned as a total.
  * 
  * @parm[in] vm The J9JavaVM
  * @parm[out] masterCpuMillis The amount of CPU time spent in the GC by the master thread, in milliseconds
- * @parm[out] slaveCpuMillis The amount of CPU time spent in the GC by the all slave threads, in milliseconds
- * @parm[out] maxThreads The maximum number of GC slave threads
- * @parm[out] currentThreads The number of GC slave threads that participated in the last collection
+ * @parm[out] workerCpuMillis The amount of CPU time spent in the GC by the all worker threads, in milliseconds
+ * @parm[out] maxThreads The maximum number of GC worker threads
+ * @parm[out] currentThreads The number of GC worker threads that participated in the last collection
  */
 void
-j9gc_get_CPU_times(J9JavaVM *javaVM, U_64 *masterCpuMillis, U_64 *slaveCpuMillis, U_32 *maxThreads, U_32 *currentThreads)
+j9gc_get_CPU_times(J9JavaVM *javaVM, U_64 *masterCpuMillis, U_64 *workerCpuMillis, U_32 *maxThreads, U_32 *currentThreads)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
 	GC_VMThreadListIterator iterator(javaVM);
 	U_64 masterMillis = 0;
-	U_64 slaveMillis = 0;
-	U_64 slaveNanos = 0;
+	U_64 workerMillis = 0;
+	U_64 workerNanos = 0;
 	J9VMThread *vmThread = iterator.nextVMThread();
 	while(NULL != vmThread) {
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 		if(!env->isMasterThread()) {
-			/* For a large number of slave threads and very long runs, a sum of 
+			/* For a large number of worker threads and very long runs, a sum of 
 			 * nanos might overflow a U_64. Sum the millis and nanos separately.
 			 */
-			slaveMillis += env->_slaveThreadCpuTimeNanos / 1000000;
-			slaveNanos += env->_slaveThreadCpuTimeNanos % 1000000;
+			workerMillis += env->_workerThreadCpuTimeNanos / 1000000;
+			workerNanos += env->_workerThreadCpuTimeNanos % 1000000;
 		}
 		vmThread = iterator.nextVMThread();
 	}
 
 	/* Adjust the total millis by the nanos, rounding up. */
-	slaveMillis += slaveNanos / 1000000;
-	if((slaveNanos % 1000000) > 500000) {
-		slaveMillis += 1;
+	workerMillis += workerNanos / 1000000;
+	if((workerNanos % 1000000) > 500000) {
+		workerMillis += 1;
 	}
 
 	/* Adjust the master millis by the nanos, rounding up. */
@@ -977,7 +977,7 @@ j9gc_get_CPU_times(J9JavaVM *javaVM, U_64 *masterCpuMillis, U_64 *slaveCpuMillis
 	
 	/* Store the results */
 	*masterCpuMillis = masterMillis;
-	*slaveCpuMillis = slaveMillis;
+	*workerCpuMillis = workerMillis;
 	*maxThreads = (U_32)extensions->dispatcher->threadCountMaximum();	
 	*currentThreads = (U_32)extensions->dispatcher->activeThreadCount();
 }

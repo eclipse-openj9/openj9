@@ -114,7 +114,7 @@ MM_EnvironmentDelegate::attachVMThread(OMR_VM *omrVM, const char  *threadName, u
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	if ((MM_EnvironmentBase::ATTACH_THREAD != reason) &&  (NULL != javaVM->javaOffloadSwitchOnWithReasonFunc)) {
-		(*javaVM->javaOffloadSwitchOnWithReasonFunc)(vmThread, J9_JNI_OFFLOAD_SWITCH_FINALIZE_SLAVE_THREAD + reason);
+		(*javaVM->javaOffloadSwitchOnWithReasonFunc)(vmThread, J9_JNI_OFFLOAD_SWITCH_FINALIZE_WORKER_THREAD + reason);
 		vmThread->javaOffloadState = 1;
 	}
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */

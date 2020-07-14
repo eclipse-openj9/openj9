@@ -748,7 +748,7 @@ typedef struct J9JavaLangManagementData {
 	U_32 isThreadCpuTimeSupported;
 	U_32 isCurrentThreadCpuTimeSupported;
 	U_64 gcMasterCpuTime;
-	U_64 gcSlaveCpuTime;
+	U_64 gcWorkerCpuTime;
 	U_32 gcMaxThreads;
 	U_32 gcCurrentThreads;
 	char counterPath[2048];
@@ -4193,7 +4193,7 @@ typedef struct J9MemoryManagerFunctions {
 	const jchar*  ( *j9gc_objaccess_jniGetStringCritical)(struct J9VMThread* vmThread, jstring str, jboolean *isCopy) ;
 	void  ( *j9gc_objaccess_jniReleaseStringCritical)(struct J9VMThread* vmThread, jstring str, const jchar* elems) ;
 	void  ( *j9gc_finalizer_completeFinalizersOnExit)(struct J9VMThread* vmThread) ;
-	void  ( *j9gc_get_CPU_times)(struct J9JavaVM *javaVM, U_64* masterCpuMillis, U_64* slaveCpuMillis, U_32* maxThreads, U_32* currentThreads) ;
+	void  ( *j9gc_get_CPU_times)(struct J9JavaVM *javaVM, U_64* masterCpuMillis, U_64* workerCpuMillis, U_32* maxThreads, U_32* currentThreads) ;
 	void*  ( *omrgc_walkLWNRLockTracePool)(void *omrVM, pool_state *state) ;
 #if defined(J9VM_GC_OBJECT_ACCESS_BARRIER)
 	UDATA  ( *j9gc_objaccess_staticCompareAndSwapInt)(struct J9VMThread *vmThread, J9Class *destClass, U_32 *destAddress, U_32 compareValue, U_32 swapValue) ;
@@ -5173,7 +5173,7 @@ typedef struct J9JavaVM {
 	UDATA leConditionConvertedToJavaException;
 #endif /* J9VM_PORT_ZOS_CEEHDLRSUPPORT */
 	void* originalSIGPIPESignalAction;
-	void* finalizeSlaveData;
+	void* finalizeWorkerData;
 	j9object_t* heapOOMStringRef;
 	UDATA strCompEnabled;
 	struct J9IdentityHashData* identityHashData;
