@@ -1957,3 +1957,68 @@ done:
 	vmFuncs->internalExitVMToJNI(vmThread);
 	return result;
 }
+
+/* Create an array of string names for class's PermittedSubclasses */
+jarray
+permittedSubclassesHelper(JNIEnv *env, jobject cls)
+{
+	J9VMThread *vmThread = (J9VMThread *)env;
+	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+	J9Class *clazz = NULL;
+	J9ROMClass *romClass = NULL;
+	jarray result = NULL;
+	J9Class *stringClass = NULL;
+	J9Class *stringArrayClass = NULL;
+	U_32 *permittedSubclassesCountPtr = 0;
+	j9array_t stringArrayObject = NULL;
+	U_32 index = 0;
+
+	vmFuncs->internalEnterVMFromJNI(vmThread);
+
+	clazz = J9VM_J9CLASS_FROM_JCLASS(vmThread, (jclass)cls);
+	romClass = clazz->romClass;
+
+	/* allocate String array for results */
+	stringClass = J9VMJAVALANGSTRING(vm);
+	if (NULL != vmThread->currentException) {
+		goto done;
+	}
+	stringArrayClass = fetchArrayClass(vmThread, stringClass);
+	if (NULL != vmThread->currentException) {
+		goto done;
+	}
+
+	permittedSubclassesCountPtr = getNumberOfPermittedSubclassesPtr(romClass);
+
+	stringArrayObject = (j9array_t) mmFuncs->J9AllocateIndexableObject(vmThread, stringArrayClass,
+				*permittedSubclassesCountPtr, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+	if (NULL == stringArrayObject) {
+		goto heapoutofmemory;
+	}
+
+	result = vmFuncs->j9jni_createLocalRef(env, (j9object_t)stringArrayObject);
+
+	for (; index < *permittedSubclassesCountPtr; index++) {
+		J9UTF8* nameUTF = NULL;
+		j9object_t nameString = NULL;
+
+		nameUTF = permittedSubclassesNameAtIndex(permittedSubclassesCountPtr, index);
+		/* Translates string to a dot seperated name which is needed for ClassDesc.of in Java code. */
+		nameString = mmFuncs->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(nameUTF), (U_32) J9UTF8_LENGTH(nameUTF), J9_STR_INTERN | J9_STR_XLAT);
+		if (NULL == nameString) {
+			goto heapoutofmemory;
+		}
+
+		J9JAVAARRAYOFOBJECT_STORE(vmThread, stringArrayObject, index, nameString);
+	}
+	goto done;
+
+heapoutofmemory:
+	vmFuncs->setHeapOutOfMemoryError(vmThread);
+	goto done;
+done:
+	vmFuncs->internalExitVMToJNI(vmThread);
+	return result;
+}

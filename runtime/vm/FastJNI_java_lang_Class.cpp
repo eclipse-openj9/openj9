@@ -218,6 +218,14 @@ Fast_java_lang_Class_isRecord(J9VMThread *currentThread, j9object_t receiverObje
 	return J9ROMCLASS_IS_RECORD(receiverClazz->romClass) ? JNI_TRUE : JNI_FALSE;
 }
 
+/* java.lang.Class public native boolean isSealed(); */
+jboolean JNICALL
+Fast_java_lang_Class_isSealed(J9VMThread *currentThread, j9object_t receiverObject)
+{
+	J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, receiverObject);
+	return J9ROMCLASS_IS_SEALED(receiverClazz->romClass) ? JNI_TRUE : JNI_FALSE;
+}
+
 J9_FAST_JNI_METHOD_TABLE(java_lang_Class)
 	J9_FAST_JNI_METHOD("isAssignableFrom", "(Ljava/lang/Class;)Z", Fast_java_lang_Class_isAssignableFrom,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
@@ -241,6 +249,9 @@ J9_FAST_JNI_METHOD_TABLE(java_lang_Class)
 	J9_FAST_JNI_METHOD("arrayTypeImpl", "()Ljava/lang/Class;", Fast_java_lang_Class_arrayTypeImpl,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
 	J9_FAST_JNI_METHOD("isRecord", "()Z", Fast_java_lang_Class_isRecord,
+		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
+		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
+	J9_FAST_JNI_METHOD("isSealed", "()Z", Fast_java_lang_Class_isSealed,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
 J9_FAST_JNI_METHOD_TABLE_END
