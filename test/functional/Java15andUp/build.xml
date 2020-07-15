@@ -55,6 +55,7 @@
 			<classpath>
 				<pathelement location="${LIB_DIR}/testng.jar"/>
 				<pathelement location="${LIB_DIR}/jcommander.jar"/>
+				<pathelement location="${LIB_DIR}/asm.jar" />
 				<pathelement location="${build}" />
 			</classpath>
 		</javac>
