@@ -1002,7 +1002,7 @@ TR_SharedCacheRelocationRuntime::getCurrentLockwordOptionHashValue(J9JavaVM *vm)
    }
 
 OMRProcessorDesc
-TR_SharedCacheRelocationRuntime::getProcessorDescription(TR_FrontEnd *fe, J9VMThread *curThread)
+TR_SharedCacheRelocationRuntime::getProcessorDescriptionFromSCC(TR_FrontEnd *fe, J9VMThread *curThread)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    J9SharedDataDescriptor firstDescriptor;

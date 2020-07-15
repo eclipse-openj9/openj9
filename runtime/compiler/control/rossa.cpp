@@ -1914,7 +1914,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
             }
          else
             {
-            TR::Compiler->relocatableTarget.cpu = TR::CPU(compInfo->reloRuntime()->getProcessorDescription(fe, curThread));
+            TR::Compiler->relocatableTarget.cpu = TR::CPU(compInfo->reloRuntime()->getProcessorDescriptionFromSCC(fe, curThread));
             }
          }
 
