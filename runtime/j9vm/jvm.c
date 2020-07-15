@@ -5753,7 +5753,7 @@ JVM_DefineClassWithSource(JNIEnv *env, const char * className, jobject classLoad
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
-	if (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, J9_JNI_UNWRAP_REFERENCE(classNameString))) {
+	if (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, J9_JNI_UNWRAP_REFERENCE(classNameString), CLASSNAME_VALID)) {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (UDATA *)*(j9object_t*)classNameString);
 		vmFuncs->internalExitVMToJNI(currentThread);
 		return NULL;

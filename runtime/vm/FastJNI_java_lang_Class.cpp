@@ -87,20 +87,14 @@ Fast_java_lang_Class_forNameImpl(J9VMThread *currentThread, j9object_t className
 		}
 	}
 
-	/* Make sure the name is legal */
-	if (CLASSNAME_INVALID == verifyQualifiedName(currentThread, classNameObject)) {
-		goto throwCNFE;
-	}
-
 	/* Find the class */
 	PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, classNameObject);
-	foundClass = internalFindClassString(currentThread, NULL, classNameObject, classLoader, 0);
+	foundClass = internalFindClassString(currentThread, NULL, classNameObject, classLoader, 0, CLASSNAME_VALID);
 	classNameObject = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 
 	if (NULL == foundClass) {
 		/* Not found - if no exception is pending, throw ClassNotFoundException */
 		if (NULL == currentThread->currentException) {
-throwCNFE:
 			setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGCLASSNOTFOUNDEXCEPTION, (UDATA*)classNameObject);
 		}
 		goto done;
