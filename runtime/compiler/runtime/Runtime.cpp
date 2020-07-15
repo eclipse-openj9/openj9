@@ -429,8 +429,8 @@ JIT_HELPER(__encodeUTF16Little);
 JIT_HELPER(__quadWordArrayCopy_vsx);
 JIT_HELPER(__forwardQuadWordArrayCopy_vsx);
 
-JIT_HELPER(__leArrayCopy);
-JIT_HELPER(__forwardLEArrayCopy);
+JIT_HELPER(__postP10ForwardCopy);
+JIT_HELPER(__postP10GenericCopy);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
 JIT_HELPER(ECP256MUL_PPC);
@@ -1338,8 +1338,8 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_PPCquadWordArrayCopy_vsx,        (void *) __quadWordArrayCopy_vsx,        TR_Helper);
    SET(TR_PPCforwardQuadWordArrayCopy_vsx, (void *) __forwardQuadWordArrayCopy_vsx, TR_Helper);
 
-   SET(TR_PPCLEArrayCopy,                  (void *) __leArrayCopy,                  TR_Helper);
-   SET(TR_PPCforwardLEArrayCopy,           (void *) __forwardLEArrayCopy,           TR_Helper);
+   SET(TR_PPCpostP10ForwardCopy,           (void *) __postP10ForwardCopy,           TR_Helper);
+   SET(TR_PPCpostP10GenericCopy,           (void *) __postP10GenericCopy,           TR_Helper);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
    SET(TR_PPCP256Multiply,                 (void *) ECP256MUL_PPC);
