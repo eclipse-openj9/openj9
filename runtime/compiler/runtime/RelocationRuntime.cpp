@@ -1139,9 +1139,7 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(TR_FrontEnd *fe)
       aotHeader->lockwordOptionHashValue = getCurrentLockwordOptionHashValue(javaVM());
       aotHeader->compressedPointerShift = javaVM()->memoryManagerFunctions->j9gc_objaccess_compressedPointersShift(javaVM()->internalVMFunctions->currentVMThread(javaVM()));
       
-      OMRPORT_ACCESS_FROM_J9PORT(javaVM()->portLibrary);
-      BOOLEAN inContainer = omrsysinfo_is_running_in_container(); 
-      if (TRUE == inContainer || TRUE == javaVM()->sharedCacheAPI->sharedCachePortable)
+      if (TRUE == javaVM()->sharedCacheAPI->sharedCachePortable)
          {
          TR::Compiler->relocatableTarget.cpu = TR::CPU::detectRelocatable(TR::Compiler->omrPortLib);
          aotHeader->processorDescription = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
