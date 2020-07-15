@@ -338,6 +338,9 @@ bool acquireVMaccessIfNeeded(J9VMThread *vmThread, TR_YesNoMaybe isCompThread)
                     heldMonitor, TR_J9VMBase::get(jitConfig, NULL)->getJ9MonitorName((J9ThreadMonitor*)heldMonitor->getVMMonitor()));
 #endif // #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
 
+            TR_ASSERT_FATAL(!compInfo->getCompilationMonitor()->owned_by_self(),
+               "Current VM thread [%p] holds the comp monitor [%p] while attempting to acquire VM access", vmThread, compInfo->getCompilationMonitor());
+
             TR::Compilation *comp = compInfoPT->getCompilation();
             if ((comp && comp->getOptions()->realTimeGC()) ||
                  TR::Options::getCmdLineOptions()->realTimeGC())
