@@ -1183,10 +1183,7 @@ J9::Options::fePreProcess(void * base)
    uint32_t numProc = compInfo->getNumTargetCPUs();
    TR::Compiler->host.setNumberOfProcessors(numProc);
    TR::Compiler->target.setNumberOfProcessors(numProc);
-
-   // Safe decision to assume always SMP
-   TR::Compiler->host.setSMP(true);
-   TR::Compiler->target.setSMP(true);
+   TR::Compiler->relocatableTarget.setNumberOfProcessors(numProc);
 
    J9MemoryManagerFunctions * mmf = vm->memoryManagerFunctions;
 #if defined(J9VM_GC_HEAP_CARD_TABLE)

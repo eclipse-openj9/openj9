@@ -37,6 +37,43 @@
 // Without this definition, we get an undefined symbol of JITConfig::instance() at runtime
 TR::JitConfig * TR::JitConfig::instance() { return NULL; }
 
+TR::CPU
+J9::X86::CPU::detectRelocatable(OMRPortLibrary * const omrPortLib)
+   {
+   if (omrPortLib == NULL)
+      return TR::CPU();
+
+   // Sandybridge Architecture is selected to be our default portable processor description
+   uint32_t enabledFeatures [] = {OMR_FEATURE_X86_FPU, OMR_FEATURE_X86_CX8, OMR_FEATURE_X86_CMOV,
+                                  OMR_FEATURE_X86_MMX, OMR_FEATURE_X86_SSE, OMR_FEATURE_X86_SSE2,
+                                  OMR_FEATURE_X86_SSSE3, OMR_FEATURE_X86_SSE4_1, OMR_FEATURE_X86_POPCNT,
+                                  OMR_FEATURE_X86_AESNI, OMR_FEATURE_X86_AVX};
+
+   OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
+   OMRProcessorDesc customProcessorDescription;
+   memset(customProcessorDescription.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
+   for (size_t i = 0; i < sizeof(enabledFeatures)/sizeof(uint32_t); i++)
+      {
+      omrsysinfo_processor_set_feature(&customProcessorDescription, enabledFeatures[i], TRUE);
+      }
+
+   // Pick the older processor between our hand-picked processor and host processor to be the actual portable processor
+   TR::CPU host = TR::CPU::detect(omrPortLib);
+   OMRProcessorDesc hostProcessorDescription = host.getProcessorDescription();
+
+   OMRProcessorDesc portableProcessorDescription;
+   portableProcessorDescription.processor = OMR_PROCESSOR_X86_FIRST;
+   portableProcessorDescription.physicalProcessor = portableProcessorDescription.processor;
+   memset(portableProcessorDescription.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
+
+   for (size_t i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
+      {
+      portableProcessorDescription.features[i] = hostProcessorDescription.features[i] & customProcessorDescription.features[i];
+      }
+
+   return TR::CPU(portableProcessorDescription);
+   }
+
 TR_X86CPUIDBuffer *
 J9::X86::CPU::queryX86TargetCPUID()
    {
@@ -137,6 +174,8 @@ J9::X86::CPU::is_test(OMRProcessorArchitecture p)
    if (TR::CompilationInfo::getStream())
       return true;
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   if (TR::comp()->compileRelocatableCode())
+      return true;
 
    switch(p)
       {
@@ -183,6 +222,8 @@ J9::X86::CPU::supports_feature_test(uint32_t feature)
    if (TR::CompilationInfo::getStream())
       return true;
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   if (TR::comp()->compileRelocatableCode())
+      return true;
 
    OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
    bool ans = (TRUE == omrsysinfo_processor_has_feature(&_processorDescription, feature));
@@ -272,3 +313,4 @@ J9::X86::CPU::supports_feature_test(uint32_t feature)
       }
    return false;
    }
+
