@@ -330,6 +330,9 @@ typedef struct J9PortLibrary {
 	void  ( *hypervisor_shutdown)(struct J9PortLibrary *portLibrary) ;
 	/** see @ref j9hypervisor.c::j9hypervisor_hypervisor_present "j9hypervisor_hypervisor_present"*/
 	intptr_t  ( *hypervisor_hypervisor_present)(struct J9PortLibrary *portLibrary) ;
+	/** see @ref j9hypervisor.c::j9hypervisor_microvm_present "j9hypervisor_microvm_present"*/
+	intptr_t  ( *hypervisor_microvm_present)(struct J9PortLibrary *portLibrary) ;
+
 	/** see @ref j9hypervisor.c::j9hypervisor_get_hypervisor_info "j9hypervisor_get_hypervisor_info"*/
 	intptr_t  ( *hypervisor_get_hypervisor_info)(struct J9PortLibrary *portLibrary , J9HypervisorVendorDetails *vendorDetails) ;
 	/** see @ref j9hypervisor.c::j9hypervisor_get_guest_processor_usage "j9hypervisor_get_guest_processor_usage"*/
@@ -748,6 +751,7 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9hypervisor_startup() privatePortLibrary->hypervisor_startup(privatePortLibrary)
 #define j9hypervisor_shutdown() privatePortLibrary->hypervisor_shutdown(privatePortLibrary)
 #define j9hypervisor_hypervisor_present() privatePortLibrary->hypervisor_hypervisor_present(privatePortLibrary)
+#define j9hypervisor_microvm_present() privatePortLibrary->hypervisor_microvm_present(privatePortLibrary)
 #define j9hypervisor_get_hypervisor_info(param1) privatePortLibrary->hypervisor_get_hypervisor_info(privatePortLibrary,param1)
 #define j9hypervisor_get_guest_processor_usage(param1) privatePortLibrary->hypervisor_get_guest_processor_usage(privatePortLibrary,param1)
 #define j9hypervisor_get_guest_memory_usage(param1) privatePortLibrary->hypervisor_get_guest_memory_usage(privatePortLibrary,param1)

@@ -1092,7 +1092,9 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	_OutputStream.writeCharacters("1CIVMIDLESTATE VM Idle State: ");
 	writeVMRuntimeState(_VirtualMachine->internalVMFunctions->getVMRuntimeState(_VirtualMachine));
 	_OutputStream.writeCharacters("\n");
-
+	
+	_OutputStream.writeCharacters("1CIMCVMINFO    Running in MicroVM : ");
+	_OutputStream.writeCharacters( (1 == j9hypervisor_microvm_present()) ? "TRUE\n" : "FALSE\n");
 	OMRPORT_ACCESS_FROM_J9PORT(_PortLibrary);
 	BOOLEAN inContainer = omrsysinfo_is_running_in_container();
 	_OutputStream.writeCharacters("1CICONTINFO    Running in container : ");

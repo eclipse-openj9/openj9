@@ -1818,6 +1818,9 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_OS_ONFREE, 0);
 				}
 			}
+			if (PORTLIB->portGlobals->hypervisorData.isMicroVM  == 1) { 
+				vm->runtimeFlags |= J9_RUNTIME_TUNE_VIRTUALIZED;
+			}
 
 			/* -XX commandline option for +/- TransparentHugepage */
 			argIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXNOTRANSPARENT_HUGEPAGE, NULL);

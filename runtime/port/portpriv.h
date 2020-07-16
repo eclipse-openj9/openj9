@@ -64,6 +64,8 @@ typedef struct J9HyperFunctions {
 
 /* Structure to hold the various attributes of the Hypervisor */
 typedef struct J9HypervisorData {
+	intptr_t isMicroVM;
+
 	intptr_t isVirtual;
 	J9HypervisorVendorDetails vendorDetails;
 	/* Status of hypervisor access from within Guest */
@@ -87,6 +89,7 @@ typedef struct J9HypervisorData {
 #define PHD_vendorMonitor		(portLibrary->portGlobals->hypervisorData.vendorMonitor)
 #define PHD_vendorPrivateData	(portLibrary->portGlobals->hypervisorData.vendorPrivateData)
 #define PHD_hypFunc				(portLibrary->portGlobals->hypervisorData.hypFunc)
+#define PHD_isMicroVM				(portLibrary->portGlobals->hypervisorData.isMicroVM)
 
 
 /**
@@ -367,6 +370,8 @@ extern J9_CFUNC void
 j9hypervisor_shutdown(struct J9PortLibrary *portLibrary);
 extern J9_CFUNC intptr_t
 j9hypervisor_hypervisor_present(struct J9PortLibrary *portLibrary);
+extern J9_CFUNC intptr_t
+j9hypervisor_microvm_present(struct J9PortLibrary *portLibrary);
 extern J9_CFUNC intptr_t
 j9hypervisor_get_hypervisor_info(struct J9PortLibrary *portLibrary, J9HypervisorVendorDetails *vendorDetails);
 extern J9_CFUNC intptr_t
