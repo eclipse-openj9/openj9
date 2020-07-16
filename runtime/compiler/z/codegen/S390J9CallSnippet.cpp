@@ -466,7 +466,7 @@ TR::S390UnresolvedCallSnippet::emitSnippetBody()
    if (comp->getOption(TR_EnableRMODE64))
 #endif
       {
-      if (comp->compileRelocatableCode() && comp->getOption(TR_TraceRelocatableDataDetailsCG))
+      if ((comp->compileRelocatableCode() || comp->isOutOfProcessCompilation()) && comp->getOption(TR_TraceRelocatableDataDetailsCG))
          {
          traceMsg(comp, "<relocatableDataTrampolinesCG>\n");
          traceMsg(comp, "%s\n", comp->signature());
