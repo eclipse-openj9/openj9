@@ -109,6 +109,8 @@ public:
 	void scanRoots(MM_EnvironmentBase *env);
 	void completeMarking(MM_EnvironmentBase *env);
 
+	uintptr_t setupIndexableScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags) { return 0; }
+
 	MMINLINE GC_ObjectScanner *
 	getObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, void *scannerSpace, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo)
 	{

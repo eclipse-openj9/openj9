@@ -1001,6 +1001,26 @@ TR_SharedCacheRelocationRuntime::getCurrentLockwordOptionHashValue(J9JavaVM *vm)
    return currentLockwordOptionHashValue;
    }
 
+OMRProcessorDesc
+TR_SharedCacheRelocationRuntime::getProcessorDescriptionFromSCC(TR_FrontEnd *fe, J9VMThread *curThread)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+   J9SharedDataDescriptor firstDescriptor;
+   firstDescriptor.address = NULL;
+   javaVM()->sharedClassConfig->findSharedData(curThread,
+                                             aotHeaderKey,
+                                             aotHeaderKeyLength,
+                                             J9SHR_DATA_TYPE_AOTHEADER,
+                                             FALSE,
+                                             &firstDescriptor,
+                                             NULL);
+
+   const void* result = firstDescriptor.address;
+   TR_ASSERT_FATAL(result, "No Shared Class Cache available for Processor Description\n");
+   TR_AOTHeader * hdrInCache = (TR_AOTHeader * )result;
+   return hdrInCache->processorDescription;
+   }
+
 // This function currently does not rely on the object beyond the v-table override (compiled as static without any problems).
 // If this changes, we will need to look further into whether its users risk concurrent access.
 bool
@@ -1118,7 +1138,16 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(TR_FrontEnd *fe)
       aotHeader->gcPolicyFlag = javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM());
       aotHeader->lockwordOptionHashValue = getCurrentLockwordOptionHashValue(javaVM());
       aotHeader->compressedPointerShift = javaVM()->memoryManagerFunctions->j9gc_objaccess_compressedPointersShift(javaVM()->internalVMFunctions->currentVMThread(javaVM()));
-      aotHeader->processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
+      
+      if (TRUE == javaVM()->sharedCacheAPI->sharedCachePortable)
+         {
+         TR::Compiler->relocatableTarget.cpu = TR::CPU::detectRelocatable(TR::Compiler->omrPortLib);
+         aotHeader->processorDescription = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
+         }
+      else
+         {
+         aotHeader->processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
+         }
 
       // Set up other feature flags
       aotHeader->featureFlags = generateFeatureFlags(fe);

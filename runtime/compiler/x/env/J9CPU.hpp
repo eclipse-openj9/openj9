@@ -51,13 +51,19 @@ protected:
    CPU(const OMRProcessorDesc& processorDescription) : J9::CPU(processorDescription) {}
 
 public:
+   /** 
+    * @brief Returns the processor type and features that will be used by portable AOT compilations
+    * @param[in] omrPortLib : the port library
+    * @return TR::CPU
+    */
+   static TR::CPU detectRelocatable(OMRPortLibrary * const omrPortLib);
 
    TR_X86CPUIDBuffer *queryX86TargetCPUID();
    const char * getProcessorVendorId();
    uint32_t getProcessorSignature();
 
+   bool testOSForSSESupport() { return true; } // VM guarantees SSE/SSE2 are available
    bool hasPopulationCountInstruction();
-   bool testOSForSSESupport() { return true; }
 
    bool isCompatible(const OMRProcessorDesc& processorDescription);
    OMRProcessorDesc getProcessorDescription();

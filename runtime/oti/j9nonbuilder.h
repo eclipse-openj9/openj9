@@ -1209,6 +1209,7 @@ typedef struct J9SharedCacheAPI {
 	U_8 sharedCacheEnabled;
 	U_8 inContainer; /* It is TRUE only when xShareClassesPresent is FALSE and J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) is TRUE and the JVM is running in container */
 	I_8 layer;
+	U_8 sharedCachePortable;
 } J9SharedCacheAPI;
 
 typedef struct J9SharedClassConfig {
