@@ -40,7 +40,7 @@
 		for debugging, and are not yet used in a configuration. -->
 	<set
 		label="newflags"
-		flags="AnnotateOverride,Sidecar15"/>
+		flags="AnnotateOverride,Sidecar15,OPENJDK_METHODHANDLES"/>
 
 	<set
 		label="oldflags"

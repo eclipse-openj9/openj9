@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2011 IBM Corp. and others
+ * Copyright (c) 2011, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -110,5 +110,11 @@ public abstract class CallSite {
 		}
 		return initialTargetHandleCache;
 	}
+	
+/*[IF OPENJDK_METHODHANDLES]*/
+	static CallSite makeSite(MethodHandle mh, String str, MethodType mt, Object obj, Class<?> cls) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();		
+	}
+/*[ENDIF] OPENJDK_METHODHANDLES */
 }
 

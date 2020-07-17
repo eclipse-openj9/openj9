@@ -270,11 +270,19 @@ public abstract class VarHandle extends VarHandleInternal
 	}
 	
 	enum AccessType {
-		GET,
-		SET,
-		COMPARE_AND_SET,
-		COMPARE_AND_EXCHANGE,
-		GET_AND_UPDATE;
+		GET(Object.class),
+		SET(void.class),
+		COMPARE_AND_SET(boolean.class),
+		COMPARE_AND_EXCHANGE(Object.class),
+		GET_AND_UPDATE(Object.class);
+
+		final boolean isMonomorphicInReturnType;
+		final Class<?> returnType;
+
+		AccessType(Class<?> returnType) {
+			this.returnType = returnType;
+			this.isMonomorphicInReturnType = (returnType != Object.class);
+		}
 
 		/**
 		 * Gets the MethodType associated with the AccessType.
@@ -334,7 +342,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 /*[IF Java14]*/
 	static final BiFunction<String, List<Integer>, ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
-	private boolean varFormUsed = false;
+	VarForm vform = null;
 /*[ENDIF] Java14 */
 	
 	private final MethodHandle[] handleTable;
@@ -388,18 +396,15 @@ public abstract class VarHandle extends VarHandleInternal
 		for (int i = 0; i < numAccessModes; i++) {
 			MemberName memberName = varForm.memberName_table[i];
 			if (memberName != null) {
-				Method method = memberName.method;
-				if (method != null) {
-					operationMTs[i] = MethodType.methodType(method.getReturnType(), method.getParameterTypes());
-					if (operationMTsExact != null) {
-						/* Replace with the actual receiver, which is expected when the operation method
-						 * is invoked. The receiver is the second argument. 
-						 */
-						operationMTsExact[i] = operationMTs[i].changeParameterType(1, receiverActual);
-					}
-					if (operationsClass == null) {
-						operationsClass = method.getDeclaringClass();
-					}
+				operationMTs[i] = memberName.getMethodType();
+				if (operationMTsExact != null) {
+					/* Replace with the actual receiver, which is expected when the operation method
+					 * is invoked. The receiver is the second argument.
+					 */
+					operationMTsExact[i] = operationMTs[i].changeParameterType(1, receiverActual);
+				}
+				if (operationsClass == null) {
+					operationsClass = memberName.getDeclaringClass();
 				}
 			}
 		}
@@ -427,7 +432,7 @@ public abstract class VarHandle extends VarHandleInternal
 		}
 		
 		this.modifiers = 0;
-		this.varFormUsed = true;
+		this.vform = varForm;
 	}
 
 	/**
@@ -485,7 +490,7 @@ public abstract class VarHandle extends VarHandleInternal
 		MethodType permuteMethodType = methodHandle.type;
 		int parameterCount = permuteMethodType.parameterCount();
 		Class<?> firstParameter = permuteMethodType.parameterType(0);
-		permuteMethodType = permuteMethodType.dropFirstParameterType();
+		permuteMethodType = permuteMethodType.dropParameterTypes(0, 1);
 		permuteMethodType = permuteMethodType.appendParameterTypes(firstParameter);
 
 		/* reorder specifies the mapping between PermuteType and HandleType
@@ -672,7 +677,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 */
 	boolean isAccessModeSupportedHelper(AccessMode accessMode) {
 /*[IF Java14]*/
-		if (varFormUsed) {
+		if (vform != null) {
 			return (handleTable[accessMode.ordinal()] != null);
 		}
 /*[ENDIF] Java14 */
@@ -1538,4 +1543,10 @@ public abstract class VarHandle extends VarHandleInternal
 /*[ENDIF] Java15 */
 
 	abstract MethodType accessModeTypeUncached(AccessMode accessMode);
+
+/*[IF OPENJDK_METHODHANDLES]*/
+	final MethodHandle getMethodHandle(int i) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF] OPENJDK_METHODHANDLES */
 }
