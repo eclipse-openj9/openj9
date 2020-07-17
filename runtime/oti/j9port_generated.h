@@ -385,7 +385,7 @@ typedef struct J9PortLibrary {
 	/** see @ref j9gs.c::j9gs_isEnabled "j9gs_isEnabled"*/
 	int32_t ( *gs_isEnabled)(struct J9PortLibrary *portLibrary, struct J9GSParameters *gsParams, void** baseAddress, uint64_t* perBitSectionSize, uint64_t* bitMask);
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
-	/** see @ref j9j9portcontrol.c::j9port_control "j9port_control"*/
+	/** see @ref j9portcontrol.c::j9port_control "j9port_control"*/
 	int32_t (*port_control)(struct J9PortLibrary *portLibrary, const char *key, uintptr_t value) ;
 } J9PortLibrary;
 
