@@ -2334,6 +2334,24 @@ public class MethodHandles {
 			return cls;
 		}
 		/*[ENDIF] Java15 */		
+		
+		/*[IF OPENJDK_METHODHANDLES]*/
+		MemberName resolveOrFail(byte b, MemberName mn) throws ReflectiveOperationException {
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+
+		MemberName resolveOrFail(byte b, Class<?> cls, String str, MethodType mt) throws NoSuchMethodException, IllegalAccessException {
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+
+		MemberName resolveOrFail(byte b, Class<?> cls1, String str, Class<?> cls2) throws NoSuchFieldException, IllegalAccessException {
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+		
+		MethodHandle linkMethodHandleConstant(byte b, Class<?> cls, String str, Object obj) throws ReflectiveOperationException {
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+		/*[ENDIF] OPENJDK_METHODHANDLES */
 	}
 	
 	static MethodHandle filterArgument(MethodHandle target, int pos, MethodHandle filter) {
