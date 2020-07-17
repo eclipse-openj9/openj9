@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -587,12 +587,18 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 
 		case JNIC_JMETHODID:
 			aJmethodID = va_arg(va, jmethodID);
+			if (NULL == aJmethodID) {
+				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
+			}
 			if (trace) {
 				jniTraceMethodID(env, aJmethodID);
 			}
 			break;
 		case JNIC_JFIELDID:
 			aJfieldID = va_arg(va, jfieldID);
+			if (NULL == aJfieldID) {
+				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
+			}
 			if (trace) {
 				jniTraceFieldID(env, aJfieldID);
 			}
