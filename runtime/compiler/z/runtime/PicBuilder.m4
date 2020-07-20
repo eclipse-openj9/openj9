@@ -154,10 +154,11 @@ SETVAL(eq_codeRA_inDataSnippet,8)
 SETVAL(eq_cpindex_inDataSnippet,16)
 SETVAL(eq_cp_inDataSnippet,20)
 SETVAL(eq_codeRef_inDataSnippet,28)
-SETVAL(eq_literalPoolAddr_inDataSnippet,36)
-SETVAL(eq_offsetSlot_inDataSnippet,44)
-SETVAL(eq_patchOffset_inDataSnippet,52)
-SETVAL(eq_outOfLineStart_inDataSnippet,56)
+SETVAL(eq_fenceNOP_inDataSnippet,36)
+SETVAL(eq_literalPoolAddr_inDataSnippet,44)
+SETVAL(eq_offsetSlot_inDataSnippet,52)
+SETVAL(eq_patchOffset_inDataSnippet,60)
+SETVAL(eq_outOfLineStart_inDataSnippet,64)
 
 ZZ  MethodFlags is a 32bit integer,but occupies 8 byte slot on 64bit
 SETVAL(eq_methodFlagsOffset,(J9TR_MethodFlagsOffset+4))
@@ -193,10 +194,11 @@ SETVAL(eq_codeRA_inDataSnippet,4)
 SETVAL(eq_cpindex_inDataSnippet,8)
 SETVAL(eq_cp_inDataSnippet,12)
 SETVAL(eq_codeRef_inDataSnippet,16)
-SETVAL(eq_literalPoolAddr_inDataSnippet,20)
-SETVAL(eq_offsetSlot_inDataSnippet,24)
-SETVAL(eq_patchOffset_inDataSnippet,28)
-SETVAL(eq_outOfLineStart_inDataSnippet,32)
+SETVAL(eq_fenceNOP_inDataSnippet,20)
+SETVAL(eq_literalPoolAddr_inDataSnippet,24)
+SETVAL(eq_offsetSlot_inDataSnippet,28)
+SETVAL(eq_patchOffset_inDataSnippet,32)
+SETVAL(eq_outOfLineStart_inDataSnippet,36)
 
 SETVAL(eq_methodFlagsOffset,J9TR_MethodFlagsOffset)
 
@@ -907,7 +909,7 @@ ZZ  If interpreter tells us it is <clinit>, we do not patch the
 ZZ  mainline code ==> we always go through this resolve slowpath
 ZZ  until <clinit> bit is unset.
     TML     r0,HEX(0001)        # data is masked for clinit?
-    JNZ     L_DataResolveExit   #if yes, goto to exit
+    JNZ     L_DataResolveDone   #if yes, goto to exit
 
 ZZ  Patching
 ZZ  We now patch the branch to snippet into effectively
@@ -920,18 +922,44 @@ ZZ  If not BRCL, we patch the instruction with BRC 3.
     JZ      L_PatchBRCL1
 
     PATCH(Lpatch)
-    J       L_DataResolveExit
+    J       L_DataResolveDone
 
 LABEL(L_PatchBRCL1)
     LHI     r1,-16380  # HEX(C004) - BRCL 0x0
     STH     r1,0(,r2)
 
-LABEL(L_DataResolveExit)
+LABEL(L_DataResolveDone)
+
+ZZ  Check if the fence NOP address is non-null and if so call the VM
+ZZ  helper to determine whether the field we are storing to is
+ZZ  volatile. If so we patch the fence NOP into a fence.
+    L_GPR   r1,eq_fenceNOP_inDataSnippet(r14)
+    CHI_GPR r1,0
+    JE      L_VolatileCheckDone
+    L_GPR   r1,eq_cp_inDataSnippet(,r14)        # p1) ramConstantPool
+    LGF_GPR r2,eq_cpindex_inDataSnippet(,r14)   # p2) cpIndex
+    LHI_GPR r3,1                                # p3) isStatic
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolvedFieldIsVolatile)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP       # Call jitResolvedFieldIsVolatile
+    LR_GPR  r14,r0
+    CHI_GPR r2,0
+    JE      L_VolatileCheckDone
+    L_GPR   r1,eq_fenceNOP_inDataSnippet(r14)
+
+ZZ  TODO: Update this to an actual MVHHI instruction once we bump up
+ZZ        assembler support for z10
+ZZ  MVHHI   0(,r1),HEX(07E0)
+    CONST_4BYTE(E5441000)
+    CONST_4BYTE(07E01800)
+
+LABEL(L_VolatileCheckDone)
     RestoreRegs
 
 ZZ Now we jump back to mainline code.
     L_GPR   r14,eq_codeRA_inDataSnippet(,r14)
-
     BR      r14
 
     END_FUNC(_interpreterUnresolvedStaticDataStoreGlue,intpUStDSG,12)
@@ -1030,8 +1058,34 @@ LABEL(L_PatchBRCL)
     ST      r1,2(,r2)
 
 LABEL(L_LDRcc2Exit)
-    RestoreRegs
 
+ZZ  Check if the fence NOP address is non-null and if so call the VM
+ZZ  helper to determine whether the field we are storing to is
+ZZ  volatile. If so we patch the fence NOP into a fence.
+    L_GPR   r1,eq_fenceNOP_inDataSnippet(r14)
+    CHI_GPR r1,0
+    JE      L_VolatileInstanceCheckDone
+    L_GPR   r1,eq_cp_inDataSnippet(,r14)        # p1) ramConstantPool
+    LGF_GPR r2,eq_cpindex_inDataSnippet(,r14)   # p2) cpIndex
+    LHI_GPR r3,0                                # p3) isStatic
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolvedFieldIsVolatile)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP       # Call jitResolvedFieldIsVolatile
+    LR_GPR  r14,r0
+    CHI_GPR r2,0
+    JE      L_VolatileInstanceCheckDone
+    L_GPR   r1,eq_fenceNOP_inDataSnippet(r14)
+
+ZZ  TODO: Update this to an actual MVHHI instruction once we bump up
+ZZ        assembler support for z10
+ZZ  MVHHI   0(,r1),HEX(07E0)
+    CONST_4BYTE(E5441000)
+    CONST_4BYTE(07E01800)
+
+LABEL(L_VolatileInstanceCheckDone)
+    RestoreRegs
     L_GPR r14,eq_codeRA_inDataSnippet(,r14)
     BR      r14
 
@@ -1051,7 +1105,32 @@ ZZ  3.  Patch the immediate field of the BRCL
     L       r1,eq_patchOffset_inDataSnippet(,r14)
     ST      r1,2(,r2)
 
-LABEL(LDataOOLExit)
+ZZ  Check if the fence NOP address is non-null and if so call the VM
+ZZ  helper to determine whether the field we are storing to is
+ZZ  volatile. If so we patch the fence NOP into a fence.
+    L_GPR   r1,eq_fenceNOP_inDataSnippet(r14)
+    CHI_GPR r1,0
+    JE      L_VolatileOOLInstanceCheckDone
+    L_GPR   r1,eq_cp_inDataSnippet(,r14)        # p1) ramConstantPool
+    LGF_GPR r2,eq_cpindex_inDataSnippet(,r14)   # p2) cpIndex
+    LHI_GPR r3,0                                # p3) isStatic
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolvedFieldIsVolatile)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP       # Call jitResolvedFieldIsVolatile
+    LR_GPR  r14,r0
+    CHI_GPR r2,0
+    JE      L_VolatileOOLInstanceCheckDone
+    L_GPR   r1,eq_fenceNOP_inDataSnippet(r14)
+
+ZZ  TODO: Update this to an actual MVHHI instruction once we bump up
+ZZ        assembler support for z10
+ZZ  MVHHI   0(,r1),HEX(07E0)
+    CONST_4BYTE(E5441000)
+    CONST_4BYTE(07E01800)
+
+LABEL(L_VolatileOOLInstanceCheckDone)
     RestoreRegs
     LA    r14,eq_outOfLineStart_inDataSnippet(,r14)
     BR    r14
