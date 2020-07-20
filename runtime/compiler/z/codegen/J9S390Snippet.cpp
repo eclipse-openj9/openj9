@@ -117,7 +117,7 @@ TR::S390HeapAllocSnippet::emitSnippetBody()
    this->setSnippetDestAddr(destAddr);
 
    *(int32_t *) buffer = (int32_t)((destAddr - (intptr_t)(buffer - 2)) / 2);
-   if (comp->compileRelocatableCode())
+   if (comp->compileRelocatableCode() || comp->isOutOfProcessCompilation())
       {
       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer, (uint8_t*) getDestination(), TR_HelperAddress, cg()),
                                 __FILE__, __LINE__, getNode());

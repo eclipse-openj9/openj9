@@ -9617,7 +9617,7 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node,
 
    // Ready parameter 6: helper reg
    intptr_t *funcdescrptr = (intptr_t*) fej9->getReferenceArrayCopyHelperAddress();
-   if (comp->compileRelocatableCode())
+   if (comp->compileRelocatableCode() || comp->isOutOfProcessCompilation())
       {
       generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, helperReg, (intptr_t)funcdescrptr, TR_ArrayCopyHelper, NULL, NULL, NULL);
       }
