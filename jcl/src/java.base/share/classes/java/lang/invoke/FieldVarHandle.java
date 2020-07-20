@@ -113,14 +113,14 @@ abstract class FieldVarHandle extends VarHandle {
 		if (Modifier.isFinal(modifiers)) {
 			MethodHandle exceptionThrower;
 			try {
-				exceptionThrower = MethodHandles.Lookup.internalPrivilegedLookup.findStatic(FieldVarHandle.class, "finalityCheckFailedExceptionThrower", methodType(void.class));
+				exceptionThrower = MethodHandles.Lookup.IMPL_LOOKUP.findStatic(FieldVarHandle.class, "finalityCheckFailedExceptionThrower", methodType(void.class));
 			} catch (IllegalAccessException | NoSuchMethodException e) {
 				throw new InternalError(e);
 			}
 			for (AccessMode mode : AccessMode.values()) {
 				if (mode.isSetter) {
 					MethodHandle mh = handleTable[mode.ordinal()];
-					Class<?>[] args = mh.type.arguments;
+					Class<?>[] args = mh.type().ptypes();
 					handleTable[mode.ordinal()] = MethodHandles.dropArguments(exceptionThrower, 0, args);
 				}
 			}

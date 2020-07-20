@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF Sidecar18-SE & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright (c) 2012, 2020 IBM Corp. and others
  *

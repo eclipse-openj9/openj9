@@ -338,7 +338,7 @@ public abstract class VarHandle extends VarHandleInternal
 	}
 	
 	static final Unsafe _unsafe = Unsafe.getUnsafe();
-	static final Lookup _lookup = Lookup.internalPrivilegedLookup;
+	static final Lookup _lookup = Lookup.IMPL_LOOKUP;
 
 /*[IF Java14]*/
 	static final BiFunction<String, List<Integer>, ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
@@ -450,18 +450,24 @@ public abstract class VarHandle extends VarHandleInternal
 		try {
 			/* Lookup the MethodHandles corresponding to access modes. */
 			for (AccessMode accessMode : AccessMode.values()) {
-				MethodType lookupType = lookupTypes[accessMode.ordinal()];
+				int index = accessMode.ordinal();
+				MethodType lookupType = lookupTypes[index];
 				if (lookupType != null) {
-					operationMHs[accessMode.ordinal()] = _lookup.findStatic(operationsClass, accessMode.methodName(), lookupType);
+					operationMHs[index] = _lookup.findStatic(operationsClass, accessMode.methodName(), lookupType);
 					if (lookupTypes == exactTypes) {
-						operationMHs[accessMode.ordinal()] = permuateHandleJEP370(operationMHs[accessMode.ordinal()]);
+						operationMHs[index] = permuateHandleJEP370(operationMHs[index]);
 					} else {
 						/* Clone the MethodHandles with the exact types if different set of exactTypes are provided. */
-						MethodType exactType = exactTypes[accessMode.ordinal()];
+						MethodType exactType = exactTypes[index];
 						if (exactType != null) {
-							operationMHs[accessMode.ordinal()] = operationMHs[accessMode.ordinal()].cloneWithNewType(exactType);
+							/*[IF OPENJDK_METHODHANDLES]*/
+							MethodHandle operationMH = operationMHs[index];
+							operationMHs[index] = operationMH.copyWith(exactType, operationMH.form);
+							/*[ELSE]*/
+							operationMHs[index] = operationMHs[index].cloneWithNewType(exactType);
+							/*[ENDIF] OPENJDK_METHODHANDLES */
 						}
-						operationMHs[accessMode.ordinal()] = permuateHandleJEP370(operationMHs[accessMode.ordinal()]);
+						operationMHs[index] = permuateHandleJEP370(operationMHs[index]);
 					}
 				}
 			}
@@ -487,7 +493,7 @@ public abstract class VarHandle extends VarHandleInternal
 		/* HandleType = {VarHandle, Receiver, Intermediate ..., Value}
 		 * PermuteType = {Receiver, Intermediate ..., Value, VarHandle}
 		 */
-		MethodType permuteMethodType = methodHandle.type;
+		MethodType permuteMethodType = methodHandle.type();
 		int parameterCount = permuteMethodType.parameterCount();
 		Class<?> firstParameter = permuteMethodType.parameterType(0);
 		permuteMethodType = permuteMethodType.dropParameterTypes(0, 1);
@@ -659,8 +665,8 @@ public abstract class VarHandle extends VarHandleInternal
 		if (internalHandle == null) {
 			modifiedType = accessModeTypeUncached(accessMode);
 		} else {
-			MethodType internalType = internalHandle.type;
-			int numOfArguments = internalType.arguments.length;
+			MethodType internalType = internalHandle.type();
+			int numOfArguments = internalType.parameterCount();
 
 			/* Drop the internal VarHandle argument. */
 			modifiedType = internalType.dropParameterTypes(numOfArguments - 1, numOfArguments);
@@ -751,14 +757,14 @@ public abstract class VarHandle extends VarHandleInternal
 		MethodHandle mh = handleTable[accessMode.ordinal()];
 
 		if (mh != null) {
-			mh = MethodHandles.insertArguments(mh, mh.type.parameterCount() - 1, this);
+			mh = MethodHandles.insertArguments(mh, mh.type().parameterCount() - 1, this);
 		}
 
 		if ((mh == null) || !isAccessModeSupported(accessMode)) {
 			MethodType mt = null;
 
 			if (mh != null) {
-				mt = mh.type;
+				mt = mh.type();
 			} else {
 				mt = accessModeTypeUncached(accessMode);
 				/* accessModeTypeUncached does not return null. It throws InternalError if the method type
@@ -1223,13 +1229,20 @@ public abstract class VarHandle extends VarHandleInternal
 		try {
 			/* Lookup the MethodHandles corresponding to access modes. */
 			for (AccessMode accessMode : AccessMode.values()) {
-				operationMHs[accessMode.ordinal()] = _lookup.findStatic(operationsClass, accessMode.methodName(), lookupTypes[accessMode.ordinal()]);
+				int index = accessMode.ordinal();
+				operationMHs[index] = _lookup.findStatic(operationsClass, accessMode.methodName(), lookupTypes[index]);
 			}
 			
 			/* If we provided a different set of exactTypes, clone the MethodHandles with the exact types. */
 			if (lookupTypes != exactTypes) {
 				for (AccessMode accessMode : AccessMode.values()) {
-					operationMHs[accessMode.ordinal()] = operationMHs[accessMode.ordinal()].cloneWithNewType(exactTypes[accessMode.ordinal()]);
+					int index = accessMode.ordinal();
+					/*[IF OPENJDK_METHODHANDLES]*/
+					MethodHandle operationMH = operationMHs[index];
+					operationMHs[index] = operationMH.copyWith(exactTypes[index], operationMH.form);
+					/*[ELSE]*/
+					operationMHs[index] = operationMHs[index].cloneWithNewType(exactTypes[index]);
+					/*[ENDIF] OPENJDK_METHODHANDLES */
 				}
 			}
 		} catch (IllegalAccessException | NoSuchMethodException e) {
