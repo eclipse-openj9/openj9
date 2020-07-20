@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 package java.lang.invoke;
 
 import static java.lang.invoke.ByteBufferViewVarHandle.ByteBufferViewVarHandleOperations.*;
-import static java.lang.invoke.MethodHandles.Lookup.internalPrivilegedLookup;
+import static java.lang.invoke.MethodHandles.Lookup.IMPL_LOOKUP;
 import static java.lang.invoke.MethodType.methodType;
 
 import com.ibm.oti.util.Msg;
@@ -107,9 +107,9 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				MethodHandle arrayMH = null;
 				MethodHandle offsetMH = null;
 				try {
-					addressMH = internalPrivilegedLookup.findGetter(ByteBuffer.class, "address", long.class);
-					arrayMH = internalPrivilegedLookup.findGetter(ByteBuffer.class, "hb", byte[].class);
-					offsetMH = internalPrivilegedLookup.findGetter(ByteBuffer.class, "offset", int.class);
+					addressMH = IMPL_LOOKUP.findGetter(ByteBuffer.class, "address", long.class);
+					arrayMH = IMPL_LOOKUP.findGetter(ByteBuffer.class, "hb", byte[].class);
+					offsetMH = IMPL_LOOKUP.findGetter(ByteBuffer.class, "offset", int.class);
 				} catch (Throwable t) {
 					throw new InternalError("Could not create MethodHandles for ByteBuffer fields", t);
 				}
