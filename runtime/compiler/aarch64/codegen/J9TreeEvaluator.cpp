@@ -1853,9 +1853,41 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
 
 static TR::Register *
 genCAS(TR::Node *node, TR::CodeGenerator *cg, TR::Register *objReg, TR::Register *offsetReg, TR::Register *oldVReg, TR::Register *newVReg,
-      TR::LabelSymbol *doneLabel, TR::Node *objNode, int32_t oldValue, bool oldValueInReg, bool isLong, bool casWithoutSync = false)
+      TR::LabelSymbol *doneLabel, int32_t oldValue, bool oldValueInReg, bool is64bit, bool casWithoutSync = false)
    {
-   TR_ASSERT_FATAL(false, "CAS generation is currently unsupported.\n");
+   TR::Register *addrReg = cg->allocateRegister();
+   TR::Register *resultReg = cg->allocateRegister();
+   TR::InstOpCode::Mnemonic op;
+
+   generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF); // dmb SY
+
+   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
+
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, addrReg, objReg, offsetReg); // ldxr/stxr instructions does not take offset
+
+   op = is64bit ? TR::InstOpCode::ldxrx : TR::InstOpCode::ldxrw;
+   generateTrg1MemInstruction(cg, op, node, resultReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
+   if (oldValueInReg)
+      generateCompareInstruction(cg, node, resultReg, oldVReg, is64bit);
+   else
+      generateCompareImmInstruction(cg, node, resultReg, oldValue, is64bit);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 0); // failure
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_NE);
+
+   op = is64bit ? TR::InstOpCode::stxrx : TR::InstOpCode::stxrw;
+   generateTrg1MemSrc1Instruction(cg, op, node, resultReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), newVReg);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, resultReg, loopLabel);
+
+   if (!casWithoutSync)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF); // dmb SY
+
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 1); // success
+
+   cg->stopUsingRegister(addrReg);
+
+   node->setRegister(resultReg);
+   return resultReg;
    }
 
 static TR::Register *
@@ -1908,7 +1940,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
       }
 
    // Compare and swap:
-   resultReg = genCAS(node, cg, objReg, offsetReg, oldVReg, newVReg, doneLabel, secondChild, oldValue, oldValueInReg, isLong, casWithoutSync);
+   resultReg = genCAS(node, cg, objReg, offsetReg, oldVReg, newVReg, doneLabel, oldValue, oldValueInReg, isLong, casWithoutSync);
 
    conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(5, 5, cg->trMemory());
    TR::addDependency(conditions, objReg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -1918,7 +1950,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
    if (oldValueInReg)
       TR::addDependency(conditions, oldVReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
 
    cg->recursivelyDecReferenceCount(firstChild);
    cg->decReferenceCount(secondChild);
