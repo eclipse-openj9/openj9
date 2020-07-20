@@ -556,10 +556,16 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-
    static TR::Register *inlineIntegerStringSize(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *inlineIntegerToCharsForLatin1Strings(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *inlineIntegerToCharsForUTF16Strings(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *bstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *sstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *istoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *astoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    };
 }
 
