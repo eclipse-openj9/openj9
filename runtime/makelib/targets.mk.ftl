@@ -355,8 +355,14 @@ DDR_SED_COMMAND := \
 
 DDR_NOLIST := <#if uma.spec.type.zos>-Wc,noconvlit -Wc,nolist,nooffset</#if>
 
+# On z/OS, also suppress these C preprocessor errors:
+# - CCN3211 Parameter list must be empty, or consist of one or more identifiers separated by commas.
+# - CCN3766 The universal character name "0x**" is not in the allowable range for an identifier.
+
+DDR_C_SUPPRESS := <#if uma.spec.type.zos>-qsuppress=CCN3211:CCN3766</#if>
+
 %.i : %.c
-	$(CC) $(CFLAGS) $(DDR_NOLIST) -E $< | $(DDR_SED_COMMAND) > $@
+	$(CC) $(CFLAGS) $(DDR_NOLIST) $(DDR_C_SUPPRESS) -E $< | $(DDR_SED_COMMAND) > $@
 
 %.i : %.cpp
 	$(CXX) $(CXXFLAGS) $(DDR_NOLIST) -E $< | $(DDR_SED_COMMAND) > $@
