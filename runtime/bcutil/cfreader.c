@@ -888,6 +888,9 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			}
 			permittedSubclassesAttributeRead = TRUE;
 
+			/* set classfile flag for sealed class (used by cfdumper) */
+			classfile->j9Flags |= CFR_J9FLAG_IS_SEALED;
+
 			if (!ALLOC(permittedSubclasses, J9CfrAttributePermittedSubclasses)) {
 				return -2;
 			}

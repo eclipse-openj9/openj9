@@ -907,6 +907,16 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 			}
 			break;
 
+		case CFR_ATTRIBUTE_PermittedSubclasses:
+			for(i = 0; i < ((J9CfrAttributePermittedSubclasses*)attrib)->numberOfClasses; i++) {
+				U_16 classIndex = ((J9CfrAttributePermittedSubclasses*)attrib)->classes[i];
+				U_16 nameIndex = classfile->constantPool[classIndex].slot1;
+
+				for(j = 0; j < tabLevel + 1; j++) j9tty_printf( PORTLIB, "  ");
+				j9tty_printf( PORTLIB, "PermittedSubclass class index, name: %i, %i -> %s\n", classIndex, nameIndex, classfile->constantPool[nameIndex].bytes);
+			}
+			break;
+
 		case CFR_ATTRIBUTE_StrippedLineNumberTable:
 		case CFR_ATTRIBUTE_StrippedLocalVariableTable:
 		case CFR_ATTRIBUTE_StrippedLocalVariableTypeTable:
@@ -930,13 +940,15 @@ static void printClassFile(J9CfrClassFile* classfile)
 {
 	U_16 index;
 	U_8* string;
-	I_32 i, j;
+	I_32 i, j, k;
 
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	if(classfile->accessFlags & CFR_ACC_PUBLIC) j9tty_printf( PORTLIB, "public ");
 	if(classfile->accessFlags & CFR_ACC_PRIVATE) j9tty_printf( PORTLIB, "protected ");
 	if(classfile->accessFlags & CFR_ACC_PROTECTED) j9tty_printf( PORTLIB, "private ");
+	/* JEP 360: note: non-sealed will not be indicated for subclasses. There's no way of knowing until classes are linked. */
+	if(classfile->j9Flags & CFR_J9FLAG_IS_SEALED) j9tty_printf( PORTLIB, "sealed ");
 	if(classfile->accessFlags & CFR_ACC_INTERFACE)
 		j9tty_printf( PORTLIB, "interface ");
 	else if (classfile->j9Flags & CFR_J9FLAG_IS_RECORD)
@@ -958,24 +970,22 @@ static void printClassFile(J9CfrClassFile* classfile)
 		i++;
 	}
 
-	j9tty_printf( PORTLIB, " ");
 	if(classfile->superClass != 0)
 	{
 		index = classfile->constantPool[classfile->superClass].slot1;
 		string = classfile->constantPool[index].bytes;
-		j9tty_printf( PORTLIB, "extends ");
+		j9tty_printf( PORTLIB, " extends ");
 		i = 0;
 		while(string[i])
 		{
 			j9tty_printf( PORTLIB, "%c", (string[i] == '/')?'.':string[i]);
 			i++;
 		}
-		j9tty_printf( PORTLIB, " ");
 	}
 
 	if(classfile->interfacesCount > 0)
 	{
-		j9tty_printf( PORTLIB, "implements ");
+		j9tty_printf( PORTLIB, " implements ");
 		for(i = 0; i < classfile->interfacesCount - 1; i++)
 		{
 			index = classfile->constantPool[classfile->interfaces[i]].slot1;
@@ -997,6 +1007,34 @@ static void printClassFile(J9CfrClassFile* classfile)
 			j++;
 		}
 	}
+
+	/* JEP 360: sealed class permits list */
+	if(classfile->j9Flags & CFR_J9FLAG_IS_SEALED) {
+		/* find PermittedSubclasses attribute */
+		for (i = 0; i < classfile->attributesCount; i++) {
+			if (CFR_ATTRIBUTE_PermittedSubclasses == classfile->attributes[i]->tag) {
+				/* found attribute, print permitted subclasses */
+				j9tty_printf( PORTLIB, " permits ");
+
+				for (j = 0; j < ((J9CfrAttributePermittedSubclasses*)classfile->attributes[i])->numberOfClasses; j++) {
+					/* class index */
+					index = ((J9CfrAttributePermittedSubclasses*)classfile->attributes[i])->classes[j];
+					/* class name index */
+					index = classfile->constantPool[index].slot1;
+					string = classfile->constantPool[index].bytes;
+
+					k = 0;
+					while('\0' != string[k]) {
+						j9tty_printf( PORTLIB, "%c", (string[k] == '/') ? '.' : string[k]);
+						k++;
+					}
+					if ((j + 1) != ((J9CfrAttributePermittedSubclasses*)classfile->attributes[i])->numberOfClasses) j9tty_printf( PORTLIB, ", ");
+				}
+				break;
+			}
+		}
+	}
+
 
 	j9tty_printf( PORTLIB, "\n{\n");
 
