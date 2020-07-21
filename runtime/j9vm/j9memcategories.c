@@ -130,4 +130,4 @@ NULL, /* OMRMEM_CATEGORY_THREADS populated by thread library */
 NULL, /* OMRMEM_CATEGORY_THREADS_NATIVE_STACK populated by thread library */
 };
 
-OMRMemCategorySet j9MasterMemCategorySet = { sizeof(categories) / sizeof(OMRMemCategory *), categories };
+OMRMemCategorySet j9MainMemCategorySet = { sizeof(categories) / sizeof(OMRMemCategory *), categories };

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -198,7 +198,7 @@ public:
 	virtual void cleanup(MM_EnvironmentBase *env);
 
 	virtual void synchronizeGCThreads(MM_EnvironmentBase *env, const char *id);
-	virtual bool synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *env, const char *id);
+	virtual bool synchronizeGCThreadsAndReleaseMain(MM_EnvironmentBase *env, const char *id);
 	virtual bool synchronizeGCThreadsAndReleaseSingleThread(MM_EnvironmentBase *env, const char *id);
 
 	virtual bool shouldYieldFromTask(MM_EnvironmentBase *env);

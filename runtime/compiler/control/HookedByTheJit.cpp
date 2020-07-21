@@ -1408,7 +1408,7 @@ U_8 * pcList[1];
 /**
  * Collect jitted stack frames during GC stack walks to help with debugging GC map PMRs.
  *
- * CAUTION walkThread is the thread doing the walking - usually a GC slave thread. It is not
+ * CAUTION walkThread is the thread doing the walking - usually a GC worker thread. It is not
  * the thread we want to use to find the appropriate buffer to update. For that we need to look
  * in walkState->walkThread. The walkThread parameter seems to be unnecessary.
  */

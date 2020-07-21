@@ -37,7 +37,7 @@
  * All minor versions append to the end of this table
  */
 
-static J9PortLibrary MasterPortLibraryTable = {
+static J9PortLibrary MainPortLibraryTable = {
 	{NULL}, /* omrPortLibrary */
 	{J9PORT_MAJOR_VERSION_NUMBER, J9PORT_MINOR_VERSION_NUMBER, 0, J9PORT_CAPABILITY_MASK}, /* portVersion */
 	NULL, /* portGlobals */
@@ -281,7 +281,7 @@ j9port_create_library(struct J9PortLibrary *portLibrary, struct J9PortLibraryVer
 
 	/* Null and initialize the table passed in */
 	memset(portLibrary, 0, size);
-	memcpy(portLibrary, &MasterPortLibraryTable, versionSize);
+	memcpy(portLibrary, &MainPortLibraryTable, versionSize);
 
 	/* Reset capabilities to be what is actually there, not what was requested */
 	portLibrary->portVersion.majorVersionNumber = version->majorVersionNumber;
@@ -529,7 +529,7 @@ j9port_isFunctionOverridden(struct J9PortLibrary *portLibrary, uintptr_t offset)
 		return 0;
 	}
 
-	return *((uintptr_t*) &(((uint8_t*) portLibrary)[offset])) != *((uintptr_t*) &(((uint8_t*) &MasterPortLibraryTable)[offset]));
+	return *((uintptr_t*) &(((uint8_t*) portLibrary)[offset])) != *((uintptr_t*) &(((uint8_t*) &MainPortLibraryTable)[offset]));
 }
 /**
  * Allocate a port library.

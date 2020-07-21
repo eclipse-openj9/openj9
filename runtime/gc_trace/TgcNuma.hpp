@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@ typedef struct TgcNumaExtensions {
 		UDATA committedRegions; /**< number of committed regions with affinity to the node */
 		UDATA freeRegions; /**< number of free regions with affinity to the node */
 		UDATA threads; /**< number of threads with affinity to the node */
-		UDATA gcThreads; /**< number of GC threads (slaves/master) with affinity to the node */
+		UDATA gcThreads; /**< number of GC threads (workers/main) with affinity to the node */
 	} *nodeData;
 } TgcNumaExtensions;
 	

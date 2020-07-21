@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -896,7 +896,7 @@ requestExclusiveVMAccessMetronomeTemp(J9JavaVM *vm, UDATA block, UDATA *vmRespon
 
 #if defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
 	do {
-		if (!(thread->privateFlags & J9_PRIVATE_FLAGS_GC_MASTER_THREAD)) {
+		if (!(thread->privateFlags & J9_PRIVATE_FLAGS_GC_MAIN_THREAD)) {
 			omrthread_monitor_enter(thread->publicFlagsMutex);
 			VM_VMAccess::setPublicFlags(thread,J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE, true);
 			/* Because the previous line writes atomically to the same field read below, there is likely
@@ -922,7 +922,7 @@ requestExclusiveVMAccessMetronomeTemp(J9JavaVM *vm, UDATA block, UDATA *vmRespon
 #endif /* J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 
 	do {
-		if (!(thread->privateFlags & J9_PRIVATE_FLAGS_GC_MASTER_THREAD)) {
+		if (!(thread->privateFlags & J9_PRIVATE_FLAGS_GC_MAIN_THREAD)) {
 			omrthread_monitor_enter(thread->publicFlagsMutex);
 #if !defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
 			VM_VMAccess::setPublicFlags(thread, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE, true);

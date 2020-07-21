@@ -229,10 +229,10 @@ MM_RealtimeGC::tearDown(MM_EnvironmentBase *env)
 }
 
 /**
- * @copydoc MM_GlobalCollector::masterSetupForGC()
+ * @copydoc MM_GlobalCollector::mainSetupForGC()
  */
 void
-MM_RealtimeGC::masterSetupForGC(MM_EnvironmentBase *env)
+MM_RealtimeGC::mainSetupForGC(MM_EnvironmentBase *env)
 {
 	/* Reset memory pools of associated memory spaces */
 	env->_cycleState->_activeSubSpace->reset();
@@ -242,16 +242,16 @@ MM_RealtimeGC::masterSetupForGC(MM_EnvironmentBase *env)
 	/* Clear the gc stats structure */
 	clearGCStats();
 
-	_realtimeDelegate.masterSetupForGC(env);
+	_realtimeDelegate.mainSetupForGC(env);
 }
 
 /**
- * @copydoc MM_GlobalCollector::masterCleanupAfterGC()
+ * @copydoc MM_GlobalCollector::mainCleanupAfterGC()
  */
 void
-MM_RealtimeGC::masterCleanupAfterGC(MM_EnvironmentBase *env)
+MM_RealtimeGC::mainCleanupAfterGC(MM_EnvironmentBase *env)
 {
-	_realtimeDelegate.masterCleanupAfterGC(env);
+	_realtimeDelegate.mainCleanupAfterGC(env);
 }
 
 /**
@@ -284,7 +284,7 @@ MM_RealtimeGC::verbose(MM_EnvironmentBase *env) {
 }
 
 /**
- * @note only called by master thread.
+ * @note only called by main thread.
  */
 void
 MM_RealtimeGC::doAuxiliaryGCWork(MM_EnvironmentBase *env)
@@ -306,14 +306,14 @@ MM_RealtimeGC::doAuxiliaryGCWork(MM_EnvironmentBase *env)
  * Incremental Collector.
  * Employs a double write barrier that saves overwriting (new) values from unscanned threads and
  * also the first (old) value overwritten by all threads (the latter as in a Yuasa barrier).
- * @note only called by master thread.
+ * @note only called by main thread.
  */
 void
 MM_RealtimeGC::incrementalCollect(MM_EnvironmentRealtime *env)
 {
 	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
-	masterSetupForGC(env);
+	mainSetupForGC(env);
 
 	_realtimeDelegate.incrementalCollectStart(env);
 
@@ -350,7 +350,7 @@ MM_RealtimeGC::incrementalCollect(MM_EnvironmentRealtime *env)
 	doAuxiliaryGCWork(env);
 
 	/* Get all components to clean up after themselves at the end of a collect */
-	masterCleanupAfterGC(env);
+	mainCleanupAfterGC(env);
 
 	_sched->condYieldFromGC(env);
 	setCollectorIdle();
@@ -396,7 +396,7 @@ MM_RealtimeGC::allThreadsAllocateUnmarked(MM_EnvironmentBase *env) {
 void
 MM_RealtimeGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription, U_32 gcCode)
 {
-	/* Setup the master thread cycle state */
+	/* Setup the main thread cycle state */
 	_cycleState = MM_CycleState();
 	env->_cycleState = &_cycleState;
 	env->_cycleState->_gcCode = MM_GCCode(gcCode);
@@ -439,7 +439,7 @@ MM_RealtimeGC::setupForGC(MM_EnvironmentBase *env)
 }	
 
 /**
- * @note only called by master thread.
+ * @note only called by main thread.
  */
 bool
 MM_RealtimeGC::internalGarbageCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription)
@@ -494,7 +494,7 @@ MM_RealtimeGC::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *s
 	_sched->setGCCode(MM_GCCode(J9MMCONSTANT_IMPLICIT_GC_DEFAULT));
 	reportGCCycleEnd(rtEnv);
 	/*
-	 * We could potentially yield during reportGCCycleEnd (e.g. due to JIT callbacks) and the scheduler will only wake up the master if _gcOn is true.
+	 * We could potentially yield during reportGCCycleEnd (e.g. due to JIT callbacks) and the scheduler will only wake up the main if _gcOn is true.
 	 * Turn off _gcOn flag at the very last, after cycle end has been reported.
 	 */
 	_sched->stopGC(rtEnv);
@@ -551,7 +551,7 @@ MM_RealtimeGC::reportSyncGCStart(MM_EnvironmentBase *env, GCReason reason, uintp
 	uintptr_t anonymousClassesUnloadedCount = 0;
 #endif /* defined(OMR_GC_DYNAMIC_CLASS_UNLOADING) */
 	
-	/* If master thread was blocked at end of GC, waiting for a new GC cycle,
+	/* If main thread was blocked at end of GC, waiting for a new GC cycle,
 	 * globalGCStats are not cleared yet. Thus, if we haven't started GC yet,
 	 * just report 0s for classLoaders unloaded count */
 	TRIGGER_J9HOOK_MM_PRIVATE_METRONOME_SYNCHRONOUS_GC_START(_extensions->privateHookInterface,
@@ -916,7 +916,7 @@ MM_RealtimeGC::completeMarking(MM_EnvironmentRealtime *env)
 {
 	
 	do {
-		if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+		if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
 			flushRememberedSet(env);
 			if (_extensions->concurrentTracingEnabled) {
 				setCollectorConcurrentTracing();
@@ -929,7 +929,7 @@ MM_RealtimeGC::completeMarking(MM_EnvironmentRealtime *env)
 			
 			/* From this point on the Scheduler collaborates with WorkPacketsRealtime on yielding.
 			 * Strictly speaking this should be done first thing in incrementalCompleteScan().
-			 * However, it would require another synchronizeGCThreadsAndReleaseMaster barrier.
+			 * However, it would require another synchronizeGCThreadsAndReleaseMain barrier.
 			 * So we are just reusing the existing one.
 			 */
 			_sched->pushYieldCollaborator(_workPackets->getYieldCollaborator());
@@ -941,7 +941,7 @@ MM_RealtimeGC::completeMarking(MM_EnvironmentRealtime *env)
 			_moreTracingRequired = true;
 		}
 
-		if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+		if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
 			/* restore the old Yield Collaborator */
 			_sched->popYieldCollaborator();
 			

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -145,18 +145,18 @@ MM_WorkPacketsRealtime::getInputPacket(MM_EnvironmentBase *envBase)
 			} else {
 				while(!inputPacketAvailable(env) && (_inputListDoneIndex == doneIndex)) {
 
-					/* if all GC threads are blocked or yielded (at least one yielded), it's time for master to know about it */
+					/* if all GC threads are blocked or yielded (at least one yielded), it's time for main to know about it */
 					if (_yieldCollaborator.getYieldCount() + _inputListWaitCount >= env->_currentTask->getThreadCount() && _yieldCollaborator.getYieldCount() > 0) {
-						if (env->isMasterThread()) {
+						if (env->isMainThread()) {
 							((MM_Scheduler *)(_extensions->dispatcher))->condYieldFromGC(env);
 						} else {
-							/* notify master last thread synced/yielded */
-							_yieldCollaborator.setResumeEvent(MM_YieldCollaborator::notifyMaster);
+							/* notify main last thread synced/yielded */
+							_yieldCollaborator.setResumeEvent(MM_YieldCollaborator::notifyMain);
 							omrthread_monitor_notify_all(_inputListMonitor);
 						}
 					}
 
-					/* A slave is only interested in synchedThreads and newPacket event. For any other event it remains to be blocked */
+					/* A worker is only interested in synchedThreads and newPacket event. For any other event it remains to be blocked */
 					/* We check doneIndex, so we can exit this iteration ASAP before synchedThreads is overwritten by another event in the next iteration
 					 * (We may be overly cautious here, since we are not that sure that overlap between iterations may even happen)
 					 */
@@ -164,7 +164,7 @@ MM_WorkPacketsRealtime::getInputPacket(MM_EnvironmentBase *envBase)
 						env->reportScanningSuspended();
 						omrthread_monitor_wait(_inputListMonitor);
 						env->reportScanningResumed();
-					} while ((_inputListDoneIndex == doneIndex) && !env->isMasterThread() && ((_yieldCollaborator.getResumeEvent() == MM_YieldCollaborator::notifyMaster) || (_yieldCollaborator.getResumeEvent() == MM_YieldCollaborator::fromYield)));
+					} while ((_inputListDoneIndex == doneIndex) && !env->isMainThread() && ((_yieldCollaborator.getResumeEvent() == MM_YieldCollaborator::notifyMain) || (_yieldCollaborator.getResumeEvent() == MM_YieldCollaborator::fromYield)));
 				}
 			}
 		}

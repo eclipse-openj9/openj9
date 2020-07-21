@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,7 +128,7 @@ MM_GlobalCollectorDelegate::tearDown(MM_EnvironmentBase *env)
 }
 
 void
-MM_GlobalCollectorDelegate::masterThreadGarbageCollectStarted(MM_EnvironmentBase *env)
+MM_GlobalCollectorDelegate::mainThreadGarbageCollectStarted(MM_EnvironmentBase *env)
 {
 	/* Clear the java specific mark stats */
 	_extensions->markJavaStats.clear();
@@ -178,7 +178,7 @@ MM_GlobalCollectorDelegate::masterThreadGarbageCollectStarted(MM_EnvironmentBase
 }
 
 void
-MM_GlobalCollectorDelegate::masterThreadGarbageCollectFinished(MM_EnvironmentBase *env, bool compactedThisCycle)
+MM_GlobalCollectorDelegate::mainThreadGarbageCollectFinished(MM_EnvironmentBase *env, bool compactedThisCycle)
 {
 	/* Check that all reference object lists are empty:
 	 * lists must be processed at Mark and nothing should be flushed after
@@ -283,10 +283,10 @@ MM_GlobalCollectorDelegate::postMarkProcessing(MM_EnvironmentBase *env)
 #if defined(J9VM_GC_FINALIZATION)
 	if (_finalizationRequired) {
 		/* Signal the finalizer */
-		omrthread_monitor_enter(_javaVM->finalizeMasterMonitor);
-		_javaVM->finalizeMasterFlags |= J9_FINALIZE_FLAGS_MASTER_WAKE_UP;
-		omrthread_monitor_notify_all(_javaVM->finalizeMasterMonitor);
-		omrthread_monitor_exit(_javaVM->finalizeMasterMonitor);
+		omrthread_monitor_enter(_javaVM->finalizeMainMonitor);
+		_javaVM->finalizeMainFlags |= J9_FINALIZE_FLAGS_MAIN_WAKE_UP;
+		omrthread_monitor_notify_all(_javaVM->finalizeMainMonitor);
+		omrthread_monitor_exit(_javaVM->finalizeMainMonitor);
 	}
 #endif /* J9VM_GC_FINALIZATION */
 }

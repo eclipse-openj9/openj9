@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,9 +51,9 @@ tgcHookCopyForwardEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 	GC_VMThreadListIterator threadIterator(vmThread);
 	while ((walkThread = threadIterator.nextVMThread()) != NULL) {
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(walkThread);
-		if ((walkThread == vmThread) || (env->getThreadType() == GC_SLAVE_THREAD)) {
+		if ((walkThread == vmThread) || (env->getThreadType() == GC_WORKER_THREAD)) {
 			tgcExtensions->printf("%4zu:   %7zu   %7zu   %7zu   %7zu   %7zu   %7zu\n",
-				env->getSlaveID(),
+				env->getWorkerID(),
 				env->_copyForwardStats._objectsCardClean,
 				env->_copyForwardStats._objectsScannedFromWorkPackets,
 				env->_copyForwardStats._objectsScannedFromOverflowedRegion,

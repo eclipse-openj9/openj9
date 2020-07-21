@@ -113,7 +113,7 @@ MM_MarkingDelegate::clearClassLoadersScannedFlag(MM_EnvironmentBase *env)
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 void
-MM_MarkingDelegate::masterSetupForWalk(MM_EnvironmentBase *env)
+MM_MarkingDelegate::mainSetupForWalk(MM_EnvironmentBase *env)
 {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	_markMap = NULL;
@@ -173,7 +173,7 @@ MM_MarkingDelegate::workerCleanupAfterGC(MM_EnvironmentBase *env)
 }
 
 void
-MM_MarkingDelegate::masterSetupForGC(MM_EnvironmentBase *env)
+MM_MarkingDelegate::mainSetupForGC(MM_EnvironmentBase *env)
 {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	clearClassLoadersScannedFlag(env);
@@ -184,7 +184,7 @@ MM_MarkingDelegate::masterSetupForGC(MM_EnvironmentBase *env)
 }
 
 void
-MM_MarkingDelegate::masterCleanupAfterGC(MM_EnvironmentBase *env)
+MM_MarkingDelegate::mainCleanupAfterGC(MM_EnvironmentBase *env)
 {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	_markMap = (_extensions->dynamicClassUnloading != MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER) ? _markingScheme->getMarkMap() : NULL;
@@ -230,7 +230,7 @@ MM_MarkingDelegate::scanRoots(MM_EnvironmentBase *env)
 		/* Setting the permanent class loaders to scanned without a locked operation is safe
 		 * Class loaders will not be rescanned until a thread synchronize is executed
 		 */
-		if (env->isMasterThread()) {
+		if (env->isMainThread()) {
 			J9JavaVM * javaVM = (J9JavaVM*)env->getLanguageVM();
 			((J9ClassLoader *)javaVM->systemClassLoader)->gcFlags |= J9_GC_CLASS_LOADER_SCANNED;
 			_markingScheme->markObject(env, (omrobjectptr_t )((J9ClassLoader *)javaVM->systemClassLoader)->classLoaderObject);

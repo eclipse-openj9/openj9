@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -132,7 +132,7 @@ MM_CompactDelegate::workerCleanupAfterGC(MM_EnvironmentBase *env)
 }
 
 void
-MM_CompactDelegate::masterSetupForGC(MM_EnvironmentBase *env)
+MM_CompactDelegate::mainSetupForGC(MM_EnvironmentBase *env)
 {
 	MM_GCExtensionsBase *extensions = env->getExtensions();
 	MM_HeapRegionDescriptorStandard *region = NULL;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -312,7 +312,7 @@ MM_ParallelScrubCardTableTask::run(MM_EnvironmentBase *envBase)
 	env->_cardCleaningStats.addToCardCleaningTime(cleanStartTime, cleanEndTime);
 	
 	Trc_MM_ParallelScrubCardTableTask_scrubCardTable_Exit(env->getLanguageVMThread(),
-		env->getSlaveID(),
+		env->getWorkerID(),
 		scrubber.getScrubbedObjects(), scrubber.getScrubbedCards(), scrubber.getDirtyCards(), scrubber.getGMPMustScanCards(),
 		j9time_hires_delta(cleanStartTime, cleanEndTime, J9PORT_TIME_DELTA_IN_MICROSECONDS),
 		didTimeout() ? "true" : "false");
@@ -321,7 +321,7 @@ MM_ParallelScrubCardTableTask::run(MM_EnvironmentBase *envBase)
 void
 MM_ParallelScrubCardTableTask::setup(MM_EnvironmentBase *env)
 {
-	if (!env->isMasterThread()) {
+	if (!env->isMainThread()) {
 		Assert_MM_true(NULL == env->_cycleState);
 		env->_cycleState = _cycleState;
 	} else {
@@ -332,7 +332,7 @@ MM_ParallelScrubCardTableTask::setup(MM_EnvironmentBase *env)
 void
 MM_ParallelScrubCardTableTask::cleanup(MM_EnvironmentBase *env)
 {
-	if (!env->isMasterThread()) {
+	if (!env->isMainThread()) {
 		env->_cycleState = NULL;
 	}
 }
@@ -360,11 +360,11 @@ MM_ParallelScrubCardTableTask::synchronizeGCThreads(MM_EnvironmentBase *env, con
 }
 
 bool
-MM_ParallelScrubCardTableTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *env, const char *id)
+MM_ParallelScrubCardTableTask::synchronizeGCThreadsAndReleaseMain(MM_EnvironmentBase *env, const char *id)
 {
 	/* this task doesn't use synchronization */
 	Assert_MM_unreachable();
-	return MM_ParallelTask::synchronizeGCThreadsAndReleaseMaster(env, id);
+	return MM_ParallelTask::synchronizeGCThreadsAndReleaseMain(env, id);
 }
 
 bool

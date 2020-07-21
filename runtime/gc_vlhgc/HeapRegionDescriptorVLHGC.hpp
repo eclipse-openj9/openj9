@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ public:
 		bool _initialLiveSet;  /**< true if the region was part of the live set at the start of collection */
 		bool _survivorSetAborted;  /**< true if the region was part of the survivor set at the time that an abort had occurred, false otherwise */
 		bool _evacuateSet;	/**< true if the region was part of the evacuate set at the beginning of the copy-forward (flag not changed during abort) */
-		bool _requiresPhantomReferenceProcessing; /**< Set to true by master thread if this region must be processed during parallel phantom reference processing */
+		bool _requiresPhantomReferenceProcessing; /**< Set to true by main thread if this region must be processed during parallel phantom reference processing */
 		volatile void *_survivorBase;  /**< The base pointer for storage used as survivor, which will NOT match the region base if tail filling has occurred */
 		MM_HeapRegionDescriptorVLHGC *_nextRegion;  /**< Region list link for compact group resource management during a copyforward operation */
 		MM_HeapRegionDescriptorVLHGC *_previousRegion;  /**< Region list link for compact group resource management during a copyforward operation */

@@ -103,7 +103,7 @@ private:
 	UDATA _taxationThreshold;	/**< The number of bytes which can be allocated between taxation points */
 	UDATA _allocatedSinceLastPGC;	/**< The number of bytes which can be allocated between PGCs */
 
-	MM_MainGCThread _masterGCThread; /**< An object which manages the state of the master GC thread */ 
+	MM_MainGCThread _mainGCThread; /**< An object which manages the state of the main GC thread */ 
 	
 	MM_CycleStateVLHGC _persistentGlobalMarkPhaseState; /**< Since the GMP can be fragmented into increments running across several pauses, we need to store the cycle state data */
 	volatile bool _forceConcurrentTermination;	/**< Setting this to true will cause any concurrent GMP work being done for this collector to stop and return.  It is volatile because it is shared state between this and the concurrent task's increment manager */
@@ -124,7 +124,7 @@ private:
 	 * completed, a partial mark completed, or a copy-forward completed) so that operations which rely on a
 	 * mark map can be performed (class unloading and finalization).
 	 * 
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void postMarkMapCompletion(MM_EnvironmentVLHGC *env);
 
@@ -137,7 +137,7 @@ private:
 	 * In the case where no work is done, the event will only list the number of candidate classloaders evaluated
 	 * and a setup time which will only include how long it took to count those loaders.  It is also worth noting
 	 * that the JIT will not be quiesced, via the class unload mutex, if there are no classloaders to unload.
-	 * @param env[in] The Master GC thread
+	 * @param env[in] The Main GC thread
 	 */
 	void unloadDeadClassLoaders(MM_EnvironmentVLHGC *env);
 
@@ -156,7 +156,7 @@ protected:
 	bool initialize(MM_EnvironmentVLHGC *env);
 	void tearDown(MM_EnvironmentVLHGC *env);
 
-	virtual	void masterThreadGarbageCollect(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, bool initMarkMap = false, bool rebuildMarkBits = false);
+	virtual	void mainThreadGarbageCollect(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, bool initMarkMap = false, bool rebuildMarkBits = false);
 
 	virtual void setupForGC(MM_EnvironmentBase *env);
 	virtual bool internalGarbageCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription);
@@ -244,7 +244,7 @@ public:
 	/**
 	 * Check if heap resizes as needed and perform it accordingly.
 	 * Update heap stats.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @parm allocDescription[in] description of current allocation request
 	 * @return true if resize is successful
 	 */
@@ -277,7 +277,7 @@ public:
 		
 	/**
 	 * Increment the nursery age of every region which contains objects, up to the maximum age.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param increment number of allocated bytes age should be incremented for
 	 * @param isPGC set to true if it is a PCG cycle - for compatibility with old aging system
 	 */
@@ -288,14 +288,14 @@ public:
 	 * As far as allocation is acceptable before Collector is started up
 	 * all regions allocated at this time required to have their age corrected
 	 * Currently age just set up to time of Collector's start up
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param increment number of allocated bytes age should be set up
 	 */
 	void initialRegionAgesSetup(MM_EnvironmentVLHGC *env, UDATA age);
 
 	/**
 	 * Increment the nursery age of region.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param increment number of allocated bytes age should be incremented for
 	 * @param isPGC set to true if it is a PCG cycle - for compatibility with old aging system
 	 */
@@ -303,7 +303,7 @@ public:
 
 	/**
 	 * Set the nursery age of every region which contains objects to the maximum age.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void setRegionAgesToMax(MM_EnvironmentVLHGC *env);
 	
@@ -314,7 +314,7 @@ public:
 
 	/**
 	 * Setup before GC cycle
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param gcCode[in] A code describing the current GC cycle
 	 */
 	void setupBeforePartialGC(MM_EnvironmentVLHGC *env, MM_GCCode gcCode);
@@ -362,7 +362,7 @@ public:
 	/**
 	 * Called after a successful allocation if the given environment has been flagged as responsible for running GC related work.
 	 * The implementation can assume that the thread is at a safe point but does not have exclusive access.
-	 * @param env[in] The thread which has been tasked with leading this increment (it will act as "master" in the collect).  This thread does not have exclusive but is at a safe point
+	 * @param env[in] The thread which has been tasked with leading this increment (it will act as "main" in the collect).  This thread does not have exclusive but is at a safe point
 	 * @param subspace[in] the subspace to be collected
 	 * @param allocDescription[in] a description of the allocate which triggered the collection
 	 */
@@ -376,24 +376,24 @@ public:
 	virtual bool isConcurrentWorkAvailable(MM_EnvironmentBase *env);
 
 	/**
-	 * Called by the MasterGCThread while it still owns the GC control monitor in order to allow for the initial population of stats
+	 * Called by the MainGCThread while it still owns the GC control monitor in order to allow for the initial population of stats
 	 * and reporting of triggers to occur in-order relative to threads outside the GC.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param stats[out] The stats data structure meant to be populated with the state of the collector before the concurrent operation starts
 	 */
 	virtual void preConcurrentInitializeStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentPhaseStatsBase *stats);
 
 	/**
-	 * The entry-point used by the master GC thread to perform concurrent GMP work.  isConcurrentWorkAvailable must be true.
-	 * @param env[in] The master GC thread
+	 * The entry-point used by the main GC thread to perform concurrent GMP work.  isConcurrentWorkAvailable must be true.
+	 * @param env[in] The main GC thread
 	 * @return The number of bytes scanned by this invocation of the concurrent task
 	 */
-	virtual uintptr_t masterThreadConcurrentCollect(MM_EnvironmentBase *env);
+	virtual uintptr_t mainThreadConcurrentCollect(MM_EnvironmentBase *env);
 
 	/**
-	 * Called by the MasterGCThread after it re-acquires the GC control monitor in order to allow for the final population of stats
+	 * Called by the MainGCThread after it re-acquires the GC control monitor in order to allow for the final population of stats
 	 * and reporting of triggers to occur in-order relative to threads outside the GC.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param stats[in/out] The stats data structure meant to be populated with the state of the collector after the concurrent operation ends (data populated before the collect is still in the structure)
 	 * @param bytesConcurrentlyScanned[in] The number of bytes scanned during the concurrent task
 	 */
@@ -401,17 +401,17 @@ public:
 
 	/**
 	 * Triggers a termination flag used to interrupt the concurrent task so that it will return.  This is called in the
-	 * cases where an external thread requires that the master GC thread return to its control mutex to receive a new
+	 * cases where an external thread requires that the main GC thread return to its control mutex to receive a new
 	 * GC request.
 	 * Note that this method returns immediately.
 	 */
 	virtual void forceConcurrentFinish();
 
 	/**
-	 * perform initializing before Master thread startup or first non gcthread garbage collection
+	 * perform initializing before Main thread startup or first non gcthread garbage collection
 	 * @param env[in] the current thread
 	 */
-	virtual void preMasterGCThreadInitialize(MM_EnvironmentBase *env);
+	virtual void preMainGCThreadInitialize(MM_EnvironmentBase *env);
 	
 	virtual MM_ConcurrentPhaseStatsBase *getConcurrentPhaseStats() { return &_concurrentPhaseStats; }
 
@@ -442,34 +442,34 @@ private:
 
 	/**
 	 * Perform a full heap global garbage collection (GGC).  The main (internal) entry point to running a GGC.
-	 * @param env[in] The master GC thread.
+	 * @param env[in] The main GC thread.
 	 * @param allocDescription[in] The allocation request which triggered the collect.
 	 */
 	void runGlobalGarbageCollection(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription);
 
 	/**
 	 * Runs a GMP (global mark only).  This call only runs the mark, collects mark time statistics, and calls the RSM updated hook.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param incrementalMark True if we should perform only one increment of the global mark (resuming where we left off) or false if we want to
 	 * complete the global mark in this call
 	 */
 	void globalMarkPhase(MM_EnvironmentVLHGC *env, bool incrementalMark);
 	/**
 	 * Runs a PGC collect.  This call does report events, before and after the collection, but does not collect statistics.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param allocDescription[in] The allocation request which triggered the collect
 	 */
 	void partialGarbageCollect(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription);
 
 	/**
 	 * Runs a PGC collect using the copy forward mechanism. This call does report events, before and after the collection, but does not collect statistics.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param allocDescription[in] The allocation request which triggered the collect
 	 */
 	void partialGarbageCollectUsingCopyForward(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription);
 	/**
 	 * Runs a PGC collect using the mark compact mechanism. This call does report events, before and after the collection, but does not collect statistics.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param allocDescription[in] The allocation request which triggered the collect
 	 */
 	void partialGarbageCollectUsingMarkCompact(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription);
@@ -477,14 +477,14 @@ private:
 	/**
 	 * Change all unmarked regions to marked regions.
 	 * This should be called as soon as the mark map has been brought up to date for these regions.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void declareAllRegionsAsMarked(MM_EnvironmentVLHGC *env);
 
 
 	/**
 	 * Walks all packets in the given work packets collection and asserts that they are all empty.
-	 * @param env[in] A GC thread (typically the master but this could be anyone)
+	 * @param env[in] A GC thread (typically the main but this could be anyone)
 	 * @param packets[in] The packets structure to verify is empty
 	 */
 	void assertWorkPacketsEmpty(MM_EnvironmentVLHGC *env, MM_WorkPacketsVLHGC *packets);
@@ -495,14 +495,14 @@ private:
 	 * 2)  have valid classes
 	 * 3)  are instances of marked classes only
 	 * Fails assertion if any of these conditions are not met.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param markMap[in] The mark map to be tested for logical closure
 	 */
 	void verifyMarkMapClosure(MM_EnvironmentVLHGC *env, MM_MarkMap *markMap);
 
 	/**
 	 * Gather generic heap/collector stats and export then into an external stats structure.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param stats[out] The stat structure, info is exported to
 	 * @param classesPotentiallyUnloaded[in], let the method if classes have recently been unloaded, so it does not do any unsafe operation that may be based on class info (like scan type)
 	 */
@@ -510,50 +510,50 @@ private:
 
 	/**
 	 * Called at the beginning of a PGC to call tracepoints and hooks required before we can begin doing increment-specific work.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void reportPGCStart(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Called at the end of a PGC to call tracepoints and hooks required before we can return from the collector.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void reportPGCEnd(MM_EnvironmentVLHGC *env);
 
 
 	/**
 	 * Called at the beginning of a GMP increment to call tracepoints and hooks required before we can begin doing increment-specific work.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void reportGMPIncrementStart(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Called at the end of a GMP increment to call tracepoints and hooks required before we can return from the collector.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void reportGMPIncrementEnd(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Called at the beginning of a global collection (OOM or SYS) to call tracepoints and hooks required before we can begin executing the collect.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void reportGlobalGCStart(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Called at the end of a global collection (OOM or SYS) to call tracepoints and hooks required before we can return from the collector.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void reportGlobalGCEnd(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Called by the above report*Start methods in order to call the common GC start hook.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void triggerGlobalGCStartHook(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Called by the above report*End methods in order to call the common GC end hook.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void triggerGlobalGCEndHook(MM_EnvironmentVLHGC *env);
 	

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -101,7 +101,7 @@ MM_RealtimeMarkingScheme::markLiveObjectsInit(MM_EnvironmentBase *env, bool init
 	 * as the threads get scanned. It also gets "disabled" on a global basis once all threads
 	 * are scanned.
 	 */
-	if (realtimeEnv->_currentTask->synchronizeGCThreadsAndReleaseMaster(realtimeEnv, UNIQUE_ID)) {
+	if (realtimeEnv->_currentTask->synchronizeGCThreadsAndReleaseMain(realtimeEnv, UNIQUE_ID)) {
 		_realtimeGC->enableWriteBarrier(realtimeEnv);
 		_realtimeGC->enableDoubleBarrier(realtimeEnv);
 		/* BEN TODO: Ragged barrier here */
@@ -130,7 +130,7 @@ MM_RealtimeMarkingScheme::markLiveObjectsScan(MM_EnvironmentBase *env)
 
 	metronomeDelegate->markLiveObjectsScan(realtimeEnv);
 
-	if (realtimeEnv->_currentTask->synchronizeGCThreadsAndReleaseMaster(realtimeEnv, UNIQUE_ID)) {
+	if (realtimeEnv->_currentTask->synchronizeGCThreadsAndReleaseMain(realtimeEnv, UNIQUE_ID)) {
 		metronomeDelegate->setUnmarkedImpliesCleared();
 		realtimeEnv->_currentTask->releaseSynchronizedGCThreads(realtimeEnv);
 	}
@@ -154,7 +154,7 @@ MM_RealtimeMarkingScheme::markLiveObjectsComplete(MM_EnvironmentBase *env)
 
 	metronomeDelegate->checkReferenceBuffer(realtimeEnv);
 
-	if (realtimeEnv->_currentTask->synchronizeGCThreadsAndReleaseMaster(realtimeEnv, UNIQUE_ID)) {
+	if (realtimeEnv->_currentTask->synchronizeGCThreadsAndReleaseMain(realtimeEnv, UNIQUE_ID)) {
 		metronomeDelegate->unsetUnmarkedImpliesCleared();
 
 		/* This is the symmetric call to the enabling of the write barrier that happens at the top of this method. */

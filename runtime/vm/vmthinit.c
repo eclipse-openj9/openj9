@@ -65,7 +65,7 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 #endif
 
 #ifdef J9VM_GC_FINALIZATION
-		omrthread_monitor_init_with_name(&vm->finalizeMasterMonitor, 0, "VM GC finalize master") ||
+		omrthread_monitor_init_with_name(&vm->finalizeMainMonitor, 0, "VM GC finalize main") ||
 		omrthread_monitor_init_with_name(&vm->finalizeRunFinalizationMutex, 0, "VM GC finalize run finalization") ||
 		(J9_IS_PROCESS_REFERENCE_MONITOR_ENABLED(vm) && omrthread_monitor_init_with_name(&vm->processReferenceMonitor, 0, "VM GC process reference")) ||
 #endif
@@ -147,7 +147,7 @@ void terminateVMThreading(J9JavaVM *vm)
 	if (vm->bindNativeMutex) omrthread_monitor_destroy(vm->bindNativeMutex);
 
 #ifdef J9VM_GC_FINALIZATION
-	if (vm->finalizeMasterMonitor) omrthread_monitor_destroy(vm->finalizeMasterMonitor);
+	if (vm->finalizeMainMonitor) omrthread_monitor_destroy(vm->finalizeMainMonitor);
 	if (NULL != vm->processReferenceMonitor) omrthread_monitor_destroy(vm->processReferenceMonitor);
 	if (vm->finalizeRunFinalizationMutex) omrthread_monitor_destroy(vm->finalizeRunFinalizationMutex);
 #endif

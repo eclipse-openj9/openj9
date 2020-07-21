@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -208,7 +208,7 @@ MM_VerboseManagerOld::getEventStreamForEvent(MM_VerboseEvent *event)
 		/* Use a thread-local event-stream */
 		eventStream = MM_VerboseEventStream::newInstance(MM_EnvironmentBase::getEnvironment(event->getThread()), this);
 		if(NULL == eventStream) {
-			/* Error - use the master event stream and hope for the best */
+			/* Error - use the main event stream and hope for the best */
 			eventStream = _eventStream;
 		} else {
 			/* This is a one time event stream for an atomic event - when the event
@@ -217,7 +217,7 @@ MM_VerboseManagerOld::getEventStreamForEvent(MM_VerboseEvent *event)
 			eventStream->setDisposable(true);
 		}
 	} else {
-		/* Use the master event-stream */
+		/* Use the main event-stream */
 		eventStream = _eventStream;
 	}
 	

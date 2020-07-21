@@ -151,7 +151,7 @@ MM_ScavengerDelegate::tearDown(MM_EnvironmentBase *env)
 }
 
 void
-MM_ScavengerDelegate::masterSetupForGC(MM_EnvironmentBase * envBase)
+MM_ScavengerDelegate::mainSetupForGC(MM_EnvironmentBase * envBase)
 {
 	/* Remember the candidates of OwnableSynchronizerObject before
 	 * clearing scavenger statistics
@@ -228,21 +228,21 @@ MM_ScavengerDelegate::mergeGCStats_mergeLangStats(MM_EnvironmentBase * envBase)
 }
 
 void
-MM_ScavengerDelegate::masterThreadGarbageCollect_scavengeComplete(MM_EnvironmentBase * envBase)
+MM_ScavengerDelegate::mainThreadGarbageCollect_scavengeComplete(MM_EnvironmentBase * envBase)
 {
 #if defined(J9VM_GC_FINALIZATION)
 	/* Alert the finalizer if work needs to be done */
 	if(this->getFinalizationRequired()) {
-		omrthread_monitor_enter(_javaVM->finalizeMasterMonitor);
-		_javaVM->finalizeMasterFlags |= J9_FINALIZE_FLAGS_MASTER_WAKE_UP;
-		omrthread_monitor_notify_all(_javaVM->finalizeMasterMonitor);
-		omrthread_monitor_exit(_javaVM->finalizeMasterMonitor);
+		omrthread_monitor_enter(_javaVM->finalizeMainMonitor);
+		_javaVM->finalizeMainFlags |= J9_FINALIZE_FLAGS_MAIN_WAKE_UP;
+		omrthread_monitor_notify_all(_javaVM->finalizeMainMonitor);
+		omrthread_monitor_exit(_javaVM->finalizeMainMonitor);
 	}
 #endif
 }
 
 void
-MM_ScavengerDelegate::masterThreadGarbageCollect_scavengeSuccess(MM_EnvironmentBase *envBase)
+MM_ScavengerDelegate::mainThreadGarbageCollect_scavengeSuccess(MM_EnvironmentBase *envBase)
 {
 	/* Once a scavenge has been completed successfully ensure that
 	 * identity hash salt for the nursery gets updated

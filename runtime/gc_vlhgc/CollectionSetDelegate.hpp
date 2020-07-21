@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,28 +155,28 @@ public:
 	/**
 	 * Build the internal representation of the set of regions that are to be collected for this cycle.
 	 * This should only be called during a partial garbage collect.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void createRegionCollectionSetForPartialGC(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Delete the internal representation of the set of regions that participated in the collection cycle.
 	 * This should only be called during a partial garbage collect.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void deleteRegionCollectionSetForPartialGC(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Build the internal representation of the set of regions that are to be collected for this cycle.
 	 * This should only be called during a global garbage collect.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void createRegionCollectionSetForGlobalGC(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Delete the internal representation of the set of regions that participated in the collection cycle.
 	 * This should only be called during a global garbage collect.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void deleteRegionCollectionSetForGlobalGC(MM_EnvironmentVLHGC *env);
 
@@ -197,7 +197,7 @@ private:
 	 * Include the core set of regions that comprise the nursery into a collection set for a PartialGC.
 	 * Find all regions whose age allow them to be counted as part of the nursery and, if the region is collectable (contains objects
 	 * and isn't in an RSCL overflow state) add it to the collection set.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @return The number of regions in the nursery collection set
 	 */
 	UDATA createNurseryCollectionSet(MM_EnvironmentVLHGC *env);
@@ -206,7 +206,7 @@ private:
 	 * Support routine to select a number of regions based on a budget to include in the collection set.
 	 * Given a set selection age group and a budget, use an form of counting to select the budgeted number of regions available in the age group.
 	 * The counting attempts to evenly distribute the selection of regions across all regions in the age group.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param budget[in] Number of regions accounted for in the budget
 	 * @param setSelectionData[in] Age group set selection data element that contains the list of regions to select from
 	 */
@@ -216,7 +216,7 @@ private:
 	 * Include a set of regions, based on rate of return calculations, outside of the nursery for collection set purposes.
 	 * Given the total regions in the nursery, select a number of regions outside the nursery for inclusion in the PartialGC collection set.
 	 * The selection will be past on historical rate of return (ROR) percentages, regions with higher ROR values being selected first.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param nurseryRegionCount[in] Number of regions selected as the core nursery collection set
 	 */
 	void createRateOfReturnCollectionSet(MM_EnvironmentVLHGC *env, UDATA nurseryRegionCount);
@@ -226,7 +226,7 @@ private:
 	 * Find region age groups that have not participated in nursery or ROR collection set selection, and select a set of regions for collection set
 	 * sampling purposes.  The aim is to find age groups where collection opportunities might exist (increasing the ROR and being dynamically
 	 * selected).
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param nurseryRegionCount[in] Number of regions selected as the core nursery collection set
 	 */
 	void createCoreSamplingCollectionSet(MM_EnvironmentVLHGC *env, UDATA nurseryRegionCount);

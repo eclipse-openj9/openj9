@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -347,19 +347,19 @@ MM_GlobalMarkDelegate::performMarkConcurrent(MM_EnvironmentVLHGC *env, UDATA tot
 void
 MM_GlobalMarkDelegate::markAll(MM_EnvironmentVLHGC *env)
 {
-	_markingScheme->masterSetupForGC(env);
+	_markingScheme->mainSetupForGC(env);
 	/* run the mark */
 	MM_ParallelGlobalMarkTask markTask(env, _dispatcher, _markingScheme, MARK_ALL, I_64_MAX, env->_cycleState);
 	_dispatcher->run(env, &markTask);
 
 	/* Do any post mark checks */
-	_markingScheme->masterCleanupAfterGC(env);
+	_markingScheme->mainCleanupAfterGC(env);
 }
 
 bool
 MM_GlobalMarkDelegate::markInit(MM_EnvironmentVLHGC *env, I_64 timeThreshold)
 {
-	_markingScheme->masterSetupForGC(env);
+	_markingScheme->mainSetupForGC(env);
 	/* run the mark */
 	MM_ParallelGlobalMarkTask markTask(env, _dispatcher, _markingScheme, MARK_INIT, timeThreshold, env->_cycleState);
 	_dispatcher->run(env, &markTask);
@@ -399,7 +399,7 @@ MM_GlobalMarkDelegate::markComplete(MM_EnvironmentVLHGC *env)
 	_dispatcher->run(env, &markTask);
 
 	/* Do any post mark checks */
-	_markingScheme->masterCleanupAfterGC(env);
+	_markingScheme->mainCleanupAfterGC(env);
 }
 
 void 

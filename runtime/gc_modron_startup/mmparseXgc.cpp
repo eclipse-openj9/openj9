@@ -1266,11 +1266,11 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 		if (try_scan(&scan_start, "finalizeMasterPriority=")) {
-			if(!scan_udata_helper(vm, &scan_start, &extensions->finalizeMasterPriority, "finalizeMasterPriority=")) {
+			if(!scan_udata_helper(vm, &scan_start, &extensions->finalizeMainPriority, "finalizeMasterPriority=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			if((extensions->finalizeMasterPriority < J9THREAD_PRIORITY_USER_MIN) || (extensions->finalizeMasterPriority > J9THREAD_PRIORITY_USER_MAX)) {
+			if((extensions->finalizeMainPriority < J9THREAD_PRIORITY_USER_MIN) || (extensions->finalizeMainPriority > J9THREAD_PRIORITY_USER_MAX)) {
 				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "-Xgc:finalizeMasterPriority", (UDATA)J9THREAD_PRIORITY_USER_MIN, (UDATA)J9THREAD_PRIORITY_USER_MAX);
 				returnValue = JNI_EINVAL;
 				break;
@@ -1278,11 +1278,11 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 		if (try_scan(&scan_start, "finalizeSlavePriority=")) {
-			if(!scan_udata_helper(vm, &scan_start, &extensions->finalizeSlavePriority, "finalizeSlavePriority=")) {
+			if(!scan_udata_helper(vm, &scan_start, &extensions->finalizeWorkerPriority, "finalizeSlavePriority=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			if((extensions->finalizeSlavePriority < J9THREAD_PRIORITY_USER_MIN) || (extensions->finalizeSlavePriority > J9THREAD_PRIORITY_USER_MAX)) {
+			if((extensions->finalizeWorkerPriority < J9THREAD_PRIORITY_USER_MIN) || (extensions->finalizeWorkerPriority > J9THREAD_PRIORITY_USER_MAX)) {
 				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "-Xgc:finalizeSlavePriority", (UDATA)J9THREAD_PRIORITY_USER_MIN, (UDATA)J9THREAD_PRIORITY_USER_MAX);
 				returnValue = JNI_EINVAL;
 				break;

@@ -1026,8 +1026,8 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 		}
 #endif /* defined (J9VM_GC_VLHGC) */
 
-		if (try_scan(&scan_start, "fvtest_disableExplictMasterThread")) {
-			extensions->fvtest_disableExplictMasterThread = true;
+		if (try_scan(&scan_start, "fvtest_disableExplictMainThread")) {
+			extensions->fvtest_disableExplictMainThread = true;
 			continue;
 		}
 		

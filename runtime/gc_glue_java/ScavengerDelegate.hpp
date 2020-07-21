@@ -111,12 +111,12 @@ private:
 
 protected:
 public:
-	void masterSetupForGC(MM_EnvironmentBase *env);
+	void mainSetupForGC(MM_EnvironmentBase *env);
 	void workerSetupForGC_clearEnvironmentLangStats(MM_EnvironmentBase *env);
 	void reportScavengeEnd(MM_EnvironmentBase * envBase, bool scavengeSuccessful);
 	void mergeGCStats_mergeLangStats(MM_EnvironmentBase *envBase);
-	void masterThreadGarbageCollect_scavengeComplete(MM_EnvironmentBase *envBase);
-	void masterThreadGarbageCollect_scavengeSuccess(MM_EnvironmentBase *envBase);
+	void mainThreadGarbageCollect_scavengeComplete(MM_EnvironmentBase *envBase);
+	void mainThreadGarbageCollect_scavengeSuccess(MM_EnvironmentBase *envBase);
 	bool internalGarbageCollect_shouldPercolateGarbageCollect(MM_EnvironmentBase *envBase, PercolateReason *reason, U_32 *gcCode);
 	GC_ObjectScanner *getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags);
 	void flushReferenceObjects(MM_EnvironmentStandard *env);
