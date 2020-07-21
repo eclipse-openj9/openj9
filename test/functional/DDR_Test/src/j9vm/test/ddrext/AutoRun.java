@@ -430,6 +430,7 @@ public class AutoRun {
 			suite.addTestSuite(TestFindExt.class);
 			suite.addTestSuite(TestTypeResolution.class);
 			suite.addTestSuite(TestCollisionResilientHashtable.class);
+			suite.addTestSuite(TestStackMap.class);
 		} else {
 			String[] testCases = testCaseList.split(",");
 			for (String aTest : testCases) {
