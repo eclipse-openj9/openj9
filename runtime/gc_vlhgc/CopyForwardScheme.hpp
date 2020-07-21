@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -639,7 +639,7 @@ private:
 	 * Handling of Work Packets overflow case
 	 * Active STW Card Based Overflow Handler only.
 	 * For other types of STW Overflow Handlers always return false
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @return true if overflow flag is set
 	 */
 	bool handleOverflow(MM_EnvironmentVLHGC *env);
@@ -992,8 +992,8 @@ protected:
 	 */
 	void tearDown(MM_EnvironmentVLHGC *env);
 
-	void masterSetupForCopyForward(MM_EnvironmentVLHGC *env);
-	void masterCleanupForCopyForward(MM_EnvironmentVLHGC *env);
+	void mainSetupForCopyForward(MM_EnvironmentVLHGC *env);
+	void mainCleanupForCopyForward(MM_EnvironmentVLHGC *env);
 	void workerSetupForCopyForward(MM_EnvironmentVLHGC *env);
 
 	void clearGCStats(MM_EnvironmentVLHGC *env);

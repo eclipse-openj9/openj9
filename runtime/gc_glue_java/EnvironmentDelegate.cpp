@@ -114,7 +114,7 @@ MM_EnvironmentDelegate::attachVMThread(OMR_VM *omrVM, const char  *threadName, u
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	if ((MM_EnvironmentBase::ATTACH_THREAD != reason) &&  (NULL != javaVM->javaOffloadSwitchOnWithReasonFunc)) {
-		(*javaVM->javaOffloadSwitchOnWithReasonFunc)(vmThread, J9_JNI_OFFLOAD_SWITCH_FINALIZE_SLAVE_THREAD + reason);
+		(*javaVM->javaOffloadSwitchOnWithReasonFunc)(vmThread, J9_JNI_OFFLOAD_SWITCH_FINALIZE_WORKER_THREAD + reason);
 		vmThread->javaOffloadState = 1;
 	}
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
@@ -153,12 +153,12 @@ MM_EnvironmentDelegate::flushNonAllocationCaches()
 }
 
 void
-MM_EnvironmentDelegate::setGCMasterThread(bool isMasterThread)
+MM_EnvironmentDelegate::setGCMainThread(bool isMainThread)
 {
-	if (isMasterThread) {
-		_vmThread->privateFlags |= J9_PRIVATE_FLAGS_GC_MASTER_THREAD;
+	if (isMainThread) {
+		_vmThread->privateFlags |= J9_PRIVATE_FLAGS_GC_MAIN_THREAD;
 	} else {
-		_vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_GC_MASTER_THREAD;
+		_vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_GC_MAIN_THREAD;
 	}
 }
 

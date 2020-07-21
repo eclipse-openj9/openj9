@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,7 +92,7 @@ void
 MM_CompactSchemeFixupRoots::fixupUnfinalizedObjects(MM_EnvironmentBase *env)
 {
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
-	if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+	if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
 		MM_HeapRegionDescriptorStandard *region = NULL;
 		GC_HeapRegionIteratorStandard regionIterator(extensions->getHeap()->getHeapRegionManager());
 		while(NULL != (region = regionIterator.nextRegion())) {

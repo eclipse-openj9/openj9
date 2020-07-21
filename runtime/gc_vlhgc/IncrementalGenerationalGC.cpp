@@ -101,7 +101,7 @@ MM_IncrementalGenerationalGC::MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *
 	, _workPacketsForGlobalGC(NULL)
 	, _taxationThreshold(0)
 	, _allocatedSinceLastPGC(0)
-	, _masterGCThread(env)
+	, _mainGCThread(env)
 	, _persistentGlobalMarkPhaseState()
 	, _forceConcurrentTermination(false)
 	, _globalMarkPhaseIncrementBytesStillToScan(0)
@@ -195,7 +195,7 @@ MM_IncrementalGenerationalGC::initialize(MM_EnvironmentVLHGC *env)
 		goto error_no_memory;
 	}
 
-	if (!_masterGCThread.initialize(this)) {
+	if (!_mainGCThread.initialize(this)) {
 		goto error_no_memory;
 	}
 
@@ -300,7 +300,7 @@ MM_IncrementalGenerationalGC::tearDown(MM_EnvironmentVLHGC *env)
 	_collectionSetDelegate.tearDown(env);
 	_projectedSurvivalCollectionSetDelegate.tearDown(env);
 
-	_masterGCThread.tearDown(env);
+	_mainGCThread.tearDown(env);
 	
 	if(NULL != _markMapManager) {
 		_markMapManager->kill(env);
@@ -351,12 +351,12 @@ MM_IncrementalGenerationalGC::setupBeforeGC(MM_EnvironmentBase *env)
 }
 
 void
-MM_IncrementalGenerationalGC::masterThreadGarbageCollect(MM_EnvironmentBase *envBase, MM_AllocateDescription *allocDescription, bool initMarkMap, bool rebuildMarkBits)
+MM_IncrementalGenerationalGC::mainThreadGarbageCollect(MM_EnvironmentBase *envBase, MM_AllocateDescription *allocDescription, bool initMarkMap, bool rebuildMarkBits)
 {
 	J9VMThread 	*vmThread = (J9VMThread *)envBase->getOmrVMThread()->_language_vmthread;
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 
-	/* We might be running in a context of either main or master thread, but either way we must have exclusive access */
+	/* We might be running in a context of either main or main thread, but either way we must have exclusive access */
 	Assert_MM_mustHaveExclusiveVMAccess(env->getOmrVMThread());
 
 	Assert_MM_true(NULL != _extensions->rememberedSetCardBucketPool);
@@ -391,7 +391,7 @@ MM_IncrementalGenerationalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env
 	 */
 	_forceConcurrentTermination = false;
 
-	/* Release any resources that might be bound to this master thread,
+	/* Release any resources that might be bound to this main thread,
 	 * since it may be implicit and change for other phases of the cycle */
 	_interRegionRememberedSet->releaseCardBufferControlBlockListForThread(env, env);
 }
@@ -535,7 +535,7 @@ MM_IncrementalGenerationalGC::internalGarbageCollect(MM_EnvironmentBase *env, MM
 		env->_cycleState->_referenceObjectOptions |= MM_CycleState::references_soft_as_weak;
 	}
 
-	bool didAttemptCollect = _masterGCThread.garbageCollect(envVLHGC, static_cast<MM_AllocateDescription*>(allocDescription));
+	bool didAttemptCollect = _mainGCThread.garbageCollect(envVLHGC, static_cast<MM_AllocateDescription*>(allocDescription));
 
 	env->_cycleState->_activeSubSpace = NULL;
 
@@ -632,10 +632,10 @@ MM_IncrementalGenerationalGC::heapReconfigured(MM_EnvironmentBase *env, HeapReco
 }
 
 void
-MM_IncrementalGenerationalGC::preMasterGCThreadInitialize(MM_EnvironmentBase *envBase)
+MM_IncrementalGenerationalGC::preMainGCThreadInitialize(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	_interRegionRememberedSet->setRememberedSetCardBucketPoolForMasterThread(env);
+	_interRegionRememberedSet->setRememberedSetCardBucketPoolForMainThread(env);
 
 	if (!_markMapManager->collectorStartup(MM_GCExtensions::getExtensions(envBase->getExtensions()))) {
 		Assert_MM_unreachable();
@@ -646,7 +646,7 @@ void
 MM_IncrementalGenerationalGC::initializeTaxationThreshold(MM_EnvironmentVLHGC *env)
 {
 	/**
-	 * This may be called from either real Master GC thread or acting Master GC thread (any thread that caused GC in absence of real Master GC thread).
+	 * This may be called from either real Main GC thread or acting Main GC thread (any thread that caused GC in absence of real Main GC thread).
 	 *  taxationThreshold will be initialized only once.
 	 */
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
@@ -676,10 +676,10 @@ MM_IncrementalGenerationalGC::collectorStartup(MM_GCExtensionsBase *extensions)
 	 * WARNING:  GCs can occur before this function is run!  Any initialization which a GC MUST rely on should be in initialize.
 	 */
 	/*
-	 * Note that _masterGCThread.startup() can invoke a GC (allocates a Thread object) so it must be the last part of
+	 * Note that _mainGCThread.startup() can invoke a GC (allocates a Thread object) so it must be the last part of
 	 * collector startup.
 	 */
-	if (!_masterGCThread.startup()) {
+	if (!_mainGCThread.startup()) {
 		return false;
 	}
 	return true;
@@ -688,7 +688,7 @@ MM_IncrementalGenerationalGC::collectorStartup(MM_GCExtensionsBase *extensions)
 void
 MM_IncrementalGenerationalGC::collectorShutdown(MM_GCExtensionsBase *extensions)
 {
-	_masterGCThread.shutdown();
+	_mainGCThread.shutdown();
 }
 
 /**
@@ -857,7 +857,7 @@ MM_IncrementalGenerationalGC::taxationEntryPoint(MM_EnvironmentBase *envModron, 
 		env->_cycleState->_collectionStatistics = &_partialCollectionStatistics;
 		static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats.clear();
 
-		bool didAttemptCollect = _masterGCThread.garbageCollect(env, allocDescription);
+		bool didAttemptCollect = _mainGCThread.garbageCollect(env, allocDescription);
 		Assert_MM_true(didAttemptCollect);
 
 		env->_cycleState->_activeSubSpace = NULL;
@@ -878,7 +878,7 @@ MM_IncrementalGenerationalGC::taxationEntryPoint(MM_EnvironmentBase *envModron, 
 		env->_cycleState->_referenceObjectOptions = MM_CycleState::references_default;
 		env->_cycleState->_collectionStatistics = &_globalCollectionStatistics;
 
-		bool didAttemptCollect = _masterGCThread.garbageCollect(env, allocDescription);
+		bool didAttemptCollect = _mainGCThread.garbageCollect(env, allocDescription);
 		Assert_MM_true(didAttemptCollect);
 
 		env->_cycleState->_activeSubSpace = NULL;
@@ -937,7 +937,7 @@ MM_IncrementalGenerationalGC::runPartialGarbageCollect(MM_EnvironmentVLHGC *env,
 
 	preCollect(env, env->_cycleState->_activeSubSpace, NULL, J9MMCONSTANT_IMPLICIT_GC_DEFAULT);
 
-	/* Perform any master-specific setup */
+	/* Perform any main-specific setup */
 	_extensions->globalVLHGCStats.gcCount += 1;
 
 	/*
@@ -991,7 +991,7 @@ MM_IncrementalGenerationalGC::runGlobalMarkPhaseIncrement(MM_EnvironmentVLHGC *e
 	reportGMPIncrementStart(env);
 	reportGCIncrementStart(env, "GMP increment", env->_cycleState->_currentIncrement);
 
-	/* Perform any master-specific setup */
+	/* Perform any main-specific setup */
 	_extensions->globalVLHGCStats.gcCount += 1;
 
 	if ((_globalMarkPhaseIncrementBytesStillToScan > 0) || (MM_CycleState::state_process_work_packets_after_initial_mark != _persistentGlobalMarkPhaseState._markDelegateState)) {
@@ -1059,7 +1059,7 @@ MM_IncrementalGenerationalGC::runGlobalGarbageCollection(MM_EnvironmentVLHGC *en
 	reportGlobalGCStart(env);
 	reportGCIncrementStart(env, "global collect", env->_cycleState->_currentIncrement);
 
-	/* Perform any master-specific setup */
+	/* Perform any main-specific setup */
 	/* Tell the GAM to flush its contexts */
 	MM_GlobalAllocationManager *gam = _extensions->globalAllocationManager;
 	if (NULL != gam) {
@@ -2039,12 +2039,12 @@ MM_IncrementalGenerationalGC::preConcurrentInitializeStatsAndReport(MM_Environme
 }
 
 uintptr_t
-MM_IncrementalGenerationalGC::masterThreadConcurrentCollect(MM_EnvironmentBase *envBase)
+MM_IncrementalGenerationalGC::mainThreadConcurrentCollect(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 
 	/* note that we can't check isConcurrentWorkAvailable at this point since another thread could have set _forceConcurrentTermination since the
-	 * master thread calls this outside of the control monitor
+	 * main thread calls this outside of the control monitor
 	 */
 	Assert_MM_true(NULL == env->_cycleState);
 	Assert_MM_true(isGlobalMarkPhaseRunning());
@@ -2054,7 +2054,7 @@ MM_IncrementalGenerationalGC::masterThreadConcurrentCollect(MM_EnvironmentBase *
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats.clear();
 	
 	/* We pass a pointer to _forceConcurrentTermination so that we can cause the concurrent to terminate early by setting the
-	 * flag to true if we want to interrupt it so that the master thread returns to the control mutex in order to receive a
+	 * flag to true if we want to interrupt it so that the main thread returns to the control mutex in order to receive a
 	 * new GC request.
 	 */
 	UDATA bytesConcurrentlyScanned = _globalMarkDelegate.performMarkConcurrent(env, _globalMarkPhaseIncrementBytesStillToScan, &_forceConcurrentTermination);
@@ -2065,7 +2065,7 @@ MM_IncrementalGenerationalGC::masterThreadConcurrentCollect(MM_EnvironmentBase *
 
 	env->_cycleState = NULL;
 
-	/* Release any resources that might be bound to this master thread,
+	/* Release any resources that might be bound to this main thread,
 	 * since it may be implicit and more importantly change for other phases of the cycle */
 	_interRegionRememberedSet->releaseCardBufferControlBlockListForThread(env, env);
 	
@@ -2485,10 +2485,10 @@ MM_IncrementalGenerationalGC::postMarkMapCompletion(MM_EnvironmentVLHGC *env)
 #if defined(J9VM_GC_FINALIZATION)
    /* Alert the finalizer if work needs to be done */
 	if(env->_cycleState->_finalizationRequired) {
-		omrthread_monitor_enter(_javaVM->finalizeMasterMonitor);
-		_javaVM->finalizeMasterFlags |= J9_FINALIZE_FLAGS_MASTER_WAKE_UP;
-		omrthread_monitor_notify_all(_javaVM->finalizeMasterMonitor);
-		omrthread_monitor_exit(_javaVM->finalizeMasterMonitor);
+		omrthread_monitor_enter(_javaVM->finalizeMainMonitor);
+		_javaVM->finalizeMainFlags |= J9_FINALIZE_FLAGS_MAIN_WAKE_UP;
+		omrthread_monitor_notify_all(_javaVM->finalizeMainMonitor);
+		omrthread_monitor_exit(_javaVM->finalizeMainMonitor);
 	}
 #endif /* J9VM_GC_FINALIZATION */
 }

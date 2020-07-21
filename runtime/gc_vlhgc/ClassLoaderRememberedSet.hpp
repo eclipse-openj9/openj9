@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -243,7 +243,7 @@ public:
 	void clearRememberedSets(MM_EnvironmentBase *env);
 	
 	/**
- 	 * Called by the master thread before a GC cycle to perform any setup required before a collection.
+ 	 * Called by the main thread before a GC cycle to perform any setup required before a collection.
  	 * @param env[in] the current thread
  	 */
 	void setupBeforeGC(MM_EnvironmentBase *env); 

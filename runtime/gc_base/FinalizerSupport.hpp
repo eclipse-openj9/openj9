@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,17 +25,17 @@
 #define FINALIZERSUPPORT_HPP
 
 /* @ddr_namespace: default */
-#define J9_FINALIZE_FLAGS_MASTER_WAKE_UP 1
+#define J9_FINALIZE_FLAGS_MAIN_WAKE_UP 1
 #define J9_FINALIZE_FLAGS_RUN_FINALIZATION 2
 #define J9_FINALIZE_FLAGS_RUN_FINALIZERS_ON_EXIT 4
-#define J9_FINALIZE_FLAGS_SLAVE_AWAKE 8
-#define J9_FINALIZE_FLAGS_SLAVE_WORK_COMPLETE 16
+#define J9_FINALIZE_FLAGS_WORKER_AWAKE 8
+#define J9_FINALIZE_FLAGS_WORKER_WORK_COMPLETE 16
 #define J9_FINALIZE_FLAGS_SHUTDOWN 32
 #define J9_FINALIZE_FLAGS_FORCE_CLASS_LOADER_UNLOAD 64
 #define J9_FINALIZE_FLAGS_SLEEPING 65536
 #define J9_FINALIZE_FLAGS_SHUTDOWN_COMPLETE 131072
 #define J9_FINALIZE_FLAGS_ACTIVE 262144
-#define J9_FINALIZE_FLAGS_MASTER_WORK_REQUEST 99
+#define J9_FINALIZE_FLAGS_MAIN_WORK_REQUEST 99
 
 #define J9_FINALIZE_JOB_TYPE_CONTAINS_OBJECT 1
 #define J9_FINALIZE_JOB_TYPE_FINALIZATION 1

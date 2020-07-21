@@ -291,7 +291,7 @@ MM_MetronomeDelegate::tearDown(MM_EnvironmentBase *env)
 }
 
 void
-MM_MetronomeDelegate::masterSetupForGC(MM_EnvironmentBase *env)
+MM_MetronomeDelegate::mainSetupForGC(MM_EnvironmentBase *env)
 {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	/* Set the dynamic class unloading flag based on command line and runtime state */
@@ -316,7 +316,7 @@ MM_MetronomeDelegate::masterSetupForGC(MM_EnvironmentBase *env)
 }
 
 void
-MM_MetronomeDelegate::masterCleanupAfterGC(MM_EnvironmentBase *env)
+MM_MetronomeDelegate::mainCleanupAfterGC(MM_EnvironmentBase *env)
 {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	/* flush the dead class segments if their size exceeds the CacheSize mark.
@@ -392,10 +392,10 @@ MM_MetronomeDelegate::doAuxiliaryGCWork(MM_EnvironmentBase *env)
 {
 #if defined(J9VM_GC_FINALIZATION)
 	if(isFinalizationRequired()) {
-		omrthread_monitor_enter(_javaVM->finalizeMasterMonitor);
-		_javaVM->finalizeMasterFlags |= J9_FINALIZE_FLAGS_MASTER_WAKE_UP;
-		omrthread_monitor_notify_all(_javaVM->finalizeMasterMonitor);
-		omrthread_monitor_exit(_javaVM->finalizeMasterMonitor);
+		omrthread_monitor_enter(_javaVM->finalizeMainMonitor);
+		_javaVM->finalizeMainFlags |= J9_FINALIZE_FLAGS_MAIN_WAKE_UP;
+		omrthread_monitor_notify_all(_javaVM->finalizeMainMonitor);
+		omrthread_monitor_exit(_javaVM->finalizeMainMonitor);
 	}
 #endif /* J9VM_GC_FINALIZATION */
 }
@@ -1081,52 +1081,52 @@ MM_MetronomeDelegate::requestExclusiveVMAccess(MM_EnvironmentBase *env, uintptr_
 
 /**
  * Block until the earlier request for exclusive VM access completes.
- * @note This can only be called by the MasterGC thread.
+ * @note This can only be called by the MainGC thread.
  * @param The requesting thread.
  */
 void 
 MM_MetronomeDelegate::waitForExclusiveVMAccess(MM_EnvironmentBase *env, bool waitRequired)
 {
-	J9VMThread *masterGCThread = (J9VMThread *)env->getLanguageVMThread();
+	J9VMThread *mainGCThread = (J9VMThread *)env->getLanguageVMThread();
 	
 	if (waitRequired) {
 		_javaVM->internalVMFunctions->waitForExclusiveVMAccessMetronomeTemp((J9VMThread *)env->getLanguageVMThread(), _vmResponsesRequiredForExclusiveVMAccess, _jniResponsesRequiredForExclusiveVMAccess);
 	}
-	++(masterGCThread->omrVMThread->exclusiveCount);
+	++(mainGCThread->omrVMThread->exclusiveCount);
 }
 
 /**
  * Acquire (request and block until success) exclusive VM access.
- * @note This can only be called by the MasterGC thread.
+ * @note This can only be called by the MainGC thread.
  * @param The requesting thread.
  */
 void 
 MM_MetronomeDelegate::acquireExclusiveVMAccess(MM_EnvironmentBase *env, bool waitRequired)
 {
-	J9VMThread *masterGCThread = (J9VMThread *)env->getLanguageVMThread();
+	J9VMThread *mainGCThread = (J9VMThread *)env->getLanguageVMThread();
 
 	if (waitRequired) {
 		_javaVM->internalVMFunctions->acquireExclusiveVMAccessFromExternalThread(_javaVM);
 	}
-	++(masterGCThread->omrVMThread->exclusiveCount);
+	++(mainGCThread->omrVMThread->exclusiveCount);
 
 }
 
 /**
  * Release the held exclusive VM access.
- * @note This can only be called by the MasterGC thread.
+ * @note This can only be called by the MainGC thread.
  * @param The requesting thread.
  */
 void 
 MM_MetronomeDelegate::releaseExclusiveVMAccess(MM_EnvironmentBase *env, bool releaseRequired)
 {
-	J9VMThread *masterGCThread = (J9VMThread *)env->getLanguageVMThread();
+	J9VMThread *mainGCThread = (J9VMThread *)env->getLanguageVMThread();
 
-	--(masterGCThread->omrVMThread->exclusiveCount);
+	--(mainGCThread->omrVMThread->exclusiveCount);
 	if (releaseRequired) {
-		_javaVM->internalVMFunctions->releaseExclusiveVMAccessMetronome(masterGCThread);
+		_javaVM->internalVMFunctions->releaseExclusiveVMAccessMetronome(mainGCThread);
 		/* Set the exclusive access response counts to an unusual value,
-		 * just for debug purposes, so we can detect scenarios, when master
+		 * just for debug purposes, so we can detect scenarios, when main
 		 * thread is waiting for Xaccess with noone requesting it before.
 		 */
 		_vmResponsesRequiredForExclusiveVMAccess = 0x7fffffff;
@@ -1157,7 +1157,7 @@ MM_MetronomeDelegate::scanUnfinalizedObjects(MM_EnvironmentRealtime *env)
 	/* first we need to move the current list to the prior list and process the prior list,
 	 * because if object has not yet become finalizable, we have to re-insert it back to the current list.
 	 */
-	if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+	if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
 		GC_OMRVMInterface::flushNonAllocationCaches(env);
 		UDATA listIndex;
 		for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
@@ -1215,7 +1215,7 @@ MM_MetronomeDelegate::scanOwnableSynchronizerObjects(MM_EnvironmentRealtime *env
 	/* first we need to move the current list to the prior list and process the prior list,
 	 * because if object has been marked, we have to re-insert it back to the current list.
 	 */
-	if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+	if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
 		GC_OMRVMInterface::flushNonAllocationCaches(env);
 		UDATA listIndex;
 		for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
@@ -1399,7 +1399,7 @@ MM_MetronomeDelegate::markLiveObjectsRoots(MM_EnvironmentRealtime *env)
 
 	/* Mark root set classes */
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	if(env->isMasterThread()) {
+	if(env->isMainThread()) {
 		/* TODO: This code belongs somewhere else? */
 		/* Setting the permanent class loaders to scanned without a locked operation is safe
 		 * Class loaders will not be rescanned until a thread synchronize is executed
@@ -1435,7 +1435,7 @@ MM_MetronomeDelegate::markLiveObjectsRoots(MM_EnvironmentRealtime *env)
 	 * yet determined whether the iterators that they use are safe and complete and have
 	 * not even analyzed in all cases whether correctness depends on completeness.
 	 */
-	if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+	if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
 #if defined(J9VM_GC_FINALIZATION)
 		/* Note: if iterators are safe in scanFinalizableObjects, disableYield() could be
 		 * removed.
@@ -1460,7 +1460,7 @@ MM_MetronomeDelegate::markLiveObjectsRoots(MM_EnvironmentRealtime *env)
 
 	rootMarker.scanThreads(env);
 
-	if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+	if (env->_currentTask->synchronizeGCThreadsAndReleaseMain(env, UNIQUE_ID)) {
 		_extensions->newThreadAllocationColor = GC_MARK;
 		_realtimeGC->disableDoubleBarrier(env);
 		if (_realtimeGC->verbose(env) >= 3) {

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 1991, 2019 IBM Corp. and others
+# Copyright (c) 1991, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1096,7 +1096,7 @@ HHC_LOCATION           =
 
 # If the GENERATE_HTMLHELP tag is set to YES, the GENERATE_CHI flag 
 # controls if a separate .chi index file is generated (YES) or that 
-# it should be included in the master .chm file (NO).
+# it should be included in the main .chm file (NO).
 
 GENERATE_CHI           = NO
 

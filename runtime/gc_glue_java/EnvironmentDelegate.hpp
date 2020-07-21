@@ -95,7 +95,7 @@ public:
 
 	void flushNonAllocationCaches();
 
-	void setGCMasterThread(bool isMasterThread);
+	void setGCMainThread(bool isMainThread);
 
 	/**
 	 * This will be called for every allocated object.  Note this is not necessarily done when the object is allocated.  You are however

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,7 @@ MM_RealtimeMarkTask::setup(MM_EnvironmentBase *envBase)
 	env->_markStats._gcCount = extensions->globalGCStats.gcCount;
 	env->_workPacketStats._gcCount = extensions->globalGCStats.gcCount;
 
-	if(env->isMasterThread()) {
+	if(env->isMainThread()) {
 		Assert_MM_true(_cycleState == env->_cycleState);
 	} else {
 		Assert_MM_true(NULL == env->_cycleState);
@@ -72,7 +72,7 @@ MM_RealtimeMarkTask::cleanup(MM_EnvironmentBase *envBase)
 
 	delegate->mergeGCStats(env);
 
-	if (env->isMasterThread()) {
+	if (env->isMainThread()) {
 		Assert_MM_true(_cycleState == env->_cycleState);
 	} else {
 		env->_cycleState = NULL;
@@ -81,7 +81,7 @@ MM_RealtimeMarkTask::cleanup(MM_EnvironmentBase *envBase)
 	/* record the thread-specific parallelism stats in the trace buffer. This partially duplicates info in -Xtgc:parallel */ 
 	Trc_MM_RealtimeMarkTask_parallelStats(
 		env->getLanguageVMThread(),
-		(U_32)env->getSlaveID(),
+		(U_32)env->getWorkerID(),
 		(U_32)omrtime_hires_delta(0, env->_workPacketStats._workStallTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS),
 		(U_32)omrtime_hires_delta(0, env->_workPacketStats._completeStallTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS),
 		(U_32)omrtime_hires_delta(0, env->_markStats._syncStallTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS),

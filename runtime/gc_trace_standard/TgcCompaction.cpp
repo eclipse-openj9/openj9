@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,7 +77,7 @@ tgcHookCompactEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void*
 	GC_VMThreadListIterator compactionThreadListIterator(vmThread);
 	while ((walkThread = compactionThreadListIterator.nextVMThread()) != NULL) {
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(walkThread->omrVMThread);
-		if ((walkThread == vmThread) || (env->getThreadType() == GC_SLAVE_THREAD)) {
+		if ((walkThread == vmThread) || (env->getThreadType() == GC_WORKER_THREAD)) {
 			MM_CompactStats *stats = &env->_compactStats;
 
 			movedObjectsTotal += stats->_movedObjects;
@@ -108,17 +108,17 @@ tgcHookCompactEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void*
 	while ((walkThread = compactionThreadListIterator.nextVMThread()) != NULL) {
 		/* TODO: Are we guaranteed to get the threads in the right order? */
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(walkThread->omrVMThread);
-		if ((walkThread == vmThread) || (env->getThreadType() == GC_SLAVE_THREAD)) {
+		if ((walkThread == vmThread) || (env->getThreadType() == GC_WORKER_THREAD)) {
 			MM_CompactStats *stats = &env->_compactStats;
-			UDATA slaveID = env->getSlaveID();
+			UDATA workerID = env->getWorkerID();
 
 			tgcExtensions->printf("Compact(%zu): Thread %zu, setup stage: %llu ms.\n",
-				gcCount, slaveID, j9time_hires_delta(stats->_setupStartTime, stats->_setupEndTime, J9PORT_TIME_DELTA_IN_MILLISECONDS));
+				gcCount, workerID, j9time_hires_delta(stats->_setupStartTime, stats->_setupEndTime, J9PORT_TIME_DELTA_IN_MILLISECONDS));
 			tgcExtensions->printf("Compact(%zu): Thread %zu, move stage: handled %zu objects in %llu ms, bytes moved %zu.\n",
-				gcCount, slaveID, stats->_movedObjects,
+				gcCount, workerID, stats->_movedObjects,
 				j9time_hires_delta(stats->_moveStartTime, stats->_moveEndTime, J9PORT_TIME_DELTA_IN_MILLISECONDS), stats->_movedBytes);
 			tgcExtensions->printf("Compact(%zu): Thread %zu, fixup stage: handled %zu objects in %zu ms, root fixup time %zu ms.\n",
-				gcCount, slaveID, stats->_fixupObjects,
+				gcCount, workerID, stats->_fixupObjects,
 				j9time_hires_delta(stats->_fixupStartTime, stats->_fixupEndTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 				j9time_hires_delta(stats->_rootFixupStartTime, stats->_rootFixupEndTime, J9PORT_TIME_DELTA_IN_MILLISECONDS));
 

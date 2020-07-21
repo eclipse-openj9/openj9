@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,10 +65,10 @@ printCardCleaningStats(OMR_VMThread *omrVMThread)
 	while (NULL != (thread = threadIterator.nextVMThread())) {
 		MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(thread->omrVMThread);
 
-		if ((GC_SLAVE_THREAD == env->getThreadType()) || (thread == currentThread)) {
+		if ((GC_WORKER_THREAD == env->getThreadType()) || (thread == currentThread)) {
 			U_64 cleanTimeInMicros = j9time_hires_delta(0, env->_cardCleaningStats._cardCleaningTime, J9PORT_TIME_DELTA_IN_MICROSECONDS);
 			tgcExtensions->printf("\t<thread id=\"%zu\" cardcleaningtime=\"%llu.%03.3llu\" cardscleaned=\"%zu\" />\n", 
-					env->getSlaveID(),
+					env->getWorkerID(),
 					cleanTimeInMicros / 1000,
 					cleanTimeInMicros % 1000,
 					env->_cardCleaningStats._cardsCleaned);

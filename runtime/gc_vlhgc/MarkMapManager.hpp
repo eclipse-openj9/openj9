@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,7 +116,7 @@ public:
 	 * Over-writes the contents of _deleteEventShadowMarkMap with that of _previousMarkMap and then
 	 * returns a pointer to _deleteEventShadowMarkMap.
 	 * @note can only be called if J9HOOK_MM_OMR_OBJECT_DELETE was reserved or hooked at startup (asserts otherwise)
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @return _deleteEventShadowMarkMap
 	 */
 	MM_MarkMap *savePreviousMarkMapForDeleteEvents(MM_EnvironmentVLHGC *env);
@@ -126,7 +126,7 @@ public:
 	 * versions, objects which were marked in oldMap but not in newMap are reported.  If the region only has a valid mark
 	 * map in newMap, the region is walked address-ordered and objects which are not marked in newMap are reported.
 	 * @note can only be called if J9HOOK_MM_OMR_OBJECT_DELETE was reserved or hooked at startup (asserts otherwise)
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param oldMap[in] The mark map prior to a mark operation which could have killed objects
 	 * @param newMap[in] The mark map following a mark operation which could have killed objects
 	 */
@@ -138,7 +138,7 @@ public:
 	 * Note that this must be called before _nextMarkMap is used to move objects on the heap since there is no way to fixup
 	 * _previousMarkMap such that this method will pass, once that has been done (since it refers to objects which are dead
 	 * in the map used for the object movement)
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void verifyNextMarkMapSubsetOfPrevious(MM_EnvironmentVLHGC *env);
 

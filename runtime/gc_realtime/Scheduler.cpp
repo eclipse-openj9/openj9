@@ -82,8 +82,8 @@ MM_Scheduler::kill(MM_EnvironmentBase *env)
 void
 MM_Scheduler::tearDown(MM_EnvironmentBase *env)
 {
-	if (_masterThreadMonitor) {
-		omrthread_monitor_destroy(_masterThreadMonitor);
+	if (_mainThreadMonitor) {
+		omrthread_monitor_destroy(_mainThreadMonitor);
 	}
 	if (NULL != _threadResumedTable) {
 		env->getForge()->free(_threadResumedTable);
@@ -202,7 +202,7 @@ MM_Scheduler::initialize(MM_EnvironmentBase *env)
 	}
 	memset(_threadResumedTable, false, _threadCountMaximum * sizeof(bool));
 
-	if (omrthread_monitor_init_with_name(&_masterThreadMonitor, 0, "MasterThread")) {
+	if (omrthread_monitor_init_with_name(&_mainThreadMonitor, 0, "MainThread")) {
 		return false;
 	}
 
@@ -281,11 +281,11 @@ MM_Scheduler::continueGC(MM_EnvironmentRealtime *env, GCReason reason, uintptr_t
 
 	_gc->getRealtimeDelegate()->preRequestExclusiveVMAccess(thr);
 
-	/* Wake up only the master thread -- it is responsible for
-	 * waking up any slaves.
+	/* Wake up only the main thread -- it is responsible for
+	 * waking up any workers.
 	 * Make sure _completeCurrentGCSynchronously and _mode are atomically changed.
 	 */
-	omrthread_monitor_enter(_masterThreadMonitor);
+	omrthread_monitor_enter(_mainThreadMonitor);
 	switch(reason) {
 		case OUT_OF_MEMORY_TRIGGER:
 			/* For now we assume that OUT_OF_MEMORY trigger means perform
@@ -306,10 +306,10 @@ MM_Scheduler::continueGC(MM_EnvironmentRealtime *env, GCReason reason, uintptr_t
 
 			break;
 		default: /* WORK_TRIGGER or TIME_TRIGGER */ {
-			if(_threadWaitingOnMasterThreadMonitor != NULL) {
+			if(_threadWaitingOnMainThreadMonitor != NULL) {
 				/* Check your timer again incase another thread beat you to checking for shouldMutatorDoubleBeat */
 				if (env->getTimer()->hasTimeElapsed(getStartTimeOfCurrentMutatorSlice(), beatNanos)) {
-					if (shouldMutatorDoubleBeat(_threadWaitingOnMasterThreadMonitor, env->getTimer())) {
+					if (shouldMutatorDoubleBeat(_threadWaitingOnMainThreadMonitor, env->getTimer())) {
 						/*
 						 * Since the mutator should double beat signal the mutator threads to update their
 						 * timer with the current time.
@@ -326,9 +326,9 @@ MM_Scheduler::continueGC(MM_EnvironmentRealtime *env, GCReason reason, uintptr_t
 			break;
 		}
 	}
-	if(_threadWaitingOnMasterThreadMonitor == NULL) {
+	if(_threadWaitingOnMainThreadMonitor == NULL) {
 		/*
- 		* The gc thread(s) are already awake and collecting (otherwise, the master
+ 		* The gc thread(s) are already awake and collecting (otherwise, the main
  		* gc thread would be waiting on the monitor).
  		* This also means that the application threads are already sleeping.
  		* So there is no need to put the application threads to sleep or to
@@ -338,9 +338,9 @@ MM_Scheduler::continueGC(MM_EnvironmentRealtime *env, GCReason reason, uintptr_t
  		goto exit;
 	}
 
-	/* At this point master thread is blocked and cannot change _gcOn flag anymore.
+	/* At this point main thread is blocked and cannot change _gcOn flag anymore.
 	 * Check the flag again, since there is (a small) chance it may have changed since the last check
-	 * (master thread, driven by mutators' could have finished the GC cycle)
+	 * (main thread, driven by mutators' could have finished the GC cycle)
 	 */
 	if (!isGCOn()) {
 		didGC = false;
@@ -353,19 +353,19 @@ MM_Scheduler::continueGC(MM_EnvironmentRealtime *env, GCReason reason, uintptr_t
 
 	if (_exclusiveVMAccessRequired) {
 		/* initiate the request for exclusive VM access; this function does not wait for exclusive access to occur,
-		 * that will be done by the master gc thread when it resumes activity after the masterThreadMonitor is notified
+		 * that will be done by the main gc thread when it resumes activity after the mainThreadMonitor is notified
 		 * We do not block. It's best effort. If the request is success full TRUE is returned via requested flag.
 		 */
-		if (FALSE == _gc->getRealtimeDelegate()->requestExclusiveVMAccess(_threadWaitingOnMasterThreadMonitor, FALSE /* do not block */, &gcPriority)) {
+		if (FALSE == _gc->getRealtimeDelegate()->requestExclusiveVMAccess(_threadWaitingOnMainThreadMonitor, FALSE /* do not block */, &gcPriority)) {
 			didGC = false;
 			goto exit;
 		}
 		_gc->setGCThreadPriority(env->getOmrVMThread(), gcPriority);
 	}
 	
-	omrthread_monitor_notify(_masterThreadMonitor);
-	/* set the waiting thread to NULL while we are in the _masterThreadMonitor so that nobody else will notify the waiting thread */
-	_threadWaitingOnMasterThreadMonitor = NULL;
+	omrthread_monitor_notify(_mainThreadMonitor);
+	/* set the waiting thread to NULL while we are in the _mainThreadMonitor so that nobody else will notify the waiting thread */
+	_threadWaitingOnMainThreadMonitor = NULL;
 
 exit:
 	if (_extensions->trackMutatorThreadCategory) {
@@ -373,7 +373,7 @@ exit:
 		omrthread_set_category(omrthread_self(), 0, J9THREAD_TYPE_SET_GC);
 	}
 
-	omrthread_monitor_exit(_masterThreadMonitor);
+	omrthread_monitor_exit(_mainThreadMonitor);
 	_gc->getRealtimeDelegate()->postRequestExclusiveVMAccess(thr);
 
 	return didGC;
@@ -391,7 +391,7 @@ MM_Scheduler::getTaskThreadCount(MM_EnvironmentBase *env)
 void
 MM_Scheduler::waitForMutatorsToStop(MM_EnvironmentRealtime *env)
 {
-	/* assumption: only master enters this */
+	/* assumption: only main enters this */
 	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	/* we need to record how long it took to wait for the mutators to stop */
@@ -400,24 +400,24 @@ MM_Scheduler::waitForMutatorsToStop(MM_EnvironmentRealtime *env)
 	/* The time before acquiring exclusive VM access is charged to the mutator but the time
 	 * during the acquisition is conservatively charged entirely to the GC. */
 	_utilTracker->addTimeSlice(env, env->getTimer(), true);
-	omrthread_monitor_enter(_masterThreadMonitor);
-	/* If master GC thread gets here without anybody requesting exclusive access for us
+	omrthread_monitor_enter(_mainThreadMonitor);
+	/* If main GC thread gets here without anybody requesting exclusive access for us
 	 * (possible in a shutdown scenario after we kill alarm thread), the thread will request
 	 * exclusive access for itself.
 	 * requestExclusiveVMAccess is invoked atomically with _mode being set to WAKING_GC
-	 * under masterThreadMonitor (see continueGC). Therefore, we check here if mode is not
+	 * under mainThreadMonitor (see continueGC). Therefore, we check here if mode is not
 	 * WAKING_GC, and only then we request exclusive assess for ourselves.
 	 * TODO: This approach is just to fix some timing holes in shutdown. Consider removing this
 	 * "if" statement and fix alarm thread not to die before requesting exclusive access for us.
 	 */
-	if (_masterThreadMustShutDown && _mode != WAKING_GC) {
+	if (_mainThreadMustShutDown && _mode != WAKING_GC) {
 		uintptr_t gcPriority = 0;
 		_gc->getRealtimeDelegate()->requestExclusiveVMAccess(env, TRUE /* block */, &gcPriority);
 		_gc->setGCThreadPriority(env->getOmrVMThread(), gcPriority);
 	}
 	/* Avoid another attempt to start up GC increment */
 	_mode = STOP_MUTATOR;
-	omrthread_monitor_exit(_masterThreadMonitor);
+	omrthread_monitor_exit(_mainThreadMonitor);
 
 	_gc->getRealtimeDelegate()->waitForExclusiveVMAccess(env, _exclusiveVMAccessRequired);
 
@@ -435,7 +435,7 @@ MM_Scheduler::startMutators(MM_EnvironmentRealtime *env) {
 void
 MM_Scheduler::startGCTime(MM_EnvironmentRealtime *env, bool isDoubleBeat)
 {
-	if (env->isMasterThread()) {
+	if (env->isMainThread()) {
 		setStartTimeOfCurrentGCSlice(_utilTracker->addTimeSlice(env, env->getTimer(), false));
 	}
 }
@@ -443,7 +443,7 @@ MM_Scheduler::startGCTime(MM_EnvironmentRealtime *env, bool isDoubleBeat)
 void
 MM_Scheduler::stopGCTime(MM_EnvironmentRealtime *env)
 {
-	if (env->isMasterThread()) {
+	if (env->isMainThread()) {
 		setStartTimeOfCurrentMutatorSlice(_utilTracker->addTimeSlice(env, env->getTimer(), false));
 	}
 }
@@ -459,8 +459,8 @@ MM_Scheduler::shouldGCDoubleBeat(MM_EnvironmentRealtime *env)
 	if (_currentConsecutiveBeats >= maximumAllowedConsecutiveBeats) {
 		return false;
 	}
-	/* Note that shouldGCDoubleBeat is only called by the master thread, this means we
-	 * can call addTimeSlice without checking for isMasterThread() */
+	/* Note that shouldGCDoubleBeat is only called by the main thread, this means we
+	 * can call addTimeSlice without checking for isMainThread() */
 	_utilTracker->addTimeSlice(env, env->getTimer(), false);
 	double excessTime = (_utilTracker->getCurrentUtil() - targetUtilization) * window;
 	double excessBeats = excessTime / beat;
@@ -486,7 +486,7 @@ MM_Scheduler::reportStartGCIncrement(MM_EnvironmentRealtime *env)
 	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	if(_completeCurrentGCSynchronously) {
-		_completeCurrentGCSynchronouslyMasterThreadCopy = true;
+		_completeCurrentGCSynchronouslyMainThreadCopy = true;
 		U_64 exclusiveAccessTimeMicros = 0;
 		U_64 meanExclusiveAccessIdleTimeMicros = 0;
 
@@ -529,7 +529,7 @@ MM_Scheduler::reportStartGCIncrement(MM_EnvironmentRealtime *env)
 void
 MM_Scheduler::reportStopGCIncrement(MM_EnvironmentRealtime *env, bool isCycleEnd)
 {
-	/* assumption: only master enters this */
+	/* assumption: only main enters this */
 
 	stopGCTime(env);
 
@@ -541,7 +541,7 @@ MM_Scheduler::reportStopGCIncrement(MM_EnvironmentRealtime *env, bool isCycleEnd
 			/* The requests for Sync GC made at the very end of
 			 * GC cycle might not had a chance to make the local copy
 			 */
-			if (_completeCurrentGCSynchronouslyMasterThreadCopy) {
+			if (_completeCurrentGCSynchronouslyMainThreadCopy) {
 				Trc_MM_SystemGCEnd(env->getLanguageVMThread(),
 					_extensions->heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_NEW),
 					_extensions->heap->getActiveMemorySize(MEMORY_TYPE_NEW),
@@ -551,7 +551,7 @@ MM_Scheduler::reportStopGCIncrement(MM_EnvironmentRealtime *env, bool isCycleEnd
 					(_extensions->largeObjectArea ? _extensions->heap->getActiveLOAMemorySize(MEMORY_TYPE_OLD) : 0 )
 				);
 				_gc->reportSyncGCEnd(env);
-				_completeCurrentGCSynchronouslyMasterThreadCopy = false;
+				_completeCurrentGCSynchronouslyMainThreadCopy = false;
 			}
 			_completeCurrentGCSynchronously = false;
 			_completeCurrentGCSynchronouslyReason = UNKOWN_REASON;
@@ -575,24 +575,24 @@ MM_Scheduler::restartMutatorsAndWait(MM_EnvironmentRealtime *env)
 {
 	startMutators(env);
 
-	omrthread_monitor_enter(_masterThreadMonitor);
-	/* Atomically change mode to MUTATOR and set threadWaitingOnMasterThreadMonitor
-	 * (only after the master is fully stoped, we switch from WAKING_MUTATOR to MUTATOR) */
+	omrthread_monitor_enter(_mainThreadMonitor);
+	/* Atomically change mode to MUTATOR and set threadWaitingOnMainThreadMonitor
+	 * (only after the main is fully stoped, we switch from WAKING_MUTATOR to MUTATOR) */
 	_mode = MUTATOR;
-	_threadWaitingOnMasterThreadMonitor = env;
+	_threadWaitingOnMainThreadMonitor = env;
 
 	/* If we're shutting down, we don't want to wait. Note that this is safe
 	 * since on shutdown, the only mutator thread left is the thread that is
 	 * doing the shutdown.
 	 */
-	if (!_masterThreadMustShutDown) {
-		omrthread_monitor_wait(_masterThreadMonitor);
-		/* Master is awoken to either do another increment of GC or
+	if (!_mainThreadMustShutDown) {
+		omrthread_monitor_wait(_mainThreadMonitor);
+		/* Main is awoken to either do another increment of GC or
 		 * to shutdown (but never both)
 		 */
-		Assert_MM_true((isGCOn() && !_masterThreadMustShutDown) || (!_gcOn &&_masterThreadMustShutDown));
+		Assert_MM_true((isGCOn() && !_mainThreadMustShutDown) || (!_gcOn &&_mainThreadMustShutDown));
 	}
-	omrthread_monitor_exit(_masterThreadMonitor);
+	omrthread_monitor_exit(_mainThreadMonitor);
 }
 
 bool
@@ -613,7 +613,7 @@ MM_Scheduler::shouldGCYield(MM_EnvironmentRealtime *env, U_64 timeSlack)
 MMINLINE bool
 MM_Scheduler::internalShouldGCYield(MM_EnvironmentRealtime *env, U_64 timeSlack)
 {
-	if (_completeCurrentGCSynchronouslyMasterThreadCopy) {
+	if (_completeCurrentGCSynchronouslyMainThreadCopy) {
 		/* If we have degraded to a synchronous GC, don't yield until finished */
 		return false;
 	}
@@ -687,9 +687,9 @@ void MM_Scheduler::yieldFromGC(MM_EnvironmentRealtime *env, bool distanceChecked
 {
 	assert(!_gc->isCollectorConcurrentTracing());
 	assert(!_gc->isCollectorConcurrentSweeping());
-	if (env->isMasterThread()) {
+	if (env->isMainThread()) {
 		if (_yieldCollaborator) {
-			/* wait for slaves to yield/sync */
+			/* wait for workers to yield/sync */
 			_yieldCollaborator->yield(env);
 		}
 
@@ -710,11 +710,11 @@ void MM_Scheduler::yieldFromGC(MM_EnvironmentRealtime *env, bool distanceChecked
 		}
 
 		if (_yieldCollaborator) {
-			_yieldCollaborator->resumeSlavesFromYield(env);
+			_yieldCollaborator->resumeWorkersFromYield(env);
 		}
 
 	} else {
-		/* Slave only running here. _yieldCollaborator instance exists for sure */
+		/* Worker only running here. _yieldCollaborator instance exists for sure */
 		env->reportScanningSuspended();
 		_yieldCollaborator->yield(env);
 		env->reportScanningResumed();
@@ -724,18 +724,18 @@ void MM_Scheduler::yieldFromGC(MM_EnvironmentRealtime *env, bool distanceChecked
 void
 MM_Scheduler::prepareThreadsForTask(MM_EnvironmentBase *env, MM_Task *task, uintptr_t threadCount)
 {
-	omrthread_monitor_enter(_slaveThreadMutex);
-	_slaveThreadsReservedForGC = true;
+	omrthread_monitor_enter(_workerThreadMutex);
+	_workerThreadsReservedForGC = true;
 
 	task->setSynchronizeMutex(_synchronizeMutex);
 
 	for (uintptr_t index=0; index < threadCount; index++) {
-		_statusTable[index] = slave_status_reserved;
+		_statusTable[index] = worker_status_reserved;
 		_taskTable[index] = task;
 	}
 
 	wakeUpThreads(threadCount);
-	omrthread_monitor_exit(_slaveThreadMutex);
+	omrthread_monitor_exit(_workerThreadMutex);
 
 	pushYieldCollaborator(((MM_IncrementalParallelTask *)task)->getYieldCollaborator());
 }
@@ -743,7 +743,7 @@ MM_Scheduler::prepareThreadsForTask(MM_EnvironmentBase *env, MM_Task *task, uint
 void
 MM_Scheduler::completeTask(MM_EnvironmentBase *env)
 {
-	if (env->isMasterThread()) {
+	if (env->isMainThread()) {
 		popYieldCollaborator();
 	}
 	MM_ParallelDispatcher::completeTask(env);
@@ -810,54 +810,54 @@ MM_Scheduler::getThreadPriority()
 }
 
 /**
- * @copydoc MM_MetronomeDispatcher::slaveEntryPoint()
+ * @copydoc MM_MetronomeDispatcher::workerEntryPoint()
  */
 void
-MM_Scheduler::slaveEntryPoint(MM_EnvironmentBase *envModron)
+MM_Scheduler::workerEntryPoint(MM_EnvironmentBase *envModron)
 {
 	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envModron);
 
-	uintptr_t slaveID = env->getSlaveID();
+	uintptr_t workerID = env->getWorkerID();
 
 	setThreadInitializationComplete(env);
 
-	omrthread_monitor_enter(_slaveThreadMutex);
+	omrthread_monitor_enter(_workerThreadMutex);
 
-	while(slave_status_dying != _statusTable[slaveID]) {
-		/* Wait for a task to be dispatched to the slave thread */
-		while(slave_status_waiting == _statusTable[slaveID]) {
-			omrthread_monitor_wait(_slaveThreadMutex);
+	while(worker_status_dying != _statusTable[workerID]) {
+		/* Wait for a task to be dispatched to the worker thread */
+		while(worker_status_waiting == _statusTable[workerID]) {
+			omrthread_monitor_wait(_workerThreadMutex);
 		}
 
-		if(slave_status_reserved == _statusTable[slaveID]) {
+		if(worker_status_reserved == _statusTable[workerID]) {
 			/* Found a task to dispatch to - do prep work for dispatch */
 			acceptTask(env);
-			omrthread_monitor_exit(_slaveThreadMutex);
+			omrthread_monitor_exit(_workerThreadMutex);
 
 			env->_currentTask->run(env);
 
-			omrthread_monitor_enter(_slaveThreadMutex);
+			omrthread_monitor_enter(_workerThreadMutex);
 			/* Returned from task - do clean up work from dispatch */
 			completeTask(env);
 		}
 	}
-	omrthread_monitor_exit(_slaveThreadMutex);
+	omrthread_monitor_exit(_workerThreadMutex);
 }
 
 /**
- * @copydoc MM_ParallelDispatcher::masterEntryPoint()
+ * @copydoc MM_ParallelDispatcher::mainEntryPoint()
  */
 void
-MM_Scheduler::masterEntryPoint(MM_EnvironmentBase *envModron)
+MM_Scheduler::mainEntryPoint(MM_EnvironmentBase *envModron)
 {
 	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envModron);
 
 	setThreadInitializationComplete(env);
 
-	omrthread_monitor_enter(_masterThreadMonitor);
-	_threadWaitingOnMasterThreadMonitor = env;
-	omrthread_monitor_wait(_masterThreadMonitor);
-	omrthread_monitor_exit(_masterThreadMonitor);
+	omrthread_monitor_enter(_mainThreadMonitor);
+	_threadWaitingOnMainThreadMonitor = env;
+	omrthread_monitor_wait(_mainThreadMonitor);
+	omrthread_monitor_exit(_mainThreadMonitor);
 
 	/* We want to execute the body of the do-while (run a gc) if a shutdown has
 	 * been requested at the same time as the first gc. In other words, we want
@@ -877,11 +877,11 @@ MM_Scheduler::masterEntryPoint(MM_EnvironmentBase *envModron)
 			_gc->_memorySubSpace->collect(env, _gcCode);
 			restartMutatorsAndWait(env);
 
-		/* We must also check for the _masterThreadMustShutDown flag since if we
+		/* We must also check for the _mainThreadMustShutDown flag since if we
 		 * try to shutdown while we're in a stopGCIntervalAndWait, the GC will
-		 * continue potentially changing the status of the master thread
+		 * continue potentially changing the status of the main thread
 		 */
-		} while ((slave_status_dying != _statusTable[env->getSlaveID()] && !_masterThreadMustShutDown));
+		} while ((worker_status_dying != _statusTable[env->getWorkerID()] && !_mainThreadMustShutDown));
 	}
 	/* TODO: tear down the thread before exiting */
 }
@@ -897,7 +897,7 @@ MM_Scheduler::completeCurrentGCSynchronously(MM_EnvironmentRealtime *env)
 		_completeCurrentGCSynchronously = true;
 		_completeCurrentGCSynchronouslyReason = VM_SHUTDOWN;
 
-		/* wait till get notified by master that the cycle is finished */
+		/* wait till get notified by main that the cycle is finished */
 		omrthread_monitor_wait(_vm->_gcCycleOnMonitor);
 	}
 	omrthread_monitor_exit(_vm->_gcCycleOnMonitor);
@@ -911,26 +911,26 @@ MM_Scheduler::wakeUpThreads(uintptr_t count)
 {
 	assert1(count > 0);
 
-	/* Resume the master thread */
-	omrthread_monitor_enter(_masterThreadMonitor);
-	omrthread_monitor_notify(_masterThreadMonitor);
-	omrthread_monitor_exit(_masterThreadMonitor);
+	/* Resume the main thread */
+	omrthread_monitor_enter(_mainThreadMonitor);
+	omrthread_monitor_notify(_mainThreadMonitor);
+	omrthread_monitor_exit(_mainThreadMonitor);
 
 	if (count > 1) {
-		wakeUpSlaveThreads(count - 1);
+		wakeUpWorkerThreads(count - 1);
 	}
 }
 
 /**
- * Wakes up `count` slave threads. This function will actually busy wait until
- * `count` number of slaves have been resumed from the suspended state.
+ * Wakes up `count` worker threads. This function will actually busy wait until
+ * `count` number of workers have been resumed from the suspended state.
  *
- * @param count Number of slave threads to wake up
+ * @param count Number of worker threads to wake up
  */
 void
-MM_Scheduler::wakeUpSlaveThreads(uintptr_t count)
+MM_Scheduler::wakeUpWorkerThreads(uintptr_t count)
 {
-	omrthread_monitor_notify_all(_slaveThreadMutex);
+	omrthread_monitor_notify_all(_workerThreadMutex);
 }
 
 /**
@@ -945,13 +945,13 @@ MM_Scheduler::shutDownThreads()
 	/* If the GC is currently in a Cycle complete it before we shutdown */
 	completeCurrentGCSynchronously();
 
-	/* Don't kill the master thread before the alarm thread since the alarm thread
-	 * may still refer to the master thread if a continueGC happens to occur during
+	/* Don't kill the main thread before the alarm thread since the alarm thread
+	 * may still refer to the main thread if a continueGC happens to occur during
 	 * shutdown.
 	 */
-	shutDownSlaveThreads();
+	shutDownWorkerThreads();
 
-	/* Don't kill the alarm thread until after the GC slave threads, since it may
+	/* Don't kill the alarm thread until after the GC worker threads, since it may
 	 * be needed to drive a final synchronous GC */
 	if (_alarmThread) {
 		MM_EnvironmentBase env(_vm);
@@ -959,20 +959,20 @@ MM_Scheduler::shutDownThreads()
 		_alarmThread = NULL;
 	}
 
-	/* Now that the alarm and trace threads are killed, we can shutdown the master thread */
-	shutDownMasterThread();
+	/* Now that the alarm and trace threads are killed, we can shutdown the main thread */
+	shutDownMainThread();
 }
 
 /**
- * Signals the slaves to shutdown, will block until they are all shutdown.
+ * Signals the workers to shutdown, will block until they are all shutdown.
  *
  * @note Assumes all threads are live before the function is called (ie: this
- * must be called before shutDownMasterThread)
+ * must be called before shutDownMainThread)
  */
 void
-MM_Scheduler::shutDownSlaveThreads()
+MM_Scheduler::shutDownWorkerThreads()
 {
-	/* If _threadShutdownCount is 1, only the master must shutdown, if 0,
+	/* If _threadShutdownCount is 1, only the main must shutdown, if 0,
 	 * no shutdown required (happens when args passed to java are invalid
 	 * so the vm doesn't actually start up, ex: -Xgc:threads=5 on a 4-way
 	 * box)
@@ -981,19 +981,19 @@ MM_Scheduler::shutDownSlaveThreads()
 		return;
 	}
 
-	omrthread_monitor_enter(_slaveThreadMutex);
+	omrthread_monitor_enter(_workerThreadMutex);
 
 	for (uintptr_t threadIndex = 1; threadIndex < _threadCountMaximum; threadIndex++) {
-		_statusTable[threadIndex] = slave_status_dying;
+		_statusTable[threadIndex] = worker_status_dying;
 	}
 
 	_threadCount = 1;
 
-	wakeUpSlaveThreads(_threadShutdownCount - 1);
+	wakeUpWorkerThreads(_threadShutdownCount - 1);
 
-	omrthread_monitor_exit(_slaveThreadMutex);
+	omrthread_monitor_exit(_workerThreadMutex);
 
-	/* -1 because the thread shutdown count includes the master thread */
+	/* -1 because the thread shutdown count includes the main thread */
 	omrthread_monitor_enter(_dispatcherMonitor);
 
 	while (1 != _threadShutdownCount) {
@@ -1004,30 +1004,30 @@ MM_Scheduler::shutDownSlaveThreads()
 }
 
 /**
- * Signals the master to shutdown, will block until the thread is shutdown.
+ * Signals the main to shutdown, will block until the thread is shutdown.
  *
- * @note Assumes the master thread is the last gc thread left (ie: this must be
- * called after shutDownSlaveThreads)
+ * @note Assumes the main thread is the last gc thread left (ie: this must be
+ * called after shutDownWorkerThreads)
  */
 void
-MM_Scheduler::shutDownMasterThread()
+MM_Scheduler::shutDownMainThread()
 {
-	omrthread_monitor_enter(_slaveThreadMutex);
-	_statusTable[0] = slave_status_dying;
-	omrthread_monitor_exit(_slaveThreadMutex);
+	omrthread_monitor_enter(_workerThreadMutex);
+	_statusTable[0] = worker_status_dying;
+	omrthread_monitor_exit(_workerThreadMutex);
 
 	/* Note: Calling wakeUpThreads at this point would be unsafe since there is
-	 * more than 1 location where the master thread could be waiting and the one
+	 * more than 1 location where the main thread could be waiting and the one
 	 * in stopGcIntervalAndWait [which ultimately gets invoked by the
 	 * condYieldFromGC] assumes that a request for exclusive VM access on behalf
-	 * of the master has been made. Blindly notifying the monitor [as
-	 * wakeUpThreads does] would cause the master thread to wait for exclusive
+	 * of the main has been made. Blindly notifying the monitor [as
+	 * wakeUpThreads does] would cause the main thread to wait for exclusive
 	 * access without requesting for it first, causing a hang.
 	 */
-	omrthread_monitor_enter(_masterThreadMonitor);
-	_masterThreadMustShutDown = true;
-	omrthread_monitor_notify(_masterThreadMonitor);
-	omrthread_monitor_exit(_masterThreadMonitor);
+	omrthread_monitor_enter(_mainThreadMonitor);
+	_mainThreadMustShutDown = true;
+	omrthread_monitor_notify(_mainThreadMonitor);
+	omrthread_monitor_exit(_mainThreadMonitor);
 
 	omrthread_monitor_enter(_dispatcherMonitor);
 	while (0 != _threadShutdownCount) {

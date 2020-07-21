@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,12 +41,12 @@ MM_CopyForwardSchemeTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, cons
 }
 
 bool
-MM_CopyForwardSchemeTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *envBase, const char *id)
+MM_CopyForwardSchemeTask::synchronizeGCThreadsAndReleaseMain(MM_EnvironmentBase *envBase, const char *id)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(envBase);
 	MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 	U_64 startTime = j9time_hires_clock();
-	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMaster(env, id);
+	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMain(env, id);
 	U_64 endTime = j9time_hires_clock();
 	env->_copyForwardStats.addToSyncStallTime(startTime, endTime);
 
@@ -67,12 +67,12 @@ MM_CopyForwardSchemeTask::synchronizeGCThreadsAndReleaseSingleThread(MM_Environm
 }
 
 bool
-MM_CopyForwardSchemeTask::synchronizeGCThreadsAndReleaseMasterForAbort(MM_EnvironmentBase *envBase, const char *id)
+MM_CopyForwardSchemeTask::synchronizeGCThreadsAndReleaseMainForAbort(MM_EnvironmentBase *envBase, const char *id)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(envBase);
 	MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 	U_64 startTime = j9time_hires_clock();
-	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMaster(env, id);
+	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMain(env, id);
 	U_64 endTime = j9time_hires_clock();
 	env->_copyForwardStats.addToAbortStallTime(startTime, endTime);
 
@@ -91,12 +91,12 @@ MM_CopyForwardSchemeTask::synchronizeGCThreadsForMark(MM_EnvironmentBase *envBas
 }
 
 bool
-MM_CopyForwardSchemeTask::synchronizeGCThreadsAndReleaseMasterForMark(MM_EnvironmentBase *envBase, const char *id)
+MM_CopyForwardSchemeTask::synchronizeGCThreadsAndReleaseMainForMark(MM_EnvironmentBase *envBase, const char *id)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(envBase);
 	MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 	U_64 startTime = j9time_hires_clock();
-	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMaster(env, id);
+	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMain(env, id);
 	U_64 endTime = j9time_hires_clock();
 	env->_copyForwardStats.addToMarkStallTime(startTime, endTime);
 

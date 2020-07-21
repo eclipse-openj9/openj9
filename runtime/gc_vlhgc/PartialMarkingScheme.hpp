@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,12 +77,12 @@ public:
 	virtual void setup(MM_EnvironmentBase *env);
 	virtual void cleanup(MM_EnvironmentBase *env);
 	
-	virtual void masterSetup(MM_EnvironmentBase *env);
-	virtual void masterCleanup(MM_EnvironmentBase *env);
+	virtual void mainSetup(MM_EnvironmentBase *env);
+	virtual void mainCleanup(MM_EnvironmentBase *env);
 
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 	virtual void synchronizeGCThreads(MM_EnvironmentBase *env, const char *id);
-	virtual bool synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *env, const char *id);
+	virtual bool synchronizeGCThreadsAndReleaseMain(MM_EnvironmentBase *env, const char *id);
 	virtual bool synchronizeGCThreadsAndReleaseSingleThread(MM_EnvironmentBase *env, const char *id);
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
@@ -204,7 +204,7 @@ private:
 	 * Handling of Work Packets overflow case
 	 * Active STW Card Based Overflow Handler only.
 	 * For other types of STW Overflow Handlers always return false
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @return true if overflow flag is set
 	 */
 	bool handleOverflow(MM_EnvironmentVLHGC *env);
@@ -366,8 +366,8 @@ public:
 	static MM_PartialMarkingScheme *newInstance(MM_EnvironmentVLHGC *env); 
 	virtual void kill(MM_EnvironmentVLHGC *env);
 	
-	void masterSetupForGC(MM_EnvironmentVLHGC *env);
-	void masterCleanupAfterGC(MM_EnvironmentVLHGC *env);
+	void mainSetupForGC(MM_EnvironmentVLHGC *env);
+	void mainCleanupAfterGC(MM_EnvironmentVLHGC *env);
 	void workerSetupForGC(MM_EnvironmentVLHGC *env);
 
 	/**

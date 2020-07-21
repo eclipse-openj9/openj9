@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,7 +140,7 @@ public:
 
 	/**
 	 * Performs sweep.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param allocDescription[in] The description of the allocation which triggered the collection
 	 * @param activeSubSpace[in] The active subspace which ran out of memory
 	 * @param gcCode[in] The description of the nature of the collection
@@ -149,7 +149,7 @@ public:
 
 	/**
 	 * Performs compact and cleans up our data structures used to define a compact.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param allocDescription[in] The description of the allocation which triggered the collection
 	 * @param activeSubSpace[in] The active subspace which ran out of memory
 	 * @param gcCode[in] The description of the nature of the collection
@@ -160,7 +160,7 @@ public:
 
 	/**
 	 * Performs sweep followed by compact and cleans up our data structures used to define a compact.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param allocDescription[in] The description of the allocation which triggered the collection
 	 * @param activeSubSpace[in] The active subspace which ran out of memory
 	 * @param gcCode[in] The description of the nature of the collection
@@ -173,7 +173,7 @@ public:
 	 * Estimate the number of reclaimable regions. If score based compact is enabled, assume that all
 	 * regions are selected. If it is not enabled, only consider free regions.
 	 * 
-	 * @param env[in] the master GC thread
+	 * @param env[in] the main GC thread
 	 * @param reclaimableRegions[out] estimated total number of reclaimable regions 
 	 * @param defragmentReclaimableRegions[out] estimated number of reclaimable old regions
 	 */
@@ -183,7 +183,7 @@ public:
 	 * Called to invoke a global sweep to update free region data and dark matter estimates following the completion of a GMP.
 	 * This is intended to be called before the PGC runs either its Copy-Forward or Mark-Sweep-Compact so that it can use the
 	 * most up-to-date statistics when selecting its collection set.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param allocDescription[in] The description of the allocation which triggered the collection
 	 * @param activeSubSpace[in] The active subspace which ran out of memory
 	 * @param gcCode[in] The description of the nature of the collection
@@ -210,20 +210,20 @@ public:
 	/**
 	 * Build the internal representation of the set of regions that are to be collected for this cycle.
 	 * This should only be called during a partial garbage collect.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void createRegionCollectionSetForPartialGC(MM_EnvironmentVLHGC *env, UDATA desiredWorkToDo);
 
 	/**
 	 * Compute the compact score based on various stats collected and store them in the regions and in a sorted list
 	 * for later consideration when selecting regions to compact. Used only for compactWorkGoal selection for both CopyForward and MarkSweepCompact
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 */
 	void deriveCompactScore(MM_EnvironmentVLHGC *env);
 	
 	/**
 	 * A helper to call into the collector to perform the compact.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param allocDescription[in] The description of the allocation which triggered the collection
 	 * @param nextMarkMap[in] The next mark map (since the compactor uses it for fixup data storage)
 	 */
@@ -233,9 +233,9 @@ public:
 	 *	Main call for Compact operation
 	 * @param nextMarkMap[in] The next mark map (since the compactor uses it for fixup data storage)
 	 */
-	void masterThreadCompact(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MarkMap *nextMarkMap);
+	void mainThreadCompact(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MarkMap *nextMarkMap);
 
-	void masterThreadRestartAllocationCaches(MM_EnvironmentVLHGC *env);
+	void mainThreadRestartAllocationCaches(MM_EnvironmentVLHGC *env);
 	
 	void reportSweepStart(MM_EnvironmentBase *env);
 	void reportSweepEnd(MM_EnvironmentBase *env);
@@ -247,7 +247,7 @@ public:
 	
 	/**
 	 * Performs a compact and cleans up our data structures used to define a compact.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param allocDescription[in] The description of the allocation which triggered the collection
 	 * @param activeSubSpace[in] The active subspace which ran out of memory
 	 * @param compactSelectionGoalInBytes[in] The minimum number of free bytes or  The minimum amount of compact work to be done
@@ -259,7 +259,7 @@ public:
 	
 	/**
 	 * Performs an atomic sweep.
-	 * @param env[in] The master GC thread
+	 * @param env[in] The main GC thread
 	 * @param allocDescription[in] The description of the allocation which triggered the collection
 	 * @param activeSubSpace[in] The active subspace which ran out of memory
 	 * @param gcCode[in] The description of the nature of the collection
