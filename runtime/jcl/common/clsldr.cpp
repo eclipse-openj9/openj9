@@ -52,23 +52,6 @@ Java_java_lang_ClassLoader_defineClassImpl(JNIEnv *env, jobject receiver, jstrin
 	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
 	UDATA options = 0;
 
-#ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
-	if (NULL != className) {
-		vmFuncs->internalEnterVMFromJNI(currentThread);
-
-		if (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, J9_JNI_UNWRAP_REFERENCE(className), CLASSNAME_VALID)) {
-			/*
-			 * We don't yet know if the class being defined is exempt. Setting this option tells
-			 * defineClassCommon() to fail if it discovers that the class is not exempt. That failure
-			 * is distinguished by returning NULL with no exception pending.
-			 */
-			options |= J9_FINDCLASS_FLAG_NAME_IS_INVALID;
-		}
-
-		vmFuncs->internalExitVMToJNI(currentThread);
-	}
-#endif /* J9VM_OPT_DYNAMIC_LOAD_SUPPORT */
-
 	if (NULL == protectionDomain) {
 		/*
 		 * Only trusted code has access to JavaLangAccess.defineClass();
@@ -78,7 +61,7 @@ Java_java_lang_ClassLoader_defineClassImpl(JNIEnv *env, jobject receiver, jstrin
 		options |= J9_FINDCLASS_FLAG_UNSAFE;
 	}
 
-	jclass result = defineClassCommon(env, receiver, className, classRep, offset, length, protectionDomain, options, NULL, NULL);
+	jclass result = defineClassCommon(env, receiver, className, classRep, offset, length, protectionDomain, &options, NULL, NULL, TRUE);
 
 	if (J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID) && (NULL == result) && (NULL == currentThread->currentException)) {
 		/*
@@ -129,7 +112,7 @@ Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclas
 	
 	jsize length = env->GetArrayLength(classRep);
 
-	jclass result = defineClassCommon(env, receiver, className, classRep, 0, length, protectionDomain, options, hostClazz, NULL);
+	jclass result = defineClassCommon(env, receiver, className, classRep, 0, length, protectionDomain, &options, hostClazz, NULL, FALSE);
 	if (env->ExceptionCheck()) {
 		return NULL;
 	} else if (NULL == result) {

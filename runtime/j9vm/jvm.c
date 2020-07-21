@@ -5747,17 +5747,9 @@ JVM_DefineClassWithSource(JNIEnv *env, const char * className, jobject classLoad
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9ClassLoader* vmLoader;
 	j9object_t loaderObject;
-	jstring classNameString;
-
-	classNameString = (*env)->NewStringUTF(env,className);
+	jstring classNameString = (*env)->NewStringUTF(env,className);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-
-	if (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, J9_JNI_UNWRAP_REFERENCE(classNameString), CLASSNAME_VALID)) {
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (UDATA *)*(j9object_t*)classNameString);
-		vmFuncs->internalExitVMToJNI(currentThread);
-		return NULL;
-	}
 
 	loaderObject = J9_JNI_UNWRAP_REFERENCE(classLoader);
 	vmLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, loaderObject);
@@ -5769,6 +5761,7 @@ JVM_DefineClassWithSource(JNIEnv *env, const char * className, jobject classLoad
 		}
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
+
 	return jvmDefineClassHelper(env, classLoader, classNameString, (jbyte*)classArray, 0, length, domain, 0);
 }
 
