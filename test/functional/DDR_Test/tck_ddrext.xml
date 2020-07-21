@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2016, 2019 IBM Corp. and others
+Copyright (c) 2016, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<property name="ADDITIONALEXPORTS" value="" />
 	<property name="TCK_CR_VM_ARG" value="${TCK_CR_VM_ARG}"/>
 	<property name="TESTNUM" value="${TESTNUM}"/>
+	<property name="COREGEN" value="j9vm.test.corehelper.CoreGen"/>
 
 	<if>
 		<equals arg1="${JDK_VERSION}" arg2="8"/>
@@ -131,6 +132,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo>JAVA_COMMAND: ${JAVA_COMMAND}</echo>
 		<echo>DUMP_OPTION: ${DUMP_OPTION}</echo>
 		<echo>EXTRADUMPOPT: ${EXTRADUMPOPT}</echo>
+		<echo>COREGEN: ${COREGEN}</echo>
 
 		<!-- We use the -Xint option to store the startup hint into the shared chache. -->
 		<exec executable="${JAVA_COMMAND}" failonerror="true">
@@ -148,7 +150,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<arg value="-Xjit:{j9vm/test/corehelper/CoreGen.main*}(count=0)"/>
 			<arg value="-cp" />
 			<arg value="${TEST_RESROOT}/DDR_Test.jar" />
-			<arg value="j9vm.test.corehelper.CoreGen" />
+			<arg value="${COREGEN}" />
 		</exec>
 
 		<if>
