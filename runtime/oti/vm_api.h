@@ -356,12 +356,14 @@ internalCreateArrayClass(J9VMThread* vmThread, J9ROMArrayClass* romClass, J9Clas
  * @param className String object representing name of the class to load
  * @param classLoader J9ClassLoader to use
  * @param options load options such as J9_FINDCLASS_FLAG_EXISTING_ONLY
+ * @param allowedBitsForClassName the allowed bits for a valid class name,
+ *        including CLASSNAME_INVALID, CLASSNAME_VALID_NON_ARRARY, CLASSNAME_VALID_ARRARY, or CLASSNAME_VALID.
  * 
  * @return pointer to J9Class if success, NULL if fail
  *
  */
 J9Class*  
-internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9object_t className, J9ClassLoader* classLoader, UDATA options);
+internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9object_t className, J9ClassLoader* classLoader, UDATA options, UDATA allowedBitsForClassName);
 
 /**
  * Load the class with the specified name in the given module.
@@ -3115,10 +3117,13 @@ getStringUTF8Length(J9VMThread *vmThread,j9object_t string);
 *
 * @param[in] *vmThread current thread
 * @param[in] string the class name string
+* @param[in] allowedBitsForClassName the allowed bits for a valid class name,
+*            including CLASSNAME_VALID_NON_ARRARY, CLASSNAME_VALID_ARRARY, or CLASSNAME_VALID.
+*
 * @return a UDATA to indicate the nature of incoming class name string, see descriptions above.
 */
 UDATA
-verifyQualifiedName(J9VMThread *vmThread, j9object_t string);
+verifyQualifiedName(J9VMThread *vmThread, j9object_t string, UDATA allowedBitsForClassName);
 
 
 /* ---------------- swalk.c ---------------- */

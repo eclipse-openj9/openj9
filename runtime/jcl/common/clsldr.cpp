@@ -48,7 +48,7 @@ Java_java_lang_ClassLoader_defineClassImpl(JNIEnv *env, jobject receiver, jstrin
 	if (NULL != className) {
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
-		if (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, J9_JNI_UNWRAP_REFERENCE(className))) {
+		if (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, J9_JNI_UNWRAP_REFERENCE(className), CLASSNAME_VALID)) {
 			/*
 			 * We don't yet know if the class being defined is exempt. Setting this option tells
 			 * defineClassCommon() to fail if it discovers that the class is not exempt. That failure

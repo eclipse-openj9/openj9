@@ -4036,17 +4036,17 @@ done:
 		if (NULL != className) {
 			J9ClassLoader *loader = J9VMJAVALANGCLASSLOADER_VMREF(_currentThread, classloaderObject);
 			if (NULL != loader) {
-				if (CLASSNAME_INVALID != verifyQualifiedName(_currentThread, className)) {
-					buildInternalNativeStackFrame(REGISTER_ARGS);
-					updateVMStruct(REGISTER_ARGS);
-					j9Class = internalFindClassString(_currentThread, NULL, className, loader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
-					VMStructHasBeenUpdated(REGISTER_ARGS);
-					if (VM_VMHelpers::exceptionPending(_currentThread)) {
-						rc = GOTO_THROW_CURRENT_EXCEPTION;
-						goto done;
-					}
-					restoreInternalNativeStackFrame(REGISTER_ARGS);
+				buildInternalNativeStackFrame(REGISTER_ARGS);
+				updateVMStruct(REGISTER_ARGS);
+				j9Class = internalFindClassString(_currentThread, NULL, className, loader,
+													J9_FINDCLASS_FLAG_EXISTING_ONLY,
+													CLASSNAME_VALID);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				if (VM_VMHelpers::exceptionPending(_currentThread)) {
+					rc = GOTO_THROW_CURRENT_EXCEPTION;
+					goto done;
 				}
+				restoreInternalNativeStackFrame(REGISTER_ARGS);
 			}
 		}
 
@@ -4121,23 +4121,23 @@ done:
 		} else {
 			loader = _vm->systemClassLoader;
 		}
-		if (CLASSNAME_VALID_NON_ARRARY == verifyQualifiedName(_currentThread, className)) {
-			updateVMStruct(REGISTER_ARGS);
-			j9Class = internalFindClassString(_currentThread, NULL, className, loader, J9_FINDCLASS_FLAG_USE_LOADER_CP_ENTRIES);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			if (VM_VMHelpers::exceptionPending(_currentThread)) {
-				/* The VMStruct is already updated */
-				J9Class *exceptionClass = J9VMJAVALANGCLASSNOTFOUNDEXCEPTION(_vm);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				/* If the current exception is ClassNotFoundException, discard it. */
-				if (exceptionClass == J9OBJECT_CLAZZ(_currentThread, _currentThread->currentException)) {
-					VM_VMHelpers::clearException(_currentThread);
-				} else {
-					rc = GOTO_THROW_CURRENT_EXCEPTION;
-					goto done;
-				}
-			}
 
+		updateVMStruct(REGISTER_ARGS);
+		j9Class = internalFindClassString(_currentThread, NULL, className, loader,
+											J9_FINDCLASS_FLAG_USE_LOADER_CP_ENTRIES,
+											CLASSNAME_VALID_NON_ARRARY);
+		VMStructHasBeenUpdated(REGISTER_ARGS);
+		if (VM_VMHelpers::exceptionPending(_currentThread)) {
+			/* The VMStruct is already updated */
+			J9Class *exceptionClass = J9VMJAVALANGCLASSNOTFOUNDEXCEPTION(_vm);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			/* If the current exception is ClassNotFoundException, discard it. */
+			if (exceptionClass == J9OBJECT_CLAZZ(_currentThread, _currentThread->currentException)) {
+				VM_VMHelpers::clearException(_currentThread);
+			} else {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				goto done;
+			}
 		}
 
 		restoreInternalNativeStackFrame(REGISTER_ARGS);
@@ -4325,21 +4325,15 @@ done:
 			}
 		}
 
-		/* Make sure the name is legal */
-		if (CLASSNAME_INVALID == verifyQualifiedName(_currentThread, classNameObject)) {
-			goto throwCNFE;
-		}
-
 		/* Find the class */
 		pushObjectInSpecialFrame(REGISTER_ARGS, classNameObject);
 		updateVMStruct(REGISTER_ARGS);
-		foundClass = internalFindClassString(_currentThread, NULL, classNameObject, classLoader, 0);
+		foundClass = internalFindClassString(_currentThread, NULL, classNameObject, classLoader, 0, CLASSNAME_VALID);
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		classNameObject = popObjectInSpecialFrame(REGISTER_ARGS);
 		if (NULL == foundClass) {
 			/* Not found - if no exception is pending, throw ClassNotFoundException */
 			if (NULL == _currentThread->currentException) {
-throwCNFE:
 				updateVMStruct(REGISTER_ARGS);
 				setCurrentException(_currentThread, J9VMCONSTANTPOOL_JAVALANGCLASSNOTFOUNDEXCEPTION, (UDATA*)classNameObject);
 				VMStructHasBeenUpdated(REGISTER_ARGS);

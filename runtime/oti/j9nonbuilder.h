@@ -41,9 +41,11 @@
 #define J9VM_OBJECT_MONITOR_CACHE_SIZE  32
 #define J9VM_ASYNC_MAX_HANDLERS 32
 
+/* The bit fields used by verifyQualifiedName to verify a qualified class name */
 #define CLASSNAME_INVALID			0
-#define CLASSNAME_VALID_NON_ARRARY	1
-#define CLASSNAME_VALID_ARRARY		2
+#define CLASSNAME_VALID_NON_ARRARY	0x1
+#define CLASSNAME_VALID_ARRARY		0x2
+#define CLASSNAME_VALID				(CLASSNAME_VALID_NON_ARRARY | CLASSNAME_VALID_ARRARY)
 
 /* @ddr_namespace: map_to_type=J9JITDataCacheConstants */
 
@@ -4233,7 +4235,7 @@ typedef struct J9InternalVMFunctions {
 	void  ( *internalExceptionDescribe)(struct J9VMThread* vmStruct) ;
 	struct J9Class*  ( *internalFindClassUTF8)(struct J9VMThread *currentThread, U_8 *className, UDATA classNameLength, struct J9ClassLoader *classLoader, UDATA options) ;
 	struct J9Class*  ( *internalFindClassInModule)(struct J9VMThread *currentThread, struct J9Module *j9module, U_8 *className, UDATA classNameLength, struct J9ClassLoader *classLoader, UDATA options) ;
-	struct J9Class*  ( *internalFindClassString)(struct J9VMThread* currentThread, j9object_t moduleName, j9object_t className, struct J9ClassLoader* classLoader, UDATA options) ;
+	struct J9Class*  ( *internalFindClassString)(struct J9VMThread* currentThread, j9object_t moduleName, j9object_t className, struct J9ClassLoader* classLoader, UDATA options, UDATA allowedBitsForClassName) ;
 	struct J9Class*  ( *hashClassTableAt)(struct J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength) ;
 	UDATA  ( *hashClassTableAtPut)(struct J9VMThread *vmThread, struct J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, struct J9Class *value) ;
 	UDATA  ( *hashClassTableDelete)(struct J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength) ;
@@ -4423,7 +4425,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *compareStrings)(struct J9VMThread * vmThread, j9object_t string1, j9object_t string2) ;
 	UDATA  ( *compareStringToUTF8)(struct J9VMThread * vmThread, j9object_t stringObject, UDATA stringFlags, const U_8 * utfData, UDATA utfLength) ;
 	void  ( *prepareForExceptionThrow)(struct J9VMThread * currentThread) ;
-	UDATA  ( *verifyQualifiedName)(struct J9VMThread *vmThread, j9object_t string) ;
+	UDATA  ( *verifyQualifiedName)(struct J9VMThread *vmThread, j9object_t string, UDATA allowedBitsForClassName) ;
 	UDATA ( *copyStringToUTF8Helper)(struct J9VMThread *vmThread, j9object_t string, UDATA stringFlags, UDATA stringOffset, UDATA stringLength, U_8 *utf8Data, UDATA utf8DataLength);
 	void  (JNICALL *sendCompleteInitialization)(struct J9VMThread *vmContext) ;
 	IDATA  ( *J9RegisterAsyncEvent)(struct J9JavaVM * vm, J9AsyncEventHandler eventHandler, void * userData) ;

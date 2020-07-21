@@ -371,7 +371,7 @@ getStringUTF8Length(J9VMThread *vmThread, j9object_t string)
 }
 
 UDATA 
-verifyQualifiedName(J9VMThread *vmThread, j9object_t string)
+verifyQualifiedName(J9VMThread *vmThread, j9object_t string, UDATA allowedBitsForClassName)
 {
 	UDATA unicodeLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string);
 	j9object_t unicodeBytes = J9VMJAVALANGSTRING_VALUE(vmThread, string);
@@ -382,6 +382,7 @@ verifyQualifiedName(J9VMThread *vmThread, j9object_t string)
 	U_8 currentChar = 0;
 	IDATA arity = 0;
 	UDATA i = 0;
+	UDATA result = CLASSNAME_INVALID;
 
 	/* strip leading ['s for array classes */
 	for (i = 0; i < unicodeLength; i++) {
@@ -450,11 +451,14 @@ verifyQualifiedName(J9VMThread *vmThread, j9object_t string)
 	 */
 	if (arity < 0) {
 		return CLASSNAME_INVALID;
-	} else if (0 == arity) {
-		return CLASSNAME_VALID_NON_ARRARY;
-	} else {
-		return CLASSNAME_VALID_ARRARY;
 	}
+
+	result = (0 == arity) ? CLASSNAME_VALID_NON_ARRARY : CLASSNAME_VALID_ARRARY;
+	if (J9_ARE_ANY_BITS_SET(result, allowedBitsForClassName)) {
+		return result;
+	}
+
+	return CLASSNAME_INVALID;
 }
 
 /**
