@@ -908,6 +908,13 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
 
    // J9
    //
+   if (parent->getOpCodeValue() == TR::ArrayStoreCHK && TR::Compiler->om.areValueTypesEnabled())
+      {
+      self()->lowerArrayStoreCHK(parent, treeTop);
+      }
+
+   // J9
+   //
    if (self()->comp()->useCompressedPointers())
       {
       if (parent->getOpCodeValue() == TR::compressedRefs)
@@ -1455,13 +1462,6 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       }
 
    // J9
-   if (node->getOpCodeValue() == TR::ArrayStoreCHK
-       && TR::Compiler->om.areValueTypesEnabled())
-      {
-      self()->lowerArrayStoreCHK(node, tt);
-      }
-
-   // J9
    //
    //Anchoring node to either extract register pressure(performance)
    //or ensure instanceof doesn't have a parent node of CALL (correctness)
@@ -1518,12 +1518,12 @@ J9::CodeGenerator::lowerTreeIfNeeded(
 void
 J9::CodeGenerator::lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt)
    {
-   TR::Node *destChild;
-   TR::Node *sourceChild;
-
    // Pattern match the ArrayStoreCHK operands to get the source of the assignment
    // (sourceChild) and the array to which an element will have a value assigned (destChild)
-   self()->findArrayStoreCHKOperands(node, destChild, sourceChild);
+   TR::Node *firstChild = node->getFirstChild();
+
+   TR::Node *sourceChild = firstChild->getSecondChild();
+   TR::Node *destChild = firstChild->getChild(2);
 
    // Only need to lower if it is possible that the value is a null reference
    if (!sourceChild->isNonNull())
@@ -1646,58 +1646,6 @@ J9::CodeGenerator::lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt)
       }
    }
 
-void
-J9::CodeGenerator::findArrayStoreCHKOperands(TR::Node *node, TR::Node *&destination, TR::Node *&source)
-   {
-   TR::Node *firstChild = node->getFirstChild();
-
-   source = firstChild->getSecondChild();
-   destination = firstChild->getChild(2);
-
-   if (self()->comp()->useCompressedPointers() && firstChild->getOpCode().isIndirect())
-      {
-      TR::Node *translatedNode = source;
-      bool usingLowMemHeap = false;
-      bool usingCompressedPointers = false;
-      bool useShiftedOffsets = (TR::Compiler->om.compressedReferenceShiftOffset() != 0);
-
-      if (translatedNode->getOpCode().isConversion())
-         {
-         translatedNode = translatedNode->getFirstChild();
-         }
-      if (translatedNode->getOpCode().isRightShift()) //optional
-         {
-         translatedNode = translatedNode->getFirstChild();
-         }
-
-      if ((TR::Compiler->vm.heapBaseAddress() == 0) ||
-            source->isNull())
-         {
-         usingLowMemHeap = true;
-         }
-
-      if (translatedNode->getOpCode().isSub() || usingLowMemHeap)
-         {
-         usingCompressedPointers = true;
-         }
-
-      if (usingCompressedPointers)
-         {
-         if (!usingLowMemHeap || useShiftedOffsets)
-            {
-            while ((source->getNumChildren() > 0) &&
-                     (source->getOpCodeValue() != TR::a2l))
-               {
-               source = source->getFirstChild();
-               }
-            if (source->getOpCodeValue() == TR::a2l)
-               {
-               source = source->getFirstChild();
-               }
-            }
-         }
-      }
-   }
 
 static bool isArraySizeSymbolRef(TR::SymbolReference *s, TR::SymbolReferenceTable *symRefTab)
    {
