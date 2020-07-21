@@ -93,6 +93,8 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
+		<!-- temporarily disable this test on zos; https://github.com/eclipse/openj9/issues/9167 -->
+		<platformRequirements>^os.zos</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
