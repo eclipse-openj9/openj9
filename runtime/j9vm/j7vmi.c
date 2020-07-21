@@ -556,7 +556,8 @@ JVM_FindLoadedClass(JNIEnv* env, jobject classLoader, jobject className)
 			NULL,
 			J9_JNI_UNWRAP_REFERENCE(className),
 			vmClassLoader,
-			J9_FINDCLASS_FLAG_EXISTING_ONLY);
+			J9_FINDCLASS_FLAG_EXISTING_ONLY,
+			CLASSNAME_INVALID);
 done:
 	vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
