@@ -784,6 +784,20 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 	 */
 	private native long getGCMainThreadCpuUsedImpl();
 
+/*[IF !Java16]*/
+	/**
+	 * {@inheritDoc}
+	 */
+	/*[IF Java11]*/
+	@Deprecated(forRemoval=true, since="15")
+	/*[ELSE] Java11 */
+	@Deprecated
+	/*[ENDIF] Java11 */
+	public long getGCMasterThreadCpuUsed() {
+		return getGCMainThreadCpuUsedImpl();
+	}
+/*[ENDIF] !Java16 */
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -798,6 +812,20 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 	 * @see #getGCWorkerThreadsCpuUsed()
 	 */
 	private native long getGCWorkerThreadsCpuUsedImpl();
+
+/*[IF !Java16]*/
+	/**
+	 * {@inheritDoc}
+	 */
+	/*[IF Java11]*/
+	@Deprecated(forRemoval=true, since="15")
+	/*[ELSE] Java11 */
+	@Deprecated
+	/*[ENDIF] Java11 */
+	public long getGCSlaveThreadsCpuUsed() {
+		return getGCWorkerThreadsCpuUsedImpl();
+	}
+/*[ENDIF] !Java16 */
 
 	/**
 	 * {@inheritDoc}
