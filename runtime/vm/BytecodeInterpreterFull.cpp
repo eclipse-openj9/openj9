@@ -23,7 +23,7 @@
 #include "j9cfg.h"
 
 #if defined(OMR_GC_FULL_POINTERS)
-#define J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES 0
+#define OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES 0
 #define LOOP_NAME bytecodeLoopFull
 #define INTERPRETER_CLASS VM_BytecodeInterpreterFull
 #include "BytecodeInterpreter.inc"

@@ -24,7 +24,7 @@
 
 #if defined(OMR_GC_FULL_POINTERS)
 #define DEBUG_VERSION
-#define J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES 0
+#define OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES 0
 #define LOOP_NAME debugBytecodeLoopFull
 #define INTERPRETER_CLASS VM_DebugBytecodeInterpreterFull
 #include "BytecodeInterpreter.inc"
