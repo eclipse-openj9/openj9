@@ -763,6 +763,34 @@ static void allSlotsInRecordDo(J9ROMClass* romClass, U_32* recordPointer, J9ROMC
 	callbacks->sectionCallback(romClass, recordPointer, (UDATA)cursor - (UDATA)recordPointer, "recordInfo", userData);
 }
 
+static void 
+allSlotsInPermittedSubclassesDo(J9ROMClass* romClass, U_32* permittedSubclassesPointer, J9ROMClassWalkCallbacks* callbacks, void* userData)
+{
+	BOOLEAN rangeValid = FALSE;
+	U_32 *cursor = permittedSubclassesPointer;
+	U_32 permittedSubclassesCount = 0;
+
+	rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(U_32), userData);
+	if (FALSE == rangeValid) {
+		return;
+	}
+
+	callbacks->slotCallback(romClass, J9ROM_U32, cursor, "permittedSubclassesCount", userData);
+	cursor += 1;
+	permittedSubclassesCount = *permittedSubclassesPointer;
+	
+	for (; permittedSubclassesCount > 0; permittedSubclassesCount--) {
+		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(U_32), userData);
+		if (FALSE == rangeValid) {
+			return;
+		}
+		callbacks->slotCallback(romClass, J9ROM_UTF8, cursor, "className", userData);
+		cursor += 1;
+	}
+
+	callbacks->sectionCallback(romClass, permittedSubclassesPointer, (UDATA)cursor - (UDATA)permittedSubclassesPointer, "permittedSubclassesInfo", userData);
+}
+
 /*
  * See ROMClassWriter::writeOptionalInfo for illustration of the layout.
  */
@@ -840,6 +868,14 @@ allSlotsInOptionalInfoDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callback
 		if (rangeValid) {
 			callbacks->slotCallback(romClass, J9ROM_SRP, cursor, "recordSRP", userData);
 			allSlotsInRecordDo(romClass, SRP_PTR_GET(cursor, U_32*), callbacks, userData);
+		}
+		cursor++;
+	}
+	if (J9ROMCLASS_IS_SEALED(romClass)) {
+		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(J9SRP), userData);
+		if (rangeValid) {
+			callbacks->slotCallback(romClass, J9ROM_SRP, cursor, "permittedSubclassesSRP", userData);
+			allSlotsInPermittedSubclassesDo(romClass, SRP_PTR_GET(cursor, U_32*), callbacks, userData);
 		}
 		cursor++;
 	}
