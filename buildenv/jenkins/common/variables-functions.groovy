@@ -718,7 +718,7 @@ def set_test_misc() {
 
 def set_slack_channel() {
     SLACK_CHANNEL = params.SLACK_CHANNEL
-    if (!SLACK_CHANNEL && (!params.PERSONAL_BUILD || params.PERSONAL_BUILD != 'true')) {
+    if (!SLACK_CHANNEL && !params.PERSONAL_BUILD.equalsIgnoreCase('true')) {
         SLACK_CHANNEL = VARIABLES.slack_channel
     }
 }
@@ -875,7 +875,7 @@ def set_build_identifier() {
         if (params.ghprbPullId && params.ghprbGhRepository) {
             // If Pull Request build
             BUILD_IDENTIFIER = params.ghprbGhRepository + '#' + params.ghprbPullId
-        } else if (PERSONAL_BUILD) {
+        } else if (PERSONAL_BUILD.equalsIgnoreCase('true')) {
             // If Personal build
             wrap([$class: 'BuildUser']) {
                 BUILD_IDENTIFIER = "${BUILD_USER_EMAIL}"
