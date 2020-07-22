@@ -63,6 +63,7 @@ DECLARE_UTF8_ATTRIBUTE_NAME(RUNTIME_VISIBLE_TYPE_ANNOTATIONS, "RuntimeVisibleTyp
 DECLARE_UTF8_ATTRIBUTE_NAME(ANNOTATION_DEFAULT, "AnnotationDefault");
 DECLARE_UTF8_ATTRIBUTE_NAME(BOOTSTRAP_METHODS, "BootstrapMethods");
 DECLARE_UTF8_ATTRIBUTE_NAME(RECORD, "Record");
+DECLARE_UTF8_ATTRIBUTE_NAME(PERMITTED_SUBCLASSES, "PermittedSubclasses");
 #if JAVA_SPEC_VERSION >= 11
 DECLARE_UTF8_ATTRIBUTE_NAME(NEST_MEMBERS, "NestMembers");
 DECLARE_UTF8_ATTRIBUTE_NAME(NEST_HOST, "NestHost");
@@ -91,6 +92,16 @@ ClassFileWriter::analyzeROMClass()
 
 	if (J9_ARE_ANY_BITS_SET(_romClass->extraModifiers, J9AccRecord)) {
 		analyzeRecordAttribute();
+	}
+
+	if (J9ROMCLASS_IS_SEALED(_romClass)) {
+		addEntry((void*) &PERMITTED_SUBCLASSES, 0, CFR_CONSTANT_Utf8);
+
+		U_32 *permittedSubclassesCountPtr = getNumberOfPermittedSubclassesPtr(_romClass);
+		for (U_32 i = 0; i < *permittedSubclassesCountPtr; i++) {
+			J9UTF8* permittedSubclassNameUtf8 = permittedSubclassesNameAtIndex(permittedSubclassesCountPtr, i);
+			addEntry(permittedSubclassNameUtf8, 0, CFR_CONSTANT_Utf8);
+		}
 	}
 
 	J9EnclosingObject * enclosingObject = getEnclosingMethodForROMClass(_javaVM, NULL, _romClass);
@@ -957,6 +968,9 @@ ClassFileWriter::writeAttributes()
 	if (J9_ARE_ANY_BITS_SET(_romClass->extraModifiers, J9AccRecord)) {
 		attributesCount += 1;
 	}
+	if (J9ROMCLASS_IS_SEALED(_romClass)) {
+		attributesCount += 1;
+	}
 #if JAVA_SPEC_VERSION >= 11
 	/* Class can not have both a nest members and member of nest attribute */
 	if ((0 != _romClass->nestMemberCount) || (NULL != nestHost)) {
@@ -1084,6 +1098,32 @@ ClassFileWriter::writeAttributes()
 	/* record attribute */
 	if (J9_ARE_ANY_BITS_SET(_romClass->extraModifiers, J9AccRecord)) {
 		writeRecordAttribute();
+	}
+
+	/* write PermittedSubclasses attribute */
+	if (J9ROMCLASS_IS_SEALED(_romClass)) {
+		U_32 *permittedSubclassesCountPtr = getNumberOfPermittedSubclassesPtr(_romClass);
+		writeAttributeHeader((J9UTF8 *) &PERMITTED_SUBCLASSES, sizeof(U_16) + (*permittedSubclassesCountPtr * sizeof(U_16)));
+
+		writeU16(*permittedSubclassesCountPtr);
+
+		for (U_32 i = 0; i < *permittedSubclassesCountPtr; i++) {
+			J9UTF8* permittedSubclassNameUtf8 = permittedSubclassesNameAtIndex(permittedSubclassesCountPtr, i);
+
+			/* CONSTANT_Class_info index should be written. Find class entry that references the subclass name in constant pool. */
+			J9HashTableState hashTableState;
+			HashTableEntry * entry = (HashTableEntry *) hashTableStartDo(_cpHashTable, &hashTableState);
+			while (NULL != entry) {
+				if (CFR_CONSTANT_Class == entry->cpType) {
+					J9UTF8* classNameCandidate = (J9UTF8*)entry->address;
+					if (J9UTF8_EQUALS(classNameCandidate, permittedSubclassNameUtf8)) {
+						writeU16(entry->cpIndex);
+						break;
+					}
+				}
+				entry = (HashTableEntry *) hashTableNextDo(&hashTableState);
+			}
+		}
 	}
 }
 
