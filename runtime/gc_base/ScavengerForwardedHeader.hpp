@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,13 +74,17 @@ public:
 	{
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 #if defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+		return (bool)OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES;
+#else /* defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 		return _compressObjectReferences;
-#else /* OMR_GC_FULL_POINTERS */
+#endif /* defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
+#else /* defined(OMR_GC_FULL_POINTERS) */
 		return true;
-#endif /* OMR_GC_FULL_POINTERS */
-#else /* OMR_GC_COMPRESSED_POINTERS */
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
 		return false;
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 	}
 
 	/**

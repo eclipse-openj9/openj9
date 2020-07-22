@@ -23,7 +23,7 @@
 #include "j9cfg.h"
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-#define J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES 1
+#define OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES 1
 #define LOOP_NAME bytecodeLoopCompressed
 #define INTERPRETER_CLASS VM_BytecodeInterpreterCompressed
 #include "BytecodeInterpreter.inc"

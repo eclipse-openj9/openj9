@@ -26,13 +26,13 @@
 
 #include "j9cfg.h"
 
-#if defined(J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
-#if J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES
+#if defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#if OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES
 #define MM_ObjectAccessBarrierAPI MM_ObjectAccessBarrierAPICompressed
-#else /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#else /* OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
 #define MM_ObjectAccessBarrierAPI MM_ObjectAccessBarrierAPIFull
-#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
-#endif /* J9_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#endif /* OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#endif /* OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
 
 #include "j9.h"
 #include "j9modron.h"
@@ -87,7 +87,11 @@ public:
 	MMINLINE bool compressObjectReferences() {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 #if defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+		return (bool)OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES;
+#else /* defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 		return _compressObjectReferences;
+#endif /* defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 #else /* defined(OMR_GC_FULL_POINTERS) */
 		return true;
 #endif /* defined(OMR_GC_FULL_POINTERS) */
