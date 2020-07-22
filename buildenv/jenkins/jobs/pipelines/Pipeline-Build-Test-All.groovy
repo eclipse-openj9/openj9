@@ -304,7 +304,7 @@ try {
 
                     SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
 
-                    if (PERSONAL_BUILD) {
+                    if (PERSONAL_BUILD.equalsIgnoreCase('true')) {
                         // update build description
                         currentBuild.description += "<br/>${PLATFORMS}"
                     }
