@@ -189,6 +189,56 @@
 			<impl>openj9</impl>
 		</impls>
 	</test>
+	
+	<test>
+		<testCaseName>jit_jitt_none_SCC</testCaseName>
+		<variations>
+			<variation>-Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs:sync -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs:async -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames \
+	arrayTest,\
+	assemblerTest,\
+	castingTest,\
+	cfgTest,\
+	crashesTest,\
+	ctresolvesTest,\
+	exceptionsTest,\
+	fieldsTest,\
+	floatsTest,\
+	gcTest,\
+	geCastingTest,\
+	immedOpTest,\
+	invokeTest,\
+	mathTest,\
+	math2Test,\
+	miscTest,\
+	os390LinkageTest,\
+	promotionTest,\
+	resolvesTest,\
+	sieveTest,\
+	transitionsTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11+</subset>
+		</subsets>
+		<impls>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 
 	<test>
 		<testCaseName>jit_jitt_XCEEHDLR</testCaseName>
