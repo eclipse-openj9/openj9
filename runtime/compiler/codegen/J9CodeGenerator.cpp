@@ -2875,7 +2875,7 @@ J9::CodeGenerator::processRelocations()
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->comp()->fe());
 
    //Project neutral non-AOT processRelocation
-   OMR::CodeGenerator::processRelocations();
+   OMR::CodeGeneratorConnector::processRelocations();
 
    int32_t missedSite = -1;
 
