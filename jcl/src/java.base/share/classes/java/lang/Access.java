@@ -398,15 +398,9 @@ final class Access implements JavaLangAccess {
 /*[ENDIF] Java14 */
 
 /*[IF Java15]*/
-	// TODO: implement support for hidden classes.
-
 	public Class<?> defineClass(ClassLoader classLoader, Class<?> clazz, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object obj) {
-		Unsafe theUnsafe = Unsafe.getUnsafe();
-		Class <?> ret = theUnsafe.defineAnonymousClass(clazz, classRep, null);
-		if (init) {
-			theUnsafe.ensureClassInitialized(ret);
-		}
-		return ret;
+		ClassLoader targetClassLoader = (null == classLoader) ? ClassLoader.bootstrapClassLoader : classLoader;
+		return targetClassLoader.defineClassInternal(clazz, className, classRep, protectionDomain, init, flags, obj);
 	}
 
 	public ProtectionDomain protectionDomain(Class<?> clazz) {

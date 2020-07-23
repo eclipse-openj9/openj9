@@ -227,6 +227,9 @@ public:
 	bool isClassUnsafe() const { return J9_FINDCLASS_FLAG_UNSAFE == (_findClassFlags & J9_FINDCLASS_FLAG_UNSAFE); }
 	bool isClassAnon() const { return J9_FINDCLASS_FLAG_ANON == (_findClassFlags & J9_FINDCLASS_FLAG_ANON); }
 	bool alwaysSplitBytecodes() const { return J9_ARE_ANY_BITS_SET(_bctFlags, BCT_AlwaysSplitBytecodes); }
+	bool isClassHidden() const { return J9_FINDCLASS_FLAG_HIDDEN == (_findClassFlags & J9_FINDCLASS_FLAG_HIDDEN);}
+	bool isHiddenClassOptNestmateSet() const { return J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE == (_findClassFlags & J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE);}
+	bool isHiddenClassOptStrongSet() const { return J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG == (_findClassFlags & J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG);}
 
 	bool isClassUnmodifiable() const {
 		bool unmodifiable = false;
@@ -288,6 +291,7 @@ public:
 			&& !(isSharedClassesBCIEnabled()
 			&& (classFileBytesReplaced() || isCreatingIntermediateROMClass()))
 			&& (LOAD_LOCATION_PATCH_PATH != loadLocation())
+			&& (!isClassHidden()) /* Need additional work if we want to share hidden class. Turn it off now. */
 		) {
 			return true;
 		} else {
@@ -370,6 +374,10 @@ public:
 	{
 		if (!isRedefining() && !isRetransforming()) {
 			if (NULL != _className) {
+				if (isClassHidden()) {
+					/* for hidden class className has ROM address appended at the end, _className does not have that */
+					classNameLength = (U_16)_classNameLength;
+				}
 				if ((0 == J9UTF8_DATA_EQUALS(_className, _classNameLength, className, classNameLength))) {
 #define J9WRONGNAME " (wrong name: "
 					PORT_ACCESS_FROM_PORT(_portLibrary);

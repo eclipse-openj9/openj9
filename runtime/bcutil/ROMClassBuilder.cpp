@@ -176,7 +176,7 @@ j9bcutil_buildRomClass(J9LoadROMClassData *loadData, U_8 * intermediateData, UDA
 	UDATA bcuFlags = javaVM->dynamicLoadBuffers->flags;
 	UDATA findClassFlags = loadData->options;
 
-	ROMClassSegmentAllocationStrategy romClassSegmentAllocationStrategy(javaVM, loadData->classLoader);
+	ROMClassSegmentAllocationStrategy romClassSegmentAllocationStrategy(javaVM, loadData->classLoader, J9_ARE_ANY_BITS_SET(findClassFlags, J9_FINDCLASS_FLAG_HIDDEN));
 	ROMClassBuilder *romClassBuilder = ROMClassBuilder::getROMClassBuilder(PORTLIB, javaVM);
 	if (NULL == romClassBuilder) {
 		return BCT_ERR_OUT_OF_MEMORY;
@@ -1059,9 +1059,9 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                                  + UNUSED
  *                                 + UNUSED
  *                                + UNUSED
- *                               + UNUSED
+ *                              + J9AccClassHiddenOptionNestmate
  *
- *                             + UNUSED
+ *                             + J9AccClassHiddenOptionStrong
  *                            + AccSealed
  *                           + AccRecord
  *                          + AccClassAnonClass
@@ -1069,7 +1069,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                        + AccSynthetic (matches Oracle modifier position)
  *                       + AccClassUseBisectionSearch
  *                      + AccClassInnerClass
- *                     + UNUSED
+ *                     + J9AccClassHidden
  *
  *                   + AccClassNeedsStaticConstantInit
  *                  + AccClassIntermediateDataIsClassfile
@@ -1105,6 +1105,16 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 
 	if ( context->isClassAnon() ) {
 		modifiers |= J9AccClassAnonClass;
+	}
+	
+	if (context->isClassHidden()) {
+		modifiers |= J9AccClassHidden;
+		if (context->isHiddenClassOptNestmateSet()) {
+			modifiers |= J9AccClassHiddenOptionNestmate;
+		}
+		if (context->isHiddenClassOptStrongSet()) {
+			modifiers |= J9AccClassHiddenOptionStrong;
+		}
 	}
 
 	if ( context->classFileBytesReplaced() ) {

@@ -95,10 +95,13 @@ internalDefineClass(
 	loadData.classData = classData;
 	loadData.classDataLength = classDataLength;
 	loadData.classDataObject = classDataObject;
-	/* use anonClassLoader if this is an anonClass */
+
 	loadData.classLoader = classLoader;
 	if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
-		loadData.classLoader = vm->anonClassLoader;
+		if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_HIDDEN)) {
+			/* use anonClassLoader if this is an anonClass, but not hidden class. */
+			loadData.classLoader = vm->anonClassLoader;
+		}
 	}
 	loadData.protectionDomain = protectionDomain;
 	loadData.options = options;

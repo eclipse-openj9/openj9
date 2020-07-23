@@ -578,3 +578,11 @@ if(NOT JAVA_SPEC_VERSION LESS 11)
 		Java_java_lang_invoke_MethodHandle_getCPConstantDynamicAt
 	)
 endif()
+
+#java 15+
+if(NOT JAVA_SPEC_VERSION LESS 15)
+	omr_add_exports(jclse
+		Java_java_lang_Class_isHiddenImpl
+		Java_java_lang_ClassLoader_defineClassImpl1
+	)
+endif()

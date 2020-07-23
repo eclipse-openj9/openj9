@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2012, 2019 IBM Corp. and others
+  Copyright (c) 2012, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1078,7 +1078,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
-	<test id="Test 57-c: Make sure that when the program runs again lambda classes are used from the cache and not stored again " timeout="600" runPath=".">
+	<test id="Test 57-c: Make sure that when the program runs again lambda classes are used from the cache and not stored again" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259,j9bcu.270} $CP_HANOI$ $PROGRAM_LAMBDA$ 0</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000)'</output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
@@ -1092,7 +1092,7 @@
 	</test>
 	
 	
-	<test id="Test 58: Make sure that when the program runs again without the first lambda class, the second lambda class is still used from the cache and not stored again " timeout="600" runPath=".">
+	<test id="Test 58: Make sure that when the program runs again without the first lambda class, the second lambda class is still used from the cache and not stored again" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259,j9bcu.270} $CP_HANOI$ $PROGRAM_LAMBDA$ 1</command>
 		<output type="success" caseSensitive="yes" regex="no">Lambda test done!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000)'</output>
@@ -1118,7 +1118,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
 	
-	<test id="Test 59-a: Run and store 10 lambda classes in the cache " timeout="600" runPath=".">
+	<test id="Test 59-a: Run and store 10 lambda classes in the cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259} $CP_HANOI$ $PROGRAM_LAMBDA$ 2</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) </output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
@@ -1157,7 +1157,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
 	
-	<test id="Test 60-a: Make sure that lambda classes work and get stored in the cache when another function with lambda classes in another file is being called from the current file " timeout="600" runPath=".">
+	<test id="Test 60-a: Make sure that lambda classes work and get stored in the cache when another function with lambda classes in another file is being called from the current file" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259} $CP_HANOI$ $PROGRAM_LAMBDA$ 4</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) </output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
@@ -1199,7 +1199,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
 	
-	<test id="Test 61-a: Make sure that when shared lambdas are disabled, no lambda classes are stored in the cache " timeout="600" runPath=".">
+	<test id="Test 61-a: Make sure that when shared lambdas are disabled, no lambda classes are stored in the cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259} -XX:-ShareAnonymousClasses $CP_HANOI$ $PROGRAM_LAMBDA$ 0</command>
 		<output type="success" caseSensitive="yes" regex="no">Lambda test done!</output>
 

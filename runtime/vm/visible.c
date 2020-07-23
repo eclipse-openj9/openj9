@@ -283,9 +283,22 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 		J9UTF8 *nestHostName = J9ROMCLASS_NESTHOSTNAME(romClass);
 		BOOLEAN canRunJavaCode = J9_ARE_NO_BITS_SET(options, J9_LOOK_NO_JAVA);
 		BOOLEAN throwException = canRunJavaCode && J9_ARE_NO_BITS_SET(options, J9_LOOK_NO_THROW);
+		BOOLEAN hiddenNestMate = J9ROMCLASS_IS_OPTIONNESTMATE_SET(romClass);
+
+		J9Class* curClazz = clazz;
+		BOOLEAN isCurClassHiddenNestMate = hiddenNestMate;
+		while ((isCurClassHiddenNestMate) 
+			&& (curClazz != curClazz->hostClass)
+		) {
+			/* current class is the nestmate of its hostClass, so we need to find nesthost of the hostClass. */
+			curClazz = curClazz->hostClass;
+			isCurClassHiddenNestMate = J9ROMCLASS_IS_OPTIONNESTMATE_SET(curClazz->romClass);
+			nestHostName = J9ROMCLASS_NESTHOSTNAME(curClazz->romClass);
+		}
+
 		/* If no nest host is named, class is own nest host */
 		if (NULL == nestHostName) {
-			nestHost = clazz;
+			nestHost = curClazz;
 		} else {
 			UDATA classLoadingFlags = 0;
 			if (canRunJavaCode) {
@@ -304,18 +317,24 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 			} else if (clazz->packageID != nestHost->packageID) {
 				result = J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR;
 			} else {
-				/* The nest host must have a nestmembers attribute that claims this class. */
-				J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
-				J9SRP *nestMembers = J9ROMCLASS_NESTMEMBERS(nestHost->romClass);
-				U_16 nestMemberCount = nestHost->romClass->nestMemberCount;
-				U_16 i = 0;
-
-				result = J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR;
-				for (i = 0; i < nestMemberCount; i++) {
-					J9UTF8 *nestMemberName = NNSRP_GET(nestMembers[i], J9UTF8*);
-					if (J9UTF8_EQUALS(className, nestMemberName)) {
-						result = J9_VISIBILITY_ALLOWED;
-						break;
+				if (hiddenNestMate) {
+					/* The nest host of hidden class does not have a nestmembers attribute that claims the hidden class. 
+					 * Set result to J9_VISIBILITY_ALLOWED in this case */
+					result = J9_VISIBILITY_ALLOWED;
+				} else {
+					/* The nest host must have a nestmembers attribute that claims this class. */
+					J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+					J9SRP *nestMembers = J9ROMCLASS_NESTMEMBERS(nestHost->romClass);
+					U_16 nestMemberCount = nestHost->romClass->nestMemberCount;
+					U_16 i = 0;
+	
+					result = J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR;
+					for (i = 0; i < nestMemberCount; i++) {
+						J9UTF8 *nestMemberName = NNSRP_GET(nestMembers[i], J9UTF8*);
+						if (J9UTF8_EQUALS(className, nestMemberName)) {
+							result = J9_VISIBILITY_ALLOWED;
+							break;
+						}
 					}
 				}
 			}

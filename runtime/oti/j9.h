@@ -124,7 +124,7 @@ typedef struct J9ClassLoaderWalkState {
 #define J9CLASS_IS_MIXED(ramClass) (((J9CLASS_FLAGS(ramClass) >> J9AccClassRAMShapeShift) & OBJECT_HEADER_SHAPE_MASK) == OBJECT_HEADER_SHAPE_MIXED)
 
 #define J9CLASS_IS_EXEMPT_FROM_VALIDATION(clazz) \
-	(J9ROMCLASS_IS_UNSAFE((clazz)->romClass) || J9_ARE_ANY_BITS_SET((clazz)->classFlags, J9ClassIsExemptFromValidation))
+	((J9ROMCLASS_IS_UNSAFE((clazz)->romClass) && !J9ROMCLASS_IS_HIDDEN((clazz)->romClass)) || (J9_ARE_ANY_BITS_SET((clazz)->classFlags, J9ClassIsExemptFromValidation)))
 
 #define IS_STRING_COMPRESSION_ENABLED(vmThread) (FALSE != ((vmThread)->javaVM)->strCompEnabled)
 
