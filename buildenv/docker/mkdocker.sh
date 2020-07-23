@@ -225,7 +225,7 @@ fi
 install_centos_packages() {
   echo "RUN yum -y update \\"
 if [ $version = 6.9 ] ; then
-  echo " && yum -y install https://\$(rpm -E '%{?centos:centos}%{!?centos:rhel}%{rhel}').iuscommunity.org/ius-release.rpm \\"
+  echo " && yum -y install https://repo.ius.io/ius-release-el6.rpm \\"
 fi
   echo " && yum -y install \\"
   echo "    alsa-lib-devel \\"
@@ -278,6 +278,7 @@ fi
   echo "    perl-GD \\"
   echo "    perl-libwww-perl \\"
   echo "    perl-Time-HiRes \\"
+  echo "    systemtap-devel \\"
   echo "    texinfo \\" # required to update make
   echo "    unzip \\"
   echo "    vim \\"
@@ -453,6 +454,7 @@ if [ $version = 16.04 ] ; then
   echo "    realpath \\"
 fi
   echo "    ssh \\"
+  echo "    systemtap-sdt-dev \\"
   echo "    unzip \\"
   echo "    wget \\"
   echo "    xvfb \\"
