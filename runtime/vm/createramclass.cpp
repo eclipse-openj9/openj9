@@ -1577,6 +1577,40 @@ popLoadingOrLinkingStack(J9VMThread *vmThread, J9StackElement **stack, J9Pool *s
 	pool_removeElement(stackpool, topOfStack);
 }
 
+
+/**
+ * JEP 360: if super class/interface is sealed the inheriting subclass must be listed in the
+ * super's PermittedSubclasses attribute to be a legal subclass.
+ * @param superRomClass ROM class of super class or interface
+ * @param className name of subclass
+ * @param classNameLength length of subclass name
+ * @return TRUE if subclass can legally inherit the super, FALSE otherwise.
+ */
+static VMINLINE BOOLEAN
+isClassPermittedBySealedSuper(J9ROMClass *superRomClass, U_8* className, U_16 classNameLength)
+{
+	BOOLEAN result = FALSE;
+	if (! J9ROMCLASS_IS_SEALED(superRomClass)) {
+		/* for non-sealed classes all subclasses are permitted (the final case is handled elsewhere). */
+		result = TRUE;
+	} else {
+		U_32 *permittedSubclassesCountPtr = getNumberOfPermittedSubclassesPtr(superRomClass);
+
+		/* find matching subclass name */
+		for (U_32 index = 0; index < *permittedSubclassesCountPtr; index++) {
+			J9UTF8* permittedSubclassNameUtf8 = permittedSubclassesNameAtIndex(permittedSubclassesCountPtr, index);
+			U_8 *permittedSubclassName = J9UTF8_DATA(permittedSubclassNameUtf8);
+			U_16 permittedSubclassLength = J9UTF8_LENGTH(permittedSubclassNameUtf8);
+
+			if (J9UTF8_DATA_EQUALS(permittedSubclassName, permittedSubclassLength, className, classNameLength)) {
+				result = TRUE;
+				break;
+			}
+		}
+	}
+	return result;
+}
+
 /**
  * Attempts to recursively load (if necessary) the required superclass and
  * interfaces for the class being loaded.
@@ -1643,6 +1677,13 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 				return FALSE;
 			}
 
+			/* JEP 360 sealed classes: if superclass is sealed it must contain the romClass's name in its PermittedSubclasses attribute */
+			if (! isClassPermittedBySealedSuper(superclass->romClass, J9UTF8_DATA(className), J9UTF8_LENGTH(className))) {
+				Trc_VM_CreateRAMClassFromROMClass_classIsNotPermittedBySealedSuperclass(vmThread, superclass, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+				setCurrentExceptionForBadClass(vmThread, className, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS);
+				return FALSE;
+			}
+
 			/* ensure that the superclass is visible */
 			if (!isExemptFromValidation) {
 				/*
@@ -1695,6 +1736,14 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 						setCurrentExceptionForBadClass(vmThread, J9ROMCLASS_CLASSNAME(interfaceClass->romClass), J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE);
 						return FALSE;
 					}
+
+					/* JEP 360 sealed classes: if superinterface is sealed it must contain the romClass's name in its PermittedSubclasses attribute */
+					if (! isClassPermittedBySealedSuper(interfaceClass->romClass, J9UTF8_DATA(className), J9UTF8_LENGTH(className))) {
+						Trc_VM_CreateRAMClassFromROMClass_classIsNotPermittedBySealedSuperinterface(vmThread, interfaceClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+						setCurrentExceptionForBadClass(vmThread, className, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE);
+						return FALSE;
+					}
+
 					if (!isExemptFromValidation) {
 						/*
 						 * Failure occurs if
