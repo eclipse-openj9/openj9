@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2009, 2018 IBM Corp. and others
+  Copyright (c) 2009, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,6 +71,42 @@
  <test id="deleteglobalreftwice">
   <command>$EXE$ $CP$ -Xcheck:jni -Dcom.ibm.tools.attach.enable=no -Xgcthreads1 j9vm.test.jnichk.DeleteGlobalRefTwice</command>
   <output regex="no">JVMJNCK035E</output>
+ </test>
+
+<!-- JVMJNCK101E JNI error in ToReflectedField: Argument #4 is expected to be static but a non-static field ID is passed to JNI -->
+ <test id="testToReflectedFieldExpectedStaticGotNonStatic">
+  <command>$EXE$ $CP$  -Xint -Xcheck:jni -Dcom.ibm.tools.attach.enable=no -Xgcthreads1 j9vm.test.jnichk.PassingFieldID testToReflectedFieldExpectedStaticGotNonStatic</command>
+  <output regex="no">JVMJNCK101E</output>
+ </test>
+
+<!-- JVMJNCK102E JNI error in ToReflectedField: Argument #4 is expected to be non-static but a static field ID is passed to JNI -->
+<test id="testToReflectedFieldExpectedNonStaticGotStatic">
+  <command>$EXE$ $CP$  -Xint -Xcheck:jni -Dcom.ibm.tools.attach.enable=no -Xgcthreads1 j9vm.test.jnichk.PassingFieldID testToReflectedFieldExpectedNonStaticGotStatic</command>
+  <output regex="no">JVMJNCK102E</output>
+ </test>
+
+<!-- JVMJNCK102E JNI error in GetCharField: Argument #3 is expected to be non-static but a static field ID is passed to JNI -->
+<test id="testGetCharFieldPassedStaticID">
+  <command>$EXE$ $CP$  -Xint -Xcheck:jni -Dcom.ibm.tools.attach.enable=no -Xgcthreads1 j9vm.test.jnichk.PassingFieldID testGetCharFieldPassedStaticID</command>
+  <output regex="no">JVMJNCK102E</output>
+ </test>
+
+<!-- JVMJNCK101E JNI error in GetStaticCharField: Argument #3 is expected to be static but a non-static field ID is passed to JNI -->
+<test id="testGetStaticCharFieldPassedNonStaticID">
+  <command>$EXE$ $CP$  -Xint -Xcheck:jni -Dcom.ibm.tools.attach.enable=no -Xgcthreads1 j9vm.test.jnichk.PassingFieldID testGetStaticCharFieldPassedNonStaticID</command>
+  <output regex="no">JVMJNCK101E</output>
+ </test>
+
+<!-- JVMJNCK102E JNI error in SetObjectField: Argument #3 is expected to be non-static but a static field ID is passed to JNI -->
+ <test id="testSetObjectFieldPassedStaticID">
+  <command>$EXE$ $CP$  -Xint -Xcheck:jni -Dcom.ibm.tools.attach.enable=no -Xgcthreads1 j9vm.test.jnichk.PassingFieldID testSetObjectFieldPassedStaticID</command>
+  <output regex="no">JVMJNCK102E</output>
+ </test>
+
+<!-- JVMJNCK101E JNI error in SetStaticObjectField: Argument #3 is expected to be static but a non-static field ID is passed to JNI -->
+<test id="testSetStaticObjectFieldPassedNonStaticID">
+  <command>$EXE$ $CP$  -Xint -Xcheck:jni -Dcom.ibm.tools.attach.enable=no -Xgcthreads1 j9vm.test.jnichk.PassingFieldID testSetStaticObjectFieldPassedNonStaticID</command>
+  <output regex="no">JVMJNCK101E</output>
  </test>
 
  <loop index="I" from="1" until="9" inc="1">

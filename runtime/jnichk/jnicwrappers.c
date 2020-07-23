@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1940,7 +1940,7 @@ checkGetObjectField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jobject actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JOBJECT, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JOBJECT, JNIC_JFIELDINSTANCEID, 0 };
 	static const char function[] = "GetObjectField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID);
@@ -1957,7 +1957,7 @@ checkGetBooleanField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jboolean actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, 0 };
 	static const char function[] = "GetBooleanField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID);
@@ -1974,7 +1974,7 @@ checkGetByteField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jbyte actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, 0 };
 	static const char function[] = "GetByteField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID);
@@ -1991,7 +1991,7 @@ checkGetCharField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jchar actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, 0 };
 	static const char function[] = "GetCharField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID);
@@ -2008,7 +2008,7 @@ checkGetShortField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jshort actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, 0 };
 	static const char function[] = "GetShortField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID);
@@ -2025,7 +2025,7 @@ checkGetIntField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jint actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, 0 };
 	static const char function[] = "GetIntField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID);
@@ -2042,7 +2042,7 @@ checkGetLongField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jlong actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, 0 };
 	static const char function[] = "GetLongField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID);
@@ -2059,7 +2059,7 @@ checkGetFloatField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jfloat actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, 0 };
 	static const char function[] = "GetFloatField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID);
@@ -2076,7 +2076,7 @@ checkGetDoubleField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jdouble actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, 0 };
 	static const char function[] = "GetDoubleField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID);
@@ -2092,7 +2092,7 @@ checkSetObjectField(JNIEnv *env, jobject obj, jfieldID fieldID, jobject val)
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, JNIC_JOBJECT, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, JNIC_JOBJECT, 0 };
 	static const char function[] = "SetObjectField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID, val);
@@ -2106,7 +2106,7 @@ checkSetBooleanField(JNIEnv *env, jobject obj, jfieldID fieldID, jboolean val)
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, JNIC_JBOOLEAN, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, JNIC_JBOOLEAN, 0 };
 	static const char function[] = "SetBooleanField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID, val);
@@ -2120,7 +2120,7 @@ checkSetByteField(JNIEnv *env, jobject obj, jfieldID fieldID, jbyte val)
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, JNIC_JBYTE, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, JNIC_JBYTE, 0 };
 	static const char function[] = "SetByteField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID, val);
@@ -2134,7 +2134,7 @@ checkSetCharField(JNIEnv *env, jobject obj, jfieldID fieldID, jchar val)
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, JNIC_JCHAR, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, JNIC_JCHAR, 0 };
 	static const char function[] = "SetCharField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID, val);
@@ -2148,7 +2148,7 @@ checkSetShortField(JNIEnv *env, jobject obj, jfieldID fieldID, jshort val)
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, JNIC_JSHORT, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, JNIC_JSHORT, 0 };
 	static const char function[] = "SetShortField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID, val);
@@ -2162,7 +2162,7 @@ checkSetIntField(JNIEnv *env, jobject obj, jfieldID fieldID, jint val)
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, JNIC_JINT, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, JNIC_JINT, 0 };
 	static const char function[] = "SetIntField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID, val);
@@ -2176,7 +2176,7 @@ checkSetLongField(JNIEnv *env, jobject obj, jfieldID fieldID, jlong val)
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, JNIC_JLONG, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, JNIC_JLONG, 0 };
 	static const char function[] = "SetLongField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID, val);
@@ -2190,7 +2190,7 @@ checkSetFloatField(JNIEnv *env, jobject obj, jfieldID fieldID, jfloat val)
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, JNIC_JFLOAT, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, JNIC_JFLOAT, 0 };
 	static const char function[] = "SetFloatField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID, val);
@@ -2204,7 +2204,7 @@ checkSetDoubleField(JNIEnv *env, jobject obj, jfieldID fieldID, jdouble val)
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDID, JNIC_JDOUBLE, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, JNIC_JDOUBLE, 0 };
 	static const char function[] = "SetDoubleField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID, val);
@@ -2816,7 +2816,7 @@ checkGetStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jobject actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, 0 };
 	static const char function[] = "GetStaticObjectField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID);
@@ -2833,7 +2833,7 @@ checkGetStaticBooleanField(JNIEnv *env, jclass clazz, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jboolean actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, 0 };
 	static const char function[] = "GetStaticBooleanField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID);
@@ -2850,7 +2850,7 @@ checkGetStaticByteField(JNIEnv *env, jclass clazz, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jbyte actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, 0 };
 	static const char function[] = "GetStaticByteField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID);
@@ -2867,7 +2867,7 @@ checkGetStaticCharField(JNIEnv *env, jclass clazz, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jchar actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, 0 };
 	static const char function[] = "GetStaticCharField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID);
@@ -2884,7 +2884,7 @@ checkGetStaticShortField(JNIEnv *env, jclass clazz, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jshort actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, 0 };
 	static const char function[] = "GetStaticShortField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID);
@@ -2901,7 +2901,7 @@ checkGetStaticIntField(JNIEnv *env, jclass clazz, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jint actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, 0 };
 	static const char function[] = "GetStaticIntField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID);
@@ -2918,7 +2918,7 @@ checkGetStaticLongField(JNIEnv *env, jclass clazz, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jlong actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, 0 };
 	static const char function[] = "GetStaticLongField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID);
@@ -2935,7 +2935,7 @@ checkGetStaticFloatField(JNIEnv *env, jclass clazz, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jfloat actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, 0 };
 	static const char function[] = "GetStaticFloatField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID);
@@ -2952,7 +2952,7 @@ checkGetStaticDoubleField(JNIEnv *env, jclass clazz, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jdouble actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, 0 };
 	static const char function[] = "GetStaticDoubleField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID);
@@ -2968,7 +2968,7 @@ checkSetStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID, jobject v
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, JNIC_JOBJECT, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, JNIC_JOBJECT, 0 };
 	static const char function[] = "SetStaticObjectField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID, value);
@@ -2982,7 +2982,7 @@ checkSetStaticBooleanField(JNIEnv *env, jclass clazz, jfieldID fieldID, jboolean
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, JNIC_JBOOLEAN, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, JNIC_JBOOLEAN, 0 };
 	static const char function[] = "SetStaticBooleanField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID, value);
@@ -2996,7 +2996,7 @@ checkSetStaticByteField(JNIEnv *env, jclass clazz, jfieldID fieldID, jbyte value
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, JNIC_JBYTE, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, JNIC_JBYTE, 0 };
 	static const char function[] = "SetStaticByteField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID, value);
@@ -3010,7 +3010,7 @@ checkSetStaticCharField(JNIEnv *env, jclass clazz, jfieldID fieldID, jchar value
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, JNIC_JCHAR, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, JNIC_JCHAR, 0 };
 	static const char function[] = "SetStaticCharField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID, value);
@@ -3024,7 +3024,7 @@ checkSetStaticShortField(JNIEnv *env, jclass clazz, jfieldID fieldID, jshort val
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, JNIC_JSHORT, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, JNIC_JSHORT, 0 };
 	static const char function[] = "SetStaticShortField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID, value);
@@ -3038,7 +3038,7 @@ checkSetStaticIntField(JNIEnv *env, jclass clazz, jfieldID fieldID, jint value)
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, JNIC_JINT, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, JNIC_JINT, 0 };
 	static const char function[] = "SetStaticIntField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID, value);
@@ -3052,7 +3052,7 @@ checkSetStaticLongField(JNIEnv *env, jclass clazz, jfieldID fieldID, jlong value
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, JNIC_JLONG, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, JNIC_JLONG, 0 };
 	static const char function[] = "SetStaticLongField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID, value);
@@ -3066,7 +3066,7 @@ checkSetStaticFloatField(JNIEnv *env, jclass clazz, jfieldID fieldID, jfloat val
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, JNIC_JFLOAT, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, JNIC_JFLOAT, 0 };
 	static const char function[] = "SetStaticFloatField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID, value);
@@ -3080,7 +3080,7 @@ checkSetStaticDoubleField(JNIEnv *env, jclass clazz, jfieldID fieldID, jdouble v
 { 	
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDID, JNIC_JDOUBLE, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_JFIELDSTATICID, JNIC_JDOUBLE, 0 };
 	static const char function[] = "SetStaticDoubleField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, fieldID, value);
