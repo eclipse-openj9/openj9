@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2010, 2019 IBM Corp. and others
+  Copyright (c) 2010, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -218,6 +218,39 @@
 	</exclude>
 	<exclude id="Test 55 Check default cache size on Java 9 and up" platform="8">
 		<reason>This test should not be run on Java 8</reason>
+	</exclude>
+	<exclude id="Test 57-a: Make sure that lambda classes work and get stored in the shared class cache" platform="1[5-9]|[2-9][0-9]">
+		<reason>Hidden class in Java 15+ are not working with SCC yet. OpenJ9 issue 9328</reason>
+	</exclude>
+	<exclude id="Test 57-b: Make sure that lambda classes are stored in the cache as orphans" platform="1[5-9]|[2-9][0-9]">
+		<reason>Hidden class in Java 15+ are not working with SCC yet. OpenJ9 issue 9328</reason>
+	</exclude>
+	<exclude id="Test 57-c: Make sure that when the program runs again lambda classes are used from the cache and not stored again" platform="1[5-9]|[2-9][0-9]">
+		<reason>Hidden class in Java 15+ are not working with SCC yet. OpenJ9 issue 9328</reason>
+	</exclude>
+	<exclude id="Test 58: Make sure that when the program runs again without the first lambda class, the second lambda class is still used from the cache and not stored again" platform="1[5-9]|[2-9][0-9]">
+		<reason>Hidden class in Java 15+ are not working with SCC yet. OpenJ9 issue 9328</reason>
+	</exclude>
+	<exclude id="Test 58 clean-up" platform="1[5-9]|[2-9][0-9]">
+		<reason>Hidden class in Java 15+ are not working with SCC yet. OpenJ9 issue 9328</reason>
+	</exclude>
+	<exclude id="Test 59-a: Run and store 10 lambda classes in the cache" platform="1[5-9]|[2-9][0-9]">
+		<reason>Hidden class in Java 15+ are not working with SCC yet. OpenJ9 issue 9328</reason>
+	</exclude>
+	<exclude id="Test 59-b: Do not run the first lambda class to check if a class with 1 digit index number gets matched to the one stored in the cache but with 2 digits index number (10th class in the previous run will be matched to 9th in this run)" platform="1[5-9]|[2-9][0-9]">
+		<reason>Hidden class in Java 15+ are not working with SCC yet. OpenJ9 issue 9328</reason>
+	</exclude>
+	<exclude id="Test 59 clean-up" platform="1[5-9]|[2-9][0-9]">
+		<reason>Hidden class in Java 15+ are not working with SCC yet. OpenJ9 issue 9328</reason>
+	</exclude>
+	<exclude id="Test 60-a: Make sure that lambda classes work and get stored in the cache when another function with lambda classes in another file is being called from the current file" platform="1[5-9]|[2-9][0-9]">
+		<reason>Hidden class in Java 15+ are not working with SCC yet. OpenJ9 issue 9328</reason>
+	</exclude>
+	<exclude id="Test 60-b: Make sure that the classes are used from the cache when the the program is being run again" platform="1[5-9]|[2-9][0-9]">
+		<reason>Hidden class in Java 15+ are not working with SCC yet. OpenJ9 issue 9328</reason>
+	</exclude>
+	<exclude id="Test 60 clean-up" platform="1[5-9]|[2-9][0-9]">
+		<reason>Hidden class in Java 15+ are not working with SCC yet. OpenJ9 issue 9328</reason>
 	</exclude>
 	<exclude id="Test 61 clean-up" platform="8">
 		<reason>Exclude the extra clean-up since tests are not run in jdk8</reason>

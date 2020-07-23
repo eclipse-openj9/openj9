@@ -171,6 +171,12 @@ public class MethodHandles {
 		
 		private static final String INVOKE_EXACT = "invokeExact"; //$NON-NLS-1$
 		private static final String INVOKE = "invoke"; //$NON-NLS-1$
+		
+		/*[IF Java15]*/
+		private static final int CLASSOPTION_FLAG_NESTMATE = 1;
+		private static final int CLASSOPTION_FLAG_STRONG = 2;
+		/*[ENDIF] Java15*/
+
 		static final int VARARGS = 0x80;
 		
 		/* single cached value of public Lookup object */
@@ -2253,7 +2259,6 @@ public class MethodHandles {
 		/*[ENDIF] Sidecar19-SE */
 		
 		/*[IF Java15]*/
-		// TODO: implement support for hidden classes.
 		/**
 		 * The ClassOption used to define the hidden class.
 		 * NESTMATE adds the hidden class into the same nest of the lookup class as a nest member.
@@ -2262,17 +2267,32 @@ public class MethodHandles {
 		 */
 		public enum ClassOption {
 			NESTMATE,
-			STRONG
+			STRONG;		
+			int toFlag() {
+				if (NESTMATE == this) {
+					return CLASSOPTION_FLAG_NESTMATE;
+				} else {
+					return CLASSOPTION_FLAG_STRONG;
+				}
+			}
 		}
 
 		static final class ClassDefiner {
 			private final byte[] classBytes;
 			private final String className;
 			private final Lookup lookup;
+			private final int ClassOptFlags;
+			ClassDefiner(String name, byte[] template, Lookup lookupObj, int flags) {
+				className = name;
+				classBytes = template;
+				lookup = lookupObj;
+				ClassOptFlags = flags;
+			}
 			ClassDefiner(String name, byte[] template, Lookup lookupObj) {
 				className = name;
 				classBytes = template;
 				lookup = lookupObj;
+				ClassOptFlags = 0;
 			}
 			Class<?> defineClass(boolean initOption) {
 				Class<?> ret = AccessController.doPrivileged(new PrivilegedAction<Class<?>>() {
@@ -2280,7 +2300,7 @@ public class MethodHandles {
 					public Class<?> run() {
 						JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
 						Class<?> lookupClass = lookup.lookupClass();
-						return jlAccess.defineClass(lookupClass.getClassLoader(), lookupClass, className, classBytes, jlAccess.protectionDomain(lookupClass), initOption, 0, null);
+						return jlAccess.defineClass(lookupClass.getClassLoader(), lookupClass, className, classBytes, jlAccess.protectionDomain(lookupClass), initOption, ClassOptFlags, null);
 					}
 				});
 				return ret;
@@ -2293,9 +2313,14 @@ public class MethodHandles {
 		 * @param initOption whether to initialize the hidden class.
 		 * @param classOptions the {@link ClassOption} to define the hidden class.
 		 * @return A Lookup object of the newly created hidden class.
+		 * @throws IllegalAccessException if this Lookup does not have full privilege access.
 		 */
 
-		public Lookup defineHiddenClass(byte[] bytes, boolean initOption, ClassOption... classOptions) {
+		public Lookup defineHiddenClass(byte[] bytes, boolean initOption, ClassOption... classOptions) throws IllegalAccessException {
+			if (!hasFullPrivilegeAccess()) {
+				throw new IllegalAccessException();
+			}
+			
 			ClassReader cr;
 			try {
 				cr = new ClassReader(bytes);
@@ -2305,8 +2330,12 @@ public class MethodHandles {
 			}
 
 			String targetClassName = cr.getClassName().replace('/', '.');
-			ClassDefiner definer = makeHiddenClassDefiner(targetClassName, bytes);
-			return new Lookup(definer.defineClass(initOption), false);
+			int flags = 0;
+			for (ClassOption opt : classOptions) {
+				flags |= opt.toFlag();
+			}
+			ClassDefiner definer = makeHiddenClassDefiner(targetClassName, bytes, flags);
+			return new Lookup(definer.defineClass(initOption));
 		}
 
 		Lookup defineHiddenClassWithClassData(byte[] bytes, Object data, ClassOption... classOptions) {
@@ -2315,6 +2344,11 @@ public class MethodHandles {
 
 		ClassDefiner makeHiddenClassDefiner(String name, byte[] template) {
 			ClassDefiner definer = new ClassDefiner(name, template, this);
+			return definer;
+		}
+		
+		ClassDefiner makeHiddenClassDefiner(String name, byte[] template, int flag) {
+			ClassDefiner definer = new ClassDefiner(name, template, this, flag);
 			return definer;
 		}
 		

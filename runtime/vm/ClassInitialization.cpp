@@ -157,11 +157,14 @@ performVerification(J9VMThread *currentThread, J9Class *clazz)
 		/* See if this class should be verified:
 		 *
 		 * - Do not verify any class created by sun.misc.Unsafe
+		 * - Do not verify hidden classes
 		 * - Do not verify any class which is marked for exclusion in the optional flags
 		 * - Verify every class whose bytecodes have been modified
 		 * - Do not verify bootstrap classes if the appropriate runtime flag is set
 		 */
-		if (!J9CLASS_IS_EXEMPT_FROM_VALIDATION(clazz) && J9_ARE_NO_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_VERIFY_EXCLUDE)) {
+		if (((!J9CLASS_IS_EXEMPT_FROM_VALIDATION(clazz)) && !J9ROMCLASS_IS_HIDDEN(romClass))
+			&& J9_ARE_NO_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_VERIFY_EXCLUDE)
+		) {
 			J9BytecodeVerificationData * bcvd = vm->bytecodeVerificationData;
 			if ((J9ROMCLASS_HAS_MODIFIED_BYTECODES(romClass) ||
 				(0 == (bcvd->verificationFlags & J9_VERIFY_SKIP_BOOTSTRAP_CLASSES)) ||

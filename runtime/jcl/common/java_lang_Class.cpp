@@ -1812,17 +1812,6 @@ Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv)
 
 	if (NULL == nestHost) {
 		J9Class *clazzToUse = clazz;
-#if JAVA_SPEC_VERSION >= 15
-		if (J9_ARE_ALL_BITS_SET(clazz->romClass->extraModifiers, J9AccClassAnonClass)) {
-			if (NULL != clazz->hostClass) {
-				/* https://github.com/eclipse/openj9/issues/9328
-				 * JEP371 is not fully implemented yet,
-				 * for J9AccClassAnonClass return the nestHost of hostClass for now.
-				 */
-				clazzToUse = clazz->hostClass;
-			}
-		}
-#endif /* JAVA_SPEC_VERSION >= 15 */
 		if (J9_VISIBILITY_ALLOWED == vmFuncs->loadAndVerifyNestHost(currentThread, clazzToUse, J9_LOOK_NO_THROW)) {
 			nestHost = clazzToUse->nestHost;
 		} else {
@@ -1935,6 +1924,24 @@ _done:
 	Assert_JCL_unimplemented();
 	return NULL;
 #endif /* JAVA_SPEC_VERSION >= 11 */
+}
+
+jboolean JNICALL 
+Java_java_lang_Class_isHiddenImpl(JNIEnv *env, jobject recv)
+{
+#if JAVA_SPEC_VERSION >= 15
+	jboolean result = JNI_FALSE;
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
+	result = J9ROMCLASS_IS_HIDDEN(clazz->romClass);
+	vmFuncs->internalExitVMToJNI(currentThread);
+	return result;
+#else /* JAVA_SPEC_VERSION >= 15 */
+	Assert_JCL_unimplemented();
+	return JNI_FALSE;
+#endif /* JAVA_SPEC_VERSION >= 15 */
 }
 
 }

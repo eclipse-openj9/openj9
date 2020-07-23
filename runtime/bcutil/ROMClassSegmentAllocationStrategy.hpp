@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,9 +36,10 @@
 class ROMClassSegmentAllocationStrategy : public AllocationStrategy
 {
 public:
-	ROMClassSegmentAllocationStrategy(J9JavaVM* javaVM, J9ClassLoader* classLoader) :
+	ROMClassSegmentAllocationStrategy(J9JavaVM* javaVM, J9ClassLoader* classLoader, bool allocNewSeg) :
 		_javaVM(javaVM),
 		_classLoader(classLoader),
+		_allocNewSeg(allocNewSeg),
 		_segment(NULL),
 		_bytesRequested(0)
 	{
@@ -51,6 +52,7 @@ public:
 private:
 	J9JavaVM* _javaVM;
 	J9ClassLoader* _classLoader;
+	bool _allocNewSeg;
 	J9MemorySegment* _segment;
 	UDATA _bytesRequested;
 };

@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #include "ArrayCopyHelpers.hpp"
+#include "VMHelpers.hpp"
 #include "j9.h"
 #include "jclglob.h"
 #include "jclprots.h"
@@ -27,6 +28,13 @@
 #include "j9protos.h"
 #include "vmhook_internal.h"
 #include "j9jclnls.h"
+
+#if JAVA_SPEC_VERSION >= 15
+/* The same values are defined in MethodHandles.java */
+#define CLASSOPTION_FLAG_NESTMATE 1
+#define CLASSOPTION_FLAG_STRONG  2
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
 
 extern "C" {
 
@@ -84,6 +92,65 @@ Java_java_lang_ClassLoader_defineClassImpl(JNIEnv *env, jobject receiver, jstrin
 
 	return result;
 }
+
+#if JAVA_SPEC_VERSION >= 15
+jclass JNICALL
+Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclass hostClass, jstring className, jbyteArray classRep, jobject protectionDomain, jboolean init, jint flags, jobject obj)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	UDATA options = 0;
+	
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	if (NULL == classRep) {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+		vmFuncs->internalExitVMToJNI(currentThread);
+		return NULL;
+	}
+	if (NULL == hostClass) {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
+		vmFuncs->internalExitVMToJNI(currentThread);
+		return NULL;
+	}
+
+	j9object_t hostClassObject = J9_JNI_UNWRAP_REFERENCE(hostClass);
+	J9Class *hostClazz =  J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, hostClassObject);
+
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	options |= (J9_FINDCLASS_FLAG_HIDDEN | J9_FINDCLASS_FLAG_UNSAFE | J9_FINDCLASS_FLAG_ANON);
+	if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_NESTMATE)) {
+		options |= J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE;
+	}
+	if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_STRONG)) {
+		options |= J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG;
+	}
+	
+	jsize length = env->GetArrayLength(classRep);
+
+	jclass result = defineClassCommon(env, receiver, className, classRep, 0, length, protectionDomain, options, hostClazz, NULL);
+	if (env->ExceptionCheck()) {
+		return NULL;
+	} else if (NULL == result) {
+		throwNewInternalError(env, NULL);
+		return NULL;
+	}
+
+	if (init) {
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		j9object_t classObject = J9_JNI_UNWRAP_REFERENCE(result);
+		J9Class *j9clazz =  J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
+		if (VM_VMHelpers::classRequiresInitialization(currentThread, j9clazz)) {
+			vmFuncs->initializeClass(currentThread, j9clazz);
+		}
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+
+	return result;
+}
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
 
 jboolean JNICALL
 Java_java_lang_ClassLoader_foundJavaAssertOption(JNIEnv *env, jclass ignored)

@@ -3012,7 +3012,9 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 
 	/* if this is an anon class classLoader should be anonClassLoader */
 	if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
-		classLoader = javaVM->anonClassLoader;
+		if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_HIDDEN)) {
+			classLoader = javaVM->anonClassLoader;
+		}
 	}
 
 	memset(&state, 0, sizeof(state));
