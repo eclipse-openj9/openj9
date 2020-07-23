@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -473,7 +473,7 @@ public class ArrayCopyTest {
 		/* Array initialization */
 		initReferenceArray(a, 0, a.length);
 
-		/* Create slave thread(s) for constant reading */
+		/* Create worker thread(s) for constant reading */
 		ReadReferenceArrayInThread t = new ReadReferenceArrayInThread(a, "ThreadReference", 0, a.length, firstString,
 				secondString);
 
@@ -535,7 +535,7 @@ public class ArrayCopyTest {
 			t.clearError();
 		}
 
-		/* Shutdown slave thread(s) */
+		/* Shutdown worker thread(s) */
 		t.endThread();
 	}
 
@@ -714,7 +714,7 @@ public class ArrayCopyTest {
 		/* Array initialization */
 		initReferenceArray(xLarge, xLargeStartTestArea, xLargeTestAreaSize);
 
-		/* Create slave thread(s) for constant reading */
+		/* Create worker thread(s) for constant reading */
 		/* Set test area: start at (1M - 13) elements, size = 61 elements */
 		ReadReferenceArrayInThread t = new ReadReferenceArrayInThread(xLarge,
 				"ThreadXLargeReference", xLargeStartTestArea,
@@ -774,7 +774,7 @@ public class ArrayCopyTest {
 			t.clearError();
 		}
 
-		/* Shutdown slave thread(s) */
+		/* Shutdown worker thread(s) */
 		t.endThread();
 	}
 
@@ -853,7 +853,7 @@ public class ArrayCopyTest {
 		long halfTime = System.currentTimeMillis() + (secondsToSpin * 500L);
 		long finishTime = halfTime + secondsToSpin * 500;
 
-		/* Create slave thread(s) for constant reading */
+		/* Create worker thread(s) for constant reading */
 		ReadArrayOfShortsInThread t = new ReadArrayOfShortsInThread(shorts,
 				"ThreadShorts", firstShort, secondShort);
 
@@ -910,7 +910,7 @@ public class ArrayCopyTest {
 			t.clearError();
 		}
 
-		/* Shutdown slave thread(s) */
+		/* Shutdown worker thread(s) */
 		t.endThread();
 	}
 
@@ -989,7 +989,7 @@ public class ArrayCopyTest {
 		long halfTime = System.currentTimeMillis() + (secondsToSpin * 500L);
 		long finishTime = halfTime + secondsToSpin * 500;
 
-		/* Create slave thread(s) for constant reading */
+		/* Create worker thread(s) for constant reading */
 		ReadArrayOfIntsInThread t = new ReadArrayOfIntsInThread(ints,
 				"ThreadInts", firstInt, secondInt);
 
@@ -1045,7 +1045,7 @@ public class ArrayCopyTest {
 			t.clearError();
 		}
 
-		/* Shutdown slave thread(s) */
+		/* Shutdown worker thread(s) */
 		t.endThread();
 	}
 
@@ -1124,7 +1124,7 @@ public class ArrayCopyTest {
 		long halfTime = System.currentTimeMillis() + (secondsToSpin * 500L);
 		long finishTime = halfTime + secondsToSpin * 500;
 
-		/* Create slave thread(s) for constant reading */
+		/* Create worker thread(s) for constant reading */
 		ReadArrayOfLongsInThread t = new ReadArrayOfLongsInThread(longs,
 				"ThreadLongs", firstLong, secondLong);
 
@@ -1188,7 +1188,7 @@ public class ArrayCopyTest {
 			t.clearError();
 		}
 
-		/* Shutdown slave thread(s) */
+		/* Shutdown worker thread(s) */
 		t.endThread();
 	}
 
@@ -1282,7 +1282,7 @@ abstract class ReadArrayInThread implements Runnable {
 	}
 
 	public void endThread() {
-		/* request slave thread to stop */
+		/* request worker thread to stop */
 		shutdown = true;
 
 		try {

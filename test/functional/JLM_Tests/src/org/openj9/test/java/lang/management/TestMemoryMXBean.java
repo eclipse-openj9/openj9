@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,6 +61,7 @@ import javax.management.openmbean.CompositeData;
 
 import com.ibm.lang.management.MemoryMXBean;
 
+import org.openj9.test.util.VersionCheck;
 import org.openj9.test.util.process.Task;
 
 // These classes are not public API.
@@ -74,6 +75,8 @@ public class TestMemoryMXBean {
 	private static Logger logger = Logger.getLogger(TestMemoryMXBean.class);
 	private static final Map<String, AttributeData> attribs;
 	private static final HashSet<String> ignoredAttributes;
+
+	private static final int javaVersion = VersionCheck.major();
 
 	static {
 		ignoredAttributes = new HashSet<>();
@@ -107,8 +110,16 @@ public class TestMemoryMXBean {
 				new AttributeData(Long.TYPE.getName(), true, false, false));
 		attribs.put("SharedClassCacheFreeSpace", new AttributeData(Long.TYPE.getName(), true, false, false));
 		attribs.put("GCMode", new AttributeData(String.class.getName(), true, false, false));
-		attribs.put("GCMasterThreadCpuUsed", new AttributeData(Long.TYPE.getName(), true, false, false));
-		attribs.put("GCSlaveThreadsCpuUsed", new AttributeData(Long.TYPE.getName(), true, false, false));
+		attribs.put("GCMainThreadCpuUsed", new AttributeData(Long.TYPE.getName(), true, false, false));
+		/* GCMasterThreadCpuUsed was deprecated for removal in Java 15. */
+		if (javaVersion < 16) {
+			attribs.put("GCMasterThreadCpuUsed", new AttributeData(Long.TYPE.getName(), true, false, false));
+		}
+		attribs.put("GCWorkerThreadsCpuUsed", new AttributeData(Long.TYPE.getName(), true, false, false));
+		/* GCSlaveThreadsCpuUsed was deprecated for removal in Java 15. */ 
+		if (javaVersion < 16) {
+			attribs.put("GCSlaveThreadsCpuUsed", new AttributeData(Long.TYPE.getName(), true, false, false));
+		}
 		attribs.put("MaximumGCThreads", new AttributeData(Integer.TYPE.getName(), true, false, false));
 		attribs.put("CurrentGCThreads", new AttributeData(Integer.TYPE.getName(), true, false, false));
 	}// end static initializer
@@ -739,7 +750,11 @@ public class TestMemoryMXBean {
 		// Eight attributes - some writable.
 		MBeanAttributeInfo[] attributes = mbi.getAttributes();
 		AssertJUnit.assertNotNull(attributes);
-		AssertJUnit.assertTrue(attributes.length == 24);
+		if (javaVersion >= 16) {
+			AssertJUnit.assertTrue(attributes.length == 24);
+		} else {
+			AssertJUnit.assertTrue(attributes.length == 26);
+		}
 		for (int i = 0; i < attributes.length; i++) {
 			MBeanAttributeInfo info = attributes[i];
 			AssertJUnit.assertNotNull(info);

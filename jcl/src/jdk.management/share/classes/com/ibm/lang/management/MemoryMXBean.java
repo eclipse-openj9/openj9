@@ -240,26 +240,62 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
      */
     public long getSharedClassCacheFreeSpace();
 	
-	/**
-	 * Returns the current GC mode as a human-readable string.  
-	 * 
-	 * @return a String describing the mode the GC is currently operating in
-	 */
-	public String getGCMode();
+    /**
+     * Returns the current GC mode as a human-readable string.
+     * 
+     * @return a String describing the mode the GC is currently operating in
+     */
+    public String getGCMode();
 
-	/**
-     * Returns the amount of CPU time spent in the GC by the master thread, in milliseconds.
+/*[IF !Java16]*/
+    /**
+     * Returns the amount of CPU time spent in the GC by the master thread, in
+     * milliseconds.
+     * 
+     * @return CPU time used in milliseconds
+     * 
+     * @deprecated renamed to getGCMainThreadCpuUsed
+     */
+    /*[IF Java11]*/
+    @Deprecated(forRemoval=true, since="15")
+    /*[ELSE] Java11 */
+    @Deprecated
+    /*[ENDIF] Java11 */
+    public long getGCMasterThreadCpuUsed();
+/*[ENDIF] !Java16 */
+
+    /**
+     * Returns the amount of CPU time spent in the GC by the main thread, in
+     * milliseconds.
      * 
      * @return CPU time used in milliseconds
      */
-	public long getGCMasterThreadCpuUsed();
+    public long getGCMainThreadCpuUsed();
 
-	/**
-     * Returns the total amount of CPU time spent in the GC by all slave threads, in milliseconds.
+/*[IF !Java16]*/
+    /**
+     * Returns the total amount of CPU time spent in the GC by all slave threads, in
+     * milliseconds.
+     * 
+     * @return CPU time used in milliseconds
+     * 
+     * @deprecated renamed to getGCWorkerThreadsCpuUsed
+     */
+    /*[IF Java11]*/
+    @Deprecated(forRemoval=true, since="15")
+    /*[ELSE] Java11 */
+    @Deprecated
+    /*[ENDIF] Java11 */
+    public long getGCSlaveThreadsCpuUsed();
+/*[ENDIF] !Java16 */
+
+    /**
+     * Returns the total amount of CPU time spent in the GC by all worker threads,
+     * in milliseconds.
      * 
      * @return CPU time used in milliseconds
      */
-	public long getGCSlaveThreadsCpuUsed();
+    public long getGCWorkerThreadsCpuUsed();
 
 	/**
      * Returns the maximum number of GC worker threads.

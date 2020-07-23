@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -186,7 +186,7 @@ public class AttachHandler extends Thread {
 	private boolean createFiles(String newDisplayName) throws IOException {
 		try {
 			/*[PR Jazz 31593] stress failures caused by long wait times for lock file ]*/
-			if (CommonDirectory.tryObtainMasterLock()) {
+			if (CommonDirectory.tryObtainControllerLock()) {
 				/* 
 				 * Non-blocking lock attempt succeeded. 
 				 * clean up garbage files from crashed processes or other failures.
@@ -196,10 +196,10 @@ public class AttachHandler extends Thread {
 				CommonDirectory.deleteStaleDirectories(pidProperty);
 			} else {
 				/* The following code needs to hold the lock, so go for a blocking lock. */
-				CommonDirectory.obtainMasterLock();
+				CommonDirectory.obtainControllerLock();
 			}
 			if (LOGGING_DISABLED != loggingStatus) {
-				IPC.logMessage("AttachHandler obtained master lock"); //$NON-NLS-1$
+				IPC.logMessage("AttachHandler obtained controller lock"); //$NON-NLS-1$
 			}
 			CommonDirectory.createNotificationFile();
 			/*[PR Jazz 31593 create the file artifacts after we have cleaned the directory]*/
@@ -218,7 +218,7 @@ public class AttachHandler extends Thread {
 			Advertisement.createAdvertisementFile(getVmId(), newDisplayName);
 		} finally {
 			CommonDirectory.releaseAttachLock();
-			CommonDirectory.releaseMasterLock();
+			CommonDirectory.releaseControllerLock();
 		}
 		return true;
 	}
@@ -421,14 +421,14 @@ public class AttachHandler extends Thread {
 		 * Try to get the lock file, but give up after a timeout. If this VM is 
 		 * notified and terminates in the meantime, don't bother notifying. 
 		 * 
-		 * Note that the master lock is not held while waiting to shut down.
+		 * Note that the controller lock is not held while waiting to shut down.
 		 */
 		long lockDeadline = System.nanoTime() + shutdownTimeoutMs*1000000/10; /* let the file lock use only a fraction of the timeout budget */
 		try {
-			gotLock = CommonDirectory.tryObtainMasterLock();
+			gotLock = CommonDirectory.tryObtainControllerLock();
 			while (!gotLock && isWaitingForSemaphore()) {
 				Thread.sleep(10);
-				gotLock = CommonDirectory.tryObtainMasterLock();
+				gotLock = CommonDirectory.tryObtainControllerLock();
 				if (System.nanoTime() > lockDeadline) {
 					break;
 				}
@@ -439,14 +439,14 @@ public class AttachHandler extends Thread {
 		if (!isWaitingForSemaphore()) {
 			wakeHandler = false; /* The wait loop is already shutting down */
 			if (LOGGING_DISABLED != loggingStatus) {
-				IPC.logMessage("VM already notified for termination, abandoning master lock"); //$NON-NLS-1$
+				IPC.logMessage("VM already notified for termination, abandoning controller lock"); //$NON-NLS-1$
 			}
 			if (gotLock) {
 				/* 
 				 * We grabbed the lock to notify the wait loop.  
 				 * Release it because the wait loop does not need to be notified. 
 				 */ 
-				CommonDirectory.releaseMasterLock();
+				CommonDirectory.releaseControllerLock();
 				gotLock = false;
 			}
 		}
@@ -454,7 +454,7 @@ public class AttachHandler extends Thread {
 		if (gotLock) {	
 			try {
 				if (LOGGING_DISABLED != loggingStatus) {
-					IPC.logMessage("AttachHandler terminate obtained master lock"); //$NON-NLS-1$
+					IPC.logMessage("AttachHandler terminate obtained controller lock"); //$NON-NLS-1$
 				}
 				/*
 				 * If one or more directories is deleted, the target count is wrong and the wait loop may
@@ -489,16 +489,16 @@ public class AttachHandler extends Thread {
 					/* CMVC 162086. add an extra notification since the count won't include this VM: the advertisement directory is already deleted */
 				}
 			} finally {
-				CommonDirectory.releaseMasterLock();
+				CommonDirectory.releaseControllerLock();
 				if (LOGGING_DISABLED != loggingStatus) {
-					IPC.logMessage("AttachHandler terminate released master lock"); //$NON-NLS-1$
+					IPC.logMessage("AttachHandler terminate released controller lock"); //$NON-NLS-1$
 				}
 			}
 		} else { 
 			/*
 			 * Either the handler has already terminated, or we cannot get the lock. In the latter case, clean up as best we can 
 			 */
-			IPC.logMessage("AttachHandler tryObtainMasterLock failed"); //$NON-NLS-1$
+			IPC.logMessage("AttachHandler tryObtainControllerLock failed"); //$NON-NLS-1$
 		}
 		return destroySemaphore;
 	}
@@ -557,13 +557,13 @@ public class AttachHandler extends Thread {
 				TargetDirectory.deleteMyDirectory(true); /*[PR Jazz 58094] terminate() cleared out the directory */
 				/*[PR CMVC 161992] wait until the attach handler thread has finished before closing the semaphore*/
 				if (destroySemaphore) {
-					if (CommonDirectory.tryObtainMasterLock()) {
+					if (CommonDirectory.tryObtainControllerLock()) {
 						/* if this fails, then another process became active after the VMs were counted */
 						CommonDirectory.destroySemaphore();
 						if (LOGGING_DISABLED != loggingStatus) {
 							IPC.logMessage("AttachHandler destroyed semaphore"); //$NON-NLS-1$
 						}
-						CommonDirectory.releaseMasterLock();
+						CommonDirectory.releaseControllerLock();
 					} else {
 						if (LOGGING_DISABLED != loggingStatus) {
 							IPC.logMessage("could not obtain lock, semaphore not destroyed"); //$NON-NLS-1$

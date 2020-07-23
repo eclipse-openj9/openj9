@@ -26,7 +26,7 @@
 	<artifact type="executable" name="vmtest" >
 		<include-if condition="spec.flags.module_porttest" />
 		<options>
-			<option name="dumpMasterPrimitiveTable"/>
+			<option name="dumpMainPrimitiveTable"/>
 		</options>
 		<phase>util</phase>
 		<flags>

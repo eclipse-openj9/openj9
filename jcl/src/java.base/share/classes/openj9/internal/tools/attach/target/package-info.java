@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2010 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@
  * 	</li>
  * 	<li>AttachHandler waits on the semaphore</li>
  * </ol>
- * <p>Creation and updating of the advertisement directory occurs under the protection of a common master lock file.</p>
+ * <p>Creation and updating of the advertisement directory occurs under the protection of a common controller lock file.</p>
  * 
  * <h3>Notification</h3>
  * <p>The API uses the VM's port library shared semaphore mechanism.  </p>
@@ -103,10 +103,10 @@
  * <p>
  * A common directory, usually /tmp/.com_ibm_tools_attach on non-Windows systems, holds common control files
  * for the shared semaphore used for interprocess notification, and lock files for mutual exclusion
- * master lock and notifier files:</p>
+ * controller lock and notifier files:</p>
  * <table border="1">
  * <tr> <th>Filename</th><th>Java class</th><th>Purpose</th> </tr>
- * <tr> <td>_master</td><td>FileLock</td><td><ul>
+ * <tr> <td>_controller</td><td>FileLock</td><td><ul>
  *	<li> provides an inter-JVM mutex</li>
  * 	<li> used to protect per-directory creation/removal</li>
  * </ul></td>
@@ -116,7 +116,7 @@
  * </table>	
  * <h3>Per-target files</h3>
  * <p>As JVM instances start up they create their own "target" directory using the virtual machine ID, usually the process id (PID)
- * as the directory name under protection of the masterLock. 
+ * as the directory name under protection of the controllerLock. 
  * The target has full owner permissions and execute permissions for group and world. </p>
  * <p>Inside the target's directory are the following files:</p>
  * <table border="1">

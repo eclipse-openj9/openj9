@@ -745,7 +745,7 @@ gcEndEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA *f
 	gcData->totalMemoryFreed += (I_64)(mgmt->preCollectionHeapUsed - mgmt->postCollectionHeapUsed);
 	
 	/* update the GC CPU usage */
-	mmFuncs->j9gc_get_CPU_times(vm, &mgmt->gcMasterCpuTime, &mgmt->gcSlaveCpuTime, &mgmt->gcMaxThreads, &mgmt->gcCurrentThreads);
+	mmFuncs->j9gc_get_CPU_times(vm, &mgmt->gcMainCpuTime, &mgmt->gcWorkerCpuTime, &mgmt->gcMaxThreads, &mgmt->gcCurrentThreads);
 	
 	/* update nonHeap memory pools for postCollection */
 	updateNonHeapMemoryPoolSizes(vm, mgmt, TRUE);
