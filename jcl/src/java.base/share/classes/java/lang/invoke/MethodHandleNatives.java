@@ -24,6 +24,11 @@
 /*[IF Java11]*/
 package java.lang.invoke;
 
+/*[IF Java15]*/
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
+/*[ENDIF] Java15 */
+
 class MethodHandleNatives {
 	static LinkageError mapLookupExceptionToError(ReflectiveOperationException roe) {
 		String exMsg = roe.getMessage();
@@ -67,6 +72,19 @@ class MethodHandleNatives {
 	
 	static boolean refKindIsConstructor(byte kind) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	
+	private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+
+	/**
+	 * Returns the classData stored in the class.
+	 * 
+	 * @param the class from where to retrieve the classData.
+	 * 
+	 * @return the classData (Object).
+	 */
+	static Object classData(Class<?> c) {
+		return JLA.classData(c);
 	}
 	/*[ENDIF] Java15 */
 }

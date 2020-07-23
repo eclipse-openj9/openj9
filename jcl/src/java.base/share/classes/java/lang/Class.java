@@ -266,6 +266,10 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private Class<?> nestHost;
 /*[ENDIF] Java11*/
 	
+/*[IF Java15]*/
+	private transient Object classData;
+/*[ENDIF] Java15*/
+	
 /**
  * Prevents this class from being instantiated. Instances
  * created by the virtual machine only.
@@ -4777,6 +4781,26 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	 */
 	public boolean isHidden() {
 		return isHiddenImpl(); 
+	}
+
+	/**
+	 * Returns the classData stored in the class.
+	 * 
+	 * @return the classData (Object).
+	 */
+	Object getClassData() {
+		return classData;
+	}
+
+	/**
+	 * Stores the classData in the class.
+	 * 
+	 * @param the classData (Object) to be stored.
+	 * 
+	 * @return void.
+	 */
+	void setClassData(Object classData) {
+		this.classData = classData;
 	}
 /*[ENDIF] Java15 */
 }
