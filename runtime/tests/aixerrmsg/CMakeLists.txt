@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2020, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,34 +20,14 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-if(OMR_OS_AIX)
-	add_subdirectory(aixerrmsg)
-endif()
-add_subdirectory(algorithm)
-if(OMR_HOST_OS STREQUAL "win" AND NOT OMR_ENV_DATA64)
-	add_subdirectory(bcprof)
-endif()
-add_subdirectory(bcverify)
-add_subdirectory(cutest)
-add_subdirectory(gp)
-add_subdirectory(j9vm)
-add_subdirectory(jni)
-add_subdirectory(jniarg)
-add_subdirectory(jsig)
-add_subdirectory(jvmtitests)
-add_subdirectory(lazyclassload)
-if(OMR_HOST_OS STREQUAL "osx")
-	add_subdirectory(loadLibraryTest)
-endif()
-add_subdirectory(port)
-add_subdirectory(props)
-add_subdirectory(redirector)
-add_subdirectory(shared)
-# add_subdirectory(shared_service)
-add_subdirectory(thread)
-if(OMR_HOST_OS STREQUAL "linux")
-	add_subdirectory(unresolved)
-endif()
-add_subdirectory(vm)
-add_subdirectory(vm_lifecycle)
-# add_subdirectory(zos)
+
+j9vm_add_library(j9aixbaddep SHARED
+	agent.c
+)
+
+target_link_libraries(j9aixbaddep
+	PRIVATE
+		j9vm_interface
+
+		-Wl,-bI:${CMAKE_CURRENT_SOURCE_DIR}/dummy.exp,-bexpall
+)
