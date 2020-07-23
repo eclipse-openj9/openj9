@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -390,11 +390,42 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>11+</subset>
 			<subset>8</subset>
 		</subsets>
 		<impls>
 			<impl>openj9</impl>
+		</impls>
+		<aot>explicit</aot>
+	</test>
+	<test>
+		<testCaseName>ShareClassesCML</testCaseName>
+		<variations>
+			<variation>Mode110</variation>
+			<variation>Mode610</variation>
+		</variations>
+		<command>$(MKTREE) $(REPORTDIR); \
+	$(CD) $(REPORTDIR); \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
+	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
+	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)ShareClassesCMLOpenJ9.xml$(Q) -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) \
+	-nonZeroExitWhenError \
+	-outputLimit 300; \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11+</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
 		</impls>
 		<aot>explicit</aot>
 	</test>
