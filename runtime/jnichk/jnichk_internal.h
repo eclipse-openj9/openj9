@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,6 +64,8 @@
 
 #define JNIC_JMETHODID 'm'
 #define JNIC_JFIELDID 'n'
+#define JNIC_JFIELDINSTANCEID 'e'
+#define JNIC_JFIELDSTATICID 'o'
 #define JNIC_VALIST 'v'
 #define JNIC_JSIZE 'q'
 #define JNIC_POINTER 'p'

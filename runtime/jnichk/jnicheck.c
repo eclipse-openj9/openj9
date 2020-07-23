@@ -595,14 +595,50 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			}
 			break;
 		case JNIC_JFIELDID:
+		{
+			jboolean aJboolean = JNI_FALSE;
+			U_32 modifiers = 0;
+
 			aJfieldID = va_arg(va, jfieldID);
 			if (NULL == aJfieldID) {
 				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
+			}
+			code += 1;
+			argNum += 1;
+			aJboolean = va_arg(va, int);
+			jniCheckRange(env, function, "jboolean", (IDATA)aJboolean, argNum, 0, 1);
+			modifiers = ((J9JNIFieldID*)aJfieldID)->field->modifiers;
+			if ((0 != (modifiers & J9AccStatic)) && !aJboolean) {
+				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_STATIC_FIELDID_PASSED, function, argNum);
+			} else if ((0 == (modifiers & J9AccStatic)) && aJboolean) {
+				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED, function, argNum);
+			}
+			if (trace) {
+				jniTraceFieldID(env, aJfieldID);
+				j9tty_printf(PORTLIB, ", ");
+				j9tty_printf(PORTLIB, "%s", aJboolean ? "true" : "false");
+			}
+			break;
+		}
+		case JNIC_JFIELDINSTANCEID:
+		case JNIC_JFIELDSTATICID:
+		{
+			U_32 modifiers = 0;
+			aJfieldID = va_arg(va, jfieldID);
+			if (NULL == aJfieldID) {
+				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
+			}
+			modifiers = ((J9JNIFieldID*)aJfieldID)->field->modifiers;
+			if ((JNIC_JFIELDINSTANCEID == asciiCode) && (0 != (modifiers & J9AccStatic))) {
+				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_STATIC_FIELDID_PASSED, function, argNum);
+			} else if ((JNIC_JFIELDSTATICID == asciiCode) && (0 == (modifiers & J9AccStatic))) {
+				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED, function, argNum);
 			}
 			if (trace) {
 				jniTraceFieldID(env, aJfieldID);
 			}
 			break;
+		}
 		case JNIC_VALIST:
 			va_arg(va, va_list*);
 			if (trace) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,6 +100,13 @@ void JNICALL Java_j9vm_test_jnichk_ConcurrentGlobalReferenceModification_test(JN
 
 jboolean JNICALL Java_j9vm_test_jnichk_CriticalAlwaysCopy_testArray(JNIEnv* env, jclass clazz, jobjectArray array);
 jboolean JNICALL Java_j9vm_test_jnichk_CriticalAlwaysCopy_testString(JNIEnv* env, jclass clazz, jstring str);
+
+void JNICALL Java_j9vm_test_jnichk_PassingFieldID_testToReflectedFieldExpectedStaticGotNonStatic(JNIEnv * env, jobject recv);
+void JNICALL Java_j9vm_test_jnichk_PassingFieldID_testToReflectedFieldExpectedNonStaticGotStatic(JNIEnv * env, jobject recv);
+void JNICALL Java_j9vm_test_jnichk_PassingFieldID_testGetCharFieldPassedStaticID(JNIEnv * env, jobject recv);
+void JNICALL Java_j9vm_test_jnichk_PassingFieldID_testGetStaticCharFieldPassedNonStaticID(JNIEnv * env, jobject recv);
+void JNICALL Java_j9vm_test_jnichk_PassingFieldID_testSetObjectFieldPassedStaticID(JNIEnv * env, jobject recv);
+void JNICALL Java_j9vm_test_jnichk_PassingFieldID_testSetStaticObjectFieldPassedNonStaticID(JNIEnv * env, jobject recv);
 
 /* ---------------- montest.c ---------------- */
 

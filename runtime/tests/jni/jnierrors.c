@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -241,4 +241,118 @@ Java_j9vm_test_jnichk_CriticalAlwaysCopy_testString(JNIEnv* env, jclass clazz, j
 	(*env)->ReleaseStringCritical(env,str,strPointer2);
 	
 	return result;
+}
+
+/*
+ * Class:     j9vm_test_jnichk_PassingFieldID
+ * Method:    testToReflectedFieldExpectedStaticGotNonStatic
+ * Signature: ()V
+ *
+ * This invokes ToReflectedField with an instance field ID and specifies isStatic with JNI_TRUE.
+ */
+void JNICALL
+Java_j9vm_test_jnichk_PassingFieldID_testToReflectedFieldExpectedStaticGotNonStatic(JNIEnv *env, jobject recv)
+{
+	jclass clazz = (*env)->GetObjectClass(env, recv);
+	if (NULL != clazz) {
+		jfieldID fID = (*env)->GetFieldID(env, clazz, "instanceCharField", "C");
+		if (NULL != fID) {
+			(*env)->ToReflectedField(env, clazz, fID, JNI_TRUE);
+		}
+	}
+}
+
+/*
+ * Class:     j9vm_test_jnichk_PassingFieldID
+ * Method:    testToReflectedFieldExpectedNonStaticGotStatic
+ * Signature: ()V
+ *
+ * This invokes ToReflectedField with a static field ID and specifies isStatic with JNI_FALSE.
+ */
+void JNICALL
+Java_j9vm_test_jnichk_PassingFieldID_testToReflectedFieldExpectedNonStaticGotStatic(JNIEnv *env, jobject recv)
+{
+	jclass clazz = (*env)->GetObjectClass(env, recv);
+	if (NULL != clazz) {
+		jfieldID fID = (*env)->GetStaticFieldID(env, clazz, "staticCharField", "C");
+		if (NULL != fID) {
+			(*env)->ToReflectedField(env, clazz, fID, JNI_FALSE);
+		}
+	}
+}
+
+/*
+ * Class:     j9vm_test_jnichk_PassingFieldID
+ * Method:    testGetCharFieldPassedStaticID
+ * Signature: ()V
+ *
+ * This invokes GetCharField with a static field ID.
+ */
+void JNICALL
+Java_j9vm_test_jnichk_PassingFieldID_testGetCharFieldPassedStaticID(JNIEnv *env, jobject recv)
+{
+	jclass clazz = (*env)->GetObjectClass(env, recv);
+	if (NULL != clazz) {
+		jfieldID fID = (*env)->GetStaticFieldID(env, clazz, "staticCharField", "C");
+		if (NULL != fID) {
+			(*env)->GetCharField(env, recv, fID);
+		}
+	}
+}
+
+/*
+ * Class:     j9vm_test_jnichk_PassingFieldID
+ * Method:    testGetStaticCharFieldPassedNonStaticID
+ * Signature: ()V
+ *
+ * This invokes GetStaticCharField with a non-static field ID.
+ */
+void JNICALL
+Java_j9vm_test_jnichk_PassingFieldID_testGetStaticCharFieldPassedNonStaticID(JNIEnv *env, jobject recv)
+{
+	jclass clazz = (*env)->GetObjectClass(env, recv);
+	if (NULL != clazz) {
+		jfieldID fID = (*env)->GetFieldID(env, clazz, "instanceCharField", "C");
+		if (NULL != fID) {
+			(*env)->GetStaticCharField(env, clazz, fID);
+		}
+	}
+}
+
+/*
+ * Class:     j9vm_test_jnichk_PassingFieldID
+ * Method:    testSetObjectFieldPassedStaticID
+ * Signature: ()V
+ *
+ * This invokes SetObjectField with a static field ID.
+ */
+void JNICALL
+Java_j9vm_test_jnichk_PassingFieldID_testSetObjectFieldPassedStaticID(JNIEnv *env, jobject recv)
+{
+	jclass clazz = (*env)->GetObjectClass(env, recv);
+	if (NULL != clazz) {
+		jfieldID fID = (*env)->GetStaticFieldID(env, clazz, "staticObjectField", "Ljava/lang/Object;");
+		if (NULL != fID) {
+			(*env)->SetObjectField(env, recv, fID, NULL);
+		}
+	}
+}
+
+/*
+ * Class:     j9vm_test_jnichk_PassingFieldID
+ * Method:    testSetStaticObjectFieldPassedNonStaticID
+ * Signature: ()V
+ *
+ * This invokes SetStaticObjectField with a non-static field ID.
+ */
+void JNICALL
+Java_j9vm_test_jnichk_PassingFieldID_testSetStaticObjectFieldPassedNonStaticID(JNIEnv * env, jobject recv)
+{
+	jclass clazz = (*env)->GetObjectClass(env, recv);
+	if (NULL != clazz) {
+		jfieldID fID = (*env)->GetFieldID(env, clazz, "instanceObjectField", "Ljava/lang/Object;");
+		if (NULL != fID) {
+			(*env)->SetStaticObjectField(env, clazz, fID, NULL);
+		}
+	}
 }
