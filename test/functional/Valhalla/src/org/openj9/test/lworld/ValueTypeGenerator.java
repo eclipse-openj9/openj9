@@ -78,13 +78,16 @@ public class ValueTypeGenerator extends ClassLoader {
 			}
 			fv = cw.visitField(fieldModifiers, nameAndSigValue[0], nameAndSigValue[1], null, null);
 			fv.visitEnd();
-			makeValueSig += nameAndSigValue[1];
-			makeValueGenericSig += "Ljava/lang/Object;";
-			if (nameAndSigValue[1].equals("J") || nameAndSigValue[1].equals("D")) {
-				makeMaxLocal += 2;
-			} else {
-				makeMaxLocal += 1;
+			if ((nameAndSigValue.length <= 2) || !nameAndSigValue[2].equals("static")) {
+				makeValueSig += nameAndSigValue[1];
+				makeValueGenericSig += "Ljava/lang/Object;";
+				if (nameAndSigValue[1].equals("J") || nameAndSigValue[1].equals("D")) {
+					makeMaxLocal += 2;
+				} else {
+					makeMaxLocal += 1;
+				}
 			}
+
 			generateFieldMethods(cw, nameAndSigValue, className, isVerifiable, isRef);
 		}
 		
@@ -389,49 +392,51 @@ public class ValueTypeGenerator extends ClassLoader {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, methodName, "(" + makeValueGenericSig + ")Ljava/lang/Object;", null, new String[] {"java/lang/Exception"});
 		mv.visitCode();
 		for (int i = 0; i <  fields.length; i++) {
-			mv.visitVarInsn(ALOAD, i);
 			String nameAndSigValue[] = fields[i].split(":");
-			switch (nameAndSigValue[1]) {
-			case "D":
-				mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
-				break;
-			case "I":
-				mv.visitTypeInsn(CHECKCAST, "java/lang/Integer");
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
-				break;
-			case "Z":
-				mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
-				break;
-			case "B":
-				mv.visitTypeInsn(CHECKCAST, "java/lang/Byte");
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
-				break;
-			case "C":
-				mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
-				break;
-			case "S":
-				mv.visitTypeInsn(CHECKCAST, "java/lang/Short");
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
-				break;
-			case "F":
-				mv.visitTypeInsn(CHECKCAST, "java/lang/Float");
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
-				break;
-			case "J":
-				mv.visitTypeInsn(CHECKCAST, "java/lang/Long");
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
-				break;
-			default:
-				String signature = nameAndSigValue[1];
-				
-				if ('L' == signature.charAt(0)) {
-					signature = signature.substring(1, signature.length() - 1);
+			if ((nameAndSigValue.length < 3) ||  !(nameAndSigValue[2].equals("static"))) {
+				mv.visitVarInsn(ALOAD, i);
+				switch (nameAndSigValue[1]) {
+				case "D":
+					mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
+					mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
+					break;
+				case "I":
+					mv.visitTypeInsn(CHECKCAST, "java/lang/Integer");
+					mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+					break;
+				case "Z":
+					mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
+					mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+					break;
+				case "B":
+					mv.visitTypeInsn(CHECKCAST, "java/lang/Byte");
+					mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
+					break;
+				case "C":
+					mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
+					mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
+					break;
+				case "S":
+					mv.visitTypeInsn(CHECKCAST, "java/lang/Short");
+					mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
+					break;
+				case "F":
+					mv.visitTypeInsn(CHECKCAST, "java/lang/Float");
+					mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
+					break;
+				case "J":
+					mv.visitTypeInsn(CHECKCAST, "java/lang/Long");
+					mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
+					break;
+				default:
+					String signature = nameAndSigValue[1];
+					
+					if ('L' == signature.charAt(0)) {
+						signature = signature.substring(1, signature.length() - 1);
+					}
+					mv.visitTypeInsn(CHECKCAST, signature);
+					break;
 				}
-				mv.visitTypeInsn(CHECKCAST, signature);
-				break;
 			}
 		}
 		mv.visitMethodInsn(INVOKESTATIC, className, specificMethodName, "(" + makeValueSig + ")" + getSigFromSimpleName(className, isRef), false);

@@ -1871,8 +1871,11 @@ public class ValueTypeTests {
 		Class cycleA1Class = ValueTypeGenerator.generateValueClass("CycleA1", cycleA1);
 		Class cycleB1Class = ValueTypeGenerator.generateValueClass("CycleB1", cycleB1);
 		
-		cycleA1Class.newInstance();
-		cycleB1Class.newInstance();
+		MethodHandle makeCycleA1 = lookup.findStatic(cycleA1Class, "makeValueGeneric", MethodType.methodType(Object.class));
+		MethodHandle makeCycleB1 = lookup.findStatic(cycleB1Class, "makeValueGeneric", MethodType.methodType(Object.class));
+		
+		makeCycleA1.invoke();
+		makeCycleB1.invoke();
 	}
 	
 	@Test(priority=1)
@@ -1885,9 +1888,13 @@ public class ValueTypeTests {
 		Class cycleB2Class = ValueTypeGenerator.generateValueClass("CycleB2", cycleB2);
 		Class cycleC2Class = ValueTypeGenerator.generateValueClass("CycleC2", cycleC2);
 		
-		cycleA2Class.newInstance();
-		cycleB2Class.newInstance();
-		cycleC2Class.newInstance();
+		MethodHandle makeCycleA2 = lookup.findStatic(cycleA2Class, "makeValueGeneric", MethodType.methodType(Object.class));
+		MethodHandle makeCycleB2 = lookup.findStatic(cycleB2Class, "makeValueGeneric", MethodType.methodType(Object.class));
+		MethodHandle makeCycleC2 = lookup.findStatic(cycleB2Class, "makeValueGeneric", MethodType.methodType(Object.class));
+		
+		makeCycleA2.invoke();
+		makeCycleB2.invoke();
+		makeCycleC2.invoke();
 	}
 	
 	@Test(priority=1)
@@ -1896,7 +1903,9 @@ public class ValueTypeTests {
 		
 		Class cycleA3Class = ValueTypeGenerator.generateValueClass("CycleA3", cycleA3);
 		
-		cycleA3Class.newInstance();
+		MethodHandle makeCycleA3 = lookup.findStatic(cycleA3Class, "makeValueGeneric", MethodType.methodType(Object.class));
+		
+		makeCycleA3.invoke();
 	}
 
 	@Test(priority=4)
