@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -149,7 +149,7 @@ public abstract class PlatformImplementation implements IPlatform {
 	public void writePlatformSpecificFiles( Artifact artifact ) throws UMAException {
 		writeExportFile(artifact);
 
-		if ( !artifact.flagSet("requiresPrimitiveTable") && !artifact.flagSet("dumpMasterPrimitiveTable") ) {
+		if ( !artifact.flagSet("requiresPrimitiveTable") && !artifact.flagSet("dumpMainPrimitiveTable") ) {
 			return;
 		}
 		String filename = UMA.getUma().getRootDirectory()+ artifact.getContainingModule().getFullName() + "/" + artifact.getTargetName() + "exp.c";
@@ -192,7 +192,7 @@ public abstract class PlatformImplementation implements IPlatform {
 			buffer.append("EsEndPrimitiveTable\n"); 
 		}
 
-		if ( artifact.flagSet("dumpMasterPrimitiveTable") ) {
+		if ( artifact.flagSet("dumpMainPrimitiveTable") ) {
 			buffer.append("\n");
 			Vector<Library> libs = artifact.getStaticLinkLibraries();
 			if (artifact.getType() == Artifact.TYPE_BUNDLE) {
@@ -512,12 +512,12 @@ public abstract class PlatformImplementation implements IPlatform {
 		case Artifact.TYPE_SHARED: // Fall-Thru
 		case Artifact.TYPE_BUNDLE: // Fall-Thru
 		case Artifact.TYPE_EXECUTABLE: 
-			if ( artifact.flagSet("requiresPrimitiveTable") || artifact.flagSet("dumpMasterPrimitiveTable") ) {
+			if ( artifact.flagSet("requiresPrimitiveTable") || artifact.flagSet("dumpMainPrimitiveTable") ) {
 				objtable.add(artifact.getTargetNameWithScope() + "exp" + getObjectExtension());
 			}
 			break;
 		case Artifact.TYPE_STATIC:
-			if (artifact.isInBundle() && ( artifact.flagSet("requiresPrimitiveTable") || artifact.flagSet("dumpMasterPrimitiveTable") )) {
+			if (artifact.isInBundle() && ( artifact.flagSet("requiresPrimitiveTable") || artifact.flagSet("dumpMainPrimitiveTable") )) {
 				objtable.add(artifact.getTargetNameWithScope() + "exp" + getObjectExtension());
 			}
 			break;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -643,7 +643,7 @@ SH_OSCacheTestMmap::testMutex(J9PortLibrary *portLibrary, J9JavaVM *vm, struct j
 
 /**
  * This test launches a child OSCache, which exits whilst holding the write lock. The
- * master then attempts to acquire the write lock. It should succeed, because JVMs are
+ * parent then attempts to acquire the write lock. It should succeed, because JVMs are
  * supposed to release the write lock if they crash.
  */
 #define OSCACHETEST_MUTEX_HANG_NAME "testMutexHang"

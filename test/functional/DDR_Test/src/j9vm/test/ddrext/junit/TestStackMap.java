@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,7 +79,7 @@ public class TestStackMap extends DDRExtTesterBase {
 		 * (Signal Dispatcher) !stack 0x63361100 !j9vmthread 0x63361100
 		 * !j9thread 0x637d0078 tid 0x144 (324) // (Concurrent Mark Helper)
 		 * !stack 0x633ce300 !j9vmthread 0x633ce300 !j9thread 0x637d02e4 tid
-		 * 0xe38 (3640) // (GC Slave) !stack 0x63432200 !j9vmthread 0x63432200
+		 * 0xe38 (3640) // (GC Worker) !stack 0x63432200 !j9vmthread 0x63432200
 		 * !j9thread 0x637d07bc tid 0x154c (5452) // (Attach API wait loop)
 		 * !stack 0x633f7a00 !j9vmthread 0x633f7a00 !j9thread 0x637d0550 tid
 		 * 0x15e0 (5600) // (Finalizer thread)

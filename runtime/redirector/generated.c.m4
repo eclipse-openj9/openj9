@@ -1,6 +1,6 @@
 changequote(`[',`]')dnl
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,7 +128,7 @@ $1(join([, ],mshift(4,$@)))
 		invokePrefix($4)[]global_$1(arg_names_list(mshift(4,$@)));
 #if defined(AIXPPC)
 	} else if (!table_initialized) {
-		/* attempt to open the 'master redirector' and try again */
+		/* attempt to open the 'main redirector' and try again */
 		int openedLibraries = openLibraries("");
 		if(JNI_ERR == openedLibraries) {
 			fprintf(stdout, "Internal Error: Failed to initialize redirector - exiting\n");
@@ -205,7 +205,7 @@ JVM_LoadSystemLibrary(const char *libName)
 		return global_JVM_LoadSystemLibrary( libName );
 #if defined(AIXPPC)
 	} else if (!table_initialized) {
-		/* attempt to open the 'master redirector' and try again */
+		/* attempt to open the 'main redirector' and try again */
 		int openedLibraries = openLibraries("");
 		if(JNI_ERR == openedLibraries) {
 			fprintf(stdout, "Internal Error: Failed to initialize redirector - exiting\n");

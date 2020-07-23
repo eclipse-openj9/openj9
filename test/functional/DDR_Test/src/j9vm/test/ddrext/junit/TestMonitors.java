@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,7 +59,7 @@ public class TestMonitors extends DDRExtTesterBase {
 		}
 
 		/*
-		 * On Windows, OMR defines a monitor named "portLibrary_omrsig_master_exception_monitor".
+		 * On Windows, OMR defines a monitor named "portLibrary_omrsig_main_exception_monitor".
 		 * Fail if the string 'exception' is present, but only if it does not follow an underscore ('_').
 		 */
 		assertTrue(validate(output,

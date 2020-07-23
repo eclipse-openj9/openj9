@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2014, 2016 IBM Corp. and others
+ * Copyright (c) 2014, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,7 @@ import java.lang.management.PlatformManagedObject;
  *     <li>CPU usage information notes:
  *       <ol>
  *         <li>Unattached native threads are not reflected.
- *         <li>Finalizer slave threads are considered as "Application" threads.
+ *         <li>Finalizer worker threads are considered as "Application" threads.
  *         <li>Threads of any category that participate in GC activity are accounted for in the "GC" category for the duration of the
  *             activity if the -XX:-ReduceCPUMonitorOverhead is specified. See the user guide for more information on this option.
  *         <li>If the application thread switches categories, the CPU usage is measured against each category for the duration of

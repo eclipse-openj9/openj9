@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -777,33 +777,61 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 	private native String getGCModeImpl();
 
 	/**
-	 * Returns the amount of CPU time spent in the GC by the master thread, in milliseconds.
+	 * Returns the amount of CPU time spent in the GC by the main thread, in milliseconds.
 	 *
 	 * @return CPU time used in milliseconds
-	 * @see #getGCMasterThreadCpuUsed()
+	 * @see #getGCMainThreadCpuUsed()
 	 */
-	private native long getGCMasterThreadCpuUsedImpl();
+	private native long getGCMainThreadCpuUsedImpl();
+
+/*[IF !Java16]*/
+	/**
+	 * {@inheritDoc}
+	 */
+	/*[IF Java11]*/
+	@Deprecated(forRemoval=true, since="15")
+	/*[ELSE] Java11 */
+	@Deprecated
+	/*[ENDIF] Java11 */
+	public long getGCMasterThreadCpuUsed() {
+		return getGCMainThreadCpuUsedImpl();
+	}
+/*[ENDIF] !Java16 */
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public long getGCMasterThreadCpuUsed() {
-		return getGCMasterThreadCpuUsedImpl();
+	public long getGCMainThreadCpuUsed() {
+		return getGCMainThreadCpuUsedImpl();
 	}
 
 	/**
-	 * Returns the amount of CPU time spent in the GC by all slave threads, in milliseconds.
+	 * Returns the amount of CPU time spent in the GC by all worker threads, in milliseconds.
 	 *
 	 * @return CPU time used in milliseconds
-	 * @see #getGCSlaveThreadsCpuUsed()
+	 * @see #getGCWorkerThreadsCpuUsed()
 	 */
-	private native long getGCSlaveThreadsCpuUsedImpl();
+	private native long getGCWorkerThreadsCpuUsedImpl();
+
+/*[IF !Java16]*/
+	/**
+	 * {@inheritDoc}
+	 */
+	/*[IF Java11]*/
+	@Deprecated(forRemoval=true, since="15")
+	/*[ELSE] Java11 */
+	@Deprecated
+	/*[ENDIF] Java11 */
+	public long getGCSlaveThreadsCpuUsed() {
+		return getGCWorkerThreadsCpuUsedImpl();
+	}
+/*[ENDIF] !Java16 */
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public long getGCSlaveThreadsCpuUsed() {
-		return getGCSlaveThreadsCpuUsedImpl();
+	public long getGCWorkerThreadsCpuUsed() {
+		return getGCWorkerThreadsCpuUsedImpl();
 	}
 
 	/**
@@ -822,7 +850,7 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 	}
 
 	/**
-	 * Returns the number of GC slave threads that participated in the most recent collection.
+	 * Returns the number of GC worker threads that participated in the most recent collection.
 	 *
 	 * @return number of active GC worker threads
 	 * @see #getCurrentGCThreads()

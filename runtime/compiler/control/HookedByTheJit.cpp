@@ -5347,13 +5347,13 @@ void getOutOfIdleStatesUnlocked(TR::CompilationInfo::TR_SamplerStates expectedSt
 /// Side-effect: will acquire/release vmThreadListMutex; note that we should
 /// not use this version in GC hooks because a deadlock may happen
 ///
-/// In Balanced, once a mutator thread hits AF it will (only) trigger GC, but will not act as master thread.
+/// In Balanced, once a mutator thread hits AF it will (only) trigger GC, but will not act as main thread.
 /// However, it is still the one that will request (and wait while the request is completed) exclusive VM access.
-/// Once it acquires it it will notify master GC thread (which is sleeping). Master GC wakes up and takes control
+/// Once it acquires it it will notify main GC thread (which is sleeping). Main GC wakes up and takes control
 /// driving GC till completion. The mutator thread will just wait on 'control mutex' for notification back
-/// from GC master thread that GC has completed. When resumed, the mutator thread will
+/// from GC main thread that GC has completed. When resumed, the mutator thread will
 /// release the exclusive VM access and proceed with allocation, and program execution.
-/// It is master GC thread that will invoke the hooks (start/end), but it does not directly hold
+/// It is main GC thread that will invoke the hooks (start/end), but it does not directly hold
 /// 'VM thread list' lock. Mutator thread does it.
 void getOutOfIdleStates(TR::CompilationInfo::TR_SamplerStates expectedState, TR::CompilationInfo *compInfo, const char* reason)
    {

@@ -2607,7 +2607,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       self()->setOption(TR_DisableTraps);
       }
 
-   // Take care of the master option TR_DisableIntrinsics and the two sub-options
+   // Take care of the main option TR_DisableIntrinsics and the two sub-options
    if (self()->getOption(TR_DisableIntrinsics))
       {
       self()->setOption(TR_DisableMarshallingIntrinsics);

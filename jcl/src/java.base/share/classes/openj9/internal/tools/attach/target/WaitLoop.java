@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 package openj9.internal.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,23 +92,23 @@ final class WaitLoop extends Thread {
 				synchronized (AttachHandler.stateSync) {
 					if (!AttachHandler.isAttachApiTerminated()) {
 						try {
-							CommonDirectory.obtainMasterLock(); /*[PR 164751 avoid scanning the directory when an attach API is launching ]*/
+							CommonDirectory.obtainControllerLock(); /*[PR 164751 avoid scanning the directory when an attach API is launching ]*/
 							status = CommonDirectory.reopenSemaphore(); 
-							CommonDirectory.releaseMasterLock();
+							CommonDirectory.releaseControllerLock();
 						} catch (IOException e) { 
-							IPC.logMessage("waitForNotification: IOError on master lock : ", e.toString()); //$NON-NLS-1$
+							IPC.logMessage("waitForNotification: IOError on controller lock : ", e.toString()); //$NON-NLS-1$
 						}
 					}
 				}
 				
 				/*[PR Jazz 41720 - Recreate notification directory if it is deleted. ]*/
 				if ((CommonDirectory.SEMAPHORE_OKAY == status) && TargetDirectory.ensureMyAdvertisementExists(AttachHandler.getVmId())) {
-					if (CommonDirectory.tryObtainMasterLock()) { /*[PR 199483] post to the semaphore to test it */
+					if (CommonDirectory.tryObtainControllerLock()) { /*[PR 199483] post to the semaphore to test it */
 						IPC.logMessage("semaphore recovery: send test post"); //$NON-NLS-1$
 						int numTargets = CommonDirectory.countTargetDirectories();
 						AttachHandler.setNumberOfTargets(numTargets);
 						CommonDirectory.notifyVm(numTargets, true); 
-						CommonDirectory.releaseMasterLock();
+						CommonDirectory.releaseControllerLock();
 					}
 					return waitForNotification(false);
 				}

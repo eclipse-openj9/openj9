@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 package openj9.internal.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -109,7 +109,7 @@ public final class Advertisement {
 		addKeyAsciiValue(contentBuffer, KEY_PROCESS_ID, Long.toString(IPC.getProcessId()));
 		addKeyValue(contentBuffer, KEY_VM_ID, vmId);
 		addKeyValue(contentBuffer, KEY_DISPLAY_NAME, (((null == displayName) || (displayName.length() == 0))? vmId: displayName));
-		addKeyValue(contentBuffer, KEY_NOTIFIER, CommonDirectory.MASTER_NOTIFIER);
+		addKeyValue(contentBuffer, KEY_NOTIFIER, CommonDirectory.CONTROLLER_NOTIFIER);
 		addKeyValue(contentBuffer, GLOBAL_SEMAPHORE, Boolean.TRUE.toString());
 		File tmpTargetDirectoryFileObject = TargetDirectory.getTargetDirectoryFileObject();
 		File tmpSyncFileObject = TargetDirectory.getSyncFileObject();
