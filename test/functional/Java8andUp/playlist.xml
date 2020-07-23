@@ -525,6 +525,7 @@
 		</subsets>
 		<impls>
 			<impl>openj9</impl>
+			<impl>ibm</impl>
 		</impls>
 	</test>
 
@@ -577,6 +578,7 @@
 		</subsets>
 		<impls>
 			<impl>openj9</impl>
+			<impl>ibm</impl>
 		</impls>
 	</test>
 
@@ -630,6 +632,7 @@
 		</subsets>
 		<impls>
 			<impl>openj9</impl>
+			<impl>ibm</impl>
 		 </impls>
 	</test>
 
@@ -656,6 +659,31 @@
 	</test>
 
 	<test>
+		<testCaseName>TestJcmd_ibm</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	-Dcom.ibm.tools.attach.enable=yes \
+	-Djdk.attach.allowAttachSelf=true \
+	-Dcom.ibm.tools.attach.timeout=15000 \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJcmd \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11+</subset>
+		</subsets>
+		<impls>
+			<impl>ibm</impl>
+		 </impls>
+	</test>
+
+	<test>
 		<testCaseName>TestJstat</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -676,6 +704,30 @@
 		 </impls>
 	</test>
 	
+	<test>
+		<testCaseName>TestJstat_ibm</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	-Dcom.ibm.tools.attach.enable=yes \
+	-Dcom.ibm.tools.attach.timeout=15000 \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJstat \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11+</subset>
+		</subsets>
+		<impls>
+			<impl>ibm</impl>
+		 </impls>
+	</test>
+
 	<test>
 		<testCaseName>TestFileLocking_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -1084,7 +1136,7 @@
 	</test>
 
 	<test>
-		<testCaseName>JCL_Test_openj9_none_SCC</testCaseName>
+		<testCaseName>JCL_Test_none_SCC</testCaseName>
 		<variations>
 			<variation>-Xshareclasses:none</variation>
 			<variation>-Xshareclasses:none -XX:RecreateClassfileOnload</variation>
@@ -1136,11 +1188,12 @@
 		<aot>nonapplicable</aot>
 		<impls>
 			<impl>openj9</impl>
+			<impl>ibm</impl>
 		</impls>
 	</test>
 
 	<test>
-		<testCaseName>JCL_Test_openj9_none_SCC_Native</testCaseName>
+		<testCaseName>JCL_Test_none_SCC_Native</testCaseName>
 		<variations>
 			<variation>-Xshareclasses:none</variation>
 			<variation>-XX:RecreateClassfileOnload -Xshareclasses:none</variation>
@@ -1180,6 +1233,7 @@
 		</types>
 		<impls>
 			<impl>openj9</impl>
+			<impl>ibm</impl>
 		</impls>
 	</test>
 
@@ -1755,6 +1809,36 @@
 		</groups>
 		<impls>
 			<impl>openj9</impl>
+		</impls>
+	</test>
+
+	<test>
+		<testCaseName>TestArrayCopy_none_SCC</testCaseName>
+		<variations>
+			<variation>Mode100</variation>
+			<variation>Mode101</variation>
+			<variation>Mode600</variation>
+			<variation>Mode619</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames TestArrayCopy \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.arm</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11+</subset>
+		</subsets>
+		<impls>
+			<impl>ibm</impl>
 		</impls>
 	</test>
 
