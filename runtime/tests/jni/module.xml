@@ -192,6 +192,12 @@
 	<export name="Java_j9vm_test_jnichk_ReturnInvalidReference_validLocalRef"/>
 	<export name="Java_j9vm_test_jnichk_CriticalAlwaysCopy_testArray"/>
 	<export name="Java_j9vm_test_jnichk_CriticalAlwaysCopy_testString"/>	
+	<export name="Java_j9vm_test_jnichk_PassingFieldID_testToReflectedFieldExpectedStaticGotNonStatic"/>
+	<export name="Java_j9vm_test_jnichk_PassingFieldID_testToReflectedFieldExpectedNonStaticGotStatic"/>
+	<export name="Java_j9vm_test_jnichk_PassingFieldID_testGetCharFieldPassedStaticID"/>
+	<export name="Java_j9vm_test_jnichk_PassingFieldID_testGetStaticCharFieldPassedNonStaticID"/>
+	<export name="Java_j9vm_test_jnichk_PassingFieldID_testSetObjectFieldPassedStaticID"/>
+	<export name="Java_j9vm_test_jnichk_PassingFieldID_testSetStaticObjectFieldPassedNonStaticID"/>
 	<export name="Java_j9vm_test_monitor_Helpers_getLastReturnCode"/>
 	<export name="Java_j9vm_test_monitor_Helpers_monitorEnter"/>
 	<export name="Java_j9vm_test_monitor_Helpers_monitorExit"/>
