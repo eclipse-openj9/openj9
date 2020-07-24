@@ -522,7 +522,7 @@ checkPushLocalFrame(JNIEnv *env, jint capacity)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jint actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JINT, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JSIZE, 0 };
 	static const char function[] = "PushLocalFrame";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, capacity);
@@ -675,7 +675,7 @@ checkEnsureLocalCapacity(JNIEnv *env, jint capacity)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jint actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JINT, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JSIZE, 0 };
 	static const char function[] = "EnsureLocalCapacity";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, capacity);
