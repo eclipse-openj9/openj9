@@ -42,7 +42,8 @@
             <group>functional</group>
         </groups>
         <subsets>
-            <subset>15+</subset>
+            <!-- run for Java 15 only since this is a preview feature. -->
+            <subset>15</subset>
         </subsets>
     </test>
 </playlist>
