@@ -711,7 +711,7 @@ UDATA initializeRequiredClasses(J9VMThread *vmThread, char* libName);
 /* J9SourceJclDefineClass*/
 extern J9_CFUNC jclass 
 defineClassCommon (JNIEnv *env, jobject classLoaderObject,
-	jstring className, jbyteArray classRep, jint offset, jint length, jobject protectionDomain, UDATA options, J9Class *hostClass, J9ClassPatchMap *patchMap);
+	jstring className, jbyteArray classRep, jint offset, jint length, jobject protectionDomain, UDATA *options, J9Class *hostClass, J9ClassPatchMap *patchMap, BOOLEAN validateName);
 
 /* BBjclNativesCommonAccessController*/
 jboolean JNICALL Java_java_security_AccessController_initializeInternal (JNIEnv *env, jclass thisClz);

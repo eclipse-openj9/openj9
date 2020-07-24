@@ -49,6 +49,7 @@ Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader
 	JNIEnv *env, jobject receiver, jstring className, jbyteArray classRep, jint offset, jint length, jobject classLoader, jobject protectionDomain)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
+	UDATA defineClassOptions = J9_FINDCLASS_FLAG_UNSAFE;
 
 	if (NULL == classLoader) {
 		J9JavaVM *vm = currentThread->javaVM;
@@ -62,7 +63,7 @@ Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader
 		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
-	return defineClassCommon(env, classLoader, className, classRep, offset, length, protectionDomain, J9_FINDCLASS_FLAG_UNSAFE, NULL, NULL);
+	return defineClassCommon(env, classLoader, className, classRep, offset, length, protectionDomain, &defineClassOptions, NULL, NULL, FALSE);
 }
 
 jclass JNICALL
@@ -71,6 +72,7 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	UDATA defineClassOptions = (J9_FINDCLASS_FLAG_UNSAFE | J9_FINDCLASS_FLAG_ANON);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	if (NULL == bytecodes) {
@@ -122,7 +124,7 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 	jsize length = env->GetArrayLength(bytecodes);
 
 	/* acquires access internally */
-	jclass anonClass = defineClassCommon(env, hostClassLoaderLocalRef, NULL,bytecodes, 0, length, protectionDomainLocalRef, J9_FINDCLASS_FLAG_UNSAFE | J9_FINDCLASS_FLAG_ANON, hostClazz, &cpPatchMap);
+	jclass anonClass = defineClassCommon(env, hostClassLoaderLocalRef, NULL,bytecodes, 0, length, protectionDomainLocalRef, &defineClassOptions, hostClazz, &cpPatchMap, FALSE);
 	if (env->ExceptionCheck()) {
 		return NULL;
 	} else if (NULL == anonClass) {
