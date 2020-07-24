@@ -351,7 +351,11 @@ int32_t TR::MonitorElimination::perform()
 
    if (trace())
       {
-      traceMsg(comp(), "Starting Monitor Elimination for %s\n", comp()->signature());
+      traceMsg(
+         comp(),
+         "Starting Monitor Elimination for %s\n"
+         "Warning: limiting lastOptSubIndex in Monitor Elimination may leave monitors in an unbalanced state.\n",
+         comp()->signature());
       comp()->dumpMethodTrees("Trees before Monitor Elimination");
       }
 
