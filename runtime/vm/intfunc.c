@@ -195,7 +195,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	cleanUpClassLoader,
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 	iterateStackTrace,
-	getCompleteNPEMessage,
+	getNPEMessage,
 	internalReleaseVMAccessNoMutex,
 	getVMHookInterface,
 	internalAttachCurrentThread,
