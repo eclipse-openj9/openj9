@@ -27,6 +27,7 @@
     <test name="Jep360Tests">
         <classes>
             <class name="org.openj9.test.java.lang.Test_Class"/>
+            <class name="org.openj9.test.java.lang.instrument.Test_Instrumentation"/>
             <class name="org.openj9.test.sealedclasses.SealedClassesTests"/>
         </classes>
     </test>

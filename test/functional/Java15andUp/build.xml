@@ -63,7 +63,7 @@
 
 	<target name="dist" depends="compile,dist_functional" description="generate the distribution" >
 		<mkdir dir="${DEST}"/>
-		<jar jarfile="${DEST}/GeneralTest.jar" filesonly="true">
+		<jar jarfile="${DEST}/GeneralTest.jar" filesonly="true" manifest="./META-INF/MANIFEST.MF">
 			<fileset dir="${build}"/>
 			<fileset dir="${src}/../" includes="*.properties,*.xml"/>
 		</jar>
