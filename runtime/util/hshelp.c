@@ -3220,6 +3220,55 @@ verifyRecordAttributesAreSame(J9ROMClass *originalROMClass, J9ROMClass *replacem
 done:
 	return rc;
 }
+
+static jvmtiError
+verifyPermittedSubclassAttributeContentsMatch(J9ROMClass *originalROMClass, J9ROMClass *replacementROMClass)
+{
+	jvmtiError rc = JVMTI_ERROR_NONE;
+
+	if (J9ROMCLASS_IS_SEALED(originalROMClass) && J9ROMCLASS_IS_SEALED(replacementROMClass)) {
+		U_32* originalPermittedSubclassesCountPtr = getNumberOfPermittedSubclassesPtr(originalROMClass);
+		U_32* replacementPermittedSubclassesCountPtr = getNumberOfPermittedSubclassesPtr(replacementROMClass);
+
+		if (*originalPermittedSubclassesCountPtr == *replacementPermittedSubclassesCountPtr) {
+			U_32 i = 0;
+
+			for (i = 0; i < *originalPermittedSubclassesCountPtr; i++) {
+				U_32 j = 0;
+				BOOLEAN foundMatchingSubclass = FALSE;
+				J9UTF8* originalSubclassNameUTF = permittedSubclassesNameAtIndex(originalPermittedSubclassesCountPtr, i);
+				
+				/* Find matching subclass name in replacement ROM class. The permitted subclasses are not required to be in the same order
+				 * as the original class. Assume the replacement subclass is in the same slot as original to try to improve speed.
+				 */
+				for (j = 0; j < *originalPermittedSubclassesCountPtr; j++){
+					U_32 adjustedIndex = (i + j) % *originalPermittedSubclassesCountPtr;
+					J9UTF8* replacementSubclassNameUTF = permittedSubclassesNameAtIndex(replacementPermittedSubclassesCountPtr, adjustedIndex);
+
+					if (J9UTF8_EQUALS(originalSubclassNameUTF, replacementSubclassNameUTF)) {
+						foundMatchingSubclass = TRUE;
+						break;
+					}
+				}
+
+				/* check if matching subclass was found. */
+				if (!foundMatchingSubclass) {
+					rc = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
+					break;
+				}
+			}
+
+		} else {
+			rc = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
+		}
+	} else if (J9ROMCLASS_IS_SEALED(originalROMClass) != J9ROMCLASS_IS_SEALED(replacementROMClass)) {
+		/* If sealed status has changed the PermittedSubclass attribute has also changed which is not allowed. */
+		rc = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
+	}
+
+	return rc;
+}
+
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 jvmtiError
@@ -3327,6 +3376,12 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 #if JAVA_SPEC_VERSION >= 15
 		/* Verify that records attributes are the same */
 		rc = verifyRecordAttributesAreSame(originalROMClass, replacementROMClass);
+		if (rc != JVMTI_ERROR_NONE) {
+			return rc;
+		}
+
+		/* Verify that permitted subclass attributes contain the same classes */
+		rc = verifyPermittedSubclassAttributeContentsMatch(originalROMClass, replacementROMClass);
 		if (rc != JVMTI_ERROR_NONE) {
 			return rc;
 		}

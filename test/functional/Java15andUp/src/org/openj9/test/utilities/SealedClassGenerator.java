@@ -25,7 +25,7 @@ package org.openj9.test.utilities;
  import org.objectweb.asm.*;
 
  public class SealedClassGenerator implements Opcodes {
-    private static String dummySubclassName = "TestSubclass";
+    private static String dummySubclassName = "TestSubclassGen";
 
     public static byte[] generateFinalSealedClass(String className) {
         int accessFlags = ACC_FINAL | ACC_SUPER;
@@ -52,6 +52,18 @@ package org.openj9.test.utilities;
         String[] interfaces = { superInterface.getName().replace('.', '/') };
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         cw.visit(V15 | V_PREVIEW, ACC_SUPER, className, null, "java/lang/Object", interfaces);
+        cw.visitEnd();
+        return cw.toByteArray();
+    }
+
+    public static byte[] generateSealedClass(String className, String[] permittedSubclassNames) {
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+        cw.visit(V15 | V_PREVIEW, ACC_SUPER, className, null, "java/lang/Object", null);
+
+        for (String psName : permittedSubclassNames) {
+            cw.visitPermittedSubclass(psName);
+        }
+
         cw.visitEnd();
         return cw.toByteArray();
     }
