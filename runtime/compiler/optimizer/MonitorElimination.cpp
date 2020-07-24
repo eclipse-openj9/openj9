@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4526,7 +4526,7 @@ void TR::MonitorElimination::addCatchBlocks()
                }
 
             firstTime = false;
-            cfg->addExceptionEdge(block, catchBlock);
+            cfg->addExceptionEdgeUnchecked(block, catchBlock);
             if (trace())
                traceMsg(comp(), "Added edge from block_%d to catch block_%d\n", block->getNumber(), catchBlock->getNumber());
 
