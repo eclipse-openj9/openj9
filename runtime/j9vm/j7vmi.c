@@ -2555,9 +2555,15 @@ jvmDefineClassHelper(JNIEnv *env, jobject classLoaderObject,
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
 	if (NULL != className) {
-		utf8Name = (U_8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(className), J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
+		j9object_t classNameObject = J9_JNI_UNWRAP_REFERENCE(className);
+		utf8Name = (U_8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, classNameObject, J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
 		if (NULL == utf8Name) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+			goto done;
+		}
+
+		if (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, classNameObject, CLASSNAME_VALID_NON_ARRARY)) {
+			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (UDATA *)*(j9object_t*)className);
 			goto done;
 		}
 	}

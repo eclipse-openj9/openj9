@@ -29,7 +29,7 @@
 
 jclass 
 defineClassCommon(JNIEnv *env, jobject classLoaderObject,
-	jstring className, jbyteArray classRep, jint offset, jint length, jobject protectionDomain, UDATA options, J9Class *hostClass, J9ClassPatchMap *patchMap)
+	jstring className, jbyteArray classRep, jint offset, jint length, jobject protectionDomain, UDATA *options, J9Class *hostClass, J9ClassPatchMap *patchMap, BOOLEAN validateName)
 {
 #ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
 
@@ -56,17 +56,13 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 	J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL};
 
 	if (vm->dynamicLoadBuffers == NULL) {
-		if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
-			throwNewInternalError(env, "Dynamic loader is unavailable");
-		}
+		throwNewInternalError(env, "Dynamic loader is unavailable");
 		goto done;
 	}
 	dynFuncs = vm->dynamicLoadBuffers;
 
 	if (classRep == NULL) {
-		if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
-			throwNewNullPointerException(env, NULL);
-		}
+		throwNewNullPointerException(env, NULL);
 		goto done;
 	}
 
@@ -80,16 +76,12 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 		vmFuncs->internalExitVMToJNI(currentThread);
 		/* Make a "flat" copy of classRep */
 		if (length < 0) {
-			if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
-				throwNewIndexOutOfBoundsException(env, NULL);
-			}
+			throwNewIndexOutOfBoundsException(env, NULL);
 			goto done;
 		}
 		classBytes = j9mem_allocate_memory(length, J9MEM_CATEGORY_CLASSES);
 		if (classBytes == NULL) {
-			if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
-				vmFuncs->throwNativeOOMError(env, 0, 0);
-			}
+			vmFuncs->throwNativeOOMError(env, 0, 0);
 			goto done;
 		}
 		(*env)->GetByteArrayRegion(env, classRep, offset, length, (jbyte *)classBytes);
@@ -102,11 +94,20 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 
 	/* Allocate and initialize a UTF8 copy of the Unicode class-name */
 	if (NULL != className) {
-		utf8Name = (U_8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(className), J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
+		j9object_t classNameObject = J9_JNI_UNWRAP_REFERENCE(className);
+		utf8Name = (U_8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, classNameObject, J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
 
 		if (NULL == utf8Name) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;
+		}
+
+		if (validateName && (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, classNameObject, CLASSNAME_VALID_NON_ARRARY))) {
+			/* We don't yet know if the class being defined is exempt. Setting this option tells
+			 * defineClassCommon() to fail if it discovers that the class is not exempt. That failure
+			 * is distinguished by returning NULL with no exception pending.
+			 */
+			*options |= J9_FINDCLASS_FLAG_NAME_IS_INVALID;
 		}
 	}
 
@@ -132,11 +133,11 @@ retry:
 
 	omrthread_monitor_enter(vm->classTableMutex);
 	/* Hidden class is never added into the hash table */
-	if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_HIDDEN)) {
+	if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_HIDDEN)) {
 		if (NULL != vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length)) {
 			/* Bad, we have already defined this class - fail */
 			omrthread_monitor_exit(vm->classTableMutex);
-			if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
+			if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
 				vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, (UDATA *)*(j9object_t*)className);
 			}
 			goto done;
@@ -158,7 +159,7 @@ retry:
 	dynFuncs->findLocallyDefinedClassFunction(currentThread, NULL, utf8Name, (U_32) utf8Length, classLoader, classLoader->classPathEntries, classLoader->classPathEntryCount, (UDATA) FALSE, &localBuffer);
 
 	/* skip if we are anonClass */
-	if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
+	if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_ANON)) {
 		/* Check for romClass cookie, it indicates that we are  defining a class out of a JXE not from class bytes */
 
 		loadedClass = vmFuncs->romClassLoadFromCookie(currentThread, utf8Name, utf8Length, classBytes, (UDATA) length);
@@ -188,7 +189,7 @@ retry:
 			} else {
 				tempClassBytes = J9ROMCLASS_INTERMEDIATECLASSDATA(loadedClass);
 				tempLength = loadedClass->intermediateClassDataLength;
-				options |= J9_FINDCLASS_FLAG_SHRC_ROMCLASS_EXISTS;
+				*options |= J9_FINDCLASS_FLAG_SHRC_ROMCLASS_EXISTS;
 			}
 		}
 	}
@@ -200,7 +201,7 @@ retry:
 				tempClassBytes, (UDATA) tempLength, NULL,
 				classLoader,
 				protectionDomain ? *(j9object_t*)protectionDomain : NULL,
-				options | J9_FINDCLASS_FLAG_THROW_ON_FAIL | J9_FINDCLASS_FLAG_NO_CHECK_FOR_EXISTING_CLASS,
+				*options | J9_FINDCLASS_FLAG_THROW_ON_FAIL | J9_FINDCLASS_FLAG_NO_CHECK_FOR_EXISTING_CLASS,
 				loadedClass,
 				hostClass,
 				&localBuffer);
@@ -219,7 +220,7 @@ retry:
 
 done:
 	if (NULL == clazz) {
-		if (J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
+		if (J9_ARE_ANY_BITS_SET(*options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
 			/*
 			 * The caller signalled that the name is invalid. Leave the result NULL and
 			 * clear any pending exception; the caller will throw NoClassDefFoundError.
