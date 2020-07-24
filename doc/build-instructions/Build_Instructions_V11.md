@@ -694,6 +694,7 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
                --with-freemarker-jar=/root/freemarker.jar \
                --with-boot-jdk=/root/bootjdk11 \
                --with-build-jdk=/root/bootjdk11 \
+               --with-cmake=no \
                --disable-warnings-as-errors \
                --disable-ddr
 ```
