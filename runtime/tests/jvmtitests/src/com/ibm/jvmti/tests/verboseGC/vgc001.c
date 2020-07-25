@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,15 +31,15 @@ static agentEnv * env;
 static jvmtiExtensionFunction subscribe  = NULL;
 static jvmtiExtensionFunction unsubscribe  = NULL;
 
-void *subscriptionID;
+static void *subscriptionID;
 volatile static jint bufferCount = 0;
 volatile static int alarmed = 0;
 
-void *subscriptionID2;
+static void *subscriptionID2;
 volatile static jint bufferCount2 = 0;
 volatile static int alarmed2 = 0;
 
-void *subscriptionID3;
+static void *subscriptionID3;
 volatile static jint bufferCount3 = 0;
 volatile static int alarmed3 = 0;
 
