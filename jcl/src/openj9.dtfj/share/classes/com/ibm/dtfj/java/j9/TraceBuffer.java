@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,28 +23,29 @@
 package com.ibm.dtfj.java.j9;
 
 /**
- * @author jmdisher
- * A container for the information that is described by the &lt;trace&gt; data in the XML index
- * 
+ * A container for the information that is described by the &lt;trace&gt; data in the XML index.
+ *
  * Data looks like this:
- * <trace>
- 	<header address="0x10a63008" size="1484"/>
- 	<buffers address="0x10a5ef00" size="8192" offset="40" link="24" terminator="0x0"/>
- * </trace>
- * 
- * We will have to know more about what is desired from this component before implementing it
+ * &lt;trace&gt;
+ *  &lt;header address="0x10a63008" size="1484"/&gt;
+ *  &lt;buffers address="0x10a5ef00" size="8192" offset="40" link="24" terminator="0x0"/&gt;
+ * &lt;/trace&gt;
+ *
+ * We will have to know more about what is desired from this component before implementing it.
+ *
+ * @author jmdisher
  */
 public class TraceBuffer
 {
 	public void setHeader(long address, long size)
 	{
-		//we will need the capability to turn these addresses into ImagePointer instances but there is no 
+		//we will need the capability to turn these addresses into ImagePointer instances but there is no
 		// API to read this type, yet
 	}
-	
+
 	public void setBuffer(long address, long size, int offset, int link, int terminator)
 	{
-		//we will need the capability to turn these addresses into ImagePointer instances but there is no 
+		//we will need the capability to turn these addresses into ImagePointer instances but there is no
 		// API to read this type, yet
 	}
 }
