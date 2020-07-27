@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,6 +53,7 @@ typedef struct MemRecord {
 
 static omrthread_monitor_t MemMonitor = NULL;
 static J9Pool* MemPoolGlobal = NULL;
+static BOOLEAN optionFatal = FALSE;
 
 static jboolean jniCheckIsSameObject (JNIEnv * env, jobject ref1, jobject ref2);
 static UDATA checkArrayCrc (JNIEnv * env, const char *acquireFunction, const char *releaseFunction, jobject object, const void *memory, jint mode, MemRecord * poolElement);
@@ -100,6 +101,9 @@ jniRecordMemoryAcquire(JNIEnv* env, const char* functionName, jobject object, co
 
 	poolElement = pool_newElement(MemPoolGlobal);
 	if (poolElement == NULL) {
+		if (optionFatal) {
+			omrthread_monitor_exit(MemMonitor);
+		}
 		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_OUT_OF_MEMORY, functionName);
 	} else {
 		poolElement->env = env;
@@ -122,6 +126,9 @@ jniCheckMemoryInit(J9JavaVM* javaVM)
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	omrthread_monitor_t globalMonitor = omrthread_global_monitor();
+	if (J9_ARE_NO_BITS_SET(javaVM->checkJNIData.options, JNICHK_NONFATAL)) {
+		optionFatal = TRUE;
+	}
 	omrthread_monitor_enter(globalMonitor);
 	if (MemMonitor == NULL) {
 		if (omrthread_monitor_init_with_name(&MemMonitor, 0,"JNI Mem")) {
@@ -179,6 +186,9 @@ jniRecordMemoryRelease(JNIEnv* env, const char* acquireFunction, const char* rel
 	poolElement = pool_startDo(MemPoolGlobal, &poolState);
 	for(;;) {
 		if (poolElement == NULL) {
+			if (optionFatal) {
+				omrthread_monitor_exit(MemMonitor);
+			}
 			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_BAD_POINTER, releaseFunction, memory);
 			break;
 		}
