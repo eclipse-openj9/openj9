@@ -88,8 +88,6 @@ private:
 
    void lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt);
 
-   void findArrayStoreCHKOperands(TR::Node *node, TR::Node *&destination, TR::Node *&source);
-
 public:
 
    bool collectSymRefs(TR::Node *node, TR_BitVector *symRefs, vcount_t secondVisitCount);
