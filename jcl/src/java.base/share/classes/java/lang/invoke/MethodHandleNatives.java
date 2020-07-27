@@ -86,6 +86,8 @@ class MethodHandleNatives {
 	static Object classData(Class<?> c) {
 		return JLA.classData(c);
 	}
+
+	native static void checkClassBytes(byte[] bytes);
 	/*[ENDIF] Java15 */
 }
 /*[ENDIF] Java11 */

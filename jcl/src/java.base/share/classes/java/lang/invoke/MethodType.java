@@ -1150,6 +1150,7 @@ public final class MethodType implements Serializable
 		return wrapperClass;
 	}
 	
+	/* The string returned by this method should be in sync with Class.descriptorString() */
 	static String getBytecodeStringName(Class<?> c){
 		if (c.isPrimitive()) {
 			if (c == int.class) {
@@ -1172,7 +1173,22 @@ public final class MethodType implements Serializable
 				return "S"; //$NON-NLS-1$
 			}
 		}
+		Class<?> clazz = c;
+		if (c.isArray()) {
+			clazz = c.getComponentType();
+			while (clazz.isArray()) {
+				clazz = clazz.getComponentType();
+			}
+		}
 		String name = c.getName().replace('.', '/');
+		/*[IF Java15]*/
+		if (clazz.isHidden()) {
+			/* keep the last "." before romaddress for hidden classes */
+			int index = name.lastIndexOf('/');
+			name = name.substring(0, index) + '.' + name.substring(index + 1,name.length());
+		}
+		/*[ENDIF] Java15 */
+		
 		if (c.isArray()) {
 			return name;
 		}

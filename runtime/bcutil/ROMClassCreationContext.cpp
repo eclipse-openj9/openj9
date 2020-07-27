@@ -157,6 +157,7 @@ ROMClassCreationContext::buildResultString(BuildResult result)
 	case UnknownAnnotation: return "UnknownAnnotation";
 	case ClassNameMismatch: return "ClassNameMismatch";
 	case InvalidAnnotation: return "InvalidAnnotation";
+	case InvalidClassType: return "InvalidClassType";
 	default: return "Unknown";
 	}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@ import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.Optional;
+import java.util.NoSuchElementException;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -131,17 +132,11 @@ public class Test_Class {
 	 */
 	private void describeConstableTestLambda(String testName) {
 		Optional<ClassDesc> optionalDesc = lambdaExpTest.describeConstable();
-		ClassDesc desc = optionalDesc.orElseThrow();
-
-		/*
-		 * verify that descriptor can be resolved. Otherwise exception will be thrown.
-		 */
 		try {
-			Class<?> resolvedClass = (Class<?>)desc.resolveConstantDesc(MethodHandles.lookup());
-			Assert.fail(testName + " : resolveConstantDesc did not throw an error.");
-		} catch (Throwable e) {
-			/* resolveConstantDesc is expected to fail */
-			logger.debug(testName + ": exception thrown for resolveConstantDesc was " + e.toString());
+			ClassDesc desc = optionalDesc.orElseThrow(); 
+		} catch (NoSuchElementException e) {
+			/* In Java 15 and up, lambda classes are hidden classes whose describeConstable is an empty Optional. */
+			logger.debug(testName + ": exception thrown for optionalDesc.orElseThrow() was " + e.toString());
 		}
 	}
 
