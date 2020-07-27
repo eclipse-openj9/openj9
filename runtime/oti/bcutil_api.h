@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,6 +178,21 @@ bcutil_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved);
 */
 I_32 
 j9bcutil_readClassFileBytes (J9PortLibrary *portLib, IDATA (*verifyFunction) (J9PortLibrary *aPortLib, J9CfrClassFile* classfile, U_8* segment, U_8* segmentLength, U_8* freePointer, U_32 vmVersionShifted, U_32 flags, I_32 *hasRET), U_8* data, UDATA dataLength, U_8* segment, UDATA segmentLength, U_32 flags, U_8** segmentFreePointer, void *verboseContext, UDATA findClassFlags, UDATA romClassSortingThreshold);
+
+#if JAVA_SPEC_VERSION >= 15
+/**
+ * check the class bytes that will be used to define a class.
+ * @param currentThread The current VM thread.
+ * @param classBytes Pointer to the class bytes that is to be checked.
+ * @param classBytesLength The length of class bytes.
+ * @param segment A memory segment that will be used to verify the class bytes.
+ * @param segmentLength The length of memory segment.
+ * 
+ * @param return 0 class bytes is legal or a negative value otherwise.
+ */
+I_32
+checkClassBytes(J9VMThread *currentThread, U_8* classBytes, UDATA classBytesLength, U_8* segment, U_32 segmentLength);
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 /* ---------------- defineclass.c ---------------- */
 

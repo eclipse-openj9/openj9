@@ -887,6 +887,7 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 		 * Error messages are contents of vm->dynamicLoadBuffers->classFileError if anything is assigned
 		 * otherwise just the classname.
 		 */
+		case BCT_ERR_INVALID_CLASS_TYPE:
 		case BCT_ERR_CLASS_NAME_MISMATCH:
 			exceptionNumber = J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR;
 			/* FALLTHROUGH */

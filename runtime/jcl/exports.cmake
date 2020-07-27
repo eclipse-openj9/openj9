@@ -584,5 +584,6 @@ if(NOT JAVA_SPEC_VERSION LESS 15)
 	omr_add_exports(jclse
 		Java_java_lang_Class_isHiddenImpl
 		Java_java_lang_ClassLoader_defineClassImpl1
+		Java_java_lang_invoke_MethodHandleNatives_checkClassBytes
 	)
 endif()

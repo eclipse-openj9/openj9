@@ -2701,6 +2701,11 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 		return -1;
 	}
 
+	if (J9_ARE_ANY_BITS_SET(flags, BCT_BasicCheckOnly)) {
+		Trc_BCU_j9bcutil_readClassFileBytes_Basic_Check_Exit(0);
+		return 0;
+	}
+
 	if (J9_ARE_ANY_BITS_SET(findClassFlags, J9_FINDCLASS_FLAG_UNSAFE)) {
 		flags |= BCT_Unsafe;
 	}
@@ -3601,3 +3606,18 @@ sortMethodIndex(J9CfrConstantPoolInfo* constantPool, J9CfrMethod *list, IDATA st
 		}
 	}
 }
+
+#if JAVA_SPEC_VERSION >= 15
+I_32
+checkClassBytes(J9VMThread *currentThread, U_8* classBytes, UDATA classBytesLength, U_8* segment, U_32 segmentLength) 
+{
+	I_32 rc = 0;
+	U_32 cfrFlags = BCT_JavaMaxMajorVersionShifted | BCT_AnyPreviewVersion | BCT_BasicCheckOnly;
+	PORT_ACCESS_FROM_VMC(currentThread);
+	if (NULL != classBytes) {
+		rc = j9bcutil_readClassFileBytes(PORTLIB, NULL, classBytes, classBytesLength, segment, segmentLength, cfrFlags, NULL, NULL, 0, 0);
+	}
+	return rc;
+}
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
