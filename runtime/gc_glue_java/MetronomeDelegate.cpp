@@ -966,7 +966,7 @@ MM_MetronomeDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 					 * while GC was in the middle of iterating the hash table.
 					 */
 					hashTableSetFlag(classLoader->classHashTable, J9HASH_TABLE_DO_NOT_REHASH);
-					clazz = _javaVM->internalVMFunctions->hashClassTableStartDo(classLoader, &walkState);
+					clazz = _javaVM->internalVMFunctions->hashClassTableStartDo(classLoader, &walkState, 0);
 					while (NULL != clazz) {
 						didWork |= markClass(env, clazz);
 						clazz = _javaVM->internalVMFunctions->hashClassTableNextDo(&walkState);

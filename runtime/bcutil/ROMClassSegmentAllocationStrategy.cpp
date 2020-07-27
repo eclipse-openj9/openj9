@@ -35,7 +35,7 @@ ROMClassSegmentAllocationStrategy::allocate(UDATA bytesRequired)
 
 	J9MemorySegment* segment = NULL;
 	/* always make a new segment if its an anonClass */
-	bool allocNewSegment = ((_allocNewSeg) || (_classLoader == _javaVM->anonClassLoader));
+	bool allocNewSegment = (_classLoader == _javaVM->anonClassLoader);
 	
 	if (!allocNewSegment) {
 		J9MemorySegmentList* classSegments = _javaVM->classMemorySegments;

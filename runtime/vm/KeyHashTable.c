@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -286,6 +286,9 @@ hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLeng
 	if (NULL != result) {
 		J9Class *clazz = result->ramClass;
 		Assert_VM_false(J9_ARE_ANY_BITS_SET((UDATA)clazz, J9_REQUIRED_CLASS_ALIGNMENT - 1));
+		if (J9ROMCLASS_IS_HIDDEN(clazz->romClass)) {
+			return NULL;
+		}
 		return clazz;
 	} else {
 		return NULL;
@@ -409,26 +412,87 @@ hashClassTableReplace(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class 
 }
 
 J9Class *
-hashClassTableStartDo(J9ClassLoader *classLoader, J9HashTableState *walkState)
+hashClassTableStartDo(J9ClassLoader *classLoader, J9HashTableState *walkState, UDATA flags)
 {
+	BOOLEAN skipHidden = J9_ARE_ALL_BITS_SET(flags, J9_HASH_TABLE_STATE_FLAG_SKIP_HIDDEN);
+	BOOLEAN continueToNext = FALSE;
 	KeyHashTableClassEntry *first = hashTableStartDo(classLoader->classHashTable, walkState);
 
-	/* only report RAM classes */
-	while ((NULL != first) && (TAG_RAM_CLASS != (first->tag & MASK_RAM_CLASS))) {
-		first = hashTableNextDo(walkState);
+	if (NULL != first) {	
+		if (TAG_RAM_CLASS != (first->tag & MASK_RAM_CLASS)) {
+			/* only report RAM classes */
+			continueToNext = TRUE;
+		} else {
+			if (skipHidden && J9ROMCLASS_IS_HIDDEN(first->ramClass->romClass)) {
+				continueToNext = TRUE;
+			} else {
+				continueToNext = FALSE;
+			}
+		}
+	} else {
+		continueToNext = FALSE;
 	}
 
+	
+	while (continueToNext) {
+		first = hashTableNextDo(walkState);
+		if (NULL != first) {	
+			if (TAG_RAM_CLASS != (first->tag & MASK_RAM_CLASS)) {
+				/* only report RAM classes */
+				continueToNext = TRUE;
+			} else {
+				if (skipHidden && J9ROMCLASS_IS_HIDDEN(first->ramClass->romClass)) {
+					continueToNext = TRUE;
+				} else {
+					continueToNext = FALSE;
+				}
+			}
+		} else {
+			continueToNext = FALSE;
+		}
+	}
+	walkState->flags = flags;
 	return (NULL == first) ? NULL : first->ramClass;
 }
 
 J9Class *
 hashClassTableNextDo(J9HashTableState *walkState)
 {
+	BOOLEAN skipHidden = J9_ARE_ALL_BITS_SET(walkState->flags, J9_HASH_TABLE_STATE_FLAG_SKIP_HIDDEN);
+	BOOLEAN continueToNext = FALSE;
 	KeyHashTableClassEntry *next = hashTableNextDo(walkState);
 
+	if (NULL != next) {	
+		if (TAG_RAM_CLASS != (next->tag & MASK_RAM_CLASS)) {
+			/* only report RAM classes */
+			continueToNext = TRUE;
+		} else {
+			if (skipHidden && J9ROMCLASS_IS_HIDDEN(next->ramClass->romClass)) {
+				continueToNext = TRUE;
+			} else {
+				continueToNext = FALSE;
+			}
+		}
+	} else {
+		continueToNext = FALSE;
+	}
 	/* only report RAM classes */
-	while ((NULL != next) && (TAG_RAM_CLASS != (next->tag & MASK_RAM_CLASS))) {
+	while (continueToNext) {
 		next = hashTableNextDo(walkState);
+		if (NULL != next) {	
+			if (TAG_RAM_CLASS != (next->tag & MASK_RAM_CLASS)) {
+				/* only report RAM classes */
+				continueToNext = TRUE;
+			} else {
+				if (skipHidden && J9ROMCLASS_IS_HIDDEN(next->ramClass->romClass)) {
+					continueToNext = TRUE;
+				} else {
+					continueToNext = FALSE;
+				}
+			}
+		} else {
+			continueToNext = FALSE;
+		}
 	}
 
 	return (NULL == next) ? NULL : next->ramClass;
@@ -536,6 +600,9 @@ hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject)
 	if (NULL != result) {
 		J9Class *clazz = result->ramClass;
 		Assert_VM_false(J9_ARE_ANY_BITS_SET((UDATA)clazz, J9_REQUIRED_CLASS_ALIGNMENT - 1));
+		if (J9ROMCLASS_IS_HIDDEN(clazz->romClass)) {
+			return NULL;
+		}
 		return clazz;
 	}
 	return NULL;

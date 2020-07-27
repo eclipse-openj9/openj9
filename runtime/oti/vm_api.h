@@ -1738,6 +1738,11 @@ setExceptionForErroredRomClass( J9ROMClass *romClass, J9VMThread *vmThread );
 
 /* ---------------- KeyHashTable.c ---------------- */
 
+/* Flag(s) used by hashClassTableStartDo()/hashClassTableNextDo() and set to J9HashTableState.flags
+ * to control whether to skip special classes, like hidden classes, in the hash table iteration. 
+ */
+#define J9_HASH_TABLE_STATE_FLAG_SKIP_HIDDEN 1
+
 /**
 * Searches classLoader for any loaded classes in a specific package
 *
@@ -1824,12 +1829,13 @@ hashClassTableReplace(J9VMThread* vmThread, J9ClassLoader *classLoader, J9Class 
 
 /**
 * @brief Iterate over the classes defined by or cached in the specified class loader
-* @param *classLoader
-* @param *walkState
+* @param *classLoader The class loader to use.
+* @param *walkState The J9HashTableState. 
+* @param flags Flags to control whether to skip special classes, like hidden classes, in the iteration.
 * @return J9Class*
 */
 J9Class*
-hashClassTableStartDo(J9ClassLoader *classLoader, J9HashTableState* walkState);
+hashClassTableStartDo(J9ClassLoader *classLoader, J9HashTableState* walkState, UDATA flags);
 
 /**
 * @brief Iterate over the classes defined by or cached in the specified class loader

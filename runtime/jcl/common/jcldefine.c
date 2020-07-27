@@ -164,8 +164,8 @@ retry:
 	 */
 	dynFuncs->findLocallyDefinedClassFunction(currentThread, NULL, utf8Name, (U_32) utf8Length, classLoader, classLoader->classPathEntries, classLoader->classPathEntryCount, (UDATA) FALSE, &localBuffer);
 
-	/* skip if we are anonClass */
-	if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_ANON)) {
+	/* skip if we are anonClass or hidden classes */
+	if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_ANON | J9_FINDCLASS_FLAG_HIDDEN)) {
 		/* Check for romClass cookie, it indicates that we are  defining a class out of a JXE not from class bytes */
 
 		loadedClass = vmFuncs->romClassLoadFromCookie(currentThread, utf8Name, utf8Length, classBytes, (UDATA) length);

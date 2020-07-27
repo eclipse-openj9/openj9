@@ -176,7 +176,7 @@ j9bcutil_buildRomClass(J9LoadROMClassData *loadData, U_8 * intermediateData, UDA
 	UDATA bcuFlags = javaVM->dynamicLoadBuffers->flags;
 	UDATA findClassFlags = loadData->options;
 
-	ROMClassSegmentAllocationStrategy romClassSegmentAllocationStrategy(javaVM, loadData->classLoader, J9_ARE_ANY_BITS_SET(findClassFlags, J9_FINDCLASS_FLAG_HIDDEN));
+	ROMClassSegmentAllocationStrategy romClassSegmentAllocationStrategy(javaVM, loadData->classLoader);
 	ROMClassBuilder *romClassBuilder = ROMClassBuilder::getROMClassBuilder(PORTLIB, javaVM);
 	if (NULL == romClassBuilder) {
 		return BCT_ERR_OUT_OF_MEMORY;
@@ -429,7 +429,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 	Trc_BCU_Assert_False(context->isRetransforming() && !context->isRetransformAllowed());
 
 	bool isLambda = false;
-	if (context->isClassAnon()) {
+	if (context->isClassAnon() || context->isClassHidden()) {
 		BuildResult res = handleAnonClassName(classFileParser->getParsedClassFile(), &isLambda);
 		if (OK != res) {
 			return res;
@@ -719,7 +719,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 	 * Use an if statement here and call finishPrepareAndLaydown() in both cases to allow the scope of SCStringTransaction() to survive the life of the call to
 	 * finishPrepareAndLaydown(). Otherwise, the scope of SCStringTransaction() would end early and it would not be safe to us interned strings.
 	 */
-	if (J9_ARE_ALL_BITS_SET(context->findClassFlags(), J9_FINDCLASS_FLAG_ANON)) {
+	if (J9_ARE_ANY_BITS_SET(context->findClassFlags(), J9_FINDCLASS_FLAG_ANON | J9_FINDCLASS_FLAG_HIDDEN)) {
 		U_16 classNameIndex = classFileOracle.getClassNameIndex();
 		U_8* classNameBytes = classFileOracle.getUTF8Data(classNameIndex);
 		U_16 classNameFullLength = classFileOracle.getUTF8Length(classNameIndex);

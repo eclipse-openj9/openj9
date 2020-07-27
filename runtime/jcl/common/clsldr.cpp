@@ -102,12 +102,14 @@ Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclas
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 
-	options |= (J9_FINDCLASS_FLAG_HIDDEN | J9_FINDCLASS_FLAG_UNSAFE | J9_FINDCLASS_FLAG_ANON);
+	options |= (J9_FINDCLASS_FLAG_HIDDEN | J9_FINDCLASS_FLAG_UNSAFE);
 	if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_NESTMATE)) {
 		options |= J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE;
 	}
 	if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_STRONG)) {
 		options |= J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG;
+	} else {
+		options |= J9_FINDCLASS_FLAG_ANON;
 	}
 	
 	jsize length = env->GetArrayLength(classRep);
