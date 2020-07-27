@@ -56,8 +56,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/p/codegen/J9CodeGenerator.cpp \
     compiler/p/codegen/J9PPCInstruction.cpp \
     compiler/p/codegen/J9PPCSnippet.cpp \
-    compiler/p/codegen/J9PPCWatchedInstanceFieldSnippet.cpp \
-    compiler/p/codegen/J9PPCWatchedStaticFieldSnippet.cpp \
     compiler/p/codegen/J9TreeEvaluator.cpp \
     compiler/p/codegen/J9UnresolvedDataSnippet.cpp \
     compiler/p/codegen/PPCJNILinkage.cpp \
