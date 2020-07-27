@@ -363,7 +363,7 @@ Java_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_getLast
 jboolean JNICALL Java_java_lang_ClassLoader_isVerboseImpl (JNIEnv *env, jclass clazz);
 jclass JNICALL Java_java_lang_ClassLoader_defineClassImpl (JNIEnv *env, jobject receiver, jstring className, jbyteArray classRep, jint offset, jint length, jobject protectionDomain);
 #if JAVA_SPEC_VERSION >= 15
-jclass JNICALL Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclass hostClass, jstring className, jbyteArray classRep, jobject protectionDomain, jboolean init, jint flags, jobject obj);
+jclass JNICALL Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclass hostClass, jstring className, jbyteArray classRep, jobject protectionDomain, jboolean init, jint flags, jobject classData);
 #endif /* JAVA_SPEC_VERSION >= 15 */
 jboolean JNICALL Java_java_lang_ClassLoader_foundJavaAssertOption (JNIEnv *env, jclass ignored);
 jint JNICALL Java_com_ibm_oti_vm_BootstrapClassLoader_addJar(JNIEnv *env, jobject receiver, jbyteArray jarPath);

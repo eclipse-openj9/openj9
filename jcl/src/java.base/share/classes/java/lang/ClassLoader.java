@@ -601,7 +601,7 @@ final Class<?> defineClassInternal(
 
 /*[IF Java15]*/
 
-private final native Class<?> defineClassImpl1(Class<?> hostClass, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object obj);
+private final native Class<?> defineClassImpl1(Class<?> hostClass, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object classData);
 final Class<?> defineClassInternal(
 		Class<?> hostClass, 
 		String className, 
@@ -609,10 +609,10 @@ final Class<?> defineClassInternal(
 		ProtectionDomain protectionDomain, 
 		boolean init, 
 		int flags, 
-		Object obj)
+		Object classData)
 		throws java.lang.ClassFormatError 
 {
-	Class<?> answer = defineClassImpl1(hostClass, className, classRep, protectionDomain, init, flags, obj);
+	Class<?> answer = defineClassImpl1(hostClass, className, classRep, protectionDomain, init, flags, classData);
 	return answer;
 }
 /*[ENDIF] Java15 */

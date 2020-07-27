@@ -400,9 +400,7 @@ final class Access implements JavaLangAccess {
 /*[IF Java15]*/
 	public Class<?> defineClass(ClassLoader classLoader, Class<?> clazz, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object classData) {
 		ClassLoader targetClassLoader = (null == classLoader) ? ClassLoader.bootstrapClassLoader : classLoader;
-		Class <?> ret = targetClassLoader.defineClassInternal(clazz, className, classRep, protectionDomain, init, flags, classData);
-		ret.setClassData(classData);
-		return ret;
+		return targetClassLoader.defineClassInternal(clazz, className, classRep, protectionDomain, init, flags, classData);
 	}
 
 	/**

@@ -4791,16 +4791,5 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	Object getClassData() {
 		return classData;
 	}
-
-	/**
-	 * Stores the classData in the class.
-	 * 
-	 * @param the classData (Object) to be stored.
-	 * 
-	 * @return void.
-	 */
-	void setClassData(Object classData) {
-		this.classData = classData;
-	}
 /*[ENDIF] Java15 */
 }

@@ -95,7 +95,7 @@ Java_java_lang_ClassLoader_defineClassImpl(JNIEnv *env, jobject receiver, jstrin
 
 #if JAVA_SPEC_VERSION >= 15
 jclass JNICALL
-Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclass hostClass, jstring className, jbyteArray classRep, jobject protectionDomain, jboolean init, jint flags, jobject obj)
+Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclass hostClass, jstring className, jbyteArray classRep, jobject protectionDomain, jboolean init, jint flags, jobject classData)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -135,6 +135,12 @@ Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclas
 	} else if (NULL == result) {
 		throwNewInternalError(env, NULL);
 		return NULL;
+	}
+
+	if (NULL != classData) {
+		j9object_t classDataObject = J9_JNI_UNWRAP_REFERENCE(classData);
+		j9object_t resultClassObject = J9_JNI_UNWRAP_REFERENCE(result);
+		J9VMJAVALANGCLASS_SET_CLASSDATA(currentThread, resultClassObject, classDataObject);
 	}
 
 	if (init) {

@@ -147,6 +147,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/Class" name="annotationCache" signature="Ljava/lang/Class$AnnotationCache;"/>
 	<fieldref class="java/lang/Class" name="module" signature="Ljava/lang/Module;" flags="opt_module" versions="9-"/>
 	<fieldref class="java/lang/Class" name="methodHandleCache" signature="Ljava/lang/Object;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/Class" name="classData" signature="Ljava/lang/Object;" versions="15-"/>
 
 	<staticfieldref class="java/lang/String" name="compressionFlag" signature="Ljava/lang/String$StringCompressionFlag;"/>
 	<fieldref class="java/lang/String" name="value" signature="[B" versions="9-">
