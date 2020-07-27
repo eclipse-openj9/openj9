@@ -167,6 +167,10 @@ initializeUnsafeMemoryTracking(J9JavaVM* vm);
 void
 freeUnsafeMemory(J9JavaVM* vm);
 
+/* ---------------- java_dyn_methodhandle.c ---------------- */
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
+void clearNonZAAPEligibleBit(JNIEnv *env, jclass nativeClass, const JNINativeMethod *nativeMethods, jint nativeMethodCount);
+#endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 
 #ifdef __cplusplus
 }

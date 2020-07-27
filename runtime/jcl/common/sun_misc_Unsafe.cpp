@@ -1051,7 +1051,11 @@ registerJdkInternalMiscUnsafeNativesCommon(JNIEnv *env, jclass clazz) {
 			(void*)&Java_sun_misc_Unsafe_getUncompressedObject
 		},
 	};
-	env->RegisterNatives(clazz, natives, sizeof(natives)/sizeof(JNINativeMethod));
+	jint numNatives = sizeof(natives)/sizeof(JNINativeMethod);
+	env->RegisterNatives(clazz, natives, numNatives);
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
+	clearNonZAAPEligibleBit(env, clazz, natives, numNatives);
+#endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 }
 
 /* register jdk.internal.misc.Unsafe natives for Java 10 */
@@ -1065,7 +1069,11 @@ registerJdkInternalMiscUnsafeNativesJava10(JNIEnv *env, jclass clazz) {
 			(void*)&Java_jdk_internal_misc_Unsafe_objectFieldOffset1
 		}
 	};
-	env->RegisterNatives(clazz, natives, sizeof(natives)/sizeof(JNINativeMethod));
+	jint numNatives = sizeof(natives)/sizeof(JNINativeMethod);
+	env->RegisterNatives(clazz, natives, numNatives);
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
+	clearNonZAAPEligibleBit(env, clazz, natives, numNatives);
+#endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 }
 
 /* register jdk.internal.misc.Unsafe natives for Java 14 */
@@ -1084,7 +1092,11 @@ registerJdkInternalMiscUnsafeNativesJava14(JNIEnv *env, jclass clazz) {
 			(void*)&Java_jdk_internal_misc_Unsafe_isWritebackEnabled
 		}
 	};
-	env->RegisterNatives(clazz, natives, sizeof(natives)/sizeof(JNINativeMethod));
+	jint numNatives = sizeof(natives)/sizeof(JNINativeMethod);
+	env->RegisterNatives(clazz, natives, numNatives);
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
+	clearNonZAAPEligibleBit(env, clazz, natives, numNatives);
+#endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 }
 
 /* class jdk.internal.misc.Unsafe only presents in Java 9 and beyond */
