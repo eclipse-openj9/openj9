@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,20 +27,20 @@ import org.xml.sax.Attributes;
 import com.ibm.dtfj.image.j9.ImageProcess;
 
 /**
- * @author jmdisher
- * 
  * Example:
- * <gpf failingThread="0x806a600" nativeFailingThread="0xb7e286c0">
-J9Generic_Signal_Number=00000004 Signal_Number=0000000b Error_Value=00000000 Signal_Code=00000001
-Handler1=B7DADB8F Handler2=B7D7B0C6 InaccessibleAddress=FFFFFFFB
-EDI=083639B0 ESI=09010101 EAX=96C5879E EBX=082EACDC
-ECX=00000000 EDX=00000000
-EIP=96C587A1 ES=C010007B DS=C010007B ESP=BFAB3634
-EFlags=00210246 CS=00000073 SS=0000007B EBP=BFAB3634
-Module=/tmp/rtj_jextract/jre/bin/libgptest.so
-Module_base_address=96C58000 Symbol=Java_VMBench_GPTests_GPTest_gpWrite
-Symbol_address=96C5879E
-</gpf>
+ * &lt;gpf failingThread="0x806a600" nativeFailingThread="0xb7e286c0"&gt;
+ * J9Generic_Signal_Number=00000004 Signal_Number=0000000b Error_Value=00000000 Signal_Code=00000001
+ * Handler1=B7DADB8F Handler2=B7D7B0C6 InaccessibleAddress=FFFFFFFB
+ * EDI=083639B0 ESI=09010101 EAX=96C5879E EBX=082EACDC
+ * ECX=00000000 EDX=00000000
+ * EIP=96C587A1 ES=C010007B DS=C010007B ESP=BFAB3634
+ * EFlags=00210246 CS=00000073 SS=0000007B EBP=BFAB3634
+ * Module=/tmp/rtj_jextract/jre/bin/libgptest.so
+ * Module_base_address=96C58000 Symbol=Java_VMBench_GPTests_GPTest_gpWrite
+ * Symbol_address=96C5879E
+ * &lt;/gpf&gt;
+ * 
+ * @author jmdisher
  */
 public class NodeGPF extends NodeAbstract
 {

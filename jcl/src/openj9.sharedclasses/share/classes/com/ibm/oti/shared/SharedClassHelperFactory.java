@@ -1,8 +1,6 @@
 /*[INCLUDE-IF SharedClasses]*/
-package com.ibm.oti.shared;
-
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +20,7 @@ package com.ibm.oti.shared;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.shared;
 
 import java.net.URL;
 /*[IF Sidecar19-SE]*/
@@ -278,9 +277,10 @@ public interface SharedClassHelperFactory {
 	 * @param 		loader ClassLoader.
 	 * 					ClassLoader which may or may not have a SharedClassHelper
 	 *  
-	 * @return		Set<SharedClassHelper>.
+	 * @return		Set&lt;SharedClassHelper&gt;.
 	 * 					A set of helpers exist for this ClassLoader.
 	 */
 	public Set<SharedClassHelper> findHelpersForClassLoader(ClassLoader loader);
 	/*[ENDIF]*/
+
 }
