@@ -1976,7 +1976,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
 
    UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(javaVM));
    Trc_JIT_VMInitStages_Event1(curThread);
-
+   Trc_JIT_portableSharedCache_enabled_or_disabled(curThread, TRUE == javaVM->sharedCacheAPI->sharedCachePortable ? 1 : 0);
    return 0;
    }
 

@@ -25,6 +25,7 @@
 #include "control/Options.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/annotations/AnnotationBase.hpp"
+#include "env/ut_j9jit.h"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "env/VMJ9.h"
