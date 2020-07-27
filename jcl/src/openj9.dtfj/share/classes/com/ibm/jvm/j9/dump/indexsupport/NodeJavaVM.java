@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,27 +30,27 @@ import com.ibm.dtfj.image.CorruptDataException;
 import com.ibm.dtfj.image.ImagePointer;
 import com.ibm.dtfj.image.j9.ImageAddressSpace;
 import com.ibm.dtfj.image.j9.ImageProcess;
+import com.ibm.dtfj.java.JavaClass;
 import com.ibm.dtfj.java.JavaClassLoader;
 import com.ibm.dtfj.java.JavaMonitor;
-import com.ibm.dtfj.java.j9.JavaObject;
 import com.ibm.dtfj.java.JavaThread;
-import com.ibm.dtfj.java.JavaClass;
+import com.ibm.dtfj.java.j9.JavaObject;
 import com.ibm.dtfj.java.j9.JavaRuntime;
 
 /**
- * @author jmdisher
- * 
  * Example:
- * <javavm id="0x805fd90">
+ * &lt;javavm id="0x805fd90"&gt;
+ *
+ * @author jmdisher
  */
 public class NodeJavaVM extends NodeAbstract
 {
 	private JavaRuntime _runtime;
-	
+
 	public NodeJavaVM(XMLIndexReader parent, ImageProcess process, ImageAddressSpace addressSpace, String vmVersion, Attributes attributes)
 	{
 		long id = _longFromString(attributes.getValue("id"));
-		
+
 		ImagePointer vmPointer = addressSpace.getPointer(id);
 		_runtime = new JavaRuntime(process, vmPointer, vmVersion);
 		if (process != null) {
@@ -64,7 +64,7 @@ public class NodeJavaVM extends NodeAbstract
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode child = null;
-		
+
 		if (qName.equals("systemProperties")) {
 			child = new NodeSystemProperties(_runtime, attributes);
 		} else if (qName.equals("class")) {
@@ -92,7 +92,7 @@ public class NodeJavaVM extends NodeAbstract
 		}
 		return child;
 	}
-	
+
 	public void didFinishParsing()
 	{
 		Iterator classLoaders = _runtime.getJavaClassLoaders();
@@ -100,7 +100,7 @@ public class NodeJavaVM extends NodeAbstract
 			Object potentialClassLoader = classLoaders.next();
 			if (potentialClassLoader instanceof JavaClassLoader) {
 				JavaClassLoader loader = (JavaClassLoader) potentialClassLoader;
-				
+
 				//sets the associated object
 				try {
 					Object potentialLoaderObject = loader.getObject();
@@ -113,11 +113,11 @@ public class NodeJavaVM extends NodeAbstract
 							Object potentialClass = classes.next();
 							if (potentialClass instanceof JavaClass) {
 								JavaClass theClass = (JavaClass)potentialClass;
-								
+
 								try {
 									Object potentialClassObject = theClass.getObject();
 									if (null != potentialClassObject && potentialClassObject instanceof com.ibm.dtfj.java.j9.JavaObject) {
-										JavaObject classObject = (com.ibm.dtfj.java.j9.JavaObject)potentialClassObject; 
+										JavaObject classObject = (com.ibm.dtfj.java.j9.JavaObject)potentialClassObject;
 										classObject.setAssociatedClass(theClass);
 										_runtime.addSpecialObject(classObject);
 									}
@@ -140,11 +140,11 @@ public class NodeJavaVM extends NodeAbstract
 			Object potentialMonitor = monitors.next();
 			if (potentialMonitor instanceof JavaMonitor) {
 				JavaMonitor monitor = (JavaMonitor) potentialMonitor;
-				
+
 				//sets the associated object
 				Object potentialMonitorObject = monitor.getObject();
 				if (null != potentialMonitorObject && potentialMonitorObject instanceof com.ibm.dtfj.java.j9.JavaObject) {
-					JavaObject monitorObject = (com.ibm.dtfj.java.j9.JavaObject)potentialMonitorObject; 
+					JavaObject monitorObject = (com.ibm.dtfj.java.j9.JavaObject)potentialMonitorObject;
 					monitorObject.setAssociatedMonitor(monitor);
 					_runtime.addSpecialObject(monitorObject);
 				}

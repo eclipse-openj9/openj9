@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,10 +29,10 @@ import com.ibm.dtfj.image.j9.ImageAddressSpace;
 import com.ibm.dtfj.image.j9.ImageProcess;
 
 /**
- * @author jmdisher
- * 
  * Example:
- * <j9dump endian="little" size="32" version="2.3" stamp="20060714_07189_lHdSMR" uuid="16994021750723430015" format="1.1" arch="x86" cpus="2" memory="1593016320" osname="Linux" osversion="2.6.15-1-686-smp" environ="0x80569c0">
+ * &lt;j9dump endian="little" size="32" version="2.3" stamp="20060714_07189_lHdSMR" uuid="16994021750723430015" format="1.1" arch="x86" cpus="2" memory="1593016320" osname="Linux" osversion="2.6.15-1-686-smp" environ="0x80569c0"&gt;
+ *
+ * @author jmdisher
  */
 public class NodeJ9Dump extends NodeAbstract
 {
@@ -41,13 +41,13 @@ public class NodeJ9Dump extends NodeAbstract
 	private String _vmVersion;
 	private ImageProcess _process;
 	private Image _image;
-	
+
 	public NodeJ9Dump(XMLIndexReader reader, Attributes attributes)
 	{
-		//<j9dump endian="little" size="32" version="2.3" stamp="20050823_02904_lHdSMR" 
-		//uuid="16827002721828718167" format="1.1" arch="x86" cpus="1" memory="536330240" 
+		//<j9dump endian="little" size="32" version="2.3" stamp="20050823_02904_lHdSMR"
+		//uuid="16827002721828718167" format="1.1" arch="x86" cpus="1" memory="536330240"
 		//osname="Windows XP" osversion="5.1 build 2600 Service Pack 1" environ="0x7c38c8f4">
-		
+
 		String osType = attributes.getValue("osname");
 		String osSubType = attributes.getValue("osversion");
 		String cpuType = attributes.getValue("arch");
@@ -75,12 +75,12 @@ public class NodeJ9Dump extends NodeAbstract
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode child = null;
-		
+
 		if (qName.equals("gpf")) {
 			child = new NodeGPF(_process, attributes);
-		} else if (qName.equals("net")){
+		} else if (qName.equals("net")) {
 			child = new NodeNet(_image, attributes);
-		} else if (qName.equals("javavm")){
+		} else if (qName.equals("javavm")) {
 			child = new NodeJavaVM(_parent, _process, _addressSpace, _vmVersion, attributes);
 		} else {
 			child = super.nodeToPushAfterStarting(uri, localName, qName, attributes);
