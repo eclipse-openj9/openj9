@@ -1000,7 +1000,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
    TR_BDChain *prevInChain = NULL;
    TR_BDChain *firstInChain = NULL;
    if ((node->getOpCodeValue() == TR::acall) &&
-       !node->getSymbolReference()->isUnresolved() &&
+        node->getSymbolReference()->getSymbol()->isResolvedMethod() &&
        ((node->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_math_BigDecimal_valueOf) ||
         (node->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_math_BigDecimal_valueOf_J)))
       {
