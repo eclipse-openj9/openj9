@@ -320,6 +320,8 @@ vmOptionsTableAddOptionWithCopy(void **vmOptionsTable, char *optionString, void 
 	#define JVM_ARCH_DIR "amd64"
   #elif defined(J9ARM)
 	#define JVM_ARCH_DIR "arm"
+  #elif defined(J9AARCH64)
+	#define JVM_ARCH_DIR "aarch64"
   #elif defined(J9X86)
 	#define JVM_ARCH_DIR "i386"
   #elif defined(S39064) || defined(J9ZOS39064)
