@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,7 @@
 #include "j9consts.h"
 #include "jni.h"
 #include "j9protos.h"
+#include "jcl_internal.h"
 #include "jclprots.h"
 #include "ut_j9jcl.h"
 #include "VM_MethodHandleKinds.h"
@@ -55,9 +56,6 @@ static void JNICALL vmInvalidate(JNIEnv *env, jclass mutableCallSiteClass, jlong
 static BOOLEAN accessCheckMethodSignature(J9VMThread *currentThread, J9Method *method, j9object_t methodType, J9UTF8 *lookupSig);
 static BOOLEAN accessCheckFieldSignature(J9VMThread *currentThread, J9Class* lookupClass, UDATA romField, j9object_t methodType, J9UTF8 *lookupSig);
 static char * expandNLSTemplate(J9VMThread *vmThread, const char *nlsTemplate, ...);
-#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
-static void clearNonZAAPEligibleBit(JNIEnv *env, jclass nativeClass, const JNINativeMethod *nativeMethods, jint nativeMethodCount);
-#endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 
 /**
  * Lookup static method name of type signature on lookupClass class.
@@ -1025,7 +1023,7 @@ setClassLoadingConstraintLinkageError(J9VMThread *vmThread, J9Class *methodOrFie
  * @param[in] nativeMethods       The JNI native method pointer
  * @param[in] nativeMethodCount  The count of native methods
  */
-static void
+void
 clearNonZAAPEligibleBit(JNIEnv *env, jclass nativeClass, const JNINativeMethod *nativeMethods, jint nativeMethodCount)
 {
 	J9VMThread *vmThread = (J9VMThread *) env;
