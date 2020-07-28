@@ -1628,12 +1628,12 @@ j9shmem_test15(J9PortLibrary *portLibrary, char* argv0)
 			}
 			case 4: {
 				outputComment(PORTLIB, "\tSub Test %d: test a uid change\n", i+1);
-				newfileinfo.uid = 0;
+				newfileinfo.uid += 1;
 				break;
 			}
 			case 5: {
 				outputComment(PORTLIB, "\tSub Test %d:test a gid change\n", i+1);
-				newfileinfo.gid = 0;
+				newfileinfo.gid += 1;
 				break;
 			}
 			case 6: {
