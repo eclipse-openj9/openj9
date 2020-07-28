@@ -51,7 +51,8 @@
 
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}"/>
-			<compilerarg line='--enable-preview --release ${JDK_VERSION}' />
+			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
+			<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
 			<classpath>
 				<pathelement location="${LIB_DIR}/testng.jar"/>
 				<pathelement location="${LIB_DIR}/jcommander.jar"/>
