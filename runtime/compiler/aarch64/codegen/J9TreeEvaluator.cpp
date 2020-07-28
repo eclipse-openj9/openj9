@@ -1614,13 +1614,40 @@ J9::ARM64::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator
 TR::Register *
 J9::ARM64::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   // TODO: Use OutOfLineCodeSection if it is correctly implemented.
-   // Because OOL is tricky to get it right, we defer implementing it to future work.
-   // We instead use ARM64HelperCallSnippet to call helper and assumes that the helper takes no arguments
+   // NOTE: ZEROCHK is intended to be general and straightforward.  If you're
+   // thinking of adding special code for specific situations in here, consider
+   // whether you want to add your own CHK opcode instead.  If you feel the
+   // need for special handling here, you may also want special handling in the
+   // optimizer, in which case a separate opcode may be more suitable.
+   //
+   // On the other hand, if the improvements you're adding could benefit other
+   // users of ZEROCHK, please go ahead and add them!
+   //
 
-   TR_ASSERT_FATAL(node->getNumChildren() == 1, "We assume that ZEROCHKEvaluator has only 1 child");
    TR::LabelSymbol *slowPathLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *restartLabel  = generateLabelSymbol(cg);
+   slowPathLabel->setStartInternalControlFlow();
+   restartLabel->setEndInternalControlFlow();
 
+   // Temporarily hide the first child so it doesn't appear in the outlined call
+   //
+   node->rotateChildren(node->getNumChildren()-1, 0);
+   node->setNumChildren(node->getNumChildren()-1);
+
+   // Outlined instructions for check failure
+   //
+   TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::call, NULL, slowPathLabel, restartLabel, cg);
+   cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+
+   // Restore the first child
+   //
+   node->setNumChildren(node->getNumChildren()+1);
+   node->rotateChildren(0, node->getNumChildren()-1);
+
+   // Children other than the first are only for the outlined path; we don't need them here
+   //
+   for (int32_t i = 1; i < node->getNumChildren(); i++)
+      cg->recursivelyDecReferenceCount(node->getChild(i));
 
    // Instructions for the check
    // ToDo: Optimize isBooleanCompare() case
@@ -1628,16 +1655,11 @@ J9::ARM64::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR::Node *valueToCheck = node->getFirstChild();
    TR::Register *value = cg->evaluate(valueToCheck);
 
-   // We do not need restart label because the helper throws exception
-   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, slowPathLabel, node->getSymbolReference());
-   cg->addSnippet(snippet);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, value, slowPathLabel);
 
-   TR::Instruction *gcPoint = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, value, slowPathLabel);
-   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
-   snippet->gcMap().setGCRegisterMask(0xffffffff);
    cg->decReferenceCount(node->getFirstChild());
-   // ARM64HelperCallSnippet generates "bl" instruction
-   cg->machine()->setLinkRegisterKilled(true);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, restartLabel);
+
    return NULL;
    }
 
