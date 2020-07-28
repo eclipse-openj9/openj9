@@ -830,8 +830,13 @@ createField(struct J9VMThread *vmThread, jfieldID fieldID)
 #if defined(USE_SUN_REFLECT)
 	J9VMJAVALANGREFLECTFIELD_SET_MODIFIERS(vmThread, fieldObject, j9FieldID->field->modifiers & CFR_FIELD_ACCESS_MASK);
 #if JAVA_SPEC_VERSION >= 15
-	if (J9_ARE_ALL_BITS_SET(j9FieldID->field->modifiers, J9AccFinal | J9AccStatic)) {
-		J9VMJAVALANGREFLECTFIELD_SET_TRUSTEDFINAL(vmThread, fieldObject, JNI_TRUE);
+	/* trust that static final fields and final record class fields will not be modified. */
+	if (J9_ARE_ALL_BITS_SET(j9FieldID->field->modifiers, J9AccFinal)) {
+		if (J9_ARE_ALL_BITS_SET(j9FieldID->field->modifiers, J9AccStatic)
+			|| J9ROMCLASS_IS_RECORD(j9FieldID->declaringClass->romClass))
+		{
+			J9VMJAVALANGREFLECTFIELD_SET_TRUSTEDFINAL(vmThread, fieldObject, JNI_TRUE);
+		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 15 */
 #endif
