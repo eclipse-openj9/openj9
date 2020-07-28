@@ -23,6 +23,7 @@
 #include "codegen/ARM64Instruction.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/MemoryReference.hpp"
+#include "codegen/Machine.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
 
@@ -184,35 +185,20 @@ J9::ARM64::MemoryReference::assignRegisters(TR::Instruction *currentInstruction,
 
    if (baseRegister != NULL)
       {
-      if (baseRegister->decFutureUseCount() == 0)
-         {
-         baseRegister->setAssignedRegister(NULL);
-         assignedBaseRegister->setState(TR::RealRegister::Unlatched);
-         }
+      machine->decFutureUseCountAndUnlatch(currentInstruction, baseRegister);
       self()->setBaseRegister(assignedBaseRegister);
       }
 
    if (indexRegister != NULL)
       {
-      if (indexRegister->decFutureUseCount() == 0)
-         {
-         indexRegister->setAssignedRegister(NULL);
-         assignedIndexRegister->setState(TR::RealRegister::Unlatched);
-         }
+      machine->decFutureUseCountAndUnlatch(currentInstruction, indexRegister);
       self()->setIndexRegister(assignedIndexRegister);
       }
 
    if (extraRegister != NULL)
       {
-      if (extraRegister->decFutureUseCount() == 0)
-         {
-         extraRegister->setAssignedRegister(NULL);
-         assignedExtraRegister->setState(TR::RealRegister::Unlatched);
-         }
-      else
-         {
-         TR_ASSERT(false, "Unexpected future use count for extraReg");
-         }
+      machine->decFutureUseCountAndUnlatch(currentInstruction, extraRegister);
+      TR_ASSERT(extraRegister->getFutureUseCount() == 0, "Unexpected future use count for extraReg");
       self()->setExtraRegister(assignedExtraRegister);
       }
 
