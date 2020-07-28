@@ -272,8 +272,7 @@ bash get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
 bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
-               --with-cups-include=<cups_include_path> \
-               --disable-warnings-as-errors
+               --with-cups-include=<cups_include_path>
 ```
 where `<my_home_dir>` is the location where you stored **freemarker.jar** and `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/freeware/include`.
 
