@@ -23,7 +23,6 @@ package org.openj9.test.java.lang;
  *******************************************************************************/
 
 import org.testng.annotations.Test;
-import org.testng.log4testng.Logger;
 
 import org.testng.AssertJUnit;
 

@@ -31,4 +31,9 @@
             <class name="org.openj9.test.sealedclasses.SealedClassesTests"/>
         </classes>
     </test>
+    <test name="Jep384Tests">
+        <classes>
+            <class name="org.openj9.test.records.RecordFinalFieldTests"/>
+        </classes>
+    </test>
 </suite>

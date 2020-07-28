@@ -47,4 +47,28 @@
             <subset>15</subset>
         </subsets>
     </test>
+    <test>
+        <testCaseName>Jep384Tests</testCaseName>
+        <variations>
+            <variation>--enable-preview</variation>
+        </variations>
+        <command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+            --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED \
+            -cp $(Q)$(LIB_DIR)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+            org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Jep384Tests \
+            -groups $(TEST_GROUP) \
+            -excludegroups $(DEFAULT_EXCLUDE); \
+            $(TEST_STATUS)
+        </command>
+        <levels>
+            <level>sanity</level>
+        </levels>
+        <groups>
+            <group>functional</group>
+        </groups>
+        <subsets>
+            <!-- run for Java 15 only since this is a preview feature. -->
+            <subset>15</subset>
+        </subsets>
+    </test>
 </playlist>
