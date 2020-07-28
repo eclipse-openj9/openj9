@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2019 IBM Corp. and others
+ * Copyright (c) 2012, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,10 +20,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package com.ibm.jvm;
-
-import openj9.management.internal.DumpConfigurationUnavailableExceptionBase;
 
 /**
  * This exception is thrown when the dump configuration cannot be
@@ -44,7 +41,7 @@ public class DumpConfigurationUnavailableException extends Exception {
 	/**
 	 * @param cause root exception
 	 */
-	public DumpConfigurationUnavailableException(DumpConfigurationUnavailableExceptionBase cause) {
+	public DumpConfigurationUnavailableException(Throwable cause) {
 		super(cause.getMessage(), cause);
 	}
 
