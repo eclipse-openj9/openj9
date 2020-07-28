@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2016 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "jcl.h"
+#include "jcl_internal.h"
 
 /*
  * This is the minimum implementation of sun.misc.Perf natives to
@@ -125,7 +126,11 @@ registerJdkInternalPerfPerfNatives(JNIEnv *env, jclass clazz) {
 			(void *)&Java_sun_misc_Perf_highResFrequency
 		},
 	};
-	(*env)->RegisterNatives(env, clazz, natives, sizeof(natives)/sizeof(JNINativeMethod));
+	jint numNatives = sizeof(natives)/sizeof(JNINativeMethod);
+	(*env)->RegisterNatives(env, clazz, natives, numNatives);
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
+	clearNonZAAPEligibleBit(env, clazz, natives, numNatives);
+#endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 }
 
 void JNICALL

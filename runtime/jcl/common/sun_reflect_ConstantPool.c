@@ -24,6 +24,7 @@
 #include "jcl.h"
 #include "jclprots.h"
 #include "jclglob.h"
+#include "jcl_internal.h"
 #include "jniidcacheinit.h"
 #include "j9.h"
 
@@ -907,6 +908,7 @@ registerJdkInternalReflectConstantPoolNatives(JNIEnv *env) {
 			(void *)&Java_sun_reflect_ConstantPool_getUTF8At0,
 		},
 	};
+	jint numNatives = sizeof(natives)/sizeof(JNINativeMethod);
 
 	/* jdk.internal.reflect.ConstantPool is currently cached in CLS_sun_reflect_ConstantPool */
 	jclass jdk_internal_reflect_ConstantPool = JCL_CACHE_GET(env, CLS_sun_reflect_ConstantPool);
@@ -922,7 +924,10 @@ registerJdkInternalReflectConstantPoolNatives(JNIEnv *env) {
 		Assert_JCL_true(NULL != jdk_internal_reflect_ConstantPool);
 	}
 
-	result = (*env)->RegisterNatives(env, jdk_internal_reflect_ConstantPool, natives, sizeof(natives)/sizeof(JNINativeMethod));
+	result = (*env)->RegisterNatives(env, jdk_internal_reflect_ConstantPool, natives, numNatives);
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
+	clearNonZAAPEligibleBit(env, jdk_internal_reflect_ConstantPool, natives, numNatives);
+#endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 
 _end:
 	return result;
