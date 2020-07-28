@@ -378,7 +378,7 @@ J9::CodeGenerator::createStackAtlas()
             localObjectsFound = true;
             int32_t localObjectAlignment = comp->fej9()->getLocalObjectAlignmentInBytes();
             if (localObjectAlignment > stackSlotSize &&
-                (comp->target().cpu.isX86() || comp->target().cpu.isPower() || comp->target().cpu.isZ()))
+                self()->supportsStackAllocations())
                {
                // We only get here in compressedrefs mode
                int32_t gcMapIndexAlignment = localObjectAlignment / stackSlotSize;
