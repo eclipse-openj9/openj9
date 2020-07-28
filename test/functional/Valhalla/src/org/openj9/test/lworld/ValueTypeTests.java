@@ -51,7 +51,7 @@ import org.testng.annotations.BeforeClass;
  * 11) make -f run_configure.mk && make compile && make _sanity
  */
 
-@Test(groups = { "level.sanity" })
+@Test(groups = { "level.sanity" }, invocationCount = 2)
 public class ValueTypeTests {
 	static Lookup lookup = MethodHandles.lookup();
 	static Unsafe myUnsafe = null;

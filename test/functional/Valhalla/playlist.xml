@@ -51,6 +51,39 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
-		 </impls>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>ValueTypeTestsJIT</testCaseName>
+		<variations>
+			<!--
+			  - -Xjit:count=0 temporarily disabled due to intermittent failures
+			  -
+			  -	<variation>-Xjit:count=0</variation>
+			  -->
+			<variation>-Xjit:count=1,disableAsyncCompilation</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		-Xverify:none \
+		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+		-XX:+EnableValhalla \
+		-cp $(Q)$(LIB_DIR)$(D)asm-all.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
+		org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames ValueTypeTestsJIT \
+		-groups $(TEST_GROUP) \
+		-excludegroups $(DEFAULT_EXCLUDE); \
+		$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>Valhalla</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 </playlist>
