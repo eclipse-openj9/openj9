@@ -571,6 +571,12 @@ public:
     */
    bool supportVMInternalNatives();
 
+
+   /**
+    * \brief Determines whether the code generator supports stack allocations
+    */
+   bool supportsStackAllocations() { return false; }
+
 private:
 
    enum // Flags
