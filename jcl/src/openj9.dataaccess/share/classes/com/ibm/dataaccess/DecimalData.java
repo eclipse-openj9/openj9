@@ -423,8 +423,10 @@ public final class DecimalData
     
         switch (decimalType) {
         case EBCDIC_SIGN_EMBEDDED_TRAILING:
-            externalSignOffset += precision - 1;
         case EBCDIC_SIGN_EMBEDDED_LEADING:
+            if (decimalType == EBCDIC_SIGN_EMBEDDED_TRAILING) {
+            	externalSignOffset += precision - 1;
+            }
             byte sign;
             if (integerValue >= 0) {
                 sign = (byte) (CommonData.PACKED_PLUS << 4);
@@ -434,8 +436,10 @@ public final class DecimalData
             externalDecimal[externalSignOffset] = (byte) ((externalDecimal[externalSignOffset] & CommonData.LOWER_NIBBLE_MASK) | sign);
             break;
         case EBCDIC_SIGN_SEPARATE_TRAILING:
-            externalSignOffset += precision;
         case EBCDIC_SIGN_SEPARATE_LEADING:
+            if (decimalType == EBCDIC_SIGN_SEPARATE_TRAILING) {
+                externalSignOffset += precision;
+            }
             if (integerValue >= 0)
                 externalDecimal[externalSignOffset] = EBCDIC_SIGN_POSITIVE;
             else
@@ -718,8 +722,10 @@ public final class DecimalData
     
         switch (decimalType) {
         case EBCDIC_SIGN_EMBEDDED_TRAILING:
-            externalSignOffset += precision - 1;
         case EBCDIC_SIGN_EMBEDDED_LEADING:
+            if (decimalType == EBCDIC_SIGN_EMBEDDED_TRAILING) {
+                externalSignOffset += precision - 1;
+            }
             byte sign;
             if (longValue >= 0) {
                 sign = (byte) (CommonData.PACKED_PLUS << 4);
@@ -729,8 +735,10 @@ public final class DecimalData
             externalDecimal[externalSignOffset] = (byte) ((externalDecimal[externalSignOffset] & CommonData.LOWER_NIBBLE_MASK) | sign);
             break;
         case EBCDIC_SIGN_SEPARATE_TRAILING:
-            externalSignOffset += precision;
         case EBCDIC_SIGN_SEPARATE_LEADING:
+            if (decimalType == EBCDIC_SIGN_SEPARATE_TRAILING) {
+                externalSignOffset += precision;
+            }
             if (longValue >= 0)
                 externalDecimal[externalSignOffset] = EBCDIC_SIGN_POSITIVE;
             else
