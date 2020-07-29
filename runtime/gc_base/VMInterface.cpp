@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,6 @@
 
 #include "ClassHeapIterator.hpp"
 #include "ClassStaticsIterator.hpp"
-#include "Dispatcher.hpp"
 #if defined(J9VM_GC_FINALIZATION)
 #include "FinalizeListManager.hpp"
 #endif /* J9VM_GC_FINALIZATION*/
@@ -42,6 +41,7 @@
 #include "ModronTypes.hpp"
 #include "ObjectHeapIterator.hpp"
 #include "ObjectModel.hpp"
+#include "ParallelDispatcher.hpp"
 #include "SublistPool.hpp"
 #include "SublistPuddle.hpp"
 #include "SublistIterator.hpp"

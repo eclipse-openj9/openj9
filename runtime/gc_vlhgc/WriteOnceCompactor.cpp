@@ -44,7 +44,6 @@
 #include "CompactGroupManager.hpp"
 #include "WriteOnceCompactor.hpp"
 #include "Debug.hpp"
-#include "Dispatcher.hpp"
 #if defined(J9VM_GC_FINALIZATION)
 #include "FinalizableObjectBuffer.hpp"
 #include "FinalizableReferenceBuffer.hpp"
@@ -68,6 +67,7 @@
 #include "ObjectAccessBarrier.hpp"
 #include "ObjectHeapIteratorAddressOrderedList.hpp"
 #include "ObjectModel.hpp"
+#include "ParallelDispatcher.hpp"
 #include "PacketSlotIterator.hpp"
 #include "PointerArrayIterator.hpp"
 #include "PointerArrayletInlineLeafIterator.hpp"
@@ -143,7 +143,7 @@ MM_WriteOnceCompactor::MM_WriteOnceCompactor(MM_EnvironmentVLHGC *env)
 	: _javaVM((J9JavaVM *)env->getLanguageVM())
 	, _extensions(MM_GCExtensions::getExtensions(env))
 	, _heap(_extensions->getHeap())
-	, _dispatcher(_extensions->dispatcher)
+	, _dispatcher(((MM_ParallelDispatcher *)_extensions->dispatcher))
 	, _regionManager(_heap->getHeapRegionManager())
 	, _heapBase(_heap->getHeapBase())
 	, _heapTop(_heap->getHeapTop())

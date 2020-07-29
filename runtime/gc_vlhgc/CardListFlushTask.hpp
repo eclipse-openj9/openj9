@@ -89,7 +89,7 @@ public:
 	virtual bool synchronizeGCThreadsAndReleaseSingleThread(MM_EnvironmentBase *env, const char *id);
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
-	MM_CardListFlushTask(MM_EnvironmentBase *env, MM_Dispatcher *dispatcher, MM_HeapRegionManager *manager, MM_InterRegionRememberedSet *remset)
+	MM_CardListFlushTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher, MM_HeapRegionManager *manager, MM_InterRegionRememberedSet *remset)
 		: MM_ParallelTask(env, dispatcher)
 		, _regionManager(manager)
 		, _interRegionRememberedSet(remset)

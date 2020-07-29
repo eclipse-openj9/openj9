@@ -47,7 +47,7 @@
 
 class MM_AllocateDescription;
 class MM_WriteOnceCompactor;
-class MM_Dispatcher;
+class MM_ParallelDispatcher;
 class MM_Heap;
 class MM_HeapRegionDescriptorVLHGC;
 class MM_MemoryPool;
@@ -81,7 +81,7 @@ public:
 	/**
 	 * Create an ParallelCompactTask object.
 	 */
-	MM_ParallelWriteOnceCompactTask(MM_EnvironmentBase *env, MM_Dispatcher *dispatcher, MM_WriteOnceCompactor *compactScheme, MM_CycleState *cycleState, MM_MarkMap *nextMarkMap)
+	MM_ParallelWriteOnceCompactTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher, MM_WriteOnceCompactor *compactScheme, MM_CycleState *cycleState, MM_MarkMap *nextMarkMap)
 		: MM_ParallelTask(env, dispatcher)
 		, _compactScheme(compactScheme)
 		, _cycleState(cycleState)
@@ -102,7 +102,7 @@ private:
     J9JavaVM * const _javaVM;	/**< Cached pointer to the common JavaVM instance */
     MM_GCExtensions * const _extensions;	/**< Cached pointer to the common GCExtensions instance */
     MM_Heap * const _heap;	/**< Cached pointer to the common Heap instance */
-    MM_Dispatcher * const _dispatcher;	/**< Cached pointer to the common Dispatcher instance */
+    MM_ParallelDispatcher * const _dispatcher;	/**< Cached pointer to the common Dispatcher instance */
 	MM_HeapRegionManager * const _regionManager; /**< The region manager which holds the MM_HeapRegionDescriptor instances which manage the properties of the regions */
     void * const _heapBase;	/**< The cached value of the lowest byte address which can be occupied by the heap */
     void * const _heapTop;	/**< The cached value of the lowest byte address after the heap */

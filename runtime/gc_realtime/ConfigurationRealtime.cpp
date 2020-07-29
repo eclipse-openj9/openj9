@@ -207,8 +207,8 @@ MM_ConfigurationRealtime::createHeapRegionManager(MM_EnvironmentBase *env)
 	return heapRegionManager;
 }
 
-MM_Dispatcher *
-MM_ConfigurationRealtime::createDispatcher(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, uintptr_t defaultOSStackSize)
+MM_ParallelDispatcher *
+MM_ConfigurationRealtime::createParallelDispatcher(MM_EnvironmentBase *env, omrsig_handler_fn handler, void* handler_arg, uintptr_t defaultOSStackSize)
 {
 	return MM_Scheduler::newInstance(env, handler, handler_arg, defaultOSStackSize);
 }

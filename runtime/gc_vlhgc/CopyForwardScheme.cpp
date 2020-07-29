@@ -58,7 +58,6 @@
 #include "CopyScanCacheListVLHGC.hpp"
 #include "CopyScanCacheVLHGC.hpp"
 #include "CycleState.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
 #include "EnvironmentVLHGC.hpp"
 #include "FinalizableObjectBuffer.hpp"
@@ -80,6 +79,7 @@
 #include "ObjectHeapIteratorAddressOrderedList.hpp"
 #include "ObjectIteratorState.hpp"
 #include "ObjectModel.hpp"
+#include "ParallelDispatcher.hpp"
 #include "PacketSlotIterator.hpp"
 #include "ParallelTask.hpp"
 #include "ReferenceObjectBuffer.hpp"
@@ -136,7 +136,7 @@ MM_CopyForwardScheme::MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegi
 	, _phantomReferenceRegionsToProcess(0)
 	, _minCacheSize(0)
 	, _maxCacheSize(0)
-	, _dispatcher(_extensions->dispatcher)
+	, _dispatcher(((MM_ParallelDispatcher *)_extensions->dispatcher))
 	, _cacheFreeList()
 	, _cacheScanLists(NULL)
 	, _scanCacheListSize(_extensions->_numaManager.getMaximumNodeNumber() + 1)

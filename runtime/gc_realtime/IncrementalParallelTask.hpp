@@ -55,7 +55,7 @@ public:
 	
 	MM_YieldCollaborator *getYieldCollaborator() { return &_yieldCollaborator; }	
 	
-	MM_IncrementalParallelTask(MM_EnvironmentBase *env, MM_Dispatcher *dispatcher) :
+	MM_IncrementalParallelTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher) :
 		MM_ParallelTask(env, dispatcher),
 		_entryCount(0),
 		_yieldCollaborator(&_synchronizeMutex, &_synchronizeCount, MM_YieldCollaborator::IncrementalParallelTask)

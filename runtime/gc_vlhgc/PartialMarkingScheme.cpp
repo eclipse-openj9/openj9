@@ -42,7 +42,6 @@
 #include "CompressedCardTable.hpp"
 #include "CycleState.hpp"
 #include "Debug.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentVLHGC.hpp"
 #if defined(J9VM_GC_FINALIZATION)
 #include "FinalizableObjectBuffer.hpp"
@@ -63,6 +62,7 @@
 #include "ModronTypes.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "ObjectModel.hpp"
+#include "ParallelDispatcher.hpp"
 #include "PacketSlotIterator.hpp"
 #include "ParallelTask.hpp"
 #include "PartialMarkGMPCardCleaner.hpp"

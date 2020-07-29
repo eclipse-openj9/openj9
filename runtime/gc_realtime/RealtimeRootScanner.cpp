@@ -29,7 +29,6 @@
 #include <string.h>
 
 #include "ClassModel.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
 #if defined(J9VM_GC_FINALIZATION)
 #include "FinalizeListManager.hpp"
@@ -40,6 +39,7 @@
 #include "MemorySubSpace.hpp"
 #include "modronapi.hpp"
 #include "ObjectModel.hpp"
+#include "ParallelDispatcher.hpp"
 #include "RealtimeMarkingScheme.hpp"
 #include "RealtimeRootScanner.hpp"
 #include "RootScanner.hpp"

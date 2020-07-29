@@ -48,13 +48,13 @@
 class MM_CardCleaner;
 class MM_Collector;
 class MM_CycleState;
-class MM_Dispatcher;
 class MM_GlobalGCStats;
 class MM_GlobalMarkingScheme;
 class MM_GlobalMarkingSchemeRootMarker;
 class MM_GlobalMarkingSchemeRootClearer;
 class MM_InterRegionRememberedSet;
 class MM_MarkMap;
+class MM_ParallelDispatcher;
 class MM_ReferenceStats;
 class MM_RootScanner;
 class MM_SublistPool;
@@ -109,7 +109,7 @@ public:
 	 * Create a ParallelMarkTask object.
 	 */
 	MM_ParallelGlobalMarkTask(MM_EnvironmentBase *env,
-			MM_Dispatcher *dispatcher, 
+			MM_ParallelDispatcher *dispatcher, 
 			MM_GlobalMarkingScheme *markingScheme, 
 			MarkAction action,
 			I_64 timeThreshold,
@@ -162,7 +162,7 @@ public:
 	 * Create a MM_ConcurrentGlobalMarkTask object.
 	 */
 	MM_ConcurrentGlobalMarkTask(MM_EnvironmentBase *env,
-			MM_Dispatcher *dispatcher, 
+			MM_ParallelDispatcher *dispatcher, 
 			MM_GlobalMarkingScheme *markingScheme, 
 			MarkAction action,
 			UDATA bytesToScan,

@@ -31,7 +31,6 @@
 #include "modronapi.hpp"
 #include "modronopt.h"
 
-#include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
 #include "HeapMemorySnapshot.hpp"
@@ -43,6 +42,7 @@
 #include "ObjectAllocationInterface.hpp"
 #include "ObjectModel.hpp"
 #include "OwnableSynchronizerObjectBuffer.hpp"
+#include "ParallelDispatcher.hpp"
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
 #include "MemoryPoolLargeObjects.hpp"

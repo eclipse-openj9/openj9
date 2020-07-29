@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,11 +27,11 @@
 #include "CollectorLanguageInterfaceImpl.hpp"
 #include "EnvironmentStandard.hpp"
 #include "Debug.hpp"
-#include "Dispatcher.hpp"
 #include "HeapRegionIteratorStandard.hpp"
 #include "MixedObjectIterator.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "OwnableSynchronizerObjectBuffer.hpp"
+#include "ParallelDispatcher.hpp"
 #include "PointerContiguousArrayIterator.hpp"
 #include "Task.hpp"
 
