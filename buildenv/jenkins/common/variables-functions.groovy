@@ -29,7 +29,7 @@ class Buildspec {
 
     /*
      * Helper function to check if a variable is a map.
-     * This is needed because .isMap() is not on the default jenkins whitelist
+     * This is needed because .isMap() is not on the default jenkins allow list
      */
     private static boolean isMap(x) {
         switch (x) {
@@ -1017,7 +1017,7 @@ def setup() {
             buildFile = pipelineFunctions
             SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_SHAS_MAP)
             BUILD_NAME = buildFile.get_build_job_name(SPEC, SDK_VERSION, BUILD_IDENTIFIER)
-            // Stash DSL file so we can quickly load it on master
+            // Stash DSL file so we can quickly load it on the Jenkins Manager node
             if (params.AUTOMATIC_GENERATION != 'false') {
                 stash includes: 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy', name: 'DSL'
             }
