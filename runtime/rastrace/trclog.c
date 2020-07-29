@@ -885,10 +885,12 @@ static UtTraceBuffer *
 getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 {
 	UtTraceBuffer *nextBuf = NULL;
-	UtTraceBuffer *trcBuf;
-	int32_t      newBuffer = FALSE;
-	uint32_t       typeFlags = UT_TRC_BUFFER_ACTIVE | UT_TRC_BUFFER_NEW;
-	uint64_t writePlatform, writeSystem;
+	UtTraceBuffer *trcBuf = NULL;
+	int32_t newBuffer = FALSE;
+	uint32_t typeFlags = UT_TRC_BUFFER_ACTIVE | UT_TRC_BUFFER_NEW;
+	uint64_t writePlatform = 0;
+	uint64_t writeSystem = 0;
+	char *recordThreadName = NULL;
 
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
 
@@ -898,26 +900,24 @@ getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 
 	if (oldBuf != NULL) {
 		/*
-		 *  Update write timestamp in case of a dump being taken before
-		 *  the buffer is ever written to disk for any reason
+		 * Update write timestamp in case of a dump being taken before
+		 * the buffer is ever written to disk for any reason.
 		 */
 		oldBuf->record.writeSystem = writeSystem;
 		oldBuf->record.writePlatform = writePlatform;
 
-		/* Null the thread reference as there's no guaranty it's valid after this point */
+		/* Null the thread reference as there's no guarantee it's valid after this point. */
 		oldBuf->thr = NULL;
 
 		if (UT_GLOBAL(traceInCore)) {
 			/*
-			 *  In core trace mode so reuse existing buffer, wrapping to the top
+			 * In core trace mode so reuse existing buffer, wrapping to the top.
 			 */
 			trcBuf = oldBuf;
-
 			goto out;
-
 		} else {
 			/*
-			 *  External trace mode
+			 * External trace mode.
 			 */
 			nextBuf = oldBuf->next;
 
@@ -931,7 +931,7 @@ getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 				}
 
 				/* Set up nextBuf */
-				/* it's okay to set the global buffers here and initialize later because the entire
+				/* It's okay to set the global buffers here and initialize later because the entire
 				 * function call's under the trace lock so nothing can be written to it until we release.
 				 */
 				if (bufferType == UT_NORMAL_BUFFER) {
@@ -964,7 +964,7 @@ getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 
 				oldBuf->lostCount += 1;
 
-				/* it's okay to set the global buffers here and initialize later because the entire
+				/* It's okay to set the global buffers here and initialize later because the entire
 				 * function calls under the trace lock so nothing can be written to it until we release.
 				 */
 				if (bufferType == UT_NORMAL_BUFFER) {
@@ -988,14 +988,14 @@ getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 	 * Reuse buffer if there is one
 	 */
 	omrthread_monitor_enter(UT_GLOBAL(freeQueueLock));
-	
+
 	trcBuf = UT_GLOBAL(freeQueue);
 	if (NULL != trcBuf) {
 		UT_GLOBAL(freeQueue) = trcBuf->next;
 	}
-	
+
 	omrthread_monitor_exit(UT_GLOBAL(freeQueueLock));
-	
+
 	if (trcBuf != NULL) {
 		DBG_ASSERT(trcBuf->queueData.next == NULL || trcBuf->queueData.next == CLEANING_MSG_FLAG);
 		DBG_ASSERT(trcBuf->queueData.referenceCount == 0);
@@ -1019,13 +1019,13 @@ getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 
 		newBuffer = TRUE;
 		trcBuf = j9mem_allocate_memory(UT_GLOBAL(bufferSize) +
-							 offsetof(UtTraceBuffer, record), OMRMEM_CATEGORY_TRACE );
+							offsetof(UtTraceBuffer, record), OMRMEM_CATEGORY_TRACE);
 
 		if (trcBuf == NULL) {
 			if (UT_GLOBAL(dynamicBuffers) == TRUE) {
 				UT_GLOBAL(dynamicBuffers) = FALSE;
 				/* Native memory allocation failure, falling back to nodynamic trace settings. */
-				j9nls_printf(PORTLIB, J9NLS_WARNING | J9NLS_STDERR, J9NLS_TRC_NODYNAMIC_FALLBACK );
+				j9nls_printf(PORTLIB, J9NLS_WARNING | J9NLS_STDERR, J9NLS_TRC_NODYNAMIC_FALLBACK);
 				trcBuf = getTrcBuf(thr, oldBuf, bufferType);
 			}
 
@@ -1036,14 +1036,13 @@ getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 		UT_DBGOUT(1, ("<UT> Allocated buffer %i " UT_POINTER_SPEC ", queue tail is "UT_POINTER_SPEC"\n", UT_GLOBAL(allocatedTraceBuffers), trcBuf, UT_GLOBAL(outputQueue).tail));
 	}
 
-
 	/*
-	 *  Initialize buffer for this thread
+	 * Initialize buffer for this thread.
 	 */
 	UT_DBGOUT(5, ("<UT> Buffer " UT_POINTER_SPEC " obtained for thread " UT_POINTER_SPEC "\n",
-			   trcBuf, thr));
+			trcBuf, thr));
 	initHeader(&trcBuf->header, UT_TRACE_BUFFER_NAME,
-			   UT_GLOBAL(bufferSize) + offsetof(UtTraceBuffer, record));
+			UT_GLOBAL(bufferSize) + offsetof(UtTraceBuffer, record));
 	trcBuf->next = NULL;
 	trcBuf->lostCount = 0;
 	trcBuf->bufferType = bufferType;
@@ -1055,29 +1054,36 @@ getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 	trcBuf->queueData.subscriptions = 0;
 	trcBuf->thr = NULL;
 
+	/*
+	 * Get a pointer to where the thread name begins in a record. We don't
+	 * just use (trcBuf->record.threadName) because threadName is declared
+	 * as an array of length one and we're almost certainly writing more
+	 * than one character there. Some compilers track the length of the
+	 * target for strcpy, etc.: we want to avoid warnings due to the
+	 * apparent lack of space (we've made sure there's enough room).
+	 */
+	recordThreadName = offsetof(UtTraceRecord, threadName) + (char *)(void *)&trcBuf->record;
 
 	if (bufferType == UT_NORMAL_BUFFER) {
 		trcBuf->record.threadId   = (uint64_t)(uintptr_t)(*thr)->id;
 		trcBuf->record.threadSyn1 = (uint64_t)(uintptr_t)(*thr)->synonym1;
 		trcBuf->record.threadSyn2 = (uint64_t)(uintptr_t)(*thr)->synonym2;
-		strncpy(trcBuf->record.threadName, (*thr)->name,
-				UT_MAX_THREAD_NAME_LENGTH);
-		trcBuf->record.threadName[UT_MAX_THREAD_NAME_LENGTH] = '\0';
+		strncpy(recordThreadName, (*thr)->name, UT_MAX_THREAD_NAME_LENGTH);
+		recordThreadName[UT_MAX_THREAD_NAME_LENGTH] = '\0';
 		(*thr)->trcBuf = trcBuf;
 	} else if (bufferType == UT_EXCEPTION_BUFFER) {
 		trcBuf->record.threadId = 0;
 		trcBuf->record.threadSyn1 = 0;
 		trcBuf->record.threadSyn2 = 0;
-
-		strcpy(trcBuf->record.threadName, UT_EXCEPTION_THREAD_NAME);
+		strcpy(recordThreadName, UT_EXCEPTION_THREAD_NAME);
 		UT_GLOBAL(exceptionTrcBuf) = trcBuf;
 	}
 
-	trcBuf->record.firstEntry = offsetof(UtTraceRecord, threadName) +
-							  (int32_t)strlen(trcBuf->record.threadName) + 1;
+	trcBuf->record.firstEntry = offsetof(UtTraceRecord, threadName)
+								+ (int32_t)strlen(recordThreadName) + 1;
 
 	/*
-	 * Update circular buffer list for external trace
+	 * Update circular buffer list for external trace.
 	 */
 
 	if (oldBuf != NULL) {
@@ -1088,12 +1094,11 @@ getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 		}
 	}
 
-
 out:
 
 	trcBuf->flags = typeFlags;
 
-	/* we reset the contents of the buffer first so that even if we're in the middle of flushing/writing this buffer
+	/* We reset the contents of the buffer first so that even if we're in the middle of flushing/writing this buffer
 	 * the record maintains it's consistency.
 	 */
 	trcBuf->record.nextEntry = trcBuf->record.firstEntry;
