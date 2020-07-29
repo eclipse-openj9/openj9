@@ -1084,38 +1084,20 @@ jint JNICALL AttachCurrentThreadAsDaemon(JavaVM * vm, void ** p_env, void * thr_
 
 #if (defined(J9VM_OPT_SIDECAR)) 
 /* run the shutdown method in java.lang.Shutdown */
-void sidecarShutdown(J9VMThread* shutdownThread)
-{
+void sidecarShutdown(J9VMThread* shutdownThread) {
 	J9JavaVM * vm = shutdownThread->javaVM;
-	omrthread_monitor_t mutex = vm->runtimeFlagsMutex;
-	J9NameAndSignature nas;
 
-	nas.name = (J9UTF8*)&j9_shutdown;
-	nas.signature = (J9UTF8*)&j9_void_void;
+	if (!(vm->runtimeFlags & J9_RUNTIME_CLEANUP)) {
+		J9NameAndSignature nas;
 
-	/* Set a flag to allow System.exit to run from within finalizers run by the shutdown code */
+		nas.name = (J9UTF8*)&j9_shutdown;
+		nas.signature = (J9UTF8*)&j9_void_void;
 
-	if (NULL != mutex) {
-		omrthread_monitor_enter(mutex);
-	}
-	vm->runtimeFlags |= J9_RUNTIME_CLEANUP;
-	if (NULL != mutex) {
-		omrthread_monitor_exit(mutex);
-	}
-
-	enterVMFromJNI(shutdownThread);
-	runStaticMethod(shutdownThread, (U_8*)"java/lang/Shutdown", &nas, 0, NULL);
-	internalExceptionDescribe(shutdownThread);
-	releaseVMAccess(shutdownThread);
-
-	/* Unset the flag so System.exit is no longer allowed (particularly while the VMDeath JMVTI event is in progress) */
-
-	if (NULL != mutex) {
-		omrthread_monitor_enter(mutex);
-	}
-	vm->runtimeFlags &= ~J9_RUNTIME_CLEANUP;
-	if (NULL != mutex) {
-		omrthread_monitor_exit(mutex);
+		vm->runtimeFlags |= J9_RUNTIME_CLEANUP;
+		enterVMFromJNI(shutdownThread);
+		runStaticMethod(shutdownThread, (U_8*)"java/lang/Shutdown", &nas, 0, NULL);
+		internalExceptionDescribe(shutdownThread);
+		releaseVMAccess(shutdownThread);
 	}
 }
 #endif /* J9VM_OPT_SIDECAR */
