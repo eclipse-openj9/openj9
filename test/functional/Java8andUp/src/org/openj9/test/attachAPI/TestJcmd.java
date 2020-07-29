@@ -294,7 +294,6 @@ public class TestJcmd extends AttachApiTest {
 
 	@BeforeSuite
 	protected void setupSuite() {
-		assertTrue(PlatformInfo.isOpenJ9(), "This test is valid only on OpenJ9");
 		userDir = new File(System.getProperty("user.dir"));
 		getJdkUtilityPath(JCMD_COMMAND);
 		commandExpectedOutputs = new HashMap<>();

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -132,7 +132,6 @@ public class TestJps extends AttachApiTest {
 	 */
 	@BeforeSuite
 	void setupSuite() {
-		assertTrue("This test is valid only on OpenJ9",PlatformInfo.isOpenJ9()); //$NON-NLS-1$
 		getJdkUtilityPath(JPS_COMMAND);
 		assertTrue("Attach API failed to launch", TargetManager.waitForAttachApiInitialization()); //$NON-NLS-1$
 		vmId = TargetManager.getVmId();

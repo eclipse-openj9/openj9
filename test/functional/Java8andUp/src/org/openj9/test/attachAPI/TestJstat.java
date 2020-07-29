@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,6 @@ public class TestJstat extends AttachApiTest {
 
 	@BeforeSuite
 	protected void setupSuite() {
-		AssertJUnit.assertTrue("This test is valid only on OpenJ9", PlatformInfo.isOpenJ9()); //$NON-NLS-1$
 		getJdkUtilityPath(JSTAT_COMMAND);
 		AssertJUnit.assertTrue("Attach API failed to launch", TargetManager.waitForAttachApiInitialization()); //$NON-NLS-1$
 		vmId = TargetManager.getVmId();
