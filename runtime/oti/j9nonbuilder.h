@@ -303,6 +303,7 @@ struct J9VMThread;
 struct JNINativeInterface_;
 struct OMR_VM;
 struct VMIZipFile;
+struct TR_AOTHeader;
 
 /* @ddr_namespace: map_to_type=J9CfrError */
 
@@ -3825,6 +3826,7 @@ typedef struct J9JITConfig {
 	void ( *jitIllegalFinalFieldModification)(struct J9VMThread *currentThread, struct J9Class *fieldClass);
 	U_8* (*codeCacheWarmAlloc)(void *codeCache);
 	U_8* (*codeCacheColdAlloc)(void *codeCache);
+	void ( *printAOTHeaderProcessorFeatures)(struct TR_AOTHeader * aotHeaderAddress, char * buff, const size_t BUFF_SIZE);
 #if defined(J9VM_OPT_JITSERVER)
 	int32_t (*startJITServer)(struct J9JITConfig *jitConfig);
 	int32_t (*waitJITServerTermination)(struct J9JITConfig *jitConfig);

@@ -61,6 +61,7 @@
 #include "runtime/codertinit.hpp"
 #include "runtime/IProfiler.hpp"
 #include "runtime/HWProfiler.hpp"
+#include "runtime/RelocationRuntime.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/J2IThunk.hpp"
@@ -1742,6 +1743,8 @@ onLoadInternal(
    jitConfig->runJitdump = runJitdump;
 #endif
 
+   jitConfig->printAOTHeaderProcessorFeatures = printAOTHeaderProcessorFeatures;
+
    if (!TR::Compiler->target.cpu.isI386())
       {
       TR_J2IThunkTable *ieThunkTable = new (PERSISTENT_NEW) TR_J2IThunkTable(persistentMemory, "InvokeExactJ2IThunkTable");
@@ -1973,7 +1976,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
 
    UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(javaVM));
    Trc_JIT_VMInitStages_Event1(curThread);
-
+   Trc_JIT_portableSharedCache_enabled_or_disabled(curThread, TRUE == javaVM->sharedCacheAPI->sharedCachePortable ? 1 : 0);
    return 0;
    }
 

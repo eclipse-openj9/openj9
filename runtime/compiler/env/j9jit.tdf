@@ -127,3 +127,5 @@ TraceEvent=Trc_JITServerStreamMessageTypeMismatch    Overhead=1 Level=1 Test Tem
 TraceEvent=Trc_JITServerStreamConnectionTerminate    Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d (%s) stream connection terminated by JITClient on stream %p: %s"
 TraceEvent=Trc_JITServerStreamClientSessionTerminate Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d (%s) stream client session terminated by JITClient: %s"
 TraceEvent=Trc_JITServerStreamInterrupted            Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d (%s) stream interrupted by JITClient (compiling %s @ %s): %s"
+
+TraceEvent=Trc_JIT_portableSharedCache_enabled_or_disabled Overhead=1 Level=3 Test Template="PortableSharedCache is %d"

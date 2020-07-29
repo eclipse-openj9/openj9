@@ -1017,7 +1017,7 @@ TR_SharedCacheRelocationRuntime::getProcessorDescriptionFromSCC(TR_FrontEnd *fe,
 
    const void* result = firstDescriptor.address;
    TR_ASSERT_FATAL(result, "No Shared Class Cache available for Processor Description\n");
-   TR_AOTHeader * hdrInCache = (TR_AOTHeader * )result;
+   TR_AOTHeader * hdrInCache = (TR_AOTHeader *)result;
    return hdrInCache->processorDescription;
    }
 
@@ -1404,3 +1404,53 @@ TR_JITServerRelocationRuntime::copyDataToCodeCache(const void *startAddress, siz
    return coldCodeStart;
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
+
+
+/** 
+ * @brief Generate the processor feature string which is stored inside TR_AOTHeader of the SCC
+ * @param[in] aotHeaderAddress : the start address of TR_AOTHeader
+ * @param[out] buff : store the generated processor feautre string in this buff
+ * @param[in] BUFF_SIZE : the upper limit length of the buffer
+ * @return void
+ */
+void
+printAOTHeaderProcessorFeatures(TR_AOTHeader * hdrInCache, char * buff, const size_t BUFF_SIZE)
+   {
+   memset(buff, 0, BUFF_SIZE*sizeof(char));
+   if (!hdrInCache)
+      {
+      strncat(buff, "null", BUFF_SIZE - strlen(buff) - 1);
+      return;
+      }
+
+   PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
+   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+   OMRProcessorDesc processorDescription = hdrInCache->processorDescription;
+
+   int rowLength = 0;
+   for (size_t i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
+      {
+      size_t numberOfBits = CHAR_BIT * sizeof(processorDescription.features[i]);
+      for (int j = 0; j < numberOfBits; j++) 
+         {
+         if (processorDescription.features[i] & (1<<j))
+            {
+            if (rowLength >= 20)
+               {
+               strncat(buff, "\n\t                                       ", BUFF_SIZE - strlen(buff) - 1);
+               rowLength = 0;
+               }
+            else if (rowLength != 0)
+               {
+               strncat(buff, " ", BUFF_SIZE - strlen(buff) - 1);
+               rowLength += 1;
+               }
+            uint32_t feature = i * numberOfBits + j;
+            const char * feature_name = omrsysinfo_get_processor_feature_name(feature);
+            strncat(buff, feature_name, BUFF_SIZE - strlen(buff) - 1);
+            rowLength += strlen(feature_name);
+            }
+         }
+      }
+   return;
+   }

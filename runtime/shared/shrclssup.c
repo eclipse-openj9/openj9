@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,6 +140,29 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				} else if (argIndex2 > argIndex1) {
 					runtimeFlags |= J9SHR_RUNTIMEFLAG_DISABLE_BCI;
 				}
+
+#if defined(J9VM_ARCH_X86)
+				/* Check for -XX:+PortableSharedCache and -XX:-PortableSharedCache; whichever comes later wins.
+				 * These options should be checked before parseArgs() to allow -Xshareclasses:portable to override this option.
+				 * 
+				 * Note: Please also change the function checkArgsConsumed() in runtime/vm/jvminit.c when adding new options,
+				 * in order to quietly consume the options if it is used without -Xshareclasses
+				 */
+				argIndex1 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXPORTABLESHAREDCACHE, NULL);
+				argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOPORTABLESHAREDCACHE, NULL);
+				if (argIndex2 > argIndex1) {
+					vm->sharedCacheAPI->sharedCachePortable = FALSE;
+				} else if (argIndex1 > argIndex2) {
+					vm->sharedCacheAPI->sharedCachePortable = TRUE;
+				} else {
+					OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
+					BOOLEAN inContainer = omrsysinfo_is_running_in_container();
+					if (TRUE == inContainer)
+						vm->sharedCacheAPI->sharedCachePortable = TRUE;
+					else
+						vm->sharedCacheAPI->sharedCachePortable = FALSE;
+				}
+#endif /* defined(J9VM_ARCH_X86) */
 
 				/* Check for -XX:+ShareAnonymousClasses and -XX:-ShareAnonymousClasses; whichever comes later wins. Enable is set by default so we just need to disable when that's the case. */
 				argIndex1 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLESHAREANONYMOUSCLASSES, NULL);
