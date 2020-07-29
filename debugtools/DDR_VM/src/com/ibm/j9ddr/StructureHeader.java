@@ -154,7 +154,7 @@ public class StructureHeader {
 		switch(configVersion) {
 			case 1 :
 				int id = ddrStream.readInt();
-				if(id >= BlobID.unknown.ordinal()) {
+				if (id < 0 || id >= BlobID.unknown.ordinal()) {
 					blobID = BlobID.unknown;
 				} else {
 					blobID = BlobID.values()[id];
@@ -165,7 +165,7 @@ public class StructureHeader {
 				for(int i = 0; i < 32; i++) {
 					char c = (char)ddrStream.readByte();
 					if(c == 0) {
-						terminated |= terminated;
+						terminated = true;
 					} else {
 						if(!terminated) {
 							builder.append(c);
