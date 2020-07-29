@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2009, 2018 IBM Corp. and others
+  Copyright (c) 2009, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,5 +67,8 @@
 <include id="-Xthr:yieldAlgorithm=2,yieldUsleepMultiplier=10" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
 <include id="-Xaggressive" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
 <include id="defaultBehaviourOfCFS" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+
+<include id="Verify -XX:+PortableSharedCache -XX:-PortableSharedCache behaves as expected with the portable shared cache feature disabled" platform=".*x86.*" shouldFix="false"><reason>Only available on x86 platforms</reason></include>
+<include id="Verify -XX:-PortableSharedCache -XX:+PortableSharedCache behaves as expected with the portable shared cache feature enabled" platform=".*x86.*" shouldFix="false"><reason>Only available on x86 platforms</reason></include>
 
 </suite>
