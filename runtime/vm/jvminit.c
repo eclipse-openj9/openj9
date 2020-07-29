@@ -506,30 +506,22 @@ void OMRNORETURN exitJavaVM(J9VMThread * vmThread, IDATA rc)
 			omrthread_monitor_enter(mutex);
 		}
 
-		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_EXIT_STARTED)) {
-			/* CLEANUP indicates that the VM is running the exit hooks/finalizers
-			 * on exit - exit must be allowed in this case, but only from a finalizer
-			 * thread (for simplicity, just check for a system thread as no other
-			 * VM-owned threads will be attempting exit).
-			 *
-			 * CLEANUP will only ever be set once EXIT_STARTED has been set,
-			 * so setting the `J9_RUNTIME_EXIT_STARTED` flag again below is harmless.
-			 */
-			if (J9_ARE_NO_BITS_SET(vmThread->privateFlags, J9_PRIVATE_FLAGS_SYSTEM_THREAD)
-			|| J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_CLEANUP)
-			) {
-				if (NULL != mutex) {
-					omrthread_monitor_exit(mutex);
-				}
+		/* CLEANUP indicates that the VM is running the exit hooks/finalizers on exit - exit
+		 * must be allowed in this case. CLEANUP will only ever be set once EXIT_STARTED has
+		 * been set, so setting the flag again below is harmless.
+		 */
+		if (J9_RUNTIME_EXIT_STARTED == (vm->runtimeFlags & (J9_RUNTIME_EXIT_STARTED | J9_RUNTIME_CLEANUP))) {
+			if (NULL != mutex) {
+				omrthread_monitor_exit(mutex);
+			}
 
-				if (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) {
-					internalReleaseVMAccess(vmThread);
-				}
+			if (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) {
+				internalReleaseVMAccess(vmThread);
+			}
 
-				/* Do nothing. Wait for the process to exit. */
-				while (1) {
-					omrthread_suspend();
-				}
+			/* Do nothing. Wait for the process to exit. */
+			while (1) {
+				omrthread_suspend();
 			}
 		}
 
