@@ -39,7 +39,6 @@
 #include "Bits.hpp"
 #include "CardTable.hpp"
 #include "Debug.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentVLHGC.hpp"
 #include "GCExtensions.hpp"
 #include "Heap.hpp"
@@ -56,6 +55,7 @@
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
 #include "ObjectModel.hpp"
+#include "ParallelDispatcher.hpp"
 #include "ParallelSweepChunk.hpp"
 #include "ParallelTask.hpp"
 #include "SweepHeapSectioningVLHGC.hpp"
@@ -189,7 +189,7 @@ MM_ParallelSweepVLHGCTask::synchronizeGCThreadsAndReleaseSingleThread(MM_Environ
 MM_ParallelSweepSchemeVLHGC::MM_ParallelSweepSchemeVLHGC(MM_EnvironmentVLHGC *env)
 	: _chunksPrepared(0)
 	, _extensions(MM_GCExtensions::getExtensions(env))
-	, _dispatcher(_extensions->dispatcher)
+	, _dispatcher(((MM_ParallelDispatcher *)_extensions->dispatcher))
 	, _cycleState()
 	, _currentSweepBits(NULL)
 	, _regionManager(_extensions->getHeap()->getHeapRegionManager())
@@ -917,7 +917,7 @@ MM_ParallelSweepSchemeVLHGC::sweep(MM_EnvironmentVLHGC *env)
 	setupForSweep(env);
 	
 	Assert_MM_true(NULL != env->_cycleState->_markMap);
-	MM_ParallelSweepVLHGCTask sweepTask(env, _extensions->dispatcher, this, env->_cycleState);
+	MM_ParallelSweepVLHGCTask sweepTask(env, ((MM_ParallelDispatcher *)_extensions->dispatcher), this, env->_cycleState);
 	_extensions->dispatcher->run(env, &sweepTask);
 	updateProjectedLiveBytesAfterSweep(env);
 }

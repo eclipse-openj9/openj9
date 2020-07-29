@@ -52,7 +52,6 @@
 #include "ConcurrentSweepScheme.hpp"
 #endif /* J9VM_GC_CONCURRENT_SWEEP */
 #include "ConfigurationDelegate.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentStandard.hpp"
 #include "ExcessiveGCStats.hpp"
 #include "FinalizableObjectBuffer.hpp"
@@ -83,6 +82,7 @@
 #include "OMRVMInterface.hpp"
 #include "OwnableSynchronizerObjectBuffer.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "ParallelDispatcher.hpp"
 #include "ParallelGlobalGC.hpp"
 #include "ParallelHeapWalker.hpp"
 #include "ParallelSweepScheme.hpp"

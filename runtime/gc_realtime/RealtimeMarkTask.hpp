@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@
 #include "CycleState.hpp"
 #include "IncrementalParallelTask.hpp"
 
-class MM_Dispatcher;
+class MM_ParallelDispatcher;
 class MM_EnvironmentBase;
 class MM_RealtimeGC;
 class MM_RealtimeMarkingScheme;
@@ -50,7 +50,7 @@ public:
 	virtual void setup(MM_EnvironmentBase *env);
 	virtual void cleanup(MM_EnvironmentBase *env);
 	
-	MM_RealtimeMarkTask(MM_EnvironmentBase *env, MM_Dispatcher *dispatcher, MM_RealtimeGC *realtimeGC, MM_RealtimeMarkingScheme *markingScheme, MM_CycleState *cycleState) :
+	MM_RealtimeMarkTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher, MM_RealtimeGC *realtimeGC, MM_RealtimeMarkingScheme *markingScheme, MM_CycleState *cycleState) :
 		MM_IncrementalParallelTask(env, dispatcher)
 		,_markingScheme(markingScheme)
 		,_cycleState(cycleState)

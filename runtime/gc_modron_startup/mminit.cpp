@@ -72,7 +72,6 @@
 #endif /* J9VM_GC_REALTIME */
 #include "ClassLoaderManager.hpp"
 #include "Debug.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
 #if defined(J9VM_GC_FINALIZATION)
 #include "FinalizeListManager.hpp"
@@ -437,7 +436,7 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 		goto error_no_memory;
 	}
 
-	extensions->dispatcher = extensions->configuration->createDispatcher(&env, (omrsig_handler_fn)vm->internalVMFunctions->structuredSignalHandlerVM, vm, vm->defaultOSStackSize);
+	extensions->dispatcher = extensions->configuration->createParallelDispatcher(&env, (omrsig_handler_fn)vm->internalVMFunctions->structuredSignalHandlerVM, vm, vm->defaultOSStackSize);
 	if (NULL == extensions->dispatcher) {
 		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER, "Failed to instantiate task dispatcher.");
 		goto error_no_memory;

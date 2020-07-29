@@ -37,7 +37,6 @@
 #include "ClassHeapIterator.hpp"
 #include "ClassLoaderIterator.hpp"
 #include "Debug.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
 #if defined(J9VM_GC_FINALIZATION)
 #include "FinalizeListManager.hpp"
@@ -58,6 +57,7 @@
 #include "ObjectHeapIteratorAddressOrderedList.hpp"
 #include "ObjectModel.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "ParallelDispatcher.hpp"
 #include "PointerArrayIterator.hpp"
 #include "SlotObject.hpp"
 #include "StringTable.hpp"

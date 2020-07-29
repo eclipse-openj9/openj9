@@ -27,7 +27,6 @@
 #include <string.h>
 
 #include "AtomicOperations.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentRealtime.hpp"
 #include "GCCode.hpp"
 #include "GCExtensionsBase.hpp"
@@ -40,6 +39,7 @@
 #include "MetronomeDelegate.hpp"
 #include "RealtimeGC.hpp"
 #include "OSInterface.hpp"
+#include "ParallelDispatcher.hpp"
 #include "Scheduler.hpp"
 #include "Timer.hpp"
 #include "UtilizationTracker.hpp"

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,6 @@
 #include "CollectorLanguageInterfaceImpl.hpp"
 #endif /* defined(J9VM_GC_FINALIZATION) */
 #include "ConfigurationDelegate.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
 #include "FinalizableObjectBuffer.hpp"
 #include "FinalizableReferenceBuffer.hpp"
@@ -42,6 +41,7 @@
 #include "MarkingSchemeRootClearer.hpp"
 #include "ModronAssertions.h"
 #include "OwnableSynchronizerObjectBuffer.hpp"
+#include "ParallelDispatcher.hpp"
 #include "ReferenceObjectBuffer.hpp"
 #include "ReferenceStats.hpp"
 #include "RootScanner.hpp"

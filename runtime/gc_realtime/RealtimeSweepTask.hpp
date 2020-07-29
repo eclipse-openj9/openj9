@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@
 
 #include "IncrementalParallelTask.hpp"
 
-class MM_Dispatcher;
+class MM_ParallelDispatcher;
 class MM_EnvironmentBase;
 class MM_SweepSchemeRealtime;
 
@@ -51,7 +51,7 @@ public:
 	virtual void setup(MM_EnvironmentBase *env);
 	virtual void cleanup(MM_EnvironmentBase *env);
 	
-	MM_RealtimeSweepTask(MM_EnvironmentBase *env, MM_Dispatcher *dispatcher, MM_SweepSchemeRealtime *sweepScheme) :
+	MM_RealtimeSweepTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher, MM_SweepSchemeRealtime *sweepScheme) :
 		MM_IncrementalParallelTask(env, dispatcher),
 		_sweepScheme(sweepScheme)
 	{

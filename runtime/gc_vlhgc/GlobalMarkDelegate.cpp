@@ -38,7 +38,6 @@
 #include "ClassLoaderManager.hpp"
 #include "ClassLoaderRememberedSet.hpp"
 #include "CycleState.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentVLHGC.hpp"
 #include "FinalizeListManager.hpp"
 #include "FinalizerSupport.hpp"
@@ -48,6 +47,7 @@
 #include "HeapMapIterator.hpp"
 #include "InterRegionRememberedSet.hpp"
 #include "MarkMap.hpp"
+#include "ParallelDispatcher.hpp"
 #include "WorkPacketsVLHGC.hpp"
 
 
@@ -61,7 +61,7 @@ MM_GlobalMarkDelegate::initialize(MM_EnvironmentVLHGC *env)
 		goto error_no_memory;
 	}
 
-	_dispatcher = _extensions->dispatcher;
+	_dispatcher = ((MM_ParallelDispatcher *)_extensions->dispatcher);
 
 	return true;
 

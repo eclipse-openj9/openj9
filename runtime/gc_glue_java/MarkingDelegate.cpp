@@ -39,7 +39,6 @@
 #include "CollectorLanguageInterfaceImpl.hpp"
 #endif /* defined(J9VM_GC_FINALIZATION) */
 #include "ConfigurationDelegate.hpp"
-#include "Dispatcher.hpp"
 #include "EnvironmentDelegate.hpp"
 #include "FinalizableReferenceBuffer.hpp"
 #include "GlobalCollector.hpp"
@@ -50,6 +49,7 @@
 #include "MarkingSchemeRootMarker.hpp"
 #include "MarkingSchemeRootClearer.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
+#include "ParallelDispatcher.hpp"
 #include "ReferenceObjectBuffer.hpp"
 #include "RootScanner.hpp"
 #include "StackSlotValidator.hpp"

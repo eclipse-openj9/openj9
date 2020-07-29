@@ -34,7 +34,7 @@
 #include "EnvironmentVLHGC.hpp"
 
 class MM_CycleState;
-class MM_Dispatcher;
+class MM_ParallelDispatcher;
 class MM_InterRegionRememberedSet;
 class MM_GCExtensions;
 class MM_GlobalMarkingScheme;
@@ -51,7 +51,7 @@ private:
 	J9JavaVM *_javaVM;  /**< Current JVM */
 	MM_GCExtensions *_extensions;  /**< Global variable container for GC */
 	MM_GlobalMarkingScheme *_markingScheme;  /**< Bit map marking implementation used to perform liveness tracing */
-	MM_Dispatcher *_dispatcher;  /**< Dispatcher used for tasks */
+	MM_ParallelDispatcher *_dispatcher;  /**< Dispatcher used for tasks */
 
 	/* Member Functions */
 public:

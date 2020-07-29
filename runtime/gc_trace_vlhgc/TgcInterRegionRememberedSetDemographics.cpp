@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,13 +31,13 @@
 #include "GCExtensions.hpp"
 #include "TgcExtensions.hpp"
 
-#include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
 #include "HashTableIterator.hpp"
 #include "HeapMapIterator.hpp"
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
 #include "HeapRegionManager.hpp"
+#include "ParallelDispatcher.hpp"
 #include "ParallelTask.hpp"
 
 struct ClassTableEntry {
@@ -67,7 +67,7 @@ public:
 	virtual UDATA getVMStateID(void) { return OMRVMSTATE_GC_TGC; }
 	virtual void run(MM_EnvironmentBase *env);
 
-	TgcParallelHeapWalkTask(MM_EnvironmentBase *env, MM_Dispatcher *dispatcher)
+	TgcParallelHeapWalkTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher)
 		: MM_ParallelTask(env, dispatcher)
 	{
 		_typeId = __FUNCTION__;
@@ -166,7 +166,7 @@ reportInterRegionRememberedSetDemographics(MM_EnvironmentBase *env)
 	
 	tgcExtensions->printf("<rememberedSetDemographics increment=\"%zu\">\n", tgcExtensions->_interRegionRememberedSetDemographics.incrementCount);
 
-	MM_Dispatcher *dispatcher = extensions->dispatcher;
+	MM_ParallelDispatcher *dispatcher = ((MM_ParallelDispatcher *)extensions->dispatcher);
 	TgcParallelHeapWalkTask heapWalkTask(env, dispatcher);
 	dispatcher->run(env, &heapWalkTask);
 	
