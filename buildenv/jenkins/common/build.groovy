@@ -289,7 +289,7 @@ def archive_sdk() {
 
         dir(OPENJDK_CLONE_DIR) {
             // The archiver receives pathnames on stdin and writes to stdout.
-            def archiveCmd = SPEC.contains('zos') ? 'pax -wvz' : 'tar -cvz -T -'
+            def archiveCmd = SPEC.contains('zos') ? 'pax -wvz -p x' : 'tar -cvz -T -'
             // Filter out unwanted files (most of which are available in the debug-image).
             def filterCmd = "sed -e '/\\.dbg\$/d' -e '/\\.debuginfo\$/d' -e '/\\.diz\$/d' -e '/\\.dSYM\\//d' -e '/\\.map\$/d' -e '/\\.pdb\$/d'"
             sh "( cd ${buildDir} && find ${JDK_FOLDER} -type f | ${filterCmd} | ${archiveCmd} ) > ${SDK_FILENAME}"
