@@ -438,7 +438,7 @@ checkThrowNew(JNIEnv *env, jclass clazz, const char *msg)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jint actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JCLASS, JNIC_STRING, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JTHROWABLE, JNIC_STRING, 0 };
 	static const char function[] = "ThrowNew";
 	U_32 msgCRC;
 
