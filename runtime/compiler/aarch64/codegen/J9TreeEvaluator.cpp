@@ -1349,14 +1349,15 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Register *tempReg3 = isVariableLength ? cg->allocateRegister() : NULL;
    TR::Register *zeroReg = cg->allocateRegister();
    TR::LabelSymbol *callLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *callReturnLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
 
    // 4. Setup register dependencies
    const int numReg = isVariableLength ? 7 : 6;
    TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(numReg, numReg, cg->trMemory());
-   TR::addDependency(conditions, classReg, TR::RealRegister::x0, TR_GPR, cg);
+   TR::addDependency(conditions, classReg, TR::RealRegister::NoReg, TR_GPR, cg);
    TR::addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   TR::addDependency(conditions, lengthReg, isArrayNew ? TR::RealRegister::x1 : TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, lengthReg, TR::RealRegister::NoReg, TR_GPR, cg);
    TR::addDependency(conditions, zeroReg, TR::RealRegister::xzr, TR_GPR, cg);
    TR::addDependency(conditions, tempReg1, TR::RealRegister::NoReg, TR_GPR, cg);
    TR::addDependency(conditions, tempReg2, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -1368,9 +1369,10 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    // 5. Allocate object/array on heap
    genHeapAlloc(node, cg, isVariableLength, allocateSize, elementSize, resultReg, lengthReg, tempReg1, tempReg2, tempReg3, conditions, callLabel);
 
-   // 6. Setup HeapAllocSnippet for slowpath
-   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HeapAllocSnippet(cg, node, callLabel, node->getSymbolReference(), doneLabel);
-   cg->addSnippet(snippet);
+   // 6. Setup OOL Section for slowpath
+   TR::Register *objReg = cg->allocateCollectedReferenceRegister();
+   TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::acall, objReg, callLabel, callReturnLabel, cg);
+   cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
 
    // 7. Initialize the allocated memory area with zero
    // TODO selectively initialize necessary slots
@@ -1427,10 +1429,17 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
 
+   // At this point the object is initialized and we can move it to a collected register.
+   // The out of line path will do the same.
+   generateMovInstruction(cg, node, objReg, resultReg, true);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, callReturnLabel);
+
    // Cleanup registers
    cg->stopUsingRegister(tempReg1);
    cg->stopUsingRegister(tempReg2);
    cg->stopUsingRegister(zeroReg);
+   cg->stopUsingRegister(resultReg);
    if (isVariableLength)
       {
       cg->stopUsingRegister(tempReg3);
@@ -1454,10 +1463,8 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          }
       }
 
-   node->setRegister(resultReg);
-   resultReg->setContainsCollectedReference();
-   cg->machine()->setLinkRegisterKilled(true);
-   return resultReg;
+   node->setRegister(objReg);
+   return objReg;
    }
 
 TR::Register *
