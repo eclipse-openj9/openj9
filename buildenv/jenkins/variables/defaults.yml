@@ -341,12 +341,18 @@ x86-64_linux:
     8: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
   node_labels:
-    build: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
+    build:
+      all: 'ci.role.build && hw.arch.x86 && sw.os.cent.7'
+      8: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
+      11: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
   extra_configure_options:
     all: '--enable-jitserver'
   build_env:
     cmd: 'source /home/jenkins/set_gcc7.5.0_env'
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
+  extra_test_labels:
+    15: '!sw.os.cent.6'
+    next: '!sw.os.cent.6'
   excluded_tests:
     11:
       - special.system
