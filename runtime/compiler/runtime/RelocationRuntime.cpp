@@ -1169,7 +1169,8 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(TR_FrontEnd *fe)
       aotHeader->lockwordOptionHashValue = getCurrentLockwordOptionHashValue(javaVM());
       aotHeader->compressedPointerShift = javaVM()->memoryManagerFunctions->j9gc_objaccess_compressedPointersShift(javaVM()->internalVMFunctions->currentVMThread(javaVM()));
       
-      if (TRUE == javaVM()->sharedCacheAPI->sharedCachePortable)
+
+      if (J9_ARE_ANY_BITS_SET(javaVM()->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE))
          {
          TR::Compiler->relocatableTarget.cpu = TR::CPU::detectRelocatable(TR::Compiler->omrPortLib);
          aotHeader->processorDescription = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();

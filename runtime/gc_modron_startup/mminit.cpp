@@ -313,6 +313,10 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
 
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE)) {
+		extensions->shouldForceLowMemoryHeapCeilingShiftIfPossible = true;
+	}
+
 #if defined(J9VM_GC_BATCH_CLEAR_TLH)
 	/* Record batch clear state in VM so inline allocates can decide correct initialization procedure */
 	vm->initializeSlotsOnTLHAllocate = (extensions->batchClearTLH == 0) ? 1 : 0;
