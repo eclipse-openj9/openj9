@@ -304,14 +304,26 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 	if (NULL == result) {
 		J9Module **findResult = NULL;
 		J9Module *j9module = NULL;
-		char localBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-		char *utf8Name = NULL;
+		U_8 localBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
+		U_8 *utf8Name = NULL;
 		UDATA utf8Length = 0;
+		UDATA stringFlags = J9_STR_NULL_TERMINATE_RESULT;
 		PORT_ACCESS_FROM_JAVAVM(vm);
+
+		if (CLASSNAME_INVALID == allowedBitsForClassName) {
+			stringFlags |= J9_STR_XLAT;
+		}
+
+		utf8Name = (U_8*)copyStringToUTF8WithMemAlloc(currentThread, className, stringFlags, "", 0, (char *)localBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
+		if (NULL == utf8Name) {
+			/* Throw out-of-memory */
+			setNativeOutOfMemoryError(currentThread, 0, 0);
+			return NULL;
+		}
 
 		/* Make sure the name is legal */
 		if ((CLASSNAME_INVALID == allowedBitsForClassName)
-			|| (CLASSNAME_INVALID != verifyQualifiedName(currentThread, className, allowedBitsForClassName))
+			|| (CLASSNAME_INVALID != verifyQualifiedName(currentThread, utf8Name, utf8Length, allowedBitsForClassName))
 		) {
 			if (NULL != moduleName) {
 				J9Module module = {0};
@@ -324,13 +336,7 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 				}
 			}
 
-			utf8Name = copyStringToUTF8WithMemAlloc(currentThread, className, J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, localBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
-			if (NULL == utf8Name) {
-				/* Throw out-of-memory */
-				setNativeOutOfMemoryError(currentThread, 0, 0);
-				return NULL;
-			}
-			result = internalFindClassInModule(currentThread, j9module, (U_8 *)utf8Name, utf8Length, classLoader, options);
+			result = internalFindClassInModule(currentThread, j9module, utf8Name, utf8Length, classLoader, options);
 			if (utf8Name != localBuf) {
 				j9mem_free_memory(utf8Name);
 			}

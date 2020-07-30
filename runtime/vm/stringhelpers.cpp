@@ -371,26 +371,19 @@ getStringUTF8Length(J9VMThread *vmThread, j9object_t string)
 }
 
 UDATA 
-verifyQualifiedName(J9VMThread *vmThread, j9object_t string, UDATA allowedBitsForClassName)
+verifyQualifiedName(J9VMThread *vmThread, U_8 *className, UDATA classNameLength, UDATA allowedBitsForClassName)
 {
-	UDATA unicodeLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string);
-	j9object_t unicodeBytes = J9VMJAVALANGSTRING_VALUE(vmThread, string);
-	BOOLEAN isStringCompressed = IS_STRING_COMPRESSED(vmThread, string);
-	UDATA remainingLength = unicodeLength;
-	BOOLEAN separator = FALSE;
-	BOOLEAN unCheckedChar = FALSE;
-	U_8 currentChar = 0;
-	IDATA arity = 0;
-	UDATA i = 0;
 	UDATA result = CLASSNAME_INVALID;
+	UDATA remainingLength = classNameLength;
+	BOOLEAN separator = FALSE;
+	UDATA arity = 0;
+	UDATA i = 0;
 
 	/* strip leading ['s for array classes */
-	for (i = 0; i < unicodeLength; i++) {
-		currentChar = isStringCompressed ? J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i) : (U_8)J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, i);
-		if ('[' == currentChar) {
+	for (i = 0; i < classNameLength; i++) {
+		if ('[' == className[i]) {
 			arity += 1;
 		} else {
-			unCheckedChar = TRUE;
 			break;
 		}
 	}
@@ -402,23 +395,19 @@ verifyQualifiedName(J9VMThread *vmThread, j9object_t string, UDATA allowedBitsFo
 	}
 
 	/* check invalid characters in the class name */
-	for (; i < unicodeLength; i++) {
-		if (unCheckedChar) {
-			unCheckedChar = FALSE;
-		} else {
-			currentChar = isStringCompressed ? J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i) : (U_8)J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, i);
-		}
-
+	for (; i < classNameLength; i++) {
 		/* check for illegal characters:  46(.) 47(/) 59(;) 60(<) 70(>) 91([) */
-		switch (currentChar) {
-		case '.': /* Fall through */
-		case '/':
-			/* Only valid between identifiers and not at end if not in loading classes */
-			if (('/' == currentChar) || separator) {
+		switch (className[i]) {
+		case '.':
+			if (separator) {
 				return CLASSNAME_INVALID;
 			}
+			/* convert the characters from '.' to '/' in the case of J9_STR_XLAT for later use in the caller */
+			className[i] = '/';
 			separator = TRUE;
 			break;
+		case '/':
+			return CLASSNAME_INVALID;
 		case ';':
 			/* Valid at the end of array classes */
 			if (arity && (1 == remainingLength)) {
@@ -444,15 +433,9 @@ verifyQualifiedName(J9VMThread *vmThread, j9object_t string, UDATA allowedBitsFo
 		return CLASSNAME_INVALID;
 	}
 
-	/* map the return code against the arity value from checkNameImpl (called by bcvCheckClassName):
-	 * 1) if arity = -1, then rc = CLASSNAME_INVALID(0)
-	 * 2) if arity = 0,  then rc = CLASSNAME_VALID_NON_ARRARY(1)
-	 * 3) if arity > 0,  then rc = CLASSNAME_VALID_ARRARY(2)
+	/* check the arity of the class name to see whether it is an array or not
+	 * and check whether the results are the allowed values by the caller.
 	 */
-	if (arity < 0) {
-		return CLASSNAME_INVALID;
-	}
-
 	result = (0 == arity) ? CLASSNAME_VALID_NON_ARRARY : CLASSNAME_VALID_ARRARY;
 	if (J9_ARE_ANY_BITS_SET(result, allowedBitsForClassName)) {
 		return result;

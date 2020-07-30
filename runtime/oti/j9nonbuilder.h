@@ -4427,7 +4427,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *compareStrings)(struct J9VMThread * vmThread, j9object_t string1, j9object_t string2) ;
 	UDATA  ( *compareStringToUTF8)(struct J9VMThread * vmThread, j9object_t stringObject, UDATA stringFlags, const U_8 * utfData, UDATA utfLength) ;
 	void  ( *prepareForExceptionThrow)(struct J9VMThread * currentThread) ;
-	UDATA  ( *verifyQualifiedName)(struct J9VMThread *vmThread, j9object_t string, UDATA allowedBitsForClassName) ;
+	UDATA  ( *verifyQualifiedName)(struct J9VMThread *vmThread, U_8 *className, UDATA classNameLength, UDATA allowedBitsForClassName) ;
 	UDATA ( *copyStringToUTF8Helper)(struct J9VMThread *vmThread, j9object_t string, UDATA stringFlags, UDATA stringOffset, UDATA stringLength, U_8 *utf8Data, UDATA utf8DataLength);
 	void  (JNICALL *sendCompleteInitialization)(struct J9VMThread *vmContext) ;
 	IDATA  ( *J9RegisterAsyncEvent)(struct J9JavaVM * vm, J9AsyncEventHandler eventHandler, void * userData) ;
