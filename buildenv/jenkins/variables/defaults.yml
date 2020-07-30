@@ -403,12 +403,13 @@ x86-64_linux_valhalla:
 aarch64_linux:
   extends: ['debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
+    8: '/usr/lib/jvm/java-1.8.0'
     11: '/usr/lib/jvm/adoptojdk-java-11'
   release:
+    8: 'linux-aarch64-normal-server-release'
     11: 'linux-aarch64-normal-server-release'
   node_labels:
-    build:
-      11: 'ci.role.build && hw.arch.aarch64 && sw.os.cent.7'
+    build: 'ci.role.build && hw.arch.aarch64 && sw.os.cent.7'
   build_env:
     vars: 'PATH+TOOLS=/usr/local/gcc-7.5.0/bin'
 #========================================#
