@@ -2334,13 +2334,24 @@ BOOLEAN
 valueTypeCapableAcmp(J9VMThread *currentThread, j9object_t lhs, j9object_t rhs);
 
 /**
+ * Determines if a name or a signature pointed by a J9UTF8 pointer is a Qtype.
+ *
+ * @param[in] utfWrapper J9UTF8 pointer that points to the name or the signature
+ *
+ * @return TRUE if the name or the signature pointed by the J9UTF8 pointer is a Qtype, FALSE otherwise
+ */
+BOOLEAN
+isNameOrSignatureQtype(J9UTF8 *utfWrapper);
+
+
+/**
  * Determines if the classref c=signature is a Qtype. There is no validation performed
  * to ensure that the cpIndex points at a classref.
  *
  * @param[in] cpContextClass ramClass that owns the constantpool being queried
  * @param[in] cpIndex the CP index
  *
- * @return TRUE if classref is a Qtype, false otherwise
+ * @return TRUE if classref is a Qtype, FALSE otherwise
  */
 BOOLEAN
 isClassRefQtype(J9Class *cpContextClass, U_16 cpIndex);
