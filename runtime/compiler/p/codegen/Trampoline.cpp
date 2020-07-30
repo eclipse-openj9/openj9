@@ -34,23 +34,10 @@
 
 namespace TR { class PersistentInfo; }
 
-#if defined(TR_TARGET_64BIT)
-#define TRAMPOLINE_SIZE       28
-#define OFFSET_IPIC_TO_CALL   36
-#else
-#define TRAMPOLINE_SIZE       16
-#define OFFSET_IPIC_TO_CALL   32
-#endif
-
 extern "C"
    {
    extern   int __j9_smp_flag;
-   int32_t  ppcTrampolineInitByCodeCache(TR_FrontEnd *, uint8_t *, uintptr_t);
    };
-
-#ifdef TR_HOST_POWER
-extern void     ppcCodeSync(uint8_t *, uint32_t);
-#endif
 
 void * ppcPicTrampInit(TR_FrontEnd *vm, TR::PersistentInfo * persistentInfo)
    {
