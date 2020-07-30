@@ -66,6 +66,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<types>
+			<type>native</type>
+		</types>
 		<subsets>
 			<subset>11+</subset>
 		</subsets>
