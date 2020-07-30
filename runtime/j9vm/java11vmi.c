@@ -1780,7 +1780,19 @@ JVM_IsCDSDumpingEnabled(JNIEnv *env)
 JNIEXPORT jboolean JNICALL
 JVM_IsCDSSharingEnabled(JNIEnv *env)
 {
-	/* OpenJ9 does not support -Xshare:dump, so we return false unconditionally. */
+	/* OpenJ9 does not support CDS, so we return false unconditionally. */
 	return JNI_FALSE;
 }
 #endif /* JAVA_SPEC_VERSION >= 15 */
+
+#if JAVA_SPEC_VERSION >= 16
+JNIEXPORT jboolean JNICALL
+JVM_IsUseContainerSupport(JNIEnv *env)
+{
+	PORT_ACCESS_FROM_ENV(env);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+	BOOLEAN inContainer = omrsysinfo_is_running_in_container();
+
+	return inContainer ? JNI_TRUE : JNI_FALSE;
+}
+#endif /* JAVA_SPEC_VERSION >= 16 */
