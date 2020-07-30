@@ -2298,16 +2298,7 @@ public class MethodHandles {
 			}
 
 			Class<?> defineClass(boolean initOption) {
-				Class<?> ret = AccessController.doPrivileged(new PrivilegedAction<Class<?>>() {
-					@Override
-					public Class<?> run() {
-						JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
-						Class<?> lookupClass = lookup.lookupClass();
-						return jlAccess.defineClass(lookupClass.getClassLoader(), lookupClass, className, classBytes,
-								jlAccess.protectionDomain(lookupClass), initOption, ClassOptFlags, null);
-					}
-				});
-				return ret;
+				return defineClass(initOption, null);
 			}
 
 			Class<?> defineClass(boolean initOption, Object classData) {
@@ -2325,9 +2316,9 @@ public class MethodHandles {
 		}
 
 		/**
-		 * Constructs a new hidden class from an array of class data bytes.
+		 * Constructs a new hidden class from an array of class file bytes.
 		 * 
-		 * @param bytes the class data bytes of the hidden class to be defined.
+		 * @param bytes the class file bytes of the hidden class to be defined.
 		 * @param initOption whether to initialize the hidden class.
 		 * @param classOptions the {@link ClassOption} to define the hidden class.
 		 * 
@@ -2340,9 +2331,10 @@ public class MethodHandles {
 		}
 		
 		/**
-		 * Constructs a new hidden class from an array of class data bytes.
+		 * Constructs a new hidden class from an array of class file bytes.
+		 * Equivalent to defineHiddenClass(bytes, true, classOptions).
 		 * 
-		 * @param bytes the class data bytes of the hidden class to be defined.
+		 * @param bytes the class file bytes of the hidden class to be defined.
 		 * @param classData the classData to be stored in the hidden class.
 		 * @param classOptions the {@link ClassOption} to define the hidden class.
 		 * 
