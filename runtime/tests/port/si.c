@@ -1835,6 +1835,7 @@ j9sysinfo_test_get_cwd3(struct J9PortLibrary *portLibrary)
 	const char* testName = "j9sysinfo_test_get_cwd3";
 	char *buffer = NULL;
 	char *orig_cwd = NULL;
+	char *cmpbuf = NULL;
 
 #if defined(WIN32)
 	/* c:\U+6211 U+7684 U+7236 U+4EB2 U+662F U+6536 U+68D2 U+5B50 U+7684 */
@@ -1843,32 +1844,72 @@ j9sysinfo_test_get_cwd3(struct J9PortLibrary *portLibrary)
 
 	reportTestEntry(portLibrary, testName);
 
+	cmpbuf = (char *)utf8;
+
 	orig_cwd = (char*)j9mem_allocate_memory( EsMaxPath, OMRMEM_CATEGORY_PORT_LIBRARY );
 	j9sysinfo_get_cwd(orig_cwd, EsMaxPath);
 
 	rc = j9file_mkdir(utf8);
 	if (0 != rc) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "error failed to create directory rc: %d\n", rc);
+			goto cleanup2;
 	}
 	rc = _wchdir(unicode);
 	if (0 != rc) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "error failed to change current directory rc: %d\n", rc);
+			goto cleanup1;
 	}
 #else /* defined(WIN32) */
-#if defined(OSX)
-	const char *utf8 = "/private/tmp/j9sysinfo_test_get_cwd3/";
-#else /* defined(OSX) */
-	const char *utf8 = "/tmp/j9sysinfo_test_get_cwd3/";
-#endif /* defined(OSX) */
+	const char *tmp = "/tmp/";
+	const char *utf8 = "j9sysinfo_test_get_cwd3/";
 
 	reportTestEntry(portLibrary, testName);
 
 	orig_cwd = (char*)j9mem_allocate_memory( EsMaxPath, OMRMEM_CATEGORY_PORT_LIBRARY );
 	j9sysinfo_get_cwd(orig_cwd, EsMaxPath);
 
+	/* /tmp may be a symlink or similar, get it's actual path first */
+#if defined(J9ZOS390)
+	rc = atoe_chdir(tmp);
+#else /* defined(J9ZOS390) */
+	rc = chdir(tmp);
+#endif /* defined(J9ZOS390) */
+	if (0 != rc) {
+		outputErrorMessage(PORTTEST_ERROR_ARGS, "cd %s failed rc: %d\n", tmp, rc);
+		goto cleanup2;
+	} else {
+		outputComment(portLibrary, "cd %s\n", tmp);
+	}
+	
+	cmpbuf = (char*)j9mem_allocate_memory( EsMaxPath, OMRMEM_CATEGORY_PORT_LIBRARY );
+
+	rc = j9sysinfo_get_cwd(cmpbuf, EsMaxPath);
+	if (0 != rc) {
+		outputErrorMessage(PORTTEST_ERROR_ARGS, "error failed to get current working directory rc: %d\n", rc);
+		j9mem_free_memory(cmpbuf);
+		cmpbuf = NULL;
+		goto cleanup1;
+	} else {
+		outputComment(PORTLIB, "CWD = %s\n", cmpbuf);
+	}
+	if (0 == strlen(cmpbuf)) {
+		outputErrorMessage(PORTTEST_ERROR_ARGS, "expected CWD to have a non-zero length\n");
+		j9mem_free_memory(cmpbuf);
+		cmpbuf = NULL;
+		goto cleanup1;
+	}
+	if ('/' != cmpbuf[strlen(cmpbuf) - 1]) {
+		strcat(cmpbuf, "/");
+	}
+	strcat(cmpbuf, utf8);
+	outputComment(portLibrary, "expected result %s\n", cmpbuf);
+
 	rc = j9file_mkdir(utf8);
 	if (0 != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "error failed to create directory rc: %d\n", rc);
+		j9mem_free_memory(cmpbuf);
+		cmpbuf = NULL;
+		goto cleanup1;
 	} else {
 		outputComment(portLibrary, "mkdir %s\n", utf8);
 	}
@@ -1879,6 +1920,7 @@ j9sysinfo_test_get_cwd3(struct J9PortLibrary *portLibrary)
 #endif /* defined(J9ZOS390) */
 	if (0 != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "cd %s failed rc: %d\n", utf8, rc);
+		goto cleanup1;
 	} else {
 		outputComment(portLibrary, "cd %s\n", utf8);
 	}
@@ -1889,14 +1931,17 @@ j9sysinfo_test_get_cwd3(struct J9PortLibrary *portLibrary)
 
 	if (0 != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "error failed to get current working directory rc: %d\n", rc);
+		goto cleanup1;
 	} else {
 		outputComment(PORTLIB, "CWD = %s\n", buffer);
 	}
 
-	rc = memcmp(utf8, buffer, strlen(buffer));
+	rc = memcmp(cmpbuf, buffer, strlen(buffer));
 	if (0 != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "invalid directory rc: %d\n", rc);
 	}
+
+cleanup1:
 
 #if defined(WIN32)
 	rc = _chdir(orig_cwd); /* we need to exit current directory before deleting it*/
@@ -1910,13 +1955,23 @@ j9sysinfo_test_get_cwd3(struct J9PortLibrary *portLibrary)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "cd %s failed rc: %d\n", orig_cwd, rc);
 	}
 
-	rc = j9file_unlinkdir(utf8);
-	if (-1 == rc) {
-		outputErrorMessage(PORTTEST_ERROR_ARGS, "error failed to delete directory %s rc: %d\n", utf8, rc);
+	if (NULL != cmpbuf) {
+		rc = j9file_unlinkdir(cmpbuf);
+		if (-1 == rc) {
+			outputErrorMessage(PORTTEST_ERROR_ARGS, "error failed to delete directory %s rc: %d\n", cmpbuf, rc);
+		}
 	}
 
-	j9mem_free_memory(orig_cwd);
-	j9mem_free_memory(buffer);
+cleanup2:
+	if (NULL != orig_cwd) {
+		j9mem_free_memory(orig_cwd);
+	}
+	if (NULL != buffer) {
+		j9mem_free_memory(buffer);
+	}
+	if ((NULL != cmpbuf) && (cmpbuf != utf8)) {
+		j9mem_free_memory(cmpbuf);
+	}
 	return reportTestExit(portLibrary, testName);
 }
 
