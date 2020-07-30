@@ -70,7 +70,6 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
    IDATA argIndexXjit = 0;
    IDATA argIndexXaot = 0;
    IDATA argIndexXnojit = 0;
-   IDATA argIndexXnoaot = 0;
 
    IDATA argIndexClient = 0;
    IDATA argIndexServer = 0;
@@ -129,7 +128,6 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
          argIndexXjit = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xjit", 0);
          argIndexXaot = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xaot", 0);
          argIndexXnojit = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xnojit", 0);
-         argIndexXnoaot = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xnoaot", 0);
 
          argIndexRIEnabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XX:+RuntimeInstrumentation", 0);
          argIndexRIDisabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XX:-RuntimeInstrumentation", 0);
@@ -169,7 +167,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
 
          /* setup field to indicate whether we will allow AOT compilation and perform AOT runtime
           * initializations to allow AOT code to be loaded from the shared cache as well as from JXEs */
-         if (argIndexXaot >= argIndexXnoaot)
+         if ((J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_AOT)))
             {
             isAOT = true;
             }
