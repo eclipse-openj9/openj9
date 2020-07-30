@@ -24,6 +24,8 @@
 /*[IF Java15]*/
 package java.lang.invoke;
 
+import java.util.List;
+
 /*
  * Stub class to compile RI j.l.i.MethodHandleImpl
  */
@@ -34,6 +36,11 @@ class DirectMethodHandle extends MethodHandle {
 	DirectMethodHandle(MethodType mt, LambdaForm lf) {
 		super(mt, lf);
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		return false;
 	}
 }
 /*[ENDIF] Java15 */

@@ -29,6 +29,10 @@ import java.util.Arrays;
 import java.util.Objects;
 /*[ENDIF]*/
 
+/*[IF Java15]*/
+import java.util.List;
+/*[ENDIF] Java15 */
+
 import com.ibm.oti.util.Msg;
 
 /*
@@ -223,6 +227,14 @@ final class VarargsCollectorHandle extends MethodHandle {
 	boolean canRevealDirect() {
 		return isPrimitiveVarargs;
 	}
+	
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		relatedMHs.add(next);
+		return true;
+	}
+/*[ENDIF] Java15 */
 	
 	// {{{ JIT support
 

@@ -24,6 +24,9 @@ package java.lang.invoke;
 
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.concurrent.ConcurrentHashMap;
+/*[IF Java15]*/
+import java.util.List;
+/*[ENDIF] Java15 */
 
 import com.ibm.oti.util.Msg;
 
@@ -699,6 +702,14 @@ abstract class ConvertHandle extends MethodHandle {
 		static void load(){}
 	}
 
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		relatedMHs.add(next);
+		return true;
+	}
+/*[ENDIF] Java15 */
+	
 	// {{{ JIT support
 	static { FilterHelpers.load(); } // JIT will need FilterHelpers loaded to compile thunks
 	// }}} JIT support

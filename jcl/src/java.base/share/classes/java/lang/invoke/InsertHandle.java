@@ -22,6 +22,10 @@
  *******************************************************************************/
 package java.lang.invoke;
 
+/*[IF Java15]*/
+import java.util.List;
+/*[ENDIF] Java15 */
+
 class InsertHandle extends MethodHandle {
 	final MethodHandle  next;
 	final int           insertionIndex;
@@ -44,6 +48,14 @@ class InsertHandle extends MethodHandle {
 		this.insertionIndex = originalHandle.insertionIndex;
 		this.values 		= originalHandle.values;
 	}
+
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		relatedMHs.add(next);
+		return true;
+	}
+/*[ENDIF] Java15 */
 
 	// {{{ JIT support
 

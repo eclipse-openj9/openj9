@@ -24,6 +24,10 @@
 
 package java.lang.invoke;
 
+/*[IF Java15]*/
+import java.util.List;
+/*[ENDIF] Java15 */
+
 /*
  * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
  */
@@ -55,4 +59,11 @@ abstract class DelegatingMethodHandle extends MethodHandle {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	/*[ENDIF]*/
+
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		return false;
+	}
+/*[ENDIF] Java15 */
 }

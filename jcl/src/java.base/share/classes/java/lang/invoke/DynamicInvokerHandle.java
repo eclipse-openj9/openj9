@@ -22,6 +22,10 @@
  *******************************************************************************/
 package java.lang.invoke;
 
+/*[IF Java15]*/
+import java.util.List;
+/*[ENDIF] Java15 */
+
 @VMCONSTANTPOOL_CLASS
 class DynamicInvokerHandle extends MethodHandle {
 	@VMCONSTANTPOOL_FIELD
@@ -36,6 +40,13 @@ class DynamicInvokerHandle extends MethodHandle {
 		super(originalHandle, newType);
 		this.site = originalHandle.site;
 	}
+
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		return false;
+	}
+/*[ENDIF] Java15 */
 
 	// {{{ JIT support
 

@@ -23,6 +23,10 @@
  *******************************************************************************/
 package java.lang.invoke;
 
+/*[IF Java15]*/
+import java.util.List;
+/*[ENDIF] Java15 */
+
 /*
  * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
  */
@@ -45,4 +49,11 @@ final class SimpleMethodHandle extends BoundMethodHandle {
 	BoundMethodHandle copyWithExtendL(MethodType mt, LambdaForm lf, Object obj) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		return false;
+	}
+/*[ENDIF] Java15 */
 }

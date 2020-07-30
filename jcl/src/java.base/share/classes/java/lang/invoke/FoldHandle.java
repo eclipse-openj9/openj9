@@ -22,6 +22,10 @@
  *******************************************************************************/
 package java.lang.invoke;
 
+/*[IF Java15]*/
+import java.util.List;
+/*[ENDIF] Java15 */
+
 abstract class FoldHandle extends MethodHandle {
 	protected final MethodHandle next;
 	protected final MethodHandle combiner;
@@ -92,6 +96,15 @@ abstract class FoldHandle extends MethodHandle {
 		 */
 		c.compareStructuralParameter(left.argumentIndices, this.argumentIndices);
 	}
+
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		relatedMHs.add(next);
+		relatedMHs.add(combiner);
+		return true;
+	}
+/*[ENDIF] Java15 */
 
 	// {{{ JIT support
 	protected static native int foldPosition();
