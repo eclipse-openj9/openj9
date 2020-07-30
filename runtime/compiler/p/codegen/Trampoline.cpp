@@ -52,7 +52,8 @@ void * ppcPicTrampInit(TR_FrontEnd *vm, TR::PersistentInfo * persistentInfo)
 
 #ifdef TR_TARGET_64BIT
    TR_J9VMBase *fej9 = (TR_J9VMBase *)vm;
-   if (!fej9->isAOT_DEPRECATED_DO_NOT_USE()) // don't init TOC if it is jar2jxe AOT compile
+   if (!fej9->isAOT_DEPRECATED_DO_NOT_USE() &&  // don't init TOC if it is jar2jxe AOT compile
+       !TR::Options::getCmdLineOptions()->getOption(TR_DisableTOC))
       {
       retVal = TR_PPCTableOfConstants::initTOC(fej9, persistentInfo, 0);
       }
