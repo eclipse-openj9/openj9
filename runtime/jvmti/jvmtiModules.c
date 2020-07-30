@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,11 +27,22 @@
 #define JVMTI_PACKAGE_NAME_BUFFER_LENGTH 80
 
 static void
-charReplace(J9UTF8 * utf8, char oldChar, char newChar) {
+charReplace(J9UTF8 * utf8, char oldChar, char newChar)
+{
+	/*
+	 * Get a pointer to the array of characters. We don't just use
+	 * J9UTF8_DATA(utf8) because while 'data' is declared as an array
+	 * of length 2 the actual size is J9UTF8_LENGTH(utf8). We do this
+	 * because some compilers track the length of the target for the
+	 * assignment below; we want to avoid warnings due to the apparent
+	 * lack of space (we know there's enough room).
+	 */
+	char *data = offsetof(J9UTF8, data) + (char *)(void *)utf8;
+	IDATA length = J9UTF8_LENGTH(utf8);
 	IDATA i = 0;
-	for (;i < J9UTF8_LENGTH(utf8); i++) {
-		if (oldChar == J9UTF8_DATA(utf8)[i]) {
-			J9UTF8_DATA(utf8)[i] = newChar;
+	for (; i < length; ++i) {
+		if (oldChar == data[i]) {
+			data[i] = newChar;
 		}
 	}
 }
@@ -272,7 +283,7 @@ jvmtiGetNamedModule(jvmtiEnv* jvmtiEnv, jobject class_loader, const char* packag
 		J9ClassLoader *vmClassLoader = NULL;
 		J9Module *vmModule = NULL;
 		J9UTF8 *packageName = NULL;
-		char buf[J9VM_PACKAGE_NAME_BUFFER_LENGTH + sizeof(packageName->length) + 1];
+		char buf[J9VM_PACKAGE_NAME_BUFFER_LENGTH + sizeof(packageName->length)];
 		UDATA packageNameLength = 0;
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -304,7 +315,7 @@ jvmtiGetNamedModule(jvmtiEnv* jvmtiEnv, jobject class_loader, const char* packag
 		packageNameLength = strlen(package_name);
 		packageName = (J9UTF8 *) buf;
 		if (packageNameLength > JVMTI_PACKAGE_NAME_BUFFER_LENGTH) {
-			packageName = j9mem_allocate_memory(packageNameLength + sizeof(packageName->length) + 1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
+			packageName = j9mem_allocate_memory(packageNameLength + sizeof(packageName->length), J9MEM_CATEGORY_JVMTI_ALLOCATE);
 			if (NULL == packageName) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 				goto done;
@@ -313,7 +324,6 @@ jvmtiGetNamedModule(jvmtiEnv* jvmtiEnv, jobject class_loader, const char* packag
 
 		J9UTF8_SET_LENGTH(packageName, (U_16) packageNameLength);
 		memcpy(J9UTF8_DATA(packageName), package_name, packageNameLength);
-		J9UTF8_DATA(packageName)[packageNameLength] = '\0';
 		vmModule = vmFuncs->findModuleForPackageUTF8(currentThread, vmClassLoader, packageName);
 		if (NULL != vmModule) {
 			rv_module = (jobject)vmFuncs->j9jni_createLocalRef((JNIEnv *) currentThread, vmModule->moduleObject);
