@@ -169,6 +169,14 @@ CXXFLAGS += $(UMA_OPTIMIZATION_CXXFLAGS)
   endif
 </#if>
 
+# If $(CC) doesn't accept the '-dumpversion' option, assume it's not GCC versions 5 or newer.
+GCC_MAJOR_VERSION := $(shell ($(CC) -dumpversion 2>/dev/null || echo 1) | cut -d. -f1)
+
+ifeq (1,$(shell expr $(GCC_MAJOR_VERSION) \>= 10))
+  CFLAGS += -Wno-stringop-overflow
+  CXXFLAGS += -Wno-stringop-overflow
+endif
+
 <#--
 OpenJ9 uses GNU89 inline semantics, but GCC versions 5 and newer default
 to GNU11 inline semantics. The option '-fgnu89-inline' is appended to CFLAGS
@@ -177,10 +185,7 @@ to allow compilation with newer GCC versions.
 Reference - https://gcc.gnu.org/gcc-5/porting_to.html.
 -->
 <#if uma.spec.flags.env_gcc.enabled || !uma.spec.processor.ppc>
-# If $(CC) doesn't accept the '-dumpversion' option, assume it's not GCC versions 5 or newer.
-GCC_MAJOR_VERSION := $(shell ($(CC) -dumpversion 2>/dev/null || echo 1) | cut -d. -f1)
-
-ifeq (,$(findstring $(GCC_MAJOR_VERSION),1 2 3 4))
+ifeq (1,$(shell expr $(GCC_MAJOR_VERSION) \>= 5))
   CFLAGS += -fgnu89-inline
 endif
 </#if>
