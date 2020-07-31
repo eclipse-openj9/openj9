@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2019 IBM Corp. and others
+ * Copyright (c) 2002, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -360,7 +360,7 @@ Java_com_ibm_oti_jvmtests_SupportJVM_ArrayCopy(JNIEnv * env, jclass unused, jobj
 	JVM_ArrayCopy(env, unused, src, src_pos, dst, dst_pos, length);
 }
 
-#if JAVA_SPEC_VERSION >= 9
+#if JAVA_SPEC_VERSION >= 11
 jlong JNICALL
 Java_com_ibm_oti_jvmtests_SupportJVM_GetNanoTimeAdjustment(JNIEnv *env, jclass clazz, jlong offset_seconds)
 {
