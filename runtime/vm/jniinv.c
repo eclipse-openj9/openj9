@@ -323,11 +323,10 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 	Trc_JNIinv_protectedDestroyJavaVM_FinishedThreadWait();
 
-	/* Prevents daemon threads from exiting */
+	/* If exit has already started, refuse the destroy request */
 	if (vm->runtimeFlagsMutex != NULL) {
 		omrthread_monitor_enter(vm->runtimeFlagsMutex);
 	}
-
 	if (vm->runtimeFlags & J9_RUNTIME_EXIT_STARTED) {
 		if (vm->runtimeFlagsMutex != NULL) {
 			omrthread_monitor_exit(vm->runtimeFlagsMutex);
@@ -337,14 +336,21 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 		 */
 		return JNI_ERR;
 	}
-
-	vm->runtimeFlags |= J9_RUNTIME_EXIT_STARTED;
 	if (vm->runtimeFlagsMutex != NULL) {
 		omrthread_monitor_exit(vm->runtimeFlagsMutex);
 	}
 
 	/* run exit hooks */
 	sidecarShutdown(vmThread);
+
+	/* Prevent daemon threads from exiting */
+	if (vm->runtimeFlagsMutex != NULL) {
+		omrthread_monitor_enter(vm->runtimeFlagsMutex);
+	}
+	vm->runtimeFlags |= J9_RUNTIME_EXIT_STARTED;
+	if (vm->runtimeFlagsMutex != NULL) {
+		omrthread_monitor_exit(vm->runtimeFlagsMutex);
+	}
 
 	Trc_JNIinv_protectedDestroyJavaVM_vmCleanupDone();
 
