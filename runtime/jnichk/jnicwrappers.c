@@ -4269,7 +4269,7 @@ checkGetObjectRefType(JNIEnv *env, jobject obj)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jobjectRefType actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_POINTER, 0 };
+	static const U_32 argDescriptor[] = { JNIC_JOBJECT, 0 };
 	static const char function[] = "GetObjectRefType";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj);
