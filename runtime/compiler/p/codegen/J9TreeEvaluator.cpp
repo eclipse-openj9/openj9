@@ -5145,10 +5145,10 @@ TR::Register * J9::Power::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *
    }
 
 static TR::Register *
-reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR::RegisterDependencyConditions *conditions, TR::Register *objReg, TR::Register *monitorReg, TR::Register *valReg, TR::Register *tempReg, TR::Register *cndReg)
+reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR::RegisterDependencyConditions *conditions, TR::Register *objReg, TR::Register *monitorReg, TR::Register *valReg, TR::Register *tempReg, TR::Register *cndReg, TR::LabelSymbol *callLabel)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
-   TR::LabelSymbol *resLabel, *callLabel, *doneLabel, *doneOOLLabel, *loopLabel, *reserved_checkLabel;
+   TR::LabelSymbol *resLabel, *doneLabel, *doneOOLLabel, *loopLabel, *reserved_checkLabel;
    int32_t lockSize;
    TR::Compilation * comp = cg->comp();
 
@@ -5159,7 +5159,6 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR
    reserved_checkLabel = generateLabelSymbol(cg);
    doneLabel = generateLabelSymbol(cg);
    doneOOLLabel = generateLabelSymbol(cg);
-   callLabel = generateLabelSymbol(cg);
 
    TR::TreeEvaluator::isPrimitiveMonitor(node, cg);
    bool isPrimitive = node->isPrimitiveLockedRegion();
@@ -5261,10 +5260,10 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR
    }
 
 static TR::Register *
-reservationLockExit(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR::RegisterDependencyConditions *conditions, TR::Register *objReg, TR::Register *monitorReg, TR::Register *valReg, TR::Register *tempReg, TR::Register *cndReg)
+reservationLockExit(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR::RegisterDependencyConditions *conditions, TR::Register *objReg, TR::Register *monitorReg, TR::Register *valReg, TR::Register *tempReg, TR::Register *cndReg, TR::LabelSymbol *callLabel)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
-   TR::LabelSymbol *resLabel, *callLabel, *doneLabel, *doneOOLLabel;
+   TR::LabelSymbol *resLabel, *doneLabel, *doneOOLLabel;
    int32_t lockSize;
    TR::Compilation *comp = cg->comp();
 
@@ -5273,7 +5272,6 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::CodeGenerator *cg, TR:
    resLabel = generateLabelSymbol(cg);
    doneLabel = generateLabelSymbol(cg);
    doneOOLLabel = generateLabelSymbol(cg);
-   callLabel = generateLabelSymbol(cg);
 
    bool isPrimitive = node->isPrimitiveLockedRegion();
    lockSize = comp->target().is64Bit() && !fej9->generateCompressedLockWord() ? 8 : 4;
@@ -5363,8 +5361,10 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    TR::Compilation *comp = cg->comp();
 
-   if (comp->getOption(TR_OptimizeForSpace) || (comp->getOption(TR_FullSpeedDebug))
-         || comp->getOption(TR_DisableInlineMonExit))
+   if (comp->getOption(TR_OptimizeForSpace) || 
+         comp->getOption(TR_FullSpeedDebug) || 
+         (TR::Compiler->om.areValueTypesEnabled() && cg->isMonitorValueType(node) == TR_yes) ||
+         comp->getOption(TR_DisableInlineMonExit))
       {
       TR::ILOpCodes opCode = node->getOpCodeValue();
       TR::Node::recreate(node, TR::call);
@@ -5373,7 +5373,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
       return targetRegister;
       }
 
-   int32_t numDeps = 5;
+   int32_t numDeps = 6;
 
    TR::Node *objNode = node->getFirstChild();
    TR::Register *objReg = cg->evaluate(objNode);
@@ -5382,7 +5382,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
    TR::Register *tempReg = cg->allocateRegister();
    TR::Register *threadReg = cg->allocateRegister();
 
-   TR::Register *objectClassReg = NULL;
+   TR::Register *objectClassReg = cg->allocateRegister();
    TR::Register *lookupOffsetReg = NULL;
 
    TR::Register *condReg = cg->allocateRegister(TR_CCR);
@@ -5392,8 +5392,6 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
 
    if (lwOffset <= 0)
       {
-      objectClassReg = cg->allocateRegister();
-      numDeps++;
       if (comp->getOption(TR_EnableMonitorCacheLookup))
          {
          lookupOffsetReg = cg->allocateRegister();
@@ -5416,12 +5414,9 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
 
    TR::addDependency(conditions, threadReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
-   if (objectClassReg)
-      {
-      TR::addDependency(conditions, objectClassReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      conditions->getPreConditions()->getRegisterDependency(conditions->getAddCursorForPre() - 1)->setExcludeGPR0();
-      conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
-      }
+   TR::addDependency(conditions, objectClassReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   conditions->getPreConditions()->getRegisterDependency(conditions->getAddCursorForPre() - 1)->setExcludeGPR0();
+   conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
 
    if (lookupOffsetReg)
       {
@@ -5439,6 +5434,12 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel, NULL);
    startLabel->setStartInternalControlFlow();
+
+   //If object is not known to be value type at compile time, check at run time
+   if (TR::Compiler->om.areValueTypesEnabled() && cg->isMonitorValueType(node) == TR_maybe)
+      {
+      generateCheckForValueTypeMonitorEnterOrExit(node, callLabel, objReg, objectClassReg, tempReg, condReg, cg);
+      }
 
    bool simpleLocking = false;
 
@@ -5529,7 +5530,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
          TR::TreeEvaluator::evaluateLockForReservation(node, &reserveLocking, &normalLockWithReservationPreserving, cg);
 
       if (reserveLocking)
-         return reservationLockExit(node, lwOffset, cg, conditions, baseReg, monitorReg, threadReg, tempReg, condReg);
+         return reservationLockExit(node, lwOffset, cg, conditions, baseReg, monitorReg, threadReg, tempReg, condReg, callLabel);
       }
 
    int32_t lockSize;
@@ -7768,15 +7769,34 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
    return true;
    }
 
+void J9::Power::TreeEvaluator::generateCheckForValueTypeMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol *helperCallLabel, TR::Register *objReg, TR::Register *objectClassReg, TR::Register *tempReg, TR::Register *condReg, TR::CodeGenerator *cg)
+{
+   //get class of object
+   generateLoadJ9Class(node, objectClassReg, objReg, cg); 
+
+   //get memory reference to class flags
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   TR::MemoryReference *classFlagsMemRef = new (cg->trHeapMemory()) TR::MemoryReference(objectClassReg, static_cast<uintptr_t>(fej9->getOffsetOfClassFlags()), 4, cg);
+
+   //check J9ClassIsValueType flag
+   generateTrg1MemInstruction(cg,TR::InstOpCode::lwz, node, tempReg, classFlagsMemRef);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, tempReg, tempReg, condReg, J9ClassIsValueType);
+   
+   //If obj is value type, call VM helper and throw IllegalMonitorState exception, else continue as usual
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, helperCallLabel, condReg);
+}
+
 TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    TR_ASSERT(lwOffset>=LOWER_IMMED && lwOffset<=UPPER_IMMED, "Need re-work on using lwOffset.");
+
    if (comp->getOption(TR_OptimizeForSpace) ||
          comp->getOption(TR_MimicInterpreterFrameShape) ||
          (comp->getOption(TR_FullSpeedDebug) && node->isSyncMethodMonitor()) ||
+         (TR::Compiler->om.areValueTypesEnabled() && cg->isMonitorValueType(node) == TR_yes) ||
          comp->getOption(TR_DisableInlineMonEnt))
       {
       TR::ILOpCodes opCode = node->getOpCodeValue();
@@ -7786,7 +7806,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
       return targetRegister;
       }
 
-   int32_t numDeps = 5;
+   int32_t numDeps = 6;
 
    TR::Node *objNode = node->getFirstChild();
    TR::Register *objReg = cg->evaluate(objNode);
@@ -7795,7 +7815,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
    TR::Register *offsetReg = cg->allocateRegister();
    TR::Register *tempReg = cg->allocateRegister();
 
-   TR::Register *objectClassReg = NULL;
+   TR::Register *objectClassReg = cg->allocateRegister();
    TR::Register *lookupOffsetReg = NULL;
 
    TR::Register *condReg = cg->allocateRegister(TR_CCR);
@@ -7805,8 +7825,6 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
 
    if (lwOffset <= 0)
       {
-      objectClassReg = cg->allocateRegister();
-      numDeps++;
       if (comp->getOption(TR_EnableMonitorCacheLookup))
          {
          lookupOffsetReg = cg->allocateRegister();
@@ -7829,13 +7847,10 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
 
    TR::addDependency(conditions, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
-   if (objectClassReg)
-      {
-      TR::addDependency(conditions, objectClassReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      conditions->getPreConditions()->getRegisterDependency(conditions->getAddCursorForPre() - 1)->setExcludeGPR0();
-      conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
-      }
-
+   TR::addDependency(conditions, objectClassReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   conditions->getPreConditions()->getRegisterDependency(conditions->getAddCursorForPre() - 1)->setExcludeGPR0();
+   conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
+   
    if (lookupOffsetReg)
       {
       TR::addDependency(conditions, lookupOffsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -7852,6 +7867,12 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel, NULL);
    startLabel->setStartInternalControlFlow();
+
+   //If object is not known to be value type at compile time, check at run time
+   if (TR::Compiler->om.areValueTypesEnabled() && cg->isMonitorValueType(node) == TR_maybe)
+      {
+      generateCheckForValueTypeMonitorEnterOrExit(node, callLabel, objReg, objectClassReg, tempReg, condReg, cg);
+      }
 
    bool simpleLocking = false;
 
@@ -7941,7 +7962,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
          TR::TreeEvaluator::evaluateLockForReservation(node, &reserveLocking, &normalLockWithReservationPreserving, cg);
 
       if (reserveLocking)
-         return reservationLockEnter(node, lwOffset, cg, conditions, baseReg, monitorReg, offsetReg, tempReg, condReg);
+         return reservationLockEnter(node, lwOffset, cg, conditions, baseReg, monitorReg, offsetReg, tempReg, condReg, callLabel);
 
       if (!simpleLocking && !reserveLocking && !normalLockWithReservationPreserving && simpleReadMonitor(node, cg, objNode, objReg, objectClassReg, condReg, lookupOffsetReg))
          return NULL;
