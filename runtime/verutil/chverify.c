@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -171,19 +171,6 @@ bcvCheckClassName (J9CfrConstantPoolInfo * info)
 {
 	/* Class checks, not method checks */
 	return checkNameImpl(info, TRUE, FALSE, FALSE);
-}
-
-/**
-* Determine if this a valid name for Classes during class loading.
-*
-* @param info A pointer to J9CfrConstantPoolInfo
-* @returns The arity of the class if valid, -1 otherwise
-*/
-I_32
-bcvCheckClassNameInLoading (J9CfrConstantPoolInfo * info)
-{
-	/* Class checks, not method checks */
-	return checkNameImpl(info, TRUE, FALSE, TRUE);
 }
 
 /**
