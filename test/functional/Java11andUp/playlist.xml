@@ -181,8 +181,6 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-		<!-- aarch64 JIT lacks the support for -Xgcpolicy:balanced -->
-		<platformRequirements>^arch.aarch64</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
