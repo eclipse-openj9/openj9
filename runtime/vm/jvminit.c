@@ -492,7 +492,6 @@ void OMRNORETURN exitJavaVM(J9VMThread * vmThread, IDATA rc)
 
 	if (vm != NULL) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
-		omrthread_monitor_t mutex = vm->runtimeFlagsMutex;
 
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 		/* exitJavaVM is always called from a JNI context */
@@ -502,40 +501,28 @@ void OMRNORETURN exitJavaVM(J9VMThread * vmThread, IDATA rc)
 
 		/* we only let the shutdown code run once */
 
-		if (NULL != mutex) {
-			omrthread_monitor_enter(mutex);
+		if(vm->runtimeFlagsMutex != NULL) {
+			omrthread_monitor_enter(vm->runtimeFlagsMutex);
 		}
 
-		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_EXIT_STARTED)) {
-			/* CLEANUP indicates that the VM is running the exit hooks/finalizers
-			 * on exit - exit must be allowed in this case, but only from a finalizer
-			 * thread (for simplicity, just check for a system thread as no other
-			 * VM-owned threads will be attempting exit).
-			 *
-			 * CLEANUP will only ever be set once EXIT_STARTED has been set,
-			 * so setting the `J9_RUNTIME_EXIT_STARTED` flag again below is harmless.
-			 */
-			if (J9_ARE_NO_BITS_SET(vmThread->privateFlags, J9_PRIVATE_FLAGS_SYSTEM_THREAD)
-			|| J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_CLEANUP)
-			) {
-				if (NULL != mutex) {
-					omrthread_monitor_exit(mutex);
-				}
+		if(vm->runtimeFlags & J9_RUNTIME_EXIT_STARTED) {
+			if (vm->runtimeFlagsMutex != NULL) {
+				omrthread_monitor_exit(vm->runtimeFlagsMutex);
+			}
 
-				if (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) {
-					internalReleaseVMAccess(vmThread);
-				}
+			if (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) {
+				internalReleaseVMAccess(vmThread);
+			}
 
-				/* Do nothing. Wait for the process to exit. */
-				while (1) {
-					omrthread_suspend();
-				}
+			/* Do nothing. Wait for the process to exit. */
+			while (1) {
+				omrthread_suspend();
 			}
 		}
 
 		vm->runtimeFlags |= J9_RUNTIME_EXIT_STARTED;
-		if (NULL != mutex) {
-			omrthread_monitor_exit(mutex);
+		if(vm->runtimeFlagsMutex != NULL) {
+			omrthread_monitor_exit(vm->runtimeFlagsMutex);
 		}
 
 #ifdef J9VM_OPT_SIDECAR
