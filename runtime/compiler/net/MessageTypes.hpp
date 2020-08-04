@@ -95,14 +95,15 @@ enum MessageType : uint16_t
    ResolvedMethod_isUnresolvedConstantDynamic,
    ResolvedMethod_dynamicConstant,
    ResolvedMethod_definingClassFromCPFieldRef,
+   ResolvedMethod_getResolvedImplementorMethods,
 
-   ResolvedRelocatableMethod_createResolvedRelocatableJ9Method, // 65
+   ResolvedRelocatableMethod_createResolvedRelocatableJ9Method, // 66
    ResolvedRelocatableMethod_fieldAttributes,
    ResolvedRelocatableMethod_staticAttributes,
    ResolvedRelocatableMethod_getFieldType,
 
    // For TR_J9ServerVM methods
-   VM_isClassLibraryClass, // 69
+   VM_isClassLibraryClass, // 70
    VM_isClassLibraryMethod,
    VM_getSuperClass,
    VM_isInstanceOf,
@@ -205,7 +206,7 @@ enum MessageType : uint16_t
    VM_getFields,
 
    // For static TR::CompilationInfo methods
-   CompInfo_isCompiled, // 170
+   CompInfo_isCompiled, // 171
    CompInfo_getInvocationCount,
    CompInfo_setInvocationCount,
    CompInfo_getJ9MethodExtra,
@@ -218,7 +219,7 @@ enum MessageType : uint16_t
    CompInfo_getJ9MethodStartPC,
 
    // For J9::ClassEnv Methods
-   ClassEnv_classFlagsValue, // 181
+   ClassEnv_classFlagsValue, // 182
    ClassEnv_classDepthOf,
    ClassEnv_classInstanceSize,
    ClassEnv_superClassesOf,
@@ -231,13 +232,13 @@ enum MessageType : uint16_t
    ClassEnv_getROMClassRefName,
 
    // For TR_J9SharedCache
-   SharedCache_getClassChainOffsetInSharedCache, // 192
+   SharedCache_getClassChainOffsetInSharedCache, // 193
    SharedCache_rememberClass,
    SharedCache_addHint,
    SharedCache_storeSharedData,
 
    // For runFEMacro
-   runFEMacro_invokeCollectHandleNumArgsToCollect, // 196
+   runFEMacro_invokeCollectHandleNumArgsToCollect, // 197
    runFEMacro_invokeExplicitCastHandleConvertArgs,
    runFEMacro_targetTypeL,
    runFEMacro_invokeILGenMacrosInvokeExactAndFixup,
@@ -263,24 +264,24 @@ enum MessageType : uint16_t
    runFEMacro_invokeCollectHandleAllocateArray,
 
    // for JITServerPersistentCHTable
-   CHTable_getAllClassInfo, // 220
+   CHTable_getAllClassInfo, // 221
    CHTable_getClassInfoUpdates,
    CHTable_commit,
    CHTable_clearReservable,
 
    // for JITServerIProfiler
-   IProfiler_profilingSample, // 224
+   IProfiler_profilingSample, // 225
    IProfiler_searchForMethodSample,
    IProfiler_getMaxCallCount,
    IProfiler_setCallCount,
 
-   Recompilation_getExistingMethodInfo, // 228
+   Recompilation_getExistingMethodInfo, // 229
    Recompilation_getJittedBodyInfoFromPC,
 
    ClassInfo_getRemoteROMString,
 
    // for KnownObjectTable
-   KnownObjectTable_getOrCreateIndex, // 231
+   KnownObjectTable_getOrCreateIndex, // 232
    KnownObjectTable_getOrCreateIndexAt,
    KnownObjectTable_getPointer,
    KnownObjectTable_getExistingIndexAt,
@@ -294,7 +295,7 @@ enum MessageType : uint16_t
    KnownObjectTable_invokeDirectHandleDirectCall,
    KnownObjectTable_getKnownObjectTableDumpInfo,
 
-   ClassEnv_isClassRefValueType, // 243
+   ClassEnv_isClassRefValueType, // 244
    MessageType_MAXTYPE
    };
 
@@ -367,11 +368,12 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "ResolvedMethod_isUnresolvedConstantDynamic",
    "ResolvedMethod_dynamicConstant",
    "ResolvedMethod_definingClassFromCPFieldRef",
-   "ResolvedRelocatableMethod_createResolvedRelocatableJ9Method", // 65
+   "ResolvedMethod_getResolvedImplementorMethods",
+   "ResolvedRelocatableMethod_createResolvedRelocatableJ9Method", // 66
    "ResolvedRelocatableMethod_fieldAttributes",
    "ResolvedRelocatableMethod_staticAttributes",
    "ResolvedRelocatableMethod_getFieldType",
-   "VM_isClassLibraryClass", // 69
+   "VM_isClassLibraryClass", // 70
    "VM_isClassLibraryMethod",
    "VM_getSuperClass",
    "VM_isInstanceOf",
@@ -472,7 +474,7 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "VM_getObjectSizeClass",
    "VM_stackWalkerMaySkipFramesSVM",
    "VM_getFields",
-   "CompInfo_isCompiled", // 170
+   "CompInfo_isCompiled", // 171
    "CompInfo_getInvocationCount",
    "CompInfo_setInvocationCount",
    "CompInfo_getJ9MethodExtra",
@@ -483,7 +485,7 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "CompInfo_setInvocationCountAtomic",
    "CompInfo_isClassSpecial",
    "CompInfo_getJ9MethodStartPC",
-   "ClassEnv_classFlagsValue", // 181
+   "ClassEnv_classFlagsValue", // 182
    "ClassEnv_classDepthOf",
    "ClassEnv_classInstanceSize",
    "ClassEnv_superClassesOf",
@@ -494,11 +496,11 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "ClassEnv_getITable",
    "ClassEnv_classHasIllegalStaticFinalFieldModification",
    "ClassEnv_getROMClassRefName",
-   "SharedCache_getClassChainOffsetInSharedCache", // 192
+   "SharedCache_getClassChainOffsetInSharedCache", // 193
    "SharedCache_rememberClass",
    "SharedCache_addHint",
    "SharedCache_storeSharedData",
-   "runFEMacro_invokeCollectHandleNumArgsToCollect", // 196
+   "runFEMacro_invokeCollectHandleNumArgsToCollect", // 197
    "runFEMacro_invokeExplicitCastHandleConvertArgs",
    "runFEMacro_targetTypeL",
    "runFEMacro_invokeILGenMacrosInvokeExactAndFixup",
@@ -522,18 +524,18 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "runFEMacro_invokeFilterArgumentsWithCombinerHandleFilterPosition",
    "runFEMacro_invokeFilterArgumentsWithCombinerHandleArgumentIndices",
    "runFEMacro_invokeCollectHandleAllocateArray",
-   "CHTable_getAllClassInfo", // 220
+   "CHTable_getAllClassInfo", // 221
    "CHTable_getClassInfoUpdates",
    "CHTable_commit",
    "CHTable_clearReservable",
-   "IProfiler_profilingSample", // 224
+   "IProfiler_profilingSample", // 225
    "IProfiler_searchForMethodSample",
    "IProfiler_getMaxCallCount",
    "IProfiler_setCallCount",
-   "Recompilation_getExistingMethodInfo", // 228
+   "Recompilation_getExistingMethodInfo", // 229
    "Recompilation_getJittedBodyInfoFromPC",
    "ClassInfo_getRemoteROMString",
-   "KnownObjectTable_getOrCreateIndex", // 231
+   "KnownObjectTable_getOrCreateIndex", // 232
    "KnownObjectTable_getOrCreateIndexAt",
    "KnownObjectTable_getPointer",
    "KnownObjectTable_getExistingIndexAt",
@@ -545,7 +547,7 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "KnownObjectTable_getReferenceField",
    "KnownObjectTable_invokeDirectHandleDirectCall",
    "KnownObjectTable_getKnownObjectTableDumpInfo",
-   "ClassEnv_isClassRefValueType", // 243
+   "ClassEnv_isClassRefValueType", // 244
    };
    }; // namespace JITServer
 #endif // MESSAGE_TYPES_HPP

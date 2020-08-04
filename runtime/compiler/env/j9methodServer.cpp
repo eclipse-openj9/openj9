@@ -1954,6 +1954,39 @@ TR_ResolvedJ9JITServerMethod::cacheFields()
       }
    }
 
+void
+TR_ResolvedJ9JITServerMethod::cacheImplementorMethods(
+   std::vector<TR_OpaqueClassBlock *> &subClasses,
+   int32_t cpIndexOrOffset,
+   bool isInterface,
+   int32_t ttlForUnresolved)
+   {
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
+   int32_t numMethods = subClasses.size();
+
+   _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedImplementorMethods, (TR_ResolvedJ9Method *) _remoteMirror, subClasses, cpIndexOrOffset, isInterface);
+   auto recv = _stream->read<std::vector<J9Method *>, std::vector<TR_ResolvedJ9JITServerMethodInfo>>();
+
+   // Note: the number of received methods can be smaller
+   // than the requsted number, because client will abort after
+   // the first unresolved method.
+   auto &ramMethods = std::get<0>(recv);
+   auto &methodInfos = std::get<1>(recv);
+   for (int32_t i = 0; i < ramMethods.size(); ++i)
+      {
+      TR_ResolvedMethodType type = isInterface ? TR_ResolvedMethodType::Interface : TR_ResolvedMethodType::VirtualFromOffset;
+      TR_ResolvedMethod *resolvedMethod;
+      TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(type, (TR_OpaqueClassBlock *) _ramClass, cpIndexOrOffset, subClasses[i]);
+      // Assume that we already checked that none of the methods have already been cached
+      compInfoPT->cacheResolvedMethod(
+         key,
+         (TR_OpaqueMethodBlock *) ramMethods[i],
+         0,
+         methodInfos[i],
+         ttlForUnresolved);
+      }
+   }
+
 bool
 TR_ResolvedJ9JITServerMethod::validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation)
    {
