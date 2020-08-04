@@ -3116,14 +3116,15 @@ getStringUTF8Length(J9VMThread *vmThread,j9object_t string);
 * 	CLASSNAME_VALID_ARRARY - if it is valid and there is a '[' at beginning of class name string.
 *
 * @param[in] *vmThread current thread
-* @param[in] string the class name string
+* @param[in] className the class name string
+* @param[in] classNameLength the length of the class name string
 * @param[in] allowedBitsForClassName the allowed bits for a valid class name,
 *            including CLASSNAME_VALID_NON_ARRARY, CLASSNAME_VALID_ARRARY, or CLASSNAME_VALID.
 *
 * @return a UDATA to indicate the nature of incoming class name string, see descriptions above.
 */
 UDATA
-verifyQualifiedName(J9VMThread *vmThread, j9object_t string, UDATA allowedBitsForClassName);
+verifyQualifiedName(J9VMThread *vmThread, U_8 *className, UDATA classNameLength, UDATA allowedBitsForClassName);
 
 
 /* ---------------- swalk.c ---------------- */

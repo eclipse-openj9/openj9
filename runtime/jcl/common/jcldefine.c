@@ -95,14 +95,20 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 	/* Allocate and initialize a UTF8 copy of the Unicode class-name */
 	if (NULL != className) {
 		j9object_t classNameObject = J9_JNI_UNWRAP_REFERENCE(className);
-		utf8Name = (U_8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, classNameObject, J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
+		UDATA stringFlags = J9_STR_NULL_TERMINATE_RESULT;
+
+		if (!validateName) {
+			stringFlags |= J9_STR_XLAT;
+		}
+
+		utf8Name = (U_8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, classNameObject, stringFlags, "", 0, utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
 
 		if (NULL == utf8Name) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;
 		}
 
-		if (validateName && (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, classNameObject, CLASSNAME_VALID_NON_ARRARY))) {
+		if (validateName && (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, utf8Name, utf8Length, CLASSNAME_VALID_NON_ARRARY))) {
 			/* We don't yet know if the class being defined is exempt. Setting this option tells
 			 * defineClassCommon() to fail if it discovers that the class is not exempt. That failure
 			 * is distinguished by returning NULL with no exception pending.
