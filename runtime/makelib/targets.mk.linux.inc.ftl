@@ -309,9 +309,9 @@ endif
   CXXFLAGS += -DJ9HAMMER -m64 -fstack-protector
   CPPFLAGS += -DJ9HAMMER -m64
 <#elseif uma.spec.processor.arm>
-  CFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include -fstack-protector
-  CXXFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include -fno-threadsafe-statics -fstack-protector
-  CPPFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED-I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include
+  CFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -D__STDC_LIMIT_MACROS -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include -fstack-protector
+  CXXFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -D__STDC_LIMIT_MACROS -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include -fno-threadsafe-statics -fstack-protector
+  CPPFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -D__STDC_LIMIT_MACROS -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include
 <#elseif uma.spec.processor.aarch64>
   CFLAGS += -DJ9AARCH64 -fstack-protector
   CXXFLAGS += -DJ9AARCH64 -fstack-protector
@@ -331,8 +331,9 @@ endif
       CPPFLAGS += -m32
     endif
   <#else>
-    CFLAGS += -qalias=noansi -qxflag=LTOL:LTOL0 -qxflag=selinux
-    CXXFLAGS += -qalias=noansi -qxflag=LTOL:LTOL0 -qxflag=selinux -qsuppress=1540-1087:1540-1088:1540-1090
+    CFLAGS += -qalias=noansi -qxflag=LTOL:LTOL0 -qxflag=selinux -D__STDC_LIMIT_MACROS
+    CXXFLAGS += -qalias=noansi -qxflag=LTOL:LTOL0 -qxflag=selinux -qsuppress=1540-1087:1540-1088:1540-1090 -D__STDC_LIMIT_MACROS
+    CPPFLAGS += -D__STDC_LIMIT_MACROS
     ifdef j9vm_env_data64
     <#if uma.spec.flags.env_littleEndian.enabled>
       CFLAGS += -qarch=pwr7
