@@ -1595,10 +1595,9 @@ TR::Register *
 J9::ARM64::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   // ldrimmw R1, [B, contiguousSize]
-   // cmpimmw R1, 0 ; If 0, must be a discontiguous array
-   // ldrimmw R2, [B, discontiguousSize]
-   // cselw R1, R1, R2, ne
+   // ldrw R, [B + contiguousSize]
+   // cmp R, 0
+   // cselw R, [B + discontiguousSize]
    //
    TR::Register *objectReg = cg->evaluate(node->getFirstChild());
    TR::Register *lengthReg = cg->allocateRegister();
@@ -1607,9 +1606,9 @@ J9::ARM64::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator
    TR::MemoryReference *contiguousArraySizeMR = new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfContiguousArraySizeField(), cg);
    TR::MemoryReference *discontiguousArraySizeMR = new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg);
 
-   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, lengthReg, contiguousArraySizeMR);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, lengthReg, contiguousArraySizeMR);
    generateCompareImmInstruction(cg, node, lengthReg, 0);
-   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, discontiguousLengthReg, discontiguousArraySizeMR);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, discontiguousLengthReg, discontiguousArraySizeMR);
    generateCondTrg1Src2Instruction(cg, TR::InstOpCode::cselw, node, lengthReg, lengthReg, discontiguousLengthReg, TR::CC_NE);
 
    cg->stopUsingRegister(discontiguousLengthReg);
