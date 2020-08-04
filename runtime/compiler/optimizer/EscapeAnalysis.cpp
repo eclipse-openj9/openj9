@@ -133,7 +133,7 @@ TR_EscapeAnalysis::TR_EscapeAnalysis(TR::OptimizationManager *manager)
    _dememoizationSymRef = NULL;
 
    _createStackAllocations   = true;
-   _createLocalObjects       = comp()->target().cpu.isX86() || comp()->target().cpu.isPower() || comp()->target().cpu.isZ();
+   _createLocalObjects       = cg()->supportsStackAllocations();
    _desynchronizeCalls       = true;
 #if CHECK_MONITORS
    /* monitors */
@@ -4466,7 +4466,7 @@ void TR_EscapeAnalysis::checkEscapeViaNonCall(TR::Node *node, TR::NodeChecklist&
                if ((!_nonColdLocalObjectsValueNumbers ||
                     !_notOptimizableLocalObjectsValueNumbers ||
                     !resolvedBaseObject ||
-                    (comp()->useCompressedPointers() && (TR::Compiler->om.compressedReferenceShift() > 3) && !comp()->target().cpu.isX86() && !comp()->target().cpu.isPower() && !comp()->target().cpu.isZ()) ||
+                    (comp()->useCompressedPointers() && (TR::Compiler->om.compressedReferenceShift() > 3) && !cg()->supportsStackAllocations()) ||
                     !resolvedBaseObject->getOpCode().hasSymbolReference() ||
                     !_nonColdLocalObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(resolvedBaseObject)) ||
                     (((node->getSymbolReference()->getSymbol()->getRecognizedField() != TR::Symbol::Java_lang_String_value) ||

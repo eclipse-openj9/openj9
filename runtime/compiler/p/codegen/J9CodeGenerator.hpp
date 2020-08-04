@@ -101,6 +101,11 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    bool suppressInliningOfCryptoMethod(TR::RecognizedMethod method);
    bool inlineCryptoMethod(TR::Node *node, TR::Register *&resultReg);
 #endif
+
+   /**
+    * \brief Determines whether the code generator supports stack allocations
+    */
+   bool supportsStackAllocations() { return true; }
    };
 
 }

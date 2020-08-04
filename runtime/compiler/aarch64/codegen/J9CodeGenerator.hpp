@@ -93,6 +93,11 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    TR::Instruction *generateSwitchToInterpreterPrePrologue(TR::Instruction *cursor, TR::Node *node);
 
    bool supportsDirectJNICallsForAOT() { return true; }
+
+   /**
+    * \brief Determines whether the code generator supports stack allocations
+    */
+   bool supportsStackAllocations() { return true; }
    };
 
 }
