@@ -82,6 +82,10 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
     */
    void reserveNTrampolines(int32_t numTrampolines);
 
+   /**
+    * \brief Determines whether the code generator supports stack allocations
+    */
+   bool supportsStackAllocations() { return true; }
    };
 
 }

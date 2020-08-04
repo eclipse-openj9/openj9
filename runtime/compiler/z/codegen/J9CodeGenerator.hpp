@@ -329,6 +329,11 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    // LL: move to .cpp
    bool arithmeticNeedsLiteralFromPool(TR::Node *node);
 
+   /**
+    * \brief Determines whether the code generator supports stack allocations
+    */
+   bool supportsStackAllocations() { return true; }
+
    private:
 
    /** \brief
