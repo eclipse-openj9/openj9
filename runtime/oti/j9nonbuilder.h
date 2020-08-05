@@ -4566,6 +4566,7 @@ typedef struct J9InternalVMFunctions {
 #endif /* J9VM_OPT_JITSERVER */
 	IDATA ( *createJoinableThreadWithCategory)(omrthread_t* handle, UDATA stacksize, UDATA priority, UDATA suspend, omrthread_entrypoint_t entrypoint, void* entryarg, U_32 category) ;
 	BOOLEAN ( *valueTypeCapableAcmp)(struct J9VMThread *currentThread, j9object_t lhs, j9object_t rhs) ;
+	BOOLEAN ( *isNameOrSignatureQtype)(J9UTF8 *utfWrapper) ;
 	BOOLEAN ( *isClassRefQtype)(struct J9Class *cpContextClass, U_16 cpIndex) ;
 	UDATA ( *getFlattenableFieldOffset)(struct J9Class *fieldOwner, J9ROMFieldShape *field);
 	BOOLEAN ( *isFlattenableFieldFlattened)(J9Class *fieldOwner, J9ROMFieldShape *field);
