@@ -5087,6 +5087,21 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
    {
    if (_generateReadBarriersForFieldWatch && comp()->compileRelocatableCode())
       comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
+
+   TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
+   if (TR::Compiler->om.areValueTypesEnabled() && owningMethod->isFieldQType(cpIndex))
+      {
+      if (!isFieldResolved(comp(), owningMethod, cpIndex, false))
+         {
+         abortForUnresolvedValueTypeOp("getfield", "field");
+         }
+      else if (owningMethod->isFieldFlattened(comp(), cpIndex, _methodSymbol->isStatic()))
+         {
+         loadFlattenableInstanceWithHelper(cpIndex);
+         return;
+         }
+      }
+
    TR::SymbolReference * symRef = symRefTab()->findOrCreateShadowSymbol(_methodSymbol, cpIndex, false);
    loadInstance(symRef);
    }
@@ -5179,6 +5194,26 @@ TR_J9ByteCodeIlGenerator::loadInstance(TR::SymbolReference * symRef)
       }
 
    push(dummyLoad);
+   }
+
+void
+TR_J9ByteCodeIlGenerator::loadFlattenableInstanceWithHelper(int32_t cpIndex)
+   {
+   TR::Node * address = pop();
+   if (!address->isNonNull())
+      {
+      auto* nullchk = TR::Node::create(TR::PassThrough, 1, address);
+      nullchk = genNullCheck(nullchk);
+      genTreeTop(nullchk);
+      }
+   auto* j9ResolvedMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
+   auto* ramFieldRef = reinterpret_cast<J9RAMFieldRef*>(j9ResolvedMethod->cp()) + cpIndex;
+   auto* ramFieldRefNode = TR::Node::aconst(reinterpret_cast<uintptr_t>(ramFieldRef));
+   auto* receiverNode = address;
+   auto* helperCallNode = TR::Node::createWithSymRef(TR::acall, 2, 2, receiverNode, ramFieldRefNode, comp()->getSymRefTab()->findOrCreateGetFlattenableFieldSymbolRef());
+   handleSideEffect(helperCallNode);
+   genTreeTop(helperCallNode);
+   push(helperCallNode);
    }
 
 void

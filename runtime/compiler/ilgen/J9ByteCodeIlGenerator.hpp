@@ -164,6 +164,7 @@ private:
    //
    void         loadInstance(int32_t);
    void         loadInstance(TR::SymbolReference *);
+   void         loadFlattenableInstanceWithHelper(int32_t cpIndex);
    void         loadStatic(int32_t);
    void         loadAuto(TR::DataType type, int32_t slot, bool isAdjunct = false);
    TR::Node     *loadSymbol(TR::ILOpCodes, TR::SymbolReference *);
