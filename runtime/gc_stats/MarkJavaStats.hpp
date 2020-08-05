@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,6 +53,9 @@ public:
 	UDATA _stringConstantsCleared; /**< The number of string constants that have been cleared during marking */
 	UDATA _stringConstantsCandidates; /**< The number of string constants that have been visited in string table during marking */
 
+	UDATA _monitorReferenceCleared; /**< The number of monitor references that have been cleared during marking */
+	UDATA _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during marking */
+
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 	UDATA splitArraysProcessed; /**< The number of array chunks (not counting parts smaller than the split size) processed by this thread */
 	UDATA splitArraysAmount;
@@ -76,6 +79,8 @@ public:
 		, _phantomReferenceStats()
 		, _stringConstantsCleared(0)
 		, _stringConstantsCandidates(0)
+		, _monitorReferenceCleared(0)
+		, _monitorReferenceCandidates(0)
 	{
 		clear();
 	}
