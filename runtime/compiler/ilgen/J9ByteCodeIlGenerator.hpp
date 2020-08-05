@@ -186,7 +186,7 @@ private:
    void         loadMonitorArg();
 
    void         storeInstance(int32_t);
-   void         storeInstance(TR::SymbolReference *symRef);
+   void         storeFlattenableInstanceWithHelper(int32_t);
    void         storeStatic(int32_t);
    void         storeAuto(TR::DataType type, int32_t slot, bool isAdjunct = false);
    void         storeArrayElement(TR::DataType dt){ storeArrayElement(dt, comp()->il.opCodeForIndirectArrayStore(dt)); }
