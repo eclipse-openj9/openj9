@@ -244,7 +244,6 @@ target_link_libraries(j9vm
 		j9hashtable
 		j9pool
 		j9stackmap
-		j9trc
 		j9hookable
 		j9prt
 		j9bcv
