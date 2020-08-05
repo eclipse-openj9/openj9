@@ -6230,6 +6230,13 @@ TR_J9ByteCodeIlGenerator::genWithField(uint16_t fieldCpIndex)
    TR::Node *passThruNode = TR::Node::create(TR::PassThrough, 1, originalObject);
    genTreeTop(genNullCheck(passThruNode));
 
+   TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
+   if (owningMethod->isFieldQType(fieldCpIndex) && owningMethod->isFieldFlattened(comp(), fieldCpIndex, _methodSymbol->isStatic()))
+      {
+      genFlattenableWithFieldWithHelper(fieldCpIndex, newFieldValue, originalObject);
+      return;
+      }
+
    loadClassObject(valueClass);
    const TR::TypeLayout *typeLayout = comp()->typeLayout(valueClass);
    size_t fieldCount = typeLayout->count();
@@ -6260,6 +6267,18 @@ TR_J9ByteCodeIlGenerator::genWithField(uint16_t fieldCpIndex)
    genTreeTop(newValueNode);
    push(newValueNode);
    genFlush(0);
+   }
+
+void
+TR_J9ByteCodeIlGenerator::genFlattenableWithFieldWithHelper(uint16_t fieldCpIndex, TR::Node * newFieldValue, TR::Node * originalObject)
+   {
+   auto* j9ResolvedMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
+   auto* ramFieldRef = reinterpret_cast<J9RAMFieldRef*>(j9ResolvedMethod->cp()) + fieldCpIndex;
+   auto* ramFieldRefNode = TR::Node::aconst(reinterpret_cast<uintptr_t>(ramFieldRef));
+   auto* helperCallNode = TR::Node::createWithSymRef(TR::acall, 3, 3, newFieldValue, originalObject, ramFieldRefNode, comp()->getSymRefTab()->findOrCreateWithFlattenableFieldSymbolRef());
+   handleSideEffect(helperCallNode);
+   genTreeTop(helperCallNode);
+   push(helperCallNode);
    }
 
 void

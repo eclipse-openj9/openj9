@@ -233,6 +233,7 @@ private:
    void         genDefaultValue(uint16_t classCpIndex);
    void         genDefaultValue(TR_OpaqueClassBlock *valueTypeClass);
    void         genWithField(uint16_t fieldCpIndex);
+   void         genFlattenableWithFieldWithHelper(uint16_t fieldCpIndex, TR::Node * newFieldValue, TR::Node * originalObject);
    void         genFlush(int32_t nargs);
    void         genFullFence(TR::Node *node);
    void         handlePendingPushSaveSideEffects(TR::Node *, int32_t stackSize = -1);
