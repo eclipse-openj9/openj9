@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,49 +20,22 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-/*
- * This file will be included within an static table (array).
- * Only enum values defined in CodeGenPhaseEnum.hpp are allowed.
- */
+#ifndef TR_PEEPHOLE_INCL
+#define TR_PEEPHOLE_INCL
 
+#include "codegen/J9Peephole.hpp"
 
+namespace TR
+{
 
-    ReserveCodeCachePhase,
-    FixUpProfiledInterfaceGuardTest,
+class OMR_EXTENSIBLE Peephole : public J9::PeepholeConnector
+   {
+   public:
 
+   Peephole(TR::Compilation* comp) :
+      J9::PeepholeConnector(comp) {}
+   };
 
-    InliningReportPhase,
-    LateSequentialConstantStoreSimplificationPhase,
+}
 
-    InMemoryLoadStoreMarkingPhase,
-    PopulateOSRBufferPhase,
-    MoveUpArrayLengthStoresPhase,
-    InsertEpilogueYieldPointsPhase,
-    CleanUpFlagsPhase,
-    SetBranchOnCountFlagPhase,
-    LowerTreesPhase,
-    InsertDebugCountersPhase,
-    CompressedReferenceRematerializationPhase,
-    AllocateLinkageRegisters,
-
-    markLoadAsZeroOrSignExtension,
-
-    FindAndFixCommonedReferencesPhase,
-    UncommonCallConstNodesPhase,
-    SetupForInstructionSelectionPhase,
-    RemoveUnusedLocalsPhase,
-    ReduceSynchronizedFieldLoadPhase,
-    UncommonBCDCHKAddressNodePhase,
-    InstructionSelectionPhase,
-    CreateStackAtlasPhase,
-
-    PeepholePhase,
-    RegisterAssigningPhase,
-    MapStackPhase,
-    PeepholePhase,
-    ExpandInstructionsPhase,
-    BinaryEncodingPhase,
-    EmitSnippetsPhase,
-    ProcessRelocationsPhase
-
-
+#endif

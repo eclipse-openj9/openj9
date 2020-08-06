@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/p/codegen/OMRLinkage.cpp \
     omr/compiler/p/codegen/OMRMachine.cpp \
     omr/compiler/p/codegen/OMRMemoryReference.cpp \
+    omr/compiler/p/codegen/OMRPeephole.cpp \
     omr/compiler/p/codegen/OMRRealRegister.cpp \
     omr/compiler/p/codegen/OMRRegisterDependency.cpp \
     omr/compiler/p/codegen/OMRSnippet.cpp \
