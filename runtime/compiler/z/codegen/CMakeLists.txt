@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@ j9jit_files(
 	z/codegen/J9Instruction.cpp
 	z/codegen/J9Linkage.cpp
 	z/codegen/J9MemoryReference.cpp
+	z/codegen/J9Peephole.cpp
 	z/codegen/J9S390Snippet.cpp
 	z/codegen/J9SystemLinkageLinux.cpp
 	z/codegen/J9SystemLinkagezOS.cpp
