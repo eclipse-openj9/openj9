@@ -215,12 +215,23 @@ public class MethodHandles {
 			accessMode = lookupMode;
 		}
 		
+		/* For Java 15, the default is not to check for the "java.lang.invoke" package.
+		 * For earlier releases, these lookups are illegal
+		  */
+		private static boolean lookupJLIPackageCheckDefault() {
+			/*[IF Java15]
+			return false;
+			/*[ELSE] Java15*/
+			return true;
+			/*[ENDIF] Java15*/
+		}
+		
 		Lookup(Class<?> lookupClass, Class<?> prevLookupClass, int lookupMode) {
-			this(lookupClass, prevLookupClass, lookupMode, true);
+			this(lookupClass, prevLookupClass, lookupMode, lookupJLIPackageCheckDefault());
 		}
 		
 		Lookup(Class<?> lookupClass, int lookupMode, boolean doCheck) {
-			this(lookupClass, null, lookupMode, doCheck);
+			this(lookupClass, null, lookupMode, lookupJLIPackageCheckDefault());
 		}
 		
 		Lookup(Class<?> lookupClass, int lookupMode) {
@@ -1426,7 +1437,7 @@ public class MethodHandles {
 				newPrevAccessClass = null;
 			}
 			
-			return new Lookup(lookupClass, newPrevAccessClass, newAccessMode);
+			return new Lookup(lookupClass, newPrevAccessClass, newAccessMode, true);
 			/*[ELSE]*/
 			return new Lookup(lookupClass, newAccessMode);
 			/*[ENDIF] Java14*/
@@ -2214,7 +2225,7 @@ public class MethodHandles {
 				newPrevAccessClass = null;
 			}
 			
-			return new Lookup(accessClass, newPrevAccessClass, newAccessMode);
+			return new Lookup(accessClass, newPrevAccessClass, newAccessMode, true);
 			/*[ELSE]*/
 			return new Lookup(accessClass, newAccessMode);
 			/*[ENDIF] Java14*/
@@ -2483,9 +2494,9 @@ public class MethodHandles {
 		
 		/*[IF Java14]*/
 		if (Objects.equals(targetClassModule, accessClassModule)) {
-			return new Lookup(targetClass, null, callerLookupMode);
+			return new Lookup(targetClass, null, callerLookupMode, true);
 		} else {
-			return new Lookup(targetClass, callerLookup.lookupClass(), (callerLookupMode & ~Lookup.MODULE));
+			return new Lookup(targetClass, callerLookup.lookupClass(), (callerLookupMode & ~Lookup.MODULE), true);
 		}
 		/*[ELSE]*/
 		return new Lookup(targetClass);
