@@ -7107,11 +7107,18 @@ TR_ResolvedJ9Method::definingClassFromCPFieldRef(
 #if defined(J9VM_OPT_JITSERVER)
    TR_ASSERT_FATAL(!comp->isOutOfProcessCompilation(), "Static version of definingClassFromCPFieldRef should not be called in JITServer mode");
 #endif
+   J9ROMFieldShape *field;
+   return definingClassAndFieldShapeFromCPFieldRef(comp, constantPool, cpIndex, isStatic, &field);
+   }
+
+TR_OpaqueClassBlock *
+TR_ResolvedJ9Method::definingClassAndFieldShapeFromCPFieldRef(TR::Compilation *comp, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic, J9ROMFieldShape **field)
+   {
    J9VMThread *vmThread = comp->j9VMThread();
    J9JavaVM *javaVM = vmThread->javaVM;
    J9JITConfig *jitConfig = javaVM->jitConfig;
    TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
-   TR::VMAccessCriticalSection definingClassFromCPFieldRef(fe);
+   TR::VMAccessCriticalSection definingClassAndFieldShapeFromCPFieldRef(fe);
 
    /* Get the class.  Stop immediately if an exception occurs. */
    J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&constantPool->romConstantPool[cpIndex];
@@ -7122,8 +7129,7 @@ TR_ResolvedJ9Method::definingClassFromCPFieldRef(
       return NULL;
 
    J9Class *classFromCP = J9_CLASS_FROM_CP(constantPool);
-   J9ROMFieldShape *field;
-   J9Class *definingClass;
+   J9Class *definingClass = NULL;
    J9ROMNameAndSignature *nameAndSig;
    J9UTF8 *name;
    J9UTF8 *signature;
@@ -7133,11 +7139,11 @@ TR_ResolvedJ9Method::definingClassFromCPFieldRef(
    signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
    if (isStatic)
       {
-      void *staticAddress = javaVM->internalVMFunctions->staticFieldAddress(vmThread, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, J9_LOOK_NO_JAVA, classFromCP);
+      void *staticAddress = javaVM->internalVMFunctions->staticFieldAddress(vmThread, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)field, J9_LOOK_NO_JAVA, classFromCP);
       }
    else
       {
-      IDATA fieldOffset = javaVM->internalVMFunctions->instanceFieldOffset(vmThread, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, J9_LOOK_NO_JAVA);
+      IDATA fieldOffset = javaVM->internalVMFunctions->instanceFieldOffset(vmThread, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)field, J9_LOOK_NO_JAVA);
       }
 
    return (TR_OpaqueClassBlock *)definingClass;
@@ -9412,3 +9418,34 @@ TR_J9ByteCodeIlGenerator::packReferenceChainOffsets(TR::Node *node, std::vector<
    return;
    }
 #endif
+
+bool
+TR_ResolvedJ9Method::isFieldQType(int32_t cpIndex)
+   {
+   if (!TR::Compiler->om.areValueTypesEnabled() ||
+      (-1 == cpIndex))
+      return false;
+
+   J9VMThread *vmThread = fej9()->vmThread();
+   J9ROMFieldRef *ref = (J9ROMFieldRef *) (&romCPBase()[cpIndex]);
+   J9ROMNameAndSignature *nameAndSignature = J9ROMFIELDREF_NAMEANDSIGNATURE(ref);
+   J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
+
+   return vmThread->javaVM->internalVMFunctions->isNameOrSignatureQtype(signature);
+   }
+
+bool
+TR_ResolvedJ9Method::isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bool isStatic)
+   {
+   if (!TR::Compiler->om.areValueTypesEnabled() ||
+      (-1 == cpIndex))
+      return false;
+
+   J9VMThread *vmThread = fej9()->vmThread();
+   J9ROMFieldShape *fieldShape = NULL; 
+   TR_OpaqueClassBlock *containingClass = definingClassAndFieldShapeFromCPFieldRef(comp, cp(), cpIndex, isStatic, &fieldShape);
+
+   // No lock is required here. Entires in J9Class::flattenedClassCache are only written during classload.
+   // They are effectively read only when being exposed to the JIT.
+   return vmThread->javaVM->internalVMFunctions->isFlattenableFieldFlattened(reinterpret_cast<J9Class *>(containingClass), fieldShape);
+   }
