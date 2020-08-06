@@ -341,6 +341,7 @@ else()
 		JVM_AreNestMates
 		JVM_InitClassName
 		JVM_InitializeFromArchive
+		JVM_IsUseContainerSupport
 	)
 endif()
 
@@ -359,13 +360,6 @@ if(NOT JAVA_SPEC_VERSION LESS 15)
 		JVM_LookupLambdaProxyClassFromArchive
 		JVM_IsCDSDumpingEnabled
 		JVM_IsCDSSharingEnabled
-	)
-endif()
-
-if(NOT JAVA_SPEC_VERSION LESS 16)
-	jvm_add_exports(jvm
-		# Additions for Java 16 (General)
-		JVM_IsUseContainerSupport
 	)
 endif()
 
