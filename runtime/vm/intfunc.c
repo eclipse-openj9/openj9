@@ -383,4 +383,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	getFlattenableFieldType,
 	getFlattenableFieldSize,
 	arrayElementSize,
+	getFlattenableField,
+	cloneValueType,
+	putFlattenableField,
 };
