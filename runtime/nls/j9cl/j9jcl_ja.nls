@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,7 +83,7 @@ J9NLS_JCL_NOTJ9.user_response=Ensure that the class library is compatible with t
 
 # END NON-TRANSLATABLE
 
-# This error occurs if the JCL and VM doesn't have the same master version
+# This error occurs if the JCL and VM doesn't have the same branch version
 # (i.e. JCL and VM come from different development streams)
 J9NLS_JCL_INCOMPATIBLE_CL_VERSION=\u4e92\u63db\u6027\u306e\u306a\u3044\u30af\u30e9\u30b9\u30fb\u30e9\u30a4\u30d6\u30e9\u30ea\u30fc\u30fb\u30d0\u30fc\u30b8\u30e7\u30f3: JCL %1$x\u3001VM %2$x
 # START NON-TRANSLATABLE

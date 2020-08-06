@@ -4266,7 +4266,7 @@ J9NLS_SHRC_SHRINIT_PRINTALLSTATS_UNRECOGNISED.system_action=The JVM terminates
 J9NLS_SHRC_SHRINIT_PRINTALLSTATS_UNRECOGNISED.user_response=Provide a valid suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP=Opcje dost\u0119pne dla -Xshareclasses:printAllStats=<opcje>. U\u017cyj '+', aby poda\u0107 wiele opcji, tzn. printallstats=aot+url. \n
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP=Opcje dost\u0119pne dla -Xshareclasses:printAllStats=<opcje>. U\u017cyj znaku '+', aby poda\u0107 wiele opcji, np: printallstats=aot+url \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.system_action=
@@ -4613,7 +4613,7 @@ J9NLS_SHRC_SHRINIT_PRINTSTATS_UNRECOGNISED.system_action=The JVM terminates
 J9NLS_SHRC_SHRINIT_PRINTSTATS_UNRECOGNISED.user_response=Provide a valid suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP=Opcje dost\u0119pne dla -Xshareclasses:printStats=<opcje>. U\u017cyj '+', aby poda\u0107 wiele opcji, tzn. printstats=aot+url. \n
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP=Opcje dost\u0119pne dla -Xshareclasses:printStats=<opcje>. U\u017cyj znaku '+', aby poda\u0107 wiele opcji, np: printstats=aot+url \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.system_action=
@@ -6905,4 +6905,12 @@ J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_4=Cache_2
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layers shared caches built on top of it.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.user_response=Use -Xshareclasses:name=<cacheName>,destroy to destroy all invalid layers (all the higher layers which are built on top of the modified layer) and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES=Funkcje procesora                    = %s
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.sample_input_1=default
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.user_response=
 # END NON-TRANSLATABLE

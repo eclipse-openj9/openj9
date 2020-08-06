@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,7 +49,7 @@ J9NLS.HEADER=verbosenls.h
 J9NLS_VERB_STACK_USAGE=\u8a73\u7d30\u30b9\u30bf\u30c3\u30af: \"%2$.*1$s\" \u306f\u3001Java/C \u30b9\u30bf\u30c3\u30af\u3067 %3$zd/%4$zd \u30d0\u30a4\u30c8\u3092\u4f7f\u7528\u3057\u307e\u3057\u305f
 # START NON-TRANSLATABLE
 J9NLS_VERB_STACK_USAGE.sample_input_1=11
-J9NLS_VERB_STACK_USAGE.sample_input_2=Gc Slave Thread
+J9NLS_VERB_STACK_USAGE.sample_input_2=Gc Worker Thread
 J9NLS_VERB_STACK_USAGE.sample_input_3=232
 J9NLS_VERB_STACK_USAGE.sample_input_4=2308
 J9NLS_VERB_STACK_USAGE.explanation=Indicates how much stack was used on each stack for a thread when -verbose:stack is specified
@@ -263,7 +263,7 @@ J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.explanation=Indicates how much stack 
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.system_action=None
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.user_response=None
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_1=11
-J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_2=Gc Slave Thread
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_2=Gc Worker Thread
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_3=232
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_4=2308
 # END NON-TRANSLATABLE

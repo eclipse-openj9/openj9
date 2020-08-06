@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,7 +85,7 @@ J9NLS_VMUTIL_OPTION_MALFORMED.sample_input_1=-XX:MaxDirectMemorySize=1J
 
 # END NON-TRANSLATABLE
 
-J9NLS_VMUTIL_OPTION_OVERFLOW=Option trop \u00e9lev\u00e9e : '%s'
+J9NLS_VMUTIL_OPTION_OVERFLOW=Option trop grande : '%s'
 # START NON-TRANSLATABLE
 J9NLS_VMUTIL_OPTION_OVERFLOW.explanation=The specified option is larger than the maximum permitted value
 J9NLS_VMUTIL_OPTION_OVERFLOW.system_action=The JVM will warn the user and ignore the option

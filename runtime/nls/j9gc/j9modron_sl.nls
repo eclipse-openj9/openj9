@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -946,7 +946,7 @@ J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_WARN.sample_input_4=K
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN=Mo\u017enost -Xgc:preferredHeapBase ni podprta v operacijskem sistemu z/OS.
+J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN=Mo\u017enost -Xgc:preferredHeapBase ni podprta na operacijskem sistemu z/OS.
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.explanation=The JVM was started with the -Xgc:preferredHeapBase option, which has no effect on z/OS.
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.system_action=The JVM ignores the -Xgc:preferredHeapBase option.

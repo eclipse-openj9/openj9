@@ -1790,7 +1790,7 @@ J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.user_response=Load class and nest host class w
 # END NON-TRANSLATABLE
 
 # No arguments
-J9NLS_VM_MODULE_IS_NULL=Modul je ni\u010deln.
+J9NLS_VM_MODULE_IS_NULL=Modul je ni\u010deln
 # START NON-TRANSLATABLE
 J9NLS_VM_MODULE_IS_NULL.explanation=Incoming module can't be NULL.
 J9NLS_VM_MODULE_IS_NULL.system_action=The JVM will throw a java/lang/NullPointerExceptions.
@@ -1979,4 +1979,22 @@ J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.sample_input_2=-Xrs
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.explanation=The two command line options are incompatible. Please refer to their documentation.
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.system_action=The JVM will terminate while processing the command line options.
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.user_response=Remove one of the incompatible command line options in order to resolve the issue.
+# END NON-TRANSLATABLE
+
+# Message to use when class is not permitted in PermittedSubclasses attribute of sealed super class
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=Razred %2$.*1$s nima dovoljenja za dedovanje iz svojega zape\u010datenega nadrazreda.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.explanation=The specified class is not permitted to extend its sealed super class.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when class is not permitted in PermittedSubclasses attribute of sealed super interface
+# argument 1 is the class name,
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=Razred %2$.*1$s nima dovoljenja za dedovanje iz svojega zape\u010datenega nadvmesnika.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.explanation=The specified class is not permitted to extend its sealed super interface.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
