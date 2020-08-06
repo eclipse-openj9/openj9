@@ -581,6 +581,7 @@ def build_all() {
                         // to correctly expand $HOME variable
                         variableFile.set_build_variables_per_node()
                         get_source()
+                        variableFile.set_sdk_variables()
                         build()
                         archive_sdk()
                     } finally {
