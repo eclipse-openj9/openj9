@@ -403,6 +403,8 @@ class ClientSessionData
    TR_MethodToBeCompiled *notifyAndDetachFirstWaitingThread();
    uint32_t getExpectedSeqNo() const { return _expectedSeqNo; }
    void setExpectedSeqNo(uint32_t seqNo) { _expectedSeqNo = seqNo; }
+   uint32_t getLastProcessedCriticalSeqNo() const { return _lastProcessedCriticalSeqNo; }
+   void setLastProcessedCriticalSeqNo(uint32_t seqNo) { _lastProcessedCriticalSeqNo = seqNo; }
    uint32_t getMaxReceivedSeqNo() const { return _maxReceivedSeqNo; }
    // updateMaxReceivedSeqNo needs to be executed with sequencingMonitor in hand
    void updateMaxReceivedSeqNo(uint32_t seqNo)
@@ -481,6 +483,9 @@ class ClientSessionData
    TR_MethodToBeCompiled *_OOSequenceEntryList;
    uint32_t _expectedSeqNo; // used for ordering compilation requests from the same client
    uint32_t _maxReceivedSeqNo; // the largest seqNo received from this client
+
+   uint32_t _lastProcessedCriticalSeqNo; // highest seqNo processed request carrying info that needs to be applied in order
+
    int8_t  _inUse;  // Number of concurrent compilations from the same client
                     // Accessed with compilation monitor in hand
    int8_t _numActiveThreads; // Number of threads working on compilations for this client

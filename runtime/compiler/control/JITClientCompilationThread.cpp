@@ -3254,6 +3254,7 @@ remoteCompile(
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
    std::string recompMethodInfoStr = compiler->isRecompilationEnabled() ? std::string((char *) compiler->getRecompilationInfo()->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
 
+   // TODO: make this a synchronized region to avoid bad_alloc exceptions
    compInfo->getSequencingMonitor()->enter();
    // Collect the list of unloaded classes
    std::vector<TR_OpaqueClassBlock*> unloadedClasses(compInfo->getUnloadedClassesTempList()->begin(), compInfo->getUnloadedClassesTempList()->end());
@@ -3265,8 +3266,12 @@ remoteCompile(
    auto table = (JITClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
    std::pair<std::string, std::string> chtableUpdates = table->serializeUpdates();
    // Update the sequence number for these updates
-   uint32_t seqNo = compInfo->getCompReqSeqNo();
-   compInfo->incCompReqSeqNo();
+   uint32_t seqNo = compInfo->incCompReqSeqNo();
+   uint32_t lastCriticalSeqNo = compInfo->getLastCriticalSeqNo();
+   // If needed, update the seqNo of the last request that carried information that needed to be processed in order
+   if (!chtableUpdates.first.empty() || !chtableUpdates.second.empty() || !illegalModificationList.empty() || !unloadedClasses.empty())
+      compInfo->setLastCriticalSeqNo(seqNo);
+   
    compInfo->getSequencingMonitor()->exit();
 
    uint32_t statusCode = compilationFailure;
@@ -3294,7 +3299,7 @@ remoteCompile(
 
       Trc_JITServerRemoteCompileRequest(vmThread, seqNo, compiler->signature(), compiler->getHotnessName());
 
-      client->buildCompileRequest(TR::comp()->getPersistentInfo()->getClientUID(), seqNo, romMethodOffset, method,
+      client->buildCompileRequest(compiler->getPersistentInfo()->getClientUID(), seqNo, lastCriticalSeqNo, romMethodOffset, method,
                                   clazz, *compInfoPT->getMethodBeingCompiled()->_optimizationPlan, detailsStr,
                                   details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr, recompMethodInfoStr,
                                   chtableUpdates.first, chtableUpdates.second, useAotCompilation);

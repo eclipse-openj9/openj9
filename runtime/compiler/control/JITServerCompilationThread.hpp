@@ -51,8 +51,10 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
 
    uint32_t getSeqNo() const { return _seqNo; }; // For ordering requests at the server
    void setSeqNo(uint32_t seqNo) { _seqNo = seqNo; }
-   void updateSeqNo(ClientSessionData *clientSession);
+   uint32_t getExpectedSeqNo() const { return _expectedSeqNo; }
+   void setExpectedSeqNo(uint32_t seqNo) { _expectedSeqNo = seqNo; }
 
+   void notifyAndDetachWaitingRequests(ClientSessionData *clientSession);
    void waitForMyTurn(ClientSessionData *clientSession, TR_MethodToBeCompiled &entry); // Return false if timeout
    bool getWaitToBeNotified() const { return _waitToBeNotified; }
    void setWaitToBeNotified(bool b) { _waitToBeNotified = b; }
@@ -138,6 +140,7 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
 
    TR_PersistentMethodInfo *_recompilationMethodInfo;
    uint32_t _seqNo;
+   uint32_t _expectedSeqNo; // this request is allowed to go if _expectedSeqNo is processed
    bool _waitToBeNotified; // accessed with clientSession->_sequencingMonitor in hand
    IPTableHeap_t *_methodIPDataPerComp;
    TR_ResolvedMethodInfoCache *_resolvedMethodInfoMap;
