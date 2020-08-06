@@ -279,6 +279,144 @@ public:
 		return isNameOrSignatureQtype(classNameWrapper);
 	}
 
+	/**
+	 * Performs a getfield operation on an object. Handles flattened and non-flattened cases.
+	 * This helper assumes that the cpIndex points to the fieldRef of a resolved Qtype. This helper
+	 * also assumes that the cpIndex points to an instance field.
+	 *
+	 * @param currentThread thread token
+	 * @oaram objectAccessBarrier access barrier
+	 * @param objectAllocate allocator
+	 * @param cpEntry the RAM cpEntry for the field, needs to be resolved
+	 * @param receiver receiver object
+	 * @param fastPath performs fastpath allocation, no GC. If this is false
+	 * 			frame must be built before calling as GC may occur
+	 *
+	 * @return NULL if allocation fails, valuetype otherwise
+	 */
+	static VMINLINE j9object_t
+	getFlattenableField(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI objectAccessBarrier, MM_ObjectAllocationAPI objectAllocate, J9RAMFieldRef *cpEntry, j9object_t receiver, bool fastPath)
+	{
+		UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
+		UDATA const flags = cpEntry->flags;
+		j9object_t returnObjectRef = NULL;
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (flags & J9FieldFlagFlattened) {
+			J9JavaVM *vm = currentThread->javaVM;
+			J9FlattenedClassCacheEntry *cache = (J9FlattenedClassCacheEntry *) cpEntry->valueOffset;
+			J9Class *flattenedFieldClass = J9_VM_FCC_CLASS_FROM_ENTRY(cache);
+			if (fastPath) {
+				returnObjectRef = objectAllocate.inlineAllocateObject(currentThread, flattenedFieldClass, false, false);
+				if (NULL == returnObjectRef) {
+					goto done;
+				}
+			} else {
+				VM_VMHelpers::pushObjectInSpecialFrame(currentThread, receiver);
+				returnObjectRef = vm->memoryManagerFunctions->J9AllocateObject(currentThread, flattenedFieldClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+				receiver = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
+				if (J9_UNEXPECTED(NULL == returnObjectRef)) {
+					goto done;
+				}
+				flattenedFieldClass = VM_VMHelpers::currentClass(flattenedFieldClass);
+			}
+
+			objectAccessBarrier.copyObjectFields(currentThread,
+								flattenedFieldClass,
+								receiver,
+								cache->offset + objectHeaderSize,
+								returnObjectRef,
+								objectHeaderSize);
+
+
+		} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		{
+			bool isVolatile = (0 != (flags & J9AccVolatile));
+			returnObjectRef = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, receiver, cpEntry->valueOffset + objectHeaderSize, isVolatile);
+		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+done:
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		return returnObjectRef;
+	}
+
+	/**
+	 * Performs a clone operation on an object.
+	 *
+	 * @param currentThread thread token
+	 * @oaram objectAccessBarrier access barrier
+	 * @param objectAllocate allocator
+	 * @param receiverClass j9class of original object
+	 * @param original object to be cloned
+	 * @param fastPath performs fastpath allocation, no GC. If this is false
+	 * 			frame must be built before calling as GC may occur
+	 *
+	 * @return NULL if allocation fails, valuetype otherwise
+	 */
+	static VMINLINE j9object_t
+	cloneValueType(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI objectAccessBarrier, MM_ObjectAllocationAPI objectAllocate, J9Class *receiverClass, j9object_t original, bool fastPath)
+	{
+		j9object_t clone = NULL;
+		J9JavaVM *vm = currentThread->javaVM;
+
+		/* need to zero memset the memory so padding bytes are zeroed for memcmp-like comparisons */
+		if (fastPath) {
+			clone = objectAllocate.inlineAllocateObject(currentThread, receiverClass, true, false);
+			if (NULL == clone) {
+				goto done;
+			}
+		} else {
+			VM_VMHelpers::pushObjectInSpecialFrame(currentThread, original);
+			clone = vm->memoryManagerFunctions->J9AllocateObject(currentThread, receiverClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+			original = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
+			if (J9_UNEXPECTED(NULL == clone)) {
+				goto done;
+			}
+			receiverClass = VM_VMHelpers::currentClass(receiverClass);
+		}
+
+		objectAccessBarrier.cloneObject(currentThread, original, clone, receiverClass);
+
+done:
+		return clone;
+	}
+
+	/**
+	 * Performs a putfield operation on an object. Handles flattened and non-flattened cases.
+	 * This helper assumes that the cpIndex points to the fieldRef of a resolved Qtype. This helper
+	 * also assumes that the cpIndex points to an instance field.
+	 *
+	 * @param currentThread thread token
+	 * @oaram objectAccessBarrier access barrier
+	 * @param cpEntry the RAM cpEntry for the field, needs to be resolved
+	 * @param receiver receiver object
+	 * @param paramObject parameter object
+	 */
+	static VMINLINE void
+	putFlattenableField(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI objectAccessBarrier, J9RAMFieldRef *cpEntry, j9object_t receiver, j9object_t paramObject)
+	{
+		UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
+		UDATA const flags = cpEntry->flags;
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagFlattened)) {
+			J9FlattenedClassCacheEntry *cache = (J9FlattenedClassCacheEntry *) cpEntry->valueOffset;
+
+			objectAccessBarrier.copyObjectFields(currentThread,
+								J9_VM_FCC_CLASS_FROM_ENTRY(cache),
+								paramObject,
+								objectHeaderSize,
+								receiver,
+								cache->offset + objectHeaderSize);
+		} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		{
+			bool isVolatile = (0 != (flags & J9AccVolatile));
+			objectAccessBarrier.inlineMixedObjectStoreObject(currentThread, receiver, cpEntry->valueOffset + objectHeaderSize, paramObject, isVolatile);
+		}
+	}
+
 };
 
 #endif /* VALUETYPEHELPERS_HPP_ */

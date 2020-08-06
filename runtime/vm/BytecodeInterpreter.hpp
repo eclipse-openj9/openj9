@@ -6559,33 +6559,18 @@ retry:
 						j9object_t newObjectRef = NULL;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 						if (flags & J9FieldFlagFlattened) {
-							J9FlattenedClassCacheEntry *cache = J9_VM_FCC_ENTRY_FROM_CLASS(J9OBJECT_CLAZZ(_currentThread, objectref), valueOffset);
-							J9Class *flattenedFieldClass = J9_VM_FCC_CLASS_FROM_ENTRY(cache);
-							newObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, flattenedFieldClass, false, false);
-
+							newObjectRef = VM_ValueTypeHelpers::getFlattenableField(_currentThread, _objectAccessBarrier, _objectAllocate, ramFieldRef, objectref, true);
 							if (NULL == newObjectRef) {
 								buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-								pushObjectInSpecialFrame(REGISTER_ARGS, objectref);
 								updateVMStruct(REGISTER_ARGS);
-								newObjectRef = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, flattenedFieldClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+								newObjectRef = VM_ValueTypeHelpers::getFlattenableField(_currentThread, _objectAccessBarrier, _objectAllocate, ramFieldRef, objectref, false);
 								VMStructHasBeenUpdated(REGISTER_ARGS);
-								objectref = popObjectInSpecialFrame(REGISTER_ARGS);
 								restoreGenericSpecialStackFrame(REGISTER_ARGS);
-								if (J9_UNEXPECTED(NULL == newObjectRef)) {
+								if (NULL == newObjectRef) {
 									rc = THROW_HEAP_OOM;
 									goto done;
 								}
-								flattenedFieldClass = VM_VMHelpers::currentClass(flattenedFieldClass);
 							}
-
-							_objectAccessBarrier.copyObjectFields(_currentThread,
-												flattenedFieldClass,
-												objectref,
-												cache->offset + objectHeaderSize,
-												newObjectRef,
-												objectHeaderSize);
-
-
 						} else
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 						{
@@ -6706,15 +6691,7 @@ resolve:
 				}
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if (flags & J9FieldFlagFlattened) {
-					J9FlattenedClassCacheEntry *cache = J9_VM_FCC_ENTRY_FROM_CLASS(J9OBJECT_CLAZZ(_currentThread, objectref), valueOffset);
-
-					_objectAccessBarrier.copyObjectFields(_currentThread,
-										J9_VM_FCC_CLASS_FROM_ENTRY(cache),
-										*(j9object_t*)_sp,
-										objectHeaderSize,
-										objectref,
-										cache->offset + objectHeaderSize);
-
+					VM_ValueTypeHelpers::putFlattenableField(_currentThread, _objectAccessBarrier, ramFieldRef, objectref, *(j9object_t*)_sp);
 				} else
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				{
@@ -8457,22 +8434,18 @@ retry:
 			}
 
 			/* need to zero memset the memory so padding bytes are zeroed for memcmp-like comparisons */
-			copyObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, objectRefClass, true, false);
+			copyObjectRef = VM_ValueTypeHelpers::cloneValueType(_currentThread, _objectAccessBarrier, _objectAllocate, objectRefClass, originalObjectRef, true);
 			if (NULL == copyObjectRef) {
 				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-				pushObjectInSpecialFrame(REGISTER_ARGS, originalObjectRef);
 				updateVMStruct(REGISTER_ARGS);
-				copyObjectRef = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, objectRefClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+				copyObjectRef = VM_ValueTypeHelpers::cloneValueType(_currentThread, _objectAccessBarrier, _objectAllocate, objectRefClass, originalObjectRef, false);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
-				originalObjectRef = popObjectInSpecialFrame(REGISTER_ARGS);
 				restoreGenericSpecialStackFrame(REGISTER_ARGS);
 				if (J9_UNEXPECTED(NULL == copyObjectRef)) {
 					rc = THROW_HEAP_OOM;
 					goto done;
 				}
-				objectRefClass = VM_VMHelpers::currentClass(objectRefClass);
 			}
-			_objectAccessBarrier.cloneObject(_currentThread, originalObjectRef, copyObjectRef, objectRefClass);
 		}
 		{
 			UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread);
@@ -8483,17 +8456,7 @@ retry:
 				_objectAccessBarrier.inlineMixedObjectStoreU64(_currentThread, copyObjectRef, newValueOffset, *(U_64*)_sp, isVolatile);
 				_sp += 2;
 			} else if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagObject)) {
-				if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagFlattened)) {
-					J9FlattenedClassCacheEntry *cache = J9_VM_FCC_ENTRY_FROM_CLASS(objectRefClass, valueOffset);
-					_objectAccessBarrier.copyObjectFields(_currentThread,
-										J9_VM_FCC_CLASS_FROM_ENTRY(cache),
-										*(j9object_t*)_sp,
-										objectHeaderSize,
-										copyObjectRef,
-										cache->offset + objectHeaderSize);
-				} else {
-					_objectAccessBarrier.inlineMixedObjectStoreObject(_currentThread, copyObjectRef, newValueOffset, *(j9object_t*)_sp, isVolatile);
-				}
+				VM_ValueTypeHelpers::putFlattenableField(_currentThread, _objectAccessBarrier, ramFieldRef, copyObjectRef, *(j9object_t*)_sp);
 				_sp += 1;
 			} else {
 				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, copyObjectRef, newValueOffset, *(U_32*)_sp, isVolatile);

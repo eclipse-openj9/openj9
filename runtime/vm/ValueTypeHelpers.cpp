@@ -29,6 +29,29 @@
 
 extern "C" {
 
+j9object_t
+getFlattenableField(J9VMThread *currentThread, J9RAMFieldRef *cpEntry, j9object_t receiver, BOOLEAN fastPath)
+{
+	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+	MM_ObjectAllocationAPI objectAllocate(currentThread);
+	return VM_ValueTypeHelpers::getFlattenableField(currentThread, objectAccessBarrier, objectAllocate, cpEntry, receiver, fastPath != FALSE);
+}
+
+j9object_t
+cloneValueType(J9VMThread *currentThread, J9Class *receiverClass, j9object_t original, BOOLEAN fastPath)
+{
+	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+	MM_ObjectAllocationAPI objectAllocate(currentThread);
+	return VM_ValueTypeHelpers::cloneValueType(currentThread, objectAccessBarrier, objectAllocate, receiverClass, original, fastPath != FALSE);
+}
+
+void
+putFlattenableField(J9VMThread *currentThread, J9RAMFieldRef *cpEntry, j9object_t receiver, j9object_t paramObject)
+{
+	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+	VM_ValueTypeHelpers::putFlattenableField(currentThread, objectAccessBarrier, cpEntry, receiver, paramObject);
+}
+
 void
 calculateFlattenedFieldAddresses(J9VMThread *currentThread, J9Class *clazz)
 {

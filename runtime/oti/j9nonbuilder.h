@@ -4573,6 +4573,9 @@ typedef struct J9InternalVMFunctions {
 	struct J9Class* ( *getFlattenableFieldType)(J9Class *fieldOwner, J9ROMFieldShape *field);
 	UDATA ( *getFlattenableFieldSize)(struct J9VMThread* currentThread, J9Class *fieldOwner, J9ROMFieldShape *field);
 	UDATA ( *arrayElementSize)(J9ArrayClass* arrayClass);
+	j9object_t ( *getFlattenableField)(struct J9VMThread *currentThread, J9RAMFieldRef *cpEntry, j9object_t receiver, BOOLEAN fastPath);
+	j9object_t ( *cloneValueType)(struct J9VMThread *currentThread, struct J9Class *receiverClass, j9object_t original, BOOLEAN fastPath);
+	void ( *putFlattenableField)(struct J9VMThread *currentThread, struct J9RAMFieldRef *cpEntry, j9object_t receiver, j9object_t paramObject);
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
