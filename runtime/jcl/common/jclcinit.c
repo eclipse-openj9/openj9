@@ -581,6 +581,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 			J9VMCONSTANTPOOL_JAVALANGCLASSNOTFOUNDEXCEPTION,
 			J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR,
 			J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR,
+			J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION,
 	};
 
 	/* Determine java/lang/String.value signature before any required class is initialized */
