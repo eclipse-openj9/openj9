@@ -1980,3 +1980,21 @@ J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.explanation=The two command line opt
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.system_action=The JVM will terminate while processing the command line options.
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.user_response=Remove one of the incompatible command line options in order to resolve the issue.
 # END NON-TRANSLATABLE
+
+# Message to use when class is not permitted in PermittedSubclasses attribute of sealed super class
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=Klasse %2$.*1$s ist nicht berechtigt, Werte von ihrer \u00fcbergeordneten versiegelten Klasse zu \u00fcbernehmen.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.explanation=The specified class is not permitted to extend its sealed super class.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when class is not permitted in PermittedSubclasses attribute of sealed super interface
+# argument 1 is the class name,
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=Klasse %2$.*1$s ist nicht berechtigt, Werte von ihrer \u00fcbergeordneten versiegelten Schnittstelle zu \u00fcbernehmen.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.explanation=The specified class is not permitted to extend its sealed super interface.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

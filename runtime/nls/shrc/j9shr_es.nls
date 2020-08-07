@@ -243,7 +243,7 @@ J9NLS_SHRC_OSCACHE_SHMEM_ATTACH.system_action=If the cache is corrupt, the JVM w
 J9NLS_SHRC_OSCACHE_SHMEM_ATTACH.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG=No se puede crear la memoria cach\u00e9 del tama\u00f1o solicitado: compruebe los valores de  SHMMAX y SHMMIN
+J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG=No se puede crear la memoria cach\u00e9 del tama\u00f1o solicitado: compruebe los valores de SHMMAX y SHMMIN
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG.explanation=The system has not been able to create a shared class cache of the size required via the -Xscmx parameter (16MB if -Xscmx is not specified).
 J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -763,7 +763,7 @@ J9NLS_SHRC_CM_WARN_FULL_CACHE.system_action=The JVM continues.  The named shared
 J9NLS_SHRC_CM_WARN_FULL_CACHE.user_response=To gain the full benefit of shared classes, delete the named cache and re-create it specifying a larger shared class cache size by the -Xscmx parameter.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_CORRUPT_CACHE=La memoria cach\u00e9 compartida \"%s\" est\u00e1 da\u00f1ada. No se permitir\u00e1 que nuevas JVM  conecten con la memoria cach\u00e9.\n\
+J9NLS_SHRC_CM_WARN_CORRUPT_CACHE=La memoria cach\u00e9 compartida \"%s\" est\u00e1 da\u00f1ada. No se permitir\u00e1 que nuevas JVM conecten con la memoria cach\u00e9.\n\
 \ \tLas JVM pueden continuar funcionando, pero no es posible actualizar la memoria cach\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.sample_input_1=myCache
@@ -1146,7 +1146,7 @@ J9NLS_SHRC_RMI_SAFEMODE_SHOW_BYTES.system_action=
 J9NLS_SHRC_RMI_SAFEMODE_SHOW_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_STORING_VERBOSE_URL_MSG=Almacenamiento de clase  %2$.*1$s en memoria cach\u00e9 compartida para el ID de cargador de clase %3$d con URL %5$.*4$s...
+J9NLS_SHRC_SHRINIT_STORING_VERBOSE_URL_MSG=Almacenamiento de clase %2$.*1$s en memoria cach\u00e9 compartida para el ID de cargador de clase %3$d con URL %5$.*4$s...
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_STORING_VERBOSE_URL_MSG.sample_input_1=23
 J9NLS_SHRC_SHRINIT_STORING_VERBOSE_URL_MSG.sample_input_2=java/net/URLClassLoader
@@ -3600,7 +3600,7 @@ J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX.system_action=The JVM continues
 J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX.user_response=The value has been changed automatically
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2=La memoria cach\u00e9 compartida \"%s\" est\u00e1 da\u00f1ada. El c\u00f3digo de corrupci\u00f3n es %d. El valor da\u00f1ado es 0x%p. No se permitir\u00e1 que nuevas JVM  conecten con la memoria cach\u00e9.\n\
+J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2=La memoria cach\u00e9 compartida \"%s\" est\u00e1 da\u00f1ada. El c\u00f3digo de corrupci\u00f3n es %d. El valor da\u00f1ado es 0x%p. No se permitir\u00e1 que nuevas JVM conecten con la memoria cach\u00e9.\n\
 \ \tLas JVM pueden continuar funcionando, pero no es posible actualizar la memoria cach\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.sample_input_1=myCache
@@ -4136,7 +4136,7 @@ J9NLS_SHRC_DEBUG_AREA_BAD_LNT_HEADER_INFO.system_action=The cache is marked as c
 J9NLS_SHRC_DEBUG_AREA_BAD_LNT_HEADER_INFO.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_DEBUG_AREA_BAD_LVT_HEADER_INFO=El \u00e1rea de depuraci\u00f3n est\u00e1 corrupta porque la direcci\u00f3n baja de los 'datos de tabla de  variable local' %p, es mayor que la direcci\u00f3n alta %p
+J9NLS_SHRC_DEBUG_AREA_BAD_LVT_HEADER_INFO=El \u00e1rea de depuraci\u00f3n est\u00e1 corrupta porque la direcci\u00f3n baja de los 'datos de tabla de variable local' %p, es mayor que la direcci\u00f3n alta %p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_DEBUG_AREA_BAD_LVT_HEADER_INFO.sample_input_1=0x3333
 J9NLS_SHRC_DEBUG_AREA_BAD_LVT_HEADER_INFO.sample_input_2=0x2222
@@ -5276,7 +5276,7 @@ J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.system_action=Th
 J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.user_response=No action required if user has intentionally attached to a shared class cache created in mprotect diagnostic mode. Othewise, if the user wants to use cache in normal mode then remove -Xshareclasses:mprotect=diagnostic option and reset the cache. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_OVERRIDE_MPROTECT_NONE_WARNING=JVM se ha conectado a la memoria cach\u00e9 de clases compartidas creada en modalidad de diagn\u00f3stico mprotect (mediante la opci\u00f3n - Xshareclasses:mprotect=diagnostic). La opci\u00f3n  -Xshareclasses:mprotect=none se pasar\u00e1 por alto.
+J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_OVERRIDE_MPROTECT_NONE_WARNING=JVM se ha conectado a la memoria cach\u00e9 de clases compartidas creada en modalidad de diagn\u00f3stico mprotect (mediante la opci\u00f3n - Xshareclasses:mprotect=diagnostic). La opci\u00f3n -Xshareclasses:mprotect=none se pasar\u00e1 por alto.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_OVERRIDE_MPROTECT_NONE_WARNING.explanation=Shared class cache that JVM is attaching to is set to be used in diagnostic mode which overrides -Xshareclasses:mprotect=none option specified on command line.
 J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_OVERRIDE_MPROTECT_NONE_WARNING.system_action=The JVM continues.
@@ -6867,7 +6867,7 @@ J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS=Imprimir resumen de las estad\u00edsticas de memoria cach\u00e9 solo desde la capa superior. UtilizarprintTopLayerStats=help para ver las opciones disponibles.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS=Imprimir resumen de las estad\u00edsticas de memoria cach\u00e9 solo desde la capa superior. Utilizar printTopLayerStats=help para ver las opciones disponibles.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.system_action=
@@ -6899,4 +6899,12 @@ J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_4=Cache_2
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layers shared caches built on top of it.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.user_response=Use -Xshareclasses:name=<cacheName>,destroy to destroy all invalid layers (all the higher layers which are built on top of the modified layer) and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES=Caracter\u00edsticas de procesador        = %s
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.sample_input_1=default
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.user_response=
 # END NON-TRANSLATABLE

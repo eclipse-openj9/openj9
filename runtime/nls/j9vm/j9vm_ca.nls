@@ -538,7 +538,7 @@ J9NLS_VM_XJNI_OPTIONS_2.system_action=
 J9NLS_VM_XJNI_OPTIONS_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_MALFORMED_OPTIONSFILE_ERROR_STR=L'opci\u00f3 mal formada %s s'ha trobat a -Xoptionsfile
+J9NLS_VM_MALFORMED_OPTIONSFILE_ERROR_STR=S'ha trobat una opci\u00f3 amb el format incorrecte %s a -Xoptionsfile
 # START NON-TRANSLATABLE
 J9NLS_VM_MALFORMED_OPTIONSFILE_ERROR_STR.sample_input_1=badoption
 J9NLS_VM_MALFORMED_OPTIONSFILE_ERROR_STR.explanation=A badly formed command line option was found in an options file.
@@ -875,14 +875,14 @@ J9NLS_VM_MISSING_DUMP_DLL_RESETDUMPOPTION.user_response=Check whether the JVM du
 # END NON-TRANSLATABLE
 
 # CMVC 151143/ PMR 07257,t19,649 workaround: check that syscorepath has been set
-J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED=Advertiment: syscorepath no s'ha configurat, cosa que pot impedir la generaci\u00f3 del fitxer core del sistema (si en cal un).\n\t\tConsulteu les instruccions d'instal\u00b7laci\u00f3 del WebSphere Real Time per con\u00e8ixer els par\u00e0metres de configuraci\u00f3 correctes de syscorepath.\n\t\tNOTA: s'ha de configurar cada vegada que es reinici\u00ef la m\u00e0quina.
+J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED=Av\u00eds: syscorepath no s'ha configurat, cosa que pot impedir la generaci\u00f3 del fitxer core del sistema (si en cal un).\n\t\tConsulteu les instruccions d'instal\u00b7laci\u00f3 del WebSphere Real Time per con\u00e8ixer els par\u00e0metres de configuraci\u00f3 correctes de syscorepath.\n\t\tNOTA: s'ha de configurar cada vegada que es reinici\u00ef la m\u00e0quina.
 # START NON-TRANSLATABLE
 J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED.explanation=syscorepath needs to configured on certain AIX systems in order to generate system core files
 J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED.system_action=The JVM will warn the user at JVM startup and continue execution
 J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED.user_response=Configure syscorepath correctly, per the WebSphere Real Time installation instructions
 # END NON-TRANSLATABLE
 
-J9NLS_VM_SYSCONFIG_FAILED=Advertiment: no es poden verificar els par\u00e0metres de syscorepath amb sysconfig: %s.
+J9NLS_VM_SYSCONFIG_FAILED=Av\u00eds: no es poden verificar els par\u00e0metres de syscorepath amb sysconfig: %s.
 # START NON-TRANSLATABLE
 J9NLS_VM_SYSCONFIG_FAILED.explanation=sysconfig was called to lookup system settings, but the call failed.
 J9NLS_VM_SYSCONFIG_FAILED.system_action=The JVM will warn the user and continue execution.
@@ -1011,7 +1011,7 @@ J9NLS_VM_XLOG_HELP05.user_response=
 # END NON-TRANSLATABLE
 
 # -Xlog:warn is not translatable
-J9NLS_VM_XLOG_HELP06=  -Xlog:warn              Registra els missatges d'advertiment de la JVM.
+J9NLS_VM_XLOG_HELP06=  -Xlog:warn              Registra els missatges d'av\u00eds de la JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP06.explanation=NOTAG
 J9NLS_VM_XLOG_HELP06.system_action=
@@ -1979,4 +1979,22 @@ J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.sample_input_2=-Xrs
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.explanation=The two command line options are incompatible. Please refer to their documentation.
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.system_action=The JVM will terminate while processing the command line options.
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.user_response=Remove one of the incompatible command line options in order to resolve the issue.
+# END NON-TRANSLATABLE
+
+# Message to use when class is not permitted in PermittedSubclasses attribute of sealed super class
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=La classe %2$.*1$s no pot heretar de la seva super classe segellada.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.explanation=The specified class is not permitted to extend its sealed super class.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when class is not permitted in PermittedSubclasses attribute of sealed super interface
+# argument 1 is the class name,
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=La classe %2$.*1$s no pot heretar de la seva super interf\u00edcie segellada.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.explanation=The specified class is not permitted to extend its sealed super interface.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

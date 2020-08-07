@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -902,7 +902,7 @@ J9NLS_GC_IGNORE_OS_REPORTED_HIGHRES_VALUES.user_response=Upgrade the OS so that 
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_VERB_SIZES_XMCRS=pocz\u0105tkowa wielko\u015b\u0107 metadanych skompresowanych referencji
+J9NLS_GC_VERB_SIZES_XMCRS=Pocz\u0105tkowa wielko\u015b\u0107 skompresowanych metadanych referencji
 # START NON-TRANSLATABLE
 J9NLS_GC_VERB_SIZES_XMCRS.explanation=Explains the -Xmcrs option when -verbose:sizes is specified
 J9NLS_GC_VERB_SIZES_XMCRS.system_action=None

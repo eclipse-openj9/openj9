@@ -900,7 +900,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR=ponto de alloca\u00e7\u00e3o             = 0x%p\n
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR=ponto de aloca\u00e7\u00e3o             = 0x%p\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR.sample_input_1=427051B0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR.explanation=NOTAG
@@ -3703,7 +3703,7 @@ J9NLS_SHRC_OSCACHE_CORRUPT_ACQUIRE_HEADER_WRITE_LOCK_FAILED.system_action=The ca
 J9NLS_SHRC_OSCACHE_CORRUPT_ACQUIRE_HEADER_WRITE_LOCK_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_BAD_EYECATCHER=Os dados de identifica\u00e7\u00e3o do cabe\u00e7alho do cache n\u00e3o s\u00e3o v\u00e1lidos. O endere\u00e7o da sequ\u00eancia de carcteres em destaque no cabe\u00e7alho do cache: 0x%p.
+J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_BAD_EYECATCHER=Os dados de identifica\u00e7\u00e3o do cabe\u00e7alho do cache n\u00e3o s\u00e3o v\u00e1lidos. O endere\u00e7o da sequ\u00eancia de caracteres em destaque no cabe\u00e7alho do cache: 0x%p.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_BAD_EYECATCHER.sample_input_1=00FCAB00
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_BAD_EYECATCHER.explanation=An error has occurred in shared class processing.
@@ -6366,7 +6366,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_DISABLED.system_action=The JVM
 J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_DISABLED.user_response=Please destroy existing shared cache and restart the JVM for the JVM to protect partially filled pages in the shared cache and for '-Xshareclasses:mprotect=onfind' to be effective.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_PARTIAL_PAGES=Ative a prote\u00e7\u00e3o de mem\u00f3ria de p\u00e1ginas parcialmente preenchidas. No z/OS, \u00e9 equivalent a 'partialpagesonstartup'.
+J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_PARTIAL_PAGES=Ative a prote\u00e7\u00e3o de mem\u00f3ria de p\u00e1ginas parcialmente preenchidas. No z/OS, \u00e9 equivalente a 'partialpagesonstartup'.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_PARTIAL_PAGES.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_PARTIAL_PAGES.system_action=
@@ -6894,7 +6894,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destrua todas as camadas de cache com o mesmo nome (use o par\u00e2metro ou o padr\u00e3o de nome)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destruir todas as camadas de cache compartilhado com o mesmo nome (use o par\u00e2metro name ou o padr\u00e3o)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
@@ -6909,7 +6909,6 @@ J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.user_response=System is running low on mem
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=Falha ao iniciar o cache compartilhado. Foi detectada uma modifica\u00e7\u00e3o no cache compartilhado da camada inferior. O ID exclusivo de cache esperado \u00e9 %s
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.sample_input_1=foo
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layer shared caches built on top of it.
@@ -7033,4 +7032,12 @@ J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_4=Cache_2
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layers shared caches built on top of it.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.user_response=Use -Xshareclasses:name=<cacheName>,destroy to destroy all invalid layers (all the higher layers which are built on top of the modified layer) and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES=Recursos do subcontratante = %s
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.sample_input_1=default
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.user_response=
 # END NON-TRANSLATABLE
