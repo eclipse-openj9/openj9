@@ -398,17 +398,24 @@ final class Access implements JavaLangAccess {
 /*[ENDIF] Java14 */
 
 /*[IF Java15]*/
-	public Class<?> defineClass(ClassLoader classLoader, Class<?> clazz, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object obj) {
+	public Class<?> defineClass(ClassLoader classLoader, Class<?> clazz, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object classData) {
 		ClassLoader targetClassLoader = (null == classLoader) ? ClassLoader.bootstrapClassLoader : classLoader;
-		return targetClassLoader.defineClassInternal(clazz, className, classRep, protectionDomain, init, flags, obj);
+		return targetClassLoader.defineClassInternal(clazz, className, classRep, protectionDomain, init, flags, classData);
+	}
+
+	/**
+	 * Returns the classData stored in the class.
+	 * 
+	 * @param the class from where to retrieve the classData.
+	 * 
+	 * @return the classData (Object).
+	 */
+	public Object classData(Class<?> clazz) {
+		return clazz.getClassData();
 	}
 
 	public ProtectionDomain protectionDomain(Class<?> clazz) {
 		return clazz.getProtectionDomain();
-	}
-
-	public Object classData(Class<?> clazz) {
-		return null;
 	}
 
 	public MethodHandle stringConcatHelper(String arg0, MethodType type) {

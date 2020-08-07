@@ -2282,45 +2282,75 @@ public class MethodHandles {
 			private final String className;
 			private final Lookup lookup;
 			private final int ClassOptFlags;
+
 			ClassDefiner(String name, byte[] template, Lookup lookupObj, int flags) {
 				className = name;
 				classBytes = template;
 				lookup = lookupObj;
 				ClassOptFlags = flags;
 			}
+
 			ClassDefiner(String name, byte[] template, Lookup lookupObj) {
 				className = name;
 				classBytes = template;
 				lookup = lookupObj;
 				ClassOptFlags = 0;
 			}
+
 			Class<?> defineClass(boolean initOption) {
+				return defineClass(initOption, null);
+			}
+
+			Class<?> defineClass(boolean initOption, Object classData) {
 				Class<?> ret = AccessController.doPrivileged(new PrivilegedAction<Class<?>>() {
 					@Override
 					public Class<?> run() {
 						JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
 						Class<?> lookupClass = lookup.lookupClass();
-						return jlAccess.defineClass(lookupClass.getClassLoader(), lookupClass, className, classBytes, jlAccess.protectionDomain(lookupClass), initOption, ClassOptFlags, null);
+						return jlAccess.defineClass(lookupClass.getClassLoader(), lookupClass, className, classBytes,
+								jlAccess.protectionDomain(lookupClass), initOption, ClassOptFlags, classData);
 					}
 				});
 				return ret;
 			}
 		}
+
 		/**
-		 * Constructs a new hidden class from an array of class data bytes.
+		 * Constructs a new hidden class from an array of class file bytes.
 		 * 
-		 * @param bytes the class data bytes of the hidden class to be defined.  
+		 * @param bytes the class file bytes of the hidden class to be defined.
 		 * @param initOption whether to initialize the hidden class.
 		 * @param classOptions the {@link ClassOption} to define the hidden class.
+		 * 
 		 * @return A Lookup object of the newly created hidden class.
 		 * @throws IllegalAccessException if this Lookup does not have full privilege access.
 		 */
-
 		public Lookup defineHiddenClass(byte[] bytes, boolean initOption, ClassOption... classOptions) throws IllegalAccessException {
+			ClassDefiner definer = classDefiner(bytes, classOptions);
+			return new Lookup(definer.defineClass(initOption));
+		}
+		
+		/**
+		 * Constructs a new hidden class from an array of class file bytes.
+		 * Equivalent to defineHiddenClass(bytes, true, classOptions).
+		 * 
+		 * @param bytes the class file bytes of the hidden class to be defined.
+		 * @param classData the classData to be stored in the hidden class.
+		 * @param classOptions the {@link ClassOption} to define the hidden class.
+		 * 
+		 * @return A Lookup object of the newly created hidden class.
+		 * @throws IllegalAccessException if this Lookup does not have full privilege access.
+		 */
+		Lookup defineHiddenClassWithClassData(byte[] bytes, Object classData, ClassOption... classOptions) throws IllegalAccessException {
+			ClassDefiner definer = classDefiner(bytes, classOptions);
+			return new Lookup(definer.defineClass(true, classData));
+		}
+
+		private ClassDefiner classDefiner(byte[] bytes, ClassOption... classOptions) throws IllegalAccessException {
 			if (!hasFullPrivilegeAccess()) {
 				throw new IllegalAccessException();
 			}
-			
+
 			ClassReader cr;
 			try {
 				cr = new ClassReader(bytes);
@@ -2334,12 +2364,8 @@ public class MethodHandles {
 			for (ClassOption opt : classOptions) {
 				flags |= opt.toFlag();
 			}
-			ClassDefiner definer = makeHiddenClassDefiner(targetClassName, bytes, flags);
-			return new Lookup(definer.defineClass(initOption));
-		}
 
-		Lookup defineHiddenClassWithClassData(byte[] bytes, Object data, ClassOption... classOptions) {
-			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+			return makeHiddenClassDefiner(targetClassName, bytes, flags);
 		}
 
 		ClassDefiner makeHiddenClassDefiner(String name, byte[] template) {
@@ -5466,12 +5492,96 @@ public class MethodHandles {
 	}
 
 	/*[IF Java15]*/
-	static boolean permuteArgumentChecks(int[] arr, MethodType mt1, MethodType mt2) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	/**
+	 * Validates that the permute[] specifies a valid permutation from permuteType to handleType.
+	 * This method throws IllegalArgumentException on failure and returns true on success. This
+	 * disjointness allows it to be used in asserts.
+	 * 
+	 * @param permute array specifies the conversion from permuteType to handleType.
+	 * @param permuteType source method type.
+	 * @param handleType target method type.
+	 * 
+	 * @return true on success.
+	 * @throws IllegalArgumentException on failure.
+	 */
+	static boolean permuteArgumentChecks(int[] permute, MethodType permuteType, MethodType handleType) {
+		return validatePermutationArray(permuteType, handleType, permute);
 	}
 	
-	static MethodHandle collectReturnValue(MethodHandle mh1, MethodHandle mh2) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	/**
+	 * Return the classData stored in the accessClass of the Lookup object.
+	 * 
+	 * @param caller Lookup object used to verify privileged access and retrieve classData.
+	 * @param unused.
+	 * @param type used to cast the classData of the accessClass.
+	 * 
+	 * @return the classData casted to the appropriate type.
+	 * @throws IllegalAccessException in the absence of full privilege access.
+	 */
+	static <T> T classData(Lookup caller, String unused, Class<T> type) throws IllegalAccessException {
+		if (caller.hasFullPrivilegeAccess()) {
+			Object classData = MethodHandleNatives.classData(caller.accessClass);
+			return type.cast(classData);
+		}
+		throw new IllegalAccessException("No full privilege access found for " + caller);
+	}
+
+	/**
+	 * Helper class used by collectReturnValue.
+	 */
+	private static final class CollectReturnHelper implements ArgumentHelper {
+		private final MethodHandle target;
+		private final MethodHandle filter;
+
+		CollectReturnHelper(MethodHandle target, MethodHandle filter) {
+			this.target = target;
+			this.filter = filter;
+		}
+
+		public Object helper(Object[] arguments) throws Throwable {
+			// Invoke target
+			int targetArity = target.type.parameterCount();
+			Object targetReturn = target.invokeWithArguments(Arrays.copyOfRange(arguments, 0, targetArity));
+
+			// Construct filter arguments
+			int filterArity = filter.type.parameterCount();
+			Object[] newArguments = new Object[filterArity];
+			System.arraycopy(arguments, targetArity, newArguments, 0, filterArity - 1);
+			newArguments[filterArity - 1] = targetReturn;
+
+			// Invoke filter
+			return filter.invokeWithArguments(newArguments);
+		}
+	}
+	
+	/**
+	 * Creates an adapter MethodHandle (MH) which invokes the target MH and then
+	 * invokes the filter MH while passing the output from the target MH as an
+	 * input to the filter MH.
+	 * 
+	 * targetMH:  O target(P...)
+	 * filterMH:  Q filter(R..., O)
+	 * adapterMH: Q adapter(P... p, R... r) {
+	 *                O o = target(p);
+	 *                return filter(r, o);  
+	 *            }
+	 *
+	 * @param target represents the above targetMH.
+	 * @param filter represent the above filterMH.
+	 * 
+	 * @return a MH similar to the above adapterMH.
+	 */
+	static MethodHandle collectReturnValue(MethodHandle target, MethodHandle filter) {
+		MethodType targetType = target.type();
+		MethodType filterType = filter.type();
+		MethodType resultType = targetType.changeReturnType(filterType.returnType());
+		int filterParamCount = filterType.parameterCount();
+		if (filterParamCount > 1) {
+			for (int i = 0; i < filterParamCount - 1; i++) {
+				resultType = resultType.appendParameterTypes(filterType.parameterType(i));
+			}
+		}
+		return buildTransformHandle(new CollectReturnHelper(target, filter), resultType);
 	}
 	/*[ENDIF] Java15 */
 
