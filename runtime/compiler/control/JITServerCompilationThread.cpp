@@ -703,7 +703,10 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    if (abortCompilation)
       {
       if (clientOptions)
+         {
          TR_Memory::jitPersistentFree(clientOptions);
+         entry._clientOptions = NULL;
+         }
       if (optPlan)
          TR_OptimizationPlan::freeOptimizationPlan(optPlan);
       if (_recompilationMethodInfo)
