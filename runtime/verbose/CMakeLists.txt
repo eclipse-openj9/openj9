@@ -64,39 +64,18 @@ target_link_libraries(j9vrb
 		j9vm_gc_includes
 		j9vm_compiler_defines
 
-		omrgc
-		j9shr
-		j9trc
 		j9stackmap
-		j9util
-		j9utilcore
 		j9verutil
-		j9avl
-		j9hashtable
 		j9pool
-		j9thr
-		j9gcbase
-		j9gcstructs
-		j9gcstats
-		j9gcapi
 		j9modronstartup
 		j9gcvrbjava
 		j9gcvrbold
 		j9gcvrbevents
-		j9modronstandard
-		j9realtime
-		j9gcvlhgc
 		j9gcvrbhdlrstandardjava
 		j9gcvrbhdlrrealtime
 		j9gcvrbhdlrvlhgc
-		j9hookable
 		j9zip
-
 		j9utilcore
-		j9vm
-		j9codert_vm
-		j9modronstandard
-		j9gc
 )
 
 target_compile_definitions(j9vrb
