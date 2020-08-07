@@ -1348,6 +1348,8 @@ class TR_RelocationRecordValidateClass : public TR_RelocationRecordConstantPoolW
 
       virtual int32_t bytesInHeaderAndPayload();
 
+      virtual bool isStaticFieldValidation() { return false ; }
+
       void setClassChainOffsetInSharedCache(TR_RelocationTarget *reloTarget, uintptr_t classChainOffsetInSharedCache);
       uintptr_t classChainOffsetInSharedCache(TR_RelocationTarget *reloTarget);
 
@@ -1365,7 +1367,7 @@ class TR_RelocationRecordValidateInstanceField : public TR_RelocationRecordValid
    public:
       TR_RelocationRecordValidateInstanceField() {}
       TR_RelocationRecordValidateInstanceField(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordValidateClass(reloRuntime, record) {}
-      virtual char *name();
+      virtual char *name();      
 
    protected:
       virtual TR_OpaqueClassBlock *getClassFromCP(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, void *void_cp);
@@ -1381,6 +1383,8 @@ class TR_RelocationRecordValidateStaticField : public TR_RelocationRecordValidat
       virtual void print(TR_RelocationRuntime *reloRuntime);
 
       virtual int32_t bytesInHeaderAndPayload();
+
+      virtual bool isStaticFieldValidation() { return true; }
 
       void setRomClassOffsetInSharedCache(TR_RelocationTarget *reloTarget, uintptr_t romClassOffsetInSharedCache);
       uintptr_t romClassOffsetInSharedCache(TR_RelocationTarget *reloTarget);
