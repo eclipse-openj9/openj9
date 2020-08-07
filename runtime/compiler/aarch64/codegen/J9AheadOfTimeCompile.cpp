@@ -75,8 +75,8 @@ void J9::ARM64::AheadOfTimeCompile::processRelocations()
          TR::SymbolValidationManager *svm =
             self()->comp()->getSymbolValidationManager();
          void *offsets = const_cast<void*>(svm->wellKnownClassChainOffsets());
-         *(uintptr_t *)relocationDataCursor = reinterpret_cast<uintptr_t>(
-            fej9->sharedCache()->offsetInSharedCacheFromPointer(offsets));
+         *(uintptr_t *)relocationDataCursor =
+            self()->offsetInSharedCacheFromPointer(fej9->sharedCache(), offsets);
          relocationDataCursor += SIZEPOINTER;
          }
 
@@ -681,7 +681,7 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          // Store rom method to get name of method
          J9Method *methodToValidate = reinterpret_cast<J9Method *>(record->_method);
          J9ROMMethod *romMethod = static_cast<TR_J9VM *>(fej9)->getROMMethodFromRAMMethod(methodToValidate);
-         uintptr_t romMethodOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romMethod);
+         uintptr_t romMethodOffsetInSharedCache = self()->offsetInSharedCacheFromROMMethod(sharedCache, romMethod);
 
          binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
          binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
