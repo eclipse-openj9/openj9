@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1003,4 +1003,20 @@ J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_2=GetPackedArra
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.explanation=wrong api used.
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.system_action=JVM continues
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED=Errore JNI in %1$s: L'argomento #%2$d \u00e8 previsto che sia statico ma \u00e8 stato passato a JNI un ID campo non statico.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.sample_input_1=methodName
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_STATIC_FIELDID_PASSED=Errore JNI in %1$s: L'argomento #%2$d \u00e8 previsto che sia non statico ma \u00e8 stato passato a JNI un ID campo statico.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.sample_input_1=methodName
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
 # END NON-TRANSLATABLE

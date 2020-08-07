@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1003,4 +1003,20 @@ J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_2=GetPackedArra
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.explanation=wrong api used.
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.system_action=JVM continues
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED=\u041e\u0448\u0438\u0431\u043a\u0430 JNI \u0432 %1$s: \u0430\u0440\u0433\u0443\u043c\u0435\u043d\u0442 #%2$d \u0434\u043e\u043b\u0436\u0435\u043d \u0431\u044b\u0442\u044c \u0441\u0442\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0438\u043c, \u043e\u0434\u043d\u0430\u043a\u043e \u0432 JNI \u043f\u0435\u0440\u0435\u0434\u0430\u043d \u0418\u0414 \u043d\u0435\u0441\u0442\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u043e\u0433\u043e \u043f\u043e\u043b\u044f
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.sample_input_1=methodName
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_STATIC_FIELDID_PASSED=\u041e\u0448\u0438\u0431\u043a\u0430 JNI \u0432 %1$s: \u0430\u0440\u0433\u0443\u043c\u0435\u043d\u0442 #%2$d \u0434\u043e\u043b\u0436\u0435\u043d \u0431\u044b\u0442\u044c \u043d\u0435\u0441\u0442\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0438\u043c, \u043e\u0434\u043d\u0430\u043a\u043e \u0432 JNI \u043f\u0435\u0440\u0435\u0434\u0430\u043d \u0418\u0414 \u0441\u0442\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u043e\u0433\u043e \u043f\u043e\u043b\u044f
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.sample_input_1=methodName
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
 # END NON-TRANSLATABLE

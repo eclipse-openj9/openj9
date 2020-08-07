@@ -6787,7 +6787,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=\u6bc0\u640d\u6240\u6709\u540d\u7a31\u76f8\u540c\u7684\u5171\u7528\u5feb\u53d6\uff08\u4f7f\u7528\u540d\u7a31\u53c3\u6578\u6216\u9810\u8a2d\u503c\uff09
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=\u6bc0\u640d\u6240\u6709\u540c\u540d\u7684\u5171\u7528\u5feb\u53d6\u5c64\uff08\u4f7f\u7528\u540d\u7a31\u53c3\u6578\u6216\u9810\u8a2d\u503c\uff09
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
@@ -6924,4 +6924,12 @@ J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_4=Cache_2
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layers shared caches built on top of it.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.user_response=Use -Xshareclasses:name=<cacheName>,destroy to destroy all invalid layers (all the higher layers which are built on top of the modified layer) and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES=\u8655\u7406\u5668\u7279\u6027                   = %s
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.sample_input_1=default
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.user_response=
 # END NON-TRANSLATABLE

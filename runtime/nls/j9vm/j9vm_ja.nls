@@ -1980,3 +1980,21 @@ J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.explanation=The two command line opt
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.system_action=The JVM will terminate while processing the command line options.
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.user_response=Remove one of the incompatible command line options in order to resolve the issue.
 # END NON-TRANSLATABLE
+
+# Message to use when class is not permitted in PermittedSubclasses attribute of sealed super class
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=\u30af\u30e9\u30b9 %2$.*1$s \u306f\u3001\u78ba\u5b9a\u3055\u308c\u305f\u30b9\u30fc\u30d1\u30fc\u30af\u30e9\u30b9\u304b\u3089\u7d99\u627f\u3067\u304d\u307e\u305b\u3093\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.explanation=The specified class is not permitted to extend its sealed super class.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when class is not permitted in PermittedSubclasses attribute of sealed super interface
+# argument 1 is the class name,
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=\u30af\u30e9\u30b9 %2$.*1$s \u306f\u3001\u78ba\u5b9a\u3055\u308c\u305f\u30b9\u30fc\u30d1\u30fc\u30a4\u30f3\u30bf\u30fc\u30d5\u30a7\u30fc\u30b9\u304b\u3089\u7d99\u627f\u3067\u304d\u307e\u305b\u3093\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.explanation=The specified class is not permitted to extend its sealed super interface.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

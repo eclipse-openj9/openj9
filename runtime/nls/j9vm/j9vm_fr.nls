@@ -441,7 +441,7 @@ J9NLS_VM_XSCMX_IGNORED.system_action=The JVM will ignore the -Xscmx command line
 J9NLS_VM_XSCMX_IGNORED.user_response=Determine if -Xscmx should be removed, or if -Xshareclasses should be added.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_OS_STACK_OVERFLOW=d\u00e9passement de capacit\u00e9 dans la pile du syst\u00e8me d'exploitation
+J9NLS_VM_OS_STACK_OVERFLOW=d\u00e9bordement de la pile du syst\u00e8me d'exploitation
 # START NON-TRANSLATABLE
 J9NLS_VM_OS_STACK_OVERFLOW.explanation=The native stack was about to grow beyond it's maximum size.
 J9NLS_VM_OS_STACK_OVERFLOW.system_action=The JVM will throw an stack overflow exception.
@@ -1402,7 +1402,7 @@ J9NLS_CANNOT_ATTACH_THREAD.system_action=The JVM will exit.
 J9NLS_CANNOT_ATTACH_THREAD.user_response=None.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED=%s n'est plus pris en charge. Le m\u00e9canisme de remplacement avec normes est pris en charge uniquement via des modules \u00e9volutifs.
+J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED=%s n'est plus pris en charge. Le m\u00e9canisme de d\u00e9rogation aux normes approuv\u00e9es n'est possible que par l'interm\u00e9diaire de modules extensibles (upgradable).
 # START NON-TRANSLATABLE
 J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED.sample_input_1=-Djava.endorsed.dirs=lib/endorsed
 J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED.explanation=The specified java property is not supported since Java 9.
@@ -1979,4 +1979,22 @@ J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.sample_input_2=-Xrs
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.explanation=The two command line options are incompatible. Please refer to their documentation.
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.system_action=The JVM will terminate while processing the command line options.
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.user_response=Remove one of the incompatible command line options in order to resolve the issue.
+# END NON-TRANSLATABLE
+
+# Message to use when class is not permitted in PermittedSubclasses attribute of sealed super class
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=la classe %2$.*1$s ne peut pas h\u00e9riter de sa superclasse scell\u00e9e.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.explanation=The specified class is not permitted to extend its sealed super class.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when class is not permitted in PermittedSubclasses attribute of sealed super interface
+# argument 1 is the class name,
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=la classe %2$.*1$s ne peut pas h\u00e9riter de sa superinterface scell\u00e9e.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.explanation=The specified class is not permitted to extend its sealed super interface.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

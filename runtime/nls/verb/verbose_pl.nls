@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,7 +49,7 @@ J9NLS.HEADER=verbosenls.h
 J9NLS_VERB_STACK_USAGE=Stos szczeg\u00f3\u0142owy: \"%2$.*1$s\" wykorzysta\u0142 b%3$zd/%4$zd bajt\u00f3w na stosach Java/C
 # START NON-TRANSLATABLE
 J9NLS_VERB_STACK_USAGE.sample_input_1=11
-J9NLS_VERB_STACK_USAGE.sample_input_2=Gc Slave Thread
+J9NLS_VERB_STACK_USAGE.sample_input_2=Gc Worker Thread
 J9NLS_VERB_STACK_USAGE.sample_input_3=232
 J9NLS_VERB_STACK_USAGE.sample_input_4=2308
 J9NLS_VERB_STACK_USAGE.explanation=Indicates how much stack was used on each stack for a thread when -verbose:stack is specified
@@ -263,7 +263,7 @@ J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.explanation=Indicates how much stack 
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.system_action=None
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.user_response=None
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_1=11
-J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_2=Gc Slave Thread
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_2=Gc Worker Thread
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_3=232
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_4=2308
 # END NON-TRANSLATABLE
@@ -289,14 +289,14 @@ J9NLS_VERB_SIZES_XSCMAXJIT.system_action=
 J9NLS_VERB_SIZES_XSCMAXJIT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCDMX=zarezerwowany obszar wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas dla atrybut\u00f3w debugowania klasy
+J9NLS_VERB_SIZES_XSCDMX=zarezerwowany obszar pami\u0119ci podr\u0119cznej klasy wsp\u00f3\u0142u\u017cytkowanej dla atrybut\u00f3w debugowania klasy
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCDMX.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCDMX.system_action=
 J9NLS_VERB_SIZES_XSCDMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMINJITDATA=minimalny zarezerwowany obszar wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas dla danych JIT
+J9NLS_VERB_SIZES_XSCMINJITDATA=maksymalny dozwolony obszar wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas dla JIT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMINJITDATA.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMINJITDATA.system_action=
@@ -325,7 +325,7 @@ J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE.system_action=
 J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XMCRS=pocz\u0105tkowa wielko\u015b\u0107 metadanych skompresowanych referencji
+J9NLS_VERB_SIZES_XMCRS=Pocz\u0105tkowa wielko\u015b\u0107 skompresowanych metadanych referencji
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XMCRS.explanation=NOTAG
 J9NLS_VERB_SIZES_XMCRS.system_action=

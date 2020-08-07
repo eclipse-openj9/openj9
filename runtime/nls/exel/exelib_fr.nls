@@ -884,14 +884,14 @@ J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\  -Xscsoftmx<x>       r\u00e9gler la taille maximale souple du nouveau cache de classes partag\u00e9es \u00e0 <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\  -Xscsoftmx<x>       r\u00e9gler la limite de taille souple (soft) du nouveau cache de classes partag\u00e9es \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       r\u00e9gler la taille (ou la taille maximale souple si l'option -XX:SharedCacheHardLimit= est pr\u00e9sente) du nouveau cache de classes partag\u00e9es \u00e0 <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       r\u00e9gler la taille (ou la limite de taille souple (soft) si l'option -XX:SharedCacheHardLimit= est pr\u00e9sente) du nouveau cache de classes partag\u00e9es \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.system_action=
@@ -946,3 +946,18 @@ J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS.user_response=
 # END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE=\  -XX:+PortableSharedCache   activer la fonctionnalit\u00e9 qui tente de maximiser la portabilit\u00e9 du cache partag\u00e9 entre machines
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE=\  -XX:-PortableShareCache   d\u00e9sactiver la fonctionnalit\u00e9 qui tente de maximiser la portabilit\u00e9 du cache partag\u00e9 entre machines
+J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE.user_response=
+# END NON-TRANSLATABLE
+
+

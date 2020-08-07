@@ -1019,7 +1019,7 @@ J9NLS_SHRC_CPI_TOO_MANY_ITEMS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 #From: CompositeCache.cpp
-J9NLS_SHRC_CC_FAILED_ENTER_MUTEX=SH_CompositeCache::enterMutex ha fallat amb el codi de retorn %d. Advertiment: \u00e9s possible que la mem\u00f2ria cau estigui malmesa.
+J9NLS_SHRC_CC_FAILED_ENTER_MUTEX=SH_CompositeCache::enterMutex ha fallat amb el codi de retorn %d. Av\u00eds: \u00e9s possible que la mem\u00f2ria cau estigui malmesa.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_FAILED_ENTER_MUTEX.sample_input_1=-1
 J9NLS_SHRC_CC_FAILED_ENTER_MUTEX.explanation=An error has occurred while trying to update the shared class cache.
@@ -1027,7 +1027,7 @@ J9NLS_SHRC_CC_FAILED_ENTER_MUTEX.system_action=The JVM will terminate.
 J9NLS_SHRC_CC_FAILED_ENTER_MUTEX.user_response=The system may be low on resources, please retry when the system is more lightly loaded.  If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_FAILED_EXIT_MUTEX=SH_CompositeCache::exitMutex ha fallat amb el codi de retorn %d. Advertiment: \u00e9s possible que la mem\u00f2ria cau estigui malmesa.
+J9NLS_SHRC_CC_FAILED_EXIT_MUTEX=SH_CompositeCache::exitMutex ha fallat amb el codi de retorn %d. Av\u00eds: \u00e9s possible que la mem\u00f2ria cau estigui malmesa.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_FAILED_EXIT_MUTEX.sample_input_1=-1
 J9NLS_SHRC_CC_FAILED_EXIT_MUTEX.explanation=An error has occurred while trying to update the shared class cache.
@@ -2511,35 +2511,35 @@ J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_CLOSESEM.system_action=The JVM terminates
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_CLOSESEM.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_INIT_SEMAPHORE_FAILED=No s'han pogut inicialitzar els sem\u00e0fors per a la mem\u00f2ria cau de classes compartides. Advertiment: \u00e9s possible que la mem\u00f2ria cau estigui malmesa. Si teniu problemes quan utilitzeu la mem\u00f2ria cau compartida, \u00e9s possible que h\u00e0giu de destruir-la i tornar-la a crear.
+J9NLS_SHRC_OSCACHE_INIT_SEMAPHORE_FAILED=No s'han pogut inicialitzar els sem\u00e0fors per a la mem\u00f2ria cau de classes compartides. Av\u00eds: \u00e9s possible que la mem\u00f2ria cau estigui malmesa. Si teniu problemes quan utilitzeu la mem\u00f2ria cau compartida, \u00e9s possible que h\u00e0giu de destruir-la i tornar-la a crear.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_INIT_SEMAPHORE_FAILED.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_INIT_SEMAPHORE_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_INIT_SEMAPHORE_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_ENTER_HDR_MUTEX=ERROR: Error en introduir el mutex per a la cap\u00e7alera de mem\u00f2ria cau de classes compartides. Advertiment: \u00e9s possible que la mem\u00f2ria cau estigui malmesa. Si teniu problemes quan utilitzeu la mem\u00f2ria cau compartida, \u00e9s possible que h\u00e0giu de destruir-la i tornar-la a crear.
+J9NLS_SHRC_OSCACHE_ERROR_ENTER_HDR_MUTEX=ERROR: Error en introduir el mutex per a la cap\u00e7alera de mem\u00f2ria cau de classes compartides. Av\u00eds: \u00e9s possible que la mem\u00f2ria cau estigui malmesa. Si teniu problemes quan utilitzeu la mem\u00f2ria cau compartida, \u00e9s possible que h\u00e0giu de destruir-la i tornar-la a crear.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_ENTER_HDR_MUTEX.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_ERROR_ENTER_HDR_MUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_ERROR_ENTER_HDR_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_EXIT_HDR_MUTEX=ERROR: Error en sortir del mutex per a la cap\u00e7alera de mem\u00f2ria cau de classes compartides. Advertiment: \u00e9s possible que la mem\u00f2ria cau estigui malmesa. Si teniu problemes quan utilitzeu la mem\u00f2ria cau compartida, \u00e9s possible que h\u00e0giu de destruir-la i tornar-la a crear.
+J9NLS_SHRC_OSCACHE_ERROR_EXIT_HDR_MUTEX=ERROR: Error en sortir del mutex per a la cap\u00e7alera de mem\u00f2ria cau de classes compartides. Av\u00eds: \u00e9s possible que la mem\u00f2ria cau estigui malmesa. Si teniu problemes quan utilitzeu la mem\u00f2ria cau compartida, \u00e9s possible que h\u00e0giu de destruir-la i tornar-la a crear.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_EXIT_HDR_MUTEX.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_ERROR_EXIT_HDR_MUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_ERROR_EXIT_HDR_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_HEADERLOCK_MUTEX=No s'ha pogut publicar el bloqueig de cap\u00e7alera de mem\u00f2ria cau de classes compartides durant la inicialitzaci\u00f3. Advertiment: \u00e9s possible que la mem\u00f2ria cau estigui malmesa. Si teniu problemes quan utilitzeu la mem\u00f2ria cau compartida, \u00e9s possible que h\u00e0giu de destruir-la i tornar-la a crear.
+J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_HEADERLOCK_MUTEX=No s'ha pogut publicar el bloqueig de cap\u00e7alera de mem\u00f2ria cau de classes compartides durant la inicialitzaci\u00f3. Av\u00eds: \u00e9s possible que la mem\u00f2ria cau estigui malmesa. Si teniu problemes quan utilitzeu la mem\u00f2ria cau compartida, \u00e9s possible que h\u00e0giu de destruir-la i tornar-la a crear.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_HEADERLOCK_MUTEX.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_HEADERLOCK_MUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_HEADERLOCK_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX=No s'ha pogut publicar el bloqueig d'usuari cap\u00e7alera de mem\u00f2ria cau de classes compartides durant la inicialitzaci\u00f3. Advertiment: \u00e9s possible que la mem\u00f2ria cau estigui malmesa. Si teniu problemes quan utilitzeu la mem\u00f2ria cau compartida, \u00e9s possible que h\u00e0giu de destruir-la i tornar-la a crear.
+J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX=No s'ha pogut publicar el bloqueig d'usuari cap\u00e7alera de mem\u00f2ria cau de classes compartides durant la inicialitzaci\u00f3. Av\u00eds: \u00e9s possible que la mem\u00f2ria cau estigui malmesa. Si teniu problemes quan utilitzeu la mem\u00f2ria cau compartida, \u00e9s possible que h\u00e0giu de destruir-la i tornar-la a crear.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -3601,7 +3601,7 @@ J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX.system_action=The JVM continues
 J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX.user_response=The value has been changed automatically
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2=La mem\u00f2ria cau compartida \"%s\" est\u00e0 malmesa. El codi de corrupci\u00f3 \u00e9s %d. El valor malm\u00e8s \u00e9s 0x%p. No es permetr\u00e0 a cap JVM nova connectar-se amb la mem\u00f2ria cau.\n\
+J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2=La mem\u00f2ria cau compartida \"%s\" est\u00e0 malmesa. El codi de corrupci\u00f3 \u00e9s %d. El valor malm\u00e8s \u00e9s 0x%p. No s'assignaran noves JVM per connectar-se a la mem\u00f2ria cau.\n\
 \ \tLes JVM existents poden continuar funcionant, per\u00f2 no poden actualitzar la mem\u00f2ria cau.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.sample_input_1=myCache
@@ -5249,14 +5249,14 @@ J9NLS_SHRC_SHRINIT_INVALID_OPTION.system_action=The JVM terminates.
 J9NLS_SHRC_SHRINIT_INVALID_OPTION.user_response=Replace the incompatible -Xshareclasses option with a -Xshareclasses utilitiy option, and rerun.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING=JVM est\u00e0 utilitzant la mem\u00f2ria cau compartida existent al mode de diagn\u00f2stic mprotect  (using -Xshareclasses:mprotect=diagnostic option), per\u00f2 la mem\u00f2ria cau no estava creant en aquest mode. La utilitzaci\u00f3 de la mem\u00f2ria cau en aquest mode pot afectar el rendiment.
+J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING=JVM est\u00e0 utilitzant la mem\u00f2ria cau compartida existent al mode de diagn\u00f2stic mprotect (utilitzant l'opci\u00f3 -Xshareclasses:mprotect=diagnostic), per\u00f2 la mem\u00f2ria cau no estava creant en aquest mode. La utilitzaci\u00f3 de la mem\u00f2ria cau en aquest mode pot afectar el rendiment.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.explanation=When running with -Xshareclasses:mprotect=diagnostic option, JVM performance is affected due to expensive system calls. This option should only be used for diagnostic purpose.
 J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.system_action=The JVM continues.
 J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.user_response=If user wants to use -Xshareclasses:mprotect=diagnostic option, it is advised to reset the cache to force JVM(s) to use the cache in mprotect diagnostic mode. Othewise, if the user wants to use the cache in normal mode then remove -Xshareclasses:mprotect=diagnostic option and re-run. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_IGNORED_WARNING=JVM est\u00e0 intentant utilitzar la mem\u00f2ria cau compartida existent al mode de diagn\u00f2stic mprotect  (using -Xshareclasses:mprotect=diagnostic option), per\u00f2 la mem\u00f2ria cau no estava creant en aquest mode. En aquest cas mprotect=diagnostic s'obvia en z/OS.
+J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_IGNORED_WARNING=JVM est\u00e0 intentant utilitzar la mem\u00f2ria cau compartida existent al mode de diagn\u00f2stic mprotect (utilitzant l'opci\u00f3 -Xshareclasses:mprotect=diagnostic), per\u00f2 la mem\u00f2ria cau no estava creant en aquest mode. En aquest cas mprotect=diagnostic s'obvia en z/OS.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_IGNORED_WARNING.explanation=Using -Xshareclasses:mprotect=diagnostic option on an existing cache not created in this mode can cause existing JVMs attached to the cache to crash.
 J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_IGNORED_WARNING.system_action=The JVM continues.
@@ -5638,7 +5638,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_SNAPSHOTCACHE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_SNAPSHOTCACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYSNAPSHOT=Destrueix la instant\u00e0nia d'una mem\u00f2ria cau compartida (utilitza el par\u00e0metre name o el valor per defecte)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYSNAPSHOT=Destrueix la instant\u00e0nia d'una mem\u00f2ria cau compartida (utilitza el par\u00e0metre de nom o el valor per defecte)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYSNAPSHOT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYSNAPSHOT.system_action=
@@ -6763,7 +6763,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destrueix totes les capes de mem\u00f2ria cau compartida amb el mateix nom (utilitza el par\u00e0metre name o el valor per defecte)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Destrueix totes les capes de mem\u00f2ria cau compartides amb el mateix nom (utilitza el par\u00e0metre name o el valor per defecte)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
@@ -6799,7 +6799,7 @@ J9NLS_SHRC_CM_FAILED_TO_START_UP.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_FAILED_TO_START_UP.user_response=Previous error messages may indicate the reason.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Especifiqueu el n\u00famero de la capa superior. Creeu una nova capa de mem\u00f2ria cau compartida si la capa especificada no existeix.
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Especifiqueu el n\u00f9mero de la capa superior. Creeu una nova capa de mem\u00f2ria cau compartida si la capa especificada no existeix.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.system_action=
@@ -6823,7 +6823,7 @@ J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.system_action=The JVM terminates.
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.user_response=Correct or remove the invalid command-line option and rerun.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER=N\u00famero de capa no v\u00e0lid (%d). La capa superior existent \u00e9s %d. El n\u00famero de la capa nova hauria de ser %d.
+J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER=N\u00famero capa no v\u00e0lid (%d). La capa superior existent \u00e9s %d. El n\u00famero de la capa nova hauria de ser %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_1=3
 J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER.sample_input_2=1
@@ -6900,4 +6900,12 @@ J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_4=Cache_2
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layers shared caches built on top of it.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.user_response=Use -Xshareclasses:name=<cacheName>,destroy to destroy all invalid layers (all the higher layers which are built on top of the modified layer) and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES=Caracter\u00edstiques de processador      = %s
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.sample_input_1=default
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.user_response=
 # END NON-TRANSLATABLE

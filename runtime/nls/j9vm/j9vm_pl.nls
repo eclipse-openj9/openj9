@@ -1891,7 +1891,7 @@ J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.user_response=
 
 # Message for LinkageError when a VerifyError is thrown out
 # arguments 1 and 2 are the specified class name
-J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS=Nie mo\u017cna rozszerza\u0107 ostatecznej superklasy %2$.*1$s
+J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS=Nie mo\u017cna rozszerza\u0107 finalnej superklasy %2$.*1$s
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS.sample_input_1=9
 J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS.sample_input_2=ClassName
@@ -1979,4 +1979,22 @@ J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.sample_input_2=-Xrs
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.explanation=The two command line options are incompatible. Please refer to their documentation.
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.system_action=The JVM will terminate while processing the command line options.
 J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.user_response=Remove one of the incompatible command line options in order to resolve the issue.
+# END NON-TRANSLATABLE
+
+# Message to use when class is not permitted in PermittedSubclasses attribute of sealed super class
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=Klasa %2$.*1$s nie ma uprawnie\u0144 do odziedziczenia ze swojej zapiecz\u0119towanej nadklasy.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.explanation=The specified class is not permitted to extend its sealed super class.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when class is not permitted in PermittedSubclasses attribute of sealed super interface
+# argument 1 is the class name,
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=Klasa %2$.*1$s nie ma uprawnie\u0144 do odziedziczenia ze swojego zapiecz\u0119towanego nadinterfejsu.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.explanation=The specified class is not permitted to extend its sealed super interface.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

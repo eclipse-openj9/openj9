@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1003,4 +1003,20 @@ J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_2=GetPackedArra
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.explanation=wrong api used.
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.system_action=JVM continues
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED=%1$s\uc758 JNI \uc624\ub958: #%2$d \uc778\uc218\uac00 \uc815\uc801 \uc778\uc218\ub85c \uc608\uc0c1\ub418\uc9c0\ub9cc \ube44\uc815\uc801 \ud544\ub4dc ID\uac00 JNI\uc5d0 \uc804\ub2ec\ub429\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.sample_input_1=methodName
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_STATIC_FIELDID_PASSED=%1$s\uc758 JNI \uc624\ub958: #%2$d \uc778\uc218\uac00 \ube44\uc815\uc801 \uc778\uc218\ub85c \uc608\uc0c1\ub418\uc9c0\ub9cc \uc815\uc801 \ud544\ub4dc ID\uac00 JNI\uc5d0 \uc804\ub2ec\ub429\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.sample_input_1=methodName
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
 # END NON-TRANSLATABLE

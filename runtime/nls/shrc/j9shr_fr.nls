@@ -5213,7 +5213,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_ERROR_STORE_INTERMEDIATE_CLASSFILE_REQUIRED.system_ac
 J9NLS_SHRC_OSCACHE_STARTUP_ERROR_STORE_INTERMEDIATE_CLASSFILE_REQUIRED.user_response=Remove option "-XX:-StoreIntermediateClassfile" from command line to use the existing Shared Class cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_STORE_INTERMEDIATE_CLASSFILE_TRUE=Stocker le fichier classe interm\u00e9diaire = true
+J9NLS_SHRC_CM_PRINTSTATS_STORE_INTERMEDIATE_CLASSFILE_TRUE=Stocker le fichier de classe interm\u00e9diaire = true
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_STORE_INTERMEDIATE_CLASSFILE_TRUE.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_STORE_INTERMEDIATE_CLASSFILE_TRUE.system_action=
@@ -6640,7 +6640,7 @@ J9NLS_SHRC_SHRINIT_MAX_SPACE_SIZE_VALUE_TOO_BIG.system_action=The JVM continues
 J9NLS_SHRC_SHRINIT_MAX_SPACE_SIZE_VALUE_TOO_BIG.user_response=The value has been changed automatically
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1=Le nombre total d'octets non stock\u00e9s en raison de la valeur de la taille maximale souple du cache partag\u00e9 est %u. Le nombre d'octets AOT non stock\u00e9s en raison de la valeur de -Xscmaxaot est %u. Le nombre d'octets JIT non stock\u00e9s en raison de la valeur de -Xscmaxjitdata est %u.
+J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1=Le nombre total d'octets non stock\u00e9s en raison de la valeur de la limite de taille souple (soft) du cache partag\u00e9 est %u. Le nombre d'octets AOT non stock\u00e9s en raison de la valeur de -Xscmaxaot est %u. Le nombre d'octets JIT non stock\u00e9s en raison de la valeur de -Xscmaxjitdata est %u.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1.sample_input_1=102400
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1.sample_input_2=4096
@@ -6913,7 +6913,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS_V1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED=La couche sup\u00e9rieure (couche %d) du cache est d\u00e9truite. La modification de la couche %d du cache partag\u00e9 a \u00e9t\u00e9 d\u00e9tect\u00e9e. L'ID unique de cache attendu est %s ; l'ID unique de cache en cours est %s.
+J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED=La couche sup\u00e9rieure (couche %d) du cache est d\u00e9truite. La modification de la couche %d du cache partag\u00e9 a \u00e9t\u00e9 d\u00e9tect\u00e9e. L'ID unique de cache attendu est %s, alors que l'ID actuel est %s.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_1=1
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_2=0
@@ -6922,4 +6922,12 @@ J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_4=Cache_2
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layers shared caches built on top of it.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.user_response=Use -Xshareclasses:name=<cacheName>,destroy to destroy all invalid layers (all the higher layers which are built on top of the modified layer) and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES=Fonctionnalit\u00e9s du processeur                   = %s
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.sample_input_1=default
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.user_response=
 # END NON-TRANSLATABLE

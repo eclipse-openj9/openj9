@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -133,7 +133,7 @@ J9NLS_JNICHK_HELP_7.system_action=
 J9NLS_JNICHK_HELP_7.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_HELP_8=\tnowarn         no visualitza advertiments
+J9NLS_JNICHK_HELP_8=\tnowarn         no visualitza avisos
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_HELP_8.explanation=NOTAG
 J9NLS_JNICHK_HELP_8.system_action=
@@ -289,7 +289,7 @@ J9NLS_JNICHK_GC_IS_DISABLED.user_response=Correct the JNI application code to av
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_NULL_ARGUMENT=Error JNI a %1$s: l'argument #%2$d \u00e9s NULL
+J9NLS_JNICHK_NULL_ARGUMENT=Error de JNI a %1$s: l'argument #%2$d \u00e9s NULL
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NULL_ARGUMENT.sample_input_1=methodName
 J9NLS_JNICHK_NULL_ARGUMENT.sample_input_2=3
@@ -573,7 +573,7 @@ J9NLS_JNICHK_WRONG_FUNCTION.user_response=Correct the JNI application code.
 # END NON-TRANSLATABLE
 
 # JNI, ExceptionCheck, ExceptionClear and ExceptionOccurred are not translatable
-J9NLS_JNICHK_MISSING_EXCEPTION_CHECK=Advertiment de JNI a %1$s: despr\u00e9s de cridar %2$s, cal que comproveu si hi ha excepcions amb ExceptionCheck, ExceptionClear o ExceptionOccurred abans de cridar %3$s
+J9NLS_JNICHK_MISSING_EXCEPTION_CHECK=Av\u00eds de JNI a %1$s: despr\u00e9s de cridar %2$s, cal que comproveu si hi ha excepcions amb ExceptionCheck, ExceptionClear o ExceptionOccurred abans de cridar %3$s
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MISSING_EXCEPTION_CHECK.sample_input_1=methodName
 J9NLS_JNICHK_MISSING_EXCEPTION_CHECK.sample_input_2=JNIFunc1
@@ -584,7 +584,7 @@ J9NLS_JNICHK_MISSING_EXCEPTION_CHECK.user_response=Correct the JNI application c
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_MALFORMED_IDENTIFIER=Advertiment de JNI a %1$s: l'argument #%2$d \u00e9s un identificador amb format incorrecte (\"%3$s\")
+J9NLS_JNICHK_MALFORMED_IDENTIFIER=Av\u00eds de JNI a %1$s: l'argument #%2$d \u00e9s un identificador amb format incorrecte (\"%3$s\")
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MALFORMED_IDENTIFIER.sample_input_1=methodName
 J9NLS_JNICHK_MALFORMED_IDENTIFIER.sample_input_2=3
@@ -595,7 +595,7 @@ J9NLS_JNICHK_MALFORMED_IDENTIFIER.user_response=Check and correct the JNI applic
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE=Advertiment de JNI a %1$s: l'argument #%2$d \u00e9s una signatura de m\u00e8tode amb format incorrecte (\"%3$s\")
+J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE=Av\u00eds de JNI a %1$s: l'argument #%2$d \u00e9s una signatura de m\u00e8tode amb format incorrecte (\"%3$s\")
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.sample_input_1=methodName
 J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.sample_input_2=3
@@ -606,7 +606,7 @@ J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.user_response=Check and correct the JNI 
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE=Advertiment de JNI a %1$s: l'argument #%2$d \u00e9s una signatura de camp amb format incorrecte (\"%3$s\")
+J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE=Av\u00eds de JNI a %1$s: l'argument #%2$d \u00e9s una signatura de camp amb format incorrecte (\"%3$s\")
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.sample_input_1=methodName
 J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.sample_input_2=3
@@ -626,7 +626,7 @@ J9NLS_JNICHK_CRITICAL_UNSAFE_WARN.user_response=Check and correct the JNI applic
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_GREW_GLOBAL_REF_POOL=Advertiment de JNI a %1$s: la capacitat d'agrupaci\u00f3 de refer\u00e8ncia global ha augmentat autom\u00e0ticament de %2$d a %3$d.\nProbablement s'ha produ\u00eft per una p\u00e8rdua de mem\u00f2ria.
+J9NLS_JNICHK_GREW_GLOBAL_REF_POOL=Av\u00eds de JNI a %1$s: la capacitat d'agrupaci\u00f3 de refer\u00e8ncia global ha augmentat autom\u00e0ticament de %2$d a %3$d.\nProbablement s'ha produ\u00eft per una p\u00e8rdua de mem\u00f2ria.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.sample_input_1=methodName
 J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.sample_input_2=64
@@ -637,7 +637,7 @@ J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.user_response=Check and correct the JNI applic
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL=Advertiment de JNI a %1$s: la capacitat d'agrupaci\u00f3 de refer\u00e8ncia feble global ha augmentat autom\u00e0ticament de %2$d a %3$d.\nProbablement s'ha produ\u00eft per una p\u00e8rdua de mem\u00f2ria.
+J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL=Av\u00eds de JNI a %1$s: la capacitat d'agrupaci\u00f3 de refer\u00e8ncia feble global ha augmentat autom\u00e0ticament de %2$d a %3$d.\nProbablement s'ha produ\u00eft per una p\u00e8rdua de mem\u00f2ria.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.sample_input_1=methodName
 J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.sample_input_2=64
@@ -648,7 +648,7 @@ J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.user_response=Check and correct the JNI a
 # END NON-TRANSLATABLE
 
 # JNI, EnsureLocalCapacity and PushLocalFrame are not translatable
-J9NLS_JNICHK_GREW_LOCAL_REF_FRAME=Advertiment de JNI a %1$s: la capacitat d'agrupaci\u00f3 de marc de refer\u00e8ncia local ha augmentat autom\u00e0ticament de %2$d a %3$d. Hi ha %4$d refer\u00e8ncies en \u00fas.\nUtilitzeu EnsureLocalCapacity o PushLocalFrame per fer que el marc augmenti expl\u00edcitament.
+J9NLS_JNICHK_GREW_LOCAL_REF_FRAME=Av\u00eds de JNI a %1$s: la capacitat d'agrupaci\u00f3 de marc de refer\u00e8ncia local ha augmentat autom\u00e0ticament de %2$d a %3$d. Hi ha %4$d refer\u00e8ncies en \u00fas.\nUtilitzeu EnsureLocalCapacity o PushLocalFrame per fer que el marc augmenti expl\u00edcitament.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.sample_input_1=methodName
 J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.sample_input_2=64
@@ -660,7 +660,7 @@ J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.user_response=Check and correct the JNI applic
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_NEGATIVE_INDEX=Advertiment de JNI a %1$s: s'ha especificat un inici o un \u00edndex negatiu (%2$d)
+J9NLS_JNICHK_NEGATIVE_INDEX=Av\u00eds de JNI a %1$s: s'ha especificat un inici o un \u00edndex negatiu (%2$d)
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NEGATIVE_INDEX.sample_input_1=methodName
 J9NLS_JNICHK_NEGATIVE_INDEX.sample_input_2=-1
@@ -670,7 +670,7 @@ J9NLS_JNICHK_NEGATIVE_INDEX.user_response=Check and correct the JNI application 
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_NEGATIVE_LENGTH=Advertiment de JNI a %1$s: s'ha especificat una longitud de regi\u00f3 negativa (%2$d)
+J9NLS_JNICHK_NEGATIVE_LENGTH=Av\u00eds de JNI a %1$s: s'ha especificat una longitud de regi\u00f3 negativa (%2$d)
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NEGATIVE_LENGTH.sample_input_1=methodName
 J9NLS_JNICHK_NEGATIVE_LENGTH.sample_input_2=-20
@@ -680,7 +680,7 @@ J9NLS_JNICHK_NEGATIVE_LENGTH.user_response=Check and correct the JNI application
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_INDEX_OUT_OF_RANGE=Advertiment de JNI a %1$s: l'inici o l'\u00edndex est\u00e0 fora de l'interval (%2$d >= %3$d)
+J9NLS_JNICHK_INDEX_OUT_OF_RANGE=Av\u00eds de JNI a %1$s: l'inici o l'\u00edndex est\u00e0 fora de l'interval (%2$d >= %3$d)
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_INDEX_OUT_OF_RANGE.sample_input_1=methodName
 J9NLS_JNICHK_INDEX_OUT_OF_RANGE.sample_input_2=90
@@ -691,7 +691,7 @@ J9NLS_JNICHK_INDEX_OUT_OF_RANGE.user_response=Check and correct the JNI applicat
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_END_OUT_OF_RANGE=Advertiment de JNI a %1$s: el final est\u00e0 fora de l'interval (%2$d + %3$d > %4$d)
+J9NLS_JNICHK_END_OUT_OF_RANGE=Av\u00eds de JNI a %1$s: el final est\u00e0 fora de l'interval (%2$d + %3$d > %4$d)
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_END_OUT_OF_RANGE.sample_input_1=methodName
 J9NLS_JNICHK_END_OUT_OF_RANGE.sample_input_2=15
@@ -703,7 +703,7 @@ J9NLS_JNICHK_END_OUT_OF_RANGE.user_response=Check and correct the JNI applicatio
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_ARRAY_DATA_MODIFIED=Advertiment de JNI a %1$s: les dades de la matriu original s'han modificat entre %2$s i %3$s.\n(CRC original=0x%4$x, CRC nou=0x%5$x).\nCom que %6$s ha tornat una c\u00f2pia del contingut de la matriu, es perdr\u00e0 el nou contingut.
+J9NLS_JNICHK_ARRAY_DATA_MODIFIED=Av\u00eds de JNI a %1$s: les dades de la matriu original s'han modificat entre %2$s i %3$s.\n(CRC original=0x%4$x, CRC nou=0x%5$x).\nCom que %6$s ha tornat una c\u00f2pia del contingut de la matriu, es perdr\u00e0 el nou contingut.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARRAY_DATA_MODIFIED.sample_input_1=methodName
 J9NLS_JNICHK_ARRAY_DATA_MODIFIED.sample_input_2=function1
@@ -717,7 +717,7 @@ J9NLS_JNICHK_ARRAY_DATA_MODIFIED.user_response=Check and correct the JNI applica
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_ARRAY_MEMORY_NOT_RELEASED=Advertiment de JNI: la mem\u00f2ria a 0x%1$p adquirida per %2$s no s'ha alliberat abans de tornar de la nativa. Probablement s'ha produ\u00eft per una p\u00e8rdua de mem\u00f2ria.
+J9NLS_JNICHK_ARRAY_MEMORY_NOT_RELEASED=Av\u00eds de JNI: la mem\u00f2ria a 0x%1$p adquirida per %2$s no s'ha alliberat abans de tornar de la nativa. Probablement s'ha produ\u00eft per una p\u00e8rdua de mem\u00f2ria.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARRAY_MEMORY_NOT_RELEASED.sample_input_1=0x0008ACD1
 J9NLS_JNICHK_ARRAY_MEMORY_NOT_RELEASED.sample_input_2=methodName
@@ -789,7 +789,7 @@ J9NLS_JNICHK_ERROR_IN_METHOD.system_action=The JVM continues.
 J9NLS_JNICHK_ERROR_IN_METHOD.user_response=Investigate the previous error message.
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_WARNING_IN_METHOD=S'ha detectat un advertiment a %2$.*1$s.%4$.*3$s%6$.*5$s\n
+J9NLS_JNICHK_WARNING_IN_METHOD=S'ha detectat un av\u00eds a %2$.*1$s.%4$.*3$s%6$.*5$s\n
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_WARNING_IN_METHOD.sample_input_1=9
 J9NLS_JNICHK_WARNING_IN_METHOD.sample_input_2=methodName
@@ -867,7 +867,7 @@ J9NLS_JNICHK_ADVICE_IN_ONLOAD.user_response=Investigate the previous advice mess
 # END NON-TRANSLATABLE
 
 # JNI and java/nio/Buffer are not translatable
-J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER=Advertiment de JNI a %1$s: l'argument #%2$d no \u00e9s un a java/nio/Buffer. %3$s tornar\u00e0 un codi d'error.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER=Av\u00eds de JNI a %1$s: l'argument #%2$d no \u00e9s un a java/nio/Buffer. %3$s tornar\u00e0 un codi d'error.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER.sample_input_2=3
@@ -888,7 +888,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD.user_response=Check and correct the J
 # END NON-TRANSLATABLE
 
 # JNI, NewLocalRef and NewGlobalRef are not translatable
-J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL=Advertiment de JNI a %1$s: l'argument #%2$d \u00e9s una refer\u00e8ncia feble. Una refer\u00e8ncia feble pot esdevenir nul\u00b7la en qualsevol moment. La refer\u00e8ncia s'ha de promoure amb NewLocalRef o NewGlobalRef i, tot seguit, s'ha de comparar amb NULL abans de cridar %3$s.
+J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL=Av\u00eds de JNI a %1$s: l'argument #%2$d \u00e9s una refer\u00e8ncia feble. Una refer\u00e8ncia feble pot esdevenir nul\u00b7la en qualsevol moment. La refer\u00e8ncia s'ha de promoure amb NewLocalRef o NewGlobalRef i, tot seguit, s'ha de comparar amb NULL abans de cridar %3$s.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL.sample_input_1=methodName
 J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL.sample_input_2=3
@@ -907,7 +907,7 @@ J9NLS_JNICHK_ERROR_IN_EVENT_FRAME.user_response=Investigate the previous error m
 # END NON-TRANSLATABLE
 
 # JVMPI and JVMTI are not translatable
-J9NLS_JNICHK_WARNING_IN_EVENT_FRAME=S'ha detectat un advertiment al marc de gestor d'una incid\u00e8ncia de JVMPI o JVMTI.\n
+J9NLS_JNICHK_WARNING_IN_EVENT_FRAME=S'ha detectat un av\u00eds al marc de gestor d'una incid\u00e8ncia de JVMPI o JVMTI.\n
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_WARNING_IN_EVENT_FRAME.explanation=This message provides additional information about the frame context of the JNI function identified in a previous warning message.
 J9NLS_JNICHK_WARNING_IN_EVENT_FRAME.system_action=The JVM continues.
@@ -960,7 +960,7 @@ J9NLS_JNICHK_RETURN_IS_NOT_REF.user_response=
 # END NON-TRANSLATABLE
 
 # use java -Xcheck:jni:help to display these message
-J9NLS_JNICHK_HELP_14=\twarn           visualitza advertiments
+J9NLS_JNICHK_HELP_14=\twarn           visualitza avisos
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_HELP_14.explanation=NOTAG
 J9NLS_JNICHK_HELP_14.system_action=
@@ -1003,4 +1003,20 @@ J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_2=GetPackedArra
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.explanation=wrong api used.
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.system_action=JVM continues
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED=Error JNI a %1$s: L'argument #%2$d ha de ser est\u00e0tic, per\u00f2 s'ha passat un ID de camp no est\u00e0tic a JNI
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.sample_input_1=methodName
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_STATIC_FIELDID_PASSED=Error JNI a %1$s: L'argument #%2$d ha de ser no est\u00e0tic per\u00f2 s'ha passat un ID de camp est\u00e0tic a JNI
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.sample_input_1=methodName
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
 # END NON-TRANSLATABLE

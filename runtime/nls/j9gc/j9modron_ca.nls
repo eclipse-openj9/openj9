@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -863,7 +863,7 @@ J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION.sample_input_2=abc
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_XLP_EXTRA_COMMA=Els car\u00e0cters de coma addicional descoberts a l'opci\u00f3 '- Xlp' es passen per alt
+J9NLS_GC_OPTIONS_XLP_EXTRA_COMMA=Els car\u00e0cters de coma addicional descoberts a l'opci\u00f3 '- Xlp' s'ignoraran
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_XLP_EXTRA_COMMA.explanation=Extra comma characters are discovered in '-Xlp' option
 J9NLS_GC_OPTIONS_XLP_EXTRA_COMMA.system_action=The JVM will ignore extra comma characters
