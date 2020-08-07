@@ -1538,28 +1538,52 @@ public abstract class VarHandle extends VarHandleInternal
 /*[ENDIF] Java12 */ 
 
 /*[IF Java15]*/
+	/**
+	 * Return the target VarHandle. For a direct VarHandle, the target
+	 * VarHandle is null. An indirect VarHandle will override this method to
+	 * return a non-null target VarHandle.
+	 * 
+	 * @return null for the target VarHandle.
+	 */
 	VarHandle target() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		return null;
 	}
 
+	/**
+	 * Return the direct-target VarHandle. For a direct VarHandle, the
+	 * direct-target is itself. An indirect VarHandle will override this method 
+	 * to return a direct-target, which should be a direct VarHandle.
+	 * 
+	 * @return "this" for a direct VarHandle.
+	 */
 	VarHandle asDirect() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		return this;
 	}
 
-	MethodHandle getMethodHandle(int i) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-
+	/**
+	 * Return true for a direct VarHandle and false for an indirect VarHandle.
+	 * An indirect VarHandle will override this method to return false. By
+	 * default, all VarHandles are direct VarHandles.
+	 * 
+	 * @return true for a direct VarHandle and false for an indirect VarHandle.
+	 */
 	boolean isDirect() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		return true;
 	}
 /*[ENDIF] Java15 */
 
-	abstract MethodType accessModeTypeUncached(AccessMode accessMode);
-
-/*[IF OPENJDK_METHODHANDLES]*/
-	final MethodHandle getMethodHandle(int i) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+/*[IF Java15 | OPENJDK_METHODHANDLES]*/
+	/**
+	 * Return the MethodHandle corresponding to the integer-value of the AccessMode.
+	 * 
+	 * @param i integer value of the AccessMode.
+	 * 
+	 * @return the MethodHandle corresponding to the integer-value of the AccessMode.
+	 */
+	MethodHandle getMethodHandle(int i) {
+		return handleTable[i];
 	}
-/*[ENDIF] OPENJDK_METHODHANDLES */
+/*[ENDIF] Java15 | OPENJDK_METHODHANDLES */
+
+	abstract MethodType accessModeTypeUncached(AccessMode accessMode);
 }
