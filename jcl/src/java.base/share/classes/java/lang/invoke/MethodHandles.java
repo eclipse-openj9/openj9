@@ -215,24 +215,40 @@ public class MethodHandles {
 			accessMode = lookupMode;
 		}
 		
-		Lookup(Class<?> lookupClass, Class<?> prevLookupClass, int lookupMode) {
-			this(lookupClass, prevLookupClass, lookupMode, true);
+		/* For Java 15, the default is not to check for the "java.lang.invoke" package.
+		 * For earlier releases, these lookups are illegal
+		  */
+		private static boolean lookupJLIPackageCheckDefault() {
+			/*[IF Java15]
+			return false;
+			/*[ELSE] Java15*/
+			return true;
+			/*[ENDIF] Java15*/
 		}
 		
-		Lookup(Class<?> lookupClass, int lookupMode, boolean doCheck) {
-			this(lookupClass, null, lookupMode, doCheck);
+		Lookup(Class<?> lookupClass, Class<?> prevLookupClass, int lookupMode) {
+			this(lookupClass, prevLookupClass, lookupMode, lookupJLIPackageCheckDefault());
 		}
 		
 		Lookup(Class<?> lookupClass, int lookupMode) {
-			this(lookupClass, lookupMode, true);
+			this(lookupClass, null, lookupMode, lookupJLIPackageCheckDefault());
 		}
 		
 		Lookup(Class<?> lookupClass) {
-			this(lookupClass, FULL_ACCESS_MASK, true);
+			this(lookupClass, null, FULL_ACCESS_MASK, lookupJLIPackageCheckDefault());
 		}
 		
+		/* Note:
+		 * The constructor Lookup(Class<?> lookupClass) above performs package check by default.
+		 * Following constructor is used when there is no need for such check,
+		 * i.e., incoming performSecurityCheck is expected to be false here.
+		 * JDK15+ expects only following three APIs invoking Lookup constructors to do such package check (matching RI behaviors):
+		 * 	MethodHandles.Lookup.in(Class<?> lookupClass)
+		 * 	MethodHandles.Lookup.dropLookupMode(Class<?> lookupClass)
+		 * 	MethodHandles.Lookup.privateLookupIn(Class<?> targetClass, MethodHandles.Lookup caller)
+		 */
 		Lookup(Class<?> lookupClass, boolean performSecurityCheck) {
-			this(lookupClass, FULL_ACCESS_MASK, performSecurityCheck);
+			this(lookupClass, null, FULL_ACCESS_MASK, performSecurityCheck);
 		}
 	
 		/**
@@ -1426,7 +1442,7 @@ public class MethodHandles {
 				newPrevAccessClass = null;
 			}
 			
-			return new Lookup(lookupClass, newPrevAccessClass, newAccessMode);
+			return new Lookup(lookupClass, newPrevAccessClass, newAccessMode, true);
 			/*[ELSE]*/
 			return new Lookup(lookupClass, newAccessMode);
 			/*[ENDIF] Java14*/
@@ -2214,7 +2230,7 @@ public class MethodHandles {
 				newPrevAccessClass = null;
 			}
 			
-			return new Lookup(accessClass, newPrevAccessClass, newAccessMode);
+			return new Lookup(accessClass, newPrevAccessClass, newAccessMode, true);
 			/*[ELSE]*/
 			return new Lookup(accessClass, newAccessMode);
 			/*[ENDIF] Java14*/
@@ -2509,9 +2525,9 @@ public class MethodHandles {
 		
 		/*[IF Java14]*/
 		if (Objects.equals(targetClassModule, accessClassModule)) {
-			return new Lookup(targetClass, null, callerLookupMode);
+			return new Lookup(targetClass, null, callerLookupMode, true);
 		} else {
-			return new Lookup(targetClass, callerLookup.lookupClass(), (callerLookupMode & ~Lookup.MODULE));
+			return new Lookup(targetClass, callerLookup.lookupClass(), (callerLookupMode & ~Lookup.MODULE), true);
 		}
 		/*[ELSE]*/
 		return new Lookup(targetClass);
