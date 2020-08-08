@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang.invoke;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,9 +33,9 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.*;
 import java.security.AccessControlException;
 import org.openj9.test.java.lang.invoke.helpers.*;
+import org.openj9.test.util.VersionCheck;
 import static java.lang.invoke.MethodHandles.*;
 import static java.lang.invoke.MethodType.*;
-
 
 public class Test_MethodHandleInfo {
 	@SuppressWarnings("unused")
@@ -686,6 +686,11 @@ public class Test_MethodHandleInfo {
 	 */
 	@Test(groups = { "level.sanity" })
 	public void test_RevealDirect_Security() throws Throwable {
+		if (VersionCheck.major() >= 15) {
+			/* This test doesn't apply to JDK15+ after removing package check for MethodHandles.Lookup() constructors exception three APIs */
+			return;
+		}
+
 		final String lookup = "org.openj9.test.java.lang.invoke.Helper_MethodHandleInfo";
 		final String methodHandle = "org.openj9.test.java.lang.invoke.helpers.Helper_MethodHandleInfoOtherPackagePublic";
 
