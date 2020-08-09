@@ -232,14 +232,6 @@ J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.user_response=Destroy and recrea
 J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG=The SCC is too big for the JIT to correctly encode offsets. Ignoring AOT code in shared class cache.
-# START NON-TRANSLATABLE
-J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.explanation=The SCC is too big for the JIT to correctly encode offsets.
-J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
-J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
-J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
-# END NON-TRANSLATABLE
-
 
 J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM=Unknown Problem. Ignoring AOT code in shared class cache.
 # START NON-TRANSLATABLE

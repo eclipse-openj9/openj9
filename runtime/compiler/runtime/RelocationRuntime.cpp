@@ -1021,45 +1021,12 @@ TR_SharedCacheRelocationRuntime::getProcessorDescriptionFromSCC(TR_FrontEnd *fe,
    return hdrInCache->processorDescription;
    }
 
-static void setAOTHeaderInvalid(TR_JitPrivateConfig *privateConfig)
-   {
-   TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
-   TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
-   privateConfig->aotValidHeader = TR_no;
-   TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_HEADER_INVALID);
-   }
-
 // This function currently does not rely on the object beyond the v-table override (compiled as static without any problems).
 // If this changes, we will need to look further into whether its users risk concurrent access.
 bool
 TR_SharedCacheRelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)
    {
-   bool cacheTooBig;
-   J9SharedClassCacheDescriptor *curCache = javaVM()->sharedClassConfig->cacheDescriptorList;
-#if defined(TR_TARGET_64BIT)
-   cacheTooBig = (curCache->cacheSizeBytes > 0x7FFFFFFFFFFFFFFF);
-#else
-   cacheTooBig = (curCache->cacheSizeBytes > 0x7FFFFFFF);
-#endif
-
-   /* We don't have to check all caches (in the multi-SCC case)
-    * as this check would have had to pass for all layers.
-    *
-    * That said, it is technically possible for there to be
-    * multiple layers such that it won't be possible for the JIT
-    * to encode the offsets, for example two layers if at least one
-    * of them was of size 0x7FFFFFFFFFFFFFFF. However, given that
-    * currently the max size of a SCC is 0x7FFFFFF8, it would
-    * require over 0x100000000 layers, which can safely be assumed
-    * to never be occur.
-    */
-   if (cacheTooBig)
-      {
-      incompatibleCache(J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG,
-                        "SCC is too big for the JIT to correctly encode offsets into it");
-      setAOTHeaderInvalid(static_cast<TR_JitPrivateConfig *>(jitConfig()->privateConfig));
-      return false;
-      }
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
 
    /* Look for an AOT header in the cache and see if this JVM is compatible */
 
@@ -1130,7 +1097,10 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *
          }
 
       // not compatible, so stop looking and don't compile anything for cache
-      setAOTHeaderInvalid(static_cast<TR_JitPrivateConfig *>(jitConfig()->privateConfig));
+      TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
+      TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
+      static_cast<TR_JitPrivateConfig *>(jitConfig()->privateConfig)->aotValidHeader = TR_no;
+      TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_HEADER_INVALID);
 
       // Generate a trace point
       Trc_JIT_IncompatibleAOTHeader(curThread);
