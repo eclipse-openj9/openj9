@@ -68,9 +68,10 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
    static bool classAddressUsesReloRecordInfo() { return false; }
 
    protected:
-
    /**
-    * @brief TR_J9SharedCache::offsetInSharedCacheFrom* asserts if the pointer
+    * @brief Wrapper around TR_J9SharedCache::isPointerInSharedCache
+    *
+    * TR_J9SharedCache::offsetInSharedCacheFromPointer asserts if the pointer
     * passed in does not exist in the SCC. Under HCR, when an agent redefines
     * a class, it causes the J9Class pointer to stay the same, but the
     * J9ROMClass pointer changes. This means that if the compiler has a
@@ -84,31 +85,12 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
     *
     * Calling TR_J9SharedCache::offsetInSharedCacheFromPointer after such a
     * redefinition could result in an assert. Therefore, this method exists as
-    * a wrapper around TR_J9SharedCache::isROMClassInSharedCache which doesn't
+    * a wrapper around TR_J9SharedCache::isPointerInSharedCache which doesn't
     * assert and conveniently, updates the location referred to by the cacheOffset
     * pointer passed in as a parameter.
     *
     * If the ptr isn't in the the SCC, then the current method will abort the
     * compilation. If the ptr is in the SCC, then the cacheOffset will be updated.
-    *
-    * @param sharedCache pointer to the TR_SharedCache object
-    * @param romClass J9ROMClass * whose offset in the SCC is required
-    * @return The offset into the SCC of romClass
-    */
-   uintptr_t offsetInSharedCacheFromROMClass(TR_SharedCache *sharedCache, J9ROMClass *romClass);
-
-   /**
-    * @brief Same circumstance as offsetInSharedCacheFromROMClass above
-    *
-    * @param sharedCache pointer to the TR_SharedCache object
-    * @param romMethod J9ROMMethod * whose offset in the SCC is required
-    * @return The offset into the SCC of romMethod
-    */
-   uintptr_t offsetInSharedCacheFromROMMethod(TR_SharedCache *sharedCache, J9ROMMethod *romMethod);
-
-   /**
-    * @brief Wrapper around TR_J9SharedCache::offsetInSharedCacheFromPointer for
-    *        consistency with the above APIs
     *
     * @param sharedCache pointer to the TR_SharedCache object
     * @param ptr pointer whose offset in the SCC is required
