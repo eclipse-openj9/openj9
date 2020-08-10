@@ -5097,8 +5097,9 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
          }
       else if (owningMethod->isFieldFlattened(comp(), cpIndex, _methodSymbol->isStatic()))
          {
-         loadFlattenableInstanceWithHelper(cpIndex);
-         return;
+         return comp()->getOption(TR_UseFlattenedFieldRuntimeHelpers) ?
+                  loadFlattenableInstanceWithHelper(cpIndex) :
+                  loadFlattenableInstance(cpIndex);
          }
       }
 
@@ -5214,6 +5215,117 @@ TR_J9ByteCodeIlGenerator::loadFlattenableInstanceWithHelper(int32_t cpIndex)
    handleSideEffect(helperCallNode);
    genTreeTop(helperCallNode);
    push(helperCallNode);
+   }
+
+static char * getTopLevelPrefixForFlattenedFields(TR_ResolvedJ9Method *owningMethod, int32_t cpIndex, int32_t &prefixLen, TR::Region &region)
+   {
+   int32_t len;
+   const char * fieldNameChars = owningMethod->fieldNameChars(cpIndex, len);
+   prefixLen = len + 1; // for '.'
+
+   char * newName = new (region) char[len+2];
+   strncpy(newName, fieldNameChars, len);
+
+   newName[len] = '.';
+   newName[len+1] = '\0';
+   return newName;
+   }
+
+void
+TR_J9ByteCodeIlGenerator::loadFlattenableInstance(int32_t cpIndex)
+   {
+   /* An example on what the tree with flattened fields looks like
+    *
+    * value NestedA {
+    *    int x;
+    *    int y;
+    *    }
+    * value NestedB {
+    *    NestedA a;
+    *    NestedA b;
+    *    }
+    * value ContainerC {
+    *    NestedB c;
+    *    NestedB d;
+    *    }
+    *
+    * method="ContainerC.getc()QNestedB;"
+    *
+    * /--- trees inserted ------------------------
+    * n10n     (  0)  treetop
+    * n9n      (  1)    newvalue  jitNewValue[#100  helper Method] [flags 0x400 0x0 ] (Identityless sharedMemory )
+    * n4n      (  1)      loadaddr  NestedB[#367  Static] [flags 0x18307 0x0 ]
+    * n5n      (  1)      iloadi  ContainerC.c.a.x I[#368  final ContainerC.c.a.x I +4] [flags 0x20603 0x200 ]
+    * n3n      (  4)        aload  <'this' parm LContainerC;>[#366  Parm] [flags 0x40000107 0x0 ] (X!=0 sharedMemory )
+    * n6n      (  1)      iloadi  ContainerC.c.a.y I[#369  final ContainerC.c.a.y I +8] [flags 0x20603 0x200 ]
+    * n3n      (  4)        ==>aload (X!=0 sharedMemory )
+    * n7n      (  1)      iloadi  ContainerC.c.b.x I[#370  final ContainerC.c.b.x I +12] [flags 0x20603 0x200 ]
+    * n3n      (  4)        ==>aload (X!=0 sharedMemory )
+    * n8n      (  1)      iloadi  ContainerC.c.b.y I[#371  final ContainerC.c.b.y I +16] [flags 0x20603 0x200 ]
+    * n3n      (  4)        ==>aload (X!=0 sharedMemory )
+    * /--- stack after ------------------------
+    * @0 n9n      (  1)  ==>newvalue (Identityless sharedMemory )
+    * ============================================================
+   */
+   TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
+
+   int len;
+   const char * fieldClassChars = owningMethod->fieldSignatureChars(cpIndex, len);
+   TR_OpaqueClassBlock * fieldClass = fej9()->getClassFromSignature(fieldClassChars, len, owningMethod);
+
+   int32_t prefixLen = 0;
+   char * fieldNamePrefix = getTopLevelPrefixForFlattenedFields(owningMethod, cpIndex, prefixLen, comp()->trMemory()->currentStackRegion());
+
+   TR_OpaqueClassBlock * containingClass = owningMethod->definingClassFromCPFieldRef(comp(), cpIndex, _methodSymbol->isStatic());
+   const TR::TypeLayout * containingClassLayout = comp()->typeLayout(containingClass);
+   size_t fieldCount = containingClassLayout->count();
+   int flattenedFieldCount = 0;
+
+   TR::Node * address = pop();
+
+   if (!address->isNonNull())
+      {
+      TR::Node * passThruNode = TR::Node::create(TR::PassThrough, 1, address);
+      genTreeTop(genNullCheck(passThruNode));
+      }
+
+   loadClassObject(fieldClass);
+
+   for (size_t idx = 0; idx < fieldCount; idx++)
+      {
+      const TR::TypeLayoutEntry &fieldEntry = containingClassLayout->entry(idx);
+
+      if (!strncmp(fieldNamePrefix, fieldEntry._fieldname, prefixLen))
+         {
+         auto * fieldSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(containingClass,
+                                                                     fieldEntry._datatype,
+                                                                     fieldEntry._offset,
+                                                                     fieldEntry._isVolatile,
+                                                                     fieldEntry._isPrivate,
+                                                                     fieldEntry._isFinal,
+                                                                     fieldEntry._fieldname,
+                                                                     fieldEntry._typeSignature);
+
+         if (comp()->getOption(TR_TraceILGen))
+            {
+            traceMsg(comp(), "Load flattened field %s\n - field[%d] name %s type %d offset %d\n",
+                  comp()->getDebug()->getName(fieldSymRef), idx, fieldEntry._fieldname,
+                  fieldEntry._datatype.getDataType(), fieldEntry._offset);
+            }
+
+         push(address);
+         loadInstance(fieldSymRef);
+
+         flattenedFieldCount++;
+         }
+      }
+
+   TR::Node * newValueNode = genNodeAndPopChildren(TR::newvalue, flattenedFieldCount + 1, symRefTab()->findOrCreateNewValueSymbolRef(_methodSymbol));
+   newValueNode->setIdentityless(true);
+   genTreeTop(newValueNode);
+   push(newValueNode);
+   genFlush(0);
+   return;
    }
 
 void
