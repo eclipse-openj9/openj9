@@ -223,12 +223,12 @@ public:
    bool addValidationRecordForCachedResolvedMethod(const TR_ResolvedMethodKey &key, TR_OpaqueMethodBlock *method);
    void cacheResolvedMethodsCallees(int32_t ttlForUnresolved = 2);
    void cacheFields();
-   void cacheImplementorMethods(std::vector<TR_OpaqueClassBlock *> &subClasses, int32_t cpIndexOrOffset, bool isInterface, int32_t ttlForUnresolved = 2);
+   int32_t collectImplementorsCapped(TR_OpaqueClassBlock *topClass, int32_t maxCount, int32_t cpIndexOrOffset, TR_YesNoMaybe useGetResolvedInterfaceMethod, TR_ResolvedMethod **implArray);
+   static void packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe);
 
 protected:
    JITServer::ServerStream *_stream;
    J9Class *_ramClass; // client pointer to RAM class
-   static void packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe);
    static void setAttributeResultFromResolvedMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, U_32 * fieldOffset, void **address, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool * unresolvedInCP, bool *result, bool isStatic);
    virtual bool getCachedFieldAttributes(int32_t cpIndex, TR_J9MethodFieldAttributes &attributes, bool isStatic);
    virtual void cacheFieldAttributes(int32_t cpIndex, const TR_J9MethodFieldAttributes &attributes, bool isStatic);
