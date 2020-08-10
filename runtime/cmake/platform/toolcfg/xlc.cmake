@@ -22,7 +22,11 @@
 
 list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -O3 -g)
 
-list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -qnortti -qsuppress=1540-1087:1540-1088:1540-1090)
+list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -qnortti)
+
+if(NOT OMR_OS_ZOS)
+	list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -qsuppress=1540-1087:1540-1088:1540-1090)
+endif()
 
 # OMR_PLATFORM_CXX_COMPILE_OPTIONS gets applied to the jit (which needs exceptions),
 # so we put these in the CMAKE_CXX_FLAGS instead
