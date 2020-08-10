@@ -1847,50 +1847,43 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::ResolvedMethod_getResolvedImplementorMethods:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, std::vector<TR_OpaqueClassBlock *>, int32_t, bool>();
-         auto owningMethod = std::get<0>(recv);
-         auto &subClasses = std::get<1>(recv);
-         int32_t cpIndexOrOffset = std::get<2>(recv);
-         bool isInterface = std::get<3>(recv);
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, int32_t, int32_t, TR_ResolvedJ9Method *, TR_YesNoMaybe>();
+         TR_OpaqueClassBlock *clazz = std::get<0>(recv);
+         int32_t maxCount = std::get<1>(recv);
+         int32_t slotOrIndex = std::get<2>(recv);
+         TR_ResolvedJ9Method *callerMethod = std::get<3>(recv);
+         TR_YesNoMaybe useGetResolvedInterfaceMethod = std::get<4>(recv);
 
-         int32_t numMethods = subClasses.size();
-         std::vector<J9Method *> ramMethods;
+         TR_ResolvedMethod *implArray[maxCount];
+         TR_PersistentClassInfo *classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, comp, true);
+         int32_t implCount =
+            TR_ClassQueries::collectImplementorsCapped(
+               classInfo,
+               implArray,
+               maxCount,
+               slotOrIndex,
+               callerMethod,
+               comp,
+               false,
+               useGetResolvedInterfaceMethod);
+
+         // pack resolved method infos and send them back to the client
          std::vector<TR_ResolvedJ9JITServerMethodInfo> methodInfos;
-         ramMethods.reserve(numMethods);
-         methodInfos.reserve(numMethods);
-
-         for (int32_t i = 0; i < numMethods; ++i)
+         std::vector<J9Method *> ramMethods;
+         if (implCount <= maxCount)
             {
-            J9Method *ramMethod;
-            TR_ResolvedJ9JITServerMethodInfo methodInfo;
-            if (isInterface)
+            // otherwise, collection failed
+            for (int32_t i = 0; i < implCount; ++i)
                {
-               ramMethod = (J9Method *) fe->getResolvedInterfaceMethod(owningMethod->getPersistentIdentifier(), subClasses[i], cpIndexOrOffset);
-               bool resolved = ramMethod && J9_BYTECODE_START_FROM_RAM_METHOD(ramMethod);
-
-               if (resolved)
-                  TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, owningMethod, fe, trMemory);
-               }
-            else
-               {
-               TR_OpaqueMethodBlock *method = fe->getResolvedVirtualMethod(subClasses[i], cpIndexOrOffset);
-               ramMethod = reinterpret_cast<J9Method *>(method);
                TR_ResolvedJ9JITServerMethodInfo methodInfo;
-               if (ramMethod)
-                  TR_ResolvedJ9JITServerMethod::createResolvedMethodMirror(methodInfo, method, 0, owningMethod, fe, trMemory);
+               TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, (TR_ResolvedJ9Method *) implArray[i], fe);
+               methodInfos.push_back(methodInfo);
+               ramMethods.push_back(static_cast<TR_ResolvedJ9Method *>(implArray[i])->ramMethod());
                }
-            ramMethods.push_back(ramMethod);
-            methodInfos.push_back(methodInfo);
-
-            // First unresolved method found, stop the walk.
-            // We will still cache this unresolved method,
-            // so that server doesn't need to make an extra remote call.
-            if (!std::get<0>(methodInfo).remoteMirror)
-               break;
             }
-         client->write(response, ramMethods, methodInfos);
-         break;
+         client->write(response, methodInfos, ramMethods, implCount);
          }
+         break;
       case MessageType::ResolvedRelocatableMethod_createResolvedRelocatableJ9Method:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, J9Method *, int32_t, uint32_t>();
