@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,9 @@ import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagConstant;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagHasFieldAnnotations;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagHasGenericSignature;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldSizeDouble;
+import static com.ibm.j9ddr.vm29.structure.J9RecordComponentFlags.J9RecordComponentFlagHasGenericSignature;
+import static com.ibm.j9ddr.vm29.structure.J9RecordComponentFlags.J9RecordComponentFlagHasAnnotations;
+import static com.ibm.j9ddr.vm29.structure.J9RecordComponentFlags.J9RecordComponentFlagHasTypeAnnotations;
 
 import java.nio.ByteOrder;
 
@@ -84,6 +87,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodTypeRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMNameAndSignaturePointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ROMRecordComponentShapePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMStringRefPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9MethodDebugInfoHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
@@ -94,6 +98,7 @@ import com.ibm.j9ddr.vm29.structure.J9ExceptionInfo;
 import com.ibm.j9ddr.vm29.structure.J9MethodDebugInfo;
 import com.ibm.j9ddr.vm29.structure.J9ROMClass;
 import com.ibm.j9ddr.vm29.structure.J9ROMConstantPoolItem;
+import com.ibm.j9ddr.vm29.structure.J9ROMRecordComponentShape;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.IClassWalkCallbacks.SlotType;
 import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.U16;
@@ -687,6 +692,16 @@ public class RomClassWalker extends ClassWalker {
 			allSlotsInAnnotationDo(U32Pointer.cast(cursor.get()), "classAnnotations");
 			cursor = cursor.add(1);
 		}
+		if (romClass.optionalFlags().allBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_RECORD_ATTRIBUTE)) {
+			classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "recordAttributeSRP");
+			recordAttributeDo(U32Pointer.cast(cursor.get()));
+			cursor = cursor.add(1);
+		}
+		if (romClass.optionalFlags().allBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_PERMITTEDSUBCLASSES_ATTRIBUTE)) {
+			classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "permittedSubclassesAttributeSRP");
+			permittedSubclassAttributeDo(U32Pointer.cast(cursor.get()));
+			cursor = cursor.add(1);
+		}
 
 		classWalkerCallback.addSection(clazz, optionalInfo, cursor.getAddress() - optionalInfo.getAddress(), "optionalInfo", true);
 	}
@@ -846,6 +861,72 @@ public class RomClassWalker extends ClassWalker {
 		}
 		return 3;
 	}
+
+	void recordAttributeDo(U32Pointer attribute) throws CorruptDataException
+	{
+		if (attribute.isNull()) {
+			return;
+		}
+		U32Pointer attributeStart = attribute;
+		int numRecordComponents = attribute.at(0).intValue();
+		classWalkerCallback.addSlot(clazz, SlotType.J9_U32, attribute, "numberRecordComponents");
+		attribute = attribute.add(1);
+		for (int i = 0; i < numRecordComponents; i++) {
+			J9ROMRecordComponentShapePointer recordComponent = J9ROMRecordComponentShapePointer.cast(attribute);
+			attribute = U32Pointer.cast(recordComponent.add(1));
+
+			J9ROMNameAndSignaturePointer recordComponentNAS = recordComponent.nameAndSignature();
+			classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, recordComponentNAS.nameEA(), "name");
+			classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, recordComponentNAS.signatureEA(), "signature");
+			classWalkerCallback.addSlot(clazz, SlotType.J9_U32, recordComponent.attributeFlagsEA(), "attributeFlags");
+			classWalkerCallback.addSection(clazz, recordComponent, J9ROMRecordComponentShape.SIZEOF, "recordComponentShape", true);
+
+			/* process variable attributes */
+			UDATA attributeFlags = recordComponent.attributeFlags();
+
+			if (attributeFlags.anyBitsIn(J9RecordComponentFlagHasGenericSignature)) {
+				classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, attribute, "recordComponentGenSigUTF8");
+				attribute = attribute.add(1);
+			}
+			if (attributeFlags.anyBitsIn(J9RecordComponentFlagHasAnnotations)) {
+				int increment = allSlotsInAnnotationDo(attribute, "recordComponentAnnotation");
+				attribute = attribute.add(increment);
+			}
+			if (attributeFlags.anyBitsIn(J9RecordComponentFlagHasTypeAnnotations)) {
+				int increment = allSlotsInAnnotationDo(attribute, "recordComponentTypeAnnotation");
+				attribute = attribute.add(increment);
+			}
+		}
+		/* calculate RecordComponent padding */
+		int recordComponentLength = (int)(attribute.getAddress() - attributeStart.getAddress());
+		int padding = recordComponentLength % U32.SIZEOF;
+		if (0 != padding) {
+			padding = U32.SIZEOF - padding;
+		}
+		U8Pointer attributeU8 = U8Pointer.cast(attribute);
+		for (int i = 0; i < padding; i++) {
+			classWalkerCallback.addSlot(clazz, SlotType.J9_U8, attributeU8, "recordComponent padding");
+			attributeU8 = attributeU8.add(1);
+		}
+		classWalkerCallback.addSection(clazz, attributeStart, recordComponentLength + padding, "recordComponent", true);
+	}
+
+	void permittedSubclassAttributeDo(U32Pointer attribute) throws CorruptDataException
+	{
+		if (attribute.isNull()) {
+			return;
+		}
+		U32Pointer attributeStart = attribute;
+		int numPermittedSubclasses = attribute.at(0).intValue();
+		classWalkerCallback.addSlot(clazz, SlotType.J9_U32, attribute, "numberPermittedSubclasses");
+		attribute = attribute.add(1);
+		for (int i = 0; i < numPermittedSubclasses; i++) {
+			classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, attribute, "permittedSubclassName");
+			attribute = attribute.add(1);
+		}
+		classWalkerCallback.addSection(clazz, attributeStart, attribute.getAddress() - attributeStart.getAddress(), "permittedSubclass", true);
+	}
+
 	int allSlotsInAnnotationDo(U32Pointer annotation, String annotationSectionName) throws CorruptDataException
 	{
 		int increment = 0;
