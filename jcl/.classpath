@@ -30,7 +30,6 @@
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/jdk.attach/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/jdk.jcmd/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/jdk.management/share/classes"/>
-	<classpathentry excluding="**/module-info.java" kind="src" path="src/ibm.jzos/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.cuda/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.dataaccess/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.dtfj/share/classes"/>
