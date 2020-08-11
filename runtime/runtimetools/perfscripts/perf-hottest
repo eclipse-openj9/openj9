@@ -1,0 +1,222 @@
+#!/usr/bin/env python
+
+# ------------------------------------------------------------------------
+ # Copyright (c) 2020, 2020 IBM Corp. and others
+ #
+ # This program and the accompanying materials are made available under
+ # the terms of the Eclipse Public License 2.0 which accompanies this
+ # distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ # or the Apache License, Version 2.0 which accompanies this distribution and
+ # is available at https://www.apache.org/licenses/LICENSE-2.0.
+ #
+ # This Source Code may also be made available under the following
+ # Secondary Licenses when the conditions for such availability set
+ # forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ # General Public License, version 2 with the GNU Classpath
+ # Exception [1] and GNU General Public License, version 2 with the
+ # OpenJDK Assembly Exception [2].
+ #
+ # [1] https://www.gnu.org/software/classpath/license.html
+ # [2] http://openjdk.java.net/legal/assembly-exception.html
+ #
+ # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+# ---------------------------------------------------------------------------
+#
+#   The performance profiling tool PERF generates data that can help to identify any performance issue in the Java JDKs. 
+#   However this data is kernel dependent, and is only readable from the machine where the PERF tool was run.
+#   This script helps to parse the data that PERF generated on the user machine, and output the result in a text format, 
+#   which makes it easy to transfer and share. 
+#
+#   Usage: perf script | perf-hottest <attr> [<attr>=<regex>...]
+#        attr: attributes that contain information about the compiler. Attributes include pc(program counter), 
+#              sym(function symbol), offs(offset within a funtion),so (shared object), thread (thread name)
+#        Examples: 
+#          perf script | <path-to-script> perf-hottest sym
+#          perf script -G -F comm,tid,ip,sym,dso | <path-to-script> perf-hottest sym
+#
+#   This script checks to make sure the following conditions:
+#    1) the user has successfully taken perf.data, i.e. perf.data file exists
+#    2) the perf-<pid>.map file is located under /tmp.
+#    3) the version of Perf tool is up-to-date. Older Perf tool will output different content with different format, 
+#       which are not compatible with this script.
+
+from __future__ import print_function
+from collections import defaultdict, namedtuple
+import re, sys, textwrap, subprocess, os.path
+from os import listdir
+
+try:
+    from builtins import hex as _builtin_hex
+except ImportError:
+    from __builtin__ import hex as _builtin_hex
+
+Sample = namedtuple('Sample', 'pc sym offs so thread')
+
+def main(args):
+    prerequisite_checks()
+
+    if len(args) == 0:
+        cmdline_error()
+
+    if args[0] in ('-h', '--help'):
+        if len(args) == 1:
+            usage(out=sys.stdout, status=0)
+        else:
+            cmdline_error()
+
+    attrs = set('pc sym offs so thread'.split())
+    group_by_attr = args[0]
+    if group_by_attr not in attrs:
+        cmdline_error()
+
+    pred = lambda s: True
+    def pred_compose(prev, attr, attr_re):
+        return lambda s: (prev(s) and attr_re.search(str(getattr(s, attr))))
+
+    for arg in args[1:]:
+        if '=' not in arg:
+            printerr('error: filter argument not of the form <attr>=<regex>:', arg)
+            cmdline_error()
+
+        cur_filter_attr, cur_filter_re_src = arg.split('=', 1)
+        try:
+            cur_filter_re = re.compile(cur_filter_re_src)
+        except re.error:
+            printerr('error: invalid regular expression:', cur_filter_re_src)
+            cmdline_error()
+
+        pred = pred_compose(pred, cur_filter_attr, cur_filter_re)
+
+    samples = (s for s in read_samples(sys.stdin) if pred(s))
+    counts = counts_by(group_by_attr, samples)
+    total_count = sum(n for key, n in counts.iteritems())
+    assert (total_count == 0) == (len(counts) == 0)
+
+    if len(counts) > 0:
+        table = []
+        for key, n in sorted(counts.iteritems(), key=lambda pair: pair[1]):
+            pct = 100.0 * float(n) / float(total_count)
+            table.append((n, '{0:6.2f}%'.format(pct), key))
+
+        hex_key_fmt = '-0{width}x'
+        key_fmt = ''
+        if group_by_attr == 'pc':
+            key_fmt = hex_key_fmt
+        elif group_by_attr == 'offs' and '?' not in counts:
+            key_fmt = hex_key_fmt
+        format_table(('-{width}', '', key_fmt), table)
+
+    print('', total_count, '        --total--')
+
+def cmdline_error():
+    usage(out=sys.stderr, status=1)
+
+def printerr(*args):
+    print('error:', *args, out=sys.stderr)
+
+def usage(out, status):
+    msg = textwrap.dedent('''\
+        usage: perf script | perf-hottest <attr> [<attr>=<regex>...]
+        attr: attributes that contain information about the compiler. 
+        attr includes: pc (program counter), sym (function symbol), offs (offset within a function), so (shared object), thread (thread name)
+    	Example:perf script | <path-to-script>/perf-hottest sym 
+        perf script -G -F comm,tid,ip,sym,dso | <path-to-script>/perf-hottest sym
+    ''')
+    print(msg, file=out)
+    sys.exit(status)
+
+
+def prerequisite_checks():
+    check_perf_version()
+    check_perfdata_exist()
+    check_perfmap_file_exist()
+
+def check_perf_version():
+    bashCommand = "perf --version"
+    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+
+    requiredMajorV = 3
+    requiredMinorV = 5
+    match = re.search(r'version (\d+)\.(\d+)\.', output)
+
+    if match:
+        majorV = int(match.group(1))
+        minorV = int(match.group(2))
+        print ("The Perf tool version is: ", majorV, ".",minorV)
+        if majorV < requiredMajorV or (majorV == requiredMajorV and minorV < requiredMinorV):
+            print ("The Perf tool installed is too old, please upgrade to at least ", requiredMajorV, ".", requiredMinorV)
+            sys.exit(-1)
+
+def check_perfdata_exist():
+    perffile='perf.data' 
+    if os.path.exists(perffile):
+        print ("The ", perffile, " file exists.")
+    else:  
+        print ("The ", perffile,  " doesn't exist, or has a different name perf-<pid>.data. Please update the file name to", perfile)
+        sys.exit(-1)
+
+
+def check_perfmap_file_exist():
+    for filename in os.listdir('/tmp/'):
+        match = re.search(r'perf-\d+\.map', filename)
+        if match:
+            print ("The map file exists.")
+            return
+    print ("The /tmp/perf-pid.map file doesn't exist.")
+    sys.exit(-1)
+
+def read_samples(f):
+    sample_re = r'''
+        \A
+        \s*
+        (?P<thread> \S | \S .* \S )     # thread name
+        \s+
+        (?: \d+ )
+	(?: \s+ | \s+\[\d+\]\s+)       # space or something like " [000] " // core id 
+        \s*
+	(?P<pc> [0-9a-fA-F]+ )          # program counter
+        \s+
+	(?P<sym> \S | \S .+? \S )       # function symbol
+        (?P<offs> \+ 0x [0-9a-fA-F]+ )? # offset within function
+        \s+
+        \(
+        (?P<so> [^() \t]* )             # shared object
+        \)
+        \s*
+        \Z
+    '''
+    sample_re = re.compile(sample_re, re.VERBOSE)
+
+    for line in f:
+        m = sample_re.match(line)
+        if m is not None:
+            pc, sym, offs, so, thread = m.group('pc', 'sym', 'offs', 'so', 'thread')
+            if sym == '[unknown]':
+                sym = '[unknown:{0}]'.format(so)
+
+            offs = int(offs, 16) if offs else '?'
+            yield Sample(int(pc, 16), sym, offs, so, thread)
+
+def counts_by(by, samples):
+    c = defaultdict(int)
+    for s in samples:
+        c[getattr(s, by)] += 1
+    return c
+
+def format_table(formats, rows):
+    widths = []
+    for i, f in enumerate(formats):
+        f = '{{0:{0}}}'.format(f.format(width=''))
+        widths.append(max(len(f.format(row[i])) for row in rows))
+
+    row_fmt = ' ' + ' '.join(
+        '{{{0}:{1}}}'.format(i, f.format(width=w))
+        for i, (f, w) in enumerate(zip(formats, widths)))
+
+    for row in rows:
+        print(row_fmt.format(*row))
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
+
