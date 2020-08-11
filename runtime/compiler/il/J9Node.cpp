@@ -298,8 +298,8 @@ J9::Node::processJNICall(TR::TreeTop * callNodeTreeTop, TR::ResolvedMethodSymbol
       }
 #endif
 
-   if (comp->canTransformUnsafeCopyToArrayCopy() &&
-       (methodSymbol->getRecognizedMethod() == TR::sun_misc_Unsafe_copyMemory))
+   if (comp->canTransformUnsafeCopyToArrayCopy()
+         && self()->isUnsafeCopyMemoryIntrinsic())
       {
       return self();
       }
@@ -2209,6 +2209,27 @@ J9::Node::setDontInlinePutOrderedCall()
          _flags.set(dontInlineUnsafePutOrderedCall);
       }
 
+   }
+
+bool
+J9::Node::isUnsafeCopyMemoryIntrinsic()
+   {
+   if (self()->getOpCode().isCall() && self()->getSymbol()->isMethod())
+      {
+      TR::MethodSymbol *symbol = self()->getSymbol()->getMethodSymbol();
+      if (symbol && symbol->isNative())
+         {
+         switch (symbol->getRecognizedMethod())
+            {
+            case TR::sun_misc_Unsafe_copyMemory:
+            case TR::jdk_internal_misc_Unsafe_copyMemory0:
+               return true;
+            default:
+               break;
+            }
+         }
+      }
+   return false;
    }
 
 bool
