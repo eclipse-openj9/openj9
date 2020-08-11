@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -290,6 +290,70 @@ J9::IL::opCodeForCorrespondingIndirectStore(TR::ILOpCodes storeOpCode)
    return TR::BadILOp;
    }
 
+TR::ILOpCodes
+J9::IL::opCodeForCorrespondingDirectLoad(TR::ILOpCodes loadOpCode)
+   {
+
+   if (loadOpCode <= TR::LastOMROp)
+      {
+      return OMR::IL::opCodeForCorrespondingDirectLoad(loadOpCode);
+      }
+
+   switch (loadOpCode)
+      {
+      case TR::dfload: return TR::dfstore;
+      case TR::ddload: return TR::ddstore;
+      case TR::deload: return TR::destore;
+      case TR::pdload: return TR::pdstore;
+      case TR::zdload: return TR::zdstore;
+      case TR::zdsleLoad: return TR::zdsleStore;
+      case TR::zdslsLoad: return TR::zdslsStore;
+      case TR::zdstsLoad: return TR::zdstsStore;
+      case TR::udLoad: return TR::udStore;
+      case TR::udslLoad: return TR::udslStore;
+      case TR::udstLoad: return TR::udstStore;
+      case TR::irsload: return TR::irsstore;
+      case TR::iriload: return TR::iristore;
+      case TR::irlload: return TR::irlstore;
+      default: return OMR::IL::opCodeForCorrespondingDirectLoad(loadOpCode);
+      }
+
+   TR_ASSERT(0, "no corresponding store opcode for specified load opcode");
+   return TR::BadILOp;
+   }
+
+
+TR::ILOpCodes
+J9::IL::opCodeForCorrespondingDirectStore(TR::ILOpCodes storeOpCode)
+   {
+
+   if (storeOpCode <= TR::LastOMROp)
+      {
+      return OMR::IL::opCodeForCorrespondingDirectStore(storeOpCode);
+      }
+
+   switch (storeOpCode)
+      {
+      case TR::dfstore: return TR::dfload;
+      case TR::ddstore: return TR::ddload;
+      case TR::destore: return TR::deload;
+      case TR::pdstore: return TR::pdload;
+      case TR::zdstore: return TR::zdload;
+      case TR::zdsleStore: return TR::zdsleLoad;
+      case TR::zdslsStore: return TR::zdslsLoad;
+      case TR::zdstsStore: return TR::zdstsLoad;
+      case TR::udStore: return TR::udLoad;
+      case TR::udslStore: return TR::udslLoad;
+      case TR::udstStore: return TR::udstLoad;
+      case TR::irsstore: return TR::irsload;
+      case TR::iristore: return TR::iriload;
+      case TR::irlstore: return TR::irlload;
+      default: return OMR::IL::opCodeForCorrespondingDirectStore(storeOpCode);
+      }
+
+   TR_ASSERT(0, "no corresponding load opcode for specified store opcode");
+   return TR::BadILOp;
+   }
 
 TR::ILOpCodes
 J9::IL::opCodeForConst(TR::DataType dt)
