@@ -36,11 +36,14 @@
 
 #if defined(TR_TARGET_POWER)
 
+// Target address prediction is based on 32-byte blocks on POWER
+// we adjust the trampoline size to align with this block-size
+// regardless 32bit or 64bit.
+#define TRAMPOLINE_SIZE       32
+
 #if defined(TR_TARGET_64BIT)
-#define TRAMPOLINE_SIZE       28
 #define OFFSET_IPIC_TO_CALL   36
 #else
-#define TRAMPOLINE_SIZE       16
 #define OFFSET_IPIC_TO_CALL   32
 #endif
 
@@ -52,13 +55,12 @@ void ppcCodeCacheConfig(int32_t ccSizeInByte, int32_t *numTempTrampolines)
    {
    // Estimated: 2KB per method, with 10% being recompiled(multi-times)
 
-   *numTempTrampolines = ccSizeInByte>>12;
+   *numTempTrampolines = TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P10) ? 0 : (ccSizeInByte>>13);
    }
 
 void ppcCreateHelperTrampolines(uint8_t *trampPtr, int32_t numHelpers)
    {
    TR::CodeCacheConfig &config = TR::CodeCacheManager::instance()->codeCacheConfig();
-   static bool customP4 =  feGetEnv("TR_CustomP4Trampoline") ? true : false;
 
    uint8_t *bufferStart = trampPtr, *buffer;
    for (int32_t cookie=1; cookie<numHelpers; cookie++)
@@ -69,14 +71,54 @@ void ppcCreateHelperTrampolines(uint8_t *trampPtr, int32_t numHelpers)
       buffer = bufferStart;
 
 #if defined(TR_TARGET_64BIT)
-         // ld gr11, [grPTOC, 8*(cookie-1)]
-         *(int32_t *)buffer = 0xe9700000 | (((cookie-1)*sizeof(intptr_t)) & 0x0000ffff);
+      if (!TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+         {
+         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableTOC))
+            {
+            // ld gr11, [grPTOC, 8*(cookie-1)]
+            *(int32_t *)buffer = 0xe9700000 | (((cookie-1)*sizeof(intptr_t)) & 0x0000ffff);
+            buffer += 4;
+            }
+         else
+            {
+            // only gr11 is available for helper dispatch
+
+            // lis gr11, upper 16-bits
+            *(int32_t *)buffer = 0x3d600000 | ((helper>>48) & 0x0000ffff);
+            buffer += 4;
+
+            // oris gr11, gr11, bits 16--31
+            *(int32_t *)buffer = 0x656b0000 | ((helper>>32) & 0x0000ffff);
+            buffer += 4;
+
+            // rldicr gr11, gr11, 32, 31
+            *(int32_t *)buffer = 0x796b07c6;
+            buffer += 4;
+
+            // oris gr11, gr11, bits 32-47
+            *(int32_t *)buffer = 0x656b0000 | ((helper>>16) & 0x0000ffff);
+            buffer += 4;
+
+            // ori gr11, gr11, bits 48--63
+            *(int32_t *)buffer = 0x616b0000 | (helper & 0x0000ffff);
+            buffer += 4;
+            }
+         }
+      else
+         {
+         // pld gr11, [,16], 1 (PC-relative)
+         *(int32_t *)buffer = 0x04100000;
          buffer += 4;
+         *(int32_t *)buffer = 0xe5600010;
+         buffer += 4;
+         }
 
 #else
+      if (!TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+         {
          // For POWER4 which has a problem with the CTR/LR cache when the upper
          // bits are not 0 extended.. Use li/oris when the 16th bit is off
-         if (!(helper & 0x00008000) )
+         if (!(helper & 0x00008000))
             {
             // li r11, lower
             *(int32_t *)buffer = 0x39600000 | (helper & 0x0000ffff);
@@ -95,16 +137,22 @@ void ppcCreateHelperTrampolines(uint8_t *trampPtr, int32_t numHelpers)
             *(int32_t *)buffer = 0x396b0000 | (helper & 0x0000ffff);
             buffer += 4;
 
-            // Now, if highest bit is on we need to clear the sign extend bits on 64bit CPUs
-            // ** POWER4 pref fix **
-            if ((helper & 0x80000000) && (!customP4 || TR::comp()->target().cpu.is(OMR_PROCESSOR_PPC_GP)))
+            if (helper & 0x80000000)
                {
                // rlwinm r11,r11,sh=0,mb=0,me=31
                *(int32_t *)buffer = 0x556b003e;
                buffer += 4;
                }
             }
-
+         }
+      else
+         {
+         // plwz gr11, [,16], 1 (PC-relative)
+         *(int32_t *)buffer = 0x06100000;
+         buffer += 4;
+         *(int32_t *)buffer = 0x81600010;
+         buffer += 4;
+         }
 #endif
 
       // mtctr r11
@@ -114,46 +162,61 @@ void ppcCreateHelperTrampolines(uint8_t *trampPtr, int32_t numHelpers)
       // bctr
       *(int32_t *)buffer = 0x4e800420;
       buffer += 4;
-   }
+
+      if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+         {
+         *(intptr_t *)buffer = helper;
+         }
+      }
+
 #ifdef TR_HOST_POWER
    ppcCodeSync(trampPtr, config.trampolineCodeSize() * numHelpers);
 #endif
-
    }
 
 void ppcCreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
    {
-   static bool customP4 =  feGetEnv("TR_CustomP4Trampoline") ? true : false;
    uint8_t *buffer = (uint8_t *)trampPtr;
    J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    intptr_t dispatcher = (intptr_t)((uint8_t *)startPC + linkInfo->getReservedWord());
 
    // Take advantage of both gr0 and gr11 ...
 #if defined(TR_TARGET_64BIT)
-   // lis gr0, upper 16-bits
-   *(int32_t *)buffer = 0x3c000000 | ((dispatcher>>48) & 0x0000ffff);
-   buffer += 4;
-
-   // lis gr11, bits 32--47
-   *(int32_t *)buffer = 0x3d600000 | ((dispatcher>>16) & 0x0000ffff);
-   buffer += 4;
-
-   // ori gr0, gr0, bits 16-31
-   *(int32_t *)buffer = 0x60000000 | ((dispatcher>>32) & 0x0000ffff);
-   buffer += 4;
-
-   // ori gr11, gr11, bits 48--63
-   *(int32_t *)buffer = 0x616b0000 | (dispatcher & 0x0000ffff);
-   buffer += 4;
-
-   // rldimi gr11, gr0, 32, 0
-   *(int32_t *)buffer = 0x780b000e;
-   buffer += 4;
-#else
-   // For POWER4 which has a problem with the CTR/LR cache when the upper
-   // bits are not 0 extended. Use li/oris when the 16th bit is off
-   if (customP4)
+   if (!TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
       {
+      // lis gr0, upper 16-bits
+      *(int32_t *)buffer = 0x3c000000 | ((dispatcher>>48) & 0x0000ffff);
+      buffer += 4;
+
+      // lis gr11, bits 32--47
+      *(int32_t *)buffer = 0x3d600000 | ((dispatcher>>16) & 0x0000ffff);
+      buffer += 4;
+
+      // ori gr0, gr0, bits 16-31
+      *(int32_t *)buffer = 0x60000000 | ((dispatcher>>32) & 0x0000ffff);
+      buffer += 4;
+
+      // ori gr11, gr11, bits 48--63
+      *(int32_t *)buffer = 0x616b0000 | (dispatcher & 0x0000ffff);
+      buffer += 4;
+
+      // rldimi gr11, gr0, 32, 0
+      *(int32_t *)buffer = 0x780b000e;
+      buffer += 4;
+      }
+   else
+      {
+      // pld gr11, [,16], 1 (PC-relative)
+      *(int32_t *)buffer = 0x04100000;
+      buffer += 4;
+      *(int32_t *)buffer = 0xe5600010;
+      buffer += 4;
+      }
+#else
+   if (!TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+      {
+      // For POWER4 which has a problem with the CTR/LR cache when the upper
+      // bits are not 0 extended. Use li/oris when the 16th bit is off
       if (!(dispatcher & 0x00008000))
          {
          // li r11, lower
@@ -167,16 +230,15 @@ void ppcCreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
       else
          {
          // lis gr11, upper
-         *(int32_t *)buffer = 0x3d600000 | (((dispatcher>>16) + (dispatcher&(1<<15)?1:0)) & 0x0000ffff);
+         *(int32_t *)buffer = 0x3d600000 |
+            (((dispatcher>>16) + (dispatcher&(1<<15)?1:0)) & 0x0000ffff);
          buffer += 4;
 
          // addi gr11, gr11, lower
          *(int32_t *)buffer = 0x396b0000 | (dispatcher & 0x0000ffff);
          buffer += 4;
 
-         // Now, if highest bit is on we need to clear the sign extend bits on 64bit CPUs
-         // ** POWER4 pref fix **
-         if ((dispatcher & 0x80000000) && (customP4 && TR::comp()->target().cpu.is(OMR_PROCESSOR_PPC_GP)))
+         if (dispatcher & 0x80000000)
             {
             // rlwinm r11,r11,sh=0,mb=0,me=31
             *(int32_t *)buffer = 0x556b003e;
@@ -186,12 +248,10 @@ void ppcCreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
       }
    else
       {
-      // lis gr11, upper
-      *(int32_t *)buffer = 0x3d600000 | (((dispatcher>>16) + (dispatcher&(1<<15)?1:0)) & 0x0000ffff);
+      // plwz gr11, [,16], 1 (PC-relative)
+      *(int32_t *)buffer = 0x06100000;
       buffer += 4;
-
-      // addi gr11, gr11, lower
-      *(int32_t *)buffer = 0x396b0000 | (dispatcher & 0x0000ffff);
+      *(int32_t *)buffer = 0x81600010;
       buffer += 4;
       }
 #endif
@@ -202,6 +262,12 @@ void ppcCreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
 
    // bcctr
    *(int32_t *)buffer = 0x4e800420;
+   buffer += 4;
+
+   if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+      {
+      *(intptr_t *)buffer = dispatcher;
+      }
 
 #if defined(TR_HOST_POWER)
    TR::CodeCacheConfig &config = TR::CodeCacheManager::instance()->codeCacheConfig();
@@ -322,33 +388,52 @@ bool ppcCodePatching(void *method, void *callSite, void *currentPC, void *curren
             }
          else
             {
-            void *newTramp = mcc_replaceTrampoline(reinterpret_cast<TR_OpaqueMethodBlock *>(method), callSite, currentTramp, currentPC, newPC, true);
+            // On POWER10 or later, the trampoline can be patched in place atomically. No need temporary trampoline anymore
+
+            void *newTramp = mcc_replaceTrampoline(reinterpret_cast<TR_OpaqueMethodBlock *>(method), callSite, currentTramp, currentPC,
+                                newPC, !TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P10));
             if (newTramp == NULL)
                {
                //if (currentTramp == NULL)
                   //FIXME we need an assume for runtime as well - TR_ASSERT(0, "This is an internal error.\n");
                return false;
                }
-            ppcCreateMethodTrampoline(newTramp, newPC, method);
+
+            // currentTramp==NULL or newTramp is a temporary trampoline
+            if (newTramp != currentTramp)
+               ppcCreateMethodTrampoline(newTramp, newPC, method);
+
             if (currentTramp == NULL)
                {
                distance = (uint8_t *)newTramp - patchAddr;
                }
             else
                {
-               if (currentDistance != ((uint8_t *)currentTramp - patchAddr))
+               if (currentTramp == newTramp)
                   {
-                  oldBits |= ((uint8_t *)currentTramp - patchAddr) & 0x03fffffc;
-                  *(int32_t *)patchAddr = oldBits;
-#if defined(TR_HOST_POWER)
-                  ppcCodeSync(patchAddr, 4);
-#endif
-                  }
+                  // this effectively is: we are on POWER10 or later, and we can patch the trampoline in place
 
-               patchAddr = (uint8_t *)currentTramp;
-               distance = (uint8_t *)newTramp - patchAddr;
-               currentDistance = 0;
-               oldBits = 0x48000000;
+                  *(uint8_t **)((uint8_t *)currentTramp + 16) = entryAddress;
+                  distance = (uint8_t *)currentTramp - patchAddr;
+                  }
+               else
+                  {
+                  // this effectively is: we are on pre-POWER10, and we need to take care of temporary trampolines
+
+                  if (currentDistance != ((uint8_t *)currentTramp - patchAddr))
+                     {
+                     oldBits |= ((uint8_t *)currentTramp - patchAddr) & 0x03fffffc;
+                     *(int32_t *)patchAddr = oldBits;
+#if defined(TR_HOST_POWER)
+                     ppcCodeSync(patchAddr, 4);
+#endif
+                     }
+
+                  patchAddr = (uint8_t *)currentTramp;
+                  distance = (uint8_t *)newTramp - patchAddr;
+                  currentDistance = 0;
+                  oldBits = 0x48000000;
+                  }
                }
             }
          }
@@ -459,20 +544,8 @@ bool ppcCodePatching(void *method, void *callSite, void *currentPC, void *curren
 
 void ppcCodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *numHelpers, int32_t* CCPreLoadedCodeSize)
    {
-   static bool customP4 =  feGetEnv("TR_CustomP4Trampoline") ? true : false;
-
-#if defined(TR_TARGET_64BIT)
    *trampolineSize = TRAMPOLINE_SIZE;
-#else
-   if (customP4)
-      {
-      *trampolineSize = TR::comp()->target().cpu.is(OMR_PROCESSOR_PPC_GP) ? TRAMPOLINE_SIZE + 4 : TRAMPOLINE_SIZE;
-      }
-   else
-      {
-      *trampolineSize = TRAMPOLINE_SIZE + 4;
-      }
-#endif
+
    //TR::CodeCacheConfig &config = TR::CodeCacheManager::instance()->codeCacheConfig();
    //fprintf(stderr, "Processor Offset: %d\n", portLibCall_getProcessorType() - TR_FirstPPCProcessor);
    //fprintf(stderr, "Trampoline Size: %d, %d\n", *trampolineSize, config.trampolineCodeSize);

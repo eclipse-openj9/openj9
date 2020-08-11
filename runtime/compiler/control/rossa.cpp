@@ -1310,6 +1310,8 @@ onLoadInternal(
    // Now that the options have been processed we can initialize the RuntimeAssumptionTables
    // If we cannot allocate various runtime assumption hash tables, fail the JVM
 
+   fe->initializeSystemProperties();
+
    // Allocate trampolines for z/OS 64-bit
 #if defined(J9ZOS390)
    if (TR::Options::getCmdLineOptions()->getOption(TR_EnableRMODE64) && !isQuickstart)
@@ -1466,8 +1468,6 @@ onLoadInternal(
       }
 
    jitConfig->thunkLookUpNameAndSig = &j9ThunkLookupNameAndSig;
-
-   fe->initializeSystemProperties();
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get();
 
