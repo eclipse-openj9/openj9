@@ -464,8 +464,8 @@ x86-64_windows:
     8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1g-x86_64-VS2013'
     11: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1g-x86_64-VS2017'
     14: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1g-x86_64-VS2017'
-    15: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1g-x86_64-VS2017'
-    next: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1g-x86_64-VS2017'
+    15: '--with-toolchain-version=2019 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1g-x86_64-VS2019'
+    next: '--with-toolchain-version=2019 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1g-x86_64-VS2019'
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
   build_env:
