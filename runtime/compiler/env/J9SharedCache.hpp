@@ -331,6 +331,32 @@ public:
 
    virtual J9SharedClassCacheDescriptor *getCacheDescriptorList();
 
+protected:
+   /**
+    * \brief Helper method; used to check if a pointer is within the SCC
+    *
+    * \param[in] cacheDesc the J9SharedClassCacheDescriptor for the cache
+    * \param[in] ptr The pointer to check
+    * \return True if ptr is within the SCC, false otherwise
+    */
+   static bool isPointerInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
+
+   /**
+    * \brief Helper method; used to check if an offset is within the SCC
+    *
+    * \param[in] cacheDesc the J9SharedClassCacheDescriptor for the cache
+    * \param[in] offset the offset to check
+    * \return True if offset is within the SCC, false otherwise
+    */
+   static bool isOffsetInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset);
+
+   static inline bool isOffsetFromStart(uintptr_t offset) { return ((offset & OFFSET_FROM_END) != OFFSET_FROM_END); }
+   static inline bool isOffsetFromEnd(uintptr_t offset) { return ((offset & OFFSET_FROM_END) == OFFSET_FROM_END); }
+   static inline uintptr_t encodeOffsetFromStart(uintptr_t offset) { return (offset << 1); }
+   static inline uintptr_t decodeOffsetFromStart(uintptr_t offset) { return (offset >> 1); }
+   static inline uintptr_t encodeOffsetFromEnd(uintptr_t offset) { return ((offset << 1) | OFFSET_FROM_END); }
+   static inline uintptr_t decodeOffsetFromEnd(uintptr_t offset) { return (offset >> 1); }
+
 private:
    // This class is intended to be a POD; keep it simple.
    struct SCCHint
@@ -367,13 +393,6 @@ private:
 
    bool romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & chainPtr, UDATA *chainEnd);
    UDATA *findChainForClass(J9Class *clazz, const char *key, uint32_t keyLength);
-
-   static inline bool isOffsetFromStart(uintptr_t offset) { return ((offset & OFFSET_FROM_END) != OFFSET_FROM_END); }
-   static inline bool isOffsetFromEnd(uintptr_t offset) { return ((offset & OFFSET_FROM_END) == OFFSET_FROM_END); }
-   static inline uintptr_t encodeOffsetFromStart(uintptr_t offset) { return (offset << 1); }
-   static inline uintptr_t decodeOffsetFromStart(uintptr_t offset) { return (offset >> 1); }
-   static inline uintptr_t encodeOffsetFromEnd(uintptr_t offset) { return ((offset << 1) | OFFSET_FROM_END); }
-   static inline uintptr_t decodeOffsetFromEnd(uintptr_t offset) { return (offset >> 1); }
 
    /**
     * \brief Helper Method; Converts an offset into the ROMClass section into a pointer.
@@ -448,30 +467,12 @@ private:
    bool validateInterfacesInClassChain(TR_OpaqueClassBlock *clazz, UDATA * & chainPtr, UDATA *chainEnd);
 
    /**
-    * \brief Helper method; used to check if a pointer is within the SCC
-    *
-    * \param[in] cacheDesc the J9SharedClassCacheDescriptor for the cache
-    * \param[in] ptr The pointer to check
-    * \return True if ptr is within the SCC, false otherwise
-    */
-   static bool isPointerInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
-
-   /**
-    * \brief Helper method; used to check if an offset is within the SCC
-    *
-    * \param[in] cacheDesc the J9SharedClassCacheDescriptor for the cache
-    * \param[in] offset the offset to check
-    * \return True if offset is within the SCC, false otherwise
-    */
-   static bool isOffsetInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset);
-
-   /**
     * \brief Helper method; used to check if a pointer is within the metadata section of the SCC
     * \param[in] cacheDesc the J9SharedClassCacheDescriptor for the cache
     * \param[in] ptr The pointer to check
     * \return True if ptr is within the metadata section of the SCC, false otherwise
     */
-   static bool isPointerInMetadataSectionSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
+   virtual bool isPointerInMetadataSectionSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
 
    /**
     * \brief Helper method; used to check if an offset is within the metadata section of the SCC
@@ -480,7 +481,7 @@ private:
     * \param[in] offset the offset to check
     * \return True if offset is within the metadata section of the SCC, false otherwise
     */
-   static bool isOffsetInMetadataSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset);
+   virtual bool isOffsetInMetadataSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset);
 
    /**
     * \brief Helper method; used to check if a pointer is within the ROMClass section of the SCC
@@ -488,7 +489,7 @@ private:
     * \param[in] ptr The pointer to check
     * \return True if ptr is within the ROMClass section of the SCC, false otherwise
     */
-   static bool isPointerInROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
+   virtual bool isPointerInROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
 
    /**
     * \brief Helper method; used to check if an offset is within the ROMClass section of the SCC
@@ -497,7 +498,7 @@ private:
     * \param[in] offset the offset to check
     * \return True if offset is within the ROMClass section of the SCC, false otherwise
     */
-   static bool isOffsetinROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset);
+   virtual bool isOffsetinROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset);
 
    /**
     * \brief Gets the cached result of a prior class chain validation
@@ -588,6 +589,24 @@ public:
    virtual const void *storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor);
 
 private:
+
+   virtual bool isPointerInMetadataSectionSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr)
+      {
+      return isPointerInCache(cacheDesc, ptr);
+      }
+   virtual bool isOffsetInMetadataSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset)
+      {
+      return (isOffsetFromEnd(offset) && isOffsetInCache(cacheDesc, offset));
+      }
+   virtual bool isPointerInROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr)
+      {
+      return isPointerInCache(cacheDesc, ptr);
+      }
+   virtual bool isOffsetinROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset)
+      {
+      return (isOffsetFromStart(offset) && isOffsetInCache(cacheDesc, offset));
+      }
+
    JITServer::ServerStream *_stream;
    };
 #endif /* defined(J9VM_OPT_JITSERVER) */

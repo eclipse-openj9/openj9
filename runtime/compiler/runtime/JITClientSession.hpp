@@ -334,6 +334,18 @@ class ClientSessionData
       U_32 _extendedRuntimeFlags2;
       }; // struct VMInfo
 
+   /**
+    * @class CacheDescriptor
+    * @brief Struct which contains data found in a cache descriptor
+    */
+   struct CacheDescriptor
+      {
+      uintptr_t cacheStartAddress;
+      uintptr_t cacheSizeBytes;
+      uintptr_t romClassStartAddress;
+      uintptr_t metadataStartAddress;
+      };
+
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
    ClientSessionData(uint64_t clientUID, uint32_t seqNo);
    ~ClientSessionData();
@@ -408,7 +420,7 @@ class ClientSessionData
    template <typename map, typename key>
    void purgeCache(std::vector<ClassUnloadedData> *unloadedClasses, map& m, key ClassUnloadedData::*k);
 
-   J9SharedClassCacheDescriptor * reconstructJ9SharedClassCacheDescriptorList(const std::vector<uintptr_t> &listOfCacheStartAddress, const std::vector<uintptr_t> &listOfCacheSizeBytes);
+   J9SharedClassCacheDescriptor * reconstructJ9SharedClassCacheDescriptorList(const std::vector<CacheDescriptor> &listOfCacheDescriptors);
    void destroyJ9SharedClassCacheDescriptorList();
 
    volatile bool isClassUnloadingAttempted() const { return _bClassUnloadingAttempt; }

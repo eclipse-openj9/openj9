@@ -478,8 +478,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          }
 
          // For multi-layered SCC support
-         std::vector<uintptr_t> listOfCacheStartAddress;
-         std::vector<uintptr_t> listOfCacheSizeBytes;
+         std::vector<ClientSessionData::CacheDescriptor> listOfCacheDescriptors;
          if (fe->sharedCache() && fe->sharedCache()->getCacheDescriptorList())
             {
             // The cache descriptor list is linked last to first and is circular, so last->previous == first.
@@ -487,14 +486,20 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             J9SharedClassCacheDescriptor *curCache = head;
             do
                {
-               listOfCacheStartAddress.push_back((uintptr_t)curCache->cacheStartAddress);
-               listOfCacheSizeBytes.push_back(curCache->cacheSizeBytes);
+               ClientSessionData::CacheDescriptor cacheDesc =
+                  {
+                  (uintptr_t)curCache->cacheStartAddress,
+                  curCache->cacheSizeBytes,
+                  (uintptr_t)curCache->romclassStartAddress,
+                  (uintptr_t)curCache->metadataStartAddress
+                  };
+               listOfCacheDescriptors.push_back(cacheDesc);
                curCache = curCache->next;
                }
             while (curCache != head);
             }
 
-         client->write(response, vmInfo, listOfCacheStartAddress, listOfCacheSizeBytes);
+         client->write(response, vmInfo, listOfCacheDescriptors);
          }
          break;
       case MessageType::VM_isPrimitiveArray:
