@@ -472,7 +472,7 @@ private:
     * \param[in] ptr The pointer to check
     * \return True if ptr is within the metadata section of the SCC, false otherwise
     */
-   virtual bool isPointerInMetadataSectionSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
+   virtual bool isPointerInMetadataSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
 
    /**
     * \brief Helper method; used to check if an offset is within the metadata section of the SCC
@@ -590,7 +590,7 @@ public:
 
 private:
 
-   virtual bool isPointerInMetadataSectionSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr)
+   virtual bool isPointerInMetadataSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr)
       {
       return isPointerInCache(cacheDesc, ptr);
       }

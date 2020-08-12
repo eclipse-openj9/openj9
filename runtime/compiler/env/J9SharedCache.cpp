@@ -480,7 +480,7 @@ TR_J9SharedCache::isOffsetInCache(const J9SharedClassCacheDescriptor *cacheDesc,
    }
 
 bool
-TR_J9SharedCache::isPointerInMetadataSectionSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr)
+TR_J9SharedCache::isPointerInMetadataSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr)
    {
    bool isPointerInMetadataSection = false;
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
@@ -744,7 +744,7 @@ TR_J9SharedCache::isPointerInSharedCache(void *ptr, uintptr_t *cacheOffset)
    J9SharedClassCacheDescriptor *curCache = firstCache;
    do
       {
-      if (isPointerInMetadataSectionSectionInCache(curCache, ptr))
+      if (isPointerInMetadataSectionInCache(curCache, ptr))
          {
          if (cacheOffset)
             {
@@ -759,7 +759,7 @@ TR_J9SharedCache::isPointerInSharedCache(void *ptr, uintptr_t *cacheOffset)
    while (curCache != firstCache);
 #else // !J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
    J9SharedClassCacheDescriptor *curCache = getCacheDescriptorList();
-   if (isPointerInMetadataSectionSectionInCache(curCache, ptr))
+   if (isPointerInMetadataSectionInCache(curCache, ptr))
       {
       if (cacheOffset)
          {
