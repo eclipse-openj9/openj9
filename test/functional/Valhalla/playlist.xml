@@ -62,6 +62,8 @@
 			  -	<variation>-Xjit:count=0</variation>
 			  -->
 			<variation>-Xjit:count=1,disableAsyncCompilation</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:nogc -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -Xnocompactgc -XX:ValueTypeFlatteningThreshold=99999</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		-Xverify:none \
