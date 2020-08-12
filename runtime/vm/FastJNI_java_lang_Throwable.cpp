@@ -58,7 +58,14 @@ Fast_java_lang_Throwable_fillInStackTrace(J9VMThread *currentThread, j9object_t 
 				walkState->restartException = receiver;
 			}
 			walkState->flags = walkFlags;
-			walkState->skipCount = 1;	// skip the INL frame
+#if JAVA_SPEC_VERSION >= 15
+			J9Class *receiverClass = J9OBJECT_CLAZZ(currentThread, receiver);
+			if (J9VMJAVALANGNULLPOINTEREXCEPTION_OR_NULL(vm) == receiverClass) {
+				walkState->skipCount = 2;	/* skip the INL & NullPointerException.fillInStackTrace() frames */
+			}
+#else /* JAVA_SPEC_VERSION >= 15 */
+			walkState->skipCount = 1;	/* skip the INL frame */
+#endif /* JAVA_SPEC_VERSION >= 15 */
 			walkState->walkThread = currentThread;
 			UDATA walkRC = vm->walkStackFrames(currentThread, walkState);
 			UDATA framesWalked = walkState->framesWalked;

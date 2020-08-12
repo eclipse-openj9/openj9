@@ -414,15 +414,13 @@ JVM_EnableCompiler(jint arg0, jint arg1)
 	return NULL;
 }
 
-
-
 void JNICALL
 JVM_FillInStackTrace(JNIEnv* env, jobject throwable)
 {
 	J9VMThread* currentThread = (J9VMThread*) env;
 	J9JavaVM* javaVM = currentThread->javaVM;
 	J9InternalVMFunctions* vmfns = javaVM->internalVMFunctions;
-	j9object_t unwrappedThrowable;
+	j9object_t unwrappedThrowable = NULL;
 
 	vmfns->internalEnterVMFromJNI(currentThread);
 	unwrappedThrowable = J9_JNI_UNWRAP_REFERENCE(throwable);
@@ -433,9 +431,9 @@ JVM_FillInStackTrace(JNIEnv* env, jobject throwable)
 		UDATA flags = J9_STACKWALK_CACHE_PCS | J9_STACKWALK_WALK_TRANSLATE_PC | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_SKIP_INLINES;
 		J9StackWalkState* walkState = currentThread->stackWalkState;
 		j9object_t result = (j9object_t) J9VMJAVALANGTHROWABLE_WALKBACK(currentThread, unwrappedThrowable);
-		UDATA rc;
-		UDATA i;
-		UDATA framesWalked;
+		UDATA rc = 0;
+		UDATA i = 0;
+		UDATA framesWalked = 0;
 
 		/* Do not hide exception frames if fillInStackTrace is called on an exception which already has a stack trace.  In the out of memory case,
 		 * there is a bit indicating that we should explicitly override this behaviour, since we've precached the stack trace array. */
@@ -443,7 +441,16 @@ JVM_FillInStackTrace(JNIEnv* env, jobject throwable)
 			flags |= J9_STACKWALK_HIDE_EXCEPTION_FRAMES;
 			walkState->restartException = unwrappedThrowable;
 		}
+#if JAVA_SPEC_VERSION >= 15
+		{
+			J9Class *receiverClass = J9OBJECT_CLAZZ(currentThread, unwrappedThrowable);
+			if (J9VMJAVALANGNULLPOINTEREXCEPTION_OR_NULL(javaVM) == receiverClass) {
+				walkState->skipCount = 2;	/* skip the INL & NullPointerException.fillInStackTrace() frames */
+			}
+		}
+#else /* JAVA_SPEC_VERSION >= 15 */
 		walkState->skipCount = 1; /* skip the INL frame -- TODO revisit this */
+#endif /* JAVA_SPEC_VERSION >= 15 */
 		walkState->walkThread = currentThread;
 		walkState->flags = flags;
 
@@ -493,7 +500,6 @@ setThrowableSlots:
 done:
 	vmfns->internalExitVMToJNI(currentThread);
 }
-
 
 /**
  * Find the specified class in given class loader 
