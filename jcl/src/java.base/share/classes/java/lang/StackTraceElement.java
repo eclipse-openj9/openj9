@@ -4,7 +4,7 @@ package java.lang;
 import com.ibm.oti.util.Util;
 
 /*******************************************************************************
- * Copyright (c) 2002, 2019 IBM Corp. and others
+ * Copyright (c) 2002, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -118,9 +118,7 @@ private StackTraceElement() {
  * @param obj the object to compare to
  * 
  */
-/*[IF AnnotateOverride]*/
 @Override
-/*[ENDIF]*/
 public boolean equals(Object obj) {
 	if (!(obj instanceof StackTraceElement)) return false;
 	StackTraceElement castObj = (StackTraceElement) obj;
@@ -213,9 +211,7 @@ public String getMethodName() {
 /**
  * Returns a hash code value for this stack trace element.
  */
-/*[IF AnnotateOverride]*/
 @Override
-/*[ENDIF]*/
 public int hashCode() {
 	// either both methodName and declaringClass are null, or neither are null
 	if (methodName == null) return 0;	// all unknown methods hash the same
@@ -244,9 +240,7 @@ public boolean isNativeMethod() {
 /**
  * Returns a string representation of this stack trace element.
  */
-/*[IF AnnotateOverride]*/
 @Override
-/*[ENDIF]*/
 public String toString() {
 	StringBuilder buf = new StringBuilder(80);
 	Util.printStackTraceElement(this, source, buf, false);
