@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -176,7 +176,7 @@ public abstract class PrimaryItem {
 			}
 			return false;
 		}
-		
+
 		private boolean hasFlag(Set<String> flags) {
 			for (String s : this.flags) {
 				if (flags.contains(s)) {
@@ -186,16 +186,16 @@ public abstract class PrimaryItem {
 			return false;
 		}
 	}
-	
+
 	protected static class AliasWithClass extends Alias {
 		final ClassRef classRef;
 		private boolean classIncluded;
-		
+
 		AliasWithClass(VersionRange[] versions, String[] flags, ClassRef classRef) {
 			super(versions, flags);
 			this.classRef = classRef;
 		}
-		
+
 		boolean checkClassForWriteSecondary(ConstantPoolStream ds) {
 			if (!classIncluded) {
 				super.writeSecondaryItems(ds);
@@ -211,7 +211,7 @@ public abstract class PrimaryItem {
 			return classIncluded;
 		}
 	}
-	
+
 	private static Alias[] aliases(Element e, String nodeName, Alias proto, Alias.Factory factory) {
 		NodeList nodes = e.getChildNodes();
 		List<Alias> list = new ArrayList<Alias>();
@@ -223,7 +223,7 @@ public abstract class PrimaryItem {
 		}
 		return list.toArray(new Alias[list.size()]);
 	}
-	
+
 	Alias alias(ConstantPoolStream ds) {
 		// Look for an alias that explicitly supports the version and a flag
 		for (Alias alias : aliases) {

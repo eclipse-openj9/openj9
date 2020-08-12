@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@ import java.util.Map;
 import org.w3c.dom.Element;
 
 public class FieldRef extends PrimaryItem implements Constants {
+
 	protected static class Alias extends PrimaryItem.AliasWithClass {
 		final NameAndSignature nas;
 		final String cast;
@@ -47,61 +48,62 @@ public class FieldRef extends PrimaryItem implements Constants {
 			if (checkClassForWrite(ds)) {
 				ds.alignTo(4);
 				ds.markInstanceField();
-				ds.writeInt( ds.getIndex(classRef) );
-				ds.writeInt( ds.getOffset(nas) - ds.getOffset() );
+				ds.writeInt(ds.getIndex(classRef));
+				ds.writeInt(ds.getOffset(nas) - ds.getOffset());
 			}
 		}
 	}
-	
+
 	protected static class Factory implements Alias.Factory {
-		private Map classes;
+
+		private final Map<String, ClassRef> classes;
 		private ClassRef classRef;
 
-		Factory(Map classes) {
+		Factory(Map<String, ClassRef> classes) {
 			this.classes = classes;
 			this.classRef = null;
 		}
-		
+
 		public PrimaryItem.Alias alias(Element e, PrimaryItem.Alias proto) {
-			Alias p = (Alias)proto;
+			Alias p = (Alias) proto;
 			return new Alias(
-				versions(e, p),
-				flags(e, p),
-				classRef(e),
-				new NameAndSignature(
-						attribute(e, "name", p != null ? p.nas.name.data : ""),
-						attribute(e, "signature", p != null ? p.nas.signature.data : "")),
-				attribute(e, "cast", p != null ? p.cast : ""));
+					versions(e, p),
+					flags(e, p),
+					classRef(e),
+					new NameAndSignature(
+							attribute(e, "name", p != null ? p.nas.name.data : ""),
+							attribute(e, "signature", p != null ? p.nas.signature.data : "")),
+					attribute(e, "cast", p != null ? p.cast : ""));
 		}
-		
+
 		protected ClassRef classRef(Element e) {
 			String name = attribute(e, "class", null);
 			if (name == null) {
 				return classRef;
 			}
 			if (classRef == null) {
-				classRef = (ClassRef) classes.get(name);
+				classRef = classes.get(name);
 			}
-			return (ClassRef) classes.get(name);
+			return classes.get(name);
 		}
 	}
 
-	public FieldRef(Element e, Map classes) {
+	public FieldRef(Element e, Map<String, ClassRef> classes) {
 		super(e, FIELDALIAS, new Factory(classes));
 	}
-	
+
 	protected FieldRef(Element e, String nodeName, com.ibm.oti.VMCPTool.PrimaryItem.Alias.Factory factory) {
 		super(e, nodeName, factory);
 	}
-	
+
 	protected String cMacroName() {
 		return ((Alias) primary).classRef.cMacroName() + "_" + ((Alias) primary).nas.name.data.toUpperCase();
 	}
-	
+
 	protected String cSetterMacroName() {
 		return ((Alias) primary).classRef.cMacroName() + "_SET_" + ((Alias) primary).nas.name.data.toUpperCase();
 	}
-	
+
 	protected String fieldType() {
 		// helpers are:
 		//	j9gc_objaccess_mixedObjectReadI32
@@ -117,7 +119,7 @@ public class FieldRef extends PrimaryItem implements Constants {
 		//	j9gc_objaccess_mixedObjectStoreObject
 		//	j9gc_objaccess_mixedObjectStoreAddress
 		//	j9gc_objaccess_mixedObjectStoreU64Split
-		
+
 		// Arrays and objects take precedence over cast to support pointer compression
 		switch (((Alias) primary).nas.signature.data.charAt(0)) {
 		case '[':
@@ -126,7 +128,7 @@ public class FieldRef extends PrimaryItem implements Constants {
 		default:
 			// Do nothing
 		}
-		
+
 		// The cast then has first dibs to determine the field type
 		String cast = ((Alias) primary).cast;
 		if (cast.length() > 0) {
@@ -146,7 +148,7 @@ public class FieldRef extends PrimaryItem implements Constants {
 				throw new UnsupportedOperationException("Unrecognized cast: " + cast);
 			}
 		}
-		
+
 		// Otherwise just determine it from the signature
 		switch (((Alias) primary).nas.signature.data.charAt(0)) {
 		case '[':
@@ -162,7 +164,7 @@ public class FieldRef extends PrimaryItem implements Constants {
 			return "U32";
 		}
 	}
-	
+
 	public void writeMacros(ConstantPool pool, PrintWriter out) {
 		super.writeMacros(pool, out);
 		String type = fieldType();
@@ -173,34 +175,34 @@ public class FieldRef extends PrimaryItem implements Constants {
 		if (type.equals("ADDRESS")) {
 			fieldOffset = "J9VMCONSTANTPOOL_ADDRESS_OFFSET(J9VMTHREAD_JAVAVM(vmThread), J9VMCONSTANTPOOL_" + macroName + ")";
 		}
-		
+
 		out.println("#define J9VM" + macroName + "_OFFSET(vmThread) " + fieldOffset);
 		out.println("#define J9VM" + macroName + "(vmThread, object) ((void)0, \\");
 		out.println("\t" + castTo + "J9OBJECT_" + type + "_LOAD(vmThread, object, J9VM" + macroName + "_OFFSET(vmThread)))");
 		out.println("#define J9VM" + cSetterMacroName() + "(vmThread, object, value) ((void)0, \\");
 		out.println("\tJ9OBJECT_" + type + "_STORE(vmThread, object, J9VM" + macroName + "_OFFSET(vmThread), (value)))");
-		
+
 		/* Generate a second set of macros that take a J9JavaVM parameter instead of a J9VMThread */
-		
+
 		fieldOffset = "J9VMCONSTANTPOOL_FIELD_OFFSET(javaVM, J9VMCONSTANTPOOL_" + macroName + ")";
 		if (type.equals("ADDRESS")) {
 			fieldOffset = "J9VMCONSTANTPOOL_ADDRESS_OFFSET(javaVM, J9VMCONSTANTPOOL_" + macroName + ")";
 		}
-		
+
 		out.println("#define J9VM" + macroName + "_OFFSET_VM(javaVM) " + fieldOffset);
 		out.println("#define J9VM" + macroName + "_VM(javaVM, object) ((void)0, \\");
 		out.println("\t" + castTo + "J9OBJECT_" + type + "_LOAD_VM(javaVM, object, J9VM" + macroName + "_OFFSET_VM(javaVM)))");
 		out.println("#define J9VM" + cSetterMacroName() + "_VM(javaVM, object, value) ((void)0, \\");
 		out.println("\tJ9OBJECT_" + type + "_STORE_VM(javaVM, object, J9VM" + macroName + "_OFFSET_VM(javaVM), (value)))");
-		
 	}
-	
+
 	protected void superWriteMacros(ConstantPool pool, PrintWriter out) {
 		super.writeMacros(pool, out);
 	}
-	
+
 	public String commentText() {
 		Alias alias = (Alias) primary;
 		return "FieldRef[" + alias.classRef.getClassName() + "." + alias.nas.name.data + " " + alias.nas.signature.data + "]";
-	}	
+	}
+
 }

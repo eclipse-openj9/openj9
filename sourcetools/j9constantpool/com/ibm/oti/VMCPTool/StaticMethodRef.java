@@ -27,6 +27,7 @@ import java.util.Map;
 import org.w3c.dom.Element;
 
 public class StaticMethodRef extends PrimaryItem implements Constants {
+
 	private static class Alias extends PrimaryItem.AliasWithClass {
 		final NameAndSignature nas;
 
@@ -40,67 +41,67 @@ public class StaticMethodRef extends PrimaryItem implements Constants {
 				ds.writeSecondaryItem(nas);
 			}
 		}
-		
+
 		void write(ConstantPoolStream ds) {
 			if (checkClassForWrite(ds)) {
 				ds.alignTo(4);
 				ds.markStaticMethod();
-				ds.writeInt( ds.getIndex(classRef) );
-				ds.writeInt( ds.getOffset(nas) - ds.getOffset() );
+				ds.writeInt(ds.getIndex(classRef));
+				ds.writeInt(ds.getOffset(nas) - ds.getOffset());
 			}
 		}
 	}
-	
+
 	private static class Factory implements Alias.Factory {
-		private Map classes;
+		private final Map<String, ClassRef> classes;
 		private ClassRef classRef;
 
-		Factory(Map classes) {
+		Factory(Map<String, ClassRef> classes) {
 			this.classes = classes;
 			this.classRef = null;
 		}
-		
+
 		public PrimaryItem.Alias alias(Element e, PrimaryItem.Alias proto) {
 			Alias p = (Alias) proto;
 			return new Alias(
-				versions(e, p),
-				flags(e, p),
-				classRef(e),
-				new NameAndSignature(
-						attribute(e, "name", p != null ? p.nas.name.data : ""),
-						attribute(e, "signature", p != null ? p.nas.signature.data : "")));
+					versions(e, p),
+					flags(e, p),
+					classRef(e),
+					new NameAndSignature(
+							attribute(e, "name", p != null ? p.nas.name.data : ""),
+							attribute(e, "signature", p != null ? p.nas.signature.data : "")));
 		}
-		
+
 		private ClassRef classRef(Element e) {
 			String name = attribute(e, "class", null);
 			if (name == null) {
 				return classRef;
 			}
 			if (classRef == null) {
-				classRef = (ClassRef) classes.get(name);
+				classRef = classes.get(name);
 			}
-			return (ClassRef) classes.get(name);
+			return classes.get(name);
 		}
 	}
 
-	public StaticMethodRef(Element e, Map classes) {
+	public StaticMethodRef(Element e, Map<String, ClassRef> classes) {
 		super(e, METHODALIAS, new Factory(classes));
 	}
-	
+
 	protected String cMacroName() {
 		return ((Alias) primary).classRef.cMacroName() + "_" + ((Alias) primary).nas.name.data.toUpperCase();
 	}
-	
+
 	public void writeMacros(ConstantPool pool, PrintWriter out) {
 		super.writeMacros(pool, out);
 		String macroName = cMacroName();
 		out.println("#define J9VM" + macroName + "_REF(vm) J9VMCONSTANTPOOL_STATICMETHODREF_AT(vm, J9VMCONSTANTPOOL_" + macroName + ")");
 		out.println("#define J9VM" + macroName + "_METHOD(vm) J9VMCONSTANTPOOL_STATICMETHOD_AT(vm, J9VMCONSTANTPOOL_" + macroName + ")");
 	}
-	
+
 	public String commentText() {
 		Alias alias = (Alias) primary;
 		return "StaticMethodRef[" + alias.classRef.getClassName() + "." + alias.nas.name.data +  alias.nas.signature.data + "]";
-	}	
-	
+	}
+
 }

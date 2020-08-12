@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@ import java.util.Map;
 import org.w3c.dom.Element;
 
 public class StaticFieldRef extends FieldRef implements Constants {
+
 	private static class Alias extends FieldRef.Alias {
 		Alias(VersionRange[] versions, String[] flags, ClassRef classRef, NameAndSignature nas, String cast) {
 			super(versions, flags, classRef, nas, cast);
@@ -36,36 +37,36 @@ public class StaticFieldRef extends FieldRef implements Constants {
 			if (checkClassForWrite(ds)) {
 				ds.alignTo(4);
 				ds.markStaticField();
-				ds.writeInt( ds.getIndex(classRef) );
-				ds.writeInt( ds.getOffset(nas) - ds.getOffset() );
+				ds.writeInt(ds.getIndex(classRef));
+				ds.writeInt(ds.getOffset(nas) - ds.getOffset());
 			}
 		}
 	}
-	
+
 	private static class Factory extends FieldRef.Factory {
 
-		Factory(Map classes) {
+		Factory(Map<String, ClassRef> classes) {
 			super(classes);
 		}
-		
+
 		public PrimaryItem.Alias alias(Element e, PrimaryItem.Alias proto) {
-			Alias p = (Alias)proto;
+			Alias p = (Alias) proto;
 			return new Alias(
-				versions(e, p),
-				flags(e, p),
-				classRef(e),
-				new NameAndSignature(
-						attribute(e, "name", p != null ? p.nas.name.data : ""),
-						attribute(e, "signature", p != null ? p.nas.signature.data : "")),
-				attribute(e, "cast", p != null ? p.cast : ""));
+					versions(e, p),
+					flags(e, p),
+					classRef(e),
+					new NameAndSignature(
+							attribute(e, "name", p != null ? p.nas.name.data : ""),
+							attribute(e, "signature", p != null ? p.nas.signature.data : "")),
+					attribute(e, "cast", p != null ? p.cast : ""));
 		}
-		
+
 	}
 
-	public StaticFieldRef(Element e, Map classes) {
+	public StaticFieldRef(Element e, Map<String, ClassRef> classes) {
 		super(e, FIELDALIAS, new Factory(classes));
 	}
-		
+
 	public void writeMacros(ConstantPool pool, PrintWriter out) {
 		superWriteMacros(pool, out);
 		String type = fieldType();
@@ -73,22 +74,22 @@ public class StaticFieldRef extends FieldRef implements Constants {
 		String castTo = cast.length() == 0 ? "" : "(" + cast + ")";
 		String macroName = cMacroName();
 		String fieldOffset = "J9VMCONSTANTPOOL_STATICFIELD_ADDRESS(J9VMTHREAD_JAVAVM(vmThread), J9VMCONSTANTPOOL_" + macroName + ")";
-		
+
 		out.println("#define J9VM" + macroName + "_ADDRESS(vmThread) " + fieldOffset);
 		out.println("#define J9VM" + macroName + "(vmThread, clazz) ((void)0, \\");
 		out.println("\t" + castTo + "J9STATIC_" + type + "_LOAD(vmThread, clazz, J9VM" + macroName + "_ADDRESS(vmThread)))");
 		out.println("#define J9VM" + cSetterMacroName() + "(vmThread, clazz, value) ((void)0, \\");
 		out.println("\tJ9STATIC_" + type + "_STORE(vmThread, clazz, J9VM" + macroName + "_ADDRESS(vmThread), (value)))");
-		
+
 		/* Generate a second set of macros that take a J9JavaVM parameter instead of a J9VMThread */
-		
+
 		fieldOffset = "J9VMCONSTANTPOOL_STATICFIELD_ADDRESS_VM(javaVM, J9VMCONSTANTPOOL_" + macroName + ")";
-		
+
 		out.println("#define J9VM" + macroName + "_ADDRESS_VM(javaVM) " + fieldOffset);
 		out.println("#define J9VM" + macroName + "_VM(javaVM, clazz) ((void)0, \\");
 		out.println("\t" + castTo + "J9STATIC_" + type + "_LOAD_VM(javaVM, clazz, J9VM" + macroName + "_ADDRESS_VM(javaVM)))");
 		out.println("#define J9VM" + cSetterMacroName() + "_VM(javaVM, clazz, value) ((void)0, \\");
 		out.println("\tJ9STATIC_" + type + "_STORE_VM(javaVM, clazz, J9VM" + macroName + "_ADDRESS_VM(javaVM), (value)))");
-		
 	}
+
 }
