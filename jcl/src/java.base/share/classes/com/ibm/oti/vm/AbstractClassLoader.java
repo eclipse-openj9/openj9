@@ -3,7 +3,7 @@
 package com.ibm.oti.vm;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -183,9 +183,7 @@ static String getPackageName(Class<?> theClass)
 	return name.substring(0, index);
 }
 
-/*[IF AnnotateOverride]*/
 @Override
-/*[ENDIF]*/
 protected URL findResource(final String res) {
 	URL result = (URL)AccessController.doPrivileged(new PrivilegedAction() {
 		public Object run() {
@@ -244,9 +242,7 @@ private URL findResourceImpl(int i, String res) {
 	return null;
 }
 
-/*[IF AnnotateOverride]*/
 @Override
-/*[ENDIF]*/
 protected Enumeration findResources(final String res) throws IOException {
 	if (resourceCacheRef != null) {
 		ConcurrentHashMap<String, Vector> resourceCache = resourceCacheRef.get();
@@ -303,9 +299,7 @@ protected Enumeration findResources(final String res) throws IOException {
  * @param		resName	String
  *					the name of the resource to find.
  */
-/*[IF AnnotateOverride]*/
 @Override
-/*[ENDIF]*/
 public InputStream getResourceAsStream(String resName) {
 	if (resName == null || resName.length() < 1 || resName.charAt(0) == '/')
 		return null;	// Do not allow absolute resource references!
