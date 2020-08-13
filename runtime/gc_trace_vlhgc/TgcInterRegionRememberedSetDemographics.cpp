@@ -166,7 +166,7 @@ reportInterRegionRememberedSetDemographics(MM_EnvironmentBase *env)
 	
 	tgcExtensions->printf("<rememberedSetDemographics increment=\"%zu\">\n", tgcExtensions->_interRegionRememberedSetDemographics.incrementCount);
 
-	MM_ParallelDispatcher *dispatcher = ((MM_ParallelDispatcher *)extensions->dispatcher);
+	MM_ParallelDispatcher *dispatcher = extensions->dispatcher;
 	TgcParallelHeapWalkTask heapWalkTask(env, dispatcher);
 	dispatcher->run(env, &heapWalkTask);
 	
