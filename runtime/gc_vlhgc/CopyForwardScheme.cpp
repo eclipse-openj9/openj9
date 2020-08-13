@@ -136,7 +136,7 @@ MM_CopyForwardScheme::MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegi
 	, _phantomReferenceRegionsToProcess(0)
 	, _minCacheSize(0)
 	, _maxCacheSize(0)
-	, _dispatcher(((MM_ParallelDispatcher *)_extensions->dispatcher))
+	, _dispatcher(_extensions->dispatcher)
 	, _cacheFreeList()
 	, _cacheScanLists(NULL)
 	, _scanCacheListSize(_extensions->_numaManager.getMaximumNodeNumber() + 1)

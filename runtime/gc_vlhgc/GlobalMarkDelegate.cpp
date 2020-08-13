@@ -61,7 +61,7 @@ MM_GlobalMarkDelegate::initialize(MM_EnvironmentVLHGC *env)
 		goto error_no_memory;
 	}
 
-	_dispatcher = ((MM_ParallelDispatcher *)_extensions->dispatcher);
+	_dispatcher = _extensions->dispatcher;
 
 	return true;
 

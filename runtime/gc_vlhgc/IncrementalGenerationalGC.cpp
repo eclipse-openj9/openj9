@@ -1183,7 +1183,7 @@ MM_IncrementalGenerationalGC::reportGCEnd(MM_EnvironmentBase *env)
 void
 MM_IncrementalGenerationalGC::flushRememberedSetIntoCardTable(MM_EnvironmentVLHGC *env)
 {
-	MM_ParallelDispatcher *dispatcher = ((MM_ParallelDispatcher *)_extensions->dispatcher);
+	MM_ParallelDispatcher *dispatcher = _extensions->dispatcher;
 	MM_CardListFlushTask flushTask(env, dispatcher, _regionManager, _interRegionRememberedSet);
 	dispatcher->run(env, &flushTask);
 }

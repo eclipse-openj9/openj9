@@ -80,7 +80,7 @@ MM_ReclaimDelegate::initialize(MM_EnvironmentVLHGC *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	_dispatcher = ((MM_ParallelDispatcher *)extensions->dispatcher);
+	_dispatcher = extensions->dispatcher;
 	UDATA regionCount = extensions->getHeap()->getHeapRegionManager()->getTableRegionCount();
 
 	if(NULL == (_sweepScheme = MM_ParallelSweepSchemeVLHGC::newInstance(env))) {
