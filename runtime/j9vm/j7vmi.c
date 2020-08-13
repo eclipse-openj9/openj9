@@ -441,6 +441,7 @@ JVM_FillInStackTrace(JNIEnv* env, jobject throwable)
 			flags |= J9_STACKWALK_HIDE_EXCEPTION_FRAMES;
 			walkState->restartException = unwrappedThrowable;
 		}
+		walkState->skipCount = 1; /* skip the INL frame -- TODO revisit this */
 #if JAVA_SPEC_VERSION >= 15
 		{
 			J9Class *receiverClass = J9OBJECT_CLAZZ(currentThread, unwrappedThrowable);
@@ -448,8 +449,6 @@ JVM_FillInStackTrace(JNIEnv* env, jobject throwable)
 				walkState->skipCount = 2;	/* skip the INL & NullPointerException.fillInStackTrace() frames */
 			}
 		}
-#else /* JAVA_SPEC_VERSION >= 15 */
-		walkState->skipCount = 1; /* skip the INL frame -- TODO revisit this */
 #endif /* JAVA_SPEC_VERSION >= 15 */
 		walkState->walkThread = currentThread;
 		walkState->flags = flags;

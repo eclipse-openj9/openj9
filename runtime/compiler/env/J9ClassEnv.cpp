@@ -32,10 +32,11 @@
 #include "env/TypeLayout.hpp"
 #include "env/VMJ9.h"
 #include "j9.h"
-#include "j9protos.h"
-#include "j9cp.h"
 #include "j9cfg.h"
+#include "j9cp.h"
 #include "j9fieldsInfo.h"
+#include "j9nonbuilder.h"
+#include "j9protos.h"
 #include "rommeth.h"
 #include "runtime/RuntimeAssumptions.hpp"
 
@@ -417,24 +418,111 @@ J9::ClassEnv::isAnonymousClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz
    return comp->fej9()->isAnonymousClass(clazz);
    }
 
-const TR::TypeLayout*
-J9::ClassEnv::enumerateFields(TR::Region& region, TR_OpaqueClassBlock * opaqueClazz, TR::Compilation *comp)
-   {  
-   J9Class *clazz = (J9Class*)opaqueClazz;
-   TR_VMFieldsInfo fieldsInfo(comp, clazz, 1, stackAlloc);
-   ListIterator<TR_VMField> iter(fieldsInfo.getFields());
-   TR::TypeLayoutBuilder tlb(region);
-   for (TR_VMField *field = iter.getFirst(); field; field = iter.getNext())
+/*
+ * Merges the prefix with the field name to a new string.
+ *
+ * \param prefix
+ *    prefix could be NULL.
+ * \param prefixLength
+ *    The length of the prefix string.
+ * \param mergedLength
+ *    The merged length of the concatenated field name that is returned to the caller.
+ */
+static char * mergeFieldNames(char *prefix, uint32_t prefixLength, J9ROMFieldShape *field,
+                              TR::Region &region, uint32_t &mergedLength)
+   {
+   J9UTF8 *fieldNameUTF = J9ROMFIELDSHAPE_NAME(field);
+   char *fieldName = reinterpret_cast<char *>(J9UTF8_DATA(fieldNameUTF));
+   uint32_t nameLength = J9UTF8_LENGTH(fieldNameUTF);
+
+   mergedLength = nameLength + prefixLength;
+   mergedLength++; // for adding '\0' at the end
+
+   char *newName = new (region) char[mergedLength];
+
+   if (prefixLength > 0)
+      strncpy(newName, prefix, prefixLength);
+   strncpy(newName + prefixLength, fieldName, nameLength);
+
+   newName[mergedLength-1] = '\0';
+
+   return newName;
+   }
+
+/*
+ * Builds a new string with the prefix and the field name and appends the string with "." to be used
+ * as a part of the flattened field chain name.
+ *
+ * \param prefix
+ *    prefix could be ended with `.` or NULL.
+ * \param prefixLength
+ *    The length of the prefix string.
+ * \param mergedLength
+ *    The merged length of the concatenated field name that is returned to the caller.
+ */
+static char * buildTransitiveFieldNames(char *prefix, uint32_t prefixLength, J9ROMFieldShape *field,
+                                        TR::Region &region, uint32_t &mergedLength)
+   {
+   J9UTF8 *fieldNameUTF = J9ROMFIELDSHAPE_NAME(field);
+   char *fieldName = reinterpret_cast<char *>(J9UTF8_DATA(fieldNameUTF));
+   uint32_t nameLength = J9UTF8_LENGTH(fieldNameUTF);
+
+   mergedLength = nameLength + prefixLength;
+   mergedLength++; // for appending '.'
+   mergedLength++; // for adding '\0' at the end
+
+   char *newName = new (region) char[mergedLength];
+
+   if (prefixLength > 0)
+      strncpy(newName, prefix, prefixLength);
+   strncpy(newName + prefixLength, fieldName, nameLength);
+
+   newName[mergedLength-2] = '.';
+   newName[mergedLength-1] = '\0';
+
+   return newName;
+   }
+
+static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, TR::Region &region, J9Class *definingClass,
+                                 char *prefix, uint32_t prefixLength, IDATA offsetBase, TR::Compilation *comp)
+   {
+   J9JavaVM *vm = comp->fej9()->getJ9JITConfig()->javaVM;
+   bool trace = comp->getOption(TR_TraceILGen);
+   uint32_t mergedLength = 0;
+   J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field->shape);
+
+   if (TR::Compiler->om.areValueTypesEnabled() &&
+       vm->internalVMFunctions->isNameOrSignatureQtype(signature) &&
+       vm->internalVMFunctions->isFlattenableFieldFlattened(definingClass, field->shape))
+      {
+      char *prefixForChild = buildTransitiveFieldNames(prefix, prefixLength, field->shape, comp->trMemory()->currentStackRegion(), mergedLength);
+      uint32_t prefixLengthForChild = mergedLength-1;
+      IDATA offsetBaseForChild = field->offset + offsetBase;
+
+      if (trace)
+         traceMsg(comp, "field %s:%s is flattened. offset from TR_VMField %d, offset from fcc %d\n",
+            field->name, field->signature, field->offset,
+            vm->internalVMFunctions->getFlattenableFieldOffset(definingClass, field->shape));
+
+      J9Class *fieldClass = vm->internalVMFunctions->getFlattenableFieldType(definingClass, field->shape);
+      TR_VMFieldsInfo fieldsInfo(comp, fieldClass, 1, stackAlloc);
+      ListIterator<TR_VMField> iter(fieldsInfo.getFields());
+      for (TR_VMField *childField = iter.getFirst(); childField; childField = iter.getNext())
+         {
+         addEntryForFieldImpl(childField, tlb, region, fieldClass, prefixForChild, prefixLengthForChild, offsetBaseForChild, comp);
+         }
+      }
+   else
       {
       char *signature = field->signature;
       char charSignature = *signature;
       TR::DataType dataType;
       switch(charSignature)
          {
-         case 'Z': 
-         case 'B': 
-         case 'C': 
-         case 'S': 
+         case 'Z':
+         case 'B':
+         case 'C':
+         case 'S':
          case 'I':
             {
             dataType = TR::Int32;
@@ -455,7 +543,7 @@ J9::ClassEnv::enumerateFields(TR::Region& region, TR_OpaqueClassBlock * opaqueCl
             dataType = TR::Double;
             break;
             }
-// VALHALLA_TODO:  Might require different TR::DataType for value types (Q)
+         // VALHALLA_TODO:  Might require different TR::DataType for value types (Q)
          case 'L':
          case 'Q':
          case '[':
@@ -464,15 +552,37 @@ J9::ClassEnv::enumerateFields(TR::Region& region, TR_OpaqueClassBlock * opaqueCl
             break;
             }
          }
-      size_t nameSize = strlen(field->name)+1;
-      char *fieldName = new (region) char[nameSize];
-      strncpy(fieldName, field->name, nameSize);
-      TR_ASSERT_FATAL(fieldName[nameSize-1] == '\0', "fieldName buffer was too small.");
-      int32_t offset = field->offset + TR::Compiler->om.objectHeaderSizeInBytes();
+
+      char *fieldName = mergeFieldNames(prefix, prefixLength, field->shape, region, mergedLength);
+      int32_t offset = offsetBase + field->offset + TR::Compiler->om.objectHeaderSizeInBytes();
       bool isVolatile = (field->modifiers & J9AccVolatile) ? true : false;
       bool isPrivate = (field->modifiers & J9AccPrivate) ? true : false;
       bool isFinal = (field->modifiers & J9AccFinal) ? true : false;
+      if (trace)
+         traceMsg(comp, "type layout definingClass %p field: %s, field offset: %d offsetBase %d\n", definingClass, fieldName, field->offset, offsetBase);
       tlb.add(TR::TypeLayoutEntry(dataType, offset, fieldName, isVolatile, isPrivate, isFinal, signature));
+      }
+   }
+
+static void addEntryForField(TR_VMField *field, TR::TypeLayoutBuilder &tlb, TR::Region &region, TR_OpaqueClassBlock *opaqueClazz, TR::Compilation *comp)
+   {
+   char *prefix = NULL;
+   uint32_t prefixLength = 0;
+   IDATA offsetBase = 0;
+   J9Class *definingClass = reinterpret_cast<J9Class*>(opaqueClazz);
+
+   addEntryForFieldImpl(field, tlb, region, definingClass, prefix, prefixLength, offsetBase, comp);
+   }
+
+const TR::TypeLayout*
+J9::ClassEnv::enumerateFields(TR::Region &region, TR_OpaqueClassBlock *opaqueClazz, TR::Compilation *comp)
+   {
+   TR_VMFieldsInfo fieldsInfo(comp, reinterpret_cast<J9Class*>(opaqueClazz), 1, stackAlloc);
+   ListIterator<TR_VMField> iter(fieldsInfo.getFields());
+   TR::TypeLayoutBuilder tlb(region);
+   for (TR_VMField *field = iter.getFirst(); field; field = iter.getNext())
+      {
+      addEntryForField(field, tlb, region, opaqueClazz, comp);
       }
    return tlb.build();
    }
@@ -595,7 +705,7 @@ J9::ClassEnv::getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *cla
       TR::CompilationInfoPerThread *compInfoPT = TR::compInfoPT;
       char *name = NULL;
 
-      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor()); 
+      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
       auto &classMap = compInfoPT->getClientData()->getROMClassMap();
       auto it = classMap.find(reinterpret_cast<J9Class *>(clazz));
       auto &classInfo = it->second;
@@ -673,7 +783,7 @@ J9::ClassEnv::isZeroInitializable(TR_OpaqueClassBlock *clazz)
    return (self()->classFlagsValue(clazz) & J9ClassContainsUnflattenedFlattenables) == 0;
    }
 
-bool 
+bool
 J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_PersistentClassInfo>* subClasses)
    {
    int count = 0;
@@ -682,7 +792,7 @@ J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_Pers
       {
       ListIterator<TR_PersistentClassInfo> j(subClasses);
       TR_ScratchList<TR_PersistentClassInfo> subClassesNotCached(comp->trMemory());
-   
+
       // Process classes cached at the server first
       ClientSessionData * clientData = TR::compInfoPT->getClientData();
       for (TR_PersistentClassInfo *ptClassInfo = j.getFirst(); ptClassInfo; ptClassInfo = j.getNext())
