@@ -338,7 +338,7 @@ public:
 		, _originalClassName(NULL)
 	{
 		/* anonClasses have the following name format: '[originalName]/[ROMSegmentAddress]' */
-		if (J9_ARE_ALL_BITS_SET(_romClass->extraModifiers, J9AccClassAnonClass)) {
+		if (J9_ARE_ANY_BITS_SET(_romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden)) {
 			PORT_ACCESS_FROM_JAVAVM(_javaVM);
 			_isAnon = true;
 			_anonClassName = J9ROMCLASS_CLASSNAME(_romClass);

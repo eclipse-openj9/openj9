@@ -1565,7 +1565,7 @@ dumpClassLoader(J9JavaVM *vm, J9ClassLoader *loader, IDATA fd){
 	J9HashTableState walkState = {0};
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	J9Class* clazz = vmFuncs->hashClassTableStartDo(loader, &walkState);
+	J9Class* clazz = vmFuncs->hashClassTableStartDo(loader, &walkState, 0);
 	while (NULL != clazz) {
 		J9ROMClass* romClass = clazz->romClass;
 		J9UTF8* utf = J9ROMCLASS_CLASSNAME(romClass);

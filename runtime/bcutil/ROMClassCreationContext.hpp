@@ -234,7 +234,9 @@ public:
 	bool isClassUnmodifiable() const {
 		bool unmodifiable = false;
 		if (NULL != _javaVM) {
-			if ((J2SE_VERSION(_javaVM) >= J2SE_V11) && isClassAnon()) {
+			if ((J2SE_VERSION(_javaVM) >= J2SE_V11) 
+				&& (isClassAnon() || isClassHidden())
+			) {
 				unmodifiable = true;
 			} else if (NULL == J9VMJAVALANGOBJECT_OR_NULL(_javaVM)) {
 				/* Object is currently only allowed to be redefined in fast HCR */

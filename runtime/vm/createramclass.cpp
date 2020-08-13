@@ -3059,11 +3059,8 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 	PORT_ACCESS_FROM_VMC(vmThread);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
-	/* if this is an anon class classLoader should be anonClassLoader */
 	if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
-		if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_HIDDEN)) {
-			classLoader = javaVM->anonClassLoader;
-		}
+		classLoader = javaVM->anonClassLoader;
 	}
 
 	memset(&state, 0, sizeof(state));
@@ -3132,7 +3129,7 @@ retry:
 				 * Therefore for classes loaded by bootloader from boot classpath,
 				 * J9Class.module should be set to J9JavaVM.unamedModuleForSystemLoader.
 				 */
-				if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
+				if (J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_ANON | J9_FINDCLASS_FLAG_HIDDEN)) {
 					module = hostClass->module;
 				} else {
 					bool findModule = false;
@@ -3223,7 +3220,7 @@ retry:
 			const U_32 inheritedFlags = J9ClassHasWatchedFields | J9ClassIsExemptFromValidation;
 			classFlags |= (superclass->classFlags & inheritedFlags);
 		}
-		if (0 != (J9_FINDCLASS_FLAG_ANON & options)) {
+		if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
 			/* if anonClass replace classLoader with hostClassLoader, no one can know about anonClassLoader */
 			result->classLoader = hostClassLoader;
 			if (NULL != result->classObject) {

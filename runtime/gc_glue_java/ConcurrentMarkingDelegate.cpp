@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -420,7 +420,7 @@ MM_ConcurrentMarkingDelegate::concurrentClassMark(MM_EnvironmentBase *env, bool 
 				 * so, if this pointer happened to be NULL at this point let it crash here
 				 */
 				Assert_MM_true(NULL != classLoader->classHashTable);
-				clazz = _javaVM->internalVMFunctions->hashClassTableStartDo(classLoader, &walkState);
+				clazz = _javaVM->internalVMFunctions->hashClassTableStartDo(classLoader, &walkState, 0);
 				while (NULL != clazz) {
 					sizeTraced += sizeof(uintptr_t);
 					_markingScheme->markObject(env, (j9object_t)clazz->classObject);

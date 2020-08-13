@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,15 +28,15 @@ UDATA
 packageNameLength(J9ROMClass* romClass)
 {
 	const J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
-	const BOOLEAN isAnonClass = J9_ARE_ANY_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass);
+	const BOOLEAN isAnonOrHidden = J9_ARE_ANY_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden);
 	BOOLEAN foundFirstSlash = FALSE;
 	UDATA result = 0;
 	IDATA i = J9UTF8_LENGTH(className) - 1;
 
 	for (; i >= 0; i--) {
 		if (J9UTF8_DATA(className)[i] == '/') {
-			/* Lambda names contain a '/'. If romClass is an anonymous class, find the second last '/'. */
-			if (!isAnonClass || foundFirstSlash) {
+			/* Lambda names contain a '/'. If romClass is an anonymous or hidden class, find the second last '/'. */
+			if (!isAnonOrHidden || foundFirstSlash) {
 				result = (UDATA)i;
 				break;
 			}
