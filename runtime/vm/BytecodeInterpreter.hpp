@@ -2986,13 +2986,12 @@ done:
 					walkState->restartException = receiver;
 				}
 				walkState->flags = walkFlags;
+				walkState->skipCount = 1;	/* skip the INL frame */
 #if JAVA_SPEC_VERSION >= 15
 				J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiver);
 				if (J9VMJAVALANGNULLPOINTEREXCEPTION_OR_NULL(_vm) == receiverClass) {
 					walkState->skipCount = 2;	/* skip the INL & NullPointerException.fillInStackTrace() frames */
 				}
-#else /* JAVA_SPEC_VERSION >= 15 */
-				walkState->skipCount = 1;	/* skip the INL frame */
 #endif /* JAVA_SPEC_VERSION >= 15 */
 				walkState->walkThread = _currentThread;
 				updateVMStruct(REGISTER_ARGS);
