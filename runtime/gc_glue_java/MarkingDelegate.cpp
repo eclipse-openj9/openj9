@@ -314,7 +314,7 @@ MM_MarkingDelegate::completeMarking(MM_EnvironmentBase *env)
 								 * so, if this pointer happened to be NULL at this point let it crash here
 								 */
 								Assert_MM_true(NULL != classLoader->classHashTable);
-								clazz = javaVM->internalVMFunctions->hashClassTableStartDo(classLoader, &walkState);
+								clazz = javaVM->internalVMFunctions->hashClassTableStartDo(classLoader, &walkState, 0);
 								while (NULL != clazz) {
 									_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )clazz->classObject);
 									_anotherClassMarkPass = true;

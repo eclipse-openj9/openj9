@@ -340,7 +340,7 @@ Java_com_ibm_oti_vm_VM_getClassNameImpl(JNIEnv *env, jclass recv, jclass jlClass
 	if (NULL != utfData) {
 		UDATA flags = J9_STR_INTERN | J9_STR_XLAT;
 
-		if (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass)) {
+		if (J9_ARE_ANY_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden)) {
 			flags |= J9_STR_ANON_CLASS_NAME;
 		}
 		j9object_t classNameObject = vm->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, utfData, utfLength, flags);

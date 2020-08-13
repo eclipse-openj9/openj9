@@ -241,9 +241,8 @@ jvmtiGetClassLoaderClasses(jvmtiEnv* env,
 
 		stats.vm = vm;
 		stats.currentThread = currentThread;
-
 		/* Search for classes who have this class loader as the initiating loader (wind up count) */
-		clazz = vmFuncs->hashClassTableStartDo(loader, &hashWalkState);
+		clazz = vmFuncs->hashClassTableStartDo(loader, &hashWalkState, J9_HASH_TABLE_STATE_FLAG_SKIP_HIDDEN);
 		while (clazz != NULL) {
 			countInitiatedClass(clazz, &stats);
 			clazz = vmFuncs->hashClassTableNextDo(&hashWalkState);
@@ -265,7 +264,7 @@ jvmtiGetClassLoaderClasses(jvmtiEnv* env,
 			rv_classes = stats.classRefs;
 
 			/* Record classes who have this class loader as the initiating loader (wind down count) */
-			clazz = vmFuncs->hashClassTableStartDo(loader, &hashWalkState);
+			clazz = vmFuncs->hashClassTableStartDo(loader, &hashWalkState, J9_HASH_TABLE_STATE_FLAG_SKIP_HIDDEN);
 			while (clazz != NULL) {
 				copyInitiatedClass(clazz, &stats);
 				clazz = vmFuncs->hashClassTableNextDo(&hashWalkState);

@@ -2725,7 +2725,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	VERBOSE_START(ParseClassFileConstantPool);
 	/* Space for the constant pool */
 
-	if (J9_ARE_ANY_BITS_SET(findClassFlags, J9_FINDCLASS_FLAG_ANON)) {
+	if (J9_ARE_ANY_BITS_SET(findClassFlags, J9_FINDCLASS_FLAG_ANON | J9_FINDCLASS_FLAG_HIDDEN)) {
 		/* Preemptively add new entry to the end of the constantPool for the modified anonClassName.
 		 * If it turns out we dont need it, simply reduce the constantPoolCount by 1, which is
 		 * cheaper than allocating twice.

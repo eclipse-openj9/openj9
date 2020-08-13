@@ -4435,7 +4435,7 @@ typedef struct J9InternalVMFunctions {
 	IDATA  ( *J9SignalAsyncEvent)(struct J9JavaVM * vm, struct J9VMThread * targetThread, IDATA handlerKey) ;
 	IDATA  ( *J9SignalAsyncEventWithoutInterrupt)(struct J9JavaVM * vm, struct J9VMThread * targetThread, IDATA handlerKey) ;
 	IDATA  ( *J9CancelAsyncEvent)(struct J9JavaVM * vm, struct J9VMThread * targetThread, IDATA handlerKey) ;
-	struct J9Class*  ( *hashClassTableStartDo)(struct J9ClassLoader *classLoader, struct J9HashTableState* walkState) ;
+	struct J9Class*  ( *hashClassTableStartDo)(struct J9ClassLoader *classLoader, struct J9HashTableState* walkState, UDATA flags) ;
 	struct J9Class*  ( *hashClassTableNextDo)(struct J9HashTableState* walkState) ;
 	struct J9PackageIDTableEntry* (*hashPkgTableAt)(J9ClassLoader* classLoader, J9ROMClass* romClass);
 	struct J9PackageIDTableEntry*  ( *hashPkgTableStartDo)(struct J9ClassLoader *classLoader, struct J9HashTableState* walkState) ;

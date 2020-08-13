@@ -224,12 +224,14 @@ internalCreateArrayClass(J9VMThread* vmThread, J9ROMArrayClass* romClass, J9Clas
 
 	if (elementInitSuccess) {
 		if (J9ROMCLASS_IS_HIDDEN(elementClass->romClass)) {
-			options |= (J9_FINDCLASS_FLAG_HIDDEN | J9_FINDCLASS_FLAG_UNSAFE | J9_FINDCLASS_FLAG_ANON);
+			options |= (J9_FINDCLASS_FLAG_HIDDEN | J9_FINDCLASS_FLAG_UNSAFE);
 			if (J9ROMCLASS_IS_OPTIONNESTMATE_SET(elementClass->romClass)) {
 				options |= J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE;
 			}
 			if (J9ROMCLASS_IS_OPTIONSTRONG_SET(elementClass->romClass)) {
-				options |= J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG ;
+				options |= J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG;
+			} else {
+				options |= J9_FINDCLASS_FLAG_ANON;
 			}
 		} else if (J9_ARE_ANY_BITS_SET(elementClass->classFlags, J9ClassIsAnonymous)) {
 			options = J9_FINDCLASS_FLAG_ANON;
@@ -365,7 +367,7 @@ internalRunPreInitInstructions(J9Class * ramClass, J9VMThread * vmThread)
 		U_32 description = 0;
 		UDATA i;
 		
-		BOOLEAN isAnonClass = J9_ARE_ANY_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass);
+		BOOLEAN isAnonClass = J9_ARE_ANY_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden);
 
 		for (i = 0; i < ramConstantPoolCount; ++i) {
 			if (descriptionCount == 0) {

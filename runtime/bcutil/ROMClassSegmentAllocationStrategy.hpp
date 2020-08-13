@@ -36,10 +36,9 @@
 class ROMClassSegmentAllocationStrategy : public AllocationStrategy
 {
 public:
-	ROMClassSegmentAllocationStrategy(J9JavaVM* javaVM, J9ClassLoader* classLoader, bool allocNewSeg) :
+	ROMClassSegmentAllocationStrategy(J9JavaVM* javaVM, J9ClassLoader* classLoader) :
 		_javaVM(javaVM),
 		_classLoader(classLoader),
-		_allocNewSeg(allocNewSeg),
 		_segment(NULL),
 		_bytesRequested(0)
 	{
@@ -52,7 +51,6 @@ public:
 private:
 	J9JavaVM* _javaVM;
 	J9ClassLoader* _classLoader;
-	bool _allocNewSeg;
 	J9MemorySegment* _segment;
 	UDATA _bytesRequested;
 };

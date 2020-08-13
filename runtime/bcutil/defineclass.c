@@ -75,6 +75,7 @@ internalDefineClass(
 	J9Class* result = NULL;
 	J9LoadROMClassData loadData = {0};
 	BOOLEAN isAnonFlagSet = J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON);
+	BOOLEAN isHiddenFlagSet = J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_HIDDEN);
 
 	/* This trace point is obsolete. It is retained only because j9vm test depends on it.
 	 * Once j9vm tests are fixed, it would be marked as Obsolete in j9bcu.tdf
@@ -97,11 +98,8 @@ internalDefineClass(
 	loadData.classDataObject = classDataObject;
 
 	loadData.classLoader = classLoader;
-	if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
-		if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_HIDDEN)) {
-			/* use anonClassLoader if this is an anonClass, but not hidden class. */
-			loadData.classLoader = vm->anonClassLoader;
-		}
+	if (isAnonFlagSet) {
+		loadData.classLoader = vm->anonClassLoader;
 	}
 	loadData.protectionDomain = protectionDomain;
 	loadData.options = options;
@@ -117,7 +115,7 @@ internalDefineClass(
 		}
 	}
 
-	if (!isAnonFlagSet) {
+	if (!isAnonFlagSet && !isHiddenFlagSet) {
 		/* See if there's already an orphan romClass available - still own classTableMutex at this point */
 		if (NULL != classLoader->romClassOrphansHashTable) {
 			orphanROMClass = romClassHashTableFind(classLoader->romClassOrphansHashTable, className, classNameLength);
@@ -144,13 +142,13 @@ internalDefineClass(
 		romClass = createROMClassFromClassFile(vmThread, &loadData, localBuffer);
 	}
 	if (romClass) {
-		/* Host class can only be set for anonymous classes, which are defined by Unsafe.defineAnonymousClass.
+		/* Host class can only be set for anonymous classes which are defined by Unsafe.defineAnonymousClass, or hidden classes.
 		 * For other cases, host class is set to NULL.
 		 */
 		if ((NULL != hostClass) && (J2SE_VERSION(vm) >= J2SE_V11)) {
 			J9ROMClass *hostROMClass = hostClass->romClass;
 			/* This error-check should only be done for anonymous classes. */
-			Trc_BCU_Assert_True(isAnonFlagSet);
+			Trc_BCU_Assert_True(isAnonFlagSet || isHiddenFlagSet);
 			/* From Java 9 and onwards, set IllegalArgumentException when host class and anonymous class have different packages. */
 			if (!hasSamePackageName(romClass, hostROMClass)) {
 				omrthread_monitor_exit(vm->classTableMutex);
@@ -322,7 +320,7 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 
 	/* Call the class load hook to potentially replace the class data */
 
-	if ((J9_ARE_NO_BITS_SET(loadData->options, J9_FINDCLASS_FLAG_ANON))
+	if ((J9_ARE_NO_BITS_SET(loadData->options, J9_FINDCLASS_FLAG_ANON | J9_FINDCLASS_FLAG_HIDDEN))
 		&& (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_CLASS_LOAD_HOOK) || J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_CLASS_LOAD_HOOK2))
 	) {
 		U_8 * classData = NULL;
@@ -373,7 +371,7 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 			className = NULL;
 		} else {
 			UDATA classNameLength = loadData->classNameLength;
-			if (J9_ARE_ALL_BITS_SET(loadData->options, J9_FINDCLASS_FLAG_ANON)) {
+			if (J9_ARE_ANY_BITS_SET(loadData->options, J9_FINDCLASS_FLAG_ANON | J9_FINDCLASS_FLAG_HIDDEN)) {
 				classNameLength -= (1 + ROM_ADDRESS_LENGTH);
 			}
 			className = j9mem_allocate_memory(classNameLength + 1, J9MEM_CATEGORY_CLASSES);
