@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,6 @@ add_jar(jpp
 		com/ibm/jpp/om/ConfigXMLHandler.java
 		com/ibm/jpp/om/EclipseMetadataExtension.java
 		com/ibm/jpp/om/ExternalMessagesExtension.java
-		com/ibm/jpp/om/InputStreamMerger.java
 		com/ibm/jpp/om/JavaPreprocessor.java
 		com/ibm/jpp/om/JitAttributesExtension.java
 		com/ibm/jpp/om/JitAttributes.java
