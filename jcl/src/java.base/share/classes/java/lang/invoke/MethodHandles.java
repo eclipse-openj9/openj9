@@ -76,6 +76,7 @@ import sun.reflect.CallerSensitive;
 
 /*[IF Java15]*/
 import jdk.internal.misc.Unsafe;
+import java.util.Collections;
 /*[ENDIF] Java15 */
 
 /**
@@ -5598,6 +5599,57 @@ public class MethodHandles {
 			}
 		}
 		return buildTransformHandle(new CollectReturnHelper(target, filter), resultType);
+	}
+	
+	/**
+	 * Scan a MethodHandle for checked exception(s).
+	 * 
+	 * @param mh A MethodHandle to scan for checked exception(s).
+	 * 
+	 * @return true if check exception(s) are found, and false otherwise.
+	 * 
+	 * @throws InternalError for an error.
+	 */
+	static boolean hasCheckedException(MethodHandle mh) {
+		if (mh == null) {
+			return false;
+		}
+		
+		List<MethodHandle> relatedMHs = new ArrayList<>(4);
+		relatedMHs.add(mh);
+		
+		while (!relatedMHs.isEmpty()) {
+			mh = relatedMHs.remove(relatedMHs.size() - 1);
+			if (mh instanceof PrimitiveHandle) {
+				Class<?>[] exceptionTypes = null;
+				MethodHandleInfoImpl mhi = new MethodHandleInfoImpl((PrimitiveHandle)mh);
+				if (mhi.isConstructor()) {
+					exceptionTypes = mhi.reflectAs(Constructor.class, Lookup.IMPL_LOOKUP).getExceptionTypes();
+				} else if (mhi.isMethod()) {
+					exceptionTypes = mhi.reflectAs(Method.class, Lookup.IMPL_LOOKUP).getExceptionTypes();
+				} else if (mhi.isField()) {
+					/* Field reference kind has no checked exceptions. */
+				} else {
+					/*[MSG "K0686", "Unknown reference kind: '{0}'"]*/
+					throw new InternalError(com.ibm.oti.util.Msg.getString("K0686", mhi.getReferenceKind())); //$NON-NLS-1$
+				}
+				if (exceptionTypes != null) {
+					for (Class<?> exceptionType : exceptionTypes) {
+						/* Checked exception is a Throwable, which is not an Error or RuntimeException. */
+						if (!RuntimeException.class.isAssignableFrom(exceptionType)
+							&& !Error.class.isAssignableFrom(exceptionType)
+							&& Throwable.class.isAssignableFrom(exceptionType)
+						) {
+							return true;
+						}
+					}
+				}
+			} else {
+				mh.addRelatedMHs(relatedMHs);
+			}
+		}
+
+		return false;
 	}
 	/*[ENDIF] Java15 */
 

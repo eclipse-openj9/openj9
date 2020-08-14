@@ -345,7 +345,12 @@ public abstract class VarHandle extends VarHandleInternal
 	VarForm vform = null;
 /*[ENDIF] Java14 */
 	
+/*[IF Java15]*/
+	MethodHandle[] handleTable;
+/*[ELSE]*/
 	private final MethodHandle[] handleTable;
+/*[ENDIF] Java15 */
+
 	final Class<?> fieldType;
 	final Class<?>[] coordinateTypes;
 	final int modifiers;
@@ -375,64 +380,75 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @param varForm an instance of VarForm.
 	 */
 	VarHandle(VarForm varForm) {
-		AccessMode[] accessModes = AccessMode.values();
-		int numAccessModes = accessModes.length;
-
-		/* The first argument in AccessType.GET MethodType is the receiver class. */
-		Class<?> receiverActual = accessModeTypeUncached(AccessMode.GET).parameterType(0);
-		Class<?> receiverVarForm = varForm.methodType_table[AccessType.GET.ordinal()].parameterType(0);
-		
-		/* Specify the exact operation method types if the actual receiver doesn't match the
-		 * receiver derived from VarForm.
-		 */
-		MethodType[] operationMTsExact = null;
-		if (receiverActual != receiverVarForm) {
-			operationMTsExact = new MethodType[numAccessModes];
-		}
-		
-		MethodType[] operationMTs = new MethodType[numAccessModes];
-		Class<?> operationsClass = null;
-
-		for (int i = 0; i < numAccessModes; i++) {
-			MemberName memberName = varForm.memberName_table[i];
-			if (memberName != null) {
-				operationMTs[i] = memberName.getMethodType();
-				if (operationMTsExact != null) {
-					/* Replace with the actual receiver, which is expected when the operation method
-					 * is invoked. The receiver is the second argument.
-					 */
-					operationMTsExact[i] = operationMTs[i].changeParameterType(1, receiverActual);
-				}
-				if (operationsClass == null) {
-					operationsClass = memberName.getDeclaringClass();
+		if (varForm.memberName_table == null) {
+			/* Indirect VarHandle. */
+			MethodType getter = varForm.methodType_table[VarHandle.AccessType.GET.ordinal()];
+			this.fieldType = getter.returnType();
+			this.coordinateTypes = getter.parameterArray();
+			this.modifiers = 0;
+			this.vform = varForm;
+			return;
+		} else {
+			/* Direct VarHandle. */
+			AccessMode[] accessModes = AccessMode.values();
+			int numAccessModes = accessModes.length;
+	
+			/* The first argument in AccessType.GET MethodType is the receiver class. */
+			Class<?> receiverActual = accessModeTypeUncached(AccessMode.GET).parameterType(0);
+			Class<?> receiverVarForm = varForm.methodType_table[AccessType.GET.ordinal()].parameterType(0);
+			
+			/* Specify the exact operation method types if the actual receiver doesn't match the
+			 * receiver derived from VarForm.
+			 */
+			MethodType[] operationMTsExact = null;
+			if (receiverActual != receiverVarForm) {
+				operationMTsExact = new MethodType[numAccessModes];
+			}
+			
+			MethodType[] operationMTs = new MethodType[numAccessModes];
+			Class<?> operationsClass = null;
+	
+			for (int i = 0; i < numAccessModes; i++) {
+				MemberName memberName = varForm.memberName_table[i];
+				if (memberName != null) {
+					operationMTs[i] = memberName.getMethodType();
+					if (operationMTsExact != null) {
+						/* Replace with the actual receiver, which is expected when the operation method
+						 * is invoked. The receiver is the second argument.
+						 */
+						operationMTsExact[i] = operationMTs[i].changeParameterType(1, receiverActual);
+					}
+					if (operationsClass == null) {
+						operationsClass = memberName.getDeclaringClass();
+					}
 				}
 			}
+	
+			MethodType getter = operationMTs[AccessMode.GET.ordinal()];
+			MethodType setter = operationMTs[AccessMode.SET.ordinal()];
+			
+			if (operationMTsExact != null) {
+				getter = operationMTsExact[AccessMode.GET.ordinal()];
+				setter = operationMTsExact[AccessMode.SET.ordinal()];
+			}
+	
+			this.fieldType = setter.parameterType(setter.parameterCount() - 1);
+			
+			/* The first VarHandle parameter type should be removed from the getter in order to derive
+			 * the coordinate types. 
+			 */
+			Class<?>[] getterParams = getter.parameterArray();
+			this.coordinateTypes = Arrays.copyOfRange(getterParams, 1, getterParams.length);
+			
+			if (operationMTsExact != null) {
+				this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTsExact);
+			} else {
+				this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTs);
+			}
+			
+			this.modifiers = 0;
+			this.vform = varForm;
 		}
-
-		MethodType getter = operationMTs[AccessMode.GET.ordinal()];
-		MethodType setter = operationMTs[AccessMode.SET.ordinal()];
-		
-		if (operationMTsExact != null) {
-			getter = operationMTsExact[AccessMode.GET.ordinal()];
-			setter = operationMTsExact[AccessMode.SET.ordinal()];
-		}
-
-		this.fieldType = setter.parameterType(setter.parameterCount() - 1);
-		
-		/* The first VarHandle parameter type should be removed from the getter in order to derive
-		 * the coordinate types. 
-		 */
-		Class<?>[] getterParams = getter.parameterArray();
-		this.coordinateTypes = Arrays.copyOfRange(getterParams, 1, getterParams.length);
-		
-		if (operationMTsExact != null) {
-			this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTsExact);
-		} else {
-			this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTs);
-		}
-		
-		this.modifiers = 0;
-		this.vform = varForm;
 	}
 
 	/**
@@ -455,7 +471,7 @@ public abstract class VarHandle extends VarHandleInternal
 				if (lookupType != null) {
 					operationMHs[index] = _lookup.findStatic(operationsClass, accessMode.methodName(), lookupType);
 					if (lookupTypes == exactTypes) {
-						operationMHs[index] = permuateHandleJEP370(operationMHs[index]);
+						operationMHs[index] = permuteHandleJ9ToReference(operationMHs[index]);
 					} else {
 						/* Clone the MethodHandles with the exact types if different set of exactTypes are provided. */
 						MethodType exactType = exactTypes[index];
@@ -467,7 +483,7 @@ public abstract class VarHandle extends VarHandleInternal
 							operationMHs[index] = operationMHs[index].cloneWithNewType(exactType);
 							/*[ENDIF] OPENJDK_METHODHANDLES */
 						}
-						operationMHs[index] = permuateHandleJEP370(operationMHs[index]);
+						operationMHs[index] = permuteHandleJ9ToReference(operationMHs[index]);
 					}
 				}
 			}
@@ -489,7 +505,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @param methodHandle to be permuted.
 	 * @return the adapter MethodHandle which performs the translation.
 	 */
-	static MethodHandle permuateHandleJEP370(MethodHandle methodHandle) {
+	static MethodHandle permuteHandleJ9ToReference(MethodHandle methodHandle) {
 		/* HandleType = {VarHandle, Receiver, Intermediate ..., Value}
 		 * PermuteType = {Receiver, Intermediate ..., Value, VarHandle}
 		 */
@@ -503,10 +519,9 @@ public abstract class VarHandle extends VarHandleInternal
 		 * reorder = {parameterCount - 1, 0, 1, 2, ..., parameterCount - 2}
 		 */
 		int[] reorder = new int[parameterCount];
-		for (int i = 0; i < parameterCount; i++) {
-			if (i == 0) {
-				reorder[i] = parameterCount - 1;
-			} else {
+		if (parameterCount > 0) {
+			reorder[0] = parameterCount - 1;
+			for (int i = 1; i < parameterCount; i++) {
 				reorder[i] = i - 1;
 			}
 		}
@@ -514,6 +529,87 @@ public abstract class VarHandle extends VarHandleInternal
 		return MethodHandles.permuteArguments(methodHandle, permuteMethodType, reorder);
 	}
 /*[ENDIF] Java14 */
+
+/*[IF Java15]*/
+	/**
+	 * Generate a MethodHandle which translates:
+	 *     FROM {VarHandle, Receiver, Intermediate ..., Value}ReturnType
+	 *     TO   {Receiver, Intermediate ..., Value, VarHandle}ReturnType
+	 *
+	 * @param methodHandle to be permuted.
+	 * @return the adapter MethodHandle which performs the translation.
+	 */
+	static MethodHandle permuteHandleReferenceToJ9(MethodHandle methodHandle) {
+		/* HandleType = {Receiver, Intermediate ..., Value, VarHandle}
+		 * PermuteType = {VarHandle, Receiver, Intermediate ..., Value}
+		 */
+		MethodType permuteMethodType = methodHandle.type();
+		int parameterCount = permuteMethodType.parameterCount();
+		Class<?>[] params = permuteMethodType.parameterArray();
+		int[] reorder = new int[parameterCount];
+		
+		if (parameterCount > 0) {
+			permuteMethodType = permuteMethodType.changeParameterType(0, params[parameterCount - 1]);
+			for (int i = 1; i < parameterCount; i++) {
+				permuteMethodType = permuteMethodType.changeParameterType(i, params[i - 1]);
+			}
+			
+			/**
+			 * reorder specifies the mapping between PermuteType and HandleType.
+			 * reorder = {1, 2, ..., parameterCount - 1, 0}
+			 */
+			reorder[parameterCount - 1] = 0;
+			for (int i = 0; i < parameterCount - 1; i++) {
+				reorder[i] = i + 1;
+			}
+		}
+		
+		return MethodHandles.permuteArguments(methodHandle, permuteMethodType, reorder);
+	}
+
+	/**
+	 * Generates handleTable for Indirect VarHandles (supports JEP383).
+	 *
+	 * @param target the target VarHandle for the Indirect VarHandle.
+	 * @param handleFactory used to transform an AccessMode MethodHandle accordingly.
+	 * 
+	 * @return a MethodHandle array which is used to initialize the handleTable.
+	 */
+	static MethodHandle[] populateMHsJEP383(VarHandle target, BiFunction<AccessMode, MethodHandle, MethodHandle> handleFactory) {
+		MethodHandle[] operationMHs = new MethodHandle[AccessMode.values().length];
+
+		try {
+			MethodType replaceWithDirectType = MethodType.methodType(VarHandle.class, VarHandle.class);
+			MethodHandle replaceWithDirect = MethodHandles.publicLookup().findStatic(VarHandle.class, "asDirect", replaceWithDirectType);
+
+			for (AccessMode mode : AccessMode.values()) {
+				int index = mode.ordinal();
+				MethodHandle targetHandle = target.getMethodHandle(index);
+
+				if (targetHandle != null) {
+					MethodType targetType = targetHandle.type();
+					if (targetType.parameterType(targetType.parameterCount() - 1) == VarHandle.class) {
+						/*
+						 * Permute a J9 VarHandle to an equivalent reference implementation VarHandle
+						 * before applying handleFactory.
+						 */
+						targetHandle = permuteHandleReferenceToJ9(targetHandle);
+					}
+					operationMHs[index] = handleFactory.apply(mode, targetHandle);
+					operationMHs[index] = permuteHandleJ9ToReference(operationMHs[index]);
+					operationMHs[index] = MethodHandles.collectArguments(operationMHs[index], operationMHs[index].type().parameterCount() - 1, replaceWithDirect);
+				}
+			}
+		} catch (IllegalAccessException | NoSuchMethodException e) {
+			/* [MSG "K0623", "Unable to create MethodHandle to VarHandle operation."] */
+			InternalError error = new InternalError(com.ibm.oti.util.Msg.getString("K0623")); //$NON-NLS-1$
+			error.initCause(e);
+			throw error;
+		}
+
+		return operationMHs;
+	}
+/*[ENDIF] Java15 */
 
 	Class<?> getDefiningClass() {
 		/*[MSG "K0627", "Expected override of this method."]*/
@@ -1569,6 +1665,17 @@ public abstract class VarHandle extends VarHandleInternal
 	 */
 	boolean isDirect() {
 		return true;
+	}
+	
+	/**
+	 * Return the direct-target VarHandle for the input varHandle.
+	 * 
+	 * @param varHandle the input VarHandle.
+	 * 
+	 * @return the direct-target VarHandle for the input VarHandle.
+	 */
+	public static VarHandle asDirect(VarHandle varHandle) {
+		return varHandle.asDirect();
 	}
 /*[ENDIF] Java15 */
 

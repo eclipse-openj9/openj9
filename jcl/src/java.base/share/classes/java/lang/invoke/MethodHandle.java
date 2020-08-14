@@ -1587,6 +1587,17 @@ public abstract class MethodHandle
 		return "KIND_#"+kind; //$NON-NLS-1$
 	}
 
+/*[IF Java15]*/
+	/**
+	 * Append to a list the child MethodHandle(s) which form "this" (parent MethodHandle).
+	 * 
+	 * @param relatedMHs the list where the child MethodHandle(s) are added. 
+	 * 
+	 * @return true if MethodHandles are added to the list, and false otherwise.
+	 */
+	abstract boolean addRelatedMHs(List<MethodHandle> relatedMHs);
+/*[ENDIF] Java15 */
+
 /*[IF OPENJDK_METHODHANDLES]*/
 	byte customizationCount;
 

@@ -22,6 +22,11 @@
  *******************************************************************************/
 package java.lang.invoke;
 
+/*[IF Java15]*/
+import java.util.Collections;
+import java.util.List;
+/*[ENDIF] Java15 */
+
 final class FilterArgumentsHandle extends MethodHandle {
 	private final MethodHandle   next;
 	private final int            startPos;
@@ -88,6 +93,15 @@ final class FilterArgumentsHandle extends MethodHandle {
 			filterArguments(filters, ILGenMacros.middleN(numPrefixArgs(), numArgsToFilter(), argPlaceholder)),
 			ILGenMacros.lastN(numSuffixArgs(), argPlaceholder)));
 	}
+
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		relatedMHs.add(next);
+		Collections.addAll(relatedMHs, filters);
+		return true;
+	}
+/*[ENDIF] Java15 */
 
 	// }}} JIT support
 

@@ -26,8 +26,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+
 import com.ibm.oti.vm.VM;
 import com.ibm.jit.JITHelpers;
+
+/*[IF Java15]*/
+import java.util.List;
+/*[ENDIF] Java15 */
 
 /**
  * PrimitiveHandle is a subclass of MethodHandle used for grouping MethodHandles that directly refer a Java-level method. 
@@ -199,4 +204,11 @@ abstract class PrimitiveHandle extends MethodHandle {
 			throw new IllegalAccessException(e.getMessage());
 		}
 	}
+	
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		return false;
+	}
+/*[ENDIF] Java15 */
 }

@@ -24,6 +24,10 @@ package java.lang.invoke;
 
 import static java.lang.invoke.MethodType.*;
 
+/*[IF Java15]*/
+import java.util.List;
+/*[ENDIF] Java15 */
+
 /*
  * MethodHandle subclass responsible for dealing with constant values.
  * The dispatch targets pop the MethodHandle and then push the constant value.
@@ -124,6 +128,13 @@ abstract class ConstantHandle extends MethodHandle {
 			return new ConstantIntHandle(methodType, value);
 		}
 	}
+	
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		return false;
+	}
+/*[ENDIF] Java15 */
 }
 
 final class ConstantObjectHandle extends ConstantHandle {
