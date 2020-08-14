@@ -91,6 +91,7 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    uint32_t getDecimalFloatToPackedFixedSize();
    uint32_t getDecimalDoubleToPackedFixedSize();
    uint32_t getDecimalLongDoubleToPackedFixedSize();
+   bool callUsesHelperImplementation(TR::Symbol *sym);
 
    uint32_t getLongToPackedFixedSize()               { return TR_LONG_TO_PACKED_SIZE; }
    uint32_t getIntegerToPackedFixedSize()            { return TR_INTEGER_TO_PACKED_SIZE; }
