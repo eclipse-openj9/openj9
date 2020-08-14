@@ -64,7 +64,31 @@ J9::AheadOfTimeCompile::offsetInSharedCacheFromPointer(TR_SharedCache *sharedCac
    if (sharedCache->isPointerInSharedCache(ptr, &offset))
       return offset;
    else
-      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find pointer in SCC");
+      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find pointer %p in SCC", ptr);
+
+   return offset;
+   }
+
+uintptr_t
+J9::AheadOfTimeCompile::offsetInSharedCacheFromROMClass(TR_SharedCache *sharedCache, J9ROMClass *romClass)
+   {
+   uintptr_t offset = 0;
+   if (sharedCache->isROMClassInSharedCache(romClass, &offset))
+      return offset;
+   else
+      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find romClass %p in SCC", romClass);
+
+   return offset;
+   }
+
+uintptr_t
+J9::AheadOfTimeCompile::offsetInSharedCacheFromROMMethod(TR_SharedCache *sharedCache, J9ROMMethod *romMethod)
+   {
+   uintptr_t offset = 0;
+   if (sharedCache->isROMMethodInSharedCache(romMethod, &offset))
+      return offset;
+   else
+      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find romMethod %p in SCC", romMethod);
 
    return offset;
    }
@@ -382,8 +406,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             }
 
          TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
-         void *romClass = reinterpret_cast<void *>(fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass));
-         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
+         J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass));
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromROMClass(sharedCache, romClass);
 
          imRecord->setReloFlags(reloTarget, flags);
          imRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
@@ -405,8 +429,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          uintptr_t inlinedSiteIndex = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
          TR::AOTClassInfo *aotCI = reinterpret_cast<TR::AOTClassInfo*>(relocation->getTargetAddress2());
 
-         void *romClass = reinterpret_cast<void *>(fej9->getPersistentClassPointerFromClassPointer(aotCI->_clazz));
-         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
+         J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(aotCI->_clazz));
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromROMClass(sharedCache, romClass);
 
          vsfRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          vsfRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(aotCI->_constantPool));
@@ -448,8 +472,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR_ResolvedMethod *inlinedMethod = ((TR_AOTMethodInfo *)ics._methodInfo)->resolvedMethod;
          TR_OpaqueClassBlock *inlinedCodeClass = reinterpret_cast<TR_OpaqueClassBlock *>(inlinedMethod->classOfMethod());
 
-         void *romClass = reinterpret_cast<void *>(fej9->getPersistentClassPointerFromClassPointer(inlinedCodeClass));
-         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
+         J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(inlinedCodeClass));
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromROMClass(sharedCache, romClass);
          traceMsg(comp, "class is %p, romclass is %p, offset is %llu\n", inlinedCodeClass, romClass, romClassOffsetInSharedCache);
 
          uintptr_t classChainIdentifyingLoaderOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(inlinedCodeClass);

@@ -555,7 +555,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          // Store rom method to get name of method
          J9Method *methodToValidate = reinterpret_cast<J9Method *>(record->_method);
          J9ROMMethod *romMethod = static_cast<TR_J9VM *>(fej9)->getROMMethodFromRAMMethod(methodToValidate);
-         uintptr_t romMethodOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romMethod);
+         uintptr_t romMethodOffsetInSharedCache = self()->offsetInSharedCacheFromROMMethod(sharedCache, romMethod);
          binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
          binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
          binaryTemplate->_lookupClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_lookupClass));
