@@ -22,6 +22,10 @@
  *******************************************************************************/
 package java.lang.invoke;
 
+/*[IF Java15]*/
+import java.util.List;
+/*[ENDIF] Java15 */
+
 final class GuardWithTestHandle extends MethodHandle {
 
 	final MethodHandle guard;
@@ -83,7 +87,17 @@ final class GuardWithTestHandle extends MethodHandle {
 			return ILGenMacros.invokeExact_X(falseTarget, argPlaceholder);
 		}
 	}
- 
+
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		relatedMHs.add(guard);
+		relatedMHs.add(falseTarget);
+		relatedMHs.add(trueTarget);
+		return true;
+	}
+/*[ENDIF] Java15 */
+
 	// }}} JIT support
 
 	@Override

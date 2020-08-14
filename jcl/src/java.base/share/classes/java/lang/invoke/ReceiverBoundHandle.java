@@ -24,6 +24,15 @@ package java.lang.invoke;
 
 import java.lang.reflect.Modifier;
 
+/*[IF Java15]*/
+import com.ibm.oti.vm.VMLangAccess;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.reflect.Field;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.List;
+/*[ENDIF] Java15 */
+
 /* ReceiverBoundHandle is a DirectHandle subclass used to call methods 
  * that have an exact known address and a bound first parameter.
  * <b>
@@ -101,6 +110,46 @@ final class ReceiverBoundHandle extends DirectHandle {
 		return result;
 	}
 
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		VMLangAccess vma = Lookup.getVMLangAccess();
+		ClassLoader rawLoader = vma.getClassloader(receiver.getClass());
+		Class<?> injectedSecurityFrame = null;
+		
+		synchronized (SecurityFrameInjector.loaderLock) {
+			injectedSecurityFrame = SecurityFrameInjector.probeLoaderToSecurityFrameMap(rawLoader);
+		}
+		
+		if ((injectedSecurityFrame == null) || !injectedSecurityFrame.isInstance(receiver)) {
+			/* Receiver object cannot be an instance of SecurityFrame as its classloader 
+			 * doesn't have an injected security frame class.
+			 */
+			return false;
+		}
+		
+		final Class<?> finalInjectedSecurityFrame = injectedSecurityFrame;
+		
+		MethodHandle target = AccessController.doPrivileged(new PrivilegedAction<MethodHandle>() {
+			public MethodHandle run() {
+				try {
+					Field targetField = finalInjectedSecurityFrame.getDeclaredField("target"); //$NON-NLS-1$
+					targetField.setAccessible(true);
+					return (MethodHandle)targetField.get(receiver);
+				} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+					throw (InternalError)new InternalError().initCause(e);
+				}
+			}
+		});
+		
+		if (target.type() == type()) {
+			relatedMHs.add(target);
+			return true;
+		}
+		
+		return false;
+	}
+/*[ENDIF] Java15 */
 
 	// {{{ JIT support
 	private static final ThunkTable _thunkTable = new ThunkTable();

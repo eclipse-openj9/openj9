@@ -22,6 +22,10 @@
  *******************************************************************************/
 package java.lang.invoke;
 
+/*[IF Java15]*/
+import java.util.List;
+/*[ENDIF] Java15 */
+
 /* 
  * Pseudocode example:
  * handle: D original(A, B, C)
@@ -65,6 +69,15 @@ final class FilterArgumentsWithCombinerHandle extends MethodHandle {
     MethodHandle cloneWithNewType(MethodType newType) {
         return new FilterArgumentsWithCombinerHandle(this, newType);
     }
+
+/*[IF Java15]*/
+    @Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		relatedMHs.add(next);
+		relatedMHs.add(combiner);
+		return true;
+	}
+/*[ENDIF] Java15 */
 
     private static Object[] infoAffectingThunks(MethodType combinerType, int filterPosition, int...argumentIndices) {
         MethodType thunkableType = ThunkKey.computeThunkableType(combinerType);

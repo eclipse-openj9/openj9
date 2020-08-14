@@ -22,6 +22,10 @@
  *******************************************************************************/
 package java.lang.invoke;
 
+/*[IF Java15]*/
+import java.util.List;
+/*[ENDIF] Java15 */
+
 /*
  * Special handle that in the interpreter calls the equivalent's implementation.
  * Provides ability to have JIT specific subtypes without requiring individual
@@ -57,5 +61,14 @@ abstract class PassThroughHandle extends MethodHandle {
 		super(originalHandle, newType);
 		this.equivalent = originalHandle.equivalent;
 	}
+	
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		relatedMHs.add(equivalent);
+		return true;
+	}
+/*[ENDIF] Java15 */
+
 }
 

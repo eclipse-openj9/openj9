@@ -22,6 +22,10 @@
  *******************************************************************************/
 package java.lang.invoke;
 
+/*[IF Java15]*/
+import java.util.List;
+/*[ENDIF] Java15 */
+
 final class PermuteHandle extends MethodHandle {
 	@VMCONSTANTPOOL_FIELD
 	private final MethodHandle next;
@@ -62,6 +66,14 @@ final class PermuteHandle extends MethodHandle {
 
 		return new PermuteHandle(permuteType, next, combinedPermute);
 	}
+
+/*[IF Java15]*/
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		relatedMHs.add(next);
+		return true;
+	}
+/*[ENDIF] Java15 */
 
 	// {{{ JIT support
 
