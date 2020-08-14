@@ -265,7 +265,12 @@ public abstract class ClassLoader {
 			System.bootLayer = jdk.internal.module.ModuleBootstrap.boot();
 		/*[IF Java10]*/
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			System.out.println(ex);
+			Throwable t = ex.getCause();
+			while (t != null) {
+				System.out.println("Caused by: " + t); //$NON-NLS-1$
+				t = t.getCause();
+			}
 			System.exit(1);
 		}
 		/*[ENDIF]*/

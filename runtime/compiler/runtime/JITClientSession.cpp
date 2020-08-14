@@ -370,24 +370,27 @@ ClientSessionData::getOrCacheVMInfo(JITServer::ServerStream *stream)
    if (!_vmInfo)
       {
       stream->write(JITServer::MessageType::VM_getVMInfo, JITServer::Void());
-      auto recv = stream->read<VMInfo, std::vector<uintptr_t>, std::vector<uintptr_t> >();
+      auto recv = stream->read<VMInfo, std::vector<CacheDescriptor> >();
       _vmInfo = new (PERSISTENT_NEW) VMInfo(std::get<0>(recv));
-      _vmInfo->_j9SharedClassCacheDescriptorList = reconstructJ9SharedClassCacheDescriptorList(std::get<1>(recv), std::get<2>(recv));
+      _vmInfo->_j9SharedClassCacheDescriptorList = reconstructJ9SharedClassCacheDescriptorList(std::get<1>(recv));
       }
    return _vmInfo;
    }
 
 J9SharedClassCacheDescriptor *
-ClientSessionData::reconstructJ9SharedClassCacheDescriptorList(const std::vector<uintptr_t> &listOfCacheStartAddress, const std::vector<uintptr_t> &listOfCacheSizeBytes)
+ClientSessionData::reconstructJ9SharedClassCacheDescriptorList(const std::vector<ClientSessionData::CacheDescriptor> &listOfCacheDescriptors)
    {
    J9SharedClassCacheDescriptor * cur = NULL;
    J9SharedClassCacheDescriptor * prev = NULL;
    J9SharedClassCacheDescriptor * head = NULL;
-   for (size_t i = 0; i < listOfCacheStartAddress.size(); i++)
+   for (size_t i = 0; i < listOfCacheDescriptors.size(); i++)
       {
+      auto cacheDesc = listOfCacheDescriptors[i];
       cur = new (PERSISTENT_NEW) J9SharedClassCacheDescriptor();
-      cur->cacheStartAddress = (J9SharedCacheHeader*)(listOfCacheStartAddress[i]);
-      cur->cacheSizeBytes = listOfCacheSizeBytes[i];
+      cur->cacheStartAddress = (J9SharedCacheHeader *)cacheDesc.cacheStartAddress;
+      cur->cacheSizeBytes = cacheDesc.cacheSizeBytes;
+      cur->romclassStartAddress = (void *)cacheDesc.romClassStartAddress;
+      cur->metadataStartAddress = (void *)cacheDesc.metadataStartAddress;
       if (prev)
          {
          prev->next = cur;
