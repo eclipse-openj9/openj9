@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,6 +60,8 @@ class OMR_EXTENSIBLE IL : public OMR::ILConnector
 
    TR::ILOpCodes opCodeForCorrespondingIndirectLoad(TR::ILOpCodes loadOpCode);
    TR::ILOpCodes opCodeForCorrespondingIndirectStore(TR::ILOpCodes storeOpCode);
+   TR::ILOpCodes opCodeForCorrespondingDirectLoad(TR::ILOpCodes loadOpCode);
+   TR::ILOpCodes opCodeForCorrespondingDirectStore(TR::ILOpCodes storeOpCode);
 
    TR::ILOpCodes opCodeForConst(TR::DataType dt);
    TR::ILOpCodes opCodeForDirectLoad(TR::DataType dt);
