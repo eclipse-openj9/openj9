@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2019 IBM Corp. and others
+ * Copyright (c) 2014, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -134,12 +134,12 @@ rasTriggerMethod(J9VMThread *thr, J9Method *method, I_32 entry, const TriggerPha
 
 	dbg_err_printf(1, PORTLIB, "<RAS> Trigger hit for method %s: %.*s.%.*s%.*s\n",
 					entry ? "entry" : "return",
-					J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass)->length,
-					J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass)->data,
-					J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method))->length,
-					J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method))->data,
-					J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method))->length,
-					J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method))->data);
+					J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass)),
+					J9UTF8_DATA(J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass)),
+					J9UTF8_LENGTH(J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method))),
+					J9UTF8_DATA(J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method))),
+					J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method))),
+					J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method))));
 
 	/*
 	 * Go through each of the rules seeing if this method is one of theirs

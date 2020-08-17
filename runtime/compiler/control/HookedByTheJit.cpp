@@ -620,7 +620,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       J9UTF8 * className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass);
       J9UTF8 * name      = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
       J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
-      int32_t sigLen = sprintf(buf, "%.*s.%.*s%.*s", className->length, utf8Data(className), name->length, utf8Data(name), signature->length, utf8Data(signature));
+      int32_t sigLen = sprintf(buf, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
       printf("Initial: Signature %s Count %d isLoopy %d isAOT %lu is in SCC %d SCCContainsProfilingInfo %d \n",buf,TR::CompilationInfo::getInvocationCount(method),J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod),
             TR::Options::sharedClassCache() ? jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod) : 0,
             TR::Options::sharedClassCache() ? TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM)->sharedCache()->isROMClassInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass) : 0,containsInfo) ; fflush(stdout);

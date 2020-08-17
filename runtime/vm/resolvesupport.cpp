@@ -105,7 +105,7 @@ checkForDecompile(J9VMThread *currentThread, J9ROMMethodRef *romMethodRef, bool 
 		if (!jitCompileTimeResolve && (NULL != vm->jitConfig)) {
 			J9UTF8 *name = J9ROMNAMEANDSIGNATURE_NAME(J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef));
 			char *decompileName = vm->decompileName;
-			if (J9UTF8_DATA_EQUALS(name->data, name->length, decompileName, strlen(decompileName))) {
+			if (J9UTF8_DATA_EQUALS(J9UTF8_DATA(name), J9UTF8_LENGTH(name), decompileName, strlen(decompileName))) {
 				if (NULL != jitConfig->jitHotswapOccurred) {
 					acquireExclusiveVMAccess(currentThread);
 					jitConfig->jitHotswapOccurred(currentThread);
@@ -1545,9 +1545,9 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 				NNSRP_SET(nameAndSig->signature, modifiedMethodSig);
 
 				/* Change method name to include the suffix "_impl", which are the methods with VarHandle send targets. */
-				modifiedMethodName->length = initialMethodNameLength + 5;
-				memcpy(modifiedMethodName->data, initialMethodName, initialMethodNameLength);
-				memcpy(modifiedMethodName->data + initialMethodNameLength, "_impl", 5);
+				J9UTF8_SET_LENGTH(modifiedMethodName, initialMethodNameLength + 5);
+				memcpy(J9UTF8_DATA(modifiedMethodName), initialMethodName, initialMethodNameLength);
+				memcpy(J9UTF8_DATA(modifiedMethodName) + initialMethodNameLength, "_impl", 5);
 
 				/* Set flag for partial signature lookup. Signature length is already initialized to 0. */
 				lookupOptions |= J9_LOOK_PARTIAL_SIGNATURE;

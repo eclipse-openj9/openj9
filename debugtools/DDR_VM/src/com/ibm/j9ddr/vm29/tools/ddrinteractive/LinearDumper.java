@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -661,7 +661,7 @@ public class LinearDumper implements IClassWalkCallbacks {
 	}
 	private int getUTF8Length(J9UTF8Pointer j9utf8Pointer) throws CorruptDataException {
 
-		UDATA length = new UDATA(j9utf8Pointer.length().longValue() + J9UTF8.SIZEOF - U8.SIZEOF * 2 /*TODO sizeof(utf8->data)*/);
+		UDATA length = new UDATA(j9utf8Pointer.length().longValue() + J9UTF8Helper.J9UTF8_HEADER_SIZE);
 		if (length.anyBitsIn(1)) {
 			length = length.add(1);
 		}

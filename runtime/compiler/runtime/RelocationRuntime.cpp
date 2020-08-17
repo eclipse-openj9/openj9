@@ -459,12 +459,12 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
       _exceptionTable->constantPool = ramCP();
       getClassNameSignatureFromMethod(_method, _exceptionTable->className, _exceptionTable->methodName, _exceptionTable->methodSignature);
       RELO_LOG(reloLogger(), 1, "relocateAOTCodeAndData: method %.*s.%.*s%.*s\n",
-                                    _exceptionTable->className->length,
-                                    _exceptionTable->className->data,
-                                    _exceptionTable->methodName->length,
-                                    _exceptionTable->methodName->data,
-                                    _exceptionTable->methodSignature->length,
-                                    _exceptionTable->methodSignature->data);
+                                    J9UTF8_LENGTH(_exceptionTable->className),
+                                    J9UTF8_DATA(_exceptionTable->className),
+                                    J9UTF8_LENGTH(_exceptionTable->methodName),
+                                    J9UTF8_DATA(_exceptionTable->methodName),
+                                    J9UTF8_LENGTH(_exceptionTable->methodSignature),
+                                    J9UTF8_DATA(_exceptionTable->methodSignature));
 
       /* Now it is safe to perform the JITExceptionTable structure relocations */
       relocateMethodMetaData((UDATA)codeStart - (UDATA)oldCodeStart, (UDATA)_exceptionTable - (UDATA)((U_8 *)oldDataStart + _aotMethodHeaderEntry->offsetToExceptionTable + sizeof(J9JITDataCacheHeader)));

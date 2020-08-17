@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,14 +140,14 @@ public abstract class LocalVariableTableIterator implements Iterator<LocalVariab
 					return null;
 				}
 				name = J9UTF8Pointer.cast(SelfRelativePointer.cast(localVariableTablePtr).get());
-				localVariableTablePtr = localVariableTablePtr.add(J9UTF8.SIZEOF);
+				localVariableTablePtr = localVariableTablePtr.add(SelfRelativePointer.SIZEOF);
 				
 				signature = J9UTF8Pointer.cast(SelfRelativePointer.cast(localVariableTablePtr).get());
-				localVariableTablePtr = localVariableTablePtr.add(J9UTF8.SIZEOF);
+				localVariableTablePtr = localVariableTablePtr.add(SelfRelativePointer.SIZEOF);
 
 				if (visibilityLength.anyBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_VARIABLE_TABLE_HAS_GENERIC)) {
 					genericSignature = J9UTF8Pointer.cast(SelfRelativePointer.cast(localVariableTablePtr).get());
-					localVariableTablePtr = localVariableTablePtr.add(J9UTF8.SIZEOF);
+					localVariableTablePtr = localVariableTablePtr.add(SelfRelativePointer.SIZEOF);
 				} else {
 					genericSignature = J9UTF8Pointer.NULL;
 				}

@@ -1805,9 +1805,9 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
    bool matchFound = false;
 
    int32_t signatureLength = J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature));
-   char *signatureString = (char *) &(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature)));
+   char *signatureString = (char *) J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature));
 
-   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\trelocateAndRegisterThunk: %.*s%.*s\n", J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature)), &(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature))),  signatureLength, signatureString);
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\trelocateAndRegisterThunk: %.*s%.*s\n", J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature)), J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature)),  signatureLength, signatureString);
 
    // Everything below is run with VM Access in hand
    TR::VMAccessCriticalSection relocateAndRegisterThunkCriticalSection(reloRuntime->fej9());
@@ -2067,8 +2067,8 @@ TR_RelocationRecordInlinedAllocation::preparePrivateData(TR_RelocationRuntime *r
       {
       RELO_LOG(reloRuntime->reloLogger(), 6, "\tpreparePrivateData: clazz %p %.*s\n",
                                                  clazz,
-                                                 J9ROMCLASS_CLASSNAME(clazz->romClass)->length,
-                                                 J9ROMCLASS_CLASSNAME(clazz->romClass)->data);
+                                                 J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(clazz->romClass)),
+                                                 J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass)));
 
       if (verifyClass(reloRuntime, reloTarget, (TR_OpaqueClassBlock *)clazz))
          inlinedCodeIsOkay = true;
@@ -2185,7 +2185,7 @@ TR_RelocationRecordInlinedMethod::print(TR_RelocationRuntime *reloRuntime)
    TR_RelocationRecordConstantPoolWithIndex::print(reloRuntime);
    J9ROMClass *inlinedCodeRomClass = reloRuntime->fej9()->sharedCache()->romClassFromOffsetInSharedCache(romClassOffsetInSharedCache(reloTarget));
    J9UTF8 *inlinedCodeClassName = J9ROMCLASS_CLASSNAME(inlinedCodeRomClass);
-   reloLogger->printf("\tromClassOffsetInSharedCache %x %.*s\n", romClassOffsetInSharedCache(reloTarget), inlinedCodeClassName->length, inlinedCodeClassName->data );
+   reloLogger->printf("\tromClassOffsetInSharedCache %x %.*s\n", romClassOffsetInSharedCache(reloTarget), J9UTF8_LENGTH(inlinedCodeClassName), J9UTF8_DATA(inlinedCodeClassName));
    //reloLogger->printf("\tromClassOffsetInSharedCache %x %.*s\n", romClassOffsetInSharedCache(reloTarget), J9UTF8_LENGTH(inlinedCodeClassname), J9UTF8_DATA(inlinedCodeClassName));
    }
 
@@ -2291,9 +2291,9 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
    J9UTF8 *callerMethodSignature;
    getClassNameSignatureFromMethod(callerMethod, callerClassName, callerMethodName, callerMethodSignature);
    RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: caller method %.*s.%.*s%.*s\n",
-                                              callerClassName->length, callerClassName->data,
-                                              callerMethodName->length, callerMethodName->data,
-                                              callerMethodSignature->length, callerMethodSignature->data);
+                                              J9UTF8_LENGTH(callerClassName), J9UTF8_DATA(callerClassName),
+                                              J9UTF8_LENGTH(callerMethodName), J9UTF8_DATA(callerMethodName),
+                                              J9UTF8_LENGTH(callerMethodSignature), J9UTF8_DATA(callerMethodSignature));
 
    J9ConstantPool *cp = NULL;
    if (!isUnloadedInlinedMethod(callerMethod))
@@ -2356,9 +2356,9 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
             J9UTF8 *methodSignature;
             getClassNameSignatureFromMethod(currentMethod, className, methodName, methodSignature);
             RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: inlined method %.*s.%.*s%.*s\n",
-                                                       className->length, className->data,
-                                                       methodName->length, methodName->data,
-                                                       methodSignature->length, methodSignature->data);
+                                                       J9UTF8_LENGTH(className), J9UTF8_DATA(className),
+                                                       J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName),
+                                                       J9UTF8_LENGTH(methodSignature), J9UTF8_DATA(methodSignature));
             }
          else
             {
@@ -2806,7 +2806,7 @@ TR_RelocationRecordProfiledInlinedMethod::preparePrivateData(TR_RelocationRuntim
       {
       J9ROMClass *inlinedCodeRomClass = reloRuntime->fej9()->sharedCache()->romClassFromOffsetInSharedCache(romClassOffsetInSharedCache(reloTarget));
       J9UTF8 *inlinedCodeClassName = J9ROMCLASS_CLASSNAME(inlinedCodeRomClass);
-      RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: inlinedCodeRomClass %p %.*s\n", inlinedCodeRomClass, inlinedCodeClassName->length, inlinedCodeClassName->data);
+      RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: inlinedCodeRomClass %p %.*s\n", inlinedCodeRomClass, J9UTF8_LENGTH(inlinedCodeClassName), J9UTF8_DATA(inlinedCodeClassName));
 
 #if defined(PUBLIC_BUILD)
       J9ClassLoader *classLoader = NULL;

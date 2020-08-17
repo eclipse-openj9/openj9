@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -115,7 +115,7 @@ j9ThunkLookupNameAndSig(void * jitConfig, void *parm)
 
 	Trc_Thunk_j9ThunkLookupNameAndSig_Entry();
 
-	thunkAddress = j9ThunkLookupSignature(jitConfig, J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature)), (char *) &J9UTF8_DATA((J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature))));
+	thunkAddress = j9ThunkLookupSignature(jitConfig, J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature)), (char *) J9UTF8_DATA((J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature))));
 
 	if (NULL == thunkAddress) {
 		Trc_Thunk_j9ThunkLookupNameAndSig_Exit_ThunkNotFound();
@@ -233,7 +233,7 @@ j9ThunkNewNameAndSig(void * jitConfig, void *parm, void *thunkAddress)
 {
 	J9ROMNameAndSignature *nameAndSignature = (J9ROMNameAndSignature *) parm;
 
-	return j9ThunkNewSignature(jitConfig, J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature)), (char *) &J9UTF8_DATA((J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature))), thunkAddress);
+	return j9ThunkNewSignature(jitConfig, J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature)), (char *) J9UTF8_DATA((J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature))), thunkAddress);
 }
 
 IDATA
@@ -485,5 +485,5 @@ j9ThunkVMHelperFromNameAndSig(void * jitConfig, void *parm)
 {
 	J9ROMNameAndSignature *nameAndSignature = (J9ROMNameAndSignature *) parm;
 
-	return j9ThunkVMHelperFromSignature(jitConfig, J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature)), (char *) &J9UTF8_DATA((J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature))));
+	return j9ThunkVMHelperFromSignature(jitConfig, J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature)), (char *) J9UTF8_DATA((J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature))));
 }
