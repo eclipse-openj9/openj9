@@ -431,6 +431,12 @@ public class AutoRun {
 			suite.addTestSuite(TestTypeResolution.class);
 			suite.addTestSuite(TestCollisionResilientHashtable.class);
 			suite.addTestSuite(TestStackMap.class);
+			suite.addTestSuite(TestDeadlockCase1.class);
+			suite.addTestSuite(TestDeadlockCase2.class);
+			suite.addTestSuite(TestDeadlockCase3.class);
+			suite.addTestSuite(TestDeadlockCase4.class);
+			suite.addTestSuite(TestDeadlockCase5.class);
+			suite.addTestSuite(TestDeadlockCase6.class);
 		} else {
 			String[] testCases = testCaseList.split(",");
 			for (String aTest : testCases) {
