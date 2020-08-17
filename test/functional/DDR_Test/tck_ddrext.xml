@@ -32,9 +32,21 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<property name="JDK_VERSION" value="${JDK_VERSION}" />
 	<property name="EXTRADUMPOPT" value="" />
 	<property name="ADDITIONALEXPORTS" value="" />
-	<property name="TCK_CR_VM_ARG" value="${TCK_CR_VM_ARG}"/>
-	<property name="TESTNUM" value="${TESTNUM}"/>
+	<property name="JVM_OPTIONS" value=""/>
+	<property name="TESTNUM" value=""/>
 	<property name="COREGEN" value="j9vm.test.corehelper.CoreGen"/>
+	<property name="TEST_LIB_PATH" value="" />
+
+	<!-- MacOSX needs to set TEST_LIB_PATH_VAL for testDDRExtJunit_MonitorsAndDeadlock* to load native library -->
+	<if>
+		<contains string="${os.name}" substring="Mac OS X"/>
+		<then>
+			<property name="TEST_LIB_PATH_VAL" value="${TEST_LIB_PATH}"/>
+		</then>
+		<else>
+			<property name="TEST_LIB_PATH_VAL" value=""/>
+		</else>
+	</if>
 
 	<if>
 		<equals arg1="${JDK_VERSION}" arg2="8"/>
@@ -133,6 +145,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo>DUMP_OPTION: ${DUMP_OPTION}</echo>
 		<echo>EXTRADUMPOPT: ${EXTRADUMPOPT}</echo>
 		<echo>COREGEN: ${COREGEN}</echo>
+		<echo>JVM_OPTIONS: ${JVM_OPTIONS}</echo>
+		<echo>TEST_NUM: ${TESTNUM}</echo>
+		<echo>os.name: ${os.name}</echo>
+		<echo>TEST_LIB_PATH_VAL: ${TEST_LIB_PATH_VAL}</echo>
 
 		<!-- We use the -Xint option to store the startup hint into the shared chache. -->
 		<exec executable="${JAVA_COMMAND}" failonerror="true">
@@ -147,10 +163,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<arg line="${DUMP_OPTION}" />
 			<arg line="-Xitsn1000" />
 			<arg line="${EXTRADUMPOPT}" />
-			<arg value="-Xjit:{j9vm/test/corehelper/CoreGen.main*}(count=0)"/>
+			<arg line="${JVM_OPTIONS}" />
+			<arg line="${TEST_LIB_PATH_VAL}"/>				
+			<arg value="-Xjit:{j9vm/test/corehelper/CoreGen.main*}(count=0)" />
 			<arg value="-cp" />
 			<arg value="${TEST_RESROOT}/DDR_Test.jar" />
-			<arg value="${COREGEN}" />
+			<arg value="${COREGEN}" />	
+			<arg value="${TESTNUM}" />		
 		</exec>
 
 		<if>

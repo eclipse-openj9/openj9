@@ -130,4 +130,160 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</impls>
 	</test>
 
+	<test>
+		<testCaseName>testDDRExtJunit_MonitorsAndDeadlock1</testCaseName>
+		<variations>
+			<variation>Mode101</variation>
+			<variation>Mode601</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
+	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DTESTNUM=1 -DCOREGEN=$(Q)j9vm.test.corehelper.DeadlockCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
+	-Dtest.list=$(Q)TestDeadlockCase1$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+
+	<test>
+		<testCaseName>testDDRExtJunit_MonitorsAndDeadlock2</testCaseName>
+		<variations>
+			<variation>Mode101</variation>
+			<variation>Mode601</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
+	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DTESTNUM=2 -DCOREGEN=$(Q)j9vm.test.corehelper.DeadlockCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
+	-Dtest.list=$(Q)TestDeadlockCase2$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+
+	<test>
+		<testCaseName>testDDRExtJunit_MonitorsAndDeadlock3</testCaseName>
+		<variations>
+			<variation>Mode101</variation>
+			<variation>Mode601</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
+	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DTESTNUM=3 -DCOREGEN=$(Q)j9vm.test.corehelper.DeadlockCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
+	-Dtest.list=$(Q)TestDeadlockCase3$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+
+	<test>
+		<testCaseName>testDDRExtJunit_MonitorsAndDeadlock4</testCaseName>
+		<variations>
+			<variation>Mode101</variation>
+			<variation>Mode601</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
+	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DTESTNUM=4 -DCOREGEN=$(Q)j9vm.test.corehelper.DeadlockCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
+	-Dtest.list=$(Q)TestDeadlockCase4$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+
+	<test>
+		<testCaseName>testDDRExtJunit_MonitorsAndDeadlock5</testCaseName>
+		<variations>
+			<variation>Mode101</variation>
+			<variation>Mode601</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
+	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DTESTNUM=5 -DCOREGEN=$(Q)j9vm.test.corehelper.DeadlockCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
+	-Dtest.list=$(Q)TestDeadlockCase5$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+
+	<test>
+		<testCaseName>testDDRExtJunit_MonitorsAndDeadlock6</testCaseName>
+		<variations>
+			<variation>Mode101</variation>
+			<variation>Mode601</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
+	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DTESTNUM=6 -DCOREGEN=$(Q)j9vm.test.corehelper.DeadlockCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
+	-Dtest.list=$(Q)TestDeadlockCase6$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+ 
 </playlist>
