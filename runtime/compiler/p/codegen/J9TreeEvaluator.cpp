@@ -2392,7 +2392,7 @@ TR::Register *J9::Power::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::Code
       conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(4, 4, cg->trMemory());
       }
 
-   if (firstChild->getOpCode().isLoadConst() && firstChild->getInt() >= LOWER_IMMED && firstChild->getInt() <= UPPER_IMMED && firstChild->getRegister() == NULL && !noReversedTrap)
+   if (firstChild->getOpCode().isLoadConst() && firstChild->getInt() >= 0 && firstChild->getInt() <= UPPER_IMMED && firstChild->getRegister() == NULL && !noReversedTrap)
       {
       src2Reg = cg->evaluate(secondChild);
       reversed = true;
@@ -2404,7 +2404,7 @@ TR::Register *J9::Power::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::Code
       if (secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL)
          {
          value = secondChild->getInt();
-         if (value < LOWER_IMMED || value > UPPER_IMMED)
+         if (value < 0 || value > UPPER_IMMED)
             {
             src2Reg = cg->evaluate(secondChild);
             }
@@ -2923,7 +2923,7 @@ TR::Register *J9::Power::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *no
    TR::Register *arrayLengthReg;
 
    // If the index is too large to be an immediate load it in a register
-   if (!indexChild->getOpCode().isLoadConst() || (indexChild->getInt() > UPPER_IMMED || indexChild->getInt() < LOWER_IMMED))
+   if (!indexChild->getOpCode().isLoadConst() || (indexChild->getInt() > UPPER_IMMED || indexChild->getInt() < 0))
       indexReg = cg->evaluate(indexChild);
    else
       indexReg = NULL;
@@ -2986,7 +2986,7 @@ TR::Register *J9::Power::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *no
             //
 
             // If the array length is too large to be an immediate load it in a register for the bound check
-            if (arrayLengthChild->getInt() > UPPER_IMMED || arrayLengthChild->getInt() < LOWER_IMMED)
+            if (arrayLengthChild->getInt() > UPPER_IMMED || arrayLengthChild->getInt() < 0)
                arrayLengthReg = cg->evaluate(arrayLengthChild);
 
             // Do the bound check first.
