@@ -37,7 +37,7 @@
 	<!-- START SET DEFINITIONS -->
 	<set
 		label="newflags"
-		flags="OPENJDK_METHODHANDLES"/>
+		flags="INLINE-TYPES,OPENJDK_METHODHANDLES"/>
 
 	<set
 		label="oldflags"
