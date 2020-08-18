@@ -344,7 +344,7 @@ class ClientSessionData
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> & getCHTableClassMap() { return _chTableClassMap; }
    PersistentUnorderedMap<J9Class*, ClassInfo> & getROMClassMap() { return _romClassMap; }
    PersistentUnorderedMap<J9Method*, J9MethodInfo> & getJ9MethodMap() { return _J9MethodMap; }
-   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getClassByNameMap() { return _classByNameMap; }
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getClassBySignatureMap() { return _classBySignatureMap; }
    PersistentUnorderedMap<J9Class *, UDATA *> & getClassChainDataCache() { return _classChainDataMap; }
    PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock*> & getConstantPoolToClassMap() { return _constantPoolToClassMap; }
    void initializeUnloadedClassAddrRanges(const std::vector<TR_AddressRange> &unloadedClassRanges, int32_t maxRanges);
@@ -431,7 +431,7 @@ class ClientSessionData
    PersistentUnorderedMap<J9Method*, J9MethodInfo> _J9MethodMap;
    // The following hashtable caches <classname> --> <J9Class> mappings
    // All classes in here are loaded by the systemClassLoader so we know they cannot be unloaded
-   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> _classByNameMap;
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> _classBySignatureMap;
 
    PersistentUnorderedMap<J9Class *, UDATA *> _classChainDataMap;
    //Constant pool to class map
