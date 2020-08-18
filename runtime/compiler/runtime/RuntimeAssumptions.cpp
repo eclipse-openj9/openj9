@@ -85,7 +85,7 @@ TR_PatchNOPedGuardSiteOnClassPreInitialize::hashCode(char *sig, uint32_t sigLen)
 void
 TR_PatchNOPedGuardSiteOnClassPreInitialize::reclaim()
    {
-   TR_ASSERT_FATAL(_key != NULL, "Attempt to reclaim an already freed _key");
+   TR_ASSERT_FATAL(_key != 0, "Attempt to reclaim an already freed _key");
 
    jitPersistentFree((void*)_key);
    _key = 0;
