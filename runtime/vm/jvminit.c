@@ -5871,7 +5871,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	J9InitializeJavaVMArgs * initArgs = userData;
 	void * osMainThread = initArgs->osMainThread;
 	J9JavaVM * vm = initArgs->vm;
-	extern struct JNINativeInterface_ * EsJNIFunctions;
+	extern struct JNINativeInterface_ EsJNIFunctions;
 	J9VMThread *env = NULL;
 	UDATA parseError = FALSE;
 	jint stageRC = 0;
