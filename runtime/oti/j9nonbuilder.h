@@ -3218,10 +3218,19 @@ typedef struct J9ClassLoader {
 #define J9CLASSLOADER_SET_CLASSLOADEROBJECT(vmThread, object, value) J9VMTHREAD_JAVAVM(vmThread)->memoryManagerFunctions->j9gc_objaccess_storeObjectToInternalVMSlot((vmThread), (j9object_t*)&((object)->classLoaderObject), (value))
 #define TMP_J9CLASSLOADER_CLASSLOADEROBJECT(object) ((object)->classLoaderObject)
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4200)
+#endif /* defined(_MSC_VER) */
+
 typedef struct J9UTF8 {
 	U_16 length;
-	U_8 data[2];
+	U_8 data[];
 } J9UTF8;
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif /* defined(_MSC_VER) */
 
 typedef struct J9ROMClass {
 	U_32 romSize;

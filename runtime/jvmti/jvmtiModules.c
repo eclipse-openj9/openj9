@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,13 +80,13 @@ addModuleExportsOrOpens(jvmtiEnv* jvmtiEnv, jobject fromModule, const char* pkgN
 		} else  {
 			IDATA len = strlen(pkgName);
 			J9UTF8 *pkgNameUTF8 = NULL;
-			char buf[JVMTI_PACKAGE_NAME_BUFFER_LENGTH + sizeof(pkgNameUTF8->length) + 1];
+			char buf[JVMTI_PACKAGE_NAME_BUFFER_LENGTH + sizeof(J9UTF8) + 1];
 			PORT_ACCESS_FROM_VMC(currentThread);
 			J9Module *foundModule = NULL;
 
 			pkgNameUTF8 = (J9UTF8 *) buf;
 			if (JVMTI_PACKAGE_NAME_BUFFER_LENGTH < len) {
-				pkgNameUTF8 = j9mem_allocate_memory(len + sizeof(pkgNameUTF8->length) + 1, OMRMEM_CATEGORY_VM);
+				pkgNameUTF8 = j9mem_allocate_memory(len + sizeof(J9UTF8) + 1, OMRMEM_CATEGORY_VM);
 				if (NULL == pkgNameUTF8) {
 					rc = JVMTI_ERROR_OUT_OF_MEMORY;
 					vmFuncs->internalExitVMToJNI(currentThread);
@@ -272,7 +272,7 @@ jvmtiGetNamedModule(jvmtiEnv* jvmtiEnv, jobject class_loader, const char* packag
 		J9ClassLoader *vmClassLoader = NULL;
 		J9Module *vmModule = NULL;
 		J9UTF8 *packageName = NULL;
-		char buf[J9VM_PACKAGE_NAME_BUFFER_LENGTH + sizeof(packageName->length) + 1];
+		char buf[J9VM_PACKAGE_NAME_BUFFER_LENGTH + sizeof(J9UTF8) + 1];
 		UDATA packageNameLength = 0;
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -304,7 +304,7 @@ jvmtiGetNamedModule(jvmtiEnv* jvmtiEnv, jobject class_loader, const char* packag
 		packageNameLength = strlen(package_name);
 		packageName = (J9UTF8 *) buf;
 		if (packageNameLength > JVMTI_PACKAGE_NAME_BUFFER_LENGTH) {
-			packageName = j9mem_allocate_memory(packageNameLength + sizeof(packageName->length) + 1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
+			packageName = j9mem_allocate_memory(packageNameLength + sizeof(J9UTF8) + 1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
 			if (NULL == packageName) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 				goto done;

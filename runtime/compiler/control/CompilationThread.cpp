@@ -581,10 +581,10 @@ bool TR::CompilationInfo::importantMethodForStartup(J9Method *method)
       J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClazz);
       if (TR::Compiler->target.numberOfProcessors() <= 2)
          {
-         if (className->length == 16 && 0==memcmp(utf8Data(className), "java/lang/String", 16))
+         if (J9UTF8_LENGTH(className) == 16 && 0==memcmp(utf8Data(className), "java/lang/String", 16))
             return true;
          }
-      else if (className->length >= 14)
+      else if (J9UTF8_LENGTH(className) >= 14)
          {
          if (0==memcmp(utf8Data(className), "java/lang/Stri", 14) ||
              0==memcmp(utf8Data(className), "java/util/zip/", 14) ||
@@ -720,7 +720,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
          if (!doDowngrade)
             {
             J9UTF8 * className = J9ROMCLASS_CLASSNAME(methodDetails.getRomClass());
-            if (className->length == 23 && !memcmp(utf8Data(className), "java/lang/J9VMInternals", 23))
+            if (J9UTF8_LENGTH(className) == 23 && !memcmp(utf8Data(className), "java/lang/J9VMInternals", 23))
                {
                doDowngrade = true;
                }

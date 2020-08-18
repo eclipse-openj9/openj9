@@ -1157,7 +1157,7 @@ static intptr_t getInitialCountForMethod(TR_ResolvedMethod *rm, TR::Compilation 
                 {
                 J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
 
-                if (className->length > 5 &&
+                if (J9UTF8_LENGTH(className) > 5 &&
                     !strncmp(utf8Data(className), "java/", 5))
                   {
                   initialCount = 10000;

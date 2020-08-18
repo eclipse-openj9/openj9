@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2019 IBM Corp. and others
+ * Copyright (c) 2003, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -149,7 +149,7 @@ TextFileStream::writeCharacters(const char* data, IDATA length)
 void
 TextFileStream::writeCharacters(const J9UTF8* data)
 {
-	writeCharacters((char*)data + offsetof(J9UTF8, data), J9UTF8_LENGTH(data));
+	writeCharacters((char*)J9UTF8_DATA(data), J9UTF8_LENGTH(data));
 }
 
 /* Method for writing characters described by a pointer to the file*/

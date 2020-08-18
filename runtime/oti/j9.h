@@ -167,7 +167,7 @@ typedef struct J9ClassLoaderWalkState {
 #define J9UTF8_LENGTH(j9UTF8Address) (((struct J9UTF8 *)(j9UTF8Address))->length)
 #define J9UTF8_SET_LENGTH(j9UTF8Address, len) (((struct J9UTF8 *)(j9UTF8Address))->length = (len))
 #define J9UTF8_DATA(j9UTF8Address) (((struct J9UTF8 *)(j9UTF8Address))->data)
-
+#define J9UTF8_TOTAL_SIZE(j9UTF8Address) (sizeof(J9UTF8) + J9UTF8_LENGTH(j9UTF8Address))
 #define J9UTF8_DATA_EQUALS(data1, length1, data2, length2) ((((length1) == (length2)) && (memcmp((data1), (data2), (length1)) == 0)))
 #define J9UTF8_EQUALS(utf1, utf2) (((utf1) == (utf2)) || (J9UTF8_DATA_EQUALS(J9UTF8_DATA(utf1), J9UTF8_LENGTH(utf1), J9UTF8_DATA(utf2), J9UTF8_LENGTH(utf2))))
 #define J9UTF8_LITERAL_EQUALS(data1, length1, cString) (J9UTF8_DATA_EQUALS((data1), (length1), (cString), sizeof(cString) - 1))

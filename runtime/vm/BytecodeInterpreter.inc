@@ -85,7 +85,7 @@ getMethodName(J9PortLibrary *PORTLIB, J9Method *method, U_8 *pc, char *buffer)
 		if (0 == ((UDATA)method->extra & 1)) {
 			strcat(buffer, "JITTED ");
 		}
-		j9str_printf(PORTLIB, temp, sizeof(temp), "%.*s.%.*s%.*s (%p)", className->length, className->data, methodName->length, methodName->data, methodSig->length, methodSig->data, method);
+		j9str_printf(PORTLIB, temp, sizeof(temp), "%.*s.%.*s%.*s (%p)", J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodSig), J9UTF8_DATA(methodSig), method);
 		strcat(buffer, temp);
 		if ((U_8*)-1 != pc) {
 			j9str_printf(PORTLIB, temp, sizeof(temp), " @ %p (offset %d)", pc, pc - method->bytecodes);

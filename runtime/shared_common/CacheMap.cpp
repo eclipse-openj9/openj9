@@ -5695,7 +5695,7 @@ SH_CacheMap::getCachedUTFString(J9VMThread* currentThread, const char* local, U_
 	const J9UTF8* pathUTF = NULL;
 	U_8 temp[J9SH_MAXPATH + sizeof(J9UTF8)];
 	J9UTF8* temputf = (J9UTF8*)&temp;
-	char* tempstr = (char*)&(J9UTF8_DATA(temputf));
+	char* tempstr = (char*)J9UTF8_DATA(temputf);
 	SH_ScopeManager* localSCM;
 	bool allowUpdate = true;
 
