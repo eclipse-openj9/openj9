@@ -719,6 +719,7 @@ freeJavaVM(J9JavaVM * vm)
 		vm->jniGlobalReferences = NULL;
 	}
 
+
 	if (NULL != vm->dllLoadTable) {
 		J9VMDllLoadInfo *traceLoadInfo = NULL;
 
@@ -4065,6 +4066,15 @@ static void closeAllDLLs(J9JavaVM* vm) {
 			}
 			entry = (J9VMDllLoadInfo*) pool_nextDo(&aState);
 		}
+	}
+
+	if (NULL != vm->jniCryptoFunctions) {
+		const char * cryptolib_name = "jgskit";
+
+		j9sl_close_shared_library(vm->jniCryptoLibrary);
+		JVMINIT_VERBOSE_INIT_VM_TRACE1(vm, "Closing library %s\n", (char*)cryptolib_name);
+		j9mem_free_memory(vm->jniCryptoFunctions);
+		vm->jniCryptoFunctions = NULL;
 	}
 }
 
