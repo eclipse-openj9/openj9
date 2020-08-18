@@ -580,7 +580,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 		try {
 			MethodType replaceWithDirectType = MethodType.methodType(VarHandle.class, VarHandle.class);
-			MethodHandle replaceWithDirect = MethodHandles.publicLookup().findStatic(VarHandle.class, "asDirect", replaceWithDirectType);
+			MethodHandle replaceWithDirect = MethodHandles.lookup().findStatic(VarHandle.class, "asDirect", replaceWithDirectType);
 
 			for (AccessMode mode : AccessMode.values()) {
 				int index = mode.ordinal();
@@ -1674,7 +1674,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 * 
 	 * @return the direct-target VarHandle for the input VarHandle.
 	 */
-	public static VarHandle asDirect(VarHandle varHandle) {
+	private static VarHandle asDirect(VarHandle varHandle) {
 		return varHandle.asDirect();
 	}
 /*[ENDIF] Java15 */
