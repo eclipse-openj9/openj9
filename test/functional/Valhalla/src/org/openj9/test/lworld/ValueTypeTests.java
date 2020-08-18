@@ -1461,6 +1461,10 @@ public class ValueTypeTests {
 		 * Withers are created in array getterAndWither[i][1] according to the order of fields i
 		 */
 		assortedValueWithLongAlignmentGetterAndWither = generateGenericGetterAndWither(assortedValueWithLongAlignmentClass, typeWithLongAlignmentFields);
+	}
+
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedValueWithLongAlignment() throws Throwable {
 		Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
 		checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterAndWither, assortedValueWithLongAlignment, typeWithLongAlignmentFields, true);
 	}
@@ -1491,6 +1495,10 @@ public class ValueTypeTests {
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
 		assortedRefWithLongAlignmentGetterAndSetter = generateGenericGetterAndSetter(assortedRefWithLongAlignmentClass, typeWithLongAlignmentFields);
+	}
+
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedRefWithLongAlignment() throws Throwable {
 		Object assortedRefWithLongAlignment = createAssorted(makeAssortedRefWithLongAlignment, typeWithLongAlignmentFields);
 		checkFieldAccessMHOfAssortedType(assortedRefWithLongAlignmentGetterAndSetter, assortedRefWithLongAlignment, typeWithLongAlignmentFields, false);
 	}
@@ -1521,7 +1529,10 @@ public class ValueTypeTests {
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
 		assortedValueWithObjectAlignmentGetterAndWither = generateGenericGetterAndWither(assortedValueWithObjectAlignmentClass, typeWithObjectAlignmentFields);
+	}
 
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedValueWithObjectAlignment() throws Throwable {
 		Object assortedValueWithObjectAlignment = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
 		checkFieldAccessMHOfAssortedType(assortedValueWithObjectAlignmentGetterAndWither, assortedValueWithObjectAlignment, typeWithObjectAlignmentFields, true);
 	}
@@ -1580,7 +1591,10 @@ public class ValueTypeTests {
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
 		assortedValueWithSingleAlignmentGetterAndWither = generateGenericGetterAndWither(assortedValueWithSingleAlignmentClass, typeWithSingleAlignmentFields);
+	}
 
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedValueWithSingleAlignment() throws Throwable {
 		Object assortedValueWithSingleAlignment = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
 		checkFieldAccessMHOfAssortedType(assortedValueWithSingleAlignmentGetterAndWither, assortedValueWithSingleAlignment, typeWithSingleAlignmentFields, true);
 	}
