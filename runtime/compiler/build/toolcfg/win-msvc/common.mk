@@ -106,6 +106,7 @@ CX_FLAGS+=\
     -wd4244 \
     -wd4018 \
     -we4700 \
+    -wd4200 \
     -MD
 
 CXX_FLAGS+=\
