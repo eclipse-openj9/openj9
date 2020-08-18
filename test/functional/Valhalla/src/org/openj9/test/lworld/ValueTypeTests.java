@@ -51,7 +51,7 @@ import org.testng.annotations.BeforeClass;
  * 11) make -f run_configure.mk && make compile && make _sanity
  */
 
-@Test(groups = { "level.sanity" }, invocationCount = 2)
+@Test(groups = { "level.sanity" })
 public class ValueTypeTests {
 	static Lookup lookup = MethodHandles.lookup();
 	static Unsafe myUnsafe = null;
@@ -532,7 +532,7 @@ public class ValueTypeTests {
 	 * }
 	 * 
 	 */
-	@Test(priority=3)
+	@Test(priority=3, invocationCount=2)
 	static public void testCreateArrayFlattenedLine2D() throws Throwable {
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -680,7 +680,7 @@ public class ValueTypeTests {
 		} catch (NoClassDefFoundError e) {}
 	}
 	
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testNullWritesOnNonNullableArrays() throws Throwable {
 		Object arrayObject = Array.newInstance(point2DClass, 3);
 		try {
@@ -696,7 +696,7 @@ public class ValueTypeTests {
 		}
 	}
 	
-	@Test(priority=2)
+	@Test(priority=2, invocationCount=2)
 	static public void testBasicACMPTestOnIdentityTypes() throws Throwable {
 		
 		Object identityType1 = new String();
@@ -722,7 +722,7 @@ public class ValueTypeTests {
 		
 	}
 	
-	@Test(priority=2)
+	@Test(priority=2, invocationCount=2)
 	static public void testBasicACMPTestOnValueTypes() throws Throwable {
 		Object valueType1 = makePoint2D.invoke(1, 2);
 		Object valueType2 = makePoint2D.invoke(1, 2);
@@ -893,7 +893,7 @@ public class ValueTypeTests {
 		
 	}
 	
-	@Test(priority=3)
+	@Test(priority=3, invocationCount=2)
 	static public void testACMPTestOnValueFloat() throws Throwable {
 		Object float1 = makeValueFloat.invoke(1.1f);
 		Object float2 = makeValueFloat.invoke(-1.1f);
@@ -956,7 +956,7 @@ public class ValueTypeTests {
 			
 	}
 
-	@Test(priority=3)
+	@Test(priority=3, invocationCount=2)
 	static public void testACMPTestOnValueDouble() throws Throwable {
 		Object double1 = makeValueDouble.invoke(1.1d);
 		Object double2 = makeValueDouble.invoke(-1.1d);
@@ -1266,7 +1266,7 @@ public class ValueTypeTests {
 	}
 	
 	
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testCreateArrayTriangle2D() throws Throwable {
 		Object arrayObject = Array.newInstance(triangle2DClass, genericArraySize);
 		Object triangle1 = createTriangle2D(defaultTrianglePositions);
@@ -1842,21 +1842,21 @@ public class ValueTypeTests {
 		assertNotNull(getV3.invoke(triangleObject));
 	}
 	
-	@Test(priority=5)
+	@Test(priority=5, invocationCount=2)
 	static public void testStaticFieldsWithObjectAlignmenDefaultValues() throws Throwable {
 		for (MethodHandle getterAndSetter[] : staticFieldsWithObjectAlignmentGenericGetterAndSetter) {
 			assertNotNull(getterAndSetter[0].invoke());
 		}
 	}
 	
-	@Test(priority=5)
+	@Test(priority=5, invocationCount=2)
 	static public void testStaticFieldsWithLongAlignmenDefaultValues() throws Throwable {
 		for (MethodHandle getterAndSetter[] : staticFieldsWithLongAlignmentGenericGetterAndSetter) {
 			assertNotNull(getterAndSetter[0].invoke());
 		}
 	}
 	
-	@Test(priority=5)
+	@Test(priority=5, invocationCount=2)
 	static public void testStaticFieldsWithSingleAlignmenDefaultValues() throws Throwable {
 		for (MethodHandle getterAndSetter[] : staticFieldsWithSingleAlignmentGenericGetterAndSetter) {
 			assertNotNull(getterAndSetter[0].invoke());
@@ -1982,7 +1982,7 @@ public class ValueTypeTests {
 	 * Create Array Objects with Point Class without initialization
 	 * The array should be set to a Default Value.
 	 */
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInPointArray() throws Throwable {
 		Object pointArray = Array.newInstance(point2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -1995,7 +1995,7 @@ public class ValueTypeTests {
 	 * Create Array Objects with Flattened Line without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
 	 */
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInLineArray() throws Throwable {
 		Object flattenedLineArray = Array.newInstance(flattenedLine2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2010,7 +2010,7 @@ public class ValueTypeTests {
 	 * Create Array Objects with triangle class without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
 	 */
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInTriangleArray() throws Throwable {
 		Object triangleArray = Array.newInstance(triangle2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2026,7 +2026,7 @@ public class ValueTypeTests {
 	 * Create an Array Object with assortedValueWithLongAlignment class without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
 	 */
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInAssortedValueWithLongAlignmentArray() throws Throwable {
 		Object assortedValueWithLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2041,7 +2041,7 @@ public class ValueTypeTests {
 	/*
 	 * Create a 2D array of valueTypes, verify that the default elements are null. 
 	 */
-	@Test(priority=5)
+	@Test(priority=5, invocationCount=2)
 	static public void testMultiDimentionalArrays() throws Throwable {
 		Class assortedValueWithLongAlignment2DClass = Array.newInstance(assortedValueWithLongAlignmentClass, 1).getClass();
 		Class assortedValueWithSingleAlignment2DClass = Array.newInstance(assortedValueWithSingleAlignmentClass, 1).getClass();
@@ -2062,7 +2062,7 @@ public class ValueTypeTests {
 	 * Create an assortedRefWithLongAlignment Array
 	 * Since it's ref type, the array should be filled with nullptrs
 	 */
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInAssortedRefWithLongAlignmentArray() throws Throwable {
 		Object assortedRefWithLongAlignmentArray = Array.newInstance(assortedRefWithLongAlignmentClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
