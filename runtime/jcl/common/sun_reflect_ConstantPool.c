@@ -752,7 +752,10 @@ Java_java_lang_invoke_MethodHandle_getCPMethodHandleAt(JNIEnv *env, jclass unuse
 			j9object_t methodHandleObject = J9STATIC_OBJECT_LOAD(vmThread, ramClass, &ramMethodHandleRef->methodHandle);
 
 			if (NULL == methodHandleObject) {
-				methodHandleObject = vmFunctions->resolveMethodHandleRef(vmThread, J9_CP_FROM_CLASS(ramClass), cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+				/* Avoid initializing the class from there so as to postpone the static initialization
+				 * to the invocation of the specified method of the class.
+				 */
+				methodHandleObject = vmFunctions->resolveMethodHandleRef(vmThread, J9_CP_FROM_CLASS(ramClass), cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_NO_CLASS_INIT);
 			}
 			if (NULL != methodHandleObject) {
 				returnValue = vmFunctions->j9jni_createLocalRef(env, methodHandleObject);
