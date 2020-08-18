@@ -49,6 +49,7 @@ class ValuePropagation : public OMR::ValuePropagation
  #endif
 
    virtual void constrainRecognizedMethod(TR::Node *node);
+   virtual bool transformUnsafeCopyMemoryCall(TR::Node *arrayCopyNode);
    virtual bool transformDirectLoad(TR::Node *node);
    virtual void doDelayedTransformations();
    void transformCallToNodeWithHCRGuard(TR::TreeTop *callTree, TR::Node *result);
