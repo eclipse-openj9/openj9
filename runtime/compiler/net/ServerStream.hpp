@@ -67,11 +67,11 @@ public:
    /**
       @brief Constructor of ServerStream class
 
-      @param connfd socket descriptor for the communication channel
+      @param socket Pointer to omrsock socket structure for the communication channel
       @param ssl  BIO for the SSL enabled stream
-      @param timeout timeout value (ms) to be set for connfd
+      @param timeout timeout value (ms) to be set for socket structure
    */
-   explicit ServerStream(int connfd, BIO *ssl);
+   explicit ServerStream(omrsock_socket_t socket, BIO *ssl);
    virtual ~ServerStream()
       {
       _numConnectionsClosed++;

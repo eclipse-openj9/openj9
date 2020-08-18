@@ -25,17 +25,10 @@
 #include "control/Options.hpp"
 #include "env/VerboseLog.hpp"
 #include "net/LoadSSLLibs.hpp"
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/un.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>	/* for TCP_NODELAY option */
 #include <fcntl.h>
-#include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h> /// gethostname, read, write
 #include <openssl/err.h>
 
 namespace JITServer
@@ -128,67 +121,87 @@ int ClientStream::static_init(TR::PersistentInfo *info)
 
 SSL_CTX *ClientStream::_sslCtx = NULL;
 
-int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs)
+omrsock_socket_t openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs)
    {
-   // TODO consider using newer API like getaddrinfo to support IPv6
-   struct hostent *entSer = gethostbyname(address.c_str());
-   if (!entSer)
-      throw StreamFailure("Cannot resolve server name");
+   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
 
-   struct sockaddr_in servAddr;
-   memset(&servAddr, 0, sizeof(servAddr));
-   memcpy(&servAddr.sin_addr.s_addr, entSer->h_addr, entSer->h_length);
-   servAddr.sin_family = AF_INET;
-   servAddr.sin_port = htons(port);
-
-   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-   if (sockfd < 0)
+   omrsock_socket_t socket = NULL;
+   if (omrsock_socket(&socket, OMRSOCK_AF_INET, OMRSOCK_STREAM, OMRSOCK_IPPROTO_DEFAULT) < 0)
       throw StreamFailure("Cannot create socket for JITServer");
 
    int flag = 1;
-   if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*)&flag, sizeof(flag)) < 0)
+   if (omrsock_setsockopt_int(socket, OMRSOCK_SOL_SOCKET, OMRSOCK_SO_KEEPALIVE, &flag) < 0)
       {
-      close(sockfd);
+      omrsock_close(&socket);
       throw StreamFailure("Cannot set option SO_KEEPALIVE on socket");
       }
 
-   struct linger lingerVal = {1, 2}; // linger 2 seconds
-   if (setsockopt(sockfd, SOL_SOCKET, SO_LINGER, (void *)&lingerVal, sizeof(lingerVal)) < 0)
+   OMRLinger linger;
+   omrsock_linger_init(&linger, 1, 2);
+   if (omrsock_setsockopt_linger(socket, OMRSOCK_SOL_SOCKET, OMRSOCK_SO_LINGER, &linger) < 0)
       {
-      close(sockfd);
+      omrsock_close(&socket);
       throw StreamFailure("Cannot set option SO_LINGER on socket");
       }
 
-   struct timeval timeout = {(timeoutMs / 1000), ((timeoutMs % 1000) * 1000)};
-   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(timeout)) < 0)
+   OMRTimeval timeout;
+   omrsock_timeval_init(&timeout, timeoutMs / 1000, (timeoutMs % 1000) * 1000);
+   if (omrsock_setsockopt_timeval(socket, OMRSOCK_SOL_SOCKET, OMRSOCK_SO_RCVTIMEO, &timeout) < 0)
       {
-      close(sockfd);
+      omrsock_close(&socket);
       throw StreamFailure("Cannot set option SO_RCVTIMEO on socket");
       }
 
-   if (setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeout, sizeof(timeout)) < 0)
+   if (omrsock_setsockopt_timeval(socket, OMRSOCK_SOL_SOCKET, OMRSOCK_SO_SNDTIMEO, &timeout) < 0)
       {
-      close(sockfd);
+      omrsock_close(&socket);
       throw StreamFailure("Cannot set option SO_SNDTIMEO on socket");
       }
 
-   if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag)) < 0)
+   if (omrsock_setsockopt_int(socket, OMRSOCK_IPPROTO_TCP, OMRSOCK_TCP_NODELAY, &flag) < 0)
       {
-      close(sockfd);
+      omrsock_close(&socket);
       throw StreamFailure("Cannot set option TCP_NODELAY on socket");
       }
 
-   if (connect(sockfd, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0)
+   omrsock_addrinfo_t hints = NULL;
+   OMRAddrInfoNode result;
+   OMRSockAddrStorage servAddr;
+   bool connected = false;
+   unsigned int len = 0;
+
+   if (omrsock_getaddrinfo_create_hints(&hints, OMRSOCK_AF_INET, OMRSOCK_STREAM, OMRSOCK_IPPROTO_DEFAULT, 0) < 0)
+      throw StreamFailure("Cannot create hints with omrsock API");
+
+   char portStr[10];
+   sprintf(portStr, "%u", port);
+   if (omrsock_getaddrinfo(address.c_str(), portStr, hints, &result))
+      throw StreamFailure("Cannot get addrinfo with omrsock API");
+   omrsock_addrinfo_length(&result, &len);
+
+   /* Try to connect to a server with results. */
+	for (unsigned int i = 0; i < len; i++) {
+      omrsock_addrinfo_address(&result, i, &servAddr);
+		if (omrsock_connect(socket, &servAddr) == 0)
+         {
+         connected = true;
+         break;
+         }
+	}
+
+   if (!connected)
       {
-      close(sockfd);
+      omrsock_close(&socket);
       throw StreamFailure("Connect failed");
       }
 
-   return sockfd;
+   return socket;
    }
 
-BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
+BIO *openSSLConnection(SSL_CTX *ctx, omrsock_socket_t socket)
    {
+   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+
    if (!ctx)
       return NULL;
 
@@ -201,7 +214,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
 
    (*OSSL_set_connect_state)(ssl);
 
-   if ((*OSSL_set_fd)(ssl, connfd) != 1)
+   if ((*OSSL_set_fd)(ssl, omrsock_socket_getfd(socket)) != 1)
       {
       (*OERR_print_errors_fp)(stderr);
       (*OSSL_free)(ssl);
@@ -248,16 +261,16 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "SSL connection on socket 0x%x, Version: %s, Cipher: %s\n",
-                                                      connfd, (*OSSL_get_version)(ssl), (*OSSL_get_cipher)(ssl));
+                                                      omrsock_socket_getfd(socket), (*OSSL_get_version)(ssl), (*OSSL_get_cipher)(ssl));
    return bio;
    }
 
 ClientStream::ClientStream(TR::PersistentInfo *info)
    : CommunicationStream(), _versionCheckStatus(NOT_DONE)
    {
-   int connfd = openConnection(info->getJITServerAddress(), info->getJITServerPort(), info->getSocketTimeout());
-   BIO *ssl = openSSLConnection(_sslCtx, connfd);
-   initStream(connfd, ssl);
+   omrsock_socket_t socket = openConnection(info->getJITServerAddress(), info->getJITServerPort(), info->getSocketTimeout());
+   BIO *ssl = openSSLConnection(_sslCtx, socket);
+   initStream(socket, ssl);
    _numConnectionsOpened++;
    }
 };

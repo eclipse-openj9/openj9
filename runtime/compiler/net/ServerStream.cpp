@@ -27,10 +27,10 @@ namespace JITServer
 int ServerStream::_numConnectionsOpened = 0;
 int ServerStream::_numConnectionsClosed = 0;
 
-ServerStream::ServerStream(int connfd, BIO *ssl)
+ServerStream::ServerStream(omrsock_socket_t socket, BIO *ssl)
    : CommunicationStream()
    {
-   initStream(connfd, ssl);
+   initStream(socket, ssl);
    _numConnectionsOpened++;
    _pClientSessionData = NULL;
    }
