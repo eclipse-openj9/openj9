@@ -526,7 +526,7 @@ CLANG_CXXFLAGS+=-std=c++0x -D_CRT_SUPPRESS_RESTRICT -DVS12AndHigher
 	CLANG_CXXFLAGS+=-D_M_X64
 </#if>
 endif
-# special handling BytecodeInterpreterFull.cpp, BytecodeInterpreterCompressed.cpp, DebugBytecodeInterpreterFull.cpp and DebugBytecodeInterpreterCompressed.cpp
+# special handling MHInterpreterFull.cpp, MHInterpreterCompressed.cpp, BytecodeInterpreterFull.cpp, BytecodeInterpreterCompressed.cpp, DebugBytecodeInterpreterFull.cpp and DebugBytecodeInterpreterCompressed.cpp
 BytecodeInterpreterFull$(UMA_DOT_O):BytecodeInterpreterFull.cpp
 	$(CLANG_CXX) $(CLANG_CXXFLAGS) -c $< -o $@
 
@@ -539,7 +539,10 @@ DebugBytecodeInterpreterFull$(UMA_DOT_O):DebugBytecodeInterpreterFull.cpp
 DebugBytecodeInterpreterCompressed$(UMA_DOT_O):DebugBytecodeInterpreterCompressed.cpp
 	$(CLANG_CXX) $(CLANG_CXXFLAGS) -c $< -o $@
 
-MHInterpreter$(UMA_DOT_O):MHInterpreter.cpp
+MHInterpreterFull$(UMA_DOT_O):MHInterpreterFull.cpp
+	$(CLANG_CXX) $(CLANG_CXXFLAGS) -c $< -o $@
+
+MHInterpreterCompressed$(UMA_DOT_O):MHInterpreterCompressed.cpp
 	$(CLANG_CXX) $(CLANG_CXXFLAGS) -c $< -o $@
 
 endif
@@ -581,7 +584,10 @@ DebugBytecodeInterpreterFull$(UMA_DOT_O):DebugBytecodeInterpreterFull.cpp
 DebugBytecodeInterpreterCompressed$(UMA_DOT_O):DebugBytecodeInterpreterCompressed.cpp
 	$(CXX) $(SPECIALCXXFLAGS) $(NEW_OPTIMIZATION_FLAG) -c $<
 
-MHInterpreter$(UMA_DOT_O):MHInterpreter.cpp
+MHInterpreterFull$(UMA_DOT_O):MHInterpreterFull.cpp
+	$(CXX) $(SPECIALCXXFLAGS) $(NEW_OPTIMIZATION_FLAG) -c $<
+
+MHInterpreterCompressed$(UMA_DOT_O):MHInterpreterCompressed.cpp
 	$(CXX) $(SPECIALCXXFLAGS) $(NEW_OPTIMIZATION_FLAG) -c $<
 
 endif
