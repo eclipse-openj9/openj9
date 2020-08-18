@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openj9-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: openj9-operator
+  template:
+    metadata:
+      labels:
+        name: openj9-operator
+    spec:
+      serviceAccountName: openj9-operator
+      containers:
+        - name: openj9-operator
+          image: chrisc66/openj9-opeartor:v0.6.0-amd64
+          command:
+          - openj9-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "openj9-operator"
