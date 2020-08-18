@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -132,8 +132,8 @@ addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, const char 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	j9package->packageName = (J9UTF8*)buf;
 	packageNameLength = (UDATA) strlen(packageName);
-	if ((NULL == j9package->packageName) || ((packageNameLength + sizeof(j9package->packageName->length) + 1) > bufLen)) {
-		j9package->packageName = j9mem_allocate_memory(packageNameLength + sizeof(j9package->packageName->length) + 1, OMRMEM_CATEGORY_VM);
+	if ((NULL == j9package->packageName) || ((packageNameLength + sizeof(J9UTF8) + 1) > bufLen)) {
+		j9package->packageName = j9mem_allocate_memory(packageNameLength + sizeof(J9UTF8) + 1, OMRMEM_CATEGORY_VM);
 		if (NULL == j9package->packageName) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			return FALSE;
@@ -168,7 +168,7 @@ getPackageDefinitionWithName(J9VMThread *currentThread, J9Module *fromModule, U_
 	char buf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	PORT_ACCESS_FROM_VMC(currentThread);
 	J9UTF8 *packageNameBuf = (J9UTF8 *) buf;
-	UDATA J9UTF8len = len + sizeof(packageNameBuf->length);
+	UDATA J9UTF8len = len + sizeof(J9UTF8);
 
 	if (J9VM_PACKAGE_NAME_BUFFER_LENGTH < J9UTF8len) {
 		packageNameBuf = j9mem_allocate_memory(J9UTF8len, OMRMEM_CATEGORY_VM);

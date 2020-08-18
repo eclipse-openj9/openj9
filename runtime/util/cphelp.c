@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,7 +155,7 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 			/* its java.base module */
 			J9_DECLARE_CONSTANT_UTF8(jrtJavaBaseUrl, "jrt:/java.base");
 			const U_16 length = J9UTF8_LENGTH(&jrtJavaBaseUrl);
-			jrtURL = j9mem_allocate_memory(sizeof(((J9UTF8*)0)->length) + length, OMRMEM_CATEGORY_VM);
+			jrtURL = j9mem_allocate_memory(sizeof(J9UTF8) + length, OMRMEM_CATEGORY_VM);
 			if (NULL == jrtURL) {
 				goto _exit;
 			}

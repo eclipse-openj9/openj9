@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1653,9 +1653,9 @@ toExternalQualifiedName(J9PortLibrary* portLibrary, VerboseVerificationBuffer* b
 
 		/* if existing buffer dose not fit the data, use allocated buffer from heap */
 		if (buf->size < (UDATA)J9UTF8_LENGTH(utf)) {
-			qualified = (J9UTF8*)j9mem_allocate_memory((sizeof(utf->length) + utf->length), OMRMEM_CATEGORY_VM);
+			qualified = (J9UTF8*)j9mem_allocate_memory(sizeof(J9UTF8) + J9UTF8_LENGTH(utf), OMRMEM_CATEGORY_VM);
 			if (NULL == qualified) {
-				Trc_VRB_Allocate_Memory_Failed(sizeof(utf->length) + utf->length);
+				Trc_VRB_Allocate_Memory_Failed(sizeof(J9UTF8) + J9UTF8_LENGTH(utf));
 				return NULL;
 			} else {
 				buf->buffer = (U_8*)qualified;
@@ -1664,17 +1664,17 @@ toExternalQualifiedName(J9PortLibrary* portLibrary, VerboseVerificationBuffer* b
 			qualified = (J9UTF8*)buf->buffer;
 		}
 
-		data = utf->data;
-		extData = qualified->data;
-		qualified->length = 0;
-		while (qualified->length != utf->length) {
+		data = J9UTF8_DATA(utf);
+		extData = J9UTF8_DATA(qualified);
+		J9UTF8_SET_LENGTH(qualified, 0);
+		while (J9UTF8_LENGTH(qualified) != J9UTF8_LENGTH(utf)) {
 			*extData = (('/' == *data) ? '.' : *data);
 			extData += 1;
 			data += 1;
-			qualified->length += 1;
+			J9UTF8_SET_LENGTH(qualified, J9UTF8_LENGTH(qualified) + 1);
 		}
 
-		buf->cursor = sizeof(qualified->length) + qualified->length;
+		buf->cursor = sizeof(J9UTF8) + J9UTF8_LENGTH(qualified);
 	}
 
 	return qualified;

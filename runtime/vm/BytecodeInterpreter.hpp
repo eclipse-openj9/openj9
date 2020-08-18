@@ -7872,8 +7872,8 @@ done:
 #endif
 		/* Examine the method signature to determine the return type (number of return slots) */
 		sig = J9ROMMETHOD_SIGNATURE(romMethod);
-		sigLength = sig->length;
-		sigData = sig->data;
+		sigLength = J9UTF8_LENGTH(sig);
+		sigData = J9UTF8_DATA(sig);
 		/* are we returning an array? */
 		if ('[' == sigData[sigLength - 2]) {
 			returnSlots = 1;
@@ -7882,7 +7882,7 @@ done:
 			case 'V': {
 				/* Is this a constructor? */
 				J9UTF8 *name = J9ROMMETHOD_NAME(romMethod);
-				if ((strlen("<init>") == name->length) && ('<' == name->data[0])) {
+				if ((strlen("<init>") == J9UTF8_LENGTH(name)) && ('<' == J9UTF8_DATA(name)[0])) {
 					isConstructor = TRUE;
 					VM_AtomicSupport::writeBarrier();
 				}

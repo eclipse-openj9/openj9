@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -986,7 +986,7 @@ public class ShrCCommand extends Command
 				} else if (itemType.eq(TYPE_SCOPE)) {
 					utf8 = J9UTF8Pointer.cast(ShcItemHelper.ITEMDATA(it));
 					scopeMetaLen += ShcItem.SIZEOF + ShcItemHdr.SIZEOF;
-					scopeDataLen += J9UTF8.SIZEOF + utf8.length().longValue();
+					scopeDataLen += J9UTF8Helper.J9UTF8_HEADER_SIZE + utf8.length().longValue();
 					if ((statTypes & SCOPE_STATS) != 0) {
 						entryFound = true;
 						CommandUtils.dbgPrint(out, "%d: %s SCOPE !j9utf8 %s %s\n", it.jvmID().longValue(), it.getHexAddress(), utf8.getHexAddress(), J9UTF8Helper.stringValue(utf8));
@@ -1080,7 +1080,7 @@ public class ShrCCommand extends Command
 				} else if (itemType.eq(TYPE_PREREQ_CACHE)) { 
 					utf8 = J9UTF8Pointer.cast(ShcItemHelper.ITEMDATA(it));
 					scopeMetaLen += ShcItem.SIZEOF + ShcItemHdr.SIZEOF;
-					scopeDataLen += J9UTF8.SIZEOF + utf8.length().longValue();
+					scopeDataLen += J9UTF8Helper.J9UTF8_HEADER_SIZE + utf8.length().longValue();
 					if ((statTypes & PREREQ_CACHE_STATS) != 0) {
 						entryFound = true;
 						CommandUtils.dbgPrint(out, "%d: %s PREREQ CACHE UNIQUE ID !j9utf8 %s %s\n", it.jvmID().longValue(), it.getHexAddress(), utf8.getHexAddress(), J9UTF8Helper.stringValue(utf8));

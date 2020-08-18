@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,9 +24,14 @@ package com.ibm.j9ddr.vm29.pointer.helper;
 import java.io.UnsupportedEncodingException;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
+import com.ibm.j9ddr.vm29.types.U16;
 
 public class J9UTF8Helper {
-	
+
+	// Do not use J9UTF8.SIZEOF here in order to maintain compatibility
+	// with older core files.
+	public static int J9UTF8_HEADER_SIZE = U16.SIZEOF;
+
 	public static String stringValue(J9UTF8Pointer utf8pointer) throws CorruptDataException 
 	{
 		byte[] buffer = new byte[utf8pointer.length().intValue()];

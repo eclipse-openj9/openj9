@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,13 +121,14 @@ addClassName(J9BytecodeVerificationData * verifyData, U_8 * name, UDATA length, 
 	offset = (U_32 *) verifyData->classNameSegmentFree;
 	utf8 = (J9UTF8 *) (offset + 1);
 	J9UTF8_SET_LENGTH(utf8, (U_16) length);
-	verifyData->classNameSegmentFree += (sizeof(U_32) + sizeof(J9UTF8));
+	verifyData->classNameSegmentFree += sizeof(U_32);
 	if (classNameInClass) {
 		offset[0] = (U_32) ((UDATA) name - (UDATA) romClass);
+		verifyData->classNameSegmentFree += sizeof(U_32);
 	} else {
 		offset[0] = 0;
 		strncpy((char *) J9UTF8_DATA(utf8), (char *) name, length);
-		verifyData->classNameSegmentFree += (length - 2 + sizeof(U_32) - 1) & ~(sizeof(U_32) - 1);	/* next U_32 boundary */
+		verifyData->classNameSegmentFree += (sizeof(J9UTF8) + length + sizeof(U_32) - 1) & ~(sizeof(U_32) - 1);	/* next U_32 boundary */
 	}
 	verifyData->classNameList[index] = (J9UTF8 *) offset;
 	verifyData->classNameList[index + 1] = NULL;
@@ -152,7 +153,7 @@ findClassName(J9BytecodeVerificationData * verifyData, U_8 * name, UDATA length)
 
 
 	while ((offset = (U_32 *) verifyData->classNameList[index]) != NULL) {
-		utf8 = (J9UTF8 *) offset + 1;
+		utf8 = (J9UTF8 *) (offset + 1);
 		if ((UDATA) J9UTF8_LENGTH(utf8) == length) {
 			data = (U_8 *) ((UDATA) offset[0] + (UDATA) romClass);
 
@@ -192,7 +193,7 @@ convertClassNameToStackMapType(J9BytecodeVerificationData * verifyData, U_8 *nam
 
 
 	while ((offset = (U_32 *) verifyData->classNameList[index]) != NULL) {
-		utf8 = (J9UTF8 *) offset + 1;
+		utf8 = (J9UTF8 *) (offset + 1);
 		if ((UDATA) J9UTF8_LENGTH(utf8) == (UDATA)length) {
 			data = (U_8 *) ((UDATA) offset[0] + (UDATA) romClass);
 

@@ -367,7 +367,7 @@ calculateJ9UTFSize(UDATA stringLength)
 		stringLength++;
 	}
 
-	return offsetof(J9UTF8, data) + stringLength;
+	return sizeof(J9UTF8) + stringLength;
 }
 
 

@@ -3397,7 +3397,7 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 
 	cmBytes = SH_CacheMap::getRequiredConstrBytes(false);
 	nameBytes = (strlen(modifiedCacheNamePtr)+1) * sizeof(char);
-	modContextBytes = modContext ? ((strlen(modContext) * sizeof(char)) + sizeof(J9UTF8)) : 0;
+	modContextBytes = modContext ? (((strlen(modContext) + 1) * sizeof(char)) + sizeof(J9UTF8)) : 0;
 	memBytesNeeded = sizeof(J9SharedClassConfig) + sizeof(J9SharedClassCacheDescriptor) + cmBytes + nameBytes + modContextBytes;
 
 	tempConfig = (J9SharedClassConfig*)j9mem_allocate_memory(memBytesNeeded, J9MEM_CATEGORY_CLASSES);

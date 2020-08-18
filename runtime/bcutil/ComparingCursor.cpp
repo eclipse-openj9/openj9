@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -551,12 +551,11 @@ ComparingCursor::isRangeValidForUTF8Ptr(J9UTF8 *utf8)
 	U_8 *ptr = (U_8*)utf8;
 
 	if (_checkRangeInSharedCache) {
-		return j9shr_Query_IsAddressInCache(_javaVM, utf8, sizeof(J9UTF8)) &&
-			   j9shr_Query_IsAddressInCache(_javaVM, ptr + offsetof(J9UTF8, data), J9UTF8_LENGTH(utf8));
+		return FALSE != j9shr_Query_IsAddressInCache(_javaVM, utf8, J9UTF8_TOTAL_SIZE(utf8));
 	} else {
 		UDATA maxLength = getMaximumValidLengthForPtrInSegment(ptr);
 
-		return (sizeof(J9UTF8) < maxLength) && (J9UTF8_LENGTH(utf8) < (maxLength - offsetof(J9UTF8, data)));
+		return J9UTF8_TOTAL_SIZE(utf8) < maxLength;
 	}
 }
 
