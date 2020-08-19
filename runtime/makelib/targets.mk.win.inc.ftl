@@ -193,10 +193,14 @@ ifdef USE_CLANG
   CLANG_CXXFLAGS+=-DWINVER=$(UMA_WINVER) -D_WIN32_WINNT=$(UMA_WINVER) -D_WIN32_WINDOWS=$(UMA_WINVER)
 endif
 
-# -Zm200 max memory is 200% default
-# -Zi add debug symbols
-CFLAGS+=  -D_MT -D_WINSOCKAPI_ -Zm400 -W3 -Zi
-CXXFLAGS+=-D_MT -D_WINSOCKAPI_ -Zm400 -W3 -Zi
+# Option   Meaning
+# ------   -------
+# -Zm400   max memory is 400% default
+# -W3      enable warnings up to level 3
+# -Zi      add debug symbols
+# -wd4200  disable warnings regarding flexible array members
+CFLAGS   += -D_MT -D_WINSOCKAPI_ -Zm400 -W3 -Zi -wd4200
+CXXFLAGS += -D_MT -D_WINSOCKAPI_ -Zm400 -W3 -Zi -wd4200
 ifdef USE_CLANG
   CLANG_CXXFLAGS+=-D_MT -D_WINSOCKAPI_
 endif
