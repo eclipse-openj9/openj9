@@ -27,6 +27,4 @@
 #define LOOP_NAME bytecodeLoopFull
 #define INTERPRETER_CLASS VM_BytecodeInterpreterFull
 #include "BytecodeInterpreter.inc"
-#else
-#define LOOP_NAME 0
 #endif /* OMR_GC_FULL_POINTERS */

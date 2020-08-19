@@ -4239,7 +4239,7 @@ queryLogOptions (J9JavaVM *vm, I_32 buffer_size, void *options, I_32 *data_size)
 UDATA
 setLogOptions (J9JavaVM *vm, char *options);
 
-/* -------------------- MHInterpreter.cpp ------------ */
+/* -------------------- NativeHelpers.cpp ------------ */
 
 /**
 * @brief

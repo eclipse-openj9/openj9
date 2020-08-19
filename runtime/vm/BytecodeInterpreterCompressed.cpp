@@ -27,6 +27,4 @@
 #define LOOP_NAME bytecodeLoopCompressed
 #define INTERPRETER_CLASS VM_BytecodeInterpreterCompressed
 #include "BytecodeInterpreter.inc"
-#else
-#define LOOP_NAME 0
 #endif /* OMR_GC_COMPRESSED_POINTERS */

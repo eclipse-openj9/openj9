@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,14 @@
 
 #if !defined(MHINTERPRETER_HPP_)
 #define MHINTERPRETER_HPP_
+
+#if defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#if OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES
+#define VM_MHInterpreter VM_MHInterpreterCompressed
+#else /* OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#define VM_MHInterpreter VM_MHInterpreterFull
+#endif /* OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES */
+#endif /* defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 
 #include "ffi.h"
 #include "j9.h"
@@ -664,11 +672,11 @@ public:
 	 * ConstructorHandle:
 	 * 		[ ... newUninitializedObject bytecodeframe] --> [ ... newInitializedObject]
 	 * FoldHandle:
-	 * 		Refer to the implementation in MHInterpreter.cpp
+	 * 		Refer to the implementation in MHInterpreter.inc
 	 * GuardWithTestHandle:
-	 * 		Refer to the implementation in MHInterpreter.cpp
+	 * 		Refer to the implementation in MHInterpreter.inc
 	 * FilterArgumentsHandle:
-	 * 		Refer to the implementation in MHInterpreter.cpp
+	 * 		Refer to the implementation in MHInterpreter.inc
 	 */
 	VM_BytecodeAction
 	impdep1();

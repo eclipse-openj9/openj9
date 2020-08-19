@@ -86,7 +86,8 @@ j9vm_add_library(j9vm SHARED
 	logsupport.c
 	lookuphelper.c
 	lookupmethod.c
-	MHInterpreter.cpp
+	MHInterpreterCompressed.cpp
+	MHInterpreterFull.cpp
 	ModularityHashTables.c
 	monhelpers.c
 	montable.c
