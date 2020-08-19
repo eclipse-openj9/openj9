@@ -64,7 +64,7 @@ J9::Z::Peephole::reloadLiteralPoolRegisterForCatchBlock(TR::Instruction* cursor)
    // This causes a failure when we come back to a catch block because the register context will not be preserved.
    // Hence, we can not assume that R6 will still contain the lit pool register and hence need to reload it.
 
-   bool isZ10 = self()->comp()->target().cpu.getSupportsArch(TR::CPU::z10);
+   bool isZ10 = self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10);
 
    // we only need to reload literal pool for Java on older z architecture on zos when on demand literal pool is off
    if ( self()->comp()->target().isZOS() && !isZ10 && !self()->cg()->isLiteralPoolOnDemandOn())
