@@ -35,7 +35,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _chTableClassMap(decltype(_chTableClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _romClassMap(decltype(_romClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _J9MethodMap(decltype(_J9MethodMap)::allocator_type(TR::Compiler->persistentAllocator())),
-   _classByNameMap(decltype(_classByNameMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classBySignatureMap(decltype(_classBySignatureMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classChainDataMap(decltype(_classChainDataMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _constantPoolToClassMap(decltype(_constantPoolToClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _unloadedClassAddresses(NULL),
@@ -109,7 +109,8 @@ void
 ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes, bool updateUnloadedClasses)
    {
    const size_t numOfUnloadedClasses = classes.size();
-   int32_t compThreadID = TR::compInfoPT->getCompThreadId();
+   auto compInfoPT = TR::compInfoPT;
+   int32_t compThreadID = compInfoPT->getCompThreadId();
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will process a list of %zu unloaded classes for clientUID %llu", 
@@ -146,9 +147,27 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
          J9ROMClass *romClass = it->second._romClass;
 
          J9UTF8 *clazzName = NNSRP_GET(romClass->className, J9UTF8 *);
-         std::string className((const char *)clazzName->data, (int32_t)clazzName->length);
+         char *className = (char *) clazzName->data;
+         int32_t sigLen = (int32_t) clazzName->length;
+         sigLen = (className[0] == '[' ? sigLen : sigLen + 2);
+
+         // copy of classNameToSignature method which can't be used
+         // here because compilation object hasn't been initialized yet
+         
+         std::string sigStr(sigLen, 0);
+         if (className[0] == '[')
+            {
+            memcpy(&sigStr[0], className, sigLen);
+            }
+         else
+            {
+            sigStr[0] = 'L';
+            memcpy(&sigStr[1], className, sigLen - 2);
+            sigStr[sigLen-1]=';';
+            }
+
          J9ClassLoader * cl = (J9ClassLoader *)(it->second._classLoader);
-         ClassLoaderStringPair key = { cl, className };
+         ClassLoaderStringPair key = { cl, sigStr };
          //Class is cached, so retain the data to be used for purging the caches.
          unloadedClasses.push_back({ clazz, key, cp, true });
 
@@ -192,7 +211,7 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
    // purge Class by name cache
    {
    OMR::CriticalSection classMapCS(getClassMapMonitor());
-   purgeCache(&unloadedClasses, getClassByNameMap(), &ClassUnloadedData::_pair);
+   purgeCache(&unloadedClasses, getClassBySignatureMap(), &ClassUnloadedData::_pair);
    }
 
    // purge Constant pool to class cache
@@ -432,7 +451,7 @@ ClientSessionData::clearCaches()
    {
       {
       OMR::CriticalSection clearCache(getClassMapMonitor());
-      _classByNameMap.clear();
+      _classBySignatureMap.clear();
       }
    OMR::CriticalSection getRemoteROMClass(getROMMapMonitor());
 
