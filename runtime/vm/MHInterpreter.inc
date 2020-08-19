@@ -863,48 +863,6 @@ VM_MHInterpreter::impdep1()
 	return rc;
 }
 
-extern "C" J9SFMethodTypeFrame *
-buildMethodTypeFrame(J9VMThread * currentThread, j9object_t methodType)
-{
-#define ROUND_U32_TO(granularity, number) (((number) + (granularity) - 1) & ~((U_32)(granularity) - 1))
-	U_32 argSlots = (U_32)J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(currentThread, methodType);
-	j9object_t stackDescriptionBits = J9VMJAVALANGINVOKEMETHODTYPE_STACKDESCRIPTIONBITS(currentThread, methodType);
-	U_32 descriptionInts = J9INDEXABLEOBJECT_SIZE(currentThread, stackDescriptionBits);
-	U_32 descriptionBytes = ROUND_U32_TO(sizeof(UDATA), descriptionInts * sizeof(I_32));
-	I_32 * description;
-	U_32 i;
-	J9SFMethodTypeFrame * methodTypeFrame;
-	UDATA * newA0 = currentThread->sp + argSlots;
-
-	/* Push the description bits */
-
-	description = (I_32 *) ((U_8 *)currentThread->sp - descriptionBytes);
-	for (i = 0; i < descriptionInts; ++i) {
-		description[i] = J9JAVAARRAYOFINT_LOAD(currentThread, stackDescriptionBits, i);
-	}
-
-	/* Push the frame */
-
-	methodTypeFrame = (J9SFMethodTypeFrame *) ((U_8 *)description - sizeof(J9SFMethodTypeFrame));
-	methodTypeFrame->methodType = methodType;
-	methodTypeFrame->argStackSlots = argSlots;
-	methodTypeFrame->descriptionIntCount = descriptionInts;
-	methodTypeFrame->specialFrameFlags = 0;
-	methodTypeFrame->savedCP = currentThread->literals;
-	methodTypeFrame->savedPC = currentThread->pc;
-	methodTypeFrame->savedA0 = (UDATA *) ((UDATA)currentThread->arg0EA | J9SF_A0_INVISIBLE_TAG);
-
-	/* Update VM thread to point to new frame */
-
-	currentThread->sp = (UDATA *) methodTypeFrame;
-	currentThread->pc = (U_8 *) J9SF_FRAME_TYPE_METHODTYPE;
-	currentThread->literals = NULL;
-	currentThread->arg0EA = newA0;
-
-	return methodTypeFrame;
-#undef ROUND_U32_TO
-}
-
 j9object_t
 VM_MHInterpreter::convertArgumentsForAsType(j9object_t methodHandle)
 {

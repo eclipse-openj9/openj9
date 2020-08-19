@@ -151,5 +151,8 @@ DebugBytecodeInterpreterFull.o : DebugBytecodeInterpreterFull.cpp
 DebugBytecodeInterpreterCompressed.o : DebugBytecodeInterpreterCompressed.cpp
 	$(CXX) $(SPECIALCXXFLAGS) $(MRABIG) $(NEW_OPTIMIZATION_FLAG) -c $< > $*.asmlist
 
-MHInterpreter$(UMA_DOT_O) : MHInterpreter.cpp
+MHInterpreterFull$(UMA_DOT_O) : MHInterpreterFull.cpp
+	$(CXX) $(SPECIALCXXFLAGS) $(MRABIG) $(NEW_OPTIMIZATION_FLAG) -c $< > $*.asmlist
+
+MHInterpreterCompressed$(UMA_DOT_O) : MHInterpreterCompressed.cpp
 	$(CXX) $(SPECIALCXXFLAGS) $(MRABIG) $(NEW_OPTIMIZATION_FLAG) -c $< > $*.asmlist

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,9 +23,6 @@
 #include "j9cfg.h"
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-#define DEBUG_VERSION
 #define OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES 1
-#define LOOP_NAME debugBytecodeLoopCompressed
-#define INTERPRETER_CLASS VM_DebugBytecodeInterpreterCompressed
-#include "BytecodeInterpreter.inc"
+#include "MHInterpreter.inc"
 #endif /* OMR_GC_COMPRESSED_POINTERS */
