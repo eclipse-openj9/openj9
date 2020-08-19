@@ -5061,6 +5061,27 @@ TR_J9ByteCodeIlGenerator::loadAuto(TR::DataType type, int32_t slot, bool isAdjun
    push(load);
    }
 
+/**
+ * @brief Returns whether a field ref in the constant pool resolved
+ *
+ * Importantly, when this function returns false, a ResolveCHK is guarenteed to be needed.
+ *
+ * @param comp is a pointer the current compilation object
+ * @param owningMethod is the method that owns the constant pool
+ * @param cpIndex is the index into the constant pool of the field
+ * @param isStore specifies whether the check is done for a store of the field
+ * @return true when the constant pool entry for the field is resolved, false otherwise
+ */
+static bool
+isFieldResolved(TR::Compilation *comp, TR_ResolvedJ9Method * owningMethod, int32_t cpIndex, bool isStore)
+   {
+   uint32_t offset = 0;
+   TR::DataType type = TR::NoType;
+   bool isVolatile = true, isFinal = false, isPrivate = false, isUnresolvedInCP;
+   return owningMethod->fieldAttributes(comp, cpIndex, &offset, &type, &isVolatile, &isFinal,
+                                    &isPrivate, isStore, &isUnresolvedInCP, true /* needsAOTValidation */);
+   }
+
 void
 TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
    {
