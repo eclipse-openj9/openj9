@@ -180,12 +180,12 @@ TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bo
    J9ClassLoader *cl = (J9ClassLoader *)getSystemClassLoader();
    std::string className(name, length);
    ClassLoaderStringPair key = {cl, className};
-   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & classByNameMap = _compInfoPT->getClientData()->getClassByNameMap();
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & classBySignatureMap = _compInfoPT->getClientData()->getClassBySignatureMap();
 
    {
    OMR::CriticalSection getSystemClassCS(_compInfoPT->getClientData()->getClassMapMonitor());
-   auto it = classByNameMap.find(key);
-   if (it != classByNameMap.end())
+   auto it = classBySignatureMap.find(key);
+   if (it != classBySignatureMap.end())
       return it->second;
    }
    // classname not found; ask the client and cache the answer
@@ -195,7 +195,7 @@ TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bo
    if (clazz)
       {
       OMR::CriticalSection getSystemClassCS(_compInfoPT->getClientData()->getClassMapMonitor());
-      classByNameMap[key] = clazz;
+      classBySignatureMap[key] = clazz;
       }
    else
       {
@@ -299,11 +299,11 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_Resolve
    TR_OpaqueClassBlock * clazz = NULL;
    J9ClassLoader * cl = ((TR_ResolvedJ9Method *)method)->getClassLoader();
    ClassLoaderStringPair key = {cl, std::string(sig, length)};
-   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & classByNameMap = _compInfoPT->getClientData()->getClassByNameMap();
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & classBySignatureMap = _compInfoPT->getClientData()->getClassBySignatureMap();
       {
       OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getClassMapMonitor());
-      auto it = classByNameMap.find(key);
-      if (it != classByNameMap.end())
+      auto it = classBySignatureMap.find(key);
+      if (it != classBySignatureMap.end())
          return it->second;
       }
    // classname not found; ask the client and cache the answer
@@ -311,7 +311,7 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_Resolve
    if (clazz)
       {
       OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getClassMapMonitor());
-      classByNameMap[key] = clazz;
+      classBySignatureMap[key] = clazz;
       }
    else
       {
@@ -2043,11 +2043,11 @@ TR_J9SharedCacheServerVM::getClassFromSignature(const char * sig, int32_t sigLen
    TR_OpaqueClassBlock* clazz = NULL;
    J9ClassLoader * cl = ((TR_ResolvedJ9Method *)method)->getClassLoader();
    ClassLoaderStringPair key = {cl, std::string(sig, sigLength)};
-   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & classByNameMap = _compInfoPT->getClientData()->getClassByNameMap();
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & classBySignatureMap = _compInfoPT->getClientData()->getClassBySignatureMap();
       {
       OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getClassMapMonitor());
-      auto it = classByNameMap.find(key);
-      if (it != classByNameMap.end())
+      auto it = classBySignatureMap.find(key);
+      if (it != classBySignatureMap.end())
          clazz = it->second;
       }
    if (!clazz)
@@ -2058,7 +2058,7 @@ TR_J9SharedCacheServerVM::getClassFromSignature(const char * sig, int32_t sigLen
          {
             {
             OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getClassMapMonitor());
-            classByNameMap[key] = clazz;
+            classBySignatureMap[key] = clazz;
             }
          if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITServerMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
             {
@@ -2073,7 +2073,6 @@ TR_J9SharedCacheServerVM::getClassFromSignature(const char * sig, int32_t sigLen
          // In theory we could consider this a special case and watch the CHTable updates
          // for a class load event for Ljava/lang/String$StringCompressionFlag, but it may not
          // be worth the trouble.
-         //static unsigned long errorsSystem = 0;
          //printf("ErrorSystem %lu for cl=%p\tclassName=%.*s\n", ++errorsSystem, cl, length, sig);
          }
       }
