@@ -394,6 +394,14 @@ J9::Z::CPU::is_at_least_test(OMRProcessorArchitecture p)
 
    switch(p)
       {
+      case OMR_PROCESSOR_S390_UNKNOWN:
+         return (self()->getSupportsArch(TR::CPU::Unknown) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_Z900:
+         return (self()->getSupportsArch(TR::CPU::z900) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_Z990:
+         return (self()->getSupportsArch(TR::CPU::z990) == (_processorDescription.processor >= p));
+      case OMR_PROCESSOR_S390_Z9:
+         return (self()->getSupportsArch(TR::CPU::z9) == (_processorDescription.processor >= p));
       case OMR_PROCESSOR_S390_Z10:
          return (self()->getSupportsArch(TR::CPU::z10) == (_processorDescription.processor >= p));
       case OMR_PROCESSOR_S390_Z196:
