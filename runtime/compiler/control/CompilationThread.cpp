@@ -8503,6 +8503,24 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             TR_ASSERT(TR::comp() == NULL, "there seems to be a current TLS TR::Compilation object %p for this thread. At this point there should be no current TR::Compilation object", TR::comp());
 
             }
+
+         // In JITServer, we would like to use JITClient's processor info for the compilation
+         // The following code effectively replaces the cpu with client's cpu through the getProcessorDescription() that has JITServer support
+         TR::Environment target = TR::Compiler->target;
+#if defined(J9VM_OPT_JITSERVER)
+         if (that->_methodBeingCompiled->isOutOfProcessCompReq())
+            {
+            OMRProcessorDesc JITClientProcessorDesc = TR::Compiler->target.cpu.getProcessorDescription();
+            target.cpu = TR::CPU(JITClientProcessorDesc);
+            }
+         else
+#endif /* defined(J9VM_OPT_JITSERVER) */
+            {
+            if (vm->needRelocatableTarget() && target.cpu.isX86())
+               {
+               target = TR::Compiler->relocatableTarget;
+               }
+            }
          compiler = new (p->trMemory(), heapAlloc) TR::Compilation(
                that->getCompThreadId(),
                vmThread,
@@ -8513,7 +8531,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                p->_dispatchRegion,
                p->trMemory(),
                p->_optimizationPlan,
-               reloRuntime);
+               reloRuntime,
+               &target);
 
 #if defined(J9VM_OPT_JITSERVER)
          // JITServer TODO: put info in optPlan so that compilation constructor can do this
