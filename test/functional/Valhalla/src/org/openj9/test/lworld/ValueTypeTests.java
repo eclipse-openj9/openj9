@@ -114,6 +114,14 @@ public class ValueTypeTests {
 	static Class assortedRefWithLongAlignmentClass = null;
 	static MethodHandle makeAssortedRefWithLongAlignment = null;
 	static MethodHandle[][] assortedRefWithLongAlignmentGetterAndSetter = null;
+	/* assortedRefWithObjectAlignment */
+	static Class assortedRefWithObjectAlignmentClass = null;
+	static MethodHandle makeAssortedRefWithObjectAlignment = null;
+	static MethodHandle[][] assortedRefWithObjectAlignmentGetterAndWither = null;
+	/* assortedRefWithSingleAlignment */
+	static Class assortedRefWithSingleAlignmentClass = null;
+	static MethodHandle makeAssortedRefWithSingleAlignment = null;
+	static MethodHandle[][] assortedRefWithSingleAlignmentGetterAndWither = null;
 	/* assortedValueWithLongAlignment */
 	static Class assortedValueWithLongAlignmentClass = null;
 	static MethodHandle makeAssortedValueWithLongAlignment = null;
@@ -1552,19 +1560,22 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testCreateAssortedRefWithObjectAlignment() throws Throwable {
-		Class assortedRefWithObjectAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithObjectAlignment", typeWithObjectAlignmentFields);
+		assortedRefWithObjectAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithObjectAlignment", typeWithObjectAlignmentFields);
 
-		MethodHandle makeAssortedRefWithObjectAlignment = lookup.findStatic(assortedRefWithObjectAlignmentClass,
+		makeAssortedRefWithObjectAlignment = lookup.findStatic(assortedRefWithObjectAlignmentClass,
 				"makeRefGeneric", MethodType.methodType(Object.class, Object.class, Object.class,
 						Object.class, Object.class, Object.class, Object.class, Object.class));
 		/*
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
-		MethodHandle[][] getterAndSetter = generateGenericGetterAndSetter(assortedRefWithObjectAlignmentClass, typeWithObjectAlignmentFields);
+		assortedRefWithObjectAlignmentGetterAndWither = generateGenericGetterAndSetter(assortedRefWithObjectAlignmentClass, typeWithObjectAlignmentFields);
+	}
 
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedRefWithObjectAlignment() throws Throwable {
 		Object assortedRefWithObjectAlignment = createAssorted(makeAssortedRefWithObjectAlignment, typeWithObjectAlignmentFields);
-		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithObjectAlignment, typeWithObjectAlignmentFields, false);
+		checkFieldAccessMHOfAssortedType(assortedRefWithObjectAlignmentGetterAndWither, assortedRefWithObjectAlignment, typeWithObjectAlignmentFields, false);
 	}
 
 	/*
@@ -1613,19 +1624,22 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testCreateAssortedRefWithSingleAlignment() throws Throwable {
-		Class assortedRefWithSingleAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithSingleAlignment", typeWithSingleAlignmentFields);
+		assortedRefWithSingleAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithSingleAlignment", typeWithSingleAlignmentFields);
 
-		MethodHandle makeAssortedRefWithSingleAlignment = lookup.findStatic(assortedRefWithSingleAlignmentClass,
+		makeAssortedRefWithSingleAlignment = lookup.findStatic(assortedRefWithSingleAlignmentClass,
 				"makeRefGeneric", MethodType.methodType(Object.class, Object.class, Object.class,
 						Object.class, Object.class, Object.class, Object.class));
 		/*
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
-		MethodHandle[][] getterAndSetter = generateGenericGetterAndSetter(assortedRefWithSingleAlignmentClass, typeWithSingleAlignmentFields);
+		assortedRefWithSingleAlignmentGetterAndWither = generateGenericGetterAndSetter(assortedRefWithSingleAlignmentClass, typeWithSingleAlignmentFields);
+	}
 
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedRefWithSingleAlignment() throws Throwable {
 		Object assortedRefWithSingleAlignment = createAssorted(makeAssortedRefWithSingleAlignment, typeWithSingleAlignmentFields);
-		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithSingleAlignment, typeWithSingleAlignmentFields, false);
+		checkFieldAccessMHOfAssortedType(assortedRefWithSingleAlignmentGetterAndWither, assortedRefWithSingleAlignment, typeWithSingleAlignmentFields, false);
 	}
 
 	/*
