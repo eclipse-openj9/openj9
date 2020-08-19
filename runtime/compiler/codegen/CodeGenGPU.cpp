@@ -586,10 +586,6 @@ static const char * nvvmOpCodeNames[] =
    "store",          // TR::iustorei
    "store",          // TR::lustorei
    "store",          // TR::bustorei
-   "ret",          // TR::iureturn
-   "ret",          // TR::lureturn
-   NULL,          // TR::iucall
-   NULL,          // TR::lucall
    "add",         // TR::iuadd
    "add",         // TR::luadd
    "add",         // TR::buadd
@@ -638,9 +634,7 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::contigarraylength
    NULL,          // TR::discontigarraylength
    NULL,          // TR::icalli
-   NULL,          // TR::iucalli
    NULL,          // TR::lcalli
-   NULL,          // TR::lucalli
    NULL,          // TR::fcalli
    NULL,          // TR::dcalli
    NULL,          // TR::acalli
