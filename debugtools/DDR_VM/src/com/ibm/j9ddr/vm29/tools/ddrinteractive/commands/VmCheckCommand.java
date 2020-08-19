@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,6 +60,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9MethodHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.structure.J9ClassInitFlags;
 import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.structure.J9MemorySegment;
@@ -495,7 +496,7 @@ public class VmCheckCommand extends Command
 			return false;
 		}
 		UDATA length = new UDATA(utf8.length());
-		U8Pointer utf8Data = utf8.dataEA();
+		U8Pointer utf8Data = J9UTF8Helper.dataEA(utf8);
 		while (length.longValue() > 0) {
 			U16 temp = new U16(0); // not used
 
