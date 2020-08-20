@@ -132,64 +132,6 @@ class ARM64MonitorExitSnippet : public TR::ARM64HelperCallSnippet
     */
    TR::LabelSymbol *getDecLabel() { return _decLabel; }
    };
-
-class ARM64HeapAllocSnippet : public TR::Snippet
-   {
-   TR::LabelSymbol     *_restartLabel;
-   TR::SymbolReference *_destination;
-
-   public:
-
-   /**
-    * @brief Constructs Heap Alloc Snippet
-    *
-    * @param codeGen      code generator
-    * @param node         node
-    * @param snippetLabel label of the snippet
-    * @param destination  symbol reference of allocation helper (jitNew/jitNewArray/jitANewArray)
-    * @param restartLabel label to return
-    */
-   ARM64HeapAllocSnippet(TR::CodeGenerator *codeGen,
-                       TR::Node            *node,
-                       TR::LabelSymbol     *snippetLabel,
-                       TR::SymbolReference *destination,
-                       TR::LabelSymbol     *restartLabel);
-
-   /**
-    * @brief Answers the Snippet kind
-    * @return Snippet kind
-    */
-   virtual Kind getKind() { return IsHeapAlloc; }
-
-   /**
-    * @brief Prints the Snippet
-    */
-   virtual void print(TR::FILE *, TR_Debug*);
-
-   /**
-    * @brief Emits the Snippet body
-    * @return instruction cursor
-    */
-   virtual uint8_t *emitSnippetBody();
-
-   /**
-    * @brief Answers the Snippet length
-    * @return Snippet length
-    */
-   virtual uint32_t getLength(int32_t estimatedSnippetStart);
-
-   /**
-    * @brief Returns the label to restart
-    * @return restart label
-    */
-   TR::LabelSymbol     *getRestartLabel() { return _restartLabel; }
-
-   /**
-    * @brief Returns the symbol reference of helper
-    * @return the symbol reference of helper
-    */
-   TR::SymbolReference *getDestination() { return _destination; }
-   };
 }
 
 #endif
