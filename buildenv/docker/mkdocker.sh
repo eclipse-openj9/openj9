@@ -637,7 +637,6 @@ create_git_cache() {
   echo " && git init --bare \\"
   add_git_remote jdk8    https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
   add_git_remote jdk11   https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
-  add_git_remote jdk14   https://github.com/ibmruntimes/openj9-openjdk-jdk14.git
   add_git_remote jdk15   https://github.com/ibmruntimes/openj9-openjdk-jdk15.git
   add_git_remote jdknext https://github.com/ibmruntimes/openj9-openjdk-jdk.git
   add_git_remote omr     https://github.com/eclipse/openj9-omr.git
