@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -202,10 +202,6 @@ MM_SchedulingDelegate::determineNextPGCType(MM_EnvironmentVLHGC *env)
 
 	/* Aborted CopyForward happened in near past. The rest of PGCs until GMP completes, should not try CopyForward. */
 	/* try only mark partial nursery regions instead of mark all of collectionSet in CopyForwardHybrid mode */
-	if (_disableCopyForwardDuringCurrentGlobalMarkPhase && !_extensions->tarokEnableCopyForwardHybrid) {
-		env->_cycleState->_reasonForMarkCompactPGC = MM_CycleState::reason_recent_abort;
-		_nextPGCShouldCopyForward = false;
-	}
 
 	env->_cycleState->_shouldRunCopyForward = _nextPGCShouldCopyForward;
 	if (_nextPGCShouldCopyForward && _extensions->tarokPGCShouldMarkCompact) {

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ class MM_CopyForwardStats : public MM_CopyForwardStatsCore
 	 * Data members 
 	 */
 public:
-
+	/* The below stats include both marked and copied cases */
 	UDATA _unfinalizedCandidates;  /**< unfinalized objects that are candidates to be finalized visited this cycle */
 	UDATA _unfinalizedEnqueued;  /**< unfinalized objects that are enqueued during this cycle (MUST be less than or equal _unfinalizedCandidates) */
 

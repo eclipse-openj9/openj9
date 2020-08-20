@@ -44,7 +44,6 @@
 #include "GlobalMarkDelegate.hpp"
 #include "MainGCThread.hpp"
 #include "ModronTypes.hpp"
-#include "PartialMarkDelegate.hpp"
 #include "ProjectedSurvivalCollectionSetDelegate.hpp"
 #include "ReclaimDelegate.hpp"
 #include "SchedulingDelegate.hpp"
@@ -83,7 +82,6 @@ private:
 	MM_CopyForwardDelegate _copyForwardDelegate;  /**< Delegate responsible for handling copy and forward GC operations */
 
 	MM_GlobalMarkDelegate _globalMarkDelegate; /**< Delegate for marking in global collections */
-	MM_PartialMarkDelegate _partialMarkDelegate; /**< Delegate for marking in mark-sweep partial collections */
 
 	MM_ReclaimDelegate _reclaimDelegate;
 	
@@ -208,16 +206,6 @@ protected:
 	 * Report the end of a global gc mark operation.
 	 */
 	void reportGlobalGCMarkEnd(MM_EnvironmentBase *env);
-
-	/**
-	 * Report the start of a PGC mark operation.
-	 */
-	void reportPGCMarkStart(MM_EnvironmentBase *env);
-
-	/**
-	 * Report the end of a PGC mark operation.
-	 */
-	void reportPGCMarkEnd(MM_EnvironmentBase *env);
 
 public:
 	static MM_IncrementalGenerationalGC *newInstance(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager);
@@ -467,12 +455,6 @@ private:
 	 * @param allocDescription[in] The allocation request which triggered the collect
 	 */
 	void partialGarbageCollectUsingCopyForward(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription);
-	/**
-	 * Runs a PGC collect using the mark compact mechanism. This call does report events, before and after the collection, but does not collect statistics.
-	 * @param env[in] The main GC thread
-	 * @param allocDescription[in] The allocation request which triggered the collect
-	 */
-	void partialGarbageCollectUsingMarkCompact(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription);
 	
 	/**
 	 * Change all unmarked regions to marked regions.

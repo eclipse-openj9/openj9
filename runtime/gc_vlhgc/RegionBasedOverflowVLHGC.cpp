@@ -224,7 +224,7 @@ MM_RegionBasedOverflowVLHGC::overflowItemInternal(MM_EnvironmentBase *env, void 
 				 * To avoid adding constructing object 
 				 */
 				envVLHGC->getGCEnvironment()->_ownableSynchronizerObjectBuffer->add(envVLHGC, objectPtr);
-				if (envVLHGC->_cycleState->_shouldRunCopyForward) {
+				if (MM_CycleState::CT_PARTIAL_GARBAGE_COLLECTION == envVLHGC->_cycleState->_collectionType) {
 					envVLHGC->_copyForwardStats._ownableSynchronizerSurvived += 1;
 				} else {
 					envVLHGC->_markVLHGCStats._ownableSynchronizerSurvived += 1;

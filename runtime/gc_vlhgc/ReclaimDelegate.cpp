@@ -532,8 +532,6 @@ MM_ReclaimDelegate::performAtomicSweep(MM_EnvironmentVLHGC *env, MM_AllocateDesc
 void
 MM_ReclaimDelegate::createRegionCollectionSetForPartialGC(MM_EnvironmentVLHGC *env, UDATA desiredWorkToDo)
 {
-	Assert_MM_true(env->_cycleState->_shouldRunCopyForward);
-	
 	UDATA ignoreSkippedRegions = 0;
 	tagRegionsBeforeCompactWithWorkGoal(env, true, desiredWorkToDo, &ignoreSkippedRegions);
 }
@@ -744,7 +742,6 @@ MM_ReclaimDelegate::runReclaimForAbortedCopyForward(MM_EnvironmentVLHGC *env, MM
 	MM_CompactGroupPersistentStats *persistentStats = extensions->compactGroupPersistentStats;
 
 	Trc_MM_ReclaimDelegate_runReclaimForAbortedCopyForward_Entry(env->getLanguageVMThread(), ((MM_GlobalAllocationManagerTarok *)MM_GCExtensions::getExtensions(env)->globalAllocationManager)->getFreeRegionCount());
-	Assert_MM_true(env->_cycleState->_shouldRunCopyForward);
 
 	/* Perform Atomic Sweep on nonEvacuated regions before compacting in order to maintain accurate projectedLiveByte for the regions
 	 * projectedLiveByte will be used in selecting RateOfReturnCollectionSet in future collection */
