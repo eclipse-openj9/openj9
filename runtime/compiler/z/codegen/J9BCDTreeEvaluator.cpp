@@ -300,19 +300,8 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          // code is present. Because of this deviation from the COBOL treatment of sign codes we must
          // take a specialized control path when generating instructions for Java.
 
-         if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
-            {
-            generateSILInstruction(cg, TR::InstOpCode::CLHHSI, node, generateS390LeftAlignedMemoryReference(*sourceMR, node, 0, cg, sourceSignEndByte), 0x002D);
-            generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, cFlowRegionEnd);
-            }
-         else
-            {
-            generateSIInstruction(cg, TR::InstOpCode::CLI, node, generateS390LeftAlignedMemoryReference(*sourceMR, node, 0, cg, sourceSignEndByte), 0x00);
-            generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, cFlowRegionEnd);
-
-            generateSIInstruction(cg, TR::InstOpCode::CLI, node, generateS390LeftAlignedMemoryReference(*sourceMR, node, 1, cg, sourceSignEndByte), 0x2D);
-            generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, cFlowRegionEnd);
-            }
+         generateSILInstruction(cg, TR::InstOpCode::CLHHSI, node, generateS390LeftAlignedMemoryReference(*sourceMR, node, 0, cg, sourceSignEndByte), 0x002D);
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, cFlowRegionEnd);
          }
       else
          {
@@ -4102,7 +4091,7 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    // also do for assumed (PFD) preferred and clean signs?
    int32_t srcSign = srcReg->hasKnownOrAssumedSignCode() ? srcReg->getKnownOrAssumedSignCode() : TR::DataType::getInvalidSignCode();
-   bool useRegBasedSequence = comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && srcReg->hasKnownValidSign();
+   bool useRegBasedSequence = srcReg->hasKnownValidSign();
    bool isSrcSign0xF     = srcSign == 0xf;
    bool isSimpleSignFlip = srcSign == TR::DataType::getPreferredPlusCode() ||
                            srcSign == TR::DataType::getPreferredMinusCode() ||

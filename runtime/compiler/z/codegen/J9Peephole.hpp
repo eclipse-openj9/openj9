@@ -49,18 +49,6 @@ class OMR_EXTENSIBLE Peephole : public OMR::PeepholeConnector
    Peephole(TR::Compilation* comp);
 
    virtual bool performOnInstruction(TR::Instruction* cursor);
-
-   private:
-      
-   /** \brief
-    *     Reloads the literal pool register in the catch block when literal pool on demand is turned off. This is
-    *     required because the signal handler will take control of the execution and we are not guaranteed that
-    *     the literal pool register will remaind valid once control is transferred back to the catch block.
-    *
-    *  \param cursor
-    *     The instruction cursor currently being processed.
-    */
-   void reloadLiteralPoolRegisterForCatchBlock(TR::Instruction* cursor);
    };
 }
 
