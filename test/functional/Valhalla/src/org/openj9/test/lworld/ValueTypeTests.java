@@ -51,7 +51,7 @@ import org.testng.annotations.BeforeClass;
  * 11) make -f run_configure.mk && make compile && make _sanity
  */
 
-@Test(groups = { "level.sanity" }, invocationCount = 2)
+@Test(groups = { "level.sanity" })
 public class ValueTypeTests {
 	static Lookup lookup = MethodHandles.lookup();
 	static Unsafe myUnsafe = null;
@@ -114,6 +114,14 @@ public class ValueTypeTests {
 	static Class assortedRefWithLongAlignmentClass = null;
 	static MethodHandle makeAssortedRefWithLongAlignment = null;
 	static MethodHandle[][] assortedRefWithLongAlignmentGetterAndSetter = null;
+	/* assortedRefWithObjectAlignment */
+	static Class assortedRefWithObjectAlignmentClass = null;
+	static MethodHandle makeAssortedRefWithObjectAlignment = null;
+	static MethodHandle[][] assortedRefWithObjectAlignmentGetterAndWither = null;
+	/* assortedRefWithSingleAlignment */
+	static Class assortedRefWithSingleAlignmentClass = null;
+	static MethodHandle makeAssortedRefWithSingleAlignment = null;
+	static MethodHandle[][] assortedRefWithSingleAlignmentGetterAndWither = null;
 	/* assortedValueWithLongAlignment */
 	static Class assortedValueWithLongAlignmentClass = null;
 	static MethodHandle makeAssortedValueWithLongAlignment = null;
@@ -532,7 +540,7 @@ public class ValueTypeTests {
 	 * }
 	 * 
 	 */
-	@Test(priority=3)
+	@Test(priority=3, invocationCount=2)
 	static public void testCreateArrayFlattenedLine2D() throws Throwable {
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -680,7 +688,7 @@ public class ValueTypeTests {
 		} catch (NoClassDefFoundError e) {}
 	}
 	
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testNullWritesOnNonNullableArrays() throws Throwable {
 		Object arrayObject = Array.newInstance(point2DClass, 3);
 		try {
@@ -696,7 +704,7 @@ public class ValueTypeTests {
 		}
 	}
 	
-	@Test(priority=2)
+	@Test(priority=2, invocationCount=2)
 	static public void testBasicACMPTestOnIdentityTypes() throws Throwable {
 		
 		Object identityType1 = new String();
@@ -722,7 +730,7 @@ public class ValueTypeTests {
 		
 	}
 	
-	@Test(priority=2)
+	@Test(priority=2, invocationCount=2)
 	static public void testBasicACMPTestOnValueTypes() throws Throwable {
 		Object valueType1 = makePoint2D.invoke(1, 2);
 		Object valueType2 = makePoint2D.invoke(1, 2);
@@ -893,7 +901,7 @@ public class ValueTypeTests {
 		
 	}
 	
-	@Test(priority=3)
+	@Test(priority=3, invocationCount=2)
 	static public void testACMPTestOnValueFloat() throws Throwable {
 		Object float1 = makeValueFloat.invoke(1.1f);
 		Object float2 = makeValueFloat.invoke(-1.1f);
@@ -956,7 +964,7 @@ public class ValueTypeTests {
 			
 	}
 
-	@Test(priority=3)
+	@Test(priority=3, invocationCount=2)
 	static public void testACMPTestOnValueDouble() throws Throwable {
 		Object double1 = makeValueDouble.invoke(1.1d);
 		Object double2 = makeValueDouble.invoke(-1.1d);
@@ -1266,7 +1274,7 @@ public class ValueTypeTests {
 	}
 	
 	
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testCreateArrayTriangle2D() throws Throwable {
 		Object arrayObject = Array.newInstance(triangle2DClass, genericArraySize);
 		Object triangle1 = createTriangle2D(defaultTrianglePositions);
@@ -1461,6 +1469,10 @@ public class ValueTypeTests {
 		 * Withers are created in array getterAndWither[i][1] according to the order of fields i
 		 */
 		assortedValueWithLongAlignmentGetterAndWither = generateGenericGetterAndWither(assortedValueWithLongAlignmentClass, typeWithLongAlignmentFields);
+	}
+
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedValueWithLongAlignment() throws Throwable {
 		Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
 		checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterAndWither, assortedValueWithLongAlignment, typeWithLongAlignmentFields, true);
 	}
@@ -1491,6 +1503,10 @@ public class ValueTypeTests {
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
 		assortedRefWithLongAlignmentGetterAndSetter = generateGenericGetterAndSetter(assortedRefWithLongAlignmentClass, typeWithLongAlignmentFields);
+	}
+
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedRefWithLongAlignment() throws Throwable {
 		Object assortedRefWithLongAlignment = createAssorted(makeAssortedRefWithLongAlignment, typeWithLongAlignmentFields);
 		checkFieldAccessMHOfAssortedType(assortedRefWithLongAlignmentGetterAndSetter, assortedRefWithLongAlignment, typeWithLongAlignmentFields, false);
 	}
@@ -1521,7 +1537,10 @@ public class ValueTypeTests {
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
 		assortedValueWithObjectAlignmentGetterAndWither = generateGenericGetterAndWither(assortedValueWithObjectAlignmentClass, typeWithObjectAlignmentFields);
+	}
 
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedValueWithObjectAlignment() throws Throwable {
 		Object assortedValueWithObjectAlignment = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
 		checkFieldAccessMHOfAssortedType(assortedValueWithObjectAlignmentGetterAndWither, assortedValueWithObjectAlignment, typeWithObjectAlignmentFields, true);
 	}
@@ -1541,19 +1560,22 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testCreateAssortedRefWithObjectAlignment() throws Throwable {
-		Class assortedRefWithObjectAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithObjectAlignment", typeWithObjectAlignmentFields);
+		assortedRefWithObjectAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithObjectAlignment", typeWithObjectAlignmentFields);
 
-		MethodHandle makeAssortedRefWithObjectAlignment = lookup.findStatic(assortedRefWithObjectAlignmentClass,
+		makeAssortedRefWithObjectAlignment = lookup.findStatic(assortedRefWithObjectAlignmentClass,
 				"makeRefGeneric", MethodType.methodType(Object.class, Object.class, Object.class,
 						Object.class, Object.class, Object.class, Object.class, Object.class));
 		/*
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
-		MethodHandle[][] getterAndSetter = generateGenericGetterAndSetter(assortedRefWithObjectAlignmentClass, typeWithObjectAlignmentFields);
+		assortedRefWithObjectAlignmentGetterAndWither = generateGenericGetterAndSetter(assortedRefWithObjectAlignmentClass, typeWithObjectAlignmentFields);
+	}
 
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedRefWithObjectAlignment() throws Throwable {
 		Object assortedRefWithObjectAlignment = createAssorted(makeAssortedRefWithObjectAlignment, typeWithObjectAlignmentFields);
-		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithObjectAlignment, typeWithObjectAlignmentFields, false);
+		checkFieldAccessMHOfAssortedType(assortedRefWithObjectAlignmentGetterAndWither, assortedRefWithObjectAlignment, typeWithObjectAlignmentFields, false);
 	}
 
 	/*
@@ -1580,7 +1602,10 @@ public class ValueTypeTests {
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
 		assortedValueWithSingleAlignmentGetterAndWither = generateGenericGetterAndWither(assortedValueWithSingleAlignmentClass, typeWithSingleAlignmentFields);
+	}
 
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedValueWithSingleAlignment() throws Throwable {
 		Object assortedValueWithSingleAlignment = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
 		checkFieldAccessMHOfAssortedType(assortedValueWithSingleAlignmentGetterAndWither, assortedValueWithSingleAlignment, typeWithSingleAlignmentFields, true);
 	}
@@ -1599,19 +1624,22 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testCreateAssortedRefWithSingleAlignment() throws Throwable {
-		Class assortedRefWithSingleAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithSingleAlignment", typeWithSingleAlignmentFields);
+		assortedRefWithSingleAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithSingleAlignment", typeWithSingleAlignmentFields);
 
-		MethodHandle makeAssortedRefWithSingleAlignment = lookup.findStatic(assortedRefWithSingleAlignmentClass,
+		makeAssortedRefWithSingleAlignment = lookup.findStatic(assortedRefWithSingleAlignmentClass,
 				"makeRefGeneric", MethodType.methodType(Object.class, Object.class, Object.class,
 						Object.class, Object.class, Object.class, Object.class));
 		/*
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
-		MethodHandle[][] getterAndSetter = generateGenericGetterAndSetter(assortedRefWithSingleAlignmentClass, typeWithSingleAlignmentFields);
+		assortedRefWithSingleAlignmentGetterAndWither = generateGenericGetterAndSetter(assortedRefWithSingleAlignmentClass, typeWithSingleAlignmentFields);
+	}
 
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedRefWithSingleAlignment() throws Throwable {
 		Object assortedRefWithSingleAlignment = createAssorted(makeAssortedRefWithSingleAlignment, typeWithSingleAlignmentFields);
-		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithSingleAlignment, typeWithSingleAlignmentFields, false);
+		checkFieldAccessMHOfAssortedType(assortedRefWithSingleAlignmentGetterAndWither, assortedRefWithSingleAlignment, typeWithSingleAlignmentFields, false);
 	}
 
 	/*
@@ -1842,21 +1870,21 @@ public class ValueTypeTests {
 		assertNotNull(getV3.invoke(triangleObject));
 	}
 	
-	@Test(priority=5)
+	@Test(priority=5, invocationCount=2)
 	static public void testStaticFieldsWithObjectAlignmenDefaultValues() throws Throwable {
 		for (MethodHandle getterAndSetter[] : staticFieldsWithObjectAlignmentGenericGetterAndSetter) {
 			assertNotNull(getterAndSetter[0].invoke());
 		}
 	}
 	
-	@Test(priority=5)
+	@Test(priority=5, invocationCount=2)
 	static public void testStaticFieldsWithLongAlignmenDefaultValues() throws Throwable {
 		for (MethodHandle getterAndSetter[] : staticFieldsWithLongAlignmentGenericGetterAndSetter) {
 			assertNotNull(getterAndSetter[0].invoke());
 		}
 	}
 	
-	@Test(priority=5)
+	@Test(priority=5, invocationCount=2)
 	static public void testStaticFieldsWithSingleAlignmenDefaultValues() throws Throwable {
 		for (MethodHandle getterAndSetter[] : staticFieldsWithSingleAlignmentGenericGetterAndSetter) {
 			assertNotNull(getterAndSetter[0].invoke());
@@ -1982,7 +2010,7 @@ public class ValueTypeTests {
 	 * Create Array Objects with Point Class without initialization
 	 * The array should be set to a Default Value.
 	 */
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInPointArray() throws Throwable {
 		Object pointArray = Array.newInstance(point2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -1995,7 +2023,7 @@ public class ValueTypeTests {
 	 * Create Array Objects with Flattened Line without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
 	 */
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInLineArray() throws Throwable {
 		Object flattenedLineArray = Array.newInstance(flattenedLine2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2010,7 +2038,7 @@ public class ValueTypeTests {
 	 * Create Array Objects with triangle class without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
 	 */
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInTriangleArray() throws Throwable {
 		Object triangleArray = Array.newInstance(triangle2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2026,7 +2054,7 @@ public class ValueTypeTests {
 	 * Create an Array Object with assortedValueWithLongAlignment class without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
 	 */
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInAssortedValueWithLongAlignmentArray() throws Throwable {
 		Object assortedValueWithLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2041,7 +2069,7 @@ public class ValueTypeTests {
 	/*
 	 * Create a 2D array of valueTypes, verify that the default elements are null. 
 	 */
-	@Test(priority=5)
+	@Test(priority=5, invocationCount=2)
 	static public void testMultiDimentionalArrays() throws Throwable {
 		Class assortedValueWithLongAlignment2DClass = Array.newInstance(assortedValueWithLongAlignmentClass, 1).getClass();
 		Class assortedValueWithSingleAlignment2DClass = Array.newInstance(assortedValueWithSingleAlignmentClass, 1).getClass();
@@ -2062,7 +2090,7 @@ public class ValueTypeTests {
 	 * Create an assortedRefWithLongAlignment Array
 	 * Since it's ref type, the array should be filled with nullptrs
 	 */
-	@Test(priority=4)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInAssortedRefWithLongAlignmentArray() throws Throwable {
 		Object assortedRefWithLongAlignmentArray = Array.newInstance(assortedRefWithLongAlignmentClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
