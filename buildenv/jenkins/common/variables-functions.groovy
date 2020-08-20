@@ -573,9 +573,6 @@ def set_build_variables() {
     def buildspec = buildspec_manager.getSpec(SPEC)
 
     // fetch values per spec and Java version from the variables file
-    BOOT_JDK = buildspec.getScalarField("boot_jdk", SDK_VERSION)
-    FREEMARKER = buildspec.getScalarField("freemarker", SDK_VERSION)
-    OPENJDK_REFERENCE_REPO = buildspec.getScalarField("openjdk_reference_repo", SDK_VERSION)
     set_release()
     set_jdk_folder()
     set_build_extra_options()
@@ -1434,6 +1431,36 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id) {
     pipelineFunctions.retry_and_delay(
         { jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params },
         3, 120)
+}
+
+def set_build_variables_per_node() {
+    BOOT_JDK = check_path(buildspec.getScalarField('boot_jdk', SDK_VERSION), true)
+    println("BOOT_JDK: ${BOOT_JDK}")
+    if (!BOOT_JDK) {
+        error("BOOT_JDK: ${BOOT_JDK} does not exist!")
+    }
+
+    def freemarkerPath = buildspec.getScalarField('freemarker', SDK_VERSION)
+    FREEMARKER = check_path(buildspec.getScalarField('freemarker', SDK_VERSION), false)
+    println("FREEMARKER: ${FREEMARKER}")
+    if (!FREEMARKER) {
+        error("FREEMARKER: ${FREEMARKER} does not exist!")
+    }
+
+    OPENJDK_REFERENCE_REPO = check_path(buildspec.getScalarField("openjdk_reference_repo", SDK_VERSION), true)
+    println("OPENJDK_REFERENCE_REPO: ${OPENJDK_REFERENCE_REPO}")
+    if (!OPENJDK_REFERENCE_REPO) {
+        println("The git cache OPENJDK_REFERENCE_REPO: ${buildspec.getScalarField('openjdk_reference_repo', SDK_VERSION)} does not exist on ${NODE_NAME}!")
+    }
+}
+
+def check_path(inPath, isDir) {
+    if (!inPath) {
+        return inPath
+    }
+
+    def testOption = (isDir) ? "-d" : "-e"
+    return sh (script: "test ${testOption} ${inPath} && echo ${inPath} || echo ''", returnStdout: true).trim()
 }
 
 return this
