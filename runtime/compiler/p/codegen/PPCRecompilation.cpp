@@ -150,13 +150,13 @@ TR::Instruction *TR_PPCRecompilation::generatePrologue(TR::Instruction *cursor)
 
          // lwzu  gr0, last 16-bits(gr11)
          cursor = generateTrg1MemInstruction(cg(), (!isProfilingCompilation())?TR::InstOpCode::lwzu:TR::InstOpCode::lwz, firstNode, gr0,
-               new (cg()->trHeapMemory()) TR::MemoryReference(gr11, LO_VALUE(addr), 4, cg()), cursor);
+               TR::MemoryReference::createWithDisplacement(cg(), gr11, LO_VALUE(addr), 4), cursor);
 
       if (!isProfilingCompilation())
          {
          cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addic_r, firstNode, gr0, gr0, -1, cursor);
          cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::stw, firstNode,
-               new (cg()->trHeapMemory()) TR::MemoryReference(gr11, (int32_t)0, 4, cg()), gr0, cursor);
+               TR::MemoryReference::createWithDisplacement(cg(), gr11, (int32_t)0, 4), gr0, cursor);
          }
       else
          {
