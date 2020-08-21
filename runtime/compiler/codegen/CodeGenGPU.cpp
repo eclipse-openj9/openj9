@@ -571,9 +571,6 @@ static const char * nvvmOpCodeNames[] =
 /*
  *END OF OPCODES REQUIRED BY OMR
  */
-   NULL,          // TR::iuconst
-   NULL,          // TR::luconst
-   NULL,          // TR::buconst
    "load",          // TR::iuload
    "load",          // TR::luload
    "load",          // TR::buload
@@ -606,7 +603,6 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::luRegLoad
    NULL,          // TR::iuRegStore
    NULL,          // TR::luRegStore
-   NULL,          // TR::cconst
 
    "load",        // TR::cload
    "load",        // TR::cloadi
