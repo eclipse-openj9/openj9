@@ -132,7 +132,7 @@ make _testList TESTLIST=jit_jitt,jit_recognizedMethod,testSCCMLTests2_1
 If a test is disabled using `<disabled>` tag in playlist.xml, it can be executed through specifying the test target or adding `disabled` in front of regular target.
 
 ```    
-    make _testA    // testA has <disabled> tag in playlist.xml  
+    make _disabled.testA    // testA has <disabled> tag in playlist.xml  
     make _disabled.sanity.functional
     make _disabled.extended
 ```
