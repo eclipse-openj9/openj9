@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,27 +32,14 @@ namespace TR {
 class J9PPCWatchedStaticFieldSnippet: public TR::J9WatchedStaticFieldSnippet
    {
    private:
-   TR::Instruction *_upperInstruction, *_lowerInstruction;
-   int32_t _tocOffset;
    bool isloaded;
 
    public:
    J9PPCWatchedStaticFieldSnippet(TR::CodeGenerator *cg, TR::Node *node, J9Method *m, UDATA loc, void *fieldAddress, J9Class *fieldClass)
-      : TR::J9WatchedStaticFieldSnippet(cg, node, m, loc, fieldAddress, fieldClass), _upperInstruction(NULL), _lowerInstruction(NULL), isloaded(false) {}
-    
-   int32_t getTOCOffset() {return _tocOffset;}
-   void setTOCOffset(int32_t offset) {_tocOffset = offset;}
-
-   TR::Instruction *getUpperInstruction() {return _upperInstruction;}
-   TR::Instruction *getLowerInstruction() {return _lowerInstruction;}
-
-   void setUpperInstruction(TR::Instruction *pi) {_upperInstruction = pi;}
-   void setLowerInstruction(TR::Instruction *pi) {_lowerInstruction = pi;}
+      : TR::J9WatchedStaticFieldSnippet(cg, node, m, loc, fieldAddress, fieldClass), isloaded(false) {}
 
    void setLoadSnippet() {isloaded = true;}
    bool isSnippetLoaded() {return isloaded;}
-
-   virtual uint8_t *emitSnippetBody();
    };
 }
 
