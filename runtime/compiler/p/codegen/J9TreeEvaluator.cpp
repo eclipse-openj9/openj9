@@ -1198,55 +1198,7 @@ void loadFieldWatchSnippet(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *d
    TR::Compilation *comp = cg->comp();
    int32_t beginIndex = PTOC_FULL_INDEX;
 
-   // Attempt to request a TOC Offset on 64bit
-   if (comp->target().is64Bit())
-      {
-      beginIndex = TR_PPCTableOfConstants::allocateChunk(1, cg);
-      if (beginIndex != PTOC_FULL_INDEX)
-         beginIndex *= TR::Compiler->om.sizeofReferenceAddress();
-      }
-
-   // If we've ran out of space within the TOC, or 32 bit then generate nibbles
-   if (comp->target().is32Bit() || beginIndex == PTOC_FULL_INDEX)
-      {
-      TR::Instruction *q[4];
-      fixedSeqMemAccess(cg, node, 0, q, snippetReg, snippetReg, TR::InstOpCode::addi2, TR::Compiler->om.sizeofReferenceAddress(), NULL, scratchReg);
-
-      if (!isInstanceField)
-         {
-         static_cast<TR::J9PPCWatchedStaticFieldSnippet *>(dataSnippet)->setLowerInstruction(comp->target().is32Bit()? q[1]: q[3]);
-         static_cast<TR::J9PPCWatchedStaticFieldSnippet *>(dataSnippet)->setUpperInstruction(q[0]);
-         }
-      else
-         {
-         static_cast<TR::J9PPCWatchedInstanceFieldSnippet *>(dataSnippet)->setLowerInstruction(comp->target().is32Bit()? q[1]: q[3]);
-         static_cast<TR::J9PPCWatchedInstanceFieldSnippet *>(dataSnippet)->setUpperInstruction(q[0]);
-         }
-      }
-
-   if (!isInstanceField)
-      {
-      static_cast<TR::J9PPCWatchedStaticFieldSnippet *>(dataSnippet)->setTOCOffset(beginIndex);
-      }
-   else
-      {
-      static_cast<TR::J9PPCWatchedInstanceFieldSnippet *>(dataSnippet)->setTOCOffset(beginIndex);
-      }
-
-   // Generate instructions to load from TOC
-   if (beginIndex != PTOC_FULL_INDEX)
-      {
-      if (beginIndex<LOWER_IMMED || beginIndex>UPPER_IMMED)
-         {
-         TR_ASSERT_FATAL_WITH_NODE(node, 0x00008000 != HI_VALUE(beginIndex), "TOC offset (0x%x) is unexpectedly high. Can not encode upper 16 bits into an addis instruction.", beginIndex);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, scratchReg, cg->getTOCBaseRegister(), HI_VALUE(beginIndex));
-         generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, snippetReg, new (cg->trHeapMemory()) TR::MemoryReference(scratchReg, LO_VALUE(beginIndex), TR::Compiler->om.sizeofReferenceAddress(), cg));
-         }
-      else
-         {
-         generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, snippetReg, new (cg->trHeapMemory()) TR::MemoryReference(cg->getTOCBaseRegister(), beginIndex, TR::Compiler->om.sizeofReferenceAddress(), cg));
-         }
-      }
+   cg->fixedLoadLabelAddressIntoReg(node, snippetReg, dataSnippet->getSnippetLabel());
 
    // Loaded Snippet
    if (!isInstanceField)
