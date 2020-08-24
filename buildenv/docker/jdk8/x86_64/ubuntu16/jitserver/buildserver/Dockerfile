@@ -59,7 +59,7 @@ RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.7.1/pr
 # Grab sources from openj9-openjdk-jdk8 and JITServer repos
 # Then builds JITServer
 WORKDIR /root
-RUN git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8 \
+RUN git clone --depth 1 https://github.com/ibmruntimes/openj9-openjdk-jdk8 \
  && cd openj9-openjdk-jdk8 \
  && bash ./get_source.sh -openj9-repo=$openj9_repo -omr-repo=$omr_repo \
  && bash ./configure --with-freemarker-jar=/root/freemarker.jar --enable-jitserver \
