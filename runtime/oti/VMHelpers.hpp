@@ -1529,7 +1529,9 @@ exit:
 	{
 		bool isHidden = false;
 		J9Class* currentClass = J9_CLASS_FROM_METHOD(method);
-		if (J9_ARE_ANY_BITS_SET(currentClass->classFlags, J9ClassIsAnonymous)) {
+		if (J9_ARE_ANY_BITS_SET(currentClass->classFlags, J9ClassIsAnonymous)
+			|| J9ROMCLASS_IS_HIDDEN(currentClass->romClass)
+		) {
 			/* lambda helper method */
 			isHidden = true;
 		} else {
