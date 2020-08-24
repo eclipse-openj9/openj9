@@ -240,6 +240,16 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/VPConstraint.cpp \
     omr/compiler/optimizer/VPHandlers.cpp \
     omr/compiler/optimizer/VPHandlersCommon.cpp \
+    omr/compiler/optimizer/BenefitInliner.cpp \
+    omr/compiler/optimizer/abstractinterpreter/AbsValue.cpp \
+    omr/compiler/optimizer/abstractinterpreter/AbsOpStack.cpp \
+    omr/compiler/optimizer/abstractinterpreter/AbsLocalVarArray.cpp \
+    omr/compiler/optimizer/abstractinterpreter/AbsState.cpp \
+    omr/compiler/optimizer/abstractinterpreter/IDT.cpp \
+    omr/compiler/optimizer/abstractinterpreter/IDTNode.cpp \
+    omr/compiler/optimizer/abstractinterpreter/OMRIDTBuilder.cpp \
+    omr/compiler/optimizer/abstractinterpreter/InliningMethodSummary.cpp \
+    omr/compiler/optimizer/abstractinterpreter/InliningProposal.cpp  \
     omr/compiler/ras/CallStack.cpp \
     omr/compiler/ras/CFGChecker.cpp \
     omr/compiler/ras/Debug.cpp \
@@ -339,6 +349,8 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/optimizer/J9EstimateCodeSize.cpp \
     compiler/optimizer/J9Inliner.cpp \
     compiler/optimizer/InterpreterEmulator.cpp \
+    compiler/optimizer/abstractinterpreter/J9IDTBuilder.cpp \
+    compiler/optimizer/abstractinterpreter/J9AbsInterpreter.cpp \
     compiler/ras/DebugExt.cpp \
     compiler/ras/DebugExtSegmentProvider.cpp \
     compiler/ras/HashTable.cpp \
