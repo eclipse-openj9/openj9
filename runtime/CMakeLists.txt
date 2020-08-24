@@ -551,9 +551,13 @@ if(J9VM_MODULE_ZLIB)
 	add_subdirectory(zlib)
 endif()
 
-# NOTE this is not conditional in the UMA module.xml
 add_subdirectory(tests)
 
 if (J9VM_OPT_JITSERVER)
 	add_subdirectory(jitserver_launcher)
+endif()
+
+# This needs to stay at the end of this file to allow the vendor code to modify any of our targets
+if(J9VM_VENDOR_DIR)
+	add_subdirectory("${J9VM_VENDOR_DIR}/runtime" vendor)
 endif()
