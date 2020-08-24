@@ -29,6 +29,7 @@
 #include "j9cfg.h"
 #include "j9protos.h"
 #include "j9consts.h"
+#include "j9argscan.h"
 #include "jni.h"
 #include "jvminit.h"
 #include "j9port.h"
@@ -1355,95 +1356,49 @@ scan_hex_helper(J9JavaVM *javaVM, char **cursor, UDATA *value, const char *argNa
 }
 
 /**
- * Wrapper for scan_udata_helper, that provides parsing for memory sizes.
- * User should be able to specify the size in GiBs, MiBs, or KiBs (with G,g,M,m,K,k suffixes) or
- * in bytes (no suffix)
+ * Wrapper for scan_udata_memory_size, that provides readable error messages.
+ * @param cursor address of the pointer to the string to parse for the udata.
+ * @param value address of the storage for the udata to be read.
+ * @param argName string containing the argument name to be used in error reporting.
  * @return true if parsing was successful, false otherwise.
  */
 bool
-scan_udata_memory_size_helper(J9JavaVM *javaVM, char **cursor, UDATA *value, const char *argName)
+scan_udata_memory_size_helper(J9JavaVM *javaVM, char **cursor, uintptr_t *value, const char *argName)
 {
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	uintptr_t result = scan_udata_memory_size(cursor, value);
 
-	if(!scan_udata_helper(javaVM, cursor, value, argName)) {
-		return false;
+	/* Report Errors */
+	if (1 == result) {
+		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, argName);
+	} else if (2 == result) {
+		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, argName);
 	}
-	
-	if(try_scan(cursor, "T") || try_scan(cursor, "t")) {
-		if (0 != *value) {
-#if defined(J9VM_ENV_DATA64)
-			if (*value <= (((UDATA)-1) >> 40)) {
-				*value <<= 40;
-			} else
-#endif /* defined(J9VM_ENV_DATA64) */
-			{
-				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, argName);
-				return false;
-			}
-		}
-	} else if(try_scan(cursor, "G") || try_scan(cursor, "g")) {
-		if (*value <= (((UDATA)-1) >> 30)) {
-			*value <<= 30;
-		} else {
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, argName);
-			return false;
-		}
-	} else if(try_scan(cursor, "M") || try_scan(cursor, "m")) {
-		if (*value <= (((UDATA)-1) >> 20)) {
-			*value <<= 20;
-		} else {
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, argName);
-			return false;
-		}
-	} else if(try_scan(cursor, "K") || try_scan(cursor, "k")) {
-		if (*value <= (((UDATA)-1) >> 10)) {
-			*value <<= 10;
-		} else {
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, argName);
-			return false;
-		}
-	}
-	return true;
+
+	return 0 == result;
 }
 
 /**
- * Wrapper for scan_u64_helper, that provides parsing for memory sizes.
- * User should be able to specify the size in GiBs, MiBs, or KiBs (with G,g,M,m,K,k suffixes) or
- * in bytes (no suffix)
+ * Wrapper for scan_u64_helper, that provides readable error messages.
+ * @param cursor address of the pointer to the string to parse for the udata.
+ * @param value address of the storage for the udata to be read.
+ * @param argName string containing the argument name to be used in error reporting.
  * @return true if parsing was successful, false otherwise.
  */
 bool
-scan_u64_memory_size_helper(J9JavaVM *javaVM, char **cursor, U_64 *value, const char *argName)
+scan_u64_memory_size_helper(J9JavaVM *javaVM, char **cursor, uint64_t *value, const char *argName)
 {
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	uintptr_t result = scan_u64_memory_size(cursor, value);
 
-	if(!scan_u64_helper(javaVM, cursor, value, argName)) {
-		return false;
+	/* Report Errors */
+	if (1 == result) {
+		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, argName);
+	} else if (2 == result) {
+		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, argName);
 	}
 
-	if(try_scan(cursor, "G") || try_scan(cursor, "g")) {
-		if (*value <= (((U_64)-1) >> 30)) {
-			*value <<= 30;
-		} else {
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, argName);
-			return false;
-		}
-	} else if(try_scan(cursor, "M") || try_scan(cursor, "m")) {
-		if (*value <= (((U_64)-1) >> 20)) {
-			*value <<= 20;
-		} else {
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, argName);
-			return false;
-		}
-	} else if(try_scan(cursor, "K") || try_scan(cursor, "k")) {
-		if (*value <= (((U_64)-1) >> 10)) {
-			*value <<= 10;
-		} else {
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, argName);
-			return false;
-		}
-	}
-	return true;
+	return 0 == result;
 }
 
 /**
