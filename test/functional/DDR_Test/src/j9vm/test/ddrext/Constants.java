@@ -78,7 +78,7 @@ public class Constants {
 	public static final String THREAD_FAILURE_KEY = "";
 
 	public static final String THREAD_HELP_SUCCESS_KEY = "list all threads in the VM,list stacks for all threads in the VM";
-	public static final String THREAD_STACK_SUCCESS_KEY = "java/lang/Thread,com/ibm/dtfj/tck/harness/Configure\\$DumpThread\\.generateDump\\(\\),!j9method 0x.*,!stack 0x.*";
+	public static final String THREAD_STACK_SUCCESS_KEY = "java/lang/Thread,j9vm/test/corehelper/SimpleThread\\.createDump\\(\\)V,!j9method 0x.*,!stack 0x.*";
 	public static final String THREAD_FLAGS_SUCCESS_KEY = "main,!j9vmthread 0x.*,publicFlags";
 	public static final String THREAD_DEBUGEVENTDATA_SUCCESS_KEYS = "!j9vmthread 0x.*";
 	public static final String THREAD_MONITORS_SUCCESS_KEY = "itemCount=[1-9][0-9]*,!j9thread 0x.*,!j9threadmonitor 0x.*";
