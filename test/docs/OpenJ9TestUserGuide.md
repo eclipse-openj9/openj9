@@ -266,7 +266,7 @@ inside the `<test>` element that you want to exclude.
 If a test is disabled using `<disabled>` tag in playlist.xml, it can be executed by specifying the test target or adding `disabled` in front of its top-level test target.
 
 ```    
-        make _testA    // testA has <disabled> tag in playlist.xml  
+        make _disabled.testA    // testA has <disabled> tag in playlist.xml  
         make _disabled.sanity.functional
         make _disabled.extended
 ```
