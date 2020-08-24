@@ -399,6 +399,27 @@ TR_J9EstimateCodeSize::estimateCodeSize(TR_CallTarget *calltarget, TR_CallStack 
    return false;
    }
 
+TR::CFG *
+TR_J9EstimateCodeSize::generateCFG(TR_CallTarget *calltarget, TR::Region &region)
+   {
+   TR::ResolvedMethodSymbol* methodSymbol = TR::ResolvedMethodSymbol::create(comp()->trHeapMemory(), calltarget->_calleeMethod, comp());
+   TR_J9ByteCodeIterator bci(methodSymbol, static_cast<TR_ResolvedJ9Method*>(methodSymbol->getResolvedMethod()), static_cast<TR_J9VMBase*>(comp()->fe()), comp());
+  
+   NeedsPeekingHeuristic nph(calltarget, bci, methodSymbol, comp());
+
+   int32_t maxIndex = bci.maxByteCodeIndex() + 5;
+
+   TR::Block * * blocks = (TR::Block * *) comp()->trMemory()->allocateStackMemory(maxIndex * sizeof(TR::Block *));
+   memset(blocks, 0, maxIndex * sizeof(TR::Block *));
+
+   flags8_t * flags = (flags8_t *) comp()->trMemory()->allocateStackMemory(maxIndex * sizeof(flags8_t));
+   memset(flags, 0, maxIndex * sizeof(flags8_t));
+
+   processBytecodeAndGenerateCFG(calltarget, region, bci, nph, blocks, flags);
+
+   return calltarget->_cfg;
+   }
+
 TR::CFG&
 TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, TR::Region &cfgRegion, TR_J9ByteCodeIterator& bci, NeedsPeekingHeuristic &nph, TR::Block** blocks, flags8_t * flags)
    {

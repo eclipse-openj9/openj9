@@ -82,6 +82,8 @@ class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
    static void setupLastTreeTop(TR::Block *currentBlock, TR_J9ByteCode bc,
                              uint32_t bcIndex, TR::Block *destinationBlock, TR_ResolvedMethod *feMethod,
                              TR::Compilation *comp);
+   
+   TR::CFG* generateCFG(TR_CallTarget *calltarget, TR::Region &region);
 
    protected:
       bool estimateCodeSize(TR_CallTarget *, TR_CallStack * , bool recurseDown = true);

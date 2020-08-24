@@ -72,4 +72,6 @@ j9jit_files(
 	optimizer/UnsafeFastPath.cpp
 	optimizer/VarHandleTransformer.cpp
 	optimizer/VPBCDConstraint.cpp
+	optimizer/abstractinterpreter/J9IDTBuilder.cpp
+	optimizer/abstractinterpreter/J9AbsInterpreter.cpp
 )
