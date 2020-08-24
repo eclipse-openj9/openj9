@@ -202,7 +202,11 @@ public:
 		}
 		case OBJECT_HEADER_SHAPE_POINTERS:
 			if (J9_IS_J9CLASS_FLATTENED(clazz)) {
-				result = SCAN_FLATTENED_ARRAY_OBJECT;
+				if (J9CLASS_HAS_REFERENCES(((J9ArrayClass *)clazz)->leafComponentType)) {
+					result = SCAN_FLATTENED_ARRAY_OBJECT;
+				} else {
+					result = SCAN_PRIMITIVE_ARRAY_OBJECT;
+				}
 			} else {
 				result = SCAN_POINTER_ARRAY_OBJECT;
 			}
