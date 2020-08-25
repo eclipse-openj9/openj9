@@ -91,6 +91,7 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.RootPathCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.RuntimeSettingsCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.SearchStringTableCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.SetVMCommand;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.ShowFlagsCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.ShowDumpAgentsCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.ShrCCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.StackWalkCommand;
@@ -196,6 +197,7 @@ public class GetCommandsTask extends BaseJVMCommands implements IBootstrapRunnab
 		toPassBack.add(new FindModulesCommand());
 		toPassBack.add(new DumpModuleCommand());
 		toPassBack.add(new DumpPackageCommand());
+		toPassBack.add(new ShowFlagsCommand());
 
 		if (ValueTypeHelper.getValueTypeHelper().areValueTypesSupported()) {
 			toPassBack.add(new FlatObjectCommand());
