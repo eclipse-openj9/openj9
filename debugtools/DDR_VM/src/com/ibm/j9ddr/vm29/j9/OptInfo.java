@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@ import static com.ibm.j9ddr.vm29.j9.ROMHelp.J9_ROM_METHOD_FROM_RAM_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_CLASS_ANNOTATION_INFO;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_ENCLOSING_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_GENERIC_SIGNATURE;
+import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_PERMITTEDSUBCLASSES_ATTRIBUTE;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SIMPLE_NAME;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_FILE_NAME;
@@ -234,6 +235,35 @@ public class OptInfo {
 			return J9SourceDebugExtensionPointer.cast(srpPtr.get());
 		}
 		return J9SourceDebugExtensionPointer.NULL;
+	}
+
+	private static U32Pointer getPermittedSubclassPointer(J9ROMClassPointer romClass) throws CorruptDataException {
+		SelfRelativePointer srpPtr = getSRPPtr(J9ROMClassHelper.optionalInfo(romClass), romClass.optionalFlags(),
+			J9_ROMCLASS_OPTINFO_PERMITTEDSUBCLASSES_ATTRIBUTE);
+		if (srpPtr.notNull()) {
+			return U32Pointer.cast(srpPtr.get());
+		}
+		return U32Pointer.NULL;
+	}
+
+	public static int getPermittedSubclassCount(J9ROMClassPointer romClass) throws CorruptDataException {
+		U32Pointer permittedSubclassPointer = getPermittedSubclassPointer(romClass);
+		if (permittedSubclassPointer.notNull()) {
+			return permittedSubclassPointer.at(0).intValue();
+		}
+		return 0;
+	}
+
+	public static J9UTF8Pointer getPermittedSubclassNameAtIndex(J9ROMClassPointer romClass, int index) throws CorruptDataException {
+		U32Pointer permittedSubclassPointer = getPermittedSubclassPointer(romClass);
+		if (permittedSubclassPointer.notNull()) {
+			/* extra 1 is to move past permitted subclass count. */
+			permittedSubclassPointer = permittedSubclassPointer.add(index + 1);
+
+			SelfRelativePointer nameSrp = SelfRelativePointer.cast(permittedSubclassPointer);
+			return J9UTF8Pointer.cast(nameSrp.get());
+		}
+		return J9UTF8Pointer.NULL;
 	}
 
 }

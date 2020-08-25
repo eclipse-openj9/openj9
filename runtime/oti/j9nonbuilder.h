@@ -108,6 +108,8 @@
 #define J9FieldTypeMask 0x380000
 #define J9FieldTypeShort 0x280000
 
+/* @ddr_namespace: map_to_type=J9RecordComponentFlags */
+
 /* Constants from J9RecordComponentFlags */
 #define J9RecordComponentFlagHasGenericSignature 0x1
 #define J9RecordComponentFlagHasAnnotations 0x2
