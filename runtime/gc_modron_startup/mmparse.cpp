@@ -1247,6 +1247,19 @@ gcParseXXArguments(J9JavaVM *vm)
 		}
 	}
 
+	{
+		IDATA alwaysPreTouchIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+AlwaysPreTouch", NULL);
+		IDATA notAlwaysPreTouchIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-AlwaysPreTouch", NULL);
+		if (alwaysPreTouchIndex != notAlwaysPreTouchIndex) {
+			/* At least one option is set. Find the right most one. */
+			if (alwaysPreTouchIndex > notAlwaysPreTouchIndex) {
+				extensions->pretouchHeapOnExpand = true;
+			} else {
+				extensions->pretouchHeapOnExpand = false;
+			}
+		}
+	}
+
 	return 1;
 }
 
