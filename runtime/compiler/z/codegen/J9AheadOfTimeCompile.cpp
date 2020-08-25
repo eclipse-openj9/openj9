@@ -152,8 +152,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
    switch (targetKind)
       {
-      case TR_AbsoluteMethodAddressOrderedPair:
-         break;
       case TR_ArrayCopyHelper:
          {
 #if defined(TR_HOST_64BIT)

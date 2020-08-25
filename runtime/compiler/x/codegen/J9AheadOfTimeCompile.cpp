@@ -174,9 +174,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_AbsoluteMethodAddressOrderedPair:
-         break;
-
       case TR_ConstantPoolOrderedPair:
          {
          // Note: thunk relos should only be created for 64 bit

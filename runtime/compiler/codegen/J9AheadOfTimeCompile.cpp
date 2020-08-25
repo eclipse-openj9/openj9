@@ -229,6 +229,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_BodyInfoAddress:
       case TR_RamMethod:
       case TR_ClassUnloadAssumption:
+      case TR_AbsoluteMethodAddressOrderedPair:
          {
          // Nothing to do
          }
@@ -1092,6 +1093,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_BodyInfoAddress:
       case TR_RamMethod:
       case TR_ClassUnloadAssumption:
+      case TR_AbsoluteMethodAddressOrderedPair:
          {
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          }
@@ -1901,11 +1903,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   traceMsg(self()->comp(), "\nInlined site index = %d, Constant pool = %x", *(uint32_t *)ep1, *(uint32_t *)(ep2));
                   }
                }
-            break;
-         case TR_AbsoluteMethodAddressOrderedPair:
-            // Reference to the current method, no other information
-            cursor++;
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             break;
          case TR_FixedSequenceAddress:
             cursor++;        // unused field
