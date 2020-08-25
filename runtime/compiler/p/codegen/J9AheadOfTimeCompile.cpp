@@ -120,8 +120,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
    TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
 
    uint8_t * aotMethodCodeStart = (uint8_t *) comp->getRelocatableMethodCodeStart();
-   TR::LabelSymbol *table;
-   uint8_t *codeLocation;
    uint8_t flags = 0;
 
    uint8_t *cursor         = relocation->getRelocationData();
@@ -204,25 +202,27 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
       case TR_FixedSequenceAddress:
          {
-         uint8_t flags = (uint8_t) ((uintptr_t) relocation->getTargetAddress2());
+         TR_RelocationRecordWithOffset *rwoRecord = reinterpret_cast<TR_RelocationRecordWithOffset *>(reloRecord);
+
+         TR::LabelSymbol *table = reinterpret_cast<TR::LabelSymbol *>(relocation->getTargetAddress());
+         uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
+         uint8_t *codeLocation = table->getCodeLocation();
+
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-
-         table = (TR::LabelSymbol *) relocation->getTargetAddress();
-         codeLocation = table->getCodeLocation();
-
+         rwoRecord->setReloFlags(reloTarget, flags);
          if (comp->target().is64Bit())
             {
-            *(uint64_t *) cursor = (uint64_t)(codeLocation - aotMethodCodeStart);
-            cursor += 8;
+            rwoRecord->setOffset(reloTarget, static_cast<uintptr_t>(codeLocation - aotMethodCodeStart));
             }
          else
             {
-            TR_ASSERT(0, "Creating TR_FixedSeqAddress/TR_FixedSeq2Address relo for 32-bit target");
-            cursor += 4;
+            TR_ASSERT_FATAL(false, "Creating TR_FixedSeqAddress/TR_FixedSeq2Address relo for 32-bit target");
             }
+
+         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
+
       case TR_FixedSequenceAddress2:
          {
          uint8_t flags = (uint8_t) ((uintptr_t) relocation->getTargetAddress2());

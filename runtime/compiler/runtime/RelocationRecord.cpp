@@ -5530,7 +5530,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordConstantPoolBinaryTemplate),                            // TR_MethodObject                                 = 6
    0,                                                                                // TR_InterfaceObject                              = 7
    sizeof(TR_RelocationRecordHelperAddressBinaryTemplate),                           // TR_AbsoluteHelperAddress                        = 8
-   16,                                                                               // TR_FixedSeqAddress                              = 9
+   sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_FixedSeqAddress                              = 9
    16,                                                                               // TR_FixedSeq2Address                             = 10
    sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_JNIVirtualTargetAddress                      = 11
    sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_JNIStaticTargetAddress                       = 12
