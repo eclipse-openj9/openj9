@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,9 +67,7 @@ TR_RelocationRuntimeLogger::setupOptions(TR::Options *options)
       {
       _logLevel = options->getAotrtDebugLevel();
       //_logLevel = TR::Options::getAOTCmdLineOptions()->getAotrtDebugLevel();
-      _logEnabled = (_logLevel > 0)
-                    || options->getOption(TR_TraceRelocatableDataRT)
-                    || options->getOption(TR_TraceRelocatableDataDetailsRT);
+      _logEnabled = (_logLevel > 0);
       }
    }
 

@@ -1187,7 +1187,7 @@ void
 J9::AheadOfTimeCompile::dumpRelocationData()
    {
    // Don't trace unless traceRelocatableDataCG or traceRelocatableDataDetailsCG
-   if (!self()->comp()->getOption(TR_TraceRelocatableDataCG) && !self()->comp()->getOption(TR_TraceRelocatableDataDetailsCG) && !self()->comp()->getOption(TR_TraceReloCG))
+   if (!self()->comp()->getOption(TR_TraceRelocatableDataCG) && !self()->comp()->getOption(TR_TraceRelocatableDataDetailsCG))
       {
       return;
       }
@@ -1205,7 +1205,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
    // Output the method
    traceMsg(self()->comp(), "%s\n", self()->comp()->signature());
 
-   if (self()->comp()->getOption(TR_TraceReloCG))
+   if (self()->comp()->getOption(TR_TraceRelocatableDataCG))
       {
       traceMsg(self()->comp(), "\n\nRelocation Record Generation Info\n");
       traceMsg(self()->comp(), "%-35s %-32s %-5s %-9s %-10s %-8s\n", "Type", "File", "Line","Offset(M)","Offset(PC)", "Node");
