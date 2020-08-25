@@ -530,7 +530,8 @@ class TR_RelocationRecord
       virtual bool isValidationRecord() { return false; }
 
 
-      static TR_RelocationRecord *create(TR_RelocationRecord *storage, TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_RelocationRecordBinaryTemplate *recordPointer);
+      static TR_RelocationRecord *create(TR_RelocationRecord *storage, TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_RelocationRecordBinaryTemplate *record);
+      static TR_RelocationRecord *create(TR_RelocationRecord *storage, TR_RelocationRuntime *reloRuntime, uint8_t reloType, TR_RelocationRecordBinaryTemplate *record);
 
       virtual void clean(TR_RelocationTarget *reloTarget);
       virtual int32_t bytesInHeaderAndPayload();

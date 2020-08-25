@@ -219,9 +219,13 @@ TR_RelocationRecordGroup::handleRelocation(TR_RelocationRuntime *reloRuntime,
 TR_RelocationRecord *
 TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_RelocationRecordBinaryTemplate *record)
    {
+   return create(storage, reloRuntime, record->type(reloTarget), record);
+   }
+
+TR_RelocationRecord *
+TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *reloRuntime, uint8_t reloType, TR_RelocationRecordBinaryTemplate *record)
+   {
    TR_RelocationRecord *reloRecord = NULL;
-   // based on the type of the relocation record, create an object of a particular variety of TR_RelocationRecord object
-   uint8_t reloType = record->type(reloTarget);
    switch (reloType)
       {
       case TR_HelperAddress:
