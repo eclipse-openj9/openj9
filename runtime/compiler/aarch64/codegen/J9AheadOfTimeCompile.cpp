@@ -120,22 +120,6 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
    switch (targetKind)
       {
-      case TR_MethodObject:
-         {
-         TR::SymbolReference *tempSR = (TR::SymbolReference *) relocation->getTargetAddress();
-
-         // next word is the index in the above stored constant pool
-         // that indicates the particular relocation target
-         *(uint64_t *) cursor = (uint64_t) relocation->getTargetAddress2();
-         cursor += SIZEPOINTER;
-
-         // final word is the address of the constant pool to
-         // which the index refers
-         *(uint64_t *) cursor = (uint64_t) (uintptr_t) tempSR->getOwningMethod(comp)->constantPool();
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_ClassAddress:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *) relocation->getTargetAddress();

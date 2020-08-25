@@ -174,23 +174,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_MethodObject:
-      //case TR_InterfaceObject: Shouldn't have branch that create interface object for X86.
-         {
-         TR_ASSERT((relocation->getTargetKind() != TR_MethodObject), "relocation TR_MethodObject being created");
-         TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
-         // next word is the address of the constant pool to which the index refers
-         // index in the below stored constant pool that indicates the particular
-         // relocation target
-
-         *(uintptr_t *)cursor = (uintptr_t)relocation->getTargetAddress2(); // inlinedSiteIndex
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)tempSR->getOwningMethod(comp)->constantPool();
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_ClassAddress:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();

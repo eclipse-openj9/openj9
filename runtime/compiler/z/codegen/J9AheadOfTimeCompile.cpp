@@ -152,39 +152,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
    switch (targetKind)
       {
-      case TR_MethodObject:
-         {
-         TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
-
-         if (comp->target().is64Bit())
-            {
-
-            // first word is the inlined site index for the constant pool
-            // that indicates the particular relocation target
-            *(uint64_t *)cursor = (uint64_t)relocation->getTargetAddress2();
-            cursor += SIZEPOINTER;
-
-            // next word is the address of the constant pool
-            *(uint64_t *)cursor = (uint64_t)(uintptr_t)tempSR->getOwningMethod(comp)->constantPool();
-            cursor += SIZEPOINTER;
-
-            //*(uint64_t *)cursor = (uint64_t)tempSR->getCPIndex();
-            }
-         else
-            {
-            // first word is the inlined site index for the constant pool
-            *(uint32_t *)cursor = (uint32_t)(uintptr_t)relocation->getTargetAddress2();
-            cursor += SIZEPOINTER;
-
-            // next word is the address of the constant pool
-            *(uint32_t *)cursor = (uintptr_t) tempSR->getOwningMethod(comp)->constantPool();
-            cursor += SIZEPOINTER;
-
-            //*(uint32_t *)cursor = (uint32_t)tempSR->getCPIndex();
-            }
-         }
-         break;
-
       case TR_ClassAddress:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();

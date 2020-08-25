@@ -143,42 +143,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
    switch (targetKind)
       {
-      case TR_MethodObject:
-         {
-         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
-         TR::SymbolReference *tempSR = (TR::SymbolReference *) recordInfo->data1;
-
-         // next word is the address of the constant pool to
-         // which the index refers
-
-         uint8_t flags = (uint8_t) recordInfo->data3;
-
-         if (comp->target().is64Bit())
-            {
-            *(uint64_t *) cursor = (uint64_t) (uintptr_t) tempSR->getOwningMethod(comp)->constantPool();
-            cursor += 8;
-
-            // final word is the index in the above stored constant pool
-            // that indicates the particular relocation target
-            *(uint64_t *) cursor = (uint64_t) recordInfo->data2;
-            cursor += 8;
-            }
-         else
-            {
-            TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-            *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-            *(uint32_t *) cursor = (uint32_t) (uintptr_t) tempSR->getOwningMethod(comp)->constantPool();
-            cursor += 4;
-
-            // final word is the index in the above stored constant pool
-            // that indicates the particular relocation target
-            *(uint32_t *) cursor = (uint32_t) recordInfo->data2;
-            cursor += 4;
-            }
-
-         }
-         break;
-
       case TR_ClassAddress:
          {
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
