@@ -128,44 +128,29 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
    TR::Compilation *comp = _cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
    TR_SharedCache *sharedCache = fej9->sharedCache();
-
-   TR_VirtualGuard *guard;
-   uint8_t flags = 0;
-   TR_ResolvedMethod *resolvedMethod;
-
-   uint8_t *cursor = relocation->getRelocationData();
-
    TR_RelocationRuntime *reloRuntime = comp->reloRuntime();
    TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
 
-   // size of relocation goes first in all types
-   *(uint16_t *)cursor = relocation->getSizeOfRelocationData();
-   AOTcgDiag5(comp, "initializeAOTRelocationHeader cursor=%x size=%x wide=%x pair=%x kind=%x\n",
-      cursor, *(uint16_t *)cursor, relocation->needsWideOffsets(), relocation->isOrderedPair(), relocation->getTargetKind());
+   uint8_t *cursor         = relocation->getRelocationData();
+   uint8_t targetKind      = relocation->getTargetKind();
+   uint16_t sizeOfReloData = relocation->getSizeOfRelocationData();
 
-   cursor += 2;
+   // Zero-initialize header
+   memset(cursor, 0, sizeOfReloData);
 
-   uint8_t  modifier = 0;
-   uint8_t *relativeBitCursor = cursor;
-
-   if (relocation->needsWideOffsets())
-      modifier |= WIDE_OFFSETS;
-   *cursor   = (uint8_t)relocation->getTargetKind();
-   AOTcgDiag1(comp, "final type =%x\n", *cursor);
-   cursor++;
-   uint8_t *flagsCursor = cursor++;
-   *flagsCursor = modifier;
-   uint32_t *wordAfterHeader = (uint32_t*)cursor;
-#if defined(TR_HOST_64BIT)
-   cursor += 4; // padding
-#endif
-
-   // This has to be created after the kind has been written into the header
    TR_RelocationRecord storage;
-   TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, reloTarget, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(relocation->getRelocationData()));
-   TR::SymbolValidationManager *symValManager = comp->getSymbolValidationManager();
+   TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, targetKind, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(relocation->getRelocationData()));
 
-   switch (relocation->getTargetKind())
+   uint8_t wideOffsets = relocation->needsWideOffsets() ? RELOCATION_TYPE_WIDE_OFFSET : 0;
+   uint32_t *wordAfterHeader = &reinterpret_cast<TR_RelocationRecordHelperAddressBinaryTemplate *>(cursor)->_helperID;
+
+   reloRecord->setSize(reloTarget, sizeOfReloData);
+   reloRecord->setType(reloTarget, static_cast<TR_RelocationRecordType>(targetKind));
+   reloRecord->setFlag(reloTarget, wideOffsets);
+
+   cursor += sizeof(TR_RelocationRecordBinaryTemplate);
+
+   switch (targetKind)
       {
       case TR_MethodObject:
          {

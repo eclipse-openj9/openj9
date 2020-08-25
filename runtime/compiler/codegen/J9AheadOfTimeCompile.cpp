@@ -994,12 +994,6 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          return cursor;
       }
 
-   reloRecord->setSize(reloTarget, relocation->getSizeOfRelocationData());
-   reloRecord->setType(reloTarget, kind);
-
-   uint8_t wideOffsets = relocation->needsWideOffsets() ? RELOCATION_TYPE_WIDE_OFFSET : 0;
-   reloRecord->setFlag(reloTarget, wideOffsets);
-
    cursor += TR_RelocationRecord::getSizeOfAOTRelocationHeader(kind);
 
    return cursor;
