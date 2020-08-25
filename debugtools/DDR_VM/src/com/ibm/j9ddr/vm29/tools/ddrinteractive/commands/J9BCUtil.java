@@ -557,10 +557,10 @@ public class J9BCUtil {
 		/* dump the enclosing method */
 		dumpEnclosingMethod(out, romClass, flags);
 
-		out.append(String.format("Sun Access Flags (0x%s): ", Long.toHexString(romClass.modifiers().longValue())));
+		out.append(String.format("Basic Access Flags (0x%s): ", Long.toHexString(romClass.modifiers().longValue())));
 		dumpModifiers(out, romClass.modifiers().longValue(), MODIFIERSOURCE_CLASS, ONLY_SPEC_MODIFIERS);
 		out.append(nl);
-		out.append(String.format("J9  Access Flags (0x%s): ", Long.toHexString(romClass.extraModifiers().longValue())));
+		out.append(String.format("J9 Access Flags (0x%s): ", Long.toHexString(romClass.extraModifiers().longValue())));
 		dumpClassJ9ExtraModifiers(out, romClass.extraModifiers().longValue());
 		out.append(nl);
 
@@ -607,6 +607,17 @@ public class J9BCUtil {
 				J9UTF8Pointer innerClassName = J9UTF8Pointer.cast(innerClasses.get());
 				out.append("   " + J9UTF8Helper.stringValue(innerClassName));
 				innerClasses = innerClasses.add(1);
+			}
+		}
+
+		/* Permitted subclasses for a sealed class */
+		if (J9ROMClassHelper.isSealed(romClass)) {
+			int permittedSubclassCount = OptInfo.getPermittedSubclassCount(romClass);
+			out.format("Permitted subclasses (%d):%n", permittedSubclassCount);
+
+			for (int i = 0; i < permittedSubclassCount; i++) {
+				J9UTF8Pointer permittedSubclassName = OptInfo.getPermittedSubclassNameAtIndex(romClass, i);
+				out.format("   %s%n", J9UTF8Helper.stringValue(permittedSubclassName));
 			}
 		}
 
@@ -715,6 +726,10 @@ public class J9BCUtil {
 			out.append("(anonClass) ");
 		if ((accessFlags & J9AccClassIsUnmodifiableBit) != 0)
 			out.append("(unmodifiable) ");
+		if ((accessFlags & J9JavaAccessFlags.J9AccRecord) != 0)
+			out.append("(record) ");
+		if ((accessFlags & J9JavaAccessFlags.J9AccSealed) != 0)
+			out.append("(sealed) ");
 	}
 
 	private static void dumpEnclosingMethod(PrintStream out, J9ROMClassPointer romClass, long flags) throws CorruptDataException {
