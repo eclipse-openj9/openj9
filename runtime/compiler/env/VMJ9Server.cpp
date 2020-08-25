@@ -332,7 +332,26 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_OpaqueM
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    std::string str(sig, length);
    stream->write(JITServer::MessageType::VM_getClassFromSignature, str, method, isVettedForAOT);
-   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   auto recv = stream->read<TR_OpaqueClassBlock *, J9ClassLoader *, J9ClassLoader *>();
+   TR_OpaqueClassBlock *clazz = std::get<0>(recv);
+   J9ClassLoader *cl = std::get<1>(recv);
+   J9ClassLoader *methodClassLoader = std::get<2>(recv);
+   if (clazz && cl != methodClassLoader)
+      {
+      // make sure that the class is cached
+      J9ROMClass *romClass = TR::Compiler->cls.romClassOf(clazz);
+      TR_ASSERT_FATAL(romClass, "class %p could not be cached", clazz);
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find(reinterpret_cast<J9Class *>(clazz));
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         // remember that we cached this class by method class loader
+         // so that the cache entry is removed if the cached class gets unloaded
+         // if the class loaders are not identical
+         it->second._referencingClassLoaders.insert(methodClassLoader);
+         }
+      }
+   return clazz;
    }
 
 void *
