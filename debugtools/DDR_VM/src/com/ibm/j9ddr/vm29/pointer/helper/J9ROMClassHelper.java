@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -131,5 +131,9 @@ public class J9ROMClassHelper {
 	
 	public static boolean isAnonymousClass(J9ROMClassPointer romclass) throws CorruptDataException {
 		return romclass.extraModifiers().allBitsIn(J9AccClassAnonClass);
+	}
+
+	public static boolean isSealed(J9ROMClassPointer romclass) throws CorruptDataException {
+		return romclass.extraModifiers().allBitsIn(J9AccSealed);
 	}
 }
