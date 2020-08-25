@@ -52,7 +52,10 @@ suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, UDATA 
 					 * For example if thread1 is suspended while in the middle of running Thread.isAlive which is synchronized, 
 					 * thread2 calling thread1.interrupt will hang forever since the lock belonging to thread1 will never be released.
 					 */
-					vmFuncs->objectMonitorEnter(currentThread, J9VMJAVALANGTHREAD_LOCK(currentThread, targetThread->threadObject));
+					j9object_t lock = J9VMJAVALANGTHREAD_LOCK(currentThread, targetThread->threadObject);
+					if (NULL != lock) {
+						vmFuncs->objectMonitorEnter(currentThread, lock);
+					}
 
 					vmFuncs->internalExitVMToJNI(currentThread);
 
@@ -68,7 +71,10 @@ suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, UDATA 
 					vmFuncs->internalEnterVMFromJNI(currentThread);
 
 					/* Release java.lang.Thread.lock */
-					vmFuncs->objectMonitorExit(currentThread, J9VMJAVALANGTHREAD_LOCK(currentThread, targetThread->threadObject));
+					if (NULL != lock) {
+						/* Do not re-use lock here as the object may have moved during the suspension */
+						vmFuncs->objectMonitorExit(currentThread, J9VMJAVALANGTHREAD_LOCK(currentThread, targetThread->threadObject));
+					}
 				}
 				Trc_JVMTI_threadSuspended(targetThread);
 			}
