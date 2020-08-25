@@ -120,29 +120,6 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
    switch (targetKind)
       {
-      case TR_DataAddress:
-         {
-         TR::SymbolReference *tempSR = (TR::SymbolReference *) relocation->getTargetAddress();
-         uintptr_t inlinedSiteIndex = (uintptr_t) relocation->getTargetAddress2();
-
-         // next word is the address of the constant pool to which the index refers
-         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), inlinedSiteIndex);
-
-         // relocation target
-         *(uintptr_t *) cursor = inlinedSiteIndex; // inlinedSiteIndex
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *) cursor = (uintptr_t) tempSR->getOwningMethod(comp)->constantPool(); // constantPool
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *) cursor = tempSR->getCPIndex(); // cpIndex
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *) cursor = tempSR->getOffset(); // offset
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_FixedSequenceAddress2:
          {
          TR_ASSERT(relocation->getTargetAddress(), "target address is NULL");
