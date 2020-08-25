@@ -427,6 +427,7 @@ public:
    virtual bool                    staticAttributes( TR::Compilation *, int32_t cpIndex, void * *, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOValidation);
 
    static TR_OpaqueClassBlock  * definingClassFromCPFieldRef(TR::Compilation *comp, J9ConstantPool *constantPool, int32_t cpIndex, bool isStatic);
+   static TR_OpaqueClassBlock  * definingClassAndFieldShapeFromCPFieldRef(TR::Compilation *comp, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic, J9ROMFieldShape **field);
    virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic);
 
    virtual char *                  fieldNameChars(int32_t cpIndex, int32_t & len);
@@ -508,6 +509,21 @@ public:
     * @param[in] methodSym : the ResolvedMethodSymbol to create the parameter list for
     */
    virtual void makeParameterList(TR::ResolvedMethodSymbol *methodSym);
+
+   /**
+    * @brief Check if a field is a QType or not.
+    *
+    * @param[in] cpIndex : the constant pool index of the field
+    */
+   virtual bool isFieldQType(int32_t cpIndex);
+   /**
+    * @brief Check if a field is flattened or not by calling the VM API.
+    *
+    * @param[in] comp : The current compilation object
+    * @param[in] cpIndex : the constant pool index of the field
+    * @param[in] isStatic : whether the field is static 
+    */
+   virtual bool isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bool isStatic);
 
 protected:
    virtual TR_J9MethodBase *       asJ9Method(){ return this; }

@@ -91,6 +91,7 @@ public:
    bool isAbstractClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer);
    bool isInterfaceClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer);
    bool isValueTypeClass(TR_OpaqueClassBlock *);
+   bool isValueTypeClassFlattened(TR_OpaqueClassBlock *clazz);
 
    /**
     * \brief
