@@ -120,21 +120,6 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
    switch (targetKind)
       {
-      case TR_ClassAddress:
-         {
-         TR::SymbolReference *tempSR = (TR::SymbolReference *) relocation->getTargetAddress();
-
-         *(uint64_t *) cursor = (uint64_t) self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), (uintptr_t)relocation->getTargetAddress2()); //inlineSiteIndex
-         cursor += SIZEPOINTER;
-
-         *(uint64_t *) cursor = (uint64_t) (uintptr_t) tempSR->getOwningMethod(comp)->constantPool();
-         cursor += SIZEPOINTER;
-
-         *(uint64_t *) cursor = tempSR->getCPIndex(); // cpIndex
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_DataAddress:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *) relocation->getTargetAddress();

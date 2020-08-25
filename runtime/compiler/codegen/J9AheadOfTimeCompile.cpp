@@ -166,6 +166,8 @@ static const char* getNameForMethodRelocation (int type)
             return "TR_SpecialRamMethodConst";
          case TR_VirtualRamMethodConst:
             return "TR_VirtualRamMethodConst";
+         case TR_ClassAddress:
+            return "TR_ClassAddress";
          default:
             TR_ASSERT(0, "We already cleared one switch, hard to imagine why we would have a different type here");
             break;
@@ -256,6 +258,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_StaticRamMethodConst:
       case TR_SpecialRamMethodConst:
       case TR_VirtualRamMethodConst:
+      case TR_ClassAddress:
          {
          TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
          TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
@@ -1107,6 +1110,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_StaticRamMethodConst:
       case TR_SpecialRamMethodConst:
       case TR_VirtualRamMethodConst:
+      case TR_ClassAddress:
          {
          TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
 
@@ -1895,33 +1899,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   {
                   traceMsg(self()->comp(), "\nTR_DataAddress: InlineCallSite index = %d, Constant pool = %x, cpIndex = %d, offset = %x",
                           *(uint32_t *)ep1, *(uint32_t *)ep2, *(uint32_t *)ep3, *(uint32_t *)ep4);
-                  }
-               }
-            }
-            break;
-         case TR_ClassAddress:
-            {
-            cursor++;        //unused field
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            ep1 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            ep2 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            ep3 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            if (isVerbose)
-               {
-               if (is64BitTarget)
-                  {
-                  traceMsg(self()->comp(), "\nTR_ClassAddress: InlinedCallSite index = %d, Constant pool = %x, cpIndex = %d",
-                          *(uint64_t *)ep1, *(uint64_t *)ep2, *(uint64_t *)ep3);
-                  }
-               else
-                  {
-                  traceMsg(self()->comp(), "\nTR_ClassAddress: InlineCallSite index = %d, Constant pool = %x, cpIndex = %d",
-                          *(uint32_t *)ep1, *(uint32_t *)ep2, *(uint32_t *)ep3);
                   }
                }
             }

@@ -145,40 +145,26 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
       {
       case TR_ClassAddress:
          {
+         TR_RelocationRecordClassAddress *caRecord = reinterpret_cast<TR_RelocationRecordClassAddress *>(reloRecord);
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
-         TR::SymbolReference *tempSR = (TR::SymbolReference *) recordInfo->data1;
-         uint8_t flags = (uint8_t) recordInfo->data3;
+
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(recordInfo->data1);
+         uintptr_t inlinedSiteIndex = reinterpret_cast<uintptr_t>(recordInfo->data2);
+         uint8_t flags = static_cast<uint8_t>(recordInfo->data3);
+
+         void *constantPool = symRef->getOwningMethod(comp)->constantPool();
+         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(constantPool, inlinedSiteIndex);
 
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
+         caRecord->setReloFlags(reloTarget, flags);
+         caRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         caRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(constantPool));
+         caRecord->setCpIndex(reloTarget, symRef->getCPIndex());
 
-         if (comp->target().is64Bit())
-            {
-            *(uint64_t *) cursor = (uint64_t) self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), recordInfo->data2); //inlineSiteIndex
-            cursor += 8;
-
-            *(uint64_t *) cursor = (uint64_t) (uintptr_t) tempSR->getOwningMethod(comp)->constantPool();
-            cursor += 8;
-
-            *(uint64_t *) cursor = tempSR->getCPIndex(); // cpIndex
-            cursor += 8;
-
-            }
-         else
-            {
-            *(uint32_t *) cursor = (uint32_t) self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), recordInfo->data2); //inlineSiteIndex
-
-            cursor += 4;
-
-            *(uint32_t *) cursor = (uint32_t) (uintptr_t) tempSR->getOwningMethod(comp)->constantPool(); //cp
-            cursor += 4;
-
-            *(uint32_t *) cursor = tempSR->getCPIndex(); // cpIndex
-            cursor += 4;
-
-            }
+         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
+
       case TR_DataAddress:
          {
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation *) relocation->getTargetAddress();
