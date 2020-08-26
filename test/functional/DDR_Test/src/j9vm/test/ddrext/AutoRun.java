@@ -458,6 +458,7 @@ public class AutoRun {
 					suite.addTestSuite(TestDDRExtensionGeneral.class);
 				} else if (aTest.trim().equalsIgnoreCase("TestFindExt")) {
 					suite.addTestSuite(TestFindExt.class);
+					suite.addTestSuite(TestThread.class);
 				} else if (aTest.trim().equalsIgnoreCase("TestStackMap")) {
 					suite.addTestSuite(TestStackMap.class);
 				} else if (aTest.trim().equalsIgnoreCase("TestTenants")) {

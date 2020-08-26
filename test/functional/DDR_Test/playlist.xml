@@ -285,5 +285,23 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<impl>ibm</impl>
 		</impls>
 	</test>
+
+	<test>
+		<testCaseName>testDDRExtJunit_FindExtThread</testCaseName>
+		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DCOREGEN=$(Q)j9vm.test.corehelper.FindExtCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
+	-Dtest.list=$(Q)TestFindExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
  
 </playlist>
