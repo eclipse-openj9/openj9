@@ -1243,7 +1243,7 @@ static void populateInlineCalls(
          inlinedCallSite->_methodInfo = (TR_OpaqueMethodBlock*)-1;
          }
       memcpy(callSiteCursor, inlinedCallSite, sizeof(TR_InlinedCallSite) );
-      if (comp->getOption(TR_TraceRelocatableDataCG) || comp->getOption(TR_TraceRelocatableDataDetailsCG) || comp->getOption(TR_TraceReloCG))
+      if (comp->getOption(TR_TraceRelocatableDataCG) || comp->getOption(TR_TraceRelocatableDataDetailsCG))
          {
          traceMsg(comp, "inlineIdx %d, callSiteCursor %p, inlinedCallSite->methodInfo = %p\n", i, callSiteCursor, inlinedCallSite->_methodInfo);
          }
