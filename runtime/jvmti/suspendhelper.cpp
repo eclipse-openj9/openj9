@@ -45,20 +45,7 @@ suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, UDATA 
 				if (currentThread == targetThread) {
 					*currentThreadSuspended = TRUE;
 				} else {
-					J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
-					/* Match Thread.suspend() synchronization by acquiring the target thread's Thread.lock before suspending.
-					 * This will prevent deadlocks in the JCL library that could occur if a thread is suspended while
-					 * holding Thread.lock.
-					 * For example if thread1 is suspended while in the middle of running Thread.isAlive which is synchronized, 
-					 * thread2 calling thread1.interrupt will hang forever since the lock belonging to thread1 will never be released.
-					 */
-					j9object_t lock = J9VMJAVALANGTHREAD_LOCK(currentThread, targetThread->threadObject);
-					if (NULL != lock) {
-						vmFuncs->objectMonitorEnter(currentThread, lock);
-					}
-
-					vmFuncs->internalExitVMToJNI(currentThread);
-
+					currentThread->javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 					omrthread_monitor_enter(targetThread->publicFlagsMutex);
 					VM_VMAccess::setHaltFlagForVMAccessRelease(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 					if (VM_VMAccess::mustWaitForVMAccessRelease(targetThread)) {
@@ -67,14 +54,7 @@ suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, UDATA 
 						}
 					}
 					omrthread_monitor_exit(targetThread->publicFlagsMutex);
-
-					vmFuncs->internalEnterVMFromJNI(currentThread);
-
-					/* Release java.lang.Thread.lock */
-					if (NULL != lock) {
-						/* Do not re-use lock here as the object may have moved during the suspension */
-						vmFuncs->objectMonitorExit(currentThread, J9VMJAVALANGTHREAD_LOCK(currentThread, targetThread->threadObject));
-					}
+					currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 				}
 				Trc_JVMTI_threadSuspended(targetThread);
 			}
