@@ -714,6 +714,178 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateClassFromITableIndexCP:
+         {
+         TR_RelocationRecordValidateClassFromITableIndexCP *cfitRecord = reinterpret_cast<TR_RelocationRecordValidateClassFromITableIndexCP *>(reloRecord);
+
+         TR::ClassFromITableIndexCPRecord *svmRecord = reinterpret_cast<TR::ClassFromITableIndexCPRecord *>(relocation->getTargetAddress());
+
+         cfitRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_class));
+         cfitRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         cfitRecord->setCpIndex(reloTarget, svmRecord->_cpIndex);
+         }
+         break;
+
+      case TR_ValidateDeclaringClassFromFieldOrStatic:
+         {
+         TR_RelocationRecordValidateDeclaringClassFromFieldOrStatic *dcfsRecord = reinterpret_cast<TR_RelocationRecordValidateDeclaringClassFromFieldOrStatic *>(reloRecord);
+
+         TR::DeclaringClassFromFieldOrStaticRecord *svmRecord = reinterpret_cast<TR::DeclaringClassFromFieldOrStaticRecord *>(relocation->getTargetAddress());
+
+         dcfsRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_class));
+         dcfsRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         dcfsRecord->setCpIndex(reloTarget, svmRecord->_cpIndex);
+         }
+         break;
+
+      case TR_ValidateConcreteSubClassFromClass:
+         {
+         TR_RelocationRecordValidateConcreteSubClassFromClass *csccRecord = reinterpret_cast<TR_RelocationRecordValidateConcreteSubClassFromClass *>(reloRecord);
+
+         TR::ConcreteSubClassFromClassRecord *svmRecord = reinterpret_cast<TR::ConcreteSubClassFromClassRecord *>(relocation->getTargetAddress());
+
+         csccRecord->setSuperClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_superClass));
+         csccRecord->setChildClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_childClass));
+         }
+         break;
+
+      case TR_ValidateClassChain:
+         {
+         TR_RelocationRecordValidateClassChain *ccRecord = reinterpret_cast<TR_RelocationRecordValidateClassChain *>(reloRecord);
+
+         TR::ClassChainRecord *svmRecord = reinterpret_cast<TR::ClassChainRecord *>(relocation->getTargetAddress());
+
+         TR_OpaqueClassBlock *classToValidate = svmRecord->_class;
+         void *classChainForClassToValidate = svmRecord->_classChain;
+
+         // Store class chain to get name of class. Checking the class chain for
+         // this record eliminates the need for a separate class chain validation.
+         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
+
+         ccRecord->setClassID(reloTarget, symValManager->getIDFromSymbol(classToValidate));
+         ccRecord->setClassChainOffset(reloTarget, classChainOffsetInSharedCache);
+         }
+         break;
+
+      case TR_ValidateMethodFromClass:
+         {
+         TR_RelocationRecordValidateMethodFromClass *mfcRecord = reinterpret_cast<TR_RelocationRecordValidateMethodFromClass *>(reloRecord);
+
+         TR::MethodFromClassRecord *svmRecord = reinterpret_cast<TR::MethodFromClassRecord *>(relocation->getTargetAddress());
+
+         mfcRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
+         mfcRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         mfcRecord->setIndex(reloTarget, svmRecord->_index);
+         }
+         break;
+
+      case TR_ValidateStaticMethodFromCP:
+         {
+         TR_RelocationRecordValidateStaticMethodFromCP *smfcpRecord = reinterpret_cast<TR_RelocationRecordValidateStaticMethodFromCP *>(reloRecord);
+
+         TR::StaticMethodFromCPRecord *svmRecord = reinterpret_cast<TR::StaticMethodFromCPRecord *>(relocation->getTargetAddress());
+
+         TR_ASSERT_FATAL(
+            (svmRecord->_cpIndex & J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG) == 0,
+            "static method cpIndex has special split table flag set");
+
+         if ((svmRecord->_cpIndex & J9_STATIC_SPLIT_TABLE_INDEX_FLAG) != 0)
+            smfcpRecord->setReloFlags(reloTarget, TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT);
+
+         smfcpRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
+         smfcpRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
+         smfcpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         smfcpRecord->setCpIndex(reloTarget, static_cast<uint16_t>(svmRecord->_cpIndex & J9_SPLIT_TABLE_INDEX_MASK));
+         }
+         break;
+
+      case TR_ValidateSpecialMethodFromCP:
+         {
+         TR_RelocationRecordValidateSpecialMethodFromCP *smfcpRecord = reinterpret_cast<TR_RelocationRecordValidateSpecialMethodFromCP *>(reloRecord);
+
+         TR::SpecialMethodFromCPRecord *svmRecord = reinterpret_cast<TR::SpecialMethodFromCPRecord *>(relocation->getTargetAddress());
+
+         TR_ASSERT_FATAL(
+            (svmRecord->_cpIndex & J9_STATIC_SPLIT_TABLE_INDEX_FLAG) == 0,
+            "special method cpIndex has static split table flag set");
+
+         if ((svmRecord->_cpIndex & J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG) != 0)
+            smfcpRecord->setReloFlags(reloTarget, TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT);
+
+         smfcpRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
+         smfcpRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
+         smfcpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         smfcpRecord->setCpIndex(reloTarget, static_cast<uint16_t>(svmRecord->_cpIndex & J9_SPLIT_TABLE_INDEX_MASK));
+         }
+         break;
+
+      case TR_ValidateVirtualMethodFromCP:
+         {
+         TR_RelocationRecordValidateVirtualMethodFromCP *vmfcpRecord = reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromCP *>(reloRecord);
+
+         TR::VirtualMethodFromCPRecord *svmRecord = reinterpret_cast<TR::VirtualMethodFromCPRecord *>(relocation->getTargetAddress());
+
+         vmfcpRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
+         vmfcpRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
+         vmfcpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         vmfcpRecord->setCpIndex(reloTarget, static_cast<uint16_t>(svmRecord->_cpIndex));
+         }
+         break;
+
+      case TR_ValidateVirtualMethodFromOffset:
+         {
+         TR_RelocationRecordValidateVirtualMethodFromOffset *vmfoRecord = reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromOffset *>(reloRecord);
+
+         TR::VirtualMethodFromOffsetRecord *svmRecord = reinterpret_cast<TR::VirtualMethodFromOffsetRecord *>(relocation->getTargetAddress());
+
+         TR_ASSERT_FATAL((svmRecord->_virtualCallOffset & 1) == 0, "virtualCallOffset must be even");
+         TR_ASSERT_FATAL(
+            svmRecord->_virtualCallOffset == (int32_t)(int16_t)svmRecord->_virtualCallOffset,
+            "virtualCallOffset must fit in a 16-bit signed integer");
+
+         uint16_t ignoreRtResolve = static_cast<uint16_t>(svmRecord->_ignoreRtResolve);
+         uint16_t virtualCallOffset = static_cast<uint16_t>(svmRecord->_virtualCallOffset);
+
+         vmfoRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
+         vmfoRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
+         vmfoRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         vmfoRecord->setVirtualCallOffsetAndIgnoreRtResolve(reloTarget, (virtualCallOffset | ignoreRtResolve));
+         }
+         break;
+
+      case TR_ValidateInterfaceMethodFromCP:
+         {
+         TR_RelocationRecordValidateInterfaceMethodFromCP *imfcpRecord = reinterpret_cast<TR_RelocationRecordValidateInterfaceMethodFromCP *>(reloRecord);
+
+         TR::InterfaceMethodFromCPRecord *svmRecord = reinterpret_cast<TR::InterfaceMethodFromCPRecord *>(relocation->getTargetAddress());
+
+         imfcpRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
+         imfcpRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
+         imfcpRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         imfcpRecord->setLookupID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_lookup));
+         imfcpRecord->setCpIndex(reloTarget, static_cast<uint16_t>(svmRecord->_cpIndex));
+         }
+         break;
+
+      case TR_ValidateMethodFromClassAndSig:
+         {
+         TR_RelocationRecordValidateMethodFromClassAndSig *mfcsRecord = reinterpret_cast<TR_RelocationRecordValidateMethodFromClassAndSig *>(reloRecord);
+
+         TR::MethodFromClassAndSigRecord *svmRecord = reinterpret_cast<TR::MethodFromClassAndSigRecord *>(relocation->getTargetAddress());
+
+         // Store rom method to get name of method
+         J9Method *methodToValidate = reinterpret_cast<J9Method *>(svmRecord->_method);
+         J9ROMMethod *romMethod = static_cast<TR_J9VM *>(fej9)->getROMMethodFromRAMMethod(methodToValidate);
+         uintptr_t romMethodOffsetInSharedCache = self()->offsetInSharedCacheFromROMMethod(sharedCache, romMethod);
+
+         mfcsRecord->setMethodID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_method));
+         mfcsRecord->setDefiningClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_definingClass));
+         mfcsRecord->setBeholderID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_beholder));
+         mfcsRecord->setLookupClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_lookupClass));
+         mfcsRecord->setRomMethodOffsetInSCC(reloTarget, romMethodOffsetInSharedCache);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1084,14 +1256,28 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
       case TR_ValidateClassFromCP:
       case TR_ValidateStaticClassFromCP:
+      case TR_ValidateClassFromITableIndexCP:
+      case TR_ValidateDeclaringClassFromFieldOrStatic:
          {
          TR_RelocationRecordValidateClassFromCP *cpRecord = reinterpret_cast<TR_RelocationRecordValidateClassFromCP *>(reloRecord);
 
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate" "%s" "Class From CP: classID=%d, beholderID=%d, cpIndex=%d ",
-                                     kind == TR_ValidateStaticClassFromCP ? " Static " : " ",
+            const char *recordType;
+            if (kind == TR_ValidateClassFromCP)
+               recordType = "Class From CP";
+            else if (kind == TR_ValidateStaticClassFromCP)
+               recordType = "Static Class FromCP";
+            else if (kind == TR_ValidateClassFromITableIndexCP)
+               recordType = "Class From ITable Index CP";
+            else if (kind == TR_ValidateDeclaringClassFromFieldOrStatic)
+               recordType = "Declaring Class From Field or Static";
+            else
+               TR_ASSERT_FATAL(false, "Unknown relokind %d!\n", kind);
+
+            traceMsg(self()->comp(), "\n Validate %s: classID=%d, beholderID=%d, cpIndex=%d ",
+                                     recordType,
                                      (uint32_t)cpRecord->classID(reloTarget),
                                      (uint32_t)cpRecord->beholderID(reloTarget),
                                      cpRecord->cpIndex(reloTarget));
@@ -1130,13 +1316,23 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          break;
 
       case TR_ValidateSuperClassFromClass:
+      case TR_ValidateConcreteSubClassFromClass:
          {
          TR_RelocationRecordValidateSuperClassFromClass *scRecord = reinterpret_cast<TR_RelocationRecordValidateSuperClassFromClass *>(reloRecord);
 
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Super Class From Class: superClassID=%d, childClassID=%d ",
+            const char *recordType;
+            if (kind == TR_ValidateSuperClassFromClass)
+               recordType = "Super Class From Class";
+            else if (kind == TR_ValidateConcreteSubClassFromClass)
+               recordType = "Concrete SubClass From Class";
+            else
+               TR_ASSERT_FATAL(false, "Unknown relokind %d!\n", kind);
+
+            traceMsg(self()->comp(), "\n Validate %s: superClassID=%d, childClassID=%d ",
+                                      recordType,
                                       (uint32_t)scRecord->superClassID(reloTarget),
                                       (uint32_t)scRecord->childClassID(reloTarget));
             }
@@ -1170,6 +1366,115 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
             traceMsg(self()->comp(), "\n Validate System Class By Name: systemClassID=%d classChainOffsetInSCC=%p ",
                      (uint32_t)scmRecord->systemClassID(reloTarget),
                      (void *)scmRecord->classChainOffset(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateClassChain:
+         {
+         TR_RelocationRecordValidateClassChain *ccRecord = reinterpret_cast<TR_RelocationRecordValidateClassChain *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Validate Class Chain: classID=%d classChainOffsetInSCC=%p ",
+                     (uint32_t)ccRecord->classID(reloTarget),
+                     (void *)ccRecord->classChainOffset(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateMethodFromClass:
+         {
+         TR_RelocationRecordValidateMethodFromClass *mfcRecord = reinterpret_cast<TR_RelocationRecordValidateMethodFromClass *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Validate Method By Name: methodID=%d, beholderID=%d, index=%d ",
+                     (uint32_t)mfcRecord->methodID(reloTarget),
+                     (uint32_t)mfcRecord->beholderID(reloTarget),
+                     mfcRecord->index(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateStaticMethodFromCP:
+      case TR_ValidateSpecialMethodFromCP:
+      case TR_ValidateVirtualMethodFromCP:
+         {
+         TR_RelocationRecordValidateMethodFromCP *mfcpRecord = reinterpret_cast<TR_RelocationRecordValidateMethodFromCP *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            const char *recordType;
+            if (kind == TR_ValidateStaticMethodFromCP)
+               recordType = "Static";
+            else if (kind == TR_ValidateSpecialMethodFromCP)
+               recordType = "Special";
+            else if (kind == TR_ValidateVirtualMethodFromCP)
+               recordType = "Virtual";
+            else
+               TR_ASSERT_FATAL(false, "Unknown relokind %d!\n", kind);
+
+            traceMsg(self()->comp(), "\n Validate %s Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
+                     recordType,
+                     (uint32_t)mfcpRecord->methodID(reloTarget),
+                     (uint32_t)mfcpRecord->definingClassID(reloTarget),
+                     (uint32_t)mfcpRecord->beholderID(reloTarget),
+                     (uint32_t)mfcpRecord->cpIndex(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateVirtualMethodFromOffset:
+         {
+         TR_RelocationRecordValidateVirtualMethodFromOffset *vmfoRecord = reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromOffset *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Validate Virtual Method From Offset: methodID=%d, definingClassID=%d, beholderID=%d, virtualCallOffset=%d, ignoreRtResolve=%s ",
+                     (uint32_t)vmfoRecord->methodID(reloTarget),
+                     (uint32_t)vmfoRecord->definingClassID(reloTarget),
+                     (uint32_t)vmfoRecord->beholderID(reloTarget),
+                     (uint32_t)(vmfoRecord->virtualCallOffsetAndIgnoreRtResolve(reloTarget) & ~1),
+                     (vmfoRecord->virtualCallOffsetAndIgnoreRtResolve(reloTarget) & 1) ? "true" : "false");
+            }
+         }
+         break;
+
+      case TR_ValidateInterfaceMethodFromCP:
+         {
+         TR_RelocationRecordValidateInterfaceMethodFromCP *imfcpRecord = reinterpret_cast<TR_RelocationRecordValidateInterfaceMethodFromCP *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Validate Interface Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, lookupID=%d, cpIndex=%d ",
+                     (uint32_t)imfcpRecord->methodID(reloTarget),
+                     (uint32_t)imfcpRecord->definingClassID(reloTarget),
+                     (uint32_t)imfcpRecord->beholderID(reloTarget),
+                     (uint32_t)imfcpRecord->lookupID(reloTarget),
+                     (uint32_t)imfcpRecord->cpIndex(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateMethodFromClassAndSig:
+         {
+         TR_RelocationRecordValidateMethodFromClassAndSig *mfcsRecord = reinterpret_cast<TR_RelocationRecordValidateMethodFromClassAndSig *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Validate Method From Class and Sig: methodID=%d, definingClassID=%d, lookupClassID=%d, beholderID=%d, romMethodOffsetInSCC=%p ",
+                     (uint32_t)mfcsRecord->methodID(reloTarget),
+                     (uint32_t)mfcsRecord->definingClassID(reloTarget),
+                     (uint32_t)mfcsRecord->lookupClassID(reloTarget),
+                     (uint32_t)mfcsRecord->beholderID(reloTarget),
+                     (void *)mfcsRecord->romMethodOffsetInSCC(reloTarget));
             }
          }
          break;
@@ -1656,211 +1961,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                }
             break;
 
-         case TR_ValidateClassFromITableIndexCP:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Class From ITableIndex CP: classID=%d beholderID=%d cpIndex=%d ",
-                        (uint32_t)binaryTemplate->_classID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_cpIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateDeclaringClassFromFieldOrStatic:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Declaring Class From Field Or Static: classID=%d, beholderID=%d, cpIndex=%d ",
-                        (uint32_t)binaryTemplate->_classID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_cpIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateConcreteSubClassFromClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Concrete SubClass From Class: childClassID=%d, superClassID=%d ",
-                        (uint32_t)binaryTemplate->_childClassID,
-                        (uint32_t)binaryTemplate->_superClassID);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateClassChain:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateClassChainBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateClassChainBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Class Chain: classID=%d classChainOffsetInSCC=%p ",
-                        (uint32_t)binaryTemplate->_classID,
-                        binaryTemplate->_classChainOffsetInSCC);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateMethodFromClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateMethodFromClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateMethodFromClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Method By Name: methodID=%d, beholderID=%d, index=%d ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_index);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateStaticMethodFromCP:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Static Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_definingClassID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_cpIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateSpecialMethodFromCP:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateSpecialMethodFromCPBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateSpecialMethodFromCPBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Special Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_definingClassID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_cpIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateSpecialMethodFromCPBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateVirtualMethodFromCP:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Virtual Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_definingClassID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_cpIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateVirtualMethodFromOffset:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Virtual Method From Offset: methodID=%d, definingClassID=%d, beholderID=%d, virtualCallOffset=%d, ignoreRtResolve=%s ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_definingClassID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_virtualCallOffsetAndIgnoreRtResolve & ~1,
-                        (binaryTemplate->_virtualCallOffsetAndIgnoreRtResolve & 1) ? "true" : "false");
-               }
-            cursor += sizeof(TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateInterfaceMethodFromCP:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Interface Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, lookupID=%d, cpIndex=%d ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_definingClassID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        (uint32_t)binaryTemplate->_lookupID,
-                        binaryTemplate->_cpIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
          case TR_ValidateImproperInterfaceMethodFromCP:
             {
             cursor++;
@@ -1878,28 +1978,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                         binaryTemplate->_cpIndex);
                }
             cursor += sizeof(TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateMethodFromClassAndSig:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Method From Class and Sig: methodID=%d, definingClassID=%d, lookupClassID=%d, beholderID=%d, romMethodOffsetInSCC=%p ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_definingClassID,
-                        (uint32_t)binaryTemplate->_lookupClassID,
-                        (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_romMethodOffsetInSCC);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             }
             break;
