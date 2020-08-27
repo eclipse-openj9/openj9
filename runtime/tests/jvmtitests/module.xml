@@ -162,6 +162,7 @@
 		<export name="Java_com_ibm_jvmti_tests_vmDump_vmd001_tryDisableVmDump"/>
 		<export name="Java_com_ibm_jvmti_tests_getLoadedClasses_glc001_check"/>
 		<export name="Java_com_ibm_jvmti_tests_retransformClasses_rtc001_retransformClass"/>
+		<export name="Java_com_ibm_jvmti_tests_retransformClasses_rtc002_retransformClass"/>
 		<export name="Java_com_ibm_jvmti_tests_log_log001_tryQueryLogOptions"/>
 		<export name="Java_com_ibm_jvmti_tests_log_log001_trySetLogOptions"/>
 		<export name="Java_com_ibm_jvmti_tests_javaLockMonitoring_jlm001_jvmtiJlmSet"/>

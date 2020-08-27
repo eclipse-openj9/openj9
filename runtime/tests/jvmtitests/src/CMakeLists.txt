@@ -162,6 +162,7 @@ j9vm_add_library(jvmti_test_src STATIC
 	com/ibm/jvmti/tests/retransformationIncapableAgent/ria001.c
 
 	com/ibm/jvmti/tests/retransformClasses/rtc001.c
+	com/ibm/jvmti/tests/retransformClasses/rtc002.c
 
 	com/ibm/jvmti/tests/retransformRedefineCombo/rrc001.c
 
