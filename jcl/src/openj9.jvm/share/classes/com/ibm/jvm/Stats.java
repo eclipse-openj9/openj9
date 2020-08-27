@@ -1,7 +1,6 @@
-/*[INCLUDE-IF Sidecar17]*/
-
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2006, 2014 IBM Corp. and others
+ * Copyright (c) 2006, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,33 +20,41 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package com.ibm.jvm;
 
 /**
  * This class is used provide the following java heap and system statistics:
- * <ul> committed heap memory
- * <ul> used heap memory
- * <ul> max heap memory
- * <ul> softmx heap memory
- * <ul> free physical memory
- * <ul> total physical memory
- * All this info is retrieved without any allocation of new objects
+ * <ul>
+ * <li>committed heap memory</li>
+ * <li>used heap memory</li>
+ * <li>max heap memory</li>
+ * <li>softmx heap memory</li>
+ * <li>free physical memory</li>
+ * <li>total physical memory</li>
+ * </ul>
+ * All this info is retrieved without any allocation of new objects.
  */
 public class Stats {
-	private long committedHeap = 0L;
-	private long usedHeap = 0L;
-	private long maxHeap = 0L;
-	private long softmxHeap = 0L;
-	private long freePhysicalMem = 0L;
-	private long totPhysicalMem = 0L;
-	private double sysLoadAvg = 0.0;
-	private long cpuTime = 0L;
+	private long committedHeap;
+	private long usedHeap;
+	private long maxHeap;
+	private long softmxHeap;
+	private long freePhysicalMem;
+	private long totPhysicalMem;
+	private double sysLoadAvg;
+	private long cpuTime;
+
+	/**
+	 * Construct a new instance.
+	 */
+	public Stats() {
+		super();
+	}
 
 	/** To avoid allocating new objects, this function merely sets
 	 *  the member variables of this class as it is called from a
 	 *  native.
-	 * 
+	 *
 	 * @param committed is the committed heap size (bytes)
 	 * @param used is the amount of used memory on the java heap (bytes)
 	 * @param max is the maximum bound of the java heap (bytes)
@@ -68,7 +75,7 @@ public class Stats {
 		this.cpuTime = cpuTime;
 		this.softmxHeap = softmxHeap;
 	}
-	
+
 	/**
 	 * @return the committed heap (reserved memory) in bytes
 	 */
@@ -89,7 +96,7 @@ public class Stats {
 	public long getMaxHeap() {
 		return maxHeap;
 	}
-	
+
 	/**
 	 * @return the softmx java heap memory (set by -Xsoftmx or from the MemoryMXBean.setMaxHeapSize)
 	 */
@@ -110,27 +117,27 @@ public class Stats {
 	public long getTotPhysicalMem() {
 		return totPhysicalMem;
 	}
-	
+
 	/**
 	 * @return the system load average in last minute (fraction)
 	 */
 	public double getSysLoadAvg() {
 		return sysLoadAvg;
 	}
-	
+
 	/**
 	 * Returns total amount of time the process has been scheduled or executed so far
 	 * in both kernel and user modes.
-	 * 
+	 *
 	 * @return time in 100 ns units, or -1 in the case of an error or if this metric
 	 *         is not supported for this operating system.
 	 */
 	public long getCpuTime() {
 		return cpuTime;
 	}
-	
+
 	/**
-	 *  Native used to retrieve the heap/OS stats 
+	 * Native method used to retrieve the heap/OS stats.
 	 */
 	public native void getStats();
-}	
+}

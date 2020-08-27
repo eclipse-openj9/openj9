@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2014, 2016 IBM Corp. and others
+ * Copyright (c) 2014, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,15 @@ import java.util.Objects;
  * on any connected CUDA GPU. A successful sort operation
  * results in the array being sorted in ascending order.
  */
+/*[IF Java16]*/
+public final class Maths {
+
+	private Maths() {
+		super();
+	}
+/*[ELSE] Java16
 public class Maths {
+/*[ENDIF] Java16*/
 
 	private static int getDefaultDevice() {
 		return CUDAManager.instanceInternal().getDefaultDevice();

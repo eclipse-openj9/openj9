@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2014, 2016 IBM Corp. and others
+ * Copyright (c) 2014, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,15 @@ package com.ibm.gpu;
  * The main method can be launched from the command line, which will print
  * the current level to stdout.
  */
+/*[IF Java16]*/
+public final class Version {
+
+	private Version() {
+		super();
+	}
+/*[ELSE] Java16
 public class Version {
+/*[ENDIF] Java16*/
 
 	/**
 	 * The current build level of this package.
