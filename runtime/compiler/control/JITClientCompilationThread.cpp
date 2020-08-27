@@ -304,7 +304,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto method = std::get<1>(recv);
          bool isVettedForAOT = std::get<2>(recv);
          auto clazz = fej9->getClassFromSignature(sig.c_str(), sig.length(), method, isVettedForAOT);
-         client->write(response, clazz);
+         J9ClassLoader *cl = clazz ? reinterpret_cast<J9ClassLoader *>(fe->getClassLoader(clazz)) : NULL;
+         J9ClassLoader *methodCL = reinterpret_cast<J9ClassLoader *>(fe->getClassLoader(fe->getClassOfMethod(method)));
+         client->write(response, clazz, cl, methodCL);
          }
          break;
       case MessageType::VM_jitFieldsOrStaticsAreSame:
