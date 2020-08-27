@@ -171,6 +171,15 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
          //Class is cached, so retain the data to be used for purging the caches.
          unloadedClasses.push_back({ clazz, key, cp, true });
 
+         // For _classBySignatureMap entries that were cached by referencing class loader
+         // we need to delete them using the correct class loader
+         auto &classLoadersMap = it->second._referencingClassLoaders;
+         for (auto it = classLoadersMap.begin(); it != classLoadersMap.end(); ++it)
+            {
+            ClassLoaderStringPair key = { *it, sigStr };
+            unloadedClasses.push_back({ clazz, key, cp, true });
+            }
+
          J9Method *methods = it->second._methodsOfClass;
          // delete all the cached J9Methods belonging to this unloaded class
          for (size_t i = 0; i < romClass->romMethodCount; i++)
@@ -369,7 +378,8 @@ ClientSessionData::ClassInfo::ClassInfo() :
    _jitFieldsCache(decltype(_jitFieldsCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _fieldOrStaticDeclaringClassCache(decltype(_fieldOrStaticDeclaringClassCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _fieldOrStaticDefiningClassCache(decltype(_fieldOrStaticDefiningClassCache)::allocator_type(TR::Compiler->persistentAllocator())),	
-   _J9MethodNameCache(decltype(_J9MethodNameCache)::allocator_type(TR::Compiler->persistentAllocator()))
+   _J9MethodNameCache(decltype(_J9MethodNameCache)::allocator_type(TR::Compiler->persistentAllocator())),
+   _referencingClassLoaders(decltype(_referencingClassLoaders)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    }
 
