@@ -29,11 +29,15 @@ def get_source() {
         OPENJ9_REPO_OPTION = (OPENJ9_REPO != "") ? "-openj9-repo=${OPENJ9_REPO}" : ""
         OPENJ9_BRANCH_OPTION = (OPENJ9_BRANCH != "") ? "-openj9-branch=${OPENJ9_BRANCH}" : ""
         OPENJ9_SHA_OPTION = (OPENJ9_SHA != "") ? "-openj9-sha=${OPENJ9_SHA}" : ""
-        OPENJ9_REFERENCE = "-openj9-reference=${OPENJDK_REFERENCE_REPO}"
+
         OMR_REPO_OPTION = (OMR_REPO != "") ? "-omr-repo=${OMR_REPO}" : ""
         OMR_BRANCH_OPTION = (OMR_BRANCH != "")? "-omr-branch=${OMR_BRANCH}" : ""
         OMR_SHA_OPTION = (OMR_SHA != "") ? "-omr-sha=${OMR_SHA}" : ""
-        OMR_REFERENCE = "-omr-reference=${OPENJDK_REFERENCE_REPO}"
+
+        if (OPENJDK_REFERENCE_REPO) {
+            OPENJ9_REFERENCE = "-openj9-reference=${OPENJDK_REFERENCE_REPO}"
+            OMR_REFERENCE = "-omr-reference=${OPENJDK_REFERENCE_REPO}"
+        }
 
         // use sshagent with Jenkins credentials ID for all platforms except zOS
         // on zOS use the user's ssh key
@@ -56,7 +60,12 @@ def get_sources() {
     // See #3633 and JENKINS-54612
     if (NODE_LABELS.contains("windows") || NODE_LABELS.contains("zos")) {
         cleanWs()
-        CLONE_CMD = "git clone --reference ${OPENJDK_REFERENCE_REPO} -b ${OPENJDK_BRANCH} ${OPENJDK_REPO} ."
+
+        CLONE_CMD = "git clone -b ${OPENJDK_BRANCH} ${OPENJDK_REPO} ."
+        if (OPENJDK_REFERENCE_REPO) {
+            CLONE_CMD += " --reference ${OPENJDK_REFERENCE_REPO}"
+        }
+
         if (USER_CREDENTIALS_ID && NODE_LABELS.contains("windows")) {
             sshagent(credentials:["${USER_CREDENTIALS_ID}"]) {
                 sh "${CLONE_CMD}"
@@ -263,10 +272,11 @@ def build() {
         // 'all' target dependencies broken for zos, use 'images test-image-openj9'
         def make_target = SPEC.contains('zos') ? 'images test-image-openj9 debug-image' : 'all'
         OPENJDK_CLONE_DIR = "${env.WORKSPACE}/${OPENJDK_CLONE_DIR}"
+
         withEnv(BUILD_ENV_VARS_LIST) {
             dir(OPENJDK_CLONE_DIR) {
                 try {
-                    sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar='$FREEMARKER' --with-boot-jdk='$BOOT_JDK' $EXTRA_CONFIGURE_OPTIONS && make $EXTRA_MAKE_OPTIONS ${make_target}"
+                    sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar=${FREEMARKER} --with-boot-jdk=${BOOT_JDK} ${EXTRA_CONFIGURE_OPTIONS} && make ${EXTRA_MAKE_OPTIONS} ${make_target}"
                 } catch (e) {
                     archive_diagnostics()
                     throw e
@@ -567,6 +577,9 @@ def build_all() {
                         add_node_to_description()
                         // Setup Artifactory now that we are on a node. This determines which server(s) we push to.
                         variableFile.set_artifactory_config(BUILD_IDENTIFIER)
+                        // initialize BOOT_JDK, FREEMARKER, OPENJDK_REFERENCE_REPO here 
+                        // to correctly expand $HOME variable
+                        variableFile.set_build_variables_per_node()
                         get_source()
                         build()
                         archive_sdk()
