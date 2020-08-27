@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,8 +90,8 @@ jint gcParseXXgcArguments(J9JavaVM *vm, char *optArg);
 bool scan_udata_helper(J9JavaVM *javaVM, char **cursor, UDATA *value, const char *argName);
 bool scan_u32_helper(J9JavaVM *javaVM, char **cursor, U_32 *value, const char *argName);
 bool scan_u64_helper(J9JavaVM *javaVM, char **cursor, U_64 *value, const char *argName);
-bool scan_udata_memory_size_helper(J9JavaVM *javaVM, char **cursor, UDATA *value, const char *argName);
-bool scan_u64_memory_size_helper(J9JavaVM *javaVM, char **cursor, U_64 *value, const char *argName);
+bool scan_udata_memory_size_helper(J9JavaVM *javaVM, char **cursor, uintptr_t *value, const char *argName);
+bool scan_u64_memory_size_helper(J9JavaVM *javaVM, char **cursor, uint64_t *value, const char *argName);
 bool scan_hex_helper(J9JavaVM *javaVM, char **cursor, UDATA *value, const char *argName);
 void gcParseXgcpolicy(MM_GCExtensions *extensions);
 
