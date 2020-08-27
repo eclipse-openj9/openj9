@@ -497,11 +497,15 @@ ClassFileOracle::walkAttributes()
 			break;
 		}
 		case CFR_ATTRIBUTE_PermittedSubclasses: {
-			_isSealed = true;
-			_permittedSubclassesAttribute = (J9CfrAttributePermittedSubclasses *)attrib;
-			for (U_16 numberOfClasses = 0; numberOfClasses < _permittedSubclassesAttribute->numberOfClasses; numberOfClasses++) {
-				U_16 classCpIndex = _permittedSubclassesAttribute->classes[numberOfClasses];
-				markClassAsReferenced(classCpIndex);
+			/* PermittedSubclasses verification is for Java 15 preview only. Don't record the attribute for other class versions
+			 * since it may be corrupt. */
+			if ((59 == _classFile->majorVersion) && (0 < _classFile->minorVersion)) {
+				_isSealed = true;
+				_permittedSubclassesAttribute = (J9CfrAttributePermittedSubclasses *)attrib;
+				for (U_16 numberOfClasses = 0; numberOfClasses < _permittedSubclassesAttribute->numberOfClasses; numberOfClasses++) {
+					U_16 classCpIndex = _permittedSubclassesAttribute->classes[numberOfClasses];
+					markClassAsReferenced(classCpIndex);
+				}
 			}
 			break;
 		}
