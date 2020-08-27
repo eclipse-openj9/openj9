@@ -131,7 +131,7 @@ j9sock_test10_get_addrinfo(struct J9PortLibrary *portLibrary)
 
 	for (i = 0; i < length; i++) {
 		U_32 scopeID = 0;
-		I_32 family, protocol, socktype = 0;
+		I_32 family = 0;
 
 		I_32 bytesToCopy = 0;
 
@@ -175,7 +175,6 @@ j9sock_test11_getnameinfo(struct J9PortLibrary *portLibrary)
 	I_32 numOfAddrinfo = 0;
 	U_32 scope_id = 0;
 	I_32 index = 0;
-	OSSOCKADDR *sockaddr;
 	I_32 nameLength = 0;
 #define CANONNAMEFLAG 0x02
 #endif
