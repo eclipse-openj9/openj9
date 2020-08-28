@@ -386,6 +386,20 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
                int32_t pivStride = INVALID_STRIDE;
                bool isAffine = isAffineAccess(comp, node->getFirstChild(), loop, piv, pivStride);
 
+               // if the induction variable is not incremented after the soon to be vectorized instructions, then we bail out (see: openj9/issues/9331)
+               if (isCheckMode)
+                  {
+                  if (!(tt->getNextTreeTop()->getNode()->getOpCode().isBooleanCompare() &&
+                      tt->getNextTreeTop()->getNode()->getOpCode().isBranch() &&
+                      hasPIV(tt->getNextTreeTop()->getNode(), piv)) ||
+                      tt->getNextTreeTop()->getNextTreeTop()->getNode()->getOpCodeValue() != TR::BBEnd)
+                     {
+                     traceMsg(comp, "   Induction variable may be incremented before vectorized operations, "
+                      "this may cause functionally incorrect result. Vectorization not performed. see: openj9/issues/9331.\n");
+                     return false;
+                     }
+                  }
+
                // if this is transformation mode and this PIV is used by a vectorized expression and satisfies
                // affine access conditions, duplicate the trees to create a vectorized loop increment
                // for the vectorized version of the PIV
