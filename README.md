@@ -95,6 +95,7 @@ What repos are part of the project?
 - https://github.com/eclipse/openj9-website : OpenJ9 website repo
 - https://github.com/eclipse/openj9-docs : OpenJ9 documentation repo
 - https://github.com/eclipse/build-openj9 : OpenJ9 GitHub actions repo
+- https://github.com/eclipse/openj9-utils : OpenJ9 utility programs / tools repo, a place to develop community around the tools
 
 
 Where can I learn more?
