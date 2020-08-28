@@ -107,6 +107,14 @@ internalDefineClass(
 	loadData.freeFunction = NULL;
 	loadData.romClass = existingROMClass;
 
+	loadData.hostPackageName = NULL;
+	loadData.hostPackageLength = 0;
+	if (isAnonFlagSet && (J2SE_VERSION(vm) >= J2SE_V11)) {
+		J9ROMClass *hostROMClass = hostClass->romClass;
+		loadData.hostPackageName = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(hostROMClass));
+		loadData.hostPackageLength = packageNameLength(hostROMClass);
+	}
+
 	if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NO_CHECK_FOR_EXISTING_CLASS)) {
 		/* For non-bootstrap classes, this check is done in jcldefine.c:defineClassCommon(). */
 		if (checkForExistingClass(vmThread, &loadData) != NULL) {

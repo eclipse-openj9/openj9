@@ -184,7 +184,7 @@ j9bcutil_buildRomClass(J9LoadROMClassData *loadData, U_8 * intermediateData, UDA
 
 	ROMClassCreationContext context(
 			PORTLIB, javaVM, loadData->classData, loadData->classDataLength, bctFlags, bcuFlags, findClassFlags, &romClassSegmentAllocationStrategy,
-			loadData->className, loadData->classNameLength, intermediateData, (U_32) intermediateDataLength, loadData->romClass, loadData->classBeingRedefined,
+			loadData->className, loadData->classNameLength, loadData->hostPackageName, loadData->hostPackageLength, intermediateData, (U_32) intermediateDataLength, loadData->romClass, loadData->classBeingRedefined,
 			loadData->classLoader, (0 != classFileBytesReplaced), (TRUE == isIntermediateROMClass), localBuffer);
 
 	BuildResult result = romClassBuilder->buildROMClass(&context);
@@ -250,7 +250,7 @@ ROMClassBuilder::buildROMClass(ROMClassCreationContext *context)
 }
 
 BuildResult
-ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda)
+ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, U_8* hostPackageName, UDATA hostPackageLength)
 {
 	J9CfrConstantPoolInfo* constantPool = classfile->constantPool;
 	U_32 cpThisClassUTF8Slot = constantPool[classfile->thisClass].slot1;
@@ -260,9 +260,15 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda)
 	U_32 i = 0;
 	BOOLEAN stringOrNASReferenceToClassName = FALSE;
 	BOOLEAN newCPEntry = TRUE;
-	UDATA newAnonClassNameLength = originalStringLength + 1 + ROM_ADDRESS_LENGTH + 1;
 	BuildResult result = OK;
 	PORT_ACCESS_FROM_PORT(_portLibrary);
+
+	/* check if adding host package name to anonymous class is needed */
+	UDATA newHostPackageLength = 0;
+	if (memcmp(originalStringBytes, hostPackageName, hostPackageLength) != 0) {
+		newHostPackageLength = hostPackageLength + 1;
+	}
+	UDATA newAnonClassNameLength = originalStringLength + 1 + ROM_ADDRESS_LENGTH + 1 + newHostPackageLength;
 
 	/* check if the class is a lambda class */
 	if (NULL != getLastDollarSignOfLambdaClassName(originalStringBytes, originalStringLength)) {
@@ -314,7 +320,7 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda)
 	}
 
 	/* calculate the size of the new string and create new cpEntry*/
-	anonClassName->slot1 = originalStringLength + ROM_ADDRESS_LENGTH + 1;
+	anonClassName->slot1 = (U_32)newAnonClassNameLength - 1;
 	if (newCPEntry) {
 		anonClassName->slot2 = 0;
 		anonClassName->tag = CFR_CONSTANT_Utf8;
@@ -326,10 +332,14 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda)
 	constantPool[classfile->thisClass].slot1 = newUtfCPEntry;
 
 	/* copy the name into the new location and add the special character, fill the rest with zeroes */
-	memcpy (constantPool[newUtfCPEntry].bytes, originalStringBytes, originalStringLength);
-	*(U_8*)((UDATA) constantPool[newUtfCPEntry].bytes + originalStringLength) = ANON_CLASSNAME_CHARACTER_SEPARATOR;
-	memset(constantPool[newUtfCPEntry].bytes + originalStringLength + 1, '0', ROM_ADDRESS_LENGTH);
-	*(U_8*)((UDATA) constantPool[newUtfCPEntry].bytes + originalStringLength + 1 + ROM_ADDRESS_LENGTH) = '\0';
+	if (newHostPackageLength > 0 ) {
+		memcpy(constantPool[newUtfCPEntry].bytes, hostPackageName, newHostPackageLength - 1);
+		*(U_8*)((UDATA) constantPool[newUtfCPEntry].bytes + newHostPackageLength - 1) = ANON_CLASSNAME_CHARACTER_SEPARATOR;
+	}
+	memcpy (constantPool[newUtfCPEntry].bytes + newHostPackageLength, originalStringBytes, originalStringLength);
+	*(U_8*)((UDATA) constantPool[newUtfCPEntry].bytes + newHostPackageLength + originalStringLength) = ANON_CLASSNAME_CHARACTER_SEPARATOR;
+	memset(constantPool[newUtfCPEntry].bytes + newHostPackageLength + originalStringLength + 1, '0', ROM_ADDRESS_LENGTH);
+	*(U_8*)((UDATA) constantPool[newUtfCPEntry].bytes + newHostPackageLength + originalStringLength + 1 + ROM_ADDRESS_LENGTH) = '\0';
 
 	/* search constantpool for all other identical classRefs. We have not actually
 	 * tested this scenario as javac will not output more than one classRef or utfRef of the
@@ -430,7 +440,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 
 	bool isLambda = false;
 	if (context->isClassAnon() || context->isClassHidden()) {
-		BuildResult res = handleAnonClassName(classFileParser->getParsedClassFile(), &isLambda);
+		BuildResult res = handleAnonClassName(classFileParser->getParsedClassFile(), &isLambda, context->hostPackageName(), context->hostPackageLength());
 		if (OK != res) {
 			return res;
 		}
