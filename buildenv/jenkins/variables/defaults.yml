@@ -321,10 +321,30 @@ ppc64_aix:
       15: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
 #========================================#
+# AIX PPC 64bits Compressed Pointers /w CMake
+#========================================#
+ppc64_aix_cm:
+  extends: ['ppc64_aix', 'cmake']
+#========================================#
+# AIX PPC 64bits Compressed Pointers /w uma
+#========================================#
+ppc64_aix_uma:
+  extends: ['ppc64_aix', 'uma']
+#========================================#
 # AIX PPC 64bits Large Heap
 #========================================#
 ppc64_aix_xl:
   extends: ['ppc64_aix', 'largeheap']
+#========================================#
+# AIX PPC 64bits Large Heap /w CMake
+#========================================#
+ppc64_aix_xl_cm:
+  extends: ['ppc64_aix_xl', 'cmake']
+#========================================#
+# AIX PPC 64bits Large Heap /w uma
+#========================================#
+ppc64_aix_xl_uma:
+  extends: ['ppc64_aix_xl', 'uma']
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
