@@ -52,6 +52,8 @@ public:
 		_clazz(NULL),
 		_className(NULL),
 		_classNameLength(0),
+		_hostPackageName(NULL),
+		_hostPackageLength(0),
 		_intermediateClassData(NULL),
 		_intermediateClassDataLength(0),
 		_classLoader(NULL),
@@ -89,6 +91,8 @@ public:
 		_clazz(NULL),
 		_className(NULL),
 		_classNameLength(0),
+		_hostPackageName(NULL),
+		_hostPackageLength(0),
 		_intermediateClassData(NULL),
 		_intermediateClassDataLength(0),
 		_classLoader(NULL),
@@ -115,8 +119,8 @@ public:
 
 	ROMClassCreationContext(
 			J9PortLibrary *portLibrary, J9JavaVM *javaVM, U_8 *classFileBytes, UDATA classFileSize, UDATA bctFlags, UDATA bcuFlags, UDATA findClassFlags, AllocationStrategy *allocationStrategy,
-			U_8 *className, UDATA classNameLength, U_8 *intermediateClassData, U_32 intermediateClassDataLength, J9ROMClass *romClass, J9Class *clazz, J9ClassLoader *classLoader, bool classFileBytesReplaced,
-			bool creatingIntermediateROMClass, J9TranslationLocalBuffer *localBuffer) :
+			U_8 *className, UDATA classNameLength, U_8 *hostPackageName, UDATA hostPackageLength, U_8 *intermediateClassData, U_32 intermediateClassDataLength, J9ROMClass *romClass, J9Class *clazz, 
+			J9ClassLoader *classLoader, bool classFileBytesReplaced, bool creatingIntermediateROMClass, J9TranslationLocalBuffer *localBuffer) :
 		_portLibrary(portLibrary),
 		_javaVM(javaVM),
 		_classFileBytes(classFileBytes),
@@ -129,6 +133,8 @@ public:
 		_clazz(clazz),
 		_className(className),
 		_classNameLength(classNameLength),
+		_hostPackageName(hostPackageName),
+		_hostPackageLength(hostPackageLength),
 		_intermediateClassData(intermediateClassData),
 		_intermediateClassDataLength(intermediateClassDataLength),
 		_classLoader(classLoader),
@@ -178,6 +184,8 @@ public:
 	UDATA findClassFlags() const {return _findClassFlags; }
 	U_8* className() const {return _className; }
 	UDATA classNameLength() const {return _classNameLength; }
+	U_8* hostPackageName() const {return _hostPackageName; }
+	UDATA hostPackageLength() const {return _hostPackageLength; }
 	U_32 bctFlags() const { return (U_32) _bctFlags; } /* Only use this for j9bcutil_readClassFileBytes */
 	AllocationStrategy *allocationStrategy() const { return _allocationStrategy; }
 	bool classFileBytesReplaced() const { return _classFileBytesReplaced; }
@@ -735,6 +743,8 @@ private:
 	J9Class *_clazz;
 	U_8 *_className;
 	UDATA _classNameLength;
+	U_8* _hostPackageName;
+	UDATA _hostPackageLength;
 	U_8 *_intermediateClassData;
 	U_32 _intermediateClassDataLength;
 	J9ClassLoader *_classLoader;

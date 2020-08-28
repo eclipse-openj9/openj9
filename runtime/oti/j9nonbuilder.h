@@ -769,6 +769,8 @@ typedef struct J9LoadROMClassData {
 	j9object_t classDataObject;
 	struct J9ClassLoader* classLoader;
 	j9object_t protectionDomain;
+	U_8* hostPackageName;
+	UDATA hostPackageLength;
 	UDATA options;
 	struct J9ROMClass* romClass;
 	struct J9MemorySegment* romClassSegment;
