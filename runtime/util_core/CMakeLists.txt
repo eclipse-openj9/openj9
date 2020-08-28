@@ -20,6 +20,11 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
+# UMA has -Werror off everywhere, but so far we have only had trouble with msvc
+if(OMR_TOOLCONFIG STREQUAL "msvc")
+	set(OMR_WARNINGS_AS_ERRORS OFF)
+endif()
+
 j9vm_add_library(j9utilcore STATIC
 	j9argscan.c
 	j9shchelp.c
