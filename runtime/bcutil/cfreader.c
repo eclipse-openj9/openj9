@@ -1915,6 +1915,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 	U_32 i, j, k;
 	UDATA foundStackMap = FALSE;
 	BOOLEAN bootstrapMethodAttributeRead = FALSE;
+	BOOLEAN enablePermittedSubclassErrors = FALSE;
 
 	errorType = CFR_ThrowClassFormatError;
 	cpBase = classfile->constantPool;
@@ -2315,31 +2316,60 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			break;
 
 		case CFR_ATTRIBUTE_PermittedSubclasses:
+			/* PermittedSubclasses verification is for Java 15 preview only. */
+			if ((59 == classfile->majorVersion) && (0 < classfile->minorVersion)) {
+				enablePermittedSubclassErrors = TRUE;
+			}
+
 			/* JVMS: If the ACC_FINAL flag is set, then the ClassFile structure must not have a PermittedSubclasses attribute. */
 			if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_FINAL)) {
-				errorCode = J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED__ID;
-				goto _errorFound;
+				if (enablePermittedSubclassErrors) {
+					errorCode = J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED__ID;
+					goto _errorFound;
+				}
+				break;
 			}
 			
 			value = ((J9CfrAttributePermittedSubclasses*)attrib)->nameIndex;
 			if ((0 == value) || (value > cpCount)) {
-				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
-				goto _errorFound;
+				if (enablePermittedSubclassErrors) {
+					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
+					goto _errorFound;
+				}
+				break;
 			}
 			if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Utf8)) {
-				errorCode = J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8__ID;
-				goto _errorFound;
+				if (enablePermittedSubclassErrors) {
+					errorCode = J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8__ID;
+					goto _errorFound;
+				}
+				break;
+			}
+
+			value = ((J9CfrAttributePermittedSubclasses*)attrib)->numberOfClasses;
+			if (0 >= value) {
+				if (enablePermittedSubclassErrors) {
+					errorCode = J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES__ID;
+					goto _errorFound;
+				}
+				break;
 			}
 
 			for (j = 0; j < ((J9CfrAttributePermittedSubclasses*)attrib)->numberOfClasses; j++) {
 				value = ((J9CfrAttributePermittedSubclasses*)attrib)->classes[j];
 				if ((0 == value) || (value > cpCount)) {
-					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
-					goto _errorFound;
+					if (enablePermittedSubclassErrors) {
+						errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
+						goto _errorFound;
+					}
+					break;
 				}
 				if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Class)) {
-					errorCode = J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE__ID;
-					goto _errorFound;
+					if (enablePermittedSubclassErrors) {
+						errorCode = J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE__ID;
+						goto _errorFound;
+					}
+					break;
 				}
 			}
 			break;
