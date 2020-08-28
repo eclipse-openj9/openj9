@@ -320,7 +320,7 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 
 	/* Call the class load hook to potentially replace the class data */
 
-	if ((J9_ARE_NO_BITS_SET(loadData->options, J9_FINDCLASS_FLAG_ANON | J9_FINDCLASS_FLAG_HIDDEN))
+	if ((J9_ARE_NO_BITS_SET(loadData->options, J9_FINDCLASS_FLAG_ANON | J9_FINDCLASS_FLAG_HIDDEN) || (J2SE_VERSION(vm) <= J2SE_18))
 		&& (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_CLASS_LOAD_HOOK) || J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_CLASS_LOAD_HOOK2))
 	) {
 		U_8 * classData = NULL;
