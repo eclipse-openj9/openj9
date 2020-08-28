@@ -1594,6 +1594,11 @@ getCacheLevels(struct J9PortLibrary *portLibrary,
 {
 	return 2;
 }
+/* getsystemcfg() isn't supported on i 7.1 so there's no need to define the 
+ * functions `getCacheTypes` & `getCacheSize` on the i-series platforms
+ */
+#if !defined(J9OS_I5_V6R1)
+
 
 static int32_t
 getCacheTypes(struct J9PortLibrary *portLibrary,
@@ -1657,6 +1662,7 @@ getCacheSize(struct J9PortLibrary *portLibrary,
 	}
 	return result;
 }
+#endif /* defined(J9OS_I5_V6R1) */
 #endif /* defined(AIXPPC) */
 
 /*
