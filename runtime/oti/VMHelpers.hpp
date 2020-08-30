@@ -1402,16 +1402,20 @@ done:
 	static VMINLINE bool
 	threadIsInterruptedImpl(J9VMThread *currentThread, j9object_t threadObject)
 	{
+		J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject);
 		bool result = false;
 		/* If the thread is alive, ask the OS thread.  Otherwise, answer false. */
-		if (J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject)) {
-			J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject);
-			if (NULL != targetThread) {
-				if (omrthread_interrupted(targetThread->osThread)) {
-					result = true;
-				}
+		if (J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject) && (NULL != targetThread)) {
+			if (omrthread_interrupted(targetThread->osThread)) {
+				result = true;
 			}
 		}
+#if JAVA_SPEC_VERSION >= 14
+		else {
+			result = J9VMJAVALANGTHREAD_DEADINTERRUPT(currentThread, threadObject);
+		}
+#endif /* JAVA_SPEC_VERSION >= 14 */
+
 		return result;
 	}
 

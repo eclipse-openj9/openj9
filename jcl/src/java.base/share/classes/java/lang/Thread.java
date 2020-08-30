@@ -712,12 +712,7 @@ public void interrupt() {
 		sun.nio.ch.Interruptible localBlockOn = blockOn;
 		if (localBlockOn != null) {
 			localBlockOn.interrupt(this);
-        }
-        /*[IF Java14]*/
-        if (!isAlive()) {
-		deadInterrupt = true;
-        }
-        /*[ENDIF] Java 14 */
+		}
 	}
 }
 
@@ -809,11 +804,6 @@ public final boolean isDaemon() {
  */
 public boolean isInterrupted() {
 	synchronized(lock) {
-		/*[IF Java14]*/
-		if (!isAlive()) {
-			return deadInterrupt;
-		}
-		/*[ENDIF] Java14 */
 		return isInterruptedImpl();
 	}
 }
