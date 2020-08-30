@@ -280,15 +280,19 @@ Java_java_lang_Thread_interruptImpl(JNIEnv *env, jobject rcv)
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	j9object_t receiverObject = J9_JNI_UNWRAP_REFERENCE(rcv);
 	J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, receiverObject);
-	if (J9VMJAVALANGTHREAD_STARTED(currentThread, receiverObject)) {
-		if (NULL != targetThread) {
-			void (*sidecarInterruptFunction)(J9VMThread*) = vm->sidecarInterruptFunction;
-			if (NULL != sidecarInterruptFunction) {
-				sidecarInterruptFunction(targetThread);
-			}
-			omrthread_interrupt(targetThread->osThread);
+	if (J9VMJAVALANGTHREAD_STARTED(currentThread, receiverObject) && (NULL != targetThread)) {
+		void (*sidecarInterruptFunction)(J9VMThread*) = vm->sidecarInterruptFunction;
+		if (NULL != sidecarInterruptFunction) {
+			sidecarInterruptFunction(targetThread);
 		}
+		omrthread_interrupt(targetThread->osThread);
 	}
+#if JAVA_SPEC_VERSION >= 14
+	else {
+		J9VMJAVALANGTHREAD_SET_DEADINTERRUPT(currentThread, receiverObject, JNI_TRUE);
+	}
+#endif /* JAVA_SPEC_VERSION >= 14 */
+
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
