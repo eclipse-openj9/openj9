@@ -204,6 +204,7 @@ char *compilationErrorNames[]={
    "compilationAOTValidateTMFailure", //52
    "compilationILGenUnsupportedValueTypeOperationFailure", //53
    "compilationAOTRelocationRecordGenerationFailure", //54
+   "compilationAotPatchedCPConstant", //55
 #if defined(J9VM_OPT_JITSERVER)
    "compilationStreamFailure", //55
    "compilationStreamLostMessage", // 56
