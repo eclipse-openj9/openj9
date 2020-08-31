@@ -232,6 +232,14 @@ J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.user_response=Destroy and recrea
 J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG=El SCC es demasiado grande para que el JIT codifique correctamente los desplazamientos. Se ignorar\u00e1 el c\u00f3digo AOT en la memoria cach\u00e9 de clases compartidas.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.explanation=The SCC is too big for the JIT to correctly encode offsets.
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
 
 J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM=Problema desconocido. Se ignorar\u00e1 el c\u00f3digo AOT en la memoria cach\u00e9 de clases compartidas.
 # START NON-TRANSLATABLE

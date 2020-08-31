@@ -332,5 +332,4 @@ _IF([JAVA_SPEC_VERSION >= 15],
 	[_X(JVM_IsCDSDumpingEnabled, JNICALL, false, jboolean, JNIEnv *env)])
 _IF([JAVA_SPEC_VERSION >= 15],
 	[_X(JVM_IsCDSSharingEnabled, JNICALL, false, jboolean, JNIEnv *env)])
-_IF([JAVA_SPEC_VERSION >= 11],
-	[_X(JVM_IsUseContainerSupport, JNICALL, false, jboolean, JNIEnv *env)])
+_X(JVM_IsUseContainerSupport, JNICALL, false, jboolean, JNIEnv *env)

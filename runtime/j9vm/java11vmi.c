@@ -1785,7 +1785,6 @@ JVM_IsCDSSharingEnabled(JNIEnv *env)
 }
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
-#if JAVA_SPEC_VERSION >= 11
 JNIEXPORT jboolean JNICALL
 JVM_IsUseContainerSupport(JNIEnv *env)
 {
@@ -1795,4 +1794,3 @@ JVM_IsUseContainerSupport(JNIEnv *env)
 
 	return inContainer ? JNI_TRUE : JNI_FALSE;
 }
-#endif /* JAVA_SPEC_VERSION >= 11 */
