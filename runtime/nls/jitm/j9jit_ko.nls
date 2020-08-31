@@ -232,6 +232,14 @@ J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.user_response=Destroy and recrea
 J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG=SCC\uac00 \ub108\ubb34 \ucee4\uc11c JIT\uac00 \uc624\ud504\uc14b\uc744 \uc62c\ubc14\ub974\uac8c \uc778\ucf54\ub529 \ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc758 AOT \ucf54\ub4dc\ub97c \ubb34\uc2dc\ud569\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.explanation=The SCC is too big for the JIT to correctly encode offsets.
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
 
 J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM=\uc54c \uc218 \uc5c6\ub294 \ubb38\uc81c\uc810\uc785\ub2c8\ub2e4. \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc758 AOT \ucf54\ub4dc\ub97c \ubb34\uc2dc\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
