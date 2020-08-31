@@ -347,10 +347,6 @@ L_UDclinitCase:
 	and	x0, x0, #(~clinit_bit)				// clear the "clinit" bit
 	ldr	w2, [x11, #J9TR_UDSnippet_template]		// load instruction template (movz)
 	ubfx	x2, x2, #0, #5					// destination register number
-	cmp	x2, #19
-	blt	L_UDclinitCase_noAdjust
-	sub	x2, x2, #2					// adjust for J9VMTHREAD (x19) and J9SP (x20) entries
-L_UDclinitCase_noAdjust:
 	ldrsw	x1, [x11, #J9TR_UDSnippet_offset]		// load offset
 	add	x0, x0, x1					// add the offset
 	str	x0, [J9SP, x2, LSL #3]				// store the resolved address
