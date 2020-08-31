@@ -289,6 +289,7 @@ jvm_add_exports(jvm
 	_JVM_GetFieldTypeAnnotations@8
 	_JVM_GetMethodParameters@8
 	_JVM_GetMethodTypeAnnotations@8
+	JVM_IsUseContainerSupport
 	_JVM_IsVMGeneratedMethodIx@12
 	JVM_GetTemporaryDirectory
 	_JVM_CopySwapMemory@44
@@ -341,7 +342,6 @@ else()
 		JVM_AreNestMates
 		JVM_InitClassName
 		JVM_InitializeFromArchive
-		JVM_IsUseContainerSupport
 	)
 endif()
 
