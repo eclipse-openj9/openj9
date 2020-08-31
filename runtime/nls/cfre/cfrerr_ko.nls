@@ -1560,3 +1560,10 @@ J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.explanation=Please 
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES=\ubd09\uc778\ub41c \ud074\ub798\uc2a4\uc5d0\ub294 \ud558\ub098 \uc774\uc0c1\uc758 \ud5c8\uc6a9\ub41c \uc11c\ube0c\ud074\ub798\uc2a4\uac00 \uc788\uc5b4\uc57c \ud569\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

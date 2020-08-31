@@ -232,6 +232,14 @@ J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.user_response=Destroy and recrea
 J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG=L'SCC \u00e8 troppo grande perch\u00e9 il JIT codifichi correttamente gli offset. Il codice AOT nella cache di classi condivisa verr\u00e0 ignorato.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.explanation=The SCC is too big for the JIT to correctly encode offsets.
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
 
 J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM=Problema sconosciuto. Il codice AOT nella cache di classi condivisa verr\u00e0 ignorato.
 # START NON-TRANSLATABLE
@@ -267,7 +275,7 @@ J9NLS_JIT_OPTIONS_MUST_BE_NUMBER.sample_input_1=-Xlp:codecache:pagesize=<size>
 
 J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED=Il valore %s specificato \u00e8 troppo grande
 # START NON-TRANSLATABLE
-J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.explanation=The specified option is too large
+J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.explanation=The specified option is too large 
 J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.system_action=The JVM will terminate
 J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.user_response=Adjust the JIT options
 J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.sample_input_1=-Xlp:codecache:pagesize=<size>

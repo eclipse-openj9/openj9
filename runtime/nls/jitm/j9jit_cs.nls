@@ -232,6 +232,14 @@ J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.user_response=Destroy and recrea
 J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG=Konektor SCC je p\u0159\u00edli\u0161 velk\u00fd pro spr\u00e1vn\u00e9 k\u00f3dov\u00e1n\u00ed offset\u016f syst\u00e9mem JIT. K\u00f3d AOT ve sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd se ignoruje.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.explanation=The SCC is too big for the JIT to correctly encode offsets.
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_CACHE_TOO_BIG.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
 
 J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM=Nezn\u00e1m\u00fd probl\u00e9m. K\u00f3d AOT ve sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd se ignoruje.
 # START NON-TRANSLATABLE

@@ -54,7 +54,7 @@ J9NLS.MODULE=CFRE
 J9NLS.HEADER=cfrerrnls.h
 
 #Example: JVMCFRE114 method bytecode must reference a method ref; class=Foo, method=main([Ljava/lang/String;)V, pc=5
-J9NLS_CFR_ERROR_TEMPLATE_METHOD=%1$s; class=%3$.*2$s, method=%5$.*4$s%7$.*6$s, pc=%8$u
+J9NLS_CFR_ERROR_TEMPLATE_METHOD=%1$s; clase=%3$.*2$s, m\u00e9todo=%5$.*4$s%7$.*6$s, pc=%8$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERROR_TEMPLATE_METHOD.sample_input_1=JVMCFRE114 method bytecode must reference a method ref
 J9NLS_CFR_ERROR_TEMPLATE_METHOD.sample_input_2=3
@@ -71,7 +71,7 @@ J9NLS_CFR_ERROR_TEMPLATE_METHOD.user_response=
 # END NON-TRANSLATABLE
 
 # Example: JVMCFRE074 bad magic number; class=Foo, offset=0
-J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD=%1$s; class=%3$.*2$s, offset=%4$u
+J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD=%1$s; clase=%3$.*2$s, offset=%4$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD.sample_input_1=JVMCFRE074 bad magic number
 J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD.sample_input_2=3
@@ -1559,4 +1559,11 @@ J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE=La entrada de clase
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES=Las clases selladas deben tener como m\u00ednimo una subclase permitida.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
