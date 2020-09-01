@@ -260,15 +260,16 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
 
       case TR_GlobalValue:
+      case TR_HCR:
          {
-         TR_RelocationRecordGlobalValue *gvRecord = reinterpret_cast<TR_RelocationRecordGlobalValue *>(reloRecord);
+         TR_RelocationRecordWithOffset *rwoRecord = reinterpret_cast<TR_RelocationRecordWithOffset *>(reloRecord);
 
          uintptr_t gv = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
          uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
 
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-         gvRecord->setReloFlags(reloTarget, flags);
-         gvRecord->setOffset(reloTarget, gv);
+         rwoRecord->setReloFlags(reloTarget, flags);
+         rwoRecord->setOffset(reloTarget, gv);
 
          cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
@@ -295,19 +296,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          acaRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache);
 
          cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
-         }
-         break;
-
-      case TR_HCR:
-         {
-         flags = 0;
-         if (((TR_HCRAssumptionFlags)((uintptr_t)(relocation->getTargetAddress2()))) == needsFullSizeRuntimeAssumption)
-        	 flags = needsFullSizeRuntimeAssumption;
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-
-         *(uintptr_t*) cursor = (uintptr_t) relocation->getTargetAddress();
-         cursor += SIZEPOINTER;
          }
          break;
 

@@ -179,13 +179,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
          }
 
-      case TR_HCR:
-         {
-         *(uintptr_t*)cursor = (uintptr_t)relocation->getTargetAddress();
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_DebugCounter:
          {
          TR::DebugCounterBase *counter = (TR::DebugCounterBase *) relocation->getTargetAddress();

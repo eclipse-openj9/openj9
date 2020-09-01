@@ -1062,12 +1062,13 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          break;
 
       case TR_GlobalValue:
+      case TR_HCR:
          {
-         TR_RelocationRecordGlobalValue *gvRecord = reinterpret_cast<TR_RelocationRecordGlobalValue *>(reloRecord);
+         TR_RelocationRecordWithOffset *rwoRecord = reinterpret_cast<TR_RelocationRecordWithOffset *>(reloRecord);
 
          uintptr_t gv = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
 
-         gvRecord->setOffset(reloTarget, gv);
+         rwoRecord->setOffset(reloTarget, gv);
          }
          break;
 
@@ -1798,6 +1799,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_FixedSequenceAddress2:
       case TR_RamMethodSequence:
       case TR_GlobalValue:
+      case TR_HCR:
          {
          TR_RelocationRecordWithOffset *rwoRecord = reinterpret_cast<TR_RelocationRecordWithOffset *>(reloRecord);
 
@@ -1813,6 +1815,8 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                recordType = "Ram Method Sequence Relo";
             else if (kind == TR_GlobalValue)
                recordType = "Global Value";
+            else if (kind == TR_HCR)
+               recordType = "HCR";
             else
                TR_ASSERT_FATAL(false, "Unknown relokind %d!\n", kind);
 
@@ -2010,31 +2014,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                }
             break;
             }
-         case TR_HCR:
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               cursor +=4;      // padding
-               ep1 = cursor;
-               cursor += 8;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nFirst address %x", *(uint64_t *)ep1);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;
-               cursor += 4;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  // ep1 is same as self()->comp()->getCurrentMethod()->constantPool())
-                  traceMsg(self()->comp(), "\nFirst address %x", *(uint32_t *)ep1);
-                  }
-               }
-            break;
          case TR_DebugCounter:
             cursor ++;
             if (is64BitTarget)
