@@ -44,4 +44,6 @@ set(J9VM_OPT_NATIVE_CHARACTER_CONVERTER ON CACHE BOOL "")
 set(OMR_GC_CONCURRENT_SCAVENGER ON CACHE BOOL "")
 set(OMR_GC_TLH_PREFETCH_FTA ON CACHE BOOL "")
 
+# CMake forces a CMAKE_BUILD_TYPE when using msvc, which defaults to Debug
+set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "")
 include("${CMAKE_CURRENT_LIST_DIR}/common.cmake")
