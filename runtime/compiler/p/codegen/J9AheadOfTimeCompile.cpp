@@ -273,29 +273,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
-      case TR_ConstantPoolOrderedPair:
-         {
-         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
-         uint8_t flags = (uint8_t) recordInfo->data3;
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-         if (comp->target().is64Bit())
-            {
-            *(uint64_t *) cursor = (uint64_t) (uintptr_t) recordInfo->data2;
-            cursor += 8;
-            *(uint64_t *) cursor = (uint64_t) (uintptr_t) recordInfo->data1;
-            cursor += 8;
-            }
-         else
-            {
-            *(uint32_t *) cursor = (uint32_t) (uintptr_t) recordInfo->data2;
-            cursor += 4;
-            *(uint32_t *) cursor = (uint32_t) (uintptr_t) recordInfo->data1;
-            cursor += 4;
-            }
-         break;
-         }
-
       case TR_RamMethodSequence:
       case TR_RamMethodSequenceReg:
          {

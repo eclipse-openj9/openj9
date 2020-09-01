@@ -3597,13 +3597,12 @@ TR_DebugExt::dxPrintAOTinfo(void *addr)
          case TR_Thunks:
          case TR_Trampolines:
          case TR_ConstantPool:
-         case TR_ConstantPoolOrderedPair:
             {
             TR_RelocationRecordConstantPool *record = (TR_RelocationRecordConstantPool *) reloRecord;
             _dbgPrintf("0x%-16x  0x%-16x", record->inlinedSiteIndex, record->constantPool);
             ptr = (U_8*) (record+1);
             }
-         break;
+            break;
          case TR_FixedSequenceAddress:
          case TR_FixedSequenceAddress2:
 #if defined(TR_HOST_64BIT)

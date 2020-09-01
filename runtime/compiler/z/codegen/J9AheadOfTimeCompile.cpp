@@ -152,28 +152,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
    switch (targetKind)
       {
-      case TR_ConstantPoolOrderedPair:
-         {
-         // constant pool address is placed as the last word of the header
-         if (comp->target().is64Bit())
-            {
-            *(uint64_t *)cursor = (uint64_t)(uintptr_t)relocation->getTargetAddress2();
-            cursor += 8;
-
-            *(uint64_t *)cursor = (uint64_t)(uintptr_t)relocation->getTargetAddress();
-            cursor += 8;
-            }
-         else
-            {
-            *(uint32_t *)cursor = (uint32_t)(uintptr_t)relocation->getTargetAddress2();
-            cursor += 4;
-
-            *(uint32_t *)cursor = (uint32_t)(uintptr_t)relocation->getTargetAddress();
-            cursor += 4;
-            }
-         }
-         break;
-
       case TR_ArbitraryClassAddress:
          {
          // ExternalRelocation data is as expected for TR_ClassAddress

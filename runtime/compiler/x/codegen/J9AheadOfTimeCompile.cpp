@@ -174,17 +174,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ConstantPoolOrderedPair:
-         {
-         // Note: thunk relos should only be created for 64 bit
-         *(uintptr_t *)cursor = (uintptr_t)relocation->getTargetAddress2(); // inlined site index
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)relocation->getTargetAddress(); // constantPool
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_PicTrampolines:
          {
          TR_ASSERT(comp->target().is64Bit(), "TR_PicTrampolines not supported on 32-bit");

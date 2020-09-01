@@ -289,7 +289,6 @@ TR_PPCRelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecord,
    switch (reloRecord->type(reloTarget))
       {
       case TR_AbsoluteMethodAddressOrderedPair:
-      case TR_ConstantPoolOrderedPair:
          return true;
       }
 
@@ -302,7 +301,6 @@ TR_PPC32RelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecor
    switch (reloRecord->type(reloTarget))
       {
       case TR_AbsoluteMethodAddressOrderedPair:
-      case TR_ConstantPoolOrderedPair:
       case TR_ClassAddress:
       case TR_ArbitraryClassAddress:
       case TR_ArrayCopyHelper:

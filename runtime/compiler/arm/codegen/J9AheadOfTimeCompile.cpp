@@ -225,16 +225,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ConstantPoolOrderedPair:
-         {
-         *(uintptr_t *)cursor = (uintptr_t)relocation->getTargetAddress2(); // inlined site index
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)relocation->getTargetAddress(); // constantPool
-         cursor += SIZEPOINTER;
-         break;
-         }
-
       case TR_J2IThunks:
          {
          // Note: thunk relos should only be created for 64 bit

@@ -232,7 +232,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          reloRecord = new (storage) TR_RelocationRecordHelperAddress(reloRuntime, record);
          break;
       case TR_ConstantPool:
-      case TR_ConstantPoolOrderedPair:
          reloRecord = new (storage) TR_RelocationRecordConstantPool(reloRuntime, record);
          break;
       case TR_BodyInfoAddress:
@@ -5546,7 +5545,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_RamMethodSequence                            = 22
    sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_RamMethodSequenceReg                         = 23
    sizeof(TR_RelocationRecordVerifyClassObjectForAllocBinaryTemplate),               // TR_VerifyClassObjectForAlloc                    = 24
-   sizeof(TR_RelocationRecordConstantPoolBinaryTemplate),                            // TR_ConstantPoolOrderedPair                      = 25
+   0,                                                                                // TR_ConstantPoolOrderedPair                      = 25
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_AbsoluteMethodAddressOrderedPair             = 26
    sizeof(TR_RelocationRecordInlinedAllocationBinaryTemplate),                       // TR_VerifyRefArrayForAlloc                       = 27
    24,                                                                               // TR_J2IThunks                                    = 28
