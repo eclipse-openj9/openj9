@@ -232,6 +232,7 @@ jint JNICALL fw001(agentEnv * env, char * args);
 jint JNICALL vmd001(agentEnv * env, char * args);
 jint JNICALL glc001(agentEnv * env, char * args);
 jint JNICALL rtc001(agentEnv * env, char * args);
+jint JNICALL rtc002(agentEnv * env, char * args);
 jint JNICALL att001(agentEnv * env, char * args);
 jint JNICALL log001(agentEnv * env, char * args);
 jint JNICALL jlm001(agentEnv * env, char * args);

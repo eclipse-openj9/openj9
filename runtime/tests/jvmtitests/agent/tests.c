@@ -112,6 +112,7 @@ static jvmtiTest jvmtiTestList[] =
 	{ "vmd001",    vmd001,    "com.ibm.jvmti.tests.vmDump.vmd001",                            "VM Dump tests" },
 	{ "glc001",    glc001,    "com.ibm.jvmti.tests.getLoadedClasses.glc001",                  "Verify correct return of all relevant loaded classes" },
 	{ "rtc001",    rtc001,    "com.ibm.jvmti.tests.retransformClasses.rtc001",                "RetransformClasses on a class loaded by sun.misc.Unsafe" },
+	{ "rtc002",    rtc002,    "com.ibm.jvmti.tests.retransformClasses.rtc002",                "RetransformClasses on a class with Annotations" },
 	{ "att001",    att001,    "com.ibm.jvmti.tests.attachOptionsTest.att001",                 "sanity test for late attach" },
 	{ "log001",    log001,    "com.ibm.jvmti.tests.log.log001",                               "Log tests" },
 	{ "jlm001",    jlm001,    "com.ibm.jvmti.tests.javaLockMonitoring.jlm001",                "Java lock monitoring - JlmSet, JlmDump, and JlmDumpStats" },
