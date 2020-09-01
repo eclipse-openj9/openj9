@@ -152,14 +152,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
    switch (targetKind)
       {
-      case TR_ArrayCopyHelper:
-         {
-#if defined(TR_HOST_64BIT)
-         *wordAfterHeader = (uint32_t)0;
-#endif
-         }
-         break;
-
       case TR_ConstantPoolOrderedPair:
          {
          // constant pool address is placed as the last word of the header
