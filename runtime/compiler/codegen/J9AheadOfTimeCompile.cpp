@@ -233,6 +233,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_AbsoluteMethodAddressOrderedPair:
       case TR_ArrayCopyHelper:
       case TR_ArrayCopyToc:
+      case TR_BodyInfoAddressLoad:
          {
          // Nothing to do
          }
@@ -1112,6 +1113,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_AbsoluteMethodAddressOrderedPair:
       case TR_ArrayCopyHelper:
       case TR_ArrayCopyToc:
+      case TR_BodyInfoAddressLoad:
          {
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          }
@@ -1945,14 +1947,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   traceMsg(self()->comp(), "\nInlined site index = %d, Constant pool = %x", *(uint32_t *)ep1, *(uint32_t *)(ep2));
                   }
                }
-            break;
-         case TR_BodyInfoAddressLoad:
-            cursor++;
-            if (is64BitTarget)
-               {
-               cursor +=4;      // padding
-               }
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             break;
          case TR_PicTrampolines:
             cursor++;        // unused field
