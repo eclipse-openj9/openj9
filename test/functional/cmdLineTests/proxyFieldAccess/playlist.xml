@@ -36,6 +36,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 		</subsets>
@@ -53,6 +57,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>11+</subset>
 		</subsets>
