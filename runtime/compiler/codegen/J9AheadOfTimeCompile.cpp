@@ -1027,6 +1027,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          break;
 
       case TR_FixedSequenceAddress2:
+      case TR_RamMethodSequence:
          {
          TR_RelocationRecordWithOffset *rwoRecord = reinterpret_cast<TR_RelocationRecordWithOffset *>(reloRecord);
 
@@ -1762,25 +1763,25 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          break;
 
       case TR_FixedSequenceAddress:
-         {
-         TR_RelocationRecordWithOffset *rwoRecord = reinterpret_cast<TR_RelocationRecordWithOffset *>(reloRecord);
-
-         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-         if (isVerbose)
-            {
-            traceMsg(self()->comp(),"Fixed Sequence Relo: patch location offset = %p", (void *)rwoRecord->offset(reloTarget));
-            }
-         }
-         break;
-
       case TR_FixedSequenceAddress2:
+      case TR_RamMethodSequence:
          {
          TR_RelocationRecordWithOffset *rwoRecord = reinterpret_cast<TR_RelocationRecordWithOffset *>(reloRecord);
 
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "Load Address Relo: patch location offset = %p", (void *)rwoRecord->offset(reloTarget));
+            const char *recordType;
+            if (kind == TR_FixedSequenceAddress)
+               recordType = "Fixed Sequence Relo";
+            else if (kind == TR_FixedSequenceAddress2)
+               recordType = "Load Address Relo";
+            else if (kind == TR_RamMethodSequence)
+               recordType = "Ram Method Sequence Relo";
+            else
+               TR_ASSERT_FATAL(false, "Unknown relokind %d!\n", kind);
+
+            traceMsg(self()->comp(),"%s: patch location offset = %p", recordType, (void *)rwoRecord->offset(reloTarget));
             }
          }
          break;
@@ -1942,26 +1943,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   // ep1 is same as self()->comp()->getCurrentMethod()->constantPool())
                   traceMsg(self()->comp(), "num trampolines\n %x", *(uint32_t *)ep1);
                   }
-               }
-            break;
-         case TR_RamMethodSequence:
-         case TR_RamMethodSequenceReg:
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               cursor +=4;      // padding
-               ep1 = cursor;
-               cursor += 8;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nDestination address %x", *(uint64_t *)ep1);
-                  }
-               }
-            else
-               {
-               cursor += 4;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
                }
             break;
 

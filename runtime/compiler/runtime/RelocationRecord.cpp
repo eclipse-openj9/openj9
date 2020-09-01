@@ -354,7 +354,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          reloRecord = new (storage) TR_RelocationRecordArrayCopyToc(reloRuntime, record);
          break;
       case TR_RamMethodSequence:
-      case TR_RamMethodSequenceReg:
          reloRecord = new (storage) TR_RelocationRecordRamSequence(reloRuntime, record);
          break;
       case TR_FixedSequenceAddress:
@@ -5543,7 +5542,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordMethodTracingCheckBinaryTemplate),                      // TR_CheckMethodEnter                             = 20
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_RamMethod                                    = 21
    sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_RamMethodSequence                            = 22
-   sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_RamMethodSequenceReg                         = 23
+   0,                                                                                // TR_RamMethodSequenceReg                         = 23
    sizeof(TR_RelocationRecordVerifyClassObjectForAllocBinaryTemplate),               // TR_VerifyClassObjectForAlloc                    = 24
    0,                                                                                // TR_ConstantPoolOrderedPair                      = 25
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_AbsoluteMethodAddressOrderedPair             = 26

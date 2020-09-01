@@ -246,12 +246,16 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
 
       case TR_RamMethodSequence:
-      case TR_RamMethodSequenceReg:
          {
-         uint8_t flags = (uint8_t) ((uintptr_t) relocation->getTargetAddress2());// sequence ID
+         TR_RelocationRecordRamSequence *rsRecord = reinterpret_cast<TR_RelocationRecordRamSequence *>(reloRecord);
+         uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
+
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-         cursor += SIZEPOINTER; //advance pointer (skip offset)
+         rsRecord->setReloFlags(reloTarget, flags);
+
+         // Skip Offset
+
+         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 

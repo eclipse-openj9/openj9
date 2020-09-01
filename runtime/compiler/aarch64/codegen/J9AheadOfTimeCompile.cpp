@@ -137,14 +137,6 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          break;
          }
-      case TR_RamMethodSequence:
-      case TR_RamMethodSequenceReg:
-         {
-         *(uint64_t *) cursor = relocation->getTargetAddress() ?
-            (uint64_t)((uint8_t *) relocation->getTargetAddress() - aotMethodCodeStart) : 0x0;
-         cursor += SIZEPOINTER;
-         }
-         break;
 
       case TR_ArbitraryClassAddress:
          {

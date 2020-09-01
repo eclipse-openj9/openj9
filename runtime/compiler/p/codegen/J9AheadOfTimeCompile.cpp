@@ -274,26 +274,34 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
 
       case TR_RamMethodSequence:
-      case TR_RamMethodSequenceReg:
          {
+         TR_RelocationRecordRamSequence *rsRecord = reinterpret_cast<TR_RelocationRecordRamSequence *>(reloRecord);
+         uint8_t flags;
+
          if (comp->target().is64Bit())
             {
-            uint8_t flags = (uint8_t) ((uintptr_t) relocation->getTargetAddress2());
-            TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-            *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-            *(uint64_t *) cursor = relocation->getTargetAddress() ?
-               (uint64_t)((uint8_t *) relocation->getTargetAddress() - aotMethodCodeStart) : 0x0;
-            cursor += 8;
+            flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
+
+            TR_ASSERT_FATAL(relocation->getTargetAddress(), "target address is NULL");
+
+            uintptr_t offset = relocation->getTargetAddress()
+                     ? static_cast<uintptr_t>(relocation->getTargetAddress() - aotMethodCodeStart)
+                     : 0x0;
+
+            rsRecord->setOffset(reloTarget, offset);
             }
          else
             {
-            TR_RelocationRecordInformation *recordInfo =
-                     (TR_RelocationRecordInformation *) relocation->getTargetAddress();
-            uint8_t flags = (uint8_t) recordInfo->data3;
-            TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-            *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-            cursor += 4;
+            TR_RelocationRecordInformation *recordInfo = reinterpret_cast<TR_RelocationRecordInformation *>(relocation->getTargetAddress());
+            flags = static_cast<uint8_t>(recordInfo->data3);
+
+            // Skip Offset
             }
+
+         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+         rsRecord->setReloFlags(reloTarget, flags);
+
+         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 

@@ -3581,7 +3581,6 @@ TR_DebugExt::dxPrintAOTinfo(void *addr)
          case TR_BodyInfoAddress:
          case TR_RamMethod:
          case TR_RamMethodSequence:
-         case TR_RamMethodSequenceReg:
          case TR_BodyInfoAddressLoad:
             _dbgPrintf("No additional fields");
             ptr = (U_8*) (((UDATA*)reloRecord)+1);
