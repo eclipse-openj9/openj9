@@ -148,11 +148,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
    switch (targetKind)
       {
-      case TR_GlobalValue:
-         *(uintptr_t*)cursor = (uintptr_t) relocation->getTargetAddress();
-         cursor += SIZEPOINTER;
-         break;
-
       case TR_PicTrampolines:
          {
          TR_ASSERT(comp->target().is64Bit(), "TR_PicTrampolines not supported on 32-bit");

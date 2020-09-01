@@ -152,11 +152,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
    switch (targetKind)
       {
-      case TR_GlobalValue:
-         *(uintptr_t*)cursor = (uintptr_t) relocation->getTargetAddress();
-         cursor += SIZEPOINTER;
-         break;
-
       case TR_HCR:
          {
          *(uintptr_t*)cursor = (uintptr_t)relocation->getTargetAddress();

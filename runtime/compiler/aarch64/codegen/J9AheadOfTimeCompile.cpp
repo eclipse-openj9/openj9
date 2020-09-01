@@ -138,13 +138,6 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
          }
 
-      case TR_GlobalValue:
-         {
-         *(uintptr_t*)cursor = (uintptr_t) relocation->getTargetAddress();
-         cursor += SIZEPOINTER;
-         break;
-         }
-
       case TR_DiscontiguousSymbolFromManager:
          {
          TR_RelocationRecordDiscontiguousSymbolFromManager *dsfmRecord = reinterpret_cast<TR_RelocationRecordDiscontiguousSymbolFromManager *>(reloRecord);

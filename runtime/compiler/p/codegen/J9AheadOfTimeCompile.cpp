@@ -333,23 +333,30 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
       case TR_GlobalValue:
          {
-#if defined(TR_HOST_64BIT)
-         uint8_t flags = (uint8_t)((uintptr_t)relocation->getTargetAddress2());
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-         *(uintptr_t*)cursor = (uintptr_t)relocation->getTargetAddress();
-#else
+         TR_RelocationRecordGlobalValue *gvRecord = reinterpret_cast<TR_RelocationRecordGlobalValue *>(reloRecord);
 
-         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
-         uint8_t flags = (uint8_t) recordInfo->data3;
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-         *(uintptr_t*) cursor = (uintptr_t) recordInfo->data1;
-#endif
+         uintptr_t gv;
+         uint8_t flags;
 
-         cursor += SIZEPOINTER;
-         break;
+         if (comp->target().is64Bit())
+            {
+            gv = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
+            flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
+            }
+         else
+            {
+            TR_RelocationRecordInformation *recordInfo = reinterpret_cast<TR_RelocationRecordInformation*>(relocation->getTargetAddress());
+            gv = recordInfo->data1;
+            flags = static_cast<uint8_t>(recordInfo->data3);
+            }
+
+         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+         gvRecord->setReloFlags(reloTarget, flags);
+         gvRecord->setOffset(reloTarget, gv);
+
+         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
+         break;
 
       case TR_DiscontiguousSymbolFromManager:
          {
