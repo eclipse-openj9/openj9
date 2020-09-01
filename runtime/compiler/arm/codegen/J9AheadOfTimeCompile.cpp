@@ -272,9 +272,10 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
       case TR_ArbitraryClassAddress:
          {
+         TR_RelocationRecordArbitraryClassAddress *acaRecord = reinterpret_cast<TR_RelocationRecordArbitraryClassAddress *>(reloRecord);
+
          // ExternalRelocation data is as expected for TR_ClassAddress
-         auto recordInfo =
-            (TR_RelocationRecordInformation*)relocation->getTargetAddress();
+         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
 
          auto symRef = (TR::SymbolReference *)recordInfo->data1;
          auto sym = symRef->getSymbol()->castToStaticSymbol();
@@ -282,16 +283,14 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          // flags stored in data3 are currently unused
          uintptr_t inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(symRef->getOwningMethod(comp)->constantPool(), recordInfo->data2);
 
-         // Data identifying the class is as though for TR_ClassPointer
-         // (TR_RelocationRecordPointerBinaryTemplate)
-         *(uintptr_t *)cursor = inlinedSiteIndex;
-         cursor += SIZEPOINTER;
+         uintptr_t classChainIdentifyingLoaderOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
+         uintptr_t classChainOffsetInSharedCache = self()->getClassChainOffset(j9class);
 
-         uintptr_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
+         acaRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         acaRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache);
+         acaRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache);
 
-         cursor = self()->emitClassChainOffset(cursor, j9class);
+         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 

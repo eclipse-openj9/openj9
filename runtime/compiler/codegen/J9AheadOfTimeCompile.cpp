@@ -1040,6 +1040,27 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ArbitraryClassAddress:
+         {
+         TR_RelocationRecordArbitraryClassAddress *acaRecord = reinterpret_cast<TR_RelocationRecordArbitraryClassAddress *>(reloRecord);
+
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+         TR::StaticSymbol *sym = symRef->getSymbol()->castToStaticSymbol();
+         TR_OpaqueClassBlock *j9class = reinterpret_cast<TR_OpaqueClassBlock *>(sym->getStaticAddress());
+         uintptr_t inlinedSiteIndex = reinterpret_cast<uintptr_t>(relocation->getTargetAddress2());
+
+         void *constantPool = symRef->getOwningMethod(comp)->constantPool();
+         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(constantPool, inlinedSiteIndex);
+
+         uintptr_t classChainIdentifyingLoaderOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
+         uintptr_t classChainOffsetInSharedCache = self()->getClassChainOffset(j9class);
+
+         acaRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         acaRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache);
+         acaRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1318,6 +1339,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          break;
 
       case TR_ClassPointer:
+      case TR_ArbitraryClassAddress:
          {
          TR_RelocationRecordClassPointer *cpRecord = reinterpret_cast<TR_RelocationRecordClassPointer *>(reloRecord);
 
@@ -1943,30 +1965,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   // ep1 is same as self()->comp()->getCurrentMethod()->constantPool())
                   traceMsg(self()->comp(), "num trampolines\n %x", *(uint32_t *)ep1);
                   }
-               }
-            break;
-
-         case TR_ArbitraryClassAddress:
-            cursor++;           // unused field
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            ep1 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            ep2 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            ep3 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-
-            if (isVerbose)
-               {
-               if (is64BitTarget)
-                  traceMsg(self()->comp(), "\nClass Pointer: Inlined site index = %d, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p",
-                                  *(uint64_t *)ep1, *(uint64_t *)ep2, *(uint64_t *)ep3);
-               else
-                  traceMsg(self()->comp(), "\nClass Pointer: Inlined site index = %d, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p",
-                                  *(uint32_t *)ep1, *(uint32_t *)ep2, *(uint32_t *)ep3);
                }
             break;
 

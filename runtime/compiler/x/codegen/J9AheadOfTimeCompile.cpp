@@ -153,27 +153,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          cursor += SIZEPOINTER;
          break;
 
-      case TR_ArbitraryClassAddress:
-         {
-         // ExternalRelocation data is as expected for TR_ClassAddress
-         auto symRef = (TR::SymbolReference *)relocation->getTargetAddress();
-         auto sym = symRef->getSymbol()->castToStaticSymbol();
-         auto j9class = (TR_OpaqueClassBlock *)sym->getStaticAddress();
-         uintptr_t inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(symRef->getOwningMethod(comp)->constantPool(), (uintptr_t)relocation->getTargetAddress2());
-
-         // Data identifying the class is as though for TR_ClassPointer
-         // (TR_RelocationRecordPointerBinaryTemplate)
-         *(uintptr_t *)cursor = inlinedSiteIndex;
-         cursor += SIZEPOINTER;
-
-         uintptr_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-
-         cursor = self()->emitClassChainOffset(cursor, j9class);
-         }
-         break;
-
       case TR_PicTrampolines:
          {
          TR_ASSERT(comp->target().is64Bit(), "TR_PicTrampolines not supported on 32-bit");
