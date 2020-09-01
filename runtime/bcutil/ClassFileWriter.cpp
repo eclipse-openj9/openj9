@@ -465,7 +465,8 @@ ClassFileWriter::analyzeMethods()
 		if (J9ROMMETHOD_HAS_PARAMETER_ANNOTATIONS(method)) {
 			addEntry((void *) &RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS, 0, CFR_CONSTANT_Utf8);
 		}
-		if (J9ROMMETHOD_HAS_METHOD_TYPE_ANNOTATIONS(getExtendedModifiersDataFromROMMethod(method))) {
+		U_32 extendedModifiers = getExtendedModifiersDataFromROMMethod(method);
+		if (J9ROMMETHOD_HAS_METHOD_TYPE_ANNOTATIONS(extendedModifiers) || J9ROMMETHOD_HAS_CODE_TYPE_ANNOTATIONS(extendedModifiers)) {
 			addEntry((void *) &RUNTIME_VISIBLE_TYPE_ANNOTATIONS, 0, CFR_CONSTANT_Utf8);
 		}
 		if (J9ROMMETHOD_HAS_DEFAULT_ANNOTATION(method)) {
