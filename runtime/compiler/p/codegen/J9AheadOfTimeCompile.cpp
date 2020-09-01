@@ -225,23 +225,27 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
       case TR_FixedSequenceAddress2:
          {
-         uint8_t flags = (uint8_t) ((uintptr_t) relocation->getTargetAddress2());
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
+         TR_RelocationRecordWithOffset *rwoRecord = reinterpret_cast<TR_RelocationRecordWithOffset *>(reloRecord);
+         uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
 
+         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+         rwoRecord->setReloFlags(reloTarget, flags);
          if (comp->target().is64Bit())
             {
-            if (relocation->getTargetAddress() == NULL)
-               printf("target address NULL!!\n");
-            *(uint64_t *) cursor = relocation->getTargetAddress() ?
-               (uint64_t)((uint8_t *) relocation->getTargetAddress() - aotMethodCodeStart) : 0x0;
-            cursor += 8;
+            TR_ASSERT_FATAL(relocation->getTargetAddress(), "target address is NULL");
+
+            uintptr_t offset = relocation->getTargetAddress()
+                     ? static_cast<uintptr_t>(relocation->getTargetAddress() - aotMethodCodeStart)
+                     : 0x0;
+
+            rwoRecord->setOffset(reloTarget, offset);
             }
          else
             {
-            TR_ASSERT(0, "Creating TR_LoadAddress/TR_LoadAddressTempReg relo for 32-bit target");
-            cursor += 4;
+            TR_ASSERT_FATAL(0, "Creating TR_LoadAddress/TR_LoadAddressTempReg relo for 32-bit target");
             }
+
+         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 

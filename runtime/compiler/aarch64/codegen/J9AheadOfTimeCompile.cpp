@@ -120,15 +120,6 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
    switch (targetKind)
       {
-      case TR_FixedSequenceAddress2:
-         {
-         TR_ASSERT(relocation->getTargetAddress(), "target address is NULL");
-         *(uint64_t *) cursor = relocation->getTargetAddress() ?
-            (uint64_t)((uint8_t *) relocation->getTargetAddress() - aotMethodCodeStart) : 0x0;
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_BodyInfoAddressLoad:
          {
          // Nothing to do
