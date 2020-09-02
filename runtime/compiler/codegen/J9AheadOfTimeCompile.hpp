@@ -61,6 +61,9 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
 
    static void interceptAOTRelocation(TR::ExternalRelocation *relocation);
 
+   uint32_t getSizeOfAOTRelocationHeader(TR_ExternalRelocationTargetKind k) { return TR_RelocationRecord::getSizeOfAOTRelocationHeader(k); }
+   uint32_t *setAOTRelocationKindToHeaderSizeMap(uint32_t *p) { TR_ASSERT_FATAL(false, "Should not be called!\n"); return 0; }
+
    /**
     * Return true if an ExternalRelocation of kind TR_ClassAddress is expected
     * to contain a pointer to TR_RelocationRecordInformation.

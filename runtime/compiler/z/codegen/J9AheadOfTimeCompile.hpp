@@ -53,7 +53,6 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public J9::AheadOfTimeCompile
     TR::list<TR::S390Relocation*>& getRelocationList() {return _relocationList;}
 
   private:
-    static uint32_t _relocationTargetTypeToHeaderSizeMap[TR_NumExternalRelocationKinds];
     TR::list<TR::S390Relocation*>     _relocationList;
     TR::CodeGenerator *_cg;
    };

@@ -64,7 +64,6 @@ public:
    static bool classAddressUsesReloRecordInfo() { return true; }
 
 private:
-   static uint32_t _relocationTargetTypeToHeaderSizeMap[TR_NumExternalRelocationKinds];
 
    List<TR::ARMRelocation>     _relocationList;
    TR::CodeGenerator       *_cg;

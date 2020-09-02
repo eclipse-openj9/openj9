@@ -59,7 +59,6 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public J9::AheadOfTimeCompile
 
    private:
    TR::CodeGenerator *_cg;
-   static uint32_t _relocationTargetTypeToHeaderSizeMap[TR_NumExternalRelocationKinds];
    };
 
 } // namespace Power

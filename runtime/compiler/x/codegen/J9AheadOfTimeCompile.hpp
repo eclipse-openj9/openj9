@@ -45,7 +45,7 @@ class OMR_EXTENSIBLE AheadOfTimeCompile  : public J9::AheadOfTimeCompile
    {
    public:
    AheadOfTimeCompile(TR::CodeGenerator *cg)
-      : J9::AheadOfTimeCompile(_relocationTargetTypeToHeaderSizeMap, cg->comp()),
+      : J9::AheadOfTimeCompile(NULL, cg->comp()),
         _cg(cg)
       {
       }
@@ -54,7 +54,6 @@ class OMR_EXTENSIBLE AheadOfTimeCompile  : public J9::AheadOfTimeCompile
    virtual uint8_t *initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation);
 
    private:
-   static uint32_t _relocationTargetTypeToHeaderSizeMap[TR_NumExternalRelocationKinds];
 
    TR::CodeGenerator *_cg;
    };
