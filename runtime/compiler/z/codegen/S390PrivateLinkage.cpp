@@ -1093,7 +1093,7 @@ J9::Z::PrivateLinkage::setupLiteralPoolRegister(TR::Snippet *firstSnippet)
    if (!cg()->isLiteralPoolOnDemandOn() && firstSnippet != NULL)
       {
       // The immediate operand will be patched when the actual address of the literal pool is known
-      if (!comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) || cg()->anyLitPoolSnippets())
+      if (cg()->anyLitPoolSnippets())
          {
          return getLitPoolRealRegister()->getRegisterNumber();
          }
@@ -1422,14 +1422,10 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
    // Save or move arguments according to the result of register assignment.
    cursor = (TR::Instruction *) saveArguments(cursor, false);
 
-   if (comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
+   static const bool prefetchStack = feGetEnv("TR_PrefetchStack") != NULL;
+   if (cg()->isPrefetchNextStackCacheLine() && prefetchStack)
       {
-      static const bool prefetchStack = feGetEnv("TR_PrefetchStack") != NULL;
-
-      if (cg()->isPrefetchNextStackCacheLine() && prefetchStack)
-         {
-         cursor = generateRXInstruction(cg(), TR::InstOpCode::PFD, firstNode, 2, generateS390MemoryReference(spReg, -256, cg()), cursor);
-         }
+      cursor = generateRXInstruction(cg(), TR::InstOpCode::PFD, firstNode, 2, generateS390MemoryReference(spReg, -256, cg()), cursor);
       }
 
    // Cold Eyecatcher is used for padding of endPC so that Return Address for exception snippets will never equal the endPC.
@@ -2757,21 +2753,10 @@ J9::Z::JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
    TR::CodeGenerator* cg = self()->cg();
 
-   if (comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
-      {
-      // Store a 1 into vmthread->inNative
-      generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode,
-                           generateS390MemoryReference(methodMetaDataVirtualRegister, offsetof(J9VMThread, inNative), cg),
-                           1);
-      }
-   else
-      {
-      TR::Register* buffer = cg->allocateRegister();
-      generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), callNode, buffer, 1);
-      generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), callNode, buffer,
-                            generateS390MemoryReference(methodMetaDataVirtualRegister, offsetof(J9VMThread, inNative), cg));
-      cg->stopUsingRegister(buffer);
-      }
+   // Store a 1 into vmthread->inNative
+   generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode,
+                        generateS390MemoryReference(methodMetaDataVirtualRegister, offsetof(J9VMThread, inNative), cg),
+                        1);
 
 
 #if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
@@ -3054,16 +3039,7 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
      auto* literalOffsetMemoryReference = new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, (int32_t)fej9->thisThreadGetJavaLiteralsOffset(), codeGen);
 
      // Set up literal offset slot to zero
-     if (comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
-        {
-        generateSILInstruction(codeGen, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode, literalOffsetMemoryReference, 0);
-        }
-     else
-        {
-        generateRIInstruction(codeGen, TR::InstOpCode::getLoadHalfWordImmOpCode(), callNode, javaLitOffsetReg, 0);
-
-        generateRXInstruction(codeGen, TR::InstOpCode::getStoreOpCode(), callNode, javaLitOffsetReg, literalOffsetMemoryReference);
-        }
+     generateSILInstruction(codeGen, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode, literalOffsetMemoryReference, 0);
      }
 
     if (isReleaseVMAccess)

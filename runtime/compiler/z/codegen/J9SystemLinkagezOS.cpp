@@ -169,16 +169,7 @@ J9::Z::zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::Re
    if (cg()->supportsJITFreeSystemStackPointer())
       {
       auto* systemSPOffsetMR = generateS390MemoryReference(methodMetaDataVirtualRegister, static_cast<int32_t>(fej9->thisThreadGetSystemSPOffset()), codeGen);
-
-      if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
-         {
-         generateSILInstruction(codeGen, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode, systemSPOffsetMR, 0);
-         }
-      else
-         {
-         generateRIInstruction(codeGen, TR::InstOpCode::getLoadHalfWordImmOpCode(), callNode, methodAddressReg, 0);
-         generateRXInstruction(codeGen, TR::InstOpCode::getStoreOpCode(), callNode, methodAddressReg, systemSPOffsetMR);
-         }
+      generateSILInstruction(codeGen, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode, systemSPOffsetMR, 0);
       }
 
    /**
