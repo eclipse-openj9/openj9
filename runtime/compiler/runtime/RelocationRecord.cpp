@@ -1960,15 +1960,15 @@ TR_RelocationRecordPicTrampolines::bytesInHeaderAndPayload()
    }
 
 void
-TR_RelocationRecordPicTrampolines::setNumTrampolines(TR_RelocationTarget *reloTarget, int numTrampolines)
+TR_RelocationRecordPicTrampolines::setNumTrampolines(TR_RelocationTarget *reloTarget, uint32_t numTrampolines)
    {
-   reloTarget->storeUnsigned8b(numTrampolines, (uint8_t *) &(((TR_RelocationRecordPicTrampolineBinaryTemplate *)_record)->_numTrampolines));
+   reloTarget->storeUnsigned32b(numTrampolines, (uint8_t *) &(((TR_RelocationRecordPicTrampolineBinaryTemplate *)_record)->_numTrampolines));
    }
 
-uint8_t
+uint32_t
 TR_RelocationRecordPicTrampolines::numTrampolines(TR_RelocationTarget *reloTarget)
    {
-   return reloTarget->loadUnsigned8b((uint8_t *) &(((TR_RelocationRecordPicTrampolineBinaryTemplate *)_record)->_numTrampolines));
+   return reloTarget->loadUnsigned32b((uint8_t *) &(((TR_RelocationRecordPicTrampolineBinaryTemplate *)_record)->_numTrampolines));
    }
 
 int32_t

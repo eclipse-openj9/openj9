@@ -991,8 +991,8 @@ class TR_RelocationRecordPicTrampolines : public TR_RelocationRecord
 
       virtual int32_t bytesInHeaderAndPayload();
 
-      void setNumTrampolines(TR_RelocationTarget *reloTarget, int numTrampolines);
-      uint8_t numTrampolines(TR_RelocationTarget *reloTarget);
+      void setNumTrampolines(TR_RelocationTarget *reloTarget, uint32_t numTrampolines);
+      uint32_t numTrampolines(TR_RelocationTarget *reloTarget);
 
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };

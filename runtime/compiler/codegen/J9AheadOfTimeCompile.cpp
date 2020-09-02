@@ -1839,6 +1839,18 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          }
          break;
 
+      case TR_PicTrampolines:
+         {
+         TR_RelocationRecordPicTrampolines *ptRecord = reinterpret_cast<TR_RelocationRecordPicTrampolines *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nTR_PicTrampolines: num trampolines = %d", ptRecord->numTrampolines(reloTarget));
+            }
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1973,32 +1985,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
       switch (kind)
          {
-         case TR_PicTrampolines:
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               //cursor +=4;      // no padding for this one
-               ep1 = cursor;
-               cursor += 4; // 32 bit entry
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nnum trampolines %x", *(uint64_t *)ep1);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;
-               cursor += 4;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  // ep1 is same as self()->comp()->getCurrentMethod()->constantPool())
-                  traceMsg(self()->comp(), "num trampolines\n %x", *(uint32_t *)ep1);
-                  }
-               }
-            break;
-
          case TR_J2IThunks:
             {
             cursor++;        //unused field
