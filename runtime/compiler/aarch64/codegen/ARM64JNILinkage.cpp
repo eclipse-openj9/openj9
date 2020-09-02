@@ -946,5 +946,7 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, depLabel, postLabelDeps);
 
    callNode->setRegister(returnRegister);
+
+   deps->stopUsingDepRegs(cg(), returnRegister);
    return returnRegister;
    }
