@@ -1138,9 +1138,16 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
    bool orderedPair = isOrderedPair(kind);
 
-   // dumpRelocationHeaderData is currently in the process of becoming the
-   // the canonical place to dump the relocation header data; new relocation
-   // records' header data should be printed here.
+   traceMsg(self()->comp(), "%16x  ", cursor);
+   traceMsg(self()->comp(), "%-5d", reloRecord->size(reloTarget));
+   traceMsg(self()->comp(), "%-31s", TR::ExternalRelocation::getName(kind));
+   traceMsg(self()->comp(), "%-6d", offsetSize);
+   traceMsg(self()->comp(), "%s", (reloRecord->flags(reloTarget) & RELOCATION_TYPE_EIP_OFFSET) ? "Rel " : "Abs ");
+
+   // Print out the correct number of spaces when no index is available
+   if (kind != TR_HelperAddress && kind != TR_AbsoluteHelperAddress)
+      traceMsg(self()->comp(), "      ");
+
    switch (kind)
       {
       case TR_ConstantPool:
@@ -2011,19 +2018,18 @@ J9::AheadOfTimeCompile::dumpRelocationData()
       }
 
    uint8_t *endOfData;
-      bool is64BitTarget = self()->comp()->target().is64Bit();
-      if (is64BitTarget)
+   if (self()->comp()->target().is64Bit())
       {
       endOfData = cursor + *(uint64_t *)cursor;
       traceMsg(self()->comp(), "Size field in relocation data is %d bytes\n\n", *(uint64_t *)cursor);
       cursor += 8;
       }
-      else
-         {
-         endOfData = cursor + *(uint32_t *)cursor;
-         traceMsg(self()->comp(), "Size field in relocation data is %d bytes\n\n", *(uint32_t *)cursor);
-         cursor += 4;
-         }
+   else
+      {
+      endOfData = cursor + *(uint32_t *)cursor;
+      traceMsg(self()->comp(), "Size field in relocation data is %d bytes\n\n", *(uint32_t *)cursor);
+      cursor += 4;
+      }
 
    if (self()->comp()->getOption(TR_UseSymbolValidationManager))
       {
@@ -2039,43 +2045,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
    while (cursor < endOfData)
       {
-      void *ep1, *ep2, *ep3, *ep4, *ep5, *ep6, *ep7;
-      TR::SymbolReference *tempSR = NULL;
-
-      uint8_t *origCursor = cursor;
-
-      traceMsg(self()->comp(), "%16x  ", cursor);
-
-      // Relocation size
-      traceMsg(self()->comp(), "%-5d", *(uint16_t*)cursor);
-
-      uint8_t *endOfCurrentRecord = cursor + *(uint16_t *)cursor;
-      cursor += 2;
-
-      TR_ExternalRelocationTargetKind kind = (TR_ExternalRelocationTargetKind)(*cursor);
-      // Relocation type
-      traceMsg(self()->comp(), "%-31s", TR::ExternalRelocation::getName(kind));
-
-      // Relocation offset width
-      uint8_t *flagsCursor = cursor + 1;
-      int32_t offsetSize = (*flagsCursor & RELOCATION_TYPE_WIDE_OFFSET) ? 4 : 2;
-      traceMsg(self()->comp(), "%-6d", offsetSize);
-
-      // Ordered-paired or non-paired
-      bool orderedPair = isOrderedPair(*cursor); //(*cursor & RELOCATION_TYPE_ORDERED_PAIR) ? true : false;
-
-      // Relative or Absolute offset type
-      traceMsg(self()->comp(), "%s", (*flagsCursor & RELOCATION_TYPE_EIP_OFFSET) ? "Rel " : "Abs ");
-
-      // Print out the correct number of spaces when no index is available
-      if (kind != TR_HelperAddress && kind != TR_AbsoluteHelperAddress)
-         traceMsg(self()->comp(), "      ");
-
-      cursor++;
-
-      cursor = self()->dumpRelocationHeaderData(origCursor, isVerbose);
-
-      traceMsg(self()->comp(), "\n");
+      cursor = self()->dumpRelocationHeaderData(cursor, isVerbose);
       }
    }
 
