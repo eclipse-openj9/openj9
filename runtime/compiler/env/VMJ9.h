@@ -270,6 +270,7 @@ public:
    virtual bool needRelocationsForPersistentInfoData() { return false; }
    virtual bool needRelocationsForLookupEvaluationData() { return false; }
    virtual bool nopsAlsoProcessedByRelocations() { return false; }
+   virtual bool needRelocatableTarget() { return false; }
 
    bool supportsContextSensitiveInlining () { return true; }
 
@@ -1142,6 +1143,7 @@ public:
    virtual bool               supportsJitMethodEntryAlignment()               { return false; }
    virtual bool               isBenefitInliningCheckIfFinalizeObject()        { return true; }
    virtual bool               needsContiguousCodeAndDataCacheAllocation()     { return true; }
+   virtual bool               needRelocatableTarget()                          { return true; }
    virtual bool               shouldDelayAotLoad();
 
    virtual bool               isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false);

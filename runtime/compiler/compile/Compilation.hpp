@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,7 +49,8 @@ class OMR_EXTENSIBLE Compilation : public J9::CompilationConnector
          TR::Region &heapMemoryRegion,
          TR_Memory *memory,
          TR_OptimizationPlan *optimizationPlan,
-         TR_RelocationRuntime *reloRuntime) :
+         TR_RelocationRuntime *reloRuntime,
+         TR::Environment *target = NULL) :
       J9::CompilationConnector(
          compThreadId,
          j9vmThread,
@@ -60,7 +61,8 @@ class OMR_EXTENSIBLE Compilation : public J9::CompilationConnector
          heapMemoryRegion,
          memory,
          optimizationPlan,
-         reloRuntime)
+         reloRuntime,
+         target)
       {}
 
    ~Compilation() {}
