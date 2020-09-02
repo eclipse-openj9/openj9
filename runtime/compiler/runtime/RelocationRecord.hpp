@@ -2081,6 +2081,9 @@ class TR_RelocationRecordEmitClass : public TR_RelocationRecordWithInlinedSiteIn
       TR_RelocationRecordEmitClass() {}
       TR_RelocationRecordEmitClass(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordWithInlinedSiteIndex(reloRuntime, record) {}
 
+      void setBCIndex(TR_RelocationTarget *reloTarget, int32_t bcIndex);
+      int32_t bcIndex(TR_RelocationTarget *reloTarget);
+
       virtual int32_t bytesInHeaderAndPayload();
 
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);

@@ -1825,6 +1825,20 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          }
          break;
 
+      case TR_EmitClass:
+         {
+         TR_RelocationRecordEmitClass *ecRecord = reinterpret_cast<TR_RelocationRecordEmitClass *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nTR_EmitClass: InlinedCallSite index = %d, bcIndex = %d",
+                                     ecRecord->inlinedSiteIndex(reloTarget),
+                                     ecRecord->bcIndex(reloTarget));
+            }
+         }
+         break;
+
       default:
          return cursor;
       }

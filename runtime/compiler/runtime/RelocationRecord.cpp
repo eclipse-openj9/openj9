@@ -5301,8 +5301,8 @@ TR_RelocationRecordEmitClass::preparePrivateData(TR_RelocationRuntime *reloRunti
    {
    TR_RelocationRecordEmitClassPrivateData *reloPrivateData = &(privateData()->emitClass);
 
-   reloPrivateData->_bcIndex              = reloTarget->loadSigned32b((uint8_t *) &(((TR_RelocationRecordEmitClassBinaryTemplate *)_record)->_bcIndex));
-   reloPrivateData->_method               = getInlinedSiteMethod(reloRuntime);
+   reloPrivateData->_bcIndex = bcIndex(reloTarget);
+   reloPrivateData->_method  = getInlinedSiteMethod(reloRuntime);
    }
 
 int32_t
@@ -5314,6 +5314,17 @@ TR_RelocationRecordEmitClass::applyRelocation(TR_RelocationRuntime *reloRuntime,
    return 0;
    }
 
+void
+TR_RelocationRecordEmitClass::setBCIndex(TR_RelocationTarget *reloTarget, int32_t bcIndex)
+   {
+   reloTarget->storeSigned32b(bcIndex, (uint8_t *) &((TR_RelocationRecordEmitClassBinaryTemplate *)_record)->_bcIndex);
+   }
+
+int32_t
+TR_RelocationRecordEmitClass::bcIndex(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadSigned32b((uint8_t *) &((TR_RelocationRecordEmitClassBinaryTemplate *)_record)->_bcIndex);
+   }
 
 char *
 TR_RelocationRecordDebugCounter::name()
@@ -5570,7 +5581,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordPointerBinaryTemplate),                                 // TR_ClassPointer                                 = 48
    sizeof(TR_RelocationRecordMethodTracingCheckBinaryTemplate),                      // TR_CheckMethodExit                              = 49
    sizeof(TR_RelocationRecordValidateArbitraryClassBinaryTemplate),                  // TR_ValidateArbitraryClass                       = 50
-   0,                                                                                // TR_EmitClass(not used)                          = 51
+   sizeof(TR_RelocationRecordEmitClassBinaryTemplate),                               // TR_EmitClass                                    = 51
    sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_JNISpecialTargetAddress                      = 52
    sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_VirtualRamMethodConst                        = 53
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedInterfaceMethod                       = 54

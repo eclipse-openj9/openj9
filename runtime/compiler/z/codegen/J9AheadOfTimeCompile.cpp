@@ -154,15 +154,16 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
       {
       case TR_EmitClass:
          {
-         *(uintptr_t *)cursor = (uintptr_t) relocation->getTargetAddress2(); // Inlined call site index
-         cursor += SIZEPOINTER;
+         TR_RelocationRecordEmitClass *ecRecord = reinterpret_cast<TR_RelocationRecordEmitClass *>(reloRecord);
 
-         TR_ByteCodeInfo *bcInfo = (TR_ByteCodeInfo *) relocation->getTargetAddress();
-         *(int32_t *)cursor = (int32_t) bcInfo->getByteCodeIndex(); // Bytecode index
-         cursor += 4;
-#if defined(TR_HOST_64BIT)
-         cursor += 4; // padding
-#endif
+         TR_ByteCodeInfo *bcInfo = reinterpret_cast<TR_ByteCodeInfo *>(relocation->getTargetAddress());
+         int32_t bcIndex = bcInfo->getByteCodeIndex();
+         uintptr_t inlinedSiteIndex = reinterpret_cast<uintptr_t>(relocation->getTargetAddress2());
+
+         ecRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         ecRecord->setBCIndex(reloTarget, bcIndex);
+
+         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
