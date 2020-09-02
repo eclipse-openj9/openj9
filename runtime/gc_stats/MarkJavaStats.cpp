@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,9 @@ MM_MarkJavaStats::clear()
 	_stringConstantsCleared = 0;
 	_stringConstantsCandidates = 0;
 
+	_monitorReferenceCleared = 0;
+	_monitorReferenceCandidates = 0;
+
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 	splitArraysProcessed = 0;
 	splitArraysAmount = 0;
@@ -63,6 +66,9 @@ MM_MarkJavaStats::merge(MM_MarkJavaStats* statsToMerge)
 
 	_stringConstantsCleared += statsToMerge->_stringConstantsCleared;
 	_stringConstantsCandidates += statsToMerge->_stringConstantsCandidates;
+
+	_monitorReferenceCleared += statsToMerge->_monitorReferenceCleared;
+	_monitorReferenceCandidates += statsToMerge->_monitorReferenceCandidates;
 
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 	/* It may not ever be useful to merge these stats, but do it anyways */

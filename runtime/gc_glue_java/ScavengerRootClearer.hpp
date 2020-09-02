@@ -188,12 +188,15 @@ public:
 		bool const compressed = _extensions->compressObjectReferences();
 		J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
 		omrobjectptr_t objectPtr = (omrobjectptr_t )monitor->userData;
+		_env->getGCEnvironment()->_scavengerJavaStats._monitorReferenceCandidates += 1;
+		
 		if(_scavenger->isObjectInEvacuateMemory(objectPtr)) {
 			MM_ForwardedHeader forwardedHeader(objectPtr, compressed);
 			omrobjectptr_t forwardPtr = forwardedHeader.getForwardedObject();
 			if(NULL != forwardPtr) {
 				monitor->userData = (uintptr_t)forwardPtr;
 			} else {
+				_env->getGCEnvironment()->_scavengerJavaStats._monitorReferenceCleared += 1;
 				monitorReferenceIterator->removeSlot();
 				/* We must call objectMonitorDestroy (as opposed to omrthread_monitor_destroy) when the
 				 * monitor is not internal to the GC
