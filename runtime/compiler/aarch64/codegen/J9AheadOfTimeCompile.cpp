@@ -120,24 +120,6 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
    switch (targetKind)
       {
-     case TR_J2IThunks:
-         {
-         TR::Node *node = (TR::Node*)relocation->getTargetAddress();
-         TR::SymbolReference *symRef = node->getSymbolReference();
-
-         *(uintptr_t *)cursor = (uintptr_t)node->getInlinedSiteIndex();
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)symRef->getOwningMethod(comp)->constantPool(); // cp address
-         cursor += SIZEPOINTER;
-
-
-         *(uintptr_t *)cursor = (uintptr_t)symRef->getCPIndex(); // cp index
-         cursor += SIZEPOINTER;
-
-         break;
-         }
-
       case TR_DiscontiguousSymbolFromManager:
          {
          TR_RelocationRecordDiscontiguousSymbolFromManager *dsfmRecord = reinterpret_cast<TR_RelocationRecordDiscontiguousSymbolFromManager *>(reloRecord);

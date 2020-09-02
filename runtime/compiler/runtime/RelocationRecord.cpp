@@ -5558,7 +5558,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    0,                                                                                // TR_ConstantPoolOrderedPair                      = 25
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_AbsoluteMethodAddressOrderedPair             = 26
    sizeof(TR_RelocationRecordInlinedAllocationBinaryTemplate),                       // TR_VerifyRefArrayForAlloc                       = 27
-   24,                                                                               // TR_J2IThunks                                    = 28
+   0,                                                                                // TR_J2IThunks                                    = 28
    sizeof(TR_RelocationRecordWithOffsetBinaryTemplate),                              // TR_GlobalValue                                  = 29
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_BodyInfoAddressLoad                          = 30
    sizeof(TR_RelocationRecordValidateClassBinaryTemplate),                           // TR_ValidateInstanceField                        = 31

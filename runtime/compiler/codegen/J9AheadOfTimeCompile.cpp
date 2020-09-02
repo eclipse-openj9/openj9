@@ -1985,35 +1985,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
       switch (kind)
          {
-         case TR_J2IThunks:
-            {
-            cursor++;        //unused field
-            if (is64BitTarget)
-               cursor += 4;     // padding
-
-            ep1 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            ep2 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            ep3 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            if (isVerbose)
-               {
-               if (is64BitTarget)
-                  {
-                  traceMsg(self()->comp(), "\nTR_J2IThunks Relocation: InlineCallSite index = %d, ROM Class offset = %x, cpIndex = %d",
-                                  *(uint64_t *)ep1, *(uint64_t *)ep2, *(uint64_t *)ep3);
-                  }
-               else
-                  {
-                  traceMsg(self()->comp(), "\nTR_J2IThunks Relocation: InlineCallSite index = %d, ROM Class offset = %x, cpIndex = %d",
-                                  *(uint32_t *)ep1, *(uint32_t *)ep2, *(uint32_t *)ep3);
-                  }
-               }
-            break;
-            }
          case TR_DebugCounter:
             cursor ++;
             if (is64BitTarget)

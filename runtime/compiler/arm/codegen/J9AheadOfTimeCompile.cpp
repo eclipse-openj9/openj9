@@ -225,26 +225,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_J2IThunks:
-         {
-         // Note: thunk relos should only be created for 64 bit
-         // *(uintptr_t *)cursor = (uintptr_t)relocation->getTargetAddress2(); // inlined site index
-
-         TR::Node *node = (TR::Node*)relocation->getTargetAddress();
-         TR::SymbolReference *symRef = node->getSymbolReference();
-
-         *(uintptr_t *)cursor = (uintptr_t)node->getInlinedSiteIndex();
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)symRef->getOwningMethod(comp)->constantPool(); // cp address
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)symRef->getCPIndex(); // cp index
-         cursor += SIZEPOINTER;
-
-         break;
-         }
-
       case TR_RamMethodSequence:
          {
          TR_RelocationRecordRamSequence *rsRecord = reinterpret_cast<TR_RelocationRecordRamSequence *>(reloRecord);
