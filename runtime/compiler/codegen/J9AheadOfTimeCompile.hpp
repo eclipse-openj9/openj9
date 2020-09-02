@@ -50,7 +50,6 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
       {
       }
 
-   uint8_t* emitClassChainOffset(uint8_t* cursor, TR_OpaqueClassBlock* classToRemember);
    uintptr_t getClassChainOffset(TR_OpaqueClassBlock* classToRemember);
    uintptr_t findCorrectInlinedSiteIndex(void *constantPool, uintptr_t currentInlinedSiteIndex);
 

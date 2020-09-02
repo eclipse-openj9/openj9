@@ -50,14 +50,6 @@ J9::AheadOfTimeCompile::getClassChainOffset(TR_OpaqueClassBlock *classToRemember
    return self()->offsetInSharedCacheFromPointer(sharedCache, classChainForInlinedMethod);
    }
 
-uint8_t *
-J9::AheadOfTimeCompile::emitClassChainOffset(uint8_t* cursor, TR_OpaqueClassBlock* classToRemember)
-   {
-   uintptr_t classChainForInlinedMethodOffsetInSharedCache = self()->getClassChainOffset(classToRemember);
-   *pointer_cast<uintptr_t *>(cursor) = classChainForInlinedMethodOffsetInSharedCache;
-   return cursor + SIZEPOINTER;
-   }
-
 uintptr_t
 J9::AheadOfTimeCompile::offsetInSharedCacheFromPointer(TR_SharedCache *sharedCache, void *ptr)
    {
