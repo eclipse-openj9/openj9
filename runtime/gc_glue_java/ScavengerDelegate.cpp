@@ -224,6 +224,9 @@ MM_ScavengerDelegate::mergeGCStats_mergeLangStats(MM_EnvironmentBase * envBase)
 	finalGCJavaStats->_softReferenceStats.merge(&scavJavaStats->_softReferenceStats);
 	finalGCJavaStats->_phantomReferenceStats.merge(&scavJavaStats->_phantomReferenceStats);
 
+	finalGCJavaStats->_monitorReferenceCleared += scavJavaStats->_monitorReferenceCleared;
+	finalGCJavaStats->_monitorReferenceCandidates += scavJavaStats->_monitorReferenceCandidates;
+
 	scavJavaStats->clear();
 }
 

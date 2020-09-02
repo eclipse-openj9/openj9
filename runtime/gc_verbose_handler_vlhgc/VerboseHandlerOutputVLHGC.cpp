@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -418,6 +418,7 @@ MM_VerboseHandlerOutputVLHGC::handleCopyForwardEnd(J9HookInterface** hook, UDATA
 	outputReferenceInfo(env, 1, "phantom", &copyForwardStats->_phantomReferenceStats, 0, 0);
 
 	outputStringConstantInfo(env, 1, copyForwardStats->_stringConstantsCandidates, copyForwardStats->_stringConstantsCleared);
+	outputMonitorReferenceInfo(env, 1, copyForwardStats->_monitorReferenceCandidates, copyForwardStats->_monitorReferenceCleared);
 
 	if(0 != copyForwardStats->_heapExpandedCount) {
 		U_64 expansionMicros = j9time_hires_delta(0, copyForwardStats->_heapExpandedTime, J9PORT_TIME_DELTA_IN_MICROSECONDS);
@@ -574,6 +575,7 @@ MM_VerboseHandlerOutputVLHGC::outputMarkSummary(MM_EnvironmentBase *env, const c
 	outputReferenceInfo(env, 1, "phantom", &markStats->_phantomReferenceStats, 0, 0);
 
 	outputStringConstantInfo(env, 1, markStats->_stringConstantsCandidates, markStats->_stringConstantsCleared);
+	outputMonitorReferenceInfo(env, 1, markStats->_monitorReferenceCandidates, markStats->_monitorReferenceCleared);
 
 	switch (env->_cycleState->_reasonForMarkCompactPGC) {
 	case MM_CycleState::reason_not_exceptional:

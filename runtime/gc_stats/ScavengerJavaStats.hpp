@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,6 +57,9 @@ public:
 	MM_ReferenceStats _weakReferenceStats;  /**< Weak reference stats for the cycle */
 	MM_ReferenceStats _softReferenceStats;  /**< Soft reference stats for the cycle */
 	MM_ReferenceStats _phantomReferenceStats;  /**< Phantom reference stats for the cycle */
+
+	UDATA _monitorReferenceCleared; /**< The number of monitor references that have been cleared during scavenge */
+	UDATA _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during scavenge */
 
 protected:
 

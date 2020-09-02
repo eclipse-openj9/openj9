@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,8 @@ MM_ScavengerJavaStats::MM_ScavengerJavaStats() :
 	,_weakReferenceStats()
 	,_softReferenceStats()
 	,_phantomReferenceStats()
+	,_monitorReferenceCleared(0)
+	,_monitorReferenceCandidates(0)
 {
 }
 
@@ -48,6 +50,9 @@ MM_ScavengerJavaStats::clear()
 	_weakReferenceStats.clear();
 	_softReferenceStats.clear();
 	_phantomReferenceStats.clear();
+
+	_monitorReferenceCleared = 0;
+	_monitorReferenceCandidates = 0;
 };
 
 

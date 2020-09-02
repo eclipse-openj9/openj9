@@ -3833,6 +3833,7 @@ private:
 
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator) {
 		J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
+		MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._monitorReferenceCandidates += 1;
 		J9Object *objectPtr = (J9Object *)monitor->userData;
 		if(!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
@@ -3843,6 +3844,7 @@ private:
 			} else {
 				Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
 				monitorReferenceIterator->removeSlot();
+				MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._monitorReferenceCleared += 1;
 				/* We must call objectMonitorDestroy (as opposed to omrthread_monitor_destroy) when the
 				 * monitor is not internal to the GC
 				 */

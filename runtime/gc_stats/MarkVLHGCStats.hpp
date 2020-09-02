@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,6 +68,9 @@ public:
 	UDATA _stringConstantsCleared;  /**< The number of string constants that have been cleared during marking */
 	UDATA _stringConstantsCandidates; /**< The number of string constants that have been visited in string table during marking */
 
+	UDATA _monitorReferenceCleared; /**< The number of monitor references that have been cleared during marking */
+	UDATA _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during marking */
+
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	UDATA _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
 	UDATA _doubleMappedArrayletsCandidates; /**< The number of double mapped arraylets that have been visited during marking */
@@ -99,6 +102,9 @@ public:
 		_stringConstantsCleared = 0;
 		_stringConstantsCandidates = 0;
 
+		_monitorReferenceCleared = 0;
+		_monitorReferenceCandidates = 0;
+
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared = 0;
 		_doubleMappedArrayletsCandidates = 0;
@@ -126,6 +132,9 @@ public:
 		_stringConstantsCleared += statsToMerge->_stringConstantsCleared;
 		_stringConstantsCandidates += statsToMerge->_stringConstantsCandidates;
 
+		_monitorReferenceCleared += statsToMerge->_monitorReferenceCleared;
+		_monitorReferenceCandidates += statsToMerge->_monitorReferenceCandidates;
+
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared += statsToMerge->_doubleMappedArrayletsCleared;
 		_doubleMappedArrayletsCandidates += statsToMerge->_doubleMappedArrayletsCandidates;
@@ -150,6 +159,8 @@ public:
 		,_phantomReferenceStats()
 		,_stringConstantsCleared(0)
 		,_stringConstantsCandidates(0)
+		,_monitorReferenceCleared(0)
+		,_monitorReferenceCandidates(0)
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		,_doubleMappedArrayletsCleared(0)
 		,_doubleMappedArrayletsCandidates(0)
