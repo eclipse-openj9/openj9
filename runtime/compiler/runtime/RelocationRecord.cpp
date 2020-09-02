@@ -5339,6 +5339,79 @@ TR_RelocationRecordDebugCounter::bytesInHeaderAndPayload()
    }
 
 void
+TR_RelocationRecordDebugCounter::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecordWithInlinedSiteIndex::print(reloRuntime);
+   reloLogger->printf("\tbcIndex %d\n", bcIndex(reloTarget));
+   reloLogger->printf("\tdelta %d\n", delta(reloTarget));
+   reloLogger->printf("\tfidelity %d\n", static_cast<uint32_t>(fidelity(reloTarget)));
+   reloLogger->printf("\tstaticDelta %d\n", staticDelta(reloTarget));
+   reloLogger->printf("\toffsetOfNameString %d\n", reinterpret_cast<void *>(offsetOfNameString(reloTarget)));
+   }
+
+void
+TR_RelocationRecordDebugCounter::setBCIndex(TR_RelocationTarget *reloTarget, int32_t bcIndex)
+   {
+   reloTarget->storeSigned32b(bcIndex, (uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_bcIndex));
+   }
+
+int32_t
+TR_RelocationRecordDebugCounter::bcIndex(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadSigned32b((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_bcIndex));
+   }
+
+void
+TR_RelocationRecordDebugCounter::setDelta(TR_RelocationTarget *reloTarget, int32_t delta)
+   {
+   reloTarget->storeSigned32b(delta, (uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_delta));
+   }
+
+int32_t
+TR_RelocationRecordDebugCounter::delta(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadSigned32b((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_delta));
+   }
+
+void
+TR_RelocationRecordDebugCounter::setFidelity(TR_RelocationTarget *reloTarget, int8_t fidelity)
+   {
+   reloTarget->storeSigned8b(fidelity, (uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_fidelity));
+   }
+
+int8_t
+TR_RelocationRecordDebugCounter::fidelity(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadSigned8b((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_fidelity));
+   }
+
+void
+TR_RelocationRecordDebugCounter::setStaticDelta(TR_RelocationTarget *reloTarget, int32_t staticDelta)
+   {
+   reloTarget->storeSigned32b(staticDelta, (uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_staticDelta));
+   }
+
+int32_t
+TR_RelocationRecordDebugCounter::staticDelta(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadSigned32b((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_staticDelta));
+   }
+
+void
+TR_RelocationRecordDebugCounter::setOffsetOfNameString(TR_RelocationTarget *reloTarget, uintptr_t offsetOfNameString)
+   {
+   reloTarget->storeRelocationRecordValue(offsetOfNameString, (uintptr_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_offsetOfNameString));
+   }
+
+uintptr_t
+TR_RelocationRecordDebugCounter::offsetOfNameString(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadRelocationRecordValue((uintptr_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_offsetOfNameString));
+   }
+
+void
 TR_RelocationRecordDebugCounter::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
    {
    TR_RelocationRecordDebugCounterPrivateData *reloPrivateData = &(privateData()->debugCounter);
@@ -5353,12 +5426,12 @@ TR_RelocationRecordDebugCounter::preparePrivateData(TR_RelocationRuntime *reloRu
       reloPrivateData->_method = NULL;
       }
 
-   reloPrivateData->_bcIndex     = reloTarget->loadSigned32b((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_bcIndex));
-   reloPrivateData->_delta       = reloTarget->loadSigned32b((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_delta));
-   reloPrivateData->_fidelity    = reloTarget->loadUnsigned8b((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_fidelity));
-   reloPrivateData->_staticDelta = reloTarget->loadSigned32b((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_staticDelta));
+   reloPrivateData->_bcIndex     = bcIndex(reloTarget);
+   reloPrivateData->_delta       = delta(reloTarget);
+   reloPrivateData->_fidelity    = fidelity(reloTarget);
+   reloPrivateData->_staticDelta = staticDelta(reloTarget);
 
-   UDATA offset                  = (UDATA)reloTarget->loadPointer((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_offsetOfNameString));
+   UDATA offset                  = offsetOfNameString(reloTarget);
    reloPrivateData->_name        =  reloRuntime->fej9()->sharedCache()->getDebugCounterName(offset);
    }
 

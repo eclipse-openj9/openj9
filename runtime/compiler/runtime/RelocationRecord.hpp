@@ -196,11 +196,11 @@ struct TR_RelocationRecordEmitClassBinaryTemplate : public TR_RelocationRecordWi
 
 struct TR_RelocationRecordDebugCounterBinaryTemplate : public TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate
    {
-   UDATA _bcIndex;
+   int8_t _fidelity;
+   int32_t _bcIndex;
+   int32_t _delta;
+   int32_t _staticDelta;
    UDATA _offsetOfNameString;
-   UDATA _delta;
-   UDATA _fidelity;
-   UDATA _staticDelta;
    };
 
 typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadAssumptionBinaryTemplate;
@@ -2098,12 +2098,29 @@ class TR_RelocationRecordDebugCounter : public TR_RelocationRecordWithInlinedSit
       TR_RelocationRecordDebugCounter(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordWithInlinedSiteIndex(reloRuntime, record) {}
       virtual char *name();
 
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
       virtual int32_t bytesInHeaderAndPayload();
 
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
 
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow);
+
+      void setBCIndex(TR_RelocationTarget *reloTarget, int32_t bcIndex);
+      int32_t bcIndex(TR_RelocationTarget *reloTarget);
+
+      void setDelta(TR_RelocationTarget *reloTarget, int32_t delta);
+      int32_t delta(TR_RelocationTarget *reloTarget);
+
+      void setFidelity(TR_RelocationTarget *reloTarget, int8_t fidelity);
+      int8_t fidelity(TR_RelocationTarget *reloTarget);
+
+      void setStaticDelta(TR_RelocationTarget *reloTarget, int32_t staticDelta);
+      int32_t staticDelta(TR_RelocationTarget *reloTarget);
+
+      void setOffsetOfNameString(TR_RelocationTarget *reloTarget, uintptr_t offsetOfNameString);
+      uintptr_t offsetOfNameString(TR_RelocationTarget *reloTarget);
 
    private:
       TR::DebugCounterBase *findOrCreateCounter(TR_RelocationRuntime *reloRuntime);

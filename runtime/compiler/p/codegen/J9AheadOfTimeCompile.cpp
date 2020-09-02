@@ -137,8 +137,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
    reloRecord->setType(reloTarget, static_cast<TR_RelocationRecordType>(targetKind));
    reloRecord->setFlag(reloTarget, wideOffsets);
 
-   cursor += sizeof(TR_RelocationRecordBinaryTemplate);
-
    switch (targetKind)
       {
       case TR_ClassAddress:
@@ -395,40 +393,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
-      case TR_DebugCounter:
-         {
-         TR::DebugCounterBase *counter = (TR::DebugCounterBase *) relocation->getTargetAddress();
-         if (!counter || !counter->getReloData() || !counter->getName())
-            comp->failCompilation<TR::CompilationException>("Failed to generate debug counter relo data");
-
-         TR::DebugCounterReloData *counterReloData = counter->getReloData();
-
-         uintptr_t offset = (uintptr_t)fej9->sharedCache()->rememberDebugCounterName(counter->getName());
-
-         uint8_t flags = (uint8_t)counterReloData->_seqKind;
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-
-         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_callerIndex;
-         cursor += SIZEPOINTER;
-         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_bytecodeIndex;
-         cursor += SIZEPOINTER;
-         *(uintptr_t *)cursor = offset;
-         cursor += SIZEPOINTER;
-         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_delta;
-         cursor += SIZEPOINTER;
-         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_fidelity;
-         cursor += SIZEPOINTER;
-         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_staticDelta;
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       default:
-         // initializeCommonAOTRelocationHeader is currently in the process
-         // of becoming the canonical place to initialize the platform agnostic
-         // relocation headers; new relocation records' header should be
-         // initialized here.
          cursor = self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
 
       }

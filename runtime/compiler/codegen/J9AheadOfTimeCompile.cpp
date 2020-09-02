@@ -1072,6 +1072,30 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_DebugCounter:
+         {
+         TR_RelocationRecordDebugCounter *dcRecord = reinterpret_cast<TR_RelocationRecordDebugCounter *>(reloRecord);
+
+         TR::DebugCounterBase *counter = reinterpret_cast<TR::DebugCounterBase *>(relocation->getTargetAddress());
+         if (!counter || !counter->getReloData() || !counter->getName())
+            comp->failCompilation<TR::CompilationException>("Failed to generate debug counter relo data");
+
+         TR::DebugCounterReloData *counterReloData = counter->getReloData();
+
+         uintptr_t offsetOfNameString = fej9->sharedCache()->rememberDebugCounterName(counter->getName());
+         uint8_t flags = counterReloData->_seqKind;
+
+         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+         dcRecord->setReloFlags(reloTarget, flags);
+         dcRecord->setInlinedSiteIndex(reloTarget, static_cast<uintptr_t>(counterReloData->_callerIndex));
+         dcRecord->setBCIndex(reloTarget, counterReloData->_bytecodeIndex);
+         dcRecord->setDelta(reloTarget, counterReloData->_delta);
+         dcRecord->setFidelity(reloTarget, counterReloData->_fidelity);
+         dcRecord->setStaticDelta(reloTarget, counterReloData->_staticDelta);
+         dcRecord->setOffsetOfNameString(reloTarget, offsetOfNameString);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1851,6 +1875,24 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          }
          break;
 
+      case TR_DebugCounter:
+         {
+         TR_RelocationRecordDebugCounter *dcRecord = reinterpret_cast<TR_RelocationRecordDebugCounter *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Debug Counter: Inlined site index = %d, bcIndex = %d, delta = %d, fidelity = %d, staticDelta = %d, offsetOfNameString = %p",
+                                     dcRecord->inlinedSiteIndex(reloTarget),
+                                     dcRecord->bcIndex(reloTarget),
+                                     dcRecord->delta(reloTarget),
+                                     dcRecord->fidelity(reloTarget),
+                                     dcRecord->staticDelta(reloTarget),
+                                     (void *)dcRecord->offsetOfNameString(reloTarget));
+            }
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1973,58 +2015,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
       cursor++;
 
-      // dumpRelocationHeaderData is currently in the process of becoming the
-      // the canonical place to dump the relocation header data; new relocation
-      // records' header data should be printed here.
-      uint8_t *newCursor = self()->dumpRelocationHeaderData(origCursor, isVerbose);
-      if (origCursor != newCursor)
-         {
-         cursor = newCursor;
-         continue;
-         }
-
-      switch (kind)
-         {
-         case TR_DebugCounter:
-            cursor ++;
-            if (is64BitTarget)
-               {
-               cursor += 4;     // padding
-               ep1 = cursor;    // inlinedSiteIndex
-               ep2 = cursor+8;  // bcIndex
-               ep3 = cursor+16; // offsetOfNameString
-               ep4 = cursor+24; // delta
-               ep5 = cursor+40; // staticDelta
-               cursor += 48;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\n Debug Counter: Inlined site index = %d, bcIndex = %d, offsetOfNameString = %p, delta = %d, staticDelta = %d",
-                                   *(int64_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;    // inlinedSiteIndex
-               ep2 = cursor+4;  // bcIndex
-               ep3 = cursor+8;  // offsetOfNameString
-               ep4 = cursor+12; // delta
-               ep5 = cursor+20; // staticDelta
-               cursor += 24;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\n Debug Counter: Inlined site index = %d, bcIndex = %d, offsetOfNameString = %p, delta = %d, staticDelta = %d",
-                                   *(int32_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
-                  }
-               }
-            break;
-
-         default:
-            traceMsg(self()->comp(), "Unknown Relocation type = %d\n", kind);
-            TR_ASSERT_FATAL(false, "Unknown Relocation type = %d", kind);
-            break;
-         }
+      cursor = self()->dumpRelocationHeaderData(origCursor, isVerbose);
 
       traceMsg(self()->comp(), "\n");
       }
