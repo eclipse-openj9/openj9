@@ -136,7 +136,8 @@ J9::Compilation::Compilation(int32_t id,
       TR::Region &heapMemoryRegion,
       TR_Memory *m,
       TR_OptimizationPlan *optimizationPlan,
-      TR_RelocationRuntime *reloRuntime)
+      TR_RelocationRuntime *reloRuntime,
+      TR::Environment *target)
    : OMR::CompilationConnector(
       id,
       j9vmThread->omrVMThread,
@@ -146,7 +147,8 @@ J9::Compilation::Compilation(int32_t id,
       options,
       heapMemoryRegion,
       m,
-      optimizationPlan),
+      optimizationPlan,
+      target),
    _updateCompYieldStats(
       options.getOption(TR_EnableCompYieldStats) ||
       options.getVerboseOption(TR_VerboseCompYieldStats) ||
@@ -183,23 +185,6 @@ J9::Compilation::Compilation(int32_t id,
 #endif /* defined(J9VM_OPT_JITSERVER) */
    _osrProhibitedOverRangeOfTrees(false)
    {
-#if defined(J9VM_OPT_JITSERVER)
-   // In JITServer, we would like to use JITClient's processor info for the compilation
-   // The following code effectively replaces the cpu with client's cpu through the getProcessorDescription() that has JITServer support
-   if (self()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-      {
-      OMRProcessorDesc JITClientProcessorDesc = TR::Compiler->target.cpu.getProcessorDescription();
-      _target.cpu = TR::CPU(JITClientProcessorDesc);
-      }
-   else
-#endif /* defined(J9VM_OPT_JITSERVER) */
-      {
-      if (((TR_J9VMBase *)fe)->isAOT_DEPRECATED_DO_NOT_USE() && TR::Compiler->target.cpu.isX86())
-         {
-         _target = TR::Compiler->relocatableTarget;
-         }
-      }
-
    _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
 
    _aotClassClassPointer = NULL;

@@ -182,7 +182,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
 
    cg->getS390Linkage()->initS390RealRegisterLinkage();
 
-   const bool accessStaticsIndirectly = !comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) ||
+   const bool accessStaticsIndirectly =
          comp->getOption(TR_DisableDirectStaticAccessOnZ) ||
          (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager));
 
@@ -2061,7 +2061,7 @@ J9::Z::CodeGenerator::genSignCodeSetting(TR::Node *node, TR_PseudoRegister *targ
       case TR::ZonedDecimal:
       case TR::ZonedDecimalSignLeadingEmbedded:
          {
-         if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && isPacked && digitsToClear >= 3)
+         if (isPacked && digitsToClear >= 3)
             {
             int32_t bytesToSet = (digitsToClear+1)/2;
             int32_t leftMostByte = 0;
@@ -3010,12 +3010,6 @@ J9::Z::CodeGenerator::canCopyWithOneOrTwoInstrs(char *lit, size_t size)
       return false;
       }
 
-   // z9 does not support these complex move instructions
-   if (!self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) && size > 2)
-      {
-      return false;
-      }
-
    bool canCopy = false;
    switch (size)
       {
@@ -3110,15 +3104,7 @@ J9::Z::CodeGenerator::useMoveImmediateCommon(TR::Node *node,
          break;
       case 2:  // MVI/MVI or MVHHI
          {
-         if (self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
-            {
-            genMVHHI(destMR, node, (lit[0]<<8)|lit[1], cg);
-            }
-         else
-            {
-            genMVI(destMR, node, lit[0], cg);
-            genMVI(getNextMR(destMR, node, 1, destLeftMostByte, isBCD, cg), node, lit[1], cg);
-            }
+         genMVHHI(destMR, node, (lit[0]<<8)|lit[1], cg);
          break;
          }
       case 3:  // MVHHI/MVI

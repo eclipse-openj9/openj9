@@ -1809,8 +1809,7 @@ J9::Options::fePreProcess(void * base)
 #if defined(TR_HOST_POWER)
    preferTLHPrefetch = TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P6) && TR::Compiler->target.cpu.isAtMost(OMR_PROCESSOR_PPC_P7);
 #elif defined(TR_HOST_S390)
-   // TODO: processor arch is not initialized at this point. Once we switch to the new api this problem will go away
-   preferTLHPrefetch = TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10);
+   preferTLHPrefetch = true;
 #else // TR_HOST_X86
    preferTLHPrefetch = true;
    // Disable TM on x86 because we cannot tell whether a Haswell chip supports TM or not, plus it's killing the performance on dayTrader3
