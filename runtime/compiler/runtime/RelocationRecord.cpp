@@ -210,12 +210,6 @@ TR_RelocationRecordGroup::handleRelocation(TR_RelocationRuntime *reloRuntime,
    return compilationAotClassReloFailure;
    }
 
-#define FLAGS_RELOCATION_WIDE_OFFSETS   0x80
-#define FLAGS_RELOCATION_EIP_OFFSET     0x40
-#define FLAGS_RELOCATION_TYPE_MASK      (TR_ExternalRelocationTargetKindMask)
-#define FLAGS_RELOCATION_FLAG_MASK      ((uint8_t) (FLAGS_RELOCATION_WIDE_OFFSETS | FLAGS_RELOCATION_EIP_OFFSET))
-
-
 TR_RelocationRecord *
 TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_RelocationRecordBinaryTemplate *record)
    {
@@ -549,53 +543,53 @@ TR_RelocationRecord::type(TR_RelocationTarget *reloTarget)
 void
 TR_RelocationRecord::setWideOffsets(TR_RelocationTarget *reloTarget)
    {
-   setFlag(reloTarget, FLAGS_RELOCATION_WIDE_OFFSETS);
+   setFlag(reloTarget, RELOCATION_TYPE_WIDE_OFFSET);
    }
 
 bool
 TR_RelocationRecord::wideOffsets(TR_RelocationTarget *reloTarget)
    {
-   return (flags(reloTarget) & FLAGS_RELOCATION_WIDE_OFFSETS) != 0;
+   return (flags(reloTarget) & RELOCATION_TYPE_WIDE_OFFSET) != 0;
    }
 
 void
 TR_RelocationRecord::setEipRelative(TR_RelocationTarget *reloTarget)
    {
-   setFlag(reloTarget, FLAGS_RELOCATION_EIP_OFFSET);
+   setFlag(reloTarget, RELOCATION_TYPE_EIP_OFFSET);
    }
 
 bool
 TR_RelocationRecord::eipRelative(TR_RelocationTarget *reloTarget)
    {
-   return (flags(reloTarget) & FLAGS_RELOCATION_EIP_OFFSET) != 0;
+   return (flags(reloTarget) & RELOCATION_TYPE_EIP_OFFSET) != 0;
    }
 
 void
 TR_RelocationRecord::setFlag(TR_RelocationTarget *reloTarget, uint8_t flag)
    {
-   uint8_t flags = reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) | (flag & FLAGS_RELOCATION_FLAG_MASK);
+   uint8_t flags = reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) | (flag & RELOCATION_CROSS_PLATFORM_FLAGS_MASK);
    reloTarget->storeUnsigned8b(flags, (uint8_t *) &_record->_flags);
    }
 
 uint8_t
 TR_RelocationRecord::flags(TR_RelocationTarget *reloTarget)
    {
-   return reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) & FLAGS_RELOCATION_FLAG_MASK;
+   return reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) & RELOCATION_CROSS_PLATFORM_FLAGS_MASK;
    }
 
 void
 TR_RelocationRecord::setReloFlags(TR_RelocationTarget *reloTarget, uint8_t reloFlags)
    {
-   TR_ASSERT_FATAL((reloFlags & FLAGS_RELOCATION_FLAG_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+   TR_ASSERT_FATAL((reloFlags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
    uint8_t crossPlatFlags = flags(reloTarget);
-   uint8_t flags = crossPlatFlags | (reloFlags & ~FLAGS_RELOCATION_FLAG_MASK);
+   uint8_t flags = crossPlatFlags | (reloFlags & RELOCATION_RELOC_FLAGS_MASK);
    reloTarget->storeUnsigned8b(flags, (uint8_t *) &_record->_flags);
    }
 
 uint8_t
 TR_RelocationRecord::reloFlags(TR_RelocationTarget *reloTarget)
    {
-   return reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) & ~FLAGS_RELOCATION_FLAG_MASK;
+   return reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) & RELOCATION_RELOC_FLAGS_MASK;
    }
 
 void
@@ -619,12 +613,6 @@ TR_RelocationRecord::computeHelperAddress(TR_RelocationRuntime *reloRuntime, TR_
 
    return helperAddress;
    }
-
-#undef FLAGS_RELOCATION_WIDE_OFFSETS
-#undef FLAGS_RELOCATION_EIP_OFFSET
-#undef FLAGS_RELOCATION_ORDERED_PAIR
-#undef FLAGS_RELOCATION_TYPE_MASK
-#undef FLAGS_RELOCATION_FLAG_MASK
 
 
 TR_RelocationRecordAction
