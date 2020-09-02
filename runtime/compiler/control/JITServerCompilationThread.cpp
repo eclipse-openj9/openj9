@@ -476,7 +476,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             clientSession->processUnloadedClasses(unloadedClasses, false);
             }
 
-         auto chTable = (JITServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+         auto chTable = static_cast<JITServerPersistentCHTable *>(compInfo->getPersistentInfo()->getPersistentCHTable());
          // Need CHTable mutex
          TR_ASSERT_FATAL(!chTable->isInitialized(), "CHTable must be empty for clientUID=%llu", (unsigned long long)clientId);
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
