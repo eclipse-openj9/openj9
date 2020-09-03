@@ -113,7 +113,10 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    if (comp->target().is64Bit())
       {
       _properties._registerFlags[TR::RealRegister::gr15] = Preserved|PPC_Reserved; // meta data
-      _properties._registerFlags[TR::RealRegister::gr16] = Preserved|PPC_Reserved; // JTOC
+      if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+         _properties._registerFlags[TR::RealRegister::gr16] = Preserved;              // typical preserved reg
+      else
+         _properties._registerFlags[TR::RealRegister::gr16] = Preserved|PPC_Reserved; // JTOC
       }
    else
       {
@@ -172,9 +175,18 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
       _properties._firstFloatReturnRegister = 1;
       _properties._returnRegisters[1]  = TR::RealRegister::fp0;
 
-      _properties._numAllocatableIntegerRegisters          = 27; // 64
-      _properties._firstAllocatableFloatArgumentRegister   = 40; // 64
-      _properties._lastAllocatableFloatVolatileRegister    = 58; // 64
+      if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+         {
+         _properties._numAllocatableIntegerRegisters          = 28; // 64 post-P10
+         _properties._firstAllocatableFloatArgumentRegister   = 41; // 64 post-P10
+         _properties._lastAllocatableFloatVolatileRegister    = 59; // 64 post-P10
+         }
+      else
+         {
+         _properties._numAllocatableIntegerRegisters          = 27; // 64 pre-P10
+         _properties._firstAllocatableFloatArgumentRegister   = 40; // 64 pre-P10
+         _properties._lastAllocatableFloatVolatileRegister    = 58; // 64 pre-P10
+         }
       }
    else
       {
@@ -240,7 +252,12 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    _properties._allocationOrder[i++] = TR::RealRegister::gr18;
    _properties._allocationOrder[i++] = TR::RealRegister::gr17;
 
-   if (comp->target().is32Bit())
+   if (comp->target().is64Bit())
+      {
+      if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+         _properties._allocationOrder[i++] = TR::RealRegister::gr16;
+      }
+   else
       {
       _properties._allocationOrder[i++] = TR::RealRegister::gr16;
       _properties._allocationOrder[i++] = TR::RealRegister::gr15;
@@ -323,7 +340,10 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
 
    if (comp->target().is64Bit())
       {
-      _properties._preservedRegisterMapForGC     = 0x00007fff;
+      if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+         _properties._preservedRegisterMapForGC     = 0x0000ffff;
+      else
+         _properties._preservedRegisterMapForGC     = 0x00007fff;
       _properties._methodMetaDataRegister        = TR::RealRegister::gr15;
       _properties._normalStackPointerRegister    = TR::RealRegister::gr14;
       _properties._alternateStackPointerRegister = TR::RealRegister::NoReg;
@@ -1913,20 +1933,28 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
    Ultimately, we don't need an assert or NULL check when searching for these registers within the dependency.
    */
    if(linkage == TR_CHelper)
-   {
+      {
       if(comp()->target().isLinux() && comp()->target().is64Bit() && comp()->target().cpu.isLittleEndian())
-      {
-         int32_t helperOffset = (callNode->getSymbolReference()->getReferenceNumber() - 1)*sizeof(intptr_t);
-         generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, dependencies->searchPreConditionRegister(TR::RealRegister::gr12),
-            new(trHeapMemory()) TR::MemoryReference(cg()->getTOCBaseRegister(), helperOffset, TR::Compiler->om.sizeofReferenceAddress(), cg()));
+         {
+         if (!comp()->getOption(TR_DisableTOC))
+            {
+            int32_t helperOffset = (callNode->getSymbolReference()->getReferenceNumber() - 1)*sizeof(intptr_t);
+            generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, dependencies->searchPreConditionRegister(TR::RealRegister::gr12),
+               new(trHeapMemory()) TR::MemoryReference(cg()->getTOCBaseRegister(), helperOffset, TR::Compiler->om.sizeofReferenceAddress(), cg()));
+            }
+         else
+            {
+            loadAddressConstant(cg(), callNode, (int64_t)runtimeHelperValue((TR_RuntimeHelper)callNode->getSymbolReference()->getReferenceNumber()),
+               dependencies->searchPreConditionRegister(TR::RealRegister::gr12));
+            }
 
-      }
+         }
       else if (comp()->target().isAIX() || (comp()->target().isLinux() && comp()->target().is64Bit()))
-      {
+         {
          generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, dependencies->searchPreConditionRegister(TR::RealRegister::gr2),
             new(trHeapMemory()) TR::MemoryReference(cg()->getMethodMetaDataRegister(), offsetof(J9VMThread, jitTOC), TR::Compiler->om.sizeofReferenceAddress(), cg()));
+         }
       }
-   }
 
 
    // This is a performance hack. CCRs are rarely live across calls,
