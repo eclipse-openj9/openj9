@@ -1461,6 +1461,7 @@ Method getMethodHelper(
 	Method result;
 	Method bestCandidate;
 	String strSig;
+	boolean candidateFromInterface = false;
 	
 	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
 	if (parameterTypes == null) {
@@ -1492,7 +1493,28 @@ Method getMethodHelper(
 			return null;
 		}
 	}
-	result = forDeclaredMethod ? getDeclaredMethodImpl(name, parameterTypes, strSig, null) : getMethodImpl(name, parameterTypes, strSig);
+	
+	if (forDeclaredMethod) {
+		result = getDeclaredMethodImpl(name, parameterTypes, strSig, null);
+	} else {
+		if (this.isInterface()) {
+			/* if the result is not in the current class, all superinterfaces will need to be searched */
+			result = getDeclaredMethodImpl(name, parameterTypes, strSig, null);
+			if (null == result) {
+				result = getMostSpecificMethodFromAllInterfacesOfCurrentClass(null, null, name, parameterTypes);
+				candidateFromInterface = true;
+			}
+		} else {
+			result = getMethodImpl(name, parameterTypes, strSig);
+			/* Retrieve the specified method implemented by the superclass from the top to the bottom. */
+			if ((result != null) && result.getDeclaringClass().isInterface()) {
+				HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache = new HashMap<>(16);
+				result = getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(infoCache, name, parameterTypes);
+				candidateFromInterface = true;
+			}
+		}
+	}
+	
 	if (result == null) {
 		return throwExceptionOrReturnNull(throwException, name, parameterTypes);
 	}
@@ -1534,26 +1556,145 @@ Method getMethodHelper(
 	 * Otherwise, the result method is chosen arbitrarily from specific methods.
 	 */
 	bestCandidate = result;
-	Class<?> declaringClass = forDeclaredMethod ? this : result.getDeclaringClass();
-	while (true) {
-		result = declaringClass.getDeclaredMethodImpl(name, parameterTypes, strSig, result);
-		if (result == null) {
-			break;
-		}
-		boolean publicMethod = ((result.getModifiers() & Modifier.PUBLIC) != 0);
-		if ((methodList != null) && publicMethod) {
-			methodList.add(result);
-		}
-		if (forDeclaredMethod || publicMethod) {
-			// bestCandidate and result have same declaringClass.
-			Class<?> candidateRetType = bestCandidate.getReturnType();
-			Class<?> resultRetType = result.getReturnType();
-			if ((candidateRetType != resultRetType) && candidateRetType.isAssignableFrom(resultRetType)) {
-				bestCandidate = result;
+	if (!candidateFromInterface) {
+		Class<?> declaringClass = forDeclaredMethod ? this : result.getDeclaringClass();
+		while (true) {
+			result = declaringClass.getDeclaredMethodImpl(name, parameterTypes, strSig, result);
+			if (result == null) {
+				break;
+			}
+			boolean publicMethod = ((result.getModifiers() & Modifier.PUBLIC) != 0);
+			if ((methodList != null) && publicMethod) {
+				methodList.add(result);
+			}
+			if (forDeclaredMethod || publicMethod) {
+				// bestCandidate and result have same declaringClass.
+				Class<?> candidateRetType = bestCandidate.getReturnType();
+				Class<?> resultRetType = result.getReturnType();
+				if ((candidateRetType != resultRetType) && candidateRetType.isAssignableFrom(resultRetType)) {
+					bestCandidate = result;
+				}
 			}
 		}
 	}
 	return cacheMethod(bestCandidate);
+}
+
+/**
+ * Helper method searches all interfaces implemented by superclasses from the top to the bottom
+ * for the most specific method declared in one of these interfaces.
+ *
+ * @param infoCache
+ * @param name the specified method's name
+ * @param parameterTypes the types of the arguments of the specified method
+ * @return the most specific method selected from all interfaces from each superclass of the current class;
+ *         otherwise, return the method of the first interface from the top superclass
+ *         if the return types of all specified methods are identical.
+ */
+private Method getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache, 
+	String name, Class<?>... parameterTypes) 
+{
+	Method candidateMethod = null;
+	if (this != Object.class) {
+		/* get to the top superclass first. if all return types end up being the same the interfaces from this superclass have priority. */
+		Class superclz = getSuperclass();
+		candidateMethod = superclz.getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(infoCache, name, parameterTypes);
+		
+		/* search all interfaces of current class, comparing against result from previous superclass. */
+		candidateMethod = getMostSpecificMethodFromAllInterfacesOfCurrentClass(infoCache, candidateMethod, name, parameterTypes);
+	}
+	return candidateMethod;
+}
+
+/**
+ * Helper method searches all interfaces implemented by the current class or interface 
+ * for the most specific method declared in one of these interfaces.
+ *
+ * @param infoCache
+ * @param potentialCandidate potential candidate from superclass, null if currentClass is an interface
+ * @param name the specified method's name
+ * @param parameterTypes the types of the arguments of the specified method
+ * @return the most specific method selected from all interfaces;
+ *         otherwise if return types from all qualifying methods are identical, return an arbitrary method.
+ */
+private Method getMostSpecificMethodFromAllInterfacesOfCurrentClass(HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache,
+	Method potentialCandidate, String name, Class<?>... parameterTypes) 
+{
+	Method bestMethod = potentialCandidate;
+	/* if infoCache is passed in, reuse from superclass */
+	if (null == infoCache) {
+		infoCache = new HashMap<>(16);
+	}
+	HashMap<MethodInfo, MethodInfo> methodCandidates = getMethodSet(infoCache, false, true);
+
+	for (MethodInfo mi : methodCandidates.values()) {
+		if (null == mi.jlrMethods) {
+			bestMethod = getMostSpecificInterfaceMethod(name, parameterTypes, bestMethod, mi.me);
+		} else {
+			for (Method m: mi.jlrMethods) {
+				bestMethod = getMostSpecificInterfaceMethod(name, parameterTypes, bestMethod, m);
+			}
+		}
+	}
+
+	return bestMethod;
+
+}
+
+private static Method getMostSpecificInterfaceMethod(String name, Class<?>[] parameterTypes, Method bestMethod, Method candidateMethod) {
+	if (candidateMethod == bestMethod) {
+		return bestMethod;
+	}
+
+	/* match name and parameters to user specification */
+	if (!candidateMethod.getDeclaringClass().isInterface() 
+		|| !candidateMethod.getName().equals(name) 
+		|| !doParameterTypesMatch(candidateMethod.getParameterTypes(), parameterTypes)
+	) {
+		return bestMethod;
+	}
+
+	if (null == bestMethod) {
+		bestMethod = candidateMethod;
+		return bestMethod;
+	}
+
+	Class<?> bestRetType = bestMethod.getReturnType();
+	Class<?> candidateRetType = candidateMethod.getReturnType();
+
+	if (bestRetType == candidateRetType) {
+		int bestModifiers = bestMethod.getModifiers();
+		int candidateModifiers = candidateMethod.getModifiers();
+		Class<?> bestDeclaringClass = bestMethod.getDeclaringClass();
+		Class<?> candidateDeclaringClass = candidateMethod.getDeclaringClass();
+		/* if all return types end up being the same, non-static methods take priority over static methods and sub-interfaces take
+			priority over superinterface */
+			if ((Modifier.isStatic(bestModifiers) && !Modifier.isStatic(candidateModifiers))
+				|| methodAOverridesMethodB(candidateDeclaringClass, Modifier.isAbstract(candidateModifiers), candidateDeclaringClass.isInterface(), 
+				bestDeclaringClass, Modifier.isAbstract(bestModifiers), bestDeclaringClass.isInterface())
+		) {
+			bestMethod = candidateMethod;
+		}
+	} else {
+		/* resulting method should have the most specific return type */
+		if (bestRetType.isAssignableFrom(candidateRetType)) {
+			bestMethod = candidateMethod;
+		}
+	}
+
+	return bestMethod;
+}
+
+private static boolean doParameterTypesMatch(Class<?>[] paramList1, Class<?>[] paramList2) {
+	if (paramList1.length != paramList2.length) return false;
+
+	for (int index = 0; index < paramList1.length; index++) {
+		if (!paramList1[index].equals(paramList2[index])) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /**
@@ -1608,7 +1749,7 @@ public Method[] getMethods() throws SecurityException {
 	/*[PR CMVC 192714,194493] prepare the class before attempting to access members */
 	J9VMInternals.prepare(this);
 	HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache = new HashMap<>(16);
-	HashMap<MethodInfo, MethodInfo> myMethods = getMethodSet(infoCache, false);
+	HashMap<MethodInfo, MethodInfo> myMethods = getMethodSet(infoCache, false, false);
 	ArrayList<Method> myMethodList = new ArrayList<>(16);
 	for (MethodInfo mi: myMethods.values()) { /* don't know how big this will be at the start */
 		if (null == mi.jlrMethods) {
@@ -1625,13 +1766,13 @@ public Method[] getMethods() throws SecurityException {
 
 private HashMap<MethodInfo, MethodInfo> getMethodSet(
 		HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache, 
-		boolean virtualOnly) {
+		boolean virtualOnly, boolean localInterfacesOnly) {
 	/* virtualOnly must be false only for the bottom class of the hierarchy */
 	HashMap<MethodInfo, MethodInfo> myMethods = infoCache.get(this);
 	if (null == myMethods) { 
 		/* haven't visited this class.  Initialize with the methods from the VTable which take priority */
 		myMethods = new HashMap<>(16);
-		if (!isInterface()) {
+		if (!isInterface() && !localInterfacesOnly) {
 			int vCount = 0;
 			int sCount = 0;
 			Method methods[] = null; /* this includes the superclass's virtual and static methods. */
@@ -1671,28 +1812,27 @@ private HashMap<MethodInfo, MethodInfo> getMethodSet(
 				}
 				if (mDeclaringClass.isInterface()) {
 					scanInterfaces = true;
-					/* The vTable may contain one declaration of an interface method with multiple declarations. */
-					if (null == methodFilter) {
-						methodFilter = new HashSet<>();
-					}
-					methodFilter.add(mi);
+					/* Add all the interfaces at once to preserve ordering */
+					myMethods.remove(mi, mi);
 				}
 			}
 			if (scanInterfaces) {
 				/* methodFilter is guaranteed to be non-null at this point */
-				addInterfaceMethods(infoCache, methodFilter, myMethods);
+				addInterfaceMethods(infoCache, methodFilter, myMethods, localInterfacesOnly);
 			}
-		} else { 
-			/* this is an interface and doesn't have a vTable, but may have static or private methods */
-			for (Method m: getDeclaredMethods()) { 
-				int methodModifiers = m.getModifiers();
-				if ((virtualOnly && Modifier.isStatic(methodModifiers)) || !Modifier.isPublic(methodModifiers)){
-					continue;
+		} else {
+			if (!localInterfacesOnly || isInterface()) {
+				/* this is an interface and doesn't have a vTable, but may have static or private methods */
+				for (Method m: getDeclaredMethods()) { 
+					int methodModifiers = m.getModifiers();
+					if ((virtualOnly && Modifier.isStatic(methodModifiers)) || !Modifier.isPublic(methodModifiers)){
+						continue;
+					}
+					MethodInfo mi = new MethodInfo(m);
+					myMethods.put(mi, mi);
 				}
-				MethodInfo mi = new MethodInfo(m);
-				myMethods.put(mi, mi);
 			}
-			addInterfaceMethods(infoCache, null, myMethods);
+			addInterfaceMethods(infoCache, null, myMethods, localInterfacesOnly);
 		}
 		infoCache.put(this, myMethods); /* save results for future use */
 	}
@@ -1709,7 +1849,7 @@ private HashMap<MethodInfo, MethodInfo> getMethodSet(
 private HashMap<MethodInfo, MethodInfo> addInterfaceMethods(
 		HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache, 
 		Set<MethodInfo> methodFilter, 
-		HashMap<MethodInfo, MethodInfo> myMethods) {
+		HashMap<MethodInfo, MethodInfo> myMethods, boolean localInterfacesOnly) {
 	boolean addToCache = false;
 	boolean updateList = (null != myMethods);
 	if (!updateList) {
@@ -1725,7 +1865,7 @@ private HashMap<MethodInfo, MethodInfo> addInterfaceMethods(
 		Class mySuperclass = getSuperclass();
 		if (!isInterface() && (Object.class != mySuperclass)) { 
 			/* some interface methods are visible via the superclass */
-			HashMap<MethodInfo, MethodInfo> superclassMethods = mySuperclass.addInterfaceMethods(infoCache, methodFilter, null);
+			HashMap<MethodInfo, MethodInfo> superclassMethods = mySuperclass.addInterfaceMethods(infoCache, methodFilter, null, localInterfacesOnly);
 			for (MethodInfo otherInfo: superclassMethods.values()) {
 				if ((null == methodFilter) || methodFilter.contains(otherInfo)) {
 					addMethod(myMethods, otherInfo);
@@ -1733,7 +1873,7 @@ private HashMap<MethodInfo, MethodInfo> addInterfaceMethods(
 			}
 		}
 		for (Class intf: getInterfaces()) {
-			HashMap<MethodInfo, MethodInfo> intfMethods = intf.getMethodSet(infoCache, true);
+			HashMap<MethodInfo, MethodInfo> intfMethods = intf.getMethodSet(infoCache, true, localInterfacesOnly);
 			for (MethodInfo otherInfo: intfMethods.values()) {
 				if ((null == methodFilter) || methodFilter.contains(otherInfo)) {
 					addMethod(myMethods, otherInfo);
@@ -3801,7 +3941,7 @@ private class MethodInfo {
 			int methodCursor = 0;
 			boolean addMethod = true;
 			boolean replacedMethod = false;
-			while (methodCursor < jlrMethods.size() && addMethod) {
+			while (methodCursor < jlrMethods.size()) {
 				int increment = 1;
 				Method m = jlrMethods.get(methodCursor);
 				if (newMethod.equals(m)) { /* already have this method */
@@ -3817,7 +3957,10 @@ private class MethodInfo {
 								incumbentMethodClass, incumbentIsAbstract, incumbentClassIsInterface)
 						) {
 							if (!replacedMethod) {
-								jlrMethods.set(methodCursor, newMethod);
+								/* preserve ordering by removing old and appending new instead of directly replacing. */ 
+								jlrMethods.remove(methodCursor);
+								jlrMethods.add(newMethod);
+								increment = 0;
 								replacedMethod = true;
 							} else {
 								jlrMethods.remove(methodCursor);
