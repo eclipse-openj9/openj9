@@ -441,8 +441,11 @@ public class ValueTypeGenerator extends ClassLoader {
 		}
 		mv.visitMethodInsn(INVOKESTATIC, className, specificMethodName, "(" + makeValueSig + ")" + getSigFromSimpleName(className, isRef), false);
 		mv.visitInsn(ARETURN);
-
-		mv.visitMaxs(makeMaxLocal, makeMaxLocal);
+		int maxStack = makeMaxLocal;
+		if (0 == maxStack) {
+			maxStack += 1;
+		}
+		mv.visitMaxs(maxStack, makeMaxLocal);
 		mv.visitEnd();
 	}
 	
