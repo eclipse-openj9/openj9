@@ -1975,6 +1975,7 @@ typedef struct J9BCTranslationData {
 #define BCT_AnyPreviewVersion  0x100000
 #define BCT_EnablePreview 0x200000
 #define BCT_Unsafe  0x400000
+#define BCT_BasicCheckOnly  0x800000
 #define BCT_DumpMaps  0x40000000
 
 #define BCT_J9DescriptionCpTypeScalar  0
@@ -4589,6 +4590,9 @@ typedef struct J9InternalVMFunctions {
 	j9object_t ( *getFlattenableField)(struct J9VMThread *currentThread, J9RAMFieldRef *cpEntry, j9object_t receiver, BOOLEAN fastPath);
 	j9object_t ( *cloneValueType)(struct J9VMThread *currentThread, struct J9Class *receiverClass, j9object_t original, BOOLEAN fastPath);
 	void ( *putFlattenableField)(struct J9VMThread *currentThread, struct J9RAMFieldRef *cpEntry, j9object_t receiver, j9object_t paramObject);
+#if JAVA_SPEC_VERSION >= 15
+	I_32 (*checkClassBytes) (struct J9VMThread *currentThread, U_8* classBytes, UDATA classBytesLength, U_8* segment, U_32 segmentLength);
+#endif /* JAVA_SPEC_VERSION >= 15 */
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */

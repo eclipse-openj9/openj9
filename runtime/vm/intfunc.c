@@ -386,4 +386,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	getFlattenableField,
 	cloneValueType,
 	putFlattenableField,
+#if JAVA_SPEC_VERSION >= 15
+	checkClassBytes,
+#endif /* JAVA_SPEC_VERSION >= 15 */
 };

@@ -37,6 +37,7 @@
 #include "j9vmnls.h"
 #include "j9vmconstantpool.h"
 #include "j9jclnls.h"
+#include "cfreader.h"
 
 /*
  * Note that the following native methods are implemented in sun_reflect_ConstantPool.c because
@@ -1045,3 +1046,50 @@ clearNonZAAPEligibleBit(JNIEnv *env, jclass nativeClass, const JNINativeMethod *
 	vmFuncs->internalExitVMToJNI(vmThread);
 }
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
+
+#if JAVA_SPEC_VERSION >= 15
+void JNICALL
+Java_java_lang_invoke_MethodHandleNatives_checkClassBytes(JNIEnv *env, jclass jlClass, jbyteArray classRep)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	jsize length = 0;
+	U_8* classBytes = NULL;
+	I_32 rc = 0;
+	U_8* segment = NULL;
+	U_32 segmentLength = 0;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	
+	if (NULL == classRep) {
+		throwNewNullPointerException(env, NULL);
+		goto done;
+	}
+	length = (*env)->GetArrayLength(env, classRep);
+	if (0 == length) {
+		goto done;
+	}
+
+	segmentLength = ESTIMATE_SIZE(length);
+	segment = (U_8*)j9mem_allocate_memory(segmentLength, J9MEM_CATEGORY_VM_JCL);
+	if (NULL == segment) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		goto done;
+	}
+	memset(segment, 0, segmentLength);
+	classBytes = (*env)->GetPrimitiveArrayCritical(env, classRep, NULL);
+
+	rc = vmFuncs->checkClassBytes(currentThread, classBytes, length, segment, segmentLength);
+	(*env)->ReleasePrimitiveArrayCritical(env, classRep, classBytes, 0);
+	if (0 != rc) {
+		J9CfrError *cfrError = (J9CfrError *)segment;
+		const char* errorMsg = OMRPORT_FROM_J9PORT(PORTLIB)->nls_lookup_message(OMRPORT_FROM_J9PORT(PORTLIB), J9NLS_DO_NOT_APPEND_NEWLINE, cfrError->errorCatalog, cfrError->errorCode, NULL);
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->setCurrentExceptionUTF(currentThread, cfrError->errorAction, errorMsg);
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+	j9mem_free_memory(segment);
+done:
+	return;
+}
+#endif /* JAVA_SPEC_VERSION >= 15 */
