@@ -2806,18 +2806,21 @@ done:
 		J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, *(j9object_t*)_sp);
 		j9object_t simpleName = NULL;
 		J9ROMClass *romClass = receiverClazz->romClass;
-		J9UTF8 *simpleNameUTF = getSimpleNameForROMClass(_vm, receiverClazz->classLoader, romClass);
-		if (NULL != simpleNameUTF) {
-			buildInternalNativeStackFrame(REGISTER_ARGS);
-			updateVMStruct(REGISTER_ARGS);
-			simpleName = _vm->memoryManagerFunctions->j9gc_createJavaLangString(_currentThread, J9UTF8_DATA(simpleNameUTF), J9UTF8_LENGTH(simpleNameUTF), 0);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			releaseOptInfoBuffer(_vm, romClass);
-			if (NULL == simpleName) {
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				goto done;
+		/* Simple name of a hidden class is NULL */
+		if (!J9ROMCLASS_IS_HIDDEN(romClass)) {
+			J9UTF8 *simpleNameUTF = getSimpleNameForROMClass(_vm, receiverClazz->classLoader, romClass);
+			if (NULL != simpleNameUTF) {
+				buildInternalNativeStackFrame(REGISTER_ARGS);
+				updateVMStruct(REGISTER_ARGS);
+				simpleName = _vm->memoryManagerFunctions->j9gc_createJavaLangString(_currentThread, J9UTF8_DATA(simpleNameUTF), J9UTF8_LENGTH(simpleNameUTF), 0);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				releaseOptInfoBuffer(_vm, romClass);
+				if (NULL == simpleName) {
+					rc = GOTO_THROW_CURRENT_EXCEPTION;
+					goto done;
+				}
+				restoreInternalNativeStackFrame(REGISTER_ARGS);
 			}
-			restoreInternalNativeStackFrame(REGISTER_ARGS);
 		}
 		returnObjectFromINL(REGISTER_ARGS, simpleName, 1);
 done:

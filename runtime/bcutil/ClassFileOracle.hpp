@@ -1084,6 +1084,7 @@ private:
 	void walkHeader();
 	void walkFields();
 	void walkAttributes();
+	void checkHiddenClass();
 	void walkInterfaces();
 	void walkMethods();
 	void walkRecordComponents(J9CfrAttributeRecord *attrib);

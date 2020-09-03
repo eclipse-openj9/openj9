@@ -51,6 +51,7 @@ import static com.ibm.oti.util.Util.doesClassLoaderDescendFrom;
 import java.util.AbstractList;
 import java.util.Iterator;
 import java.util.ArrayList;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import jdk.internal.reflect.CallerSensitive;
 import java.lang.invoke.VarHandle.AccessMode;
@@ -67,6 +68,8 @@ import jdk.internal.misc.JavaLangAccess;
 /*[ENDIF] Java12 */
 import java.security.ProtectionDomain;
 import jdk.internal.org.objectweb.asm.ClassReader;
+import jdk.internal.org.objectweb.asm.Opcodes;
+import jdk.internal.org.objectweb.asm.Type;
 /*[ELSE] Sidecar19-SE-OpenJ9
 import java.lang.reflect.Module;
 /*[ENDIF] Sidecar19-SE-OpenJ9*/
@@ -1765,7 +1768,13 @@ public class MethodHandles {
 			/* https://github.com/eclipse/openj9/issues/3175
 			 * Setters are allowed on instance final instance fields if they have been set accessible.
 			 */
-			if (Modifier.isFinal(modifiers) && (!field.isAccessible() || Modifier.isStatic(modifiers))) {
+			if (Modifier.isFinal(modifiers) && 
+				(!field.isAccessible() || Modifier.isStatic(modifiers)
+			/*[IF Java15]
+				|| declaringClass.isHidden()
+			/*[ENDIF] Java15 */
+				)
+			) {
 				/*[MSG "K05cf", "illegal setter on final field"]*/
 				throw new IllegalAccessException(Msg.getString("K05cf")); //$NON-NLS-1$
 			}
@@ -2368,21 +2377,58 @@ public class MethodHandles {
 				throw new IllegalAccessException();
 			}
 
-			ClassReader cr;
-			try {
-				cr = new ClassReader(bytes);
-			} catch (ArrayIndexOutOfBoundsException e) {
-				/*[MSG "K065Y2", "The class byte array is corrupted"]*/
-				throw new ClassFormatError(com.ibm.oti.util.Msg.getString("K065Y2")); //$NON-NLS-1$
-			}
-
-			String targetClassName = cr.getClassName().replace('/', '.');
 			int flags = 0;
 			for (ClassOption opt : classOptions) {
 				flags |= opt.toFlag();
 			}
-
+			MethodHandleNatives.checkClassBytes(bytes);
+			String targetClassName = getClassName(bytes);
 			return makeHiddenClassDefiner(targetClassName, bytes, flags);
+			
+		}
+
+		private String getClassName(byte[] bytes) {
+			String targetClassName;
+			ClassReader cr;
+			try {
+				cr = new ClassReader(bytes);
+
+				int thisClassIndex = cr.readUnsignedShort(cr.header + 2);
+				char[] buffer = new char[cr.getMaxStringLength()];
+				Object thisClass = cr.readConst(thisClassIndex, buffer);
+				if (!(thisClass instanceof Type)) {
+					throw new ClassFormatError();
+				}
+				Type type = (Type)thisClass;
+				if (!type.getDescriptor().startsWith("L")) {
+					throw new ClassFormatError();
+				}
+				targetClassName = type.getClassName();
+			} catch (ArrayIndexOutOfBoundsException e) {
+				/*[MSG "K065Y2", "The class byte array is corrupted"]*/
+				throw new ClassFormatError(com.ibm.oti.util.Msg.getString("K065Y2")); //$NON-NLS-1$
+			} catch (RuntimeException e) {
+				ClassFormatError error = new ClassFormatError();
+				error.initCause(e);
+				throw error;
+			}
+
+			int accessFlag = cr.getAccess();
+			if (Opcodes.ACC_MODULE == (accessFlag & Opcodes.ACC_MODULE)) {
+				/* Must be a class or interface, ACC_MODULE cannot be there. */
+				throw new IllegalArgumentException();
+			}
+			
+			String pkgName = lookupClass().getPackageName();
+			int index = targetClassName.lastIndexOf('.');
+			String pkgName1 = "";
+			if (0 < index) {
+				pkgName1 = targetClassName.substring(0, index);
+			}
+			if (!pkgName1.equals(pkgName)) {
+				throw new IllegalArgumentException();
+			}
+			return targetClassName;
 		}
 
 		ClassDefiner makeHiddenClassDefiner(String name, byte[] template) {

@@ -579,6 +579,19 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 	if (NULL != verifyData->vmStruct->currentException) {
 		return (IDATA) FALSE;
 	}
+	
+	if (J9ROMCLASS_IS_HIDDEN(verifyData->romClass)) {	
+		J9UTF8* className = J9ROMCLASS_CLASSNAME(verifyData->romClass);
+		if (J9UTF8_DATA_EQUALS(J9UTF8_DATA(className),  J9UTF8_LENGTH(className), sourceName, sourceLength)) {
+			/* isRAMClassCompatible() cannot find ram class of a hidden class, we are testing if 
+			 * the source class is the subclass of target class. We can use superclass of source class instead here. 
+			 * A hidden class can not be super class of another class, the hidden class name it is not findable and its name is generated at runtime. 
+			 */
+			J9UTF8* superClassName = J9ROMCLASS_SUPERCLASSNAME(verifyData->romClass);
+			sourceLength = J9UTF8_LENGTH(superClassName);
+			sourceName = J9UTF8_DATA(superClassName);
+		}
+	}
 
 	rc = isRAMClassCompatible(verifyData, targetName, targetLength , sourceName, sourceLength, reasonCode);
 
@@ -952,8 +965,17 @@ isProtectedAccessPermitted(J9BytecodeVerificationData *verifyData, J9UTF8* decla
 
 		/* Short circuit if the classes are the same */
 		currentClassName = J9ROMCLASS_CLASSNAME(romClass);
-		if (compareTwoUTF8s(declaringClassName, currentClassName)) return TRUE;
-
+		if (compareTwoUTF8s(declaringClassName, currentClassName)) {
+			return TRUE;
+		}
+		if (J9ROMCLASS_IS_HIDDEN(romClass)) {
+			/* j9rtv_verifierGetRAMClass won't find hidden classes. We are checking if the current class has access to
+			 * proected memeber of declaringClass. We can use the superclass of current class instead here. */
+			currentClassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
+			if (compareTwoUTF8s(declaringClassName, currentClassName)) {
+				return TRUE;
+			}
+		}
 		/* Get the ram classes for the current and defining classes */
 		currentRamClass = j9rtv_verifierGetRAMClass (verifyData, verifyData->classLoader, J9UTF8_DATA(currentClassName), J9UTF8_LENGTH(currentClassName), reasonCode);
 		if ((NULL == currentRamClass) && (BCV_ERR_INSUFFICIENT_MEMORY == *reasonCode)) {
@@ -1018,9 +1040,19 @@ isProtectedAccessPermitted(J9BytecodeVerificationData *verifyData, J9UTF8* decla
 
 				/* Determine if the targetRamClass is the same class or a sub class of the current class */
 				/* flipped logic - currentRamClass is the same class or a super class of the target class */
-				if (!isSameOrSuperClassOf (currentRamClass, targetRamClass)) {
-					/* fail */
-					return FALSE;
+				if (J9ROMCLASS_IS_HIDDEN(romClass)) {
+					currentClassName = J9ROMCLASS_CLASSNAME(romClass);
+					if ((targetClassLength != J9UTF8_LENGTH(currentClassName))
+						|| (0 != strncmp(J9UTF8_DATA(currentClassName), targetClassName, targetClassLength))
+					) {
+						/* fail if current class and target class are not the same */
+						return FALSE;
+					}
+				} else {
+					if (!isSameOrSuperClassOf (currentRamClass, targetRamClass)) {
+						/* fail */
+						return FALSE;
+					}
 				}
 			}
 		}
