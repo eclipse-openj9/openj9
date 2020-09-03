@@ -219,7 +219,12 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       {
       // We need to kill all the non-volatiles so that they'll be in a stack frame in case
       // gc needs to find them.
-      if (comp()->target().is32Bit())
+      if (comp()->target().is64Bit())
+         {
+         if (comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+            TR::addDependency(deps, NULL, TR::RealRegister::gr16, TR_GPR, cg());
+         }
+      else
          {
          // gr15 and gr16 are reserved in 64-bit, normal non-volatile in 32-bit
          TR::addDependency(deps, NULL, TR::RealRegister::gr15, TR_GPR, cg());
