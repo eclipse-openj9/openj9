@@ -2128,30 +2128,40 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
    // DO NOT MODIFY without also changing Recompilation.s!!
    if (comp->target().is64Bit())
       {
-      int32_t beginIndex = TR_PPCTableOfConstants::allocateChunk(1, cg);
-      if (beginIndex != PTOC_FULL_INDEX)
+      if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
          {
-         beginIndex *= TR::Compiler->om.sizeofReferenceAddress();
-         if (beginIndex < LOWER_IMMED || beginIndex > UPPER_IMMED)
-            {
-            TR_ASSERT_FATAL_WITH_NODE(callNode, 0x00008000 != HI_VALUE(beginIndex), "TOC offset (0x%x) is unexpectedly high. Can not encode upper 16 bits into an addis instruction.", beginIndex);
-            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, callNode, gr12, cg->getTOCBaseRegister(), HI_VALUE(beginIndex));
-            generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, new (cg->trHeapMemory()) TR::MemoryReference(gr12, LO_VALUE(beginIndex), TR::Compiler->om.sizeofReferenceAddress(), cg));
-            }
-         else
-            {
-            generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, new (cg->trHeapMemory()) TR::MemoryReference(cg->getTOCBaseRegister(), beginIndex, TR::Compiler->om.sizeofReferenceAddress(), cg));
-            }
+         // Expecting the 64bit IPIC snippet shape
+         generateTrg1MemInstruction(cg, TR::InstOpCode::paddi, callNode, gr12, TR::MemoryReference::withLabel(cg, ifcSnippet->getSnippetLabel(), 12+4*TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()));
          generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr11, new (cg->trHeapMemory()) TR::MemoryReference(gr12, 0, TR::Compiler->om.sizeofReferenceAddress(), cg));
          }
       else
          {
-         TR::Instruction *q[4];
-         fixedSeqMemAccess(cg, callNode, 0, q, gr11, gr12,TR::InstOpCode::Op_loadu, TR::Compiler->om.sizeofReferenceAddress(), NULL, gr11);
-         ifcSnippet->setLowerInstruction(q[3]);
-         ifcSnippet->setUpperInstruction(q[0]);
+         int32_t beginIndex = TR_PPCTableOfConstants::allocateChunk(1, cg);
+
+         if (beginIndex != PTOC_FULL_INDEX)
+            {
+            beginIndex *= TR::Compiler->om.sizeofReferenceAddress();
+            if (beginIndex < LOWER_IMMED || beginIndex > UPPER_IMMED)
+               {
+               TR_ASSERT_FATAL_WITH_NODE(callNode, 0x00008000 != HI_VALUE(beginIndex), "TOC offset (0x%x) is unexpectedly high. Can not encode upper 16 bits into an addis instruction.", beginIndex);
+               generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, callNode, gr12, cg->getTOCBaseRegister(), HI_VALUE(beginIndex));
+               generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, new (cg->trHeapMemory()) TR::MemoryReference(gr12, LO_VALUE(beginIndex), TR::Compiler->om.sizeofReferenceAddress(), cg));
+               }
+            else
+               {
+               generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, new (cg->trHeapMemory()) TR::MemoryReference(cg->getTOCBaseRegister(), beginIndex, TR::Compiler->om.sizeofReferenceAddress(), cg));
+               }
+            generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr11, new (cg->trHeapMemory()) TR::MemoryReference(gr12, 0, TR::Compiler->om.sizeofReferenceAddress(), cg));
+            }
+         else
+            {
+            TR::Instruction *q[4];
+            fixedSeqMemAccess(cg, callNode, 0, q, gr11, gr12,TR::InstOpCode::Op_loadu, TR::Compiler->om.sizeofReferenceAddress(), NULL, gr11);
+            ifcSnippet->setLowerInstruction(q[3]);
+            ifcSnippet->setUpperInstruction(q[0]);
+            }
+         ifcSnippet->setTOCOffset(beginIndex);
          }
-      ifcSnippet->setTOCOffset(beginIndex);
       }
    else
       {
