@@ -122,22 +122,26 @@ Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclas
 		return NULL;
 	}
 
+	vmFuncs->internalEnterVMFromJNI(currentThread);
 	if (NULL != classData) {
 		j9object_t classDataObject = J9_JNI_UNWRAP_REFERENCE(classData);
 		j9object_t resultClassObject = J9_JNI_UNWRAP_REFERENCE(result);
 		J9VMJAVALANGCLASS_SET_CLASSDATA(currentThread, resultClassObject, classDataObject);
 	}
-
+	
+	j9object_t classObject = J9_JNI_UNWRAP_REFERENCE(result);
+	J9Class *j9clazz =  J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
 	if (init) {
-		vmFuncs->internalEnterVMFromJNI(currentThread);
-		j9object_t classObject = J9_JNI_UNWRAP_REFERENCE(result);
-		J9Class *j9clazz =  J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
 		if (VM_VMHelpers::classRequiresInitialization(currentThread, j9clazz)) {
 			vmFuncs->initializeClass(currentThread, j9clazz);
+			j9clazz = J9_CURRENT_CLASS(j9clazz);
 		}
-		vmFuncs->internalExitVMToJNI(currentThread);
+	} else {
+		/* Should link the class, see https://github.com/eclipse/openj9/issues/10297 */
+		vmFuncs->prepareClass(currentThread, j9clazz);
 	}
 
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 #endif /* JAVA_SPEC_VERSION >= 15 */

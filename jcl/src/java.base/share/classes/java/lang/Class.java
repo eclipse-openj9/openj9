@@ -3428,8 +3428,12 @@ public String getSimpleName() {
 	String simpleName = baseType.getSimpleNameImpl();
 	String fullName = baseType.getName();
 	if (simpleName == null) {
-		Class<?> parent = baseType.getEnclosingObjectClass();
-		// either a base class, or anonymous class
+		/** 
+		 * It is a base class, an anonymous class, or a hidden class.
+		 * Call getEnclosingClass() instead of getEnclosingObjectClass() to check getDeclaringClass() first. Hidden class test expects
+		 * NoClassDefFoundError from getDeclaringClass(). 
+		 */
+		Class<?> parent = baseType.getEnclosingClass();
 		if (parent != null) {
 			simpleName = ""; //$NON-NLS-1$
 		} else {
@@ -3493,12 +3497,6 @@ public String getSimpleName() {
  * @see #isLocalClass()
  */
 public String getCanonicalName() {
-/*[IF Java15]*/
-	if (isHidden()) {
-		/* Canonical name is always null for hidden classes. */
-		return null;
-	}
-/*[ENDIF] Java15 */
 	int arrayCount = 0;
 	Class<?> baseType = this;
 	if (isArray()) {
@@ -3507,6 +3505,12 @@ public String getCanonicalName() {
 			arrayCount++;
 		}
 	}
+/*[IF Java15]*/
+	if (baseType.isHidden()) {
+		/* Canonical name is always null for hidden classes. */
+		return null;
+	}
+/*[ENDIF] Java15 */
 	if (baseType.getEnclosingObjectClass() != null) {
 		// local or anonymous class
 		return null;
@@ -4665,6 +4669,20 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	 * @return Optional with a nominal descriptor of Class instance
 	 */
 	public Optional<ClassDesc> describeConstable() {
+/*[IF Java15]*/
+		Class<?> clazz = this;
+		if (isArray()) {
+			clazz = getComponentType();
+			while (clazz.isArray()) {
+				clazz = clazz.getComponentType();
+			}
+		}
+		if (clazz.isHidden()) {
+			/* It is always an empty Optional for hidden classes. */
+			return Optional.empty(); 
+		}
+/*[ENDIF] Java15 */		
+		
 		ClassDesc classDescriptor = ClassDesc.ofDescriptor(this.descriptorString());
 		return Optional.of(classDescriptor);
 	}
@@ -4699,6 +4717,20 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 			}
 		}
 		String name = this.getName().replace('.', '/');
+/*[IF Java15]*/
+		Class<?> clazz = this;
+		if (isArray()) {
+			clazz = getComponentType();
+			while (clazz.isArray()) {
+				clazz = clazz.getComponentType();
+			}
+		}
+		if (clazz.isHidden()) {
+			/* descriptor String of hidden class is something like: "Lpackage/ClassName.romaddress;". */
+			int index = name.lastIndexOf('/');
+			name = name.substring(0, index)+ '.' + name.substring(index + 1,name.length());
+		}
+/*[ENDIF] Java15 */
 		if (this.isArray()) {
 			return name;
 		}

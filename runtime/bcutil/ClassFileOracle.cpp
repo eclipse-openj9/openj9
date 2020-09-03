@@ -227,6 +227,11 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	if (OK == _buildResult) {
 		walkAttributes();
 	}
+	
+	if (_context->isClassHidden()) {
+		checkHiddenClass();
+	}
+	
 	if (OK == _buildResult) {
 		walkInterfaces();
 	}
@@ -511,21 +516,28 @@ ClassFileOracle::walkAttributes()
 		}
 #if JAVA_SPEC_VERSION >= 11
 		case CFR_ATTRIBUTE_NestMembers:
-			_nestMembers = (J9CfrAttributeNestMembers *)attrib;
-			_nestMembersCount = _nestMembers->numberOfClasses;
-			/* The classRefs are never resolved & therefore do not need to
-			 * be kept in the constant pool.
-			 */
-			for (U_16 i = 0; i < _nestMembersCount; i++) {
-				U_16 classNameIndex = UTF8_INDEX_FROM_CLASS_INDEX(_classFile->constantPool, _nestMembers->classes[i]);
-				markConstantUTF8AsReferenced(classNameIndex);
+			/* ignore CFR_ATTRIBUTE_NestMembers for hidden classes, as the nest members never know the name of hidden classes */
+			if (!_context->isClassHidden()) {
+				_nestMembers = (J9CfrAttributeNestMembers *)attrib;
+				_nestMembersCount = _nestMembers->numberOfClasses;
+				/* The classRefs are never resolved & therefore do not need to
+				 * be kept in the constant pool.
+				 */
+				for (U_16 i = 0; i < _nestMembersCount; i++) {
+					U_16 classNameIndex = UTF8_INDEX_FROM_CLASS_INDEX(_classFile->constantPool, _nestMembers->classes[i]);
+					markConstantUTF8AsReferenced(classNameIndex);
+				}
 			}
 			break;
 
 		case CFR_ATTRIBUTE_NestHost: {
-			U_16 hostClassIndex = ((J9CfrAttributeNestHost *)attrib)->hostClassIndex;
-			_nestHost = UTF8_INDEX_FROM_CLASS_INDEX(_classFile->constantPool, hostClassIndex);
-			markConstantUTF8AsReferenced(_nestHost);
+			/* Ignore CFR_ATTRIBUTE_NestHost for hidden classes, as the nest host of a hidden class is not decided by CFR_ATTRIBUTE_NestHost.
+			 * The nesthost of a hidden class is its host class if ClassOption.NESTMATE is used or itself if ClassOption.NESTMATE is not used. */
+			if (!_context->isClassHidden()) {
+				U_16 hostClassIndex = ((J9CfrAttributeNestHost *)attrib)->hostClassIndex;
+				_nestHost = UTF8_INDEX_FROM_CLASS_INDEX(_classFile->constantPool, hostClassIndex);
+				markConstantUTF8AsReferenced(_nestHost);
+			}
 			break;
 		}
 #endif /* JAVA_SPEC_VERSION >= 11 */
@@ -541,6 +553,38 @@ ClassFileOracle::walkAttributes()
 				_hasVerifyExcludeAttribute = true;
 			}
 		}
+	}
+}
+
+void
+ClassFileOracle::checkHiddenClass()
+{
+	ROMClassVerbosePhase v(_context, ClassFileAttributesAnalysis);
+	/* Hidden Class cannot be a record or enum. */
+	U_16 superClassNameIndex = getSuperClassNameIndex();
+	bool isEnum = false;
+	
+	/**
+	 * See test case jdk/java/lang/invoke/defineHiddenClass/BasicTest.emptyHiddenClass().
+	 * A normal Enum cannot be defined as a hidden class. But an empty enum class that does not
+	 * define constants of its type can still be defined as a hidden class. 
+	 * So when setting isEnum, add a check for field count. 
+	 */
+	if (0 != superClassNameIndex) {
+		isEnum = J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_ENUM) && 
+				J9UTF8_DATA_EQUALS(getUTF8Data(superClassNameIndex), getUTF8Length(superClassNameIndex), "java/lang/Enum", LITERAL_STRLEN("java/lang/Enum")) &&
+				(getFieldsCount() > 0);
+	}
+	if (_isRecord  || isEnum) {
+		PORT_ACCESS_FROM_PORT(_context->portLibrary());
+		char msg[] = "Hidden Class cannot be a record or enum";
+		UDATA len = sizeof(msg);
+		char *error = (char *) j9mem_allocate_memory(len, J9MEM_CATEGORY_CLASSES);
+		if (NULL != error) {
+			strcpy(error, msg);
+			_context->recordCFRError((U_8*)error);
+		}
+		_buildResult = InvalidClassType;
 	}
 }
 
@@ -1320,9 +1364,9 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 	/* Verify that each LVTT entry has a matching local variable. Since there is no guaranteed order
 	 * for code attributes, this check must be performed after all attributes are processed.
 	 * 
-	 * According to the JVM spec: ”Each entry in the local_variable_type_table array ... 
+	 * According to the JVM spec: "Each entry in the local_variable_type_table array ... 
 	 * indicates the index into the local variable array of the current frame at which 
-	 * that local variable can be found.”
+	 * that local variable can be found."
 	 * 
 	 * While multiple LocalVariableTypeTable attributes may exist according to the spec, upon observation 
 	 * it is the common case for 'javac' to generate only one attribute per method. To take advantage of this 

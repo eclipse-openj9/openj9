@@ -940,6 +940,10 @@ Java_java_lang_invoke_MethodHandles_findNativeAddress(JNIEnv *env, jclass jlClas
 
 /* java_dyn_methodtype.c */
 jobject JNICALL Java_java_lang_invoke_MethodType_makeTenured(JNIEnv *env, jclass clazz, jobject receiverObject);
+#if JAVA_SPEC_VERSION >= 15
+extern J9_CFUNC void JNICALL
+Java_java_lang_invoke_MethodHandleNatives_checkClassBytes(JNIEnv *env, jclass jlClass, jbyteArray classRep);
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 /* java_lang_invoke_VarHandle.c */
 jlong JNICALL Java_java_lang_invoke_FieldVarHandle_lookupField(JNIEnv *env, jobject handle, jclass lookupClass, jstring name, jstring signature, jclass type, jboolean isStatic, jclass accessClass);

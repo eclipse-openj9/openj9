@@ -23,4 +23,5 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<export name="Java_java_lang_Class_permittedSubclassesImpl"/>
 	<export name="Java_java_lang_Class_isHiddenImpl"/>
 	<export name="Java_java_lang_ClassLoader_defineClassImpl1"/>
+	<export name="Java_java_lang_invoke_MethodHandleNatives_checkClassBytes"/>
 </exports>
