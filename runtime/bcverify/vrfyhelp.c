@@ -1023,16 +1023,16 @@ isProtectedAccessPermitted(J9BytecodeVerificationData *verifyData, J9UTF8* decla
 		if (currentRamClass->packageID == definingRamClass->packageID) return TRUE;
 
 		/* Determine if the defining class is the same class or a super class of current class */
-		if (isSameOrSuperClassOf (definingRamClass, currentRamClass)) {
-			U_8 * targetClassName;
-			UDATA targetClassLength;
-			J9Class * targetRamClass;
+		if (isSameOrSuperClassOf(definingRamClass, currentRamClass)) {
+			U_8 * targetClassName = NULL;
+			UDATA targetClassLength = 0;
+			J9Class * targetRamClass = NULL;
 
 			/* NULL is compatible */
 			if (targetClass != BCV_BASE_TYPE_NULL) {
 				/* Get the targetRamClass */
-				getNameAndLengthFromClassNameList (verifyData, J9CLASS_INDEX_FROM_CLASS_ENTRY(targetClass), &targetClassName, &targetClassLength);
-				targetRamClass = j9rtv_verifierGetRAMClass (verifyData, verifyData->classLoader, targetClassName, targetClassLength, reasonCode);
+				getNameAndLengthFromClassNameList(verifyData, J9CLASS_INDEX_FROM_CLASS_ENTRY(targetClass), &targetClassName, &targetClassLength);
+				targetRamClass = j9rtv_verifierGetRAMClass(verifyData, verifyData->classLoader, targetClassName, targetClassLength, reasonCode);
 				if (NULL == targetRamClass) {
 					return FALSE;
 				}
@@ -1041,14 +1041,12 @@ isProtectedAccessPermitted(J9BytecodeVerificationData *verifyData, J9UTF8* decla
 				/* flipped logic - currentRamClass is the same class or a super class of the target class */
 				if (J9ROMCLASS_IS_HIDDEN(romClass)) {
 					currentClassName = J9ROMCLASS_CLASSNAME(romClass);
-					if ((targetClassLength != J9UTF8_LENGTH(currentClassName))
-						|| (0 != strncmp(J9UTF8_DATA(currentClassName), targetClassName, targetClassLength))
-					) {
+					if (J9UTF8_DATA_EQUALS(targetClassName, targetClassLength, J9UTF8_DATA(currentClassName), J9UTF8_LENGTH(currentClassName))) {
 						/* fail if current class and target class are not the same */
 						return FALSE;
 					}
 				} else {
-					if (!isSameOrSuperClassOf (currentRamClass, targetRamClass)) {
+					if (!isSameOrSuperClassOf(currentRamClass, targetRamClass)) {
 						/* fail */
 						return FALSE;
 					}
