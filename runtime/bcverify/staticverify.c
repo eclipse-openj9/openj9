@@ -877,8 +877,9 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			info = &(classfile->constantPool[classfile->constantPool[index].slot1]);
 			if (info->bytes[0] == '<') {
 				if ((bc != CFR_BC_invokespecial)
-						||(info->tag != CFR_CONSTANT_Utf8)
-						|| (strncmp((char *) info->bytes, "<init>", 6))) {
+				|| (info->tag != CFR_CONSTANT_Utf8)
+				|| !J9UTF8_DATA_EQUALS("<init>", 6, info->bytes, info->slot1)
+				) {
 					errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID__ID;
 					goto _verifyError;
 				}
@@ -1540,13 +1541,10 @@ checkMethodStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, UDATA
 
 	/* Throw a class format error if we are given a static <init> method (otherwise later we will throw a verify error due to back stack shape) */
 	info = &(classfile->constantPool[method->nameIndex]);
-	if (info->slot1 == 6) {		/* size of '<init>' */
-		if ((info->tag == CFR_CONSTANT_Utf8)
-				&& (!strncmp ((char *)info->bytes, "<init>", 6))) {
-			if (method->accessFlags & CFR_ACC_STATIC) {
-				errorType = J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS__ID;
-				goto _formatError;
-			}
+	if (method->accessFlags & CFR_ACC_STATIC) {
+		if ((CFR_CONSTANT_Utf8 == info->tag) && J9UTF8_DATA_EQUALS("<init>", 6, info->bytes, info->slot1)) {
+			errorType = J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS__ID;
+			goto _formatError;
 		}
 	}
 

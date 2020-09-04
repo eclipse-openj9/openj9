@@ -410,9 +410,11 @@ public:
 					return ClassNameMismatch;
 #undef J9WRONGNAME
 				}
-			} else if (shouldCheckPackageName()  /* classname is null */
-					&& (0 == strncmp((char *) className, "java/", 5))
-					&& (!isClassAnon())) {
+			} else if (shouldCheckPackageName() /* classname is null */
+					&& (classNameLength >= 5)
+					&& (0 == memcmp(className, "java/", 5))
+					&& !isClassAnon()
+			) {
 				/*
 				 * Non-bootstrap classloaders may not load nto the "java" package.
 				 * if classname is not null, the JCL or JNI has already checked it

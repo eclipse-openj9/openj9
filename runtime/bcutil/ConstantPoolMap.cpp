@@ -324,93 +324,106 @@ ConstantPoolMap::isVarHandleMethod(U_32 classIndex, U_32 nasIndex) {
 	U_16 classNameLength = _classFileOracle->getUTF8Length(getCPSlot1(classIndex));
 
 	if ((sizeof(VARHANDLE_CLASS_NAME) - 1) == classNameLength) {
-		const char *classNameData = (const char *)_classFileOracle->getUTF8Data(getCPSlot1(classIndex));
-		if (0 == strcmp(classNameData, VARHANDLE_CLASS_NAME)) {
+		const U_8 *classNameData = _classFileOracle->getUTF8Data(getCPSlot1(classIndex));
+		if (0 == memcmp(classNameData, VARHANDLE_CLASS_NAME, classNameLength)) {
 			U_32 methodNameIndex = getCPSlot1(nasIndex);
 			U_16 methodNameLength = _classFileOracle->getUTF8Length(methodNameIndex);
-			const char *methodNameData = (const char *)_classFileOracle->getUTF8Data(methodNameIndex);
+			const U_8 *methodNameData = _classFileOracle->getUTF8Data(methodNameIndex);
 
 			switch (methodNameLength) {
 			case 3:
-				if ((0 == strcmp(methodNameData, "get"))
-				 || (0 == strcmp(methodNameData, "set"))
+				if ((0 == memcmp(methodNameData, "get", methodNameLength))
+				 || (0 == memcmp(methodNameData, "set", methodNameLength))
 				) {
 					result = true;
 				}
 				break;
 			case 9:
-				if ((0 == strcmp(methodNameData, "getOpaque"))
-				 || (0 == strcmp(methodNameData, "setOpaque"))
-				 || (0 == strcmp(methodNameData, "getAndSet"))
-				 || (0 == strcmp(methodNameData, "getAndAdd"))
+				if ((0 == memcmp(methodNameData, "getOpaque", methodNameLength))
+				 || (0 == memcmp(methodNameData, "setOpaque", methodNameLength))
+				 || (0 == memcmp(methodNameData, "getAndSet", methodNameLength))
+				 || (0 == memcmp(methodNameData, "getAndAdd", methodNameLength))
 				) {
 					result = true;
 				}
 				break;
 			case 10:
-				if ((0 == strcmp(methodNameData, "getAcquire"))
-				 || (0 == strcmp(methodNameData, "setRelease"))
+				if ((0 == memcmp(methodNameData, "getAcquire", methodNameLength))
+				 || (0 == memcmp(methodNameData, "setRelease", methodNameLength))
 				) {
 					result = true;
 				}
 				break;
 			case 11:
-				if ((0 == strcmp(methodNameData, "getVolatile"))
-				 || (0 == strcmp(methodNameData, "setVolatile"))
+				if ((0 == memcmp(methodNameData, "getVolatile", methodNameLength))
+				 || (0 == memcmp(methodNameData, "setVolatile", methodNameLength))
 				) {
 					result = true;
 				}
 				break;
+			case 13:
+				if (0 == memcmp(methodNameData, "compareAndSet", methodNameLength)) {
+					result = true;
+				}
+				break;
+			case 15:
+				if (0 == memcmp(methodNameData, "getAndBitwiseOr", methodNameLength)) {
+					result = true;
+				}
+				break;
 			case 16:
-				if ((0 == strcmp(methodNameData, "getAndSetAcquire"))
-				 || (0 == strcmp(methodNameData, "getAndSetRelease"))
-				 || (0 == strcmp(methodNameData, "getAndAddAcquire"))
-				 || (0 == strcmp(methodNameData, "getAndAddRelease"))
-				 || (0 == strcmp(methodNameData, "getAndBitwiseAnd"))
-				 || (0 == strcmp(methodNameData, "getAndBitwiseXor"))
+				if ((0 == memcmp(methodNameData, "getAndSetAcquire", methodNameLength))
+				 || (0 == memcmp(methodNameData, "getAndSetRelease", methodNameLength))
+				 || (0 == memcmp(methodNameData, "getAndAddAcquire", methodNameLength))
+				 || (0 == memcmp(methodNameData, "getAndAddRelease", methodNameLength))
+				 || (0 == memcmp(methodNameData, "getAndBitwiseAnd", methodNameLength))
+				 || (0 == memcmp(methodNameData, "getAndBitwiseXor", methodNameLength))
 				) {
 					result = TRUE;
 				}
 				break;
+			case 17:
+				if (0 == memcmp(methodNameData, "weakCompareAndSet", methodNameLength)) {
+					result = true;
+				}
+				break;
+			case 18:
+				if (0 == memcmp(methodNameData, "compareAndExchange", methodNameLength)) {
+					result = true;
+				}
+				break;
 			case 22:
-				if ((0 == strcmp(methodNameData, "getAndBitwiseOrAcquire"))
-				 || (0 == strcmp(methodNameData, "getAndBitwiseOrRelease"))
-				 || (0 == strcmp(methodNameData, "weakCompareAndSetPlain"))
+				if ((0 == memcmp(methodNameData, "getAndBitwiseOrAcquire", methodNameLength))
+				 || (0 == memcmp(methodNameData, "getAndBitwiseOrRelease", methodNameLength))
+				 || (0 == memcmp(methodNameData, "weakCompareAndSetPlain", methodNameLength))
 				) {
 					result = TRUE;
 				}
 				break;
 			case 23:
-				if ((0 == strcmp(methodNameData, "getAndBitwiseAndAcquire"))
-				 || (0 == strcmp(methodNameData, "getAndBitwiseAndRelease"))
-				 || (0 == strcmp(methodNameData, "getAndBitwiseXorAcquire"))
-				 || (0 == strcmp(methodNameData, "getAndBitwiseXorRelease"))
+				if ((0 == memcmp(methodNameData, "getAndBitwiseAndAcquire", methodNameLength))
+				 || (0 == memcmp(methodNameData, "getAndBitwiseAndRelease", methodNameLength))
+				 || (0 == memcmp(methodNameData, "getAndBitwiseXorAcquire", methodNameLength))
+				 || (0 == memcmp(methodNameData, "getAndBitwiseXorRelease", methodNameLength))
 				) {
 					result = TRUE;
 				}
 				break;
 			case 24:
-				if ((0 == strcmp(methodNameData, "weakCompareAndSetAcquire"))
-				 || (0 == strcmp(methodNameData, "weakCompareAndSetRelease"))
+				if ((0 == memcmp(methodNameData, "weakCompareAndSetAcquire", methodNameLength))
+				 || (0 == memcmp(methodNameData, "weakCompareAndSetRelease", methodNameLength))
 				) {
 					result = true;
 				}
 				break;
 			case 25:
-				if ((0 == strcmp(methodNameData, "compareAndExchangeAcquire"))
-				 || (0 == strcmp(methodNameData, "compareAndExchangeRelease"))
+				if ((0 == memcmp(methodNameData, "compareAndExchangeAcquire", methodNameLength))
+				 || (0 == memcmp(methodNameData, "compareAndExchangeRelease", methodNameLength))
 				) {
 					result = true;
 				}
 				break;
 			default:
-				if ((0 == strcmp(methodNameData, "compareAndSet"))
-				 || (0 == strcmp(methodNameData, "getAndBitwiseOr"))
-				 || (0 == strcmp(methodNameData, "weakCompareAndSet"))
-				 || (0 == strcmp(methodNameData, "compareAndExchange"))
-				) {
-					result = true;
-				}
 				break;
 			}
 		}

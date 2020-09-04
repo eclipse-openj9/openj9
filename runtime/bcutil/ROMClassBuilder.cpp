@@ -350,8 +350,8 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, 
 			U_32 classNameSlot = constantPool[i].slot1;
 			if (classNameSlot != newUtfCPEntry) {
 				U_32 classNameLength = constantPool[classNameSlot].slot1;
-				if ((classNameLength == originalStringLength)
-					&& (0 == strncmp(originalStringBytes, (const char*)constantPool[classNameSlot].bytes, originalStringLength)))
+				if (J9UTF8_DATA_EQUALS(originalStringBytes, originalStringLength,
+						constantPool[classNameSlot].bytes, classNameLength))
 				{
 					/* if it is the same class, point to original class name slot */
 					constantPool[i].slot1 = newUtfCPEntry;

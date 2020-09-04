@@ -534,8 +534,8 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		 *    except Object (already checked above), java/lang/Cloneable and java/io/Serializable,
 		 *    which means targetClass must be one/array of Object, java/lang/Cloneable and java/io/Serializable.
 		 */
-		if (((CLONEABLE_CLASS_NAME_LENGTH == targetLength) && ((0 == strncmp((const char*)targetName, CLONEABLE_CLASS_NAME, CLONEABLE_CLASS_NAME_LENGTH))))
-		|| ((SERIALIZEABLE_CLASS_NAME_LENGTH == targetLength) && (0 == strncmp((const char*)targetName, SERIALIZEABLE_CLASS_NAME, SERIALIZEABLE_CLASS_NAME_LENGTH)))
+		if (J9UTF8_DATA_EQUALS(targetName, targetLength, CLONEABLE_CLASS_NAME, CLONEABLE_CLASS_NAME_LENGTH)
+		||  J9UTF8_DATA_EQUALS(targetName, targetLength, SERIALIZEABLE_CLASS_NAME, SERIALIZEABLE_CLASS_NAME_LENGTH)
 		) {
 			rc = isInterfaceClass(verifyData, targetName, targetLength, reasonCode);
 
@@ -1063,12 +1063,7 @@ isProtectedAccessPermitted(J9BytecodeVerificationData *verifyData, J9UTF8* decla
 /* return TRUE if identical, FALSE otherwise */
 static UDATA compareTwoUTF8s(J9UTF8 * first, J9UTF8 * second)
 {
-	U_8 * f = J9UTF8_DATA(first);
-	U_8 * s = J9UTF8_DATA(second);
-
-	if (J9UTF8_LENGTH(first) != J9UTF8_LENGTH(second)) return 0;
-
-	return (memcmp(f, s, J9UTF8_LENGTH(first)) == 0);
+	return J9UTF8_EQUALS(first, second);
 }
 
 
