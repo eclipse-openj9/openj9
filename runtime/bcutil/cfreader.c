@@ -2167,8 +2167,9 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				/* Check class name integrity? */
 			}
 
-			/* Duplicate class check */
+			/* Duplicate class check except the direct circular entries */
 			for(j = 0; j < classes->numberOfClasses; j++) {
+			if (classes->classes[j].innerClassInfoIndex != classes->classes[j].outerClassInfoIndex) {
 				for(k = j + 1; k < classes->numberOfClasses; k++) {
 					if (classes->classes[j].innerClassInfoIndex == classes->classes[k].innerClassInfoIndex) {
 						errorCode = J9NLS_CFR_ERR_DUPLICATE_INNER_CLASS_ENTRY__ID;
