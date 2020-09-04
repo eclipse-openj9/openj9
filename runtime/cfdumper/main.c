@@ -42,8 +42,8 @@
 #include "atoe.h"
 #endif
 
-#define CFDUMP_CLASSFILE_EXTESION ".class"
-#define CFDUMP_CLASSFILE_EXTESION_WITHOUT_DOT "class"
+#define CFDUMP_CLASSFILE_EXTENSION ".class"
+#define CFDUMP_CLASSFILE_EXTENSION_WITHOUT_DOT "class"
 
 /* Return values. */
 #define RET_SUCCESS                                0
@@ -266,7 +266,7 @@ convertToClassFilename(const char **files, char ***classFiles, I_32 *fileCount) 
 	UDATA size = 0;
 	I_32 i = 0;
 	I_32 result = RET_SUCCESS;
-	UDATA classExtLen = sizeof(CFDUMP_CLASSFILE_EXTESION) - 1;
+	UDATA classExtLen = sizeof(CFDUMP_CLASSFILE_EXTENSION) - 1;
 
 	PORT_ACCESS_FROM_PORT(portLib);
 
@@ -301,7 +301,7 @@ convertToClassFilename(const char **files, char ***classFiles, I_32 *fileCount) 
 		UDATA length = strlen(file);
 		UDATA j = 0;
 
-		if ((length > classExtLen) && !strncmp(&file[length - classExtLen], CFDUMP_CLASSFILE_EXTESION, classExtLen)) {
+		if ((length > classExtLen) && !strncmp(&file[length - classExtLen], CFDUMP_CLASSFILE_EXTENSION, classExtLen)) {
 			length -= classExtLen;
 		}
 		for (j = 0; j < length; j++) {
@@ -311,7 +311,7 @@ convertToClassFilename(const char **files, char ***classFiles, I_32 *fileCount) 
 				currentFile[j] = file[j];
 			}
 		}
-		strcpy(&currentFile[length], CFDUMP_CLASSFILE_EXTESION);
+		strcpy(&currentFile[length], CFDUMP_CLASSFILE_EXTENSION);
 		currentFile[length + classExtLen] = '\0';
 		convertedFiles[i] = currentFile;
 		currentFile += length + classExtLen + 1;		/* ".class\0" */
@@ -383,10 +383,10 @@ convertToJImageLocations(J9JImage *jimage, char **files, JImageMatchInfo ** outp
 
 		/* Check if input ends with '.class' */
 		if (
-			(length > sizeof(CFDUMP_CLASSFILE_EXTESION)) &&
-			(0 == strcmp(file + length - sizeof(CFDUMP_CLASSFILE_EXTESION) + 1, CFDUMP_CLASSFILE_EXTESION))) {
+			(length > sizeof(CFDUMP_CLASSFILE_EXTENSION)) &&
+			(0 == strcmp(file + length - sizeof(CFDUMP_CLASSFILE_EXTENSION) + 1, CFDUMP_CLASSFILE_EXTENSION))) {
 			/* ignore the .class extension */
-			file[length - sizeof(CFDUMP_CLASSFILE_EXTESION)+1] = '\0';
+			file[length - sizeof(CFDUMP_CLASSFILE_EXTENSION)+1] = '\0';
 		}
 		/* Split into package & class */
 		lastDot = strrchr(file, '.');
@@ -2873,7 +2873,7 @@ processAllInJImage(J9JImage *jimage, char *jimageFileName, U_32 flags)
 
 		/* Don't bother with files that don't have a ".class" extension. */
 		if ((NULL == j9jimageLocation.extensionString)
-			|| (strncmp(j9jimageLocation.extensionString, CFDUMP_CLASSFILE_EXTESION_WITHOUT_DOT, sizeof(CFDUMP_CLASSFILE_EXTESION_WITHOUT_DOT)))
+			|| (strncmp(j9jimageLocation.extensionString, CFDUMP_CLASSFILE_EXTENSION_WITHOUT_DOT, sizeof(CFDUMP_CLASSFILE_EXTENSION_WITHOUT_DOT)))
 		) {
 			continue;
 		}
@@ -2948,7 +2948,7 @@ processFilesInJImage(J9JImage *jimage, char *jimageFileName, char **resources, U
 		if (ACTION_writeJImageResource == options.action) {
 			resourceName = resources[i];
 		} else {
-			result = j9bcutil_getJImageResourceName(PORTLIB, jimage,  matchInfo[i].module, matchInfo[i].parentString, matchInfo[i].baseString, CFDUMP_CLASSFILE_EXTESION_WITHOUT_DOT, &resourceName);
+			result = j9bcutil_getJImageResourceName(PORTLIB, jimage,  matchInfo[i].module, matchInfo[i].parentString, matchInfo[i].baseString, CFDUMP_CLASSFILE_EXTENSION_WITHOUT_DOT, &resourceName);
 			if (result != J9JIMAGE_NO_ERROR ){
 				j9tty_printf(PORTLIB, "Insufficient memory to complete operation\n");
 				goto cleanExit;
