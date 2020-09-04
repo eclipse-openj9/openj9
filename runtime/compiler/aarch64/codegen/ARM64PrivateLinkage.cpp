@@ -1242,6 +1242,8 @@ TR::Register *J9::ARM64::PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
       }
 
    callNode->setRegister(retReg);
+
+   dependencies->stopUsingDepRegs(cg(), retReg);
    return retReg;
    }
 
@@ -1439,6 +1441,8 @@ TR::Register *J9::ARM64::PrivateLinkage::buildIndirectDispatch(TR::Node *callNod
       }
 
    callNode->setRegister(retReg);
+
+   dependencies->stopUsingDepRegs(cg(), retReg);
    return retReg;
    }
 
