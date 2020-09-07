@@ -118,14 +118,14 @@ checkNameImpl (J9CfrConstantPoolInfo * info, BOOLEAN isClass, BOOLEAN isMethod, 
 static VMINLINE I_32
 isInitOrClinitImpl (J9CfrConstantPoolInfo * info)
 {
-	U_8 *c = info->bytes;
+	U_8 *name = info->bytes;
 
 	/* Handle <init>/<clinit> cases */
-	if (*c == '<') {
-		if ((info->slot1 == 6) && (!strncmp((char *) info->bytes, "<init>", 6))) {
+	if (*name == '<') {
+		if (J9UTF8_DATA_EQUALS("<init>", 6, name, info->slot1)) {
 			return CFR_METHOD_NAME_INIT;
 		}
-		if ((info->slot1 == 8) && (!strncmp((char *) info->bytes, "<clinit>", 8))) {
+		if (J9UTF8_DATA_EQUALS("<clinit>", 8, name, info->slot1)) {
 			return CFR_METHOD_NAME_CLINIT;
 		}
 		return CFR_METHOD_NAME_INVALID;
