@@ -155,7 +155,7 @@ checkForStoreFilter(J9JavaVM* vm, J9ClassLoader* classloader, const char* classn
 	anElement = (struct ClassNameFilterData*)pool_startDo(filterPool, &aState);
 	while (anElement) {
 		if (anElement->classloader == classloader) {
-			if ((anElement->classnameLen == classnameLen) && (strncmp(anElement->classname, classname, classnameLen) == 0)) {
+			if ((anElement->classnameLen == classnameLen) && (memcmp(anElement->classname, classname, classnameLen) == 0)) {
 				theElement = anElement;
 				break;
 			}

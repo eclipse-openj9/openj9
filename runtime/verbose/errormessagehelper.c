@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2019 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -922,8 +922,8 @@ printTypeInfoToBuffer(MessageBuffer* buf, U_8 tag, J9UTF8Ref* dataType, BOOLEAN 
 	switch(tag) {
 	case CFR_STACKMAP_TYPE_TOP:
 		/* Only print the 2nd slot of long/double type to the error message buffer for the "Reason" section in the error message framework. */
-		if ((0 == strncmp((char*)dataType->bytes, TYPE_LONG, sizeof(TYPE_LONG) - 1))
-		|| (0 == strncmp((char*)dataType->bytes, TYPE_DOUBLE, sizeof(TYPE_DOUBLE) - 1))
+		if (J9UTF8_DATA_EQUALS(TYPE_LONG, sizeof(TYPE_LONG) - 1, dataType->bytes, dataType->length)
+		 || J9UTF8_DATA_EQUALS(TYPE_DOUBLE, sizeof(TYPE_DOUBLE) - 1, dataType->bytes, dataType->length)
 		) {
 			printMessage(buf, "%.*s_2nd", dataType->length, dataType->bytes);
 		} else {
