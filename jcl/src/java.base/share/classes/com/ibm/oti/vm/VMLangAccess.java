@@ -169,4 +169,12 @@ public interface VMLangAccess {
 	 * @return      A java.lang.Thread created
 	 */
 	public Thread createThread(Runnable runnable, String threadName, boolean isSystemThreadGroup, boolean inheritThreadLocals, boolean isDaemon, ClassLoader contextClassLoader);
+
+
+	/**
+	 * Prepare the passed in class
+	 *
+	 * @param theClass The class to prepare
+	 */
+	public void prepare(Class<?> theClass);
 }
