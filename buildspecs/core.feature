@@ -123,5 +123,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="thr_lockNurseryFatArrays" value="false"/>
 		<flag id="thr_preemptive" value="true"/>
 		<flag id="uma_tracegenc" value="false"/>
+		<flag id="opt_methodHandle" value="true"/>
+		<flag id="opt_openjdkMethodhandle" value="false"/>
 	</flags>
 </feature>
