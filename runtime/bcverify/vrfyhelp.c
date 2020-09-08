@@ -1041,7 +1041,7 @@ isProtectedAccessPermitted(J9BytecodeVerificationData *verifyData, J9UTF8* decla
 				/* flipped logic - currentRamClass is the same class or a super class of the target class */
 				if (J9ROMCLASS_IS_HIDDEN(romClass)) {
 					currentClassName = J9ROMCLASS_CLASSNAME(romClass);
-					if (J9UTF8_DATA_EQUALS(targetClassName, targetClassLength, J9UTF8_DATA(currentClassName), J9UTF8_LENGTH(currentClassName))) {
+					if (!J9UTF8_DATA_EQUALS(targetClassName, targetClassLength, J9UTF8_DATA(currentClassName), J9UTF8_LENGTH(currentClassName))) {
 						/* fail if current class and target class are not the same */
 						return FALSE;
 					}
