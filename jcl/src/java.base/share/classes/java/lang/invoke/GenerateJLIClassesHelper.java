@@ -1,7 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE-OpenJ9]*/
-
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,35 +23,41 @@
 package java.lang.invoke;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 /*
- * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
+ * Stub class to compile OpenJDK java.lang.invoke.MethodHandleImpl.
  */
-
 class GenerateJLIClassesHelper {
 	static byte[] generateDirectMethodHandleHolderClassBytes(String str, MethodType[] mts, int[] nums) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	static byte[] generateDelegatingMethodHandleHolderClassBytes(String str, MethodType[] mets) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	static Map.Entry<String, byte[]> generateConcreteBMHClassBytes(String str) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	static byte[] generateBasicFormsClassBytes(String str) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	static byte[] generateInvokersHolderClassBytes(String str, MethodType[] mts) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 
-/*[IF Java11]*/
-        static byte[] generateInvokersHolderClassBytes(String str, MethodType[] invokerMts, MethodType[] callMts) {
-                throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-        }
-/*[ENDIF]*/
+	/*[IF Java11]*/
+	static byte[] generateInvokersHolderClassBytes(String str, MethodType[] invokerMts, MethodType[] callMts) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	/*[ENDIF] Java11*/
+
+	/*[IF Java16]*/
+	static Map<String, byte[]> generateHolderClasses(Stream<String> traces) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	/*[ENDIF] Java16*/
 }
