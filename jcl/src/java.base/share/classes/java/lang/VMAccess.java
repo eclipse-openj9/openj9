@@ -220,4 +220,9 @@ final class VMAccess implements VMLangAccess {
 	public Thread createThread(Runnable runnable, String threadName, boolean isSystemThreadGroup, boolean inheritThreadLocals, boolean isDaemon, ClassLoader contextClassLoader) {
 		return new Thread(runnable, threadName, isSystemThreadGroup, inheritThreadLocals, isDaemon, contextClassLoader);
 	}
+
+	@Override
+	public void prepare(Class<?> theClass) {
+		J9VMInternals.prepare(theClass);
+	}
 }
