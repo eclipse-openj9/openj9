@@ -70,6 +70,7 @@
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
 #include "HeapRegionManager.hpp"
+#include "HotFieldUtil.hpp"
 #include "InterRegionRememberedSet.hpp"
 #include "MarkMap.hpp"
 #include "MemorySpace.hpp"
@@ -124,6 +125,9 @@
  * if the common context disappears or becomes defined in a more complicated fashion
  */
 #define COMMON_CONTEXT_INDEX 0
+
+/* If scavenger dynamicBreadthFirstScanOrdering and alwaysDepthCopyFirstOffset is enabled, always copy the first offset of each object after the object itself is copied */
+#define DEFAULT_HOT_FIELD_OFFSET 1
 
 MM_CopyForwardScheme::MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager)
 	: MM_BaseNonVirtual()
@@ -1416,6 +1420,11 @@ MM_CopyForwardScheme::mainSetupForCopyForward(MM_EnvironmentVLHGC *env)
 	_failedToExpand = false;
 	_phantomReferenceRegionsToProcess = 0;
 
+	/* Sort all hot fields for all classes if scavenger dynamicBreadthFirstScanOrdering is enabled */
+	if (_extensions->scavengerScanOrdering == MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST) {
+		MM_HotFieldUtil::sortAllHotFieldData(_javaVM, _extensions->globalVLHGCStats.gcCount);
+	}
+
 	/* Cache of the mark map */
 	_markMap = env->_cycleState->_markMap;
 
@@ -2031,6 +2040,8 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 					copyLeafChildren(env, reservingContext, destinationObjectPtr);
 				}
 #endif /* J9VM_GC_LEAF_BITS */
+				/* depth copy the hot fields of an object if scavenger dynamicBreadthFirstScanOrdering is enabled */
+				depthCopyHotFields(env, forwardedHeader->getPreservedClass(), destinationObjectPtr, reservingContext);
 			}
 			/* return value for updating the slot */
 			result = destinationObjectPtr;
@@ -2092,6 +2103,43 @@ MM_CopyForwardScheme::updateInternalLeafPointersAfterCopy(J9IndexableObject *des
 			if ((sourceStartAddress < leafAddress) && (leafAddress < sourceEndAddress)) {
 				leafSlotObject->writeReferenceToSlot((J9Object*)((UDATA)destinationPtr + (leafAddress - sourceStartAddress)));
 			}
+		}
+	}
+}
+
+MMINLINE void
+MM_CopyForwardScheme::depthCopyHotFields(MM_EnvironmentVLHGC *env, J9Class *clazz, J9Object *destinationObjectPtr, MM_AllocationContextTarok *reservingContext) {
+	/* depth copy the hot fields of an object up to a depth specified by depthCopyMax */
+	J9ClassHotFieldsInfo* hotFieldsInfo = clazz->hotFieldsInfo;
+	if (env->_hotFieldCopyDepthCount < _extensions->depthCopyMax && NULL != hotFieldsInfo) {
+		U_8 hotFieldOffset = hotFieldsInfo->hotFieldOffset1;
+		if (U_8_MAX != hotFieldOffset) {
+			copyHotField(env, destinationObjectPtr, hotFieldOffset, reservingContext);
+			U_8 hotFieldOffset2 = hotFieldsInfo->hotFieldOffset2;
+			if (U_8_MAX !=hotFieldOffset2) {
+				copyHotField(env, destinationObjectPtr, hotFieldOffset2, reservingContext);
+				U_8 hotFieldOffset3 = hotFieldsInfo->hotFieldOffset3;
+				if (U_8_MAX != hotFieldOffset3) {
+					copyHotField(env, destinationObjectPtr, hotFieldOffset3, reservingContext);
+				}
+			}
+		} else if ((_extensions->alwaysDepthCopyFirstOffset) && (false == _extensions->objectModel.isIndexable(destinationObjectPtr))) {
+			copyHotField(env, destinationObjectPtr, DEFAULT_HOT_FIELD_OFFSET, reservingContext);
+		}
+	}	
+}
+
+MMINLINE void
+MM_CopyForwardScheme::copyHotField(MM_EnvironmentVLHGC *env, J9Object *destinationObjectPtr, U_8 offset, MM_AllocationContextTarok *reservingContext) {
+	GC_SlotObject hotFieldObject(_javaVM->omrVM, (fomrobject_t*)(destinationObjectPtr + offset));
+	omrobjectptr_t objectPtr = hotFieldObject.readReferenceFromSlot();							
+	if (isObjectInEvacuateMemory(objectPtr)) {
+		/* Hot field needs to be copy and forwarded.  Check if the work has already been done */
+		MM_ScavengerForwardedHeader forwardHeaderHotField(objectPtr, _extensions->compressObjectReferences());
+		if (!forwardHeaderHotField.isForwardedPointer()) {
+			env->_hotFieldCopyDepthCount += 1;
+			copy(env, reservingContext, &forwardHeaderHotField);
+			env->_hotFieldCopyDepthCount -= 1;
 		}
 	}
 }
@@ -4097,6 +4145,9 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 	}
 	((MM_CopyForwardSchemeTask*)env->_currentTask)->synchronizeGCThreadsForInterRegionRememberedSet(env, UNIQUE_ID);
 
+	/*  Enable dynamicBreadthFirstScanOrdering depth copying if dynamicBreadthFirstScanOrdering is enabled */
+	env->enableHotFieldDepthCopy();
+	
 	/* scan roots before cleaning the card table since the roots give us more concrete NUMA recommendations */
 	scanRoots(env);
 
@@ -4114,6 +4165,9 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 		
 		completeScan(env);
 	}
+	/*  Disable dynamicBreadthFirstScanOrdering depth copying after root scanning and main phase of PGC cycle */
+	env->disableHotFieldDepthCopy();
+
 	/* ensure that all buffers have been flushed before we start reference processing */
 	env->getGCEnvironment()->_referenceObjectBuffer->flush(env);
 	
