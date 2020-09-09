@@ -476,13 +476,13 @@ public class MethodHandles {
 
 				try {
 					/*[IF Java14]*/
-					checkClassModuleVisibility(accessMode, accessClass, prevAccessClass, type.returnType);
-					for (Class<?> c: type.arguments) {
+					checkClassModuleVisibility(accessMode, accessClass, prevAccessClass, type.returnType());
+					for (Class<?> c: type.ptypes()) {
 						checkClassModuleVisibility(accessMode, accessClass, prevAccessClass, c);
 					}
 					/*[ELSE]*/
-					checkClassModuleVisibility(accessMode, accessModule, type.returnType);
-					for (Class<?> c: type.arguments) {
+					checkClassModuleVisibility(accessMode, accessModule, type.returnType());
+					for (Class<?> c: type.ptypes()) {
 						checkClassModuleVisibility(accessMode, accessModule, c);
 					}
 					/*[ENDIF] Java14*/
@@ -1104,7 +1104,7 @@ public class MethodHandles {
 		 */
 		final void accessCheckArgRetTypes(MethodType type) throws IllegalAccessException {
 			if (INTERNAL_PRIVILEGED != accessMode) {
-				for (Class<?> para : type.arguments) {
+				for (Class<?> para : type.ptypes()) {
 					if (!para.isPrimitive()) {
 						checkClassAccess(para);
 					}
@@ -1970,7 +1970,7 @@ public class MethodHandles {
 			MethodHandle result = foldArguments(thrower, constructor.bindTo(msg));
 			
 			/* Change result MethodType to the requested type */
-			result = result.asType(MethodType.methodType(type.returnType));
+			result = result.asType(MethodType.methodType(type.returnType()));
 			result = dropArguments(result, 0, type.parameterList());
 			return result;
 		}
@@ -2703,11 +2703,11 @@ public class MethodHandles {
 			throw new IllegalArgumentException();
 		}
 		int testArgCount = guardType.parameterCount();
-		if ((guardType.returnType != boolean.class) || (testArgCount > trueType.parameterCount())) {
+		if ((guardType.returnType() != boolean.class) || (testArgCount > trueType.parameterCount())) {
 			throw new IllegalArgumentException();
 		}
 		for (int i = 0; i < testArgCount; i++) {
-			if (guardType.arguments[i] != trueType.arguments[i]) {
+			if (guardType.parameterType(i) != trueType.parameterType(i)) {
 				throw new IllegalArgumentException();
 			}
 		}
@@ -2747,7 +2747,7 @@ public class MethodHandles {
 		}
 		MethodType tryType = tryHandle.type;
 		MethodType catchType = catchHandle.type;
-		if (tryType.returnType != catchType.returnType) {
+		if (tryType.returnType() != catchType.returnType()) {
 			throw new IllegalArgumentException();
 		}
 		if (catchType.parameterType(0) != throwableClass) {
@@ -2757,8 +2757,8 @@ public class MethodHandles {
 		if ((catchArgCount - 1) > tryType.parameterCount()) {
 			throw new IllegalArgumentException();
 		}
-		Class<?>[] tryParams = tryType.arguments;
-		Class<?>[] catchParams = catchType.arguments;
+		Class<?>[] tryParams = tryType.ptypes();
+		Class<?>[] catchParams = catchType.ptypes();
 		for (int i = 1; i < catchArgCount; i++) {
 			if (catchParams[i] != tryParams[i - 1]) {
 				throw new IllegalArgumentException();
@@ -2807,11 +2807,11 @@ public class MethodHandles {
 		MethodType tryType = tryHandle.type;
 		MethodType finallyType = finallyHandle.type;
 		
-		if (tryType.returnType != finallyType.returnType) {
+		if (tryType.returnType() != finallyType.returnType()) {
 			/*[MSG "K063B", "The return type of the try handle: {0} is inconsistent with the return type of the finally handle: {1}"]*/
 			throw new IllegalArgumentException(Msg.getString("K063B", new Object[] { //$NON-NLS-1$
-							tryType.returnType.getSimpleName(),
-							finallyType.returnType.getSimpleName(),}));
+							tryType.returnType().getSimpleName(),
+							finallyType.returnType().getSimpleName(),}));
 		}
 		if (!Throwable.class.isAssignableFrom(finallyType.parameterType(0))) {
 			/*[MSG "K063C", "The 1st parameter type of the finally handle: {0} is not {1}"]*/
@@ -2819,18 +2819,18 @@ public class MethodHandles {
 							finallyType.parameterType(0).getSimpleName(),
 							Throwable.class.getSimpleName()}));
 		}
-		if ((void.class != tryType.returnType) && (finallyType.parameterType(1) != tryType.returnType)) {
+		if ((void.class != tryType.returnType()) && (finallyType.parameterType(1) != tryType.returnType())) {
 			/*[MSG "K063D", "The 2nd parameter type of the finally handle: {0} is inconsistent with the return type of the try handle: {1}"]*/
 			throw new IllegalArgumentException(Msg.getString("K063D", new Object[] { //$NON-NLS-1$
 							finallyType.parameterType(1).getSimpleName(),
-							tryType.returnType.getSimpleName()}));
+							tryType.returnType().getSimpleName()}));
 		}
 		
 		int finallyParamCount =  finallyType.parameterCount();
-		Class<?>[] tryParams = tryType.arguments;
-		Class<?>[] finallyParams = finallyType.arguments;
+		Class<?>[] tryParams = tryType.ptypes();
+		Class<?>[] finallyParams = finallyType.ptypes();
 		
-		if (void.class == tryType.returnType) {
+		if (void.class == tryType.returnType()) {
 			validateParametersOfMethodTypes(finallyParamCount, tryType, finallyParams, tryParams, 1);
 		} else {
 			validateParametersOfMethodTypes(finallyParamCount, tryType, finallyParams, tryParams, 2);
@@ -3164,13 +3164,13 @@ public class MethodHandles {
 	public static MethodHandle filterReturnValue(MethodHandle handle, MethodHandle filter) throws NullPointerException, IllegalArgumentException {
 		MethodType filterType = filter.type;
 		int filterArgCount = filterType.parameterCount();
-		Class<?> handleReturnType = handle.type.returnType;
+		Class<?> handleReturnType = handle.type.returnType();
 		
 		if ((handleReturnType == void.class) && (filterArgCount == 0)) {
 			// filter handle must not take any parameters as handle doesn't return anything
 			return new FilterReturnHandle(handle, filter);
 		}
-		if ((filterArgCount == 1) && (filterType.parameterType(0) == handle.type.returnType)) {
+		if ((filterArgCount == 1) && (filterType.parameterType(0) == handle.type.returnType())) {
 			// filter handle must accept single parameter of handle's returnType
 			return new FilterReturnHandle(handle, filter);
 		}
@@ -3357,13 +3357,13 @@ public class MethodHandles {
 			if (filter != null) {
 				containsNonNullFilters = true;
 				MethodType filterType = filter.type;
-				if (newArgTypes[startPosition + i] != filterType.returnType) {
+				if (newArgTypes[startPosition + i] != filterType.returnType()) {
 					throw new IllegalArgumentException();
 				}
 				if (filterType.parameterCount() != 1) {
 					throw new IllegalArgumentException();
 				}
-				newArgTypes[startPosition + i] = filterType.arguments[0];
+				newArgTypes[startPosition + i] = filterType.parameterType(0);
 			}
 		}
 		if (!containsNonNullFilters) {
@@ -3382,7 +3382,7 @@ public class MethodHandles {
 			startPosition += 1;
 		}
 		
-		MethodType newType = MethodType.methodType(handleType.returnType, newArgTypes);
+		MethodType newType = MethodType.methodType(handleType.returnType(), newArgTypes);
 		MethodHandle result = FilterArgumentsHandle.get(handle, startPosition, filters, newType);
 		return result;
 	}
@@ -3427,7 +3427,7 @@ public class MethodHandles {
 
 		MethodType handleType = handle.type; // implicit nullcheck
 		MethodType preprocessorType = preprocessor.type; // implicit nullcheck
-		Class<?> preprocessorReturnClass = preprocessorType.returnType;
+		Class<?> preprocessorReturnClass = preprocessorType.returnType();
 		final int handleTypeParamCount = handleType.parameterCount();
 		final int preprocessorTypeParamCount = preprocessorType.parameterCount();
 		final int argIndexCount = passedInargumentIndices.length;
@@ -3460,11 +3460,11 @@ public class MethodHandles {
 			throw new IllegalArgumentException(Msg.getString("K063A2")); //$NON-NLS-1$
 		}
 
-		if (preprocessorReturnClass != handleType.arguments[filterPosition]) {
+		if (preprocessorReturnClass != handleType.parameterType(filterPosition)) {
 			/*[MSG "K063A1", "The return type of combiner: {0} is inconsistent with the argument type of {1} handle: {2} at the {3} position: {4}"]*/
 			throw new IllegalArgumentException(Msg.getString("K063A1", new Object[] { //$NON-NLS-1$
 							preprocessorReturnClass.getSimpleName(), "filter",
-							handleType.arguments[filterPosition].getSimpleName(), "filter", 
+							handleType.parameterType(filterPosition).getSimpleName(), "filter", 
 							Integer.toString(filterPosition)}));
 		}
 		
@@ -3567,7 +3567,7 @@ public class MethodHandles {
 	private static final MethodHandle foldArgumentsCommon(MethodHandle handle, int foldPosition, MethodHandle preprocessor, int... argumentIndices) throws NullPointerException, IllegalArgumentException {
 		MethodType handleType = handle.type; // implicit nullcheck
 		MethodType preprocessorType = preprocessor.type; // implicit nullcheck
-		Class<?> preprocessorReturnClass = preprocessorType.returnType;
+		Class<?> preprocessorReturnClass = preprocessorType.returnType();
 		final int handleTypeParamCount = handleType.parameterCount();
 		final int preprocessorTypeParamCount = preprocessorType.parameterCount();
 		final int argIndexCount = argumentIndices.length;
@@ -3635,11 +3635,11 @@ public class MethodHandles {
 							Integer.toString(preprocessorTypeParamCount), 
 							"<", Integer.toString(handleTypeParamCount)})); //$NON-NLS-1$
 		}
-		if (preprocessorReturnClass != handleType.arguments[foldPosition]) {
+		if (preprocessorReturnClass != handleType.parameterType(foldPosition)) {
 			/*[MSG "K063A1", "The return type of combiner: {0} is inconsistent with the argument type of {1} handle: {2} at the {3} position: {4}"]*/
 			throw new IllegalArgumentException(Msg.getString("K063A1", new Object[] { //$NON-NLS-1$
 							preprocessorReturnClass.getSimpleName(), "filter",
-							handleType.arguments[foldPosition].getSimpleName(), "filter",
+							handleType.parameterType(foldPosition).getSimpleName(), "filter",
 							Integer.toString(foldPosition)}));
 		}
 		validateParametersOfCombiner(argIndexCount, preprocessorTypeParamCount, preprocessorType, handleType, argumentIndices, foldPosition, 1);
@@ -3651,14 +3651,14 @@ public class MethodHandles {
 	private static void validateParametersOfCombiner(int argIndexCount, int preprocessorTypeParamCount, MethodType preprocessorType, MethodType handleType, int[] argumentIndices, int foldPosition, int foldPlaceHolder) {
 		if (0 == argIndexCount) {
 			for (int i = 0; i < preprocessorTypeParamCount; i++) {
-				if (preprocessorType.arguments[i]  != handleType.arguments[foldPosition + i + foldPlaceHolder]) {
+				if (preprocessorType.parameterType(i) != handleType.parameterType(foldPosition + i + foldPlaceHolder)) {
 					/*[MSG "K05d0", "Can't apply preprocessor of type: {0} to handle of type: {1} starting at {2} "]*/
 					throw new IllegalArgumentException(Msg.getString("K05d0", preprocessorType.toString(), handleType.toString(), Integer.toString(foldPosition))); //$NON-NLS-1$
 				}
 			}
 		} else {
 			for (int i = 0; i < argIndexCount; i++) {
-				if (preprocessorType.arguments[i]  != handleType.arguments[argumentIndices[i]]) {
+				if (preprocessorType.parameterType(i) != handleType.parameterType(argumentIndices[i])) {
 					/*[MSG "K05d0", "Can't apply preprocessor of type: {0} to handle of type: {1} starting at {2} "]*/
 					throw new IllegalArgumentException(Msg.getString("K05d0", preprocessorType.toString(), handleType.toString(), Integer.toString(foldPosition))); //$NON-NLS-1$
 				}
@@ -3688,11 +3688,11 @@ public class MethodHandles {
 	public static MethodHandle permuteArguments(MethodHandle handle, MethodType permuteType, int... permute) throws NullPointerException, IllegalArgumentException {
 		// TODO: If permute is the identity permute, return this
 		MethodType handleType = handle.type;	// implicit null check
-		Class<?> permuteReturnType = permuteType.returnType; // implicit null check
+		Class<?> permuteReturnType = permuteType.returnType(); // implicit null check
 		if (permute.length != handleType.parameterCount()) { // implicit null check on permute
 			throw new IllegalArgumentException();
 		}
-		if (permuteReturnType != handleType.returnType) {
+		if (permuteReturnType != handleType.returnType()) {
 			throw new IllegalArgumentException();
 		}
 		permute = permute.clone();	// ensure the permute[] can't be modified during/after validation
@@ -3720,7 +3720,7 @@ public class MethodHandles {
 	public static MethodHandle collectArguments(MethodHandle target, int pos, MethodHandle filter) throws NullPointerException, IllegalArgumentException {
 		MethodType targetType = target.type; // implicit nullcheck
 		MethodType filterType = filter.type; // implicit nullcheck
-		Class<?> filterReturnClass = filterType.returnType;
+		Class<?> filterReturnClass = filterType.returnType();
 		
 		if (filterReturnClass == void.class) {
 			// special case: a filter handle that returns void doesn't provide an argument to the target handle
@@ -3728,7 +3728,7 @@ public class MethodHandles {
 				/*[MSG "K0580", "Filter argument index (pos) is not between 0 and target arity (\"{0}\")"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0580", targetType.argSlots)); //$NON-NLS-1$
 			}
-			MethodType resultType = targetType.insertParameterTypes(pos, filterType.arguments);
+			MethodType resultType = targetType.insertParameterTypes(pos, filterType.ptypes());
 			MethodHandle result = buildTransformHandle(new VoidCollectHelper(target, pos, filter), resultType);
 			return result;
 		}
@@ -3738,11 +3738,11 @@ public class MethodHandles {
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0580", targetType.argSlots)); //$NON-NLS-1$
 		}
 		
-		if (filterReturnClass != targetType.arguments[pos]) {
+		if (filterReturnClass != targetType.parameterType(pos)) {
 			/*[MSG "K0581", "Filter return type does not match target argument at position \"{0}\""]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0581", pos)); //$NON-NLS-1$
 		}
-		MethodType resultType = targetType.dropParameterTypes(pos, pos + 1).insertParameterTypes(pos, filterType.arguments);
+		MethodType resultType = targetType.dropParameterTypes(pos, pos + 1).insertParameterTypes(pos, filterType.ptypes());
 		MethodHandle result = buildTransformHandle(new CollectHelper(target, pos, filter), resultType);
 		return result;
 	}
@@ -3758,8 +3758,8 @@ public class MethodHandles {
 		/*[IF ]*/
 		/////////////// TODO: would it be faster to create the new MethodType using the handle.type & permute array and then use newType == permuteType?
 		/*[ENDIF]*/
-		Class<?>[] permuteArgs = permuteType.arguments;
-		Class<?>[] handleArgs = handleType.arguments;
+		Class<?>[] permuteArgs = permuteType.ptypes();
+		Class<?>[] handleArgs = handleType.ptypes();
 		for (int i = 0; i < permute.length; i++) {
 			int permuteIndex = permute[i];
 			if ((permuteIndex < 0) || (permuteIndex >= permuteArgs.length)){
@@ -3939,14 +3939,14 @@ public class MethodHandles {
 	 */
 	public static MethodHandle explicitCastArguments(MethodHandle handle, MethodType type) throws NullPointerException, WrongMethodTypeException {
 		MethodType handleType = handle.type;	// implicit null check
-		Class<?> newReturnType = type.returnType; // implicit null check
+		Class<?> newReturnType = type.returnType(); // implicit null check
 		
 		if (handleType == type) {
 			return handle;
 		}
 		MethodHandle mh = handle;
-		if (handleType.returnType != newReturnType) {
-			MethodHandle filter = FilterHelpers.getReturnFilter(handleType.returnType, newReturnType, true);
+		if (handleType.returnType() != newReturnType) {
+			MethodHandle filter = FilterHelpers.getReturnFilter(handleType.returnType(), newReturnType, true);
 			mh = new FilterReturnHandle(handle, filter);
 			/* Exit early if only return types differ */
 			if (mh.type == type) {
@@ -4008,7 +4008,7 @@ public class MethodHandles {
 			// overwrite the original argument with the new class from the values[]
 			arguments[location + i] = valueClazz;
 		}
-		MethodHandle asTypedOriginalHandle = originalHandle.asType(MethodType.methodType(originalType.returnType, arguments)); 
+		MethodHandle asTypedOriginalHandle = originalHandle.asType(MethodType.methodType(originalType.returnType(), arguments)); 
 
 		MethodType mtype = originalType.dropParameterTypes(location, location + values.length);
 		MethodHandle insertHandle;
@@ -4188,8 +4188,8 @@ public class MethodHandles {
 	 * @throws NullPointerException - if the requested MethodType is null
 	 */
 	public static MethodHandle empty(MethodType targetMethodType) throws NullPointerException {
-		MethodHandle constantHandle = zero(targetMethodType.returnType);
-		return dropArgumentsUnsafe(constantHandle, 0, targetMethodType.arguments);
+		MethodHandle constantHandle = zero(targetMethodType.returnType());
+		return dropArgumentsUnsafe(constantHandle, 0, targetMethodType.ptypes());
 	}
 	
 	/**
@@ -4317,7 +4317,7 @@ public class MethodHandles {
 		}
 		
 		MethodType bodyType = bodyHandle.type;
-		Class<?> bodyReturnType = bodyType.returnType;
+		Class<?> bodyReturnType = bodyType.returnType();
 		int bodyParamLength = bodyType.parameterCount();
 		
 		/* The signature of the body handle must be either (V, A...)V or (A...)void */
@@ -4328,9 +4328,9 @@ public class MethodHandles {
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D3", bodyReturnType)); //$NON-NLS-1$
 			}
 			
-			if (bodyReturnType != bodyType.arguments[0]) {
+			if (bodyReturnType != bodyType.parameterType(0)) {
 				/*[MSG "K065D2", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D2", bodyReturnType, bodyType.arguments[0])); //$NON-NLS-1$
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D2", bodyReturnType, bodyType.parameterType(0))); //$NON-NLS-1$
 			}
 			
 			bodyIterationVarLength = 1;
@@ -4412,7 +4412,7 @@ public class MethodHandles {
 		} catch (IllegalAccessException | NoSuchMethodException e) {
 			throw new InternalError("The method doesn't exit or it fails in the access checking", e); //$NON-NLS-1$
 		}
-		Class<?> bodyReturnType = bodyHandle.type.returnType;
+		Class<?> bodyReturnType = bodyHandle.type.returnType();
 		
 		/* Initially the leading parameter type of body handle is 'V',
 		 * so insert the counter argument 'I' (int type) for 'end' before V.
@@ -4468,8 +4468,8 @@ public class MethodHandles {
 			throw new NullPointerException(com.ibm.oti.util.Msg.getString("K065E")); //$NON-NLS-1$
 		}
 		
-		Class<?> startReturnType = startHandle.type.returnType;
-		Class<?> endReturnType = endHandle.type.returnType;
+		Class<?> startReturnType = startHandle.type.returnType();
+		Class<?> endReturnType = endHandle.type.returnType();
 		if ((startReturnType != endReturnType)
 			|| (int.class != startReturnType)
 			|| (int.class != endReturnType)
@@ -4479,8 +4479,8 @@ public class MethodHandles {
 		}
 		
 		MethodType bodyType = bodyHandle.type;
-		Class<?> bodyReturnType = bodyType.returnType;
-		Class<?>[] bodyParamTypes = bodyType.arguments;
+		Class<?> bodyReturnType = bodyType.returnType();
+		Class<?>[] bodyParamTypes = bodyType.ptypes();
 		int bodyParamLength = bodyParamTypes.length;
 		
 		/* The signature of the body handle must be either (V,I,A...)V or (I,A...)void */
@@ -4572,7 +4572,7 @@ public class MethodHandles {
 		validateArgumentsOfIteratedLoop(iteratorHandle, initHandle, bodyHandle);
 		
 		MethodType bodyType = bodyHandle.type;
-		Class<?> bodyReturnType = bodyType.returnType;
+		Class<?> bodyReturnType = bodyType.returnType();
 		
 		/* The init handle for iterator is set to the method handle to Iterable.iterator()
 		 * by default if it is null. The default iterator handle parameters are adjusted 
@@ -4580,7 +4580,7 @@ public class MethodHandles {
 		 */
 		MethodHandle initIterator = iteratorHandle;
 		if (null == initIterator) {
-			int bodyParamTypesLength = bodyHandle.type.arguments.length;
+			int bodyParamTypesLength = bodyHandle.type.parameterCount();
 			int bodyIterationVarLength = 2;
 			if (void.class == bodyReturnType) {
 				bodyIterationVarLength = 1;
@@ -4591,7 +4591,7 @@ public class MethodHandles {
 			 */
 			Class<?> iterableType = Iterable.class;
 			if (bodyParamTypesLength > bodyIterationVarLength) {
-				iterableType = bodyHandle.type.arguments[bodyIterationVarLength];
+				iterableType = bodyHandle.type.parameterType(bodyIterationVarLength);
 			}
 			
 			try {
@@ -4606,7 +4606,7 @@ public class MethodHandles {
 		 */
 		MethodHandle iteratorNextElement = null;
 		MethodHandle iteratorHasNextElement = null;
-		Class<?> iteratorType = initIterator.type.returnType;
+		Class<?> iteratorType = initIterator.type.returnType();
 
 		try {
 			iteratorNextElement = Lookup.internalPrivilegedLookup.findVirtual(iteratorType, "next", MethodType.methodType(Object.class)); //$NON-NLS-1$
@@ -4678,8 +4678,8 @@ public class MethodHandles {
 		}
 		
 		MethodType bodyType = bodyHandle.type;
-		Class<?> bodyReturnType = bodyType.returnType;
-		Class<?>[] bodyParamTypes = bodyType.arguments;
+		Class<?> bodyReturnType = bodyType.returnType();
+		Class<?>[] bodyParamTypes = bodyType.ptypes();
 		int bodyParamTypesLength = bodyParamTypes.length;
 		int bodyIterationVarLength = 1;
 		
@@ -4708,9 +4708,9 @@ public class MethodHandles {
 		 * Otherwise default A will be set to java.util.Iterator.
 		 */
 		if (null != iteratorHandle) {
-			if (!Iterator.class.isAssignableFrom(iteratorHandle.type.returnType)) {
+			if (!Iterator.class.isAssignableFrom(iteratorHandle.type.returnType())) {
 				/*[MSG "K065J", "The return type of the iterator handle must be Iterator or its subtype rather than {0}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065J", iteratorHandle.type.returnType.getName())); //$NON-NLS-1$
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065J", iteratorHandle.type.returnType().getName())); //$NON-NLS-1$
 			}
 		} else if (bodyParamTypesLength > bodyIterationVarLength) {
 			if (!Iterable.class.isAssignableFrom(bodyParamTypes[bodyIterationVarLength])) {
@@ -4721,13 +4721,13 @@ public class MethodHandles {
 		
 		if (null != initHandle) {
 			MethodType initType = initHandle.type;
-			Class<?> initReturnType = initType.returnType;
+			Class<?> initReturnType = initType.returnType();
 			if (initReturnType != bodyReturnType) {
 				/*[MSG "K065M", "The return type of init and loop body doesn't match: {0} != {1}"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065M", initReturnType.getName(), bodyReturnType.getName())); //$NON-NLS-1$
 			}
 			
-			Class<?>[] initParamTypes = initType.arguments;
+			Class<?>[] initParamTypes = initType.ptypes();
 			int initParamTypesLength = initParamTypes.length;
 			if ((initParamTypesLength > 0) && (bodyParamTypesLength == bodyIterationVarLength)) {
 				if (null == iteratorHandle) {
@@ -4741,7 +4741,7 @@ public class MethodHandles {
 					 * we need to check the init handle to see whether it has more parameter types than iterator.
 					 * Note: other cases will be addressed later in the generic loop.
 					 */
-					Class<?>[] iteratorParamTypes =  iteratorHandle.type.arguments;
+					Class<?>[] iteratorParamTypes =  iteratorHandle.type.ptypes();
 					if (initParamTypesLength > iteratorParamTypes.length) {
 						/*[MSG "K065O", "The parameter types of init doesn't match that of iterator: {0} != {1}"]*/
 						throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065O",  //$NON-NLS-1$
@@ -4766,15 +4766,15 @@ public class MethodHandles {
 		}
 		
 		MethodType bodyType = bodyHandle.type;
-		Class<?>[] bodyParamTypes = bodyType.arguments;
+		Class<?>[] bodyParamTypes = bodyType.ptypes();
 		MethodType targetType = targetHandle.type;
-		Class<?>[] targetParamTypes = targetType.arguments;
+		Class<?>[] targetParamTypes = targetType.ptypes();
 		
 		/* Remove V (if exist) and T from the parameter list of loop body so as to
 		 * obtain its external parameter types.
 		 */
 		int fixedParamType = 1;
-		if (void.class != bodyType.returnType) {
+		if (void.class != bodyType.returnType()) {
 			fixedParamType += 1;
 		}
 		
@@ -4809,7 +4809,7 @@ public class MethodHandles {
 	private static MethodHandle recreateIteratedBodyHandle(MethodHandle iteratorHandle, MethodHandle bodyHandle) {
 		MethodHandle loopBody = bodyHandle;
 		MethodType bodyType = loopBody.type;
-		Class<?> bodyReturnType = bodyType.returnType;
+		Class<?> bodyReturnType = bodyType.returnType();
 		Class<?>[] bodyParamTypes = bodyType.parameterArray();
 		int bodyParamLength = bodyParamTypes.length;
 		int bodyIterationVarLength = 1;
@@ -4849,7 +4849,7 @@ public class MethodHandles {
 	}
 	
 	private static boolean hasNoArgs(MethodType type) {
-		return (0 == type.arguments.length);
+		return (0 == type.parameterCount());
 	}
 	
 	/* Wrap the logic of clause validation, construction of parameter list for each handle,
@@ -4942,7 +4942,7 @@ public class MethodHandles {
 			 * used later to generate the final parameter type list (A...) of loop handle.
 			 */
 			if (null != initHandle) {
-				updateLongerLoopParamTypes(initHandle.type.arguments);
+				updateLongerLoopParamTypes(initHandle.type.ptypes());
 			}
 			
 			/* Ensure the init handle and the step handle have compatible return types */
@@ -4957,7 +4957,7 @@ public class MethodHandles {
 			/* Check whether at least one predicate handle exists in the clause array */
 			if (null != predHandle) {
 				atLeastOnePredicateFound = true;
-				if (boolean.class != predHandle.type.returnType) {
+				if (boolean.class != predHandle.type.returnType()) {
 					/*[MSG "K0656", "The return type of predicate must be boolean: {0}"]*/
 					throw new IllegalArgumentException(Msg.getString("K0656", Arrays.toString(currentClause))); //$NON-NLS-1$
 				}
@@ -4966,7 +4966,7 @@ public class MethodHandles {
 			
 			/* Validate all 'fini' handles have the same return type */
 			if (null != finiHandle) {
-				Class<?> finiReturnType = finiHandle.type.returnType;
+				Class<?> finiReturnType = finiHandle.type.returnType();
 				if (null == loopReturnType) {
 					loopReturnType = finiReturnType;
 				} else if (loopReturnType != finiReturnType) {
@@ -4988,13 +4988,13 @@ public class MethodHandles {
 			int notNullCount = 0;
 			
 			if (null != handle1) {
-				returnType1 = handle1.type.returnType;
+				returnType1 = handle1.type.returnType();
 				commonReturnType = returnType1;
 				notNullCount += 1;
 			}
 			
 			if (null != handle2) {
-				returnType2 = handle2.type.returnType;
+				returnType2 = handle2.type.returnType();
 				commonReturnType = returnType2;
 				notNullCount += 1;
 			}
@@ -5065,7 +5065,7 @@ public class MethodHandles {
 						&& (currrentHandle.type.parameterCount() > 0)
 					) {
 						/* Remove the iteration variable types (V...) of non-init handles to get the remaining parameter types */
-						Class<?>[] suffixOfParamTypes = getSuffixOfParamTypesFromNonInitHandle(currrentHandle.type.arguments);
+						Class<?>[] suffixOfParamTypes = getSuffixOfParamTypesFromNonInitHandle(currrentHandle.type.ptypes());
 						
 						/* Compared with the existing longest parameter types to determine
 						 * the longer parameter types for use in the next non-init handle.
@@ -5305,7 +5305,7 @@ public class MethodHandles {
 		/* Generate a clause handle with a full-length array of parameter types */
 		private MethodHandle getHandleWithFullLengthParamTypes(MethodHandle handleOfClause, Class<?>[] expectedParamTypes) {
 			MethodHandle currentHandle = handleOfClause;
-			int handleParamLength = handleOfClause.type.arguments.length;
+			int handleParamLength = handleOfClause.type.parameterCount();
 			
 			/* 1) No need to update the parameter types of the handle if (V..., A...) or (A...) doesn't exist.
 			 *    It means that neither init handles nor non-init handles have parameters.
@@ -5358,7 +5358,7 @@ public class MethodHandles {
 				 * match RI's behavior even though there is nothing to return/affect the final
 				 * result.
 				 */
-				if (void.class == currentClause[0].type.returnType){
+				if (void.class == currentClause[0].type.returnType()){
 					currentClause[0].invokeWithArguments(arguments);
 				} else {
 					/* Update the the corresponding iteration variable in the internal parameter list
@@ -5379,7 +5379,7 @@ public class MethodHandles {
 					/* As with init, the step handle with the void return type only gets executed
 					 * and returns nothing.
 					 */
-					if (void.class == currentClause[1].type.returnType) {
+					if (void.class == currentClause[1].type.returnType()) {
 						currentClause[1].invokeWithArguments(loopParamTypes);
 					} else {
 						/* Call the step handle to update the value of iteration variable for each clause */
@@ -5453,7 +5453,7 @@ public class MethodHandles {
 				throw tryThrowable;
 			} finally {
 				int finallyParamCount = finallyTarget.type.parameterCount();
-				Class<?> tryTargetReturnType = tryTarget.type.returnType;
+				Class<?> tryTargetReturnType = tryTarget.type.returnType();
 				Object[] finallyParams = new Object[finallyParamCount];
 				finallyParams[0] = finallyThrowable;
 				
