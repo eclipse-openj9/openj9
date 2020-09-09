@@ -79,7 +79,7 @@ J9::ARM64::MemoryReference::assignRegisters(TR::Instruction *currentInstruction,
          {
          if (baseRegister->getTotalUseCount() == baseRegister->getFutureUseCount())
             {
-            if ((assignedBaseRegister = machine->findBestFreeRegister(TR_GPR, true)) == NULL)
+            if ((assignedBaseRegister = machine->findBestFreeRegister(currentInstruction, TR_GPR, true, baseRegister)) == NULL)
                {
                assignedBaseRegister = machine->freeBestRegister(currentInstruction, baseRegister);
                }
@@ -119,7 +119,7 @@ J9::ARM64::MemoryReference::assignRegisters(TR::Instruction *currentInstruction,
          {
          if (indexRegister->getTotalUseCount() == indexRegister->getFutureUseCount())
             {
-            if ((assignedIndexRegister = machine->findBestFreeRegister(TR_GPR, false)) == NULL)
+            if ((assignedIndexRegister = machine->findBestFreeRegister(currentInstruction, TR_GPR, false, indexRegister)) == NULL)
                {
                assignedIndexRegister = machine->freeBestRegister(currentInstruction, indexRegister);
                }
@@ -159,7 +159,7 @@ J9::ARM64::MemoryReference::assignRegisters(TR::Instruction *currentInstruction,
          {
          if (extraRegister->getTotalUseCount() == extraRegister->getFutureUseCount())
             {
-            if ((assignedExtraRegister = machine->findBestFreeRegister(TR_GPR, false)) == NULL)
+            if ((assignedExtraRegister = machine->findBestFreeRegister(currentInstruction, TR_GPR, false, extraRegister)) == NULL)
                {
                assignedExtraRegister = machine->freeBestRegister(currentInstruction, extraRegister);
                }
