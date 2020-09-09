@@ -463,7 +463,7 @@ J9NLS_DMP_PROCESSING_EVENT_TIME.link=dita:///diag/tools/dump_agents.dita
 # END NON-TRANSLATABLE
 
 
-J9NLS_DMP_WRITTEN_DUMP_STR_ZOS=Dump %1$s gravado no(s) conjunto de dados(s) usando o modelo de nome %2$s
+J9NLS_DMP_WRITTEN_DUMP_STR_ZOS=Dump %1$s gravado no(s) conjunto de dados(s) usando o template de nome %2$s
 # START NON-TRANSLATABLE
 J9NLS_DMP_WRITTEN_DUMP_STR_ZOS.explanation=The dump was written using the specified dataset name template.
 J9NLS_DMP_WRITTEN_DUMP_STR_ZOS.system_action=The JVM continues.

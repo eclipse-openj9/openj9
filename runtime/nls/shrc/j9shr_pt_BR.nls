@@ -7034,7 +7034,7 @@ J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.system_action=The JVM terminates, unless
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.user_response=Use -Xshareclasses:name=<cacheName>,destroy to destroy all invalid layers (all the higher layers which are built on top of the modified layer) and retry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES=Recursos do subcontratante = %s
+J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES=Recursos do Processador = %s
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.sample_input_1=default
 J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.explanation=NOTAG

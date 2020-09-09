@@ -1531,7 +1531,7 @@ J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.user_response=Contact the provider of the clas
 # END NON-TRANSLATABLE
 
 # PermittedSubclasses is not translatable
-J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES=varis atributos PermittedSubclasses
+J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES=m\u00faltiples atributos PermittedSubclasses
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.

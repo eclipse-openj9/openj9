@@ -996,7 +996,7 @@ J9NLS_JNICHK_NON_ARRAY_REQUIRED.system_action=If -Xcheck:jni:nonfatal has been s
 J9NLS_JNICHK_NON_ARRAY_REQUIRED.user_response=Check and correct the JNI application code.
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS=Rada JNI v %1$s: Tuto funkci nelze pou\u017e\u00edt se sbalen\u00fdmi objekty. Pou\u017eijte m\u00edsto toho %2$s.
+J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS=Rada JNI v %1$s: Tuto funkci nelze pou\u017e\u00edt se sbalen\u00fdmi objekty. Pou\u017eijte m\u00edsto n\u00ed %2$s.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_1=GetPrimitiveArrayCritical
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_2=GetPackedArrayElements

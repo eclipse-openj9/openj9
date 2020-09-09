@@ -75,7 +75,7 @@ J9NLS_VMUTIL_OPTIONS_FILE_NOT_FOUND_STR.user_response=Correct the command line o
 # END NON-TRANSLATABLE
 
 # Note %s command-line option
-J9NLS_VMUTIL_OPTION_MALFORMED=Option mal form\u00e9e : '%s'
+J9NLS_VMUTIL_OPTION_MALFORMED=Option incorrectement form\u00e9e : '%s'
 # START NON-TRANSLATABLE
 J9NLS_VMUTIL_OPTION_MALFORMED.explanation=The specified option could not be parsed
 J9NLS_VMUTIL_OPTION_MALFORMED.system_action=The JVM will warn the user and ignore the option
@@ -85,7 +85,7 @@ J9NLS_VMUTIL_OPTION_MALFORMED.sample_input_1=-XX:MaxDirectMemorySize=1J
 
 # END NON-TRANSLATABLE
 
-J9NLS_VMUTIL_OPTION_OVERFLOW=Option trop grande : '%s'
+J9NLS_VMUTIL_OPTION_OVERFLOW=Option trop \u00e9lev\u00e9e : '%s'
 # START NON-TRANSLATABLE
 J9NLS_VMUTIL_OPTION_OVERFLOW.explanation=The specified option is larger than the maximum permitted value
 J9NLS_VMUTIL_OPTION_OVERFLOW.system_action=The JVM will warn the user and ignore the option
@@ -95,7 +95,7 @@ J9NLS_VMUTIL_OPTION_OVERFLOW.sample_input_1=-XX:MaxDirectMemorySize=1000G
 
 # END NON-TRANSLATABLE
 
-J9NLS_VMUTIL_MALFORMED_OPTIONSFILE_ERROR_STR=Option mal form\u00e9e %s d\u00e9tect\u00e9e dans -Xoptionsfile
+J9NLS_VMUTIL_MALFORMED_OPTIONSFILE_ERROR_STR=Option incorrectement form\u00e9e %s d\u00e9tect\u00e9e dans -Xoptionsfile
 # START NON-TRANSLATABLE
 J9NLS_VMUTIL_MALFORMED_OPTIONSFILE_ERROR_STR.sample_input_1=badoption
 J9NLS_VMUTIL_MALFORMED_OPTIONSFILE_ERROR_STR.explanation=A closing quote character was missing from a quoted token in the specified option found in a file specified by -Xoptionsfile
@@ -115,7 +115,7 @@ J9NLS_VMUTIL_MALFORMED_JTOPTS_ERROR_STR.user_response=Correct the JAVA_TOOL_OPTI
 
 # Note: this string is not used by J2ME VMs.
 # Note: IBM_JAVA_OPTIONS is an environment variable name and should not be translated
-J9NLS_VMUTIL_MALFORMED_OPTS_ERROR_STR=Valeur mal form\u00e9e pour IBM_JAVA_OPTIONS
+J9NLS_VMUTIL_MALFORMED_OPTS_ERROR_STR=Valeur incorrectement form\u00e9e pour IBM_JAVA_OPTIONS
 # START NON-TRANSLATABLE
 J9NLS_VMUTIL_MALFORMED_OPTS_ERROR_STR.explanation=A closing quote character was missing from a quoted token in the IBM_JAVA_OPTIONS environment variable
 J9NLS_VMUTIL_MALFORMED_OPTS_ERROR_STR.system_action=The JVM will terminate
@@ -125,7 +125,7 @@ J9NLS_VMUTIL_MALFORMED_OPTS_ERROR_STR.user_response=Correct the IBM_JAVA_OPTIONS
 
 # Note: this string is not used by J2ME VMs.
 # Note: -Xservice is a command line option and should not be translated
-J9NLS_VMUTIL_MALFORMED_XSERVICE_ERROR_STR=Valeur mal form\u00e9e pour -Xservice
+J9NLS_VMUTIL_MALFORMED_XSERVICE_ERROR_STR=Valeur incorrectement form\u00e9e pour -Xservice
 # START NON-TRANSLATABLE
 J9NLS_VMUTIL_MALFORMED_XSERVICE_ERROR_STR.explanation=A closing quote character was missing from a quoted token in the -Xservice command line option
 J9NLS_VMUTIL_MALFORMED_XSERVICE_ERROR_STR.system_action=The JVM will terminate
@@ -133,7 +133,7 @@ J9NLS_VMUTIL_MALFORMED_XSERVICE_ERROR_STR.user_response=Correct the command line
 
 # END NON-TRANSLATABLE
 
-J9NLS_VMUTIL_MALFORMED_MEMORY_OPTION=Valeur d'option mal form\u00e9e ; l'option "%1$s%3$.*2$s" contient des caract\u00e8res de fin "%4$s" qui ont \u00e9t\u00e9 ignor\u00e9s.
+J9NLS_VMUTIL_MALFORMED_MEMORY_OPTION=Valeur d'option incorrectement form\u00e9e ; l'option "%1$s%3$.*2$s" contient des caract\u00e8res de fin "%4$s" qui ont \u00e9t\u00e9 ignor\u00e9s.
 # START NON-TRANSLATABLE
 J9NLS_VMUTIL_MALFORMED_MEMORY_OPTION.sample_input_1=-Xminf
 J9NLS_VMUTIL_MALFORMED_MEMORY_OPTION.sample_input_2=3

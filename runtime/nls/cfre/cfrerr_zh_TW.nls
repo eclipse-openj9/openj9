@@ -898,7 +898,7 @@ J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8.user_response=Contact the provid
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS=\u7121\u6548\u7684\u65b9\u6cd5\u4fee\u98fe\u5143
+J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS=\u4e0d\u5408\u6cd5\u7684\u65b9\u6cd5\u4fee\u98fe\u5143
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1082,7 +1082,7 @@ J9NLS_CFR_ERR_FOUND_JSR_IN_CLASS_VER_51.user_response=Contact the provider of th
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME=\u7121\u6548\u7684\u6b04\u4f4d\u540d\u7a31
+J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME=\u4e0d\u5408\u6cd5\u7684\u6b04\u4f4d\u540d\u7a31
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1208,7 +1208,7 @@ J9NLS_CFR_ERR_METHOD_PARAMETER_NAME_NOT_UTF8.user_response=Contact the provider 
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8=\u4ecb\u9762\u65b9\u6cd5\u7684\u4fee\u98fe\u5143\u7121\u6548
+J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8=\u4ecb\u9762\u65b9\u6cd5\u7684\u4fee\u98fe\u5143\u4e0d\u5408\u6cd5
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8.explanation=See the JVM spec for details of the allowed interface method modifiers
 J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1307,7 +1307,7 @@ J9NLS_CFR_ERR_CLINIT_NOT_STATIC.user_response=Contact the provider of the classf
 # END NON-TRANSLATABLE
 
 # <clinit> method at version 51.0 must be void and take no arguments
-J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=\u65b9\u6cd5 <clinit> \u5177\u6709\u7121\u6548\u7c3d\u7ae0
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=\u65b9\u6cd5 <clinit> \u5177\u6709\u4e0d\u5408\u6cd5\u7c3d\u7ae0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.

@@ -328,7 +328,7 @@ J9NLS_CFR_ERR_NULL_SUPER.user_response=Contact the provider of the classfile for
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_EXCEPTION_NOT_CLASS=a exce\u00e7\u00e3o emitida deve ser uma classe
+J9NLS_CFR_ERR_EXCEPTION_NOT_CLASS=a exce\u00e7\u00e3o lan\u00e7ada deve ser uma classe
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_EXCEPTION_NOT_CLASS.explanation=The 'Exceptions_attribute' refers to something that is not a class.
 J9NLS_CFR_ERR_EXCEPTION_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1307,7 +1307,7 @@ J9NLS_CFR_ERR_CLINIT_NOT_STATIC.user_response=Contact the provider of the classf
 # END NON-TRANSLATABLE
 
 # <clinit> method at version 51.0 must be void and take no arguments
-J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=O m\u00e9todo <clinit> possui uma assinatura ilegal
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=O m\u00e9todo <clinit> possui uma assinatura inv\u00e1lida
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.

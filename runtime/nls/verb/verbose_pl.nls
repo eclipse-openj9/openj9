@@ -289,14 +289,14 @@ J9NLS_VERB_SIZES_XSCMAXJIT.system_action=
 J9NLS_VERB_SIZES_XSCMAXJIT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCDMX=zarezerwowany obszar pami\u0119ci podr\u0119cznej klasy wsp\u00f3\u0142u\u017cytkowanej dla atrybut\u00f3w debugowania klasy
+J9NLS_VERB_SIZES_XSCDMX=zarezerwowany obszar pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas dla atrybut\u00f3w debugowania klasy
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCDMX.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCDMX.system_action=
 J9NLS_VERB_SIZES_XSCDMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMINJITDATA=maksymalny dozwolony obszar wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas dla JIT
+J9NLS_VERB_SIZES_XSCMINJITDATA=minimalny zarezerwowany obszar wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas dla danych JIT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMINJITDATA.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMINJITDATA.system_action=

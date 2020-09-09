@@ -244,7 +244,7 @@ J9NLS_JNICHK_FATAL_ERROR_ADVICE.user_response=As required, add the -Xcheck:jni:n
 # END NON-TRANSLATABLE
 
 # JNI, JNIEnv, -Xcheck:jni:nonfatal and JVM are not translatable
-J9NLS_JNICHK_INVALID_ENV=Errore JNI in %s: JNIEnv non sembra essere un thread valido, o la memoria \u00e8 stata corrotta, o non \u00e8 una J9 virtual machine
+J9NLS_JNICHK_INVALID_ENV=Errore JNI in %s: JNIEnv non sembra essere un thread valido, o la memoria \u00e8 stata danneggiata, o non \u00e8 una J9 virtual machine
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_INVALID_ENV.sample_input_1=methodName
 J9NLS_JNICHK_INVALID_ENV.explanation=Validation of the JNIEnv passed on the named JNI function has failed.
