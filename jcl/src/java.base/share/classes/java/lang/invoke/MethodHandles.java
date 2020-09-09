@@ -2160,6 +2160,9 @@ public class MethodHandles {
 			JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
 			Class<?> targetClass = jlAccess.defineClass(accessClass.getClassLoader(), targetClassName, classBytes, accessClass.getProtectionDomain(), null);
 			
+			/* Class needs to be linked but without having been initialized */
+			getVMLangAccess().prepare(targetClass);
+
 			return targetClass;
 		}
 		/*[ENDIF] Sidecar19-SE-OpenJ9*/
