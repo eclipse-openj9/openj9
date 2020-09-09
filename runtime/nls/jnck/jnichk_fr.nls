@@ -584,7 +584,7 @@ J9NLS_JNICHK_MISSING_EXCEPTION_CHECK.user_response=Correct the JNI application c
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_MALFORMED_IDENTIFIER=Avertissement JNI dans %1$s : L'argument #%2$d est un identificateur mal form\u00e9 (\"%3$s\")
+J9NLS_JNICHK_MALFORMED_IDENTIFIER=Avertissement JNI dans %1$s : L'argument #%2$d est un identificateur incorrectement form\u00e9 (\"%3$s\")
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MALFORMED_IDENTIFIER.sample_input_1=methodName
 J9NLS_JNICHK_MALFORMED_IDENTIFIER.sample_input_2=3
@@ -595,7 +595,7 @@ J9NLS_JNICHK_MALFORMED_IDENTIFIER.user_response=Check and correct the JNI applic
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE=Avertissement JNI dans %1$s : L'argument #%2$d est une signature de m\u00e9thode mal form\u00e9e (\"%3$s\")
+J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE=Avertissement JNI dans %1$s : L'argument #%2$d est une signature de m\u00e9thode incorrectement form\u00e9e (\"%3$s\")
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.sample_input_1=methodName
 J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.sample_input_2=3
@@ -606,7 +606,7 @@ J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.user_response=Check and correct the JNI 
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE=Avertissement JNI dans %1$s : L'argument #%2$d est une signature de champ mal form\u00e9e (\"%3$s\")
+J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE=Avertissement JNI dans %1$s : L'argument #%2$d est une signature de champ incorrectement form\u00e9e (\"%3$s\")
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.sample_input_1=methodName
 J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.sample_input_2=3

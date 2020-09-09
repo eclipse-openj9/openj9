@@ -362,7 +362,7 @@ J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR_MSG.system_action=The JVM will contin
 J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR_MSG.user_response=Refer the documentation for supported Hypervisor / OS combinations for which usage information will be provided.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL=Invokespecial requis par le m\u00e9thodes de l'interface priv\u00e9e
+J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL=Invokespecial requis par les m\u00e9thodes d'interface priv\u00e9e
 # START NON-TRANSLATABLE
 J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL.explanation=Private interface methods must be looked up with the equivalent of invokespecial, not invokeinterface or invokevirtual.
 J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL.system_action=The JVM will throw an IncompatibleClassChangeError.

@@ -161,21 +161,21 @@ J9NLS_VERB_SIZES_XMX.system_action=
 J9NLS_VERB_SIZES_XMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMX=taille du cache des classes partag\u00e9es
+J9NLS_VERB_SIZES_XSCMX=taille du cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMX.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMX.system_action=
 J9NLS_VERB_SIZES_XSCMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMINAOT=cache de classes partag\u00e9es min r\u00e9serv\u00e9 pour AOT
+J9NLS_VERB_SIZES_XSCMINAOT=cache de classe partag\u00e9 min r\u00e9serv\u00e9 pour AOT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMINAOT.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMINAOT.system_action=
 J9NLS_VERB_SIZES_XSCMINAOT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMAXAOT=cache de classes partag\u00e9es max autoris\u00e9 pour AOT
+J9NLS_VERB_SIZES_XSCMAXAOT=cache de classe partag\u00e9 max autoris\u00e9 pour AOT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMAXAOT.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMAXAOT.system_action=
@@ -275,35 +275,35 @@ J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1.system_action=None
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1.user_response=None
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMINJIT=cache de classes partag\u00e9es min r\u00e9serv\u00e9 pour JIT
+J9NLS_VERB_SIZES_XSCMINJIT=cache de classe partag\u00e9 min r\u00e9serv\u00e9 pour JIT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMINJIT.explanation=NOTISSUED
 J9NLS_VERB_SIZES_XSCMINJIT.system_action=
 J9NLS_VERB_SIZES_XSCMINJIT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMAXJIT=cache de classes partag\u00e9es max autoris\u00e9 pour JIT
+J9NLS_VERB_SIZES_XSCMAXJIT=cache de classe partag\u00e9 max autoris\u00e9 pour JIT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMAXJIT.explanation=NOTISSUED
 J9NLS_VERB_SIZES_XSCMAXJIT.system_action=
 J9NLS_VERB_SIZES_XSCMAXJIT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCDMX=espace cache de classes partag\u00e9es r\u00e9serv\u00e9 pour les attributs de d\u00e9bogage des classes
+J9NLS_VERB_SIZES_XSCDMX=espace cache de classe partag\u00e9 r\u00e9serv\u00e9 pour les attributs de d\u00e9bogage des classes
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCDMX.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCDMX.system_action=
 J9NLS_VERB_SIZES_XSCDMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMINJITDATA=espace cache de classes partag\u00e9es min r\u00e9serv\u00e9 pour les donn\u00e9es JIT
+J9NLS_VERB_SIZES_XSCMINJITDATA=espace cache de classe partag\u00e9 min r\u00e9serv\u00e9 pour les donn\u00e9es JIT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMINJITDATA.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMINJITDATA.system_action=
 J9NLS_VERB_SIZES_XSCMINJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMAXJITDATA=espace cache de classes partag\u00e9es max autoris\u00e9 pour les donn\u00e9es JIT
+J9NLS_VERB_SIZES_XSCMAXJITDATA=espace cache de classe partag\u00e9 max autoris\u00e9 pour les donn\u00e9es JIT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMAXJITDATA.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMAXJITDATA.system_action=
@@ -332,14 +332,14 @@ J9NLS_VERB_SIZES_XMCRS.system_action=
 J9NLS_VERB_SIZES_XMCRS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS=taille du cache des classes partag\u00e9es
+J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS=taille du cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS.explanation=NOTAG
 J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS.system_action=
 J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMX_V1=limite de taille souple (soft) du cache des classes partag\u00e9es
+J9NLS_VERB_SIZES_XSCMX_V1=taille maximale souple du cache des classes partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMX_V1.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMX_V1.system_action=

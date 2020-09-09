@@ -441,7 +441,7 @@ J9NLS_VM_XSCMX_IGNORED.system_action=The JVM will ignore the -Xscmx command line
 J9NLS_VM_XSCMX_IGNORED.user_response=Determine if -Xscmx should be removed, or if -Xshareclasses should be added.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_OS_STACK_OVERFLOW=d\u00e9bordement de la pile du syst\u00e8me d'exploitation
+J9NLS_VM_OS_STACK_OVERFLOW=d\u00e9passement de la capacit\u00e9 de pile du syst\u00e8me d'exploitation
 # START NON-TRANSLATABLE
 J9NLS_VM_OS_STACK_OVERFLOW.explanation=The native stack was about to grow beyond it's maximum size.
 J9NLS_VM_OS_STACK_OVERFLOW.system_action=The JVM will throw an stack overflow exception.
@@ -762,7 +762,7 @@ J9NLS_VM_ILLEGAL_ACCESS_CLASS.user_response=
 # END NON-TRANSLATABLE
 
 # Message for InternalError when eventron rules are violated
-J9NLS_VM_EVENTRON_ERROR=op\u00e9ration non admise sur l'unit\u00e9 d'ex\u00e9cution eventron
+J9NLS_VM_EVENTRON_ERROR=op\u00e9ration interdite sur l'unit\u00e9 d'ex\u00e9cution eventron
 # START NON-TRANSLATABLE
 J9NLS_VM_EVENTRON_ERROR.explanation=NOTAG
 J9NLS_VM_EVENTRON_ERROR.system_action=
@@ -849,7 +849,7 @@ J9NLS_VM_IFA_ERROR.sample_input_1=5623DA10
 # END NON-TRANSLATABLE
 
 # Note %s command-line option
-J9NLS_VM_OPTION_MALFORMED=Option mal form\u00e9e : '%s'
+J9NLS_VM_OPTION_MALFORMED=Option incorrectement form\u00e9e : '%s'
 # START NON-TRANSLATABLE
 J9NLS_VM_OPTION_MALFORMED.explanation=The specified option could not be parsed
 J9NLS_VM_OPTION_MALFORMED.system_action=The JVM will warn the user and ignore the option
@@ -1983,7 +1983,7 @@ J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.user_response=Remove one of the inco
 
 # Message to use when class is not permitted in PermittedSubclasses attribute of sealed super class
 # argument 1 is the class name
-J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=la classe %2$.*1$s ne peut pas h\u00e9riter de sa superclasse scell\u00e9e.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=la classe %2$.*1$s ne peut pas h\u00e9riter des valeurs de sa classe parente scell\u00e9e.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.explanation=The specified class is not permitted to extend its sealed super class.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.system_action=The JVM will throw an IncompatibleClassChangeError.
@@ -1992,7 +1992,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.user_response=Co
 
 # Message to use when class is not permitted in PermittedSubclasses attribute of sealed super interface
 # argument 1 is the class name,
-J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=la classe %2$.*1$s ne peut pas h\u00e9riter de sa superinterface scell\u00e9e.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=la classe %2$.*1$s ne peut pas h\u00e9riter des valeurs de son interface parente scell\u00e9e.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.explanation=The specified class is not permitted to extend its sealed super interface.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.

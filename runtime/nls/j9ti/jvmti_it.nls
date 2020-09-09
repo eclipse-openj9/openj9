@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,7 +178,7 @@ J9NLS_JVMTI_COM_IBM_JVM_JLM_SET_DESCRIPTION.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_JVMTI_COM_IBM_JVM_JLM_DUMP_DESCRIPTION=Richiedere un dump di JLM (Java Lock Monitor)
+J9NLS_JVMTI_COM_IBM_JVM_JLM_DUMP_DESCRIPTION=Richiedere un dump di JLM (Java Lock Monitor).
 # START NON-TRANSLATABLE
 J9NLS_JVMTI_COM_IBM_JVM_JLM_DUMP_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_JVM_JLM_DUMP_DESCRIPTION.system_action=None
@@ -372,7 +372,7 @@ J9NLS_JVMTI_COM_IBM_JVM_ITERATE_SHARED_CACHES_DESCRIPTION.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_JVMTI_COM_IBM_JVM_DESTROY_SHARED_CACHE_DESCRIPTION=Distruggere una cache condivisa indicata.
+J9NLS_JVMTI_COM_IBM_JVM_DESTROY_SHARED_CACHE_DESCRIPTION=Eliminare una cache condivisa indicata.
 # START NON-TRANSLATABLE
 J9NLS_JVMTI_COM_IBM_JVM_DESTROY_SHARED_CACHE_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_JVM_DESTROY_SHARED_CACHE_DESCRIPTION.system_action=None
@@ -476,7 +476,7 @@ J9NLS_JVMTI_COM_IBM_GET_OBJECT_MONITOR_HASH_CODE_DESCRIPTION.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_JVMTI_COM_IBM_CLEAR_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY=Cancellare il flag per-metodo per l'immissione selettiva e la notifica di uscita.
+J9NLS_JVMTI_COM_IBM_CLEAR_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY=Cancellare il flag per-metodo per l'input selettivo e la notifica di uscita.
 # START NON-TRANSLATABLE
 J9NLS_JVMTI_COM_IBM_CLEAR_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_CLEAR_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY.system_action=None

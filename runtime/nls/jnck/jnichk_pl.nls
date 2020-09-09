@@ -637,7 +637,7 @@ J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.user_response=Check and correct the JNI applic
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL=Ostrze\u017cenie JNI w %1$s: Pojemno\u015b\u0107 globalnej puli referencji wzros\u0142a automatycznie od warto\u015bci %2$d do warto\u015bci %3$d.\nMo\u017ce to by\u0107 przejawem przecieku pami\u0119ci.
+J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL=Ostrze\u017cenie JNI w %1$s: Pojemno\u015b\u0107 globalnej puli s\u0142abych referencji wzros\u0142a automatycznie od warto\u015bci %2$d do warto\u015bci %3$d.\nMo\u017ce to by\u0107 przejawem przecieku pami\u0119ci.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.sample_input_1=methodName
 J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.sample_input_2=64

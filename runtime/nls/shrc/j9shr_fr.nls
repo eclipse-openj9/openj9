@@ -83,7 +83,7 @@ J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE.system_action=Processing continues.
 J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE.user_response=Other messages may have been issued indicating the reason why the cache has not been destroyed.  Investigate these messages.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_NO_SHARE_CACHE=Aucun cache de classes partag\u00e9es disponible
+J9NLS_SHRC_CLCM_NO_SHARE_CACHE=Aucun cache de classe partag\u00e9 disponible
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_NO_SHARE_CACHE.explanation=There are no shared class caches present on the system which can be processed by the command requested
 J9NLS_SHRC_CLCM_NO_SHARE_CACHE.system_action=Processing continues.
@@ -99,7 +99,7 @@ J9NLS_SHRC_CLCM_CACHE_EXPIRED.system_action=Processing continues.
 J9NLS_SHRC_CLCM_CACHE_EXPIRED.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_FAILED_REMOVED=Impossible de retirer le cache de classes partag\u00e9es \"%s\"
+J9NLS_SHRC_CLCM_FAILED_REMOVED=Impossible de retirer le cache de classe partag\u00e9 \"%s\"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_FAILED_REMOVED.sample_input_1=myCache
 J9NLS_SHRC_CLCM_FAILED_REMOVED.explanation=It has not been possible to remove the indicated shared class cache.
@@ -134,7 +134,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED.system_action=A JVM will not be create
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED.user_response=None required.  This is an information message issued when you request a shared class cache to be destroyed.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPFAILED=Erreur : Impossible d'ouvrir le cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPFAILED=Erreur : Impossible d'ouvrir le cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPFAILED.explanation=NOTISSUED
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPFAILED.system_action=
@@ -165,14 +165,14 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_SEMAPHORE_REMOVE_FAILED.system_action=The JVM te
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_SEMAPHORE_REMOVE_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_INVALIDFLAG=Erreur du cache de classes partag\u00e9es : option non valide
+J9NLS_SHRC_OSCACHE_INVALIDFLAG=Erreur du cache de classe partag\u00e9 : option non valide
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_INVALIDFLAG.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_INVALIDFLAG.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_INVALIDFLAG.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_FAILED=Erreur du cache de classes partag\u00e9es :
+J9NLS_SHRC_OSCACHE_FAILED=Erreur du cache de classe partag\u00e9 :
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_FAILED.explanation=NOTISSUED
 J9NLS_SHRC_OSCACHE_FAILED.system_action=
@@ -271,21 +271,21 @@ J9NLS_SHRC_OSCACHE_ERROR_SHSEM_NOSPACE.system_action=The JVM terminates, unless 
 J9NLS_SHRC_OSCACHE_ERROR_SHSEM_NOSPACE.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_WRONG_EYECATCHER=Le cache de classes partag\u00e9es que vous tentez de connecter a un en-t\u00eate non valide.
+J9NLS_SHRC_OSCACHE_ERROR_WRONG_EYECATCHER=Le cache de classe partag\u00e9 que vous tentez de connecter a un en-t\u00eate non valide.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_WRONG_EYECATCHER.explanation=The shared class cache you are trying to use is invalid.
 J9NLS_SHRC_OSCACHE_ERROR_WRONG_EYECATCHER.system_action=If the cache is corrupt, the JVM will attempt to re-create it. Otherwise the JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_ERROR_WRONG_EYECATCHER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_WRONG_JVM_LEVEL=La version de JVM du cache de classes partag\u00e9es auquel vous tentez de vous connecter est incompatible.
+J9NLS_SHRC_OSCACHE_ERROR_WRONG_JVM_LEVEL=La version de JVM du cache de classe partag\u00e9 auquel vous tentez de vous connecter est incompatible.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_WRONG_JVM_LEVEL.explanation=The shared class cache you are trying to use is incompatible with this JVM.
 J9NLS_SHRC_OSCACHE_ERROR_WRONG_JVM_LEVEL.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_ERROR_WRONG_JVM_LEVEL.user_response=If the requested shared class cache is no longer required, destroy it and rerun.  If it is still required, for example, by another process running a different level of the JVM, create a new cache by specifying a new name to the JVM using the -Xshareclasses:name
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_WRONG_MOD_LEVEL=Le niveau de modification du cache de classes partag\u00e9es auquel vous tentez de vous connecter est erron\u00e9.
+J9NLS_SHRC_OSCACHE_ERROR_WRONG_MOD_LEVEL=Le niveau de modification du cache de classe partag\u00e9 auquel vous tentez de vous connecter est erron\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_WRONG_MOD_LEVEL.explanation=The shared class cache you are trying to use is incompatible with this JVM.
 J9NLS_SHRC_OSCACHE_ERROR_WRONG_MOD_LEVEL.system_action=The JVM terminates.
@@ -1280,7 +1280,7 @@ J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.user_response=If you require a larger cache, destroy this cache, increase the value of SHMMAX and re-create the cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA=Cache de classes partag\u00e9es \"%1$s\" cr\u00e9\u00e9
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA=Cache de classe partag\u00e9 \"%1$s\" cr\u00e9\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.explanation=This message informs you that a shared class cache with the given name has been created.  It is only issued if verbose shared classes messages have been requested with -Xshareclasses:verbose.
@@ -1288,7 +1288,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA=Cache de classes partag\u00e9es \"%1$s\" ouvert
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA=Cache de classe partag\u00e9 \"%1$s\" ouvert
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA.explanation=This message informs you that an existing shared class cache with the given name has been opened.  It is only issued if verbose shared classes messages have been requested with -Xshareclasses:verbose.
@@ -1724,14 +1724,14 @@ J9NLS_SHRC_BDMI_FAILED_ENTER_BDMUTEX.system_action=The JVM continues.
 J9NLS_SHRC_BDMI_FAILED_ENTER_BDMUTEX.user_response=The system may be low on resources, please retry when the system is more lightly loaded.  If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PERSISTENT=Cr\u00e9er un cache de classes partag\u00e9es persistant
+J9NLS_SHRC_SHRINIT_HELPTEXT_PERSISTENT=Cr\u00e9er un cache de classe partag\u00e9 persistant
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PERSISTENT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PERSISTENT.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PERSISTENT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NONPERSISTENT=Cr\u00e9er un cache de classes partag\u00e9es non persistant
+J9NLS_SHRC_SHRINIT_HELPTEXT_NONPERSISTENT=Cr\u00e9er un cache de classe partag\u00e9 non persistant
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NONPERSISTENT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NONPERSISTENT.system_action=
@@ -1775,14 +1775,14 @@ J9NLS_SHRC_OSCACHE_MMAP_PORT_ERROR_MESSAGE.system_action=The JVM terminates, unl
 J9NLS_SHRC_OSCACHE_MMAP_PORT_ERROR_MESSAGE.user_response=If the appropriate action cannot be determined from the error message, please contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_MMAPCAP=Les caches de classes partag\u00e9es persistants ne peuvent pas \u00eatre cr\u00e9\u00e9s/utilis\u00e9s car le mappage de m\u00e9moire ne prend pas en charge les fonctions requises
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_MMAPCAP=Les caches de classe partag\u00e9s persistants ne peuvent pas \u00eatre cr\u00e9\u00e9s/utilis\u00e9s car le mappage de m\u00e9moire ne prend pas en charge les fonctions requises
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_MMAPCAP.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_MMAPCAP.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_MMAPCAP.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_PORTCAP=Impossible de cr\u00e9er/utiliser des caches de classes partag\u00e9es persistants, car le verrouillage de fichiers n'est pas pris en charge
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_PORTCAP=Impossible de cr\u00e9er/utiliser des caches de classe partag\u00e9s persistants, car le verrouillage de fichiers n'est pas pris en charge
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_PORTCAP.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_PORTCAP.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -1803,28 +1803,28 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_GETCACHEPATHNAME_ERROR.system_action=The JVM ter
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_GETCACHEPATHNAME_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR=Erreur lors de l'ouverture du fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR=Erreur lors de l'ouverture du fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR=Erreur lors de l'acquisition du verrou d'\u00e9criture de l'en-t\u00eate du fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR=Erreur lors de l'acquisition du verrou d'\u00e9criture de l'en-t\u00eate du fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME=Erreur lors de la mise \u00e0 jour de l'heure de la derni\u00e8re connexion au cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME=Erreur lors de la mise \u00e0 jour de l'heure de la derni\u00e8re connexion au cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INVALID_CACHE_HEADER=Erreur : en-t\u00eate non valide dans le fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INVALID_CACHE_HEADER=Erreur : en-t\u00eate non valide dans le fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INVALID_CACHE_HEADER.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INVALID_CACHE_HEADER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -1838,7 +1838,7 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INITIALISING_DATA_HEADER.system_action=The
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INITIALISING_DATA_HEADER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_SETTING_CACHE_LENGTH=Erreur lors de la d\u00e9finition de la longueur du fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_SETTING_CACHE_LENGTH=Erreur lors de la d\u00e9finition de la longueur du fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_SETTING_CACHE_LENGTH.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_SETTING_CACHE_LENGTH.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -1852,21 +1852,21 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_OPENING_CACHE_READONLY.system_action=The J
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_OPENING_CACHE_READONLY.user_response=Remove the readonly option from your command-line and restart.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_CREATING_CACHE_HEADER=Erreur lors de la cr\u00e9ation de l'en-t\u00eate du fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_CREATING_CACHE_HEADER=Erreur lors de la cr\u00e9ation de l'en-t\u00eate du fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_CREATING_CACHE_HEADER.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_CREATING_CACHE_HEADER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_CREATING_CACHE_HEADER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK=Erreur lors de l'acquisition du verrou en lecture de la connexion au fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK=Erreur lors de l'acquisition du verrou en lecture de la connexion au fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK=Erreur lors de la lib\u00e9ration du verrou en lecture de la connexion au fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK=Erreur lors de la lib\u00e9ration du verrou en lecture de la connexion au fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -1889,56 +1889,56 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_OPENED.system_action=The JVM continues, this is 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_OPENED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_NOT_ATTACHED=Erreur : le cache de classes partag\u00e9es n'est pas connect\u00e9
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_NOT_ATTACHED=Erreur : le cache de classe partag\u00e9 n'est pas connect\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_NOT_ATTACHED.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_NOT_ATTACHED.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_NOT_ATTACHED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_HEADER_WRITE_LOCK=Erreur : impossible d'acqu\u00e9rir le verrou en \u00e9criture de l'en-t\u00eate du fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_HEADER_WRITE_LOCK=Erreur : impossible d'acqu\u00e9rir le verrou en \u00e9criture de l'en-t\u00eate du fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_HEADER_WRITE_LOCK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_HEADER_WRITE_LOCK.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_HEADER_WRITE_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_ATTACH_WRITE_LOCK=Erreur : impossible d'acqu\u00e9rir le verrou en \u00e9criture de la connexion au fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_ATTACH_WRITE_LOCK=Erreur : impossible d'acqu\u00e9rir le verrou en \u00e9criture de la connexion au fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_ATTACH_WRITE_LOCK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_ATTACH_WRITE_LOCK.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_ATTACH_WRITE_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_DELETING_FILE=Erreur : Impossible de supprimer le fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_DELETING_FILE=Erreur : Impossible de supprimer le fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_DELETING_FILE.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_DELETING_FILE.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_DELETING_FILE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME=Erreur lors de la mise \u00e0 jour de l'heure de la derni\u00e8re d\u00e9connexion du fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME=Erreur lors de la mise \u00e0 jour de l'heure de la derni\u00e8re d\u00e9connexion du fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_RELEASING_ATTACH_READ_LOCK=Erreur lors de la lib\u00e9ration du verrou en lecture de la connexion au fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_RELEASING_ATTACH_READ_LOCK=Erreur lors de la lib\u00e9ration du verrou en lecture de la connexion au fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_RELEASING_ATTACH_READ_LOCK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_RELEASING_ATTACH_READ_LOCK.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_RELEASING_ATTACH_READ_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_GETTING_FILE_LENGTH=Erreur lors de l'obtention de la longueur du fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_GETTING_FILE_LENGTH=Erreur lors de l'obtention de la longueur du fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_GETTING_FILE_LENGTH.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_GETTING_FILE_LENGTH.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_GETTING_FILE_LENGTH.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_MAPPING_FILE=Erreur lors du mappage du fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_MAPPING_FILE=Erreur lors du mappage du fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_MAPPING_FILE.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_MAPPING_FILE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -1953,21 +1953,21 @@ J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ATTACHED.system_action=The JVM continues, this is
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ATTACHED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER=Erreur : l'identificateur de l'en-t\u00eate du fichier de cache de classes partag\u00e9es n'est pas valide
+J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER=Erreur : l'identificateur de l'en-t\u00eate du fichier de cache de classe partag\u00e9 n'est pas valide
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION=Erreur : la version de l'en-t\u00eate du fichier de cache de classes partag\u00e9es n'est pas validee
+J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION=Erreur : la version de l'en-t\u00eate du fichier de cache de classe partag\u00e9 n'est pas validee
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_MODLEVEL=Erreur : le niveau de modification de l'en-t\u00eate du fichier de cache de classes partag\u00e9es n'est pas valide
+J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_MODLEVEL=Erreur : le niveau de modification de l'en-t\u00eate du fichier de cache de classe partag\u00e9 n'est pas valide
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_MODLEVEL.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_MODLEVEL.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -1988,28 +1988,28 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_AUTOPUNT.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_AUTOPUNT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILESEEK=Erreur lors de la recherche dans le fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILESEEK=Erreur lors de la recherche dans le fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILESEEK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILESEEK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILESEEK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILEWRITE=Erreur lors de l'\u00e9criture de l'en-t\u00eate du fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILEWRITE=Erreur lors de l'\u00e9criture de l'en-t\u00eate du fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILEWRITE.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILEWRITE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILEWRITE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_SETCACHELENGTH_FILESETLENGTH=Erreur lors de la d\u00e9finition de la longueur du fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_SETCACHELENGTH_FILESETLENGTH=Erreur lors de la d\u00e9finition de la longueur du fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_SETCACHELENGTH_FILESETLENGTH.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_SETCACHELENGTH_FILESETLENGTH.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_SETCACHELENGTH_FILESETLENGTH.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME=Erreur de mise \u00e0 jour de l'heure de la derni\u00e8re d\u00e9connexion du fichier de cache de classes partag\u00e9es lors de l'arr\u00eat de la JVM
+J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME=Erreur de mise \u00e0 jour de l'heure de la derni\u00e8re d\u00e9connexion du fichier de cache de classe partag\u00e9 lors de l'arr\u00eat de la JVM
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -2238,7 +2238,7 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_OPENED_READONLY.system_action=The JVM continues,
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_OPENED_READONLY.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SYSV_STARTUP_OPENED_READONLY=Cache de classes partag\u00e9es %1$s ouvert en lecture seule
+J9NLS_SHRC_OSCACHE_SYSV_STARTUP_OPENED_READONLY=Cache de classe partag\u00e9 %1$s ouvert en lecture seule
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SYSV_STARTUP_OPENED_READONLY.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SYSV_STARTUP_OPENED_READONLY.explanation=Shared classes cache %1$s has been opened for read-only access.
@@ -2320,7 +2320,7 @@ J9NLS_SHRC_NO_COREMMAP_WARNING.system_action=The JVM continues
 J9NLS_SHRC_NO_COREMMAP_WARNING.user_response=If possible, run with the environment variable CORE_MMAP set to "yes" and remove the "noCoreMmap" option
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_COREMMAP_REQUIRED=Pour pouvoir utiliser des caches de classes partag\u00e9es persistants sur AIX, affectez \u00e0 la variable d'environnement CORE_MMAP la valeur "yes"
+J9NLS_SHRC_COREMMAP_REQUIRED=Pour pouvoir utiliser des caches de classe partag\u00e9s persistants sur AIX, affectez \u00e0 la variable d'environnement CORE_MMAP la valeur "yes"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_COREMMAP_REQUIRED.explanation=Without CORE_MMAP set to "yes", the system dumps will not contain the required class data
 J9NLS_SHRC_COREMMAP_REQUIRED.system_action=The JVM terminates
@@ -2336,7 +2336,7 @@ J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.system_action=The JVM exits
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.user_response=Add persistent suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS=Le cache des classes partag\u00e9es \"%s\" n'a pas \u00e9t\u00e9 cr\u00e9\u00e9 avec l'option imbriqu\u00e9e. Impossible d'augmenter la m\u00e9moire du cache.
+J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS=Le cache de classe partag\u00e9 \"%s\" n'a pas \u00e9t\u00e9 cr\u00e9\u00e9 avec l'option imbriqu\u00e9e. Impossible d'augmenter la m\u00e9moire du cache.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS.sample_input_1=sharedcc
 J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS.explanation=An error has occurred within Shared Classes processing.
@@ -2344,7 +2344,7 @@ J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS.system_action=The JVM terminates, unless 
 J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS.user_response=Use a different cache name, reset or destroy the cache, or remove the nested option from your command-line, and restart.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_NESTED_IN_USE=Le cache des classes partag\u00e9es est utilis\u00e9 par une autre machine virtuelle. Impossible d'augmenter la m\u00e9moire du cache imbriqu\u00e9.
+J9NLS_SHRC_OSCACHE_NESTED_IN_USE=Le cache de classe partag\u00e9 est utilis\u00e9 par une autre machine virtuelle. Impossible d'augmenter la m\u00e9moire du cache imbriqu\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_NESTED_IN_USE.explanation=An error has occurred within Shared Classes processing.
 J9NLS_SHRC_OSCACHE_NESTED_IN_USE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -2434,14 +2434,14 @@ J9NLS_SHRC_OSCACHE_VMEM_NETWORK_CACHE.system_action=The JVM terminates, unless y
 J9NLS_SHRC_OSCACHE_VMEM_NETWORK_CACHE.user_response=Select a different cacheDir.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEATTACHWRITELOCK_ERROR=Erreur lors de la lib\u00e9ration du verrou en \u00e9criture de la connexion au fichier de cache des classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEATTACHWRITELOCK_ERROR=Erreur lors de la lib\u00e9ration du verrou en \u00e9criture de la connexion au fichier de cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEATTACHWRITELOCK_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEATTACHWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEATTACHWRITELOCK_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEHEADERWRITELOCK_ERROR=Erreur de lib\u00e9ration du verrou en \u00e9criture pour l'en-t\u00eate du fichier de cache des classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEHEADERWRITELOCK_ERROR=Erreur de lib\u00e9ration du verrou en \u00e9criture pour l'en-t\u00eate du fichier de cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEHEADERWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -2476,7 +2476,7 @@ J9NLS_SHRC_SHRINIT_CANT_SERIALIZE_NO_CURRENT_THREAD.system_action=No shared cach
 J9NLS_SHRC_SHRINIT_CANT_SERIALIZE_NO_CURRENT_THREAD.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_CACHE_FILENAME=Imprime le nom du fichier cache de classes partag\u00e9es qui sera utilis\u00e9.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_CACHE_FILENAME=Imprime le nom du fichier cache de classe partag\u00e9 qui sera utilis\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_CACHE_FILENAME.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_CACHE_FILENAME.system_action=
@@ -2511,35 +2511,35 @@ J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_CLOSESEM.system_action=The JVM terminates
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_CLOSESEM.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_INIT_SEMAPHORE_FAILED=Echec de l'initialisation des s\u00e9maphores du cache de classes partag\u00e9es. Avertissement : le cache est peut-\u00eatre endommag\u00e9. Si le cache partag\u00e9 pose des probl\u00e8mes, il peut \u00eatre n\u00e9cessaire de le d\u00e9truire et de le recr\u00e9er.
+J9NLS_SHRC_OSCACHE_INIT_SEMAPHORE_FAILED=Echec de l'initialisation des s\u00e9maphores du cache de classe partag\u00e9. Avertissement : le cache est peut-\u00eatre endommag\u00e9. Si le cache partag\u00e9 pose des probl\u00e8mes, il peut \u00eatre n\u00e9cessaire de le d\u00e9truire et de le recr\u00e9er.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_INIT_SEMAPHORE_FAILED.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_INIT_SEMAPHORE_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_INIT_SEMAPHORE_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_ENTER_HDR_MUTEX=ERREUR : Echec lors de l'entr\u00e9e du mutex pour l'en-t\u00eate du cache de classes partag\u00e9es. Avertissement : le cache est peut-\u00eatre endommag\u00e9. Si le cache partag\u00e9 pose des probl\u00e8mes, il peut \u00eatre n\u00e9cessaire de le d\u00e9truire et de le recr\u00e9er.
+J9NLS_SHRC_OSCACHE_ERROR_ENTER_HDR_MUTEX=ERREUR : Echec lors de l'entr\u00e9e du mutex pour l'en-t\u00eate du cache de classe partag\u00e9. Avertissement : le cache est peut-\u00eatre endommag\u00e9. Si le cache partag\u00e9 pose des probl\u00e8mes, il peut \u00eatre n\u00e9cessaire de le d\u00e9truire et de le recr\u00e9er.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_ENTER_HDR_MUTEX.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_ERROR_ENTER_HDR_MUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_ERROR_ENTER_HDR_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_EXIT_HDR_MUTEX=ERREUR : Echec lors de la sortie du mutex pour l'en-t\u00eate du cache de classes partag\u00e9es. Avertissement : le cache est peut-\u00eatre endommag\u00e9. Si le cache partag\u00e9 pose des probl\u00e8mes, il peut \u00eatre n\u00e9cessaire de le d\u00e9truire et de le recr\u00e9er.
+J9NLS_SHRC_OSCACHE_ERROR_EXIT_HDR_MUTEX=ERREUR : Echec lors de la sortie du mutex pour l'en-t\u00eate du cache de classe partag\u00e9. Avertissement : le cache est peut-\u00eatre endommag\u00e9. Si le cache partag\u00e9 pose des probl\u00e8mes, il peut \u00eatre n\u00e9cessaire de le d\u00e9truire et de le recr\u00e9er.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_EXIT_HDR_MUTEX.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_ERROR_EXIT_HDR_MUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_ERROR_EXIT_HDR_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_HEADERLOCK_MUTEX=Echec de l'envoi du verrou de l'en-t\u00eate du cache des classes partag\u00e9es au cours de l'initialisation. Avertissement : le cache est peut-\u00eatre endommag\u00e9. Si le cache partag\u00e9 pose des probl\u00e8mes, il peut \u00eatre n\u00e9cessaire de le d\u00e9truire et de le recr\u00e9er.
+J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_HEADERLOCK_MUTEX=Echec de l'envoi du verrou de l'en-t\u00eate du cache de classe partag\u00e9 au cours de l'initialisation. Avertissement : le cache est peut-\u00eatre endommag\u00e9. Si le cache partag\u00e9 pose des probl\u00e8mes, il peut \u00eatre n\u00e9cessaire de le d\u00e9truire et de le recr\u00e9er.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_HEADERLOCK_MUTEX.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_HEADERLOCK_MUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_HEADERLOCK_MUTEX.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX=Echec de l'envoi du verrou utilisateur du cache des classes partag\u00e9es au cours de l'initialisation. Avertissement : le cache est peut-\u00eatre endommag\u00e9. Si le cache partag\u00e9 pose des probl\u00e8mes, il peut \u00eatre n\u00e9cessaire de le d\u00e9truire et de le recr\u00e9er.
+J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX=Echec de l'envoi du verrou utilisateur du cache de classe partag\u00e9 au cours de l'initialisation. Avertissement : le cache est peut-\u00eatre endommag\u00e9. Si le cache partag\u00e9 pose des probl\u00e8mes, il peut \u00eatre n\u00e9cessaire de le d\u00e9truire et de le recr\u00e9er.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_ERROR_INIT_SEMAPHORE_POST_SEM_USERLOCK_MUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -2909,7 +2909,7 @@ J9NLS_SHRC_CM_PRINTSTATS_DEBUG_ENABLED_FALSE.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUG_ENABLED_FALSE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_SHUTDOWN_NONDEBUG_CACHE=Arr\u00eat d'un cache de classes partag\u00e9es activ\u00e9 pour le d\u00e9bogage.
+J9NLS_SHRC_SHRINIT_SHUTDOWN_NONDEBUG_CACHE=Arr\u00eat d'un cache de classe partag\u00e9 activ\u00e9 pour le d\u00e9bogage.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_SHUTDOWN_NONDEBUG_CACHE.explanation=The cache does not contain the information required for debugging.
 J9NLS_SHRC_SHRINIT_SHUTDOWN_NONDEBUG_CACHE.system_action=The JVM will continue without using the cache.
@@ -3485,7 +3485,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTDETAILS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTDETAILS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN=Ancienne g\u00e9n\u00e9ration du cache de classes partag\u00e9es \"%s\" supprim\u00e9e
+J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN=Ancienne g\u00e9n\u00e9ration du cache de classe partag\u00e9 \"%s\" supprim\u00e9e
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.explanation=Successfully removed older generation of indicated shared class cache.
@@ -3493,7 +3493,7 @@ J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.system_action=Processing continues.
 J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN=Impossible de supprimer l'ancienne g\u00e9n\u00e9ration du cache de classes partag\u00e9es \"%s\"
+J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN=Impossible de supprimer l'ancienne g\u00e9n\u00e9ration du cache de classe partag\u00e9 \"%s\"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.explanation=It has not been possible to remove the older generation of indicated shared class cache.
@@ -3501,7 +3501,7 @@ J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.system_action=Processing continues.
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.user_response=Run with -Xshareclasses:verbose enabled to see other messages that may indicate the reason why the cache has not been destroyed.  Investigate these messages.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN=Impossible de supprimer la g\u00e9n\u00e9ration actuelle du cache de classes partag\u00e9es \"%s\"
+J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN=Impossible de supprimer la g\u00e9n\u00e9ration actuelle du cache de classe partag\u00e9 \"%s\"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN.explanation=It has not been possible to remove the current generation of indicated shared class cache.
@@ -3549,7 +3549,7 @@ J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER.system_action=VM 
 J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER.user_response=Please check the value passed by -Xitsn option on the command line. Supported range can be seen in the error message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE=-Xitsn%2$u utilise %1$u octets de m\u00e9moire, ce qui d\u00e9passe la taille du cache de classes partag\u00e9es de %3$u octets
+J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE=-Xitsn%2$u utilise %1$u octets de m\u00e9moire, ce qui d\u00e9passe la taille du cache de classe partag\u00e9 de %3$u octets
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE.sample_input_1=24000
 J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE.sample_input_2=1000
@@ -3559,14 +3559,14 @@ J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE.system_action
 J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE.user_response=Check the shared cache size and intern string table node count specified by the -Xitsn option.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR=Erreur lors de l'acquisition du verrou d'\u00e9criture de l'en-t\u00eate du fichier de cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR=Erreur lors de l'acquisition du verrou d'\u00e9criture de l'en-t\u00eate du fichier de cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK=Erreur lors de la lib\u00e9ration du verrou en lecture de l'en-t\u00eate de fichier du cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK=Erreur lors de la lib\u00e9ration du verrou en lecture de l'en-t\u00eate de fichier du cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -4020,7 +4020,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_FORCE_DUMP_IF_CORRUPT.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_FORCE_DUMP_IF_CORRUPT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_FAKE_CORRUPTION=Force la reconnaissance d'un cache de classes partag\u00e9es endommag\u00e9
+J9NLS_SHRC_SHRINIT_HELPTEXT_FAKE_CORRUPTION=Force la reconnaissance d'un cache de classe partag\u00e9 endommag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FAKE_CORRUPTION.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FAKE_CORRUPTION.system_action=
@@ -4618,7 +4618,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2=Echec de la cr\u00e9ation d'un r\u00e9pertoire \"%s\" pour le cache de classes partag\u00e9es
+J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2=Echec de la cr\u00e9ation d'un r\u00e9pertoire \"%s\" pour le cache de classe partag\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.explanation=The directory specified for the shared class cache could not be created
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -4632,7 +4632,7 @@ J9NLS_SHRC_OSCACHE_BAD_CACHENAME_ERROR.system_action=The JVM terminates, unless 
 J9NLS_SHRC_OSCACHE_BAD_CACHENAME_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL=Echec de l'initialisation du cache de classes partag\u00e9es ; l'espace disponible dans le syst\u00e8me de fichiers n'est pas suffisant. Espace disque libre disponible en octets = %lld, octets demand\u00e9s = %lld.
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL=Echec de l'initialisation du cache de classe partag\u00e9 ; l'espace disponible dans le syst\u00e8me de fichiers n'est pas suffisant. Espace disque libre disponible en octets = %lld, octets demand\u00e9s = %lld.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.explanation=An error has occurred within Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -4662,14 +4662,14 @@ J9NLS_SHRC_SHRINIT_VERBOSE_CROSSGUEST_CACHE_ENABLED_INFO.system_action=
 J9NLS_SHRC_SHRINIT_VERBOSE_CROSSGUEST_CACHE_ENABLED_INFO.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_CROSSGUEST=Cr\u00e9er un cache de classes partag\u00e9es interinvit\u00e9
+J9NLS_SHRC_SHRINIT_HELPTEXT_CROSSGUEST=Cr\u00e9er un cache de classe partag\u00e9 interinvit\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_CROSSGUEST.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_CROSSGUEST.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_CROSSGUEST.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_ISCACHEHEADERVALID_EYECATCHER=L'identificateur de l'en-t\u00eate du cache de classes partag\u00e9es interinvit\u00e9 n'est pas valide
+J9NLS_SHRC_OSCACHE_VIRT_ISCACHEHEADERVALID_EYECATCHER=L'identificateur de l'en-t\u00eate du cache de classe partag\u00e9 interinvit\u00e9 n'est pas valide
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_ISCACHEHEADERVALID_EYECATCHER.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_ISCACHEHEADERVALID_EYECATCHER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -4738,7 +4738,7 @@ J9NLS_SHRC_OSCACHE_VIRT_NETWORK_CACHE.system_action=The JVM terminates, unless y
 J9NLS_SHRC_OSCACHE_VIRT_NETWORK_CACHE.user_response=Use the "nonpersistent" option.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ACQUIREHEADERWRITELOCK_ERROR=Erreur lors de l'acquisition de l'en-t\u00eate dans le cache de classes partag\u00e9es interinvit\u00e9
+J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ACQUIREHEADERWRITELOCK_ERROR=Erreur lors de l'acquisition de l'en-t\u00eate dans le cache de classe partag\u00e9 interinvit\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -4759,7 +4759,7 @@ J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_OPENING_CACHE_READONLY.system_action=The J
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_OPENING_CACHE_READONLY.user_response=Remove the readonly option from your command-line and restart.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_CREATING_CACHE_HEADER=Erreur lors de la cr\u00e9ation de l'en-t\u00eate dans le cache de classes partag\u00e9es interinvit\u00e9
+J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_CREATING_CACHE_HEADER=Erreur lors de la cr\u00e9ation de l'en-t\u00eate dans le cache de classe partag\u00e9 interinvit\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_CREATING_CACHE_HEADER.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_CREATING_CACHE_HEADER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -4773,7 +4773,7 @@ J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INITIALISING_DATA_HEADER.system_action=The
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INITIALISING_DATA_HEADER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK=Erreur lors de la lib\u00e9ration du verrou en lecture de la connexion au cache de classes partag\u00e9es interinvit\u00e9
+J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK=Erreur lors de la lib\u00e9ration du verrou en lecture de la connexion au cache de classe partag\u00e9 interinvit\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -4787,49 +4787,49 @@ J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_MAPPING_SHARED_OBJECT.system_action=The JVM
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_MAPPING_SHARED_OBJECT.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_DESTROY_ERROR_DELETING_SHARED_CACHE=Erreur : Impossible de supprimer le cache de classes partag\u00e9es interinvit\u00e9
+J9NLS_SHRC_OSCACHE_VIRT_DESTROY_ERROR_DELETING_SHARED_CACHE=Erreur : Impossible de supprimer le cache de classe partag\u00e9 interinvit\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_DESTROY_ERROR_DELETING_SHARED_CACHE.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_DESTROY_ERROR_DELETING_SHARED_CACHE.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_VIRT_DESTROY_ERROR_DELETING_SHARED_CACHE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME=Erreur de mise \u00e0 jour de l'heure de la derni\u00e8re d\u00e9connexion du cache de classes partag\u00e9es interinvit\u00e9
+J9NLS_SHRC_OSCACHE_VIRT_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME=Erreur de mise \u00e0 jour de l'heure de la derni\u00e8re d\u00e9connexion du cache de classe partag\u00e9 interinvit\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_VIRT_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK=Erreur lors de l'acquisition du verrou en lecture de la connexion au cache de classes partag\u00e9es interinvit\u00e9
+J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK=Erreur lors de l'acquisition du verrou en lecture de la connexion au cache de classe partag\u00e9 interinvit\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ACQUIREHEADERWRITELOCK_ERROR=Erreur lors de l'acquisition du verrou d'\u00e9criture de l'en-t\u00eate de cache de classes partag\u00e9es interinvit\u00e9
+J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ACQUIREHEADERWRITELOCK_ERROR=Erreur lors de l'acquisition du verrou d'\u00e9criture de l'en-t\u00eate de cache de classe partag\u00e9 interinvit\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INVALID_CACHE_HEADER=Erreur : en-t\u00eate non valide dans le cache de classes partag\u00e9es interinvit\u00e9
+J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INVALID_CACHE_HEADER=Erreur : en-t\u00eate non valide dans le cache de classe partag\u00e9 interinvit\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INVALID_CACHE_HEADER.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INVALID_CACHE_HEADER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INVALID_CACHE_HEADER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME=Erreur lors de la mise \u00e0 jour de l'heure de la derni\u00e8re connexion du cache de classes partag\u00e9es interinvit\u00e9
+J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME=Erreur lors de la mise \u00e0 jour de l'heure de la derni\u00e8re connexion du cache de classe partag\u00e9 interinvit\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK=Erreur lors de la lib\u00e9ration du verrou en lecture de l'en-t\u00eate de cache de classes partag\u00e9es interinvit\u00e9
+J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK=Erreur lors de la lib\u00e9ration du verrou en lecture de l'en-t\u00eate de cache de classe partag\u00e9 interinvit\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -5248,35 +5248,35 @@ J9NLS_SHRC_SHRINIT_INVALID_OPTION.system_action=The JVM terminates.
 J9NLS_SHRC_SHRINIT_INVALID_OPTION.user_response=Replace the incompatible -Xshareclasses option with a -Xshareclasses utilitiy option, and rerun.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING=La machine virtuelle Java utilise le cache de classes partag\u00e9es existant en mode diagnostic mprotect (avec l'option -Xshareclasses:mprotect=diagnostic), mais le cache n'effectuait pas la cr\u00e9ation dans ce mode. L'utilisation du cache dans ce mode peut avoir une incidence sur les performances.
+J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING=La machine virtuelle Java utilise le cache de classe partag\u00e9 existant en mode diagnostic mprotect (avec l'option -Xshareclasses:mprotect=diagnostic), mais le cache n'effectuait pas la cr\u00e9ation dans ce mode. L'utilisation du cache dans ce mode peut avoir une incidence sur les performances.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.explanation=When running with -Xshareclasses:mprotect=diagnostic option, JVM performance is affected due to expensive system calls. This option should only be used for diagnostic purpose.
 J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.system_action=The JVM continues.
 J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.user_response=If user wants to use -Xshareclasses:mprotect=diagnostic option, it is advised to reset the cache to force JVM(s) to use the cache in mprotect diagnostic mode. Othewise, if the user wants to use the cache in normal mode then remove -Xshareclasses:mprotect=diagnostic option and re-run. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_IGNORED_WARNING=La machine virtuelle Java tente d'utiliser le cache de classes partag\u00e9es existant en mode diagnostic mprotect (avec l'option -Xshareclasses:mprotect=diagnostic), mais le cache n'effectuait pas la cr\u00e9ation dans ce mode. Dans ce cas, l'option mprotect=diagnostic est ignor\u00e9e sous z/OS.
+J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_IGNORED_WARNING=La machine virtuelle Java tente d'utiliser le cache de classe partag\u00e9 existant en mode diagnostic mprotect (avec l'option -Xshareclasses:mprotect=diagnostic), mais le cache n'effectuait pas la cr\u00e9ation dans ce mode. Dans ce cas, l'option mprotect=diagnostic est ignor\u00e9e sous z/OS.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_IGNORED_WARNING.explanation=Using -Xshareclasses:mprotect=diagnostic option on an existing cache not created in this mode can cause existing JVMs attached to the cache to crash.
 J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_IGNORED_WARNING.system_action=The JVM continues.
 J9NLS_SHRC_SHRINIT_USING_NORMAL_CACHE_WITH_MPROTECT_DIAGNOSTIC_IGNORED_WARNING.user_response=If user wants to use -Xshareclasses:mprotect=diagnostic option, then reset the cache to force JVM(s) to use the cache in mprotect diagnostic mode. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_CREATING_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING=La machine virtuelle Java a cr\u00e9\u00e9 le cache de classes partag\u00e9es en mode diagnostic mprotect (avec l'option -Xshareclasses:mprotect=diagnostic). L'utilisation du cache dans ce mode peut avoir une incidence sur les performances.
+J9NLS_SHRC_SHRINIT_CREATING_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING=La machine virtuelle Java a cr\u00e9\u00e9 le cache de classe partag\u00e9 en mode diagnostic mprotect (avec l'option -Xshareclasses:mprotect=diagnostic). L'utilisation du cache dans ce mode peut avoir une incidence sur les performances.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_CREATING_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.explanation=When running with -Xshareclasses:mprotect=diagnostic, JVM performance is affected due to expensive system calls. This option should only be used for diagnostic purpose.
 J9NLS_SHRC_SHRINIT_CREATING_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.system_action=The JVM continues.
 J9NLS_SHRC_SHRINIT_CREATING_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.user_response=No action required if user has intentionally specified -Xshareclasses:mprotect=diagnostic on command line. Othewise, if the user wants to use the cache in normal mode then remove -Xshareclasses:mprotect=diagnostic option and reset the cache. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING=La machine virtuelle Java s'est connect\u00e9e au cache de classes partag\u00e9es cr\u00e9\u00e9 en mode diagnostic mprotect (avec l'option -Xshareclasses:mprotect=diagnostic). L'utilisation du cache dans ce mode peut avoir une incidence sur les performances.
+J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING=La machine virtuelle Java s'est connect\u00e9e au cache de classe partag\u00e9 cr\u00e9\u00e9 en mode diagnostic mprotect (avec l'option -Xshareclasses:mprotect=diagnostic). L'utilisation du cache dans ce mode peut avoir une incidence sur les performances.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.explanation=Shared class cache that JVM is attaching to is set to be used in diagnostic mode which will affect JVM's performance.
 J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.system_action=The JVM continues.
 J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_WARNING.user_response=No action required if user has intentionally attached to a shared class cache created in mprotect diagnostic mode. Othewise, if the user wants to use cache in normal mode then remove -Xshareclasses:mprotect=diagnostic option and reset the cache. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_OVERRIDE_MPROTECT_NONE_WARNING=La machine virtuelle Java s'est connect\u00e9e au cache de classes partag\u00e9es cr\u00e9\u00e9 en mode diagnostic mprotect (avec l'option -Xshareclasses:mprotect=diagnostic). L'option -Xshareclasses:mprotect=none sera ignor\u00e9e.
+J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_OVERRIDE_MPROTECT_NONE_WARNING=La machine virtuelle Java s'est connect\u00e9e au cache de classe partag\u00e9 cr\u00e9\u00e9 en mode diagnostic mprotect (avec l'option -Xshareclasses:mprotect=diagnostic). L'option -Xshareclasses:mprotect=none sera ignor\u00e9e.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_OVERRIDE_MPROTECT_NONE_WARNING.explanation=Shared class cache that JVM is attaching to is set to be used in diagnostic mode which overrides -Xshareclasses:mprotect=none option specified on command line.
 J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_OVERRIDE_MPROTECT_NONE_WARNING.system_action=The JVM continues.
@@ -5304,7 +5304,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_OWNER_NOT_CREATOR.system_action=The JVM terminates,
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OWNER_NOT_CREATOR.user_response=Delete the existing shared cache and restart to create new shared cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SEMAPHORE_GROUPACCESS_REQUIRED=La machine virtuelle Java n'est pas configur\u00e9e pour acc\u00e9der au jeu de s\u00e9maphores associ\u00e9 au cache de classes partag\u00e9es non persistant existant. Pour la connexion au cache de classes partag\u00e9es non persistant, utilisez la sous-option 'groupAccess'.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_GROUPACCESS_REQUIRED=La machine virtuelle Java n'est pas configur\u00e9e pour acc\u00e9der au jeu de s\u00e9maphores associ\u00e9 au cache de classe partag\u00e9 non persistant existant. Pour la connexion au cache de classe partag\u00e9 non persistant, utilisez la sous-option 'groupAccess'.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SEMAPHORE_GROUPACCESS_REQUIRED.explanation=An error has occurred within Shared Classes processing.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_GROUPACCESS_REQUIRED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -5332,14 +5332,14 @@ J9NLS_SHRC_OSCACHE_SHARED_MEMORY_OWNER_NOT_CREATOR.system_action=The JVM termina
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_OWNER_NOT_CREATOR.user_response=Delete the existing shared cache and restart to create new shared cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_REQUIRED=La machine virtuelle Java n'est pas configur\u00e9e pour acc\u00e9der \u00e0 la m\u00e9moire partag\u00e9e associ\u00e9e au cache de classes partag\u00e9es non persistant. Pour la connexion au cache de classes partag\u00e9es non persistant, utilisez la sous-option 'groupAccess'.
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_REQUIRED=La machine virtuelle Java n'est pas configur\u00e9e pour acc\u00e9der \u00e0 la m\u00e9moire partag\u00e9e associ\u00e9e au cache de classe partag\u00e9 non persistant. Pour la connexion au cache de classe partag\u00e9 non persistant, utilisez la sous-option 'groupAccess'.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_REQUIRED.explanation=An error has occurred within Shared Classes processing.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_REQUIRED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_REQUIRED.user_response=Modify existing "-Xshareclasses:" option to add "groupAccess" suboption and restart. The shared cache may have been created by another user in the same group as the current user.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_READONLY_REQUIRED=La machine virtuelle Java n'est pas configur\u00e9e pour acc\u00e9der \u00e0 la m\u00e9moire partag\u00e9e associ\u00e9e au cache de classes partag\u00e9es non persistant. Pour la connexion au cache de classes partag\u00e9es non persistant, utilisez les sous-options 'groupAccess' et 'readonly'.
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_READONLY_REQUIRED=La machine virtuelle Java n'est pas configur\u00e9e pour acc\u00e9der \u00e0 la m\u00e9moire partag\u00e9e associ\u00e9e au cache de classe partag\u00e9 non persistant. Pour la connexion au cache de classe partag\u00e9 non persistant, utilisez les sous-options 'groupAccess' et 'readonly'.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_READONLY_REQUIRED.explanation=An error has occurred within Shared Classes processing.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_READONLY_REQUIRED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -5361,7 +5361,7 @@ J9NLS_SHRC_CM_PRINTSTATS_IS_CACHE_ACCESSIBLE.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_IS_CACHE_ACCESSIBLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_GROUPACCESS_REQUIRED=La machine virtuelle Java n'est pas configur\u00e9e pour acc\u00e9der au fichier de cache partag\u00e9. Pour la connexion au cache de classes partag\u00e9es, utilisez la sous-option 'groupAccess'.
+J9NLS_SHRC_OSCACHE_MMAP_GROUPACCESS_REQUIRED=La machine virtuelle Java n'est pas configur\u00e9e pour acc\u00e9der au fichier de cache partag\u00e9. Pour la connexion au cache de classe partag\u00e9, utilisez la sous-option 'groupAccess'.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_GROUPACCESS_REQUIRED.explanation=An error has occurred within Shared Classes processing.
 J9NLS_SHRC_OSCACHE_MMAP_GROUPACCESS_REQUIRED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -5405,14 +5405,14 @@ J9NLS_SHRC_OSCACHE_SHARED_MEMORY_OPFAILED_DISPLAY_SHMID.system_action=The JVM co
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_OPFAILED_DISPLAY_SHMID.user_response=Remove the shared memory indicated in the error message using "ipcrm" command if it still exists and is not in use.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM=Correction d'erreur : un jeu de s\u00e9maphores d\u00e9truit est associ\u00e9 \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM=Correction d'erreur : un jeu de s\u00e9maphores d\u00e9truit est associ\u00e9 \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM.explanation=An error occurred in shared class processing and as part of error recovery JVM destroyed the semaphore set associated with shared class cache.
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM.system_action=The JVM detected an error during shared class processing and has destroyed the semaphore set in an attempt to recover.
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM_WITH_SEMID=Correction d'erreur : un jeu de s\u00e9maphores d\u00e9truit portant l'id=%d est associ\u00e9 \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM_WITH_SEMID=Correction d'erreur : un jeu de s\u00e9maphores d\u00e9truit portant l'id=%d est associ\u00e9 \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM_WITH_SEMID.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM_WITH_SEMID.explanation=An error occurred in shared class processing and as part of error recovery JVM destroyed the semaphore set associated with shared class cache.
@@ -5420,7 +5420,7 @@ J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM_WITH_SEMID.system_action=Th
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM_WITH_SEMID.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_NOT_PERMITTED=Echec de la correction d'erreur : impossible de d\u00e9truire le jeu de s\u00e9maphores avec semid=%d associ\u00e9 \u00e0 un cache de classes partag\u00e9es. Seul le cr\u00e9ateur, le propri\u00e9taire ou un utilisateur dot\u00e9 des privil\u00e8ges d'administration peut d\u00e9truire le jeu de s\u00e9maphores.
+J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_NOT_PERMITTED=Echec de la correction d'erreur : impossible de d\u00e9truire le jeu de s\u00e9maphores avec semid=%d associ\u00e9 \u00e0 un cache de classe partag\u00e9. Seul le cr\u00e9ateur, le propri\u00e9taire ou un utilisateur dot\u00e9 des privil\u00e8ges d'administration peut d\u00e9truire le jeu de s\u00e9maphores.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_NOT_PERMITTED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_NOT_PERMITTED.explanation=An error occurred in shared class processing. JVM's attempt to destroy the semaphore set as part of error recovery has failed as the Operating system allows only the creator or owner or a user with administrative privileges to destroy the semaphore set.
@@ -5428,7 +5428,7 @@ J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_NOT_PERMITTED.system_action=Th
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_NOT_PERMITTED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_ERROR_V1=Echec de la correction d'erreur : impossible de d\u00e9truire le jeu de s\u00e9maphores avec semid=%d associ\u00e9 \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_ERROR_V1=Echec de la correction d'erreur : impossible de d\u00e9truire le jeu de s\u00e9maphores avec semid=%d associ\u00e9 \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_ERROR_V1.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_ERROR_V1.explanation=An error occurred in shared class processing. JVM's attempt to destroy the semaphore set as part of error recovery has failed.
@@ -5436,14 +5436,14 @@ J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_ERROR_V1.system_action=The JVM
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_ERROR_V1.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM=Correction d'erreur : une m\u00e9moire partag\u00e9e d\u00e9truite est associ\u00e9e \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM=Correction d'erreur : une m\u00e9moire partag\u00e9e d\u00e9truite est associ\u00e9e \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM.explanation=An error occurred in shared class processing and as part of error recovery JVM destroyed the shared memory associated with shared class cache.
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM.system_action=The JVM detected an error during shared class processing and has destroyed the shared memory in an attempt to recover.
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM_WITH_SHMID=Correction d'erreur : une m\u00e9moire partag\u00e9e d\u00e9truite portant l'id=%d est associ\u00e9e \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM_WITH_SHMID=Correction d'erreur : une m\u00e9moire partag\u00e9e d\u00e9truite portant l'id=%d est associ\u00e9e \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM_WITH_SHMID.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM_WITH_SHMID.explanation=An error occurred in shared class processing and as part of error recovery JVM destroyed the shared memory associated with shared class cache.
@@ -5451,7 +5451,7 @@ J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM_WITH_SHMID.system_action=Th
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM_WITH_SHMID.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSHM_NOT_PERMITTED=Echec de la correction d'erreur : impossible de d\u00e9truire la m\u00e9moire partag\u00e9e avec shmid=%d associ\u00e9e \u00e0 un cache de classes partag\u00e9es. Seul le cr\u00e9ateur, le propri\u00e9taire ou un utilisateur dot\u00e9 des privil\u00e8ges d'administration peut d\u00e9truire la m\u00e9moire partag\u00e9e.
+J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSHM_NOT_PERMITTED=Echec de la correction d'erreur : impossible de d\u00e9truire la m\u00e9moire partag\u00e9e avec shmid=%d associ\u00e9e \u00e0 un cache de classe partag\u00e9. Seul le cr\u00e9ateur, le propri\u00e9taire ou un utilisateur dot\u00e9 des privil\u00e8ges d'administration peut d\u00e9truire la m\u00e9moire partag\u00e9e.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSHM_NOT_PERMITTED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSHM_NOT_PERMITTED.explanation=An error occurred in shared class processing. JVM's attempt to destroy the shared memory as part of error recovery has failed as the Operating system allows only the creator or owner or a user with administrative privileges to destroy the shared memory.
@@ -5459,7 +5459,7 @@ J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSHM_NOT_PERMITTED.system_action=Th
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSHM_NOT_PERMITTED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSM_ERROR_V1=Echec de la correction d'erreur : impossible de d\u00e9truire la m\u00e9moire partag\u00e9e avec shmid=%d associ\u00e9e \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSM_ERROR_V1=Echec de la correction d'erreur : impossible de d\u00e9truire la m\u00e9moire partag\u00e9e avec shmid=%d associ\u00e9e \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSM_ERROR_V1.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSM_ERROR_V1.explanation=An error occurred in shared class processing. JVM's attempt to destroy the shared memory set as part of error recovery has failed.
@@ -5482,14 +5482,14 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_DESTROY_NOT_PERMITTED.system_action=The JVM continu
 J9NLS_SHRC_OSCACHE_SEMAPHORE_DESTROY_NOT_PERMITTED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR=Echec de la destruction du jeu de s\u00e9maphores associ\u00e9 \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR=Echec de la destruction du jeu de s\u00e9maphores associ\u00e9 \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR.explanation=An error has occurred while destroying semaphore set associated with shared class cache.
 J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR_WITH_SEMID=Echec de la destruction du jeu de s\u00e9maphores avec semid=%d associ\u00e9 \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR_WITH_SEMID=Echec de la destruction du jeu de s\u00e9maphores avec semid=%d associ\u00e9 \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR_WITH_SEMID.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR_WITH_SEMID.explanation=An error has occurred while destroying semaphore set associated with shared class cache.
@@ -5505,14 +5505,14 @@ J9NLS_SHRC_OSCACHE_SHARED_MEMORY_DESTROY_NOT_PERMITTED.system_action=The JVM con
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_DESTROY_NOT_PERMITTED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR=Echec de la destruction de la m\u00e9moire partag\u00e9e associ\u00e9e \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR=Echec de la destruction de la m\u00e9moire partag\u00e9e associ\u00e9e \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR.explanation=An error has occurred while destroying shared memory associated with shared class cache.
 J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR_WITH_SHMID=Echec de la destruction de la m\u00e9moire partag\u00e9e avec shmid=%d associ\u00e9e \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR_WITH_SHMID=Echec de la destruction de la m\u00e9moire partag\u00e9e avec shmid=%d associ\u00e9e \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR_WITH_SHMID.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR_WITH_SHMID.explanation=An error has occurred while destroying shared memory associated with shared class cache.
@@ -5536,7 +5536,7 @@ J9NLS_SHRC_OSCACHE_PORT_ERROR_MESSAGE_SYSV_ERR.system_action=The JVM has failed 
 J9NLS_SHRC_OSCACHE_PORT_ERROR_MESSAGE_SYSV_ERR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SEMAPHORE_CONTROL_FILE_UNLINK_FAILED=Echec de la correction d'erreur : impossible de supprimer le fichier de contr\u00f4le du jeu de s\u00e9maphores %s associ\u00e9 au cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_CONTROL_FILE_UNLINK_FAILED=Echec de la correction d'erreur : impossible de supprimer le fichier de contr\u00f4le du jeu de s\u00e9maphores %s associ\u00e9 au cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SEMAPHORE_CONTROL_FILE_UNLINK_FAILED.sample_input_1=C280M4F0A64_semaphore_mycache_G33
 J9NLS_SHRC_OSCACHE_SEMAPHORE_CONTROL_FILE_UNLINK_FAILED.explanation=An error occurred during shared class proccessing. JVM's attempt to remove the control file as part of error recovery has failed.
@@ -5544,7 +5544,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_CONTROL_FILE_UNLINK_FAILED.system_action=The JVM co
 J9NLS_SHRC_OSCACHE_SEMAPHORE_CONTROL_FILE_UNLINK_FAILED.user_response=If JVM fails to startup, please remove the control files manually.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_MEMORY_CONTROL_FILE_UNLINK_FAILED=Echec de la correction d'erreur : impossible de supprimer le fichier de contr\u00f4le du jeu de s\u00e9maphores %s associ\u00e9 au cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_CONTROL_FILE_UNLINK_FAILED=Echec de la correction d'erreur : impossible de supprimer le fichier de contr\u00f4le du jeu de s\u00e9maphores %s associ\u00e9 au cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_CONTROL_FILE_UNLINK_FAILED.sample_input_1=C280M4F0A64_semaphore_mycache_G33
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_CONTROL_FILE_UNLINK_FAILED.explanation=An error occurred during shared class proccessing. JVM's attempt to remove the control file as part of error recovery has failed.
@@ -5587,14 +5587,14 @@ J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.system_action=If -Xsh
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT=Impossible de d\u00e9marrer le cache de classes partag\u00e9es. Continuez sans l'utiliser car -Xshareclasses:nonfatal est sp\u00e9cifi\u00e9
+J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT=Impossible de d\u00e9marrer le cache de classe partag\u00e9. Continuez sans l'utiliser car -Xshareclasses:nonfatal est sp\u00e9cifi\u00e9
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT.explanation=An error occurred during shared class cache startup. User has specified -Xshareclasses:nonfatal so JVM will continue without using shared class cache.
 J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT.system_action=The JVM continues without shared class cache.
 J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT.user_response=Contact your service representative to understand the reason for failure to startup shared class cache. Previous error messages would possibly indicate the reason.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_STARTUP_CACHE_CREATION_NOT_ALLOWED_READONLY_MODE=Impossible de cr\u00e9er un nouveau cache de classes partag\u00e9es lors de l'ex\u00e9cution de l'option -Xshareclasses:readonly
+J9NLS_SHRC_OSCACHE_STARTUP_CACHE_CREATION_NOT_ALLOWED_READONLY_MODE=Impossible de cr\u00e9er un nouveau cache de classe partag\u00e9 lors de l'ex\u00e9cution de l'option -Xshareclasses:readonly
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_STARTUP_CACHE_CREATION_NOT_ALLOWED_READONLY_MODE.explanation=An error occurred during shared class cache startup. JVM cannot create a new shared class cache when running with -Xshareclasses:readonly option.
 J9NLS_SHRC_OSCACHE_STARTUP_CACHE_CREATION_NOT_ALLOWED_READONLY_MODE.system_action=The JVM terminates unless -Xshareclasses:nonfatal is specified in which case JVM will continue without shared class cache.
@@ -6143,7 +6143,7 @@ J9NLS_SHRC_OSCACHE_MMAP_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_MMAP_SET_GROUPACCESS_FAILED.user_response=Check the umask setting and ensure the user has sufficient permission for creating the new cache with group access.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED=Impossible de d\u00e9finir les droits d'acc\u00e8s de groupe comme demand\u00e9 par la sous-option 'groupAccess' sur le jeu de s\u00e9maphores avec semid=%d associ\u00e9 \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED=Impossible de d\u00e9finir les droits d'acc\u00e8s de groupe comme demand\u00e9 par la sous-option 'groupAccess' sur le jeu de s\u00e9maphores avec semid=%d associ\u00e9 \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new semaphore with sub-option "groupAccess".
@@ -6151,7 +6151,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.system_action=The JVM contin
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new semaphore with group access.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED=Impossible de d\u00e9finir les droits d'acc\u00e8s de groupe comme demand\u00e9 par la sous-option 'groupAccess' sur la m\u00e9moire partag\u00e9e avec shmid=%d associ\u00e9e \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED=Impossible de d\u00e9finir les droits d'acc\u00e8s de groupe comme demand\u00e9 par la sous-option 'groupAccess' sur la m\u00e9moire partag\u00e9e avec shmid=%d associ\u00e9e \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new shared memory with sub-option "groupAccess".
@@ -6159,14 +6159,14 @@ J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.system_action=The JVM co
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new shared memory with group access.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SEM_CONTROL_FILE_SET_GROUPACCESS_FAILED=Impossible de d\u00e9finir les droits d'acc\u00e8s de groupe comme demand\u00e9 par la sous-option 'groupAccess' sur le fichier de contr\u00f4le de s\u00e9maphore associ\u00e9 \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_SEM_CONTROL_FILE_SET_GROUPACCESS_FAILED=Impossible de d\u00e9finir les droits d'acc\u00e8s de groupe comme demand\u00e9 par la sous-option 'groupAccess' sur le fichier de contr\u00f4le de s\u00e9maphore associ\u00e9 \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SEM_CONTROL_FILE_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new control file with sub-option "groupAccess". It might be caused by the improper setting of umask.
 J9NLS_SHRC_OSCACHE_SEM_CONTROL_FILE_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SEM_CONTROL_FILE_SET_GROUPACCESS_FAILED.user_response=Check the umask setting and ensure the user has sufficient permission for creating the semaphore control file with group access.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHM_CONTROL_FILE_SET_GROUPACCESS_FAILED=Impossible de d\u00e9finir les droits d'acc\u00e8s de groupe comme demand\u00e9 par la sous-option 'groupAccess' sur le fichier de contr\u00f4le de m\u00e9moire partag\u00e9e associ\u00e9 \u00e0 un cache de classes partag\u00e9es.
+J9NLS_SHRC_OSCACHE_SHM_CONTROL_FILE_SET_GROUPACCESS_FAILED=Impossible de d\u00e9finir les droits d'acc\u00e8s de groupe comme demand\u00e9 par la sous-option 'groupAccess' sur le fichier de contr\u00f4le de m\u00e9moire partag\u00e9e associ\u00e9 \u00e0 un cache de classe partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHM_CONTROL_FILE_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new control file with sub-option "groupAccess". It might be caused by the improper setting of umask.
 J9NLS_SHRC_OSCACHE_SHM_CONTROL_FILE_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
@@ -6181,7 +6181,7 @@ J9NLS_SHRC_ERROR_SNAPSHOT_SET_GROUPACCESS_FAILED.user_response=Check the umask s
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_ERROR_FILE_STAT=Erreur d'obtention des statistiques du fichier \
-du cache de classes partag\u00e9es lors de la v\u00e9rification de ses droits d'acc\u00e8s de groupe.
+du cache de classe partag\u00e9 lors de la v\u00e9rification de ses droits d'acc\u00e8s de groupe.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_FILE_STAT.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_ERROR_FILE_STAT.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -6414,28 +6414,28 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_SOFTMX_EQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_SOFTMX_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINAOT_EQUALS=Ajustez l'espace minimal du cache de classes partag\u00e9es r\u00e9serv\u00e9 aux donn\u00e9es AOT \u00e0 <taille>.
+J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINAOT_EQUALS=Ajustez l'espace minimal du cache de classe partag\u00e9 r\u00e9serv\u00e9 aux donn\u00e9es AOT \u00e0 <taille>.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINAOT_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINAOT_EQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINAOT_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXAOT_EQUALS=Ajustez l'espace maximal du cache de classes partag\u00e9es autoris\u00e9 pour les donn\u00e9es AOT \u00e0 <taille>.
+J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXAOT_EQUALS=Ajustez l'espace maximal du cache de classe partag\u00e9 autoris\u00e9 pour les donn\u00e9es AOT \u00e0 <taille>.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXAOT_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXAOT_EQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXAOT_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINJIT_EQUALS=Ajustez l'espace minimal du cache de classes partag\u00e9es r\u00e9serv\u00e9 aux donn\u00e9es JIT \u00e0 <taille>.
+J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINJIT_EQUALS=Ajustez l'espace minimal du cache de classe partag\u00e9 r\u00e9serv\u00e9 aux donn\u00e9es JIT \u00e0 <taille>.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINJIT_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINJIT_EQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINJIT_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXJIT_EQUALS=Ajustez l'espace maximal du cache de classes partag\u00e9es autoris\u00e9 pour les donn\u00e9es JIT \u00e0 <taille>.
+J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXJIT_EQUALS=Ajustez l'espace maximal du cache de classe partag\u00e9 autoris\u00e9 pour les donn\u00e9es JIT \u00e0 <taille>.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXJIT_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXJIT_EQUALS.system_action=
@@ -6640,7 +6640,7 @@ J9NLS_SHRC_SHRINIT_MAX_SPACE_SIZE_VALUE_TOO_BIG.system_action=The JVM continues
 J9NLS_SHRC_SHRINIT_MAX_SPACE_SIZE_VALUE_TOO_BIG.user_response=The value has been changed automatically
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1=Le nombre total d'octets non stock\u00e9s en raison de la valeur de la limite de taille souple (soft) du cache partag\u00e9 est %u. Le nombre d'octets AOT non stock\u00e9s en raison de la valeur de -Xscmaxaot est %u. Le nombre d'octets JIT non stock\u00e9s en raison de la valeur de -Xscmaxjitdata est %u.
+J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1=Le nombre total d'octets non stock\u00e9s en raison de la valeur de la limite de taille souple du cache partag\u00e9 est %u. Le nombre d'octets AOT non stock\u00e9s en raison de la valeur de -Xscmaxaot est %u. Le nombre d'octets JIT non stock\u00e9s en raison de la valeur de -Xscmaxjitdata est %u.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1.sample_input_1=102400
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1.sample_input_2=4096
@@ -6821,14 +6821,14 @@ J9NLS_SHRC_CM_FAILED_TO_START_UP.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_FAILED_TO_START_UP.user_response=Previous error messages may indicate the reason.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Indiquez le num\u00e9ro de couche sup\u00e9rieure. Cr\u00e9ez une couche de cache partag\u00e9e si la couche indiqu\u00e9e n'existe pas.
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Indiquez le num\u00e9ro de couche sup\u00e9rieure. Cr\u00e9ez une couche de cache partag\u00e9 si la couche indiqu\u00e9e n'existe pas.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER=Cr\u00e9ez une nouvelle couche de cache partag\u00e9e.
+J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER=Cr\u00e9ez une nouvelle couche de cache partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=

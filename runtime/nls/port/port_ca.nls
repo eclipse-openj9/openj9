@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -481,7 +481,7 @@ J9NLS_PORT_SL_EXECUTABLE_OPEN_ERROR.system_action=Process shuts down
 J9NLS_PORT_SL_EXECUTABLE_OPEN_ERROR.user_response=This message will be accompanied by another message providing more detail.
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR=No hi ha prou mem\u00f2ria mentre es prova de carregar una biblioteca compartida
+J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR=No hi ha prou mem\u00f2ria interm\u00e8dia en intentar carregar una biblioteca compartida
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.explanation=The file system path length of the shared object exceeds the maximum buffer size
 J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.system_action=Shared object is not loaded
