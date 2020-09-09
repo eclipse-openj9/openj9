@@ -748,7 +748,7 @@ J9NLS_JNICHK_IGNORING_JNI_ABORT.system_action=The JVM continues.
 J9NLS_JNICHK_IGNORING_JNI_ABORT.user_response=Check and correct the JNI application code if necessary.
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_CONSIDER_JNI_ABORT=Suggeriment JNI a %s: El buffer sembla no haver estat modificat. Considereu la possibilitat d'utilitzar JNI_ABORT enlloc de mode 0.
+J9NLS_JNICHK_CONSIDER_JNI_ABORT=Suggeriment JNI a %s: La mem\u00f2ria interm\u00e8dia sembla no haver estat modificada. Considereu la possibilitat d'utilitzar JNI_ABORT enlloc de mode 0.
 J9NLS_JNICHK_CONSIDER_JNI_ABORT.sample_input_1=methodName
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_CONSIDER_JNI_ABORT.explanation=The named JNI function was called with a mode parameter set to 0.

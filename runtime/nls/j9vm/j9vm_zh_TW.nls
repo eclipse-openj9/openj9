@@ -762,7 +762,7 @@ J9NLS_VM_ILLEGAL_ACCESS_CLASS.user_response=
 # END NON-TRANSLATABLE
 
 # Message for InternalError when eventron rules are violated
-J9NLS_VM_EVENTRON_ERROR=eventron \u57f7\u884c\u7dd2\u4e0a\u7684\u4f5c\u696d\u7121\u6548
+J9NLS_VM_EVENTRON_ERROR=eventron \u57f7\u884c\u7dd2\u4e0a\u7684\u4f5c\u696d\u4e0d\u5408\u6cd5
 # START NON-TRANSLATABLE
 J9NLS_VM_EVENTRON_ERROR.explanation=NOTAG
 J9NLS_VM_EVENTRON_ERROR.system_action=

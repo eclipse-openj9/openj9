@@ -5102,7 +5102,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_SEM_SIZE_CHECK_FAILED.system_action=The JV
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_SEM_SIZE_CHECK_FAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_SEM_MARKER_CHECK_FAILED=\u6253\u5f00\u4fe1\u53f7\u91cf\u65f6\u53d1\u751f\u9519\u8bef\u3002\u5728\u4fe1\u53f7\u91cf\u96c6\u4e2d\u672a\u627e\u5230\u4fe1\u53f7\u91cf\u6807\u8bb0\u3002
+J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_SEM_MARKER_CHECK_FAILED=\u6253\u5f00\u4fe1\u53f7\u91cf\u65f6\u53d1\u751f\u9519\u8bef\u3002\u5728\u4fe1\u53f7\u91cf\u96c6\u4e2d\u672a\u53d1\u73b0\u4fe1\u53f7\u91cf\u6807\u8bb0\u3002
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_SEM_MARKER_CHECK_FAILED.explanation=An error has occurred in shared class processing.  Further messages may follow providing more detail.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_SEM_MARKER_CHECK_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.

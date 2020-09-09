@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -159,7 +159,7 @@ J9NLS_BCV_ERR_MULTIPLE_JSR.user_response=Contact the provider of the classfile f
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_LOOKUPSWITCH_NOT_INTEGER=lookupswitch de\u011fi\u015ftirgesi tamsay\u0131 de\u011fil
+J9NLS_BCV_ERR_LOOKUPSWITCH_NOT_INTEGER=lookupswitch parametresi tamsay\u0131 de\u011fil
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_LOOKUPSWITCH_NOT_INTEGER.explanation=None
 J9NLS_BCV_ERR_LOOKUPSWITCH_NOT_INTEGER.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
@@ -199,7 +199,7 @@ J9NLS_BCV_ERR_MULTIPLE_RET.user_response=Contact the provider of the classfile f
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_SHIFT_NOT_INTEGER=shift byte kodu de\u011fi\u015ftirgesi tamsay\u0131 de\u011fil
+J9NLS_BCV_ERR_SHIFT_NOT_INTEGER=shift byte kodu parametresi tamsay\u0131 de\u011fil
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_SHIFT_NOT_INTEGER.explanation=None
 J9NLS_BCV_ERR_SHIFT_NOT_INTEGER.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
@@ -255,7 +255,7 @@ J9NLS_BCV_ERR_UNEXPECTED_SUBROUTINE_NOT_WALKED.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_TABLESWITCH_NOT_INTEGER=tableswitch de\u011fi\u015ftirgesi tamsay\u0131 de\u011fil
+J9NLS_BCV_ERR_TABLESWITCH_NOT_INTEGER=tableswitch parametresi tamsay\u0131 de\u011fil
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_TABLESWITCH_NOT_INTEGER.explanation=None
 J9NLS_BCV_ERR_TABLESWITCH_NOT_INTEGER.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE

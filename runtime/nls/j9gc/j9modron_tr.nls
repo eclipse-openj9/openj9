@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -398,7 +398,7 @@ J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE.sample_input_3=100
 # END NON-TRANSLATABLE
 
 # Note %s memoryParameter (e.g. "-Xmx")
-J9NLS_GC_OPTIONS_MUST_BE_NUMBER=%s de\u011fi\u015ftirgesini bir say\u0131 izlemelidir
+J9NLS_GC_OPTIONS_MUST_BE_NUMBER=%s parametresini bir say\u0131 izlemelidir
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_MUST_BE_NUMBER.explanation=The specified option must be immediately followed by a number
 J9NLS_GC_OPTIONS_MUST_BE_NUMBER.system_action=The JVM will terminate
@@ -444,7 +444,7 @@ J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.sample_input_1=-Xmx
 
 # Note %1$s deprecated parameter (e.g. "-Xgc:excessiveGCdebug=")
 # Note %2$s new parameter (e.g. "-Xtgc:excessivegc")
-J9NLS_GC_OPTION_DEPRECATED=%1$s kullan\u0131mdan kald\u0131r\u0131ld\u0131; %2$s de\u011fi\u015ftirgesini kullan\u0131n
+J9NLS_GC_OPTION_DEPRECATED=%1$s kullan\u0131mdan kald\u0131r\u0131ld\u0131; %2$s parametresini kullan\u0131n
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTION_DEPRECATED.explanation=The specified option is deprecated and is no longer supportd
 J9NLS_GC_OPTION_DEPRECATED.system_action=The JVM will terminate
@@ -833,7 +833,7 @@ J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_3=pagea
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER='%1$s', '%2$s' se\u00e7ene\u011finde birinci de\u011fi\u015ftirge olarak belirtilmedi
+J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER='%1$s', '%2$s' se\u00e7ene\u011finde birinci parametre olarak belirtilmedi
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER.explanation=Either a required parameter is not specified, or it is not in specified in required order
 J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER.system_action=The JVM will terminate
@@ -843,7 +843,7 @@ J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER.sample_input_2=-Xlp:objectheap
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION='%1$s' se\u00e7ene\u011fi tamamlanmad\u0131, '%2$s' de\u011fi\u015ftirgesi belirtilmelidir.
+J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION='%1$s' se\u00e7ene\u011fi tamamlanmad\u0131, '%2$s' parametresi belirtilmelidir.
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION.explanation=Specified option is not complete, it requires more parameters
 J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION.system_action=The JVM will terminate
@@ -853,7 +853,7 @@ J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION.sample_input_2=[non]pageable
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION=Sistem yap\u0131lan\u0131\u015f\u0131 '-Xlp' se\u00e7ene\u011findeki '%.*s' de\u011fi\u015ftirgesini  desteklemiyor
+J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION=Sistem yap\u0131lan\u0131\u015f\u0131 '-Xlp' se\u00e7ene\u011findeki '%.*s' parametresini  desteklemiyor
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION.explanation=Specified parameter is not recognized in -Xlp option
 J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION.system_action=The JVM will terminate

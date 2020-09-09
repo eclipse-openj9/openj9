@@ -75,7 +75,7 @@ J9NLS_SHRC_CLCM_LAST_DETACH_TIME_TITLE.system_action=
 J9NLS_SHRC_CLCM_LAST_DETACH_TIME_TITLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE=Impossibile distruggere la cache \"%s\"
+J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE=Impossibile eliminare la cache \"%s\"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE.sample_input_1=myCache
 J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE.explanation=It has not been possible to destroy the named shared class cache.
@@ -126,7 +126,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENED.user_response=None required.  This is an information message issued when verbose shared class messages have been requested.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED=La cache condivisa \"%s\" \u00e8 stata distrutta
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED=La cache condivisa \"%s\" \u00e8 stata eliminata
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED.explanation=This is an information message notifying you that the named shared class cache has been destroyed as requested.
@@ -354,14 +354,14 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY=Distruggi cache condivisa (utilizza parm nome o predefinito)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY=Elimina cache condivisa (utilizza parm nome o predefinito)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL=Distruggi tutte le cache condivise
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL=Elimina tutte le cache condivise
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL.system_action=
@@ -384,7 +384,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS_OPTION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS_OPTION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_EXPIRE=Distruggi cache che non sono state utilizzare per <t> min
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXPIRE=Elimina cache che non sono state utilizzare per <t> min
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_EXPIRE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_EXPIRE.system_action=
@@ -2016,7 +2016,7 @@ J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.system_act
 J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS=La cache condivisa permanente \"%1$s\" \u00e8 stata distrutta
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS=La cache condivisa permanente \"%1$s\" \u00e8 stata eliminata
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS.explanation=This message informs you that you have successfully destroyed the cache named 1$.  This message is only issued if verbose Shared Classes messages have been requested with "-Xshareclasses:verbose".
@@ -2201,7 +2201,7 @@ J9NLS_SHRC_INFO_LISTING_FOR_CACHEDIR.system_action=
 J9NLS_SHRC_INFO_LISTING_FOR_CACHEDIR.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR=Tentativo in corso di distruggere tutte le cache della cacheDir %s
+J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR=Tentativo in corso di eliminare tutte le cache della cacheDir %s
 # START NON-TRANSLATABLE
 J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR.explanation=NOTAG
@@ -2790,7 +2790,7 @@ J9NLS_SHRC_SHRINIT_STORE_FAILED_VERBOSE_TOKEN_MSG.system_action=
 J9NLS_SHRC_SHRINIT_STORE_FAILED_VERBOSE_TOKEN_MSG.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FOUND_VERBOSE_AOT_MSG=Trovato codice AOT per ROMMethod 0x%1$p nella cache condivisa
+J9NLS_SHRC_SHRINIT_FOUND_VERBOSE_AOT_MSG=Trovato codice AOT per ROMMethod 0x%1$p nella cache condivisa.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FOUND_VERBOSE_AOT_MSG.sample_input_1=00FFAB00
 J9NLS_SHRC_SHRINIT_FOUND_VERBOSE_AOT_MSG.explanation=NOTAG
@@ -2798,7 +2798,7 @@ J9NLS_SHRC_SHRINIT_FOUND_VERBOSE_AOT_MSG.system_action=
 J9NLS_SHRC_SHRINIT_FOUND_VERBOSE_AOT_MSG.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FIND_FAILED_VERBOSE_AOT_MSG=Impossibile trovare codice AOT per ROMMethod 0x%1$p nella cache condivisa
+J9NLS_SHRC_SHRINIT_FIND_FAILED_VERBOSE_AOT_MSG=Impossibile trovare il codice AOT per ROMMethod 0x%1$p nella cache condivisa.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FIND_FAILED_VERBOSE_AOT_MSG.sample_input_1=00FFAB00
 J9NLS_SHRC_SHRINIT_FIND_FAILED_VERBOSE_AOT_MSG.explanation=NOTAG
@@ -2806,7 +2806,7 @@ J9NLS_SHRC_SHRINIT_FIND_FAILED_VERBOSE_AOT_MSG.system_action=
 J9NLS_SHRC_SHRINIT_FIND_FAILED_VERBOSE_AOT_MSG.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_STORED_VERBOSE_AOT_MSG=Codice AOT memorizzato per ROMMethod 0x%1$p nella cache condivisa
+J9NLS_SHRC_SHRINIT_STORED_VERBOSE_AOT_MSG=Codice AOT memorizzato per ROMMethod 0x%1$p nella cache condivisa.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_STORED_VERBOSE_AOT_MSG.sample_input_1=00FFAB00
 J9NLS_SHRC_SHRINIT_STORED_VERBOSE_AOT_MSG.explanation=NOTAG
@@ -2814,7 +2814,7 @@ J9NLS_SHRC_SHRINIT_STORED_VERBOSE_AOT_MSG.system_action=
 J9NLS_SHRC_SHRINIT_STORED_VERBOSE_AOT_MSG.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_STORE_FAILED_VERBOSE_AOT_MSG=Impossibile memorizzare codice AOT per ROMMethod 0x%1$p nella cache condivisa
+J9NLS_SHRC_SHRINIT_STORE_FAILED_VERBOSE_AOT_MSG=Impossibile memorizzare codice AOT per ROMMethod 0x%1$p nella cache condivisa.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_STORE_FAILED_VERBOSE_AOT_MSG.sample_input_1=00FFAB00
 J9NLS_SHRC_SHRINIT_STORE_FAILED_VERBOSE_AOT_MSG.explanation=NOTAG
@@ -4013,14 +4013,14 @@ J9NLS_SHRC_SHRINIT_TOTAL_MINAOT_MINJITDATA_GRTHAN_CACHESIZE.system_action=The JV
 J9NLS_SHRC_SHRINIT_TOTAL_MINAOT_MINJITDATA_GRTHAN_CACHESIZE.user_response=Change -Xscminaot and -Xscminjitdata values and make sure total of these values do not exceed available cache size
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_FORCE_DUMP_IF_CORRUPT=Se la cache aperta \u00e8 contrassegnata come corrotta, eseguire il trigger dell'evento di dump della cache
+J9NLS_SHRC_SHRINIT_HELPTEXT_FORCE_DUMP_IF_CORRUPT=Se la cache aperta \u00e8 contrassegnata come danneggiata, eseguire il trigger dell'evento di dump della cache
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FORCE_DUMP_IF_CORRUPT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FORCE_DUMP_IF_CORRUPT.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_FORCE_DUMP_IF_CORRUPT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_FAKE_CORRUPTION=Forzare il rilevamento di una cache delle classi condivise corrotta
+J9NLS_SHRC_SHRINIT_HELPTEXT_FAKE_CORRUPTION=Forzare il rilevamento di una cache delle classi condivise danneggiata
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FAKE_CORRUPTION.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FAKE_CORRUPTION.system_action=
@@ -4119,7 +4119,7 @@ J9NLS_SHRC_PLACEHOLDER_C.system_action=
 J9NLS_SHRC_PLACEHOLDER_C.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_DEBUG_AREA_BAD_FREE_SPACE=L'area di debug \u00e8 corrotta perch\u00e9 l'indirizzo inferiore dello spazio libero %p, \u00e8 maggiore dell'indirizzo superiore dello spazio libero %p
+J9NLS_SHRC_DEBUG_AREA_BAD_FREE_SPACE=L'area di debug \u00e8 danneggiata perch\u00e9 l'indirizzo inferiore dello spazio libero %p, \u00e8 maggiore dell'indirizzo superiore dello spazio libero %p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_DEBUG_AREA_BAD_FREE_SPACE.sample_input_1=0x3333
 J9NLS_SHRC_DEBUG_AREA_BAD_FREE_SPACE.sample_input_2=0x2222
@@ -4128,7 +4128,7 @@ J9NLS_SHRC_DEBUG_AREA_BAD_FREE_SPACE.system_action=The cache is marked as corrup
 J9NLS_SHRC_DEBUG_AREA_BAD_FREE_SPACE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_DEBUG_AREA_BAD_LNT_HEADER_INFO=L'area di debug \u00e8 corrotta perch\u00e9 l'indirizzo inferiore dei 'dati di tabella del numero riga' %p, \u00e8 maggiore dell'indirizzo superiore %p
+J9NLS_SHRC_DEBUG_AREA_BAD_LNT_HEADER_INFO=L'area di debug \u00e8 danneggiata perch\u00e9 l'indirizzo inferiore dei 'dati di tabella del numero riga' %p, \u00e8 maggiore dell'indirizzo superiore %p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_DEBUG_AREA_BAD_LNT_HEADER_INFO.sample_input_1=0x3333
 J9NLS_SHRC_DEBUG_AREA_BAD_LNT_HEADER_INFO.sample_input_2=0x2222
@@ -4137,7 +4137,7 @@ J9NLS_SHRC_DEBUG_AREA_BAD_LNT_HEADER_INFO.system_action=The cache is marked as c
 J9NLS_SHRC_DEBUG_AREA_BAD_LNT_HEADER_INFO.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_DEBUG_AREA_BAD_LVT_HEADER_INFO=L'area di debug \u00e8 corrotta perch\u00e9 l'indirizzo inferiore dei 'dati tabella della variabile locale' %p, \u00e8 maggiore dell'indirizzo superiore %p
+J9NLS_SHRC_DEBUG_AREA_BAD_LVT_HEADER_INFO=L'area di debug \u00e8 danneggiata perch\u00e9 l'indirizzo inferiore dei 'dati tabella della variabile locale' %p, \u00e8 maggiore dell'indirizzo superiore %p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_DEBUG_AREA_BAD_LVT_HEADER_INFO.sample_input_1=0x3333
 J9NLS_SHRC_DEBUG_AREA_BAD_LVT_HEADER_INFO.sample_input_2=0x2222
@@ -4146,7 +4146,7 @@ J9NLS_SHRC_DEBUG_AREA_BAD_LVT_HEADER_INFO.system_action=The cache is marked as c
 J9NLS_SHRC_DEBUG_AREA_BAD_LVT_HEADER_INFO.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_DEBUG_AREA_BAD_SIZES_FOR_COMMIT=L'area di debug \u00e8 corrotta perch\u00e9 la memorizzazione dei byte 'tabella numero di riga' %d e dei byte 'tabella della variabile locale' %d, risulter\u00e0 in un indirizzo superiore dei 'dati tabella del numero riga' di %p, che sar\u00e0 maggiore del nuovo indirizzo inferiore dei 'dati tabella della variabile locale' %p
+J9NLS_SHRC_DEBUG_AREA_BAD_SIZES_FOR_COMMIT=L'area di debug \u00e8 danneggiata perch\u00e9 la memorizzazione dei byte 'tabella numero di riga' %d e dei byte 'tabella della variabile locale' %d, risulter\u00e0 in un indirizzo superiore dei 'dati tabella del numero riga' di %p, che sar\u00e0 maggiore del nuovo indirizzo inferiore dei 'dati tabella della variabile locale' %p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_DEBUG_AREA_BAD_SIZES_FOR_COMMIT.sample_input_1=32
 J9NLS_SHRC_DEBUG_AREA_BAD_SIZES_FOR_COMMIT.sample_input_2=32
@@ -4165,7 +4165,7 @@ J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_DATA_START_NULL.system_action=The cache is mark
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_DATA_START_NULL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_DEBUG_AREA_BAD_FREE_SPACE_SIZE=L'area di debug \u00e8 corrotta perch\u00e9 l'indirizzo superiore dello spazio libero %p meno l'indirizzo inferiore dello spazio libero %p supera la dimensione della regione di debug di %lu byte
+J9NLS_SHRC_DEBUG_AREA_BAD_FREE_SPACE_SIZE=L'area di debug \u00e8 danneggiata perch\u00e9 l'indirizzo superiore dello spazio libero %p meno l'indirizzo inferiore dello spazio libero %p supera la dimensione della regione di debug di %lu byte
 # START NON-TRANSLATABLE
 J9NLS_SHRC_DEBUG_AREA_BAD_FREE_SPACE_SIZE.sample_input_1=0x3333
 J9NLS_SHRC_DEBUG_AREA_BAD_FREE_SPACE_SIZE.sample_input_2=0x2222
@@ -4175,7 +4175,7 @@ J9NLS_SHRC_DEBUG_AREA_BAD_FREE_SPACE_SIZE.system_action=The cache is marked as c
 J9NLS_SHRC_DEBUG_AREA_BAD_FREE_SPACE_SIZE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_DEBUG_AREA_BAD_SIZE=L'area di debug \u00e8 corrotta perch\u00e9 la sua dimensione di %lu \u00e8 superiore alla dimensione di cache totale di %u memorizzata nell'intestazione della cache
+J9NLS_SHRC_DEBUG_AREA_BAD_SIZE=L'area di debug \u00e8 danneggiata perch\u00e9 la sua dimensione di %lu \u00e8 superiore alla dimensione di cache totale di %u memorizzata nell'intestazione della cache
 # START NON-TRANSLATABLE
 J9NLS_SHRC_DEBUG_AREA_BAD_SIZE.sample_input_1=1048576
 J9NLS_SHRC_DEBUG_AREA_BAD_SIZE.sample_input_2=1024
@@ -5601,7 +5601,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_CACHE_CREATION_NOT_ALLOWED_READONLY_MODE.system_actio
 J9NLS_SHRC_OSCACHE_STARTUP_CACHE_CREATION_NOT_ALLOWED_READONLY_MODE.user_response=Remove "readonly" sub-option from -Xshareclasses and restart the JVM. "readonly" sub-option is useful only if shared class cache already exists.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_RESTRICT_CLASSPATHS=\u00c8 possibile aggiungere i classpath solo inizializzando prima la cache JVM
+J9NLS_SHRC_SHRINIT_HELPTEXT_RESTRICT_CLASSPATHS=\u00c8 possibile aggiungere i classpath solo inizializzando prima la cache JVM.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_RESTRICT_CLASSPATHS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_RESTRICT_CLASSPATHS.system_action=
@@ -5858,7 +5858,7 @@ J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED_SNAPSHOT_CACHE.system_action
 J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED_SNAPSHOT_CACHE.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED=La JVM non \u00e8 configurata per accedere al file di istantanea della cache condivisa non persistente \"%s\". Per aprire il file, utilizzare l'opzione secondaria 'groupAccess'
+J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED=La JVM non \u00e8 configurata per accedere al file di istantanea della cache condivisa non persistente \"%s\". Per aprire il file, utilizzare l'opzione secondaria 'groupAccess'.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.explanation=An error has occurred within Shared Classes processing.
@@ -6671,7 +6671,7 @@ J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL=Indicatori STARTUP HINTS DETAIL: %1$zu DATA1: %2$zu DATA2: %3$zu
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL=Flag STARTUP HINTS DETAIL: %1$zu DATA1: %2$zu DATA2: %3$zu
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.sample_input_2=1024
@@ -6765,7 +6765,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Distruggi tutti i livelli di cache condivisa con lo stesso nome (utilizza parm nome o predefinito)
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS=Elimina tutti i livelli di cache condivisa con lo stesso nome (utilizza parm nome o predefinito)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS.system_action=
@@ -6779,7 +6779,7 @@ J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.system_action=The JVM terminates, unless y
 J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=Impossibile avviare la cache condivisa. \u00c8 stata rilevata una modifica ad una cache condivisa di livello inferiore L'ID cache univoco previsto \u00e8 %s
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=Impossibile avviare la cache condivisa. \u00c8 stata rilevata una modifica ad una cache condivisa di livello inferiore. L'ID cache univoco previsto \u00e8 %s
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.sample_input_1=foo
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layer shared caches built on top of it.
@@ -6787,7 +6787,7 @@ J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.system_action=The JVM terminates, unless yo
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.user_response=Use -Xshareclasses:name=<cacheName>,destroyAllLayers to destroy all layers and retry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED=Impossibile avviare la cache condivisa. Si \u00e8 verificato un errore durante l'acquisizione dell'ID univoco di una cache prerequisito di livello inferiore
+J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED=Impossibile avviare la cache condivisa. Si \u00e8 verificato un errore durante l'acquisizione dell'ID univoco di una cache prerequisito di livello inferiore.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.explanation=Cannot get the unique ID of a lower layer prerequisite cache.
 J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -6801,7 +6801,7 @@ J9NLS_SHRC_CM_FAILED_TO_START_UP.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_FAILED_TO_START_UP.user_response=Previous error messages may indicate the reason.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Specificare il numero del livello principale . Creare un nuovo livello di cache condivisa se il livello specificato non esiste.
+J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS=Specificare il numero del livello principale. Creare un nuovo livello di cache condivisa se il livello specificato non esiste.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS.system_action=
@@ -6870,7 +6870,7 @@ J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS=Stampare il, riepilogo delle statistiche sulla cache solo dal livello principale. Utilizzare printTopLayerStats=help per visualizzare le opzioni disponibili.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS=Stampare il riepilogo delle statistiche sulla cache solo dal livello principale. Utilizzare printTopLayerStats=help per visualizzare le opzioni disponibili.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.system_action=
