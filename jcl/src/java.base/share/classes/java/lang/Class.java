@@ -4599,14 +4599,20 @@ public boolean isNestmateOf(Class<?> that) {
  * Answers the nest member classes of the receiver's nest host.
  *
  * @throws SecurityException if a SecurityManager is present and package access is not allowed
+/*[IF !Java15]
  * @throws LinkageError if there is any problem loading or validating a nest member or the nest host
+/*[ENDIF]
  * @throws SecurityException if a returned class is not the current class, a security manager is enabled,
  *	the caller's class loader is not the same or an ancestor of that returned class, and the
  * 	checkPackageAccess() denies access
  * @return the host class of the receiver.
  */
 @CallerSensitive
-public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
+public Class<?>[] getNestMembers() throws
+/*[IF !Java15] */
+LinkageError, 
+/*[ENDIF] */
+SecurityException {
 	if (isArray() || isPrimitive()) {
 		/* By spec, Class objects representing array types or primitive types
 		 * belong to the nest consisting only of itself.
