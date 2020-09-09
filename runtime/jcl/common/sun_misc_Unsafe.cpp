@@ -1129,7 +1129,9 @@ Java_jdk_internal_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
 jboolean
  memOverlapIsNone(j9object_t sourceObject, UDATA sourceOffset, j9object_t destObject, UDATA destOffset, UDATA actualCopySize) {
 	jboolean result = JNI_FALSE;
-	if ((sourceObject == NULL) && (destObject == NULL)) {
+	if (sourceObject != destObject) {
+		result = JNI_TRUE;
+	} else if ((sourceObject == NULL) && (destObject == NULL)) {
 		if (sourceOffset > (destOffset + actualCopySize)) {
 			result = JNI_TRUE;
 		} else if (destOffset > (sourceOffset + actualCopySize)) {
