@@ -711,53 +711,56 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
 
    if (comp->target().is64Bit())
       {
-      if (getTOCOffset() != PTOC_FULL_INDEX)
+      if (!comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
          {
-         TR_PPCTableOfConstants::setTOCSlot(getTOCOffset(), (uintptr_t)cursor);
-         }
-      else
-         {
-         int32_t  *patchAddr = (int32_t *)getLowerInstruction()->getBinaryEncoding();
-         intptr_t addrValue = (intptr_t)cursor;
-         if (!comp->compileRelocatableCode()
-            #ifdef J9VM_OPT_JITSERVER
-               && !comp->isOutOfProcessCompilation()
-            #endif
-            )
+         if (getTOCOffset() != PTOC_FULL_INDEX)
             {
-            // If the high nibble is 0 and the next nibble's high bit is clear, change the first instruction to a nop and the third to a li
-            // Next nibble's high bit needs to be clear in order to use li (because li will sign extend the immediate)
-            if ((addrValue >> 48) == 0 && ((addrValue >> 32) & 0x8000) == 0)
-               {
-               *patchAddr |= addrValue & 0x0000ffff;
-               addrValue = cg()->hiValue(addrValue);
-               uint32_t ori = *(patchAddr-2);
-               uint32_t li = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::li) | (ori & 0x03e00000);
-               *(patchAddr-2) = li | ((addrValue>>16) & 0x0000ffff);
-               *(patchAddr-3) |= addrValue & 0x0000ffff;
-               *(patchAddr-4) = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::nop);
-               }
-            else
-               {
-               *patchAddr |= addrValue & 0x0000ffff;
-               addrValue = cg()->hiValue(addrValue);
-               *(patchAddr-2) |= (addrValue>>16) & 0x0000ffff;
-               *(patchAddr-3) |= addrValue & 0x0000ffff;
-               *(patchAddr-4) |= (addrValue>>32) & 0x0000ffff;
-               }
+            TR_PPCTableOfConstants::setTOCSlot(getTOCOffset(), (uintptr_t)cursor);
             }
          else
             {
-            // We must take this path for all compiles that need to generate relocatable code (ex. AOT, outOfProcess).
-            // The immediate fields of relocatable instructions must be clear. This is because when performing the relocation,
-            // we OR the new address into the fields. So if the fields are not already clear, then OR'ing the new address can
-            // result in garbage data.
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(getUpperInstruction(),
-               (uint8_t *)(addrValue),
-               (uint8_t *)fixedSequence4,
-               TR_FixedSequenceAddress2,
-               cg()),
-               __FILE__, __LINE__, callNode);
+            int32_t  *patchAddr = (int32_t *)getLowerInstruction()->getBinaryEncoding();
+            intptr_t addrValue = (intptr_t)cursor;
+            if (!comp->compileRelocatableCode()
+               #ifdef J9VM_OPT_JITSERVER
+                  && !comp->isOutOfProcessCompilation()
+               #endif
+               )
+               {
+               // If the high nibble is 0 and the next nibble's high bit is clear, change the first instruction to a nop and the third to a li
+               // Next nibble's high bit needs to be clear in order to use li (because li will sign extend the immediate)
+               if ((addrValue >> 48) == 0 && ((addrValue >> 32) & 0x8000) == 0)
+                  {
+                  *patchAddr |= addrValue & 0x0000ffff;
+                  addrValue = cg()->hiValue(addrValue);
+                  uint32_t ori = *(patchAddr-2);
+                  uint32_t li = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::li) | (ori & 0x03e00000);
+                  *(patchAddr-2) = li | ((addrValue>>16) & 0x0000ffff);
+                  *(patchAddr-3) |= addrValue & 0x0000ffff;
+                  *(patchAddr-4) = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::nop);
+                  }
+               else
+                  {
+                  *patchAddr |= addrValue & 0x0000ffff;
+                  addrValue = cg()->hiValue(addrValue);
+                  *(patchAddr-2) |= (addrValue>>16) & 0x0000ffff;
+                  *(patchAddr-3) |= addrValue & 0x0000ffff;
+                  *(patchAddr-4) |= (addrValue>>32) & 0x0000ffff;
+                  }
+               }
+            else
+               {
+               // We must take this path for all compiles that need to generate relocatable code (ex. AOT, outOfProcess).
+               // The immediate fields of relocatable instructions must be clear. This is because when performing the relocation,
+               // we OR the new address into the fields. So if the fields are not already clear, then OR'ing the new address can
+               // result in garbage data.
+               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(getUpperInstruction(),
+                  (uint8_t *)(addrValue),
+                  (uint8_t *)fixedSequence4,
+                  TR_FixedSequenceAddress2,
+                  cg()),
+                  __FILE__, __LINE__, callNode);
+               }
             }
          }
       }

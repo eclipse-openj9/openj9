@@ -480,25 +480,37 @@ bool ppcCodePatching(void *method, void *callSite, void *currentPC, void *curren
 
          oldBits = *(int32_t *)((uint8_t *)callSite - encodingStartOffset);     // The load of the first IPIC cache slot or rldimi
 #if defined(TR_TARGET_64BIT)
-         if (((oldBits>>26) & 0x0000003F) != 30)
+         if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
             {
-            // PTOC was used, oldBits is ld
-            currentDistance = oldBits<<16>>16;
-            if (((oldBits>>16) & 0x0000001F) == 12)
-               {
-               oldBits = *(int32_t *)((uint8_t *)callSite - encodingStartOffset - 4);
-               currentDistance += oldBits<<16;
-               }
-            patchAddr = *(uint8_t **)(*(intptr_t *)extra + currentDistance);
+            // oldBits is the latter half of paddi
+            distance = *(int32_t *)((uint8_t *)callSite - encodingStartOffset - 4);
+            distance = (distance & 0x0003FFFF) << 16;  // Getting the top-18-bits and shifted into place
+            distance |= oldBits & 0x0000FFFF;          // Concatenate with the bottom-16-bits
+            distance = (distance << 30) >> 30;         // sign-extend
+            patchAddr = (uint8_t *)callSite - encodingStartOffset - 4 + distance;
             }
          else
             {
-            // PTOC was full and the load address is formed via 5 instructions: lis, lis, ori, rldimi, ldu; oldBits is the rldimi
-            distance  = ((intptr_t)(*(int32_t *)((uint8_t *)callSite - encodingStartOffset - 12)) & 0x0000FFFF) << 48;
-            distance |= ((intptr_t)(*(int32_t *)((uint8_t *)callSite - encodingStartOffset - 8)) & 0x0000FFFF) << 16;
-            distance |= ((intptr_t)(*(int32_t *)((uint8_t *)callSite - encodingStartOffset - 4)) & 0x0000FFFF) << 32;
-            distance += ((intptr_t)(*(int32_t *)((uint8_t *)callSite - encodingStartOffset + 4)) & 0x0000FFFC) << 48 >> 48;
-            patchAddr = (uint8_t *)distance;
+            if (((oldBits>>26) & 0x0000003F) != 30)
+               {
+               // PTOC was used, oldBits is ld
+               currentDistance = oldBits<<16>>16;
+               if (((oldBits>>16) & 0x0000001F) == 12)
+                  {
+                  oldBits = *(int32_t *)((uint8_t *)callSite - encodingStartOffset - 4);
+                  currentDistance += oldBits<<16;
+                  }
+               patchAddr = *(uint8_t **)(*(intptr_t *)extra + currentDistance);
+               }
+            else
+               {
+               // PTOC was full and the load address is formed via 5 instructions: lis, lis, ori, rldimi, ldu; oldBits is the rldimi
+               distance  = ((intptr_t)(*(int32_t *)((uint8_t *)callSite - encodingStartOffset - 12)) & 0x0000FFFF) << 48;
+               distance |= ((intptr_t)(*(int32_t *)((uint8_t *)callSite - encodingStartOffset - 8)) & 0x0000FFFF) << 16;
+               distance |= ((intptr_t)(*(int32_t *)((uint8_t *)callSite - encodingStartOffset - 4)) & 0x0000FFFF) << 32;
+               distance += ((intptr_t)(*(int32_t *)((uint8_t *)callSite - encodingStartOffset + 4)) & 0x0000FFFC) << 48 >> 48;
+               patchAddr = (uint8_t *)distance;
+               }
             }
 #else
          // oldBits is lwzu
