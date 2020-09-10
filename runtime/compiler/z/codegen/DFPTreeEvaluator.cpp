@@ -78,7 +78,7 @@ const char * fieldName = "laside";
 const char * sig = "J";
 const uint32_t fieldLen = 6;
 const uint32_t sigLen = 1;
-const char * className = "Ljava/math/BigDecimal;\0";
+const char * className = "Ljava/math/BigDecimal;";
 const int32_t len = 22;
 
 /*

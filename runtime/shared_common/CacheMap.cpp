@@ -7334,7 +7334,7 @@ SH_CacheMap::isCacheCorruptReported(void)
 static char*
 formatAttachedDataString(J9VMThread* currentThread, U_8 *attachedData, UDATA attachedDataLength,
 		char *attachedDataStringBuffer, UDATA bufferLength) {
-	const int BYTE_STRING_LENGTH=6; /* "0x" + 2 characters of hex data + " \0" */
+	const int BYTE_STRING_LENGTH = 6; /* "0x" + 2 characters of hex data + " " + NUL */
 	U_8 *dataCursor = attachedData;
 	UDATA bytesRemaining = attachedDataLength;
 	char *stringCursor = attachedDataStringBuffer;
