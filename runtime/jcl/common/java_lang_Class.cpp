@@ -1813,14 +1813,13 @@ Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv)
 	J9Class *nestHost = clazz->nestHost;
 
 	if (NULL == nestHost) {
-		J9Class *clazzToUse = clazz;
-		if (J9_VISIBILITY_ALLOWED == vmFuncs->loadAndVerifyNestHost(currentThread, clazzToUse, J9_LOOK_NO_THROW)) {
-			nestHost = clazzToUse->nestHost;
+		if (J9_VISIBILITY_ALLOWED == vmFuncs->loadAndVerifyNestHost(currentThread, clazz, J9_LOOK_NO_THROW)) {
+			nestHost = clazz->nestHost;
 		} else {
 			/* If there is a failure loading or accessing the nest host, or if this class or interface does
 			 * not specify a nest, then it is considered to belong to its own nest and this is returned as
 			 * the host */
-			nestHost = clazzToUse;
+			nestHost = clazz;
 		}
 	}
 	j9object_t resultObject = J9VM_J9CLASS_TO_HEAPCLASS(nestHost);
