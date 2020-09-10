@@ -183,7 +183,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 		NEXT_U32(length, index);
 		end = index + length;
 
-		if ((!name) || (name > classfile->constantPoolCount)) {
+		if ((!name) || (name >= classfile->constantPoolCount)) {
 			errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 			offset = address;
 			goto _errorFound;
@@ -447,6 +447,17 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			} else if ((BCT_ERR_NO_ERROR != result) || (0 == length) || (index != end)) {
 				U_32 cursor = 0;
 				Trc_BCU_MalformedAnnotation(address);
+
+				/* Capture the errors with type_name_index & const_name_index in enum_const_value against the VM Spec */
+				if (BCT_ERR_INVALID_ANNOTATION_BAD_CP_INDEX_OUT_OF_RANGE == result) {
+					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
+					offset = address;
+					goto _errorFound;
+				} else if (BCT_ERR_INVALID_ANNOTATION_BAD_CP_UTF8_STRING == result) {
+					errorCode = J9NLS_CFR_ERR_BAD_NAME_INDEX__ID;
+					offset = address;
+					goto _errorFound;
+				}
 
 				if (0 == length) {
 					/* rawDataLength should be zero to indicate an error. Add an extra byte to the annotation 
@@ -1628,7 +1639,7 @@ checkFields(J9CfrClassFile * classfile, U_8 * segment, U_32 flags)
 
 		offset = 2;
 		value = field->nameIndex;
-		if ((!value) || (value > classfile->constantPoolCount)) {
+		if ((!value) || (value >= classfile->constantPoolCount)) {
 			errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 			goto _errorFound;
 		}
@@ -1640,7 +1651,7 @@ checkFields(J9CfrClassFile * classfile, U_8 * segment, U_32 flags)
 
 		offset = 4;
 		value = field->descriptorIndex;
-		if ((!value) || (value > classfile->constantPoolCount)) {
+		if ((!value) || (value >= classfile->constantPoolCount)) {
 			errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 			goto _errorFound;
 		}
@@ -1713,7 +1724,7 @@ checkMethods(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_3
 		/* Can we trust the name index? */
 		nameIndexOK = TRUE;
 		value = method->nameIndex;
-		if ((!value) || (value > classfile->constantPoolCount)) {
+		if ((!value) || (value >= classfile->constantPoolCount)) {
 			nameIndexOK = FALSE;
 		} else if (classfile->constantPool[value].tag != CFR_CONSTANT_Utf8) {
 			nameIndexOK = FALSE;
@@ -1846,7 +1857,7 @@ _nameCheck:
 		/* Name check. */
 		value = method->nameIndex;
 		if (!nameIndexOK) {
-			if ((!value) || (value > classfile->constantPoolCount)) {
+			if ((!value) || (value >= classfile->constantPoolCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
@@ -1860,7 +1871,7 @@ _nameCheck:
 		offset = 4;
 		/* Check signature. */
 		value = method->descriptorIndex;
-		if ((!value) || (value > classfile->constantPoolCount)) {
+		if ((!value) || (value >= classfile->constantPoolCount)) {
 			errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 			goto _errorFound;
 		}
@@ -1926,7 +1937,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 		switch(attrib->tag) {
 		case CFR_ATTRIBUTE_SourceFile:
 			value = ((J9CfrAttributeSourceFile*)attrib)->sourceFileIndex;
-			if((!value)||(value > cpCount)) {
+			if((!value)||(value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}				
@@ -1938,7 +1949,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 
 		case CFR_ATTRIBUTE_Signature:
 			value = ((J9CfrAttributeSignature*)attrib)->signatureIndex;
-			if((0 == value)||(value > cpCount)) {
+			if((0 == value)||(value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}				
@@ -1950,7 +1961,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 
 		case CFR_ATTRIBUTE_ConstantValue:
 			value = ((J9CfrAttributeConstantValue*)attrib)->constantValueIndex;
-			if((0 == value)||(value > cpCount)) {
+			if((0 == value)||(value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
@@ -1978,7 +1989,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			for(j = 0; j < code->exceptionTableLength; j++) {
 				exception = &(code->exceptionTable[j]);
 				value = exception->catchType;
-				if(value > cpCount) {
+				if(value >= cpCount) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -1997,7 +2008,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			exceptions = (J9CfrAttributeExceptions*)attrib;
 			for(j = 0; j < exceptions->numberOfExceptions; j++) {
 				value = exceptions->exceptionIndexTable[j];
-				if((0 == value)||(value > cpCount)) {
+				if((0 == value)||(value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2037,7 +2048,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				}							
 
 				value = ((J9CfrAttributeLocalVariableTable*)attrib)->localVariableTable[j].nameIndex;
-				if((0 == value)||(value > cpCount)) {
+				if((0 == value)||(value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2053,7 +2064,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				}
 
 				value = ((J9CfrAttributeLocalVariableTable*)attrib)->localVariableTable[j].descriptorIndex;
-				if((0 == value)||(value > cpCount)) {
+				if((0 == value)||(value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2086,7 +2097,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				}							
 
 				value = ((J9CfrAttributeLocalVariableTypeTable*)attrib)->localVariableTypeTable[j].nameIndex;
-				if((0 == value)||(value > cpCount)) {
+				if((0 == value)||(value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2102,7 +2113,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				}
 
 				value = ((J9CfrAttributeLocalVariableTypeTable*)attrib)->localVariableTypeTable[j].signatureIndex;
-				if((0 == value)||(value > cpCount)) {
+				if((0 == value)||(value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2123,7 +2134,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			classes = (J9CfrAttributeInnerClasses*)attrib;
 			for(j = 0; j < classes->numberOfClasses; j++) {
 				value = classes->classes[j].innerClassInfoIndex;
-				if((0 == value)||(value > cpCount)) {
+				if((0 == value)||(value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2134,7 +2145,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				/* Check class name integrity? */
 
 				value = classes->classes[j].outerClassInfoIndex;
-				if((0 != value) && (value > cpCount)) {
+				if((0 != value) && (value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2145,7 +2156,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				/* Check class name integrity? */
 
 				value = classes->classes[j].innerNameIndex;
-				if((0 != value) && (value > cpCount)) {
+				if((0 != value) && (value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2174,7 +2185,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			}
 			enclosing = (J9CfrAttributeEnclosingMethod*)attrib;
 			value = enclosing->classIndex;
-			if ((0 == value) || (value > cpCount)) {
+			if ((0 == value) || (value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
@@ -2184,7 +2195,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			}
 
 			value = enclosing->methodIndex;
-			if(value > cpCount) {
+			if(value >= cpCount) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
@@ -2207,7 +2218,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 					U_16 numberOfBootstrapArguments = 0;
 					J9CfrBootstrapMethod *bsm = &bootstrapMethods->bootstrapMethods[j];
 					value = bsm->bootstrapMethodIndex;
-					if ((0 == value) || (value > cpCount)) {
+					if ((0 == value) || (value >= cpCount)) {
 						errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 						goto _errorFound;
 					}
@@ -2221,7 +2232,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 						U_8 cpValueTag = 0;
 						value = bsm->bootstrapArguments[k];
 
-						if ((0 == value) || (value > cpCount)) {
+						if ((0 == value) || (value >= cpCount)) {
 							errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 							goto _errorFound;
 						}
@@ -2279,7 +2290,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			}
 
 			value = ((J9CfrAttributeRecord*)attrib)->nameIndex;
-			if ((0 == value) || (value > cpCount)) {
+			if ((0 == value) || (value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
@@ -2291,7 +2302,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			for (j = 0; j < ((J9CfrAttributeRecord*)attrib)->numberOfRecordComponents; j++) {
 				J9CfrRecordComponent* recordComponent = &(((J9CfrAttributeRecord*)attrib)->recordComponents[j]);
 				value = recordComponent->nameIndex;
-				if ((0 == value) || (value > cpCount)) {
+				if ((0 == value) || (value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2300,7 +2311,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 					goto _errorFound;
 				}
 				value = recordComponent->descriptorIndex;
-				if ((0 == value) || (value > cpCount)) {
+				if ((0 == value) || (value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2331,7 +2342,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			}
 			
 			value = ((J9CfrAttributePermittedSubclasses*)attrib)->nameIndex;
-			if ((0 == value) || (value > cpCount)) {
+			if ((0 == value) || (value >= cpCount)) {
 				if (enablePermittedSubclassErrors) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
@@ -2357,7 +2368,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 
 			for (j = 0; j < ((J9CfrAttributePermittedSubclasses*)attrib)->numberOfClasses; j++) {
 				value = ((J9CfrAttributePermittedSubclasses*)attrib)->classes[j];
-				if ((0 == value) || (value > cpCount)) {
+				if ((0 == value) || (value >= cpCount)) {
 					if (enablePermittedSubclassErrors) {
 						errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 						goto _errorFound;
@@ -2377,7 +2388,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 #if JAVA_SPEC_VERSION >= 11
 		case CFR_ATTRIBUTE_NestHost:
 			value = ((J9CfrAttributeNestHost*)attrib)->hostClassIndex;
-			if ((!value) || (value > cpCount)) {
+			if ((!value) || (value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
@@ -2391,7 +2402,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			U_16 nestMembersCount = ((J9CfrAttributeNestMembers*)attrib)->numberOfClasses;
 			for (j = 0; j < nestMembersCount; j++) {
 				value = ((J9CfrAttributeNestMembers*)attrib)->classes[j];
-				if ((0 == value) || (value > cpCount)) {
+				if ((0 == value) || (value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2540,7 +2551,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 	}
 
 	value = classfile->thisClass;
-	if((!value)||(value > classfile->constantPoolCount)) {
+	if((!value)||(value >= classfile->constantPoolCount)) {
 		errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 		offset = endOfConstantPool + 2;
 		goto _errorFound;
@@ -2553,7 +2564,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 	}
 
 	value = classfile->superClass;
-	if(value > classfile->constantPoolCount) {
+	if(value >= classfile->constantPoolCount) {
 		errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 		offset = endOfConstantPool + 4;
 		goto _errorFound;
@@ -2576,7 +2587,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 		U_32 j;
 		J9CfrConstantPoolInfo* cpInfo;
 		value = classfile->interfaces[i];
-		if((!value)||(value > classfile->constantPoolCount)) {
+		if((!value)||(value >= classfile->constantPoolCount)) {
 			errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 			offset = endOfConstantPool + 4 + (i << 1);
 			goto _errorFound;
@@ -3470,6 +3481,12 @@ readAnnotationElement(J9CfrClassFile * classfile, J9CfrAnnotationElement ** pAnn
 		break;
 			
 	case 'e':
+	{
+		J9CfrConstantPoolInfo* cpBase = classfile->constantPool;
+		U_16 cpCount = classfile->constantPoolCount;
+		U_16 typeNameIndex = 0;
+		U_16 constNameIndex = 0;
+
 		if (!ALLOC_CAST(element, J9CfrAnnotationElementEnum, J9CfrAnnotationElement)) {
 			return -2;
 		}
@@ -3477,8 +3494,17 @@ readAnnotationElement(J9CfrClassFile * classfile, J9CfrAnnotationElement ** pAnn
 		CHECK_EOF(4);
 		NEXT_U16(((J9CfrAnnotationElementEnum *)element)->typeNameIndex, index);
 		NEXT_U16(((J9CfrAnnotationElementEnum *)element)->constNameIndex, index);
+		
+		typeNameIndex = ((J9CfrAnnotationElementEnum *)element)->typeNameIndex;
+		constNameIndex = ((J9CfrAnnotationElementEnum *)element)->constNameIndex;
+		if ((0 == typeNameIndex) || (typeNameIndex >= cpCount) || (0 == constNameIndex) || (constNameIndex >= cpCount)) {
+			return BCT_ERR_INVALID_ANNOTATION_BAD_CP_INDEX_OUT_OF_RANGE;
+		}
+		if ((CFR_CONSTANT_Utf8 != cpBase[typeNameIndex].tag) || (CFR_CONSTANT_Utf8 != cpBase[constNameIndex].tag)) {
+			return BCT_ERR_INVALID_ANNOTATION_BAD_CP_UTF8_STRING;
+		}
 		break;
-
+	}
 	case 'c':
 		if (!ALLOC_CAST(element, J9CfrAnnotationElementClass, J9CfrAnnotationElement)) {
 			return -2;
