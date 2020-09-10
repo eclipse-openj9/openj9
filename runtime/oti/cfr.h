@@ -932,11 +932,11 @@ typedef struct J9CfrClassFile {
 #define CFR_J9FLAG_IS_SEALED        4
 
 #if defined(J9VM_ENV_DATA64)
-#define ROM_ADDRESS_LENGTH 16
-#define ROM_ADDRESS_FORMAT "%016X\0"
+#define ROM_ADDRESS_LENGTH 18
+#define ROM_ADDRESS_FORMAT "0x%016x\0"
 #else
-#define ROM_ADDRESS_LENGTH 8
-#define ROM_ADDRESS_FORMAT "%08X\0"
+#define ROM_ADDRESS_LENGTH 10
+#define ROM_ADDRESS_FORMAT "0x%08x\0"
 #endif
 
 #define CFR_METHOD_EXT_HAS_METHOD_TYPE_ANNOTATIONS 0x01
