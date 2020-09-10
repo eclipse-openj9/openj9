@@ -1313,7 +1313,7 @@ ROMClassBuilder::compareROMClassForEquality(U_8 *romClass,bool romClassIsShared,
 	if (isLambda) {
 		if (sizeof(U_64) < abs((int)(romSize - ((J9ROMClass *)romClass)->romSize))) {
 			/* If the class is a lambda class, we compare the romSizes first to save time. Lambda class names are in the format of
-			 * HostClassName$$Lambda$<IndexNumber>/0000000000000000. When we reach this check, the host class names will be the
+			 * HostClassName$$Lambda$<IndexNumber>/0x0000000000000000. When we reach this check, the host class names will be the
 			 * same for both the classes because of the hash key check earlier so the only difference in the size will be the
 			 * difference between the number of digits of the index number. The same lambda class might have a different index
 			 * number from run to run and when the number of digits of the index number increases by 1, romSize increases by 2.

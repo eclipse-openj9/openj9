@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2006, 2019 IBM Corp. and others
+  Copyright (c) 2006, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,12 +108,16 @@
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>
-	
+
+	<!--
+		The tests match anon/hidden class names with 10 or 18 zeroes (0000000000|000000000000000000), the extra two zeroes are for the 0x in the
+		address. The 0x is written along with the romAddress which is done after the tracepoint that these tests rely on is called.
+	-->
 	<test id="APITests.NullPointerAndEmptyArrayTest" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$ -Xtrace:print={j9jcl.162,j9jcl.163,j9jcl.486} APITests.NullPointerAndEmptyArrayTest </command>
 		<output type="success" caseSensitive="yes" regex="no">NullPointerAndEmptyArrayTest : TEST PASSED</output>
 		<output type="required" caseSensitive="yes" regex="no">Exiting because URL count is 0</output>
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Entering with url (00000000|0000000000000000)</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Entering with url (0000000000|000000000000000000)</output>
 		<output type="required" caseSensitive="yes" regex="no">Exiting with 0 as CallObjectMethod failed for URLgetPathID</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>

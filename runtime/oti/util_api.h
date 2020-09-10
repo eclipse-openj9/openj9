@@ -2280,7 +2280,7 @@ uint64_t
 getOpenJ9Sha();
 
 /**
- * If the class is a lambda class get the pointer to the last '$' sign of the class name which is in the format of HostClassName$$Lambda$<IndexNumber>/0000000000000000.
+ * If the class is a lambda class get the pointer to the last '$' sign of the class name which is in the format of HostClassName$$Lambda$<IndexNumber>/0x0000000000000000.
  * NULL otherwise.
  *
  * @param[in] className  pointer to the class name
