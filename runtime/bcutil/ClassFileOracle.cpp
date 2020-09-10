@@ -2375,6 +2375,121 @@ ClassFileOracle::methodIsNonStaticNonAbstract(U_16 methodIndex)
 	return J9_ARE_NO_BITS_SET(_classFile->methods[methodIndex].accessFlags, (CFR_ACC_STATIC | CFR_ACC_ABSTRACT));
 }
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+/**
+ * Determine if the method name corresponds to a VarHandle method with polymorphic
+ * signature.
+ *
+ * @param methodName the bytes of the method name
+ * @param methodNameLength the length of the method name
+ *
+ * @return true for a VarHandle method with polymorphic signature. Otherwise,
+ * return false.
+ */
+bool
+ClassFileOracle::isPolymorphicVarHandleMethod(U_8 *methodName, U_32 methodNameLength)
+{
+	bool result = false;
+
+	switch (methodNameLength) {
+	case 3:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "get")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "set")) {
+			result = true;
+		}
+		break;
+	case 9:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndSet")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndAdd")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getOpaque")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "setOpaque")) {
+			result = true;
+		}
+		break;
+	case 10:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAcquire")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "setRelease")) {
+			result = true;
+		}
+		break;
+	case 11:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getVolatile")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "setVolatile")) {
+			result = true;
+		}
+		break;
+	case 16:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndSetAcquire")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndSetRelease")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndAddAcquire")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndAddRelease")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndBitwiseAnd")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndBitwiseXor")) {
+			result = true;
+		}
+		break;
+	case 22:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndBitwiseOrAcquire")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndBitwiseOrRelease")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "weakCompareAndSetPlain")) {
+			result = true;
+		}
+		break;
+	case 23:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndBitwiseAndAcquire")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndBitwiseAndRelease")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndBitwiseXorAcquire")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndBitwiseXorRelease")) {
+			result = true;
+		}
+		break;
+	case 24:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "weakCompareAndSetAcquire")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "weakCompareAndSetRelease")) {
+			result = true;
+		}
+		break;
+	case 25:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "compareAndExchangeAcquire")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "compareAndExchangeRelease")) {
+			result = true;
+		}
+		break;
+	default:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "compareAndSet")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "getAndBitwiseOr")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "weakCompareAndSet")) {
+			result = true;
+		} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "compareAndExchange")) {
+			result = true;
+		}
+		break;
+	}
+
+	return result;
+}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
 /**
  * Method to determine if an invokevirtual instruction should be re-written to be an
  * invokehandle or invokehandlegeneric bytecode.  Modifications as follows:
@@ -2408,6 +2523,15 @@ ClassFileOracle::shouldConvertInvokeVirtualToMethodHandleBytecodeForMethodRef(U_
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		}
 	}
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/* Invoking against java.lang.invoke.VarHandle. */
+	if (J9UTF8_LITERAL_EQUALS(targetClassName->bytes, targetClassName->slot1, "java/lang/invoke/VarHandle")
+		&& isPolymorphicVarHandleMethod(name->bytes, name->slot1)
+	) {
+		result = CFR_BC_invokehandle;
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	return result;
 }

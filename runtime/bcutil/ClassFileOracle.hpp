@@ -1172,6 +1172,10 @@ private:
 	static int compareLineNumbers(const void *left, const void *right);
 	void compressLineNumberTable(U_16 methodIndex, U_32 lineNumbersCount);
 	void sortAndCompressLineNumberTable(U_16 methodIndex, U_32 lineNumbersCount, U_8 *lineNumbersInfoCompressedInitial);
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	static VMINLINE bool isPolymorphicVarHandleMethod(U_8 *methodName, U_32 length);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 };
 
 #endif /* CLASSFILEORACLE_HPP_ */
