@@ -67,12 +67,14 @@ J9::Z::UnresolvedDataReadOnlySnippet::UnresolvedDataReadOnlySnippet(
       intptr_t resolveDataAddress,
       TR::LabelSymbol *startResolveSequenceLabel,
       TR::LabelSymbol *volatileFenceLabel,
+      TR::LabelSymbol *snippetCallNextInstrLabel,
       TR::LabelSymbol *doneLabel) :
    Snippet(cg, node, generateLabelSymbol(cg)),
       resolveDataAddress(resolveDataAddress),
       dataSymRef(dataSymRef),
       startResolveSequenceLabel(startResolveSequenceLabel),
       volatileFenceLabel(volatileFenceLabel),
+      snippetCallNextInstrLabel(snippetCallNextInstrLabel),
       doneLabel(doneLabel)
    {}
 
@@ -89,13 +91,12 @@ J9::Z::UnresolvedDataReadOnlySnippet::emitSnippetBody()
    TR::GlobalFunctionCallData dataDestination(glueSymRef, getNode(), cursor, cg(), self());
    cursor = cg()->getObjFmt()->encodeGlobalFunctionCall(dataDestination);
 
+   uint8_t *helperCallRA = cursor;
+	
    // Relative address to the CCUnresolvedData*
-   intptr_t addressA = reinterpret_cast<intptr_t>(resolveDataAddress);
-   intptr_t addressB = reinterpret_cast<intptr_t>(cursor);
+   TR_ASSERT_FATAL(cg()->canUseRelativeLongInstructions(resolveDataAddress), "CCUnresolvedData* [%p] is outside relative immediate range", resolveDataAddress);
 
-   TR_ASSERT_FATAL(cg()->canUseRelativeLongInstructions(addressA), "CCUnresolvedData* [%p] is outside relative immediate range", addressA);
-
-   *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(addressA - addressB);
+   *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(resolveDataAddress - (intptr_t)helperCallRA);
    cursor += 4;
 
    // Constant pool index
@@ -103,12 +104,13 @@ J9::Z::UnresolvedDataReadOnlySnippet::emitSnippetBody()
    cursor += 4;
 
    // Relative address to the start of the mainline resolution
-   addressA = reinterpret_cast<intptr_t>(startResolveSequenceLabel->getCodeLocation());
-   addressB = reinterpret_cast<intptr_t>(cursor);
+   intptr_t startResolutionSeqLabelAddr = reinterpret_cast<intptr_t>(startResolveSequenceLabel->getCodeLocation());
+   TR_ASSERT_FATAL(cg()->canUseRelativeLongInstructions(startResolutionSeqLabelAddr), "startResolveSequenceLabel [%p] is outside relative immediate range", startResolutionSeqLabelAddr);*reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(startOfResolutionSeqLabelAddr - (intptr_t)helperCallRA);
+   *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(startResolutionSeqLabelAddr - (intptr_t)helperCallRA);
 
-   TR_ASSERT_FATAL(cg()->canUseRelativeLongInstructions(addressA), "startResolveSequenceLabel [%p] is outside relative immediate range", addressA);
-
-   *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(addressA - addressB);
+   // Relative address to the next instruction after the snippet call.
+   intptr_t snippetCallNextInstrLabelAddress = reinterpret_cast<intptr_t>(snippetCallNextInstrLabel->getCodeLocation());
+   *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(snippetCallNextInstrLabelAddress - (intptr_t)helperCallRA);
    cursor += 4;
 
    if (volatileFenceLabel != NULL)
@@ -122,12 +124,11 @@ J9::Z::UnresolvedDataReadOnlySnippet::emitSnippetBody()
       // Branch to doneLabel (BRCL 0xF,[doneLabel])
       *reinterpret_cast<int16_t*>(cursor) = 0xC0F4;
 
-      addressA = reinterpret_cast<intptr_t>(doneLabel->getCodeLocation());
-      addressB = reinterpret_cast<intptr_t>(cursor);
+      intptr_t doneLabelAddress = reinterpret_cast<intptr_t>(doneLabel->getCodeLocation());
 
-      TR_ASSERT_FATAL(cg()->canUseRelativeLongInstructions(addressA), "doneLabel [%p] is outside relative immediate range", addressA);
+      TR_ASSERT_FATAL(cg()->canUseRelativeLongInstructions(doneLabelAddress), "doneLabel [%p] is outside relative immediate range", doneLabelAddress);
 
-      *reinterpret_cast<int32_t*>(cursor + 2) = static_cast<int32_t>((addressA - addressB) / 2);
+      *reinterpret_cast<int32_t*>(cursor + 2) = static_cast<int32_t>((doneLabelAddress - (intptr_t)cursor) / 2);
       cursor += 6;
       }
 
@@ -137,7 +138,7 @@ J9::Z::UnresolvedDataReadOnlySnippet::emitSnippetBody()
 uint32_t
 J9::Z::UnresolvedDataReadOnlySnippet::getLength(int32_t estimatedSnippetStart)
    {
-   uint32_t length = 8 + 4 + 4 + 4;
+   uint32_t length = 8 + 4 + 4 + 4 + 4;
 
    if (volatileFenceLabel != NULL)
       length += 2 + 6;
@@ -161,23 +162,27 @@ J9::Z::UnresolvedDataReadOnlySnippet::print(TR::FILE *f, TR_Debug *debug)
    trfprintf(f, "BASR \tGPR14, GPR14");
    cursor += 2;
 
-   debug->printPrefix(f, NULL, cursor, 6);
+   debug->printPrefix(f, NULL, cursor, 4);
    trfprintf(f, "DC    \t0x%08X \t# Relative address to the CCUnresolvedData*", *reinterpret_cast<int32_t*>(cursor));
    cursor += 4;
 
-   debug->printPrefix(f, NULL, cursor, 6);
+   debug->printPrefix(f, NULL, cursor, 4);
    trfprintf(f, "DC    \t0x%08X \t# Constant pool index", *reinterpret_cast<int32_t*>(cursor));
    cursor += 4;
 
-   debug->printPrefix(f, NULL, cursor, 6);
+   debug->printPrefix(f, NULL, cursor, 4);
    trfprintf(f, "DC    \t0x%08X \t# Relative address to the start of the mainline resolution", *reinterpret_cast<int32_t*>(cursor));
+   cursor += 4;
+   
+   debug->printPrefix(f, NULL, cursor, 4);
+   trfprintf(f, "DC    \t0x%08X \t# Relative address to the next Instruction after snippet call in mainline", *reinterpret_cast<int32_t*>(cursor));
    cursor += 4;
 
    if (volatileFenceLabel != NULL)
       {
       debug->printSnippetLabel(f, volatileFenceLabel, cursor, "volatileFenceLabel");
 
-      debug->printPrefix(f, NULL, cursor, 6);
+      debug->printPrefix(f, NULL, cursor, 2);
       trfprintf(f, "BCR   \t14, GPR0");
       cursor += 2;
 

@@ -178,6 +178,7 @@ SETVAL(eq_isVolatile_inDSRO,16)
 SETVAL(eq_CCUnresolvedData_inDSRO,0)
 SETVAL(eq_cpIndex_inDSRO,4)
 SETVAL(eq_codeRA_inDSRO,8)
+SETVAL(eq_gcMapRA_inDSRO,12)
 
 ZZ  MethodFlags is a 32bit integer,but occupies 8 byte slot on 64bit
 SETVAL(eq_methodFlagsOffset,(J9TR_MethodFlagsOffset+4))
@@ -226,6 +227,7 @@ SETVAL(eq_isVolatile_inDSRO,8)
 SETVAL(eq_CCUnresolvedData_inDSRO,0)
 SETVAL(eq_cpIndex_inDSRO,4)
 SETVAL(eq_codeRA_inDSRO,8)
+SETVAL(eq_gcMapRA_inDSRO,12)
 
 SETVAL(eq_methodFlagsOffset,J9TR_MethodFlagsOffset)
 
@@ -1411,8 +1413,8 @@ ZZ ===================================================================
     LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
     L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
     LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
-    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
-    LA      r3,8(r3,r14)
+    LGF_GPR r3,eq_gcMapRA_inDSRO(,r14)
+    LA      r3,0(r3,r14)
 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveFieldSetter)
 
@@ -1435,8 +1437,8 @@ ZZ ===================================================================
     LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
     L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
     LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
-    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
-    LA      r3,8(r3,r14)
+    LGF_GPR r3,eq_gcMapRA_inDSRO(,r14)
+    LA      r3,0(r3,r14)
 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveField)
 
@@ -1458,8 +1460,8 @@ ZZ ===================================================================
     LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
     L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
     LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
-    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
-    LA      r3,8(r3,r14)
+    LGF_GPR r3,eq_gcMapRA_inDSRO(,r14)
+    LA      r3,0(r3,r14)
 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveClassFromStaticField)
 
@@ -1481,8 +1483,8 @@ ZZ ===================================================================
     LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
     L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
     LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
-    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
-    LA      r3,8(r3,r14)
+    LGF_GPR r3,eq_gcMapRA_inDSRO(,r14)
+    LA      r3,0(r3,r14)
 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveClass)
 
@@ -1504,8 +1506,8 @@ ZZ ===================================================================
     LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
     L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
     LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
-    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
-    LA      r3,8(r3,r14)
+    LGF_GPR r3,eq_gcMapRA_inDSRO(,r14)
+    LA      r3,0(r3,r14)
 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveString)
 
@@ -1527,8 +1529,8 @@ ZZ ===================================================================
     LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
     L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
     LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
-    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
-    LA      r3,8(r3,r14)
+    LGF_GPR r3,eq_gcMapRA_inDSRO(,r14)
+    LA      r3,0(r3,r14)
 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveMethodType)
 
@@ -1550,8 +1552,8 @@ ZZ ===================================================================
     LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
     L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
     LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
-    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
-    LA      r3,8(r3,r14)
+    LGF_GPR r3,eq_gcMapRA_inDSRO(,r14)
+    LA      r3,0(r3,r14)
 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveMethodHandle)
 
@@ -1573,8 +1575,8 @@ ZZ ===================================================================
     LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
     L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
     LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
-    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
-    LA      r3,8(r3,r14)
+    LGF_GPR r3,eq_gcMapRA_inDSRO(,r14)
+    LA      r3,0(r3,r14)
 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveInvokeDynamic)
 
@@ -1596,8 +1598,8 @@ ZZ ===================================================================
     LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
     L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
     LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
-    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
-    LA      r3,8(r3,r14)
+    LGF_GPR r3,eq_gcMapRA_inDSRO(,r14)
+    LA      r3,0(r3,r14)
 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveHandleMethod)
 
@@ -1619,8 +1621,8 @@ ZZ ===================================================================
     LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
     L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
     LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
-    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
-    LA      r3,8(r3,r14)
+    LGF_GPR r3,eq_gcMapRA_inDSRO(,r14)
+    LA      r3,0(r3,r14)
 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveConstantDynamic)
 
@@ -1642,8 +1644,8 @@ ZZ ===================================================================
     LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
     L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
     LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
-    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
-    LA      r3,8(r3,r14)
+    LGF_GPR r3,eq_gcMapRA_inDSRO(,r14)
+    LA      r3,0(r3,r14)
 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticFieldSetter)
 
@@ -1666,8 +1668,8 @@ ZZ ===================================================================
     LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
     L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
     LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
-    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
-    LA      r3,8(r3,r14)
+    LGF_GPR r3,eq_gcMapRA_inDSRO(,r14)
+    LA      r3,0(r3,r14)
 
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticField)
 
@@ -1707,7 +1709,6 @@ LABEL(LVolatileCheckReadOnlyDone)
     RestoreRegs
 
     AGF     r14,eq_codeRA_inDSRO(,r14)
-    AGFI    r14,8
     BR      r14
 
     END_FUNC(_interpreterUnresolvedStaticFieldReadOnlyGlue,iUSFRO,8)
