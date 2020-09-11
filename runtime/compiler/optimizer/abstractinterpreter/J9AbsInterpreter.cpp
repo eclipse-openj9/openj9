@@ -1651,6 +1651,12 @@ void J9AbsInterpreter::comparison(TR::DataType type, ComparisonOperator op)
                state->push(result);
                break;
                }
+            else 
+               {
+               AbsValue* result = AbsValue::createIntRange(-1, 1, region(), vp());
+               state->push(result);
+               break;
+               }
             }
          else 
             {
