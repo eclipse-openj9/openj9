@@ -842,7 +842,6 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
    int32_t argIndex = 0;
    int32_t numMemArgs = 0;
    int32_t memArgSize = 0;
-   int32_t firstExplicitArg = 0;
    int32_t from, to, step;
    int32_t argSize = -getOffsetToFirstParm();
    int32_t totalSize = 0;
@@ -910,14 +909,6 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
       from += step;
       }
 
-   // C helpers have an implicit first argument (the VM thread) that we have to account for
-   if (linkage == TR_CHelper)
-      {
-      TR_ASSERT(numIntArgRegs > 0, "This code doesn't handle passing this implicit arg on the stack");
-      numIntegerArgs++;
-      totalSize += TR::Compiler->om.sizeofReferenceAddress();
-      }
-
    for (int32_t i = from; (rightToLeft && i >= to) || (!rightToLeft && i <= to); i += step)
       {
       child = callNode->getChild(i);
@@ -968,19 +959,6 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
 
    numIntegerArgs = 0;
    numFloatArgs = 0;
-
-   // C helpers have an implicit first argument (the VM thread) that we have to account for
-   if (linkage == TR_CHelper)
-      {
-      TR_ASSERT(numIntArgRegs > 0, "This code doesn't handle passing this implicit arg on the stack");
-      TR::Register *vmThreadArgRegister = cg()->allocateRegister();
-      generateMovInstruction(cg(), callNode, vmThreadArgRegister, cg()->getMethodMetaDataRegister());
-      dependencies->addPreCondition(vmThreadArgRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
-      if (resType.getDataType() == TR::NoType)
-         dependencies->addPostCondition(vmThreadArgRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
-      numIntegerArgs++;
-      firstExplicitArg = 1;
-      }
 
    // Helper linkage preserves all argument registers except the return register
    // TODO: C helper linkage does not, this code needs to make sure argument registers are killed in post dependencies
@@ -1043,7 +1021,7 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
                      generateMovInstruction(cg(), callNode, tempReg, argRegister);
                      argRegister = tempReg;
                      }
-                  if (numIntegerArgs == firstExplicitArg)
+                  if (numIntegerArgs == 0)
                      {
                      // the first integer argument
                      TR::Register *resultReg;
@@ -1051,10 +1029,8 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
                         resultReg = cg()->allocateCollectedReferenceRegister();
                      else
                         resultReg = cg()->allocateRegister();
-                     dependencies->addPreCondition(argRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
+                     dependencies->addPreCondition(argRegister, TR::RealRegister::x0);
                      dependencies->addPostCondition(resultReg, TR::RealRegister::x0);
-                     if (firstExplicitArg == 1)
-                        dependencies->addPostCondition(argRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
                      }
                   else
                      {
