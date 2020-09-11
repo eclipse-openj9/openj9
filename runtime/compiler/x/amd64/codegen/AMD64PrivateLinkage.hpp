@@ -46,6 +46,42 @@ class PrivateLinkage : public J9::X86::PrivateLinkage
    PrivateLinkage(TR::CodeGenerator *cg);
    virtual TR::Register *buildJNIDispatch(TR::Node *callNode);
 
+   struct ccUnresolvedStaticSpecialData
+      {
+      intptr_t snippetOrCompiledMethod;
+      intptr_t ramMethod;
+      intptr_t cpAddress;
+      };
+
+   struct ccInterpretedStaticSpecialData
+      {
+      intptr_t snippetOrCompiledMethod;
+      intptr_t ramMethod;
+      };
+
+   /**
+    * For interface dispatch that does not patch the code cache, the following
+    * structure describes the metadata that is necessary in order for a patchless
+    * dispatch sequence to work.  The structure must be allocated in a data area
+    * that can be written to at runtime.
+    *
+    * BEWARE: Offsets of fields in this structure are described in
+    * x/runtime/X86PicBuilder.inc so any changes to the size or ordering of
+    * these fields will require a corresponding change there as well.
+    */
+   struct ccInterfaceData
+      {
+      intptr_t slot1Class;
+      intptr_t slot1Method;
+      intptr_t slot2Class;
+      intptr_t slot2Method;
+      intptr_t slowInterfaceDispatchMethod;
+      intptr_t cpAddress;
+      intptr_t cpIndex;
+      intptr_t interfaceClassAddress;
+      intptr_t itableOffset;
+      };
+
    protected:
 
    virtual TR::Instruction *savePreservedRegisters(TR::Instruction *cursor);
@@ -79,11 +115,15 @@ class PrivateLinkage : public J9::X86::PrivateLinkage
          bool rightToLeftHelperLinkage,
          bool passArgsOnStack = false);
 
+   virtual void buildNoPatchingVirtualDispatchWithResolve(TR::X86CallSite &site, TR::Register *, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel);
    virtual void buildVirtualOrComputedCall(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk);
    virtual TR::Instruction *buildPICSlot(TR::X86PICSlot picSlot, TR::LabelSymbol *mismatchLabel, TR::LabelSymbol *doneLabel, TR::X86CallSite &site);
    virtual void buildIPIC(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk);
+   virtual void buildNoPatchingIPIC(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk);
    virtual uint8_t *generateVirtualIndirectThunk(TR::Node *callNode);
    virtual TR_J2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, char *signature);
+
+   virtual TR::Instruction *buildUnresolvedOrInterpretedDirectCallReadOnly(TR::SymbolReference *methodSymRef, TR::X86CallSite &site);
 
    TR::Instruction *generateFlushInstruction(
          TR::Instruction *prev,

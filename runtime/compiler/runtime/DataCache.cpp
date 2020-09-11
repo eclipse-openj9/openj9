@@ -43,6 +43,7 @@ TR_DataCacheManager* TR_DataCacheManager::constructManager (
    )
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
    T* newManager = static_cast<T *>(j9mem_allocate_memory( sizeof(T), J9MEM_CATEGORY_JIT ));
    if (newManager)
       {
@@ -104,8 +105,11 @@ TR_DataCacheManager::destroyManager()
       J9JITConfig *jitConfig = _dataCacheManager->_jitConfig; // make a copy before destroying the object
       _dataCacheManager->~TR_DataCacheManager();
       ((TR_JitPrivateConfig *)jitConfig->privateConfig)->dcManager = NULL;
+
       PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
       j9mem_free_memory(_dataCacheManager);
+
       _dataCacheManager = NULL;
       }
    }
@@ -184,6 +188,7 @@ TR_DataCacheManager::freeDataCacheList(TR_DataCache *& head)
    for (TR_DataCache * next = 0; head; head = next)
       {
       next = head->_next;
+
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       J9MemorySegment *segment = head->_segment;
       head->~TR_DataCache();
@@ -274,7 +279,9 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
             else
                {
                TR_VerboseLog::writeLine(TR_Vlog_INFO, "Failed to allocate %d Kb data cache", _jitConfig->dataCacheKB);
+
                j9mem_free_memory(dataCache);
+
                dataCache = NULL;
                _jitConfig->runtimeFlags |= J9JIT_DATA_CACHE_FULL;  // prevent future allocations
 #ifdef DATA_CACHE_DEBUG
@@ -683,7 +690,8 @@ void *
 TR_DataCacheManager::allocateMemoryFromVM(size_t size)
    {
    PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
-   void *alloc = j9mem_allocate_memory(size, J9MEM_CATEGORY_JIT);
+
+   void *alloc = j9mem_allocate_memory(size, J9MEM_CATEGORY_JIT);;
    if (!alloc)
       {
       // out of memory

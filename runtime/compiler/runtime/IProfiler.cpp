@@ -3640,6 +3640,7 @@ static int32_t J9THREAD_PROC iprofilerThreadProc(void * entryarg)
    TR_J9VMBase *fe = TR_J9VM::get(jitConfig, 0);
    TR_IProfiler *iProfiler = fe->getIProfiler();
    J9VMThread *iprofilerThread = NULL;
+
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    // If I created this thread, iprofiler exists; don't need to check against NULL
    int rc = vm->internalVMFunctions->internalAttachCurrentThread(vm, &iprofilerThread, NULL,
@@ -3783,9 +3784,10 @@ void TR_IProfiler::stopIProfilerThread()
       }
    else
       {
+
       specialProfilingBuffer = (IProfilerBuffer*)j9mem_allocate_memory(sizeof(IProfilerBuffer), J9MEM_CATEGORY_JIT);
       if (specialProfilingBuffer)
-    specialProfilingBuffer->setBuffer(NULL);
+         specialProfilingBuffer->setBuffer(NULL);
       }
 
    // Deallocate all outstanding buffers
@@ -3801,7 +3803,9 @@ void TR_IProfiler::stopIProfilerThread()
    if (specialProfilingBuffer)
       {
       if (specialProfilingBuffer->getBuffer())
+         {
          j9mem_free_memory(specialProfilingBuffer->getBuffer());
+         }
       specialProfilingBuffer->setBuffer(NULL);
       specialProfilingBuffer->setSize(0);
       _workingBufferList.add(specialProfilingBuffer);
@@ -3844,6 +3848,7 @@ TR_IProfiler::postIprofilingBufferToWorkingQueue(J9VMThread * vmThread, const U_
          _iprofilerMonitor->exit();
          return false;
          }
+
       freeBuffer = (IProfilerBuffer*)j9mem_allocate_memory(sizeof(IProfilerBuffer), J9MEM_CATEGORY_JIT);
       if (!freeBuffer)
          {

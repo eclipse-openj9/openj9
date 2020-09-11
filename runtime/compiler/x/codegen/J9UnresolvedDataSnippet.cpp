@@ -37,6 +37,8 @@
 #include "il/StaticSymbol.hpp"
 #include "il/StaticSymbol_inlines.hpp"
 #include "il/Symbol.hpp"
+#include "objectfmt/GlobalFunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "x/codegen/X86Instruction.hpp"
@@ -145,32 +147,8 @@ J9::X86::UnresolvedDataSnippet::emitSnippetBody()
 uint8_t *
 J9::X86::UnresolvedDataSnippet::emitResolveHelperCall(uint8_t *cursor)
    {
-   // Get the address for the glue routine (or its trampoline)
-   //
-   intptr_t glueAddress = (intptr_t)_glueSymRef->getMethodAddress();
-
-   cg()->addProjectSpecializedRelocation(cursor+1, (uint8_t *)_glueSymRef, NULL, TR_HelperAddress,
-   __FILE__, __LINE__, getNode());
-
-   // Call to the glue routine
-   //
-   const intptr_t rip = (intptr_t)(cursor+5);
-   if ((cg()->needRelocationsForHelpers() && cg()->comp()->target().is64Bit()) ||
-       NEEDS_TRAMPOLINE(glueAddress, rip, cg()))
-      {
-      TR_ASSERT(cg()->comp()->target().is64Bit(), "should not require a trampoline on 32-bit");
-      glueAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(_glueSymRef->getReferenceNumber(), (void *)cursor);
-      TR_ASSERT(IS_32BIT_RIP(glueAddress, rip), "Local helper trampoline should be reachable directly.\n");
-      }
-
-   *cursor++ = 0xe8;    // CALLImm4
-
-   int32_t offset = (int32_t)((intptr_t)glueAddress - rip);
-   *(int32_t *)cursor = offset;
-   cursor += 4;
-
-   TR_ASSERT((intptr_t)cursor == rip, "assertion failure");
-
+   TR::GlobalFunctionCallData data(_glueSymRef, getNode(), cursor, cg());
+   cursor = cg()->getObjFmt()->encodeGlobalFunctionCall(data);
    return cursor;
    }
 
@@ -548,7 +526,7 @@ J9::X86::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart)
    {
    uint32_t length;
 
-   length = 5;  // CALLImm4 to resolve helper
+   length = cg()->getObjFmt()->globalFunctionCallBinaryLength();  // call to resolve helper
 
    // cpAddr
    //

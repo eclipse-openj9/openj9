@@ -37,6 +37,7 @@ j9jit_files(
 	z/codegen/J9TreeEvaluator.cpp
 	z/codegen/J9BCDTreeEvaluator.cpp
 	z/codegen/J9UnresolvedDataSnippet.cpp
+	z/codegen/J9UnresolvedDataReadOnlySnippet.cpp
 	z/codegen/J9ZSnippet.cpp
 	z/codegen/ReduceSynchronizedFieldLoad.cpp
 	z/codegen/S390AOTRelocation.cpp

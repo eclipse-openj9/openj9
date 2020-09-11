@@ -377,13 +377,17 @@ J9::CodeCache::addFreeBlock(void  *voidMetaData)
       {
       if (config.verboseReclamation())
          {
-         if (metaData->ramMethod)
+         J9Method *ramMethod = J9JITEXCEPTIONTABLE_RAMMETHOD_GET(metaData);
+         if (ramMethod)
             {
+            J9UTF8 *className = J9JITEXCEPTIONTABLE_CLASSNAME_GET(metaData);
+            J9UTF8 *methodName = J9JITEXCEPTIONTABLE_METHODNAME_GET(metaData);
+            J9UTF8 *methodSignature = J9JITEXCEPTIONTABLE_METHODSIGNATURE_GET(metaData);
             TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,"CC=%p unloading j9method=%p metaData=%p warmBlock=%p size=%d: %.*s.%.*s%.*s",
-                                           this, metaData->ramMethod,metaData, warmBlock, (int)warmBlock->_size,
-                                           J9UTF8_LENGTH(metaData->className), J9UTF8_DATA(metaData->className),
-                                           J9UTF8_LENGTH(metaData->methodName), J9UTF8_DATA(metaData->methodName),
-                                           J9UTF8_LENGTH(metaData->methodSignature), J9UTF8_DATA(metaData->methodSignature));
+                                           this, ramMethod, metaData, warmBlock, (int)warmBlock->_size,
+                                           J9UTF8_LENGTH(className), J9UTF8_DATA(className),
+                                           J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName),
+                                           J9UTF8_LENGTH(methodSignature), J9UTF8_DATA(methodSignature));
             }
          else
             {
@@ -432,7 +436,7 @@ J9::CodeCache::addFreeBlock(void  *voidMetaData)
                {
                // There could be several bodyInfo pointing to the same methodInfo
                // Prevent deallocating twice by freeing only for the last body
-               if (TR::Compiler->mtd.startPC((TR_OpaqueMethodBlock*)metaData->ramMethod) == (uintptr_t)metaData->startPC)
+               if (TR::Compiler->mtd.startPC((TR_OpaqueMethodBlock*)J9JITEXCEPTIONTABLE_RAMMETHOD_GET(metaData)) == (uintptr_t)metaData->startPC)
                   {
                   // Clear profile info
                   pmi->setBestProfileInfo(NULL);

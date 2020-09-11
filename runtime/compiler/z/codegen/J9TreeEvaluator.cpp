@@ -41,6 +41,7 @@
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
+#include "codegen/J9UnresolvedDataReadOnlySnippet.hpp"
 #include "codegen/J9WatchedStaticFieldSnippet.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
@@ -2140,7 +2141,7 @@ J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * c
       // async-check.
       // (the VM ensures that all malloc'ed storage has the high-order-bit cleared)
       TR::Register * testRegister = cg->allocateRegister();
-      TR::MemoryReference * tempMR = generateS390MemoryReference(firstChild, cg);
+      TR::MemoryReference * tempMR = TR::MemoryReference::create(cg, firstChild);
 
       TR_ASSERT( getIntegralValue(secondChild) == -1, "asynccheck bad format");
       TR_ASSERT( comp->target().is32Bit(), "ICM can be used for 32bit code-gen only!");
@@ -3068,7 +3069,7 @@ J9::Z::TreeEvaluator::DIVCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
        (node->getFirstChild()->getOpCodeValue() == TR::idiv ||
         node->getFirstChild()->getOpCodeValue() == TR::irem))
       {
-      divisorMr = generateS390MemoryReference(secondChild, cg);
+      divisorMr = TR::MemoryReference::create(cg, secondChild);
 
       TR::InstOpCode::Mnemonic op = (dtype.isInt64())? TR::InstOpCode::CLGHSI : TR::InstOpCode::CLFHSI;
       generateSILInstruction(cg, op, node, divisorMr, 0);
@@ -3379,7 +3380,7 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          cursor = generateRSInstruction(cg, opCode,
                                          node, regChild->getRegister(),
                                          getMaskForBranchCondition(compareCondition),
-                                         generateS390MemoryReference(memChild, cg));
+                                         TR::MemoryReference::create(cg, memChild));
          cursor->setExceptBranchOp();
          cg->setCanExceptByTrap(true);
          cursor->setNeedsGCMap(0x0000FFFF);
@@ -4123,7 +4124,7 @@ J9::Z::TreeEvaluator::ardbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       bool dynLitPoolLoad = false;
       resultReg = TR::TreeEvaluator::checkAndAllocateReferenceRegister(node, cg, dynLitPoolLoad);
       // MemRef can generate BRCL to unresolved data snippet if needed.
-      TR::MemoryReference* loadMemRef = generateS390MemoryReference(node, cg);
+      TR::MemoryReference* loadMemRef = TR::MemoryReference::create(cg, node);
 
       if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE))
          {
@@ -4145,6 +4146,100 @@ J9::Z::TreeEvaluator::ardbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
    // decrementing the node we skip doing it here and let the load evaluator do it.
    return resultReg;
+   }
+
+static void
+xstoreVolatileHelper(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   if (node->getSymbolReference()->isUnresolved())
+      {
+      if (cg->comp()->getGenerateReadOnlyCode())
+         {
+         TR::Instruction* cursor = cg->getAppendInstruction();
+         while (cursor != NULL)
+            {
+            if (cursor->getOpCodeValue() == TR::InstOpCode::BRCL)
+               {
+               auto brclInst = reinterpret_cast<TR::S390RILInstruction*>(cursor);
+               if (brclInst->getTargetSnippet() != NULL && brclInst->getTargetSnippet()->getKind() == TR::Snippet::IsUnresolvedDataReadOnly)
+                  {
+                  auto uds = reinterpret_cast<J9::Z::UnresolvedDataReadOnlySnippet*>(brclInst->getTargetSnippet());
+                  if (uds->getDataSymbolReference() == node->getSymbolReference())
+                     {
+                     typedef J9::Z::UnresolvedDataReadOnlySnippet::CCUnresolvedData CCUnresolvedData;
+
+                     intptr_t unresolvedDataAddress = reinterpret_cast<intptr_t>(uds->getCCUnresolvedData());
+
+                     TR::StaticSymbol *isVolatileSymbol =
+                        TR::StaticSymbol::createWithAddress(
+                           cg->trHeapMemory(),
+                           TR::Address,
+                           reinterpret_cast<void *>(unresolvedDataAddress + offsetof(CCUnresolvedData, isVolatile)));
+                     isVolatileSymbol->setNotDataAddress();
+                     TR::SymbolReference *isVolatileSymRef = new (cg->trHeapMemory()) TR::SymbolReference(cg->comp()->getSymRefTab(), isVolatileSymbol, 0);
+
+                     TR::Register *isVolatileReg = cg->allocateRegister();
+                     generateRILInstruction(cg, TR::InstOpCode::getLoadRelativeLongOpCode(), node, isVolatileReg, isVolatileSymRef, isVolatileSymbol->getStaticAddress());
+                     generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, isVolatileReg, 1, TR::InstOpCode::COND_BE, uds->getVolatileFenceLabel());
+                     generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, uds->getDoneLabel());
+                     cg->stopUsingRegister(isVolatileReg);
+                     return;
+                     }
+                  }
+               }
+
+            cursor = cursor->getPrev();
+            }
+         }
+      else
+         {
+         TR::Instruction* cursor = cg->getAppendInstruction();
+         while (cursor != NULL)
+            {
+            // All branches to snippets should be done via BRCL. The fatal assert below will guard against some code
+            // potentially not doing this. If some code branches to a resolve snippet with another instruction then one of
+            // the following two things will happen:
+            //
+            // 1. This loop will continue searching backwards past the branch to the resolve snippet, and will reach the
+            //    beginning of the instruction stream and we will hit the assert below.
+            //
+            // 2. This loop will continue searching backwards past the branch to the resolve snippet, and will reach 
+            //    another BRCL instruction. Even if that BRCL instruction is a branch for another resolve snippet this
+            //    loop will terminate and we will proceed as normal. Later during emit snippet phase we will fatally
+            //    assert because we will encounter a store unresolved data snippet which does not have the fence NOP
+            //    instruction pointer set.
+            //
+            // This means we are covered in all cases and the code below is sound.
+
+            if (cursor->getOpCodeValue() == TR::InstOpCode::BRCL)
+               {
+               auto brclInst = reinterpret_cast<TR::S390RILInstruction*>(cursor);
+               if (brclInst->getTargetSnippet() != NULL && brclInst->getTargetSnippet()->getKind() == TR::Snippet::IsUnresolvedData)
+                  {
+                  auto uds = reinterpret_cast<TR::UnresolvedDataSnippet*>(brclInst->getTargetSnippet());
+                  if (uds->getDataSymbolReference() == node->getSymbolReference())
+                     {
+                     // For unresolved symrefs we emit a NOP of the same size as a store fence (BCR 14,0). The unresolved helper call
+                     // will take care of patching the NOP into a fence if it determines the field is volatile following resolution.
+                     TR::Instruction* fenceNOP = new (cg->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, node, cg);
+
+                     uds->fenceNOPInst = fenceNOP;
+
+                     return;
+                     }
+                  }
+               }
+
+            cursor = cursor->getPrev();
+            }
+         }
+
+      TR_ASSERT_FATAL_WITH_NODE(node, false, "Could not find the BRCL instruction for volatile unresolved store");
+      }
+   else if (node->getSymbol()->isVolatile())
+      {
+      generateSerializationInstruction(cg, node);
+      }
    }
 
 TR::Register *
@@ -4317,7 +4412,7 @@ J9::Z::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    // We need to evaluate all the children first before we generate memory reference
    // since it will screw up the code sequence for patching when we do symbol resolution.
-   TR::MemoryReference *tempMR = generateS390MemoryReference(node, cg);
+   TR::MemoryReference *tempMR = TR::MemoryReference::create(cg, node);
    TR::InstOpCode::Mnemonic storeOp = usingCompressedPointers ? TR::InstOpCode::ST : TR::InstOpCode::getStoreOpCode();
    TR::Instruction * instr = generateRXInstruction(cg, storeOp, node, opCodeIsIndirect ? compressedRegister : sourceRegister, tempMR);
 
@@ -4349,7 +4444,74 @@ J9::Z::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       }
    cg->stopUsingRegister(sourceRegister);
    tempMR->stopUsingMemRefRegister(cg);
+
+   xstoreVolatileHelper(node, cg);
+
    return NULL;
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::bstoreEvaluator(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   auto result = OMR::TreeEvaluatorConnector::bstoreEvaluator(node, cg);
+   xstoreVolatileHelper(node, cg);
+   return result;
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::sstoreEvaluator(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   auto result = OMR::TreeEvaluatorConnector::sstoreEvaluator(node, cg);
+   xstoreVolatileHelper(node, cg);
+   return result;
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::cstoreEvaluator(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   auto result = OMR::TreeEvaluatorConnector::cstoreEvaluator(node, cg);
+   xstoreVolatileHelper(node, cg);
+   return result;
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::istoreEvaluator(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   auto result = OMR::TreeEvaluatorConnector::istoreEvaluator(node, cg);
+   xstoreVolatileHelper(node, cg);
+   return result;
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::lstoreEvaluator(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   auto result = OMR::TreeEvaluatorConnector::lstoreEvaluator(node, cg);
+   xstoreVolatileHelper(node, cg);
+   return result;
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::astoreEvaluator(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   auto result = OMR::TreeEvaluatorConnector::astoreEvaluator(node, cg);
+   xstoreVolatileHelper(node, cg);
+   return result;
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::fstoreEvaluator(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   auto result = OMR::TreeEvaluatorConnector::fstoreEvaluator(node, cg);
+   xstoreVolatileHelper(node, cg);
+   return result;
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::dstoreEvaluator(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   auto result = OMR::TreeEvaluatorConnector::dstoreEvaluator(node, cg);
+   xstoreVolatileHelper(node, cg);
+   return result;
    }
 
 TR::Register *
@@ -5071,7 +5233,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
          {
             srcReg = cg->allocateCollectedReferenceRegister();
 
-            generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), sourceChild, srcReg, generateS390MemoryReference(sourceChild, cg));
+            generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), sourceChild, srcReg, TR::MemoryReference::create(cg, sourceChild));
 
             sourceChild->setRegister(srcReg);
          }
@@ -5088,7 +5250,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    TR::Node *callNode = TR::Node::createWithSymRef(node, TR::call, 2, node->getSymbolReference());
    callNode->setChild(0, sourceChild);
    callNode->setChild(1, classChild);
-   mr1 = generateS390MemoryReference(firstChild, cg);
+   mr1 = TR::MemoryReference::create(cg, firstChild);
 
    TR::Register *compressedReg = srcReg;
    if (usingCompressedPointers)
@@ -5560,7 +5722,7 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
                && reference->getRegister() == NULL)
             {
             targetRegister = cg->allocateCollectedReferenceRegister();
-            appendTo = generateRXInstruction(cg, TR::InstOpCode::getLoadAndTrapOpCode(), node, targetRegister, generateS390MemoryReference(reference, cg), appendTo);
+            appendTo = generateRXInstruction(cg, TR::InstOpCode::getLoadAndTrapOpCode(), node, targetRegister, TR::MemoryReference::create(cg, reference), appendTo);
             reference->setRegister(targetRegister);
             }
          else if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12)
@@ -5631,7 +5793,7 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
                }
 
             reference->setRegister(targetRegister);
-            TR::MemoryReference * tempMR = generateS390MemoryReference(reference, cg);
+            TR::MemoryReference * tempMR = TR::MemoryReference::create(cg, reference);
             appendTo = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), reference, targetRegister, tempMR, appendTo);
             tempMR->stopUsingMemRefRegister(cg);
 

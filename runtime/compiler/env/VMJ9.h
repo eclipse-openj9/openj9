@@ -187,6 +187,17 @@ extern "C" {
    I_32 j9jit_vfprintfId(I_32 fileId, char *format, ...);
    I_32 j9jit_fprintfId(I_32 fileId, char *format, ...);
 
+   void jitHookClassLoadHelper(J9VMThread *vmThread,
+                               J9JITConfig * jitConfig,
+                               J9Class * cl,
+                               TR::CompilationInfo *compInfo,
+                               UDATA *classLoadEventFailed);
+
+   void jitHookClassPreinitializeHelper(J9VMThread *vmThread,
+                                        J9JITConfig *jitConfig,
+                                        J9Class *cl,
+                                        UDATA *classPreinitializeEventFailed);
+
 #ifdef __cplusplus
 }
 #endif

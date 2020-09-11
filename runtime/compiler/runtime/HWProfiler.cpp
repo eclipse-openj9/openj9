@@ -731,33 +731,36 @@ TR_HWProfiler::getBytecodePCFromIA(J9VMThread *vmThread, uint8_t *IA)
    if (vmThread)
       {
       J9JITExceptionTable *metaData = _jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA) IA);
-      if (metaData &&
-          metaData->riData &&
-          ((TR_HWPBytecodePCToIAMap *)metaData->riData)->_bytecodePC == (void *)METADATA_MAPPING_EYECATCHER)
+      if (metaData)
          {
-         TR_HWPBytecodePCToIAMap *cursor = (TR_HWPBytecodePCToIAMap *)metaData->riData;
-         uintptr_t arraySize = (uintptr_t)cursor->_instructionAddr;
-
-         cursor++;
-         for (uint32_t i = 0; i < arraySize; i++, cursor++)
+         void *riData = J9JITEXCEPTIONTABLE_RIDATA_GET(metaData);
+         if (riData &&
+             ((TR_HWPBytecodePCToIAMap *)riData)->_bytecodePC == (void *)METADATA_MAPPING_EYECATCHER)
             {
-            if ((uint8_t *)cursor->_instructionAddr == IA)
+            TR_HWPBytecodePCToIAMap *cursor = (TR_HWPBytecodePCToIAMap *)riData;
+            uintptr_t arraySize = (uintptr_t)cursor->_instructionAddr;
+
+            cursor++;
+            for (uint32_t i = 0; i < arraySize; i++, cursor++)
                {
-#if defined (RI_VP_Verbose)
-               if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler) &&
-                   metaData->bodyInfo)
+               if ((uint8_t *)cursor->_instructionAddr == IA)
                   {
-                  TR_PersistentJittedBodyInfo *bodyInfo = (TR_PersistentJittedBodyInfo *)metaData->bodyInfo;
-                  if (bodyInfo->getMethodInfo() && bodyInfo->getMethodInfo()->getMethodInfo())
+   #if defined (RI_VP_Verbose)
+                  if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler) &&
+                     metaData->bodyInfo)
                      {
-                     TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "Found bytecodePC=0x%p from metadata=0x%p of j9method=0x%p",
-                                                    cursor->_bytecodePC,
-                                                    metaData,
-                                                    bodyInfo->getMethodInfo()->getMethodInfo());
+                     TR_PersistentJittedBodyInfo *bodyInfo = (TR_PersistentJittedBodyInfo *)metaData->bodyInfo;
+                     if (bodyInfo->getMethodInfo() && bodyInfo->getMethodInfo()->getMethodInfo())
+                        {
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "Found bytecodePC=0x%p from metadata=0x%p of j9method=0x%p",
+                                                      cursor->_bytecodePC,
+                                                      metaData,
+                                                      bodyInfo->getMethodInfo()->getMethodInfo());
+                        }
                      }
+   #endif
+                  return (uintptr_t)cursor->_bytecodePC;
                   }
-#endif
-               return (uintptr_t)cursor->_bytecodePC;
                }
             }
          }
@@ -768,7 +771,7 @@ TR_HWProfiler::getBytecodePCFromIA(J9VMThread *vmThread, uint8_t *IA)
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "metaData=0x%p, metaData->raData=0x%p, or eyecatcher invalid",
                                            metaData,
-                                           metaData ? metaData->riData : NULL);
+                                           metaData ? J9JITEXCEPTIONTABLE_RIDATA_GET(metaData) : NULL);
             }
          }
 #endif
@@ -780,11 +783,12 @@ TR_HWProfiler::getBytecodePCFromIA(J9VMThread *vmThread, uint8_t *IA)
 void
 TR_HWProfiler::registerRecords(J9JITExceptionTable *metaData, TR::Compilation *comp)
    {
+   void *riData = J9JITEXCEPTIONTABLE_RIDATA_GET(metaData);
    if (TR::Options::getCmdLineOptions()->getOption(TR_EnableHardwareProfileIndirectDispatch) &&
        TR::Options::getCmdLineOptions()->getOption(TR_EnableMetadataBytecodePCToIAMap) &&
-       metaData->riData)
+       riData)
       {
-      void *bytecodePCToIAMapLocation         = metaData->riData;
+      void *bytecodePCToIAMapLocation         = riData;
       TR_HWPBytecodePCToIAMap* cursor         = (TR_HWPBytecodePCToIAMap *)bytecodePCToIAMapLocation;
       TR_Array<TR_HWPBytecodePCToIAMap> *maps = comp->getHWPBCMap();
       uint32_t arraySize                      = maps->size();

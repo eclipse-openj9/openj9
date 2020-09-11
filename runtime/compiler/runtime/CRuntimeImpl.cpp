@@ -68,10 +68,13 @@ void _prepareForOSR(uintptr_t vmThreadArg, int32_t currentInlinedSiteIndex, int3
          currentInlinedSiteIndex, (int)bytecodePCOffset, numSymsThatShareSlot, totalNumSlots, vmThread);
 
       TR_VerboseLog::vlogAcquire();
+      J9UTF8 *className = J9JITEXCEPTIONTABLE_CLASSNAME_GET(metaData);
+      J9UTF8 *methodName = J9JITEXCEPTIONTABLE_METHODNAME_GET(metaData);
+      J9UTF8 *methodSignature = J9JITEXCEPTIONTABLE_METHODSIGNATURE_GET(metaData);
       TR_VerboseLog::writeLine(TR_Vlog_OSRD, "%X   Jitted body:    %.*s.%.*s%.*s", (int)vmThreadArg,
-         J9UTF8_LENGTH(metaData->className),       J9UTF8_DATA(metaData->className),
-         J9UTF8_LENGTH(metaData->methodName),      J9UTF8_DATA(metaData->methodName),
-         J9UTF8_LENGTH(metaData->methodSignature), J9UTF8_DATA(metaData->methodSignature));
+         J9UTF8_LENGTH(className),       J9UTF8_DATA(className),
+         J9UTF8_LENGTH(methodName),      J9UTF8_DATA(methodName),
+         J9UTF8_LENGTH(methodSignature), J9UTF8_DATA(methodSignature));
 
       if (details)
          {
@@ -106,7 +109,7 @@ void _prepareForOSR(uintptr_t vmThreadArg, int32_t currentInlinedSiteIndex, int3
 
    if (numSymsThatShareSlot > 0) // this is a condition that depends on the current inlined method
       {
-      int32_t* osrMetaData = (int32_t*) metaData->osrInfo;
+      int32_t* osrMetaData = (int32_t*) J9JITEXCEPTIONTABLE_OSRINFO_GET(metaData);
       osrMetaData += 2; //skip size of section 0 and maxScratchBufferSize
       int32_t numberOfMappings = *osrMetaData; osrMetaData++;
       if (details)
@@ -239,8 +242,3 @@ void _prepareForOSR(uintptr_t vmThreadArg, int32_t currentInlinedSiteIndex, int3
       TR_VerboseLog::writeLineLocked(TR_Vlog_OSRD, "%X   prepareForOSR returning", (int)vmThreadArg);
    }
 }
-
-
-
-
-

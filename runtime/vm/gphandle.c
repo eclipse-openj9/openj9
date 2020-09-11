@@ -176,7 +176,7 @@ getVmDetailsFromPortLib(struct J9PortLibrary *portLibrary, struct vmDetails *det
 	details->mem = j9sysinfo_get_physical_memory();
 }
 
-static void 
+static void
 dumpVmDetailString(struct J9PortLibrary *portLibrary, J9JavaVM* vm)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
@@ -191,7 +191,7 @@ dumpVmDetailString(struct J9PortLibrary *portLibrary, J9JavaVM* vm)
 		details.cpus = vm->j9ras->cpus;
 		details.mem = vm->j9ras->memory;
 	} else
-#endif	
+#endif
 	{
 		getVmDetailsFromPortLib(portLibrary, &details);
 	}
@@ -583,15 +583,15 @@ handleJNIZOSLECondition(struct J9PortLibrary* portLibrary, J9VMThread *vmThread,
 
 #endif /* J9VM_PORT_ZOS_CEEHDLRSUPPORT  */
 
- 
+
 #if defined(J9VM_OPT_SWITCH_STACKS_FOR_SIGNAL_HANDLER)
 
 UDATA swapStacksAndRunHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, J9VMThread* userData);
-  
+
  /**
   * @internal
   *
-  * The generic VM signal handler. 
+  * The generic VM signal handler.
  * Assumes the void* parameter is a J9JavaVM.
  */
 UDATA
@@ -660,8 +660,8 @@ structuredSignalHandlerVM(struct J9PortLibrary* portLibrary, U_32 gpType, void* 
 	if (infoKind != J9PORT_SIG_VALUE_32) {
 		/* the call failed, do not defer to any handlers */
 		return 0;
-	} 
-	
+	}
+
 	if ( 0 != *value) {
 		/* there is a try/except handler */
 		return 1;
@@ -676,7 +676,7 @@ structuredSignalHandlerVM(struct J9PortLibrary* portLibrary, U_32 gpType, void* 
 /**
  * @internal
  *
- * The generic VM signal handler. 
+ * The generic VM signal handler.
   * Assumes the void* parameter is a J9JavaVM.
   */
  UDATA
@@ -698,7 +698,7 @@ structuredSignalHandlerVM(struct J9PortLibrary* portLibrary, U_32 gpType, void* 
 /**
  * @internal
  *
- * The generic VM signal handler. 
+ * The generic VM signal handler.
  */
 UDATA
 vmSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData)
@@ -715,11 +715,11 @@ vmSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, vo
 	J9RASCrashInfo rasCrashInfo;
 #endif
 
-	/* We no longer have J9VMToken, but we must still use the second slot to 
+	/* We no longer have J9VMToken, but we must still use the second slot to
 	 * figure out whether we were passed a VM or a Thread in this case, because the stack swap code
 	 * calls this handler with a thread, but in some cases it may be called with a VM only (e.g. Signal Handler thread).
 	 */
-	
+
 	/* Case 1: It's not actually a thread, but a VM pointer! */
 	if (((J9JavaVM*) vmThread) == vmThread->javaVM) {
 		vm = (J9JavaVM*) vmThread;
@@ -728,7 +728,7 @@ vmSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, vo
 	} else {
 		vm = vmThread->javaVM;
 	}
-		
+
 	memset(&recursiveCrashData, 0, sizeof(J9RecursiveCrashData));
 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT) && !defined(J9ZTPF)
@@ -755,7 +755,7 @@ vmSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, vo
 				if (0 != vmThread->percolatedConditionAndTriggeredDiagnostics) {
 					/* we've already generated RAS diagnostics for this, percolate the condition */
 					return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
-				} 
+				}
 
 				/* fall through to generating RAS diagnostics */
 
@@ -782,7 +782,7 @@ vmSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, vo
 #endif /* defined(J9ZOS390) */
 	) {
 		J9VMThread *currentThread = ((NULL == vmThread) ? vm->internalVMFunctions->currentVMThread(vm): vmThread);
-		
+
 		if (NULL != currentThread) {
 			if (J9_ARE_ALL_BITS_SET(currentThread->privateFlags2, J9_PRIVATE_FLAGS2_UNSAFE_HANDLE_SIGBUS)) {
 				if (J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION == sigBusHandler(currentThread, gpInfo)) {
@@ -856,7 +856,7 @@ vmSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, vo
 
 	recursiveCrashData.protectedFunctionName = "executeAbortHook";
 	j9sig_protect(
-		executeAbortHook, &crashData, 
+		executeAbortHook, &crashData,
 		recursiveCrashHandler, &recursiveCrashData,
 		J9PORT_SIG_FLAG_MAY_RETURN | J9PORT_SIG_FLAG_SIGALLSYNC,
 		&result);
@@ -864,19 +864,19 @@ vmSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, vo
 
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)
 	if (J9PORT_SIG_OPTIONS_ZOS_USE_CEEHDLR == (J9PORT_SIG_OPTIONS_ZOS_USE_CEEHDLR & j9sig_get_options())) {
-		
+
 		if (J9_SIG_PERCOLATE_CONDITIONS == (vm->sigFlags & J9_SIG_PERCOLATE_CONDITIONS)) {
 
 			/* record that we already triggered diagnostics, so that any le condition handlers further down the call chain do not */
 			vmThread->percolatedConditionAndTriggeredDiagnostics = 1;
 			vmThread->privateFlags |= J9_PRIVATE_FLAGS_STACKS_OUT_OF_SYNC;
 			return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
-			
+
 		} else {
 			_INT4 code = PORT_ABEND_CODE;
 			_INT4 reason = 0; /* arbitrarily chosen reason code*/
 			_INT4 cleanup = 0; /* 0 - issue the abend without clean-up */
-		
+
 			CEE3AB2(&code, &reason, &cleanup);
 		}
 	}
@@ -1076,7 +1076,7 @@ writeJITInfo(J9VMThread* vmThread, char* s, UDATA length, void* gpInfo)
 		jitExceptionTable = jitConfig->jitGetExceptionTableFromPC(vmThread, pc);
 
 		if (jitExceptionTable) {
-			J9Method *ramMethod = jitExceptionTable->ramMethod;
+			J9Method *ramMethod = J9JITEXCEPTIONTABLE_RAMMETHOD_GET(jitExceptionTable);
 			J9Class *clazz = J9_CLASS_FROM_METHOD(ramMethod);
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
 			J9ROMClass *romClass = clazz->romClass;
@@ -1117,7 +1117,7 @@ writeVMInfo(J9JavaVM* vm, char* s, UDATA length)
 		UDATA n;
 
 		/* show number of options */
-		n = j9str_printf(PORTLIB, s, length, "\nJavaVMInitArgs.nOptions=%i:\n", numOptions);  
+		n = j9str_printf(PORTLIB, s, length, "\nJavaVMInitArgs.nOptions=%i:\n", numOptions);
 		length -= n;
 		s += n;
 		numBytesWritten += n;
@@ -1198,7 +1198,7 @@ setupRasCrashInfo(struct J9PortLibrary* portLibrary, void* userData)
 }
 #endif
 
-static UDATA 
+static UDATA
 writeCrashDataToConsole(struct J9PortLibrary* portLibrary, void* userData)
 {
 	J9CrashData* data = userData;
@@ -1238,7 +1238,7 @@ writeCrashDataToConsole(struct J9PortLibrary* portLibrary, void* userData)
 	for (category = 0; category < J9PORT_SIG_NUM_CATEGORIES; category++) {
 
 		UDATA result;
-		
+
 		writeGPInfoCrashData.s = s;
 		writeGPInfoCrashData.length = length;
 		writeGPInfoCrashData.category = category;
@@ -1309,7 +1309,7 @@ recursiveCrashHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpIn
 	return J9PORT_SIG_EXCEPTION_RETURN;
 }
 
-static UDATA 
+static UDATA
 executeAbortHook(struct J9PortLibrary* portLibrary, void* userData)
 {
 	J9CrashData* data = userData;
@@ -1379,7 +1379,7 @@ javaAndCStacksMustBeInSync(J9VMThread *vmThread, BOOLEAN fromJIT)
 
 	j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2, code, reason, cleanup);
 	CEE3AB2(&code, &reason, &cleanup); /* terminate the process, no chance for anyone to resume */
-	
+
 	/* can't get here */
 }
 #endif

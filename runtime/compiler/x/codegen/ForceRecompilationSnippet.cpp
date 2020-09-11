@@ -36,6 +36,8 @@
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
+#include "objectfmt/GlobalFunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "x/codegen/X86Recompilation.hpp"
 
@@ -48,24 +50,10 @@ uint8_t *TR::X86ForceRecompilationSnippet::emitSnippetBody()
    uint8_t *buffer = cg()->getBinaryBufferCursor();
    getSnippetLabel()->setCodeLocation(buffer);
 
-   TR::SymbolReference *helper = cg()->symRefTab()->findOrCreateRuntimeHelper(cg()->comp()->target().is64Bit()? TR_AMD64induceRecompilation : TR_IA32induceRecompilation, false, false, false);
-   intptr_t helperAddress = (intptr_t)helper->getMethodAddress();
-   *buffer++ = 0xe8; // CallImm4
-   if (NEEDS_TRAMPOLINE(helperAddress, buffer+4, cg()))
-      {
-      helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(helper->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT(IS_32BIT_RIP(helperAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
-      }
-   *(int32_t *)buffer = ((uint8_t*)helperAddress - buffer) - 4;
+   TR::SymbolReference *helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(cg()->comp()->target().is64Bit()? TR_AMD64induceRecompilation : TR_IA32induceRecompilation, false, false, false);
 
-   cg()->addExternalRelocation(new (cg()->trHeapMemory())
-      TR::ExternalRelocation(
-         buffer,
-         (uint8_t *)helper,
-         TR_HelperAddress, cg()),
-         __FILE__, __LINE__, getNode());
-
-   buffer += 4;
+   TR::GlobalFunctionCallData data(helperSymRef, getNode(), buffer, cg());
+   buffer = cg()->getObjFmt()->encodeGlobalFunctionCall(data);
 
    uint8_t *bufferBase = buffer;
 
@@ -118,5 +106,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86ForceRecompilationSnippet  * snippet)
 
 uint32_t TR::X86ForceRecompilationSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   return 14;
+   int32_t length = cg()->getObjFmt()->globalFunctionCallBinaryLength();
+   return   length
+          + estimateRestartJumpLength(estimatedSnippetStart + length)
+          + 4;  // disp32 to method startPC
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,18 +94,39 @@ J9::Options::kcaOffsets(char *option, void *, TR::OptionTable *entry)
       fprintf( file, "#define J9OBJECT_MONITOR           (0) // Does not exist!\n" );
       fprintf( file, "#define J9OBJECT_ARRAY_SIZE        (%d)\n", offsetof(J9IndexableObjectContiguous,size) );
 
+      #if defined(J9VM_RAS_EYECATCHERS)
+      #if defined(J9VM_OPT_SNAPSHOTS)
+      fprintf( file, "#define METADATA_CLASSNAME         (%d)\n", offsetof(J9JITExceptionTable,classNameOffset) );
+      fprintf( file, "#define METADATA_METHODNAME        (%d)\n", offsetof(J9JITExceptionTable,methodNameOffset) );
+      fprintf( file, "#define METADATA_SIGNATURE         (%d)\n", offsetof(J9JITExceptionTable,methodSignatureOffset) );
+      #else /* defined(J9VM_OPT_SNAPSHOTS) */
       fprintf( file, "#define METADATA_CLASSNAME         (%d)\n", offsetof(J9JITExceptionTable,className) );
       fprintf( file, "#define METADATA_METHODNAME        (%d)\n", offsetof(J9JITExceptionTable,methodName) );
       fprintf( file, "#define METADATA_SIGNATURE         (%d)\n", offsetof(J9JITExceptionTable,methodSignature) );
+      #endif /* defined(J9VM_OPT_SNAPSHOTS) */
+      #else /* J9VM_RAS_EYECATCHERS */
+      fprintf( file, "#define METADATA_CLASSNAME         (%d)\n", 0 );
+      fprintf( file, "#define METADATA_METHODNAME        (%d)\n", 0 );
+      fprintf( file, "#define METADATA_SIGNATURE         (%d)\n", 0 );
+      #endif /* J9VM_RAS_EYECATCHERS */
+      #if defined(J9VM_OPT_SNAPSHOTS)
+      fprintf( file, "#define METADATA_CONSTANTPOOL      (%d)\n", offsetof(J9JITExceptionTable,constantPoolOffset) );
+      fprintf( file, "#define METADATA_J9METHOD          (%d)\n", offsetof(J9JITExceptionTable,ramMethodOffset) );
+      #else /* defined(J9VM_OPT_SNAPSHOTS) */
       fprintf( file, "#define METADATA_CONSTANTPOOL      (%d)\n", offsetof(J9JITExceptionTable,constantPool) );
       fprintf( file, "#define METADATA_J9METHOD          (%d)\n", offsetof(J9JITExceptionTable,ramMethod) );
+      #endif /* defined(J9VM_OPT_SNAPSHOTS) */
       fprintf( file, "#define METADATA_STARTPC           (%d)\n", offsetof(J9JITExceptionTable,startPC) );
       fprintf( file, "#define METADATA_ENDWARMPC         (%d)\n", offsetof(J9JITExceptionTable,endWarmPC) );
       fprintf( file, "#define METADATA_COLDSTART         (%d)\n", offsetof(J9JITExceptionTable,startColdPC) );
       fprintf( file, "#define METADATA_COLDEND           (%d)\n", offsetof(J9JITExceptionTable,endPC) );
       fprintf( file, "#define METADATA_FRAMESIZE         (%d)\n", offsetof(J9JITExceptionTable,totalFrameSize) );
       fprintf( file, "#define METADATA_NUM_EXC_RANGES    (%d)\n", offsetof(J9JITExceptionTable,numExcptionRanges) );
+      #if defined(J9VM_OPT_SNAPSHOTS)
+      fprintf( file, "#define METADATA_INLINEDCALLS      (%d)\n", offsetof(J9JITExceptionTable,inlinedCallsOffset) );
+      #else /* defined(J9VM_OPT_SNAPSHOTS) */
       fprintf( file, "#define METADATA_INLINEDCALLS      (%d)\n", offsetof(J9JITExceptionTable,inlinedCalls) );
+      #endif /* defined(J9VM_OPT_SNAPSHOTS) */
       fprintf( file, "#define METADATA_BODYINFO          (%d)\n", offsetof(J9JITExceptionTable,bodyInfo) );
       fprintf( file, "#define METADATA_SIZE              (%d)\n", sizeof(J9JITExceptionTable) );
 
@@ -223,4 +244,3 @@ J9::Options::kcaOffsets(char *option, void *, TR::OptionTable *entry)
       }
    return option;
    }
-

@@ -24,6 +24,7 @@
 #include "j9consts.h"
 #include "jclprots.h"
 #include "j9protos.h"
+#include "vm_api.h"
 
 
 
@@ -138,13 +139,29 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 retry:
 
 	omrthread_monitor_enter(vm->classTableMutex);
-	/* Hidden class is never added into the hash table */
-	if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_HIDDEN)) {
-		if (NULL != vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length)) {
-			/* Bad, we have already defined this class - fail */
-			omrthread_monitor_exit(vm->classTableMutex);
-			if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
-				vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, (UDATA *)*(j9object_t*)className);
+
+	if (vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length) != NULL) {
+		/* Bad, we have already defined this class - fail */
+		omrthread_monitor_exit(vm->classTableMutex);
+		if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
+#if defined(J9VM_OPT_SNAPSHOTS)
+			/* TODO: We get here if someone does Classloader.findClass on a persisted class
+			 * Once class objects are persisted we should never get here apart from error
+			 * cases. */
+			if (IS_RESTORE_RUN(vm)) {
+				clazz = vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length);
+
+				if (!vmFuncs->loadWarmClass(currentThread, classLoader, clazz)) {
+					clazz = NULL;
+				}
+
+				if (NULL != protectionDomain) {
+					J9VMJAVALANGCLASS_SET_PROTECTIONDOMAIN(currentThread, clazz->classObject, J9_JNI_UNWRAP_REFERENCE(protectionDomain));
+				}
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, (UDATA*)* (j9object_t*)className);
 			}
 			goto done;
 		}

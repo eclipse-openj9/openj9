@@ -70,6 +70,7 @@ J9::Z::UnresolvedDataSnippet::UnresolvedDataSnippet(
    J9::UnresolvedDataSnippet(cg, node, symRef, isStore, canCauseGC),
       _branchInstruction(NULL),
       _dataReferenceInstruction(NULL),
+      fenceNOPInst(NULL),
       _dataSymbolReference(symRef),
       _unresolvedData(NULL),
       _memoryReference(NULL),
@@ -180,6 +181,8 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
       if (resolveForStore())
          {
          glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedInstanceDataStoreGlue, false, false, false);
+
+         TR_ASSERT_FATAL_WITH_INSTRUCTION(getDataReferenceInstruction(), fenceNOPInst != NULL, "Unresolved store must have a fence NOP instruction");
          }
       else
          {
@@ -226,6 +229,8 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
       if (resolveForStore())
          {
          glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedStaticDataStoreGlue, false, false, false);
+
+         TR_ASSERT_FATAL_WITH_INSTRUCTION(getDataReferenceInstruction(), fenceNOPInst != NULL, "Unresolved store must have a fence NOP instruction");
          }
       else
          {
@@ -312,6 +317,20 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
    AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
    cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
                              __FILE__, __LINE__, getNode());
+   cursor += sizeof(uintptr_t);
+
+   // Fence NOP emitted for volatile field stores that may need patching for volatile fields
+   if (fenceNOPInst != NULL)
+      {
+      *(uintptr_t *) cursor = (uintptr_t) (fenceNOPInst->getBinaryEncoding());
+      AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
+      cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
+                             __FILE__, __LINE__, getNode());
+      }
+   else
+      {
+      *(uintptr_t *) cursor = 0;
+      }
    cursor += sizeof(uintptr_t);
 
    // Literal Pool Address to patch.
@@ -417,7 +436,7 @@ uint32_t
 J9::Z::UnresolvedDataSnippet::getLength(int32_t  estimatedSnippetStart)
    {
    TR::Compilation *comp = cg()->comp();
-   uint32_t length = (comp->target().is64Bit() ? (14 + 5 * sizeof(uintptr_t)) : (12 + 5 * sizeof(uintptr_t)));
+   uint32_t length = (comp->target().is64Bit() ? (14 + 6 * sizeof(uintptr_t)) : (12 + 6 * sizeof(uintptr_t)));
    // For instance snippets, we have the out-of-line sequence
    if (isInstanceData())
       length += (comp->target().is64Bit()) ? 36 : 28;
@@ -554,6 +573,19 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
       addr = (uintptr_t) (snippet->getBranchInstruction()->getNext())->getBinaryEncoding();
       }
    trfprintf(pOutFile, "DC    \t0x%p \t# Address Of Ref. Instruction", addr);
+
+   bufferPos += sizeof(intptr_t);
+
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   if (snippet->fenceNOPInst != NULL)
+      {
+      addr = (uintptr_t) (snippet->fenceNOPInst->getBinaryEncoding());
+      }
+   else
+      {
+      addr = 0;
+      }
+   trfprintf(pOutFile, "DC    \t0x%p \t# Address NOP fence", addr);
 
    bufferPos += sizeof(intptr_t);
 

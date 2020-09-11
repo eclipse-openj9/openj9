@@ -1362,10 +1362,6 @@ void platformUnlock(uint32_t *ptr)
 }
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
-uint32_t *getLinkageInfo(void *startPC)
-   {
-   return (uint32_t *)J9::PrivateLinkage::LinkageInfo::get(startPC);
-   }
 
 uint32_t isRecompMethBody(void *li)
    {
@@ -1379,7 +1375,7 @@ void fixPersistentMethodInfo(void *table, bool isJITClientAOTLoad)
    {
    J9JITExceptionTable *exceptionTable = (J9JITExceptionTable *)table;
    TR_PersistentJittedBodyInfo *bodyInfo = (TR_PersistentJittedBodyInfo *)exceptionTable->bodyInfo;
-   void *vmMethodInfo = (void *)exceptionTable->ramMethod;
+   void *vmMethodInfo = (void *)J9JITEXCEPTIONTABLE_RAMMETHOD_GET(exceptionTable);
    TR_PersistentMethodInfo *methodInfo;
 
    if (!isJITClientAOTLoad)
@@ -1798,4 +1794,3 @@ void methodHandleJ2I_unwrapper(void **argsPtr, void **resPtr)
    j9object_t   methodHandle = (j9object_t)argsPtr[0];
    methodHandleJ2I(methodHandle, stack, vmThread);
    }
-

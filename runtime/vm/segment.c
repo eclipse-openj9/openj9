@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,9 @@
 #include "j9protos.h"
 #include "j9cfg.h"
 #include "j9port.h"
+#if defined(J9VM_OPT_SNAPSHOTS)
+#include "j9port_generated.h"
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #include "j9consts.h"
 #include "ut_j9vm.h"
 #include "vm_internal.h"
@@ -41,10 +44,10 @@ J9MemorySegmentList *allocateMemorySegmentListWithSize (J9JavaVM * javaVM, U_32 
 U_32 memorySegmentListSize (J9MemorySegmentList *segmentList);
 void freeMemorySegmentList (J9JavaVM *javaVM,J9MemorySegmentList *segmentList);
 static void * allocateMemoryForSegment (J9JavaVM *javaVM,J9MemorySegment *segment, J9PortVmemParams *vmemParams, U_32 memoryCategory);
+static void * allocateMemoryForCollocatedSegments (J9JavaVM *javaVM, U_32 count, J9MemorySegment **segments, J9PortVmemParams *vmemParams);
 J9MemorySegmentList *allocateMemorySegmentList (J9JavaVM * javaVM, U_32 numberOfMemorySegments, U_32 memoryCategory);
 J9MemorySegment * romImageNewSegment (J9JavaVM *vm, J9ROMImageHeader *header, UDATA isBaseType, J9ClassLoader *classLoader );
 void freeMemorySegment (J9JavaVM *javaVM, J9MemorySegment *segment, BOOLEAN freeDescriptor);
-J9MemorySegment * allocateMemorySegmentListEntry (J9MemorySegmentList *segmentList);
 
 J9Class* allClassesStartDo (J9ClassWalkState* state, J9JavaVM* vm, J9ClassLoader* classLoader);
 J9Class* allClassesNextDo (J9ClassWalkState* state);
@@ -62,6 +65,7 @@ J9MemorySegment * findMemorySegment(J9JavaVM *javaVM, J9MemorySegmentList *segme
 static IDATA segmentInsertionComparator (J9AVLTree *tree, J9MemorySegment *insertNode, J9MemorySegment *walkNode);
 static IDATA segmentSearchComparator (J9AVLTree *tree, UDATA value, J9MemorySegment *searchNode);
 static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *javaVM, J9MemorySegmentList *segmentList, UDATA size, UDATA type, J9PortVmemParams *vmemParams, U_32 memoryCategory);
+static J9MemorySegment * allocateCollocatedVirtualMemorySegmentsInListsInternal(J9JavaVM *javaVM, UDATA count, J9MemorySegmentList **segmentLists, UDATA *sizes, UDATA *types, J9PortVmemParams *vmemParams, J9MemorySegment **segments);
 
 static BOOLEAN shouldSkipClassLoader(J9ClassLoaderWalkState *state, J9ClassLoader *classLoader);
 
@@ -96,7 +100,6 @@ void freeMemorySegment(J9JavaVM *javaVM, J9MemorySegment *segment, BOOLEAN freeD
 {
 	J9MemorySegmentList *segmentList;
 	PORT_ACCESS_FROM_GINFO(javaVM);
-
 	segmentList = segment->memorySegmentList;
 
 #if defined(J9VM_THR_PREEMPTIVE)
@@ -120,22 +123,47 @@ void freeMemorySegment(J9JavaVM *javaVM, J9MemorySegment *segment, BOOLEAN freeD
 	segmentList->totalSegmentSize -= segment->size;
 
 	if (segment->type & MEMORY_TYPE_ALLOCATED) {
+#if defined(J9VM_OPT_SNAPSHOTS)
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 		BOOLEAN useAdvise = (J9_EXTENDED_RUNTIME_FLAG_JSCRATCH_ADV_ON_FREE == (javaVM->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_FLAG_JSCRATCH_ADV_ON_FREE));
 
 		/* The order of these checks is important.
 		 * MEMORY_TYPE_VIRTUAL is expected to be used along with another bit, like MEMORY_TYPE_JIT_SCRATCH_SPACE.
 		 */
 		if (J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_CODE | MEMORY_TYPE_FIXED_RAM_CLASS | MEMORY_TYPE_VIRTUAL)) {
-			j9vmem_free_memory(segment->baseAddress, segment->size, &segment->vmemIdentifier);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOT_RUN(javaVM) && J9_ARE_ALL_BITS_SET(segment->type, MEMORY_TYPE_CODE))
+				vmsnapshot_free_memory(segment->baseAddress);
+			else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+				j9vmem_free_memory(segment->baseAddress, segment->size, &segment->vmemIdentifier);
 		} else if ((useAdvise) && (MEMORY_TYPE_JIT_SCRATCH_SPACE & segment->type)) {
 			j9mem_advise_and_free_memory(segment->baseAddress);
 		} else if (segment->type & (MEMORY_TYPE_RAM_CLASS | MEMORY_TYPE_UNDEAD_CLASS)) {
-			if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
-				j9mem_free_memory32(segment->baseAddress);
-			} else {
-				j9mem_free_memory(segment->baseAddress);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
+					vmsnapshot_free_memory32(segment->baseAddress);
+				} else {
+					vmsnapshot_free_memory(segment->baseAddress);
+				}
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
+					j9mem_free_memory32(segment->baseAddress);
+				} else {
+					j9mem_free_memory(segment->baseAddress);
+				}
 			}
-		} else {
+		}
+#if defined(J9VM_OPT_SNAPSHOTS)
+		else if (J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_ROM_CLASS | MEMORY_TYPE_RAM) && IS_SNAPSHOTTING_ENABLED(javaVM)) {
+			vmsnapshot_free_memory(segment->baseAddress);
+		}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		else {
 			j9mem_free_memory(segment->baseAddress);
 		}
 		segment->type &= ~MEMORY_TYPE_ALLOCATED;
@@ -180,6 +208,9 @@ void freeMemorySegmentListEntry(J9MemorySegmentList *segmentList, J9MemorySegmen
 void freeMemorySegmentList(J9JavaVM *javaVM,J9MemorySegmentList *segmentList)
 {
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	J9MemorySegment *currentSegment;
 
 	do {
@@ -193,7 +224,18 @@ void freeMemorySegmentList(J9JavaVM *javaVM,J9MemorySegmentList *segmentList)
 	if(segmentList->segmentMutex) omrthread_monitor_destroy(segmentList->segmentMutex);
 #endif
 
-	j9mem_free_memory(segmentList);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	/* Guaranteed that classMemorySegments was allocated on JVMImageHeap */
+	/* TODO: In J9MemorySegmentList flags add allocation from image rather than this check. see @ref omr:j9nongenerated.h */
+	if (IS_SNAPSHOTTING_ENABLED(javaVM) && ((javaVM->classMemorySegments == segmentList) || (javaVM->memorySegments == segmentList))) {
+		vmsnapshot_free_memory(segmentList);
+	} else if (IS_SNAPSHOTTING_ENABLED(javaVM) && IS_SNAPSHOT_RUN(javaVM) && ((javaVM->jitConfig->codeCacheList == segmentList) || (javaVM->jitConfig->dataCacheList == segmentList))) {
+		vmsnapshot_free_memory(segmentList);
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+		j9mem_free_memory(segmentList);
+	}
 }
 
 
@@ -205,7 +247,7 @@ U_32 memorySegmentListSize (J9MemorySegmentList *segmentList)
 
 /*
  *	Allocates the memory for a segment.
- *	only 2 cases are delt with:
+ *	only 2 cases are dealt with:
  *	1. MEMORY_TYPE_CODE
  *	2.	Everything else.  Regardless of the type, it will be allocated
  */
@@ -214,6 +256,9 @@ allocateMemoryForSegment(J9JavaVM *javaVM,J9MemorySegment *segment, J9PortVmemPa
 {
 	void *tmpAddr;
 	PORT_ACCESS_FROM_GINFO(javaVM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	/* The order of these checks is important.
 	 * MEMORY_TYPE_VIRTUAL is expected to be used along with another bit, like MEMORY_TYPE_JIT_SCRATCH_SPACE.
@@ -224,22 +269,103 @@ allocateMemoryForSegment(J9JavaVM *javaVM,J9MemorySegment *segment, J9PortVmemPa
 		 */
 		Assert_VM_true(J9_ARE_NO_BITS_SET(segment->type, MEMORY_TYPE_VIRTUAL) || J9_ARE_ANY_BITS_SET(segment->type, ~MEMORY_TYPE_VIRTUAL));
 
-		tmpAddr = j9vmem_reserve_memory_ex(&segment->vmemIdentifier, vmemParams);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOT_RUN(javaVM) && J9_ARE_ALL_BITS_SET(segment->type, MEMORY_TYPE_CODE))
+			tmpAddr = vmsnapshot_allocate_memory(segment->size, memoryCategory);
+		else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			tmpAddr = j9vmem_reserve_memory_ex(&segment->vmemIdentifier, vmemParams);
 	} else if (J9_ARE_ALL_BITS_SET(segment->type, MEMORY_TYPE_FIXED_RAM_CLASS)) {
 		tmpAddr = j9vmem_reserve_memory_ex(&segment->vmemIdentifier, vmemParams);
 		Trc_VM_virtualRAMClassAlloc(tmpAddr);
 	} else if (J9_ARE_ALL_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS)) {
-		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
-			tmpAddr = j9mem_allocate_memory32(segment->size, memoryCategory);
-		} else {
-			tmpAddr = j9mem_allocate_memory(segment->size, memoryCategory);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+			if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
+				tmpAddr = vmsnapshot_allocate_memory32(segment->size, memoryCategory);
+			} else {
+				tmpAddr = vmsnapshot_allocate_memory(segment->size, memoryCategory);
+			}
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
+				tmpAddr = j9mem_allocate_memory32(segment->size, memoryCategory);
+			} else {
+				tmpAddr = j9mem_allocate_memory(segment->size, memoryCategory);
+			}
 		}
-	} else {
+	}
+#if defined(J9VM_OPT_SNAPSHOTS)
+	else if (J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_ROM_CLASS | MEMORY_TYPE_RAM) && IS_SNAPSHOTTING_ENABLED(javaVM)) {
+		tmpAddr = vmsnapshot_allocate_memory(segment->size, memoryCategory);
+		/* TODO: Add Memory type for allocation inside JVMImage (MEMORY_TYPE_IMAGE_ALLOCATED). see @ref omr:j9nongenerated.h */
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	else {
 		tmpAddr = j9mem_allocate_memory(segment->size, memoryCategory);
 	}
 
 	if(tmpAddr) {
 		segment->type = segment->type | MEMORY_TYPE_ALLOCATED;
+	}
+
+	return tmpAddr;
+}
+
+
+/*
+ *	Allocates the memory for a segment.
+ *	only 2 cases are dealt with:
+ *	1. MEMORY_TYPE_CODE
+ *	2. MEMORY_TYPE_VIRTUAL
+ */
+static void *
+allocateMemoryForCollocatedSegments(J9JavaVM *javaVM, U_32 count, J9MemorySegment **segments, J9PortVmemParams *vmemParams)
+{
+	struct J9PortVmemIdentifier *identifiers[OMRPORT_MAX_COLLOCATED_SEGMENTS_ALLOC];
+	void *tmpAddr = NULL;
+	PORT_ACCESS_FROM_GINFO(javaVM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
+	for (int i = 0; i < count; i++) {
+		identifiers[i] = &segments[i]->vmemIdentifier;
+	}
+
+	/* The order of these checks is important.
+	 * MEMORY_TYPE_VIRTUAL is expected to be used along with another bit, like MEMORY_TYPE_JIT_SCRATCH_SPACE.
+	 */
+	if (J9_ARE_ANY_BITS_SET(segments[0]->type,  MEMORY_TYPE_CODE | MEMORY_TYPE_VIRTUAL)) {
+		/* MEMORY_TYPE_CODE and MEMORY_TYPE_VIRTUAL are allocated via the virtual memory functions.
+		 * Assert MEMORY_TYPE_VIRTUAL is used in combination with another bit, like MEMORY_TYPE_JIT_SCRATCH_SPACE.
+		 */
+		Assert_VM_true(J9_ARE_NO_BITS_SET(segments[0]->type, MEMORY_TYPE_VIRTUAL) || J9_ARE_ANY_BITS_SET(segments[0]->type, ~MEMORY_TYPE_VIRTUAL));
+
+		for (int i = 1; i < count; i++) {
+			Assert_VM_true(J9_ARE_ANY_BITS_SET(segments[i]->type,  MEMORY_TYPE_CODE | MEMORY_TYPE_VIRTUAL));
+			Assert_VM_true(J9_ARE_NO_BITS_SET(segments[i]->type, MEMORY_TYPE_VIRTUAL) || J9_ARE_ANY_BITS_SET(segments[i]->type, ~MEMORY_TYPE_VIRTUAL));
+		}
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(javaVM)
+		    && J9_ARE_ANY_BITS_SET(segments[0]->type, MEMORY_TYPE_CODE | MEMORY_TYPE_CCDATA)) {
+			uintptr_t totalSize = 0;
+			for (int i = 0; i < count; i++) {
+				totalSize += segments[i]->size;
+			}
+			tmpAddr = vmsnapshot_allocate_memory(totalSize, OMRMEM_CATEGORY_UNKNOWN);
+		}
+		else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			tmpAddr = j9vmem_reserve_memory_collocated_ex(count, identifiers, vmemParams);
+	}
+
+	if (tmpAddr) {
+		for (int i = 0; i < count; i++) {
+			segments[i]->type = segments[i]->type | MEMORY_TYPE_ALLOCATED;
+		}
 	}
 
 	return tmpAddr;
@@ -415,19 +541,117 @@ static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *ja
 	return segment;
 }
 
+J9MemorySegment * allocateCollocatedVirtualMemorySegmentsInLists(J9JavaVM *javaVM, UDATA count, J9MemorySegmentList **segmentLists, UDATA *sizes, UDATA *types, J9PortVmemParams *vmemParams, J9MemorySegment **segments)
+{
+	Assert_VM_true(count > 0 && count <= OMRPORT_MAX_COLLOCATED_SEGMENTS_ALLOC);
+	return allocateCollocatedVirtualMemorySegmentsInListsInternal(javaVM, count, segmentLists, sizes, types, vmemParams, segments);
+}
+
+static J9MemorySegment * allocateCollocatedVirtualMemorySegmentsInListsInternal(J9JavaVM *javaVM, UDATA count, J9MemorySegmentList **segmentLists, UDATA *sizes, UDATA *types, J9PortVmemParams *vmemParams, J9MemorySegment **segments)
+{
+	U_8 *allocatedBase;
+
+	for (UDATA i = 0; i < count; i++) {
+		Trc_VM_allocateMemorySegmentInList_Entry(segmentLists[i], sizes[i], types[i]);
+#if defined(J9VM_THR_PREEMPTIVE)
+		/* Monitors are recursive, so it should be OK to lock a segment multiple times here. */
+		if (segmentLists[i]->segmentMutex) {
+			omrthread_monitor_enter(segmentLists[i]->segmentMutex);
+		}
+#endif
+	}
+
+	for (UDATA i = 0; i < count; i++) {
+		segments[i] = allocateMemorySegmentListEntry(segmentLists[i]);
+		if (segments[i] == NULL) {
+			Trc_VM_allocateMemorySegmentInList_EntryAllocFailed(segmentLists[i], types[i]);
+			for (UDATA j = 0; j < i; j++) {
+				freeMemorySegmentListEntry(segmentLists[j], segments[j]);
+				segments[j] = NULL;
+			}
+			goto done;
+		}
+
+		segments[i]->type = types[i];
+		segments[i]->size = sizes[i];
+
+		if (vmemParams != NULL) {
+			vmemParams[i].byteAmount = segments[i]->size;
+		}
+	}
+
+	allocatedBase = (U_8 *) allocateMemoryForCollocatedSegments(javaVM, count, segments, vmemParams);
+
+	if (NULL == allocatedBase) {
+		for (UDATA i = 0; i < count; i++) {
+			Trc_VM_allocateMemorySegmentInList_AllocFailed(segmentLists[i], sizes[i], types[i]);
+			freeMemorySegmentListEntry(segmentLists[i], segments[i]);
+			segments[i] = NULL;
+		}
+	} else {
+		U_8 *segmentBase = allocatedBase;
+		for (UDATA i = 0; i < count; i++) {
+			segments[i]->baseAddress = segmentBase;
+			segments[i]->heapBase = segmentBase;
+			segments[i]->heapTop = (U_8 *)&(segments[i]->heapBase)[segments[i]->size];
+			segments[i]->heapAlloc = segments[i]->heapBase;
+
+			segmentLists[i]->totalSegmentSize += segments[i]->size;
+
+			Trc_VM_allocateMemorySegmentInList_Alloc(segments[i], segments[i]->heapBase, segments[i]->heapTop, segments[i]->type);
+
+			if (0 != (segmentLists[i]->flags & MEMORY_SEGMENT_LIST_FLAG_SORT)) {
+				avl_insert(&segmentLists[i]->avlTreeData, (J9AVLTreeNode *) segments[i]);
+			}
+
+			segmentBase += segments[i]->size;
+		}
+	}
+
+done:
+	for (UDATA i = 0; i < count; i++) {
+#if defined(J9VM_THR_PREEMPTIVE)
+		if (segmentLists[i]->segmentMutex) {
+			omrthread_monitor_exit(segmentLists[i]->segmentMutex);
+		}
+#endif
+		Trc_VM_allocateMemorySegmentInList_Exit(segments[i]);
+	}
+
+	return segments[0];
+}
+
 
 J9MemorySegmentList *allocateMemorySegmentListWithSize(J9JavaVM * javaVM, U_32 numberOfMemorySegments, UDATA sizeOfElements, U_32 memoryCategory)
 {
 	J9MemorySegmentList *segmentList;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
-	if (NULL == (segmentList = j9mem_allocate_memory(sizeof(J9MemorySegmentList), memoryCategory)))
-		return NULL;
-
-	segmentList->segmentPool = pool_new(sizeOfElements, numberOfMemorySegments, 0, 0, J9_GET_CALLSITE(), memoryCategory, POOL_FOR_PORT(PORTLIB));
-	if (!(segmentList->segmentPool)) {
-		j9mem_free_memory(segmentList);
-		return NULL;
+#if defined(J9VM_OPT_SNAPSHOTS)
+	/* Check if its a cold run and class memory segments list */
+	if (IS_SNAPSHOT_RUN(javaVM) && ((J9MEM_CATEGORY_CLASSES == memoryCategory) || (OMRMEM_CATEGORY_VM == memoryCategory) || (J9MEM_CATEGORY_JIT == memoryCategory))) {
+		if (NULL == (segmentList = vmsnapshot_allocate_memory(sizeof(J9MemorySegmentList), memoryCategory))) {
+			return NULL;
+		}
+		segmentList->segmentPool = pool_new(sizeOfElements, numberOfMemorySegments, 0, 0, J9_GET_CALLSITE(), memoryCategory, POOL_FOR_PORT(VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM)));
+		if (!(segmentList->segmentPool)) {
+			vmsnapshot_free_memory(segmentList);
+			return NULL;
+		}
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+		if (NULL == (segmentList = j9mem_allocate_memory(sizeof(J9MemorySegmentList), memoryCategory))) {
+			return NULL;
+		}
+		segmentList->segmentPool = pool_new(sizeOfElements, numberOfMemorySegments, 0, 0, J9_GET_CALLSITE(), memoryCategory, POOL_FOR_PORT(PORTLIB));
+		if (!(segmentList->segmentPool)) {
+			j9mem_free_memory(segmentList);
+			return NULL;
+		}
 	}
 	segmentList->nextSegment = NULL;
 	segmentList->totalSegmentSize = 0;
@@ -650,4 +874,3 @@ segmentSearchComparator (J9AVLTree *tree, UDATA value, J9MemorySegment *searchNo
 		return baseAddress > value ? -1 : 1;
 	}
 }
-

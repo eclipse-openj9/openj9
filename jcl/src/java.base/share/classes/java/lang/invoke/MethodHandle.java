@@ -66,6 +66,8 @@ import sun.reflect.ConstantPool;
 /*[ENDIF]*/
 import com.ibm.jit.JITHelpers;
 import com.ibm.oti.util.Msg;
+import com.ibm.oti.vm.SnapshotControlAPI;
+import com.ibm.oti.vm.SnapshotHook;
 // }}} JIT support
 import com.ibm.oti.vm.VM;
 import com.ibm.oti.vm.VMLangAccess;
@@ -1957,6 +1959,15 @@ final class ThunkTuple {
 	static native void registerNatives();
 	static {
 		registerNatives();
+		if (VM.isSnapshotRun()) {
+			/* Need to use the old style anon functions, too early in JVM startup to use lambdas */
+			SnapshotControlAPI.registerPostRestoreHooks(new Runnable() {
+				@Override
+				public void run() {
+					registerNatives();
+				}	
+			});
+		}
 	}
 	
 	/*[IF ]*/

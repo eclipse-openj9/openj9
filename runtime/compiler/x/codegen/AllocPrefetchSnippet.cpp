@@ -27,6 +27,8 @@
 #include "env/jittypes.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "objectfmt/GlobalFunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 #include "runtime/CodeRuntime.hpp"
 #include "runtime/J9CodeCache.hpp"
 #include "env/VMJ9.h"
@@ -54,17 +56,12 @@ uint8_t *TR::X86AllocPrefetchSnippet::emitSnippetBody()
       }
 #endif
 
-   TR_ASSERT(prefetchThunkGenerated, "Invalid prefetch snippet.");
-
-   // CALL [32-bit relative]
-   //
-   *buffer++ = 0xe8;
-
-   int32_t disp32;
-   uintptr_t helperAddress = 0;
+   TR_ASSERT_FATAL(prefetchThunkGenerated, "Invalid prefetch snippet.");
 
    if (useSharedCodeCacheSnippet)
       {
+      uintptr_t helperAddress = 0;
+
 #ifdef J9VM_GC_NON_ZERO_TLH
       if(!isNonZeroTLH())
          {
@@ -77,36 +74,44 @@ uint8_t *TR::X86AllocPrefetchSnippet::emitSnippetBody()
 #else
       helperAddress = (uintptr_t)(fej9->getAllocationPrefetchCodeSnippetAddress(comp));
 #endif
-      }
 
-   if (helperAddress && IS_32BIT_RIP(helperAddress, (buffer + 4) ) )
-      {
-      disp32 = (int32_t)(helperAddress - (uintptr_t)(buffer+4));
+      // CALLImm4 prefetchSnippet
+      //
+      // Local call
+      //
+      *buffer++ = 0xe8;
+
+      TR_ASSERT_FATAL(helperAddress, "could not find allocation prefetch helper");
+      TR_ASSERT_FATAL(IS_32BIT_RIP(helperAddress, (buffer + 4)), "prefetch helper should be in the same code cache");
+
+      int32_t disp32 = (int32_t)(helperAddress - (uintptr_t)(buffer+4));
+
+      *(int32_t *)buffer = disp32;
+      buffer += 4;
       }
    else
       {
       TR_RuntimeHelper helper = (comp->getOption(TR_EnableNewX86PrefetchTLH)) ? TR_X86newPrefetchTLH : TR_X86prefetchTLH;
       helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
-      disp32 = cg()->branchDisplacementToHelperOrTrampoline(buffer+4, helperSymRef);
-      if (fej9->needRelocationsForHelpers())
-         {
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
-                                                                                (uint8_t *)helperSymRef,
-                                                                                TR_HelperAddress,
-                                                                                cg()),
-                                   __FILE__, __LINE__, getNode());
-         }
-      }
 
-   *(int32_t *)buffer = disp32;
-   buffer += 4;
+      TR::GlobalFunctionCallData data(helperSymRef, getNode(), buffer, cg());
+      buffer = cg()->getObjFmt()->encodeGlobalFunctionCall(data);
+      }
 
    return genRestartJump(buffer);
    }
 
 uint32_t TR::X86AllocPrefetchSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   return 10 + estimateRestartJumpLength(estimatedSnippetStart + 2);
+   TR::Compilation *comp = cg()->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+   bool useSharedCodeCacheSnippet = fej9->supportsCodeCacheSnippets();
+
+   int32_t length = useSharedCodeCacheSnippet ? 5 :   // 5 = CALLImm4
+                                                cg()->getObjFmt()->globalFunctionCallBinaryLength();
+
+   length += estimateRestartJumpLength(estimatedSnippetStart + length);
+   return length;
    }
 
 TR_X86AllocPrefetchGeometry

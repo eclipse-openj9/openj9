@@ -39,6 +39,8 @@
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
+#include "objectfmt/GlobalFunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 
 bool TR::X86PicDataSnippet::shouldEmitJ2IThunkPointer()
    {

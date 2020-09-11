@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,6 +92,107 @@ computeJCLRuntimeFlags(J9JavaVM *vm)
 	return flags;
 }
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+jint
+restoreRunStandardInit(J9JavaVM *vm)
+{
+	J9VMThread *vmThread = vm->mainThread;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9ConstantPool *jclConstantPool = (J9ConstantPool *) vm->jclConstantPool;
+	extern J9ROMClass *jclROMClass;
+	jclFakeClass.romClass = jclROMClass;
+	jclConstantPool->ramClass = &jclFakeClass;
+	jclConstantPool->romConstantPool = J9_ROM_CP_FROM_ROM_CLASS(jclROMClass);
+	J9NativeLibrary *javaLibHandle = NULL;
+	J9NativeLibrary *nativeLibrary = NULL;
+	J9JavaLangManagementData *mgmt = NULL;
+	jint rc = 0;
+
+	mgmt = vm->managementData;
+	if (NULL == mgmt) {
+		rc = JNI_ERR;
+		goto done;
+	}
+
+	/* init monitor used to protect access to the U64 fields in the management data */
+	if (omrthread_rwmutex_init(&mgmt->managementDataLock, 0, "management fields lock")) {
+		rc = JNI_ERR;
+		goto done;
+	}
+
+	/* init monitor used to wake up the heap threshold notification thread */
+	if (omrthread_monitor_init(&mgmt->notificationMonitor, 0)) {
+		rc = JNI_ERR;
+		goto done;
+	}
+
+	if (J9THREAD_SUCCESS != omrthread_monitor_init(&mgmt->dlparNotificationMonitor, 0)) {
+		mgmt->dlparNotificationMonitor = NULL;
+	}
+
+	rc = initializeStaticIntField(vmThread, J9VMCOMIBMOTIVMVM_OR_NULL(vm), J9VMCONSTANTPOOL_COMIBMOTIVMVM_EXTENDED_RUNTIME_FLAGS2, (I_32)vm->extendedRuntimeFlags2);
+	if (JNI_OK != rc) {
+		goto done;
+	}
+
+	/* CANNOT hold VM Access while calling registerBootstrapLibrary */
+	vmFuncs->internalReleaseVMAccess(vmThread);
+
+	/* If we have a JitConfig, add the JIT dll to the bootstrap loader so we can add JNI natives in the JIT */
+	if (NULL != vm->jitConfig) {
+
+		if (vmFuncs->registerBootstrapLibrary(vmThread, J9_JIT_DLL_NAME, &nativeLibrary, FALSE) != J9NATIVELIB_LOAD_OK) {
+			rc = JNI_ERR;
+			goto doneReacquire;
+		}
+	}
+
+	rc = (jint)vmFuncs->registerBootstrapLibrary(vm->mainThread, J9_JAVA_SE_DLL_NAME, &nativeLibrary, FALSE);
+	if (0 != rc) {
+		goto doneReacquire;
+	}
+	((J9NativeLibrary*)nativeLibrary)->flags |= J9NATIVELIB_FLAG_ALLOW_INL;
+
+#ifdef J9VM_OPT_SIDECAR
+#if !defined(J9VM_INTERP_MINIMAL_JCL)
+	{
+		rc = (jint)vmFuncs->registerBootstrapLibrary(vm->mainThread, "zip", &nativeLibrary, FALSE);
+	}
+#endif /* !J9VM_INTERP_MINIMAL_JCL */
+#endif /* J9VM_OPT_SIDECAR */
+
+	if (0 == vmFuncs->registerBootstrapLibrary(vmThread, "java", &javaLibHandle, 0)) {
+		jstring (JNICALL *nativeFuncAddr)(JNIEnv *env, const char *str) = NULL;
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		j9sl_lookup_name(javaLibHandle->handle, "JNU_NewStringPlatform", (UDATA*)&nativeFuncAddr, "LLL");
+		nativeFuncAddr((JNIEnv*)vmThread, "");
+	}
+
+
+#if defined(WIN32) && !defined(OPENJ9_BUILD)
+
+	/* Preload this dependency from the JVM directories so the system does not load it from system path, as the wrong version could be found.
+	 * Ignore the return value, if jsig isn't present the JVM won't start anyway.
+	 */
+	vmFuncs->registerBootstrapLibrary( vm->mainThread, "jsig", &nativeLibrary, FALSE);
+
+	/* Preload this dependency from the JVM directories so the system does not load it from system path, as the wrong version could be found. */
+	rc = (jint)vmFuncs->registerBootstrapLibrary( vm->mainThread, "dbgwrapper80", &nativeLibrary, FALSE);
+	if (0 != rc) {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		/* If library can not be found, print a warning and proceed anyway as the dependency on this library may have been removed. */
+		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB, dbgwrapperStr, rc);
+	}
+#endif /* defined(WIN32) && !defined(OPENJ9_BUILD) */
+
+doneReacquire:
+	vmFuncs->internalAcquireVMAccess(vmThread);
+
+done:
+	return rc;
+}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
 jint
 standardInit( J9JavaVM *vm, char *dllName)
 {
@@ -127,7 +228,11 @@ standardInit( J9JavaVM *vm, char *dllName)
 		}
 	}
 	/* Now create the classPathEntries */
-	if (initializeBootstrapClassPath(vm)) {
+	if (initializeBootstrapClassPath(vm)
+#if defined(J9VM_OPT_SNAPSHOTS)
+		&& !IS_RESTORE_RUN(vm)
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	) {
 		goto _fail;
 	}
 #endif
@@ -154,18 +259,18 @@ standardInit( J9JavaVM *vm, char *dllName)
 
 	if (JNI_OK == result) {
 		vmFuncs->internalAcquireVMAccess(vmThread);
-		
+
 		result = (jint)initializeRequiredClasses(vmThread, dllName);
-		
+
 		if (JNI_OK == result) {
 			result = vmFuncs->initializeHeapOOMMessage(vmThread);
 		}
-		
+
 		if (JNI_OK == result) {
 			U_32 runtimeFlags = computeJCLRuntimeFlags(vm);
 			result = initializeKnownClasses(vm, runtimeFlags);
 		}
-		
+
 		if (JNI_OK == result) {
 			IDATA continueInitialization = TRUE;
 			/* Must do this before initializeAttachedThread */
@@ -202,7 +307,7 @@ standardInit( J9JavaVM *vm, char *dllName)
 		}
 		vmFuncs->internalReleaseVMAccess(vmThread);
 	}
-	
+
 	if (JNI_OK != result) {
 		goto _fail;
 	}
@@ -386,15 +491,29 @@ internalInitializeJavaLangClassLoader(JNIEnv * env)
 	}
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	/* always use persisted version in restore run */
+	if (!IS_RESTORE_RUN(vm)) {
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		vm->applicationClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(appClassLoader));
+#if defined(J9VM_OPT_SNAPSHOTS)
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
-	vm->applicationClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(appClassLoader));
-
+#if defined(J9VM_OPT_SNAPSHOTS)
+	/* set app class loader object if restore run */
+	if (IS_RESTORE_RUN(vm)) {
+		vmFuncs->initializeImageClassLoaderObject(vm, vm->applicationClassLoader, J9_JNI_UNWRAP_REFERENCE(appClassLoader));
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	if (NULL == vm->applicationClassLoader) {
 		/* CMVC 201518
 		 * applicationClassLoader may be null due to lazy classloader initialization. Initialize
 		 * the applicationClassLoader now or vm will start throwing NoClassDefFoundException.
 		 */
-		vm->applicationClassLoader = (void*) (UDATA)(vmFuncs->internalAllocateClassLoader(vm, J9_JNI_UNWRAP_REFERENCE(appClassLoader)));
+
+		vm->applicationClassLoader = (void*)(UDATA)(vmFuncs->internalAllocateClassLoader(vm, J9_JNI_UNWRAP_REFERENCE(appClassLoader)));
+
 		if (NULL != vmThread->currentException) {
 			/* while this exception check and return statement seem un-necessary, it is added to prevent
 			 * oversights if anybody adds more code in the future.
@@ -412,11 +531,25 @@ internalInitializeJavaLangClassLoader(JNIEnv * env)
 			classLoaderObject = classLoaderParentObject;
 			classLoaderParentObject = J9VMJAVALANGCLASSLOADER_PARENT(vmThread, classLoaderObject);
 		}
+#if defined(J9VM_OPT_SNAPSHOTS)
+		/* always use persisted version in restore run */
+		if (!IS_RESTORE_RUN(vm)) {
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			vm->extensionClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, classLoaderObject);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
-		vm->extensionClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, classLoaderObject);
-
+#if defined(J9VM_OPT_SNAPSHOTS)
+		/* set extension class loader object if warm run */
+		if (IS_RESTORE_RUN(vm)) {
+			vmFuncs->initializeImageClassLoaderObject(vm, vm->extensionClassLoader, classLoaderObject);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 		if (NULL == vm->extensionClassLoader) {
-			vm->extensionClassLoader = (void*) (UDATA)(vmFuncs->internalAllocateClassLoader(vm, classLoaderObject));
+
+			vm->extensionClassLoader = (void*)(UDATA)(vmFuncs->internalAllocateClassLoader(vm, classLoaderObject));
+
 			if (NULL != vmThread->currentException) {
 				/* while this exception check and return statement seem un-necessary, it is added to prevent
 				 * oversights if anybody adds more code in the future.
@@ -442,7 +575,15 @@ JCL_OnUnload(J9JavaVM *vm, void *reserved)
 #ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	if (vm->bootstrapClassPath) {
-		j9mem_free_memory(vm->bootstrapClassPath);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(vm)) {
+			VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+			vmsnapshot_free_memory(vm->bootstrapClassPath);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			j9mem_free_memory(vm->bootstrapClassPath);
+		}
 		vm->bootstrapClassPath = NULL;
 	}
 #endif
@@ -953,11 +1094,11 @@ completeInitialization(J9JavaVM * vm)
 	jint result = JNI_OK;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9VMThread *currentThread = vm->mainThread;
-	
+
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->sendCompleteInitialization(currentThread);
 	vmFuncs->internalReleaseVMAccess(currentThread);
-	
+
 	if (NULL == currentThread->currentException) {
 		/* ensure ClassLoader.applicationClassLoader updated via system property java.system.class.loader is updated in VM as well */
 		internalInitializeJavaLangClassLoader((JNIEnv*)currentThread);

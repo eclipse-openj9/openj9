@@ -5297,6 +5297,31 @@ J9::CodeGenerator::generatePoisonNode(TR::Block *currentBlock, TR::SymbolReferen
    return storeNode;
    }
 
+uint32_t
+J9::CodeGenerator::initializeLinkageInfo(void *linkageInfoPtr)
+   {
+   TR::Compilation *comp = self()->comp();
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = (J9::PrivateLinkage::LinkageInfo *)linkageInfoPtr;
+
+   TR::Recompilation * recomp = comp->getRecompilationInfo();
+   if (recomp && recomp->couldBeCompiledAgain())
+      {
+      if (recomp->useSampling())
+         linkageInfo->setSamplingMethodBody();
+      else
+         linkageInfo->setCountingMethodBody();
+      }
+
+   linkageInfo->setReservedWord((self()->getBinaryBufferCursor() - self()->getCodeStart()));
+   linkageInfo->setReturnInfo(comp->getReturnInfo());
+
+   if (comp->getGenerateReadOnlyCode())
+      {
+      comp->setLinkageInfo(linkageInfo);
+      }
+
+   return linkageInfo->getWord();
+   }
 
 // I need to preserve the type information for monitorenter/exit through
 // code generation, but the secondChild is being used for other monitor

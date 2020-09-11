@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,7 @@ static void cleanupBytecodeProfilingData (J9HookInterface** hook, UDATA eventNum
  * listeners and resetting the buffer.
  *
  * If the thread doesn't have a buffer, one will be created for it.
- * 
+ *
  */
 void
 flushBytecodeProfilingData(J9VMThread* vmThread)
@@ -62,7 +62,9 @@ flushBytecodeProfilingData(J9VMThread* vmThread)
 			vmThread->profilingBufferCursor - bufferStart);
 	} else {
 		PORT_ACCESS_FROM_VMC(vmThread);
-		U_8* newBuffer = j9mem_allocate_memory(profilingBufferSize , OMRMEM_CATEGORY_VM);
+
+		U_8* newBuffer;
+		newBuffer = j9mem_allocate_memory(profilingBufferSize , OMRMEM_CATEGORY_VM);
 
 		Trc_VM_flushBytecodeProfilingData_newBuffer(vmThread, newBuffer);
 
@@ -77,7 +79,7 @@ flushBytecodeProfilingData(J9VMThread* vmThread)
 
 /**
  * Free any profiling buffer associated with this thread. If the buffer contains
- * unflushed data, report the J9HOOK_VM_PROFILING_BYTECODE_BUFFER_FULL 
+ * unflushed data, report the J9HOOK_VM_PROFILING_BYTECODE_BUFFER_FULL
  * event to any listeners first.
  */
 static void
@@ -96,6 +98,7 @@ cleanupBytecodeProfilingData(J9HookInterface** hook, UDATA eventNum, void* event
 		vmThread->profilingBufferEnd = vmThread->profilingBufferCursor = NULL;
 
 		j9mem_free_memory(bufferStart);
+
 	}
 
 	Trc_VM_cleanupBytecodeProfilingData_Exit();
@@ -136,7 +139,7 @@ profilingBytecodeBufferFullHookRegistered(J9JavaVM* vm)
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 /*
  * Classes are being unloaded.
- * As a precaution, flush any pending profile buffers in ALL threads, since they may contain references to 
+ * As a precaution, flush any pending profile buffers in ALL threads, since they may contain references to
  * classes being unloaded. This could cause a crash if a listener attempted to process that data.
  * Caller must have exclusive VM access.
  */

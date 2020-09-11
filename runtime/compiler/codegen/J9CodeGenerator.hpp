@@ -571,6 +571,14 @@ public:
     */
    bool supportVMInternalNatives();
 
+   /**
+    * \brief Intializes the Linkage Info word found before the interpreter entry point.
+    *
+    * \param[in] linkageInfo : pointer to the linkage info word
+    *
+    * \return Linkage Info word
+    */
+   uint32_t initializeLinkageInfo(void *linkageInfoPtr);
 
    /**
     * \brief Determines whether the code generator supports stack allocations

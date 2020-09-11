@@ -33,7 +33,15 @@ intptr_t
 J9::PrivateLinkage::entryPointFromCompiledMethod()
    {
    uint8_t *methodEntry = cg()->getCodeStart();
-   methodEntry += J9::PrivateLinkage::LinkageInfo::get(methodEntry)->getReservedWord();
+   TR::Compilation *comp = cg()->comp();
+
+   J9::PrivateLinkage::LinkageInfo *linkageInfo;
+   if (comp->getGenerateReadOnlyCode())
+      linkageInfo = J9::PrivateLinkage::LinkageInfo::get(comp);
+   else
+      linkageInfo = J9::PrivateLinkage::LinkageInfo::get(methodEntry);
+
+   methodEntry += linkageInfo->getReservedWord();
    return reinterpret_cast<intptr_t>(methodEntry);
    }
 

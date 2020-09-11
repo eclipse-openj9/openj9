@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,15 @@ addStatistic(J9JavaVM *javaVM, U_8 *name, U_8 dataType)
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	/* Allocate and fill the structure */
-	statistic = j9mem_allocate_memory(size, OMRMEM_CATEGORY_VM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+		statistic = vmsnapshot_allocate_memory(size, OMRMEM_CATEGORY_VM);
+	} else
+#endif
+	{
+		statistic = j9mem_allocate_memory(size, OMRMEM_CATEGORY_VM);
+	}
 	if (NULL != statistic) {
 		statistic->dataSlot = 0;
 		statistic->dataType = (U_32) dataType;
@@ -76,7 +84,15 @@ deleteStatistics(J9JavaVM *javaVM)
 	/* Delete the linked list */
 	while (NULL != statistic) {
 		J9Statistic *nextStatistic = statistic->nextStatistic;
-		j9mem_free_memory(statistic);
+	#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+			VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+			vmsnapshot_free_memory(statistic);
+		} else
+	#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			j9mem_free_memory(statistic);
+		}
 		statistic = nextStatistic;
 	}
 	javaVM->nextStatistic = NULL;
@@ -91,11 +107,11 @@ void *
 getStatistic(J9JavaVM *javaVM, U_8 *name)
 {
 	J9Statistic *statistic = NULL;
-	
+
 	if (NULL != javaVM->statisticsMutex) {
 		omrthread_monitor_enter(javaVM->statisticsMutex);
 	}
-	
+
 	statistic = javaVM->nextStatistic;
 
 	/* Walk the linked list */

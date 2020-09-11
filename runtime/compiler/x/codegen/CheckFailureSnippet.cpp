@@ -38,6 +38,8 @@
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "infra/SimpleRegex.hpp"
+#include "objectfmt/GlobalFunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 uint32_t TR::X86CheckFailureSnippet::getLength(int32_t estimatedSnippetStart)
@@ -66,7 +68,11 @@ uint32_t TR::X86CheckFailureSnippet::getLength(int32_t estimatedSnippetStart)
       }
 
    }
-   return (_requiresFPstackPop ? 11 : 9) + breakSize;
+   return (_requiresFPstackPop ? 2 :   // FSTP st0,st0
+                                 0)
+           + cg()->getObjFmt()->globalFunctionCallBinaryLength()
+           + 4                         // disp32 to check instruction
+           + breakSize;
    }
 
 uint8_t *TR::X86CheckFailureSnippet::emitSnippetBody()
@@ -149,25 +155,9 @@ uint8_t *TR::X86CheckFailureSnippet::emitCheckFailureSnippetBody(uint8_t *buffer
       *buffer++ = 0xd8;
       }
 
-   *buffer++ = 0xe8; // CallImm4
-   intptr_t destinationAddress = (intptr_t)getDestination()->getMethodAddress();
+   TR::GlobalFunctionCallData data(getDestination(), getCheckInstruction()->getNode(), buffer, cg());
+   buffer = cg()->getObjFmt()->encodeGlobalFunctionCall(data);
 
-   if (NEEDS_TRAMPOLINE(destinationAddress, buffer+4, cg()))
-      {
-      destinationAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(getDestination()->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT(IS_32BIT_RIP(destinationAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
-      }
-
-   *(int32_t *)buffer = (int32_t)(destinationAddress - (intptr_t)(buffer+4));
-   cg()->addExternalRelocation(new (cg()->trHeapMemory())
-      TR::ExternalRelocation(
-         buffer,
-         (uint8_t *)getDestination(),
-         TR_HelperAddress,
-         cg()),
-      __FILE__, __LINE__, getCheckInstruction()->getNode());
-
-   buffer += 4;
    uint8_t *checkSite = getCheckInstruction()->getBinaryEncoding();
    *(uint32_t *)buffer = (uint32_t)(buffer - checkSite);
    buffer += 4;
@@ -265,8 +255,11 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86SpineCheckSnippet *snippet)
 
 uint32_t TR::X86CheckFailureSnippetWithResolve::getLength(int32_t estimatedSnippetStart)
    {
-
-   return getRequiredFPstackPop() ? 32 : 30;
+   return (getRequiredFPstackPop() ? 2 :  // FSTP st0, st0
+                                     0)
+           + 5 + 5 + 5                    // 3 * PUSHImm4
+           + (2 * cg()->getObjFmt()->globalFunctionCallBinaryLength())  // 2 * global function calls
+           + 4;                           // disp32 to check instruction
    }
 
 enum
@@ -311,26 +304,9 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
                           getCheckInstruction()->getNode());
    buffer += 4;
 
-   // Call the glue routine
-   //
-   *buffer++ = 0xe8;                      // call  Imm4 glue routine
-
-   TR::SymbolReference * glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper(), false, false, false);
-   intptr_t glueAddress = (intptr_t)glueSymRef->getMethodAddress();
-   if (NEEDS_TRAMPOLINE(glueAddress, buffer+4, cg()))
-      {
-      glueAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueSymRef->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT(IS_32BIT_RIP(glueAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
-      }
-   *(int32_t *)buffer = (int32_t)(glueAddress - (intptr_t)(buffer+4));
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
-                                                         (uint8_t *)glueSymRef,
-                                                         TR_HelperAddress, cg()),
-                          __FILE__,
-                          __LINE__,
-                          getCheckInstruction()->getNode());
-
-   buffer += 4;
+   TR::SymbolReference *glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper(), false, false, false);
+   TR::GlobalFunctionCallData dataGlue(glueSymRef, getCheckInstruction()->getNode(), buffer, cg());
+   buffer = cg()->getObjFmt()->encodeGlobalFunctionCall(dataGlue);
 
    // Discard the top of the FP stack
    //
@@ -340,23 +316,9 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
       *buffer++ = 0xd8;
       }
 
-   *buffer++ = 0xe8; // CallImm4
+   TR::GlobalFunctionCallData dataDestination(getDestination(), getCheckInstruction()->getNode(), buffer, cg());
+   buffer = cg()->getObjFmt()->encodeGlobalFunctionCall(dataDestination);
 
-   intptr_t destinationAddress = (intptr_t)getDestination()->getMethodAddress();
-   if (NEEDS_TRAMPOLINE(destinationAddress, buffer+4, cg()))
-      {
-      destinationAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(getDestination()->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT(IS_32BIT_RIP(destinationAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
-      }
-   *(int32_t *)buffer = (int32_t)(destinationAddress - (intptr_t)(buffer+4));
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
-                                                         (uint8_t *)getDestination(),
-                                                         TR_HelperAddress,
-                                                         cg()),
-                                                         __FILE__,
-                                                         __LINE__,
-                                                         getCheckInstruction()->getNode());
-   buffer += 4;
    uint8_t *checkSite = getCheckInstruction()->getBinaryEncoding();
    *(uint32_t *)buffer = (uint32_t)(buffer - checkSite);
    buffer += 4;

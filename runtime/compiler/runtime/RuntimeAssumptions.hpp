@@ -299,9 +299,43 @@ class TR_UnloadedClassPicSite : public OMR::ValueModifyRuntimeAssumption
 
    virtual void dumpInfo();
 
+   /**
+    * @brief Serializes the assumption
+    * @param cursor - pointer to where the assumption should be serialized
+    * @param owningMetadata - pointer to the metadata that this assumption belongs to
+    */
+   virtual void serialize(uint8_t *cursor, uint8_t *owningMetadata);
+
+   /**
+    * @brief Returns the size of the serialized data
+    * @return size of the serialized data
+    */
+   virtual uint32_t size() { return sizeof(SerializedData); }
+
+   /**
+    * @brief Deserializes the assumption
+    *
+    * @param fe - TR_Frontend
+    * @param pm - TR_PersistentMemory
+    * @param cursor - pointer to the start of the section of the serialized assumptions for this kind
+    * @param numAssumptions - number of assumptions in the section
+    *
+    * This method goes through the buffer and calls make to add assumptions to the RAT
+    */
+   static void deserialize(TR_FrontEnd *fe, TR_PersistentMemory * pm, uint8_t *cursor, uint32_t numAssumptions);
+
    private:
    uint8_t    *_picLocation;
    uint32_t    _size;
+
+   struct SerializedData
+      {
+      uint32_t                  _size;
+      uintptr_t                 _key;
+      uint8_t                  *_picLocation;
+      uint8_t                  *_owningMetadata;
+      };
+
    };
 
 #ifdef J9VM_OPT_JITSERVER

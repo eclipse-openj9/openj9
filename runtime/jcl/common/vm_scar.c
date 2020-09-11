@@ -373,20 +373,27 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				break;
 			}
 
-			result = (IDATA) scarInit(vm);
-			if (JNI_OK == result) {
-				result = (IDATA) completeInitialization(vm);
-			}
-			if (JNI_OK != result) {
-				J9VMThread *vmThread = vm->mainThread;
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_RESTORE_RUN(vm)) {
+				restoreRunStandardInit(vm);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				result = (IDATA) scarInit(vm);
+				if (JNI_OK == result) {
+					result = (IDATA) completeInitialization(vm);
+				}
+				if (JNI_OK != result) {
+					J9VMThread *vmThread = vm->mainThread;
 
-				if ((NULL != vmThread->currentException) || (NULL == vmThread->threadObject)) {
-					vmFuncs->internalEnterVMFromJNI(vmThread);
-					vmFuncs->internalExceptionDescribe(vmThread);
-					vmFuncs->internalReleaseVMAccess(vmThread);
-					returnVal = J9VMDLLMAIN_SILENT_EXIT_VM;
-				} else {
-					returnVal = J9VMDLLMAIN_FAILED;
+					if ((NULL != vmThread->currentException) || (NULL == vmThread->threadObject)) {
+						vmFuncs->internalEnterVMFromJNI(vmThread);
+						vmFuncs->internalExceptionDescribe(vmThread);
+						vmFuncs->internalReleaseVMAccess(vmThread);
+						returnVal = J9VMDLLMAIN_SILENT_EXIT_VM;
+					} else {
+						returnVal = J9VMDLLMAIN_FAILED;
+					}
 				}
 			}
 			break;

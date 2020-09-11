@@ -117,11 +117,25 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 		/* Create the vmThread */
 		void *startOfMemoryBlock = NULL;
 		UDATA vmThreadAllocationSize = J9VMTHREAD_ALIGNMENT + ROUND_TO(sizeof(UDATA), vm->vmThreadSize);
-		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-			startOfMemoryBlock = (void *)j9mem_allocate_memory32(vmThreadAllocationSize, OMRMEM_CATEGORY_THREADS);
-		} else {
-			startOfMemoryBlock = (void *)j9mem_allocate_memory(vmThreadAllocationSize, OMRMEM_CATEGORY_THREADS);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(vm)) {
+			VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+			if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+				startOfMemoryBlock = (void *)vmsnapshot_allocate_memory32(vmThreadAllocationSize, OMRMEM_CATEGORY_THREADS);
+			} else {
+				startOfMemoryBlock = (void *)vmsnapshot_allocate_memory(vmThreadAllocationSize, OMRMEM_CATEGORY_THREADS);
+			}
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+				startOfMemoryBlock = (void *)j9mem_allocate_memory32(vmThreadAllocationSize, OMRMEM_CATEGORY_THREADS);
+			} else {
+				startOfMemoryBlock = (void *)j9mem_allocate_memory(vmThreadAllocationSize, OMRMEM_CATEGORY_THREADS);
+			}
 		}
+
 		if (NULL == startOfMemoryBlock) {
 			goto fail;
 		}
@@ -135,7 +149,14 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 
 #if defined(J9VM_PORT_RUNTIME_INSTRUMENTATION)
 		/* Allocate J9RIParameters. */
-		newThread->riParameters = j9mem_allocate_memory(sizeof(J9RIParameters), OMRMEM_CATEGORY_THREADS);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(vm)) {
+			newThread->riParameters = vmsnapshot_allocate_memory(sizeof(J9RIParameters), OMRMEM_CATEGORY_THREADS);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			newThread->riParameters = j9mem_allocate_memory(sizeof(J9RIParameters), OMRMEM_CATEGORY_THREADS);
+		}
 		if (NULL == newThread->riParameters) {
 			goto fail;
 		}
@@ -230,7 +251,14 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 		goto fail;
 	}
 
-	newThread->monitorEnterRecordPool = pool_new(sizeof(J9MonitorEnterRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(PORTLIB));
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(vm)) {
+		newThread->monitorEnterRecordPool = pool_new(sizeof(J9MonitorEnterRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(vm)));
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+		newThread->monitorEnterRecordPool = pool_new(sizeof(J9MonitorEnterRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(PORTLIB));
+	}
 	if (NULL == newThread->monitorEnterRecordPool) {
 		goto fail;
 	}
@@ -1379,7 +1407,6 @@ dumpThreadingInfo(J9JavaVM* jvm)
 J9JavaStack * 
 allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack)
 {
-	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9JavaStack * stack;
 	UDATA mallocSize;
 
@@ -1389,11 +1416,25 @@ allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack)
 	 */
 
 	mallocSize = J9_STACK_OVERFLOW_AND_HEADER_SIZE + (stackSize + sizeof(UDATA)) + vm->thrStaggerMax;
-	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-		stack = (J9JavaStack*)j9mem_allocate_memory32(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
-	} else {
-		stack = (J9JavaStack*)j9mem_allocate_memory(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOTTING_ENABLED(vm)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+			stack = (J9JavaStack*)vmsnapshot_allocate_memory32(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
+		} else {
+			stack = (J9JavaStack*)vmsnapshot_allocate_memory(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
+		}
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+			stack = (J9JavaStack*)j9mem_allocate_memory32(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
+		} else {
+			stack = (J9JavaStack*)j9mem_allocate_memory(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
+		}
 	}
+
 	if (stack != NULL) {
 		/* for hyperthreading platforms, make sure that stacks are relatively misaligned */
 		UDATA end = ((UDATA) stack) + J9_STACK_OVERFLOW_AND_HEADER_SIZE + stackSize;
@@ -1440,12 +1481,23 @@ allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack)
 void 
 freeJavaStack(J9JavaVM * vm, J9JavaStack * stack)
 {
-	PORT_ACCESS_FROM_JAVAVM(vm);
-
-	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-		j9mem_free_memory32(stack);			
-	} else {
-		j9mem_free_memory(stack);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOTTING_ENABLED(vm)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+			vmsnapshot_free_memory32(stack);
+		} else {
+			vmsnapshot_free_memory(stack);
+		}
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+			j9mem_free_memory32(stack);
+		} else {
+			j9mem_free_memory(stack);
+		}
 	}
 }
 

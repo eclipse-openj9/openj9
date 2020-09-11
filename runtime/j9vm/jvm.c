@@ -1237,6 +1237,9 @@ typedef struct J9SpecialArguments {
 	UDATA *argEncoding;
 	IDATA *ibmMallocTraceSet;
 	const char *executableJarPath;
+#if defined(J9VM_OPT_SNAPSHOTS)
+	char *ramCache;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 } J9SpecialArguments;
 /**
  * Look for special options:
@@ -1283,6 +1286,11 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs)
 		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XARGENCODINGLATIN)) {
 			*(specialArgs->argEncoding) = ARG_ENCODING_LATIN;
 		}
+#if defined(J9VM_OPT_SNAPSHOTS)
+		else if (0 == strncmp(args->options[argCursor].optionString, VMOPT_XSNAPSHOT, sizeof(VMOPT_XSNAPSHOT) - 1)) {
+			specialArgs->ramCache = args->options[argCursor].optionString + strlen(VMOPT_XSNAPSHOT);
+		}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	}
 
 	if ((NULL != classPathValue) && (NULL != javaCommandValue) && (strcmp(javaCommandValue, classPathValue) == 0)) {
@@ -1307,6 +1315,307 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs)
 	}
 	return argumentsSize;
 }
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+
+typedef enum J9ParseResult {
+	J9_PARSE_SUCCESS, /**< A pattern was matched */
+	J9_PARSE_FAILURE, /**< A pattern was not matched */
+	J9_PARSE_ERROR    /**< A pattern was matched, but the text contains a semantic error */
+} J9ParseResult;
+
+static BOOLEAN
+matchChar(const char **const cursor, const char pattern)
+{
+	if (pattern == **cursor) {
+		*cursor += 1;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/**
+ * Match up to, but not including, the target character or nul.
+ */
+static void
+scanUntilCharOrNul(const char **const cursor, const char pattern)
+{
+	while ('\0' != **cursor && pattern != **cursor) {
+		*cursor += 1;
+	}
+}
+
+/**
+ * Match up to the end of a suboption. The terminating character (delimiter or nul) is not matched.
+ */
+static void
+scanUntilSuboptionEnd(const char **const cursor)
+{
+	scanUntilCharOrNul(cursor, ',');
+}
+
+/**
+ * Match a string.
+ */
+static BOOLEAN
+matchString(const char **const cursor, const char *const pattern, const size_t length)
+{
+	if (strncmp(*cursor, pattern, length) == 0) {
+		*cursor = *cursor + length;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/**
+ * Helper for matching a string literal.
+ */
+#define J9_MATCH_STRING_LITERAL(cursor, pattern) \
+	matchString(cursor, pattern, sizeof(pattern) - 1)
+
+/**
+ * Capture a string option from a delimited sequence of suboptions.
+ *
+ * As a special consideration, if the output destination constains a non-null pointer, that pointer will be freed before
+ * the destination is assigned. This is to allow for subsequent matches against a string option, where only the last
+ * match will be respected.
+ *
+ * <option>:<suboption>=<value>,<suboption>=<value>
+ *                      ^^^^^^^             ^^^^^^^
+ */
+static J9ParseResult
+parseStringSuboptionValue(const char **const cursor, char **const out)
+{
+	const char *begin = *cursor;
+
+	scanUntilSuboptionEnd(cursor);
+
+	size_t length = *cursor - begin;
+	if (length == 0) {
+		fprintf(stderr, "Error: Empty suboption value.\n");
+		*out = NULL;
+		return J9_PARSE_ERROR;
+	}
+
+	if (*out != NULL) {
+		free(*out);
+		*out = NULL;
+	}
+
+	*out = strndup(begin, length);
+	if (*out == NULL) {
+		fprintf(stderr, "Error: Failed to allocate option value.\n");
+		return J9_PARSE_ERROR;
+	}
+
+	return J9_PARSE_SUCCESS;
+}
+
+/**
+ * Parse a suboption with a string value.
+ *
+ * <option>:<suboption>=<value>,<suboption>=<value>
+ *          ^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^
+ */
+static J9ParseResult
+parseStringSuboption(const char **const cursor, const char *const option, const size_t length, char **const out)
+{
+	if (!matchString(cursor, option, length)) {
+		return J9_PARSE_FAILURE;
+	}
+
+	if (**cursor == '\0' || **cursor == ',') {
+		fprintf(stderr, "Error: Suboption '%s' requires a value.\n", option);
+		return J9_PARSE_ERROR;
+	}
+
+	if (!matchChar(cursor, '=')) {
+		return J9_PARSE_FAILURE;
+	}
+
+	return parseStringSuboptionValue(cursor, out);
+}
+
+#define J9_PARSE_STRING_SUBOPTION_LITERAL(cursor, option, out) \
+	parseStringSuboption(cursor, option, sizeof(option) - 1, out)
+
+static J9ParseResult
+parseXsnapshotOption(const char *const string, J9SnapshotParams *const out)
+{
+	const char *c = string;
+	const char **const cursor = &c;
+
+	if (!J9_MATCH_STRING_LITERAL(cursor, VMOPT_XSNAPSHOT)) {
+		return J9_PARSE_FAILURE;
+	}
+
+	if ('\0' == **cursor) {
+		out->enabled = TRUE;
+		return J9_PARSE_SUCCESS;
+	}
+	if (!matchChar(cursor, ':')) {
+		return J9_PARSE_FAILURE;
+	}
+
+parseSuboption:
+	if ('\0' == **cursor) {
+		fprintf(stderr, "Error: Expecting suboption.\n");
+		goto onError;
+	}
+
+	switch (J9_PARSE_STRING_SUBOPTION_LITERAL(cursor, "file", &out->filename)) {
+	case J9_PARSE_SUCCESS:
+		goto parseNextSuboption;
+	case J9_PARSE_FAILURE:
+		break;
+	case J9_PARSE_ERROR:
+		goto onError;
+	}
+
+	switch (J9_PARSE_STRING_SUBOPTION_LITERAL(cursor, "trigger", &out->trigger)) {
+	case J9_PARSE_SUCCESS:
+		goto parseNextSuboption;
+	case J9_PARSE_FAILURE:
+		break;
+	case J9_PARSE_ERROR:
+		goto onError;
+	}
+
+	fprintf(stderr, "Error: Invalid suboption.\n");
+	goto onError;
+
+parseNextSuboption:
+	if (matchChar(cursor, ',')) {
+		goto parseSuboption;
+	}
+	if ('\0' == **cursor) {
+		out->enabled = TRUE;
+		return J9_PARSE_SUCCESS;
+	}
+	goto onError;
+
+onError:
+	fprintf(stderr, "Error: Failed to parse option '%s'.\n", string);
+	out->enabled = FALSE;
+	return J9_PARSE_ERROR;
+}
+
+static J9ParseResult
+parseXrestoreOption(const char *const string, J9RestoreParams *const out)
+{
+	const char *c = string;
+	const char **const cursor = &c;
+
+	if (!J9_MATCH_STRING_LITERAL(cursor, VMOPT_XRESTORE)) {
+		return J9_PARSE_FAILURE;
+	}
+
+	if ('\0' == **cursor) {
+		out->enabled = TRUE;
+		return J9_PARSE_SUCCESS;
+	}
+	if (!matchChar(cursor, ':')) {
+		return J9_PARSE_FAILURE;
+	}
+
+parseSuboption:
+	if ('\0' == **cursor) {
+		fprintf(stderr, "Error: expecting suboption following colon.\n");
+		goto onError;
+	}
+
+	switch (J9_PARSE_STRING_SUBOPTION_LITERAL(cursor, "file", &out->filename)) {
+	case J9_PARSE_SUCCESS:
+		goto parseNextSuboption;
+	case J9_PARSE_FAILURE:
+		break;
+	case J9_PARSE_ERROR:
+		goto onError;
+	}
+
+	fprintf(stderr, "Error: Invalid suboption.\n");
+	goto onError;
+
+parseNextSuboption:
+	if (matchChar(cursor, ',')) {
+		goto parseSuboption;
+	}
+	if ('\0' == **cursor) {
+		out->enabled = TRUE;
+		return J9_PARSE_SUCCESS;
+	}
+	goto onError;
+
+onError:
+	fprintf(stderr, "Error: Failed to parse option '%s'.\n", string);
+	out->enabled = FALSE;
+	return J9_PARSE_ERROR;
+}
+
+/**
+ * Look for special snapshot-related arguments:
+ *   -Xsnapshot
+ *   -Xrestore
+ */
+static IDATA
+handleSnapshotOptions(const JavaVMInitArgs *const args, J9CreateJavaVMParams *const out)
+{
+	for (jint index = 0; index < args->nOptions; index += 1) {
+		const char *const string = args->options[index].optionString;
+		J9ParseResult result;
+
+		result = parseXsnapshotOption(string, &out->snapshotParams);
+		if (result == J9_PARSE_SUCCESS) {
+			out->flags |= J9_CREATEJAVAVM_SNAPSHOT;
+			continue;
+		} else if (result == J9_PARSE_ERROR) {
+			return -1;
+		}
+
+		result = parseXrestoreOption(string, &out->restoreParams);
+		if (result == J9_PARSE_SUCCESS) {
+			out->flags |= J9_CREATEJAVAVM_RESTORE;
+			continue;
+		} else if (result == J9_PARSE_ERROR) {
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+static void
+initializeSnapshotParams(J9SnapshotParams *params)
+{
+	params->enabled = FALSE;
+	params->filename = NULL;
+	params->trigger = NULL;
+}
+
+static void
+tearDownSnapshotParams(J9SnapshotParams *params)
+{
+	if (NULL != params->filename) {
+		free(params->filename);
+	}
+}
+
+static void
+initializeRestoreParams(J9RestoreParams *params)
+{
+	params->enabled = FALSE;
+	params->filename = NULL;
+}
+
+void
+tearDownRestoreParams(J9RestoreParams *params)
+{
+	if (NULL != params->filename) {
+		free(params->filename);
+	}
+}
+
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 static void
 printVmArgumentsList(J9VMInitArgs *argList)
@@ -1648,6 +1957,12 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	specialArgs.argEncoding = &argEncoding;
 	specialArgs.executableJarPath = NULL;
 	specialArgs.ibmMallocTraceSet = &ibmMallocTraceSet;
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	initializeSnapshotParams(&createParams.snapshotParams);
+	initializeRestoreParams(&createParams.restoreParams);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
 #ifdef J9ZTPF
 
     result = tpf_eownrc(TPF_SET_EOWNR, "IBMRT4J                        ");
@@ -1913,6 +2228,12 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	launcherArgumentsSize = initialArgumentScan(args, &specialArgs);
 	localVerboseLevel = specialArgs.localVerboseLevel;
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (handleSnapshotOptions(args, &createParams) != 0) {
+		result = JNI_ERR;
+		goto exit;
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	if (VERBOSE_INIT == localVerboseLevel) {
 		createParams.flags |= J9_CREATEJAVAVM_VERBOSE_INIT;
 	}

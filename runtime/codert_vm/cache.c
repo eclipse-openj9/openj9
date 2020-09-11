@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,12 +30,14 @@ J9_DECLARE_CONSTANT_UTF8(newInstanceImplName, "newInstanceImpl");
 J9_DECLARE_CONSTANT_UTF8(newInstanceImplSig, "(Ljava/lang/Class;)Ljava/lang/Object;");
 const J9NameAndSignature newInstanceImplNameAndSig = { (J9UTF8*)&newInstanceImplName, (J9UTF8*)&newInstanceImplSig };
 
-J9AVLTree * jit_allocate_artifacts(J9PortLibrary * portLibrary)
+J9AVLTree * jit_allocate_artifacts(J9JavaVM *javaVM)
 {
 	J9AVLTree *artifactAVLTree;
-	PORT_ACCESS_FROM_PORT(portLibrary);
+
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	artifactAVLTree = (J9AVLTree *) j9mem_allocate_memory(sizeof(J9AVLTree), OMRMEM_CATEGORY_JIT);
+
 	if (!artifactAVLTree)
 		return NULL;
 	artifactAVLTree->insertionComparator = (IDATA (*)(J9AVLTree *, J9AVLTreeNode *, J9AVLTreeNode *))avl_jit_artifact_insertionCompare;
@@ -53,4 +55,3 @@ J9JITHashTable *avl_jit_artifact_insert_existing_table(J9AVLTree * tree, J9JITHa
 	avl_insert(tree, (J9AVLTreeNode *) hashTable);
 	return hashTable;
 }
-

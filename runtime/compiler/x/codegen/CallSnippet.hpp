@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@ namespace TR { class CodeGenerator; }
 namespace TR { class Instruction; }
 namespace TR { class LabelSymbol; }
 namespace TR { class MethodSymbol; }
+namespace TR { class Node; }
 namespace TR { class SymbolReference; }
 
 namespace TR {
@@ -101,6 +102,7 @@ class X86PicDataSnippet : public TR::Snippet
    private:
    bool shouldEmitJ2IThunkPointer();
    };
+
 
 class X86CallSnippet : public TR::Snippet
    {

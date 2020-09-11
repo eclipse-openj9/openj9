@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,6 +74,9 @@ public:
    TR::CodeCacheMemorySegment *allocateCodeCacheSegment(size_t segmentSize,
                                                         size_t &codeCacheSizeToAllocate,
                                                         void *preferredStartAddress);
+   TR::CodeCacheMemorySegment *allocateCodeCacheWithDataSegmentRO(size_t segmentSize,
+                                                                  size_t &codeCacheSizeToAllocate,
+                                                                  void *preferredStartAddress);
    void *chooseCacheStartAddress(size_t repositorySize);
 
    void addFaintCacheBlock(OMR::MethodExceptionData *metaData, uint8_t bytesToSaveAtStart);

@@ -109,6 +109,7 @@ set(main_sources
 	jnimisc.cpp
 	jnireflect.cpp
 	jvmfree.c
+	VMSnapshotImpl.cpp
 	jvminit.c
 	jvminitcommon.c
 	jvmrisup.c

@@ -622,7 +622,8 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
             if (!sharedCacheServerVM)
                {
                PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-               void * alloc = j9mem_allocate_memory(sizeof(TR_J9SharedCacheServerVM), J9MEM_CATEGORY_JIT);
+               void * alloc  = j9mem_allocate_memory(sizeof(TR_J9SharedCacheServerVM), J9MEM_CATEGORY_JIT);
+
                if (alloc)
                   sharedCacheServerVM = new (alloc) TR_J9SharedCacheServerVM(jitConfig, vmWithoutThreadInfo->_compInfo, vmThread);
                if (sharedCacheServerVM)
@@ -647,7 +648,8 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
             if (!serverVM)
                {
                PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-               void * alloc = j9mem_allocate_memory(sizeof(TR_J9ServerVM), J9MEM_CATEGORY_JIT);
+               alloc = j9mem_allocate_memory(sizeof(TR_J9ServerVM), J9MEM_CATEGORY_JIT);
+
                if (alloc)
                   serverVM = new (alloc) TR_J9ServerVM(jitConfig, vmWithoutThreadInfo->_compInfo, vmThread);
                if (serverVM)
@@ -671,6 +673,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
          if (!aotVMWithThreadInfo)
             {
             PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
             void * alloc = j9mem_allocate_memory(sizeof(TR_J9SharedCacheVM), J9MEM_CATEGORY_JIT);
             if (alloc)
                {
@@ -699,6 +702,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
          if (!vmWithThreadInfo) // This thread has not cached a frontend
             {
             PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
             void * alloc = j9mem_allocate_memory(sizeof(TR_J9VM), J9MEM_CATEGORY_JIT);
             if (alloc)
                {
@@ -3706,7 +3710,8 @@ TR_J9VMBase::compileMethods(TR::OptionSet *optionSet, void *config)
    J9Method * newInstanceThunk = NULL;
 
    int   maxMethodNameLen = 2048;
-   char* fullMethodName   = (char*)j9mem_allocate_memory(maxMethodNameLen, J9MEM_CATEGORY_JIT);
+
+   char* fullMethodName = (char*)j9mem_allocate_memory(maxMethodNameLen, J9MEM_CATEGORY_JIT);
    if (!fullMethodName)
       {
       return false;
@@ -3749,8 +3754,10 @@ TR_J9VMBase::compileMethods(TR::OptionSet *optionSet, void *config)
                if (J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 1 > maxMethodNameLen)
                   {
                   maxMethodNameLen = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 1;
+
                   j9mem_free_memory(fullMethodName);
                   fullMethodName   = (char*)j9mem_allocate_memory(maxMethodNameLen, J9MEM_CATEGORY_JIT);
+
                   if (!fullMethodName)
                      {
                      break;

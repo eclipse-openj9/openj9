@@ -97,17 +97,35 @@ UDATA initializeVMThreading(J9JavaVM *vm)
  */
 void freeVMThread(J9JavaVM *vm, J9VMThread *vmThread)
 {
-	PORT_ACCESS_FROM_PORT(vm->portLibrary);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOTTING_ENABLED(vm)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
 #if defined(J9VM_PORT_RUNTIME_INSTRUMENTATION)
-	if (NULL != vmThread->riParameters) {
-		/* Free J9RIParameters. */
-		j9mem_free_memory(vmThread->riParameters);
-	}
+		if (NULL != vmThread->riParameters) {
+			/* Free J9RIParameters. */
+			vmsnapshot_free_memory(vmThread->riParameters);
+		}
 #endif /* defined(J9VM_PORT_RUNTIME_INSTRUMENTATION) */
-	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-		j9mem_free_memory32(vmThread->startOfMemoryBlock);
-	} else {
-		j9mem_free_memory(vmThread->startOfMemoryBlock);
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+			vmsnapshot_free_memory32(vmThread->startOfMemoryBlock);
+		} else {
+			vmsnapshot_free_memory(vmThread->startOfMemoryBlock);
+		}
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+		PORT_ACCESS_FROM_PORT(vm->portLibrary);
+#if defined(J9VM_PORT_RUNTIME_INSTRUMENTATION)
+		if (NULL != vmThread->riParameters) {
+			/* Free J9RIParameters. */
+			j9mem_free_memory(vmThread->riParameters);
+		}
+#endif /* defined(J9VM_PORT_RUNTIME_INSTRUMENTATION) */
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+			j9mem_free_memory32(vmThread->startOfMemoryBlock);
+		} else {
+			j9mem_free_memory(vmThread->startOfMemoryBlock);
+		}
 	}
 }
 

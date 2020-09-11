@@ -300,6 +300,19 @@ JIT_HELPER(arrayTranslateTRTO);
 JIT_HELPER(arrayTranslateTROTNoBreak);
 JIT_HELPER(arrayTranslateTROT);
 
+JIT_HELPER(interpreterUnresolvedClassReadOnlyGlue);
+JIT_HELPER(interpreterUnresolvedClassFromStaticFieldReadOnlyGlue);
+JIT_HELPER(interpreterUnresolvedStringReadOnlyGlue);
+JIT_HELPER(interpreterUnresolvedMethodTypeReadOnlyGlue);
+JIT_HELPER(interpreterUnresolvedMethodHandleReadOnlyGlue);
+JIT_HELPER(interpreterUnresolvedCallSiteTableEntryReadOnlyGlue);
+JIT_HELPER(interpreterUnresolvedMethodTypeTableEntryReadOnlyGlue);
+JIT_HELPER(interpreterUnresolvedStaticFieldReadOnlyGlue);
+JIT_HELPER(interpreterUnresolvedStaticFieldSetterReadOnlyGlue);
+JIT_HELPER(interpreterUnresolvedFieldReadOnlyGlue);
+JIT_HELPER(interpreterUnresolvedFieldSetterReadOnlyGlue);
+JIT_HELPER(interpreterUnresolvedConstantDynamicReadOnlyGlue);
+
 // --------------------------------------------------------------------------------
 //                                   AMD64
 // --------------------------------------------------------------------------------
@@ -309,6 +322,14 @@ JIT_HELPER(arrayTranslateTROT);
 JIT_HELPER(SSEdoubleRemainder);
 JIT_HELPER(SSEfloatRemainder);
 
+JIT_HELPER(resolveVirtualDispatchReadOnly);
+JIT_HELPER(interpreterUnresolvedStaticGlueReadOnly);
+JIT_HELPER(interpreterUnresolvedSpecialGlueReadOnly);
+JIT_HELPER(interpreterStaticAndSpecialGlueReadOnly);
+JIT_HELPER(dispatchIPicSlot1MethodReadOnly);
+JIT_HELPER(dispatchIPicSlot2MethodReadOnly);
+JIT_HELPER(IPicResolveReadOnly);
+JIT_HELPER(IPicLookupDispatchReadOnly);
 
 JIT_HELPER(icallVMprJavaSendVirtual0);
 JIT_HELPER(icallVMprJavaSendVirtual1);
@@ -597,6 +618,19 @@ JIT_HELPER(_interpreterUnresolvedStaticDataGlue);
 JIT_HELPER(_interpreterUnresolvedStaticDataStoreGlue);
 JIT_HELPER(_interpreterUnresolvedInstanceDataGlue);
 JIT_HELPER(_interpreterUnresolvedInstanceDataStoreGlue);
+JIT_HELPER(_interpreterUnresolvedFieldSetterReadOnlyGlue);
+JIT_HELPER(_interpreterUnresolvedFieldReadOnlyGlue);
+JIT_HELPER(_interpreterUnresolvedClassFromStaticFieldReadOnlyGlue);
+JIT_HELPER(_interpreterUnresolvedClassReadOnlyGlue);
+JIT_HELPER(_interpreterUnresolvedStringReadOnlyGlue);
+JIT_HELPER(_interpreterUnresolvedMethodTypeReadOnlyGlue);
+JIT_HELPER(_interpreterUnresolvedMethodHandleReadOnlyGlue);
+JIT_HELPER(_interpreterUnresolvedCallSiteTableEntryReadOnlyGlue);
+JIT_HELPER(_interpreterUnresolvedMethodTypeTableEntryReadOnlyGlue);
+JIT_HELPER(_interpreterUnresolvedConstantDynamicReadOnlyGlue);
+JIT_HELPER(_interpreterUnresolvedStaticFieldSetterReadOnlyGlue);
+JIT_HELPER(_interpreterUnresolvedStaticFieldReadOnlyGlue);
+JIT_HELPER(_virtualUnresolvedHelperReadOnly);
 JIT_HELPER(_virtualUnresolvedHelper);
 JIT_HELPER(_interfaceCallHelper);
 JIT_HELPER(_interfaceCallHelperSingleDynamicSlot);
@@ -1149,6 +1183,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_X86dispatchInterpretedFromVPicSlot,         (void *)dispatchInterpretedFromVPicSlot, TR_Helper);
    SET(TR_X86populateVPicVTableDispatch,              (void *)populateVPicVTableDispatch,      TR_Helper);
 
+
    SET(TR_X86interpreterUnresolvedStaticGlue,         (void *)interpreterUnresolvedStaticGlue,  TR_Helper);
    SET(TR_X86interpreterUnresolvedSpecialGlue,        (void *)interpreterUnresolvedSpecialGlue,  TR_Helper);
 
@@ -1166,6 +1201,19 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_X86interpreterUnresolvedConstantDynamicGlue,      (void *)interpreterUnresolvedConstantDynamicGlue,      TR_Helper);
    SET(TR_X86interpreterStaticAndSpecialGlue,               (void *)interpreterStaticAndSpecialGlue,               TR_Helper);
 
+   SET(TR_X86interpreterUnresolvedClassReadOnlyGlue,                (void *)interpreterUnresolvedClassReadOnlyGlue,                TR_Helper);
+   SET(TR_X86interpreterUnresolvedClassFromStaticFieldReadOnlyGlue, (void *)interpreterUnresolvedClassFromStaticFieldReadOnlyGlue, TR_Helper);
+   SET(TR_X86interpreterUnresolvedStringReadOnlyGlue,               (void *)interpreterUnresolvedStringReadOnlyGlue,               TR_Helper);
+   SET(TR_interpreterUnresolvedMethodTypeReadOnlyGlue,              (void *)interpreterUnresolvedMethodTypeReadOnlyGlue,           TR_Helper);
+   SET(TR_interpreterUnresolvedMethodHandleReadOnlyGlue,            (void *)interpreterUnresolvedMethodHandleReadOnlyGlue,         TR_Helper);
+   SET(TR_interpreterUnresolvedCallSiteTableEntryReadOnlyGlue,      (void *)interpreterUnresolvedCallSiteTableEntryReadOnlyGlue,   TR_Helper);
+   SET(TR_interpreterUnresolvedMethodTypeTableEntryReadOnlyGlue,    (void *)interpreterUnresolvedMethodTypeTableEntryReadOnlyGlue, TR_Helper);
+   SET(TR_X86interpreterUnresolvedStaticFieldReadOnlyGlue,          (void *)interpreterUnresolvedStaticFieldReadOnlyGlue,          TR_Helper);
+   SET(TR_X86interpreterUnresolvedStaticFieldSetterReadOnlyGlue,    (void *)interpreterUnresolvedStaticFieldSetterReadOnlyGlue,    TR_Helper);
+   SET(TR_X86interpreterUnresolvedFieldReadOnlyGlue,                (void *)interpreterUnresolvedFieldReadOnlyGlue,                TR_Helper);
+   SET(TR_X86interpreterUnresolvedFieldSetterReadOnlyGlue,          (void *)interpreterUnresolvedFieldSetterReadOnlyGlue,          TR_Helper);
+   SET(TR_X86interpreterUnresolvedConstantDynamicReadOnlyGlue,      (void *)interpreterUnresolvedConstantDynamicReadOnlyGlue,      TR_Helper);
+
    SET(TR_X86prefetchTLH,                (void *)prefetchTLH,                 TR_Helper);
    SET(TR_X86newPrefetchTLH,             (void *)newPrefetchTLH,              TR_Helper);
    SET(TR_X86CodeCachePrefetchHelper,    (void *)prefetchTLH,                 TR_Helper); // needs to be set while compiling
@@ -1176,6 +1224,17 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 
    SET(TR_AMD64floatRemainder,                        (void *)SSEfloatRemainder,  TR_Helper);
    SET(TR_AMD64doubleRemainder,                       (void *)SSEdoubleRemainder, TR_Helper);
+
+   SET(TR_AMD64resolveVirtualDispatchReadOnly,        (void *)resolveVirtualDispatchReadOnly, TR_Helper);
+
+   SET(TR_AMD64interpreterUnresolvedStaticGlueReadOnly, (void *)interpreterUnresolvedStaticGlueReadOnly, TR_Helper);
+   SET(TR_AMD64interpreterUnresolvedSpecialGlueReadOnly, (void *)interpreterUnresolvedSpecialGlueReadOnly, TR_Helper);
+   SET(TR_AMD64interpreterStaticAndSpecialGlueReadOnly, (void *)interpreterStaticAndSpecialGlueReadOnly, TR_Helper);
+
+   SET(TR_AMD64dispatchIPicSlot1MethodReadOnly,       (void *)dispatchIPicSlot1MethodReadOnly, TR_Helper);
+   SET(TR_AMD64dispatchIPicSlot2MethodReadOnly,       (void *)dispatchIPicSlot2MethodReadOnly, TR_Helper);
+   SET(TR_AMD64IPicResolveReadOnly,                   (void *)IPicResolveReadOnly, TR_Helper);
+   SET(TR_AMD64IPicLookupDispatchReadOnly,            (void *)IPicLookupDispatchReadOnly, TR_Helper);
 
    SET(TR_AMD64icallVMprJavaSendVirtual0,             (void *)icallVMprJavaSendVirtual0, TR_Helper);
    SET(TR_AMD64icallVMprJavaSendVirtual1,             (void *)icallVMprJavaSendVirtual1, TR_Helper);
@@ -1578,6 +1637,19 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_S390interpreterUnresolvedStaticDataStoreGlue,   (void *) _interpreterUnresolvedStaticDataStoreGlue,      TR_Helper);
    SET(TR_S390interpreterUnresolvedInstanceDataGlue,      (void *) _interpreterUnresolvedInstanceDataGlue,         TR_Helper);
    SET(TR_S390interpreterUnresolvedInstanceDataStoreGlue, (void *) _interpreterUnresolvedInstanceDataStoreGlue,    TR_Helper);
+   SET(TR_interpreterUnresolvedFieldSetterReadOnlyGlue,            (void *) _interpreterUnresolvedFieldSetterReadOnlyGlue,          TR_Helper);
+   SET(TR_interpreterUnresolvedFieldReadOnlyGlue,                  (void *) _interpreterUnresolvedFieldReadOnlyGlue,                TR_Helper);
+   SET(TR_interpreterUnresolvedClassFromStaticFieldReadOnlyGlue,   (void *) _interpreterUnresolvedClassFromStaticFieldReadOnlyGlue, TR_Helper);
+   SET(TR_interpreterUnresolvedClassReadOnlyGlue,                  (void *) _interpreterUnresolvedClassReadOnlyGlue,                TR_Helper);
+   SET(TR_interpreterUnresolvedStringReadOnlyGlue,                 (void *) _interpreterUnresolvedStringReadOnlyGlue,               TR_Helper);
+   SET(TR_interpreterUnresolvedMethodTypeReadOnlyGlue,             (void *) _interpreterUnresolvedMethodTypeReadOnlyGlue,           TR_Helper);
+   SET(TR_interpreterUnresolvedMethodHandleReadOnlyGlue,           (void *) _interpreterUnresolvedMethodHandleReadOnlyGlue,         TR_Helper);
+   SET(TR_interpreterUnresolvedCallSiteTableEntryReadOnlyGlue,     (void *) _interpreterUnresolvedCallSiteTableEntryReadOnlyGlue,   TR_Helper);
+   SET(TR_interpreterUnresolvedMethodTypeTableEntryReadOnlyGlue,   (void *) _interpreterUnresolvedMethodTypeTableEntryReadOnlyGlue, TR_Helper);
+   SET(TR_interpreterUnresolvedConstantDynamicReadOnlyGlue,        (void *) _interpreterUnresolvedConstantDynamicReadOnlyGlue,      TR_Helper);
+   SET(TR_interpreterUnresolvedStaticFieldSetterReadOnlyGlue,      (void *) _interpreterUnresolvedStaticFieldSetterReadOnlyGlue,    TR_Helper);
+   SET(TR_interpreterUnresolvedStaticFieldReadOnlyGlue,            (void *) _interpreterUnresolvedStaticFieldReadOnlyGlue,          TR_Helper);
+   SET(TR_S390virtualUnresolvedHelperReadOnly,            (void *) _virtualUnresolvedHelperReadOnly,               TR_Helper);
    SET(TR_S390virtualUnresolvedHelper,                    (void *) _virtualUnresolvedHelper,                       TR_Helper);
    SET(TR_S390interfaceCallHelper,                        (void *) _interfaceCallHelper,                           TR_Helper);
    SET(TR_S390interfaceCallHelperSingleDynamicSlot,       (void *) _interfaceCallHelperSingleDynamicSlot,          TR_Helper);
@@ -1607,6 +1679,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_S390jitResolveVirtualMethod,                    (void *) jitResolveVirtualMethod,                        TR_Helper);
    SET(TR_S390jitResolveSpecialMethod,                    (void *) jitResolveSpecialMethod,                        TR_Helper);
    SET(TR_S390jitResolveStaticMethod,                     (void *) jitResolveStaticMethod,                         TR_Helper);
+   SET(TR_S390jitResolvedFieldIsVolatile,                 (void *) jitResolvedFieldIsVolatile,                     TR_Helper);
 
    SET(TR_S390interpreterVoidStaticGlue,              (void *) _interpreterVoidStaticGlue,       TR_Helper);
    SET(TR_S390interpreterSyncVoidStaticGlue,          (void *) _interpreterSyncVoidStaticGlue,   TR_Helper);
@@ -1898,12 +1971,13 @@ char * feGetEnv2(const char * s, const void * vm)
       return 0;
 
    char * envSpace = NULL;
-   PORT_ACCESS_FROM_PORT(((J9JavaVM *)vm)->portLibrary);
+
+   J9JavaVM *javaVM = (J9JavaVM *)vm;
+   PORT_ACCESS_FROM_PORT(javaVM->portLibrary);
    int32_t envSize = j9sysinfo_get_env((char *)s, NULL, 0);
    if (envSize != -1)
       {
       envSpace = (char *)j9mem_allocate_memory(envSize, J9MEM_CATEGORY_JIT);
-
       if (NULL != envSpace)
          {
          envSize = j9sysinfo_get_env((char *)s, envSpace, envSize);
@@ -1963,14 +2037,14 @@ extern "C" void jitReportDynamicCodeLoadEvents(J9VMThread *currentThread)
                J9JITExceptionTable * metaData = (J9JITExceptionTable *) (current + sizeof(J9JITDataCacheHeader));
 
                /* Don't report events for unloaded metaData */
-               if (metaData->constantPool != NULL)
+               if (J9JITEXCEPTIONTABLE_CONSTANTPOOL_GET(metaData) != NULL)
                   {
                   bool foundEyeCatcher = false;
                   OMR::CodeCacheMethodHeader *ccMethodHeader;
-                  ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(vm->hookInterface, currentThread, metaData->ramMethod, (void *) metaData->startPC, metaData->endWarmPC - metaData->startPC, "JIT warm body", metaData );
+                  ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(vm->hookInterface, currentThread, J9JITEXCEPTIONTABLE_RAMMETHOD_GET(metaData), (void *) metaData->startPC, metaData->endWarmPC - metaData->startPC, "JIT warm body", metaData );
                   if (metaData->startColdPC != 0)
                      {
-                     ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(vm->hookInterface, currentThread, metaData->ramMethod, (void *) metaData->startColdPC, metaData->endPC - metaData->startColdPC, "JIT cold body", metaData);
+                     ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(vm->hookInterface, currentThread, J9JITEXCEPTIONTABLE_RAMMETHOD_GET(metaData), (void *) metaData->startColdPC, metaData->endPC - metaData->startColdPC, "JIT cold body", metaData);
                      }
 
                   // Find preprologue region by searching for eye-catcher
@@ -1981,7 +2055,7 @@ extern "C" void jitReportDynamicCodeLoadEvents(J9VMThread *currentThread)
                      J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get((void *)metaData->startPC);
                      if (linkageInfo->isRecompMethodBody())
                         {
-                        ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(vm->hookInterface, currentThread, metaData->ramMethod, (void *)((char*)ccMethodHeader->_eyeCatcher+4), metaData->startPC - (UDATA)((char*)ccMethodHeader->_eyeCatcher+4), "JIT method header", metaData);
+                        ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(vm->hookInterface, currentThread, J9JITEXCEPTIONTABLE_RAMMETHOD_GET(metaData), (void *)((char*)ccMethodHeader->_eyeCatcher+4), metaData->startPC - (UDATA)((char*)ccMethodHeader->_eyeCatcher+4), "JIT method header", metaData);
                         }
                      }
                   }
@@ -2079,5 +2153,3 @@ bool isOrderedPair(U_8 recordType)
       }
    return isOrderedPair;
    }
-
-

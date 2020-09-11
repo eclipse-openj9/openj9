@@ -585,6 +585,7 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9vmem_vmem_params_init(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_vmem_params_init(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9vmem_reserve_memory(param1,param2,param3,param4,param5,param6) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_reserve_memory(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3,param4,param5,param6)
 #define j9vmem_reserve_memory_ex(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_reserve_memory_ex(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
+#define j9vmem_reserve_memory_collocated_ex(param1,param2,param3) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_reserve_memory_collocated_ex(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3)
 #define j9vmem_get_page_size(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_get_page_size(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9vmem_get_page_flags(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_get_page_flags(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9vmem_supported_page_sizes() OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_supported_page_sizes(OMRPORT_FROM_J9PORT(privatePortLibrary))
@@ -788,6 +789,31 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9gs_deinitialize(param1) privatePortLibrary->gs_deinitialize(privatePortLibrary,param1)
 #define j9gs_isEnabled(param1,param2,param3,param4) privatePortLibrary->gs_isEnabled(privatePortLibrary,param1,param2,param3,param4)
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
+
+/* Macros for snapshot port access */
+#define VMSNAPSHOTIMPLPORT_FROM_PORT(_portLibrary) ((VMSnapshotImplPortLibrary *)(_portLibrary))
+#define VMSNAPSHOTIMPLPORT_FROM_JAVAVM(javaVM) ((VMSnapshotImplPortLibrary *)(javaVM->vmSnapshotImplPortLibrary))
+#define VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM) VMSnapshotImplPortLibrary *privateImagePortLibrary = VMSNAPSHOTIMPLPORT_FROM_JAVAVM(javaVM)
+
+/* Macros for omr port access */
+#define VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM) ((OMRPortLibrary *)(javaVM->vmSnapshotImplPortLibrary))
+#define VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(vmSnapshotImplPortLibrary) ((OMRPortLibrary *)vmSnapshotImplPortLibrary)
+
+/*
+* OMR port library wrapper
+* VMSnapshotImpl instance to access vm snapshot functions
+*/
+typedef struct VMSnapshotImplPortLibrary {
+	/* portLibrary, must be the first member of J9PortLibrary */
+	OMRPortLibrary portLibrary;
+	void *vmSnapshotImpl; /* the port lib redirects to vmSnapshotImpl for allocations */
+} VMSnapshotImplPortLibrary;
+
+/* Standard allocation and free functions for image heap suballocator */
+#define vmsnapshot_allocate_memory(param1, category) VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary)->mem_allocate_memory(VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary),param1, J9_GET_CALLSITE(), category)
+#define vmsnapshot_free_memory(param1) VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary)->mem_free_memory(VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary),param1)
+#define vmsnapshot_allocate_memory32(param1, category) VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary)->mem_allocate_memory32(VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary),param1, J9_GET_CALLSITE(), category)
+#define vmsnapshot_free_memory32(param1) VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary)->mem_free_memory32(VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary),param1)
 
 #if defined(OMR_OPT_CUDA)
 

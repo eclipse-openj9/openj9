@@ -78,7 +78,7 @@ static VMINLINE void * getByteCodeInfo(void *inlinedCallSite);
 static VMINLINE void initializeIterator(TR_MapIterator * i, void * methodMetaData)
    {
    i->_methodMetaData = (J9TR_MethodMetaData *)methodMetaData;
-   i->_stackAtlas = (J9JITStackAtlas *) i->_methodMetaData->gcStackAtlas;
+   i->_stackAtlas = J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(i->_methodMetaData);
    i->_currentStackMap = NULL;
    i->_currentInlineMap = NULL;
    i->_nextMap = (U_8 *) getFirstStackMap(i->_stackAtlas);
@@ -88,7 +88,7 @@ static VMINLINE void initializeIterator(TR_MapIterator * i, void * methodMetaDat
 static VMINLINE void initializeIteratorWithSpecifiedMap(TR_MapIterator * i, J9TR_MethodMetaData * methodMetaData, U_8 * map, U_32 mapCount)
    {
    i->_methodMetaData = methodMetaData;
-   i->_stackAtlas = (J9JITStackAtlas *) i->_methodMetaData->gcStackAtlas;
+   i->_stackAtlas = J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(i->_methodMetaData);
    i->_currentStackMap = NULL;
    i->_currentInlineMap = NULL;
    i->_nextMap = map;
@@ -175,7 +175,7 @@ static VMINLINE TR_StackMapTable * initializeMapTable(J9JavaVM * javaVM, J9TR_Me
    TR_MapIterator i;
 
    assert(metaData);
-   stackAtlas = (J9JITStackAtlas *)metaData->gcStackAtlas;
+   stackAtlas = J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(metaData);
    assert(stackAtlas);
 
    initializeIterator(&i, metaData);
@@ -184,8 +184,21 @@ static VMINLINE TR_StackMapTable * initializeMapTable(J9JavaVM * javaVM, J9TR_Me
 
    if (i._stackAtlas->numberOfMaps > threshold)
       {
+#if defined(J9VM_OPT_SNAPSHOTS)
+      VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+#endif
       PORT_ACCESS_FROM_JAVAVM(javaVM);
-      mapTable = (TR_StackMapTable *) j9mem_allocate_memory(concreteMapCount * sizeof(TR_MapTableEntry) + sizeof(TR_StackMapTable), J9MEM_CATEGORY_JIT);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+      if (IS_SNAPSHOT_RUN(javaVM))
+         {
+         mapTable = (TR_StackMapTable *) vmsnapshot_allocate_memory(concreteMapCount * sizeof(TR_MapTableEntry) + sizeof(TR_StackMapTable), J9MEM_CATEGORY_JIT);
+         }
+      else
+#endif
+         {
+         mapTable = (TR_StackMapTable *) j9mem_allocate_memory(concreteMapCount * sizeof(TR_MapTableEntry) + sizeof(TR_StackMapTable), J9MEM_CATEGORY_JIT);
+         }
 
       if (mapTable)
          {
@@ -410,7 +423,7 @@ void jitGetMapsFromPC(J9JavaVM * javaVM, J9TR_MethodMetaData * methodMetaData, U
 
    UDATA fourByteOffsets = HAS_FOUR_BYTE_OFFSET(methodMetaData);
 
-   J9JITStackAtlas * stackAtlas = (J9JITStackAtlas *) methodMetaData->gcStackAtlas;
+   J9JITStackAtlas * stackAtlas = J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(methodMetaData);
 
    *stackMap = 0;
    *inlineMap = 0;
@@ -531,9 +544,10 @@ void * getStackMapFromJitPC(J9JavaVM * javaVM, J9TR_MethodMetaData * methodMetaD
 
 void * getStackAllocMapFromJitPC(J9JavaVM * javaVM, J9TR_MethodMetaData * methodMetaData, UDATA jitPC, void *curStackMap)
    {
+   J9JITStackAtlas *gcStackAtlas = J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(methodMetaData);
    void * stackMap, ** stackAllocMap;
 
-   if (!methodMetaData->gcStackAtlas)
+   if (!gcStackAtlas)
       return NULL;
 
    if (curStackMap)
@@ -541,12 +555,12 @@ void * getStackAllocMapFromJitPC(J9JavaVM * javaVM, J9TR_MethodMetaData * method
    else
       stackMap = getStackMapFromJitPC(javaVM, methodMetaData, jitPC);
 
-   stackAllocMap = (void **)((J9JITStackAtlas *) methodMetaData->gcStackAtlas)->stackAllocMap;
+   stackAllocMap = (void **)J9JITSTACKATLAS_STACKALLOCMAP_GET(gcStackAtlas);
    if (stackAllocMap)
       {
       uintptr_t returnValue;
 
-      if (*((uint8_t **) stackAllocMap) == ((uint8_t *) stackMap))
+      if (J9JITSTACKALLOCMAP_PARAMETERMAP_GET(stackAllocMap) == ((uint8_t *) stackMap))
          return NULL;
 
       returnValue = ((uintptr_t) stackAllocMap) + sizeof(uintptr_t);
@@ -561,7 +575,7 @@ void * getStackAllocMapFromJitPC(J9JavaVM * javaVM, J9TR_MethodMetaData * method
 
 static U_32 sizeOfInlinedCallSiteArrayElement(J9JITExceptionTable * methodMetaData)
    {
-   return sizeof(TR_InlinedCallSite) + ((J9JITStackAtlas *)methodMetaData->gcStackAtlas)->numberOfMapBytes;
+   return sizeof(TR_InlinedCallSite) + J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(methodMetaData)->numberOfMapBytes;
    }
 
 
@@ -756,8 +770,10 @@ UDATA jitExceptionHandlerSearch(J9VMThread * currentThread, J9StackWalkState * w
       else
          {
          PORT_ACCESS_FROM_JAVAVM(currentThread->javaVM);
+
          currentThread->jitExceptionHandlerCache  =
             j9mem_allocate_memory(JIT_EXCEPTION_HANDLER_CACHE_SIZE * sizeof (TR_jitExceptionHandlerCache),J9MEM_CATEGORY_VM);
+
          if(currentThread->jitExceptionHandlerCache)
             {
             searchCache=(TR_jitExceptionHandlerCache *)(currentThread->jitExceptionHandlerCache);
@@ -1087,7 +1103,8 @@ U_32 getNumInlinedCallSites(J9JITExceptionTable * methodMetaData)
    U_32 numExceptionRanges = methodMetaData->numExcptionRanges & 0x3FFF;
    U_32 fourByteExceptionRanges = methodMetaData->numExcptionRanges & 0x8000;
 
-   if (methodMetaData->inlinedCalls)
+   void *inlinedCalls = J9JITEXCEPTIONTABLE_INLINEDCALLS_GET(methodMetaData);
+   if (inlinedCalls)
       {
 #if 0
       if (fourByteExceptionRanges)
@@ -1104,7 +1121,7 @@ U_32 getNumInlinedCallSites(J9JITExceptionTable * methodMetaData)
          }
 #endif
 
-      sizeOfInlinedCallSites = (U_32) ((UDATA) methodMetaData->gcStackAtlas - (UDATA) methodMetaData->inlinedCalls);
+      sizeOfInlinedCallSites = (U_32) ((UDATA) J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(methodMetaData) - (UDATA) inlinedCalls);
 
       numInlinedCallSites = sizeOfInlinedCallSites / sizeOfInlinedCallSiteArrayElement(methodMetaData);
       }
@@ -1196,18 +1213,23 @@ void aotStackAtlasFixEndian(J9JITStackAtlas * stackAtlas, J9JITExceptionTable * 
 
    if (numInlinedCallSites)
       {
-      U_8 * callSiteCursor = methodMetaData->inlinedCalls;
+      U_8 * callSiteCursor = J9JITEXCEPTIONTABLE_INLINEDCALLS_GET(methodMetaData);
       for (i = 0; i < numInlinedCallSites; ++i)
          {
+#if defined(J9VM_OPT_SNAPSHOTS)
+         TR_InlinedCallSiteWithOffset * inlinedCallSite = (TR_InlinedCallSiteWithOffset *)callSiteCursor;
+         J9_AOT_FIX_ENDIAN(inlinedCallSite->_methodInfoOffset)
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
          TR_InlinedCallSite * inlinedCallSite = (TR_InlinedCallSite *)callSiteCursor;
          J9_AOT_FIX_ENDIAN(inlinedCallSite->_methodInfo)
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
          aotByteCodeInfoFixEndian(&inlinedCallSite->_byteCodeInfo);
          callSiteCursor += sizeOfInlinedCallSiteArrayElement(methodMetaData);
          }
       }
 
    /* Fix internal pointer maps */
-   internalPtrMapCursor = stackAtlas->internalPointerMap;
+   internalPtrMapCursor = J9JITSTACKATLAS_INTERNALPOINTERMAP_GET(stackAtlas);
    if (internalPtrMapCursor)
       {
       J9_AOT_FIX_ENDIAN(*internalPtrMapCursor); /* Fix endian of parameter map */
@@ -1218,7 +1240,11 @@ void aotStackAtlasFixEndian(J9JITStackAtlas * stackAtlas, J9JITExceptionTable * 
       }
 
 /* Fix the stack atlas (we fix the padding so that if it is removed we'll find out) */
+#if defined(J9VM_OPT_SNAPSHOTS)
+   J9_AOT_FIX_ENDIAN(stackAtlas->internalPointerMapOffset)
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
    J9_AOT_FIX_ENDIAN(stackAtlas->internalPointerMap)
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
    J9_AOT_FIX_ENDIAN_HALF(stackAtlas->numberOfMaps)
    J9_AOT_FIX_ENDIAN_HALF(stackAtlas->numberOfMapBytes)
    J9_AOT_FIX_ENDIAN_HALF(stackAtlas->parmBaseOffset)
@@ -1251,8 +1277,13 @@ void aotMethodMetaDataFixEndian(J9JITExceptionTable * methodMetaData)
 /* Ignore the inlined call map, since we have none in AOT (for now) */
 
 /* Fix fields within the method meta data structure */
+#if defined(J9VM_OPT_SNAPSHOTS)
+   J9_AOT_FIX_ENDIAN(methodMetaData->constantPoolOffset)
+   J9_AOT_FIX_ENDIAN(methodMetaData->ramMethodOffset)
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
    J9_AOT_FIX_ENDIAN(methodMetaData->constantPool)
    J9_AOT_FIX_ENDIAN(methodMetaData->ramMethod)
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
    J9_AOT_FIX_ENDIAN(methodMetaData->startPC)
    J9_AOT_FIX_ENDIAN(methodMetaData->endPC)
    J9_AOT_FIX_ENDIAN(methodMetaData->endWarmPC)
@@ -1268,31 +1299,36 @@ void aotMethodMetaDataFixEndian(J9JITExceptionTable * methodMetaData)
    J9_AOT_FIX_ENDIAN_HALF(methodMetaData->numExcptionRanges)
    J9_AOT_FIX_ENDIAN(methodMetaData->size)
    J9_AOT_FIX_ENDIAN(methodMetaData->registerSaveDescription)
+#if defined(J9VM_OPT_SNAPSHOTS)
+   J9_AOT_FIX_ENDIAN(methodMetaData->gcStackAtlasOffset)
+   J9_AOT_FIX_ENDIAN(methodMetaData->inlinedCallsOffset)
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
    J9_AOT_FIX_ENDIAN(methodMetaData->gcStackAtlas)
    J9_AOT_FIX_ENDIAN(methodMetaData->inlinedCalls)
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #undef J9_AOT_FIX_ENDIAN
 #undef J9_AOT_FIX_ENDIAN_HALF
     }
 
 UDATA * getObjectArgScanCursor(J9StackWalkState * walkState)
    {
-   return (UDATA *) (((U_8 *) walkState->bp) + ((J9JITStackAtlas *)walkState->jitInfo->gcStackAtlas)->parmBaseOffset);
+   return (UDATA *) (((U_8 *) walkState->bp) + J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(walkState->jitInfo)->parmBaseOffset);
    }
 
 
 UDATA * getObjectTempScanCursor(J9StackWalkState * walkState)
    {
-   return (UDATA *) (((U_8 *) walkState->bp) + ((J9JITStackAtlas *)walkState->jitInfo->gcStackAtlas)->localBaseOffset);
+   return (UDATA *) (((U_8 *) walkState->bp) + J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(walkState->jitInfo)->localBaseOffset);
    }
 
 I_32 hasSyncObjectTemp(J9StackWalkState * walkState)
    {
-   return (I_16)((J9JITStackAtlas *)walkState->jitInfo->gcStackAtlas)->paddingTo32 == -1 ? 0 : 1;
+   return (I_16)J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(walkState->jitInfo)->paddingTo32 == -1 ? 0 : 1;
    }
 
 UDATA * getSyncObjectTempScanCursor(J9StackWalkState * walkState)
    {
-   return (UDATA *) (((U_8 *) walkState->bp) + (I_16)((J9JITStackAtlas *)walkState->jitInfo->gcStackAtlas)->paddingTo32);
+   return (UDATA *) (((U_8 *) walkState->bp) + (I_16)J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(walkState->jitInfo)->paddingTo32);
    }
 
 U_8 getNextDescriptionBit(U_8 ** jitDescriptionCursor)
@@ -1304,8 +1340,8 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
    {
    UDATA registerMap;
    U_8 numInternalPtrMapBytes, numDistinctPinningArrays, i;
-   UDATA parmStackMap;
-   void * internalPointerMap = gcStackAtlas->internalPointerMap;
+   U_8 *parmStackMap;
+   void * internalPointerMap = J9JITSTACKATLAS_INTERNALPOINTERMAP_GET(gcStackAtlas);
    U_8 *tempJitDescriptionCursor = (U_8 *) internalPointerMap;
    I_16 indexOfFirstInternalPtr;
    I_16 offsetOfFirstInternalPtr;
@@ -1319,8 +1355,8 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
       internal pointer autos, as calling GC in this case is problematic.
    */
 
-   parmStackMap = *((UDATA *) tempJitDescriptionCursor);
-   if (parmStackMap == ((UDATA) stackMap))
+   parmStackMap = J9JITINTERNALPOINTERMAP_PARAMETERMAP_GET(tempJitDescriptionCursor);
+   if (parmStackMap == stackMap)
       return;
 
    registerMap = getJitRegisterMap(walkState->jitInfo, stackMap);
@@ -1815,12 +1851,12 @@ void jitAddSpilledRegisters(J9StackWalkState * walkState, void * stackMap)
 
 static VMINLINE J9ConstantPool * getJitConstantPool(J9TR_MethodMetaData * md)
    {
-   return md->constantPool;
+   return J9JITEXCEPTIONTABLE_CONSTANTPOOL_GET(md);
    }
 
 static VMINLINE J9Method * getJitRamMethod(J9TR_MethodMetaData * md)
    {
-   return md->ramMethod;
+   return J9JITEXCEPTIONTABLE_RAMMETHOD_GET(md);
    }
 
 static VMINLINE UDATA getJittedMethodStartPC(J9TR_MethodMetaData * md)
@@ -1875,17 +1911,17 @@ static VMINLINE I_32 getJitExceptionTableSize(J9TR_MethodMetaData * md)
 
 void * getJitGCStackAtlas(J9TR_MethodMetaData * md)
    {
-   return md->gcStackAtlas;
+   return J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(md);
    }
 
 void * getJitInlinedCallInfo(J9TR_MethodMetaData * md)
    {
-   return md->inlinedCalls;
+   return J9JITEXCEPTIONTABLE_INLINEDCALLS_GET(md);
    }
 
 U_8 * getJitInternalPointerMap(J9TR_StackAtlas * sa)
    {
-   return sa->internalPointerMap;
+   return J9JITSTACKATLAS_INTERNALPOINTERMAP_GET(sa);
    }
 
 U_16 getJitNumberOfMaps(J9TR_StackAtlas * sa)
@@ -1998,7 +2034,11 @@ UDATA hasMoreInlinedMethods(void * inlinedCallSite)
 
 void * getInlinedMethod(void * inlinedCallSite)
    {
+#if defined(J9VM_OPT_SNAPSHOTS)
+   return J9_METHOD_FROM_OFFSET(((TR_InlinedCallSiteWithOffset *)inlinedCallSite)->_methodInfoOffset);
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
    return ((TR_InlinedCallSite *)inlinedCallSite)->_methodInfo;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
    }
 
 
@@ -2415,7 +2455,7 @@ UDATA getJitSlotsBeforeSavesInDataResolve()
 
 uint8_t* getBeginningOfOSRSection(J9JITExceptionTable *metaData, uint32_t sectionIndex)
    {
-   uint8_t* returnVal = (uint8_t*)metaData->osrInfo;
+   uint8_t* returnVal = (uint8_t*)J9JITEXCEPTIONTABLE_OSRINFO_GET(metaData);
    uint32_t i;
    for (i = 0; i < sectionIndex; i++)
       {
@@ -2433,7 +2473,7 @@ void* preOSR(J9VMThread* currentThread, J9JITExceptionTable *metaData, void *pc)
    void* stackMap, *inlineMap;
    TR_ByteCodeInfo* bcInfo;
    assert(metaData);
-   assert(metaData->osrInfo);
+   assert(J9JITEXCEPTIONTABLE_OSRINFO_GET(metaData));
 
    jitGetMapsFromPC(currentThread->javaVM, metaData, (UDATA) pc, &stackMap, &inlineMap);
    bcInfo = (TR_ByteCodeInfo*) getByteCodeInfoFromStackMap(metaData, inlineMap);
@@ -2462,7 +2502,7 @@ UDATA postOSR(J9VMThread* currentThread, J9JITExceptionTable *metaData, void *pc
 UDATA usesOSR(J9VMThread* currentThread, J9JITExceptionTable *metaData)
    {
    assert(metaData != NULL);
-   return metaData->osrInfo?1:0;
+   return J9JITEXCEPTIONTABLE_OSRINFO_GET(metaData)?1:0;
    }
 
 UDATA osrScratchBufferSize(J9VMThread* currentThread, J9JITExceptionTable *metaData, void *pc)
@@ -2470,7 +2510,7 @@ UDATA osrScratchBufferSize(J9VMThread* currentThread, J9JITExceptionTable *metaD
    uint8_t* instruction2SharedSlotMap;
    uint32_t maxScratchBufferSize;
    assert(metaData);
-   assert(metaData->osrInfo);
+   assert(J9JITEXCEPTIONTABLE_OSRINFO_GET(metaData));
    instruction2SharedSlotMap = getBeginningOfOSRSection(metaData, 0);
    /* skip over the size of the section*/
    instruction2SharedSlotMap += sizeof(uint32_t);

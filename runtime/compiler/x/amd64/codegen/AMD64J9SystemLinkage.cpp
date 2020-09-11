@@ -27,6 +27,8 @@
 #include "env/jittypes.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "objectfmt/GlobalFunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 #include "x/codegen/J9LinkageUtils.hpp"
 
 #if defined(TR_TARGET_64BIT)
@@ -135,24 +137,8 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(
          }
       }
 
-
-   TR::Instruction *instr;
-   if (methodSymbol->getMethodAddress())
-      {
-      TR_ASSERT(scratchReg, "could not find second scratch register");
-      generateRegImm64Instruction(
-         MOV8RegImm64,
-         callNode,
-         scratchReg,
-         (uintptr_t)methodSymbol->getMethodAddress(),
-         cg());
-
-      instr = generateRegInstruction(CALLReg, callNode, scratchReg, preDeps, cg());
-      }
-   else
-      {
-      instr = generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, preDeps, cg());
-      }
+   TR::GlobalFunctionCallData data(methodSymRef, callNode, scratchReg, 0, preDeps, TR_NoRelocation, false, cg());
+   TR::Instruction *instr = cg()->getObjFmt()->emitGlobalFunctionCall(data);
 
    instr->setNeedsGCMap(getProperties().getPreservedRegisterMapForGC());
 

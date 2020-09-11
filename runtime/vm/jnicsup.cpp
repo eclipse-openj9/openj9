@@ -1762,7 +1762,15 @@ jniPushFrame(J9VMThread * vmThread, UDATA type, UDATA capacity)
 
 	/* Allocate per-thread JNI reference frame pools */
 	if (vmThread->jniReferenceFrames == NULL) {
-		if ((vmThread->jniReferenceFrames = pool_new(sizeof(struct J9JNIReferenceFrame), 16, 0, POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(javaVM->portLibrary))) == NULL) {
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOT_RUN(javaVM)) {
+			vmThread->jniReferenceFrames = pool_new(sizeof(struct J9JNIReferenceFrame), 16, 0, POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM)));
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			vmThread->jniReferenceFrames = pool_new(sizeof(struct J9JNIReferenceFrame), 16, 0, POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(javaVM->portLibrary));
+		}
+		if (vmThread->jniReferenceFrames == NULL) {
 			goto exit;
 		}
 	}
@@ -1772,7 +1780,14 @@ jniPushFrame(J9VMThread * vmThread, UDATA type, UDATA capacity)
 	if (frame) {
 		frame->type = type;
 		frame->previous = (J9JNIReferenceFrame*)vmThread->jniLocalReferences;
-		frame->references = pool_new( sizeof(UDATA), capacity, sizeof(UDATA), POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(javaVM->portLibrary));
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOT_RUN(javaVM)) {
+			frame->references = pool_new( sizeof(UDATA), capacity, sizeof(UDATA), POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM)));
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			frame->references = pool_new( sizeof(UDATA), capacity, sizeof(UDATA), POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(javaVM->portLibrary));
+		}
 		if (frame->references) {
 			vmThread->jniLocalReferences = (UDATA*)frame;
 			result = 0;
@@ -1941,7 +1956,16 @@ ensureJNIIDTable(J9VMThread *currentThread, J9Class* clazz)
 	/* First ensure that the ID pool in the class loader exists */
 
 	if (classLoader->jniIDs == NULL) {
-		J9Pool * idPool = pool_new(sizeof(J9GenericJNIID),  16, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, (j9memAlloc_fptr_t)pool_portLibAlloc, (j9memFree_fptr_t)pool_portLibFree, PORTLIB);
+		J9Pool * idPool = NULL;
+#if defined(J9VM_OPT_SNAPSHOTS)
+		J9JavaVM *vm = currentThread->javaVM;
+		if (IS_SNAPSHOT_RUN(vm)) {
+			idPool = pool_new(sizeof(J9GenericJNIID),  16, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(vm)));
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			idPool = pool_new(sizeof(J9GenericJNIID),  16, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, (j9memAlloc_fptr_t)pool_portLibAlloc, (j9memFree_fptr_t)pool_portLibFree, PORTLIB);
+		}
 
 		if (idPool == NULL) {
 			return NULL;
@@ -1956,7 +1980,16 @@ ensureJNIIDTable(J9VMThread *currentThread, J9Class* clazz)
 		J9ROMClass * romclass = clazz->romClass;
 		UDATA size = (romclass->romMethodCount + romclass->romFieldCount) * sizeof(void *);
 
-		jniIDs = (void**)j9mem_allocate_memory(size, J9MEM_CATEGORY_JNI);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		J9JavaVM *vm = currentThread->javaVM;
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+		if (IS_SNAPSHOT_RUN(vm)) {
+			jniIDs = (void**)vmsnapshot_allocate_memory(size, J9MEM_CATEGORY_JNI);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			jniIDs = (void**)j9mem_allocate_memory(size, J9MEM_CATEGORY_JNI);
+		}
 		if (jniIDs != NULL) {
 			memset(jniIDs, 0, size);
 			issueWriteBarrier();

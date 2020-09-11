@@ -119,6 +119,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static void VMwrtbarWithoutStoreEvaluator(TR::Node *node, TR::Node *destOwningObject, TR::Node *sourceObject, TR::Register *srcReg, TR_X86ScratchRegisterManager *scratchRegisterManager, TR::CodeGenerator *cg);
    static void VMwrtbarWithStoreEvaluator(TR::Node *node, TR::MemoryReference  *storeMR, TR_X86ScratchRegisterManager *, TR::Node *destinationChild, TR::Node *sourceChild, bool isIndirect, TR::CodeGenerator *cg, bool nullAdjusted = false);
 
+   static TR::Register *loadaddrEvaluator(TR::Node *code, TR::CodeGenerator *cg);
+
    /*
     * Generate instructions for static/instance field access report.
     * @param dataSnippetRegister: Optional, can be used to pass the address of the snippet inside the register.
@@ -154,6 +156,15 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    class CaseConversionManager;
    static TR::Register *stringCaseConversionHelper(TR::Node *node, TR::CodeGenerator *cg, CaseConversionManager& manager);
+
+   static TR::MemoryReference *generateX86MemoryReferenceForLoadILOpCode(TR::Node *node, TR::Instruction *&insertAfterInstr, TR::CodeGenerator *cg);
+   static TR::MemoryReference *generateX86MemoryReferenceForStoreILOpCode(TR::Node *node, TR::Instruction *&insertAfterInstr, TR::CodeGenerator *cg);
+
+   static TR::MemoryReference *generateUnresolvedDataReferenceReadOnly(
+      TR::Node *node,
+      TR::Instruction *&insertAfterInstr,
+      bool needsVolatileCheck,
+      TR::CodeGenerator *cg);
 
    private:
    static TR::Register* performHeapLoadWithReadBarrier(TR::Node* node, TR::CodeGenerator* cg);

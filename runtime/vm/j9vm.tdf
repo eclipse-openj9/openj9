@@ -796,5 +796,21 @@ TraceExit=Trc_VM_GetCompleteNPEMessage_Exit Overhead=1 Level=3 Template="GetComp
 
 TraceException=Trc_VM_CreateRAMClassFromROMClass_circularity2 noEnv Overhead=1 Level=1 Template="Class loading circularity detected"
 
+TraceEntry=Trc_VM_ReadImageFromFile_Entry NoEnv Overhead=1 Level=1 Template="Heap = %p. File being read = %s"
+TraceExit=Trc_VM_ReadImageFromFile_Exit NoEnv Overhead=1 Level=1 Template="JVMImage Read Successful"
+TraceEntry=Trc_VM_WriteImageToFile_Entry Overhead=1 Level=1 Template="Heap = %p. File being written to = %s"
+TraceExit=Trc_VM_WriteImageToFile_Exit Overhead=1 Level=1 Template="JVMImage Write Successful"
+TraceEntry=Trc_VM_SubAllocateImageMemory_Entry NoEnv Overhead=1 Level=1 Template="JVMImage Data = %p. Byte amount = %d."
+TraceExit=Trc_VM_SubAllocateImageMemory_Exit NoEnv Overhead=1 Level=1 Template="Memory allocated = %p."
+TraceEntry=Trc_VM_RegisterInTable_Entry NoEnv Overhead=1 Level=1 Template="Table = %p. Current size of table is %d. Last element in table is %d. Entry to be added is %d."
+TraceExit=Trc_VM_RegisterInTable_Exit NoEnv Overhead=1 Level=1 Template="Table = %p. Current size of table is %d. Last element in table is %d."
+TraceEntry=Trc_VM_DeregisterInTable_Entry NoEnv Overhead=1 Level=1 Template="Table = %p. Current size of table is %d. Last element in table is %d. Entry to be deleted is %d."
+TraceExit=Trc_VM_DeregisterInTable_Exit NoEnv Overhead=1 Level=1 Template="Table = %p. Current size of table is %d. Last element in table is %d."
+TraceEvent=Trc_VM_ImageClassLoaderRegister NoEnv Overhead=1 Level=1 Template="Classloader located at %p. Classloader ID is %d."
+TraceEvent=Trc_VM_ImageClassRegister Overhead=1 Level=1 Template="Class located at %p. Class Name is %s."
+TraceEvent=Trc_VM_ImageCPEntryRegister NoEnv Overhead=1 Level=1 Template="ClassPath located at %p. ClassPath Name is %s."
+TraceEvent=Trc_VM_warmClassLoadHookFailed Overhead=1 Level=1 Template="Warm class load hook failed class=%p, %s"
+TraceEvent=Trc_VM_loadWarmClass Overhead=1 Level=1 Template="LoadClass clazz=%p, %s"
+
 TraceException=Trc_VM_CreateRAMClassFromROMClass_classIsNotPermittedBySealedSuperclass Overhead=1 Level=1 Template="Superclass (RAM class=%p) does not include %.*s in PermittedSubclasses list"
 TraceException=Trc_VM_CreateRAMClassFromROMClass_classIsNotPermittedBySealedSuperinterface Overhead=1 Level=1 Template="Superinterface (RAM class=%p) does not include %.*s in PermittedSubclasses list"

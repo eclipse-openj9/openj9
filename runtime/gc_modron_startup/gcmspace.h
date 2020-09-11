@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,11 @@ extern "C" {
 
 MM_MemorySpace *internalAllocateMemorySpaceWithMaximum(J9JavaVM * javaVM, UDATA minimumSpaceSize, UDATA minimumNewSpaceSize, UDATA initialNewSpaceSize, UDATA maximumNewSpaceSize, UDATA minimumTenureSpaceSize, UDATA initialTenureSpaceSize, UDATA maximumTenureSpaceSize, UDATA memoryMax, UDATA baseAddress, UDATA tenureFlags);
 MM_MemorySpace *internalAllocateMemorySpaceWithMaximumWithEnv(MM_EnvironmentBase *env, J9JavaVM *javaVM, UDATA minimumSpaceSize, UDATA minimumNewSpaceSize, UDATA initialNewSpaceSize, UDATA maximumNewSpaceSize, UDATA minimumTenureSpaceSize, UDATA initialTenureSpaceSize, UDATA maximumTenureSpaceSize, UDATA memoryMax, UDATA baseAddress, UDATA tenureFlags);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+MM_MemorySpace *internalAllocateMemorySpaceForRestore(J9JavaVM *javaVM, UDATA minimumSpaceSize, UDATA restoreNewSpaceSize, UDATA minimumNewSpaceSize, UDATA initialNewSpaceSize, UDATA maximumNewSpaceSize, UDATA restoreTenureSpaceSize, UDATA minimumTenureSpaceSize, UDATA initialTenureSpaceSize, UDATA maximumTenureSpaceSize, UDATA memoryMax, UDATA baseAddress, UDATA tenureFlags);
+MM_MemorySpace *internalAllocateMemorySpaceForRestoreWithEnv(MM_EnvironmentBase *env, J9JavaVM *javaVM, UDATA minimumSpaceSize, UDATA restoreNewSpaceSize, UDATA minimumNewSpaceSize, UDATA initialNewSpaceSize, UDATA maximumNewSpaceSize, UDATA restoreTenureSpaceSize, UDATA minimumTenureSpaceSize, UDATA initialTenureSpaceSize, UDATA maximumTenureSpaceSize, UDATA memoryMax, UDATA baseAddress, UDATA tenureFlags);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 #ifdef __cplusplus
 } /* extern "C" { */

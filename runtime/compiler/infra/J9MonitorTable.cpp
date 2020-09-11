@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "infra/MonitorTable.hpp"
+#include "env/CompilerEnv.hpp"
 #include "infra/Monitor.hpp"
 #include "infra/CriticalSection.hpp"
 #include "control/CompilationRuntime.hpp"
@@ -44,6 +45,7 @@ J9::MonitorTable::init(
       }
 
    PORT_ACCESS_FROM_PORT(portLib);
+
    void *tableMem = j9mem_allocate_memory(sizeof(TR::MonitorTable), J9MEM_CATEGORY_JIT);
    if (!tableMem) return 0;
    TR::MonitorTable *table = new (tableMem) TR::MonitorTable();
@@ -84,6 +86,7 @@ J9::MonitorTable::allocInitClassUnloadMonitorHolders(uint32_t allowedTotalCompTh
 
    _numCompThreads = allowedTotalCompThreads;
    // Allocate and initialize the array of classUnloadMonitorHolders
+
    _classUnloadMonitorHolders = (int32_t*)j9mem_allocate_memory(sizeof(*(_classUnloadMonitorHolders)) * _numCompThreads, J9MEM_CATEGORY_JIT);
    if (!_classUnloadMonitorHolders)
       return false;
@@ -98,7 +101,7 @@ J9::MonitorTable::create(char *name)
    {
    PORT_ACCESS_FROM_PORT(_portLib);
 
-   void *monMem = j9mem_allocate_memory(sizeof(TR::Monitor), J9MEM_CATEGORY_JIT);
+   void *monMem = j9mem_allocate_memory(sizeof(TR::Monitor), J9MEM_CATEGORY_JIT);;
    if (!monMem)
       {
       return 0;
@@ -172,13 +175,16 @@ J9::MonitorTable::free()
    while (monitor)
       {
       TR::Monitor *next = monitor->getNext();
+
       j9mem_free_memory(monitor);
+
       monitor = next;
       }
+
    j9mem_free_memory(table->_classUnloadMonitorHolders);
    _instance = 0;
    j9mem_free_memory(table);
-   };
+   }
 
 
 // Used to check if current thread holds any known monitors

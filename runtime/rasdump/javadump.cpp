@@ -3538,7 +3538,7 @@ JavaCoreDumpWriter::writeJitMethod(J9VMThread* vmThread)
 			case J9PORT_SIG_VALUE_ADDRESS:
 				table = jitConfig->jitGetExceptionTableFromPC(vmThread, *(UDATA*)value);
 				if (table) {
-					ramMethod = table->ramMethod;
+					ramMethod = J9JITEXCEPTIONTABLE_RAMMETHOD_GET(table);
 					insideJitMethod = true;
 				}
 				break;

@@ -70,12 +70,12 @@ namespace  {
       if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_DYNAMIC_CODE_UNLOAD))
          {
          ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_UNLOAD
-            (vm->hookInterface, vmThread, metaData->ramMethod,
+            (vm->hookInterface, vmThread, J9JITEXCEPTIONTABLE_RAMMETHOD_GET(metaData),
              (U_8*)metaData->startPC);
 
          if (metaData->startColdPC)
             ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_UNLOAD
-               (vm->hookInterface, vmThread, metaData->ramMethod,
+               (vm->hookInterface, vmThread, J9JITEXCEPTIONTABLE_RAMMETHOD_GET(metaData),
                 (U_8*)metaData->startColdPC);
          // At this point the the bodyInfo may have already been reclaimed
          // The bodyInfo is reclaimed only for class unloading, not for recompilation
@@ -84,7 +84,7 @@ namespace  {
             J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get((void *)metaData->startPC);
             if (linkageInfo->isRecompMethodBody())
                {
-               ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_UNLOAD(vm->hookInterface, vmThread, metaData->ramMethod, (U_8 *)((char*)ccMethodHeader->_eyeCatcher+4));
+               ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_UNLOAD(vm->hookInterface, vmThread, J9JITEXCEPTIONTABLE_RAMMETHOD_GET(metaData), (U_8 *)((char*)ccMethodHeader->_eyeCatcher+4));
                }
             }
          }
@@ -105,7 +105,7 @@ namespace  {
 
    inline void markMetaDataAsUnloaded (J9JITExceptionTable *metaData)
       {
-      metaData->constantPool = 0;
+      J9JITEXCEPTIONTABLE_CONSTANTPOOL_SET(metaData, NULL);
       }
 
    inline void reclaimAssumptions(J9JITConfig *jitConfig, J9JITExceptionTable *metaData, bool reclaimPrePrologueAssumptions)
@@ -132,16 +132,16 @@ namespace  {
       {
       // newMetaData's prevMethod and nextMethod should be the
       // same as oldMetaData's due to the memcpy
-      J9JITExceptionTable *prev = oldMetadata->prevMethod;
-      J9JITExceptionTable *next = oldMetadata->nextMethod;
+      J9JITExceptionTable *prev = J9JITEXCEPTIONTABLE_PREVMETHOD_GET(oldMetadata);
+      J9JITExceptionTable *next = J9JITEXCEPTIONTABLE_NEXTMETHOD_GET(oldMetadata);
 
       if (prev)
          {
-         prev->nextMethod = newMetadata;
+         J9JITEXCEPTIONTABLE_NEXTMETHOD_SET(prev, newMetadata);
          }
       else
          {
-         J9Class *j9class = J9_CLASS_FROM_METHOD(oldMetadata->ramMethod);
+         J9Class *j9class = J9_CLASS_FROM_METHOD(J9JITEXCEPTIONTABLE_RAMMETHOD_GET(oldMetadata));
          TR_J9VMBase *fe = TR_J9VMBase::get(vmThread->javaVM->jitConfig, NULL);
 
          if (fe->isAnonymousClass((TR_OpaqueClassBlock *)j9class))
@@ -157,7 +157,7 @@ namespace  {
          }
 
       if (next)
-         next->prevMethod = newMetadata;
+         J9JITEXCEPTIONTABLE_PREVMETHOD_SET(next, newMetadata);
       }
 
    inline J9JITExceptionTable * createStubExceptionTable(J9VMThread *vmThread, J9JITExceptionTable *metaData)
@@ -177,11 +177,11 @@ namespace  {
 
             // Set the various pointers to NULL since this J9JITExceptionTable has no variable length section
             // However, the bodyInfo needs to exist.
-            stubMetadata->inlinedCalls = NULL;
-            stubMetadata->gcStackAtlas = NULL;
-            stubMetadata->gpuCode = NULL;
-            stubMetadata->riData = NULL;
-            stubMetadata->osrInfo = NULL;
+            J9JITEXCEPTIONTABLE_INLINEDCALLS_SET(stubMetadata, NULL);
+            J9JITEXCEPTIONTABLE_GCSTACKATLAS_SET(stubMetadata, NULL);
+            J9JITEXCEPTIONTABLE_GPUCODE_SET(stubMetadata, NULL);
+            J9JITEXCEPTIONTABLE_RIDATA_SET(stubMetadata, NULL);
+            J9JITEXCEPTIONTABLE_OSRINFO_SET(stubMetadata, NULL);
             stubMetadata->runtimeAssumptionList = NULL;
 
             // FASTWALK
@@ -408,7 +408,7 @@ void jitRemoveAllMetaDataForClassLoader(J9VMThread * vmThread, J9ClassLoader * c
    while (nextMetaData)
       {
       currentMetaData = nextMetaData;
-      nextMetaData = currentMetaData->nextMethod;
+      nextMetaData = J9JITEXCEPTIONTABLE_NEXTMETHOD_GET(currentMetaData);
       jitReleaseCodeCollectMetaData(vmThread->javaVM->jitConfig, vmThread, currentMetaData);
       }
    classLoader->jitMetaDataList = NULL;
@@ -434,8 +434,21 @@ void freeFastWalkCache(J9VMThread *vmThread, J9JITExceptionTable *metaData)
          void * mapTable = ((TR_PersistentJittedBodyInfo *)metaData->bodyInfo)->getMapTable();
          if (mapTable && mapTable != (void *)-1)
             {
+#if defined(J9VM_OPT_SNAPSHOTS)
+            VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
+#endif
             PORT_ACCESS_FROM_VMC(vmThread);
-            j9mem_free_memory(mapTable);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+            if (IS_SNAPSHOT_RUN(vmThread->javaVM))
+               {
+               vmsnapshot_free_memory(mapTable);
+               }
+            else
+#endif
+               {
+               j9mem_free_memory(mapTable);
+               }
             }
          ((TR_PersistentJittedBodyInfo *)metaData->bodyInfo)->setMapTable(NULL);
          }
@@ -445,15 +458,17 @@ void vlogReclamation(const char * prefix, J9JITExceptionTable *metaData, size_t 
    {
    if (TR::Options::getVerboseOption(TR_VerboseReclamation))
       {
-
+      J9UTF8 *className = J9JITEXCEPTIONTABLE_CLASSNAME_GET(metaData);
+      J9UTF8 *methodName = J9JITEXCEPTIONTABLE_METHODNAME_GET(metaData);
+      J9UTF8 *methodSignature = J9JITEXCEPTIONTABLE_METHODSIGNATURE_GET(metaData);
       TR_VerboseLog::vlogAcquire();
       TR_VerboseLog::write(
          TR_Vlog_RECLAMATION,
          "%s %.*s.%.*s%.*s @ %s [" POINTER_PRINTF_FORMAT "-",
          prefix,
-         J9UTF8_LENGTH(metaData->className), J9UTF8_DATA(metaData->className),
-         J9UTF8_LENGTH(metaData->methodName), J9UTF8_DATA(metaData->methodName),
-         J9UTF8_LENGTH(metaData->methodSignature), J9UTF8_DATA(metaData->methodSignature),
+         J9UTF8_LENGTH(className), J9UTF8_DATA(className),
+         J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName),
+         J9UTF8_LENGTH(methodSignature), J9UTF8_DATA(methodSignature),
          TR::Compilation::getHotnessName(TR_Hotness(metaData->hotness)),
          metaData->startPC + bytesToSaveAtStart);
 

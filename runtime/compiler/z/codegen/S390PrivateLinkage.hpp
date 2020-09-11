@@ -84,6 +84,9 @@ public:
 
    virtual void buildVirtualDispatch(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies,
       TR::Register * vftReg, uint32_t sizeOfArguments);
+   
+   virtual TR::Instruction* buildNoPatchingVirtualDispatchWithResolve(TR::Node *callNode, TR::RegisterDependencyConditions *deps,
+      TR::LabelSymbol *doneLabel, intptr_t virtualThunk);
 
    virtual TR::RealRegister::RegNum setMethodMetaDataRegister(TR::RealRegister::RegNum r) { return _methodMetaDataRegister = r; }
    virtual TR::RealRegister::RegNum getMethodMetaDataRegister() { return _methodMetaDataRegister; }

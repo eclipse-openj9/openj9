@@ -38,6 +38,9 @@
 #include "HeapRegionDescriptor.hpp"
 #include "HeapRegionIterator.hpp"
 #include "HeapRegionManager.hpp"
+#if defined(J9VM_OPT_SNAPSHOTS)
+#include "HeapVirtualMemory.hpp"
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #include "GlobalCollector.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "ObjectModel.hpp"
@@ -1129,5 +1132,84 @@ j9gc_incrementalUpdate_getHeapBase(OMR_VM *omrVM)
 	}
 }
 #endif /* OMR_GC_MODRON_CONCURRENT_MARK || J9VM_GC_VLHGC */
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+/**
+ * Enter a mode where the heap is safe for snapshotting.
+ *
+ * @param thread the current thread, which must hold exclusive access
+ * @param[out] properties metadata about the current heap snapshot.
+ */
+UDATA
+j9gc_enter_heap_snapshot_mode(J9VMThread *thread)
+{
+	j9gc_modron_global_collect_with_overrides(thread, J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT);
+	return 0;
+}
+
+/**
+ * Leave a mode where the heap is safe for snapshotting.
+ */
+UDATA
+j9gc_leave_heap_snapshot_mode(J9VMThread *thread)
+{
+	return 0;
+}
+
+/**
+ * Store GC properties into the snapshot file.
+ */
+static void
+registerGCSnapshotProperties(J9VMThread *thread)
+{
+	J9JavaVM *vm = thread->javaVM;
+	J9GCSnapshotProperties properties;
+	properties.referenceMode = J9_FULL_REFERENCE_MODE;
+	properties.snapshotKind = J9_STANDARD_GC_SNAPSHOT;
+	vm->internalVMFunctions->setGCSnapshotProperties(vm, &properties);
+}
+
+/**
+ * Register the heap for snapshotting.
+ */
+static void
+registerGCHeapMemoryRegion(J9VMThread *thread)
+{
+	J9JavaVM *vm = thread->javaVM;
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(thread);
+	Assert_MM_true(extensions->isStandardGC());
+	MM_HeapVirtualMemory *heap = (MM_HeapVirtualMemory *)extensions->heap;
+	J9MemoryRegion region;
+	region.type = GC_HEAP;
+	region.fileOffset = 0;
+	region.startAddr = heap->getHeapBase();
+	region.alignedStartAddr = region.startAddr; /* TODO: why? */
+	region.totalSize = heap->getActiveMemorySize();
+	region.mappableSize = 0; /* TODO: unused */
+	region.permissions = 0; /* PROT_READ | PROT_WRITE; TODO: unused */
+	vm->internalVMFunctions->setGCHeapMemoryRegion(vm, &region);
+}
+
+/**
+ * Register GC data for snapshotting.
+ *
+ * Inform the snapshot manager of the heap and other GC properties, so that GC
+ * data will be included in the snapshot file. This function is called by the
+ * snapshot manager before dumping a snapshot file.
+ *
+ * Before calling this function, the GC must be in snapshot mode, which is
+ * entered by calling j9gc_enter_heap_snapshot_mode.
+ */
+UDATA
+j9gc_register_for_snapshot(J9VMThread *thread)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(thread);
+	Assert_MM_true(extensions->isStandardGC());
+	registerGCSnapshotProperties(thread);
+	registerGCHeapMemoryRegion(thread);
+	return 0;
+}
+
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 } /* extern "C" */

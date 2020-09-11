@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2019 IBM Corp. and others
+; Copyright (c) 2000, 2020 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,6 +93,37 @@ eq_IPicData_j2iThunk           equ 22h    ; only present if direct invoke is pos
 ; IPIC data size is either 22h or 2ah, due to the optional j2iThunk.
 ; It's omitted here since it would be unused anyway.
 
+
+; The following describes the field offsets of the ccResolveVirtualData struct
+; in AMD64PrivateLinkage.cpp
+;
+eq_ResolveVirtual_cpAddress     equ 00h
+eq_ResolveVirtual_cpIndex       equ 08h
+eq_ResolveVirtual_directMethod  equ 10h
+eq_ResolveVirtual_j2iThunk      equ 18h
+eq_ResolveVirtual_vtableOffset  equ 20h
+
+; The following describes the field offsets of the ccUnresolvedStaticSpecialData
+; struct in AMD64PrivateLinkage.cpp
+;
+eq_StaticSpecial_snippetOrCompiledMethod equ 00h
+eq_StaticSpecial_ramMethod               equ 08h
+eq_StaticSpecial_cpAddress               equ 10h
+
+; The following describes the field offsets of the ccInterfaceData struct in
+; AMD64PrivateLinkage.cpp
+;
+eq_InterfaceDispatch_slot1Class                  equ 00h
+eq_InterfaceDispatch_slot1Method                 equ 08h
+eq_InterfaceDispatch_slot2Class                  equ 10h
+eq_InterfaceDispatch_slot2Method                 equ 18h
+eq_InterfaceDispatch_slowInterfaceDispatchMethod equ 20h
+eq_InterfaceDispatch_cpAddress                   equ 28h
+eq_InterfaceDispatch_cpIndex                     equ 30h
+eq_InterfaceDispatch_interfaceClassAddress       equ 38h
+eq_InterfaceDispatch_itableOffset                equ 40h
+
+
 %macro LoadHelperIndex 2 ; args: targetReg, helperIndexSym
         mov     %1, dword [rel + %2]
 %endmacro
@@ -123,5 +154,8 @@ eq_IPicData_j2iThunk           equ 22h    ; only present if direct invoke is pos
         and     %2, eq_ObjectClassMask
 %endif
 %endmacro
+
+eq_ResolveData_indexOrAddr equ 00h
+eq_ResolveData_cpAddress   equ 08h
 
 %endif ; ifndef TR_HOST_64BIT

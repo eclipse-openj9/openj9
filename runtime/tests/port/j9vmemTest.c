@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,12 +24,12 @@
  * @file
  * @ingroup PortTest
  * @brief Verify port library virtual memory management.
- * 
- * Exercise the API for port library virtual memory management operations.  These functions 
- * can be found in the file @ref j9vmem.c  
- * 
+ *
+ * Exercise the API for port library virtual memory management operations.  These functions
+ * can be found in the file @ref j9vmem.c
+ *
  * @note port library virtual memory management operations are not optional in the port library table.
- * 
+ *
  */
 #include <stdlib.h>
 #include <string.h>
@@ -80,14 +80,14 @@ void myFunction2();
 /**
  * @internal
  * Helper function for memory management verification.
- * 
+ *
  * Given a pointer to an memory chunk verify it is
  * \arg a non NULL pointer
  * \arg correct size
  * \arg writeable
  * \arg aligned
  * \arg double aligned
- * 
+ *
  * @param[in] portLibrary The port library under test
  * @param[in] testName The name of the test requesting this functionality
  * @param[in] memPtr Pointer the memory under test
@@ -153,11 +153,11 @@ verifyMemory(struct J9PortLibrary *portLibrary, const char* testName, char *memP
 
 /**
  * Verify port library memory management.
- * 
+ *
  * Ensure the port library is properly setup to run vmem operations.
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
@@ -166,9 +166,9 @@ j9vmem_verify_functiontable_slots(struct J9PortLibrary *portLibrary)
 	const char* testName = "j9vmem_verify_functiontable_slots";
 
 	reportTestEntry(portLibrary, testName);
-	 
+
 	/* Verify that the memory management function pointers are non NULL */
-	
+
 	/* Not tested, implementation dependent.  No known functionality.
 	 * Startup is private to the portlibrary, it is not re-entrant safe
 	 */
@@ -195,7 +195,7 @@ j9vmem_verify_functiontable_slots(struct J9PortLibrary *portLibrary)
 	if (NULL == OMRPORT_FROM_J9PORT(portLibrary)->vmem_decommit_memory) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->vmem_decommit_memory, is NULL\n");
 	}
-	
+
 	if (NULL == OMRPORT_FROM_J9PORT(portLibrary)->vmem_free_memory) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "portLibrary->vmem_free_memory, is NULL\n");
 	}
@@ -209,15 +209,15 @@ j9vmem_verify_functiontable_slots(struct J9PortLibrary *portLibrary)
 
 /**
  * Verify port library memory management.
- * 
+ *
  * Make sure there is at least one page size returned by j9vmem_get_supported_page_sizes
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
-j9vmem_test_verify_there_are_page_sizes(struct J9PortLibrary *portLibrary) 
+j9vmem_test_verify_there_are_page_sizes(struct J9PortLibrary *portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9vmem_test_verify_there_are_page_sizes";
@@ -225,18 +225,18 @@ j9vmem_test_verify_there_are_page_sizes(struct J9PortLibrary *portLibrary)
 	UDATA * pageSizes;
 	UDATA * pageFlags;
 	int i = 0;
-	
+
 	reportTestEntry(portLibrary, testName);
 
 	/* First get all the supported page sizes */
 	pageSizes = j9vmem_supported_page_sizes();
 	pageFlags = j9vmem_supported_page_flags();
-	
+
 	if (pageSizes[0] == 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "There aren't any supported page sizes on this platform \n");
 		goto exit;
 	}
-	
+
 	outputComment(portLibrary, "\t Supported page sizes:\n");
 	for (i =0 ; pageSizes[i] != 0 ; i++) {
 		outputComment(portLibrary, "\t 0x%zx ", pageSizes[i]);
@@ -285,15 +285,15 @@ isPageSizeSupportedBelowBar(UDATA pageSize, UDATA pageFlags)
 
 /**
  * Get all the page sizes and make sure we can allocate a memory chunk for each page size.
- * 
+ *
  * Checks that each allocation manipulates the memory categories appropriately.
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
-j9vmem_test1(struct J9PortLibrary *portLibrary) 
+j9vmem_test1(struct J9PortLibrary *portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9vmem_test1";
@@ -306,21 +306,21 @@ j9vmem_test1(struct J9PortLibrary *portLibrary)
 	I_32 rc;
 	char *lastErrorMessage = NULL;
 	I_32 lastErrorNumber = 0;
-	
+
 	reportTestEntry(portLibrary, testName);
 
 	/* First get all the supported page sizes */
 	pageSizes = j9vmem_supported_page_sizes();
 	pageFlags = j9vmem_supported_page_flags();
-	
+
 	/* reserve and commit memory for each page size */
 	for (i=0 ; pageSizes[i] != 0 ; i++) {
 		UDATA initialBlocks;
 		UDATA initialBytes;
-		
+
 		/* Sample baseline category data */
 		getPortLibraryMemoryCategoryData(portLibrary, &initialBlocks, &initialBytes);
-		
+
 		/* reserve and commit */
 #if defined(J9ZOS390)
 		/* On z/OS skip this test for newly added large pages as obsolete j9vmem_reserve_memory() does not support them */
@@ -331,7 +331,7 @@ j9vmem_test1(struct J9PortLibrary *portLibrary)
 		memPtr = j9vmem_reserve_memory(0,pageSizes[i], &vmemID
 				,J9PORT_VMEM_MEMORY_MODE_READ | J9PORT_VMEM_MEMORY_MODE_WRITE | J9PORT_VMEM_MEMORY_MODE_COMMIT
 				,pageSizes[i], OMRMEM_CATEGORY_PORT_LIBRARY);
-		
+
 		/* did we get any memory? */
 		if (memPtr == NULL) {
 			lastErrorMessage = (char *)j9error_last_error_message();
@@ -354,16 +354,16 @@ j9vmem_test1(struct J9PortLibrary *portLibrary)
 			if (finalBlocks <= initialBlocks) {
 				outputErrorMessage(PORTTEST_ERROR_ARGS, "vmem reserve didn't increment category block as expected. Final blocks=%zu, initial blocks=%zu, page size=%zu.\n", finalBlocks, initialBlocks, pageSizes[i]);
 			}
-		
+
 			if (finalBytes < (initialBytes + pageSizes[i])) {
 				outputErrorMessage(PORTTEST_ERROR_ARGS, "vmem reserve didn't increment category bytes as expected. Initial bytes=%zu, final bytes=%zu, page size=%zu.\n", finalBytes, initialBytes, pageSizes[i]);
 			}
 		}
-		
+
 		/* can we read and write to the memory? */
 		(void) j9str_printf(PORTLIB, allocName, allocNameSize, "j9vmem_reserve_memory(%d)", pageSizes[i]);
 		verifyMemory(portLibrary, testName, memPtr, pageSizes[i], allocName);
-		
+
 		/* free the memory (reuse the vmemID) */
 		rc = j9vmem_free_memory(memPtr, pageSizes[i], &vmemID);
 		if (rc != 0) {
@@ -439,7 +439,7 @@ j9vmem_bench_write_and_decommit_memory(struct J9PortLibrary *portLibrary, UDATA 
 
 	reportTestEntry(portLibrary, testName);
 	setDisclaimVirtualMemory(portLibrary, disclaim);
-	
+
 	/* reserve the memory, but don't commit it yet */
 	j9vmem_vmem_params_init(&params);
 	params.byteAmount = byteAmount;
@@ -467,7 +467,7 @@ j9vmem_bench_write_and_decommit_memory(struct J9PortLibrary *portLibrary, UDATA 
 	startTimeNanos = j9time_nano_time();
 
 	for (i = 0; numIterations != i; i++) {
-	
+
 		memPtr = j9vmem_commit_memory(memPtr, byteAmount, &vmemID);
 		if (NULL == memPtr) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "j9vmem_commit_memory returned NULL when trying to commit 0x%zx bytes backed by 0x%zx-byte pages\n", byteAmount, pageSize);
@@ -787,17 +787,17 @@ exit:
 
 /**
  * Verify that we don't get any errors decomitting memory
- * 
+ *
  * Get all the page sizes and make sure we can allocate a memory chunk for each page size
- * 
+ *
  * After reserving and committing the memory, decommit the memory before freeing it.
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
-j9vmem_decommit_memory_test(struct J9PortLibrary *portLibrary) 
+j9vmem_decommit_memory_test(struct J9PortLibrary *portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9vmem_decommit_memory_test";
@@ -810,16 +810,16 @@ j9vmem_decommit_memory_test(struct J9PortLibrary *portLibrary)
 	IDATA rc;
 	char *lastErrorMessage = NULL;
 	I_32 lastErrorNumber = 0;
-	
+
 	reportTestEntry(portLibrary, testName);
 
 	/* First get all the supported page sizes */
 	pageSizes = j9vmem_supported_page_sizes();
 	pageFlags = j9vmem_supported_page_flags();
-	
+
 	/* reserve, commit, decommit, and memory for each page size */
 	for (i=0 ; pageSizes[i] != 0 ; i++) {
-		
+
 		/* reserve and commit */
 #if defined(J9ZOS390)
 		/* On z/OS skip this test for newly added large pages as obsolete j9vmem_reserve_memory() does not support them */
@@ -830,7 +830,7 @@ j9vmem_decommit_memory_test(struct J9PortLibrary *portLibrary)
 		memPtr = j9vmem_reserve_memory(0,pageSizes[i], &vmemID
 				,J9PORT_VMEM_MEMORY_MODE_READ | J9PORT_VMEM_MEMORY_MODE_WRITE | J9PORT_VMEM_MEMORY_MODE_COMMIT
 				,pageSizes[i], OMRMEM_CATEGORY_PORT_LIBRARY);
-		
+
 		/* did we get any memory? */
 		if (memPtr == NULL) {
 			lastErrorMessage = (char *)j9error_last_error_message();
@@ -845,11 +845,11 @@ j9vmem_decommit_memory_test(struct J9PortLibrary *portLibrary)
 		} else {
 			outputComment(portLibrary, "\treserved and committed 0x%zx bytes with page size 0x%zx\n", pageSizes[i], vmemID.pageSize);
 		}
-		
+
 		/* can we read and write to the memory? */
 		(void) j9str_printf(PORTLIB, allocName, allocNameSize, "j9vmem_reserve_memory(%d)", pageSizes[i]);
 		verifyMemory(portLibrary, testName, memPtr, pageSizes[i], allocName);
-		
+
 		/* decommit the memory */
 		rc = j9vmem_decommit_memory(memPtr, pageSizes[i], &vmemID);
 		if (rc != 0) {
@@ -858,7 +858,7 @@ j9vmem_decommit_memory_test(struct J9PortLibrary *portLibrary)
 					, rc, pageSizes[i], pageSizes[i]);
 			goto exit;
 		}
-		
+
 		/* free the memory (reuse the vmemID) */
 		rc = j9vmem_free_memory(memPtr, pageSizes[i], &vmemID);
 		if (rc != 0) {
@@ -880,7 +880,7 @@ exit:
  * See @ref j9vmem_testReserveMemoryEx_impl
  */
 int
-j9vmem_testReserveMemoryEx(struct J9PortLibrary *portLibrary) 
+j9vmem_testReserveMemoryEx(struct J9PortLibrary *portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	if (memoryIsAvailable(portLibrary, FALSE)) {
@@ -994,9 +994,9 @@ j9vmem_testReserveMemoryEx_StandardAndQuickMode(struct J9PortLibrary *portLibrar
 
 
 /**
- * Get all the page sizes and make sure we can allocate a memory chunk 
+ * Get all the page sizes and make sure we can allocate a memory chunk
  * within a certain range of addresses for each page size
- * 
+ *
  * @param[in] portLibrary The port library under test
  * @param[in] testName The name of the test
  * @param[in] memory allocation options
@@ -1092,7 +1092,7 @@ j9vmem_testReserveMemoryEx_impl(struct J9PortLibrary *portLibrary, const char* t
 				/* if returned pointer is outside of range then fail */
 				outputErrorMessage(PORTTEST_ERROR_ARGS, "Strict address flag set and returned pointer [0x%zx] is outside of range.\n"
 						"\tlastErrorNumber=%d, lastErrorMessage=%s\n ", memPtr[j], lastErrorNumber, lastErrorMessage);
-				
+
 			} else if (strictPageSize && (vmemID[j].pageSize != params[j].pageSize)) {
 				/* fail if strict page size flag and returned memory does not have the requested page size */
 				outputErrorMessage(PORTTEST_ERROR_ARGS, "Strict page size flag set and returned memory has a page size of [0x%zx] "
@@ -1111,13 +1111,13 @@ j9vmem_testReserveMemoryEx_impl(struct J9PortLibrary *portLibrary, const char* t
 			if (NULL != memPtr[j]) {
 				UDATA finalBlocks;
 				UDATA finalBytes;
-				
+
 				/* are the page sizes stored and reported correctly? */
 				if (vmemID[j].pageSize != j9vmem_get_page_size(&(vmemID[j]))) {
 					outputErrorMessage(PORTTEST_ERROR_ARGS, "vmemID[j].pageSize (0x%zx)!= j9vmem_get_page_size (0x%zx) .\n",
 								vmemID[j].pageSize, j9vmem_get_page_size(vmemID));
 				}
-				
+
 				/* are the page types stored and reported correctly? */
 				if (vmemID[j].pageFlags != j9vmem_get_page_flags(&(vmemID[j]))) {
 					outputErrorMessage(PORTTEST_ERROR_ARGS, "vmemID[j].pageFlags (0x%zx)!= j9vmem_get_page_flags (0x%zx) .\n",
@@ -1178,12 +1178,12 @@ j9vmem_testReserveMemoryEx_impl(struct J9PortLibrary *portLibrary, const char* t
  * Tries to allocate and free same amount of memory that will be used by
  * reserve_memory_ex tests to see whether or not there is enough memory
  * on the system.
- * 
+ *
  * @param[in] portLibrary The port library under test
  * @param[in] strictAddress TRUE if J9PORT_VMEM_STRICT_ADDRESS flag is to be used
- * 
+ *
  * @return TRUE if memory is available, FALSE otherwise
- * 
+ *
  */
 static BOOLEAN
 memoryIsAvailable(struct J9PortLibrary *portLibrary, BOOLEAN strictAddress){
@@ -1255,7 +1255,7 @@ memoryIsAvailable(struct J9PortLibrary *portLibrary, BOOLEAN strictAddress){
 #if defined(J9ZOS390)
 /**
  * Test request for pages below the 2G bar on z/OS
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 static int
@@ -1282,7 +1282,7 @@ j9vmem_testReserveMemoryEx_zOSLargePageBelowBar(struct J9PortLibrary *portLibrar
 		I_32 rc = 0;
 
 		j9vmem_vmem_params_init(&params);
-		
+
 		/* request memory (at or) below the 2G bar */
 		params.startAddress = 0;
 		params.endAddress = (void *) TWO_GIG_BAR;
@@ -1291,7 +1291,7 @@ j9vmem_testReserveMemoryEx_zOSLargePageBelowBar(struct J9PortLibrary *portLibrar
 		params.pageSize = pageSizes[i];
 		params.pageFlags = pageFlags[i];
 		params.options = 0;
-		
+
 		outputComment(portLibrary, "\tPage Size: 0x%zx Range: [0x%zx,0x%zx] "\
 					"topDown: %s strictAddress: %s strictPageSize: %s useExtendedPrivateAreaMemory: %s\n",\
 					params.pageSize, params.startAddress, params.endAddress,\
@@ -1314,11 +1314,11 @@ j9vmem_testReserveMemoryEx_zOSLargePageBelowBar(struct J9PortLibrary *portLibrar
 			outputComment(portLibrary, "\t reserved and committed 0x%zx bytes with page size 0x%zx and page flag 0x%x at address 0x%zx\n",\
 						params.byteAmount, vmemID.pageSize, vmemID.pageFlags, memPtr);
 		}
-	
+
 		/* can we read and write to the memory? */
 		j9str_printf(PORTLIB, allocName, allocNameSize, "j9vmem_reserve_memory(%d)", params.byteAmount);
 		verifyMemory(portLibrary, testName, memPtr, params.byteAmount, allocName);
-	
+
 		/* free the memory */
 		rc = j9vmem_free_memory(memPtr, params.byteAmount, &vmemID);
 		if (rc != 0) {
@@ -1395,9 +1395,9 @@ j9vmem_testReserveMemoryExStrictAddress_zOSLargePageBelowBar(struct J9PortLibrar
 		if (NULL == memPtr) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "unable to reserve and commit 0x%zx bytes with page size 0x%zx, page type 0x%zx.\n", \
 							params.byteAmount, pageSizes[i], pageFlags[i]);
-					
+
 			goto exit;
-			
+
 		} else {
 			outputComment(portLibrary, "\t reserved and committed 0x%zx bytes with page size 0x%zx and page flag 0x%x at address 0x%zx\n",\
 							params.byteAmount, vmemID.pageSize, vmemID.pageFlags, memPtr);
@@ -1534,15 +1534,15 @@ exit:
 
 /**
  * Verify port library memory management.
- * 
+ *
  * Make sure there is at least one page size returned by j9vmem_get_supported_page_sizes
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
-j9vmem_test_commitOutsideOfReservedRange(struct J9PortLibrary *portLibrary) 
+j9vmem_test_commitOutsideOfReservedRange(struct J9PortLibrary *portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9vmem_test_commitOutsideOfReservedRange";
@@ -1551,7 +1551,7 @@ j9vmem_test_commitOutsideOfReservedRange(struct J9PortLibrary *portLibrary)
 	int i = 0;
 	struct J9PortVmemIdentifier vmemID;
 	J9PortVmemParams params;
-	
+
 	reportTestEntry(portLibrary, testName);
 
 	pageSizes = j9vmem_supported_page_sizes();
@@ -1570,30 +1570,30 @@ j9vmem_test_commitOutsideOfReservedRange(struct J9PortLibrary *portLibrary)
 		if (NULL == memPtr) {
 			outputComment(PORTLIB, "! Could not find 0x%zx bytes available with page size 0x%zx\n", params.byteAmount, pageSizes[i]);
 		} else {
-			IDATA rc; 
+			IDATA rc;
 			void *commitResult;
 
 			/* attempt to commit 1 byte more than we reserved */
-			commitResult = j9vmem_commit_memory(memPtr,params.byteAmount+1,&vmemID); 
+			commitResult = j9vmem_commit_memory(memPtr,params.byteAmount+1,&vmemID);
 
 			if (NULL != commitResult) {
 				outputErrorMessage(PORTTEST_ERROR_ARGS, "j9vmem_commit_memory did not return an error when attempting to commit more memory"
 						"than was reserved. \n");
 			} else {
 				commitResult = j9vmem_commit_memory(memPtr,params.byteAmount,&vmemID);
-				
+
 				if (NULL == commitResult) {
 					outputErrorMessage(PORTTEST_ERROR_ARGS, "j9vmem_commit_memory returned an error while attempting to commit reserved memory: %s\n", j9error_last_error_message());
 				} else {
 					/* attempt to decommit 1 byte more than we reserved */
 					rc = j9vmem_decommit_memory(memPtr,params.byteAmount+1,&vmemID);
-					
+
 					if (0 == rc) {
 						outputErrorMessage(PORTTEST_ERROR_ARGS, "j9vmem_decommit_memory did not return an error when attempting to decommit "
 								"more memory than was reserved. \n");
 					} else {
 						rc = j9vmem_decommit_memory(memPtr,params.byteAmount,&vmemID);
-						
+
 						if ( rc != 0) {
 							outputErrorMessage(PORTTEST_ERROR_ARGS, "j9vmem_decommit_memory returned an error when attempting to decommit "
 									"reserved memory, rc=%zd\n",rc);
@@ -1618,17 +1618,17 @@ j9vmem_test_commitOutsideOfReservedRange(struct J9PortLibrary *portLibrary)
 #if defined(AIXPPC) || defined(LINUX) || defined(WIN32) || defined(WIN64) || defined(J9ZOS390)
 /**
  * Verify port library memory management.
- * 
+ *
  * Ensure that we can execute code within memory returned by
  * j9vmem_reserve_memory_ex with the J0PORT_VMEM_MEMORY_MODE_EXECUTE
  * mode flag specified.
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
-j9vmem_test_reserveExecutableMemory(struct J9PortLibrary *portLibrary) 
+j9vmem_test_reserveExecutableMemory(struct J9PortLibrary *portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9vmem_test_reserveExecutableMemory";
@@ -1638,7 +1638,7 @@ j9vmem_test_reserveExecutableMemory(struct J9PortLibrary *portLibrary)
 	int i = 0;
 	struct J9PortVmemIdentifier vmemID;
 	J9PortVmemParams params;
-	
+
 	reportTestEntry(portLibrary, testName);
 
 	pageSizes = j9vmem_supported_page_sizes();
@@ -1648,12 +1648,12 @@ j9vmem_test_reserveExecutableMemory(struct J9PortLibrary *portLibrary)
 	for (i=0 ; pageSizes[i] != 0 ; i++) {
 		j9vmem_vmem_params_init(&params);
 		params.byteAmount = pageSizes[i];
-		params.mode |= J9PORT_VMEM_MEMORY_MODE_READ | J9PORT_VMEM_MEMORY_MODE_WRITE | 
+		params.mode |= J9PORT_VMEM_MEMORY_MODE_READ | J9PORT_VMEM_MEMORY_MODE_WRITE |
 						J9PORT_VMEM_MEMORY_MODE_EXECUTE | J9PORT_VMEM_MEMORY_MODE_COMMIT;
 		params.options |= J9PORT_VMEM_STRICT_PAGE_SIZE;
 		params.pageSize = pageSizes[i];
 		params.pageFlags = pageFlags[i];
-	
+
 		/* reserve */
 		memPtr = j9vmem_reserve_memory_ex(&vmemID, &params);
 
@@ -1662,16 +1662,16 @@ j9vmem_test_reserveExecutableMemory(struct J9PortLibrary *portLibrary)
 		} else {
 			IDATA rc;
 			void (*function)();
-			
+
 #if defined(AIXPPC)
-			
+
 			*memPtr = 0x4e800020; /* blr instruction (equivalent to RET on x86)*/
 
-			struct fDesc { 
-				UDATA func_addr; 
-				IDATA toc; 
-				IDATA envp; 
-			} myDesc; 
+			struct fDesc {
+				UDATA func_addr;
+				IDATA toc;
+				IDATA envp;
+			} myDesc;
 			myDesc.func_addr = (UDATA)memPtr;
 
 			function = (void (*)()) &myDesc;
@@ -1713,7 +1713,7 @@ j9vmem_test_reserveExecutableMemory(struct J9PortLibrary *portLibrary)
 #if defined(J9ZOS39064)
 			}
 #endif /* J9ZOS39064 */
-			
+
 #endif /* defined(AIXPPC) */
 
 			rc = j9vmem_free_memory(memPtr, params.byteAmount, &vmemID);
@@ -1728,20 +1728,99 @@ j9vmem_test_reserveExecutableMemory(struct J9PortLibrary *portLibrary)
 }
 #endif /* defined(AIXPPC) || defined(LINUX) || defined(WIN32) || defined(WIN64) */
 
-#if defined(J9VM_GC_VLHGC)
+#if defined(AIXPPC) || defined(LINUX) || defined(WIN32) || defined(WIN64) || defined(J9ZOS390)
+
+#define NUM_COLLOCATED_SEGMENTS 2
+
 /**
- * Try to associate memory with each NUMA node at each page size.
- * 
- * If NUMA is not available, this test does nothing.
- * 
- * This test cannot test that the NUMA affinity is correctly set, just that the API succeeds.
- * 
+ * Verify port library memory management.
+ *
+ * Ensure that we can allocate collocated memory segments.
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
-j9vmem_test_numa(struct J9PortLibrary *portLibrary) 
+j9vmem_test_reserveCollocatedMemory(struct J9PortLibrary *portLibrary)
+{
+	PORT_ACCESS_FROM_PORT(portLibrary);
+	const char* testName = "j9vmem_test_reserveCollocatedMemory";
+	unsigned int *memPtr = NULL;
+	UDATA * pageSizes;
+	UDATA * pageFlags;
+	struct J9PortVmemIdentifier vmemIDStorage[NUM_COLLOCATED_SEGMENTS];
+	struct J9PortVmemIdentifier *vmemIDs[NUM_COLLOCATED_SEGMENTS];
+
+	reportTestEntry(portLibrary, testName);
+
+	for (int i = 0; i < NUM_COLLOCATED_SEGMENTS; i++)
+		vmemIDs[i] = &vmemIDStorage[i];
+
+	pageSizes = j9vmem_supported_page_sizes();
+	pageFlags = j9vmem_supported_page_flags();
+
+	/* reserve and commit memory for each page size */
+	for (int i = 0 ; pageSizes[i] != 0 ; i++) {
+		uintptr_t totalByteAmount = 0;
+		struct J9PortVmemParams params[NUM_COLLOCATED_SEGMENTS];
+
+#if defined(J9ZOS390)
+		/* On z/OS skip this test for newly added large pages as obsolete j9vmem_reserve_memory() does not support them */
+		if (TRUE == isNewPageSize(pageSizes[i], pageFlags[i])) {
+			continue;
+		}
+#endif /* J9ZOS390 */
+
+		for (int j = 0; j < NUM_COLLOCATED_SEGMENTS; j++) {
+			j9vmem_vmem_params_init(&params[j]);
+			params[j].mode = J9PORT_VMEM_MEMORY_MODE_READ | J9PORT_VMEM_MEMORY_MODE_WRITE | J9PORT_VMEM_MEMORY_MODE_COMMIT;
+			/* Vary the modes being tested by adding execute to every other segment. */
+			if (0 == (j % 2)) {
+				params[j].mode |= J9PORT_VMEM_MEMORY_MODE_EXECUTE;
+			}
+			params[j].pageSize = pageSizes[i];
+			params[j].pageFlags = J9PORT_VMEM_PAGE_FLAG_NOT_USED;
+			params[j].options = 0;
+			params[j].byteAmount = pageSizes[i];
+			totalByteAmount += params[j].byteAmount;
+		}
+
+		/* reserve */
+		memPtr = j9vmem_reserve_memory_collocated_ex(NUM_COLLOCATED_SEGMENTS, vmemIDs, params);
+
+		if (NULL == memPtr) {
+			outputComment(PORTLIB, "! Could not find 0x%zx bytes available with page size 0x%zx and specified mode\n", totalByteAmount, pageSizes[i]);
+		}
+		else {
+			for (int j = 0; j < NUM_COLLOCATED_SEGMENTS; j++) {
+				IDATA rc = j9vmem_free_memory(vmemIDs[j]->address, params[j].byteAmount, vmemIDs[j]);
+				if (rc != 0) {
+					outputErrorMessage(PORTTEST_ERROR_ARGS, "j9vmem_free_memory returned %i when trying to free 0x%zx bytes at 0x%zx\n"
+							, rc, params[j].byteAmount, vmemIDs[j]->address);
+				}
+			}
+		}
+	}
+
+	return reportTestExit(portLibrary, testName);
+}
+#endif /* defined(AIXPPC) || defined(LINUX) || defined(WIN32) || defined(WIN64) */
+
+#if defined(J9VM_GC_VLHGC)
+/**
+ * Try to associate memory with each NUMA node at each page size.
+ *
+ * If NUMA is not available, this test does nothing.
+ *
+ * This test cannot test that the NUMA affinity is correctly set, just that the API succeeds.
+ *
+ * @param[in] portLibrary The port library under test
+ *
+ * @return TEST_PASS on success, TEST_FAIL on error
+ */
+int
+j9vmem_test_numa(struct J9PortLibrary *portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9vmem_test_numa";
@@ -1751,16 +1830,16 @@ j9vmem_test_numa(struct J9PortLibrary *portLibrary)
 	I_32 lastErrorNumber = 0;
 	UDATA totalNumaNodeCount = 0;
 	IDATA detailReturnCode = 0;
-	
+
 	reportTestEntry(portLibrary, testName);
 
 	/* First get all the supported page sizes */
 	pageSizes = j9vmem_supported_page_sizes();
 	pageFlags = j9vmem_supported_page_flags();
-	
+
 	/* Find out how many NUMA nodes are available */
 	detailReturnCode = j9vmem_numa_get_node_details(NULL, &totalNumaNodeCount);
-	
+
 	if ((detailReturnCode != 0) || (0 == totalNumaNodeCount)) {
 		outputComment(portLibrary, "\tNUMA not available\n");
 	} else {
@@ -1771,7 +1850,7 @@ j9vmem_test_numa(struct J9PortLibrary *portLibrary)
 		UDATA nodeArraySize = sizeof(J9MemoryNodeDetail) * totalNumaNodeCount;
 		J9MemoryNodeDetail *nodeArray = j9mem_allocate_memory(nodeArraySize, OMRMEM_CATEGORY_PORT_LIBRARY);
 		IDATA rc = 0;
-		
+
 		if (nodeArray == NULL) {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "j9vmem_free_memory returned NULL when trying to allocate J9MemoryNodeDetail array for NUMA test (FAIL)\n");
 			goto exit;
@@ -1797,7 +1876,7 @@ j9vmem_test_numa(struct J9PortLibrary *portLibrary)
 					allowed += 1;
 				}
 			}
-			
+
 			nodesWithMemoryCount = preferred;
 			policyForMemoryNode = J9NUMA_PREFERRED;
 			if (nodesWithMemoryCount == 0) {
@@ -1815,7 +1894,7 @@ j9vmem_test_numa(struct J9PortLibrary *portLibrary)
 			char *memPtr = NULL;
 			UDATA pageSize = pageSizes[i];
 			UDATA reserveSizeInBytes = pageSize * nodesWithMemoryCount;
-			
+
 			/* reserve and commit */
 #if defined(J9ZOS390)
 			/* On z/OS skip this test for newly added large pages as obsolete j9vmem_reserve_memory() does not support them */
@@ -1825,11 +1904,11 @@ j9vmem_test_numa(struct J9PortLibrary *portLibrary)
 #endif /* J9ZOS390 */
 			memPtr = j9vmem_reserve_memory(
 					NULL,
-					reserveSizeInBytes, 
+					reserveSizeInBytes,
 					&vmemID,
 					J9PORT_VMEM_MEMORY_MODE_READ | J9PORT_VMEM_MEMORY_MODE_WRITE,
 					pageSize, OMRMEM_CATEGORY_PORT_LIBRARY);
-			
+
 			outputComment(portLibrary, "\treserved 0x%zx bytes with page size 0x%zx at address 0x%zx\n", reserveSizeInBytes, vmemID.pageSize, memPtr);
 
 			/* did we get any memory? */
@@ -1838,11 +1917,11 @@ j9vmem_test_numa(struct J9PortLibrary *portLibrary)
 				UDATA nodeIndex = 0;
 				char * numaBlock = memPtr;
 				void * commitResult = NULL;
-				
+
 				for (nodeIndex = 0; nodeIndex < totalNumaNodeCount; nodeIndex++) {
 					if (policyForMemoryNode == nodeArray[nodeIndex].memoryPolicy) {
 						UDATA nodeNumber = nodeArray[nodeIndex].j9NodeNumber;
-						rc = j9vmem_numa_set_affinity(nodeNumber, numaBlock, pageSize, &vmemID); 
+						rc = j9vmem_numa_set_affinity(nodeNumber, numaBlock, pageSize, &vmemID);
 						if (rc != 0) {
 							outputErrorMessage(PORTTEST_ERROR_ARGS
 									, "j9vmem_numa_set_affinity returned 0x%zx when trying to set affinity for 0x%zx bytes at 0x%p to node %zu\n"
@@ -1852,7 +1931,7 @@ j9vmem_test_numa(struct J9PortLibrary *portLibrary)
 						numaBlock += pageSize;
 					}
 				}
-				
+
 				/* can we commit the memory? */
 				commitResult = j9vmem_commit_memory(memPtr, numaBlock - memPtr, &vmemID);
 				if (commitResult != memPtr) {
@@ -1861,13 +1940,13 @@ j9vmem_test_numa(struct J9PortLibrary *portLibrary)
 							, commitResult, numaBlock - memPtr, memPtr);
 					goto exit;
 				}
-				
+
 				/* ideally we'd test that the memory actually has some NUMA characteristics, but that's difficult to prove */
 
 				/* can we read and write to the memory? */
 				j9str_printf(PORTLIB, allocName, allocNameSize, "j9vmem_reserve_memory(%d)", pageSize);
 				verifyMemory(portLibrary, testName, memPtr, reserveSizeInBytes, allocName);
-				
+
 				/* free the memory (reuse the vmemID) */
 				rc = j9vmem_free_memory(memPtr, reserveSizeInBytes, &vmemID);
 				if (rc != 0) {
@@ -2720,7 +2799,7 @@ j9vmem_testFindValidPageSize_impl(struct J9PortLibrary *portLibrary, char *testN
 	}
 
 	/* Test -Xlp:codecache options */
-	
+
 	outputComment(PORTLIB, "\nCase %d: -Xlp:codecache:pagesize=1M,pageable\n", caseIndex++);
 	mode = J9PORT_VMEM_MEMORY_MODE_EXECUTE;
 	requestedPageSize = ONE_MB;
@@ -2842,7 +2921,7 @@ j9vmem_testFindValidPageSize_impl(struct J9PortLibrary *portLibrary, char *testN
 								requestedPageSize, requestedPageFlags, isSizeSupported);
 
 	/* Test -Xlp:objectheap options */
-	
+
 #if defined(J9VM_ENV_DATA64)
 	outputComment(PORTLIB, "\nCase %d: -Xlp:objectheap:pagesize=2G,nonpageable\n", caseIndex++);
 	mode = 0;
@@ -3463,15 +3542,15 @@ exit:
 
 /**
  * Verify port library memory management.
- * 
+ *
  * Exercise all API related to port library memory management found in
  * @ref j9vmem.c
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return 0 on success, -1 on failure
  */
-I_32 
+I_32
 j9vmem_runTests(struct J9PortLibrary *portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
@@ -3491,7 +3570,7 @@ j9vmem_runTests(struct J9PortLibrary *portLibrary)
 		rc |= j9vmem_testFindValidPageSize(portLibrary);
 #if !defined(J9ZOS390)
 		/* Commit and decommit do nothing on z/OS */
-		rc |= j9vmem_test_commitOutsideOfReservedRange(portLibrary); 
+		rc |= j9vmem_test_commitOutsideOfReservedRange(portLibrary);
 #endif /* !J9ZOS390 */
 		rc |= j9vmem_test1(portLibrary);
 		rc |= j9vmem_decommit_memory_test(portLibrary);
@@ -3507,7 +3586,7 @@ j9vmem_runTests(struct J9PortLibrary *portLibrary)
 		rc |= j9vmem_testReserveMemoryExTopDown(portLibrary);
 		rc |= j9vmem_testReserveMemoryExStrictAddress(portLibrary);
 		rc |= j9vmem_testReserveMemoryExStrictPageSize(portLibrary);
-		
+
 #if defined(J9ZOS390)
 		rc |= j9vmem_testReserveMemoryEx_zOSLargePageBelowBar(portLibrary);
 		rc |= j9vmem_testReserveMemoryExStrictAddress_zOSLargePageBelowBar(portLibrary);
@@ -3521,11 +3600,15 @@ j9vmem_runTests(struct J9PortLibrary *portLibrary)
 #if (defined(AIXPPC) || defined(LINUX) || defined(WIN32) || defined(WIN64) || defined(J9ZOS390)) && !(defined(HARDHAT) && defined(LINUXPPC))
 		rc |= j9vmem_test_reserveExecutableMemory(portLibrary);
 #endif /* defined(AIXPPC) || defined(LINUX) || defined(WIN32) || defined(WIN64) */
-		
+
+#if (defined(AIXPPC) || defined(LINUX) || defined(WIN32) || defined(WIN64) || defined(J9ZOS390)) && !(defined(HARDHAT) && defined(LINUXPPC))
+		rc |= j9vmem_test_reserveCollocatedMemory(portLibrary);
+#endif /* defined(AIXPPC) || defined(LINUX) || defined(WIN32) || defined(WIN64) */
+
 #endif /* ENABLE_RESERVE_MEMORY_EX_TESTS */
 	}
 
-	
+
 	/* Output results */
 	outputComment(PORTLIB, "\nMemory test done%s\n\n", rc == TEST_PASS ? "." : ", failures detected.");
 	return TEST_PASS == rc ? 0 : -1;
@@ -3537,7 +3620,7 @@ int myFunction1()
 	return 1;
 }
 
-/* This function is used by j9vmem_test_reserveExecutableMemory to tell 
+/* This function is used by j9vmem_test_reserveExecutableMemory to tell
  * where myFunction1() ends. It is never called but its body must be
  * different from myFunction1() so that it is not optimized away by the
  * C compiler. */

@@ -141,6 +141,7 @@ option(J9VM_OPT_VALHALLA_VALUE_TYPES "Enables support for Project Valhalla Value
 
 option(J9VM_OPT_ROM_IMAGE_SUPPORT "Controls if the VM includes basic support for linked rom images")
 option(J9VM_OPT_SHARED_CLASSES "Support for class sharing")
+option(J9VM_OPT_SNAPSHOTS "Enable 'open world' VM snapshotting")
 
 option(J9VM_OPT_ZIP_SUPPORT "Controls if the VM includes zip reading and caching support. (implies dynamic loading)")
 option(J9VM_OPT_ZLIB_COMPRESSION "Controls if the compression routines in zlib are included.")

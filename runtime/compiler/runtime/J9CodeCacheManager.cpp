@@ -43,6 +43,7 @@
 #include "env/VMJ9.h"
 #include "runtime/ArtifactManager.hpp"
 #include "env/IO.hpp"
+#include "codegen/CCData.hpp"
 
 TR::CodeCacheManager *J9::CodeCacheManager::_codeCacheManager = NULL;
 J9JavaVM *J9::CodeCacheManager::_javaVM = NULL;
@@ -128,6 +129,7 @@ J9::CodeCacheManager::addFaintCacheBlock(OMR::MethodExceptionData  *metaData, ui
    {
    PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
 
+
    OMR::FaintCacheBlock *block = (OMR::FaintCacheBlock *)j9mem_allocate_memory(sizeof(OMR::FaintCacheBlock), J9MEM_CATEGORY_JIT);
    if (!block)
       return;
@@ -166,20 +168,24 @@ J9::CodeCacheManager::purgeClassLoaderFromFaintBlocks(J9ClassLoader *classLoader
    OMR::FaintCacheBlock *previousFaintBlock = 0;
    while (currentFaintBlock)
       {
-      if (classLoader == J9_CLASS_FROM_METHOD(currentFaintBlock->_metaData->ramMethod)->classLoader)
+      if (classLoader == J9_CLASS_FROM_METHOD(J9JITEXCEPTIONTABLE_RAMMETHOD_GET(currentFaintBlock->_metaData))->classLoader)
          {
          PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
          if (previousFaintBlock)
             {
             previousFaintBlock->_next = currentFaintBlock->_next;
+
             j9mem_free_memory(currentFaintBlock);
+
             currentFaintBlock = previousFaintBlock->_next;
             continue;
             }
          else
             {
             _jitConfig->methodsToDelete = currentFaintBlock->_next;
+
             j9mem_free_memory(currentFaintBlock);
+
             currentFaintBlock = static_cast<OMR::FaintCacheBlock *>(_jitConfig->methodsToDelete);
             continue;
             }
@@ -238,12 +244,105 @@ J9::CodeCacheManager::reportCodeLoadEvents()
       }
    }
 
+TR::CodeCacheMemorySegment *
+J9::CodeCacheManager::allocateCodeCacheWithDataSegmentRO(size_t segmentSize,
+                                                         size_t &codeCacheSizeToAllocate,
+                                                         void *preferredStartAddress)
+   {
+   J9JavaVM *javaVM = this->javaVM();
+   J9JITConfig *jitConfig = this->jitConfig();
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
+   J9PortVmemParams vmemParams[2];
+   J9PortVmemParams &codeCacheParams = vmemParams[0];
+   J9PortVmemParams &ccDataParams = vmemParams[1];
+   UDATA segmentTypes[2];
+   UDATA &codeCacheSegmentType = segmentTypes[0];
+   UDATA &ccDataSegmentType = segmentTypes[1];
+
+   j9vmem_vmem_params_init(&codeCacheParams);
+   j9vmem_vmem_params_init(&ccDataParams);
+
+   TR::CodeCacheConfig &config = self()->codeCacheConfig();
+
+   TR_ASSERT_FATAL(config.codeCachePadKB() == 0, "Uncommitted codecache memory not supported here");
+
+   codeCacheParams.mode = J9PORT_VMEM_MEMORY_MODE_READ |
+                          J9PORT_VMEM_MEMORY_MODE_WRITE |
+                          J9PORT_VMEM_MEMORY_MODE_EXECUTE |
+                          J9PORT_VMEM_MEMORY_MODE_COMMIT;
+   codeCacheSegmentType = MEMORY_TYPE_CODE | MEMORY_TYPE_RAM;
+
+   ccDataParams.mode = J9PORT_VMEM_MEMORY_MODE_READ |
+                       J9PORT_VMEM_MEMORY_MODE_WRITE |
+                       J9PORT_VMEM_MEMORY_MODE_COMMIT;
+   ccDataSegmentType = MEMORY_TYPE_CCDATA | MEMORY_TYPE_RAM | MEMORY_TYPE_VIRTUAL;
+
+   codeCacheParams.category = J9MEM_CATEGORY_JIT_CODE_CACHE;
+   ccDataParams.category = J9MEM_CATEGORY_JIT_DATA_CACHE;
+
+   codeCacheSizeToAllocate = segmentSize;
+   // For virtual allocations the size must always be a multiple of the page size
+   codeCacheSizeToAllocate = (codeCacheSizeToAllocate + (codeCacheParams.pageSize-1)) & (~(codeCacheParams.pageSize-1));
+   size_t dataAreaSize =  config.dataAreaTotalKB() << 10;
+   dataAreaSize = (dataAreaSize + (ccDataParams.pageSize-1)) & (~(ccDataParams.pageSize-1));
+   UDATA sizes[2] = {codeCacheSizeToAllocate, dataAreaSize};
+
+   J9MemorySegmentList *segmentLists[2] = {jitConfig->codeCacheList, jitConfig->dataCacheList};
+   J9MemorySegment *segments[2];
+   J9MemorySegment *&codeCacheSegment = segments[0];
+   J9MemorySegment *&ccDataSegment = segments[1];
+   J9MemorySegment *result =
+      javaVM->internalVMFunctions->allocateCollocatedVirtualMemorySegmentsInLists(javaVM,
+                                                                                  2,
+                                                                                  segmentLists,
+                                                                                  sizes,
+                                                                                  segmentTypes,
+                                                                                  vmemParams,
+                                                                                  segments);
+
+   if (result)
+      {
+      if (config.dataAreaTotalKB() > 0)
+         {
+         TR_ASSERT_FATAL(_codeCacheData == NULL, "A CCData instance already exists; this code currently doesn't support multiple codecache segments because we can only allocate one CCData instance. TODO: Fix this limitation.");
+         uint8_t * const dataArea = ccDataSegment->baseAddress;
+         _codeCacheData = new OMR::CCData(dataArea, dataAreaSize);
+         }
+      mcc_printf("TR::CodeCache::allocated : codeCacheSegment is %p\n",codeCacheSegment);
+      if (config.verboseCodeCache())
+         {
+         char * verboseLogString = "The code cache repository was allocated between addresses %p and %p";
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,
+            verboseLogString,
+            codeCacheParams.startAddress,
+            codeCacheParams.endAddress);
+         }
+      }
+   else
+      {
+      // TODO: we should generate a trace point
+      mcc_printf("TR::CodeCache::allocate : codeCacheSegment is NULL, %p\n",codeCacheSegment);
+      return 0;
+      }
+
+   if (config.verboseCodeCache())
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "allocated code cache segment of size %u", codeCacheSizeToAllocate);
+
+   TR::CodeCacheMemorySegment *memSegment = (TR::CodeCacheMemorySegment *) self()->getMemory(sizeof(TR::CodeCacheMemorySegment));
+   new (memSegment) TR::CodeCacheMemorySegment(codeCacheSegment);
+
+   return memSegment;
+   }
 
 TR::CodeCacheMemorySegment *
 J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
                                               size_t &codeCacheSizeToAllocate,
                                               void *preferredStartAddress)
    {
+   if (TR::Options::getCmdLineOptions()->getOption(TR_ForceGenerateReadOnlyCode))
+      return allocateCodeCacheWithDataSegmentRO(segmentSize, codeCacheSizeToAllocate, preferredStartAddress);
+
    J9JavaVM *javaVM = this->javaVM();
    J9JITConfig *jitConfig = this->jitConfig();
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
@@ -294,7 +393,9 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
    codeCacheSizeToAllocate = std::max(segmentSize, (config.codeCachePadKB() << 10));
    // For virtual allocations the size must always be a multiple of the page size
    codeCacheSizeToAllocate = (codeCacheSizeToAllocate + (vmemParams.pageSize-1)) & (~(vmemParams.pageSize-1));
-   vmemParams.byteAmount = codeCacheSizeToAllocate;
+   size_t dataAreaSize =  config.dataAreaTotalKB() << 10;
+   dataAreaSize = (dataAreaSize + (vmemParams.pageSize-1)) & (~(vmemParams.pageSize-1));
+   vmemParams.byteAmount = codeCacheSizeToAllocate + dataAreaSize;
 
    void *defaultEndAddress = vmemParams.endAddress;
 
@@ -329,9 +430,10 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
 #endif
 
    mcc_printf("TR::CodeCache::allocate : requesting %d bytes\n", codeCacheSizeToAllocate);
+   mcc_printf("TR::CodeCache::allocate : dataAreaSize = %p\n", dataAreaSize);
    mcc_printf("TR::CodeCache::allocate : javaVM = %p\n", javaVM);
    mcc_printf("TR::CodeCache::allocate : codeCacheList = %p\n", jitConfig->codeCacheList);
-   mcc_printf("TR::CodeCache::allocate : size = %p\n", codeCacheSizeToAllocate);
+   mcc_printf("TR::CodeCache::allocate : size = %p\n", vmemParams.byteAmount);
    mcc_printf("TR::CodeCache::allocate : largeCodePageSize = %d\n", largeCodePageSize);
    mcc_printf("TR::CodeCache::allocate : segmentType = %x\n", segmentType);
    mcc_printf("TR::CodeCache::allocate : mode = %x\n", mode);
@@ -340,7 +442,7 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
    J9MemorySegment *codeCacheSegment =
       javaVM->internalVMFunctions->allocateVirtualMemorySegmentInList(javaVM,
                                                                       jitConfig->codeCacheList,
-                                                                      codeCacheSizeToAllocate,
+                                                                      vmemParams.byteAmount,
                                                                       segmentType,
                                                                       &vmemParams);
 
@@ -380,7 +482,7 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
       codeCacheSegment =
           javaVM->internalVMFunctions->allocateVirtualMemorySegmentInList(javaVM,
                                                                           jitConfig->codeCacheList,
-                                                                          codeCacheSizeToAllocate,
+                                                                          vmemParams.byteAmount,
                                                                           segmentType,
                                                                           &vmemParams);
       }
@@ -411,13 +513,19 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
       codeCacheSegment =
           javaVM->internalVMFunctions->allocateVirtualMemorySegmentInList(javaVM,
                                                                           jitConfig->codeCacheList,
-                                                                          codeCacheSizeToAllocate,
+                                                                          vmemParams.byteAmount,
                                                                           segmentType,
                                                                           &vmemParams);
       }
 
    if (codeCacheSegment)
       {
+      if (config.dataAreaTotalKB() > 0)
+         {
+         TR_ASSERT_FATAL(_codeCacheData == NULL, "A CCData instance already exists; this code currently doesn't support multiple codecache segments because we can only allocate one CCData instance. TODO: Fix this limitation.");
+         uint8_t * const dataArea = codeCacheSegment->baseAddress + codeCacheSizeToAllocate;
+         _codeCacheData = new OMR::CCData(dataArea, dataAreaSize);
+         }
       mcc_printf("TR::CodeCache::allocated : codeCacheSegment is %p\n",codeCacheSegment);
       if (config.verboseCodeCache())
          {
@@ -455,6 +563,19 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
          // or
          // javaVM->internalVMFunctions->freeMemorySegmentListEntry(jitConfig->codeCacheList, codeCacheSegment);
          return 0;
+         }
+
+         if (dataAreaSize)
+         {
+         void* rc = j9vmem_commit_memory(((char*)codeCacheSegment->vmemIdentifier.address) + codeCacheSizeToAllocate,
+                                       dataAreaSize,
+                                       &codeCacheSegment->vmemIdentifier);
+
+         if (NULL == rc)
+            {
+            javaVM->internalVMFunctions->freeMemorySegment(javaVM, codeCacheSegment, 1);
+            return 0;
+            }
          }
       }
 #endif

@@ -24,6 +24,8 @@
 package java.lang;
 
 import com.ibm.oti.vm.J9UnmodifiableClass;
+import com.ibm.oti.vm.SnapshotControlAPI;
+
 import java.lang.ref.SoftReference;
 import java.lang.reflect.*;
 import java.security.AccessController;
@@ -38,9 +40,7 @@ import java.security.ProtectionDomain;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
+
 /*[IF Sidecar19-SE]*/
 import jdk.internal.ref.CleanerShutdown;
 import jdk.internal.ref.CleanerImpl;
@@ -84,6 +84,45 @@ final class J9VMInternals {
 	private J9VMInternals() {
 	}
 
+	private static void registerInternalPostRestoreHooks() {
+		String[] listOfClassesThatRequireJNIIDInit = new String[] {"java.io.FileOutputStream", //$NON-NLS-1$
+									"java.io.FileDescriptor", //$NON-NLS-1$
+									"java.io.UnixFileSystem", //$NON-NLS-1$
+									"java.io.FileDescriptor", //$NON-NLS-1$
+									"sun.nio.ch.IOUtil", //$NON-NLS-1$
+									"sun.nio.ch.FileChannelImpl", //$NON-NLS-1$
+									"sun.nio.ch.ServerSocketChannelImpl", //$NON-NLS-1$
+									"java.util.zip.ZipFile", //$NON-NLS-1$
+									"java.util.zip.Inflater", //$NON-NLS-1$
+									"java.util.zip.Deflater", //$NON-NLS-1$
+									"java.io.UnixFileSystem", //$NON-NLS-1$
+									"java.io.RandomAccessFile"}; //$NON-NLS-1$
+
+		
+		try {
+			SnapshotControlAPI.registerHighPriorityPostRestoreHooks(() -> {
+				System.loadLibrary("net"); //$NON-NLS-1$
+				System.loadLibrary("nio"); //$NON-NLS-1$
+			});
+			
+			
+			for (String className : listOfClassesThatRequireJNIIDInit) {
+				Class<?> clazz = Class.forName(className);
+				Method method = clazz.getDeclaredMethod("initIDs", (Class []) null); //$NON-NLS-1$
+				method.setAccessible(true);
+				SnapshotControlAPI.registerPostRestoreHooks(() -> {
+					try {
+						method.invoke(null);
+					} catch (Throwable t) {
+						throw new InternalError(t);
+					}
+				});
+			}
+		} catch (ReflectiveOperationException e) {
+			throw new InternalError(e);
+		}
+	}
+	
 	/*
 	 * Called by the vm after everything else is initialized.
 	 */
@@ -133,6 +172,10 @@ final class J9VMInternals {
 			Runtime.getRuntime().addShutdownHook(new Thread(runnable, "CommonCleanerShutdown", true, false, false, null)); //$NON-NLS-1$
 		}
 		/*[ENDIF]*/
+		
+		if (com.ibm.oti.vm.VM.isSnapshotRun()) {
+			registerInternalPostRestoreHooks();
+		}
 	}
 	
 	/**

@@ -52,6 +52,8 @@
 #include "il/TreeTop_inlines.hpp"
 #include "infra/SimpleRegex.hpp"
 #include "env/VMJ9.h"
+#include "objectfmt/GlobalFunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 #include "x/codegen/X86Instruction.hpp"
 #include "x/codegen/CallSnippet.hpp"
 #include "x/codegen/FPTreeEvaluator.hpp"
@@ -772,7 +774,8 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
             generateRegImmInstruction(ADDRegImm4(), cursor->getNode(), espReal, allocSize, cg());
             }
          TR::SymbolReference* helper = comp()->getSymRefTab()->findOrCreateStackOverflowSymbolRef(NULL);
-         jitOverflowCheck = generateImmSymInstruction(CALLImm4, cursor->getNode(), (uintptr_t)helper->getMethodAddress(), helper, cg());
+         TR::GlobalFunctionCallData data(helper, cursor->getNode(), 0, 0, 0, TR_NoRelocation, true, cg());
+         jitOverflowCheck = cg()->getObjFmt()->emitGlobalFunctionCall(data);
          jitOverflowCheck->setNeedsGCMap(0xFF00FFFF);
          if (doAllocateFrameSpeculatively)
             {
@@ -1299,6 +1302,13 @@ void TR::X86CallSite::computeProfiledTargets()
    if (cg()->profiledPointersRequireRelocation())
       // bail until create appropriate relocations to validate profiled targets
       return;
+
+   static char *disableStaticPICs = feGetEnv("TR_disableStaticPICs");
+
+   if (disableStaticPICs)
+      {
+      return;
+      }
 
    // Use static PICs for guarded calls as well
    //
@@ -1928,7 +1938,12 @@ void J9::X86::PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef,
          generateRegImmInstruction(MOV4RegImm4, callNode, ramMethodReg, (uint32_t)(uintptr_t)methodSymbol->getMethodAddress(), cg());
          }
 
+#if 0
       callInstr = generateHelperCallInstruction(callNode, TR_j2iTransition, NULL, cg());
+#endif
+      TR::GlobalFunctionCallData data(TR_j2iTransition, callNode, 0, cg());
+      callInstr = cg()->getObjFmt()->emitGlobalFunctionCall(data);
+
       cg()->stopUsingRegister(ramMethodReg);
       }
    else if (comp()->target().is64Bit() && methodSymbol->isJITInternalNative())
@@ -1940,29 +1955,47 @@ void J9::X86::PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef,
       TR::Register *nativeMethodReg = cg()->allocateRegister();
       site.addPostCondition(nativeMethodReg, TR::RealRegister::edi);
 
-      generateRegImm64Instruction(MOV8RegImm64, callNode, nativeMethodReg, (uint64_t)(uintptr_t)methodSymbol->getMethodAddress(), cg());
-      callInstr = generateRegInstruction(CALLReg, callNode, nativeMethodReg, cg());
+      TR::GlobalFunctionCallData data(methodSymRef, callNode, nativeMethodReg, 0, NULL, TR_NoRelocation, false, cg());
+      callInstr = cg()->getObjFmt()->emitGlobalFunctionCall(data);
+
       cg()->stopUsingRegister(nativeMethodReg);
       }
    else if (methodSymRef->isUnresolved() || methodSymbol->isInterpreted()
             || (comp()->compileRelocatableCode() && !methodSymbol->isHelper()) )
       {
-      TR::LabelSymbol *label   = generateLabelSymbol(cg());
+      if (cg()->comp()->getGenerateReadOnlyCode())
+         {
+         callInstr = buildUnresolvedOrInterpretedDirectCallReadOnly(methodSymRef, site);
+         }
+      else
+         {
+         TR::LabelSymbol *label = generateLabelSymbol(cg());
 
-      TR::Snippet *snippet = (TR::Snippet*)new (trHeapMemory()) TR::X86CallSnippet(cg(), callNode, label, false);
-      cg()->addSnippet(snippet);
-      snippet->gcMap().setGCRegisterMask(site.getPreservedRegisterMask());
+         TR::Snippet *snippet = (TR::Snippet*)new (trHeapMemory()) TR::X86CallSnippet(cg(), callNode, label, false);
+         cg()->addSnippet(snippet);
+         snippet->gcMap().setGCRegisterMask(site.getPreservedRegisterMask());
 
-      callInstr = generateImmSymInstruction(CALLImm4, callNode, 0, new (trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), label), cg());
-      generateBoundaryAvoidanceInstruction(TR::X86BoundaryAvoidanceInstruction::unresolvedAtomicRegions, 8, 8, callInstr, cg());
+         callInstr = generateImmSymInstruction(CALLImm4, callNode, 0, new (trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), label), cg());
+         generateBoundaryAvoidanceInstruction(TR::X86BoundaryAvoidanceInstruction::unresolvedAtomicRegions, 8, 8, callInstr, cg());
 
-      // Nop is necessary due to confusion when resolving shared slots at a transition
-      if (methodSymRef->isOSRInductionHelper())
-         generatePaddingInstruction(1, callNode, cg());
+         // Nop is necessary due to confusion when resolving shared slots at a transition
+         if (methodSymRef->isOSRInductionHelper())
+            generatePaddingInstruction(1, callNode, cg());
+         }
       }
    else
       {
-      callInstr = generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, cg());
+      static char *disableReadOnlyLocalCalls = feGetEnv("TR_disableReadOnlyLocalCalls");
+      if (cg()->comp()->getGenerateReadOnlyCode() && !disableReadOnlyLocalCalls && !cg()->comp()->isRecursiveMethodTarget(methodSymbol))
+         {
+         // Not a global function, but in the codecache?
+         TR::GlobalFunctionCallData data(methodSymRef, callNode, 0, 0, 0, TR_NoRelocation, true, cg());
+         callInstr = cg()->getObjFmt()->emitGlobalFunctionCall(data);
+         }
+      else
+         {
+         callInstr = generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, cg());
+         }
 
       if (comp()->target().isSMP() && !methodSymbol->isHelper())
          {

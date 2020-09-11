@@ -154,7 +154,7 @@ mergeFindDataBlockForResolveIPicClass:
 callResolveInterfaceMethod:
       push        edi                                          ; p) jit valid EIP
       push        edx                                          ; p) push the address of the constant pool and cpIndex
-      CallHelperUseReg jitResolveInterfaceMethod,eax           ; returns interpreter vtable index
+      CallHelperUseReg jitResolveInterfaceMethod,eax
 
       call        memoryFence                                  ; Ensure IPIC data area drains to memory before proceeding.
 
@@ -1061,11 +1061,17 @@ populateVPicVTableDispatch:
       DECLARE_GLOBAL dispatchInterpretedFromIPicSlot
       DECLARE_GLOBAL IPicLookupDispatch
 
+      DECLARE_GLOBAL IPicResolveReadOnly
+      DECLARE_GLOBAL dispatchIPicSlot1MethodReadOnly
+      DECLARE_GLOBAL dispatchIPicSlot2MethodReadOnly
+      DECLARE_GLOBAL IPicLookupDispatchReadOnly
+
       DECLARE_GLOBAL resolveVPicClass
       DECLARE_GLOBAL populateVPicSlotClass
       DECLARE_GLOBAL populateVPicSlotCall
       DECLARE_GLOBAL dispatchInterpretedFromVPicSlot
       DECLARE_GLOBAL populateVPicVTableDispatch
+      DECLARE_GLOBAL resolveVirtualDispatchReadOnly
 
       DECLARE_EXTERN jitResolveInterfaceMethod
       DECLARE_EXTERN jitLookupInterfaceMethod
@@ -1234,7 +1240,7 @@ mergeResolveIPicClass:
 callResolveInterfaceMethod:
       mov         rsi, rdi                                     ; p2) jit valid EIP
       mov         rax, rdx                                     ; p1) address of the constant pool and cpIndex
-      CallHelperUseReg  jitResolveInterfaceMethod,rax          ; returns interpreter vtable index
+      CallHelperUseReg  jitResolveInterfaceMethod,rax
 
       mfence                                                   ; Ensure IPIC data area drains to memory before proceeding.
 
@@ -1747,9 +1753,12 @@ resolvedToDirectMethodVPic:
       ; By writing 0e8h twice in a row, it doesn't matter here whether the vtable
       ; call instruction would have been 7 or 8 bytes.
       ;
-      mov         dword [rdx+eq_VPicData_size], 0e8e8cccch     ; int 3, int 3, call, call
+      ; rax = low-tagged J9Method of method to be directly invoked
+      ; rdx = EA of VPic data block
+      ;
+      mov         dword [rdx+eq_VPicData_size], 0e8e8cccch     ; int3, int3, call, call
 
-      xor         rax, J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG ; rax is the J9Method to be directly invoked
+      xor         rax, J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG ; whack the low-tag
       mov         qword [rdx+eq_VPicData_directMethod], rax
 
 callDirectMethodVPic:
@@ -1759,9 +1768,9 @@ callDirectMethodVPic:
       cmp         byte [rdx+eq_VPicData_callMemModRM], 94h
       sete        dil                                          ; 1 for SIB byte, or else 0
       movzx       edi, dil
-      lea         rdi, [rdx+eq_VPicData_size+7+rdi]            ; Adjusted return address
+      lea         rdi, [rdx+eq_VPicData_size+7+rdi]            ; rdi = adjusted return address
                                                                ;    7 (size of vtable call without SIB byte)
-      add         rdx, eq_VPicData_j2iThunk
+      add         rdx, eq_VPicData_j2iThunk                    ; rdx = address of j2iThunk in VPicData
       jmp         dispatchDirectMethod
       ret
 
@@ -2221,5 +2230,417 @@ callNeedsSIB:
       mov         edi, 0e8h
       jmp short   mergePopulateVPicVTableDispatch
       ret
+
+
+; Resolve a virtual method and cache the resolved vtable index in
+; the virtual resolve data block for this call site.
+;
+; STACK SHAPE: must maintain stack shape expected by call to getJitVirtualMethodResolvePushes()
+; across the call to the resolution helper.
+;
+      align 16
+resolveVirtualDispatchReadOnly:
+      push        rdi                                          ; preserve
+      push        rax                                          ; preserve GP arg0 (the receiver)
+      push        rsi                                          ; preserve GP arg1
+      push        rdx                                          ; preserve GP arg2
+      push        rcx                                          ; preserve GP arg3
+
+      ; Stack shape:
+      ;
+      ; +40 RA in code cache (call to helper)
+      ; +32 saved rdi
+      ; +24 saved rax (receiver)
+      ; +16 saved rsi
+      ; +8 saved rdx
+      ; +0 saved rcx
+      ;
+      mov         rdi, qword [rsp+40]                          ; RA in code cache snippet
+      movsx       rdx, dword [rdi]                             ; disp32 to virtual resolve data block
+      lea         rdx, [rdi + rdx]                             ; rdx = EA of virtual resolve data block cpAddr and cpIndex
+
+      ; If there is a direct method cached for this call site (implying
+      ; the method is not in the vtable) then skip the resolution and
+      ; dispatch directly.
+      ;
+      mov         rax, qword [rdx+eq_ResolveVirtual_directMethod]
+      test        rax, rax
+      jnz         resolveVirtualDispatchDirectMethod
+
+      mov         rax, rdx                                     ; p1) EA of virtual resolve data block
+      mov         rsi, rdi                                     ; p2) rsi = jit valid EIP
+      CallHelperUseReg jitResolveVirtualMethod,rax             ; rax = compiler vtable index, or (low-tagged) direct J9Method pointer
+
+      test        rax, J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG
+      jnz         resolveVirtualCacheDirectMethod
+
+      mov         dword [rdx+eq_ResolveVirtual_vtableOffset], eax   ; store resolved vtable index in virtual resolve data block
+
+      movsx       rdx, dword [rdi+4]                           ; disp32 to vtable dispatch instruction in mainline code
+      add         qword [rsp + 40], rdx                        ; adjust call RA on stack to return to the start of the vtable
+                                                               ;    dispatch instruction in mainline code
+
+      pop         rcx                                          ; restore
+      pop         rdx                                          ; restore
+      pop         rsi                                          ; restore
+      pop         rax                                          ; restore
+      pop         rdi                                          ; restore
+
+      ret                                                      ; branch will mispredict due to RA adjustment on stack
+
+resolveVirtualCacheDirectMethod:
+      ; rax = low-tagged J9Method of direct method
+      ; rdx = EA of virtual resolve data block
+      ; rdi = RA in code cache snippet
+      ;
+      xor         rax, J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG        ; whack the low-tag
+      mov         qword [rdx+eq_ResolveVirtual_directMethod], rax
+
+resolveVirtualDispatchDirectMethod:
+
+      ; Stack shape:
+      ;
+      ; +40 RA in code cache (call to helper)
+      ; +32 saved rdi
+      ; +24 saved rax (receiver)
+      ; +16 saved rsi
+      ; +8 saved rdx
+      ; +0 saved rcx
+      ;
+      movsx       rsi, dword [rdi+8]                           ; disp32 to vtable dispatch instruction in mainline code
+      add         qword [rsp + 40], rsi                        ; adjust call RA on stack to return to the instruction following
+                                                               ;    the vtable dispatch sequence in the mainline code
+
+      test        qword [rax+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit  ; method compiled?
+      jnz         resolveVirtualDispatchDirectMethodInterpreted
+
+      ; Method is compiled
+      ;
+      mov         rax, qword [rax+J9TR_MethodPCStartOffset]    ; interpreter entry point for compiled method
+      mov         edi, dword [rax-4]                           ; preprologue info word
+      shr         edi, 16                                      ; offset to JIT entry point
+      add         rdi, rax                                     ; JIT entry point
+
+mergeResolveVirtualDispatchDirectMethod:
+      pop         rcx                                          ; restore
+      pop         rdx                                          ; restore
+      pop         rsi                                          ; restore
+      pop         rax                                          ; restore
+      add         rsp, 8                                       ; skip rdi
+      jmp         rdi
+
+resolveVirtualDispatchDirectMethodInterpreted:
+      lea         r8, [rax+J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG]  ; re-establish low-tag on J9Method
+      mov         rdi, qword [rdx+eq_ResolveVirtual_j2iThunk]        ; j2i virtual thunk
+      jmp         mergeResolveVirtualDispatchDirectMethod
+
+      ret
+
+
+; Resolve the interface method and update the IPIC data area with the interface J9Class
+; and the itable index.  Proceed to attempt to occupy an empty IPIC slot with the resolved
+; method.  If both slots are occupied, replace the call to this resolution and populate
+; function with the general IPicLookupDispatchReadOnly function.
+;
+; STACK SHAPE: must maintain stack shape expected by call to getJitVirtualMethodResolvePushes()
+; across the call to the resolution helper.
+;
+      align 16
+IPicResolveReadOnly:
+      push        rdi                                          ; preserve
+      push        rax                                          ; preserve GP arg0 (the receiver)
+      push        rsi                                          ; preserve GP arg1
+      push        rdx                                          ; preserve GP arg2
+      push        rcx                                          ; preserve GP arg3
+
+      ; Stack shape:
+      ;
+      ; +40 RA in code cache (call to helper)
+      ; +32 saved rdi
+      ; +24 saved rax (receiver)
+      ; +16 saved rsi
+      ; +8 saved rdx
+      ; +0 saved rcx
+      ;
+      mov         rsi, qword [rsp+40]                          ; rsi = RA in code cache snippet
+      movsx       rcx, dword [rsi]                             ; disp32 to interface dispatch data block
+      lea         rcx, [rsi + rcx]                             ; rcx = EA of interface dispatch data block
+
+      test        qword [rcx + eq_InterfaceDispatch_itableOffset], J9TR_J9_ITABLE_OFFSET_DIRECT
+      jz short    noPatchingResolveInterfaceMethod
+
+      cmp         qword [rcx + eq_InterfaceDispatch_interfaceClassAddress], 0
+      jnz         typeCheckAndDirectDispatchIPicReadOnly
+
+noPatchingResolveInterfaceMethod:
+      mov         rdi, rax                                     ; rdi = receiver
+      lea         rax, [rcx + eq_InterfaceDispatch_cpAddress]  ; p1) rax = EA of interface dispatch data block cpAddr and cpIndex
+                                                               ; p2) rsi = valid JITed code EIP
+      CallHelperUseReg  jitResolveInterfaceMethod,rax
+
+      mfence                                                   ; Ensure IPIC data area drains to memory before proceeding.
+
+      test        qword [rcx + eq_InterfaceDispatch_itableOffset], J9TR_J9_ITABLE_OFFSET_DIRECT
+      jnz         typeCheckAndDirectDispatchIPicReadOnly
+
+      LoadClassPointerFromObjectHeader rdi, rdi, edi
+
+      ; Attempt to acquire the first IPIC slot
+      ;
+      or          rax, -1                                      ; Expected default J9Class value in slot
+      mov         rdx, rdi
+      lock cmpxchg qword [rcx + eq_InterfaceDispatch_slot1Class], rdx
+      jz short    updateIPicSlotSuccess
+
+      ; If another thread has acquired the slot with the same class
+      ; that we were attempting then consider the slot to be acquired
+      ; successfully.
+      ;
+      cmp         rax, rdx
+      jz short    updateIPicSlotSuccess
+
+      ; Attempt to acquire the second IPIC slot
+      ;
+      or          rax, -1                                      ; Expected default J9Class value in slot
+      lock cmpxchg qword [rcx + eq_InterfaceDispatch_slot2Class], rdx
+      jz short    updateIPicSlotSuccess
+
+      ; If another thread has acquired the slot with the same class
+      ; that we were attempting then consider the slot to be acquired
+      ; successfully.
+      ;
+      cmp         rax, rdx
+      jz short    updateIPicSlotSuccess
+
+      ; All slots are occupied.  Change the default path to call
+      ; through the generic interface lookup dispatch, and re-run
+      ; the indirect call instruction in the snippet that dispatched
+      ; to this helper to dispatch to the new target.
+      ;
+      MoveHelper  rdx, IPicLookupDispatchReadOnly
+      mov         qword [rcx + eq_InterfaceDispatch_slowInterfaceDispatchMethod], rdx
+      sub         qword [rsp + 40], 6
+      jmp short   doneIPicResolveReadOnly
+
+updateIPicSlotSuccess:
+      movsx       rcx, dword [rsi+4]                           ; disp32 to first slot compare instruction in mainline
+      add         qword [rsp + 40], rcx                        ; adjust call RA on stack to return to the first slot
+                                                               ;    compare instruction in mainline
+
+doneIPicResolveReadOnly:
+      ; Stack shape:
+      ;
+      ; +40 RA in code cache (call to helper)
+      ; +32 saved rdi
+      ; +24 saved rax (receiver)
+      ; +16 saved rsi
+      ; +8 saved rdx
+      ; +0 saved rcx
+      ;
+      pop         rcx                                          ; restore
+      pop         rdx                                          ; restore
+      pop         rsi                                          ; restore
+      pop         rax                                          ; restore
+      pop         rdi                                          ; restore
+      ret
+
+typeCheckAndDirectDispatchIPicReadOnly:
+      int3
+      ret
+
+
+; Dispatch a method from read-only IPic slot 1.  If the target method is compiled the
+; call to this helper function will be replaced with a call to the compiled method
+; entry point.
+;
+; STACK SHAPE: must maintain stack shape expected by call to getJitVirtualMethodResolvePushes()
+; across the call to the lookup helper.
+;
+      align 16
+dispatchIPicSlot1MethodReadOnly:
+      push        rdi                                          ; preserve
+      push        rax                                          ; preserve GP arg0 (the receiver)
+      push        rsi                                          ; preserve GP arg1
+      push        rdx                                          ; preserve GP arg2
+      push        rcx                                          ; preserve GP arg3
+
+      ; Stack shape:
+      ;
+      ; +40 RA in code cache (call to helper)
+      ; +32 saved rdi
+      ; +24 saved rax (receiver)
+      ; +16 saved rsi
+      ; +8 saved rdx
+      ; +0 saved rcx
+      ;
+      mov         rdx, qword [rsp+40]                          ; rdx = RA in mainline
+      movsx       rsi, dword [rdx-4]                           ; rsi = disp32 to slot 1 method in interface data block
+                                                               ;    taken from RIP offset of call instruction
+
+      ; rcx = EA of interface dispatch data block slot 1 method
+      lea         rcx, [rsi + rdx]
+
+      ; rsi = EA of interface dispatch data block interface class
+      lea         rsi, [rsi + rdx + (eq_InterfaceDispatch_interfaceClassAddress - eq_InterfaceDispatch_slot1Method)]
+
+commonDispatchIPicSlotMethodReadOnly:
+
+      ; Stack shape:
+      ;
+      ; +40 RA in code cache (call to helper)
+      ; +32 saved rdi
+      ; +24 saved rax (receiver)
+      ; +16 saved rsi
+      ; +8 saved rdx
+      ; +0 saved rcx
+      ;
+      LoadClassPointerFromObjectHeader rax, rax, eax           ; p1) rax = receiver class
+      mov         rdi, rax
+                                                               ; p2) rsi = resolved interface class EA
+                                                               ; p3) rdx = jit RA
+      CallHelperUseReg jitLookupInterfaceMethod,rax            ; returns interpreter vtable offset
+
+      mov         r8, rax
+      mov         rax, qword [rdi+rax]                         ; rax = J9Method from interpreter vtable
+      test        byte [rax + J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit ; method compiled?
+      jnz short   dispatchInterfaceThroughVTableReadOnly
+
+      mov         rdi, qword [rax+J9TR_MethodPCStartOffset]    ; compiled method interpreter entry point from J9Method
+      mov         edx, dword [rdi-4]                           ; fetch preprologue info word
+      shr         edx, 16                                      ; isolate interpreter argument flush area size
+      add         rdi, rdx                                     ; rdx = JIT entry point
+
+      ; Update the method slot in the interface dispatch data block with the compiled target
+      ;
+      mov         qword [rcx], rdi
+
+      ; Stack shape:
+      ;
+      ; +40 RA in code cache (call to helper)
+      ; +32 saved rdi
+      ; +24 saved rax (receiver)
+      ; +16 saved rsi
+      ; +8 saved rdx
+      ; +0 saved rcx
+      ;
+      pop         rcx                                          ; restore
+      pop         rdx                                          ; restore
+      pop         rsi                                          ; restore
+      pop         rax                                          ; restore
+      pop         rdi                                          ; restore
+      sub         qword [rsp], 6                               ; re-run the IPic call instruction to dispatch compiled method
+      ret
+
+dispatchInterfaceThroughVTableReadOnly:
+
+      ; rdi = receiver class
+      ; r8 = interpreter vtable offset
+      ;
+      ; Stack shape:
+      ;
+      ; +40 RA in code cache (call to helper)
+      ; +32 saved rdi
+      ; +24 saved rax (receiver)
+      ; +16 saved rsi
+      ; +8 saved rdx
+      ; +0 saved rcx
+      ;
+      sub         r8, J9TR_InterpVTableOffset
+      neg         r8                                           ; r8 = JIT vtable offset
+      pop         rcx                                          ; restore
+      pop         rdx                                          ; restore
+      pop         rsi                                          ; restore
+      pop         rax                                          ; restore
+      add         rsp, 8                                       ; skip rdi
+
+      ; Any interpreted dispatch helpers (e.g., j2iVirtual) expects r8 to
+      ; contain the JIT vtable offset
+      ;
+      mov rdi, qword [rdi + r8]
+      jmp rdi
+
+
+; Dispatch a method from read-only IPic slot 2.  If the target method is compiled the
+; call to this helper function will be replaced with a call to the compiled method
+; entry point.
+;
+; STACK SHAPE: must maintain stack shape expected by call to getJitVirtualMethodResolvePushes()
+; across the call to the lookup helper.
+;
+      align 16
+dispatchIPicSlot2MethodReadOnly:
+      push        rdi                                          ; preserve
+      push        rax                                          ; preserve GP arg0 (the receiver)
+      push        rsi                                          ; preserve GP arg1
+      push        rdx                                          ; preserve GP arg2
+      push        rcx                                          ; preserve GP arg3
+
+      ; Stack shape:
+      ;
+      ; +40 RA in code cache (call to helper)
+      ; +32 saved rdi
+      ; +24 saved rax (receiver)
+      ; +16 saved rsi
+      ; +8 saved rdx
+      ; +0 saved rcx
+      ;
+      mov         rdx, qword [rsp+40]                          ; rdx = RA in mainline
+      movsx       rsi, dword [rdx-4]                           ; rsi = disp32 to slot 2 method in interface data block
+                                                               ;    taken from RIP offset of call instruction
+
+      ; rcx = EA of interface dispatch data block slot 2 method
+      lea         rcx, [rsi + rdx]
+
+      ; rsi = EA of interface dispatch data block interface class
+      lea         rsi, [rsi + rdx + (eq_InterfaceDispatch_interfaceClassAddress - eq_InterfaceDispatch_slot2Method)]
+
+      jmp         commonDispatchIPicSlotMethodReadOnly
+
+
+; Look up an implemented interface method in this receiver's class and
+; dispatch it.
+;
+; STACK SHAPE: must maintain stack shape expected by call to getJitVirtualMethodResolvePushes()
+; across the call to the lookup helper.
+;
+      align 16
+IPicLookupDispatchReadOnly:
+      push        rdi                                          ; preserve
+      push        rax                                          ; preserve GP arg0 (the receiver)
+      push        rsi                                          ; preserve GP arg1
+      push        rdx                                          ; preserve GP arg2
+      push        rcx                                          ; preserve GP arg3
+
+      ; Stack shape:
+      ;
+      ; +40 RA in code cache (call to helper)
+      ; +32 saved rdi
+      ; +24 saved rax (receiver)
+      ; +16 saved rsi
+      ; +8 saved rdx
+      ; +0 saved rcx
+      ;
+      mov         rdx, qword [rsp+40]                          ; rdx = RA in mainline
+      movsx       rsi, dword [rdx]                             ; rsi = disp32 to interface dispatch data block
+                                                               ;    taken from RIP offset of call instruction
+
+      ; rsi = EA of interface dispatch data block interface class
+      lea         rsi, [rsi + rdx + eq_InterfaceDispatch_interfaceClassAddress]
+
+      LoadClassPointerFromObjectHeader rax, rax, eax           ; p1) rax = receiver class
+      mov         rdi, rax
+                                                               ; p2) rsi = resolved interface class EA
+                                                               ; p3) rdx = jit RA
+      CallHelperUseReg jitLookupInterfaceMethod,rax            ; returns interpreter vtable offset
+      mov         r8, rax
+
+      ; Modify the return address on stack to return to the "done" label
+      ; in the mainline code after the IPic
+      ;
+      movsx       rsi, dword [rdx+8]
+      lea         rsi, [rsi + rdx]
+      mov         qword [rsp+40], rsi
+
+      jmp         dispatchInterfaceThroughVTableReadOnly
 
 %endif

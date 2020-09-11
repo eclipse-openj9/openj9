@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,6 +46,9 @@ TR_OptAnnotation::TR_OptAnnotation(TR::Compilation *comp,
   if(!loadAnnotation(clazz,kTRJITOpt)) return;
 
   J9JavaVM * javaVM = ((TR_J9VMBase *)_comp->fej9())->_jitConfig->javaVM;
+#if defined(J9VM_OPT_SNAPSHOTS)
+  VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+#endif
   PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 
@@ -54,7 +57,18 @@ TR_OptAnnotation::TR_OptAnnotation(TR::Compilation *comp,
   int32_t methodNameLen = resolvedMethod->nameLength();
   int32_t methodSigLen  = resolvedMethod->signatureLength();
 
-  char *nameBuf = (char *)j9mem_allocate_memory(methodNameLen+methodSigLen+2 * sizeof(char), J9MEM_CATEGORY_JIT);
+  char *nameBuf;
+#if defined(J9VM_OPT_SNAPSHOTS)
+  if (IS_SNAPSHOT_RUN(javaVM))
+     {
+     nameBuf = (char *)vmsnapshot_allocate_memory(methodNameLen+methodSigLen+2 * sizeof(char), J9MEM_CATEGORY_JIT);
+     }
+  else
+#endif
+     {
+     nameBuf = (char *)j9mem_allocate_memory(methodNameLen+methodSigLen+2 * sizeof(char), J9MEM_CATEGORY_JIT);
+     }
+
   if (!nameBuf)
      return;
 
@@ -76,7 +90,18 @@ TR_OptAnnotation::TR_OptAnnotation(TR::Compilation *comp,
                                              clazz);
 
    if(NULL != nameBuf)
-      j9mem_free_memory(nameBuf);
+      {
+#if defined(J9VM_OPT_SNAPSHOTS)
+      if (IS_SNAPSHOT_RUN(javaVM))
+         {
+         vmsnapshot_free_memory(nameBuf);
+         }
+      else
+#endif
+         {
+         j9mem_free_memory(nameBuf);
+         }
+      }
 
    J9SRP *j9ptr;
    if(extractValue(annotationInfoEntryPtr,"optLevel",kEnum ,&j9ptr))

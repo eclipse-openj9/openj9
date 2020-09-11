@@ -144,6 +144,16 @@ SETVAL(eq_privMethod_inVUCallSnippet,40)
 SETVAL(eq_j2i_thunk_inVUCallSnippet,48)
 SETVAL(eq_privateRA_inVUCallSnippet,56)
 
+ZZ Virtual Unresolved Call Read Only Layout
+SETVAL(eq_ResolveVirtual_cpAddress,0)
+SETVAL(eq_ResolveVirtual_cpIndex,8)
+SETVAL(eq_ResolveVirtual_directMethod,16)
+SETVAL(eq_ResolveVirtual_j2iThunk,24)
+SETVAL(eq_ResolveVirtual_vtableOffset,32)
+SETVAL(eq_resolveVirtualDispatchReadOnly_RA,4)
+SETVAL(eq_returnAddressDirectMethod,8)
+SETVAL(eq_ResolveVirtualData_RIP,0)
+
 ZZ These two should really be in codert/jilconsts.inc
 SETVAL(J9TR_MethodConstantPool,8)
 SETVAL(eq_ramclassFromConstantPool,0)
@@ -154,10 +164,19 @@ SETVAL(eq_codeRA_inDataSnippet,8)
 SETVAL(eq_cpindex_inDataSnippet,16)
 SETVAL(eq_cp_inDataSnippet,20)
 SETVAL(eq_codeRef_inDataSnippet,28)
-SETVAL(eq_literalPoolAddr_inDataSnippet,36)
-SETVAL(eq_offsetSlot_inDataSnippet,44)
-SETVAL(eq_patchOffset_inDataSnippet,52)
-SETVAL(eq_outOfLineStart_inDataSnippet,56)
+SETVAL(eq_fenceNOP_inDataSnippet,36)
+SETVAL(eq_literalPoolAddr_inDataSnippet,44)
+SETVAL(eq_offsetSlot_inDataSnippet,52)
+SETVAL(eq_patchOffset_inDataSnippet,60)
+SETVAL(eq_outOfLineStart_inDataSnippet,64)
+
+ZZ Unresolved Data Read Only Snippet (64-bit mode)
+SETVAL(eq_indexOrAddress_inDSRO,0)
+SETVAL(eq_cpAddress_inDSRO,8)
+SETVAL(eq_isVolatile_inDSRO,16)
+SETVAL(eq_CCUnresolvedData_inDSRO,0)
+SETVAL(eq_cpIndex_inDSRO,4)
+SETVAL(eq_codeRA_inDSRO,8)
 
 ZZ  MethodFlags is a 32bit integer,but occupies 8 byte slot on 64bit
 SETVAL(eq_methodFlagsOffset,(J9TR_MethodFlagsOffset+4))
@@ -193,10 +212,19 @@ SETVAL(eq_codeRA_inDataSnippet,4)
 SETVAL(eq_cpindex_inDataSnippet,8)
 SETVAL(eq_cp_inDataSnippet,12)
 SETVAL(eq_codeRef_inDataSnippet,16)
-SETVAL(eq_literalPoolAddr_inDataSnippet,20)
-SETVAL(eq_offsetSlot_inDataSnippet,24)
-SETVAL(eq_patchOffset_inDataSnippet,28)
-SETVAL(eq_outOfLineStart_inDataSnippet,32)
+SETVAL(eq_fenceNOP_inDataSnippet,20)
+SETVAL(eq_literalPoolAddr_inDataSnippet,24)
+SETVAL(eq_offsetSlot_inDataSnippet,28)
+SETVAL(eq_patchOffset_inDataSnippet,32)
+SETVAL(eq_outOfLineStart_inDataSnippet,36)
+
+ZZ Unresolved Data Read Only Snippet (31-bit mode)
+SETVAL(eq_indexOrAddress_inDSRO,0)
+SETVAL(eq_cpAddress_inDSRO,4)
+SETVAL(eq_isVolatile_inDSRO,8)
+SETVAL(eq_CCUnresolvedData_inDSRO,0)
+SETVAL(eq_cpIndex_inDSRO,4)
+SETVAL(eq_codeRA_inDSRO,8)
 
 SETVAL(eq_methodFlagsOffset,J9TR_MethodFlagsOffset)
 
@@ -1143,7 +1171,7 @@ ZZ  If interpreter tells us it is <clinit>, we do not patch the
 ZZ  mainline code ==> we always go through this resolve slowpath
 ZZ  until <clinit> bit is unset.
     TML     r0,HEX(0001)        # data is masked for clinit?
-    JNZ     L_DataResolveExit   #if yes, goto to exit
+    JNZ     L_DataResolveDone   #if yes, goto to exit
 
 ZZ  Patching
 ZZ  We now patch the branch to snippet into effectively
@@ -1156,18 +1184,44 @@ ZZ  If not BRCL, we patch the instruction with BRC 3.
     JZ      L_PatchBRCL1
 
     PATCH(Lpatch)
-    J       L_DataResolveExit
+    J       L_DataResolveDone
 
 LABEL(L_PatchBRCL1)
     LHI     r1,-16380  # HEX(C004) - BRCL 0x0
     STH     r1,0(,r2)
 
-LABEL(L_DataResolveExit)
+LABEL(L_DataResolveDone)
+
+ZZ  Check if the fence NOP address is non-null and if so call the VM
+ZZ  helper to determine whether the field we are storing to is
+ZZ  volatile. If so we patch the fence NOP into a fence.
+    L_GPR   r1,eq_fenceNOP_inDataSnippet(r14)
+    CHI_GPR r1,0
+    JE      L_VolatileCheckDone
+    L_GPR   r1,eq_cp_inDataSnippet(,r14)        # p1) ramConstantPool
+    LGF_GPR r2,eq_cpindex_inDataSnippet(,r14)   # p2) cpIndex
+    LHI_GPR r3,1                                # p3) isStatic
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolvedFieldIsVolatile)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP       # Call jitResolvedFieldIsVolatile
+    LR_GPR  r14,r0
+    CHI_GPR r2,0
+    JE      L_VolatileCheckDone
+    L_GPR   r1,eq_fenceNOP_inDataSnippet(r14)
+
+ZZ  TODO: Update this to an actual MVHHI instruction once we bump up
+ZZ        assembler support for z10
+ZZ  MVHHI   0(,r1),HEX(07E0)
+    CONST_4BYTE(E5441000)
+    CONST_4BYTE(07E01800)
+
+    LABEL(L_VolatileCheckDone)
     RestoreRegs
 
 ZZ Now we jump back to mainline code.
     L_GPR   r14,eq_codeRA_inDataSnippet(,r14)
-
     BR      r14
 
     END_FUNC(_interpreterUnresolvedStaticDataStoreGlue,intpUStDSG,12)
@@ -1266,8 +1320,34 @@ LABEL(L_PatchBRCL)
     ST      r1,2(,r2)
 
 LABEL(L_LDRcc2Exit)
-    RestoreRegs
 
+ZZ  Check if the fence NOP address is non-null and if so call the VM
+ZZ  helper to determine whether the field we are storing to is
+ZZ  volatile. If so we patch the fence NOP into a fence.
+    L_GPR   r1,eq_fenceNOP_inDataSnippet(r14)
+    CHI_GPR r1,0
+    JE      L_VolatileInstanceCheckDone
+    L_GPR   r1,eq_cp_inDataSnippet(,r14)        # p1) ramConstantPool
+    LGF_GPR r2,eq_cpindex_inDataSnippet(,r14)   # p2) cpIndex
+    LHI_GPR r3,0                                # p3) isStatic
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolvedFieldIsVolatile)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP       # Call jitResolvedFieldIsVolatile
+    LR_GPR  r14,r0
+    CHI_GPR r2,0
+    JE      L_VolatileInstanceCheckDone
+    L_GPR   r1,eq_fenceNOP_inDataSnippet(r14)
+
+ZZ  TODO: Update this to an actual MVHHI instruction once we bump up
+ZZ        assembler support for z10
+ZZ  MVHHI   0(,r1),HEX(07E0)
+    CONST_4BYTE(E5441000)
+    CONST_4BYTE(07E01800)
+
+LABEL(L_VolatileInstanceCheckDone)
+    RestoreRegs
     L_GPR r14,eq_codeRA_inDataSnippet(,r14)
     BR      r14
 
@@ -1287,12 +1367,424 @@ ZZ  3.  Patch the immediate field of the BRCL
     L       r1,eq_patchOffset_inDataSnippet(,r14)
     ST      r1,2(,r2)
 
-LABEL(LDataOOLExit)
+ZZ  Check if the fence NOP address is non-null and if so call the VM
+ZZ  helper to determine whether the field we are storing to is
+ZZ  volatile. If so we patch the fence NOP into a fence.
+    L_GPR   r1,eq_fenceNOP_inDataSnippet(r14)
+    CHI_GPR r1,0
+    JE      L_VolatileOOLInstanceCheckDone
+    L_GPR   r1,eq_cp_inDataSnippet(,r14)        # p1) ramConstantPool
+    LGF_GPR r2,eq_cpindex_inDataSnippet(,r14)   # p2) cpIndex
+    LHI_GPR r3,0                                # p3) isStatic
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolvedFieldIsVolatile)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP       # Call jitResolvedFieldIsVolatile
+    LR_GPR  r14,r0
+    CHI_GPR r2,0
+    JE      L_VolatileOOLInstanceCheckDone
+    L_GPR   r1,eq_fenceNOP_inDataSnippet(r14)
+
+ZZ  TODO: Update this to an actual MVHHI instruction once we bump up
+ZZ        assembler support for z10
+ZZ  MVHHI   0(,r1),HEX(07E0)
+    CONST_4BYTE(E5441000)
+    CONST_4BYTE(07E01800)
+
+    LABEL(L_VolatileOOLInstanceCheckDone)
     RestoreRegs
     LA    r14,eq_outOfLineStart_inDataSnippet(,r14)
     BR    r14
 
     END_FUNC(_interpreterUnresolvedInstanceDataStoreGlue,intpUIDSG,11)
+
+ZZ ===================================================================
+ZZ  PICBuilder routine - _interpreterUnresolvedFieldSetterReadOnlyGlue
+ZZ
+ZZ ===================================================================
+    START_FUNC(_interpreterUnresolvedFieldSetterReadOnlyGlue,iUFSRO)
+
+    SaveRegs
+
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
+    LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
+    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
+    LA      r3,8(r3,r14)
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveFieldSetter)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP
+
+    LHI_GPR r3,0
+    J       LCommonUnresolvedReadOnlyCode
+
+    END_FUNC(_interpreterUnresolvedFieldSetterReadOnlyGlue,iUFSRO,8)
+
+ZZ ===================================================================
+ZZ  PICBuilder routine - _interpreterUnresolvedFieldReadOnlyGlue
+ZZ
+ZZ ===================================================================
+    START_FUNC(_interpreterUnresolvedFieldReadOnlyGlue,iUFRO)
+
+    SaveRegs
+
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
+    LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
+    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
+    LA      r3,8(r3,r14)
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveField)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP
+
+    J       LCommonUnresolvedReadOnlyCode
+
+    END_FUNC(_interpreterUnresolvedFieldReadOnlyGlue,iUFRO,7)
+
+ZZ ===================================================================
+ZZ  PICBuilder routine - _interpreterUnresolvedClassFromStaticFieldReadOnlyGlue
+ZZ
+ZZ ===================================================================
+    START_FUNC(_interpreterUnresolvedClassFromStaticFieldReadOnlyGlue,iUCFSFRO)
+
+    SaveRegs
+
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
+    LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
+    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
+    LA      r3,8(r3,r14)
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveClassFromStaticField)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP
+
+    J       LCommonUnresolvedReadOnlyCode
+
+    END_FUNC(_interpreterUnresolvedClassFromStaticFieldReadOnlyGlue,iUCFSFRO,10)
+
+ZZ ===================================================================
+ZZ  PICBuilder routine - _interpreterUnresolvedClassReadOnlyGlue
+ZZ
+ZZ ===================================================================
+    START_FUNC(_interpreterUnresolvedClassReadOnlyGlue,iUCRO)
+
+    SaveRegs
+
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
+    LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
+    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
+    LA      r3,8(r3,r14)
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveClass)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP
+
+    J       LCommonUnresolvedReadOnlyCode
+
+    END_FUNC(_interpreterUnresolvedClassReadOnlyGlue,iUCRO,7)
+
+ZZ ===================================================================
+ZZ  PICBuilder routine - _interpreterUnresolvedStringReadOnlyGlue
+ZZ
+ZZ ===================================================================
+    START_FUNC(_interpreterUnresolvedStringReadOnlyGlue,iUSRO)
+
+    SaveRegs
+
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
+    LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
+    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
+    LA      r3,8(r3,r14)
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveString)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP
+
+    J       LCommonUnresolvedReadOnlyCode
+
+    END_FUNC(_interpreterUnresolvedStringReadOnlyGlue,iUSRO,7)
+
+ZZ ===================================================================
+ZZ  PICBuilder routine - _interpreterUnresolvedMethodTypeReadOnlyGlue
+ZZ
+ZZ ===================================================================
+    START_FUNC(_interpreterUnresolvedMethodTypeReadOnlyGlue,iUMTRO)
+
+    SaveRegs
+
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
+    LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
+    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
+    LA      r3,8(r3,r14)
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveMethodType)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP
+
+    J       LCommonUnresolvedReadOnlyCode
+
+    END_FUNC(_interpreterUnresolvedMethodTypeReadOnlyGlue,iUMTRO,8)
+
+ZZ ===================================================================
+ZZ  PICBuilder routine - _interpreterUnresolvedMethodHandleReadOnlyGlue
+ZZ
+ZZ ===================================================================
+    START_FUNC(_interpreterUnresolvedMethodHandleReadOnlyGlue,iUMHRO)
+
+    SaveRegs
+
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
+    LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
+    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
+    LA      r3,8(r3,r14)
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveMethodHandle)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP
+
+    J       LCommonUnresolvedReadOnlyCode
+
+    END_FUNC(_interpreterUnresolvedMethodHandleReadOnlyGlue,iUMHRO,8)
+
+ZZ ===================================================================
+ZZ  PICBuilder routine - _interpreterUnresolvedCallSiteTableEntryReadOnlyGlue
+ZZ
+ZZ ===================================================================
+    START_FUNC(_interpreterUnresolvedCallSiteTableEntryReadOnlyGlue,iUCSTERO)
+
+    SaveRegs
+
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
+    LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
+    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
+    LA      r3,8(r3,r14)
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveInvokeDynamic)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP
+
+    J       LCommonUnresolvedReadOnlyCode
+
+    END_FUNC(_interpreterUnresolvedCallSiteTableEntryReadOnlyGlue,iUCSTERO,10)
+
+ZZ ===================================================================
+ZZ  PICBuilder routine - _interpreterUnresolvedMethodTypeTableEntryReadOnlyGlue
+ZZ
+ZZ ===================================================================
+    START_FUNC(_interpreterUnresolvedMethodTypeTableEntryReadOnlyGlue,iUMTTERO)
+
+    SaveRegs
+
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
+    LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
+    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
+    LA      r3,8(r3,r14)
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveHandleMethod)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP
+
+    J       LCommonUnresolvedReadOnlyCode
+
+    END_FUNC(_interpreterUnresolvedMethodTypeTableEntryReadOnlyGlue,iUMTTERO,10)
+
+ZZ ===================================================================
+ZZ  PICBuilder routine - _interpreterUnresolvedConstantDynamicReadOnlyGlue
+ZZ
+ZZ ===================================================================
+    START_FUNC(_interpreterUnresolvedConstantDynamicReadOnlyGlue,iUCDRO)
+
+    SaveRegs
+
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
+    LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
+    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
+    LA      r3,8(r3,r14)
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveConstantDynamic)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP
+
+    J       LCommonUnresolvedReadOnlyCode
+
+    END_FUNC(_interpreterUnresolvedConstantDynamicReadOnlyGlue,iUCDRO,8)
+
+ZZ ===================================================================
+ZZ  PICBuilder routine - _interpreterUnresolvedStaticFieldSetterReadOnlyGlue
+ZZ
+ZZ ===================================================================
+    START_FUNC(_interpreterUnresolvedStaticFieldSetterReadOnlyGlue,iUSFSRO)
+
+    SaveRegs
+
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
+    LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
+    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
+    LA      r3,8(r3,r14)
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticFieldSetter)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP
+
+    LHI_GPR r3,1
+    J       LCommonUnresolvedReadOnlyCode
+
+    END_FUNC(_interpreterUnresolvedStaticFieldSetterReadOnlyGlue,iUSFSRO,9)
+
+ZZ ===================================================================
+ZZ  PICBuilder routine - _interpreterUnresolvedStaticFieldReadOnlyGlue
+ZZ
+ZZ ===================================================================
+    START_FUNC(_interpreterUnresolvedStaticFieldReadOnlyGlue,iUSFRO)
+
+    SaveRegs
+
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)
+    LGF_GPR r2,eq_cpIndex_inDSRO(,r14)
+    LGF_GPR r3,eq_codeRA_inDSRO(,r14)
+    LA      r3,8(r3,r14)
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveStaticField)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP
+
+LABEL(LCommonUnresolvedReadOnlyCode)
+    LR_GPR  r14,r0
+
+LABEL(LClinitCheckReadOnly)
+    TML     r2,HEX(0001)
+ZZ TODO: How do we properly handle <clinit>?
+ZZ  JNZ     LVolatileCheckReadOnlyDone
+    NILL    r2,HEX(FFFE)
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    STG     r2,eq_indexOrAddress_inDSRO(r1,r14)
+
+LABEL(LVolatileCheckReadOnly)
+    L_GPR   r2,eq_isVolatile_inDSRO(r1,r14)
+    TML     r2,HEX(0001)
+    JZ      LVolatileCheckReadOnlyDone
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    L_GPR   r1,eq_cpAddress_inDSRO(r1,r14)      # p1) ramConstantPool
+    LGF_GPR r2,eq_cpIndex_inDSRO(,r14)          # p2) cpIndex
+
+ZZ p3 is loaded before we branch to LCommonUnresolvedReadOnlyCode
+
+LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolvedFieldIsVolatile)
+
+    LR_GPR  r0,r14
+    BASR    r14,rEP       # Call jitResolvedFieldIsVolatile
+    LR_GPR  r14,r0
+    LGF_GPR r1,eq_CCUnresolvedData_inDSRO(,r14)
+    STG     r2,eq_isVolatile_inDSRO(r1,r14)
+
+LABEL(LVolatileCheckReadOnlyDone)
+    RestoreRegs
+
+    AGF     r14,eq_codeRA_inDSRO(,r14)
+    AGFI    r14,8
+    BR      r14
+
+    END_FUNC(_interpreterUnresolvedStaticFieldReadOnlyGlue,iUSFRO,8)
+
+ZZ ==================================================================
+ZZ  PICBuilder routine - _virtualUnresolvedHelperReadOnly
+ZZ ===================================================================
+    START_FUNC(_virtualUnresolvedHelperReadOnly,virUFRd)
+
+    AHI_GPR J9SP,-(3*PTR_SIZE)
+    ST_GPR r3,0(J9SP)
+    ST_GPR r2,PTR_SIZE(J9SP)
+    ST_GPR r1,(2*PTR_SIZE)(J9SP)
+    
+    LR_GPR r3,r14
+    AGF r3,eq_ResolveVirtualData_RIP(r3)
+    LTG r2,eq_ResolveVirtual_directMethod(r3)
+    JNZ L_resolveVirtualDispatchDirectMethodReadOnly
+
+    LR_GPR r1,r3
+    LR_GPR r2,r14
+    AGF r2,eq_resolveVirtualDispatchReadOnly_RA(r2)
+    LR_GPR r0,r14
+ZZ Load jitResolveVirtualMethod Address
+LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveVirtualMethod)
+
+    BASR r14,r14
+
+    LR_GPR r14,r0
+    LR      r1,r2
+    NILL    r1,J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG 
+    JNZ L_resolveVirtualDispatchCacheDirectMethod
+
+    st r2,eq_ResolveVirtual_vtableOffset(r3)
+    
+    L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Restore argument registers
+    L_GPR   r2,PTR_SIZE(,J9SP)
+    L_GPR   r3,0(,J9SP)
+    AHI_GPR J9SP,(3*PTR_SIZE)
+    AGF r14,eq_resolveVirtualDispatchReadOnly_RA(r14)
+    BR R14
+
+LABEL(L_resolveVirtualDispatchCacheDirectMethod)
+    XILF r2,J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG
+    ST_GPR r2,eq_ResolveVirtual_directMethod(r3)
+
+LABEL(L_resolveVirtualDispatchDirectMethodReadOnly)
+
+    AGF r14,eq_returnAddressDirectMethod(r14)
+    TM      eq_methodCompiledFlagOffset(r2),J9TR_MethodNotCompiledBit
+    JZ      L_resolveVirtualDispatchDirectMethodCompiled
+
+    LR_GPR  r0,r2
+    OILL R0,J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG
+    L_GPR   rEP,eq_ResolveVirtual_j2iThunk(r3)
+    J       L_CallDirectCachedMethod 
+
+
+LABEL(L_resolveVirtualDispatchDirectMethodCompiled)
+    L_GPR   r1,J9TR_MethodPCStartOffset(r2)
+
+    LGF     r2,-4(r1) # Load reservedWord
+
+ZZ The first half of the reserved word is jit-to-jit offset,
+ZZ so we need to shift it to lower half
+ZZ see use of getReservedWord() in getJitEntryOffset()
+    SRL     r2,16
+    AR_GPR  r1,r2
+    LR_GPR  rEP,r1
+
+LABEL(L_CallDirectCachedMethod)
+    L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Restore R1
+    L_GPR   r2,PTR_SIZE(,J9SP)           # Restore R2
+    L_GPR   r3,0(,J9SP)                  # Restore R3
+    AHI_GPR J9SP,(3*PTR_SIZE)            # Restore JSP
+    BR      rEP       # call private target. Does not return to here
+
+END_FUNC(_virtualUnresolvedHelperReadOnly,virUFRd,9)
 
 ZZ ===================================================================
 ZZ  PICBuilder routine - _virtualUnresolvedHelper

@@ -836,6 +836,9 @@ executeSnippetCode:
       DECLARE_GLOBAL interpreterUnresolvedStaticGlue
       DECLARE_GLOBAL interpreterUnresolvedSpecialGlue
       DECLARE_GLOBAL interpreterStaticAndSpecialGlue
+      DECLARE_GLOBAL interpreterUnresolvedStaticGlueReadOnly
+      DECLARE_GLOBAL interpreterUnresolvedSpecialGlueReadOnly
+      DECLARE_GLOBAL interpreterStaticAndSpecialGlueReadOnly
 
       DECLARE_GLOBAL interpreterUnresolvedStringGlue
       DECLARE_GLOBAL interpreterUnresolvedMethodTypeGlue
@@ -849,6 +852,19 @@ executeSnippetCode:
       DECLARE_GLOBAL interpreterUnresolvedFieldGlue
       DECLARE_GLOBAL interpreterUnresolvedFieldSetterGlue
       DECLARE_GLOBAL interpreterUnresolvedConstantDynamicGlue
+
+      DECLARE_GLOBAL interpreterUnresolvedStringReadOnlyGlue
+      DECLARE_GLOBAL interpreterUnresolvedMethodTypeReadOnlyGlue
+      DECLARE_GLOBAL interpreterUnresolvedMethodHandleReadOnlyGlue
+      DECLARE_GLOBAL interpreterUnresolvedCallSiteTableEntryReadOnlyGlue
+      DECLARE_GLOBAL interpreterUnresolvedMethodTypeTableEntryReadOnlyGlue
+      DECLARE_GLOBAL interpreterUnresolvedClassReadOnlyGlue
+      DECLARE_GLOBAL interpreterUnresolvedClassFromStaticFieldReadOnlyGlue
+      DECLARE_GLOBAL interpreterUnresolvedStaticFieldReadOnlyGlue
+      DECLARE_GLOBAL interpreterUnresolvedStaticFieldSetterReadOnlyGlue
+      DECLARE_GLOBAL interpreterUnresolvedFieldReadOnlyGlue
+      DECLARE_GLOBAL interpreterUnresolvedFieldSetterReadOnlyGlue
+      DECLARE_GLOBAL interpreterUnresolvedConstantDynamicReadOnlyGlue
 
       DECLARE_EXTERN j2iTransition
       DECLARE_EXTERN jitResolveStaticMethod
@@ -1003,6 +1019,120 @@ interpreterStaticAndSpecialGlue:
       jmp         rcx                                          ; Dispatch compiled method through the interpreted entry
                                                                ; point. This is because the linkage registers may not be
                                                                ; set up any longer.
+
+
+; interpreterUnresolved{Static|Special}GlueReadOnly
+;
+      align 16
+interpreterUnresolvedStaticGlueReadOnly:
+      pop         rdi                                          ; RA in snippet (see [2] above)
+
+      ; Attempt to resolve static method.
+      ;
+      mov         rax, qword [rsp]                             ; p1) rax = RA in mainline code
+
+      movsx       rcx, dword [rdi]                             ; offset to unresolved static data area
+      add         rcx, rdi                                     ; address of unresolved static data area
+      mov         rsi, qword [rcx+eq_StaticSpecial_cpAddress]  ; p2) rsi = cpAddr
+      mov         edx, dword [rdi+4]                           ; p3) rdx = cpIndex
+                                                               ;        4 = 4 (RIP offset to data area)
+      call        jitResolveStaticMethod
+      mov         rsi, rdi                                     ; Save the return address in snippet
+
+      ; The interpreter may low-tag the result to avoid populating the constant pool -- whack it and record in CF.
+      ;
+      btr         rax, 0
+
+      ; Load the resolved RAM method into RDI so that the caller doesn't have to re-run patched code
+      ;
+      mov         rdi, rax
+
+      ; Skip updating the resolved RAM method in the data area if it
+      ; was low-tagged during resolution.  Dispatch the interpreted
+      ; method directly.
+      ;
+      jc          j2iTransition
+
+mergeInterpreterUnresolvedPatchingReadOnly:
+
+      ; If the method is compiled, modify the mainline callsite to dispatch
+      ; to the compiled method.  If the method is not compiled (interpreted)
+      ; then update the RAM method for the interpreted snippet and modify the
+      ; mainline callsite to dispatch to the interpeter snippet.
+
+      ; rdi = resolved J9Method
+      ; rsi = RA in snippet
+
+      mov         rcx, qword [rdi + J9TR_MethodPCStartOffset]  ; rcx = interpreter entry point of the compiled method
+      test        cl, J9TR_MethodNotCompiledBit
+      jnz         prepareToInterpret
+
+      movsx       rax, dword [rsi]                             ; offset to unresolved static data area
+      lea         rax, [rax + rsi + eq_StaticSpecial_snippetOrCompiledMethod] ; EA of snippetOrCompiledMethod field in data area
+
+      ; Modify the call target of the mainline call
+      ;
+      ; rdi = resolved J9Method
+      ; rax = EA of snippetOrCompiledMethod field in data area
+      ; rcx = interpreter entry point of the compiled method
+      ;
+mergeInterpreterUpdateCompiledMethodTargetReadOnly:
+      mov         edi, dword [rcx - 4]                         ; -4 = offset to preprologue info word
+      shr         edi, 16                                      ; compute offset to JIT entry point
+      add         rdi, rcx                                     ; rdi = JIT entry point
+      mov         qword [rax], rdi
+
+      jmp         rcx                                          ; Dispatch to the interpreter entry point of the compiled method
+
+prepareToInterpret:
+
+      ; Update the RAM method in the data area for this call site.
+      ;
+      ; rdi = resolved J9Method
+      ; rsi = RA in snippet
+      ; rcx = interpreter entry point of compiled method
+      ;
+      movsx       rax, dword [rsi]                             ; offset to unresolved static data area
+      add         rax, rsi                                     ; address of unresolved static data area
+      mov         qword [rax+eq_StaticSpecial_ramMethod], rdi  ; Store RAM method
+
+      jmp         j2iTransition                                ; Dispatch interpreted method
+
+
+      align 16
+interpreterUnresolvedSpecialGlueReadOnly:
+      pop         rdi                                          ; RA in snippet
+
+      ; Attempt to resolve special method.
+      ;
+      mov         rax, qword [rsp]                             ; p1) rax = RA in mainline code
+
+      movsx       rcx, dword [rdi]                             ; offset to unresolved static data area
+      add         rcx, rdi                                     ; address of unresolved static data area
+      mov         rsi, qword [rcx+eq_StaticSpecial_cpAddress]  ; p2) rsi = cpAddr
+      mov         edx, dword [rdi+4]                           ; p3) rdx = cpIndex
+
+      call        jitResolveSpecialMethod
+      mov         rsi, rdi                                     ; Save the return address
+
+      ; Load the resolved RAM method into RDI so that the caller doesn't have to re-run patched code
+      ;
+      mov         rdi, rax
+
+      jmp         mergeInterpreterUnresolvedPatchingReadOnly
+
+
+      align 16
+interpreterStaticAndSpecialGlueReadOnly:
+      mov         rcx, qword [rdi + J9TR_MethodPCStartOffset]  ; rcx = interpreter entry point of the compiled method
+      test        cl, J9TR_MethodNotCompiledBit
+      jnz         j2iTransition
+
+      mov         rax, qword [rsp]                             ; RA in mainline
+      movsx       rsi, dword [rax-4]                           ; disp32 to snippetOrCompiledMethod
+      add         rax, rsi                                     ; EA of snippetOrCompiledMethod field in data area
+
+      jmp         mergeInterpreterUpdateCompiledMethodTargetReadOnly
 
 
 ; --------------------------------------------------------------------------------
@@ -1557,5 +1687,221 @@ noVolatileCheck4Byte:
       popfq                                                    ; restore
       lea rsp, [rsp+8]                                         ; skip over RA in snippet--mispredict
       ret
+
+
+%macro DispatchUnresolvedDataReadOnlyHelper 1                  ; helper
+      mov         rdi, qword [rsp+264]                         ; RA in snippet (see stack shape below)
+
+      movsx       rcx, dword [rdi]                             ; rcx = RIP to snippet data area
+      mov         rax, qword [rdi+rcx+eq_ResolveData_cpAddress] ; p1) rax = cpAddress
+      mov         esi, dword [rdi+4]                           ; p2) rsi = cpIndex
+      and         esi, 1ffffh                                  ; isolate the cpIndex
+      mov         rdx, qword [rsp+272]                         ; p3) rdx = RA in mainline code
+                                                               ; (see stack shape below)
+      CallHelperUseReg %1, rax
+%endmacro
+
+
+; interpreterUnresolved{*}ReadOnlyGlue
+;
+; Generic code to perform runtime resolution of a data reference without patching
+; the code cache.  These functions are called from a snippet that has the following
+; general shape:
+;
+;     call  interpreterUnresolved{*}ReadOnlyGlue
+;     dd [RIP offset to resolution data]
+;     dd Constant pool index + encoding flags
+;     dd [RIP offset to start of mainline resolution ]
+;
+; volatileFenceLabel:
+;     mfence
+;     jmp doneLabel
+;
+; Spare bits in the cpIndex passed in are used to specify behaviour based on the
+; kind of resolution.  The anatomy of a cpIndex:
+;
+;       byte 3   byte 2   byte 1   byte 0
+;
+;      3 222  2 222    1 1      0 0      0
+;      10987654 32109876 54321098 76543210
+;      |||||__| ||| ||||_________________|
+;      |||| |   ||| |||         |
+;      |||| |   ||| |||         +---------------- cpIndex (0-16)
+;      |||| |   ||| ||+-------------------------- upper long dword resolution (17)
+;      |||| |   ||| |+--------------------------- lower long dword resolution (18)
+;      |||| |   ||| +---------------------------- check volatility (19)
+;      |||| |   ||+------------------------------ resolve, but do not patch snippet template (21)
+;      |||| |   |+------------------------------- resolve, but do not patch mainline code (22)
+;      |||| |   +-------------------------------- long push instruction (23)
+;      |||| +------------------------------------ number of live X87 registers across this resolution (24-27)
+;      |||+-------------------------------------- has live XMM registers (28)
+;      ||+--------------------------------------- static resolution (29)
+;      |+---------------------------------------- 64-bit: resolved value is 8 bytes (30)
+;      |                                          32-bit: resolved value is high word of long pair (30)
+;      +----------------------------------------- 64 bit: extreme static memory barrier position (31)
+;
+; NOTES:
+;
+; [1] STACK SHAPE: must maintain stack shape expected by call to getJitDataResolvePushes()
+;     across the resolution helper.
+;
+      align 16
+interpreterUnresolvedStringReadOnlyGlue:
+      DataResolvePrologue
+      DispatchUnresolvedDataReadOnlyHelper jitResolveString
+      jmp         commonUnresolvedReadOnlyCode
+
+      align 16
+interpreterUnresolvedConstantDynamicReadOnlyGlue:
+      DataResolvePrologue
+      DispatchUnresolvedDataReadOnlyHelper jitResolveConstantDynamic
+      jmp         commonUnresolvedReadOnlyCode
+
+      align 16
+interpreterUnresolvedMethodTypeReadOnlyGlue:
+      DataResolvePrologue
+      DispatchUnresolvedDataReadOnlyHelper jitResolveMethodType
+      jmp         commonUnresolvedReadOnlyCode
+
+      align 16
+interpreterUnresolvedMethodHandleReadOnlyGlue:
+      DataResolvePrologue
+      DispatchUnresolvedDataReadOnlyHelper jitResolveMethodHandle
+      jmp         commonUnresolvedReadOnlyCode
+
+      align 16
+interpreterUnresolvedCallSiteTableEntryReadOnlyGlue:
+      DataResolvePrologue
+      DispatchUnresolvedDataReadOnlyHelper jitResolveInvokeDynamic
+      jmp         commonUnresolvedReadOnlyCode
+
+      align 16
+interpreterUnresolvedMethodTypeTableEntryReadOnlyGlue:
+      DataResolvePrologue
+      DispatchUnresolvedDataReadOnlyHelper jitResolveHandleMethod
+      jmp         commonUnresolvedReadOnlyCode
+
+      align 16
+interpreterUnresolvedClassReadOnlyGlue:
+      DataResolvePrologue
+      DispatchUnresolvedDataReadOnlyHelper jitResolveClass
+      jmp         commonUnresolvedReadOnlyCode
+
+      align 16
+interpreterUnresolvedClassFromStaticFieldReadOnlyGlue:
+      DataResolvePrologue
+      DispatchUnresolvedDataReadOnlyHelper jitResolveClassFromStaticField
+      jmp         commonUnresolvedReadOnlyCode
+
+      align 16
+interpreterUnresolvedStaticFieldReadOnlyGlue:
+      DataResolvePrologue
+      DispatchUnresolvedDataReadOnlyHelper jitResolveStaticField
+      jmp         commonUnresolvedReadOnlyCode
+
+      align 16
+interpreterUnresolvedStaticFieldSetterReadOnlyGlue:
+      DataResolvePrologue
+      DispatchUnresolvedDataReadOnlyHelper jitResolveStaticFieldSetter
+      jmp         commonUnresolvedReadOnlyCode
+
+      align 16
+interpreterUnresolvedFieldReadOnlyGlue:
+      DataResolvePrologue
+      DispatchUnresolvedDataReadOnlyHelper jitResolveField
+      jmp         commonUnresolvedReadOnlyCode
+
+      align 16
+interpreterUnresolvedFieldSetterReadOnlyGlue:
+      DataResolvePrologue
+      DispatchUnresolvedDataReadOnlyHelper jitResolveFieldSetter
+
+commonUnresolvedReadOnlyCode:
+      ; STACK SHAPE:
+      ;
+      ; rsp+272 : RA in mainline
+      ; rsp+264 : RA in snippet
+      ; rsp+256 : RFlags
+      ; rsp+248 : r15
+      ; rsp+240 : r14
+      ; rsp+232 : r13
+      ; rsp+224 : r12
+      ; rsp+216 : r11
+      ; rsp+208 : r10
+      ; rsp+200 : r9
+      ; rsp+192 : r8
+      ; rsp+184 : rsp
+      ; rsp+176 : rbp
+      ; rsp+168 : rsi
+      ; rsp+160 : rdi
+      ; rsp+152 : rdx
+      ; rsp+144 : rcx
+      ; rsp+136 : rbx
+      ; rsp+128 : rax
+      ; rsp+120 : xmm15
+      ; rsp+112 : xmm14
+      ; rsp+104 : xmm13
+      ; rsp+96 : xmm12
+      ; rsp+88 : xmm11
+      ; rsp+80 : xmm10
+      ; rsp+72 : xmm9
+      ; rsp+64 : xmm8
+      ; rsp+56 : xmm7
+      ; rsp+48 : xmm6
+      ; rsp+40 : xmm5
+      ; rsp+32 : xmm4
+      ; rsp+24 : xmm3
+      ; rsp+16 : xmm2
+      ; rsp+8 : xmm1
+      ; rsp+0 : xmm0
+      ;
+      ; rax = result from resolve helper
+      ; rdi = return address in snippet
+
+      mov         esi, dword [rdi+4]                           ; full cpIndex word
+
+      ; If resolving a static, a clinit check is required
+      ;
+      test        esi, eq_ResolveStatic
+      jnz         resolveStaticReadOnly
+
+      ; If a volatility test is required, low-tag the resolved result
+      ;
+      test        esi,  eq_VolatilityCheck                     ; test for the volatility check flag
+      jnz         checkReferenceVolatilityReadOnly
+
+updateResolutionDataArea:
+
+      movsx       rcx, dword [rdi]                             ; rcx = RIP to snippet data area
+      mov         qword [rdi+rcx+eq_ResolveData_indexOrAddr], rax
+
+      movsx       rcx, dword [rdi+8]                           ; +8 = offset to restart displacement in snippet
+      add         rdi, rcx                                     ; compute restart address in mainline
+      mov         qword [rsp+272], rdi                         ; patch return address in mainline
+
+      DataResolveEpilogue
+
+      ; STACK SHAPE:
+      ;
+      ; rsp+0  : RFlags
+      ; rsp+8  : RA in snippet
+      ; rsp+16 : RA in mainline
+
+      popfq                                                    ; restore RFlags
+      lea rsp, [rsp+8]                                         ; skip over RA in snippet--mispredict
+      ret
+
+resolveStaticReadOnly:
+      ; For now, whack the low-bit indicating the clinit hasn't finished running yet.
+      ; Update the resolution area anyway.
+      ;
+      btr         rax, 0
+      jmp         updateResolutionDataArea
+
+checkReferenceVolatilityReadOnly:
+      ; If the resolved field or static is volatile, a fence is required.
+      ; For now, do nothing.
+      ;
+      jmp         updateResolutionDataArea
 
 %endif

@@ -32,7 +32,10 @@ extern "C" {
 
 
 jint initializeJCLSystemProperties(J9JavaVM * vm);
-
+#if defined(J9VM_OPT_SNAPSHOTS)
+jint restoreRunStandardInit(J9JavaVM *vm);
+jint initializeStaticIntField(J9VMThread *vmThread, J9Class *clazz, UDATA vmCPIndex, I_32 value);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 /************************************************************
  ** COMPONENT: BBjclNativesCommon
  ************************************************************/

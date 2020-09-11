@@ -825,7 +825,7 @@ TR_ResolvedJ9MethodBase::setOwningMethod(TR_ResolvedMethod *parent)
 bool
 TR_ResolvedJ9Method::owningMethodDoesntMatter()
    {
-   
+
    // Returning true here allows us to ignore the owning method, which lets us
    // share symrefs more aggressively and other goodies, but usually ignoring
    // the owning method will confuse inliner and others, so only do so when
@@ -1368,7 +1368,7 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
             SVM_ASSERT_ALREADY_VALIDATED(svm, aMethod);
             SVM_ASSERT_ALREADY_VALIDATED(svm, containingClass());
             }
-         else if (owner) 
+         else if (owner)
             {
             // JITServer: in baseline, if owner doesn't exist then comp doesn't exist, so thi case is not possible
             // but in JITClient comp is initialized before creating resolved method for compilee, so need this guard.
@@ -2282,8 +2282,8 @@ TR_ResolvedRelocatableJ9Method::allocateException(uint32_t numBytes, TR::Compila
    memset((uint8_t *)eTbl, 0, size);
 
    // These get updated in TR_RelocationRuntime::relocateAOTCodeAndData
-   eTbl->ramMethod = NULL;
-   eTbl->constantPool = NULL;
+   J9JITEXCEPTIONTABLE_RAMMETHOD_SET(eTbl, NULL);
+   J9JITEXCEPTIONTABLE_CONSTANTPOOL_SET(eTbl, NULL);
 
    // This exception table doesn't get initialized until relocation
    eTbl->flags |= JIT_METADATA_NOT_INITIALIZED;
@@ -5853,9 +5853,12 @@ TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
    memset((uint8_t *)eTbl, 0, size);
 
    #if defined(J9VM_RAS_EYECATCHERS)
-   eTbl->className       = J9ROMCLASS_CLASSNAME(romClassPtr());
-   eTbl->methodName      = J9ROMMETHOD_NAME(romMethod());
-   eTbl->methodSignature = J9ROMMETHOD_SIGNATURE(romMethod());
+   J9UTF8 *className       = J9ROMCLASS_CLASSNAME(romClassPtr());
+   J9UTF8 *methodName      = J9ROMMETHOD_NAME(romMethod());
+   J9UTF8 *methodSignature = J9ROMMETHOD_SIGNATURE(romMethod());
+   J9JITEXCEPTIONTABLE_CLASSNAME_SET(eTbl, className);
+   J9JITEXCEPTIONTABLE_METHODNAME_SET(eTbl, methodName);
+   J9JITEXCEPTIONTABLE_METHODSIGNATURE_SET(eTbl, methodSignature);
    #endif
 
    J9ConstantPool *cpool;
@@ -5877,8 +5880,8 @@ TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
    TR_ASSERT(cpool, "Constant pool cannot be null");
 
    // fill in the reserved slots in the newly allocated table
-   eTbl->constantPool = cpool;
-   eTbl->ramMethod = _ramMethod;
+   J9JITEXCEPTIONTABLE_CONSTANTPOOL_SET(eTbl, cpool);
+   J9JITEXCEPTIONTABLE_RAMMETHOD_SET(eTbl, _ramMethod);
    return (U_8 *) eTbl;
    }
 
@@ -7716,7 +7719,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          intptr_t methodDescriptorLength;
          char *methodDescriptor;
 
-#if defined(J9VM_OPT_JITSERVER)      
+#if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
@@ -8547,7 +8550,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             uint32_t spreadPositionOffset = fej9->getInstanceFieldOffset(fej9->getObjectClass(methodHandle), "spreadPosition", "I");
             if (spreadPositionOffset != ~0)
                spreadPosition = fej9->getInt32FieldAt(methodHandle, spreadPositionOffset);
-            
+
             leafClassNameChars = fej9->getClassNameChars((TR_OpaqueClassBlock*)leafClass, leafClassNameLength); // eww, TR_FrontEnd downcast
             isPrimitiveClass = TR::Compiler->cls.isPrimitiveClass(comp(), (TR_OpaqueClassBlock *) leafClass);
             }
@@ -8620,7 +8623,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          int32_t numNextArguments;
          int32_t spreadStart;
 
-#if defined(J9VM_OPT_JITSERVER) 
+#if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
@@ -9091,7 +9094,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                if (knotEnabled)
                   filterIndexList[i] = knot->getOrCreateIndex(fej9->getReferenceElement(filters, i));
                }
-               
+
 
             startPos = (int32_t)fej9->getInt32Field(methodHandle, "startPos");
             uintptr_t methodDescriptorRef = fej9->getReferenceField(fej9->getReferenceField(fej9->getReferenceField(

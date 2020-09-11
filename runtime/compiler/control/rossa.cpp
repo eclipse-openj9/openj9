@@ -923,6 +923,11 @@ compileClasses(J9VMThread * vmThread, const char * pattern)
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    if (!compInfo)
       return foundClassToCompile;
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+   VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+#endif
+
    PORT_ACCESS_FROM_JAVAVM(javaVM);
    J9ClassWalkState classWalkState;
 
@@ -1011,7 +1016,9 @@ compileClasses(J9VMThread * vmThread, const char * pattern)
             }
 
          if (freeClassNameString)
+            {
             j9mem_free_memory(classNameString);
+            }
          } // end if
 
       clazz = javaVM->internalVMFunctions->allLiveClassesNextDo(&classWalkState);
@@ -1020,7 +1027,9 @@ compileClasses(J9VMThread * vmThread, const char * pattern)
    javaVM->internalVMFunctions->allLiveClassesEndDo(&classWalkState);
 
    if (freePatternString)
+      {
       j9mem_free_memory(patternString);
+      }
 
    // now compile all classes from the list
    TR_ClassHolder * trj9class;
@@ -1062,6 +1071,10 @@ onLoadInternal(
       void *reserved0,
       I_32 xnojit)
    {
+#if defined(J9VM_OPT_SNAPSHOTS)
+   VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+#endif
+
    PORT_ACCESS_FROM_JAVAVM(javaVM);
 
    jitConfig->javaVM = javaVM;
@@ -1087,6 +1100,7 @@ onLoadInternal(
 
    /* Allocate the privateConfig structure.  Note that the AOTRT DLL does not allocate this structure */
    jitConfig->privateConfig = j9mem_allocate_memory(sizeof(TR_JitPrivateConfig), J9MEM_CATEGORY_JIT);
+
    if (jitConfig->privateConfig == NULL)  // Memory Allocation Failure.
       return -1;
 
@@ -1348,7 +1362,7 @@ onLoadInternal(
    memset(aotStats, 0, sizeof(TR_AOTStats));
    ((TR_JitPrivateConfig*)jitConfig->privateConfig)->aotStats = aotStats;
 
-   TR::CodeCacheManager *codeCacheManager = (TR::CodeCacheManager *) j9mem_allocate_memory(sizeof(TR::CodeCacheManager), J9MEM_CATEGORY_JIT);
+   TR::CodeCacheManager *codeCacheManager = (TR::CodeCacheManager *) j9mem_allocate_memory(sizeof(TR::CodeCacheManager), J9MEM_CATEGORY_JIT);;
    if (codeCacheManager == NULL)
       return -1;
    memset(codeCacheManager, 0, sizeof(TR::CodeCacheManager));
@@ -1395,7 +1409,8 @@ onLoadInternal(
    codeCacheConfig._verbosePerformance = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance);
    codeCacheConfig._verboseReclamation = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCacheReclamation);
    codeCacheConfig._doSanityChecks = TR::Options::getCmdLineOptions()->getOption(TR_CodeCacheSanityCheck);
-   codeCacheConfig._codeCacheTotalKB = jitConfig->codeCacheTotalKB;
+   codeCacheConfig._codeCacheTotalKB = 64*1024;
+   codeCacheConfig._dataAreaTotalKB = jitConfig->codeCacheTotalKB;
    codeCacheConfig._codeCacheKB = jitConfig->codeCacheKB;
    codeCacheConfig._codeCachePadKB = jitConfig->codeCachePadKB;
    codeCacheConfig._codeCacheAlignment = jitConfig->codeCacheAlignment;
@@ -1445,7 +1460,17 @@ onLoadInternal(
 
       #if defined(TR_TARGET_S390)
          // allocate 4K
-         jitConfig->pseudoTOC = j9mem_allocate_memory(4096, J9MEM_CATEGORY_JIT);
+#if defined(J9VM_OPT_SNAPSHOTS)
+         if (IS_SNAPSHOT_RUN(javaVM))
+            {
+            jitConfig->pseudoTOC = vmsnapshot_allocate_memory(4096, J9MEM_CATEGORY_JIT);
+            }
+         else
+#endif
+            {
+            jitConfig->pseudoTOC = j9mem_allocate_memory(4096, J9MEM_CATEGORY_JIT);
+            }
+
          if (!jitConfig->pseudoTOC)
             return -1;
 
@@ -1651,16 +1676,16 @@ onLoadInternal(
 #if defined(J9VM_OPT_JITSERVER)
    if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      chtable = new (PERSISTENT_NEW) JITServerPersistentCHTable(persistentMemory);
+      chtable = new (PERSISTENT_NEW) JITServerPersistentCHTable(persistentMemory, jitConfig);
       }
    else if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
-      chtable = new (PERSISTENT_NEW) JITClientPersistentCHTable(persistentMemory);
+      chtable = new (PERSISTENT_NEW) JITClientPersistentCHTable(persistentMemory, jitConfig);
       }
    else
 #endif
       {
-      chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);
+      chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory, jitConfig);
       }
    if (chtable == NULL)
       return -1;
@@ -1742,6 +1767,8 @@ onLoadInternal(
 #ifdef J9VM_RAS_DUMP_AGENTS
    jitConfig->runJitdump = runJitdump;
 #endif
+
+   // STRATUM TODO: https://github.ibm.com/runtimes/openj9-stratum/issues/69
 
    jitConfig->printAOTHeaderProcessorFeatures = printAOTHeaderProcessorFeatures;
 
@@ -1890,34 +1917,49 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
 
       if (validateSCC)
          {
-         /* If AOT Shared Classes is turned ON, perform compatibility checks for AOT Shared Classes
-          *
-          * This check has to be done after latePostProcessJIT so that all the necessary JIT options
-          * can be set
-          */
-         TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, curThread);
-         if (!compInfo->reloRuntime()->validateAOTHeader(fe, curThread))
+         if (TR::Options::getCmdLineOptions()->getOption(TR_ForceGenerateReadOnlyCode))
             {
-            TR_ASSERT_FATAL(static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader != TR_yes,
-                            "aotValidHeader is TR_yes after failing to validate AOT header\n");
-
-            /* If this is the second run, then failing to validate AOT header will cause aotValidHeader
-             * to be TR_no, in which case the SCC is not valid for use. However, if this is the first
-             * run, then aotValidHeader will be TR_maybe; try to store the AOT Header in this case.
+            /* Disable AOT entirely for the intial prototype. The reason is because
+             * enabling AOT in this mode is going to require some (likely small but) non-trivial
+             * changes in the control logic.
              */
-            if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_no
-                || !compInfo->reloRuntime()->storeAOTHeader(fe, curThread))
-               {
-               static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader = TR_no;
-               TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
-               TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
-               TR::Options::setSharedClassCache(false);
-               TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
-               }
+            static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader = TR_no;
+            TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
+            TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
+            TR::Options::setSharedClassCache(false);
+            TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
             }
          else
             {
-            TR::Compiler->relocatableTarget.cpu = TR::CPU(compInfo->reloRuntime()->getProcessorDescriptionFromSCC(fe, curThread));
+            /* If AOT Shared Classes is turned ON, perform compatibility checks for AOT Shared Classes
+             *
+             * This check has to be done after latePostProcessJIT so that all the necessary JIT options
+             * can be set
+             */
+            TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, curThread);
+            if (!compInfo->reloRuntime()->validateAOTHeader(fe, curThread))
+               {
+               TR_ASSERT_FATAL(static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader != TR_yes,
+                               "aotValidHeader is TR_yes after failing to validate AOT header\n");
+
+               /* If this is the second run, then failing to validate AOT header will cause aotValidHeader
+                * to be TR_no, in which case the SCC is not valid for use. However, if this is the first
+                * run, then aotValidHeader will be TR_maybe; try to store the AOT Header in this case.
+                */
+               if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_no
+                   || !compInfo->reloRuntime()->storeAOTHeader(fe, curThread))
+                  {
+                  static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader = TR_no;
+                  TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
+                  TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
+                  TR::Options::setSharedClassCache(false);
+                  TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+                  }
+               }
+            else
+               {
+               TR::Compiler->relocatableTarget.cpu = TR::CPU(compInfo->reloRuntime()->getProcessorDescriptionFromSCC(fe, curThread));
+               }
             }
          }
 

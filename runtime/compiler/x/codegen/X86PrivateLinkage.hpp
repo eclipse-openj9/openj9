@@ -271,6 +271,7 @@ class PrivateLinkage : public J9::PrivateLinkage
    virtual void buildIPIC(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk)=0;
    virtual TR::Instruction *buildVFTCall(TR::X86CallSite &site, TR_X86OpCode dispatchOp, TR::Register *targetAddressReg, TR::MemoryReference *targetAddressMemref);
    virtual void buildInterfaceDispatchUsingLastITable (TR::X86CallSite &site, int32_t numIPicSlots, TR::X86PICSlot &lastPicSlot, TR::Instruction *&slotPatchInstruction, TR::LabelSymbol *doneLabel, TR::LabelSymbol *lookupDispatchSnippetLabel, TR_OpaqueClassBlock *declaringClass, uintptr_t itableIndex);
+   virtual TR::Instruction *buildUnresolvedOrInterpretedDirectCallReadOnly(TR::SymbolReference *methodSymRef, TR::X86CallSite &site) { return 0; }
 
    // Creates a thunk for interpreted virtual calls, used to initialize
    // the vTable slot for the called method.

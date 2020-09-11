@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -291,6 +291,7 @@ I_32 j9jit_vfprintf(TR::FILE *pFile, char *format, va_list args)
    if (length >= BUFSIZE)
       {
       grewBuf = true;
+
       buf = (char*)j9mem_allocate_memory(length+1, J9MEM_CATEGORY_JIT);
       if (!buf)
          return length;
@@ -318,7 +319,9 @@ I_32 j9jit_vfprintf(TR::FILE *pFile, char *format, va_list args)
 #endif
       }
    if (grewBuf)
+      {
       j9mem_free_memory(buf);
+      }
 
    return length;
    }

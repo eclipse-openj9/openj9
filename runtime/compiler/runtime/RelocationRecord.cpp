@@ -879,7 +879,8 @@ void
 TR_RelocationRecordRamSequence::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
    {
    TR_RelocationRecordWithOffsetPrivateData *reloPrivateData = &(privateData()->offset);
-   reloPrivateData->_addressToPatch = (uint8_t *)reloRuntime->exceptionTable()->ramMethod;
+   J9JITExceptionTable *exceptionTable = reloRuntime->exceptionTable();
+   reloPrivateData->_addressToPatch = (uint8_t *)J9JITEXCEPTIONTABLE_RAMMETHOD_GET(exceptionTable);
    RELO_LOG(reloRuntime->reloLogger(), 6, "\tpreparePrivateData: j9method %p\n", reloPrivateData->_addressToPatch);
    }
 
@@ -2975,16 +2976,18 @@ TR_RelocationRecordRamMethod::name()
 int32_t
 TR_RelocationRecordRamMethod::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
-   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: method pointer %p\n", reloRuntime->exceptionTable()->ramMethod);
-   reloTarget->storeAddress((uint8_t *)reloRuntime->exceptionTable()->ramMethod, reloLocation);
+   J9JITExceptionTable *exceptionTable = reloRuntime->exceptionTable();
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: method pointer %p\n", J9JITEXCEPTIONTABLE_RAMMETHOD_GET(exceptionTable));
+   reloTarget->storeAddress((uint8_t *)J9JITEXCEPTIONTABLE_RAMMETHOD_GET(exceptionTable), reloLocation);
    return 0;
    }
 
 int32_t
 TR_RelocationRecordRamMethod::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow)
    {
-   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: method pointer %p\n", reloRuntime->exceptionTable()->ramMethod);
-   reloTarget->storeAddress((uint8_t *)reloRuntime->exceptionTable()->ramMethod, reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
+   J9JITExceptionTable *exceptionTable = reloRuntime->exceptionTable();
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: method pointer %p\n", J9JITEXCEPTIONTABLE_RAMMETHOD_GET(exceptionTable));
+   reloTarget->storeAddress((uint8_t *)J9JITEXCEPTIONTABLE_RAMMETHOD_GET(exceptionTable), reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
    return 0;
    }
 
@@ -3237,7 +3240,7 @@ TR_RelocationRecordValidateStaticField::getClass(TR_RelocationRuntime *reloRunti
    TR_OpaqueClassBlock *definingClass = NULL;
    if (void_cp)
       {
-      definingClass = TR_ResolvedJ9Method::definingClassFromCPFieldRef(reloRuntime->comp(), (J9ConstantPool *) void_cp, cpIndex(reloTarget), true); 
+      definingClass = TR_ResolvedJ9Method::definingClassFromCPFieldRef(reloRuntime->comp(), (J9ConstantPool *) void_cp, cpIndex(reloTarget), true);
       }
 
    return definingClass;
@@ -4683,7 +4686,8 @@ TR_RelocationRecordHCR::action(TR_RelocationRuntime *reloRuntime)
 int32_t
 TR_RelocationRecordHCR::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
-   void *methodAddress = (void *)reloRuntime->exceptionTable()->ramMethod;
+   J9JITExceptionTable *exceptionTable = reloRuntime->exceptionTable();
+   void *methodAddress = (void *)J9JITEXCEPTIONTABLE_RAMMETHOD_GET(exceptionTable);
    if (offset(reloTarget)) // non-NULL means resolved
       createClassRedefinitionPicSite(methodAddress, (void*)reloLocation, sizeof(UDATA), true, getMetadataAssumptionList(reloRuntime->exceptionTable()));
    else
@@ -5143,7 +5147,7 @@ TR_RelocationRecordMethodCallAddress::computeTargetMethodAddress(TR_RelocationRu
       {
       RELO_LOG(reloRuntime->reloLogger(), 6, "\tredirecting call to " POINTER_PRINTF_FORMAT " through trampoline\n", callTargetAddress);
       auto metadata = jitGetExceptionTableFromPC(reloRuntime->currentThread(), (UDATA)callTargetAddress);
-      auto j9method = metadata->ramMethod;
+      auto j9method = J9JITEXCEPTIONTABLE_RAMMETHOD_GET(metadata);
       TR::VMAccessCriticalSection computeTargetMethodAddress(reloRuntime->fej9());
       // getResolvedTrampoline will create the trampoline if it doesn't exist, but we pass inBinaryEncoding=true because we want the compilation to fail
       // if the trampoline can't be allocated in the current code cache rather than switching to a new code cache, which can't be done during relocation.

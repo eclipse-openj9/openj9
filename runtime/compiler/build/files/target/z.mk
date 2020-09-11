@@ -55,7 +55,9 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/codegen/UnaryEvaluator.cpp \
     omr/compiler/z/codegen/snippet/PPA1Snippet.cpp \
     omr/compiler/z/codegen/snippet/PPA2Snippet.cpp \
-    omr/compiler/z/env/OMRCPU.cpp
+    omr/compiler/z/env/OMRCPU.cpp \
+    omr/compiler/z/objectfmt/OMRJitCodeObjectFormat.cpp \
+    omr/compiler/z/objectfmt/OMRELFJitCodeObjectFormat.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/z/codegen/DFPTreeEvaluator.cpp \
@@ -74,6 +76,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/z/codegen/J9TreeEvaluator.cpp \
     compiler/z/codegen/J9BCDTreeEvaluator.cpp \
     compiler/z/codegen/J9UnresolvedDataSnippet.cpp \
+    compiler/z/codegen/J9UnresolvedDataReadOnlySnippet.cpp \
     compiler/z/codegen/J9ZSnippet.cpp \
     compiler/z/codegen/ReduceSynchronizedFieldLoad.cpp \
     compiler/z/codegen/S390AOTRelocation.cpp \

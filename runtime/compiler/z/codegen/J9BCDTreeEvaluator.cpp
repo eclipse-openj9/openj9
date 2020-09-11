@@ -4737,7 +4737,7 @@ J9::Z::TreeEvaluator::pdloadVectorEvaluatorHelper(TR::Node *node, TR::CodeGenera
    // generateVSIInstruction() API will call separateIndexRegister() to separate the index
    // register by emitting an LA instruction. If there's a need for large displacement adjustment,
    // LAY will be emitted instead.
-   TR::MemoryReference* sourceMR = generateS390MemoryReference(node, cg, false);
+   TR::MemoryReference* sourceMR = TR::MemoryReference::create(cg, node);
 
    // Index of the first byte to load, counting from the right ranging from 0-15.
    uint8_t indexFromTheRight = TR_VECTOR_REGISTER_SIZE - 1;
@@ -5780,7 +5780,7 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
    // generateVSIInstruction() API will call separateIndexRegister() to separate the index
    // register by emitting an LA instruction. If there's a need for large displacement adjustment,
    // LAY will be emitted instead.
-   TR::MemoryReference * targetMR = generateS390MemoryReference(node, cg, false);
+   TR::MemoryReference * targetMR = TR::MemoryReference::create(cg, node);
 
    // 0 we store 1 byte, 15 we store 16 bytes
    uint8_t lengthToStore = TR_VECTOR_REGISTER_SIZE - 1;

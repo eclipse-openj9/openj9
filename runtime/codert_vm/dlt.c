@@ -104,7 +104,7 @@ retry:
 				if (bytesRequired > maxSize) {
 					bytesRequired = maxSize;
 				}
-				
+
 				/* If the grow succeeds, restart the stack walk since all the stack pointers have moved */
 
 				if (vm->internalVMFunctions->growJavaStack(currentThread, bytesRequired) == 0) {
@@ -130,9 +130,21 @@ retry:
 	argTempCount += argCount;
 	copiedTemps = dltBlock->inlineTempsBuffer;
 	if (argTempCount > (sizeof(dltBlock->inlineTempsBuffer) / sizeof(UDATA))) {
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+#endif
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
-		copiedTemps = j9mem_allocate_memory(argTempCount * sizeof(UDATA), OMRMEM_CATEGORY_JIT);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOT_RUN(vm)) {
+			copiedTemps = vmsnapshot_allocate_memory(argTempCount * sizeof(UDATA), OMRMEM_CATEGORY_JIT);
+		} else
+#endif
+		{
+			copiedTemps = j9mem_allocate_memory(argTempCount * sizeof(UDATA), OMRMEM_CATEGORY_JIT);
+		}
+
 		if (copiedTemps == NULL) {
 			Trc_DLT_setUpForDLT_Exit_FailedTempAllocate(currentThread);
 			return NULL;

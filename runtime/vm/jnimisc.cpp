@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2019 IBM Corp. and others
+ * Copyright (c) 2012, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -145,7 +145,14 @@ getCurrentClassLoader(J9VMThread *currentThread)
 		} else {
 			classLoader = vm->applicationClassLoader;
 			/* If the app loader doesn't exist yet, use the boot loader */
-			if (NULL == classLoader) {
+			if ((NULL == classLoader)
+#if defined(J9VM_OPT_SNAPSHOTS)
+				/* Need to preserve the order. Classloaders should not be considered active until
+				 * the classloader object is set
+				 */
+				|| (NULL == classLoader->classLoaderObject)
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			) {
 				classLoader = vm->systemClassLoader;
 			}
 		}
@@ -572,7 +579,7 @@ getOrSetArrayRegion(JNIEnv *env, jarray array, jsize start, jsize len, void *buf
 	UDATA ustart = (UDATA)(IDATA)start;
 	UDATA ulen = (UDATA)(IDATA)len;
 	UDATA end = ustart + ulen;
-	if ((ustart >= size) 
+	if ((ustart >= size)
 		|| (end > size)
 		|| (end < ustart) /* overflow */
 	) {
@@ -794,7 +801,7 @@ getStringUTFRegion(JNIEnv *env, jstring str, jsize start, jsize len, char *buf)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	if ((start < 0) 
+	if ((start < 0)
 		|| (len < 0)
 		|| (((U_32) (start + len)) > I_32_MAX)
 	) {
@@ -899,7 +906,7 @@ unregisterNatives(JNIEnv *env, jclass clazz)
 	acquireExclusiveVMAccess(currentThread);
 	J9Method *currentMethod = j9clazz->ramMethods;
 	J9Method *endOfMethods = currentMethod + j9clazz->romClass->romMethodCount;
-	
+
 	if (
 			(NULL != vm->jitConfig)  &&
 			(NULL != vm->jitConfig->jitDiscardPendingCompilationsOfNatives)
@@ -925,7 +932,7 @@ getStringRegion(JNIEnv *env, jstring str, jsize start, jsize len, jchar *buf)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	if ((start < 0) 
+	if ((start < 0)
 		|| (len < 0)
 		|| (((U_32) (start + len)) > I_32_MAX)
 	) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,8 +40,8 @@ static UDATA  constraintHashEqualFn(void *leftKey, void *rightKey, void *userDat
 
 
 /* This is a helper function used by Assert_RTV_validateClassLoadingConstraints */
-static void 
-validateArgs (J9VMThread* vmThread, J9ClassLoader* loader1, J9ClassLoader* loader2, U_8* name1, U_8* name2, UDATA length) 
+static void
+validateArgs (J9VMThread* vmThread, J9ClassLoader* loader1, J9ClassLoader* loader2, U_8* name1, U_8* name2, UDATA length)
 {
 	J9MemorySegment *seg;
 
@@ -70,7 +70,7 @@ validateArgs (J9VMThread* vmThread, J9ClassLoader* loader1, J9ClassLoader* loade
  * sig1 and sig2 must contain identical bytes. The signatures may be method or field signatures.
  * return 0 if no class loading constraints have been violated, or non-zero if they have been.
  */
-UDATA 
+UDATA
 j9bcv_checkClassLoadingConstraintsForSignature (J9VMThread* vmThread, J9ClassLoader* loader1, J9ClassLoader* loader2, J9UTF8* sig1, J9UTF8* sig2)
 {
 	U_32 index = 0, endIndex;
@@ -214,7 +214,14 @@ registerClassLoadingConstraint (J9VMThread* vmThread, J9ClassLoader* loader, U_8
 
 	if (vm->classLoadingConstraints == NULL) {
 		Trc_RTV_registerClassLoadingConstraint_AllocatingTable(vmThread);
-		vm->classLoadingConstraints  = hashTableNew(OMRPORT_FROM_J9PORT(PORTLIB), J9_GET_CALLSITE(), 256, sizeof(J9ClassLoadingConstraint), sizeof(char *), 0, J9MEM_CATEGORY_CLASSES, constraintHashFn, constraintHashEqualFn, NULL, vm);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOT_RUN(vm)) {
+			vm->classLoadingConstraints  = hashTableNew(VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(vm), J9_GET_CALLSITE(), 256, sizeof(J9ClassLoadingConstraint), sizeof(char *), 0, J9MEM_CATEGORY_CLASSES, constraintHashFn, constraintHashEqualFn, NULL, vm);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			vm->classLoadingConstraints  = hashTableNew(OMRPORT_FROM_J9PORT(PORTLIB), J9_GET_CALLSITE(), 256, sizeof(J9ClassLoadingConstraint), sizeof(char *), 0, J9MEM_CATEGORY_CLASSES, constraintHashFn, constraintHashEqualFn, NULL, vm);
+		}
 		if (vm->classLoadingConstraints == NULL) {
 			Trc_RTV_registerClassLoadingConstraint_TableAllocationFailed(vmThread);
 			Trc_RTV_registerClassLoadingConstraint_Exit(vmThread, NULL);
@@ -259,7 +266,7 @@ oom:
 /* NOTE: the current thread must own the class table mutex */
 
 static J9ClassLoadingConstraint*
-findClassLoadingConstraint (J9VMThread* vmThread, J9ClassLoader* loader, U_8* name, UDATA length) 
+findClassLoadingConstraint (J9VMThread* vmThread, J9ClassLoader* loader, U_8* name, UDATA length)
 {
 	J9ClassLoadingConstraint *constraint = NULL;
 	J9JavaVM* vm = vmThread->javaVM;
@@ -287,7 +294,7 @@ findClassLoadingConstraint (J9VMThread* vmThread, J9ClassLoader* loader, U_8* na
 
 /* NOTE: this function must only be called while the current thread owns the class table mutex */
 
-J9Class * 
+J9Class *
 j9bcv_satisfyClassLoadingConstraint (J9VMThread* vmThread, J9ClassLoader* loader, J9Class* clazz)
 {
 	J9ROMClass* romClass = clazz->romClass;
@@ -320,8 +327,8 @@ j9bcv_satisfyClassLoadingConstraint (J9VMThread* vmThread, J9ClassLoader* loader
  * The current thread should have exclusive VM access
  */
 
-void 
-unlinkClassLoadingConstraints (J9JavaVM* jvm) 
+void
+unlinkClassLoadingConstraints (J9JavaVM* jvm)
 {
 	J9HashTableState walkState;
 	J9ClassLoadingConstraint* constraint;
@@ -378,7 +385,7 @@ constrainList (J9ClassLoadingConstraint* constraint, J9Class* clazz)
 	}
 }
 
-static UDATA 
+static UDATA
 constraintHashFn(void *key, void *userData)
 {
 	J9ClassLoadingConstraint *k = key;
@@ -389,15 +396,15 @@ constraintHashFn(void *key, void *userData)
 }
 
 
-static UDATA  
+static UDATA
 constraintHashEqualFn(void *leftKey, void *rightKey, void *userData)
 {
 	J9ClassLoadingConstraint *left_k = leftKey;
 	J9ClassLoadingConstraint *right_k = rightKey;
 	J9JavaVM *vm = userData;
 
-	return 
-		(left_k->classLoader == right_k->classLoader) 
+	return
+		(left_k->classLoader == right_k->classLoader)
 		&& (J9UTF8_DATA_EQUALS(left_k->name, left_k->nameLength, right_k->name, right_k->nameLength));
 }
 

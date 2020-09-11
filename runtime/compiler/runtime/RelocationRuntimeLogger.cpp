@@ -165,11 +165,11 @@ TR_RelocationRuntimeLogger::exceptionTable()
    JITRT_PRINTF(jitConfig())(jitConfig(), "%-12p",   data->startPC);
    JITRT_PRINTF(jitConfig())(jitConfig(), "%-12p",   data->endPC);
    JITRT_PRINTF(jitConfig())(jitConfig(), "%-8x",    data->size);
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-14p",   data->gcStackAtlas);
+   JITRT_PRINTF(jitConfig())(jitConfig(), "%-14p",   J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(data));
    JITRT_PRINTF(jitConfig())(jitConfig(), "%-12p\n", data->bodyInfo);
 
    JITRT_PRINTF(jitConfig())(jitConfig(), "%-12s\n", "inlinedCalls");
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12x\n", data->inlinedCalls);
+   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12x\n", J9JITEXCEPTIONTABLE_INLINEDCALLS_GET(data));
 
    unlockLog(wasLocked);
    }
