@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,7 @@
 #include "mmhook.h"
 #include "Base.hpp"
 
+class MM_VerboseBuffer;
 class MM_VerboseManager;
 class MM_EnvironmentBase;
 
@@ -51,7 +52,7 @@ public:
 	/**
 	 * Output Java VM arguments.
 	 */
-	static void writeVmArgs(MM_VerboseManager *manager, MM_EnvironmentBase* env, J9JavaVM *vm);
+	static void writeVmArgs(MM_EnvironmentBase* env, MM_VerboseBuffer* buffer, J9JavaVM *vm);
 };
 
 #endif /* VERBOSEHANDLERJAVA_HPP_ */
