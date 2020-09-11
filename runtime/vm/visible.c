@@ -284,16 +284,28 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 		BOOLEAN canRunJavaCode = J9_ARE_NO_BITS_SET(options, J9_LOOK_NO_JAVA);
 		BOOLEAN throwException = canRunJavaCode && J9_ARE_NO_BITS_SET(options, J9_LOOK_NO_THROW);
 		BOOLEAN hiddenNestMate = J9ROMCLASS_IS_OPTIONNESTMATE_SET(romClass);
-
 		J9Class* curClazz = clazz;
-		BOOLEAN isCurClassHiddenNestMate = hiddenNestMate;
-		while ((isCurClassHiddenNestMate) 
-			&& (curClazz != curClazz->hostClass)
-		) {
-			/* current class is the nestmate of its hostClass, so we need to find nesthost of the hostClass. */
-			curClazz = curClazz->hostClass;
-			isCurClassHiddenNestMate = J9ROMCLASS_IS_OPTIONNESTMATE_SET(curClazz->romClass);
-			nestHostName = J9ROMCLASS_NESTHOSTNAME(curClazz->romClass);
+
+		if (hiddenNestMate) {
+			BOOLEAN isCurClassHiddenNestMate = hiddenNestMate;
+			while ((isCurClassHiddenNestMate) 
+					&& (curClazz != curClazz->hostClass)
+			) {
+				/* current class is the nestmate of its hostClass, so we need to find nesthost of the hostClass. */
+				curClazz = curClazz->hostClass;
+				isCurClassHiddenNestMate = J9ROMCLASS_IS_OPTIONNESTMATE_SET(curClazz->romClass);
+				nestHostName = J9ROMCLASS_NESTHOSTNAME(curClazz->romClass);
+			}
+
+			if (NULL != curClazz->nestHost) {
+				/* 
+				 * hidden class defined with ClassOption.NESTMATE has the same nest host as its hostClass (curClazz). 
+				 * The nest host of curClass is already found, return directly. 
+				 */ 
+				clazz->nestHost = curClazz->nestHost;
+				result = J9_VISIBILITY_ALLOWED;
+				goto done;
+			}
 		}
 
 		/* If no nest host is named, class is own nest host */
@@ -343,6 +355,22 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 		/* If a problem occurred in nest host verification then the nest host value is invalid */
 		if (J9_VISIBILITY_ALLOWED == result) {
 			clazz->nestHost = nestHost;
+		} else if ((J2SE_VERSION(vmThread->javaVM) >= J2SE_V15)
+				&& canRunJavaCode
+		) {
+			/**
+			 * JVM spec updated in Java 15:
+			 * If a class has problem finding/validating its nest host, then it is its own nest host (for hidden class, the nest host is its host class).
+			 * Any exception during finding/validating the nest host is not rethrown.
+			 * 
+			 * If canRunJavaCode is FALSE, the flag passed to internalFindClassUTF8() is J9_FINDCLASS_FLAG_EXISTING_ONLY, 
+			 * which tries to find the nest host in loaded classes only. It is possible that nest host is not loaded yet. 
+			 * So set clazz->nestHost only when canRunJavaCode is TRUE.
+			 */
+			clazz->nestHost = curClazz;
+			vmThread->currentException = NULL;
+			vmThread->privateFlags &= ~(UDATA)J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
+			result = J9_VISIBILITY_ALLOWED;
 		} else if (throwException) {
 			/* Only set an exception is there isn't only already pending (and pop frame is not requested) */
 			if (J9_ARE_NO_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_POP_FRAMES_INTERRUPT)
@@ -356,7 +384,7 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 			vmThread->privateFlags &= ~(UDATA)J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
 		}
 	}
-
+done:
 	return result;
 }
 #endif /* JAVA_SPEC_VERSION >= 11 */
