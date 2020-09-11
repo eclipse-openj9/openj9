@@ -152,6 +152,7 @@ SETVAL(eq_ResolveVirtual_j2iThunk,24)
 SETVAL(eq_ResolveVirtual_vtableOffset,32)
 SETVAL(eq_resolveVirtualDispatchReadOnly_RA,4)
 SETVAL(eq_returnAddressDirectMethod,8)
+SETVAL(eq_resolveVirtualJitEIPForHelperCall,12)
 SETVAL(eq_ResolveVirtualData_RIP,0)
 
 ZZ These two should really be in codert/jilconsts.inc
@@ -1728,7 +1729,7 @@ ZZ ===================================================================
 
     LR_GPR r1,r3
     LR_GPR r2,r14
-    AGF r2,eq_resolveVirtualDispatchReadOnly_RA(r2)
+    AGF r2,eq_resolveVirtualJitEIPForHelperCall(r2)
     LR_GPR r0,r14
 ZZ Load jitResolveVirtualMethod Address
 LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveVirtualMethod)

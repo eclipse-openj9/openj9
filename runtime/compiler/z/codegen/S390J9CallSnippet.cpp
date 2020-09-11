@@ -1600,6 +1600,10 @@ TR::S390VirtualUnresolvedReadOnlySnippet::emitSnippetBody()
    *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(doneLabelAddress - (intptr_t)helperCallRA);
    cursor += sizeof(int32_t);
 
+   intptr_t nextInstrFromSnippetCallAddress = reinterpret_cast<intptr_t>(snippetCallNextInstrLabel->getCodeLocation());
+   *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(nextInstrFromSnippetCallAddress - (intptr_t)helperCallRA);
+   cursor += sizeof(int32_t);
+
    return cursor;
 
    }
@@ -1636,7 +1640,10 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390VirtualUnresolvedReadOnlySnippet *sn
    printPrefix(pOutFile, NULL, bufferPos, sizeof(int32_t));
    trfprintf(pOutFile, "<%p>\t# RIP offset to post vtable dispatch sequence",
                     (void*)*(int32_t*)bufferPos);
-
+   bufferPos += sizeof(int32_t);
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(int32_t));
+   trfprintf(pOutFile, "<%p>\t# RIP offset to post snippet call in mainline",
+                    (void*)*(int32_t*)bufferPos);
    }
 
 
@@ -1646,8 +1653,9 @@ TR::S390VirtualUnresolvedReadOnlySnippet::getLength(int32_t estimatedSnippetStar
    // TODO: Need to get the length of the call from the GlobalFunctionCall Data, this hard-coded way is not recommended
    return    6 /*LGRL*/ 
            + 2 /*BASR*/
-           + sizeof(int32_t) /*RIP offset to vtableData*/
-           + sizeof(int32_t) /*RIP offset to vtable load instruction in mainline*/
-           + sizeof(int32_t); /*RIP offset to post vtable dispatch sequence*/
+           + sizeof(int32_t)  /*RIP offset to vtableData*/
+           + sizeof(int32_t)  /*RIP offset to vtable load instruction in mainline*/
+           + sizeof(int32_t)  /*RIP offset to post vtable dispatch sequence*/
+           + sizeof(int32_t); /*RIP offset to post snippet call in mainline*/
    }
 
