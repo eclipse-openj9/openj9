@@ -653,62 +653,12 @@ TR_J9VM::initializeProcessorType()
    if (TR::Compiler->target.cpu.isZ())
       {
 #if defined(TR_HOST_S390)
-      initializeS390ProcessorFeatures();
-
 #if defined(J9ZOS390)
       // Cache whether current process is running in Supervisor State (i.e. Control Region of WAS).
       if (!_isPSWInProblemState())
          _compInfo->setIsInZOSSupervisorState();
 #endif
 #endif
-
-#ifdef TR_TARGET_S390
-      // For AOT shared classes cache processor compatibility purposes, the following
-      // processor settings should not be modified.
-      if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp14);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z15))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp13);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z14))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp12);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z13))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp11);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp10);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp9);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp8);
-         }
-      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z9))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp7);
-         }
-      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z990))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp6);
-         }
-      else
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp5);
-         }
-#endif
-
-      TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_First390Processor
-             && TR::Compiler->target.cpu.id() <= TR_Last390Processor, "Not a valid 390 Processor Type");
       }
    else if (TR::Compiler->target.cpu.isARM())
       {
@@ -764,19 +714,3 @@ TR_J9VM::initializeProcessorType()
       TR_ASSERT(0,"Unknown target");
       }
    }
-
-// -----------------------------------------------------------------------------
-
-#if defined(TR_TARGET_S390)
-void
-TR_J9VMBase::initializeS390ProcessorFeatures()
-   {
-   TR::Compiler->target.cpu.initializeS390ProcessorFeatures();
-   }
-
-void
-TR_J9SharedCacheVM::initializeS390ProcessorFeatures()
-   {
-   return;
-   }
-#endif

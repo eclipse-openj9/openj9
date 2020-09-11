@@ -55,21 +55,10 @@ class OMR_EXTENSIBLE CPU : public J9::CPU
    public:
    
    static int32_t TO_PORTLIB_get390MachineId();
-   static bool TO_PORTLIB_get390_supportsZNext();
-   static bool TO_PORTLIB_get390_supportsZ15();
-   static bool TO_PORTLIB_get390_supportsZ14();
-   static bool TO_PORTLIB_get390_supportsZ13();
-   static bool TO_PORTLIB_get390_supportsZ6();
-   static bool TO_PORTLIB_get390_supportsZGryphon();
-   static bool TO_PORTLIB_get390_supportsZHelix();
 
    void applyUserOptions();
-   void initializeS390ProcessorFeatures();
    bool isCompatible(const OMRProcessorDesc& processorDescription);
    OMRProcessorDesc getProcessorDescription();
-
-   bool is_at_least_test(OMRProcessorArchitecture p);
-   bool supports_feature_test(uint32_t feature);
    };
 
 }
