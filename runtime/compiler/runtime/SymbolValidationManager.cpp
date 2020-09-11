@@ -629,8 +629,11 @@ TR::SymbolValidationManager::addMultipleArrayRecords(TR_OpaqueClassBlock *compon
 bool
 TR::SymbolValidationManager::addMethodRecord(TR::MethodValidationRecord *record)
    {
-   if (shouldNotDefineSymbol(record->_method))
+   if (shouldNotDefineSymbol(record->_method)
+       || !isClassWorthRemembering(_fej9->getClassOfMethod(record->_method)))
+      {
       return abandonRecord(record);
+      }
 
    if (recordExists(record))
       {
@@ -972,6 +975,9 @@ TR::SymbolValidationManager::addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBl
 bool
 TR::SymbolValidationManager::addClassInfoIsInitializedRecord(TR_OpaqueClassBlock *clazz, bool isInitialized)
    {
+   if (!isClassWorthRemembering(clazz))
+      return false;
+
    SVM_ASSERT_ALREADY_VALIDATED(this, clazz);
    return addVanillaRecord(clazz, new (_region) ClassInfoIsInitialized(clazz, isInitialized));
    }
