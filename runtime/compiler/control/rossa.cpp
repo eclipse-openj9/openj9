@@ -1647,24 +1647,26 @@ onLoadInternal(
          persistentMemory->getPersistentInfo()->setRuntimeInstrumentationRecompilationEnabled(true);
       }
 
-   TR_PersistentCHTable *chtable;
 #if defined(J9VM_OPT_JITSERVER)
-   if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-      {
-      chtable = new (PERSISTENT_NEW) JITServerPersistentCHTable(persistentMemory);
-      }
-   else if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-      {
-      chtable = new (PERSISTENT_NEW) JITClientPersistentCHTable(persistentMemory);
-      }
-   else
+   // server-side CH table is initialized per-client
+   if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
 #endif
       {
-      chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);
+      TR_PersistentCHTable *chtable;
+#if defined(J9VM_OPT_JITSERVER)
+      if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+         {
+         chtable = new (PERSISTENT_NEW) JITClientPersistentCHTable(persistentMemory);
+         }
+      else
+#endif
+         {
+         chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);
+         }
+      if (chtable == NULL)
+         return -1;
+      persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
       }
-   if (chtable == NULL)
-      return -1;
-   persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
 
 #if defined(J9VM_OPT_JITSERVER)
    if (JITServer::CommunicationStream::useSSL())

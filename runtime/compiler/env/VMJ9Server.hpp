@@ -191,6 +191,9 @@ public:
    virtual uintptr_t getCellSizeForSizeClass(uintptr_t) override;
    virtual uintptr_t getObjectSizeClass(uintptr_t) override;
 
+   virtual bool acquireClassTableMutex() override;
+   virtual void releaseClassTableMutex(bool) override;
+
    bool getCachedField(J9Class *ramClass, int32_t cpIndex, J9Class **declaringClass, UDATA *field);
    void cacheField(J9Class *ramClass, int32_t cpIndex, J9Class *declaringClass, UDATA field);
 
