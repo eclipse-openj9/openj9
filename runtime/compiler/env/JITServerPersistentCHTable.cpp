@@ -31,14 +31,25 @@
 
 
 JITServerPersistentCHTable::JITServerPersistentCHTable(TR_PersistentMemory *trMemory)
-   : TR_PersistentCHTable(trMemory)
+   : TR_PersistentCHTable(trMemory),
+   _classMap(decltype(_classMap)::allocator_type(TR::Compiler->persistentAllocator()))
    {
+   _chTableMonitor = TR::Monitor::create("JIT-JITServerCHTableMonitor");
+   if (!_chTableMonitor)
+      throw std::bad_alloc();
    }
 
-PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &JITServerPersistentCHTable::getData()
+JITServerPersistentCHTable::~JITServerPersistentCHTable()
    {
-   auto &data = TR::compInfoPT->getClientData()->getCHTableClassMap();
-   return data;
+   // Free CHTable 
+   for (auto& it : _classMap)
+      {
+      TR_PersistentClassInfo *classInfo = it.second;
+      classInfo->removeSubClasses();
+      jitPersistentFree(classInfo);
+      }
+   _classMap.clear();
+   _chTableMonitor->destroy();
    }
 
 bool
@@ -49,14 +60,13 @@ JITServerPersistentCHTable::initializeCHTable(TR_J9VMBase *fej9, const std::stri
    auto infos = FlatPersistentClassInfo::deserializeHierarchy(rawData);
       {
       TR::ClassTableCriticalSection initializeIfNeeded(fej9);
-      auto& data = getData();
-      if (data.empty()) // check again to prevent races
+      if (_classMap.empty()) // check again to prevent races
          {
          Trc_JITServerInitCHTable(TR::compInfoPT->getCompilationThread(), TR::compInfoPT->getCompThreadId(),
             TR::compInfoPT->getClientData(), (unsigned long long)TR::compInfoPT->getClientData()->getClientUID(),
             (unsigned long long)infos.size());
          for (auto clazz : infos)
-            data.insert({ clazz->getClassId(), clazz });
+            _classMap.insert({ clazz->getClassId(), clazz });
          CHTABLE_UPDATE_COUNTER(_numClassesUpdated, infos.size());
          return true;
          }
@@ -64,11 +74,11 @@ JITServerPersistentCHTable::initializeCHTable(TR_J9VMBase *fej9, const std::stri
          {
          Trc_JITServerAbortInitCHTable(TR::compInfoPT->getCompilationThread(), TR::compInfoPT->getCompThreadId(),
             TR::compInfoPT->getClientData(), (unsigned long long)TR::compInfoPT->getClientData()->getClientUID(),
-            (unsigned long long)data.size(), (unsigned long long)infos.size());
+            (unsigned long long)_classMap.size(), (unsigned long long)infos.size());
 
          TR_ASSERT_FATAL(false,"compThreadID=%d clientSessionData=%p clientUID=%llu CHTable is not empty size %llu. Update size %llu",
             TR::compInfoPT->getCompThreadId(), TR::compInfoPT->getClientData(), (unsigned long long)TR::compInfoPT->getClientData()->getClientUID(),
-            (unsigned long long)data.size(), (unsigned long long)infos.size());
+            (unsigned long long)_classMap.size(), (unsigned long long)infos.size());
          }
       }
    return false;
@@ -79,8 +89,7 @@ JITServerPersistentCHTable::doUpdate(TR_J9VMBase *fej9, const std::string &remov
    {
    TR::ClassTableCriticalSection doUpdate(fej9);
 
-   auto& data = getData();
-   if (!data.empty()) // make sure it's initialized already
+   if (!_classMap.empty()) // make sure it's initialized already
       {
       Trc_JITServerDoCHTableUpdate(TR::compInfoPT->getCompilationThread(), TR::compInfoPT->getCompThreadId(),
          TR::compInfoPT->getClientData(), (unsigned long long)TR::compInfoPT->getClientData()->getClientUID(),
@@ -110,13 +119,12 @@ JITServerPersistentCHTable::doUpdate(TR_J9VMBase *fej9, const std::string &remov
 void 
 JITServerPersistentCHTable::commitRemoves(const std::string &rawData)
    {
-   auto &data = getData();
    TR_OpaqueClassBlock **ptr = (TR_OpaqueClassBlock**)&rawData[0];
    size_t num = rawData.size() / sizeof(TR_OpaqueClassBlock*);
    for (size_t i = 0; i < num; i++)
       {
-      auto item = data[ptr[i]];
-      data.erase(ptr[i]);
+      auto item = _classMap[ptr[i]];
+      _classMap.erase(ptr[i]);
       if (item) // may have already been removed earlier in this update block
          jitPersistentFree(item);
       }
@@ -126,7 +134,6 @@ JITServerPersistentCHTable::commitRemoves(const std::string &rawData)
 void 
 JITServerPersistentCHTable::commitModifications(const std::string &rawData)
    {
-   auto &data = getData();
    std::unordered_map<TR_OpaqueClassBlock*, std::pair<FlatPersistentClassInfo*, TR_PersistentClassInfo*>> infoMap;
 
    // First, process all TR_PersistentClassInfo entries that have been
@@ -143,7 +150,7 @@ JITServerPersistentCHTable::commitModifications(const std::string &rawData)
       if (!clazz)
          {
          clazz = new (PERSISTENT_NEW) TR_PersistentClassInfo(NULL);
-         data.insert({classId, clazz});
+         _classMap.insert({classId, clazz});
          }
       infoMap.insert({classId, {info, clazz}});
       // Overwrite existing TR_PersistentClassInfo entry with info from client
@@ -176,13 +183,12 @@ TR_PersistentClassInfo *
 JITServerPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
    CHTABLE_UPDATE_COUNTER(_numQueries, 1);
-   auto& data = getData();
    // It is possible that the persistentCHTable on the client side is not populated,
    // such as when recompilation is not allowed on the client side.
-   if (!data.empty())
+   if (!_classMap.empty())
       {
-      auto it = data.find(classId);
-      if (it != data.end())
+      auto it = _classMap.find(classId);
+      if (it != _classMap.end())
          return it->second;
       }
    return NULL;

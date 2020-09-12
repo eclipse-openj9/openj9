@@ -1915,6 +1915,25 @@ TR_J9ServerVM::getObjectSizeClass(uintptr_t objectSize)
    }
 
 bool
+TR_J9ServerVM::acquireClassTableMutex()
+   {
+   // Acquire per-client class table lock
+   TR::Monitor *classTableMonitor = static_cast<JITServerPersistentCHTable *>(_compInfoPT->getClientData()->getCHTable())->getCHTableMonitor();
+   TR_ASSERT_FATAL(classTableMonitor, "CH table and its monitor must be initialized");
+   classTableMonitor->enter();
+   return true;
+   }
+
+void
+TR_J9ServerVM::releaseClassTableMutex(bool releaseVMAccess)
+   {
+   // Release per-cient class table lock
+   TR::Monitor *classTableMonitor = static_cast<JITServerPersistentCHTable *>(_compInfoPT->getClientData()->getCHTable())->getCHTableMonitor();
+   TR_ASSERT_FATAL(classTableMonitor, "CH table and its monitor must be initialized");
+   classTableMonitor->exit();
+   }
+
+bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
    TR_ASSERT(vettedForAOT, "The TR_J9SharedCacheServerVM version of this method is expected to be called only from isClassLibraryMethod.\n"
