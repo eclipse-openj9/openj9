@@ -42,7 +42,7 @@ TR::CFG* J9::IDTBuilder::generateControlFlowGraph(TR_CallTarget* callTarget)
 
       // sum up the freq of the predecessors of the end block
       // Because the start block's frequency is not accurate. 
-      // This sum should equal to the start block frequency.
+      // This sum should be equal to the start block frequency.
       int32_t freqSum = 0;
       for (auto e = endBlock->getPredecessors().begin(); e != endBlock->getPredecessors().end(); ++e)
          {
@@ -55,7 +55,6 @@ TR::CFG* J9::IDTBuilder::generateControlFlowGraph(TR_CallTarget* callTarget)
 
       // the successor of the start block
       (*startBlock->getSuccessors().begin())->getTo()->setFrequency(freqSum);
-
       }
 
    return cfg;
@@ -70,12 +69,13 @@ J9::IDTBuilder::~IDTBuilder()
    }
 
 
-void J9::IDTBuilder::performAbstractInterpretation(IDTNode* node, IDTBuilderVisitor& visitor, AbsArguments* arguments, int32_t callerIndex)
+void J9::IDTBuilder::performAbstractInterpretation(IDTNode* node, IDTBuilderVisitor& visitor, AbsArguments* args, int32_t callerIndex)
    {
-   J9AbsInterpreter interpreter(node->getResolvedMethodSymbol(), node->getCallTarget()->_cfg, &visitor, arguments, region(), comp());
+   J9AbsInterpreter interpreter(node->getResolvedMethodSymbol(), node->getCallTarget()->_cfg, &visitor, args, region(), comp());
    
    interpreter.setCallerIndex(callerIndex);
    interpreter.interpret();
 
    node->setInliningMethodSummary(interpreter.getInliningMethodSummary());
    }
+   

@@ -42,6 +42,8 @@ J9AbsInterpreter::J9AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol,
    memset(_blockStartIndexFlags, 0, maxByteCodeIndex());
 
    TR::AllBlockIterator blockIt(cfg, comp);
+
+   //Marks the bytecode index which is the start index of any block
    while (blockIt.currentBlock())
       {
       if (blockIt.currentBlock() != cfg->getStart()->asBlock() && blockIt.currentBlock() != cfg->getEnd()->asBlock())
@@ -53,12 +55,12 @@ J9AbsInterpreter::J9AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol,
       
    }
 
-OMR::ValuePropagation* J9AbsInterpreter::vp()
+TR::ValuePropagation* J9AbsInterpreter::vp()
    {
    if (!_vp)
       {
       TR::OptimizationManager* manager = comp()->getOptimizer()->getOptimization(OMR::globalValuePropagation);
-      _vp = (OMR::ValuePropagation*) manager->factory()(manager);
+      _vp = (TR::ValuePropagation*) manager->factory()(manager);
       _vp->initialize();
       }
    return _vp;
@@ -66,29 +68,27 @@ OMR::ValuePropagation* J9AbsInterpreter::vp()
 
 bool J9AbsInterpreter::interpret()
    {
-   
    if (comp()->getOption(TR_TraceAbstractInterpretation))
       traceMsg(comp(), "\nStarting to abstract interpret method %s ...\n", _callerMethod->signature(comp()->trMemory()));
 
    setStartBlockState();
-   moveToNextBasicBlock();
+   moveToNextBlock();
    
-   while (currentBlock()) //walk the CFG basic blocks
+   while (currentBlock()) //walk the CFG blocks
       {
-
       //Check if the current block has been already interpreted
       while (currentBlock() 
-         && ( (_blockStartIndexFlags[currentByteCodeIndex()] == true && currentByteCodeIndex() != currentBlock()->getBlockBCIndex()) //if we arrive at the start index of another basic block
+         && ( (_blockStartIndexFlags[currentByteCodeIndex()] == true && currentByteCodeIndex() != currentBlock()->getBlockBCIndex()) //if we arrive at the start index of another block
                || currentByteCodeIndex() > maxByteCodeIndex() // if we arrive at the end of the whole method
                || current() == J9BCunknown)) 
          {
          if (comp()->getOption(TR_TraceAbstractInterpretation) && currentBlock()->getAbsState())
             {
             traceMsg(comp(), "\nBlock: #%d of method %s finishes abstract interpretation\n", currentBlock()->getNumber(), _callerMethod->signature(comp()->trMemory()));
-            currentBlock()->getAbsState()->print(comp(), vp());
+            static_cast<AbsStackMachineState*>(currentBlock()->getAbsState())->print(comp(), vp());
             }
          
-         moveToNextBasicBlock(); //We may move to the end (currentBlock() is NULL)
+         moveToNextBlock(); //We may move to the end (currentBlock() is NULL)
          }
       
       if (currentBlock()) 
@@ -107,7 +107,9 @@ bool J9AbsInterpreter::interpret()
             }
          else 
             {
-            //dead code block, does not have an absState
+            //dead code block, does not have an state
+            if (comp()->getOption(TR_TraceAbstractInterpretation))
+               traceMsg(comp(), "\nBlock in dead code area. Do not interpret\n");
             }
 
          next(); //move to next bytecode
@@ -123,7 +125,7 @@ bool J9AbsInterpreter::interpret()
    return true;
    }
 
-void J9AbsInterpreter::moveToNextBasicBlock()
+void J9AbsInterpreter::moveToNextBlock()
    {
    TR_ASSERT_FATAL(currentBlock(), "Cannot move to next block since CFG walk has already ended");
 
@@ -136,7 +138,7 @@ void J9AbsInterpreter::moveToNextBasicBlock()
       {
       if (comp()->getOption(TR_TraceAbstractInterpretation))
          traceMsg(comp(), "\nStart to abstract interpret Block: #%d of method %s ...\n", currentBlock()->getNumber(), _callerMethod->signature(comp()->trMemory()));
-      transferBlockStatesFromPredeccesors(); //transfer CFG abstract states to the current basic block
+      transferBlockStatesFromPredeccesors(); //transfer CFG abstract states to the current block
       setIndex(currentBlock()->getBlockBCIndex()); //set the start index of the bytecode iterator
       }
    }
@@ -144,7 +146,7 @@ void J9AbsInterpreter::moveToNextBasicBlock()
 //Set the abstract state of the START block of CFG
 void J9AbsInterpreter::setStartBlockState()
    {  
-   AbsState* state = new (region()) AbsState(region());
+   AbsStackMachineState* state = new (region()) AbsStackMachineState(region());
 
    uint32_t paramPos = 0; 
    uint32_t slotIndex = 0;
@@ -159,7 +161,7 @@ void J9AbsInterpreter::setStartBlockState()
          AbsValue* arg = _arguments->at(i);
          TR::DataType dataType = arg->getDataType();
 
-         AbsValue* param = AbsValue::create(arg, region());
+         AbsValue* param = AbsValue::create(region(), arg);
          param->setParamPosition(paramPos);
 
          if (i == 0 && !_callerMethod->isStatic())
@@ -177,32 +179,28 @@ void J9AbsInterpreter::setStartBlockState()
                break;
             case TR::Double:
                slotIndex++;
-               state->set(slotIndex, AbsValue::createDummyDouble(region()));
+               state->set(slotIndex, AbsValue::createTopDouble(region())); //take the second half of 64-bit
                break;
             case TR::Int64:
                slotIndex++;
-               state->set(slotIndex, AbsValue::createDummyLong(region()));
+               state->set(slotIndex, AbsValue::createTopLong(region()));
                break;
 
             default:
                TR_ASSERT_FATAL(false, "Invalid type");
             }
-         
          }
-
-      
       }
 
    // if not, setting the parameters as TOP. 
    //
    else 
       {
-   
       //set the implicit parameter
       if (!_callerMethod->isStatic())
          {
          TR_OpaqueClassBlock *classBlock = _callerMethod->containingClass();
-         AbsValue* value = AbsValue::createClassObject(classBlock, true, region(), vp());
+         AbsValue* value = AbsValue::createClassObject(region(), vp(), classBlock, true);
          value->setParamPosition(paramPos++);
          value->setImplicitParam();
          state->set(slotIndex++, value);
@@ -229,7 +227,7 @@ void J9AbsInterpreter::setStartBlockState()
                param->setParamPosition(paramPos);
                state->set(slotIndex, param);
                slotIndex++;
-               state->set(slotIndex, AbsValue::createDummyLong(region()));
+               state->set(slotIndex, AbsValue::createTopLong(region()));
                break;
             
             case TR::Double:
@@ -237,7 +235,7 @@ void J9AbsInterpreter::setStartBlockState()
                param->setParamPosition(paramPos);
                state->set(slotIndex, param);
                slotIndex++;
-               state->set(slotIndex, AbsValue::createDummyDouble(region()));
+               state->set(slotIndex, AbsValue::createTopDouble(region()));
                break;
             
             case TR::Float:
@@ -253,13 +251,13 @@ void J9AbsInterpreter::setStartBlockState()
                   {
                   int32_t arrayType = comp()->fe()->getNewArrayTypeFromClass(classBlock);
                   int32_t elemetSize = arrayType == 7 || arrayType == 11 ? 8 : 4; //7: double, 11: long
-                  param = AbsValue::createArrayObject(classBlock, false, 0, INT_MAX, elemetSize, region(), vp());
+                  param = AbsValue::createArrayObject(region(), vp(), classBlock, false, 0, INT_MAX, elemetSize);
                   param->setParamPosition(paramPos);
                   state->set(slotIndex, param);
                   }
                else
                   {
-                  param = AbsValue::createClassObject(classBlock, false, region(), vp());
+                  param = AbsValue::createClassObject(region(), vp(),classBlock, false);
                   param->setParamPosition(paramPos);
                   state->set(slotIndex, param);
                   }
@@ -278,7 +276,7 @@ void J9AbsInterpreter::setStartBlockState()
    if (comp()->getOption(TR_TraceAbstractInterpretation))
       {
       traceMsg(comp(), "Start Block state of method %s:\n", _callerMethod->signature(comp()->trMemory()));
-      _cfg->getStart()->asBlock()->getAbsState()->print(comp(), vp());
+      static_cast<AbsStackMachineState*>(_cfg->getStart()->asBlock()->getAbsState())->print(comp(), vp());
       }
                   
    }
@@ -306,8 +304,8 @@ void J9AbsInterpreter::transferBlockStatesFromPredeccesors()
       /*** Case 2.2: Parent is interpreted. Copy parent's state and pass it to the current block ***/
       else 
          {
-         AbsState* parentState = parentBlock->getAbsState();
-         AbsState* copiedState = new (region()) AbsState(parentState, region()); //copy
+         AbsStackMachineState* parentState = static_cast<AbsStackMachineState*>(parentBlock->getAbsState());
+         AbsStackMachineState* copiedState = new (region()) AbsStackMachineState(parentState, region()); //copy
 
          block->setAbsState(copiedState);
          return;
@@ -341,11 +339,11 @@ void J9AbsInterpreter::transferBlockStatesFromPredeccesors()
       if (allPredecessorsInterpreted)
          {
          TR::Block* firstPredBlock = (*block->getPredecessors().begin())->getFrom()->asBlock();
-         AbsState* state = new (region()) AbsState(firstPredBlock->getAbsState(), region());
+         AbsStackMachineState* state = new (region()) AbsStackMachineState(static_cast<AbsStackMachineState*>(firstPredBlock->getAbsState()), region());
          for (auto e = ++block->getPredecessors().begin(); e != block->getPredecessors().end(); e ++)
             {
             TR::Block* predBlock = (*e)->getFrom()->asBlock();
-            state->merge(predBlock->getAbsState(), vp());
+            state->merge(static_cast<AbsStackMachineState*>(predBlock->getAbsState()), vp());
             }
 
          block->setAbsState(state);
@@ -356,7 +354,7 @@ void J9AbsInterpreter::transferBlockStatesFromPredeccesors()
       //NOTE: This case (back-edge) will be handled in the future. 
       if (!allPredecessorsInterpreted && oneInterpretedBlock)
          {
-         AbsState* copiedState = new (region()) AbsState(oneInterpretedBlock->getAbsState(), region());
+         AbsStackMachineState* copiedState = new (region()) AbsStackMachineState(static_cast<AbsStackMachineState*>(oneInterpretedBlock->getAbsState()), region());
 
          copiedState->setToTop();
          block->setAbsState(copiedState);
@@ -738,7 +736,7 @@ void J9AbsInterpreter::return_(TR::DataType type, bool oneBit)
    if (type == TR::NoType)
       return;
 
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
    if (type.isDouble() || type.isInt64())
       state->pop();
 
@@ -748,46 +746,46 @@ void J9AbsInterpreter::return_(TR::DataType type, bool oneBit)
 
 void J9AbsInterpreter::constant(int32_t i)
    {
-   AbsState* state = currentBlock()->getAbsState();
-   AbsValue* value = AbsValue::createIntConst(i, region(), vp());
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
+   AbsValue* value = AbsValue::createIntConst(region(), vp(), i);
    state->push(value);
    }
 
 void J9AbsInterpreter::constant(int64_t l)
    {
-   AbsState* state = currentBlock()->getAbsState();
-   AbsValue* value1 = AbsValue::createLongConst(l, region(), vp());
-   AbsValue* value2 = AbsValue::createDummyLong(region());
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
+   AbsValue* value1 = AbsValue::createLongConst(region(), vp(), l);
+   AbsValue* value2 = AbsValue::createTopLong(region());
    state->push(value1);
    state->push(value2);
    }
 
 void J9AbsInterpreter::constant(float f)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
    AbsValue* floatConst = AbsValue::createTopFloat(region());
    state->push(floatConst);
    }
 
 void J9AbsInterpreter::constant(double d)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
    AbsValue *value1 = AbsValue::createTopDouble(region());
-   AbsValue *value2 = AbsValue::createDummyDouble(region());
+   AbsValue *value2 = AbsValue::createTopDouble(region());
    state->push(value1);
    state->push(value2);
    }
 
 void J9AbsInterpreter::constantNull()
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
    AbsValue* value = AbsValue::createNullObject(region(), vp());
    state->push(value);
    }
 
 void J9AbsInterpreter::ldc(bool wide)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    int32_t cpIndex = wide ? next2Bytes() : nextByte();
    TR::DataType type = _callerMethod->getLDCType(cpIndex);
@@ -828,14 +826,14 @@ void J9AbsInterpreter::ldc(bool wide)
                }
             else  //Resolved
                {
-               AbsValue *stringVal = AbsValue::createStringConst(symbolReference, region(), vp());
+               AbsValue *stringVal = AbsValue::createStringObject(region(), vp(), symbolReference);
                state->push(stringVal);
                }
             }
          else  //Class
             {
             TR_OpaqueClassBlock* classBlock = _callerMethod->getClassFromConstantPool(comp(), cpIndex);
-            AbsValue* value = AbsValue::createClassObject(classBlock, false, region(), vp());
+            AbsValue* value = AbsValue::createClassObject(region(), vp(), classBlock, false);
             state->push(value);
             }
          break;
@@ -848,7 +846,7 @@ void J9AbsInterpreter::ldc(bool wide)
 
 void J9AbsInterpreter::load(TR::DataType type, int32_t index)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
    
    switch (type)
       {
@@ -879,7 +877,7 @@ void J9AbsInterpreter::load(TR::DataType type, int32_t index)
 
 void J9AbsInterpreter::store(TR::DataType type, int32_t index)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    switch (type)
       {
@@ -910,7 +908,7 @@ void J9AbsInterpreter::store(TR::DataType type, int32_t index)
 
 void J9AbsInterpreter::arrayLoad(TR::DataType type)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    AbsValue *index = state->pop();
    TR_ASSERT_FATAL(index->getDataType() == TR::Int32, "Unexpected type");
@@ -923,7 +921,7 @@ void J9AbsInterpreter::arrayLoad(TR::DataType type)
       case TR::Double:
          {
          AbsValue *value1 = AbsValue::createTopDouble(region());
-         AbsValue *value2 = AbsValue::createDummyDouble(region());
+         AbsValue *value2 = AbsValue::createTopDouble(region());
          state->push(value1);
          state->push(value2);
          break;
@@ -945,7 +943,7 @@ void J9AbsInterpreter::arrayLoad(TR::DataType type)
       case TR::Int64:
          {
          AbsValue *value1 = AbsValue::createTopLong(region());
-         AbsValue *value2 = AbsValue::createDummyLong(region());
+         AbsValue *value2 = AbsValue::createTopLong(region());
          state->push(value1);
          state->push(value2);
          break;
@@ -964,7 +962,7 @@ void J9AbsInterpreter::arrayLoad(TR::DataType type)
 
 void J9AbsInterpreter::arrayStore(TR::DataType type)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    if (type.isDouble() || type.isInt64())
       state->pop(); //dummy
@@ -997,7 +995,7 @@ void J9AbsInterpreter::arrayStore(TR::DataType type)
 
 void J9AbsInterpreter::binaryOperation(TR::DataType type, BinaryOperator op)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    if (type.isDouble() || type.isInt64())
       state->pop(); //dummy
@@ -1024,7 +1022,7 @@ void J9AbsInterpreter::binaryOperation(TR::DataType type, BinaryOperator op)
       case TR::Double:
          {
          AbsValue *result1 = AbsValue::createTopDouble(region());
-         AbsValue *result2 = AbsValue::createDummyDouble(region());
+         AbsValue *result2 = AbsValue::createTopDouble(region());
          state->push(result1);
          state->push(result2);
          break;
@@ -1084,7 +1082,7 @@ void J9AbsInterpreter::binaryOperation(TR::DataType type, BinaryOperator op)
                   break;
                }
 
-            AbsValue* result = AbsValue::createIntConst(resultVal, region(), vp());
+            AbsValue* result = AbsValue::createIntConst(region(), vp(), resultVal);
             state->push(result);
             break;
             }
@@ -1105,7 +1103,7 @@ void J9AbsInterpreter::binaryOperation(TR::DataType type, BinaryOperator op)
             if (longVal2 == 0 && op == BinaryOperator::div) //divide by zero exception
                {
                AbsValue* result1 = AbsValue::createTopLong(region());
-               AbsValue* result2 = AbsValue::createDummyLong(region());
+               AbsValue* result2 = AbsValue::createTopLong(region());
                state->push(result1);
                state->push(result2);
                break;
@@ -1150,8 +1148,8 @@ void J9AbsInterpreter::binaryOperation(TR::DataType type, BinaryOperator op)
                   break;
                }
             
-            AbsValue* result1 = AbsValue::createLongConst(resultVal, region(), vp());
-            AbsValue* result2 = AbsValue::createDummyLong(region());
+            AbsValue* result1 = AbsValue::createLongConst(region(), vp(), resultVal);
+            AbsValue* result2 = AbsValue::createTopLong(region());
             state->push(result1);
             state->push(result2);
             break;
@@ -1159,7 +1157,7 @@ void J9AbsInterpreter::binaryOperation(TR::DataType type, BinaryOperator op)
          else  //not const
             {
             AbsValue* result1 = AbsValue::createTopLong(region());
-            AbsValue* result2 = AbsValue::createDummyLong(region());
+            AbsValue* result2 = AbsValue::createTopLong(region());
             state->push(result1);
             state->push(result2);
             break;
@@ -1173,7 +1171,7 @@ void J9AbsInterpreter::binaryOperation(TR::DataType type, BinaryOperator op)
 
 void J9AbsInterpreter::unaryOperation(TR::DataType type, UnaryOperator op)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
    if (type.isDouble() || type.isInt64())
       state->pop();
    
@@ -1192,7 +1190,7 @@ void J9AbsInterpreter::unaryOperation(TR::DataType type, UnaryOperator op)
       case TR::Double:
          {
          AbsValue* result1 = AbsValue::createTopDouble(region());
-         AbsValue* result2 = AbsValue::createDummyDouble(region());
+         AbsValue* result2 = AbsValue::createTopDouble(region());
          state->push(result1);
          state->push(result2);
          break;
@@ -1203,7 +1201,7 @@ void J9AbsInterpreter::unaryOperation(TR::DataType type, UnaryOperator op)
          if (value->isIntConst()) //const int
             {
             int32_t intVal = value->getConstraint()->asIntConst()->getInt();
-            AbsValue* result = AbsValue::createIntConst(-intVal, region(), vp());
+            AbsValue* result = AbsValue::createIntConst(region(), vp(), -intVal);
             state->push(result);
             break;
             }
@@ -1218,7 +1216,7 @@ void J9AbsInterpreter::unaryOperation(TR::DataType type, UnaryOperator op)
                break;
                }
 
-            AbsValue* result = AbsValue::createIntRange(-intValHigh, -intValLow, region(), vp());
+            AbsValue* result = AbsValue::createIntRange(region(), vp(), -intValHigh, -intValLow);
             state->push(result);
             break;
             }
@@ -1236,8 +1234,8 @@ void J9AbsInterpreter::unaryOperation(TR::DataType type, UnaryOperator op)
          if (value->isLongConst())
             {
             int64_t longVal = value->getConstraint()->asLongConst()->getLong();
-            AbsValue* result1 = AbsValue::createLongConst(-longVal, region(), vp());
-            AbsValue* result2 = AbsValue::createDummyLong(region());
+            AbsValue* result1 = AbsValue::createLongConst(region(), vp(), -longVal);
+            AbsValue* result2 = AbsValue::createTopLong(region());
             state->push(result1);
             state->push(result2);
             break;
@@ -1250,12 +1248,12 @@ void J9AbsInterpreter::unaryOperation(TR::DataType type, UnaryOperator op)
             if (longValLow == LONG_MIN)
                {
                state->push(AbsValue::createTopLong(region()));
-               state->push(AbsValue::createDummyLong(region()));
+               state->push(AbsValue::createTopLong(region()));
                break;
                }
 
-            AbsValue* result1 = AbsValue::createLongRange(-longValHigh, -longValLow, region(), vp());
-            AbsValue* result2 = AbsValue::createDummyLong(region());
+            AbsValue* result1 = AbsValue::createLongRange(region(), vp(), -longValHigh, -longValLow);
+            AbsValue* result2 = AbsValue::createTopLong(region());
             state->push(result1);
             state->push(result2);
             break;
@@ -1263,7 +1261,7 @@ void J9AbsInterpreter::unaryOperation(TR::DataType type, UnaryOperator op)
          else 
             {
             AbsValue* result1 = AbsValue::createTopLong(region());
-            AbsValue* result2 = AbsValue::createDummyLong(region());
+            AbsValue* result2 = AbsValue::createTopLong(region());
             state->push(result1);
             state->push(result2);
             break;
@@ -1282,7 +1280,7 @@ void J9AbsInterpreter::pop(int32_t size)
    TR_ASSERT_FATAL(size >0 && size <= 2, "Invalid pop size");
    for (int32_t i = 0; i < size; i ++)
       {
-      currentBlock()->getAbsState()->pop();
+      static_cast<AbsStackMachineState*>(currentBlock()->getAbsState())->pop();
       }
    }
 
@@ -1292,7 +1290,7 @@ void J9AbsInterpreter::nop()
 
 void J9AbsInterpreter::swap()
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
    AbsValue* value1 = state->pop();
    AbsValue* value2 = state->pop();
    state->push(value1);
@@ -1304,7 +1302,7 @@ void J9AbsInterpreter::dup(int32_t size, int32_t delta)
    TR_ASSERT_FATAL(size > 0 && size <= 2, "Invalid dup size");
    TR_ASSERT_FATAL(delta >= 0 && size <=2, "Invalid dup delta");
 
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    AbsValue* temp[size + delta];
 
@@ -1312,7 +1310,7 @@ void J9AbsInterpreter::dup(int32_t size, int32_t delta)
       temp[i] = state->pop();
    
    for (int32_t i = size - 1 ; i >= 0 ; i --)
-      state->push(AbsValue::create(temp[i], region())); //copy the top X values of the stack
+      state->push(AbsValue::create(region(), temp[i])); //copy the top X values of the stack
 
    for (int32_t i = size + delta - 1; i >= 0 ; i --)
       state->push(temp[i]); //push the values back to stack
@@ -1320,7 +1318,7 @@ void J9AbsInterpreter::dup(int32_t size, int32_t delta)
 
 void J9AbsInterpreter::shift(TR::DataType type, ShiftOperator op)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    AbsValue* shiftAmount = state->pop();
 
@@ -1353,7 +1351,7 @@ void J9AbsInterpreter::shift(TR::DataType type, ShiftOperator op)
                   TR_ASSERT_FATAL(false, "Invalid shift operator");
                   break;
                }
-            AbsValue* result = AbsValue::createIntConst(resultVal, region(), vp());
+            AbsValue* result = AbsValue::createIntConst(region(), vp(), resultVal);
             state->push(result);
             break;
             }
@@ -1388,8 +1386,8 @@ void J9AbsInterpreter::shift(TR::DataType type, ShiftOperator op)
                   TR_ASSERT_FATAL(false, "Invalid shift operator");
                   break;
                }
-            AbsValue* result1 = AbsValue::createLongConst(resultVal, region(), vp());
-            AbsValue* result2 = AbsValue::createDummyLong(region());
+            AbsValue* result1 = AbsValue::createLongConst(region(), vp(), resultVal);
+            AbsValue* result2 = AbsValue::createTopLong(region());
             state->push(result1);
             state->push(result2);
             break;
@@ -1397,7 +1395,7 @@ void J9AbsInterpreter::shift(TR::DataType type, ShiftOperator op)
          else 
             {
             AbsValue* result1 = AbsValue::createTopLong(region());
-            AbsValue* result2 = AbsValue::createDummyLong(region());
+            AbsValue* result2 = AbsValue::createTopLong(region());
             state->push(result1);
             state->push(result2);
             break;
@@ -1412,7 +1410,7 @@ void J9AbsInterpreter::shift(TR::DataType type, ShiftOperator op)
 
 void J9AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    if (fromType.isDouble() || fromType.isInt64())
       state->pop(); //dummy
@@ -1430,7 +1428,7 @@ void J9AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
             case TR::Int8: //i2b
                {
                AbsValue* result = value->isIntConst() ? 
-                  AbsValue::createIntConst((int8_t)value->getConstraint()->asIntConst()->getInt(), region(), vp())
+                  AbsValue::createIntConst(region(), vp(), (int8_t)value->getConstraint()->asIntConst()->getInt())
                   :
                   AbsValue::createTopInt(region());
                
@@ -1441,7 +1439,7 @@ void J9AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
             case TR::Int16: //i2c or i2s
                {
                AbsValue* result = value->isIntConst() ? 
-                  AbsValue::createIntConst((int16_t)value->getConstraint()->asIntConst()->getInt(), region(), vp())
+                  AbsValue::createIntConst(region(), vp(), (int16_t)value->getConstraint()->asIntConst()->getInt())
                   :
                   AbsValue::createTopInt(region());
                
@@ -1452,11 +1450,11 @@ void J9AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
             case TR::Int64: //i2l
                {
                AbsValue* result1 = value->isIntConst() ?
-                  AbsValue::createLongConst(value->getConstraint()->asIntConst()->getInt(), region(), vp())
+                  AbsValue::createLongConst(region(), vp(), value->getConstraint()->asIntConst()->getInt())
                   :
                   AbsValue::createTopLong(region());
                
-               AbsValue* result2 = AbsValue::createDummyLong(region());
+               AbsValue* result2 = AbsValue::createTopLong(region());
                state->push(result1);
                state->push(result2);
                break;
@@ -1472,7 +1470,7 @@ void J9AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
             case TR::Double: //i2d
                {
                AbsValue* result1 = AbsValue::createTopDouble(region());
-               AbsValue* result2 = AbsValue::createDummyDouble(region());
+               AbsValue* result2 = AbsValue::createTopDouble(region());
                state->push(result1);
                state->push(result2);
                break;
@@ -1493,7 +1491,7 @@ void J9AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
             case TR::Int32: //l2i
                {
                AbsValue* result = value->isLongConst() ?
-                  AbsValue::createIntConst((int32_t)value->getConstraint()->asLongConst()->getLong(), region(), vp())
+                  AbsValue::createIntConst(region(), vp(), (int32_t)value->getConstraint()->asLongConst()->getLong())
                   :
                   AbsValue::createTopInt(region());
 
@@ -1511,7 +1509,7 @@ void J9AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
             case TR::Double: //l2d
                {
                AbsValue* result1 = AbsValue::createTopDouble(region());
-               AbsValue* result2 = AbsValue::createDummyDouble(region());
+               AbsValue* result2 = AbsValue::createTopDouble(region());
                state->push(result1);
                state->push(result2);
                break;
@@ -1546,7 +1544,7 @@ void J9AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
             case TR::Int64: //d2l
                {
                AbsValue* result1 = AbsValue::createTopLong(region());
-               AbsValue* result2 = AbsValue::createDummyLong(region());
+               AbsValue* result2 = AbsValue::createTopLong(region());
                state->push(result1);
                state->push(result2);
                break;
@@ -1574,7 +1572,7 @@ void J9AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
                case TR::Double: //f2d
                   {
                   AbsValue* result1 = AbsValue::createTopDouble(region());
-                  AbsValue* result2 = AbsValue::createDummyDouble(region());
+                  AbsValue* result2 = AbsValue::createTopDouble(region());
                   state->push(result1);
                   state->push(result2);
                   break;
@@ -1583,7 +1581,7 @@ void J9AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
                case TR::Int64: //f2l
                   {
                   AbsValue* result1 = AbsValue::createTopLong(region());
-                  AbsValue* result2 = AbsValue::createDummyLong(region());
+                  AbsValue* result2 = AbsValue::createTopLong(region());
                   state->push(result1);
                   state->push(result2);
                   break;
@@ -1605,7 +1603,7 @@ void J9AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
 
 void J9AbsInterpreter::comparison(TR::DataType type, ComparisonOperator op)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    if (type.isDouble() || type.isInt64())
       state->pop();
@@ -1624,7 +1622,7 @@ void J9AbsInterpreter::comparison(TR::DataType type, ComparisonOperator op)
       case TR::Float:
       case TR::Double:
          {
-         AbsValue* result = AbsValue::createIntRange(-1,1,region(), vp());
+         AbsValue* result = AbsValue::createIntRange(region(), vp(), -1, 1);
          state->push(result);
          break;
          }
@@ -1635,32 +1633,32 @@ void J9AbsInterpreter::comparison(TR::DataType type, ComparisonOperator op)
             if (value1->isLongConst() && value2->isLongConst() // ==
                && value1->getConstraint()->asLongConst()->getLong() == value2->getConstraint()->asLongConst()->getLong()) 
                {
-               AbsValue* result = AbsValue::createIntConst(0, region(), vp());
+               AbsValue* result = AbsValue::createIntConst(region(), vp(), 0);
                state->push(result);
                break;
                }
             else if (value1->getConstraint()->asLongConstraint()->getLowLong() > value2->getConstraint()->asLongConstraint()->getHighLong()) // >
                {
-               AbsValue* result = AbsValue::createIntConst(1, region(), vp());
+               AbsValue* result = AbsValue::createIntConst(region(), vp(), 1);
                state->push(result);
                break;
                }
             else if (value1->getConstraint()->asLongConstraint()->getHighLong() < value2->getConstraint()->asLongConstraint()->getLowLong()) // <
                {
-               AbsValue* result = AbsValue::createIntConst(-1, region(), vp());
+               AbsValue* result = AbsValue::createIntConst(region(), vp(), -1);
                state->push(result);
                break;
                }
             else 
                {
-               AbsValue* result = AbsValue::createIntRange(-1, 1, region(), vp());
+               AbsValue* result = AbsValue::createIntRange(region(), vp(), -1, 1);
                state->push(result);
                break;
                }
             }
          else 
             {
-            AbsValue* result = AbsValue::createIntRange(-1,1,region(), vp());
+            AbsValue* result = AbsValue::createIntRange(region(), vp(), -1,1);
             state->push(result);
             break;
             }
@@ -1678,7 +1676,7 @@ void J9AbsInterpreter::goto_(int32_t label)
 
 void J9AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, ConditionalBranchOperator op)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    switch(op)
       {
@@ -1986,16 +1984,17 @@ void J9AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, Condi
 
 void J9AbsInterpreter::new_()
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
+
    int32_t cpIndex = next2Bytes();
    TR_OpaqueClassBlock* type = _callerMethod->getClassFromConstantPool(comp(), cpIndex);
-   AbsValue* value = AbsValue::createClassObject(type, true, region(), vp());
+   AbsValue* value = AbsValue::createClassObject(region(), vp(), type, true);
    state->push(value);
    }
 
 void J9AbsInterpreter::multianewarray(int32_t dimension)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    uint16_t cpIndex = next2Bytes();
 
@@ -2013,31 +2012,33 @@ void J9AbsInterpreter::multianewarray(int32_t dimension)
    if (length->isInt())
       {
       AbsValue* array = AbsValue::createArrayObject(
+                           region(), 
+                           vp(), 
                            arrayType,
                            true,
                            length->getConstraint()->asIntConstraint()->getLowInt(),
                            length->getConstraint()->asIntConstraint()->getHighInt(),
-                           4,
-                           region(),
-                           vp());
+                           4
+                           );
       state->push(array);
       return;
       }
 
    AbsValue* array = AbsValue::createArrayObject(
+                        region(), 
+                        vp(), 
                         arrayType,
                         true,
                         0,
                         INT32_MAX,
-                        4,
-                        region(),
-                        vp());
+                        4
+                        );
    state->push(array);
    }
 
 void J9AbsInterpreter::newarray()
    {
-   AbsState *state = currentBlock()->getAbsState();
+   AbsStackMachineState *state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    /**
     * aType
@@ -2060,30 +2061,34 @@ void J9AbsInterpreter::newarray()
 
    if (length->isInt())
       {
-      AbsValue* value = AbsValue::createArrayObject(arrayType, 
-                                                      true, 
-                                                      length->getConstraint()->getLowInt(), 
-                                                      length->getConstraint()->getHighInt(), 
-                                                      elementSize, 
-                                                      region(), 
-                                                      vp());
+      AbsValue* value = AbsValue::createArrayObject(
+                                                   region(), 
+                                                   vp(), 
+                                                   arrayType, 
+                                                   true, 
+                                                   length->getConstraint()->getLowInt(), 
+                                                   length->getConstraint()->getHighInt(), 
+                                                   elementSize
+                                                   );
       state->push(value);
       return;
       }
 
-   AbsValue* value = AbsValue::createArrayObject(arrayType, 
-                                                   true, 
-                                                   0, 
-                                                   INT32_MAX, 
-                                                   elementSize, 
-                                                   region(), 
-                                                   vp());
+   AbsValue* value = AbsValue::createArrayObject(
+                                                region(), 
+                                                vp(), 
+                                                arrayType, 
+                                                true, 
+                                                0, 
+                                                INT32_MAX, 
+                                                elementSize
+                                                );
    state->push(value);
    }
 
 void J9AbsInterpreter::anewarray()
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    int32_t cpIndex = next2Bytes();
 
@@ -2094,24 +2099,26 @@ void J9AbsInterpreter::anewarray()
 
    if (length->isInt())
       {
-      AbsValue* value = AbsValue::createArrayObject(arrayType, 
-                                                      true, 
-                                                      length->getConstraint()->asIntConstraint()->getLowInt(), 
-                                                      length->getConstraint()->asIntConstraint()->getHighInt(),
-                                                      4, 
-                                                      region(), 
-                                                      vp());
+      AbsValue* value = AbsValue::createArrayObject(
+                                                   region(), 
+                                                   vp(), 
+                                                   arrayType, 
+                                                   true, 
+                                                   length->getConstraint()->asIntConstraint()->getLowInt(), 
+                                                   length->getConstraint()->asIntConstraint()->getHighInt(),
+                                                   4
+                                                   );
       state->push(value);
       return;
       }
 
-   AbsValue* value = AbsValue::createArrayObject(arrayType, true, 0, INT32_MAX ,4, region(), vp());
+   AbsValue* value = AbsValue::createArrayObject(region(), vp(), arrayType, true, 0, INT32_MAX, 4);
    state->push(value);
    }
 
 void J9AbsInterpreter::arraylength()
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    AbsValue* arrayRef = state->pop();
    TR_ASSERT_FATAL(arrayRef->getDataType() == TR::Address, "Unexpected type");
@@ -2128,23 +2135,23 @@ void J9AbsInterpreter::arraylength()
 
       if (info->lowBound() == info->highBound())
          {
-         result = AbsValue::createIntConst(info->lowBound(), region(), vp());
+         result = AbsValue::createIntConst(region(), vp(), info->lowBound());
          }
       else
          {
-         result = AbsValue::createIntRange(info->lowBound(), info->highBound(), region(), vp());
+         result = AbsValue::createIntRange(region(), vp(), info->lowBound(), info->highBound());
          }
       state->push(result);
       return;
       }
    
-   AbsValue *result = AbsValue::createIntRange(0, INT32_MAX, region(), vp());
+   AbsValue *result = AbsValue::createIntRange(region(), vp(), 0, INT32_MAX);
    state->push(result);
    }
 
 void J9AbsInterpreter::instanceof()
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    AbsValue *objectRef = state->pop();
    TR_ASSERT_FATAL(objectRef->getDataType() == TR::Address, "Unexpected type");
@@ -2160,7 +2167,7 @@ void J9AbsInterpreter::instanceof()
 
    if (objectRef->isNullObject())
       {
-      AbsValue* result = AbsValue::createIntConst(0, region(), vp()); //false
+      AbsValue* result = AbsValue::createIntConst(region(), vp(), 0); //false
       state->push(result);
       return;
       }
@@ -2176,24 +2183,24 @@ void J9AbsInterpreter::instanceof()
                                                       true);
          if( yesNoMaybe == TR_yes) //Instanceof must be true;
             {
-            state->push(AbsValue::createIntConst(1,region(),vp()));
+            state->push(AbsValue::createIntConst(region(), vp(), 1));
             return;
             } 
          else if (yesNoMaybe == TR_no) //Instanceof must be false;
             {
-            state->push(AbsValue::createIntConst(0,region(),vp()));
+            state->push(AbsValue::createIntConst(region(), vp(), 0));
             return;
             }
          }
       }
 
-   state->push(AbsValue::createIntRange(0, 1, region(),vp()));
+   state->push(AbsValue::createIntRange(region(), vp(), 0, 1));
    return;
    }
 
 void J9AbsInterpreter::checkcast() 
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    AbsValue *objRef = state->pop();
    TR_ASSERT_FATAL(objRef->getDataType() == TR::Address, "Unexpected type");
@@ -2231,7 +2238,7 @@ void J9AbsInterpreter::checkcast()
                }
             else //cast into a different type
                {
-               state->push(AbsValue::createClassObject(classBlock, true, region(), vp()));
+               state->push(AbsValue::createClassObject(region(), vp(), classBlock, true));
                return;   
                }
             }
@@ -2243,7 +2250,8 @@ void J9AbsInterpreter::checkcast()
 
 void J9AbsInterpreter::get(bool isStatic)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
+
    int32_t cpIndex = next2Bytes();
    TR::DataType type;
 
@@ -2276,7 +2284,7 @@ void J9AbsInterpreter::get(bool isStatic)
       
       case TR::Int64:
          state->push(AbsValue::createTopLong(region()));
-         state->push(AbsValue::createDummyLong(region()));
+         state->push(AbsValue::createTopLong(region()));
          break;
 
       case TR::Float:
@@ -2285,7 +2293,7 @@ void J9AbsInterpreter::get(bool isStatic)
 
       case TR::Double:
          state->push(AbsValue::createTopDouble(region()));
-         state->push(AbsValue::createDummyDouble(region()));
+         state->push(AbsValue::createTopDouble(region()));
          break;
 
       case TR::Address:
@@ -2300,7 +2308,8 @@ void J9AbsInterpreter::get(bool isStatic)
 
 void J9AbsInterpreter::put(bool isStatic)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
+
    int32_t cpIndex = next2Bytes();
    TR::DataType type;
 
@@ -2335,26 +2344,26 @@ void J9AbsInterpreter::put(bool isStatic)
 
 void J9AbsInterpreter::monitor(bool kind)
    {
-   AbsValue* value = currentBlock()->getAbsState()->pop();
+   AbsValue* value = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState())->pop();
    TR_ASSERT_FATAL(value->getDataType() == TR::Address, "Unexpected type");
    }
 
 void J9AbsInterpreter::switch_(bool kind)
    {
-   AbsValue* value = currentBlock()->getAbsState()->pop();
+   AbsValue* value = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState())->pop();
    TR_ASSERT_FATAL(value->getDataType() == TR::Int32, "Unexpected type");
    }
 
 void J9AbsInterpreter::iinc(int32_t index, int32_t incVal)
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    AbsValue* value = state->at(index);
    TR_ASSERT_FATAL(value->getDataType() == TR::Int32, "Unexpected type");
 
    if (value->isIntConst())
       {
-      AbsValue* result = AbsValue::createIntConst(value->getConstraint()->asIntConst()->getInt() + incVal, region(), vp());
+      AbsValue* result = AbsValue::createIntConst(region(), vp(), value->getConstraint()->asIntConst()->getInt() + incVal);
       state->set(index, result);
       return;
       }
@@ -2368,7 +2377,7 @@ void J9AbsInterpreter::athrow()
 
 void J9AbsInterpreter::invoke(TR::MethodSymbol::Kinds kind) 
    {
-   AbsState* state = currentBlock()->getAbsState();
+   AbsStackMachineState* state = static_cast<AbsStackMachineState*>(currentBlock()->getAbsState());
 
    int32_t cpIndex = next2Bytes();
 
@@ -2385,31 +2394,32 @@ void J9AbsInterpreter::invoke(TR::MethodSymbol::Kinds kind)
    TR_CallSite* callsite = getCallSite(kind, bcIndex, cpIndex); // callsite can be NULL
 
    uint32_t numExplicitParams = calleeMethod->numberOfExplicitParameters();
+   uint32_t totalNumParams = numExplicitParams + (kind  == TR::MethodSymbol::Static ? 0 : 1);
 
-   AbsArguments* arguments = new (region()) AbsArguments(region());
+   AbsArguments* args = new (region()) AbsArguments(totalNumParams, region());
 
    for (uint32_t i = 0 ; i < numExplicitParams; i ++) //explicit param
       {
-      AbsValue* absValue = NULL;
+      AbsValue* value = NULL;
 
       TR::DataType dataType = calleeMethod->parmType(numExplicitParams -i - 1);
       if (dataType == TR::Double || dataType == TR::Int64)
          state->pop();
   
-      absValue = state->pop();
-      TR_ASSERT_FATAL(dataType == TR::Int8 || dataType == TR::Int16 ? absValue->getDataType() == TR::Int32 : absValue->getDataType() == dataType, "Unexpected type");
-   
-      arguments->push_front(absValue);
+      value = state->pop();
+      TR_ASSERT_FATAL(dataType == TR::Int8 || dataType == TR::Int16 ? value->getDataType() == TR::Int32 : value->getDataType() == dataType, "Unexpected type");
+
+      args->set(totalNumParams - i - 1, value);
       }
    
    if (kind != TR::MethodSymbol::Kinds::Static) //implicit param
       {
       AbsValue* value = state->pop();
-      arguments->push_front(value);
+      args->set(0, value);
       }
       
 
-   _visitor->visitCallSite(callsite, _callerIndex, callBlock, arguments); //callback 
+   _visitor->visitCallSite(callsite, _callerIndex, callBlock, args); //callback 
 
    if (calleeMethod->isConstructor() || calleeMethod->returnType() == TR::NoType )
       return;
@@ -2431,11 +2441,11 @@ void J9AbsInterpreter::invoke(TR::MethodSymbol::Kinds kind)
             break;
          case TR::Double:
             state->push(AbsValue::createTopDouble(region()));
-            state->push(AbsValue::createDummyDouble(region()));
+            state->push(AbsValue::createTopDouble(region()));
             break;
          case TR::Int64:
             state->push(AbsValue::createTopLong(region()));
-            state->push(AbsValue::createDummyLong(region()));
+            state->push(AbsValue::createTopLong(region()));
             break;
             
          default:

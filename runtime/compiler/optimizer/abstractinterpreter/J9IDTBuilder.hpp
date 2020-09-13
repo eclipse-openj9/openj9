@@ -53,22 +53,19 @@ class IDTBuilder : public OMR::IDTBuilderConnector
    /**
     * @brief generate the control flow graph of a call target so that the abstract interpretation can use. 
     *
-    * @param callTarget TR_CallTarget*
+    * @param callTarget the call target to generate CFG for
     * 
-    * @return TR::CFG*
+    * @return the generated CFG
     */
    virtual TR::CFG* generateControlFlowGraph(TR_CallTarget* callTarget);
 
    /**
     * @brief Perform the abstract interpretation on the method in the IDTNode. 
     *
-    * @param node IDTNode*
-    * @param visitor IDTBuilderVisitor& - The IDTBuilderVisitor defines the callback method 
-    *                that will be called when visiting a call site during abtract interpretation.
-    * @param arguments AbsArguments* - The arguments are the AbsValues passed from the caller method.
-    * @param callerIndex int32_t
-    * 
-    * @return void
+    * @param node the IDT node (method) to be interpreted
+    * @param visitor the abstract interpretation visitor
+    * @param arguments the arguments passed from the caller method.
+    * @param callerIndex the caller index for call site
     */
    virtual void performAbstractInterpretation(IDTNode* node, IDTBuilderVisitor& visitor, AbsArguments* arguments, int32_t callerIndex);
 

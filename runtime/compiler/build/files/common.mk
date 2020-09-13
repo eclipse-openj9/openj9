@@ -242,9 +242,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/VPHandlersCommon.cpp \
     omr/compiler/optimizer/BenefitInliner.cpp \
     omr/compiler/optimizer/abstractinterpreter/AbsValue.cpp \
-    omr/compiler/optimizer/abstractinterpreter/AbsOpStack.cpp \
-    omr/compiler/optimizer/abstractinterpreter/AbsLocalVarArray.cpp \
-    omr/compiler/optimizer/abstractinterpreter/AbsState.cpp \
+    omr/compiler/optimizer/abstractinterpreter/AbsStackMachineState.cpp \
     omr/compiler/optimizer/abstractinterpreter/IDT.cpp \
     omr/compiler/optimizer/abstractinterpreter/IDTNode.cpp \
     omr/compiler/optimizer/abstractinterpreter/OMRIDTBuilder.cpp \

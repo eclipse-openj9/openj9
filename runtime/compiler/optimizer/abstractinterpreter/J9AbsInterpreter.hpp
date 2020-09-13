@@ -23,7 +23,7 @@
 #define J9_ABS_INTERPRETER_INCL
 
 #include "optimizer/abstractinterpreter/IDTBuilder.hpp"
-#include "optimizer/abstractinterpreter/AbsState.hpp"
+#include "optimizer/abstractinterpreter/AbsStackMachineState.hpp"
 #include "il/Block.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
 #include "infra/ILWalk.hpp"
@@ -31,7 +31,6 @@
 /*
  * The abstract interpreter for Java Bytecode.
  * It interprets the method and simluates the JVM state.
- * 
  */
 class J9AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostorderSnapshotBlockIterator
    {
@@ -43,9 +42,7 @@ class J9AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostord
     * It walks the CFG's basic blocks in reverse post order and interprets the bytecode in each block,
     * updating the block's abstract state correspondingly.
     * 
-    * @return bool
-    * 
-    * The return value indicates whether the abstract interpretation is successful or not.
+    * @return true if the whole method is successfully interpreted. false otherwise
     */
    bool interpret();
 
@@ -89,9 +86,9 @@ class J9AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostord
    TR::Compilation* comp() {  return _comp; }
    TR::Region& region() {  return _region;  }
 
-   OMR::ValuePropagation *vp();
+   TR::ValuePropagation *vp();
 
-   void moveToNextBasicBlock();
+   void moveToNextBlock();
 
    void setStartBlockState();
 
@@ -151,6 +148,7 @@ class J9AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostord
    void iinc(int32_t index, int32_t incVal);
 
    void monitor(bool kind); //true: enter, false: exit
+   
    void switch_(bool kind); //true: lookup, false: table
 
    void athrow();
@@ -177,9 +175,7 @@ class J9AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostord
 
    TR::Region& _region;
    TR::Compilation* _comp;
-   OMR::ValuePropagation* _vp;
+   TR::ValuePropagation* _vp;
    };
-
-
 
 #endif
