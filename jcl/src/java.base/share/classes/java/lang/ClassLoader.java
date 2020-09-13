@@ -62,7 +62,12 @@ import jdk.internal.loader.BootLoader;
 /*[ELSE]
 import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
- 
+
+/*[IF Java15]*/
+import jdk.internal.loader.NativeLibraries;
+import jdk.internal.loader.NativeLibrary;
+/*[ENDIF] Java15 */
+
 /**
  * ClassLoaders are used to dynamically load, link and install
  * classes into a running image.
@@ -147,7 +152,10 @@ public abstract class ClassLoader {
 /*[ENDIF]*/	
 	private static boolean specialLoaderInited = false;
 	private static InternalAnonymousClassLoader internalAnonClassLoader;
-	private static native void initAnonClassLoader(InternalAnonymousClassLoader anonClassLoader);	
+/*[IF Java15]*/
+	private NativeLibraries nativelibs = null;
+/*[ENDIF] Java15 */
+	private static native void initAnonClassLoader(InternalAnonymousClassLoader anonClassLoader);
 	
 	/*[PR JAZZ 73143]: ClassLoader incorrectly discards class loading locks*/
 	static final class ClassNameLockRef extends WeakReference<Object> implements Runnable {
@@ -407,6 +415,9 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 		}
 /*[IF Sidecar19-SE]*/
 		unnamedModule = new Module(this);
+/*[IF Java15]*/
+		this.nativelibs = NativeLibraries.jniNativeLibraries(this);
+/*[ENDIF] Java15 */
 /*[ENDIF]*/
 	} 
 /*[IF Sidecar19-SE]*/	
@@ -416,11 +427,17 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 			unnamedModule = null;
 			bootstrapClassLoader = this;
 			VM.initializeClassLoader(bootstrapClassLoader, VM.J9_CLASSLOADER_TYPE_BOOT, false);
+/*[IF Java15]*/
+			this.nativelibs = NativeLibraries.jniNativeLibraries(null);
+/*[ENDIF] Java15 */
 		} else {
 			// Assuming the second classloader initialized is platform classloader
 			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
 			specialLoaderInited = true;
 			unnamedModule = new Module(this);
+/*[IF Java15]*/
+			this.nativelibs = NativeLibraries.jniNativeLibraries(this);
+/*[ENDIF] Java15 */
 		}
 	}
 	this.classLoaderName = classLoaderName;
@@ -1967,7 +1984,9 @@ static void loadLibraryWithPath(String libName, ClassLoader loader, String libra
 		} catch (java.io.IOException e) {
 			error = com.ibm.oti.util.Util.toString(message);
 		}
-		throw new UnsatisfiedLinkError(libName + " (" + error + ")"); //$NON-NLS-1$ //$NON-NLS-2$
+		/*[MSG "K0649", "{0} ({1})"]*/
+		throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0649", libName, error));//$NON-NLS-1$
+
 	}
 }
 
@@ -1982,10 +2001,54 @@ static void loadLibrary(Class<?> caller, String name, boolean fullPath) {
 
 /*[IF Java15]*/
 static void loadLibrary(Class<?> caller, File file) {
-	loadLibraryWithPath(file.getAbsolutePath(), caller.getClassLoaderImpl(), null);
+	ClassLoader loader = (caller == null) ? null : caller.getClassLoader();
+	NativeLibraries nls = (loader == null) ? bootstrapClassLoader.nativelibs : loader.nativelibs;
+	NativeLibrary nl = nls.loadLibrary(caller, file);
+	if (nl == null) {
+		/*[MSG "K0647", "Can't load {0}"]*/
+		throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0647", file));//$NON-NLS-1$
+	}
 }
 static void loadLibrary(Class<?> caller, String libName) {
-	loadLibraryWithClassLoader(libName, caller.getClassLoaderImpl());
+	ClassLoader loader = (caller == null) ? null : caller.getClassLoader();
+	if (loader == null) {
+		NativeLibrary nl = bootstrapClassLoader.nativelibs.loadLibrary(caller, libName);
+		if (nl == null) {
+			/*[MSG "K0647", "Can't load {0}"]*/
+			throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0647", libName));//$NON-NLS-1$
+		}
+	} else {
+		NativeLibraries nls = loader.nativelibs;
+		String libfilename = loader.findLibrary(libName);
+		if (libfilename != null) {
+			File libfile = new File(libfilename);
+			if (!libfile.isAbsolute()) {
+				/*[MSG "K0648", "Not an absolute path: {0}"]*/
+				throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0648", libfilename));//$NON-NLS-1$
+			}
+			NativeLibrary nl = nls.loadLibrary(caller, libfile);
+			if (nl == null) {
+				/*[MSG "K0647", "Can't load {0}"]*/
+				throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0647", libfilename));//$NON-NLS-1$
+			}
+		} else {
+			NativeLibrary nl = nls.loadLibrary(caller, libName);
+			if (nl == null) {
+				/*[MSG "K0647", "Can't load {0}"]*/
+				throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0647", libName));//$NON-NLS-1$
+			}
+		}
+	}
+}
+
+private static long findNative(ClassLoader loader, String entryName) {
+	long result = 0;
+	if (loader == null) {
+		result = bootstrapClassLoader.nativelibs.find(entryName);
+	} else {
+		result = loader.nativelibs.find(entryName);
+	}
+	return result;
 }
 /*[ENDIF] Java15 */
 

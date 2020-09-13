@@ -798,3 +798,22 @@ TraceException=Trc_VM_CreateRAMClassFromROMClass_circularity2 noEnv Overhead=1 L
 
 TraceException=Trc_VM_CreateRAMClassFromROMClass_classIsNotPermittedBySealedSuperclass Overhead=1 Level=1 Template="Superclass (RAM class=%p) does not include %.*s in PermittedSubclasses list"
 TraceException=Trc_VM_CreateRAMClassFromROMClass_classIsNotPermittedBySealedSuperinterface Overhead=1 Level=1 Template="Superinterface (RAM class=%p) does not include %.*s in PermittedSubclasses list"
+
+TraceEntry=Trc_VM_bindNative_Entry Overhead=1 Level=3 Template="bindNative - nativeMethod (%p) longJNI (%s) shortJNI (%s) bindJNINative (%llu)"
+TraceEvent=Trc_VM_bindNative_NativeLibrary_Success Overhead=1 Level=3 Template="bindNative success - nativeMethod (%p) nativeLibrary (%p) longJNI (%s) shortJNI (%s) bindJNINative (%llu)"
+TraceEvent=Trc_VM_bindNative_NativeLibrary_OOM Overhead=1 Level=3 Template="bindNative OOM - nativeMethod (%p) nativeLibrary (%p) longJNI (%s) shortJNI (%s) bindJNINative (%llu)"
+TraceEvent=Trc_VM_bindNative_NullNativeLibrary_Success Overhead=1 Level=3 Template="bindNative success (NULL Native Library) - nativeMethod (%p) longJNI (%s) shortJNI (%s) bindJNINative (%llu)"
+TraceEvent=Trc_VM_bindNative_NullNativeLibrary_OOM Overhead=1 Level=3 Template="bindNative OOM (NULL Native Library) - nativeMethod (%p) longJNI (%s) shortJNI (%s) bindJNINative (%llu)"
+TraceEvent=Trc_VM_bindNative_JVMTIAgent_Success Overhead=1 Level=3 Template="bindNative success (JVMTI Agent) - nativeMethod (%p) longJNI (%s) shortJNI (%s)"
+TraceEvent=Trc_VM_bindNative_Fail Overhead=1 Level=3 Template="bindNative fail - nativeMethod (%p) longJNI (%s) shortJNI (%s) bindJNINative (%llu)"
+TraceEntry=Trc_VM_lookupJNINative_Entry Overhead=1 Level=3 Template="lookupJNINative - nativeLibrary (%p) nativeMethod (%p) symbolName (%s) signature (%s)"
+TraceEvent=Trc_VM_lookupJNINative_NullNativeLibrary Overhead=1 Level=3 Template="lookupJNINative (null native library) - nativeMethod (%p) symbolName (%s) signature (%s) functionAddress (%p)"
+TraceExit=Trc_VM_lookupJNINative_Exit Overhead=1 Level=3 Template="lookupJNINative - nativeLibrary (%p) nativeMethod (%p) nativeMethod->extra (%p) symbolName (%s) signature (%s) lookupResult (%llu)"
+TraceEntry=Trc_VM_lookupNativeAddress_Entry Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) longJNI (%s) shortJNI (%s) functionArgCount (%llu) bindJNINative (%llu)"
+TraceExit=Trc_VM_lookupNativeAddress_inlIntercept_Exit Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) longJNI (%s) rc (%llu)"
+TraceExit=Trc_VM_lookupNativeAddress_bindmethod_shortJNI_Exit Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) shortJNI (%s) argSignature (%s)"
+TraceExit=Trc_VM_lookupNativeAddress_bindmethod_longJNI_Exit Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) longJNI (%s) argSignature (%s)"
+TraceExit=Trc_VM_lookupNativeAddress_fail_Exit Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) argSignature (%s)"
+
+TraceEntry=Trc_VM_registerBootstrapLibrary_Entry Overhead=1 Level=3 Template="registerBootstrapLibrary - libName (%s) libraryPtr (%p)"
+TraceExit=Trc_VM_registerBootstrapLibrary_Exit Overhead=1 Level=3 Template="registerBootstrapLibrary - libName (%s) libraryPtr (%p) result (%llu)"
