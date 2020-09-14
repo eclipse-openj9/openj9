@@ -856,8 +856,6 @@ public:
    void computeAndCacheCpuEntitlement() { _cpuEntitlement.computeAndCacheCpuEntitlement(); }
    double getJvmCpuEntitlement() const { return _cpuEntitlement.getJvmCpuEntitlement(); }
 
-   void setProcessorByDebugOption();
-
    bool importantMethodForStartup(J9Method *method);
    bool shouldDowngradeCompReq(TR_MethodToBeCompiled *entry);
 

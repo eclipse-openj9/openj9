@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,28 +24,22 @@
 #pragma csect(STATIC,"J9J9CPU#S")
 #pragma csect(TEST,"J9J9CPU#T")
 
+#include "control/CompilationRuntime.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/CPU.hpp"
 #include "env/VMJ9.h"
 #include "j9.h"
 #include "j9port.h"
 
-
-J9ProcessorDesc*
-J9::CPU::TO_PORTLIB_getJ9ProcessorDesc()
+OMRProcessorDesc
+J9::CPU::getProcessorDescription()
    {
-   static int processorTypeInitialized = 0;
-   static J9ProcessorDesc  processorDesc;
-
-   if(processorTypeInitialized == 0)
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
       {
-      PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
-
-      //Just make sure we initialize the J9ProcessorDesc at least once.
-      j9sysinfo_get_processor_description(&processorDesc);
-
-      processorTypeInitialized = 1;
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_processorDescription;
       }
-   return &processorDesc;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   return _processorDescription;
    }
-

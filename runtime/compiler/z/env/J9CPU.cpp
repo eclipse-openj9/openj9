@@ -160,17 +160,3 @@ J9::Z::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
       }
    return true;
    }
-
-OMRProcessorDesc
-J9::Z::CPU::getProcessorDescription()
-   {
-#if defined(J9VM_OPT_JITSERVER)
-   if (auto stream = TR::CompilationInfo::getStream())
-      {
-      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-      return vmInfo->_processorDescription;
-      }
-#endif /* defined(J9VM_OPT_JITSERVER) */
-   return _processorDescription;
-   }
-
