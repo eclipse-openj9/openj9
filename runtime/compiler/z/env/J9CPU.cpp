@@ -122,56 +122,6 @@ J9::Z::CPU::applyUserOptions()
       }
    }
 
-int32_t
-J9::Z::CPU::TO_PORTLIB_get390MachineId()
-  {
-#if defined(J9ZTPF) || defined(J9ZOS390)
-   // Note we cannot use utsname on Linux as it simply returns "s390x" in info.machine. On z/OS we can indeed use it [1].
-   //
-   // [1] https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.1.0/com.ibm.zos.v2r1.bpxbd00/rtuna.htm
-   struct utsname info;
-
-   if (::uname(&info) >= 0)
-      {
-      return atoi(info.machine);
-      }
-
-   return 2098;
-#else
-   char line[80];
-   const int LINE_SIZE = sizeof(line) - 1;
-   const char procHeader[] = "processor ";
-   const int PROC_LINE_SIZE = 69;
-   const int PROC_HEADER_SIZE = sizeof(procHeader) - 1;
-
-   FILE * fp = fopen("/proc/cpuinfo", "r");
-   if (fp)
-      {
-      while (fgets(line, LINE_SIZE, fp) > 0)
-         {
-         int len = strlen(line);
-         if (len > PROC_HEADER_SIZE && !memcmp(line, procHeader, PROC_HEADER_SIZE))
-            {
-            if (len == PROC_LINE_SIZE)
-               {
-               int32_t id;
-
-               // Match the following pattern to extract the machine id:
-               //
-               // processor 0: version = FF,  identification = 100003,  machine = 9672
-               sscanf(line, "%*s %*d%*c %*s %*c %*s %*s %*c %*s %*s %*c %d", &id);
-
-               return id;
-               }
-            }
-         }
-      fclose(fp);
-      }
-
-   return 2098;
-#endif
-   }
-
 bool
 J9::Z::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    {

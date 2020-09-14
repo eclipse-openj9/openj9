@@ -47,15 +47,13 @@ namespace Z
 
 class OMR_EXTENSIBLE CPU : public J9::CPU
    {
-   protected:
+protected:
 
    CPU() : J9::CPU() {}
    CPU(const OMRProcessorDesc& processorDescription) : J9::CPU(processorDescription) {}
 
-   public:
+public:
    
-   static int32_t TO_PORTLIB_get390MachineId();
-
    void applyUserOptions();
    bool isCompatible(const OMRProcessorDesc& processorDescription);
    OMRProcessorDesc getProcessorDescription();
