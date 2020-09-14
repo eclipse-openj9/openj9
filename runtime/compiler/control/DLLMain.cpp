@@ -172,6 +172,12 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             isAOT = true;
             }
 
+         if (IS_RESTORE_RUN(vm))
+            {
+            isAOT = false;
+            xaotCommandLineOptions = NULL;
+            }
+
          static char *disableAOT = feGetEnv2("TR_disableAOT", (void *)vm);
          if (disableAOT)
             isAOT = false;
@@ -268,16 +274,21 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                   do
                      {
                      size = size * 2;
+
                      if (xjitCommandLineOptions)
                         j9mem_free_memory(xjitCommandLineOptions);
-                     if (!(xjitCommandLineOptions = (char*)j9mem_allocate_memory(size * sizeof(char), J9MEM_CATEGORY_JIT)))
+                     xjitCommandLineOptions = (char*)j9mem_allocate_memory(size * sizeof(char), J9MEM_CATEGORY_JIT);
+
+                     if (!xjitCommandLineOptions)
                         return J9VMDLLMAIN_FAILED;
+
                      returnVal = GET_COMPOUND_VALUE(argIndexXjit, ':', &xjitCommandLineOptions, size);
                      } while (returnVal == OPTION_BUFFER_OVERFLOW);
 
                   if (!* xjitCommandLineOptions)
                      {
                      j9mem_free_memory(xjitCommandLineOptions);
+
                      loadInfo->fatalErrorStr = "no arguments for -Xjit:";
                      return J9VMDLLMAIN_FAILED;
                      }
@@ -293,16 +304,21 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                   do
                      {
                      size = size * 2;
+
                      if (xaotCommandLineOptions)
                         j9mem_free_memory(xaotCommandLineOptions);
-                     if (!(xaotCommandLineOptions = (char*)j9mem_allocate_memory(size * sizeof(char), J9MEM_CATEGORY_JIT)))
+                     xaotCommandLineOptions = (char*)j9mem_allocate_memory(size * sizeof(char), J9MEM_CATEGORY_JIT);
+
+                     if (!xaotCommandLineOptions)
                         return J9VMDLLMAIN_FAILED;
+
                      returnVal = GET_COMPOUND_VALUE(argIndexXaot, ':', &xaotCommandLineOptions, size);
                      } while (returnVal == OPTION_BUFFER_OVERFLOW);
 
                   if (!* xaotCommandLineOptions)
                      {
                      j9mem_free_memory(xaotCommandLineOptions);
+
                      loadInfo->fatalErrorStr = "no arguments for -Xaot:";
                      return J9VMDLLMAIN_FAILED;
                      }
@@ -322,8 +338,15 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                if (aotrtInitialized)
                   jitConfig->runtimeFlags |= J9JIT_AOT_ATTACHED;
 
-               if (jitConfig->runtimeFlags & J9JIT_JIT_ATTACHED)
-                  goto _abort;
+               bool checkIfAttached = true;
+#if defined(J9VM_OPT_SNAPSHOTS)
+               if (IS_RESTORE_RUN(vm))
+                  checkIfAttached = false;
+#endif
+               if (checkIfAttached)
+                  if (jitConfig->runtimeFlags & J9JIT_JIT_ATTACHED)
+                     goto _abort;
+
                if (onLoadInternal(vm, jitConfig, xjitCommandLineOptions, xaotCommandLineOptions, initialFlags, reserved, isJIT?0:1))
                   goto _abort;
 
@@ -460,6 +483,13 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
 
             /* If the return value is 0, then continue normally */
             TR::Options::setIsFullyInitialized();
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+            if (IS_RESTORE_RUN(vm))
+               {
+               codert_initRestoreVM(vm);
+               }
+#endif
             }
 
          break;

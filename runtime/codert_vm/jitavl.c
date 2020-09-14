@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,25 +27,37 @@
 
 
 void avl_jit_artifact_free_all(J9JavaVM *javaVM, J9AVLTree *tree) {
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+#endif
 	PORT_ACCESS_FROM_PORT(javaVM->portLibrary);
 
-	avl_jit_artifact_free_node(PORTLIB, (J9JITHashTable *)tree->rootNode);
-	j9mem_free_memory(tree);
+	avl_jit_artifact_free_node(javaVM, (J9JITHashTable *)tree->rootNode);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(javaVM)) {
+		vmsnapshot_free_memory(tree);
+	} else
+#endif
+	{
+		j9mem_free_memory(tree);
+	}
 }
 
 
-void avl_jit_artifact_free_node(J9PortLibrary *portLib, J9JITHashTable *nodeToDelete) {
-	PORT_ACCESS_FROM_PORT(portLib);
+void avl_jit_artifact_free_node(J9JavaVM *javaVM, J9JITHashTable *nodeToDelete) {
+	PORT_ACCESS_FROM_PORT(javaVM->portLibrary);
 
 	if (!nodeToDelete) {
 		return;
 	}
 
-	avl_jit_artifact_free_node(portLib, (J9JITHashTable *)J9JITHASHTABLE_LEFTCHILD(nodeToDelete));
-	avl_jit_artifact_free_node(portLib, (J9JITHashTable *)J9JITHASHTABLE_RIGHTCHILD(nodeToDelete));
+	avl_jit_artifact_free_node(javaVM, (J9JITHashTable *)J9JITHASHTABLE_LEFTCHILD(nodeToDelete));
+	avl_jit_artifact_free_node(javaVM, (J9JITHashTable *)J9JITHASHTABLE_RIGHTCHILD(nodeToDelete));
 
 	if ( !(nodeToDelete->flags & JIT_HASH_IN_DATA_CACHE)) {
-		hash_jit_free(portLib, nodeToDelete);
+		hash_jit_free(javaVM, nodeToDelete);
 	}
 }
 
@@ -69,7 +81,7 @@ IDATA avl_jit_artifact_searchCompare(J9AVLTree *tree, UDATA searchValue, J9JITHa
 
 	if (searchValue < walkNode->start)
 		return 1;
-	
+
 	return 0;
 }
 

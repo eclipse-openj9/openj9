@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -323,7 +323,7 @@ jitUpdateInlineAttribute(J9VMThread *currentThread, J9Class * classPtr, void *ji
 static J9Method*
 jitGetExceptionCatcher(J9VMThread *currentThread, void *handlerPC, J9JITExceptionTable *metaData, IDATA *location)
 {
-	J9Method *method = metaData->ramMethod;
+	J9Method *method = J9JITEXCEPTIONTABLE_RAMMETHOD_GET(metaData);
 	void *stackMap = NULL;
 	void *inlineMap = NULL;
 	void *inlinedCallSite = NULL;

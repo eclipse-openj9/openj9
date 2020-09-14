@@ -42,6 +42,8 @@
 #include "env/jittypes.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "objectfmt/ELFJitCodeObjectFormat.hpp"
+#include "objectfmt/JitCodeObjectFormat.hpp"
 #include "z/codegen/J9SystemLinkageLinux.hpp"
 #include "z/codegen/J9SystemLinkagezOS.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
@@ -4295,3 +4297,11 @@ J9::Z::CodeGenerator::supportsTrapsInTMRegion()
    return self()->comp()->target().isZOS();
    }
 
+void
+J9::Z::CodeGenerator::createObjectFormat()
+   {
+   if (self()->comp()->getGenerateReadOnlyCode())
+      self()->setObjFmt(new (self()->trHeapMemory()) TR::ELFJitCodeObjectFormat());
+   else
+      self()->setObjFmt(new (self()->trHeapMemory()) TR::JitCodeObjectFormat());
+   }

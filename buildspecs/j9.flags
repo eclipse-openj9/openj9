@@ -1846,6 +1846,10 @@ Only available on zOS</description>
 			<require flag="interp_jniSupport"/>
 		</requires>
 	</flag>
+	<flag id="opt_snapshots">
+		<description>Enable open world VM snapshots</description>
+		<ifRemoved>Disable any snapshot related features, including both creating and loading snapshots</ifRemoved>
+	</flag>
 	<flag id="opt_srpAvlTreeSupport">
 		<description>Include support for AVL trees with SRPs</description>
 		<ifRemoved>Use normal AVL trees with direct pointers</ifRemoved>

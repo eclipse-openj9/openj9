@@ -54,12 +54,12 @@ TR_Debug::printJ9JITExceptionTableDetails(J9JITExceptionTable *data, J9JITExcept
    else
       trfprintf(_file, "J9JITExceptionTable [%p]\n", data);
    trfprintf(_file, "CP=[%p], slots=[%p], NumExcpRanges=[%p], size=[%p]\n",
-               data->constantPool, data->slots, data->numExcptionRanges, data->size);
+               J9JITEXCEPTIONTABLE_CONSTANTPOOL_GET(data), data->slots, data->numExcptionRanges, data->size);
    trfprintf(_file, "startPC=     [%p]\n", data->startPC);
-   trfprintf(_file, "endWarmPC=   [%p]\n",data->endWarmPC);
-   trfprintf(_file, "startColdPC= [%p]\n",data->startColdPC);
-   trfprintf(_file, "endPC=       [%p]\n",data->endPC);
-   trfprintf(_file, "hotness=     [%d]\n",data->hotness);
+   trfprintf(_file, "endWarmPC=   [%p]\n", data->endWarmPC);
+   trfprintf(_file, "startColdPC= [%p]\n", data->startColdPC);
+   trfprintf(_file, "endPC=       [%p]\n", data->endPC);
+   trfprintf(_file, "hotness=     [%d]\n", data->hotness);
    trfprintf(_file, "scalarTempSlots=%d, objectTempSlots=%d\n", data->scalarTempSlots, data->objectTempSlots);
    trfprintf(_file, "prologuePushes=%d, tempOffset=%d\n", data->prologuePushes, data->tempOffset);
    trfprintf(_file, "registerSaveDescription=[%p]\n", data->registerSaveDescription);
@@ -106,8 +106,13 @@ TR_Debug::print(J9JITExceptionTable * data, TR_ResolvedMethod * feMethod, bool f
             {
             uintptr_t callerIndex = *(uintptr_t *)cursor;
             trfprintf(_file, "caller index=\"%08x\" ", callerIndex);
-            TR_InlinedCallSite * inlinedCallSite = ((TR_InlinedCallSite *)data->inlinedCalls) + callerIndex;
+#if defined(J9VM_OPT_SNAPSHOTS)
+            TR_InlinedCallSiteWithOffset * inlinedCallSite = ((TR_InlinedCallSiteWithOffset *)J9JITEXCEPTIONTABLE_INLINEDCALLS_GET(data)) + callerIndex;
+            method = (J9Method *) J9_METHOD_FROM_OFFSET(inlinedCallSite->_methodInfoOffset);
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
+            TR_InlinedCallSite * inlinedCallSite = ((TR_InlinedCallSite *)J9JITEXCEPTIONTABLE_INLINEDCALLS_GET(data)) + callerIndex;
             method = (J9Method *) inlinedCallSite->_methodInfo;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
             }
 
          if (_comp->target().is64Bit())
@@ -153,7 +158,7 @@ TR_Debug::print(J9JITExceptionTable * data, TR_ResolvedMethod * feMethod, bool f
    if (sa->getNumberOfSlotsMapped())
       {
       trfprintf(_file, "\n\nMethod liveMonitor mask: ");
-      uint8_t * maskBits = (uint8_t *)data->gcStackAtlas + sizeof(J9JITStackAtlas);
+      uint8_t * maskBits = (uint8_t *)J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(data) + sizeof(J9JITStackAtlas);
       printStackMapInfo(maskBits, sa->getNumberOfSlotsMapped(), 0, offsetInfo);
       trfprintf(_file, "\n\n");
       }
@@ -192,7 +197,7 @@ TR_Debug::print(J9JITExceptionTable * data, TR_ResolvedMethod * feMethod, bool f
       sizeOfInlinedCallSites -= sizeOfStackAtlas;
 
    numInlinedCallSites = sizeOfInlinedCallSites / (sizeof(TR_InlinedCallSite) + j9StackAtlas->numberOfMapBytes);
-   uint8_t * callSiteCursor = (uint8_t *)data->inlinedCalls;
+   uint8_t * callSiteCursor = (uint8_t *)J9JITEXCEPTIONTABLE_INLINEDCALLS_GET(data);
    if (numInlinedCallSites && callSiteCursor)
       {
       trfprintf(_file, "\nInlined call site array:\n");
@@ -262,10 +267,11 @@ TR_Debug::printStackAtlasDetails(uintptr_t startPC, uint8_t * mapBits, int32_t n
    *sizeOfStackAtlas = sizeof(J9JITStackAtlas);
 
    uint16_t indexOfFirstInternalPtr = 0;
-   if (stackAtlas->internalPointerMap)
+   U_8 *internalPointerMap = J9JITSTACKATLAS_INTERNALPOINTERMAP_GET(stackAtlas);
+   if (internalPointerMap)
       {
       trfprintf(_file, "      variable length internal pointer stack map portion exists\n");
-      uint8_t *internalPtrMapCursor = (uint8_t *) stackAtlas->internalPointerMap;
+      uint8_t *internalPtrMapCursor = (uint8_t *)internalPointerMap;
       internalPtrMapCursor += sizeof(intptr_t);
       uint8_t variableLengthSize = *((uint8_t *)internalPtrMapCursor);
       trfprintf(_file, "        size of internal pointer stack map = %d\n", variableLengthSize);
@@ -301,20 +307,21 @@ TR_Debug::printStackAtlasDetails(uintptr_t startPC, uint8_t * mapBits, int32_t n
       *sizeOfStackAtlas = *sizeOfStackAtlas + 1 + variableLengthSize;
       }
 
-    if (stackAtlas->stackAllocMap)
-       {
-       trfprintf(_file, "\nStack alloc map location : %p ", stackAtlas->stackAllocMap);
+   U_8 *stackAllocMap = J9JITSTACKATLAS_STACKALLOCMAP_GET(stackAtlas);
+   if (stackAllocMap)
+      {
+      trfprintf(_file, "\nStack alloc map location : %p ", stackAllocMap);
 
-       uint8_t *localStackAllocMap = (uint8_t *) dxMallocAndRead(sizeof(intptr_t), stackAtlas->stackAllocMap);
+      uint8_t *localStackAllocMap = (uint8_t *) dxMallocAndRead(sizeof(intptr_t), stackAllocMap);
 
-       trfprintf(_file, "\n  GC map at stack overflow check : %p", localStackAllocMap);
-       trfprintf(_file, "\n  Stack alloc map bits : ");
+      trfprintf(_file, "\n  GC map at stack overflow check : %p", localStackAllocMap);
+      trfprintf(_file, "\n  Stack alloc map bits : ");
 
-       uint8_t *mapBits = (uint8_t *) ((uintptr_t) localStackAllocMap + sizeof(uintptr_t));
-       printStackMapInfo(mapBits, numberOfSlotsMapped, sizeOfStackAtlas, NULL);
+      uint8_t *mapBits = (uint8_t *) ((uintptr_t) localStackAllocMap + sizeof(uintptr_t));
+      printStackMapInfo(mapBits, numberOfSlotsMapped, sizeOfStackAtlas, NULL);
 
-       trfprintf(_file,"\n");
-       }
+      trfprintf(_file,"\n");
+      }
 
    //Offset info
    int32_t size = TR::Compiler->om.sizeofReferenceAddress();
@@ -589,5 +596,3 @@ TR_Debug::printByteCodeStack(int32_t parentStackIndex, uint16_t byteCodeIndex, c
    }
 
 // copied from jit.dev/rossa.cpp - needed to link on WinCE
-
-

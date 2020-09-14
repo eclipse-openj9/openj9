@@ -55,7 +55,7 @@ class JITServerPersistentCHTable : public TR_PersistentCHTable
 public:
    TR_ALLOC(TR_Memory::PersistentCHTable)
 
-   JITServerPersistentCHTable(TR_PersistentMemory *);
+   JITServerPersistentCHTable(TR_PersistentMemory *, J9JITConfig *);
 
    bool isInitialized() { return !getData().empty(); } // needs CHTable mutex in hand
    bool initializeCHTable(TR_J9VMBase *fej9, const std::string &rawData);
@@ -98,7 +98,7 @@ class JITClientPersistentCHTable : public TR_PersistentCHTable
 public:
    TR_ALLOC(TR_Memory::PersistentCHTable)
 
-   JITClientPersistentCHTable(TR_PersistentMemory *);
+   JITClientPersistentCHTable(TR_PersistentMemory *, J9JITConfig *);
 
    std::pair<std::string, std::string> serializeUpdates();
 

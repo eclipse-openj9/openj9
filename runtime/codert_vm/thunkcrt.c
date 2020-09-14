@@ -41,7 +41,7 @@
 
 /* This value should be a multiple of 8 bytes (to maintain pointer alignment).
  *
- * Also note that the value must be smaller than 64 (128 types) so that argCount * 2 + 
+ * Also note that the value must be smaller than 64 (128 types) so that argCount * 2 +
  * may be stored in the inline argCount byte.
  */
 
@@ -135,8 +135,15 @@ j9ThunkTableAllocate(J9JavaVM * vm)
 		return 1;
 	}
 
+	OMRPortLibrary* privatePortLibrary = OMRPORT_FROM_J9PORT(vm->portLibrary);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(vm)) {
+		privatePortLibrary = VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(vm);
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
 	jitConfig->thunkHashTable = hashTableNew(
-		OMRPORT_FROM_J9PORT(vm->portLibrary),				/* portLibrary */
+		privatePortLibrary,				/* portLibrary */
 		J9_GET_CALLSITE(),				/* tableName */
 		0,								/* tableSize */
 		sizeof(J9ThunkTableEntry),		/* entrySize */
@@ -158,6 +165,9 @@ j9ThunkTableFree(J9JavaVM * vm)
 	J9JITConfig * jitConfig = vm->jitConfig;
 
 	if (jitConfig->thunkHashTable != NULL) {
+#if defined(J9VM_OPT_SNAPSHOTS)
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+#endif
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		J9HashTableState state;
 		J9ThunkTableEntry * entry;
@@ -165,7 +175,15 @@ j9ThunkTableFree(J9JavaVM * vm)
 		entry = hashTableStartDo(jitConfig->thunkHashTable, &state);
 		while (entry != NULL) {
 			if (!J9_THUNK_BYTES_ARE_INLINE(entry)) {
-				j9mem_free_memory(entry->encodedSignature.outOfLineBytes);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+				if (IS_SNAPSHOT_RUN(vm)) {
+					vmsnapshot_free_memory(entry->encodedSignature.outOfLineBytes);
+				} else
+#endif
+				{
+					j9mem_free_memory(entry->encodedSignature.outOfLineBytes);
+				}
 			}
 			entry = hashTableNextDo(&state);
 		}
@@ -180,7 +198,7 @@ j9ThunkTableFree(J9JavaVM * vm)
 }
 
 static UDATA
-j9ThunkTableHash(void *key, void *userData) 
+j9ThunkTableHash(void *key, void *userData)
 {
 	U_8 * encodedSignature;
 	U_8 argCount;
@@ -188,8 +206,8 @@ j9ThunkTableHash(void *key, void *userData)
 	argCount = j9ThunkGetEncodedSignature(key, &encodedSignature);
 	return j9crc32(0, encodedSignature + 1, J9_THUNK_ENCODED_SIGNATURE_LENGTH(argCount));
 }
-static UDATA 
-j9ThunkTableEquals(void *leftKey, void *rightKey, void *userData) 
+static UDATA
+j9ThunkTableEquals(void *leftKey, void *rightKey, void *userData)
 {
 	U_8 * leftSig;
 	U_8 * rightSig;
@@ -239,6 +257,9 @@ j9ThunkNewNameAndSig(void * jitConfig, void *parm, void *thunkAddress)
 IDATA
 j9ThunkNewSignature(void * jitConfig, int signatureLength, char *signatureChars, void *thunkAddress)
 {
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(((J9JITConfig *) jitConfig)->javaVM);
+#endif
 	PORT_ACCESS_FROM_JAVAVM(((J9JITConfig *) jitConfig)->javaVM);
 	J9ThunkTableEntry exemplar;
 	J9ThunkTableEntry * entry;
@@ -257,7 +278,15 @@ j9ThunkNewSignature(void * jitConfig, int signatureLength, char *signatureChars,
 	memset(exemplar.encodedSignature.inlineBytes, J9_THUNK_TYPE_FILL * 0x11, sizeof(exemplar.encodedSignature));
 
 	if (length > J9_THUNK_INLINE_ENCODING_BYTES) {
-		U_8 * allocatedSignature = j9mem_allocate_memory(length, OMRMEM_CATEGORY_JIT);
+		U_8 * allocatedSignature;
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOT_RUN(((J9JITConfig *) jitConfig)->javaVM)) {
+			allocatedSignature = vmsnapshot_allocate_memory(length, OMRMEM_CATEGORY_JIT);
+		} else
+#endif
+		{
+			allocatedSignature = j9mem_allocate_memory(length, OMRMEM_CATEGORY_JIT);
+		}
 
 #ifdef DEBUG
 		printf("allocating bytes\n");
@@ -268,7 +297,7 @@ j9ThunkNewSignature(void * jitConfig, int signatureLength, char *signatureChars,
 		}
 
 		memcpy(allocatedSignature, encodedSignature, length);
-		exemplar.encodedSignature.outOfLineBytes = allocatedSignature;		
+		exemplar.encodedSignature.outOfLineBytes = allocatedSignature;
 	} else {
 		/* Inline encoding bytes must all be odd - multiply argCount by 2 and add 1 to make it odd */
 		encodedSignature[0] = encodedSignature[0] * 2 + 1;
@@ -282,14 +311,31 @@ j9ThunkNewSignature(void * jitConfig, int signatureLength, char *signatureChars,
 	omrthread_monitor_exit(((J9JITConfig *) jitConfig)->thunkHashTableMutex);
 	if (entry == NULL) {
 		if (!J9_THUNK_BYTES_ARE_INLINE(&exemplar)) {
-			j9mem_free_memory(exemplar.encodedSignature.outOfLineBytes);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOT_RUN(((J9JITConfig *) jitConfig)->javaVM)) {
+				vmsnapshot_free_memory(exemplar.encodedSignature.outOfLineBytes);
+			} else
+#endif
+			{
+				j9mem_free_memory(exemplar.encodedSignature.outOfLineBytes);
+			}
+
 		}
 		return -1;
 	} else {
 		if (!J9_THUNK_BYTES_ARE_INLINE(&exemplar)) {
 			if (exemplar.encodedSignature.outOfLineBytes != entry->encodedSignature.outOfLineBytes) {
 				/* Existing entry was found in the table */
-				j9mem_free_memory(exemplar.encodedSignature.outOfLineBytes);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+				if (IS_SNAPSHOT_RUN(((J9JITConfig *) jitConfig)->javaVM)) {
+					vmsnapshot_free_memory(exemplar.encodedSignature.outOfLineBytes);
+				} else
+#endif
+				{
+					j9mem_free_memory(exemplar.encodedSignature.outOfLineBytes);
+				}
 			}
 		}
 	}
@@ -395,7 +441,7 @@ j9ThunkEncodeSignature(char *signatureData, U_8 * encodedSignature)
 }
 
 static U_8
-j9ThunkGetEncodedSignature(J9ThunkTableEntry * entry, U_8 ** encodedSignaturePtr) 
+j9ThunkGetEncodedSignature(J9ThunkTableEntry * entry, U_8 ** encodedSignaturePtr)
 {
 	U_8 * encodedSignature;
 	U_8 argCount;

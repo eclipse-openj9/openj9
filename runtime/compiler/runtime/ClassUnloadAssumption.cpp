@@ -188,6 +188,7 @@ TR_PersistentClassInfo::removeUnloadedSubClasses()
        }
     _marked=0;
     memset(_detachPending, 0, sizeof(bool)*LastAssumptionKind);
+    _totalSize=0;
     return true;
     }
 
@@ -357,6 +358,10 @@ void TR_RuntimeAssumptionTable::purgeRATTable(TR_FrontEnd *fe)
 void TR_RuntimeAssumptionTable::addAssumption(OMR::RuntimeAssumption *a, TR_RuntimeAssumptionKind kind, TR_FrontEnd *fe, OMR::RuntimeAssumption **sentinel)
    {
    OMR::CriticalSection addAssumption(assumptionTableMutex);
+
+   if (kind == RuntimeAssumptionOnRegisterNative || kind == RuntimeAssumptionOnClassUnload)
+      _totalSize += a->size();
+
    a->enqueueInListOfAssumptionsForJittedBody(sentinel);
    // FIXME: how should we deal with memory allocation failures at runtime?
 
@@ -391,6 +396,10 @@ void TR_RuntimeAssumptionTable::markForDetachFromRAT(OMR::RuntimeAssumption *ass
    _detachPending[assumption->getAssumptionKind()] = true;
    hashTable->_markedforDetachCount[(assumption->hashCode() % hashTable->_spineArraySize)]++;
    assumption->markForDetach();
+
+   if (assumption->getAssumptionKind() == RuntimeAssumptionOnRegisterNative || assumption->getAssumptionKind() == RuntimeAssumptionOnClassUnload)
+      _totalSize -= assumption->size();
+
    _marked++;
    }
 
@@ -579,7 +588,167 @@ int32_t TR_RuntimeAssumptionTable::countRatAssumptions()
    return count;
    }
 
+bool
+TR_RuntimeAssumptionTable::assumptionCanBeSerialized(TR_RuntimeAssumptionKind kind)
+   {
+   bool canBeSerialized;
 
+   switch (kind)
+      {
+      case RuntimeAssumptionOnClassUnload:
+      case RuntimeAssumptionOnRegisterNative:
+         {
+         canBeSerialized = true;
+         break;
+         }
+      default:
+         {
+         canBeSerialized = false;
+         break;
+         }
+      }
+
+   return canBeSerialized;
+   }
+
+uint8_t *
+TR_RuntimeAssumptionTable::serialize(J9JITConfig *jitConfig)
+   {
+   OMR::CriticalSection serializeAssumptions(assumptionTableMutex);
+
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Serializing Assumptions:");
+
+   uint8_t *bufferStart;
+#if defined(J9VM_OPT_SNAPSHOTS)
+   if (IS_SNAPSHOT_RUN(jitConfig->javaVM))
+      {
+      VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
+      PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
+      OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+      bufferStart = (uint8_t *)vmsnapshot_allocate_memory((getTotalSize() + sizeof(SerializedDataAtlas)), J9MEM_CATEGORY_JIT);
+      TR_ASSERT_FATAL(bufferStart, "Failed to allocate memory to serialize runtime assumptions\n");
+      }
+   else
+#endif
+      {
+      TR_ASSERT_FATAL(false, "Should not be calling serialize\n");
+      }
+
+   SerializedDataAtlas *atlas = (SerializedDataAtlas *)bufferStart;
+   memset(atlas, 0, sizeof(SerializedDataAtlas));
+   atlas->_size = getTotalSize();
+
+   uint8_t *buffer = bufferStart;
+   buffer += sizeof(SerializedDataAtlas);
+
+   for (int k=0; k < LastAssumptionKind; k++) // for each table
+      {
+      TR_RatHT *hashTable = _tables + k;
+      size_t hashTableSize = hashTable->_spineArraySize;
+      for (size_t i = 0; i < hashTableSize; ++i) // for each bucket
+         {
+         OMR::RuntimeAssumption *cursor = hashTable->_htSpineArray[i];
+         while (cursor) // for each entry
+            {
+            if (!cursor->isMarkedForDetach())
+               {
+               TR::SentinelRuntimeAssumption *sentinel = (TR::SentinelRuntimeAssumption *)cursor->getSentinel();
+               TR_ASSERT_FATAL(sentinel, "Sentinel can't be NULL\n");
+
+               uint32_t size = cursor->size();
+               J9JITExceptionTable *owningMetadata = (J9JITExceptionTable *)sentinel->getOwningMetadata();
+               TR_ASSERT_FATAL(owningMetadata, "owningMetadata can't be NULL\n");
+
+               cursor->serialize(buffer, (uint8_t *)owningMetadata);
+
+               atlas->_numAssumptionsPerKind[k]._count++;
+               atlas->_numAssumptionsPerKind[k]._size += size;
+
+               owningMetadata->runtimeAssumptionList = NULL;
+               buffer += size;
+
+               OMR::RuntimeAssumption *next = cursor->getNext();
+
+               cursor->dequeueFromListOfAssumptionsForJittedBody();
+               TR_PersistentMemory::jitPersistentFree(cursor);
+
+               cursor = next;
+               }
+            }
+         }
+
+      if (!assumptionCanBeSerialized((TR_RuntimeAssumptionKind)k))
+         TR_ASSERT_FATAL(atlas->_numAssumptionsPerKind[k]._count == 0, "Assumption(s) of kind %d serialized!", k);
+      }
+
+   return bufferStart;
+   }
+
+/* This method is used to answer the question as to whether an assumption type
+ * has deserialization support. However, the deserialize API's default parameter
+ * for kind is LastAssumptionKind, which is used to deserialize all assumption
+ * kinds. Therefore, the shouldDeserialize API returns true if the filter is
+ * LastAssumptionKind.
+ */
+static bool
+shouldDeserialize(TR_RuntimeAssumptionKind kind, TR_RuntimeAssumptionKind filter)
+   {
+   if (filter == LastAssumptionKind)
+      return true;
+   else
+      return (filter == kind);
+   }
+
+void
+TR_RuntimeAssumptionTable::deserialize(TR_FrontEnd *fe, TR_PersistentMemory *pm, uint8_t *buffer, TR_RuntimeAssumptionKind kind)
+   {
+   if (!assumptionCanBeSerialized(kind) && kind != LastAssumptionKind)
+      TR_ASSERT_FATAL(false, "Trying to deserialize assumption(s) of kind %d!\n", kind);
+
+   OMR::CriticalSection deserializeAssumptions(assumptionTableMutex);
+
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Deserializing Assumptions:");
+
+   SerializedDataAtlas *atlas = (SerializedDataAtlas *)buffer;
+   uint8_t *data = buffer + sizeof(SerializedDataAtlas);
+   uint8_t *cursor = data;
+
+   for (int k=0; k < LastAssumptionKind; k++)
+      {
+      if (shouldDeserialize((TR_RuntimeAssumptionKind)k, kind))
+         {
+         switch(k)
+            {
+            case RuntimeAssumptionOnClassUnload:
+               {
+               TR_UnloadedClassPicSite::deserialize(fe, pm, cursor, atlas->_numAssumptionsPerKind[k]._count);
+               break;
+               }
+
+            case RuntimeAssumptionOnRegisterNative:
+               {
+               TR_PatchJNICallSite::deserialize(fe, pm, cursor, atlas->_numAssumptionsPerKind[k]._count);
+               break;
+               }
+
+            default:
+               {
+               TR_ASSERT_FATAL(atlas->_numAssumptionsPerKind[k]._count == 0, "Non zero assumptions for %d!\n", k);
+               break;
+               }
+            }
+         }
+      else
+         {
+         if (!assumptionCanBeSerialized(kind))
+            TR_ASSERT_FATAL(atlas->_numAssumptionsPerKind[k]._count == 0, "Non zero assumptions for %d!\n", k);
+         }
+
+      cursor += atlas->_numAssumptionsPerKind[k]._size;
+      }
+   }
 
 
 void TR_RuntimeAssumptionTable::reclaimAssumptions(void *md, bool reclaimPrePrologueAssumptions)
@@ -745,6 +914,54 @@ TR_UnloadedClassPicSite::dumpInfo()
    {
    OMR::RuntimeAssumption::dumpInfo("TR_UnloadedClassPicSite");
    TR_VerboseLog::write(" picLocation=%p size=%d", _picLocation, _size);
+   }
+
+void
+TR_UnloadedClassPicSite::serialize(uint8_t *cursor, uint8_t *owningMetadata)
+   {
+   // STRATUM TODO: use offsets for key and picLocation
+   SerializedData serializedData = { _size, getKey(), _picLocation, owningMetadata };
+
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                                     "\tSerializing RuntimeAssumptionOnClassUnload: "
+                                     "_key=%p, _picLocation=%p, _size=%d, owningMetadata=%p",
+                                     serializedData._key,
+                                     serializedData._picLocation,
+                                     serializedData._size,
+                                     owningMetadata);
+      }
+
+   memcpy(cursor, &serializedData, sizeof(SerializedData));
+   }
+
+void
+TR_UnloadedClassPicSite::deserialize(TR_FrontEnd *fe, TR_PersistentMemory *pm, uint8_t *cursor, uint32_t numAssumptions)
+   {
+   for (uint32_t i = 0; i < numAssumptions; i++)
+      {
+      SerializedData *serializedData = (SerializedData *)cursor;
+      J9JITExceptionTable *owningMetadata = (J9JITExceptionTable *)serializedData->_owningMetadata;
+
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                                        "\tDeserializing RuntimeAssumptionOnClassUnload: "
+                                        "_key=%p, _picLocation=%p, _size=%d, owningMetadata=%p",
+                                        serializedData->_key,
+                                        serializedData->_picLocation,
+                                        serializedData->_size,
+                                        owningMetadata);
+         }
+
+      TR_UnloadedClassPicSite::make(fe, pm, serializedData->_key,
+                                    serializedData->_picLocation, serializedData->_size,
+                                    RuntimeAssumptionOnClassUnload,
+                                    (OMR::RuntimeAssumption **)&owningMetadata->runtimeAssumptionList);
+
+      cursor += sizeof(SerializedData);
+      }
    }
 
 TR_RedefinedClassRPicSite *TR_RedefinedClassRPicSite::make(

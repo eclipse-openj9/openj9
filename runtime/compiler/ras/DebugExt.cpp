@@ -3169,16 +3169,16 @@ TR_DebugExt::dxPrintMethodName(char *p, int32_t searchLimit)
       }
    J9JITExceptionTable *localMetadata = (J9JITExceptionTable *) dxMallocAndRead(sizeof(J9JITExceptionTable), remoteMetadata);
 
-   struct J9UTF8 *localClassNameStruct = (J9UTF8 *) dxMallocAndRead(sizeof(J9UTF8), localMetadata->className);
-   char *className = (char *) dxMallocAndRead(J9UTF8_LENGTH(localClassNameStruct) + 1, (void *) J9UTF8_DATA(localMetadata->className));
+   struct J9UTF8 *localClassNameStruct = (J9UTF8 *) dxMallocAndRead(sizeof(J9UTF8), J9JITEXCEPTIONTABLE_CLASSNAME_GET(localMetadata));
+   char *className = (char *) dxMallocAndRead(J9UTF8_LENGTH(localClassNameStruct) + 1, (void *) J9UTF8_DATA(J9JITEXCEPTIONTABLE_CLASSNAME_GET(localMetadata)));
    className[J9UTF8_LENGTH(localClassNameStruct)] = 0;
 
-   struct J9UTF8 *localMethodNameStruct = (J9UTF8 *) dxMallocAndRead(sizeof(J9UTF8), localMetadata->methodName);
-   char *methodName = (char *) dxMallocAndRead(J9UTF8_LENGTH(localMethodNameStruct) + 1, (void *) J9UTF8_DATA(localMetadata->methodName));
+   struct J9UTF8 *localMethodNameStruct = (J9UTF8 *) dxMallocAndRead(sizeof(J9UTF8), J9JITEXCEPTIONTABLE_METHODNAME_GET(localMetadata));
+   char *methodName = (char *) dxMallocAndRead(J9UTF8_LENGTH(localMethodNameStruct) + 1, (void *) J9UTF8_DATA(J9JITEXCEPTIONTABLE_METHODNAME_GET(localMetadata)));
    methodName[J9UTF8_LENGTH(localMethodNameStruct)] = 0;
 
-   struct J9UTF8 *localMethodSignatureStruct = (J9UTF8 *) dxMallocAndRead(sizeof(J9UTF8), localMetadata->methodSignature);
-   char *methodSignature = (char *) dxMallocAndRead(J9UTF8_LENGTH(localMethodSignatureStruct) + 1, (void *) J9UTF8_DATA(localMetadata->methodSignature));
+   struct J9UTF8 *localMethodSignatureStruct = (J9UTF8 *) dxMallocAndRead(sizeof(J9UTF8), J9JITEXCEPTIONTABLE_METHODSIGNATURE_GET(localMetadata));
+   char *methodSignature = (char *) dxMallocAndRead(J9UTF8_LENGTH(localMethodSignatureStruct) + 1, (void *) J9UTF8_DATA(J9JITEXCEPTIONTABLE_METHODSIGNATURE_GET(localMetadata)));
    methodSignature[J9UTF8_LENGTH(localMethodSignatureStruct)] = 0;
 
    int32_t hotness = -1;
@@ -3232,7 +3232,7 @@ TR_DebugExt::dxPrintMethodName(char *p, int32_t searchLimit)
    J9::PrivateLinkage::LinkageInfo *linkageInfo = (J9::PrivateLinkage::LinkageInfo *) dxMallocAndRead(sizeof(J9::PrivateLinkage::LinkageInfo), (void*)((char *)localMetadata->startPC - 4) );
 
    _dbgPrintf("\n\nMethod:\t%s.%s%s\n\n", className, methodName, methodSignature);
-   dxPrintJ9RamAndRomMethod(localMetadata->ramMethod);
+   dxPrintJ9RamAndRomMethod(J9JITEXCEPTIONTABLE_RAMMETHOD_GET(localMetadata));
    _dbgPrintf("Method Hotness:\t%i = %s\n\n", hotness, hotness == -1 ? "unknown" : comp()->getHotnessName((TR_Hotness) hotness));
 
 
@@ -3530,7 +3530,7 @@ TR_DebugExt::dxPrintAOTinfo(void *addr)
    _dbgPrintf("%-16p    ", exceptionTable->startPC);
    _dbgPrintf("%-16p    ", exceptionTable->endPC);
    _dbgPrintf("%-10x", exceptionTable->size);
-   _dbgPrintf("%-14x", exceptionTable->gcStackAtlas);
+   _dbgPrintf("%-14x", J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(exceptionTable));
    _dbgPrintf("%-16p\n", exceptionTable->bodyInfo);
 
    _dbgPrintf("%-20s", "CodeStart");
@@ -3543,7 +3543,7 @@ TR_DebugExt::dxPrintAOTinfo(void *addr)
    _dbgPrintf("%-16p    ",aotMethodHeaderEntry->compileMethodDataStartPC);
    _dbgPrintf("%-10x",aotMethodHeaderEntry->compileMethodCodeSize);
    _dbgPrintf("%-10x",aotMethodHeaderEntry->compileMethodDataSize);
-   _dbgPrintf("%-16p\n", exceptionTable->inlinedCalls);
+   _dbgPrintf("%-16p\n", J9JITEXCEPTIONTABLE_INLINEDCALLS_GET(exceptionTable));
 
 
    TR_RelocationHeader *header = (TR_RelocationHeader *) dxMallocAndRead(sizeof(TR_RelocationHeader), (U_8 *)addr + aotMethodHeaderEntry->offsetToRelocationDataItems);
@@ -3868,4 +3868,3 @@ TR_InternalFunctionsExt::fprintf(TR::FILE *file, const char *format, ...)
    }
 
 #endif // DEBUGEXT_C
-

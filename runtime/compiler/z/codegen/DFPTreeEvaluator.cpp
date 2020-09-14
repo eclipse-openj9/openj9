@@ -2640,7 +2640,7 @@ deloadHelper(TR::Node * node, TR::CodeGenerator * cg, TR::MemoryReference * srcM
    TR::MemoryReference * hiMR;
    if (loMR == NULL)
       {
-      loMR = generateS390MemoryReference(node, cg);
+      loMR = TR::MemoryReference::create(cg, node);
       }
    hiMR = generateS390MemoryReference(*loMR, 8, cg);
    // FP reg pairs for long double: FPR0 & FPR2, FPR4 & FPR6, FPR1 & FPR3, FPR5 & FPR7 etc..
@@ -2677,7 +2677,7 @@ destoreHelper(TR::Node * node, TR::CodeGenerator * cg)
   // source returns a reg pair, so... TODO
   TR::Register * srcReg = cg->evaluate(valueChild);
 
-   TR::MemoryReference * loMR = generateS390MemoryReference(node, cg);
+   TR::MemoryReference * loMR = TR::MemoryReference::create(cg, node);
    TR::MemoryReference * hiMR = generateS390MemoryReference(*loMR, 8, cg);
 
    generateRXInstruction(cg, TR::InstOpCode::STD, node, srcReg->getHighOrder(), loMR);

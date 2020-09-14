@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,9 @@
 #include "omrlinkedlist.h"
 #include "j9protos.h"
 #include "j9port.h"
+#if defined(J9VM_OPT_SNAPSHOTS)
+#include "j9port_generated.h"
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #include "omrthread.h"
 #include "j9user.h"
 #include "jimage.h"
@@ -49,7 +52,7 @@
 
 static void trcModulesFreeJ9ModuleEntry(J9JavaVM *javaVM, J9Module *j9module);
 
-void 
+void
 freeClassLoaderEntries(J9VMThread * vmThread, J9ClassPathEntry * entries, UDATA count)
 {
 	/* free memory allocated to class path entries */
@@ -84,7 +87,16 @@ freeClassLoaderEntries(J9VMThread * vmThread, J9ClassPathEntry * entries, UDATA 
 		cpEntry->pathLength = 0;
 		cpEntry++;
 	}
-	j9mem_free_memory(entries);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOTTING_ENABLED(vm)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+		vmsnapshot_free_memory(entries);
+	} else
+#endif
+	{
+		j9mem_free_memory(entries);
+	}
 
 	Trc_VM_freeClassLoaderEntries_Exit(vmThread);
 }
@@ -167,7 +179,7 @@ recycleVMThread(J9VMThread * vmThread)
 }
 
 
-void 
+void
 deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA sendThreadDestroyEvent)
 {
 	J9JavaVM * vm = vmThread->javaVM;
@@ -206,7 +218,7 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 		print_verbose_stackUsage(vmThread, FALSE);
 	}
 #endif
-	
+
 	/* vm->memoryManagerFunctions will be NULL if we failed to load the gc dll */
 	if (NULL != vm->memoryManagerFunctions) {
 		/* Make sure the memory manager does anything needed before shutting down */
@@ -233,7 +245,7 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 			currentStack = previous;
 		} while (currentStack);
 	}
-	
+
 	if (vmThread->privateFlags & J9_PRIVATE_FLAGS_DAEMON_THREAD) {
 		--(vm->daemonThreadCount);
 	}
@@ -341,7 +353,7 @@ freeJ9Module(J9JavaVM *javaVM, J9Module *j9module) {
 	Trc_MODULE_freeJ9Module_exit(j9module);
 }
 
-#if (defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)) 
+#if (defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING))
 /**
  * Perform classloader-specific cleanup.  The current thread has exclusive access.
  * J9HOOK_VM_CLASS_LOADER_UNLOAD is triggered.
@@ -351,10 +363,10 @@ freeJ9Module(J9JavaVM *javaVM, J9Module *j9module) {
  * @param classLoader the classloader to cleanup
  */
 void
-cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader) 
+cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader)
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
-	
+
 	Trc_VM_cleanUpClassLoaders_Entry(vmThread, classLoader);
 
 	Trc_VM_triggerClassLoaderUnloadHook_Entry(vmThread, classLoader);

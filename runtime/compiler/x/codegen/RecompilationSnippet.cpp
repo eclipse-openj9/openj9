@@ -39,6 +39,8 @@
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
+#include "objectfmt/GlobalFunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 TR::X86RecompilationSnippet::X86RecompilationSnippet(TR::LabelSymbol    *lab,
@@ -51,9 +53,10 @@ TR::X86RecompilationSnippet::X86RecompilationSnippet(TR::LabelSymbol    *lab,
 
 uint32_t TR::X86RecompilationSnippet::getLength(int32_t estimatedSnippetStart)
    {
-
-   return 9;
+   return   cg()->getObjFmt()->globalFunctionCallBinaryLength()
+          + 4;   // disp32 to method startPC
    }
+
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::X86RecompilationSnippet * snippet)
    {
@@ -87,23 +90,11 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86RecompilationSnippet * snippet)
 
 uint8_t *TR::X86RecompilationSnippet::emitSnippetBody()
    {
-
    uint8_t *buffer = cg()->getBinaryBufferCursor();
    getSnippetLabel()->setCodeLocation(buffer);
 
-   intptr_t helperAddress = (intptr_t)_destination->getMethodAddress();
-   *buffer++ = 0xe8; // CallImm4
-   if (NEEDS_TRAMPOLINE(helperAddress, buffer+4, cg()))
-      {
-      helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(_destination->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT(IS_32BIT_RIP(helperAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
-      }
-   *(int32_t *)buffer = ((uint8_t*)helperAddress - buffer) - 4;
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
-                                                         (uint8_t *)_destination,
-                                                         TR_HelperAddress, cg()),
-                                                         __FILE__, __LINE__, getNode());
-   buffer += 4;
+   TR::GlobalFunctionCallData data(_destination, getNode(), buffer, cg());
+   buffer = cg()->getObjFmt()->encodeGlobalFunctionCall(data);
 
    uint8_t *bufferBase = buffer;
 

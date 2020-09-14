@@ -231,7 +231,7 @@ dumpStack(J9VMThread *currentThread, char const *msg)
 
 
 static void
-decompPrintMethod(J9VMThread * currentThread, J9Method * method) 
+decompPrintMethod(J9VMThread * currentThread, J9Method * method)
 {
 	PORT_ACCESS_FROM_VMC(currentThread);
 	J9UTF8 * className = J9ROMCLASS_CLASSNAME(UNTAGGED_METHOD_CP(method)->ramClass->romClass);
@@ -346,15 +346,18 @@ jitCleanUpDecompilationStack(J9VMThread * currentThread, J9StackWalkState * walk
 #endif /* J9VM_INTERP_HOT_CODE_REPLACEMENT (autogen) */
 
 
-void  
+void
 jitCodeBreakpointAdded(J9VMThread * currentThread, J9Method * method)
 {
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(currentThread->javaVM);
+#endif
 	PORT_ACCESS_FROM_VMC(currentThread);
 	J9JITConfig * jitConfig = currentThread->javaVM->jitConfig;
 	J9JITBreakpointedMethod * breakpointedMethod;
 	J9JITBreakpointedMethod * breakpointedMethods = jitConfig->breakpointedMethods;
 	J9VMThread * loopThread;
-	
+
 	/* Called under exclusive access, so no mutex required */
 
 	Trc_Decomp_jitCodeBreakpointAdded_Entry(currentThread, method);
@@ -372,7 +375,16 @@ jitCodeBreakpointAdded(J9VMThread * currentThread, J9Method * method)
 
 	Trc_Decomp_jitCodeBreakpointAdded_newEntry(currentThread);
 
-	breakpointedMethod = (J9JITBreakpointedMethod *) j9mem_allocate_memory(sizeof(J9JITBreakpointedMethod), OMRMEM_CATEGORY_JIT);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(currentThread->javaVM)) {
+		breakpointedMethod = (J9JITBreakpointedMethod *) vmsnapshot_allocate_memory(sizeof(J9JITBreakpointedMethod), OMRMEM_CATEGORY_JIT);
+	} else
+#endif
+	{
+		breakpointedMethod = (J9JITBreakpointedMethod *) j9mem_allocate_memory(sizeof(J9JITBreakpointedMethod), OMRMEM_CATEGORY_JIT);
+	}
+
 	if (!breakpointedMethod) {
 		j9tty_printf(PORTLIB, "\n*** alloc failure in jitPermanentBreakpointAdded ***\n");
 		Assert_Decomp_breakpointFailed();
@@ -397,15 +409,18 @@ jitCodeBreakpointAdded(J9VMThread * currentThread, J9Method * method)
 		walkState.frameWalkFunction = codeBreakpointAddedFrameIterator;
 		walkState.walkThread = loopThread;
 		currentThread->javaVM->walkStackFrames(currentThread, &walkState);
-	} while ((loopThread = loopThread->linkNext) != currentThread);	
+	} while ((loopThread = loopThread->linkNext) != currentThread);
 
 	Trc_Decomp_jitCodeBreakpointAdded_Exit(currentThread);
 }
 
 
-void  
+void
 jitCodeBreakpointRemoved(J9VMThread * currentThread, J9Method * method)
 {
+#if defined(J9VM_OPT_SNAPSHOTS)
+        VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(currentThread->javaVM);
+#endif
 	PORT_ACCESS_FROM_VMC(currentThread);
 	J9JITConfig * jitConfig = currentThread->javaVM->jitConfig;
 	J9JITBreakpointedMethod ** previous = &(jitConfig->breakpointedMethods);
@@ -424,7 +439,16 @@ jitCodeBreakpointRemoved(J9VMThread * currentThread, J9Method * method)
 				Trc_Decomp_jitCodeBreakpointAdded_fixingMethods(currentThread);
 				markMethodUnbreakpointed(currentThread, breakpointedMethod);
 				*previous = breakpointedMethod->link;
-				j9mem_free_memory(breakpointedMethod);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+				if (IS_SNAPSHOT_RUN(currentThread->javaVM)) {
+					vmsnapshot_free_memory(breakpointedMethod);
+				} else
+#endif
+				{
+					j9mem_free_memory(breakpointedMethod);
+				}
+
 				deleteAllDecompilations(currentThread, JITDECOMP_CODE_BREAKPOINT, method);
 			}
 
@@ -454,7 +478,7 @@ codeBreakpointAddedFrameIterator(J9VMThread * currentThread, J9StackWalkState * 
 
 #if (defined(J9VM_INTERP_HOT_CODE_REPLACEMENT)) /* priv. proto (autogen) */
 
-void  
+void
 jitHotswapOccurred(J9VMThread * currentThread)
 {
 	/* We have exclusive */
@@ -483,7 +507,7 @@ jitHotswapOccurred(J9VMThread * currentThread)
 #endif /* J9VM_INTERP_HOT_CODE_REPLACEMENT (autogen) */
 
 
-void  
+void
 jitDecompileMethod(J9VMThread * currentThread, J9JITDecompilationInfo * decompRecord)
 {
 	J9JITDecompileState decompileState;
@@ -783,8 +807,9 @@ performDecompile(J9VMThread *currentThread, J9JITDecompileState *decompileState,
 	dumpStack(currentThread, "before decompilation");
 
 	if (FALSE == decompRecord->usesOSR) {
+		J9JITStackAtlas *gcStackAtlas =  J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(decompileState->metaData);
 		/* Not compiled with OSR - copy stack slots from JIT frame into OSR frame */
-		UDATA *jitTempBase = ((UDATA *) (((U_8 *) decompileState->bp) + ((J9JITStackAtlas *) decompileState->metaData->gcStackAtlas)->localBaseOffset)) + decompileState->metaData->tempOffset;
+		UDATA *jitTempBase = ((UDATA *) (((U_8 *) decompileState->bp) + gcStackAtlas->localBaseOffset)) + decompileState->metaData->tempOffset;
 		UDATA *osrTempBase = ((UDATA*)(osrFrame + 1)) + osrFrame->maxStack;
 		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(osrFrame->method);
 		UDATA argCount = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod);
@@ -1086,6 +1111,9 @@ fixStackForNewDecompilation(J9VMThread * currentThread, J9StackWalkState * walkS
 static J9JITDecompilationInfo *
 addDecompilation(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA reason)
 {
+#if defined(J9VM_OPT_SNAPSHOTS)
+        VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(currentThread->javaVM);
+#endif
 	PORT_ACCESS_FROM_VMC(currentThread);
 	J9JavaVM* vm = currentThread->javaVM;
 	J9VMThread * decompileThread = walkState->walkThread;
@@ -1139,7 +1167,16 @@ addDecompilation(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA
 
 	/* Allocate and zero the decompilation record, taking the OSR buffer into account */
 	allocSize += osrAllFramesSize(currentThread, metaData, walkState->pc, resolveFrameFlags);
-	info = (J9JITDecompilationInfo *) j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_JIT);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(currentThread->javaVM)) {
+		info = (J9JITDecompilationInfo *) vmsnapshot_allocate_memory(allocSize, OMRMEM_CATEGORY_JIT);
+	} else
+#endif
+	{
+		info = (J9JITDecompilationInfo *) j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_JIT);
+	}
+
 	if (!info) {
 		Trc_Decomp_addDecompilation_allocFailed(currentThread);
 		return NULL;
@@ -1157,36 +1194,83 @@ addDecompilation(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA
 	osrData.objectTempScanCursor = getObjectTempScanCursor(walkState);
 	if (OSR_OK != initializeOSRBuffer(currentThread, &info->osrBuffer, &osrData)) {
 		Trc_Decomp_addDecompilation_allocFailed(currentThread);
-		j9mem_free_memory(info);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOT_RUN(currentThread->javaVM)) {
+			vmsnapshot_free_memory(info);
+		} else
+#endif
+		{
+			j9mem_free_memory(info);
+		}
+
 		return NULL;
 	}
 
 	if (osrFrame) {
 		UDATA scratchBufferSize = roundedOSRScratchBufferSize(currentThread, metaData, walkState->pc);
 		UDATA jitStackFrameSize = (UDATA)(walkState->arg0EA + 1) - (UDATA)walkState->unwindSP;
-		void *osrScratchBuffer = j9mem_allocate_memory(scratchBufferSize + jitStackFrameSize, OMRMEM_CATEGORY_JIT);
+
+		void *osrScratchBuffer;
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOT_RUN(currentThread->javaVM)) {
+			osrScratchBuffer = vmsnapshot_allocate_memory(scratchBufferSize + jitStackFrameSize, OMRMEM_CATEGORY_JIT);
+		} else
+#endif
+		{
+			osrScratchBuffer = j9mem_allocate_memory(scratchBufferSize + jitStackFrameSize, OMRMEM_CATEGORY_JIT);
+		}
+
 		UDATA mustDecompile = FALSE;
 		UDATA osrResultCode = OSR_OK;
 
 		/* TODO: use global buffer here? */
 		if (NULL == osrScratchBuffer) {
 			Trc_Decomp_addDecompilation_allocFailed(currentThread);
-			j9mem_free_memory(info);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOT_RUN(currentThread->javaVM)) {
+				vmsnapshot_free_memory(info);
+                	} else
+#endif
+			{
+				j9mem_free_memory(info);
+			}
+
 			return NULL;
 		}
 
 		osrResultCode = performOSR(currentThread, walkState, &info->osrBuffer, (U_8*)osrScratchBuffer, scratchBufferSize, jitStackFrameSize, &mustDecompile);
 		if (OSR_OK != osrResultCode) {
 			Trc_Decomp_addDecompilation_osrFailed(currentThread);
-			j9mem_free_memory(osrScratchBuffer);
-			j9mem_free_memory(info);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOT_RUN(currentThread->javaVM)) {
+				vmsnapshot_free_memory(osrScratchBuffer);
+				vmsnapshot_free_memory(info);
+			} else
+#endif
+			{
+				j9mem_free_memory(osrScratchBuffer);
+				j9mem_free_memory(info);
+			}
+
 			return NULL;
 		}
 		if (mustDecompile) {
 			Trc_Decomp_addDecompilation_osrMustDecompile(currentThread);
 			reason |= JITDECOMP_ON_STACK_REPLACEMENT;
 		}
-		j9mem_free_memory(osrScratchBuffer);
+
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOT_RUN(currentThread->javaVM)) {
+			vmsnapshot_free_memory(osrScratchBuffer);
+		} else
+#endif
+		{
+			j9mem_free_memory(osrScratchBuffer);
+		}
 	}
 
 	/* Add the decompilation to the stack */
@@ -1197,7 +1281,7 @@ addDecompilation(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA
 	return info;
 }
 
-void  
+void
 c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 {
 	/* Fetch the exception from the JIT */
@@ -1280,7 +1364,7 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 
 #if (defined(J9VM_INTERP_HOT_CODE_REPLACEMENT)) /* priv. proto (autogen) */
 
-void  
+void
 jitDecompileMethodForFramePop(J9VMThread * currentThread, UDATA skipCount)
 {
 	J9JITDecompileState decompileState;
@@ -1340,9 +1424,20 @@ deleteDecompilationForExistingFrame(J9VMThread * decompileThread, J9JITDecompila
 static void
 freeDecompilationRecord(J9VMThread * decompileThread, J9JITDecompilationInfo * info, UDATA retain)
 {
+#if defined(J9VM_OPT_SNAPSHOTS)
+        VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(decompileThread->javaVM);
+#endif
 	PORT_ACCESS_FROM_VMC(decompileThread);
 
-	j9mem_free_memory(decompileThread->lastDecompilation);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(decompileThread->javaVM)) {
+		vmsnapshot_free_memory(decompileThread->lastDecompilation);
+	} else
+#endif
+	{
+		j9mem_free_memory(decompileThread->lastDecompilation);
+	}
+
 	decompileThread->lastDecompilation = NULL;
 	if (info->reason & JITDECOMP_OSR_GLOBAL_BUFFER_USED) {
 		omrthread_monitor_exit(decompileThread->javaVM->osrGlobalBufferLock);
@@ -1350,13 +1445,22 @@ freeDecompilationRecord(J9VMThread * decompileThread, J9JITDecompilationInfo * i
 		if (retain) {
 			decompileThread->lastDecompilation = info;
 		} else {
-			j9mem_free_memory(info);
+
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOT_RUN(decompileThread->javaVM)) {
+				vmsnapshot_free_memory(info);
+			} else
+#endif
+			{
+				j9mem_free_memory(info);
+			}
 		}
 	}
 }
 
 
-void  
+void
 jitDataBreakpointAdded(J9VMThread * currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
@@ -1387,7 +1491,7 @@ jitDataBreakpointAdded(J9VMThread * currentThread)
 			/* Make all future compilations inline the field watch code */
 			jitConfig->inlineFieldWatches = TRUE;
 		} else {
-			jitConfig->jitClassesRedefined(currentThread, 0, NULL);			
+			jitConfig->jitClassesRedefined(currentThread, 0, NULL);
 		}
 
 		/* Find every method which has been translated and mark it for retranslation */
@@ -1407,7 +1511,7 @@ jitDataBreakpointAdded(J9VMThread * currentThread)
 }
 
 
-void  
+void
 jitDataBreakpointRemoved(J9VMThread * currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
@@ -1499,13 +1603,13 @@ deleteAllDecompilations(J9VMThread * currentThread, UDATA reason, J9Method * met
 				previous = &(current->next);
 			}
 		}
-	} while ((loopThread = loopThread->linkNext) != currentThread);	
+	} while ((loopThread = loopThread->linkNext) != currentThread);
 
 	Trc_Decomp_deleteAllDecompilations_Exit(currentThread);
 }
 
 
-void  
+void
 jitExceptionCaught(J9VMThread * currentThread)
 {
 	J9StackWalkState * walkState = currentThread->stackWalkState;
@@ -1628,7 +1732,7 @@ reinstallAllBreakpoints(J9VMThread * currentThread)
 }
 
 
-void  
+void
 jitSingleStepAdded(J9VMThread * currentThread)
 {
 	/* We have exclusive */
@@ -1646,7 +1750,7 @@ jitSingleStepAdded(J9VMThread * currentThread)
 }
 
 
-void  
+void
 jitSingleStepRemoved(J9VMThread * currentThread)
 {
 	/* We have exclusive */
@@ -1708,7 +1812,7 @@ findOSRFrameAtInlineDepth(J9OSRBuffer *osrBuffer, UDATA inlineDepth)
 
 #if (defined(J9VM_OPT_JVMTI)) /* priv. proto (autogen) */
 
-static void  
+static void
 jitFramePopNotificationAdded(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA inlineDepth)
 {
 	J9JITDecompilationInfo *decompilationInfo = NULL;
@@ -1748,7 +1852,7 @@ jitStackLocalsModified(J9VMThread * currentThread, J9StackWalkState * walkState)
 }
 
 
-void  
+void
 jitBreakpointedMethodCompiled(J9VMThread * currentThread, J9Method * method, void * startAddress)
 {
 	J9JITConfig * jitConfig = currentThread->javaVM->jitConfig;
@@ -1846,7 +1950,7 @@ osrAllFramesSize(J9VMThread *currentThread, J9JITExceptionTable *metaData, void 
 	}
 
 	/* Count the outer method */
-	totalSize += osrFrameSize(metaData->ramMethod);
+	totalSize += osrFrameSize(J9JITEXCEPTIONTABLE_RAMMETHOD_GET(metaData));
 
 	return totalSize;
 }
@@ -1891,7 +1995,7 @@ performOSR(J9VMThread *currentThread, J9StackWalkState *walkState, J9OSRBuffer *
 	 * Assert the number of bytes provided matches the expected frame size from the metadata
 	 * (arguments + return address + totalFrameSize slots).
 	 */
-	Assert_CodertVM_true(jitStackFrameSize == ((J9_ARG_COUNT_FROM_ROM_METHOD(J9_ROM_METHOD_FROM_RAM_METHOD(metaData->ramMethod)) + 1 + metaData->totalFrameSize) * sizeof(UDATA)));
+	Assert_CodertVM_true(jitStackFrameSize == ((J9_ARG_COUNT_FROM_ROM_METHOD(J9_ROM_METHOD_FROM_RAM_METHOD(J9JITEXCEPTIONTABLE_RAMMETHOD_GET(metaData))) + 1 + metaData->totalFrameSize) * sizeof(UDATA)));
 	memcpy(osrJittedFrameCopy, walkState->unwindSP, jitStackFrameSize);
 
 	/* Perform the OSR */
@@ -1961,7 +2065,7 @@ jitLocalSlotAddress(J9VMThread * currentThread, J9StackWalkState *walkState, UDA
 
 		Assert_CodertVM_true(0 == inlineDepth);
 		if (slot >= romMethod->argCount) {
-			J9JITStackAtlas * stackAtlas = (J9JITStackAtlas *) (metaData->gcStackAtlas);
+			J9JITStackAtlas * stackAtlas = J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(metaData);
 
 			slotAddress = (UDATA *) (((UDATA) walkState->bp) + stackAtlas->localBaseOffset);
 			if (romMethod->modifiers & J9AccSynchronized) {
@@ -2160,7 +2264,7 @@ initializeOSRBuffer(J9VMThread *currentThread, J9OSRBuffer *osrBuffer, J9OSRData
 	void *jitPC = osrData->jitPC;
 	UDATA resolveFrameFlags = osrData->resolveFrameFlags;
 	UDATA numberOfFrames = 1; /* count the outer method now */
-	J9Method *outerMethod = metaData->ramMethod;
+	J9Method *outerMethod = J9JITEXCEPTIONTABLE_RAMMETHOD_GET(metaData);
 	void *stackMap = NULL;
 	void *inlineMap = NULL;
 	J9JITStackAtlas *gcStackAtlas = NULL;
@@ -2223,10 +2327,13 @@ done:
  * @param[in] *currentThread current thread
  * @param[in] *jitPC compiled PC at which to OSR
  */
-void 
+void
 induceOSROnCurrentThread(J9VMThread * currentThread)
 {
 	J9JavaVM * vm = currentThread->javaVM;
+#if defined(J9VM_OPT_SNAPSHOTS)
+        VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+#endif
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9JITExceptionTable *metaData = NULL;
 	void *jitPC = NULL;
@@ -2271,7 +2378,15 @@ induceOSROnCurrentThread(J9VMThread * currentThread)
 	Assert_CodertVM_true(totalSize <= vm->osrGlobalBufferSize);
 
 	/* Allocate the buffer, falling back to the global one if the allocation fails */
-	decompilationRecord = (J9JITDecompilationInfo*)j9mem_allocate_memory(totalSize, OMRMEM_CATEGORY_JIT);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(vm)) {
+		decompilationRecord = (J9JITDecompilationInfo*)vmsnapshot_allocate_memory(totalSize, OMRMEM_CATEGORY_JIT);
+	} else
+#endif
+	{
+		decompilationRecord = (J9JITDecompilationInfo*)j9mem_allocate_memory(totalSize, OMRMEM_CATEGORY_JIT);
+	}
+
 	if (NULL == decompilationRecord) {
 		/* Trc_Decomp_induceOSROnCurrentThread_usingGlobalBuffer(currentThread); */
 		omrthread_monitor_enter(vm->osrGlobalBufferLock);
@@ -2497,4 +2612,3 @@ jitIsMethodBreakpointed(J9VMThread *currentThread, J9Method *method)
 }
 
 } /* extern "C" */
-

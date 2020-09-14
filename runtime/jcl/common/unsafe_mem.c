@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2014 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,15 @@ freeUnsafeMemory(J9JavaVM* vm)
 
 		while (NULL != (memBlock = vm->unsafeMemoryListHead)) {
 			J9_LINKED_LIST_REMOVE(vm->unsafeMemoryListHead, memBlock);
-			j9mem_free_memory((void *) memBlock);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(vm)) {
+				VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+				vmsnapshot_free_memory((void *) memBlock);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				j9mem_free_memory((void *) memBlock);
+			}
 		}
 		omrthread_monitor_destroy(vm->unsafeMemoryTrackingMutex);
 	}
@@ -77,28 +85,37 @@ freeUnsafeMemory(J9JavaVM* vm)
  * Allocating 0 bytes returns a valid pointer (cf. unsafeReallocateMemory).
  * @param vmThread thread pointer
  * @param size number of bytes to allocate
- * @return pointer to allocated buffer (after the linked list pointers).  Null if allocation failure. 
+ * @return pointer to allocated buffer (after the linked list pointers).  Null if allocation failure.
  */
-void* 
-unsafeAllocateMemory(J9VMThread* vmThread, UDATA size, UDATA throwExceptionOnFailure) 
+void*
+unsafeAllocateMemory(J9VMThread* vmThread, UDATA size, UDATA throwExceptionOnFailure)
 {
 	U_8* newAddress;
 	J9UnsafeMemoryBlock *memBlock;
-	omrthread_monitor_t mutex = vmThread->javaVM->unsafeMemoryTrackingMutex;
-	
+	J9JavaVM *vm = vmThread->javaVM;
+	omrthread_monitor_t mutex = vm->unsafeMemoryTrackingMutex;
+
 	PORT_ACCESS_FROM_VMC(vmThread);
-	size = size + offsetof(J9UnsafeMemoryBlock, data); /* leave space for the linked list pointers */ 
+	size = size + offsetof(J9UnsafeMemoryBlock, data); /* leave space for the linked list pointers */
 	Trc_JCL_sun_misc_Unsafe_allocateMemory_Entry(vmThread, size);
-	memBlock = (J9UnsafeMemoryBlock*) j9mem_allocate_memory(size, J9MEM_CATEGORY_SUN_MISC_UNSAFE_ALLOCATE);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(vm)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+		memBlock = (J9UnsafeMemoryBlock*) vmsnapshot_allocate_memory(size, J9MEM_CATEGORY_SUN_MISC_UNSAFE_ALLOCATE);
+	} else
+#endif
+	{
+		memBlock = (J9UnsafeMemoryBlock*) j9mem_allocate_memory(size, J9MEM_CATEGORY_SUN_MISC_UNSAFE_ALLOCATE);
+	}
 	if (0 == memBlock) {
 		if (throwExceptionOnFailure) {
 			vmThread->javaVM->internalVMFunctions->setNativeOutOfMemoryError(vmThread, 0, 0);
 			/* the builder code actually throws the exception */
 		}
 		Trc_JCL_sun_misc_Unsafe_allocateMemory_OutOfMemory(vmThread);
-		return 0;	
+		return 0;
 	}
-	
+
 	omrthread_monitor_enter(mutex);
 	J9_LINKED_LIST_ADD_LAST(vmThread->javaVM->unsafeMemoryListHead, memBlock);
 	omrthread_monitor_exit(mutex);
@@ -113,24 +130,33 @@ unsafeAllocateMemory(J9VMThread* vmThread, UDATA size, UDATA throwExceptionOnFai
  * @param pointer to buffer. May be null.
  */
 void
-unsafeFreeMemory(J9VMThread* vmThread, void* oldAddress) 
+unsafeFreeMemory(J9VMThread* vmThread, void* oldAddress)
 {
 	J9UnsafeMemoryBlock *memBlock;
-		
+	J9JavaVM *vm = vmThread->javaVM;
+
 	PORT_ACCESS_FROM_VMC(vmThread);
 	Trc_JCL_sun_misc_Unsafe_freeMemory_Entry(vmThread, oldAddress);
 
 	if (0 != oldAddress) {
 		omrthread_monitor_t mutex = vmThread->javaVM->unsafeMemoryTrackingMutex;
-		
+
 		memBlock = (J9UnsafeMemoryBlock*) ((U_8*) oldAddress - offsetof(J9UnsafeMemoryBlock, data));
 		omrthread_monitor_enter(mutex);
 		J9_LINKED_LIST_REMOVE(vmThread->javaVM->unsafeMemoryListHead, memBlock);
 		omrthread_monitor_exit(mutex);
-		j9mem_free_memory(memBlock);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(vm)) {
+			VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+			vmsnapshot_free_memory(memBlock);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			j9mem_free_memory(memBlock);
+		}
 	}
 	Trc_JCL_sun_misc_Unsafe_freeMemory_Exit(vmThread);
-	
+
 	return;
 }
 
@@ -138,31 +164,31 @@ unsafeFreeMemory(J9VMThread* vmThread, void* oldAddress)
  * @param vmThread thread pointer
  * @param pointer to old buffer, advanced past the linked list pointers.
  * @param size new size of buffer to allocate
- * @return pointer to new buffer.  Null if allocation failure. 
+ * @return pointer to new buffer.  Null if allocation failure.
  * Reallocating 0 bytes returns a null pointer (cf. unsafeAllocateMemory), advanced past the linked list pointers.
  */
-void* 
-unsafeReallocateMemory(J9VMThread* vmThread, void* oldAddress, UDATA size) 
+void*
+unsafeReallocateMemory(J9VMThread* vmThread, void* oldAddress, UDATA size)
 {
 	void* newAddress = 0;
 	J9UnsafeMemoryBlock *memBlock;
 	UDATA newSize;
 	omrthread_monitor_t mutex = vmThread->javaVM->unsafeMemoryTrackingMutex;
-	
+
 	PORT_ACCESS_FROM_VMC(vmThread);
 	Trc_JCL_sun_misc_Unsafe_reallocateMemory_Entry(vmThread, oldAddress, size);
-	
-	newSize = size + offsetof(J9UnsafeMemoryBlock, data); /* leave space for the linked list pointers */ 
+
+	newSize = size + offsetof(J9UnsafeMemoryBlock, data); /* leave space for the linked list pointers */
 	if (0 == oldAddress) {
 		memBlock = (J9UnsafeMemoryBlock*) oldAddress;
 	} else {
 		memBlock = (J9UnsafeMemoryBlock*) ((U_8*) oldAddress - offsetof(J9UnsafeMemoryBlock, data));
-	
+
 		omrthread_monitor_enter(mutex);
 		J9_LINKED_LIST_REMOVE(vmThread->javaVM->unsafeMemoryListHead, memBlock);
 		omrthread_monitor_exit(mutex);
 	}
-	
+
 	/* memBlock may be null at this point */
 	if (0 != size) {
 		memBlock = (J9UnsafeMemoryBlock*) j9mem_reallocate_memory(memBlock, newSize, J9MEM_CATEGORY_SUN_MISC_UNSAFE_ALLOCATE);
@@ -174,7 +200,7 @@ unsafeReallocateMemory(J9VMThread* vmThread, void* oldAddress, UDATA size)
 		}
 		omrthread_monitor_enter(mutex);
 		J9_LINKED_LIST_ADD_LAST(vmThread->javaVM->unsafeMemoryListHead, memBlock);
-		omrthread_monitor_exit(mutex);	
+		omrthread_monitor_exit(mutex);
 		newAddress = (void*) &(memBlock->data);
 	} else {
 		/* emulate old behaviour of returning null pointer if new size is 0 */
@@ -238,7 +264,15 @@ unsafeAllocateDBBMemory(J9VMThread* vmThread, UDATA size, UDATA throwExceptionOn
 
 	size = size + offsetof(J9UnsafeMemoryBlock, data); /* leave space for the linked list pointers */
 	Trc_JCL_sun_misc_Unsafe_allocateDBBMemory_Entry(vmThread, size);
-	memBlock = (J9UnsafeMemoryBlock*) j9mem_allocate_memory(size, J9MEM_CATEGORY_SUN_MISC_UNSAFE_ALLOCATEDBB);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(vm)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+		memBlock = (J9UnsafeMemoryBlock*) vmsnapshot_allocate_memory(size, J9MEM_CATEGORY_SUN_MISC_UNSAFE_ALLOCATEDBB);
+	} else
+#endif
+	{
+		memBlock = (J9UnsafeMemoryBlock*) j9mem_allocate_memory(size, J9MEM_CATEGORY_SUN_MISC_UNSAFE_ALLOCATEDBB);
+	}
 	if (0 == memBlock) {
 		if (throwExceptionOnFailure) {
 			vm->internalVMFunctions->setNativeOutOfMemoryError(vmThread, 0, 0);
@@ -280,7 +314,15 @@ unsafeFreeDBBMemory(J9VMThread* vmThread, void* oldAddress)
 			/* release DBB block from the original list when it is not in cloud mode */
 			mutex = vm->unsafeMemoryTrackingMutex;
 			unsafeLinkedListRemove(mutex, &vm->unsafeMemoryListHead, &memBlock);
-			j9mem_free_memory(memBlock);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(vm)) {
+				VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+				vmsnapshot_free_memory(memBlock);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				j9mem_free_memory(memBlock);
+			}
 		}
 	}
 	Trc_JCL_sun_misc_Unsafe_freeDBBMemory_Exit(vmThread);

@@ -5840,6 +5840,20 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
          else if (method()->isStringConstant(cpIndex))
             {
             loadSymbol(TR::aload, symRefTab()->findOrCreateStringSymbol(_methodSymbol, cpIndex));
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+            /*
+             * The following is a TEMPORARY fix until constant string usage in the restore VM
+             * is fixed.  Abort any compile that loads a constant string.
+             */
+            TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
+            J9JavaVM *javaVM = fej9->getJ9JITConfig()->javaVM;
+
+            if (IS_SNAPSHOT_RUN(javaVM))
+               {
+               comp()->failCompilation<J9::AOTHasMethodTypeConstant>("Constant strings not supported");
+               }
+#endif
             }
          else if (method()->isMethodHandleConstant(cpIndex))
             {

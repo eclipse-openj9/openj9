@@ -57,6 +57,11 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_jvmPhaseChange,
 	initializeMutatorModelJava,
 	cleanupMutatorModelJava,
+#if defined(J9VM_OPT_SNAPSHOTS)
+	j9gc_enter_heap_snapshot_mode,
+	j9gc_leave_heap_snapshot_mode,
+	j9gc_register_for_snapshot,
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #if defined(J9VM_GC_FINALIZATION)
 	j9gc_finalizer_startup,
 	j9gc_finalizer_shutdown,

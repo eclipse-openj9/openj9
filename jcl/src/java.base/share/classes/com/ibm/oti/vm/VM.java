@@ -42,6 +42,11 @@ import sun.reflect.CallerSensitive;
 @SuppressWarnings("javadoc")
 public final class VM {
 
+	private static final int J9_EXTENDED_RUNTIME2_RAMSTATE_SNAPSHOT_RUN = 0x1000;
+	private static final int J9_EXTENDED_RUNTIME2_RAMSTATE_RESTORE_RUN = 0x2000;
+	private static final int J9_EXTENDED_RUNTIME2_SNAPSHOT_STATE_IS_RESTORED = 0x4000;
+	private static int EXTENDED_RUNTIME_FLAGS2;
+	
 	public static final boolean PACKED_SUPPORT_ENABLED = false;  /* TODO delete this when ARM JCL is updated */
 
 	public static final int J9_JAVA_CLASS_RAM_SHAPE_SHIFT;
@@ -209,12 +214,16 @@ public final class VM {
 		GLR_MINIMUM_RESERVED_RATIO = 0;
 		GLR_CANCEL_ABSOLUTE_THRESHOLD = 0;
 		GLR_MINIMUM_LEARNING_RATIO = 0;
+		
+		EXTENDED_RUNTIME_FLAGS2 = 0;
 }
 /**
  * Prevents this class from being instantiated.
  */
 private VM() {
 }
+
+static final native int getExtendedRuntimeFlags();
 
 /**
  * Answer the class at depth.
@@ -585,4 +594,13 @@ public static int markCurrentThreadAsSystem()
 
 private static native int markCurrentThreadAsSystemImpl();
 
+public static boolean isRestoreRun() {
+	return ((EXTENDED_RUNTIME_FLAGS2 & J9_EXTENDED_RUNTIME2_RAMSTATE_RESTORE_RUN) == J9_EXTENDED_RUNTIME2_RAMSTATE_RESTORE_RUN);
 }
+
+public static boolean isSnapshotRun() {
+	return ((EXTENDED_RUNTIME_FLAGS2 & J9_EXTENDED_RUNTIME2_RAMSTATE_SNAPSHOT_RUN) == J9_EXTENDED_RUNTIME2_RAMSTATE_SNAPSHOT_RUN);
+}
+
+}
+

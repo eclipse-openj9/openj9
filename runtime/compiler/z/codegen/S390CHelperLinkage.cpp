@@ -51,6 +51,8 @@
 #include "z/codegen/SystemLinkage.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
+#include "objectfmt/GlobalFunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::CHelperLinkage for J9
@@ -353,10 +355,11 @@ TR::Register * J9::Z::CHelperLinkage::buildDirectDispatch(TR::Node * callNode, T
 #endif
 #endif
       }
+   //TODO:  Check if we need to genrate a trampoline here. 
    TR::SymbolReference * callSymRef = callNode->getSymbolReference();
-   void * destAddr = callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethodAddress();
-   cursor = new (cg()->trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRASL, callNode, regRA, destAddr, callSymRef, cg());
-   cursor->setDependencyConditions(preDeps);
+   TR::GlobalFunctionCallData data(callSymRef, callNode, regRA, cg(), NULL, preDeps);
+   cursor = cg()->getObjFmt()->emitGlobalFunctionCall(data);
+
    if (isFastPathOnly)
       {
 #if defined(J9ZOS390)

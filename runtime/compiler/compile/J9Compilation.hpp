@@ -331,6 +331,15 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    void setOSRProhibitedOverRangeOfTrees() { _osrProhibitedOverRangeOfTrees = true; }
    bool isOSRProhibitedOverRangeOfTrees() { return _osrProhibitedOverRangeOfTrees; }
 
+   void setLinkageInfo(J9::PrivateLinkage::LinkageInfo *linkageInfo)
+      {
+      reinterpret_cast<J9::PrivateLinkage::LinkageInfo *>(&_linkageInfoWord)->init(linkageInfo);
+      }
+   J9::PrivateLinkage::LinkageInfo * getLinkageInfo()
+      {
+      return reinterpret_cast<J9::PrivateLinkage::LinkageInfo *>(&_linkageInfoWord);
+      }
+
 private:
    enum CachedClassPointerId
       {
@@ -428,6 +437,8 @@ private:
 
    TR::SymbolValidationManager *_symbolValidationManager;
    bool _osrProhibitedOverRangeOfTrees;
+
+   uint32_t _linkageInfoWord;
    };
 
 }

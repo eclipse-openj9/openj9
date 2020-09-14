@@ -938,17 +938,19 @@ createStackAtlas(
    // ptr data will be located
    //
    uint8_t *cursor = atlasBits + atlasSizeInBytes;
-
+   U_8 *stackAllocMap = NULL;
    if (trStackAtlas->getStackAllocMap())
       {
-      vmAtlas->stackAllocMap = cursor;
+      stackAllocMap = cursor;
+      J9JITSTACKATLAS_STACKALLOCMAP_SET(vmAtlas, stackAllocMap);
       cursor += sizeof(uintptr_t);
       int32_t mapSizeInBytes = trStackAtlas->getStackAllocMap()->getMapSizeInBytes();
       memcpy(cursor, trStackAtlas->getStackAllocMap()->getMapBits(), mapSizeInBytes);
       cursor += numberOfMapBytes;
       }
 
-   vmAtlas->internalPointerMap = createInternalPtrStackMapInJ9Format(vm, trStackAtlas->getInternalPointerMap(), trStackAtlas, cg, cursor, comp);
+   U_8 *internalPointerMap = createInternalPtrStackMapInJ9Format(vm, trStackAtlas->getInternalPointerMap(), trStackAtlas, cg, cursor, comp);
+   J9JITSTACKATLAS_INTERNALPOINTERMAP_SET(vmAtlas, internalPointerMap);
 
    if (trStackAtlas->getStackAllocMap())
       {
@@ -1000,10 +1002,10 @@ createStackAtlas(
 
          createStackMap(mapCursor, cg, cursor, fourByteOffsets, trStackAtlas, numberOfMapBytes, comp);
 
-         if (vmAtlas->internalPointerMap && mapCursor == trStackAtlas->getParameterMap())
-            *((uintptr_t *) vmAtlas->internalPointerMap) = (uintptr_t) cursor;
-         if (vmAtlas->stackAllocMap && mapCursor == trStackAtlas->getParameterMap())
-            *((uintptr_t *) vmAtlas->stackAllocMap) = (uintptr_t) cursor;
+         if (internalPointerMap && mapCursor == trStackAtlas->getParameterMap())
+            J9JITINTERNALPOINTERMAP_PARAMETERMAP_SET(internalPointerMap, cursor);
+         if (stackAllocMap && mapCursor == trStackAtlas->getParameterMap())
+            J9JITSTACKALLOCMAP_PARAMETERMAP_SET(stackAllocMap, cursor);
          }
       previousLowestCodeOffset = mapCursor->getLowestCodeOffset();
       mapCursor = nextMapCursor;
@@ -1029,7 +1031,7 @@ void AOTRAS_traceMetaData(TR_J9VMBase *vm, TR_MethodMetaData *data, TR::Compilat
    traceMsg(comp, "%-12x", data->startPC);
    traceMsg(comp, "%-12x", data->endPC);
    traceMsg(comp, "%-8x", data->size);
-   traceMsg(comp, "%-14x", data->gcStackAtlas);
+   traceMsg(comp, "%-14x", J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(data));
    traceMsg(comp, "%-12x\n", data->bodyInfo);
 
    traceMsg(comp, "%-12s", "CodeStart");
@@ -1042,7 +1044,7 @@ void AOTRAS_traceMetaData(TR_J9VMBase *vm, TR_MethodMetaData *data, TR::Compilat
    traceMsg(comp, "%-12x",aotMethodHeaderEntry->compileMethodDataStartPC);
    traceMsg(comp, "%-10x",aotMethodHeaderEntry->compileMethodCodeSize);
    traceMsg(comp, "%-10x",aotMethodHeaderEntry->compileMethodDataSize);
-   traceMsg(comp, "%-12x\n", data->inlinedCalls);
+   traceMsg(comp, "%-12x\n", J9JITEXCEPTIONTABLE_INLINEDCALLS_GET(data));
 
    traceMsg(comp, "</relocatableDataMetaDataCG>\n");
    }
@@ -1186,11 +1188,12 @@ static void populateOSRInfo(TR::Compilation* comp, TR_MethodMetaData* data, uint
    uint32_t offset = 0;
    if (comp->getOption(TR_EnableOSR))
       {
-      data->osrInfo = (uint8_t*)data + osrInfoOffset;
-      comp->getOSRCompilationData()->writeMetaData((uint8_t*)data->osrInfo);
+      void *osrInfo = (uint8_t*)data + osrInfoOffset;
+      J9JITEXCEPTIONTABLE_OSRINFO_SET(data, osrInfo);
+      comp->getOSRCompilationData()->writeMetaData((uint8_t*)osrInfo);
       }
    else
-      data->osrInfo = NULL;
+      J9JITEXCEPTIONTABLE_OSRINFO_SET(data, NULL);
    }
 
 static void populateGpuPtx(TR::Compilation* comp, char** gpuPtxArrayCursor, char *gpuPtxArrayEntryLocation)
@@ -1242,7 +1245,14 @@ static void populateInlineCalls(
          {
          inlinedCallSite->_methodInfo = (TR_OpaqueMethodBlock*)-1;
          }
-      memcpy(callSiteCursor, inlinedCallSite, sizeof(TR_InlinedCallSite) );
+#if defined(J9VM_OPT_SNAPSHOTS)
+      TR_InlinedCallSiteWithOffset *callSiteMetaData = (TR_InlinedCallSiteWithOffset *)callSiteCursor;
+      callSiteMetaData->_methodInfoOffset = J9_METHOD_TO_OFFSET(inlinedCallSite->_methodInfo);
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
+      TR_InlinedCallSite *callSiteMetaData = (TR_InlinedCallSite *)callSiteCursor;
+      callSiteMetaData->_methodInfo = inlinedCallSite->_methodInfo;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+      callSiteMetaData->_byteCodeInfo = inlinedCallSite->_byteCodeInfo;
       if (comp->getOption(TR_TraceRelocatableDataCG) || comp->getOption(TR_TraceRelocatableDataDetailsCG))
          {
          traceMsg(comp, "inlineIdx %d, callSiteCursor %p, inlinedCallSite->methodInfo = %p\n", i, callSiteCursor, inlinedCallSite->_methodInfo);
@@ -1292,7 +1302,12 @@ static void populateInlineCalls(
             }
          }
 
-      callSiteCursor += sizeof(TR_InlinedCallSite);
+#if defined(J9VM_OPT_SNAPSHOTS)
+      size_t icsSize = sizeof(TR_InlinedCallSiteWithOffset);
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
+      size_t icsSize = sizeof(TR_InlinedCallSite);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+      callSiteCursor += icsSize;
 
       createMonitorMask(callSiteCursor, autos, numberOfMapBytes);
 
@@ -1386,7 +1401,12 @@ createMethodMetaData(
 
    // Space for the number of entries
    //
-   uint32_t inlinedCallSize = comp->getNumInlinedCallSites() * (sizeof(TR_InlinedCallSite) + numberOfMapBytes);
+#if defined(J9VM_OPT_SNAPSHOTS)
+   size_t icsSize = sizeof(TR_InlinedCallSiteWithOffset);
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
+   size_t icsSize = sizeof(TR_InlinedCallSite);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+   uint32_t inlinedCallSize = comp->getNumInlinedCallSites() * (icsSize + numberOfMapBytes);
    tableSize += inlinedCallSize;
 
    // Add size of stack atlas to allocate
@@ -1508,7 +1528,7 @@ createMethodMetaData(
    data->tempOffset = comp->cg()->getStackAtlas()->getNumberOfPendingPushSlots();
    data->size = tableSize;
 
-   data->gcStackAtlas = createStackAtlas(
+   void *gcStackAtlas = createStackAtlas(
          vm,
          comp->cg(),
          fourByteOffsets,
@@ -1518,6 +1538,8 @@ createMethodMetaData(
          ((uint8_t *)data + exceptionTableSize + inlinedCallSize),
          sizeOfStackAtlasInBytes,
          nonmergeableBCI);
+
+   J9JITEXCEPTIONTABLE_GCSTACKATLAS_SET(data, gcStackAtlas);
 
    data->registerSaveDescription = comp->cg()->getRegisterSaveDescription();
 
@@ -1595,11 +1617,11 @@ createMethodMetaData(
    uint8_t *callSiteCursor = (uint8_t *)data + exceptionTableSize;
    if (inlinedCallSize)
       {
-      data->inlinedCalls = (void*)callSiteCursor;
+      J9JITEXCEPTIONTABLE_INLINEDCALLS_SET(data, (void*)callSiteCursor);
       }
    else
       {
-      data->inlinedCalls = NULL;
+      J9JITEXCEPTIONTABLE_INLINEDCALLS_SET(data, NULL);
       }
 
    // AOT RAS output if tracerelocatableData[Details]CG requested
@@ -1629,20 +1651,20 @@ createMethodMetaData(
          {
          J9Class *j9clazz = ((TR_ResolvedJ9Method*)vmMethod)->constantPoolHdr();
          J9CLASS_EXTENDED_FLAGS_SET(j9clazz, J9ClassContainsJittedMethods);
-         data->prevMethod = NULL;
-         data->nextMethod = j9clazz->jitMetaDataList;
+         J9JITEXCEPTIONTABLE_PREVMETHOD_SET(data, NULL);
+         J9JITEXCEPTIONTABLE_NEXTMETHOD_SET(data, j9clazz->jitMetaDataList);
          if (j9clazz->jitMetaDataList)
-            j9clazz->jitMetaDataList->prevMethod = data;
+            J9JITEXCEPTIONTABLE_PREVMETHOD_SET(j9clazz->jitMetaDataList, data);
          j9clazz->jitMetaDataList = data;
          }
       else
          {
          J9ClassLoader * classLoader = ((TR_ResolvedJ9Method*)vmMethod)->getClassLoader();
          classLoader->flags |= J9CLASSLOADER_CONTAINS_JITTED_METHODS;
-         data->prevMethod = NULL;
-         data->nextMethod = classLoader->jitMetaDataList;
+         J9JITEXCEPTIONTABLE_PREVMETHOD_SET(data, NULL);
+         J9JITEXCEPTIONTABLE_NEXTMETHOD_SET(data, classLoader->jitMetaDataList);;
          if (classLoader->jitMetaDataList)
-            classLoader->jitMetaDataList->prevMethod = data;
+            J9JITEXCEPTIONTABLE_PREVMETHOD_SET(classLoader->jitMetaDataList, data);
          classLoader->jitMetaDataList = data;
          }
       }
@@ -1690,9 +1712,12 @@ createMethodMetaData(
            CUmodule ptr (for ptxSourceID = 0, deviceID = 7)
            ... repeat comp->getGPUPtxCount() times ...
       */
+#if defined(J9VM_OPT_SNAPSHOTS)
+     TR_ASSERT_FATAL(false, "GPU metadata is not safe for snapshotting");
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
       GpuMetaData* gpuMetaDataLocation = (GpuMetaData*)((uint8_t*)data + gpuMetaDataOffset);
-      data->gpuCode = (void*)gpuMetaDataLocation;
+      J9JITEXCEPTIONTABLE_GPUCODE_SET(data, (void*)gpuMetaDataLocation);
 
       char* gpuMethodSignatureLocation = (char*)((uint8_t*)data + gpuMethodSignatureOffset);
       gpuMetaDataLocation->methodSignature = gpuMethodSignatureLocation;
@@ -1720,13 +1745,26 @@ createMethodMetaData(
        comp->getOption(TR_EnableHardwareProfileIndirectDispatch) &&
        comp->getOption(TR_EnableMetadataBytecodePCToIAMap))
       {
+#if defined(J9VM_OPT_SNAPSHOTS)
+     TR_ASSERT_FATAL(false, "RI metadata is not safe for snapshotting");
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
       void *bytecodePCToIAMapLocation = (void *)((uint8_t*)data + bytecodePCToIAMapOffset);
-      data->riData = bytecodePCToIAMapLocation;
+      J9JITEXCEPTIONTABLE_RIDATA_SET(data, bytecodePCToIAMapLocation);
       }
 
    if (comp->getOption(TR_TraceCG) && comp->getOutFile() != NULL)
       {
       comp->getDebug()->print(data, vmMethod, fourByteOffsets);
+      }
+
+   if (comp->getGenerateReadOnlyCode())
+      {
+      J9::PrivateLinkage::LinkageInfo *compLinkageInfo = comp->getLinkageInfo();
+      J9::PrivateLinkage::LinkageInfo *metadataLinkageInfo =
+            reinterpret_cast<J9::PrivateLinkage::LinkageInfo *>(&(data->linkageInfoWord));
+
+      metadataLinkageInfo->init(compLinkageInfo);
+      compLinkageInfo->invalidate();
       }
 
    return data;

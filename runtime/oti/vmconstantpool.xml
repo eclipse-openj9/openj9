@@ -433,4 +433,5 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<staticfieldref class="com/ibm/oti/vm/VM" name="GLR_MINIMUM_RESERVED_RATIO" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="GLR_CANCEL_ABSOLUTE_THRESHOLD" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="GLR_MINIMUM_LEARNING_RATIO" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="EXTENDED_RUNTIME_FLAGS2" signature="I"/>
 </vmconstantpool>

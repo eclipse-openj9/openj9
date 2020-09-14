@@ -61,6 +61,7 @@
 #include "env/StackMemoryRegion.hpp"
 #include "env/jittypes.h"
 #include "env/ClassTableCriticalSection.hpp"
+#include "env/PersistentCHTable.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "compile/CompilationException.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
@@ -91,6 +92,7 @@
 #include "env/VMJ9.h"
 #include "env/annotations/AnnotationBase.hpp"
 #include "runtime/MethodMetaData.h"
+#include "runtime/RuntimeAssumptions.hpp"
 #include "env/J9JitMemory.hpp"
 #include "env/J9SegmentCache.hpp"
 #include "env/SystemSegmentProvider.hpp"
@@ -4251,6 +4253,29 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
 
    entry._tryCompilingAgain = false; // this field may be set by compile()
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+   if (IS_RESTORE_RUN(compThread->javaVM) && entry.getMethodDetails().isOrdinaryMethod())
+      {
+      TR_PersistentCHTable * cht = compInfo->getPersistentInfo()->getPersistentCHTable();
+      if (!cht->isAccessible() && !cht->failedToActivate())
+         {
+         TR_J9VMBase *fej9 = TR_J9VMBase::get(compInfo->getJITConfig(), compThread);
+
+         bool alreadyHaveVMAccess = ((compThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) != 0);
+         if (!alreadyHaveVMAccess)
+            compThread->javaVM->internalVMFunctions->internalAcquireVMAccess(compThread);
+         compThread->javaVM->internalVMFunctions->acquireExclusiveVMAccess(compThread);
+
+         if (!cht->isActive())
+            cht->activate(compThread, fej9, compInfo);
+
+         compThread->javaVM->internalVMFunctions->releaseExclusiveVMAccess(compThread);
+         if (!alreadyHaveVMAccess)
+            compThread->javaVM->internalVMFunctions->internalReleaseVMAccess(compThread);
+         }
+      }
+#endif
+
    // The following call will return with compilation monitor and the
    // queue slot (entry) monitor in hand
    //
@@ -5463,7 +5488,9 @@ void TR::CompilationInfo::recycleCompilationEntry(TR_MethodToBeCompiled *entry)
             _methodPoolSize--;
             crt->shutdown(); // free the monitor and string associated with it
             PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
+
             j9mem_free_memory(crt);
+
             crt = prev->_next;
             }
          else
@@ -8058,6 +8085,10 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   }
                }
 
+            TR_PersistentCHTable *cht = that->_compInfo.getPersistentInfo()->getPersistentCHTable();
+            if (cht && !cht->isActive())
+               p->_optimizationPlan->setDisableCHOpts();
+
             // Set up options for this compilation. An option subset might apply
             // to the method, either via an option set index in the limitfile or
             // via a regular expression that matches the method.
@@ -9322,6 +9353,9 @@ TR::CompilationInfoPerThreadBase::compile(
                }
             compiler->failCompilation<J9::MetaDataCreationFailure>("Metadata creation failure");
             }
+         TR::SentinelRuntimeAssumption *sentinel = *reinterpret_cast<TR::SentinelRuntimeAssumption **>(compiler->getMetadataAssumptionList());
+         TR_ASSERT_FATAL(sentinel, "sentinel can't be NULL\n");
+         sentinel->setOwningMetadata(metaData);
 
          if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
             {
@@ -9644,6 +9678,7 @@ TR::CompilationInfo::emitJvmpiCallSites(TR::Compilation *&compiler, J9VMThread *
       }
 
    ALWAYS_TRIGGER_J9HOOK_JIT_COMPILED_METHOD_LOAD(_jitConfig->hookInterface, vmThread, _method, buffer, bufferCursor - buffer, NULL);
+
    j9mem_free_memory(buffer);
    }
 
@@ -10035,6 +10070,7 @@ TR::CompilationInfo::emitJvmpiExtendedDataBuffer(TR::Compilation *&compiler, J9V
    // Call event hook
    if (J9_EVENT_IS_HOOKED(_jitConfig->javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
       ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(_jitConfig->javaVM->hookInterface, vmThread, _method, buffer, bufferCursor - buffer, "JIT inlined body", NULL);
+
    j9mem_free_memory(buffer);
    }
 
@@ -10431,7 +10467,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   // reclaim code memory so we can use it for something else
                   TR::CodeCacheManager::instance()->addFreeBlock(static_cast<void *>(metaData), reinterpret_cast<uint8_t *>(metaData->startPC));
 
-                  metaData->constantPool = 0; // mark metadata as unloaded
+                  J9JITEXCEPTIONTABLE_CONSTANTPOOL_SET(metaData, NULL); // mark metadata as unloaded
 
                   TR_DataCache *dataCache = (TR_DataCache*)comp->getReservedDataCache();
                   TR_ASSERT(dataCache, "A dataCache must be reserved for AOT compilations\n");
@@ -10495,7 +10531,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   compInfo->getPersistentInfo()->getRuntimeAssumptionTable()->reclaimAssumptions(comp->getMetadataAssumptionList(), NULL);
                   metaData->runtimeAssumptionList = NULL;
 
-                  metaData->constantPool = 0; // mark metadata as unloaded
+                  J9JITEXCEPTIONTABLE_CONSTANTPOOL_SET(metaData, NULL); // mark metadata as unloaded
                   }
 
                if (entry->_compInfoPT)

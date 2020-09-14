@@ -129,6 +129,27 @@ class S390VirtualUnresolvedSnippet : public TR::S390VirtualSnippet
    TR::Instruction *getIndirectCallInstruction() {return indirectCallInstruction;}
    };
 
+class S390VirtualUnresolvedReadOnlySnippet : public TR::Snippet
+   {
+   intptr_t resolveVirtualDataAddress;
+
+   TR::LabelSymbol *loadVTableOffsetLabel;
+
+   TR::LabelSymbol *doneLabel;
+
+   public:
+   S390VirtualUnresolvedReadOnlySnippet(TR::CodeGenerator *cg, TR::Node *callNode, TR::LabelSymbol *lab, TR::LabelSymbol *loadVTableOffsetLabel, TR::LabelSymbol *doneLabel, intptr_t resolveVirtualDataAddress)
+      : TR::Snippet(cg, callNode, lab, false), loadVTableOffsetLabel(loadVTableOffsetLabel), doneLabel(doneLabel), resolveVirtualDataAddress(resolveVirtualDataAddress)
+      {
+      }
+   
+   virtual Kind getKind() { return IsResolveVirtualDispatchReadOnlyData; }
+
+   virtual uint8_t *emitSnippetBody();
+
+   virtual uint32_t getLength(int32_t estimatedSnippetStart);
+   };
+
 class J9S390InterfaceCallDataSnippet : public TR::S390ConstantDataSnippet
    {
    TR::Instruction * _firstCLFI;

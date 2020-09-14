@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,7 +89,7 @@ TR_TranslationArtifactManager::addCodeCache(TR::CodeCache *codeCache)
    bool success = false;
    TR_ASSERT(codeCache, "codeCache must not be null");
    TR_VMExclusiveAccess exclusiveAccess(_vm);
-   J9JITHashTable *newTable = hash_jit_allocate(_portLibrary, reinterpret_cast<UDATA>(codeCache->getCodeBase()), reinterpret_cast<UDATA>(codeCache->getCodeTop()) );
+   J9JITHashTable *newTable = hash_jit_allocate(_vm, reinterpret_cast<UDATA>(codeCache->getCodeBase()), reinterpret_cast<UDATA>(codeCache->getCodeTop()) );
    if (newTable)
       {
       success = (avl_insert(_translationArtifacts, (J9AVLTreeNode *) newTable) != NULL);
@@ -179,7 +179,7 @@ TR_TranslationArtifactManager::insertRange(J9JITExceptionTable *artifact, UDATA 
    updateCache(artifact->startPC);
    if (_cachedHashTable)
       {
-      insertSuccess = (hash_jit_artifact_insert_range(_portLibrary, _cachedHashTable, artifact, startPC, endPC) == 0);
+      insertSuccess = (hash_jit_artifact_insert_range(_vm, _cachedHashTable, artifact, startPC, endPC) == 0);
       }
    return insertSuccess;
    }

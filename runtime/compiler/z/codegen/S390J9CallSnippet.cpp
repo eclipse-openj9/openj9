@@ -33,6 +33,8 @@
 #include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "objectfmt/GlobalFunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/Runtime.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
@@ -1570,3 +1572,82 @@ TR::S390JNICallDataSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    trfprintf(pOutFile, "DC   \t%p \t\t# targetAddress",*((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
 }
+
+uint8_t *
+TR::S390VirtualUnresolvedReadOnlySnippet::emitSnippetBody()
+   {
+
+   uint8_t *cursor = cg()->getBinaryBufferCursor();
+   getSnippetLabel()->setCodeLocation(cursor);
+   TR::Node *callNode = getNode();
+
+   TR::SymbolReference *resolveVirtualDispatchReadOnlySymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390virtualUnresolvedHelperReadOnly,
+                                                                                                               false, false, false);
+   TR::GlobalFunctionCallData dataDestination(resolveVirtualDispatchReadOnlySymRef, callNode, cursor, cg(), self());
+
+   cursor = cg()->getObjFmt()->encodeGlobalFunctionCall(dataDestination);
+
+   uint8_t *helperCallRA = cursor;
+   TR_ASSERT_FATAL(cg()->canUseRelativeLongInstructions(resolveVirtualDataAddress), "resolveVirtualData %p is outside relative immediate range", resolveVirtualDataAddress);
+   *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(resolveVirtualDataAddress - (intptr_t)helperCallRA);
+   cursor += sizeof(int32_t);
+
+   intptr_t loadResolvedVtableOffsetLabelAddress = reinterpret_cast<intptr_t>(loadVTableOffsetLabel->getCodeLocation());
+   *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(loadResolvedVtableOffsetLabelAddress - (intptr_t)helperCallRA);
+   cursor += sizeof(int32_t);
+
+   intptr_t doneLabelAddress = reinterpret_cast<intptr_t>(doneLabel->getCodeLocation());
+   *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(doneLabelAddress - (intptr_t)helperCallRA);
+   cursor += sizeof(int32_t);
+
+   return cursor;
+
+   }
+
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::S390VirtualUnresolvedReadOnlySnippet *snippet)
+   {
+   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
+   TR::SymbolReference *resolveVirtualDispatchReadOnlySymRef = _cg->getSymRef(TR_S390virtualUnresolvedHelperReadOnly);
+
+   TR::SymbolReference *methodSymRef = snippet->getNode()->getSymbolReference();
+   // TODO: Need the address of the ccGlobalFunctionCallData   
+   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Virtual Unresolved Call Snippet");
+   printPrefix(pOutFile, NULL, bufferPos, 6);
+   trfprintf(pOutFile, "LGRL \tGPR14, <%p>\t# Load address of the Helper Method, targetAddress = <%p>",
+                    (void *)*(int32_t*)(bufferPos+sizeof(int16_t)),
+                    (void*)(2 * (uintptr_t)*(bufferPos+sizeof(int16_t)) + reinterpret_cast<uintptr_t>(bufferPos)));
+   bufferPos += 6;
+
+   printPrefix(pOutFile, NULL, bufferPos, 2);
+   trfprintf(pOutFile, "BASR \tGPR14, GPR14\t# Branch to Helper");
+   bufferPos += 2;
+
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(int32_t));
+   trfprintf(pOutFile, "<%p>\t# RIP offset to vtabledata",
+                    (void*)*(int32_t*)bufferPos);
+   bufferPos += sizeof(int32_t);
+
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(int32_t));
+   trfprintf(pOutFile, "<%p>\t# RIP offset to vtable load instruction in mainline",
+                    (void*)*(int32_t*)bufferPos);
+   bufferPos += sizeof(int32_t);
+
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(int32_t));
+   trfprintf(pOutFile, "<%p>\t# RIP offset to post vtable dispatch sequence",
+                    (void*)*(int32_t*)bufferPos);
+
+   }
+
+
+uint32_t
+TR::S390VirtualUnresolvedReadOnlySnippet::getLength(int32_t estimatedSnippetStart)
+   {
+   // TODO: Need to get the length of the call from the GlobalFunctionCall Data, this hard-coded way is not recommended
+   return    6 /*LGRL*/ 
+           + 2 /*BASR*/
+           + sizeof(int32_t) /*RIP offset to vtableData*/
+           + sizeof(int32_t) /*RIP offset to vtable load instruction in mainline*/
+           + sizeof(int32_t); /*RIP offset to post vtable dispatch sequence*/
+   }
+

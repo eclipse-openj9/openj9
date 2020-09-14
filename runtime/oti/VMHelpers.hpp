@@ -1634,6 +1634,20 @@ exit:
 		}
 	}
 
+	static UDATA
+	findNativeMethodFrameImpl(J9VMThread *currentThread, J9StackWalkState *walkState)
+	{
+		UDATA rc = J9_STACKWALK_KEEP_ITERATING;
+		J9Method *method = walkState->method;
+		
+		if ((NULL == method) || J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccNative)) {
+			walkState->userData1 = (void *) walkState->sp;
+			walkState->userData2 = (void *) walkState->literals;
+			walkState->userData3 = (void *) walkState->arg0EA;
+		}
+		return rc;
+	}
+
 	/**
 	 * Find the J9SFJNINativeMethodFrame representing the current native.
 	 *
@@ -1644,7 +1658,21 @@ exit:
 	static VMINLINE J9SFJNINativeMethodFrame*
 	findNativeMethodFrame(J9VMThread *currentThread)
 	{
-		return (J9SFJNINativeMethodFrame*)((UDATA)currentThread->sp + (UDATA)currentThread->literals);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (J9_ARE_ALL_BITS_SET(currentThread->privateFlags2, J9_PRIVATE_FLAGS2_RESTORE_MAINTHREAD)) {
+			J9JavaVM *vm = currentThread->javaVM;
+			J9StackWalkState walkState = {0};
+			walkState.walkThread = currentThread;
+			walkState.frameWalkFunction = findNativeMethodFrameImpl;
+			walkState.skipCount = 0;
+			walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_ITERATE_FRAMES;
+			vm->walkStackFrames(currentThread, &walkState);
+			return (J9SFJNINativeMethodFrame*)((U_8*)walkState.sp - sizeof(J9SFJNINativeMethodFrame));
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			return (J9SFJNINativeMethodFrame*)((UDATA)currentThread->sp + (UDATA)currentThread->literals);
+		}
 	}
 
 	/**

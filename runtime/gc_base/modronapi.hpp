@@ -112,6 +112,13 @@ UDATA ownableSynchronizerObjectCreated(J9VMThread *vmThread, j9object_t object);
  * @param isFastHCR Flag to indicate wether it replacement was done via fastHCR or not
  */
 void j9gc_notifyGCOfClassReplacement(J9VMThread *vmThread, J9Class *originalClass, J9Class *replacementClass, UDATA isFastHCR);
-}
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+UDATA j9gc_enter_heap_snapshot_mode(J9VMThread *thread);
+UDATA j9gc_leave_heap_snapshot_mode(J9VMThread *thread);
+UDATA j9gc_register_for_snapshot(J9VMThread *thread);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
+} /* extern "C" */
 
 #endif /* MODRONAPI_HPP_ */

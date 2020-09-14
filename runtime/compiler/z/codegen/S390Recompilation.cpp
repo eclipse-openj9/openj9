@@ -549,7 +549,13 @@ void TR_S390Recompilation::postCompilation()
    if(!couldBeCompiledAgain()) return;
 
    uint8_t  *startPC = _compilation->cg()->getCodeStart();
-   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
+
+   J9::PrivateLinkage::LinkageInfo *linkageInfo;
+   if (_compilation->getGenerateReadOnlyCode())
+      linkageInfo = J9::PrivateLinkage::LinkageInfo::get(_compilation);
+   else
+      linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
+
    int32_t jitEntryOffset = linkageInfo->getReservedWord() & 0x0ffff;
    uint32_t * jitEntryPoint = (uint32_t*)(startPC + jitEntryOffset);
    uint32_t * saveLocn = (uint32_t*)(startPC + OFFSET_INTEP_JITEP_SAVE_RESTORE_LOCATION);

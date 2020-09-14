@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@ extern "C"
 #undef fwrite
 #endif
 
+#include "env/CompilerEnv.hpp"
 #include "env/FilePointer.hpp"
 #include "j9.h"
 #include "env/IO.hpp"
@@ -179,7 +180,9 @@ FilePointer::close(J9PortLibrary *portLib)
       j9file_sync(_fileId);
       j9file_close(_fileId);
       if (_buffer)
+         {
          j9mem_free_memory(_buffer);
+         }
       }
    else
       {

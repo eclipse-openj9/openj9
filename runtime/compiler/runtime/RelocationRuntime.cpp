@@ -455,16 +455,20 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
    if (_exceptionTableCacheEntry->type == J9_JIT_DCE_EXCEPTION_INFO)
       {
       /* Adjust exception table entires */
-      _exceptionTable->ramMethod = _method;
-      _exceptionTable->constantPool = ramCP();
-      getClassNameSignatureFromMethod(_method, _exceptionTable->className, _exceptionTable->methodName, _exceptionTable->methodSignature);
+      J9JITEXCEPTIONTABLE_RAMMETHOD_SET(_exceptionTable, _method);
+      J9ConstantPool *constantPool = ramCP();
+      J9JITEXCEPTIONTABLE_CONSTANTPOOL_SET(_exceptionTable, constantPool);
+      J9UTF8 *className = J9JITEXCEPTIONTABLE_CLASSNAME_GET(_exceptionTable);
+      J9UTF8 *methodName = J9JITEXCEPTIONTABLE_METHODNAME_GET(_exceptionTable);
+      J9UTF8 *methodSignature = J9JITEXCEPTIONTABLE_METHODSIGNATURE_GET(_exceptionTable);
+      getClassNameSignatureFromMethod(_method, className, methodName, methodSignature);
       RELO_LOG(reloLogger(), 1, "relocateAOTCodeAndData: method %.*s.%.*s%.*s\n",
-                                    J9UTF8_LENGTH(_exceptionTable->className),
-                                    J9UTF8_DATA(_exceptionTable->className),
-                                    J9UTF8_LENGTH(_exceptionTable->methodName),
-                                    J9UTF8_DATA(_exceptionTable->methodName),
-                                    J9UTF8_LENGTH(_exceptionTable->methodSignature),
-                                    J9UTF8_DATA(_exceptionTable->methodSignature));
+                                    J9UTF8_LENGTH(className),
+                                    J9UTF8_DATA(className),
+                                    J9UTF8_LENGTH(methodName),
+                                    J9UTF8_DATA(methodName),
+                                    J9UTF8_LENGTH(methodSignature),
+                                    J9UTF8_DATA(methodSignature));
 
       /* Now it is safe to perform the JITExceptionTable structure relocations */
       relocateMethodMetaData((UDATA)codeStart - (UDATA)oldCodeStart, (UDATA)_exceptionTable - (UDATA)((U_8 *)oldDataStart + _aotMethodHeaderEntry->offsetToExceptionTable + sizeof(J9JITDataCacheHeader)));
@@ -592,7 +596,7 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
          {
          TR_TranslationArtifactManager::CriticalSection updateMetaData;
 
-         jit_artifact_insert(javaVM()->portLibrary, jitConfig()->translationArtifacts, _exceptionTable);
+         jit_artifact_insert(javaVM(), jitConfig()->translationArtifacts, _exceptionTable);
 
 #if !defined(J9VM_OPT_JITSERVER)
          // Fix up RAM method
@@ -607,20 +611,20 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
          if (fej9()->isAnonymousClass((TR_OpaqueClassBlock*)j9clazz))
             {
             J9CLASS_EXTENDED_FLAGS_SET(j9clazz, J9ClassContainsJittedMethods);
-            _exceptionTable->prevMethod = NULL;
-            _exceptionTable->nextMethod = j9clazz->jitMetaDataList;
+            J9JITEXCEPTIONTABLE_PREVMETHOD_SET(_exceptionTable, NULL);
+            J9JITEXCEPTIONTABLE_NEXTMETHOD_SET(_exceptionTable, j9clazz->jitMetaDataList);
             if (j9clazz->jitMetaDataList)
-               j9clazz->jitMetaDataList->prevMethod = _exceptionTable;
+               J9JITEXCEPTIONTABLE_PREVMETHOD_SET(j9clazz->jitMetaDataList, _exceptionTable);
             j9clazz->jitMetaDataList = _exceptionTable;
             }
          else
             {
             J9ClassLoader * classLoader = j9clazz->classLoader;
             classLoader->flags |= J9CLASSLOADER_CONTAINS_JITTED_METHODS;
-            _exceptionTable->prevMethod = NULL;
-            _exceptionTable->nextMethod = classLoader->jitMetaDataList;
+            J9JITEXCEPTIONTABLE_PREVMETHOD_SET(_exceptionTable, NULL);
+            J9JITEXCEPTIONTABLE_NEXTMETHOD_SET(_exceptionTable, classLoader->jitMetaDataList);
             if (classLoader->jitMetaDataList)
-               classLoader->jitMetaDataList->prevMethod = _exceptionTable;
+               J9JITEXCEPTIONTABLE_PREVMETHOD_SET(classLoader->jitMetaDataList, _exceptionTable);
             classLoader->jitMetaDataList = _exceptionTable;
             }
          }
@@ -649,33 +653,45 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
 
    _exceptionTable->codeCacheAlloc = (UDATA) ( ((U_8 *)_exceptionTable->codeCacheAlloc) + codeRelocationAmount);
 
-   if (_exceptionTable->gcStackAtlas)
+   J9JITStackAtlas *gcStackAtlas = J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(_exceptionTable);
+   if (gcStackAtlas)
       {
       bool relocateStackAtlasFirst = classReloAmount() != 0;
 
       if (relocateStackAtlasFirst)
-         _exceptionTable->gcStackAtlas = (void *)( ((U_8 *)_exceptionTable->gcStackAtlas) + dataRelocationAmount);
-
-      J9JITStackAtlas *vmAtlas = (J9JITStackAtlas*)_exceptionTable->gcStackAtlas;
-      if (vmAtlas->internalPointerMap)
          {
-         vmAtlas->internalPointerMap = (U_8 *)( ((U_8 *)vmAtlas->internalPointerMap) + dataRelocationAmount);
+         gcStackAtlas = (J9JITStackAtlas *)( ((U_8 *)gcStackAtlas) + dataRelocationAmount);
+         J9JITEXCEPTIONTABLE_GCSTACKATLAS_SET(_exceptionTable, gcStackAtlas);
          }
 
-      if (vmAtlas->stackAllocMap)
+      U_8 *internalPointerMap = J9JITSTACKATLAS_INTERNALPOINTERMAP_GET(gcStackAtlas);
+      if (internalPointerMap)
          {
-         vmAtlas->stackAllocMap = (U_8 *)( ((U_8 *)vmAtlas->stackAllocMap) + dataRelocationAmount);
+         internalPointerMap = (U_8 *)( ((U_8 *)internalPointerMap) + dataRelocationAmount);
+         J9JITSTACKATLAS_INTERNALPOINTERMAP_SET(gcStackAtlas, internalPointerMap);
+         }
+
+      U_8 *stackAllocMap = J9JITSTACKATLAS_STACKALLOCMAP_GET(gcStackAtlas);
+      if (stackAllocMap)
+         {
+         stackAllocMap = (U_8 *)( ((U_8 *)stackAllocMap) + dataRelocationAmount);
+         J9JITSTACKATLAS_STACKALLOCMAP_SET(gcStackAtlas, stackAllocMap);
          }
 
       if (!relocateStackAtlasFirst)
-         _exceptionTable->gcStackAtlas = (void *)( ((U_8 *)_exceptionTable->gcStackAtlas) + dataRelocationAmount);
+         {
+         gcStackAtlas = (J9JITStackAtlas *)( ((U_8 *)gcStackAtlas) + dataRelocationAmount);
+         J9JITEXCEPTIONTABLE_GCSTACKATLAS_SET(_exceptionTable, gcStackAtlas);
+         }
       }
 
    // Believe this will eventually be handled via relocations
-   if (_exceptionTable->inlinedCalls)
+   void *inlinedCalls = J9JITEXCEPTIONTABLE_INLINEDCALLS_GET(_exceptionTable);
+   if (inlinedCalls)
       {
       U_32 numInlinedCallSites;
-      _exceptionTable->inlinedCalls = (void *) (((U_8 *)_exceptionTable->inlinedCalls) + dataRelocationAmount);
+      inlinedCalls = (void *) (((U_8 *)inlinedCalls) + dataRelocationAmount);
+      J9JITEXCEPTIONTABLE_INLINEDCALLS_SET(_exceptionTable, inlinedCalls);
       numInlinedCallSites = getNumInlinedCallSites(_exceptionTable);
       /* FIXME: methodInfo is not correctly fixed up.
       if (classReloAmount() && numInlinedCallSites)
@@ -720,17 +736,19 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
       _exceptionTable->bodyInfo = (void *)(persistentBodyInfo);
       }
 
+   void *riData = J9JITEXCEPTIONTABLE_RIDATA_GET(_exceptionTable);
    if (getPersistentInfo()->isRuntimeInstrumentationEnabled() &&
        TR::Options::getCmdLineOptions()->getOption(TR_EnableHardwareProfileIndirectDispatch) &&
        TR::Options::getCmdLineOptions()->getOption(TR_EnableMetadataBytecodePCToIAMap) &&
-       _exceptionTable->riData)
+       riData)
       {
-      _exceptionTable->riData = (void *) (((U_8 *)_exceptionTable->riData) + dataRelocationAmount);
+      J9JITEXCEPTIONTABLE_RIDATA_SET(_exceptionTable, (void *) (((U_8 *)riData) + dataRelocationAmount));
       }
 
 #if defined(J9VM_OPT_JITSERVER)
-   if (_exceptionTable->osrInfo)
-      _exceptionTable->osrInfo = (void *) (((U_8 *)_exceptionTable->osrInfo) + dataRelocationAmount);
+   void *osrInfo = J9JITEXCEPTIONTABLE_OSRINFO_GET(_exceptionTable);
+   if (osrInfo)
+      J9JITEXCEPTIONTABLE_OSRINFO_SET(_exceptionTable, (void *) (((U_8 *)osrInfo) + dataRelocationAmount));
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    // Reset the uninitialized bit
@@ -1151,8 +1169,8 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(TR_FrontEnd *fe)
    PORT_ACCESS_FROM_JAVAVM(javaVM());
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
-   TR_AOTHeader * aotHeader = (TR_AOTHeader *)j9mem_allocate_memory(sizeof(TR_AOTHeader), J9MEM_CATEGORY_JIT);
 
+   TR_AOTHeader * aotHeader = (TR_AOTHeader *)j9mem_allocate_memory(sizeof(TR_AOTHeader), J9MEM_CATEGORY_JIT);;
    if (aotHeader)
       {
       aotHeader->eyeCatcher = TR_AOTHeaderEyeCatcher;
@@ -1168,7 +1186,7 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(TR_FrontEnd *fe)
       aotHeader->gcPolicyFlag = javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM());
       aotHeader->lockwordOptionHashValue = getCurrentLockwordOptionHashValue(javaVM());
       aotHeader->compressedPointerShift = javaVM()->memoryManagerFunctions->j9gc_objaccess_compressedPointersShift(javaVM()->internalVMFunctions->currentVMThread(javaVM()));
-      
+
 
       if (J9_ARE_ANY_BITS_SET(javaVM()->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE))
          {
@@ -1437,7 +1455,7 @@ TR_JITServerRelocationRuntime::copyDataToCodeCache(const void *startAddress, siz
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 
-/** 
+/**
  * @brief Generate the processor feature string which is stored inside TR_AOTHeader of the SCC
  * @param[in] aotHeaderAddress : the start address of TR_AOTHeader
  * @param[out] buff : store the generated processor feautre string in this buff
@@ -1462,7 +1480,7 @@ printAOTHeaderProcessorFeatures(TR_AOTHeader * hdrInCache, char * buff, const si
    for (size_t i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
       {
       size_t numberOfBits = CHAR_BIT * sizeof(processorDescription.features[i]);
-      for (int j = 0; j < numberOfBits; j++) 
+      for (int j = 0; j < numberOfBits; j++)
          {
          if (processorDescription.features[i] & (1<<j))
             {

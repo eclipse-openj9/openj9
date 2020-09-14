@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,11 +57,11 @@ extern J9_CFUNC void   jitDecompileMethodForFramePop (J9VMThread * currentThread
 extern J9_CFUNC void   jitExceptionCaught (J9VMThread * currentThread);
 extern J9_CFUNC void   jitSingleStepRemoved (J9VMThread * currentThread);
 extern J9_CFUNC void   jitDataBreakpointAdded (J9VMThread * currentThread);
-extern J9_CFUNC void  
+extern J9_CFUNC void
 jitBreakpointedMethodCompiled (J9VMThread * currentThread, J9Method * method, void * startAddress);
 extern J9_CFUNC UDATA
 initializeFSD (J9JavaVM * vm);
-extern J9_CFUNC void 
+extern J9_CFUNC void
 induceOSROnCurrentThread(J9VMThread * currentThread);
 #if (defined(J9VM_INTERP_HOT_CODE_REPLACEMENT)) /* priv. proto (autogen) */
 extern J9_CFUNC void   jitHotswapOccurred (J9VMThread * currentThread);
@@ -85,7 +85,7 @@ extern J9_CFUNC void   c_jitDecompileOnReturn(J9VMThread * currentThread);
 extern J9_CFUNC void * j9ThunkLookupNameAndSig (void * jitConfig, void *parm);
 
 extern J9_CFUNC J9JITHashTable *avl_jit_artifact_insert_existing_table (J9AVLTree * tree, J9JITHashTable * hashTable);
-extern J9_CFUNC J9AVLTree * jit_allocate_artifacts (J9PortLibrary * portLibrary);
+extern J9_CFUNC J9AVLTree * jit_allocate_artifacts (J9JavaVM * javaVM);
 
 extern J9_CFUNC UDATA  jitWalkStackFrames (J9StackWalkState *walkState);
 extern J9_CFUNC J9JITExceptionTable * jitGetExceptionTableFromPC (J9VMThread * vmThread, UDATA jitPC);
@@ -95,8 +95,8 @@ extern J9_CFUNC void jitPrintRegisterMapArray (J9StackWalkState * walkState, cha
 #endif /* J9VM_INTERP_STACKWALK_TRACING (autogen) */
 
 
-extern J9_CFUNC J9JITHashTable *jit_artifact_add_code_cache (J9PortLibrary * portLibrary, J9AVLTree * tree, J9MemorySegment * cacheToInsert, J9JITHashTable *optionalHashTable);
-extern J9_CFUNC UDATA jit_artifact_insert (J9PortLibrary * portLibrary, J9AVLTree * tree, J9JITExceptionTable * dataToInsert);
+extern J9_CFUNC J9JITHashTable *jit_artifact_add_code_cache (J9JavaVM * javaVM, J9AVLTree * tree, J9MemorySegment * cacheToInsert, J9JITHashTable *optionalHashTable);
+extern J9_CFUNC UDATA jit_artifact_insert (J9JavaVM * javaVM, J9AVLTree * tree, J9JITExceptionTable * dataToInsert);
 extern J9_CFUNC J9JITHashTable *
 jit_artifact_protected_add_code_cache (J9JavaVM * vm, J9AVLTree * tree, J9MemorySegment * cacheToInsert, J9JITHashTable *optionalHashTable);
 extern J9_CFUNC UDATA jit_artifact_remove (J9PortLibrary * portLibrary, J9AVLTree * tree, J9JITExceptionTable * dataToDelete);

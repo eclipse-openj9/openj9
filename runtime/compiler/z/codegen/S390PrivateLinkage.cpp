@@ -39,6 +39,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/ParameterSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "infra/InterferenceGraph.hpp"
@@ -1576,6 +1577,91 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
 
    }
 
+TR::Instruction *
+J9::Z::PrivateLinkage::buildNoPatchingVirtualDispatchWithResolve(TR::Node *callNode, TR::RegisterDependencyConditions *deps,
+   TR::LabelSymbol *doneLabel, intptr_t virtualThunk)
+   {
+   struct ccResolveVirtualData
+      {
+      intptr_t cpAddress;
+      intptr_t cpIndex; // Need to allocate intptr_t for this as this is how a helper is going to access it.
+      intptr_t directMethod;
+      intptr_t j2iThunk;
+      int32_t vtableOffset;
+      };
+   
+   ccResolveVirtualData *ccResolveVirtualDataAddress = reinterpret_cast<ccResolveVirtualData *>(cg()->allocateCodeMemory(sizeof(ccResolveVirtualData), false));
+
+   if (!ccResolveVirtualDataAddress)
+      {
+      comp()->failCompilation<TR::CompilationException>("Could not allocate resovle virtual dispatch metadata");
+      }
+
+   ccResolveVirtualDataAddress->cpAddress = reinterpret_cast<intptr_t> (callNode->getSymbolReference()->getOwningMethod(comp())->constantPool());
+   ccResolveVirtualDataAddress->cpIndex = (intptr_t) (callNode->getSymbolReference()->getCPIndexForVM());
+   ccResolveVirtualDataAddress->directMethod = 0;
+   ccResolveVirtualDataAddress->j2iThunk = virtualThunk;
+   ccResolveVirtualDataAddress->vtableOffset = 0;
+
+   intptr_t resolveVirtualDataAddress = reinterpret_cast<intptr_t>(ccResolveVirtualDataAddress);
+
+   
+   TR::StaticSymbol *resolveVirtualDataSymbol =
+      TR::StaticSymbol::createWithAddress(comp()->trHeapMemory(), TR::Int32, reinterpret_cast<void *>(resolveVirtualDataAddress + offsetof(ccResolveVirtualData, vtableOffset)));
+   resolveVirtualDataSymbol->setNotDataAddress();
+   TR::SymbolReference *resolveVirtualDataSymRef = new (comp()->trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), resolveVirtualDataSymbol, 0);
+
+   // TODO: This is not needed technically. The JIT helper glue code will have set up the return address to be the
+   // label below, which it then passes off to the helper. If the helper we call ends up triggering a GC, the stack
+   // walker will use the JIT return address we passed to walk the current JIT frame and find the GC map associated
+   // with the return address. The GC map logic subtracts 1 (see jitGetMapsFromPC) which means that unless we create
+   // the GC map on an instruction before the return label, we will retrieve the wrong GC map! i.e. it will fetch
+   // whatever GC map is before this evaluator which is not what we want. Until we think of a better solution we
+   // emit a NOP here and create a GC map at this location.
+   TR::Instruction *cursor = new (cg()->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
+   cursor->setNeedsGCMap(getPreservedRegisterMapForGC());
+   
+   TR::LabelSymbol *loadResolvedVtableOffsetLabel = generateLabelSymbol(cg());
+   cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, loadResolvedVtableOffsetLabel);
+
+   // Using GPR0 as the vTableOffsetReg as it is vtableOffset is expected to be in GPR0 when calling through J2IThunk
+   TR::Register *vTableOffsetReg = deps->searchPostConditionRegister(TR::RealRegister::GPR0);
+   
+   TR_ASSERT_FATAL(cg()->canUseRelativeLongInstructions(reinterpret_cast<int64_t>(resolveVirtualDataSymbol->getStaticAddress())), "resolveVirtualDataAddress %p is outside relative immediate range", resolveVirtualDataSymbol->getStaticAddress());
+   cursor = generateRILInstruction(cg(), TR::InstOpCode::LGFRL, callNode, vTableOffsetReg, resolveVirtualDataSymRef, resolveVirtualDataSymbol->getStaticAddress());
+
+   cursor = generateRILInstruction(cg(), TR::InstOpCode::CGFI, callNode, vTableOffsetReg, 0);
+
+   TR::LabelSymbol *resolveVirtualDispatchReadOnlyDataSnippetLabel = generateLabelSymbol(cg());
+
+   TR::S390VirtualUnresolvedReadOnlySnippet *snippet = new (trHeapMemory()) TR::S390VirtualUnresolvedReadOnlySnippet(
+      cg(),
+      callNode,
+      resolveVirtualDispatchReadOnlyDataSnippetLabel,
+      loadResolvedVtableOffsetLabel,
+      doneLabel,
+      resolveVirtualDataAddress);
+   TR::RegisterDependencyConditions * preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(deps->getPreConditions(), NULL,
+                                                                                                         deps->getAddCursorForPre(), 0, cg());
+   generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, generateLabelSymbol(cg()), preDeps);
+   
+   cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRCL, callNode, 0x8, snippet, NULL, cg());
+   cursor->setNeedsGCMap(0xFFFFFFFF);
+   
+   TR::RegisterDependencyConditions *postDepsForCall = new (trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg());
+   TR::Register * killRegRA = cg()->allocateRegister();
+   TR::Register * killRegEP = cg()->allocateRegister();
+   postDepsForCall->addPostCondition(killRegRA, cg()->getReturnAddressRegister());
+   postDepsForCall->addPostCondition(killRegEP, cg()->getEntryPointRegister());
+   generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, generateLabelSymbol(cg()), postDepsForCall);
+   
+   cg()->addSnippet(snippet);
+   cg()->stopUsingRegister(killRegRA);
+   cg()->stopUsingRegister(killRegEP);
+   
+   return cursor;
+   }
+
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::PrivateLinkage::buildVirtualDispatch - build virtual function call
 ////////////////////////////////////////////////////////////////////////////////
@@ -1667,7 +1753,6 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
       TR::LabelSymbol * virtualLabel     = NULL;
       TR::LabelSymbol * doneVirtualLabel = generateLabelSymbol(cg());
       int32_t offset = comp()->compileRelocatableCode() ? 0: methodSymRef->getOffset();
-
       if (comp()->getOption(TR_TraceCG))
          traceMsg(comp(), "Virtual call with offset %d\n", offset);
 
@@ -1699,7 +1784,6 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          {
          postDeps->addPostCondition(RegThis, TR::RealRegister::AssignAny);
          }
-
       if (methodSymRef->isUnresolved() || comp()->compileRelocatableCode())
          {
          if (comp()->getOption(TR_TraceCG))
@@ -1709,15 +1793,21 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          // moving this vft register dependency to BASR pre-deps.
          postDeps->addPostConditionIfNotAlreadyInserted(vftReg, TR::RealRegister::AssignAny);
 
-         // Emit the resolve snippet and BRASL to call it
-         //
-         TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
-         unresolvedSnippet = new (trHeapMemory()) TR::S390VirtualUnresolvedSnippet(cg(), callNode, snippetLabel, sizeOfArguments, virtualThunk);
-         cg()->addSnippet(unresolvedSnippet);
-         //generateSnippetCall extracts preDeps from dependencies and puts them on BRASL
-         TR::Instruction * gcPoint =
-            generateSnippetCall(cg(), callNode, unresolvedSnippet, dependencies, methodSymRef);
-         gcPoint->setNeedsGCMap(getPreservedRegisterMapForGC());
+         if (comp()->getGenerateReadOnlyCode() && methodSymRef->isUnresolved())
+            {
+            TR::Instruction *gcPoint = buildNoPatchingVirtualDispatchWithResolve(callNode, dependencies, doneVirtualLabel , reinterpret_cast<intptr_t>(virtualThunk));
+            }
+         else
+            {
+            // Emit the resolve snippet and BRASL to call it
+            //
+            TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
+            unresolvedSnippet = new (trHeapMemory()) TR::S390VirtualUnresolvedSnippet(cg(), callNode, snippetLabel, sizeOfArguments, virtualThunk);
+            cg()->addSnippet(unresolvedSnippet);
+            //generateSnippetCall extracts preDeps from dependencies and puts them on BRASL
+            TR::Instruction * gcPoint = generateSnippetCall(cg(), callNode, unresolvedSnippet, dependencies, methodSymRef);
+            gcPoint->setNeedsGCMap(getPreservedRegisterMapForGC());
+            }
          }
       else
          {
@@ -1947,8 +2037,12 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          {
          classReg = vftReg;
          }
-
-      if (!TR::Compiler->cls.classesOnHeap() && offset >= 0 && methodSymRef == comp()->getSymRefTab()->findObjectNewInstanceImplSymbol())
+      
+      if (comp()->getGenerateReadOnlyCode() && methodSymRef->isUnresolved())
+         {
+         cursor = generateRXInstruction(cg(), TR::InstOpCode::LG, callNode, RegRA, generateS390MemoryReference(classReg, RegZero, 0, cg()));
+         }
+      else if (!TR::Compiler->cls.classesOnHeap() && offset >= 0 && methodSymRef == comp()->getSymRefTab()->findObjectNewInstanceImplSymbol())
          {
          cursor =
             generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, RegRA, generateS390MemoryReference(classReg, offset, cg()));
@@ -2007,6 +2101,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          }
       else
          {
+         generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, doneVirtualLabel, postDeps);
          gcPoint->setDependencyConditions(postDeps);
          }
       }

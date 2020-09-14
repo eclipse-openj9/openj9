@@ -1966,6 +1966,15 @@ J9::Options::fePreProcess(void * base)
    if (!TR::Compiler->target.cpu.isZ())
       self()->setOption(TR_DisableAOTBytesCompression);
 
+   if (IS_SNAPSHOT_RUN(vm))
+      {
+      self()->setOption(TR_ForceGenerateReadOnlyCode);
+      }
+   else if (IS_RESTORE_RUN(vm))
+      {
+      /* Options to set on the restore run */
+      }
+
 #if defined(J9VM_OPT_JITSERVER)
    static bool JITServerAlreadyParsed = false;
    if (!JITServerAlreadyParsed) // Avoid processing twice for AOT and JIT and produce duplicate messages
@@ -2627,6 +2636,42 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
        && TR::Options::_aggressivenessLevel == TR::Options::AGGRESSIVE_AOT)
       {
       TR::Options::_coldUpgradeSampleThreshold = 10;
+      }
+
+   if (self()->getOption(TR_ForceGenerateReadOnlyCode))
+      {
+      self()->setOption(TR_DisableVirtualGuardNOPing);
+
+      /* Need to disable HCR because TR_DisableVirtualGuardNOPing will
+       * result in the compiler not generating HCR guards and hence
+       * assumptions for class redefinition. Additionally, there is no
+       * need to support HCR in the first milestone
+       */
+      self()->setOption(TR_DisableNextGenHCR);
+      self()->setOption(TR_EnableHCR, false);
+      self()->setOption(TR_FullSpeedDebug, false);
+      self()->setOption(TR_EnableOSR, false);
+      self()->setOption(TR_DisableOSR);
+
+      /* Disable recompilation */
+      self()->setOption(TR_InhibitRecompilation);
+      self()->setAllowRecompilation(false);
+
+      /* Disable prex */
+      self()->setDisabled(OMR::invariantArgumentPreexistence, true);
+
+      /* Disable CH Opts on the global options on the snapshot run (see
+       * https://github.ibm.com/runtimes/openj9-stratum/issues/78). On
+       * the restore run however, the global options should not have this
+       * set so that the CHT can be populated later on. The per compilation
+       * options object will have CH Opts disabled because of the CHT state.
+       */
+#if defined(J9VM_OPT_SNAPSHOTS)
+      if (IS_SNAPSHOT_RUN(javaVM))
+         {
+         self()->setOption(TR_DisableCHOpts);
+         }
+#endif
       }
 
 #if defined(TR_HOST_ARM64)

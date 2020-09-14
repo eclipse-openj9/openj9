@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,8 +19,8 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
- 
- 
+
+
 /**
  * @file
  * @ingroup GC_Modron_Startup
@@ -84,7 +84,7 @@ internalAllocateMemorySpaceWithMaximumWithEnv(MM_EnvironmentBase *env, J9JavaVM 
 	MM_Heap *heap = extensions->heap;
 
 	/* create set of parameters and clean them */
-	MM_InitializationParameters parameters;	
+	MM_InitializationParameters parameters;
 	MM_Configuration *configuration = extensions->configuration;
 
 	/*
@@ -94,9 +94,9 @@ internalAllocateMemorySpaceWithMaximumWithEnv(MM_EnvironmentBase *env, J9JavaVM 
 	configuration->prepareParameters(javaVM->omrVM, minimumSpaceSize, minimumNewSpaceSize, initialNewSpaceSize, maximumNewSpaceSize,
 					 minimumTenureSpaceSize, initialTenureSpaceSize, maximumTenureSpaceSize,
 					 memoryMax, tenureFlags, &parameters);
-	
+
 	memorySpace = configuration->createDefaultMemorySpace(env, heap, &parameters);
-	
+
 	if(NULL == memorySpace) {
 		goto cleanup;
 	}
@@ -131,5 +131,81 @@ cleanup:
 	/* TODO: Cleanup for the memorySpace class (if necessary) */
 	return NULL;
 }
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+
+/**
+ * Low level memory space allocation, where the space is being initialized with active memory pulled from a snapshotted heap.
+ */
+
+/**
+ * Shim for low level Memory Spaces allocation which only exists to create the correct fake env for internalAllocateMemorySpaceWithMaximumWithEnv.
+ * Provided sizes are already adjusted (aligned etc).
+ * @return the pointer to the list (pool) of memory spaces allocated
+ *
+ * In this variant, the memory space will be initialized with active memory as
+ */
+MM_MemorySpace *
+internalAllocateMemorySpaceForRestore(J9JavaVM *javaVM, UDATA minimumSpaceSize, UDATA restoreNewSpaceSize, UDATA minimumNewSpaceSize, UDATA initialNewSpaceSize, UDATA maximumNewSpaceSize, UDATA restoreTenureSpaceSize, UDATA minimumTenureSpaceSize, UDATA initialTenureSpaceSize, UDATA maximumTenureSpaceSize, UDATA memoryMax, UDATA baseAddress, UDATA tenureFlags)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	Assert_MM_true(extensions->isStandardGC());
+	MM_EnvironmentBase env(javaVM->omrVM);
+	return internalAllocateMemorySpaceForRestoreWithEnv(&env, javaVM, minimumSpaceSize, restoreNewSpaceSize, minimumNewSpaceSize, initialNewSpaceSize, maximumNewSpaceSize, restoreTenureSpaceSize, minimumTenureSpaceSize, initialTenureSpaceSize, maximumTenureSpaceSize, memoryMax, baseAddress, tenureFlags);
+}
+
+/**
+ * Low level Memory Spaces allocation.
+ * Provided sizes are already adjusted (aligned etc).
+ * @return the pointer to the list (pool) of memory spaces allocated
+ */
+MM_MemorySpace *
+internalAllocateMemorySpaceForRestoreWithEnv(MM_EnvironmentBase *env, J9JavaVM *javaVM, UDATA minimumSpaceSize, UDATA restoreNewSpaceSize, UDATA minimumNewSpaceSize, UDATA initialNewSpaceSize, UDATA maximumNewSpaceSize, UDATA restoreTenureSpaceSize, UDATA minimumTenureSpaceSize, UDATA initialTenureSpaceSize, UDATA maximumTenureSpaceSize, UDATA memoryMax, UDATA baseAddress, UDATA tenureFlags)
+{
+	MM_MemorySpace *memorySpace = NULL;
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	MM_Heap *heap = extensions->heap;
+
+	/* create set of parameters and clean them */
+	MM_InitializationParameters parameters;
+	MM_Configuration *configuration = extensions->configuration;
+
+	/*
+	 * This function uses goto! All function-scope variables must be declared above
+	 * this comment. Failure to do so will cause compile errors on GNU and IBM compilers.
+	 */
+	configuration->prepareParameters(javaVM->omrVM, minimumSpaceSize,
+	                                 restoreNewSpaceSize, minimumNewSpaceSize, initialNewSpaceSize, maximumNewSpaceSize,
+	                                 restoreTenureSpaceSize, minimumTenureSpaceSize, initialTenureSpaceSize, maximumTenureSpaceSize,
+	                                 memoryMax, tenureFlags, &parameters);
+
+	memorySpace = configuration->createDefaultMemorySpaceForRestore(env, heap, &parameters);
+
+	if(NULL == memorySpace) {
+		goto cleanup;
+	}
+
+	if(!memorySpace->restore(env)) {
+		goto cleanup;
+	}
+
+	TRIGGER_J9HOOK_MM_PRIVATE_HEAP_NEW(
+		MM_GCExtensions::getExtensions(javaVM)->privateHookInterface,
+		env->getOmrVMThread(),
+		memorySpace);
+
+	if (NULL == heap->getDefaultMemorySpace()) {
+		heap->setDefaultMemorySpace(memorySpace);
+	}
+
+	return memorySpace;
+
+cleanup:
+
+	/* TODO: Cleanup for the memorySpace class (if necessary) */
+	return NULL;
+}
+
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 } /* extern "C" */

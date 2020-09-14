@@ -392,7 +392,7 @@ doJCLCheck(J9JavaVM *vm, J9Class *j9VMInternalsClass)
  *
  * @return a JNI result code
  */
-static jint
+jint
 initializeStaticIntField(J9VMThread *vmThread, J9Class *clazz, UDATA vmCPIndex, I_32 value)
 {
 	jint rc = initializeStaticField(vmThread->javaVM, vmCPIndex, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
@@ -540,6 +540,13 @@ intializeVMConstants(J9VMThread *currentThread)
 		goto done;
 	}
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+	rc = initializeStaticIntField(currentThread, vmClass, J9VMCONSTANTPOOL_COMIBMOTIVMVM_EXTENDED_RUNTIME_FLAGS2, (I_32)vm->extendedRuntimeFlags2);
+	if (JNI_OK != rc) {
+		goto done;
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
 	/* Initialize constant int fields */
 	for (i = 0; i < sizeof(intVMConstants) / sizeof(J9IntConstantMapping); ++i) {
 			UDATA vmCPIndex = intVMConstants[i].vmCPIndex;
@@ -675,9 +682,16 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	 */
 	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_CLASS_OBJECT_ASSIGNED;
 
-	if (vmFuncs->internalCreateBaseTypePrimitiveAndArrayClasses(vmThread) != 0) {
-		return 1;
+#if	defined(J9VM_OPT_SNAPSHOTS)
+	/* in a restore run the primitive classes have already been created */
+	if (!IS_RESTORE_RUN(vm)) {
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		if (vmFuncs->internalCreateBaseTypePrimitiveAndArrayClasses(vmThread) != 0) {
+			return 1;
+		}
+#if defined(J9VM_OPT_SNAPSHOTS)
 	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	/* Initialize early since sendInitialize() uses this */ 
 	if (initializeStaticMethod(vm, J9VMCONSTANTPOOL_JAVALANGJ9VMINTERNALS_INITIALIZATIONALREADYFAILED)) {

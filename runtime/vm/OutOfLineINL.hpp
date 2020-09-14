@@ -130,6 +130,28 @@ public:
  		currentThread->jitStackFrameFlags = nativeMethodFrame->specialFrameFlags & J9_SSF_JIT_NATIVE_TRANSITION_FRAME;
  		restoreSpecialStackFrameLeavingArgs(currentThread, ((UDATA*)(nativeMethodFrame + 1)) - 1);
  	}
+ 	
+ 	/*
+ 	 * Equivalent to the interpreter recordJNIReturn function. Used to pop
+ 	 * JNI local frames and return a handle to the native callout frame.
+ 	 *
+ 	 * @param currentThread thread token
+ 	 * @param bp stack base pointer
+ 	 * @return native callout frame handle
+ 	 */
+ 	static VMINLINE J9SFJNINativeMethodFrame*
+	recordJNIReturn(J9VMThread *currentThread, UDATA *bp)
+	{
+		J9SFJNINativeMethodFrame *frame = ((J9SFJNINativeMethodFrame*)(bp + 1)) - 1;
+		UDATA flags = frame->specialFrameFlags;
+		if (flags & J9_SSF_JNI_REFS_REDIRECTED) {
+			freeStacks(currentThread, bp);
+		}
+		if (flags & J9_SSF_CALL_OUT_FRAME_ALLOC) {
+			jniPopFrame(currentThread, JNIFRAME_TYPE_INTERNAL);
+		}
+		return frame;
+	}
 };
 
 #include "objectreferencesmacros_define.inc"

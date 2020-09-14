@@ -231,7 +231,7 @@ typedef struct TR_MapIterator
    else \
       { \
       nextStackMap = GET_REGISTER_MAP_CURSOR(fourByteOffset, stackMap); \
-      if ((*(U_32*)nextStackMap & INTERNAL_PTR_REG_MASK) && atlas->internalPointerMap) \
+      if ((*(U_32*)nextStackMap & INTERNAL_PTR_REG_MASK) && J9JITSTACKATLAS_INTERNALPOINTERMAP_GET(atlas)) \
          nextStackMap += (*(nextStackMap + 4) + 1);   \
       nextStackMap += 3 + atlas->numberOfMapBytes; \
       if (((*nextStackMap) & 128) != 0) \

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@
 
 
 
-UDATA jit_artifact_insert(J9PortLibrary * portLibrary, J9AVLTree * tree, J9JITExceptionTable * dataToInsert)
+UDATA jit_artifact_insert(J9JavaVM * javaVM, J9AVLTree * tree, J9JITExceptionTable * dataToInsert)
 {
 	J9JITHashTable *foundTable = NULL;
 
@@ -39,7 +39,7 @@ UDATA jit_artifact_insert(J9PortLibrary * portLibrary, J9AVLTree * tree, J9JITEx
 		return (UDATA) 2;
 
 	/* insert the element */
-	return (UDATA) hash_jit_artifact_insert(portLibrary, foundTable, dataToInsert);
+	return (UDATA) hash_jit_artifact_insert(javaVM, foundTable, dataToInsert);
 }
 
 UDATA jit_artifact_remove(J9PortLibrary * portLibrary, J9AVLTree * tree, J9JITExceptionTable * dataToDelete)
@@ -56,7 +56,7 @@ UDATA jit_artifact_remove(J9PortLibrary * portLibrary, J9AVLTree * tree, J9JITEx
 	return (UDATA) hash_jit_artifact_remove(portLibrary, foundTable, dataToDelete);
 }
 
-J9JITHashTable *jit_artifact_add_code_cache(J9PortLibrary * portLibrary, J9AVLTree * tree, J9MemorySegment * cacheToInsert, J9JITHashTable *optionalHashTable)
+J9JITHashTable *jit_artifact_add_code_cache(J9JavaVM * javaVM, J9AVLTree * tree, J9MemorySegment * cacheToInsert, J9JITHashTable *optionalHashTable)
 {
 	if(optionalHashTable) {
 		avl_insert(tree, (J9AVLTreeNode *) optionalHashTable);
@@ -65,7 +65,7 @@ J9JITHashTable *jit_artifact_add_code_cache(J9PortLibrary * portLibrary, J9AVLTr
 		J9JITHashTable *newTable;
 
 		/* register the code cache we've created */
-		newTable = hash_jit_allocate(portLibrary, (UDATA) cacheToInsert->heapBase, (UDATA) cacheToInsert->heapTop);
+		newTable = hash_jit_allocate(javaVM, (UDATA) cacheToInsert->heapBase, (UDATA) cacheToInsert->heapTop);
 
 		if (!newTable)
 			return NULL;
@@ -85,7 +85,7 @@ jit_artifact_protected_add_code_cache(J9JavaVM * vm, J9AVLTree * tree, J9MemoryS
 	if (currentThread != NULL) {
 		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
 	}
-	table = jit_artifact_add_code_cache(vm->portLibrary, tree, cacheToInsert, optionalHashTable);
+	table = jit_artifact_add_code_cache(vm, tree, cacheToInsert, optionalHashTable);
 	if (currentThread != NULL) {
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
 	}

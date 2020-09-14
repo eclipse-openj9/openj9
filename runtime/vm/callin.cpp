@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2019 IBM Corp. and others
+ * Copyright (c) 2012, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1040,6 +1040,15 @@ runCallInMethod(JNIEnv *env, jobject receiver, jclass clazz, jmethodID methodID,
 	J9VMThread *currentThread = (J9VMThread *)env;
 	Trc_VM_runCallInMethod_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	/* intercept call-in to main from java.c */
+	if (interceptMainAndRestoreSnapshotState(currentThread, methodID)) {
+		restoreCallInFrame(currentThread);
+		goto done;
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
 	if (buildCallInStackFrame(currentThread, &newELS, false, true)) {
 		Assert_VM_true(NULL != methodID);
 		J9SFJNICallInFrame *frame = (J9SFJNICallInFrame *)currentThread->sp;
@@ -1084,6 +1093,9 @@ pushArgs:
 restore:
 		restoreCallInFrame(currentThread);
 	}
+#if defined(J9VM_OPT_SNAPSHOTS)
+done:
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	Trc_VM_runCallInMethod_Exit(currentThread);
 }
 
@@ -1301,5 +1313,14 @@ sidecarInvokeReflectConstructor(J9VMThread *currentThread, jobject constructorRe
 	sidecarInvokeReflectConstructorImpl(currentThread, constructorRef, recevierRef, argsRef);
 	VM_VMAccess::inlineExitVMToJNI(currentThread);
 }
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+void
+restoreThreadState(struct J9VMThread *currentThread)
+{
+	currentThread->returnValue = J9_BCLOOP_EXECUTE_BYTECODE;
+	c_cInterpreter(currentThread);
+}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 } /* extern "C" */

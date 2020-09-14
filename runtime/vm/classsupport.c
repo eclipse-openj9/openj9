@@ -48,6 +48,11 @@ static VMINLINE J9Class* arbitratedLoadClass(J9VMThread* vmThread, U_8* classNam
 		J9ClassLoader* classLoader, j9object_t * classNotFoundException);
 static J9Class* internalFindArrayClass(J9VMThread* vmThread, J9Module *j9module, UDATA arity, U_8* name, UDATA length, J9ClassLoader* classLoader, UDATA options);
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+BOOLEAN loadWarmClassOrFindClass(J9VMThread* vmThread, J9ClassLoader* classLoader, J9Class *clazz);
+static char* getClassName(J9Class *clazz);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
 extern J9Method initialStaticMethod;
 extern J9Method initialSpecialMethod;
 
@@ -299,6 +304,13 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 		omrthread_monitor_enter(vm->classTableMutex);
 	}
 	result = hashClassTableAtString(classLoader, (j9object_t) className);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if ((NULL != result) && IS_RESTORE_RUN(currentThread->javaVM)) {
+		if (!loadWarmClass(currentThread, classLoader, result)) {
+			result = NULL;
+		}
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	if (!fastMode) {
 		omrthread_monitor_exit(vm->classTableMutex);
 	}
@@ -857,6 +869,13 @@ waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *table
 	/* still have classTableMutex here */
 	Trc_VM_waitForContendedLoadClass_waited(vmThread, vmThread, tableEntry->classLoader, classNameLength, className, status);
 	foundClass = hashClassTableAt(tableEntry->classLoader, className, classNameLength);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if ((NULL != foundClass) && IS_RESTORE_RUN(vmThread->javaVM)) {
+		if (!loadWarmClass(vmThread, tableEntry->classLoader, foundClass)) {
+			foundClass = NULL;
+		}
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	omrthread_monitor_exit(vmThread->javaVM->classTableMutex);
 	internalAcquireVMAccess(vmThread);
 	Trc_VM_waitForContendedLoadClass_acquired_vm_access(vmThread, vmThread, tableEntry->classLoader, classNameLength, className);
@@ -953,6 +972,70 @@ arbitratedLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength,
 	return foundClass;
 }
 
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+char*
+getClassName(J9Class *clazz) {
+	return (char*) J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass));
+}
+
+BOOLEAN
+loadWarmClass(J9VMThread* vmThread, J9ClassLoader* classLoader, J9Class *clazz)
+{
+	BOOLEAN rc = TRUE;
+	BOOLEAN failed = FALSE;
+
+	if (J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassIsLoadedFromImage)) {
+		J9Class *superClazz = clazz->superclasses[J9CLASS_DEPTH(clazz) - 1];
+		J9ITable *itable = (J9ITable *) clazz->iTable;
+
+		clazz->classFlags |= J9ClassIsLoadedFromImage;
+
+		/* load superclasses and interfaces first */
+		if (NULL != superClazz) {
+			if (!loadWarmClass(vmThread, classLoader, superClazz)) {
+				rc = FALSE;
+				goto done;
+			}
+		}
+
+		while (NULL != itable) {
+			J9Class *interface = itable->interfaceClass;
+			if (!loadWarmClass(vmThread, classLoader, interface)) {
+				rc = FALSE;
+				goto done;
+			}
+			itable = itable->next;
+		}
+
+		initializeImageJ9Class(vmThread->javaVM, clazz);
+
+		TRIGGER_J9HOOK_VM_INTERNAL_CLASS_LOAD(vmThread->javaVM->hookInterface, vmThread, clazz, failed);
+		TRIGGER_J9HOOK_VM_CLASS_LOAD(vmThread->javaVM->hookInterface, vmThread, clazz);
+
+		if (failed) {
+			Trc_VM_warmClassLoadHookFailed(vmThread, clazz, getClassName(clazz));
+			rc = FALSE;
+			goto done;
+		}
+
+		/* TODO: temporary fix for arrays
+		 * Pre-emptively load array so when someone does clazz->arrayClass they get a valid class */
+		if (NULL != clazz->arrayClass) {
+			if (!loadWarmClass(vmThread, classLoader, clazz->arrayClass)) {
+				rc = FALSE;
+				goto done;
+			}
+		}
+
+		Trc_VM_loadWarmClass(vmThread, clazz, getClassName(clazz));
+	}
+
+done:
+	return rc;
+}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
 /**
  * Load non-array class.
  * @param vmThread Current VM thread
@@ -1007,9 +1090,16 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 	}
 
 	foundClass = hashClassTableAt(classLoader, className, classNameLength);
-	if (NULL != foundClass) {
+	if ((NULL != foundClass)) {
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_RESTORE_RUN(vmThread->javaVM)) {
+			if (!loadWarmClass(vmThread, classLoader, foundClass)) {
+				foundClass = NULL;
+			}
+		}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 		if (!fastMode) {
-			omrthread_monitor_exit(vm->classTableMutex);
+			omrthread_monitor_exit(vmThread->javaVM->classTableMutex);
 		}
 	} else {
 		if (options & J9_FINDCLASS_FLAG_EXISTING_ONLY) {
@@ -1030,10 +1120,22 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 				omrthread_monitor_enter(vm->classTableMutex);
 
 				/* check again if somebody else already loaded the class */
+
 				foundClass = hashClassTableAt(classLoader, className, classNameLength);
 				if (NULL != foundClass) {
+#if defined(J9VM_OPT_SNAPSHOTS)
+					if (IS_RESTORE_RUN(vmThread->javaVM)) {
+						if (!loadWarmClass(vmThread, classLoader, foundClass)) {
+							foundClass = NULL;
+						} else {
+							omrthread_monitor_exit(vm->classTableMutex);
+							goto done;
+						}
+					}
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
 					omrthread_monitor_exit(vm->classTableMutex);
 					goto done;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 				}
 			}
 			/* Do not do the primitive type optimization if -Xfuture is on */

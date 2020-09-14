@@ -36,8 +36,8 @@ int16_t TR_MethodToBeCompiled::_globalIndex = 0;
 TR_MethodToBeCompiled *TR_MethodToBeCompiled::allocate(J9JITConfig *jitConfig)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-   TR_MethodToBeCompiled *entry = (TR_MethodToBeCompiled*)
-      j9mem_allocate_memory(sizeof(TR_MethodToBeCompiled), J9MEM_CATEGORY_JIT);
+
+   TR_MethodToBeCompiled *entry = (TR_MethodToBeCompiled*)j9mem_allocate_memory(sizeof(TR_MethodToBeCompiled), J9MEM_CATEGORY_JIT);;
    if (entry == NULL)  // Memory Allocation Failure.
       return NULL;
 
@@ -146,7 +146,7 @@ TR_MethodToBeCompiled::setAotCodeToBeRelocated(const void *m)
    }
 
 #if defined(J9VM_OPT_JITSERVER)
-uint64_t 
+uint64_t
 TR_MethodToBeCompiled::getClientUID() const
    {
    return _stream->getClientId();

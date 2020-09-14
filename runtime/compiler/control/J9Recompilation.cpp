@@ -29,6 +29,7 @@
 #include "control/Options.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/VMJ9.h"
+#include "runtime/ArtifactManager.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "exceptions/RuntimeFailure.hpp"
 #if defined(J9VM_OPT_JITSERVER)
@@ -741,6 +742,45 @@ TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_Per
    // Now that it can no longer be accessed, dec ref count on old info
    if (oldPtr)
       TR_PersistentProfileInfo::decRefCount((TR_PersistentProfileInfo*)oldPtr);
+   }
+
+J9::PrivateLinkage::LinkageInfo *
+J9::PrivateLinkage::LinkageInfo::get(void *startPC)
+   {
+   if (TR::Options::getCmdLineOptions()->getOption(TR_ForceGenerateReadOnlyCode))
+      {
+      J9JITExceptionTable *metadata =
+            const_cast<J9JITExceptionTable *>(
+               TR_TranslationArtifactManager::getGlobalArtifactManager()->retrieveArtifact(
+                  reinterpret_cast<uintptr_t>(startPC)));
+
+      TR_ASSERT_FATAL(metadata, "metadata is NULL, startPC=%p, comp=%p\n", startPC);
+
+      J9::PrivateLinkage::LinkageInfo *linkageInfo
+            = reinterpret_cast<J9::PrivateLinkage::LinkageInfo *>(&(metadata->linkageInfoWord));
+
+      TR_ASSERT_FATAL(linkageInfo, "LinkageInfo is NULL, startPC=%p\n", startPC);
+      TR_ASSERT_FATAL(!linkageInfo->isInvalid(), "LinkageInfo %p is invalid, startPC=%p\n", linkageInfo, startPC);
+
+      return linkageInfo;
+      }
+   else
+      {
+      return reinterpret_cast<J9::PrivateLinkage::LinkageInfo *>(((uint32_t*)startPC)-1);
+      }
+   }
+
+J9::PrivateLinkage::LinkageInfo *
+J9::PrivateLinkage::LinkageInfo::get(TR::Compilation *comp)
+   {
+   TR_ASSERT_FATAL(comp->getGenerateReadOnlyCode(), "Should not use this API if not generating read only code!\n");
+
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = comp->getLinkageInfo();
+
+   TR_ASSERT_FATAL(linkageInfo, "LinkageInfo is NULL, comp=%p\n", comp);
+   TR_ASSERT_FATAL(!linkageInfo->isInvalid(), "LinkageInfo %p is invalid, comp=%p\n", linkageInfo, comp);
+
+   return linkageInfo;
    }
 
 #if defined(J9VM_OPT_JITSERVER)

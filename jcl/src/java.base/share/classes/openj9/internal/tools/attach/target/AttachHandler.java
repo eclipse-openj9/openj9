@@ -33,6 +33,7 @@ import java.io.PrintStream;
 import java.util.Properties;
 import java.util.Vector;
 
+import com.ibm.oti.vm.SnapshotControlAPI;
 import com.ibm.oti.vm.VM;
 
 /**
@@ -161,6 +162,17 @@ public class AttachHandler extends Thread {
 			mainHandler.start();
 		} else { /*[PR Jazz 31596 add missing state transition]*/
 			setAttachState(AttachStateValues.ATTACH_TERMINATED);
+		}
+		
+		if (VM.isSnapshotRun()) {
+			SnapshotControlAPI.registerPostRestoreHooks(() -> {
+				mainHandler = new AttachHandler();
+				currentAttachThread = mainHandler;
+				if (!IPC.isZOS) {
+					/* Easier to recreate this thread rather than restore it */
+					mainHandler.start();
+				}
+			});
 		}
 	}
 

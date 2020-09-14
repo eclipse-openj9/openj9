@@ -26,6 +26,7 @@
 #include "codegen/AMD64JNILinkage.hpp"
 
 #include <stdint.h>
+#include "codegen/AMD64CallSnippet.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
@@ -37,6 +38,8 @@
 #include "env/J2IThunk.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
+#include "objectfmt/GlobalFunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/ParameterSymbol.hpp"
@@ -1094,6 +1097,7 @@ static TR_AtomicRegion X86PicSlotAtomicRegion[] =
 
 TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot picSlot, TR::LabelSymbol *mismatchLabel, TR::LabelSymbol *doneLabel, TR::X86CallSite &site)
    {
+   bool readOnlyCode = cg()->comp()->getGenerateReadOnlyCode();
    TR::Register *cachedAddressRegister = cg()->allocateRegister();
 
    TR::Node *node = site.getCallNode();
@@ -1102,11 +1106,29 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
    if (picSlot.getMethodAddress())
       {
       addrToBeCompared = (uint64_t) picSlot.getMethodAddress();
-      firstInstruction = generateRegImm64Instruction(MOV8RegImm64, node, cachedAddressRegister, addrToBeCompared, cg());
+
+      if (readOnlyCode)
+         {
+         TR::MemoryReference *constMR = TR::TreeEvaluator::generateLoadConstantMemoryReference(node, static_cast<intptr_t>(addrToBeCompared), cg(), TR_ClassAddress);
+         firstInstruction = generateRegMemInstruction(LRegMem(), node, cachedAddressRegister, constMR, cg());
+         }
+      else
+         {
+         firstInstruction = generateRegImm64Instruction(MOV8RegImm64, node, cachedAddressRegister, addrToBeCompared, cg());
+         }
       }
    else
-      firstInstruction = generateRegImm64Instruction(MOV8RegImm64, node, cachedAddressRegister, (uint64_t)picSlot.getClassAddress(), cg());
-
+      {
+      if (readOnlyCode)
+         {
+         TR::MemoryReference *constMR = TR::TreeEvaluator::generateLoadConstantMemoryReference(node, static_cast<intptr_t>(picSlot.getClassAddress()), cg(), TR_ClassAddress);
+         firstInstruction = generateRegMemInstruction(LRegMem(), node, cachedAddressRegister, constMR, cg());
+         }
+      else
+         {
+         firstInstruction = generateRegImm64Instruction(MOV8RegImm64, node, cachedAddressRegister, (uint64_t)picSlot.getClassAddress(), cg());
+         }
+      }
 
    firstInstruction->setNeedsGCMap(site.getPreservedRegisterMask());
 
@@ -1167,7 +1189,16 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
       TR::SymbolReference * callSymRef = comp()->getSymRefTab()->findOrCreateMethodSymbol(
             node->getSymbolReference()->getOwningMethodIndex(), -1, picSlot.getMethod(), TR::MethodSymbol::Virtual);
 
-      instr = generateImmSymInstruction(CALLImm4, node, (intptr_t)picSlot.getMethod()->startAddressForJittedMethod(), callSymRef, cg());
+      if (readOnlyCode)
+         {
+         // Not a global function, but a "local function" ??
+         TR::GlobalFunctionCallData data(callSymRef, node, 0, (uintptr_t)picSlot.getMethod()->startAddressForJittedMethod(), 0, TR_NoRelocation, true, cg());
+         instr = cg()->getObjFmt()->emitGlobalFunctionCall(data);
+         }
+      else
+         {
+         instr = generateImmSymInstruction(CALLImm4, node, (intptr_t)picSlot.getMethod()->startAddressForJittedMethod(), callSymRef, cg());
+         }
       }
    else if (picSlot.getHelperMethodSymbolRef())
       {
@@ -1176,6 +1207,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
       }
    else
       {
+      TR_ASSERT_FATAL(!readOnlyCode, "target address required for read only");
       instr = generateImmInstruction(CALLImm4, node, 0, cg());
       }
 
@@ -1215,6 +1247,12 @@ static TR_AtomicRegion amd64IPicAtomicRegions[] =
 
 void J9::X86::AMD64::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk)
    {
+   if (comp()->getGenerateReadOnlyCode())
+      {
+      buildNoPatchingIPIC(site, entryLabel, doneLabel, thunk);
+      return;
+      }
+
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
    int32_t numIPICs = 0;
 
@@ -1254,7 +1292,6 @@ void J9::X86::AMD64::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelS
          generateInstruction(BADIA32Op, site.getCallNode(), cg());
          }
       }
-
 
    if (numIPicSlots > 1)
       {
@@ -1325,6 +1362,219 @@ void J9::X86::AMD64::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelS
    cg()->reserveNTrampolines(numIPICs);
    }
 
+
+void J9::X86::AMD64::PrivateLinkage::buildNoPatchingIPIC(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk)
+   {
+
+   TR_ASSERT(doneLabel, "a doneLabel is required for PIC dispatches");
+
+   if (entryLabel)
+      generateLabelInstruction(LABEL, site.getCallNode(), entryLabel, cg());
+
+   ccInterfaceData *ccInterfaceDataAddress =
+      reinterpret_cast<ccInterfaceData *>(cg()->allocateCodeMemory(sizeof(ccInterfaceData), false));
+
+   if (!ccInterfaceDataAddress)
+      {
+      comp()->failCompilation<TR::CompilationException>("Could not allocate interface dispatch metadata");
+      }
+
+   ccInterfaceDataAddress->slot1Class = static_cast<intptr_t>(-1);
+   TR::SymbolReference *dispatchIPicSlot1MethodReadOnlySymRef =
+      cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64dispatchIPicSlot1MethodReadOnly, false, false, false);
+   ccInterfaceDataAddress->slot1Method = reinterpret_cast<intptr_t>(dispatchIPicSlot1MethodReadOnlySymRef->getMethodAddress());
+
+   ccInterfaceDataAddress->slot2Class = static_cast<intptr_t>(-1);
+   TR::SymbolReference *dispatchIPicSlot2MethodReadOnlySymRef =
+      cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64dispatchIPicSlot2MethodReadOnly, false, false, false);
+   ccInterfaceDataAddress->slot2Method = reinterpret_cast<intptr_t>(dispatchIPicSlot2MethodReadOnlySymRef->getMethodAddress());
+
+   TR::SymbolReference *IPicResolveReadOnlySymRef =
+      cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64IPicResolveReadOnly, false, false, false);
+   ccInterfaceDataAddress->slowInterfaceDispatchMethod = reinterpret_cast<intptr_t>(IPicResolveReadOnlySymRef->getMethodAddress());
+
+   ccInterfaceDataAddress->cpAddress = reinterpret_cast<intptr_t>(site.getSymbolReference()->getOwningMethod(comp())->constantPool());
+   ccInterfaceDataAddress->cpIndex = static_cast<intptr_t>(site.getSymbolReference()->getCPIndexForVM());
+   ccInterfaceDataAddress->interfaceClassAddress = 0;
+   ccInterfaceDataAddress->itableOffset = 0;
+
+   intptr_t interfaceDataAddress = reinterpret_cast<intptr_t>(ccInterfaceDataAddress);
+
+   TR::StaticSymbol *interfaceDataSlot1ClassSymbol  =
+      TR::StaticSymbol::createWithAddress(comp()->trHeapMemory(), TR::Address, reinterpret_cast<void *>(interfaceDataAddress + offsetof(ccInterfaceData, slot1Class)));
+   interfaceDataSlot1ClassSymbol->setNotDataAddress();
+   TR::SymbolReference *interfaceDataSlot1ClassSymRef = new (comp()->trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), interfaceDataSlot1ClassSymbol, 0);
+
+   TR::Register *vftRegister = site.evaluateVFT();
+
+   // startSlot1:
+   //    cmp Rclass, [RIP + slot1Class]
+   //    jne short startSlot2
+   //    call [RIP + slot1Method]
+   //    jmp short done
+   //
+   TR::LabelSymbol *startSlot1Label = generateLabelSymbol(cg());
+   generateLabelInstruction(LABEL, site.getCallNode(), startSlot1Label, cg());
+   generateRegMemInstruction(CMP8RegMem, site.getCallNode(),
+                             vftRegister,
+                             new (comp()->trHeapMemory()) TR::MemoryReference(interfaceDataSlot1ClassSymRef, cg(), true),
+                             cg());
+
+   TR::LabelSymbol *startSlot2Label = generateLabelSymbol(cg());
+   generateLabelInstruction(JNE4, site.getCallNode(), startSlot2Label, cg());
+
+   TR::StaticSymbol *interfaceDataSlot1MethodSymbol  =
+      TR::StaticSymbol::createWithAddress(comp()->trHeapMemory(), TR::Address, reinterpret_cast<void *>(interfaceDataAddress + offsetof(ccInterfaceData, slot1Method)));
+   interfaceDataSlot1MethodSymbol->setNotDataAddress();
+   TR::SymbolReference *interfaceDataSlot1MethodSymRef = new (comp()->trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), interfaceDataSlot1MethodSymbol, 0);
+   TR::Instruction *slotCallInstruction = generateMemInstruction(CALLMem, site.getCallNode(),
+      new (comp()->trHeapMemory()) TR::MemoryReference(interfaceDataSlot1MethodSymRef, cg(), true),
+      cg());
+   slotCallInstruction->setNeedsGCMap(site.getPreservedRegisterMask());
+
+   generateLabelInstruction(JMP4, site.getCallNode(), doneLabel, cg());
+
+   // startSlot2:
+   //    cmp Rclass, [RIP + slot2Class]
+   //    jne short interfaceDispatchReadOnlySnippet
+   //    call [RIP + slot2Method]
+   // done:
+   //
+   generateLabelInstruction(LABEL, site.getCallNode(), startSlot2Label, cg());
+
+   TR::StaticSymbol *interfaceDataSlot2ClassSymbol  =
+      TR::StaticSymbol::createWithAddress(comp()->trHeapMemory(), TR::Address, reinterpret_cast<void *>(interfaceDataAddress + offsetof(ccInterfaceData, slot2Class)));
+   interfaceDataSlot2ClassSymbol->setNotDataAddress();
+   TR::SymbolReference *interfaceDataSlot2ClassSymRef = new (comp()->trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), interfaceDataSlot2ClassSymbol, 0);
+   generateRegMemInstruction(CMP8RegMem, site.getCallNode(),
+                             vftRegister,
+                             new (comp()->trHeapMemory()) TR::MemoryReference(interfaceDataSlot2ClassSymRef, cg(), true),
+                             cg());
+
+   TR::LabelSymbol *interfaceDispatchReadOnlySnippetLabel = generateLabelSymbol(cg());
+
+   generateLabelInstruction(JNE4, site.getCallNode(), interfaceDispatchReadOnlySnippetLabel, cg());
+
+   TR::StaticSymbol *interfaceDataSlot2MethodSymbol  =
+      TR::StaticSymbol::createWithAddress(comp()->trHeapMemory(), TR::Address, reinterpret_cast<void *>(interfaceDataAddress + offsetof(ccInterfaceData, slot2Method)));
+   interfaceDataSlot2MethodSymbol->setNotDataAddress();
+   TR::SymbolReference *interfaceDataSlot2MethodSymRef = new (comp()->trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), interfaceDataSlot2MethodSymbol, 0);
+
+   slotCallInstruction = generateMemInstruction(CALLMem, site.getCallNode(),
+      new (comp()->trHeapMemory()) TR::MemoryReference(interfaceDataSlot2MethodSymRef, cg(), true),
+      cg());
+   slotCallInstruction->setNeedsGCMap(site.getPreservedRegisterMask());
+
+   generateLabelInstruction(LABEL, site.getCallNode(), doneLabel, cg());
+
+   TR::X86InterfaceDispatchReadOnlySnippet *snippet = new (trHeapMemory()) TR::X86InterfaceDispatchReadOnlySnippet(
+      interfaceDispatchReadOnlySnippetLabel,
+      site.getCallNode(),
+      interfaceDataAddress,
+      startSlot1Label,
+      doneLabel,
+      cg());
+
+   snippet->gcMap().setGCRegisterMask(site.getPreservedRegisterMask());
+   cg()->addSnippet(snippet);
+   }
+
+
+void
+J9::X86::AMD64::PrivateLinkage::buildNoPatchingVirtualDispatchWithResolve(
+      TR::X86CallSite &site,
+      TR::Register *vftRegister,
+      TR::LabelSymbol *entryLabel,
+      TR::LabelSymbol *doneLabel)
+   {
+   if (entryLabel)
+      generateLabelInstruction(LABEL, site.getCallNode(), entryLabel, cg());
+
+   /**
+    * Define the shape of the structure that will be allocated in a data area
+    * to guide the resolution of this virtual dispatch.
+    *
+    * BEWARE: Offsets of fields in this structure are described in
+    * x/runtime/X86PicBuilder.inc so any changes to the size or ordering of
+    * these fields will require a corresponding change there as well.
+    */
+   struct ccResolveVirtualData
+      {
+      intptr_t cpAddress;
+      intptr_t cpIndex;
+      intptr_t directMethod;
+      intptr_t j2iThunk;
+      int32_t vtableOffset;
+      };
+
+   ccResolveVirtualData *ccResolveVirtualDataAddress =
+      reinterpret_cast<ccResolveVirtualData *>(cg()->allocateCodeMemory(sizeof(ccResolveVirtualData), false));
+
+   if (!ccResolveVirtualDataAddress)
+      {
+      comp()->failCompilation<TR::CompilationException>("Could not allocate resolve virtual dispatch metadata");
+      }
+
+   ccResolveVirtualDataAddress->cpAddress = reinterpret_cast<intptr_t>(site.getSymbolReference()->getOwningMethod(comp())->constantPool());
+   ccResolveVirtualDataAddress->cpIndex = static_cast<intptr_t>(site.getSymbolReference()->getCPIndexForVM());
+   ccResolveVirtualDataAddress->directMethod = 0;
+   ccResolveVirtualDataAddress->j2iThunk = reinterpret_cast<intptr_t>(site.getThunkAddress());
+   ccResolveVirtualDataAddress->vtableOffset = 0;
+
+   intptr_t resolveVirtualDataAddress = reinterpret_cast<intptr_t>(ccResolveVirtualDataAddress);
+
+   TR::StaticSymbol *resolveVirtualDataSymbol =
+      TR::StaticSymbol::createWithAddress(comp()->trHeapMemory(), TR::Int32, reinterpret_cast<void *>(resolveVirtualDataAddress + offsetof(ccResolveVirtualData, vtableOffset)));
+   resolveVirtualDataSymbol->setNotDataAddress();
+   TR::SymbolReference *resolveVirtualDataSymRef = new (comp()->trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), resolveVirtualDataSymbol, 0);
+
+   // loadResolvedVtableOffset:
+   //    movsx RvtableOffset, dword [RIP + resolvedVtableOffset]
+   //
+   TR::LabelSymbol *loadResolvedVtableOffsetLabel = generateLabelSymbol(cg());
+   generateLabelInstruction(LABEL, site.getCallNode(), loadResolvedVtableOffsetLabel, cg());
+
+   TR::Register *vtableOffsetReg = cg()->allocateRegister();
+   generateRegMemInstruction(MOVSXReg8Mem4, site.getCallNode(),
+                             vtableOffsetReg,
+                             new (comp()->trHeapMemory()) TR::MemoryReference(resolveVirtualDataSymRef, cg(), true),
+                             cg());
+
+   // The following test will only succeed once.  Once resolved, the vtable offset
+   // will be known, the test will fail, and the dispatch will be done through the vtable.
+   //
+   //    test RvtableOffset, RvtableOffset
+   //    jz resolveVirtualDispatchReadOnlyDataSnippet
+   //
+   TR::LabelSymbol *resolveVirtualDispatchReadOnlyDataSnippetLabel = generateLabelSymbol(cg());
+
+   TR::X86ResolveVirtualDispatchReadOnlyDataSnippet *snippet = new (trHeapMemory()) TR::X86ResolveVirtualDispatchReadOnlyDataSnippet(
+      resolveVirtualDispatchReadOnlyDataSnippetLabel,
+      site.getCallNode(),
+      resolveVirtualDataAddress,
+      loadResolvedVtableOffsetLabel,
+      doneLabel,
+      cg());
+
+   snippet->gcMap().setGCRegisterMask(site.getPreservedRegisterMask());
+   cg()->addSnippet(snippet);
+
+   generateRegRegInstruction(TEST8RegReg, site.getCallNode(), vtableOffsetReg, vtableOffsetReg, cg());
+   generateLabelInstruction(JE4, site.getCallNode(), resolveVirtualDispatchReadOnlyDataSnippetLabel, cg());
+
+   //    call [Rclass + RvtableOffset + 0x00000000]
+   //
+   TR::MemoryReference *dispatchMR = generateX86MemoryReference(vftRegister, vtableOffsetReg, 0, 0, cg());
+   dispatchMR->setForceWideDisplacement();
+   TR::Instruction *callInstr = generateMemInstruction(CALLMem, site.getCallNode(), dispatchMR, cg());
+   callInstr->setNeedsGCMap(site.getPreservedRegisterMask());
+
+   site.getPostConditionsUnderConstruction()->addPostCondition(vtableOffsetReg, TR::RealRegister::r8, cg());
+
+   generateLabelInstruction(LABEL, site.getCallNode(), doneLabel, cg());
+   }
+
+
 void J9::X86::AMD64::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
@@ -1342,21 +1592,52 @@ void J9::X86::AMD64::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite 
       {
       buildVFTCall(site, CALLReg, site.evaluateVFT(), NULL);
       }
-   else if (evaluateVftEarly)
-      {
-      site.evaluateVFT(); // We must evaluate the VFT here to avoid a later evaluation that pollutes the VPic shape.
-      buildVPIC(site, entryLabel, doneLabel);
-      }
-   else if (site.resolvedVirtualShouldUseVFTCall())
+   else if (!evaluateVftEarly && site.resolvedVirtualShouldUseVFTCall())
       {
       // Call through VFT
       //
-      buildVFTCall(site, CALLMem, NULL, generateX86MemoryReference(site.evaluateVFT(), methodSymRef->getOffset(), cg()));
+      TR::MemoryReference *dispatchMR;
+      TR::Register *vftRegister = site.evaluateVFT();
+
+      if (comp()->getGenerateReadOnlyCode())
+         {
+         /**
+          * The particular addressing mode of the VPIC dispatch instruction is required by runtime
+          * glue logic to distinguish a virtual dispatch produced in a read-only VPIC from other
+          * cases.  In particular, see VM_JITInterface::jitVTableIndex() in runtime/oti/JITInterface.hpp
+          */
+
+         TR::Register *vtableOffsetReg = cg()->allocateRegister();
+         generateRegImmInstruction(MOV8RegImm4, site.getCallNode(), vtableOffsetReg, methodSymRef->getOffset(), cg());
+
+         // [ Rclass + RvtableOffset + 0x00000000 ]
+         //
+         dispatchMR = generateX86MemoryReference(vftRegister, vtableOffsetReg, 0, 0, cg());
+         dispatchMR->setForceWideDisplacement();
+
+         site.getPostConditionsUnderConstruction()->addPostCondition(vtableOffsetReg, TR::RealRegister::r8, cg());
+         }
+      else
+         {
+         // [ Rclass + disp32 ]
+         //
+         dispatchMR = generateX86MemoryReference(vftRegister, methodSymRef->getOffset(), cg());
+         }
+
+      buildVFTCall(site, CALLMem, NULL, dispatchMR);
       }
    else
       {
-      site.evaluateVFT(); // We must evaluate the VFT here to avoid a later evaluation that pollutes the VPic shape.
-      buildVPIC(site, entryLabel, doneLabel);
+      TR::Register *vftRegister = site.evaluateVFT(); // We must evaluate the VFT here to avoid a later evaluation that pollutes the VPic shape.
+
+      if (!comp()->getGenerateReadOnlyCode())
+         {
+         buildVPIC(site, entryLabel, doneLabel);
+         }
+      else
+         {
+         buildNoPatchingVirtualDispatchWithResolve(site, vftRegister, entryLabel, doneLabel);
+         }
       }
    }
 
@@ -1366,4 +1647,123 @@ TR::Register *J9::X86::AMD64::PrivateLinkage::buildJNIDispatch(TR::Node *callNod
    return NULL;
    }
 
+
+TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildUnresolvedOrInterpretedDirectCallReadOnly(TR::SymbolReference *methodSymRef, TR::X86CallSite &site)
+   {
+   TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+
+   bool isJitInduceOSRCall = false;
+   if (comp()->target().is64Bit() &&
+       methodSymbol->isHelper() &&
+       methodSymRef->isOSRInductionHelper())
+      {
+      TR_ASSERT_FATAL(false, "induceOSR not supported for read only");
+      isJitInduceOSRCall = true;
+      }
+
+   TR::LabelSymbol *label = generateLabelSymbol(cg());
+
+   TR::X86CallReadOnlySnippet *snippet = reinterpret_cast<TR::X86CallReadOnlySnippet *>(new (trHeapMemory()) TR::X86CallReadOnlySnippet(cg(), site.getCallNode(), label, false));
+
+   cg()->addSnippet(snippet);
+   snippet->gcMap().setGCRegisterMask(site.getPreservedRegisterMask());
+
+   intptr_t staticSpecialDataAddress;
+   intptr_t snippetOrCompiledMethodOffset;
+
+   if (methodSymRef->isUnresolved() || (comp()->compileRelocatableCode() && !methodSymbol->isHelper()))
+      {
+      ccUnresolvedStaticSpecialData *ccUnresolvedStaticSpecialAddress =
+         reinterpret_cast<ccUnresolvedStaticSpecialData *>(cg()->allocateCodeMemory(sizeof(ccUnresolvedStaticSpecialData), false));
+
+      if (!ccUnresolvedStaticSpecialAddress)
+         {
+         comp()->failCompilation<TR::CompilationException>("Could not allocate unresolved static/special ccdata");
+         }
+
+      // Requires TR::ExternalRelocation
+      ccUnresolvedStaticSpecialAddress->cpAddress = (intptr_t)methodSymRef->getOwningMethod(comp())->constantPool();
+      ccUnresolvedStaticSpecialAddress->ramMethod = 0;
+
+      snippet->setUnresolvedStaticSpecialDataAddress(reinterpret_cast<intptr_t>(ccUnresolvedStaticSpecialAddress));
+      snippet->setRAMMethodDataAddress(reinterpret_cast<intptr_t>(&(ccUnresolvedStaticSpecialAddress->ramMethod)));
+      snippetOrCompiledMethodOffset = offsetof(ccUnresolvedStaticSpecialData, snippetOrCompiledMethod);
+      staticSpecialDataAddress = reinterpret_cast<intptr_t>(ccUnresolvedStaticSpecialAddress);
+      }
+   else
+      {
+      // Interpreted only
+      //
+      ccInterpretedStaticSpecialData *ccInterpretedStaticSpecialAddress =
+         reinterpret_cast<ccInterpretedStaticSpecialData *>(cg()->allocateCodeMemory(sizeof(ccInterpretedStaticSpecialData), false));
+
+      if (!ccInterpretedStaticSpecialAddress)
+         {
+         comp()->failCompilation<TR::CompilationException>("Could not allocate unresolved static/special ccdata");
+         }
+
+      // For jitInduceOSR we don't need to set the RAM method (the method that the VM needs to start executing)
+      // because VM is going to figure what method to execute by looking up the the jitPC in the GC map and finding
+      // the desired invoke bytecode.
+      //
+      intptr_t ramMethod;
+      if (!isJitInduceOSRCall)
+         {
+#if defined(J9VM_OPT_JITSERVER)
+         ramMethod = comp()->isOutOfProcessCompilation() && !methodSymbol->isInterpreted() ?
+                             (intptr_t)methodSymRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier() :
+                             (intptr_t)methodSymbol->getMethodAddress();
+#else
+         ramMethod = (intptr_t)methodSymbol->getMethodAddress();
+#endif
+         }
+      else
+         {
+         ramMethod = 0;
+         }
+
+      ccInterpretedStaticSpecialAddress->ramMethod = ramMethod;
+
+      if (comp()->getOption(TR_UseSymbolValidationManager))
+         {
+         TR_ASSERT_FATAL(0, "SVM not supported yet for read only");
+/*
+         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                       (uint8_t *)ramMethod,
+                                                                                       (uint8_t *)TR::SymbolType::typeMethod,
+                                                                                       TR_SymbolFromManager,
+                                                                                       cg()),
+                                     __FILE__, __LINE__, getNode());
+*/
+         }
+
+      if (comp()->getOption(TR_EnableHCR))
+         {
+         TR_ASSERT_FATAL(0, "HCR not supported yet for read only");
+/*
+         cg()->jitAddPicToPatchOnClassRedefinition((void *)ramMethod, (void *)cursor);
+*/
+         }
+
+      snippet->setInterpretedStaticSpecialDataAddress(reinterpret_cast<intptr_t>(ccInterpretedStaticSpecialAddress));
+      snippet->setRAMMethodDataAddress(reinterpret_cast<intptr_t>(&(ccInterpretedStaticSpecialAddress->ramMethod)));
+      snippetOrCompiledMethodOffset = offsetof(ccInterpretedStaticSpecialData, snippetOrCompiledMethod);
+      staticSpecialDataAddress = reinterpret_cast<intptr_t>(ccInterpretedStaticSpecialAddress);
+      }
+
+   TR::StaticSymbol *snippetOrCompiledSlotSymbol =
+      TR::StaticSymbol::createWithAddress(comp()->trHeapMemory(), TR::Address, reinterpret_cast<void *>(staticSpecialDataAddress + snippetOrCompiledMethodOffset));
+   TR::SymbolReference *snippetOrCompiledSlotSymRef = new (comp()->trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), snippetOrCompiledSlotSymbol, 0);
+
+   // Local function call
+   //
+   // The AMD64CallReadOnlySnippet will initialize the snippetOrCompiledMethod field with the address
+   // of the snippet when it is emitted.  Alternatively, use an AbsoluteLabelRelocation
+   //
+   TR::Instruction *slotCallInstruction = generateMemInstruction(CALLMem, site.getCallNode(),
+      new (comp()->trHeapMemory()) TR::MemoryReference(snippetOrCompiledSlotSymRef, cg(), true),
+      cg());
+
+   return slotCallInstruction;
+   }
 #endif

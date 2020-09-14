@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,11 +45,11 @@ extern "C" {
 #define COUNT_MARK_BIT 20
 
 
-J9JITExceptionTable** 
-hash_jit_artifact_array_insert(J9PortLibrary *portLibrary, J9JITHashTable *table, J9JITExceptionTable** array, J9JITExceptionTable *dataToInsert, UDATA startPC)
+J9JITExceptionTable**
+hash_jit_artifact_array_insert(J9JavaVM *javaVM, J9JITHashTable *table, J9JITExceptionTable** array, J9JITExceptionTable *dataToInsert, UDATA startPC)
 {
 	J9JITExceptionTable** returnVal = array;
-	PORT_ACCESS_FROM_PORT(portLibrary);
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	/* If the array pointer is tagged, then it's not a chain, it's a single tagged metadata */
 
@@ -61,7 +61,7 @@ hash_jit_artifact_array_insert(J9PortLibrary *portLibrary, J9JITHashTable *table
 		 */
 
 		if ((table->currentAllocate + 2) > table->methodStoreEnd) {		/* This comparison is safe since currentAllocate and methodStoreEnd will always be pointing into the same allocated block */
-			if (hash_jit_allocate_method_store(portLibrary, table) == NULL) {
+			if (hash_jit_allocate_method_store(javaVM, table) == NULL) {
 				return NULL;
 			}
 		}
@@ -114,7 +114,7 @@ hash_jit_artifact_array_insert(J9PortLibrary *portLibrary, J9JITHashTable *table
 			*/
 
 			if ((table->currentAllocate + chainLength + 1) > table->methodStoreEnd) {		/* This comparison is safe since currentAllocate and methodStoreEnd will always be pointing into the same allocated block */
-				if (hash_jit_allocate_method_store(portLibrary, table) == NULL) {
+				if (hash_jit_allocate_method_store(javaVM, table) == NULL) {
 					return NULL;
 				}
 			}
@@ -150,7 +150,7 @@ J9JITExceptionTable** hash_jit_artifact_array_remove(J9PortLibrary *portLibrary,
 		--index;
 		*index = (J9JITExceptionTable*)SET_LOW_BIT(*index);
 	} else if(removeSpot) {
-		size = (count-removeSpot+1)*sizeof(UDATA);		/* dataToRemove is in middle (or start) of the array. */ 
+		size = (count-removeSpot+1)*sizeof(UDATA);		/* dataToRemove is in middle (or start) of the array. */
 		memmove((void*)(array+removeSpot-1),(void*)(array+removeSpot),size);
 		*index = 0;
 	} else {
@@ -168,13 +168,13 @@ J9JITExceptionTable** hash_jit_artifact_array_remove(J9PortLibrary *portLibrary,
 	return array;
 }
 
-UDATA 
-hash_jit_artifact_insert_range(J9PortLibrary *portLibrary, J9JITHashTable *table, J9JITExceptionTable *dataToInsert, UDATA startPC, UDATA endPC)
+UDATA
+hash_jit_artifact_insert_range(J9JavaVM *javaVM, J9JITHashTable *table, J9JITExceptionTable *dataToInsert, UDATA startPC, UDATA endPC)
 {
 	J9JITExceptionTable** index;
 	J9JITExceptionTable** endIndex;
 	J9JITExceptionTable** temp;
-	PORT_ACCESS_FROM_PORT(portLibrary);
+	PORT_ACCESS_FROM_PORT(javaVM->portLibrary);
 
 	if ((startPC < table->start) || (endPC > table->end)) {
 		return 1;
@@ -185,7 +185,7 @@ hash_jit_artifact_insert_range(J9PortLibrary *portLibrary, J9JITHashTable *table
 
 	do {
 		if (*index) {
-			temp = hash_jit_artifact_array_insert(portLibrary, table, (J9JITExceptionTable**) *index, dataToInsert, startPC);
+			temp = hash_jit_artifact_array_insert(javaVM, table, (J9JITExceptionTable**) *index, dataToInsert, startPC);
 			if (!temp) {
 				return 2;
 			}
@@ -197,18 +197,18 @@ hash_jit_artifact_insert_range(J9PortLibrary *portLibrary, J9JITHashTable *table
 		}
 
 	} while (++index <= endIndex);
-	
+
 	return 0;
 }
 
-UDATA hash_jit_artifact_insert(J9PortLibrary *portLibrary, J9JITHashTable *table, J9JITExceptionTable *dataToInsert) {
+UDATA hash_jit_artifact_insert(J9JavaVM *javaVM, J9JITHashTable *table, J9JITExceptionTable *dataToInsert) {
 	UDATA result;
 
-        result = hash_jit_artifact_insert_range(portLibrary, table, dataToInsert, dataToInsert->startPC, dataToInsert->endWarmPC);
+        result = hash_jit_artifact_insert_range(javaVM, table, dataToInsert, dataToInsert->startPC, dataToInsert->endWarmPC);
         if (result)
                 return result;
         if (dataToInsert->startColdPC)
-                result = hash_jit_artifact_insert_range(portLibrary, table, dataToInsert, dataToInsert->startColdPC, dataToInsert->endPC);
+                result = hash_jit_artifact_insert_range(javaVM, table, dataToInsert, dataToInsert->startColdPC, dataToInsert->endPC);
 
 	return result;
 }
@@ -239,7 +239,7 @@ UDATA hash_jit_artifact_remove_range(J9PortLibrary *portLibrary, J9JITHashTable 
 		} else
 			return (UDATA) 1;
 	} while (++index <= endIndex);
-	
+
 	return (UDATA) 0;
 }
 
@@ -255,13 +255,15 @@ UDATA hash_jit_artifact_remove(J9PortLibrary *portLibrary, J9JITHashTable *table
 	return result;
 }
 
-J9JITHashTable *hash_jit_allocate(J9PortLibrary * portLibrary, UDATA start, UDATA end)
+J9JITHashTable *hash_jit_allocate(J9JavaVM * javaVM, UDATA start, UDATA end)
 {
 	J9JITHashTable *table;
 	UDATA size;
-	PORT_ACCESS_FROM_PORT(portLibrary);
+
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	table = (J9JITHashTable *) j9mem_allocate_memory(sizeof(J9JITHashTable), OMRMEM_CATEGORY_JIT);
+
 	if (table == NULL) {
 		return NULL;
 	}
@@ -270,33 +272,39 @@ J9JITHashTable *hash_jit_allocate(J9PortLibrary * portLibrary, UDATA start, UDAT
 	table->end = end;
 
 	size = DETERMINE_BUCKET(end, start, 0) + sizeof(UDATA);
+
 	table->buckets = (UDATA *) j9mem_allocate_memory(size, OMRMEM_CATEGORY_JIT);
+
 	if (table->buckets == NULL) {
 		j9mem_free_memory(table);
+
 		return NULL;
 	}
 	memset(table->buckets, 0, size);
 
-	if (hash_jit_allocate_method_store(portLibrary, table) == NULL) {
+	if (hash_jit_allocate_method_store(javaVM, table) == NULL) {
 		j9mem_free_memory(table->buckets);
 		j9mem_free_memory(table);
+
 		return NULL;
 	}
 
 	return table;
 }
 
-void hash_jit_free(J9PortLibrary * portLibrary, J9JITHashTable * table) {
+void hash_jit_free(J9JavaVM * javaVM, J9JITHashTable * table) {
 	UDATA *methodStoreCurrent, *methodStoreNext;
-	PORT_ACCESS_FROM_PORT(portLibrary);
+	PORT_ACCESS_FROM_PORT(javaVM->portLibrary);
 
-	methodStoreCurrent = table->methodStoreStart;	
+	methodStoreCurrent = table->methodStoreStart;
 
 	while (methodStoreCurrent) {
 		methodStoreNext = (UDATA *)*methodStoreCurrent;
 		j9mem_free_memory(methodStoreCurrent);
+
 		methodStoreCurrent = methodStoreNext;
 	}
+
 	j9mem_free_memory(table->buckets);
 	j9mem_free_memory(table);
 }
@@ -380,7 +388,7 @@ J9JITHashTable* hash_jit_toJ9MemorySegment(J9JITHashTable * table, J9MemorySegme
 
 	byteCount += sizeof(J9JITHashTable);
 	/* check alignment - currently removed */
-	/*if (LOW_BIT_SET(dataCache->heapAlloc)) 
+	/*if (LOW_BIT_SET(dataCache->heapAlloc))
 		++byteCount;*/
 
 	/* determine if enough room is available */
@@ -493,12 +501,12 @@ J9JITExceptionTable * hash_jit_next_do(J9JITHashTableWalkState* walkState) {
 	return metaData;
 }
 
-J9JITExceptionTable** hash_jit_allocate_method_store(J9PortLibrary *portLibrary, J9JITHashTable *table)
+J9JITExceptionTable** hash_jit_allocate_method_store(J9JavaVM *javaVM, J9JITHashTable *table)
 {
 	/* CMVC 117169 - add 1 slot for link, 1 slot for terminator */
 	UDATA size = (METHOD_STORE_SIZE + 2) * sizeof(UDATA);
 	UDATA* newStore;
-	PORT_ACCESS_FROM_PORT(portLibrary);
+	PORT_ACCESS_FROM_PORT(javaVM->portLibrary);
 
 	newStore = (UDATA *) j9mem_allocate_memory(size, OMRMEM_CATEGORY_JIT);
 

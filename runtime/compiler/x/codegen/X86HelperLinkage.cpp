@@ -35,6 +35,8 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "env/VMJ9.h"
+#include "objectfmt/GlobalFunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 #include "x/codegen/X86Instruction.hpp"
 
 // An utility to manage real registers and their corresponding virtual registers
@@ -269,30 +271,27 @@ TR::Register* J9::X86::HelperCallSite::BuildCall()
          }
       }
 
-   // Call helper
-   TR::X86ImmInstruction* instr = generateImmSymInstruction(CALLImm4,
-                                                            _Node,
-                                                            (uintptr_t)_SymRef->getMethodAddress(),
-                                                            _SymRef,
-                                                            RealRegisters.BuildRegisterDependencyConditions(),
-                                                            cg());
-   instr->setNeedsGCMap(PreservedRegisterMapForGC);
-
    // Stack adjustment
+   int32_t SizeOfParamOnStack = StackSlotSize * (NumberOfParamOnStack + NumberOfIntParamRegisters - StackIndexAdjustment);
+   int32_t adjustsFramePointerBy;
+
+   if (CalleeCleanup)
       {
-      int SizeOfParamOnStack = StackSlotSize * (NumberOfParamOnStack + NumberOfIntParamRegisters - StackIndexAdjustment);
-      if (CalleeCleanup)
-         {
-         instr->setAdjustsFramePointerBy(-SizeOfParamOnStack);
-         }
-      else
-         {
-         if (SizeOfParamOnStack > cg()->getLargestOutgoingArgSize())
-            {
-            cg()->setLargestOutgoingArgSize(SizeOfParamOnStack);
-            }
-         }
+      adjustsFramePointerBy = -SizeOfParamOnStack;
       }
+   else
+      {
+      if (SizeOfParamOnStack > cg()->getLargestOutgoingArgSize())
+         {
+         cg()->setLargestOutgoingArgSize(SizeOfParamOnStack);
+         }
+      adjustsFramePointerBy = 0;
+      }
+
+   // Call helper
+   TR::GlobalFunctionCallData data(_SymRef, _Node, 0, 0, RealRegisters.BuildRegisterDependencyConditions(), TR_NoRelocation, true, adjustsFramePointerBy, cg());
+   TR::Instruction *instr = cg()->getObjFmt()->emitGlobalFunctionCall(data);
+   instr->setNeedsGCMap(PreservedRegisterMapForGC);
 
    // Return value
    TR::Register* ret = NULL;

@@ -25,9 +25,14 @@
  * @ingroup GC_Modron_Startup
  */
 
+#include "j9cfg.h"
+
 #if defined (J9VM_GC_VLHGC)
 #include <math.h>
 #endif /* J9VM_GC_VLHGC */
+#if defined(J9VM_OPT_SNAPSHOTS)
+#include <sys/mman.h>
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #include <string.h>
 
 #include "gcmspace.h"
@@ -280,12 +285,19 @@ gcCleanupHeapStructures(J9JavaVM * vm)
 		gam->flushAllocationContextsForShutdown(&env);
 	}
 
-	if (vm->memorySegments) {
-		vm->internalVMFunctions->freeMemorySegmentList(vm, vm->memorySegments);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	/* if this is a snapshot run segment list will be freed later */
+	if (!IS_RESTORE_RUN(vm)) {
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		if (vm->memorySegments) {
+			vm->internalVMFunctions->freeMemorySegmentList(vm, vm->memorySegments);
+		}
+		if (vm->classMemorySegments) {
+			vm->internalVMFunctions->freeMemorySegmentList(vm, vm->classMemorySegments);
+		}
+#if defined(J9VM_OPT_SNAPSHOTS)
 	}
-	if (vm->classMemorySegments) {
-		vm->internalVMFunctions->freeMemorySegmentList(vm, vm->classMemorySegments);
-	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 #if defined(J9VM_GC_FINALIZATION)
 	if (extensions->finalizeListManager) {
@@ -312,6 +324,11 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 	MM_GlobalCollector *globalCollector;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	J9MemoryRegion heapSnapshotMemoryRegion;
+	J9GCSnapshotProperties gcSnapshotProperties;
+	intptr_t snapshotFD = -1;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE)) {
 		extensions->shouldForceLowMemoryHeapCeilingShiftIfPossible = true;
@@ -322,7 +339,32 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 	vm->initializeSlotsOnTLHAllocate = (extensions->batchClearTLH == 0) ? 1 : 0;
 #endif /* J9VM_GC_BATCH_CLEAR_TLH */
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(vm)) {
+		vm->internalVMFunctions->getGCHeapMemoryRegion(vm, &heapSnapshotMemoryRegion);
+		vm->internalVMFunctions->getGCSnapshotProperties(vm, &gcSnapshotProperties);
+		snapshotFD = vm->internalVMFunctions->getSnapshotFD(vm);
+		extensions->preferredHeapBase = (uintptr_t)heapSnapshotMemoryRegion.alignedStartAddr;
+		extensions->restoreOldSpaceSize = heapSnapshotMemoryRegion.totalSize;
+	}
+#endif /* defined(J9VM_OPT_HEAP_SNAPSHOTS) */
+
 	extensions->heap = extensions->configuration->createHeap(&env, heapBytesRequested);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(vm)) {
+
+		Assert_MM_true(extensions->heap->getHeapBase() == heapSnapshotMemoryRegion.alignedStartAddr);
+
+		void *addr = mmap((void *)heapSnapshotMemoryRegion.alignedStartAddr,
+		              heapSnapshotMemoryRegion.totalSize,
+		              PROT_READ | PROT_WRITE,
+		              MAP_PRIVATE | MAP_FIXED,
+		              snapshotFD,
+		              heapSnapshotMemoryRegion.fileOffset);
+		Assert_MM_true(addr == heapSnapshotMemoryRegion.alignedStartAddr);
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	if (NULL == extensions->heap) {
 		const char *splitFailure = NULL;
@@ -517,22 +559,37 @@ gcInitializeHeapStructures(J9JavaVM *vm)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
 	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
 
-	/* For now, number of segments to default in pool */
-	if ((vm->memorySegments = vm->internalVMFunctions->allocateMemorySegmentList(vm, 10, OMRMEM_CATEGORY_VM)) == NULL) {
-		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS, "Failed to allocate VM memory segments.");
-		goto error;
-	}
+#if defined(J9VM_OPT_SNAPSHOTS)
+	/* if this is a restore run memory segments are already set */
+	if (!IS_RESTORE_RUN(vm))
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+		/* For now, number of segments to default in pool */
+		if ((vm->memorySegments = vm->internalVMFunctions->allocateMemorySegmentList(vm, 10, OMRMEM_CATEGORY_VM)) == NULL) {
+			loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS, "Failed to allocate VM memory segments.");
+			goto error;
+		}
 
-	/* For now, number of segments to default in pool */
-	if ((vm->classMemorySegments = vm->internalVMFunctions->allocateMemorySegmentListWithFlags(vm, 10, MEMORY_SEGMENT_LIST_FLAG_SORT, J9MEM_CATEGORY_CLASSES)) == NULL) {
-		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS, "Failed to allocate VM class memory segments.");
-		goto error;
+		/* For now, number of segments to default in pool */
+		if ((vm->classMemorySegments = vm->internalVMFunctions->allocateMemorySegmentListWithFlags(vm, 10, MEMORY_SEGMENT_LIST_FLAG_SORT, J9MEM_CATEGORY_CLASSES)) == NULL) {
+			loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS, "Failed to allocate VM class memory segments.");
+			goto error;
+		}
 	}
 
 	/* j9gc_initialize_heap is now called from gcInitializeDefaults */
 
 	/* Create and initialize the default memory space */
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(vm)) {
+		defaultMemorySpace = internalAllocateMemorySpaceForRestore(vm, extensions->initialMemorySize, extensions->restoreNewSpaceSize, extensions->minNewSpaceSize, extensions->newSpaceSize, extensions->maxNewSpaceSize, extensions->restoreOldSpaceSize, extensions->minOldSpaceSize, extensions->oldSpaceSize, extensions->maxOldSpaceSize, extensions->maxSizeDefaultMemorySpace, 0, MEMORY_TYPE_DISCARDABLE);
+	} else {
+		defaultMemorySpace = internalAllocateMemorySpaceWithMaximum(vm, extensions->initialMemorySize, extensions->minNewSpaceSize, extensions->newSpaceSize, extensions->maxNewSpaceSize, extensions->minOldSpaceSize, extensions->oldSpaceSize, extensions->maxOldSpaceSize, extensions->maxSizeDefaultMemorySpace, 0, MEMORY_TYPE_DISCARDABLE);
+	}
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
 	defaultMemorySpace = internalAllocateMemorySpaceWithMaximum(vm, extensions->initialMemorySize, extensions->minNewSpaceSize, extensions->newSpaceSize, extensions->maxNewSpaceSize, extensions->minOldSpaceSize, extensions->oldSpaceSize, extensions->maxOldSpaceSize, extensions->maxSizeDefaultMemorySpace, 0, MEMORY_TYPE_DISCARDABLE);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
 	if (defaultMemorySpace == NULL) {
 		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE, "Failed to allocate default memory space.");
 		goto error;
@@ -642,7 +699,6 @@ void j9gc_jvmPhaseChange(J9VMThread *currentThread, UDATA phase)
 		}
 	}
 }
-
 
 void
 gcExpandHeapOnStartup(J9JavaVM *javaVM)
@@ -2842,7 +2898,17 @@ gcInitializeDefaults(J9JavaVM* vm)
 	MM_EnvironmentBase env(vm->omrVM);
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(vm)) {
+		J9MemoryRegion region;
+		vm->internalVMFunctions->getGCHeapMemoryRegion(vm, &region);
+		minimumVMSize = region.totalSize;
+	} else {
+		minimumVMSize = MINIMUM_VM_SIZE;
+	}
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
 	minimumVMSize = MINIMUM_VM_SIZE;
+#endif /* define(J9VM_OPT_SNAPSHOTS) */
 
 	memoryParameterTable = (IDATA *)j9mem_allocate_memory(tableSize, OMRMEM_CATEGORY_MM);
 	if (!memoryParameterTable) {

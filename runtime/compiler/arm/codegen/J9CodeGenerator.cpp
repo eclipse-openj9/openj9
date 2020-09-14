@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -283,19 +283,8 @@ void J9::ARM::CodeGenerator::doBinaryEncoding()
       cursorInstruction = cursorInstruction->getNext();
       if (isPrivateLinkage && cursorInstruction == j2jEntryInstruction)
          {
-         uint32_t magicWord = ((self()->getBinaryBufferCursor()-self()->getCodeStart())<<16) | static_cast<uint32_t>(comp->getReturnInfo());
-         TR_ASSERT(_returnTypeInfoInstruction && _returnTypeInfoInstruction->getOpCodeValue() == ARMOp_dd, "assertion failure");
-         ((TR::ARMImmInstruction *)_returnTypeInfoInstruction)->setSourceImmediate(magicWord);
-         *(uint32_t *)(_returnTypeInfoInstruction->getBinaryEncoding()) = magicWord;
-
-         if (recomp != NULL && recomp->couldBeCompiledAgain())
-            {
-            J9::PrivateLinkage::LinkageInfo *lkInfo = J9::PrivateLinkage::LinkageInfo::get(self()->getCodeStart());
-            if (recomp->useSampling())
-               lkInfo->setSamplingMethodBody();
-            else
-               lkInfo->setCountingMethodBody();
-            }
+         uint32_t linkageInfoWord = self()->initializeLinkageInfo(_returnTypeInfoInstruction->getBinaryEncoding());
+         ((TR::ARMImmInstruction *)_returnTypeInfoInstruction)->setSourceImmediate(linkageInfoWord);
          }
       }
    // Create exception table entries for outlined instructions.

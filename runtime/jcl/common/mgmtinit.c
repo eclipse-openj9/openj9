@@ -84,7 +84,15 @@ managementInit(J9JavaVM *vm)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	/* allocate management data struct */
-	vm->managementData = j9mem_allocate_memory(sizeof(J9JavaLangManagementData), J9MEM_CATEGORY_VM_JCL);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(vm)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+		vm->managementData = vmsnapshot_allocate_memory(sizeof(J9JavaLangManagementData), J9MEM_CATEGORY_VM_JCL);
+	} else
+#endif
+	{
+		vm->managementData = j9mem_allocate_memory(sizeof(J9JavaLangManagementData), J9MEM_CATEGORY_VM_JCL);
+	}
 	mgmt = vm->managementData;
 	if (NULL == mgmt) {
 		return JNI_ERR;
@@ -338,10 +346,21 @@ managementTerminate(J9JavaVM *vm)
 	}
 	
 	/* deallocate management data struct */
-	j9mem_free_memory(mgmt->memoryPools);
-	j9mem_free_memory(mgmt->garbageCollectors);
-	j9mem_free_memory(mgmt->nonHeapMemoryPools);
-	j9mem_free_memory(vm->managementData);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOTTING_ENABLED(vm)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+		vmsnapshot_free_memory(mgmt->memoryPools);
+		vmsnapshot_free_memory(mgmt->garbageCollectors);
+		vmsnapshot_free_memory(mgmt->nonHeapMemoryPools);
+		vmsnapshot_free_memory(vm->managementData);
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+		j9mem_free_memory(mgmt->memoryPools);
+		j9mem_free_memory(mgmt->garbageCollectors);
+		j9mem_free_memory(mgmt->nonHeapMemoryPools);
+		j9mem_free_memory(vm->managementData);
+	}
 }
 
 static void
@@ -851,7 +870,15 @@ initMemoryManagement(J9JavaVM *vm)
 	mgmt->supportedCollectors = getNumberSupported(supportedCollectorIDs);
 
 	/* initialize Heap memory pools (initSize, maxSize) */
-	mgmt->memoryPools = j9mem_allocate_memory((sizeof(*mgmt->memoryPools) * mgmt->supportedMemoryPools), J9MEM_CATEGORY_VM_JCL);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(vm)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+		mgmt->memoryPools = vmsnapshot_allocate_memory((sizeof(*mgmt->memoryPools) * mgmt->supportedMemoryPools), J9MEM_CATEGORY_VM_JCL);
+	} else
+#endif
+	{
+		mgmt->memoryPools = j9mem_allocate_memory((sizeof(*mgmt->memoryPools) * mgmt->supportedMemoryPools), J9MEM_CATEGORY_VM_JCL);
+	}
 	if (NULL == mgmt->memoryPools) {
 		return JNI_ERR;
 	}
@@ -873,7 +900,15 @@ initMemoryManagement(J9JavaVM *vm)
 	}
 
 	/* initialize Garbage Collectors */
-	mgmt->garbageCollectors = j9mem_allocate_memory((sizeof(*mgmt->garbageCollectors) * mgmt->supportedCollectors), J9MEM_CATEGORY_VM_JCL);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(vm)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+		mgmt->garbageCollectors = vmsnapshot_allocate_memory((sizeof(*mgmt->garbageCollectors) * mgmt->supportedCollectors), J9MEM_CATEGORY_VM_JCL);
+	} else
+#endif
+	{
+		mgmt->garbageCollectors = j9mem_allocate_memory((sizeof(*mgmt->garbageCollectors) * mgmt->supportedCollectors), J9MEM_CATEGORY_VM_JCL);
+	}
 	if (NULL == mgmt->garbageCollectors) {
 		return JNI_ERR;
 	}
@@ -899,7 +934,15 @@ initMemoryManagement(J9JavaVM *vm)
 		mgmt->supportedNonHeapMemoryPools += 2; /* "JIT code cache", "JIT data cache" */
 	}
 #endif
-	mgmt->nonHeapMemoryPools = j9mem_allocate_memory((sizeof(*mgmt->nonHeapMemoryPools) * mgmt->supportedNonHeapMemoryPools), J9MEM_CATEGORY_VM_JCL);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(vm)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+		mgmt->nonHeapMemoryPools = vmsnapshot_allocate_memory((sizeof(*mgmt->nonHeapMemoryPools) * mgmt->supportedNonHeapMemoryPools), J9MEM_CATEGORY_VM_JCL);
+	} else
+#endif
+	{
+		mgmt->nonHeapMemoryPools = j9mem_allocate_memory((sizeof(*mgmt->nonHeapMemoryPools) * mgmt->supportedNonHeapMemoryPools), J9MEM_CATEGORY_VM_JCL);
+	}
 	if (NULL == mgmt->nonHeapMemoryPools) {
 		return JNI_ERR;
 	}

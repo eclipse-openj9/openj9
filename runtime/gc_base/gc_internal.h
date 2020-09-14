@@ -45,6 +45,9 @@
 #include "j9.h"
 #include "omr.h"
 #include "jvmti.h"
+#if defined(J9VM_OPT_SNAPSHOTS)
+#include "SnapshotFileFormat.h"
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 #ifdef __cplusplus
 extern "C" {
@@ -278,6 +281,12 @@ extern UDATA j9gc_stringHashEqualFn (void *leftKey, void *rightKey, void *userDa
 
 /* modronapi.cpp */
 extern J9_CFUNC UDATA j9gc_get_bytes_allocated_by_thread(J9VMThread* vmThread);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+extern J9_CFUNC UDATA j9gc_enter_heap_snapshot_mode(J9VMThread *thread);
+extern J9_CFUNC UDATA j9gc_leave_heap_snapshot_mode(J9VMThread *thread);
+extern J9_CFUNC UDATA j9gc_register_for_snapshot(J9VMThread *thread);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 #ifdef __cplusplus
 }

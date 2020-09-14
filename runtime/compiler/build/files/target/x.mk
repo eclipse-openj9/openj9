@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,6 +68,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/x/codegen/J9Snippet.cpp \
     compiler/x/codegen/J9TreeEvaluator.cpp \
     compiler/x/codegen/J9UnresolvedDataSnippet.cpp \
+    compiler/x/codegen/J9UnresolvedDataReadOnlySnippet.cpp \
     compiler/x/codegen/J9X86Instruction.cpp \
     compiler/x/codegen/RecompilationSnippet.cpp \
     compiler/x/codegen/X86HelperLinkage.cpp \

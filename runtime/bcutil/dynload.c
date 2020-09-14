@@ -587,6 +587,14 @@ readZip (J9JavaVM * javaVM, J9ClassPathEntry * cpEntry) {
 
 	zipFile = (VMIZipFile *) (cpEntry->extraInfo);
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(javaVM)) {
+		if (NULL == zipFile) {
+			javaVM->internalVMFunctions->initializeClassPathEntry(javaVM, cpEntry);
+		}
+	}
+#endif
+
 	/* Find the desired entry, if it is present. */
 	filenameLength = strlen((const char*)javaVM->dynamicLoadBuffers->searchFilenameBuffer);
 	zipFunctions->zip_initZipEntry (VMI, &entry);

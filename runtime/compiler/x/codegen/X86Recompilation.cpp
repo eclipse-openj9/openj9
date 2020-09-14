@@ -38,6 +38,8 @@
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
+#include "objectfmt/GlobalFunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 #include "x/codegen/RecompilationSnippet.hpp"
 #include "x/codegen/X86Instruction.hpp"
 
@@ -125,6 +127,10 @@ TR::Instruction *TR_X86Recompilation::generatePrePrologue()
       // atomically.
       //
       prev = generateHelperCallInstruction(prev, SAMPLING_RECOMPILE_METHOD, cg());
+/*
+      TR::GlobalFunctionCallData data(SAMPLING_RECOMPILE_METHOD, prev, 0, cg());
+      prev = cg()->getObjFmt()->emitGlobalFunctionCall(data);
+*/
       }
 
    // The address of the persistent method info is inserted in the pre-prologue
@@ -228,7 +234,12 @@ void TR_X86Recompilation::setMethodReturnInfoBits()
    //    instruction of the method (this is done by OMR::Recompilation::methodCannotBeRecompiled)
    //
    uint8_t  *startPC = _compilation->cg()->getCodeStart();
-   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
+
+   J9::PrivateLinkage::LinkageInfo *linkageInfo;
+   if (_compilation->getGenerateReadOnlyCode())
+      linkageInfo = J9::PrivateLinkage::LinkageInfo::get(_compilation);
+   else
+      linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
 
    if (useSampling())
       {
