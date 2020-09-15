@@ -277,6 +277,9 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
       bool isGenerated(int32_t bcIndex) { return _iteratorWithState ? Base::isGenerated(bcIndex): false; }
       void visitInvokedynamic();
       void visitInvokevirtual();
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+      void visitInvokehandle();
+#endif
       void visitInvokespecial();
       void visitInvokestatic();
       void visitInvokeinterface();

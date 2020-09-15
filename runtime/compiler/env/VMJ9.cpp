@@ -4853,6 +4853,46 @@ TR_J9VMBase::targetMethodFromMethodHandle(uintptr_t methodHandle)
       "vmentry",             "Ljava/lang/invoke/MemberName;");
    return targetMethodFromMemberName(vmentry);
    }
+
+char *
+TR_J9VMBase::getSignatureForLinkToStaticForInvokeHandle(TR::Compilation* comp, J9UTF8* romMethodSignature)
+   {
+   char * signatureString = (char *) comp->trMemory()->allocateMemory((J9UTF8_LENGTH(romMethodSignature)+1)*sizeof(char), heapAlloc);
+   char * linkToStaticSignature = (char *) comp->trMemory()->allocateMemory((J9UTF8_LENGTH(romMethodSignature)+55)*sizeof(char), heapAlloc);
+   strcpy(signatureString, utf8Data(romMethodSignature));
+   if (strncmp(signatureString, "()", 2) == 0)
+      {
+      char * returnTypeToken = strtok(signatureString, "()");
+      sprintf(linkToStaticSignature, "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)%s", returnTypeToken);
+      }
+   else
+      {
+      char * sigTokenStart = strtok(signatureString, "()");
+      char * sigTokenEnd = strtok(NULL, "()");
+      sprintf(linkToStaticSignature, "(Ljava/lang/Object;%sLjava/lang/Object;Ljava/lang/Object;)%s", sigTokenStart, sigTokenEnd);
+      }
+   return linkToStaticSignature;
+   }
+
+char *
+TR_J9VMBase::getSignatureForLinkToStaticForInvokeDynamic(TR::Compilation* comp, J9UTF8* romMethodSignature)
+   {
+   char * signatureString = (char *) comp->trMemory()->allocateMemory((J9UTF8_LENGTH(romMethodSignature)+1)*sizeof(char), heapAlloc);
+   char * linkToStaticSignature = (char *) comp->trMemory()->allocateMemory((J9UTF8_LENGTH(romMethodSignature)+37)*sizeof(char), heapAlloc);
+   strcpy(signatureString, utf8Data(romMethodSignature));
+   if (strncmp(signatureString, "()", 2) == 0)
+      {
+      char * returnTypeToken = strtok(signatureString, "()");
+      sprintf(linkToStaticSignature, "(Ljava/lang/Object;Ljava/lang/Object;)%s", returnTypeToken);
+      }
+   else
+      {
+      char * sigTokenStart = strtok(signatureString, "()");
+      char * sigTokenEnd = strtok(NULL, "()");
+      sprintf(linkToStaticSignature, "(%sLjava/lang/Object;Ljava/lang/Object;)%s", sigTokenStart, sigTokenEnd);
+      }
+   return linkToStaticSignature;
+   }
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 /**
