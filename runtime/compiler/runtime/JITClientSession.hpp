@@ -38,6 +38,8 @@ class J9ConstantPool;
 class TR_IPBytecodeHashTableEntry;
 class TR_MethodToBeCompiled;
 class TR_AddressRange;
+class TR_PersistentCHTable;
+class JITServerPersistentCHTable;
 namespace JITServer { class ServerStream; }
 
 
@@ -354,7 +356,7 @@ class ClientSessionData
 
    void setJavaLangClassPtr(TR_OpaqueClassBlock* j9clazz) { _javaLangClassPtr = j9clazz; }
    TR_OpaqueClassBlock * getJavaLangClassPtr() const { return _javaLangClassPtr; }
-   PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> & getCHTableClassMap() { return _chTableClassMap; }
+   TR_PersistentCHTable *getCHTable();
    PersistentUnorderedMap<J9Class*, ClassInfo> & getROMClassMap() { return _romClassMap; }
    PersistentUnorderedMap<J9Method*, J9MethodInfo> & getJ9MethodMap() { return _J9MethodMap; }
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getClassBySignatureMap() { return _classBySignatureMap; }
@@ -436,8 +438,8 @@ class ClientSessionData
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
    TR_OpaqueClassBlock *_javaLangClassPtr; // NULL means not set
-   // Server side cache of CHTable
-   PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> _chTableClassMap;
+   // Server side CHTable
+   JITServerPersistentCHTable *_chTable;
    // Server side cache of j9classes and their properties; romClass is copied so it can be accessed by the server
    PersistentUnorderedMap<J9Class*, ClassInfo> _romClassMap;
    // Hashtable for information related to one J9Method

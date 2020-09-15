@@ -294,6 +294,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/env/J9JitMemory.cpp \
     compiler/env/J9KnownObjectTable.cpp \
     compiler/env/J9ObjectModel.cpp \
+    compiler/env/J9PersistentInfo.cpp \
     compiler/env/J9SegmentAllocator.cpp \
     compiler/env/J9SegmentCache.cpp \
     compiler/env/J9SegmentProvider.cpp \

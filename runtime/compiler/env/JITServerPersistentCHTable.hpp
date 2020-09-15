@@ -56,14 +56,17 @@ public:
    TR_ALLOC(TR_Memory::PersistentCHTable)
 
    JITServerPersistentCHTable(TR_PersistentMemory *, J9JITConfig *);
+   ~JITServerPersistentCHTable();
 
-   bool isInitialized() { return !getData().empty(); } // needs CHTable mutex in hand
+   bool isInitialized() { return !_classMap.empty(); } // needs CHTable monitor in hand
    bool initializeCHTable(TR_J9VMBase *fej9, const std::string &rawData);
    void doUpdate(TR_J9VMBase *fej9, const std::string &removeStr, const std::string &modifyStr);
 
    virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId) override;
    virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false) override;
    virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR_FrontEnd *, bool returnClassInfoForAOT = false) override;
+
+   TR::Monitor *getCHTableMonitor() { return _chTableMonitor; }
 
 #ifdef COLLECT_CHTABLE_STATS
    // Statistical counters
@@ -79,7 +82,8 @@ private:
    void commitRemoves(const std::string &data);
    void commitModifications(const std::string &data);
 
-   PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &getData();
+   PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> _classMap;
+   TR::Monitor *_chTableMonitor;
    };
 
 /**
