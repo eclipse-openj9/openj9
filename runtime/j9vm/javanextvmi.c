@@ -19,6 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+#include <assert.h>
 #include <jni.h>
 
 #include "bcverify_api.h"
@@ -30,6 +31,14 @@
 /* Define for debug
 #define DEBUG_BCV
 */
+
+#if JAVA_SPEC_VERSION >= 16
+JNIEXPORT void JNICALL
+JVM_DefineArchivedModules(JNIEnv *env, jobject obj1, jobject obj2)
+{
+	assert(!"JVM_DefineArchivedModules unimplemented");
+}
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if JAVA_SPEC_VERSION >= 11
 JNIEXPORT void JNICALL
