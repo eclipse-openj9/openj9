@@ -1682,10 +1682,10 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				IDATA argIndex9 = 0;
 				BOOLEAN sharedClassDisabled = FALSE;
 
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 				IDATA argIndexXXPortableSharedCache = 0;
 				IDATA argIndexXXNoPortableSharedCache = 0;
-#endif /* defined(J9VM_ARCH_X86) */
+#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) */
 
 				vm->sharedClassPreinitConfig = NULL;
 
@@ -1714,10 +1714,10 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				argIndex8 = FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, VMOPT_XSCMAXJITDATA, NULL);
 				argIndex9 = FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, VMOPT_XXSHARED_CACHE_HARD_LIMIT_EQUALS, NULL);
 
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 				argIndexXXPortableSharedCache = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXPORTABLESHAREDCACHE, NULL);
 				argIndexXXNoPortableSharedCache = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOPORTABLESHAREDCACHE, NULL);
-#endif /* defined(J9VM_ARCH_X86) */
+#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) */
 
 				if (((!J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm)) && (argIndex < 0))
 					|| (TRUE == sharedClassDisabled)
@@ -1799,7 +1799,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 					vm->sharedClassPreinitConfig = piConfig;
 
 					if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_AOT)) {
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 						if (argIndexXXPortableSharedCache > argIndexXXNoPortableSharedCache) {
 							vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE;
 						} else if (argIndexXXPortableSharedCache == argIndexXXNoPortableSharedCache) {
@@ -1811,7 +1811,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 								vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE;
 							}
 						}
-#endif /* defined(J9VM_ARCH_X86) */
+#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) */
 					}
 				}
 
