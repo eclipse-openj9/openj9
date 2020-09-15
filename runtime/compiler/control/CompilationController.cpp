@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,9 +42,9 @@
 
 TR::CompilationStrategy *TR::CompilationController::_compilationStrategy = NULL;
 TR::CompilationInfo *    TR::CompilationController::_compInfo = 0;
-int32_t                 TR::CompilationController::_verbose = 0;
-bool                    TR::CompilationController::_useController = false;
-
+int32_t                  TR::CompilationController::_verbose = 0;
+bool                     TR::CompilationController::_useController = false;
+bool                     TR::CompilationController::_tlsCompObjCreated = false;
 
 
 //------------------------------------ init -----------------------------------
@@ -89,6 +89,7 @@ bool TR::CompilationController::init(TR::CompilationInfo *compInfo)
    if (options->getOption(TR_EnableCompYieldStats))
       TR::Compilation::allocateCompYieldStatsMatrix();
    tlsAlloc(OMR::compilation);
+   _tlsCompObjCreated = true;
    return _useController;
    }
 
@@ -98,7 +99,8 @@ bool TR::CompilationController::init(TR::CompilationInfo *compInfo)
 // --------------------------------------------------------------------------
 void TR::CompilationController::shutdown()
    {
-   tlsFree(OMR::compilation);
+   if (_tlsCompObjCreated)
+      tlsFree(OMR::compilation);
    if (!_useController)
       return;
    // would like to free all entries in the pool of compilation plans
