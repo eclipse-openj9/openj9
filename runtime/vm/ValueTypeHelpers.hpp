@@ -417,6 +417,83 @@ done:
 		}
 	}
 
+	/**
+	 * Performs an aastore operation on an object. Handles flattened and non-flattened cases.
+	 *
+	 * Assumes recieverObject and paramObject are not null.
+	 * All AIOB exceptions must be thrown before calling.
+	 *
+	 * @param[in] currentThread thread token
+	 * @param[in] _objectAccessBarrier access barrier
+	 * @param[in] receiverObject arrayObject
+	 * @param[in] index array index
+	 * @param[in] paramObject obj arg
+	 */
+	static VMINLINE void
+	storeFlattenableArrayElement(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI _objectAccessBarrier, j9object_t receiverObject, U_32 index, j9object_t paramObject)
+	{
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		J9ArrayClass *arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(currentThread, receiverObject);
+		if (J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
+			_objectAccessBarrier.copyObjectFieldsToFlattenedArrayElement(currentThread, arrayrefClass, paramObject, (J9IndexableObject *) receiverObject, index);
+		} else
+#endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		{
+			_objectAccessBarrier.inlineIndexableObjectStoreObject(currentThread, receiverObject, index, paramObject);
+		}
+	}
+
+	/**
+	 * Performs an aaload operation on an object. Handles flattened and non-flattened cases.
+	 *
+	 * Assumes recieverObject is not null.
+	 * All AIOB exceptions must be thrown before calling.
+	 *
+	 * Returns null if newObjectRef retrieval fails.
+	 *
+	 * If fast == false, special stack frame must be built and receiverObject must be pushed onto it.
+	 *
+	 * @param[in] currentThread thread token
+	 * @param[in] _objectAccessBarrier access barrier
+	 * @param[in] _objectAllocate allocator
+	 * @param[in] receiverObject arrayobject
+	 * @param[in] index array index
+	 *
+	 * @return array element
+	 */
+	static VMINLINE j9object_t
+	loadFlattenableArrayElement(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI _objectAccessBarrier, MM_ObjectAllocationAPI _objectAllocate, j9object_t receiverObject, U_32 index, bool fast)
+	{
+		j9object_t value = NULL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		j9object_t newObjectRef = NULL;
+		J9Class *arrayrefClass = J9OBJECT_CLAZZ(currentThread, receiverObject);
+		if (J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
+			if (fast) {
+				newObjectRef = _objectAllocate.inlineAllocateObject(currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, false, false);
+				if(J9_UNEXPECTED(NULL == newObjectRef)) {
+					goto done;
+				}
+			} else {
+				newObjectRef = currentThread->javaVM->memoryManagerFunctions->J9AllocateObject(currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+				if (J9_UNEXPECTED(NULL == newObjectRef)) {
+					goto done;
+				}
+				arrayrefClass = VM_VMHelpers::currentClass(arrayrefClass);
+			}
+			_objectAccessBarrier.copyObjectFieldsFromFlattenedArrayElement(currentThread, (J9ArrayClass *) arrayrefClass, newObjectRef, (J9IndexableObject *) receiverObject, index);
+			value = newObjectRef;
+		} else
+#endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		{
+			value = _objectAccessBarrier.inlineIndexableObjectReadObject(currentThread, receiverObject, index);
+		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+done:
+#endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		return value;
+	}
+
 };
 
 #endif /* VALUETYPEHELPERS_HPP_ */
