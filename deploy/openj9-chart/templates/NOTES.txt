@@ -1,0 +1,15 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+To learn more about OpenJ9, please visit:
+
+  * OpenJ9 website: https://www.eclipse.org/openj9/index.html
+  * OpenJ9 JITServer technology: https://www.eclipse.org/openj9/docs/jitserver/
+  * OpenJ9 repository: https://github.com/eclipse/openj9
+  * OpenJ9 docs: https://github.com/eclipse/openj9-docs

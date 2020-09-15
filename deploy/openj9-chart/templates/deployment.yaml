@@ -1,0 +1,80 @@
+###############################################################################
+# Copyright (c) 2020, 2020 IBM Corp.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+###############################################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "openj9-chart.fullname" . }}
+  labels:
+    helm.sh/chart: {{ template "openj9-chart.chart" . }}
+    app.kubernetes.io/name: {{ template "openj9-chart.fullname" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.Version }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/component: {{ template "openj9-chart.name" . }}
+    app.kubernetes.io/part-of: {{ template "openj9-chart.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "openj9-chart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/version: "1.0.0"
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: {{ template "openj9-chart.chart" . }}
+        app.kubernetes.io/name: {{ template "openj9-chart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/component: openj9
+        app.kubernetes.io/part-of: openj9
+    spec:
+      containers:
+        - name: {{ template "openj9-chart.fullname" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: {{ .Values.container.command }}
+          env:
+          - name: OPENJ9_JAVA_OPTIONS
+            value: {{ .Values.container.OPENJ9_JAVA_OPTIONS }}
+          ports:
+            - containerPort: 38400
+              protocol: TCP
+          resources:
+            limits:
+              memory: {{ .Values.container.limits.memory }}
+              cpu: {{ .Values.container.limits.cpu }}
+            requests:
+              memory: {{ .Values.container.requests.memory }}
+              cpu: {{ .Values.container.requests.cpu }}
+      affinity: 
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions: 
+              - key: beta.kubernetes.io/arch
+                operator: In
+                values:
+                - {{ .Values.arch }}
+      restartPolicy: Always
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
