@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 2007, 2020 IBM Corp. and others
  *
@@ -430,6 +430,12 @@ final class Access implements JavaLangAccess {
 		return StringConcatHelper.mix(arg0, string);
 	}
 /*[ENDIF] Java15 */
+	
+	/*[IF Java16]*/
+	public void bindToLoader(ModuleLayer ml, ClassLoader cl) {
+		ml.bindToLoader(cl);
+	}
+	/*[ENDIF] Java16 */
 
 /*[ENDIF] Sidecar19-SE */
 }
