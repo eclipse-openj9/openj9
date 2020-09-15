@@ -542,7 +542,7 @@ ClientSessionData::getCHTable()
    {
    if (!_chTable)
       {
-      _chTable = new (PERSISTENT_NEW) JITServerPersistentCHTable(trPersistentMemory);
+      _chTable = new (PERSISTENT_NEW) JITServerPersistentCHTable(trPersistentMemory, jitConfig);
       }
    return _chTable;
    }

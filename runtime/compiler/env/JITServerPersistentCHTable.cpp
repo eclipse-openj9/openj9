@@ -30,8 +30,8 @@
 #include "runtime/JITClientSession.hpp"
 
 
-JITServerPersistentCHTable::JITServerPersistentCHTable(TR_PersistentMemory *trMemory)
-   : TR_PersistentCHTable(trMemory),
+JITServerPersistentCHTable::JITServerPersistentCHTable(TR_PersistentMemory *trMemory, J9JITConfig *jitConfig)
+   : TR_PersistentCHTable(trMemory, jitConfig),
    _classMap(decltype(_classMap)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    _chTableMonitor = TR::Monitor::create("JIT-JITServerCHTableMonitor");
@@ -397,8 +397,8 @@ FlatPersistentClassInfo::deserializeHierarchy(const std::string& data)
 // JITClient
 // TODO: check for race conditions with _dirty/_remove
 
-JITClientPersistentCHTable::JITClientPersistentCHTable(TR_PersistentMemory *trMemory)
-   : TR_PersistentCHTable(trMemory)
+JITClientPersistentCHTable::JITClientPersistentCHTable(TR_PersistentMemory *trMemory, J9JITConfig *jitConfig)
+   : TR_PersistentCHTable(trMemory, jitConfig)
    , _dirty(decltype(_dirty)::allocator_type(TR::Compiler->persistentAllocator()))
    , _remove(decltype(_remove)::allocator_type(TR::Compiler->persistentAllocator()))
    {

@@ -50,7 +50,7 @@
 
 class TR_OpaqueClassBlock;
 
-TR_PersistentCHTable::TR_PersistentCHTable(TR_PersistentMemory *trPersistentMemory)
+TR_PersistentCHTable::TR_PersistentCHTable(TR_PersistentMemory *trPersistentMemory, J9JITConfig *jitConfig)
    : _trPersistentMemory(trPersistentMemory)
    {
    /*
