@@ -885,25 +885,136 @@ old_fast_jitPutFlattenableStaticField(J9VMThread *currentThread)
 void* J9FASTCALL
 old_slow_jitLoadFlattenableArrayElement(J9VMThread *currentThread)
 {
-	return NULL;
+	SLOW_JIT_HELPER_PROLOGUE();
+	j9object_t arrayObject = (j9object_t)currentThread->floatTemp1;
+	U_32 index = *(U_32 *)&currentThread->floatTemp2;
+	void *addr = NULL;
+	void *oldPC = currentThread->jitReturnAddress;
+	if (NULL == arrayObject) {
+		buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+		addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		j9object_t value = NULL;
+		U_32 arrayLength = J9INDEXABLEOBJECT_SIZE(_currentThread, arrayObject);
+		if (index >= arrayLength) {
+			buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+			addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYINDEXOUTOFBOUNDSEXCEPTION, NULL);
+		} else {
+			buildJITResolveFrameWithPC(currentThread, J9_STACK_FLAGS_JIT_ALLOCATION_RESOLVE | J9_SSF_JIT_RESOLVE, parmCount, true, 0, oldPC);
+			value = currentThread->javaVM->internalVMFunctions->loadFlattenableArrayElement(currentThread, arrayObject, index, false);
+			if (NULL == value) {
+				addr = setHeapOutOfMemoryErrorFromJIT(currentThread);
+				goto done;
+			}
+			currentThread->floatTemp1 = (void*)value; // in case of decompile
+			addr = restoreJITResolveFrame(currentThread, oldPC, false, false);
+			if (NULL != addr) {
+				goto done;
+			}
+			JIT_RETURN_UDATA(value);
+		}
+	}
+done:
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
 }
 
 void* J9FASTCALL
 old_fast_jitLoadFlattenableArrayElement(J9VMThread *currentThread)
 {
-	return NULL;
+	OLD_JIT_HELPER_PROLOGUE(2);
+	DECLARE_JIT_PARM(j9object_t, arrayObject, 1);
+	DECLARE_JIT_PARM(U_32, index, 2);
+	bool slowPathUsed = false;
+	void *slowPath = NULL;
+	j9object_t value = NULL;
+	U_32 arrayLength = 0;
+	if (NULL == arrayObject) {
+		goto slow;
+	}
+	arrayLength = J9INDEXABLEOBJECT_SIZE(_currentThread, arrayObject);
+	if (index >= arrayLength) {
+		goto slow;
+	}
+	value = (j9object_t) currentThread->javaVM->internalVMFunctions->loadFlattenableArrayElement(currentThread, arrayObject, index, true);
+	if (J9_UNEXPECTED(NULL == value)) {
+		goto slow;
+	}
+	JIT_RETURN_UDATA(value);
+done:
+	return slowPath;
+slow:
+	slowPathUsed = true;
+	currentThread->floatTemp1 = (void *)arrayObject;
+	currentThread->floatTemp2 = *(void **)&index;
+	slowPath = (void*)old_slow_jitLoadFlattenableArrayElement;
+	goto done;
 }
 
 void* J9FASTCALL
 old_slow_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 {
-	return NULL;
+	SLOW_JIT_HELPER_PROLOGUE();
+	j9object_t arrayref = (j9object_t)currentThread->floatTemp1;
+	j9object_t value = (j9object_t)currentThread->floatTemp2;
+	U_32 index = *(U_32 *)&currentThread->floatTemp3;
+	U_32 arrayLength = 0;
+	void *addr = NULL;
+	buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+	if (NULL == arrayref) {
+		addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		arrayLength = J9INDEXABLEOBJECT_SIZE(currentThread, arrayref);
+		if (index >= arrayLength) {
+			addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYINDEXOUTOFBOUNDSEXCEPTION, NULL);
+		} else {
+			if (false == VM_VMHelpers::objectArrayStoreAllowed(arrayref, value)) {
+				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, NULL);
+			} else {
+				J9ArrayClass *arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(currentThread, arrayref);
+				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);;
+			}
+		}
+	}
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
 }
 
 void* J9FASTCALL
 old_fast_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 {
-	return NULL;
+	OLD_JIT_HELPER_PROLOGUE(3);
+	DECLARE_JIT_PARM(j9object_t, arrayref, 1);
+	DECLARE_JIT_PARM(j9object_t, value, 2);
+	DECLARE_JIT_PARM(U_32, index, 3);
+	bool slowPathUsed = false;
+	void *slowPath = NULL;
+	U_32 arrayLength = 0;
+	J9ArrayClass *arrayrefClass = NULL;
+	if (NULL == arrayref) {
+		goto slow;
+	}
+	arrayLength = J9INDEXABLEOBJECT_SIZE(currentThread, arrayref);
+	if (index >= arrayLength) {
+		goto slow;
+	}
+	if (false == VM_VMHelpers::objectArrayStoreAllowed(arrayref, value)) {
+		goto slow;
+	}
+	arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(currentThread, arrayref);
+	if (NULL == value) {
+		goto slow;
+	}
+	currentThread->javaVM->internalVMFunctions->storeFlattenableArrayElement(currentThread, arrayref, index, value);
+done:
+	return slowPath;
+slow:
+	slowPathUsed = true;
+	currentThread->floatTemp1 = (void *)arrayref;
+	currentThread->floatTemp2 = (void *)value;
+	currentThread->floatTemp3 = *(void **)&index;
+	slowPath = (void*)old_slow_jitStoreFlattenableArrayElement;
+	goto done;
 }
 
 static VMINLINE bool

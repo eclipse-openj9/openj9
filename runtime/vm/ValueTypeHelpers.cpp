@@ -220,4 +220,19 @@ arrayElementSize(J9ArrayClass* arrayClass)
         return arrayClass->flattenedElementSize;
 }
 
+void
+storeFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject, U_32 index, j9object_t paramObject)
+{
+        MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+        VM_ValueTypeHelpers::storeFlattenableArrayElement(currentThread, objectAccessBarrier, receiverObject, index, paramObject);
+}
+
+j9object_t
+loadFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject, U_32 index, BOOLEAN fast)
+{
+        MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+        MM_ObjectAllocationAPI objectAllocate(currentThread);
+        return VM_ValueTypeHelpers::loadFlattenableArrayElement(currentThread, objectAccessBarrier, objectAllocate, receiverObject, index, fast != false);
+}
+
 } /* extern "C" */

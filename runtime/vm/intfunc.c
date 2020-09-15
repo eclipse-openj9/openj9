@@ -389,4 +389,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 #if JAVA_SPEC_VERSION >= 15
 	checkClassBytes,
 #endif /* JAVA_SPEC_VERSION >= 15 */
+	storeFlattenableArrayElement,
+	loadFlattenableArrayElement,
 };

@@ -1421,24 +1421,6 @@ obj:
 		return rc;
 	}
 
-	VMINLINE bool
-	objectArrayStoreAllowed(j9object_t array, j9object_t storeValue)
-	{
-		bool rc = true;
-		if (NULL != storeValue) {
-			J9Class *valueClass = J9OBJECT_CLAZZ(_currentThread, storeValue);
-			J9Class *componentType = ((J9ArrayClass*)J9OBJECT_CLAZZ(_currentThread, array))->componentType;
-			/* quick check -- is this a store of a C into a C[]? */
-			if (valueClass != componentType) {
-				/* quick check -- is this a store of a C into a java.lang.Object[]? */
-				if (0 != J9CLASS_DEPTH(componentType)) {
-					rc = VM_VMHelpers::inlineCheckCast(valueClass, componentType);
-				}
-			}
-		}
-		return rc;
-	}
-
 	VMINLINE bool immediateAsyncPending()
 	{
 #if defined(DEBUG_VERSION)
@@ -5875,34 +5857,24 @@ done:
 				_currentThread->tempSlot = (UDATA)index;
 				rc = THROW_AIOB;
 			} else {
-				j9object_t value = NULL;
+				j9object_t value = VM_ValueTypeHelpers::loadFlattenableArrayElement(_currentThread, _objectAccessBarrier, _objectAllocate, arrayref, index, true);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				J9Class *arrayrefClass = J9OBJECT_CLAZZ(_currentThread, arrayref);
-				if (J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
-					j9object_t newObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, false, false);
-
-					if (NULL == newObjectRef) {
-						buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-						pushObjectInSpecialFrame(REGISTER_ARGS, arrayref);
-						updateVMStruct(REGISTER_ARGS);
-						newObjectRef = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-						VMStructHasBeenUpdated(REGISTER_ARGS);
-						arrayref = popObjectInSpecialFrame(REGISTER_ARGS);
-						restoreGenericSpecialStackFrame(REGISTER_ARGS);
-						if (J9_UNEXPECTED(NULL == newObjectRef)) {
-							rc = THROW_HEAP_OOM;
-							return rc;
-						}
-						arrayrefClass = VM_VMHelpers::currentClass(arrayrefClass);
+				if ((NULL == value) && J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
+					/* We only get here due to an allocation failure */
+					buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+					pushObjectInSpecialFrame(REGISTER_ARGS, arrayref);
+					updateVMStruct(REGISTER_ARGS);
+					value = VM_ValueTypeHelpers::loadFlattenableArrayElement(_currentThread, _objectAccessBarrier, _objectAllocate, arrayref, index, false);
+					VMStructHasBeenUpdated(REGISTER_ARGS);
+					arrayref = popObjectInSpecialFrame(REGISTER_ARGS);
+					restoreGenericSpecialStackFrame(REGISTER_ARGS);
+					if (J9_UNEXPECTED(NULL == value)) {
+						rc = THROW_HEAP_OOM;
+						return rc;
 					}
-
-					_objectAccessBarrier.copyObjectFieldsFromFlattenedArrayElement(_currentThread, (J9ArrayClass *) arrayrefClass, newObjectRef, (J9IndexableObject *) arrayref, index);
-					value = newObjectRef;
-				} else
-#endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-				{
-					value = _objectAccessBarrier.inlineIndexableObjectReadObject(_currentThread, arrayref, index);
 				}
+#endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				_pc += 1;
 				_sp += 1;
 				*(j9object_t*)_sp = value;
@@ -5931,26 +5903,17 @@ done:
 			} else {
 				j9object_t value = *(j9object_t*)_sp;
 				/* Runtime check class compatibility */
-				if (false == objectArrayStoreAllowed(arrayref, value)) {
+				if (false == VM_VMHelpers::objectArrayStoreAllowed(arrayref, value)) {
 					rc = THROW_ARRAY_STORE;
 				} else {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 					J9ArrayClass *arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(_currentThread, arrayref);
-					if (J9_IS_J9CLASS_VALUETYPE(arrayrefClass->componentType)) {
-						if (NULL == value) {
-							rc = THROW_NPE;
-							goto done;
-						}
-						if (J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
-							_objectAccessBarrier.copyObjectFieldsToFlattenedArrayElement(_currentThread, arrayrefClass, value, (J9IndexableObject *) arrayref, index);
-						} else {
-							_objectAccessBarrier.inlineIndexableObjectStoreObject(_currentThread, arrayref, index, value);
-						}
-					} else
-#endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-					{
-						_objectAccessBarrier.inlineIndexableObjectStoreObject(_currentThread, arrayref, index, value);
+					if (J9_IS_J9CLASS_VALUETYPE(arrayrefClass->componentType) && (NULL == value)) {
+						rc = THROW_NPE;
+						goto done;
 					}
+#endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+					VM_ValueTypeHelpers::storeFlattenableArrayElement(_currentThread, _objectAccessBarrier, arrayref, index, value);
 					_pc += 1;
 					_sp += 3;
 				}
