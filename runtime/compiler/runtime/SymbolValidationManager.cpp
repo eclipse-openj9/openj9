@@ -49,6 +49,11 @@ TR::SymbolValidationManager::_systemClassesNotWorthRemembering[] = {
     */
    { "java/lang/Throwable", NULL, true },
 
+   /* Newer java code is moving towards using StringBuilder. Therefore, ignoring this class
+    * reduces load failures, while having minimal impact on steady state throughput.
+    */
+   { "java/lang/StringBuffer", NULL, false },
+
    /* Terminating entry */
    { NULL, NULL, false }
 };
@@ -156,7 +161,7 @@ TR::SymbolValidationManager::isClassWorthRemembering(TR_OpaqueClassBlock *clazz)
 void
 TR::SymbolValidationManager::populateWellKnownClasses()
    {
-#define WELL_KNOWN_CLASS_COUNT 10
+#define WELL_KNOWN_CLASS_COUNT 9
 #define REQUIRED_WELL_KNOWN_CLASS_COUNT 1
 
    // Classes must have names only allowed to be defined by the bootstrap loader
@@ -170,7 +175,6 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       "java/lang/Runnable",
       "java/lang/String",
       "java/lang/StringBuilder",
-      "java/lang/StringBuffer",
       "java/lang/System",
       "java/lang/ref/Reference",
       "com/ibm/jit/JITHelpers",
