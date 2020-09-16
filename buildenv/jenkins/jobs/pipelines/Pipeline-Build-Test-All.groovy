@@ -28,7 +28,7 @@
  * VARIABLE_FILE allows to run it in a custom configuration on a different server.
  *
  * Parameters:
- *   PLATFORMS: String - Comma separated platforms to build. See `id=` in the `.spec` files found in the buildspecs directory (the id should be the same as the spec file name without the `.spec`).
+ *   PLATFORMS: String - Comma separated platforms to build, or `all`. For the list of platforms, see `id=` in the `.spec` files found in the buildspecs directory (the id should be the same as the spec file name without the `.spec`).
  *   OPENJ9_REPO: String - the OpenJ9 git repository URL: e.g. https://github.com/eclipse/openj9.git (default)
  *   OPENJ9_BRANCH: String - the OpenJ9 branch to clone from: e.g. master (default)
  *   OPENJ9_SHA: String - the last commit SHA of the OpenJ9 repository
