@@ -3366,7 +3366,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_fullFence,     "fullFence",  "()V")},
 
       {x(TR::sun_misc_Unsafe_ensureClassInitialized,     "ensureClassInitialized", "(Ljava/lang/Class;)V")},
-
+      {x(TR::jdk_internal_misc_Unsafe_copyMemory0,   "copyMemory0", "(Ljava/lang/Object;JLjava/lang/Object;JJ)V")},
       {  TR::unknownMethod}
       };
 
