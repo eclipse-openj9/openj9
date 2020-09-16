@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2016, 2020 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="Xlp option commandline tests" timeout="120">
+
+	<!-- These tests check -Xlp parsing is done correctly and error/warning messages are proper. --> 
+
+	<test id="Test -Xlpabc">
+		<command>$EXE$ -Xlpabc -version</command>
+		<output regex="no" type="success">Command-line option unrecognised: -Xlpabc</output>
+  		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+ 	
+ 	<test id="Test -Xlp1Mabc">
+		<command>$EXE$ -Xlp1Mabc -version</command>
+		<!-- If system does not support large page size, we should get following error message -->  
+		<output regex="no" type="success">System configuration does not support option '-Xlp'</output>
+		<!-- If system supports large page size, we should get following warning message -->
+		<output regex="no" type="success">Malformed option value, option "-Xlp1M" contains trailing characters "abc" which have been ignored</output>
+ 	</test>
+ 	
+ 	<test id="Test -Xlp:objectheap:pagesize=">
+		<command>$EXE$ -Xlp:objectheap:pagesize= -version</command>
+		<output regex="no" type="success">pagesize= must be followed by a number</output>
+		<output regex="yes" javaUtilPattern="yes" type="required">Value for '-Xlp:objectheap:pagesize=.?size.?' is not correct</output>
+  		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+ 	
+	<test id="Test -Xlp:objectheap:pagesize=abc">
+		<command>$EXE$ -Xlp:objectheap:pagesize=abc -version</command>
+		<output regex="no" type="success">pagesize= must be followed by a number</output>
+		<output regex="yes" javaUtilPattern="yes" type="required">Value for '-Xlp:objectheap:pagesize=.?size.?' is not correct</output>
+  		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+ 	
+ 	<test id="Test -Xlp:objectheap:pagesize=1M," platforms="aix.*,linux.*,win.*">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1M, -version</command>
+		<output regex="no" type="success">Extra comma characters are discovered in '-Xlp' option - ignored</output>
+  		<output regex="yes" type="required" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="no" type="failure">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="failure">Error: A fatal exception has occurred. Program will exit.</output>
+ 	</test>
+ 	
+ 	 <test id="Test -Xlp:objectheap:pagesize=1M," platforms="zos.*">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1M, -version</command>
+		<output regex="no" type="success">'-Xlp:objectheap:' option is not complete, must specify '[non]pageable' parameter</output>
+  		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+ 	
+ 	<test id="Test -Xlp:objectheap:pagesize=1Mabc">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1Mabc -version</command>
+		<output regex="no" type="success">System configuration does not support parameter 'pagesize=1Mabc' in option '-Xlp'</output>
+  		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+ 	
+ 	<test id="Test -Xlp:objectheap:pagesize=1M,abc">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1M,abc -version</command>
+		<output regex="no" type="success">System configuration does not support parameter 'abc' in option '-Xlp'</output>
+  		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+	
+	<test id="Test -Xlp:objectheap:pagesize=abc,pageable">
+		<command>$EXE$ -Xlp:objectheap:pagesize=abc,pageable -version</command>
+		<output regex="no" type="success">pagesize= must be followed by a number</output>
+		<output regex="yes" javaUtilPattern="yes" type="required">Value for '-Xlp:objectheap:pagesize=.?size.?' is not correct</output>
+  		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+ 	
+ 	<test id="Test -Xlp:objectheap:pagesize=abc,nonpageable">
+		<command>$EXE$ -Xlp:objectheap:pagesize=abc,nonpageable -version</command>
+		<output regex="no" type="success">pagesize= must be followed by a number</output>
+		<output regex="yes" javaUtilPattern="yes" type="required">Value for '-Xlp:objectheap:pagesize=.?size.?' is not correct</output>
+  		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+ 	
+ 	<test id="Test -Xlp:objectheap:pagesize=1Mabc,pageable">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1Mabc,pageable -version</command>
+		<output regex="no" type="success">System configuration does not support parameter 'pagesize=1Mabc' in option '-Xlp'</output>
+  		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+
+ 	<test id="Test -Xlp:objectheap:pagesize=1Mabc,nonpageable">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1Mabc,nonpageable -version</command>
+		<output regex="no" type="success">System configuration does not support parameter 'pagesize=1Mabc' in option '-Xlp'</output>
+  		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+ 	
+ 	<test id="Test -Xlp:objectheap:pagesize=1M,abc,pageable">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1M,abc,pageable -version</command>
+		<output regex="no" type="success">System configuration does not support parameter 'abc' in option '-Xlp'</output>
+ 		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+ 	
+ 	<test id="Test -Xlp:objectheap:pagesize=1M,abc,nonpageable">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1M,abc,nonpageable -version</command>
+		<output regex="no" type="success">System configuration does not support parameter 'abc' in option '-Xlp'</output>
+ 		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+ 	
+ 	<test id="Test -Xlp:objectheap:pagesize=1M,pageable,">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1M,pageable, -version</command>
+		<output regex="no" type="success">Extra comma characters are discovered in '-Xlp' option - ignored</output>
+  		<output regex="yes" type="required" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="no" type="failure">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="failure">Error: A fatal exception has occurred. Program will exit.</output>
+ 	</test>
+ 	
+ 	<test id="Test -Xlp:objectheap:pagesize=1M,nonpageable,">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1M,nonpageable, -version</command>
+		<output regex="no" type="success">Extra comma characters are discovered in '-Xlp' option - ignored</output>
+  		<output regex="yes" type="required" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="no" type="failure">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="failure">Error: A fatal exception has occurred. Program will exit.</output>
+ 	</test>
+ 	
+ 	<test id="Test -Xlp:objectheap:pagesize=1M,pageableabc">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1M,pageableabc -version</command>
+		<output regex="no" type="success">System configuration does not support parameter 'pageableabc' in option '-Xlp'</output>
+   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+ 
+ 	<test id="Test -Xlp:objectheap:pagesize=1M,nonpageableabc">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1M,nonpageableabc -version</command>
+		<output regex="no" type="success">System configuration does not support parameter 'nonpageableabc' in option '-Xlp'</output>
+   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+ 	
+ 	<test id="Test -Xlp:objectheap:pagesize=1M,abcpageable">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1M,abcpageable -version</command>
+		<output regex="no" type="success">System configuration does not support parameter 'abcpageable' in option '-Xlp'</output>
+   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+ 
+ 	<test id="Test -Xlp:objectheap:pagesize=1M,abcnonpageable">
+		<command>$EXE$ -Xlp:objectheap:pagesize=1M,abcnonpageable -version</command>
+		<output regex="no" type="success">System configuration does not support parameter 'abcnonpageable' in option '-Xlp'</output>
+   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
+  		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
+  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+ 	</test>
+</suite>
