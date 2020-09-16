@@ -51,6 +51,7 @@ machine, or in a Docker container :whale:.
 If you are using a different Linux distribution, you might have to review the list of libraries that are bundled with your distribution and/or modify the instructions to use equivalent commands to the Advanced Packaging Tool (APT). For example, for Centos, substitute the `apt-get` command with `yum`.
 
 If you want to build a binary for Linux on a different architecture, such as Power Systems&trade; or z Systems&trade;, the process is very similar and any additional information for those architectures are included as Notes :pencil: as we go along.
+See also [AArch64 section](#aarch64) for building for AArch64 Linux.
 
 ### 1. Prepare your system
 :penguin:
@@ -677,4 +678,96 @@ We haven't created a full build process for ARM yet? Watch this space!
 
 ## AArch64
 
-:construction: Build process for AArch64 (ARMv8 64-bit) Linux does not support OpenJDK V8 at the time of writing this.
+:penguin:
+The following instructions guide you through the process of building an OpenJDK V8 binary that contains Eclipse OpenJ9 for AArch64 (ARMv8 64-bit) Linux.
+
+The binary can be built on your AArch64 Linux system.  Cross-building on x86-64 Linux is not supported yet.
+
+### 1. Get the source
+:penguin:
+First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
+```
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
+```
+Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
+```
+cd openj9-openjdk-jdk8
+```
+Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
+```
+bash get_source.sh
+```
+
+### 2. Prepare your system
+
+You must install a number of software dependencies to create a suitable build environment on your AArch64 Linux system:
+
+- GNU C/C++ compiler
+- [AArch64 Linux JDK](https://api.adoptopenjdk.net/v3/binary/latest/8/ga/linux/aarch64/jdk/hotspot/normal/adoptopenjdk), which is used as the boot JDK.
+- [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
+
+See [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker) in [Linux section](#linux) for other dependencies to be installed.
+
+### 3. Configure
+:penguin:
+When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
+```
+bash configure --with-freemarker-jar=/<path_to>/freemarker.jar --with-boot-jdk=/<path_to_boot_JDK>
+```
+:warning: You must give an absolute path to freemarker.jar
+
+:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK that uses OpenSSL, you must specify `--with-openssl={system|path_to_library}`
+
+  where:
+
+  - `system` uses the package installed OpenSSL library in the system.
+  - `path_to_library` uses a custom OpenSSL library that's already built.
+
+  If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
+
+### 6. Build
+:penguin:
+Now you're ready to build OpenJDK V8 with OpenJ9:
+```
+make all
+```
+:warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
+If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
+
+Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre):
+- **build/linux-aarch64-normal-server-release/images/j2sdk-image**
+- **build/linux-aarch64-normal-server-release/images/j2re-image**
+
+### 6. Test
+:penguin:
+For a simple test, try running the `java -version` command.
+Change to your **j2re-image** directory:
+```
+cd build/linux-aarch64-normal-server-release/images/j2re-image
+```
+Run:
+```
+bin/java -version
+```
+
+Here is some sample output:
+
+```
+openjdk version "1.8.0_265-internal"
+OpenJDK Runtime Environment (build 1.8.0_265-internal-ubuntu_2020_07_28_13_28-b00)
+Eclipse OpenJ9 VM (build master-e724f249c, JRE 1.8.0 Linux aarch64-64-Bit Compressed References 20200728_000000 (JIT enabled, AOT enabled)
+OpenJ9   - e724f249c
+OMR      - 8124c1385
+JCL      - 28815f64 based on jdk8u265-b01)
+```
+
+:construction: AArch64 JIT compiler is not fully optimized at the time of writing this, compared with other platforms.
+
+:pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
+
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
+
+:penguin: *Congratulations!* :tada:
