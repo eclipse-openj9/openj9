@@ -251,6 +251,55 @@ J9::SymbolReferenceTable::findOrCreateAcmpHelperSymbolRef(TR::ResolvedMethodSymb
 
 
 TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateGetFlattenableFieldSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol)
+   {
+   return findOrCreateRuntimeHelper(TR_getFlattenableField, true, true, true);
+   }
+
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateWithFlattenableFieldSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol)
+   {
+   return findOrCreateRuntimeHelper(TR_withFlattenableField, true, true, true);
+   }
+
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreatePutFlattenableFieldSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol)
+   {
+   return findOrCreateRuntimeHelper(TR_putFlattenableField, true, true, true);
+   }
+
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateGetFlattenableStaticFieldSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol)
+   {
+   return findOrCreateRuntimeHelper(TR_getFlattenableStaticField, true, true, true);
+   }
+
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreatePutFlattenableStaticFieldSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol)
+   {
+   return findOrCreateRuntimeHelper(TR_putFlattenableStaticField, true, true, true);
+   }
+
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateLoadFlattenableArrayElementSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol)
+   {
+   return findOrCreateRuntimeHelper(TR_ldFlattenableArrayElement, true, false, true);
+   }
+
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateStoreFlattenableArrayElementSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol)
+   {
+   return findOrCreateRuntimeHelper(TR_strFlattenableArrayElement, true, false, true);
+   }
+
+
+TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateFloatSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
    {
    void * dataAddress = owningMethodSymbol->getResolvedMethod()->floatConstant(cpIndex);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@
 
 #include "j9field.h"
 #include "infra/List.hpp"
+#include "infra/vector.hpp"
 #include "env/IO.hpp"
 #include "env/VMJ9.h"
 
@@ -37,19 +38,16 @@ public:
 
    List<TR_VMField>*   getFields() { return _fields; }
    List<TR_VMField>*   getStatics() { return _statics; }
-   UDATA               getNumRefSlotsInObject() { return _numRefSlotsInObject; }
-   int32_t *           getGCDescriptor() { return _gcDescriptor; }
-   void                print(TR::FILE *outFile);
+   int32_t *           getGCDescriptor() { return &_gcDescriptor[0]; }
 
 private:
-   int                 buildField(J9Class *aClazz, J9ROMFieldShape *fieldShape);
+   void                collectFieldInfo(J9Class *aClazz);
+   void                buildField(J9Class *aClazz, J9ROMFieldShape *fieldShape);
    TR_J9VMBase *       _fe;
    TR::Compilation *   _comp;
-   J9Class *          _ramClass;
-   int32_t *          _gcDescriptor;
-   UDATA              _numRefSlotsInObject;
-   List <TR_VMField>* _fields;
-   List <TR_VMField>* _statics;
+   TR::vector<int32_t, TR::Region&> _gcDescriptor;
+   List<TR_VMField>*  _fields;
+   List<TR_VMField>*  _statics;
    TR_AllocationKind  _allocKind;
    };
 #endif
