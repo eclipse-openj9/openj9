@@ -5061,11 +5061,47 @@ TR_J9ByteCodeIlGenerator::loadAuto(TR::DataType type, int32_t slot, bool isAdjun
    push(load);
    }
 
+/**
+ * @brief Returns whether a field ref in the constant pool resolved
+ *
+ * Importantly, when this function returns false, a ResolveCHK is guarenteed to be needed.
+ *
+ * @param comp is a pointer the current compilation object
+ * @param owningMethod is the method that owns the constant pool
+ * @param cpIndex is the index into the constant pool of the field
+ * @param isStore specifies whether the check is done for a store of the field
+ * @return true when the constant pool entry for the field is resolved, false otherwise
+ */
+static bool
+isFieldResolved(TR::Compilation *comp, TR_ResolvedJ9Method * owningMethod, int32_t cpIndex, bool isStore)
+   {
+   uint32_t offset = 0;
+   TR::DataType type = TR::NoType;
+   bool isVolatile = true, isFinal = false, isPrivate = false, isUnresolvedInCP;
+   return owningMethod->fieldAttributes(comp, cpIndex, &offset, &type, &isVolatile, &isFinal,
+                                    &isPrivate, isStore, &isUnresolvedInCP, true /* needsAOTValidation */);
+   }
+
 void
 TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
    {
    if (_generateReadBarriersForFieldWatch && comp()->compileRelocatableCode())
       comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
+
+   TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
+   if (TR::Compiler->om.areValueTypesEnabled() && owningMethod->isFieldQType(cpIndex))
+      {
+      if (!isFieldResolved(comp(), owningMethod, cpIndex, false))
+         {
+         abortForUnresolvedValueTypeOp("getfield", "field");
+         }
+      else if (owningMethod->isFieldFlattened(comp(), cpIndex, _methodSymbol->isStatic()))
+         {
+         loadFlattenableInstanceWithHelper(cpIndex);
+         return;
+         }
+      }
+
    TR::SymbolReference * symRef = symRefTab()->findOrCreateShadowSymbol(_methodSymbol, cpIndex, false);
    loadInstance(symRef);
    }
@@ -5158,6 +5194,26 @@ TR_J9ByteCodeIlGenerator::loadInstance(TR::SymbolReference * symRef)
       }
 
    push(dummyLoad);
+   }
+
+void
+TR_J9ByteCodeIlGenerator::loadFlattenableInstanceWithHelper(int32_t cpIndex)
+   {
+   TR::Node * address = pop();
+   if (!address->isNonNull())
+      {
+      auto* nullchk = TR::Node::create(TR::PassThrough, 1, address);
+      nullchk = genNullCheck(nullchk);
+      genTreeTop(nullchk);
+      }
+   auto* j9ResolvedMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
+   auto* ramFieldRef = reinterpret_cast<J9RAMFieldRef*>(j9ResolvedMethod->cp()) + cpIndex;
+   auto* ramFieldRefNode = TR::Node::aconst(reinterpret_cast<uintptr_t>(ramFieldRef));
+   auto* receiverNode = address;
+   auto* helperCallNode = TR::Node::createWithSymRef(TR::acall, 2, 2, receiverNode, ramFieldRefNode, comp()->getSymRefTab()->findOrCreateGetFlattenableFieldSymbolRef());
+   handleSideEffect(helperCallNode);
+   genTreeTop(helperCallNode);
+   push(helperCallNode);
    }
 
 void
@@ -6174,6 +6230,13 @@ TR_J9ByteCodeIlGenerator::genWithField(uint16_t fieldCpIndex)
    TR::Node *passThruNode = TR::Node::create(TR::PassThrough, 1, originalObject);
    genTreeTop(genNullCheck(passThruNode));
 
+   TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
+   if (owningMethod->isFieldQType(fieldCpIndex) && owningMethod->isFieldFlattened(comp(), fieldCpIndex, _methodSymbol->isStatic()))
+      {
+      genFlattenableWithFieldWithHelper(fieldCpIndex, newFieldValue, originalObject);
+      return;
+      }
+
    loadClassObject(valueClass);
    const TR::TypeLayout *typeLayout = comp()->typeLayout(valueClass);
    size_t fieldCount = typeLayout->count();
@@ -6204,6 +6267,18 @@ TR_J9ByteCodeIlGenerator::genWithField(uint16_t fieldCpIndex)
    genTreeTop(newValueNode);
    push(newValueNode);
    genFlush(0);
+   }
+
+void
+TR_J9ByteCodeIlGenerator::genFlattenableWithFieldWithHelper(uint16_t fieldCpIndex, TR::Node * newFieldValue, TR::Node * originalObject)
+   {
+   auto* j9ResolvedMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
+   auto* ramFieldRef = reinterpret_cast<J9RAMFieldRef*>(j9ResolvedMethod->cp()) + fieldCpIndex;
+   auto* ramFieldRefNode = TR::Node::aconst(reinterpret_cast<uintptr_t>(ramFieldRef));
+   auto* helperCallNode = TR::Node::createWithSymRef(TR::acall, 3, 3, newFieldValue, originalObject, ramFieldRefNode, comp()->getSymRefTab()->findOrCreateWithFlattenableFieldSymbolRef());
+   handleSideEffect(helperCallNode);
+   genTreeTop(helperCallNode);
+   push(helperCallNode);
    }
 
 void
@@ -6659,6 +6734,20 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
    if (_generateWriteBarriersForFieldWatch && comp()->compileRelocatableCode())
       comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
 
+   TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
+   if (TR::Compiler->om.areValueTypesEnabled() && owningMethod->isFieldQType(cpIndex))
+      {
+      if (!isFieldResolved(comp(), owningMethod, cpIndex, true))
+         {
+         abortForUnresolvedValueTypeOp("putfield", "field");
+         }
+      else if (owningMethod->isFieldFlattened(comp(), cpIndex, _methodSymbol->isStatic()))
+         {
+         storeFlattenableInstanceWithHelper(cpIndex);
+         return;
+         }
+      }
+
    TR::SymbolReference * symRef = symRefTab()->findOrCreateShadowSymbol(_methodSymbol, cpIndex, true);
    TR::Symbol * symbol = symRef->getSymbol();
    TR::DataType type = symbol->getDataType();
@@ -6790,6 +6879,25 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
       else
          genTreeTop(node);
       }
+   }
+
+void
+TR_J9ByteCodeIlGenerator::storeFlattenableInstanceWithHelper(int32_t cpIndex)
+   {
+   TR::Node * value = pop();
+   TR::Node * address = pop();
+   if (!address->isNonNull())
+      {
+      auto* nullchk = TR::Node::create(TR::PassThrough, 1, address);
+      nullchk = genNullCheck(nullchk);
+      genTreeTop(nullchk);
+      }
+   auto* j9ResolvedMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
+   auto* ramFieldRef = reinterpret_cast<J9RAMFieldRef*>(j9ResolvedMethod->cp()) + cpIndex;
+   auto* ramFieldRefNode = TR::Node::aconst(reinterpret_cast<uintptr_t>(ramFieldRef));
+   auto* helperCallNode = TR::Node::createWithSymRef(TR::acall, 3, 3, value, address, ramFieldRefNode, comp()->getSymRefTab()->findOrCreatePutFlattenableFieldSymbolRef());
+   handleSideEffect(helperCallNode);
+   genTreeTop(helperCallNode);
    }
 
 void
