@@ -1014,7 +1014,7 @@ openFileFromDirectorySearchList(char *searchPath, char *fileName, int32_t flags,
 	searchPathLen = strlen(searchPath);
 	while (offset < searchPathLen) {
 		PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
-		size_t currentPathEntryEndsAt = strcspn(nextPathEntry, ";\0");
+		size_t currentPathEntryEndsAt = strcspn(nextPathEntry, ";");
 		strncpy(tempFileNamePath, nextPathEntry, currentPathEntryEndsAt);
 		tempFileNamePath[currentPathEntryEndsAt] = '\0';
 		strcat(tempFileNamePath, DIR_SEPARATOR_STR);

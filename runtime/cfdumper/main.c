@@ -314,7 +314,7 @@ convertToClassFilename(const char **files, char ***classFiles, I_32 *fileCount) 
 		strcpy(&currentFile[length], CFDUMP_CLASSFILE_EXTENSION);
 		currentFile[length + classExtLen] = '\0';
 		convertedFiles[i] = currentFile;
-		currentFile += length + classExtLen + 1;		/* ".class\0" */
+		currentFile += length + classExtLen + 1; /* ".class" */
 	}
 
 _end:
