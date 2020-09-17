@@ -1681,12 +1681,12 @@ onLoadInternal(
 #if defined(J9VM_OPT_JITSERVER)
       if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          {
-         chtable = new (PERSISTENT_NEW) JITClientPersistentCHTable(persistentMemory, jitConfig);
+         chtable = new (PERSISTENT_NEW) JITClientPersistentCHTable(persistentMemory);
          }
       else
 #endif
          {
-         chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory, jitConfig);
+         chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);
          }
       if (chtable == NULL)
          return -1;
