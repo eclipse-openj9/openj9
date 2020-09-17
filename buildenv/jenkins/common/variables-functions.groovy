@@ -619,7 +619,7 @@ def set_build_variables() {
 
 def set_sdk_variables() {
     DATESTAMP = get_date()
-    SDK_FILE_EXT = SPEC.contains('zos') ? '.pax' : '.tar.gz'
+    SDK_FILE_EXT = SPEC.contains('zos') ? '.pax.Z' : '.tar.gz'
     SDK_FILENAME =  "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}${SDK_FILE_EXT}"
     TEST_FILENAME = "test-images.tar.gz"
     JAVADOC_FILENAME = "OpenJ9-JDK${SDK_VERSION}-Javadoc-${SPEC}-${DATESTAMP}.tar.gz"
