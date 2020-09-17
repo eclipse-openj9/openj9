@@ -28,22 +28,7 @@
  * VARIABLE_FILE allows to run it in a custom configuration on a different server.
  *
  * Parameters:
- *   PLATFORMS: String - Comma separated platforms to build.
- *              Expected values: all or any of the following:
- *              aix_ppc-64_cmprssptrs,
- *              linux_x86-64,
- *              linux_x86-64_cmprssptrs,
- *              linux_ppc-64,
- *              linux_ppc-64_cmprssptrs_le,
- *              linux_390-64,
- *              linux_390-64_cmprssptrs,
- *              win_x86-64_cmprssptrs,
- *              win_x86 (Java 8 support only),
- *              zos_390-64_cmprssptrs (Java 11 support only),
- *              osx_x86-64 (Java 8 and Java 11 support only),
- *              osx_x86-64_cmprssptrs (Java 8 and Java 11 support only),
- *              aarch64_linux (Java 8 and Java 11 support only),
- *              aarch64_linux_xl (Java 8 and Java 11 support only)
+ *   PLATFORMS: String - Comma separated platforms to build, or `all`. For the list of platforms, see `id=` in the `.spec` files found in the buildspecs directory (the id should be the same as the spec file name without the `.spec`).
  *   OPENJ9_REPO: String - the OpenJ9 git repository URL: e.g. https://github.com/eclipse/openj9.git (default)
  *   OPENJ9_BRANCH: String - the OpenJ9 branch to clone from: e.g. master (default)
  *   OPENJ9_SHA: String - the last commit SHA of the OpenJ9 repository
@@ -125,9 +110,9 @@ SPECS = ['ppc64_aix' : CURRENT_RELEASES,
          'x86-64_windows_cm': CURRENT_RELEASES,
          'x86-64_windows_xl' : CURRENT_RELEASES,
          'x86-64_windows_xl_cm': CURRENT_RELEASES,
-         'aarch64_linux' : ['8', '11'],
+         'aarch64_linux' : CURRENT_RELEASES,
          'aarch64_linux_cm': ['11'],
-         'aarch64_linux_xl' : ['8', '11'],
+         'aarch64_linux_xl' : CURRENT_RELEASES,
          'aarch64_linux_xl_cm': ['11']]
 
 // SHORT_NAMES is used for PullRequest triggers
