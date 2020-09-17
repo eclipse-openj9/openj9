@@ -69,7 +69,7 @@ class TR_PersistentCHTable
    public:
    TR_ALLOC(TR_Memory::PersistentCHTable)
 
-   TR_PersistentCHTable(TR_PersistentMemory *, J9JITConfig *);
+   TR_PersistentCHTable(TR_PersistentMemory *);
 
    virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId);
 

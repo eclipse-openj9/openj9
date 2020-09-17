@@ -325,6 +325,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                   }
 
                jitConfig = vm->jitConfig;
+               ::jitConfig = jitConfig;
 
                if (!jitConfig)
                   {

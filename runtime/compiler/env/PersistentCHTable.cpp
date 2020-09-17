@@ -50,7 +50,7 @@
 
 class TR_OpaqueClassBlock;
 
-TR_PersistentCHTable::TR_PersistentCHTable(TR_PersistentMemory *trPersistentMemory, J9JITConfig *jitConfig)
+TR_PersistentCHTable::TR_PersistentCHTable(TR_PersistentMemory *trPersistentMemory)
    : _trPersistentMemory(trPersistentMemory)
    {
    /*
@@ -66,7 +66,7 @@ TR_PersistentCHTable::TR_PersistentCHTable(TR_PersistentMemory *trPersistentMemo
    _classes = static_cast<TR_LinkHead<TR_PersistentClassInfo> *>(static_cast<void *>(_buffer));
 
 #if defined(J9VM_OPT_SNAPSHOTS)
-   if (IS_RESTORE_RUN(jitConfig->javaVM))
+   if (IS_RESTORE_RUN(::jitConfig->javaVM))
       {
       resetStatus();
       }
