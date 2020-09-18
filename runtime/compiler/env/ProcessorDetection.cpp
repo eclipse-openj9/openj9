@@ -496,73 +496,73 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
 
    if (TR::Compiler->target.cpu.isPower())
       {
-      switch(portLibCall_getProcessorType())
+      switch (TR::Compiler->target.cpu.getProcessorDescription().processor)
          {
-         case TR_PPCpwr604:
+         case OMR_PROCESSOR_PPC_PWR604:
             sourceString = "PPCPWR604";
             break;
 
-         case TR_PPCpwr630:
+         case OMR_PROCESSOR_PPC_PWR630:
             sourceString = "PPCpwr630 ";
             break;
 
-         case TR_PPCgp:
+         case OMR_PROCESSOR_PPC_GP:
             sourceString = "PPCgp";
             break;
 
-         case TR_PPCgr:
+         case OMR_PROCESSOR_PPC_GR:
             sourceString = "PPCgr";
             break;
 
-         case TR_PPCp6:
+         case OMR_PROCESSOR_PPC_P6:
             sourceString = "PPCp6";
             break;
 
-         case TR_PPCp7:
+         case OMR_PROCESSOR_PPC_P7:
             sourceString = "PPCp7";
             break;
 
-         case TR_PPCp8:
+         case OMR_PROCESSOR_PPC_P8:
             sourceString = "PPCp8";
             break;
 
-         case TR_PPCp9:
+         case OMR_PROCESSOR_PPC_P9:
             sourceString = "PPCp9";
             break;
 
-         case TR_PPCp10:
+         case OMR_PROCESSOR_PPC_P10:
             sourceString = "PPCp10";
             break;
 
-         case TR_PPCpulsar:
+         case OMR_PROCESSOR_PPC_PULSAR:
             sourceString = "PPCpulsar";
             break;
 
-         case TR_PPCnstar:
+         case OMR_PROCESSOR_PPC_NSTAR:
             sourceString = "PPCnstar";
             break;
 
-         case TR_PPCpwr403:
+         case OMR_PROCESSOR_PPC_PWR403:
             sourceString = "PPCPWR403";
             break;
 
-         case TR_PPCpwr601:
+         case OMR_PROCESSOR_PPC_PWR601:
             sourceString = "PPCPWR601";
             break;
 
-         case TR_PPCpwr603:
+         case OMR_PROCESSOR_PPC_PWR603:
             sourceString = "PPCPWR603";
             break;
 
-         case  TR_PPC82xx:
+         case OMR_PROCESSOR_PPC_82XX:
             sourceString = "PPCP82xx";
             break;
 
-         case  TR_PPC7xx:
+         case OMR_PROCESSOR_PPC_7XX:
             sourceString = "PPC7xx";
             break;
 
-         case TR_PPCpwr440:
+         case OMR_PROCESSOR_PPC_PWR440:
             sourceString = "PPCPWR440";
             break;
 
@@ -583,49 +583,125 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
       return returnValue;
       }
 
-#if defined(TR_TARGET_S390)
    if (TR::Compiler->target.cpu.isZ())
       {
-      int32_t machineId = TR::Compiler->target.cpu.TO_PORTLIB_get390MachineId();
+      switch (TR::Compiler->target.cpu.getProcessorDescription().processor)
+         {
+         case OMR_PROCESSOR_S390_Z900:
+            sourceString = "z900";
+            break;
 
-      return snprintf(processorName, stringLength, "%s (%d)", TR::Compiler->target.cpu.getProcessorName(machineId), machineId);
+         case OMR_PROCESSOR_S390_Z990:
+            sourceString = "z990";
+            break;
+
+         case OMR_PROCESSOR_S390_Z9:
+            sourceString = "z9";
+            break;
+
+         case OMR_PROCESSOR_S390_Z10:
+            sourceString = "z10";
+            break;
+
+         case OMR_PROCESSOR_S390_Z196:
+            sourceString = "z196";
+            break;
+
+         case OMR_PROCESSOR_S390_ZEC12:
+            sourceString = "zec12";
+            break;
+
+         case OMR_PROCESSOR_S390_Z13:
+            sourceString = "z13";
+            break;
+
+         case OMR_PROCESSOR_S390_Z14:
+            sourceString = "z14";
+            break;
+
+         case OMR_PROCESSOR_S390_Z15:
+            sourceString = "z15";
+            break;
+
+         case OMR_PROCESSOR_S390_ZNEXT:
+            sourceString = "zNext";
+            break;
+         }
+      returnValue = strlen(sourceString);
+      strncpy(processorName, sourceString, stringLength);
+      return returnValue;
       }
-#endif
 
    if (TR::Compiler->target.cpu.isX86())
       {
-      switch(TR::Compiler->target.cpu.id())
+      switch (TR::Compiler->target.cpu.getProcessorDescription().processor)
          {
-         case TR_X86ProcessorIntelPentium:
+         case OMR_PROCESSOR_X86_INTELPENTIUM:
             sourceString = "X86 Intel Pentium";
             break;
 
-         case TR_X86ProcessorIntelP6:
+         case OMR_PROCESSOR_X86_INTELP6:
             sourceString = "X86 Intel P6";
             break;
 
-         case TR_X86ProcessorIntelPentium4:
+         case OMR_PROCESSOR_X86_INTELPENTIUM4:
             sourceString = "X86 Intel Netburst Microarchitecture";
             break;
 
-         case TR_X86ProcessorIntelCore2:
+         case OMR_PROCESSOR_X86_INTELCORE2:
             sourceString = "X86 Intel Core2 Microarchitecture";
             break;
 
-         case TR_X86ProcessorIntelTulsa:
+         case OMR_PROCESSOR_X86_INTELTULSA:
             sourceString = "X86 Intel Tulsa";
             break;
 
-         case TR_X86ProcessorAMDK5:
+         case OMR_PROCESSOR_X86_INTELNEHALEM:
+            sourceString = "X86 Intel Nehalem";
+            break;
+
+         case OMR_PROCESSOR_X86_INTELWESTMERE:
+            sourceString = "X86 Intel Westmere";
+            break;
+
+         case OMR_PROCESSOR_X86_INTELSANDYBRIDGE:
+            sourceString = "X86 Intel Sandy Bridge";
+            break;
+
+         case OMR_PROCESSOR_X86_INTELIVYBRIDGE:
+            sourceString = "X86 Intel Ivy Bridge";
+            break;
+
+         case OMR_PROCESSOR_X86_INTELHASWELL:
+            sourceString = "X86 Intel Haswell";
+            break;
+
+         case OMR_PROCESSOR_X86_INTELBROADWELL:
+            sourceString = "X86 Intel Broadwell";
+            break;
+
+         case OMR_PROCESSOR_X86_INTELSKYLAKE:
+            sourceString = "X86 Intel Skylake";
+            break;
+
+         case OMR_PROCESSOR_X86_AMDK5:
             sourceString = "X86 AMDK5";
             break;
 
-         case TR_X86ProcessorAMDAthlonDuron:
+         case OMR_PROCESSOR_X86_AMDK6:
+            sourceString = "X86 AMDK6";
+            break;
+
+         case OMR_PROCESSOR_X86_AMDATHLONDURON:
             sourceString = "X86 AMD Athlon-Duron";
             break;
 
-         case TR_X86ProcessorAMDOpteron:
+         case OMR_PROCESSOR_X86_AMDOPTERON:
             sourceString = "X86 AMD Opteron";
+            break;
+
+         case OMR_PROCESSOR_X86_AMDFAMILY15H:
+            sourceString = "X86 AMD Family 15h";
             break;
 
          default:
@@ -635,7 +711,6 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
       returnValue = strlen(sourceString);
       strncpy(processorName, sourceString, stringLength);
       return returnValue;
-
       }
    sourceString = "Unknown Processor";
    returnValue = strlen(sourceString);
@@ -653,62 +728,12 @@ TR_J9VM::initializeProcessorType()
    if (TR::Compiler->target.cpu.isZ())
       {
 #if defined(TR_HOST_S390)
-      initializeS390ProcessorFeatures();
-
 #if defined(J9ZOS390)
       // Cache whether current process is running in Supervisor State (i.e. Control Region of WAS).
       if (!_isPSWInProblemState())
          _compInfo->setIsInZOSSupervisorState();
 #endif
 #endif
-
-#ifdef TR_TARGET_S390
-      // For AOT shared classes cache processor compatibility purposes, the following
-      // processor settings should not be modified.
-      if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp14);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z15))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp13);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z14))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp12);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z13))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp11);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp10);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp9);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp8);
-         }
-      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z9))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp7);
-         }
-      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z990))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp6);
-         }
-      else
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp5);
-         }
-#endif
-
-      TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_First390Processor
-             && TR::Compiler->target.cpu.id() <= TR_Last390Processor, "Not a valid 390 Processor Type");
       }
    else if (TR::Compiler->target.cpu.isARM())
       {
@@ -764,19 +789,3 @@ TR_J9VM::initializeProcessorType()
       TR_ASSERT(0,"Unknown target");
       }
    }
-
-// -----------------------------------------------------------------------------
-
-#if defined(TR_TARGET_S390)
-void
-TR_J9VMBase::initializeS390ProcessorFeatures()
-   {
-   TR::Compiler->target.cpu.initializeS390ProcessorFeatures();
-   }
-
-void
-TR_J9SharedCacheVM::initializeS390ProcessorFeatures()
-   {
-   return;
-   }
-#endif
