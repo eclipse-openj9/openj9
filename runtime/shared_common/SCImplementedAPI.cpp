@@ -477,7 +477,9 @@ j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9Clas
 
 	modContext = sconfig->modContext;
 
-	if (classloader != NULL) {
+	if ((classloader != NULL)
+		&& (J9SHR_LOADTYPE_NOT_FROM_PATH != loadType) /* no need to set classpath if loadType is J9SHR_LOADTYPE_NOT_FROM_PATH */
+	) {
 		/* default values for bootstrap: */
 		IDATA helperID = 0;
 		U_16 cpType = CP_TYPE_CLASSPATH;
