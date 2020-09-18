@@ -1256,12 +1256,34 @@ public Class<?> getDeclaringClass() {
 			declaringClass.checkMemberAccess(security, callerClassLoader, MEMBER_INVALID_TYPE);
 		}
 		return declaringClass;
+	} else if (this.isClassADeclaredClass(declaringClass) || this.isClassADeclaredClass(this) || this.isCircularDeclaringClass()) {
+		/* The execution of VM shouldn't be interrupted by corrupted InnerClasses attributes such as circular entries.
+		 * To be specific, Class A is the declaringClass of B, Class B is the declaringClass of C, ..., Class Z is the
+		 * declaringClass of A, which forms a circle in the entries, whether or not the relationships between two classes
+		 * literally exist. e.g.
+		 * The specified declaringClass is fake one (intentionally set in the class file) which actually has no
+		 * relationship with current class but the current class is the declaring class of the specified declaringClass.
+		 * Thus, there are 3 cases:
+		 * 1) A --> B (real/fake) --> A: B is the declaring class of A and is one of the inner classes of A.
+		 * 2) B --> A --> A: B is the declaring class of A while A is one of the inner classes of A itself.
+		 * 3) A --> B --> C --> ... Z --> A: keep fetching the declaring class from A ends up wit A itself.
+		 */
+		return null;
 	}
 	
 	/*[MSG "K0555", "incompatible InnerClasses attribute between \"{0}\" and \"{1}\""]*/
 	throw new IncompatibleClassChangeError(
 			com.ibm.oti.util.Msg.getString("K0555", this.getName(),	declaringClass.getName())); //$NON-NLS-1$
 }
+
+/**
+ * Returns true if a cycle exists from the current class to itself by repeatedly searching the declaring classes.
+ *
+ * @return		true if the cycle exists, false otherwise.
+ *
+ */
+private native boolean isCircularDeclaringClass();
+
 /**
  * Returns true if the class passed in to the method is a declared class of
  * this class. 
