@@ -1773,6 +1773,10 @@ Only available on zOS</description>
 		<description>Enables support for OpenJ9 MethodHandles. opt_openjdkMethodhandle should be disabled.</description>
 		<ifRemoved>Disables support for OpenJ9 MethodHandles.</ifRemoved>
 	</flag>
+	<flag id="opt_methodHandleCommon">
+		<description>Enables common dependencies between OpenJ9 and OpenJDK MethodHandles.</description>
+		<ifRemoved>Disables common dependencies between OpenJ9 and OpenJDK MethodHandles.</ifRemoved>
+	</flag>
 	<flag id="opt_module">
 		<description>Turns on module support</description>
 		<ifRemoved></ifRemoved>
