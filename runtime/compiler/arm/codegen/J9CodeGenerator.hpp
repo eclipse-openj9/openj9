@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,9 +50,16 @@ namespace ARM
 
 class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    {
-   public:
+
+protected:
+
+   CodeGenerator(TR::Compilation *comp);
+
+public:
 
    CodeGenerator();
+
+   void initialize();
 
    TR::Recompilation *allocateRecompilationInfo();
 

@@ -31,6 +31,13 @@
 #include "codegen/Linkage_inlines.hpp"
 #include "il/Node_inlines.hpp"
 
+void
+J9::X86::i386::CodeGenerator::initialize()
+   {
+   self()->J9::X86::CodeGenerator::initialize();
+   }
+
+
 TR::Linkage *
 J9::X86::i386::CodeGenerator::createLinkage(TR_LinkageConventions lc)
    {

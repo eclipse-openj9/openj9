@@ -71,9 +71,16 @@ namespace Power
 
 class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    {
-   public:
+
+protected:
+
+   CodeGenerator(TR::Compilation *comp);
+
+public:
 
    CodeGenerator();
+
+   void initialize();
 
    TR::Recompilation *allocateRecompilationInfo();
 

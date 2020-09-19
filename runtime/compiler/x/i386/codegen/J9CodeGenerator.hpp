@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,10 +50,18 @@ namespace i386
 
 class OMR_EXTENSIBLE CodeGenerator : public J9::X86::CodeGenerator
    {
-   public:
+
+protected:
+
+   CodeGenerator(TR::Compilation *comp) :
+      J9::X86::CodeGenerator(comp) {}
+
+public:
 
    CodeGenerator() :
       J9::X86::CodeGenerator() {}
+
+   void initialize();
 
    TR::Linkage *createLinkage(TR_LinkageConventions lc);
 

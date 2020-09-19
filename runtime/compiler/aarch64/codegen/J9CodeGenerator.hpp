@@ -48,12 +48,19 @@ namespace ARM64
 
 class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    {
-   public:
+
+protected:
+
+   CodeGenerator(TR::Compilation *comp);
+
+public:
 
    /**
     * @brief Constructor
     */
    CodeGenerator();
+
+   void initialize();
 
    /**
     * @brief Allocates recompilation information
@@ -76,9 +83,9 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
     * @return Endoded BL (or B) instruction
     */
    uint32_t encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node, bool omitLink = false);
-   
+
    bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg);
-   
+
    /**
     * @brief Generates pre-prologue
     * @param[in] data : binary encoding data

@@ -63,9 +63,16 @@ namespace J9
 
 class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGeneratorConnector
    {
+
+protected:
+
+   CodeGenerator(TR::Compilation *comp);
+
 public:
 
    CodeGenerator();
+
+   void initialize();
 
    TR_J9VMBase *fej9();
 

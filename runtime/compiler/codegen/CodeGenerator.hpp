@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,8 @@
 
 #include "codegen/J9CodeGenerator.hpp"
 
+namespace TR { class Compilation; }
+
 namespace TR
 {
 class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGeneratorConnector
@@ -33,6 +35,9 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGeneratorConnector
 
    CodeGenerator() :
       J9::CodeGeneratorConnector() {}
+
+   CodeGenerator(TR::Compilation *comp) :
+      J9::CodeGeneratorConnector(comp) {}
    };
 }
 
