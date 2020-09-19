@@ -26,12 +26,10 @@
 /*
  * The following #define and typedef must appear before any #includes in this file
  */
-#ifndef TRJ9_CODEGENERATORBASE_CONNECTOR
-#define TRJ9_CODEGENERATORBASE_CONNECTOR
-
+#ifndef J9_CODEGENERATOR_CONNECTOR
+#define J9_CODEGENERATOR_CONNECTOR
 namespace J9 { namespace X86 { namespace AMD64 { class CodeGenerator; } } }
 namespace J9 { typedef J9::X86::AMD64::CodeGenerator CodeGeneratorConnector; }
-
 #else
 #error J9::X86::AMD64::CodeGenerator expected to be a primary connector, but a J9 connector is already defined
 #endif

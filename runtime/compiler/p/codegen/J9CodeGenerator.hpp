@@ -26,8 +26,8 @@
 /*
  * The following #define and typedef must appear before any #includes in this file
  */
-#ifndef TRJ9_CODEGENERATORBASE_CONNECTOR
-#define TRJ9_CODEGENERATORBASE_CONNECTOR
+#ifndef J9_CODEGENERATOR_CONNECTOR
+#define J9_CODEGENERATOR_CONNECTOR
 namespace J9 { namespace Power { class CodeGenerator; } }
 namespace J9 { typedef J9::Power::CodeGenerator CodeGeneratorConnector; }
 #else
