@@ -20,8 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_J9_AMD64_CODEGENERATORBASE_INCL
-#define TR_J9_AMD64_CODEGENERATORBASE_INCL
+#ifndef J9_AMD64_CODEGENERATOR_INCL
+#define J9_AMD64_CODEGENERATOR_INCL
 
 /*
  * The following #define and typedef must appear before any #includes in this file
