@@ -431,9 +431,10 @@ aarch64_linux:
   boot_jdk:
     8: '/usr/lib/jvm/java-1.8.0'
     11: '/usr/lib/jvm/adoptojdk-java-11'
+    15: '/usr/lib/jvm/jdk-15+36'
   release:
-    8: 'linux-aarch64-normal-server-release'
-    11: 'linux-aarch64-normal-server-release'
+    all: 'linux-aarch64-normal-server-release'
+    15: 'linux-aarch64-server-release'
   node_labels:
     build: 'ci.role.build && hw.arch.aarch64 && sw.os.cent.7'
   build_env:
