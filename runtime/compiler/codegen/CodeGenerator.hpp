@@ -20,8 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_J9_CODEGENERATOR_INCL
-#define TR_J9_CODEGENERATOR_INCL
+#ifndef TR_CODEGENERATOR_INCL
+#define TR_CODEGENERATOR_INCL
 
 #include "codegen/J9CodeGenerator.hpp"
 
