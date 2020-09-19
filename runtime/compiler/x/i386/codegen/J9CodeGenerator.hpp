@@ -28,10 +28,10 @@
  */
 #ifndef J9_CODEGENERATOR_CONNECTOR
 #define J9_CODEGENERATOR_CONNECTOR
-namespace J9 { namespace X86 { namespace i386 { class CodeGenerator; } } }
-namespace J9 { typedef J9::X86::i386::CodeGenerator CodeGeneratorConnector; }
+namespace J9 { namespace X86 { namespace I386 { class CodeGenerator; } } }
+namespace J9 { typedef J9::X86::I386::CodeGenerator CodeGeneratorConnector; }
 #else
-#error J9::X86::i386::CodeGenerator expected to be a primary connector, but a J9 connector is already defined
+#error J9::X86::I386::CodeGenerator expected to be a primary connector, but a J9 connector is already defined
 #endif
 
 
@@ -43,7 +43,7 @@ namespace J9
 namespace X86
 {
 
-namespace i386
+namespace I386
 {
 
 class OMR_EXTENSIBLE CodeGenerator : public J9::X86::CodeGenerator
@@ -71,7 +71,7 @@ public:
 
    };
 
-} // namespace i386
+} // namespace I386
 
 } // namespace X86
 
