@@ -815,7 +815,9 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::lnolz,
    NULL,          // TR::lnotz,
    NULL,          // TR::lpopcnt,
+   NULL,          // TR::sbyteswap,
    NULL,          // TR::ibyteswap,
+   NULL,          // TR::lbyteswap,
 
    NULL,          // TR::bbitpermute,
    NULL,          // TR::sbitpermute,

@@ -10075,11 +10075,12 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
                return true;
                }
             return false; // Call the native version of NativeThread.current()
-
+         case TR::jdk_internal_misc_Unsafe_copyMemory0:
          case TR::sun_misc_Unsafe_copyMemory:
             {
-            if (comp->canTransformUnsafeCopyToArrayCopy() &&
-                performTransformation(comp, "O^O Call arraycopy instead of Unsafe.copyMemory: %s\n", cg->getDebug()->getName(node)))
+            if (comp->canTransformUnsafeCopyToArrayCopy()
+               && methodSymbol->isNative()
+               && performTransformation(comp, "O^O Call arraycopy instead of Unsafe.copyMemory: %s\n", cg->getDebug()->getName(node)))
                {
                TR::Node *src = node->getChild(1);
                TR::Node *srcOffset = node->getChild(2);

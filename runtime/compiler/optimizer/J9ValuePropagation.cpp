@@ -483,6 +483,81 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
    return false;
    }
 
+bool J9::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arraycopyNode)
+   {
+   if (!canRunTransformToArrayCopy())
+      return false;
+
+   if (comp()->canTransformUnsafeCopyToArrayCopy()
+         && arraycopyNode->isUnsafeCopyMemoryIntrinsic())
+      {
+
+      TR::TreeTop *tt = _curTree;
+      TR::Node *ttNode = tt->getNode();
+
+      if ((ttNode->getOpCodeValue() == TR::treetop || ttNode->getOpCode().isResolveOrNullCheck())
+            && performTransformation(comp(), "%sChanging call Unsafe.copyMemory [%p] to arraycopy\n", OPT_DETAILS, arraycopyNode))
+
+         {
+         TR::Node *unsafe     = arraycopyNode->getChild(0);
+         TR::Node *src        = arraycopyNode->getChild(1);
+         TR::Node *srcOffset  = arraycopyNode->getChild(2);
+         TR::Node *dest       = arraycopyNode->getChild(3);
+         TR::Node *destOffset = arraycopyNode->getChild(4);
+         TR::Node *len        = arraycopyNode->getChild(5);
+
+         bool isGlobal;
+         TR::VPConstraint *srcOffsetConstraint = getConstraint(srcOffset, isGlobal);
+         TR::VPConstraint *dstOffsetConstraint = getConstraint(destOffset, isGlobal);
+         TR::VPConstraint *copyLenConstraint   = getConstraint(len, isGlobal);
+
+         int64_t srcOffLow   = srcOffsetConstraint ? srcOffsetConstraint->getLowInt() : TR::getMinSigned<TR::Int32>();
+         int64_t srcOffHigh  = srcOffsetConstraint ? srcOffsetConstraint->getHighInt() : TR::getMaxSigned<TR::Int32>();
+         int64_t dstOffLow   = dstOffsetConstraint ? dstOffsetConstraint->getLowInt() : TR::getMinSigned<TR::Int32>();
+         int64_t dstOffHigh  = dstOffsetConstraint ? dstOffsetConstraint->getHighInt() : TR::getMaxSigned<TR::Int32>();
+         int64_t copyLenLow  = copyLenConstraint   ? copyLenConstraint->getLowInt() : TR::getMinSigned<TR::Int32>();
+         int64_t copyLenHigh = copyLenConstraint   ? copyLenConstraint->getHighInt() : TR::getMaxSigned<TR::Int32>();
+
+         if (comp()->target().is64Bit())
+            {
+            src  = TR::Node::create(TR::aladd, 2, src, srcOffset);
+            dest = TR::Node::create(TR::aladd, 2, dest, destOffset);
+            }
+         else
+            {
+            srcOffset  = TR::Node::create(TR::l2i, 1, srcOffset);
+            destOffset = TR::Node::create(TR::l2i, 1, destOffset);
+            len        = TR::Node::create(TR::l2i, 1, len);
+            src  = TR::Node::create(TR::aiadd, 2, src, srcOffset);
+            dest = TR::Node::create(TR::aiadd, 2, dest, destOffset);
+            }
+
+         TR::Node    *oldArraycopyNode = arraycopyNode;
+         TR::TreeTop *oldTT = tt;
+
+         arraycopyNode = TR::Node::createArraycopy(src, dest, len);
+         TR::Node    *treeTopNode = TR::Node::create(TR::treetop, 1, arraycopyNode);
+         tt = TR::TreeTop::create(comp(), treeTopNode);
+
+         oldTT->insertAfter(tt);
+
+         if (ttNode->getOpCode().isNullCheck())
+            ttNode->setAndIncChild(0, TR::Node::create(TR::PassThrough, 1, unsafe));
+         else
+            ttNode->setAndIncChild(0, unsafe);
+
+         removeNode(oldArraycopyNode);
+
+         if ((srcOffLow >= dstOffHigh) || (srcOffHigh+copyLenHigh) <= dstOffLow)
+            arraycopyNode->setForwardArrayCopy(true);
+
+         return true;
+         }
+      }
+   return false;
+
+   }
+
 void
 J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
    {

@@ -69,48 +69,18 @@ J9::Power::CPU::supports_feature_test(uint32_t feature)
 bool
 J9::Power::CPU::is(OMRProcessorArchitecture p)
    {
-   if (TR::Compiler->omrPortLib == NULL)
-      return self()->id() == self()->get_old_processor_type_from_new_processor_type(p);
-
-#if defined(J9VM_OPT_JITSERVER)
-  if (TR::CompilationInfo::getStream())
-#endif
-     {
-     TR_ASSERT_FATAL((_processorDescription.processor == p) == (self()->id() == self()->get_old_processor_type_from_new_processor_type(p)), "is test %d failed, id() %d, _processorDescription.processor %d", p, self()->id(), _processorDescription.processor);
-     }
-
    return _processorDescription.processor == p;
    }
 
 bool
 J9::Power::CPU::isAtLeast(OMRProcessorArchitecture p)
    {
-   if (TR::Compiler->omrPortLib == NULL)
-      return self()->id() >= self()->get_old_processor_type_from_new_processor_type(p);
-
-#if defined(J9VM_OPT_JITSERVER)
-  if (TR::CompilationInfo::getStream())
-#endif
-     {
-     TR_ASSERT_FATAL((_processorDescription.processor >= p) == (self()->id() >= self()->get_old_processor_type_from_new_processor_type(p)), "is at least test %d failed, id() %d, _processorDescription.processor %d", p, self()->id(), _processorDescription.processor);
-     }
-
    return _processorDescription.processor >= p;
    }
 
 bool
 J9::Power::CPU::isAtMost(OMRProcessorArchitecture p)
    {
-   if (TR::Compiler->omrPortLib == NULL)
-      return self()->id() <= self()->get_old_processor_type_from_new_processor_type(p);
-
-#if defined(J9VM_OPT_JITSERVER)
-   if (TR::CompilationInfo::getStream())
-#endif
-      {
-      TR_ASSERT_FATAL((_processorDescription.processor <= p) == (self()->id() <= self()->get_old_processor_type_from_new_processor_type(p)), "is at most test %d failed, id() %d, _processorDescription.processor %d", p, self()->id(), _processorDescription.processor);
-      }
-
    return _processorDescription.processor <= p;
    }
 

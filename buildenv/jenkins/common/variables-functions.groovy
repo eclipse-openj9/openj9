@@ -349,9 +349,14 @@ def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
         def branch = default_openjdk_info.get('default').get('branch')
         def sha = ''
 
-        if (default_openjdk_info[build_spec]) {
-            repo = default_openjdk_info.get(build_spec).get('repoUrl')
-            branch = default_openjdk_info.get(build_spec).get('branch')
+        def shortBuildSpecName = build_spec
+        for (entry in default_openjdk_info.entrySet()) {
+            if ((entry.key != 'default') && entry.key.contains(build_spec)) {
+                repo = entry.value.get('repoUrl')
+                branch = entry.value.get('branch')
+                shortBuildSpecName = entry.key.get(0)
+                break
+            }
         }
 
         // check build parameters
@@ -371,19 +376,19 @@ def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
         }
 
         if (MULTI_RELEASE) {
-            if (params."${param_name}_REPO_${build_spec}") {
+            if (params."${param_name}_REPO_${shortBuildSpecName}") {
                 // got OPENJDK*_REPO_<spec> build parameter, overwrite repo
-                repo = params."${param_name}_REPO_${build_spec}"
+                repo = params."${param_name}_REPO_${shortBuildSpecName}"
             }
 
-            if (params."${param_name}_BRANCH_${build_spec}") {
+            if (params."${param_name}_BRANCH_${shortBuildSpecName}") {
                 // got OPENJDK*_BRANCH_<spec> build parameter, overwrite branch
-                branch = params."${param_name}_BRANCH_${build_spec}"
+                branch = params."${param_name}_BRANCH_${shortBuildSpecName}"
             }
 
-            if (params."${param_name}_SHA_${build_spec}") {
+            if (params."${param_name}_SHA_${shortBuildSpecName}") {
                 // got OPENJDK*_SHA_<spec> build parameter, overwrite sha
-                sha = params."${param_name}_SHA_${build_spec}"
+                sha = params."${param_name}_SHA_${shortBuildSpecName}"
             }
         }
 

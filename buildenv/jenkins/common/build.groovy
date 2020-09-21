@@ -584,8 +584,11 @@ def build_all() {
                         build()
                         archive_sdk()
                     } finally {
-                        // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
-                        cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
+                        KEEP_WORKSPACE = (params.KEEP_WORKSPACE) ?: false
+                        if (!KEEP_WORKSPACE) {
+                            // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
+                            cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
+                        }
                     }
                 }
             }

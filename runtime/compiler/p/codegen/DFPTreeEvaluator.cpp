@@ -74,7 +74,7 @@ static const char * fieldName = "laside";
 static const char * sig = "J";
 static const uint32_t fieldLen = 6;
 static const uint32_t sigLen = 1;
-static const char * className ="Ljava/math/BigDecimal;\0";
+static const char * className = "Ljava/math/BigDecimal;";
 static const int32_t len = 22;
 
 extern bool loadAndEvaluateAsDouble(

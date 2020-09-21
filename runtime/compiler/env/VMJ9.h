@@ -241,10 +241,6 @@ public:
    virtual bool supportsJitMethodEntryAlignment() { return true; }
    virtual bool canUseSymbolValidationManager() { return false; }
 
-#if defined(TR_TARGET_S390)
-   virtual void initializeS390ProcessorFeatures();
-#endif
-
 /////
    // Inlining optimization
    //
@@ -1175,10 +1171,6 @@ public:
 
    virtual TR_OpaqueMethodBlock *getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, int32_t cpIndex, bool ignoreReResolve = true);
    virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
-
-#if defined(TR_TARGET_S390)
-   virtual void               initializeS390ProcessorFeatures();
-#endif
 
    virtual int32_t            getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed);
    virtual bool               javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result);

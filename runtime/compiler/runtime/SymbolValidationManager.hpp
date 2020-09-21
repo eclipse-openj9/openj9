@@ -635,6 +635,13 @@ public:
 
    SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee);
 
+   struct SystemClassNotWorthRemembering
+      {
+      const char * const _className;
+      TR_OpaqueClassBlock *_clazz;
+      const bool _checkIsSuperClass;
+      };
+
    void populateWellKnownClasses();
    bool validateWellKnownClasses(const uintptr_t *wellKnownClassChainOffsets);
    bool isWellKnownClass(TR_OpaqueClassBlock *clazz);
@@ -904,7 +911,7 @@ private:
    typedef std::set<ClassFromAnyCPIndex, LessClassFromAnyCPIndex, ClassFromAnyCPIndexAlloc> ClassFromAnyCPIndexSet;
    ClassFromAnyCPIndexSet _classesFromAnyCPIndex;
 
-   TR_OpaqueClassBlock *_jlthrowable;
+   static SystemClassNotWorthRemembering _systemClassesNotWorthRemembering[];
    };
 
 }

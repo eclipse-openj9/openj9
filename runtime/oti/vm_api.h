@@ -2374,6 +2374,39 @@ isNameOrSignatureQtype(J9UTF8 *utfWrapper);
 BOOLEAN
 isClassRefQtype(J9Class *cpContextClass, U_16 cpIndex);
 
+/**
+ * Performs an aaload operation on an object. Handles flattened and non-flattened cases.
+ *
+ * Assumes recieverObject is not null.
+ * All AIOB exceptions must be thrown before calling.
+ *
+ * Returns null if newObjectRef retrieval fails.
+ *
+ * If fast == false, special stack frame must be built and receiverObject must be pushed onto it.
+ *
+ * @param[in] currentThread thread token
+ * @param[in] receiverObject arrayObject
+ * @param[in] index array index
+ * @param[in] fast bool for fast or slow path
+ *
+ * @return array element
+ */
+j9object_t
+loadFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject, U_32 index, BOOLEAN fast);
+
+/**
+ * Performs an aastore operation on an object. Handles flattened and non-flattened cases.
+ *
+ * Assumes recieverObject and paramObject are not null.
+ * All AIOB exceptions must be thrown before calling.
+ *
+ * @param[in] currentThread thread token
+ * @param[in] receiverObject arrayObject
+ * @param[in] index array index
+ * @param[in] paramObject obj arg
+ */
+void
+storeFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject, U_32 index, j9object_t paramObject);
 
 /**
 * @brief Iterate over fields of the specified class in JVMTI order.

@@ -775,7 +775,7 @@ TR_ValueProfiler::addListOrArrayProfilingTrees(
       if (!_bdClass)
          {
          TR_ResolvedMethod *owningMethod = comp()->getCurrentMethod();
-         _bdClass = comp()->fe()->getClassFromSignature("Ljava/math/BigDecimal;\0", 22, owningMethod);
+         _bdClass = comp()->fe()->getClassFromSignature("Ljava/math/BigDecimal;", 22, owningMethod);
          }
       TR_OpaqueClassBlock * bdClass = _bdClass;
       char *fieldName = "scale";
