@@ -57,7 +57,7 @@ if test "x$RUN_LINT" = "xyes" ; then
   export LLVM_CONFIG=llvm-config-3.8 CLANG=clang++-3.8 CXX_PATH=clang++-3.8 CXX=clang++-3.8
 
   cd $J9SRC
-  git clone --depth 1 --branch openj9 https://github.com/eclipse/openj9-omr.git omr
+  git clone --depth 1 --branch snapshot https://github.com/eclipse/openj9-omr.git omr
   cd ..
 
   # We need some generated headers for the linter to run properly
@@ -91,7 +91,7 @@ if test "x$RUN_BUILD" = "xyes" ; then
     echo "Warning using SHA $OPENJ9_SHA instead of $TRAVIS_COMMIT."
   fi
 
-  cd openj9-openjdk-jdk11 && bash get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$OPENJ9_SHA
+  cd openj9-openjdk-jdk11 && bash get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$OPENJ9_SHA -omr-branch=snapshot
 
   # Limit number of jobs to work around g++ internal compiler error.
   bash configure --disable-warnings-as-errors --enable-ccache --with-cmake --with-jobs=$MAKE_JOBS --with-num-cores=$MAKE_JOBS
