@@ -537,7 +537,9 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 	vm->thrDeflationPolicy = J9VM_DEFLATION_POLICY_ASAP;
 
 	if (cpus > 1) {
-#if defined(AIXPPC) || defined(LINUXPPC)
+#if (defined(LINUXPPC)) && !defined(J9VM_ENV_LITTLE_ENDIAN)
+		vm->thrMaxSpins1BeforeBlocking = 151;
+#elif defined(AIXPPC) || defined(LINUXPPC)
 		vm->thrMaxSpins1BeforeBlocking = 96;
 #else /* defined(AIXPPC) || defined(LINUXPPC) */
 		vm->thrMaxSpins1BeforeBlocking = 256;

@@ -1770,8 +1770,8 @@ Only available on zOS</description>
 		<ifRemoved>No -Xcheck:memory support</ifRemoved>
 	</flag>
 	<flag id="opt_methodHandle">
-		<description>Turns on methodhandle support</description>
-		<ifRemoved></ifRemoved>
+		<description>Enables support for OpenJ9 MethodHandles. opt_openjdkMethodhandle should be disabled.</description>
+		<ifRemoved>Disables support for OpenJ9 MethodHandles.</ifRemoved>
 	</flag>
 	<flag id="opt_module">
 		<description>Turns on module support</description>
@@ -1805,6 +1805,10 @@ Only available on zOS</description>
 		<description>Enables New Reality Runtime (NRR) features.</description>
 		<ifRemoved></ifRemoved>
 	</flag>
+        <flag id="opt_openjdkMethodhandle">
+                <description>Enables support for OpenJDK MethodHandles. opt_methodHandle should be disabled.</description>
+                <ifRemoved>Disables support for OpenJDK MethodHandles.</ifRemoved>
+        </flag>
 	<flag id="opt_packed">
 		<description>Enables support for @Packed types (Structs)</description>
 		<ifRemoved>No support for @Packed types (Structs)</ifRemoved>
