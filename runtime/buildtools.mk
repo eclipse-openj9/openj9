@@ -45,17 +45,11 @@ CMAKE_ARGS :=
 # We grab the C/C++ compilers detected by autoconf or provided by user, not
 # the CC/CXX variables defined by the makefiles, which potentially include
 # the ccache command which will throw off cmake
-ifneq (,$(OPENJ9_CC))
-  CMAKE_ARGS += "-DCMAKE_C_COMPILER=$(OPENJ9_CC)"
-else
-  CMAKE_ARGS += "-DCMAKE_C_COMPILER=$(ac_cv_prog_CC)"
-endif
+OPENJ9_CC  ?= $(ac_cv_prog_CC)
+OPENJ9_CXX ?= $(ac_cv_prog_CXX)
 
-ifneq (,$(OPENJ9_CXX))
-  CMAKE_ARGS += "-DCMAKE_CXX_COMPILER=$(OPENJ9_CXX)"
-else
-  CMAKE_ARGS += "-DCMAKE_CXX_COMPILER=$(ac_cv_prog_CXX)"
-endif
+CMAKE_ARGS += "-DCMAKE_C_COMPILER=$(OPENJ9_CC)"
+CMAKE_ARGS += "-DCMAKE_CXX_COMPILER=$(OPENJ9_CXX)"
 
 ifneq (,$(CCACHE))
   # Open jdk makefiles add a  bunch of environment variables to the ccache command
@@ -215,7 +209,7 @@ j9includegen : uma
 	$(MAKE) -C include j9include_generate
 
 configure : j9includegen
-	$(MAKE) -C omr -f run_configure.mk 'SPEC=$(SPEC)' 'OMRGLUE=$(OMRGLUE)' 'CONFIG_INCL_DIR=$(CONFIG_INCL_DIR)' 'OMRGLUE_INCLUDES=$(OMRGLUE_INCLUDES)' 'EXTRA_CONFIGURE_ARGS=$(EXTRA_CONFIGURE_ARGS)'
+	$(MAKE) -C omr -f run_configure.mk 'CC=$(OPENJ9_CC)' 'CXX=$(OPENJ9_CXX)' 'SPEC=$(SPEC)' 'OMRGLUE=$(OMRGLUE)' 'CONFIG_INCL_DIR=$(CONFIG_INCL_DIR)' 'OMRGLUE_INCLUDES=$(OMRGLUE_INCLUDES)' 'EXTRA_CONFIGURE_ARGS=$(EXTRA_CONFIGURE_ARGS)'
 endif
 
 # run UMA to generate makefiles
