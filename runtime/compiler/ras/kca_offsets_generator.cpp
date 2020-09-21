@@ -96,9 +96,9 @@ J9::Options::kcaOffsets(char *option, void *, TR::OptionTable *entry)
 
       #if defined(J9VM_RAS_EYECATCHERS)
       #if defined(J9VM_OPT_SNAPSHOTS)
-      fprintf( file, "#define METADATA_CLASSNAME         (%d)\n", offsetof(J9JITExceptionTable,classNameOffset) );
-      fprintf( file, "#define METADATA_METHODNAME        (%d)\n", offsetof(J9JITExceptionTable,methodNameOffset) );
-      fprintf( file, "#define METADATA_SIGNATURE         (%d)\n", offsetof(J9JITExceptionTable,methodSignatureOffset) );
+      fprintf( file, "#define METADATA_CLASSNAME         (%d)\n", offsetof(J9JITExceptionTable,className) );
+      fprintf( file, "#define METADATA_METHODNAME        (%d)\n", offsetof(J9JITExceptionTable,methodName) );
+      fprintf( file, "#define METADATA_SIGNATURE         (%d)\n", offsetof(J9JITExceptionTable,methodSignature) );
       #else /* defined(J9VM_OPT_SNAPSHOTS) */
       fprintf( file, "#define METADATA_CLASSNAME         (%d)\n", offsetof(J9JITExceptionTable,className) );
       fprintf( file, "#define METADATA_METHODNAME        (%d)\n", offsetof(J9JITExceptionTable,methodName) );
@@ -110,8 +110,8 @@ J9::Options::kcaOffsets(char *option, void *, TR::OptionTable *entry)
       fprintf( file, "#define METADATA_SIGNATURE         (%d)\n", 0 );
       #endif /* J9VM_RAS_EYECATCHERS */
       #if defined(J9VM_OPT_SNAPSHOTS)
-      fprintf( file, "#define METADATA_CONSTANTPOOL      (%d)\n", offsetof(J9JITExceptionTable,constantPoolOffset) );
-      fprintf( file, "#define METADATA_J9METHOD          (%d)\n", offsetof(J9JITExceptionTable,ramMethodOffset) );
+      fprintf( file, "#define METADATA_CONSTANTPOOL      (%d)\n", offsetof(J9JITExceptionTable,constantPool) );
+      fprintf( file, "#define METADATA_J9METHOD          (%d)\n", offsetof(J9JITExceptionTable,ramMethod) );
       #else /* defined(J9VM_OPT_SNAPSHOTS) */
       fprintf( file, "#define METADATA_CONSTANTPOOL      (%d)\n", offsetof(J9JITExceptionTable,constantPool) );
       fprintf( file, "#define METADATA_J9METHOD          (%d)\n", offsetof(J9JITExceptionTable,ramMethod) );
@@ -123,7 +123,7 @@ J9::Options::kcaOffsets(char *option, void *, TR::OptionTable *entry)
       fprintf( file, "#define METADATA_FRAMESIZE         (%d)\n", offsetof(J9JITExceptionTable,totalFrameSize) );
       fprintf( file, "#define METADATA_NUM_EXC_RANGES    (%d)\n", offsetof(J9JITExceptionTable,numExcptionRanges) );
       #if defined(J9VM_OPT_SNAPSHOTS)
-      fprintf( file, "#define METADATA_INLINEDCALLS      (%d)\n", offsetof(J9JITExceptionTable,inlinedCallsOffset) );
+      fprintf( file, "#define METADATA_INLINEDCALLS      (%d)\n", offsetof(J9JITExceptionTable,inlinedCalls) );
       #else /* defined(J9VM_OPT_SNAPSHOTS) */
       fprintf( file, "#define METADATA_INLINEDCALLS      (%d)\n", offsetof(J9JITExceptionTable,inlinedCalls) );
       #endif /* defined(J9VM_OPT_SNAPSHOTS) */

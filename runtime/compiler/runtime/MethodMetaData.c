@@ -1240,11 +1240,7 @@ void aotStackAtlasFixEndian(J9JITStackAtlas * stackAtlas, J9JITExceptionTable * 
       }
 
 /* Fix the stack atlas (we fix the padding so that if it is removed we'll find out) */
-#if defined(J9VM_OPT_SNAPSHOTS)
-   J9_AOT_FIX_ENDIAN(stackAtlas->internalPointerMapOffset)
-#else /* defined(J9VM_OPT_SNAPSHOTS) */
    J9_AOT_FIX_ENDIAN(stackAtlas->internalPointerMap)
-#endif /* defined(J9VM_OPT_SNAPSHOTS) */
    J9_AOT_FIX_ENDIAN_HALF(stackAtlas->numberOfMaps)
    J9_AOT_FIX_ENDIAN_HALF(stackAtlas->numberOfMapBytes)
    J9_AOT_FIX_ENDIAN_HALF(stackAtlas->parmBaseOffset)
@@ -1277,13 +1273,8 @@ void aotMethodMetaDataFixEndian(J9JITExceptionTable * methodMetaData)
 /* Ignore the inlined call map, since we have none in AOT (for now) */
 
 /* Fix fields within the method meta data structure */
-#if defined(J9VM_OPT_SNAPSHOTS)
-   J9_AOT_FIX_ENDIAN(methodMetaData->constantPoolOffset)
-   J9_AOT_FIX_ENDIAN(methodMetaData->ramMethodOffset)
-#else /* defined(J9VM_OPT_SNAPSHOTS) */
    J9_AOT_FIX_ENDIAN(methodMetaData->constantPool)
    J9_AOT_FIX_ENDIAN(methodMetaData->ramMethod)
-#endif /* defined(J9VM_OPT_SNAPSHOTS) */
    J9_AOT_FIX_ENDIAN(methodMetaData->startPC)
    J9_AOT_FIX_ENDIAN(methodMetaData->endPC)
    J9_AOT_FIX_ENDIAN(methodMetaData->endWarmPC)
@@ -1299,13 +1290,8 @@ void aotMethodMetaDataFixEndian(J9JITExceptionTable * methodMetaData)
    J9_AOT_FIX_ENDIAN_HALF(methodMetaData->numExcptionRanges)
    J9_AOT_FIX_ENDIAN(methodMetaData->size)
    J9_AOT_FIX_ENDIAN(methodMetaData->registerSaveDescription)
-#if defined(J9VM_OPT_SNAPSHOTS)
-   J9_AOT_FIX_ENDIAN(methodMetaData->gcStackAtlasOffset)
-   J9_AOT_FIX_ENDIAN(methodMetaData->inlinedCallsOffset)
-#else /* defined(J9VM_OPT_SNAPSHOTS) */
    J9_AOT_FIX_ENDIAN(methodMetaData->gcStackAtlas)
    J9_AOT_FIX_ENDIAN(methodMetaData->inlinedCalls)
-#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #undef J9_AOT_FIX_ENDIAN
 #undef J9_AOT_FIX_ENDIAN_HALF
     }

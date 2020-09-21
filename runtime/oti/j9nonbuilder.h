@@ -512,9 +512,9 @@ typedef struct J9VTuneInterface {
 typedef struct J9JITExceptionTable {
 #if defined(J9VM_RAS_EYECATCHERS)
 #if defined(J9VM_OPT_SNAPSHOTS)
-	UDATA classNameOffset;
-	UDATA methodNameOffset;
-	UDATA methodSignatureOffset;
+	J9WSRP className;
+	J9WSRP methodName;
+	J9WSRP methodSignature;
 #else /* defined(J9VM_OPT_SNAPSHOTS) */
 	struct J9UTF8* className;
 	struct J9UTF8* methodName;
@@ -522,8 +522,8 @@ typedef struct J9JITExceptionTable {
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #endif /* J9VM_RAS_EYECATCHERS */
 #if defined(J9VM_OPT_SNAPSHOTS)
-	UDATA constantPoolOffset;
-	UDATA ramMethodOffset;
+	J9WSRP constantPool;
+	J9WSRP ramMethod;
 #else /* defined(J9VM_OPT_SNAPSHOTS) */
 	struct J9ConstantPool* constantPool;
 	struct J9Method* ramMethod;
@@ -543,16 +543,16 @@ typedef struct J9JITExceptionTable {
 	UDATA flags;
 	UDATA registerSaveDescription;
 #if defined(J9VM_OPT_SNAPSHOTS)
-	UDATA gcStackAtlasOffset;
-	UDATA inlinedCallsOffset;
+	J9WSRP gcStackAtlas;
+	J9WSRP inlinedCalls;
 #else /* defined(J9VM_OPT_SNAPSHOTS) */
 	void* gcStackAtlas;
 	void* inlinedCalls;
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	void* bodyInfo;
 #if defined(J9VM_OPT_SNAPSHOTS)
-	UDATA nextMethodOffset;
-	UDATA prevMethodOffset;
+	J9WSRP nextMethod;
+	J9WSRP prevMethod;
 #else /* defined(J9VM_OPT_SNAPSHOTS) */
 	struct J9JITExceptionTable* nextMethod;
 	struct J9JITExceptionTable* prevMethod;
@@ -560,7 +560,7 @@ typedef struct J9JITExceptionTable {
 	void* debugSlot1;
 	void* debugSlot2;
 #if defined(J9VM_OPT_SNAPSHOTS)
-	UDATA osrInfoOffset;
+	J9WSRP osrInfo;
 #else /* defined(J9VM_OPT_SNAPSHOTS) */
 	void* osrInfo;
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
@@ -568,8 +568,8 @@ typedef struct J9JITExceptionTable {
 	I_32 hotness;
 	UDATA codeCacheAlloc;
 #if defined(J9VM_OPT_SNAPSHOTS)
-	UDATA gpuCodeOffset;
-	UDATA riDataOffset;
+	J9WSRP gpuCode;
+	J9WSRP riData;
 #else /* defined(J9VM_OPT_SNAPSHOTS) */
 	void* gpuCode;
 	void* riData;
@@ -584,48 +584,32 @@ typedef struct J9JITExceptionTable {
 
 #if defined(J9VM_OPT_SNAPSHOTS)
 
-#define J9_NULLOFFSET 0
-
-#define J9_UTF8_BASE 0
-#define J9_UTF8_TO_OFFSET(utf8) ((UDATA)(utf8) - J9_UTF8_BASE)
-#define J9_UTF8_FROM_OFFSET(utf8Offset) (struct J9UTF8*)(J9_UTF8_BASE + (utf8Offset))
-#define J9_CONSTANTPOOL_BASE 0
-#define J9_CONSTANTPOOL_TO_OFFSET(constantPool) ((UDATA)(constantPool) - J9_CONSTANTPOOL_BASE)
-#define J9_CONSTANTPOOL_FROM_OFFSET(constantPoolOffset) (struct J9ConstantPool*)(J9_CONSTANTPOOL_BASE + (constantPoolOffset))
-#define J9_METHOD_BASE 0
-#define J9_METHOD_TO_OFFSET(ramMethod) ((UDATA)(ramMethod) - J9_METHOD_BASE)
-#define J9_METHOD_FROM_OFFSET(ramMethodOffset) (struct J9Method*)(J9_METHOD_BASE + (ramMethodOffset))
-
-#define J9JIT_DATACACHE_BASE 0
-#define J9JIT_DATACACHE_PTR_TO_OFFSET(ptr) ((UDATA)(ptr) - J9JIT_DATACACHE_BASE)
-#define J9JIT_DATACACHE_OFFSET_TO_PTR(offset, ptrDataType) (ptrDataType *)(J9JIT_DATACACHE_BASE + (offset))
-
 #if defined(J9VM_RAS_EYECATCHERS)
-#define J9JITEXCEPTIONTABLE_CLASSNAME_GET(et) ((et)->classNameOffset == J9_NULLOFFSET ? NULL : J9_UTF8_FROM_OFFSET((et)->classNameOffset))
-#define J9JITEXCEPTIONTABLE_CLASSNAME_SET(et, cn) ((et)->classNameOffset = (cn) == NULL ? J9_NULLOFFSET : J9_UTF8_TO_OFFSET(cn))
-#define J9JITEXCEPTIONTABLE_METHODNAME_GET(et) ((et)->methodNameOffset == J9_NULLOFFSET ? NULL : J9_UTF8_FROM_OFFSET((et)->methodNameOffset))
-#define J9JITEXCEPTIONTABLE_METHODNAME_SET(et, mn) ((et)->methodNameOffset = (mn) == NULL ? J9_NULLOFFSET : J9_UTF8_TO_OFFSET(mn))
-#define J9JITEXCEPTIONTABLE_METHODSIGNATURE_GET(et) ((et)->methodSignatureOffset == J9_NULLOFFSET ? NULL : J9_UTF8_FROM_OFFSET((et)->methodSignatureOffset))
-#define J9JITEXCEPTIONTABLE_METHODSIGNATURE_SET(et, ms) ((et)->methodSignatureOffset = (ms) == NULL ? J9_NULLOFFSET : J9_UTF8_TO_OFFSET(ms))
+#define J9JITEXCEPTIONTABLE_CLASSNAME_GET(et) WSRP_GET((et)->className, struct J9UTF8*)
+#define J9JITEXCEPTIONTABLE_CLASSNAME_SET(et, cn) WSRP_SET((et)->className, (cn))
+#define J9JITEXCEPTIONTABLE_METHODNAME_GET(et) WSRP_GET((et)->methodName, struct J9UTF8*)
+#define J9JITEXCEPTIONTABLE_METHODNAME_SET(et, mn)  WSRP_SET((et)->methodName, (mn))
+#define J9JITEXCEPTIONTABLE_METHODSIGNATURE_GET(et) WSRP_GET((et)->methodSignature, struct J9UTF8*)
+#define J9JITEXCEPTIONTABLE_METHODSIGNATURE_SET(et, ms)  WSRP_SET((et)->methodSignature, (ms))
 #endif /* J9VM_RAS_EYECATCHERS */
-#define J9JITEXCEPTIONTABLE_CONSTANTPOOL_GET(et) ((et)->constantPoolOffset == J9_NULLOFFSET ? NULL : J9_CONSTANTPOOL_FROM_OFFSET((et)->constantPoolOffset))
-#define J9JITEXCEPTIONTABLE_CONSTANTPOOL_SET(et, cp) ((et)->constantPoolOffset = (cp) == NULL ? J9_NULLOFFSET : J9_CONSTANTPOOL_TO_OFFSET(cp))
-#define J9JITEXCEPTIONTABLE_RAMMETHOD_GET(et) ((et)->ramMethodOffset == J9_NULLOFFSET ? NULL : J9_METHOD_FROM_OFFSET((et)->ramMethodOffset))
-#define J9JITEXCEPTIONTABLE_RAMMETHOD_SET(et, rm) ((et)->ramMethodOffset = (rm) == NULL ? J9_NULLOFFSET : J9_METHOD_TO_OFFSET(rm))
-#define J9JITEXCEPTIONTABLE_NEXTMETHOD_GET(et) ((et)->nextMethodOffset == J9_NULLOFFSET ? NULL : J9JIT_DATACACHE_OFFSET_TO_PTR((et)->nextMethodOffset, struct J9JITExceptionTable))
-#define J9JITEXCEPTIONTABLE_NEXTMETHOD_SET(et, nm) ((et)->nextMethodOffset = (nm) == NULL ? J9_NULLOFFSET : J9JIT_DATACACHE_PTR_TO_OFFSET(nm))
-#define J9JITEXCEPTIONTABLE_PREVMETHOD_GET(et) ((et)->prevMethodOffset == J9_NULLOFFSET ? NULL : J9JIT_DATACACHE_OFFSET_TO_PTR((et)->prevMethodOffset, struct J9JITExceptionTable))
-#define J9JITEXCEPTIONTABLE_PREVMETHOD_SET(et, pm) ((et)->prevMethodOffset = (pm) == NULL ? J9_NULLOFFSET : J9JIT_DATACACHE_PTR_TO_OFFSET(pm))
-#define J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(et) ((et)->gcStackAtlasOffset == J9_NULLOFFSET ? NULL : J9JIT_DATACACHE_OFFSET_TO_PTR((et)->gcStackAtlasOffset, struct J9JITStackAtlas))
-#define J9JITEXCEPTIONTABLE_GCSTACKATLAS_SET(et, sa) ((et)->gcStackAtlasOffset = (sa) == NULL ? J9_NULLOFFSET : J9JIT_DATACACHE_PTR_TO_OFFSET(sa))
-#define J9JITEXCEPTIONTABLE_INLINEDCALLS_GET(et) ((et)->inlinedCallsOffset == J9_NULLOFFSET ? NULL : J9JIT_DATACACHE_OFFSET_TO_PTR((et)->inlinedCallsOffset, void))
-#define J9JITEXCEPTIONTABLE_INLINEDCALLS_SET(et, ic) ((et)->inlinedCallsOffset = (ic) == NULL ? J9_NULLOFFSET : J9JIT_DATACACHE_PTR_TO_OFFSET(ic))
-#define J9JITEXCEPTIONTABLE_OSRINFO_GET(et) ((et)->osrInfoOffset == J9_NULLOFFSET ? NULL : J9JIT_DATACACHE_OFFSET_TO_PTR((et)->osrInfoOffset, void))
-#define J9JITEXCEPTIONTABLE_OSRINFO_SET(et, oi) ((et)->osrInfoOffset = (oi) == NULL ? J9_NULLOFFSET : J9JIT_DATACACHE_PTR_TO_OFFSET(oi))
-#define J9JITEXCEPTIONTABLE_GPUCODE_GET(et) ((et)->gpuCodeOffset == J9_NULLOFFSET ? NULL : J9JIT_DATACACHE_OFFSET_TO_PTR((et)->gpuCodeOffset, void))
-#define J9JITEXCEPTIONTABLE_GPUCODE_SET(et, gc) ((et)->gpuCodeOffset = (gc) == NULL ? J9_NULLOFFSET : J9JIT_DATACACHE_PTR_TO_OFFSET(gc))
-#define J9JITEXCEPTIONTABLE_RIDATA_GET(et) ((et)->riDataOffset == J9_NULLOFFSET ? NULL : J9JIT_DATACACHE_OFFSET_TO_PTR((et)->riDataOffset, void))
-#define J9JITEXCEPTIONTABLE_RIDATA_SET(et, rd) ((et)->riDataOffset = (rd) == NULL ? J9_NULLOFFSET : J9JIT_DATACACHE_PTR_TO_OFFSET(rd))
+#define J9JITEXCEPTIONTABLE_CONSTANTPOOL_GET(et) WSRP_GET((et)->constantPool, struct J9ConstantPool*)
+#define J9JITEXCEPTIONTABLE_CONSTANTPOOL_SET(et, cp) WSRP_SET((et)->constantPool, (cp))
+#define J9JITEXCEPTIONTABLE_RAMMETHOD_GET(et) WSRP_GET((et)->ramMethod, struct J9Method*)
+#define J9JITEXCEPTIONTABLE_RAMMETHOD_SET(et, rm) WSRP_SET((et)->ramMethod, (rm))
+#define J9JITEXCEPTIONTABLE_NEXTMETHOD_GET(et) WSRP_GET((et)->nextMethod, struct J9JITExceptionTable*)
+#define J9JITEXCEPTIONTABLE_NEXTMETHOD_SET(et, nm) WSRP_SET((et)->nextMethod, (nm))
+#define J9JITEXCEPTIONTABLE_PREVMETHOD_GET(et) WSRP_GET((et)->prevMethod, struct J9JITExceptionTable*)
+#define J9JITEXCEPTIONTABLE_PREVMETHOD_SET(et, pm) WSRP_SET((et)->prevMethod, (pm))
+#define J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(et) WSRP_GET((et)->gcStackAtlas, J9JITStackAtlas *)
+#define J9JITEXCEPTIONTABLE_GCSTACKATLAS_SET(et, sa) WSRP_SET((et)->gcStackAtlas, (sa))
+#define J9JITEXCEPTIONTABLE_INLINEDCALLS_GET(et) WSRP_GET((et)->inlinedCalls, void*)
+#define J9JITEXCEPTIONTABLE_INLINEDCALLS_SET(et, ic) WSRP_SET((et)->inlinedCalls, (ic))
+#define J9JITEXCEPTIONTABLE_OSRINFO_GET(et) WSRP_GET((et)->osrInfo, void*)
+#define J9JITEXCEPTIONTABLE_OSRINFO_SET(et, oi) WSRP_SET((et)->osrInfo, (oi))
+#define J9JITEXCEPTIONTABLE_GPUCODE_GET(et) WSRP_GET((et)->gpuCode, void*)
+#define J9JITEXCEPTIONTABLE_GPUCODE_SET(et, gc) WSRP_SET((et)->gpuCode, (gc))
+#define J9JITEXCEPTIONTABLE_RIDATA_GET(et) WSRP_GET((et)->riData, void*)
+#define J9JITEXCEPTIONTABLE_RIDATA_SET(et, rd) WSRP_SET((et)->riData, (rd))
 
 #else /* defined(J9VM_OPT_SNAPSHOTS) */
 
@@ -675,8 +659,8 @@ typedef struct J9JIT32BitExceptionTableEntry {
 
 typedef struct J9JITStackAtlas {
 #if defined(J9VM_OPT_SNAPSHOTS)
-	UDATA stackAllocMapOffset;
-	UDATA internalPointerMapOffset;
+	J9WSRP stackAllocMap;
+	J9WSRP internalPointerMap;
 #else /* defined(J9VM_OPT_SNAPSHOTS) */
 	U_8* stackAllocMap;
 	U_8* internalPointerMap;
@@ -691,14 +675,14 @@ typedef struct J9JITStackAtlas {
 
 #if defined(J9VM_OPT_SNAPSHOTS)
 
-#define J9JITSTACKATLAS_STACKALLOCMAP_GET(sa) ((sa)->stackAllocMapOffset == J9_NULLOFFSET ? NULL : J9JIT_DATACACHE_OFFSET_TO_PTR((sa)->stackAllocMapOffset, U_8))
-#define J9JITSTACKATLAS_STACKALLOCMAP_SET(sa, sam) ((sa)->stackAllocMapOffset = (sam) == NULL ? J9_NULLOFFSET : J9JIT_DATACACHE_PTR_TO_OFFSET(sam))
-#define J9JITSTACKATLAS_INTERNALPOINTERMAP_GET(sa) ((sa)->internalPointerMapOffset == J9_NULLOFFSET ? NULL : J9JIT_DATACACHE_OFFSET_TO_PTR((sa)->internalPointerMapOffset, U_8))
-#define J9JITSTACKATLAS_INTERNALPOINTERMAP_SET(sa, ipm) ((sa)->internalPointerMapOffset = (ipm) == NULL ? J9_NULLOFFSET : J9JIT_DATACACHE_PTR_TO_OFFSET(ipm))
-#define J9JITINTERNALPOINTERMAP_PARAMETERMAP_GET(ipm) (*(UDATA*)(ipm) == J9_NULLOFFSET ? NULL : J9JIT_DATACACHE_OFFSET_TO_PTR(*(UDATA*)(ipm), U_8))
-#define J9JITINTERNALPOINTERMAP_PARAMETERMAP_SET(ipm, pm) (*(UDATA*)(ipm) = (pm) == NULL ? J9_NULLOFFSET : J9JIT_DATACACHE_PTR_TO_OFFSET(pm))
-#define J9JITSTACKALLOCMAP_PARAMETERMAP_GET(sam) (*(UDATA*)(sam) == J9_NULLOFFSET ? NULL : J9JIT_DATACACHE_OFFSET_TO_PTR(*(UDATA*)(sam), U_8))
-#define J9JITSTACKALLOCMAP_PARAMETERMAP_SET(sam, pm) (*(UDATA*)(sam) = (pm) == NULL ? J9_NULLOFFSET : J9JIT_DATACACHE_PTR_TO_OFFSET(pm))
+#define J9JITSTACKATLAS_STACKALLOCMAP_GET(sa) WSRP_GET((sa)->stackAllocMap, U_8*)
+#define J9JITSTACKATLAS_STACKALLOCMAP_SET(sa, sam) WSRP_SET((sa)->stackAllocMap, (sam))
+#define J9JITSTACKATLAS_INTERNALPOINTERMAP_GET(sa) WSRP_GET((sa)->internalPointerMap, U_8*)
+#define J9JITSTACKATLAS_INTERNALPOINTERMAP_SET(sa, ipm) WSRP_SET((sa)->internalPointerMap, (ipm))
+#define J9JITINTERNALPOINTERMAP_PARAMETERMAP_GET(ipm) WSRP_GET(*(U_8*)(ipm), U_8*)
+#define J9JITINTERNALPOINTERMAP_PARAMETERMAP_SET(ipm, pm) WSRP_SET(*(U_8*)(ipm), (pm))
+#define J9JITSTACKALLOCMAP_PARAMETERMAP_GET(sam) WSRP_GET(*(U_8*)(sam), U_8*)
+#define J9JITSTACKALLOCMAP_PARAMETERMAP_SET(sam, pm) WSRP_SET(*(U_8*)(sam), (pm))
 
 #else /* defined(J9VM_OPT_SNAPSHOTS) */
 
