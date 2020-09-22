@@ -132,6 +132,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/invoke/VarHandleInvokeHandle" versions="9-"/>
 	<classref name="java/lang/invoke/FieldVarHandle" versions="9-"/>
 
+<!--
+	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
+	whether or not to attempt the class load.  The flags sepcified on the fields are ignored.
+	The field flags are only documentation to help map which feature (as expressed on the class) requires
+	the particular field.
+
+	This is a limitation of the tool as it would otherwise need to encode the class multiple times - once
+	for each combination of field flags.
+-->
 	<fieldref class="java/lang/ClassLoader" name="parent" signature="Ljava/lang/ClassLoader;"/>
 	<fieldref class="java/lang/ClassLoader" name="vmRef" signature="J" cast="struct J9ClassLoader *"/>
 	<fieldref class="java/lang/ClassLoader" name="isParallelCapable" signature="Z"/>
@@ -340,6 +349,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<fieldref class="com/ibm/oti/util/WeakReferenceNode" name="next" signature="Lcom/ibm/oti/util/WeakReferenceNode;" flags="opt_methodHandle"/>
 
+<!--
+	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
+	whether or not to attempt the class load.  The flags sepcified on the methods are ignored.
+	The method flags are only documentation to help map which feature (as expressed on the class) requires
+	the particular method.
+
+	This is a limitation of the tool as it would otherwise need to encode the class multiple times - once
+	for each combination of method flags.
+-->
 	<staticmethodref class="java/lang/J9VMInternals" name="completeInitialization" signature="()V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="checkPackageAccess" signature="(Ljava/lang/Class;Ljava/security/ProtectionDomain;)V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="threadCleanup" signature="(Ljava/lang/Thread;)V"/>
