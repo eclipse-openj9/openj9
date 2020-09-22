@@ -716,6 +716,143 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 		}
 
 #if defined(J9VM_GC_MODRON_SCAVENGER)
+		/* Start of options relating to dynamicBreadthFirstScanOrdering */
+		if(try_scan(&scan_start, "dbfGcCountBetweenHotFieldSort=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfGcCountBetweenHotFieldSort=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 10) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfGcCountBetweenHotFieldSort=", (UDATA)0, (UDATA)10);
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->gcCountBetweenHotFieldSort = value;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfGcCountBetweenHotFieldSortMax=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfGcCountBetweenHotFieldSortMax=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 50) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfGcCountBetweenHotFieldSortMax=", (UDATA)0, (UDATA)50);
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->gcCountBetweenHotFieldSortMax = value;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfDisableAdaptiveGcCountBetweenHotFieldSort")) {
+			extensions->adaptiveGcCountBetweenHotFieldSort = false;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfDisableDepthCopyTwoPaths")) {
+			extensions->depthCopyTwoPaths = false;
+			continue;
+		}
+		
+		if(try_scan(&scan_start, "dbfDepthCopyThreePaths")) {
+			extensions->depthCopyThreePaths = true;
+			continue;
+		}
+		
+		if(try_scan(&scan_start, "dbfEnableAlwaysDepthCopyFirstOffset")) {
+			extensions->alwaysDepthCopyFirstOffset = true;
+			continue;
+		} 
+
+		if(try_scan(&scan_start, "dbfEnablePermanantHotFields")) {
+			extensions->allowPermanantHotFields = true;
+			continue;
+		}
+		
+		if(try_scan(&scan_start, "dbfMaxConsecutiveHotFieldSelections=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfMaxConsecutiveHotFieldSelections=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 50) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfMaxConsecutiveHotFieldSelections=", (UDATA)0, (UDATA)50);
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->maxConsecutiveHotFieldSelections = value;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfEnableHotFieldResetting")) {
+			extensions->hotFieldResettingEnabled = true;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfGcCountBetweenHotFieldReset=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfGcCountBetweenHotFieldReset=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 5000) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfGcCountBetweenHotFieldReset=", (UDATA)0, (UDATA)5000);
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->gcCountBetweenHotFieldReset = value;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfDepthCopyMax=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfDepthCopyMax=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 10) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfDepthCopyMax=", (UDATA)0, (UDATA)10);
+				returnValue = JNI_EINVAL;
+				break;
+			}	
+			extensions->depthCopyMax = value;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfMaxHotFieldListLength=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfMaxHotFieldListLength=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 20) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfMaxHotFieldListLength=", (UDATA)0, (UDATA)20);
+				returnValue = JNI_EINVAL;
+				break;
+			}	
+			extensions->maxHotFieldListLength = ((uint32_t)value);
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfMinCpuUtil=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfMinCpuUtil=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 15) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfMinCpuUtil=", (UDATA)0, (UDATA)15);
+				returnValue = JNI_EINVAL;
+				break;
+			}	
+			extensions->minCpuUtil = value;
+			continue;
+		}
+		/* End of options relating to dynamicBreadthFirstScanOrdering */
+		
 		if (try_scan(&scan_start, "scanCacheMinimumSize=")) {
 			/* Read in restricted scan cache size */
 			if(!scan_udata_helper(vm, &scan_start, &extensions->scavengerScanCacheMinimumSize, "scanCacheMinimumSize=")) {
