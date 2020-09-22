@@ -60,6 +60,13 @@ public:
     */
    static void enableFeatureMasks();
 
+   /** 
+    * @brief A factory method used to construct a CPU object for portable AOT compilations
+    * @param[in] omrPortLib : the port library
+    * @return TR::CPU
+    */
+   static TR::CPU detectRelocatable(OMRPortLibrary * const omrPortLib);
+   
    bool isCompatible(const OMRProcessorDesc& processorDescription);
    };
 
