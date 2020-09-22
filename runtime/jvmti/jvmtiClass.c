@@ -82,7 +82,7 @@ static jvmtiError jvmtiGetConstantPool_addInvokeDynamic(jvmtiGcp_translation *tr
 static jint
 jvmtiGetLoadedClassesCount(J9JavaVM * vm)
 {
-	J9InternalVMFunctions * const vmfuncs = vm->internalVMFunctions;
+	J9InternalVMFunctions const * const vmfuncs = vm->internalVMFunctions;
 	J9ClassWalkState classWalkState;
 	jint classCount = 0;
 	J9Class *clazz = NULL;
@@ -115,7 +115,7 @@ jvmtiGetLoadedClasses(jvmtiEnv* env,
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	jclass *rv_classes = NULL;
 	jint rv_class_count = 0;
-	J9InternalVMFunctions * const vmfuncs = vm->internalVMFunctions;
+	J9InternalVMFunctions const * const vmfuncs = vm->internalVMFunctions;
 
 	Trc_JVMTI_jvmtiGetLoadedClasses_Entry(env);
 
