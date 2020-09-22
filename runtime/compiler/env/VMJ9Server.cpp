@@ -1921,7 +1921,9 @@ TR_J9ServerVM::acquireClassTableMutex()
    TR::Monitor *classTableMonitor = static_cast<JITServerPersistentCHTable *>(_compInfoPT->getClientData()->getCHTable())->getCHTableMonitor();
    TR_ASSERT_FATAL(classTableMonitor, "CH table and its monitor must be initialized");
    classTableMonitor->enter();
-   return true;
+   // The return value indicates whether this method acquired VM access.
+   // Always return false since this version doesn't use VM access.
+   return false;
    }
 
 void
