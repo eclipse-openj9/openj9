@@ -1466,20 +1466,29 @@ printAOTHeaderProcessorFeatures(TR_AOTHeader * hdrInCache, char * buff, const si
          {
          if (processorDescription.features[i] & (1<<j))
             {
-            if (rowLength >= 20)
-               {
-               strncat(buff, "\n\t                                       ", BUFF_SIZE - strlen(buff) - 1);
-               rowLength = 0;
-               }
-            else if (rowLength != 0)
-               {
-               strncat(buff, " ", BUFF_SIZE - strlen(buff) - 1);
-               rowLength += 1;
-               }
             uint32_t feature = i * numberOfBits + j;
             const char * feature_name = omrsysinfo_get_processor_feature_name(feature);
-            strncat(buff, feature_name, BUFF_SIZE - strlen(buff) - 1);
-            rowLength += strlen(feature_name);
+            if (rowLength + 1 + strlen(feature_name) >= 20 && rowLength != 0)
+               {
+               // start a new row (also don't start a new row when rowLength is 0)
+               strncat(buff, "\n\t                                       ", BUFF_SIZE - strlen(buff) - 1);
+               rowLength = 0;
+
+               strncat(buff, feature_name, BUFF_SIZE - strlen(buff) - 1);
+               rowLength += strlen(feature_name);
+               }
+            else
+               {
+               // append to current row
+               if (rowLength > 0)
+                  {
+                  strncat(buff, " ", BUFF_SIZE - strlen(buff) - 1);
+                  rowLength += 1;
+                  }
+
+               strncat(buff, feature_name, BUFF_SIZE - strlen(buff) - 1);
+               rowLength += strlen(feature_name);
+               }
             }
          }
       }

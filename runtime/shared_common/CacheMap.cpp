@@ -5193,13 +5193,13 @@ SH_CacheMap::printCacheStatsTopLayerStatsHelper(J9VMThread* currentThread, UDATA
 		CACHEMAP_PRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_FEATURE, "default");
 	}
 
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 	if (currentThread->javaVM->jitConfig) {
 		j9tty_printf(_portlib, "\t");
 		J9SharedDataDescriptor firstDescriptor;
 		firstDescriptor.address = NULL;
 		findSharedData(currentThread, "J9AOTHeader", sizeof("J9AOTHeader") - 1, J9SHR_DATA_TYPE_AOTHEADER, FALSE, &firstDescriptor, NULL);
-		const size_t BUFF_SIZE = 500;
+		const size_t BUFF_SIZE = 800;
 		char processorFeatures[BUFF_SIZE];
 		currentThread->javaVM->jitConfig->printAOTHeaderProcessorFeatures((TR_AOTHeader *)firstDescriptor.address, processorFeatures, BUFF_SIZE);
 		CACHEMAP_PRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES, processorFeatures);
