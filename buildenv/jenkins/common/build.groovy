@@ -573,7 +573,7 @@ def build_all() {
                 timeout(time: 5, unit: 'HOURS') {
                     try {
                         // Cleanup in case an old build left anything behind
-                        cleanWs()
+                        cleanWs disableDeferredWipeout: true, deleteDirs: true
                         add_node_to_description()
                         // Setup Artifactory now that we are on a node. This determines which server(s) we push to.
                         variableFile.set_artifactory_config(BUILD_IDENTIFIER)
