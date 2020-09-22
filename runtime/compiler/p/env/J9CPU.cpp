@@ -29,8 +29,15 @@
 bool
 J9::Power::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    {
-   OMRProcessorArchitecture targetProcessor = self()->getProcessorDescription().processor;
-   OMRProcessorArchitecture processor = processorDescription.processor;
+   const OMRProcessorArchitecture& targetProcessor = self()->getProcessorDescription().processor;
+   const OMRProcessorArchitecture& processor = processorDescription.processor;
+
+   for (int i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
+      {
+      if ((processorDescription.features[i] & self()->getProcessorDescription().features[i]) != processorDescription.features[i])
+         return false;
+      }
+
    // Backwards compatibility only applies to p4,p5,p6,p7 and onwards
    // Looks for equality otherwise
    if ((processor == OMR_PROCESSOR_PPC_GP
