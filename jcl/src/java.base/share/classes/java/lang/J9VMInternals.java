@@ -34,13 +34,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.WeakHashMap;
 import java.security.AccessControlContext;
+import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
+import java.net.URL;
 /*[IF Sidecar19-SE]*/
 import jdk.internal.ref.CleanerShutdown;
 import jdk.internal.ref.CleanerImpl;
@@ -492,25 +491,39 @@ final class J9VMInternals {
 	
 	
 	private static String[] getClassInfoStrings(final Class<?> clazz, String classPath){
-		String classLoader;
+		String classLoaderStr = "<Bootstrap Loader>"; //$NON-NLS-1$
+		String cpResult = "<Unknown>"; //$NON-NLS-1$
 		
-		if (classPath != null) {
-			classLoader = "<Bootstrap Loader>";
-		} else {
-			classLoader = clazz.getClassLoader().toString();
-			classPath = (String)AccessController.doPrivileged(new PrivilegedAction() {
-				public Object run() {
-					String path = null;
-					try {
-						path = clazz.getProtectionDomain().getCodeSource().getLocation().toString();
-					} catch (Exception e) {
-						path = "<Unknown>";
+		if (classPath == null) {
+			ClassLoader classLoader = clazz.getClassLoader();
+			if (classLoader != null) {
+				classLoaderStr = classLoader.toString();
+				classPath = AccessController.doPrivileged(new PrivilegedAction<String>() {
+					@Override
+					public String run() {
+						String path = null;
+						try {
+							ProtectionDomain pd = clazz.getProtectionDomain();
+							if (pd != null) {
+								CodeSource cs = pd.getCodeSource();
+								if (cs != null) {
+									URL loc = cs.getLocation();
+									if (loc != null) {
+										path = loc.toString();
+									}
+								}
+							}
+						} catch (Exception e) {
+						}
+						return path;
 					}
-					return path;
-				}
-			});
+				});
+			}
 		}
-		String [] strings = {classPath, classLoader};
+		if (classPath != null) {
+			cpResult = classPath;
+		}
+		String [] strings = {cpResult, classLoaderStr};
 		return strings;
 	}
 	
