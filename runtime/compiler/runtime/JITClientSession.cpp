@@ -29,6 +29,7 @@
 #include "net/ServerStream.hpp" // for JITServer::ServerStream
 #include "runtime/RuntimeAssumptions.hpp" // for TR_AddressSet
 #include "env/JITServerPersistentCHTable.hpp"
+#include "runtime/SymbolValidationManager.hpp"
 
 
 ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) : 
@@ -66,6 +67,8 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
       {
       TR_ASSERT_FATAL(false, "Failed to initialize JITServer class unload RWMutex");
       }
+
+   TR::SymbolValidationManager::populateSystemClassesNotWorthRemembering(this);
    }
 
 ClientSessionData::~ClientSessionData()
