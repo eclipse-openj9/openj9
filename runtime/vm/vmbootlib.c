@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -357,27 +357,25 @@ getBootLibraryPath(JavaVMInitArgs *vmInitArgs)
  * \return One of the LOAD_* constants returned by \sa openNativeLibrary()
  */
 UDATA
-registerBootstrapLibrary(J9VMThread * vmThread, const char * libName, J9NativeLibrary** libraryPtr, UDATA suppressError)
+registerBootstrapLibrary(J9VMThread *vmThread, const char *libName, J9NativeLibrary **libraryPtr, UDATA suppressError)
 {
-	char * bootLibraryPath = NULL;
-	UDATA result;
-	char errorBuffer[512];
+	char *bootLibraryPath = NULL;
+	UDATA result = 0;
+	char errorBuffer[512] = {0};
+	JavaVMInitArgs *vmInitArgs = (JavaVMInitArgs *) vmThread->javaVM->vmArgsArray->actualVMArgs;
 
-	JavaVMInitArgs  *vmInitArgs = (JavaVMInitArgs  *) vmThread->javaVM->vmArgsArray->actualVMArgs;
-
+	Trc_VM_registerBootstrapLibrary_Entry(vmThread, libName, libraryPtr);
 	/* Look for the boot library path system property */
-	if (vmInitArgs) {
+	if (NULL != vmInitArgs) {
 		bootLibraryPath = getBootLibraryPath(vmInitArgs);
 	}
-	
 	Assert_VM_mustNotHaveVMAccess(vmThread);
-
 	result = registerNativeLibrary(vmThread, vmThread->javaVM->systemClassLoader, libName, bootLibraryPath, libraryPtr, errorBuffer, sizeof(errorBuffer));
-
 	if (result && !suppressError) {
 		PORT_ACCESS_FROM_VMC(vmThread);
 		j9tty_printf(PORTLIB, "<error: unable to load %s (%s)>\n", libName, errorBuffer);
 	}
+	Trc_VM_registerBootstrapLibrary_Exit(vmThread, libName, libraryPtr, result);
 
 	return result;
 }
@@ -703,15 +701,18 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 			exitVMToJNI(vmThread);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+#if JAVA_SPEC_VERSION < 15
+			/* JDK 15+ NativeLibraries is going to call JNI_Onload depending on JNI flag */
 			jniVersion = (*newNativeLibrary->send_lifecycle_event)(vmThread,
 																   newNativeLibrary,
 																   J9DYNAMIC_ONLOAD,
 																   JNI_VERSION_1_1);
+#endif /* JAVA_SPEC_VERSION < 15 */
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 			enterVMFromJNI(vmThread);
 			releaseVMAccess(vmThread);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-
+#if JAVA_SPEC_VERSION < 15
 			if ((FALSE == jniVersionIsValid(jniVersion)) || (NULL != vmThread->currentException)) {
 				char msgBuffer[MAXIMUM_MESSAGE_LENGTH];
 
@@ -729,6 +730,7 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 				rc = J9NATIVELIB_LOAD_ERR_JNI_ONLOAD_FAILED;
 				reportError(errBuf, msgBuffer, bufLen);
 			}
+#endif /* JAVA_SPEC_VERSION < 15 */
 		}
 	}
 
