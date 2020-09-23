@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,6 @@
 *
 * This file contains implementation-private function prototypes and
 * type definitions for the JEXTRACTNATIVES module.
-*
 */
 
 #include "j9.h"
@@ -40,11 +39,10 @@
 extern "C" {
 #endif
 
-void run_command( const char *cmd );
+void run_command(const char *cmd);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* jextractnatives_internal_h */
-

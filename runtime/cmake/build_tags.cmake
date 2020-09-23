@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,9 @@
 
 string(TIMESTAMP J9VM_CURRENT_YEAR "%Y")
 string(TIMESTAMP J9VM_BUILD_DATE "%Y%m%d")
-string(TIMESTAMP J9VM_UNIQUE_BUILD_ID "%Y%m%d%H%M%S")
+string(TIMESTAMP J9VM_BUILD_TIME "%Y%m%d%H%M%S")
+string(RANDOM ALPHABET "0123456789abcdef" LENGTH 16 RANDOM_SEED ${J9VM_BUILD_TIME} J9VM_UNIQUE_BUILD_ID)
+set(J9VM_UNIQUE_BUILD_ID "0x${J9VM_UNIQUE_BUILD_ID}")
 
 # information intended to be overridden at build time
 set(BUILD_ID 000000 CACHE STRING "")

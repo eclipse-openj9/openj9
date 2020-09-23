@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,9 @@
 
 #define CACHE_SIZE 1024
 
-typedef struct {
+#define DEBUG_CACHE_STATISTICS 0
+
+typedef struct dbgCacheElement {
 	UDATA address;
 	U_8 data[4096];
 } dbgCacheElement;
@@ -44,16 +46,15 @@ static jmethodID globalGetMemMid;
 static jmethodID globalFindPatternMid;
 static dbgCacheElement cache[CACHE_SIZE];
 
-static jint cacheIDs (JNIEnv* env, jobject dumpObj);
-static jboolean validateDump (JNIEnv *env);
-static jint callFindPattern (U_8* pattern, jint patternLength, jint patternAlignment, jlong startSearchFrom, jlong* resultP);
+static jint cacheIDs(JNIEnv* env, jobject dumpObj);
+static jboolean validateDump(JNIEnv *env, jboolean disableBuildIdCheck);
+static jint callFindPattern(U_8* pattern, jint patternLength, jint patternAlignment, jlong startSearchFrom, jlong* resultP);
 static void callGetMemoryBytes(UDATA address, void *structure, UDATA size, UDATA *bytesRead);
 static void readCachedMemory(UDATA address, void *structure, UDATA size, UDATA *bytesRead);
 static void flushCache(void);
 
-
-void 
-dbgReadMemory (UDATA address, void *structure, UDATA size, UDATA *bytesRead)
+void
+dbgReadMemory(UDATA address, void *structure, UDATA size, UDATA *bytesRead)
 {
 	if (address == 0) {
 		memset(structure, 0, size);
@@ -65,13 +66,10 @@ dbgReadMemory (UDATA address, void *structure, UDATA size, UDATA *bytesRead)
 	if (*bytesRead != size) {
 		callGetMemoryBytes(address, structure, size, bytesRead);
 	}
-
-	return;
 }
 
-
-UDATA 
-dbgGetExpression (const char* args)
+UDATA
+dbgGetExpression(const char *args)
 {
 #ifdef WIN64
 	return (UDATA)_strtoui64(args, NULL, 16);
@@ -80,18 +78,17 @@ dbgGetExpression (const char* args)
 #endif
 }
 
-
 /*
  * See dbgFindPatternInRange
  */
 void*
-dbgFindPattern(U_8* pattern, UDATA patternLength, UDATA patternAlignment, U_8* startSearchFrom, UDATA* bytesSearched) 
+dbgFindPattern(U_8 *pattern, UDATA patternLength, UDATA patternAlignment, U_8 *startSearchFrom, UDATA *bytesSearched)
 {
-	jlong result;
+	jlong result = 0;
 
 	*bytesSearched = 0;
 
-	if (callFindPattern(pattern, (jint)patternLength, (jint)patternAlignment, (jlong)(UDATA)startSearchFrom, &result)) {
+	if (callFindPattern(pattern, (jint) patternLength, (jint) patternAlignment, (jlong) (UDATA) startSearchFrom, &result)) {
 		return NULL;
 	}
 
@@ -103,21 +100,19 @@ dbgFindPattern(U_8* pattern, UDATA patternLength, UDATA patternAlignment, U_8* s
 	}
 }
 
-
-
 /*
  * Find the J9RAS structure and validate that it is correct.
- * This prevents jextract from one build or platform being used with a 
+ * This prevents jextract from one build or platform being used with a
  * dump produced by a different build or platform.
  *
  * Return JNI_TRUE if the dump matches jextract.
  * Return JNI_FALSE and set a Java exception if the dump does not match.
  */
 static jboolean
-validateDump(JNIEnv *env)
+validateDump(JNIEnv *env, jboolean disableBuildIdCheck)
 {
 	jlong startFrom = 0;
-	jlong eyecatcher;
+	jlong eyecatcher = 0;
 	char errBuf[256];
 
 	PORT_ACCESS_FROM_VMC((J9VMThread*)env);
@@ -127,15 +122,13 @@ validateDump(JNIEnv *env)
 		return JNI_FALSE;
 	}
 
-#if !defined (J9VM_RAS_EYECATCHERS)
+#if !defined(J9VM_RAS_EYECATCHERS)
 	(*env)->ThrowNew(env, errorClazz, "RAS is not enabled on this platform");
 	return JNI_FALSE;
 #else
-
-
 	for(;;) {
 		J9RAS *ras = NULL;
-		const char* rasString = "J9VMRAS";
+		const char *rasString = "J9VMRAS";
 
 		if (callFindPattern((U_8*)rasString, sizeof(rasString), 8, startFrom, &eyecatcher)) {
 			(*env)->ThrowNew(env, errorClazz, "An error occurred while searching for the J9VMRAS eyecatcher");
@@ -143,54 +136,65 @@ validateDump(JNIEnv *env)
 		}
 
 		if (eyecatcher == (jlong)-1) {
-			j9str_printf(PORTLIB, 
-					errBuf, sizeof(errBuf), 
+			j9str_printf(PORTLIB,
+					errBuf, sizeof(errBuf),
 					"JVM anchor block (J9VMRAS) not found in dump. Dump may be truncated, corrupted or contains a partially initialized JVM.");
 			(*env)->ThrowNew(env, errorClazz, errBuf);
 			return JNI_FALSE;
 		}
 
-#if !defined (J9VM_ENV_DATA64)
-		if ( (U_64)eyecatcher > (U_64)0xFFFFFFFF ) {
-			j9str_printf(PORTLIB, 
-				errBuf, sizeof(errBuf), 
-				"J9RAS is out of range for a 32-bit pointer (0x%16.16llx). This version of jextract is incompatible with this dump.", 
+#if !defined(J9VM_ENV_DATA64)
+		if ((U_64)eyecatcher > (U_64)0xFFFFFFFF) {
+			j9str_printf(PORTLIB,
+				errBuf, sizeof(errBuf),
+				"J9RAS is out of range for a 32-bit pointer (0x%16.16llx). This version of jextract is incompatible with this dump.",
 				eyecatcher);
 			(*env)->ThrowNew(env, errorClazz, errBuf);
 			return JNI_FALSE;
 		}
 #endif
-		/* Allocate this, since on 64bit platforms we want to know now that we can't allocate
-		 * the scratch space. This allows us to exit early with a simple error message */
+		/* Allocate this, since on 64-bit platforms we want to know now that we can't allocate
+		 * the scratch space. This allows us to exit early with a simple error message.
+		 */
 		ras = dbgMallocAndRead(sizeof(J9RAS), (void *)(UDATA)eyecatcher);
 		if (ras != NULL) {
 			if (ras->bitpattern1 == 0xaa55aa55 && ras->bitpattern2 == 0xaa55aa55) {
 				if (ras->version != J9RASVersion) {
-					j9str_printf(PORTLIB, 
-						errBuf, sizeof(errBuf), 
-						"J9RAS.version is incorrect (found %u, expecting %u). This version of jextract is incompatible with this dump.", 
+					j9str_printf(PORTLIB,
+						errBuf, sizeof(errBuf),
+						"J9RAS.version is incorrect (found %u, expecting %u). This version of jextract is incompatible with this dump.",
 						ras->version,
 						J9RASVersion);
 					(*env)->ThrowNew(env, errorClazz, errBuf);
 					return JNI_FALSE;
 				}
 				if (ras->length != sizeof(J9RAS)) {
-					j9str_printf(PORTLIB, 
-						errBuf, sizeof(errBuf), 
-						"J9RAS.length is incorrect (found %u, expecting %u). This version of jextract is incompatible with this dump.", 
+					j9str_printf(PORTLIB,
+						errBuf, sizeof(errBuf),
+						"J9RAS.length is incorrect (found %u, expecting %u). This version of jextract is incompatible with this dump.",
 						ras->length,
 						sizeof(J9RAS));
 					(*env)->ThrowNew(env, errorClazz, errBuf);
 					return JNI_FALSE;
 				}
 				if (ras->buildID != J9UniqueBuildID) {
-					j9str_printf(PORTLIB, 
-						errBuf, sizeof(errBuf), 
-						"J9RAS.buildID is incorrect (found %llx, expecting %llx). This version of jextract is incompatible with this dump.", 
-						ras->buildID,
-						(U_64)J9UniqueBuildID);
-					(*env)->ThrowNew(env, errorClazz, errBuf);
-					return JNI_FALSE;
+					if (disableBuildIdCheck) {
+						j9tty_printf(PORTLIB,
+							"Ignoring incorrect J9RAS.buildID (found %llx, expecting %llx)."
+							" This version of jextract may be incompatible with this dump.\n",
+							ras->buildID,
+							(U_64)J9UniqueBuildID);
+					} else {
+						j9str_printf(PORTLIB,
+							errBuf, sizeof(errBuf),
+							"J9RAS.buildID is incorrect (found %llx, expecting %llx)."
+							" This version of jextract is incompatible with this dump"
+							" (use '-r' option to relax this check).",
+							ras->buildID,
+							(U_64)J9UniqueBuildID);
+						(*env)->ThrowNew(env, errorClazz, errBuf);
+						return JNI_FALSE;
+					}
 				}
 
 				/* cache the value here so that dbgSniffForJavaVM doesn't need to duplicate this work */
@@ -199,11 +203,12 @@ validateDump(JNIEnv *env)
 			}
 			dbgFree(ras);
 		} else {
-			/* on 64bit platforms, the code that tries to allocate the scratch space J9DBGEXT_SCRATCH_SIZE 
-			 * scratch space will have issued it's own informative error already. */
-			j9str_printf(PORTLIB, 
-				errBuf, sizeof(errBuf), 
-				"Cannot allocate %zu bytes of memory for initial RAS eyecatcher, cannot continue processing this dump.", 
+			/* On 64-bit platforms, the code that tries to allocate the scratch space J9DBGEXT_SCRATCH_SIZE
+			 * scratch space will have issued it's own informative error already.
+			 */
+			j9str_printf(PORTLIB,
+				errBuf, sizeof(errBuf),
+				"Cannot allocate %zu bytes of memory for initial RAS eyecatcher, cannot continue processing this dump.",
 				sizeof(J9RAS));
 			(*env)->ThrowNew(env, errorClazz, errBuf);
 			return JNI_FALSE;
@@ -215,15 +220,14 @@ validateDump(JNIEnv *env)
 #endif
 }
 
-
 /*
  * See dbgFindPatternInRange
  */
 static jint
 callFindPattern(U_8* pattern, jint patternLength, jint patternAlignment, jlong startSearchFrom, jlong* resultP)
 {
-	jbyteArray patternArray;
-	jlong result;
+	jbyteArray patternArray = NULL;
+	jlong result = 0;
 
 	if (!globalDumpObj || !globalFindPatternMid) {
 		return -1;
@@ -242,11 +246,11 @@ callFindPattern(U_8* pattern, jint patternLength, jint patternAlignment, jlong s
 		return -1;
 	}
 
-	result = (*globalEnv)->CallLongMethod(globalEnv, 
-		globalDumpObj, 
-		globalFindPatternMid, 
-		patternArray, 
-		(jint)patternAlignment, 
+	result = (*globalEnv)->CallLongMethod(globalEnv,
+		globalDumpObj,
+		globalFindPatternMid,
+		patternArray,
+		(jint)patternAlignment,
 		(jlong)startSearchFrom);
 
 	(*globalEnv)->DeleteLocalRef(globalEnv, patternArray);
@@ -260,13 +264,11 @@ callFindPattern(U_8* pattern, jint patternLength, jint patternAlignment, jlong s
 	return 0;
 }
 
-
-
 static jint
 cacheIDs(JNIEnv* env, jobject dumpObj)
 {
-	jclass cls;
-	
+	jclass cls = NULL;
+
 	globalEnv = env;
 	globalDumpObj = dumpObj;
 
@@ -292,16 +294,16 @@ cacheIDs(JNIEnv* env, jobject dumpObj)
 	return 0;
 }
 
-
-void JNICALL Java_com_ibm_jvm_j9_dump_extract_Main_doCommand(JNIEnv *env, jobject obj, jobject dumpObj, jstring commandObject)
+void JNICALL
+Java_com_ibm_jvm_j9_dump_extract_Main_doCommand(JNIEnv *env, jobject obj, jobject dumpObj, jstring commandObject)
 {
-	const char *command = (const char *) (*env)->GetStringUTFChars(env, commandObject, 0);
+	const char *command = (*env)->GetStringUTFChars(env, commandObject, 0);
 	PORT_ACCESS_FROM_VMC((J9VMThread*)env);
 
 	if (command == NULL) {
 		return;
 	}
-	
+
 	if (cacheIDs(env, dumpObj)) {
 		return;
 	}
@@ -312,16 +314,15 @@ void JNICALL Java_com_ibm_jvm_j9_dump_extract_Main_doCommand(JNIEnv *env, jobjec
 	OMRPORT_FROM_J9PORT(dbgGetPortLibrary())->port_control = OMRPORT_FROM_J9PORT(PORTLIB)->port_control;
 
 	run_command(command);
-	
-	(*env)->ReleaseStringUTFChars(env, commandObject, command);
 
-	return;
+	(*env)->ReleaseStringUTFChars(env, commandObject, command);
 }
 
 /**
  * Gets the environment pointer from the J9RAS structure.
  */
-jlong JNICALL Java_com_ibm_jvm_j9_dump_extract_Main_getEnvironmentPointer(JNIEnv * env, jobject obj, jobject dumpObj)
+jlong JNICALL
+Java_com_ibm_jvm_j9_dump_extract_Main_getEnvironmentPointer(JNIEnv * env, jobject obj, jobject dumpObj, jboolean disableBuildIdCheck)
 {
 	J9JavaVM* vmPtr = NULL;
 	J9JavaVM* localVMPtr = NULL;
@@ -332,7 +333,7 @@ jlong JNICALL Java_com_ibm_jvm_j9_dump_extract_Main_getEnvironmentPointer(JNIEnv
 		goto end;
 	}
 
-	if (!validateDump(env)) {
+	if (!validateDump(env, disableBuildIdCheck)) {
 		goto end;
 	}
 
@@ -351,7 +352,7 @@ jlong JNICALL Java_com_ibm_jvm_j9_dump_extract_Main_getEnvironmentPointer(JNIEnv
 		goto end;
 	}
 
-#if defined (J9VM_ENV_DATA64)
+#if defined(J9VM_ENV_DATA64)
 	toReturn = (jlong)(IDATA)localRAS->environment;
 #else
 	toReturn = (jlong)(IDATA)localRAS->environment & J9CONST64(0xFFFFFFFF);
@@ -377,29 +378,29 @@ dbg_j9port_create_library(J9PortLibrary *portLib, J9PortLibraryVersion *version,
  * to the platform debugger - or rather to stdout here when we are not running under the
  * platform debugger.
  */
-void 
-dbgWriteString (const char* message)
+void
+dbgWriteString(const char* message)
 {
 	PORT_ACCESS_FROM_VMC((J9VMThread*)globalEnv);
 
 	j9tty_printf(PORTLIB, "%s", message);
 }
 
-static void 
+static void
 callGetMemoryBytes(UDATA address, void *structure, UDATA size, UDATA *bytesRead)
 {
-	jbyteArray data;
+	jbyteArray data = NULL;
 	jlong ja = address;
 	jint js = (jsize)size;
-	
+
 	*bytesRead = 0;
 	memset(structure, 0, size);
 
 	/* ensure that size can be represented as a jsize */
-	if ( (js < 0) || ((UDATA)js != size) ) {
+	if ((js < 0) || ((UDATA)js != size)) {
 		return;
 	}
-	
+
 	if (!globalDumpObj || !globalGetMemMid) {
 		return;
 	}
@@ -417,7 +418,7 @@ callGetMemoryBytes(UDATA address, void *structure, UDATA size, UDATA *bytesRead)
 		jthrowable exception = (*globalEnv)->ExceptionOccurred(globalEnv);
 		jclass exceptionClass = NULL;
 		jmethodID printStackTraceID = NULL;
-		
+
 		(*globalEnv)->ExceptionClear(globalEnv);
 		/* note that the error cases where we are missing an exception, a class or printStackTrace, we have no good solution */
 		exceptionClass = (*globalEnv)->GetObjectClass(globalEnv, exception);
@@ -431,17 +432,15 @@ callGetMemoryBytes(UDATA address, void *structure, UDATA size, UDATA *bytesRead)
 	}
 
 	if (data) {
-		jsize jbytesRead = (*globalEnv)->GetArrayLength(globalEnv, data); 
+		jsize jbytesRead = (*globalEnv)->GetArrayLength(globalEnv, data);
 		if (jbytesRead > js) {
 			/* throw an exception here? */
 		} else {
-		   (*globalEnv)->GetByteArrayRegion(globalEnv, data, 0, jbytesRead, structure);
+			(*globalEnv)->GetByteArrayRegion(globalEnv, data, 0, jbytesRead, structure);
 		}
 		(*globalEnv)->DeleteLocalRef(globalEnv, data);
 		*bytesRead = (UDATA)jbytesRead;
 	}
-
-	return;
 }
 
 /**
@@ -450,9 +449,9 @@ callGetMemoryBytes(UDATA address, void *structure, UDATA size, UDATA *bytesRead)
 static void
 flushCache(void)
 {
-	int i=0;
+	int i = 0;
 
-	for (i=0; i < sizeof(cache)/sizeof(cache[0]); i++) {
+	for (i = 0; i < sizeof(cache) / sizeof(cache[0]); i++) {
 		/* invalidate this element */
 		cache[i].address = 0;
 	}
@@ -461,37 +460,42 @@ flushCache(void)
 /**
  * This function implements a very simple caching scheme to accelerate the reading of small objects.
  * A more sophisticated scheme is implemented in the Java code. This cache allows us to bypass
- * the relatively expensive call-in to Java for most objects. During a normal jextract run we expect 
+ * the relatively expensive call-in to Java for most objects. During a normal jextract run we expect
  * the cache to have a hit rate of over 90%.
  */
-static void 
+static void
 readCachedMemory(UDATA address, void *structure, UDATA size, UDATA *bytesRead)
 {
-	static UDATA hits, total;
+#if DEBUG_CACHE_STATISTICS
+	static UDATA hits = 0;
+	static UDATA total = 0;
+#endif /* DEBUG_CACHE_STATISTICS */
 
 	dbgCacheElement* thisElement = NULL;
 	UDATA lineStart = address & ~(UDATA)(sizeof(thisElement->data) - 1);
 	UDATA endAddress = address + size;
 
-#if 0
-	if ( ((++total) % (16 * 1024)) == 0) {
-		dbgPrint("Cache hit rate: %.2f\n", (float)hits / (float)(total));
+#if DEBUG_CACHE_STATISTICS
+	if (((++total) % (16 * 1024)) == 0) {
+		dbgPrint("Cache hit rate: %.2f\n", (float)hits / (float)total);
 	}
-#endif
+#endif /* DEBUG_CACHE_STATISTICS */
 
 	*bytesRead = 0;
 
-	if (( (lineStart + sizeof(thisElement->data)) >= endAddress ) &&
+	if (((lineStart + sizeof(thisElement->data)) >= endAddress) &&
 		(endAddress > address)) { /* check for arithmetic overflow */
-		UDATA cacheBytesRead;
+		UDATA cacheBytesRead = 0;
 
-		thisElement = &cache[ (lineStart / sizeof(thisElement->data)) % CACHE_SIZE ];
+		thisElement = &cache[(lineStart / sizeof(thisElement->data)) % CACHE_SIZE];
 
 		/* is the data cached at this slot? */
 		if (thisElement->address == lineStart) {
 			memcpy(structure, thisElement->data + (address - lineStart), size);
 			*bytesRead = size;
-			hits++;
+#if DEBUG_CACHE_STATISTICS
+			hits += 1;
+#endif /* DEBUG_CACHE_STATISTICS */
 			return;
 		}
 
@@ -507,4 +511,3 @@ readCachedMemory(UDATA address, void *structure, UDATA size, UDATA *bytesRead)
 		}
 	}
 }
-
