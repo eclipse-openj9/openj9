@@ -107,7 +107,6 @@ typedef struct J9SnapshotHeader {
 	J9JavaVM *vm;
 	SavedJ9JavaVMStructures savedJavaVMStructs;
 	UDATA numOfMemorySections;
-	J9JITConfig *jitConfig;
 	J9GCSnapshotProperties gcProperties;
 } J9SnapshotHeader;
 

@@ -548,10 +548,9 @@ VMSnapshotImpl::restoreJITConfig(void)
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 
 	bool rc = true;
-	J9JITConfig *jitConfig = _snapshotHeader->jitConfig;
-	_vm->jitConfig = jitConfig;
+	J9JITConfig *jitConfig = _vm->jitConfig;
 
-	if (jitConfig) {
+	if (NULL != jitConfig) {
 		if (omrthread_monitor_init_with_name(&jitConfig->thunkHashTableMutex, 0, "JIT thunk table")) {
 			j9tty_printf(PORTLIB, "failed to initialize jitConfig->thunkHashTableMutex");
 			rc = false;
@@ -908,9 +907,10 @@ VMSnapshotImpl::saveHiddenInstanceFields(void)
 void
 VMSnapshotImpl::saveJITConfig(void)
 {
-	_vm->jitConfig->imageCodeCacheStart = _vm->jitConfig->codeCache->heapBase;
-	_vm->jitConfig->imageCodeCacheEnd = _vm->jitConfig->codeCache->heapTop;
-	_snapshotHeader->jitConfig = _vm->jitConfig;
+	if (NULL != _vm->jitConfig) {
+		_vm->jitConfig->imageCodeCacheStart = _vm->jitConfig->codeCache->heapBase;
+		_vm->jitConfig->imageCodeCacheEnd = _vm->jitConfig->codeCache->heapTop;
+	}
 }
 
 void
