@@ -945,6 +945,9 @@ typedef struct J9CfrClassFile {
 
 #define ANON_CLASSNAME_CHARACTER_SEPARATOR '/'
 
+#define CFR_FOUND_CHARS_IN_EXTENDED_MUE_FORM 0x1
+#define CFR_FOUND_SEPARATOR_IN_MUE_FORM 0x2
+
 #ifdef __cplusplus
 }
 #endif
