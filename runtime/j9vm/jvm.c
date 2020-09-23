@@ -3650,25 +3650,42 @@ JVM_LoadSystemLibrary(const char *libName)
  */
 
 void* JNICALL
-JVM_LoadLibrary(const char* libName)
+JVM_LoadLibrary(const char *libName)
 {
-	void* result = NULL;
-	J9NativeLibrary* nativeLibrary = NULL;
-	J9JavaVM* javaVM = (J9JavaVM*)BFUjavaVM;
-	J9InternalVMFunctions* vmFuncs = javaVM->internalVMFunctions;
-	J9VMThread* currentThread = vmFuncs->currentVMThread(javaVM);
+	void *result = NULL;
+	J9JavaVM *javaVM = (J9JavaVM*)BFUjavaVM;
 
 	Trc_SC_LoadLibrary_Entry(libName);
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	/* registerBootstrapLibrary can't have VM access */
-	vmFuncs->internalReleaseVMAccess(currentThread);
-	if (vmFuncs->registerBootstrapLibrary(currentThread, libName, &nativeLibrary, FALSE) == J9NATIVELIB_LOAD_OK) {
-		result = (void*)nativeLibrary->handle;
-	}
-	vmFuncs->internalAcquireVMAccess(currentThread);
-	vmFuncs->internalExitVMToJNI(currentThread);
+	if (NULL == javaVM->applicationClassLoader) {
+		J9NativeLibrary *nativeLibrary = NULL;
+		J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
+		J9VMThread *currentThread = vmFuncs->currentVMThread(javaVM);
+		Assert_SC_notNull(currentThread);
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->internalReleaseVMAccess(currentThread);
+		if (vmFuncs->registerBootstrapLibrary(currentThread, libName, &nativeLibrary, FALSE) == J9NATIVELIB_LOAD_OK) {
+			result = (void*)nativeLibrary->handle;
+		}
+		vmFuncs->internalAcquireVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
+		Trc_SC_LoadLibrary_BootStrap(libName);
+	} else {
+		PORT_ACCESS_FROM_JAVAVM(javaVM);
+		UDATA handle = 0;
+		UDATA flags = 0;
+		UDATA slOpenResult = j9sl_open_shared_library((char *)libName, &handle, flags);
 
+		Trc_SC_LoadLibrary_OpenShared(libName);
+		if (0 != slOpenResult) {
+			slOpenResult = j9sl_open_shared_library((char *)libName, &handle, flags | J9PORT_SLOPEN_DECORATE);
+			Trc_SC_LoadLibrary_OpenShared_Decorate(libName);
+		}
+		if (0 == slOpenResult) {
+			result = (void*)handle;
+		}
+	}
 	Trc_SC_LoadLibrary_Exit(result);
+
 	return result;
 }
 
