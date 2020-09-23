@@ -26,10 +26,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -816,7 +817,8 @@ public class NewElfDump extends CoreReaderSupport {
 		private short _programHeaderCount = 0;
 		private short _sectionHeaderEntrySize = 0;
 		private short _sectionHeaderCount = 0;
-		final Set<String> _fileNotes = new HashSet<>();
+		// Maps to a set of paths of loaded shared libraries for a particular 'soname'.
+		final Map<String, Set<String>> _librariesBySOName = new HashMap<>();
 		private List<DataEntry> _processEntries = new ArrayList<>();
 		private List<DataEntry> _threadEntries = new ArrayList<>();
 		private List<DataEntry> _auxiliaryVectorEntries = new ArrayList<>();
@@ -839,6 +841,10 @@ public class NewElfDump extends CoreReaderSupport {
 		ElfFile(DumpReader reader, long offset) {
 			_reader = reader;
 			_offset = offset;
+		}
+
+		void close() throws IOException {
+			_reader.releaseResources();
 		}
 
 		Iterator<DataEntry> processEntries() {
@@ -1008,13 +1014,64 @@ public class NewElfDump extends CoreReaderSupport {
 			long wordSizeBytes = addressSize() / 8;
 			long fixedOffset = offset + (2 * wordSizeBytes);
 			long stringsOffset = fixedOffset + (count * 3 * wordSizeBytes);
+			Set<String> fileNames = new HashSet<>();
 
 			_reader.seek(stringsOffset);
 
 			for (int index = 0; index < count; ++index) {
-				String file = readString();
+				String fileName = readString();
 
-				_fileNotes.add(file);
+				fileNames.add(fileName);
+			}
+
+			for (String fileName : fileNames) {
+				File file = new File(fileName);
+
+				try (ClosingFileReader fileReader = new ClosingFileReader(file)) {
+					ElfFile result = elfFileFrom(fileReader, this);
+
+					if (result == null) {
+						// not an existing ELF file
+						continue;
+					}
+
+					String soname = result.getSONAME();
+
+					if (soname != null) {
+						/*
+						 * Often the file name matches the soname, but some system libraries are
+						 * installed such that the soname is a symbolic link to the latest version
+						 * of that shared library (in the same directory). The file note in this
+						 * situation may refer to the file rather than the symbolic link. We need
+						 * to use the symbolic link (if it exists and refers to the same file) so
+						 * jdmpview can resolve the reference using the soname.
+						 * An example may make this clearer. A recent Linux distribution includes
+						 * the following for soname 'libc.so.6':
+						 *     /lib/x86_64-linux-gnu/libc-2.31.so
+						 *     /lib/x86_64-linux-gnu/libc.so.6
+						 * with the latter being a symbolic link to the former.
+						 */
+						File sofile = new File(file.getParentFile(), soname);
+
+						if (isSameFile(file, sofile)) {
+							Set<String> paths = _librariesBySOName.computeIfAbsent(soname, key -> new HashSet<>());
+
+							paths.add(sofile.getAbsolutePath());
+						}
+					}
+
+					result.close();
+				} catch (IOException e) {
+					// ignore
+				}
+			}
+		}
+
+		private static boolean isSameFile(File file, File sofile) {
+			try {
+				return Files.isSameFile(file.toPath(), sofile.toPath());
+			} catch (IOException e) {
+				return false;
 			}
 		}
 
@@ -1603,25 +1660,14 @@ public class NewElfDump extends CoreReaderSupport {
 					continue;
 				}
 
-				boolean found = false;
-
 				// add all matching names found in the file notes
-				if (!soname.startsWith(File.separator)) {
-					int sonameLength = soname.length();
+				Set<String> libs = _file._librariesBySOName.get(soname);
 
-					for (String name : _file._fileNotes) {
-						int index = name.length() - sonameLength - 1;
-
-						if ((index > 0) && (name.charAt(index) == File.separatorChar) && name.endsWith(soname)) {
-							_additionalFileNames.add(name);
-							found = true;
-						}
-					}
-				}
-
-				// use soname if we could't find something better in the file notes
-				if (!found) {
+				if (libs == null || libs.isEmpty()) {
+					// use soname if we could't find something better in the file notes
 					_additionalFileNames.add(soname);
+				} else {
+					_additionalFileNames.addAll(libs);
 				}
 			} catch (Exception ex) {
 				// We can't tell a loaded module from a loaded something else without trying to open it
@@ -2209,15 +2255,24 @@ public class NewElfDump extends CoreReaderSupport {
 	}
 
 	private ElfFile elfFileFrom(ClosingFileReader file) throws IOException {
-		file.seek(0);
+		return elfFileFrom(file, _file);
+	}
+
+	static ElfFile elfFileFrom(ClosingFileReader file, ElfFile container) throws IOException {
 		byte[] signature = new byte[EI_NIDENT];
+
+		file.seek(0);
 		file.readFully(signature);
+
 		if (ElfFile.isELF(signature)) {
 			DumpReader reader = readerForEndianess(signature[5], signature[4], file);
 			ElfFile result = fileForClass(signature[4], reader);
-			if (result.getClass().isInstance(_file))
+
+			if (result.getClass().isInstance(container)) {
 				return result;
+			}
 		}
+
 		return null;
 	}
 

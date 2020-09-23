@@ -350,6 +350,14 @@ public class Main {
 			}
 			report("jextract complete."); //$NON-NLS-1$
 		}
+
+		if (dumper._dump != null) {
+			try {
+				dumper._dump.releaseResources();
+			} catch (IOException e) {
+				// ignore
+			}
+		}
 	}
 
 	private static void ensure(boolean condition, String errorMessage) {
@@ -567,8 +575,7 @@ public class Main {
 			byte[] buffer = new byte[ZIP_BUFFER_SIZE];
 			while (fileNames.hasNext()) {
 				String name = fileNames.next();
-				try {
-					ClosingFileReader in = fileResolver.openFile(name);
+				try (ClosingFileReader in = fileResolver.openFile(name)) {
 					boolean mvsfile = in.isMVSFile();
 					String absolute = in.getAbsolutePath();
 					if (mvsfile || absolute.equals(new File(name).getAbsolutePath())) {
