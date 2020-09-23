@@ -81,7 +81,7 @@ private:
       Block * next() { return reinterpret_cast<Block *>( (reinterpret_cast<uintptr_t>(_next) & ~0x1)); }
       };
 
-   static const size_t PERSISTANT_BLOCK_SIZE_BUCKETS = 12;
+   static const size_t PERSISTANT_BLOCK_SIZE_BUCKETS = 16;
    static size_t freeBlocksIndex(size_t const blockSize)
       {
       size_t const adjustedBlockSize = blockSize - sizeof(Block);
