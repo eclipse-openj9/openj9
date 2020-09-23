@@ -2350,6 +2350,32 @@ TR_J9VMBase::markHotField(TR::Compilation * comp, TR::SymbolReference * symRef, 
    }
 
 
+/**
+ * Report a hot field if the JIT has determined that the field has met appropriate thresholds to be determined a hot field. 
+ * Valid if dynamicBreadthFirstScanOrdering is enabled.
+ *
+ * @param reducedCpuUtil normalized cpu utilization of the hot field for the method being compiled
+ * @param clazz pointer to the class where a hot field should be added
+ * @param fieldOffset value of the field offset that should be added as a hot field for the given class
+ * @param reducedFrequency normalized block frequency of the hot field for the method being compiled
+ */
+void
+TR_J9VMBase::reportHotField(int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency)
+{
+   J9JavaVM * javaVM = _jitConfig->javaVM;
+   javaVM->internalVMFunctions->reportHotField(javaVM, reducedCpuUtil, clazz, fieldOffset, reducedFrequency);
+}
+
+/**
+ * Query if hot reference field is reqired for dynamicBreadthFirstScanOrdering
+ *  @return true if scavenger dynamicBreadthFirstScanOrdering is enabled, 0 otherwise 
+ */
+bool
+TR_J9VMBase::isHotReferenceFieldRequired()
+   {
+   return TR::Compiler->om.isHotReferenceFieldRequired();
+   }
+
 
 bool
 TR_J9VMBase::scanReferenceSlotsInClassForOffset(TR::Compilation * comp, TR_OpaqueClassBlock * classPointer, int32_t offset)
@@ -2439,7 +2465,7 @@ TR_J9VMBase::findFirstHotFieldTenuredClassOffset(TR::Compilation *comp, TR_Opaqu
 void
 TR_J9VMBase::markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassBlock *opclazz, uint32_t alignFromStart)
    {
-   if (!isAOT_DEPRECATED_DO_NOT_USE())
+   if (!jitConfig->javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(jitConfig->javaVM) && !isAOT_DEPRECATED_DO_NOT_USE())
       {
       J9Class *clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(opclazz);
       UDATA hotFieldsWordValue = 0x1; // mark for alignment

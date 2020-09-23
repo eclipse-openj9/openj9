@@ -611,6 +611,24 @@ typedef struct J9JITRedefinedClass {
 	struct J9JITMethodEquivalence* methodList;
 } J9JITRedefinedClass;
 
+typedef struct J9HotField {
+	struct J9HotField* next;
+	uint32_t hotness;
+	uint16_t cpuUtil;
+	uint8_t hotFieldOffset; 
+} J9HotField;
+
+typedef struct J9ClassHotFieldsInfo {
+	struct J9HotField* hotFieldListHead;
+	struct J9ClassLoader* classLoader;
+	BOOLEAN isClassHotFieldListDirty;	
+	uint8_t hotFieldOffset1;
+	uint8_t hotFieldOffset2;
+	uint8_t hotFieldOffset3;
+	uint8_t consecutiveHotFieldSelections; 
+	uint8_t hotFieldListLength;  
+ } J9ClassHotFieldsInfo;
+
 typedef struct J9ROMNameAndSignature {
 	J9SRP name;
 	J9SRP signature;
@@ -3074,6 +3092,7 @@ typedef struct J9Class {
 	struct J9Class* nestHost;
 #endif /* JAVA_SPEC_VERSION >= 11 */
 	struct J9FlattenedClassCache* flattenedClassCache;
+	struct J9ClassHotFieldsInfo* hotFieldsInfo;
 } J9Class;
 
 /* Interface classes can never be instantiated, so the following fields in J9Class will not be used:
@@ -3148,6 +3167,7 @@ typedef struct J9ArrayClass {
 #endif /* JAVA_SPEC_VERSION >= 11 */
 	/* Added temporarily for consistency */
 	UDATA flattenedElementSize;
+	struct J9ClassHotFieldsInfo* hotFieldsInfo;
 } J9ArrayClass;
 
 
@@ -3206,6 +3226,8 @@ typedef struct J9ClassLoader {
 	struct J9HashTable* moduleExtraInfoHashTable;
 	struct J9HashTable* classLocationHashTable;
 	struct J9HashTable* classRelationshipsHashTable;
+	struct J9Pool* hotFieldPool;
+	omrthread_monitor_t hotFieldPoolMutex; 
 } J9ClassLoader;
 
 #define J9CLASSLOADER_SHARED_CLASSES_ENABLED  8
@@ -4053,6 +4075,8 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_scavenger_enabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_concurrent_scavenger_enabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_software_read_barrier_enabled)(struct J9JavaVM *javaVM) ;
+	BOOLEAN  ( *j9gc_hot_reference_field_required)(struct J9JavaVM *javaVM) ;
+	uint32_t  ( *j9gc_max_hot_field_list_length)(struct J9JavaVM *javaVM) ;
 #if defined(J9VM_GC_HEAP_CARD_TABLE)
 	UDATA  ( *j9gc_concurrent_getCardSize)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_concurrent_getHeapBase)(struct J9JavaVM *javaVM) ;
@@ -4427,6 +4451,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *structuredSignalHandler)(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData) ;
 	UDATA  ( *structuredSignalHandlerVM)(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData) ;
 	UDATA  ( *addHiddenInstanceField)(struct J9JavaVM *vm, const char *className, const char *fieldName, const char *fieldSignature, UDATA *offsetReturn) ;
+	void  ( *reportHotField)(struct J9JavaVM *javaVM, int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency) ;
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9ROMClass *romClass, struct J9Class *superClazz, struct J9ROMFieldOffsetWalkState *state, U_32 flags, J9FlattenedClassCache *flattenedClassCache) ;
 #else
@@ -4919,6 +4944,9 @@ typedef struct J9JavaVM {
 	U_32 extendedRuntimeFlags;
 	U_32 extendedRuntimeFlags2;
 	UDATA zeroOptions;
+	struct J9Pool* hotFieldClassInfoPool;
+	omrthread_monitor_t hotFieldClassInfoPoolMutex;
+	omrthread_monitor_t globalHotFieldPoolMutex;
 	struct J9ClassLoader* systemClassLoader;
 	UDATA sigFlags;
 	void* vmLocalStorageFunctions;

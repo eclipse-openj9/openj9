@@ -111,6 +111,12 @@
 #include "VMThreadListIterator.hpp"
 #include "VMThreadStackSlotIterator.hpp"
 
+/* Value used to help with the incrementing of the gc count between hot field sorting for dynamicBreadthFirstScanOrdering */
+#define INCREMENT_GC_COUNT_BETWEEN_HOT_FIELD_SORT 100
+
+/* Minimum hotness value for a third hot field offset if depthCopyThreePaths is enabled for dynamicBreadthFirstScanOrdering */
+#define MINIMUM_THIRD_HOT_FIELD_HOTNESS 50000
+
 class MM_AllocationContext;
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
@@ -179,6 +185,11 @@ MM_ScavengerDelegate::mainSetupForGC(MM_EnvironmentBase * envBase)
 	_shouldScavengeUnfinalizedObjects = false;
 
 	private_setupForOwnableSynchronizerProcessing(MM_EnvironmentStandard::getEnvironment(envBase));
+
+	/* Sort all hot fields for all classes if scavenger dynamicBreadthFirstScanOrdering is enabled */
+	if (MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST == _extensions->scavengerScanOrdering) {
+		private_SortAllHotFieldData();
+	}
 
 	return;
 }
@@ -649,6 +660,125 @@ MM_ScavengerDelegate::private_shouldPercolateGarbageCollect_classUnloading(MM_En
 #endif
 
 	return shouldGCPercolate;
+}
+
+void
+MM_ScavengerDelegate::private_SortAllHotFieldData()
+{	
+	/* update hottest fields for all elements of the hotFieldClassInfoPool where isClassHotFieldListDirty is true */
+	if ((NULL != _javaVM->hotFieldClassInfoPool) && ((_extensions->scavengerStats._gcCount  % _extensions->gcCountBetweenHotFieldSort) == 0)) {
+		pool_state hotFieldClassInfoPoolState;
+		J9ClassHotFieldsInfo *hotFieldClassInfoTemp;
+		omrthread_monitor_enter(_javaVM->hotFieldClassInfoPoolMutex);
+		hotFieldClassInfoTemp = (struct J9ClassHotFieldsInfo*)pool_startDo(_javaVM->hotFieldClassInfoPool, &hotFieldClassInfoPoolState);
+		
+		/* sort hot field list for the class if the hot field list of the class is dirty */
+		while ((NULL != hotFieldClassInfoTemp) && (U_8_MAX != hotFieldClassInfoTemp->consecutiveHotFieldSelections)) {
+			if (hotFieldClassInfoTemp->isClassHotFieldListDirty) {
+				private_SortClassHotFieldList(hotFieldClassInfoTemp);
+			}
+			hotFieldClassInfoTemp = (struct J9ClassHotFieldsInfo*)pool_nextDo(&hotFieldClassInfoPoolState);
+		}
+		omrthread_monitor_exit(_javaVM->hotFieldClassInfoPoolMutex);
+	}
+	/* If adaptiveGcCountBetweenHotFieldSort, update the gc count required between sorting all hot fields as the application runs longer */
+	if ((_extensions->adaptiveGcCountBetweenHotFieldSort) && (_extensions->gcCountBetweenHotFieldSort < _extensions->gcCountBetweenHotFieldSortMax) && ((_extensions->scavengerStats._gcCount % INCREMENT_GC_COUNT_BETWEEN_HOT_FIELD_SORT) == 0)) {
+		_extensions->gcCountBetweenHotFieldSort++;
+	}
+	/* If hotFieldResettingEnabled, update the gc count required between resetting all hot fields */
+	if ((_extensions->hotFieldResettingEnabled) && ((_extensions->scavengerStats._gcCount % _extensions->gcCountBetweenHotFieldReset) == 0)) {
+		private_ResetAllHotFieldData();
+	}
+}
+
+void
+MM_ScavengerDelegate::private_SortClassHotFieldList(J9ClassHotFieldsInfo* hotFieldClassInfo) {
+	/* store initial hot field offsets before hotFieldClassInfo hot field offsets are updated */
+	uint8_t initialHotFieldOffset1 = hotFieldClassInfo->hotFieldOffset1;
+	uint8_t initialHotFieldOffset2 = hotFieldClassInfo->hotFieldOffset2;
+	uint8_t initialHotFieldOffset3 = hotFieldClassInfo->hotFieldOffset3;
+
+	/* compute and update the hot fields for each class */
+	if (1 == hotFieldClassInfo->hotFieldListLength) {
+		hotFieldClassInfo->hotFieldOffset1 = hotFieldClassInfo->hotFieldListHead->hotFieldOffset;
+	} else {
+		J9HotField* currentHotField = hotFieldClassInfo->hotFieldListHead;
+		uint64_t hottest = 0;
+		uint64_t secondHottest = 0;
+		uint64_t thirdHottest = 0;
+		uint64_t current = 0;
+		while (NULL != currentHotField) {
+			if(currentHotField->cpuUtil > _extensions->minCpuUtil) {
+				current = currentHotField->hotness;
+				/* compute the three hottest fields if depthCopyThreePaths is enabled, or the two hottest fields if only depthCopyTwoPaths is enabled, otherwise, compute just the hottest field if both depthCopyTwoPaths and depthCopyThreePaths are disabled */
+				if (_extensions->depthCopyThreePaths) {
+					if (current > hottest) {
+						thirdHottest = secondHottest;
+						hotFieldClassInfo->hotFieldOffset3 = hotFieldClassInfo->hotFieldOffset2;
+						secondHottest = hottest;
+						hotFieldClassInfo->hotFieldOffset2 = hotFieldClassInfo->hotFieldOffset1;
+						hottest = current;
+						hotFieldClassInfo->hotFieldOffset1 = currentHotField->hotFieldOffset;
+					} else if (current > secondHottest) {
+						thirdHottest = secondHottest;
+						hotFieldClassInfo->hotFieldOffset3 = hotFieldClassInfo->hotFieldOffset2;
+						secondHottest = current;
+						hotFieldClassInfo->hotFieldOffset2 = currentHotField->hotFieldOffset;		
+					} else if (current > thirdHottest) {
+						thirdHottest = current;
+						hotFieldClassInfo->hotFieldOffset3 = currentHotField->hotFieldOffset;
+					}
+				} else if (_extensions->depthCopyTwoPaths) {
+					if (current > hottest) {
+						secondHottest = hottest;
+						hotFieldClassInfo->hotFieldOffset2 = hotFieldClassInfo->hotFieldOffset1;
+						hottest = current;
+						hotFieldClassInfo->hotFieldOffset1 = currentHotField->hotFieldOffset;
+					} else if (current > secondHottest) {
+						secondHottest = current;
+						hotFieldClassInfo->hotFieldOffset2 = currentHotField->hotFieldOffset;		
+					}
+				} else if (current > hottest) {
+					hottest = current;
+					hotFieldClassInfo->hotFieldOffset1 = currentHotField->hotFieldOffset;
+				}
+			}
+			currentHotField = currentHotField->next;
+		}
+		if (thirdHottest < MINIMUM_THIRD_HOT_FIELD_HOTNESS) { 
+			hotFieldClassInfo->hotFieldOffset3 = U_8_MAX;
+		}
+	}
+	/* if permanantHotFields are allowed, update consecutiveHotFieldSelections counter if hot field offsets are the same as the previous time the class hot field list was sorted  */
+	if (_extensions->allowPermanantHotFields) {
+		if ((initialHotFieldOffset1 == hotFieldClassInfo->hotFieldOffset1) && (initialHotFieldOffset2 == hotFieldClassInfo->hotFieldOffset2) && (initialHotFieldOffset3 == hotFieldClassInfo->hotFieldOffset3)) {
+			hotFieldClassInfo->consecutiveHotFieldSelections++;
+			if (hotFieldClassInfo->consecutiveHotFieldSelections == _extensions->maxConsecutiveHotFieldSelections) { 
+				hotFieldClassInfo->consecutiveHotFieldSelections = U_8_MAX;
+			}
+		} else {
+			hotFieldClassInfo->consecutiveHotFieldSelections = 0;
+		}
+	}
+	hotFieldClassInfo->isClassHotFieldListDirty = false;
+}
+
+void
+MM_ScavengerDelegate::private_ResetAllHotFieldData()
+{
+	pool_state hotFieldClassInfoPoolState;
+	omrthread_monitor_enter(_javaVM->hotFieldClassInfoPoolMutex);
+	J9ClassHotFieldsInfo *hotFieldClassInfoTemp = (J9ClassHotFieldsInfo *)pool_startDo(_javaVM->hotFieldClassInfoPool, &hotFieldClassInfoPoolState);
+	while (NULL != hotFieldClassInfoTemp) {
+		J9HotField* currentHotField = hotFieldClassInfoTemp->hotFieldListHead;
+		while (NULL != currentHotField) {
+			currentHotField->hotness = 0;
+			currentHotField->cpuUtil = 0;
+			currentHotField = currentHotField->next;
+		}
+		hotFieldClassInfoTemp = (struct J9ClassHotFieldsInfo*)pool_nextDo(&hotFieldClassInfoPoolState);
+	}
+	omrthread_monitor_exit(_javaVM->hotFieldClassInfoPoolMutex);
 }
 
 bool

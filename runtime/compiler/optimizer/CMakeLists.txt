@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@ j9jit_files(
 	optimizer/EstimateCodeSize.cpp
 	optimizer/FearPointAnalysis.cpp
 	optimizer/HCRGuardAnalysis.cpp
+	optimizer/HotFieldMarking.cpp
 	optimizer/IdiomRecognition.cpp
 	optimizer/IdiomRecognitionUtils.cpp
 	optimizer/IdiomTransformations.cpp
