@@ -158,6 +158,7 @@ void * getRuntimeHelperValue(int32_t h)
 
 }
 
+#if defined(J9VM_OPT_SNAPSHOTS)
 static void restoreJitArtifacts(J9JavaVM *vm)
    {
    J9AVLTree *translationArtifacts = vm->jitConfig->translationArtifacts;
@@ -196,6 +197,7 @@ static void restoreJitArtifacts(J9JavaVM *vm)
       }
    vmFuncs->allClassesEndDo(&classWalkState);
    }
+#endif
 
 #ifdef LINUX
 #include <sys/types.h>
@@ -293,10 +295,12 @@ J9JITConfig * codert_onload(J9JavaVM * javaVM)
 #endif
 
    jitConfig->translationArtifacts = jit_allocate_artifacts(javaVM);
+#if defined(J9VM_OPT_SNAPSHOTS)
    if (!conditionalInit)
       {
       restoreJitArtifacts(javaVM);
       }
+#endif
 
    if (!jitConfig->translationArtifacts)
       goto _abort;

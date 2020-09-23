@@ -7002,7 +7002,9 @@ freeClassNativeMemory(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 {
 	J9VMClassUnloadEvent * data = eventData;
 	J9Class * clazz = data->clazz;
+#if defined(J9VM_OPT_SNAPSHOTS)
 	J9JavaVM *vm = data->currentThread->javaVM;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	PORT_ACCESS_FROM_VMC(data->currentThread);
 
 	/* Free the ID table for this class, but do not free any of the IDs.  They will be freed by killing their
