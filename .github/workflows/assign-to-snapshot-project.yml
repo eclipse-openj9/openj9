@@ -7,7 +7,7 @@ on:
 jobs:
   automate-project-columns:
     runs-on: ubuntu-latest
-    if: github.event.label.name == 'Snapshot'
+    if: github.event.label.name == 'snapshot'
     steps:
       - uses: alex-page/github-project-automation-plus@v0.3.0
         with:
