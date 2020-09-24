@@ -1164,6 +1164,7 @@ adjustNewline(char* continuationStart, U_32 continuationLength) {
 
 #define MANIFEST_FILE "META-INF/MANIFEST.MF"
 #define IBM_JAVA_OPTIONS  "IBM-Java-Options"
+#define JAR_JVM_OPTIONS  "JVM-Options"
 
 IDATA
 addJarArguments(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, const char *jarPath, J9ZipFunctionTable *zipFuncs, UDATA verboseFlags)
@@ -1209,15 +1210,22 @@ addJarArguments(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, c
 					if (0 == status) {
 						char *cursor = (char*)dataBuffer;
 						char *argStart = cursor;
+						int skipDistance = sizeof(JAR_JVM_OPTIONS) - 1;
 						BOOLEAN foundStart = FALSE;
 						do {
 							/*
 							 * Find the manifest section
 							 * A manifest section starts with the header name at the start of a line.
 							 * newline:                      CR LF | LF | CR (not followed by LF)
+							 *
+							 * Give "JVM-Options" precedence over "IBM-Java-Options"
 							 */
-							argStart = strstr(cursor, IBM_JAVA_OPTIONS);
-							if (argStart == (char *)dataBuffer) {
+							argStart = strstr(cursor, JAR_JVM_OPTIONS);
+							if (NULL == argStart) {
+								skipDistance = sizeof(IBM_JAVA_OPTIONS) - 1;
+								argStart = strstr(cursor, IBM_JAVA_OPTIONS);
+							}
+							if (NULL == argStart) {
 								argStart = NULL;  /* illegal position.  Just ignore it. */
 							}
 							if (NULL != argStart) {
@@ -1226,7 +1234,7 @@ addJarArguments(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, c
 								if (('\r' == nl0) || ('\n' == nl0)) { /* CR, LF or CRLF  */
 									foundStart = TRUE;
 								} else {
-									cursor += (sizeof(IBM_JAVA_OPTIONS) - 1);
+									cursor += skipDistance;
 								}
 							}
 						} while (!foundStart && (NULL != argStart)) ;
@@ -1236,7 +1244,7 @@ addJarArguments(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, c
 							char * argEnd = NULL;
 							char testChar = '\0';
 
-							argStart += (sizeof(IBM_JAVA_OPTIONS) - 1);
+							argStart += skipDistance;
 							testChar = *argStart;
 							while ((':' != testChar) && ('\0' != testChar) && ('\n' != testChar) &&('\r' != testChar)) {
 								argStart += 1;

@@ -52,6 +52,7 @@ import java.util.Map;
 
 import org.openj9.test.util.FileUtilities;
 import org.openj9.test.util.HelloWorld;
+import org.openj9.test.util.PlatformInfo;
 import org.openj9.test.util.StringPrintStream;
 import org.openj9.test.util.VersionCheck;
 import org.testng.annotations.BeforeMethod;
@@ -83,7 +84,8 @@ public class VmArgumentTests {
 	private static final String FILE_SEPARATOR = System.getProperty("file.separator");
 	private static final String USER_DIR = System.getProperty("user.dir");
 	private static final String OS_NAME_PROPERTY = System.getProperty("os.name");
-	private static final String vmargsJarFilename;
+	private static final String ibmVmargsJarFilename;
+	private static final String commonVmargsJarFilename;
 	private static final String XJIT = "-Xjit";
 	private static final String XINT = "-Xint";
 	private static final String XPROD = "-Xprod";
@@ -130,9 +132,10 @@ public class VmArgumentTests {
 	protected static Logger logger = Logger.getLogger(VmArgumentTests.class);
 
 	static {
-		boolean isIbm = System.getProperty("java.vm.vendor").equals("IBM Corporation");
+		final String vendor = System.getProperty("java.vm.vendor");
+		boolean isJ9 = vendor.contains("IBM") || vendor.contains("OpenJ9");
 		mandatoryArgumentsJava8 = new String[] {
-				isIbm?XOPTIONSFILE:null,
+				isJ9 ? XOPTIONSFILE:null,
 						"-Xlockword:mode",
 						"-Xjcl:",
 						"-Dcom.ibm.oti.vm.bootstrap.library.path",
@@ -148,7 +151,7 @@ public class VmArgumentTests {
 		};
 
 		mandatoryArguments = new String[] {
-				isIbm?XOPTIONSFILE:null,
+				isJ9 ? XOPTIONSFILE:null,
 						"-Xlockword:mode",
 						"-Xjcl:",
 						"-Dcom.ibm.oti.vm.bootstrap.library.path",
@@ -163,7 +166,8 @@ public class VmArgumentTests {
 		};	
 		int javaMajorVersion = VersionCheck.major();
 		isJava8 = (8 == javaMajorVersion);
-		vmargsJarFilename = "vmargs.jar";
+		ibmVmargsJarFilename = "ibmvmargs.jar";
+		commonVmargsJarFilename = "vmargs.jar";
 	}
 
 	/* 
@@ -192,7 +196,7 @@ public class VmArgumentTests {
 
 	@Test
 	public void testWindowsPath() {
-		if (isWindows()) {
+		if (PlatformInfo.isWindows()) {
 			ArrayList<String> actualArguments = null;
 			boolean foundPath = false;
 			try {
@@ -368,11 +372,23 @@ public class VmArgumentTests {
 	/* test options in runnable jar files */
 	@Test
 	public void testJarArguments() throws URISyntaxException {
-		URL jarUrl = ClassLoader.getSystemClassLoader().getResource(vmargsJarFilename);
-		assertNotNull(vmargsJarFilename+" not found", jarUrl);
+		URL jarUrl = ClassLoader.getSystemClassLoader().getResource(commonVmargsJarFilename);
+		assertNotNull(commonVmargsJarFilename+" not found", jarUrl);
+		logger.debug("jarURL="+jarUrl);
 		Path jarPath = null;
-			jarPath = Paths.get(jarUrl.toURI()).toFile().toPath();
-			checkJarArgs(jarPath.toString());
+		jarPath = Paths.get(jarUrl.toURI()).toFile().toPath();
+		checkJarArgs(jarPath.toString());
+	}
+
+	/* test options in runnable jar files using the legacy section name */
+	@Test
+	public void testIbmJarArguments() throws URISyntaxException {
+		URL jarUrl = ClassLoader.getSystemClassLoader().getResource(ibmVmargsJarFilename);
+		assertNotNull(ibmVmargsJarFilename+" not found", jarUrl);
+		Path jarPath = null;
+		jarPath = Paths.get(jarUrl.toURI()).toFile().toPath();
+		logger.debug("jarURL="+jarUrl);
+		checkJarArgs(jarPath.toString());
 	}
 
 	/**
@@ -381,7 +397,7 @@ public class VmArgumentTests {
 	@Test
 	public void testExecutableJarArguments() {
 		final String HWVMARGS = "hwvmargs.jar";
-		URL jarUrl = ClassLoader.getSystemClassLoader().getResource(vmargsJarFilename);
+		URL jarUrl = ClassLoader.getSystemClassLoader().getResource(commonVmargsJarFilename);
 		final String pathString = HWVMARGS;
 		assertNotNull(pathString+" not found", jarUrl);		
 		Path jarPath = null;
@@ -1798,11 +1814,6 @@ public class VmArgumentTests {
 		String getStreamOutput() {
 			return psBuffer.toString();
 		}
-	}
-
-	private boolean isWindows() {
-		String osName = System.getProperty("os.name");
-		return ((null != osName) && osName.startsWith("Windows"));
 	}
 
 	static class ProcessRunner {
