@@ -3480,6 +3480,16 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
+	{
+		IDATA enableLegacyMangling = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLELEGACYMANGLING, NULL);
+		IDATA disableLegacyMangling = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLELEGACYMANGLING, NULL);
+		if (enableLegacyMangling > disableLegacyMangling) {
+			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_LEGACY_MANGLING;
+		} else if (enableLegacyMangling < disableLegacyMangling) {
+			vm->extendedRuntimeFlags2 &= ~(UDATA)J9_EXTENDED_RUNTIME2_LEGACY_MANGLING;
+		}
+	}
+
 	/* -Xbootclasspath and -Xbootclasspath/p are not supported from Java 9 onwards */
 	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		PORT_ACCESS_FROM_JAVAVM(vm);

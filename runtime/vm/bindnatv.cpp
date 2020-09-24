@@ -63,7 +63,7 @@ extern "C" {
 /**
  * Prototypes for locally defined functions.
  */
-static IDATA mangledSize (U_8 * data, U_16 length);
+static IDATA mangledSize (U_8 * data, U_16 length, BOOLEAN legacyMangling);
 static void mangledData (U_8** pBuffer, U_8 * data, U_16 length);
 static void nativeSignature(J9Method* nativeMethod, char *resultBuffer);
 static UDATA nativeMethodHash(void *key, void *userData);
@@ -347,7 +347,10 @@ inlIntercept(J9VMThread *currentThread, J9Method *nativeMethod, const char *symb
  * \param ramMethod The method for signature computation.
  * \param ramClass The class which contains the method.
  * \param nameOffset Buffer into which the mangled signature will be written.
- * \return A buffer containing the mangled JNI names, separated by nulls.
+ * \return A buffer containing the mangled JNI names, separated by nulls
+ *         Failure is indicated by:
+ *            NULL (failure to allocate native memory)
+ *            UDATA_MAX (identifiers are invalid)
  *
  * Sample Input:
  * 			boolean pkg.X.foo(String,int);
@@ -365,6 +368,8 @@ buildNativeFunctionNames(J9JavaVM * javaVM, J9Method* ramMethod, J9Class* ramCla
 	UDATA size, shortSize;
 	U_8 *classNameData, *methodNameData, *methodSigData;
 	U_16 classNameLength, methodNameLength, methodSigLength;
+	IDATA tempSize = 0;
+	BOOLEAN legacyMangling = J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_LEGACY_MANGLING);
 
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
@@ -381,22 +386,36 @@ buildNativeFunctionNames(J9JavaVM * javaVM, J9Method* ramMethod, J9Class* ramCla
 
 	/* First add the common part: Java_<cls>_<name> */
 	size = 6;
-	size += mangledSize(classNameData, classNameLength);
-	size += mangledSize(methodNameData, methodNameLength);
+	tempSize = mangledSize(classNameData, classNameLength, legacyMangling);
+	if (tempSize < 0) {
+error:
+		buffer = (U_8*)UDATA_MAX;
+		goto done;
+	}
+	size += tempSize;
+	tempSize = mangledSize(methodNameData, methodNameLength, legacyMangling);
+	if (tempSize < 0) {
+		goto error;
+	}
+	size += tempSize;
 	shortSize = size;
 	size <<= 1;
 
 	/* Now add for the signature part: __<parm1><parm2> */
 	size += 2;
-	size += mangledSize(methodSigData, methodSigLength);
+	tempSize = mangledSize(methodSigData, methodSigLength, legacyMangling);
+	if (tempSize < 0) {
+		goto error;
+	}
+	size += tempSize;
 
 	/* Null terminate both strings */
 	size += 2;
 
 	/* Allocate enough memory */
 	buffer = (U_8*)j9mem_allocate_memory(size, OMRMEM_CATEGORY_VM);
-	if(buffer == NULL) {
-		return NULL;
+	if (NULL == buffer) {
+		goto done;
 	}
 
 	/* Dump the long name */
@@ -414,7 +433,7 @@ buildNativeFunctionNames(J9JavaVM * javaVM, J9Method* ramMethod, J9Class* ramCla
 	/* Memcopy the short name from the long name */
 	memcpy(current, buffer, shortSize);
 	current[shortSize] = '\0';
-
+done:
 	return buffer;
 }
 
@@ -506,15 +525,16 @@ mangledData(U_8** pBuffer, U_8 * data, U_16 length)
  * mangled JNI name for a method.
  * \param data  Method signature in canonical UTF8 form.
  * \param length The number of bytes in data.
- * \return The number of ASCII characters required for the mangled JNI name.
+ * \return The number of ASCII characters required for the mangled JNI name, or a negative value for illegal identifiers
  */
 static IDATA
-mangledSize(U_8 * data, U_16 length)
+mangledSize(U_8 * data, U_16 length, BOOLEAN legacyMangling)
 {
 	/* Return the size in ASCII characters of the JNI mangled version of utf
 		Assumes verified canonical UTF8 strings */
 	IDATA size;
 	U_16 i, ch;
+	BOOLEAN disallow0to3 = !legacyMangling;
 
 	size = 0;
 	i = 0;
@@ -525,11 +545,12 @@ mangledSize(U_8 * data, U_16 length)
 				break;
 
 			case ')':										/* End of signature -- done */
-				return size;
+				goto done;
 
 			case '/':										/* / -> _ */
 				size += 1;
-				break;
+				disallow0to3 = !legacyMangling;
+				continue;
 
 			case '_':										/* _ -> _1 */
 			case ';':										/* ; -> _2 */
@@ -548,11 +569,19 @@ mangledSize(U_8 * data, U_16 length)
 					/* Multibyte encoding: two or three bytes? */
 					i += 1;
 					if((ch & 0xE0) == 0xE0) i += 1;
+				} else {
+					if (disallow0to3) {
+						if ((ch >= (U_16)'0') && (ch <= (U_16)'3')) {
+							size = -1;
+							goto done;
+						}
+					}
+					size += 1;
 				}
-				else size += 1;
 		}
+		disallow0to3 = FALSE;
 	}
-
+done:
 	return size;
 }
 
@@ -807,6 +836,7 @@ nativeMethodEqual(void *leftKey, void *rightKey, void *userData)
  * \warning This function may release VM access.
  * \return
  * 	J9_NATIVE_METHOD_BIND_SUCCESS on success.
+ * 	J9_NATIVE_METHOD_BIND_FAIL if native cannot be bound, or mangling is illegal.
  *  J9_NATIVE_METHOD_BIND_RECURSIVE if another thread is binding the method.
  * 	J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY if scratch space cannot be allocated.
  */
@@ -866,6 +896,8 @@ resolveNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, UDATA ru
 			namesBuffer = (char *) buildNativeFunctionNames(vm, nativeMethod, J9_CLASS_FROM_METHOD(nativeMethod), 0);
 			if (namesBuffer == NULL) {
 				rc = J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY;
+			} else if (namesBuffer == (char*)UDATA_MAX) {
+				rc = J9_NATIVE_METHOD_BIND_FAIL;
 			} else {
 				/* exemplar.nativeMethod already set above */
 				/* exemplar.bindThread is set below */
