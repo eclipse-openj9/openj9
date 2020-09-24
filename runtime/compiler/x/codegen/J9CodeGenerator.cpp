@@ -397,6 +397,13 @@ J9::X86::CodeGenerator::supportsInliningOfIsAssignableFrom()
    return !disableInliningOfIsAssignableFrom;
    }
 
+bool
+J9::X86::CodeGenerator::canEmitBreakOnDFSet()
+   {
+   static const bool enableBreakOnDFSet = feGetEnv("TR_enableBreakOnDFSet") != NULL;
+   return enableBreakOnDFSet;
+   }
+
 void
 J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
    {

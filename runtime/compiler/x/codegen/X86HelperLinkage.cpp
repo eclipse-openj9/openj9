@@ -319,5 +319,9 @@ TR::Register* J9::X86::HelperCallSite::BuildCall()
       {
       generateRegRegInstruction(MOVRegReg(), _Node, ret, EAX, cg());
       }
+
+   if (cg()->canEmitBreakOnDFSet())
+      generateBreakOnDFSet(cg());
+
    return ret;
 }

@@ -749,6 +749,36 @@ public:
 
    bool hasMethodTypesSideTable();
 
+   // Openjdk implementation
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   /*
+    * \brief
+    *    Return MemberName.vmtarget, a J9method pointer for method represented by `memberName`
+    *    Caller must acquire VM access
+    */
+   TR_OpaqueMethodBlock* targetMethodFromMemberName(uintptr_t memberName);
+   /*
+    * \brief
+    *    Return MemberName.vmtarget, a J9method pointer for method represented by `memberName`
+    *    VM access is not required
+    */
+   TR_OpaqueMethodBlock* targetMethodFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+   /*
+    * \brief
+    *    Return MethodHandle.form.vmentry.vmtarget, J9method for the underlying java method
+    *    The J9Method is the target to be invoked intrinsically by MethodHandle.invokeBasic
+    *    Caller must acquire VM access
+    */
+   TR_OpaqueMethodBlock* targetMethodFromMethodHandle(uintptr_t methodHandle);
+   /*
+    * \brief
+    *    Return MethodHandle.form.vmentry.vmtarget, J9method for the underlying java method
+    *    The J9Method is the target to be invoked intrinsically by MethodHandle.invokeBasic
+    *    VM access is not required
+    */
+   TR_OpaqueMethodBlock* targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+#endif
+
    // JSR292 }}}
 
    virtual uintptr_t getFieldOffset( TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef);
