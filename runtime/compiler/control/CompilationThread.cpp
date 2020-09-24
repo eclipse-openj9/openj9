@@ -10606,51 +10606,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
    return startPC;
    }
 
-void
-TR::CompilationInfo::setProcessorByDebugOption()
-   {
-   if (debug("rios1"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCrios1);
-   else if (debug("rios2"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCrios2);
-   else if (debug("pwr403"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr403);
-   else if (debug("pwr405"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr405);
-   else if (debug("pwr601"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr601);
-   else if (debug("pwr603"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr603);
-   else if (debug("pwr604"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr604);
-   else if (debug("pwr630"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr630);
-   else if (debug("pwr620"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr620);
-   else if (debug("nstar"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCnstar);
-   else if (debug("pulsar"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpulsar);
-   else if (debug("gp"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCgp);
-   else if (debug("gpul"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCgpul);
-   else if (debug("gr"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCgr);
-   else if (debug("p6"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCp6);
-   else if (debug("p7"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCp7);
-   else if (debug("p8"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCp8);
-   else if (debug("p9"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCp9);
-   else if (debug("440GP"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr440);
-   else if (debug("750FX"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPC7xx);
-   }
-
 // Ensure that only methods whose name (prefix) matches names in
 // the translation filter list are compiled.
 //

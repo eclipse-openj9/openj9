@@ -203,7 +203,6 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             //if disableDualTLH is specified, revert back to old semantics.
             // Do not batch clear, JIT has to zeroinit all code on TLH.
             //Non P6, P7 and up are allowed to batch clear however.
-            TR::Compiler->target.cpu.setProcessor(TR_J9VMBase::getPPCProcessorType());
             bool disableZeroedTLHPages = disableDualTLH && (((notlhPrefetch >= 0) || (!TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_P6) && !TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_P7))));
 #endif//TR_HOST_POWER
 #endif//TR_HOST_X86

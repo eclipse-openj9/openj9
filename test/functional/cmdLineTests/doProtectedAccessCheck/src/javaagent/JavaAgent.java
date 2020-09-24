@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,27 +19,19 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package javaagent;
 
-#pragma csect(CODE,"J9J9CPU#C")
-#pragma csect(STATIC,"J9J9CPU#S")
-#pragma csect(TEST,"J9J9CPU#T")
+import java.lang.instrument.Instrumentation;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-#include "control/CompilationRuntime.hpp"
-#include "env/CompilerEnv.hpp"
-#include "env/CPU.hpp"
-#include "env/VMJ9.h"
-#include "j9.h"
-#include "j9port.h"
+public class JavaAgent {
 
-OMRProcessorDesc
-J9::CPU::getProcessorDescription()
-   {
-#if defined(J9VM_OPT_JITSERVER)
-   if (auto stream = TR::CompilationInfo::getStream())
-      {
-      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-      return vmInfo->_processorDescription;
-      }
-#endif /* defined(J9VM_OPT_JITSERVER) */
-   return _processorDescription;
-   }
+	public static int transformCount = 0;
+
+	public static void premain(String args, Instrumentation inst) throws Exception {
+		inst.addTransformer(new ProtectedClassFileTransformer(), true);
+		inst.retransformClasses(Class.forName("b.B"), Class.forName("a.A"));
+	}
+}

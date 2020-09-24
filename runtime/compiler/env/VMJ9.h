@@ -192,9 +192,6 @@ extern "C" {
 #endif
 
 
-TR_Processor      portLibCall_getProcessorType();
-TR_Processor      portLibCall_getPhysicalProcessorType();
-TR_Processor      mapJ9Processor(J9ProcessorArchitecture j9processor);
 static TR_Processor portLibCall_getARMProcessorType();
 static TR_Processor portLibCall_getX86ProcessorType();
 static bool portLibCall_sysinfo_has_resumable_trap_handler();
@@ -277,8 +274,6 @@ public:
    static bool createGlobalFrontEnd(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo);
    static TR_J9VMBase * get(J9JITConfig *, J9VMThread *, VM_TYPE vmType=DEFAULT_VM);
    static char *getJ9FormattedName(J9JITConfig *, J9PortLibrary *, char *, int32_t, char *, char *, bool suffix=false);
-   static TR_Processor getPPCProcessorType();
-   virtual bool getPPCSupportsVSXRegisters();
 
    static bool isBigDecimalClass(J9UTF8 * className);
    bool isCachedBigDecimalClassFieldAddr(){ return cachedStaticDFPAvailField; }
@@ -1104,7 +1099,6 @@ public:
 private:
    void transformJavaLangClassIsArrayOrIsPrimitive( TR::Compilation *, TR::Node * callNode,  TR::TreeTop * treeTop, int32_t andMask);
    void transformJavaLangClassIsArray( TR::Compilation *, TR::Node * callNode,  TR::TreeTop * treeTop);
-   void setProcessorByDebugOption();
    };
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)

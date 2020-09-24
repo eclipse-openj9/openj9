@@ -62,7 +62,6 @@ public:
    
    void applyUserOptions();
    bool isCompatible(const OMRProcessorDesc& processorDescription);
-   OMRProcessorDesc getProcessorDescription();
 
 private:
 
