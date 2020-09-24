@@ -11659,7 +11659,7 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
       return;
 
    bool postP10CopyInline = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10) &&
-                            cg->comp()->target().cpu.getPPCSupportsVSX();
+                            cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX);
 
    if (postP10CopyInline)
       {
@@ -12907,7 +12907,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
          // maintainability, we are simplifying the logic but using more registers.
 
          bool postP10CopyInline = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10) &&
-                                  cg->comp()->target().cpu.getPPCSupportsVSX();
+                                  cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX);
 
          static bool disableLEArrayCopyInline = (feGetEnv("TR_disableLEArrayCopyInline") != NULL);
          bool supportsLEArrayCopyInline = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) &&
@@ -13123,11 +13123,11 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
 
    // This section calculates the number of dependencies needed by the assembly helpers path.
    bool postP10Copy = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10) &&
-                      cg->comp()->target().cpu.getPPCSupportsVSX();
+                      cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX);
 
    static bool disableVSXArrayCopy = (feGetEnv("TR_disableVSXArrayCopy") != NULL);
    bool useVSXForCopy  = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) &&
-                         !disableVSXArrayCopy && cg->comp()->target().cpu.getPPCSupportsVSX();
+                         !disableVSXArrayCopy && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX);
 
    // VSX supercedes FPU.  No reason to offering disable option on this.
    //    POWER8 potentially micro-coded unaligned integer accesses in LE mode,

@@ -115,19 +115,6 @@ J9::X86::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    return true;
    }
 
-OMRProcessorDesc
-J9::X86::CPU::getProcessorDescription()
-   {
-#if defined(J9VM_OPT_JITSERVER)
-   if (auto stream = TR::CompilationInfo::getStream())
-      {
-      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-      return vmInfo->_processorDescription;
-      }
-#endif /* defined(J9VM_OPT_JITSERVER) */
-   return _processorDescription;
-   }
-
 uint32_t
 J9::X86::CPU::getX86ProcessorFeatureFlags()
    {
