@@ -51,12 +51,22 @@ protected:
    CPU(const OMRProcessorDesc& processorDescription) : J9::CPU(processorDescription) {}
 
 public:
+
    /** 
     * @brief Returns the processor type and features that will be used by portable AOT compilations
     * @param[in] omrPortLib : the port library
     * @return TR::CPU
     */
    static TR::CPU detectRelocatable(OMRPortLibrary * const omrPortLib);
+
+   /**
+    * @brief Intialize _featureMasks to the list of processor features that will be utilized by the compiler and set _isFeatureMasksEnabled to true
+    * @return void
+    */
+   static void enableFeatureMasks();
+
+   bool is(OMRProcessorArchitecture p);
+   bool supportsFeature(uint32_t feature);
 
    TR_X86CPUIDBuffer *queryX86TargetCPUID();
    const char * getProcessorVendorId();
@@ -66,6 +76,7 @@ public:
    bool hasPopulationCountInstruction();
 
    bool isCompatible(const OMRProcessorDesc& processorDescription);
+
    uint32_t getX86ProcessorFeatureFlags();
    uint32_t getX86ProcessorFeatureFlags2();
    uint32_t getX86ProcessorFeatureFlags8();

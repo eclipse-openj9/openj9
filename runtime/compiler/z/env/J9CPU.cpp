@@ -44,26 +44,24 @@
 
 extern J9JITConfig * jitConfig;
 
-
 TR::CPU
 J9::Z::CPU::detectRelocatable(OMRPortLibrary * const omrPortLib)
    {
-   if (omrPortLib == NULL)
-      return TR::CPU();
+   OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
+   OMRProcessorDesc processorDescription;
+   omrsysinfo_get_processor_description(&processorDescription);
 
-   TR::CPU host = TR::CPU::detect(omrPortLib);
-   OMRProcessorDesc portableProcessorDescription = host.getProcessorDescription();
-   if (portableProcessorDescription.processor > OMR_PROCESSOR_S390_Z10)
+   if (processorDescription.processor > OMR_PROCESSOR_S390_Z10)
       { 
-      portableProcessorDescription.processor = OMR_PROCESSOR_S390_Z10;
-      portableProcessorDescription.physicalProcessor = OMR_PROCESSOR_S390_Z10;
-      TR::CPU::adjustProcessorFeatures(portableProcessorDescription);
+      processorDescription.processor = OMR_PROCESSOR_S390_Z10;
+      processorDescription.physicalProcessor = OMR_PROCESSOR_S390_Z10;
       }
-   return TR::CPU(portableProcessorDescription);
+
+   return TR::CPU::customize(processorDescription);
    }
 
-void
-J9::Z::CPU::adjustProcessorFeatures(OMRProcessorDesc& processorDescription)
+TR::CPU
+J9::Z::CPU::customize(OMRProcessorDesc processorDescription)
    {
    OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
    if (processorDescription.processor < OMR_PROCESSOR_S390_Z10)
@@ -122,27 +120,40 @@ J9::Z::CPU::adjustProcessorFeatures(OMRProcessorDesc& processorDescription)
          omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_GUARDED_STORAGE, FALSE);
          }
       }
+
+   if (_isFeatureMasksEnabled)
+      {
+      // mask out any cpu features that the compiler doesn't care about
+      for (size_t i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
+         {
+         processorDescription.features[i] &= _featureMasks.features[i];
+         }
+      }
+
+   return TR::CPU(processorDescription);
    }
 
-void
-J9::Z::CPU::applyUserOptions()
-   {
-   if (_processorDescription.processor >= OMR_PROCESSOR_S390_Z10 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ10))
-      _processorDescription.processor = OMR_PROCESSOR_S390_FIRST;
-   else if (_processorDescription.processor >= OMR_PROCESSOR_S390_Z196 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ196))
-      _processorDescription.processor = OMR_PROCESSOR_S390_Z10;
-   else if (_processorDescription.processor >= OMR_PROCESSOR_S390_ZEC12 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZEC12))
-      _processorDescription.processor = OMR_PROCESSOR_S390_Z196;
-   else if (_processorDescription.processor >= OMR_PROCESSOR_S390_Z13 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ13))
-      _processorDescription.processor = OMR_PROCESSOR_S390_ZEC12;
-   else if (_processorDescription.processor >= OMR_PROCESSOR_S390_Z14 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ14))
-      _processorDescription.processor = OMR_PROCESSOR_S390_Z13;
-   else if (_processorDescription.processor >= OMR_PROCESSOR_S390_Z15 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ15))
-      _processorDescription.processor = OMR_PROCESSOR_S390_Z14;
-   else if (_processorDescription.processor >= OMR_PROCESSOR_S390_ZNEXT && TR::Options::getCmdLineOptions()->getOption(TR_DisableZNext))
-      _processorDescription.processor = OMR_PROCESSOR_S390_Z15;
 
-   TR::CPU::adjustProcessorFeatures(_processorDescription);
+void
+J9::Z::CPU::enableFeatureMasks()
+   {
+   // Only enable the features that compiler currently uses
+   const uint32_t utilizedFeatures [] = {OMR_FEATURE_S390_DFP, OMR_FEATURE_S390_TE, OMR_FEATURE_S390_FPE,
+                                         OMR_FEATURE_S390_RI, OMR_FEATURE_S390_VECTOR_FACILITY, OMR_FEATURE_S390_HIGH_WORD,
+                                         OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_2,
+                                         OMR_FEATURE_S390_GUARDED_STORAGE, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL,
+                                         OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1,
+                                         OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2,
+                                         OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3,
+                                         OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY};
+
+   memset(_featureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
+   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+   for (size_t i = 0; i < sizeof(utilizedFeatures)/sizeof(uint32_t); i++)
+      {
+      omrsysinfo_processor_set_feature(&_featureMasks, utilizedFeatures[i], TRUE);
+      }
+   _isFeatureMasksEnabled = true;
    }
 
 bool

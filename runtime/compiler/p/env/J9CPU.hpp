@@ -54,8 +54,13 @@ protected:
 
 public:
 
+   /**
+    * @brief Intialize _featureMasks to the list of processor features that will be utilized by the compiler and set _isFeatureMasksEnabled to true
+    * @return void
+    */
+   static void enableFeatureMasks();
+
    bool isCompatible(const OMRProcessorDesc& processorDescription);
-   void applyUserOptions();
    };
 
 }
