@@ -58,8 +58,6 @@ class JNILinkage : public PrivateLinkage
    int32_t computeMemoryArgSize(TR::Node *callNode, int32_t first, int32_t last, bool passThread = true);
    int32_t buildArgs(TR::Node *callNode, TR::RegisterDependencyConditions *deps, bool passThread = true, bool passReceiver = true);
    TR::Register *buildVolatileAndReturnDependencies(TR::Node *callNode, TR::RegisterDependencyConditions *deps, bool omitDedicatedFrameRegister);
-   void switchToMachineCStack(TR::Node *callNode);
-   void switchToJavaStack(TR::Node *callNode);
    void cleanupReturnValue(TR::Node *callNode, TR::Register *linkageReturnReg, TR::Register *targetReg);
 
    TR::Register *buildDirectDispatch(TR::Node *callNode, bool spillFPRegs);
