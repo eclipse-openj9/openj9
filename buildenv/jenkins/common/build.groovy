@@ -302,7 +302,14 @@ def archive_sdk() {
             def archiveCmd = SPEC.contains('zos') ? 'pax -wvz -p x' : 'tar -cvz -T -'
             // Filter out unwanted files (most of which are available in the debug-image).
             def filterCmd = "sed -e '/\\.dbg\$/d' -e '/\\.debuginfo\$/d' -e '/\\.diz\$/d' -e '/\\.dSYM\\//d' -e '/\\.map\$/d' -e '/\\.pdb\$/d'"
-            sh "( cd ${buildDir} && find ${JDK_FOLDER} -type f | ${filterCmd} | ${archiveCmd} ) > ${SDK_FILENAME}"
+            // Rename the top level directory for JDK11 z/OS to J11.0_64.
+            def ZOS_JDK_FOLDER = "J11.0_64"
+            if (SPEC.contains('zos')) {
+                sh "( cd ${buildDir} && mv ${JDK_FOLDER} ${ZOS_JDK_FOLDER} )"
+                sh "( cd ${buildDir} && find ${ZOS_JDK_FOLDER} -type f | ${filterCmd} | ${archiveCmd} ) > ${SDK_FILENAME}"
+            } else {
+                sh "( cd ${buildDir} && find ${JDK_FOLDER} -type f | ${filterCmd} | ${archiveCmd} ) > ${SDK_FILENAME}"
+            }
             // test if the test natives directory is present, only in JDK11+
             if (fileExists("${buildDir}${testDir}")) {
                 if (SPEC.contains('zos')) {
