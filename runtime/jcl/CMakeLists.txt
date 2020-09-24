@@ -175,6 +175,13 @@ if(J9VM_OPT_METHOD_HANDLE)
 	)
 endif()
 
+if(J9VM_OPT_OPENJDK_METHODHANDLE)
+	target_sources(jclse
+		PRIVATE
+			${CMAKE_CURRENT_SOURCE_DIR}/common/java_lang_invoke_MethodHandleNatives.cpp
+	)
+endif()
+
 if(JAVA_SPEC_VERSION EQUAL 8)
 	# sources for Java 8 only
 	target_sources(jclse

@@ -22,6 +22,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 -->
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
 
+	<xi:include href="uma/java_lang_invoke_MethodHandleNatives_exports.xml"></xi:include>
 	<xi:include href="uma/sun_misc_Unsafe_exports.xml"></xi:include>
 	<xi:include href="uma/unsafemem_inl_exports.xml"></xi:include>
 	<xi:include href="uma/se6_vm-side_natives_exports.xml"></xi:include>
@@ -43,6 +44,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<xi:fallback/>
 	</xi:include>
 
+	<xi:include href="uma/java_lang_invoke_MethodHandleNatives_objects.xml"></xi:include>
 	<xi:include href="uma/sun_misc_Unsafe_objects.xml"></xi:include>
 	<xi:include href="uma/se6_vm-side_natives_objects.xml"></xi:include>
 	<xi:include href="uma/se6_vm-side_lifecycle_objects.xml"></xi:include>
@@ -80,6 +82,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<exports>
 			<group name="se6_vm-side_lifecycle"/>
 			<group name="se6_vm-side_natives"/>
+			<group name="java_lang_invoke_MethodHandleNatives">
+				<include-if condition="spec.flags.opt_openjdkMethodhandle"/>
+			</group>
 			<group name="jithelpers"/>
 			<group name="sun_misc_Unsafe"/>
 			<group name="sun_misc_Unsafe_inl"/>
@@ -143,6 +148,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<objects>
 			<group name="se6_vm-side_lifecycle"/>
 			<group name="se6_vm-side_natives"/>
+			<group name="java_lang_invoke_MethodHandleNatives">
+				<include-if condition="spec.flags.opt_openjdkMethodhandle"/>
+			</group>
 			<group name="jithelpers"/>
 			<group name="sun_misc_Unsafe"/>
 			<group name="attach">

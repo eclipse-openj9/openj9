@@ -602,3 +602,23 @@ if(NOT JAVA_SPEC_VERSION LESS 16)
 		Java_jdk_internal_vm_vector_VectorSupport_getMaxLaneCount
 	)
 endif()
+
+# OpenJDK methodhandle support
+if(J9VM_OPT_OPENJDK_METHODHANDLE)
+	omr_add_exports(jclse
+		Java_java_lang_invoke_MethodHandleNatives_init
+		Java_java_lang_invoke_MethodHandleNatives_expand
+		Java_java_lang_invoke_MethodHandleNatives_resolve
+		Java_java_lang_invoke_MethodHandleNatives_getMembers
+		Java_java_lang_invoke_MethodHandleNatives_objectFieldOffset
+		Java_java_lang_invoke_MethodHandleNatives_staticFieldOffset
+		Java_java_lang_invoke_MethodHandleNatives_staticFieldBase
+		Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo
+		Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetNormal
+		Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetVolatile
+		Java_java_lang_invoke_MethodHandleNatives_copyOutBootstrapArguments
+		Java_java_lang_invoke_MethodHandleNatives_clearCallSiteContext
+		Java_java_lang_invoke_MethodHandleNatives_getNamedCon
+		Java_java_lang_invoke_MethodHandleNatives_registerNatives
+	)
+endif()

@@ -644,3 +644,34 @@ TraceEntry=Trc_JCL_attach_closeSemaphoreEntry Overhead=1 Level=1 Template="Java_
 TraceEntry=Trc_JCL_attach_destroySemaphoreEntry Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_destroySemaphoreImpl destroying semaphore (%p)"
 
 TraceEvent=Trc_JCL_init_nativeLibrariesLoadMethodID Overhead=1 Level=3 Template="init nativeLibrariesLoadMethodID (0x%zx)"
+
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_initImpl_setField Overhead=1 Level=3 Template="Set field MemberName: name=%.*s, signature=%.*s"
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_initImpl_setData Overhead=1 Level=3 Template="Set MemberName data: flags=0x%08X, clazz=%p, vmindex=%ld, target=%ld"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_init_Entry Overhead=1 Level=3 Template="MethodHandleNatives_init Enter: self = %p, ref = %p"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_init_Exit Overhead=1 Level=3 Template="MethodHandleNatives_init Exit"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_expand_Entry Overhead=1 Level=3 Template="MethodHandleNatives_expand Enter: self = %p"
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_expand_Data Overhead=1 Level=3 Template="MethodHandleNatives_expand Data: membername = %p, clazz = %p, name = %p, type = %p, flags = 0x%08X, vmindex = %ld"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_expand_Exit Overhead=1 Level=3 Template="MethodHandleNatives_expand Exit"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_Entry Overhead=1 Level=3 Template="MethodHandleNatives_resolve Enter: self = %p, caller = %p, speculativeResolve = %s"
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_Data Overhead=1 Level=3 Template="MethodHandleNatives_resolve Data: membername = %p, clazz = %p, caller = %p, name = %p, type = %p, flags = 0x%08X, vmindex = %ld, target = %ld"
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_NAS Overhead=1 Level=3 Template="MethodHandleNatives_resolve NAS: name = %s, signature = %s"
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_resolved Overhead=1 Level=3 Template="MethodHandleNatives_resolve Resolved to: vmindex = %ld, target = %ld, class = %p, flags = 0x%08X"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_Exit Overhead=1 Level=3 Template="MethodHandleNatives_resolve Exit"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_getMembers_Entry Overhead=1 Level=3 Template="MethodHandleNatives_getMembers Enter: defc = %p, matchName = %p, matchSig = %p, matchFlags = 0x%08X, caller = %p, skip = %d, results = %p"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_getMembers_Exit Overhead=1 Level=3 Template="MethodHandleNatives_getMembers Exit: result = %d"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_objectFieldOffset_Entry Overhead=1 Level=3 Template="MethodHandleNatives_objectFieldOffset Enter: self = %p"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_objectFieldOffset_Exit Overhead=1 Level=3 Template="MethodHandleNatives_objectFieldOffset Exit: result = %ld"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_staticFieldOffset_Entry Overhead=1 Level=3 Template="MethodHandleNatives_staticFieldOffset Enter: self = %p"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_staticFieldOffset_Exit Overhead=1 Level=3 Template="MethodHandleNatives_staticFieldOffset Exit: result = %ld"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_staticFieldBase_Entry Overhead=1 Level=3 Template="MethodHandleNatives_staticFieldBase Enter: self = %p"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_staticFieldBase_Exit Overhead=1 Level=3 Template="MethodHandleNatives_staticFieldBase Exit: result = %p"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_getMemberVMInfo_Entry Overhead=1 Level=3 Template="MethodHandleNatives_getMemberVMInfo Enter: self = %p"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_getMemberVMInfo_Exit Overhead=1 Level=3 Template="MethodHandleNatives_getMemberVMInfo Exit: result = %p"

@@ -5388,6 +5388,10 @@ typedef struct J9JavaVM {
 	U_32 minimumReservedRatio;
 	U_32 cancelAbsoluteThreshold;
 	U_32 minimumLearningRatio;
+#ifdef J9VM_OPT_OPENJDK_METHODHANDLE
+	UDATA vmindexOffset;
+	UDATA vmtargetOffset;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2
