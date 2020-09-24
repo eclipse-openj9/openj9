@@ -1,0 +1,16 @@
+name: Assign to snapshot project
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  automate-project-columns:
+    runs-on: ubuntu-latest
+    if: github.event.label.name == 'Snapshot'
+    steps:
+      - uses: alex-page/github-project-automation-plus@v0.3.0
+        with:
+          project: Snapshot+Restore
+          column: To do
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
