@@ -1984,6 +1984,12 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, TR::CompilationInfo::isCompiled(method));
          }
          break;
+      case MessageType::CompInfo_getPCIfCompiled:
+         {
+         J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
+         client->write(response, TR::CompilationInfo::getPCIfCompiled(method));
+         }
+         break;
       case MessageType::CompInfo_getJ9MethodExtra:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
