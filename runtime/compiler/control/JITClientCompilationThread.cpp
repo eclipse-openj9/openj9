@@ -258,7 +258,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<std::string, bool>();
          const std::string name = std::get<0>(recv);
          bool isVettedForAOT = std::get<1>(recv);
-         client->write(response, fe->getSystemClassFromClassName(name.c_str(), name.length(), isVettedForAOT));
+         // Always need non-AOT front-end here, since class validation is done on the server
+         TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
+         client->write(response, fej9->getSystemClassFromClassName(name.c_str(), name.length(), isVettedForAOT));
          }
          break;
       case MessageType::VM_isMethodTracingEnabled:
