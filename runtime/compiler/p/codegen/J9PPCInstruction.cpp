@@ -50,7 +50,7 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
       TR::ResolvedMethodSymbol *sym = getSymbolReference()->getSymbol()->getResolvedMethodSymbol();
       TR_ResolvedMethod *resolvedMethod = sym == NULL ? NULL : sym->getResolvedMethod();
       TR::LabelSymbol *label = getSymbolReference()->getSymbol()->getLabelSymbol();
-      bool callToSelf = resolvedMethod != NULL && resolvedMethod->isSameMethod(comp->getCurrentMethod()) && !comp->isDLT();
+      bool callToSelf = comp->isRecursiveMethodTarget(resolvedMethod);
 
       if (cg()->hasCodeCacheSwitched())
          {
