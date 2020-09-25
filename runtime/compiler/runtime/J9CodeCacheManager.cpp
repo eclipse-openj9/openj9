@@ -341,7 +341,7 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
                                               void *preferredStartAddress)
    {
    if (TR::Options::getCmdLineOptions()->getOption(TR_ForceGenerateReadOnlyCode))
-      return allocateCodeCacheWithDataSegmentRO(segmentSize, codeCacheSizeToAllocate, preferredStartAddress);
+      return self()->allocateCodeCacheWithDataSegmentRO(segmentSize, codeCacheSizeToAllocate, preferredStartAddress);
 
    J9JavaVM *javaVM = this->javaVM();
    J9JITConfig *jitConfig = this->jitConfig();
