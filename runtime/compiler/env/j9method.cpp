@@ -6222,7 +6222,11 @@ void *
 TR_ResolvedJ9Method::callSiteTableEntryAddress(int32_t callSiteIndex)
    {
    J9Class *ramClass = constantPoolHdr();
+#if defined (J9VM_OPT_OPENJDK_METHODHANDLE)
+   return (void *)(((J9InvokeCacheEntry *)ramClass->callSites) + callSiteIndex);
+#else
    return ramClass->callSites + callSiteIndex;
+#endif
    }
 
 bool
@@ -6271,10 +6275,15 @@ TR_ResolvedJ9Method::isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex)
 void *
 TR_ResolvedJ9Method::methodTypeTableEntryAddress(int32_t cpIndex)
    {
+   J9Class *ramClass = constantPoolHdr();
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   UDATA invokeCacheIndex = (((J9RAMMethodRef*) literals())[cpIndex]).methodIndexAndArgCount >> 8;
+   return (void *)(((J9InvokeCacheEntry *)ramClass->invokeCache) + invokeCacheIndex);
+#else
    UDATA methodTypeIndex = (((J9RAMMethodRef*) literals())[cpIndex]).methodIndexAndArgCount;
    methodTypeIndex >>= 8;
-   J9Class *ramClass = constantPoolHdr();
    return ramClass->methodTypes + methodTypeIndex;
+#endif
    }
 
 bool
