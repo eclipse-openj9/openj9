@@ -97,7 +97,11 @@ if test "x$RUN_BUILD" = "xyes" ; then
   pushd $TRAVIS_BUILD_DIR
   git remote set-branches origin 'snapshot'
   git fetch --depth 50 origin snapshot
+  git remote -v
+  git branch -v
   popd
+
+
 
   cd openj9-openjdk-jdk11 && bash get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$OPENJ9_SHA -omr-branch=snapshot
 
