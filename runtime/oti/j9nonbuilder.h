@@ -3485,7 +3485,7 @@ typedef struct J9Method {
 	U_8* bytecodes;
 	struct J9ConstantPool* constantPool;
 	void* methodRunAddress;
-	void* extra;
+	void* volatile extra;
 } J9Method;
 
 typedef struct J9JNIMethodID {
