@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2016, 2020 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="System Properties Converting Tests" timeout="200">
+ <variable name="ARGENABLE-UNI" value="-Xargencoding" />
+ <variable name="ARGENABLE-LATIN" value="-Xargencoding:latin" />
+ <variable name="ARGENABLE-UTF8" value="-Xargencoding:utf8" />
+ <variable name="LATIN" value="ISO-8859-1" />
+ <variable name="UTF8" value="UTF-8" />
+ <variable name="UNICODE" value="UNICODE" />
+ <variable name="DEFAULT" value="DEFAULT" />
+
+<!--   
+	The tests put non-ascii characters in system property name and value (which is also hardcoded in the test Java application)
+	defined via -D, and confirms the characters are converted correctly in the resulting system properties
+	using the current code page for the platform.
+
+	Usage of UNICODE parameter does make sense on Windows platforms only.   	
+	 
+	Attention
+        we use non-ascii symbols in command line option. According to XML rule they appear as &#153;  &#254;  and &#208;  
+ 		Please do not delete it        
+ -->
+
+  <test id="Test 1 Default Options">
+  <command>$EXE$ -Dtestkey=TestVa&#187;lue&#161; -cp $Q$$JARPATH$$Q$ SysPropTest $DEFAULT$</command>
+	<output regex="no" type="success">test succeeded</output> 
+	<output regex="no" type="required">test succeeded</output> 
+	 <output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	 <output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	 <output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>	
+ </test>
+
+  <test id="Test 2 Enable Argument Encoding with Unicode Option">
+	<command>$EXE$ $ARGENABLE-UNI$ -Dtestkey=TestVa&#187;lue&#161; -cp $Q$$JARPATH$$Q$ SysPropTest $UNICODE$</command>
+	<output regex="no" type="success">test succeeded</output> 
+	<output regex="no" type="required">test succeeded</output> 
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>	
+ </test>
+ 
+  <test id="Test 3 Enable Argument Encoding with Latin Option">
+	<command>$EXE$ $ARGENABLE-LATIN$ -Dtestkey=TestVa&#187;lue&#161; -cp $Q$$JARPATH$$Q$ SysPropTest $LATIN$</command>
+	<output regex="no" type="success">test succeeded</output> 
+	<output regex="no" type="required">test succeeded</output> 
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>	
+ </test>
+
+  <test id="Test 4 Enable Argument Encoding with UTF-8 Option">
+	<command>$EXE$ $ARGENABLE-UTF8$ -Dtestkey=TestVa&#187;lue&#161; -cp $Q$$JARPATH$$Q$ SysPropTest $UTF8$</command>
+	<output regex="no" type="success">test succeeded</output> 
+	<output regex="no" type="required">test succeeded</output> 
+	<output regex="no" type="failure">test failed</output>
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>	
+ </test>
+
+  <test id="Test 5 Enable Argument Encoding and Property Converting Options">
+	<command>$EXE$ $ARGENABLE-LATIN$ -Dtestkey=TestVa&#187;lue&#161; -cp $Q$$JARPATH$$Q$ SysPropTest $LATIN$</command>
+	<output regex="no" type="success">test succeeded</output> 
+	<output regex="no" type="required">test succeeded</output> 
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>	
+ </test>
+
+  <test id="Test 6 Enable Property Converting - No Argument Encoding">
+	<command>$EXE$ -Dtestkey=TestVa&#187;lue&#161; -cp $Q$$JARPATH$$Q$ SysPropTest $DEFAULT$</command>
+	<output regex="no" type="success">test succeeded</output> 
+	<output regex="no" type="required">test succeeded</output> 
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>	
+ </test>
+ 
+  <test id="Test 7 detect invalid arguments">
+	<command>$EXE$ -Xargencodingfoo -Dtestkey=TestVa&#187;lue&#161; -cp $Q$$JARPATH$$Q$ SysPropTest $DEFAULT$</command>
+	<output regex="no" type="success">JVMJ9VM007E Command-line option unrecognised</output> 
+	<output regex="no" type="required">JVMJ9VM007E Command-line option unrecognised</output> 
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">test succeeded</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>	
+ </test>
+ 
+   <test id="Test 8 disregard Argument Encoding with random Option">
+	<command>$EXE$ -Xargencoding:foo -Dtestkey=TestVa&#187;lue&#161; -cp $Q$$JARPATH$$Q$ SysPropTest $DEFAULT$</command>
+	<output regex="no" type="success">test succeeded</output> 
+	<output regex="no" type="required">test succeeded</output> 
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>	
+ </test>
+
+<test id="Test 9 Test -Xnoargsconversion">
+	<command>$EXE$ -Xnoargsconversion -Dtestkey=TestVa&#187;lue&#161; -cp $Q$$JARPATH$$Q$ SysPropTest $DEFAULT$</command>
+	<output regex="no" type="success">test succeeded</output> 
+	<output regex="no" type="required">test succeeded</output> 
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>	
+ </test>
+ 
+<test id="Test 10 Test corrupt -Xnoargsencodings">
+	<command>$EXE$ -Xnoargsconversionfoo -Dtestkey=TestVa&#187;lue&#161; -cp $Q$$JARPATH$$Q$ SysPropTest $DEFAULT$</command>
+	<output regex="no" type="success">JVMJ9VM007E Command-line option unrecognised</output> 
+	<output regex="no" type="required">JVMJ9VM007E Command-line option unrecognised</output> 
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">test succeeded</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>	
+ </test>
+ 
+</suite>
