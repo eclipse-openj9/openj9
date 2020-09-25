@@ -32,6 +32,10 @@
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/SymbolValidationManager.hpp"
 
+#if defined(J9VM_OPT_JITSERVER)
+#include "runtime/JITClientSession.hpp"
+#endif
+
 #include "j9protos.h"
 
 #if defined (_MSC_VER) && _MSC_VER < 1900
@@ -52,10 +56,7 @@ TR::SymbolValidationManager::_systemClassesNotWorthRemembering[] = {
    /* Newer java code is moving towards using StringBuilder. Therefore, ignoring this class
     * reduces load failures, while having minimal impact on steady state throughput.
     */
-   { "java/lang/StringBuffer", NULL, false },
-
-   /* Terminating entry */
-   { NULL, NULL, false }
+   { "java/lang/StringBuffer", NULL, false }
 };
 
 TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee)
@@ -111,7 +112,26 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
       _alreadyGeneratedRecords.insert(
          new (_region) ArrayClassFromComponentClassRecord(arrayClass, component));
       }
+
+   // Ensure that the count of classes not worth remembering is defined correctly
+   static_assert(SYSTEM_CLASSES_NOT_WORTH_REMEMBERING_COUNT == sizeof(_systemClassesNotWorthRemembering) / sizeof(_systemClassesNotWorthRemembering[0]),
+                 "SYSTEM_CLASSES_NOT_WORTH_REMEMBERING_COUNT doesn't match the size of _systemClassesNotWorthRemembering");
+
    }
+
+#if defined(J9VM_OPT_JITSERVER)
+void
+TR::SymbolValidationManager::populateSystemClassesNotWorthRemembering(ClientSessionData *clientData)
+   {
+   // Populate the client session with classes not worth remembering
+   auto classesNotWorthRemembering = clientData->getSystemClassesNotWorthRemembering();
+   for (int i = 0; i < SYSTEM_CLASSES_NOT_WORTH_REMEMBERING_COUNT; ++i)
+      {
+      auto classNotWorthRemembering = &_systemClassesNotWorthRemembering[i];
+      classesNotWorthRemembering[i] = { classNotWorthRemembering->_className, NULL, classNotWorthRemembering->_checkIsSuperClass };
+      }
+   }
+#endif
 
 void
 TR::SymbolValidationManager::defineGuaranteedID(void *symbol, TR::SymbolType type)
@@ -127,9 +147,9 @@ TR::SymbolValidationManager::isClassWorthRemembering(TR_OpaqueClassBlock *clazz)
    {
    bool worthRemembering = true;
 
-   for (int i = 0; worthRemembering && _systemClassesNotWorthRemembering[i]._className; i++)
+   for (int i = 0; worthRemembering && i < SYSTEM_CLASSES_NOT_WORTH_REMEMBERING_COUNT; i++)
       {
-      SystemClassNotWorthRemembering *systemClassNotWorthRemembering = &_systemClassesNotWorthRemembering[i];
+      SystemClassNotWorthRemembering *systemClassNotWorthRemembering = getSystemClassNotWorthRemembering(i);
       if (!systemClassNotWorthRemembering->_clazz)
          {
          systemClassNotWorthRemembering->_clazz = _fej9->getSystemClassFromClassName(
@@ -156,6 +176,22 @@ TR::SymbolValidationManager::isClassWorthRemembering(TR_OpaqueClassBlock *clazz)
       }
 
    return worthRemembering;
+   }
+
+TR::SymbolValidationManager::SystemClassNotWorthRemembering *
+TR::SymbolValidationManager::getSystemClassNotWorthRemembering(int idx)
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (_comp->isOutOfProcessCompilation())
+      {
+      auto classesNotWorthRemembering = _fej9->_compInfoPT->getClientData()->getSystemClassesNotWorthRemembering();
+      return &classesNotWorthRemembering[idx];
+      }
+   else
+#endif
+      {
+      return &_systemClassesNotWorthRemembering[idx];
+      }
    }
 
 void

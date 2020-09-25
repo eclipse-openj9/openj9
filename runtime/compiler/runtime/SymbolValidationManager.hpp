@@ -38,6 +38,10 @@
 #include "exceptions/AOTFailure.hpp"
 #include "runtime/J9Runtime.hpp"
 
+#if defined(J9VM_OPT_JITSERVER)
+class ClientSessionData;
+#endif
+
 #define SVM_ASSERT_LOCATION_INNER(line) __FILE__ ":" #line
 #define SVM_ASSERT_LOCATION(line) SVM_ASSERT_LOCATION_INNER(line)
 
@@ -637,9 +641,9 @@ public:
 
    struct SystemClassNotWorthRemembering
       {
-      const char * const _className;
+      const char *_className;
       TR_OpaqueClassBlock *_clazz;
-      const bool _checkIsSuperClass;
+      bool _checkIsSuperClass;
       };
 
    void populateWellKnownClasses();
@@ -764,10 +768,17 @@ public:
 
    static bool assertionsAreFatal();
 
+   static int getSystemClassesNotWorthRememberingCount();
+
 #if defined(J9VM_OPT_JITSERVER)
    std::string serializeSymbolToIDMap();
    void deserializeSymbolToIDMap(const std::string &symbolToIdStr);
+   static void populateSystemClassesNotWorthRemembering(ClientSessionData *clientData);
 #endif /* defined(J9VM_OPT_JITSERVER) */
+
+   SystemClassNotWorthRemembering *getSystemClassNotWorthRemembering(int idx);
+
+   static const int SYSTEM_CLASSES_NOT_WORTH_REMEMBERING_COUNT = 2;
 
 private:
 
