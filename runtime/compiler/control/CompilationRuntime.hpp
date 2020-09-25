@@ -457,6 +457,14 @@ public:
    static JITServer::ServerStream *getStream();
 #endif /* defined(J9VM_OPT_JITSERVER) */
    static bool isInterpreted(J9Method *method) { return !isCompiled(method); }
+
+   /**
+    * @brief Determines if a J9Method is compiled
+    *
+    * @param method pointer to the J9Method
+    *
+    * @return true if compiled, false otherwise
+    */
    static bool isCompiled(J9Method *method)
       {
 #if defined(J9VM_OPT_JITSERVER)
@@ -466,8 +474,34 @@ public:
          return std::get<0>(stream->read<bool>());
          }
 #endif /* defined(J9VM_OPT_JITSERVER) */
-      return (((uintptr_t)method->extra) & J9_STARTPC_NOT_TRANSLATED) == 0;
+
+      return (getPCIfCompiled(method) != NULL);
       }
+
+   /**
+    * @brief Returns the PC of a method that is compiled
+    *
+    * @param method pointer to the J9Method
+    *
+    * @return The start PC if compiled, NULL otherwise
+    */
+   static void* getPCIfCompiled(J9Method *method)
+      {
+#if defined(J9VM_OPT_JITSERVER)
+      if (auto stream = getStream())
+         {
+         stream->write(JITServer::MessageType::CompInfo_getPCIfCompiled, method);
+         return std::get<0>(stream->read<void *>());
+         }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+      /* Read extra field only once */
+      void *extra = method->extra;
+
+      /* Return extra field if compiled, NULL otherwise */
+      return ((uintptr_t)extra & J9_STARTPC_NOT_TRANSLATED) == 0 ? extra : NULL;
+      }
+
    static bool isJNINative(J9Method *method)
       {
 #if defined(J9VM_OPT_JITSERVER)
