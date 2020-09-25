@@ -91,6 +91,14 @@ if test "x$RUN_BUILD" = "xyes" ; then
     echo "Warning using SHA $OPENJ9_SHA instead of $TRAVIS_COMMIT."
   fi
 
+  # Travis uses --depth=50 which implies --single-branch.  To get the snapshot branch, we
+  # need to add the ref and fetch it explicitly before the get_source.sh can use it as it
+  # is "fetching" from the local checkout
+  pushd $TRAVIS_BUILD_DIR
+  git remote set-branches origin 'snapshot'
+  git fetch --depth 50 origin snapshot
+  popd
+
   cd openj9-openjdk-jdk11 && bash get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$OPENJ9_SHA -omr-branch=snapshot
 
   # Limit number of jobs to work around g++ internal compiler error.
