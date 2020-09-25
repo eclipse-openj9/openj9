@@ -780,7 +780,7 @@ Java_sun_misc_Unsafe_getKlassPointer(JNIEnv *env, jobject receiver, jobject addr
 }
 
 jboolean JNICALL
-Java_jdk_internal_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass clazz)
+Java_sun_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass clazz)
 {
 	jboolean result = JNI_FALSE;
 
@@ -955,7 +955,7 @@ registerJdkInternalMiscUnsafeNativesCommon(JNIEnv *env, jclass clazz) {
 		{
 			(char*)"shouldBeInitialized0",
 			(char*)"(Ljava/lang/Class;)Z",
-			(void*)&Java_jdk_internal_misc_Unsafe_shouldBeInitialized
+			(void*)&Java_sun_misc_Unsafe_shouldBeInitialized
 		},
 		{
 			(char*)"allocateMemory0",

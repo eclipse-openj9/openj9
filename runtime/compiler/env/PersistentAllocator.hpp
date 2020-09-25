@@ -81,17 +81,30 @@ private:
       Block * next() { return reinterpret_cast<Block *>( (reinterpret_cast<uintptr_t>(_next) & ~0x1)); }
       };
 
-   static const size_t PERSISTANT_BLOCK_SIZE_BUCKETS = 12;
+   // Monitor to protect access to the linked lists of (small) fixed-size blocks
+   // The variable-size block list (which takes longer to access) will continue
+   // to be protected by memoryAllocMonitor. This arrangement prevents a fast
+   // fixed-size block list access to be delayed by a slow variable-size block
+   // list access
+   J9ThreadMonitor * _smallBlockListsMonitor;
+
+   static const size_t PERSISTANT_BLOCK_SIZE_BUCKETS = 16;
+   // first list/bucket is for large blocks of variable size
+   static const size_t LARGE_BLOCK_LIST_INDEX = 0;
    static size_t freeBlocksIndex(size_t const blockSize)
       {
       size_t const adjustedBlockSize = blockSize - sizeof(Block);
       size_t const candidateBucket = adjustedBlockSize / sizeof(void *);
       return candidateBucket < PERSISTANT_BLOCK_SIZE_BUCKETS ?
          candidateBucket :
-         0;
+         LARGE_BLOCK_LIST_INDEX;
       }
 
-   void * allocateLocked(size_t);
+   void * allocateInternal(size_t);
+   Block * allocateFromVariableSizeListLocked(size_t allocSize);
+   void * allocateFromSegmentLocked(size_t allocSize);
+   void freeFixedSizeBlock(Block * block);
+   void freeVariableSizeBlock(Block * block);
    void freeBlock(Block *);
 
    J9MemorySegment * findUsableSegment(size_t requiredSize);
