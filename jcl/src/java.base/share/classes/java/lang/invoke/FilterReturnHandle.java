@@ -33,7 +33,7 @@ final class FilterReturnHandle extends ConvertHandle {
 	final MethodHandle filter;
 	
 	FilterReturnHandle(MethodHandle next, MethodHandle filter) {
-		super(next, next.type.changeReturnType(filter.type.returnType), KIND_FILTERRETURN, filter.type()); //$NON-NLS-1$
+		super(next, next.type.changeReturnType(filter.type.returnType()), KIND_FILTERRETURN, filter.type()); //$NON-NLS-1$
 		this.filter = filter;
 	}
 
