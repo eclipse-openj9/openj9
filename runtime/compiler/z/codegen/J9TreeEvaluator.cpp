@@ -2184,7 +2184,7 @@ J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * c
          }
       if (value >= MIN_IMMEDIATE_VAL && value <= MAX_IMMEDIATE_VAL)
          {
-         TR::MemoryReference * tempMR = generateS390MemoryReference(firstChild, cg);
+         TR::MemoryReference * tempMR = TR::MemoryReference::create(cg, firstChild);
 
          if (tempMR->getIndexRegister() != NULL && tempMR->getBaseRegister() != NULL)
             {

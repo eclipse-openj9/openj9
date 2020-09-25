@@ -133,7 +133,9 @@ void
 unsafeFreeMemory(J9VMThread* vmThread, void* oldAddress)
 {
 	J9UnsafeMemoryBlock *memBlock;
+#if defined(J9VM_OPT_SNAPSHOTS)
 	J9JavaVM *vm = vmThread->javaVM;
+#endif
 
 	PORT_ACCESS_FROM_VMC(vmThread);
 	Trc_JCL_sun_misc_Unsafe_freeMemory_Entry(vmThread, oldAddress);
