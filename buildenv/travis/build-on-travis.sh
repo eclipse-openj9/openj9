@@ -96,7 +96,7 @@ if test "x$RUN_BUILD" = "xyes" ; then
   # is "fetching" from the local checkout
   pushd $TRAVIS_BUILD_DIR
   git remote set-branches origin 'snapshot'
-  git fetch --depth 50 origin snapshot
+  git fetch --depth 50 origin snapshot:snapshot
   git remote -v
   git branch -v
   popd
