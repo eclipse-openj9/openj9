@@ -516,14 +516,6 @@ public:
 #endif /* defined(J9VM_OPT_JITSERVER) */
       return (int32_t)((intptr_t)method->extra);
       }
-   static uint32_t getJ9MethodJITExtra(J9Method *method)
-      {
-#if defined(J9VM_OPT_JITSERVER)
-      TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
-#endif /* defined(J9VM_OPT_JITSERVER) */
-      TR_ASSERT((intptr_t)method->extra & J9_STARTPC_NOT_TRANSLATED, "MethodExtra Already Jitted!");
-      return (uint32_t)((uintptr_t)method->extra >> 32);
-      }
    static void * getJ9MethodStartPC(J9Method *method)
       {
 #if defined(J9VM_OPT_JITSERVER)
