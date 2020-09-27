@@ -28,14 +28,17 @@
 #include "ilgen/J9ByteCodeIterator.hpp"
 #include "infra/ILWalk.hpp"
 
+
+namespace J9 {
+   
 /*
  * The abstract interpreter for Java Bytecode.
  * It interprets the method and simluates the JVM state.
  */
-class J9AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostorderSnapshotBlockIterator
+class AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostorderSnapshotBlockIterator
    {
    public:
-   J9AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol, TR::CFG* cfg, AbsVisitor* vistor, AbsArguments* arguments, TR::Region& region, TR::Compilation* comp);
+   AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol, TR::CFG* cfg, TR::AbsVisitor* vistor, TR::AbsArguments* arguments, TR::Region& region, TR::Compilation* comp);
 
    /**
     * @brief start to interpret the method.
@@ -46,9 +49,9 @@ class J9AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostord
     */
    bool interpret();
 
-   InliningMethodSummary* getInliningMethodSummary() { return _inliningMethodSummary; }
+   TR::InliningMethodSummary* getInliningMethodSummary() { return _inliningMethodSummary; }
 
-   AbsValue* getReturnValue() { return _returnValue; }
+   TR::AbsValue* getReturnValue() { return _returnValue; }
 
    void setCallerIndex(int32_t callerIndex) { _callerIndex = callerIndex; }
    
@@ -159,12 +162,48 @@ class J9AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostord
 
    TR_CallSite* getCallSite(TR::MethodSymbol::Kinds kind, int32_t bcIndex, int32_t cpIndex);
 
-   AbsVisitor* _visitor;
+   /*** Methods for creating different types of abstract values ***/
+   TR::AbsValue* createObject(TR_OpaqueClassBlock* opaqueClass, TR_YesNoMaybe isNonNull);
 
-   AbsArguments *_arguments;
+   TR::AbsValue* createNullObject();
 
-   InliningMethodSummary* _inliningMethodSummary;
-   AbsValue* _returnValue;
+   TR::AbsValue* createArrayObject(TR_OpaqueClassBlock* arrayClass, TR_YesNoMaybe isNonNull, int32_t lengthLow, int32_t lengthHigh, int32_t elementSize);
+   TR::AbsValue* createStringObject(TR::SymbolReference* symRef, TR_YesNoMaybe isNonNull);
+
+   TR::AbsValue* createIntConst(int32_t value);
+   TR::AbsValue* createLongConst(int64_t value);
+
+   TR::AbsValue* createIntRange(int32_t low, int32_t high);
+   TR::AbsValue* createLongRange(int64_t low, int64_t high);
+
+   TR::AbsValue* createTopInt();
+   TR::AbsValue* createTopLong();
+
+   TR::AbsValue* createTopDouble();
+   TR::AbsValue* createTopFloat();
+
+   TR::AbsValue* createTopObject();
+
+   bool isNullObject(TR::AbsValue* v);
+   bool isNonNullObject(TR::AbsValue* v);
+
+   bool isArrayObject(TR::AbsValue* v);
+   bool isObject(TR::AbsValue* v);
+
+   bool isIntConst(TR::AbsValue* v);
+   bool isIntRange(TR::AbsValue* v);
+   bool isInt(TR::AbsValue* v);
+
+   bool isLongConst(TR::AbsValue* v);
+   bool isLongRange(TR::AbsValue* v);
+   bool isLong(TR::AbsValue* v);
+
+   TR::AbsVisitor* _visitor;
+
+   TR::AbsArguments* _arguments;
+
+   TR::InliningMethodSummary* _inliningMethodSummary;
+   TR::AbsValue* _returnValue;
    
    int32_t _callerIndex;
    TR::ResolvedMethodSymbol* _callerMethodSymbol;
@@ -177,5 +216,7 @@ class J9AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostord
    TR::Compilation* _comp;
    TR::ValuePropagation* _vp;
    };
+
+}
 
 #endif

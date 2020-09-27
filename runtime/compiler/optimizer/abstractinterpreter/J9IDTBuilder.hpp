@@ -40,6 +40,9 @@ namespace J9
 {
 class IDTBuilder : public OMR::IDTBuilderConnector
    {
+
+   friend class OMR::IDTBuilder;
+   
    public:
    IDTBuilder(TR::ResolvedMethodSymbol* symbol, int32_t budget, TR::Region& region, TR::Compilation* comp, TR_InlinerBase* inliner) :
       OMR::IDTBuilderConnector(symbol, budget, region, comp, inliner),
@@ -57,7 +60,7 @@ class IDTBuilder : public OMR::IDTBuilderConnector
     * 
     * @return the generated CFG
     */
-   virtual TR::CFG* generateControlFlowGraph(TR_CallTarget* callTarget);
+   TR::CFG* generateControlFlowGraph(TR_CallTarget* callTarget);
 
    /**
     * @brief Perform the abstract interpretation on the method in the IDTNode. 
@@ -67,7 +70,7 @@ class IDTBuilder : public OMR::IDTBuilderConnector
     * @param arguments the arguments passed from the caller method.
     * @param callerIndex the caller index for call site
     */
-   virtual void performAbstractInterpretation(IDTNode* node, IDTBuilderVisitor& visitor, AbsArguments* arguments, int32_t callerIndex);
+   void performAbstractInterpretation(TR::IDTNode* node, TR::IDTBuilderVisitor& visitor, TR::AbsArguments* arguments, int32_t callerIndex);
 
    TR_J9EstimateCodeSize* _cfgGen;
    };

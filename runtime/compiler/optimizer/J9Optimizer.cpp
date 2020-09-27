@@ -747,7 +747,7 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
    // initialize additional J9 optimizations
 
    _opts[OMR::inlining] =
-      new (comp->allocator()) TR::OptimizationManager(self(), TR::SelectOpt<TR_EnableBenefitInliner, BenefitInlinerWrapper, TR_Inliner>::create, OMR::inlining);
+      new (comp->allocator()) TR::OptimizationManager(self(), TR::SelectOpt<TR_EnableBenefitInliner, TR::BenefitInlinerWrapper, TR_Inliner>::create, OMR::inlining);
    _opts[OMR::targetedInlining] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_Inliner::create, OMR::targetedInlining);
    _opts[OMR::targetedInlining]->setOptPolicy(new (comp->allocator()) TR_J9JSR292InlinerPolicy(comp));
