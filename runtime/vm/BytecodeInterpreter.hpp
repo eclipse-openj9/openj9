@@ -8061,28 +8061,33 @@ retry:
 	}
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	VMINLINE VM_BytecodeAction
 	invokehandle(REGISTER_ARGS_LIST)
 	{
-#if defined(J9VM_OPT_METHOD_HANDLE)
 retry:
 		/* An invokevirtual MethodHandle.invokeExact() becomes invokehandle.
-		 * The resolved MethodType and MethodHandle.type() must be equal or an exception will be thrown.
+		 * The resolved MethodType and MethodHandle.type() must be equal or
+		 * an exception will be thrown.
 		 */
 		VM_BytecodeAction rc = GOTO_RUN_METHODHANDLE;
-		U_16 index = *(U_16*)(_pc + 1);
+		U_16 index = *(U_16 *)(_pc + 1);
+
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
-		J9RAMMethodRef *ramMethodRef = ((J9RAMMethodRef*)ramConstantPool) + index;
+		J9RAMMethodRef *ramMethodRef = ((J9RAMMethodRef *)ramConstantPool) + index;
+
 		UDATA volatile methodIndexAndArgCount = ramMethodRef->methodIndexAndArgCount;
 		UDATA methodTypeIndex = ramMethodRef->methodIndexAndArgCount >> 8;
+
 		j9object_t volatile type = J9_CLASS_FROM_CP(ramConstantPool)->methodTypes[methodTypeIndex];
+
 		if (J9_EXPECTED(NULL != type)) {
 			j9object_t mhReceiver = ((j9object_t*)_sp)[methodIndexAndArgCount & 0xFF];
 			if (J9_UNEXPECTED(NULL == mhReceiver)) {
 				rc = THROW_NPE;
 				goto done;
 			}
-			/* MethodType check: require an exact match as MethodTypes are interned */
+			/* MethodType check: require an exact match as MethodTypes are interned. */
 			if (J9_UNEXPECTED(J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, mhReceiver) != type)) {
 				rc = THROW_WRONG_METHOD_TYPE;
 				goto done;
@@ -8104,11 +8109,55 @@ retry:
 		}
 done:
 		return rc;
-#else
-	Assert_VM_unreachable();
-	return EXECUTE_BYTECODE;
-#endif /* J9VM_OPT_METHOD_HANDLE */
 	}
+#elif defined(J9VM_OPT_OPENJDK_METHODHANDLE) /* defined(J9VM_OPT_METHOD_HANDLE) */
+	VMINLINE VM_BytecodeAction
+	invokehandle(REGISTER_ARGS_LIST)
+	{
+retry:
+		VM_BytecodeAction rc = GOTO_RUN_METHOD;
+		U_16 index = *(U_16 *)(_pc + 1);
+
+		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
+		J9RAMMethodRef *ramMethodRef = ((J9RAMMethodRef *)ramConstantPool) + index;
+
+		UDATA invokeCacheIndex = ramMethodRef->methodIndexAndArgCount >> 8;
+		J9InvokeCacheEntry *resultEntry = ((J9InvokeCacheEntry *)J9_CLASS_FROM_CP(ramConstantPool)->invokeCache) + invokeCacheIndex;
+
+		j9object_t memberNameObject = resultEntry->target;
+
+		if (J9_EXPECTED(NULL != memberNameObject)) {
+			*--_sp = (UDATA)resultEntry->appendix;
+			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
+		} else {
+			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+			updateVMStruct(REGISTER_ARGS);
+			/* The resolution is performed by MethodHandleNatives.linkMethod(*).
+			 * The resolved values consist of a MemberName object and a MethodHandle object.
+			 * The resolved values are stored in invokeCache[invokeCacheIndex].
+			 */
+			resolveMethodHandle(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			restoreGenericSpecialStackFrame(REGISTER_ARGS);
+			if (immediateAsyncPending()) {
+				rc = GOTO_ASYNC_CHECK;
+			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+			} else {
+				goto retry;
+			}
+		}
+
+		return rc;
+	}
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	VMINLINE VM_BytecodeAction
+	invokehandle(REGISTER_ARGS_LIST)
+	{
+		Assert_VM_unreachable();
+		return EXECUTE_BYTECODE;
+	}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 	VMINLINE VM_BytecodeAction
 	invokehandlegeneric(REGISTER_ARGS_LIST)
