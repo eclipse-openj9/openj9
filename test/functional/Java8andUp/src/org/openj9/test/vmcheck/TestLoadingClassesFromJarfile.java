@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -151,7 +151,8 @@ public class TestLoadingClassesFromJarfile {
 			"sun.print",
 			"sun.reflect.misc.Trampoline",
 			"sun.security.tools.policytool",
-			"sun.swing"
+			"sun.swing",
+			"com.oracle.net"
 	}).stream().map(s -> s.replace('.', '/')).collect(Collectors.toList()));
 
 	private static boolean includeFile(String jarEntryName) {
