@@ -8125,6 +8125,177 @@ done:
 #endif /* J9VM_OPT_METHOD_HANDLE */
 	}
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	VMINLINE VM_BytecodeAction
+	invokeBasic(REGISTER_ARGS_LIST)
+	{
+		VM_BytecodeAction rc = GOTO_RUN_METHOD;
+		bool fromJIT = J9_ARE_ANY_BITS_SET(_currentThread->jitStackFrameFlags, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
+		UDATA methodArgCount = 0;
+
+		if (fromJIT) {
+			methodArgCount = _currentThread->tempSlot;
+		} else {
+			U_16 index = *(U_16 *)(_pc + 1);
+			J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
+			J9RAMMethodRef *ramMethodRef = ((J9RAMMethodRef *)ramConstantPool) + index;
+			UDATA volatile methodIndexAndArgCount = ramMethodRef->methodIndexAndArgCount;
+			methodArgCount = (methodIndexAndArgCount & 0xFF);
+		}
+
+		j9object_t mhReceiver = ((j9object_t *)_sp)[methodArgCount];
+		if (J9_UNEXPECTED(NULL == mhReceiver)) {
+			return THROW_NPE;
+		}
+
+		j9object_t lambdaForm = J9VMJAVALANGINVOKEMETHODHANDLE_FORM(_currentThread, mhReceiver);
+		j9object_t memberName = J9VMJAVALANGINVOKELAMBDAFORM_VMENTRY(_currentThread, lambdaForm);
+		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
+
+		if (fromJIT) {
+			_currentThread->jitStackFrameFlags = 0;
+			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
+			rc = j2iTransition(REGISTER_ARGS);
+		}
+
+		return rc;
+	}
+
+	VMINLINE VM_BytecodeAction
+	linkToStaticSpecial(REGISTER_ARGS_LIST)
+	{
+		VM_BytecodeAction rc = GOTO_RUN_METHOD;
+		bool fromJIT = J9_ARE_ANY_BITS_SET(_currentThread->jitStackFrameFlags, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
+
+		/* Pop memberNameObject from the stack. */
+		j9object_t memberNameObject = *(j9object_t *)_sp++;
+		if (J9_UNEXPECTED(NULL == memberNameObject)) {
+			return THROW_NPE;
+		}
+
+		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
+
+		if (fromJIT) {
+			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
+			UDATA methodArgCount = romMethod->argCount;
+
+			/* Restore sp position before popping memberNameObject. */
+			_sp -= 1;
+
+			/* Shift arguments by 1 and place memberNameObject before the first argument. */
+			memmove(_sp, _sp + 1, methodArgCount * sizeof(UDATA));
+			_sp[methodArgCount] = (UDATA)memberNameObject;
+
+			_currentThread->jitStackFrameFlags = 0;
+			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
+			rc = j2iTransition(REGISTER_ARGS);
+		}
+
+		return rc;
+	}
+
+	VMINLINE VM_BytecodeAction
+	linkToVirtual(REGISTER_ARGS_LIST)
+	{
+		VM_BytecodeAction rc = GOTO_RUN_METHOD;
+		bool fromJIT = J9_ARE_ANY_BITS_SET(_currentThread->jitStackFrameFlags, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
+
+		/* Pop memberNameObject from the stack. */
+		j9object_t memberNameObject = *(j9object_t *)_sp++;
+		if (J9_UNEXPECTED(NULL == memberNameObject)) {
+			return THROW_NPE;
+		}
+
+		J9JNIMethodID *methodID = (J9JNIMethodID *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
+		UDATA methodArgCount = romMethod->argCount;
+
+		j9object_t receiverObject = ((j9object_t *)_sp)[methodArgCount - 1];
+		if (J9_UNEXPECTED(NULL == receiverObject)) {
+			return THROW_NPE;
+		}
+		J9Class *receiverClass = J9OBJECT_CLAZZ(currentThread, receiverObject);
+		_sendMethod = *(J9Method **)(((UDATA)receiverClass) + methodID->vTableIndex);
+
+		if (fromJIT) {
+			/* Restore sp position before popping memberNameObject. */
+			_sp -= 1;
+
+			/* Shift arguments by 1 and place memberNameObject before the first argument. */
+			memmove(_sp, _sp + 1, methodArgCount * sizeof(UDATA));
+			_sp[methodArgCount] = (UDATA)memberNameObject;
+
+			_currentThread->jitStackFrameFlags = 0;
+			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
+			rc = j2iTransition(REGISTER_ARGS);
+		}
+
+		return rc;
+	}
+
+	VMINLINE VM_BytecodeAction
+	linkToInterface(REGISTER_ARGS_LIST)
+	{
+		VM_BytecodeAction rc = GOTO_RUN_METHOD;
+		bool fromJIT = J9_ARE_ANY_BITS_SET(_currentThread->jitStackFrameFlags, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
+
+		/* Pop memberNameObject from the stack. */
+		j9object_t memberNameObject = *(j9object_t *)_sp++;
+		if (J9_UNEXPECTED(NULL == memberNameObject)) {
+			return THROW_NPE;
+		}
+
+		J9JNIMethodID *methodID = (J9JNIMethodID *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
+		UDATA methodArgCount = romMethod->argCount;
+
+		j9object_t receiverObject = ((j9object_t *)_sp)[methodArgCount - 1];
+		if (J9_UNEXPECTED(NULL == receiverObject)) {
+			return THROW_NPE;
+		}
+		J9Class *receiverClass = J9OBJECT_CLAZZ(currentThread, receiverObject);
+		J9Method *method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
+		UDATA vTableOffset = methodID->vTableIndex;
+
+		if (J9_ARE_ANY_BITS_SET(vTableOffset, J9_JNI_MID_INTERFACE)) {
+			UDATA iTableIndex = vTableOffset & ~(UDATA)J9_JNI_MID_INTERFACE;
+			J9Class *interfaceClass = J9_CLASS_FROM_METHOD(method);
+			vTableOffset = 0;
+			J9ITable * iTable = receiverClass->lastITable;
+			if (interfaceClass == iTable->interfaceClass) {
+				goto foundITable;
+			}
+			iTable = (J9ITable*)receiverClass->iTable;
+			while (NULL != iTable) {
+				if (interfaceClass == iTable->interfaceClass) {
+					receiverClass->lastITable = iTable;
+foundITable:
+					vTableOffset = ((UDATA*)(iTable + 1))[iTableIndex];
+					break;
+				}
+				iTable = iTable->next;
+			}
+		}
+
+		_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
+
+		if (fromJIT) {
+			/* Restore sp position before popping memberNameObject. */
+			_sp -= 1;
+
+			/* Shift arguments by 1 and place memberNameObject before the first argument. */
+			memmove(_sp, _sp + 1, methodArgCount * sizeof(UDATA));
+			_sp[methodArgCount] = (UDATA)memberNameObject;
+
+			_currentThread->jitStackFrameFlags = 0;
+			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
+			rc = j2iTransition(REGISTER_ARGS);
+		}
+
+		return rc;
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
 	VMINLINE j9object_t
 	countAndCompileMethodHandle(REGISTER_ARGS_LIST, j9object_t methodHandle, void **compiledEntryPoint)
 	{
@@ -8917,6 +9088,12 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_CLASS_ARRAY_TYPE_IMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_CLASS_IS_RECORD),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_CLASS_IS_SEALED),
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_METHODHANDLE_INVOKEBASIC),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOSTATICSPECIAL),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOVIRTUAL),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOINTERFACE),
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	};
 #endif /* !defined(USE_COMPUTED_GOTO) */
 
@@ -9489,6 +9666,16 @@ runMethod: {
 		PERFORM_ACTION(inlClassIsRecord(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_CLASS_IS_SEALED):
 		PERFORM_ACTION(inlClassIsSealed(REGISTER_ARGS));
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_METHODHANDLE_INVOKEBASIC):
+		PERFORM_ACTION(invokeBasic(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOSTATICSPECIAL):
+		PERFORM_ACTION(linkToStaticSpecial(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOVIRTUAL):
+		PERFORM_ACTION(linkToVirtual(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOINTERFACE):
+		PERFORM_ACTION(linkToInterface(REGISTER_ARGS));
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 #if !defined(USE_COMPUTED_GOTO)
 	default:
 		Assert_VM_unreachable();
