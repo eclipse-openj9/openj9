@@ -8163,16 +8163,21 @@ retry:
 	invokehandlegeneric(REGISTER_ARGS_LIST)
 	{
 #if defined(J9VM_OPT_METHOD_HANDLE)
+		/* MH.invoke is translated to invokehandlegeneric. */
 retry:
 		VM_BytecodeAction rc = GOTO_RUN_METHODHANDLE;
-		U_16 index = *(U_16*)(_pc + 1);
+		U_16 index = *(U_16 *)(_pc + 1);
+
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
-		J9RAMMethodRef *ramMethodRef = ((J9RAMMethodRef*)ramConstantPool) + index;
+		J9RAMMethodRef *ramMethodRef = ((J9RAMMethodRef *)ramConstantPool) + index;
+
 		UDATA volatile methodIndexAndArgCount = ramMethodRef->methodIndexAndArgCount;
 		UDATA methodTypeIndex = ramMethodRef->methodIndexAndArgCount >> 8;
+
 		j9object_t volatile type = J9_CLASS_FROM_CP(ramConstantPool)->methodTypes[methodTypeIndex];
+
 		if (J9_EXPECTED(NULL != type)) {
-			j9object_t mhReceiver = ((j9object_t*)_sp)[methodIndexAndArgCount & 0xFF];
+			j9object_t mhReceiver = ((j9object_t *)_sp)[methodIndexAndArgCount & 0xFF];
 			if (J9_UNEXPECTED(NULL == mhReceiver)) {
 				rc = THROW_NPE;
 				goto done;
@@ -8190,18 +8195,18 @@ retry:
 				} else {
 					buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 					updateVMStruct(REGISTER_ARGS);
-					sendForGenericInvoke (_currentThread, mhReceiver, type, FALSE /* dropFirstArg */);
+					sendForGenericInvoke(_currentThread, mhReceiver, type, FALSE /* dropFirstArg */);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
-					mhReceiver = (j9object_t) _currentThread->returnValue;
+					mhReceiver = (j9object_t)_currentThread->returnValue;
 					if (VM_VMHelpers::exceptionPending(_currentThread)) {
 						rc = GOTO_THROW_CURRENT_EXCEPTION;
 						goto done;
 					}
 					restoreGenericSpecialStackFrame(REGISTER_ARGS);
 				}
-				((j9object_t*)_sp)[ramMethodRef->methodIndexAndArgCount & 0xFF] = mhReceiver;
+				((j9object_t *)_sp)[ramMethodRef->methodIndexAndArgCount & 0xFF] = mhReceiver;
 			}
-			_currentThread->tempSlot = (UDATA) mhReceiver;
+			_currentThread->tempSlot = (UDATA)mhReceiver;
 		} else {
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
@@ -8218,10 +8223,14 @@ retry:
 		}
 done:
 		return rc;
-#else
+#else /* defined(J9VM_OPT_METHOD_HANDLE) */
+	/* When J9VM_OPT_OPENJDK_METHODHANDLE is enabled, MH.invoke and MH.invokeExact are
+	 * both translated to invokehandle. So, invokehandlegeneric is not used with OpenJDK
+	 * MethodHandles.
+	 */
 	Assert_VM_unreachable();
 	return EXECUTE_BYTECODE;
-#endif /* J9VM_OPT_METHOD_HANDLE */
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	}
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
