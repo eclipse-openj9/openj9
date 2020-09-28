@@ -39,6 +39,11 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<!-- temporarily disable on JDK15 due to https://github.com/eclipse/openj9/issues/10708-->
+		<subsets>
+			<subset>8</subset>
+			<subset>11</subset>
+		</subsets>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
