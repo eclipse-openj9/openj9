@@ -7972,18 +7972,21 @@ done:
 		return EXECUTE_BYTECODE;
 	}
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	VMINLINE VM_BytecodeAction
 	invokedynamic(REGISTER_ARGS_LIST)
 	{
-#if defined(J9VM_OPT_METHOD_HANDLE)
 retry:
 		VM_BytecodeAction rc = GOTO_RUN_METHODHANDLE;
-		U_16 index = *(U_16*)(_pc + 1);
+		U_16 index = *(U_16 *)(_pc + 1);
+
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
 		j9object_t *callSite = ramConstantPool->ramClass->callSites + index;
+
 		j9object_t volatile methodHandle = *callSite;
+
 		if (J9_EXPECTED(NULL != methodHandle)) {
-			/* Copy the stack up to create a free slot for the receiver.  Write the MH into that slot */
+			/* Copy the stack up to create a free slot for the receiver. Write the MH into that slot. */
 			j9object_t currentType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandle);
 			U_32 argSlots = (U_32)J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(_currentThread, currentType);
 			_sp -= 1;
@@ -8004,12 +8007,59 @@ retry:
 				goto retry;
 			}
 		}
+
 		return rc;
-#else
-	Assert_VM_unreachable();
-	return EXECUTE_BYTECODE;
-#endif /* J9VM_OPT_METHOD_HANDLE */
 	}
+#elif defined(J9VM_OPT_OPENJDK_METHODHANDLE) /* defined(J9VM_OPT_METHOD_HANDLE) */
+	VMINLINE VM_BytecodeAction
+	invokedynamic(REGISTER_ARGS_LIST)
+	{
+retry:
+		VM_BytecodeAction rc = GOTO_RUN_METHOD;
+		U_16 index = *(U_16 *)(_pc + 1);
+
+		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
+		J9InvokeCacheEntry *invokeCache = ((J9InvokeCacheEntry *)ramConstantPool->ramClass->callSites) + index;
+
+		j9object_t memberName = invokeCache->target;
+
+		if (J9_EXPECTED(NULL != memberName)) {
+			if (J9OBJECT_CLAZZ(_currentThread, memberName) == J9VMJAVALANGINVOKEMEMBERNAME_OR_NULL(_vm)) {
+				_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
+				*--_sp = (UDATA)invokeCache->appendix;
+			} else {
+				VM_VMHelpers::setExceptionPending(_currentThread, memberName);
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+			}
+		} else {
+			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+			updateVMStruct(REGISTER_ARGS);
+			/* The resolution is performed by MethodHandleNatives.linkCallSite(*).
+			 * The resolved values consist of a MemberName object and a MethodHandle object.
+			 * The resolved values are stored in callSites[index].
+			 */
+			resolveInvokeDynamic(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			restoreGenericSpecialStackFrame(REGISTER_ARGS);
+			if (immediateAsyncPending()) {
+				rc = GOTO_ASYNC_CHECK;
+			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+			} else {
+				goto retry;
+			}
+		}
+
+		return rc;
+	}
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	VMINLINE VM_BytecodeAction
+	invokedynamic(REGISTER_ARGS_LIST)
+	{
+		Assert_VM_unreachable();
+		return EXECUTE_BYTECODE;
+	}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 	VMINLINE VM_BytecodeAction
 	invokehandle(REGISTER_ARGS_LIST)
