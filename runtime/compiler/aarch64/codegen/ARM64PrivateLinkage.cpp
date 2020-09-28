@@ -1540,27 +1540,8 @@ void J9::ARM64::PrivateLinkage::performPostBinaryEncoding()
                    "Expecting the return type info instruction to be created");
 
    TR::ARM64ImmInstruction *linkageInfoWordInstruction = cg()->getReturnTypeInfoInstruction();
-   uint32_t linkageInfoWord = linkageInfoWordInstruction->getSourceImmediate();
-
-   intptr_t jittedMethodEntryAddress = reinterpret_cast<intptr_t>(getJittedMethodEntryPoint()->getBinaryEncoding());
-   intptr_t interpretedMethodEntryAddress = reinterpret_cast<intptr_t>(getInterpretedMethodEntryPoint()->getBinaryEncoding());
-
-   linkageInfoWord = (static_cast<uint32_t>(jittedMethodEntryAddress - interpretedMethodEntryAddress) << 16) | linkageInfoWord;
+   uint32_t linkageInfoWord = cg()->initializeLinkageInfo(linkageInfoWordInstruction->getBinaryEncoding());
    linkageInfoWordInstruction->setSourceImmediate(linkageInfoWord);
-
-   *(uint32_t *)(linkageInfoWordInstruction->getBinaryEncoding()) = linkageInfoWord;
-
-   // Set recompilation info
-   //
-   TR::Recompilation *recomp = comp()->getRecompilationInfo();
-   if (recomp != NULL && recomp->couldBeCompiledAgain())
-      {
-      J9::PrivateLinkage::LinkageInfo *lkInfo = J9::PrivateLinkage::LinkageInfo::get(cg()->getCodeStart());
-      if (recomp->useSampling())
-         lkInfo->setSamplingMethodBody();
-      else
-         lkInfo->setCountingMethodBody();
-      }
    }
 
 int32_t J9::ARM64::HelperLinkage::buildArgs(TR::Node *callNode,
