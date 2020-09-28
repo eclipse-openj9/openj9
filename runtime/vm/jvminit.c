@@ -1814,21 +1814,23 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 					piConfig->sharedClassReadWriteBytes = -1;					/* -1 == proportion of cache size */
 					vm->sharedClassPreinitConfig = piConfig;
 
-					if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_AOT)) {
 #if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+					if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_AOT)) {
 						if (argIndexXXPortableSharedCache > argIndexXXNoPortableSharedCache) {
 							vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE;
 						} else if (argIndexXXPortableSharedCache == argIndexXXNoPortableSharedCache) {
-							/* both "-XX:+PortableSharedCache" and "-XX:-PortableSharedCache" were not found thus following the default behavior for portable shared cache */
-							OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
-							BOOLEAN inContainer = omrsysinfo_is_running_in_container();
-							/* by default, enable portable shared cache in containers and disable otherwise */
-							if (TRUE == inContainer) {
-								vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE;
+							if (J9_GC_POLICY_GENCON == ((OMR_VM *)vm->omrVM)->gcPolicy) {
+								/* both "-XX:+PortableSharedCache" and "-XX:-PortableSharedCache" were not found thus following the default behavior for portable shared cache */
+								OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
+								BOOLEAN inContainer = omrsysinfo_is_running_in_container();
+								/* by default, enable portable shared cache in containers and disable otherwise */
+								if (TRUE == inContainer) {
+									vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE;
+								}
 							}
 						}
-#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) */
 					}
+#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) */
 				}
 
 
