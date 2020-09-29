@@ -19,27 +19,25 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package j9vm.test.classunloading.testcases;
+package j9vm.test.classunloading.classestoload;
 
-import j9vm.test.classunloading.*;
+import j9vm.test.classunloading.FinalizationIndicator;
+import j9vm.test.classunloading.testcases.UnloadedStackTraceTest;
 
-/**
- *		Create a ClassPathSettingClassLoader, and let it be unloaded.  This loader attempts to set a vm
- *	classpath for itself when it is instantiated.
- */
-public class ClassPathSettingClassLoaderTest extends ClassUnloadingTestParent {
-public static void main(String[] args) throws Exception  {
-	new ClassPathSettingClassLoaderTest().runTest();
-}
-
-protected String[] unloadableItems() { 
-	return new String[] {"ClassLoader"};
-}
-protected String[] itemsToBeUnloaded() { 
-	return new String[] {"ClassLoader"};
-}
-
-protected void createScenario() throws Exception {
-	new ClassPathSettingClassLoader("ClassLoader", jarFileName);//.loadClass("j9vm.test.classunloading.classestoload.ClassToLoad1").newInstance();
-}
+public class ClassToLoadWithException {
+	private static FinalizationIndicator indicator = new FinalizationIndicator( ClassToLoadWithException.class.getName());
+	
+	public ClassToLoadWithException() throws UnloadedStackTraceTest.MyError {
+		/* by doing this 10000 times, we give the jIT a good chance to compile the helper */
+		for (int i = 0; i < 10000; i++) {
+			helper(i);
+		}
+	}
+	
+	private static void helper(int i) throws UnloadedStackTraceTest.MyError {
+		if (i == 9999) {
+			throw new UnloadedStackTraceTest.MyError("This Exception's stack trace refers to a class which is about to be unloaded");
+		}
+	}
+	
 }

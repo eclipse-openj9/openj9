@@ -174,4 +174,30 @@
 		</impls>
 	</test>
 
+	<test>
+		<testCaseName>j9vmClassUnloading</testCaseName>
+		<variations>
+			<variation>Mode110</variation>
+			<variation>Mode301</variation>
+			<variation>Mode351</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
+			<variation>Mode610</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) -Xdump -Xint -Dj9vm.testing.tests.path=$(TEST_RESROOT) \
+	-cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q)  \
+	j9vm.runner.Menu -exe=$(Q)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(Q) -jar=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) -test=$(Q)j9vm.test.classunloading.testcases$(Q) \
+	-xids=all,$(PLATFORM),$(VARIATION); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 </playlist>
