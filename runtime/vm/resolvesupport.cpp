@@ -1641,7 +1641,9 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 				if (0 == vTableOffset) {
 					if (throwException) {
 						j9object_t errorString = methodToString(vmStruct, method);
-						setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (UDATA *)errorString);
+						if (NULL != errorString) {
+							setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (UDATA *)errorString);
+						}
 					}
 				} else {
 					if (ramCPEntry != NULL) {

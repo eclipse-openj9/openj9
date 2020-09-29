@@ -3013,7 +3013,9 @@ illegalAccess:
 				J9UTF8_LENGTH(nameUTF),
 				J9UTF8_DATA(sigUTF),
 				J9UTF8_LENGTH(sigUTF));
-		setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSEXCEPTION, detailMessage);
+		if (NULL != detailMessage) {
+			setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSEXCEPTION, detailMessage);
+		}
 		goto done;
 	}
 

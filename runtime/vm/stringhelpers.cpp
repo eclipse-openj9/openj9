@@ -498,7 +498,9 @@ catUtfToString4(J9VMThread * vmThread, const U_8 *data1, UDATA length1, const U_
 	j9object_t result = NULL;
 	UDATA totalLength = length1 + length2 + length3 + length4;
 	U_8 *buffer = (U_8*)j9mem_allocate_memory(totalLength, OMRMEM_CATEGORY_VM);
-	if (NULL != buffer) {
+	if (NULL == buffer) {
+		vmThread->javaVM->internalVMFunctions->setNativeOutOfMemoryError(vmThread, 0, 0);
+	} else {
 		U_8 *ptr = buffer;
 		memcpy(ptr, data1, length1);
 		ptr += length1;
