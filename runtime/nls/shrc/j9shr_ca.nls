@@ -293,14 +293,14 @@ J9NLS_SHRC_OSCACHE_ERROR_WRONG_MOD_LEVEL.user_response=If the requested shared c
 # END NON-TRANSLATABLE
 
 # From: shrinit.cpp
-J9NLS_SHRC_SHRINIT_HASHTABLE_DISABLED=Blocatge de taules hash locals inhabilitat
+J9NLS_SHRC_SHRINIT_HASHTABLE_DISABLED=S'ha inhabilitat el blocatge de taules hash locals
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HASHTABLE_DISABLED.explanation=NOTISSUED
 J9NLS_SHRC_SHRINIT_HASHTABLE_DISABLED.system_action=
 J9NLS_SHRC_SHRINIT_HASHTABLE_DISABLED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_TIMESTAMP_DISABLED=Inhabilitada la comprovaci\u00f3 de la indicaci\u00f3 de l'hora
+J9NLS_SHRC_SHRINIT_TIMESTAMP_DISABLED=S'ha inhabilitat la comprovaci\u00f3 de la indicaci\u00f3 de l'hora
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_TIMESTAMP_DISABLED.explanation=NOTISSUED
 J9NLS_SHRC_SHRINIT_TIMESTAMP_DISABLED.system_action=
@@ -314,14 +314,14 @@ J9NLS_SHRC_SHRINIT_CACHE_CLASSPATH_DISABLED.system_action=
 J9NLS_SHRC_SHRINIT_CACHE_CLASSPATH_DISABLED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_CONCURRENT_STORE_DISABLED=Inhabilitada la reducci\u00f3 de contenci\u00f3 d'emmagatzematge simultani
+J9NLS_SHRC_SHRINIT_CONCURRENT_STORE_DISABLED=S'ha inhabilitat la reducci\u00f3 de contenci\u00f3 d'emmagatzematge simultani
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_CONCURRENT_STORE_DISABLED.explanation=NOTISSUED
 J9NLS_SHRC_SHRINIT_CONCURRENT_STORE_DISABLED.system_action=
 J9NLS_SHRC_SHRINIT_CONCURRENT_STORE_DISABLED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INCREMENTAL_UPDATE_DISABLED=Inhabilitades les actualitzacions incrementals
+J9NLS_SHRC_SHRINIT_INCREMENTAL_UPDATE_DISABLED=S'han inhabilitat les actualitzacions incrementals
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INCREMENTAL_UPDATE_DISABLED.explanation=NOTISSUED
 J9NLS_SHRC_SHRINIT_INCREMENTAL_UPDATE_DISABLED.system_action=
@@ -340,14 +340,14 @@ J9NLS_SHRC_SHRINIT_HELP_HEADER.system_action=
 J9NLS_SHRC_SHRINIT_HELP_HEADER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_HELP=Imprimir l'ajuda general compartida
+J9NLS_SHRC_SHRINIT_HELPTEXT_HELP=Imprimeix l'ajuda general compartida
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_HELP.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_HELP.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_HELP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS=Especificar nom de la mem\u00f2ria cau compartida
+J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS=Especifiqueu el nom de la mem\u00f2ria cau compartida
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS.system_action=
@@ -361,7 +361,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL=Destruir totes les mem\u00f2ries cau compartides
+J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL=Destrueix totes les mem\u00f2ries cau compartides
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL.system_action=
@@ -384,28 +384,28 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS_OPTION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS_OPTION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_EXPIRE=Destruir les mem\u00f2ries cau que no s'han fet servir durant <t> min.
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXPIRE=Destrueix les mem\u00f2ries cau que no s'han fet servir durant <t> min.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_EXPIRE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_EXPIRE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_EXPIRE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_LISTALLCACHES=Mostrar totes les mem\u00f2ries cau compartides i les seves estad\u00edstiques
+J9NLS_SHRC_SHRINIT_HELPTEXT_LISTALLCACHES=Mostra totes les mem\u00f2ries cau compartides i les seves estad\u00edstiques
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_LISTALLCACHES.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_LISTALLCACHES.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_LISTALLCACHES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS=Imprimir el resum de les estad\u00edstiques de la mem\u00f2ria cau
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS=Imprimeix el resum de les estad\u00edstiques de la mem\u00f2ria cau
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS=Llistar tots els elements de la mem\u00f2ria cau
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS=Llista tots els elements de la mem\u00f2ria cau
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS.system_action=
@@ -419,14 +419,14 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_SAFEMODE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_SAFEMODE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_VERBOSE=Habilitar sortida detallada
+J9NLS_SHRC_SHRINIT_HELPTEXT_VERBOSE=Habilita la sortida detallada
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_VERBOSE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_VERBOSE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_VERBOSE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS=Desconnectar les actualitzacions din\u00e0miques
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS=Desconnectas les actualitzacions din\u00e0miques
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS.system_action=
@@ -440,21 +440,21 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_CLASSPATH_CACHEING.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_CLASSPATH_CACHEING.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NO_LOCAL_LOCKING=Inhabilitar el blocatge de la taula d'aleatoritzaci\u00f3 local
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_LOCAL_LOCKING=Inhabilita el blocatge de la taula d'aleatoritzaci\u00f3 local
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_LOCAL_LOCKING.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_LOCAL_LOCKING.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_LOCAL_LOCKING.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NO_REDUCE_STORE_CONTENTION=Inhabilitar l'algorisme per reduir la contenci\u00f3 d'emmagatzematge
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_REDUCE_STORE_CONTENTION=Inhabilita l'algorisme per reduir la contenci\u00f3 d'emmagatzematge
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_REDUCE_STORE_CONTENTION.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_REDUCE_STORE_CONTENTION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_REDUCE_STORE_CONTENTION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NO_INCREMENTAL_UPDATES=Inhabilitar les actualitzacions de mem\u00f2ria cau incrementals
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_INCREMENTAL_UPDATES=Inhabilita les actualitzacions de mem\u00f2ria cau incrementals
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_INCREMENTAL_UPDATES.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_INCREMENTAL_UPDATES.system_action=
@@ -532,14 +532,14 @@ J9NLS_SHRC_SHRINIT_FAILURE_CREATE_POOL.system_action=The JVM terminates, unless 
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_POOL.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_LOCKING_DISABLED_INFO=Blocatge de taules hash locals inhabilitat
+J9NLS_SHRC_SHRINIT_LOCKING_DISABLED_INFO=S'ha inhabilitat el blocatge de taules hash locals
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_LOCKING_DISABLED_INFO.explanation=This message confirms that locking of local hashtables for the shared class cache has been disabled as requested.  It is only issued when verbose messages are requested.
 J9NLS_SHRC_SHRINIT_LOCKING_DISABLED_INFO.system_action=
 J9NLS_SHRC_SHRINIT_LOCKING_DISABLED_INFO.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_TIMESTAMP_DISABLED_INFO=Inhabilitada la comprovaci\u00f3 de la indicaci\u00f3 de l'hora
+J9NLS_SHRC_SHRINIT_TIMESTAMP_DISABLED_INFO=S'ha inhabilitat la comprovaci\u00f3 de la indicaci\u00f3 de l'hora
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_TIMESTAMP_DISABLED_INFO.explanation=This message confirms that Shared Classes timestamp checking has been disabled as requested.  It is only issued when verbose messages are requested.
 J9NLS_SHRC_SHRINIT_TIMESTAMP_DISABLED_INFO.system_action=The JVM continues.
@@ -553,14 +553,14 @@ J9NLS_SHRC_SHRINIT_CPCACHEING_DISABLED_INFO.system_action=The JVM continues.
 J9NLS_SHRC_SHRINIT_CPCACHEING_DISABLED_INFO.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_STCONT_REDUCE_DISABLED_INFO=Inhabilitada la reducci\u00f3 de contenci\u00f3 d'emmagatzematge simultani
+J9NLS_SHRC_SHRINIT_STCONT_REDUCE_DISABLED_INFO=S'ha inhabilitat la reducci\u00f3 de contenci\u00f3 d'emmagatzematge simultani
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_STCONT_REDUCE_DISABLED_INFO.explanation=This message confirms that shared classes concurrent store contention reduction has been disabled as requested.  It is only issued when verbose messages are requested.
 J9NLS_SHRC_SHRINIT_STCONT_REDUCE_DISABLED_INFO.system_action=The JVM continues.
 J9NLS_SHRC_SHRINIT_STCONT_REDUCE_DISABLED_INFO.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INCREMENTAL_DISABLED_INFO=Inhabilitades les actualitzacions incrementals
+J9NLS_SHRC_SHRINIT_INCREMENTAL_DISABLED_INFO=S'han inhabilitat les actualitzacions incrementals
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INCREMENTAL_DISABLED_INFO.explanation=This message confirms that shared classes incremental updates have been disabled as requested.  It is only issued when verbose messages are requested.
 J9NLS_SHRC_SHRINIT_INCREMENTAL_DISABLED_INFO.system_action=The JVM continues.
@@ -705,7 +705,7 @@ J9NLS_SHRC_CM_FAILED_CREATE_ROMIMAGE.system_action=The JVM terminates, unless yo
 J9NLS_SHRC_CM_FAILED_CREATE_ROMIMAGE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_FAILED_CREATE_REFRESH_MUTEX=No es pot crear el mutex d'actualitzaci\u00f3 a SH_CacheMap.
+J9NLS_SHRC_CM_FAILED_CREATE_REFRESH_MUTEX=No es pot crear el mutex de renovaci\u00f3 a SH_CacheMap.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_FAILED_CREATE_REFRESH_MUTEX.explanation=Failed to allocate native resources to create a monitor for shared class cache.
 J9NLS_SHRC_CM_FAILED_CREATE_REFRESH_MUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -1981,7 +1981,7 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_READONLY_CACHE_NOTINITIALIZED.system_actio
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_READONLY_CACHE_NOTINITIALIZED.user_response=Either wait until the cache has initialized or remove the readonly option
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NO_AUTOPUNT=No suprimir autom\u00e0ticament mem\u00f2ries cau de diferents buildID
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_AUTOPUNT=No suprimeixis autom\u00e0ticament mem\u00f2ries cau de diferents buildID
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_AUTOPUNT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_AUTOPUNT.system_action=
@@ -2186,7 +2186,7 @@ J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE.system_action=None
 J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE.user_response=None
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_RESET=Re- crear la mem\u00f2ria cau compartida a l'inici
+J9NLS_SHRC_SHRINIT_HELPTEXT_RESET=Torna a crear la mem\u00f2ria cau compartida a l'inici
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_RESET.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_RESET.system_action=None
@@ -2201,7 +2201,7 @@ J9NLS_SHRC_INFO_LISTING_FOR_CACHEDIR.system_action=
 J9NLS_SHRC_INFO_LISTING_FOR_CACHEDIR.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR=Intentant destruir totes les mem\u00f2ries cau de cacheDir %s
+J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR=S'est\u00e0 intentant destruir totes les mem\u00f2ries cau de cacheDir %s
 # START NON-TRANSLATABLE
 J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR.explanation=NOTAG
@@ -3958,7 +3958,7 @@ J9NLS_SHRC_CM_ADDRESS_NOT_IN_CACHE.system_action=
 J9NLS_SHRC_CM_ADDRESS_NOT_IN_CACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_CACHE_REFRESH_FAILED=no s'ha pogut actualitzar la mem\u00f2ria cau
+J9NLS_SHRC_CM_CACHE_REFRESH_FAILED=no s'ha pogut renovar la mem\u00f2ria cau
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_CACHE_REFRESH_FAILED.explanation=NOTAG
 J9NLS_SHRC_CM_CACHE_REFRESH_FAILED.system_action=
@@ -4541,7 +4541,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_ALLOCATING_CHAR_ARRAY.system_action=The JVM terminate
 J9NLS_SHRC_SHRINIT_FAILURE_ALLOCATING_CHAR_ARRAY.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET=For\u00e7ar la comprovaci\u00f3 de reinici de la taula de cadenes quan estigui marcada com a malmesa.
+J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET=For\u00e7a la comprovaci\u00f3 de reinici de la taula de cadenes quan estigui marcada com a malmesa. 
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET.system_action=
@@ -4598,7 +4598,7 @@ J9NLS_SHRC_CM_PRINTSTATS_CACHE_CONTAINS_CONTENT_WITH_AND_WITHOUT_LINE_NUMBERS.sy
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_CONTAINS_CONTENT_WITH_AND_WITHOUT_LINE_NUMBERS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_2=Imprimir el resum de les estad\u00edstiques de la mem\u00f2ria cau. Utilitzeu printstats=help per veure les opcions disponibles.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_2=Imprimeix el resum de les estad\u00edstiques de la mem\u00f2ria cau. Utilitzeu printstats=help per veure les opcions disponibles.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_2.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_2.system_action=
@@ -5036,7 +5036,7 @@ J9NLS_SHRC_CM_UPDATED_VERBOSE_JIT_ATTACHED_DATA.system_action=
 J9NLS_SHRC_CM_UPDATED_VERBOSE_JIT_ATTACHED_DATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_DISABLE_BCI=Inhabilitar el suport per a la instrumentaci\u00f3 de codi de byte.
+J9NLS_SHRC_SHRINIT_HELPTEXT_DISABLE_BCI=Inhabilita el suport per a la instrumentaci\u00f3 de codi de byte.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_DISABLE_BCI.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_DISABLE_BCI.system_action=
@@ -5214,7 +5214,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_ERROR_STORE_INTERMEDIATE_CLASSFILE_REQUIRED.system_ac
 J9NLS_SHRC_OSCACHE_STARTUP_ERROR_STORE_INTERMEDIATE_CLASSFILE_REQUIRED.user_response=Remove option "-XX:-StoreIntermediateClassfile" from command line to use the existing Shared Class cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_STORE_INTERMEDIATE_CLASSFILE_TRUE=Emmagatzemar el fitxer de classes intermedi = true
+J9NLS_SHRC_CM_PRINTSTATS_STORE_INTERMEDIATE_CLASSFILE_TRUE=Emmagatzema el fitxer de classes intermedi = true
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_STORE_INTERMEDIATE_CLASSFILE_TRUE.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_STORE_INTERMEDIATE_CLASSFILE_TRUE.system_action=
@@ -5284,7 +5284,7 @@ J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_OVERRIDE_MPROTECT_NONE_W
 J9NLS_SHRC_SHRINIT_USING_CACHE_WITH_MPROTECT_DIAGNOSTIC_OVERRIDE_MPROTECT_NONE_WARNING.user_response=No action required if user has intentionally attached to a shared class cache created in mprotect diagnostic mode. Othewise, if the user wants to use cache with -Xshareclasses:mprotect=none option then remove -Xshareclasses:mprotect=diagnostic option and reset the cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_DIAGNOSTIC=Habilita modalitat de diagn\u00f2stic mprotect
+J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_DIAGNOSTIC=Habilita la modalitat de diagn\u00f2stic mprotect
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_DIAGNOSTIC.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_DIAGNOSTIC.system_action=
@@ -5789,7 +5789,7 @@ J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK.user_response=Previous error message
 # END NON-TRANSLATABLE
 
 # From: CacheLifeCycleManager.cpp
-J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR=Intentant destruir totes les instant\u00e0nies de mem\u00f2ria cau compartida al cacheDir \"%s\"
+J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR=S'est\u00e0 intentant destruir totes les instant\u00e0nies de mem\u00f2ria cau compartida al cacheDir \"%s\"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.explanation=NOTAG

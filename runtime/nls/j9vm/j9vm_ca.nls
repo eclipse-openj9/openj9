@@ -1167,7 +1167,7 @@ J9NLS_VM_XSCMAXJITDATA_IGNORED.system_action=The JVM continues
 J9NLS_VM_XSCMAXJITDATA_IGNORED.user_response=The -Xscmaxjitdata value is ignored
 # END NON-TRANSLATABLE
 
-J9NLS_VM_COULD_NOT_GET_USER32_DLL_RANGE=NO es pot obtenir l'interval d'adreces user32.dll necessari per a -Xprotectcontiguous.
+J9NLS_VM_COULD_NOT_GET_USER32_DLL_RANGE=No es pot obtenir l'interval d'adreces user32.dll necessari per a -Xprotectcontiguous.
 # START NON-TRANSLATABLE
 J9NLS_VM_COULD_NOT_GET_USER32_DLL_RANGE.explanation=The JVM failed to find the address of user32.dll.
 J9NLS_VM_COULD_NOT_GET_USER32_DLL_RANGE.system_action=The JVM will terminate.
