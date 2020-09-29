@@ -110,6 +110,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="opt_inlineJsrs" value="true"/>
 		<flag id="opt_jitserver" value="false"/>
 		<flag id="opt_methodHandle" value="true"/>
+		<flag id="opt_methodHandleCommon" value="true"/>
 		<flag id="opt_module" value="true"/>
 		<flag id="opt_newObjectHash" value="true"/>
 		<flag id="opt_newRomClassBuilder" value="true"/>

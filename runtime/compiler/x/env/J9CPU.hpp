@@ -66,7 +66,6 @@ public:
    bool hasPopulationCountInstruction();
 
    bool isCompatible(const OMRProcessorDesc& processorDescription);
-   OMRProcessorDesc getProcessorDescription();
    uint32_t getX86ProcessorFeatureFlags();
    uint32_t getX86ProcessorFeatureFlags2();
    uint32_t getX86ProcessorFeatureFlags8();

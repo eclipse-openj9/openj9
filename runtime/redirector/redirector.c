@@ -681,15 +681,14 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 		fprintf(stdout, "does not exist.\n");
 
 		/* direct user to OpenJ9 build configurations to properly generate the requested build. */
-		if (OPENJ9_NOCR_JVM_DIR == basePointer) {
+		if (0 == strcmp(OPENJ9_NOCR_JVM_DIR, basePointer)) {
 			fprintf(stdout,
 					"This JVM package only includes the '-Xcompressedrefs' configuration. Please run "
 					"the VM without specifying the '-Xnocompressedrefs' option or by specifying the "
 					"'-Xcompressedrefs' option.\nTo compile the other configuration, please run configure "
 					"with '--with-noncompressedrefs.\n"
 			);
-		}
-		if (OPENJ9_CR_JVM_DIR == basePointer) {
+		} else if (0 == strcmp(OPENJ9_CR_JVM_DIR, basePointer)) {
 			fprintf(stdout,
 					"This JVM package only includes the '-Xnocompressedrefs' configuration. Please run "
 					"the VM without specifying the '-Xcompressedrefs' option or by specifying the "

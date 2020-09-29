@@ -347,9 +347,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<exports group="jdk15">
 		<!-- Additions for Java 15 (General) -->
-		<export name="JVM_GetRandomSeedForCDSDump"/>
 		<export name="JVM_RegisterLambdaProxyClassForArchiving"/>
 		<export name="JVM_LookupLambdaProxyClassFromArchive"/>
+	</exports>
+
+	<exports group="jdk15only">
+		<!-- Additions for Java 15 only -->
+		<export name="JVM_GetRandomSeedForCDSDump"/>
 		<export name="JVM_IsCDSDumpingEnabled"/>
 		<export name="JVM_IsCDSSharingEnabled"/>
 	</exports>
@@ -357,6 +361,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<exports group="jdk16">
 		<!-- Additions for Java 16 (General) -->
 		<export name="JVM_DefineArchivedModules"/>
+		<export name="JVM_GetRandomSeedForDumping"/>
+		<export name="JVM_IsDynamicDumpingEnabled"/>
+		<export name="JVM_IsSharingEnabled"/>
 	</exports>
 
 </exportlists>

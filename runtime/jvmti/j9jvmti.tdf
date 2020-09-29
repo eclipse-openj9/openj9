@@ -1,4 +1,4 @@
-//Copyright (c) 2006, 2019 IBM Corp. and others
+//Copyright (c) 2006, 2020 IBM Corp. and others
 //	
 //This program and the accompanying materials are made available under
 //the terms of the Eclipse Public License 2.0 which accompanies this
@@ -624,3 +624,9 @@ TraceEntry=Trc_JVMTI_jvmtiHookSampledObjectAlloc_Entry Overhead=1 Level=5 Noenv 
 TraceExit=Trc_JVMTI_jvmtiHookSampledObjectAlloc_Exit Overhead=1 Level=5 Noenv Template="HookSampledObjectAlloc"
 
 TraceException=Trc_JVMTI_issueAgentOnLoadAttach_strConvertFailed Overhead=1 Level=1 Noenv Template="issueAgentOnLoadAttach: j9str_convert (%s) failed"
+
+TraceEntry=Trc_JVMTI_lookupNativeAddressHelper_Entry Overhead=1 Level=3 Template="lookupNativeAddressHelper - nativeMethod (%p) methodName (%.*s) methodSignature (%.*s) prefixOffset (%llu) retransformFlag (%llu) functionArgCount (%llu) callback (%p)"
+TraceEvent=Trc_JVMTI_lookupNativeAddressHelper_Bound_ClassLoader_Library Overhead=1 Level=3 Template="lookupNativeAddressHelper (bound with classloader library) - nativeMethod (%p) nativeLibrary (%p) longJNI (%s) shortJNI (%s) functionArgCount (%llu)"
+TraceEvent=Trc_JVMTI_lookupNativeAddressHelper_Bound_Null_Library Overhead=1 Level=3 Template="lookupNativeAddressHelper (bound without classloader library) - nativeMethod (%p) longJNI (%s) shortJNI (%s) functionArgCount (%llu)"
+TraceEvent=Trc_JVMTI_lookupNativeAddressHelper_Bound_Agent_Library Overhead=1 Level=3 Template="lookupNativeAddressHelper (bound with agent library) - nativeMethod (%p) nativeLibrary (%p) longJNI (%s) shortJNI (%s) functionArgCount (%llu)"
+TraceExit=Trc_JVMTI_lookupNativeAddressHelper_Exit Overhead=1 Level=3 Template="lookupNativeAddressHelper - prefixOffset (%llu)"

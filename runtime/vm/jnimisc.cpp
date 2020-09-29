@@ -716,7 +716,7 @@ getStringChars(JNIEnv *env, jstring string, jboolean *isCopy)
 
 			if (IS_STRING_COMPRESSED(currentThread, stringObject)) {
 				for (UDATA i = 0; i < length; ++i) {
-					((jchar*)chars)[i] = (jchar)J9JAVAARRAYOFBYTE_LOAD(currentThread, charArray, i);
+					((jchar*)chars)[i] = (jchar)(U_8)J9JAVAARRAYOFBYTE_LOAD(currentThread, charArray, i);
 				}
 			} else {
 				VM_ArrayCopyHelpers::memcpyFromArray(currentThread, charArray, (UDATA)1, 0, length, (void*)chars);
@@ -952,7 +952,7 @@ outOfBounds:
 		JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_REGION, byteCount);
 		if (IS_STRING_COMPRESSED(currentThread, stringObject)) {
 			for (jsize i = 0; i < len; ++i) {
-				buf[i] = (jchar)J9JAVAARRAYOFBYTE_LOAD(currentThread, charArray, i + start);
+				buf[i] = (jchar)(U_8)J9JAVAARRAYOFBYTE_LOAD(currentThread, charArray, i + start);
 			}
 		} else {
 			/* No guarantee of native memory alignment, so copy byte-wise */

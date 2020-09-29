@@ -721,9 +721,10 @@ static TR_YesNoMaybe shouldInitiateDLT(J9DLTInformationBlock *dltInfo, int32_t i
    if (hitCount>=triggerCount)
       return TR_maybe;
 
-   if(!TR::Options::getCmdLineOptions()->getOption(TR_DisableFastDLTOnLongRunningInterpreter) && TR::CompilationInfo::isCompiled(currentMethod))
+   void *extra = TR::CompilationInfo::getPCIfCompiled(currentMethod);
+   if(extra && !TR::Options::getCmdLineOptions()->getOption(TR_DisableFastDLTOnLongRunningInterpreter))
       {
-      TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(currentMethod->extra);
+      TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(extra);
       if (bodyInfo && bodyInfo->isLongRunningInterpreted())
          return TR_yes;
       }
@@ -846,6 +847,7 @@ void DLTLogic(J9VMThread* vmThread, TR::CompilationInfo *compInfo)
    int32_t    idx = dltBlock->cursor + 1;
    J9ROMMethod *romMethod = NULL;
    bool         bcRepeats;
+   void        *extra = NULL;
 
    if (startPC!=(uint8_t *)-1 &&  walkState.method!=0)
       romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState.method);
@@ -864,9 +866,9 @@ void DLTLogic(J9VMThread* vmThread, TR::CompilationInfo *compInfo)
       dltBlock->methods[idx] = 0;
       return;
       }
-   else if (TR::CompilationInfo::isCompiled(walkState.method))
+   else if (extra = TR::CompilationInfo::getPCIfCompiled(walkState.method))
       {
-      TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(walkState.method->extra);
+      TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(extra);
       if (bodyInfo && bodyInfo->getMethodInfo()->hasFailedDLTCompRetrials())
          {
          dltBlock->methods[idx] = 0;
@@ -2327,9 +2329,8 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
             TR::CodeCacheManager::instance()->onClassRedefinition(reinterpret_cast<TR_OpaqueMethodBlock *>(staleMethod),
                                                                   reinterpret_cast<TR_OpaqueMethodBlock *>(freshMethod));
             // Step 2 invalidate methods that are already compiled and trigger a new compilation.
-            if (staleMethod && freshMethod && compInfo->isCompiled(staleMethod))
+            if (staleMethod && freshMethod && (startPC = compInfo->getPCIfCompiled(staleMethod)))
                {
-               startPC = TR::CompilationInfo::getJ9MethodStartPC(staleMethod);
                // Update the ram method information in PersistentMethodInfo
                TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
                if (bodyInfo)
@@ -6181,10 +6182,9 @@ void jitHookJNINativeRegistered(J9HookInterface **hookInterface, UDATA eventNum,
 
    getOutOfIdleStates(TR::CompilationInfo::SAMPLER_DEEPIDLE, compInfo, "JNI registered");
 
-   if (TR::CompilationInfo::isCompiled(method))
+   uint8_t *thunkStartPC = (uint8_t *)TR::CompilationInfo::getPCIfCompiled(method);
+   if (thunkStartPC)
       {
-      uint8_t *thunkStartPC = (uint8_t*) TR::CompilationInfo::getJ9MethodStartPC(method);
-
       // The address in the word immediately before the linkage info
       uintptr_t **addressSlot = (uintptr_t **)(thunkStartPC - (4 + sizeof(uintptr_t)));
 

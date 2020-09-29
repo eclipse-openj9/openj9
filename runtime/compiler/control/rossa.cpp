@@ -119,10 +119,6 @@
 
 extern "C" int32_t encodeCount(int32_t count);
 
-#if defined(TR_HOST_POWER)
-extern TR_Processor portLibCall_getProcessorType();
-#endif
-
 extern "C" {
 struct J9RASdumpContext;
 }

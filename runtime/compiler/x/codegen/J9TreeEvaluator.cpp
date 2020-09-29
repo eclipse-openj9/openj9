@@ -1279,6 +1279,12 @@ TR::Register *J9::X86::TreeEvaluator::newEvaluator(TR::Node *node, TR::CodeGener
       bool spillFPRegs = (comp->canAllocateInlineOnStack(node, classInfo) <= 0);
       targetRegister = TR::TreeEvaluator::performHelperCall(node, NULL, TR::acall, spillFPRegs, cg);
       }
+   else if (cg->canEmitBreakOnDFSet())
+      {
+      // Check DF flag after inline new
+      generateBreakOnDFSet(cg);
+      }
+
    return targetRegister;
    }
 
@@ -1549,6 +1555,9 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
 
 TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
+   if (cg->canEmitBreakOnDFSet())
+      generateBreakOnDFSet(cg);
+
    TR::Compilation *comp = cg->comp();
 
    if (!node->isReferenceArrayCopy())
@@ -11747,7 +11756,6 @@ J9::X86::TreeEvaluator::tabortEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 TR::Register *
 J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-
    static bool useJapaneseCompression = (feGetEnv("TR_JapaneseComp") != NULL);
    TR::Compilation *comp = cg->comp();
    TR::SymbolReference *symRef = node->getSymbolReference();

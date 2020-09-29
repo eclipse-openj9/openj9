@@ -724,9 +724,20 @@ public static int identityHashCode(Object anObject) {
 @CallerSensitive
 public static void load(String pathName) {
 	SecurityManager smngr = System.getSecurityManager();
-	if (smngr != null)
+	if (smngr != null) {
 		smngr.checkLink(pathName);
+	}
+/*[IF Java15]*/
+	File fileName = new File(pathName);
+	if (fileName.isAbsolute()) {
+		ClassLoader.loadLibrary(getCallerClass(), fileName);
+	} else {
+		/*[MSG "K0648", "Not an absolute path: {0}"]*/
+		throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0648", pathName));//$NON-NLS-1$
+	}
+/*[ELSE]
 	ClassLoader.loadLibraryWithPath(pathName, ClassLoader.callerClassLoader(), null);
+/*[ENDIF] Java15 */
 }
 
 /**
@@ -739,7 +750,11 @@ public static void load(String pathName) {
  */
 @CallerSensitive
 public static void loadLibrary(String libName) {
+/*[IF Java15]*/
+	ClassLoader.loadLibrary(getCallerClass(), libName);
+/*[ELSE]*/
 	ClassLoader.loadLibraryWithClassLoader(libName, ClassLoader.callerClassLoader());
+/*[ENDIF] Java15 */
 }
 
 /**

@@ -53,6 +53,7 @@
 #include "x/codegen/CheckFailureSnippet.hpp"
 #include "x/codegen/HelperCallSnippet.hpp"
 #include "x/codegen/X86Instruction.hpp"
+#include "x/codegen/J9LinkageUtils.hpp"
 
 TR::Register *J9::X86::AMD64::JNILinkage::processJNIReferenceArg(TR::Node *child)
    {
@@ -471,30 +472,6 @@ J9::X86::AMD64::JNILinkage::buildVolatileAndReturnDependencies(
    }
 
 
-void J9::X86::AMD64::JNILinkage::switchToMachineCStack(TR::Node *callNode)
-   {
-   TR::RealRegister *espReal     = machine()->getRealRegister(TR::RealRegister::esp);
-   TR::Register        *vmThreadReg = cg()->getVMThreadRegister();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-
-   // Squirrel Java SP away into VM thread.
-   //
-   generateMemRegInstruction(SMemReg(),
-                             callNode,
-                             generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetJavaSPOffset(), cg()),
-                             espReal,
-                             cg());
-
-   // Load machine SP from VM thread.
-   //
-   generateRegMemInstruction(LRegMem(),
-                             callNode,
-                             espReal,
-                             generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetMachineSPOffset(), cg()),
-                             cg());
-   }
-
-
 void J9::X86::AMD64::JNILinkage::buildJNICallOutFrame(
       TR::Node *callNode,
       TR::LabelSymbol *returnAddrLabel)
@@ -818,23 +795,6 @@ J9::X86::AMD64::JNILinkage::generateMethodDispatch(
       }
 
    return instr;
-   }
-
-
-void J9::X86::AMD64::JNILinkage::switchToJavaStack(TR::Node *callNode)
-   {
-   TR::RealRegister *espReal = machine()->getRealRegister(TR::RealRegister::esp);
-   TR::Register *vmThreadReg = cg()->getMethodMetaDataRegister();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-
-   //    2) Load up the java sp so we have the callout frame on top of the java stack.
-   //
-   generateRegMemInstruction(
-      LRegMem(),
-      callNode,
-      espReal,
-      generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetJavaSPOffset(), cg()),
-      cg());
    }
 
 
@@ -1388,7 +1348,7 @@ TR::Register *J9::X86::AMD64::JNILinkage::buildDirectJNIDispatch(TR::Node *callN
       }
 
    // Switch from the Java stack to the C stack:
-   switchToMachineCStack(callNode);
+   TR::J9LinkageUtils::switchToMachineCStack(callNode, cg());
 
    // Preserve the VMThread pointer on the C stack.
    // Adjust the argSize to include the just pushed VMThread pointer.
@@ -1500,7 +1460,7 @@ TR::Register *J9::X86::AMD64::JNILinkage::buildDirectJNIDispatch(TR::Node *callN
       espReal,
       cg());
 
-   switchToJavaStack(callNode);
+   TR::J9LinkageUtils::switchToJavaStack(callNode, cg());
 
    if (createJNIFrame)
       {

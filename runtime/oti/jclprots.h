@@ -667,7 +667,7 @@ void JNICALL
 Java_sun_misc_Unsafe_setMemory__Ljava_lang_Object_2JJB(JNIEnv *env, jobject receiver, jobject obj, jlong offset, jlong size, jbyte value);
 void JNICALL Java_sun_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz);
 void JNICALL Java_jdk_internal_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz);
-jboolean JNICALL Java_jdk_internal_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass clazz);
+jboolean JNICALL Java_sun_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass clazz);
 jint JNICALL Java_sun_misc_Unsafe_pageSize(JNIEnv *env, jobject receiver);
 jint JNICALL Java_sun_misc_Unsafe_getLoadAverage(JNIEnv *env, jobject receiver, jdoubleArray loadavg, jint nelems);
 jboolean JNICALL Java_sun_misc_Unsafe_unalignedAccess0(JNIEnv *env, jobject receiver);

@@ -82,21 +82,22 @@ static jvmtiError jvmtiGetConstantPool_addInvokeDynamic(jvmtiGcp_translation *tr
 static jint
 jvmtiGetLoadedClassesCount(J9JavaVM * vm)
 {
+	J9InternalVMFunctions const * const vmfuncs = vm->internalVMFunctions;
 	J9ClassWalkState classWalkState;
 	jint classCount = 0;
-	J9Class *clazz;
+	J9Class *clazz = NULL;
 
 	/* Count classes (ignore primitive types and old versions of redefined classes) */
-	clazz = vm->internalVMFunctions->allLiveClassesStartDo(&classWalkState, vm, NULL);
+	clazz = vmfuncs->allLiveClassesStartDo(&classWalkState, vm, NULL);
 	while (clazz) {
 		if (J9ROMCLASS_IS_PRIMITIVE_TYPE(clazz->romClass) == 0) {
 			if ((J9CLASS_FLAGS(clazz) & J9AccClassHotSwappedOut) == 0) {
 				classCount++;
 			}
 		}
-		clazz = vm->internalVMFunctions->allLiveClassesNextDo(&classWalkState);
+		clazz = vmfuncs->allLiveClassesNextDo(&classWalkState);
 	}
-	vm->internalVMFunctions->allLiveClassesEndDo(&classWalkState);
+	vmfuncs->allLiveClassesEndDo(&classWalkState);
 
 	return classCount;
 }
@@ -114,6 +115,7 @@ jvmtiGetLoadedClasses(jvmtiEnv* env,
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	jclass *rv_classes = NULL;
 	jint rv_class_count = 0;
+	J9InternalVMFunctions const * const vmfuncs = vm->internalVMFunctions;
 
 	Trc_JVMTI_jvmtiGetLoadedClasses_Entry(env);
 
@@ -123,7 +125,7 @@ jvmtiGetLoadedClasses(jvmtiEnv* env,
 		jint lastClassCount;
 		J9Class *clazz;
 
-		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+		vmfuncs->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_PHASE_LIVE(env);
 
@@ -144,7 +146,7 @@ jvmtiGetLoadedClasses(jvmtiEnv* env,
 			jint i = 0;
 
 			/* Copy class references (ignore primitive types and old versions of redefined classes) */
-			clazz = vm->internalVMFunctions->allLiveClassesStartDo(&classWalkState, vm, NULL);
+			clazz = vmfuncs->allLiveClassesStartDo(&classWalkState, vm, NULL);
 			while (clazz) {
 				/* Check if we need more memory */
 				if (i == lastClassCount) {
@@ -156,7 +158,7 @@ jvmtiGetLoadedClasses(jvmtiEnv* env,
 						/* realloc failed - need to free the original allocation */
 						j9mem_free_memory(classRefs);
 						classRefs = NULL;
-						vm->internalVMFunctions->allLiveClassesEndDo(&classWalkState);
+						vmfuncs->allLiveClassesEndDo(&classWalkState);
 						omrthread_monitor_exit(vm->classTableMutex);
 						rc = JVMTI_ERROR_OUT_OF_MEMORY;
 						goto done;
@@ -166,13 +168,13 @@ jvmtiGetLoadedClasses(jvmtiEnv* env,
 
 				if (J9ROMCLASS_IS_PRIMITIVE_TYPE(clazz->romClass) == 0) {
 					if ((J9CLASS_FLAGS(clazz) & J9AccClassHotSwappedOut) == 0) {
-						classRefs[i++] = (jclass)vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
+						classRefs[i++] = (jclass)vmfuncs->j9jni_createLocalRef((JNIEnv *) currentThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 					}
 				}
 
-				clazz = vm->internalVMFunctions->allLiveClassesNextDo(&classWalkState);
+				clazz = vmfuncs->allLiveClassesNextDo(&classWalkState);
 			}
-			vm->internalVMFunctions->allLiveClassesEndDo(&classWalkState);
+			vmfuncs->allLiveClassesEndDo(&classWalkState);
 
 			jvmtiData->lastClassCount = (UDATA) i;
 			rv_class_count = i;
@@ -182,7 +184,7 @@ jvmtiGetLoadedClasses(jvmtiEnv* env,
 		omrthread_monitor_exit(vm->classTableMutex);
 
 done:
-		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+		vmfuncs->internalExitVMToJNI(currentThread);
 	}
 
 	if (NULL != class_count_ptr) {

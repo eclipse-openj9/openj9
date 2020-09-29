@@ -258,24 +258,6 @@ Java_jdk_internal_misc_Unsafe_allocateDBBMemory(JNIEnv *env, jobject receiver, j
 	return Java_sun_misc_Unsafe_allocateDBBMemory(env, receiver, size);
 }
 
-jlong JNICALL
-Java_sun_misc_Unsafe_allocateMemoryNoException(JNIEnv *env, jobject receiver, jlong size)
-{
-	J9VMThread *currentThread = (J9VMThread*)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	jlong result = 0;
-	UDATA actualSize = (UDATA)size;
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	if ((size < 0) || (size != (jlong)actualSize)) {
-		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
-	} else {
-		result = (jlong)(UDATA)unsafeAllocateMemory(currentThread, actualSize, FALSE);
-	}
-	vmFuncs->internalExitVMToJNI(currentThread);
-	return result;
-}
-
 
 void JNICALL
 Java_sun_misc_Unsafe_freeMemory(JNIEnv *env, jobject receiver, jlong address)
@@ -798,7 +780,7 @@ Java_sun_misc_Unsafe_getKlassPointer(JNIEnv *env, jobject receiver, jobject addr
 }
 
 jboolean JNICALL
-Java_jdk_internal_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass clazz)
+Java_sun_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass clazz)
 {
 	jboolean result = JNI_FALSE;
 
@@ -973,7 +955,7 @@ registerJdkInternalMiscUnsafeNativesCommon(JNIEnv *env, jclass clazz) {
 		{
 			(char*)"shouldBeInitialized0",
 			(char*)"(Ljava/lang/Class;)Z",
-			(void*)&Java_jdk_internal_misc_Unsafe_shouldBeInitialized
+			(void*)&Java_sun_misc_Unsafe_shouldBeInitialized
 		},
 		{
 			(char*)"allocateMemory0",
