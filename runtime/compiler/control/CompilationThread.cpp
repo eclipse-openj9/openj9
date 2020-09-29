@@ -4520,9 +4520,9 @@ TR::CompilationInfoPerThread::shouldPerformCompilation(TR_MethodToBeCompiled &en
          {
          TR_ASSERT(entry._reqFromSecondaryQueue == TR_MethodToBeCompiled::REASON_UPGRADE, "wrong reason for upgrade");
          // This method might have failed compilation or have been rejected due to filters
-         if (TR::CompilationInfo::isCompiled(method))
+         void *startPC = TR::CompilationInfo::getPCIfCompiled(method);
+         if (startPC)
             {
-            void *startPC = TR::CompilationInfo::getJ9MethodStartPC(method);
             // A compilation attempt might have already happened for this method
             // (and failed or succeeded)
             J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
@@ -5445,14 +5445,13 @@ void *TR::CompilationInfo::startPCIfAlreadyCompiled(J9VMThread * vmThread, TR::I
       // first compilation of the method: J9Method would be updated if the
       // compilation has already taken place
       //
-      if (isCompiled(method))
-         startPC = getJ9MethodStartPC(method);
+      startPC = getPCIfCompiled(method);
       }
    else
       {
       J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(oldStartPC);
-      if (linkageInfo->recompilationAttempted() && isCompiled(method))
-         startPC = getJ9MethodStartPC(method);
+      if (linkageInfo->recompilationAttempted())
+         startPC = getPCIfCompiled(method);
       }
    return startPC;
    }
@@ -5679,10 +5678,10 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
          } // if
       else if (!oldStartPC && !details.isMethodInProgress())
          {
-         if (isCompiled(method))
+         startPC = getPCIfCompiled(method);
+         if (startPC)
             {
             debugPrint("\tcompile request already done", method); //, vmThread, entry->getMethodDetails());
-            startPC = getJ9MethodStartPC(method);
             needCompile = false;
             }
          } // if
@@ -5693,9 +5692,9 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
             J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(oldStartPC);
             if (linkageInfo->recompilationAttempted())
                {
-               startPC = getJ9MethodStartPC(method); // provide the new startPC
+               startPC = getPCIfCompiled(method); // provide the new startPC
                // must look like a compiled method
-               if (isCompiled(method))
+               if (startPC)
                   {
                   debugPrint("\tcompile request already done", method); //, vmThread, entry->getMethodDetails());
                   needCompile = false;
@@ -7539,10 +7538,14 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
    else // compilation will not be retried, either because it succeeded or because we don't want to
       {
       TR_PersistentJittedBodyInfo *bodyInfo;
+      void *extra = NULL;
       // JITServer: Can not acquire the jitted body info on the server
-      if (!entry->isOutOfProcessCompReq() && entry->isDLTCompile() && !startPC && TR::CompilationInfo::isCompiled(method) && // DLT compilation that failed too many times
-         (bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(method->extra)))  // do not use entry->_oldStartPC which is probably 0. Use the most up-to-date startPC
+      if (!entry->isOutOfProcessCompReq() && entry->isDLTCompile() && !startPC &&
+          (extra = TR::CompilationInfo::getPCIfCompiled(method)) && // DLT compilation that failed too many times
+          (bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(extra)))  // do not use entry->_oldStartPC which is probably 0. Use the most up-to-date startPC
+         {
          bodyInfo->getMethodInfo()->setHasFailedDLTCompRetrials(true);
+         }
 
       startPC = TR::CompilationInfo::compilationEnd(
          vmThread,
@@ -8547,7 +8550,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          else
 #endif /* defined(J9VM_OPT_JITSERVER) */
             {
-            if (vm->needRelocatableTarget() && target.cpu.isX86())
+            if (vm->needRelocatableTarget())
                {
                target = TR::Compiler->relocatableTarget;
                }
@@ -10642,51 +10645,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
    return startPC;
    }
 
-void
-TR::CompilationInfo::setProcessorByDebugOption()
-   {
-   if (debug("rios1"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCrios1);
-   else if (debug("rios2"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCrios2);
-   else if (debug("pwr403"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr403);
-   else if (debug("pwr405"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr405);
-   else if (debug("pwr601"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr601);
-   else if (debug("pwr603"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr603);
-   else if (debug("pwr604"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr604);
-   else if (debug("pwr630"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr630);
-   else if (debug("pwr620"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr620);
-   else if (debug("nstar"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCnstar);
-   else if (debug("pulsar"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpulsar);
-   else if (debug("gp"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCgp);
-   else if (debug("gpul"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCgpul);
-   else if (debug("gr"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCgr);
-   else if (debug("p6"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCp6);
-   else if (debug("p7"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCp7);
-   else if (debug("p8"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCp8);
-   else if (debug("p9"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCp9);
-   else if (debug("440GP"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPCpwr440);
-   else if (debug("750FX"))
-      TR::Compiler->target.cpu.setProcessor(TR_PPC7xx);
-   }
-
 // Ensure that only methods whose name (prefix) matches names in
 // the translation filter list are compiled.
 //
@@ -11523,10 +11481,9 @@ TR::CompilationInfo::triggerOrderedCompiles(TR_FrontEnd * f, intptr_t tickCount)
       // For a compiled method, mark it for recompilation if it is currently
       // being sampled. If it is being profiled leave it to run its course.
       //
-      if (isCompiled(ramMethod))
+      void *startPC = getPCIfCompiled(ramMethod);
+      if (startPC)
          {
-         void *startPC = TR::CompilationInfo::getJ9MethodStartPC(ramMethod);
-
          J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
 
          if (linkageInfo->isRecompMethodBody())

@@ -2250,6 +2250,19 @@ UDATA
 addHiddenInstanceField(J9JavaVM *vm, const char *className, const char *fieldName, const char *fieldSignature, UDATA *offsetReturn);
 
 /**
+ * Report a hot field if the JIT has determined that the field has met appropriate thresholds to be determined a hot field. 
+ * Valid if dynamicBreadthFirstScanOrdering is enabled.
+ *
+ * @param vm[in] pointer to the J9JavaVM
+ * @param reducedCpuUtil normalized cpu utilization of the hot field for the method being compiled
+ * @param clazz pointer to the class where a hot field should be added
+ * @param fieldOffset value of the field offset that should be added as a hot field for the given class
+ * @param reducedFrequency normalized block frequency of the hot field for the method being compiled
+ */
+void
+reportHotField(J9JavaVM *javaVM, int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency);
+
+/**
 * @brief
 * @param *vmStruct
 * @param *clazz

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,9 +124,8 @@ TR_PPCHWProfiler::allocate(J9JITConfig *jitConfig)
       else
          VERBOSE("OS appears to be RHEL with glibc %d.%d, assuming glibc supports EBB context in TCB.", major, minor);
       }
-   J9ProcessorDesc *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   J9PortLibrary   *privatePortLibrary = TR::Compiler->portLib;
-   if (!j9sysinfo_processor_has_feature(processorDesc, J9PORT_PPC_FEATURE_EBB))
+
+   if (!TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_EBB))
       {
       VERBOSE("Failed to detect kernel EBB support.");
       return NULL;

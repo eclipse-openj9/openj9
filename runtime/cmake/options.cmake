@@ -133,6 +133,7 @@ option(J9VM_OPT_JVMTI "Support for the JVMTI interface")
 option(J9VM_OPT_JXE_LOAD_SUPPORT "Controls if main will allow -jxe: and relocate the disk image for you.")
 
 option(J9VM_OPT_METHOD_HANDLE "Enables support for OpenJ9 MethodHandles. J9VM_OPT_OPENJDK_METHODHANDLE should be disabled.")
+option(J9VM_OPT_METHOD_HANDLE_COMMON "Enables common dependencies between OpenJ9 and OpenJDK MethodHandles.")
 option(J9VM_OPT_MODULE "Turns on module support")
 option(J9VM_OPT_MULTI_VM "Decides if multiple VMs can be created in the same address space")
 option(J9VM_OPT_OPENJDK_METHODHANDLE "Enables support for OpenJDK MethodHandles. J9VM_OPT_METHOD_HANDLE should be disabled.")

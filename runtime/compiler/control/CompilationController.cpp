@@ -613,7 +613,7 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
       fe->acquireCompilationLock();
       bool isAlreadyBeingCompiled;
       TR_OpaqueMethodBlock *j9m = methodInfo->getMethodInfo();
-      void *currentStartPC = TR::CompilationInfo::isCompiled((J9Method*)j9m) ? (void *)TR::Compiler->mtd.startPC(j9m) : NULL;
+      void *currentStartPC = TR::CompilationInfo::getPCIfCompiled((J9Method*)j9m);
 
       // See if the method has already been compiled but we get a sample in the old body
       if (currentStartPC != startPC) // rare case

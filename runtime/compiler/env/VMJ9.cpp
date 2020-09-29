@@ -2354,6 +2354,32 @@ TR_J9VMBase::markHotField(TR::Compilation * comp, TR::SymbolReference * symRef, 
    }
 
 
+/**
+ * Report a hot field if the JIT has determined that the field has met appropriate thresholds to be determined a hot field. 
+ * Valid if dynamicBreadthFirstScanOrdering is enabled.
+ *
+ * @param reducedCpuUtil normalized cpu utilization of the hot field for the method being compiled
+ * @param clazz pointer to the class where a hot field should be added
+ * @param fieldOffset value of the field offset that should be added as a hot field for the given class
+ * @param reducedFrequency normalized block frequency of the hot field for the method being compiled
+ */
+void
+TR_J9VMBase::reportHotField(int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency)
+{
+   J9JavaVM * javaVM = _jitConfig->javaVM;
+   javaVM->internalVMFunctions->reportHotField(javaVM, reducedCpuUtil, clazz, fieldOffset, reducedFrequency);
+}
+
+/**
+ * Query if hot reference field is reqired for dynamicBreadthFirstScanOrdering
+ *  @return true if scavenger dynamicBreadthFirstScanOrdering is enabled, 0 otherwise 
+ */
+bool
+TR_J9VMBase::isHotReferenceFieldRequired()
+   {
+   return TR::Compiler->om.isHotReferenceFieldRequired();
+   }
+
 
 bool
 TR_J9VMBase::scanReferenceSlotsInClassForOffset(TR::Compilation * comp, TR_OpaqueClassBlock * classPointer, int32_t offset)
@@ -2443,7 +2469,7 @@ TR_J9VMBase::findFirstHotFieldTenuredClassOffset(TR::Compilation *comp, TR_Opaqu
 void
 TR_J9VMBase::markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassBlock *opclazz, uint32_t alignFromStart)
    {
-   if (!isAOT_DEPRECATED_DO_NOT_USE())
+   if (!jitConfig->javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(jitConfig->javaVM) && !isAOT_DEPRECATED_DO_NOT_USE())
       {
       J9Class *clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(opclazz);
       UDATA hotFieldsWordValue = 0x1; // mark for alignment
@@ -2931,7 +2957,7 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
              * for java_lang_String_hashCodeImplCompressed instead of using a fallthrough.
              */
             if (!TR::Compiler->om.canGenerateArraylets() &&
-                comp->target().cpu.isPower() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && getPPCSupportsVSXRegisters() && !comp->compileRelocatableCode())
+                comp->target().cpu.isPower() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) && !comp->compileRelocatableCode())
                   {
                   dontInlineRecognizedMethod = true;
                   break;
@@ -4759,6 +4785,58 @@ TR_J9VMBase::methodHandle_jitInvokeExactThunk(uintptr_t methodHandle)
       "thunks", "Ljava/lang/invoke/ThunkTuple;"),
       "invokeExactThunk");
    }
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+TR_OpaqueMethodBlock*
+TR_J9VMBase::targetMethodFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
+   {
+   auto knot = comp->getKnownObjectTable();
+   if (objIndex != TR::KnownObjectTable::UNKNOWN &&
+       knot &&
+       !knot->isNull(objIndex))
+      {
+      TR::VMAccessCriticalSection getTarget(this);
+      uintptr_t object = knot->getPointer(objIndex);
+      return targetMethodFromMemberName(object);
+      }
+   return NULL;
+   }
+
+TR_OpaqueMethodBlock*
+TR_J9VMBase::targetMethodFromMemberName(uintptr_t memberName)
+   {
+   TR_ASSERT(haveAccess(), "targetFromMemberName requires VM access");
+   return (TR_OpaqueMethodBlock*)J9OBJECT_U64_LOAD(vmThread(), memberName, vmThread()->javaVM->vmtargetOffset);
+   }
+
+TR_OpaqueMethodBlock*
+TR_J9VMBase::targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
+   {
+   auto knot = comp->getKnownObjectTable();
+   if (objIndex != TR::KnownObjectTable::UNKNOWN &&
+       knot &&
+       !knot->isNull(objIndex))
+      {
+      TR::VMAccessCriticalSection getTarget(this);
+      uintptr_t object = knot->getPointer(objIndex);
+      return targetMethodFromMethodHandle(object);
+      }
+   return NULL;
+   }
+
+TR_OpaqueMethodBlock*
+TR_J9VMBase::targetMethodFromMethodHandle(uintptr_t methodHandle)
+   {
+   TR_ASSERT(haveAccess(), "targetFromMethodHandle requires VM access");
+   uintptr_t form = getReferenceField(
+      methodHandle,
+      "form",             "Ljava/lang/invoke/LambdaForm;");
+   uintptr_t vmentry = getReferenceField(
+      form,
+      "vmentry",             "Ljava/lang/invoke/MemberName;");
+   return targetMethodFromMemberName(vmentry);
+   }
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 /**
  * \brief

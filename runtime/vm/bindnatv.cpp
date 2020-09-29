@@ -69,7 +69,12 @@ static void nativeSignature(J9Method* nativeMethod, char *resultBuffer);
 static UDATA nativeMethodHash(void *key, void *userData);
 static UDATA nativeMethodEqual(void *leftKey, void *rightKey, void *userData);
 static UDATA bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char * longJNI, char * shortJNI, UDATA bindJNINative);
-static UDATA    lookupNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, J9NativeLibrary *handle, char *longJNI, char *shortJNI, UDATA functionArgCount, UDATA bindJNINative);
+static UDATA lookupNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, J9NativeLibrary *handle, char *longJNI, char *shortJNI, UDATA functionArgCount, UDATA bindJNINative);
+
+#if JAVA_SPEC_VERSION >= 15
+J9_DECLARE_CONSTANT_UTF8(j9_findnative_sig, "(Ljava/lang/ClassLoader;Ljava/lang/String;)J");
+J9_DECLARE_CONSTANT_UTF8(j9_findnative_name, "findNative");
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 typedef struct {
 	const char *nativeName;
@@ -934,14 +939,15 @@ resolveNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, UDATA ru
  *   J9_NATIVE_METHOD_BIND_FAIL on failure.
  */
 static UDATA
-bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char * longJNI, char * shortJNI, UDATA bindJNINative)
+bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char *longJNI, char *shortJNI, UDATA bindJNINative)
 {
-	J9JavaVM * vm = currentThread->javaVM;
-	J9ClassLoader * classLoader = J9_CLASS_FROM_METHOD(nativeMethod)->classLoader;
-	J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(nativeMethod);
+	J9JavaVM *vm = currentThread->javaVM;
+	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(nativeMethod)->classLoader;
+	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(nativeMethod);
 	U_8 argCount = romMethod->argCount;
-	J9NativeLibrary * nativeLibrary;
+	J9NativeLibrary *nativeLibrary = NULL;
 
+	Trc_VM_bindNative_Entry(currentThread, nativeMethod, longJNI, shortJNI, bindJNINative);
 #if defined(J9VM_INTERP_MINIMAL_JNI)
 	/* Minimal JNI does not support all 255 arguments */
 	if (argCount > J9_INLINE_JNI_MAX_ARG_COUNT) {
@@ -957,17 +963,34 @@ bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char * longJNI, ch
 		++argCount;
 	}
 
-	/* Search each shared library in the class loader for a matching native */
-	nativeLibrary = classLoader->librariesHead;
-	while (nativeLibrary != NULL) {
-		UDATA rc = lookupNativeAddress(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, argCount, bindJNINative);
-		if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
-			return J9_NATIVE_METHOD_BIND_SUCCESS;
-		} else if (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc) {
-			return rc;
+#if JAVA_SPEC_VERSION >= 15
+	if (classLoader == vm->systemClassLoader)
+#endif /* JAVA_SPEC_VERSION >= 15 */
+	{
+		/* Search each shared library in the class loader for a matching native */
+		nativeLibrary = classLoader->librariesHead;
+		while (nativeLibrary != NULL) {
+			UDATA rc = lookupNativeAddress(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, argCount, bindJNINative);
+			if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
+				Trc_VM_bindNative_NativeLibrary_Success(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, bindJNINative);
+				return J9_NATIVE_METHOD_BIND_SUCCESS;
+			} else if (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc) {
+				Trc_VM_bindNative_NativeLibrary_OOM(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, bindJNINative);
+				return rc;
+			}
+			nativeLibrary = nativeLibrary->next;
 		}
-		nativeLibrary = nativeLibrary->next;
 	}
+#if JAVA_SPEC_VERSION >= 15
+	UDATA rc = lookupNativeAddress(currentThread, nativeMethod, NULL, longJNI, shortJNI, argCount, bindJNINative);
+	if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
+		Trc_VM_bindNative_NullNativeLibrary_Success(currentThread, nativeMethod, longJNI, shortJNI, bindJNINative);
+		return J9_NATIVE_METHOD_BIND_SUCCESS;
+	} else if (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc) {
+		Trc_VM_bindNative_NullNativeLibrary_OOM(currentThread, nativeMethod, longJNI, shortJNI, bindJNINative);
+		return rc;
+	}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 #if defined(J9VM_OPT_JVMTI)
 	/* If the native is not found in any registered library, search JVMTI agent libraries.
@@ -977,11 +1000,13 @@ bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char * longJNI, ch
 	if (bindJNINative) {
 		TRIGGER_J9HOOK_VM_LOOKUP_NATIVE_ADDRESS(vm->hookInterface, currentThread, nativeMethod, longJNI, shortJNI, argCount, lookupNativeAddress);
 		if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
+			Trc_VM_bindNative_JVMTIAgent_Success(currentThread, nativeMethod, longJNI, shortJNI);
 			return J9_NATIVE_METHOD_BIND_SUCCESS;
 		}
 	}
 #endif
 
+	Trc_VM_bindNative_Fail(currentThread, nativeMethod, longJNI, shortJNI, bindJNINative);
 	return J9_NATIVE_METHOD_BIND_FAIL;
 }
 
@@ -997,14 +1022,36 @@ bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char * longJNI, ch
  * \return 0 on success, any other value on failure.
  */
 UDATA
-lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Method *nativeMethod, char * symbolName, char * signature)
+lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Method *nativeMethod, char *symbolName, char *signature)
 {
-	UDATA lookupResult;
-	void * functionAddress;
+	UDATA lookupResult = 0;
+	void *functionAddress = NULL;
 	J9JavaVM *vm = currentThread->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	lookupResult = j9sl_lookup_name(nativeLibrary->handle, symbolName, (UDATA*)&functionAddress, signature);
+	Trc_VM_lookupJNINative_Entry(currentThread, nativeLibrary, nativeMethod, symbolName, signature);
+#if JAVA_SPEC_VERSION >= 15
+	if (NULL == nativeLibrary) {
+		J9MemoryManagerFunctions const * const mmFuncs = vm->memoryManagerFunctions;
+		J9NameAndSignature nas = {0};
+		nas.name = (J9UTF8 *)&j9_findnative_name;
+		nas.signature = (J9UTF8 *)&j9_findnative_sig;
+		internalAcquireVMAccess(currentThread);
+		j9object_t entryName = mmFuncs->j9gc_createJavaLangString(currentThread, (U_8*)symbolName, strlen(symbolName), 0);
+		j9object_t classLoaderObject = J9_CLASS_FROM_METHOD(nativeMethod)->classLoader->classLoaderObject;
+		UDATA args[] = { (UDATA) classLoaderObject, (UDATA) entryName };
+		runStaticMethod(currentThread, (U_8 *)"java/lang/ClassLoader", &nas, 2, (UDATA *)args);
+		internalReleaseVMAccess(currentThread);
+		functionAddress = (UDATA *) currentThread->returnValue;
+		if ((NULL != currentThread->currentException) || (NULL == functionAddress) ) {
+			lookupResult = 1;
+		}
+		Trc_VM_lookupJNINative_NullNativeLibrary(currentThread, nativeMethod, symbolName, signature, functionAddress);
+	} else
+#endif /* JAVA_SPEC_VERSION >= 15 */
+	{
+		lookupResult = j9sl_lookup_name(nativeLibrary->handle, symbolName, (UDATA*)&functionAddress, signature);
+	}
 	if (lookupResult == 0) {
 		UDATA cpFlags = J9_STARTPC_JNI_NATIVE;
 
@@ -1014,7 +1061,7 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 		internalReleaseVMAccess(currentThread);
 #endif
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
-		if (nativeLibrary->doSwitching != 0) {
+		if ((NULL != nativeLibrary) && (0 != nativeLibrary->doSwitching)) {
 			cpFlags |= J9_STARTPC_NATIVE_REQUIRES_SWITCHING;
 			if (nativeLibrary->doSwitching & J9_NATIVE_LIBRARY_SWITCH_JDBC) {
 				J9Class* ramClass;
@@ -1037,6 +1084,7 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 		atomicOrIntoConstantPool(vm, nativeMethod, cpFlags);
 		nativeMethod->methodRunAddress = vm->jniSendTarget;
 	}
+	Trc_VM_lookupJNINative_Exit(currentThread, nativeLibrary, nativeMethod, nativeMethod->extra, symbolName, signature, lookupResult);
 
 	return lookupResult;
 }
@@ -1055,15 +1103,19 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 static UDATA   
 lookupNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, J9NativeLibrary *nativeLibrary, char *longJNI, char *shortJNI, UDATA functionArgCount, UDATA bindJNINative)
 {
-	UDATA lookupResult;
+	UDATA lookupResult = 0;
 	char argSignature[260];  /* max args is 256 + JNIEnv + jobject/jclass + return type + '\0' */
-	bool inlAllowed = J9_ARE_ANY_BITS_SET(nativeLibrary->flags, J9NATIVELIB_FLAG_ALLOW_INL);
 
-	/* If INL lookup is allowed for this library, check for C INLs */
-	if (inlAllowed) {
-		UDATA rc = inlIntercept(currentThread, nativeMethod, longJNI);
-		if ((J9_NATIVE_METHOD_BIND_SUCCESS == rc) || (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc)) {
-			return rc;
+	Trc_VM_lookupNativeAddress_Entry(currentThread, nativeLibrary, nativeMethod, longJNI, shortJNI, functionArgCount, bindJNINative);
+	if (NULL != nativeLibrary) {
+		bool inlAllowed = J9_ARE_ANY_BITS_SET(nativeLibrary->flags, J9NATIVELIB_FLAG_ALLOW_INL);
+		/* If INL lookup is allowed for this library, check for C INLs */
+		if (inlAllowed) {
+			UDATA rc = inlIntercept(currentThread, nativeMethod, longJNI);
+			if ((J9_NATIVE_METHOD_BIND_SUCCESS == rc) || (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc)) {
+				Trc_VM_lookupNativeAddress_inlIntercept_Exit(currentThread, nativeLibrary, nativeMethod, longJNI, rc);
+				return rc;
+			}
 		}
 	}
 
@@ -1077,16 +1129,25 @@ lookupNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, J9NativeL
 	 */
 
 	if (bindJNINative) {
-		lookupResult = (*nativeLibrary->bind_method)(currentThread, nativeLibrary, nativeMethod, shortJNI, argSignature);
-		if (lookupResult == 0) {
+		UDATA  (*bind_method)(struct J9VMThread* vmThread, struct J9NativeLibrary* library, struct J9Method* method, char* functionName, char* argSignature) = NULL;
+		if (NULL != nativeLibrary) {
+			bind_method = nativeLibrary->bind_method;
+		} else {
+			bind_method = lookupJNINative;
+		}
+		lookupResult = bind_method(currentThread, nativeLibrary, nativeMethod, shortJNI, argSignature);
+		if (0 == lookupResult) {
+			Trc_VM_lookupNativeAddress_bindmethod_shortJNI_Exit(currentThread, nativeLibrary, nativeMethod, shortJNI, argSignature);
 			return J9_NATIVE_METHOD_BIND_SUCCESS;
 		}
-		lookupResult = (*nativeLibrary->bind_method)(currentThread, nativeLibrary, nativeMethod, longJNI, argSignature);
-		if (lookupResult == 0) {
+		lookupResult = bind_method(currentThread, nativeLibrary, nativeMethod, longJNI, argSignature);
+		if (0 == lookupResult) {
+			Trc_VM_lookupNativeAddress_bindmethod_longJNI_Exit(currentThread, nativeLibrary, nativeMethod, longJNI, argSignature);
 			return J9_NATIVE_METHOD_BIND_SUCCESS;
 		}
 	}
 
+	Trc_VM_lookupNativeAddress_fail_Exit(currentThread, nativeLibrary, nativeMethod, argSignature);
 	return J9_NATIVE_METHOD_BIND_FAIL;
 }
 

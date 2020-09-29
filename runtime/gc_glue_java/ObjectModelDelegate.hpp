@@ -392,6 +392,60 @@ public:
 	}
 
 	/**
+	 * Returns the field offset of the hottest field of the object referred to by the forwarded header.
+	 * Valid if scavenger dynamicBreadthFirstScanOrdering is enabled.
+	 *
+	 * @param forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @return the offset of the hottest field of the given object referred to by the forwarded header, return U_8_MAX if a hot field does not exist
+	 */
+	MMINLINE uint8_t
+	getHotFieldOffset(MM_ForwardedHeader *forwardedHeader)
+	{
+		J9Class* hotClass = ((J9Class *)(((uintptr_t)(forwardedHeader->getPreservedSlot())) & ~(UDATA)_delegateHeaderSlotFlagsMask));
+		if (hotClass->hotFieldsInfo != NULL) {
+			return hotClass->hotFieldsInfo->hotFieldOffset1;
+		}
+		
+		return U_8_MAX;
+	}
+
+	/**
+	 * Returns the field offset of the second hottest field of the object referred to by the forwarded header.
+	 * Valid if scavenger dynamicBreadthFirstScanOrdering is enabled
+	 *
+	 * @param forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @return the offset of the second hottest field of the given object referred to by the forwarded header, return U_8_MAX if the hot field does not exist
+	 */
+	MMINLINE uint8_t
+	getHotFieldOffset2(MM_ForwardedHeader *forwardedHeader)
+	{
+		J9Class* hotClass = ((J9Class *)(((uintptr_t)(forwardedHeader->getPreservedSlot())) & ~(UDATA)_delegateHeaderSlotFlagsMask));
+		if (hotClass->hotFieldsInfo != NULL) {
+			return hotClass->hotFieldsInfo->hotFieldOffset2;
+		}
+		
+		return U_8_MAX;	
+	}
+
+	/**
+	 * Returns the field offset of the third hottest field of the object referred to by the forwarded header.
+	 * Valid if scavenger dynamicBreadthFirstScanOrdering is enabled
+	 *
+	 * @param forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @return the offset of the third hottest field of the given object referred to by the forwarded header, return U_8_MAX if the hot field does not exist
+	 */
+	MMINLINE uint8_t
+	getHotFieldOffset3(MM_ForwardedHeader *forwardedHeader)
+	{
+		J9Class* hotClass = ((J9Class *)(((uintptr_t)(forwardedHeader->getPreservedSlot())) & ~(UDATA)_delegateHeaderSlotFlagsMask));
+		if (hotClass->hotFieldsInfo != NULL) {
+			return hotClass->hotFieldsInfo->hotFieldOffset3;
+		}
+		
+		return U_8_MAX;	
+	}
+
+	/**
 	 * Return true if the object holds references to heap objects not reachable from reference graph. For
 	 * example, an object may be associated with a class and the class may have associated meta-objects
 	 * that are in the heap but not directly reachable from the root set. This method is called to

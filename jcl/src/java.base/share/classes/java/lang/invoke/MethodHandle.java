@@ -430,9 +430,9 @@ public abstract class MethodHandle
 				collectType = collectType.dropParameterTypes(spreadPosition + 1, spreadPosition + spreadCount);
 			}
 			
-			Class<?>[] parameters = type.arguments.clone();
+			Class<?>[] parameters = type.ptypes().clone();
 			Arrays.fill(parameters, spreadPosition, spreadPosition + spreadCount, componentType);
-			adapted = asType(MethodType.methodType(type.returnType, parameters));
+			adapted = asType(MethodType.methodType(type.returnType(), parameters));
 		}
 		return new SpreadHandle(adapted, collectType, arrayClass, spreadCount, spreadPosition);
 	}
@@ -526,11 +526,11 @@ public abstract class MethodHandle
 			return localPreviousAsType;
 		}
 		MethodHandle handle = this;
-		Class<?> fromReturn = type.returnType;
-		Class<?> toReturn = newType.returnType;
+		Class<?> fromReturn = type.returnType();
+		Class<?> toReturn = newType.returnType();
 		if (fromReturn != toReturn) {
 			if(toReturn.isAssignableFrom(fromReturn)){
-				handle = cloneWithNewType(MethodType.methodType(toReturn, type.arguments));
+				handle = cloneWithNewType(MethodType.methodType(toReturn, type.ptypes()));
 			} else {
 				MethodHandle filter = ConvertHandle.FilterHelpers.getReturnFilter(fromReturn, toReturn, false);
 				handle = new FilterReturnHandle(this, filter);
@@ -567,11 +567,11 @@ public abstract class MethodHandle
 		/* We know the only accepted argument length ahead of time,
 		 * so reject all calls with the wrong argument count
 		 */
-		if (argsLength != type.arguments.length) {
+		if (argsLength != type.parameterCount()) {
 			throw newWrongMethodTypeException(type, args, argsLength);
 		}
 		if (argsLength < 253) {
-			return IWAContainer.getMH(type.arguments.length).invokeExact(this, args);
+			return IWAContainer.getMH(type.parameterCount()).invokeExact(this, args);
 		}
 		return this.asSpreader(Object[].class, argsLength).invoke(args);
 	}
@@ -586,7 +586,7 @@ public abstract class MethodHandle
 			}
 			classes[i] = c;
 		}
-		return WrongMethodTypeException.newWrongMethodTypeException(type, MethodType.methodType(type.returnType, classes));
+		return WrongMethodTypeException.newWrongMethodTypeException(type, MethodType.methodType(type.returnType(), classes));
 	}
 	static final class IWAContainer {
 		static MethodHandle getMH(int len){

@@ -44,11 +44,89 @@
 
 extern J9JITConfig * jitConfig;
 
+
+TR::CPU
+J9::Z::CPU::detectRelocatable(OMRPortLibrary * const omrPortLib)
+   {
+   if (omrPortLib == NULL)
+      return TR::CPU();
+
+   TR::CPU host = TR::CPU::detect(omrPortLib);
+   OMRProcessorDesc portableProcessorDescription = host.getProcessorDescription();
+   if (portableProcessorDescription.processor > OMR_PROCESSOR_S390_Z10)
+      { 
+      portableProcessorDescription.processor = OMR_PROCESSOR_S390_Z10;
+      portableProcessorDescription.physicalProcessor = OMR_PROCESSOR_S390_Z10;
+      TR::CPU::adjustProcessorFeatures(portableProcessorDescription);
+      }
+   return TR::CPU(portableProcessorDescription);
+   }
+
+void
+J9::Z::CPU::adjustProcessorFeatures(OMRProcessorDesc& processorDescription)
+   {
+   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+   if (processorDescription.processor < OMR_PROCESSOR_S390_Z10)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_DFP, FALSE);
+      }
+
+   if (processorDescription.processor < OMR_PROCESSOR_S390_Z196)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_HIGH_WORD, FALSE);
+      }
+
+   if (processorDescription.processor < OMR_PROCESSOR_S390_ZEC12)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_TE, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_RI, FALSE);
+      }
+
+   if (processorDescription.processor < OMR_PROCESSOR_S390_Z13)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_FACILITY, FALSE);
+      }
+
+   if (processorDescription.processor < OMR_PROCESSOR_S390_Z14)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_2, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_GUARDED_STORAGE, FALSE);
+      }
+
+   if (processorDescription.processor < OMR_PROCESSOR_S390_Z15)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY, FALSE);
+      }
+
+   // This variable is used internally by the j9sysinfo macros below and cannot be folded away
+   J9PortLibrary* privatePortLibrary = TR::Compiler->portLib;
+
+#if defined(LINUX)
+   if (TRUE == omrsysinfo_processor_has_feature(&processorDescription, OMR_FEATURE_S390_RI))
+      {
+      if (0 != j9ri_enableRISupport())
+         {
+         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_RI, FALSE);
+         }
+      }
+#endif
+
+   if (TRUE == omrsysinfo_processor_has_feature(&processorDescription, OMR_FEATURE_S390_GUARDED_STORAGE))
+      {
+      if (TR::Compiler->javaVM->memoryManagerFunctions->j9gc_software_read_barrier_enabled(TR::Compiler->javaVM))
+         {
+         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_GUARDED_STORAGE, FALSE);
+         }
+      }
+   }
+
 void
 J9::Z::CPU::applyUserOptions()
    {
-   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
-
    if (_processorDescription.processor >= OMR_PROCESSOR_S390_Z10 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ10))
       _processorDescription.processor = OMR_PROCESSOR_S390_FIRST;
    else if (_processorDescription.processor >= OMR_PROCESSOR_S390_Z196 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ196))
@@ -64,62 +142,7 @@ J9::Z::CPU::applyUserOptions()
    else if (_processorDescription.processor >= OMR_PROCESSOR_S390_ZNEXT && TR::Options::getCmdLineOptions()->getOption(TR_DisableZNext))
       _processorDescription.processor = OMR_PROCESSOR_S390_Z15;
 
-   if (_processorDescription.processor < OMR_PROCESSOR_S390_Z10)
-      {
-      omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_DFP, FALSE);
-      }
-
-   if (_processorDescription.processor < OMR_PROCESSOR_S390_Z196)
-      {
-      omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_HIGH_WORD, FALSE);
-      }
-
-   if (_processorDescription.processor < OMR_PROCESSOR_S390_ZEC12)
-      {
-      omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_TE, FALSE);
-      omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_RI, FALSE);
-      }
-
-   if (_processorDescription.processor < OMR_PROCESSOR_S390_Z13)
-      {
-      omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_VECTOR_FACILITY, FALSE);
-      }
-
-   if (_processorDescription.processor < OMR_PROCESSOR_S390_Z14)
-      {
-      omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_2, FALSE);
-      omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL, FALSE);
-      omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1, FALSE);
-      omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_GUARDED_STORAGE, FALSE);
-      }
-
-   if (_processorDescription.processor < OMR_PROCESSOR_S390_Z15)
-      {
-      omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3, FALSE);
-      omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2, FALSE);
-      omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY, FALSE);
-      }
-
-   // This variable is used internally by the j9sysinfo macros below and cannot be folded away
-   J9PortLibrary* privatePortLibrary = TR::Compiler->portLib;
-
-#if defined(LINUX)
-   if (TRUE == omrsysinfo_processor_has_feature(&_processorDescription, OMR_FEATURE_S390_RI))
-      {
-      if (0 != j9ri_enableRISupport())
-         {
-         omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_RI, FALSE);
-         }
-      }
-#endif
-
-   if (TRUE == omrsysinfo_processor_has_feature(&_processorDescription, OMR_FEATURE_S390_GUARDED_STORAGE))
-      {
-      if (TR::Compiler->javaVM->memoryManagerFunctions->j9gc_software_read_barrier_enabled(TR::Compiler->javaVM))
-         {
-         omrsysinfo_processor_set_feature(&_processorDescription, OMR_FEATURE_S390_GUARDED_STORAGE, FALSE);
-         }
-      }
+   TR::CPU::adjustProcessorFeatures(_processorDescription);
    }
 
 bool
@@ -137,17 +160,3 @@ J9::Z::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
       }
    return true;
    }
-
-OMRProcessorDesc
-J9::Z::CPU::getProcessorDescription()
-   {
-#if defined(J9VM_OPT_JITSERVER)
-   if (auto stream = TR::CompilationInfo::getStream())
-      {
-      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-      return vmInfo->_processorDescription;
-      }
-#endif /* defined(J9VM_OPT_JITSERVER) */
-   return _processorDescription;
-   }
-

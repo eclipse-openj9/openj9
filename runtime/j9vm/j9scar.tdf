@@ -343,3 +343,8 @@ TraceEntry=Trc_SC_GetExtendedNPEMessage_Entry Overhead=1 Level=3 Template="JVM_G
 TraceEntry=Trc_SC_GetExtendedNPEMessage_Entry2 Overhead=1 Level=1 Template="JVM_GetExtendedNPEMessage - throwableObj(0x%p)"
 TraceEvent=Trc_SC_GetExtendedNPEMessage_Null_NPE_MSG Overhead=1 Level=1 Template="JVM_GetExtendedNPEMessage - returns a NULL NPE message : romClass (0x%p) && romMethod (0x%p) bytecodeOffset (%d)"
 TraceExit=Trc_SC_GetExtendedNPEMessage_Exit Overhead=1 Level=3 Template="JVM_GetExtendedNPEMessage - returns msgObjectRef(0x%p)"
+
+TraceEntry=Trc_SC_UnloadLibrary_Entry NoEnv Overhead=1 Level=2 Template="JVM_UnloadLibrary(handle=%p)"
+TraceEvent=Trc_SC_LoadLibrary_BootStrap NoEnv Overhead=1 Level=3 Template="JVM_LoadLibrary(name=%s) Bootstrap library"
+TraceEvent=Trc_SC_LoadLibrary_OpenShared NoEnv Overhead=1 Level=3 Template="JVM_LoadLibrary(name=%s) j9sl_open_shared_library"
+TraceEvent=Trc_SC_LoadLibrary_OpenShared_Decorate NoEnv Overhead=1 Level=3 Template="JVM_LoadLibrary(name=%s) j9sl_open_shared_library J9PORT_SLOPEN_DECORATE"

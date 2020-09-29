@@ -86,6 +86,10 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
     * \brief Determines whether the code generator supports stack allocations
     */
    bool supportsStackAllocations() { return true; }
+   /** \brief
+    *     Determines whether to insert instructions to check DF flag and break on DF set
+    */
+   bool canEmitBreakOnDFSet();
    };
 
 }

@@ -59,6 +59,7 @@
 #include "optimizer/PreEscapeAnalysis.hpp"
 #include "optimizer/PostEscapeAnalysis.hpp"
 #include "optimizer/DataAccessAccelerator.hpp"
+#include "optimizer/HotFieldMarking.hpp"
 #include "optimizer/IsolatedStoreElimination.hpp"
 #include "optimizer/LoopAliasRefiner.hpp"
 #include "optimizer/MonitorElimination.hpp"
@@ -284,6 +285,7 @@ static const OptimizationStrategy coldStrategyOpts[] =
    { OMR::globalLiveVariablesForGC,                  OMR::IfAggressiveLiveness  },
    { OMR::profilingGroup,                            OMR::IfProfiling                },
    { OMR::regDepCopyRemoval                                                     },
+   { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                               }
    };
 
@@ -373,6 +375,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::globalLiveVariablesForGC                                              },
    { OMR::profilingGroup,                            OMR::IfProfiling                },
    { OMR::regDepCopyRemoval                                                     },
+   { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                               }
    };
 
@@ -400,6 +403,7 @@ static const OptimizationStrategy reducedWarmStrategyOpts[] =
    { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
+   { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                               }
    };
 
@@ -468,6 +472,7 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::finalGlobalGroup                                                }, // done just before codegen
    { OMR::profilingGroup,                        OMR::IfProfiling              },
    { OMR::regDepCopyRemoval                                               },
+   { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                         }
    };
 
@@ -549,6 +554,7 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::finalGlobalGroup                                   }, // done just before codegen
    { OMR::profilingGroup,                        OMR::IfProfiling },
    { OMR::regDepCopyRemoval                                  },
+   { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                            }
 #endif
    };
@@ -719,6 +725,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::globalLiveVariablesForGC                                              },
    { OMR::profilingGroup,                            OMR::IfProfiling                },
    { OMR::regDepCopyRemoval                                                     },
+   { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                               }
    };
 
@@ -817,6 +824,8 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), TR_JProfilingValue::create, OMR::jProfilingValue);
    _opts[OMR::staticFinalFieldFolding] =
          new (comp->allocator()) TR::OptimizationManager(self(), TR_StaticFinalFieldFolding::create, OMR::staticFinalFieldFolding);
+   _opts[OMR::hotFieldMarking] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_HotFieldMarking::create, OMR::hotFieldMarking);
    // NOTE: Please add new J9 optimizations here!
 
    // initialize additional J9 optimization groups

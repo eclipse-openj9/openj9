@@ -191,7 +191,10 @@ _X(JVM_SetThreadPriority,JNICALL,true,void,JNIEnv* env, jobject thread, jint pri
 _X(JVM_StartThread,JNICALL,true,void ,JNIEnv* jniEnv, jobject newThread)
 _X(JVM_StopThread,JNICALL,true,jobject ,jint arg0, jint arg1, jint arg2)
 _X(JVM_SuspendThread,JNICALL,true,jobject ,jint arg0, jint arg1)
-_X(JVM_UnloadLibrary,JNICALL,true,jobject ,jint arg0)
+_IF([JAVA_SPEC_VERSION < 15],
+	[_X(JVM_UnloadLibrary, JNICALL, true, jobject, jint arg0)])
+_IF([JAVA_SPEC_VERSION >= 15],
+	[_X(JVM_UnloadLibrary, JNICALL, true, void, void* handle)])
 _X(JVM_Yield,JNICALL,true,jobject ,jint arg0, jint arg1)
 _X(JVM_SetSockOpt,JNICALL,true,jint ,jint fd, int level, int optname, const char *optval, int optlen)
 _X(JVM_GetSockOpt,JNICALL,true,jint ,jint fd, int level, int optname, char *optval, int *optlen)
@@ -322,16 +325,22 @@ _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_InitializeFromArchive, JNICALL, false, void, JNIEnv *env, jclass clz)])
 _IF([JAVA_SPEC_VERSION >= 14],
 	[_X(JVM_GetExtendedNPEMessage, JNICALL, false, jstring, JNIEnv *env, jthrowable throwableObj)])
-_IF([JAVA_SPEC_VERSION >= 15],
+_IF([JAVA_SPEC_VERSION == 15],
 	[_X(JVM_GetRandomSeedForCDSDump, JNICALL, false, jlong)])
+_IF([JAVA_SPEC_VERSION >= 16],
+	[_X(JVM_GetRandomSeedForDumping, JNICALL, false, jlong)])
 _IF([JAVA_SPEC_VERSION >= 15],
 	[_X(JVM_RegisterLambdaProxyClassForArchiving, JNICALL, false, void, JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6, jclass arg7)])
 _IF([JAVA_SPEC_VERSION >= 15],
 	[_X(JVM_LookupLambdaProxyClassFromArchive, JNICALL, false, jclass, JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6, jboolean arg7)])
-_IF([JAVA_SPEC_VERSION >= 15],
+_IF([JAVA_SPEC_VERSION == 15],
 	[_X(JVM_IsCDSDumpingEnabled, JNICALL, false, jboolean, JNIEnv *env)])
-_IF([JAVA_SPEC_VERSION >= 15],
+_IF([JAVA_SPEC_VERSION >= 16],
+	[_X(JVM_IsDynamicDumpingEnabled, JNICALL, false, jboolean, JNIEnv *env)])
+_IF([JAVA_SPEC_VERSION == 15],
 	[_X(JVM_IsCDSSharingEnabled, JNICALL, false, jboolean, JNIEnv *env)])
+_IF([JAVA_SPEC_VERSION >= 16],
+	[_X(JVM_IsSharingEnabled, JNICALL, false, jboolean, JNIEnv *env)])
 _IF([JAVA_SPEC_VERSION >= 16],
 	[_X(JVM_DefineArchivedModules, JNICALL, false, void, JNIEnv *env, jobject obj1, jobject obj2)])
 _X(JVM_IsUseContainerSupport, JNICALL, false, jboolean, JNIEnv *env)

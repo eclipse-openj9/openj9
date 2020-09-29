@@ -20,69 +20,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "control/CompilationRuntime.hpp"
+#include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/CPU.hpp"
 #include "j9.h"
 #include "j9port.h"
-
-// supportsFeature and supports_feature_test will be removed when old_apis are no longer needed
-bool
-J9::Power::CPU::supportsFeature(uint32_t feature)
-   {
-   if (TR::Compiler->omrPortLib == NULL)
-      {
-      return false;
-      }
-
-#if defined(J9VM_OPT_JITSERVER)
-  if (TR::CompilationInfo::getStream())
-#endif
-     {
-     TR_ASSERT_FATAL(self()->supports_feature_test(feature), "feature test %d failed", feature);
-     }
-
-   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
-   return (TRUE == omrsysinfo_processor_has_feature(&_processorDescription, feature));
-   }
-
-bool
-J9::Power::CPU::supports_feature_test(uint32_t feature)
-   {
-   bool ans_old = false;
-   bool ans_new = false;
-
-#if !defined(TR_HOST_POWER) || (defined(J9OS_I5) && defined(J9OS_I5_V5R4))
-   ans_old = false;
-#else
-   J9ProcessorDesc *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   J9PortLibrary *privatePortLibrary = TR::Compiler->portLib;
-   ans_old = (TRUE == j9sysinfo_processor_has_feature(processorDesc, feature));
-#endif
-   
-   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
-   ans_new = (TRUE == omrsysinfo_processor_has_feature(&_processorDescription, feature));
-
-   return ans_new == ans_old; 
-   }
-
-bool
-J9::Power::CPU::is(OMRProcessorArchitecture p)
-   {
-   return _processorDescription.processor == p;
-   }
-
-bool
-J9::Power::CPU::isAtLeast(OMRProcessorArchitecture p)
-   {
-   return _processorDescription.processor >= p;
-   }
-
-bool
-J9::Power::CPU::isAtMost(OMRProcessorArchitecture p)
-   {
-   return _processorDescription.processor <= p;
-   }
 
 bool
 J9::Power::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
@@ -105,21 +47,61 @@ J9::Power::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    return targetProcessor == processor;
    }
 
-OMRProcessorDesc
-J9::Power::CPU::getProcessorDescription()
+void
+J9::Power::CPU::applyUserOptions()
    {
-#if defined(J9VM_OPT_JITSERVER)
-   if (auto stream = TR::CompilationInfo::getStream())
+   // P10 support is not yet well-tested, so it's currently gated behind an environment
+   // variable to prevent it from being used by accident by users who use old versions of
+   // OMR once P10 chips become available.
+   if (_processorDescription.processor == OMR_PROCESSOR_PPC_P10)
       {
-      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-      return vmInfo->_processorDescription;
+      static bool enableP10 = feGetEnv("TR_EnableExperimentalPower10Support");
+      if (!enableP10)
+         {
+         _processorDescription.processor = OMR_PROCESSOR_PPC_P9;
+         _processorDescription.physicalProcessor = OMR_PROCESSOR_PPC_P9;
+         }
       }
-#endif /* defined(J9VM_OPT_JITSERVER) */
-   return _processorDescription;
+
+   if (debug("rios1"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_RIOS1;
+   else if (debug("rios2"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_RIOS2;
+   else if (debug("pwr403"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_PWR403;
+   else if (debug("pwr405"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_PWR405;
+   else if (debug("pwr601"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_PWR601;
+   else if (debug("pwr603"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_PWR603;
+   else if (debug("pwr604"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_PWR604;
+   else if (debug("pwr630"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_PWR630;
+   else if (debug("pwr620"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_PWR620;
+   else if (debug("nstar"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_NSTAR;
+   else if (debug("pulsar"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_PULSAR;
+   else if (debug("gp"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_GP;
+   else if (debug("gpul"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_GPUL;
+   else if (debug("gr"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_GR;
+   else if (debug("p6"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_P6;
+   else if (debug("p7"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_P7;
+   else if (debug("p8"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_P8;
+   else if (debug("p9"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_P9;
+   else if (debug("440GP"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_PWR440;
+   else if (debug("750FX"))
+      _processorDescription.processor = OMR_PROCESSOR_PPC_7XX;
    }
 
-bool
-J9::Power::CPU::getPPCSupportsVSX()
-   {
-   return self()->supportsFeature(OMR_FEATURE_PPC_HAS_VSX);
-   }
