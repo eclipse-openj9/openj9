@@ -220,7 +220,7 @@ J9NLS_JNICHK_FREED_LOCAL_REF.user_response=
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_NONFATAL_ERROR=S'ha detectat un error JNI. Continuant...
+J9NLS_JNICHK_NONFATAL_ERROR=S'ha detectat un error JNI. S'est\u00e0 continuant...
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NONFATAL_ERROR.explanation=The JNI check utility has detected a recoverable JNI error.
 J9NLS_JNICHK_NONFATAL_ERROR.system_action=The JVM continues.
@@ -228,7 +228,7 @@ J9NLS_JNICHK_NONFATAL_ERROR.user_response=Investigate the JNI check error report
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_FATAL_ERROR=S'ha detectat un error JNI. Avortant.
+J9NLS_JNICHK_FATAL_ERROR=S'ha detectat un error JNI. S'est\u00e0 avortant.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_FATAL_ERROR.explanation=The JNI check utility has detected an unrecoverable JNI error.
 J9NLS_JNICHK_FATAL_ERROR.system_action=The JVM terminates.
