@@ -198,7 +198,7 @@ void
 TR::SymbolValidationManager::populateWellKnownClasses()
    {
 #define WELL_KNOWN_CLASS_COUNT 9
-#define REQUIRED_WELL_KNOWN_CLASS_COUNT 1
+#define REQUIRED_WELL_KNOWN_CLASS_COUNT 0
 
    // Classes must have names only allowed to be defined by the bootstrap loader
    // The first REQUIRED_WELL_KNOWN_CLASS_COUNT entries are required - if any is
@@ -284,6 +284,7 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       _wellKnownClassChainOffsets != NULL,
       "Failed to store well-known classes' class chains");
 
+#undef REQUIRED_WELL_KNOWN_CLASS_COUNT
 #undef WELL_KNOWN_CLASS_COUNT
    }
 
