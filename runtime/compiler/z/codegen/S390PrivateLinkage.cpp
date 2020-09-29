@@ -1611,18 +1611,9 @@ J9::Z::PrivateLinkage::buildNoPatchingVirtualDispatchWithResolve(TR::Node *callN
    resolveVirtualDataSymbol->setNotDataAddress();
    TR::SymbolReference *resolveVirtualDataSymRef = new (comp()->trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), resolveVirtualDataSymbol, 0);
 
-   // TODO: This is not needed technically. The JIT helper glue code will have set up the return address to be the
-   // label below, which it then passes off to the helper. If the helper we call ends up triggering a GC, the stack
-   // walker will use the JIT return address we passed to walk the current JIT frame and find the GC map associated
-   // with the return address. The GC map logic subtracts 1 (see jitGetMapsFromPC) which means that unless we create
-   // the GC map on an instruction before the return label, we will retrieve the wrong GC map! i.e. it will fetch
-   // whatever GC map is before this evaluator which is not what we want. Until we think of a better solution we
-   // emit a NOP here and create a GC map at this location.
-   TR::Instruction *cursor = new (cg()->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
-   cursor->setNeedsGCMap(getPreservedRegisterMapForGC());
    
    TR::LabelSymbol *loadResolvedVtableOffsetLabel = generateLabelSymbol(cg());
-   cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, loadResolvedVtableOffsetLabel);
+   TR::Instruction *cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, loadResolvedVtableOffsetLabel);
 
    // Using GPR0 as the vTableOffsetReg as it is vtableOffset is expected to be in GPR0 when calling through J2IThunk
    TR::Register *vTableOffsetReg = deps->searchPostConditionRegister(TR::RealRegister::GPR0);
@@ -1634,26 +1625,29 @@ J9::Z::PrivateLinkage::buildNoPatchingVirtualDispatchWithResolve(TR::Node *callN
 
    TR::LabelSymbol *resolveVirtualDispatchReadOnlyDataSnippetLabel = generateLabelSymbol(cg());
 
+   TR::LabelSymbol *snippetCallNextInstrLabel = generateLabelSymbol(cg());
+
    TR::S390VirtualUnresolvedReadOnlySnippet *snippet = new (trHeapMemory()) TR::S390VirtualUnresolvedReadOnlySnippet(
       cg(),
       callNode,
       resolveVirtualDispatchReadOnlyDataSnippetLabel,
       loadResolvedVtableOffsetLabel,
       doneLabel,
+      snippetCallNextInstrLabel,
       resolveVirtualDataAddress);
    TR::RegisterDependencyConditions * preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(deps->getPreConditions(), NULL,
                                                                                                          deps->getAddCursorForPre(), 0, cg());
    generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, generateLabelSymbol(cg()), preDeps);
    
    cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRCL, callNode, 0x8, snippet, NULL, cg());
-   cursor->setNeedsGCMap(0xFFFFFFFF);
+   cursor->setNeedsGCMap(getPreservedRegisterMapForGC());
    
    TR::RegisterDependencyConditions *postDepsForCall = new (trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg());
    TR::Register * killRegRA = cg()->allocateRegister();
    TR::Register * killRegEP = cg()->allocateRegister();
    postDepsForCall->addPostCondition(killRegRA, cg()->getReturnAddressRegister());
    postDepsForCall->addPostCondition(killRegEP, cg()->getEntryPointRegister());
-   generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, generateLabelSymbol(cg()), postDepsForCall);
+   generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, snippetCallNextInstrLabel, postDepsForCall);
    
    cg()->addSnippet(snippet);
    cg()->stopUsingRegister(killRegRA);

@@ -137,9 +137,11 @@ class S390VirtualUnresolvedReadOnlySnippet : public TR::Snippet
 
    TR::LabelSymbol *doneLabel;
 
+   TR::LabelSymbol *snippetCallNextInstrLabel;
+
    public:
-   S390VirtualUnresolvedReadOnlySnippet(TR::CodeGenerator *cg, TR::Node *callNode, TR::LabelSymbol *lab, TR::LabelSymbol *loadVTableOffsetLabel, TR::LabelSymbol *doneLabel, intptr_t resolveVirtualDataAddress)
-      : TR::Snippet(cg, callNode, lab, false), loadVTableOffsetLabel(loadVTableOffsetLabel), doneLabel(doneLabel), resolveVirtualDataAddress(resolveVirtualDataAddress)
+   S390VirtualUnresolvedReadOnlySnippet(TR::CodeGenerator *cg, TR::Node *callNode, TR::LabelSymbol *lab, TR::LabelSymbol *loadVTableOffsetLabel, TR::LabelSymbol *doneLabel, TR::LabelSymbol *snippetCallNextInstrLabel, intptr_t resolveVirtualDataAddress)
+      : TR::Snippet(cg, callNode, lab, false), loadVTableOffsetLabel(loadVTableOffsetLabel), doneLabel(doneLabel), snippetCallNextInstrLabel(snippetCallNextInstrLabel), resolveVirtualDataAddress(resolveVirtualDataAddress)
       {
       }
    

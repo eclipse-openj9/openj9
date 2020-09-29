@@ -59,6 +59,7 @@ class UnresolvedDataReadOnlySnippet : public TR::Snippet
       intptr_t resolveDataAddress,
       TR::LabelSymbol *startResolveSequenceLabel,
       TR::LabelSymbol *volatileFenceLabel,
+      TR::LabelSymbol *snippetCallNextInstrLabel,
       TR::LabelSymbol *doneLabel);
 
    virtual Kind getKind() { return IsUnresolvedDataReadOnly; }
@@ -89,6 +90,7 @@ class UnresolvedDataReadOnlySnippet : public TR::Snippet
    TR::LabelSymbol *startResolveSequenceLabel;
    TR::LabelSymbol *volatileFenceLabel;
    TR::LabelSymbol *doneLabel;
+   TR::LabelSymbol *snippetCallNextInstrLabel;
 
    intptr_t resolveDataAddress;
    };

@@ -417,17 +417,6 @@ J9::Z::MemoryReference::create(TR::CodeGenerator* cg, TR::Node* node)
       unresolvedDataSymbol->setNotDataAddress();
       TR::SymbolReference *unresolvedDataSymRef = new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), unresolvedDataSymbol, 0);
 
-      // TODO: This is not needed technically. The JIT helper glue code will have set up the return address to be the
-      // label below, which it then passes off to the helper. If the helper we call ends up triggering a GC, the stack
-      // walker will use the JIT return address we passed to walk the current JIT frame and find the GC map associated
-      // with the return address. The GC map logic subtracts 1 (see jitGetMapsFromPC) which means that unless we create
-      // the GC map on an instruction before the return label, we will retrieve the wrong GC map! i.e. it will fetch
-      // whatever GC map is before this evaluator which is not what we want. Until we think of a better solution we
-      // emit a NOP here and create a GC map at this location.
-
-      auto gcMapNOP = new (cg->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, node, cg);
-      gcMapNOP->setNeedsGCMap(0xFFFFFFFF);
-
       TR::LabelSymbol *startResolveSequenceLabel = generateLabelSymbol(cg);
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, startResolveSequenceLabel);
 
@@ -436,6 +425,7 @@ J9::Z::MemoryReference::create(TR::CodeGenerator* cg, TR::Node* node)
 
       TR::LabelSymbol *volatileFenceLabel = node->getOpCode().isStore() ? generateLabelSymbol(cg) : NULL;
       TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
 
       TR::Snippet *snippet = (TR::Snippet*) new (comp->trHeapMemory()) J9::Z::UnresolvedDataReadOnlySnippet(
          cg,
@@ -444,13 +434,13 @@ J9::Z::MemoryReference::create(TR::CodeGenerator* cg, TR::Node* node)
          unresolvedDataAddress,
          startResolveSequenceLabel,
          volatileFenceLabel,
+         cFlowRegionEnd,
          doneLabel);
 
       cg->addSnippet(snippet);
 
       TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
       cFlowRegionStart->setStartInternalControlFlow();
-      TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
       cFlowRegionEnd->setEndInternalControlFlow();
 
       TR::Register *raReg = cg->allocateRegister();
