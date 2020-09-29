@@ -27,6 +27,7 @@
 #include "env/PersistentCollections.hpp" // for PersistentUnorderedMap
 #include "il/DataTypes.hpp" // for DataType
 #include "env/VMJ9.h" // for TR_StaticFinalData
+#include "runtime/SymbolValidationManager.hpp"
 
 class J9ROMClass;
 class J9Class;
@@ -434,6 +435,8 @@ class ClientSessionData
    void writeAcquireClassUnloadRWMutex();
    void writeReleaseClassUnloadRWMutex();
 
+   TR::SymbolValidationManager::SystemClassNotWorthRemembering *getSystemClassesNotWorthRemembering() { return _systemClassesNotWorthRemembering; }
+
    private:
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
@@ -481,6 +484,8 @@ class ClientSessionData
 
    omrthread_rwmutex_t _classUnloadRWMutex;
    volatile bool _bClassUnloadingAttempt;
+
+   TR::SymbolValidationManager::SystemClassNotWorthRemembering _systemClassesNotWorthRemembering[TR::SymbolValidationManager::SYSTEM_CLASSES_NOT_WORTH_REMEMBERING_COUNT];
    }; // class ClientSessionData
 
 
