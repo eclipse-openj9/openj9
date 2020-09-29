@@ -716,7 +716,7 @@ static void generateCommonLockNurseryCodes(TR::Node          *node,
    }
 
 #ifdef TR_TARGET_32BIT
-TR::Register *J9::X86::i386::TreeEvaluator::conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *J9::X86::I386::TreeEvaluator::conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    // used by asynccheck, methodEnterhook, and methodExitHook
 
@@ -12876,7 +12876,7 @@ TR::Register *J9::X86::TreeEvaluator::fwrtbariEvaluator(TR::Node *node, TR::Code
    }
 
 #ifdef TR_TARGET_32BIT
-TR::Register *J9::X86::i386::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *J9::X86::I386::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    // For rdbar and wrtbar nodes we first evaluate the children we need to
    // handle the side effects. Then we delegate the evaluation of the remaining
@@ -12897,7 +12897,7 @@ TR::Register *J9::X86::i386::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR:
    return TR::TreeEvaluator::dstoreEvaluator(node, cg);
    }
 
-TR::Register *J9::X86::i386::TreeEvaluator::dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *J9::X86::I386::TreeEvaluator::dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    // For rdbar and wrtbar nodes we first evaluate the children we need to
    // handle the side effects. Then we delegate the evaluation of the remaining
