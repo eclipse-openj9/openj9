@@ -31,8 +31,15 @@
 #include "codegen/Linkage_inlines.hpp"
 #include "il/Node_inlines.hpp"
 
+void
+J9::X86::I386::CodeGenerator::initialize()
+   {
+   self()->J9::X86::CodeGenerator::initialize();
+   }
+
+
 TR::Linkage *
-J9::X86::i386::CodeGenerator::createLinkage(TR_LinkageConventions lc)
+J9::X86::I386::CodeGenerator::createLinkage(TR_LinkageConventions lc)
    {
    TR::Compilation *comp = self()->comp();
    TR::Linkage *linkage = NULL;
@@ -91,7 +98,7 @@ J9::X86::i386::CodeGenerator::createLinkage(TR_LinkageConventions lc)
 
 
 void
-J9::X86::i386::CodeGenerator::lowerTreesPreTreeTopVisit(TR::TreeTop *tt, vcount_t visitCount)
+J9::X86::I386::CodeGenerator::lowerTreesPreTreeTopVisit(TR::TreeTop *tt, vcount_t visitCount)
    {
    J9::X86::CodeGenerator::lowerTreesPreTreeTopVisit(tt, visitCount);
 
@@ -118,7 +125,7 @@ J9::X86::i386::CodeGenerator::lowerTreesPreTreeTopVisit(TR::TreeTop *tt, vcount_
 
 
 void
-J9::X86::i386::CodeGenerator::lowerTreesPostTreeTopVisit(TR::TreeTop *tt, vcount_t visitCount)
+J9::X86::I386::CodeGenerator::lowerTreesPostTreeTopVisit(TR::TreeTop *tt, vcount_t visitCount)
    {
    J9::X86::CodeGenerator::lowerTreesPostTreeTopVisit(tt, visitCount);
 
@@ -145,7 +152,7 @@ J9::X86::i386::CodeGenerator::lowerTreesPostTreeTopVisit(TR::TreeTop *tt, vcount
 
 
 void
-J9::X86::i386::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node * parent, TR::TreeTop * treeTop, vcount_t visitCount)
+J9::X86::I386::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node * parent, TR::TreeTop * treeTop, vcount_t visitCount)
    {
    J9::X86::CodeGenerator::lowerTreesPreChildrenVisit(parent, treeTop, visitCount);
 
@@ -153,7 +160,7 @@ J9::X86::i386::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node * parent, TR::
 
 
 void
-J9::X86::i386::CodeGenerator::lowerTreesPostChildrenVisit(TR::Node * parent, TR::TreeTop * treeTop, vcount_t visitCount)
+J9::X86::I386::CodeGenerator::lowerTreesPostChildrenVisit(TR::Node * parent, TR::TreeTop * treeTop, vcount_t visitCount)
    {
    J9::X86::CodeGenerator::lowerTreesPostChildrenVisit(parent, treeTop, visitCount);
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,18 +20,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_J9_AMD64_CODEGENERATORBASE_INCL
-#define TR_J9_AMD64_CODEGENERATORBASE_INCL
+#ifndef J9_AMD64_CODEGENERATOR_INCL
+#define J9_AMD64_CODEGENERATOR_INCL
 
 /*
  * The following #define and typedef must appear before any #includes in this file
  */
-#ifndef TRJ9_CODEGENERATORBASE_CONNECTOR
-#define TRJ9_CODEGENERATORBASE_CONNECTOR
-
+#ifndef J9_CODEGENERATOR_CONNECTOR
+#define J9_CODEGENERATOR_CONNECTOR
 namespace J9 { namespace X86 { namespace AMD64 { class CodeGenerator; } } }
 namespace J9 { typedef J9::X86::AMD64::CodeGenerator CodeGeneratorConnector; }
-
 #else
 #error J9::X86::AMD64::CodeGenerator expected to be a primary connector, but a J9 connector is already defined
 #endif
@@ -51,10 +49,18 @@ namespace AMD64
 
 class OMR_EXTENSIBLE CodeGenerator : public J9::X86::CodeGenerator
    {
-   public:
+
+protected:
+
+   CodeGenerator(TR::Compilation *comp) :
+      J9::X86::CodeGenerator(comp) {}
+
+public:
 
    CodeGenerator() :
       J9::X86::CodeGenerator() {}
+
+   void initialize();
 
    TR::Linkage *createLinkage(TR_LinkageConventions lc);
    };
