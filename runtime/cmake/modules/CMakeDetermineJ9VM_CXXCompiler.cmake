@@ -20,23 +20,11 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-list(APPEND OMR_PLATFORM_DEFINITIONS
-	-D_CRT_NONSTDC_NO_WARNINGS
-)
+set(CMAKE_J9VM_CXX_COMPILER_LIST clang)
+set(CMAKE_J9VM_CXX_COMPILER_ENV_VAR J9CXX)
+find_program(CMAKE_J9VM_CXX_COMPILER "clang")
 
-# Remove some default flags cmake gives us
-set(flags_to_remove /O2 /Ob1 /DNDEBUG)
-omr_remove_flags(CMAKE_C_FLAGS ${flags_to_remove})
-omr_remove_flags(CMAKE_CXX_FLAGS ${flags_to_remove})
-foreach(build_type IN ITEMS ${CMAKE_CONFIGURATION_TYPES} ${CMAKE_BUILD_TYPE})
-	string(TOUPPER ${build_type} build_type)
-	omr_remove_flags(CMAKE_C_FLAGS_${build_type} ${flags_to_remove})
-	omr_remove_flags(CMAKE_CXX_FLAGS_${build_type} ${flags_to_remove})
-endforeach()
+configure_file(${CMAKE_CURRENT_LIST_DIR}/CMakeJ9VM_CXXCompiler.cmake.in
+	${CMAKE_PLATFORM_INFO_DIR}/CMakeJ9VM_CXXCompiler.cmake @ONLY)
 
-# /Ox = enable most speed optimizations
-# /Zi = produce separate pdb files
-list(APPEND OMR_PLATFORM_COMPILE_OPTIONS  /Ox /Zi)
-
-list(APPEND OMR_PLATFORM_EXE_LINKER_OPTIONS /debug /opt:icf /opt:ref)
-list(APPEND OMR_PLATFORM_SHARED_LINKER_OPTIONS /debug /opt:icf /opt:ref)
+include("${CMAKE_CURRENT_LIST_DIR}/CMakeJ9VM_CXXInformation.cmake")
