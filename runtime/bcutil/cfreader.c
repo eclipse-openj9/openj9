@@ -1228,9 +1228,11 @@ readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* 
 				return -2;
 			}
 			CHECK_EOF(size);
-			verifyResult = j9bcutil_verifyCanonisizeAndCopyUTF8(info->bytes, index, size);
+			verifyResult = j9bcutil_verifyCanonisizeAndCopyUTF8(info->bytes, index, size, &(info->flags1));
 			info->slot1 = (U_32) verifyResult;
-			if (verifyResult < 0) {
+			if ((verifyResult < 0) ||
+				(J9_ARE_ALL_BITS_SET(info->flags1, CFR_FOUND_CHARS_IN_EXTENDED_MUE_FORM) && (classfile->majorVersion >= 48))
+			) {
 				errorCode = J9NLS_CFR_ERR_BAD_UTF8__ID;
 				offset = (U_32) (index - data - 1);
 				goto _errorFound;
@@ -2587,7 +2589,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 		goto _errorFound;
 	}
 
-	if((value & CFR_ACC_FINAL)&&(value & CFR_ACC_ABSTRACT)) {
+	if ((value & CFR_ACC_FINAL)&&(value & CFR_ACC_ABSTRACT)) {
 		errorCode = J9NLS_CFR_ERR_FINAL_ABSTRACT_CLASS__ID;
 		offset = endOfConstantPool;
 		goto _errorFound;
@@ -2602,39 +2604,47 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 	}
 
 	value = classfile->thisClass;
-	if((!value)||(value >= classfile->constantPoolCount)) {
+	if ((!value)||(value >= classfile->constantPoolCount)) {
 		errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 		offset = endOfConstantPool + 2;
 		goto _errorFound;
 	}
 
-	if((classfile->constantPool)&&(classfile->constantPool[value].tag != CFR_CONSTANT_Class)) {
+	if ((classfile->constantPool) && (classfile->constantPool[value].tag != CFR_CONSTANT_Class)) {
 		errorCode = J9NLS_CFR_ERR_NOT_CLASS__ID;
 		offset = endOfConstantPool + 2;
 		goto _errorFound;
 	}
+	if ((classfile->constantPool) && (CFR_CONSTANT_Class == classfile->constantPool[value].tag)) {
+		value = classfile->constantPool[classfile->thisClass].slot1;
+		if (J9_ARE_ALL_BITS_SET(classfile->constantPool[value].flags1, CFR_FOUND_SEPARATOR_IN_MUE_FORM) && (classfile->majorVersion < 48)) {
+			errorCode = J9NLS_CFR_ERR_BAD_CLASS_NAME__ID;
+			offset = endOfConstantPool + 2;
+			goto _errorFound;
+		}
+	}
 
 	value = classfile->superClass;
-	if(value >= classfile->constantPoolCount) {
+	if (value >= classfile->constantPoolCount) {
 		errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 		offset = endOfConstantPool + 4;
 		goto _errorFound;
 	}
 
-	if(value == 0) {
+	if (0 == value) {
 		/* Check against j.l.O. */
 		if(!utf8Equal(&classfile->constantPool[classfile->constantPool[classfile->thisClass].slot1], "java/lang/Object", 16)) {
 			errorCode = J9NLS_CFR_ERR_NULL_SUPER__ID;
 			offset = endOfConstantPool + 4;
 			goto _errorFound;
 		}
-	} else if(classfile->constantPool[value].tag != CFR_CONSTANT_Class) {
+	} else if (classfile->constantPool[value].tag != CFR_CONSTANT_Class) {
 		errorCode = J9NLS_CFR_ERR_SUPER_NOT_CLASS__ID;
 		offset = endOfConstantPool + 4;
 		goto _errorFound;
 	} 
 
-	for(i = 0; i < classfile->interfacesCount; i++) {
+	for (i = 0; i < classfile->interfacesCount; i++) {
 		U_32 j;
 		J9CfrConstantPoolInfo* cpInfo;
 		value = classfile->interfaces[i];
@@ -2662,7 +2672,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 	}
 
 	/* Check that interfaces subclass object. */
-	if(classfile->accessFlags & CFR_ACC_INTERFACE) {
+	if (classfile->accessFlags & CFR_ACC_INTERFACE) {
 		/* Check against j.l.O. */
 		if(!utf8Equal(&classfile->constantPool[classfile->constantPool[classfile->superClass].slot1], "java/lang/Object", 16)) {
 			errorCode = J9NLS_CFR_ERR_INTERFACE_SUPER_NOT_OBJECT__ID;
@@ -2671,11 +2681,11 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 		}
 	}
 
-	if(checkFields(portLib, classfile, segment, flags)) {
+	if (checkFields(portLib, classfile, segment, flags)) {
 		return -1;
 	}
 
-	if(checkMethods(portLib, classfile, segment, vmVersionShifted, flags)) {
+	if (checkMethods(portLib, classfile, segment, vmVersionShifted, flags)) {
 		return -1;
 	}
 
@@ -2687,7 +2697,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 		return -1;
 	}
 
-	if(checkAttributes(portLib, classfile, classfile->attributes, classfile->attributesCount, segment, maxBootstrapMethodIndex, OUTSIDE_CODE, flags)) {
+	if (checkAttributes(portLib, classfile, classfile->attributes, classfile->attributesCount, segment, maxBootstrapMethodIndex, OUTSIDE_CODE, flags)) {
 		return -1;
 	}
 
