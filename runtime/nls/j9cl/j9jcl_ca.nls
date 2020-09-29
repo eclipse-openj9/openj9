@@ -369,7 +369,7 @@ J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL.system_action=The JVM will th
 J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL.user_response=Use the correct invoke bytecode to access private interface methods.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT=Carregant violaci\u00f3 de restricci\u00f3: %2$.*1$s no \u00e9s visible des de %4$.*3$s
+J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT=S'est\u00e0 carregant la violaci\u00f3 de restricci\u00f3: %2$.*1$s no \u00e9s visible des de %4$.*3$s
 # START NON-TRANSLATABLE
 J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.sample_input_1=SomeClassloader
 J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.sample_input_2=2
