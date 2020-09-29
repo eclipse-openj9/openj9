@@ -24,25 +24,25 @@
 #pragma csect(STATIC,"J9J9CPU#S")
 #pragma csect(TEST,"J9J9CPU#T")
 
-#include "control/CompilationRuntime.hpp"
-#include "env/CompilerEnv.hpp"
 #include "env/CPU.hpp"
 #include "env/VMJ9.h"
+#include "infra/Assert.hpp"                         // for TR_ASSERT
 
 OMRProcessorDesc J9::CPU::_supportedFeatureMasks = {OMR_PROCESSOR_UNDEFINED, OMR_PROCESSOR_UNDEFINED, {}};
 bool J9::CPU::_isSupportedFeatureMasksEnabled = false;
 
-OMRProcessorDesc
-J9::CPU::getProcessorDescription()
+const char *
+J9::CPU::getProcessorVendorId() 
    {
-#if defined(J9VM_OPT_JITSERVER)
-   if (auto stream = TR::CompilationInfo::getStream())
-      {
-      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-      return vmInfo->_processorDescription;
-      }
-#endif /* defined(J9VM_OPT_JITSERVER) */
-   return _processorDescription;
+   TR_ASSERT_FATAL(false, "Vendor ID not defined for this platform!");
+   return NULL;
+   }
+
+uint32_t 
+J9::CPU::getProcessorSignature()
+   {
+   TR_ASSERT_FATAL(false, "Processor Signature not defined for this platform!"); 
+   return 0;
    }
 
 void
