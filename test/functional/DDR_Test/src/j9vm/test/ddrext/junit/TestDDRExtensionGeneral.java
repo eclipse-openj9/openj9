@@ -581,4 +581,19 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 		}
 		assertTrue(validate(nativeMemInfoOutput, Constants.NATIVEMEMINFO_SUCCESS_KEYS, Constants.NATIVEMEMINFO_FAILURE_KEYS));
 	}
+
+	/**
+	 * This junit method tests the !versioninfo output for "IBM J9 VM" or "Eclipse OpenJ9 VM"
+	 */
+	public void testVersionInfo()
+	{
+		String versionInfoOutput = exec(Constants.COREINFO_CMD, new String[] {});
+		String impl = System.getProperty("java.vm.name");
+		if (impl.contains("Eclipse OpenJ9 VM")){
+			assertTrue(validate(versionInfoOutput, Constants.COREINFO_VERSION_OPENJ9_SUCCESS_KEYS, Constants.COREINFO_VERSION_FAILURE_KEYS));
+		}
+		else {
+			assertTrue(validate(versionInfoOutput, Constants.COREINFO_VERSION_IBM_SUCCESS_KEYS, Constants.COREINFO_VERSION_FAILURE_KEYS));
+		}
+	}
 }
