@@ -48,6 +48,7 @@ J9_FAST_JNI_METHOD_TABLE_EXTERN(java_lang_Thread);
 J9_FAST_JNI_METHOD_TABLE_EXTERN(java_lang_String);
 J9_FAST_JNI_METHOD_TABLE_EXTERN(java_lang_reflect_Array);
 J9_FAST_JNI_METHOD_TABLE_EXTERN(java_lang_Throwable);
+J9_FAST_JNI_METHOD_TABLE_EXTERN(com_ibm_crypto_plus_provider_icc_NativeInterface);
 J9_FAST_JNI_METHOD_TABLE_EXTERN(java_lang_invoke_MethodHandle);
 
 J9_FAST_JNI_CLASS_TABLE(fastJNINatives)
@@ -55,6 +56,7 @@ J9_FAST_JNI_CLASS_TABLE(fastJNINatives)
 	J9_FAST_JNI_CLASS("java/lang/Class", java_lang_Class)
 	J9_FAST_JNI_CLASS("java/lang/Object", java_lang_Object)
 	J9_FAST_JNI_CLASS("java/lang/System", java_lang_System)
+	J9_FAST_JNI_CLASS("com/ibm/crypto/plus/provider/icc/NativeInterface", com_ibm_crypto_plus_provider_icc_NativeInterface)
 	J9_FAST_JNI_CLASS("com/ibm/oti/vm/VM", com_ibm_oti_vm_VM)
 	J9_FAST_JNI_CLASS("sun/misc/Unsafe", sun_misc_Unsafe)
 	J9_FAST_JNI_CLASS("jdk/internal/misc/Unsafe", sun_misc_Unsafe)
