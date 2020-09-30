@@ -147,7 +147,9 @@ findField(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameL
 			(const U_8 *) ".", 1,
 			fieldName, fieldNameLength, 
 			NULL, 0);
-		setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGNOSUCHFIELDERROR, (UDATA*)message);
+		if (NULL != message) {
+			setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGNOSUCHFIELDERROR, (UDATA*)message);
+		}
 	}
 
 	return NULL;

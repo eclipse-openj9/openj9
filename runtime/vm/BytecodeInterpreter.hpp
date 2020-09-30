@@ -1465,7 +1465,10 @@ obj:
 			}
 		}
 		updateVMStruct(REGISTER_ARGS);
-		setCurrentException(_currentThread, exception, (UDATA*)methodToString(_currentThread, _sendMethod));
+		j9object_t detailMessage = methodToString(_currentThread, _sendMethod);
+		if (NULL != detailMessage) {
+			setCurrentException(_currentThread, exception, (UDATA*)detailMessage);
+		}
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		return  GOTO_THROW_CURRENT_EXCEPTION;
 	}
