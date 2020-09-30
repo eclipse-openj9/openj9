@@ -123,6 +123,7 @@ public abstract class ELFFileReader {
 	private long baseOffset;
 
 	private final File _file;
+	private boolean _isTruncated;
 
 	private final List<ProgramHeaderEntry> _programHeaderEntries = new LinkedList<>();
 	private final List<SectionHeaderEntry> _sectionHeaderEntries = new LinkedList<>();
@@ -144,15 +145,14 @@ public abstract class ELFFileReader {
 	protected String sourceName;
 
 	// Use openELFFile to get an ELFFile instance.
-	protected ELFFileReader(File file, ByteOrder byteOrder, long offset)
-			throws IOException, InvalidDumpFormatException {
+	protected ELFFileReader(File file, ByteOrder byteOrder) throws IOException, InvalidDumpFormatException {
 		try {
 			is = new FileImageInputStream(file);
 			is.setByteOrder(byteOrder);
 			this._file = file;
 			sourceName = file.getAbsolutePath();
-			this.baseOffset = offset;
-			initializeReader(offset);
+			this.baseOffset = 0;
+			initializeReader(is.length());
 		} catch (IOException | InvalidDumpFormatException e) {
 			// Don't leak file handles if we fail to create this reader.
 			close();
@@ -166,57 +166,86 @@ public abstract class ELFFileReader {
 		}
 	}
 
-	protected ELFFileReader(ImageInputStream in, long offset) throws IOException, InvalidDumpFormatException {
+	protected ELFFileReader(ImageInputStream in, long offset, long size)
+			throws IOException, InvalidDumpFormatException {
 		_file = null;
 		is = in;
 		this.baseOffset = offset;
 		sourceName = "internal data stream";
-		initializeReader(offset);
+		initializeReader(size);
 	}
 
 	public String getSourceName() {
 		return sourceName;
 	}
 
-	private void initializeReader(long offset) throws IOException, InvalidDumpFormatException {
-		is.seek(offset);
-		readHeader();
-		readSectionHeader();
-		readProgramHeader();
+	private void initializeReader(long size) throws IOException, InvalidDumpFormatException {
+		try {
+			is.seek(baseOffset);
+			readHeader();
+			readSectionHeader();
+			readProgramHeader();
+
+			/*
+			 * Only check for truncation of the core file itself.
+			 * Embedded objects normally describe parts that may
+			 * not have been loaded into memory.
+			 */
+			if (baseOffset == 0) {
+				long maxOffset = 0;
+
+				for (SectionHeaderEntry section : _sectionHeaderEntries) {
+					if (section.size != 0) {
+						maxOffset = Math.max(maxOffset, section.offset + section.size - 1);
+					}
+				}
+
+				for (ProgramHeaderEntry segment : _programHeaderEntries) {
+					if (segment.fileSize != 0) {
+						maxOffset = Math.max(maxOffset, segment.fileOffset + segment.fileSize - 1);
+					}
+				}
+
+				if (size < 0) {
+					// length is unknown: test offset by seeking which is expected
+					// to trigger an IOException if out of range
+					is.seek(maxOffset);
+				} else {
+					if (maxOffset >= size) {
+						markTruncated();
+					}
+				}
+			}
+		} catch (IOException e) {
+			// something is missing if we can't read the basic structure of the core file
+			markTruncated();
+			throw e;
+		}
 	}
 
-	// ELF files can be either Big Endian (for example on Linux/PPC) or Little
-	// Endian (Linux/IA).
-	// Let's check whether it's actually an ELF file. We'll sort out the byte
-	// order later.
-
-	public static ELFFileReader getELFFileReaderWithOffset(File f, long offset)
-			throws IOException, InvalidDumpFormatException {
+	// ELF files can be either Big Endian (for example on Linux/PPC)
+	// or Little Endian (Linux/IA).
+	public static ELFFileReader getELFFileReader(File file) throws IOException, InvalidDumpFormatException {
 		// Figure out which combination of bitness and architecture we are
-		ImageInputStream in = new FileImageInputStream(f);
-
-		if (!isFormatValid(in)) {
-			throw new InvalidDumpFormatException("File " + f.getAbsolutePath() + " is not an ELF file");
+		try (ImageInputStream in = new FileImageInputStream(file)) {
+			if (!isFormatValid(in)) {
+				throw new InvalidDumpFormatException("File " + file.getAbsolutePath() + " is not an ELF file");
+			}
+			int bitness = in.read();
+			ByteOrder byteOrder = getByteOrder(in);
+			if (ELFCLASS64 == bitness) {
+				return new ELF64FileReader(file, byteOrder);
+			} else {
+				return new ELF32FileReader(file, byteOrder);
+			}
 		}
-		int bitness = in.read();
-		ByteOrder byteOrder = getByteOrder(in);
-		in.close(); // no longer need the input stream as passing the File descriptor into the reader
-		if (ELFCLASS64 == bitness) {
-			return new ELF64FileReader(f, byteOrder, offset);
-		} else {
-			return new ELF32FileReader(f, byteOrder, offset);
-		}
-	}
-
-	public static ELFFileReader getELFFileReader(File f) throws IOException, InvalidDumpFormatException {
-		return getELFFileReaderWithOffset(f, 0);
 	}
 
 	public static ELFFileReader getELFFileReader(ImageInputStream in) throws IOException, InvalidDumpFormatException {
-		return getELFFileReaderWithOffset(in, 0);
+		return getELFFileReaderWithOffset(in, 0, in.length());
 	}
 
-	public static ELFFileReader getELFFileReaderWithOffset(ImageInputStream in, long offset)
+	public static ELFFileReader getELFFileReaderWithOffset(ImageInputStream in, long offset, long limit)
 			throws IOException, InvalidDumpFormatException {
 		in.mark(); // mark the stream as the validation and bitsize determinations move the underlying pointer
 		in.seek(offset);
@@ -228,9 +257,9 @@ public abstract class ELFFileReader {
 		in.setByteOrder(byteOrder);
 		in.reset(); // reset the stream so that the reader reads from the start
 		if (ELFCLASS64 == bitness) {
-			return new ELF64FileReader(in, offset);
+			return new ELF64FileReader(in, offset, limit);
 		} else {
-			return new ELF32FileReader(in, offset);
+			return new ELF32FileReader(in, offset, limit);
 		}
 	}
 
@@ -257,7 +286,7 @@ public abstract class ELFFileReader {
 		return (0x7F == signature[0] && 0x45 == signature[1] && 0x4C == signature[2] && 0x46 == signature[3]);
 	}
 
-	private String _nameForFileType(short type) {
+	private static String _nameForFileType(short type) {
 		String fileType = "Unknown";
 		int typeAsInt = 0xFFFF & type;
 
@@ -350,11 +379,13 @@ public abstract class ELFFileReader {
 		seek(_sectionHeaderOffset);
 		SectionHeaderEntry firstEntry = readSectionHeaderEntry();
 		if (firstEntry.offset != 0 || firstEntry.size != 0 || firstEntry._type != 0 || firstEntry._name != 0) {
+			markTruncated();
 			return; // first entry should be all zeros
 		}
 		seek(_sectionHeaderOffset + _sectionHeaderEntrySize);
 		SectionHeaderEntry secondEntry = readSectionHeaderEntry();
 		if (secondEntry.size == 0) {
+			markTruncated();
 			return; // second entry should not have zero size
 		}
 		_sectionHeaderEntries.add(firstEntry);
@@ -529,15 +560,12 @@ public abstract class ELFFileReader {
 
 		Map<Long, String> sectionHeaderStringTable = new HashMap<>();
 		for (SectionHeaderEntry entry : _sectionHeaderEntries) {
-			if (null != shstrtabEntry) {
-				String name = "";
-				seek(shstrtabEntry.offset + entry._name);
-				name = readString();
-				sectionHeaderStringTable.put(entry._name, name);
-				if (name == null) {
-					logger.log(Level.FINER,
-							"Error reading section header name. The core file is invalid and the results may unpredictable");
-				}
+			seek(shstrtabEntry.offset + entry._name);
+			String name = readString();
+			sectionHeaderStringTable.put(entry._name, name);
+			if (name == null) {
+				logger.log(Level.FINER,
+						"Error reading section header name. The core file is invalid and the results may unpredictable");
 			}
 		}
 		return sectionHeaderStringTable;
@@ -770,6 +798,20 @@ public abstract class ELFFileReader {
 	 */
 	public boolean isExecutable() {
 		return (_objectType == ET_EXEC);
+	}
+
+	/**
+	 * Are any parts of the core file known to be missing?
+	 */
+	public boolean isTruncated() {
+		return _isTruncated;
+	}
+
+	private void markTruncated() {
+		// Truncation is only meaningful for the core file itself (not the embedded objects).
+		if (baseOffset == 0) {
+			_isTruncated = true;
+		}
 	}
 
 	/**

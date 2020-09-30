@@ -188,6 +188,12 @@ public abstract class ELFDumpReader implements ILibraryDependentCore {
 		}
 	}
 
+	@Override
+	public boolean isTruncated() {
+		return _reader.isTruncated();
+	}
+
+	@Override
 	public void close() throws IOException {
 		// close the handle to the dump
 		_reader.close();
@@ -507,15 +513,12 @@ public abstract class ELFDumpReader implements ILibraryDependentCore {
 			if (!entry.isLoadable()) {
 				continue;
 			}
-			ELFFileReader elfReader;
 			try {
-				elfReader = ELFFileReader.getELFFileReaderWithOffset(_reader.getStream(), entry.fileOffset);
-				if (elfReader.isExecutable()) {
-					return elfReader;
+				ELFFileReader reader = getReaderForSegment(_reader.getStream(), entry);
+				if (reader != null && reader.isExecutable()) {
+					return reader;
 				}
 			} catch (IOException e) {
-				// keep iterating through the program header table
-			} catch (InvalidDumpFormatException e) {
 				// keep iterating through the program header table
 			}
 		}
@@ -542,7 +545,7 @@ public abstract class ELFDumpReader implements ILibraryDependentCore {
 			}
 			try {
 				// System.err.printf("Getting internal reader for %s, virtual address 0x%x, file offset 0x%x\n", executableName, entry.virtualAddress, entry.fileOffset );
-				ELFFileReader loadedElf = getReaderFromOffsetWithinCoreFile(_reader.getStream(), entry.fileOffset);
+				ELFFileReader loadedElf = getReaderForSegment(_reader.getStream(), entry);
 				if (loadedElf != null) {
 					moduleReadersByBaseAddress.put(entry.virtualAddress, loadedElf);
 				}
@@ -1014,12 +1017,10 @@ public abstract class ELFDumpReader implements ILibraryDependentCore {
 	private long readNote(long offset) throws IOException {
 		_reader.seek(offset);
 
-		long nameLength = padToIntBoundary(_reader.readInt());
+		long nameLength = _reader.readInt();
 		long dataSize = _reader.readInt();
 		long type = _reader.readInt();
-		_reader.readBytes((int) nameLength); // Ignore name
-
-		long dataOffset = offset + ELF_NOTE_HEADER_SIZE + nameLength;
+		long dataOffset = offset + ELF_NOTE_HEADER_SIZE + padToIntBoundary(nameLength);
 
 		if (NT_PRSTATUS == type) {
 			_threadEntries.add(new DataEntry(dataOffset, dataSize));
@@ -1367,10 +1368,9 @@ public abstract class ELFDumpReader implements ILibraryDependentCore {
 	 * @return reader to the module or null if not possible
 	 * @throws IOException
 	 */
-	private ELFFileReader getReaderFromOffsetWithinCoreFile(ImageInputStream in, long offset) throws IOException {
-		ELFFileReader loadedElf = null;
+	private ELFFileReader getReaderForSegment(ImageInputStream in, ProgramHeaderEntry entry) throws IOException {
 		try {
-			loadedElf = ELFFileReader.getELFFileReaderWithOffset(in, offset);
+			return ELFFileReader.getELFFileReaderWithOffset(in, entry.fileOffset, entry.fileSize);
 		} catch (InvalidDumpFormatException e) {
 			// This is usually thrown because the given program header entry
 			// points to a segment within the core file that does not start with an ELF header.
@@ -1380,7 +1380,6 @@ public abstract class ELFDumpReader implements ILibraryDependentCore {
 			// ELF-format modules and do not start with an ELF header.
 			return null;
 		}
-		return loadedElf;
 	}
 
 	/**

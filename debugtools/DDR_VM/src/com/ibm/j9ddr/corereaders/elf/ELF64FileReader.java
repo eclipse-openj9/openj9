@@ -56,18 +56,14 @@ import com.ibm.j9ddr.corereaders.InvalidDumpFormatException;
 
 public class ELF64FileReader extends ELFFileReader {
 
-	public ELF64FileReader(File file, ByteOrder byteOrder, long offset)
-			throws IOException, InvalidDumpFormatException {
-		super(file, byteOrder, offset);
-	}
-
 	public ELF64FileReader(File file, ByteOrder byteOrder)
 			throws IOException, InvalidDumpFormatException {
-		super(file, byteOrder, 0);
+		super(file, byteOrder);
 	}
 
-	public ELF64FileReader(ImageInputStream in, long offset) throws IOException, InvalidDumpFormatException {
-		super(in, offset);
+	public ELF64FileReader(ImageInputStream in, long offset, long limit)
+			throws IOException, InvalidDumpFormatException {
+		super(in, offset, limit);
 	}
 
 	public boolean validDump(byte[] data, long filesize) {
