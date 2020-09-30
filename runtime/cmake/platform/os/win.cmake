@@ -32,6 +32,7 @@ if(OMR_ENV_DATA64)
         -D_WIN64
     )
 endif()
+list(APPEND OMR_PLATFORM_DEFINITIONS -DWINDOWS)
 
 # Set flags we use to build the interpreter
 omr_stringify(CMAKE_J9VM_CXX_FLAGS
