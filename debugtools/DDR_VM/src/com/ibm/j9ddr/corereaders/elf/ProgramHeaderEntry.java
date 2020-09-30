@@ -27,8 +27,7 @@ import com.ibm.j9ddr.corereaders.memory.IDetailedMemoryRange;
 import com.ibm.j9ddr.corereaders.memory.IMemorySource;
 import com.ibm.j9ddr.corereaders.memory.UnbackedMemorySource;
 
-public class ProgramHeaderEntry
-{
+public class ProgramHeaderEntry {
 	// Program Headers defined in /usr/include/linux/elf.h
 	// type constants
 	// private static final int PT_NULL = 0;
@@ -47,8 +46,7 @@ public class ProgramHeaderEntry
 	// PHE structure definitions:
 	private int _type;
 	public final long fileOffset;
-	public final long fileSize; // if fileSize == 0 then we have to map memory from
-							// external lib file.
+	public final long fileSize; // if fileSize == 0 then we have to map memory from external lib file.
 	public final long virtualAddress;
 	public final long physicalAddress;
 	public final long memorySize;
@@ -57,10 +55,8 @@ public class ProgramHeaderEntry
 
 	// private long _alignment;
 
-	ProgramHeaderEntry(int type, long fileOffset, long fileSize,
-			long virtualAddress, long physicalAddress, long memorySize,
-			int flags, long alignment, ELFFileReader reader)
-	{
+	ProgramHeaderEntry(int type, long fileOffset, long fileSize, long virtualAddress, long physicalAddress,
+			long memorySize, int flags, long alignment, ELFFileReader reader) {
 		_type = type;
 		this.fileOffset = fileOffset;
 		this.fileSize = fileSize;
@@ -72,8 +68,7 @@ public class ProgramHeaderEntry
 		// _alignment = alignment;
 	}
 
-	boolean isEmpty()
-	{
+	boolean isEmpty() {
 		// if the core is not a complete dump of the address space, there will
 		// be missing pieces. These are manifested as program header entries
 		// with a real memory size but a zero file size
@@ -82,57 +77,50 @@ public class ProgramHeaderEntry
 		return 0 == fileSize;
 	}
 
-	boolean isDynamic()
-	{
+	boolean isDynamic() {
 		return PT_DYNAMIC == _type;
 	}
-	
-	boolean isLoadable()
-	{
+
+	boolean isLoadable() {
 		return PT_LOAD == _type;
 	}
 
-	boolean isNote()
-	{
+	boolean isNote() {
 		return PT_NOTE == _type;
 	}
 
 	public boolean isEhFrame() {
 		return PT_GNU_EH_FRAME == _type;
 	}
-	
-	IMemorySource asMemorySource()
-	{
+
+	IMemorySource asMemorySource() {
 		IMemorySource source = null;
 		if (!isEmpty()) {
-			boolean isExecutable = (_flags & PF_X) != 0;
 			source = new ELFMemorySource(virtualAddress, memorySize, fileOffset, reader);
 		} else {
 			source = new UnbackedMemorySource(virtualAddress, memorySize,
 					"ELF ProgramHeaderEntry storage declared but data not included");
 		}
-		Properties memoryProps = ((IDetailedMemoryRange)source).getProperties();
-		memoryProps.setProperty("IN_CORE", ""+(!isEmpty()));
-		if( (_flags & PF_W) != 0 ) {
+		Properties memoryProps = ((IDetailedMemoryRange) source).getProperties();
+		memoryProps.setProperty("IN_CORE", "" + (!isEmpty()));
+		if ((_flags & PF_W) != 0) {
 			memoryProps.setProperty(IDetailedMemoryRange.WRITABLE, Boolean.TRUE.toString());
 		}
-		if( (_flags & PF_X) != 0 ) {
+		if ((_flags & PF_X) != 0) {
 			memoryProps.setProperty(IDetailedMemoryRange.EXECUTABLE, Boolean.TRUE.toString());
 		}
-		if( (_flags & PF_R) != 0 ) {
+		if ((_flags & PF_R) != 0) {
 			memoryProps.setProperty(IDetailedMemoryRange.READABLE, Boolean.TRUE.toString());
 		}
 		return source;
 	}
 
-	boolean validInProcess(long address)
-	{
-		return virtualAddress <= address
-				&& address < virtualAddress + memorySize;
+	boolean validInProcess(long address) {
+		return virtualAddress <= address && address < virtualAddress + memorySize;
 	}
 
-	boolean contains(long address)
-	{
+	boolean contains(long address) {
 		return false == isEmpty() && validInProcess(address);
 	}
+
 }
