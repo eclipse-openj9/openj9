@@ -187,7 +187,7 @@ ppc64le_linux:
     11: '/usr/lib/jvm/adoptojdk-java-11'
     14: '/usr/lib/jvm/adoptojdk-java-14'
     15: '/usr/lib/jvm/adoptojdk-java-14'
-    next: '/usr/lib/jvm/adoptojdk-java-14'
+    next: '/usr/lib/jvm/adoptojdk-java-15'
   release:
     all: 'linux-ppc64le-server-release'
     8: 'linux-ppc64le-normal-server-release'
@@ -245,7 +245,7 @@ s390x_linux:
     11: '/usr/lib/jvm/adoptojdk-java-11'
     14: '/usr/lib/jvm/adoptojdk-java-14'
     15: '/usr/lib/jvm/adoptojdk-java-14'
-    next: '/usr/lib/jvm/adoptojdk-java-14'
+    next: '/usr/lib/jvm/adoptojdk-java-15'
   release:
     all: 'linux-s390x-server-release'
     8: 'linux-s390x-normal-server-release'
@@ -299,7 +299,7 @@ ppc64_aix:
     11: '/opt/java11_64'
     14: '/opt/java14_64'
     15: '/opt/java14_64'
-    next: '/opt/java14_64'
+    next: '/opt/java15_64'
   release:
     all: 'aix-ppc64-server-release'
     8: 'aix-ppc64-normal-server-release'
@@ -355,7 +355,7 @@ x86-64_linux:
     11: '/usr/lib/jvm/jdk-11'
     14: '/usr/lib/jvm/adoptojdk-java-14'
     15: '/usr/lib/jvm/adoptojdk-java-14'
-    next: '/usr/lib/jvm/adoptojdk-java-14'
+    next: '/usr/lib/jvm/adoptojdk-java-15'
   release:
     all: 'linux-x86_64-server-release'
     8: 'linux-x86_64-normal-server-release'
@@ -432,6 +432,7 @@ aarch64_linux:
     8: '/usr/lib/jvm/java-1.8.0'
     11: '/usr/lib/jvm/adoptojdk-java-11'
     15: '/usr/lib/jvm/jdk-15+36'
+    next: '/usr/lib/jvm/jdk-15+36'
   release:
     all: 'linux-aarch64-normal-server-release'
     15: 'linux-aarch64-server-release'
@@ -474,7 +475,7 @@ x86-64_windows:
     11: '/cygdrive/c/openjdk/jdk11'
     14: '/cygdrive/c/openjdk/jdk14'
     15: '/cygdrive/c/openjdk/jdk14'
-    next: '/cygdrive/c/openjdk/jdk14'
+    next: '/cygdrive/c/openjdk/jdk15'
   release:
     all: 'windows-x86_64-server-release'
     8: 'windows-x86_64-normal-server-release'
@@ -560,7 +561,7 @@ x86-64_mac:
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
     14: '/Users/jenkins/bootjdks/adoptojdk-java-14'
     15: '/Users/jenkins/bootjdks/adoptojdk-java-14'
-    next: '/Users/jenkins/bootjdks/adoptojdk-java-14'
+    next: '/Users/jenkins/bootjdks/adoptojdk-java-15'
   release:
     all: 'macosx-x86_64-server-release'
     8: 'macosx-x86_64-normal-server-release'
