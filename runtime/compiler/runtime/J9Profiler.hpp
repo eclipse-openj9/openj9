@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -231,8 +231,8 @@ class TR_RecompilationProfiler : public TR_Link<TR_RecompilationProfiler>
    {
    public:
 
-   TR_RecompilationProfiler(TR::Compilation * c, TR::Recompilation * r, bool initialComp = false)
-      : _compilation(c), _recompilation(r), _trMemory(c->trMemory()) { }
+   TR_RecompilationProfiler(TR::Compilation * c, TR::Recompilation * r, uint32_t flags = 0)
+      : _compilation(c), _recompilation(r), _trMemory(c->trMemory()), _flags(flags) { }
 
    virtual void modifyTrees() { }
    virtual void removeTrees() { }
@@ -272,7 +272,7 @@ class TR_LocalRecompilationCounters : public TR_RecompilationProfiler
    {
    public:
 
-   TR_LocalRecompilationCounters(TR::Compilation  * c, TR::Recompilation * r)
+   TR_LocalRecompilationCounters(TR::Compilation * c, TR::Recompilation * r)
       : TR_RecompilationProfiler(c, r) { }
 
    virtual void modifyTrees();
@@ -297,7 +297,7 @@ class TR_CatchBlockProfiler : public TR_RecompilationProfiler
    {
    public:
 
-   TR_CatchBlockProfiler(TR::Compilation  * c, TR::Recompilation * r, bool initialCompilation = false);
+   TR_CatchBlockProfiler(TR::Compilation * c, TR::Recompilation * r, bool initialCompilation = false);
 
    virtual void modifyTrees();
    virtual void removeTrees();
@@ -313,7 +313,7 @@ class TR_BlockFrequencyProfiler : public TR_RecompilationProfiler
    {
    public:
 
-   TR_BlockFrequencyProfiler(TR::Compilation  * c, TR::Recompilation * r);
+   TR_BlockFrequencyProfiler(TR::Compilation * c, TR::Recompilation * r);
 
    virtual TR_BlockFrequencyProfiler *asBlockFrequencyProfiler() { return this; }
    virtual void modifyTrees();
@@ -328,7 +328,7 @@ class TR_BlockFrequencyProfiler : public TR_RecompilationProfiler
 class TR_ValueProfiler : public TR_RecompilationProfiler
    {
    public:
-   TR_ValueProfiler(TR::Compilation  * c, TR::Recompilation * r, TR_ValueInfoSource profiler = LinkedListProfiler) :
+   TR_ValueProfiler(TR::Compilation * c, TR::Recompilation * r, TR_ValueInfoSource profiler = LinkedListProfiler) :
       TR_RecompilationProfiler(c, r, initialCompilation),
       _bdClass(NULL),
       _stringClass(NULL),
@@ -600,7 +600,7 @@ public:
    uint32_t getInitialBlockFrequency() { return _initialBlockFrequency; }
 
    void     setCallFactor(float factor) { _factor = factor; }
-   void     setInitialBlockFrequency(uint32_t initialFrequency) { _initialBlockFrequency =  initialFrequency; }
+   void     setInitialBlockFrequency(uint32_t initialFrequency) { _initialBlockFrequency = initialFrequency; }
 
 public:
    int32_t  _oldMaxFrequency;
