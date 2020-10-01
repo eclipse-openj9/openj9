@@ -36,6 +36,7 @@
 	<property name="src" location="./src" />
 	<property name="src_80" location="./src_80" />
 	<property name="src_90" location="./src_90" />
+	<property name="scr_DupClassNameTest" location="./scr_DupClassNameTest" />
 	<property name="build" location="./bin" />
 	<property name="build_resource" location="./resource" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
@@ -66,6 +67,9 @@
 		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 		<mkdir dir="${build_resource}" />
+		<mkdir dir="${build}/DupClassNameTest" />
+		<mkdir dir="${build}/DupClassNameTest/version1" />
+		<mkdir dir="${build}/DupClassNameTest/version2" />
 	</target>
 
 	<!--compiles the NoSuchMethod test classes. Multiple steps are needed to create classes that call non-existent methods -->
@@ -138,6 +142,16 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
+		<javac srcdir="${scr_DupClassNameTest}/version1" destdir="${build}/DupClassNameTest/version1" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<classpath>
+				<pathelement location="${LIB_DIR}/testng.jar" />
+			</classpath>
+		</javac>
+		<javac srcdir="${scr_DupClassNameTest}/version2" destdir="${build}/DupClassNameTest/version2" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<classpath>
+				<pathelement location="${LIB_DIR}/testng.jar" />
+			</classpath>
+		</javac>
 		<if>
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
@@ -321,6 +335,15 @@
 		<copy todir="${DEST}">
 			<fileset dir="${src}/../" includes="*.xml,*.policy" />
 			<fileset dir="${src}/../" includes="*.mk" />
+		</copy>
+		<mkdir dir="${DEST}/DupClassNameTest" />
+		<mkdir dir="${DEST}/DupClassNameTest/version1" />
+		<mkdir dir="${DEST}/DupClassNameTest/version2" />
+		<copy todir="${DEST}/DupClassNameTest/version1/">
+			<fileset dir="${build}/DupClassNameTest/version1" includes="*.class" />
+		</copy>
+		<copy todir="${DEST}/DupClassNameTest/version2/">
+			<fileset dir="${build}/DupClassNameTest/version2" includes="*.class" />
 		</copy>
 	</target>
 
