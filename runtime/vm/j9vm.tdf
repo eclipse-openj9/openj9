@@ -817,3 +817,8 @@ TraceExit=Trc_VM_lookupNativeAddress_fail_Exit Overhead=1 Level=3 Template="look
 
 TraceEntry=Trc_VM_registerBootstrapLibrary_Entry Overhead=1 Level=3 Template="registerBootstrapLibrary - libName (%s) libraryPtr (%p)"
 TraceExit=Trc_VM_registerBootstrapLibrary_Exit Overhead=1 Level=3 Template="registerBootstrapLibrary - libName (%s) libraryPtr (%p) result (%llu)"
+
+TraceEvent=Trc_VM_ConvertToJavaFullyQualifiedName_Get_ClassName Overhead=1 Level=4 Template="ConvertToJavaFullyQualifiedName - get result (%s) from %.*s"
+TraceEvent=Trc_VM_ConvertMethodSignature_Malformed_Signature Overhead=1 Level=1 Template="ConvertMethodSignature - malformed signature %.*s at index i = %d"
+TraceEvent=Trc_VM_ConvertMethodSignature_Signature_BufferSize Overhead=1 Level=4 Template="ConvertMethodSignature - signature %.*s has bufferSize %d"
+TraceEvent=Trc_VM_ConvertMethodSignature_Signature_Result Overhead=1 Level=4 Template="ConvertMethodSignature - result (%s) with resultLength %llu"

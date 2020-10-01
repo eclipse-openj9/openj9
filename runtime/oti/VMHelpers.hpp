@@ -176,6 +176,12 @@ typedef enum {
 	J9_BCLOOP_SEND_TARGET_CLASS_ARRAY_TYPE_IMPL,
 	J9_BCLOOP_SEND_TARGET_CLASS_IS_RECORD,
 	J9_BCLOOP_SEND_TARGET_CLASS_IS_SEALED,
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	J9_BCLOOP_SEND_TARGET_METHODHANDLE_INVOKEBASIC,
+	J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOSTATICSPECIAL,
+	J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOVIRTUAL,
+	J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOINTERFACE,
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 } VM_SendTarget;
 
 typedef enum {
@@ -331,7 +337,7 @@ public:
 
 	/**
 	 * @brief Return whether an exception is pending or not
-	 * 
+	 *
 	 * @param currentThread the J9VMThread to check
 	 * @return true if an exception is pending, otherwise false.
 	 */
@@ -785,7 +791,7 @@ done:
 	 * Perform a non-instrumentable allocation of an indexable flattened or unflattened class.
 	 *
 	 * Unflattened array classes that contain the J9ClassContainsUnflattenedFlattenables flag will return NULL
-	 * 
+	 *
 	 * @param currentThread[in] the current J9VMThread
 	 * @param objectAllocate[in] instance of MM_ObjectAllocationAPI created on the current thread
 	 * @param arrayClass[in] the indexable J9Class to instantiate
@@ -1082,7 +1088,7 @@ done:
 		}
 		return hash;
 	}
-	
+
 	/**
 	 * Determines whether the UTF8 string is an ASCII string.
 	 *
@@ -1441,7 +1447,7 @@ done:
 
 		return (jobject)ref;
 	}
-	
+
 	static VMINLINE U_32
 	lookupVarHandleMethodTypeCacheIndex(J9ROMClass *romClass, UDATA cpIndex)
 	{
