@@ -2229,6 +2229,13 @@ typedef struct J9NameAndSignature {
 	struct J9UTF8* signature;
 } J9NameAndSignature;
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+typedef struct J9InvokeCacheEntry {
+	j9object_t target;
+	j9object_t appendix;
+} J9InvokeCacheEntry;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
 typedef struct J9WalkStackFramesAndSlotsStorage {
 #if defined(J9VM_ARCH_X86)
 #if defined(J9VM_ENV_DATA64)
@@ -3079,7 +3086,11 @@ typedef struct J9Class {
 	struct J9Class* nextClassInSegment;
 	UDATA* ramConstantPool;
 	j9object_t* callSites;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	j9object_t* invokeCache;
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	j9object_t* methodTypes;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	j9object_t* varHandleMethodTypes;
 #if defined(J9VM_INTERP_CUSTOM_SPIN_OPTIONS)
 	struct J9VMCustomSpinOptions *customSpinOption;
@@ -3159,7 +3170,11 @@ typedef struct J9ArrayClass {
 	struct J9Class* nextClassInSegment;
 	UDATA* ramConstantPool;
 	j9object_t* callSites;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	j9object_t* invokeCache;
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	j9object_t* methodTypes;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	j9object_t* varHandleMethodTypes;
 #if defined(J9VM_INTERP_CUSTOM_SPIN_OPTIONS)
 	struct J9VMCustomSpinOptions *customSpinOption;
@@ -3301,7 +3316,11 @@ typedef struct J9ROMClass {
 	U_32 optionalFlags;
 	J9SRP optionalInfo;
 	U_32 maxBranchCount;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	U_32 invokeCacheCount;
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	U_32 methodTypeCount;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	U_32 varHandleMethodTypeCount;
 	U_32 bsmCount;
 	U_32 callSiteCount;
@@ -3378,7 +3397,11 @@ typedef struct J9ROMArrayClass {
 	U_32 optionalFlags;
 	J9SRP optionalInfo;
 	U_32 maxBranchCount;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	U_32 invokeCacheCount;
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	U_32 methodTypeCount;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	U_32 varHandleMethodTypeCount;
 	U_32 bsmCount;
 	U_32 callSiteCount;
@@ -3450,7 +3473,11 @@ typedef struct J9ROMReflectClass {
 	U_32 optionalFlags;
 	J9SRP optionalInfo;
 	U_32 maxBranchCount;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	U_32 invokeCacheCount;
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	U_32 methodTypeCount;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	U_32 varHandleMethodTypeCount;
 	U_32 bsmCount;
 	U_32 callSiteCount;

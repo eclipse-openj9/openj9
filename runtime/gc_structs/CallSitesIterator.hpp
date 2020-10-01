@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,7 +45,11 @@ class GC_CallSitesIterator
 	
 public:
 	GC_CallSitesIterator(J9Class *clazz) :
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		_callSiteCount(clazz->romClass->callSiteCount * 2),
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		_callSiteCount(clazz->romClass->callSiteCount),
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		_callSitePtr(clazz->callSites)
 	{
 		/* check if the class's call sites have been abandoned due to hot
