@@ -64,7 +64,10 @@ artifactory:
   server:
     osu: 'ci-eclipse-openj9'
     unb: 'ci-eclipse-openj9-unb'
-  repo: 'ci-eclipse-openj9'
+  repo:
+    default: 'ci-eclipse-openj9'
+  uploadDir:
+    default: "${repo}/${JOB_NAME}/${BUILD_ID}"
   # if numArtifacts not set, use build_discarder
   numArtifacts:
     unb: 5

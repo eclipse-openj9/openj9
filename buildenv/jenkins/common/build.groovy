@@ -438,6 +438,8 @@ def fetchFile(src, dest) {
 }
 
 def archive_diagnostics() {
+    def datestamp = variableFile.get_date()
+    def diagnosticsFilename = "${JOB_NAME}-${BUILD_NUMBER}-${datestamp}-diagnostics.tar.gz"
     if (SPEC.contains('zos')) {
         def logContent = currentBuild.rawBuild.getLog()
         // search for each occurrence of IEATDUMP success for DSN=
@@ -467,27 +469,27 @@ def archive_diagnostics() {
             }
         }
         // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
-        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | pax -wzf ${DIAGNOSTICS_FILENAME}"
+        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | pax -wzf ${diagnosticsFilename}"
     } else if (SPEC.endsWith("_cm")) {
-        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' -o -name ddr_info -o -name superset.dat -o -name j9ddr.dat -o -name '*.stub.h' -o -name '*.annt.h' | sed 's#^./##' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"
+        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' -o -name ddr_info -o -name superset.dat -o -name j9ddr.dat -o -name '*.stub.h' -o -name '*.annt.h' | sed 's#^./##' | tar -zcvf ${diagnosticsFilename} -T -"
     } else {
-        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"
+        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | tar -zcvf ${diagnosticsFilename} -T -"
     }
     if (ARTIFACTORY_CONFIG) {
         def uploadSpec = """{
             "files":[
                 {
-                    "pattern": "${DIAGNOSTICS_FILENAME}",
+                    "pattern": "${diagnosticsFilename}",
                     "target": "${ARTIFACTORY_CONFIG['uploadDir']}",
                     "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"
                 }
             ]
         }"""
         upload_artifactory_core(ARTIFACTORY_CONFIG['defaultGeo'], uploadSpec)
-        DIAGNOSTICS_FILE_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${DIAGNOSTICS_FILENAME}"
-        currentBuild.description += "<br><a href=${DIAGNOSTICS_FILE_URL}>${DIAGNOSTICS_FILENAME}</a>"
+        DIAGNOSTICS_FILE_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${diagnosticsFilename}"
+        currentBuild.description += "<br><a href=${DIAGNOSTICS_FILE_URL}>${diagnosticsFilename}</a>"
     } else {
-        archiveArtifacts artifacts: "${DIAGNOSTICS_FILENAME}", fingerprint: false
+        archiveArtifacts artifacts: "${diagnosticsFilename}", fingerprint: false
     }
 }
 
@@ -575,13 +577,12 @@ def build_all() {
                         // Cleanup in case an old build left anything behind
                         cleanWs disableDeferredWipeout: true, deleteDirs: true
                         add_node_to_description()
-                        // Setup Artifactory now that we are on a node. This determines which server(s) we push to.
-                        variableFile.set_artifactory_config(BUILD_IDENTIFIER)
-                        // initialize BOOT_JDK, FREEMARKER, OPENJDK_REFERENCE_REPO here 
+                        // initialize BOOT_JDK, FREEMARKER, OPENJDK_REFERENCE_REPO here
                         // to correctly expand $HOME variable
                         variableFile.set_build_variables_per_node()
                         get_source()
                         variableFile.set_sdk_variables()
+                        variableFile.set_artifactory_config(BUILD_IDENTIFIER)
                         build()
                         archive_sdk()
                     } finally {

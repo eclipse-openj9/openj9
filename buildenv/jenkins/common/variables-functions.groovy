@@ -622,12 +622,11 @@ def set_sdk_variables() {
     set_sdk_versions()
     DATESTAMP = get_date()
     SDK_FILE_EXT = SPEC.contains('zos') ? '.pax' : '.tar.gz'
-
-    // Use template from variable file if provided otherwise default
     SDK_FILENAME = get_value(VARIABLES.misc.sdk_filename_template, BUILD_IDENTIFIER) ?: get_value(VARIABLES.misc.sdk_filename_template, 'default')
     echo "SDK_FILENAME (before processing):'${SDK_FILENAME}'"
     // If filename has unresolved variables at this point, use Groovy Template Binding engine to resolve them
     if (SDK_FILENAME.contains('$')) {
+        set_sdk_impl()
         // Add all variables that could be used in a template
         def binding = ["SDK_IMPL":SDK_IMPL, "SPEC":SPEC, "SDK_VERSION":SDK_VERSION, "FULL_SDK_VERSION":FULL_SDK_VERSION, "JAVA_RELEASE":JAVA_RELEASE, "JAVA_SUB_RELEASE":JAVA_SUB_RELEASE, "DATESTAMP":DATESTAMP, "SDK_FILE_EXT":SDK_FILE_EXT]
         def engine = new groovy.text.SimpleTemplateEngine()
@@ -644,7 +643,6 @@ def set_sdk_variables() {
     echo "Using JAVADOC_FILENAME = ${JAVADOC_FILENAME}"
     echo "Using JAVADOC_OPENJ9_ONLY_FILENAME = ${JAVADOC_OPENJ9_ONLY_FILENAME}"
     echo "Using DEBUG_IMAGE_FILENAME = ${DEBUG_IMAGE_FILENAME}"
-    DIAGNOSTICS_FILENAME = "${JOB_NAME}-${BUILD_NUMBER}-${DATESTAMP}-diagnostics.tar.gz"
 }
 
 def set_sdk_versions() {
@@ -797,10 +795,24 @@ def set_artifactory_config(id="Nightly") {
 
     if (VARIABLES.artifactory.defaultGeo) {
         // Allow default geo to be overridden with a param. Used by the Clenaup script to target a specific server.
-        ARTIFACTORY_CONFIG['defaultGeo'] = (params.ARTIFACTORY_GEO) ? params.ARTIFACTORY_GEO : VARIABLES.artifactory.defaultGeo
+        ARTIFACTORY_CONFIG['defaultGeo'] = params.ARTIFACTORY_GEO ?: VARIABLES.artifactory.defaultGeo
         ARTIFACTORY_CONFIG['geos'] = VARIABLES.artifactory.server.keySet()
-        ARTIFACTORY_CONFIG['repo'] = VARIABLES.artifactory.repo
-        ARTIFACTORY_CONFIG['uploadDir'] = "${ARTIFACTORY_CONFIG['repo']}/${JOB_NAME}/${BUILD_ID}/"
+        ARTIFACTORY_CONFIG['repo'] = get_value(VARIABLES.artifactory.repo, id) ?: get_value(VARIABLES.artifactory.repo, 'default')
+        def repo = ARTIFACTORY_CONFIG['repo']
+        ARTIFACTORY_CONFIG['uploadDir'] = get_value(VARIABLES.artifactory.uploadDir, id) ?: get_value(VARIABLES.artifactory.uploadDir, 'default')
+        if (!ARTIFACTORY_CONFIG['uploadDir'].endsWith('/')) {
+            ARTIFACTORY_CONFIG['uploadDir'] += '/'
+        }
+        // If uploadDir has unresolved variables at this point, use Groovy Template Binding engine to resolve them
+        if (ARTIFACTORY_CONFIG['uploadDir'].contains('$')) {
+            if (ARTIFACTORY_CONFIG['uploadDir'].contains('SDK_IMPL') && !SDK_IMPL) {
+                set_sdk_impl()
+            }
+            // Add all variables that could be used in a template
+            def binding = ["JOB_NAME":JOB_NAME, "BUILD_ID":BUILD_ID, "repo":repo, "SDK_IMPL":SDK_IMPL, "JAVA_RELEASE":JAVA_RELEASE, "JAVA_SUB_RELEASE":JAVA_SUB_RELEASE, "SPEC":SPEC, "DATESTAMP":DATESTAMP]
+            def engine = new groovy.text.SimpleTemplateEngine()
+            ARTIFACTORY_CONFIG['uploadDir'] = engine.createTemplate(ARTIFACTORY_CONFIG['uploadDir']).make(binding)
+        }
 
         for (geo in ARTIFACTORY_CONFIG['geos']) {
             ARTIFACTORY_CONFIG[geo] = [:]
@@ -835,7 +847,6 @@ def set_artifactory_config(id="Nightly") {
                 }
             }
         }
-
         echo "ARTIFACTORY_CONFIG:'${ARTIFACTORY_CONFIG}'"
         /*
         * Write out default server values to string variables.
