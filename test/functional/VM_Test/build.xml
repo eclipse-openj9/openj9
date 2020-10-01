@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,8 @@
 	<property name="build" location="./bin" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 	<property name="TestUtilities" location="../TestUtilities/src"/>
+	<property name="classUnloadingSupportTests" location="./classUnloadingSupportTests/src"/>
+	<property name="classUnloadingBin" location="./classUnloadingSupportTests/bin"/>
 
 	<path id="build.cp">
 		<fileset  dir="${LIB_DIR}/" includes="junit4.jar" />
@@ -53,6 +55,7 @@
 		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 		<mkdir dir="${databin}" />
+		<mkdir dir="${classUnloadingBin}"/>
 		<mkdir dir="${databin}/InvalidClasspathResource1" />
 		<mkdir dir="${databin}/InvalidClasspathResource2" />
 		<mkdir dir="${databin}/InvalidClasspathResource3" />
@@ -79,6 +82,25 @@
 		</javac>
 
 		<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED --add-exports=jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED" />
+
+		<if>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
+			<then>
+				<javac destdir="${classUnloadingBin}" nowarn="on" debug="true" fork="true" executable="${compiler.javac}" classpathref="build.cp" encoding="ISO-8859-1">
+					<src path="${classUnloadingSupportTests}"/>
+					<src path="${src}"/>
+					<include name="j9vm/test/classunloading/**"/>
+				</javac>
+			</then>
+			<else>
+				<javac destdir="${classUnloadingBin}" nowarn="on" debug="true" fork="true" executable="${compiler.javac}" classpathref="build.cp" encoding="ISO-8859-1">
+					<src path="${classUnloadingSupportTests}"/>
+					<src path="${src}"/>
+					<include name="j9vm/test/classunloading/**"/>
+					<compilerarg line='${addExports}' />
+				</javac>
+			</else>
+		</if>
 
 		<if>
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
@@ -155,6 +177,13 @@
 			<fileset dir="${data}" includes="ParentlessChild.class" />
 			<fileset dir="${properties}"/>
 		</jar>
+		<jar jarfile="${DEST}/classestoload.jar" filesonly="true">
+			<fileset dir="${classUnloadingBin}"/>
+			<fileset dir="${classUnloadingSupportTests}"/>
+			<fileset dir="${src}">
+				<include name="j9vm/test/classunloading/**"/>
+			</fileset>
+		</jar>
 		<copy todir="${DEST}">
 			<fileset dir="${src}/../" includes="*.xml" />
 			<!--copy SharedClassesSysVTesting perl script -->
@@ -170,6 +199,7 @@
 			<fileset dir="${data}" includes="**/*.class" />
 		</delete>
 		<delete dir="${databin}" />
+		<delete dir="${classUnloadingBin}" />
 	</target>
 
 	<target name="build" >

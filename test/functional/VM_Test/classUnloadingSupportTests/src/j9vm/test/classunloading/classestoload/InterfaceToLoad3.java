@@ -19,27 +19,11 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package j9vm.test.classunloading.testcases;
+package j9vm.test.classunloading.classestoload;
 
-import j9vm.test.classunloading.*;
+import j9vm.test.classunloading.FinalizationIndicator;
 
-/**
- *		Create a ClassPathSettingClassLoader, and let it be unloaded.  This loader attempts to set a vm
- *	classpath for itself when it is instantiated.
- */
-public class ClassPathSettingClassLoaderTest extends ClassUnloadingTestParent {
-public static void main(String[] args) throws Exception  {
-	new ClassPathSettingClassLoaderTest().runTest();
-}
+public interface InterfaceToLoad3 {
+	public static final FinalizationIndicator interface3 = new FinalizationIndicator( InterfaceToLoad3.class.getName());
 
-protected String[] unloadableItems() { 
-	return new String[] {"ClassLoader"};
-}
-protected String[] itemsToBeUnloaded() { 
-	return new String[] {"ClassLoader"};
-}
-
-protected void createScenario() throws Exception {
-	new ClassPathSettingClassLoader("ClassLoader", jarFileName);//.loadClass("j9vm.test.classunloading.classestoload.ClassToLoad1").newInstance();
-}
 }
