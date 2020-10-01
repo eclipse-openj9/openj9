@@ -5122,7 +5122,10 @@ TR_ResolvedJ9Method::methodModifiers()
 bool
 TR_ResolvedJ9Method::isConstructor()
    {
-   return nameLength()==6 && !strncmp(nameChars(), "<init>", 6);
+   if (!TR::Compiler->om.areValueTypesEnabled())
+      return (nameLength()==6 && !strncmp(nameChars(), "<init>", 6));
+   else
+      return (nameLength()==6 && !isStatic() && (returnType()==TR::NoType) && !strncmp(nameChars(), "<init>", 6));
    }
 
 bool TR_ResolvedJ9Method::isStatic()            { return methodModifiers() & J9AccStatic ? true : false; }
