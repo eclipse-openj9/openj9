@@ -615,6 +615,9 @@ def set_build_variables() {
         BUILD_ENV_CMD = ''
     }
 
+    GSKIT_SDK_DOWNLOAD_LINK = buildspec.getScalarField("gskit.sdk", SDK_VERSION)
+    GSKIT_LIB_DOWNLOAD_LINK = buildspec.getScalarField("gskit.lib", SDK_VERSION)
+
     echo "Using BUILD_ENV_CMD = ${BUILD_ENV_CMD}, BUILD_ENV_VARS_LIST = ${BUILD_ENV_VARS_LIST.toString()}"
 }
 
