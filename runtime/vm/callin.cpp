@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2019 IBM Corp. and others
+ * Copyright (c) 2012, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -940,6 +940,54 @@ sendForGenericInvoke(J9VMThread *currentThread, j9object_t methodHandle, j9objec
 		restoreCallInFrame(currentThread);
 	}
 	Trc_VM_sendForGenericInvoke_Exit(currentThread);
+}
+
+void JNICALL
+sendResolveMethodHandle2(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA cpIndex, I_32 refKind, J9Class *resolvedClass, J9ROMNameAndSignature* nameAndSig, j9object_t appendix)
+{
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	J9VMEntryLocalStorage newELS;
+	if (buildCallInStackFrame(currentThread, &newELS, true, false)) {
+		/* Convert name and signature to String objects */
+		J9JavaVM *vm = currentThread->javaVM;
+		J9MemoryManagerFunctions const * const mmFuncs = vm->memoryManagerFunctions;
+		J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
+		j9object_t nameString = mmFuncs->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9_STR_INTERN);
+		if (NULL != nameString) {
+			J9UTF8 *sigUTF = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, nameString);
+			j9object_t sigString = mmFuncs->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), J9_STR_INTERN);
+			nameString = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+			if (NULL != sigString) {
+				/* Run the method */
+				/* skip one slot because we are passing a long */
+				currentThread->sp -= 2;
+				/*
+				 * Need to pass the ramClass so that we can get the
+				 * correct ramConstantPool. If we pass the classObject
+				 * we will always get the latest ramClass, which is not always
+				 * the correct one. In cases where we can have an
+				 * old method (caused by class redefinition) on the stack,
+				 * we will need to search the old ramClass to get the correct
+				 * constantPool. It is difficult to do this if we pass the
+				 * classObject.
+				 */
+				*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(ramCP->ramClass);
+				*(I_32*)--currentThread->sp = refKind;
+				*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(resolvedClass);
+				*--currentThread->sp = (UDATA)nameString;
+				*--currentThread->sp = (UDATA)sigString;
+				*--currentThread->sp = (UDATA)appendix;
+				currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
+				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLEHELPER_RESOLVEMETHODHANDLE_METHOD(vm);
+				c_cInterpreter(currentThread);
+			}
+		}
+		restoreCallInFrame(currentThread);
+	}
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	Assert_VM_unreachable();
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 }
 
 void JNICALL
