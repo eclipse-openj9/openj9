@@ -88,6 +88,8 @@ misc:
     sanity.openjdk: 'true'
     extended.openjdk: 'true'
     special.openjdk: 'true'
+  sdk_filename_template:
+    default: "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}${SDK_FILE_EXT}"
 credentials:
   github: 'b6987280-6402-458f-bdd6-7affc2e360d4'
 test_dependencies_job_name: 'test.getDependency'

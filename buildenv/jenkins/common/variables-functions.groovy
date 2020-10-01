@@ -581,6 +581,7 @@ def set_build_variables() {
     set_release()
     set_jdk_folder()
     set_build_extra_options()
+    set_sdk_impl()
 
     // set variables for the build environment configuration
     // check job parameters, if not provided default to variables file
@@ -618,9 +619,22 @@ def set_build_variables() {
 }
 
 def set_sdk_variables() {
+    set_sdk_versions()
     DATESTAMP = get_date()
     SDK_FILE_EXT = SPEC.contains('zos') ? '.pax' : '.tar.gz'
-    SDK_FILENAME =  "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}${SDK_FILE_EXT}"
+
+    // Use template from variable file if provided otherwise default
+    SDK_FILENAME = get_value(VARIABLES.misc.sdk_filename_template, BUILD_IDENTIFIER) ?: get_value(VARIABLES.misc.sdk_filename_template, 'default')
+    echo "SDK_FILENAME (before processing):'${SDK_FILENAME}'"
+    // If filename has unresolved variables at this point, use Groovy Template Binding engine to resolve them
+    if (SDK_FILENAME.contains('$')) {
+        // Add all variables that could be used in a template
+        def binding = ["SDK_IMPL":SDK_IMPL, "SPEC":SPEC, "SDK_VERSION":SDK_VERSION, "FULL_SDK_VERSION":FULL_SDK_VERSION, "JAVA_RELEASE":JAVA_RELEASE, "JAVA_SUB_RELEASE":JAVA_SUB_RELEASE, "DATESTAMP":DATESTAMP, "SDK_FILE_EXT":SDK_FILE_EXT]
+        def engine = new groovy.text.SimpleTemplateEngine()
+        SDK_FILENAME = engine.createTemplate(SDK_FILENAME).make(binding)
+    }
+    echo "SDK_FILENAME:'${SDK_FILENAME}'"
+
     TEST_FILENAME = "test-images.tar.gz"
     JAVADOC_FILENAME = "OpenJ9-JDK${SDK_VERSION}-Javadoc-${SPEC}-${DATESTAMP}.tar.gz"
     JAVADOC_OPENJ9_ONLY_FILENAME = "OpenJ9-JDK${SDK_VERSION}-Javadoc-openj9-${SPEC}-${DATESTAMP}.tar.gz"
@@ -631,6 +645,53 @@ def set_sdk_variables() {
     echo "Using JAVADOC_OPENJ9_ONLY_FILENAME = ${JAVADOC_OPENJ9_ONLY_FILENAME}"
     echo "Using DEBUG_IMAGE_FILENAME = ${DEBUG_IMAGE_FILENAME}"
     DIAGNOSTICS_FILENAME = "${JOB_NAME}-${BUILD_NUMBER}-${DATESTAMP}-diagnostics.tar.gz"
+}
+
+def set_sdk_versions() {
+    /*
+     * Get full version from tag and replace + with _
+     * Eg. JDK8
+     * OPENJDK_TAG := jdk8u272-b08
+     * FULL_SDK_VERSION = jdk8u272-b08
+     * JAVA_RELEASE = 8
+     * JAVS_SUB_RELEASE = 8u272
+     *
+     * Eg. JDK11
+     * OPENJDK_TAG := jdk-11.0.8+10
+     * FULL_SDK_VERSION = jdk-11.0.8_10
+     * JAVA_RELEASE = 11.0
+     * JAVS_SUB_RELEASE = 11.0.8
+     *
+     * Eg. Initial feature release
+     * OPENJDK_TAG := jdk-15+36
+     * FULL_SDK_VERSION = jdk-15_36
+     * JAVA_RELEASE = 15.0
+     * JAVA_SUB_RELEASE = 15.0.0
+     */
+
+    FULL_SDK_VERSION = sh (
+        script: "sed -n -e 's/+/_/g; s/^OPENJDK_TAG := //p' < closed/openjdk-tag.gmk",
+        returnStdout: true
+    ).trim()
+    def subReleaseStartIndexChar = 'jdk-'
+    def subReleaseEndIndexChar = '_'
+    def releaseEndIndexChar = '.'
+    if (SDK_VERSION == '8') {
+        subReleaseStartIndexChar = 'jdk'
+        subReleaseEndIndexChar = '-'
+        releaseEndIndexChar = 'u'
+    }
+    JAVA_SUB_RELEASE = FULL_SDK_VERSION.substring(FULL_SDK_VERSION.indexOf(subReleaseStartIndexChar) + subReleaseStartIndexChar.length(), FULL_SDK_VERSION.indexOf(subReleaseEndIndexChar))
+
+    if (!JAVA_SUB_RELEASE.contains('.') && !SDK_VERSION == '8') {
+        // Must be the initial
+        JAVA_SUB_RELEASE += ".0.0"
+    }
+    JAVA_RELEASE = JAVA_SUB_RELEASE.substring(0,JAVA_SUB_RELEASE.lastIndexOf(releaseEndIndexChar))
+
+    echo "FULL_SDK_VERSION:'${FULL_SDK_VERSION}'"
+    echo "JAVA_RELEASE:'${JAVA_RELEASE}'"
+    echo "JAVA_SUB_RELEASE:'${JAVA_SUB_RELEASE}'"
 }
 
 def get_date() {
@@ -667,6 +728,10 @@ def set_test_targets() {
     }
     echo "TESTS:'${TESTS}'"
 
+    set_sdk_impl()
+}
+
+def set_sdk_impl() {
     // Set SDK Implementation, default to OpenJ9
     SDK_IMPL = buildspec.getScalarField("sdk_impl", 'all') ?: 'openj9'
     SDK_IMPL_SHORT = buildspec.getScalarField("sdk_impl_short", 'all') ?: 'j9'
@@ -973,7 +1038,6 @@ def set_job_variables(job_type) {
             set_node(job_type)
             // set variables for a build job
             set_build_variables()
-            set_sdk_variables()
             add_pr_to_description()
             break
         case "pipeline":
