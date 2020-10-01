@@ -583,6 +583,7 @@ def build_all() {
                         get_source()
                         variableFile.set_sdk_variables()
                         variableFile.set_artifactory_config(BUILD_IDENTIFIER)
+                        variableFile.set_build_custom_options()
                         build()
                         archive_sdk()
                     } finally {
