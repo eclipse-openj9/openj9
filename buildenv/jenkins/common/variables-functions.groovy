@@ -681,7 +681,7 @@ def set_sdk_versions() {
     }
     JAVA_SUB_RELEASE = FULL_SDK_VERSION.substring(FULL_SDK_VERSION.indexOf(subReleaseStartIndexChar) + subReleaseStartIndexChar.length(), FULL_SDK_VERSION.indexOf(subReleaseEndIndexChar))
 
-    if (!JAVA_SUB_RELEASE.contains('.') && !SDK_VERSION == '8') {
+    if (!JAVA_SUB_RELEASE.contains('.') && !SDK_VERSION.equals('8')) {
         // Must be the initial
         JAVA_SUB_RELEASE += ".0.0"
     }
