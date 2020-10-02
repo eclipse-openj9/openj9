@@ -369,10 +369,10 @@ public class DiagnosticProperties {
 	 * Encode information about an exception into properties.
 	 *
 	 * @param e Exception object
-	 * @return Properties object
+	 * @return DiagnosticProperties object
 	 */
-	public static Properties makeExceptionProperties(Exception e) {
-		Properties props = new Properties();
+	public static DiagnosticProperties makeExceptionProperties(Exception e) {
+		DiagnosticProperties props = new DiagnosticProperties();
 		props.put(IPC.PROPERTY_DIAGNOSTICS_ERROR, Boolean.toString(true));
 		props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORTYPE, e.getClass().getName());
 		String msg = e.getMessage();
