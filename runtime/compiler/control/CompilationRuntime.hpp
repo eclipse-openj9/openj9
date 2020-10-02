@@ -561,8 +561,10 @@ public:
       else
 #endif /* defined(J9VM_OPT_JITSERVER) */
          {
-         TR_ASSERT(!((intptr_t)method->extra & J9_STARTPC_NOT_TRANSLATED), "Method NOT Jitted!");
-         return (void *)method->extra;
+         /* Read extra field only once */
+         void *extra = method->extra;
+         TR_ASSERT(!((intptr_t)extra & J9_STARTPC_NOT_TRANSLATED), "Method NOT Jitted!");
+         return extra;
          }
       }
    static void setJ9MethodExtra(J9Method *method, intptr_t newValue)

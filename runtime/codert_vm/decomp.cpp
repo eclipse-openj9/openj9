@@ -259,10 +259,11 @@ jitResetAllMethods(J9VMThread *currentThread)
 		U_32 methodCount = clazz->romClass->romMethodCount;
 
 		while (methodCount != 0) {
-			if (0 == ((UDATA)method->extra & J9_STARTPC_NOT_TRANSLATED)) {
+			UDATA extra = (UDATA)method->extra;
+			if (0 == (extra & J9_STARTPC_NOT_TRANSLATED)) {
 				/* Do not reset JIT INLs (currently in FSD there are no compiled JNI natives) */
 				if (0 == (J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccNative)) {
-					J9JITExceptionTable *metaData = vm->jitConfig->jitGetExceptionTableFromPC(currentThread, (UDATA) method->extra);
+					J9JITExceptionTable *metaData = vm->jitConfig->jitGetExceptionTableFromPC(currentThread, extra);
 					if (NULL != metaData) {
 						/* 0xCC is the "int3" instruction on x86.
 						 * This will cause a crash if this instruction is executed.
@@ -1575,11 +1576,12 @@ static void
 markMethodBreakpointed(J9VMThread * currentThread, J9JITBreakpointedMethod * breakpointedMethod)
 {
 	J9Method * method = breakpointedMethod->method;
+	void * extra = method->extra;
 
 	breakpointedMethod->hasBeenTranslated = FALSE;
-	if ((((UDATA) method->extra) & J9_STARTPC_NOT_TRANSLATED) == 0) {
+	if ((((UDATA) extra) & J9_STARTPC_NOT_TRANSLATED) == 0) {
 		breakpointedMethod->hasBeenTranslated = TRUE;
-		_fsdSwitchToInterpPatchEntry(method->extra);
+		_fsdSwitchToInterpPatchEntry(extra);
 	}
 
 	method->constantPool = (J9ConstantPool *) ((UDATA) method->constantPool | (UDATA)J9_STARTPC_METHOD_BREAKPOINTED);
