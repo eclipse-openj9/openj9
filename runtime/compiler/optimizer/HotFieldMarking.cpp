@@ -76,10 +76,10 @@ static int32_t getReducedFrequencyMax(int32_t currentValue, int32_t count, int32
 
 int32_t TR_HotFieldMarking::perform()
    {
-   if (!TR::Compiler->om.isHotReferenceFieldRequired())
+   if (!TR::Compiler->om.isHotReferenceFieldRequired() || comp()->getOption(TR_DisableMarkingOfHotFields))
       {
       if (trace())
-         traceMsg(comp(), "Skipping hot field marking since dynamic breadth first scan ordering is disabled\n");
+         traceMsg(comp(), "Skipping hot field marking since hot field marking is disabled. Do not disable hot fields if using dynamic breadth first scan ordering.\n");
       return 0;
       }
 

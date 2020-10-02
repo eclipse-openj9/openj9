@@ -116,9 +116,6 @@
 #else
 #define CACHE_LINE_SIZE 64
 #endif
-/* create macros to interpret the hot field descriptor */
-#define HOTFIELD_SHOULD_ALIGN(descriptor) (0x1 == (0x1 & (descriptor)))
-#define HOTFIELD_ALIGNMENT_BIAS(descriptor, heapObjectAlignment) (((descriptor) >> 1) * (heapObjectAlignment))
 
 /* give a name to the common context.  Note that this may need to be stored locally and fetched, at start-up,
  * if the common context disappears or becomes defined in a more complicated fashion
@@ -152,7 +149,6 @@ MM_CopyForwardScheme::MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegi
 	, _abortInProgress(false)
 	, _regionCountCannotBeEvacuated(0)
 	, _regionCountReservedNonEvacuated(0)
-	, _cacheLineAlignment(0)
 	, _clearableProcessingStarted(false)
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	, _dynamicClassUnloadingEnabled(false)
@@ -286,8 +282,6 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 
 	/* Cached pointer to the inter region remembered set */
 	_interRegionRememberedSet = MM_GCExtensions::getExtensions(env)->interRegionRememberedSet;
-
-	_cacheLineAlignment = CACHE_LINE_SIZE;
 
 	/* TODO: how to determine this value? It should be large enough that each thread does
 	 * real work, but small enough to give good sharing
@@ -1866,7 +1860,6 @@ MM_CopyForwardScheme::getContextForHeapAddress(void *address)
 J9Object *
 MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ScavengerForwardedHeader* forwardedHeader, bool leafType)
 {
-	bool const compressed = env->compressObjectReferences();
 	J9Object *result = NULL;
 	J9Object *object = forwardedHeader->getObject();
 	UDATA objectCopySizeInBytes = 0;
@@ -1890,9 +1883,6 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 
 		result = object;
 	} else {
-		UDATA hotFieldAlignmentDescriptor = 0;
-		UDATA* hotFieldPadBase = NULL;
-		UDATA hotFieldPadSize = 0;
 		MM_CopyScanCacheVLHGC *copyCache = NULL;
 		void *newCacheAlloc = NULL;
 		bool doesObjectNeedHash = false;
@@ -1902,20 +1892,6 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 		calculateObjectDetailsForCopy(forwardedHeader, &objectCopySizeInBytes, &objectReserveSizeInBytes, &doesObjectNeedHash, &isObjectGrowingHashSlot);
 
 		Assert_MM_objectAligned(env, objectReserveSizeInBytes);
-
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-		/* adjust the reserved object's size if we are aligning hot fields and this class has a known hot field */
-		if (_extensions->scavengerAlignHotFields) {
-			UDATA checkDescriptor = forwardedHeader->getPreservedClass()->instanceHotFieldDescription;
-			/* set the descriptor field if we should be aligning (since assuming that 0 means no is not safe) */
-			if (HOTFIELD_SHOULD_ALIGN(checkDescriptor)) {
-				hotFieldAlignmentDescriptor = checkDescriptor;
-				/* for simplicity, add the maximum padding we could need (and back off after allocation) */
-				objectReserveSizeInBytes += (_cacheLineAlignment - _objectAlignmentInBytes);
-				Assert_MM_objectAligned(env, objectReserveSizeInBytes);
-			}
-		}
-#endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
 		reservingContext = getPreferredAllocationContext(reservingContext, object);
 
@@ -1933,27 +1909,6 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 			J9Object *destinationObjectPtr = (J9Object *)copyCache->cacheAlloc;
 			Assert_MM_true(NULL != destinationObjectPtr);
 
-			/* now correct for the hot field alignment */
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-			if (0 != hotFieldAlignmentDescriptor) {
-				UDATA remainingInCacheLine = _cacheLineAlignment - ((UDATA)destinationObjectPtr % _cacheLineAlignment);
-				UDATA alignmentBias = HOTFIELD_ALIGNMENT_BIAS(hotFieldAlignmentDescriptor, _objectAlignmentInBytes);
-				/* do alignment only if the object cannot fit in the remaining space in the cache line */
-				if ((remainingInCacheLine < objectCopySizeInBytes) && (alignmentBias < remainingInCacheLine)) {
-					hotFieldPadSize = ((remainingInCacheLine + _cacheLineAlignment) - (alignmentBias % _cacheLineAlignment)) % _cacheLineAlignment;
-					hotFieldPadBase = (UDATA *)destinationObjectPtr;
-					/* now fix the object pointer so that the hot field is aligned */
-					destinationObjectPtr = (J9Object *)((UDATA)destinationObjectPtr + hotFieldPadSize);
-				}
-				/* and update the reserved size so that we "un-reserve" the extra memory we said we might need.  This is done by
-				 * removing the excess reserve since we already accounted for the hotFieldPadSize by bumping the destination pointer
-				 * and now we need to revert to the amount needed for the object allocation and its array alignment so the rest of
-				 * the method continues to function without needing to know about this extra alignment calculation
-				 */
-				objectReserveSizeInBytes = objectReserveSizeInBytes - (_cacheLineAlignment - _objectAlignmentInBytes);
-			}
-#endif /* J9VM_INTERP_NATIVE_SUPPORT */
-
 			/* and correct for the double array alignment */
 			newCacheAlloc = (void *) ( ((U_8 *)destinationObjectPtr) + objectReserveSizeInBytes );
 
@@ -1963,13 +1918,6 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 			Assert_MM_true(NULL != destinationObjectPtr);
 			if (destinationObjectPtr == originalDestinationObjectPtr) {
 				/* Succeeded in forwarding the object - copy and adjust the age value */
-
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-				if (NULL != hotFieldPadBase) {
-					/* lay down a hole (XXX:  This assumes that we are using AOL (address-ordered-list)) */
-					MM_HeapLinkedFreeHeader::fillWithHoles(hotFieldPadBase, hotFieldPadSize, compressed);
-				}
-#endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
 				memcpy((void *)destinationObjectPtr, forwardedHeader->getObject(), objectCopySizeInBytes);
 
@@ -2004,10 +1952,6 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 				Assert_MM_true(copyCache->cacheAlloc <= copyCache->cacheTop);
 
 				/* Update the stats */
-				if (hotFieldPadSize > 0) {
-					/* account for this as free memory */
-					env->_copyForwardCompactGroups[destinationCompactGroup]._freeMemoryMeasured += hotFieldPadSize;
-				}
 				MM_HeapRegionDescriptorVLHGC * sourceRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(object);
 				UDATA sourceCompactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, sourceRegion);
 				if (sourceRegion->isEden()) {

@@ -2251,6 +2251,11 @@ J9::Options::fePostProcessJIT(void * base)
          }
       }
 
+   if (self()->getOption(TR_TraceMarkingOfHotFields) && !TR::Compiler->om.isHotReferenceFieldRequired())
+      {
+         TR_VerboseLog::writeLine(TR_Vlog_INFO,"JIT option traceMarkingOfHotFields is only available on Power OR used along with -Xgc:dynamicBreadthFirstScanOrdering");
+      }
+
 #if defined(J9VM_OPT_JITSERVER)
    self()->setupJITServerOptions();
 #endif /* defined(J9VM_OPT_JITSERVER) */

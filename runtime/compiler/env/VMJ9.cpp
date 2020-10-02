@@ -2236,128 +2236,6 @@ TR_J9VMBase::hasFinalFieldsInClass(TR_OpaqueClassBlock * clazz)
    return (clazzPtr->classDepthAndFlags & J9AccClassHasFinalFields)!=0;
    }
 
-static uint32_t offsetOfHotFields() { return offsetof(J9Class, instanceHotFieldDescription); }
-
-class TR_MarkHotField : public TR_SubclassVisitor
-   {
-public:
-   TR_MarkHotField(TR::Compilation * comp, TR::SymbolReference * symRef)
-      : TR_SubclassVisitor(comp), _symRef(symRef) { }
-
-   void mark(J9Class *, bool);
-
-   virtual bool visitSubclass(TR_PersistentClassInfo *);
-
-private:
-
-   bool markHotField(J9Class * clazz, bool baseClass);
-
-   TR::SymbolReference * _symRef;
-   UDATA                _bitValue;
-   UDATA                _slotIndex;
-   };
-
-void
-TR_MarkHotField::mark(J9Class * clazz, bool isFixedClass)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(_comp->fe());
-   if (fej9->isAOT_DEPRECATED_DO_NOT_USE())
-      return;
-
-   if ((*(UDATA *)((char *)clazz + offsetOfHotFields()) & 0x1))
-      {
-      // temporary hack: tenure aligned classes can't have
-      // hot fields marked, we need another word for this
-      if (_comp->getOption(TR_TraceMarkingOfHotFields))
-         {
-         J9ROMClass* romClass = TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *)clazz);
-         J9UTF8* name = J9ROMCLASS_CLASSNAME(romClass);
-         printf("Rejected class %.*s for hot field marking because it's marked for tenured alignment\n", J9UTF8_LENGTH(name), J9UTF8_DATA(name));
-         }
-      return;
-      }
-
-   if (!_symRef->getSymbol()->getShadowSymbol() || _symRef->isUnresolved() || !clazz)
-      return;
-
-   if ((uintptr_t)_symRef->getOffset() < fej9->getObjectHeaderSizeInBytes())
-      return;
-
-   _slotIndex = ((_symRef->getOffset() - fej9->getObjectHeaderSizeInBytes()) / TR::Compiler->om.sizeofReferenceField()) + 1; // +1 because low order bit means tenured alignment
-   if (_slotIndex > 30) // not 31 because low order bit means tenured alignment
-      return;
-
-   _bitValue = (UDATA)1 << _slotIndex;
-
-   if (!markHotField(clazz, true))
-      return;
-
-   if (!isFixedClass)
-      {
-      setTracing(_comp->getOption(TR_TraceMarkingOfHotFields));
-      visit(fej9->convertClassPtrToClassOffset(clazz));
-      }
-   }
-
-bool
-TR_MarkHotField::visitSubclass(TR_PersistentClassInfo * subclassInfo)
-   {
-   return markHotField(TR::Compiler->cls.convertClassOffsetToClassPtr(subclassInfo->getClassId()), false);
-   }
-
-bool
-TR_MarkHotField::markHotField(J9Class * clazz, bool rootClass)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(_comp->fe());
-   if (fej9->isAOT_DEPRECATED_DO_NOT_USE())
-      return false;
-
-   // If the bit is already marked in the class then we don't need to walk this classes subclasses.
-   // Returning false indicates to the visitor to not walk this classes subclasses.
-   //
-   UDATA noncoldWord= *(UDATA *)((char *)clazz + offsetOfHotFields());
-   if (noncoldWord & _bitValue)
-      return false;
-
-   UDATA * descriptorPtr = clazz->instanceDescription;
-   UDATA descriptorWord;
-   if (((UDATA) descriptorPtr) & BCT_J9DescriptionImmediate)
-      descriptorWord = ((UDATA) descriptorPtr) >> 1;
-   else
-      descriptorWord = descriptorPtr[0];
-
-   // Check that the field is a member of the class.  At the time this code was written there were cases
-   // when value propation would call this function with the class being Object and the field being String.value
-   //
-   if (!(descriptorWord & _bitValue))
-      return false;
-
-   if (_comp->getOption(TR_TraceMarkingOfHotFields))
-      {
-      if (rootClass)
-         {
-         int32_t len; char * s = _symRef->getOwningMethod(_comp)->fieldName(_symRef->getCPIndex(), len, _comp->trMemory());
-         printf("hot field %*s with bitValue=%lx and slotIndex=%lu found while compiling \n   %s\n", len, s, _bitValue, _slotIndex, _comp->signature());
-         }
-
-      J9ROMClass* romClass = TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock*)clazz);
-      J9UTF8* name = J9ROMCLASS_CLASSNAME(romClass);
-      printf("%*smarked field as hot in class %.*s\n", depth(), " ", J9UTF8_LENGTH(name), J9UTF8_DATA(name));
-      }
-
-   *(UDATA *)((char *)clazz + offsetOfHotFields()) = noncoldWord | _bitValue;
-
-   return true;
-   }
-
-void
-TR_J9VMBase::markHotField(TR::Compilation * comp, TR::SymbolReference * symRef, TR_OpaqueClassBlock * clazz, bool isFixedClass)
-   {
-   TR_MarkHotField marker(comp, symRef);
-   marker.mark(TR::Compiler->cls.convertClassOffsetToClassPtr(clazz), isFixedClass);
-   }
-
-
 /**
  * Report a hot field if the JIT has determined that the field has met appropriate thresholds to be determined a hot field. 
  * Valid if dynamicBreadthFirstScanOrdering is enabled.
@@ -2373,16 +2251,6 @@ TR_J9VMBase::reportHotField(int32_t reducedCpuUtil, J9Class* clazz, uint8_t fiel
    J9JavaVM * javaVM = _jitConfig->javaVM;
    javaVM->internalVMFunctions->reportHotField(javaVM, reducedCpuUtil, clazz, fieldOffset, reducedFrequency);
 }
-
-/**
- * Query if hot reference field is reqired for dynamicBreadthFirstScanOrdering
- *  @return true if scavenger dynamicBreadthFirstScanOrdering is enabled, 0 otherwise 
- */
-bool
-TR_J9VMBase::isHotReferenceFieldRequired()
-   {
-   return TR::Compiler->om.isHotReferenceFieldRequired();
-   }
 
 
 bool
@@ -2412,9 +2280,7 @@ TR_J9VMBase::scanReferenceSlotsInClassForOffset(TR::Compilation * comp, TR_Opaqu
 
             if (fieldClass != NULL)
                {
-               UDATA hotWordValue = *(UDATA *)((char *)fieldClass + offsetOfHotFields());
-
-               if (hotWordValue & 0x1) return true;
+               return true;
                }
             }
          }
@@ -2429,29 +2295,12 @@ TR_J9VMBase::findFirstHotFieldTenuredClassOffset(TR::Compilation *comp, TR_Opaqu
    if (!isAOT_DEPRECATED_DO_NOT_USE())
       {
       J9Class *clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(opclazz);
-      UDATA hotFieldsWordValue = *(UDATA *)((char *)clazz + offsetOfHotFields());
-
-      if (!hotFieldsWordValue)
-         return -1;
-
-      if (hotFieldsWordValue & 0x1)
+      if (NULL != clazz->hotFieldsInfo)
          {
-         // this class is marked for tenured alignment ignore it
-         return -1;
-         }
-
-      for (int i = 1; i<31; i++)
-         {
-         uint32_t flag = (uint32_t)(hotFieldsWordValue & ((UDATA)1<<i));
-
-         // if the field is marked find the
-         // class type of this field and see if that class
-         // is marked for tenured alignment
-         if (flag)
+         uint8_t slotIndex = clazz->hotFieldsInfo->hotFieldOffset1;
+         if (slotIndex != U_8_MAX)
             {
-            uint32_t offset = (i-1) * TR::Compiler->om.sizeofReferenceField();
-            if (scanReferenceSlotsInClassForOffset(comp, opclazz, offset))
-               return (int32_t)(offset + getObjectHeaderSizeInBytes());
+            return (int32_t)(((clazz->hotFieldsInfo->hotFieldOffset1 - 1) * TR::Compiler->om.sizeofReferenceField()) + getObjectHeaderSizeInBytes());
             }
          }
       }
@@ -2468,27 +2317,6 @@ TR_J9VMBase::findFirstHotFieldTenuredClassOffset(TR::Compilation *comp, TR_Opaqu
 #else
 #define CACHE_LINE_SIZE 256
 #endif
-
-
-void
-TR_J9VMBase::markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassBlock *opclazz, uint32_t alignFromStart)
-   {
-   if (!jitConfig->javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(jitConfig->javaVM) && !isAOT_DEPRECATED_DO_NOT_USE())
-      {
-      J9Class *clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(opclazz);
-      UDATA hotFieldsWordValue = 0x1; // mark for alignment
-
-      TR_ASSERT(0==(alignFromStart % TR::Compiler->om.objectAlignmentInBytes()), "alignment undershot should be multiple of %d bytes", TR::Compiler->om.objectAlignmentInBytes());
-      TR_ASSERT((alignFromStart < 128), "alignment undershot should be less than 128 (124 max)");
-
-      hotFieldsWordValue |= (((alignFromStart & 0x7f)/TR::Compiler->om.objectAlignmentInBytes()) << 1);
-
-      //printf("Class %p, hotFieldsWordValue %p\n", opclazz,  hotFieldsWordValue);
-
-      *(UDATA *)((char *)clazz + offsetOfHotFields()) = hotFieldsWordValue;
-      }
-   }
-
 
 char *
 TR_J9VMBase::getClassSignature_DEPRECATED(TR_OpaqueClassBlock * clazz, int32_t & length, TR_Memory * trMemory)

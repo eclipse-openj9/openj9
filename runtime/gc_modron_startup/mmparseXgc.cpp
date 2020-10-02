@@ -1125,8 +1125,6 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		
 	if(try_scan(scan_start, "dynamicBreadthFirstScanOrdering")) {
 		extensions->scavengerScanOrdering = MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST;
-		/* Below options are required options for dynamicBreadthFirstScanOrdering */
-		extensions->scavengerAlignHotFields = false;
 		goto _exit;
 	}
 
