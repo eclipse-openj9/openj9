@@ -70,8 +70,6 @@ protected:
 
 public:
 
-   CodeGenerator();
-
    void initialize();
 
    TR_J9VMBase *fej9();
