@@ -473,7 +473,7 @@ checkEnvOptions(char *envOptions, int *gcPolicy, char **xcompressedstr, char **x
 	char *gcPolicyString = findStartOfMostRightOption(envOptions, GC_POLICY_OPTION);
 	if (NULL == gcPolicyString) {
 		if (hasEnvOption(envOptions, "-XX:+UseNoGC")) {
-			gcPolicyString = "nogc";
+			gcPolicyString = GC_POLICY_OPTION "nogc";
 		}
 	}
 	if (NULL != gcPolicyString) {
