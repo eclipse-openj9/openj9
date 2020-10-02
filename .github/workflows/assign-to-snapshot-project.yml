@@ -25,14 +25,21 @@ name: Assign to snapshot project
 on:
   issues:
     types: [labeled]
+  pull_request:
+    types: [labeled]
+env:
+  MY_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+
+# Source: https://github.com/marketplace/actions/assign-to-one-project
 jobs:
-  automate-project-columns:
+  assign_one_project:
     runs-on: ubuntu-latest
+    name: Assign to Snapshot Project
     if: github.event.label.name == 'snapshot'
     steps:
-      - uses: alex-page/github-project-automation-plus@v0.3.0
-        with:
-          project: Snapshot+Restore
-          column: To do
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: snapshot label assigner
+      uses: srggrs/assign-one-project-github-action@1.2.0
+      with:
+        project: 'https://github.com/eclipse/openj9/projects/17'
