@@ -105,7 +105,9 @@ public class CoreInfoCommand extends Command
 			/* Print Java Version Info */
 			out.println("JAVA VERSION INFO\n" + properties.get("java.fullversion"));
 			/* Print Java VM Version Info */
-			out.println("JAVA VM VERSION\t- " + properties.get("java.vm.version") + "\n");
+			out.println("JAVA VM VERSION\t- " + properties.get("java.vm.version"));
+			/* Print Java VM Name */
+			out.println("JAVA VM NAME\t- " + properties.get("java.vm.name"));
 			
 			/* Print Platform Info */
 			boolean is64BitPlatform = (process.bytesPerPointer() == 8) ? true : false;
