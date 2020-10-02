@@ -22,6 +22,7 @@
 package com.ibm.j9ddr.vm29.tools.ddrinteractive.commands;
 
 import java.io.PrintStream;
+import java.util.Map;
 import java.util.Properties;
 
 import com.ibm.j9ddr.CorruptDataException;
@@ -42,6 +43,11 @@ public class VersionInfoCommand extends Command{
 			throws DDRInteractiveCommandException 
 	{
 		initialize();
+		for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+			Object key = entry.getKey();
+			Object value = entry.getValue();
+			System.out.println("key: " + key + ' ' + "value: " + value);
+		}		
 		Object javaFullVersion = properties.get("java.fullversion");
 		Object javaRuntimeVersion = properties.get("java.runtime.version");
 		Object javaRuntimeName = properties.get("java.runtime.name");
