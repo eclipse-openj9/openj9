@@ -674,12 +674,12 @@ def set_sdk_versions() {
     def subReleaseStartIndexChar = 'jdk-'
     def subReleaseEndIndexChar = '_'
     def releaseEndIndexChar = '.'
-    if (SDK_VERSION == '8') {
+    if (SDK_VERSION.equals('8')) {
         subReleaseStartIndexChar = 'jdk'
         subReleaseEndIndexChar = '-'
         releaseEndIndexChar = 'u'
     }
-    JAVA_SUB_RELEASE = FULL_SDK_VERSION.substring(FULL_SDK_VERSION.indexOf(subReleaseStartIndexChar) + subReleaseStartIndexChar.length(), FULL_SDK_VERSION.indexOf(subReleaseEndIndexChar))
+    JAVA_SUB_RELEASE = FULL_SDK_VERSION.substring(FULL_SDK_VERSION.indexOf(subReleaseStartIndexChar) + subReleaseStartIndexChar.length(), FULL_SDK_VERSION.lastIndexOf(subReleaseEndIndexChar))
 
     if (!JAVA_SUB_RELEASE.contains('.') && !SDK_VERSION.equals('8')) {
         // Must be the initial
