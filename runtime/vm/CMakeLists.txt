@@ -87,7 +87,6 @@ set(main_sources
 	exceptiondescribe.c
 	exceptionsupport.c
 	extendedMessageNPE.cpp
-	FastJNI_com_ibm_crypto_plus_provider_icc_NativeInterface.cpp
 	FastJNI_com_ibm_oti_vm_VM.cpp
 	FastJNI.cpp
 	FastJNI_java_lang_Class.cpp
