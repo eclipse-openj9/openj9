@@ -46,10 +46,22 @@ public class DiagnosticUtils {
 	private static final String FORMAT_PREFIX = " Format: "; //$NON-NLS-1$
 
 	@SuppressWarnings("nls")
-	private static final String FILE_PATH_HELP = " <file path>%n"
-				+ " <file path> is optional, otherwise a default path/name is used."
-				+ " Relative paths are resolved to the target's working directory.%n"
-				+ " The dump agent may choose a different file path if the requested file exists.%n";
+	private static final String HEAP_DUMP_OPTION_HELP = " [request=<options>] [opts=<options] [<file path>]%n"
+			+ " Set optional request= and opts= -Xdump options. The order of the parameters does not matter.%n";
+
+	@SuppressWarnings("nls")
+	private static final String OTHER_DUMP_OPTION_HELP = " [request=<options>] [<file path>]%n"
+				+ " Set optional request= -Xdump options. The order of the parameters does not matter.%n";
+
+	@SuppressWarnings("nls")
+	private static final String HEAPSYSTEM_DUMP_OPTION_HELP =
+			" system and heap dumps default to request=exclusive+prepwalk rather than the -Xdump:<type>:defaults setting.%n";
+
+	@SuppressWarnings("nls")
+	private static final String GENERIC_DUMP_OPTION_HELP =
+			" <file path> is optional, otherwise a default path/name is used.%n"
+			+ " Relative paths are resolved to the target's working directory.%n"
+			+ " The dump agent may choose a different file path if the requested file exists.%n";
 
 	/**
 	 * Command strings for executeDiagnosticCommand()
@@ -254,9 +266,9 @@ public class DiagnosticUtils {
 		DiagnosticProperties result = null;
 		String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
 		IPC.logMessage("doDump: ", diagnosticCommand); //$NON-NLS-1$
-		if (parts.length == 0 || parts.length > 2) {
+		if (parts.length == 0 || parts.length > 4) {
 			// The argument could be just Dump command which is going to use default configurations like -Xdump,
-			// or there is an optional path/name argument for the dump file generated.
+			// or there is an optional path/name argument for the dump file generated, plus `request=` and `opts=` options.
 			result = DiagnosticProperties.makeErrorProperties("Error: wrong number of arguments"); //$NON-NLS-1$
 		} else {
 			String dumpType = ""; //$NON-NLS-1$
@@ -272,17 +284,50 @@ public class DiagnosticUtils {
 				}
 			}
 			if (!dumpType.isEmpty()) {
-				String request = dumpType;
-				if (parts.length == 2) {
-					String fileDirective = ("system".equals(dumpType) && IPC.isZOS) ? ":dsn=" : ":file="; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-					request += fileDirective + parts[1];
+				StringBuilder request = new StringBuilder();
+				request.append(dumpType);
+				String filePath = null;
+				boolean foundRequest = false;
+				boolean heapDump = "heap".equals(dumpType); //$NON-NLS-1$
+				boolean systemDump = "system".equals(dumpType); //$NON-NLS-1$
+				String separator = ":"; //$NON-NLS-1$
+				for (int i = 1; i < parts.length; i++) {
+					String option = parts[i];
+					boolean isRequest = option.startsWith("request="); //$NON-NLS-1$
+					boolean isOpts = option.startsWith("opts="); //$NON-NLS-1$
+					if (isRequest || isOpts) {
+						if (!heapDump && isOpts) {
+							// opts= are only valid for heap dumps
+							continue;
+						}
+						request.append(separator).append(option);
+						if (isRequest) {
+							foundRequest = true;
+						}
+					} else {
+						if (filePath != null) {
+							result = DiagnosticProperties.makeErrorProperties("Error: second <file path> found, \"" //$NON-NLS-1$
+									+ option + "\" after \"" + filePath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+							break;
+						}
+						String fileDirective = (systemDump && IPC.isZOS) ? "dsn=" : "file="; //$NON-NLS-1$ //$NON-NLS-2$
+						request.append(separator).append(fileDirective).append(option);
+						filePath = option;
+					}
+					separator = ","; //$NON-NLS-1$
 				}
-				try {
-					String actualDumpFile = triggerDumpsImpl(request, dumpType + "DumpToFile"); //$NON-NLS-1$
-					result = DiagnosticProperties.makeStringResult("Dump written to " + actualDumpFile); //$NON-NLS-1$
-				} catch (InvalidDumpOptionExceptionBase e) {
-					IPC.logMessage("doDump exception: ", e.getMessage()); //$NON-NLS-1$
-					DiagnosticProperties.makeExceptionProperties(e);
+				if (result == null) {
+					if (!foundRequest && (systemDump || heapDump)) {
+						// set default options if the user didn't specify
+						request.append(separator).append("request=exclusive+prepwalk"); //$NON-NLS-1$
+					}
+					try {
+						String actualDumpFile = triggerDumpsImpl(request.toString(), dumpType + "DumpToFile"); //$NON-NLS-1$
+						result = DiagnosticProperties.makeStringResult("Dump written to " + actualDumpFile); //$NON-NLS-1$
+					} catch (InvalidDumpOptionExceptionBase e) {
+						IPC.logMessage("doDump exception: ", e.getMessage()); //$NON-NLS-1$
+						result = DiagnosticProperties.makeExceptionProperties(e);
+					}
 				}
 			}
 		}
@@ -356,22 +401,22 @@ public class DiagnosticUtils {
 			+ " Options: -l : print information about ownable synchronizers%n";
 
 	private static final String DIAGNOSTICS_DUMP_HEAP_HELP = "Create a heap dump.%n" //$NON-NLS-1$
-			+ FORMAT_PREFIX + DIAGNOSTICS_DUMP_HEAP + FILE_PATH_HELP
-			+ DIAGNOSTICS_GC_HEAP_DUMP + " is an alias for " + DIAGNOSTICS_DUMP_HEAP; //$NON-NLS-1$
+			+ FORMAT_PREFIX + DIAGNOSTICS_DUMP_HEAP + HEAP_DUMP_OPTION_HELP + HEAPSYSTEM_DUMP_OPTION_HELP + GENERIC_DUMP_OPTION_HELP
+			+ DIAGNOSTICS_GC_HEAP_DUMP + " is an alias for " + DIAGNOSTICS_DUMP_HEAP + "%n"; //$NON-NLS-1$ //$NON-NLS-2$
 
 	private static final String DIAGNOSTICS_DUMP_JAVA_HELP = "Create a javacore file.%n" //$NON-NLS-1$
-			+ FORMAT_PREFIX + DIAGNOSTICS_DUMP_JAVA + FILE_PATH_HELP;
+			+ FORMAT_PREFIX + DIAGNOSTICS_DUMP_JAVA + OTHER_DUMP_OPTION_HELP + GENERIC_DUMP_OPTION_HELP;
 
 	private static final String DIAGNOSTICS_DUMP_SNAP_HELP = "Dump the snap trace buffer.%n" //$NON-NLS-1$
-			+ FORMAT_PREFIX + DIAGNOSTICS_DUMP_SNAP + FILE_PATH_HELP;
+			+ FORMAT_PREFIX + DIAGNOSTICS_DUMP_SNAP + OTHER_DUMP_OPTION_HELP + GENERIC_DUMP_OPTION_HELP;
 
 	private static final String DIAGNOSTICS_DUMP_SYSTEM_HELP = "Create a native core file.%n" //$NON-NLS-1$
-			+ FORMAT_PREFIX + DIAGNOSTICS_DUMP_SYSTEM + FILE_PATH_HELP;
+			+ FORMAT_PREFIX + DIAGNOSTICS_DUMP_SYSTEM + OTHER_DUMP_OPTION_HELP + HEAPSYSTEM_DUMP_OPTION_HELP + GENERIC_DUMP_OPTION_HELP;
 
 	private static final String DIAGNOSTICS_JSTAT_CLASS_HELP = "Show JVM classloader statistics.%n" //$NON-NLS-1$
 			+ FORMAT_PREFIX + DIAGNOSTICS_STAT_CLASS + "%n" //$NON-NLS-1$
 			+ "NOTE: this utility might significantly affect the performance of the target VM.%n"; //$NON-NLS-1$
-
+	
 	/* Initialize the command and help text tables */
 	static {
 		commandTable = new HashMap<>();
