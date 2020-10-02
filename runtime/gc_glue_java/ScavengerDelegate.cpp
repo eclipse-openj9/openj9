@@ -178,7 +178,7 @@ MM_ScavengerDelegate::mainSetupForGC(MM_EnvironmentBase * envBase)
 	_shouldIterateContinuationObjects = false;
 
 	/* Sort all hot fields for all classes if scavenger dynamicBreadthFirstScanOrdering is enabled */
-	if (MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST == _extensions->scavengerScanOrdering) {
+	if (_javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(_javaVM)) {
 		MM_HotFieldUtil::sortAllHotFieldData(_javaVM, _extensions->incrementScavengerStats._gcCount);
 	}
 

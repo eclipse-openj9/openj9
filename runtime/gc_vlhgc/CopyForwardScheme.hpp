@@ -141,8 +141,6 @@ private:
 	uintptr_t _regionCountCannotBeEvacuated; /**<The number of regions, which can not be copyforward in collectionSet */
 	uintptr_t _regionCountReservedNonEvacuated; /** the number of regions need to set Mark only in order to try to avoid abort case */
 
-	uintptr_t _cacheLineAlignment; /**< The number of bytes per cache line which is used to determine which boundaries in memory represent the beginning of a cache line */
-
 	bool _clearableProcessingStarted;  /**< Flag indicating that clearable processing had been started during this cycle (used for abort purposes) */
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
