@@ -139,6 +139,7 @@ typedef enum gc_policy{
 #ifndef PATH_MAX
 #define PATH_MAX 1023
 #endif
+#define ENVVAR_JAVA_OPTIONS "JAVA_OPTIONS"
 #define ENVVAR_OPENJ9_JAVA_OPTIONS "OPENJ9_JAVA_OPTIONS"
 #define ENVVAR_IBM_JAVA_OPTIONS "IBM_JAVA_OPTIONS"
 
@@ -463,6 +464,60 @@ parseMemorySizeValue(char *option)
 	return result;
 }
 
+#define GC_POLICY_OPTION "-Xgcpolicy:"
+#define LENGTH_GC_POLICY_OPTION (sizeof(GC_POLICY_OPTION) - 1)
+
+static void
+checkEnvOptions(char *envOptions, int *gcPolicy, char **xcompressedstr, char **xnocompressedstr, char **xjvmstr, int *xjvm, char **namedVM, size_t *nameLength, char **xmxstr)
+{
+	char *gcPolicyString = findStartOfMostRightOption(envOptions, GC_POLICY_OPTION);
+	if (NULL == gcPolicyString) {
+		if (hasEnvOption(envOptions, "-XX:+UseNoGC")) {
+			gcPolicyString = GC_POLICY_OPTION "nogc";
+		}
+	}
+	if (NULL != gcPolicyString) {
+		parseGCPolicy(gcPolicyString + LENGTH_GC_POLICY_OPTION, gcPolicy);
+	}
+
+	if (hasEnvOption(envOptions, "-Xcompressedrefs")) {
+		xcompressed = 0;
+		*xcompressedstr = "-Xcompressedrefs";
+	}
+	if (hasEnvOption(envOptions, "-XX:+UseCompressedOops")) {
+		xcompressed = 0;
+		*xcompressedstr = "-XX:+UseCompressedOops";
+	}
+	if (hasEnvOption(envOptions, "-Xnocompressedrefs")) {
+		xnocompressed = 0;
+		*xnocompressedstr = "-Xnocompressedrefs";
+	}
+	if (hasEnvOption(envOptions, "-XX:-UseCompressedOops")) {
+		xnocompressed = 0;
+		*xnocompressedstr = "-XX:-UseCompressedOops";
+	}
+	
+	*xjvmstr = strstr(envOptions, "-Xjvm:");
+	if (NULL != *xjvmstr) {
+		char *space = NULL;
+
+		xjvm = 0;
+		*namedVM = *xjvmstr + 6;
+		/* make sure that we don't include the rest of the env var by saving the length until the next space */
+		space = strstr(*namedVM, " ");
+		if (NULL == space) {
+			*nameLength = strlen(*namedVM);
+		} else {
+			*nameLength = (size_t)(space - *namedVM);
+		}
+	}
+
+	*xmxstr = findStartOfMostRightOption(envOptions, XMX);
+	if (NULL != *xmxstr) {
+		*xmxstr += sizeof(XMX) - 1;
+	}
+}
+
 /**
  * @param args The VM command line arguments
  * @param retBuffer The buffer which will be populated with the directory name (must be big enough to contain the name and the NULL byte)
@@ -491,69 +546,27 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 	int ignoreUnrecognizedEnabled = 0;
 
 	int gcPolicy = GC_POLICY_GENCON;
-	const char *gcPolicyOption = "-Xgcpolicy:";
-	size_t gcPolicyOptionLength = strlen(gcPolicyOption);
-	char *gcPolicyString = NULL;
 
 	char *xmxstr = NULL;
 	U_64 requestedHeapSize = 0;
 
-	/* the command line is handled below but look into the ENVVAR_OPENJ9_JAVA_OPTIONS here, since it is a special case */
+	/* 
+	 * The command line is handled below but look into the multiple JAVA_OPTIONS environment variables here, since it is a special case.
+	 * First look at JAVA_OPTIONS, then OPENJ9_JAVA_OPTIONS or IBM_JAVA_OPTIONS if OPENJ9_JAVA_OPTIONS isn't defined.
+	 */
+#if (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD)
+	envOptions = getenv(ENVVAR_JAVA_OPTIONS);
+	if (NULL != envOptions) {
+		checkEnvOptions(envOptions, &gcPolicy, &xcompressedstr, &xnocompressedstr, &xjvmstr, &xjvm, &namedVM, &nameLength, &xmxstr);
+	}
+#endif /* (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD) */
+	
 	envOptions = getenv(ENVVAR_OPENJ9_JAVA_OPTIONS);
 	if (NULL == envOptions) {
 		envOptions = getenv(ENVVAR_IBM_JAVA_OPTIONS);
 	}
 	if (NULL != envOptions) {
-		/* we need a non-zero index to point to where this occurs to use the first index we don't have - the number of arguments in the list */
-		int i = 0;
-
-		gcPolicyString = findStartOfMostRightOption(envOptions, gcPolicyOption);
-		if (NULL == gcPolicyString) {
-			if (hasEnvOption(envOptions, "-XX:+UseNoGC")) {
-				gcPolicyString = "nogc";
-			}
-		}
-
-		if (NULL != gcPolicyString) {
-			parseGCPolicy(gcPolicyString + gcPolicyOptionLength, &gcPolicy);
-		}
-
-		if (hasEnvOption(envOptions, "-Xcompressedrefs")) {
-			xcompressed = i;
-			xcompressedstr = "-Xcompressedrefs";
-		}
-		if (hasEnvOption(envOptions, "-XX:+UseCompressedOops")) {
-			xcompressed = i;
-			xcompressedstr = "-XX:+UseCompressedOops";
-		}
-		if (hasEnvOption(envOptions, "-Xnocompressedrefs")) {
-			xnocompressed = i;
-			xnocompressedstr = "-Xnocompressedrefs";
-		}
-		if (hasEnvOption(envOptions, "-XX:-UseCompressedOops")) {
-			xnocompressed = i;
-			xnocompressedstr = "-XX:-UseCompressedOops";
-		}
-		
-		xjvmstr = strstr(envOptions, "-Xjvm:");
-		if (NULL != xjvmstr) {
-			char *space = NULL;
-
-			xjvm = i;
-			namedVM = strstr(envOptions, "-Xjvm:") + 6;
-			/* make sure that we don't include the rest of the env var by saving the length until the next space */
-			space = strstr(namedVM, " ");
-			if (NULL == space) {
-				nameLength = strlen(namedVM);
-			} else {
-				nameLength = (size_t)(space - namedVM);
-			}
-		}
-
-		xmxstr = findStartOfMostRightOption(envOptions, XMX);
-		if (NULL != xmxstr) {
-			xmxstr += sizeof(XMX)-1;
-		}
+		checkEnvOptions(envOptions, &gcPolicy, &xcompressedstr, &xnocompressedstr, &xjvmstr, &xjvm, &namedVM, &nameLength, &xmxstr);
 	}
 
 	for( i=0; i < args->nOptions; i++ ) {
@@ -575,8 +588,8 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 			xmxstr = args->options[i].optionString + sizeof(XMX)-1;
 		} else if ((0 == strcmp(args->options[i].optionString, "-XXvm:ignoreUnrecognized")) || (JNI_TRUE == args->ignoreUnrecognized)) {
 			ignoreUnrecognizedEnabled = 1;
-		} else if (0 == strncmp(args->options[i].optionString, gcPolicyOption, gcPolicyOptionLength)) {
-			parseGCPolicy(args->options[i].optionString + gcPolicyOptionLength, &gcPolicy);
+		} else if (0 == strncmp(args->options[i].optionString, GC_POLICY_OPTION, LENGTH_GC_POLICY_OPTION)) {
+			parseGCPolicy(args->options[i].optionString + LENGTH_GC_POLICY_OPTION, &gcPolicy);
 		}
 	}
 
