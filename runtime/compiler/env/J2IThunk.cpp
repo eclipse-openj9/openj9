@@ -30,6 +30,7 @@
 #include "infra/CriticalSection.hpp"
 #include "env/j9method.h"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 
 static int32_t
 computeSignatureLength(char *signature)

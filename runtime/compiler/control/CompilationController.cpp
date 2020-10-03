@@ -31,6 +31,7 @@
 #include "control/RecompilationInfo.hpp"
 #include "env/IO.hpp"
 #include "env/TRMemory.hpp"
+#include "env/VerboseLog.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "infra/Monitor.hpp"
 #include "runtime/CodeCacheManager.hpp"

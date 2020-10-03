@@ -21,6 +21,7 @@
 
 #include "compile/ResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
+#include "env/KnownObjectTable.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
 #include "compile/Compilation.hpp"
 

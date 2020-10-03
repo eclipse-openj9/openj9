@@ -43,6 +43,7 @@
 #include "env/VMJ9.h"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/KnownObjectTable.hpp"
+#include "env/VerboseLog.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "ilgen/IlGenRequest.hpp"

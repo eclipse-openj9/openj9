@@ -41,6 +41,8 @@
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/VMJ9.h"
 #include "env/j9method.h"
+#include "env/VerboseLog.hpp"
+
 
 namespace  {
 

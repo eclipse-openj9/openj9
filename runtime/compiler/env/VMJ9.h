@@ -31,6 +31,7 @@
 #include "rommeth.h"
 #include "env/FrontEnd.hpp"
 #include "env/KnownObjectTable.hpp"
+#include "codegen/CodeGenPhase.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"
 #include "control/OptionsUtil.hpp"

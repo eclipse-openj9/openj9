@@ -42,6 +42,7 @@
 #include "cs2/sparsrbit.h"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
+#include "env/VerboseLog.hpp"
 #include "il/AliasSetInterface.hpp"
 #include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"

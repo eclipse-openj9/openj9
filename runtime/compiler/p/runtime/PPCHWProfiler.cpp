@@ -31,6 +31,7 @@
 #include "env/jittypes.h"
 #include "infra/Annotations.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "p/runtime/PPCHWProfilerPrivate.hpp"
 #include "control/CompilationRuntime.hpp"
 

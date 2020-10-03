@@ -38,6 +38,7 @@
 #include "env/jittypes.h"
 #include "runtime/MethodMetaData.h"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "runtime/asmprotos.h"
 
 // To transfer control to VM during OSR

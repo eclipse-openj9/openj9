@@ -30,6 +30,7 @@
 #include "env/J2IThunk.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"

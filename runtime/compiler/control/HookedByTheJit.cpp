@@ -53,6 +53,7 @@
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "il/DataTypes.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "infra/Monitor.hpp"

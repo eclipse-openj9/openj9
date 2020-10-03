@@ -29,6 +29,7 @@
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CpuUtilization.hpp"
+#include "env/VerboseLog.hpp"
 
 /*
  * Relevant port library API:

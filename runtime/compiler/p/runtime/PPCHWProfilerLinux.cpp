@@ -26,6 +26,7 @@
 #include "j9port_generated.h"
 #include "control/CompilationThread.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 
 #include <errno.h>
 #include <gnu/libc-version.h>

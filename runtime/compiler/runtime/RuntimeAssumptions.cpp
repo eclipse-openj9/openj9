@@ -29,6 +29,7 @@
 #include "env/CompilerEnv.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/jittypes.h"
+#include "env/VerboseLog.hpp"
 #include "infra/Monitor.hpp"
 #include "infra/CriticalSection.hpp"
 #include "control/CompilationRuntime.hpp"

@@ -29,6 +29,7 @@
 #include "control/CompilationThread.hpp"
 #include "env/ut_j9jit.h"
 #include "env/VMAccessCriticalSection.hpp"
+#include "env/VerboseLog.hpp"
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/JITServerHelpers.hpp"

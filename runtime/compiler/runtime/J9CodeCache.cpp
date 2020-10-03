@@ -52,6 +52,7 @@
 #include "runtime/ArtifactManager.hpp"
 #include "env/IO.hpp"
 #include "runtime/HookHelpers.hpp"
+#include "env/VerboseLog.hpp"
 
 OMR::CodeCacheMethodHeader *getCodeCacheMethodHeader(char *p, int searchLimit, J9JITExceptionTable * metaData);
 

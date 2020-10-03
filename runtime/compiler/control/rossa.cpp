@@ -69,6 +69,7 @@
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
 #include "env/ClassTableCriticalSection.hpp"
+#include "env/VerboseLog.hpp"
 
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 
