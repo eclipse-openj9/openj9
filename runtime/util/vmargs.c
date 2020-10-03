@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1395,6 +1395,9 @@ addEnvironmentVariables(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, J
 			|| (0 != mapEnvVarToArgument(portLib, ENVVAR_IBM_JAVA_ENABLE_ASCII_FILETAG, VMOPT_XASCII_FILETAG, vmArgumentsList, EXACT_MAP_NO_OPTIONS, verboseFlags))
 #endif
 			|| (0 != addEnvironmentVariableArguments(portLib, ENVVAR_JAVA_TOOL_OPTIONS, vmArgumentsList, verboseFlags))
+#if (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD)
+			|| (0 != addEnvironmentVariableArguments(portLib, ENVVAR_JAVA_OPTIONS, vmArgumentsList, verboseFlags))
+#endif /* (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD) */
 			|| (0 != addEnvironmentVariableArguments(portLib, ENVVAR_OPENJ9_JAVA_OPTIONS, vmArgumentsList, verboseFlags))
 			|| (0 != addEnvironmentVariableArguments(portLib, ENVVAR_IBM_JAVA_OPTIONS, vmArgumentsList, verboseFlags))
 			|| (0 != mapEnvVarToArgument(portLib, ENVVAR_IBM_JAVA_JITLIB, MAPOPT_XXJITDIRECTORY, vmArgumentsList, EXACT_MAP_WITH_OPTIONS, verboseFlags))
