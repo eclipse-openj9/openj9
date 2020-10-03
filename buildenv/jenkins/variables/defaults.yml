@@ -161,6 +161,20 @@ freemarker:
 openjdk_reference_repo:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
 #========================================#
+# BootJDK Default values
+#========================================#
+boot_jdk_default:
+  boot_jdk:
+    location:
+      all: '${HOME}/bootjdks'
+    version:
+      8: '8'
+      11: '11'
+      15: '15'
+      next: '15'
+    dir_strip:
+      all: '1'
+#========================================#
 # Cuda
 #========================================#
 cuda:
@@ -181,13 +195,10 @@ valhalla:
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
 ppc64le_linux:
-  extends: ['cuda_version', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'cuda_version', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
-    8: '/usr/lib/jvm/adoptojdk-java-80'
-    11: '/usr/lib/jvm/adoptojdk-java-11'
-    14: '/usr/lib/jvm/adoptojdk-java-14'
-    15: '/usr/lib/jvm/adoptojdk-java-14'
-    next: '/usr/lib/jvm/adoptojdk-java-14'
+    arch: 'ppc64le'
+    os: 'linux'
   release:
     all: 'linux-ppc64le-server-release'
     8: 'linux-ppc64le-normal-server-release'
@@ -236,16 +247,13 @@ ppc64le_linux_jit:
 #========================================#
 # Linux S390 64bits Compressed Pointers
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
-# IBM 7 for the bootJDK or compiling corba will fail to find Object.
+#       IBM 7 for the bootJDK or compiling corba will fail to find Object.
 #========================================#
 s390x_linux:
-  extends: ['debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
-    8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
-    11: '/usr/lib/jvm/adoptojdk-java-11'
-    14: '/usr/lib/jvm/adoptojdk-java-14'
-    15: '/usr/lib/jvm/adoptojdk-java-14'
-    next: '/usr/lib/jvm/adoptojdk-java-14'
+    arch: 's390x'
+    os: 'linux'
   release:
     all: 'linux-s390x-server-release'
     8: 'linux-s390x-normal-server-release'
@@ -293,13 +301,11 @@ s390x_linux_jit:
 # AIX PPC 64bits Compressed Pointers
 #========================================#
 ppc64_aix:
-  extends: ['debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
-    8: '/opt/java7'
-    11: '/opt/java11_64'
-    14: '/opt/java14_64'
-    15: '/opt/java14_64'
-    next: '/opt/java14_64'
+    location: '/opt/bootjdks'
+    arch: 'ppc64'
+    os: 'aix'
   release:
     all: 'aix-ppc64-server-release'
     8: 'aix-ppc64-normal-server-release'
@@ -349,13 +355,10 @@ ppc64_aix_xl_uma:
 # Linux x86 64bits Compressed Pointers
 #========================================#
 x86-64_linux:
-  extends: ['cuda_version', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'cuda_version', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
-    8: '/usr/lib/jvm/jdk-7'
-    11: '/usr/lib/jvm/jdk-11'
-    14: '/usr/lib/jvm/adoptojdk-java-14'
-    15: '/usr/lib/jvm/adoptojdk-java-14'
-    next: '/usr/lib/jvm/adoptojdk-java-14'
+    arch: 'x64'
+    os: 'linux'
   release:
     all: 'linux-x86_64-server-release'
     8: 'linux-x86_64-normal-server-release'
@@ -427,11 +430,10 @@ x86-64_linux_valhalla:
 # Linux Aarch 64bits Compressed Pointers
 #========================================#
 aarch64_linux:
-  extends: ['debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
-    8: '/usr/lib/jvm/java-1.8.0'
-    11: '/usr/lib/jvm/adoptojdk-java-11'
-    15: '/usr/lib/jvm/jdk-15+36'
+    arch: 'aarch64'
+    os: 'linux'
   release:
     all: 'linux-aarch64-normal-server-release'
     15: 'linux-aarch64-server-release'
@@ -468,13 +470,10 @@ aarch64_linux_xl_uma:
 # Windows x86 64bits Compressed Pointers
 #========================================#
 x86-64_windows:
-  extends: ['cuda', 'debuginfo', 'openjdk_reference_repo', 'openssl_bundle']
+  extends: ['boot_jdk_default', 'cuda', 'debuginfo', 'openjdk_reference_repo', 'openssl_bundle']
   boot_jdk:
-    8: '/cygdrive/c/openjdk/jdk7'
-    11: '/cygdrive/c/openjdk/jdk11'
-    14: '/cygdrive/c/openjdk/jdk14'
-    15: '/cygdrive/c/openjdk/jdk14'
-    next: '/cygdrive/c/openjdk/jdk14'
+    arch: 'x64'
+    os: 'windows'
   release:
     all: 'windows-x86_64-server-release'
     8: 'windows-x86_64-normal-server-release'
@@ -523,9 +522,10 @@ x86-64_windows_xl_uma:
 # Windows x86 32bits
 #========================================#
 x86-32_windows:
-  extends: ['debuginfo', 'openjdk_reference_repo', 'openssl_bundle']
+  extends: ['boot_jdk_default', 'debuginfo', 'openjdk_reference_repo', 'openssl_bundle']
   boot_jdk:
-    8: '/cygdrive/c/openjdk/jdk7'
+    arch: 'x64'
+    os: 'windows'
   release:
     8: 'windows-x86-normal-server-release'
   extra_configure_options:
@@ -554,13 +554,12 @@ x86-32_windows_uma:
 # OSX x86 64bits Compressed Pointers
 #========================================#
 x86-64_mac:
-  extends: ['debuginfo', 'openssl', 'openssl_bundle']
+  extends: ['boot_jdk_default', 'debuginfo', 'openssl', 'openssl_bundle']
   boot_jdk:
-    8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
-    11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
-    14: '/Users/jenkins/bootjdks/adoptojdk-java-14'
-    15: '/Users/jenkins/bootjdks/adoptojdk-java-14'
-    next: '/Users/jenkins/bootjdks/adoptojdk-java-14'
+    arch: 'x64'
+    os: 'mac'
+    dir_strip:
+      all: '3'
   release:
     all: 'macosx-x86_64-server-release'
     8: 'macosx-x86_64-normal-server-release'
