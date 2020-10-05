@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,7 +44,6 @@ import com.ibm.dtfj.corereaders.Builder;
 import com.ibm.dtfj.corereaders.ClosingFileReader;
 import com.ibm.dtfj.corereaders.DumpFactory;
 import com.ibm.dtfj.corereaders.ICoreFileReader;
-import com.ibm.dtfj.corereaders.NewElfDump;
 
 public class Main {
 
@@ -77,18 +75,7 @@ public class Main {
 		 */
 		private List<File> _successfulSearchPaths = new ArrayList<>();
 
-		private boolean _executableAvailable = true;
-
 		private final long _environmentPointer;
-
-		/**
-		 * Alternative constructor. Equivalent to DummyBuilder(rootDirectory,0);
-		 * @param rootDirectory The path to prepend to all absolute path file look-ups.
-		 * Can be null if we are to use the given path verbatim.
-		 */
-		public DummyBuilder(File rootDirectory) {
-			this(rootDirectory, 0);
-		}
 
 		/**
 		 * @param rootDirectory The path to prepend to all absolute path file look-ups.
@@ -221,11 +208,7 @@ public class Main {
 
 		@Override
 		public void setExecutableUnavailable(String description) {
-			_executableAvailable = false;
-		}
-
-		public boolean isExecutableAvailable() {
-			return _executableAvailable;
+			// Do nothing
 		}
 
 		@Override
@@ -259,18 +242,18 @@ public class Main {
 		}
 	}
 
-	private String _dumpName = null;
-	private File _virtualRootDirectory = null;
-	private boolean _verbose;
+	private final String _dumpName;
+	private final File _virtualRootDirectory;
+	private final boolean _verbose;
 	private static boolean _throwExceptions;
-	private ICoreFileReader _dump = null;
+	private ICoreFileReader _dump;
 	private static final String J9_LIB_NAME = "j9jextract"; //$NON-NLS-1$
 	/* This is the buffer size used when copying files into the ZIP stream.
 	 * Making it bigger should improve performance on z/OS and there is only
 	 * one instance of this, anyway.
 	 */
 	private static final int ZIP_BUFFER_SIZE = 8 * 4096;
-	private DummyBuilder _builder;
+	private final DummyBuilder _builder;
 
 	// jextract return codes
 	private static int JEXTRACT_SUCCESS = 0;
@@ -290,6 +273,7 @@ public class Main {
 		boolean verbose = false;
 		boolean throwExceptions = false;
 		boolean zip = true;
+		boolean disableBuildIdCheck = false;
 
 		if (args.length == 0) {
 			usageMessage(null, JEXTRACT_SUCCESS);
@@ -326,6 +310,8 @@ public class Main {
 					verbose = true;
 				} else if (args[i].equals("-e")) { //$NON-NLS-1$
 					throwExceptions = true;
+				} else if (args[i].equals("-r")) { //$NON-NLS-1$
+					disableBuildIdCheck = true;
 				} else {
 					usageMessage("Unrecognized option: " + args[i], JEXTRACT_SYNTAX_ERROR); //$NON-NLS-1$
 				}
@@ -340,7 +326,7 @@ public class Main {
 
 		ensure(null != dumpName, "No dump file specified"); //$NON-NLS-1$
 
-		Main dumper = new Main(dumpName, virtualRootDirectory, verbose, throwExceptions);
+		Main dumper = new Main(dumpName, virtualRootDirectory, verbose, throwExceptions, disableBuildIdCheck);
 
 		if (interactive) {
 			dumper.runInteractive();
@@ -367,20 +353,17 @@ public class Main {
 	}
 
 	private static void usageMessage(String message, int code) {
-		report("Usage: jextract dump_name [output_filename] [options]"); //$NON-NLS-1$
-		report(" output filename defaults to dump_name.zip"); //$NON-NLS-1$
-		report(" options:"); //$NON-NLS-1$
-		report("   -f executable_name override executable name"); //$NON-NLS-1$
-		report("   -help              print this usage message"); //$NON-NLS-1$
-		report("   -v                 enable verbose output"); //$NON-NLS-1$
-		if (_throwExceptions) {
-			throw new JExtractFatalException(message, code);
-		} else {
-			if (message != null) {
-				report(message);
-			}
-			System.exit(code);
-		}
+		report("Usage: jextract [options] dump_name [output_filename]"); //$NON-NLS-1$
+		report("  output filename defaults to dump_name.zip"); //$NON-NLS-1$
+		report("  options:"); //$NON-NLS-1$
+		report("    -e                  throw exceptions instead of calling System.exit()"); //$NON-NLS-1$
+		report("    -f executable_name  override executable name"); //$NON-NLS-1$
+		report("    -help               print this usage message"); //$NON-NLS-1$
+		report("    -p prefix           prefix for all paths (absolute or relative)"); //$NON-NLS-1$
+		report("    -r                  relax version checking"); //$NON-NLS-1$
+		report("    -v                  enable verbose output"); //$NON-NLS-1$
+		report("    --                  mark end of options"); //$NON-NLS-1$
+		errorMessage(message, code);
 	}
 
 	private static void errorMessage(String message, int code) {
@@ -406,7 +389,7 @@ public class Main {
 		}
 	}
 
-	private Main(String dumpName, File virtualRootDirectory, boolean verbose, boolean throwExceptions) {
+	private Main(String dumpName, File virtualRootDirectory, boolean verbose, boolean throwExceptions, boolean disableBuildIdCheck) {
 		// System.err.println("Main.Main entered dn=" + dumpName + " vrd=" + virtualRootDirectory + " v=" + verbose);
 
 		_dumpName = dumpName;
@@ -454,34 +437,16 @@ public class Main {
 			report("Warning: dump file is truncated. Extracted information may be incomplete."); //$NON-NLS-1$
 		}
 
-		_builder = new DummyBuilder(_virtualRootDirectory);
+		long environmentPointer = 0;
+		try {
+			environmentPointer = getEnvironmentPointer(_dump.getAddressSpace(), disableBuildIdCheck);
+		} catch (Throwable t) {
+			errorMessage("Error. Unable to locate executable for " + dumpName, JEXTRACT_INTERNAL_ERROR, t); //$NON-NLS-1$
+		}
+
+		_builder = new DummyBuilder(_virtualRootDirectory, environmentPointer);
 		// extract does the bulk of core-reader processing
 		_dump.extract(_builder);
-
-		//If executable is unavailable we won't have loaded some/all modules
-		//which means we don't have the complete address space loaded on Linux.
-		//
-		//We can use the current address space to sniff the environment from the J9RAS structure,
-		//then recreate the dump (the environment pointer can be used to find the IBM_COMMAND_LINE
-		//variable and get the executable that way).
-		if (_dump instanceof NewElfDump && !_builder.isExecutableAvailable()) {
-			long environmentPointer = 0;
-			try {
-				environmentPointer = getEnvironmentPointer(_dump.getAddressSpace());
-			} catch (Throwable t) {
-				errorMessage("Error. Unable to locate executable for " + dumpName, JEXTRACT_INTERNAL_ERROR, t); //$NON-NLS-1$
-			}
-
-			if (environmentPointer != 0) {
-				_builder = new DummyBuilder(_virtualRootDirectory, environmentPointer);
-				try {
-					_dump = DumpFactory.createDumpForCore(reader, _verbose);
-				} catch (IOException e) {
-					errorMessage("Error. Unexpected Exception occurred opening: " + dumpName + " for the second time", JEXTRACT_FILE_ERROR, e); //$NON-NLS-1$ //$NON-NLS-2$
-				}
-				_dump.extract(_builder);
-			}
-		}
 
 		report("Read memory image from " + _dumpName); //$NON-NLS-1$
 	}
@@ -627,7 +592,7 @@ public class Main {
 
 	/**
 	 * Copies from the given input stream to the given output stream using the buffer provided (this is for file copying, zipping, etc)
-	 * 
+	 *
 	 * @param from The stream to read the data from
 	 * @param to The stream to write the data to
 	 * @param buffer The buffer to use to hold intermediate data (this buffer may be quite large so re-using it from the callsite allows for less re-allocation of the same large buffer)
@@ -647,7 +612,7 @@ public class Main {
 
 	/**
 	 * Copies from the given ClosingFileReader to the given output stream using the buffer provided (this is for file copying, zipping, etc)
-	 * 
+	 *
 	 * @param from The ClosingFileReader to read from
 	 * @param to The stream to write the data to
 	 * @param buffer The buffer to use to hold intermediate data (this buffer may be quite large so re-using it from the callsite allows for less re-allocation of the same large buffer)
@@ -665,7 +630,7 @@ public class Main {
 		}
 	}
 
-	private native long getEnvironmentPointer(IAbstractAddressSpace dump) throws Exception;
+	private native long getEnvironmentPointer(IAbstractAddressSpace dump, boolean disableBuildIdCheck) throws Exception;
 
 	private native void doCommand(IAbstractAddressSpace dump, String command) throws Exception;
 
