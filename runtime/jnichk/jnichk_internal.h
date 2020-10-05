@@ -67,6 +67,7 @@
 #define JNIC_JFIELDINSTANCEID 'e'
 #define JNIC_JFIELDSTATICID 'o'
 #define JNIC_VALIST 'v'
+#define JNIC_JVALUE 'x'
 #define JNIC_JSIZE 'q'
 #define JNIC_POINTER 'p'
 #define JNIC_STRING '$'
