@@ -1261,7 +1261,7 @@ void TR::X86CallSite::setupVirtualGuardInfo()
                {
                TR_ResolvedMethod * method = chTable->findSingleAbstractImplementer(thisClass, methodSymRef->getOffset(), methodSymRef->getOwningMethod(comp()), comp());
                if (method &&
-                   ((method->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) ||
+                   (comp()->isRecursiveMethodTarget(method) ||
                     !method->isInterpreted() ||
                     method->isJITInternalNative()))
                   {
@@ -1276,7 +1276,7 @@ void TR::X86CallSite::setupVirtualGuardInfo()
                   {
                   TR_ResolvedMethod *calleeMethod = methodSymRef->getOwningMethod(comp())->getResolvedVirtualMethod(comp(), refinedThisClass, methodSymRef->getOffset());
                   if (calleeMethod &&
-                      ((calleeMethod->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) ||
+                      (comp()->isRecursiveMethodTarget(calleeMethod) ||
                        !calleeMethod->isInterpreted() ||
                        calleeMethod->isJITInternalNative()))
                      {
