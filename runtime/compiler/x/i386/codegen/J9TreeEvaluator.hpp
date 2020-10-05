@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,10 +28,10 @@
  */
 #ifndef J9_TREE_EVALUATOR_CONNECTOR
 #define J9_TREE_EVALUATOR_CONNECTOR
-namespace J9 { namespace X86 { namespace i386 { class TreeEvaluator; } } }
-namespace J9 { typedef J9::X86::i386::TreeEvaluator TreeEvaluatorConnector; }
+namespace J9 { namespace X86 { namespace I386 { class TreeEvaluator; } } }
+namespace J9 { typedef J9::X86::I386::TreeEvaluator TreeEvaluatorConnector; }
 #else
-#error J9::X86::i386::TreeEvaluator expected to be a primary connector, but a J9 connector is already defined
+#error J9::X86::I386::TreeEvaluator expected to be a primary connector, but a J9 connector is already defined
 #endif
 
 
@@ -43,7 +43,7 @@ namespace J9
 namespace X86
 {
 
-namespace i386
+namespace I386
 {
 
 class OMR_EXTENSIBLE TreeEvaluator: public J9::X86::TreeEvaluator
@@ -55,7 +55,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::X86::TreeEvaluator
    static TR::Register *dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    };
 
-} // namespace i386
+} // namespace I386
 
 } // namespace X86
 

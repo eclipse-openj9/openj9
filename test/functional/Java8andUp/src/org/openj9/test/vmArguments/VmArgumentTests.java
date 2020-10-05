@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,6 +89,7 @@ public class VmArgumentTests {
 	private static final String XPROD = "-Xprod";
 	private static final String HELLO_WORLD_SCRIPT = "#!/bin/sh\n"+ "echo hello, world\n";
 
+	private static final String JAVA_OPTIONS = "JAVA_OPTIONS"; //$NON-NLS-1$
 	private static final String IBM_JAVA_OPTIONS = "IBM_JAVA_OPTIONS"; //$NON-NLS-1$
 	private static final String JAVA_TOOL_OPTIONS = "JAVA_TOOL_OPTIONS"; //$NON-NLS-1$
 	private static final String OPENJ9_JAVA_OPTIONS = "OPENJ9_JAVA_OPTIONS"; //$NON-NLS-1$
@@ -117,6 +118,7 @@ public class VmArgumentTests {
 	private static final String JAVA_COMPILER_VALUE=System.getProperty("java.compiler");
 	private static final String SYSPROP_DJAVA_COMPILER_EQUALS = "-Djava.compiler="+JAVA_COMPILER_VALUE;
 
+	private static final boolean isIBM;
 	private static final boolean isJava8;
 
 	private static final String IBM_NOSIGHANDLER = "IBM_NOSIGHANDLER";
@@ -130,9 +132,9 @@ public class VmArgumentTests {
 	protected static Logger logger = Logger.getLogger(VmArgumentTests.class);
 
 	static {
-		boolean isIbm = System.getProperty("java.vm.vendor").equals("IBM Corporation");
+		isIBM = System.getProperty("java.vm.vendor").equals("IBM Corporation");
 		mandatoryArgumentsJava8 = new String[] {
-				isIbm?XOPTIONSFILE:null,
+				isIBM ? XOPTIONSFILE : null,
 						"-Xlockword:mode",
 						"-Xjcl:",
 						"-Dcom.ibm.oti.vm.bootstrap.library.path",
@@ -148,7 +150,7 @@ public class VmArgumentTests {
 		};
 
 		mandatoryArguments = new String[] {
-				isIbm?XOPTIONSFILE:null,
+				isIBM ? XOPTIONSFILE : null,
 						"-Xlockword:mode",
 						"-Xjcl:",
 						"-Dcom.ibm.oti.vm.bootstrap.library.path",
@@ -334,7 +336,27 @@ public class VmArgumentTests {
 		assertTrue(IBM_JAVA_OPTIONS+ " should come last", argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
 	}
 
-	/* test OPENJ9_JAVA_OPTIONS environment variableS */
+	/* test JAVA_OPTIONS environment variable */
+	@Test
+	public void testJavaOptions() {
+		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
+		Map<String, String> env = pb.environment();
+		String javaOptionsArg = "-Dtest.name=testJavaOptions"; //$NON-NLS-1$
+		env.put(JAVA_OPTIONS, javaOptionsArg);
+		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {javaOptionsArg});
+		if (!isJava8 || !isIBM) {
+			assertTrue(MISSING_ARGUMENT + javaOptionsArg, argumentPositions.containsKey(javaOptionsArg));
+			/* environment variables should come after implicit arguments */
+			assertTrue(JAVA_OPTIONS + SHOULD_COME_AFTER + DJAVA_HOME, 
+					argumentPositions.get(javaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
+		} else {
+			assertFalse("Unexpected: " + javaOptionsArg, argumentPositions.containsKey(javaOptionsArg));
+		}
+	}
+
+
+	/* test OPENJ9_JAVA_OPTIONS environment variable */
 	@Test
 	public void testOpenJ9Options() {
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
@@ -666,30 +688,46 @@ public class VmArgumentTests {
 		}
 	}
 
-	/* IBM_JAVA_OPTIONS should take priority over JAVA_TOOL_OPTIONS */
+	/* IBM_JAVA_OPTIONS should take priority over JAVA_TOOL_OPTIONS, and JAVA_OPTIONS */
 	@Test
 	public void testEnvironmentVariableOrdering() {
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 		Map<String, String> env = pb.environment();
-		String javaToolOptionsArg = "-Dtest.name1=javaToolOptionsArg";
-		String ibmJavaOptionsArg = "-Dtest.name2=ibmJavaOptionsArg";
-		String openJ9JavaOptionsArg = "-Dtest.name2=openJ9JavaOptionsArg";
-		env.put(JAVA_TOOL_OPTIONS, javaToolOptionsArg);
+		String ibmJavaOptionsArg = "-Dtest.name1=ibmJavaOptionsArg";
+		String javaOptionsArg = "-Dtest.name2=javaOptionsArg";
+		String javaToolOptionsArg = "-Dtest.name3=javaToolOptionsArg";
+		String openJ9JavaOptionsArg = "-Dtest.name4=openJ9JavaOptionsArg";
 		env.put(IBM_JAVA_OPTIONS, ibmJavaOptionsArg);
+		env.put(JAVA_OPTIONS, javaOptionsArg);
+		env.put(JAVA_TOOL_OPTIONS, javaToolOptionsArg);
 		env.put(OPENJ9_JAVA_OPTIONS, openJ9JavaOptionsArg);
 		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
 		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, 
-				new String[] {ibmJavaOptionsArg, javaToolOptionsArg, openJ9JavaOptionsArg});
+				new String[] {ibmJavaOptionsArg, javaOptionsArg, javaToolOptionsArg, openJ9JavaOptionsArg});
 		assertTrue(MISSING_ARGUMENT+ibmJavaOptionsArg, 
 				argumentPositions.containsKey(ibmJavaOptionsArg));
+		if (!isJava8 || !isIBM) {
+			assertTrue(MISSING_ARGUMENT + javaOptionsArg, 
+					argumentPositions.containsKey(javaOptionsArg));
+		} else {
+			assertFalse("unexpected: " + javaOptionsArg, 
+					argumentPositions.containsKey(javaOptionsArg));
+		}
 		assertTrue(MISSING_ARGUMENT+javaToolOptionsArg, 
 				argumentPositions.containsKey(javaToolOptionsArg));
 		assertTrue(MISSING_ARGUMENT+openJ9JavaOptionsArg, 
 				argumentPositions.containsKey(openJ9JavaOptionsArg));
 		assertTrue(IBM_JAVA_OPTIONS+ SHOULD_COME_AFTER+OPENJ9_JAVA_OPTIONS, 
 				argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(openJ9JavaOptionsArg).intValue());
-		assertTrue(OPENJ9_JAVA_OPTIONS+ SHOULD_COME_AFTER+JAVA_TOOL_OPTIONS, 
-				argumentPositions.get(openJ9JavaOptionsArg).intValue() > argumentPositions.get(javaToolOptionsArg).intValue());
+		if (!isJava8 || !isIBM) {
+			assertTrue(OPENJ9_JAVA_OPTIONS + SHOULD_COME_AFTER + JAVA_OPTIONS, 
+					argumentPositions.get(openJ9JavaOptionsArg).intValue() > argumentPositions.get(javaOptionsArg).intValue());
+			assertTrue(JAVA_OPTIONS + SHOULD_COME_AFTER + JAVA_TOOL_OPTIONS, 
+					argumentPositions.get(javaOptionsArg).intValue() > argumentPositions.get(javaToolOptionsArg).intValue());
+		} else {
+			assertTrue(OPENJ9_JAVA_OPTIONS + SHOULD_COME_AFTER + JAVA_TOOL_OPTIONS, 
+					argumentPositions.get(openJ9JavaOptionsArg).intValue() > argumentPositions.get(javaToolOptionsArg).intValue());
+		}
 	}
 
 	/*

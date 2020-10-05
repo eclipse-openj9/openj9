@@ -40,6 +40,28 @@
 
 extern void TEMPORARY_initJ9ARMTreeEvaluatorTable(TR::CodeGenerator *cg);
 
+J9::ARM::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
+      J9::CodeGenerator(comp)
+   {
+   }
+
+void
+J9::ARM::CodeGenerator::initialize()
+   {
+   self()->J9::CodeGenerator::initialize();
+
+   /*
+    * "Statically" initialize the FE-specific tree evaluator functions.
+    * This code only needs to execute once per JIT lifetime.
+    */
+   static bool initTreeEvaluatorTable = false;
+   if (!initTreeEvaluatorTable)
+      {
+      TEMPORARY_initJ9ARMTreeEvaluatorTable(self());
+      initTreeEvaluatorTable = true;
+      }
+   }
+
 J9::ARM::CodeGenerator::CodeGenerator() :
       J9::CodeGenerator()
    {

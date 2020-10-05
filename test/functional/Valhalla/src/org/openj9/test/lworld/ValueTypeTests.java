@@ -2019,6 +2019,54 @@ public class ValueTypeTests {
 		}
 	}
 
+	/**
+	 * Create multi dimensional array with Point Class without initialization.
+	 * Set each array value to a default value and check field access method handler.
+	 */
+	@Test(priority=4)
+	static public void testDefaultValueInPointInstanceMultiArray() throws Throwable {
+		Object pointArray = Array.newInstance(point2DClass, new int[]{genericArraySize, genericArraySize});
+		String[] fields = {"x:I", "y:I"};
+		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(point2DClass, fields);
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object pointNew = createPoint2D(defaultPointPositions1);
+				Array.set(Array.get(pointArray,i),j, pointNew);
+			}
+		}
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object pointObject = Array.get(Array.get(pointArray,i),j);
+				checkFieldAccessMHOfAssortedType(getterAndWither, pointObject, fields, true);
+			}
+		}
+	}
+
+	/**
+	 * Create multi dimensional array with Point Class using bytecode instruction
+	 * multianewarray.
+	 * Set each array value to a default value and check field access method handler.
+	 */
+	@Test(priority=4)
+	static public void testDefaultValueInPointByteCodeMultiArray() throws Throwable {
+		MethodHandle makePointArray = lookup.findStatic(point2DClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
+		Object pointArray = makePointArray.invoke(genericArraySize, genericArraySize);
+		String[] fields = {"x:I", "y:I"};
+		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(point2DClass, fields);
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object pointNew = createPoint2D(defaultPointPositions1);
+				Array.set(Array.get(pointArray,i),j, pointNew);
+			}
+		}
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object pointObject = Array.get(Array.get(pointArray,i),j);
+				checkFieldAccessMHOfAssortedType(getterAndWither, pointObject, fields, true);
+			}
+		}
+	}
+
 	/*
 	 * Create Array Objects with Flattened Line without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
@@ -2031,6 +2079,54 @@ public class ValueTypeTests {
 			assertNotNull(lineObject);
 			assertNotNull(getFlatSt.invoke(lineObject));
 			assertNotNull(getFlatEn.invoke(lineObject));
+		}
+	}
+
+	/**
+	 * Create multi dimensional array with Line Class without initialization.
+	 * Set each array value to a default value and check field access method handler.
+	 */
+	@Test(priority=4)
+	static public void testDefaultValueInLineInstanceMultiArray() throws Throwable {
+		Object flattenedLineArray = Array.newInstance(flattenedLine2DClass, new int[]{genericArraySize, genericArraySize});
+		String[] fields = {"st:QPoint;:value","en:QPoint;:value"};
+		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(flattenedLine2DClass, fields);
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object lineNew = createFlattenedLine2D(defaultLinePositions1);
+				Array.set(Array.get(flattenedLineArray,i),j, lineNew);
+			}
+		}
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object lineObject = Array.get(Array.get(flattenedLineArray,i),j);
+				checkFieldAccessMHOfAssortedType(getterAndWither, lineObject, fields, true);
+			}
+		}
+	}
+
+	/**
+	 * Create multi dimensional array with Line Class using bytecode instruction
+	 * multianewarray.
+	 * Set each array value to a default value and check field access method handler.
+	 */
+	@Test(priority=4)
+	static public void testDefaultValueInLineByteCodeMultiArray() throws Throwable {
+		MethodHandle makeLineArray = lookup.findStatic(flattenedLine2DClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
+		Object flattenedLineArray = makeLineArray.invoke(genericArraySize, genericArraySize);
+		String[] fields = {"st:QPoint;:value","en:QPoint;:value"};
+		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(flattenedLine2DClass, fields);
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object lineNew = createFlattenedLine2D(defaultLinePositions1);
+				Array.set(Array.get(flattenedLineArray,i),j, lineNew);
+			}
+		}
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object lineObject = Array.get(Array.get(flattenedLineArray,i),j);
+				checkFieldAccessMHOfAssortedType(getterAndWither, lineObject, fields, true);
+			}
 		}
 	}
 
@@ -2050,6 +2146,54 @@ public class ValueTypeTests {
 		}
 	}
 
+	/**
+	 * Create multi dimensional array with Triangle Class without initialization.
+	 * Set each array value to a default value and check field access method handler.
+	 */
+	@Test(priority=4)
+	static public void testDefaultValueInTriangleInstanceMultiArray() throws Throwable {
+		Object triangleArray = Array.newInstance(triangle2DClass, new int[]{genericArraySize, genericArraySize});
+		String[] fields = {"v1:QFlattenedLine2D;:value", "v2:QFlattenedLine2D;:value", "v3:QFlattenedLine2D;:value"};
+		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(triangle2DClass, fields);
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object triNew = createTriangle2D(new int[][][] {defaultLinePositions1, defaultLinePositions1, defaultLinePositions1});
+				Array.set(Array.get(triangleArray,i),j, triNew);
+			}
+		}
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object triangleObject = Array.get(Array.get(triangleArray,i),j);
+				checkFieldAccessMHOfAssortedType(getterAndWither, triangleObject, fields, true);
+			}
+		}
+	}
+
+	/**
+	 * Create multi dimensional array with Triangle Class using bytecode instruction
+	 * multianewarray.
+	 * Set each array value to a default value and check field access method handler.
+	 */
+	@Test(priority=4)
+	static public void testDefaultValueInTriangleByteCodeMultiArray() throws Throwable {
+		MethodHandle makeTriangleArray = lookup.findStatic(triangle2DClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
+		Object triangleArray = makeTriangleArray.invoke(genericArraySize, genericArraySize);
+		String[] fields = {"v1:QFlattenedLine2D;:value", "v2:QFlattenedLine2D;:value", "v3:QFlattenedLine2D;:value"};
+		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(triangle2DClass, fields);
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object triNew = createTriangle2D(new int[][][] {defaultLinePositions1, defaultLinePositions1, defaultLinePositions1});
+				Array.set(Array.get(triangleArray,i),j, triNew);
+			}
+		}
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object triangleObject = Array.get(Array.get(triangleArray,i),j);
+				checkFieldAccessMHOfAssortedType(getterAndWither, triangleObject, fields, true);
+			}
+		}
+	}
+
 	/*
 	 * Create an Array Object with assortedValueWithLongAlignment class without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
@@ -2062,6 +2206,54 @@ public class ValueTypeTests {
 			assertNotNull(assortedValueWithLongAlignmentObject);
 			for (int j = 0; j < 7; j++) {
 				assertNotNull(assortedValueWithLongAlignmentGetterAndWither[j][0].invoke(assortedValueWithLongAlignmentObject));
+			}
+		}
+	}
+
+	/**
+	 * Create multi dimensional array with assortedValueWithLongAlignment without initialization.
+	 * Set each array value to a default value and check field access method handler.
+	 *
+	 * Fails tests with array flattening enabled
+	 */
+	@Test(enabled = false, priority=5)
+	static public void testDefaultValueInAssortedValueWithLongAlignmenInstanceMultiArray() throws Throwable {
+		Object assortedValueWithLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, new int[]{genericArraySize, genericArraySize});
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
+				Array.set(Array.get(assortedValueWithLongAlignmentArray,i),j, assortedValueWithLongAlignment);
+			}
+		}
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object assortedValueWithLongAlignmentObject = Array.get(Array.get(assortedValueWithLongAlignmentArray,i),j);
+				checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterAndWither, assortedValueWithLongAlignmentObject, typeWithLongAlignmentFields, true);
+			}
+		}
+	}
+
+	/**
+	 * Create multi dimensional array with assortedValueWithLongAlignment using bytecode instruction
+	 * multianewarray.
+	 * Set each array value to a default value and check field access method handler.
+	 *
+	 * Fails tests with array flattening enabled
+	 */
+	@Test(enabled = false, priority=5)
+	static public void testDefaultValueInAssortedValueWithLongAlignmentByteCodeMultiArray() throws Throwable {
+		MethodHandle makeAssortedValueWithLongAlignmentArray = lookup.findStatic(assortedValueWithLongAlignmentClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
+		Object assortedValueWithLongAlignmentArray = makeAssortedValueWithLongAlignmentArray.invoke(genericArraySize, genericArraySize);
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
+				Array.set(Array.get(assortedValueWithLongAlignmentArray,i),j, assortedValueWithLongAlignment);
+			}
+		}
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				Object assortedValueWithLongAlignmentObject = Array.get(Array.get(assortedValueWithLongAlignmentArray,i),j);
+				checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterAndWither, assortedValueWithLongAlignmentObject, typeWithLongAlignmentFields, true);
 			}
 		}
 	}

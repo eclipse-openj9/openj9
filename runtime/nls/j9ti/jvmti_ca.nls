@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,7 +98,7 @@ J9NLS_JVMTI_COM_IBM_GET_POTENTIAL_EXTENDED_CAPABILITIES_DESCRIPTION.user_respons
 
 # END NON-TRANSLATABLE
 
-J9NLS_JVMTI_COM_IBM_ADD_EXTENDED_CAPABILITIES_DESCRIPTION=Afegir les noves possibilitats ampliades des de capabilities_ptr.
+J9NLS_JVMTI_COM_IBM_ADD_EXTENDED_CAPABILITIES_DESCRIPTION=Afegeix les noves possibilitats ampliades des de capabilities_ptr.
 # START NON-TRANSLATABLE
 J9NLS_JVMTI_COM_IBM_ADD_EXTENDED_CAPABILITIES_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_ADD_EXTENDED_CAPABILITIES_DESCRIPTION.system_action=None
@@ -106,7 +106,7 @@ J9NLS_JVMTI_COM_IBM_ADD_EXTENDED_CAPABILITIES_DESCRIPTION.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_JVMTI_COM_IBM_RELINQUISH_EXTENDED_CAPABILITIES_DESCRIPTION=Renunciar a les possibilitats ampliades de capabilities_ptr.
+J9NLS_JVMTI_COM_IBM_RELINQUISH_EXTENDED_CAPABILITIES_DESCRIPTION=Renuncia a les possibilitats ampliades de capabilities_ptr.
 # START NON-TRANSLATABLE
 J9NLS_JVMTI_COM_IBM_RELINQUISH_EXTENDED_CAPABILITIES_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_RELINQUISH_EXTENDED_CAPABILITIES_DESCRIPTION.system_action=None
@@ -114,7 +114,7 @@ J9NLS_JVMTI_COM_IBM_RELINQUISH_EXTENDED_CAPABILITIES_DESCRIPTION.user_response=N
 
 # END NON-TRANSLATABLE
 
-J9NLS_JVMTI_COM_IBM_GET_EXTENDED_CAPABILITIES_DESCRIPTION=Obtenir el conjunt actual de possibilitats ampliades mitjan\u00e7ant capabilities_ptr.
+J9NLS_JVMTI_COM_IBM_GET_EXTENDED_CAPABILITIES_DESCRIPTION=Obt\u00e9n el conjunt actual de possibilitats ampliades mitjan\u00e7ant capabilities_ptr.
 # START NON-TRANSLATABLE
 J9NLS_JVMTI_COM_IBM_GET_EXTENDED_CAPABILITIES_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_GET_EXTENDED_CAPABILITIES_DESCRIPTION.system_action=None
@@ -146,7 +146,7 @@ J9NLS_JVMTI_COM_IBM_METHOD_ENTRY_EXTENDED_DESCRIPTION.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_JVMTI_COM_IBM_JVM_TRACE_SET_DESCRIPTION=Afegir una opci\u00f3 -Xtrace din\u00e0mica
+J9NLS_JVMTI_COM_IBM_JVM_TRACE_SET_DESCRIPTION=Afegeix una opci\u00f3 -Xtrace din\u00e0mica
 # START NON-TRANSLATABLE
 J9NLS_JVMTI_COM_IBM_JVM_TRACE_SET_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_JVM_TRACE_SET_DESCRIPTION.system_action=None
@@ -154,7 +154,7 @@ J9NLS_JVMTI_COM_IBM_JVM_TRACE_SET_DESCRIPTION.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_JVMTI_COM_IBM_JVM_DUMP_SET_DESCRIPTION=Afegir una opci\u00f3 -Xdump din\u00e0mica
+J9NLS_JVMTI_COM_IBM_JVM_DUMP_SET_DESCRIPTION=Afegeix una opci\u00f3 -Xdump din\u00e0mica
 # START NON-TRANSLATABLE
 J9NLS_JVMTI_COM_IBM_JVM_DUMP_SET_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_JVM_DUMP_SET_DESCRIPTION.system_action=None

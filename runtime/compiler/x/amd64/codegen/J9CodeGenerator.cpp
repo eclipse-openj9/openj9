@@ -35,6 +35,13 @@
 #include "objectfmt/JitCodeObjectFormat.hpp"
 #include "objectfmt/ELFJitCodeObjectFormat.hpp"
 
+void
+J9::X86::AMD64::CodeGenerator::initialize()
+   {
+   self()->J9::X86::CodeGenerator::initialize();
+   }
+
+
 TR::Linkage *
 J9::X86::AMD64::CodeGenerator::createLinkage(TR_LinkageConventions lc)
    {

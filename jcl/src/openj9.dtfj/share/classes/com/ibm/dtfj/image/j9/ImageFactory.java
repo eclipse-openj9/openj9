@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -195,19 +195,17 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 		File core = null;
 		File meta = null;
 		if (FileManager.isArchive(imageFile)) {
-			boolean foundCoreFile = false; //flag to indicate that a core file has been found
 			CompressedFileManager archiveManager = (CompressedFileManager) manager;
 			for (ManagedImageSource candidate : candidates) {
 				if (candidate.getType().equals(ImageSourceType.CORE)) {
-					if (foundCoreFile) {
+					if (source != null) {
 						//for legacy behaviour compatibility this can only return 1 core when invoked this way
 						throw new MultipleCandidateException(candidates, imageFile);
 					}
 					source = candidate; //note the core file
-					foundCoreFile = true;
 				}
 			}
-			if (foundCoreFile) {
+			if (source != null) {
 				//if a single core file has been located then extract it and any associated meta data into a temp directory
 				File parent = getTempDirParent();
 				tmpdir = FileManager.createTempDir(parent);

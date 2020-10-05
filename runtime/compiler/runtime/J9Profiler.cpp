@@ -223,8 +223,8 @@ TR_GlobalRecompilationCounters::examineStructure(
 TR_CatchBlockProfiler::TR_CatchBlockProfiler(
       TR::Compilation  * c,
       TR::Recompilation * r,
-      bool initialCompilation)
-   : TR_RecompilationProfiler(c, r, initialCompilation),
+      bool forInitialCompilation)
+   : TR_RecompilationProfiler(c, r, forInitialCompilation ? initialCompilation : 0),
       _profileInfo(0),
       _throwCounterSymRef(0),
       _catchCounterSymRef(0)

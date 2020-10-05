@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2019 IBM Corp. and others
+ * Copyright (c) 2002, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -725,15 +725,14 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 						}
 						funcs->internalExitVMToJNI(vmThread);
 
-						if (packageStringRef) {
-							(*env)->SetObjectArrayElement(env, result, (jsize) i, packageStringRef);
-							(*env)->DeleteLocalRef(env, packageStringRef);
-						}
-
-						if ( (*env)->ExceptionCheck(env) ) {
+						if (NULL == packageStringRef) {
+							/* An exception is necessarily pending */
 							result = NULL;
 							break;
 						}
+
+						(*env)->SetObjectArrayElement(env, result, (jsize) i, packageStringRef);
+						(*env)->DeleteLocalRef(env, packageStringRef);
 					}
 				}
 			}
@@ -786,18 +785,18 @@ JVM_GetSystemPackage_Impl(JNIEnv* env, jstring pkgName)
 	Trc_SunVMI_GetSystemPackage_Entry(env, pkgName);
 
 	if (NULL == pkgName) {
-		return NULL;
+		goto done;
 	}
 
 	utfPkgName = (const char *) (*env)->GetStringUTFChars(env, pkgName, NULL);
 	if (NULL == utfPkgName) {
-		return NULL;
+		goto done;
 	}
 
 	utfPkgNameLen = strlen(utfPkgName);
 
 	if (0 == utfPkgNameLen) {
-		return NULL;
+		goto release;
 	}
 
 	funcs->internalEnterVMFromJNI(vmThread);
@@ -812,7 +811,7 @@ JVM_GetSystemPackage_Impl(JNIEnv* env, jstring pkgName)
 		queryROMClass = j9mem_allocate_memory(allocationSize, J9MEM_CATEGORY_VM);
 		if (NULL == queryROMClass) {
 			Trc_SunVMI_AllocateRomClassFailed(vmThread);
-			goto done;
+			goto exit;
 		} else {
 			/* the end of a J9ROMClass is guaranteed to be aligned */
 			pkgNameUTF8 =  (J9UTF8 *)(queryROMClass + 1);
@@ -854,12 +853,11 @@ JVM_GetSystemPackage_Impl(JNIEnv* env, jstring pkgName)
 	if (NULL != jlstringObject) {
 		result = funcs->j9jni_createLocalRef(env, jlstringObject);
 	}
-
-done:
+exit:
 	funcs->internalExitVMToJNI(vmThread);
-
+release:
 	(*env)->ReleaseStringUTFChars(env, pkgName, utfPkgName);
-
+done:
 	Trc_SunVMI_GetSystemPackage_Exit(env, result);
 
 	return result;

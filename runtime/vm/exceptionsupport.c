@@ -1101,7 +1101,10 @@ setRecursiveBindError(J9VMThread * currentThread, J9Method * method)
 void  
 setNativeNotFoundError(J9VMThread * currentThread, J9Method * method)
 {
-	setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGUNSATISFIEDLINKERROR, (UDATA*)methodToString(currentThread, method));
+	j9object_t detailMessage = methodToString(currentThread, method);
+	if (NULL != detailMessage) {
+		setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGUNSATISFIEDLINKERROR, (UDATA*)detailMessage);
+	}
 }
 
 

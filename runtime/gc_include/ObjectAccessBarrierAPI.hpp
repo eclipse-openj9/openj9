@@ -411,7 +411,8 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_structuralCompareFlattenedObjects(vmThread, valueClass, lhsObject, rhsObject, startOffset);
 #else /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
-		if (j9gc_modron_readbar_none != _readBarrierType) {
+		bool hasReferences = J9CLASS_HAS_REFERENCES(valueClass);
+		if (hasReferences && (j9gc_modron_readbar_none != _readBarrierType)) {
 			return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_structuralCompareFlattenedObjects(vmThread, valueClass, lhsObject, rhsObject, startOffset);
 		} else {
 			startOffset += valueClass->backfillOffset;
@@ -439,7 +440,8 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset);
 #else /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
-		if (j9gc_modron_readbar_none != _readBarrierType) {	
+		bool hasReferences = J9CLASS_HAS_REFERENCES(objectClass);
+		if (hasReferences && ((j9gc_modron_readbar_none != _readBarrierType) || (j9gc_modron_wrtbar_always == _writeBarrierType))) {
 			vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset);
 		} else {
 			UDATA offset = 0;
@@ -465,8 +467,9 @@ public:
 			if (NULL != lockwordAddress) {
 				J9_STORE_LOCKWORD(vmThread, lockwordAddress, 0);
 			}
-
-			postBatchStoreObject(vmThread, destObject);
+			if (hasReferences) {
+				postBatchStoreObject(vmThread, destObject);
+			}
 		}
 #endif /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
 	}

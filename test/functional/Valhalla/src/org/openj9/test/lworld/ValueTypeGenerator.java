@@ -119,6 +119,7 @@ public class ValueTypeGenerator extends ClassLoader {
 				makeGeneric(cw, className, "makeValueGeneric", "makeValue", makeValueSig, makeValueGenericSig, fields, makeMaxLocal, isRef);
 			}
 		}
+		test2DMultiANewArray(cw, className, isRef);
 		testCheckCastOnInvalidQtype(cw);
 		testCheckCastOnInvalidLtype(cw);
 		addStaticSynchronizedMethods(cw);
@@ -932,5 +933,16 @@ public class ValueTypeGenerator extends ClassLoader {
 	public static Class<?> generateRefClass(String name, String[] fields) throws Throwable {
 		byte[] bytes = generateClass(name, fields, false, true);
 		return generator.defineClass(name, bytes, 0, bytes.length);
+	}
+
+	public static void test2DMultiANewArray(ClassWriter cw, String className, boolean isRef) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "generate2DMultiANewArray", "(II)Ljava/lang/Object;", null, null);
+		mv.visitCode();
+		mv.visitVarInsn(ILOAD, 0);
+		mv.visitVarInsn(ILOAD, 1);
+		mv.visitMultiANewArrayInsn("[[" + getSigFromSimpleName(className, isRef), 2);
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(2, 2);
+		mv.visitEnd();
 	}
 }

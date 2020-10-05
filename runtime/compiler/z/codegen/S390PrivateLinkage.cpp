@@ -1861,7 +1861,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                      TR_ResolvedMethod * method = chTable->findSingleAbstractImplementer(thisClass, methodSymRef->getOffset(),
                                                                 methodSymRef->getOwningMethod(comp()), comp());
                      if (method &&
-                        ((method->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) || !method->isInterpreted() || method->isJITInternalNative()))
+                        (comp()->isRecursiveMethodTarget(method) || !method->isInterpreted() || method->isJITInternalNative()))
                         {
                         performGuardedDevirtualization = true;
                         resolvedMethod = method;
@@ -1882,7 +1882,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                         TR_ResolvedMethod * calleeMethod = methodSymRef->getOwningMethod(comp())->getResolvedVirtualMethod(comp(),
                                                                 refinedThisClass, methodSymRef->getOffset());
                         if (calleeMethod &&
-                           ((calleeMethod->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) ||
+                           (comp()->isRecursiveMethodTarget(calleeMethod) ||
                            !calleeMethod->isInterpreted() ||
                            calleeMethod->isJITInternalNative()))
                            {
@@ -2429,7 +2429,7 @@ J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference 
    TR_ResolvedMethod * fem = (sym == NULL) ? NULL : sym->getResolvedMethod();
    bool myself;
    bool isJitInduceOSR = callSymRef->isOSRInductionHelper();
-   myself = (fem != NULL && fem->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) ? true : false;
+   myself = comp()->isRecursiveMethodTarget(fem);
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
 
