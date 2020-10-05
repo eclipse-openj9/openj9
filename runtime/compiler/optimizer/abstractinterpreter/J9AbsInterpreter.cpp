@@ -159,7 +159,7 @@ void J9::AbsInterpreter::setStartBlockState()
          TR::AbsVPValue* arg = static_cast<TR::AbsVPValue*>(_arguments->at(i));
          TR::DataType dataType = arg->getDataType();
 
-         TR::AbsVPValue* param = new TR::AbsVPValue(vp(), arg->getConstraint(), dataType);
+         TR::AbsVPValue* param = new (region()) TR::AbsVPValue(vp(), arg->getConstraint(), dataType);
          param->setParamPosition(paramPos);
 
          if (i == 0 && !_callerMethod->isStatic())
