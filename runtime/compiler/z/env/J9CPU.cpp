@@ -121,12 +121,12 @@ J9::Z::CPU::customize(OMRProcessorDesc processorDescription)
          }
       }
 
-   if (_isFeatureMasksEnabled)
+   if (_isSupportedFeatureMasksEnabled)
       {
       // mask out any cpu features that the compiler doesn't care about
       for (size_t i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
          {
-         processorDescription.features[i] &= _featureMasks.features[i];
+         processorDescription.features[i] &= _supportedFeatureMasks.features[i];
          }
       }
 
@@ -147,13 +147,13 @@ J9::Z::CPU::enableFeatureMasks()
                                          OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3,
                                          OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY};
 
-   memset(_featureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
+   memset(_supportedFeatureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
    OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
    for (size_t i = 0; i < sizeof(utilizedFeatures)/sizeof(uint32_t); i++)
       {
-      omrsysinfo_processor_set_feature(&_featureMasks, utilizedFeatures[i], TRUE);
+      omrsysinfo_processor_set_feature(&_supportedFeatureMasks, utilizedFeatures[i], TRUE);
       }
-   _isFeatureMasksEnabled = true;
+   _isSupportedFeatureMasksEnabled = true;
    }
 
 bool

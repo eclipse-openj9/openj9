@@ -55,12 +55,12 @@ J9::Power::CPU::enableFeatureMasks()
                                         OMR_FEATURE_PPC_HTM, OMR_FEATURE_PPC_HAS_VSX};
 
 
-   memset(_featureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
+   memset(_supportedFeatureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
    OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
    for (size_t i = 0; i < sizeof(utilizedFeatures)/sizeof(uint32_t); i++)
       {
-      omrsysinfo_processor_set_feature(&_featureMasks, utilizedFeatures[i], TRUE);
+      omrsysinfo_processor_set_feature(&_supportedFeatureMasks, utilizedFeatures[i], TRUE);
       }
    
-   _isFeatureMasksEnabled = true;
+   _isSupportedFeatureMasksEnabled = true;
    }

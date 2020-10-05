@@ -60,7 +60,7 @@ public:
    static TR::CPU detectRelocatable(OMRPortLibrary * const omrPortLib);
 
    /**
-    * @brief Intialize _featureMasks to the list of processor features that will be utilized by the compiler and set _isFeatureMasksEnabled to true
+    * @brief Intialize _supportedFeatureMasks to the list of processor features that will be utilized by the compiler and set _isSupportedFeatureMasksEnabled to true
     * @return void
     */
    static void enableFeatureMasks();

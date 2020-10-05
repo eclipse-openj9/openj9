@@ -81,13 +81,13 @@ J9::X86::CPU::enableFeatureMasks()
                                         OMR_FEATURE_X86_AESNI, OMR_FEATURE_X86_OSXSAVE, OMR_FEATURE_X86_AVX,
                                         OMR_FEATURE_X86_FMA, OMR_FEATURE_X86_HLE, OMR_FEATURE_X86_RTM};
 
-   memset(_featureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
+   memset(_supportedFeatureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
    OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
    for (size_t i = 0; i < sizeof(utilizedFeatures)/sizeof(uint32_t); i++)
       {
-      omrsysinfo_processor_set_feature(&_featureMasks, utilizedFeatures[i], TRUE);
+      omrsysinfo_processor_set_feature(&_supportedFeatureMasks, utilizedFeatures[i], TRUE);
       }
-   _isFeatureMasksEnabled = true;
+   _isSupportedFeatureMasksEnabled = true;
    }
 
 
@@ -153,7 +153,7 @@ J9::X86::CPU::supportsFeature(uint32_t feature)
    if (!disableCPUDetectionTest)
       {
       TR_ASSERT_FATAL(self()->supports_feature_test(feature), "Old API and new API did not match: processor feature %d\n", feature);
-      TR_ASSERT_FATAL(TRUE == omrsysinfo_processor_has_feature(&_featureMasks, feature), "New processor feature usage detected, please add feature %d to _featureMasks via TR::CPU::enableFeatureMasks()\n", feature);
+      TR_ASSERT_FATAL(TRUE == omrsysinfo_processor_has_feature(&_supportedFeatureMasks, feature), "New processor feature usage detected, please add feature %d to _supportedFeatureMasks via TR::CPU::enableFeatureMasks()\n", feature);
       }
       
    return TRUE == omrsysinfo_processor_has_feature(&_processorDescription, feature);

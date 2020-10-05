@@ -48,12 +48,12 @@ protected:
    /**
     * @brief Contain the list of processor features utlizied by the compiler, initialized via TR::CPU::initializeFeatureMasks()
     */
-   static OMRProcessorDesc _featureMasks;
+   static OMRProcessorDesc _supportedFeatureMasks;
 
    /**
-    * @brief _isFeatureMasksEnabled tells you whether _featureMasks was used for masking out unused processor features
+    * @brief _isSupportedFeatureMasksEnabled tells you whether _supportedFeatureMasks was used for masking out unused processor features
     */
-   static bool _isFeatureMasksEnabled;
+   static bool _isSupportedFeatureMasksEnabled;
 
 public:
 
@@ -72,7 +72,7 @@ public:
    static TR::CPU customize(OMRProcessorDesc processorDescription);
 
    /**
-    * @brief Intialize _featureMasks to the list of processor features that will be utilized by the compiler and set _isFeatureMasksEnabled to true
+    * @brief Intialize _supportedFeatureMasks to the list of processor features that will be utilized by the compiler and set _isSupportedFeatureMasksEnabled to true
     * @return void
     */
    static void enableFeatureMasks();
