@@ -25,6 +25,7 @@ package java.lang.invoke;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+import static java.lang.invoke.MethodHandleHelper.UNSAFE;
 
 /*
  * MethodHandle subclass that is able to return the value of
@@ -55,42 +56,47 @@ final class FieldGetterHandle extends FieldHandle {
 	// {{{ JIT support
 	@FrameIteratorSkip
 	private final int    invokeExact_thunkArchetype_I(Object receiver, int argPlaceholder) {
-		if (isVolatile)
+		if (isVolatile) {
 			return UNSAFE.getIntVolatile(receiver, vmSlot + HEADER_SIZE);
-		else
-			return UNSAFE.getInt        (receiver, vmSlot + HEADER_SIZE);
+		} else {
+			return UNSAFE.getInt(receiver, vmSlot + HEADER_SIZE);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final long   invokeExact_thunkArchetype_J(Object receiver, int argPlaceholder) {
-		if (isVolatile)
+		if (isVolatile) {
 			return UNSAFE.getLongVolatile(receiver, vmSlot + HEADER_SIZE);
-		else
-			return UNSAFE.getLong        (receiver, vmSlot + HEADER_SIZE);
+		} else {
+			return UNSAFE.getLong(receiver, vmSlot + HEADER_SIZE);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final float  invokeExact_thunkArchetype_F(Object receiver, int argPlaceholder) {
-		if (isVolatile)
+		if (isVolatile) {
 			return UNSAFE.getFloatVolatile(receiver, vmSlot + HEADER_SIZE);
-		else
-			return UNSAFE.getFloat        (receiver, vmSlot + HEADER_SIZE);
+		} else {
+			return UNSAFE.getFloat(receiver, vmSlot + HEADER_SIZE);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final double invokeExact_thunkArchetype_D(Object receiver, int argPlaceholder) {
-		if (isVolatile)
+		if (isVolatile) {
 			return UNSAFE.getDoubleVolatile(receiver, vmSlot + HEADER_SIZE);
-		else
-			return UNSAFE.getDouble        (receiver, vmSlot + HEADER_SIZE);
+		} else {
+			return UNSAFE.getDouble(receiver, vmSlot + HEADER_SIZE);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final Object invokeExact_thunkArchetype_L(Object receiver, int argPlaceholder) {
-		if (isVolatile)
+		if (isVolatile) {
 			return UNSAFE.getObjectVolatile(receiver, vmSlot + HEADER_SIZE);
-		else
-			return UNSAFE.getObject        (receiver, vmSlot + HEADER_SIZE);
+		} else {
+			return UNSAFE.getObject(receiver, vmSlot + HEADER_SIZE);
+		}
 	}
 
 	private static final ThunkTable _thunkTable = new ThunkTable();

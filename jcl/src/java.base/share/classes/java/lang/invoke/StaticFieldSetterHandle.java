@@ -25,6 +25,8 @@ package java.lang.invoke;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+import static java.lang.invoke.MethodHandleHelper.UNSAFE;
+
 /*
  * MethodHandle subclass that is able to set the value of
  * a static field.
@@ -55,46 +57,51 @@ final class StaticFieldSetterHandle extends FieldHandle {
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(int    newValue, int argPlaceholder) {
 		initializeClassIfRequired();
-		if (isVolatile)
+		if (isVolatile) {
 			UNSAFE.putIntVolatile(defc, vmSlot, newValue);
-		else
-			UNSAFE.putInt        (defc, vmSlot, newValue);
+		} else {
+			UNSAFE.putInt(defc, vmSlot, newValue);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(long   newValue, int argPlaceholder) {
 		initializeClassIfRequired();
-		if (isVolatile)
+		if (isVolatile) {
 			UNSAFE.putLongVolatile(defc, vmSlot, newValue);
-		else
-			UNSAFE.putLong        (defc, vmSlot, newValue);
+		} else {
+			UNSAFE.putLong(defc, vmSlot, newValue);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(float  newValue, int argPlaceholder) {
 		initializeClassIfRequired();
-		if (isVolatile)
+		if (isVolatile) {
 			UNSAFE.putFloatVolatile(defc, vmSlot, newValue);
-		else
-			UNSAFE.putFloat        (defc, vmSlot, newValue);
+		} else {
+			UNSAFE.putFloat(defc, vmSlot, newValue);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(double newValue, int argPlaceholder) {
 		initializeClassIfRequired();
-		if (isVolatile)
+		if (isVolatile) {
 			UNSAFE.putDoubleVolatile(defc, vmSlot, newValue);
-		else
-			UNSAFE.putDouble        (defc, vmSlot, newValue);
+		} else {
+			UNSAFE.putDouble(defc, vmSlot, newValue);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object newValue, int argPlaceholder) {
 		initializeClassIfRequired();
-		if (isVolatile)
+		if (isVolatile) {
 			UNSAFE.putObjectVolatile(defc, vmSlot, newValue);
-		else
-			UNSAFE.putObject        (defc, vmSlot, newValue);
+		} else {
+			UNSAFE.putObject(defc, vmSlot, newValue);
+		}
 	}
 
 	private static final ThunkTable _thunkTable = new ThunkTable();
