@@ -25,6 +25,8 @@ package java.lang.invoke;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+import static java.lang.invoke.MethodHandleHelper.UNSAFE;
+
 /*
  * MethodHandle subclass that is able to set the value of
  * an instance field.
@@ -57,42 +59,47 @@ final class FieldSetterHandle extends FieldHandle {
 	// {{{ JIT support
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object receiver, int    newValue, int argPlaceholder) {
-		if (isVolatile)
+		if (isVolatile) {
 			UNSAFE.putIntVolatile(receiver, vmSlot + HEADER_SIZE, newValue);
-		else
-			UNSAFE.putInt        (receiver, vmSlot + HEADER_SIZE, newValue);
+		} else {
+			UNSAFE.putInt(receiver, vmSlot + HEADER_SIZE, newValue);
+		}
 	}
 	
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object receiver, long   newValue, int argPlaceholder) {
-		if (isVolatile)
+		if (isVolatile) {
 			UNSAFE.putLongVolatile(receiver, vmSlot + HEADER_SIZE, newValue);
-		else
-			UNSAFE.putLong        (receiver, vmSlot + HEADER_SIZE, newValue);
+		} else {
+			UNSAFE.putLong(receiver, vmSlot + HEADER_SIZE, newValue);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object receiver, float  newValue, int argPlaceholder) {
-		if (isVolatile)
+		if (isVolatile) {
 			UNSAFE.putFloatVolatile(receiver, vmSlot + HEADER_SIZE, newValue);
-		else
-			UNSAFE.putFloat        (receiver, vmSlot + HEADER_SIZE, newValue);
+		} else {
+			UNSAFE.putFloat(receiver, vmSlot + HEADER_SIZE, newValue);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object receiver, double newValue, int argPlaceholder) {
-		if (isVolatile)
+		if (isVolatile) {
 			UNSAFE.putDoubleVolatile(receiver, vmSlot + HEADER_SIZE, newValue);
-		else
-			UNSAFE.putDouble        (receiver, vmSlot + HEADER_SIZE, newValue);
+		} else {
+			UNSAFE.putDouble(receiver, vmSlot + HEADER_SIZE, newValue);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object receiver, Object newValue, int argPlaceholder) {
-		if (isVolatile)
+		if (isVolatile) {
 			UNSAFE.putObjectVolatile(receiver, vmSlot + HEADER_SIZE, newValue);
-		else
-			UNSAFE.putObject        (receiver, vmSlot + HEADER_SIZE, newValue);
+		} else {
+			UNSAFE.putObject(receiver, vmSlot + HEADER_SIZE, newValue);
+		}
 	}
 
 	private static final ThunkTable _thunkTable = new ThunkTable();
