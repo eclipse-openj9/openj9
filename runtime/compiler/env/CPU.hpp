@@ -29,11 +29,10 @@ namespace TR
 {
 class OMR_EXTENSIBLE CPU : public J9::CPUConnector
    {
-   public:
+public:
 
    CPU() : J9::CPUConnector() {}
    CPU(const OMRProcessorDesc& processorDescription) : J9::CPUConnector(processorDescription) {}
-
    };
 }
 
