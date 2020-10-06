@@ -1514,33 +1514,62 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id) {
 }
 
 def set_build_variables_per_node() {
-    BOOT_JDK = check_path(buildspec.getScalarField('boot_jdk', SDK_VERSION), true)
+    def bootJDKVersion = buildspec.getScalarField('boot_jdk.version', SDK_VERSION)
+    def bootJDKPath = buildspec.getScalarField('boot_jdk.location', SDK_VERSION)
+    BOOT_JDK = "${bootJDKPath}/jdk${bootJDKVersion}"
     println("BOOT_JDK: ${BOOT_JDK}")
-    if (!BOOT_JDK) {
-        error("BOOT_JDK: ${BOOT_JDK} does not exist!")
+    if (!check_path("${BOOT_JDK}/bin/java")) {
+        echo "BOOT_JDK: ${BOOT_JDK} does not exist! Attempt to download it..."
+        download_boot_jdk(bootJDKVersion, BOOT_JDK)
     }
 
-    def freemarkerPath = buildspec.getScalarField('freemarker', SDK_VERSION)
-    FREEMARKER = check_path(buildspec.getScalarField('freemarker', SDK_VERSION), false)
+    FREEMARKER = buildspec.getScalarField('freemarker', SDK_VERSION)
     println("FREEMARKER: ${FREEMARKER}")
-    if (!FREEMARKER) {
+    if (!check_path(FREEMARKER)) {
         error("FREEMARKER: ${FREEMARKER} does not exist!")
     }
 
-    OPENJDK_REFERENCE_REPO = check_path(buildspec.getScalarField("openjdk_reference_repo", SDK_VERSION), true)
+    OPENJDK_REFERENCE_REPO = buildspec.getScalarField("openjdk_reference_repo", SDK_VERSION)
     println("OPENJDK_REFERENCE_REPO: ${OPENJDK_REFERENCE_REPO}")
-    if (!OPENJDK_REFERENCE_REPO) {
+    if (!check_path(OPENJDK_REFERENCE_REPO)) {
         println("The git cache OPENJDK_REFERENCE_REPO: ${buildspec.getScalarField('openjdk_reference_repo', SDK_VERSION)} does not exist on ${NODE_NAME}!")
     }
 }
 
-def check_path(inPath, isDir) {
+def check_path(inPath) {
     if (!inPath) {
-        return inPath
+        return false
     }
-
-    def testOption = (isDir) ? "-d" : "-e"
-    return sh (script: "test ${testOption} ${inPath} && echo ${inPath} || echo ''", returnStdout: true).trim()
+    return sh (script: "test -e ${inPath} && echo true || echo false", returnStdout: true).trim().toBoolean()
 }
 
+def download_boot_jdk(bootJDKVersion, bootJDK) {
+    def os = buildspec.getScalarField('boot_jdk', 'os')
+    def arch = buildspec.getScalarField('boot_jdk', 'arch')
+    def dirStrip = buildspec.getScalarField('boot_jdk.dir_strip', SDK_VERSION)
+    def sdkUrl = "https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk"
+
+    /*
+     * Download bootjdk
+     * Windows are zips from Adopt. Unzip doesn't have strip dir so we have to manually move.
+     * Remaining platforms are tarballs.
+     * Mac has some extra dirs to strip off hence $dirStrip.
+     */
+    dir('bootjdk') {
+        sh """
+            curl -LJkO ${sdkUrl}
+            mkdir -p ${bootJDK}
+            sdkFile=`ls | grep OpenJDK`
+            if [[ "\$sdkFile" == *zip ]]; then
+                unzip "\$sdkFile" -d .
+                sdkFolder=`ls -d */`
+                mv "\$sdkFolder"* ${bootJDK}/
+            else
+                gzip -cd "\$sdkFile" | tar xof - -C ${bootJDK} --strip=${dirStrip}
+            fi
+            ${bootJDK}/bin/java -version
+            rm -f "\$sdkFile"
+        """
+    }
+}
 return this
