@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,9 +30,9 @@ import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
 
 public class BuildInfo implements TemplateHashModel {
-	
+
 	ConfigurationImpl config;
-	
+
 	public BuildInfo(ConfigurationImpl config) {
 		this.config = config;
 	}
@@ -49,14 +49,20 @@ public class BuildInfo implements TemplateHashModel {
 			int buildidint = Integer.valueOf(buildidstr);
 			return new SimpleScalar(Integer.toString(buildidint));
 		} else if (arg0.equals("unique_build_id")) {
-			long uniqueBuildId = config.getBuildSpec().getId().hashCode();
-			uniqueBuildId <<= 32; 
+			String buildId = config.getBuildSpec().getId();
+			/*
+			 * Remove "_cmprssptrs" from linux_x86-64_cmprssptrs, for example,
+			 * to generate the same uniqueBuildId as for linux_x86-64.
+			 */
+			buildId = buildId.replace("_cmprssptrs", "");
+			long uniqueBuildId = buildId.hashCode();
+			uniqueBuildId <<= 32;
 			String buildidstr = config.replaceMacro("buildid");
 			int buildidint = Integer.valueOf(buildidstr);
 			uniqueBuildId |= buildidint;
-			return new SimpleScalar("0x"+Long.toHexString(uniqueBuildId).toUpperCase());
+			return new SimpleScalar("0x" + Long.toHexString(uniqueBuildId).toUpperCase());
 		} else if (arg0.equalsIgnoreCase("sourceControl")) {
-			 return new SourceControl(config);
+			return new SourceControl(config);
 		} else if (arg0.equalsIgnoreCase("runtime")) {
 			return new SimpleScalar(config.getBuildInfo().getRuntime());
 		} else if (arg0.equalsIgnoreCase("defaultSizes")) {

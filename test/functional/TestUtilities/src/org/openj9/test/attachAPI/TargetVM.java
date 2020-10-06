@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ public class TargetVM {
 		}
 		BufferedReader inRdr = new BufferedReader(new InputStreamReader(
 				System.in));
-		System.err.println("starting");
+		System.err.println(new java.util.Date() + " : TargetVM starting");
 		long pid = 0;
 		try {
 			pid = TargetManager.getProcessId();
@@ -74,7 +74,7 @@ public class TargetVM {
 			if (null == cmd) {
 				System.out.println(pid + " stdin closed unexpectedly");
 			} else {
-				System.out.println(pid + " terminated by \"" + cmd + "\"");
+				System.out.println(new java.util.Date() + " : " + pid + " terminated by \"" + cmd + "\"");
 			}
 			/* force a reference to keep the Properties object alive */
 			if (!propertyValue.equals(p.getProperty(propertyKey))) {
@@ -88,8 +88,11 @@ public class TargetVM {
 		} finally {
 			System.out.flush();
 			System.err.flush();
-			System.out.println("terminated");
+			System.out.println(new java.util.Date() + " : terminated from System.out");
+			System.out.flush();
 			System.out.close();
+			System.err.println(new java.util.Date() + " : terminated from System.err");
+			System.err.flush();
 			System.err.close();
 		}
 	}
@@ -97,7 +100,7 @@ public class TargetVM {
 	private static String waitForTermination(BufferedReader inRdr, long pid,
 			String cmd) throws IOException {
 		while ((null != cmd) && !cmd.contains(TargetManager.TARGETVM_STOP)) {
-			System.out.println(pid + " received \"" + cmd + "\"");
+			System.out.println(new java.util.Date() + " : waitForTermination: " + pid + " received \"" + cmd + "\"");
 			System.out.flush();
 			cmd = inRdr.readLine();
 		}

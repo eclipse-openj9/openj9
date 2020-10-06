@@ -363,7 +363,7 @@ public class AttachHandler extends Thread {
 	protected boolean terminate(boolean wakeHandler) {
 		
 		if (LOGGING_DISABLED != loggingStatus) {
-		IPC.logMessage("AttachHandler terminate: Attach API is being shut down"); //$NON-NLS-1$
+			IPC.logMessage("AttachHandler terminate: Attach API is being shut down, currentAttachThread = " + currentAttachThread); //$NON-NLS-1$
 		}
 		
 		synchronized (stateSync) {
@@ -516,7 +516,7 @@ public class AttachHandler extends Thread {
 				/* Set  the current thread as a System Thread */
 				com.ibm.oti.vm.VM.markCurrentThreadAsSystem();
 				if (LOGGING_DISABLED != loggingStatus) {
-					IPC.logMessage("shutting down attach API"); //$NON-NLS-1$
+					IPC.logMessage("shutting down attach API : " + mainHandler); //$NON-NLS-1$
 				}
 				if (null == mainHandler) {
 					return; /* the constructor failed */
@@ -540,7 +540,7 @@ public class AttachHandler extends Thread {
 					while (System.nanoTime() < shutdownDeadlineNs) {
 						currentAttachThread.join(timeout); /* timeout in milliseconds */
 						if (currentAttachThread.getState() != Thread.State.TERMINATED) {
-							IPC.logMessage("Timeout waiting for wait loop termination.  Retry #"+retryNumber); //$NON-NLS-1$
+							IPC.logMessage(currentAttachThread + "Timeout waiting for wait loop termination.  Retry #" + retryNumber); //$NON-NLS-1$
 							timeout *= 2;
 							AttachHandler.terminateWaitLoop(true, retryNumber);
 							++retryNumber;

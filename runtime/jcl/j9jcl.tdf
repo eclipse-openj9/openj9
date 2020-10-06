@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2019 IBM Corp. and others
+// Copyright (c) 2006, 2020 IBM Corp. and others
 //	
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -348,7 +348,7 @@ TraceEvent=Trc_JCL_attach_chmod Overhead=1 Level=1 Template="Java_com_ibm_tools_
 TraceEvent=Trc_JCL_attach_createSharedResourcesDir Overhead=1 Level=1 Template="createSharedResourcesDir %s, status=%d"
 TraceEvent=Trc_JCL_attach_openSemaphore Overhead=1 Level=1 Template="openSemaphore name=%s, control director = %s, status=%d"
 TraceEvent=Trc_JCL_attach_notifyVm obsolete Overhead=1 Noenv Level=1 Template="notifyVm on semphore %s, control director = %s, status=%d"
-TraceEntry=Trc_JCL_attach_waitSemaphoreEntry Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_waitSemaphoreImpl waiting on semaphore"
+TraceEntry=Trc_JCL_attach_waitSemaphoreEntry Obsolete Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_waitSemaphoreImpl waiting on semaphore"
 TraceExit=Trc_JCL_attach_waitSemaphoreExit Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_waitSemaphoreImpl received post on semaphore, status = %d"
 TraceEvent=Trc_JCL_attach_closeSemaphore Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_closeSemaphoreImpl"
 TraceEvent=Trc_JCL_attach_destroySemaphore Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_destroySemaphoreImpl status = %d"
@@ -638,3 +638,7 @@ TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyCla
 TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3_ExitError_Event Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange3: Creating new classpath entries failed. Exiting with -1."
 TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3_Exit Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange3: Exiting"
 TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3_ExitUrlCountZero Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange3: Exiting because URL count is 0"
+
+TraceEntry=Trc_JCL_attach_waitSemaphoreEntry2 Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_waitSemaphoreImpl waiting on semaphore (%p)"
+TraceEntry=Trc_JCL_attach_closeSemaphoreEntry Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_closeSemaphoreImpl closing semaphore (%p)"
+TraceEntry=Trc_JCL_attach_destroySemaphoreEntry Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_destroySemaphoreImpl destroying semaphore (%p)"

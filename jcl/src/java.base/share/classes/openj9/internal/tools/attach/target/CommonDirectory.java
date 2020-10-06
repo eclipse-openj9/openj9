@@ -278,6 +278,7 @@ public abstract class CommonDirectory {
 	public static int notifyVm(int numberOfTargets, boolean global) {
 		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("notifyVm ", numberOfTargets, " targets"); //$NON-NLS-1$ //$NON-NLS-2$
+			IPC.logMessage(getCommonDirFileObject().getAbsolutePath() + ", global = " + global); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return IPC.notifyVm(getCommonDirFileObject().getAbsolutePath(), CONTROLLER_NOTIFIER, numberOfTargets, global);
 	}
