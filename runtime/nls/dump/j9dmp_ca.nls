@@ -201,7 +201,7 @@ J9NLS_DMP_UNRECOGNISED_REQUEST_STR.link=dita:///diag/tools/dumpagents_syntax.dit
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_NO_OPEN_READ=Avortant: No es pot obrir o llegir (%s)
+J9NLS_DMP_NO_OPEN_READ=S'est\u00e0 avortant: No es pot obrir o llegir (%s)
 # START NON-TRANSLATABLE
 J9NLS_DMP_NO_OPEN_READ.explanation=The JVM cannot open a dump file in read mode.
 J9NLS_DMP_NO_OPEN_READ.system_action=INTERNAL USE ONLY
@@ -211,7 +211,7 @@ J9NLS_DMP_NO_OPEN_READ.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_NO_CREATE=Avortant: No es pot crear el fitxer (%s)
+J9NLS_DMP_NO_CREATE=S'est\u00e0 avortant: No es pot crear el fitxer (%s)
 # START NON-TRANSLATABLE
 J9NLS_DMP_NO_CREATE.explanation=The JVM cannot open a new file.
 J9NLS_DMP_NO_CREATE.system_action=INTERNAL USE ONLY
@@ -221,7 +221,7 @@ J9NLS_DMP_NO_CREATE.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_NO_COMPRESS=Avortant: No es pot comprimir el fitxer (%s)
+J9NLS_DMP_NO_COMPRESS=S'est\u00e0 avortant: No es pot comprimir el fitxer (%s)
 # START NON-TRANSLATABLE
 J9NLS_DMP_NO_COMPRESS.explanation=The JVM cannot compress a file.
 J9NLS_DMP_NO_COMPRESS.system_action=INTERNAL USE ONLY

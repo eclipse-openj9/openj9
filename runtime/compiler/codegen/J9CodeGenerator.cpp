@@ -68,6 +68,26 @@
 
 #define OPT_DETAILS "O^O CODE GENERATION: "
 
+
+J9::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
+      OMR::CodeGeneratorConnector(comp),
+   _gpuSymbolMap(comp->allocator()),
+   _stackLimitOffsetInMetaData(comp->fej9()->thisThreadGetStackLimitOffset()),
+   _uncommonedNodes(comp->trMemory(), stackAlloc),
+   _liveMonitors(NULL),
+   _nodesSpineCheckedList(getTypedAllocator<TR::Node*>(comp->allocator())),
+   _jniCallSites(getTypedAllocator<TR_Pair<TR_ResolvedMethod,TR::Instruction> *>(comp->allocator())),
+   _monitorMapping(std::less<ncount_t>(), MonitorMapAllocator(comp->trMemory()->heapMemoryRegion())),
+   _dummyTempStorageRefNode(NULL)
+   {
+   }
+
+void
+J9::CodeGenerator::initialize()
+   {
+   self()->OMR::CodeGeneratorConnector::initialize();
+   }
+
 J9::CodeGenerator::CodeGenerator() :
       OMR::CodeGeneratorConnector(),
    _gpuSymbolMap(TR::comp()->allocator()),

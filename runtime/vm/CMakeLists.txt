@@ -22,6 +22,17 @@
 
 omr_add_tracegen(j9vm.tdf)
 
+if(OMR_TOOLCONFIG STREQUAL "msvc")
+	# bypass omr provided warning flag handling, because we don't want
+	# the warning flags to get passed to clang.
+	# Note: the updated variables are scoped to this directory
+	set(OMR_ENHANCED_WARNINGS OFF)
+	set(OMR_WARNINGS_AS_ERRORS OFF)
+	set(OMR_BASE_WARNING_FLAGS)
+	omr_append_flags(CMAKE_C_FLAGS ${OMR_ENHANCED_WARNING_FLAG} ${OMR_WARNING_AS_ERROR_FLAG})
+	omr_append_flags(CMAKE_CXX_FLAGS ${OMR_ENHANCED_WARNING_FLAG} ${OMR_WARNING_AS_ERROR_FLAG})
+endif()
+
 set(interp_flags_to_remove) # list of flags removed when compiling the interpreter
 set(interp_new_flags) # flags to be added when compiling the interpreter
 
@@ -41,7 +52,6 @@ if(OMR_ARCH_POWER AND OMR_OS_AIX)
 		endif()
 		]]
 	endif()
-
 endif()
 
 if(interp_flags_to_remove)
@@ -199,14 +209,22 @@ if(interp_new_flags)
 endif()
 
 
-# JIT helper methods require us to disable buffer security checks on Windows
-# See https://github.com/eclipse/openj9/pull/1494 for rationale
 if(OMR_OS_WINDOWS AND (OMR_TOOLCONFIG STREQUAL "msvc"))
+	# JIT helper methods require us to disable buffer security checks on Windows
+	# See https://github.com/eclipse/openj9/pull/1494 for rationale
 	set_property(
 		SOURCE
 			cnathelp.cpp
 			SharedService.c
 		APPEND PROPERTY COMPILE_FLAGS "/GS-"
+	)
+
+	# Use J9VM_CXX compiler (aka clang) to build the interpreter
+	enable_language(J9VM_CXX)
+	set_source_files_properties(
+		${interpreter_sources}
+		PROPERTIES
+		LANGUAGE J9VM_CXX
 	)
 endif()
 

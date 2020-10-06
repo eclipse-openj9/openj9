@@ -2672,5 +2672,27 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	
+	<test>
+		<testCaseName>DupClassNameTest</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:name=DupClassNameTest,reset \
+			-cp $(Q)$(TESTNG)$(P)$(TEST_RESROOT)$(D)DupClassNameTest$(D)version1$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) \
+			-testclass DupClassNameTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 
 </playlist>

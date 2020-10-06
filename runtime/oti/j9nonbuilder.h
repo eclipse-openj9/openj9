@@ -81,8 +81,8 @@
 #define J9ClassIsExemptFromValidation 0x2000
 #define J9ClassContainsUnflattenedFlattenables 0x4000
 #define J9ClassCanSupportFastSubstitutability 0x8000
-#define J9ClassIsLoadedFromImage 0x10000
-
+#define J9ClassHasReferences 0x10000
+#define J9ClassIsLoadedFromImage 0x20000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -3290,6 +3290,12 @@ typedef struct J9Class {
 
 #define J9ARRAYCLASS_SET_STRIDE(clazz, strideLength) ((clazz)->flattenedClassCache) = (J9FlattenedClassCache*)(UDATA)(strideLength)
 #define J9ARRAYCLASS_GET_STRIDE(clazz) ((UDATA)((clazz)->flattenedClassCache))
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define J9CLASS_HAS_REFERENCES(clazz) (J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassHasReferences))
+#else
+#define J9CLASS_HAS_REFERENCES(clazz) TRUE
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 typedef struct J9ArrayClass {
 	UDATA eyecatcher;

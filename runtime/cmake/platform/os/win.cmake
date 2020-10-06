@@ -32,3 +32,18 @@ if(OMR_ENV_DATA64)
         -D_WIN64
     )
 endif()
+list(APPEND OMR_PLATFORM_DEFINITIONS -DWINDOWS)
+
+# Set flags we use to build the interpreter
+omr_stringify(CMAKE_J9VM_CXX_FLAGS
+    -O3
+    -fno-rtti
+    -fno-threadsafe-statics
+    -fno-strict-aliasing
+    -fno-exceptions
+    -fno-asynchronous-unwind-tables
+    -std=c++0x
+    -D_CRT_SUPPRESS_RESTRICT
+    -DVS12AndHigher
+    ${OMR_PLATFORM_DEFINITIONS}
+)

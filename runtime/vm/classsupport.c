@@ -113,7 +113,7 @@ internalFindArrayClass(J9VMThread* vmThread, J9Module *j9module, UDATA arity, U_
 		/* the first level of arity is already present in the array class */
 		arity -= 1;
 
-	} else if (firstChar == 'L' && lastChar == ';') {
+	} else if (IS_REF_OR_VAL_SIGNATURE(firstChar) && lastChar == ';') {
 
 		name += arity + 1; /* 1 for 'L' */
 		length -= arity + 2; /* 2 for 'L and ';' */

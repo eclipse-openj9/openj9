@@ -153,13 +153,13 @@ static VMINLINE BOOLEAN loadSuperClassAndInterfaces(J9VMThread *vmThread, J9Clas
 static J9Class* internalCreateRAMClassDropAndReturn(J9VMThread *vmThread, J9ROMClass *romClass, J9CreateRAMClassState *state);
 static J9Class* internalCreateRAMClassDoneNoMutex(J9VMThread *vmThread, J9ROMClass *romClass, UDATA options, J9CreateRAMClassState *state);
 static J9Class* internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
-	J9UTF8 *className, J9CreateRAMClassState *state);
+	J9UTF8 *className, J9CreateRAMClassState *state, J9Class *superclass, J9MemorySegment *segment);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-static BOOLEAN loadFlattenableFieldValueClasses(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module, UDATA *valueTypeFlags, J9FlattenedClassCache *flattenedClassCache);
+static BOOLEAN loadFlattenableFieldValueClasses(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module, UDATA *valueTypeFlags, J9FlattenedClassCache *flattenedClassCache, J9Class *superClazz);
 
 static J9Class* internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
 	J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined, UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state,
-	J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache);
+	J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache, UDATA valueTypeFlags);
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 static J9Class* internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
 	J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined, UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state,
@@ -172,7 +172,7 @@ static I_32 interfaceDepthCompare(const void *a, const void *b);
 static void checkForCustomSpinOptions(void *element, void *userData);
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */
 static void trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader *classLoader, J9UTF8 *className);
-
+static void initializeClassLinks(J9Class *ramClass, J9Class *superclass, J9MemorySegment *segment, UDATA options);
 /*
  * A class which extends (perhaps indirectly) the 'magic'
  * accessor class is exempt from the normal access rules.
@@ -1803,7 +1803,7 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
  * appropriate Java error on the VM.
  */
 static BOOLEAN
-loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module, UDATA *valueTypeFlags, J9FlattenedClassCache *flattenedClassCache)
+loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module, UDATA *valueTypeFlags, J9FlattenedClassCache *flattenedClassCache, J9Class *superClazz)
 {
 	J9ROMFieldWalkState fieldWalkState = {0};
 	J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
@@ -1858,7 +1858,7 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 					entry->offset = UDATA_MAX;
 					flattenableFieldCount += 1;
 				}
-				*valueTypeFlags |= (valueClass->classFlags & (J9ClassLargestAlignmentConstraintDouble | J9ClassLargestAlignmentConstraintReference));
+				*valueTypeFlags |= (valueClass->classFlags & (J9ClassLargestAlignmentConstraintDouble | J9ClassLargestAlignmentConstraintReference | J9ClassHasReferences));
 				break;
 			}
 			case 'D':
@@ -1868,11 +1868,14 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 				*valueTypeFlags |= J9ClassLargestAlignmentConstraintDouble;
 				break;
 			case 'L':
-				*valueTypeFlags |= J9ClassLargestAlignmentConstraintReference;
+				*valueTypeFlags |= (J9ClassLargestAlignmentConstraintReference | J9ClassHasReferences);
 				eligibleForFastSubstitutability = false;
 				break;
 			case 'F':
 				eligibleForFastSubstitutability = false;
+				break;
+			case '[':
+				*valueTypeFlags |= (J9ClassLargestAlignmentConstraintReference | J9ClassHasReferences);
 				break;
 			default:
 				/* Do nothing for now. If we eventually decide to pack fields smaller than 32 bits we'll
@@ -1895,7 +1898,9 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 		*valueTypeFlags |= J9ClassCanSupportFastSubstitutability;
 	}
 	flattenedClassCache->numberOfEntries = flattenableFieldCount;
-
+	if (NULL != superClazz) {
+		*valueTypeFlags |= (J9ClassHasReferences & superClazz->classFlags);
+	}
 done:
 	return result;
 }
@@ -1932,7 +1937,7 @@ internalCreateRAMClassDoneNoMutex(J9VMThread *vmThread, J9ROMClass *romClass, UD
 
 static J9Class*
 internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass,
-	UDATA options, J9Class *elementClass, J9UTF8 *className, J9CreateRAMClassState *state)
+	UDATA options, J9Class *elementClass, J9UTF8 *className, J9CreateRAMClassState *state, J9Class *superclass, J9MemorySegment *segment)
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
 	BOOLEAN hotswapping = (0 != (options & J9_FINDCLASS_FLAG_NO_DEBUG_EVENTS));
@@ -1972,13 +1977,8 @@ internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *classLoader, J9R
 				alreadyLoadedClass = elementClass->arrayClass;
 			}
 			if (alreadyLoadedClass != NULL) {
+				/* We are discarding this class */
 alreadyLoaded:
-				/* We are discarding this class - mark it as hot swapped to prevent it showing up in JVMTI class queries */
-
-				state->ramClass->classDepthAndFlags |= J9AccClassHotSwappedOut;
-				state->ramClass->arrayClass = alreadyLoadedClass;
-				J9STATIC_OBJECT_STORE(vmThread, state->ramClass, (j9object_t*)&state->ramClass->classObject, (j9object_t)alreadyLoadedClass->classObject);
-
 				omrthread_monitor_exit(javaVM->classTableMutex);
 				state->ramClass = alreadyLoadedClass;
 				return internalCreateRAMClassDropAndReturn(vmThread, romClass, state);
@@ -1993,6 +1993,11 @@ nativeOOM:
 				state->ramClass = NULL;
 				return internalCreateRAMClassDoneNoMutex(vmThread, romClass, options, state);
 			}
+		}
+
+		/* Link classes in segment, segment is NULL in failure paths */
+		if (NULL != segment) {
+			initializeClassLinks(state->ramClass, superclass, segment, options);
 		}
 
 		/* Initialize class object and link the object and the J9Class. */
@@ -2142,11 +2147,39 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 		}
 	}
 }
+
+/**
+ * This function initializes the subclass traversal links in the ramclass and the
+ * next class link in the j9segment. Caller must hold the classTableMutex.
+ *
+ * @param ramClass the class being loaded
+ * @param superclass the super class of the class being loaded
+ * @param segment the segment in which the class being loaded is allocated
+ * @param options class loading options
+ */
+static void
+initializeClassLinks(J9Class *ramClass, J9Class *superclass, J9MemorySegment *segment, UDATA options)
+{
+	ramClass->nextClassInSegment = *(J9Class **) segment->heapBase;
+	*(J9Class **)segment->heapBase = ramClass;
+
+	ramClass->subclassTraversalLink = ramClass;
+	ramClass->subclassTraversalReverseLink = ramClass;
+
+	if ((NULL != superclass) && J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NO_SUBCLASS_LINK)) {
+		J9Class* nextLink = superclass->subclassTraversalLink;
+		ramClass->subclassTraversalLink = nextLink;
+		nextLink->subclassTraversalReverseLink = ramClass;
+		superclass->subclassTraversalLink = ramClass;
+		ramClass->subclassTraversalReverseLink = superclass;
+	}
+}
+
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 static J9Class*
 internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass,
 	UDATA options, J9Class *elementClass, J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined,
-	UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state, J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache)
+	UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state, J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache, UDATA valueTypeFlags)
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 static J9Class*
 internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass,
@@ -2182,6 +2215,7 @@ internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *clas
 	UDATA inheritedInterfaceCount = 0;
 	UDATA defaultConflictCount = 0;
 	J9OverrideErrorData errorData = {0};
+	J9MemorySegment *segment = NULL;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	state->retry = FALSE;
@@ -2192,7 +2226,7 @@ internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *clas
 		if (hotswapping) {
 fail:
 			omrthread_monitor_enter(javaVM->classTableMutex);
-			return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, state);
+			return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, state, superclass, NULL);
 		}
 		javaVM->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(vmThread, J9MMCONSTANT_EXPLICIT_GC_NATIVE_OUT_OF_MEMORY);
 		result = j9maxmap_setMapMemoryBuffer(javaVM, romClass);
@@ -2292,7 +2326,11 @@ fail:
 			/* add in my instanceShape size (0 if <= highestBitInSlot) */
 			UDATA temp = romWalkResult->totalInstanceSize / referenceSize;
 
-			if (temp > highestBitInSlot) {
+			if ((temp > highestBitInSlot)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				&& (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassHasReferences))
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+			) {
 				/* reserve additional space for the instance description bits */
 				temp += highestBitInSlot;
 				temp &= ~highestBitInSlot;
@@ -2417,7 +2455,7 @@ fail:
 			return internalCreateRAMClassDoneNoMutex(vmThread, romClass, options, state);
 		}
 
-		return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, state);
+		return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, state, superclass, NULL);
 	}
 
 	if (!hotswapping) {
@@ -2438,7 +2476,6 @@ fail:
 	}
 	if (classSize != 0) {
 		if (ramClass == NULL) {
-			J9MemorySegment *segment;
 			RAMClassAllocationRequest allocationRequests[RAM_CLASS_FRAGMENT_COUNT];
 			UDATA minimumSuperclassArraySizeBytes = (sizeof(UDATA) * javaVM->minimumSuperclassArraySize);
 			UDATA superclassSizeBytes = 0;
@@ -2552,8 +2589,6 @@ fail:
 			if (NULL != segment) {
 				ramClass = (J9Class *) allocationRequests[RAM_CLASS_HEADER_FRAGMENT].address;
 				state->ramClass = ramClass;
-				ramClass->nextClassInSegment = *(J9Class **) segment->heapBase;
-				*(J9Class **)segment->heapBase = ramClass;
 				ramClass->ramMethods = (J9Method *) allocationRequests[RAM_METHODS_FRAGMENT].address;
 				if (fastHCR) {
 					/* Share iTable and instanceDescription (and associated fields) with class being redefined. */
@@ -2772,27 +2807,13 @@ fail:
 			}
 
 			tempClassDepthAndFlags &= J9AccClassRomToRamMask;
-			ramClass->subclassTraversalLink = NULL;
-			ramClass->subclassTraversalReverseLink = NULL;
+
 			if (superclass == NULL) {
-				ramClass->subclassTraversalLink = ramClass;
-				ramClass->subclassTraversalReverseLink = ramClass;
 				/* Place a NULL at superclasses[-1] for quick get superclass on java.lang.Object. */
 				*ramClass->superclasses++ = superclass;
 			} else {
 				UDATA superclassCount = J9CLASS_DEPTH(superclass);
 
-				if ((options & J9_FINDCLASS_FLAG_NO_SUBCLASS_LINK) == 0) {
-					J9Class* nextLink = superclass->subclassTraversalLink;
-
-					ramClass->subclassTraversalLink = nextLink;
-					nextLink->subclassTraversalReverseLink = ramClass;
-					superclass->subclassTraversalLink = ramClass;
-					ramClass->subclassTraversalReverseLink = superclass;
-				} else {
-					ramClass->subclassTraversalLink = ramClass;
-					ramClass->subclassTraversalReverseLink = ramClass;
-				}
 				/* fill in class depth */
 				tempClassDepthAndFlags |= superclass->classDepthAndFlags;
 				tempClassDepthAndFlags &= ~(J9AccClassHotSwappedOut | J9AccClassHasBeenOverridden | J9AccClassHasJDBCNatives | J9AccClassRAMArray | (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift));
@@ -2824,7 +2845,11 @@ fail:
 
 			if (!fastHCR) {
 				/* calculate the instanceDescription field */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				calculateInstanceDescription(vmThread, ramClass, superclass, instanceDescription, &romWalkState, romWalkResult, J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassHasReferences));
+#else /* defined(J9VM_GC_LEAF_BITS) */
 				calculateInstanceDescription(vmThread, ramClass, superclass, instanceDescription, &romWalkState, romWalkResult);
+#endif /* defined(J9VM_GC_LEAF_BITS) */
 			}
 
 			/* fill in the classLoader slot */
@@ -2946,7 +2971,7 @@ fail:
 					Trc_VM_CreateRAMClassFromROMClass_classLoadingConstraintViolation(vmThread);
 					state->ramClass = NULL;
 					if (hotswapping) {
-						return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, state);
+						return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, state, superclass, NULL);
 					}
 					popFromClassLoadingStack(vmThread);
 					omrthread_monitor_exit(javaVM->classTableMutex);
@@ -3034,7 +3059,7 @@ fail:
 		}
 	}
 
-	return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, state);
+	return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, state, superclass, segment);
 }
 
 /**
@@ -3187,7 +3212,7 @@ retry:
 		if (NULL == flattenedClassCache) {
 			setNativeOutOfMemoryError(vmThread, 0, 0);
 			omrthread_monitor_enter(javaVM->classTableMutex);
-			return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, &state);
+			return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, &state, superclass, NULL);
 		}
 		memset(flattenedClassCache, 0, flattenedClassCacheAllocSize);
 	}
@@ -3195,7 +3220,7 @@ retry:
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, options, elementClass, packageID, hotswapping, classPreloadFlags, &superclass, module)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		|| !loadFlattenableFieldValueClasses(vmThread, hostClassLoader, romClass, classPreloadFlags, packageID, module, &valueTypeFlags, flattenedClassCache)
+		|| !loadFlattenableFieldValueClasses(vmThread, hostClassLoader, romClass, classPreloadFlags, packageID, module, &valueTypeFlags, flattenedClassCache, superclass)
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
@@ -3204,12 +3229,12 @@ retry:
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		omrthread_monitor_enter(javaVM->classTableMutex);
-		return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, &state);
+		return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, &state, superclass, NULL);
 	}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	result = internalCreateRAMClassFromROMClassImpl(vmThread, classLoader, romClass, options, elementClass,
-		methodRemapArray, entryIndex, locationType, classBeingRedefined, packageID, superclass, &state, hostClassLoader, hostClass, module, flattenedClassCache);
+		methodRemapArray, entryIndex, locationType, classBeingRedefined, packageID, superclass, &state, hostClassLoader, hostClass, module, flattenedClassCache, valueTypeFlags);
 
 		if (flattenedClassCache != (J9FlattenedClassCache *) flattenedClassCacheBuffer) {
 			j9mem_free_memory(flattenedClassCache);
@@ -3265,6 +3290,9 @@ retry:
 		}
 		if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassContainsUnflattenedFlattenables)) {
 			classFlags |= J9ClassContainsUnflattenedFlattenables;
+		}
+		if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassHasReferences)) {
+			classFlags |= J9ClassHasReferences;
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_SNAPSHOTS)

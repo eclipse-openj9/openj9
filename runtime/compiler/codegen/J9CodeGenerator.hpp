@@ -20,14 +20,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_J9_CODEGENERATORBASE_INCL
-#define TR_J9_CODEGENERATORBASE_INCL
+#ifndef J9_CODEGENERATOR_INCL
+#define J9_CODEGENERATOR_INCL
 
 /*
  * The following #define and typedef must appear before any #includes in this file
  */
-#ifndef TRJ9_CODEGENERATORBASE_CONNECTOR
-#define TRJ9_CODEGENERATORBASE_CONNECTOR
+#ifndef J9_CODEGENERATOR_CONNECTOR
+#define J9_CODEGENERATOR_CONNECTOR
 
 namespace J9 { class CodeGenerator; }
 namespace J9 { typedef J9::CodeGenerator CodeGeneratorConnector; }
@@ -63,9 +63,16 @@ namespace J9
 
 class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGeneratorConnector
    {
+
+protected:
+
+   CodeGenerator(TR::Compilation *comp);
+
 public:
 
    CodeGenerator();
+
+   void initialize();
 
    TR_J9VMBase *fej9();
 

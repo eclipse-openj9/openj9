@@ -1393,52 +1393,72 @@ BOOLEAN
 MM_ObjectAccessBarrier::structuralCompareFlattenedObjects(J9VMThread *vmThread, J9Class *valueClass, j9object_t lhsObject, j9object_t rhsObject, UDATA startOffset)
 {
 	bool result = true;
-	const UDATA *descriptionPtr = (UDATA *) valueClass->instanceDescription;
-	UDATA descriptionBits = 0;
 	bool const compressed = J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread);
 	UDATA const referenceSize = J9VMTHREAD_REFERENCE_SIZE(vmThread);
+	bool hasReferences = J9CLASS_HAS_REFERENCES(valueClass);
+	UDATA limit = valueClass->totalInstanceSize;
+	U_32 firstFieldOffset = (U_32) valueClass->backfillOffset;
+	UDATA offset = 0;
 
 	Assert_MM_true(J9_IS_J9CLASS_VALUETYPE(valueClass));
 
-	if(((UDATA)descriptionPtr) & 1) {
-		descriptionBits = ((UDATA)descriptionPtr) >> 1;
-	} else {
-		descriptionBits = *descriptionPtr++;
-	}
+	if (hasReferences) {
+		UDATA descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
+		const UDATA *descriptionPtr = (UDATA *) valueClass->instanceDescription;
+		UDATA descriptionBits = 0;
 
-	UDATA descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
-	UDATA offset = 0;
-	UDATA limit = valueClass->totalInstanceSize;
+		if (0 != firstFieldOffset) {
+			/* subtract padding */
+			offset += firstFieldOffset;
+			descriptionBits >>= 1;
+			descriptionIndex -= 1;
+		}
 
-	U_32 firstFieldOffset = (U_32) valueClass->backfillOffset;
-	if (0 != firstFieldOffset) {
-		/* subtract padding */
-		offset += firstFieldOffset;
-		descriptionBits >>= 1;
-		descriptionIndex -= 1;
-	}
-
-	while (offset < limit) {
-		/* Determine if the slot contains an object pointer or not */
-		if(descriptionBits & 1) {
-			if (mixedObjectReadObject(vmThread, lhsObject, startOffset + offset, false) != mixedObjectReadObject(vmThread, rhsObject, startOffset + offset, false)) {
-				result = false;
-				break;
-			}
+		if (((UDATA)descriptionPtr) & 1) {
+			descriptionBits = ((UDATA)descriptionPtr) >> 1;
 		} else {
+			descriptionBits = *descriptionPtr++;
+		}
+
+
+		while (offset < limit) {
+			/* Determine if the slot contains an object pointer or not */
+			if (descriptionBits & 1) {
+				if (mixedObjectReadObject(vmThread, lhsObject, startOffset + offset, false) != mixedObjectReadObject(vmThread, rhsObject, startOffset + offset, false)) {
+					result = false;
+					break;
+				}
+			} else {
+				fomrobject_t lhsValue = GC_SlotObject::readSlot((fomrobject_t*)((UDATA)lhsObject + startOffset + offset), compressed);
+				fomrobject_t rhsValue = GC_SlotObject::readSlot((fomrobject_t*)((UDATA)rhsObject + startOffset + offset), compressed);
+				if (lhsValue != rhsValue) {
+					result = false;
+					break;
+				}
+			}
+			descriptionBits >>= 1;
+			if (descriptionIndex-- == 0) {
+				descriptionBits = *descriptionPtr++;
+				descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
+			}
+			offset += referenceSize;
+		}
+	} else {
+		/* no instanceDescription bits needed on this path */
+		if (0 != firstFieldOffset) {
+			/* subtract padding */
+			offset += firstFieldOffset;
+		}
+
+		while (offset < limit) {
 			fomrobject_t lhsValue = GC_SlotObject::readSlot((fomrobject_t*)((UDATA)lhsObject + startOffset + offset), compressed);
 			fomrobject_t rhsValue = GC_SlotObject::readSlot((fomrobject_t*)((UDATA)rhsObject + startOffset + offset), compressed);
 			if (lhsValue != rhsValue) {
 				result = false;
 				break;
 			}
+			offset += referenceSize;
 		}
-		descriptionBits >>= 1;
-		if(descriptionIndex-- == 0) {
-			descriptionBits = *descriptionPtr++;
-			descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
-		}
-		offset += referenceSize;
 	}
 
 	return result;
@@ -1481,35 +1501,61 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 		}
 	}
 
-	const UDATA *descriptionPtr = (UDATA *) objectClass->instanceDescription;
-	UDATA descriptionBits = 0;
-	if(((UDATA)descriptionPtr) & 1) {
-		descriptionBits = ((UDATA)descriptionPtr) >> 1;
-	} else {
-		descriptionBits = *descriptionPtr++;
-	}
-
-	UDATA descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 	UDATA offset = 0;
 	UDATA limit = objectClass->totalInstanceSize;
 	UDATA const referenceSize = J9VMTHREAD_REFERENCE_SIZE(vmThread);
+	bool hasReferences = J9CLASS_HAS_REFERENCES(objectClass);
+	U_32 firstFieldOffset = (U_32) objectClass->backfillOffset;
 
-	if (isValueType) {
-		U_32 firstFieldOffset = (U_32) objectClass->backfillOffset;
-		if (0 != firstFieldOffset) {
-			/* subtract padding */
-			offset += firstFieldOffset;
-			descriptionBits >>= 1;
-			descriptionIndex -= 1;
-		}
-	}
-
-	while (offset < limit) {
-		/* Determine if the slot contains an object pointer or not */
-		if(descriptionBits & 1) {
-			J9Object *objectPtr = mixedObjectReadObject(vmThread, srcObject, srcOffset + offset, false);
-			mixedObjectStoreObject(vmThread, destObject, destOffset + offset, objectPtr, false);
+	if (hasReferences) {
+		const UDATA *descriptionPtr = (UDATA *) objectClass->instanceDescription;
+		UDATA descriptionBits = 0;
+		if (((UDATA)descriptionPtr) & 1) {
+			descriptionBits = ((UDATA)descriptionPtr) >> 1;
 		} else {
+			descriptionBits = *descriptionPtr++;
+		}
+
+		UDATA descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
+
+		if (isValueType) {
+			if (0 != firstFieldOffset) {
+				/* subtract padding */
+				offset += firstFieldOffset;
+				descriptionBits >>= 1;
+				descriptionIndex -= 1;
+			}
+		}
+
+		while (offset < limit) {
+			/* Determine if the slot contains an object pointer or not */
+			if (descriptionBits & 1) {
+				J9Object *objectPtr = mixedObjectReadObject(vmThread, srcObject, srcOffset + offset, false);
+				mixedObjectStoreObject(vmThread, destObject, destOffset + offset, objectPtr, false);
+			} else {
+				UDATA srcAddress = (UDATA)srcObject + srcOffset + offset;
+				UDATA destAddress = (UDATA)destObject + destOffset + offset;
+				if (sizeof(uint32_t) == referenceSize) {
+					*(uint32_t *)destAddress = *(uint32_t *)srcAddress;
+				} else {
+					*(uintptr_t *)destAddress = *(uintptr_t *)srcAddress;
+				}
+			}
+			descriptionBits >>= 1;
+			if (descriptionIndex-- == 0) {
+				descriptionBits = *descriptionPtr++;
+				descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
+			}
+			offset += referenceSize;
+		}
+	} else {
+		/* no instanceDescription bits needed on this path */
+		if (isValueType) {
+			if (0 != firstFieldOffset) {
+				offset += firstFieldOffset;
+			}
+		}
+		while (offset < limit) {
 			UDATA srcAddress = (UDATA)srcObject + srcOffset + offset;
 			UDATA destAddress = (UDATA)destObject + destOffset + offset;
 			if (sizeof(uint32_t) == referenceSize) {
@@ -1517,13 +1563,8 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 			} else {
 				*(uintptr_t *)destAddress = *(uintptr_t *)srcAddress;
 			}
+			offset += referenceSize;
 		}
-		descriptionBits >>= 1;
-		if(descriptionIndex-- == 0) {
-			descriptionBits = *descriptionPtr++;
-			descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
-		}
-		offset += referenceSize;
 	}
 
 	if (!isValueType) {

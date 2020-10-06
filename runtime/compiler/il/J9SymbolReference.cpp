@@ -62,15 +62,10 @@ SymbolReference::SymbolReference(
       symRefTab->comp()->registerResolvedMethodSymbolReference(self());
 
    //Check for init method
-   if (sym->isMethod())
+   if (sym->isMethod() &&
+       sym->castToMethodSymbol()->getMethod()->isConstructor())
       {
-      char *name         = sym->castToMethodSymbol()->getMethod()->nameChars();
-      int   nameLen      = sym->castToMethodSymbol()->getMethod()->nameLength();
-      if ((nameLen == 6) &&
-          !strncmp(name, "<init>", 6))
-         {
-         self()->setInitMethod();
-         }
+      self()->setInitMethod();
       }
 
    symRefTab->checkImmutable(self());

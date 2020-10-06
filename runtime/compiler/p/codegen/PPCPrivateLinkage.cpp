@@ -745,11 +745,11 @@ static TR::Instruction *unrollPrologueInitLoop(TR::CodeGenerator *cg, TR::Node *
             cursor = loadConstant(cg, node, 16, gr11, cursor);
             }
 
-         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stxvw4x, node, new (trHeapMemory) TR::MemoryReference(nullReg, baseInitReg, 16, cg), vectorNullReg, cursor);
-         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stxvw4x, node, new (trHeapMemory) TR::MemoryReference(gr11   , baseInitReg, 16, cg), vectorNullReg, cursor);
+         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stxvw4x, node, TR::MemoryReference::createWithIndexReg(cg, nullReg, baseInitReg, 16), vectorNullReg, cursor);
+         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stxvw4x, node, TR::MemoryReference::createWithIndexReg(cg, gr11   , baseInitReg, 16), vectorNullReg, cursor);
          cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, baseInitReg, baseInitReg, 32, cursor);
-         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stxvw4x, node, new (trHeapMemory) TR::MemoryReference(nullReg, baseInitReg, 16, cg), vectorNullReg, cursor);
-         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stxvw4x, node, new (trHeapMemory) TR::MemoryReference(gr11   , baseInitReg, 16, cg), vectorNullReg, cursor);
+         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stxvw4x, node, TR::MemoryReference::createWithIndexReg(cg, nullReg, baseInitReg, 16), vectorNullReg, cursor);
+         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stxvw4x, node, TR::MemoryReference::createWithIndexReg(cg, gr11   , baseInitReg, 16), vectorNullReg, cursor);
 
          if (loopIterations > 1)
             {
@@ -775,7 +775,7 @@ static TR::Instruction *unrollPrologueInitLoop(TR::CodeGenerator *cg, TR::Node *
       int32_t storeSize         = (use8Bytes ? 8 : 4);
       while (wordsToUnroll > 0)
          {
-         cursor = generateMemSrc1Instruction(cg, instruction, node, new (trHeapMemory) TR::MemoryReference(baseInitReg, initSlotOffset, storeSize, cg), nullReg, cursor);
+         cursor = generateMemSrc1Instruction(cg, instruction, node, TR::MemoryReference::createWithDisplacement(cg, baseInitReg, initSlotOffset, storeSize), nullReg, cursor);
          initSlotOffset += storeSize;
          wordsToUnroll--;
          }
@@ -784,7 +784,7 @@ static TR::Instruction *unrollPrologueInitLoop(TR::CodeGenerator *cg, TR::Node *
       // (since we used store double word)
       if ((use8Bytes && TR::Compiler->om.sizeofReferenceAddress() == 4) && (num % 2 == 1))
          {
-         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, new (trHeapMemory) TR::MemoryReference(baseInitReg, initSlotOffset, 4, cg), nullReg, cursor);
+         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, TR::MemoryReference::createWithDisplacement(cg, baseInitReg, initSlotOffset, 4), nullReg, cursor);
          }
       }
    else
@@ -806,10 +806,10 @@ static TR::Instruction *unrollPrologueInitLoop(TR::CodeGenerator *cg, TR::Node *
             cursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel, cursor);
             }
          // This clears (wordsToUnroll/4) * (use8Bytes ? 32: 16) bytes.
-         cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, new (trHeapMemory) TR::MemoryReference(baseInitReg, initSlotOffset, TR::Compiler->om.sizeofReferenceAddress(), cg), nullReg, cursor);
-         cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, new (trHeapMemory) TR::MemoryReference(baseInitReg, initSlotOffset+(use8Bytes?8:4), TR::Compiler->om.sizeofReferenceAddress(), cg), nullReg, cursor);
-         cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, new (trHeapMemory) TR::MemoryReference(baseInitReg, initSlotOffset+(use8Bytes?16:8), TR::Compiler->om.sizeofReferenceAddress(), cg), nullReg, cursor);
-         cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, new (trHeapMemory) TR::MemoryReference(baseInitReg, initSlotOffset+(use8Bytes?24:12), TR::Compiler->om.sizeofReferenceAddress(), cg), nullReg, cursor);
+         cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, TR::MemoryReference::createWithDisplacement(cg, baseInitReg, initSlotOffset, TR::Compiler->om.sizeofReferenceAddress()), nullReg, cursor);
+         cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, TR::MemoryReference::createWithDisplacement(cg, baseInitReg, initSlotOffset+(use8Bytes?8:4), TR::Compiler->om.sizeofReferenceAddress()), nullReg, cursor);
+         cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, TR::MemoryReference::createWithDisplacement(cg, baseInitReg, initSlotOffset+(use8Bytes?16:8), TR::Compiler->om.sizeofReferenceAddress()), nullReg, cursor);
+         cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, TR::MemoryReference::createWithDisplacement(cg, baseInitReg, initSlotOffset+(use8Bytes?24:12), TR::Compiler->om.sizeofReferenceAddress()), nullReg, cursor);
          if (wordsToUnroll >=8)
             {
             cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, gr12, gr12, (use8Bytes?32:16), cursor);
@@ -824,11 +824,11 @@ static TR::Instruction *unrollPrologueInitLoop(TR::CodeGenerator *cg, TR::Node *
       switch (wordsToUnroll % 4)
          {
          case 3:
-            cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, new (trHeapMemory) TR::MemoryReference(baseInitReg, initSlotOffset+(use8Bytes?16:8), TR::Compiler->om.sizeofReferenceAddress(), cg), nullReg, cursor);
+            cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, TR::MemoryReference::createWithDisplacement(cg, baseInitReg, initSlotOffset+(use8Bytes?16:8), TR::Compiler->om.sizeofReferenceAddress()), nullReg, cursor);
          case 2:
-            cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, new (trHeapMemory) TR::MemoryReference(baseInitReg, initSlotOffset+(use8Bytes?8:4), TR::Compiler->om.sizeofReferenceAddress(), cg), nullReg, cursor);
+            cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, TR::MemoryReference::createWithDisplacement(cg, baseInitReg, initSlotOffset+(use8Bytes?8:4), TR::Compiler->om.sizeofReferenceAddress()), nullReg, cursor);
          case 1:
-            cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, new (trHeapMemory) TR::MemoryReference(baseInitReg, initSlotOffset, TR::Compiler->om.sizeofReferenceAddress(), cg), nullReg, cursor);
+            cursor = generateMemSrc1Instruction(cg, use8Bytes? TR::InstOpCode::std : TR::InstOpCode::stw, node, TR::MemoryReference::createWithDisplacement(cg, baseInitReg, initSlotOffset, TR::Compiler->om.sizeofReferenceAddress()), nullReg, cursor);
          break;
          }
       // Last one if needed
@@ -836,7 +836,7 @@ static TR::Instruction *unrollPrologueInitLoop(TR::CodeGenerator *cg, TR::Node *
          {
          if (wordsToUnroll %4)
             initSlotOffset += (use8Bytes?8:4)*(wordsToUnroll%4);
-         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, new (trHeapMemory) TR::MemoryReference(baseInitReg, initSlotOffset, TR::Compiler->om.sizeofReferenceAddress(), cg), nullReg, cursor);
+         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, TR::MemoryReference::createWithDisplacement(cg, baseInitReg, initSlotOffset, TR::Compiler->om.sizeofReferenceAddress()), nullReg, cursor);
          }
       }
    return cursor;
@@ -976,9 +976,8 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    // Load the stack limit offset for comparison
    if (!comp()->isDLT())
       cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, firstNode, gr11,
-                  new (trHeapMemory()) TR::MemoryReference(metaBase, cg()->getStackLimitOffset(),
-                  TR::Compiler->om.sizeofReferenceAddress(),
-                  cg()), cursor);
+                  TR::MemoryReference::createWithDisplacement(cg(), metaBase, cg()->getStackLimitOffset(),
+                  TR::Compiler->om.sizeofReferenceAddress()), cursor);
 
    if (cg()->getFrameSizeInBytes() || saveLR)
       {
@@ -1008,7 +1007,7 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          if (saveLR)
             {
             // javaSP[totalFrameSize] <- linkRegister
-            cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_stx, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, gr12, TR::Compiler->om.sizeofReferenceAddress(), cg()),
+            cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_stx, firstNode, TR::MemoryReference::createWithIndexReg(cg(), stackPtr, gr12, TR::Compiler->om.sizeofReferenceAddress()),
                         gr0, cursor);
             }
          }
@@ -1031,7 +1030,7 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          if (saveLR)
             {
             // javaSP[totalFrameSize] <- linkRegister
-            cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, cg()->getFrameSizeInBytes(), TR::Compiler->om.sizeofReferenceAddress(), cg()),
+            cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, TR::MemoryReference::createWithDisplacement(cg(), stackPtr, cg()->getFrameSizeInBytes(), TR::Compiler->om.sizeofReferenceAddress()),
                         gr0, cursor);
             }
          }
@@ -1069,14 +1068,14 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          {
          for (regIndex=intSavedFirst; regIndex<=TR::RealRegister::LastGPR; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex+1))
             {
-            cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, argSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), machine->getRealRegister(regIndex), cursor);
+            cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, TR::MemoryReference::createWithDisplacement(cg(), stackPtr, argSize, TR::Compiler->om.sizeofReferenceAddress()), machine->getRealRegister(regIndex), cursor);
 
             argSize = argSize + TR::Compiler->om.sizeofReferenceAddress();
             }
          }
       else
          {
-         cursor = generateMemSrc1Instruction(cg(), (intSavedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::stw:TR::InstOpCode::stmw, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, argSize, 4*(TR::RealRegister::LastGPR-intSavedFirst+1), cg()), machine->getRealRegister(intSavedFirst), cursor);
+         cursor = generateMemSrc1Instruction(cg(), (intSavedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::stw:TR::InstOpCode::stmw, firstNode, TR::MemoryReference::createWithDisplacement(cg(), stackPtr, argSize, 4*(TR::RealRegister::LastGPR-intSavedFirst+1)), machine->getRealRegister(intSavedFirst), cursor);
 
          argSize += (TR::RealRegister::LastGPR - intSavedFirst + 1) * 4;
          }
@@ -1159,9 +1158,9 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
                cursor = loadConstant(cg(), firstNode, loopDistance, gr11, cursor);
                cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, firstNode, loopLabel, cursor);
                if (residualSize >= -LOWER_IMMED)
-                  cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_stx, firstNode, new (trHeapMemory()) TR::MemoryReference(gr12, gr11, TR::Compiler->om.sizeofReferenceAddress(), cg()), nullValueRegister, cursor);
+                  cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_stx, firstNode, TR::MemoryReference::createWithIndexReg(cg(), gr12, gr11, TR::Compiler->om.sizeofReferenceAddress()), nullValueRegister, cursor);
                else
-                  cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_stx, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, gr11, initSlotOffset+ TR::Compiler->om.sizeofReferenceAddress(), cg()), nullValueRegister, cursor);
+                  cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_stx, firstNode, TR::MemoryReference::createWithIndexReg(cg(), stackPtr, gr11, initSlotOffset+ TR::Compiler->om.sizeofReferenceAddress()), nullValueRegister, cursor);
                cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addic_r, firstNode, gr11, gr11, cr0, TR::Compiler->om.sizeofReferenceAddress(), cursor);
                cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, firstNode, loopLabel, cr0, cursor);
                }
@@ -1177,22 +1176,22 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
                int32_t count = 0;
                if (numLocalsToBeInitialized >= 2)
                   {
-                  cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::std, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, offset+residualSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), nullValueRegister, cursor);
+                  cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::std, firstNode, TR::MemoryReference::createWithDisplacement(cg(), stackPtr, offset+residualSize, TR::Compiler->om.sizeofReferenceAddress()), nullValueRegister, cursor);
                   count++;
                   if (numLocalsToBeInitialized >= 4)
                      {
-                     cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::std, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, offset+residualSize+8, TR::Compiler->om.sizeofReferenceAddress(), cg()), nullValueRegister, cursor);
+                     cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::std, firstNode, TR::MemoryReference::createWithDisplacement(cg(), stackPtr, offset+residualSize+8, TR::Compiler->om.sizeofReferenceAddress()), nullValueRegister, cursor);
                      count++;
                      }
                   }
                if (numLocalsToBeInitialized % 2 == 1)
-                  cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, offset+residualSize+(count*8), TR::Compiler->om.sizeofReferenceAddress(), cg()), nullValueRegister, cursor);
+                  cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, TR::MemoryReference::createWithDisplacement(cg(), stackPtr, offset+residualSize+(count*8), TR::Compiler->om.sizeofReferenceAddress()), nullValueRegister, cursor);
                }
             else
                {
                for (i = 0; i < numLocalsToBeInitialized; i++, offset += TR::Compiler->om.sizeofReferenceAddress())
                   {
-                  cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, offset+residualSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), nullValueRegister, cursor);
+                  cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, TR::MemoryReference::createWithDisplacement(cg(), stackPtr, offset+residualSize, TR::Compiler->om.sizeofReferenceAddress()), nullValueRegister, cursor);
                   }
                }
             }
@@ -1262,7 +1261,7 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
                {
                for (i = 0; i < numSlotsToBeInitialized; i++, offset += TR::Compiler->om.sizeofReferenceAddress())
                   {
-                  cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, offset+residualSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), nullValueRegister, cursor);
+                  cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, TR::MemoryReference::createWithDisplacement(cg(), stackPtr, offset+residualSize, TR::Compiler->om.sizeofReferenceAddress()), nullValueRegister, cursor);
                   }
                }
             }
@@ -1309,7 +1308,7 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
 TR::MemoryReference *J9::Power::PrivateLinkage::getOutgoingArgumentMemRef(int32_t argSize, TR::Register *argReg, TR::InstOpCode::Mnemonic opCode, TR::PPCMemoryArgument &memArg, uint32_t length)
    {
-   TR::MemoryReference *result=new (trHeapMemory()) TR::MemoryReference(cg()->getStackPointerRegister(), argSize, length, cg());
+   TR::MemoryReference *result = TR::MemoryReference::createWithDisplacement(cg(), cg()->getStackPointerRegister(), argSize, length);
    memArg.argRegister = argReg;
    memArg.argMemory = result;
    memArg.opCode = opCode;
@@ -1341,7 +1340,7 @@ void J9::Power::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
 
    if (restoreLR && frameSize <= UPPER_IMMED)
       {
-      cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, gr0, new (trHeapMemory()) TR::MemoryReference(stackPtr, frameSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
+      cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, gr0, TR::MemoryReference::createWithDisplacement(cg(), stackPtr, frameSize, TR::Compiler->om.sizeofReferenceAddress()), cursor);
       cursor = generateSrc1Instruction(cg(), TR::InstOpCode::mtlr, currentNode, gr0, 0, cursor);
       }
 
@@ -1365,14 +1364,14 @@ void J9::Power::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
          {
          for (regIndex=savedFirst; regIndex<=TR::RealRegister::LastGPR; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex+1))
             {
-            cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(stackPtr, saveSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
+            cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getRealRegister(regIndex), TR::MemoryReference::createWithDisplacement(cg(), stackPtr, saveSize, TR::Compiler->om.sizeofReferenceAddress()), cursor);
 
             saveSize = saveSize + TR::Compiler->om.sizeofReferenceAddress();
             }
          }
       else
          {
-         cursor = generateTrg1MemInstruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::lwz:TR::InstOpCode::lmw, currentNode, machine->getRealRegister(savedFirst), new (trHeapMemory()) TR::MemoryReference(stackPtr, saveSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), cursor);
+         cursor = generateTrg1MemInstruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::lwz:TR::InstOpCode::lmw, currentNode, machine->getRealRegister(savedFirst), TR::MemoryReference::createWithDisplacement(cg(), stackPtr, saveSize, 4*(TR::RealRegister::LastGPR-savedFirst+1)), cursor);
 
          saveSize += (TR::RealRegister::LastGPR - savedFirst + 1) * 4;
          }
@@ -1393,7 +1392,7 @@ void J9::Power::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
 
       if (restoreLR && frameSize > UPPER_IMMED)
          {
-         cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, gr0, new (trHeapMemory()) TR::MemoryReference(stackPtr, -TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
+         cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, gr0, TR::MemoryReference::createWithDisplacement(cg(), stackPtr, -TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()), cursor);
          cursor = generateSrc1Instruction(cg(), TR::InstOpCode::mtlr, currentNode, gr0, 0, cursor);
          }
       }
@@ -1940,7 +1939,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
             {
             int32_t helperOffset = (callNode->getSymbolReference()->getReferenceNumber() - 1)*sizeof(intptr_t);
             generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, dependencies->searchPreConditionRegister(TR::RealRegister::gr12),
-               new(trHeapMemory()) TR::MemoryReference(cg()->getTOCBaseRegister(), helperOffset, TR::Compiler->om.sizeofReferenceAddress(), cg()));
+               TR::MemoryReference::createWithDisplacement(cg(), cg()->getTOCBaseRegister(), helperOffset, TR::Compiler->om.sizeofReferenceAddress()));
             }
          else
             {
@@ -1952,7 +1951,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
       else if (comp()->target().isAIX() || (comp()->target().isLinux() && comp()->target().is64Bit()))
          {
          generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, dependencies->searchPreConditionRegister(TR::RealRegister::gr2),
-            new(trHeapMemory()) TR::MemoryReference(cg()->getMethodMetaDataRegister(), offsetof(J9VMThread, jitTOC), TR::Compiler->om.sizeofReferenceAddress(), cg()));
+            TR::MemoryReference::createWithDisplacement(cg(), cg()->getMethodMetaDataRegister(), offsetof(J9VMThread, jitTOC), TR::Compiler->om.sizeofReferenceAddress()));
          }
       }
 
@@ -2106,11 +2105,11 @@ static void buildVirtualCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Regi
       {
       TR_ASSERT_FATAL_WITH_NODE(callNode, 0x00008000 != HI_VALUE(offset), "offset (0x%x) is unexpectedly high. Can not encode upper 16 bits into an addis instruction.", offset);
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, callNode, gr12, vftReg, HI_VALUE(offset));
-      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, new (cg->trHeapMemory()) TR::MemoryReference(gr12, LO_VALUE(offset), TR::Compiler->om.sizeofReferenceAddress(), cg));
+      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, TR::MemoryReference::createWithDisplacement(cg, gr12, LO_VALUE(offset), TR::Compiler->om.sizeofReferenceAddress()));
       }
    else
       {
-      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, new (cg->trHeapMemory()) TR::MemoryReference(vftReg, offset, TR::Compiler->om.sizeofReferenceAddress(), cg));
+      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, TR::MemoryReference::createWithDisplacement(cg, vftReg, offset, TR::Compiler->om.sizeofReferenceAddress()));
       }
 
    generateSrc1Instruction(cg, TR::InstOpCode::mtctr, callNode, gr12);
@@ -2131,8 +2130,8 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
       if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
          {
          // Expecting the 64bit IPIC snippet shape
-         generateTrg1MemInstruction(cg, TR::InstOpCode::paddi, callNode, gr12, TR::MemoryReference::withLabel(cg, ifcSnippet->getSnippetLabel(), 12+4*TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()));
-         generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr11, new (cg->trHeapMemory()) TR::MemoryReference(gr12, 0, TR::Compiler->om.sizeofReferenceAddress(), cg));
+         generateTrg1MemInstruction(cg, TR::InstOpCode::paddi, callNode, gr12, TR::MemoryReference::createWithLabel(cg, ifcSnippet->getSnippetLabel(), 12+4*TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()));
+         generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr11, TR::MemoryReference::createWithDisplacement(cg, gr12, 0, TR::Compiler->om.sizeofReferenceAddress()));
          }
       else
          {
@@ -2145,13 +2144,13 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
                {
                TR_ASSERT_FATAL_WITH_NODE(callNode, 0x00008000 != HI_VALUE(beginIndex), "TOC offset (0x%x) is unexpectedly high. Can not encode upper 16 bits into an addis instruction.", beginIndex);
                generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, callNode, gr12, cg->getTOCBaseRegister(), HI_VALUE(beginIndex));
-               generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, new (cg->trHeapMemory()) TR::MemoryReference(gr12, LO_VALUE(beginIndex), TR::Compiler->om.sizeofReferenceAddress(), cg));
+               generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, TR::MemoryReference::createWithDisplacement(cg, gr12, LO_VALUE(beginIndex), TR::Compiler->om.sizeofReferenceAddress()));
                }
             else
                {
-               generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, new (cg->trHeapMemory()) TR::MemoryReference(cg->getTOCBaseRegister(), beginIndex, TR::Compiler->om.sizeofReferenceAddress(), cg));
+               generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12, TR::MemoryReference::createWithDisplacement(cg, cg->getTOCBaseRegister(), beginIndex, TR::Compiler->om.sizeofReferenceAddress()));
                }
-            generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr11, new (cg->trHeapMemory()) TR::MemoryReference(gr12, 0, TR::Compiler->om.sizeofReferenceAddress(), cg));
+            generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr11, TR::MemoryReference::createWithDisplacement(cg, gr12, 0, TR::Compiler->om.sizeofReferenceAddress()));
             }
          else
             {
@@ -2166,14 +2165,14 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
    else
       {
       ifcSnippet->setUpperInstruction(generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, callNode, gr12, 0));
-      ifcSnippet->setLowerInstruction(generateTrg1MemInstruction(cg, TR::InstOpCode::lwzu, callNode, gr11, new (cg->trHeapMemory()) TR::MemoryReference(gr12, 0, 4, cg)));
+      ifcSnippet->setLowerInstruction(generateTrg1MemInstruction(cg, TR::InstOpCode::lwzu, callNode, gr11, TR::MemoryReference::createWithDisplacement(cg, gr12, 0, 4)));
       }
    TR::LabelSymbol *hitLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *snippetLabel = ifcSnippet->getSnippetLabel();
    generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, callNode, cr0, vftReg, gr11);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, callNode, hitLabel, cr0);
 
-   generateTrg1MemInstruction(cg,TR::InstOpCode::Op_loadu, callNode, gr11, new (cg->trHeapMemory()) TR::MemoryReference(gr12, 2 * TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress(), cg));
+   generateTrg1MemInstruction(cg,TR::InstOpCode::Op_loadu, callNode, gr11, TR::MemoryReference::createWithDisplacement(cg, gr12, 2 * TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()));
    generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, callNode, cr0, vftReg, gr11);
 
 #ifdef INLINE_LASTITABLE_CHECK
@@ -2201,12 +2200,12 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
       // Check if the lastITable belongs to the interface class we're using at this call site
       //
       generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr11,
-                                 new (cg->trHeapMemory()) TR::MemoryReference(vftReg, fej9->getOffsetOfLastITableFromClassField(), TR::Compiler->om.sizeofReferenceAddress(), cg));
+                                 TR::MemoryReference::createWithDisplacement(cg, vftReg, fej9->getOffsetOfLastITableFromClassField(), TR::Compiler->om.sizeofReferenceAddress()));
       // Load the interface class from the snippet rather than materializing it, again because we want to do this in a single instruction
       generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12,
-                                 new (cg->trHeapMemory()) TR::MemoryReference(gr12, -4 * TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress(), cg));
+                                 TR::MemoryReference::createWithDisplacement(cg, gr12, -4 * TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()));
       generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr0,
-                                 new (cg->trHeapMemory()) TR::MemoryReference(gr11, fej9->getOffsetOfInterfaceClassFromITableField(), TR::Compiler->om.sizeofReferenceAddress(), cg));
+                                 TR::MemoryReference::createWithDisplacement(cg, gr11, fej9->getOffsetOfInterfaceClassFromITableField(), TR::Compiler->om.sizeofReferenceAddress()));
       generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, callNode, cr0, gr0, gr12);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, callNode, snippetLabel, cr0);
 
@@ -2214,11 +2213,11 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
       // Use it to look up the VFT offset and use that to make a virtual call
       //
       generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr12,
-                                 new (cg->trHeapMemory()) TR::MemoryReference(gr11, fej9->convertITableIndexToOffset(itableIndex), TR::Compiler->om.sizeofReferenceAddress(), cg));
+                                 TR::MemoryReference::createWithDisplacement(cg, gr11, fej9->convertITableIndexToOffset(itableIndex), TR::Compiler->om.sizeofReferenceAddress()));
       loadConstant(cg, callNode, fej9->getITableEntryJitVTableOffset(), gr11);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, callNode, gr12, gr12, gr11);
       generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr11,
-                                 new (cg->trHeapMemory()) TR::MemoryReference(vftReg, gr12, TR::Compiler->om.sizeofReferenceAddress(), cg));
+                                 TR::MemoryReference::createWithIndexReg(cg, vftReg, gr12, TR::Compiler->om.sizeofReferenceAddress()));
       generateLabelInstruction(cg, TR::InstOpCode::b, callNode, callLabel);
       }
    else
@@ -2227,7 +2226,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
       generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, callNode, snippetLabel, cr0);
       }
    generateLabelInstruction(cg, TR::InstOpCode::label, callNode, hitLabel);
-   generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr11, new (cg->trHeapMemory()) TR::MemoryReference(gr12, TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress(), cg));
+   generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, gr11, TR::MemoryReference::createWithDisplacement(cg, gr12, TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()));
 #ifdef INLINE_LASTITABLE_CHECK
    generateLabelInstruction(cg, TR::InstOpCode::label, callNode, callLabel);
 #endif /* INLINE_LASTITABLE_CHECK */
@@ -2337,7 +2336,7 @@ void J9::Power::PrivateLinkage::buildVirtualDispatch(TR::Node                   
          // method pointer. The branch should be a no-op if the offset turns
          // out to be within range (for most cases).
          generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, snippetLabel);
-         generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, callNode, gr12, new (trHeapMemory()) TR::MemoryReference(gr12, 0, TR::Compiler->om.sizeofReferenceAddress(), cg()));
+         generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, callNode, gr12, TR::MemoryReference::createWithDisplacement(cg(), gr12, 0, TR::Compiler->om.sizeofReferenceAddress()));
 
          generateSrc1Instruction(cg(), TR::InstOpCode::mtctr, callNode, gr12);
          TR::Instruction *gcPoint = generateInstruction(cg(), TR::InstOpCode::bctrl, callNode);
@@ -2379,7 +2378,7 @@ void J9::Power::PrivateLinkage::buildVirtualDispatch(TR::Node                   
                   {
                   TR_ResolvedMethod *calleeMethod = chTable->findSingleAbstractImplementer(thisClass, methodSymRef->getOffset(), methodSymRef->getOwningMethod(comp()), comp());
                   if (calleeMethod &&
-                      ((calleeMethod->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) ||
+                      (comp()->isRecursiveMethodTarget(calleeMethod) ||
                        !calleeMethod->isInterpreted() ||
                        calleeMethod->isJITInternalNative()))
                      {
@@ -2393,7 +2392,7 @@ void J9::Power::PrivateLinkage::buildVirtualDispatch(TR::Node                   
                   {
                   TR_ResolvedMethod *calleeMethod = methodSymRef->getOwningMethod(comp())->getResolvedVirtualMethod(comp(), refinedThisClass, methodSymRef->getOffset());
                   if (calleeMethod &&
-                      ((calleeMethod->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) ||
+                      (comp()->isRecursiveMethodTarget(calleeMethod) ||
                        !calleeMethod->isInterpreted() ||
                        calleeMethod->isJITInternalNative()))
                      {
@@ -2444,7 +2443,7 @@ void J9::Power::PrivateLinkage::buildVirtualDispatch(TR::Node                   
                   resolvedMethodSymbol = methodSymbol->getResolvedMethodSymbol();
                   resolvedMethod = resolvedMethodSymbol->getResolvedMethod();
                   }
-               uintptr_t methodAddress = resolvedMethod->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT() ? 0 : (uintptr_t)resolvedMethod->startAddressForJittedMethod();
+               uintptr_t methodAddress = comp()->isRecursiveMethodTarget(resolvedMethod) ? 0 : (uintptr_t)resolvedMethod->startAddressForJittedMethod();
                TR::Instruction *gcPoint = generateDepImmSymInstruction(cg(), TR::InstOpCode::bl, callNode, methodAddress,
                                                                                               new (trHeapMemory()) TR::RegisterDependencyConditions(0, 0, trMemory()), methodSymRef);
                generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, dependencies);
@@ -2685,9 +2684,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
    TR::MethodSymbol *callSymbol    = callSymRef->getSymbol()->castToMethodSymbol();
    TR::ResolvedMethodSymbol *sym   = callSymbol->getResolvedMethodSymbol();
    TR_ResolvedMethod *vmm       = (sym==NULL)?NULL:sym->getResolvedMethod();
-   bool myself =
-      (vmm!=NULL && vmm->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) ?
-      true : false;
+   bool myself = comp()->isRecursiveMethodTarget(vmm);
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
 
@@ -2904,8 +2901,8 @@ TR::MemoryReference *J9::Power::PrivateLinkage::getOutgoingArgumentMemRef(int32_
    {
    TR::Machine *machine = cg()->machine();
 
-   TR::MemoryReference *result=new (trHeapMemory()) TR::MemoryReference(machine->getRealRegister(properties.getNormalStackPointerRegister()),
-                                        argSize+getOffsetToFirstParm(), length, cg());
+   TR::MemoryReference *result = TR::MemoryReference::createWithDisplacement(cg(), machine->getRealRegister(properties.getNormalStackPointerRegister()),
+                                        argSize+getOffsetToFirstParm(), length);
    memArg.argRegister = argReg;
    memArg.argMemory = result;
    memArg.opCode = opCode;

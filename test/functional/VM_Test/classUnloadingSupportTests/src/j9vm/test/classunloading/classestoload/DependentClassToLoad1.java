@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,21 +19,11 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package java.lang;
+package j9vm.test.classunloading.classestoload;
 
 import j9vm.test.classunloading.FinalizationIndicator;
 
-public class ClassPathSettingClassLoader extends ClassLoader {
-	
-		FinalizationIndicator finalizationIndicator;
-		
-public ClassPathSettingClassLoader(String name, String classPath) {
-	finalizationIndicator = new FinalizationIndicator(name);
-	com.ibm.oti.vm.VM.setClassPathImpl(this, classPath);
-}
-protected Class findClass (String className) throws ClassNotFoundException {
-	Class newClass = VMAccess.findClassOrNull(className, this);
-	if (newClass == null) throw new ClassNotFoundException(className);
-	return newClass;
-}
+public class DependentClassToLoad1 implements InterfaceToLoad1 {
+	private static FinalizationIndicator indicator = new FinalizationIndicator( DependentClassToLoad1.class.getName());
+	private static FinalizationIndicator interfaceIndicator = interface1;
 }
