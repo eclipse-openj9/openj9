@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<project name="CDS Adaptor Tests" default="clean" basedir=".">
+	<taskdef resource='net/sf/antcontrib/antlib.xml'/>
+    <description>
+       Build CDS Adaptor Tests 
+    </description>
+	
+	<!-- set global properties for this build -->
+	<property name="DEST" value="${BUILD_ROOT}/jvmtest/VM/cdsadaptortest" />
+	<property name="dist" location="${DEST}"/>
+	
+	<!--Properties for this particular build-->
+    <property name="src" location="./src"/>
+	<property name="build" location="./bin"/>
+	<property name="resources" location="./resources"/>
+	<property name="src.level" value="1.5"/>
+	<property name="target.level" value="1.5"/>
+	<target name="init">
+		<mkdir dir="${build}"/>
+	</target>
+
+    <target name="compile" depends="init" description="compile the source " >
+    	<echo>Ant version is ${ant.version}</echo>
+		<if>
+			<os family="unix"/>
+			<then>
+				<property name="build.compiler.java7" value="/bluebird/sdk/ibm-jdk-7.0-ga/linux_x86-32/bin/javac" />
+			</then>
+			<else>
+				<echo>dev tools: ${env.DEV_TOOLS}</echo>
+				 <fail unless="env.DEV_TOOLS" message="You must have the DEV_TOOLS environment defined." />
+				<property name="build.compiler.java7" value="${env.DEV_TOOLS}/ibm-jdk-1.7.0/bin/javac.exe" />
+			</else>
+		</if>		
+    	<javac srcdir="${src}" destdir="${build}" source="${src.level}" target="${target.level}" 
+			debug="true" fork="true" executable="${build.compiler.java7}" encoding="ISO-8859-1">
+				<classpath>
+					<fileset dir="${resources}" casesensitive="yes">
+						<include name="org.eclipse.osgi*.jar" />
+					</fileset>
+				</classpath>
+		</javac>
+	</target>
+
+  	<target name="dist" depends="compile" description="generate the distribution" >
+	    <!-- Store all java files, class files, bundles and cdsadaptortest.xml in cdsadaptortest.jar file -->
+  		<mkdir dir="${dist}"/>
+	    <jar jarfile="${dist}/cdsadaptortest.jar">
+	    	<fileset dir=".">
+	    		<include name="cdsadaptortest.xml"/>
+	    	</fileset>
+			<fileset dir="${build}"/>
+			<fileset dir="${src}"/>
+	    	<fileset dir="${resources}"/>
+		</jar>
+  	</target>
+    <target name="clean" depends="dist" description="clean up" >
+       <!-- Delete the ${build} directory trees -->
+       <delete dir="${build}"/>
+    </target>
+	
+    <target name="build_test">
+		<antcall target="clean" inheritall="true" />    	
+    </target>
+</project>
