@@ -98,6 +98,62 @@ public final class MethodHandleHelper {
 
 	@SuppressWarnings("unused")
 	private static final Object resolveConstantDynamic(long j9class, String name, String fieldDescriptor, long bsmData) throws Throwable {
+/*[IF OPENJDK_METHODHANDLES]*/
+		Object result = null;
+
+		VMLangAccess access = VM.getVMLangAccess();
+		Object internalRamClass = access.createInternalRamClass(j9class);
+		Class<?> classObject = getClassFromJ9Class(j9class);
+
+		Class<?> typeClass = fromFieldDescriptorString(fieldDescriptor, access.getClassloader(classObject));
+
+		int bsmIndex = UNSAFE.getShort(bsmData);
+		int bsmArgCount = UNSAFE.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
+		long bsmArgs = bsmData + BSM_ARGUMENTS_OFFSET;
+		MethodHandle bsm = getCPMethodHandleAt(internalRamClass, bsmIndex);
+		if (null == bsm) {
+			/*[MSG "K05cd", "unable to resolve 'bootstrap_method_ref' in '{0}' at index {1}"]*/
+			throw new NullPointerException(Msg.getString("K05cd", classObject.toString(), bsmIndex)); //$NON-NLS-1$
+		}
+		Object[] staticArgs = new Object[bsmArgCount];
+
+		/* Static optional arguments */
+		int bsmTypeArgCount = bsm.type().parameterCount();
+
+		/* JVMS JDK11 5.4.3.6 Dynamically-Computed Constant and Call Site Resolution
+		 * requires the first parameter of the bootstrap method to be java.lang.invoke.MethodHandles.Lookup
+		 * else fail resolution with BootstrapMethodError
+		 */
+		if (bsmTypeArgCount < 1 || MethodHandles.Lookup.class != bsm.type().parameterType(0)) {
+			/*[MSG "K0A01", "Constant_Dynamic references bootstrap method '{0}' does not have java.lang.invoke.MethodHandles.Lookup as first parameter."]*/
+			throw new BootstrapMethodError(Msg.getString("K0A01", bsm)); //$NON-NLS-1$
+		}
+
+		for (int i = 0; i < bsmArgCount; i++) {
+			staticArgs[i] = getAdditionalBsmArg(access, internalRamClass, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
+		}
+
+		/* JVMS JDK11 5.4.3.6 Dynamically-Computed Constant and Call Site Resolution
+		 * requires that exceptions from BSM invocation be wrapped in a BootstrapMethodError
+		 * unless the exception thrown is a sub-class of Error.
+		 * Exceptions thrown before invocation should be passed through unwrapped.
+		 */
+		try {
+			result = MethodHandleNatives.linkDynamicConstant(classObject, 0, bsm, name, typeClass, (Object)staticArgs);
+			/* result validation */
+			result = MethodHandles.identity(typeClass).invoke(result);
+		} catch(Throwable e) {
+			if (e instanceof Error) {
+				throw e;
+			} else {
+				/*[MSG "K0A00", "Failed to resolve Constant Dynamic entry with j9class: {0}, name: {1}, descriptor: {2}, bsmData: {3}"]*/
+				String msg = Msg.getString("K0A00", new Object[] {String.valueOf(j9class), name, fieldDescriptor, String.valueOf(bsmData)}); //$NON-NLS-1$
+				throw new BootstrapMethodError(msg, e);
+			}
+		}
+		
+		return result;
+/*[ELSE]*/
 		Object result = null;
 
 		VMLangAccess access = VM.getVMLangAccess();
@@ -156,6 +212,7 @@ public final class MethodHandleHelper {
 		}
 		
 		return result;
+/*[ENDIF] OPENJDK_METHODHANDLES*/
 	}
 /*[ENDIF] Java11*/
 
