@@ -53,14 +53,14 @@ protected:
 public:
 
    /** 
-    * @brief Returns the processor type and features that will be used by portable AOT compilations
+    * @brief A factory method used to construct a CPU object for portable AOT compilations
     * @param[in] omrPortLib : the port library
     * @return TR::CPU
     */
    static TR::CPU detectRelocatable(OMRPortLibrary * const omrPortLib);
 
    /**
-    * @brief Intialize _supportedFeatureMasks to the list of processor features that will be utilized by the compiler and set _isSupportedFeatureMasksEnabled to true
+    * @brief Intialize _supportedFeatureMasks to the list of processor features that will be exploited by the compiler and set _isSupportedFeatureMasksEnabled to true
     * @return void
     */
    static void enableFeatureMasks();
