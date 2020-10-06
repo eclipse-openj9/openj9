@@ -352,19 +352,37 @@ jniCheckParseOptions(J9JavaVM* vm, char* options)
 	return J9VMDLLMAIN_OK;
 }
 
-void jniCheckSubclass(JNIEnv* env, const char* function, IDATA argNum, jobject aJobject, const char* type) {
-	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
-
+void jniCheckSubclass(JNIEnv* env, const char* function, IDATA argNum, jobject aJobject, const char* type)
+{
+	J9JavaVM *j9vm = ((J9VMThread*)env)->javaVM;
 	jclass superclazz = j9vm->EsJNIFunctions->FindClass(env, type);
-	if (superclazz == NULL) {
+
+	if (NULL == superclazz) {
 		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND, function, argNum, type);
 	}
-
 	if (!j9vm->EsJNIFunctions->IsInstanceOf(env, aJobject, superclazz)) {
 		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS, function, argNum, type);
 	}
 }
 
+void jniCheckSubclass2(JNIEnv* env, const char* function, IDATA argNum, jobject aJobject, const char* type1, const char* type2)
+{
+	J9JavaVM *j9vm = ((J9VMThread*)env)->javaVM;
+	jclass superclazz1 = j9vm->EsJNIFunctions->FindClass(env, type1);
+	jclass superclazz2 = j9vm->EsJNIFunctions->FindClass(env, type2);
+
+	if (NULL == superclazz1) {
+		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND, function, argNum, type1);
+	}
+	if (NULL == superclazz2) {
+		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND, function, argNum, type2);
+	}
+	if (!(j9vm->EsJNIFunctions->IsInstanceOf(env, aJobject, superclazz1)
+		|| j9vm->EsJNIFunctions->IsInstanceOf(env, aJobject, superclazz2))
+	) {
+		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2, function, argNum, type1, type2);
+	}
+}
 
 void
 jniCheckRange(JNIEnv* env,  const char* function, const char* type, IDATA arg, IDATA argNum, IDATA min, IDATA max)
@@ -858,7 +876,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			aJobject = va_arg(va, jobject);
 			jniCheckNull(env, function, argNum, aJobject);
 			jniCheckRef(env, function, argNum, aJobject);
-			/* jniCheckSubclass(env, function, argNum, aJobject, "java/lang/reflect/Constructor" or "java/lang/reflect/Method"); */
+			jniCheckSubclass2(env, function, argNum, aJobject, "java/lang/reflect/Constructor", "java/lang/reflect/Method");
 			if (trace) jniTraceObject(env, aJobject);
 			break;
 
