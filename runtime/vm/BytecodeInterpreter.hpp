@@ -2515,11 +2515,6 @@ done:
 		return rc;
 	}
 
-	VMINLINE J9ConstantPool *ramConstantPool(J9Method * &_literals) { return J9_CP_FROM_METHOD(_literals); }
-	VMINLINE J9RAMConstantPoolItem *ramConstantPoolItem(J9Method * &_literals, U_16 index) { return (J9RAMConstantPoolItem*)ramConstantPool(_literals) + index; }
-	VMINLINE J9ROMConstantPoolItem *romConstantPool(J9Method * &_literals) { return J9_ROM_CP_FROM_CP(ramConstantPool(_literals)); }
-	VMINLINE J9ROMConstantPoolItem *romConstantPoolItem(J9Method * &_literals, U_16 index) { return romConstantPool(_literals) + index; }
-
 	/* INL native implementations
 	 *
 	 * Each INL must pop its arguments from the stack, push the return value
