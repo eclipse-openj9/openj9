@@ -516,6 +516,13 @@ static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, 
       ListIterator<TR_VMField> iter(fieldsInfo.getFields());
       for (TR_VMField *childField = iter.getFirst(); childField; childField = iter.getNext())
          {
+         IDATA offsetBaseForChild = field->offset + offsetBase;
+         /* Types with fields (flat or non-flat) that require double (64bit) alignment are pre-padded if there isn't
+          * a smaller type that can be used as pre-padding. Pre-padding is eliminated when a type is flattened within
+          * its container. As a result pre-padding must be subtracted from the base offset of the flattened field.
+          */
+         offsetBaseForChild -= J9CLASS_PREPADDING_SIZE(fieldClass);
+
          addEntryForFieldImpl(childField, tlb, region, fieldClass, prefixForChild, prefixLengthForChild, offsetBaseForChild, comp);
          }
       }
