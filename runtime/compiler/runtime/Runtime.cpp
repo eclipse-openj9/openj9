@@ -49,6 +49,10 @@
 #include "runtime/codertinit.hpp"
 #include "env/VMJ9.h"
 #include "runtime/J9RuntimeAssumptions.hpp"
+#if defined(J9VM_OPT_JITSERVER) && defined(TR_HOST_POWER)
+#include "control/CompilationRuntime.hpp"
+#include "control/MethodToBeCompiled.hpp"
+#endif
 
 extern J9JITConfig *jitConfig;
 extern "C" int32_t _getnumRTHelpers();  /* 390 asm stub */
@@ -167,6 +171,25 @@ void* TR_RuntimeHelperTable::getFunctionPointer(TR_RuntimeHelper h)
 
 void* TR_RuntimeHelperTable::getFunctionEntryPointOrConst(TR_RuntimeHelper h)
    {
+#if defined(J9VM_OPT_JITSERVER) && defined(TR_HOST_POWER)
+   // Fetch helper address directly from the client.
+   // We only need to do this for Power because other platforms
+   // can relocate helper addresses, while Power might need to store
+   // the address in gr12 register and it cannot relocate helpers stored
+   // in non-call instructions.
+   TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      auto compInfoPT = TR::compInfoPT;
+      if (compInfoPT)
+         {
+         auto stream = compInfoPT->getMethodBeingCompiled()->_stream;
+         auto vmInfo = compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+         return vmInfo->_helperAddresses[h];
+         }
+      return NULL;
+      }
+#endif
    if (h < TR_numRuntimeHelpers)
       {
       if (_linkage[h] == TR_CHelper || _linkage[h] == TR_Helper)

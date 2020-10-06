@@ -336,6 +336,9 @@ class ClientSessionData
       TR_OpaqueClassBlock *_srConstructorAccessorClass;
 #endif // J9VM_OPT_SIDECAR
       U_32 _extendedRuntimeFlags2;
+#if defined(TR_HOST_POWER)
+      void *_helperAddresses[TR_numRuntimeHelpers];
+#endif
       }; // struct VMInfo
 
    /**
