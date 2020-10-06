@@ -2090,14 +2090,18 @@ resolveMethodHandle(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, 
 	j9object_t memberName = NULL;
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	bool canRunJavaCode = J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_REDEFINE_CLASS);
-
-	if (!canRunJavaCode) {
-		return NULL;
-	}
-
 	J9RAMMethodRef *ramCPEntry = (J9RAMMethodRef*)ramCP + cpIndex;
 	UDATA invokeCacheIndex = ramCPEntry->methodIndexAndArgCount >> 8;
 	J9Class *ramClass = J9_CLASS_FROM_CP(ramCP);
+	J9InvokeCacheEntry *resultEntry = ((J9InvokeCacheEntry *)ramClass->invokeCache) + invokeCacheIndex;
+	memberName = resultEntry->target;
+
+	if (NULL != memberName) {
+		return memberName;
+	} else if (!canRunJavaCode) {
+		return NULL;
+	}
+
 	J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)&ramCP->romConstantPool[cpIndex];
 	J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
 
@@ -2110,7 +2114,7 @@ resolveMethodHandle(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, 
 		if (NULL == arrayClass) {
 			/* Allocate an array class */
 			J9ROMArrayClass* arrayOfObjectsROMClass = (J9ROMArrayClass*)J9ROMIMAGEHEADER_FIRSTCLASS(vmThread->javaVM->arrayROMClasses);
-			arrayClass = vmThread->javaVM->internalVMFunctions->internalCreateArrayClass(vmThread, arrayOfObjectsROMClass, objectClass);
+			arrayClass = internalCreateArrayClass(vmThread, arrayOfObjectsROMClass, objectClass);
 		}
 		j9object_t appendix = vm->memoryManagerFunctions->J9AllocateIndexableObject(vmThread, arrayClass, 1, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
 
@@ -2126,10 +2130,8 @@ resolveMethodHandle(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, 
 
 		if (memberName != NULL) {
 			/* store result */
-			J9InvokeCacheEntry *resultEntry = ((J9InvokeCacheEntry *)ramClass->invokeCache) + invokeCacheIndex;
-			resultEntry->target = memberName;
 			resultEntry->appendix = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(vmThread, appendix, 0);
-
+			resultEntry->target = memberName;
 		}
 	}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
