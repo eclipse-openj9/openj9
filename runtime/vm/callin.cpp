@@ -952,26 +952,18 @@ sendResolveOpenJDKMethodHandle(J9VMThread *currentThread, J9ConstantPool *ramCP,
 		J9JavaVM *vm = currentThread->javaVM;
 		J9MemoryManagerFunctions const * const mmFuncs = vm->memoryManagerFunctions;
 		J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
-		j9object_t nameString = mmFuncs->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9_STR_INTERN);
+		PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, appendix);
+		j9object_t nameString = mmFuncs->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), 0);
+		appendix = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 		if (NULL != nameString) {
 			J9UTF8 *sigUTF = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, appendix);
 			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, nameString);
-			j9object_t sigString = mmFuncs->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), J9_STR_INTERN);
+			j9object_t sigString = mmFuncs->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), 0);
 			nameString = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+			appendix = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 			if (NULL != sigString) {
 				/* Run the method */
-				/* skip one slot because we are passing a long */
-				currentThread->sp -= 2;
-				/*
-				 * Need to pass the ramClass so that we can get the
-				 * correct ramConstantPool. If we pass the classObject
-				 * we will always get the latest ramClass, which is not always
-				 * the correct one. In cases where we can have an
-				 * old method (caused by class redefinition) on the stack,
-				 * we will need to search the old ramClass to get the correct
-				 * constantPool. It is difficult to do this if we pass the
-				 * classObject.
-				 */
 				*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(ramCP->ramClass);
 				*(I_32*)--currentThread->sp = refKind;
 				*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(resolvedClass);
