@@ -685,6 +685,16 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			}
 			break;
 
+		case JNIC_JVALUE:
+			aPointer = va_arg(va, char*);
+			if (NULL == aPointer) {
+				jniCheckFatalErrorNLS(env, J9NLS_JNICHK_NULL_ARGUMENT, function, argNum);
+			}
+			if (trace) {
+				j9tty_printf(PORTLIB, "(jvalue*)%p", aPointer);
+			}
+			break;
+
 		case JNIC_MEMBERNAME:
 			aPointer = va_arg(va, char*);
 			if (NULL == aPointer) {
