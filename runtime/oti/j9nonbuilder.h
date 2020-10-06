@@ -4562,7 +4562,7 @@ typedef struct J9InternalVMFunctions {
 	j9object_t ( *resolveMethodHandle)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;
 	j9object_t ( *resolveConstantDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;
 	j9object_t  ( *resolveInvokeDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;
-	void  (JNICALL *sendResolveMethodHandle2)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, I_32 refKind, J9Class *resolvedClass, J9ROMNameAndSignature* nameAndSig, j9object_t appendix) ;
+	void  (JNICALL *sendResolveOpenJDKMethodHandle)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, I_32 refKind, J9Class *resolvedClass, J9ROMNameAndSignature* nameAndSig, j9object_t appendix) ;
 	void  (JNICALL *sendResolveConstantDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData) ;
 	void  (JNICALL *sendResolveInvokeDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSiteIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData) ;
 	j9object_t  ( *resolveMethodHandleRef)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;

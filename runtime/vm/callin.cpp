@@ -943,7 +943,7 @@ sendForGenericInvoke(J9VMThread *currentThread, j9object_t methodHandle, j9objec
 }
 
 void JNICALL
-sendResolveMethodHandle2(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA cpIndex, I_32 refKind, J9Class *resolvedClass, J9ROMNameAndSignature* nameAndSig, j9object_t appendix)
+sendResolveOpenJDKMethodHandle(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA cpIndex, I_32 refKind, J9Class *resolvedClass, J9ROMNameAndSignature* nameAndSig, j9object_t appendix)
 {
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	J9VMEntryLocalStorage newELS;

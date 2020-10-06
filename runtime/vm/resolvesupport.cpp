@@ -2131,7 +2131,7 @@ resolveMethodHandle(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, 
 		}
 		j9object_t appendix = vm->memoryManagerFunctions->J9AllocateIndexableObject(vmThread, arrayClass, 1, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
 
-		sendResolveMethodHandle2(vmThread, ramCP, cpIndex, MH_REF_INVOKEVIRTUAL, resolvedClass, nameAndSig, appendix);
+		sendResolveOpenJDKMethodHandle(vmThread, ramCP, cpIndex, MH_REF_INVOKEVIRTUAL, resolvedClass, nameAndSig, appendix);
 		memberName = (j9object_t)vmThread->returnValue;
 
 		if (vmThread->currentException != NULL) {
