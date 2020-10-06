@@ -206,7 +206,54 @@ public final class MethodHandleHelper {
 	}
 	
 	@SuppressWarnings("unused")
-	private static final MethodHandle resolveInvokeDynamic(long j9class, String name, String methodDescriptor, long bsmData) throws Throwable {
+	private static final Object resolveInvokeDynamic(long j9class, String name, String methodDescriptor, long bsmData) throws Throwable {
+/*[IF OPENJDK_METHODHANDLES]*/
+		Object[] result = new Object[2];
+		MethodType type = null;
+
+		try {
+			VMLangAccess access = VM.getVMLangAccess();
+			Object internalRamClass = access.createInternalRamClass(j9class);
+			Class<?> classObject = getClassFromJ9Class(j9class);
+			
+			type = MethodType.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
+
+			int bsmIndex = UNSAFE.getShort(bsmData);
+			int bsmArgCount = UNSAFE.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
+			long bsmArgs = bsmData + BSM_ARGUMENTS_OFFSET;
+			MethodHandle bsm = getCPMethodHandleAt(internalRamClass, bsmIndex);
+			if (null == bsm) {
+				/*[MSG "K05cd", "unable to resolve 'bootstrap_method_ref' in '{0}' at index {1}"]*/
+				throw new NullPointerException(Msg.getString("K05cd", classObject.toString(), bsmIndex)); //$NON-NLS-1$
+			}
+			Object[] staticArgs = new Object[bsmArgCount];
+
+			/* Static optional arguments */
+			int bsmTypeArgCount = bsm.type().parameterCount();
+			for (int i = 0; i < bsmArgCount; i++) {
+				staticArgs[i] = getAdditionalBsmArg(access, internalRamClass, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
+			}
+
+			Object[] appendixResult = new Object[1];
+			appendixResult[0] = null;
+			try {
+				MemberName mname = MethodHandleNatives.linkCallSite(classObject, 0, bsm, name, type, (Object)staticArgs, appendixResult);
+
+				result[0] = mname;
+				result[1] = appendixResult[0];
+			} catch (Throwable e) {
+				if (e instanceof Error) {
+					result[0] = e;
+				} else {
+					result[0] = new BootstrapMethodError(e);
+				}
+			}
+		} catch (Throwable e) {
+			result[0] = e;
+		}
+
+		return (Object)result;
+/*[ELSE]*/	
 		MethodHandle result = null;
 		MethodType type = null;
 
@@ -295,6 +342,7 @@ public final class MethodHandleHelper {
 		}
 		
 		return result;
+/*[ENDIF] OPENJDK_METHODHANDLES*/
 	}
 
 	@SuppressWarnings("unused")

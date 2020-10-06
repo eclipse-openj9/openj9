@@ -409,7 +409,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<!-- Static method references needed to support OpenJ9 and OpenJDK MethodHandles. -->
 	<staticmethodref class="java/lang/invoke/MethodHandleHelper" name="sendResolveMethodHandle" signature="(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandleCommon"/>
-	<staticmethodref class="java/lang/invoke/MethodHandleHelper" name="resolveInvokeDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandleCommon"/>
+	<staticmethodref class="java/lang/invoke/MethodHandleHelper" name="resolveInvokeDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" flags="opt_methodHandleCommon"/>
 	<staticmethodref class="java/lang/invoke/MethodHandleHelper" name="resolveConstantDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" versions="11-" flag="opt_methodHandleCommon"/>
 	<staticmethodref class="java/lang/invoke/MethodHandleHelper" name="constructorPlaceHolder" signature="(Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandleCommon"/>
 
