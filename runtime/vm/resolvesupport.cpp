@@ -2267,7 +2267,28 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 	Assert_VM_true(J9_RESOLVE_FLAG_RUNTIME_RESOLVE == resolveFlags);
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	J9InvokeCacheEntry *invokeCache = (J9InvokeCacheEntry *)ramCP->ramClass->callSites + callSiteIndex;
+
+retry:
 	j9object_t result = invokeCache->target;
+
+	/* Check if already resolved */
+	if (result != NULL) {
+		return result;
+	}
+
+	if (NULL == invokeCache->appendix) {
+		/* Unresolved entry, attempt to start resolution by placing threadObject in appendix slot */
+		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_staticCompareAndSwapObject(vmThread, j9class, &invokeCache->appendix, NULL, vmThread->threadObject);
+	}
+
+	/**
+	 * If the current thread object is in the appendix slot, then this is the resolving thread
+	 * Else, spin until the resolving thread has finished resolution and updated the invokeCache->target slot
+	 */
+	if (vmThread->threadObject != invokeCache->appendix) {
+		/* Another thread beat this thread to updating the appendix object */
+		goto retry;
+	}
 
 	J9ROMClass *romClass = ramCP->ramClass->romClass;
 	J9SRP *callSiteData = (J9SRP *) J9ROMCLASS_CALLSITEDATA(romClass);
@@ -2276,11 +2297,6 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 	J9ROMNameAndSignature* nameAndSig = SRP_PTR_GET(callSiteData + callSiteIndex, J9ROMNameAndSignature*);
 	U_16 bsmIndex = bsmIndices[callSiteIndex];
 	U_16 i;
-
-	/* Check if already resolved */
-	if (result != NULL) {
-		return result;
-	}
 
 	/* Walk bsmData - skip all bootstrap methods before bsmIndex */
 	for (i = 0; i < bsmIndex; i++) {
@@ -2303,27 +2319,11 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 	if (NULL != result) {
 		j9object_t memberName = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(vmThread, result, 0);
 		j9object_t appendix = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(vmThread, result, 1);
-		J9MemoryManagerFunctions *gcFuncs = vmThread->javaVM->memoryManagerFunctions;
-		memberName = gcFuncs->j9gc_objaccess_asConstantPoolObject(
-									vmThread,
-									memberName,
-									J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE | J9_GC_ALLOCATE_OBJECT_HASHED);
-		appendix = gcFuncs->j9gc_objaccess_asConstantPoolObject(
-									vmThread,
-									appendix,
-									J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE | J9_GC_ALLOCATE_OBJECT_HASHED);
 
-		if (NULL == memberName) {
-			setHeapOutOfMemoryError(vmThread);
-		} else {
-			J9Class *j9class = J9_CLASS_FROM_CP(ramCP);
-			if (0 == gcFuncs->j9gc_objaccess_staticCompareAndSwapObject(vmThread, j9class, &invokeCache->target, NULL, memberName)) {
-				/* Another thread beat this thread to updating the call site, ensure both threads return the same method handle. */
-				result = invokeCache->target;
-			} else {
-				invokeCache->appendix = appendix;
-			}
-		}
+		J9Class *j9class = J9_CLASS_FROM_CP(ramCP);
+		invokeCache->appendix = appendix;
+		VM_AtomicSupport::writeBarrier();
+		invokeCache->target = memberName;
 	}
 
 	return result;
