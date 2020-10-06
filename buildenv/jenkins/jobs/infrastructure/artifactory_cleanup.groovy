@@ -41,7 +41,8 @@ timestamps {
         checkout scm
         def variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
         variableFile.parse_variables_file()
-        variableFile.set_artifactory_config()
+        variableFile.set_basic_artifactory_config()
+        println ARTIFACTORY_CONFIG
 
         def artifactory_server = params.ARTIFACTORY_SERVER ? params.ARTIFACTORY_SERVER : env.ARTIFACTORY_SERVER
         def server = Artifactory.server artifactory_server

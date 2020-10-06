@@ -790,14 +790,9 @@ def set_slack_channel() {
 }
 
 def set_artifactory_config(id="Nightly") {
-    ARTIFACTORY_CONFIG = [:]
-    echo "Configure Artifactory..."
+    set_basic_artifactory_config(id)
 
     if (VARIABLES.artifactory.defaultGeo) {
-        // Allow default geo to be overridden with a param. Used by the Clenaup script to target a specific server.
-        ARTIFACTORY_CONFIG['defaultGeo'] = params.ARTIFACTORY_GEO ?: VARIABLES.artifactory.defaultGeo
-        ARTIFACTORY_CONFIG['geos'] = VARIABLES.artifactory.server.keySet()
-        ARTIFACTORY_CONFIG['repo'] = get_value(VARIABLES.artifactory.repo, id) ?: get_value(VARIABLES.artifactory.repo, 'default')
         def repo = ARTIFACTORY_CONFIG['repo']
         ARTIFACTORY_CONFIG['uploadDir'] = get_value(VARIABLES.artifactory.uploadDir, id) ?: get_value(VARIABLES.artifactory.uploadDir, 'default')
         if (!ARTIFACTORY_CONFIG['uploadDir'].endsWith('/')) {
@@ -805,7 +800,7 @@ def set_artifactory_config(id="Nightly") {
         }
         // If uploadDir has unresolved variables at this point, use Groovy Template Binding engine to resolve them
         if (ARTIFACTORY_CONFIG['uploadDir'].contains('$')) {
-            if (ARTIFACTORY_CONFIG['uploadDir'].contains('SDK_IMPL') && !SDK_IMPL) {
+            if (ARTIFACTORY_CONFIG['uploadDir'].contains('SDK_IMPL') && !binding.hasVariable('SDK_IMPL')) {
                 set_sdk_impl()
             }
             // Add all variables that could be used in a template
@@ -814,18 +809,6 @@ def set_artifactory_config(id="Nightly") {
             ARTIFACTORY_CONFIG['uploadDir'] = engine.createTemplate(ARTIFACTORY_CONFIG['uploadDir']).make(binding)
         }
 
-        for (geo in ARTIFACTORY_CONFIG['geos']) {
-            ARTIFACTORY_CONFIG[geo] = [:]
-            ARTIFACTORY_CONFIG[geo]['server'] = get_value(VARIABLES.artifactory.server, geo)
-            def numArtifacts = get_value(VARIABLES.artifactory.numArtifacts, geo)
-            if (!numArtifacts) {
-                numArtifacts = get_value(VARIABLES.build_discarder.logs, pipelineFunctions.convert_build_identifier(id))
-            }
-            ARTIFACTORY_CONFIG[geo]['numArtifacts'] = numArtifacts.toInteger()
-            ARTIFACTORY_CONFIG[geo]['daysToKeepArtifacts'] = get_value(VARIABLES.artifactory.daysToKeepArtifacts, geo).toInteger()
-            ARTIFACTORY_CONFIG[geo]['manualCleanup'] = get_value(VARIABLES.artifactory.manualCleanup, geo)
-            ARTIFACTORY_CONFIG[geo]['vpn'] = get_value(VARIABLES.artifactory.vpn, geo)
-        }
         ARTIFACTORY_CONFIG[VARIABLES.artifactory.defaultGeo]['uploadBool'] = true
 
         // Determine if we need to upload more than the default server
@@ -848,6 +831,32 @@ def set_artifactory_config(id="Nightly") {
             }
         }
         echo "ARTIFACTORY_CONFIG:'${ARTIFACTORY_CONFIG}'"
+    }
+}
+
+def set_basic_artifactory_config(id="Nightly") {
+    ARTIFACTORY_CONFIG = [:]
+    echo "Configure Artifactory..."
+
+    if (VARIABLES.artifactory.defaultGeo) {
+        // Allow default geo to be overridden with a param. Used by the Clenaup script to target a specific server.
+        ARTIFACTORY_CONFIG['defaultGeo'] = params.ARTIFACTORY_GEO ?: VARIABLES.artifactory.defaultGeo
+        ARTIFACTORY_CONFIG['geos'] = VARIABLES.artifactory.server.keySet()
+        ARTIFACTORY_CONFIG['repo'] = get_value(VARIABLES.artifactory.repo, id) ?: get_value(VARIABLES.artifactory.repo, 'default')
+
+        for (geo in ARTIFACTORY_CONFIG['geos']) {
+            ARTIFACTORY_CONFIG[geo] = [:]
+            ARTIFACTORY_CONFIG[geo]['server'] = get_value(VARIABLES.artifactory.server, geo)
+            def numArtifacts = get_value(VARIABLES.artifactory.numArtifacts, geo)
+            if (!numArtifacts) {
+                numArtifacts = get_value(VARIABLES.build_discarder.logs, pipelineFunctions.convert_build_identifier(id))
+            }
+            ARTIFACTORY_CONFIG[geo]['numArtifacts'] = numArtifacts.toInteger()
+            ARTIFACTORY_CONFIG[geo]['daysToKeepArtifacts'] = get_value(VARIABLES.artifactory.daysToKeepArtifacts, geo).toInteger()
+            ARTIFACTORY_CONFIG[geo]['manualCleanup'] = get_value(VARIABLES.artifactory.manualCleanup, geo)
+            ARTIFACTORY_CONFIG[geo]['vpn'] = get_value(VARIABLES.artifactory.vpn, geo)
+        }
+
         /*
         * Write out default server values to string variables.
         * The upstream job calls job.getBuildVariables() which only returns strings.
