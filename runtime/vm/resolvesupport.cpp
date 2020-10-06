@@ -34,6 +34,7 @@
 #include "j9modifiers_api.h"
 #include "VMHelpers.hpp"
 #include "vm_api.h"
+#include "AtomicSupport.hpp"
 
 #define MAX_STACK_SLOTS 255
 
@@ -2131,6 +2132,7 @@ resolveMethodHandle(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, 
 		if (memberName != NULL) {
 			/* store result */
 			resultEntry->appendix = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(vmThread, appendix, 0);
+			VM_AtomicSupport::writeBarrier();
 			resultEntry->target = memberName;
 		}
 	}
