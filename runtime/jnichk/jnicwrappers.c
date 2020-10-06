@@ -1940,7 +1940,7 @@ checkGetObjectField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	J9JavaVM* j9vm = ((J9VMThread*)env)->javaVM;
 	jobject actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_JOBJECT, JNIC_JFIELDINSTANCEID, 0 };
+	static const U_32 argDescriptor[] = { JNIC_NONNULLOBJECT, JNIC_JFIELDINSTANCEID, 0 };
 	static const char function[] = "GetObjectField";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj, fieldID);
