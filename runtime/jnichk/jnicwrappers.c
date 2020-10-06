@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2020 IBM Corp. and others
  *
@@ -562,14 +561,11 @@ checkNewGlobalRef(JNIEnv *env, jobject lobj)
 	actualResult = j9vm->EsJNIFunctions->NewGlobalRef(env, lobj);
 	if (NULL != actualResult) {
 		/* search for the reference in the hashtable */
-		JNICHK_GREF_HASHENTRY searchEntry;
-		JNICHK_GREF_HASHENTRY* foundEntry;
-			
-		searchEntry.reference = (UDATA)actualResult;
-		searchEntry.alive = TRUE;
-			
+		JNICHK_GREF_HASHENTRY searchEntry = { (UDATA)actualResult, 1 };
+		JNICHK_GREF_HASHENTRY* foundEntry = NULL;
+
 #ifdef J9VM_THR_PREEMPTIVE
-	omrthread_monitor_enter(j9vm->jniFrameMutex);
+		omrthread_monitor_enter(j9vm->jniFrameMutex);
 #endif
 		foundEntry = hashTableFind(j9vm->checkJNIData.jniGlobalRefHashTab, &searchEntry);
 		if (NULL == foundEntry) {
@@ -577,10 +573,10 @@ checkNewGlobalRef(JNIEnv *env, jobject lobj)
 			hashTableAdd(j9vm->checkJNIData.jniGlobalRefHashTab, &searchEntry);
 		} else {
 			/* found an entry already in the table, so make it alive */
-			foundEntry->alive = TRUE;
+			foundEntry->count = 1;
 		}
 #ifdef J9VM_THR_PREEMPTIVE
-	omrthread_monitor_exit(j9vm->jniFrameMutex);
+		omrthread_monitor_exit(j9vm->jniFrameMutex);
 #endif
 	}
 	
@@ -597,26 +593,31 @@ checkDeleteGlobalRef(JNIEnv *env, jobject gref)
 	J9JniCheckLocalRefState refTracking;
 	static const U_32 argDescriptor[] = { JNIC_GLOBALREF, 0 };
 	static const char function[] = "DeleteGlobalRef";
-	JNICHK_GREF_HASHENTRY entry;
-	JNICHK_GREF_HASHENTRY* actualResult;
+	JNICHK_GREF_HASHENTRY entry = { (UDATA)gref, 0 };
+	JNICHK_GREF_HASHENTRY* actualResult = NULL;
 
 	jniCheckArgs(function, 1, CRITICAL_WARN, &refTracking, argDescriptor, env, gref);
-	j9vm->EsJNIFunctions->DeleteGlobalRef(env, gref);
 
 	/* search for the reference in the hashtable */
-	entry.reference = (UDATA)gref;
 #ifdef J9VM_THR_PREEMPTIVE
 	omrthread_monitor_enter(j9vm->jniFrameMutex);
 #endif
 	actualResult = hashTableFind(j9vm->checkJNIData.jniGlobalRefHashTab, &entry);
+	if (NULL != actualResult) {
+		/* Do not track the deletion of internal class refs */
+		if (!jniIsInternalClassRef(env, gref)) {
+			/* Only internal class refs can ever have a count of more than 1, so set the count to 0 here
+			 * rather than decrementing so that the count does not go negative if a ref is deleted more
+			 * than once.
+			 */
+			actualResult->count = 0;
+		}
+	}
 #ifdef J9VM_THR_PREEMPTIVE
 	omrthread_monitor_exit(j9vm->jniFrameMutex);
 #endif
-	if (NULL != actualResult) {
-		/* mark the entry as dead */
-		actualResult->alive = FALSE;
-	}
 		
+	j9vm->EsJNIFunctions->DeleteGlobalRef(env, gref);
 	jniCheckLocalRefTracking(env, function, &refTracking);
 	jniCheckFlushJNICache(env);
 }

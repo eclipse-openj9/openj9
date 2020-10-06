@@ -55,6 +55,7 @@ static IDATA jniDecodeValue (J9VMThread * vmThread, UDATA sigChar, void * valueP
 jint JNICALL JVM_OnLoad( JavaVM *jvm, char* options, void *reserved );
 static void jniCallInReturn (J9VMThread * vmThread, void * vaptr, void *stackResult, UDATA returnType);
 static void methodEnterHook (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+static void classesRedefinedHook (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jniTraceMethodID (JNIEnv* env, jmethodID mid);
 static void jniCheckPrintJNIOnLoad (JNIEnv* env, U_32 level);
 static UDATA jniIsWeakGlobalRef (JNIEnv* env, jobject reference);
@@ -128,6 +129,11 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			}
 
 			if ((*hook)->J9HookRegisterWithCallSite(hook, J9HOOK_VM_NATIVE_METHOD_RETURN, methodExitHook, OMR_GET_CALLSITE(), NULL)) {
+				j9tty_err_printf(PORTLIB, "<JNI check utility: unable to hook event>\n");
+				return J9VMDLLMAIN_FAILED;
+			}
+
+			if ((*hook)->J9HookRegisterWithCallSite(hook, J9HOOK_VM_CLASSES_REDEFINED, classesRedefinedHook, OMR_GET_CALLSITE(), NULL)) {
 				j9tty_err_printf(PORTLIB, "<JNI check utility: unable to hook event>\n");
 				return J9VMDLLMAIN_FAILED;
 			}
@@ -1174,6 +1180,25 @@ static UDATA jniIsLocalRef(JNIEnv * currentEnv, JNIEnv* env, jobject reference)
 }
 
 
+UDATA
+jniIsInternalClassRef(JNIEnv *env, jobject reference)
+{
+	J9VMThread *currentThread = (J9VMThread*)env;
+	UDATA rc = FALSE;
+	j9object_t object = J9_JNI_UNWRAP_REFERENCE(reference);
+	if (J9VM_IS_INITIALIZED_HEAPCLASS(currentThread, object)) {
+		J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, object);
+		do {
+			if (reference == (jobject)&clazz->classObject) {
+				rc = TRUE;
+				break;
+			}
+			clazz = clazz->replacedClass;
+		} while (NULL != clazz);
+	}
+	return rc;
+}
+
 
 static UDATA
 jniIsGlobalRef(JNIEnv* env, jobject reference)
@@ -1181,8 +1206,6 @@ jniIsGlobalRef(JNIEnv* env, jobject reference)
 	J9VMThread* vmThread = (J9VMThread*)env;
 	J9JavaVM* vm = vmThread->javaVM;
 	UDATA rc;
-	JNICHK_GREF_HASHENTRY entry;
-	JNICHK_GREF_HASHENTRY* actualResult;
 
 	enterVM(vmThread);
 
@@ -1193,19 +1216,11 @@ jniIsGlobalRef(JNIEnv* env, jobject reference)
 	rc = pool_includesElement(vm->jniGlobalReferences, reference);
 
 	if (!rc) {
-		j9object_t heapclass;
-
-		/* The address of the classObject slot of a J9Class can be used as a global reference. */
-		heapclass = *(j9object_t*)reference;
-
 		/* search for the reference in the hashtable */
-		entry.reference = (UDATA)reference;
-		actualResult = hashTableFind(vm->checkJNIData.jniGlobalRefHashTab, &entry);
-		if (NULL == actualResult || (NULL != actualResult && actualResult->alive) ) {
-			/* verify that the object is a j.l.Class */
-			if (J9VM_IS_INITIALIZED_HEAPCLASS(vmThread, heapclass)) {
-				rc = (reference == (jobject)&(J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, heapclass)->classObject));
-			}
+		JNICHK_GREF_HASHENTRY entry = { (UDATA)reference, 0 };
+		JNICHK_GREF_HASHENTRY* actualResult = hashTableFind(vm->checkJNIData.jniGlobalRefHashTab, &entry);
+		if (NULL != actualResult) {
+			rc = (0 != actualResult->count);
 		}
 	}
 #ifdef J9VM_THR_PREEMPTIVE
@@ -1717,13 +1732,33 @@ methodEnterHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* u
 {
 	J9VMNativeMethodEnterEvent* event = eventData;
 	J9VMThread* vmThread = event->currentThread;
+	J9JavaVM *vm = vmThread->javaVM;
 	J9Method* method = event->method;
 	void* arg0EA = event->arg0EA;
 	UDATA trace = vmThread->javaVM->checkJNIData.options & JNICHK_TRACE;
+	J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+
+	/* For static native methods, increment the count of the internal class ref in the hash table */
+	if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccStatic)) {
+		J9Class *clazz = J9_CLASS_FROM_METHOD(method);
+		JNICHK_GREF_HASHENTRY entry = { (UDATA)&clazz->classObject, 1 };
+		JNICHK_GREF_HASHENTRY* actualResult = NULL;
+#ifdef J9VM_THR_PREEMPTIVE
+		omrthread_monitor_enter(vm->jniFrameMutex);
+#endif
+		actualResult = hashTableFind(vm->checkJNIData.jniGlobalRefHashTab, &entry);
+		if (NULL == actualResult) {
+			hashTableAdd(vm->checkJNIData.jniGlobalRefHashTab, &entry);
+		} else {
+			actualResult->count += 1;
+		}
+#ifdef J9VM_THR_PREEMPTIVE
+		omrthread_monitor_exit(vm->jniFrameMutex);
+#endif
+	}
 
 	if (trace) {
 		PORT_ACCESS_FROM_VMC(vmThread);
-		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 		J9UTF8 * nameUTF = J9ROMMETHOD_NAME(romMethod);
 		J9UTF8 * sigUTF = J9ROMMETHOD_SIGNATURE(romMethod);
 		J9UTF8 * classNameUTF = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass);
@@ -1771,6 +1806,7 @@ methodExitHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 {
 	J9VMNativeMethodReturnEvent* event = eventData;
 	J9VMThread* vmThread = event->currentThread;
+	J9JavaVM *vm = vmThread->javaVM;
 	J9Method* method = event->method;
 	PORT_ACCESS_FROM_VMC(vmThread);
 	UDATA trace = vmThread->javaVM->checkJNIData.options  & JNICHK_TRACE;
@@ -1779,7 +1815,28 @@ methodExitHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 	J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 	J9UTF8 * sigUTF = J9ROMMETHOD_SIGNATURE(romMethod);
 	U_8 * sigData = J9UTF8_DATA(sigUTF) + 1;
-    UDATA sigChar;
+	UDATA sigChar;
+
+	/* For static native methods, decrement the count of the internal class ref in the hash table */
+	if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccStatic)) {
+		J9Class *clazz = J9_CLASS_FROM_METHOD(method);
+		JNICHK_GREF_HASHENTRY entry = { (UDATA)&clazz->classObject, 0 };
+		JNICHK_GREF_HASHENTRY* actualResult = NULL;
+#ifdef J9VM_THR_PREEMPTIVE
+		omrthread_monitor_enter(vm->jniFrameMutex);
+#endif
+		actualResult = hashTableFind(vm->checkJNIData.jniGlobalRefHashTab, &entry);
+		if (NULL != actualResult) {
+			actualResult->count -= 1;
+			if (0 == actualResult->count) {
+				/* Remove dead entries immediately so no work is required during class unloading */
+				hashTableRemove(vm->checkJNIData.jniGlobalRefHashTab, actualResult);
+			}
+		}
+#ifdef J9VM_THR_PREEMPTIVE
+		omrthread_monitor_exit(vm->jniFrameMutex);
+#endif
+	}
 
 	/* check for unreleased memory (a warning) before checking the critical section count */
 	jniCheckForUnreleasedMemory( (JNIEnv*)vmThread );
@@ -1836,6 +1893,27 @@ methodExitHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 		--indent;
 		omrthread_tls_set(vmThread->osThread, jniEntryCountKey, (void*) indent);
 		j9tty_printf(PORTLIB, "%p %*s}\n", vmThread, indent * 2, "");
+	}
+}
+
+
+static void
+classesRedefinedHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
+{
+	J9VMClassesRedefinedEvent *event = eventData;
+	J9VMThread *currentThread = event->currentThread;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9HashTableState walkState;
+	/* No need for the mutex here as we have exclusive VM access */
+	JNICHK_GREF_HASHENTRY *entry = hashTableStartDo(vm->checkJNIData.jniGlobalRefHashTab, &walkState);
+	while (NULL != entry) {
+		jobject reference = (jobject)entry->reference;
+		if (jniIsInternalClassRef((JNIEnv*)currentThread, reference)) {
+			j9object_t jlClass = J9_JNI_UNWRAP_REFERENCE(reference);
+			J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, jlClass);
+			entry->reference = (UDATA)&clazz->classObject;
+		}
+		entry = hashTableNextDo(&walkState);
 	}
 }
 

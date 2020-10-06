@@ -99,7 +99,7 @@
 /* Global Ref tracking hash table entry */
 typedef struct JNICHK_GREF_HASHENTRY {
 	UDATA reference;
-	BOOLEAN alive;
+	UDATA count;
 } JNICHK_GREF_HASHENTRY;		
 
 
@@ -151,6 +151,19 @@ extern "C" {
 #endif
 
 /* ---------------- jnicheck.c ---------------- */
+
+/**
+ * Determine a global ref represents an internal class ref
+ * (the address of j9class->classObject). Assumes that the
+ * reference is a valid global ref.
+ *
+ * @param env[in] The JNI environment
+ * @param reference[in] The reference to check
+ *
+ * @returns TRUE if reference is an internal class ref, FALSE if not
+ */
+UDATA
+jniIsInternalClassRef(JNIEnv *env, jobject reference);
 
 /**
 * @brief
