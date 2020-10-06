@@ -899,10 +899,10 @@ areMethodsEquivalentSub(J9ROMMethod * method1, J9ROMClass * romClass1, J9Class *
 					if ((NULL != ramClass1) && (NULL != ramClass2)) {
 						/* propagate call site data */
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-						J9InvokeCacheEntry * entry1 = (J9InvokeCacheEntry *)ramClass1->callSites + callSiteIndex1;
+						J9InvokeCacheEntry * entry1 = ((J9InvokeCacheEntry *)ramClass1->callSites) + callSiteIndex1;
 						if (NULL != entry1->target) {
 							/* callsite resolution exists */
-							J9InvokeCacheEntry * entry2 = (J9InvokeCacheEntry *)ramClass2->callSites + callSiteIndex2;
+							J9InvokeCacheEntry * entry2 = ((J9InvokeCacheEntry *)ramClass2->callSites) + callSiteIndex2;
 							entry2->target = entry1->target;
 							entry2->appendix = entry1->appendix;
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
