@@ -47,7 +47,11 @@ ConstantPoolMap::ConstantPoolMap(BufferManager *bufferManager, ROMClassCreationC
 	_romConstantPoolTypes(NULL),
 	_staticSplitEntries(NULL),
 	_specialSplitEntries(NULL),
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	_invokeCacheCount(0),
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	_methodTypeCount(0),
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	_varHandleMethodTypeCount(0),
 	_varHandleMethodTypeLookupTable(NULL),
 	_callSiteCount(0),
