@@ -117,6 +117,7 @@ checkForDecompile(J9VMThread *currentThread, J9ROMMethodRef *romMethodRef, bool 
 	}
 }
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 static BOOLEAN
 isMethodHandleINL(U_8* methodName, U_16 methodNameLength)
 {
@@ -124,23 +125,23 @@ isMethodHandleINL(U_8* methodName, U_16 methodNameLength)
 
 	switch (methodNameLength) {
 	case 11:
-		if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "invokeBasic")) {
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "invokeBasic")) {
 			isMethodHandle = TRUE;
 		}
 		break;
 	case 12:
-		if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "linkToStatic")) {
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToStatic")) {
 			isMethodHandle = TRUE;
 		}
 		break;
 	case 13:
-		if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "linkToSpecial")
-		||  J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "linkToVirtual")) {
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToSpecial")
+		||  J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToVirtual")) {
 			isMethodHandle = TRUE;
 		}
 		break;
 	case 15:
-		if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "linkToInterface")) {
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToInterface")) {
 			isMethodHandle = TRUE;
 		}
 		break;
@@ -148,6 +149,7 @@ isMethodHandleINL(U_8* methodName, U_16 methodNameLength)
 
 	return isMethodHandle;
 }
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 UDATA   
 packageAccessIsLegal(J9VMThread *currentThread, J9Class *targetClass, j9object_t protectionDomain, UDATA canRunJavaCode)
@@ -2087,9 +2089,9 @@ resolveMethodHandleRef(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpInde
 j9object_t
 resolveMethodHandle(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags)
 {
-	J9JavaVM *vm = vmThread->javaVM;
 	j9object_t memberName = NULL;
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	J9JavaVM *vm = vmThread->javaVM;
 	bool canRunJavaCode = J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_REDEFINE_CLASS);
 	J9RAMMethodRef *ramCPEntry = (J9RAMMethodRef*)ramCP + cpIndex;
 	UDATA invokeCacheIndex = ramCPEntry->methodIndexAndArgCount >> 8;
