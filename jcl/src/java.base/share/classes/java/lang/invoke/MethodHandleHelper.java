@@ -686,4 +686,14 @@ public final class MethodHandleHelper {
 			return JITHELPERS.getJ9ClassFromClass64(c);
 		}
 	}
+
+/*[IF OPENJDK_METHODHANDLES]*/
+	@SuppressWarnings("unused")
+	private static final Object resolveMethodHandle(Class<?> callerClass, int refKind, Class<?> defc, String name, String type, Object[] appendixResult) throws Throwable {
+		VMLangAccess access = VM.getVMLangAccess();
+		MethodType mt = MethodType.fromMethodDescriptorString(type, access.getClassloader(callerClass));
+
+		return MethodHandleNatives.linkMethod(callerClass, refKind, defc, name, mt, appendixResult);
+	}
+/*[ENDIF] OPENJDK_METHODHANDLES*/
 }
