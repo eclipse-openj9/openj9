@@ -503,6 +503,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             while (curCache != head);
             }
 
+#if defined(TR_HOST_POWER)
+         for (int32_t i = 0; i < TR_numRuntimeHelpers; ++i)
+            vmInfo._helperAddresses[i] = runtimeHelperValue((TR_RuntimeHelper) i);
+#endif
+
          client->write(response, vmInfo, listOfCacheDescriptors);
          }
          break;
