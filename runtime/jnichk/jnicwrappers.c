@@ -23,6 +23,7 @@
 
 #include "jni.h"
 #include "jnichk_internal.h"
+#include "jnichknls.h"
 
 static jint JNICALL checkGetVersion(JNIEnv *env);
 static jclass JNICALL checkDefineClass(JNIEnv *env, const char *name, jobject loader, const jbyte *buf, jsize len);
@@ -4058,6 +4059,9 @@ checkGetStringRegion(JNIEnv *env, jstring str, jsize start, jsize len, jchar *bu
 	static const char function[] = "GetStringRegion";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, str, start, len, buf);
+	if ((len > 0) && (NULL == buf)) {
+		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NULL, function, 5);
+	}
 	jniCheckStringRange(env, function, str, start, len);
 	j9vm->EsJNIFunctions->GetStringRegion(env, str, start, len, buf);
 	jniCheckLocalRefTracking(env, function, &refTracking);
@@ -4073,6 +4077,9 @@ checkGetStringUTFRegion(JNIEnv *env, jstring str, jsize start, jsize len, char *
 	static const char function[] = "GetStringUTFRegion";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, str, start, len, buf);
+	if ((len > 0) && (NULL == buf)) {
+		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NULL, function, 5);
+	}
 	jniCheckStringUTFRange(env, function, str, start, len);
 	j9vm->EsJNIFunctions->GetStringUTFRegion(env, str, start, len, buf);
 	jniCheckLocalRefTracking(env, function, &refTracking);
