@@ -11523,7 +11523,6 @@ J9::Z::TreeEvaluator::countDigitsHelper(TR::Node * node, TR::CodeGenerator * cg,
 TR::Register *
 J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-#ifndef PUBLIC_BUILD
    //   [0x00000000803797c8] (  0)  tstart
    //   [0x0000000080379738] (  1)    branch --> block 28 BBStart at [0x0000000080378bc8]
    //   [0x00000000803f15f8] (  1)      GlRegDeps
@@ -11674,7 +11673,6 @@ J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    cg->decReferenceCount(brPersistentNode);
    cg->decReferenceCount(brTransientNode);
    cg->decReferenceCount(fallThrough);
-#endif
 
    return NULL;
    }
@@ -11685,10 +11683,8 @@ J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 J9::Z::TreeEvaluator::tfinishEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-#ifndef PUBLIC_BUILD
    TR::MemoryReference * tempMR1 = generateS390MemoryReference(cg->machine()->getRealRegister(TR::RealRegister::GPR0),0,cg);
    TR::Instruction * cursor = generateSInstruction(cg, TR::InstOpCode::TEND, node, tempMR1);
-#endif
 
    return NULL;
    }
@@ -11699,7 +11695,6 @@ J9::Z::TreeEvaluator::tfinishEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 J9::Z::TreeEvaluator::tabortEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-#ifndef PUBLIC_BUILD
    TR::Instruction *cursor;
    TR::LabelSymbol * labelDone = generateLabelSymbol(cg);
    TR::Register *codeReg = cg->allocateRegister();
@@ -11715,7 +11710,6 @@ J9::Z::TreeEvaluator::tabortEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    cursor = generateSInstruction(cg, TR::InstOpCode::TABORT, node, codeMR);
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelDone);
    cg->stopUsingRegister(codeReg);
-#endif
    return NULL;
    }
 

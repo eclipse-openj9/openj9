@@ -233,10 +233,8 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
          }
       }
 
-#if !defined(PUBLIC_BUILD)
    // Generate RIOFF if RI is supported.
    cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RIOFF);
-#endif
 
    // TODO: We could use LRL / LGRL here but the JIT does not guarantee that the Data Constant be 4 / 8 byte aligned,
    // so we cannot make use of these instructions in general. We should explore the idea of aligning 4 / 8 byte data
@@ -422,10 +420,7 @@ J9::Z::UnresolvedDataSnippet::getLength(int32_t  estimatedSnippetStart)
    if (isInstanceData())
       length += (comp->target().is64Bit()) ? 36 : 28;
 
-#if !defined(PUBLIC_BUILD)
    length += getRuntimeInstrumentationOnOffInstructionLength(cg());
-#endif
-
    return length;
    }
 
