@@ -306,12 +306,62 @@ public final class MethodHandleHelper {
 			String name,
 			String typeDescriptor,
 			ClassLoader loader) throws Throwable {
+/*[IF OPENJDK_METHODHANDLES]*/
+		try {
+			MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass);
+			MethodType type = null;
+			MethodHandle result = null;
+
+			switch (cpRefKind) {
+			case 1: /* getField */
+				result = lookup.findGetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, lookup, loader));
+				break;
+			case 2: /* getStatic */
+				result = lookup.findStaticGetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, lookup, loader));
+				break;
+			case 3: /* putField */
+				result = lookup.findSetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, lookup, loader));
+				break;
+			case 4: /* putStatic */
+				result = lookup.findStaticSetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, lookup, loader));
+				break;
+			case 5: /* invokeVirtual */
+				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				result = lookup.findVirtual(referenceClazz, name, type);
+				break;
+			case 6: /* invokeStatic */
+				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				result = lookup.findStatic(referenceClazz, name, type);
+				break;
+			case 7: /* invokeSpecial */ 
+				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				result = lookup.findSpecial(referenceClazz, name, type, currentClass);
+				break;
+			case 8: /* newInvokeSpecial */
+				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				result = lookup.findConstructor(referenceClazz, type);
+				break;
+			case 9: /* invokeInterface */
+				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				result = lookup.findVirtual(referenceClazz, name, type);
+				break;
+			default:
+				/* Can never happen */
+				throw new UnsupportedOperationException();
+			}
+			return result;
+		} catch (IllegalAccessException iae) {
+			// Java spec expects an IllegalAccessError instead of IllegalAccessException thrown when an application attempts 
+			// (not reflectively) to access or modify a field, or to invoke a method that it doesn't have access to.
+			throw new IllegalAccessError(iae.getMessage()).initCause(iae);
+		}
+/*[ELSE]*/
 		try {
 			MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass, false);
 			MethodType type = null;
 			MethodHandle result = null;
 
-			switch(cpRefKind){
+			switch (cpRefKind) {
 			case 1: /* getField */
 				result = lookup.findGetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, lookup, loader));
 				break;
@@ -359,6 +409,7 @@ public final class MethodHandleHelper {
 			// (not reflectively) to access or modify a field, or to invoke a method that it doesn't have access to.
 			throw new IllegalAccessError(iae.getMessage()).initCause(iae);
 		}
+/*[ENDIF] OPENJDK_METHODHANDLES*/
 	}
 	
 	/* Convert the field type descriptor into a MethodType so we can reuse the parsing logic in 
@@ -366,9 +417,14 @@ public final class MethodHandleHelper {
 	 * a valid field descriptor so adding the "()V" around it is valid.
 	 */
 	private static final Class<?> resolveFieldHandleHelper(String typeDescriptor, Lookup lookup, ClassLoader loader) throws Throwable {
+/*[IF OPENJDK_METHODHANDLES]*/
+		MethodType mt = MethodType.vmResolveFromMethodDescriptorString("(" + typeDescriptor + ")V", loader, null); //$NON-NLS-1$ //$NON-NLS-2$
+		return mt.parameterType(0);
+/*[ELSE]*/
 		MethodType mt = MethodType.vmResolveFromMethodDescriptorString("(" + typeDescriptor + ")V", loader, null); //$NON-NLS-1$ //$NON-NLS-2$
 		lookup.accessCheckArgRetTypes(mt);
 		return mt.parameterType(0);
+/*[ENDIF] OPENJDK_METHODHANDLES*/
 	}
 	
 	/**
