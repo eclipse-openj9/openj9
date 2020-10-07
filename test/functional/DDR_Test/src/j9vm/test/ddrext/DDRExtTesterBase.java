@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -490,7 +490,8 @@ public class DDRExtTesterBase extends TestCase {
 	protected String[] getCoreInfo() {
 		if (null == coreinfoOutput) {
 			String execOutput = exec(Constants.COREINFO_CMD, new String[] {});
-			coreinfoOutput = execOutput.split("\n");
+			/* split on any kind of line-end: CR-LF, LF or CR */
+			coreinfoOutput = execOutput.split("\r\n|\n|\r");
 		}
 		return coreinfoOutput;
 	}
@@ -504,9 +505,9 @@ public class DDRExtTesterBase extends TestCase {
 		}
 		String[] coreInfo = getCoreInfo();
 		Pattern versionMatcher = Pattern.compile(".*\\(SR(\\d+)\\).*"); /* look for (SRn), where "n" is a string of digits */
-		for (int i = 0; i < (coreInfo.length+1); ++i) {
+		for (int i = 0; i < (coreInfo.length - 1); ++i) {
 			if (coreInfo[i].matches("JAVA SERVICE LEVEL INFO.*")) {
-				Matcher m = versionMatcher.matcher(coreInfo[i+1]);
+				Matcher m = versionMatcher.matcher(coreInfo[i + 1]);
 				if (m.matches()) {
 					String version = m.group(1); /* get the "n" described above */
 					javaSr = Integer.parseInt(version);
@@ -533,16 +534,16 @@ public class DDRExtTesterBase extends TestCase {
 		Pattern versionMatcher = Pattern.compile("JRE\\s+1\\.(\\d+).*"); /* look for JRE 1.n, where "n" is a string of digits */
 		Pattern versionMatcherForJava9 = Pattern.compile("JRE\\s(\\d+).*"); /* look for JRE 9 */
 
-		for (int i = 0; i < (coreInfo.length+1); ++i) {
+		for (int i = 0; i < (coreInfo.length - 1); ++i) {
 			if (coreInfo[i].matches("JAVA VERSION INFO.*")) {
-				Matcher m = versionMatcher.matcher(coreInfo[i+1]); /* look on the next line */
+				Matcher m = versionMatcher.matcher(coreInfo[i + 1]); /* look on the next line */
 				if (m.matches()) {
 					String version = m.group(1); /* get the "n" described above */
 					javaVersion = Integer.parseInt(version);
 					return javaVersion;
 				} else {
-					m = versionMatcherForJava9.matcher(coreInfo[i+1]);
-					if(m.matches()) {
+					m = versionMatcherForJava9.matcher(coreInfo[i + 1]);
+					if (m.matches()) {
 						String version = m.group(1); /* get the "n" described above */
 						javaVersion = Integer.parseInt(version);
 						return javaVersion;
@@ -564,7 +565,7 @@ public class DDRExtTesterBase extends TestCase {
 		}
 		String[] coreInfo = getCoreInfo();
 		Pattern versionMatcher = Pattern.compile("JAVA VM VERSION\\s*-\\s*(.*)");
-		for (int i = 0; i < (coreInfo.length+1); ++i) {
+		for (int i = 0; i < coreInfo.length; ++i) {
 			if (coreInfo[i].matches("JAVA VM VERSION.*")) {
 				Matcher m = versionMatcher.matcher(coreInfo[i]);
 				if (m.matches()) {
@@ -575,23 +576,23 @@ public class DDRExtTesterBase extends TestCase {
 			}
 		}
 		vmVersion = "unknown";
-		return vmVersion;	
+		return vmVersion;
 	}
-	
+
 	/**
 	 * @return a human-friendly description of the Java version, release, and VM stream.
 	 */
 	protected String getVersionString() {
-		String javaVer = (javaVersion > 0)? ("Java "+Integer.toString(javaVersion)): "unknown Java version";
-		String sr ;
+		String javaVer = (javaVersion > 0) ? ("Java " + javaVersion) : "unknown Java version";
+		String sr;
 		if (javaSr < 0) {
 			sr = "unknown release";
 		} else if (0 == javaSr) {
 			sr = "GA";
 		} else {
-			sr = "SR"+Integer.toString(javaSr); 
+			sr = "SR" + javaSr;
 		}
-		String vmVer = (null != vmVersion)? ("VM R"+vmVersion): "unknown VM";
-		return javaVer+" "+sr+" "+vmVer;
+		String vmVer = (null != vmVersion) ? ("VM R" + vmVersion) : "unknown VM";
+		return javaVer + " " + sr + " " + vmVer;
 	}
-	}
+}
