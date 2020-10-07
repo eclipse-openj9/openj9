@@ -505,6 +505,19 @@ void jniCheckSubclass(JNIEnv* env, const char* function, IDATA argNum, jobject a
 /**
 * @brief
 * @param env
+* @param function
+* @param argNum
+* @param aJobject
+* @param type1
+* @param type2
+* @return void
+*/
+void jniCheckSubclass2(JNIEnv* env, const char* function, IDATA argNum, jobject aJobject, const char* type1, const char* type2);
+
+
+/**
+* @brief
+* @param env
 * @param nlsModule
 * @param nlsIndex
 * @param ...
