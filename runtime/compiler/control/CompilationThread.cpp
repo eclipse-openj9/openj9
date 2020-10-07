@@ -8513,8 +8513,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 #if defined(J9VM_OPT_JITSERVER)
          if (that->_methodBeingCompiled->isOutOfProcessCompReq())
             {
+            // Customize target.cpu based on the processor description fetched from the client
             OMRProcessorDesc JITClientProcessorDesc = TR::Compiler->target.cpu.getProcessorDescription();
-            target.cpu = TR::CPU(JITClientProcessorDesc);
+            target.cpu = TR::CPU::customize(JITClientProcessorDesc);
             }
          else
 #endif /* defined(J9VM_OPT_JITSERVER) */

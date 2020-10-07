@@ -45,12 +45,43 @@ protected:
    CPU() : OMR::CPUConnector() {}
    CPU(const OMRProcessorDesc& processorDescription) : OMR::CPUConnector(processorDescription) {}
 
+   /**
+    * @brief Contains the list of processor features exploited by the compiler, initialized via TR::CPU::initializeFeatureMasks()
+    */
+   static OMRProcessorDesc _supportedFeatureMasks;
+
+   /**
+    * @brief _isSupportedFeatureMasksEnabled tells you whether _supportedFeatureMasks was used for masking out unused processor features
+    */
+   static bool _isSupportedFeatureMasksEnabled;
+
 public:
+
+   /** 
+    * @brief A factory method used to construct a CPU object based on the underlying hardware
+    * @param[in] omrPortLib : the port library
+    * @return TR::CPU
+    */
+   static TR::CPU detect(OMRPortLibrary * const omrPortLib);
+
+   /** 
+    * @brief A factory method used to construct a CPU object based on user customized processorDescription
+    * @param[in] OMRProcessorDesc : the processor description
+    * @return TR::CPU
+    */
+   static TR::CPU customize(OMRProcessorDesc processorDescription);
+
+   /**
+    * @brief Intialize _supportedFeatureMasks to the list of processor features that will be exploited by the compiler and set _isSupportedFeatureMasksEnabled to true
+    * @return void
+    */
+   static void enableFeatureMasks();
 
    const char *getProcessorVendorId() { TR_ASSERT(false, "Vendor ID not defined for this platform!"); return NULL; }
    uint32_t getProcessorSignature() { TR_ASSERT(false, "Processor Signature not defined for this platform!"); return 0; }
 
    OMRProcessorDesc getProcessorDescription();
+   bool supportsFeature(uint32_t feature);
    };
 }
 
