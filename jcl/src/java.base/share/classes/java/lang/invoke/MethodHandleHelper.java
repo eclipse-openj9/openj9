@@ -121,13 +121,13 @@ public final class MethodHandleHelper {
 		staticArgs[BSM_TYPE_ARGUMENT_INDEX] = typeClass;
 
 		/* Static optional arguments */
-		int bsmTypeArgCount = bsm.type.parameterCount();
+		int bsmTypeArgCount = bsm.type().parameterCount();
 
 		/* JVMS JDK11 5.4.3.6 Dynamically-Computed Constant and Call Site Resolution
 		 * requires the first parameter of the bootstrap method to be java.lang.invoke.MethodHandles.Lookup
 		 * else fail resolution with BootstrapMethodError
 		 */
-		if (bsmTypeArgCount < 1 || MethodHandles.Lookup.class != bsm.type.parameterType(0)) {
+		if (bsmTypeArgCount < 1 || MethodHandles.Lookup.class != bsm.type().parameterType(0)) {
 			/*[MSG "K0A01", "Constant_Dynamic references bootstrap method '{0}' does not have java.lang.invoke.MethodHandles.Lookup as first parameter."]*/
 			throw new BootstrapMethodError(Msg.getString("K0A01", bsm.getMethodName())); //$NON-NLS-1$
 		}
@@ -241,7 +241,7 @@ public final class MethodHandleHelper {
 			staticArgs[BSM_TYPE_ARGUMENT_INDEX] = type;
 		
 			/* Static optional arguments */
-			int bsmTypeArgCount = bsm.type.parameterCount();
+			int bsmTypeArgCount = bsm.type().parameterCount();
 			for (int i = 0; i < bsmArgCount; i++) {
 				staticArgs[BSM_OPTIONAL_ARGUMENTS_START_INDEX + i] = getAdditionalBsmArg(access, internalRamClass, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
 			}
@@ -447,14 +447,14 @@ public final class MethodHandleHelper {
 			int cpValue = cp.getIntAt(index);
 			Class<?> argClass = null;
 			if (treatLastArgAsVarargs && (staticArgIndex >= (bsmTypeArgCount - 1))) {
-				argClass = bsm.type.lastParameterType().getComponentType(); /* varargs component type */
+				argClass = bsm.type().lastParameterType().getComponentType(); /* varargs component type */
 			} else {
 				/* Verify that a call to MethodType.parameterType will not cause an ArrayIndexOutOfBoundsException. 
 				* If the number of static arguments is greater than the number of argument slots in the bsm
 				* leave argClass unset. A more meaningful user error WrongMethodTypeException will be thrown later on.
 				*/
 				if (staticArgIndex < bsmTypeArgCount) {
-					argClass = bsm.type.parameterType(staticArgIndex);
+					argClass = bsm.type().parameterType(staticArgIndex);
 				}
 			}
 			if (argClass == Short.TYPE) {
