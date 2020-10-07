@@ -28,8 +28,9 @@
 #include "env/CompilerEnv.hpp"
 #include "env/CPU.hpp"
 #include "env/VMJ9.h"
-#include "j9.h"
-#include "j9port.h"
+
+OMRProcessorDesc J9::CPU::_supportedFeatureMasks = {OMR_PROCESSOR_UNDEFINED, OMR_PROCESSOR_UNDEFINED, {}};
+bool J9::CPU::_isSupportedFeatureMasksEnabled = false;
 
 OMRProcessorDesc
 J9::CPU::getProcessorDescription()
@@ -42,4 +43,51 @@ J9::CPU::getProcessorDescription()
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    return _processorDescription;
+   }
+
+void
+J9::CPU::enableFeatureMasks()
+   {
+   // Assume all features will be utilized by default
+   memset(_supportedFeatureMasks.features, ~0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
+   _isSupportedFeatureMasksEnabled = true;
+   }
+
+TR::CPU
+J9::CPU::customize(OMRProcessorDesc processorDescription)
+   {
+   if (_isSupportedFeatureMasksEnabled)
+      {
+      // mask out any cpu features that the compiler doesn't care about
+      for (size_t i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
+         {
+         processorDescription.features[i] &= _supportedFeatureMasks.features[i];
+         }
+      }
+   return TR::CPU(processorDescription);
+   }
+
+TR::CPU
+J9::CPU::detect(OMRPortLibrary * const omrPortLib)
+   {   
+   OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
+   OMRProcessorDesc processorDescription;
+   omrsysinfo_get_processor_description(&processorDescription);
+
+   TR::CPU::enableFeatureMasks();
+   return TR::CPU::customize(processorDescription);
+   }
+
+bool
+J9::CPU::supportsFeature(uint32_t feature)
+   {
+   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+
+   static bool disableCPUDetectionTest = feGetEnv("TR_DisableCPUDetectionTest");
+   if (!disableCPUDetectionTest && _isSupportedFeatureMasksEnabled)
+      {
+      TR_ASSERT_FATAL(TRUE == omrsysinfo_processor_has_feature(&_supportedFeatureMasks, feature), "New processor feature usage detected, please add feature %d to _supportedFeatureMasks via TR::CPU::enableFeatureMasks()\n", feature);
+      }
+
+   return TRUE == omrsysinfo_processor_has_feature(&_processorDescription, feature);
    }
