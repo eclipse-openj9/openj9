@@ -526,6 +526,7 @@ checkPushLocalFrame(JNIEnv *env, jint capacity)
 	static const char function[] = "PushLocalFrame";
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, capacity);
+	jniCheckRange(env, function, "jint", capacity, 2, 1, INT32_MAX);
 	actualResult = j9vm->EsJNIFunctions->PushLocalFrame(env, capacity);
 	jniCheckFlushJNICache(env);
 
@@ -3971,6 +3972,7 @@ checkRegisterNatives(JNIEnv *env, jclass clazz, const JNINativeMethod *methods, 
 	U_32 methodsCRC;
 
 	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz, methods, nMethods);
+	jniCheckRange(env, function, "jint", nMethods, 4, 1, INT32_MAX);
 	methodsCRC = computeDataCRC(methods, nMethods * sizeof(methods[0]));
 	actualResult = j9vm->EsJNIFunctions->RegisterNatives(env, clazz, methods, nMethods);
 	checkDataCRC(env, function, 3, methods, nMethods * sizeof(methods[0]), methodsCRC);
