@@ -977,7 +977,12 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_AOTHeader *hdrInCache, i
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH, "AOT header validation failed: Software Read Barrier feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_UsesTM) != (hdrInCache->featureFlags & TR_FeatureFlag_UsesTM))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_TM_MISMATCH, "AOT header validation failed: TM feature mismatch.");
-
+   if ((featureFlags & TR_FeatureFlag_IsVariableHeapBaseForBarrierRange0) != (hdrInCache->featureFlags & TR_FeatureFlag_IsVariableHeapBaseForBarrierRange0))
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEAP_BASE_FOR_BARRIER_RANGE_MISMATCH, "AOT header validation failed: Heap Base for Barrier Range feature mismatch.");
+   if ((featureFlags & TR_FeatureFlag_IsVariableHeapSizeForBarrierRange0) != (hdrInCache->featureFlags & TR_FeatureFlag_IsVariableHeapSizeForBarrierRange0))
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH, "AOT header validation failed: Heap Size for Barrier Range feature mismatch.");
+   if ((featureFlags & TR_FeatureFlag_IsVariableActiveCardTableBase) != (hdrInCache->featureFlags & TR_FeatureFlag_IsVariableActiveCardTableBase))
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH, "AOT header validation failed: Active Card Table Base feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_SanityCheckEnd) != (hdrInCache->featureFlags & TR_FeatureFlag_SanityCheckEnd))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED, "AOT header validation failed: Trailing sanity bit mismatch.");
 
@@ -1316,6 +1321,15 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
          featureFlags |= TR_FeatureFlag_UsesTM;
          }
       }
+
+   if (TR::Options::getCmdLineOptions()->isVariableHeapBaseForBarrierRange0())
+      featureFlags |= TR_FeatureFlag_IsVariableHeapBaseForBarrierRange0;
+
+   if (TR::Options::getCmdLineOptions()->isVariableHeapSizeForBarrierRange0())
+      featureFlags |= TR_FeatureFlag_IsVariableHeapSizeForBarrierRange0;
+
+   if (TR::Options::getCmdLineOptions()->isVariableActiveCardTableBase())
+      featureFlags |= TR_FeatureFlag_IsVariableActiveCardTableBase;
 
    return featureFlags;
    }
