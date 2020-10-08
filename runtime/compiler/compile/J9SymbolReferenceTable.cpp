@@ -889,29 +889,11 @@ J9::SymbolReferenceTable::findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * ow
       containingClass =
          owningMethod->definingClassFromCPFieldRef(comp(), cpIndex, isStatic, &fromResolvedJ9Method);
 
-      if (comp()->compileRelocatableCode())
-         {
-         TR_ASSERT_FATAL(
-            containingClass != NULL,
-            "failed to get defining class of field ref cpIndex=%d in owning method J9Method=%p\n"
-            "\tTR_ResolvedJ9Method::definingClassFromCPFieldRef=%p, TR_ResolvedRelocatableJ9Method::definingClassFromCPFieldRef=%p\n"
-            "\tfromResolvedJ9Method=%p\n"
-            "\tTR_UseSymbolValidationManager=%d",
-            cpIndex,
-            owningMethod->getNonPersistentIdentifier(),
-            owningMethod->TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp(), owningMethod->cp(), cpIndex, isStatic),
-            static_cast<TR_ResolvedRelocatableJ9Method *>(owningMethod)->definingClassFromCPFieldRef(comp(), cpIndex, isStatic),
-            fromResolvedJ9Method,
-            comp()->getOption(TR_UseSymbolValidationManager));
-         }
-      else
-         {
-         TR_ASSERT_FATAL(
-            containingClass != NULL,
-            "failed to get defining class of field ref cpIndex=%d in owning method J9Method=%p",
+      if (containingClass == NULL)
+         comp()->failCompilation<TR::CompilationException>(
+            "failed to get defining class of resolved field ref cpIndex=%d in owning method J9Method=%p",
             cpIndex,
             owningMethod->getNonPersistentIdentifier());
-         }
 
       ResolvedFieldShadowKey key(containingClass, offset, type);
       TR::SymbolReference *symRef =
