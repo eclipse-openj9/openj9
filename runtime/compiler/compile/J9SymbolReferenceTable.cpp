@@ -889,29 +889,21 @@ J9::SymbolReferenceTable::findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * ow
       containingClass =
          owningMethod->definingClassFromCPFieldRef(comp(), cpIndex, isStatic, &fromResolvedJ9Method);
 
-      if (comp()->compileRelocatableCode())
-         {
-         TR_ASSERT_FATAL(
-            containingClass != NULL,
-            "failed to get defining class of field ref cpIndex=%d in owning method J9Method=%p\n"
-            "\tTR_ResolvedJ9Method::definingClassFromCPFieldRef=%p, TR_ResolvedRelocatableJ9Method::definingClassFromCPFieldRef=%p\n"
-            "\tfromResolvedJ9Method=%p\n"
-            "\tTR_UseSymbolValidationManager=%d",
-            cpIndex,
-            owningMethod->getNonPersistentIdentifier(),
-            owningMethod->TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp(), owningMethod->cp(), cpIndex, isStatic),
-            static_cast<TR_ResolvedRelocatableJ9Method *>(owningMethod)->definingClassFromCPFieldRef(comp(), cpIndex, isStatic),
-            fromResolvedJ9Method,
-            comp()->getOption(TR_UseSymbolValidationManager));
-         }
-      else
-         {
-         TR_ASSERT_FATAL(
-            containingClass != NULL,
-            "failed to get defining class of field ref cpIndex=%d in owning method J9Method=%p",
+      // Normally, the expectation is that if a cp field ref is resolved, then the cp ref pointing
+      // to the containing class must also be resolved. However, in #9416, it was discovered that
+      // this assumption does not hold in some cases. Under AOT, loading class data from the SCC
+      // using findSharedData() may fail, which is propagated to the JIT as a NULL containing class.
+      // In addition, if a class is redefined between the point where a field is looked up and
+      // where the defining class is looked, the latter may become NULL.
+      //
+      // Having a NULL containing class would imply two fields from different classes could have
+      // the same lookup key, which is a problem. So, until the above issues are resolved, the
+      // safe thing to do is to abort compilation in these (rare) cases.
+      if (containingClass == NULL)
+         comp()->failCompilation<TR::CompilationException>(
+            "failed to get defining class of resolved field ref cpIndex=%d in owning method J9Method=%p",
             cpIndex,
             owningMethod->getNonPersistentIdentifier());
-         }
 
       ResolvedFieldShadowKey key(containingClass, offset, type);
       TR::SymbolReference *symRef =
