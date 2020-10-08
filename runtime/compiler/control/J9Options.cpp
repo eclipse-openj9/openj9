@@ -2118,6 +2118,7 @@ J9::Options::setupJITServerOptions()
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       {
+      JITServer::CommunicationStream::printJITServerVersion();
       TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
       if (persistentInfo->getRemoteCompilationMode() == JITServer::SERVER)
          {

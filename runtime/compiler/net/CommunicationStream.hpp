@@ -29,6 +29,7 @@
 #include "net/LoadSSLLibs.hpp"
 #include "net/Message.hpp"
 #include "infra/Statistics.hpp"
+#include "env/VerboseLog.hpp"
 
 
 namespace JITServer
@@ -59,6 +60,12 @@ public:
    static uint64_t getJITServerFullVersion()
       {
       return Message::buildFullVersion(getJITServerVersion(), CONFIGURATION_FLAGS);
+      }
+
+   static void printJITServerVersion()
+      {
+      // print the human-readable version string
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer version: %u.%u.%u", MAJOR_NUMBER, MINOR_NUMBER, PATCH_NUMBER);
       }
 
 protected:
