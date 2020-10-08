@@ -12647,7 +12647,6 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
 
 TR::Register *J9::Power::TreeEvaluator::tstartEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-#ifndef PUBLIC_BUILD
    // tstart
    //  - persistentFailNode
    //  - transientFailNode
@@ -12818,16 +12817,13 @@ TR::Register *J9::Power::TreeEvaluator::tstartEvaluator(TR::Node *node, TR::Code
    cg->decReferenceCount(persistentFailureNode);
    cg->decReferenceCount(transientFailureNode);
    cg->decReferenceCount(fallThrough);
-#endif //PUBLIC_BUILD
 
    return NULL;
    }
 
 TR::Register *J9::Power::TreeEvaluator::tfinishEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-#ifndef PUBLIC_BUILD
    generateInstruction(cg, TR::InstOpCode::tend_r, node);
-#endif //PUBLIC_BUILD
    return NULL;
    }
 

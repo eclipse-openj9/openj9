@@ -430,7 +430,6 @@ int32_t TR::MonitorElimination::perform()
          traceMsg(comp(),"findRedundantMonitors returned true.  About to remove Redundant Monitors\n");
       removeRedundantMonitors();
 
-#ifndef PUBLIC_BUILD
       /* enable TLE by default on supported HW for now */
       if(!comp()->getOption(TR_DisableTLE) && comp()->cg()->getSupportsTLE())
          {
@@ -446,8 +445,6 @@ int32_t TR::MonitorElimination::perform()
                   transformMonitorsIntoTMRegions();
             }
          }
-#endif
-
       }
    else
       {
@@ -1059,8 +1056,6 @@ void TR::MonitorElimination::addOSRGuard(TR::TreeTop *guard)
       monitor->getOSRGuards().add(guard);
       }
    }
-
-#ifndef PUBLIC_BUILD
 
 // returns true if  we find at least one monitor who is a candidate for TM
 bool TR::MonitorElimination::evaluateMonitorsForTMCandidates()
@@ -1704,7 +1699,6 @@ void TR::MonitorElimination::transformMonitorsIntoTMRegions()
 
    }
 
-#endif
 
 bool TR::MonitorElimination::killsReadMonitorProperty(TR::Node *node)
    {

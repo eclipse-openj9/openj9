@@ -58,10 +58,8 @@ TR::S390ForceRecompilationSnippet::emitSnippetBody()
    *(int32_t *) cursor = 0xDEADBEEF;
    cursor += sizeof(int32_t);
 
-#if !defined(PUBLIC_BUILD)
    // Generate RIOFF if RI is supported.
    cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RIOFF);
-#endif
 
    // BRCL
    *(int16_t *) cursor = 0xC0F4;
@@ -107,11 +105,7 @@ uint32_t
 TR::S390ForceRecompilationSnippet::getLength(int32_t  estimatedSnippetStart)
    {
    uint32_t length = 12;  // LARL + BRCL
-
-#if !defined(PUBLIC_BUILD)
    length += getRuntimeInstrumentationOnOffInstructionLength(cg());
-#endif
-
    return length;
    }
 

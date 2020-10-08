@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -168,7 +168,6 @@ class MonitorElimination : public TR::Optimization
    void removeRedundantMonitors();
 
    //TransactionalMemory
-#ifndef PUBLIC_BUILD
    bool evaluateMonitorsForTMCandidates();
    void transformMonitorsIntoTMRegions();
    void searchAndLabelNearbyMonitors(TR_ActiveMonitor *currentMonitor);
@@ -179,7 +178,7 @@ class MonitorElimination : public TR::Optimization
 
    TR_Array<TR::Block *>* createFailHandlerBlocks(TR_ActiveMonitor *monitor, TR::SymbolReference *tempSymRef, TR::Block *monitorBlock, TR::Block *tstartblock);
    TR::SymbolReference *createAndInsertTMRetryCounter(TR_ActiveMonitor *monitor);
-#endif
+
    void resetReadMonitors(int32_t);
    bool tagReadMonitors();
    bool transformIntoReadMonitor();

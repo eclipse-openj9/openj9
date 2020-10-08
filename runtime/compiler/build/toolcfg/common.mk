@@ -51,10 +51,6 @@ ifdef ASSUMES
     PRODUCT_DEFINES+=PROD_WITH_ASSUMES
 endif
 
-ifdef PUBLIC_BUILD
-    PRODUCT_DEFINES+=PUBLIC_BUILD
-endif
-
 ifdef ENABLE_GPU
     ifeq (,$(CUDA_HOME))
         $(error You must set CUDA_HOME if ENABLE_GPU is set)

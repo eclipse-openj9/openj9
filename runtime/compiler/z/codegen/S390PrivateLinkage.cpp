@@ -1274,7 +1274,6 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
       }
 
       // End of stack overflow checking code ////////////////////////
-#if !defined(PUBLIC_BUILD)
    static bool bppoutline = (feGetEnv("TR_BPRP_Outline")!=NULL);
 
    if (bppoutline && cg()->_outlineCall._frequency != -1)
@@ -1291,7 +1290,6 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
       TR::MemoryReference * tempMR = generateS390MemoryReference(epReg, 0, cg());
       cursor = generateS390BranchPredictionPreloadInstruction(cg(), TR::InstOpCode::BPP, firstNode, cg()->_outlineArrayCall._callLabel, (int8_t) 0xD, tempMR, cursor);
       }
-#endif
 
       if (cg()->getSupportsRuntimeInstrumentation())
          cursor = TR::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(cg(), TR::InstOpCode::RION, firstNode, cursor, true);
@@ -1460,9 +1458,7 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
    TR::RealRegister * epReg = getRealRegister(getEntryPointRegister());
    int32_t blockNumber = -1;
 
-#if !defined(PUBLIC_BUILD)
    bool enableBranchPreload = cg()->supportsBranchPreload();
-#endif
 
    dep = cursor->getNext()->getDependencyConditions();
    offset = getOffsetToRegSaveArea();
@@ -1493,7 +1489,7 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
       if (comp()->getOption(TR_TraceCG))
          traceMsg(comp(), "No RAREG context restore needed in Epilog\n");
       }
-#if !defined(PUBLIC_BUILD)
+
    if (enableBranchPreload && (cursor->getNext() == cg()->_hottestReturn._returnInstr))
       {
       if (cg()->_hottestReturn._frequency > 6 && cg()->_hottestReturn._insertBPPInEpilogue)
@@ -1504,7 +1500,6 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
          cg()->_hottestReturn._insertBPPInEpilogue = false;
          }
       }
-#endif
 
    // Restore GPRs
    firstUsedReg = getFirstRestoredRegister(TR::RealRegister::GPR6, TR::RealRegister::GPR12);
@@ -1558,7 +1553,6 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
       cursor = TR::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(cg(), TR::InstOpCode::RIOFF, currentNode, cursor, true);
 
 
-#if !defined(PUBLIC_BUILD)
    if (enableBranchPreload)
       {
       if (cursor->getNext() == cg()->_hottestReturn._returnInstr)
@@ -1569,7 +1563,6 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
             }
          }
       }
-#endif
 
    cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, currentNode, getRealRegister(getReturnAddressRegister()), cursor);
    ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BCR);
