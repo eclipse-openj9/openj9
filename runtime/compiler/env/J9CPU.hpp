@@ -33,8 +33,6 @@ namespace J9 { typedef CPU CPUConnector; }
 #endif
 
 #include "env/OMRCPU.hpp"
-#include "j9port.h"
-#include "infra/Assert.hpp"                         // for TR_ASSERT
 
 namespace J9
 {
@@ -77,13 +75,11 @@ public:
     */
    static void enableFeatureMasks();
 
-   const char *getProcessorVendorId() { TR_ASSERT(false, "Vendor ID not defined for this platform!"); return NULL; }
-   uint32_t getProcessorSignature() { TR_ASSERT(false, "Processor Signature not defined for this platform!"); return 0; }
-
-   OMRProcessorDesc getProcessorDescription();
    bool supportsFeature(uint32_t feature);
+   
+   const char *getProcessorVendorId();
+   uint32_t getProcessorSignature();
    };
 }
-
 
 #endif
