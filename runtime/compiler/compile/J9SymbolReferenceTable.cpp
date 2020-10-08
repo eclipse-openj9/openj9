@@ -865,11 +865,11 @@ J9::SymbolReferenceTable::findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * ow
       containingClass =
          owningMethod->definingClassFromCPFieldRef(comp(), cpIndex, isStatic);
 
-      TR_ASSERT_FATAL(
-         containingClass != NULL,
-         "failed to get defining class of field ref cpIndex=%d in owning method J9Method=%p",
-         cpIndex,
-         owningMethod->getNonPersistentIdentifier());
+      if (containingClass == NULL)
+         comp()->failCompilation<TR::CompilationException>(
+            "failed to get defining class of resolved field ref cpIndex=%d in owning method J9Method=%p",
+            cpIndex,
+            owningMethod->getNonPersistentIdentifier());
 
       ResolvedFieldShadowKey key(containingClass, offset, type);
       TR::SymbolReference *symRef =
