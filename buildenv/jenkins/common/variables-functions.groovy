@@ -616,6 +616,12 @@ def set_build_variables() {
     }
 
     echo "Using BUILD_ENV_CMD = ${BUILD_ENV_CMD}, BUILD_ENV_VARS_LIST = ${BUILD_ENV_VARS_LIST.toString()}"
+
+    if (VARIABLES.misc.custom_filename) {
+        customFile = load VARIABLES.misc.custom_filename
+    } else {
+        customFile = null
+    }
 }
 
 def set_sdk_variables() {
@@ -1515,6 +1521,9 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id) {
     params.put('DISCARDER_NUM_BUILDS', DISCARDER_NUM_BUILDS)
     params.put('SCM_REPO', SCM_REPO)
     params.put('SCM_BRANCH', SCM_BRANCH)
+    if (USER_CREDENTIALS_ID) {
+        params.put('USER_CREDENTIALS_ID', USER_CREDENTIALS_ID)
+    }
 
     def templatePath = 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy'
     pipelineFunctions.retry_and_delay(
@@ -1581,4 +1590,11 @@ def download_boot_jdk(bootJDKVersion, bootJDK) {
         """
     }
 }
+
+def set_build_custom_options() {
+    if (customFile) {
+        customFile.set_extra_options()
+    }
+}
+
 return this
