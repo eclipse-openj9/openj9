@@ -138,6 +138,8 @@ public class TestJcmd extends AttachApiTest {
 			args.add(getVmId());
 			args.add(command);
 			args.add(new File(userDir, "my" + command + "Dump").getAbsolutePath());
+			args.add("request=something");
+			args.add("opts=else");
 			args.add("wrongargument");
 			List<String> jcmdOutput = runCommandAndLogOutput(args);
 			String expectedString = commandExpectedOutputs.getOrDefault(command, "Test error: expected output not defined");
@@ -218,6 +220,52 @@ public class TestJcmd extends AttachApiTest {
 				log("test " + command);
 				args.add(command);
 				args.add(dumpFilePath);
+				List<String> jcmdOutput = runCommandAndLogOutput(args);
+
+				assertTrue(dumpFileLocation.exists(), "dump file " + dumpFilePath + "missing");
+				String expectedString = JCMD_OUTPUT_START_STRING + dumpFilePath;
+				log("Expected jcmd output string: " + expectedString);
+				Optional<String> searchResult = StringUtilities.searchSubstring(expectedString, jcmdOutput);
+				assertTrue(searchResult.isPresent(), ERROR_EXPECTED_STRING_NOT_FOUND + " in jcmd output: " + expectedString);
+				log(EXPECTED_STRING_FOUND + " in jcmd output: " + expectedString);
+
+				expectedString = dumpType + TARGET_DUMP_WRITTEN_STRING + dumpFilePath;
+				searchResult = StringUtilities.searchSubstring(expectedString,tgt.getTargetErrReader().lines());
+				assertTrue(searchResult.isPresent(), ERROR_EXPECTED_STRING_NOT_FOUND + " in target standard error: " + expectedString);
+				log(EXPECTED_STRING_FOUND + " in target standard error: " + expectedString);
+			} finally {
+				tgt.terminateTarget();
+				dumpFileLocation.delete();
+			}
+		}
+	}
+
+	@Test
+	public void testDumpsWithOptions() throws IOException {
+		String[][] commandsAndDumpTypes = {
+				{DUMP_HEAP, "Heap", "request=exclusive+compact+prepwalk,opts=CLASSIC"},
+				{GC_HEAP_DUMP, "Heap", "opts=PHD"}, {DUMP_JAVA, "Java", "request=serial"},
+				{DUMP_SNAP, "Snap", "request=exclusive"},
+				{DUMP_SYSTEM, "System", "request=exclusive+compact+prepwalk"}};
+		for (String[] commandAndDumpName : commandsAndDumpTypes) {
+			TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null,
+					Collections.singletonList("-Xmx10M"), Collections.emptyList());
+			tgt.syncWithTarget();
+			String targetId = tgt.targetId;
+			assertNotNull(targetId, ERROR_TARGET_NOT_LAUNCH);
+			String dumpType = commandAndDumpName[1];
+			String options = commandAndDumpName[2];
+			File dumpFileLocation = new File(userDir, "my" + dumpType + "Dump");
+			dumpFileLocation.delete();
+			try {
+				String dumpFilePath = dumpFileLocation.getAbsolutePath();
+				List<String> args = new ArrayList<>();
+				args.add(targetId);
+				String command = commandAndDumpName[0];
+				log("test " + command);
+				args.add(command);
+				args.add(dumpFilePath);
+				args.add(options);
 				List<String> jcmdOutput = runCommandAndLogOutput(args);
 
 				assertTrue(dumpFileLocation.exists(), "dump file " + dumpFilePath + "missing");
