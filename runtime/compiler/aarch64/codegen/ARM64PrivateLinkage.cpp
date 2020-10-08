@@ -892,10 +892,6 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
       case TR::java_lang_invoke_ComputedCalls_dispatchVirtual:
          specialArgReg = getProperties().getVTableIndexArgumentRegister();
          break;
-      case TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper:
-         numIntArgRegs   = 0;
-         numFloatArgRegs = 0;
-         break;
       }
    if (specialArgReg != TR::RealRegister::NoReg)
       {

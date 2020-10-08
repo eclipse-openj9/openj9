@@ -320,7 +320,6 @@ class ClientSessionData
       MM_GCWriteBarrierType _writeBarrierType;
       bool _compressObjectReferences;
       OMRProcessorDesc _processorDescription;
-      J9Method *_invokeWithArgumentsHelperMethod;
       void *_noTypeInvokeExactThunkHelper;
       void *_int64InvokeExactThunkHelper;
       void *_int32InvokeExactThunkHelper;
