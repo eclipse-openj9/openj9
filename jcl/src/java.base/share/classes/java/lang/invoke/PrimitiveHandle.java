@@ -34,6 +34,9 @@ import com.ibm.jit.JITHelpers;
 import java.util.List;
 /*[ENDIF] Java15 */
 
+import static java.lang.invoke.MethodHandleHelper.UNSAFE;
+import static java.lang.invoke.MethodHandleHelper.JITHELPERS;
+
 /**
  * PrimitiveHandle is a subclass of MethodHandle used for grouping MethodHandles that directly refer a Java-level method. 
  * 

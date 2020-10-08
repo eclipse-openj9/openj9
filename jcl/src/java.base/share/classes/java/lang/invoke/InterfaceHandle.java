@@ -24,6 +24,8 @@ package java.lang.invoke;
 
 import java.lang.reflect.Method;
 
+import static java.lang.invoke.MethodHandleHelper.getJ9ClassFromClass;
+
 /*
  * InterfaceHandle is a MethodHandle that does interface dispatch 
  * on the receiver.  
