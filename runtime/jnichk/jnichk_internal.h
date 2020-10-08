@@ -94,7 +94,8 @@
 #define JNIC_NONNULLOBJECT '0'
 #define JNIC_WEAKREF 'w'
 #define JNIC_GLOBALREF '*'
-#define JNIC_LOCALREF '?'		
+#define JNIC_LOCALREF '?'
+#define JNIC_CLASSLOADER 'k'
 
 /* Global Ref tracking hash table entry */
 typedef struct JNICHK_GREF_HASHENTRY {
