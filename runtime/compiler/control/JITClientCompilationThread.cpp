@@ -507,6 +507,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          for (int32_t i = 0; i < TR_numRuntimeHelpers; ++i)
             vmInfo._helperAddresses[i] = runtimeHelperValue((TR_RuntimeHelper) i);
 #endif
+         vmInfo._isHotReferenceFieldRequired = TR::Compiler->om.isHotReferenceFieldRequired();
 
          client->write(response, vmInfo, listOfCacheDescriptors);
          }
@@ -908,6 +909,13 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR_OpaqueClassBlock *clazz = std::get<0>(recv);
          uint32_t alignFromStart = std::get<1>(recv);
          fe->markClassForTenuredAlignment(comp, clazz, alignFromStart);
+         client->write(response, JITServer::Void());
+         }
+         break;
+      case MessageType::VM_reportHotField:
+         {
+         auto recv = client->getRecvData<int32_t, J9Class *, uint8_t, uint32_t>();
+         fe->reportHotField(std::get<0>(recv), std::get<1>(recv), std::get<2>(recv), std::get<3>(recv));
          client->write(response, JITServer::Void());
          }
          break;

@@ -128,6 +128,13 @@ J9::ObjectModel::sizeofReferenceField()
 bool
 J9::ObjectModel::isHotReferenceFieldRequired()
    {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_isHotReferenceFieldRequired;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return TR::Compiler->javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(TR::Compiler->javaVM);
    }
 
