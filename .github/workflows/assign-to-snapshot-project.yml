@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################/
 
-name: Assign to snapshot project
+name: Assign labels to project
 
 on:
   issues:
@@ -34,12 +34,22 @@ env:
 
 # Source: https://github.com/marketplace/actions/assign-to-one-project
 jobs:
-  assign_one_project:
+  assign_snapshot_project:
     runs-on: ubuntu-latest
     name: Assign to Snapshot Project
     if: github.event.label.name == 'snapshot'
     steps:
-    - name: snapshot label assigner
+    - name: snapshot project assigner
       uses: srggrs/assign-one-project-github-action@1.2.0
       with:
         project: 'https://github.com/eclipse/openj9/projects/17'
+
+  assign_mh_project:
+    runs-on: ubuntu-latest
+    name: Assign to Snapshot Project
+    if: github.event.label.name == 'project:MH'
+    steps:
+    - name: MH project assigner
+      uses: srggrs/assign-one-project-github-action@1.2.0
+      with:
+        project: 'https://github.com/eclipse/openj9/projects/18'
