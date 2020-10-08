@@ -402,7 +402,7 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 				}
 				restoreMethodTypeFrame(frame, spPriorToFrameBuild);
 			}
-			insertPlaceHolderFrame(slotCount, newObject, J9VMJAVALANGINVOKEMETHODHANDLE_CONSTRUCTORPLACEHOLDER_METHOD(_vm));
+			insertPlaceHolderFrame(slotCount, newObject, J9VMJAVALANGINVOKEMETHODHANDLEHELPER_CONSTRUCTORPLACEHOLDER_METHOD(_vm));
 			goto runMethod;
 		}
 		case J9_METHOD_HANDLE_KIND_GET_FIELD: {
@@ -676,7 +676,7 @@ VM_MHInterpreter::impdep1()
 	/* NOTE: bp calculation assumes that there is only ever a single argument on the stack */
 	UDATA *bp = _currentThread->arg0EA - (sizeof(J9SFStackFrame)/sizeof(UDATA*));
 	J9SFStackFrame *frame = (J9SFStackFrame*)(bp);
-	if (J9VMJAVALANGINVOKEMETHODHANDLE_CONSTRUCTORPLACEHOLDER_METHOD(_vm) == _currentThread->literals) {
+	if (J9VMJAVALANGINVOKEMETHODHANDLEHELPER_CONSTRUCTORPLACEHOLDER_METHOD(_vm) == _currentThread->literals) {
 		/* restore frame for constructor: leave objectRef on stack & increment PC */
 		_currentThread->sp = _currentThread->arg0EA;
 		_currentThread->literals = frame->savedCP;

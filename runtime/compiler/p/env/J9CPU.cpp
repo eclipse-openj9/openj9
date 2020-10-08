@@ -26,11 +26,37 @@
 #include "j9.h"
 #include "j9port.h"
 
+TR::CPU
+J9::Power::CPU::detectRelocatable(OMRPortLibrary * const omrPortLib)
+   {
+   if (omrPortLib == NULL)
+      return TR::CPU();
+
+   OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
+   OMRProcessorDesc portableProcessorDescription;
+   omrsysinfo_get_processor_description(&portableProcessorDescription);
+   
+   if (portableProcessorDescription.processor > OMR_PROCESSOR_PPC_P8)
+      {
+      portableProcessorDescription.processor = OMR_PROCESSOR_PPC_P8;
+      portableProcessorDescription.physicalProcessor = OMR_PROCESSOR_PPC_P8;
+      }
+
+   return TR::CPU::customize(portableProcessorDescription);
+   }
+
 bool
 J9::Power::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    {
-   OMRProcessorArchitecture targetProcessor = self()->getProcessorDescription().processor;
-   OMRProcessorArchitecture processor = processorDescription.processor;
+   const OMRProcessorArchitecture& targetProcessor = self()->getProcessorDescription().processor;
+   const OMRProcessorArchitecture& processor = processorDescription.processor;
+
+   for (int i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
+      {
+      if ((processorDescription.features[i] & self()->getProcessorDescription().features[i]) != processorDescription.features[i])
+         return false;
+      }
+
    // Backwards compatibility only applies to p4,p5,p6,p7 and onwards
    // Looks for equality otherwise
    if ((processor == OMR_PROCESSOR_PPC_GP

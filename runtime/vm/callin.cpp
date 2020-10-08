@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2019 IBM Corp. and others
+ * Copyright (c) 2012, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -915,7 +915,7 @@ sendResolveMethodHandle(J9VMThread *currentThread, UDATA cpIndex, J9ConstantPool
 				*--currentThread->sp = (UDATA)sigString;
 				*--currentThread->sp = (UDATA)clazz->classLoader->classLoaderObject;
 				currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLE_SENDRESOLVEMETHODHANDLE_METHOD(vm);
+				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLEHELPER_SENDRESOLVEMETHODHANDLE_METHOD(vm);
 				c_cInterpreter(currentThread);
 			}
 		}
@@ -980,7 +980,7 @@ sendResolveConstantDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDA
 				currentThread->sp -= 2;
 				*(U_64*)currentThread->sp = (U_64)(UDATA)bsmData;
 				currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLE_RESOLVECONSTANTDYNAMIC_METHOD(vm);
+				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLEHELPER_RESOLVECONSTANTDYNAMIC_METHOD(vm);
 				c_cInterpreter(currentThread);
 			}
 		}
@@ -1025,7 +1025,7 @@ sendResolveInvokeDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA
 				currentThread->sp -= 2;
 				*(U_64*)currentThread->sp = (U_64)(UDATA)bsmData;
 				currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLE_RESOLVEINVOKEDYNAMIC_METHOD(vm);
+				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLEHELPER_RESOLVEINVOKEDYNAMIC_METHOD(vm);
 				c_cInterpreter(currentThread);
 			}
 		}
