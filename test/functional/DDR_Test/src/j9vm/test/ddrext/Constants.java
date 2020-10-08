@@ -610,6 +610,9 @@ public class Constants {
 	public static final String COREINFO_CMD = "coreinfo";
 	public static final String COREINFO_SUCCESS_KEYS = "COMMANDLINE,JAVA VERSION INFO,PLATFORM INFO,Platform Name,OS Level,Processors,Architecture,How Many";
 	public static final String COREINFO_FAILURE_KEYS = "Problem running command";
+	public static final String COREINFO_VERSION_IBM_SUCCESS_KEYS = "JAVA VM NAME,IBM J9 VM";
+	public static final String COREINFO_VERSION_OPENJ9_SUCCESS_KEYS = "JAVA VM NAME,Eclipse OpenJ9 VM";
+	public static final String COREINFO_VERSION_FAILURE_KEYS = "Problem running command";
 	
 	public static final String NATIVEMEMINFO_CMD = "nativememinfo";
 	public static final String NATIVEMEMINFO_SUCCESS_KEYS = "JRE:,VM:,Classes:,Memory Manager,Java Heap:,Other:,Threads:,Java Stack:, bytes, allocations";

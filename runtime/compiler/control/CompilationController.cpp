@@ -1045,11 +1045,9 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
                         // Exception: bootstrap class methods that are cheap should be upgraded directly at warm
                         if (cmdLineOptions->getOption(TR_UpgradeBootstrapAtWarm) && fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)j9method))
                            {
-#ifndef PUBLIC_BUILD
                            TR_J9SharedCache *sc = TR_J9VMBase::get(jitConfig, event->_vmThread, TR_J9VMBase::AOT_VM)->sharedCache();
                            bool expensiveComp = sc->isHint(j9method, TR_HintLargeMemoryMethodW);
                            if (!expensiveComp)
-#endif //!PUBLIC_BUILD
                               nextOptLevel = warm;
                            }
                         }

@@ -6691,7 +6691,6 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
 //-----------------------------------------
 void TR::CompilationInfo::queueForcedAOTUpgrade(TR_MethodToBeCompiled *originalEntry, uint16_t hints, TR_FrontEnd *fe)
    {
-#ifndef PUBLIC_BUILD
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390))
 
    TR_ASSERT(!originalEntry->isDLTCompile(), "No DLTs allowed in queueForcedAOTUpgrade"); // no DLT here
@@ -6818,7 +6817,6 @@ void TR::CompilationInfo::queueForcedAOTUpgrade(TR_MethodToBeCompiled *originalE
    queueEntry(cur);
    //fprintf(stderr, "Forcefully upgraded j9method %p (entry=%p)\n", cur->_method, cur);
 #endif // #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390))
-#endif //!PUBLIC_BUILD
    }
 
 
@@ -8736,7 +8734,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       metaData = that->compile(vmThread, compiler, compilee, *vm, p->_optimizationPlan, scratchSegmentProvider);
 
       }
-#ifndef PUBLIC_BUILD
+
    // Store hints in the SCC
    TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
    if (metaData  && !that->_methodBeingCompiled->isDLTCompile() &&
@@ -8811,7 +8809,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             }
          }
       }
-#endif // !PUBLIC_BUILD
+
    return metaData;
    }
 
