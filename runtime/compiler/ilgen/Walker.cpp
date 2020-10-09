@@ -6715,9 +6715,7 @@ TR_J9ByteCodeIlGenerator::genReturn(TR::ILOpCodes nodeop, bool monitorExit)
       TR::SymbolReference * methodExitSymRef = symRefTab()->findOrCreateReportMethodExitSymbolRef(_methodSymbol);
 
       TR::Node * methodExitNode;
-      if (comp()->getOption(TR_OldJVMPI))
-         methodExitNode = TR::Node::createWithSymRef(TR::MethodExitHook, 0, methodExitSymRef);
-      else if (nodeop == TR::Return)
+      if (nodeop == TR::Return)
          {
          loadConstant(TR::aconst, (void *)0);
          methodExitNode = TR::Node::createWithSymRef(TR::MethodExitHook, 1, 1, pop(), methodExitSymRef);
