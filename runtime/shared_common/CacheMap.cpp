@@ -5193,7 +5193,7 @@ SH_CacheMap::printCacheStatsTopLayerStatsHelper(J9VMThread* currentThread, UDATA
 		CACHEMAP_PRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_FEATURE, "default");
 	}
 
-#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+#if (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER))
 	if (currentThread->javaVM->jitConfig) {
 		j9tty_printf(_portlib, "\t");
 		J9SharedDataDescriptor firstDescriptor;
@@ -5204,7 +5204,7 @@ SH_CacheMap::printCacheStatsTopLayerStatsHelper(J9VMThread* currentThread, UDATA
 		currentThread->javaVM->jitConfig->printAOTHeaderProcessorFeatures((TR_AOTHeader *)firstDescriptor.address, processorFeatures, BUFF_SIZE);
 		CACHEMAP_PRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES, processorFeatures);
 	}
-#endif /* defined(J9VM_ARCH_X86) */
+#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) */
 
 	j9tty_printf(_portlib, "\n");
 	if (true == this->_ccHead->getIsNoLineNumberContentEnabled()) {
