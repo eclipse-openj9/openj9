@@ -84,7 +84,7 @@ TR::Instruction *TR_PPCRecompilation::generatePrePrologue()
    TR::Machine *machine = cg()->machine();
    TR::Register   *gr0 = machine->getRealRegister(TR::RealRegister::gr0);
    TR::Node       *firstNode = comp->getStartTree()->getNode();
-   TR::SymbolReference *recompileMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCsamplingRecompileMethod, false, false, false);
+   TR::SymbolReference *recompileMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCsamplingRecompileMethod);
    TR_PersistentJittedBodyInfo *info = getJittedBodyInfo();
    // force creation of switch to interpreter pre prologue if in Full Speed Debug
    if (cg()->mustGenerateSwitchToInterpreterPrePrologue())
