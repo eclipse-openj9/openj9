@@ -180,7 +180,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
 
       // Slow path lookup dispatch
       //
-      _dispatchSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86IPicLookupDispatch, false, false, false);
+      _dispatchSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86IPicLookupDispatch);
 
       *cursor++ = 0xe8;  // CALL
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, _dispatchSymRef);
@@ -348,7 +348,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
          TR_ASSERT_FATAL(0, "Can't handle resolved VPICs here yet!");
          }
 
-      _dispatchSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86populateVPicVTableDispatch, false, false, false);
+      _dispatchSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86populateVPicVTableDispatch);
 
       getSnippetLabel()->setCodeLocation(cursor);
 
@@ -416,9 +416,9 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
       uint8_t *picSlotCursor = _startOfPicInstruction->getBinaryEncoding();
 
       TR::SymbolReference *resolveSlotHelperSymRef =
-         cg()->symRefTab()->findOrCreateRuntimeHelper(resolveSlotHelper, false, false, false);
+         cg()->symRefTab()->findOrCreateRuntimeHelper(resolveSlotHelper);
       TR::SymbolReference *populateSlotHelperSymRef =
-         cg()->symRefTab()->findOrCreateRuntimeHelper(populateSlotHelper, false, false, false);
+         cg()->symRefTab()->findOrCreateRuntimeHelper(populateSlotHelper);
 
       // Patch first slot test with call to resolution helper.
       //
@@ -861,7 +861,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       TR_RuntimeHelper resolutionHelper = methodSymbol->isStatic() ?
          TR_X86interpreterUnresolvedStaticGlue : TR_X86interpreterUnresolvedSpecialGlue;
 
-      TR::SymbolReference *helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(resolutionHelper, false, false, false);
+      TR::SymbolReference *helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(resolutionHelper);
 
       *cursor++ = 0xe8;    // CALL
       *(int32_t *)cursor = cg()->branchDisplacementToHelperOrTrampoline(cursor + 4, helperSymRef);
@@ -890,7 +890,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
 
       // JMP interpreterStaticAndSpecialGlue
       //
-      helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue, false, false, false);
+      helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue);
 
       *cursor++ = 0xe9;    // JMP
       *(int32_t *)cursor = cg()->branchDisplacementToHelperOrTrampoline(cursor + 4, helperSymRef);
@@ -999,7 +999,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
 
       TR::SymbolReference* dispatchSymRef =
           methodSymbol->isHelper() && methodSymRef->isOSRInductionHelper() ? methodSymRef :
-                                                                             cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue, false, false, false);
+                                                                             cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue);
 
       *(int32_t *)cursor = cg()->branchDisplacementToHelperOrTrampoline(cursor + 4, dispatchSymRef);
 
