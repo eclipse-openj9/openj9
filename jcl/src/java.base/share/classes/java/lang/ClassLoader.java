@@ -1913,9 +1913,6 @@ static ClassLoader callerClassLoader() {
  *							if the library was not allowed to be loaded
  */
 static void loadLibraryWithClassLoader(String libName, ClassLoader loader) {
-	SecurityManager smngr = System.getSecurityManager();
-	if (smngr != null)
-		smngr.checkLink(libName);
 	if (loader != null) {
 		String realLibName = loader.findLibrary(libName);
 		

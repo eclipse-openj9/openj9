@@ -750,6 +750,10 @@ public static void load(String pathName) {
  */
 @CallerSensitive
 public static void loadLibrary(String libName) {
+	SecurityManager smngr = System.getSecurityManager();
+	if (smngr != null) {
+		smngr.checkLink(libName);
+	}
 /*[IF Java15]*/
 	ClassLoader.loadLibrary(getCallerClass(), libName);
 /*[ELSE]*/
