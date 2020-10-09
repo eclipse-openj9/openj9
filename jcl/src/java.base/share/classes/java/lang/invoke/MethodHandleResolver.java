@@ -43,7 +43,7 @@ import com.ibm.jit.JITHelpers;
 /**
  * Static methods for the MethodHandle class.
  */
-final class MethodHandleHelper {
+final class MethodHandleResolver {
 	static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
 	static final JITHelpers JITHELPERS = JITHelpers.getHelpers();

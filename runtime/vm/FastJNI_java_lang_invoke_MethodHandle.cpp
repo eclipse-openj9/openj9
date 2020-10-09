@@ -34,7 +34,7 @@ extern "C" {
  * See the JNI version in sun_reflect_ConstantPool.c
  */
 jint JNICALL
-Fast_java_lang_invoke_MethodHandleHelper_getCPTypeAt(J9VMThread *vmThread, j9object_t constantPoolOop, jint cpIndex)
+Fast_java_lang_invoke_MethodHandleResolver_getCPTypeAt(J9VMThread *vmThread, j9object_t constantPoolOop, jint cpIndex)
 {
 	UDATA cpType = J9CPTYPE_UNUSED;
 
@@ -55,7 +55,7 @@ Fast_java_lang_invoke_MethodHandleHelper_getCPTypeAt(J9VMThread *vmThread, j9obj
 }
 
 J9_FAST_JNI_METHOD_TABLE(java_lang_invoke_MethodHandle)
-	J9_FAST_JNI_METHOD("getCPTypeAt", "(Ljava/lang/Class;I)I", Fast_java_lang_invoke_MethodHandleHelper_getCPTypeAt,
+	J9_FAST_JNI_METHOD("getCPTypeAt", "(Ljava/lang/Class;I)I", Fast_java_lang_invoke_MethodHandleResolver_getCPTypeAt,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
 J9_FAST_JNI_METHOD_TABLE_END
 

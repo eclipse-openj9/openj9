@@ -25,7 +25,7 @@ package java.lang.invoke;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
-import static java.lang.invoke.MethodHandleHelper.UNSAFE;
+import static java.lang.invoke.MethodHandleResolver.UNSAFE;
 
 /*
  * MethodHandle subclass that is able to return the value of

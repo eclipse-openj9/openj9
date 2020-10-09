@@ -28,7 +28,7 @@ import jdk.internal.ref.Cleaner;
 import sun.misc.Cleaner;
 /*[ENDIF]*/
 
-import static java.lang.invoke.MethodHandleHelper.UNSAFE;
+import static java.lang.invoke.MethodHandleResolver.UNSAFE;
 
 /**
  * A MutableCallSite acts as though its target MethodHandle were a normal variable.

@@ -481,7 +481,7 @@ Java_sun_reflect_ConstantPool_getFieldAtIfLoaded0(JNIEnv *env, jobject unusedObj
  * @throws  IllegalArgumentException if cpIndex has wrong type
  */
 jobject JNICALL
-Java_java_lang_invoke_MethodHandleHelper_getCPClassNameAt(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex)
+Java_java_lang_invoke_MethodHandleResolver_getCPClassNameAt(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex)
 {
 	jobject classNameObject = NULL;
 	J9VMThread *vmThread = (J9VMThread *) env;
@@ -668,7 +668,7 @@ Java_sun_reflect_ConstantPool_getUTF8At0(JNIEnv *env, jobject unusedObject, jobj
  * Return the result of J9_CP_TYPE(J9Class->romClass->cpShapeDescription, index)
  */
 jint JNICALL
-Java_java_lang_invoke_MethodHandleHelper_getCPTypeAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex)
+Java_java_lang_invoke_MethodHandleResolver_getCPTypeAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex)
 {
 	UDATA cpType = J9CPTYPE_UNUSED;
 	J9VMThread *vmThread = (J9VMThread *) env;
@@ -701,7 +701,7 @@ Java_java_lang_invoke_MethodHandleHelper_getCPTypeAt(JNIEnv *env, jclass unusedC
  * equivalent for MethodType.
  */
 jobject JNICALL
-Java_java_lang_invoke_MethodHandleHelper_getCPMethodTypeAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex)
+Java_java_lang_invoke_MethodHandleResolver_getCPMethodTypeAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex)
 {
 	jobject returnValue = NULL;
 	J9VMThread *vmThread = (J9VMThread *) env;
@@ -736,7 +736,7 @@ Java_java_lang_invoke_MethodHandleHelper_getCPMethodTypeAt(JNIEnv *env, jclass u
  * equivalent for MethodHandle.
  */
 jobject JNICALL
-Java_java_lang_invoke_MethodHandleHelper_getCPMethodHandleAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex)
+Java_java_lang_invoke_MethodHandleResolver_getCPMethodHandleAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex)
 {
 	jobject returnValue = NULL;
 	J9VMThread *vmThread = (J9VMThread *) env;
@@ -770,7 +770,7 @@ Java_java_lang_invoke_MethodHandleHelper_getCPMethodHandleAt(JNIEnv *env, jclass
 }
 
 jobject JNICALL
-Java_java_lang_invoke_MethodHandleHelper_getCPConstantDynamicAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex)
+Java_java_lang_invoke_MethodHandleResolver_getCPConstantDynamicAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex)
 {
 	jobject returnValue = NULL;
 	J9VMThread *vmThread = (J9VMThread *) env;
