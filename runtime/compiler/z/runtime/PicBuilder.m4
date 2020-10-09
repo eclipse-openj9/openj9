@@ -155,6 +155,18 @@ SETVAL(eq_returnAddressDirectMethod,8)
 SETVAL(eq_resolveVirtualJitEIPForHelperCall,12)
 SETVAL(eq_ResolveVirtualData_RIP,0)
 
+ZZ Interface Call Helper Read Only Layout
+SETVAL(eq_InterfaceCallHelper_readOnlyData,0)
+SETVAL(eq_InterfaceCallHelper_cpAddress,48)
+SETVAL(eq_InterfaceCallHelper_cpIndex,56)
+SETVAL(eq_InterfaceCallHelper_interfaceClass,64)
+SETVAL(eq_InterfaceCallHelper_methodIndex,72)
+SETVAL(eq_InterfaceCallHelper_totalPICSlotSize,88)
+SETVAL(eq_InterfaceCallHelper_isCacheFullFlag,96)
+SETVAL(eq_InterfaceCallHelperReadOnly_RA,4)
+SETVAL(eq_offsetOfMethodAddrInPICSlot,8)
+SETVAL(eq_sizeOfPICSlotForInterfaceCall,16)
+
 ZZ These two should really be in codert/jilconsts.inc
 SETVAL(J9TR_MethodConstantPool,8)
 SETVAL(eq_ramclassFromConstantPool,0)
@@ -2341,7 +2353,257 @@ ZZ # Load the address of lookup class
 
     END_FUNC(_interfaceCallHelperSingleDynamicSlot,ifCH1,7)
 
+ZZ ==================================================================
+ZZ  PICBuilder routine - _interfaceCallHelperMultiSlotsReadOnly
+ZZ ==================================================================
+   START_FUNC(_interfaceCallHelperMultiSlotsReadOnly,ifCHRM)
 
+LABEL(_interfaceCallHelperMultiSlotsReadOnly_BODY)
+   AHI_GPR  J9SP,-(3*PTR_SIZE)
+   ST_GPR   r1,(2*PTR_SIZE)(J9SP)
+   ST_GPR   r2,PTR_SIZE(J9SP)
+   ST_GPR   r3,0(J9SP)
+
+ZZ Load address of the interface call data block into the rEP
+   LR_GPR   rEP,r14
+   AGF      rEP,eq_InterfaceCallHelper_readOnlyData(rEP)
+
+ZZ If the stored interfaceClass in the PICSlot metadata is NULL, need to resolve the method.
+   L_GPR    r1,eq_InterfaceCallHelper_interfaceClass(rEP)
+   CHI_GPR  r1,0
+   JNZ      L_checkMethodIndexForPrivateTargetROMS
+
+ZZ Call the resolveJitInterfaceMethod helper
+   LA       r1,eq_InterfaceCallHelper_cpAddress(rEP)
+   LR_GPR   r2,r14
+   AGF      r2,eq_InterfaceCallHelperReadOnly_RA(r2)
+   LR_GPR   r0,r14
+
+LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveInterfaceMethod)
+   BASR     r14,r14
+
+   LR_GPR   r14,r0
+
+LABEL(L_checkMethodIndexForPrivateTargetROMS)
+
+   L_GPR    r1,eq_InterfaceCallHelper_methodIndex(rEP)
+   NILL     r1,J9TR_J9_ITABLE_OFFSET_DIRECT
+   JNZ      L_typeCheckIFCPrivateROMS
+
+LABEL(L_continueInterfaceLookupROMS)
+ZZ Setup for the jitLookupInterfaceMethod Call
+ZZ Args expected : r1 - receiverClass
+ZZ                 r2 - pointer to interfaceClass in CCData
+ZZ                 r3 - jitReturnAddress
+   LR_GPR   r3,r14
+   AGF      r3,eq_InterfaceCallHelperReadOnly_RA(r3)
+
+   LA       r2,eq_InterfaceCallHelper_interfaceClass(rEP)
+   L_GPR    r1,(2*PTR_SIZE)(J9SP)
+
+IfCompressedElse({dnl
+   llgf     r1,J9TR_J9Object_class(r1)
+},{dnl
+   L_GPR    r1,J9TR_J9Object_class(r1)
+})dnl
+   NILL     r1,HEX(10000)-J9TR_RequiredClassAlignment
+
+ZZ Call the jitLookupInterfaceMethod helper
+   LR_GPR   r0,r14
+
+LOAD_ADDR_FROM_TOC(r14,TR_S390jitLookupInterfaceMethod)
+   BASR     r14,r14
+
+
+ZZ Now check if the target is compiled or not.
+   L_GPR    r1,(2*PTR_SIZE)(J9SP)
+IfCompressedElse({dnl
+   llgf     r1,J9TR_J9Object_class(r1)
+},{dnl
+   L_GPR    r1,J9TR_J9Object_class(r1)
+})dnl
+   NILL     r1,HEX(10000)-J9TR_RequiredClassAlignment
+   L_GPR    r3,0(r2,r1)
+   LR_GPR   r14,r0
+   TM       eq_methodCompiledFlagOffset(r3),J9TR_MethodNotCompiledBit
+   JNZ      L_interfaceCallDispatchCommonROMS
+
+ZZ Method is compiled. Calculate the method Address and try to update the slot.
+   L_GPR    r3,J9TR_MethodPCStartOffset(r3)
+
+ZZ Snapshot for now do not support 31-Bit. Cleanup the following piece once
+ZZ confirmed.
+ifdef({TR_HOST_64BIT},{dnl
+   LGF      r14,-4(r3)
+},{dnl
+   L        r14,-4(r3)
+   lgfr     r14,r14
+})dnl
+
+   SRL      r14,16
+   AR_GPR   r3,r14
+
+
+   LR_GPR   r14,r0
+ZZ r1 = classPtr r3 = jit-to-jit entry point
+ZZ Routine to check if the PIC slots are available and
+ZZ Atomically update the slots.
+
+   TM          eq_InterfaceCallHelper_isCacheFullFlag(rEP),1
+   JNZ         L_interfaceCallDispatchCommonROMS
+
+   AHI_GPR     J9SP,-(3*PTR_SIZE)
+   ST_GPR      r6,0(J9SP)
+   ST_GPR      r7,PTR_SIZE(J9SP)
+   ST_GPR      r9,(2*PTR_SIZE)(J9SP)
+   LHI_GPR     r9,0
+
+ZZ Atomically check and update PIC slot routine.
+LABEL(L_checkNextPICSlot)
+   LA          r7,0(r9,rEP)
+   LHI_GPR     r6,0
+   CS_GPR      r6,r1,0(r7)
+   JNZ         L_checkForSameClass
+
+   ST_GPR      r3,eq_offsetOfMethodAddrInPICSlot(,r7)
+   J           L_doneCacheUpdate
+
+LABEL(L_checkForSameClass)
+ZZ Check if the we are updating slot with same class, in such case, we are done.
+   CR_GPR      r1,r6
+   JZ          L_doneCacheUpdate
+
+   AHI_GPR     r9,eq_sizeOfPICSlotForInterfaceCall
+   CL_GPR      r9,eq_InterfaceCallHelper_totalPICSlotSize(rEP)
+   JNZ         L_checkNextPICSlot
+
+ZZ All the slots has been checked and every one is updated.
+ZZ Set the cacheFull flag so that next time it does not check
+ZZ Slots to update and skip to dispatch sequence directly.
+   MVI         eq_InterfaceCallHelper_isCacheFullFlag(rEP),1
+
+LABEL(L_doneCacheUpdate)
+   L_GPR       r6,0(J9SP)
+   L_GPR       r7,PTR_SIZE(J9SP)
+   L_GPR       r9,(2*PTR_SIZE)(J9SP)
+   AHI_GPR     J9SP,3*PTR_SIZE
+
+ZZ TODO: For regular JDK, we add the PIC slot once updated to the PatchPIC On class unloading list.
+ZZ We need to verify if we need to do that for SnapShot.
+
+LABEL(L_interfaceCallDispatchCommonROMS)
+ZZ r0 should hold interpVtableOffset, r1 - This object and rest arguments are loaded back before making call.
+
+   LNR_GPR     r2,r2
+   AHI_GPR     r2,J9TR_InterpVTableOffset
+   LR_GPR      r0,r2
+   AGF         r14,eq_InterfaceCallHelperReadOnly_RA(r14)
+   L_GPR       r1,(2*PTR_SIZE)(J9SP)
+IfCompressedElse({dnl
+   llgf        r3,J9TR_J9Object_class(,r1)
+},{dnl
+   L_GPR       r3,J9TR_J9Object_class(,r1)
+})dnl
+   NILL        r3,HEX(10000)-J9TR_RequiredClassAlignment
+   L_GPR       rEP,0(r2,r3)
+   L_GPR       r2,PTR_SIZE(J9SP)
+   L_GPR       r3,0(J9SP)
+   AHI_GPR     J9SP,(3*PTR_SIZE)
+   BR          rEP
+
+LABEL(L_typeCheckIFCPrivateROMS)
+ZZ ------------------------------------------------------------
+ZZ      private interface method handling
+ZZ
+ZZ  1. do type check by calling fast_jitInstanceOf
+ZZ  2. if the type check passes, remove low tag from method
+ZZ     extract entry and perform direct dispatch.
+ZZ     Otherwise, call lookup helper so that it throws
+ZZ     an error.
+ZZ
+ZZ  Note that this is sharing the JIT direct dispatch with
+ZZ  virtual private method, which does not return to this routine
+
+ZZ  use a shorter name for this offset
+SETVAL(eq_vmThrSSP,J9TR_VMThread_systemStackPointer)
+
+ZZ  Call fast_jitInstanceOf
+ZZ  with three args: VMthread, object, and castClass.
+ZZ
+ZZ  The call to this helper follows J9::Z::CHelperLinkage except
+ZZ  that all volatiles are saved here.
+ZZ  instance of result is indicated in return reg
+ZZ
+ZZ  NOTE: fast_jitInstanceOf has different parameter orders on
+ZZ        different platforms
+ZZ
+ZZ  R1-3 have been saved. just need to save r0, r4-15 here.
+   LR_GPR   r0,r14
+   LR_GPR   CARG1,r13                                  # vmThr
+   L_GPR    CARG2,(2*PTR_SIZE)(J9SP)                   # obj
+   L_GPR    CARG3,eq_InterfaceCallHelper_interfaceClass(rEP)  # class
+
+   AHI_GPR  J9SP,-(13*PTR_SIZE)    # save r0, and r4-r15
+   ST_GPR   r0,0(J9SP)
+   STM_GPR  r4,r15,PTR_SIZE(J9SP)
+
+ZZ  Now start to call fast_jitInstanceOf as a C function
+   ST_GPR   J9SP,J9TR_VMThread_sp(r13)
+ifdef({J9ZOS390},{dnl
+   L_GPR    rSSP,eq_vmThrSSP(r13)
+   XC       eq_vmThrSSP(PTR_SIZE,r13),eq_vmThrSSP(r13)
+ifdef({TR_HOST_64BIT},{dnl
+ZZ 64 bit zOS. Do nothing.
+},{dnl
+ZZ 31 bit zOS. See definition of J9TR_CAA_SAVE_OFFSET
+   L_GPR    r12,2080(rSSP)
+})dnl
+
+})dnl
+
+LOAD_ADDR_FROM_TOC(r14,TR_instanceOf)
+   BASR     r14,r14        # call instanceOf
+
+ifdef({J9ZOS390},{dnl
+   ST_GPR   rSSP,eq_vmThrSSP(r13)
+})dnl
+
+   L_GPR    J9SP,J9TR_VMThread_sp(r13)
+
+ZZ  restore all regs
+   L_GPR    r0,0(J9SP)
+   LM_GPR   r4,r15,PTR_SIZE(J9SP)
+   AHI_GPR  J9SP,(13*PTR_SIZE)
+   LR_GPR   r14,r0
+
+   CHI_GPR  CRINT,1
+   JNE      L_continueInterfaceLookupROMS
+
+ZZ  remove low tag and call
+   L_GPR    r0,eq_intfMethodIndex_inInterfaceSnippet(r14)
+   LR_GPR   r3,r14         # free r14 for RA
+   LR_GPR   r1,r0          # keep low-tagged in r0
+
+ZZ  bitwise NOT the flag
+ifdef({J9ZOS390},{dnl
+ZZ zOS
+   LHI_GPR  r2,J9TR_J9_ITABLE_OFFSET_DIRECT
+   LCR_GPR  r2,r2
+   AHI_GPR  r2,-1
+},{dnl
+ZZ zLinux
+   LHI_GPR  r2,~J9TR_J9_ITABLE_OFFSET_DIRECT
+})dnl
+
+   NR_GPR   r1,r2         # Remove low-tag of J9Method ptr
+   AGF      r14,eq_InterfaceCallHelperReadOnly_RA(r14)
+   TM       eq_methodCompiledFlagOffset(r1),J9TR_MethodNotCompiledBit
+   JZ       L_jitted_private
+   L_GPR    rEP,eq_thunk_inInterfaceSnippet(r3)      # load J2I thunk
+   J        L_callPrivate_inVU
+
+   END_FUNC(_interfaceCallHelperMultiSlotsReadOnly,ifCHRM,8)
+   
 ZZ ===================================================================
 ZZ  PICBuilder routine - _interfaceCallHelperMultiSlots
 ZZ

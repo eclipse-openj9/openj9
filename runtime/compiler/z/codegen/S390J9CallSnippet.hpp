@@ -152,6 +152,25 @@ class S390VirtualUnresolvedReadOnlySnippet : public TR::Snippet
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
    };
 
+class S390InterfaceCallReadOnlySnippet : public TR::Snippet
+   {
+   intptr_t interfaceCallPICSlotDataAddress;
+
+   TR::LabelSymbol *doneLabel;
+
+   public:
+   S390InterfaceCallReadOnlySnippet(TR::CodeGenerator *cg, TR::Node *callNode, TR::LabelSymbol *lab, TR::LabelSymbol *doneLabel, intptr_t interfaceCallPICSlotDataAddress)
+      : TR::Snippet(cg, callNode, lab, false), doneLabel(doneLabel), interfaceCallPICSlotDataAddress(interfaceCallPICSlotDataAddress)
+      {
+      }
+
+   virtual Kind getKind() { return IsInterfaceCallDataReadOnly; }
+
+   virtual uint8_t *emitSnippetBody();
+
+   virtual uint32_t getLength(int32_t estimiateSnippetStart);
+   };
+
 class J9S390InterfaceCallDataSnippet : public TR::S390ConstantDataSnippet
    {
    TR::Instruction * _firstCLFI;
