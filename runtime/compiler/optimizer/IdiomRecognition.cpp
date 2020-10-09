@@ -6644,8 +6644,7 @@ TR_CISCTransformer::analyzeBoolTable(TR_BitVector **bv, TR::TreeTop **retSameExi
                      ntakenBV -= tmpBV;
                      break;
                   default:
-                     TR_ASSERT(false, "not implemented yet");
-                     // not implemented yet
+                     TR_UNIMPLEMENTED();
                      return false;
                   }
 
@@ -6781,7 +6780,7 @@ TR_CISCTransformer::analyzeByteBoolTable(TR_CISCNode *boolTable, uint8_t *table2
          defBV.setAll(   0+BYTEBVOFFSET, 255+BYTEBVOFFSET);
          break;
       default:
-         TR_ASSERT(false, "not implemented yet");
+         TR_UNIMPLEMENTED();
          // not implemented yet
          return -1;     // error
       }
@@ -6867,7 +6866,7 @@ TR_CISCTransformer::analyzeCharBoolTable(TR_CISCNode *boolTable, uint8_t *table6
          defBV.setAll(0, 65535);
          break;
       default:
-         TR_ASSERT(false, "not implemented yet");
+         TR_UNIMPLEMENTED();
          // not implemented yet
          return -1;     // error
       }
