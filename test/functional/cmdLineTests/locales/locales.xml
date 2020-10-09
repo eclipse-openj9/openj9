@@ -28,7 +28,7 @@
 	<variable name="CLASS" value="-cp $UTILSJAR$ VMBench.FibBench" />
 	
 	<test id="locales">
-		<command>$EXE$ -Xlog:INFO -Xshareclasses:SILENT -Xjit:NUMINTERFACECALLCACHESLOTS=4 -Xtrace:iprint=j9vm.4 $CLASS$</command>
+		<command>$EXE$ -Xsyslog:INFO -Xshareclasses:SILENT -Xjit:NUMINTERFACECALLCACHESLOTS=4 -Xtrace:iprint=j9vm.4 $CLASS$</command>
 		<output regex="no" type="success">Fibonacci: iterations</output> 
 		<output regex="no" type="failure">bad return code</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
