@@ -179,57 +179,57 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
       {
       if (resolveForStore())
          {
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedInstanceDataStoreGlue, false, false, false);
+         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedInstanceDataStoreGlue);
          }
       else
          {
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedInstanceDataGlue, false, false, false);
+         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedInstanceDataGlue);
          }
       }
    else if (getDataSymbol()->isClassObject())
       {
       if (getDataSymbol()->addressIsCPIndexOfStatic())
          {
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedClassGlue2, false, false, false);
+         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedClassGlue2);
          }
       else
          {
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedClassGlue, false, false, false);
+         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedClassGlue);
          }
       }
    else if (getDataSymbol()->isConstString())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedStringGlue, false, false, false);
+      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedStringGlue);
       }
    else if (getDataSymbol()->isConstMethodType())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodTypeGlue, false, false, false);
+      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodTypeGlue);
       }
    else if (getDataSymbol()->isConstMethodHandle())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodHandleGlue, false, false, false);
+      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodHandleGlue);
       }
    else if (getDataSymbol()->isCallSiteTableEntry())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedCallSiteTableEntryGlue, false, false, false);
+      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedCallSiteTableEntryGlue);
       }
    else if (getDataSymbol()->isMethodTypeTableEntry())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodTypeTableEntryGlue, false, false, false);
+      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodTypeTableEntryGlue);
       }
    else if (getDataSymbol()->isConstantDynamic())
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitResolveConstantDynamicGlue, false, false, false);
+      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitResolveConstantDynamicGlue);
       }
    else // must be static data
       {
       if (resolveForStore())
          {
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedStaticDataStoreGlue, false, false, false);
+         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedStaticDataStoreGlue);
          }
       else
          {
-         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedStaticDataGlue, false, false, false);
+         glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpreterUnresolvedStaticDataGlue);
          }
       }
 
