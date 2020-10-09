@@ -35,14 +35,7 @@ void avl_jit_artifact_free_all(J9JavaVM *javaVM, J9AVLTree *tree) {
 
 	avl_jit_artifact_free_node(javaVM, (J9JITHashTable *)tree->rootNode);
 
-#if defined(J9VM_OPT_SNAPSHOTS)
-	if (IS_SNAPSHOT_RUN(javaVM)) {
-		vmsnapshot_free_memory(tree);
-	} else
-#endif
-	{
-		j9mem_free_memory(tree);
-	}
+	j9mem_free_memory(tree);
 }
 
 
