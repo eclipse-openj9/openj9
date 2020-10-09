@@ -22,5 +22,5 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 <exports group="se11">
 	<export name="Java_java_lang_Class_getNestHostImpl"/>
 	<export name="Java_java_lang_Class_getNestMembersImpl"/>
-	<export name="Java_java_lang_invoke_MethodHandleHelper_getCPConstantDynamicAt"/>
+	<export name="Java_java_lang_invoke_MethodHandleResolver_getCPConstantDynamicAt"/>
 </exports>
