@@ -1156,7 +1156,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_jitRetranslateCaller,         (void *)jitRetranslateCaller,                TR_Helper);
    SET(TR_jitRetranslateCallerWithPrep, (void *)jitRetranslateCallerWithPreparation, TR_Helper);
 
-#if !defined(TR_CROSS_COMPILE_ONLY)
 #ifdef TR_HOST_X86
 
    // --------------------------------- X86 ------------------------------------
@@ -1685,8 +1684,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
       a  = runtimeHelpers.getFunctionEntryPointOrConst(h);
       fprintf(stderr,"TR_S390interfaceCallHelperSingleDynamicSlot= _helpers[%d]=0x%p \n",h,a);
       }
-#endif
-
 #endif
 
    #undef SET

@@ -93,7 +93,6 @@ int32_t J9::Recompilation::limitMethodsCompiled = 0;
 int32_t J9::Recompilation::hotThresholdMethodsCompiled = 0;
 int32_t J9::Recompilation::scorchingThresholdMethodsCompiled = 0;
 
-#if !defined(TR_CROSS_COMPILE_ONLY)
 bool
 J9::Recompilation::isAlreadyBeingCompiled(
       TR_OpaqueMethodBlock *methodInfo,
@@ -105,7 +104,6 @@ J9::Recompilation::isAlreadyBeingCompiled(
       return fej9->isBeingCompiled(methodInfo, startPC);
    return TR::Recompilation::isAlreadyPreparedForRecompile(startPC);
    }
-#endif
 
 void setDllSlip(char*CodeStart,char*CodeEnd,char*dllName, TR::Compilation * comp)
 {
@@ -180,7 +178,6 @@ J9::Recompilation::sampleMethod(
 
    int32_t totalSampleCount = globalSampleCount;
 
-#if !defined(TR_CROSS_COMPILE_ONLY)
    J9Method * j9method = (J9Method *) methodInfo;
 
    /* Reject samples to native methods */
@@ -234,7 +231,6 @@ J9::Recompilation::sampleMethod(
             TR::Recompilation::jitRecompilationsInduced++;
          }
       }
-#endif
    }
 
 
@@ -1202,8 +1198,6 @@ void initializeJitRuntimeHelperTable(char isSMP)
    #define SET runtimeHelpers.setAddress
    #define SET_CONST runtimeHelpers.setConstant
 
-#if !defined(TR_CROSS_COMPILE_ONLY)
-
 #if defined(TR_HOST_POWER)
    PPCinitializeValueProfiler();
 #elif defined(TR_HOST_S390)
@@ -1304,8 +1298,6 @@ void initializeJitRuntimeHelperTable(char isSMP)
    SET(TR_S390induceRecompilation,              (void *)_induceRecompilation,       TR_Helper);
    SET_CONST(TR_S390induceRecompilation_unwrapper, (void *) induceRecompilation_unwrapper);
    SET_CONST(TR_S390CEnvironmentAddress,(void *)TOC_UNWRAP_ENV((void *)_jitProfileValue));
-
-#endif
 
 #endif
 
