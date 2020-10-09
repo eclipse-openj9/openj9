@@ -970,7 +970,7 @@ J9NLS_VM_XSCDMX_IGNORED.system_action=-Xscdmx will be ignored.
 J9NLS_VM_XSCDMX_IGNORED.user_response=Ignore this message, remove -Xscdmx, or enable -Xshareclasses.
 # END NON-TRANSLATABLE
 
-# Help text for the -Xlog option. Note: please do not translate the text of the option flags: help, all, none, warn, error, info, config, vital
+# Help text for the -Xsyslog option. Note: please do not translate the text of the option flags: help, all, none, warn, error, info, config, vital
 J9NLS_VM_XLOG_HELP01=\nSyntaxe :\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP01.explanation=NOTAG
@@ -978,64 +978,64 @@ J9NLS_VM_XLOG_HELP01.system_action=
 J9NLS_VM_XLOG_HELP01.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:help is not translatable
-J9NLS_VM_XLOG_HELP02=  -Xlog:help              Imprime l'aide -Xlog de la machine virtuelle Java.
+# -Xsyslog:help is not translatable
+J9NLS_VM_XLOG_HELP02=  -Xsyslog:help              Imprime l'aide -Xsyslog de la machine virtuelle Java.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP02.explanation=NOTAG
 J9NLS_VM_XLOG_HELP02.system_action=
 J9NLS_VM_XLOG_HELP02.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:none is not translatable
-J9NLS_VM_XLOG_HELP03=  -Xlog:none              D\u00e9sactive les options de journal de la machine virtuelle Java sp\u00e9cifi\u00e9es pr\u00e9c\u00e9demment, y compris les valeurs par d\u00e9faut.
+# -Xsyslog:none is not translatable
+J9NLS_VM_XLOG_HELP03=  -Xsyslog:none              D\u00e9sactive les options de journal de la machine virtuelle Java sp\u00e9cifi\u00e9es pr\u00e9c\u00e9demment, y compris les valeurs par d\u00e9faut.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP03.explanation=NOTAG
 J9NLS_VM_XLOG_HELP03.system_action=
 J9NLS_VM_XLOG_HELP03.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:all is not translatable
-J9NLS_VM_XLOG_HELP04=  -Xlog:all               Consigne tous les messages de la machine virtuelle Java.
+# -Xsyslog:all is not translatable
+J9NLS_VM_XLOG_HELP04=  -Xsyslog:all               Consigne tous les messages de la machine virtuelle Java.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP04.explanation=NOTAG
 J9NLS_VM_XLOG_HELP04.system_action=
 J9NLS_VM_XLOG_HELP04.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:info is not translatable
-J9NLS_VM_XLOG_HELP05=  -Xlog:info              Consigne les messages d'information de la machine virtuelle Java.
+# -Xsyslog:info is not translatable
+J9NLS_VM_XLOG_HELP05=  -Xsyslog:info              Consigne les messages d'information de la machine virtuelle Java.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP05.explanation=NOTAG
 J9NLS_VM_XLOG_HELP05.system_action=
 J9NLS_VM_XLOG_HELP05.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:warn is not translatable
-J9NLS_VM_XLOG_HELP06=  -Xlog:warn              Consigne les messages d'avertissement de la machine virtuelle Java.
+# -Xsyslog:warn is not translatable
+J9NLS_VM_XLOG_HELP06=  -Xsyslog:warn              Consigne les messages d'avertissement de la machine virtuelle Java.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP06.explanation=NOTAG
 J9NLS_VM_XLOG_HELP06.system_action=
 J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:error is not translatable
-J9NLS_VM_XLOG_HELP07=  -Xlog:error             Consigne les messages d'erreur de la machine virtuelle Java. Cette option est activ\u00e9e par d\u00e9faut.
+# -Xsyslog:error is not translatable
+J9NLS_VM_XLOG_HELP07=  -Xsyslog:error             Consigne les messages d'erreur de la machine virtuelle Java. Cette option est activ\u00e9e par d\u00e9faut.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
 J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:vital is not translatable
-J9NLS_VM_XLOG_HELP08=  -Xlog:vital             Consigne les messages critiques de la machine virtuelle Java. Cette option est activ\u00e9e par d\u00e9faut.
+# -Xsyslog:vital is not translatable
+J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital             Consigne les messages critiques de la machine virtuelle Java. Cette option est activ\u00e9e par d\u00e9faut.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
 J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:config is not translatable
-J9NLS_VM_XLOG_HELP09=  -Xlog:config            Consigne les messages de configuration de la machine virtuelle Java.\n
+# -Xsyslog:config is not translatable
+J9NLS_VM_XLOG_HELP09=  -Xsyslog:config            Consigne les messages de configuration de la machine virtuelle Java.\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1050,16 +1050,16 @@ J9NLS_VM_XLOG_HELP10.system_action=
 J9NLS_VM_XLOG_HELP10.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:error,warn is not translatable
-J9NLS_VM_XLOG_HELP11=  -Xlog:error,warn
+# -Xsyslog:error,warn is not translatable
+J9NLS_VM_XLOG_HELP11=  -Xsyslog:error,warn
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP11.explanation=NOTAG
 J9NLS_VM_XLOG_HELP11.system_action=
 J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12=  -Xlog:info,warn,error\n
+# -Xsyslog:info,warn,error is not translatable
+J9NLS_VM_XLOG_HELP12=  -Xsyslog:info,warn,error\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=
