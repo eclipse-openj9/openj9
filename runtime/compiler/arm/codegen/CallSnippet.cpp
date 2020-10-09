@@ -262,7 +262,7 @@ uint8_t *TR::ARMCallSnippet::emitSnippetBody()
    // Flush in-register arguments back to the stack for interpreter
    cursor = flushArgumentsToStack(cursor, callNode, getSizeOfArguments(), cg());
 
-   glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper(), false, false, false);
+   glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper());
 
    // bl glueRef
    *(int32_t *)cursor = encodeHelperBranchAndLink(glueRef, cursor, callNode, cg());
@@ -395,7 +395,7 @@ uint8_t *TR::ARMVirtualUnresolvedSnippet::emitSnippetBody()
    {
    uint8_t            *cursor = cg()->getBinaryBufferCursor();
    TR::SymbolReference *methodSymRef = getNode()->getSymbolReference();
-   TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMvirtualUnresolvedHelper, false, false, false);
+   TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMvirtualUnresolvedHelper);
 
    TR::Compilation* comp = cg()->comp();
 
@@ -439,7 +439,7 @@ uint8_t *TR::ARMInterfaceCallSnippet::emitSnippetBody()
    {
    uint8_t            *cursor = cg()->getBinaryBufferCursor();
    TR::SymbolReference *methodSymRef = getNode()->getSymbolReference();
-   TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMinterfaceCallHelper, false, false, false);
+   TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMinterfaceCallHelper);
 
    getSnippetLabel()->setCodeLocation(cursor);
 
@@ -543,7 +543,7 @@ uint8_t *TR::ARMCallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize
                   cg->getDebug()->getName(dataType));
       }
 
-   dispatcher = (intptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false)->getMethodAddress();
+   dispatcher = (intptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(helper)->getMethodAddress();
 
    buffer = flushArgumentsToStack(buffer, callNode, argSize, cg);
 
@@ -606,7 +606,7 @@ TR_J2IThunk *TR::ARMCallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNode,
                   cg->getDebug()->getName(dataType));
       }
 
-   dispatcher = (intptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false)->getMethodAddress();
+   dispatcher = (intptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(helper)->getMethodAddress();
 
    buffer = flushArgumentsToStack(buffer, callNode, argSize, cg);
 
