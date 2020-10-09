@@ -895,7 +895,7 @@ old_slow_jitLoadFlattenableArrayElement(J9VMThread *currentThread)
 		addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	} else {
 		j9object_t value = NULL;
-		U_32 arrayLength = J9INDEXABLEOBJECT_SIZE(_currentThread, arrayObject);
+		U_32 arrayLength = J9INDEXABLEOBJECT_SIZE(currentThread, arrayObject);
 		if (index >= arrayLength) {
 			buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
 			addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYINDEXOUTOFBOUNDSEXCEPTION, NULL);
@@ -932,7 +932,7 @@ old_fast_jitLoadFlattenableArrayElement(J9VMThread *currentThread)
 	if (NULL == arrayObject) {
 		goto slow;
 	}
-	arrayLength = J9INDEXABLEOBJECT_SIZE(_currentThread, arrayObject);
+	arrayLength = J9INDEXABLEOBJECT_SIZE(currentThread, arrayObject);
 	if (index >= arrayLength) {
 		goto slow;
 	}
@@ -968,7 +968,7 @@ old_slow_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 		if (index >= arrayLength) {
 			addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYINDEXOUTOFBOUNDSEXCEPTION, NULL);
 		} else {
-			if (false == VM_VMHelpers::objectArrayStoreAllowed(arrayref, value)) {
+			if (false == VM_VMHelpers::objectArrayStoreAllowed(currentThread, arrayref, value)) {
 				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, NULL);
 			} else {
 				J9ArrayClass *arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(currentThread, arrayref);
@@ -998,7 +998,7 @@ old_fast_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 	if (index >= arrayLength) {
 		goto slow;
 	}
-	if (false == VM_VMHelpers::objectArrayStoreAllowed(arrayref, value)) {
+	if (false == VM_VMHelpers::objectArrayStoreAllowed(currentThread, arrayref, value)) {
 		goto slow;
 	}
 	arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(currentThread, arrayref);
