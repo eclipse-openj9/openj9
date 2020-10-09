@@ -70,6 +70,9 @@ J9::CPU::customize(OMRProcessorDesc processorDescription)
 TR::CPU
 J9::CPU::detect(OMRPortLibrary * const omrPortLib)
    {   
+   if (omrPortLib == NULL)
+      return TR::CPU();
+
    OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
    OMRProcessorDesc processorDescription;
    omrsysinfo_get_processor_description(&processorDescription);
