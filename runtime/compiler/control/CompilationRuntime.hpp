@@ -916,9 +916,6 @@ public:
    enum {SMALL_LAG=1, MEDIUM_LAG, LARGE_LAG};
    bool methodCanBeCompiled(TR_FrontEnd *, TR_ResolvedMethod *compilee, TR_FilterBST *&filter);
 
-   void emitJvmpiExtendedDataBuffer(TR::Compilation *&compiler, J9VMThread *vmThread, J9Method *&_method, TR_MethodMetaData *metaData);
-   void emitJvmpiCallSites(TR::Compilation *&compiler, J9VMThread *vmThread, J9Method *&_method);
-
    void setAllCompilationsShouldBeInterrupted();
 
    int32_t getIprofilerMaxCount() const { return _iprofilerMaxCount; }
