@@ -181,6 +181,9 @@ target_compile_definitions(j9prt
 if(OMR_OS_WINDOWS)
 	target_include_directories(j9prt PRIVATE win32_include)
 else()
+	if(OMR_OS_ZOS)
+		target_include_directories(j9prt PRIVATE zos390)
+	endif()
 	target_include_directories(j9prt PRIVATE
 		unix
 		unix_include
