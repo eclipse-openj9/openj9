@@ -258,6 +258,11 @@ target_sources(j9vm_interface
 		$<$<OR:${is_shlib},${is_executable}>:${CMAKE_CURRENT_BINARY_DIR}/copyright.c>
 )
 
+# If on z/OS link against omr_ascii, this is what gives us convlit(ISO8859-1) and links j9atoe
+if(OMR_OS_ZOS)
+	target_link_libraries(j9vm_interface INTERFACE omr_ascii)
+endif()
+
 target_include_directories(j9vm_interface INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/nls)
 
 add_dependencies(j9vm_interface
