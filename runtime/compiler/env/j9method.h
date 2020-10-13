@@ -129,6 +129,7 @@ public:
    static TR::DataType             unsafeDataTypeForObject(TR::RecognizedMethod rm);
    static bool                     isVarHandleOperationMethod(TR::RecognizedMethod rm);
    virtual bool                    isVarHandleAccessMethod(TR::Compilation * = NULL);
+   virtual bool                    isSignaturePolymorphicMethod(TR::Compilation * = NULL);
 
    virtual bool                    isUnsafeWithObjectArg( TR::Compilation * comp = NULL);
    virtual bool                    isUnsafeCAS(TR::Compilation * = NULL);
@@ -446,6 +447,9 @@ public:
 
    virtual bool                    isCompilable(TR_Memory *);
 
+   // Check if a method at cpIndex has to be compile time resolved
+   //
+   virtual bool                    shouldCompileTimeResolveMethod(I_32 cpIndex);
    static TR_OpaqueMethodBlock *   getVirtualMethod(TR_J9VMBase *fej9, J9ConstantPool *cp, I_32 cpIndex, UDATA *vTableOffset, bool *unresolvedInCP);
    static TR_OpaqueClassBlock  *   getInterfaceITableIndexFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex, uintptr_t *pITableIndex);
 
