@@ -133,7 +133,7 @@ void freeMemorySegment(J9JavaVM *javaVM, J9MemorySegment *segment, BOOLEAN freeD
 		 */
 		if (J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_CODE | MEMORY_TYPE_FIXED_RAM_CLASS | MEMORY_TYPE_VIRTUAL)) {
 #if defined(J9VM_OPT_SNAPSHOTS)
-			if (IS_SNAPSHOT_RUN(javaVM) && J9_ARE_ALL_BITS_SET(segment->type, MEMORY_TYPE_CODE))
+			if (IS_SNAPSHOT_RUN(javaVM) && J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_CODE | MEMORY_TYPE_CCDATA))
 				vmsnapshot_free_memory(segment->baseAddress);
 			else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
