@@ -2262,25 +2262,6 @@ J9::Options::fePostProcessAOT(void * base)
    return true;
    }
 
-static inline bool jvmpiInterface(J9JavaVM * javaVM)
-   {
-   #ifdef J9VM_PROF_JVMPI
-      return javaVM->jvmpiInterface != 0;
-   #else
-      return false;
-   #endif
-   }
-
-static inline UDATA jvmpiExtensions(J9JITConfig * jitConfig)
-   {
-   #ifdef J9VM_PROF_JVMPI
-      //return javaVM->jvmpiInterface != 0 ? jitConfig->jvmpiExtensions : 0;
-      return enableCompiledMethodLoadHookOnly ? 0 : jitConfig->jvmpiExtensions;
-   #else
-      return 0;
-   #endif
-   }
-
 bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    {
    // vmPostProcess is called indirectly from the JIT_INITIALIZED phase
@@ -2372,22 +2353,19 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
 
    // Determine whether or not to generate method enter and exit hooks
    //
-   if (!jvmpiInterface(javaVM) || (jvmpiExtensions(jitConfig) & J9JIT_JVMPI_GEN_COMPILED_ENTRY_EXIT))
+   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_METHOD_ENTER))
       {
-      if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_METHOD_ENTER))
-         {
-         self()->setOption(TR_ReportMethodEnter);
+      self()->setOption(TR_ReportMethodEnter);
 #if !defined(TR_HOST_S390) && !defined(TR_HOST_POWER) && !defined(TR_HOST_X86)
-         doAOT = false;
+      doAOT = false;
 #endif
-         }
-      if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_METHOD_RETURN))
-         {
-         self()->setOption(TR_ReportMethodExit);
+      }
+   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_METHOD_RETURN))
+      {
+      self()->setOption(TR_ReportMethodExit);
 #if !defined(TR_HOST_S390) && !defined(TR_HOST_POWER) && !defined(TR_HOST_X86)
-         doAOT = false;
+      doAOT = false;
 #endif
-         }
       }
 
    // Determine whether or not to disable allocation inlining

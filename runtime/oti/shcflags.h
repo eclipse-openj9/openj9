@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -151,6 +151,8 @@
 #define J9SHR_LOADTYPE_NORMAL  1
 #define J9SHR_LOADTYPE_REDEFINED  2
 #define J9SHR_LOADTYPE_RETRANSFORMED  3
+/* class is not loaded from class path or module path */
+#define J9SHR_LOADTYPE_NOT_FROM_PATH  4
 
 #define J9SHR_HEADER_STRING_TABLE_INITIALIZED 1
 

@@ -781,10 +781,6 @@ TR::Register *J9::X86::I386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
 #endif
 
 #ifdef TR_TARGET_64BIT
-// Hack markers
-#define JVMPI_HOOKS_WITHOUT_SNIPPETS (!debug("enableSnippetsForJVMPI")) // Snippets can't yet do the necessary linkage logic
-
-
 TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    // TODO:AMD64: Try to common this with the IA32 version
@@ -823,19 +819,6 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
    //          aconst (RAM method)
    //
 
-   // Decrement the reference count on the constant placeholder parameter to
-   // the MethodEnterHook call.  An evaluation isn't necessary because the
-   // constant value isn't used here.
-   //
-   if (node->getOpCodeValue() == TR::MethodEnterHook && !JVMPI_HOOKS_WITHOUT_SNIPPETS)
-      {
-      if (node->getSecondChild()->getOpCode().isCall() &&
-          node->getSecondChild()->getNumChildren() > 1)
-         {
-         cg->decReferenceCount(node->getSecondChild()->getFirstChild());
-         }
-      }
-
    // The child contains an inline test.
    //
    TR::Node *testNode    = node->getFirstChild();
@@ -851,8 +834,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
    //
    // The reference counts will be decremented when the call node is evaluated.
    //
-   if (JVMPI_HOOKS_WITHOUT_SNIPPETS &&
-       (node->getOpCodeValue() == TR::MethodEnterHook || node->getOpCodeValue() == TR::MethodExitHook))
+   if (node->getOpCodeValue() == TR::MethodEnterHook || node->getOpCodeValue() == TR::MethodExitHook)
       {
       TR::Node *callNode = node->getSecondChild();
 
@@ -910,8 +892,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
 
    TR::Instruction *startInstruction = generateLabelInstruction(LABEL, node, startLabel, cg);
 
-   if (JVMPI_HOOKS_WITHOUT_SNIPPETS &&
-       (node->getOpCodeValue() == TR::MethodEnterHook || node->getOpCodeValue() == TR::MethodExitHook))
+   if (node->getOpCodeValue() == TR::MethodEnterHook || node->getOpCodeValue() == TR::MethodExitHook)
       {
       TR::Node *callNode = node->getSecondChild();
 

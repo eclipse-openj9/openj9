@@ -9470,25 +9470,6 @@ getMethodFromBCInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
    return method;
    }
 
-// assumes that a debug server exists with getLineNumber()
-static int32_t getLineNumberFromBCIndex(J9JavaVM *vm, J9Method *method, int32_t bcIndex)
-   {
-   int32_t lineNumber;
-
-   // We don't always have lineNumber info in the class.  This allows us to use
-   // bytecode offset in place of lineNumbers for tools like profile diffing.
-   //
-   // TODO: Add support for an indexable table of inlined methods.  Then pre-fix the bytecode
-   //       offset with the index of the inlined method.
-   //
-   static char *useByteCodeOffsetForJVMPILineNums = feGetEnv("TR_UseBCOffsetForJVMPILineNums");
-   if (useByteCodeOffsetForJVMPILineNums)
-      lineNumber = bcIndex;
-   else
-      lineNumber = getLineNumberForROMClass(vm, method, bcIndex);
-   return lineNumber;
-   }
-
 static inline U_8 *
 writeU64(U_8 * bufferCursor, U_64 data)
    {
@@ -9500,14 +9481,14 @@ static inline U_8 *
 writeU32(U_8 * bufferCursor, U_32 data)
    {
    *((U_32 *)bufferCursor) = data;
-   return bufferCursor +sizeof(U_32);
+   return bufferCursor + sizeof(U_32);
    }
 
 static inline U_8 *
 writeI32(U_8 * bufferCursor, I_32 data)
    {
    *((I_32 *)bufferCursor) = data;
-   return bufferCursor +sizeof(I_32);
+   return bufferCursor + sizeof(I_32);
    }
 
 static inline U_8 *
@@ -9529,124 +9510,6 @@ writeU8(U_8 * bufferCursor, U_8 data)
    {
    *bufferCursor = data;
    return bufferCursor + sizeof(U_8);
-   }
-
-void
-TR::CompilationInfo::emitJvmpiCallSites(TR::Compilation *&compiler, J9VMThread *vmThread, J9Method *&_method)
-   {
-   PORT_ACCESS_FROM_JAVAVM(_jitConfig->javaVM);
-
-   // no point outputting an empty table
-   if (compiler->getNumInlinedCallSites() < 1)
-      return;
-
-   // format:
-   // <u32 eye-catcher> <u32 type> <u32 attributes> <i16 numCallSites>
-   // <i16 callerIndex> <u32 callerLineNum> <i32 name length> <utf8 null-terminated calleeSourceFile>
-   // <i16 callerIndex> <u32 callerLineNum> <i32 name length> <utf8 null-terminated calleeSourceFile>
-   // ...
-   // where attributes is:
-   // bits 0-3 = version of format
-   // ** if nameLength < 0; then the actual file name is the same as for record[-nameLength];
-
-   uint8_t formatVersion = 0;
-   uint32_t attributes = 0;    // no attributes, at this moment...
-   attributes |= formatVersion;
-
-   uint32_t bufferSize = 3*sizeof(uint32_t) + sizeof(int16_t); // eye catcher, type, attributes, # callsites
-
-   // calculate the buffer size
-   for (int16_t i = 0; i < (int16_t) compiler->getNumInlinedCallSites(); i++)
-      {
-      bufferSize += sizeof(int16_t);  // 2 bytes for calleeIndex
-      bufferSize += sizeof(uint32_t); // 4 bytes for line number in caller
-      bufferSize += sizeof(uint32_t); // 4 bytes for the length of the source file names
-
-      TR_OpaqueMethodBlock * method = compiler->getInlinedCallSite(i)._methodInfo;
-
-      J9UTF8 * calleeSourceFileUTF8 = getSourceFileName(_jitConfig->javaVM, _method);
-
-      int32_t calleeSourceFileLen;
-      if (calleeSourceFileUTF8)
-         utf8Data(calleeSourceFileUTF8, calleeSourceFileLen);
-      else
-         calleeSourceFileLen = 0;
-
-      bufferSize += calleeSourceFileLen + 1; // +1 for null terminator
-      }
-
-   U_8 *buffer = (U_8 *)j9mem_allocate_memory(bufferSize, J9MEM_CATEGORY_JIT);
-   if (!buffer)
-      return;
-
-   U_8 *bufferCursor = buffer;
-
-   bufferCursor = writeU32(bufferCursor, JITA2N_EXTENDED_DATA_EYE_CATCHER);
-   bufferCursor = writeU32(bufferCursor, JITA2N_EXTENDED_DATA_CALLSITES);
-   bufferCursor = writeU32(bufferCursor, attributes);
-   bufferCursor = writeI16(bufferCursor, compiler->getNumInlinedCallSites());
-
-   // Remember the last source file we had; this way, if the same file is
-   // used more than once (fairly likely), we can just output a code to use
-   // the same filename as the previous one.
-   //
-   const char *lastCalleeSourceFile = NULL;
-   int32_t     lastCalleeSourceFileLen = -1;
-
-   for (int16_t icsIndex = 0; icsIndex < (int16_t) compiler->getNumInlinedCallSites(); icsIndex++)
-      {
-
-      TR_ByteCodeInfo       bcInfo = compiler->getInlinedCallSite(icsIndex)._byteCodeInfo;
-      TR_OpaqueMethodBlock *method = compiler->getInlinedCallSite(icsIndex)._methodInfo;
-      J9UTF8               *calleeSourceFileUTF8 = getSourceFileName(_jitConfig->javaVM, _method);
-      int32_t               calleeSourceFileLen = 0;
-      const char           *calleeSourceFile = NULL;
-      uint32_t              callerLineNumber = -1;
-      int16_t               callerIcsIndex = bcInfo.getCallerIndex();
-
-      if (calleeSourceFileUTF8)
-         calleeSourceFile = utf8Data(calleeSourceFileUTF8, calleeSourceFileLen);
-      else
-         calleeSourceFileLen = 0;
-
-      // quick little hack: if the last source file is the same as this one, output the negated index of
-      // the last call site as this entry's length, then output a zero-length, null-terminated
-      // string for this one's file name
-      //
-      if (lastCalleeSourceFile && lastCalleeSourceFileLen == calleeSourceFileLen &&
-          strncmp(lastCalleeSourceFile, calleeSourceFile, calleeSourceFileLen) == 0)
-         {
-         // we don't have to update last*, since we're the same;
-         // but we do change the output strings
-         //
-         calleeSourceFileLen = 0x80000000 | (icsIndex - 1);
-         calleeSourceFile = "";
-         }
-      else
-         {
-         lastCalleeSourceFile = calleeSourceFile;
-         lastCalleeSourceFileLen = calleeSourceFileLen;
-         }
-
-      callerLineNumber = getLineNumberFromBCIndex(_jitConfig->javaVM, (J9Method *) method, bcInfo.getByteCodeIndex());
-
-      // and now, output our record
-      bufferCursor = writeI16(bufferCursor, callerIcsIndex);
-      bufferCursor = writeU32(bufferCursor, callerLineNumber);
-      bufferCursor = writeI32(bufferCursor, calleeSourceFileLen);
-
-      // if length < 0, then it's been overloaded to be an index, and we don't output the source file
-      if (calleeSourceFileLen > 0)
-         {
-         strncpy((char *) bufferCursor, calleeSourceFile, calleeSourceFileLen); // does not copy null term
-         bufferCursor += calleeSourceFileLen;
-         }
-
-      *bufferCursor++ = '\0';
-      }
-
-   ALWAYS_TRIGGER_J9HOOK_JIT_COMPILED_METHOD_LOAD(_jitConfig->hookInterface, vmThread, _method, buffer, bufferCursor - buffer, NULL);
-   j9mem_free_memory(buffer);
    }
 
 // Compilation descriptor:
@@ -9932,7 +9795,7 @@ uint8_t * TR::CompilationInfo::bufferPopulateLineNumberTable(uint8_t * buffer, T
       bcInfo =     instruction->getNode()->getByteCodeInfo();
       icsIndex =   bcInfo.getCallerIndex();
       method =     getMethodFromBCInfo(bcInfo, compiler);
-      lineNumber = getLineNumberFromBCIndex(_jitConfig->javaVM, (J9Method *) method, bcInfo.getByteCodeIndex());
+      lineNumber = getLineNumberForROMClass(_jitConfig->javaVM, (J9Method *) method, bcInfo.getByteCodeIndex());
 
       needNewRecord = (isFirstLoop || // this means we don't need to init lastLineNumber
                        numOffsets == UCHAR_MAX ||
@@ -9997,47 +9860,6 @@ uint8_t * TR::CompilationInfo::bufferPopulateLineNumberTable(uint8_t * buffer, T
    *recordHead = numOffsets;
 
    return bufferCursor;
-   }
-
-void
-TR::CompilationInfo::emitJvmpiExtendedDataBuffer(TR::Compilation *&compiler, J9VMThread *vmThread, J9Method *&_method, TR_MethodMetaData *metaData)
-   {
-   PORT_ACCESS_FROM_JAVAVM(_jitConfig->javaVM);
-
-   // bufferCursor is our main cursor, but when we need to print out addresses,
-   U_8 *buffer, *bufferCursor, *bufferCursorStart;
-   U_32 bufferSize = 0;
-
-   // ... SIZES ...
-   // .............
-
-   // Compilation attributes
-   bufferSize += bufferSizeCompilationAttributes();
-   // Callsite table
-   bufferSize += bufferSizeInlinedCallSites(compiler, metaData);
-   // Line number/callsite index table
-   bufferSize += bufferSizeLineNumberTable(compiler, metaData, _method);
-
-   // ... BUY THE BUFFER ...
-   // ....... ..............
-   buffer = (U_8 *)j9mem_allocate_memory(bufferSize, J9MEM_CATEGORY_JIT);
-   if (!buffer)
-      return;
-
-   // ... POPULATE ...
-   // ................
-   bufferCursorStart = bufferCursor = buffer;
-   // Compilation attributes
-   bufferCursor = bufferPopulateCompilationAttributes(bufferCursor, compiler, metaData);
-   // Inlined call sites table
-   bufferCursor = bufferPopulateInlinedCallSites(bufferCursor, compiler, metaData);
-   // Linenumber table
-   bufferCursor = bufferPopulateLineNumberTable(bufferCursor, compiler, metaData, _method);
-
-   // Call event hook
-   if (J9_EVENT_IS_HOOKED(_jitConfig->javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
-      ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(_jitConfig->javaVM->hookInterface, vmThread, _method, buffer, bufferCursor - buffer, "JIT inlined body", NULL);
-   j9mem_free_memory(buffer);
    }
 
 #if defined(JIT_METHODHANDLE_TRANSLATED)
@@ -10680,12 +10502,6 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             {
             OMR::CodeCacheMethodHeader *ccMethodHeader;
             ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(javaVM->hookInterface, vmThread, method, (U_8*)metaData->startPC, metaData->endWarmPC - metaData->startPC, "JIT warm body", metaData);
-
-            if (TR::Options::getCmdLineOptions()->getOption(TR_EnableJVMPILineNumbers))
-               {
-               _compInfo.emitJvmpiCallSites(compiler, vmThread, method);
-               _compInfo.emitJvmpiExtendedDataBuffer(compiler, vmThread, method, metaData);
-               }
 
             if (metaData->startColdPC)
                {
