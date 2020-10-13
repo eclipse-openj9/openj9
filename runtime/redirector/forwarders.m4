@@ -343,4 +343,8 @@ _IF([JAVA_SPEC_VERSION >= 16],
 	[_X(JVM_IsSharingEnabled, JNICALL, false, jboolean, JNIEnv *env)])
 _IF([JAVA_SPEC_VERSION >= 16],
 	[_X(JVM_DefineArchivedModules, JNICALL, false, void, JNIEnv *env, jobject obj1, jobject obj2)])
+_IF([JAVA_SPEC_VERSION >= 16],
+	[_X(JVM_LogLambdaFormInvoker, JNICALL, false, void, JNIEnv *env, jstring str)])
+_IF([JAVA_SPEC_VERSION >= 16],
+	[_X(JVM_IsDumpingClassList, JNICALL, false, jboolean, JNIEnv *env)])
 _X(JVM_IsUseContainerSupport, JNICALL, false, jboolean, JNIEnv *env)
