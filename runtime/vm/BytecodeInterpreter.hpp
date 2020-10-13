@@ -5901,7 +5901,7 @@ done:
 			} else {
 				j9object_t value = *(j9object_t*)_sp;
 				/* Runtime check class compatibility */
-				if (false == VM_VMHelpers::objectArrayStoreAllowed(arrayref, value)) {
+				if (false == VM_VMHelpers::objectArrayStoreAllowed(_currentThread, arrayref, value)) {
 					rc = THROW_ARRAY_STORE;
 				} else {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
