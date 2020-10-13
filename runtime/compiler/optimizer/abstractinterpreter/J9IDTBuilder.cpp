@@ -20,7 +20,7 @@
  *******************************************************************************/
 
 #include "optimizer/abstractinterpreter/IDTBuilder.hpp"
-#include "optimizer/abstractinterpreter/J9AbsInterpreter.hpp"
+#include "optimizer/abstractinterpreter/AbsInterpreter.hpp"
 #include "compile/Compilation.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
 
@@ -69,9 +69,9 @@ J9::IDTBuilder::~IDTBuilder()
    }
 
 
-void J9::IDTBuilder::performAbstractInterpretation(TR::IDTNode* node, TR::IDTBuilderVisitor& visitor, TR::AbsArguments* args, int32_t callerIndex)
+void J9::IDTBuilder::performAbstractInterpretation(TR::IDTNode* node, TR::IDTBuilderVisitor& visitor, std::vector<TR::AbsValue*>* args, int32_t callerIndex)
    {
-   J9::AbsInterpreter interpreter(node->getResolvedMethodSymbol(), node->getCallTarget()->_cfg, &visitor, args, region(), comp());
+   TR::AbsInterpreter interpreter(node->getResolvedMethodSymbol(), node->getCallTarget()->_cfg, &visitor, args, region(), comp());
    
    interpreter.setCallerIndex(callerIndex);
    interpreter.interpret();

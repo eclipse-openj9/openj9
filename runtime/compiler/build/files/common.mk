@@ -242,7 +242,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/VPHandlersCommon.cpp \
     omr/compiler/optimizer/BenefitInliner.cpp \
     omr/compiler/optimizer/abstractinterpreter/AbsValue.cpp \
-    omr/compiler/optimizer/abstractinterpreter/AbsStackMachineState.cpp \
+    omr/compiler/optimizer/abstractinterpreter/AbsOpStack.cpp \
+    omr/compiler/optimizer/abstractinterpreter/AbsOpArray.cpp \
     omr/compiler/optimizer/abstractinterpreter/IDT.cpp \
     omr/compiler/optimizer/abstractinterpreter/IDTNode.cpp \
     omr/compiler/optimizer/abstractinterpreter/OMRIDTBuilder.cpp \
@@ -348,7 +349,8 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/optimizer/J9Inliner.cpp \
     compiler/optimizer/InterpreterEmulator.cpp \
     compiler/optimizer/abstractinterpreter/J9IDTBuilder.cpp \
-    compiler/optimizer/abstractinterpreter/J9AbsInterpreter.cpp \
+    compiler/optimizer/abstractinterpreter/AbsStackMachineState.cpp \
+    compiler/optimizer/abstractinterpreter/AbsInterpreter.cpp \
     compiler/ras/DebugExt.cpp \
     compiler/ras/DebugExtSegmentProvider.cpp \
     compiler/ras/HashTable.cpp \

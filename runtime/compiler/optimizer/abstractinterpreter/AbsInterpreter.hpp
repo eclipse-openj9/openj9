@@ -19,17 +19,20 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef J9_ABS_INTERPRETER_INCL
-#define J9_ABS_INTERPRETER_INCL
+#ifndef ABS_INTERPRETER_INCL
+#define ABS_INTERPRETER_INCL
 
 #include "optimizer/abstractinterpreter/IDTBuilder.hpp"
 #include "optimizer/abstractinterpreter/AbsStackMachineState.hpp"
 #include "il/Block.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
 #include "infra/ILWalk.hpp"
+#include "compiler/env/TypedAllocator.hpp"
+#include <map>
+#include <functional>
 
 
-namespace J9 {
+namespace TR {
    
 /*
  * The abstract interpreter for Java Bytecode.
@@ -38,7 +41,7 @@ namespace J9 {
 class AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostorderSnapshotBlockIterator
    {
    public:
-   AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol, TR::CFG* cfg, TR::AbsVisitor* vistor, TR::AbsArguments* arguments, TR::Region& region, TR::Compilation* comp);
+   AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol, TR::CFG* cfg, TR::AbsVisitor* vistor, std::vector<TR::AbsValue*>* arguments, TR::Region& region, TR::Compilation* comp);
 
    /**
     * @brief start to interpret the method.
@@ -90,6 +93,9 @@ class AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostorder
    TR::Region& region() {  return _region;  }
 
    TR::ValuePropagation *vp();
+
+   TR::AbsStackMachineState* getState(TR::Block* block);
+   void setState(TR::Block* block, TR::AbsStackMachineState* state);
 
    void moveToNextBlock();
 
@@ -200,7 +206,7 @@ class AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostorder
 
    TR::AbsVisitor* _visitor;
 
-   TR::AbsArguments* _arguments;
+   std::vector<TR::AbsValue*>* _arguments;
 
    TR::InliningMethodSummary* _inliningMethodSummary;
    TR::AbsValue* _returnValue;
@@ -211,6 +217,10 @@ class AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostorder
    TR::CFG* _cfg;
 
    bool *_blockStartIndexFlags;  //marks if the index is the start index of any basic block
+
+   typedef TR::typed_allocator<std::pair<TR::Block*, TR::AbsStackMachineState*>, TR::Region&> BlockStateMapAllocator;
+   typedef std::less<TR::Block*> BlockStateMapComparator;
+   std::map<TR::Block*, TR::AbsStackMachineState*, BlockStateMapComparator, BlockStateMapAllocator> _blockStateMap;
 
    TR::Region& _region;
    TR::Compilation* _comp;

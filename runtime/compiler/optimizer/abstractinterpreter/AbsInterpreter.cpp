@@ -19,10 +19,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "optimizer/abstractinterpreter/J9AbsInterpreter.hpp"
+#include "optimizer/abstractinterpreter/AbsInterpreter.hpp"
 #include "optimizer/J9CallGraph.hpp"
+#include <vector>
 
-J9::AbsInterpreter::AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol, TR::CFG* cfg, TR::AbsVisitor* vistor, TR::AbsArguments* arguments, TR::Region& region, TR::Compilation* comp):
+TR::AbsInterpreter::AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol, TR::CFG* cfg, TR::AbsVisitor* vistor, std::vector<TR::AbsValue*>* arguments, TR::Region& region, TR::Compilation* comp):
       TR_J9ByteCodeIterator(callerMethodSymbol, static_cast<TR_ResolvedJ9Method*>(callerMethodSymbol->getResolvedMethod()), static_cast<TR_J9VMBase*>(comp->fe()), comp),
       TR::ReversePostorderSnapshotBlockIterator(cfg, comp),
       _callerMethodSymbol(callerMethodSymbol),
@@ -35,6 +36,7 @@ J9::AbsInterpreter::AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol,
       _comp(comp),
       _vp(NULL),
       _returnValue(NULL),
+      _blockStateMap(BlockStateMapComparator(), BlockStateMapAllocator(region)),
       _inliningMethodSummary(new (region) TR::InliningMethodSummary(region))
    {
    _blockStartIndexFlags = new (_region) bool[maxByteCodeIndex()];
@@ -54,7 +56,7 @@ J9::AbsInterpreter::AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol,
       
    }
 
-TR::ValuePropagation* J9::AbsInterpreter::vp()
+TR::ValuePropagation* TR::AbsInterpreter::vp()
    {
    if (!_vp)
       {
@@ -65,7 +67,21 @@ TR::ValuePropagation* J9::AbsInterpreter::vp()
    return _vp;
    }
 
-bool J9::AbsInterpreter::interpret()
+void TR::AbsInterpreter::setState(TR::Block* block, TR::AbsStackMachineState* state)
+   {
+   _blockStateMap.insert(std::pair<TR::Block*, TR::AbsStackMachineState*>(block, state));
+   }
+
+TR::AbsStackMachineState* TR::AbsInterpreter::getState(TR::Block* block)
+   {
+   auto iter = _blockStateMap.find(block);
+   if (iter == _blockStateMap.end()) 
+      return NULL;
+   
+   return iter->second;
+   }
+
+bool TR::AbsInterpreter::interpret()
    {
    if (comp()->getOption(TR_TraceAbstractInterpretation))
       traceMsg(comp(), "\nStarting to abstract interpret method %s ...\n", _callerMethod->signature(comp()->trMemory()));
@@ -81,10 +97,10 @@ bool J9::AbsInterpreter::interpret()
                || currentByteCodeIndex() > maxByteCodeIndex() // if we arrive at the end of the whole method
                || current() == J9BCunknown)) 
          {
-         if (comp()->getOption(TR_TraceAbstractInterpretation) && currentBlock()->getAbsState())
+         if (comp()->getOption(TR_TraceAbstractInterpretation) && getState(currentBlock()))
             {
             traceMsg(comp(), "\nBlock: #%d of method %s finishes abstract interpretation\n", currentBlock()->getNumber(), _callerMethod->signature(comp()->trMemory()));
-            static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState())->print(comp());
+            getState(currentBlock())->print(comp());
             }
          
          moveToNextBlock(); //We may move to the end (currentBlock() is NULL)
@@ -92,7 +108,7 @@ bool J9::AbsInterpreter::interpret()
       
       if (currentBlock()) 
          {
-         if (currentBlock()->getAbsState())
+         if (getState(currentBlock()))
             {
             bool success = interpretByteCode();
 
@@ -124,7 +140,7 @@ bool J9::AbsInterpreter::interpret()
    return true;
    }
 
-void J9::AbsInterpreter::moveToNextBlock()
+void TR::AbsInterpreter::moveToNextBlock()
    {
    TR_ASSERT_FATAL(currentBlock(), "Cannot move to next block since CFG walk has already ended");
 
@@ -143,9 +159,12 @@ void J9::AbsInterpreter::moveToNextBlock()
    }
 
 //Set the abstract state of the START block of CFG
-void J9::AbsInterpreter::setStartBlockState()
+void TR::AbsInterpreter::setStartBlockState()
    {  
-   TR::AbsStackMachineState* state = new (region()) TR::AbsStackMachineState(region());
+   TR_ResolvedJ9Method *method = (TR_ResolvedJ9Method *)_callerMethod;
+   J9ROMMethod *romMethod = method->romMethod();
+
+   TR::AbsStackMachineState* state = new (region()) TR::AbsStackMachineState(region(), J9_ARG_COUNT_FROM_ROM_METHOD(romMethod) + J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod));
 
    uint32_t paramPos = 0; 
    uint32_t slotIndex = 0;
@@ -161,9 +180,6 @@ void J9::AbsInterpreter::setStartBlockState()
 
          TR::AbsVPValue* param = new (region()) TR::AbsVPValue(vp(), arg->getConstraint(), dataType);
          param->setParamPosition(paramPos);
-
-         if (i == 0 && !_callerMethod->isStatic())
-            param->setImplicitParam();
 
          state->set(slotIndex, param);
 
@@ -200,7 +216,6 @@ void J9::AbsInterpreter::setStartBlockState()
          TR_OpaqueClassBlock *classBlock = _callerMethod->containingClass();
          TR::AbsValue* value = createObject(classBlock, TR_yes);
          value->setParamPosition(paramPos++);
-         value->setImplicitParam();
          state->set(slotIndex++, value);
          }
 
@@ -269,17 +284,17 @@ void J9::AbsInterpreter::setStartBlockState()
          }
       }
 
-   _cfg->getStart()->asBlock()->setAbsState(state);
+   setState(_cfg->getStart()->asBlock(), state);
 
    if (comp()->getOption(TR_TraceAbstractInterpretation))
       {
       traceMsg(comp(), "Start Block state of method %s:\n", _callerMethod->signature(comp()->trMemory()));
-      static_cast<TR::AbsStackMachineState*>(_cfg->getStart()->asBlock()->getAbsState())->print(comp());
+      getState(_cfg->getStart()->asBlock())->print(comp());
       }
                   
    }
 
-void J9::AbsInterpreter::transferBlockStatesFromPredeccesors()
+void TR::AbsInterpreter::transferBlockStatesFromPredeccesors()
    {
    TR::Block* block = currentBlock();
 
@@ -288,24 +303,23 @@ void J9::AbsInterpreter::transferBlockStatesFromPredeccesors()
       {
       return;
       }
-      
+   
    /*** Case 2: Have only one predecessor ***/
    if (block->getPredecessors().size() == 1)
       {
       TR::Block* parentBlock = block->getPredecessors().front()->getFrom()->asBlock();
       
       /*** Case 2.1: Parent is not interpreted. This may happen if this block is in a dead code area. Do nothing ***/
-      if (parentBlock->getAbsState() == NULL)
+      if (getState(parentBlock) == NULL)
          {
          return;
          }
       /*** Case 2.2: Parent is interpreted. Copy parent's state and pass it to the current block ***/
       else 
          {
-         TR::AbsState* parentState = parentBlock->getAbsState();
-         TR::AbsState* copiedState = parentState->clone(region()); //copy
-
-         block->setAbsState(copiedState);
+         TR::AbsStackMachineState* parentState = getState(parentBlock);
+         TR::AbsStackMachineState* copiedState = parentState->clone(region()); //copy
+         setState(block, copiedState);
          return;
          }
       }
@@ -321,7 +335,7 @@ void J9::AbsInterpreter::transferBlockStatesFromPredeccesors()
          {
          TR::Block* predBlock = (*e)->getFrom()->asBlock();
 
-         if (predBlock->getAbsState() == NULL) //any block is not interpreted
+         if (getState(predBlock) == NULL) //any block is not interpreted
             {
             allPredecessorsInterpreted = false;
             if (oneInterpretedBlock)
@@ -337,14 +351,15 @@ void J9::AbsInterpreter::transferBlockStatesFromPredeccesors()
       if (allPredecessorsInterpreted)
          {
          TR::Block* firstPredBlock = (*block->getPredecessors().begin())->getFrom()->asBlock();
-         TR::AbsState* state = firstPredBlock->getAbsState()->clone(region());
+         TR::AbsStackMachineState* state = getState(firstPredBlock)->clone(region());
+         
          for (auto e = ++block->getPredecessors().begin(); e != block->getPredecessors().end(); e ++)
             {
             TR::Block* predBlock = (*e)->getFrom()->asBlock();
-            state->merge(predBlock->getAbsState());
+            state->merge(getState(predBlock));
             }
 
-         block->setAbsState(state);
+         setState(block, state);
          return;
          }
 
@@ -352,10 +367,30 @@ void J9::AbsInterpreter::transferBlockStatesFromPredeccesors()
       //NOTE: This case (back-edge) will be handled in the future. 
       if (!allPredecessorsInterpreted && oneInterpretedBlock)
          {
-         TR::AbsState* copiedState = oneInterpretedBlock->getAbsState()->clone(region());
+         TR::AbsStackMachineState* copiedState = getState(oneInterpretedBlock)->clone(region());
+         for (size_t i = 0; i < copiedState->getArraySize(); i ++)
+            {
+            copiedState->at(i) ? copiedState->at(i)->setToTop() : copiedState->set(i, new (region()) TR::AbsVPValue(vp(), NULL, TR::NoType));
+            }
 
-         copiedState->setToTop();
-         block->setAbsState(copiedState);
+         std::vector<TR::AbsValue*> temp;
+         while (copiedState->getStackSize() != 0)
+            {
+            TR::AbsValue* val = copiedState->pop();
+            if (val)
+               val->setToTop();
+            else 
+               val = new (region()) TR::AbsVPValue(vp(), NULL, TR::NoType);
+
+            temp.push_back(val);
+            }
+
+         for (size_t i = 0; i < temp.size(); i ++)
+            {
+            copiedState->push(temp[i]);
+            }
+
+         setState(block, copiedState);
          return;
          }
 
@@ -371,8 +406,101 @@ void J9::AbsInterpreter::transferBlockStatesFromPredeccesors()
 
 
 
-bool J9::AbsInterpreter::interpretByteCode()
+bool TR::AbsInterpreter::interpretByteCode()
    {
+   char *J9_ByteCode_Strings[] =	
+	{
+	"J9BCnop",
+	"J9BCaconstnull",
+	"J9BCiconstm1",
+	"J9BCiconst0", "J9BCiconst1", "J9BCiconst2", "J9BCiconst3", "J9BCiconst4", "J9BCiconst5",
+	"J9BClconst0", "J9BClconst1",
+	"J9BCfconst0", "J9BCfconst1", "J9BCfconst2",
+	"J9BCdconst0", "J9BCdconst1",
+	"J9BCbipush", "J9BCsipush",
+	"J9BCldc", "J9BCldcw", "J9BCldc2lw", "J9BCldc2dw",
+	"J9BCiload", "J9BClload", "J9BCfload", "J9BCdload", "J9BCaload",
+	"J9BCiload0", "J9BCiload1", "J9BCiload2", "J9BCiload3",
+	"J9BClload0", "J9BClload1", "J9BClload2", "J9BClload3",
+	"J9BCfload0", "J9BCfload1", "J9BCfload2", "J9BCfload3",
+	"J9BCdload0", "J9BCdload1", "J9BCdload2", "J9BCdload3",
+	"J9BCaload0", "J9BCaload1", "J9BCaload2", "J9BCaload3",
+	"J9BCiaload", "J9BClaload", "J9BCfaload", "J9BCdaload", "J9BCaaload", "J9BCbaload", "J9BCcaload", "J9BCsaload",
+	"J9BCiloadw", "J9BClloadw", "J9BCfloadw", "J9BCdloadw", "J9BCaloadw",
+	"J9BCistore", "J9BClstore", "J9BCfstore", "J9BCdstore", "J9BCastore",
+	"J9BCistorew", "J9BClstorew", "J9BCfstorew", "J9BCdstorew", "J9BCastorew",
+	"J9BCistore0", "J9BCistore1", "J9BCistore2", "J9BCistore3",
+	"J9BClstore0", "J9BClstore1", "J9BClstore2", "J9BClstore3",
+	"J9BCfstore0", "J9BCfstore1", "J9BCfstore2", "J9BCfstore3",
+	"J9BCdstore0", "J9BCdstore1", "J9BCdstore2", "J9BCdstore3",
+	"J9BCastore0", "J9BCastore1", "J9BCastore2", "J9BCastore3",
+	"J9BCiastore", "J9BClastore", "J9BCfastore", "J9BCdastore", "J9BCaastore", "J9BCbastore", "J9BCcastore", "J9BCsastore",
+	"J9BCpop", "J9BCpop2",
+	"J9BCdup", "J9BCdupx1", "J9BCdupx2", "J9BCdup2", "J9BCdup2x1", "J9BCdup2x2",
+	"J9BCswap",
+	"J9BCiadd", "J9BCladd", "J9BCfadd", "J9BCdadd",
+	"J9BCisub", "J9BClsub", "J9BCfsub", "J9BCdsub",
+	"J9BCimul", "J9BClmul", "J9BCfmul", "J9BCdmul",
+	"J9BCidiv", "J9BCldiv", "J9BCfdiv", "J9BCddiv",
+	"J9BCirem", "J9BClrem", "J9BCfrem", "J9BCdrem",
+	"J9BCineg", "J9BClneg", "J9BCfneg", "J9BCdneg",
+	"J9BCishl", "J9BClshl", "J9BCishr", "J9BClshr", "J9BCiushr", "J9BClushr",
+	"J9BCiand", "J9BCland",
+	"J9BCior", "J9BClor",
+	"J9BCixor", "J9BClxor",
+	"J9BCiinc", "J9BCiincw",
+	"J9BCi2l", "J9BCi2f", "J9BCi2d",
+	"J9BCl2i", "J9BCl2f", "J9BCl2d", "J9BCf2i", "J9BCf2l", "J9BCf2d",
+	"J9BCd2i", "J9BCd2l", "J9BCd2f",
+	"J9BCi2b", "J9BCi2c", "J9BCi2s",
+	"J9BClcmp", "J9BCfcmpl", "J9BCfcmpg", "J9BCdcmpl", "J9BCdcmpg",
+	"J9BCifeq", "J9BCifne", "J9BCiflt", "J9BCifge", "J9BCifgt", "J9BCifle",
+	"J9BCificmpeq", "J9BCificmpne", "J9BCificmplt", "J9BCificmpge", "J9BCificmpgt", "J9BCificmple", "J9BCifacmpeq", "J9BCifacmpne",
+	"J9BCifnull", "J9BCifnonnull",
+	"J9BCgoto",
+	"J9BCgotow",
+	"J9BCtableswitch", "J9BClookupswitch",
+	"J9BCgenericReturn",
+	"J9BCgetstatic", "J9BCputstatic",
+	"J9BCgetfield", "J9BCputfield",
+	"J9BCinvokevirtual", "J9BCinvokespecial", "J9BCinvokestatic", "J9BCinvokeinterface", "J9BCinvokedynamic", "J9BCinvokehandle", "J9BCinvokehandlegeneric","J9BCinvokespecialsplit",
+	
+	/** \brief
+	*      Pops 1 int32_t argument off the stack and truncates to a uint16_t.
+	*/
+	"J9BCReturnC",
+	
+	/** \brief
+	*      Pops 1 int32_t argument off the stack and truncates to a int16_t.
+	*/
+	"J9BCReturnS",
+	
+	/** \brief
+	*      Pops 1 int32_t argument off the stack and truncates to a int8_t.
+	*/
+	"J9BCReturnB",
+	
+	/** \brief
+	*      Pops 1 int32_t argument off the stack returns the single lowest order bit.
+	*/
+	"J9BCReturnZ",
+	
+	"J9BCinvokestaticsplit", "J9BCinvokeinterface2",
+	"J9BCnew", "J9BCnewarray", "J9BCanewarray", "J9BCmultianewarray",
+	"J9BCarraylength",
+	"J9BCathrow",
+	"J9BCcheckcast",
+	"J9BCinstanceof",
+	"J9BCmonitorenter", "J9BCmonitorexit",
+	"J9BCwide",
+	"J9BCasyncCheck",
+	"J9BCdefaultvalue",
+	"J9BCwithfield",
+	"J9BCbreakpoint",
+	"J9BCunknown"
+	};
+
+
    switch(current())
       {
       case J9BCnop: nop(); break;
@@ -729,12 +857,12 @@ bool J9::AbsInterpreter::interpretByteCode()
    return true; //This bytecode is successfully interpreted
    }
 
-void J9::AbsInterpreter::return_(TR::DataType type, bool oneBit)
+void TR::AbsInterpreter::return_(TR::DataType type, bool oneBit)
    {
    if (type == TR::NoType)
       return;
 
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
    if (type.isDouble() || type.isInt64())
       state->pop();
 
@@ -742,48 +870,48 @@ void J9::AbsInterpreter::return_(TR::DataType type, bool oneBit)
    TR_ASSERT_FATAL(type == TR::Int16 || type == TR::Int8 ? value->getDataType() == TR::Int32 : value->getDataType() == type, "Unexpected type");
    }
 
-void J9::AbsInterpreter::constant(int32_t i)
+void TR::AbsInterpreter::constant(int32_t i)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
    TR::AbsValue* value = createIntConst(i);
    state->push(value);
    }
 
-void J9::AbsInterpreter::constant(int64_t l)
+void TR::AbsInterpreter::constant(int64_t l)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
    TR::AbsValue* value1 = createLongConst(l);
    TR::AbsValue* value2 = createTopLong();
    state->push(value1);
    state->push(value2);
    }
 
-void J9::AbsInterpreter::constant(float f)
+void TR::AbsInterpreter::constant(float f)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
    TR::AbsValue* floatConst = createTopFloat();
    state->push(floatConst);
    }
 
-void J9::AbsInterpreter::constant(double d)
+void TR::AbsInterpreter::constant(double d)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
    TR::AbsValue *value1 = createTopDouble();
    TR::AbsValue *value2 = createTopDouble();
    state->push(value1);
    state->push(value2);
    }
 
-void J9::AbsInterpreter::constantNull()
+void TR::AbsInterpreter::constantNull()
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
    TR::AbsValue* value = createNullObject();
    state->push(value);
    }
 
-void J9::AbsInterpreter::ldc(bool wide)
+void TR::AbsInterpreter::ldc(bool wide)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    int32_t cpIndex = wide ? next2Bytes() : nextByte();
    TR::DataType type = _callerMethod->getLDCType(cpIndex);
@@ -842,10 +970,10 @@ void J9::AbsInterpreter::ldc(bool wide)
       }
    }
 
-void J9::AbsInterpreter::load(TR::DataType type, int32_t index)
+void TR::AbsInterpreter::load(TR::DataType type, int32_t index)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
-   
+   TR::AbsStackMachineState* state = getState(currentBlock());
+
    switch (type)
       {
       case TR::Int32:
@@ -853,6 +981,7 @@ void J9::AbsInterpreter::load(TR::DataType type, int32_t index)
       case TR::Address:
          {
          TR::AbsValue *value = state->at(index);
+         TR_ASSERT_FATAL(value, "NULL");
          TR_ASSERT_FATAL(value->getDataType() == type, "Unexpected type");
          state->push(value);
          break;
@@ -861,6 +990,7 @@ void J9::AbsInterpreter::load(TR::DataType type, int32_t index)
       case TR::Double:
          {
          TR::AbsValue *value1 = state->at(index);
+         TR_ASSERT_FATAL(value1, "NULL");
          TR_ASSERT_FATAL(value1->getDataType() == type, "Unexpected type");
          TR::AbsValue *value2 = state->at(index + 1);
          state->push(value1);
@@ -873,9 +1003,9 @@ void J9::AbsInterpreter::load(TR::DataType type, int32_t index)
       }
    }
 
-void J9::AbsInterpreter::store(TR::DataType type, int32_t index)
+void TR::AbsInterpreter::store(TR::DataType type, int32_t index)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    switch (type)
       {
@@ -904,9 +1034,9 @@ void J9::AbsInterpreter::store(TR::DataType type, int32_t index)
       }
    }
 
-void J9::AbsInterpreter::arrayLoad(TR::DataType type)
+void TR::AbsInterpreter::arrayLoad(TR::DataType type)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    TR::AbsValue *index = state->pop();
    TR_ASSERT_FATAL(index->getDataType() == TR::Int32, "Unexpected type");
@@ -958,9 +1088,9 @@ void J9::AbsInterpreter::arrayLoad(TR::DataType type)
       }
    }
 
-void J9::AbsInterpreter::arrayStore(TR::DataType type)
+void TR::AbsInterpreter::arrayStore(TR::DataType type)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    if (type.isDouble() || type.isInt64())
       state->pop(); //dummy
@@ -991,9 +1121,9 @@ void J9::AbsInterpreter::arrayStore(TR::DataType type)
       }
    }
 
-void J9::AbsInterpreter::binaryOperation(TR::DataType type, BinaryOperator op)
+void TR::AbsInterpreter::binaryOperation(TR::DataType type, BinaryOperator op)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    if (type.isDouble() || type.isInt64())
       state->pop(); //dummy
@@ -1167,9 +1297,9 @@ void J9::AbsInterpreter::binaryOperation(TR::DataType type, BinaryOperator op)
       }
    }
 
-void J9::AbsInterpreter::unaryOperation(TR::DataType type, UnaryOperator op)
+void TR::AbsInterpreter::unaryOperation(TR::DataType type, UnaryOperator op)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
    if (type.isDouble() || type.isInt64())
       state->pop();
    
@@ -1273,34 +1403,34 @@ void J9::AbsInterpreter::unaryOperation(TR::DataType type, UnaryOperator op)
       }
    }
 
-void J9::AbsInterpreter::pop(int32_t size)
+void TR::AbsInterpreter::pop(int32_t size)
    {
    TR_ASSERT_FATAL(size >0 && size <= 2, "Invalid pop size");
    for (int32_t i = 0; i < size; i ++)
       {
-      static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState())->pop();
+      getState(currentBlock())->pop();
       }
    }
 
-void J9::AbsInterpreter::nop()
+void TR::AbsInterpreter::nop()
    {
    }
 
-void J9::AbsInterpreter::swap()
+void TR::AbsInterpreter::swap()
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
    TR::AbsValue* value1 = state->pop();
    TR::AbsValue* value2 = state->pop();
    state->push(value1);
    state->push(value2);
    }
 
-void J9::AbsInterpreter::dup(int32_t size, int32_t delta)  
+void TR::AbsInterpreter::dup(int32_t size, int32_t delta)  
    {
    TR_ASSERT_FATAL(size > 0 && size <= 2, "Invalid dup size");
    TR_ASSERT_FATAL(delta >= 0 && size <=2, "Invalid dup delta");
 
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    TR::AbsValue* temp[size + delta];
 
@@ -1314,9 +1444,9 @@ void J9::AbsInterpreter::dup(int32_t size, int32_t delta)
       state->push(temp[i]); //push the values back to stack
    }
 
-void J9::AbsInterpreter::shift(TR::DataType type, ShiftOperator op)
+void TR::AbsInterpreter::shift(TR::DataType type, ShiftOperator op)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    TR::AbsValue* shiftAmount = state->pop();
 
@@ -1406,9 +1536,9 @@ void J9::AbsInterpreter::shift(TR::DataType type, ShiftOperator op)
       }
    }
 
-void J9::AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
+void TR::AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    if (fromType.isDouble() || fromType.isInt64())
       state->pop(); //dummy
@@ -1599,9 +1729,9 @@ void J9::AbsInterpreter::conversion(TR::DataType fromType, TR::DataType toType)
    }
    
 
-void J9::AbsInterpreter::comparison(TR::DataType type, ComparisonOperator op)
+void TR::AbsInterpreter::comparison(TR::DataType type, ComparisonOperator op)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    if (type.isDouble() || type.isInt64())
       state->pop();
@@ -1668,13 +1798,13 @@ void J9::AbsInterpreter::comparison(TR::DataType type, ComparisonOperator op)
       }
    }
 
-void J9::AbsInterpreter::goto_(int32_t label)
+void TR::AbsInterpreter::goto_(int32_t label)
    {
    }
 
-void J9::AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, ConditionalBranchOperator op)
+void TR::AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, ConditionalBranchOperator op)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    switch(op)
       {
@@ -1684,7 +1814,7 @@ void J9::AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, Con
          TR::AbsValue* value = state->pop();
          TR_ASSERT_FATAL(value->getDataType() == TR::Address, "Unexpected type");
          
-         if (value->isParameter() && !value->isImplicitParameter())
+         if (value->isParameter() && !(!_callerMethod->isStatic() && value->getParamPosition() == 0)) 
             {
             TR::PotentialOptimizationVPPredicate* p1 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
@@ -1713,7 +1843,7 @@ void J9::AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, Con
          TR::AbsValue* value = state->pop();
          TR_ASSERT_FATAL(value->getDataType() == TR::Address, "Unexpected type");
 
-         if (value->isParameter() && !value->isImplicitParameter())
+         if (value->isParameter() && !(!_callerMethod->isStatic() && value->getParamPosition() == 0))
             {
             TR::PotentialOptimizationVPPredicate* p1 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
@@ -2037,9 +2167,9 @@ void J9::AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, Con
       }
    }
 
-void J9::AbsInterpreter::new_()
+void TR::AbsInterpreter::new_()
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    int32_t cpIndex = next2Bytes();
    TR_OpaqueClassBlock* type = _callerMethod->getClassFromConstantPool(comp(), cpIndex);
@@ -2047,9 +2177,9 @@ void J9::AbsInterpreter::new_()
    state->push(value);
    }
 
-void J9::AbsInterpreter::multianewarray(int32_t dimension)
+void TR::AbsInterpreter::multianewarray(int32_t dimension)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    uint16_t cpIndex = next2Bytes();
 
@@ -2087,9 +2217,9 @@ void J9::AbsInterpreter::multianewarray(int32_t dimension)
    state->push(array);
    }
 
-void J9::AbsInterpreter::newarray()
+void TR::AbsInterpreter::newarray()
    {
-   TR::AbsStackMachineState *state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState *state = getState(currentBlock());
 
    /**
     * aType
@@ -2133,9 +2263,9 @@ void J9::AbsInterpreter::newarray()
    state->push(value);
    }
 
-void J9::AbsInterpreter::anewarray()
+void TR::AbsInterpreter::anewarray()
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    int32_t cpIndex = next2Bytes();
 
@@ -2161,14 +2291,14 @@ void J9::AbsInterpreter::anewarray()
    state->push(value);
    }
 
-void J9::AbsInterpreter::arraylength()
+void TR::AbsInterpreter::arraylength()
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    TR::AbsValue* arrayRef = state->pop();
    TR_ASSERT_FATAL(arrayRef->getDataType() == TR::Address, "Unexpected type");
 
-   if (arrayRef->isParameter() && !arrayRef->isImplicitParameter())
+   if (arrayRef->isParameter() && !(!_callerMethod->isStatic() && arrayRef->getParamPosition() == 0))
       {
       TR::PotentialOptimizationVPPredicate* p1 = 
          new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::NullCheckFolding, vp());
@@ -2200,9 +2330,9 @@ void J9::AbsInterpreter::arraylength()
    state->push(result);
    }
 
-void J9::AbsInterpreter::instanceof()
+void TR::AbsInterpreter::instanceof()
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    TR::AbsValue *objectRef = state->pop();
    TR_ASSERT_FATAL(objectRef->getDataType() == TR::Address, "Unexpected type");
@@ -2211,7 +2341,7 @@ void J9::AbsInterpreter::instanceof()
    TR_OpaqueClassBlock *castClass = _callerMethod->getClassFromConstantPool(comp(), cpIndex); //The cast class to be compared with
 
    //Add to the inlining summary
-   if (objectRef->isParameter())
+   if (objectRef->isParameter() && !(!_callerMethod->isStatic() && objectRef->getParamPosition() == 0))
       {
       TR::PotentialOptimizationVPPredicate* p1 = 
          new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::InstanceOfFolding, vp());
@@ -2261,9 +2391,9 @@ void J9::AbsInterpreter::instanceof()
    return;
    }
 
-void J9::AbsInterpreter::checkcast() 
+void TR::AbsInterpreter::checkcast() 
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    TR::AbsValue *objRef = state->pop();
    TR_ASSERT_FATAL(objRef->getDataType() == TR::Address, "Unexpected type");
@@ -2272,7 +2402,7 @@ void J9::AbsInterpreter::checkcast()
    TR_OpaqueClassBlock* castClass = _callerMethod->getClassFromConstantPool(comp(), cpIndex);
 
    //adding to method summary
-   if (objRef->isParameter() && !objRef->isImplicitParameter() )
+   if (objRef->isParameter() && !(!_callerMethod->isStatic() && objRef->getParamPosition() == 0))
       {
       TR::PotentialOptimizationVPPredicate* p1 = 
          new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::CheckCastFolding, vp());
@@ -2322,9 +2452,9 @@ void J9::AbsInterpreter::checkcast()
    state->push(createTopObject());
    }
 
-void J9::AbsInterpreter::get(bool isStatic)
+void TR::AbsInterpreter::get(bool isStatic)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    int32_t cpIndex = next2Bytes();
    TR::DataType type;
@@ -2339,7 +2469,7 @@ void J9::AbsInterpreter::get(bool isStatic)
       TR::AbsValue* objRef = state->pop();
       TR_ASSERT_FATAL(objRef->getDataType() == TR::Address, "Unexpected type");
 
-      if (objRef->isParameter() && !objRef->isImplicitParameter())  
+      if (objRef->isParameter() && !(!_callerMethod->isStatic() && objRef->getParamPosition() == 0))  
          {
          TR::PotentialOptimizationVPPredicate* p1 = 
             new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::NullCheckFolding, vp());
@@ -2386,9 +2516,9 @@ void J9::AbsInterpreter::get(bool isStatic)
       }
    }
 
-void J9::AbsInterpreter::put(bool isStatic)
+void TR::AbsInterpreter::put(bool isStatic)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    int32_t cpIndex = next2Bytes();
    TR::DataType type;
@@ -2414,7 +2544,7 @@ void J9::AbsInterpreter::put(bool isStatic)
       TR::AbsValue* objRef = state->pop();
       TR_ASSERT_FATAL(objRef->getDataType() == TR::Address, "Unexpected type");
 
-      if (objRef->isParameter() && !objRef->isImplicitParameter())  
+      if (objRef->isParameter() && !(!_callerMethod->isStatic() && objRef->getParamPosition() == 0))  
          {
          TR::PotentialOptimizationVPPredicate* p1 = 
             new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::NullCheckFolding, vp());
@@ -2428,21 +2558,21 @@ void J9::AbsInterpreter::put(bool isStatic)
    
    }
 
-void J9::AbsInterpreter::monitor(bool kind)
+void TR::AbsInterpreter::monitor(bool kind)
    {
-   TR::AbsValue* value = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState())->pop();
+   TR::AbsValue* value = getState(currentBlock())->pop();
    TR_ASSERT_FATAL(value->getDataType() == TR::Address, "Unexpected type");
    }
 
-void J9::AbsInterpreter::switch_(bool kind)
+void TR::AbsInterpreter::switch_(bool kind)
    {
-   TR::AbsValue* value = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState())->pop();
+   TR::AbsValue* value = getState(currentBlock())->pop();
    TR_ASSERT_FATAL(value->getDataType() == TR::Int32, "Unexpected type");
    }
 
-void J9::AbsInterpreter::iinc(int32_t index, int32_t incVal)
+void TR::AbsInterpreter::iinc(int32_t index, int32_t incVal)
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    TR::AbsValue* value = state->at(index);
    TR_ASSERT_FATAL(value->getDataType() == TR::Int32, "Unexpected type");
@@ -2457,13 +2587,13 @@ void J9::AbsInterpreter::iinc(int32_t index, int32_t incVal)
    state->set(index, createTopInt());
    }
 
-void J9::AbsInterpreter::athrow()
+void TR::AbsInterpreter::athrow()
    {
    }
 
-void J9::AbsInterpreter::invoke(TR::MethodSymbol::Kinds kind) 
+void TR::AbsInterpreter::invoke(TR::MethodSymbol::Kinds kind) 
    {
-   TR::AbsStackMachineState* state = static_cast<TR::AbsStackMachineState*>(currentBlock()->getAbsState());
+   TR::AbsStackMachineState* state = getState(currentBlock());
 
    int32_t cpIndex = next2Bytes();
 
@@ -2482,7 +2612,7 @@ void J9::AbsInterpreter::invoke(TR::MethodSymbol::Kinds kind)
    uint32_t numExplicitParams = calleeMethod->numberOfExplicitParameters();
    uint32_t totalNumParams = numExplicitParams + (kind  == TR::MethodSymbol::Static ? 0 : 1);
 
-   TR::AbsArguments* args = new (region()) TR::AbsArguments(totalNumParams, region());
+   std::vector<TR::AbsValue*> args(totalNumParams);
 
    for (uint32_t i = 0 ; i < numExplicitParams; i ++) //explicit param
       {
@@ -2495,7 +2625,7 @@ void J9::AbsInterpreter::invoke(TR::MethodSymbol::Kinds kind)
       value = state->pop();
       TR_ASSERT_FATAL(dataType == TR::Int8 || dataType == TR::Int16 ? value->getDataType() == TR::Int32 : value->getDataType() == dataType, "Unexpected type");
 
-      args->set(totalNumParams - i - 1, value);
+      args[totalNumParams-i-1] = value;
       }
    
    if (kind != TR::MethodSymbol::Kinds::Static) //implicit param
@@ -2503,7 +2633,7 @@ void J9::AbsInterpreter::invoke(TR::MethodSymbol::Kinds kind)
       TR::AbsValue* objRef = state->pop();
       if (kind == TR::MethodSymbol::Interface || kind == TR::MethodSymbol::Virtual)
          {
-         if (objRef->isParameter() && !objRef->isImplicitParameter())  
+         if (objRef->isParameter() && !(!_callerMethod->isStatic() && objRef->getParamPosition() == 0))  
             {
             TR::PotentialOptimizationVPPredicate* p1 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::NullCheckFolding, vp());
@@ -2514,10 +2644,10 @@ void J9::AbsInterpreter::invoke(TR::MethodSymbol::Kinds kind)
             _inliningMethodSummary->addPotentialOptimizationByArgument(p2, objRef->getParamPosition());
             }
          }
-      args->set(0, objRef);
+      args[0] = objRef;
       }
 
-   _visitor->visitCallSite(callsite, _callerIndex, callBlock, args); //callback 
+   _visitor->visitCallSite(callsite, _callerIndex, callBlock, &args); //callback 
 
    if (calleeMethod->isConstructor() || calleeMethod->returnType() == TR::NoType )
       return;
@@ -2552,7 +2682,7 @@ void J9::AbsInterpreter::invoke(TR::MethodSymbol::Kinds kind)
          }  
    }
    
-TR_CallSite* J9::AbsInterpreter::getCallSite(TR::MethodSymbol::Kinds kind, int32_t bcIndex, int32_t cpIndex)
+TR_CallSite* TR::AbsInterpreter::getCallSite(TR::MethodSymbol::Kinds kind, int32_t bcIndex, int32_t cpIndex)
    {
    TR_CallSite* callSite = NULL;
 
@@ -2668,7 +2798,7 @@ TR_CallSite* J9::AbsInterpreter::getCallSite(TR::MethodSymbol::Kinds kind, int32
    }
 
 
-TR::SymbolReference* J9::AbsInterpreter::getSymbolReference(int32_t cpIndex, TR::MethodSymbol::Kinds kind)
+TR::SymbolReference* TR::AbsInterpreter::getSymbolReference(int32_t cpIndex, TR::MethodSymbol::Kinds kind)
    {
    TR::SymbolReference *symbolReference = NULL;
    switch(kind)
@@ -2693,7 +2823,7 @@ TR::SymbolReference* J9::AbsInterpreter::getSymbolReference(int32_t cpIndex, TR:
    return symbolReference;
    }
 
-TR::AbsValue* J9::AbsInterpreter::createObject(TR_OpaqueClassBlock* opaqueClass, TR_YesNoMaybe isNonNull)
+TR::AbsValue* TR::AbsInterpreter::createObject(TR_OpaqueClassBlock* opaqueClass, TR_YesNoMaybe isNonNull)
    {
    TR::VPClassPresence *classPresence = isNonNull == TR_yes ? TR::VPNonNullObject::create(vp()) : NULL;
    TR::VPClassType *classType = opaqueClass? TR::VPResolvedClass::create(vp(), opaqueClass) : NULL;
@@ -2701,12 +2831,12 @@ TR::AbsValue* J9::AbsInterpreter::createObject(TR_OpaqueClassBlock* opaqueClass,
    return new (region()) TR::AbsVPValue(vp(), TR::VPClass::create(vp(), classType, classPresence, NULL, NULL, NULL), TR::Address);
    }
 
-TR::AbsValue* J9::AbsInterpreter::createNullObject()
+TR::AbsValue* TR::AbsInterpreter::createNullObject()
    {
    return new (region()) TR::AbsVPValue(vp(), TR::VPNullObject::create(vp()), TR::Address);
    }
 
-TR::AbsValue* J9::AbsInterpreter::createArrayObject(TR_OpaqueClassBlock* arrayClass, TR_YesNoMaybe isNonNull, int32_t lengthLow, int32_t lengthHigh, int32_t elementSize)
+TR::AbsValue* TR::AbsInterpreter::createArrayObject(TR_OpaqueClassBlock* arrayClass, TR_YesNoMaybe isNonNull, int32_t lengthLow, int32_t lengthHigh, int32_t elementSize)
    {
    TR::VPClassPresence *classPresence = isNonNull == TR_yes ? TR::VPNonNullObject::create(vp()) : NULL;;
    TR::VPArrayInfo *arrayInfo = TR::VPArrayInfo::create(vp(), lengthLow, lengthHigh, elementSize);
@@ -2715,7 +2845,7 @@ TR::AbsValue* J9::AbsInterpreter::createArrayObject(TR_OpaqueClassBlock* arrayCl
    return new (region()) TR::AbsVPValue(vp(), TR::VPClass::create(vp(), arrayType, classPresence, NULL, arrayInfo, NULL), TR::Address);    
    }
    
-TR::AbsValue* J9::AbsInterpreter::createStringObject(TR::SymbolReference* symRef, TR_YesNoMaybe isNonNull)
+TR::AbsValue* TR::AbsInterpreter::createStringObject(TR::SymbolReference* symRef, TR_YesNoMaybe isNonNull)
    {
    TR::VPClassPresence *classPresence = isNonNull == TR_yes ? TR::VPNonNullObject::create(vp()) : NULL;
    TR::VPClassType *stringType = symRef ? TR::VPConstString::create(vp(), symRef) : NULL;
@@ -2723,106 +2853,106 @@ TR::AbsValue* J9::AbsInterpreter::createStringObject(TR::SymbolReference* symRef
    return new (region()) TR::AbsVPValue(vp(), TR::VPClass::create(vp(), stringType, classPresence, NULL, NULL, NULL), TR::Address);
    }
 
-TR::AbsValue* J9::AbsInterpreter::createIntConst(int32_t value)
+TR::AbsValue* TR::AbsInterpreter::createIntConst(int32_t value)
    {
    return new (region()) TR::AbsVPValue(vp(), TR::VPIntConst::create(vp(), value), TR::Int32);
    }
 
-TR::AbsValue* J9::AbsInterpreter::createLongConst(int64_t value)
+TR::AbsValue* TR::AbsInterpreter::createLongConst(int64_t value)
    {
    return new (region()) TR::AbsVPValue(vp(), TR::VPLongConst::create(vp(), value), TR::Int64);
    }
 
-TR::AbsValue* J9::AbsInterpreter::createIntRange(int32_t low, int32_t high)
+TR::AbsValue* TR::AbsInterpreter::createIntRange(int32_t low, int32_t high)
    {
    return new (region()) TR::AbsVPValue(vp(), TR::VPIntRange::create(vp(), low, high), TR::Int32);
    }
 
-TR::AbsValue* J9::AbsInterpreter::createLongRange(int64_t low, int64_t high)
+TR::AbsValue* TR::AbsInterpreter::createLongRange(int64_t low, int64_t high)
    {
    return new (region()) TR::AbsVPValue(vp(), TR::VPLongRange::create(vp(), low, high), TR::Int64);
    }
 
-TR::AbsValue* J9::AbsInterpreter::createTopInt()
+TR::AbsValue* TR::AbsInterpreter::createTopInt()
    {
    return new (region()) TR::AbsVPValue(vp(), TR::VPIntRange::create(vp(), INT32_MIN, INT32_MAX), TR::Int32);
    }
 
-TR::AbsValue* J9::AbsInterpreter::createTopLong()
+TR::AbsValue* TR::AbsInterpreter::createTopLong()
    {
    return new (region()) TR::AbsVPValue(vp(), TR::VPLongRange::create(vp(), INT64_MIN, INT64_MAX), TR::Int64);
    }
 
-TR::AbsValue* J9::AbsInterpreter::createTopDouble()
+TR::AbsValue* TR::AbsInterpreter::createTopDouble()
    {
    return new (region()) TR::AbsVPValue(vp(), NULL, TR::Double);
    }
 
-TR::AbsValue* J9::AbsInterpreter::createTopFloat()
+TR::AbsValue* TR::AbsInterpreter::createTopFloat()
    {
    return new (region()) TR::AbsVPValue(vp(), NULL, TR::Float);
    }
 
-TR::AbsValue* J9::AbsInterpreter::createTopObject()
+TR::AbsValue* TR::AbsInterpreter::createTopObject()
    {
    return createObject(comp()->getObjectClassPointer(), TR_maybe);
    }
 
-bool J9::AbsInterpreter::isNullObject(TR::AbsValue* v)
+bool TR::AbsInterpreter::isNullObject(TR::AbsValue* v)
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
    return value->getConstraint() && value->getConstraint()->isNullObject();
    }
 
-bool J9::AbsInterpreter::isNonNullObject(TR::AbsValue* v)
+bool TR::AbsInterpreter::isNonNullObject(TR::AbsValue* v)
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
    return value->getConstraint() && value->getConstraint()->isNonNullObject();
    }
 
-bool J9::AbsInterpreter::isArrayObject(TR::AbsValue* v)  
+bool TR::AbsInterpreter::isArrayObject(TR::AbsValue* v)  
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
    return value->getConstraint() && value->getConstraint()->asClass() && value->getConstraint()->getArrayInfo();
    }
 
-bool J9::AbsInterpreter::isObject(TR::AbsValue* v)  
+bool TR::AbsInterpreter::isObject(TR::AbsValue* v)  
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
    return value->getConstraint() && value->getConstraint()->asClass();
    }
 
-bool J9::AbsInterpreter::isIntConst(TR::AbsValue* v)  
+bool TR::AbsInterpreter::isIntConst(TR::AbsValue* v)  
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
    return value->getConstraint() && value->getConstraint()->asIntConst();
    }
 
-bool J9::AbsInterpreter::isIntRange(TR::AbsValue* v)  
+bool TR::AbsInterpreter::isIntRange(TR::AbsValue* v)  
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
    return value->getConstraint() && value->getConstraint()->asIntRange();
    }
 
-bool J9::AbsInterpreter::isInt(TR::AbsValue* v)  
+bool TR::AbsInterpreter::isInt(TR::AbsValue* v)  
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
    return value->getConstraint() && value->getConstraint()->asIntConstraint();
    }
 
-bool J9::AbsInterpreter::isLongConst(TR::AbsValue* v)  
+bool TR::AbsInterpreter::isLongConst(TR::AbsValue* v)  
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
    return value->getConstraint() && value->getConstraint()->asLongConst();
    }
 
-bool J9::AbsInterpreter::isLongRange(TR::AbsValue* v)  
+bool TR::AbsInterpreter::isLongRange(TR::AbsValue* v)  
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
    return value->getConstraint() && value->getConstraint()->asLongRange();
    }
 
-bool J9::AbsInterpreter::isLong(TR::AbsValue* v)  
+bool TR::AbsInterpreter::isLong(TR::AbsValue* v)  
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
    return value->getConstraint() && value->getConstraint()->asLongConstraint();
