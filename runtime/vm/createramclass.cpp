@@ -1126,9 +1126,8 @@ void
 fillJITVTableSlot(J9VMThread *vmStruct, UDATA *currentSlot, J9Method *currentMethod)
 {
 	J9JITConfig *jitConfig = vmStruct->javaVM->jitConfig;
-	UDATA frameBuilder;
-	if (((UDATA)currentMethod->extra & J9_STARTPC_NOT_TRANSLATED) != J9_STARTPC_NOT_TRANSLATED) {
-		frameBuilder = (UDATA)currentMethod->extra;
+	UDATA frameBuilder = (UDATA)currentMethod->extra;
+	if ((frameBuilder & J9_STARTPC_NOT_TRANSLATED) != J9_STARTPC_NOT_TRANSLATED) {
 #if defined(J9SW_PARAMETERS_IN_REGISTERS)
 		/* Add the interpreter preprologue size to get to the JIT->JIT address */
 		frameBuilder += (((U_32 *)frameBuilder)[-1] >> 16);

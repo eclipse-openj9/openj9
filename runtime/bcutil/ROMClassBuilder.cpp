@@ -261,6 +261,7 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, 
 	BOOLEAN stringOrNASReferenceToClassName = FALSE;
 	BOOLEAN newCPEntry = TRUE;
 	BuildResult result = OK;
+	char buf[ROM_ADDRESS_LENGTH + 1] = {0};
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 
 	/* check if adding host package name to anonymous class is needed */
@@ -338,8 +339,12 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, 
 	}
 	memcpy (constantPool[newUtfCPEntry].bytes + newHostPackageLength, originalStringBytes, originalStringLength);
 	*(U_8*)((UDATA) constantPool[newUtfCPEntry].bytes + newHostPackageLength + originalStringLength) = ANON_CLASSNAME_CHARACTER_SEPARATOR;
-	memset(constantPool[newUtfCPEntry].bytes + newHostPackageLength + originalStringLength + 1, '0', ROM_ADDRESS_LENGTH);
-	*(U_8*)((UDATA) constantPool[newUtfCPEntry].bytes + newHostPackageLength + originalStringLength + 1 + ROM_ADDRESS_LENGTH) = '\0';
+	/* 
+	 * 0x<romAddress> will be appended to anon/hidden class name.
+	 * Initialize the 0x<romAddress> part to 0x00000000 or 0x0000000000000000 (depending on the platforms).
+	 */
+	j9str_printf(PORTLIB, buf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, 0);
+	memcpy(constantPool[newUtfCPEntry].bytes + newHostPackageLength + originalStringLength + 1, buf, ROM_ADDRESS_LENGTH + 1);	
 
 	/* search constantpool for all other identical classRefs. We have not actually
 	 * tested this scenario as javac will not output more than one classRef or utfRef of the
@@ -483,10 +488,14 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 	getSizeInfo(context, &romClassWriter, &srpOffsetTable, &countDebugDataOutOfLine, &sizeInformation);
 
 	U_32 romSize = 0;
+	U_32 sizeToCompareForLambda = 0;
 	if (isLambda) {
-		/* calculate the romSize to compare the ROM sizes in the compareROMClassForEquality method for lambda classes */
-		romSize = U_32(sizeInformation.rcWithOutUTF8sSize + sizeInformation.utf8sSize + sizeInformation.rawClassDataSize + sizeInformation.varHandleMethodTypeLookupTableSize);
-		romSize = ROUND_UP_TO_POWEROF2(romSize, sizeof(U_64));
+		/* 
+		 * romSize calculated from getSizeInfo() does not involve StringInternManager. It is only accurate for string intern disabled classes. 
+		 * Lambda classes in java 15 and up are strong hidden classes (defined with Option.STONG), which has the same lifecycle as its
+		 * defining class loader. It is string intern enabled. So pass classFileSize instead of romSize to sizeToCompareForLambda.
+		 */
+		sizeToCompareForLambda = classFileOracle.getClassFileSize();
 	}
 
 	if ( context->shouldCompareROMClassForEquality() ) {
@@ -502,7 +511,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 		bool romClassIsShared = (j9shr_Query_IsAddressInCache(_javaVM, romClass, romClass->romSize) ? true : false);
 
 		if (compareROMClassForEquality((U_8*)romClass, romClassIsShared, &romClassWriter,
-				&srpOffsetTable, &srpKeyProducer, &classFileOracle, modifiers, extraModifiers, optionalFlags, context, romSize, isLambda)
+				&srpOffsetTable, &srpKeyProducer, &classFileOracle, modifiers, extraModifiers, optionalFlags, context, sizeToCompareForLambda, isLambda)
 		) {
 			return OK;
 		} else {
@@ -533,7 +542,9 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 #if defined(J9VM_OPT_SHARED_CLASSES)
 	if (context->isROMClassShareable()) {
 		UDATA loadType = J9SHR_LOADTYPE_NORMAL;
-		if (context->isRedefining()) {
+		if (context->isClassHidden()) {
+			loadType = J9SHR_LOADTYPE_NOT_FROM_PATH;
+		} else if (context->isRedefining()) {
 			loadType = J9SHR_LOADTYPE_REDEFINED;
 		} else if (context->isRetransforming()) {
 			loadType = J9SHR_LOADTYPE_RETRANSFORMED;
@@ -579,7 +590,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 				}
 				context->recordROMClass(existingROMClass);
 				if (compareROMClassForEquality((U_8*)existingROMClass, /* romClassIsShared = */ true, &romClassWriter,
-						&srpOffsetTable, &srpKeyProducer, &classFileOracle, modifiers, extraModifiers, optionalFlags, context, romSize, isLambda)
+						&srpOffsetTable, &srpKeyProducer, &classFileOracle, modifiers, extraModifiers, optionalFlags, context, sizeToCompareForLambda, isLambda)
 				) {
 					/*
 					 * Found an existing ROMClass in the shared cache that is equivalent
@@ -1306,22 +1317,23 @@ bool
 ROMClassBuilder::compareROMClassForEquality(U_8 *romClass,bool romClassIsShared,
 		ROMClassWriter *romClassWriter, SRPOffsetTable *srpOffsetTable, SRPKeyProducer *srpKeyProducer,
 		ClassFileOracle *classFileOracle, U_32 modifiers, U_32 extraModifiers, U_32 optionalFlags,
-		ROMClassCreationContext * context, U_32 romSize, bool isLambda)
+		ROMClassCreationContext * context, U_32 sizeToCompareForLambda, bool isLambda)
 {
 	bool ret = false;
 
 	if (isLambda) {
-		if (sizeof(U_64) < abs((int)(romSize - ((J9ROMClass *)romClass)->romSize))) {
-			/* If the class is a lambda class, we compare the romSizes first to save time. Lambda class names are in the format of
-			 * HostClassName$$Lambda$<IndexNumber>/0x0000000000000000. When we reach this check, the host class names will be the
-			 * same for both the classes because of the hash key check earlier so the only difference in the size will be the
-			 * difference between the number of digits of the index number. The same lambda class might have a different index
-			 * number from run to run and when the number of digits of the index number increases by 1, romSize increases by 2.
-			 * We check if the difference between romSizes is bigger than sizeof(U_64) because this will allow at least 4 but up
-			 * to 7 (because romSize has padding and is always multiples of 8) digits difference. (eg. HostClassName$$Lambda$[1-9]
-			 * can get matched at least up to HostClassName$$Lambda$99999, HostClassName$$Lambda$[10-99] can get matched at least
-			 * up to HostClassName$$Lambda$999999) This check is different than the classFileSize check because when the number of
-			 * digits of the index number increases by 1, romSize increases by 2 but classFileSize increases by 1.
+		int maxVariance = 9;
+		if (abs((int)(sizeToCompareForLambda - ((J9ROMClass *)romClass)->classFileSize)) > maxVariance) {
+			/* 
+			 * Lambda class names are in the format of HostClassName$$Lambda$<IndexNumber>/0x0000000000000000.
+			 * When we reach this check, the host class names will be the same for both the classes because
+			 * of the hash key check earlier so the only difference in the size will be the difference
+			 * between the number of digits of the index number. The same lambda class might have a
+			 * different index number from run to run and when the number of digits of the index number
+			 * increases by 1, classFileSize also increases by 1. The indexNumber is counter for the number of lambda classes 
+			 * defined so far. It is an int in the JCL side, so the it cannot vary more than max integer vs 0, which is maxVariance (9 bytes).
+			 * This check is different than the romSize check because when the number of digits of the index
+			 * number increases by 1, classFileSize also increases by 1 but romSize increases by 2.
 			 */
 			ret = false;
 		} else {

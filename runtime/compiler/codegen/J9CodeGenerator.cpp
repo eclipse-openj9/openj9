@@ -2601,7 +2601,7 @@ J9::CodeGenerator::doInstructionSelection()
 
    self()->freeAllVariableSizeSymRefs();
 
-#if defined(TR_TARGET_S390) && !defined(PUBLIC_BUILD)
+#if defined(TR_TARGET_S390)
    // Virtual function insertInstructionPrefetches is implemented only for s390 platform,
    // for all other platforms the function is empty
    //

@@ -1362,8 +1362,19 @@ TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void 
 void
 TR_J9ServerVM::markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t alignFromStart)
    {
+   if (!TR::Compiler->om.isHotReferenceFieldRequired() && !comp->compileRelocatableCode())
+      {
+      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JITServer::MessageType::VM_markClassForTenuredAlignment, clazz, alignFromStart);
+      stream->read<JITServer::Void>();
+      }
+   }
+
+void
+TR_J9ServerVM::reportHotField(int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency)
+   {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_markClassForTenuredAlignment, clazz, alignFromStart);
+   stream->write(JITServer::MessageType::VM_reportHotField, reducedCpuUtil, clazz, fieldOffset, reducedFrequency);
    stream->read<JITServer::Void>();
    }
 

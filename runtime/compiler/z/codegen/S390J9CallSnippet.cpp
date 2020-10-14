@@ -275,10 +275,8 @@ TR::S390J9CallSnippet::emitSnippetBody()
    TR_RuntimeHelper runtimeHelper = getInterpretedDispatchHelper(methodSymRef, callNode->getDataType());
    TR::SymbolReference * glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(runtimeHelper, false, false, false);
 
-#if !defined(PUBLIC_BUILD)
    // Generate RIOFF if RI is supported.
    cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RIOFF);
-#endif
 
    // data area start address
    uintptr_t dataStartAddr = (uintptr_t) (getPICBinaryLength(cg()) + cursor);
@@ -513,9 +511,7 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
    getSnippetLabel()->setCodeLocation(cursor);
 
    // Generate RIOFF if RI is supported.
-#if !defined(PUBLIC_BUILD)
    cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RIOFF);
-#endif
 
    cursor = generatePICBinary(cg(), cursor, glueRef);
 
@@ -593,9 +589,7 @@ TR::S390VirtualUnresolvedSnippet::getLength(int32_t  estimatedSnippetStart)
    {
    TR::Compilation* comp = cg()->comp();
    uint32_t length = getPICBinaryLength(cg()) + 7 * sizeof(uintptr_t) + TR::Compiler->om.sizeofReferenceAddress();
-#if !defined(PUBLIC_BUILD)
    length += getRuntimeInstrumentationOnOffInstructionLength(cg());
-#endif
    return length;
    }
 

@@ -42,10 +42,10 @@
 /*
  * Note that the following native methods are implemented in sun_reflect_ConstantPool.c because
  * they effectively extend the ConstantPool API and require functionality from that module:
- * 		Java_java_lang_invoke_MethodHandle_getCPTypeAt
- * 		Java_java_lang_invoke_MethodHandle_getCPMethodTypeAt
- * 		Java_java_lang_invoke_MethodHandle_getCPMethodHandleAt
- * 		Java_java_lang_invoke_MethodHandle_getCPConstantDynamicAt
+ * 		Java_java_lang_invoke_MethodHandleResolver_getCPTypeAt
+ * 		Java_java_lang_invoke_MethodHandleResolver_getCPMethodTypeAt
+ * 		Java_java_lang_invoke_MethodHandleResolver_getCPMethodHandleAt
+ * 		Java_java_lang_invoke_MethodHandleResolver_getCPConstantDynamicAt
  */
 
 static VMINLINE UDATA lookupImpl(J9VMThread *currentThread, J9Class *lookupClass, J9UTF8 *name, J9UTF8 *signature, J9Class *senderClass, UDATA options, BOOLEAN *foundDefaultConflicts);

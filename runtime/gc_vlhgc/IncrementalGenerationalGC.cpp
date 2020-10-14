@@ -415,7 +415,6 @@ MM_IncrementalGenerationalGC::globalMarkPhase(MM_EnvironmentVLHGC *env, bool inc
 	
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats.clear();
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._startTime = j9time_hires_clock();
 
 	if (incrementalMark) {
@@ -1003,6 +1002,7 @@ MM_IncrementalGenerationalGC::runGlobalMarkPhaseIncrement(MM_EnvironmentVLHGC *e
 	}
 
 	/* If the GMP is no longer running, then we have run the final increment of the cycle. */
+	Assert_MM_true(0 == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats.getStallTime());
 	if(!isGlobalMarkPhaseRunning()) {
 		reportGCCycleFinalIncrementEnding(env);
 		/* TODO: TEMPORARY: This is a temporary call that should be deleted once the new verbose format is in place */
@@ -1118,7 +1118,7 @@ MM_IncrementalGenerationalGC::runGlobalGarbageCollection(MM_EnvironmentVLHGC *en
 	 */
 	/* Global Collection - we max out ages on all live regions to remove them from the nursery collection set */
 	setRegionAgesToMax(env);
-
+	Assert_MM_true(0 == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats.getStallTime());
 	reportGCCycleFinalIncrementEnding(env);
 	/* TODO: TEMPORARY: This is a temporary call that should be deleted once the new verbose format is in place */
 	/* NOTE: May want to move any tracepoints up into this routine */
@@ -1189,6 +1189,7 @@ MM_IncrementalGenerationalGC::partialGarbageCollect(MM_EnvironmentVLHGC *env, MM
 	
 	Assert_MM_false(_workPacketsForGlobalGC->getOverflowFlag());
 	Assert_MM_false(_workPacketsForPartialGC->getOverflowFlag());
+	Assert_MM_true(0 == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats.getTotalStallTime());
 
 	reportGCCycleStart(env);
 	reportPGCStart(env);
@@ -1431,6 +1432,7 @@ MM_IncrementalGenerationalGC::setupBeforeGlobalGC(MM_EnvironmentVLHGC *env, MM_G
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 
 	setupBeforeGC(env);
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats.clear();
 }
 
 void
@@ -2234,7 +2236,8 @@ MM_IncrementalGenerationalGC::reportGCIncrementEnd(MM_EnvironmentBase *env)
 	}
 
 	stats->_endTime = j9time_hires_clock();
-
+	stats->_stallTime = static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats.getTotalStallTime();
+	
 	TRIGGER_J9HOOK_MM_PRIVATE_GC_INCREMENT_END(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),

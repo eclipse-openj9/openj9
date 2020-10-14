@@ -641,7 +641,7 @@ TraceEntry=Trc_VM_sendTenantInitializationAlreadyFailed_Entry Overhead=1 Level=3
 TraceExit=Trc_VM_sendTenantInitializationAlreadyFailed_Exit Overhead=1 Level=3 Template="sendTenantInitializationAlreadyFailed"
 
 TraceEntry=Trc_VM_classInitStateMachine_Entry Group=classinit Overhead=1 Level=3 Template="classInitStateMachine for %.*s (%p) loader=%p up to %s"
-TraceEvent=Trc_VM_classInitStateMachine_noLock Group=classinit Overhead=1 Level=3 Template="initializationLock is NULL - class if fully initialized"
+TraceEvent=Trc_VM_classInitStateMachine_noLock Group=classinit Overhead=1 Level=3 Template="initializationLock is NULL - class is fully initialized"
 TraceEvent=Trc_VM_classInitStateMachine_status Group=classinit Overhead=1 Level=3 Template="status is %p (%s)"
 TraceEvent=Trc_VM_classInitStateMachine_stateChanged Group=classinit Overhead=1 Level=3 Template="state changed after acquiring lock - loop and check state again"
 TraceEvent=Trc_VM_classInitStateMachine_markVerificationInProgress Group=classinit Overhead=1 Level=3 Template="marking class as verifying in current thread"

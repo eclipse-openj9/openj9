@@ -56,28 +56,31 @@ extern "C" {
  *    5.0    Java9 (929 AND 829)
  */
 
-#define TR_AOTHeaderMajorVersion 5
-#define TR_AOTHeaderMinorVersion 1
+#define TR_AOTHeaderMajorVersion 6
+#define TR_AOTHeaderMinorVersion 0
 #define TR_AOTHeaderEyeCatcher   0xA0757A27
 
 /* AOT Header Flags */
 typedef enum TR_AOTFeatureFlags
    {
-   TR_FeatureFlag_sanityCheckBegin              = 0x00000001,
-   TR_FeatureFlag_IsSMP                         = 0x00000002,
-   TR_FeatureFlag_UsesCompressedPointers        = 0x00000004,
-   TR_FeatureFlag_UseDFPHardware                = 0x00000008,
-   TR_FeatureFlag_DisableTraps                  = 0x00000010,
-   TR_FeatureFlag_TLHPrefetch                   = 0x00000020,
-   TR_FeatureFlag_MethodTrampolines             = 0x00000040,
-   // Available                                 = 0x00000080,
-   TR_FeatureFlag_HCREnabled                    = 0x00000100,
-   TR_FeatureFlag_SIMDEnabled                   = 0x00000200,     //set and tested for s390
-   TR_FeatureFlag_AsyncCompilation              = 0x00000400,     //async compilation - switch to interpreter code NOT generated
-   TR_FeatureFlag_ConcurrentScavenge            = 0x00000800,
-   TR_FeatureFlag_SoftwareReadBarrier           = 0x00001000,
-   TR_FeatureFlag_UsesTM                        = 0x00002000,
-   TR_FeatureFlag_SanityCheckEnd                = 0x80000000
+   TR_FeatureFlag_sanityCheckBegin                   = 0x00000001,
+   TR_FeatureFlag_IsSMP                              = 0x00000002,
+   TR_FeatureFlag_UsesCompressedPointers             = 0x00000004,
+   TR_FeatureFlag_UseDFPHardware                     = 0x00000008,
+   TR_FeatureFlag_DisableTraps                       = 0x00000010,
+   TR_FeatureFlag_TLHPrefetch                        = 0x00000020,
+   TR_FeatureFlag_MethodTrampolines                  = 0x00000040,
+   // Available                                      = 0x00000080,
+   TR_FeatureFlag_HCREnabled                         = 0x00000100,
+   TR_FeatureFlag_SIMDEnabled                        = 0x00000200,     //set and tested for s390
+   TR_FeatureFlag_AsyncCompilation                   = 0x00000400,     //async compilation - switch to interpreter code NOT generated
+   TR_FeatureFlag_ConcurrentScavenge                 = 0x00000800,
+   TR_FeatureFlag_SoftwareReadBarrier                = 0x00001000,
+   TR_FeatureFlag_UsesTM                             = 0x00002000,
+   TR_FeatureFlag_IsVariableHeapBaseForBarrierRange0 = 0x00004000,
+   TR_FeatureFlag_IsVariableHeapSizeForBarrierRange0 = 0x00008000,
+   TR_FeatureFlag_IsVariableActiveCardTableBase      = 0x00010000,
+   TR_FeatureFlag_SanityCheckEnd                     = 0x80000000
    } TR_AOTFeatureFlags;
 
 

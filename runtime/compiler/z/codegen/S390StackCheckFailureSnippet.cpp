@@ -222,10 +222,8 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
          }
       }
 
-#if !defined(PUBLIC_BUILD)
    // Generate RIOFF if RI is supported.
    cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RIOFF);
-#endif
 
    // Now we generate a BRASL to target
    *(int16_t *) cursor = 0xC0E5;                                                      // BRASL     r14, <Helper Addr>
@@ -263,11 +261,9 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
    cursor += sizeof(int32_t);
    returnLocationInSnippet = cursor;
 
-#if !defined(PUBLIC_BUILD)
    // Generate RION if RI is supported.
    //temporary disable to allow RI on zlinux
    //cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RION);
-#endif
 
    // If non-Trex, we need to reload the RA from the stack.
    if (requireRALoad)                                                                 // -->non-Trex<--  L/LG     r14, 0(r5)
@@ -403,12 +399,10 @@ TR::S390StackCheckFailureSnippet::getLength(int32_t)
       size += (is64BitTarget)?34:28;
       }
 
-#if !defined(PUBLIC_BUILD)
    // RI Hooks
    //temporary only RIOFF to allow RI on zlinux
    size += getRuntimeInstrumentationOnOffInstructionLength(cg());
    //size += 2 * getRuntimeInstrumentationOnOffInstructionLength(cg());
-#endif
 
    return size;
    }

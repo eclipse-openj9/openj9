@@ -784,10 +784,6 @@ TR::Register *J9::X86::I386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
 #endif
 
 #ifdef TR_TARGET_64BIT
-// Hack markers
-#define JVMPI_HOOKS_WITHOUT_SNIPPETS (!debug("enableSnippetsForJVMPI")) // Snippets can't yet do the necessary linkage logic
-
-
 TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    // TODO:AMD64: Try to common this with the IA32 version
@@ -826,19 +822,6 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
    //          aconst (RAM method)
    //
 
-   // Decrement the reference count on the constant placeholder parameter to
-   // the MethodEnterHook call.  An evaluation isn't necessary because the
-   // constant value isn't used here.
-   //
-   if (node->getOpCodeValue() == TR::MethodEnterHook && !JVMPI_HOOKS_WITHOUT_SNIPPETS)
-      {
-      if (node->getSecondChild()->getOpCode().isCall() &&
-          node->getSecondChild()->getNumChildren() > 1)
-         {
-         cg->decReferenceCount(node->getSecondChild()->getFirstChild());
-         }
-      }
-
    // The child contains an inline test.
    //
    TR::Node *testNode    = node->getFirstChild();
@@ -854,8 +837,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
    //
    // The reference counts will be decremented when the call node is evaluated.
    //
-   if (JVMPI_HOOKS_WITHOUT_SNIPPETS &&
-       (node->getOpCodeValue() == TR::MethodEnterHook || node->getOpCodeValue() == TR::MethodExitHook))
+   if (node->getOpCodeValue() == TR::MethodEnterHook || node->getOpCodeValue() == TR::MethodExitHook)
       {
       TR::Node *callNode = node->getSecondChild();
 
@@ -913,8 +895,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
 
    TR::Instruction *startInstruction = generateLabelInstruction(LABEL, node, startLabel, cg);
 
-   if (JVMPI_HOOKS_WITHOUT_SNIPPETS &&
-       (node->getOpCodeValue() == TR::MethodEnterHook || node->getOpCodeValue() == TR::MethodExitHook))
+   if (node->getOpCodeValue() == TR::MethodEnterHook || node->getOpCodeValue() == TR::MethodExitHook)
       {
       TR::Node *callNode = node->getSecondChild();
 
@@ -4731,7 +4712,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          }
       }
 
-   TR_ASSERT_FATAL(cg->comp()->compileRelocatableCode() || cg->comp()->isOutOfProcessCompilation() || cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) == cg->getX86ProcessorInfo().supportsHLE(), "supportsHLE() failed\n");
    if (cg->comp()->target().is64Bit() && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) && comp->getOption(TR_X86HLE))
       {
       TR::LabelSymbol *JITMonitorEntrySnippetLabel = generateLabelSymbol(cg);
@@ -4787,14 +4767,12 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    if (cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord())
       {
       op = cg->comp()->target().isSMP() ? LCMPXCHG8MemReg : CMPXCHG8MemReg;
-      TR_ASSERT_FATAL(cg->comp()->compileRelocatableCode() || cg->comp()->isOutOfProcessCompilation() || cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) == cg->getX86ProcessorInfo().supportsHLE(), "supportsHLE() failed!\n");
       if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) && comp->getOption(TR_X86HLE))
          op = cg->comp()->target().isSMP() ? XALCMPXCHG8MemReg : XACMPXCHG8MemReg;
       }
    else
       {
       op = cg->comp()->target().isSMP() ? LCMPXCHG4MemReg : CMPXCHG4MemReg;
-      TR_ASSERT_FATAL(cg->comp()->compileRelocatableCode() || cg->comp()->isOutOfProcessCompilation() || cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) == cg->getX86ProcessorInfo().supportsHLE(), "supportsHLE() failed!\n");
       if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) && comp->getOption(TR_X86HLE))
          op = cg->comp()->target().isSMP() ? XALCMPXCHG4MemReg : XACMPXCHG4MemReg;
       }
@@ -5621,7 +5599,6 @@ TR::Register
 
    if (!node->isReadMonitor() && !reservingLock)
       {
-      TR_ASSERT_FATAL(cg->comp()->compileRelocatableCode() || cg->comp()->isOutOfProcessCompilation() || cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) == cg->getX86ProcessorInfo().supportsHLE(), "supportsHLE() failed!\n");
       if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_HLE) && comp->getOption(TR_X86HLE))
          generateMemImmInstruction(XRSMemImm4(gen64BitInstr),
             node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
@@ -9330,7 +9307,6 @@ static TR::Register* inlineStringHashCode(TR::Node* node, bool isCompressed, TR:
       generateRegMemInstruction(LEARegMem(), node, tmp, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, isCompressed ? MASKCOMPRESSED : MASKDECOMPRESSED), cg), cg);
 
       auto mr = generateX86MemoryReference(tmp, index, shift, 0, cg);
-      TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || cg->getX86ProcessorInfo().supportsAVX() == comp->target().cpu.supportsAVX(), "supportsAVX() failed\n");
       if (comp->target().cpu.supportsAVX())
          {
          generateRegMemInstruction(PANDRegMem, node, hashXMM, mr, cg);
@@ -9752,7 +9728,6 @@ inlineCompareAndSwapNative(
       }
    else
       {
-      TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->target().cpu.supportsFeature(OMR_FEATURE_X86_CX8) == cg->getX86ProcessorInfo().supportsCMPXCHG8BInstruction(), "supportsCMPXCHG8BInstruction() failed\n");
       if (!comp->target().cpu.supportsFeature(OMR_FEATURE_X86_CX8))
          return false;
 
@@ -10175,7 +10150,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
 
          case TR::java_util_concurrent_atomic_Fences_orderAccesses:
             {
-            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->target().cpu.supportsMFence() == cg->getX86ProcessorInfo().supportsMFence(), "supportsMFence() failed\n");
             if (comp->target().cpu.supportsMFence())
                {
                TR_X86OpCode fenceOp;
@@ -10189,9 +10163,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
 
          case TR::java_util_concurrent_atomic_Fences_orderReads:
             {
-            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->target().cpu.requiresLFence() == cg->getX86ProcessorInfo().requiresLFENCE(), "requiresLFence() failed\n");
-            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->target().cpu.supportsLFence() == cg->getX86ProcessorInfo().supportsLFence(), "supportsLFence() failed\n");
-
             if (comp->target().cpu.requiresLFence() &&
                 comp->target().cpu.supportsLFence())
                {
@@ -10206,8 +10177,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
 
          case TR::java_util_concurrent_atomic_Fences_orderWrites:
             {
-            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->target().cpu.supportsSFence() == cg->getX86ProcessorInfo().supportsSFence(), "supportsSFence() failed\n");
-
             if (comp->target().cpu.supportsSFence())
                {
                TR_X86OpCode fenceOp;

@@ -1,6 +1,4 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
-package java.lang;
-
 /*******************************************************************************
  * Copyright (c) 1998, 2020 IBM Corp. and others
  *
@@ -22,6 +20,7 @@ package java.lang;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package java.lang;
 
 import java.util.Map;
 import java.security.AccessControlContext;
@@ -128,11 +127,6 @@ public class Thread implements Runnable {
 	long threadLocalRandomSeed;
 	int threadLocalRandomProbe;
 	int threadLocalRandomSecondarySeed;
-
-	/*[IF Java13 & !Java14]*/
-	/* The flag to indicate if this thread is suspended. */
-	private volatile boolean isSuspended;
-	/*[ENDIF] Java 13 & !Java14 */
 
 /**
  * 	Constructs a new Thread with no runnable object and a newly generated name.
@@ -560,18 +554,7 @@ public int countStackFrames() {
 /*[IF Java14]*/
 	throw new UnsupportedOperationException();
 /*[ELSE] Java14 */
-/*[IF Java13]*/
-	if (isAlive()) {
-		if (isSuspended) {
-			return 0;
-		}
-		throw new IllegalThreadStateException();
-	} else {
-/*[ENDIF] Java13 */
-		return 0;
-/*[IF Java13]*/
-	}
-/*[ENDIF] Java13 */
+	return 0;
 /*[ENDIF] Java14 */
 }
 
@@ -940,9 +923,6 @@ public final void resume() {
 	synchronized(lock) {
 		resumeImpl();
 	}
-/*[IF Java13 & !Java14]*/
-	isSuspended = false;
-/*[ENDIF] Java13 & !Java14 */
 }
 
 /**
@@ -1272,9 +1252,6 @@ public final void suspend() {
 			suspendImpl();
 		}
 	}
-/*[IF Java13 & !Java14]*/
-	isSuspended = true;
-/*[ENDIF] Java13 & !Java14 */
 }
 
 /**

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -493,6 +493,9 @@ public class IPC {
 	private static void printLogMessageHeader(PrintStream log) {
 		long currentTime = System.currentTimeMillis();
 		log.print(currentTime);
+		log.print("("); //$NON-NLS-1$
+		log.print(new java.util.Date());
+		log.print(")"); //$NON-NLS-1$
 		log.print(" "); //$NON-NLS-1$
 		String id = AttachHandler.getVmId();
 		if (0 == id.length()) {

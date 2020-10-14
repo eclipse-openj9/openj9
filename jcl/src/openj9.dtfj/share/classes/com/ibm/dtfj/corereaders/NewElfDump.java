@@ -1547,8 +1547,7 @@ public class NewElfDump extends CoreReaderSupport {
 		}
 
 		return buildProcess(builder, addressSpace, pid, commandLine,
-					getEnvironmentVariables(builder), failingThread,
-					threads.iterator(), executable);
+				environment, failingThread, threads.iterator(), executable);
 	}
 
 	private Object buildProcess(Builder builder, Object addressSpace, String pid, String commandLine,

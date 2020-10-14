@@ -90,22 +90,31 @@ public class CoreInfoCommand extends Command
 
 			try {
 				/* Print the command line of a running program that generated core file */
-				out.println("COMMANDLINE\n" + ddrProcess.getCommandLine() + "\n");
+				out.println("COMMANDLINE");
+				out.println(ddrProcess.getCommandLine());
+				out.println();
 			} catch (DataUnavailable e) {
 				/*For Zos core files, commandline is not available */
-				out.println("COMMANDLINE is not available\n");
+				out.println("COMMANDLINE is not available");
+				out.println();
 			} catch (com.ibm.dtfj.image.CorruptDataException e) {
 				throw new DDRInteractiveCommandException("CorruptDataException occured while getting the commandline from process");
 			}
 			
 			Properties properties = J9JavaVMHelper.getSystemProperties(vm);
 			
-			/* Print VM service level info */
-			out.println("JAVA SERVICE LEVEL INFO\n" + ras.serviceLevel().getCStringAtOffset(0));
-			/* Print Java Version Info */
-			out.println("JAVA VERSION INFO\n" + properties.get("java.fullversion"));
+			/* Print Java VM Name */
+			out.println("JAVA VM NAME\t- " + properties.get("java.vm.name"));
 			/* Print Java VM Version Info */
-			out.println("JAVA VM VERSION\t- " + properties.get("java.vm.version") + "\n");
+			out.println("JAVA VM VERSION\t- " + properties.get("java.vm.version"));
+			/* Print VM service level info */
+			out.println("JAVA SERVICE LEVEL INFO");
+			out.println(ras.serviceLevel().getCStringAtOffset(0));
+			/* Print Java Version Info */
+			out.println("JAVA VERSION INFO");
+			out.println(properties.get("java.fullversion"));
+			out.println(); 
+
 			
 			/* Print Platform Info */
 			boolean is64BitPlatform = (process.bytesPerPointer() == 8) ? true : false;
@@ -126,7 +135,8 @@ public class CoreInfoCommand extends Command
 			try {
 				properties = ddrProcess.getEnvironment();
 				Enumeration processPropEnum = properties.keys();
-				out.println("\nENVIRONMENT VARIABLES");
+				out.println();
+				out.println("ENVIRONMENT VARIABLES");
 				while (processPropEnum.hasMoreElements()) {
 					String key = (String)processPropEnum.nextElement();
 					out.println(key + "=" + properties.get(key));
@@ -134,7 +144,8 @@ public class CoreInfoCommand extends Command
 			} catch (com.ibm.dtfj.image.CorruptDataException e) {
 				throw new DDRInteractiveCommandException("CorruptDataException occured while getting the environment variables from process");
 			} catch (DataUnavailable e) {
-				out.println("Environment variables are not available\n");
+				out.println("Environment variables are not available");
+				out.println();
 			}
 			
 		} catch (CorruptDataException e) {

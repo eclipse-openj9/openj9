@@ -995,7 +995,12 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_AOTHeader *hdrInCache, i
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH, "AOT header validation failed: Software Read Barrier feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_UsesTM) != (hdrInCache->featureFlags & TR_FeatureFlag_UsesTM))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_TM_MISMATCH, "AOT header validation failed: TM feature mismatch.");
-
+   if ((featureFlags & TR_FeatureFlag_IsVariableHeapBaseForBarrierRange0) != (hdrInCache->featureFlags & TR_FeatureFlag_IsVariableHeapBaseForBarrierRange0))
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEAP_BASE_FOR_BARRIER_RANGE_MISMATCH, "AOT header validation failed: Heap Base for Barrier Range feature mismatch.");
+   if ((featureFlags & TR_FeatureFlag_IsVariableHeapSizeForBarrierRange0) != (hdrInCache->featureFlags & TR_FeatureFlag_IsVariableHeapSizeForBarrierRange0))
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH, "AOT header validation failed: Heap Size for Barrier Range feature mismatch.");
+   if ((featureFlags & TR_FeatureFlag_IsVariableActiveCardTableBase) != (hdrInCache->featureFlags & TR_FeatureFlag_IsVariableActiveCardTableBase))
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH, "AOT header validation failed: Active Card Table Base feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_SanityCheckEnd) != (hdrInCache->featureFlags & TR_FeatureFlag_SanityCheckEnd))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED, "AOT header validation failed: Trailing sanity bit mismatch.");
 
@@ -1335,6 +1340,15 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
          }
       }
 
+   if (TR::Options::getCmdLineOptions()->isVariableHeapBaseForBarrierRange0())
+      featureFlags |= TR_FeatureFlag_IsVariableHeapBaseForBarrierRange0;
+
+   if (TR::Options::getCmdLineOptions()->isVariableHeapSizeForBarrierRange0())
+      featureFlags |= TR_FeatureFlag_IsVariableHeapSizeForBarrierRange0;
+
+   if (TR::Options::getCmdLineOptions()->isVariableActiveCardTableBase())
+      featureFlags |= TR_FeatureFlag_IsVariableActiveCardTableBase;
+
    return featureFlags;
    }
 
@@ -1484,20 +1498,29 @@ printAOTHeaderProcessorFeatures(TR_AOTHeader * hdrInCache, char * buff, const si
          {
          if (processorDescription.features[i] & (1<<j))
             {
-            if (rowLength >= 20)
-               {
-               strncat(buff, "\n\t                                       ", BUFF_SIZE - strlen(buff) - 1);
-               rowLength = 0;
-               }
-            else if (rowLength != 0)
-               {
-               strncat(buff, " ", BUFF_SIZE - strlen(buff) - 1);
-               rowLength += 1;
-               }
             uint32_t feature = i * numberOfBits + j;
             const char * feature_name = omrsysinfo_get_processor_feature_name(feature);
-            strncat(buff, feature_name, BUFF_SIZE - strlen(buff) - 1);
-            rowLength += strlen(feature_name);
+            if (rowLength + 1 + strlen(feature_name) >= 20 && rowLength != 0)
+               {
+               // start a new row (also don't start a new row when rowLength is 0)
+               strncat(buff, "\n\t                                       ", BUFF_SIZE - strlen(buff) - 1);
+               rowLength = 0;
+
+               strncat(buff, feature_name, BUFF_SIZE - strlen(buff) - 1);
+               rowLength += strlen(feature_name);
+               }
+            else
+               {
+               // append to current row
+               if (rowLength > 0)
+                  {
+                  strncat(buff, " ", BUFF_SIZE - strlen(buff) - 1);
+                  rowLength += 1;
+                  }
+
+               strncat(buff, feature_name, BUFF_SIZE - strlen(buff) - 1);
+               rowLength += strlen(feature_name);
+               }
             }
          }
       }

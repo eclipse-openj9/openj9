@@ -67,6 +67,7 @@
 #define JNIC_JFIELDINSTANCEID 'e'
 #define JNIC_JFIELDSTATICID 'o'
 #define JNIC_VALIST 'v'
+#define JNIC_JVALUE 'x'
 #define JNIC_JSIZE 'q'
 #define JNIC_POINTER 'p'
 #define JNIC_STRING '$'
@@ -93,7 +94,8 @@
 #define JNIC_NONNULLOBJECT '0'
 #define JNIC_WEAKREF 'w'
 #define JNIC_GLOBALREF '*'
-#define JNIC_LOCALREF '?'		
+#define JNIC_LOCALREF '?'
+#define JNIC_CLASSLOADER 'k'
 
 /* Global Ref tracking hash table entry */
 typedef struct JNICHK_GREF_HASHENTRY {
@@ -499,6 +501,19 @@ void jniCheckStringUTFRange(JNIEnv* env, const char* function, jstring string, j
 * @return void
 */
 void jniCheckSubclass(JNIEnv* env, const char* function, IDATA argNum, jobject aJobject, const char* type);
+
+
+/**
+* @brief
+* @param env
+* @param function
+* @param argNum
+* @param aJobject
+* @param type1
+* @param type2
+* @return void
+*/
+void jniCheckSubclass2(JNIEnv* env, const char* function, IDATA argNum, jobject aJobject, const char* type1, const char* type2);
 
 
 /**

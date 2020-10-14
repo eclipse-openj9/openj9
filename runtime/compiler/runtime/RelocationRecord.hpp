@@ -284,8 +284,6 @@ struct TR_RelocationRecordValidateMethodFromCPBinaryTemplate : public TR_Relocat
    uint16_t _cpIndex; // constrained to 16 bits by the class file format
    };
 
-typedef TR_RelocationRecordValidateMethodFromCPBinaryTemplate TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate;
-
 struct TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _methodID;
@@ -346,13 +344,13 @@ struct TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate : publi
    {
    uint16_t _methodID;
    uint16_t _methodClassID;
-   bool _skipFrames;
+   uint8_t _skipFrames;
    };
 
 struct TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _classID;
-   bool _isInitialized;
+   uint8_t _isInitialized;
    };
 
 struct TR_RelocationRecordSymbolFromManagerBinaryTemplate : public TR_RelocationRecordBinaryTemplate
@@ -1766,15 +1764,12 @@ class TR_RelocationRecordValidateInterfaceMethodFromCP : public TR_RelocationRec
       uint16_t cpIndex(TR_RelocationTarget *reloTarget);
    };
 
-class TR_RelocationRecordValidateImproperInterfaceMethodFromCP : public TR_RelocationRecord
+class TR_RelocationRecordValidateImproperInterfaceMethodFromCP : public TR_RelocationRecordValidateMethodFromCP
    {
    public:
       TR_RelocationRecordValidateImproperInterfaceMethodFromCP() {}
-      TR_RelocationRecordValidateImproperInterfaceMethodFromCP(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
+      TR_RelocationRecordValidateImproperInterfaceMethodFromCP(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordValidateMethodFromCP(reloRuntime, record) {}
       virtual char *name() { return "TR_RelocationRecordValidateImproperInterfaceMethodFromCP"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };
 
@@ -1817,6 +1812,17 @@ class TR_RelocationRecordValidateStackWalkerMaySkipFrames : public TR_Relocation
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID);
+      uint16_t methodID(TR_RelocationTarget *reloTarget);
+
+      void setMethodClassID(TR_RelocationTarget *reloTarget, uint16_t methodClassID);
+      uint16_t methodClassID(TR_RelocationTarget *reloTarget);
+
+      void setSkipFrames(TR_RelocationTarget *reloTarget, bool skipFrames);
+      bool skipFrames(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordValidateClassInfoIsInitialized : public TR_RelocationRecord
@@ -1829,6 +1835,14 @@ class TR_RelocationRecordValidateClassInfoIsInitialized : public TR_RelocationRe
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setClassID(TR_RelocationTarget *reloTarget, uint16_t classID);
+      uint16_t classID(TR_RelocationTarget *reloTarget);
+
+      void setIsInitialized(TR_RelocationTarget *reloTarget, bool isInitialized);
+      bool isInitialized(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordValidateMethodFromSingleImpl : public TR_RelocationRecord
@@ -1841,6 +1855,26 @@ class TR_RelocationRecordValidateMethodFromSingleImpl : public TR_RelocationReco
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID);
+      uint16_t methodID(TR_RelocationTarget *reloTarget);
+
+      void setDefiningClassID(TR_RelocationTarget *reloTarget, uint16_t definingClassID);
+      uint16_t definingClassID(TR_RelocationTarget *reloTarget);
+
+      void setThisClassID(TR_RelocationTarget *reloTarget, uint16_t thisClassID);
+      uint16_t thisClassID(TR_RelocationTarget *reloTarget);
+
+      void setCpIndexOrVftSlot(TR_RelocationTarget *reloTarget, int32_t cpIndexOrVftSlot);
+      int32_t cpIndexOrVftSlot(TR_RelocationTarget *reloTarget);
+
+      void setCallerMethodID  (TR_RelocationTarget *reloTarget, uint16_t callerMethodID);
+      uint16_t callerMethodID(TR_RelocationTarget *reloTarget);
+
+      void setUseGetResolvedInterfaceMethod(TR_RelocationTarget *reloTarget, TR_YesNoMaybe useGetResolvedInterfaceMethod);
+      TR_YesNoMaybe useGetResolvedInterfaceMethod(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordValidateMethodFromSingleInterfaceImpl : public TR_RelocationRecord
@@ -1853,6 +1887,23 @@ class TR_RelocationRecordValidateMethodFromSingleInterfaceImpl : public TR_Reloc
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID);
+      uint16_t methodID(TR_RelocationTarget *reloTarget);
+
+      void setDefiningClassID(TR_RelocationTarget *reloTarget, uint16_t definingClassID);
+      uint16_t definingClassID(TR_RelocationTarget *reloTarget);
+
+      void setThisClassID(TR_RelocationTarget *reloTarget, uint16_t thisClassID);
+      uint16_t thisClassID(TR_RelocationTarget *reloTarget);
+
+      void setCpIndex(TR_RelocationTarget *reloTarget, uint16_t cpIndex);
+      uint16_t cpIndex(TR_RelocationTarget *reloTarget);
+
+      void setCallerMethodID  (TR_RelocationTarget *reloTarget, uint16_t callerMethodID);
+      uint16_t callerMethodID(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordValidateMethodFromSingleAbstractImpl : public TR_RelocationRecord
@@ -1865,6 +1916,23 @@ class TR_RelocationRecordValidateMethodFromSingleAbstractImpl : public TR_Reloca
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID);
+      uint16_t methodID(TR_RelocationTarget *reloTarget);
+
+      void setDefiningClassID(TR_RelocationTarget *reloTarget, uint16_t definingClassID);
+      uint16_t definingClassID(TR_RelocationTarget *reloTarget);
+
+      void setThisClassID(TR_RelocationTarget *reloTarget, uint16_t thisClassID);
+      uint16_t thisClassID(TR_RelocationTarget *reloTarget);
+
+      void setVftSlot(TR_RelocationTarget *reloTarget, int32_t vftSlot);
+      int32_t vftSlot(TR_RelocationTarget *reloTarget);
+
+      void setCallerMethodID  (TR_RelocationTarget *reloTarget, uint16_t callerMethodID);
+      uint16_t callerMethodID(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordSymbolFromManager : public TR_RelocationRecord
@@ -1880,6 +1948,14 @@ class TR_RelocationRecordSymbolFromManager : public TR_RelocationRecord
       virtual void activatePointer(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
       bool needsUnloadAssumptions(TR::SymbolType symbolType);
       bool needsRedefinitionAssumption(TR_RelocationRuntime *reloRuntime, uint8_t *reloLocation, TR_OpaqueClassBlock *clazz, TR::SymbolType symbolType);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setSymbolID(TR_RelocationTarget *reloTarget, uint16_t symbolID);
+      uint16_t symbolID(TR_RelocationTarget *reloTarget);
+
+      void setSymbolType(TR_RelocationTarget *reloTarget, TR::SymbolType symbolType);
+      TR::SymbolType symbolType(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordDiscontiguousSymbolFromManager : public TR_RelocationRecordSymbolFromManager
@@ -1900,6 +1976,11 @@ class TR_RelocationRecordResolvedTrampolines : public TR_RelocationRecord
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setSymbolID(TR_RelocationTarget *reloTarget, uint16_t symbolID);
+      uint16_t symbolID(TR_RelocationTarget *reloTarget);
    };
 /* SYMBOL VALIDATION MANAGER */
 

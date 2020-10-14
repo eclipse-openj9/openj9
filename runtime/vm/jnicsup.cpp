@@ -2191,6 +2191,27 @@ findJNIMethod(J9VMThread* currentThread, J9Class* clazz, char* name, char* signa
 	return result;
 }
 
+UDATA
+jniIsInternalClassRef(J9JavaVM *vm, jobject ref)
+{
+	UDATA rc = FALSE;
+	J9ClassWalkState classWalkState;
+	J9Class *clazz = allLiveClassesStartDo(&classWalkState, vm, NULL);
+	while (clazz != NULL) {
+		do {
+			if (ref == (jobject)&clazz->classObject) {
+				rc = TRUE;
+				goto done;
+			}
+			clazz = clazz->replacedClass;
+		} while (NULL != clazz);
+		clazz = allLiveClassesNextDo(&classWalkState);
+	}
+done:
+	allLiveClassesEndDo(&classWalkState);
+	return rc;
+}
+
 static jobjectRefType JNICALL
 getObjectRefType(JNIEnv *env, jobject obj)
 {
@@ -2199,8 +2220,6 @@ getObjectRefType(JNIEnv *env, jobject obj)
 	jobjectRefType rc = JNIInvalidRefType;
 	J9JNIReferenceFrame* frame;
 	J9JavaStack* stack = vmThread->stackObject;
-	J9ClassWalkState classWalkState;
-	J9Class * clazz;
 
 	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 
@@ -2262,15 +2281,10 @@ getObjectRefType(JNIEnv *env, jobject obj)
 
 	/* Check for class refs */
 
-	clazz = allLiveClassesStartDo(&classWalkState, vm, NULL);
-	while (clazz != NULL) {
-		if (obj == (jobject) &(clazz->classObject)) {
-			rc = JNILocalRefType;
-			break;
-		}
-		clazz = allLiveClassesNextDo(&classWalkState);
+	if (jniIsInternalClassRef(vm, obj)) {
+		rc = JNILocalRefType;
+		goto done;
 	}
-	allLiveClassesEndDo(&classWalkState);
 
 done:
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
