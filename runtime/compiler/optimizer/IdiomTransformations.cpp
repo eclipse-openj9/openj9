@@ -4992,7 +4992,7 @@ CISCTransform2TRTOArray(TR_CISCTransformer *trans)
                }
             else
                {
-               TR_UNIMPLEMENTED();
+               TR_ASSERT(false, "Not implemented yet");
                }
             }
          }
