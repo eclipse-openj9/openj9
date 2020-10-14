@@ -150,7 +150,7 @@ private:
 
 	bool compareROMClassForEquality(U_8 *romClass, bool romClassIsShared,
 			ROMClassWriter *romClassWriter, SRPOffsetTable *srpOffsetTable, SRPKeyProducer *srpKeyProducer, ClassFileOracle *classFileOracle,
-			U_32 modifiers, U_32 extraModifiers, U_32 optionalFlags, ROMClassCreationContext * context, U_32 romSize, bool isLambda);
+			U_32 modifiers, U_32 extraModifiers, U_32 optionalFlags, ROMClassCreationContext * context, U_32 sizeToCompareForLambda, bool isLambda);
 	SharedCacheRangeInfo getSharedCacheSRPRangeInfo(void *address);
 	void getSizeInfo(ROMClassCreationContext *context, ROMClassWriter *romClassWriter, SRPOffsetTable *srpOffsetTable, bool *countDebugDataOutOfLine, SizeInformation *sizeInformation);
 };

@@ -133,13 +133,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/invoke/MethodType" flags="opt_methodHandleCommon"/>
 	<classref name="java/lang/invoke/MethodHandle" flags="opt_methodHandleCommon"/>
 	<classref name="java/lang/invoke/WrongMethodTypeException" flags="opt_methodHandleCommon"/>
+	<classref name="java/lang/invoke/MethodHandleResolver" flags="opt_methodHandleCommon"/>
 	
 	<!-- Class references needed to support OpenJDK MethodHandles. -->
 	<classref name="java/lang/invoke/MemberName" flags="opt_openjdkMethodhandle"/>
 	<classref name="java/lang/invoke/MethodTypeHelper" flags="opt_openjdkMethodhandle"/>
 	<classref name="java/lang/invoke/MethodTypeForm" flags="opt_openjdkMethodhandle"/>
 	<classref name="java/lang/invoke/LambdaForm" flags="opt_openjdkMethodhandle"/>
-	<classref name="java/lang/invoke/MethodHandleHelper" flags="opt_openjdkMethodhandle"/>
 	
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
@@ -390,11 +390,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<staticmethodref class="java/lang/J9VMInternals" name="newInstanceImpl" signature="(Ljava/lang/Class;)Ljava/lang/Object;" flags="jit_newInstancePrototype"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="formatNoSuchMethod" signature="(Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;"/>
 	<staticmethodref class="java/lang/invoke/MethodType" name="vmResolveFromMethodDescriptorString" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandle" name="sendResolveMethodHandle" signature="(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandle" name="resolveInvokeDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandle" name="resolveConstantDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" versions="11-" flag="opt_methodHandle"/>
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="invokeWithArgumentsHelper" signature="(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandle" name="constructorPlaceHolder" signature="(Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="forGenericInvoke" signature="(Ljava/lang/invoke/MethodType;Z)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="returnFilterPlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="foldHandlePlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
@@ -411,13 +407,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<staticmethodref class="java/lang/J9VMInternals" name="initializationAlreadyFailed" signature="(Ljava/lang/Class;)V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="recordInitializationFailure" signature="(Ljava/lang/Class;Ljava/lang/Throwable;)V"/>
 
+	<!-- Static method references needed to support OpenJ9 and OpenJDK MethodHandles. -->
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="sendResolveMethodHandle" signature="(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandleCommon"/>
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="resolveInvokeDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandleCommon"/>
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="resolveConstantDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" versions="11-" flag="opt_methodHandleCommon"/>
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="constructorPlaceHolder" signature="(Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandleCommon"/>
+
 	<!-- Static method references needed to support OpenJDK MethodHandles. -->
 	<staticmethodref class="java/lang/invoke/MethodTypeHelper" name="vmResolveFromMethodDescriptorString" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/invoke/MethodType;" flags="opt_openjdkMethodhandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandleHelper" name="sendResolveMethodHandle" signature="(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodHandle;" flags="opt_openjdkMethodhandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandleHelper" name="resolveMethodHandle" signature="(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandleHelper" name="resolveInvokeDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandleHelper" name="resolveConstantDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" versions="11-" flag="opt_openjdkMethodhandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandleHelper" name="constructorPlaceHolder" signature="(Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="resolveMethodHandle" signature="(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
 
 	<!-- Security manager check -->
 	<staticfieldref class="java/lang/System" name="security" signature="Ljava/lang/SecurityManager;"/>

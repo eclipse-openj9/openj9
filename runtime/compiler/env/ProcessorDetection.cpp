@@ -535,17 +535,109 @@ void
 TR_J9VM::initializeProcessorType()
    {
    TR_ASSERT(_compInfo,"compInfo not defined");
-   TR::Compiler->target.cpu.applyUserOptions();
-
+   
    if (TR::Compiler->target.cpu.isZ())
       {
-#if defined(TR_HOST_S390)
+      OMRProcessorDesc processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
+      if (processorDescription.processor >= OMR_PROCESSOR_S390_Z10 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ10))
+         processorDescription.processor = OMR_PROCESSOR_S390_FIRST;
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z196 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ196))
+         processorDescription.processor = OMR_PROCESSOR_S390_Z10;
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_ZEC12 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZEC12))
+         processorDescription.processor = OMR_PROCESSOR_S390_Z196;
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z13 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ13))
+         processorDescription.processor = OMR_PROCESSOR_S390_ZEC12;
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z14 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ14))
+         processorDescription.processor = OMR_PROCESSOR_S390_Z13;
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z15 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ15))
+         processorDescription.processor = OMR_PROCESSOR_S390_Z14;
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_ZNEXT && TR::Options::getCmdLineOptions()->getOption(TR_DisableZNext))
+         processorDescription.processor = OMR_PROCESSOR_S390_Z15;
+
+      TR::Compiler->target.cpu = TR::CPU::customize(processorDescription);
 #if defined(J9ZOS390)
       // Cache whether current process is running in Supervisor State (i.e. Control Region of WAS).
       if (!_isPSWInProblemState())
          _compInfo->setIsInZOSSupervisorState();
 #endif
-#endif
+      }
+   else if (TR::Compiler->target.cpu.isPower())
+      {
+      OMRProcessorDesc processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
+      // P10 support is not yet well-tested, so it's currently gated behind an environment
+      // variable to prevent it from being used by accident by users who use old versions of
+      // OMR once P10 chips become available.
+      if (processorDescription.processor == OMR_PROCESSOR_PPC_P10)
+         {
+         static bool enableP10 = feGetEnv("TR_EnableExperimentalPower10Support");
+         if (!enableP10)
+            {
+            processorDescription.processor = OMR_PROCESSOR_PPC_P9;
+            processorDescription.physicalProcessor = OMR_PROCESSOR_PPC_P9;
+            }
+         }
+
+      if (debug("rios1"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_RIOS1;
+      else if (debug("rios2"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_RIOS2;
+      else if (debug("pwr403"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_PWR403;
+      else if (debug("pwr405"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_PWR405;
+      else if (debug("pwr601"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_PWR601;
+      else if (debug("pwr603"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_PWR603;
+      else if (debug("pwr604"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_PWR604;
+      else if (debug("pwr630"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_PWR630;
+      else if (debug("pwr620"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_PWR620;
+      else if (debug("nstar"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_NSTAR;
+      else if (debug("pulsar"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_PULSAR;
+      else if (debug("gp"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_GP;
+      else if (debug("gpul"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_GPUL;
+      else if (debug("gr"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_GR;
+      else if (debug("p6"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_P6;
+      else if (debug("p7"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_P7;
+      else if (debug("p8"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_P8;
+      else if (debug("p9"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_P9;
+      else if (debug("440GP"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_PWR440;
+      else if (debug("750FX"))
+         processorDescription.processor = OMR_PROCESSOR_PPC_7XX;
+
+      TR::Compiler->target.cpu = TR::CPU::customize(processorDescription);
+      }
+   else if (TR::Compiler->target.cpu.isX86())
+      {
+      OMRProcessorDesc processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
+      OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+      if (feGetEnv("TR_DisableAVX"))
+         {
+         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_OSXSAVE, FALSE);
+         }
+      
+      TR::Compiler->target.cpu = TR::CPU::customize(processorDescription);
+
+      const char *vendor = TR::Compiler->target.cpu.getProcessorVendorId();
+      uint32_t processorSignature = TR::Compiler->target.cpu.getProcessorSignature();
+
+      TR::Compiler->target.cpu.setProcessor(portLibCall_getX86ProcessorType(vendor, processorSignature));
+
+      TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_FirstX86Processor
+             && TR::Compiler->target.cpu.id() <= TR_LastX86Processor, "Not a valid X86 Processor Type");
       }
    else if (TR::Compiler->target.cpu.isARM())
       {
@@ -560,20 +652,6 @@ TR_J9VM::initializeProcessorType()
 
       TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_FirstARM64Processor
              && TR::Compiler->target.cpu.id() <= TR_LastARM64Processor, "Not a valid ARM64 Processor Type");
-      }
-   else if (TR::Compiler->target.cpu.isPower())
-      {
-      return;
-      }
-   else if (TR::Compiler->target.cpu.isX86())
-      {
-      const char *vendor = TR::Compiler->target.cpu.getProcessorVendorId();
-      uint32_t processorSignature = TR::Compiler->target.cpu.getProcessorSignature();
-
-      TR::Compiler->target.cpu.setProcessor(portLibCall_getX86ProcessorType(vendor, processorSignature));
-
-      TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_FirstX86Processor
-             && TR::Compiler->target.cpu.id() <= TR_LastX86Processor, "Not a valid X86 Processor Type");
       }
    else
       {

@@ -25,6 +25,8 @@ package java.lang.invoke;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+import static java.lang.invoke.MethodHandleResolver.UNSAFE;
+
 /*
  * MethodHandle subclass that is able to return the value of
  * a static field.
@@ -55,46 +57,51 @@ final class StaticFieldGetterHandle extends FieldHandle {
 	@FrameIteratorSkip
 	private final int    invokeExact_thunkArchetype_I(int argPlaceholder) {
 		initializeClassIfRequired();
-		if (isVolatile)
+		if (isVolatile) {
 			return UNSAFE.getIntVolatile(defc, vmSlot);
-		else
-			return UNSAFE.getInt        (defc, vmSlot);
+		} else {
+			return UNSAFE.getInt(defc, vmSlot);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final long   invokeExact_thunkArchetype_J(int argPlaceholder) {
 		initializeClassIfRequired();
-		if (isVolatile)
+		if (isVolatile) {
 			return UNSAFE.getLongVolatile(defc, vmSlot);
-		else
-			return UNSAFE.getLong        (defc, vmSlot);
+		} else {
+			return UNSAFE.getLong(defc, vmSlot);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final float  invokeExact_thunkArchetype_F(int argPlaceholder) {
 		initializeClassIfRequired();
-		if (isVolatile)
+		if (isVolatile) {
 			return UNSAFE.getFloatVolatile(defc, vmSlot);
-		else
-			return UNSAFE.getFloat        (defc, vmSlot);
+		} else {
+			return UNSAFE.getFloat(defc, vmSlot);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final double invokeExact_thunkArchetype_D(int argPlaceholder) {
 		initializeClassIfRequired();
-		if (isVolatile)
+		if (isVolatile) {
 			return UNSAFE.getDoubleVolatile(defc, vmSlot);
-		else
-			return UNSAFE.getDouble        (defc, vmSlot);
+		} else {
+			return UNSAFE.getDouble(defc, vmSlot);
+		}
 	}
 
 	@FrameIteratorSkip
 	private final Object invokeExact_thunkArchetype_L(int argPlaceholder) {
 		initializeClassIfRequired();
-		if (isVolatile)
+		if (isVolatile) {
 			return UNSAFE.getObjectVolatile(defc, vmSlot);
-		else
-			return UNSAFE.getObject        (defc, vmSlot);
+		} else {
+			return UNSAFE.getObject(defc, vmSlot);
+		}
 	}
 
 	private static final ThunkTable _thunkTable = new ThunkTable();

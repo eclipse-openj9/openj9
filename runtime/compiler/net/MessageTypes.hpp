@@ -171,6 +171,7 @@ enum MessageType : uint16_t
    VM_getMethodFromClass,
    VM_isClassVisible,
    VM_markClassForTenuredAlignment,
+   VM_reportHotField,
    VM_getReferenceSlotsInClass,
    VM_getMethodSize,
    VM_addressOfFirstClassStatic,
@@ -206,7 +207,7 @@ enum MessageType : uint16_t
    VM_getFields,
 
    // For static TR::CompilationInfo methods
-   CompInfo_isCompiled, // 171
+   CompInfo_isCompiled, // 172
    CompInfo_getPCIfCompiled,
    CompInfo_getInvocationCount,
    CompInfo_setInvocationCount,
@@ -220,7 +221,7 @@ enum MessageType : uint16_t
    CompInfo_getJ9MethodStartPC,
 
    // For J9::ClassEnv Methods
-   ClassEnv_classFlagsValue, // 183
+   ClassEnv_classFlagsValue, // 184
    ClassEnv_classDepthOf,
    ClassEnv_classInstanceSize,
    ClassEnv_superClassesOf,
@@ -233,13 +234,13 @@ enum MessageType : uint16_t
    ClassEnv_getROMClassRefName,
 
    // For TR_J9SharedCache
-   SharedCache_getClassChainOffsetInSharedCache, // 194
+   SharedCache_getClassChainOffsetInSharedCache, // 195
    SharedCache_rememberClass,
    SharedCache_addHint,
    SharedCache_storeSharedData,
 
    // For runFEMacro
-   runFEMacro_invokeCollectHandleNumArgsToCollect, // 198
+   runFEMacro_invokeCollectHandleNumArgsToCollect, // 199
    runFEMacro_invokeExplicitCastHandleConvertArgs,
    runFEMacro_targetTypeL,
    runFEMacro_invokeILGenMacrosInvokeExactAndFixup,
@@ -265,24 +266,24 @@ enum MessageType : uint16_t
    runFEMacro_invokeCollectHandleAllocateArray,
 
    // for JITServerPersistentCHTable
-   CHTable_getAllClassInfo, // 222
+   CHTable_getAllClassInfo, // 223
    CHTable_getClassInfoUpdates,
    CHTable_commit,
    CHTable_clearReservable,
 
    // for JITServerIProfiler
-   IProfiler_profilingSample, // 226
+   IProfiler_profilingSample, // 227
    IProfiler_searchForMethodSample,
    IProfiler_getMaxCallCount,
    IProfiler_setCallCount,
 
-   Recompilation_getExistingMethodInfo, // 230
+   Recompilation_getExistingMethodInfo, // 231
    Recompilation_getJittedBodyInfoFromPC,
 
    ClassInfo_getRemoteROMString,
 
    // for KnownObjectTable
-   KnownObjectTable_getOrCreateIndex, // 233
+   KnownObjectTable_getOrCreateIndex, // 234
    KnownObjectTable_getOrCreateIndexAt,
    KnownObjectTable_getPointer,
    KnownObjectTable_getExistingIndexAt,
@@ -296,7 +297,7 @@ enum MessageType : uint16_t
    KnownObjectTable_invokeDirectHandleDirectCall,
    KnownObjectTable_getKnownObjectTableDumpInfo,
 
-   ClassEnv_isClassRefValueType, // 245
+   ClassEnv_isClassRefValueType, // 246
    MessageType_MAXTYPE
    };
 
@@ -442,6 +443,7 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "VM_getMethodFromClass",
    "VM_isClassVisible",
    "VM_markClassForTenuredAlignment",
+   "VM_reportHotField",
    "VM_getReferenceSlotsInClass",
    "VM_getMethodSize",
    "VM_addressOfFirstClassStatic",
@@ -475,7 +477,7 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "VM_getObjectSizeClass",
    "VM_stackWalkerMaySkipFramesSVM",
    "VM_getFields",
-   "CompInfo_isCompiled", // 171
+   "CompInfo_isCompiled", // 172
    "CompInfo_getPCIfCompiled",
    "CompInfo_getInvocationCount",
    "CompInfo_setInvocationCount",
@@ -487,7 +489,7 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "CompInfo_setInvocationCountAtomic",
    "CompInfo_isClassSpecial",
    "CompInfo_getJ9MethodStartPC",
-   "ClassEnv_classFlagsValue", // 183
+   "ClassEnv_classFlagsValue", // 184
    "ClassEnv_classDepthOf",
    "ClassEnv_classInstanceSize",
    "ClassEnv_superClassesOf",
@@ -498,11 +500,11 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "ClassEnv_getITable",
    "ClassEnv_classHasIllegalStaticFinalFieldModification",
    "ClassEnv_getROMClassRefName",
-   "SharedCache_getClassChainOffsetInSharedCache", // 194
+   "SharedCache_getClassChainOffsetInSharedCache", // 195
    "SharedCache_rememberClass",
    "SharedCache_addHint",
    "SharedCache_storeSharedData",
-   "runFEMacro_invokeCollectHandleNumArgsToCollect", // 198
+   "runFEMacro_invokeCollectHandleNumArgsToCollect", // 199
    "runFEMacro_invokeExplicitCastHandleConvertArgs",
    "runFEMacro_targetTypeL",
    "runFEMacro_invokeILGenMacrosInvokeExactAndFixup",
@@ -526,18 +528,18 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "runFEMacro_invokeFilterArgumentsWithCombinerHandleFilterPosition",
    "runFEMacro_invokeFilterArgumentsWithCombinerHandleArgumentIndices",
    "runFEMacro_invokeCollectHandleAllocateArray",
-   "CHTable_getAllClassInfo", // 222
+   "CHTable_getAllClassInfo", // 223
    "CHTable_getClassInfoUpdates",
    "CHTable_commit",
    "CHTable_clearReservable",
-   "IProfiler_profilingSample", // 226
+   "IProfiler_profilingSample", // 227
    "IProfiler_searchForMethodSample",
    "IProfiler_getMaxCallCount",
    "IProfiler_setCallCount",
-   "Recompilation_getExistingMethodInfo", // 230
+   "Recompilation_getExistingMethodInfo", // 231
    "Recompilation_getJittedBodyInfoFromPC",
    "ClassInfo_getRemoteROMString",
-   "KnownObjectTable_getOrCreateIndex", // 232
+   "KnownObjectTable_getOrCreateIndex", // 233
    "KnownObjectTable_getOrCreateIndexAt",
    "KnownObjectTable_getPointer",
    "KnownObjectTable_getExistingIndexAt",
@@ -549,7 +551,7 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "KnownObjectTable_getReferenceField",
    "KnownObjectTable_invokeDirectHandleDirectCall",
    "KnownObjectTable_getKnownObjectTableDumpInfo",
-   "ClassEnv_isClassRefValueType", // 245
+   "ClassEnv_isClassRefValueType", // 246
    };
    }; // namespace JITServer
 #endif // MESSAGE_TYPES_HPP

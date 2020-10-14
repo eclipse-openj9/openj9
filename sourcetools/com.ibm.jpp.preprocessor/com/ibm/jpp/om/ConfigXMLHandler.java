@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2019 IBM Corp. and others
+ * Copyright (c) 1999, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -283,10 +283,10 @@ public class ConfigXMLHandler implements IXMLDocumentHandler {
 	}
 
 	/**
- *   * Returns the automated tests source entries.
- *       *
- *           * @return      the automated tests source entries
- *               */
+	 * Returns the automated tests source entries.
+	 *
+	 * @return      the automated tests source entries
+	 */
 	public List<Src> getTestsSources() {
 		return testsSources;
 	}
@@ -340,7 +340,7 @@ public class ConfigXMLHandler implements IXMLDocumentHandler {
 	public void xmlStartElement(String elementName, Map<String, String> attributes) throws XMLException {
 		if (elementName.equals("configurationreg")) {
 			String version = attributes.get("version");
-			if (attributes.get("version") == null) {
+			if (version == null) {
 				throw new XMLException("No JPP Configuration XML version defined");
 			} else {
 				int majorVersion = Integer.parseInt(version.substring(0, 1));
@@ -358,7 +358,7 @@ public class ConfigXMLHandler implements IXMLDocumentHandler {
 			}
 		} else if (elementName.equals("require") && attributes.get("name") != null) {
 			try {
-				ConfigurationRegistry requiredRegistry = MetaRegistry.getRegistry(baseDir, attributes.get("name").toString(), ConfigurationRegistry.DEFAULT_XML);
+				ConfigurationRegistry requiredRegistry = MetaRegistry.getRegistry(baseDir, attributes.get("name"), ConfigurationRegistry.DEFAULT_XML);
 				requiredObjects.addAll(requiredRegistry.getConfigurationsAsCollection());
 			} catch (FileNotFoundException e) {
 				System.out.println("Could not find the XML configuration file: " + ConfigurationRegistry.DEFAULT_XML + "\n");
@@ -401,7 +401,7 @@ public class ConfigXMLHandler implements IXMLDocumentHandler {
 			 * included flag A and the dependency on 'depX' then the final flag set of configA would be A, Y and Z.
 			 */
 			if (attributes.get("dependencies") != null) {
-				StringTokenizer t = new StringTokenizer(attributes.get("dependencies").toString(), ",");
+				StringTokenizer t = new StringTokenizer(attributes.get("dependencies"), ",");
 
 				while (t.hasMoreTokens()) {
 					String currentString = t.nextToken().trim();
@@ -418,11 +418,11 @@ public class ConfigXMLHandler implements IXMLDocumentHandler {
 			configObjects.add(currentConfig);
 		} else if (elementName.equals("configuration")) {
 			if (attributes.get("name") != null) {
-				currentConfig = new ConfigObject(attributes.get("name").toString(), baseDir, true);
+				currentConfig = new ConfigObject(attributes.get("name"), baseDir, true);
 			} else {
-				currentConfig = new ConfigObject(attributes.get("label").toString(), baseDir, true);
+				currentConfig = new ConfigObject(attributes.get("label"), baseDir, true);
 				if (attributes.get("flags") != null) {
-					StringTokenizer t = new StringTokenizer(attributes.get("flags").toString(), ",");
+					StringTokenizer t = new StringTokenizer(attributes.get("flags"), ",");
 					while (t.hasMoreTokens()) {
 						String currentString = t.nextToken().trim();
 						if (currentString.charAt(0) == '-') {
@@ -436,7 +436,7 @@ public class ConfigXMLHandler implements IXMLDocumentHandler {
 					}
 				}
 				if (attributes.get("dependencies") != null) {
-					StringTokenizer t = new StringTokenizer(attributes.get("dependencies").toString(), ",");
+					StringTokenizer t = new StringTokenizer(attributes.get("dependencies"), ",");
 					while (t.hasMoreTokens()) {
 						String currentString = t.nextToken().trim();
 						if (currentString.charAt(0) == '-') {
@@ -458,12 +458,12 @@ public class ConfigXMLHandler implements IXMLDocumentHandler {
 			}
 
 			if (attributes.get("jdkcompliance") != null) {
-				currentConfig.setJDKCompliance(attributes.get("jdkcompliance").toString());
+				currentConfig.setJDKCompliance(attributes.get("jdkcompliance"));
 			}
 
 			if (attributes.get("outputpath") != null) {
-				currentConfig.setOutputPathKeyword(attributes.get("outputpath").toString());
-				currentConfig.setOutputPath(attributes.get("outputpath").toString());
+				currentConfig.setOutputPathKeyword(attributes.get("outputpath"));
+				currentConfig.setOutputPath(attributes.get("outputpath"));
 				currentConfig.setTestsOutputPaths();
 				currentConfig.setBootTestsOutputPaths();
 			}
@@ -474,15 +474,15 @@ public class ConfigXMLHandler implements IXMLDocumentHandler {
 
 			configObjects.add(currentConfig);
 		} else if (elementName.equals("source")) {
-			String path = attributes.get("path").toString();
+			String path = attributes.get("path");
 			if (!inAutomatedTests) {
 				path = (path.startsWith("/")) ? path : srcRoot + path;
 			}
 
 			if (attributes.get("type") != null && attributes.get("outputpath") != null) {
-				currentSource = new Src(path, attributes.get("outputpath").toString());
+				currentSource = new Src(path, attributes.get("outputpath"));
 			} else if (attributes.get("type") != null) {
-				currentSource = new Src(path, attributes.get("type").toString().equals("simplecopy"));
+				currentSource = new Src(path, attributes.get("type").equals("simplecopy"));
 			} else {
 				currentSource = new Src(path);
 			}
@@ -490,62 +490,67 @@ public class ConfigXMLHandler implements IXMLDocumentHandler {
 			inSource = true;
 		} else if (elementName.equals("parameter")) {
 			if (inSource) {
-				currentSource.addOption(attributes.get("name").toString(), attributes.get("value").toString());
+				currentSource.addOption(attributes.get("name"), attributes.get("value"));
 				/* [PR 119756] config project prefix and postfix support in jpp_configuration.xml file */
 			} else if (inGlobals) {
-				if (attributes.get("name").toString().equals("outputPathPrefix")) {
-					outputPathPrefix = attributes.get("value").toString();
-				} else if (attributes.get("name").toString().equals("outputPathSuffix")) {
-					outputPathSuffix = attributes.get("value").toString();
-				} else if (attributes.get("name").toString().equals("testsOutputPathPrefix")) {
-					testsOutputPathPrefix = attributes.get("value").toString();
-				} else if (attributes.get("name").toString().equals("testsOutputPathSuffix")) {
-					testsOutputPathSuffix = attributes.get("value").toString();
-				} else if (attributes.get("name").toString().equals("bootTestsOutputPathPrefix")) {
-					bootTestsOutputPathPrefix = attributes.get("value").toString();
-				} else if (attributes.get("name").toString().equals("bootTestsOutputPathSuffix")) {
-					bootTestsOutputPathSuffix = attributes.get("value").toString();
+				if (attributes.get("name").equals("outputPathPrefix")) {
+					outputPathPrefix = attributes.get("value");
+				} else if (attributes.get("name").equals("outputPathSuffix")) {
+					outputPathSuffix = attributes.get("value");
+				} else if (attributes.get("name").equals("testsOutputPathPrefix")) {
+					testsOutputPathPrefix = attributes.get("value");
+				} else if (attributes.get("name").equals("testsOutputPathSuffix")) {
+					testsOutputPathSuffix = attributes.get("value");
+				} else if (attributes.get("name").equals("bootTestsOutputPathPrefix")) {
+					bootTestsOutputPathPrefix = attributes.get("value");
+				} else if (attributes.get("name").equals("bootTestsOutputPathSuffix")) {
+					bootTestsOutputPathSuffix = attributes.get("value");
 				} else {
-					System.out.println(attributes.get("name").toString() + " is not valid global variable.");
+					System.out.println(attributes.get("name") + " is not valid global variable.");
 				}
 			} else {
 				/* [PR 119756] config project prefix and postfix support in jpp_configuration.xml file */
 				// if prefixes and suffixes are defined in configuration, then overwrite global values.
-				if (attributes.get("name").toString().equals(outputPathPrefix)) {
+				if (attributes.get("name").equals(outputPathPrefix)) {
 					currentConfig.setOutputPathPrefix(outputPathPrefix);
-				} else if (attributes.get("name").toString().equals(outputPathSuffix)) {
+				} else if (attributes.get("name").equals(outputPathSuffix)) {
 					currentConfig.setOutputPathSuffix(outputPathSuffix);
-				} else if (attributes.get("name").toString().equals(testsOutputPathPrefix)) {
+				} else if (attributes.get("name").equals(testsOutputPathPrefix)) {
 					currentConfig.setTestsOutputPathPrefix(testsOutputPathPrefix);
-				} else if (attributes.get("name").toString().equals(testsOutputPathSuffix)) {
+				} else if (attributes.get("name").equals(testsOutputPathSuffix)) {
 					currentConfig.setTestsOutputPathSuffix(testsOutputPathSuffix);
-				} else if (attributes.get("name").toString().equals(bootTestsOutputPathPrefix)) {
+				} else if (attributes.get("name").equals(bootTestsOutputPathPrefix)) {
 					currentConfig.setBootTestsOutputPathPrefix(bootTestsOutputPathPrefix);
-				} else if (attributes.get("name").toString().equals(bootTestsOutputPathSuffix)) {
+				} else if (attributes.get("name").equals(bootTestsOutputPathSuffix)) {
 					currentConfig.setBootTestsOutputPathSuffix(bootTestsOutputPathSuffix);
 				} else {
-					currentConfig.addOption(attributes.get("name").toString(), attributes.get("value").toString());
+					currentConfig.addOption(attributes.get("name"), attributes.get("value"));
 				}
 			}
 			/* [PR 118829] Desing 894: Core.JCL : Support for compiler options in preprocessor plugin */
 		} else if (elementName.equals("coption")) {
-			currentConfig.addCompilerOption(attributes.get("name").toString(), attributes.get("value").toString());
+			currentConfig.addCompilerOption(attributes.get("name"), attributes.get("value"));
 		} else if (elementName.equals("classpathentry")) {
-			boolean exported = (attributes.get("exported") != null) && Boolean.parseBoolean(attributes.get("exported"));
+			boolean exported = Boolean.parseBoolean(attributes.get("exported"));
 			/* [PR 120359] New classpath entry is needed for configurations */
-			if (attributes.get("kind") != null) {
-				if (attributes.get("sourcepath") != null) {
-					classPaths.add(new ClassPathEntry(attributes.get("path").toString(), attributes.get("kind").toString(), attributes.get("sourcepath").toString(), exported));
+			String kind = attributes.get("kind");
+			if (kind != null) {
+				String path = attributes.get("path");
+				String sourcepath = attributes.get("sourcepath");
+				ClassPathEntry entry;
+				if (sourcepath != null) {
+					entry = new ClassPathEntry(path, kind, sourcepath, exported);
 				} else {
-					classPaths.add(new ClassPathEntry(attributes.get("path").toString(), attributes.get("kind").toString(), exported));
+					entry = new ClassPathEntry(path, kind, exported);
 				}
+				classPaths.add(entry);
 			} else {
 				String registry = "this";
 				if (attributes.containsKey("registry")) {
-					registry = attributes.get("registry").toString();
+					registry = attributes.get("registry");
 				}
-				String configName = attributes.get("configName").toString();
-				String project = attributes.get("project").toString();
+				String configName = attributes.get("configName");
+				String project = attributes.get("project");
 				ConfigObject foundConfig = null;
 				String path = null;
 				if (registry.equals("this") || registry.equals(srcRoot.substring(0, srcRoot.length() - 1))) {
@@ -596,8 +601,8 @@ public class ConfigXMLHandler implements IXMLDocumentHandler {
 				}
 			}
 		} else if (elementName.equals("dependjob")) {
-			String dependJobName = attributes.get("config").toString();
-			String dependJobRegistry = attributes.get("registry").toString();
+			String dependJobName = attributes.get("config");
+			String dependJobRegistry = attributes.get("registry");
 			ConfigurationRegistry dependRegistry = null;
 
 			try {

@@ -110,23 +110,7 @@ ComparingCursor::writeU32(U_32 u32Value, DataType dataType)
 	ComparingCursorHelper * countingcursor = getCountingCursor(dataType);
 	if ( shouldCheckForEquality(dataType, u32Value) ) {
 		U_32 * tmpu32 = (U_32 *)(countingcursor->getBaseAddress() + countingcursor->getCount());
-		if ((CLASS_FILE_SIZE == dataType) && isComparingLambdaFromSCC()) {
-			if (sizeof(U_32) < abs((int)(u32Value - *tmpu32))) {
-				/* Lambda class names are in the format of HostClassName$$Lambda$<IndexNumber>/0000000000000000.
-				 * When we reach this check, the host class names will be the same for both the classes because
-				 * of the hash key check earlier so the only difference in the size will be the difference
-				 * between the number of digits of the index number. The same lambda class might have a
-				 * different index number from run to run and when the number of digits of the index number
-				 * increases by 1, classFileSize also increases by 1. We check if the difference between
-				 * classFileSizes is bigger than sizeof(U_32) because this will allow exactly 4 digits difference.
-				 * (eg. HostClassName$$Lambda$[1-9] can get matched up to HostClassName$$Lambda$99999,
-				 * HostClassName$$Lambda$[10-99] can get matched up to HostClassName$$Lambda$999999)
-				 * This check is different than the romSize check because when the number of digits of the index
-				 * number increases by 1, classFileSize also increases by 1 but romSize increases by 2.
-				 */
-				markUnEqual();
-			}
-		} else if (!isRangeValid(sizeof(U_32), dataType) || (u32Value != *tmpu32)) {
+		if (!isRangeValid(sizeof(U_32), dataType) || (u32Value != *tmpu32)) {
 			markUnEqual();
 		}
 	}
@@ -444,6 +428,12 @@ ComparingCursor::shouldCheckForEquality(DataType dataType, U_32 u32Value)
 	case BYTECODE: /* fall through */
 	case GENERIC: /* fall through */
 	case CLASS_FILE_SIZE: /* fall through */
+		if ((CLASS_FILE_SIZE == dataType) 
+			&& isComparingLambdaFromSCC()
+		) {
+			/* If comparing a lambda class from the shared cache, class file size comparison is already done in ROMClassBuilder::compareROMClassForEquality().  */
+			return false;
+		}
 	case SRP_TO_DEBUG_DATA: /* fall through */
 	case SRP_TO_GENERIC: /* fall through */
 	case SRP_TO_UTF8: /* fall through */

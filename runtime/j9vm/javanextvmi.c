@@ -38,6 +38,18 @@ JVM_DefineArchivedModules(JNIEnv *env, jobject obj1, jobject obj2)
 {
 	assert(!"JVM_DefineArchivedModules unimplemented");
 }
+
+JNIEXPORT void JNICALL
+JVM_LogLambdaFormInvoker(JNIEnv *env, jstring str)
+{
+	assert(!"JVM_LogLambdaFormInvoker unimplemented");
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_IsDumpingClassList(JNIEnv *env)
+{
+	return JNI_FALSE;
+}
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if JAVA_SPEC_VERSION >= 11

@@ -503,7 +503,6 @@ J9::X86::CodeGenerator::nopsAlsoProcessedByRelocations()
 bool
 J9::X86::CodeGenerator::enableAESInHardwareTransformations()
    {
-   TR_ASSERT_FATAL(self()->comp()->compileRelocatableCode() || self()->comp()->isOutOfProcessCompilation() || self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_AESNI) == TR::CodeGenerator::getX86ProcessorInfo().supportsAESNI(), "supportsAESNI() failed\n");
    if (self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_AESNI) && !self()->comp()->getOption(TR_DisableAESInHardware) && !self()->comp()->getCurrentMethod()->isJNINative())
       return true;
    else

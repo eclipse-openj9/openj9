@@ -76,7 +76,7 @@ static int32_t getReducedFrequencyMax(int32_t currentValue, int32_t count, int32
 
 int32_t TR_HotFieldMarking::perform()
    {
-   if (!jitConfig->javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(jitConfig->javaVM))
+   if (!TR::Compiler->om.isHotReferenceFieldRequired())
       {
       if (trace())
          traceMsg(comp(), "Skipping hot field marking since dynamic breadth first scan ordering is disabled\n");

@@ -40,6 +40,7 @@ if (!binding.hasVariable('SCM_REPO')) SCM_REPO = 'https://github.com/eclipse/ope
 if (SCM_BRANCH ==~ /origin\/pr\/[0-9]+\/merge/) {
     SCM_BRANCH = 'master'
 }
+if (!binding.hasVariable('USER_CREDENTIALS_ID')) USER_CREDENTIALS_ID = ''
 
 pipelineScript = 'buildenv/jenkins/jobs/pipelines/Pipeline-Initialize.groovy'
 
@@ -50,6 +51,9 @@ pipelineJob("$JOB_NAME") {
             scm {
                 git {
                     remote {
+                        if (USER_CREDENTIALS_ID) {
+                            credentials(USER_CREDENTIALS_ID)
+                        }
                         url(SCM_REPO)
                     }
                     branch(SCM_BRANCH)
