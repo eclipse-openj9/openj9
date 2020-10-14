@@ -1213,8 +1213,6 @@ jniIsGlobalRef(JNIEnv* env, jobject reference)
 	J9VMThread* vmThread = (J9VMThread*)env;
 	J9JavaVM* vm = vmThread->javaVM;
 	UDATA rc;
-	JNICHK_GREF_HASHENTRY entry;
-	JNICHK_GREF_HASHENTRY* actualResult;
 
 	enterVM(vmThread);
 
