@@ -1194,10 +1194,17 @@ static UDATA jniIsLocalRef(JNIEnv * currentEnv, JNIEnv* env, jobject reference)
 			exitVM(vmThread);
 		}
 
+		/* Internal class refs are considered local refs */
+		if (!rc) {
+			J9JavaVM *vm = currentThread->javaVM;
+			if (vm->internalVMFunctions->jniIsInternalClassRef(vm, reference)) {
+				rc = 1;
+			}
+		}
+
 		return rc;
 	}
 }
-
 
 
 static UDATA
@@ -1216,23 +1223,6 @@ jniIsGlobalRef(JNIEnv* env, jobject reference)
 #endif
 	/* walk the JNIGlobalReferences pool */
 	rc = pool_includesElement(vm->jniGlobalReferences, reference);
-
-	if (!rc) {
-		j9object_t heapclass;
-
-		/* The address of the classObject slot of a J9Class can be used as a global reference. */
-		heapclass = *(j9object_t*)reference;
-
-		/* search for the reference in the hashtable */
-		entry.reference = (UDATA)reference;
-		actualResult = hashTableFind(vm->checkJNIData.jniGlobalRefHashTab, &entry);
-		if (NULL == actualResult || (NULL != actualResult && actualResult->alive) ) {
-			/* verify that the object is a j.l.Class */
-			if (J9VM_IS_INITIALIZED_HEAPCLASS(vmThread, heapclass)) {
-				rc = (reference == (jobject)&(J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, heapclass)->classObject));
-			}
-		}
-	}
 #ifdef J9VM_THR_PREEMPTIVE
 	omrthread_monitor_exit(vm->jniFrameMutex);
 #endif

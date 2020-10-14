@@ -990,6 +990,15 @@ initializeInitialMethods(J9JavaVM *vm);
 /* ---------------- jnicsup.c ---------------- */
 
 /**
+* @brief Determine if a JNI ref is an internal class ref
+* @param *vm
+* @param ref
+* @return UDATA
+*/
+UDATA
+jniIsInternalClassRef(J9JavaVM *vm, jobject ref);
+
+/**
 * @brief
 * @param *currentThread
 * @param *clazz
