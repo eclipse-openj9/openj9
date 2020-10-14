@@ -8134,7 +8134,7 @@ retry:
 			 * The resolved values consist of a MemberName object and a MethodHandle object.
 			 * The resolved values are stored in invokeCache[invokeCacheIndex].
 			 */
-			resolveMethodHandle(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+			resolveInvokeHandle(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			restoreGenericSpecialStackFrame(REGISTER_ARGS);
 			if (immediateAsyncPending()) {

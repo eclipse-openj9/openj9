@@ -861,3 +861,5 @@ TraceEvent=Trc_VM_findNativeLibrariesLoad_nativeLibraryImplObject Overhead=1 Lev
 TraceEvent=Trc_VM_findNativeLibrariesLoad_fromClassObj Overhead=1 Level=3 Template="getCurrentClassLoader - find NativeLibrariesLoad fromClassObj (0x%p)"
 TraceEvent=Trc_VM_findNativeLibrariesLoad_fromClass Overhead=1 Level=3 Template="getCurrentClassLoader - find NativeLibrariesLoad fromClass (0x%p)"
 TraceEvent=Trc_VM_findNativeLibrariesLoad_classLoader Overhead=1 Level=3 Template="getCurrentClassLoader - find NativeLibrariesLoad classLoader (0x%p)"
+
+TraceAssert=Trc_VM_Assert_ShouldNeverHappen NoEnv Overhead=1 Level=1 Assert="(0 /* Fatal VM error */)"
