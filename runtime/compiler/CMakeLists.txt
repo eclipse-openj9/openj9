@@ -219,8 +219,7 @@ set(J9_CXXFLAGS
 	${OMR_PLATFORM_CXX_COMPILE_OPTIONS}
 )
 if(OMR_OS_LINUX OR OMR_OS_OSX)
-	set(J9_SHAREDFLAGS
-		${J9_SHAREDFLAGS}
+	list(APPEND J9_SHAREDFLAGS
 		-fno-strict-aliasing
 		-Wno-deprecated
 		-Wno-enum-compare
@@ -233,31 +232,24 @@ if(OMR_OS_LINUX OR OMR_OS_OSX)
 
 	# Platform specific CXX flags, also derived from the
 	# Makefiles
-	set(J9_CXXFLAGS
-		${J9_CXXFLAGS}
+	list(APPEND J9_CXXFLAGS
 		-fno-threadsafe-statics
 		-Wno-invalid-offsetof
 	)
 	if(NOT J9VM_OPT_JITSERVER)
-		set(J9_CXXFLAGS
-			${J9_CXXFLAGS}
-			-fno-rtti
-		)
+		list(APPEND J9_CXXFLAGS -fno-rtti)
 	endif()
 
-	set(J9_CFLAGS
-		${J9_CFLAGS}
-		-std=gnu89
-	)
+	list(APPEND J9_CFLAGS -std=gnu89)
 elseif(OMR_OS_WINDOWS)
-	set(J9_SHAREDFLAGS
+	list(APPEND J9_SHAREDFLAGS
 		-D_WIN32
 		-DWIN32
 		-DSUPPORTS_THREAD_LOCAL
 		-DWINDOWS
 	)
 elseif(OMR_OS_AIX)
-	set(J9_SHAREDFLAGS
+	list(APPEND J9_SHAREDFLAGS
 		-DAIXPPC
 		-DRS6000
 		-D_XOPEN_SOURCE_EXTENDED=1
@@ -265,14 +257,14 @@ elseif(OMR_OS_AIX)
 		-DSUPPORTS_THREAD_LOCAL
 	)
 	if(OMR_ENV_DATA64)
-		set(J9_SHAREDFLAGS -q64)
+		list(APPEND J9_SHAREDFLAGS -q64)
 		if(OMR_TOOLCONFIG STREQUAL "xlc")
 			# Modify the arch tuning value we inherit from omr
 			list(REMOVE_ITEM TR_COMPILE_OPTIONS "-qarch=pwr7")
 			list(APPEND TR_COMPILE_OPTIONS "-qarch=ppc64grsq")
 		endif()
 	else()
-		set(J9_SHAREDFLAGS -q32)
+		list(APPEND J9_SHAREDFLAGS -q32)
 	endif()
 else()
 	message(SEND_ERROR "unsupported platform")
