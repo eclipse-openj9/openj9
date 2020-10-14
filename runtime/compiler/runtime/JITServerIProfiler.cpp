@@ -163,7 +163,7 @@ JITServerIProfiler::profilingSample(uintptr_t pc, uintptr_t data, bool addIt, bo
    if (addIt)
       return NULL; // Server should not create any samples
 
-   TR_ASSERT(false, "not implemented for JITServer");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
