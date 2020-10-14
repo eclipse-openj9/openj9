@@ -970,7 +970,7 @@ J9NLS_VM_XSCDMX_IGNORED.system_action=-Xscdmx will be ignored.
 J9NLS_VM_XSCDMX_IGNORED.user_response=Ignore this message, remove -Xscdmx, or enable -Xshareclasses.
 # END NON-TRANSLATABLE
 
-# Help text for the -Xlog option. Note: please do not translate the text of the option flags: help, all, none, warn, error, info, config, vital
+# Help text for the -Xsyslog option. Note: please do not translate the text of the option flags: help, all, none, warn, error, info, config, vital
 J9NLS_VM_XLOG_HELP01=\n\u00das:\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP01.explanation=NOTAG
@@ -978,64 +978,64 @@ J9NLS_VM_XLOG_HELP01.system_action=
 J9NLS_VM_XLOG_HELP01.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:help is not translatable
-J9NLS_VM_XLOG_HELP02=  -Xlog:help              Imprimeix l'ajuda de -Xlog de la JVM.
+# -Xsyslog:help is not translatable
+J9NLS_VM_XLOG_HELP02=  -Xsyslog:help              Imprimeix l'ajuda de -Xsyslog de la JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP02.explanation=NOTAG
 J9NLS_VM_XLOG_HELP02.system_action=
 J9NLS_VM_XLOG_HELP02.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:none is not translatable
-J9NLS_VM_XLOG_HELP03=  -Xlog:none              Inhabilita les opcions de registre de la JVM especificades anteriorment, incloent-hi els valors per defecte.
+# -Xsyslog:none is not translatable
+J9NLS_VM_XLOG_HELP03=  -Xsyslog:none              Inhabilita les opcions de registre de la JVM especificades anteriorment, incloent-hi els valors per defecte.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP03.explanation=NOTAG
 J9NLS_VM_XLOG_HELP03.system_action=
 J9NLS_VM_XLOG_HELP03.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:all is not translatable
-J9NLS_VM_XLOG_HELP04=  -Xlog:all               Registra tots els missatges de la JVM.
+# -Xsyslog:all is not translatable
+J9NLS_VM_XLOG_HELP04=  -Xsyslog:all               Registra tots els missatges de la JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP04.explanation=NOTAG
 J9NLS_VM_XLOG_HELP04.system_action=
 J9NLS_VM_XLOG_HELP04.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:info is not translatable
-J9NLS_VM_XLOG_HELP05=  -Xlog:info              Registra els missatges informatius de la JVM.
+# -Xsyslog:info is not translatable
+J9NLS_VM_XLOG_HELP05=  -Xsyslog:info              Registra els missatges informatius de la JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP05.explanation=NOTAG
 J9NLS_VM_XLOG_HELP05.system_action=
 J9NLS_VM_XLOG_HELP05.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:warn is not translatable
-J9NLS_VM_XLOG_HELP06=  -Xlog:warn              Registra els missatges d'av\u00eds de la JVM.
+# -Xsyslog:warn is not translatable
+J9NLS_VM_XLOG_HELP06=  -Xsyslog:warn              Registra els missatges d'av\u00eds de la JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP06.explanation=NOTAG
 J9NLS_VM_XLOG_HELP06.system_action=
 J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:error is not translatable
-J9NLS_VM_XLOG_HELP07=  -Xlog:error             Registra missatges d'error de la JVM. Aquesta opci\u00f3 est\u00e0 activada per defecte.
+# -Xsyslog:error is not translatable
+J9NLS_VM_XLOG_HELP07=  -Xsyslog:error             Registra missatges d'error de la JVM. Aquesta opci\u00f3 est\u00e0 activada per defecte.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
 J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:vital is not translatable
-J9NLS_VM_XLOG_HELP08=  -Xlog:vital             Registra missatges vitals de la JVM. Aquesta opci\u00f3 est\u00e0 activada per defecte.
+# -Xsyslog:vital is not translatable
+J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital             Registra missatges vitals de la JVM. Aquesta opci\u00f3 est\u00e0 activada per defecte.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
 J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:config is not translatable
-J9NLS_VM_XLOG_HELP09=  -Xlog:config            Registra missatges de configuraci\u00f3 de la JVM. \n
+# -Xsyslog:config is not translatable
+J9NLS_VM_XLOG_HELP09=  -Xsyslog:config            Registra missatges de configuraci\u00f3 de la JVM. \n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1050,16 +1050,16 @@ J9NLS_VM_XLOG_HELP10.system_action=
 J9NLS_VM_XLOG_HELP10.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:error,warn is not translatable
-J9NLS_VM_XLOG_HELP11=  -Xlog:error,warn
+# -Xsyslog:error,warn is not translatable
+J9NLS_VM_XLOG_HELP11=  -Xsyslog:error,warn
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP11.explanation=NOTAG
 J9NLS_VM_XLOG_HELP11.system_action=
 J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12=  -Xlog:info,warn,error\n
+# -Xsyslog:info,warn,error is not translatable
+J9NLS_VM_XLOG_HELP12=  -Xsyslog:info,warn,error\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=
