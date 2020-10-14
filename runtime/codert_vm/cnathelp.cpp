@@ -2325,6 +2325,26 @@ old_slow_jitResolveHandleMethod(J9VMThread *currentThread)
 	DECLARE_JIT_PARM(void*, jitEIP, 3);
 	void *addr = NULL;
 	J9JavaVM *vm = currentThread->javaVM;
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	J9RAMMethodRef *ramMethodRef = ((J9RAMMethodRef*)ramConstantPool) + cpIndex;
+	UDATA invokeCacheIndex = ramMethodRef->methodIndexAndArgCount >> 8;
+retry:
+	j9object_t *invokeCacheArray = &((J9_CLASS_FROM_CP(ramConstantPool)->invokeCache)[invokeCacheIndex]);
+	if (NULL == *invokeCacheArray) {
+		buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_DATA, parmCount, true, 0, jitEIP);
+		/* add new resolve code which calls sendResolveInvokeHandle -> MHN.linkMethod()
+		 * store the memberName/appendix values in invokeCache[invokeCacheIndex]
+		 */
+		vm->internalVMFunctions->resolveOpenJDKInvokeHandle(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+		addr = restoreJITResolveFrame(currentThread, jitEIP);
+		if (NULL != addr) {
+			goto done;
+		}
+		goto retry;
+	}
+	JIT_RETURN_UDATA(invokeCacheArray);
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	j9object_t *methodTypePtr = NULL;
 	j9object_t *methodTypeTablePtr = NULL;
 	UDATA methodTypeIndex = 0;
@@ -2372,6 +2392,7 @@ retry:
 	}
 
 	JIT_RETURN_UDATA(methodTypePtr);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 done:
 	SLOW_JIT_HELPER_EPILOGUE();
 	return addr;
