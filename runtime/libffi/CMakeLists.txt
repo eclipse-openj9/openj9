@@ -195,6 +195,21 @@ elseif(OMR_ARCH_AARCH64 AND OMR_OS_LINUX)
 			aarch64/sysv.S
 	)
 
+elseif(OMR_ARCH_RISCV AND OMR_OS_LINUX)
+	if(OMR_ENV_DATA64)
+		target_include_directories(ffi
+			PUBLIC
+				riscv
+				preconf/rv64
+		)
+	else()
+		message(SEND_ERROR "Unsupported platform: RV32")
+	endif()
+	target_sources(ffi
+		PRIVATE
+			riscv/ffi.c
+			riscv/sysv.S
+	)
 else()
 	message(SEND_ERROR "Unsupported platform")
 endif()
