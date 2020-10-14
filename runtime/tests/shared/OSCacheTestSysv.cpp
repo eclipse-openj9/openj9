@@ -152,7 +152,7 @@ cleanup:
 	
 	return rc;
 }
-#if defined(J9SHR_CACHELET_SUPPORT) || defined (J9VM_GC_REALTIME)
+#if defined(J9VM_GC_REALTIME)
 	/* rtjavm7 does not seem to like testing with 10 processes. Without doing a
 	 * terrible amount of investigation lowering this to 3 appears to fix the problem
 	 */

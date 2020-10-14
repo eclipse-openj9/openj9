@@ -188,46 +188,6 @@ SH_CompositeCacheImpl::newInstance(J9JavaVM* vm, J9SharedClassConfig* sharedClas
 	return newCC;
 }
 
-#if defined(J9SHR_CACHELET_SUPPORT)
-
-/**
- * Constructs a new nested instance of SH_CompositeCache.
- * 
- * @param [in] vm A Java VM
- * @param [in] parent The cache in which this cache is nested
- * @param [in] memForConstructor Memory for building this object as
- *       returned by @ref getRequiredConstrBytes
- *
- * @return A pointer to the new instance
- */
-SH_CompositeCacheImpl*
-SH_CompositeCacheImpl::newInstanceNested(J9JavaVM* vm, SH_CompositeCacheImpl* parent, SH_CompositeCacheImpl* memForConstructor, UDATA nestedSize, BlockPtr nestedMemory, bool creatingCachelet)
-{
-	SH_CompositeCacheImpl* newCC = (SH_CompositeCacheImpl*)memForConstructor;
-
-	new(newCC) SH_CompositeCacheImpl();
-	newCC->initializeNested(vm, parent, ((BlockPtr)memForConstructor + sizeof(SH_CompositeCacheImpl)), nestedSize, nestedMemory, creatingCachelet);
-
-	if (0 != omrthread_monitor_init_with_name(&newCC->_startupMonitor, 0, "Cachelet startup")) {
-		Trc_SHR_CC_newInstanceNested_allocStartupMonitorFailed(newCC);
-		return NULL;
-	}
-	return newCC;
-}
-
-SH_CompositeCacheImpl*
-SH_CompositeCacheImpl::newInstanceChained(J9JavaVM* vm, SH_CompositeCacheImpl* memForConstructor, J9SharedClassConfig* sharedClassConfig, I_32 cacheTypeRequired)
-{
-	SH_CompositeCacheImpl* newCC = (SH_CompositeCacheImpl*)memForConstructor;
-
-	new(newCC) SH_CompositeCacheImpl();
-	newCC->initialize(vm, ((BlockPtr)memForConstructor + sizeof(SH_CompositeCacheImpl)), sharedClassConfig, "CHAINED_CACHE_ROOT", cacheTypeRequired, false);
-
-	return newCC;
-}
-
-#endif /* J9SHR_CACHELET_SUPPORT */
-
 void
 SH_CompositeCacheImpl::commonInit(J9JavaVM* vm)
 {
@@ -261,9 +221,6 @@ SH_CompositeCacheImpl::commonInit(J9JavaVM* vm)
 	_previous = NULL;
 	_ccHead = NULL;
 	_cacheFullFlags = 0;
-#if defined(J9SHR_CACHELET_SUPPORT)
-	_deployedOffset = 0;
-#endif
 	_doMetaProtect = _doSegmentProtect = _doHeaderProtect = _doHeaderReadWriteProtect = _doReadWriteSync = _doPartialPagesProtect = false;
 	_useWriteHash = false;
 	_reduceStoreContentionDisabled = false;
@@ -272,34 +229,6 @@ SH_CompositeCacheImpl::commonInit(J9JavaVM* vm)
 	_maximumAccessedShrCacheMetadata = 0;
 	_layer = 0;
 }
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-
-void
-SH_CompositeCacheImpl::initializeNested(J9JavaVM* vm, SH_CompositeCacheImpl* parent, BlockPtr memForConstructor, UDATA nestedSize, BlockPtr nestedMemory, bool creatingCachelet)
-{
-	J9VMThread* currentThread = vm->internalVMFunctions->currentVMThread(vm);
-
-	commonInit(vm);
-
-	if (creatingCachelet) {
-		parent->setContainsCachelets(currentThread);
-	}
-	_parent = parent;
-	_newHdrPtr = (SH_SharedCacheHeaderInit*)((BlockPtr)memForConstructor);
-	_oscache = NULL;
-	_osPageSize = parent->_osPageSize;
-	_readOnlyOSCache = parent->_readOnlyOSCache;
-	_nestedSize = nestedSize;
-	_nestedMemory = nestedMemory;
-	_runtimeFlags = parent->_runtimeFlags;
-	_verboseFlags = parent->_verboseFlags;
-	/*All nested caches use their parents debug area*/
-	_debugData = _parent->_debugData;
-	/* TODO: Are there any more inherited fields? */
-}
-
-#endif /* J9SHR_CACHELET_SUPPORT */
 
 /*
  *  Calculating free block bytes as below
@@ -784,7 +713,6 @@ SH_CompositeCacheImpl::setCacheAreaBoundaries(J9VMThread* currentThread, J9Share
 	 * Set up the 'debug' region of the cache header
 	 */	
 	if (NULL == this->_parent) {
-#if !defined (J9SHR_CACHELET_SUPPORT)
 		/* The size of the cache will be rounded down to a multiple of 'align' which normally the osPageSize.
 		 * On some AIX boxes _osPageSize is zero, in this case we set align to be 4KB.
 		 */
@@ -826,9 +754,6 @@ SH_CompositeCacheImpl::setCacheAreaBoundaries(J9VMThread* currentThread, J9Share
 		Trc_SHR_CC_setCacheAreaBoundaries_Event_CreateDebugAreaSize(currentThread, debugsize);
 		ClassDebugDataProvider::HeaderInit(_theca, debugsize);
 		_theca->updateSRP -= (UDATA)debugsize;
-#else
-		ClassDebugDataProvider::HeaderInit(_theca, 0);
-#endif /*J9SHR_CACHELET_SUPPORT*/
 	}
 
 	if ((U_32)-1 != _theca->softMaxBytes) {
@@ -960,41 +885,6 @@ SH_CompositeCacheImpl::notifyPagesCommitted(BlockPtr start, BlockPtr end, UDATA 
 
 	Trc_SHR_CC_notifyPagesCommitted_Exit();
 }
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-
-IDATA 
-SH_CompositeCacheImpl::startupNested(J9VMThread* currentThread)
-{
-	J9SharedClassPreinitConfig tempConfig;
-	J9JavaVM* vm = currentThread->javaVM;
-	U_32 actualSize;
-	UDATA ignore;
-	bool ignore2;
-
-	memcpy(&tempConfig, vm->sharedClassPreinitConfig, sizeof(J9SharedClassPreinitConfig));
-	tempConfig.sharedClassCacheSize = _nestedSize;
-	tempConfig.sharedClassReadWriteBytes = 0;
-	
-	Trc_SHR_Assert_True(_parent->_commonCCInfo != NULL);
-	this->_commonCCInfo = _parent->_commonCCInfo;
-	return startup(currentThread, &tempConfig, _nestedMemory, _runtimeFlags, _verboseFlags, "A_CACHELET", "CACHELET_ROOT", J9SH_DIRPERM_ABSENT, &actualSize, &ignore, false, &ignore2);
-}
-
-IDATA 
-SH_CompositeCacheImpl::startupChained(J9VMThread* currentThread, SH_CompositeCacheImpl* ccHead,
-		J9SharedClassPreinitConfig* piconfig, U_32* actualSize, UDATA* localCrashCntr)
-{
-	bool ignore;
-	J9JavaVM* vm = currentThread->javaVM;
-
-	this->_ccHead = ccHead;
-	Trc_SHR_Assert_True(_ccHead->_commonCCInfo != NULL);
-	this->_commonCCInfo = _ccHead->_commonCCInfo;
-	return startup(currentThread, piconfig, NULL, ccHead->_runtimeFlags, ccHead->_verboseFlags, "A_CHAINED_CACHE", _sharedClassConfig->ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, actualSize, localCrashCntr, false, &ignore);
-}
-
-#endif /* J9SHR_CACHELET_SUPPORT */
 
 /**
  * Starts the SH_CompositeCache. 
@@ -1237,7 +1127,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 			_theca = (J9SharedCacheHeader*)cacheMemory;
 		} else {
 			_theca = (J9SharedCacheHeader*)_oscache->attach(currentThread, &versionData);
-#ifndef J9SHR_CACHELET_SUPPORT
+
 			/* Verify that a non-realtime VM is not attaching to a Realtime cache when printing stats */
 			if ((_theca != 0) && getContainsCachelets() &&
 					((J9SHR_RUNTIMEFLAG_ENABLE_STATS == (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_STATS)) || isRunningReadOnly())) {
@@ -1246,7 +1136,6 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				rc = CC_STARTUP_FAILED;
 				goto releaseLockCheck;
 			}
-#endif
 		}
 		if (_theca != 0) {
 			UDATA crcValue;
@@ -1403,18 +1292,6 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 					_canStoreClasspaths = true;
 
 				} else {
-#if defined(J9SHR_CACHELET_SUPPORT)
-					if (isFirstStart && (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_NESTED) && !getContainsCachelets()) {
-						/* Trying to grow a nested cache which doesn't contain cachelets
-						 */
-						if (_oscache != NULL) {
-							_oscache->destroy(true);
-						}
-						Trc_SHR_CC_Startup_No_Cachelets(currentThread, *_runtimeFlags, (I_32)getContainsCachelets());
-						rc = CC_STARTUP_NO_CACHELETS;
-						goto releaseLockCheck;
-					}
-#endif
 					bool compatible = checkCacheCompatibility(currentThread);
 					if (false == compatible) {
 						rc = CC_STARTUP_FAILED;
@@ -2716,10 +2593,6 @@ SH_CompositeCacheImpl::allocate(J9VMThread* currentThread, U_8 type, ShcItem* it
 	U_32 softMaxValue = 0;
 	U_32 addBufferSize = (NULL == readWriteBuffer) ? separateBufferSize : 0;
 	UDATA regionFullFlag = 0;
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-	/* Allocate readWrite data from the parent */
-	SH_CompositeCacheImpl *parent = _parent == NULL ? this : _parent;
-#endif
 
 	if (!_started || _readOnlyOSCache || (itemToWrite == NULL) || ((I_32)itemToWrite->dataLen < 0)) {
 		Trc_SHR_Assert_ShouldNeverHappen();
@@ -2796,11 +2669,7 @@ SH_CompositeCacheImpl::allocate(J9VMThread* currentThread, U_8 type, ShcItem* it
 		}
 		enoughSpace = (freeBytes >= (I_32)(itemLen + separateBufferSize));
 	} else {
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-		enoughSpace = ((freeBytes >= (I_32)itemLen) && (parent->getFreeReadWriteBytes() >= (I_32)separateBufferSize));
-#else
 		enoughSpace = ((freeBytes >= (I_32)itemLen) && ((I_32)FREEREADWRITEBYTES(_theca) >= (I_32)separateBufferSize));
-#endif
 	}
 	usedBytes = getUsedBytes();
 	softMaxValue = _theca->softMaxBytes;
@@ -2833,17 +2702,9 @@ SH_CompositeCacheImpl::allocate(J9VMThread* currentThread, U_8 type, ShcItem* it
 				Trc_SHR_CC_allocate_EventSegmentBufSet(currentThread, *segmentBuffer);
 			}
 			if (readWriteBuffer) {
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-				*readWriteBuffer = parent->allocateReadWrite(separateBufferSize);
-#if defined(J9SHR_CACHELET_SUPPORT)
-				if (parent != this) {
-					_commitParent = true;
-				}
-#endif
-#else
 				_storedReadWriteUsedBytes = separateBufferSize;
 				*readWriteBuffer = RWUPDATEPTR(_theca);
-#endif
+
 				Trc_SHR_CC_allocate_EventReadWriteBufSet(currentThread, *readWriteBuffer);
 			}
 		}
@@ -2872,29 +2733,21 @@ SH_CompositeCacheImpl::allocate(J9VMThread* currentThread, U_8 type, ShcItem* it
 		SH_CompositeCacheImpl *ccToUse = ((_ccHead == NULL) ? ((_parent == NULL) ? this : _parent->_ccHead) : _ccHead);
 
 		if (ALLOCATE_TYPE_AOT == type) {
-			Trc_SHR_Assert_True((0 == (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_NESTED)));
 			flags |= J9SHR_AOT_SPACE_FULL;
 		} else if (ALLOCATE_TYPE_JIT == type) {
-			Trc_SHR_Assert_True((0 == (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_NESTED)));
 			flags |= J9SHR_JIT_SPACE_FULL;
 		} else {
-			if (0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_NESTED)) {
-				/* For realtime cache, allocation failure can happen only when trying to allocate new cachelet. */
-				Trc_SHR_Assert_Equals(itemToWrite->dataType, TYPE_CACHELET);
-				flags |= J9SHR_BLOCK_SPACE_FULL;
+			I_32 freeBlockBytes = getFreeBlockBytes();
+			/* Allocation request for BLOCK data can fail if
+			 * 		requested amount > freeBlockBytes >= CC_MIN_SPACE_BEFORE_CACHE_FULL, or
+			 * 		requested amount > freeBlockBytes < (J9SHR_MIN_GAP_BEFORE_METADATA + J9SHR_MIN_DUMMY_DATA_SIZE).
+			 * In first case we don't want to set J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL as free block bytes is above threshold.
+			 * In second case we don't need to set J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL as it would have been done in previous commit.
+			 */
+			if (freeBlockBytes < (I_32) (J9SHR_MIN_GAP_BEFORE_METADATA + J9SHR_MIN_DUMMY_DATA_SIZE)) {
+				Trc_SHR_Assert_True(J9SHR_BLOCK_SPACE_FULL == (J9SHR_BLOCK_SPACE_FULL & _theca->cacheFullFlags));
 			} else {
-				I_32 freeBlockBytes = getFreeBlockBytes();
-				/* Allocation request for BLOCK data can fail if
-				 * 		requested amount > freeBlockBytes >= CC_MIN_SPACE_BEFORE_CACHE_FULL, or
-				 * 		requested amount > freeBlockBytes < (J9SHR_MIN_GAP_BEFORE_METADATA + J9SHR_MIN_DUMMY_DATA_SIZE).
-				 * In first case we don't want to set J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL as free block bytes is above threshold.
-				 * In second case we don't need to set J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL as it would have been done in previous commit.
-				 */
-				if (freeBlockBytes < (I_32) (J9SHR_MIN_GAP_BEFORE_METADATA + J9SHR_MIN_DUMMY_DATA_SIZE)) {
-					Trc_SHR_Assert_True(J9SHR_BLOCK_SPACE_FULL == (J9SHR_BLOCK_SPACE_FULL & _theca->cacheFullFlags));
-				} else {
-					Trc_SHR_Assert_True(freeBlockBytes >= (I_32) CC_MIN_SPACE_BEFORE_CACHE_FULL);
-				}
+				Trc_SHR_Assert_True(freeBlockBytes >= (I_32) CC_MIN_SPACE_BEFORE_CACHE_FULL);
 			}
 		}
 		ccToUse->setCacheHeaderFullFlags(currentThread, flags, true);
@@ -3040,15 +2893,6 @@ SH_CompositeCacheImpl::fillCacheIfNearlyFull(J9VMThread* currentThread)
 	return;
 }
 
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-SH_CompositeCacheImpl::BlockPtr
-SH_CompositeCacheImpl::allocateReadWrite(U_32 separateBufferSize)
-{
-	_storedReadWriteUsedBytes = (UDATA)separateBufferSize;
-	return RWUPDATEPTR(_theca);
-}
-#endif
-
 /**
  * Rollback shared classes cache update.
  * 
@@ -3069,15 +2913,6 @@ SH_CompositeCacheImpl::rollbackUpdate(J9VMThread* currentThread)
 	_storedMetaUsedBytes = _storedSegmentUsedBytes = _storedAOTUsedBytes = _storedJITUsedBytes = _storedReadWriteUsedBytes = 0;
 	_prevScan = _storedPrevScan;
 	_scan = _storedScan;
-
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-#if defined(J9SHR_CACHELET_SUPPORT)
-	if (_commitParent) {
-		_parent->rollbackUpdate(currentThread);
-		_commitParent = false;
-	}
-#endif
-#endif
 }
 
 /**
@@ -3230,15 +3065,6 @@ SH_CompositeCacheImpl::commitUpdateHelper(J9VMThread* currentThread, bool isCach
 
 	updateMetadataSegment(currentThread);
 
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-#if defined(J9SHR_CACHELET_SUPPORT)
-	if (_commitParent) {
-		_parent->commitUpdate(currentThread);
-		_commitParent = false;
-	}
-#endif
-#endif
-
 	Trc_SHR_CC_CRASH6_commitUpdate_Exit(currentThread, _oldUpdateCount);
 	Trc_SHR_CC_commitUpdate_Exit(currentThread);
 }
@@ -3265,12 +3091,10 @@ SH_CompositeCacheImpl::commitUpdate(J9VMThread* currentThread, bool isCachelet)
 {
 	commitUpdateHelper(currentThread, isCachelet);
 
-	if (0 == (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_NESTED)) {
-		/* Since this method is not called for realtime cache,
-		 * we can avoid determining first super cache to call fillCacheIfNearlyFull().
-		 */
-		fillCacheIfNearlyFull(currentThread);
-	}
+	/* Since this method is not called for realtime cache,
+	 * we can avoid determining first super cache to call fillCacheIfNearlyFull().
+	 */
+	fillCacheIfNearlyFull(currentThread);
 }
 
 /**
@@ -3512,23 +3336,6 @@ SH_CompositeCacheImpl::getMetaAllocPtr(void)
 	}
 	return UPDATEPTR(_theca);
 }
-
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-/**
- * Return the start of the readWrite allocation area.
- *
- * @return pointer to the next free byte in the readWrite allocation area.
- */
-void*
-SH_CompositeCacheImpl::getReadWriteAllocPtr(void)
-{
-	if (!_started) {
-		Trc_SHR_Assert_ShouldNeverHappen();
-		return NULL;
-	}
-	return RWUPDATEPTR(_theca);
-}
-#endif
 
 /**
  * Get total usable shared classes cache size
@@ -4798,28 +4605,6 @@ SH_CompositeCacheImpl::setMetadataMemorySegment(J9MemorySegment** segment)
 	_metadataSegmentPtr = segment;
 }
 
-#if defined(J9SHR_CACHELET_SUPPORT)
-
-void
-SH_CompositeCacheImpl::setContainsCachelets(J9VMThread* currentThread)
-{
-	if (!_started){
-		return;
-	}
-	/* If the cache contains cachelets, disable segment page protection as this will be dealt with by the cachelets themselves */
-	if (_doSegmentProtect) {
-		notifyPagesRead(CASTART(_theca), SEGUPDATEPTR(_theca), DIRECTION_BACKWARD, true);
-		_doSegmentProtect = false;
-	}
-	if (!isRunningReadOnly()) {
-		unprotectHeaderReadWriteArea(currentThread, false);
-		_theca->containsCachelets = 1;
-		protectHeaderReadWriteArea(currentThread, false);
-	}
-}
-
-#endif /* J9SHR_CACHELET_SUPPORT */
-
 bool
 SH_CompositeCacheImpl::getContainsCachelets(void)
 {
@@ -4827,11 +4612,11 @@ SH_CompositeCacheImpl::getContainsCachelets(void)
 }
 
 SH_CompositeCacheImpl::BlockPtr
-SH_CompositeCacheImpl::getFirstROMClassAddress(bool isNested)
+SH_CompositeCacheImpl::getFirstROMClassAddress()
 {
 	BlockPtr returnVal = (BlockPtr)getBaseAddress();
 
-	if (isNested || getContainsCachelets()) {
+	if (getContainsCachelets()) {
 		return returnVal + sizeof(J9SharedCacheHeader);
 	} else {
 		return returnVal;
@@ -5013,384 +4798,6 @@ SH_CompositeCacheImpl::getOSPageSize(void)
 	}
 	return _osPageSize;
 }
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-UDATA
-SH_CompositeCacheImpl::computeDeployedReadWriteOffsets(J9VMThread* currentThread, SH_CompositeCacheImpl* ccHead)
-{
-	PORT_ACCESS_FROM_VMC(currentThread);
-	BlockPtr destSegmentStart;
-	UDATA totalReadWriteLen;
-	SH_CompositeCacheImpl* walk = ccHead; /* supercache iterator */
-
-	if (!_started || !ccHead->isStarted() || (_scan != (ShcItemHdr*)CCFIRSTENTRY(_theca))) {
-		return 0;
-	}
-
-	destSegmentStart = CASTART(_theca);
-	totalReadWriteLen = 0;
-
-	/* copy into the serialized cache */
-	while (walk) {
-		SH_CompositeCacheImpl* next = walk->getNext();
-		BlockPtr srcSegmentStart, srcSegmentEnd;
-		BlockPtr srcReadWriteStart, srcReadWriteEnd;
-		UDATA srcSegmentLen, srcReadWriteLen;
-
-		srcReadWriteStart = (BlockPtr)walk->getReadWriteBase();
-		srcReadWriteEnd = (BlockPtr)walk->getReadWriteAllocPtr();
-		srcReadWriteLen = srcReadWriteEnd - srcReadWriteStart;
-
-		srcSegmentStart = (BlockPtr)walk->getBaseAddress();
-		srcSegmentEnd = (BlockPtr)walk->getSegmentAllocPtr();
-		srcSegmentLen = srcSegmentEnd - srcSegmentStart;
-
-		totalReadWriteLen += srcReadWriteLen;
-		if (totalReadWriteLen > READWRITEAREASIZE(_theca)) {
-			return 0;
-		}
-
-		j9tty_printf(PORTLIB, "%x %x %x %x %x\n", (UDATA)destSegmentStart, (UDATA)CASTART(_theca), walk->getFreeReadWriteBytes(),
-				READWRITEAREASIZE(_theca), totalReadWriteLen);
-		walk->setDeployedReadWriteOffset((UDATA)destSegmentStart - (UDATA)CASTART(_theca)
-				- walk->getFreeReadWriteBytes()
-				+ (READWRITEAREASIZE(_theca) - totalReadWriteLen));
-		destSegmentStart += srcSegmentLen;
-		walk = next;
-	}
-
-	return 1;
-}
-#endif
-
-/**
- * Called by the serialized (deployed) cache to pull all data from the chained deployment cache.
- * @param[in] self serialized cache
- * @param[in] ccHead chain of supercaches
- * @param[out] metadataOffset
- *
- * @retval true ok
- * @retval false error
- */
-bool
-SH_CompositeCacheImpl::copyFromCacheChain(J9VMThread* currentThread, SH_CompositeCacheImpl* ccHead, IDATA* metadataOffset)
-{
-	BlockPtr destSegmentStart = NULL, destMetaStart = NULL, srcMetaStart = NULL;
-	UDATA srcMetaLen, totalSegmentLen;
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-	BlockPtr destReadWriteStart;
-	UDATA totalReadWriteLen;
-#endif
-	SH_CompositeCacheImpl* walk = ccHead; /* supercache iterator */
-
-	if (!_started || !ccHead->isStarted() || (_scan != (ShcItemHdr*)CCFIRSTENTRY(_theca))) {
-		return false;
-	}
-
-	destSegmentStart = CASTART(_theca);
-	totalSegmentLen = 0;
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-	destReadWriteStart = READWRITEAREASTART(_theca);
-	totalReadWriteLen = 0;
-#endif
-
-	/* copy into the serialized cache */
-	while (walk) {
-		SH_CompositeCacheImpl* next = walk->getNext();
-		BlockPtr srcSegmentStart, srcSegmentEnd, srcMetaEnd;
-		UDATA srcSegmentLen;
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-		BlockPtr srcReadWriteStart, srcReadWriteEnd;
-		UDATA srcReadWriteLen;
-
-		srcReadWriteStart = (BlockPtr)walk->getReadWriteBase();
-		srcReadWriteEnd = (BlockPtr)walk->getReadWriteAllocPtr();
-		srcReadWriteLen = srcReadWriteEnd - srcReadWriteStart;
-		memcpy(destReadWriteStart, srcReadWriteStart, srcReadWriteLen);
-		destReadWriteStart += srcReadWriteLen;
-#endif
-
-		srcSegmentStart = (BlockPtr)walk->getBaseAddress();
-		srcSegmentEnd = (BlockPtr)walk->getSegmentAllocPtr();
-		srcSegmentLen = srcSegmentEnd - srcSegmentStart;
-		memcpy(destSegmentStart, srcSegmentStart, srcSegmentLen);
-		if (next == NULL) {
-			srcMetaStart = (BlockPtr)walk->getMetaAllocPtr();
-			srcMetaEnd = (BlockPtr)walk->getCacheEndAddress();
-			srcMetaLen = srcMetaEnd - srcMetaStart;
-			destMetaStart = CADEBUGSTART(_theca) - srcMetaLen;
-			memcpy(destMetaStart, srcMetaStart, srcMetaLen);
-		} else {
-			srcMetaStart = srcMetaEnd = NULL;
-			srcMetaLen = 0;
-		}
-
-		totalSegmentLen += srcSegmentLen;
-		if ((totalSegmentLen + srcMetaLen) >= FREEBYTES(_theca)) {
-			return false;
-		}
-
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-		totalReadWriteLen += srcReadWriteLen;
-		if (totalReadWriteLen > READWRITEAREASIZE(_theca)) {
-			return false;
-		}
-#endif
-
-		walk->setDeployedOffset((UDATA)destSegmentStart - (UDATA)srcSegmentStart);
-		destSegmentStart += srcSegmentLen;
-		walk = next;
-	}
-
-	_theca->updateSRP -= srcMetaLen;
-	_theca->segmentSRP += totalSegmentLen;
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-	_theca->readWriteSRP += totalReadWriteLen;
-#endif
-	_theca->updateCount = ccHead->_theca->updateCount;
-	_theca->containsCachelets = ccHead->_theca->containsCachelets;
-
-	*metadataOffset = (UDATA)destMetaStart - (UDATA)srcMetaStart;
-	/* TODO: Note that currently this function doesn't leave the cache in a state that it can be written to */
-	return true;
-}
-
-SH_CompositeCacheImpl*
-SH_CompositeCacheImpl::getParent(void)
-{
-	return _parent;
-}
-
-IDATA
-SH_CompositeCacheImpl::getDeployedOffset(void)
-{
-	return _deployedOffset;
-}
-
-void
-SH_CompositeCacheImpl::setDeployedOffset(IDATA offset)
-{
-	_deployedOffset = offset;
-}
-
-#if defined(J9SHR_CACHELETS_SAVE_READWRITE_AREA)
-IDATA
-SH_CompositeCacheImpl::getDeployedReadWriteOffset(void)
-{
-	return _deployedReadWriteOffset;
-}
-
-void
-SH_CompositeCacheImpl::setDeployedReadWriteOffset(IDATA offset)
-{
-	_deployedReadWriteOffset = offset;
-}
-#endif
-
-/**
- * Fixup the AOT code in this cachelet. 
- * Does not descend into nested cachelets.
- * This renders the cache unusable to the current process.
- * @param[in] self the cachelet
- * @param[in] currentThread the current VMThread
- * @param[in] serializedROMClassStartAddress address of the first ROMClass segment in the serialized (deployed) cache
- * @retval 0 success
- * @retval -1 failure
- */
-IDATA
-SH_CompositeCacheImpl::fixupSerializedCompiledMethods(J9VMThread* currentThread, void* serializedROMClassStartAddress)
-{
-	IDATA rc = 0;
-
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-	J9JITConfig *jitConfig = currentThread->javaVM->jitConfig;
-	CompiledMethodWrapper *wrapper;
-	ShcItem* it;
-
-	if (!jitConfig) {
-		return rc;
-	}
-	if (!jitConfig->updateROMClassOffsetsInAOTMethod) {
-		return -1;
-	}
-
-	/* walk all items in the cache */
-	/* will not skip over stale items */
-	this->findStart(currentThread);
-	while (NULL != (it = (ShcItem*)this->nextEntry(currentThread, NULL))) {
-		if (TYPE_COMPILED_METHOD == ITEMTYPE(it)) {
-			wrapper = (CompiledMethodWrapper*)ITEMDATA(it);
-			if (jitConfig->updateROMClassOffsetsInAOTMethod(currentThread->javaVM, CMWDATA(wrapper), (J9ROMMethod*)(wrapper->romMethodOffset + (UDATA)getCacheHeaderAddress()) , serializedROMClassStartAddress)) {
-				rc = -1;
-				break;
-			}
-		}
-	}
-#endif /* J9VM_INTERP_NATIVE_SUPPORT */
-
-	return rc;
-}
-
-#if 0
-/**
- * Grow the read write area, and discard all metadata.
- */
-void
-SH_CompositeCacheImpl::growCacheInPlace(UDATA rwGrowth, UDATA freeGrowth)
-{
-	_theca->totalBytes += rwGrowth;
-	_theca->readWriteBytes += rwGrowth;
-	_theca->updateSRP += rwGrowth;
-	_theca->segmentSRP += rwGrowth;
-	_theca->crcValue = 0;
-	_theca->crcValid = 0;
-
-	_prevScan = _scan = (ShcItemHdr*)CCFIRSTENTRY(_theca);
-}
-#endif
-
-SH_CompositeCacheImpl::BlockPtr
-SH_CompositeCacheImpl::getNestedMemory(void)
-{
-	return _nestedMemory;
-}
-
-/**
- * Count the segments in this cache(let).
- * ROMClass segments are contiguously adjacent to each other in the write area of the cache.
- * @param[in] currentThread
- * @returns number of segments
- * 
- * @see writeROMSegmentMetadata
- */
-UDATA
-SH_CompositeCacheImpl::countROMSegments(J9VMThread* currentThread)
-{
-	UDATA count = 0;
-	J9AVLTree* tree = &currentThread->javaVM->classMemorySegments->avlTreeData;
-	const J9MemorySegment* segment = NULL;
-	UDATA baseAddress;
-
-	if (!getCurrentROMSegment()) {
-		return 0;
-	}
-
-	baseAddress = (UDATA)getBaseAddress();
-	do {
-		segment = (const J9MemorySegment*)avl_search(tree, baseAddress);
-		if (!segment) {
-			break;
-		}
-
-		/* validate that the segment is inside the cache */
-		Trc_SHR_Assert_False((segment->baseAddress < getBaseAddress()) || (segment->heapTop > getCacheLastEffectiveAddress()));
-
-		if (segment->type == (MEMORY_TYPE_ROM_CLASS | MEMORY_TYPE_ROM | MEMORY_TYPE_FIXEDSIZE))	{
-			++count;
-		}
-		baseAddress = (UDATA)segment->heapTop;
-	} while (segment != getCurrentROMSegment());
-
-	return count;
-}
-
-/**
- * Write this cache(let)'s segments into the cachelet metadata when serializing the cache.
- * ROMClass segments are contiguously adjacent to each other in the write area of the cache.
- * Each cache(let)'s segment metadata consists of an array of UDATA-sized lengths.
- * 
- * @param[in] currentThread
- * @param[in] numSegments Number of segment metadata elements allocated for this function to populate.
- * @param[in] dest Address of segment metadata elements in serialized cache.
- * @param[out] lastSegmentAlloc Allocated size of last segment.
- * @returns number of segments written out
- * 
- * @see countROMSegments
- */
-UDATA
-SH_CompositeCacheImpl::writeROMSegmentMetadata(J9VMThread* currentThread, UDATA numSegments, BlockPtr dest,
-		UDATA* lastSegmentAlloc)
-{
-	J9AVLTree* tree = &currentThread->javaVM->classMemorySegments->avlTreeData;
-	const J9MemorySegment* segment = NULL;
-	UDATA baseAddress;
-	UDATA* lengthArray = (UDATA*)dest;
-	UDATA segmentsWritten = 0;
-
-	*lastSegmentAlloc = 0;
-
-	if (!getCurrentROMSegment()) {
-		return 0;
-	}
-
-	baseAddress = (UDATA)getBaseAddress();
-	do {
-		segment = (const J9MemorySegment*)avl_search(tree, baseAddress);
-		if (!segment) {
-			break;
-		}
-
-		/* validate that the segment is inside the cache */
-		Trc_SHR_Assert_False((segment->baseAddress < getBaseAddress()) || (segment->heapTop > getCacheLastEffectiveAddress()));
-
-		if (segment->type == (MEMORY_TYPE_ROM_CLASS | MEMORY_TYPE_ROM | MEMORY_TYPE_FIXEDSIZE)) {
-			*lengthArray = segment->heapTop - segment->baseAddress;
-
-			if (segment == getCurrentROMSegment()) {
-				/* this is the condition for exiting the loop, so this is the last segment */
-				*lastSegmentAlloc = segment->heapAlloc - segment->heapBase;
-			}
-
-			++lengthArray;
-			++segmentsWritten;
-
-			Trc_SHR_Assert_True(segmentsWritten <= numSegments);
-		}
-		baseAddress = (UDATA)segment->heapTop;
-	} while (segment != getCurrentROMSegment());
-
-	return segmentsWritten;
-}
-
-/**
- * Acquire cachelet startup monitor.
- * @param[in] currentThread
- * @retval 0 success
- * @retval -1 lock acquire failed
- * @retval -2 lock allocation failed
- * @see unlockStartupMonitor
- * @bug HACK. THIS IS TOTALLY UNSAFE FOR WRITEABLE CACHES.
- */
-IDATA
-SH_CompositeCacheImpl::lockStartupMonitor(J9VMThread* currentThread)
-{
-	if (!_startupMonitor) {
-		return -2;
-	}
-	if (0 != omrthread_monitor_enter(_startupMonitor)) {
-		return -1;
-	}
-	return 0;
-}
-
-/**
- * Release cachelet startup monitor.
- * @param[in] currentThread
- * @see lockStartupMonitor
- * @bug HACK. THIS IS TOTALLY UNSAFE FOR WRITEABLE CACHES.
- */
-void
-SH_CompositeCacheImpl::unlockStartupMonitor(J9VMThread* currentThread)
-{
-	if (_startupMonitor) {
-		omrthread_monitor_exit(_startupMonitor);
-	}
-}
-
-#endif /* J9SHR_CACHELET_SUPPORT */
-
 
 /**
  *	Set the string table initialized state
@@ -5863,52 +5270,6 @@ SH_CompositeCacheImpl::getNumRequiredOSLocks() {
 	return CC_NUM_WRITE_LOCKS;
 }
 
-#if defined(J9SHR_CACHELET_SUPPORT)
-/**
- * Starts the SH_CompositeCache for a cachelet.
- *
- * The method starts the CompositeCache for an existing cachelet.
- *
- * @param [in] currentThread Pointer to J9VMThread structure for the current thread
- * 
- * THREADING: Current thread owns write lock
- *
- * @return 0 for success, and -2 for corrupt.
- * @retval CC_STARTUP_OK (0) success
- * @retval CC_STARTUP_CORRUPT (-2)
- */
-IDATA 
-SH_CompositeCacheImpl::startupNestedForStats(J9VMThread* currentThread)
-{
-	IDATA retval = CC_STARTUP_OK;
-
-	if (_started == true) {
-		goto done;
-	}
-	
-	Trc_SHR_Assert_True(_parent->_commonCCInfo != NULL);
-	Trc_SHR_Assert_Equals(currentThread, _parent->_commonCCInfo->hasWriteMutexThread);
-
-	_commonCCInfo = _parent->_commonCCInfo;
-	_oscache = _parent->_oscache;
-	_osPageSize = _oscache->getPermissionsRegionGranularity(_portlib);
-
-	_theca = (J9SharedCacheHeader*)_nestedMemory;
-	if (this->isCacheInitComplete() == false) {
-		retval = CC_STARTUP_CORRUPT;
-		goto done;
-	}
-	_prevScan = _scan = (ShcItemHdr*)CCFIRSTENTRY(_theca);
-	
-	done:
-	if (retval == CC_STARTUP_OK) {
-		_started = true;
-	}
-	return retval;
-
-}
-#endif /*J9SHR_CACHELET_SUPPORT*/
-
 /*
  * Returns corruption context that includes a corruption code and the corrupt value.
  *
@@ -6053,13 +5414,8 @@ SH_CompositeCacheImpl::setRuntimeCacheFullFlags(J9VMThread* currentThread)
 				CC_TRACE1(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_SHRC_CM_WARN_FULL_CACHE, _cacheName);
 			} else {
 				if (0 != (cacheFullFlags & J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) {
-					if (0 != (cacheFullFlags & J9SHR_RUNTIMEFLAG_ENABLE_NESTED)) {
-						/* If we requested a growable cache, this is an error. */
-						CC_TRACE1(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_INFO, J9NLS_SHRC_CM_WARN_FULL_CACHE, _cacheName);
-					} else {
-						/* Only report Block data space full to std-err with verbose enabled */
-						CC_TRACE1(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL, _cacheName);
-					}
+					/* Only report Block data space full to std-err with verbose enabled */
+					CC_TRACE1(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL, _cacheName);
 				}
 				if (J9_ARE_ALL_BITS_SET(cacheFullFlags, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL)) {
 					/* Only report cache soft full to std-err with verbose enabled */
@@ -6094,11 +5450,6 @@ void
 SH_CompositeCacheImpl::protectLastUnusedPages(J9VMThread *currentThread)
 {
 	UDATA updatePtr, segmentPtr;
-
-	/* No need to mprotect these pages for realtime cache */
-	if (0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_NESTED)) {
-		return;
-	}
 
 	Trc_SHR_CC_protectLastUnusedPages_Entry();
 
