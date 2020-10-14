@@ -147,7 +147,11 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, optionalFlags);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, optionalInfo);
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, maxBranchCount);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, invokeCacheCount);
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, methodTypeCount);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, staticSplitMethodRefCount);
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, specialSplitMethodRefCount);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, staticSplitMethodRefIndexes);
