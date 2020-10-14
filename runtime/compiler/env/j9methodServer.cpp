@@ -845,6 +845,16 @@ TR_ResolvedJ9JITServerMethod::getResolvedInterfaceMethod(I_32 cpIndex, UDATA *pI
    }
 
 TR_ResolvedMethod *
+TR_ResolvedJ9JITServerMethod::getResolvedInterfaceMethodFromCache(TR::Compilation *comp, TR_OpaqueClassBlock * classObject, int32_t cpIndex)
+   {
+   TR_ResolvedMethod *resolvedMethod = NULL;
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
+   TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *) _ramClass;
+   compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Interface, clazz, cpIndex, classObject), this, &resolvedMethod);
+   return resolvedMethod;
+   }
+
+TR_ResolvedMethod *
 TR_ResolvedJ9JITServerMethod::getResolvedInterfaceMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 cpIndex)
    {
    TR_ResolvedMethod *resolvedMethod = NULL;
@@ -974,6 +984,24 @@ TR_ResolvedJ9JITServerMethod::startAddressForInterpreterOfJittedMethod()
    {
    _stream->write(JITServer::MessageType::ResolvedMethod_startAddressForInterpreterOfJittedMethod, _remoteMirror);
    return std::get<0>(_stream->read<void *>());
+   }
+
+TR_ResolvedMethod *
+TR_ResolvedJ9JITServerMethod::getResolvedVirtualMethodFromCache(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset, bool ignoreRtResolve)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
+   if (_fe->_compInfoPT->getClientData()->getRtResolve() && !ignoreRtResolve)
+      return NULL;
+
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
+   TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *) _ramClass;
+   TR_ResolvedMethod *resolvedMethod = NULL;
+   if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromOffset, clazz, virtualCallOffset, classObject), this, &resolvedMethod))
+      {
+      TR_ASSERT_FATAL(resolvedMethod, "Cached unresolved virtual method");
+      return resolvedMethod;
+      }
+   return NULL;
    }
 
 TR_ResolvedMethod *
@@ -1972,48 +2000,56 @@ TR_ResolvedJ9JITServerMethod::collectImplementorsCapped(
       _remoteMirror,
       useGetResolvedInterfaceMethod);
    auto recv = stream->read<std::vector<TR_ResolvedJ9JITServerMethodInfo>, std::vector<J9Method *>, int32_t>();
-   auto &methodInfos = std::get<0>(recv);
-   auto &ramMethods = std::get<1>(recv);
 
-   bool isInterface = TR::Compiler->cls.isInterfaceClass(compInfoPT->getCompilation(), topClass);
-
-   // refine if requested by a caller
-   if (useGetResolvedInterfaceMethod != TR_maybe)
-      isInterface = useGetResolvedInterfaceMethod == TR_yes ? true : false;
-   for (int32_t i = 0; i < methodInfos.size(); ++i)
+   int32_t implCount = std::get<2>(recv);
+   if (implCount <= maxCount)
       {
-      TR_ResolvedMethodType type = isInterface ?
-         TR_ResolvedMethodType::Interface :
-         TR_ResolvedMethodType::VirtualFromOffset;
+      auto &methodInfos = std::get<0>(recv);
+      auto &ramMethods = std::get<1>(recv);
 
-      TR_ResolvedMethod *resolvedMethod;
-      TR_ResolvedMethodKey key =
-         compInfoPT->getResolvedMethodKey(
-            type,
-            reinterpret_cast<TR_OpaqueClassBlock *>(_ramClass),
-            cpIndexOrOffset,
-            reinterpret_cast<TR_OpaqueClassBlock *>(std::get<0>(methodInfos[i]).ramClass));
+      bool isInterface = TR::Compiler->cls.isInterfaceClass(compInfoPT->getCompilation(), topClass);
 
-      bool success;
-      if (!(success = compInfoPT->getCachedResolvedMethod(
-             key,
-             this,
-             &resolvedMethod)))
+      // refine if requested by a caller
+      if (useGetResolvedInterfaceMethod != TR_maybe)
+         isInterface = useGetResolvedInterfaceMethod == TR_yes ? true : false;
+      if (implCount > 0)
+         TR_ASSERT_FATAL((TR_OpaqueClassBlock *) std::get<0>(methodInfos[0]).ramClass == topClass, "first cached class is not top class %p %p", (TR_OpaqueClassBlock *) std::get<0>(methodInfos[0]).ramClass, topClass);
+      for (int32_t i = 0; i < methodInfos.size(); ++i)
          {
-         compInfoPT->cacheResolvedMethod(
-            key,
-            (TR_OpaqueMethodBlock *) ramMethods[i],
-            cpIndexOrOffset,
-            methodInfos[i],
-            0); // all received methods should be resolved
-         success = compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod);
-         }
+         TR_ResolvedMethodType type = isInterface ?
+            TR_ResolvedMethodType::Interface :
+            TR_ResolvedMethodType::VirtualFromOffset;
 
-      TR_ASSERT_FATAL(success && resolvedMethod, "method must be cached and resolved");
-      implArray[i] = resolvedMethod;
+         TR_ResolvedMethod *resolvedMethod;
+         TR_ResolvedMethodKey key =
+            compInfoPT->getResolvedMethodKey(
+               type,
+               reinterpret_cast<TR_OpaqueClassBlock *>(_ramClass),
+               cpIndexOrOffset,
+               reinterpret_cast<TR_OpaqueClassBlock *>(std::get<0>(methodInfos[i]).ramClass));
+
+         bool success;
+         if (!(success = compInfoPT->getCachedResolvedMethod(
+                key,
+                this,
+                &resolvedMethod)))
+            {
+            compInfoPT->cacheResolvedMethod(
+               key,
+               (TR_OpaqueMethodBlock *) ramMethods[i],
+               cpIndexOrOffset,
+               methodInfos[i],
+               0); // all received methods should be resolved
+            success = compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod);
+            }
+
+         TR_ASSERT_FATAL(success && resolvedMethod, "method must be cached and resolved");
+         implArray[i] = resolvedMethod;
+         }
+      compInfoPT->cacheImplementorCount(topClass, cpIndexOrOffset, implCount);
       }
 
-   return std::get<2>(recv);
+   return implCount;
    }
 
 bool

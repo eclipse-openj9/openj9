@@ -133,7 +133,8 @@ TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::Compilati
    _classOfStaticMap(NULL),
    _fieldAttributesCache(NULL),
    _staticAttributesCache(NULL),
-   _isUnresolvedStrCache(NULL)
+   _isUnresolvedStrCache(NULL),
+   _implementorCountCache(NULL)
    {}
 
 /**
@@ -1231,6 +1232,36 @@ TR::CompilationInfoPerThreadRemote::getCachedIsUnresolvedStr(TR_OpaqueClassBlock
    }
 
 /**
+ * @brief Method executed by JITServer to cache the number of implementor methods
+ * for a method specified by class and index, that are cached on the server
+ *
+ * @param topClass class containing the method for which we count the implementors
+ * @param slotOrIndex The slot or cpIndex of the method for which we count the implementors
+ * @param implCount The number of implementors of the method specified by the other 2 parameters in a given class tree
+ * @return void
+ */
+void
+TR::CompilationInfoPerThreadRemote::cacheImplementorCount(TR_OpaqueClassBlock *topClass, int32_t slotOrIndex, const int32_t implCount)
+   {
+   cacheToPerCompilationMap(_implementorCountCache, std::make_pair(topClass, slotOrIndex), implCount);
+   }
+
+/**
+ * @brief Method executed by JITServer to retrieve the number of implementor methods
+ * for a method specified by class and index that are cached on the server.
+ *
+ * @param topClass class containing the method for which we count the implementors
+ * @param slotOrIndex The slot or cpIndex of the method for which we count the implementors
+ * @param implCount The number of implementors of the method specified by the other 2 parameters in a given class tree to be set by the API
+ * @return returns true if found in cache else false
+ */
+bool
+TR::CompilationInfoPerThreadRemote::getCachedImplementorCount(TR_OpaqueClassBlock *topClass, int32_t slotOrIndex, int32_t &implCount)
+   {
+   return getCachedValueFromPerCompilationMap(_implementorCountCache, std::make_pair(topClass, slotOrIndex), implCount);
+   }
+
+/**
  * @brief Method executed by JITServer to clear cache for per compilation
  */
 void
@@ -1243,6 +1274,7 @@ TR::CompilationInfoPerThreadRemote::clearPerCompilationCaches()
    clearPerCompilationCache(_fieldAttributesCache);
    clearPerCompilationCache(_staticAttributesCache);
    clearPerCompilationCache(_isUnresolvedStrCache);
+   clearPerCompilationCache(_implementorCountCache);
    }
 
 /**

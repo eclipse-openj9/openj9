@@ -925,15 +925,43 @@ CollectImplementors::visitSubclass(TR_PersistentClassInfo *cl)
       {
       int32_t length;
       char *clazzName = TR::Compiler->cls.classNameChars(comp(), classId, length);
-      TR_ResolvedMethod *method;
+      TR_ResolvedMethod *method = NULL;
 
       if (isInterface())
          {
-         method = _callerMethod->getResolvedInterfaceMethod(comp(), classId, _slotOrIndex);
+         if (comp()->isOutOfProcessCompilation())
+            {
+            auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(TR::compInfoPT);
+            int32_t implCount = 0;
+            // if (compInfoPT->getCachedImplementorCount(_topClassId, _slotOrIndex, implCount) && implCount >= _maxCount)
+               method = static_cast<TR_ResolvedJ9JITServerMethod *>(_callerMethod)->getResolvedInterfaceMethodFromCache(comp(), classId, _slotOrIndex);
+            // else
+               // method = _callerMethod->getResolvedInterfaceMethod(comp(), classId, _slotOrIndex);
+            }
+         else
+            {
+            method = _callerMethod->getResolvedInterfaceMethod(comp(), classId, _slotOrIndex);
+            }
          }
       else
          {
-         method = _callerMethod->getResolvedVirtualMethod(comp(), classId, _slotOrIndex);
+         if (comp()->isOutOfProcessCompilation())
+            {
+            auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(TR::compInfoPT);
+            int32_t implCount = 0;
+            // if (compInfoPT->getCachedImplementorCount(_topClassId, _slotOrIndex, implCount) && implCount >= _maxCount)
+               {
+               method = static_cast<TR_ResolvedJ9JITServerMethod *>(_callerMethod)->getResolvedVirtualMethodFromCache(comp(), classId, _slotOrIndex);
+               }
+            // else
+               // {
+               // method = _callerMethod->getResolvedVirtualMethod(comp(), classId, _slotOrIndex);
+               // }
+            }
+         else
+            {
+            method = _callerMethod->getResolvedVirtualMethod(comp(), classId, _slotOrIndex);
+            }
          }
 
       ++_numVisitedSubClasses;
@@ -1040,12 +1068,21 @@ TR_ClassQueries::collectImplementorsCapped(TR_PersistentClassInfo *clazz,
 #if defined(J9VM_OPT_JITSERVER)
    if (comp->isOutOfProcessCompilation())
       {
-      return static_cast<TR_ResolvedJ9JITServerMethod *>(callerMethod)->collectImplementorsCapped(
-         clazz->getClassId(),
-         maxCount,
-         slotOrIndex,
-         useGetResolvedInterfaceMethod,
-         implArray);
+      // If we already cached at least maxCount implementors for this method,
+      // don't need to make a remote call, can get all implementors from the cache
+      auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(TR::compInfoPT);
+      int32_t implCount = 0;
+      if (!compInfoPT->getCachedImplementorCount(clazz->getClassId(), slotOrIndex, implCount)
+          || implCount < maxCount)
+         {
+         implCount = static_cast<TR_ResolvedJ9JITServerMethod *>(callerMethod)->collectImplementorsCapped(
+            clazz->getClassId(),
+            maxCount,
+            slotOrIndex,
+            useGetResolvedInterfaceMethod,
+            implArray);
+         return implCount;
+         }
       }
 #endif
    CollectImplementors collector(comp, clazz->getClassId(), implArray, maxCount, callerMethod, slotOrIndex, useGetResolvedInterfaceMethod);

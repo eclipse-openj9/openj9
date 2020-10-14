@@ -183,12 +183,14 @@ public:
    virtual char * localName(uint32_t slotNumber, uint32_t bcIndex, int32_t &len, TR_Memory *) override;
    virtual bool virtualMethodIsOverridden() override { return _virtualMethodIsOverridden; }
    virtual TR_ResolvedMethod * getResolvedInterfaceMethod(TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
+   TR_ResolvedMethod *getResolvedInterfaceMethodFromCache(TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
    virtual TR_OpaqueClassBlock * getResolvedInterfaceMethod(int32_t cpIndex, uintptr_t * pITableIndex) override;
    virtual uint32_t getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
    virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex) override;
    virtual void * startAddressForJNIMethod(TR::Compilation *) override;
    virtual void *startAddressForInterpreterOfJittedMethod() override;
    virtual TR_ResolvedMethod *getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset , bool ignoreRtResolve) override;
+   TR_ResolvedMethod *getResolvedVirtualMethodFromCache(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset , bool ignoreRtResolve = true);
    virtual char * fieldOrStaticSignatureChars(I_32 cpIndex, int32_t & len) override;
    virtual char * getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length) override;
    virtual char * classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;

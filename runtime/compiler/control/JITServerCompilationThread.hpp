@@ -76,6 +76,9 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    void cacheIsUnresolvedStr(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, const TR_IsUnresolvedString &stringAttrs);
    bool getCachedIsUnresolvedStr(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_IsUnresolvedString &stringAttrs);
 
+   void cacheImplementorCount(TR_OpaqueClassBlock *topClass, int32_t slotOrIndex, const int32_t implCount);
+   bool getCachedImplementorCount(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, int32_t &implCount);
+
    void clearPerCompilationCaches();
    void deleteClientSessionData(uint64_t clientId, TR::CompilationInfo* compInfo, J9VMThread* compThread);
    virtual void freeAllResources() override;
@@ -146,6 +149,7 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    FieldOrStaticAttrTable_t *_fieldAttributesCache;
    FieldOrStaticAttrTable_t *_staticAttributesCache;
    UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_IsUnresolvedString> *_isUnresolvedStrCache;
+   UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, int32_t> *_implementorCountCache;
    }; // class CompilationInfoPerThreadRemote
 } // namespace TR
 
