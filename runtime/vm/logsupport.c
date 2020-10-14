@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,8 @@ static const J9LogLevel logLevels[] = {
 #define XLOG_OPTION_FIRST_PRINTABLE 2
 #define XLOG_OPTION_NONE 1
 
-#define XLOG_OPT "-Xlog"
+#define SMALL_STRING_BUF_SIZE 64
+
 static const UDATA numLogLevels = ( sizeof(logLevels) / sizeof(J9LogLevel) );
 
 static const UDATA defaultLogOptions = J9NLS_ERROR | J9NLS_VITAL;
@@ -264,29 +265,26 @@ parseLogOptions(char *options, UDATA *optionsFlags, UDATA *parseSucceeded)
 jint
 processXLogOptions(J9JavaVM * vm)
 {
-	IDATA xlogindex;
-	UDATA xlogflags, printhelp, tempflags;
+	IDATA xlogindex = FIND_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH, VMOPT_XSYSLOG_OPT, NULL);
+	/* The default for -Xsyslog is to be turned on and capture 'error' and 'vital' type messages */
+	UDATA xlogflags = defaultLogOptions;
+	UDATA printhelp = FALSE;
+	UDATA tempflags = 0;
 	jint rc = JNI_OK;
 	J9VMInitArgs* j9vm_args = vm->vmArgsArray;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	printhelp = FALSE;
-
-	/* The default for -Xlog is to be turned on and capture 'error' and 'vital' type messages */
-	xlogflags = defaultLogOptions;
-
-	xlogindex = FIND_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH, XLOG_OPT, NULL);
-
 	/* If xlogindex == -1 nothing was specified, so use the default setting from above */
 
 	while (xlogindex >= 0) {
-		IDATA optionsfound;
+		IDATA optionsfound = 0;
 		UDATA optionsparsed = FALSE;
-		char *xlogoptions = NULL;
+		char xlogoptionsbuf[SMALL_STRING_BUF_SIZE];
+		char *xlogoptions = xlogoptionsbuf;
 
 		CONSUME_ARG(j9vm_args, xlogindex);
-		optionsfound = GET_OPTION_VALUE(xlogindex, ':', &xlogoptions);
+		optionsfound = COPY_OPTION_VALUE(xlogindex, ':', &xlogoptions, sizeof(xlogoptionsbuf));
 
 		if (optionsfound != OPTION_OK) {
 			rc = JNI_ERR;
@@ -294,12 +292,12 @@ processXLogOptions(J9JavaVM * vm)
 		}
 
 		if (xlogoptions == NULL) {
-			/* Reached if e.g. just -Xlog is specified */
+			/* Reached if e.g. just -Xsyslog is specified */
 			printhelp = TRUE;
 			j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_OPTION_MALFORMED, j9vm_args->actualVMArgs->options[xlogindex].optionString);
 
 		} else if (j9_cmdla_stricmp(logLevels[XLOG_OPTION_NONE].level, xlogoptions) == 0) {
-			/* -Xlog:none suppresses everything seen so far */
+			/* -Xsyslog:none suppresses everything seen so far */
 			printhelp = FALSE;
 			xlogflags = 0;
 
@@ -317,7 +315,7 @@ processXLogOptions(J9JavaVM * vm)
 			}
 		}
 
-		xlogindex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, XLOG_OPT, NULL, xlogindex);
+		xlogindex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XSYSLOG_OPT, NULL, xlogindex);
 	}
 
 	/* Options are good, start logging */

@@ -970,7 +970,7 @@ J9NLS_VM_XSCDMX_IGNORED.system_action=-Xscdmx will be ignored.
 J9NLS_VM_XSCDMX_IGNORED.user_response=Ignore this message, remove -Xscdmx, or enable -Xshareclasses.
 # END NON-TRANSLATABLE
 
-# Help text for the -Xlog option. Note: please do not translate the text of the option flags: help, all, none, warn, error, info, config, vital
+# Help text for the -Xsyslog option. Note: please do not translate the text of the option flags: help, all, none, warn, error, info, config, vital
 J9NLS_VM_XLOG_HELP01=\nPou\u017eit\u00ed:\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP01.explanation=NOTAG
@@ -978,64 +978,64 @@ J9NLS_VM_XLOG_HELP01.system_action=
 J9NLS_VM_XLOG_HELP01.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:help is not translatable
-J9NLS_VM_XLOG_HELP02=  -Xlog:help              Vytisknout n\u00e1pov\u011bdu -Xlog prost\u0159ed\u00ed JVM.
+# -Xsyslog:help is not translatable
+J9NLS_VM_XLOG_HELP02=  -Xsyslog:help              Vytisknout n\u00e1pov\u011bdu -Xsyslog prost\u0159ed\u00ed JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP02.explanation=NOTAG
 J9NLS_VM_XLOG_HELP02.system_action=
 J9NLS_VM_XLOG_HELP02.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:none is not translatable
-J9NLS_VM_XLOG_HELP03=  -Xlog:none              Zak\u00e1zat d\u0159\u00edve ur\u010den\u00e9 volby protokolov\u00e1n\u00ed prost\u0159ed\u00ed JVM, v\u010detn\u011b v\u00fdchoz\u00edch hodnot.
+# -Xsyslog:none is not translatable
+J9NLS_VM_XLOG_HELP03=  -Xsyslog:none              Zak\u00e1zat d\u0159\u00edve ur\u010den\u00e9 volby protokolov\u00e1n\u00ed prost\u0159ed\u00ed JVM, v\u010detn\u011b v\u00fdchoz\u00edch hodnot.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP03.explanation=NOTAG
 J9NLS_VM_XLOG_HELP03.system_action=
 J9NLS_VM_XLOG_HELP03.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:all is not translatable
-J9NLS_VM_XLOG_HELP04=  -Xlog:all               Protokolovat v\u0161echny zpr\u00e1vy prost\u0159ed\u00ed JVM.
+# -Xsyslog:all is not translatable
+J9NLS_VM_XLOG_HELP04=  -Xsyslog:all               Protokolovat v\u0161echny zpr\u00e1vy prost\u0159ed\u00ed JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP04.explanation=NOTAG
 J9NLS_VM_XLOG_HELP04.system_action=
 J9NLS_VM_XLOG_HELP04.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:info is not translatable
-J9NLS_VM_XLOG_HELP05=  -Xlog:info              Protokolovat informa\u010dn\u00ed zpr\u00e1vy prost\u0159ed\u00ed JVM.
+# -Xsyslog:info is not translatable
+J9NLS_VM_XLOG_HELP05=  -Xsyslog:info              Protokolovat informa\u010dn\u00ed zpr\u00e1vy prost\u0159ed\u00ed JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP05.explanation=NOTAG
 J9NLS_VM_XLOG_HELP05.system_action=
 J9NLS_VM_XLOG_HELP05.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:warn is not translatable
-J9NLS_VM_XLOG_HELP06=  -Xlog:warn              Protokolovat varovn\u00e9 zpr\u00e1vy prost\u0159ed\u00ed JVM.
+# -Xsyslog:warn is not translatable
+J9NLS_VM_XLOG_HELP06=  -Xsyslog:warn              Protokolovat varovn\u00e9 zpr\u00e1vy prost\u0159ed\u00ed JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP06.explanation=NOTAG
 J9NLS_VM_XLOG_HELP06.system_action=
 J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:error is not translatable
-J9NLS_VM_XLOG_HELP07=  -Xlog:error             Protokolovat chybov\u00e9 zpr\u00e1vy prost\u0159ed\u00ed JVM. Tato volba je zapnuta p\u0159i v\u00fdchoz\u00edm nastaven\u00ed.
+# -Xsyslog:error is not translatable
+J9NLS_VM_XLOG_HELP07=  -Xsyslog:error             Protokolovat chybov\u00e9 zpr\u00e1vy prost\u0159ed\u00ed JVM. Tato volba je zapnuta p\u0159i v\u00fdchoz\u00edm nastaven\u00ed.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
 J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:vital is not translatable
-J9NLS_VM_XLOG_HELP08=  -Xlog:vital             Protokolovat z\u00e1va\u017en\u00e9 zpr\u00e1vy prost\u0159ed\u00ed JVM. Tato volba je zapnuta p\u0159i v\u00fdchoz\u00edm nastaven\u00ed.
+# -Xsyslog:vital is not translatable
+J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital             Protokolovat z\u00e1va\u017en\u00e9 zpr\u00e1vy prost\u0159ed\u00ed JVM. Tato volba je zapnuta p\u0159i v\u00fdchoz\u00edm nastaven\u00ed.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
 J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:config is not translatable
-J9NLS_VM_XLOG_HELP09=  -Xlog:config            Protokolovat zpr\u00e1vy konfigurace prost\u0159ed\u00ed JVM. \n
+# -Xsyslog:config is not translatable
+J9NLS_VM_XLOG_HELP09=  -Xsyslog:config            Protokolovat zpr\u00e1vy konfigurace prost\u0159ed\u00ed JVM. \n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1050,16 +1050,16 @@ J9NLS_VM_XLOG_HELP10.system_action=
 J9NLS_VM_XLOG_HELP10.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:error,warn is not translatable
-J9NLS_VM_XLOG_HELP11=  -Xlog:error,warn
+# -Xsyslog:error,warn is not translatable
+J9NLS_VM_XLOG_HELP11=  -Xsyslog:error,warn
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP11.explanation=NOTAG
 J9NLS_VM_XLOG_HELP11.system_action=
 J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12=  -Xlog:info,warn,error\n
+# -Xsyslog:info,warn,error is not translatable
+J9NLS_VM_XLOG_HELP12=  -Xsyslog:info,warn,error\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=

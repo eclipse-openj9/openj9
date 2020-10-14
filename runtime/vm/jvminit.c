@@ -6123,7 +6123,21 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		goto error;
 	}
 
-	/* Handle -Xlog early, so that any future init failures can be reported to the system log */
+	/* Handle -Xsyslog and legacy -Xlog early, so that any future init failures can be reported to the system log */
+	{
+		IDATA enabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXLEGACYXLOGOPTION, NULL);
+		IDATA disabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOLEGACYXLOGOPTION, NULL);
+		/* Default to -XX:-LegacyXlogOption */
+		if (enabled > disabled) {
+			if (RC_FAILED == registerCmdLineMapping(vm, MAPOPT_XLOG_OPT, VMOPT_XSYSLOG_OPT, EXACT_MAP_NO_OPTIONS)) {
+				goto error;
+			}
+			if (RC_FAILED == registerCmdLineMapping(vm, MAPOPT_XLOG_OPT_COLON, MAPOPT_XSYSLOG_OPT_COLON, MAP_WITH_INCLUSIVE_OPTIONS)) {
+				goto error;
+			}
+		}
+	}
+
 	if (JNI_OK != processXLogOptions(vm)) {
 		parseError = TRUE;
 		goto error;

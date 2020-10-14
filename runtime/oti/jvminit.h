@@ -550,6 +550,13 @@ enum INIT_STAGE {
 #define VMOPT_XXPRINTFLAGSFINALENABLE "-XX:+PrintFlagsFinal"
 #define VMOPT_XXPRINTFLAGSFINALDISABLE "-XX:-PrintFlagsFinal"
 
+#define VMOPT_XXLEGACYXLOGOPTION "-XX:+LegacyXlogOption"
+#define VMOPT_XXNOLEGACYXLOGOPTION "-XX:-LegacyXlogOption"
+#define MAPOPT_XLOG_OPT "-Xlog"
+#define MAPOPT_XLOG_OPT_COLON "-Xlog:"
+#define VMOPT_XSYSLOG_OPT "-Xsyslog"
+#define MAPOPT_XSYSLOG_OPT_COLON "-Xsyslog:"
+
 /* Modularity command line options */
 #define VMOPT_MODULE_UPGRADE_PATH "--upgrade-module-path"
 #define VMOPT_MODULE_PATH "--module-path"

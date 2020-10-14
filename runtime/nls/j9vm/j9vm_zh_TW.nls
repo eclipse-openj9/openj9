@@ -970,7 +970,7 @@ J9NLS_VM_XSCDMX_IGNORED.system_action=-Xscdmx will be ignored.
 J9NLS_VM_XSCDMX_IGNORED.user_response=Ignore this message, remove -Xscdmx, or enable -Xshareclasses.
 # END NON-TRANSLATABLE
 
-# Help text for the -Xlog option. Note: please do not translate the text of the option flags: help, all, none, warn, error, info, config, vital
+# Help text for the -Xsyslog option. Note: please do not translate the text of the option flags: help, all, none, warn, error, info, config, vital
 J9NLS_VM_XLOG_HELP01=\n\u7528\u6cd5\uff1a\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP01.explanation=NOTAG
@@ -978,64 +978,64 @@ J9NLS_VM_XLOG_HELP01.system_action=
 J9NLS_VM_XLOG_HELP01.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:help is not translatable
-J9NLS_VM_XLOG_HELP02=  -Xlog:help              \u5217\u5370 JVM -Xlog \u8aaa\u660e\u3002
+# -Xsyslog:help is not translatable
+J9NLS_VM_XLOG_HELP02=  -Xsyslog:help              \u5217\u5370 JVM -Xsyslog \u8aaa\u660e\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP02.explanation=NOTAG
 J9NLS_VM_XLOG_HELP02.system_action=
 J9NLS_VM_XLOG_HELP02.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:none is not translatable
-J9NLS_VM_XLOG_HELP03=  -Xlog:none              \u505c\u7528\u5148\u524d\u6307\u5b9a\u7684 JVM \u65e5\u8a8c\u9078\u9805\uff0c\u5305\u62ec\u9810\u8a2d\u503c\u3002
+# -Xsyslog:none is not translatable
+J9NLS_VM_XLOG_HELP03=  -Xsyslog:none              \u505c\u7528\u5148\u524d\u6307\u5b9a\u7684 JVM \u65e5\u8a8c\u9078\u9805\uff0c\u5305\u62ec\u9810\u8a2d\u503c\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP03.explanation=NOTAG
 J9NLS_VM_XLOG_HELP03.system_action=
 J9NLS_VM_XLOG_HELP03.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:all is not translatable
-J9NLS_VM_XLOG_HELP04=  -Xlog:all               \u8a18\u8f09\u6240\u6709 JVM \u8a0a\u606f\u3002
+# -Xsyslog:all is not translatable
+J9NLS_VM_XLOG_HELP04=  -Xsyslog:all               \u8a18\u8f09\u6240\u6709 JVM \u8a0a\u606f\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP04.explanation=NOTAG
 J9NLS_VM_XLOG_HELP04.system_action=
 J9NLS_VM_XLOG_HELP04.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:info is not translatable
-J9NLS_VM_XLOG_HELP05=  -Xlog:info              \u8a18\u8f09 JVM \u53c3\u8003\u8a0a\u606f\u3002
+# -Xsyslog:info is not translatable
+J9NLS_VM_XLOG_HELP05=  -Xsyslog:info              \u8a18\u8f09 JVM \u53c3\u8003\u8a0a\u606f\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP05.explanation=NOTAG
 J9NLS_VM_XLOG_HELP05.system_action=
 J9NLS_VM_XLOG_HELP05.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:warn is not translatable
-J9NLS_VM_XLOG_HELP06=  -Xlog:warn              \u8a18\u8f09 JVM \u8b66\u544a\u8a0a\u606f\u3002
+# -Xsyslog:warn is not translatable
+J9NLS_VM_XLOG_HELP06=  -Xsyslog:warn              \u8a18\u8f09 JVM \u8b66\u544a\u8a0a\u606f\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP06.explanation=NOTAG
 J9NLS_VM_XLOG_HELP06.system_action=
 J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:error is not translatable
-J9NLS_VM_XLOG_HELP07=  -Xlog:error             \u8a18\u8f09 JVM \u932f\u8aa4\u8a0a\u606f\u3002\u4f9d\u9810\u8a2d\uff0c\u6703\u555f\u7528\u6b64\u9078\u9805\u3002
+# -Xsyslog:error is not translatable
+J9NLS_VM_XLOG_HELP07=  -Xsyslog:error             \u8a18\u8f09 JVM \u932f\u8aa4\u8a0a\u606f\u3002\u4f9d\u9810\u8a2d\uff0c\u6703\u555f\u7528\u6b64\u9078\u9805\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
 J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:vital is not translatable
-J9NLS_VM_XLOG_HELP08=  -Xlog:vital             \u8a18\u8f09 JVM \u91cd\u8981\u8a0a\u606f\u3002\u4f9d\u9810\u8a2d\uff0c\u6703\u555f\u7528\u6b64\u9078\u9805\u3002
+# -Xsyslog:vital is not translatable
+J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital             \u8a18\u8f09 JVM \u91cd\u8981\u8a0a\u606f\u3002\u4f9d\u9810\u8a2d\uff0c\u6703\u555f\u7528\u6b64\u9078\u9805\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
 J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:config is not translatable
-J9NLS_VM_XLOG_HELP09=  -Xlog:config            \u8a18\u8f09 JVM \u914d\u7f6e\u8a0a\u606f\u3002\n
+# -Xsyslog:config is not translatable
+J9NLS_VM_XLOG_HELP09=  -Xsyslog:config            \u8a18\u8f09 JVM \u914d\u7f6e\u8a0a\u606f\u3002\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1050,16 +1050,16 @@ J9NLS_VM_XLOG_HELP10.system_action=
 J9NLS_VM_XLOG_HELP10.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:error,warn is not translatable
-J9NLS_VM_XLOG_HELP11=  -Xlog:error,warn
+# -Xsyslog:error,warn is not translatable
+J9NLS_VM_XLOG_HELP11=  -Xsyslog:error,warn
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP11.explanation=NOTAG
 J9NLS_VM_XLOG_HELP11.system_action=
 J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12=  -Xlog:info,warn,error\n
+# -Xsyslog:info,warn,error is not translatable
+J9NLS_VM_XLOG_HELP12=  -Xsyslog:info,warn,error\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=
