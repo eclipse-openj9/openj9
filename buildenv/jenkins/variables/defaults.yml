@@ -477,6 +477,8 @@ aarch64_linux_xl_uma:
 x86-64_windows:
   extends: ['boot_jdk_default', 'cuda', 'debuginfo', 'openjdk_reference_repo', 'openssl_bundle']
   boot_jdk:
+    location:
+      all: '/cygdrive/f/Users/jenkins/bootjdks'
     arch: 'x64'
     os: 'windows'
   release:
@@ -529,6 +531,8 @@ x86-64_windows_xl_uma:
 x86-32_windows:
   extends: ['boot_jdk_default', 'debuginfo', 'openjdk_reference_repo', 'openssl_bundle']
   boot_jdk:
+    location:
+      all: '/cygdrive/f/Users/jenkins/bootjdks'
     arch: 'x64'
     os: 'windows'
   release:
