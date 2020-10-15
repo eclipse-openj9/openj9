@@ -6936,7 +6936,27 @@ static void genInitArrayHeader(
    if (sizeReg)
       {
       // Variable size
-      //
+      // Special handling of zero sized arrays.
+      // Zero length arrays are discontiguous (i.e. they also need the discontiguous length field to be 0) because
+      // they are indistinguishable from non-zero length discontiguous arrays
+      int32_t arrayDiscontiguousSizeOffset = fej9->getOffsetOfDiscontiguousArraySizeField();
+      TR::LabelSymbol *nonZeroLengthLabel = generateLabelSymbol(cg);
+
+      generateRegRegInstruction(TEST4RegReg, node, sizeReg, sizeReg, cg);
+      generateLabelInstruction(JNE4, node, nonZeroLengthLabel, cg);
+
+      TR::MemoryReference *arrayDiscontiguousSizeMR = generateX86MemoryReference(objectReg, arrayDiscontiguousSizeOffset, cg);
+      if (canUseFastInlineAllocation)
+         {
+         TR_X86OpCodes storeOp = (comp->target().is64Bit() && !comp->useCompressedPointers()) ? S8MemReg : S4MemReg;
+         generateMemRegInstruction(storeOp, node, arrayDiscontiguousSizeMR, sizeReg, cg);
+         }
+      else
+         {
+         generateMemRegInstruction(S4MemReg, node, arrayDiscontiguousSizeMR, sizeReg, cg);
+         }
+      generateLabelInstruction(LABEL, node, nonZeroLengthLabel, cg);
+
       if (canUseFastInlineAllocation)
          {
          // Native 64-bit needs to cover the discontiguous size field
