@@ -76,6 +76,15 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateOSRScratchBufferSymbolRef();
    TR::SymbolReference * findOrCreateOSRFrameIndexSymbolRef();
 
+   /** \brief
+    * Find or create VMThread tempSlot symbol reference. J9VMThread.tempSlot provides a mechanism for the
+    * compiler to provide information that the VM can use for various reasons - such as locating items on
+    * the stack during a call to internal native methods that are signature-polymorphic.
+    *
+    * \return TR::SymbolReference* the VMThreadTempSlotField symbol reference
+    */
+   TR::SymbolReference * findOrCreateVMThreadTempSlotFieldSymbolRef();
+
    // CG linkage
    TR::SymbolReference * findOrCreateAcquireVMAccessSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol); // minor rework
    TR::SymbolReference * findOrCreateReleaseVMAccessSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol); // minor rework
