@@ -423,6 +423,10 @@ J9::ARM64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xE);
 
    generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, tempMR, sourceRegister, NULL);
+
+   if (needSync)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF);
+
    wrtbarEvaluator(node, sourceRegister, destinationRegister, firstChild->isNonNull(), true, cg);
 
    if (killSource)
@@ -521,6 +525,9 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xE);
 
    generateMemSrc1Instruction(cg, storeOp, node, tempMR, translatedSrcReg);
+
+   if (needSync)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF);
 
    wrtbarEvaluator(node, sourceRegister, destinationRegister, secondChild->isNonNull(), true, cg);
 
