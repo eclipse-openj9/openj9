@@ -4864,7 +4864,7 @@ SecurityException {
 	 * @return field descriptor of Class instance
 	 */
 	public String descriptorString() {
-		/* see MethodType.getBytecodeStringName */
+		/* see MethodTypeHelper.getBytecodeStringName */
 
 		if (this.isPrimitive()) {
 			if (this == int.class) {
