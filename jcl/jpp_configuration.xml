@@ -67,6 +67,7 @@
 		<source path="src/openj9.jvm/share/classes"/>
 		<source path="src/openj9.sharedclasses/share/classes"/>
 		<source path="src/openj9.zosconditionhandling/share/classes"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=8"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
@@ -91,6 +92,7 @@
 		<source path="src/openj9.jvm/share/classes"/>
 		<source path="src/openj9.sharedclasses/share/classes"/>
 		<source path="src/openj9.zosconditionhandling/share/classes"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=8"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
@@ -118,6 +120,7 @@
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava11.jar"/>
 		<source path="src"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=11"/>
 		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
@@ -145,6 +148,7 @@
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava15.jar"/>
 		<source path="src"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=15"/>
 		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
@@ -172,6 +176,7 @@
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava15.jar"/>
 		<source path="src"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=16"/>
 		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
@@ -199,6 +204,7 @@
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava11.jar"/>
 		<source path="src"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=11"/>
 		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
@@ -223,9 +229,10 @@
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
-		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava14.jar"/>
+		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava15.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190Panama.jar"/>
 		<source path="src"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=15"/>
 		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
@@ -240,6 +247,7 @@
 		<source path="src/java.base/share/classes"/>
 		<source path="src/openj9.dataaccess/share/classes"/>
 		<source path="src/openj9.zosconditionhandling/share/classes"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=8"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
@@ -254,6 +262,7 @@
 		<source path="src/java.base/share/classes"/>
 		<source path="src/openj9.dtfj/share/classes"/>
 		<source path="src/openj9.zosconditionhandling/share/classes"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=8"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
@@ -269,6 +278,7 @@
 		<source path="src/openj9.dtfj/share/classes"/>
 		<source path="src/openj9.dtfjview/share/classes"/>
 		<source path="src/openj9.zosconditionhandling/share/classes"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=8"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
@@ -283,6 +293,7 @@
 		<source path="src/java.base/share/classes"/>
 		<source path="src/openj9.traceformat/share/classes"/>
 		<source path="src/openj9.zosconditionhandling/share/classes"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=8"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
@@ -298,6 +309,7 @@
 		<source path="src/openj9.dtfj/share/classes"/>
 		<source path="src/openj9.dtfjview/share/classes"/>
 		<source path="src/openj9.traceformat/share/classes"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=8"/>
 		<parameter name="msg:outputdir" value=""/>
 	</configuration>
 
