@@ -309,14 +309,22 @@ LIBCDEFS := $(word 1,$(wildcard $(foreach d,$(TPF_ROOT),$d/base/lib/libCDEFSFORA
 %$(UMA_DOT_II): %.cpp
 	$(CXX) $(CXXFLAGS) -E -dDI -o $@ $<
 
+<#elseif uma.spec.type.zos>
+
+<#if uma.spec.flags.opt_useOmrDdr.enabled>
+# Optimization is limited when using '-Wc,debug', but *.dbg files are required for DDR.
+# Compile C and C++ code twice: once with '-Wc,debug', and a second time without that option.
 </#if>
-<#if uma.spec.type.zos>
+
 # compilation rule for C files.
-%$(UMA_DOT_O): %.c
+%$(UMA_DOT_O) : %.c
+<#if uma.spec.flags.opt_useOmrDdr.enabled>
+	$(CC) $(CFLAGS) -Wc,debug -c -o $@ $< > /dev/null
+</#if>
 	$(CC) $(CFLAGS) -c -o $@ $< > $*.asmlist
 
 # compilation rule for metal-C files.
-%$(UMA_DOT_O): %.mc
+%$(UMA_DOT_O) : %.mc
 	cp $< $*.c
 	xlc $(MCFLAGS) -qnosearch -I /usr/include/metal/ -qmetal -qlongname -S -o $*.s $*.c > $*.asmlist
 	rm -f $*.c
@@ -324,9 +332,12 @@ LIBCDEFS := $(word 1,$(wildcard $(foreach d,$(TPF_ROOT),$d/base/lib/libCDEFSFORA
 	rm -f $*.s
 
 # compilation rule for C++ files.
-%$(UMA_DOT_O): %.cpp
-	$(CXX) $(CXXFLAGS) -c $< > $*.asmlist
-<#elseif !uma.spec.type.ztpf>
+%$(UMA_DOT_O) : %.cpp
+<#if uma.spec.flags.opt_useOmrDdr.enabled>
+	$(CXX) $(CXXFLAGS) -Wc,debug -c -o $@ $< > /dev/null
+</#if>
+	$(CXX) $(CXXFLAGS) -c -o $@ $< > $*.asmlist
+<#else>
 
 # compilation rule for C files.
 %$(UMA_DOT_O): %.c
