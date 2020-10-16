@@ -29,6 +29,7 @@
 #include "control/Options.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "exceptions/RuntimeFailure.hpp"
 #if defined(J9VM_OPT_JITSERVER)

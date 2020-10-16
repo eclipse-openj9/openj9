@@ -53,6 +53,7 @@
 #include "env/PersistentInfo.hpp"
 #include "env/TRMemory.hpp"
 #include "env/ut_j9jit.h"
+#include "env/VerboseLog.hpp"
 #include "runtime/asmprotos.h"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"

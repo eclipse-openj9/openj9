@@ -35,6 +35,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "exceptions/PersistenceFailure.hpp"
 #include "infra/CriticalSection.hpp"
 #include "runtime/CodeRuntime.hpp"
