@@ -43,6 +43,7 @@
 #include "env/VMJ9.h"
 #include "runtime/ArtifactManager.hpp"
 #include "env/IO.hpp"
+#include "env/VerboseLog.hpp"
 
 TR::CodeCacheManager *J9::CodeCacheManager::_codeCacheManager = NULL;
 J9JavaVM *J9::CodeCacheManager::_javaVM = NULL;

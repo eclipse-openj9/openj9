@@ -37,6 +37,7 @@
 #include "env/IO.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "env/VerboseLog.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
