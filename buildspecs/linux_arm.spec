@@ -132,10 +132,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</source>
 	<flags>
 		<flag id="arch_arm" value="true"/>
-		<flag id="build_autobuild" value="true"/>
+		<flag id="build_autobuild" value="false"/>
 		<flag id="build_dropToHursley" value="true"/>
 		<flag id="build_j2se" value="true"/>
-		<flag id="build_java8" value="true"/>
+		<flag id="build_java8" value="false"/>
 		<flag id="build_vmContinuous" value="true"/>
 		<flag id="env_hasFPU" value="true"/>
 		<flag id="env_littleEndian" value="true"/>
