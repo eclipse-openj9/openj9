@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,12 +90,6 @@ protected:
 	virtual U_32 getHashTableEntriesFromCacheSize(UDATA cacheSizeBytes);	
 
 	HashLinkedListImpl* localHLLNewInstance(HashLinkedListImpl* memForConstructor) { return NULL; };
-	
-#if defined(J9SHR_CACHELET_SUPPORT)
-	virtual bool canCreateHints() { return true; }
-	virtual IDATA createHintsForCachelet(J9VMThread* vmthread, SH_CompositeCache* cachelet, CacheletHints* hints);
-	virtual IDATA primeHashtables(J9VMThread* vmthread, SH_CompositeCache* cachelet, U_8* hintsData, UDATA datalength);
-#endif
 
 private:
 	SH_TimestampManager* _tsm;
