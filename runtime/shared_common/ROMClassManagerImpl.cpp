@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -621,68 +621,3 @@ SH_ROMClassManagerImpl::customCountItemsInList(void* entry, void* opaque)
 	} while (node != walk);
 	return 0;
 }
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-
-bool 
-SH_ROMClassManagerImpl::canCreateHints()
-{
-	return true;
-}
-
-/**
- * Walk the managed items hashtable in this cachelet. Allocate and populate an array
- * of hints, one for each hash entry.
- *
- * @param[in] self a data type manager
- * @param[in] vmthread the current VMThread
- * @param[out] hints a CacheletHints structure. This function fills in its
- * contents.
- *
- * @retval 0 success
- * @retval -1 failure
- */
-IDATA
-SH_ROMClassManagerImpl::createHintsForCachelet(J9VMThread* vmthread, SH_CompositeCache* cachelet, CacheletHints* hints)
-{
-	Trc_SHR_Assert_True(hints != NULL);
-
-	/* hints->dataType should have been set by the caller */
-	Trc_SHR_Assert_True(hints->dataType == _dataTypesRepresented[0]);
-	
-	return hllCollectHashes(vmthread, cachelet, hints);
-}
-
-/**
- * add a (_hashValue, cachelet) entry to the hash table
- * only called with hints of the right data type 
- *
- * each hint is a UDATA-length hash of a string
- */
-IDATA
-SH_ROMClassManagerImpl::primeHashtables(J9VMThread* vmthread, SH_CompositeCache* cachelet, U_8* hintsData, UDATA dataLength)
-{
-	UDATA* hashSlot = (UDATA*)hintsData;
-	UDATA hintCount = 0;
-
-	if ((dataLength == 0) || (hintsData == NULL)) {
-		return 0;
-	}
-
-	hintCount = dataLength / sizeof(UDATA);
-	while (hintCount-- > 0) {
-		Trc_SHR_RMI_primeHashtables_addingHint(vmthread, cachelet, *hashSlot);
-		if (!_hints.addHint(vmthread, *hashSlot, cachelet)) {
-			/* If we failed to finish priming the hints, just give up.
-			 * Stuff should still work, just suboptimally.
-			 */
-			Trc_SHR_RMI_primeHashtables_failedToPrimeHint(vmthread, this, cachelet, *hashSlot);
-			break;
-		}
-		++hashSlot;
-	}
-	
-	return 0;
-}
-
-#endif /* J9SHR_CACHELET_SUPPORT */

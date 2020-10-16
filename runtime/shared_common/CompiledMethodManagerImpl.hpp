@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,10 +45,7 @@ protected:
 	virtual U_32 getHashTableEntriesFromCacheSize(UDATA cacheSizeBytes);
 
 	virtual UDATA getKeyForItem(const ShcItem* cacheItem);
-	
-#if defined(J9SHR_CACHELET_SUPPORT)
-	virtual bool canCreateHints() { return true; }
-#endif
+
 private:
 	/* Copy prevention */
 	SH_CompiledMethodManagerImpl(const SH_CompiledMethodManagerImpl&);

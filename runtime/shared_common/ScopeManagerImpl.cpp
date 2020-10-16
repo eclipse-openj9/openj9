@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,9 +32,6 @@
 #include <string.h>
 
 SH_ScopeManagerImpl::SH_ScopeManagerImpl()
-#if defined(J9SHR_CACHELET_SUPPORT)
-	:_allCacheletsStarted(false)
-#endif /* J9SHR_CACHELET_SUPPORT */
 {
 	_htMutexName = "scTableMutex";
 }
@@ -150,22 +147,10 @@ SH_ScopeManagerImpl::scTableLookup(J9VMThread* currentThread, const J9UTF8* key)
 	Trc_SHR_SMI_scTableLookup_Entry(currentThread, J9UTF8_LENGTH(key), J9UTF8_DATA(key));
 	
 	if (lockHashTable(currentThread, "scTableLookup")) {
-#if defined(J9SHR_CACHELET_SUPPORT)
-		if (_isRunningNested) {
-			UDATA hint = scHashFn(&searchEntry, currentThread->javaVM->internalVMFunctions);
-			
-			if (startupHintCachelets(currentThread, hint) == -1) {
-				goto exit_lockFailed;
-			}
-		}
-#endif
 		found = (const HashEntry*)hashTableFind(_hashTable, (void*)&searchEntry);
 		Trc_SHR_SMI_scTableLookup_HashtableFind(currentThread, found);
 		unlockHashTable(currentThread, "scTableLookup");
 	} else {
-#if defined(J9SHR_CACHELET_SUPPORT)
-exit_lockFailed:
-#endif
 		PORT_ACCESS_FROM_PORT(_portlib);
 		M_ERR_TRACE(J9NLS_SHRC_SMI_FAILED_ENTER_SCMUTEX);
 		Trc_SHR_SMI_scTableLookup_Exit1(currentThread, MONITOR_ENTER_RETRY_TIMES);
@@ -178,79 +163,6 @@ exit_lockFailed:
 	Trc_SHR_SMI_scTableLookup_Exit2(currentThread, returnVal);
 	return returnVal;
 }
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-
-/**
- * A hash table do function. Collect hash values of entries in a cachelet.
- */
-UDATA
-SH_ScopeManagerImpl::scCollectHashOfEntry(void* entry_, void* userData)
-{
-	HashEntry* entry = (HashEntry*)entry_;
-	CacheletHintHashData* data = (CacheletHintHashData*)userData;
-
-	if (data->cachelet == entry->_cachelet) {
-		*data->hashSlot++ = scHashFn(entry, data->userData);
-	}
-	return FALSE; /* don't remove entry */
-}
-
-/**
- * A hash table do function. Count number of entries in a cachelet.
- */
-UDATA
-SH_ScopeManagerImpl::scCountCacheletHashes(void* entry_, void* userData)
-{
-	HashEntry* entry = (HashEntry*)entry_;
-	CacheletHintCountData* data = (CacheletHintCountData*)userData;
-
-	if (data->cachelet == entry->_cachelet) {
-		data->hashCount++;
-	}
-	return FALSE; /* don't remove entry */
-}
-
-/**
- * Collect the hash entry hashes into a cachelet hint.
- */
-IDATA
-SH_ScopeManagerImpl::scCollectHashes(J9VMThread* currentThread, SH_CompositeCache* cachelet, CacheletHints* hints)
-{
-	PORT_ACCESS_FROM_VMC(currentThread);
-	CacheletHintHashData hashes;
-	CacheletHintCountData counts;
-
-	/* count hashes in this cachelet */
-	counts.cachelet = cachelet;
-	counts.hashCount = 0;
-	hashTableForEachDo(_hashTable, scCountCacheletHashes, (void*)&counts);
-	/* TODO trace hints written. Note this runs after trace engine has shut down. */
-	
-	/* allocate hash array */
-	hints->length = counts.hashCount * sizeof(UDATA);
-	if (hints->length == 0) {
-		hints->data = NULL;
-		return 0;
-	}
-	hints->data = (U_8*)j9mem_allocate_memory(hints->length, J9MEM_CATEGORY_CLASSES);
-	if (!hints->data) {
-		/* TODO trace alloc failure */
-		hints->length = 0;
-		return -1;
-	}
-
-	/* collect hashes */
-	hashes.cachelet = cachelet;
-	hashes.hashSlot = (UDATA*)hints->data;
-	hashes.userData = (void*)currentThread->javaVM->internalVMFunctions;
-	hashTableForEachDo(_hashTable, scCollectHashOfEntry, (void*)&hashes);
-	/* TODO trace hints written */
-
-	return 0;
-}
-
-#endif /* J9SHR_CACHELET_SUPPORT */
 
 /**
  * Create a new instance of SH_ScopeManagerImpl
@@ -430,65 +342,3 @@ SH_ScopeManagerImpl::validate(J9VMThread* currentThread, const J9UTF8* partition
 	Trc_SHR_SMI_validate_ExitOK(currentThread);
 	return 1;
 }
-
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-
-/**
- * Walk the managed items hashtable in this cachelet. Allocate and populate an array
- * of hints, one for each hash entry.
- *
- * @param[in] self a data type manager
- * @param[in] vmthread the current VMThread
- * @param[out] hints a CacheletHints structure. This function fills in its
- * contents.
- *
- * @retval 0 success
- * @retval -1 failure
- */
-IDATA
-SH_ScopeManagerImpl::createHintsForCachelet(J9VMThread* vmthread, SH_CompositeCache* cachelet, CacheletHints* hints)
-{
-	Trc_SHR_Assert_True(hints != NULL);
-
-	/* hints->dataType should have been set by the caller */
-	Trc_SHR_Assert_True(hints->dataType == _dataTypesRepresented[0]);
-	
-	return scCollectHashes(vmthread, cachelet, hints);
-}
-
-/**
- * add a (_hashValue, cachelet) entry to the hash table
- * only called with hints of the right data type 
- *
- * each hint is a UDATA-length hash of a string
- * 
- * This method is not threadsafe.
- */
-IDATA
-SH_ScopeManagerImpl::primeHashtables(J9VMThread* vmthread, SH_CompositeCache* cachelet, U_8* hintsData, UDATA dataLength)
-{
-	UDATA* hashSlot = (UDATA*)hintsData;
-	UDATA hintCount = 0;
-
-	if ((dataLength == 0) || (hintsData == NULL)) {
-		return 0;
-	}
-
-	hintCount = dataLength / sizeof(UDATA);
-	while (hintCount-- > 0) {
-		Trc_SHR_SMI_primeHashtables_addingHint(vmthread, cachelet, *hashSlot);
-		if (!_hints.addHint(vmthread, *hashSlot, cachelet)) {
-			/* If we failed to finish priming the hints, just give up.
-			 * Stuff should still work, just suboptimally.
-			 */
-			Trc_SHR_SMI_primeHashtables_failedToPrimeHint(vmthread, this, cachelet, *hashSlot);
-			break;
-		}
-		++hashSlot;
-	}
-	
-	return 0;
-}
-
-#endif /* J9SHR_CACHELET_SUPPORT */

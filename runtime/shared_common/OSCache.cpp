@@ -38,9 +38,6 @@
 
 #include "OSCachesysv.hpp"
 #include "OSCachemmap.hpp"
-#if defined(J9SHR_CACHELET_SUPPORT)
-#include "OSCachevmem.hpp"
-#endif /* J9SHR_CACHELET_SUPPORT */
 #include "CacheMap.hpp"
 
 /**
@@ -545,12 +542,6 @@ SH_OSCache::newInstance(J9PortLibrary* portlib, SH_OSCache* memForConstructor, c
 		break;
 	case J9PORT_SHR_CACHE_TYPE_SNAPSHOT:
 		break;
-#if defined(J9SHR_CACHELET_SUPPORT)
-	case J9PORT_SHR_CACHE_TYPE_VMEM :
-		/* TODO : tracepoint */
-		new(newOSC) SH_OSCachevmem();
-		break;
-#endif
 	}
 	Trc_SHR_OSC_newInstance_initializingNewObject();
 	newOSC->initialize(PORTLIB, ((char*)memForConstructor + SH_OSCache::getRequiredConstrBytes()), generation, layer);

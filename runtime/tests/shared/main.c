@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -191,11 +191,9 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 	I_32 i;
 	J9JavaVM* vm;
 	JNIEnv* env = NULL;
-#if !defined(J9SHR_CACHELET_SUPPORT)
 	J9ProcessHandle pid = NULL;
 	char * childargv[SHRTEST_MAX_CMD_OPTS];
 	UDATA childargc = 0;
-#endif
 
 	PORT_ACCESS_FROM_PORT(args->portLibrary);
 
@@ -207,7 +205,6 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 	main_setNLSCatalog(PORTLIB, argv);
 
 	for(i=0;i<argc;i++){
-#if !defined(J9SHR_CACHELET_SUPPORT)
 		if (startsWith(argv[i],TRANSACTIONTEST_CMDLINE_STARTSWITH)!=0) {
 			IDATA procrc = 0;
 			if (createJavaVM(args, &vm, TRUE, FALSE, &env) != JNI_OK) {
@@ -245,7 +242,6 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 			}
 			return procrc;
 		}
-#endif
 
 		if(startsWith(argv[i],OSCACHETEST_CMDLINE_STARTSWITH)!=0) {
 			IDATA procrc = 1;
@@ -264,7 +260,6 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 		}
 	}
 
-#if !defined(J9SHR_CACHELET_SUPPORT)
 	childargc = buildChildCmdlineOption(argc, argv, TRANSACTIONTEST_CMDLINE_STARTSWITH, childargv);
 	pid = LaunchChildProcess (PORTLIB, "testSCStoreTransaction", childargv, childargc);
 	if (pid == NULL) {
@@ -280,7 +275,6 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 		return 1;
 	}
 	rc |= WaitForTestProcess(PORTLIB, pid);
-#endif
 
 	if (createJavaVM(args, &vm, FALSE, FALSE, &env) != JNI_OK) {
 		j9tty_printf(PORTLIB,"\nCound not create jvm. Exiting unit test...\n");
@@ -325,8 +319,6 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 	HEADING(PORTLIB, "CorruptCache Test");
 	rc |= testCorruptCache(vm);
 
-	/* TODO: Temporarily disable AttachedDataTest and minmax tests on realtime */
-#if !defined(J9SHR_CACHELET_SUPPORT)
 	HEADING(PORTLIB, "AttachedData Test");
 	rc |= testAttachedData(vm);
 
@@ -341,7 +333,6 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 
     HEADING(PORTLIB, "Cache Full Test");
     rc |= testCacheFull(vm);
-#endif
 
 	HEADING(PORTLIB, "Protect New ROM Class Data Test");
 	rc |= testProtectNewROMClassData(vm);

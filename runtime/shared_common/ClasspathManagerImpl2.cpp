@@ -97,9 +97,6 @@ SH_ClasspathManagerImpl2::CpLinkedListImpl::initialize(I_16 CPEIndex_, const Shc
 	 * synchronization.
 	 */
 	_next = this;
-#if defined(J9SHR_CACHELET_SUPPORT)
-	_cachelet = cachelet_;
-#endif
 
 	Trc_SHR_CMI_CpLinkedListImpl_initialize_Exit();
 }
@@ -563,22 +560,9 @@ SH_ClasspathManagerImpl2::cpeTableLookup(J9VMThread* currentThread, const char* 
 	Trc_SHR_CMI_cpeTableLookup_Entry(currentThread, keySize, key, isToken);
 
 	if (lockHashTable(currentThread, "cpeTableLookup")) {
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-		if (_isRunningNested) {
-			UDATA hint = cpeHashFn(&dummy, currentThread->javaVM->internalVMFunctions);
-			
-			if (startupHintCachelets(currentThread, hint) == -1) {
-				goto exit_lockFailed;
-			}
-		}
-#endif
 		returnVal = cpeTableLookupHelper(currentThread, &dummy);
 		unlockHashTable(currentThread, "cpeTableLookup");
 	} else {
-#if defined(J9SHR_CACHELET_SUPPORT)
-exit_lockFailed:
-#endif
 		PORT_ACCESS_FROM_PORT(_portlib);
 		M_ERR_TRACE(J9NLS_SHRC_CMI_FAILED_ENTER_CPEMUTEX);
 		Trc_SHR_CMI_cpeTableLookup_Exit1(currentThread, MONITOR_ENTER_RETRY_TIMES);
@@ -1453,147 +1437,3 @@ SH_ClasspathManagerImpl2::getNumItemsByType(UDATA* numClasspaths, UDATA* numURLs
 	*numURLs = _urlCount;
 	*numTokens = _tokenCount;
 }
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-
-/**
- * Walk the managed items hashtable in this cachelet. Allocate and populate an array
- * of hints, one for each hash entry.
- *
- * @param[in] self a data type manager
- * @param[in] vmthread the current VMThread
- * @param[out] hints a CacheletHints structure. This function fills in its
- * contents.
- *
- * @retval 0 success
- * @retval -1 failure
- */
-IDATA
-SH_ClasspathManagerImpl2::createHintsForCachelet(J9VMThread* vmthread, SH_CompositeCache* cachelet, CacheletHints* hints)
-{
-	Trc_SHR_Assert_True(hints != NULL);
-
-	/* hints->dataType should have been set by the caller */
-	Trc_SHR_Assert_True(hints->dataType == _dataTypesRepresented[0]);
-	
-	return cpeCollectHashes(vmthread, cachelet, hints);
-}
-
-/**
- * add a (_hashValue, cachelet) entry to the hash table
- * only called with hints of the right data type 
- *
- * each hint is a UDATA-length hash of a string
- * 
- * This method is not threadsafe.
- */
-IDATA
-SH_ClasspathManagerImpl2::primeHashtables(J9VMThread* vmthread, SH_CompositeCache* cachelet, U_8* hintsData, UDATA dataLength)
-{
-	UDATA* hashSlot = (UDATA*)hintsData;
-	UDATA hintCount = 0;
-
-	if ((dataLength == 0) || (hintsData == NULL)) {
-		return 0;
-	}
-
-	hintCount = dataLength / sizeof(UDATA);
-	while (hintCount-- > 0) {
-		Trc_SHR_CMI_primeHashtables_addingHint(vmthread, cachelet, *hashSlot);
-		if (!_hints.addHint(vmthread, *hashSlot, cachelet)) {
-			/* If we failed to finish priming the hints, just give up.
-			 * Stuff should still work, just suboptimally.
-			 */
-			Trc_SHR_CMI_primeHashtables_failedToPrimeHint(vmthread, this, cachelet, *hashSlot);
-			break;
-		}
-		++hashSlot;
-	}
-	
-	return 0;
-}
-
-/**
- * A hash table do function. Collect hash values of entries in a cachelet.
- */
-UDATA
-SH_ClasspathManagerImpl2::cpeCollectHashOfEntry(void* entry, void* userData)
-{
-	CpLinkedListHdr* node = (CpLinkedListHdr*)entry;
-	CpLinkedListImpl* item = node->_list;
-	CacheletHintHashData* data = (CacheletHintHashData*)userData;
-
-	if (item) {
-		do {
-			if (data->cachelet == item->_cachelet) {
-				*data->hashSlot++ = cpeHashFn(node, data->userData);
-				break;
-			}
-			item = (CpLinkedListImpl*)item->_next;
-		} while (item != node->_list);
-	}
-	return FALSE; /* don't remove entry */
-}
-
-/**
- * A hash table do function. Count number of entries in a cachelet.
- */
-UDATA
-SH_ClasspathManagerImpl2::cpeCountCacheletHashes(void* entry, void* userData)
-{
-	CpLinkedListHdr* node = (CpLinkedListHdr*)entry;
-	CpLinkedListImpl* item = node->_list;
-	CacheletHintCountData* data = (CacheletHintCountData*)userData;
-
-	if (item) {
-		do {
-			if (data->cachelet == item->_cachelet) {
-				data->hashCount++;
-				break;
-			}
-			item = (CpLinkedListImpl*)item->_next;
-		} while (item != node->_list);
-	}
-	return FALSE; /* don't remove entry */
-}
-
-/**
- * Collect the hash entry hashes into a cachelet hint.
- */
-IDATA
-SH_ClasspathManagerImpl2::cpeCollectHashes(J9VMThread* currentThread, SH_CompositeCache* cachelet, CacheletHints* hints)
-{
-	PORT_ACCESS_FROM_VMC(currentThread);
-	CacheletHintHashData hashes;
-	CacheletHintCountData counts;
-
-	/* count hashes in this cachelet */
-	counts.cachelet = cachelet;
-	counts.hashCount = 0;
-	hashTableForEachDo(_hashTable, cpeCountCacheletHashes, (void*)&counts);
-	/* TODO trace hints written. Note this runs after trace engine has shut down. */
-	
-	/* allocate hash array */
-	hints->length = counts.hashCount * sizeof(UDATA);
-	if (hints->length == 0) {
-		hints->data = NULL;
-		return 0;
-	}
-	hints->data = (U_8*)j9mem_allocate_memory(hints->length, J9MEM_CATEGORY_CLASSES);
-	if (!hints->data) {
-		/* TODO trace alloc failure */
-		hints->length = 0;
-		return -1;
-	}
-
-	/* collect hashes */
-	hashes.cachelet = cachelet;
-	hashes.hashSlot = (UDATA*)hints->data;
-	hashes.userData = (void*)currentThread->javaVM->internalVMFunctions;
-	hashTableForEachDo(_hashTable, cpeCollectHashOfEntry, (void*)&hashes);
-	/* TODO trace hints written */
-
-	return 0;
-}
-
-#endif /* J9SHR_CACHELET_SUPPORT */
