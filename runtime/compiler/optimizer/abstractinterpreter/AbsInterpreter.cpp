@@ -179,7 +179,7 @@ void TR::AbsInterpreter::setStartBlockState()
          TR::DataType dataType = arg->getDataType();
 
          TR::AbsVPValue* param = new (region()) TR::AbsVPValue(vp(), arg->getConstraint(), dataType);
-         param->setParamPosition(paramPos);
+         param->setParameterPosition(paramPos);
 
          state->set(slotIndex, param);
 
@@ -215,7 +215,7 @@ void TR::AbsInterpreter::setStartBlockState()
          {
          TR_OpaqueClassBlock *classBlock = _callerMethod->containingClass();
          TR::AbsValue* value = createObject(classBlock, TR_yes);
-         value->setParamPosition(paramPos++);
+         value->setParameterPosition(paramPos++);
          state->set(slotIndex++, value);
          }
 
@@ -231,13 +231,13 @@ void TR::AbsInterpreter::setStartBlockState()
             case TR::Int16:
             case TR::Int32:
                param = createTopInt();
-               param->setParamPosition(paramPos);
+               param->setParameterPosition(paramPos);
                state->set(slotIndex, param);
                break;
             
             case TR::Int64:
                param = createTopLong();
-               param->setParamPosition(paramPos);
+               param->setParameterPosition(paramPos);
                state->set(slotIndex, param);
                slotIndex++;
                state->set(slotIndex, createTopLong());
@@ -245,7 +245,7 @@ void TR::AbsInterpreter::setStartBlockState()
             
             case TR::Double:
                param = createTopDouble();
-               param->setParamPosition(paramPos);
+               param->setParameterPosition(paramPos);
                state->set(slotIndex, param);
                slotIndex++;
                state->set(slotIndex, createTopDouble());
@@ -253,7 +253,7 @@ void TR::AbsInterpreter::setStartBlockState()
             
             case TR::Float:
                param = createTopFloat();
-               param->setParamPosition(paramPos);
+               param->setParameterPosition(paramPos);
                state->set(slotIndex, param);
                break;
             
@@ -265,13 +265,13 @@ void TR::AbsInterpreter::setStartBlockState()
                   int32_t arrayType = comp()->fe()->getNewArrayTypeFromClass(classBlock);
                   int32_t elemetSize = arrayType == 7 || arrayType == 11 ? 8 : 4; //7: double, 11: long
                   param = createArrayObject(classBlock, TR_maybe, 0, INT32_MAX, elemetSize);
-                  param->setParamPosition(paramPos);
+                  param->setParameterPosition(paramPos);
                   state->set(slotIndex, param);
                   }
                else
                   {
                   param = createObject(classBlock, TR_maybe);
-                  param->setParamPosition(paramPos);
+                  param->setParameterPosition(paramPos);
                   state->set(slotIndex, param);
                   }
                break;
@@ -1335,8 +1335,8 @@ void TR::AbsInterpreter::unaryOperation(TR::DataType type, UnaryOperator op)
             }
          else if (isIntRange(value)) //range int
             {
-            int32_t intValLow = static_cast<TR::AbsVPValue*>(value)->getConstraint()->asIntRange()->getLowInt();
-            int32_t intValHigh = static_cast<TR::AbsVPValue*>(value)->getConstraint()->asIntRange()->getHighInt();
+            int32_t intValLow = static_cast<TR::AbsVPValue*>(value)->getConstraint()->getLowInt();
+            int32_t intValHigh = static_cast<TR::AbsVPValue*>(value)->getConstraint()->getHighInt();
 
             if (intValLow == INT32_MIN) //neg INT_MIN = INT_MIN
                {
@@ -1370,8 +1370,8 @@ void TR::AbsInterpreter::unaryOperation(TR::DataType type, UnaryOperator op)
             }
          else if (isLongRange(value))
             {
-            int64_t longValLow = static_cast<TR::AbsVPValue*>(value)->getConstraint()->asLongRange()->getLowLong();
-            int64_t longValHigh = static_cast<TR::AbsVPValue*>(value)->getConstraint()->asLongRange()->getHighLong();
+            int64_t longValLow = static_cast<TR::AbsVPValue*>(value)->getConstraint()->getLowLong();
+            int64_t longValHigh = static_cast<TR::AbsVPValue*>(value)->getConstraint()->getHighLong();
 
             if (longValLow == LONG_MIN)
                {
@@ -1765,13 +1765,13 @@ void TR::AbsInterpreter::comparison(TR::DataType type, ComparisonOperator op)
                state->push(result);
                break;
                }
-            else if (static_cast<TR::AbsVPValue*>(value1)->getConstraint()->asLongConstraint()->getLowLong() > static_cast<TR::AbsVPValue*>(value2)->getConstraint()->asLongConstraint()->getHighLong()) // >
+            else if (static_cast<TR::AbsVPValue*>(value1)->getConstraint()->getLowLong() > static_cast<TR::AbsVPValue*>(value2)->getConstraint()->getHighLong()) // >
                {
                TR::AbsValue* result = createIntConst(1);
                state->push(result);
                break;
                }
-            else if (static_cast<TR::AbsVPValue*>(value1)->getConstraint()->asLongConstraint()->getHighLong() < static_cast<TR::AbsVPValue*>(value2)->getConstraint()->asLongConstraint()->getLowLong()) // <
+            else if (static_cast<TR::AbsVPValue*>(value1)->getConstraint()->getHighLong() < static_cast<TR::AbsVPValue*>(value2)->getConstraint()->getLowLong()) // <
                {
                TR::AbsValue* result = createIntConst(-1);
                state->push(result);
@@ -1814,15 +1814,15 @@ void TR::AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, Con
          TR::AbsValue* value = state->pop();
          TR_ASSERT_FATAL(value->getDataType() == TR::Address, "Unexpected type");
          
-         if (value->isParameter() && !(!_callerMethod->isStatic() && value->getParamPosition() == 0)) 
+         if (value->isParameter() && !(!_callerMethod->isStatic() && value->getParameterPosition() == 0)) 
             {
             TR::PotentialOptimizationVPPredicate* p1 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
             TR::PotentialOptimizationVPPredicate* p2 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNonNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
 
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParamPosition());
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParamPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParameterPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParameterPosition());
             }
          
          switch (type)
@@ -1843,15 +1843,15 @@ void TR::AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, Con
          TR::AbsValue* value = state->pop();
          TR_ASSERT_FATAL(value->getDataType() == TR::Address, "Unexpected type");
 
-         if (value->isParameter() && !(!_callerMethod->isStatic() && value->getParamPosition() == 0))
+         if (value->isParameter() && !(!_callerMethod->isStatic() && value->getParameterPosition() == 0))
             {
             TR::PotentialOptimizationVPPredicate* p1 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
             TR::PotentialOptimizationVPPredicate* p2 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNonNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
 
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParamPosition());
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParamPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParameterPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParameterPosition());
             }
 
          switch (type)
@@ -1881,9 +1881,9 @@ void TR::AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, Con
             TR::PotentialOptimizationVPPredicate* p3 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPIntRange::create(vp(), 1, INT_MAX), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
 
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParamPosition());
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParamPosition());
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p3, value->getParamPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParameterPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParameterPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p3, value->getParameterPosition());
             }
 
          switch (type)
@@ -1912,9 +1912,9 @@ void TR::AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, Con
             TR::PotentialOptimizationVPPredicate* p3 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPIntRange::create(vp(), 1, INT_MAX), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
 
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParamPosition());
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParamPosition());
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p3, value->getParamPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParameterPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParameterPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p3, value->getParameterPosition());
             }
 
          switch (type)
@@ -1936,16 +1936,13 @@ void TR::AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, Con
 
          if (value->isParameter())
             {
-            if (isInt(value))
-               {
-               TR::PotentialOptimizationVPPredicate* p1 = 
-                  new (region()) TR::PotentialOptimizationVPPredicate(TR::VPIntRange::create(vp(), INT_MIN, -1), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
-               TR::PotentialOptimizationVPPredicate* p2 = 
-                  new (region()) TR::PotentialOptimizationVPPredicate(TR::VPIntRange::create(vp(), 0, INT_MAX), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
-            
-               _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParamPosition());
-               _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParamPosition());
-               }
+            TR::PotentialOptimizationVPPredicate* p1 = 
+               new (region()) TR::PotentialOptimizationVPPredicate(TR::VPIntRange::create(vp(), INT_MIN, -1), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
+            TR::PotentialOptimizationVPPredicate* p2 = 
+               new (region()) TR::PotentialOptimizationVPPredicate(TR::VPIntRange::create(vp(), 0, INT_MAX), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
+         
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParameterPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParameterPosition());
             }
 
          switch (type)
@@ -1972,8 +1969,8 @@ void TR::AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, Con
             TR::PotentialOptimizationVPPredicate* p2 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPIntRange::create(vp(), 1, INT_MAX), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
             
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParamPosition());
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParamPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParameterPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParameterPosition());
             }
 
          switch (type)
@@ -2000,8 +1997,8 @@ void TR::AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, Con
             TR::PotentialOptimizationVPPredicate* p2 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPIntRange::create(vp(), 1, INT_MAX), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
             
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParamPosition());
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParamPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParameterPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParameterPosition());
             }
 
          switch (type)
@@ -2028,8 +2025,8 @@ void TR::AbsInterpreter::conditionalBranch(TR::DataType type, int32_t label, Con
             TR::PotentialOptimizationVPPredicate* p2 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPIntRange::create(vp(), 0, INT_MAX), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::BranchFolding, vp());
          
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParamPosition());
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParamPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, value->getParameterPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, value->getParameterPosition());
             }
 
          switch (type)
@@ -2199,8 +2196,8 @@ void TR::AbsInterpreter::multianewarray(int32_t dimension)
       TR::AbsValue* array = createArrayObject(
                            arrayType,
                            TR_yes,
-                           static_cast<TR::AbsVPValue*>(length)->getConstraint()->asIntConstraint()->getLowInt(),
-                           static_cast<TR::AbsVPValue*>(length)->getConstraint()->asIntConstraint()->getHighInt(),
+                           static_cast<TR::AbsVPValue*>(length)->getConstraint()->getLowInt(),
+                           static_cast<TR::AbsVPValue*>(length)->getConstraint()->getHighInt(),
                            4
                            );
       state->push(array);
@@ -2279,8 +2276,8 @@ void TR::AbsInterpreter::anewarray()
       TR::AbsValue* value = createArrayObject(
                                              arrayType, 
                                              TR_yes, 
-                                             static_cast<TR::AbsVPValue*>(length)->getConstraint()->asIntConstraint()->getLowInt(), 
-                                             static_cast<TR::AbsVPValue*>(length)->getConstraint()->asIntConstraint()->getHighInt(),
+                                             static_cast<TR::AbsVPValue*>(length)->getConstraint()->getLowInt(), 
+                                             static_cast<TR::AbsVPValue*>(length)->getConstraint()->getHighInt(),
                                              4
                                              );
       state->push(value);
@@ -2298,15 +2295,15 @@ void TR::AbsInterpreter::arraylength()
    TR::AbsValue* arrayRef = state->pop();
    TR_ASSERT_FATAL(arrayRef->getDataType() == TR::Address, "Unexpected type");
 
-   if (arrayRef->isParameter() && !(!_callerMethod->isStatic() && arrayRef->getParamPosition() == 0))
+   if (arrayRef->isParameter() && !(!_callerMethod->isStatic() && arrayRef->getParameterPosition() == 0))
       {
       TR::PotentialOptimizationVPPredicate* p1 = 
          new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::NullCheckFolding, vp());
       TR::PotentialOptimizationVPPredicate* p2 = 
          new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNonNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::NullCheckFolding, vp());
 
-      _inliningMethodSummary->addPotentialOptimizationByArgument(p1, arrayRef->getParamPosition());
-      _inliningMethodSummary->addPotentialOptimizationByArgument(p2, arrayRef->getParamPosition());
+      _inliningMethodSummary->addPotentialOptimizationByArgument(p1, arrayRef->getParameterPosition());
+      _inliningMethodSummary->addPotentialOptimizationByArgument(p2, arrayRef->getParameterPosition());
       }
      
    if (isArrayObject(arrayRef))
@@ -2341,19 +2338,19 @@ void TR::AbsInterpreter::instanceof()
    TR_OpaqueClassBlock *castClass = _callerMethod->getClassFromConstantPool(comp(), cpIndex); //The cast class to be compared with
 
    //Add to the inlining summary
-   if (objectRef->isParameter() && !(!_callerMethod->isStatic() && objectRef->getParamPosition() == 0))
+   if (objectRef->isParameter() && !(!_callerMethod->isStatic() && objectRef->getParameterPosition() == 0))
       {
       TR::PotentialOptimizationVPPredicate* p1 = 
          new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::InstanceOfFolding, vp());
 
-      _inliningMethodSummary->addPotentialOptimizationByArgument(p1, objectRef->getParamPosition());
+      _inliningMethodSummary->addPotentialOptimizationByArgument(p1, objectRef->getParameterPosition());
       
       if (castClass)
          {
          TR::PotentialOptimizationVPPredicate* p2 = 
             new (region()) TR::PotentialOptimizationVPPredicate(TR::VPResolvedClass::create(vp(), castClass), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::InstanceOfFolding, vp());
 
-         _inliningMethodSummary->addPotentialOptimizationByArgument(p2, objectRef->getParamPosition());
+         _inliningMethodSummary->addPotentialOptimizationByArgument(p2, objectRef->getParameterPosition());
          }
       
       }
@@ -2402,19 +2399,19 @@ void TR::AbsInterpreter::checkcast()
    TR_OpaqueClassBlock* castClass = _callerMethod->getClassFromConstantPool(comp(), cpIndex);
 
    //adding to method summary
-   if (objRef->isParameter() && !(!_callerMethod->isStatic() && objRef->getParamPosition() == 0))
+   if (objRef->isParameter() && !(!_callerMethod->isStatic() && objRef->getParameterPosition() == 0))
       {
       TR::PotentialOptimizationVPPredicate* p1 = 
          new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::CheckCastFolding, vp());
 
-      _inliningMethodSummary->addPotentialOptimizationByArgument(p1, objRef->getParamPosition());
+      _inliningMethodSummary->addPotentialOptimizationByArgument(p1, objRef->getParameterPosition());
       
       if (castClass)
          {
          TR::PotentialOptimizationVPPredicate* p2 = 
             new (region()) TR::PotentialOptimizationVPPredicate(TR::VPResolvedClass::create(vp(), castClass), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::CheckCastFolding, vp());
 
-         _inliningMethodSummary->addPotentialOptimizationByArgument(p2, objRef->getParamPosition());
+         _inliningMethodSummary->addPotentialOptimizationByArgument(p2, objRef->getParameterPosition());
          }
       }
 
@@ -2469,15 +2466,15 @@ void TR::AbsInterpreter::get(bool isStatic)
       TR::AbsValue* objRef = state->pop();
       TR_ASSERT_FATAL(objRef->getDataType() == TR::Address, "Unexpected type");
 
-      if (objRef->isParameter() && !(!_callerMethod->isStatic() && objRef->getParamPosition() == 0))  
+      if (objRef->isParameter() && !(!_callerMethod->isStatic() && objRef->getParameterPosition() == 0))  
          {
          TR::PotentialOptimizationVPPredicate* p1 = 
             new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::NullCheckFolding, vp());
          TR::PotentialOptimizationVPPredicate* p2 = 
             new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNonNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::NullCheckFolding, vp());
 
-         _inliningMethodSummary->addPotentialOptimizationByArgument(p1, objRef->getParamPosition());
-         _inliningMethodSummary->addPotentialOptimizationByArgument(p2, objRef->getParamPosition());
+         _inliningMethodSummary->addPotentialOptimizationByArgument(p1, objRef->getParameterPosition());
+         _inliningMethodSummary->addPotentialOptimizationByArgument(p2, objRef->getParameterPosition());
          }
 
       uint32_t a; bool b; bool c; bool d; bool e;
@@ -2544,15 +2541,15 @@ void TR::AbsInterpreter::put(bool isStatic)
       TR::AbsValue* objRef = state->pop();
       TR_ASSERT_FATAL(objRef->getDataType() == TR::Address, "Unexpected type");
 
-      if (objRef->isParameter() && !(!_callerMethod->isStatic() && objRef->getParamPosition() == 0))  
+      if (objRef->isParameter() && !(!_callerMethod->isStatic() && objRef->getParameterPosition() == 0))  
          {
          TR::PotentialOptimizationVPPredicate* p1 = 
             new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::NullCheckFolding, vp());
          TR::PotentialOptimizationVPPredicate* p2 = 
             new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNonNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::NullCheckFolding, vp());
 
-         _inliningMethodSummary->addPotentialOptimizationByArgument(p1, objRef->getParamPosition());
-         _inliningMethodSummary->addPotentialOptimizationByArgument(p2, objRef->getParamPosition());
+         _inliningMethodSummary->addPotentialOptimizationByArgument(p1, objRef->getParameterPosition());
+         _inliningMethodSummary->addPotentialOptimizationByArgument(p2, objRef->getParameterPosition());
          }
       }
    
@@ -2633,15 +2630,15 @@ void TR::AbsInterpreter::invoke(TR::MethodSymbol::Kinds kind)
       TR::AbsValue* objRef = state->pop();
       if (kind == TR::MethodSymbol::Interface || kind == TR::MethodSymbol::Virtual)
          {
-         if (objRef->isParameter() && !(!_callerMethod->isStatic() && objRef->getParamPosition() == 0))  
+         if (objRef->isParameter() && !(!_callerMethod->isStatic() && objRef->getParameterPosition() == 0))  
             {
             TR::PotentialOptimizationVPPredicate* p1 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::NullCheckFolding, vp());
             TR::PotentialOptimizationVPPredicate* p2 = 
                new (region()) TR::PotentialOptimizationVPPredicate(TR::VPNonNullObject::create(vp()), currentByteCodeIndex(), TR::PotentialOptimizationPredicate::Kind::NullCheckFolding, vp());
 
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, objRef->getParamPosition());
-            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, objRef->getParamPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p1, objRef->getParameterPosition());
+            _inliningMethodSummary->addPotentialOptimizationByArgument(p2, objRef->getParameterPosition());
             }
          }
       args[0] = objRef;
@@ -2931,13 +2928,13 @@ bool TR::AbsInterpreter::isIntConst(TR::AbsValue* v)
 bool TR::AbsInterpreter::isIntRange(TR::AbsValue* v)  
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
-   return value->getConstraint() && value->getConstraint()->asIntRange();
+   return value->getConstraint() && (value->getConstraint()->asIntRange() || value->getConstraint()->asMergedIntConstraints());
    }
 
 bool TR::AbsInterpreter::isInt(TR::AbsValue* v)  
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
-   return value->getConstraint() && value->getConstraint()->asIntConstraint();
+   return value->getConstraint() && (value->getConstraint()->asIntConstraint() || value->getConstraint()->asMergedIntConstraints());
    }
 
 bool TR::AbsInterpreter::isLongConst(TR::AbsValue* v)  
@@ -2949,11 +2946,11 @@ bool TR::AbsInterpreter::isLongConst(TR::AbsValue* v)
 bool TR::AbsInterpreter::isLongRange(TR::AbsValue* v)  
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
-   return value->getConstraint() && value->getConstraint()->asLongRange();
+   return value->getConstraint() && (value->getConstraint()->asLongRange() || value->getConstraint()->asMergedLongConstraints());
    }
 
 bool TR::AbsInterpreter::isLong(TR::AbsValue* v)  
    {
    TR::AbsVPValue* value = static_cast<TR::AbsVPValue*>(v);
-   return value->getConstraint() && value->getConstraint()->asLongConstraint();
+   return value->getConstraint() && (value->getConstraint()->asLongConstraint() || value->getConstraint()->asMergedLongConstraints());
    }
