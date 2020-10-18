@@ -73,5 +73,5 @@ j9jit_files(
 	optimizer/VarHandleTransformer.cpp
 	optimizer/VPBCDConstraint.cpp
 	optimizer/abstractinterpreter/J9IDTBuilder.cpp
-	optimizer/abstractinterpreter/J9AbsInterpreter.cpp
+	optimizer/abstractinterpreter/AbsInterpreter.cpp
 )
