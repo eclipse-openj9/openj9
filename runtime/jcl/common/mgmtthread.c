@@ -703,7 +703,7 @@ Java_openj9_internal_tools_attach_target_DiagnosticUtils_dumpAllThreadsImpl(JNIE
 				{
 					++numThreads;
 					exc = getThreadInfo(currentThread, vmThread, info,
-							maxDepth, getLockedMonitors);
+							(jsize)J9_THREADINFO_MAX_STACK_DEPTH, getLockedMonitors);
 					if (exc > 0) {
 						freeThreadInfos(currentThread, allinfo, numThreads);
 						goto dumpAll_failWithExclusive;
@@ -748,7 +748,7 @@ Java_openj9_internal_tools_attach_target_DiagnosticUtils_dumpAllThreadsImpl(JNIE
 	}
 	vmfns->internalExitVMToJNI(currentThread);
 
-	result = createThreadInfoArray(env, allinfo, numThreads, (jsize)J9_THREADINFO_MAX_STACK_DEPTH);
+	result = createThreadInfoArray(env, allinfo, numThreads, maxDepth);
 	j9mem_free_memory(allinfo);
 	
 	Trc_JCL_threadmxbean_dumpAllThreads_Exit(env, result);
