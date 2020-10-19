@@ -1583,12 +1583,14 @@ J9::Z::PrivateLinkage::buildNoPatchingVirtualDispatchWithResolve(TR::Node *callN
       int32_t vtableOffset;
       };
    
-   ccResolveVirtualData *ccResolveVirtualDataAddress = reinterpret_cast<ccResolveVirtualData *>(cg()->allocateCodeMemory(sizeof(ccResolveVirtualData), false));
-
-   if (!ccResolveVirtualDataAddress)
+   OMR::CCData *codeCacheData = cg()->getCodeCache()->manager()->getCodeCacheData();
+   OMR::CCData::index_t index;
+   if (!(codeCacheData->put(NULL, sizeof(ccResolveVirtualData), 8, NULL, index)))
       {
       comp()->failCompilation<TR::CompilationException>("Could not allocate resovle virtual dispatch metadata");
       }
+ 
+   ccResolveVirtualData *ccResolveVirtualDataAddress = codeCacheData->get<ccResolveVirtualData>(index);
 
    ccResolveVirtualDataAddress->cpAddress = reinterpret_cast<intptr_t> (callNode->getSymbolReference()->getOwningMethod(comp())->constantPool());
    ccResolveVirtualDataAddress->cpIndex = (intptr_t) (callNode->getSymbolReference()->getCPIndexForVM());
