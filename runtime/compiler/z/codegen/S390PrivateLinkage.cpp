@@ -1585,9 +1585,9 @@ J9::Z::PrivateLinkage::buildNoPatchingVirtualDispatchWithResolve(TR::Node *callN
    
    OMR::CCData *codeCacheData = cg()->getCodeCache()->manager()->getCodeCacheData();
    OMR::CCData::index_t index;
-   if (!(codeCacheData->put(NULL, sizeof(ccResolveVirtualData), 8, NULL, index)))
+   if (!(codeCacheData->put(NULL, sizeof(ccResolveVirtualData), alignof(ccResolveVirtualData), NULL, index)))
       {
-      comp()->failCompilation<TR::CompilationException>("Could not allocate resovle virtual dispatch metadata");
+      comp()->failCompilation<TR::CompilationException>("Could not allocate resolve virtual dispatch metadata");
       }
  
    ccResolveVirtualData *ccResolveVirtualDataAddress = codeCacheData->get<ccResolveVirtualData>(index);
