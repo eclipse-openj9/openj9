@@ -31,8 +31,8 @@ class AbsStackMachineState
    {
    public:
    explicit AbsStackMachineState(TR::Region &region, uint32_t maxArraySize) :
-         _array(new (region) TR::AbsOpArray(maxArraySize)),
-         _stack(new (region) TR::AbsOpStack())
+         _array(new (region) TR::AbsOpArray(maxArraySize, region)),
+         _stack(new (region) TR::AbsOpStack(region))
       {}
 
    /**

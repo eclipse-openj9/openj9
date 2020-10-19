@@ -41,7 +41,7 @@ namespace TR {
 class AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostorderSnapshotBlockIterator
    {
    public:
-   AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol, TR::CFG* cfg, TR::AbsVisitor* vistor, std::vector<TR::AbsValue*>* arguments, TR::Region& region, TR::Compilation* comp);
+   AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol, TR::CFG* cfg, TR::AbsVisitor* vistor, TR::vector<TR::AbsValue*, TR::Region&>* arguments, TR::Region& region, TR::Compilation* comp);
 
    /**
     * @brief start to interpret the method.
@@ -206,7 +206,7 @@ class AbsInterpreter : public TR_J9ByteCodeIterator, public TR::ReversePostorder
 
    TR::AbsVisitor* _visitor;
 
-   std::vector<TR::AbsValue*>* _arguments;
+   TR::vector<TR::AbsValue*, TR::Region&>* _arguments;
 
    TR::InliningMethodSummary* _inliningMethodSummary;
    TR::AbsValue* _returnValue;

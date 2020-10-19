@@ -21,9 +21,9 @@
 
 #include "optimizer/abstractinterpreter/AbsInterpreter.hpp"
 #include "optimizer/J9CallGraph.hpp"
-#include <vector>
+#include "infra/vector.hpp"
 
-TR::AbsInterpreter::AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol, TR::CFG* cfg, TR::AbsVisitor* vistor, std::vector<TR::AbsValue*>* arguments, TR::Region& region, TR::Compilation* comp):
+TR::AbsInterpreter::AbsInterpreter(TR::ResolvedMethodSymbol* callerMethodSymbol, TR::CFG* cfg, TR::AbsVisitor* vistor, TR::vector<TR::AbsValue*, TR::Region&>* arguments, TR::Region& region, TR::Compilation* comp):
       TR_J9ByteCodeIterator(callerMethodSymbol, static_cast<TR_ResolvedJ9Method*>(callerMethodSymbol->getResolvedMethod()), static_cast<TR_J9VMBase*>(comp->fe()), comp),
       TR::ReversePostorderSnapshotBlockIterator(cfg, comp),
       _callerMethodSymbol(callerMethodSymbol),
@@ -373,7 +373,7 @@ void TR::AbsInterpreter::transferBlockStatesFromPredeccesors()
             copiedState->at(i) ? copiedState->at(i)->setToTop() : copiedState->set(i, new (region()) TR::AbsVPValue(vp(), NULL, TR::NoType));
             }
 
-         std::vector<TR::AbsValue*> temp;
+         TR::vector<TR::AbsValue*, TR::Region&> temp(region());
          while (copiedState->getStackSize() != 0)
             {
             TR::AbsValue* val = copiedState->pop();
@@ -2516,7 +2516,7 @@ void TR::AbsInterpreter::invoke(TR::MethodSymbol::Kinds kind)
    uint32_t numExplicitParams = calleeMethod->numberOfExplicitParameters();
    uint32_t totalNumParams = numExplicitParams + (kind  == TR::MethodSymbol::Static ? 0 : 1);
 
-   std::vector<TR::AbsValue*> args(totalNumParams);
+   TR::vector<TR::AbsValue*, TR::Region&> args(totalNumParams, region());
 
    for (uint32_t i = 0 ; i < numExplicitParams; i ++) //explicit param
       {
