@@ -1262,15 +1262,6 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::de2pd
    NULL,          // TR::de2pdSetSign
    NULL,          // TR::de2pdClean
-   NULL,          // TR::ircload
-   NULL,          // TR::irsload
-   NULL,          // TR::iruiload
-   NULL,          // TR::iriload
-   NULL,          // TR::irulload
-   NULL,          // TR::irlload
-   NULL,          // TR::irsstore
-   NULL,          // TR::iristore
-   NULL,          // TR::irlstore
 };
 
 static_assert(sizeof(nvvmOpCodeNames) == (TR::NumIlOps*sizeof(char*)), "Number of elements in nvvmOpCodeNames does not match the value of TR::NumIlOps");

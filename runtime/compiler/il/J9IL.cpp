@@ -247,9 +247,6 @@ J9::IL::opCodeForCorrespondingIndirectLoad(TR::ILOpCodes loadOpCode)
       case TR::udLoadi: return TR::udStorei;
       case TR::udslLoadi: return TR::udslStorei;
       case TR::udstLoadi: return TR::udstStorei;
-      case TR::irsload: return TR::irsstore;
-      case TR::iriload: return TR::iristore;
-      case TR::irlload: return TR::irlstore;
       default: return OMR::IL::opCodeForCorrespondingIndirectLoad(loadOpCode);
       }
 
@@ -280,9 +277,6 @@ J9::IL::opCodeForCorrespondingIndirectStore(TR::ILOpCodes storeOpCode)
       case TR::udStorei: return TR::udLoadi;
       case TR::udslStorei: return TR::udslLoadi;
       case TR::udstStorei: return TR::udstLoadi;
-      case TR::irsstore: return TR::irsload;
-      case TR::iristore: return TR::iriload;
-      case TR::irlstore: return TR::irlload;
       default: return OMR::IL::opCodeForCorrespondingIndirectStore(storeOpCode);
       }
 
@@ -312,9 +306,6 @@ J9::IL::opCodeForCorrespondingDirectLoad(TR::ILOpCodes loadOpCode)
       case TR::udLoad: return TR::udStore;
       case TR::udslLoad: return TR::udslStore;
       case TR::udstLoad: return TR::udstStore;
-      case TR::irsload: return TR::irsstore;
-      case TR::iriload: return TR::iristore;
-      case TR::irlload: return TR::irlstore;
       default: return OMR::IL::opCodeForCorrespondingDirectLoad(loadOpCode);
       }
 
@@ -345,9 +336,6 @@ J9::IL::opCodeForCorrespondingDirectStore(TR::ILOpCodes storeOpCode)
       case TR::udStore: return TR::udLoad;
       case TR::udslStore: return TR::udslLoad;
       case TR::udstStore: return TR::udstLoad;
-      case TR::irsstore: return TR::irsload;
-      case TR::iristore: return TR::iriload;
-      case TR::irlstore: return TR::irlload;
       default: return OMR::IL::opCodeForCorrespondingDirectStore(storeOpCode);
       }
 
