@@ -333,7 +333,7 @@ _IF([JAVA_SPEC_VERSION >= 15],
 	[_X(JVM_RegisterLambdaProxyClassForArchiving, JNICALL, false, void, JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6, jclass arg7)])
 _IF([JAVA_SPEC_VERSION >= 15],
 	[_X(JVM_LookupLambdaProxyClassFromArchive, JNICALL, false, jclass, JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6, jboolean arg7)])
-_IF([JAVA_SPEC_VERSION == 15],
+_IF([JAVA_SPEC_VERSION >= 15],
 	[_X(JVM_IsCDSDumpingEnabled, JNICALL, false, jboolean, JNIEnv *env)])
 _IF([JAVA_SPEC_VERSION >= 16],
 	[_X(JVM_IsDynamicDumpingEnabled, JNICALL, false, jboolean, JNIEnv *env)])
