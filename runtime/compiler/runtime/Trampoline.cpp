@@ -87,8 +87,8 @@ void ppcCreateHelperTrampolines(uint8_t *trampPtr, int32_t numHelpers)
             *(int32_t *)buffer = 0x3d600000 | ((helper>>48) & 0x0000ffff);
             buffer += 4;
 
-            // oris gr11, gr11, bits 16--31
-            *(int32_t *)buffer = 0x656b0000 | ((helper>>32) & 0x0000ffff);
+            // ori gr11, gr11, bits 16--31
+            *(int32_t *)buffer = 0x616b0000 | ((helper>>32) & 0x0000ffff);
             buffer += 4;
 
             // rldicr gr11, gr11, 32, 31
