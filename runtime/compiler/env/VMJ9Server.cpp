@@ -1947,6 +1947,29 @@ TR_J9ServerVM::releaseClassTableMutex(bool releaseVMAccess)
    }
 
 bool
+TR_J9ServerVM::getNurserySpaceBounds(uintptr_t *base, uintptr_t *top)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   *base = _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_nurserySpaceBoundsBase;
+   *top = _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_nurserySpaceBoundsTop;
+   return true;
+   }
+
+UDATA
+TR_J9ServerVM::getLowTenureAddress()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   return _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_lowTenureAddress;
+   }
+
+UDATA
+TR_J9ServerVM::getHighTenureAddress()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   return _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_highTenureAddress;
+   }
+
+bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
    TR_ASSERT(vettedForAOT, "The TR_J9SharedCacheServerVM version of this method is expected to be called only from isClassLibraryMethod.\n"
