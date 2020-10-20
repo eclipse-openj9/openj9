@@ -98,10 +98,7 @@ public final class Cuda {
 
 	static {
 		AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-			/*[USEMACROS]*/
-			String version = System.getProperty("com.ibm.oti.vm.library.version", "%%MACRO@com.ibm.oti.vm.library.version%%"); //$NON-NLS-1$ //$NON-NLS-2$
-
-			System.loadLibrary("cuda4j".concat(version)); //$NON-NLS-1$
+			System.loadLibrary("cuda4j29"); //$NON-NLS-1$
 			return null;
 		});
 

@@ -41,6 +41,7 @@
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "il/MethodSymbol.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"

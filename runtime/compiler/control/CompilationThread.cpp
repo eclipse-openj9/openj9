@@ -63,6 +63,7 @@
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMAccessCriticalSection.hpp"
+#include "env/VerboseLog.hpp"
 #include "compile/CompilationException.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
 #include "exceptions/JITShutDown.hpp"

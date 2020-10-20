@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,17 +45,7 @@ SH_Manager::SH_Manager()
    _htEntries(0),
    _runtimeFlagsPtr(0),
    _verboseFlags(0),
-#if defined(J9SHR_CACHELET_SUPPORT)
-   _cacheletListHead(0),
-   _cacheletListTail(0),
-   _cacheletListPool(0),
-   _shareNewCacheletsWithOtherManagers(true),
-   _isRunningNested(false),
-#endif
    _state(0)
-#if defined(J9SHR_CACHELET_SUPPORT)
-	,_allCacheletsStarted(false)
-#endif
 {
 }
 
@@ -86,9 +76,6 @@ SH_Manager::HashLinkedListImpl::initialize(const J9UTF8* key_, const ShcItem* it
 	 * synchronization.
 	 */
 	_next = this;
-#if defined(J9SHR_CACHELET_SUPPORT)
-	_cachelet = cachelet_;
-#endif
 	_hashValue = hashValue_;
 	localInit(key_, item_, cachelet_, hashValue_);
 
@@ -141,10 +128,6 @@ SH_Manager::tearDownHashTable(J9VMThread* currentThread)
 {
 	Trc_SHR_M_tearDownHashTable_Entry(currentThread, _managerType);
 
-#if defined(J9SHR_CACHELET_SUPPORT)
-	_hints.destroy();
-#endif
-	
 	localTearDownPools(currentThread);
 	if (_hashTable) {
 		hashTableFree(_hashTable);
@@ -168,14 +151,6 @@ SH_Manager::initializeHashTable(J9VMThread* currentThread)
 
 	Trc_SHR_M_initializeHashTable_Entry(currentThread, _managerType);
 
-#if defined(J9SHR_CACHELET_SUPPORT)
-	if (!_hints.initialize(_portlib)) {
-		M_ERR_TRACE(J9NLS_SHRC_M_FAILED_CREATE_HINTTABLE);
-		returnVal = -1;
-		goto _exit;
-	}
-#endif
-	
 	_hashTableGetNumItemsDoFn = (J9HashTableDoFn)SH_Manager::countItemsInList;
 	_hashTable = localHashTableCreate(currentThread, _htEntries);
 	if (!_hashTable) {
@@ -192,11 +167,6 @@ SH_Manager::initializeHashTable(J9VMThread* currentThread)
 	}
 
 _exit :
-#if defined(J9SHR_CACHELET_SUPPORT)
-	if (returnVal != 0) {
-		_hints.destroy();
-	}
-#endif
 	Trc_SHR_M_initializeHashTable_Exit(currentThread, returnVal);
 	return returnVal;
 }
@@ -297,12 +267,6 @@ SH_Manager::cleanup(J9VMThread* currentThread)
 	if ((_state == MANAGER_STATE_STARTED) || (_state == MANAGER_STATE_STARTING)) {
 		if (!_htMutex || (_cache->enterLocalMutex(currentThread, _htMutex, "_htMutex", "cleanup")==0)) {
 			tearDownHashTable(currentThread);
-#if defined(J9SHR_CACHELET_SUPPORT)
-			if (_cacheletListPool) {
-				pool_kill(_cacheletListPool);
-				_cacheletListPool = NULL;
-			}
-#endif
 			localPostCleanup(currentThread);
 			_cache->exitLocalMutex(currentThread, _htMutex, "_htMutex", "cleanup");
 		}
@@ -445,21 +409,9 @@ SH_Manager::hllTableLookup(J9VMThread* currentThread, const char* name, U_16 nam
 	Trc_SHR_M_hllTableLookup_Entry(currentThread, nameLen, name);
 
 	if (lockHashTable(currentThread, "hllTableLookup")) {
-#if defined(J9SHR_CACHELET_SUPPORT)
-		if (_isRunningNested && allowCacheletStartup) {
-			UDATA hint = generateHash(currentThread->javaVM->internalVMFunctions, (U_8*)name, nameLen);
-
-			if (startupHintCachelets(currentThread, hint) == -1) {
-				goto exit_lockFailed;
-			}
-		}
-#endif
 		result = hllTableLookupHelper(currentThread, (U_8*)name, nameLen, 0, NULL);
 		unlockHashTable(currentThread, "hllTableLookup");
 	} else {
-#if defined(J9SHR_CACHELET_SUPPORT)
-exit_lockFailed:
-#endif
 		PORT_ACCESS_FROM_PORT(_portlib);
 		M_ERR_TRACE(J9NLS_SHRC_M_FAILED_ENTER_HTMUTEX);
 		Trc_SHR_M_hllTableLookup_Exit1(currentThread, MONITOR_ENTER_RETRY_TIMES);
@@ -482,73 +434,12 @@ SH_Manager::hllTableLookupHelper(J9VMThread* currentThread, U_8* key, U_16 keySi
 
 	dummyPtr->_key = key;
 	dummyPtr->_keySize = keySize;
-	dummyPtr->_hashValue = hashValue; 
-#if defined(J9SHR_CACHELET_SUPPORT)
-	dummyPtr->_cachelet = cachelet;
-#endif
-	
+	dummyPtr->_hashValue = hashValue;
+
 	p_result = (HashLinkedListImpl**)hashTableFind(_hashTable, (void*)&dummyPtr);
 
 	return (p_result? *p_result : NULL);
 }
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-
-/**
- * Ensure that all cachelets for a hint value are started.
- * 
- * @param[in] currentThread
- * @param[in] hint the hint value
- * @returns number of cachelets started
- * @retval >= 0 number of cachelets started
- * @retval -1 unable to re-obtain hashtable lock
- * 
- * @pre Owns the hashtable mutex
- * @post Owns the hashtable mutex, if successful
- */
-IDATA
-SH_Manager::startupHintCachelets(J9VMThread* currentThread, UDATA hint)
-{
-	SH_CompositeCacheImpl* hintCachelet = NULL;
-	IDATA cacheletsStarted = 0;
-	
-	Trc_SHR_M_startupHintCachelets_Entry(currentThread, hint);
-	
-	while (NULL != (hintCachelet = (SH_CompositeCacheImpl*)_hints.findHint(currentThread, hint))) {
-		IDATA rc;
-		
-		unlockHashTable(currentThread, "startupHintCachelets");
-		/**
-		 * @bug _startupMonitor IS A HORRIBLE HACK FOR CMVC 141328. 
-		 * THIS WILL NOT WORK FOR NON-READONLY CACHES.
-		 * @see SH_CompositeCacheImpl::_startupMonitor
-		 */
-		if (0 == (rc = hintCachelet->lockStartupMonitor(currentThread))) {
-			if (!hintCachelet->isStarted()) { 
-				
-				Trc_SHR_M_startupHintCachelets_startingCacheletForHint(currentThread, hintCachelet, hint, hint);
-				rc = _cache->startupCachelet(currentThread, hintCachelet);
-				if (rc == CC_STARTUP_OK) {
-					++cacheletsStarted;
-				} else {
-					Trc_SHR_M_startupHintCachelets_startupCacheletFailed(currentThread, rc, hintCachelet, hint, hint);
-				}
-			}
-			hintCachelet->unlockStartupMonitor(currentThread);
-		} else {
-			Trc_SHR_M_startupHintCachelets_lockStartupMonitorFailed(currentThread, rc, hintCachelet, hint, hint);
-		}
-		if (!lockHashTable(currentThread, "startupHintCachelets")) {
-			Trc_SHR_M_startupHintCachelets_Exit(currentThread, -1);
-			return -1;
-		}
-		_hints.removeHint(currentThread, hint, hintCachelet);
-	}
-	Trc_SHR_M_startupHintCachelets_Exit(currentThread, cacheletsStarted);
-	return cacheletsStarted;
-}
-
-#endif /* J9SHR_CACHELET_SUPPORT */
 
 /* Creates a new link, adds it to the hashtable and links it to the correct list.
  * Returns the newly created link or NULL if there was an error */
@@ -665,79 +556,6 @@ SH_Manager::hllHashEqualFn(void* left, void* right, void *userData)
 	return result;
 }
 
-#if defined(J9SHR_CACHELET_SUPPORT)
-
-/**
- * A hash table do function. Collect hash values of entries in a cachelet.
- */
-UDATA
-SH_Manager::hllCollectHashOfEntry(void* entry, void* userData)
-{
-	HashLinkedListImpl* node = *(HashLinkedListImpl**)entry;
-	CacheletHintHashData* data = (CacheletHintHashData*)userData;
-
-	if (data->cachelet == node->_cachelet) {
-		*data->hashSlot++ = (UDATA)node->_hashValue;
-		/* TODO trace hint written */
-	}
-	return FALSE; /* don't remove entry */
-}
-
-/**
- * A hash table do function. Count number of entries in a cachelet.
- */
-UDATA
-SH_Manager::hllCountCacheletHashes(void* entry, void* userData)
-{
-	HashLinkedListImpl* node = *(HashLinkedListImpl**)entry;
-	CacheletHintCountData* data = (CacheletHintCountData*)userData;
-
-	if (data->cachelet == node->_cachelet) {
-		data->hashCount++;
-	}
-	return FALSE; /* don't remove entry */
-}
-
-/**
- * Collect the hash entry hashes into a cachelet hint.
- */
-IDATA
-SH_Manager::hllCollectHashes(J9VMThread* currentThread, SH_CompositeCache* cachelet, CacheletHints* hints)
-{
-	PORT_ACCESS_FROM_VMC(currentThread);
-	CacheletHintHashData hashes;
-	CacheletHintCountData counts;
-
-	/* count hashes in this cachelet */
-	counts.cachelet = cachelet;
-	counts.hashCount = 0;
-	hashTableForEachDo(_hashTable, hllCountCacheletHashes, (void*)&counts);
-	/* TODO trace hints written. Note this runs after trace engine has shut down. */
-	
-	/* allocate hash array */
-	hints->length = counts.hashCount * sizeof(UDATA);
-	if (hints->length == 0) {
-		hints->data = NULL;
-		return 0;
-	}
-	hints->data = (U_8*)j9mem_allocate_memory(hints->length, J9MEM_CATEGORY_CLASSES);
-	if (!hints->data) {
-		/* TODO trace alloc failure */
-		hints->length = 0;
-		return -1;
-	}
-
-	/* collect hashes */
-	hashes.cachelet = cachelet;
-	hashes.hashSlot = (UDATA*)hints->data;
-	hashTableForEachDo(_hashTable, hllCollectHashOfEntry, (void*)&hashes);
-	/* TODO trace hints written */
-
-	return 0;
-}
-
-#endif /* J9SHR_CACHELET_SUPPORT */
-
 /**
  * @param currentThread - the currentThread or NULL when called to collect javacore data
  */
@@ -777,212 +595,6 @@ SH_Manager::countItemsInList(void* entry, void* opaque)
 	}
 	return 0;
 }
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-
-/**
- * Looks for an existing cachelet, that is known by this manager, with enough free space for a data element.
- * 
- * @param[in] dataType Data type. Currently unused.
- * @param[in] dataLength Size, in bytes, of data element. Used to determine number of free bytes needed.
- * @returns an existing cachelet or NULL
- * @retval NULL No cachelet has enough free space
- * 
- * TODO: Protect these cache area calls with a mutex
- */
-SH_CompositeCacheImpl* 
-SH_Manager::getCacheAreaForData(SH_CacheMap * cm, J9VMThread* currentThread, UDATA dataType, UDATA dataLength)
-{
-	if (_cacheletListHead != NULL) {
-		CacheletListItem* walk = _cacheletListHead;
-		
-		while (walk) {
-			if (walk->cachelet->isStarted() == false) {
-				cm->startupCachelet(currentThread, walk->cachelet);
-			}
-			if ((false == walk->cachelet->isCacheMarkedFull(currentThread)) && (walk->cachelet->getFreeBytes() >= dataLength)) {
-				return walk->cachelet;
-			}
-			walk = walk->next;
-		}
-	}
-	return NULL;
-}
-
-/* Assumes that the caller has checked that the cachelet is not already in list */
-void 
-SH_Manager::addNewCacheArea(SH_CompositeCacheImpl* newCache)
-{
-	CacheletListItem* newListEntry;
-	J9Pool* clp;
-	
-	if (!(clp = getCacheletListPool())) {
-		return;
-	}
-	if (isCacheletInList(newCache)) {
-		return;
-	}
-	newListEntry = (CacheletListItem*)pool_newElement(clp);
-	if (newListEntry) {
-		newListEntry->cachelet = newCache;
-		if (_cacheletListHead == NULL) {
-			_cacheletListHead = _cacheletListTail = newListEntry;
-			newListEntry->next = NULL;
-		} else {
-			_cacheletListTail->next = newListEntry;
-			_cacheletListTail = newListEntry;
-		}
-	}
-}
-
-bool
-SH_Manager::isCacheletInList(SH_CompositeCache* cachelet)
-{
-	if (_cacheletListHead != NULL) {
-		CacheletListItem* walk = _cacheletListHead;
-		
-		while (walk) {
-			if (walk->cachelet == cachelet) {
-				return true;
-			}
-			walk = walk->next;
-		}
-	}
-	return false;
-}
-
-bool
-SH_Manager::canShareNewCacheletsWithOtherManagers()
-{
-	return _shareNewCacheletsWithOtherManagers;
-}
-
-/* Default implementation does nothing. Managers wanting to create hints should override */
-IDATA
-SH_Manager::primeHashtables(J9VMThread* vmthread, SH_CompositeCache* cachelet, U_8* hintsData, UDATA datalength)
-{
-	return 0;
-}
-
-IDATA
-SH_Manager::primeFromHints(J9VMThread* vmthread, SH_CompositeCache* cachelet, U_8* hintsData, UDATA datalength)
-{
-	if (_state != MANAGER_STATE_STARTED) {
-		Trc_SHR_Assert_ShouldNeverHappen();
-		return -1;
-	}
-	addNewCacheArea((SH_CompositeCacheImpl*)cachelet);
-	if (hintsData != NULL) {
-		return primeHashtables(vmthread, cachelet, hintsData, datalength);
-	}
-	return 0;
-}
-
-IDATA
-SH_Manager::generateHints(J9VMThread* vmthread, CacheletMetadataArray* metadataArray)
-{
-	UDATA i, j;
-	CacheletMetadata* current;  
-	
-	if (_state != MANAGER_STATE_STARTED) {
-		Trc_SHR_Assert_ShouldNeverHappen();
-		return -1;
-	}
-	
-	for (i=0; i<metadataArray->numMetas; i++) {
-		current = &metadataArray->metadataArray[i];
-		/* If we have written data into the cachelet, make hints for it */
-		if (isCacheletInList(current->cachelet)) {
-			/* Find the next free hints slot */
-			for (j=0; j<current->numHints; j++) {
-				if (current->hintsArray[j].dataType == TYPE_UNINITIALIZED) {
-					break;
-				}
-			}
-			/* No free hints slots - oops! */
-			if (j == current->numHints) {
-				Trc_SHR_Assert_ShouldNeverHappen();
-				return -1;
-			}
-			/* Even if no detailed hints are written, note for each cachelet that this Manager has written stuff into it */
-			current->hintsArray[j].dataType = _dataTypesRepresented[0];	/* Main datatype only is required */
-			if (canCreateHints()) {
-				createHintsForCachelet(vmthread, current->cachelet, &current->hintsArray[j]);
-			}
-		}
-	}
-	return 0;
-}
-
-IDATA
-SH_Manager::freeHintData(J9VMThread* vmthread, CacheletMetadataArray* metadataArray)
-{
-	UDATA i, j;
-	CacheletMetadata* current;
-	
-	PORT_ACCESS_FROM_VMC(vmthread);
-
-	if (!canCreateHints()) {
-		Trc_SHR_Assert_ShouldNeverHappen();
-		return -1;
-	}
-	for (i=0; i<metadataArray->numMetas; i++) {
-		current = &metadataArray->metadataArray[i];
-		for (j=0; j<current->numHints; j++) {
-			if (current->hintsArray[j].dataType == _dataTypesRepresented[0]) {
-				j9mem_free_memory(current->hintsArray[j].data);
-				current->hintsArray[j].data = NULL;
-			}
-		}
-	}
-	return 0;	
-}
-
-/**
- * Walk the managed items in this cachelet. Allocate and populate
- * an array of hints, one for each hash item.
- * This default implementation does nothing. Managers wanting to create hints 
- * should override.
- * @param[in] self a data type manager
- * @param[in] vmthread the current VMThread
- * @param[out] hints a CacheletHints structure. This function fills in its
- * contents.
- *
- * @retval 0 success
- * @retval -1 failure
- */
-IDATA 
-SH_Manager::createHintsForCachelet(J9VMThread* vmthread, SH_CompositeCache* cachelet, CacheletHints* hints)
-{
-	if (!canCreateHints()) {
-		Trc_SHR_Assert_ShouldNeverHappen();
-		return -1;
-	}
-	return 0;
-}
-
-/* Should be overridden if the manager can create cachelet hints */ 
-bool 
-SH_Manager::canCreateHints()
-{
-	return false;
-}
-
-#endif /* J9SHR_CACHELET_SUPPORT */
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-
-J9Pool*
-SH_Manager::getCacheletListPool() 
-{
-	if (_cacheletListPool) {
-		return _cacheletListPool;
-	}
-	_isRunningNested = true;
-	return (_cacheletListPool = pool_new(sizeof(SH_Manager::CacheletListItem),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(_portlib)));
-}
-
-#endif /* J9SHR_CACHELET_SUPPORT */
 
 bool
 SH_Manager::isDataTypeRepresended(UDATA type)

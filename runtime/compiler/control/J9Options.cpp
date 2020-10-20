@@ -45,6 +45,7 @@
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "env/jittypes.h"
 #include "infra/SimpleRegex.hpp"
 #include "control/CompilationRuntime.hpp"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,12 +88,6 @@ protected:
 		return new(memForConstructor) HashLinkedListImpl();
 	}
 
-#if defined(J9SHR_CACHELET_SUPPORT)
-	virtual bool canCreateHints();
-	virtual IDATA createHintsForCachelet(J9VMThread* vmthread, SH_CompositeCache* cachelet, CacheletHints* hints);
-	virtual IDATA primeHashtables(J9VMThread* vmthread, SH_CompositeCache* cachelet, U_8* hintsData, UDATA datalength);
-#endif
-	
 private:
 	SH_TimestampManager* _tsm;
 	
