@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,24 +71,11 @@ protected:
 	virtual U_32 getHashTableEntriesFromCacheSize(UDATA cacheSizeBytes);	
 	HashLinkedListImpl* localHLLNewInstance(HashLinkedListImpl* memForConstructor) { return NULL; }
 
-#if defined(J9SHR_CACHELET_SUPPORT)
-	virtual bool canCreateHints() { return true; }
-	virtual IDATA createHintsForCachelet(J9VMThread* vmthread, SH_CompositeCache* cachelet, CacheletHints* hints);
-	virtual IDATA primeHashtables(J9VMThread* vmthread, SH_CompositeCache* cachelet, U_8* hintsData, UDATA datalength);
-#endif
-
 private:
 	struct HashEntry {
 		const J9UTF8* _value;
-#if defined(J9SHR_CACHELET_SUPPORT)
-		SH_CompositeCache* _cachelet;
-#endif
-
 		HashEntry(const J9UTF8* value_, SH_CompositeCache* cachelet_):
 			_value(value_)
-#if defined(J9SHR_CACHELET_SUPPORT)
-			,_cachelet(cachelet_)
-#endif
 		 {}
 	};
 
@@ -98,14 +85,6 @@ private:
 	static UDATA scHashEqualFn(void* left, void* right, void *userData);
 	const J9UTF8* scTableLookup(J9VMThread* currentThread, const J9UTF8* key);
 	const HashEntry* scTableAdd(J9VMThread* currentThread, const ShcItem* item, SH_CompositeCache* cachelet);
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-	IDATA scCollectHashes(J9VMThread* currentThread, SH_CompositeCache* cachelet, CacheletHints* hints);
-	static UDATA scCollectHashOfEntry(void* entry, void* userData);
-	static UDATA scCountCacheletHashes(void* entry, void* userData);
-
-	bool _allCacheletsStarted;
-#endif /* J9SHR_CACHELET_SUPPORT */
 };
 
 #endif /* SCOPEMANAGERIMPL_H_INCLUDED */

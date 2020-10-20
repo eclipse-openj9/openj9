@@ -43,6 +43,8 @@
 #include "control/CompilationRuntime.hpp"
 #include "env/VMJ9.h"
 #include "env/j9method.h"
+#include "env/VerboseLog.hpp"
+
 
 uint32_t TR_HWProfiler::_STATS_TotalBuffersProcessed = 0;
 uint32_t TR_HWProfiler::_STATS_BuffersProcessedByAppThread = 0;

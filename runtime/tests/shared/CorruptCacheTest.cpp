@@ -171,9 +171,6 @@ public:
 			const char * testName="openTestCache",
 			bool startupWillFail=false,
 			bool doCleanupOnFail=true);
-#if defined(J9SHR_CACHELET_SUPPORT)
-	IDATA serializeCache(J9JavaVM *vm);
-#endif
 	IDATA closeTestCache(J9JavaVM *vm, I_32 cacheType, bool saveCRC);
 	IDATA openCorruptCache(J9JavaVM *vm, I_32 cacheType, bool readOnly, I_32 cacheSize, U_64 extraRunTimeFlag = 0);
 	IDATA closeAndRemoveCorruptCache(J9JavaVM *vm, I_32 cacheType);
@@ -243,30 +240,15 @@ CorruptCacheTest::corruptCache(J9JavaVM *vm, I_32 cacheType, IDATA corruptionTyp
 		memset(areaStart, 0, areaSize);
 		break;
 	case WALK_ROMCLASS_CORRUPT_CASE1_TYPE:
-#if defined(J9SHR_CACHELET_SUPPORT)
-		{
-			J9SharedCacheHeader *cacheletHeader;
-			cacheletHeader = (J9SharedCacheHeader *)cc->getBaseAddress();
-			romClass = (J9ROMClass *)((U_8 *)cacheletHeader + cacheletHeader->readWriteBytes);
-		}
-#else
 		romClass = (J9ROMClass *)cc->getBaseAddress();
-#endif
+
 		/* set romclass size to zero */
 		romClass->romSize = 0;
 		break;
 	case WALK_ROMCLASS_CORRUPT_CASE2_TYPE:
-#if defined(J9SHR_CACHELET_SUPPORT)
-		{
-			J9SharedCacheHeader *cacheletHeader;
-			cacheletHeader = (J9SharedCacheHeader *)cc->getBaseAddress();
-			endOfROMSegment = (U_8 *)cacheletHeader + cacheletHeader->segmentSRP;
-			romClass = (J9ROMClass *)((U_8 *)cacheletHeader + cacheletHeader->readWriteBytes);
-		}
-#else
 		endOfROMSegment = (U_8*)cc->getSegmentAllocPtr();
 		romClass = (J9ROMClass *)cc->getBaseAddress();
-#endif
+
 		/* set romclass size more than ROM segment size */
 		romClass->romSize = (U_32)(endOfROMSegment - (U_8*)romClass)*2;
 		break;
@@ -497,23 +479,6 @@ done:
 	j9tty_printf(PORTLIB, "%s: Done opening test cache\n", testName);
 	return rc;
 }
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-IDATA
-CorruptCacheTest::serializeCache(J9JavaVM *vm)
-{
-	IDATA rc = PASS;
-	SH_CacheMap *cacheMap;
-
-	cacheMap = (SH_CacheMap *)vm->sharedClassConfig->sharedClassCache;
-	if (NULL != cacheMap) {
-		if (false == cacheMap->serializeSharedCache(vm->mainThread)) {
-			rc = FAIL;
-		}
-	}
-	return rc;
-}
-#endif
 
 IDATA
 CorruptCacheTest::closeTestCache(J9JavaVM *vm, I_32 cacheType, bool saveCRC)
@@ -1044,48 +1009,36 @@ testCorruptCache(J9JavaVM* vm)
 		switch (i) {
 		case 0:
 #if !defined(J9ZOS390)
-#if !defined(J9SHR_CACHELET_SUPPORT)
 			cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
 			cacheTypeString = "J9PORT_SHR_CACHE_TYPE_PERSISTENT";
-#else
-			cacheType = J9PORT_SHR_CACHE_TYPE_VMEM;
-			cacheTypeString = "J9PORT_SHR_CACHE_TYPE_VMEM";
-#endif
 			readOnly = false;
 			extraRuntimeFlags |= J9SHR_RUNTIMEFLAG_DISABLE_CORRUPT_CACHE_DUMPS;
 #endif
 			break;
 		case 1:
-#if !defined(J9SHR_CACHELET_SUPPORT)
 			cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 			cacheTypeString = "J9PORT_SHR_CACHE_TYPE_NONPERSISTENT";
 			readOnly = false;
 			extraRuntimeFlags |= J9SHR_RUNTIMEFLAG_DISABLE_CORRUPT_CACHE_DUMPS;
-#endif
+
 			break;
 		case 2:
 #if !(defined(J9ZOS390))
-#if !defined(J9SHR_CACHELET_SUPPORT)
 			cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
 			cacheTypeString = "J9PORT_SHR_CACHE_TYPE_PERSISTENT";
-#else
-			cacheType = J9PORT_SHR_CACHE_TYPE_VMEM;
-			cacheTypeString = "J9PORT_SHR_CACHE_TYPE_VMEM";
-#endif
 			readOnly = true;
 			extraRuntimeFlags |= J9SHR_RUNTIMEFLAG_DISABLE_CORRUPT_CACHE_DUMPS;
 #endif
 			break;
 		case 3:
-#if !defined(J9SHR_CACHELET_SUPPORT)
 			cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 			cacheTypeString = "J9PORT_SHR_CACHE_TYPE_NONPERSISTENT";
 			readOnly = true;
 			extraRuntimeFlags |= J9SHR_RUNTIMEFLAG_DISABLE_CORRUPT_CACHE_DUMPS;
-#endif
+
 			break;
 		case 4:
-#if !defined(J9ZOS390) && !defined(J9SHR_CACHELET_SUPPORT)
+#if !defined(J9ZOS390)
 			cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
 			cacheTypeString = "J9PORT_SHR_CACHE_TYPE_PERSISTENT";
 			readOnly = false;
@@ -1093,12 +1046,11 @@ testCorruptCache(J9JavaVM* vm)
 #endif
 			break;
 		case 5:
-#if !defined(J9SHR_CACHELET_SUPPORT)
 			cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 			cacheTypeString = "J9PORT_SHR_CACHE_TYPE_NONPERSISTENT";
 			readOnly = false;
 			extraRuntimeFlags |= (J9SHR_RUNTIMEFLAG_DISABLE_CORRUPT_CACHE_DUMPS | J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT | J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL | J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_RW);
-#endif
+
 			break;
 		}
 
@@ -1109,43 +1061,12 @@ testCorruptCache(J9JavaVM* vm)
 				I_32 cacheSize = CACHE_SIZE;
 
 				j9tty_printf(PORTLIB, "\nCorrupt cache with corruption type: %d(%s)\n", corruptionType, CorruptionTypeStrings[corruptionType]);
-#if defined(J9SHR_CACHELET_SUPPORT)
-				/* reset cacheType as it gets modified during the course of test. */
-				cacheType = J9PORT_SHR_CACHE_TYPE_VMEM;
-#endif
+
 				if (ACQUIRE_HEADER_WRITE_LOCK_FAILED_TYPE == corruptionType) {
 					/* skip this type as it is not possible for now to create this case */
 					j9tty_printf(PORTLIB, "skip this type as it is not possible to create this case\n");
 					continue;
 				}
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-				if (J9PORT_SHR_CACHE_TYPE_VMEM == cacheType) {
-					/* Cache CRC is not computed for realtime cache. Cachelets are not forced into memory until their content is required.
-					 * Having a CRC for the cache will force the entire contents of the cache into memory when the CRC value is verified.
-					 * Skip the check for CRC corruption type.
-					 * Debug area is not used in realtime cache. Skip corruption types related to debug area.
-					 */
-					if ((CACHE_CRC_INVALID_TYPE == corruptionType) ||
-						(BAD_FREESPACE_DEBUG_AREA == corruptionType) ||
-						(BAD_FREESPACE_SIZE_DEBUG_AREA == corruptionType) ||
-						(BAD_LVT_BOUNDS_DEBUG_AREA == corruptionType) ||
-						(BAD_LNT_BOUNDS_DEBUG_AREA == corruptionType) ||
-						(CACHE_SEMAPHORE_MISMATCH_TYPE == corruptionType) ||
-						(CACHE_CCINITCOMPLETE_UNINITIALIZED == corruptionType) ||
-					) {
-						j9tty_printf(PORTLIB, "skip this type as it is not checked for \"realtime\" cache\n");
-						continue;
-					}
-
-					if ((UPDATE_ROMCLASS_CORRUPT_CASE2_TYPE == corruptionType) ||
-						(ITEM_LENGTH_CORRUPT_AFTER_STARTUP_TYPE == corruptionType)
-					) {
-						j9tty_printf(PORTLIB, "skip this type as it is not possible to create this case\n");
-						continue;
-					}
-				}
-#endif
 
 				if (J9PORT_SHR_CACHE_TYPE_PERSISTENT == cacheType) {
 					if (CACHE_SEMAPHORE_MISMATCH_TYPE == corruptionType) {
@@ -1173,11 +1094,8 @@ testCorruptCache(J9JavaVM* vm)
 					j9tty_printf(PORTLIB, "skip this type as it is not detected on a read-only cache\n");
 					continue;
 				}
-#if defined(J9SHR_CACHELET_SUPPORT)
-				rc = corruptCacheTest.openTestCache(vm, cacheType, cacheSize, J9SHR_RUNTIMEFLAG_ENABLE_NESTED);
-#else
 				rc = corruptCacheTest.openTestCache(vm, cacheType, cacheSize);
-#endif
+
 				if (FAIL == rc) {
 					j9tty_printf(PORTLIB, "testCorruptCache: failed to open test cache\n");
 					break;
@@ -1215,7 +1133,6 @@ testCorruptCache(J9JavaVM* vm)
 						j9tty_printf(PORTLIB, "testCorruptCache: corruption context verification failed\n");
 						break;
 					}
-#if !defined(J9SHR_CACHELET_SUPPORT)
 					rc = corruptCacheTest.closeTestCache(vm, cacheType, true);
 					if (FAIL == rc) {
 						j9tty_printf(PORTLIB, "testCorruptCache: failed to close test cache\n");
@@ -1223,7 +1140,7 @@ testCorruptCache(J9JavaVM* vm)
 					}
 
 					corruptCacheTest.openCorruptCache(vm, cacheType, readOnly, cacheSize, extraRuntimeFlags);
-#endif
+
 					rc = corruptCacheTest.closeAndRemoveCorruptCache(vm, cacheType);
 					if (FAIL == rc) {
 						j9tty_printf(PORTLIB, "testCorruptCache: failed to remove corrupt cache\n");
@@ -1240,23 +1157,12 @@ testCorruptCache(J9JavaVM* vm)
 					}
 				}
 
-#if defined(J9SHR_CACHELET_SUPPORT)
-				rc = corruptCacheTest.serializeCache(vm);
-				if (FAIL == rc) {
-					j9tty_printf(PORTLIB, "testCorruptCache: failed to serialize test cache\n");
-					break;
-				}
-#endif
 				rc = corruptCacheTest.closeTestCache(vm, cacheType, true);
 				if (FAIL == rc) {
 					j9tty_printf(PORTLIB, "testCorruptCache: failed to close test cache\n");
 					break;
 				}
 
-#if defined(J9SHR_CACHELET_SUPPORT)
-				/* Once a realtime cache is created, it is used as J9PORT_SHR_CACHE_TYPE_PERSISTENT */
-				cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
-#endif
 				if (CACHE_SIZE_INVALID_TYPE == corruptionType) {
 					truncateCache(vm, cacheType);
 				} else if (CACHE_DATA_NULL_TYPE == corruptionType) {
@@ -1289,11 +1195,8 @@ testCorruptCache(J9JavaVM* vm)
 							break;
 						}
 					}
-#if defined(J9SHR_CACHELET_SUPPORT)
-					rc = corruptCacheTest.closeTestCache(vm, J9PORT_SHR_CACHE_TYPE_VMEM, false);
-#else
 					rc = corruptCacheTest.closeTestCache(vm, cacheType, false);
-#endif
+
 					if (FAIL == rc) {
 						j9tty_printf(PORTLIB, "testCorruptCache: failed to close test cache after making it corrupt\n");
 						break;
@@ -1316,28 +1219,8 @@ testCorruptCache(J9JavaVM* vm)
 				 * Opening the cache for stats does not detect CACHE_SEMAPHORE_MISMATCH_TYPE corruption.
 				 */
 				if (CACHE_SEMAPHORE_MISMATCH_TYPE != corruptionType) {
-#if defined(J9SHR_CACHELET_SUPPORT)
-					if ((WALK_ROMCLASS_CORRUPT_CASE1_TYPE == corruptionType) || (WALK_ROMCLASS_CORRUPT_CASE2_TYPE == corruptionType)) {
-						/* For realtime cache, cachelets are not started during startup.
-						 * As a result sanityWalkROMClassSegment() is not called during startup.
-						 * To startup a cachelet and perform sanity walk, we try to find a previously added dummy class
-						 * which should result in detecting cache as corrupt in sanityWalkROMClassSegment().
-						 */
-						corruptCacheTest.openTestCache(vm, cacheType, cacheSize, J9SHR_RUNTIMEFLAG_ENABLE_READONLY);
-						rc = corruptCacheTest.findDummyROMClass(vm, "DummyClass1");
-						if (FAIL == rc) {
-							j9tty_printf(PORTLIB, "testCorruptCache: failed to find dummy ROMClass\n");
-							break;
-						}
-					} else {
-						/* realtime cache is always used in read-only mode. */
-						readOnly = true;
-						corruptCacheTest.openCorruptCache(vm, cacheType, readOnly, cacheSize, extraRuntimeFlags);
-					}
-#else
 					extraRuntimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_STATS;
 					corruptCacheTest.openCorruptCache(vm, cacheType, readOnly, cacheSize, extraRuntimeFlags);
-#endif
 					rc = corruptCacheTest.verifyCorruptionContext(vm, corruptionType);
 					if (FAIL == rc) {
 						j9tty_printf(PORTLIB, "testCorruptCache: corruption context verification failed\n");

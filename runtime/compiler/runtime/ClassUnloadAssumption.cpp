@@ -29,6 +29,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
+#include "env/VerboseLog.hpp"
 #include "infra/Monitor.hpp"
 #include "infra/CriticalSection.hpp"
 #include "runtime/J9RuntimeAssumptions.hpp"

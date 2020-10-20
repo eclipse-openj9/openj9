@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -232,7 +232,6 @@ IDATA
 AOTDataMinMaxTest::StoreAOTDataFailureOnMinMaxTest(IDATA iteration)
 {
 	IDATA rc = PASS;
-#if !defined(J9SHR_CACHELET_SUPPORT)
 	const U_8* storedMethod;
 	J9VMThread *currentThread;
 	J9SharedClassJavacoreDataDescriptor descriptor;
@@ -282,7 +281,7 @@ AOTDataMinMaxTest::StoreAOTDataFailureOnMinMaxTest(IDATA iteration)
 		}
 	}
 	UnitTest::unitTest = UnitTest::NO_TEST;
-#endif
+
 	return rc;
 }
 

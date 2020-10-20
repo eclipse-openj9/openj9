@@ -27,6 +27,7 @@
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 
 //--------------------- DataCacheManager ----------------
 
