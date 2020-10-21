@@ -1790,13 +1790,6 @@ JVM_GetRandomSeedForDumping()
 }
 
 JNIEXPORT jboolean JNICALL
-JVM_IsDynamicDumpingEnabled(JNIEnv *env)
-{
-	/* OpenJ9 does not support -Xshare:dump, so we return false unconditionally. */
-	return JNI_FALSE;
-}
-
-JNIEXPORT jboolean JNICALL
 JVM_IsSharingEnabled(JNIEnv *env)
 {
 	/* OpenJ9 does not support CDS, so we return false unconditionally. */
