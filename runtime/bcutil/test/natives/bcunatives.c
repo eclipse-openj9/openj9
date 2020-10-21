@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ Java_com_ibm_j9_test_bcutil_TestNatives_verifyCanonisizeAndCopyUTF8(JNIEnv *env,
 		src[i] = (char) jSrc[i];
 	}
 
-	result = j9bcutil_verifyCanonisizeAndCopyUTF8(dest, src, length);
+	result = j9bcutil_verifyCanonisizeAndCopyUTF8(dest, src, length, NULL);
 
 	for (i =0; i < length; i++) {
 		jDest[i] = dest[i];
