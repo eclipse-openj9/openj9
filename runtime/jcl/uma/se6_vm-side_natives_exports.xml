@@ -228,6 +228,7 @@
 	<export name="Java_com_ibm_oti_vm_VM_getClassPathCount" />
 	<export name="Java_com_ibm_oti_vm_VM_getPathFromClassPath" />
 	<export name="Java_com_ibm_oti_vm_VM_setCommonData" />
+	<export name="Java_java_lang_Class_isCircularDeclaringClass" />
 	<export name="Java_java_lang_Class_isClassADeclaredClass" />
 	<export name="Java_java_lang_ClassLoader_defineClassImpl" />
 	<export name="Java_java_lang_ClassLoader_isVerboseImpl" />

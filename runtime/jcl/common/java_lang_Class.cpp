@@ -268,6 +268,35 @@ Java_java_lang_Class_isClassADeclaredClass(JNIEnv *env, jobject jlClass, jobject
 	return result;
 }
 
+jboolean JNICALL
+Java_java_lang_Class_isCircularDeclaringClass(JNIEnv *env, jobject recv)
+{
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	jboolean result = JNI_FALSE;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
+	J9Class *currentClazz = clazz;
+	J9UTF8 *outerClassName = J9ROMCLASS_OUTERCLASSNAME(currentClazz->romClass);
+	while (NULL != outerClassName) {
+		J9Class *outerClass = vmFuncs->internalFindClassUTF8(currentThread, J9UTF8_DATA(outerClassName),
+								J9UTF8_LENGTH(outerClassName), currentClazz->classLoader, 0);
+		if (NULL == outerClass) {
+			break;
+		} else if (clazz == outerClass) {
+			result = JNI_TRUE;
+			break;
+		}
+		currentClazz = outerClass;
+		outerClassName = J9ROMCLASS_OUTERCLASSNAME(currentClazz->romClass);
+	}
+
+	vmFuncs->internalExitVMToJNI(currentThread);
+	return result;
+}
 
 jobject JNICALL
 Java_com_ibm_oti_vm_VM_getClassNameImpl(JNIEnv *env, jclass recv, jclass jlClass)
