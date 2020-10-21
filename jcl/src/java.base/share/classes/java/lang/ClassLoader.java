@@ -1925,14 +1925,13 @@ static void loadLibraryWithClassLoader(String libName, ClassLoader loader) {
 	* [PR JAZZ 93728] Match behaviour of System.loadLibrary() in reference
 	* implementation when system property java.library.path is set 
 	*/
-
-	if (null == loader) {
+	try {
 		loadLibraryWithPath(libName, loader, System.internalGetProperties().getProperty("com.ibm.oti.vm.bootstrap.library.path")); //$NON-NLS-1$
-	} else {
-		try {
+	} catch (UnsatisfiedLinkError ule) {
+		if (loader == null) {
+			throw ule;
+		} else {
 			loadLibraryWithPath(libName, loader, System.internalGetProperties().getProperty("java.library.path")); //$NON-NLS-1$
-		} catch (UnsatisfiedLinkError ule) {
-			loadLibraryWithPath(libName, loader, System.internalGetProperties().getProperty("com.ibm.oti.vm.bootstrap.library.path")); //$NON-NLS-1$
 		}
 	}
 }
