@@ -1400,22 +1400,6 @@ initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry)
 		return CPE_TYPE_DIRECTORY;
 	}
 
-	if ((EsIsFile == attr) && (J2SE_VERSION(javaVM) >= J2SE_V11)) {
-		J9JImageIntf *jimageIntf = javaVM->jimageIntf;
-		if (NULL != jimageIntf) {
-			UDATA jimageHandle = 0;
-			I_32 rc = jimageIntf->jimageOpen(jimageIntf, (char *)cpEntry->path, &jimageHandle);
-
-			if (J9JIMAGE_NO_ERROR == rc) {
-				cpEntry->type = CPE_TYPE_JIMAGE;
-				cpEntry->extraInfo = (void *)jimageHandle;
-				return CPE_TYPE_JIMAGE;
-			} else {
-				Trc_VM_initializeClassPathEntry_loadJImageFailed(cpEntry->pathLength, cpEntry->path, rc);
-			}
-		}
-	}
-
 #ifdef J9VM_OPT_ZIP_SUPPORT
 	if (EsIsFile == attr) {
 		VMI_ACCESS_FROM_JAVAVM((JavaVM *)javaVM);
@@ -1429,7 +1413,6 @@ initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry)
 
 			memset(zipFile, 0, sizeof(*zipFile));
 			rc = zipFunctions->zip_openZipFile(VMI, (char *)cpEntry->path, zipFile, ZIP_FLAG_OPEN_CACHE | ZIP_FLAG_BOOTSTRAP);
-
 			if (0 == rc) {
 				/* Save the zipFile */
 				cpEntry->extraInfo = zipFile;
@@ -1442,6 +1425,80 @@ initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry)
 		}
 	}
 #endif /* J9VM_OPT_ZIP_SUPPORT */
+
+	/* Ok. There's nothing here. Give up. */
+	cpEntry->type = CPE_TYPE_UNUSABLE;
+	cpEntry->extraInfo = NULL;
+	return CPE_TYPE_UNUSABLE;
+}
+
+IDATA
+initializeModulesPathEntry(J9JavaVM * javaVM, J9ClassPathEntry *cpEntry)
+{
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	int32_t attr = 0;
+#if defined(WIN32)
+	char *convertedModulesPath = NULL;
+#endif /* defined(WIN32) */
+
+	/* Start guessing. Is it a directory? */
+	attr = j9file_attr((char *)cpEntry->path);
+	if (EsIsDir == attr) {
+		cpEntry->type = CPE_TYPE_DIRECTORY;
+		return CPE_TYPE_DIRECTORY;
+	}
+
+	if (EsIsFile == attr) {
+		J9JImageIntf *jimageIntf = javaVM->jimageIntf;
+		if (NULL != jimageIntf) {
+			I_32 rc = 0;
+			UDATA jimageHandle = 0;
+			char *modulesPath = (char *)cpEntry->path;
+#if defined(WIN32)
+			IDATA modulesPathLen = cpEntry->pathLength;
+			IDATA convertedModulesPathLen = j9str_convert(J9STR_CODE_MUTF8, J9STR_CODE_WINDEFAULTACP, modulesPath, modulesPathLen, NULL, 0);
+			if (convertedModulesPathLen > 0) {
+				convertedModulesPath = j9mem_allocate_memory(convertedModulesPathLen + 1, OMRMEM_CATEGORY_VM);
+				if (convertedModulesPath != NULL) {
+					convertedModulesPathLen = j9str_convert(J9STR_CODE_MUTF8, J9STR_CODE_WINDEFAULTACP, modulesPath, modulesPathLen, convertedModulesPath, convertedModulesPathLen);
+					if (convertedModulesPathLen > 0) {
+						convertedModulesPath[convertedModulesPathLen] = '\0';
+						modulesPath = convertedModulesPath;
+					} else {
+						goto _error;
+					}
+				} else {
+					goto _error;
+				}
+			} else {
+				goto _error;
+			}
+#endif /* defined(WIN32) */
+			rc = jimageIntf->jimageOpen(jimageIntf, modulesPath, &jimageHandle);
+#if defined(WIN32)
+			if (convertedModulesPath != NULL) {
+				j9mem_free_memory(convertedModulesPath);
+				convertedModulesPath = NULL;
+			}
+#endif /* defined(WIN32) */
+
+			if (J9JIMAGE_NO_ERROR == rc) {
+				cpEntry->type = CPE_TYPE_JIMAGE;
+				cpEntry->extraInfo = (void *)jimageHandle;
+				return CPE_TYPE_JIMAGE;
+			} else {
+				Trc_VM_initializeModulesPathEntry_loadJImageFailed(cpEntry->pathLength, cpEntry->path, rc);
+			}
+		}
+	}
+
+#if defined(WIN32)
+_error:
+	if (convertedModulesPath != NULL) {
+		j9mem_free_memory(convertedModulesPath);
+		convertedModulesPath = NULL;
+	}
+#endif /* defined(WIN32) */
 
 	/* Ok. There's nothing here. Give up. */
 	cpEntry->type = CPE_TYPE_UNUSABLE;
@@ -1462,34 +1519,39 @@ initializeModulesPath(J9JavaVM *vm) {
 	IDATA modulesPathLen = 0;
 	U_8 *modulesPath = NULL;
 	J9VMSystemProperty *javaHome = NULL;
+	char *javaHomeValue = NULL;
+	IDATA javaHomeValueLen = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	rc = getSystemProperty(vm, "java.home", &javaHome);
 	if (J9SYSPROP_ERROR_NOT_FOUND == rc) {
 		goto _error;
 	}
+	javaHomeValue = javaHome->value;
+	javaHomeValueLen = strlen(javaHome->value);
+
 	/* If <JAVA_HOME>/lib/modules is a jimage file, it is used for searching system modules.
 	 * If it is not present, then <JAVA_HOME>/modules is searched for modules in exploded form.
 	 */
-	modulesPathLen = strlen(javaHome->value) + LITERAL_STRLEN(DIR_SEPARATOR_STR) + LITERAL_STRLEN("lib") + LITERAL_STRLEN(DIR_SEPARATOR_STR) + LITERAL_STRLEN("modules");
+	modulesPathLen = javaHomeValueLen + LITERAL_STRLEN(DIR_SEPARATOR_STR) + LITERAL_STRLEN("lib") + LITERAL_STRLEN(DIR_SEPARATOR_STR) + LITERAL_STRLEN("modules");
 	vm->modulesPathEntry = j9mem_allocate_memory(sizeof(J9ClassPathEntry) + modulesPathLen + 1, OMRMEM_CATEGORY_VM);
 	if (NULL == vm->modulesPathEntry) {
 		goto _error;
 	}
 	memset(vm->modulesPathEntry, 0, sizeof(J9ClassPathEntry));
 	modulesPath = (U_8 *)(vm->modulesPathEntry + 1);
-	j9str_printf(PORTLIB, (char*)modulesPath, (U_32)modulesPathLen + 1, "%s" DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "modules", javaHome->value);
+	j9str_printf(PORTLIB, (char*)modulesPath, (U_32)modulesPathLen + 1, "%s" DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "modules", javaHomeValue);
 
 	vm->modulesPathEntry->path = modulesPath;
 	vm->modulesPathEntry->pathLength = (U_32)modulesPathLen;
-	rc = initializeClassPathEntry(vm, vm->modulesPathEntry);
+	rc = initializeModulesPathEntry(vm, vm->modulesPathEntry);
 	if (CPE_TYPE_UNUSABLE == rc) {
 		vm->modulesPathEntry->type = CPE_TYPE_UNKNOWN;
 		/* If <JAVA_HOME>/lib/modules is not usable, try to use <JAVA_HOME>/modules dir */
-		modulesPathLen = strlen(javaHome->value) + LITERAL_STRLEN(DIR_SEPARATOR_STR) + LITERAL_STRLEN("modules");
-		j9str_printf(PORTLIB, (char*)modulesPath, (U_32)modulesPathLen + 1, "%s" DIR_SEPARATOR_STR "modules", javaHome->value);
+		modulesPathLen = javaHomeValueLen + LITERAL_STRLEN(DIR_SEPARATOR_STR) + LITERAL_STRLEN("modules");
+		j9str_printf(PORTLIB, (char*)modulesPath, (U_32)modulesPathLen + 1, "%s" DIR_SEPARATOR_STR "modules", javaHomeValue);
 		vm->modulesPathEntry->pathLength = (U_32)modulesPathLen;
-		rc = initializeClassPathEntry(vm, vm->modulesPathEntry);
+		rc = initializeModulesPathEntry(vm, vm->modulesPathEntry);
 		if (CPE_TYPE_UNUSABLE == rc) {
 			goto _error;
 		}
