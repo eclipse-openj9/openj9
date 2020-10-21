@@ -362,7 +362,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<!-- Additions for Java 16 (General) -->
 		<export name="JVM_DefineArchivedModules"/>
 		<export name="JVM_GetRandomSeedForDumping"/>
-		<export name="JVM_IsDynamicDumpingEnabled"/>
 		<export name="JVM_IsSharingEnabled"/>
 		<export name="JVM_LogLambdaFormInvoker"/>
 		<export name="JVM_IsDumpingClassList"/>

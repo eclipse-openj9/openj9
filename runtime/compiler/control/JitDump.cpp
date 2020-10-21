@@ -285,9 +285,9 @@ static TR_CompilationErrorCode recompileMethodForLog(
    J9VMThread         *vmThread,
    J9Method           *ramMethod,
    TR::CompilationInfo *compInfo,
-   TR_J9VMBase        *frontendOfThread,
    TR_Hotness          optimizationLevel,
    bool                profilingCompile,
+   bool                aotCompile,
    void               *oldStartPC,
    TR::FILE *logFile
    )
@@ -327,7 +327,7 @@ static TR_CompilationErrorCode recompileMethodForLog(
    // TODO: this is indiscriminately compiling as J9::DumpMethodRequest, which is wrong;
    //       should be fixed by checking if the method is indeed DLT, and compiling DLT if so
       {
-      J9::JitDumpMethodDetails details(ramMethod);
+      J9::JitDumpMethodDetails details(ramMethod, aotCompile);
       compInfo->compileMethod(vmThread, details, oldStartPC, TR_no, &compErrCode, &successfullyQueued, plan);
       }
 
@@ -587,15 +587,29 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                if (!(jittedMethodsOnStack[i]._method))
                   continue;
 
+               bool isAOTBody = false;
+               J9JITExceptionTable *metadata = NULL;
+               void *startPC = jittedMethodsOnStack[i]._oldStartPC;
+               if (startPC)
+                  {
+                  metadata = jitConfig->jitGetExceptionTableFromPC(crashedThread, (UDATA)startPC);
+                  if (metadata)
+                     {
+                     TR_PersistentJittedBodyInfo *bodyInfo = (TR_PersistentJittedBodyInfo *)metadata->bodyInfo;
+                     if (bodyInfo)
+                        isAOTBody = bodyInfo->getIsAotedBody();
+                     }
+                  }
+
                TR_CompilationErrorCode compErrCode;
                compErrCode = recompileMethodForLog(
                   crashedThread,
                   jittedMethodsOnStack[i]._method,
                   compInfo,
-                  frontendOfThread,
                   jittedMethodsOnStack[i]._optLevel,
                   false,
-                  jittedMethodsOnStack[i]._oldStartPC,
+                  isAOTBody,
+                  startPC,
                   logFile
                );
                } // for
@@ -665,9 +679,9 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                         crashedThread,
                         (J9Method *)(comp->getCurrentMethod()->getPersistentIdentifier()),
                         compInfo,
-                        frontendOfThread,
                         (TR_Hotness)comp->getOptLevel(),
                         comp->isProfilingCompilation(),
+                        comp->compileRelocatableCode(),
                         oldStartPC,
                         logFile
                      );

@@ -372,7 +372,6 @@ elseif(NOT JAVA_SPEC_VERSION LESS 16)
 		# Additions for Java 16 (General)
 		JVM_DefineArchivedModules
 		JVM_GetRandomSeedForDumping
-		JVM_IsDynamicDumpingEnabled
 		JVM_IsSharingEnabled
 		JVM_LogLambdaFormInvoker
 		JVM_IsDumpingClassList

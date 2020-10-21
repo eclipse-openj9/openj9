@@ -822,3 +822,5 @@ TraceEvent=Trc_VM_ConvertToJavaFullyQualifiedName_Get_ClassName Overhead=1 Level
 TraceEvent=Trc_VM_ConvertMethodSignature_Malformed_Signature Overhead=1 Level=1 Template="ConvertMethodSignature - malformed signature %.*s at index i = %d"
 TraceEvent=Trc_VM_ConvertMethodSignature_Signature_BufferSize Overhead=1 Level=4 Template="ConvertMethodSignature - signature %.*s has bufferSize %d"
 TraceEvent=Trc_VM_ConvertMethodSignature_Signature_Result Overhead=1 Level=4 Template="ConvertMethodSignature - result (%s) with resultLength %llu"
+
+TraceEvent=Trc_VM_initializeModulesPathEntry_loadJImageFailed NoEnv Overhead=1 Level=1 Template="initializeModulesPathEntry - attempt to load %.*s as jimage file failed with error=%d"
