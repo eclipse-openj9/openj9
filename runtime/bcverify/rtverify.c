@@ -1531,15 +1531,26 @@ _illegalPrimitiveReturn:
 				 * cases of invokevirtual which only invoke public methods of a public class.
 				 */
 
+				/* Remove the receiver from the stack. */
+				type = POP;
 				/* Receiver compatible with MethodHandle? */
-				type = POP;		/* Remove the receiver from the stack */
-				rc = isClassCompatibleByName (verifyData, type, (U_8 *)"java/lang/invoke/MethodHandle", sizeof("java/lang/invoke/MethodHandle") - 1, &reasonCode);
+				rc = isClassCompatibleByName(verifyData, type, (U_8 *)"java/lang/invoke/MethodHandle", sizeof("java/lang/invoke/MethodHandle") - 1, &reasonCode);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+				if ((JBinvokehandle == bc) && (FALSE == rc)) {
+					if (BCV_ERR_INSUFFICIENT_MEMORY == reasonCode) {
+						goto _outOfMemoryError;
+					}
+					/* Receiver compatible with VarHandle? */
+					rc = isClassCompatibleByName(verifyData, type, (U_8 *)"java/lang/invoke/VarHandle", sizeof("java/lang/invoke/VarHandle") - 1, &reasonCode);
+				}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 				if (FALSE == rc) {
 					if (BCV_ERR_INSUFFICIENT_MEMORY == reasonCode) {
 						goto _outOfMemoryError;
 					}
 					errorType = J9NLS_BCV_ERR_RECEIVER_NOT_COMPATIBLE__ID;
-					/* Jazz 82615: Store the index of the expected data type 'java/lang/invoke/MethodHandle' for later retrieval in classNameList */
+					/* Jazz 82615: Store the index of the expected data type 'java/lang/invoke/MethodHandle'
+					 * or 'java/lang/invoke/VarHandle' for later retrieval in classNameList. */
 					errorTargetType = (UDATA)(BCV_JAVA_LANG_INVOKE_METHODHANDLE_INDEX << BCV_CLASS_INDEX_SHIFT);
 					errorStackIndex = stackTop - liveStack->stackElements;
 					goto _inconsistentStack2;
