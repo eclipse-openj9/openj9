@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,16 +23,21 @@ package j9vm.test.corehelper;
 
  public class SimpleThread {
 
- 	public void configureValidJavaThreads() {
-		Thread t1 = new Thread() {
-			public void run() {
-				try {
-					sleep(1000);
-					createDump();
-				} catch (InterruptedException e) {
-				}
+	final class DumperThread extends Thread {
+		protected static final char SIG_BOOLEAN = 'Z';
+
+		@Override
+		public void run() {
+			try {
+				sleep(1000);
+				createDump();
+			} catch (InterruptedException e) {
 			}
-		};
+		}
+	}
+
+ 	public void configureValidJavaThreads() {
+		Thread t1 = new DumperThread();
 
  		t1.start();
 		try {
