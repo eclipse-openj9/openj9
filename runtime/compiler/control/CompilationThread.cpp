@@ -7273,9 +7273,11 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          else
             {
             // Heuristic: generate AOT only for downgraded compilations in the second run
-            if (!isSecondAOTRun &&
-                entry->_optimizationPlan->isOptLevelDowngraded())
+            if ((!isSecondAOTRun && entry->_optimizationPlan->isOptLevelDowngraded()) ||
+                entry->getMethodDetails().isJitDumpAOTMethod())
+               {
                canDoRelocatableCompile = true;
+               }
             }
          }
       }
