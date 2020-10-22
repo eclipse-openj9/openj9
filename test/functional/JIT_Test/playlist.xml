@@ -409,6 +409,32 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+
+	<test>
+                <testCaseName>SIMDCommonedAddressTest</testCaseName>
+                <variations>
+                        <variation>-Xjit:count=50,limit={*testSIMDCommonedAddress*},optLevel=scorching,disableAsyncCompilation</variation>
+                </variations>
+                <command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+        -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+        org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+        -testnames \
+        SIMDCommonedAddressTest \
+        -groups $(TEST_GROUP) \
+        -excludegroups $(DEFAULT_EXCLUDE); \
+        $(TEST_STATUS)</command>
+                <levels>
+                        <level>sanity</level>
+                </levels>
+                <groups>
+                        <group>functional</group>
+                </groups>
+                <aot>nonapplicable</aot>
+                <impls>
+                        <impl>openj9</impl>
+                        <impl>ibm</impl>
+                </impls>
+        </test>
 	
 	<test>
 		<testCaseName>SIMDOptTest</testCaseName>
