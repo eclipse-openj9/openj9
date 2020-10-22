@@ -52,11 +52,6 @@ $(UMA_EXETARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 
 </#assign>
 
-<#if uma.spec.flags.opt_useOmrDdr.enabled>
-  CFLAGS   += -Wc,debug
-  CXXFLAGS += -Wc,debug
-</#if>
-
 ifndef UMA_DO_NOT_OPTIMIZE_CCODE
   ifeq ($(VERSION_MAJOR),8)
     UMA_OPTIMIZATION_FLAGS = -O3 -Wc,"ARCH(7)" -Wc,"TUNE(10)"
