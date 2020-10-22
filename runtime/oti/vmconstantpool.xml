@@ -409,12 +409,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<!-- Static method references needed to support OpenJ9 and OpenJDK MethodHandles. -->
 	<staticmethodref class="java/lang/invoke/MethodTypeHelper" name="vmResolveFromMethodDescriptorString" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/invoke/MethodType;" flags="opt_methodHandleCommon"/>
 	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="sendResolveMethodHandle" signature="(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandleCommon"/>
-	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="resolveInvokeDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandleCommon"/>
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="resolveInvokeDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" flags="opt_methodHandleCommon"/>
 	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="resolveConstantDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" versions="11-" flag="opt_methodHandleCommon"/>
 	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="constructorPlaceHolder" signature="(Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandleCommon"/>
 
 	<!-- Static method references needed to support OpenJDK MethodHandles. -->
-	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="resolveMethodHandle" signature="(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="linkCallerMethod" signature="(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
 
 	<!-- Security manager check -->
 	<staticfieldref class="java/lang/System" name="security" signature="Ljava/lang/SecurityManager;"/>
