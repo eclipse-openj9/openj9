@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -177,7 +177,7 @@ void freeMemorySegmentListEntry(J9MemorySegmentList *segmentList, J9MemorySegmen
 }
 
 
-void freeMemorySegmentList(J9JavaVM *javaVM,J9MemorySegmentList *segmentList)
+void freeMemorySegmentList(J9JavaVM *javaVM, J9MemorySegmentList *segmentList)
 {
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 	J9MemorySegment *currentSegment;
@@ -196,10 +196,25 @@ void freeMemorySegmentList(J9JavaVM *javaVM,J9MemorySegmentList *segmentList)
 	j9mem_free_memory(segmentList);
 }
 
+void
+allSegmentsInMemorySegmentListDo(J9MemorySegmentList *segmentList, void (* segmentCallback)(J9MemorySegment*, void*), void *userData)
+{
+	Assert_VM_notNull(segmentList);
+	Assert_VM_notNull(segmentCallback);
+	if (!J9_MEMORY_SEGMENT_LINEAR_LINKED_LIST_IS_EMPTY(segmentList->nextSegment)) {
+		J9MemorySegment *segment = J9_MEMORY_SEGMENT_LINEAR_LINKED_LIST_START_DO(segmentList->nextSegment);
+
+		while (segment != NULL) {
+			segmentCallback(segment, userData);
+			segment = J9_MEMORY_SEGMENT_LINEAR_LINKED_LIST_NEXT_DO(segmentList->nextSegment, segment);
+		}
+	}
+}
+
 
 U_32 memorySegmentListSize (J9MemorySegmentList *segmentList)
 {
-		return (U_32) pool_numElements(segmentList->segmentPool);
+	return (U_32) pool_numElements(segmentList->segmentPool);
 }
 
 
@@ -651,3 +666,50 @@ segmentSearchComparator (J9AVLTree *tree, UDATA value, J9MemorySegment *searchNo
 	}
 }
 
+#if defined(DEBUG_PRINT_SEGMENT_TYPES)
+/* Debug helper to print all the memory types known at the
+ * time this function was added.
+ *
+ * To enable, define DEBUG_PRINT_SEGMENT_TYPES and use this
+ * as the `segmentCallback` for `allSegmentsInMemorySegmentListDo`
+ */
+void
+printSegments(J9MemorySegment *s, void* data)
+{
+	uintptr_t type = s->type;
+	printf("segment=%p heapBase=%p size=%d type=%lX\n", s, s->heapBase, (int)s->size, type);
+	if ((type & MEMORY_TYPE_OLD) == MEMORY_TYPE_OLD) printf("MEMORY_TYPE_OLD ");
+	if ((type & MEMORY_TYPE_NEW_RAM) == MEMORY_TYPE_NEW_RAM) printf("MEMORY_TYPE_NEW_RAM ");
+	if ((type & MEMORY_TYPE_SCOPED) == MEMORY_TYPE_SCOPED) printf("MEMORY_TYPE_SCOPED ");
+	if ((type & MEMORY_TYPE_ALLOCATED) == MEMORY_TYPE_ALLOCATED) printf("MEMORY_TYPE_ALLOCATED ");
+	if ((type & MEMORY_TYPE_IMMORTAL) == MEMORY_TYPE_IMMORTAL) printf("MEMORY_TYPE_IMMORTAL ");
+	if ((type & MEMORY_TYPE_DEBUG_INFO) == MEMORY_TYPE_DEBUG_INFO) printf("MEMORY_TYPE_DEBUG_INFO ");
+	if ((type & MEMORY_TYPE_BASETYPE_ROM_CLASS) == MEMORY_TYPE_BASETYPE_ROM_CLASS) printf("MEMORY_TYPE_BASETYPE_ROM_CLASS ");
+	if ((type & MEMORY_TYPE_DYNAMIC_LOADED_CLASSES) == MEMORY_TYPE_DYNAMIC_LOADED_CLASSES) printf("MEMORY_TYPE_DYNAMIC_LOADED_CLASSES ");
+	if ((type & MEMORY_TYPE_NEW) == MEMORY_TYPE_NEW) printf("MEMORY_TYPE_NEW ");
+	if ((type & MEMORY_TYPE_DISCARDABLE) == MEMORY_TYPE_DISCARDABLE) printf("MEMORY_TYPE_DISCARDABLE ");
+	if ((type & MEMORY_TYPE_NUMA) == MEMORY_TYPE_NUMA) printf("MEMORY_TYPE_NUMA ");
+	if ((type & MEMORY_TYPE_ROM_CLASS) == MEMORY_TYPE_ROM_CLASS) printf("MEMORY_TYPE_ROM_CLASS ");
+	if ((type & MEMORY_TYPE_UNCOMMITTED) == MEMORY_TYPE_UNCOMMITTED) printf("MEMORY_TYPE_UNCOMMITTED ");
+	if ((type & MEMORY_TYPE_FROM_JXE) == MEMORY_TYPE_FROM_JXE) printf("MEMORY_TYPE_FROM_JXE ");
+	if ((type & MEMORY_TYPE_OLD_ROM) == MEMORY_TYPE_OLD_ROM) printf("MEMORY_TYPE_OLD_ROM ");
+	if ((type & MEMORY_TYPE_SHARED_META) == MEMORY_TYPE_SHARED_META) printf("MEMORY_TYPE_SHARED_META ");
+	if ((type & MEMORY_TYPE_VIRTUAL) == MEMORY_TYPE_VIRTUAL) printf("MEMORY_TYPE_VIRTUAL ");
+	if ((type & MEMORY_TYPE_FIXED_RAM_CLASS) == MEMORY_TYPE_FIXED_RAM_CLASS) printf("MEMORY_TYPE_FIXED_RAM_CLASS ");
+	if ((type & MEMORY_TYPE_RAM_CLASS) == MEMORY_TYPE_RAM_CLASS) printf("MEMORY_TYPE_RAM_CLASS ");
+	if ((type & MEMORY_TYPE_IGC_SCAN_QUEUE) == MEMORY_TYPE_IGC_SCAN_QUEUE) printf("MEMORY_TYPE_IGC_SCAN_QUEUE ");
+	if ((type & MEMORY_TYPE_RAM) == MEMORY_TYPE_RAM) printf("MEMORY_TYPE_RAM ");
+	if ((type & MEMORY_TYPE_FIXED) == MEMORY_TYPE_FIXED) printf("MEMORY_TYPE_FIXED ");
+	if ((type & MEMORY_TYPE_JIT_SCRATCH_SPACE) == MEMORY_TYPE_JIT_SCRATCH_SPACE) printf("MEMORY_TYPE_JIT_SCRATCH_SPACE ");
+	if ((type & MEMORY_TYPE_FIXED_RAM) == MEMORY_TYPE_FIXED_RAM) printf("MEMORY_TYPE_FIXED_RAM ");
+	if ((type & MEMORY_TYPE_OLD_RAM) == MEMORY_TYPE_OLD_RAM) printf("MEMORY_TYPE_OLD_RAM ");
+	if ((type & MEMORY_TYPE_CODE) == MEMORY_TYPE_CODE) printf("MEMORY_TYPE_CODE ");
+	if ((type & MEMORY_TYPE_ROM) == MEMORY_TYPE_ROM) printf("MEMORY_TYPE_ROM ");
+	if ((type & MEMORY_TYPE_CLASS_FILE_BYTES) == MEMORY_TYPE_CLASS_FILE_BYTES) printf("MEMORY_TYPE_CLASS_FILE_BYTES ");
+	if ((type & MEMORY_TYPE_UNDEAD_CLASS) == MEMORY_TYPE_UNDEAD_CLASS) printf("MEMORY_TYPE_UNDEAD_CLASS ");
+	if ((type & MEMORY_TYPE_JIT_PERSISTENT) == MEMORY_TYPE_JIT_PERSISTENT) printf("MEMORY_TYPE_JIT_PERSISTENT ");
+	if ((type & MEMORY_TYPE_FIXEDSIZE) == MEMORY_TYPE_FIXEDSIZE) printf("MEMORY_TYPE_FIXEDSIZE ");
+	if ((type & MEMORY_TYPE_DEFAULT) == MEMORY_TYPE_DEFAULT) printf("MEMORY_TYPE_DEFAULT ");
+	printf("\n");
+}
+#endif /* DEBUG_PRINT_SEGMENT_TYPES */
