@@ -208,9 +208,7 @@ allSegmentsInMemorySegmentListDo(J9MemorySegmentList *segmentList, void (* segme
 			segmentCallback(segment, userData);
 			segment = J9_MEMORY_SEGMENT_LINEAR_LINKED_LIST_NEXT_DO(segmentList->nextSegment, segment);
 		}
-
 	}
-
 }
 
 
