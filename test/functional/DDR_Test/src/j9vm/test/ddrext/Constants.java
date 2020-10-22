@@ -290,14 +290,15 @@ public class Constants {
 	public static final String ALL_CLASSESS_FAILURE_KEY = "";
 
 	public static final String J9CLASSSHAPE_CMD = "j9classshape";
-	public static final String J9CLASSSHAPE_TEST_CLASS = "j9vm/test/corehelper/SimpleThread";
-	public static final String J9CLASSSHAPE_SUCCESS_KEY = "_object,"+J9CLASSSHAPE_TEST_CLASS;
+	public static final String J9CLASSSHAPE_TEST_CLASS = "j9vm/test/corehelper/SimpleThread$DumperThread";
+	public static final String J9CLASS_TEST_SUCCESS_KEY = "j9vm/test/corehelper/SimpleThread\\$DumperThread";
+	public static final String J9CLASSSHAPE_SUCCESS_KEY = "threadRef,"+J9CLASS_TEST_SUCCESS_KEY;
 
 	public static final String J9VTABLES_CMD = "j9vtables";
-	public static final String J9VTABLES_SUCCESS_KEY = "j9class,j9method,"+J9CLASSSHAPE_TEST_CLASS;
+	public static final String J9VTABLES_SUCCESS_KEY = "j9class,j9method,"+J9CLASS_TEST_SUCCESS_KEY;
 
 	public static final String J9STATICS_CMD = "j9statics";
-	public static final String J9STATICS_SUCCESS_KEY = "j9romstaticfieldshape," + J9CLASSSHAPE_TEST_CLASS;
+	public static final String J9STATICS_SUCCESS_KEY = "j9romstaticfieldshape," + J9CLASS_TEST_SUCCESS_KEY;
 
 	public static final String CL_FOR_NAME_CMD = "classforname";
 	public static final String CL_FOR_NAME_CLASS = "java/lang/Object";
