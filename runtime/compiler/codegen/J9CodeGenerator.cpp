@@ -171,7 +171,7 @@ static TR::Node *lowerCASValues(
  * @details
  *
  * This transformation adds checks for the cases where the acmp can be performed
- * without calling the VM helper. The trasformed Trees represen the following operation:
+ * without calling the VM helper. The transformed Trees represent the following operation:
  *
  * 1. If the address of lhs and rhs are the same, produce an eq (true) result
  *    and skip the call (note the two objects must be the same regardless of
@@ -215,7 +215,7 @@ static TR::Node *lowerCASValues(
  *        |
  *        v
  *  +-----------------+
- *  |BBStart
+ *  |BBStart          |
  *  |ificmpeq --> ... |
  *  |  iRegLoad x     |
  *  |  iconst 0       |
@@ -251,7 +251,7 @@ J9::CodeGenerator::fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt, const boo
    // next treetop and then at the current one
    TR::Block* prevBlock = tt->getEnclosingBlock();
    TR::Block* targetBlock = prevBlock->splitPostGRA(tt->getNextTreeTop(), cfg, true, NULL);
-   TR::Block* callBlock = prevBlock->split(tt, cfg);
+   TR::Block* callBlock = prevBlock->splitPostGRAWithoutFixingCommoning(tt, cfg, true, NULL);
    callBlock->setIsExtensionOfPreviousBlock(true);
    if (trace)
       traceMsg(comp, "Isolated call node n%dn in block_%d\n", node->getGlobalIndex(), callBlock->getNumber());
@@ -1660,7 +1660,7 @@ J9::CodeGenerator::lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt)
                                self()->symRefTab()->findOrCreateNullCheckSymbolRef(currentMethod));
       TR::TreeTop *nullCheckTT = prevBlock->append(TR::TreeTop::create(self()->comp(), nullCheck));
 
-      TR::Block *nullCheckBlock = prevBlock->split(nullCheckTT, cfg);
+      TR::Block *nullCheckBlock = prevBlock->splitPostGRAWithoutFixingCommoning(nullCheckTT, cfg, true, NULL);
 
       nullCheckBlock->setIsExtensionOfPreviousBlock(true);
 

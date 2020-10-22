@@ -576,7 +576,7 @@ TR_JProfilingValue::addProfilingTrees(
       iter->append(nullTestTree);
       if (lastBranchToMainlineReturnTT != NULL)
          {
-         TR::Block *temp = iter->split(nullTestTree, cfg, false, true);
+         TR::Block *temp = iter->splitPostGRAWithoutFixingCommoning(nullTestTree, cfg, true, NULL);
          temp->setIsExtensionOfPreviousBlock();
          cfg->addEdge(iter, mainlineReturn);
          iter = temp;
@@ -608,7 +608,7 @@ TR_JProfilingValue::addProfilingTrees(
    TR::TreeTop *incIndexTreeTop = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, selectNode));
    iter->append(incIndexTreeTop);
 
-   TR::Block *quickTestBlock = iter->split(incIndexTreeTop, cfg, false, true);
+   TR::Block *quickTestBlock = iter->splitPostGRAWithoutFixingCommoning(incIndexTreeTop, cfg, true, NULL);
    quickTestBlock->setIsExtensionOfPreviousBlock();
    if (lastBranchToMainlineReturnTT != NULL)
       {
@@ -633,7 +633,7 @@ TR_JProfilingValue::addProfilingTrees(
    TR::Node *counterBaseAddress = TR::Node::aconst(value, table->getBaseAddress() + table->getFreqOffset());
    TR::TreeTop *incTree = TR::TreeTop::create(comp, checkNodeTreeTop,
       incrementMemory(comp, counterType, effectiveAddress(counterType, counterBaseAddress, convertType(selectNode, systemType, true))));
-   TR::Block *quickInc = quickTestBlock->split(incTree, cfg, false, true);
+   TR::Block *quickInc = quickTestBlock->splitPostGRAWithoutFixingCommoning(incTree, cfg, true, NULL);
    quickInc->setIsExtensionOfPreviousBlock();
    if (trace)
       traceMsg(comp, "\t\t\tQuick increment performed in block_%d\n", quickInc->getNumber());
