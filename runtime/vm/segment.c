@@ -177,7 +177,7 @@ void freeMemorySegmentListEntry(J9MemorySegmentList *segmentList, J9MemorySegmen
 }
 
 
-void freeMemorySegmentList(J9JavaVM *javaVM,J9MemorySegmentList *segmentList)
+void freeMemorySegmentList(J9JavaVM *javaVM, J9MemorySegmentList *segmentList)
 {
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 	J9MemorySegment *currentSegment;
@@ -196,10 +196,27 @@ void freeMemorySegmentList(J9JavaVM *javaVM,J9MemorySegmentList *segmentList)
 	j9mem_free_memory(segmentList);
 }
 
+void
+allSegmentsInMemorySegmentListDo(J9MemorySegmentList *segmentList, void (* segmentCallback)(J9MemorySegment*, void*), void *userData)
+{
+	Assert_VM_notNull(segmentList);
+	Assert_VM_notNull(segmentCallback);
+	if (!J9_MEMORY_SEGMENT_LINEAR_LINKED_LIST_IS_EMPTY(segmentList->nextSegment)) {
+		J9MemorySegment *segment = J9_MEMORY_SEGMENT_LINEAR_LINKED_LIST_START_DO(segmentList->nextSegment);
+
+		while (segment != NULL) {
+			segmentCallback(segment, userData);
+			segment = J9_MEMORY_SEGMENT_LINEAR_LINKED_LIST_NEXT_DO(segmentList->nextSegment, segment);
+		}
+
+	}
+
+}
+
 
 U_32 memorySegmentListSize (J9MemorySegmentList *segmentList)
 {
-		return (U_32) pool_numElements(segmentList->segmentPool);
+	return (U_32) pool_numElements(segmentList->segmentPool);
 }
 
 
