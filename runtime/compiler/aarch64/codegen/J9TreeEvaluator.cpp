@@ -780,7 +780,7 @@ void genInstanceOfOrCheckCastSuperClassTest(TR::Node *node, TR::Register *instan
       generateLogicalShiftLeftImmInstruction(cg, node, castClassDepthReg, castClassDepthReg, 3, false);
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldroffx, node, instanceClassSuperClassReg, new (cg->trHeapMemory()) TR::MemoryReference(instanceClassSuperClassesArrayReg, castClassDepthReg, cg));
       }
-   generateCompareInstruction(cg, node, instanceClassSuperClassReg, castClassReg);
+   generateCompareInstruction(cg, node, instanceClassSuperClassReg, castClassReg, true);
 
    if (castClassDepthReg)
       srm->reclaimScratchRegister(castClassDepthReg);

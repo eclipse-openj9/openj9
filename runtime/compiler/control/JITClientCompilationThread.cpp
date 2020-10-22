@@ -465,6 +465,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._interpreterVTableOffset = TR::Compiler->vm.getInterpreterVTableOffset();
          vmInfo._maxHeapSizeInBytes = TR::Compiler->vm.maxHeapSizeInBytes();
          vmInfo._enableGlobalLockReservation = vmThread->javaVM->enableGlobalLockReservation;
+         fe->getNurserySpaceBounds(&vmInfo._nurserySpaceBoundsBase, &vmInfo._nurserySpaceBoundsTop);
+         vmInfo._lowTenureAddress = fe->getLowTenureAddress();
+         vmInfo._highTenureAddress = fe->getHighTenureAddress();
+
          {
             TR::VMAccessCriticalSection getVMInfo(fe);
             vmInfo._jlrMethodInvoke = javaVM->jlrMethodInvoke;

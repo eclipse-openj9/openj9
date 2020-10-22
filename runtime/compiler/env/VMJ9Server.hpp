@@ -198,6 +198,10 @@ public:
    bool getCachedField(J9Class *ramClass, int32_t cpIndex, J9Class **declaringClass, UDATA *field);
    void cacheField(J9Class *ramClass, int32_t cpIndex, J9Class *declaringClass, UDATA field);
 
+   virtual bool getNurserySpaceBounds(uintptr_t *base, uintptr_t *top) override;
+   virtual UDATA getLowTenureAddress() override;
+   virtual UDATA getHighTenureAddress() override;
+
 private:
    bool instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* castClass, bool cacheUpdate);
    bool checkCHTableIfClassInfoExistsAndHasBeenExtended(TR_OpaqueClassBlock *clazz, bool &bClassHasBeenExtended);

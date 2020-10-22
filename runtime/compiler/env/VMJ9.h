@@ -1021,8 +1021,8 @@ public:
    // --------------------------------------------------------------------------
 
    virtual bool getNurserySpaceBounds(uintptr_t *base, uintptr_t *top);
-   virtual uintptr_t getLowTenureAddress();
-   virtual uintptr_t getHighTenureAddress();
+   virtual UDATA getLowTenureAddress();
+   virtual UDATA getHighTenureAddress();
    virtual uintptr_t getThreadLowTenureAddressPointerOffset();
    virtual uintptr_t getThreadHighTenureAddressPointerOffset();
    virtual uintptr_t thisThreadRememberedSetFragmentOffset();

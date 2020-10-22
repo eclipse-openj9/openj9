@@ -331,6 +331,10 @@ class ClientSessionData
       int64_t _maxHeapSizeInBytes;
       J9Method *_jlrMethodInvoke;
       uint32_t _enableGlobalLockReservation;
+      uintptr_t _nurserySpaceBoundsBase;
+      uintptr_t _nurserySpaceBoundsTop;
+      UDATA _lowTenureAddress;
+      UDATA _highTenureAddress;
 #if defined(J9VM_OPT_SIDECAR)
       TR_OpaqueClassBlock *_srMethodAccessorClass;
       TR_OpaqueClassBlock *_srConstructorAccessorClass;
