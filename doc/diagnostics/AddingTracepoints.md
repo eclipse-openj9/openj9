@@ -67,7 +67,20 @@ For example:
 
 This breaks down as follows:
 
-`TraceEvent=Trc_VM_getMethodOrFieldID_dereferencedClass`  This specifies the type and the name of the tracepoint. `Trc_VM_getMethodOrFieldID_dereferencedClass` is the name of the generated macro to use in your code. The `TraceEvent=` denotes this is an event trace point. Other tracepoint types are:  `TraceEntry` `TraceExit` `TraceException` `TraceExit-Exception` `TraceAssert` `TraceDebug`.
+`TraceEvent=Trc_VM_getMethodOrFieldID_dereferencedClass`  This specifies the type and the name of the tracepoint. `Trc_VM_getMethodOrFieldID_dereferencedClass` is the name of the generated macro to use in your code. The `TraceEvent=` denotes this is an event trace point. Other tracepoint types are:
+
+- `TraceEntry`, `TraceEntry-Exception`:
+  Tracepoint to be placed at the entry point of a non-trivial function.
+- `TraceExit`, `TraceExit-Exception`:
+  Tracepoint for the exit points of a non-trivial function that has a `TraceEntry` tracepoint. Entry and Exit tracepoints facilitate indented formatting. If Entry and Exit tracepoints are unbalanced, the formatted trace may be indented incorrectly.
+- `TraceEvent`:
+  A generic tracepoint.
+- `TraceException`:
+  Tracepoint is for out-of-line/error situations (not just Java exceptions).
+- `TraceAssert`:
+  An assertion tracepoint.
+- `TraceDebug`, `TraceDebug-Exception`:
+  Tracepoints deemed useful for debugging particular problems (synonymous with ad hoc, ifdef'ed printfs scattered through the code).
 
 `Overhead=1`  Each tracepoint has an overhead to determine whether it is included in the generated object code at build time. This is useful for very hot tracepoints, where even the cost of the simple 'if enabled' test at runtime is too great. The threshold in the tracepoint pre-processor is currently set to 1, so if you set Overhead to a value greater than 1, the tracepoint will expand to an empty statement at build time. It can still be useful to have the tracepoint defined in the source code, but of course requires a custom re-build of the relevant library as and when actually needed for diagnostics.
 
