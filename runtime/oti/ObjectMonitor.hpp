@@ -37,6 +37,7 @@
 #include "j9accessbarrier.h"
 #include "j9consts.h"
 #include "j9modron.h"
+#include "j9vmnls.h"
 #include "monhelp.h"
 #include "stackwalk.h"
 #include "vm_api.h"
@@ -278,9 +279,9 @@ done:
 	{
 		bool locked = false;
 		if (LN_HAS_LOCKWORD(currentThread, object)
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		&& !J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ(currentThread, object))
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if JAVA_SPEC_VERSION >= 16
+		&& J9_CLASS_ALLOWS_LOCKING(J9OBJECT_CLAZZ(currentThread, object))
+#endif /* JAVA_SPEC_VERSION >= 16 */
 		) {
 			locked = inlineFastInitAndEnterMonitor(currentThread, J9OBJECT_MONITOR_EA(currentThread, object));
 		}
