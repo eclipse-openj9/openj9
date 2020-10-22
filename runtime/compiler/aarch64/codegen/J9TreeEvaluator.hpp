@@ -88,6 +88,16 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    static TR::Register *instanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
+   /**
+    * @brief Generates instructions for inlining instanceof
+    *
+    * @param[in] node: node
+    * @param[in]   cg: code generator
+    *
+    * @return register containing the result of instanceof
+    */
+   static TR::Register *VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
    static TR::Register *checkcastAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *checkcastEvaluator(TR::Node *node, TR::CodeGenerator *cg);
