@@ -2610,7 +2610,7 @@ J9::CodeGenerator::printNVVMIR(
                    isLongMul ? "i64" : "i32");
       }
    else if (node->getOpCodeValue() == TR::bneg || node->getOpCodeValue() == TR::sneg ||
-            node->getOpCodeValue() == TR::ineg || node->getOpCodeValue() == TR::lneg || 
+            node->getOpCodeValue() == TR::ineg || node->getOpCodeValue() == TR::lneg ||
             node->getOpCodeValue() == TR::fneg || node->getOpCodeValue() == TR::dneg)
       {
       getNodeName(node->getChild(0), name0, self()->comp());
@@ -3596,7 +3596,7 @@ J9::CodeGenerator::generateGPU()
       parm->setSymbolReference(parmSymRef);
       callNode->setAndIncChild(12, parm);
 
-      TR::SymbolReference *helper = self()->comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_callGPU, false, false, false);
+      TR::SymbolReference *helper = self()->comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_callGPU);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(TR_System);
       callNode->setSymbolReference(helper);
       TR::Node *treetop = TR::Node::create(callNode, TR::treetop, 1);
