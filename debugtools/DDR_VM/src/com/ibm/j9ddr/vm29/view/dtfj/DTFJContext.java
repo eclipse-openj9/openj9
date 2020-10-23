@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,7 @@ import com.ibm.j9ddr.view.dtfj.image.J9DDRImageSection;
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.J9VMThreadPointerUtil.ThreadInfo;
 import com.ibm.j9ddr.vm29.pointer.AbstractPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ConstantPoolPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JITDataCacheHeaderPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JITExceptionTablePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
@@ -54,12 +55,12 @@ import com.ibm.j9ddr.vm29.view.dtfj.java.DTFJJavaRuntime;
 /**
  * Represents the current context under which DTFJ is being used. This will identify
  * the AddressSpace, Process and RunTime under which operations are being carried out
- * 
+ *
  * @author Adam Pilkington
  *
  */
 public class DTFJContext {
-	
+
 	// TODO: Move these constants to real home
 	/* Constants from J9JITDataCacheConstants */
 	public static final long J9DataTypeExceptionInfo = 0x1;
@@ -68,14 +69,14 @@ public class DTFJContext {
 	public static final long  J9DataTypeStackAtlas = 0x2;
 	public static final long  J9DataTypeThunkMappingData = 0x10;
 	public static final long  J9DataTypeThunkMappingList = 0x8;
-	
+
 	private final static IProcess process;
 	private final static J9JavaVMPointer vm;
 	private static List<ThreadInfo> threadInfoCache = null;
 	private static DTFJJavaRuntime runtime;
 	private static J9DDRImageProcess imageProcess;
 	private static Map<J9MethodPointer, List<J9JITExceptionTablePointer>> jitMethodCache = null;
-	
+
 	static {
 		process = AbstractPointer.getProcess();
 		J9JavaVMPointer temp = null;
@@ -86,23 +87,23 @@ public class DTFJContext {
 		}
 		vm = temp;
 	}
-	
+
 	public static IProcess getProcess() {
 		return process;
 	}
-	
+
 	public static J9JavaVMPointer getVm() {
 		return vm;
 	}
-	
+
 	public static J9DDRImagePointer getImagePointer(long address) {
 		return new J9DDRImagePointer(process, address);
 	}
-	
+
 	public static J9DDRImageSection getImageSection(long address, String name) {
 		return new J9DDRImageSection(process, address, name);
 	}
-	
+
 	/**
 	 * Convenience method to ensure that all DTFJ components log in the same way
 	 * @return
@@ -110,7 +111,7 @@ public class DTFJContext {
 	public static Logger getLogger() {
 		return Logger.getLogger(LOGGER_VIEW_DTFJ);
 	}
-	
+
 	public static List<ThreadInfo> getThreadInfoCache() throws CorruptDataException {
 		if(threadInfoCache == null) {
 			List<ThreadInfo> localThreadInfoCache = new ArrayList<ThreadInfo>();
@@ -121,7 +122,7 @@ public class DTFJContext {
 				localThreadInfoCache.add(info);
 				vmThread = vmThread.linkNext();
 			} while(!vmThread.eq(firstThread));
-			
+
 			threadInfoCache = localThreadInfoCache;
 		}
 		return threadInfoCache;
@@ -131,41 +132,41 @@ public class DTFJContext {
 	{
 		runtime = r;
 	}
-	
+
 	public static DTFJJavaRuntime getRuntime()
 	{
 		return runtime;
 	}
-	
-	public static List<J9JITExceptionTablePointer> getJITMetaData(J9MethodPointer j9ramMethod) 
+
+	public static List<J9JITExceptionTablePointer> getJITMetaData(J9MethodPointer j9ramMethod)
 	{
 		if (jitMethodCache == null) {
 			cacheJITMethodAddresses();
 		}
-		
+
 		return jitMethodCache.get(j9ramMethod);
 	}
-	
+
 	private static void cacheJITMethodAddresses() {
 		jitMethodCache = new HashMap<J9MethodPointer, List<J9JITExceptionTablePointer>>();
-		
+
 		try {
 			J9MemorySegmentListPointer dataCacheList = getVm().jitConfig().dataCacheList();
 			J9MemorySegmentPointer dataCache = dataCacheList.nextSegment();
-			
-			
+
+
 			while (dataCache.notNull()) {
 				UDATA current = UDATA.cast(dataCache.heapBase());
 				UDATA end = UDATA.cast(dataCache.heapAlloc());
-				
+
 				while(current.lt(end)) {
 					J9JITDataCacheHeaderPointer hdr = J9JITDataCacheHeaderPointer.cast(current);
-					
+
 					if (hdr.type().longValue() == J9DataTypeExceptionInfo) {
 						J9JITExceptionTablePointer metaData = J9JITExceptionTablePointer.cast(current.add(J9JITDataCacheHeader.SIZEOF));
 						addMetaData(metaData);
 					}
-					
+
 					current = current.add(hdr.size());
 				}
 				dataCache = dataCache.nextSegment();
@@ -176,14 +177,14 @@ public class DTFJContext {
 	}
 
 	private static void addMetaData(J9JITExceptionTablePointer metaData) throws CorruptDataException {
-		if (metaData.constantPool().isNull()) {
+		if (J9ConstantPoolPointer.cast(metaData.constantPoolOffset()).isNull()) {
 			return;
 		}
-		
-		List<J9JITExceptionTablePointer> bucket = jitMethodCache.get(metaData.ramMethod());
+
+		List<J9JITExceptionTablePointer> bucket = jitMethodCache.get(J9MethodPointer.cast(metaData.ramMethodOffset()));
 		if (bucket == null) {
 			bucket = new ArrayList<J9JITExceptionTablePointer>();
-			jitMethodCache.put(metaData.ramMethod(), bucket);
+			jitMethodCache.put(J9MethodPointer.cast(metaData.ramMethodOffset()), bucket);
 		}
 		bucket.add(metaData);
 	}
@@ -192,7 +193,7 @@ public class DTFJContext {
 	{
 		imageProcess = process;
 	}
-	
+
 	public static J9DDRImageProcess getImageProcess()
 	{
 		return imageProcess;

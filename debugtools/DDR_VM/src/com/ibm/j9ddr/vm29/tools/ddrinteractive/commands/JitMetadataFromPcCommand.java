@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,21 +30,25 @@ import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.JITLook;
+import com.ibm.j9ddr.vm29.pointer.VoidPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ConstantPoolPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JITExceptionTablePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9MethodHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
-public class JitMetadataFromPcCommand extends Command 
+public class JitMetadataFromPcCommand extends Command
 {
 	public JitMetadataFromPcCommand()
 	{
 		addCommand("jitmetadatafrompc", "<pc>", "Show jit method metadata for PC");
 	}
-	
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		try {
 			UDATA searchValue = new UDATA(Long.decode(args[0]));
@@ -60,15 +64,15 @@ public class JitMetadataFromPcCommand extends Command
 
 	}
 
-	void dbgext_j9jitexceptiontable(PrintStream out, J9JITExceptionTablePointer parm) throws CorruptDataException 
+	void dbgext_j9jitexceptiontable(PrintStream out, J9JITExceptionTablePointer parm) throws CorruptDataException
 	{
 		/* print individual fields */
 		CommandUtils.dbgPrint(out, "J9JITExceptionTable at %s {\n", parm.getHexAddress());
-		CommandUtils.dbgPrint(out, "    struct J9UTF8* className = !j9utf8 %s   // %s\n", parm.className().getHexAddress(), parm.className().isNull() ? "NULL" : J9UTF8Helper.stringValue(parm.className()));
-		CommandUtils.dbgPrint(out, "    struct J9UTF8* methodName = !j9utf8 %s   // %s\n", parm.methodName().getHexAddress(), parm.methodName().isNull() ? "NULL" : J9UTF8Helper.stringValue(parm.methodName()));
-		CommandUtils.dbgPrint(out, "    struct J9UTF8* methodSignature = !j9utf8 %s   // %s\n", parm.methodSignature().getHexAddress(), parm.methodSignature().isNull() ? "NULL" :J9UTF8Helper.stringValue(parm.methodSignature()));
-		CommandUtils.dbgPrint(out, "    struct J9ConstantPool* constantPool = !j9constantpool %s \n", parm.constantPool().getHexAddress());
-		CommandUtils.dbgPrint(out, "    struct J9Method* ramMethod = !j9method %s   // %s\n", parm.ramMethod().getHexAddress(), J9MethodHelper.getName(parm.ramMethod()));
+		CommandUtils.dbgPrint(out, "    struct J9UTF8* className = !j9utf8 %s   // %s\n", J9UTF8Pointer.cast(parm.classNameOffset()).getHexAddress(), J9UTF8Pointer.cast(parm.classNameOffset()).isNull() ? "NULL" : J9UTF8Helper.stringValue(J9UTF8Pointer.cast(parm.classNameOffset())));
+		CommandUtils.dbgPrint(out, "    struct J9UTF8* methodName = !j9utf8 %s   // %s\n", J9UTF8Pointer.cast(parm.methodNameOffset()).getHexAddress(), J9UTF8Pointer.cast(parm.methodNameOffset()).isNull() ? "NULL" : J9UTF8Helper.stringValue(J9UTF8Pointer.cast(parm.methodNameOffset())));
+		CommandUtils.dbgPrint(out, "    struct J9UTF8* methodSignature = !j9utf8 %s   // %s\n", J9UTF8Pointer.cast(parm.methodSignatureOffset()).getHexAddress(), J9UTF8Pointer.cast(parm.methodSignatureOffset()).isNull() ? "NULL" :J9UTF8Helper.stringValue(J9UTF8Pointer.cast(parm.methodSignatureOffset())));
+		CommandUtils.dbgPrint(out, "    struct J9ConstantPool* constantPool = !j9constantpool %s \n", J9ConstantPoolPointer.cast(parm.constantPoolOffset()).getHexAddress());
+		CommandUtils.dbgPrint(out, "    struct J9Method* ramMethod = !j9method %s   // %s\n", J9MethodPointer.cast(parm.ramMethodOffset()).getHexAddress(), J9MethodHelper.getName(J9MethodPointer.cast(parm.ramMethodOffset())));
 		CommandUtils.dbgPrint(out, "    UDATA parm.startPC = %s;\n", parm.startPC().getHexValue());
 		CommandUtils.dbgPrint(out, "    UDATA parm.endWarmPC = %s;\n", parm.endWarmPC().getHexValue());
 		CommandUtils.dbgPrint(out, "    UDATA parm.startColdPC = %s;\n", parm.startColdPC().getHexValue());
@@ -82,19 +86,19 @@ public class JitMetadataFromPcCommand extends Command
 		CommandUtils.dbgPrint(out, "    U_16 parm.numExcptionRanges = %s;\n", parm.numExcptionRanges().getHexValue());
 		CommandUtils.dbgPrint(out, "    I_32 parm.size = %s;\n", parm.size().getHexValue());
 		CommandUtils.dbgPrint(out, "    UDATA parm.registerSaveDescription = %s;\n", parm.registerSaveDescription().getHexValue());
-		CommandUtils.dbgPrint(out, "    void* gcStackAtlas = !void %s \n", parm.gcStackAtlas().getHexAddress());
-		CommandUtils.dbgPrint(out, "    void* inlinedCalls = !void %s \n", parm.inlinedCalls().getHexAddress());
+		CommandUtils.dbgPrint(out, "    void* gcStackAtlas = !void %s \n", VoidPointer.cast(parm.gcStackAtlasOffset()).getHexAddress());
+		CommandUtils.dbgPrint(out, "    void* inlinedCalls = !void %s \n", VoidPointer.cast(parm.inlinedCallsOffset()).getHexAddress());
 		CommandUtils.dbgPrint(out, "    void* bodyInfo = !void %s \n", parm.bodyInfo().getHexAddress());
-		CommandUtils.dbgPrint(out, "    struct J9JITExceptionTable* nextMethod = !j9jitexceptiontable %s \n", parm.nextMethod().getHexAddress());
-		CommandUtils.dbgPrint(out, "    struct J9JITExceptionTable* prevMethod = !j9jitexceptiontable %s \n", parm.prevMethod().getHexAddress());
+		CommandUtils.dbgPrint(out, "    struct J9JITExceptionTable* nextMethod = !j9jitexceptiontable %s \n", J9JITExceptionTablePointer.cast(parm.nextMethodOffset()).getHexAddress());
+		CommandUtils.dbgPrint(out, "    struct J9JITExceptionTable* prevMethod = !j9jitexceptiontable %s \n", J9JITExceptionTablePointer.cast(parm.prevMethodOffset()).getHexAddress());
 		CommandUtils.dbgPrint(out, "    void* debugSlot1 = !void %s \n", parm.debugSlot1().getHexAddress());
 		CommandUtils.dbgPrint(out, "    void* debugSlot2 = !void %s \n", parm.debugSlot2().getHexAddress());
-		CommandUtils.dbgPrint(out, "    void* osrInfo = !void %s \n", parm.osrInfo().getHexAddress());
+		CommandUtils.dbgPrint(out, "    void* osrInfo = !void %s \n", VoidPointer.cast(parm.osrInfoOffset()).getHexAddress());
 		CommandUtils.dbgPrint(out, "    void* runtimeAssumptionList = !void %s \n", parm.runtimeAssumptionList().getHexAddress());
 		CommandUtils.dbgPrint(out, "    I_32 parm.hotness = %s;\n", parm.hotness().getHexValue());
 		CommandUtils.dbgPrint(out, "    UDATA parm.codeCacheAlloc = %s;\n", parm.codeCacheAlloc().getHexValue());
-		CommandUtils.dbgPrint(out, "    void* gpuCode = !void %s \n", parm.gpuCode().getHexAddress());
-		CommandUtils.dbgPrint(out, "    void* riData = !void %s \n", parm.riData().getHexAddress());
+		CommandUtils.dbgPrint(out, "    void* gpuCode = !void %s \n", VoidPointer.cast(parm.gpuCodeOffset()).getHexAddress());
+		CommandUtils.dbgPrint(out, "    void* riData = !void %s \n", VoidPointer.cast(parm.riDataOffset()).getHexAddress());
 		CommandUtils.dbgPrint(out, "}\n");
 	}
 }
