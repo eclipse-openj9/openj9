@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -400,6 +400,11 @@ public class JavaRuntime implements com.ibm.dtfj.java.JavaRuntime
 	public void setTraceBufferForName(TraceBuffer buffer, String key)
 	{
 		_traceBuffers.put(key, buffer);
+	}
+
+	@Override
+	public Properties getSystemProperties() {
+		return _systemProperties;
 	}
 
 	public String getSystemProperty(String key)
