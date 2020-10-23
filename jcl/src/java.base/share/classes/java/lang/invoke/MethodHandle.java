@@ -608,9 +608,6 @@ public abstract class MethodHandle
 		final static MethodHandle spreader_7 = MethodHandles.spreadInvoker(MethodType.genericMethodType(7), 0);
 		
 	}
-
-	
-	private static native Object invokeWithArgumentsHelper(MethodHandle mh, Object[] args);
 	
 	/**
 	 * Helper method to call {@link #invokeWithArguments(Object[])}.
