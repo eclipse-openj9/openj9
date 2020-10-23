@@ -83,6 +83,7 @@ initializeMethodRunAddressMethodHandle(J9Method *method)
 }
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 static VMINLINE bool
 initializeMethodRunAddressVarHandle(J9Method *method)
 {
@@ -202,6 +203,7 @@ initializeMethodRunAddressVarHandle(J9Method *method)
 
 	return NULL != encodedAccessMode;
 }
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 void
 initializeMethodRunAddress(J9VMThread *vmThread, J9Method *method)
@@ -216,9 +218,11 @@ initializeMethodRunAddress(J9VMThread *vmThread, J9Method *method)
 	}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	if (initializeMethodRunAddressVarHandle(method)) {
 		return;
 	}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_INITIALIZE_SEND_TARGET)) {
 		method->methodRunAddress = NULL;
