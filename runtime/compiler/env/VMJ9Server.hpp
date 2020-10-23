@@ -47,7 +47,6 @@ public:
 
    virtual bool storeOffsetToArgumentsInVirtualIndirectThunks() override { return true; }
    virtual bool needsContiguousCodeAndDataCacheAllocation() override     { return true; }
-   virtual bool supportsEmbeddedHeapBounds() override                    { return false; }
    virtual bool supportsFastNanoTime() override                          { return false; }
    virtual bool needRelocationsForHelpers() override                     { return true; }
    virtual bool canDevirtualizeDispatch() override                       { return true; }
