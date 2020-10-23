@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -151,7 +151,7 @@ public class HashTest {
 			if (randomPadding) {
 				int r = rand.nextInt(128);
 				while (r > 0) {
-					Integer foo = new Integer(r);
+					Integer foo = Integer.valueOf(r);
 					r--;
 				}
 			}

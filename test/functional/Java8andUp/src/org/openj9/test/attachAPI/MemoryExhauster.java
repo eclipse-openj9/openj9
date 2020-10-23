@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,7 @@ public class MemoryExhauster {
 	public MemoryExhauster(MemoryExhauster predecessor, long i) {
 		try {
 			link = predecessor;
-			bloat = new Long(i);
+			bloat = Long.valueOf(i);
 		} catch (OutOfMemoryError e) {
 			bloat = null;
 			link = null;

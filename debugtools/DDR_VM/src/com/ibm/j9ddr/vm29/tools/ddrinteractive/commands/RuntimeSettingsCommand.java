@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,7 +97,7 @@ public class RuntimeSettingsCommand extends Command
 				initialSoftmx = cmdline.substring(start + length, end);
 				initialSoftmx = initialSoftmx.toUpperCase();
 			}
-			currentSoftmx = new Long(GCExtensions.softMx().longValue());
+			currentSoftmx = Long.valueOf(GCExtensions.softMx().longValue());
 			qualifiedCurrentSoftmx = currentSoftmx.toString();
 			Matcher m = p.matcher(initialSoftmx);
 
@@ -229,7 +229,7 @@ public class RuntimeSettingsCommand extends Command
 	 * a qualified size such as '4K' 
 	 */
 	private String sizeInBytes(String qSize) {
-		Long number = new Long(qSize.substring(0, qSize.length()-1));
+		Long number = Long.valueOf(qSize.substring(0, qSize.length()-1));
 		if (qSize.endsWith("K")) {
 			number = number * 1024;
 		} else if (qSize.endsWith("M")) {

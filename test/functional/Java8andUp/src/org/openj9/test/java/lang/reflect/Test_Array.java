@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang.reflect;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -499,7 +499,7 @@ public class Test_Array {
 		Object ret = null;
 		boolean thrown = false;
 		try {
-			Array.set(x, 0, new Integer(1));
+			Array.set(x, 0, Integer.valueOf(1));
 		} catch (Exception e) {
 			AssertJUnit.assertTrue("Exception during get test: " + e.toString(), false);
 		}
@@ -514,7 +514,7 @@ public class Test_Array {
 			AssertJUnit.assertTrue("Passing non-array failed to throw exception", false);
 		thrown = false;
 		try {
-			Array.set(x, 4, new Integer(1));
+			Array.set(x, 4, Integer.valueOf(1));
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// Correct behaviour
 			thrown = true;

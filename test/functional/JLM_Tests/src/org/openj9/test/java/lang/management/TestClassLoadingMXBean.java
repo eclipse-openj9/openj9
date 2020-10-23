@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -190,7 +190,7 @@ public class TestClassLoadingMXBean {
 			Boolean before = (Boolean)mbs.getAttribute(objName, "Verbose");
 			// Toggle the boolean state of "isVerbose"
 			boolean newVal = !before;
-			attr = new Attribute("Verbose", new Boolean(newVal));
+			attr = new Attribute("Verbose", Boolean.valueOf(newVal));
 			mbs.setAttribute(objName, attr);
 			Boolean after = (Boolean)mbs.getAttribute(objName, "Verbose");
 			assert (newVal == after);
@@ -212,7 +212,7 @@ public class TestClassLoadingMXBean {
 		}
 
 		// Let's try and set some non-writable attributes.
-		attr = new Attribute("LoadedClassCount", new Integer(25));
+		attr = new Attribute("LoadedClassCount", Integer.valueOf(25));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception.");
@@ -227,7 +227,7 @@ public class TestClassLoadingMXBean {
 			logger.debug("Exception occurred, as expected: " + e1.getMessage());
 		}
 
-		attr = new Attribute("TotalLoadedClassCount", new Long(3300));
+		attr = new Attribute("TotalLoadedClassCount", Long.valueOf(3300));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception.");
@@ -242,7 +242,7 @@ public class TestClassLoadingMXBean {
 			logger.debug("Exception occurred, as expected: " + e1.getMessage());
 		}
 
-		attr = new Attribute("UnloadedClassCount", new Long(38));
+		attr = new Attribute("UnloadedClassCount", Long.valueOf(38));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception.");
@@ -258,7 +258,7 @@ public class TestClassLoadingMXBean {
 		}
 
 		// Try and set the Verbose attribute with an incorrect type.
-		attr = new Attribute("Verbose", new Long(42));
+		attr = new Attribute("Verbose", Long.valueOf(42));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception.");
@@ -337,7 +337,7 @@ public class TestClassLoadingMXBean {
 	public final void testSetAttributes() {
 		// Ideal scenario...
 		AttributeList attList = new AttributeList();
-		Attribute verbose = new Attribute("Verbose", new Boolean(false));
+		Attribute verbose = new Attribute("Verbose", Boolean.valueOf(false));
 		attList.add(verbose);
 		AttributeList setAttrs = null;
 		try {
@@ -355,7 +355,7 @@ public class TestClassLoadingMXBean {
 
 		// A failure scenario - a non-existent attribute...
 		AttributeList badList = new AttributeList();
-		Attribute garbage = new Attribute("Bantry", new Long(2888));
+		Attribute garbage = new Attribute("Bantry", Long.valueOf(2888));
 		badList.add(garbage);
 		try {
 			setAttrs = mbs.setAttributes(objName, badList);
@@ -371,7 +371,7 @@ public class TestClassLoadingMXBean {
 
 		// Another failure scenario - a non-writable attribute...
 		badList = new AttributeList();
-		garbage = new Attribute("TotalLoadedClassCount", new Long(2888));
+		garbage = new Attribute("TotalLoadedClassCount", Long.valueOf(2888));
 		badList.add(garbage);
 		try {
 			setAttrs = mbs.setAttributes(objName, badList);
@@ -387,7 +387,7 @@ public class TestClassLoadingMXBean {
 
 		// Yet another failure scenario - a wrongly-typed attribute...
 		badList = new AttributeList();
-		garbage = new Attribute("Verbose", new Long(2888));
+		garbage = new Attribute("Verbose", Long.valueOf(2888));
 		badList.add(garbage);
 		try {
 			setAttrs = mbs.setAttributes(objName, badList);
@@ -406,7 +406,7 @@ public class TestClassLoadingMXBean {
 	public final void testInvoke() {
 		// ClassLoadingMXBean has no operations to invoke...
 		try {
-			Object retVal = mbs.invoke(objName, "KissTheBlarney", new Object[] { new Long(7446), new Long(54) },
+			Object retVal = mbs.invoke(objName, "KissTheBlarney", new Object[] { Long.valueOf(7446), Long.valueOf(54) },
 					new String[] { "java.lang.Long", "java.lang.Long" });
 			// An exception other then InstanceNotFoundException should have been thrown,
 			// since there aren't any operations and we just tried to invoke one.

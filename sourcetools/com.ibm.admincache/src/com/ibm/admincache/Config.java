@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corp. and others
+ * Copyright (c) 2008, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -613,7 +613,7 @@ abstract class Config {
         		addedFileName = _unicityOfFileName.get(fileNameCanonical);
         		if (addedFileName == null) {
         			fileNames().add(fileNameCanonical);
-        			_unicityOfFileName.put(fileNameCanonical, new Integer(0));
+        			_unicityOfFileName.put(fileNameCanonical, Integer.valueOf(0));
         		}
         	} else {
         		if (badFileEncountered())

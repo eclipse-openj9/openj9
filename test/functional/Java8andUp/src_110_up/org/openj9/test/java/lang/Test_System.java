@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,7 +97,7 @@ public class Test_System {
 		Integer b[] = new Integer[20];
 		int i = 0;
 		while (i < a.length) {
-			a[i] = new Integer(i);
+			a[i] = Integer.valueOf(i);
 			++i;
 		}
 		System.arraycopy(a, 0, b, 0, a.length);

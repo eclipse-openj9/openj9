@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@ public class ComplexIndyTest{
 	}
 	@Test(groups = { "level.extended" })
 	public void test_gwtTest_Integer() {
-		String s = com.ibm.j9.jsr292.indyn.ComplexIndy.gwtTest(new Integer(1));
+		String s = com.ibm.j9.jsr292.indyn.ComplexIndy.gwtTest(Integer.valueOf(1));
 		if (!s.equals("2")) Assert.fail("Wrong string returned'" + s +"'");
 	}
 	@Test(groups = { "level.extended" })

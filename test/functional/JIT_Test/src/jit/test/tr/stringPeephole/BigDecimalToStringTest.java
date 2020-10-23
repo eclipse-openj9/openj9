@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,7 @@ public class BigDecimalToStringTest{
       @Test
       public void testBigDecimal0ToString() {
          NumberFormat format = new DecimalFormat("###,###,##0");
-         BigDecimal bigDecimalValue = new BigDecimal(new Double(0.000));
+         BigDecimal bigDecimalValue = new BigDecimal(Double.valueOf(0.000));
          String s = bigDecimalToString(format, bigDecimalValue);
          logger.debug("Converting BigDecimal with value 0 to string ...");
          Assert.assertEquals(s, "0");

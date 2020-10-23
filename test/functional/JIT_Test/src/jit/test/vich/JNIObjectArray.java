@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2018 IBM Corp. and others
+ * Copyright (c) 2006, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ public class JNIObjectArray {
 	{
 		for (int i = 0; i < array.length; i++)
 		{
-			array[i] = new Integer(0);
+			array[i] = Integer.valueOf(0);
 		}
 	}
 	

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -436,7 +436,7 @@ public class TestLoggingMXBean {
 			if (sb != null) {
 				// Call getParentLoggerName(String) again with a bad argument type.
 				try {
-					Object retVal = sb.invoke("getParentLoggerName", new Object[] { new Long(311) },
+					Object retVal = sb.invoke("getParentLoggerName", new Object[] { Long.valueOf(311) },
 							new String[] { Long.TYPE.getName() });
 					Assert.fail("Should have thrown exception !!");
 				} catch (ReflectionException e) {
@@ -464,7 +464,7 @@ public class TestLoggingMXBean {
 		if (sb != null) {
 			// Try invoking a bogus operation ...
 			try {
-				Object retVal = sb.invoke("GetUpStandUp", new Object[] { new Long(7446), new Long(54) },
+				Object retVal = sb.invoke("GetUpStandUp", new Object[] { Long.valueOf(7446), Long.valueOf(54) },
 						new String[] { "java.lang.Long", "java.lang.Long" });
 				Assert.fail("Unreacheable code: should have thrown an exception.");
 			} catch (ReflectionException e) {
