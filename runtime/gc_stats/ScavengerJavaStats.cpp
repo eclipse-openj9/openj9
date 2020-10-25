@@ -23,36 +23,20 @@
 
 #include "ScavengerJavaStats.hpp"
 
+
 MM_ScavengerJavaStats::MM_ScavengerJavaStats() :
-	_unfinalizedCandidates(0)
-	,_unfinalizedEnqueued(0)
-	,_ownableSynchronizerCandidates(0)
+	MM_JavaStats()
 	,_ownableSynchronizerTotalSurvived(0)
 	,_ownableSynchronizerNurserySurvived(0)
-	,_weakReferenceStats()
-	,_softReferenceStats()
-	,_phantomReferenceStats()
-	,_monitorReferenceCleared(0)
-	,_monitorReferenceCandidates(0)
 {
 }
 
 void 
 MM_ScavengerJavaStats::clear()
 {
-	_unfinalizedCandidates = 0;
-	_unfinalizedEnqueued = 0;
-
-	_ownableSynchronizerCandidates = 0;
+	MM_JavaStats::clear();
 	_ownableSynchronizerTotalSurvived = 0;
 	_ownableSynchronizerNurserySurvived = 0;
-
-	_weakReferenceStats.clear();
-	_softReferenceStats.clear();
-	_phantomReferenceStats.clear();
-
-	_monitorReferenceCleared = 0;
-	_monitorReferenceCandidates = 0;
 };
 
 

@@ -31,35 +31,21 @@
 
 #include "j9.h"
 #include "j9cfg.h"
-#include "j9port.h"
 #include "j9consts.h"
 #include "modron.h"
-#include "modronopt.h"
 
-#include "Base.hpp"
-#include "ReferenceStats.hpp"
+#include "JavaStats.hpp"
 
 /**
  * Storage for statistics relevant to a scavenging (semi-space copying) collector.
  * @ingroup GC_Stats
  */
-class MM_ScavengerJavaStats
+class MM_ScavengerJavaStats : public MM_JavaStats
 {
 public:
 
-	UDATA _unfinalizedCandidates;  /**< unfinalized objects that are candidates to be finalized visited this cycle */
-	UDATA _unfinalizedEnqueued;  /**< unfinalized objects that are enqueued during this cycle (MUST be less than or equal _unfinalizedCandidates) */
-
-	UDATA _ownableSynchronizerCandidates;  /**< number of ownable synchronizer objects visited this cycle */
 	UDATA _ownableSynchronizerTotalSurvived;	/**< number of ownable synchronizer objects survived this cycle */
 	UDATA _ownableSynchronizerNurserySurvived; /**< number of ownable synchronizer objects survived this cycle in Nursery Space */
-
-	MM_ReferenceStats _weakReferenceStats;  /**< Weak reference stats for the cycle */
-	MM_ReferenceStats _softReferenceStats;  /**< Soft reference stats for the cycle */
-	MM_ReferenceStats _phantomReferenceStats;  /**< Phantom reference stats for the cycle */
-
-	UDATA _monitorReferenceCleared; /**< The number of monitor references that have been cleared during scavenge */
-	UDATA _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during scavenge */
 
 protected:
 

@@ -29,21 +29,12 @@
 void
 MM_MarkJavaStats::clear()
 {
-	_unfinalizedCandidates = 0;
-	_unfinalizedEnqueued = 0;
+	MM_JavaStats::clear();
 
-	_ownableSynchronizerCandidates = 0;
 	_ownableSynchronizerCleared = 0;
-
-	_weakReferenceStats.clear();
-	_softReferenceStats.clear();
-	_phantomReferenceStats.clear();
 
 	_stringConstantsCleared = 0;
 	_stringConstantsCandidates = 0;
-
-	_monitorReferenceCleared = 0;
-	_monitorReferenceCandidates = 0;
 
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 	splitArraysProcessed = 0;
