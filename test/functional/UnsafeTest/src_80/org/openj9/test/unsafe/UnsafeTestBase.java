@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -413,7 +413,7 @@ public class UnsafeTestBase implements ITest {
 				myUnsafe.putByteVolatile(base(target, i), offset, modelByte[i]);
 			}
 			if (method.equals(ORDERED)) {
-				myUnsafe.putOrderedObject(base(target, i), offset, new Byte(
+				myUnsafe.putOrderedObject(base(target, i), offset, Byte.valueOf(
 						(byte) -1));
 			} else {
 				myUnsafe.putByte(base(target, i), offset, modelByte[i]);

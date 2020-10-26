@@ -974,7 +974,7 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\t\tif (CACHE_FIELDS) {%n");
 			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = new Boolean(getBoolAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+			writer.format("\t\t\t\t%s_cache = Boolean.valueOf(getBoolAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
 			writer.format("\t\t\t}%n");
 			writer.format("\t\t\treturn %s_cache.booleanValue();%n", getter);
 			writer.format("\t\t} else {%n\t");
@@ -999,7 +999,7 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\t\tif (CACHE_FIELDS) {%n");
 			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = new Double(getDoubleAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+			writer.format("\t\t\t\t%s_cache = Double.valueOf(getDoubleAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
 			writer.format("\t\t\t}%n");
 			writer.format("\t\t\treturn %s_cache.doubleValue();%n", getter);
 			writer.format("\t\t} else {%n\t");
@@ -1027,13 +1027,13 @@ public class PointerGenerator {
 			writer.format("\t\tif (CACHE_FIELDS) {%n");
 			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
 			writer.format("\t\t\t\tif (%s.SIZEOF == 1) {%n", enumType);
-			writer.format("\t\t\t\t\t%s_cache = new Long(getByteAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+			writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getByteAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
 			writer.format("\t\t\t\t} else if (%s.SIZEOF == 2) {%n", enumType);
-			writer.format("\t\t\t\t\t%s_cache = new Long(getShortAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+			writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getShortAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
 			writer.format("\t\t\t\t} else if (%s.SIZEOF == 4) {%n", enumType);
-			writer.format("\t\t\t\t\t%s_cache = new Long(getIntAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+			writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getIntAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
 			writer.format("\t\t\t\t} else if (%s.SIZEOF == 8) {%n", enumType);
-			writer.format("\t\t\t\t\t%s_cache = new Long(getLongAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+			writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getLongAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
 			writer.format("\t\t\t\t} else {%n");
 			writer.format("\t\t\t\t\tthrow new IllegalArgumentException(\"Unexpected ENUM size in core file\");%n");
 			writer.format("\t\t\t\t}%n");
@@ -1099,7 +1099,7 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\t\tif (CACHE_FIELDS) {%n");
 			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = new Float(getFloatAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+			writer.format("\t\t\t\t%s_cache = Float.valueOf(getFloatAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
 			writer.format("\t\t\t}%n");
 			writer.format("\t\t\treturn %s_cache.floatValue();%n", getter);
 			writer.format("\t\t} else {%n\t");

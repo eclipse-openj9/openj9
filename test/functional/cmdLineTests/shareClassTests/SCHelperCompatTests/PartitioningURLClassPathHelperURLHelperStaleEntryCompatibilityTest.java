@@ -69,7 +69,7 @@ public class PartitioningURLClassPathHelperURLHelperStaleEntryCompatibilityTest 
 		String partition = props.getProperty("Partition");
 		
 		String ctl = props.getProperty("NumberOfClassesToLoad");
-		Integer intctl = new Integer(ctl);
+		Integer intctl = Integer.valueOf(ctl);
 		int numberOfClassesToLoad = intctl.intValue();
 		
 		String classesString = props.getProperty("LoadClasses");
@@ -79,7 +79,7 @@ public class PartitioningURLClassPathHelperURLHelperStaleEntryCompatibilityTest 
 		}
 		
 		String numberOfUrlsString = props.getProperty("NumberOfUrls");
-		Integer tempNumberOfUrls = new Integer(numberOfUrlsString);
+		Integer tempNumberOfUrls = Integer.valueOf(numberOfUrlsString);
 		int numberOfUrls = tempNumberOfUrls.intValue();
 		
 		int maxClassesToFind = 0;		
@@ -89,7 +89,7 @@ public class PartitioningURLClassPathHelperURLHelperStaleEntryCompatibilityTest 
 			urls[index] = props.getProperty("Url"+index);
 			partitionStrings[index] = props.getProperty("urlPartition"+index);
 			String ctf = props.getProperty("NumberOfClassesToFind"+index);
-			Integer intctf = new Integer(ctl);
+			Integer intctf = Integer.valueOf(ctl);
 			maxClassesToFind = ((intctl.intValue() > maxClassesToFind) ? intctl.intValue() : maxClassesToFind);
 		}
 		
@@ -100,7 +100,7 @@ public class PartitioningURLClassPathHelperURLHelperStaleEntryCompatibilityTest 
 			String findClasses = props.getProperty("FindClasses"+urlIndex);
 			String result = props.getProperty("Results"+urlIndex);
 			String ctf = props.getProperty("NumberOfClassesToFind"+urlIndex);
-			Integer intctf = new Integer(ctf);
+			Integer intctf = Integer.valueOf(ctf);
 			int numberOfClassesToFind = intctf.intValue();
 			for(int classToFindIndex = 0; classToFindIndex < numberOfClassesToFind; classToFindIndex++){
 				classesToFind[urlIndex][classToFindIndex] = manipulator.getStringElement(classToFindIndex, findClasses);

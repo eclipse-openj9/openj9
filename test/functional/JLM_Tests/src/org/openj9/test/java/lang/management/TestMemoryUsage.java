@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -206,7 +206,7 @@ public class TestMemoryUsage {
 	private static CompositeData createBadCompositeDataObject() {
 		CompositeData result = null;
 		String[] names = { "init", "max", "incorrect", "committed" };
-		Object[] values = { new Long(100), new Long(1000), new Long(150), new Long(500) };
+		Object[] values = { Long.valueOf(100), Long.valueOf(1000), Long.valueOf(150), Long.valueOf(500) };
 		CompositeType cType = createBadCompositeTypeObject();
 		try {
 			result = new CompositeDataSupport(cType, names, values);

@@ -403,7 +403,7 @@ public class TestRuntimeMXBean {
 		} catch (Exception e1) {
 		}
 
-		attr = new Attribute("StartTime", new Long(2333));
+		attr = new Attribute("StartTime", Long.valueOf(2333));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Should have thrown an exception.");
@@ -417,7 +417,7 @@ public class TestRuntimeMXBean {
 		} catch (Exception e1) {
 		}
 
-		attr = new Attribute("Uptime", new Long(1979));
+		attr = new Attribute("Uptime", Long.valueOf(1979));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Should have thrown an exception.");
@@ -445,7 +445,7 @@ public class TestRuntimeMXBean {
 		} catch (Exception e1) {
 		}
 
-		attr = new Attribute("BootClassPathSupported", new Boolean(false));
+		attr = new Attribute("BootClassPathSupported", Boolean.valueOf(false));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Should have thrown an exception.");
@@ -453,7 +453,7 @@ public class TestRuntimeMXBean {
 		}
 
 		// Try and set the Name attribute with an incorrect type.
-		attr = new Attribute("Name", new Long(42));
+		attr = new Attribute("Name", Long.valueOf(42));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Should have thrown an exception");
@@ -571,7 +571,7 @@ public class TestRuntimeMXBean {
 		try {
 			Object retVal = null;
 			try {
-				retVal = mbs.invoke(objName, "DoTheStrand", new Object[] { new Long(7446), new Long(54) },
+				retVal = mbs.invoke(objName, "DoTheStrand", new Object[] { Long.valueOf(7446), Long.valueOf(54) },
 						new String[] { "java.lang.Long", "java.lang.Long" });
 			} catch (InstanceNotFoundException e) {
 				// An unlikely exception - if this occurs, we can't proceed with the test.

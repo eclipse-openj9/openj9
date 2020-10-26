@@ -1,7 +1,7 @@
 package org.openj9.test.java.security;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,9 +93,9 @@ public class Test_AccessController {
 			public Object run() {
 				try {
 					AccessController.checkPermission(new AllPermission());
-					return new Boolean(false);
+					return Boolean.valueOf(false);
 				} catch (SecurityException ex) {
-					return new Boolean(true);
+					return Boolean.valueOf(true);
 				}
 			}
 		}, null);

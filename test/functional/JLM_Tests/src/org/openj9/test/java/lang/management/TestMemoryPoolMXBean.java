@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -267,7 +267,7 @@ public class TestMemoryPoolMXBean {
 		// - UsageThreshold and CollectionUsageThreshold
 		MemoryPoolMXBean testImpl = testBean;
 		AttributeList attList = new AttributeList();
-		Attribute newUT = new Attribute("UsageThreshold", new Long(100 * 1024));
+		Attribute newUT = new Attribute("UsageThreshold", Long.valueOf(100 * 1024));
 		attList.add(newUT);
 		AttributeList setAttrs = null;
 		try {
@@ -288,7 +288,7 @@ public class TestMemoryPoolMXBean {
 		}
 
 		attList = new AttributeList();
-		Attribute newCUT = new Attribute("CollectionUsageThreshold", new Long(250 * 1024));
+		Attribute newCUT = new Attribute("CollectionUsageThreshold", Long.valueOf(250 * 1024));
 		attList.add(newCUT);
 		try {
 			setAttrs = mbs.setAttributes(objName, attList);
@@ -309,7 +309,7 @@ public class TestMemoryPoolMXBean {
 
 		// A failure scenario - a non-existent attribute...
 		AttributeList badList = new AttributeList();
-		Attribute garbage = new Attribute("Bantry", new Long(2888));
+		Attribute garbage = new Attribute("Bantry", Long.valueOf(2888));
 		badList.add(garbage);
 		try {
 			setAttrs = mbs.setAttributes(objName, badList);
@@ -345,7 +345,7 @@ public class TestMemoryPoolMXBean {
 
 		// Yet another failure scenario - a wrongly-typed attribute...
 		badList = new AttributeList();
-		garbage = new Attribute("CollectionUsageThreshold", new Boolean(true));
+		garbage = new Attribute("CollectionUsageThreshold", Boolean.valueOf(true));
 		badList.add(garbage);
 		try {
 			setAttrs = mbs.setAttributes(objName, badList);
@@ -676,10 +676,10 @@ public class TestMemoryPoolMXBean {
 			try {
 				long originalUT = (Long)mbs.getAttribute(objName, "UsageThreshold");
 				long newUT = originalUT + 1024;
-				Attribute newUTAttr = new Attribute("UsageThreshold", new Long(newUT));
+				Attribute newUTAttr = new Attribute("UsageThreshold", Long.valueOf(newUT));
 				mbs.setAttribute(objName, newUTAttr);
 
-				AssertJUnit.assertEquals(new Long(newUT), (Long)mbs.getAttribute(objName, "UsageThreshold"));
+				AssertJUnit.assertEquals(Long.valueOf(newUT), (Long)mbs.getAttribute(objName, "UsageThreshold"));
 			} catch (AttributeNotFoundException e) {
 				e.printStackTrace();
 				Assert.fail("Unexpected AttributeNotFoundException occurred: " + e.getMessage());
@@ -698,7 +698,7 @@ public class TestMemoryPoolMXBean {
 			}
 		} else {
 			try {
-				Attribute newUTAttr = new Attribute("UsageThreshold", new Long(100 * 1024));
+				Attribute newUTAttr = new Attribute("UsageThreshold", Long.valueOf(100 * 1024));
 				mbs.setAttribute(objName, newUTAttr);
 				Assert.fail("Unreacheable code: should have thrown exception!");
 			} catch (Exception e) {
@@ -716,10 +716,10 @@ public class TestMemoryPoolMXBean {
 			try {
 				long originalCUT = (Long)mbs.getAttribute(objName, "CollectionUsageThreshold");
 				long newCUT = originalCUT + 1024;
-				Attribute newCUTAttr = new Attribute("CollectionUsageThreshold", new Long(newCUT));
+				Attribute newCUTAttr = new Attribute("CollectionUsageThreshold", Long.valueOf(newCUT));
 				mbs.setAttribute(objName, newCUTAttr);
 
-				AssertJUnit.assertEquals(new Long(newCUT), (Long)mbs.getAttribute(objName, "CollectionUsageThreshold"));
+				AssertJUnit.assertEquals(Long.valueOf(newCUT), (Long)mbs.getAttribute(objName, "CollectionUsageThreshold"));
 			} catch (AttributeNotFoundException e) {
 				e.printStackTrace();
 				Assert.fail("Unexpected AttributeNotFoundException occurred: " + e.getMessage());
@@ -738,7 +738,7 @@ public class TestMemoryPoolMXBean {
 			}
 		} else {
 			try {
-				Attribute newCUTAttr = new Attribute("CollectionUsageThreshold", new Long(100 * 1024));
+				Attribute newCUTAttr = new Attribute("CollectionUsageThreshold", Long.valueOf(100 * 1024));
 				mbs.setAttribute(objName, newCUTAttr);
 				Assert.fail("Unreacheable code: should have thrown exception!");
 			} catch (Exception e) {
@@ -753,7 +753,7 @@ public class TestMemoryPoolMXBean {
 		MemoryPoolMXBean testImpl = testBean;
 
 		// Let's try and set some non-writable attributes.
-		Attribute attr = new Attribute("UsageThresholdCount", new Long(25));
+		Attribute attr = new Attribute("UsageThresholdCount", Long.valueOf(25));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception.");

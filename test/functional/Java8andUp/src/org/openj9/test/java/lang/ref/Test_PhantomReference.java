@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang.ref;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@ public class Test_PhantomReference {
 	@Test
 	public void test_get() {
 		ReferenceQueue rq = new ReferenceQueue();
-		bool = new Boolean(false);
+		bool = Boolean.valueOf(false);
 		PhantomReference pr = new PhantomReference(bool, rq);
 		AssertJUnit.assertTrue("Same object returned.", pr.get() == null);
 	}
@@ -53,7 +53,7 @@ public class Test_PhantomReference {
 	@Test
 	public void test_Constructor() {
 		ReferenceQueue rq = new ReferenceQueue();
-		bool = new Boolean(true);
+		bool = Boolean.valueOf(true);
 		try {
 			PhantomReference pr = new PhantomReference(bool, rq);
 			// Allow the finalizer to run to potentially enqueue

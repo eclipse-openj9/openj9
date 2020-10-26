@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,7 @@ public class SharedCPEntryInvokerTestCases {
 		Class.forName(intfClassName.replace('/', '.'), true, classLoader);
 
 		characteristics.clear();
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
+		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_INTERFACE, DummyClassGenerator.INVOKE_STATIC });
 
@@ -103,13 +103,13 @@ public class SharedCPEntryInvokerTestCases {
 		ClassGenerator intfGenerator = new InterfaceGenerator(testName, PKG_NAME);
 		ClassGenerator dummyClassGenerator = new DummyClassGenerator(testName, PKG_NAME);
 
-		characteristics.put(ClassGenerator.INTF_HAS_DEFAULT_METHOD, new Boolean(true));
+		characteristics.put(ClassGenerator.INTF_HAS_DEFAULT_METHOD, Boolean.valueOf(true));
 		intfGenerator.setCharacteristics(characteristics);
 		classLoader.setClassData(intfGenerator.getClassData());
 		Class.forName(intfClassName.replace('/', '.'), true, classLoader);
 
 		characteristics.clear();
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
+		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_INTERFACE, DummyClassGenerator.INVOKE_STATIC });
 
@@ -151,13 +151,13 @@ public class SharedCPEntryInvokerTestCases {
 		ClassGenerator intfGenerator = new InterfaceGenerator(testName, PKG_NAME);
 		ClassGenerator dummyClassGenerator = new DummyClassGenerator(testName, PKG_NAME);
 
-		characteristics.put(ClassGenerator.INTF_HAS_STATIC_METHOD, new Boolean(true));
+		characteristics.put(ClassGenerator.INTF_HAS_STATIC_METHOD, Boolean.valueOf(true));
 		intfGenerator.setCharacteristics(characteristics);
 		classLoader.setClassData(intfGenerator.getClassData());
 		Class.forName(intfClassName.replace('/', '.'), true, classLoader);
 
 		characteristics.clear();
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
+		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_INTERFACE, DummyClassGenerator.INVOKE_STATIC });
 
@@ -205,7 +205,7 @@ public class SharedCPEntryInvokerTestCases {
 		Class.forName(intfClassName.replace('/', '.'), true, classLoader);
 
 		characteristics.clear();
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
+		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_INTERFACE, DummyClassGenerator.INVOKE_SPECIAL });
 
@@ -248,13 +248,13 @@ public class SharedCPEntryInvokerTestCases {
 		ClassGenerator intfGenerator = new InterfaceGenerator(testName, PKG_NAME);
 		ClassGenerator dummyClassGenerator = new DummyClassGenerator(testName, PKG_NAME);
 
-		characteristics.put(ClassGenerator.INTF_HAS_DEFAULT_METHOD, new Boolean(true));
+		characteristics.put(ClassGenerator.INTF_HAS_DEFAULT_METHOD, Boolean.valueOf(true));
 		intfGenerator.setCharacteristics(characteristics);
 		classLoader.setClassData(intfGenerator.getClassData());
 		Class.forName(intfClassName.replace('/', '.'), true, classLoader);
 
 		characteristics.clear();
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
+		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_INTERFACE, DummyClassGenerator.INVOKE_SPECIAL });
 
@@ -304,7 +304,7 @@ public class SharedCPEntryInvokerTestCases {
 		Class.forName(helperClassName.replace('/', '.'), true, classLoader);
 
 		characteristics.clear();
-		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, new Boolean(true));
+		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_STATIC, DummyClassGenerator.INVOKE_SPECIAL });
 
@@ -353,7 +353,7 @@ public class SharedCPEntryInvokerTestCases {
 		Class.forName(helperClassName.replace('/', '.'), true, classLoader);
 
 		characteristics.clear();
-		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, new Boolean(true));
+		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_STATIC, DummyClassGenerator.INVOKE_SPECIAL });
 
@@ -402,7 +402,7 @@ public class SharedCPEntryInvokerTestCases {
 		Class.forName(helperClassName.replace('/', '.'), true, classLoader);
 
 		characteristics.clear();
-		characteristics.put(ClassGenerator.USE_HELPER_CLASS, new Boolean(true));
+		characteristics.put(ClassGenerator.USE_HELPER_CLASS, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_STATIC, DummyClassGenerator.INVOKE_VIRTUAL });
 
@@ -451,7 +451,7 @@ public class SharedCPEntryInvokerTestCases {
 		Class.forName(helperClassName.replace('/', '.'), true, classLoader);
 
 		characteristics.clear();
-		characteristics.put(ClassGenerator.USE_HELPER_CLASS, new Boolean(true));
+		characteristics.put(ClassGenerator.USE_HELPER_CLASS, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_STATIC, DummyClassGenerator.INVOKE_VIRTUAL });
 
@@ -500,7 +500,7 @@ public class SharedCPEntryInvokerTestCases {
 		Class.forName(helperClassName.replace('/', '.'), true, classLoader);
 
 		characteristics.clear();
-		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, new Boolean(true));
+		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_SPECIAL, DummyClassGenerator.INVOKE_VIRTUAL });
 
@@ -549,7 +549,7 @@ public class SharedCPEntryInvokerTestCases {
 		Class.forName(intfClassName.replace('/', '.'), true, classLoader);
 
 		characteristics.clear();
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
+		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] {
 						DummyClassGenerator.INVOKE_INTERFACE,
@@ -606,13 +606,13 @@ public class SharedCPEntryInvokerTestCases {
 		ClassGenerator intfGenerator = new InterfaceGenerator(testName, PKG_NAME);
 		ClassGenerator dummyClassGenerator = new DummyClassGenerator(testName, PKG_NAME);
 
-		characteristics.put(ClassGenerator.INTF_HAS_DEFAULT_METHOD, new Boolean("true"));
+		characteristics.put(ClassGenerator.INTF_HAS_DEFAULT_METHOD, Boolean.valueOf("true"));
 		intfGenerator.setCharacteristics(characteristics);
 		classLoader.setClassData(intfGenerator.getClassData());
 		Class.forName(intfClassName.replace('/', '.'), true, classLoader);
 
 		characteristics.clear();
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
+		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] {
 						DummyClassGenerator.INVOKE_INTERFACE,
@@ -670,13 +670,13 @@ public class SharedCPEntryInvokerTestCases {
 		ClassGenerator intfGenerator = new InterfaceGenerator(testName, PKG_NAME);
 		ClassGenerator dummyClassGenerator = new DummyClassGenerator(testName, PKG_NAME);
 
-		characteristics.put(ClassGenerator.INTF_HAS_STATIC_METHOD, new Boolean("true"));
+		characteristics.put(ClassGenerator.INTF_HAS_STATIC_METHOD, Boolean.valueOf("true"));
 		intfGenerator.setCharacteristics(characteristics);
 		classLoader.setClassData(intfGenerator.getClassData());
 		Class.forName(intfClassName.replace('/', '.'), true, classLoader);
 
 		characteristics.clear();
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
+		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] {
 						DummyClassGenerator.INVOKE_INTERFACE,

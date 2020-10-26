@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@ package com.ibm.jvmti.tests.decompResolveFrame;
 
 public class ResolveFrameMain 
 {
-    static Integer i1 = new Integer(1234);
+    static Integer i1 = Integer.valueOf(1234);
     static double  d1 = 2863311530.0;
     static long    l1 = 1234567;
 

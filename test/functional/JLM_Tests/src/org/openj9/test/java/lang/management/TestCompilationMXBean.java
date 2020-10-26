@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -197,7 +197,7 @@ public class TestCompilationMXBean {
 			logger.debug("Exception occurred, as expected: " + "attempting to set a read-only attribute.");
 		}
 
-		attr = new Attribute("TotalCompilationTime", new Long(65533));
+		attr = new Attribute("TotalCompilationTime", Long.valueOf(65533));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception.");
@@ -206,7 +206,7 @@ public class TestCompilationMXBean {
 			logger.debug("Exception occurred, as expected: " + "attempting to set a read-only attribute.");
 		}
 
-		attr = new Attribute("CompilationTimeMonitoringSupported", new Boolean(true));
+		attr = new Attribute("CompilationTimeMonitoringSupported", Boolean.valueOf(true));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception.");
@@ -216,7 +216,7 @@ public class TestCompilationMXBean {
 		}
 
 		// Try and set the Name attribute with an incorrect type.
-		attr = new Attribute("Name", new Long(42));
+		attr = new Attribute("Name", Long.valueOf(42));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception");
@@ -305,7 +305,7 @@ public class TestCompilationMXBean {
 	public final void testInvoke() {
 		// CompilationMXBean has no operations to invoke...
 		try {
-			Object retVal = mbs.invoke(objName, "KissTheBlarney", new Object[] { new Long(7446), new Long(54) },
+			Object retVal = mbs.invoke(objName, "KissTheBlarney", new Object[] { Long.valueOf(7446), Long.valueOf(54) },
 					new String[] { "java.lang.Long", "java.lang.Long" });
 			Assert.fail("Unreacheable code: should have thrown an exception.");
 		} catch (InstanceNotFoundException e) {

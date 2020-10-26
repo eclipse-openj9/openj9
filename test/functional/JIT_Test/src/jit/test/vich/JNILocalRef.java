@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2018 IBM Corp. and others
+ * Copyright (c) 2006, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,13 @@ import jit.test.vich.utils.Timer;
  * @author
  */
 public class JNILocalRef {
-	
+
+	private static class LocalRefClass {
+		LocalRefClass() {
+			super();
+		}
+	}
+
 	private static Logger logger = Logger.getLogger(JNILocalRef.class);
 	Timer timer;
 
@@ -53,38 +59,38 @@ public class JNILocalRef {
 	@Test(groups = { "level.sanity","component.jit" })
 	public void testJNILocalRef()
 	{
-		Object o1 = new Integer(0);
-		Object o2 = new Integer(0);
-		Object o3 = new Integer(0);
-		Object o4 = new Integer(0);
-		Object o5 = new Integer(0);
-		Object o6 = new Integer(0);
-		Object o7 = new Integer(0);
-		Object o8 = new Integer(0);
-		Object o9 = new Integer(0);
-		Object o10 = new Integer(0);
-		Object o11 = new Integer(0);
-		Object o12 = new Integer(0);
-		Object o13 = new Integer(0);
-		Object o14 = new Integer(0);
-		Object o15 = new Integer(0);
-		Object o16 = new Integer(0);
-		Object o17 = new Integer(0);
-		Object o18 = new Integer(0);
-		Object o19 = new Integer(0);
-		Object o20 = new Integer(0);
-		Object o21 = new Integer(0);
-		Object o22 = new Integer(0);
-		Object o23 = new Integer(0);
-		Object o24 = new Integer(0);
-		Object o25 = new Integer(0);
-		Object o26 = new Integer(0);
-		Object o27 = new Integer(0);
-		Object o28 = new Integer(0);
-		Object o29 = new Integer(0);
-		Object o30 = new Integer(0);
-		Object o31 = new Integer(0);
-		Object o32 = new Integer(0);
+		Object o1 = new LocalRefClass();
+		Object o2 = new LocalRefClass();
+		Object o3 = new LocalRefClass();
+		Object o4 = new LocalRefClass();
+		Object o5 = new LocalRefClass();
+		Object o6 = new LocalRefClass();
+		Object o7 = new LocalRefClass();
+		Object o8 = new LocalRefClass();
+		Object o9 = new LocalRefClass();
+		Object o10 = new LocalRefClass();
+		Object o11 = new LocalRefClass();
+		Object o12 = new LocalRefClass();
+		Object o13 = new LocalRefClass();
+		Object o14 = new LocalRefClass();
+		Object o15 = new LocalRefClass();
+		Object o16 = new LocalRefClass();
+		Object o17 = new LocalRefClass();
+		Object o18 = new LocalRefClass();
+		Object o19 = new LocalRefClass();
+		Object o20 = new LocalRefClass();
+		Object o21 = new LocalRefClass();
+		Object o22 = new LocalRefClass();
+		Object o23 = new LocalRefClass();
+		Object o24 = new LocalRefClass();
+		Object o25 = new LocalRefClass();
+		Object o26 = new LocalRefClass();
+		Object o27 = new LocalRefClass();
+		Object o28 = new LocalRefClass();
+		Object o29 = new LocalRefClass();
+		Object o30 = new LocalRefClass();
+		Object o31 = new LocalRefClass();
+		Object o32 = new LocalRefClass();
 		
 		try
 		{

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,7 @@ public class Scavenge extends jit.test.jitt.Test {
 
 	private void tst_jit1(int recursionDepth, Object z, boolean triggerGC) {
 
-		Integer i = new Integer(recursionDepth - 1); // make a temp
+		Integer i = Integer.valueOf(recursionDepth - 1); // make a temp
 
 		if (recursionDepth == 0) {
 			if (triggerGC)
@@ -63,7 +63,7 @@ public class Scavenge extends jit.test.jitt.Test {
 	public void testScavenge() {
 		Scavenge x = new Scavenge();
 		for (int j = 0; j < 101; j++) {
-			x.tst_jit1(10, new Integer(j), false);
+			x.tst_jit1(10, Integer.valueOf(j), false);
 		}
 		x.tst_jit1(10, "trigger_gc_now", true);
 	}
