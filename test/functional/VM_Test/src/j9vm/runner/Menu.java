@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,7 +65,7 @@ public void doCommand(String command)  {
 		return;
 	}
 	try  {
-		int n = Integer.valueOf(command).intValue();
+		int n = Integer.parseInt(command);
 		if (command.equals(String.valueOf(n)))  {
 			n--;
 			if ((n >= 0) && (n < menuItems.size()))  {

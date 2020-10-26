@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2017 IBM Corp. and others
+ * Copyright (c) 1999, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,7 +63,7 @@ import java.util.Map;
  * For Trusted and Untrusted, Arg is an integer indicating for which
  * argument(s) the attribute applies. -1 means all arguments. The number
  * must be formatted such that it can be converted to a Java int using
- * Integer.valueOf().intValue().
+ * Integer.parseInt().
  *
  * eg.
  * [ATTR Trusted -1 com_ibm_oti_Foo]
