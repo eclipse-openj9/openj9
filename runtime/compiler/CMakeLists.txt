@@ -48,6 +48,18 @@ if(OMR_ARCH_X86)
 		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/i386/runtime/"
 	)
 	omr_append_flags(CMAKE_ASM_NASM_FLAGS ${asm_inc_dirs})
+	# For whatever reason cmake does not apply compile definitions when building nasm objects.
+	# The if guard is here in case they ever start doing so.
+	if(NOT CMAKE_ASM_NASM_COMPILE_OBJECT MATCHES "<DEFINES>")
+		# Tack on defines immediately following the compiler name.
+		string(REPLACE
+			"<CMAKE_ASM_NASM_COMPILER>"
+			"<CMAKE_ASM_NASM_COMPILER> <DEFINES>"
+			CMAKE_ASM_NASM_COMPILE_OBJECT
+			"${CMAKE_ASM_NASM_COMPILE_OBJECT}"
+		)
+
+	endif()
 endif()
 
 # Using the linker option -static-libgcc results in an error on OSX. The option -static-libstdc++ is unused. Therefore
