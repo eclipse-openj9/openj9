@@ -26,7 +26,6 @@
  * running JVM to do operations such as creating diagnotic files or performing a GC.
  */
 module jdk.jcmd {
-  requires java.base;
   requires java.management;
   requires jdk.attach;
 }

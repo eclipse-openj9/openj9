@@ -27,7 +27,6 @@
  */
 @SuppressWarnings("module")
 module openj9.gpu {
-  requires java.base;
   requires openj9.cuda;
   exports com.ibm.gpu;
   provides com.ibm.gpu.spi.GPUAssist.Provider with com.ibm.gpu.internal.CudaGPUAssistProvider;

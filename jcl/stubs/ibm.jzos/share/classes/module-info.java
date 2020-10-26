@@ -24,6 +24,5 @@
  * Provides access to z/OS datasets.
  */
 module ibm.jzos {
-  requires java.base;
   exports com.ibm.jzos;
 }
