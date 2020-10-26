@@ -428,7 +428,7 @@ public class ByteCodeDumper {
 
 				nameAndSig = J9ROMNameAndSignaturePointer.cast(callSiteData.add(index).get());
 
-				out.append("bsm #" + String.valueOf(bsmIndices.at(index).longValue()));	/* Bootstrap method index */
+				out.append("bsm #" + bsmIndices.at(index).longValue()); /* Bootstrap method index */
 				out.append(":");
 				out.append(J9UTF8Helper.stringValue(nameAndSig.name())); /* dump name */
 				out.append(J9UTF8Helper.stringValue(nameAndSig.signature())); /* dump signature */

@@ -136,7 +136,7 @@ public class Tcb {
 
         String s = space.getDump().getProductRelease();
         if (s != null) {
-            release = Integer.valueOf(s).intValue();
+            release = Integer.parseInt(s);
         }
     }
 

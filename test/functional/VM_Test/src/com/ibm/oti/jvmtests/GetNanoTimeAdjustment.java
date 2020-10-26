@@ -59,7 +59,7 @@ public class GetNanoTimeAdjustment extends TestCase {
 	 */
 	public void test_EnsureResultIsNanoSecondGranularity() {
 		long result = SupportJVM.GetNanoTimeAdjustment(0);
-		assertEquals("GetNanoTimeAdjustment did not return 19 digits", NANO_TIME_DIGITS, Long.valueOf(result).toString().length());
+		assertEquals("GetNanoTimeAdjustment did not return 19 digits", NANO_TIME_DIGITS, Long.toString(result).length());
 	}
 	
 	/*

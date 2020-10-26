@@ -70,8 +70,12 @@ public static Object get(Object array, int index) throws IllegalArgumentExceptio
 	} else if (arrayClass == short[].class) {
 		return ((short[])array)[index];
 	} else if (arrayClass == byte[].class) {
+		/*[IF JAVA_SPEC_VERSION <= 11]*/
 		/* Avoiding Byte cache yields 5x performance improvement. */
-		return Byte.valueOf(((byte[])array)[index]);
+		return new Byte(((byte[])array)[index]);
+		/*[ELSE]*/
+		return ((byte[])array)[index];
+		/*[ENDIF] JAVA_SPEC_VERSION <= 11 */
 	} else {
 		try {
 			return ((Object[])array)[index];

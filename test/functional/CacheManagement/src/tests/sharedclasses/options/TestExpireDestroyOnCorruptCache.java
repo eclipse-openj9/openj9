@@ -55,7 +55,7 @@ public class TestExpireDestroyOnCorruptCache extends TestUtils {
 		}
 
 		/* expire all caches not used for past 1 min */
-		expireAllCachesWithTime(Integer.valueOf(1).toString());
+		expireAllCachesWithTime(Integer.toString(1));
 		/* expire does not delete caches detected as corrupt during oscache->startup() */
 		checkFileExistsForPersistentCache("Foo");
 		
