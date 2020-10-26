@@ -49,6 +49,12 @@ if(OMR_OS_ZOS)
 		PRIVATE
 			"${omr_SOURCE_DIR}/port/zos390"
 	)
+	# redirector needs getUserExtendedPrivateAreaMemoryType from omrutil,
+	# but we don't want to introduce any transitive dependencies, so we use $<TARGET_FILE>.
+	target_link_libraries(jvm_redirect PRIVATE $<TARGET_FILE:omrutil>)
+
+	# Ensure that omrutil is built before we attempt to link it.
+	add_dependencies(jvm_redirect omrutil)
 endif()
 set_target_properties(jvm_redirect PROPERTIES
 	ARCHIVE_OUTPUT_NAME redirector_jvm
