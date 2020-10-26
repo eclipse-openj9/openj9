@@ -86,7 +86,7 @@ uint8_t *TR::X86AllocPrefetchSnippet::emitSnippetBody()
    else
       {
       TR_RuntimeHelper helper = (comp->getOption(TR_EnableNewX86PrefetchTLH)) ? TR_X86newPrefetchTLH : TR_X86prefetchTLH;
-      helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
+      helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(helper);
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(buffer+4, helperSymRef);
       if (fej9->needRelocationsForHelpers())
          {

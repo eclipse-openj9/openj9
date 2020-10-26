@@ -508,7 +508,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
 
       TR::Snippet *snippet = new (trHeapMemory()) TR::X86CheckFailureSnippet(
             cg(),
-            cg()->symRefTab()->findOrCreateRuntimeHelper(TR_throwCurrentException, false, false, false),
+            cg()->symRefTab()->findOrCreateRuntimeHelper(TR_throwCurrentException),
             snippetLabel,
             instr,
             callNode->getDataType() == TR::Float || callNode->getDataType() == TR::Double);

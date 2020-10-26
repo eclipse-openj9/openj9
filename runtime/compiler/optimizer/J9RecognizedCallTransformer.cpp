@@ -59,7 +59,7 @@ void J9::RecognizedCallTransformer::process_java_lang_Class_IsAssignableFrom(TR:
    treetop->insertBefore(TR::TreeTop::create(comp(), TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, TR::Node::create(node, TR::PassThrough, 1, fromClass), nullchk)));
 
    TR::Node::recreate(treetop->getNode(), TR::treetop);
-   node->setSymbolReference(comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_checkAssignable, false, false, false));
+   node->setSymbolReference(comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_checkAssignable));
    node->setAndIncChild(0, TR::Node::createWithSymRef(TR::aloadi, 1, 1, toClass, comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef()));
    node->setAndIncChild(1, TR::Node::createWithSymRef(TR::aloadi, 1, 1, fromClass, comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef()));
    node->swapChildren();
@@ -261,7 +261,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       auto isObjectNullTreeTop = TR::TreeTop::create(comp(), isObjectNullNode);
       treetop->insertBefore(isObjectNullTreeTop);
       treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
- 
+
       if (enableTrace)
          traceMsg(comp(), "Created isObjectNull test node n%dn, non-null object will fall through to Block_%d\n", isObjectNullNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
 

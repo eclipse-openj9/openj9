@@ -62,30 +62,30 @@ TR::S390J9CallSnippet::generateVIThunk(TR::Node * callNode, int32_t argSize, TR:
    switch (callNode->getDataType())
       {
       case TR::NoType:
-         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtual0, false, false, false);
+         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtual0);
          break;
       case TR::Int32:
-         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtual1, false, false, false);
+         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtual1);
          break;
       case TR::Address:
          if (comp->target().is64Bit())
             {
-            dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtualJ, false, false, false);
+            dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtualJ);
             }
          else
             {
-            dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtual1, false, false, false);
+            dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtual1);
             }
 
          break;
       case TR::Int64:
-         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtualJ, false, false, false);
+         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtualJ);
          break;
       case TR::Float:
-         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtualF, false, false, false);
+         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtualF);
          break;
       case TR::Double:
-         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtualD, false, false, false);
+         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390icallVMprJavaSendVirtualD);
          break;
       default:
          TR_ASSERT(0, "Bad return data type for a call node.  DataType was %s\n",
@@ -155,25 +155,25 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
    switch (callNode->getDataType())
       {
       case TR::NoType:
-         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact0, false, false, false);
+         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact0);
          break;
       case TR::Int32:
-         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1, false, false, false);
+         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1);
          break;
       case TR::Address:
          if (comp->target().is64Bit())
-            dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactJ, false, false, false);
+            dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactJ);
          else
-            dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1, false, false, false);
+            dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1);
          break;
       case TR::Int64:
-         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactJ, false, false, false);
+         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactJ);
          break;
       case TR::Float:
-         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactF, false, false, false);
+         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactF);
          break;
       case TR::Double:
-         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD, false, false, false);
+         dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD);
          break;
       default:
          TR_ASSERT(0, "Bad return data type for a call node.  DataType was %s\n",
@@ -215,7 +215,7 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
       *(int16_t *) cursor = 0xC0F4;   // BRCL   <Helper Addr>
       cursor += 2;
 
-      TR::SymbolReference *helper = cg->symRefTab()->findOrCreateRuntimeHelper(TR_methodHandleJ2IGlue, false, false, false);
+      TR::SymbolReference *helper = cg->symRefTab()->findOrCreateRuntimeHelper(TR_methodHandleJ2IGlue);
       intptr_t destAddr = (intptr_t)helper->getMethodAddress();
 #if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
@@ -272,7 +272,7 @@ TR::S390J9CallSnippet::emitSnippetBody()
    cursor = S390flushArgumentsToStack(cursor, callNode, getSizeOfArguments(), cg());
 
    TR_RuntimeHelper runtimeHelper = getInterpretedDispatchHelper(methodSymRef, callNode->getDataType());
-   TR::SymbolReference * glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(runtimeHelper, false, false, false);
+   TR::SymbolReference * glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(runtimeHelper);
 
    // Generate RIOFF if RI is supported.
    cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RIOFF);
@@ -505,7 +505,7 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
    uint8_t * cursor = cg()->getBinaryBufferCursor();
    TR::Node * callNode = getNode();
    TR::Compilation *comp = cg()->comp();
-   TR::SymbolReference * glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390virtualUnresolvedHelper, false, false, false);
+   TR::SymbolReference * glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390virtualUnresolvedHelper);
 
    getSnippetLabel()->setCodeLocation(cursor);
 
@@ -621,15 +621,15 @@ TR::S390InterfaceCallSnippet::emitSnippetBody()
 
    if (getNumInterfaceCallCacheSlots() == 0)
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interfaceCallHelper, false, false, false);
+      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interfaceCallHelper);
       }
    else if (comp->getOption(TR_enableInterfaceCallCachingSingleDynamicSlot))
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interfaceCallHelperSingleDynamicSlot, false, false, false);
+      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interfaceCallHelperSingleDynamicSlot);
       }
    else
       {
-      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interfaceCallHelperMultiSlots, false, false, false);
+      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interfaceCallHelperMultiSlots);
       }
 
    // Set up the start of data constants and jump to helper.

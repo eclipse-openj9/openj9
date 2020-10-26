@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@
 uint8_t *TR::ARM64RecompilationSnippet::emitSnippetBody()
    {
    uint8_t *buffer = cg()->getBinaryBufferCursor();
-   TR::SymbolReference  *countingRecompMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64countingRecompileMethod, false, false, false);
+   TR::SymbolReference  *countingRecompMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64countingRecompileMethod);
 
    getSnippetLabel()->setCodeLocation(buffer);
 

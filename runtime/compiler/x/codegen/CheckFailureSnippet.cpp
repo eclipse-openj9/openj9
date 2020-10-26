@@ -315,7 +315,7 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
    //
    *buffer++ = 0xe8;                      // call  Imm4 glue routine
 
-   TR::SymbolReference * glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper(), false, false, false);
+   TR::SymbolReference * glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper());
    intptr_t glueAddress = (intptr_t)glueSymRef->getMethodAddress();
    if (NEEDS_TRAMPOLINE(glueAddress, buffer+4, cg()))
       {

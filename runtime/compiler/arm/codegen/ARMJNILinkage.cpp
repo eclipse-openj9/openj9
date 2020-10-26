@@ -1072,7 +1072,7 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       generateSrc2Instruction(codeGen, ARMOp_tst, callNode, gr4Reg, gr5Reg);
       }
 
-   helperSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_ARMjitCollapseJNIReferenceFrame, false, false, false);
+   helperSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_ARMjitCollapseJNIReferenceFrame);
    //AOT relocation is handled in TR::ARMImmSymInstruction::generateBinaryEncoding()
    generateImmSymInstruction(codeGen, ARMOp_bl, callNode, (uint32_t)helperSymRef->getMethodAddress(), NULL, helperSymRef, NULL, NULL, ARMConditionCodeEQ);
 

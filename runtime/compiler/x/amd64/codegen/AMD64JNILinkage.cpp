@@ -1147,7 +1147,7 @@ void J9::X86::AMD64::JNILinkage::checkForJNIExceptions(TR::Node *callNode)
 
    TR::Snippet *snippet =
       new (trHeapMemory()) TR::X86CheckFailureSnippet(cg(),
-                                     cg()->symRefTab()->findOrCreateRuntimeHelper(TR_throwCurrentException, false, false, false),
+                                     cg()->symRefTab()->findOrCreateRuntimeHelper(TR_throwCurrentException),
                                      snippetLabel,
                                      instr,
                                      _JNIDispatchInfo.requiresFPstackPop);
