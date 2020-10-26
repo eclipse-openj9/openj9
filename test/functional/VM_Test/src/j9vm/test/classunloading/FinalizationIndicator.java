@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,14 +62,14 @@ public class FinalizationIndicator {
 
 public FinalizationIndicator(String name) {
 		//System.out.println("FinalizationIndicator instantiated for " + name);
-		isInstanceFinalized.put(name, new Boolean(false));
+		isInstanceFinalized.put(name, Boolean.valueOf(false));
 		this.name = name;
 }
 public static void setLock(Counter counterLock) {
 	FinalizationIndicator.counterLock = counterLock;
 }
 protected void finalize() {
-	isInstanceFinalized.put(name, new Boolean(true));
+	isInstanceFinalized.put(name, Boolean.valueOf(true));
 	System.out.println(name + " unloaded");
 	counterLock.increment();
 	if(counterLock.atDesiredValue())

@@ -129,7 +129,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
          refNum = TR_PPCinterpreterUnresolvedStaticDataGlue;
       }
 
-   glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(refNum, false, false, false);
+   glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(refNum);
    getSnippetLabel()->setCodeLocation(cursor);
 
    intptr_t helperAddress = (intptr_t)glueRef->getMethodAddress();

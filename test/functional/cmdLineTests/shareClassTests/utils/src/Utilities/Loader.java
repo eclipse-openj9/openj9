@@ -67,7 +67,7 @@ public class Loader {
 		String classPath = props.getProperty("ClassPath");
 		
 		String nctls = props.getProperty("NumberOfClassesToLoad");
-		Integer i = new Integer(nctls);
+		Integer i = Integer.valueOf(nctls);
 		int classesToLoadCount = i.intValue();
 		
 		String[] classesToLoad = new String[classesToLoadCount];

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,7 +85,7 @@ public class MutateOnStackSplitTableRetransformationTest {
 		expected = ClassGenerator.DUMMY_CLASS_NAME + "_V1." + DummyClassGenerator.INVOKE_STATIC;
 		method = dummyClass.getMethod("invokeStatic", new Class[] { boolean.class });
 		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { new Boolean(true) });
+			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { Boolean.valueOf(true) });
 			logger.debug("Returned " + rc);
 			AssertJUnit.assertEquals("Did not get expected value: ", expected, rc);
 		} catch (Exception e) {
@@ -95,7 +95,7 @@ public class MutateOnStackSplitTableRetransformationTest {
 		expected = ClassGenerator.DUMMY_CLASS_NAME + "_V2." + DummyClassGenerator.INVOKE_STATIC;
 		method = dummyClass.getMethod("invokeStatic", new Class[] { boolean.class });
 		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { new Boolean(false) });
+			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { Boolean.valueOf(false) });
 			logger.debug("Returned " + rc);
 			AssertJUnit.assertEquals("Did not get expected value: ", expected, rc);
 		} catch (Exception e) {
@@ -114,7 +114,7 @@ public class MutateOnStackSplitTableRetransformationTest {
 		expected = ClassGenerator.DUMMY_CLASS_NAME + "_V2." + DummyClassGenerator.INVOKE_STATIC;
 		method = dummyClass.getMethod("invokeStatic", new Class[] { boolean.class });
 		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { new Boolean(true) });
+			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { Boolean.valueOf(true) });
 			logger.debug("Returned " + rc);
 			AssertJUnit.assertEquals("Did not get expected value: ", expected, rc);
 		} catch (Exception e) {
@@ -124,7 +124,7 @@ public class MutateOnStackSplitTableRetransformationTest {
 		expected = ClassGenerator.DUMMY_CLASS_NAME + "_V1." + DummyClassGenerator.INVOKE_STATIC;
 		method = dummyClass.getMethod("invokeStatic", new Class[] { boolean.class });
 		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { new Boolean(false) });
+			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { Boolean.valueOf(false) });
 			logger.debug("Returned " + rc);
 			AssertJUnit.assertEquals("Did not get expected value: ", expected, rc);
 		} catch (Exception e) {
@@ -170,7 +170,7 @@ public class MutateOnStackSplitTableRetransformationTest {
 		expected = ClassGenerator.DUMMY_CLASS_NAME + "_V1." + DummyClassGenerator.INVOKE_SPECIAL;
 		method = dummyClass.getMethod("invokeSpecial", new Class[] { boolean.class });
 		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { new Boolean(true) });
+			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { Boolean.valueOf(true) });
 			logger.debug("Returned " + rc);
 			AssertJUnit.assertEquals("Did not get expected value: ", expected, rc);
 		} catch (Exception e) {
@@ -180,7 +180,7 @@ public class MutateOnStackSplitTableRetransformationTest {
 		expected = ClassGenerator.DUMMY_CLASS_NAME + "_V2." + DummyClassGenerator.INVOKE_SPECIAL;
 		method = dummyClass.getMethod("invokeSpecial", new Class[] { boolean.class });
 		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { new Boolean(false) });
+			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { Boolean.valueOf(false) });
 			logger.debug("Returned " + rc);
 			AssertJUnit.assertEquals("Did not get expected value: ", expected, rc);
 		} catch (Exception e) {
@@ -199,7 +199,7 @@ public class MutateOnStackSplitTableRetransformationTest {
 		expected = ClassGenerator.DUMMY_CLASS_NAME + "_V2." + DummyClassGenerator.INVOKE_SPECIAL;
 		method = dummyClass.getMethod("invokeSpecial", new Class[] { boolean.class });
 		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { new Boolean(true) });
+			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { Boolean.valueOf(true) });
 			logger.debug("Returned " + rc);
 			AssertJUnit.assertEquals("Did not get expected value: ", expected, rc);
 		} catch (Exception e) {
@@ -209,7 +209,7 @@ public class MutateOnStackSplitTableRetransformationTest {
 		expected = ClassGenerator.DUMMY_CLASS_NAME + "_V1." + DummyClassGenerator.INVOKE_SPECIAL;
 		method = dummyClass.getMethod("invokeSpecial", new Class[] { boolean.class });
 		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { new Boolean(false) });
+			rc = (String)method.invoke(dummyClass.newInstance(), new Object[] { Boolean.valueOf(false) });
 			logger.debug("Returned " + rc);
 			AssertJUnit.assertEquals("Did not get expected value: ", expected, rc);
 		} catch (Exception e) {

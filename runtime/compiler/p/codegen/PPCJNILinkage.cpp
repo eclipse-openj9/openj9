@@ -595,7 +595,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
          //        Pending GAC's verification. ***
          uint32_t            flagValue = fej9->constJNIReferenceFrameAllocatedFlags();
          TR::LabelSymbol      *refPoolRestartLabel = generateLabelSymbol(cg());
-         TR::SymbolReference *collapseSymRef = cg()->getSymRefTab()->findOrCreateRuntimeHelper(TR_PPCcollapseJNIReferenceFrame, false, false, false);
+         TR::SymbolReference *collapseSymRef = cg()->getSymRefTab()->findOrCreateRuntimeHelper(TR_PPCcollapseJNIReferenceFrame);
 
          generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, callNode, gr30Reg, TR::MemoryReference::createWithDisplacement(cg(), stackPtr, fej9->constJNICallOutFrameFlagsOffset(), TR::Compiler->om.sizeofReferenceAddress()));
          simplifyANDRegImm(callNode, gr31Reg, gr30Reg, flagValue, cg());

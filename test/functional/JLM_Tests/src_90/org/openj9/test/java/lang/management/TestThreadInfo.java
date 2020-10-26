@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,45 +152,45 @@ public class TestThreadInfo {
 		typeDescsGlobal = typeDescsGlobalTmp;
 
 		Object[] valuesCompositeDataGlobalTmp = {
-				/* threadId */new Long(GOOD_THREAD_ID),
+				/* threadId */Long.valueOf(GOOD_THREAD_ID),
 				/* threadName */new String(GOOD_THREAD_NAME),
 				/* threadState */new String(GOOD_THREAD_STATE),
-				/* suspended */new Boolean(GOOD_SUSPENDED),
-				/* inNative */new Boolean(GOOD_IN_NATIVE),
-				/* blockedCount */new Long(GOOD_BLOCKED_COUNT),
-				/* blockedTime */new Long(GOOD_BLOCKED_TIME),
-				/* waitedCount */new Long(GOOD_WAITED_COUNT),
-				/* waitedTime */new Long(GOOD_WAITED_TIME),
+				/* suspended */Boolean.valueOf(GOOD_SUSPENDED),
+				/* inNative */Boolean.valueOf(GOOD_IN_NATIVE),
+				/* blockedCount */Long.valueOf(GOOD_BLOCKED_COUNT),
+				/* blockedTime */Long.valueOf(GOOD_BLOCKED_TIME),
+				/* waitedCount */Long.valueOf(GOOD_WAITED_COUNT),
+				/* waitedTime */Long.valueOf(GOOD_WAITED_TIME),
 				/* lockInfo */TestLockInfo.createGoodCompositeData(),
 				/* lockName */new String(GOOD_LOCK_NAME),
-				/* lockOwnerId */new Long(GOOD_LOCK_OWNER_ID),
+				/* lockOwnerId */Long.valueOf(GOOD_LOCK_OWNER_ID),
 				/* lockOwnerName */new String(GOOD_LOCK_OWNER_NAME),
 				/* stackTrace */createGoodStackTraceCompositeData(),
 				/* lockedMonitors */monitors,
 				/* lockedSynchronizers */synchronizers,
-				/* daemon */new Boolean(GOOD_DAEMON),
-				/* priority */new Integer(GOOD_PRIORITY) };
+				/* daemon */Boolean.valueOf(GOOD_DAEMON),
+				/* priority */Integer.valueOf(GOOD_PRIORITY) };
 		valuesCompositeDataGlobal = valuesCompositeDataGlobalTmp;
 
 		Object[] valuesGoodCompositeDataNoLockInfoTmp = {
-				/* threadId */new Long(GOOD_THREAD_ID),
+				/* threadId */Long.valueOf(GOOD_THREAD_ID),
 				/* threadName */new String(GOOD_THREAD_NAME),
 				/* threadState */new String(GOOD_THREAD_STATE),
-				/* suspended */new Boolean(GOOD_SUSPENDED),
-				/* inNative */new Boolean(GOOD_IN_NATIVE),
-				/* blockedCount */new Long(GOOD_BLOCKED_COUNT),
-				/* blockedTime */new Long(GOOD_BLOCKED_TIME),
-				/* waitedCount */new Long(GOOD_WAITED_COUNT),
-				/* waitedTime */new Long(GOOD_WAITED_TIME),
+				/* suspended */Boolean.valueOf(GOOD_SUSPENDED),
+				/* inNative */Boolean.valueOf(GOOD_IN_NATIVE),
+				/* blockedCount */Long.valueOf(GOOD_BLOCKED_COUNT),
+				/* blockedTime */Long.valueOf(GOOD_BLOCKED_TIME),
+				/* waitedCount */Long.valueOf(GOOD_WAITED_COUNT),
+				/* waitedTime */Long.valueOf(GOOD_WAITED_TIME),
 				/* lockInfo */createDummyCompositeData(),
 				/* lockName */new String(GOOD_LOCK_NAME),
-				/* lockOwnerId */new Long(GOOD_LOCK_OWNER_ID),
+				/* lockOwnerId */Long.valueOf(GOOD_LOCK_OWNER_ID),
 				/* lockOwnerName */new String(GOOD_LOCK_OWNER_NAME),
 				/* stackTrace */createGoodStackTraceCompositeData(),
 				/* lockedMonitors */monitors,
 				/* lockedSynchronizers */synchronizers,
-				/* daemon */new Boolean(GOOD_DAEMON),
-				/* priority */new Integer(GOOD_PRIORITY) };
+				/* daemon */Boolean.valueOf(GOOD_DAEMON),
+				/* priority */Integer.valueOf(GOOD_PRIORITY) };
 		valuesGoodCompositeDataNoLockInfo = valuesGoodCompositeDataNoLockInfoTmp;
 
 		try {
@@ -570,7 +569,7 @@ public class TestThreadInfo {
 		String[] names = { "className", "identityHashCode" };
 		Object[] values = {
 				/* className */new String(GOOD_LOCK_CLASSNAME),
-				/* identityHashCode */new Integer(GOOD_LOCK_HASH) };
+				/* identityHashCode */Integer.valueOf(GOOD_LOCK_HASH) };
 		CompositeType cType = TestLockInfo.createGoodLockInfoCompositeType();
 		try {
 			result = new CompositeDataSupport(cType, names, values);
@@ -674,8 +673,8 @@ public class TestThreadInfo {
 				new String("foo.bar.Blobby"),
 				new String("takeOverWorld"),
 				new String("Blobby.java"),
-				new Integer(2100),
-				new Boolean(false),
+				Integer.valueOf(2100),
+				Boolean.valueOf(false),
 				new String("myModuleName"),
 				new String("myModuleVersion"),
 				new String("myClassLoaderName") };

@@ -48,7 +48,7 @@ uint8_t *TR::X86ForceRecompilationSnippet::emitSnippetBody()
    uint8_t *buffer = cg()->getBinaryBufferCursor();
    getSnippetLabel()->setCodeLocation(buffer);
 
-   TR::SymbolReference *helper = cg()->symRefTab()->findOrCreateRuntimeHelper(cg()->comp()->target().is64Bit()? TR_AMD64induceRecompilation : TR_IA32induceRecompilation, false, false, false);
+   TR::SymbolReference *helper = cg()->symRefTab()->findOrCreateRuntimeHelper(cg()->comp()->target().is64Bit()? TR_AMD64induceRecompilation : TR_IA32induceRecompilation);
    intptr_t helperAddress = (intptr_t)helper->getMethodAddress();
    *buffer++ = 0xe8; // CallImm4
    if (NEEDS_TRAMPOLINE(helperAddress, buffer+4, cg()))

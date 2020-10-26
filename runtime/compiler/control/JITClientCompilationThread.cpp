@@ -216,8 +216,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          std::string encoded = FlatPersistentClassInfo::serializeHierarchy(table);
 
          client->write(response, ranges, unloadedClasses->getMaxRanges(), encoded);
-            { 
-            OMR::CriticalSection romClassCache(compInfo->getclassesCachedAtServerMonitor());  
+            {
+            OMR::CriticalSection romClassCache(compInfo->getclassesCachedAtServerMonitor());
             compInfo->getclassesCachedAtServer().clear();
             }
          break;
@@ -455,12 +455,12 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._writeBarrierType = TR::Compiler->om.writeBarrierType();
          vmInfo._compressObjectReferences = TR::Compiler->om.compressObjectReferences();
          vmInfo._processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
-         vmInfo._noTypeInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact0, false, false, false)->getMethodAddress();
-         vmInfo._int64InvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactJ, false, false, false)->getMethodAddress();
-         vmInfo._int32InvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1, false, false, false)->getMethodAddress();
-         vmInfo._addressInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactL, false, false, false)->getMethodAddress();
-         vmInfo._floatInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactF, false, false, false)->getMethodAddress();
-         vmInfo._doubleInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD, false, false, false)->getMethodAddress();
+         vmInfo._noTypeInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact0)->getMethodAddress();
+         vmInfo._int64InvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactJ)->getMethodAddress();
+         vmInfo._int32InvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1)->getMethodAddress();
+         vmInfo._addressInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactL)->getMethodAddress();
+         vmInfo._floatInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactF)->getMethodAddress();
+         vmInfo._doubleInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD)->getMethodAddress();
          vmInfo._interpreterVTableOffset = TR::Compiler->vm.getInterpreterVTableOffset();
          vmInfo._maxHeapSizeInBytes = TR::Compiler->vm.maxHeapSizeInBytes();
          vmInfo._enableGlobalLockReservation = vmThread->javaVM->enableGlobalLockReservation;
@@ -546,9 +546,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::VM_stackWalkerMaySkipFrames:
          {
          client->getRecvData<JITServer::Void>();
-         client->write(response, 
-            vmThread->javaVM->jlrMethodInvoke, 
-            vmThread->javaVM->srMethodAccessor ? (TR_OpaqueClassBlock *) J9VM_J9CLASS_FROM_JCLASS(vmThread, vmThread->javaVM->srMethodAccessor) : NULL, 
+         client->write(response,
+            vmThread->javaVM->jlrMethodInvoke,
+            vmThread->javaVM->srMethodAccessor ? (TR_OpaqueClassBlock *) J9VM_J9CLASS_FROM_JCLASS(vmThread, vmThread->javaVM->srMethodAccessor) : NULL,
             vmThread->javaVM->srConstructorAccessor ? (TR_OpaqueClassBlock *) J9VM_J9CLASS_FROM_JCLASS(vmThread, vmThread->javaVM->srConstructorAccessor) : NULL);
          }
          break;
@@ -1787,7 +1787,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                case TR_ResolvedMethodType::Static:
                   {
                   TR::VMAccessCriticalSection resolveStaticMethodRef(fe);
-                  ramMethod = jitResolveStaticMethodRef(fe->vmThread(), owningMethod->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME); 
+                  ramMethod = jitResolveStaticMethodRef(fe->vmThread(), owningMethod->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
                   if (ramMethod) createMethod = true;
                   break;
                   }
@@ -3211,7 +3211,7 @@ remoteCompile(
       compiler->setOption(TR_Server);
 
       // Check the _classesCachedAtServer set to determine whether JITServer is likely to have this class already cached.
-      // If so, do not send the ROMClass content to save network traffic. 
+      // If so, do not send the ROMClass content to save network traffic.
       bool serializeClass = false;
       {
       OMR::CriticalSection romClassCache(compInfo->getclassesCachedAtServerMonitor());
@@ -3223,7 +3223,7 @@ remoteCompile(
          }
       }
 
-   auto classInfoTuple = JITServerHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm()->vmThread(), compiler->trMemory(), serializeClass);   
+   auto classInfoTuple = JITServerHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm()->vmThread(), compiler->trMemory(), serializeClass);
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
    std::string recompMethodInfoStr = compiler->isRecompilationEnabled() ? std::string((char *) compiler->getRecompilationInfo()->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
 
@@ -3282,7 +3282,7 @@ remoteCompile(
       if (JITServer::MessageType::compilationCode == response)
          {
          auto recv = client->getRecvData<std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>,
-                                         std::string, std::string, std::vector<TR_ResolvedJ9Method*>, 
+                                         std::string, std::string, std::vector<TR_ResolvedJ9Method*>,
                                          TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>>();
          statusCode = compilationOK;
          codeCacheStr = std::get<0>(recv);
@@ -3364,7 +3364,7 @@ remoteCompile(
       }
    catch (...)
       {
-      // For any other type of exception disconnect the socket 
+      // For any other type of exception disconnect the socket
       client->~ClientStream();
       TR_Memory::jitPersistentFree(client);
       compInfoPT->setClientStream(NULL);
@@ -3405,7 +3405,7 @@ remoteCompile(
                {
                uint8_t *basePtr = it.isOffsetFromMetaDataBase() ? (uint8_t*)metaData : (uint8_t*)(metaData->codeCacheAlloc);
                uint8_t *addrToPatch = (uint8_t*)(basePtr + it.getOffset());
-               switch (it.getKind()) 
+               switch (it.getKind())
                   {
                   case RuntimeAssumptionOnRegisterNative:
                      {
@@ -3432,7 +3432,7 @@ remoteCompile(
                      }
                   default:
                      TR_ASSERT_FATAL(false, "Runtime assumption of kind %d is not handled by JITClient\n", it.getKind());
-                  } // end switch (it->getKind()) 
+                  } // end switch (it->getKind())
                }
             metaData->runtimeAssumptionList = *(compiler->getMetadataAssumptionList());
             }

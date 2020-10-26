@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang.ref;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,7 @@ public class Test_WeakReference {
 	public void test_Constructor() {
 		// SM.
 		ReferenceQueue rq = new ReferenceQueue();
-		bool = new Boolean(true);
+		bool = Boolean.valueOf(true);
 		try {
 			// Allow the finalizer to run to potentially enqueue
 			WeakReference wr = new WeakReference(bool, rq);
@@ -70,7 +70,7 @@ public class Test_WeakReference {
 	@Test
 	public void test_Constructor2() {
 		// SM.
-		bool = new Boolean(true);
+		bool = Boolean.valueOf(true);
 		try {
 			WeakReference wr = new WeakReference(bool);
 			// Allow the finalizer to run to potentially enqueue

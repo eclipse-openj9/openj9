@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2018 IBM Corp. and others
+ * Copyright (c) 2014, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -112,63 +112,63 @@ public class FilterArgumentsTest {
 		
 		/* Leading null filters */
 		MethodHandle out = filterArguments(target, 0, null, null, null, f2, f3, f4);
-		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, filterByte2(constByte3), (long) constByte4, new Byte(constByte5), Byte.MIN_VALUE, constByte6), 
+		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, filterByte2(constByte3), (long) constByte4, Byte.valueOf(constByte5), Byte.MIN_VALUE, constByte6), 
 				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, constByte4, constByte5, Byte.MIN_VALUE, constByte6));
 		
 		/* Intermediate null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, filterByte0(constByte1), constByte2, constByte3, (long) constByte4, new Byte(constByte5), Byte.MIN_VALUE, constByte6), 
+		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, filterByte0(constByte1), constByte2, constByte3, (long) constByte4, Byte.valueOf(constByte5), Byte.MIN_VALUE, constByte6), 
 				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, constByte4, constByte5, Byte.MIN_VALUE, constByte6));
 		
 		/* Trailing null filters */
 		out = filterArguments(target, 2, f1, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetByte(constByte1, Byte.MAX_VALUE, filterByte1(constByte2), filterByte2(constByte3), (long) constByte4, new Byte(constByte5), Byte.MIN_VALUE, constByte6), 
+		AssertJUnit.assertEquals (targetByte(constByte1, Byte.MAX_VALUE, filterByte1(constByte2), filterByte2(constByte3), (long) constByte4, Byte.valueOf(constByte5), Byte.MIN_VALUE, constByte6), 
 				(byte) out.invokeExact(constByte1, Byte.MAX_VALUE, constByte2, constByte3, constByte4, constByte5, Byte.MIN_VALUE, constByte6));
 		
 		/* Leading and intermediate null filters */
 		out = filterArguments(target, 0, null, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, filterByte0(constByte1), constByte2, constByte3, (long) constByte4, new Byte(constByte5), Byte.MIN_VALUE, constByte6), 
+		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, filterByte0(constByte1), constByte2, constByte3, (long) constByte4, Byte.valueOf(constByte5), Byte.MIN_VALUE, constByte6), 
 				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, constByte4, constByte5, Byte.MIN_VALUE, constByte6));
 		
 		/* Leading and trailing null filters */
 		out = filterArguments(target, 0, null, null, null, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, filterByte2(constByte3), (long) constByte4, new Byte(constByte5), Byte.MIN_VALUE, constByte6), 
+		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, filterByte2(constByte3), (long) constByte4, Byte.valueOf(constByte5), Byte.MIN_VALUE, constByte6), 
 				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, constByte4, constByte5, Byte.MIN_VALUE, constByte6));
 		
 		/* Intermediate and trailing null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, filterByte0(constByte1), constByte2, constByte3, (long) constByte4, new Byte(constByte5), Byte.MIN_VALUE, constByte6), 
+		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, filterByte0(constByte1), constByte2, constByte3, (long) constByte4, Byte.valueOf(constByte5), Byte.MIN_VALUE, constByte6), 
 				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, constByte4, constByte5, Byte.MIN_VALUE, constByte6));
 		
 		/* Leading, intermediate and trailing null filters */
 		out = filterArguments(target, 0, null, null, f0, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, filterByte0(constByte2), constByte3, (long) constByte4, new Byte(constByte5), Byte.MIN_VALUE, constByte6), 
+		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, filterByte0(constByte2), constByte3, (long) constByte4, Byte.valueOf(constByte5), Byte.MIN_VALUE, constByte6), 
 				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, constByte4, constByte5, Byte.MIN_VALUE, constByte6));
 		
 		/* Only null filters */
 		out = filterArguments(target, 0, null, null, null, null, null, null, null, null);
-		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, new Byte(constByte5), Byte.MIN_VALUE, constByte6), 
-				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, new Byte(constByte5), Byte.MIN_VALUE, constByte6));
+		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, Byte.valueOf(constByte5), Byte.MIN_VALUE, constByte6), 
+				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, Byte.valueOf(constByte5), Byte.MIN_VALUE, constByte6));
 		
 		out = filterArguments(target, 4, null, null, null, null);
-		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, new Byte(constByte5), Byte.MIN_VALUE, constByte6), 
-				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, new Byte(constByte5), Byte.MIN_VALUE, constByte6));
+		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, Byte.valueOf(constByte5), Byte.MIN_VALUE, constByte6), 
+				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, Byte.valueOf(constByte5), Byte.MIN_VALUE, constByte6));
 		
 		out = filterArguments(target, 2, null, null);
-		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, new Byte(constByte5), Byte.MIN_VALUE, constByte6), 
-				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, new Byte(constByte5), Byte.MIN_VALUE, constByte6));
+		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, Byte.valueOf(constByte5), Byte.MIN_VALUE, constByte6), 
+				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, Byte.valueOf(constByte5), Byte.MIN_VALUE, constByte6));
 		
 		/* No Null filters */
 		out = filterArguments(target, 0, f0, f1, f2, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetByte(filterByte0(Byte.MAX_VALUE), filterByte1(constByte1), filterByte2(constByte2), filterByte2(constByte3), (long) constByte4, new Byte(constByte5), filterByte0(Byte.MIN_VALUE), filterByte1(constByte6)), 
+		AssertJUnit.assertEquals (targetByte(filterByte0(Byte.MAX_VALUE), filterByte1(constByte1), filterByte2(constByte2), filterByte2(constByte3), (long) constByte4, Byte.valueOf(constByte5), filterByte0(Byte.MIN_VALUE), filterByte1(constByte6)), 
 				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, constByte4, constByte5, Byte.MIN_VALUE, constByte6));
 		
 		out = filterArguments(target, 3, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, filterByte2(constByte3), (long) constByte4, new Byte(constByte5), filterByte0(Byte.MIN_VALUE), filterByte1(constByte6)), 
+		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, filterByte2(constByte3), (long) constByte4, Byte.valueOf(constByte5), filterByte0(Byte.MIN_VALUE), filterByte1(constByte6)), 
 				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, constByte4, constByte5, Byte.MIN_VALUE, constByte6));
 		
 		out = filterArguments(target, 5, f4, f0, f1);
-		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, new Byte(constByte5), filterByte0(Byte.MIN_VALUE), filterByte1(constByte6)), 
+		AssertJUnit.assertEquals (targetByte(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, Byte.valueOf(constByte5), filterByte0(Byte.MIN_VALUE), filterByte1(constByte6)), 
 				(byte) out.invokeExact(Byte.MAX_VALUE, constByte1, constByte2, constByte3, (long) constByte4, constByte5, Byte.MIN_VALUE, constByte6));
 	}
 	
@@ -219,63 +219,63 @@ public class FilterArgumentsTest {
 		
 		/* Leading null filters */
 		MethodHandle out = filterArguments(target, 0, null, null, null, f2, f3, f4);
-		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, filterShort2(constShort3), (long) constShort4, new Short(constShort5), Short.MIN_VALUE, constShort6), 
+		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, filterShort2(constShort3), (long) constShort4, Short.valueOf(constShort5), Short.MIN_VALUE, constShort6), 
 				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, constShort4, constShort5, Short.MIN_VALUE, constShort6));
 		
 		/* Intermediate null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, filterShort0(constShort1), constShort2, constShort3, (long) constShort4, new Short(constShort5), Short.MIN_VALUE, constShort6), 
+		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, filterShort0(constShort1), constShort2, constShort3, (long) constShort4, Short.valueOf(constShort5), Short.MIN_VALUE, constShort6), 
 				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, constShort4, constShort5, Short.MIN_VALUE, constShort6));
 		
 		/* Trailing null filters */
 		out = filterArguments(target, 2, f1, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetShort(constShort1, Short.MAX_VALUE, filterShort1(constShort2), filterShort2(constShort3), (long) constShort4, new Short(constShort5), Short.MIN_VALUE, constShort6), 
+		AssertJUnit.assertEquals (targetShort(constShort1, Short.MAX_VALUE, filterShort1(constShort2), filterShort2(constShort3), (long) constShort4, Short.valueOf(constShort5), Short.MIN_VALUE, constShort6), 
 				(short) out.invokeExact(constShort1, Short.MAX_VALUE, constShort2, constShort3, constShort4, constShort5, Short.MIN_VALUE, constShort6));
 		
 		/* Leading and intermediate null filters */
 		out = filterArguments(target, 0, null, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, filterShort0(constShort1), constShort2, constShort3, (long) constShort4, new Short(constShort5), Short.MIN_VALUE, constShort6), 
+		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, filterShort0(constShort1), constShort2, constShort3, (long) constShort4, Short.valueOf(constShort5), Short.MIN_VALUE, constShort6), 
 				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, constShort4, constShort5, Short.MIN_VALUE, constShort6));
 		
 		/* Leading and trailing null filters */
 		out = filterArguments(target, 0, null, null, null, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, filterShort2(constShort3), (long) constShort4, new Short(constShort5), Short.MIN_VALUE, constShort6), 
+		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, filterShort2(constShort3), (long) constShort4, Short.valueOf(constShort5), Short.MIN_VALUE, constShort6), 
 				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, constShort4, constShort5, Short.MIN_VALUE, constShort6));
 		
 		/* Intermediate and trailing null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, filterShort0(constShort1), constShort2, constShort3, (long) constShort4, new Short(constShort5), Short.MIN_VALUE, constShort6), 
+		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, filterShort0(constShort1), constShort2, constShort3, (long) constShort4, Short.valueOf(constShort5), Short.MIN_VALUE, constShort6), 
 				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, constShort4, constShort5, Short.MIN_VALUE, constShort6));
 		
 		/* Leading, intermediate and trailing null filters */
 		out = filterArguments(target, 0, null, null, f0, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, filterShort0(constShort2), constShort3, (long) constShort4, new Short(constShort5), Short.MIN_VALUE, constShort6), 
+		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, filterShort0(constShort2), constShort3, (long) constShort4, Short.valueOf(constShort5), Short.MIN_VALUE, constShort6), 
 				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, constShort4, constShort5, Short.MIN_VALUE, constShort6));
 		
 		/* Only null filters */
 		out = filterArguments(target, 0, null, null, null, null, null, null, null, null);
-		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, new Short(constShort5), Short.MIN_VALUE, constShort6), 
-				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, new Short(constShort5), Short.MIN_VALUE, constShort6));
+		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, Short.valueOf(constShort5), Short.MIN_VALUE, constShort6), 
+				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, Short.valueOf(constShort5), Short.MIN_VALUE, constShort6));
 		
 		out = filterArguments(target, 4, null, null, null, null);
-		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, new Short(constShort5), Short.MIN_VALUE, constShort6), 
-				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, new Short(constShort5), Short.MIN_VALUE, constShort6));
+		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, Short.valueOf(constShort5), Short.MIN_VALUE, constShort6), 
+				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, Short.valueOf(constShort5), Short.MIN_VALUE, constShort6));
 		
 		out = filterArguments(target, 2, null, null);
-		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, new Short(constShort5), Short.MIN_VALUE, constShort6), 
-				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, new Short(constShort5), Short.MIN_VALUE, constShort6));
+		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, Short.valueOf(constShort5), Short.MIN_VALUE, constShort6), 
+				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, Short.valueOf(constShort5), Short.MIN_VALUE, constShort6));
 		
 		/* No Null filters */
 		out = filterArguments(target, 0, f0, f1, f2, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetShort(filterShort0(Short.MAX_VALUE), filterShort1(constShort1), filterShort2(constShort2), filterShort2(constShort3), (long) constShort4, new Short(constShort5), filterShort0(Short.MIN_VALUE), filterShort1(constShort6)), 
+		AssertJUnit.assertEquals (targetShort(filterShort0(Short.MAX_VALUE), filterShort1(constShort1), filterShort2(constShort2), filterShort2(constShort3), (long) constShort4, Short.valueOf(constShort5), filterShort0(Short.MIN_VALUE), filterShort1(constShort6)), 
 				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, constShort4, constShort5, Short.MIN_VALUE, constShort6));
 		
 		out = filterArguments(target, 3, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, filterShort2(constShort3), (long) constShort4, new Short(constShort5), filterShort0(Short.MIN_VALUE), filterShort1(constShort6)), 
+		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, filterShort2(constShort3), (long) constShort4, Short.valueOf(constShort5), filterShort0(Short.MIN_VALUE), filterShort1(constShort6)), 
 				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, constShort4, constShort5, Short.MIN_VALUE, constShort6));
 		
 		out = filterArguments(target, 5, f4, f0, f1);
-		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, new Short(constShort5), filterShort0(Short.MIN_VALUE), filterShort1(constShort6)), 
+		AssertJUnit.assertEquals (targetShort(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, Short.valueOf(constShort5), filterShort0(Short.MIN_VALUE), filterShort1(constShort6)), 
 				(short) out.invokeExact(Short.MAX_VALUE, constShort1, constShort2, constShort3, (long) constShort4, constShort5, Short.MIN_VALUE, constShort6));
 	}
 	
@@ -326,63 +326,63 @@ public class FilterArgumentsTest {
 		
 		/* Leading null filters */
 		MethodHandle out = filterArguments(target, 0, null, null, null, f2, f3, f4);
-		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, filterCharacter2(constCharacter3), (long) constCharacter4, new Character(constCharacter5), Character.MIN_VALUE, constCharacter6), 
+		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, filterCharacter2(constCharacter3), (long) constCharacter4, Character.valueOf(constCharacter5), Character.MIN_VALUE, constCharacter6), 
 				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, constCharacter4, constCharacter5, Character.MIN_VALUE, constCharacter6));
 		
 		/* Intermediate null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, filterCharacter0(constCharacter1), constCharacter2, constCharacter3, (long) constCharacter4, new Character(constCharacter5), Character.MIN_VALUE, constCharacter6), 
+		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, filterCharacter0(constCharacter1), constCharacter2, constCharacter3, (long) constCharacter4, Character.valueOf(constCharacter5), Character.MIN_VALUE, constCharacter6), 
 				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, constCharacter4, constCharacter5, Character.MIN_VALUE, constCharacter6));
 		
 		/* Trailing null filters */
 		out = filterArguments(target, 2, f1, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetCharacter(constCharacter1, Character.MAX_VALUE, filterCharacter1(constCharacter2), filterCharacter2(constCharacter3), (long) constCharacter4, new Character(constCharacter5), Character.MIN_VALUE, constCharacter6), 
+		AssertJUnit.assertEquals (targetCharacter(constCharacter1, Character.MAX_VALUE, filterCharacter1(constCharacter2), filterCharacter2(constCharacter3), (long) constCharacter4, Character.valueOf(constCharacter5), Character.MIN_VALUE, constCharacter6), 
 				(char) out.invokeExact(constCharacter1, Character.MAX_VALUE, constCharacter2, constCharacter3, constCharacter4, constCharacter5, Character.MIN_VALUE, constCharacter6));
 		
 		/* Leading and intermediate null filters */
 		out = filterArguments(target, 0, null, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, filterCharacter0(constCharacter1), constCharacter2, constCharacter3, (long) constCharacter4, new Character(constCharacter5), Character.MIN_VALUE, constCharacter6), 
+		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, filterCharacter0(constCharacter1), constCharacter2, constCharacter3, (long) constCharacter4, Character.valueOf(constCharacter5), Character.MIN_VALUE, constCharacter6), 
 				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, constCharacter4, constCharacter5, Character.MIN_VALUE, constCharacter6));
 		
 		/* Leading and trailing null filters */
 		out = filterArguments(target, 0, null, null, null, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, filterCharacter2(constCharacter3), (long) constCharacter4, new Character(constCharacter5), Character.MIN_VALUE, constCharacter6), 
+		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, filterCharacter2(constCharacter3), (long) constCharacter4, Character.valueOf(constCharacter5), Character.MIN_VALUE, constCharacter6), 
 				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, constCharacter4, constCharacter5, Character.MIN_VALUE, constCharacter6));
 		
 		/* Intermediate and trailing null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, filterCharacter0(constCharacter1), constCharacter2, constCharacter3, (long) constCharacter4, new Character(constCharacter5), Character.MIN_VALUE, constCharacter6), 
+		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, filterCharacter0(constCharacter1), constCharacter2, constCharacter3, (long) constCharacter4, Character.valueOf(constCharacter5), Character.MIN_VALUE, constCharacter6), 
 				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, constCharacter4, constCharacter5, Character.MIN_VALUE, constCharacter6));
 		
 		/* Leading, intermediate and trailing null filters */
 		out = filterArguments(target, 0, null, null, f0, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, filterCharacter0(constCharacter2), constCharacter3, (long) constCharacter4, new Character(constCharacter5), Character.MIN_VALUE, constCharacter6), 
+		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, filterCharacter0(constCharacter2), constCharacter3, (long) constCharacter4, Character.valueOf(constCharacter5), Character.MIN_VALUE, constCharacter6), 
 				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, constCharacter4, constCharacter5, Character.MIN_VALUE, constCharacter6));
 		
 		/* Only null filters */
 		out = filterArguments(target, 0, null, null, null, null, null, null, null, null);
-		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, new Character(constCharacter5), Character.MIN_VALUE, constCharacter6), 
-				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, new Character(constCharacter5), Character.MIN_VALUE, constCharacter6));
+		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, Character.valueOf(constCharacter5), Character.MIN_VALUE, constCharacter6), 
+				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, Character.valueOf(constCharacter5), Character.MIN_VALUE, constCharacter6));
 		
 		out = filterArguments(target, 4, null, null, null, null);
-		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, new Character(constCharacter5), Character.MIN_VALUE, constCharacter6), 
-				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, new Character(constCharacter5), Character.MIN_VALUE, constCharacter6));
+		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, Character.valueOf(constCharacter5), Character.MIN_VALUE, constCharacter6), 
+				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, Character.valueOf(constCharacter5), Character.MIN_VALUE, constCharacter6));
 		
 		out = filterArguments(target, 2, null, null);
-		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, new Character(constCharacter5), Character.MIN_VALUE, constCharacter6), 
-				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, new Character(constCharacter5), Character.MIN_VALUE, constCharacter6));
+		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, Character.valueOf(constCharacter5), Character.MIN_VALUE, constCharacter6), 
+				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, Character.valueOf(constCharacter5), Character.MIN_VALUE, constCharacter6));
 		
 		/* No Null filters */
 		out = filterArguments(target, 0, f0, f1, f2, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetCharacter(filterCharacter0(Character.MAX_VALUE), filterCharacter1(constCharacter1), filterCharacter2(constCharacter2), filterCharacter2(constCharacter3), (long) constCharacter4, new Character(constCharacter5), filterCharacter0(Character.MIN_VALUE), filterCharacter1(constCharacter6)), 
+		AssertJUnit.assertEquals (targetCharacter(filterCharacter0(Character.MAX_VALUE), filterCharacter1(constCharacter1), filterCharacter2(constCharacter2), filterCharacter2(constCharacter3), (long) constCharacter4, Character.valueOf(constCharacter5), filterCharacter0(Character.MIN_VALUE), filterCharacter1(constCharacter6)), 
 				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, constCharacter4, constCharacter5, Character.MIN_VALUE, constCharacter6));
 		
 		out = filterArguments(target, 3, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, filterCharacter2(constCharacter3), (long) constCharacter4, new Character(constCharacter5), filterCharacter0(Character.MIN_VALUE), filterCharacter1(constCharacter6)), 
+		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, filterCharacter2(constCharacter3), (long) constCharacter4, Character.valueOf(constCharacter5), filterCharacter0(Character.MIN_VALUE), filterCharacter1(constCharacter6)), 
 				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, constCharacter4, constCharacter5, Character.MIN_VALUE, constCharacter6));
 		
 		out = filterArguments(target, 5, f4, f0, f1);
-		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, new Character(constCharacter5), filterCharacter0(Character.MIN_VALUE), filterCharacter1(constCharacter6)), 
+		AssertJUnit.assertEquals (targetCharacter(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, Character.valueOf(constCharacter5), filterCharacter0(Character.MIN_VALUE), filterCharacter1(constCharacter6)), 
 				(char) out.invokeExact(Character.MAX_VALUE, constCharacter1, constCharacter2, constCharacter3, (long) constCharacter4, constCharacter5, Character.MIN_VALUE, constCharacter6));
 	}
 	
@@ -433,63 +433,63 @@ public class FilterArgumentsTest {
 		
 		/* Leading null filters */
 		MethodHandle out = filterArguments(target, 0, null, null, null, f2, f3, f4);
-		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, filterInteger2(constInteger3), (long) constInteger4, new Integer(constInteger5), Integer.MIN_VALUE, constInteger6), 
+		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, filterInteger2(constInteger3), (long) constInteger4, Integer.valueOf(constInteger5), Integer.MIN_VALUE, constInteger6), 
 				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, constInteger4, constInteger5, Integer.MIN_VALUE, constInteger6));
 		
 		/* Intermediate null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, filterInteger0(constInteger1), constInteger2, constInteger3, (long) constInteger4, new Integer(constInteger5), Integer.MIN_VALUE, constInteger6), 
+		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, filterInteger0(constInteger1), constInteger2, constInteger3, (long) constInteger4, Integer.valueOf(constInteger5), Integer.MIN_VALUE, constInteger6), 
 				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, constInteger4, constInteger5, Integer.MIN_VALUE, constInteger6));
 		
 		/* Trailing null filters */
 		out = filterArguments(target, 2, f1, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetInteger(constInteger1, Integer.MAX_VALUE, filterInteger1(constInteger2), filterInteger2(constInteger3), (long) constInteger4, new Integer(constInteger5), Integer.MIN_VALUE, constInteger6), 
+		AssertJUnit.assertEquals (targetInteger(constInteger1, Integer.MAX_VALUE, filterInteger1(constInteger2), filterInteger2(constInteger3), (long) constInteger4, Integer.valueOf(constInteger5), Integer.MIN_VALUE, constInteger6), 
 				(int) out.invokeExact(constInteger1, Integer.MAX_VALUE, constInteger2, constInteger3, constInteger4, constInteger5, Integer.MIN_VALUE, constInteger6));
 		
 		/* Leading and intermediate null filters */
 		out = filterArguments(target, 0, null, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, filterInteger0(constInteger1), constInteger2, constInteger3, (long) constInteger4, new Integer(constInteger5), Integer.MIN_VALUE, constInteger6), 
+		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, filterInteger0(constInteger1), constInteger2, constInteger3, (long) constInteger4, Integer.valueOf(constInteger5), Integer.MIN_VALUE, constInteger6), 
 				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, constInteger4, constInteger5, Integer.MIN_VALUE, constInteger6));
 		
 		/* Leading and trailing null filters */
 		out = filterArguments(target, 0, null, null, null, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, filterInteger2(constInteger3), (long) constInteger4, new Integer(constInteger5), Integer.MIN_VALUE, constInteger6), 
+		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, filterInteger2(constInteger3), (long) constInteger4, Integer.valueOf(constInteger5), Integer.MIN_VALUE, constInteger6), 
 				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, constInteger4, constInteger5, Integer.MIN_VALUE, constInteger6));
 		
 		/* Intermediate and trailing null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, filterInteger0(constInteger1), constInteger2, constInteger3, (long) constInteger4, new Integer(constInteger5), Integer.MIN_VALUE, constInteger6), 
+		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, filterInteger0(constInteger1), constInteger2, constInteger3, (long) constInteger4, Integer.valueOf(constInteger5), Integer.MIN_VALUE, constInteger6), 
 				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, constInteger4, constInteger5, Integer.MIN_VALUE, constInteger6));
 		
 		/* Leading, intermediate and trailing null filters */
 		out = filterArguments(target, 0, null, null, f0, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, filterInteger0(constInteger2), constInteger3, (long) constInteger4, new Integer(constInteger5), Integer.MIN_VALUE, constInteger6), 
+		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, filterInteger0(constInteger2), constInteger3, (long) constInteger4, Integer.valueOf(constInteger5), Integer.MIN_VALUE, constInteger6), 
 				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, constInteger4, constInteger5, Integer.MIN_VALUE, constInteger6));
 		
 		/* Only null filters */
 		out = filterArguments(target, 0, null, null, null, null, null, null, null, null);
-		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, new Integer(constInteger5), Integer.MIN_VALUE, constInteger6), 
-				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, new Integer(constInteger5), Integer.MIN_VALUE, constInteger6));
+		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, Integer.valueOf(constInteger5), Integer.MIN_VALUE, constInteger6), 
+				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, Integer.valueOf(constInteger5), Integer.MIN_VALUE, constInteger6));
 		
 		out = filterArguments(target, 4, null, null, null, null);
-		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, new Integer(constInteger5), Integer.MIN_VALUE, constInteger6), 
-				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, new Integer(constInteger5), Integer.MIN_VALUE, constInteger6));
+		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, Integer.valueOf(constInteger5), Integer.MIN_VALUE, constInteger6), 
+				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, Integer.valueOf(constInteger5), Integer.MIN_VALUE, constInteger6));
 		
 		out = filterArguments(target, 2, null, null);
-		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, new Integer(constInteger5), Integer.MIN_VALUE, constInteger6), 
-				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, new Integer(constInteger5), Integer.MIN_VALUE, constInteger6));
+		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, Integer.valueOf(constInteger5), Integer.MIN_VALUE, constInteger6), 
+				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, Integer.valueOf(constInteger5), Integer.MIN_VALUE, constInteger6));
 		
 		/* No Null filters */
 		out = filterArguments(target, 0, f0, f1, f2, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetInteger(filterInteger0(Integer.MAX_VALUE), filterInteger1(constInteger1), filterInteger2(constInteger2), filterInteger2(constInteger3), (long) constInteger4, new Integer(constInteger5), filterInteger0(Integer.MIN_VALUE), filterInteger1(constInteger6)), 
+		AssertJUnit.assertEquals (targetInteger(filterInteger0(Integer.MAX_VALUE), filterInteger1(constInteger1), filterInteger2(constInteger2), filterInteger2(constInteger3), (long) constInteger4, Integer.valueOf(constInteger5), filterInteger0(Integer.MIN_VALUE), filterInteger1(constInteger6)), 
 				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, constInteger4, constInteger5, Integer.MIN_VALUE, constInteger6));
 		
 		out = filterArguments(target, 3, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, filterInteger2(constInteger3), (long) constInteger4, new Integer(constInteger5), filterInteger0(Integer.MIN_VALUE), filterInteger1(constInteger6)), 
+		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, filterInteger2(constInteger3), (long) constInteger4, Integer.valueOf(constInteger5), filterInteger0(Integer.MIN_VALUE), filterInteger1(constInteger6)), 
 				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, constInteger4, constInteger5, Integer.MIN_VALUE, constInteger6));
 		
 		out = filterArguments(target, 5, f4, f0, f1);
-		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, new Integer(constInteger5), filterInteger0(Integer.MIN_VALUE), filterInteger1(constInteger6)), 
+		AssertJUnit.assertEquals (targetInteger(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, Integer.valueOf(constInteger5), filterInteger0(Integer.MIN_VALUE), filterInteger1(constInteger6)), 
 				(int) out.invokeExact(Integer.MAX_VALUE, constInteger1, constInteger2, constInteger3, (long) constInteger4, constInteger5, Integer.MIN_VALUE, constInteger6));
 	}
 	
@@ -540,63 +540,63 @@ public class FilterArgumentsTest {
 		
 		/* Leading null filters */
 		MethodHandle out = filterArguments(target, 0, null, null, null, f2, f3, f4);
-		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, filterLong2(constLong3), constInteger4, new Long(constLong5), Long.MIN_VALUE, constLong6), 
+		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, filterLong2(constLong3), constInteger4, Long.valueOf(constLong5), Long.MIN_VALUE, constLong6), 
 				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, (long) constInteger4, constLong5, Long.MIN_VALUE, constLong6));
 		
 		/* Intermediate null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, filterLong0(constLong1), constLong2, constLong3, constInteger4, new Long(constLong5), Long.MIN_VALUE, constLong6), 
+		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, filterLong0(constLong1), constLong2, constLong3, constInteger4, Long.valueOf(constLong5), Long.MIN_VALUE, constLong6), 
 				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, (long) constInteger4, constLong5, Long.MIN_VALUE, constLong6));
 		
 		/* Trailing null filters */
 		out = filterArguments(target, 2, f1, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetLong(constLong1, Long.MAX_VALUE, filterLong1(constLong2), filterLong2(constLong3), constInteger4, new Long(constLong5), Long.MIN_VALUE, constLong6), 
+		AssertJUnit.assertEquals (targetLong(constLong1, Long.MAX_VALUE, filterLong1(constLong2), filterLong2(constLong3), constInteger4, Long.valueOf(constLong5), Long.MIN_VALUE, constLong6), 
 				(long) out.invokeExact(constLong1, Long.MAX_VALUE, constLong2, constLong3, (long) constInteger4, constLong5, Long.MIN_VALUE, constLong6));
 		
 		/* Leading and intermediate null filters */
 		out = filterArguments(target, 0, null, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, filterLong0(constLong1), constLong2, constLong3, constInteger4, new Long(constLong5), Long.MIN_VALUE, constLong6), 
+		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, filterLong0(constLong1), constLong2, constLong3, constInteger4, Long.valueOf(constLong5), Long.MIN_VALUE, constLong6), 
 				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, (long) constInteger4, constLong5, Long.MIN_VALUE, constLong6));
 		
 		/* Leading and trailing null filters */
 		out = filterArguments(target, 0, null, null, null, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, filterLong2(constLong3), constInteger4, new Long(constLong5), Long.MIN_VALUE, constLong6), 
+		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, filterLong2(constLong3), constInteger4, Long.valueOf(constLong5), Long.MIN_VALUE, constLong6), 
 				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, (long) constInteger4, constLong5, Long.MIN_VALUE, constLong6));
 		
 		/* Intermediate and trailing null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, filterLong0(constLong1), constLong2, constLong3, constInteger4, new Long(constLong5), Long.MIN_VALUE, constLong6), 
+		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, filterLong0(constLong1), constLong2, constLong3, constInteger4, Long.valueOf(constLong5), Long.MIN_VALUE, constLong6), 
 				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, (long) constInteger4, constLong5, Long.MIN_VALUE, constLong6));
 		
 		/* Leading, intermediate and trailing null filters */
 		out = filterArguments(target, 0, null, null, f0, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, filterLong0(constLong2), constLong3, constInteger4, new Long(constLong5), Long.MIN_VALUE, constLong6), 
+		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, filterLong0(constLong2), constLong3, constInteger4, Long.valueOf(constLong5), Long.MIN_VALUE, constLong6), 
 				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, (long) constInteger4, constLong5, Long.MIN_VALUE, constLong6));
 		
 		/* Only null filters */
 		out = filterArguments(target, 0, null, null, null, null, null, null, null, null);
-		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, new Long(constLong5), Long.MIN_VALUE, constLong6), 
-				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, new Long(constLong5), Long.MIN_VALUE, constLong6));
+		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, Long.valueOf(constLong5), Long.MIN_VALUE, constLong6), 
+				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, Long.valueOf(constLong5), Long.MIN_VALUE, constLong6));
 		
 		out = filterArguments(target, 4, null, null, null, null);
-		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, new Long(constLong5), Long.MIN_VALUE, constLong6), 
-				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, new Long(constLong5), Long.MIN_VALUE, constLong6));
+		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, Long.valueOf(constLong5), Long.MIN_VALUE, constLong6), 
+				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, Long.valueOf(constLong5), Long.MIN_VALUE, constLong6));
 		
 		out = filterArguments(target, 2, null, null);
-		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, new Long(constLong5), Long.MIN_VALUE, constLong6), 
-				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, new Long(constLong5), Long.MIN_VALUE, constLong6));
+		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, Long.valueOf(constLong5), Long.MIN_VALUE, constLong6), 
+				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, Long.valueOf(constLong5), Long.MIN_VALUE, constLong6));
 		
 		/* No Null filters */
 		out = filterArguments(target, 0, f0, f1, f2, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetLong(filterLong0(Long.MAX_VALUE), filterLong1(constLong1), filterLong2(constLong2), filterLong2(constLong3), constInteger4, new Long(constLong5), filterLong0(Long.MIN_VALUE), filterLong1(constLong6)), 
+		AssertJUnit.assertEquals (targetLong(filterLong0(Long.MAX_VALUE), filterLong1(constLong1), filterLong2(constLong2), filterLong2(constLong3), constInteger4, Long.valueOf(constLong5), filterLong0(Long.MIN_VALUE), filterLong1(constLong6)), 
 				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, (long) constInteger4, constLong5, Long.MIN_VALUE, constLong6));
 		
 		out = filterArguments(target, 3, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, filterLong2(constLong3), constInteger4, new Long(constLong5), filterLong0(Long.MIN_VALUE), filterLong1(constLong6)), 
+		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, filterLong2(constLong3), constInteger4, Long.valueOf(constLong5), filterLong0(Long.MIN_VALUE), filterLong1(constLong6)), 
 				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, (long) constInteger4, constLong5, Long.MIN_VALUE, constLong6));
 		
 		out = filterArguments(target, 5, f4, f0, f1);
-		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, new Long(constLong5), filterLong0(Long.MIN_VALUE), filterLong1(constLong6)), 
+		AssertJUnit.assertEquals (targetLong(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, Long.valueOf(constLong5), filterLong0(Long.MIN_VALUE), filterLong1(constLong6)), 
 				(long) out.invokeExact(Long.MAX_VALUE, constLong1, constLong2, constLong3, constInteger4, constLong5, Long.MIN_VALUE, constLong6));
 	}
 	
@@ -653,63 +653,63 @@ public class FilterArgumentsTest {
 		
 		/* Leading null filters */
 		MethodHandle out = filterArguments(target, 0, null, null, null, f2, f3, f4);
-		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, filterFloat2(constFloat3), (double) constFloat4, new Float(constFloat5), Float.MIN_VALUE, constFloat6), 
+		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, filterFloat2(constFloat3), (double) constFloat4, Float.valueOf(constFloat5), Float.MIN_VALUE, constFloat6), 
 				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, constFloat4, constFloat5, Float.MIN_VALUE, constFloat6));
 		
 		/* Intermediate null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, filterFloat0(constFloat1), constFloat2, constFloat3, (double) constFloat4, new Float(constFloat5), Float.MIN_VALUE, constFloat6), 
+		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, filterFloat0(constFloat1), constFloat2, constFloat3, (double) constFloat4, Float.valueOf(constFloat5), Float.MIN_VALUE, constFloat6), 
 				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, constFloat4, constFloat5, Float.MIN_VALUE, constFloat6));
 		
 		/* Trailing null filters */
 		out = filterArguments(target, 2, f1, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetFloat(constFloat1, Float.MAX_VALUE, filterFloat1(constFloat2), filterFloat2(constFloat3), (double) constFloat4, new Float(constFloat5), Float.MIN_VALUE, constFloat6), 
+		AssertJUnit.assertEquals (targetFloat(constFloat1, Float.MAX_VALUE, filterFloat1(constFloat2), filterFloat2(constFloat3), (double) constFloat4, Float.valueOf(constFloat5), Float.MIN_VALUE, constFloat6), 
 				(float) out.invokeExact(constFloat1, Float.MAX_VALUE, constFloat2, constFloat3, constFloat4, constFloat5, Float.MIN_VALUE, constFloat6));
 		
 		/* Leading and intermediate null filters */
 		out = filterArguments(target, 0, null, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, filterFloat0(constFloat1), constFloat2, constFloat3, (double) constFloat4, new Float(constFloat5), Float.MIN_VALUE, constFloat6), 
+		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, filterFloat0(constFloat1), constFloat2, constFloat3, (double) constFloat4, Float.valueOf(constFloat5), Float.MIN_VALUE, constFloat6), 
 				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, constFloat4, constFloat5, Float.MIN_VALUE, constFloat6));
 		
 		/* Leading and trailing null filters */
 		out = filterArguments(target, 0, null, null, null, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, filterFloat2(constFloat3), (double) constFloat4, new Float(constFloat5), Float.MIN_VALUE, constFloat6), 
+		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, filterFloat2(constFloat3), (double) constFloat4, Float.valueOf(constFloat5), Float.MIN_VALUE, constFloat6), 
 				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, constFloat4, constFloat5, Float.MIN_VALUE, constFloat6));
 		
 		/* Intermediate and trailing null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, filterFloat0(constFloat1), constFloat2, constFloat3, (double) constFloat4, new Float(constFloat5), Float.MIN_VALUE, constFloat6), 
+		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, filterFloat0(constFloat1), constFloat2, constFloat3, (double) constFloat4, Float.valueOf(constFloat5), Float.MIN_VALUE, constFloat6), 
 				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, constFloat4, constFloat5, Float.MIN_VALUE, constFloat6));
 		
 		/* Leading, intermediate and trailing null filters */
 		out = filterArguments(target, 0, null, null, f0, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, filterFloat0(constFloat2), constFloat3, (double) constFloat4, new Float(constFloat5), Float.MIN_VALUE, constFloat6), 
+		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, filterFloat0(constFloat2), constFloat3, (double) constFloat4, Float.valueOf(constFloat5), Float.MIN_VALUE, constFloat6), 
 				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, constFloat4, constFloat5, Float.MIN_VALUE, constFloat6));
 		
 		/* Only null filters */
 		out = filterArguments(target, 0, null, null, null, null, null, null, null, null);
-		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, new Float(constFloat5), Float.MIN_VALUE, constFloat6), 
-				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, new Float(constFloat5), Float.MIN_VALUE, constFloat6));
+		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, Float.valueOf(constFloat5), Float.MIN_VALUE, constFloat6), 
+				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, Float.valueOf(constFloat5), Float.MIN_VALUE, constFloat6));
 		
 		out = filterArguments(target, 4, null, null, null, null);
-		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, new Float(constFloat5), Float.MIN_VALUE, constFloat6), 
-				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, new Float(constFloat5), Float.MIN_VALUE, constFloat6));
+		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, Float.valueOf(constFloat5), Float.MIN_VALUE, constFloat6), 
+				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, Float.valueOf(constFloat5), Float.MIN_VALUE, constFloat6));
 		
 		out = filterArguments(target, 2, null, null);
-		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, new Float(constFloat5), Float.MIN_VALUE, constFloat6), 
-				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, new Float(constFloat5), Float.MIN_VALUE, constFloat6));
+		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, Float.valueOf(constFloat5), Float.MIN_VALUE, constFloat6), 
+				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, Float.valueOf(constFloat5), Float.MIN_VALUE, constFloat6));
 		
 		/* No Null filters */
 		out = filterArguments(target, 0, f0, f1, f2, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetFloat(filterFloat0(Float.MAX_VALUE), filterFloat1(constFloat1), filterFloat2(constFloat2), filterFloat2(constFloat3), (double) constFloat4, new Float(constFloat5), filterFloat0(Float.MIN_VALUE), filterFloat1(constFloat6)), 
+		AssertJUnit.assertEquals (targetFloat(filterFloat0(Float.MAX_VALUE), filterFloat1(constFloat1), filterFloat2(constFloat2), filterFloat2(constFloat3), (double) constFloat4, Float.valueOf(constFloat5), filterFloat0(Float.MIN_VALUE), filterFloat1(constFloat6)), 
 				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, constFloat4, constFloat5, Float.MIN_VALUE, constFloat6));
 		
 		out = filterArguments(target, 3, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, filterFloat2(constFloat3), (double) constFloat4, new Float(constFloat5), filterFloat0(Float.MIN_VALUE), filterFloat1(constFloat6)), 
+		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, filterFloat2(constFloat3), (double) constFloat4, Float.valueOf(constFloat5), filterFloat0(Float.MIN_VALUE), filterFloat1(constFloat6)), 
 				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, constFloat4, constFloat5, Float.MIN_VALUE, constFloat6));
 		
 		out = filterArguments(target, 5, f4, f0, f1);
-		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, new Float(constFloat5), filterFloat0(Float.MIN_VALUE), filterFloat1(constFloat6)), 
+		AssertJUnit.assertEquals (targetFloat(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, Float.valueOf(constFloat5), filterFloat0(Float.MIN_VALUE), filterFloat1(constFloat6)), 
 				(float) out.invokeExact(Float.MAX_VALUE, constFloat1, constFloat2, constFloat3, (double) constFloat4, constFloat5, Float.MIN_VALUE, constFloat6));
 	}
 	
@@ -760,63 +760,63 @@ public class FilterArgumentsTest {
 		
 		/* Leading null filters */
 		MethodHandle out = filterArguments(target, 0, null, null, null, f2, f3, f4);
-		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, filterDouble2(constDouble3), constFloat4, new Double(constDouble5), Double.MIN_VALUE, constDouble6), 
+		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, filterDouble2(constDouble3), constFloat4, Double.valueOf(constDouble5), Double.MIN_VALUE, constDouble6), 
 				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, (double) constFloat4, constDouble5, Double.MIN_VALUE, constDouble6));
 		
 		/* Intermediate null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, filterDouble0(constDouble1), constDouble2, constDouble3, constFloat4, new Double(constDouble5), Double.MIN_VALUE, constDouble6), 
+		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, filterDouble0(constDouble1), constDouble2, constDouble3, constFloat4, Double.valueOf(constDouble5), Double.MIN_VALUE, constDouble6), 
 				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, (double) constFloat4, constDouble5, Double.MIN_VALUE, constDouble6));
 		
 		/* Trailing null filters */
 		out = filterArguments(target, 2, f1, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetDouble(constDouble1, Double.MAX_VALUE, filterDouble1(constDouble2), filterDouble2(constDouble3), constFloat4, new Double(constDouble5), Double.MIN_VALUE, constDouble6), 
+		AssertJUnit.assertEquals (targetDouble(constDouble1, Double.MAX_VALUE, filterDouble1(constDouble2), filterDouble2(constDouble3), constFloat4, Double.valueOf(constDouble5), Double.MIN_VALUE, constDouble6), 
 				(double) out.invokeExact(constDouble1, Double.MAX_VALUE, constDouble2, constDouble3, (double) constFloat4, constDouble5, Double.MIN_VALUE, constDouble6));
 		
 		/* Leading and intermediate null filters */
 		out = filterArguments(target, 0, null, f0, null, null, f3, f4);
-		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, filterDouble0(constDouble1), constDouble2, constDouble3, constFloat4, new Double(constDouble5), Double.MIN_VALUE, constDouble6), 
+		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, filterDouble0(constDouble1), constDouble2, constDouble3, constFloat4, Double.valueOf(constDouble5), Double.MIN_VALUE, constDouble6), 
 				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, (double) constFloat4, constDouble5, Double.MIN_VALUE, constDouble6));
 		
 		/* Leading and trailing null filters */
 		out = filterArguments(target, 0, null, null, null, f2, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, filterDouble2(constDouble3), constFloat4, new Double(constDouble5), Double.MIN_VALUE, constDouble6), 
+		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, filterDouble2(constDouble3), constFloat4, Double.valueOf(constDouble5), Double.MIN_VALUE, constDouble6), 
 				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, (double) constFloat4, constDouble5, Double.MIN_VALUE, constDouble6));
 		
 		/* Intermediate and trailing null filters */
 		out = filterArguments(target, 1, f0, null, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, filterDouble0(constDouble1), constDouble2, constDouble3, constFloat4, new Double(constDouble5), Double.MIN_VALUE, constDouble6), 
+		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, filterDouble0(constDouble1), constDouble2, constDouble3, constFloat4, Double.valueOf(constDouble5), Double.MIN_VALUE, constDouble6), 
 				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, (double) constFloat4, constDouble5, Double.MIN_VALUE, constDouble6));
 		
 		/* Leading, intermediate and trailing null filters */
 		out = filterArguments(target, 0, null, null, f0, null, f3, f4, null, null);
-		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, filterDouble0(constDouble2), constDouble3, constFloat4, new Double(constDouble5), Double.MIN_VALUE, constDouble6), 
+		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, filterDouble0(constDouble2), constDouble3, constFloat4, Double.valueOf(constDouble5), Double.MIN_VALUE, constDouble6), 
 				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, (double) constFloat4, constDouble5, Double.MIN_VALUE, constDouble6));
 		
 		/* Only null filters */
 		out = filterArguments(target, 0, null, null, null, null, null, null, null, null);
-		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, new Double(constDouble5), Double.MIN_VALUE, constDouble6), 
-				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, new Double(constDouble5), Double.MIN_VALUE, constDouble6));
+		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, Double.valueOf(constDouble5), Double.MIN_VALUE, constDouble6), 
+				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, Double.valueOf(constDouble5), Double.MIN_VALUE, constDouble6));
 		
 		out = filterArguments(target, 4, null, null, null, null);
-		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, new Double(constDouble5), Double.MIN_VALUE, constDouble6), 
-				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, new Double(constDouble5), Double.MIN_VALUE, constDouble6));
+		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, Double.valueOf(constDouble5), Double.MIN_VALUE, constDouble6), 
+				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, Double.valueOf(constDouble5), Double.MIN_VALUE, constDouble6));
 		
 		out = filterArguments(target, 2, null, null);
-		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, new Double(constDouble5), Double.MIN_VALUE, constDouble6), 
-				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, new Double(constDouble5), Double.MIN_VALUE, constDouble6));
+		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, Double.valueOf(constDouble5), Double.MIN_VALUE, constDouble6), 
+				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, Double.valueOf(constDouble5), Double.MIN_VALUE, constDouble6));
 		
 		/* No Null filters */
 		out = filterArguments(target, 0, f0, f1, f2, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetDouble(filterDouble0(Double.MAX_VALUE), filterDouble1(constDouble1), filterDouble2(constDouble2), filterDouble2(constDouble3), constFloat4, new Double(constDouble5), filterDouble0(Double.MIN_VALUE), filterDouble1(constDouble6)), 
+		AssertJUnit.assertEquals (targetDouble(filterDouble0(Double.MAX_VALUE), filterDouble1(constDouble1), filterDouble2(constDouble2), filterDouble2(constDouble3), constFloat4, Double.valueOf(constDouble5), filterDouble0(Double.MIN_VALUE), filterDouble1(constDouble6)), 
 				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, (double) constFloat4, constDouble5, Double.MIN_VALUE, constDouble6));
 		
 		out = filterArguments(target, 3, f2, f3, f4, f0, f1);
-		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, filterDouble2(constDouble3), constFloat4, new Double(constDouble5), filterDouble0(Double.MIN_VALUE), filterDouble1(constDouble6)), 
+		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, filterDouble2(constDouble3), constFloat4, Double.valueOf(constDouble5), filterDouble0(Double.MIN_VALUE), filterDouble1(constDouble6)), 
 				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, (double) constFloat4, constDouble5, Double.MIN_VALUE, constDouble6));
 		
 		out = filterArguments(target, 5, f4, f0, f1);
-		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, new Double(constDouble5), filterDouble0(Double.MIN_VALUE), filterDouble1(constDouble6)), 
+		AssertJUnit.assertEquals (targetDouble(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, Double.valueOf(constDouble5), filterDouble0(Double.MIN_VALUE), filterDouble1(constDouble6)), 
 				(double) out.invokeExact(Double.MAX_VALUE, constDouble1, constDouble2, constDouble3, constFloat4, constDouble5, Double.MIN_VALUE, constDouble6));
 	}
 	
@@ -944,19 +944,19 @@ public class FilterArgumentsTest {
 	/* Divide by 2 */
 	public static Double filterDoubleObject0 (Double a) {
 		System.gc();
-		return new Double(a/2);
+		return Double.valueOf(a/2);
 	}
 	
 	/* Subtract 1 */
 	public static Double filterDoubleObject1 (Double a) {
 		System.gc();
-		return new Double(a-1); 
+		return Double.valueOf(a-1); 
 	}
 	
 	/* Add 1 */
 	public static Double filterDoubleObject2 (Double a) {
 		System.gc();
-		return new Double(a+1); 
+		return Double.valueOf(a+1); 
 	}
 
 	/* Convert into 1 stack-slot primitive data-type */
@@ -968,7 +968,7 @@ public class FilterArgumentsTest {
 	/* Target - returns average of input parameters */
 	public static Double targetDoubleObject (Double a, Double b, Double c, Double d, float e, double f, Double g, Double h) {
 		System.gc();
-		return averageDoubleObject (a, b, c, d, new Double((double) e), new Double(f), g, h);
+		return averageDoubleObject (a, b, c, d, Double.valueOf((double) e), Double.valueOf(f), g, h);
 	}
 	
 	public static Double averageDoubleObject (Double... args) {
@@ -976,7 +976,7 @@ public class FilterArgumentsTest {
 		for(Double arg : args) {
 			total += (arg.doubleValue()/(args.length));
 		}
-		return new Double(total);
+		return Double.valueOf(total);
 	}
 	
    /* Test filterArguments: data-type -> boolean */

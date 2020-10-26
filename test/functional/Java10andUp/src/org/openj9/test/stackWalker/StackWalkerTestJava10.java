@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@ public class StackWalkerTestJava10 {
 	}
 
 	void sanityMethod_1(int i) {
-		if (i > 0) sanityMethod_1(i-1); else sanityMethod_2(new Integer(42));
+		if (i > 0) sanityMethod_1(i-1); else sanityMethod_2(Integer.valueOf(42));
 	}
 
 	private void sanityMethod_2(Integer in) {

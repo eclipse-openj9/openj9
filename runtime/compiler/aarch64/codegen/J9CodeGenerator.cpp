@@ -190,9 +190,9 @@ J9::ARM64::CodeGenerator::generateSwitchToInterpreterPrePrologue(TR::Instruction
    TR::Register *lr = self()->machine()->getRealRegister(TR::RealRegister::x30); // link register
    TR::Register *xzr = self()->machine()->getRealRegister(TR::RealRegister::xzr); // zero register
    TR::ResolvedMethodSymbol *methodSymbol = comp->getJittedMethodSymbol();
-   TR::SymbolReference *revertToInterpreterSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64revertToInterpreterGlue, false, false, false);
+   TR::SymbolReference *revertToInterpreterSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64revertToInterpreterGlue);
    uintptr_t ramMethod = (uintptr_t)methodSymbol->getResolvedMethod()->resolvedMethodAddress();
-   TR::SymbolReference *helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, false, false, false);
+   TR::SymbolReference *helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition);
    uintptr_t helperAddr = (uintptr_t)helperSymRef->getMethodAddress();
 
    // x8 must contain the saved LR; see Recompilation.s

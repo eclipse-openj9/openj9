@@ -190,7 +190,7 @@ generateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg, bool isArdbar
    // TR_softwareReadBarrier helper expects the vmThread in x0.
    generateMovInstruction(cg, node, x0Reg, vmThreadReg);
 
-   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier, false, false, false);
+   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier);
    generateImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptr_t)helperSym->getMethodAddress(), deps, helperSym, NULL);
 
    generateTrg1MemInstruction(cg, loadOp, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(locationReg, 0, cg));
@@ -1240,7 +1240,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
        *
        * cmp      lengthReg, #maxObjectSizeInElements
        * b.hi     callLabel
-       * 
+       *
        * uxtw     tempReg, lengthReg
        * ldrimmx  resultReg, [metaReg, offsetToHeapAlloc]
        * lsl      tempReg, lengthReg, #shiftValue
@@ -1251,7 +1251,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
        * cselx    dataSizeReg, tempReg, tempReg2, ne
        * ldrimmx  heapTopReg, [metaReg, offsetToHeapTop]
        * addimmx  tempReg, resultReg, dataSizeReg
-       * 
+       *
        * # check for overflow
        * cmp      tempReg, heapTopReg
        * b.gt     callLabel
@@ -1260,7 +1260,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
        *
        */
       // Detect large or negative number of elements in case addr wrap-around
-      // 
+      //
       // The GC will guarantee that at least 'maxObjectSizeGuaranteedNotToOverflow' bytes
       // of slush will exist between the top of the heap and the end of the address space.
       //
@@ -1326,7 +1326,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
             }
          loadConstant64(cg, node, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), heapTopReg);
 
-         generateCondTrg1Src2Instruction(cg, TR::InstOpCode::cselx, node, dataSizeReg, tempReg, heapTopReg, TR::CC_NE); 
+         generateCondTrg1Src2Instruction(cg, TR::InstOpCode::cselx, node, dataSizeReg, tempReg, heapTopReg, TR::CC_NE);
          }
       else
          {
@@ -1789,7 +1789,7 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    else
       {
       elementSize = TR::Compiler->om.getSizeOfArrayElement(node);
- 
+
       // If the array cannot be allocated as a contiguous array, then comp->canAllocateInline should have returned -1.
       // The only exception is when the array length is 0.
       headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();

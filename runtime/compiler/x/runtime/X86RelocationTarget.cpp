@@ -127,7 +127,7 @@ j9ThunkInvokeExactHelperFromTerseSignature(UDATA signatureLength, char *signatur
          helper = TR_icallVMprJavaSendInvokeExact1;
          break;
       }
-   TR::SymbolReference *symRef = reloRuntime->comp()->getSymRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
+   TR::SymbolReference *symRef = reloRuntime->comp()->getSymRefTab()->findOrCreateRuntimeHelper(helper);
 
    return symRef->getMethodAddress();
    }

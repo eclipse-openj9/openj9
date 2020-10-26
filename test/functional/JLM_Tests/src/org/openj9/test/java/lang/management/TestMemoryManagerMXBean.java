@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -349,7 +349,7 @@ public class TestMemoryManagerMXBean {
 			logger.debug("Exception occurred, as expected: " + e1.getMessage());
 		}
 
-		attr = new Attribute("Valid", new Boolean(true));
+		attr = new Attribute("Valid", Boolean.valueOf(true));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception.");
@@ -384,7 +384,7 @@ public class TestMemoryManagerMXBean {
 	public final void testInvoke() {
 		// No operations to invoke...
 		try {
-			Object retVal = mbs.invoke(objName, "KissTheRoadOfRoratonga", new Object[] { new Long(7446), new Long(54) },
+			Object retVal = mbs.invoke(objName, "KissTheRoadOfRoratonga", new Object[] { Long.valueOf(7446), Long.valueOf(54) },
 					new String[] { "java.lang.Long", "java.lang.Long" });
 			Assert.fail("Unreacheable code: should have thrown an exception.");
 		} catch (Exception e) {

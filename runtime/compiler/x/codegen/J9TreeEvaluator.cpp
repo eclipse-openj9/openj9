@@ -1548,7 +1548,7 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
 
       auto snippetLabel = generateLabelSymbol(cg);
       auto instr = generateLabelInstruction(JNE4, node, snippetLabel, cg); // ReferenceArrayCopy set ZF when succeed.
-      auto snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, cg->symRefTab()->findOrCreateRuntimeHelper(TR_arrayStoreException, false, false, false),
+      auto snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, cg->symRefTab()->findOrCreateRuntimeHelper(TR_arrayStoreException),
                                                                          snippetLabel, instr, false);
       cg->addSnippet(snippet);
       }
@@ -6351,7 +6351,7 @@ static void genHeapAlloc(
             else
                {
                generateLabelInstruction(JG4, node, restartLabel, cg);
-               TR::SymbolReference * helperSymRef = cg->getSymRefTab()->findOrCreateRuntimeHelper(TR_X86CodeCachePrefetchHelper, false, false, false);
+               TR::SymbolReference * helperSymRef = cg->getSymRefTab()->findOrCreateRuntimeHelper(TR_X86CodeCachePrefetchHelper);
                TR::MethodSymbol *helperSymbol = helperSymRef->getSymbol()->castToMethodSymbol();
 #ifdef J9VM_GC_NON_ZERO_TLH
                if (!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization())
@@ -8728,7 +8728,7 @@ inlineNanoTime(
          resultAddress = NULL;
          }
 
-      TR::SymbolReference *gtod = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_AMD64clockGetTime,false,false,false);
+      TR::SymbolReference *gtod = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_AMD64clockGetTime);
       TR::Node *timevalNode = TR::Node::createWithSymRef(node, TR::loadaddr, 0, cg->getNanoTimeTemp());
       TR::Node *clockSourceNode = TR::Node::create(node, TR::iconst, 0, CLOCK_MONOTONIC);
       TR::Node *callNode    = TR::Node::createWithSymRef(TR::call, 2, 2, clockSourceNode, timevalNode, gtod);

@@ -3757,7 +3757,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
 
    TR::ResolvedMethodSymbol* methodSymbol = comp->getJittedMethodSymbol();
 
-   TR::SymbolReference* helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, false, false, false);
+   TR::SymbolReference* helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition);
 
    // AOT relocation for the helper address
    TR::S390EncodingRelocation* encodingRelocation = new (self()->trHeapMemory()) TR::S390EncodingRelocation(TR_AbsoluteHelperAddress, helperSymRef);

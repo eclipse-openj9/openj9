@@ -66,7 +66,7 @@ public class URLStaleClassPathEntryTest {
 		}
 
 		String numberOfUrlsString = props.getProperty("NumberOfUrls");
-		Integer tempNumberOfUrls = new Integer(numberOfUrlsString);
+		Integer tempNumberOfUrls = Integer.valueOf(numberOfUrlsString);
 		int numberOfUrls = tempNumberOfUrls.intValue();
 		
 		int maxClassesToLoad = 0;
@@ -75,10 +75,10 @@ public class URLStaleClassPathEntryTest {
 		for(int index = 0; index < numberOfUrls; index++){
 			urls[index] = props.getProperty("Url"+index);
 			String ctl = props.getProperty("NumberOfClassesToLoad"+index);
-			Integer intctl = new Integer(ctl);
+			Integer intctl = Integer.valueOf(ctl);
 			maxClassesToLoad = ((intctl.intValue() > maxClassesToLoad) ? intctl.intValue() : maxClassesToLoad);
 			String ctf = props.getProperty("NumberOfClassesToFind"+index);
-			Integer intctf = new Integer(ctl);
+			Integer intctf = Integer.valueOf(ctl);
 			maxClassesToFind = ((intctl.intValue() > maxClassesToFind) ? intctl.intValue() : maxClassesToFind);
 		}
 		
@@ -91,10 +91,10 @@ public class URLStaleClassPathEntryTest {
 			String findClasses = props.getProperty("FindClasses"+urlIndex);
 			String result = props.getProperty("Results"+urlIndex);
 			String ctl = props.getProperty("NumberOfClassesToLoad"+urlIndex);
-			Integer intctl = new Integer(ctl);
+			Integer intctl = Integer.valueOf(ctl);
 			int numberOfClassesToLoad = intctl.intValue();
 			String ctf = props.getProperty("NumberOfClassesToFind"+urlIndex);
-			Integer intctf = new Integer(ctl);
+			Integer intctf = Integer.valueOf(ctl);
 			int numberOfClassesToFind = intctf.intValue();
 			for(int classToLoadIndex = 0; classToLoadIndex < numberOfClassesToLoad; classToLoadIndex++){
 				classesToLoad[urlIndex][classToLoadIndex] = manipulator.getStringElement(classToLoadIndex, loadClasses);

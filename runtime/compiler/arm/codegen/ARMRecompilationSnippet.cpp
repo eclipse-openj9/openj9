@@ -44,7 +44,7 @@ uint8_t *TR::ARMRecompilationSnippet::emitSnippetBody()
    */
 
    uint8_t             *buffer = cg()->getBinaryBufferCursor();
-   TR::SymbolReference  *countingRecompMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMcountingRecompileMethod, false, false, false);
+   TR::SymbolReference  *countingRecompMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMcountingRecompileMethod);
 
    getSnippetLabel()->setCodeLocation(buffer);
 

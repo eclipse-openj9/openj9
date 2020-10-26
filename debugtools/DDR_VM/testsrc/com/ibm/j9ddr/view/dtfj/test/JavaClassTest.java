@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,7 +65,7 @@ public class JavaClassTest extends DTFJUnitTest {
 	
 	public static final Comparator<Object> CONSTANCT_POOL_REFERENCES_SORT_ORDER = new Comparator<Object>() {
 		public int compare(Object o1, Object o2) {
-			return new Long(((JavaObject) o1).getID().getAddress()).compareTo(new Long(((JavaObject) o2).getID().getAddress()));
+			return Long.valueOf(((JavaObject) o1).getID().getAddress()).compareTo(Long.valueOf(((JavaObject) o2).getID().getAddress()));
 		}
 	};
 	
