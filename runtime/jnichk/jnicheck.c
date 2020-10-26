@@ -322,6 +322,11 @@ jniCheckParseOptions(J9JavaVM* vm, char* options)
 			continue;
 		}
 
+		if (try_scan(&scan_start, "abortonerror")) {
+			vm->checkJNIData.options |= JNICHK_ABORTONERROR;
+			continue;
+		}
+
 		/* scan for levels */
 		if (try_scan(&scan_start, "level=low")) {
 			vm->checkJNIData.options = (JNICHK_NONFATAL | JNICHK_NOWARN | JNICHK_NOADVICE);
@@ -1055,6 +1060,7 @@ static void printJnichkHelp(J9PortLibrary* portLib) {
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_JNICHK_HELP_13, NULL));
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_JNICHK_HELP_11, NULL));
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_JNICHK_HELP_12, NULL));
+	j9file_printf(PORTLIB, J9PORT_TTY_OUT, j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_JNICHK_HELP_16, NULL));
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "\n");
 }
 
@@ -2180,7 +2186,8 @@ jniCheckPopLocalFrame(JNIEnv* env, const char* function)
 void
 jniCheckFatalErrorNLS(JNIEnv* env, U_32 nlsModule, U_32 nlsIndex, ...)
 {
-	J9JavaVM* vm = ((J9VMThread*)env)->javaVM;
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM* vm = currentThread->javaVM;
 	UDATA options = vm->checkJNIData.options;
 
 	if ( (options & JNICHK_INCLUDEBOOT) || !inBootstrapClass(env)) {
@@ -2198,6 +2205,9 @@ jniCheckFatalErrorNLS(JNIEnv* env, U_32 nlsModule, U_32 nlsIndex, ...)
 		} else {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JNICHK_FATAL_ERROR);
 			j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_JNICHK_FATAL_ERROR_ADVICE);
+			if (J9_ARE_ANY_BITS_SET(options, JNICHK_ABORTONERROR)) {
+				vm->j9rasDumpFunctions->triggerDumpAgents(vm, currentThread, J9RAS_DUMP_ON_ABORT_SIGNAL, NULL);
+			}
 			vm->EsJNIFunctions->FatalError(env, "JNI error");
 		}
 	}
