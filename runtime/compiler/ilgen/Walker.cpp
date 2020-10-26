@@ -5195,6 +5195,21 @@ TR_J9ByteCodeIlGenerator::loadInstance(TR::SymbolReference * symRef)
          }
       }
 
+   static char *disableFinalFieldFoldingInILGen = feGetEnv("TR_DisableFinalFieldFoldingInILGen");
+   static char *disableInstanceFinalFieldFoldingInILGen = feGetEnv("TR_DisableInstanceFinalFieldFoldingInILGen");
+   if (!disableFinalFieldFoldingInILGen &&
+       !disableInstanceFinalFieldFoldingInILGen &&
+       address->getOpCode().hasSymbolReference() &&
+       address->getSymbolReference()->hasKnownObjectIndex() &&
+       address->isNonNull())
+      {
+      TR::Node* nodeToRemove = NULL;
+      if (TR::TransformUtil::transformIndirectLoadChain(comp(), dummyLoad, address, address->getSymbolReference()->getKnownObjectIndex(), &nodeToRemove) && nodeToRemove)
+         {
+         nodeToRemove->recursivelyDecReferenceCount();
+         }
+      }
+
    push(dummyLoad);
    }
 
@@ -5641,6 +5656,16 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
          {
          handleSideEffect(treeTopNode);
          genTreeTop(treeTopNode);
+         }
+
+      static char *disableFinalFieldFoldingInILGen = feGetEnv("TR_DisableFinalFieldFoldingInILGen");
+      static char *disableStaticFinalFieldFoldingInILGen = feGetEnv("TR_DisableStaticFinalFieldFoldingInILGen");
+      if (!disableFinalFieldFoldingInILGen &&
+          !disableStaticFinalFieldFoldingInILGen &&
+          symbol->isFinal() &&
+          TR::TransformUtil::canFoldStaticFinalField(comp(), load) == TR_yes)
+         {
+         TR::TransformUtil::foldReliableStaticFinalField(comp(), load);
          }
 
       push(load);
