@@ -2394,16 +2394,29 @@ ClassFileOracle::shouldConvertInvokeVirtualToMethodHandleBytecodeForMethodRef(U_
 	J9CfrConstantPoolInfo *name = &_classFile->constantPool[nas->slot1];
 	UDATA result = 0;
 
-	/* Invoking against java.lang.invoke.MethodHandle? */
+	/* Invoking against java.lang.invoke.MethodHandle. */
 	if (J9UTF8_LITERAL_EQUALS(targetClassName->bytes, targetClassName->slot1, "java/lang/invoke/MethodHandle")) {
 		if (J9UTF8_LITERAL_EQUALS(name->bytes, name->slot1, "invokeExact")) {
 			/* MethodHandle.invokeExact */
 			result = CFR_BC_invokehandle;
 		} else if (J9UTF8_LITERAL_EQUALS(name->bytes, name->slot1, "invoke")) {
 			/* MethodHandle.invoke */
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+ 			result = CFR_BC_invokehandle;
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 			result = CFR_BC_invokehandlegeneric;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		}
 	}
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/* Invoking against java.lang.invoke.VarHandle. */
+	if (J9UTF8_LITERAL_EQUALS(targetClassName->bytes, targetClassName->slot1, "java/lang/invoke/VarHandle")
+	&& VM_VMHelpers::isPolymorphicVarHandleMethod((const U_8 *)name->bytes, name->slot1)
+	) {
+		result = CFR_BC_invokehandle;
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	return result;
 }

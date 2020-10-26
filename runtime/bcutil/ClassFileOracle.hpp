@@ -35,6 +35,9 @@
 #include "bcnames.h"
 
 #include "BuildResult.hpp"
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+#include "VMHelpers.hpp"
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 /*
  * It is not guaranteed that slot1 value for constantpool index=0 entry will be zero. 
