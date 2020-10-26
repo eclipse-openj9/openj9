@@ -1164,8 +1164,7 @@
 	<test>
 		<testCaseName>testOpenJ9DiagnosticsMXBean</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
+			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -1194,8 +1193,7 @@
 	<test>
 		<testCaseName>testOpenJ9DiagnosticsMXBean_win</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
+			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
