@@ -173,6 +173,10 @@ if(OMR_OS_OSX OR OMR_OS_AIX)
 	target_link_libraries(j9prt PRIVATE iconv)
 endif()
 
+if(OMR_OS_ZOS)
+	target_link_libraries(j9prt PRIVATE omrport_metalc)
+endif()
+
 target_compile_definitions(j9prt
 	PRIVATE
 		-DJ9PORT_LIBRARY_DEFINE
