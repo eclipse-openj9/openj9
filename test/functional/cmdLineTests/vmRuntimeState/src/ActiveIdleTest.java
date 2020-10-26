@@ -76,14 +76,14 @@ public class ActiveIdleTest {
 					switch (name) {
 						case BUSY_PERIOD:
 							if (value != null) {
-								busyPeriod = Long.valueOf(value).longValue();
+								busyPeriod = Long.parseLong(value);
 							} else {
 								parseResult = ParseResult.OPTION_MISSING_VALUE;
 							}
 							break;
 						case IDLE_PERIOD:
 							if (value != null) {
-								idlePeriod = Long.valueOf(value).longValue();
+								idlePeriod = Long.parseLong(value);
 							} else {
 								parseResult = ParseResult.OPTION_MISSING_VALUE;
 							}

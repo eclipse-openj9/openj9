@@ -89,7 +89,7 @@ public class Caa {
          * of registers found */
         String s = System.getProperty("zebedee.where.skip");
         if (s != null) {
-            whereSkip = Integer.valueOf(s).intValue();
+            whereSkip = Integer.parseInt(s);
         }
     }
 
@@ -142,7 +142,7 @@ public class Caa {
             caaTemplate = new Caa32Template();
             String s = space.getDump().getProductRelease();
             if (s != null) {
-                int release = Integer.valueOf(s).intValue();
+                int release = Integer.parseInt(s);
                 if (release >= 11) {
                     caaTemplate = new Caa32_11Template();
                     log.fine("switched to new caa format");
@@ -156,7 +156,7 @@ public class Caa {
             caaTemplate = new Caa64Template();
             String s = space.getDump().getProductRelease();
             if (s != null) {
-                int release = Integer.valueOf(s).intValue();
+                int release = Integer.parseInt(s);
                 if (release >= 11) {
                     caaTemplate = new Caa64_11Template();
                     log.fine("switched to new caa format");
@@ -167,7 +167,7 @@ public class Caa {
             caaTemplate = new Caa32Template();
             String s = space.getDump().getProductRelease();
             if (s != null) {
-                int release = Integer.valueOf(s).intValue();
+                int release = Integer.parseInt(s);
                 if (release >= 11) {
                     caaTemplate = new Caa32_11Template();
                     log.fine("switched to new caa format");
