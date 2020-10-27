@@ -105,8 +105,9 @@ J9::Z::UnresolvedDataReadOnlySnippet::emitSnippetBody()
 
    // Relative address to the start of the mainline resolution
    intptr_t startResolutionSeqLabelAddr = reinterpret_cast<intptr_t>(startResolveSequenceLabel->getCodeLocation());
-   TR_ASSERT_FATAL(cg()->canUseRelativeLongInstructions(startResolutionSeqLabelAddr), "startResolveSequenceLabel [%p] is outside relative immediate range", startResolutionSeqLabelAddr);*reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(startOfResolutionSeqLabelAddr - (intptr_t)helperCallRA);
+   TR_ASSERT_FATAL(cg()->canUseRelativeLongInstructions(startResolutionSeqLabelAddr), "startResolveSequenceLabel [%p] is outside relative immediate range", startResolutionSeqLabelAddr);
    *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(startResolutionSeqLabelAddr - (intptr_t)helperCallRA);
+   cursor += 4;
 
    // Relative address to the next instruction after the snippet call.
    intptr_t snippetCallNextInstrLabelAddress = reinterpret_cast<intptr_t>(snippetCallNextInstrLabel->getCodeLocation());
