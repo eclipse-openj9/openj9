@@ -44,7 +44,7 @@
 
 	<target name="dist" description="generate the distribution">
 		<copy todir="${DEST}" outputencoding="${TEXT_ENCODING}">
-			<fileset dir="${src}" includes="*.xml"/>
+			<fileset dir="${src}" includes="*.xml,*.mk"/>
 			<fileset dir="${src}" includes="*.sh"/>
 		</copy>
 	</target>
