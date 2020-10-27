@@ -1429,11 +1429,17 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return s1len - s2len;
 	}
 
+	private int compareValue(int codepoint) {
+		if ('A' <= codepoint && codepoint <= 'Z') {
+			return codepoint + ('a' - 'A');
+		}
+
+		return Character.toLowerCase(Character.toUpperCase(codepoint));
+	}
+
 	private char compareValue(char c) {
-		if (c < 128) {
-			if ('A' <= c && c <= 'Z') {
-				return (char) (c + ('a' - 'A'));
-			}
+		if ('A' <= c && c <= 'Z') {
+			return (char) (c + ('a' - 'A'));
 		}
 
 		return Character.toLowerCase(Character.toUpperCase(c));
@@ -1488,12 +1494,26 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			while (o1 < end) {
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
+				int codepointAtO1 = charAtO1;
+				int codepointAtO2 = charAtO2;
 
 				if (charAtO1 == charAtO2) {
+					/*[IF Java16]*/
+					if (Character.isHighSurrogate(charAtO1) && (o1 < end)) {
+						codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
+						codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
+						if (codepointAtO1 == codepointAtO2) {
+							continue;
+						}
+					} else {
+						continue;
+					}
+					/*[ELSE]*/
 					continue;
+					/*[ENDIF] Java16 */
 				}
 
-				int result = compareValue(charAtO1) - compareValue(charAtO2);
+				int result = compareValue(codepointAtO1) - compareValue(codepointAtO2);
 
 				if (result != 0) {
 					return result;
@@ -1769,15 +1789,35 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			char charAtO1Last = s1.charAtInternal(s1len - 1, s1Value);
 			char charAtO2Last = s2.charAtInternal(s1len - 1, s2Value);
 
-			if (charAtO1Last != charAtO2Last &&
-					toUpperCase(charAtO1Last) != toUpperCase(charAtO2Last) &&
-					((charAtO1Last <= 255 && charAtO2Last <= 255) || Character.toLowerCase(charAtO1Last) != Character.toLowerCase(charAtO2Last))) {
+			if (charAtO1Last != charAtO2Last
+					&& toUpperCase(charAtO1Last) != toUpperCase(charAtO2Last)
+					&& ((charAtO1Last <= 255 && charAtO2Last <= 255) || Character.toLowerCase(charAtO1Last) != Character.toLowerCase(charAtO2Last))
+					/*[IF Java16]*/
+					&& (!Character.isLowSurrogate(charAtO1Last) || !Character.isLowSurrogate(charAtO2Last))
+					/*[ENDIF] Java16 */
+			) {
 				return false;
 			}
 
+			/*[IF Java16]*/
+			while (o1 < end) {
+			/*[ELSE]*/
 			while (o1 < end - 1) {
+			/*[ENDIF] Java16 */
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
+
+				/*[IF Java16]*/
+				if (Character.isHighSurrogate(charAtO1) && Character.isHighSurrogate(charAtO2) && (o1 < end)) {
+					int codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
+					int codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
+					if ((codepointAtO1 != codepointAtO2) && (compareValue(codepointAtO1) != compareValue(codepointAtO2))) {
+						return false;
+					} else {
+						continue;
+					}
+				}
+				/*[ENDIF] Java16 */
 
 				if (charAtO1 != charAtO2 &&
 						toUpperCase(charAtO1) != toUpperCase(charAtO2) &&
@@ -2415,6 +2455,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			while (o1 < end) {
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
+
+				/*[IF Java16]*/
+				if (Character.isHighSurrogate(charAtO1) && Character.isHighSurrogate(charAtO2) && (o1 < end)) {
+					int codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
+					int codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
+					if ((codepointAtO1 != codepointAtO2) && (compareValue(codepointAtO1) != compareValue(codepointAtO2))) {
+						return false;
+					}
+				}
+				/*[ENDIF] Java16 */
 
 				if (charAtO1 != charAtO2 &&
 						toUpperCase(charAtO1) != toUpperCase(charAtO2) &&
@@ -5408,10 +5458,8 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	}
 
 	private static char compareValue(char c) {
-		if (c < 128) {
-			if ('A' <= c && c <= 'Z') {
-				return (char) (c + ('a' - 'A'));
-			}
+		if ('A' <= c && c <= 'Z') {
+			return (char) (c + ('a' - 'A'));
 		}
 
 		return Character.toLowerCase(Character.toUpperCase(c));
