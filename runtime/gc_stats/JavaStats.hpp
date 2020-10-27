@@ -65,6 +65,21 @@ public:
         _monitorReferenceCandidates = 0;
     }
 
+    virtual void merge(MM_JavaStats *statsToMerge)
+    {
+        _unfinalizedCandidates += statsToMerge->_unfinalizedCandidates;
+		_unfinalizedEnqueued += statsToMerge->_unfinalizedEnqueued;
+
+        _ownableSynchronizerCandidates += statsToMerge->_ownableSynchronizerCandidates;
+
+        _weakReferenceStats.merge(&statsToMerge->_weakReferenceStats);
+		_softReferenceStats.merge(&statsToMerge->_softReferenceStats);
+		_phantomReferenceStats.merge(&statsToMerge->_phantomReferenceStats);
+        
+        _monitorReferenceCleared += statsToMerge->_monitorReferenceCleared;
+		_monitorReferenceCandidates += statsToMerge->_monitorReferenceCandidates;
+    }
+
 	MM_JavaStats() :
 		MM_Base()
         , _unfinalizedCandidates(0)

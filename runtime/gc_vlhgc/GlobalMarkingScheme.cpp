@@ -951,12 +951,12 @@ MM_GlobalMarkingScheme::scanUnfinalizedObjects(MM_EnvironmentVLHGC *env)
 					J9Object *object = region->getUnfinalizedObjectList()->getPriorList();
 					while (NULL != object) {
 						Assert_MM_true(region->isAddressInRegion(object));
-						env->_markVLHGCStats._unfinalizedCandidates += 1;
+						env->_markVLHGCStats._javaStats._unfinalizedCandidates += 1;
 
 						J9Object* next = _extensions->accessBarrier->getFinalizeLink(object);
 						if (markObject(env, object)) {
 							/* object was not previously marked -- it is now finalizable so push it to the local buffer */
-							env->_markVLHGCStats._unfinalizedEnqueued += 1;
+							env->_markVLHGCStats._javaStats._unfinalizedEnqueued += 1;
 							buffer.add(env, object);
 							env->_cycleState->_finalizationRequired = true;
 						} else {
@@ -995,7 +995,7 @@ MM_GlobalMarkingScheme::scanOwnableSynchronizerObjects(MM_EnvironmentVLHGC *env)
 					J9Object *object = region->getOwnableSynchronizerObjectList()->getPriorList();
 					while (NULL != object) {
 						Assert_MM_true(region->isAddressInRegion(object));
-						env->_markVLHGCStats._ownableSynchronizerCandidates += 1;
+						env->_markVLHGCStats._javaStats._ownableSynchronizerCandidates += 1;
 
 						/* read the next link before we add it to the buffer */
 						J9Object* next = _extensions->accessBarrier->getOwnableSynchronizerLink(object);
@@ -1192,10 +1192,10 @@ private:
 
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator) {
 		J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
-		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._monitorReferenceCandidates += 1;
+		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._javaStats._monitorReferenceCandidates += 1;
 		if(!_markingScheme->isMarked((J9Object *)monitor->userData)) {
 			monitorReferenceIterator->removeSlot();
-			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._monitorReferenceCleared += 1;
+			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._javaStats._monitorReferenceCleared += 1;
 			/* We must call objectMonitorDestroy (as opposed to omrthread_monitor_destroy) when the
 			 * monitor is not internal to the GC */
 			static_cast<J9JavaVM*>(_omrVM->_language_vm)->internalVMFunctions->objectMonitorDestroy(static_cast<J9JavaVM*>(_omrVM->_language_vm), (J9VMThread *)_env->getLanguageVMThread(), (omrthread_monitor_t)monitor);
@@ -1545,7 +1545,7 @@ MM_GlobalMarkingScheme::scanWeakReferenceObjects(MM_EnvironmentVLHGC *env)
 		if (region->containsObjects()) {
 			if (!region->getReferenceObjectList()->wasWeakListEmpty()) {
 				if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-					processReferenceList(env, region->getReferenceObjectList()->getPriorWeakList(), &env->_markVLHGCStats._weakReferenceStats);
+					processReferenceList(env, region->getReferenceObjectList()->getPriorWeakList(), &env->_markVLHGCStats._javaStats._weakReferenceStats);
 				}
 			}
 		}
@@ -1566,7 +1566,7 @@ MM_GlobalMarkingScheme::scanSoftReferenceObjects(MM_EnvironmentVLHGC *env)
 		if (region->containsObjects()) {
 			if (!region->getReferenceObjectList()->wasSoftListEmpty()) {
 				if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-					processReferenceList(env, region->getReferenceObjectList()->getPriorSoftList(), &env->_markVLHGCStats._softReferenceStats);
+					processReferenceList(env, region->getReferenceObjectList()->getPriorSoftList(), &env->_markVLHGCStats._javaStats._softReferenceStats);
 				}
 			}
 		}
@@ -1598,7 +1598,7 @@ MM_GlobalMarkingScheme::scanPhantomReferenceObjects(MM_EnvironmentVLHGC *env)
 		if (region->containsObjects()) {
 			if (!region->getReferenceObjectList()->wasPhantomListEmpty()) {
 				if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-					processReferenceList(env, region->getReferenceObjectList()->getPriorPhantomList(), &env->_markVLHGCStats._phantomReferenceStats);
+					processReferenceList(env, region->getReferenceObjectList()->getPriorPhantomList(), &env->_markVLHGCStats._javaStats._phantomReferenceStats);
 				}
 			}
 		}

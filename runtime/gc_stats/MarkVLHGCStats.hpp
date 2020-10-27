@@ -42,6 +42,7 @@
 #include "Base.hpp"
 #include "AtomicOperations.hpp" 
 #include "ReferenceStats.hpp"
+#include "JavaStats.hpp"
 
 /**
  * Storage for statistics relevant to the mark phase of a global collection.
@@ -53,23 +54,13 @@ class MM_MarkVLHGCStats : public MM_MarkVLHGCStatsCore
 private:
 protected:
 public:
+	MM_JavaStats _javaStats;
 
-	UDATA _unfinalizedCandidates;  /**< unfinalized objects that are candidates to be finalized visited this cycle */
-	UDATA _unfinalizedEnqueued;  /**< unfinalized objects that are enqueued during this cycle (MUST be less than or equal _unfinalizedCandidates) */
-
-	UDATA _ownableSynchronizerCandidates;  /**< number of ownable synchronizer objects visited this cycle, used by both MarkingScheme */
 	UDATA _ownableSynchronizerSurvived;  /**< number of ownable synchronizer objects survived this cycle, used only by PMS */
 	UDATA _ownableSynchronizerCleared;  /**< number of ownable synchronizer objects cleared this cycle, used only by GMP */
 
-	MM_ReferenceStats _weakReferenceStats;  /**< Weak reference stats for the cycle */
-	MM_ReferenceStats _softReferenceStats;  /**< Soft reference stats for the cycle */
-	MM_ReferenceStats _phantomReferenceStats;  /**< Phantom reference stats for the cycle */
-
 	UDATA _stringConstantsCleared;  /**< The number of string constants that have been cleared during marking */
 	UDATA _stringConstantsCandidates; /**< The number of string constants that have been visited in string table during marking */
-
-	UDATA _monitorReferenceCleared; /**< The number of monitor references that have been cleared during marking */
-	UDATA _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during marking */
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	UDATA _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
@@ -88,22 +79,13 @@ public:
 	void clear()
 	{
 		MM_MarkVLHGCStatsCore::clear();
-		_unfinalizedCandidates = 0;
-		_unfinalizedEnqueued = 0;
+		_javaStats.clear();
 
-		_ownableSynchronizerCandidates = 0;
 		_ownableSynchronizerSurvived = 0;
 		_ownableSynchronizerCleared = 0;
 
-		_weakReferenceStats.clear();
-		_softReferenceStats.clear();
-		_phantomReferenceStats.clear();
-
 		_stringConstantsCleared = 0;
 		_stringConstantsCandidates = 0;
-
-		_monitorReferenceCleared = 0;
-		_monitorReferenceCandidates = 0;
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared = 0;
@@ -118,22 +100,14 @@ public:
 	void merge(MM_MarkVLHGCStats *statsToMerge)
 	{
 		MM_MarkVLHGCStatsCore::merge(statsToMerge);
-		_unfinalizedCandidates += statsToMerge->_unfinalizedCandidates;
-		_unfinalizedEnqueued += statsToMerge->_unfinalizedEnqueued;
-
-		_ownableSynchronizerCandidates += statsToMerge->_ownableSynchronizerCandidates;
+		_javaStats.merge(&statsToMerge->_javaStats);
 		_ownableSynchronizerSurvived += statsToMerge->_ownableSynchronizerSurvived;
 		_ownableSynchronizerCleared += statsToMerge->_ownableSynchronizerCleared;
-
-		_weakReferenceStats.merge(&statsToMerge->_weakReferenceStats);
-		_softReferenceStats.merge(&statsToMerge->_softReferenceStats);
-		_phantomReferenceStats.merge(&statsToMerge->_phantomReferenceStats);
 
 		_stringConstantsCleared += statsToMerge->_stringConstantsCleared;
 		_stringConstantsCandidates += statsToMerge->_stringConstantsCandidates;
 
-		_monitorReferenceCleared += statsToMerge->_monitorReferenceCleared;
-		_monitorReferenceCandidates += statsToMerge->_monitorReferenceCandidates;
+
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared += statsToMerge->_doubleMappedArrayletsCleared;
@@ -149,18 +123,11 @@ public:
 	
 	MM_MarkVLHGCStats() :
 		MM_MarkVLHGCStatsCore()
-		,_unfinalizedCandidates(0)
-		,_unfinalizedEnqueued(0)
-		,_ownableSynchronizerCandidates(0)
+		,_javaStats()
 		,_ownableSynchronizerSurvived(0)
 		,_ownableSynchronizerCleared(0)
-		,_weakReferenceStats()
-		,_softReferenceStats()
-		,_phantomReferenceStats()
 		,_stringConstantsCleared(0)
 		,_stringConstantsCandidates(0)
-		,_monitorReferenceCleared(0)
-		,_monitorReferenceCandidates(0)
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		,_doubleMappedArrayletsCleared(0)
 		,_doubleMappedArrayletsCandidates(0)

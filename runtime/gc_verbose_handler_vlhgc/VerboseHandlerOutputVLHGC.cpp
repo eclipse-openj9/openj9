@@ -410,15 +410,15 @@ MM_VerboseHandlerOutputVLHGC::handleCopyForwardEnd(J9HookInterface** hook, UDATA
 	}
 	outputRememberedSetClearedInfo(env, irrsStats);
 
-	outputUnfinalizedInfo(env, 1, copyForwardStats->_unfinalizedCandidates, copyForwardStats->_unfinalizedEnqueued);
-	outputOwnableSynchronizerInfo(env, 1, copyForwardStats->_ownableSynchronizerCandidates, (copyForwardStats->_ownableSynchronizerCandidates-copyForwardStats->_ownableSynchronizerSurvived));
+	outputUnfinalizedInfo(env, 1, copyForwardStats->_javaStats._unfinalizedCandidates, copyForwardStats->_javaStats._unfinalizedEnqueued);
+	outputOwnableSynchronizerInfo(env, 1, copyForwardStats->_javaStats._ownableSynchronizerCandidates, (copyForwardStats->_javaStats._ownableSynchronizerCandidates-copyForwardStats->_ownableSynchronizerSurvived));
 
-	outputReferenceInfo(env, 1, "soft", &copyForwardStats->_softReferenceStats, extensions->getDynamicMaxSoftReferenceAge(), extensions->getMaxSoftReferenceAge());
-	outputReferenceInfo(env, 1, "weak", &copyForwardStats->_weakReferenceStats, 0, 0);
-	outputReferenceInfo(env, 1, "phantom", &copyForwardStats->_phantomReferenceStats, 0, 0);
+	outputReferenceInfo(env, 1, "soft", &copyForwardStats->_javaStats._softReferenceStats, extensions->getDynamicMaxSoftReferenceAge(), extensions->getMaxSoftReferenceAge());
+	outputReferenceInfo(env, 1, "weak", &copyForwardStats->_javaStats._weakReferenceStats, 0, 0);
+	outputReferenceInfo(env, 1, "phantom", &copyForwardStats->_javaStats._phantomReferenceStats, 0, 0);
 
 	outputStringConstantInfo(env, 1, copyForwardStats->_stringConstantsCandidates, copyForwardStats->_stringConstantsCleared);
-	outputMonitorReferenceInfo(env, 1, copyForwardStats->_monitorReferenceCandidates, copyForwardStats->_monitorReferenceCleared);
+	outputMonitorReferenceInfo(env, 1, copyForwardStats->_javaStats._monitorReferenceCandidates, copyForwardStats->_javaStats._monitorReferenceCleared);
 
 	if(0 != copyForwardStats->_heapExpandedCount) {
 		U_64 expansionMicros = j9time_hires_delta(0, copyForwardStats->_heapExpandedTime, J9PORT_TIME_DELTA_IN_MICROSECONDS);
@@ -567,15 +567,15 @@ MM_VerboseHandlerOutputVLHGC::outputMarkSummary(MM_EnvironmentBase *env, const c
 		outputRememberedSetClearedInfo(env, irrsStats);
 	}
 
-	outputUnfinalizedInfo(env, 1, markStats->_unfinalizedCandidates, markStats->_unfinalizedEnqueued);
-	outputOwnableSynchronizerInfo(env, 1, markStats->_ownableSynchronizerCandidates, markStats->_ownableSynchronizerCleared);
+	outputUnfinalizedInfo(env, 1, markStats->_javaStats._unfinalizedCandidates, markStats->_javaStats._unfinalizedEnqueued);
+	outputOwnableSynchronizerInfo(env, 1, markStats->_javaStats._ownableSynchronizerCandidates, markStats->_ownableSynchronizerCleared);
 
-	outputReferenceInfo(env, 1, "soft", &markStats->_softReferenceStats, extensions->getDynamicMaxSoftReferenceAge(), extensions->getMaxSoftReferenceAge());
-	outputReferenceInfo(env, 1, "weak", &markStats->_weakReferenceStats, 0, 0);
-	outputReferenceInfo(env, 1, "phantom", &markStats->_phantomReferenceStats, 0, 0);
+	outputReferenceInfo(env, 1, "soft", &markStats->_javaStats._softReferenceStats, extensions->getDynamicMaxSoftReferenceAge(), extensions->getMaxSoftReferenceAge());
+	outputReferenceInfo(env, 1, "weak", &markStats->_javaStats._weakReferenceStats, 0, 0);
+	outputReferenceInfo(env, 1, "phantom", &markStats->_javaStats._phantomReferenceStats, 0, 0);
 
 	outputStringConstantInfo(env, 1, markStats->_stringConstantsCandidates, markStats->_stringConstantsCleared);
-	outputMonitorReferenceInfo(env, 1, markStats->_monitorReferenceCandidates, markStats->_monitorReferenceCleared);
+	outputMonitorReferenceInfo(env, 1, markStats->_javaStats._monitorReferenceCandidates, markStats->_javaStats._monitorReferenceCleared);
 
 	switch (env->_cycleState->_reasonForMarkCompactPGC) {
 	case MM_CycleState::reason_not_exceptional:

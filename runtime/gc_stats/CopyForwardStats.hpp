@@ -39,6 +39,7 @@
 #if defined(J9VM_GC_VLHGC)
 
 #include "ReferenceStats.hpp"
+#include "JavaStats.hpp"
 
 /**
  * Storage for statistics relevant to a copy forward collector.
@@ -50,22 +51,12 @@ class MM_CopyForwardStats : public MM_CopyForwardStatsCore
 	 * Data members 
 	 */
 public:
+	MM_JavaStats _javaStats;
 	/* The below stats include both marked and copied cases */
-	UDATA _unfinalizedCandidates;  /**< unfinalized objects that are candidates to be finalized visited this cycle */
-	UDATA _unfinalizedEnqueued;  /**< unfinalized objects that are enqueued during this cycle (MUST be less than or equal _unfinalizedCandidates) */
-
-	UDATA _ownableSynchronizerCandidates;  /**< number of ownable synchronizer objects visited this cycle */
 	UDATA _ownableSynchronizerSurvived;	/**< number of ownable synchronizer objects survived this cycle */
-
-	MM_ReferenceStats _weakReferenceStats;  /**< Weak reference stats for the cycle */
-	MM_ReferenceStats _softReferenceStats;  /**< Soft reference stats for the cycle */
-	MM_ReferenceStats _phantomReferenceStats;  /**< Phantom reference stats for the cycle */
 
 	UDATA _stringConstantsCleared;  /**< The number of string constants that have been cleared during marking */
 	UDATA _stringConstantsCandidates; /**< The number of string constants that have been visited in string table during marking */
-
-	UDATA _monitorReferenceCleared; /**< The number of monitor references that have been cleared during marking */
-	UDATA _monitorReferenceCandidates; /**< The number of monitor references that have been visited in monitor table during marking */
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	UDATA _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
@@ -82,22 +73,12 @@ public:
 	MMINLINE void clear() {
 
 		MM_CopyForwardStatsCore::clear();
+		_javaStats.clear();
 
-		_unfinalizedCandidates = 0;
-		_unfinalizedEnqueued = 0;
-
-		_ownableSynchronizerCandidates = 0;
 		_ownableSynchronizerSurvived = 0;
-
-		_weakReferenceStats.clear();
-		_softReferenceStats.clear();
-		_phantomReferenceStats.clear();
 
 		_stringConstantsCleared = 0;
 		_stringConstantsCandidates = 0;
-
-		_monitorReferenceCleared = 0;
-		_monitorReferenceCandidates = 0;
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared = 0;
@@ -111,20 +92,12 @@ public:
 	 */
 	void merge(MM_CopyForwardStats *stats) {
 		MM_CopyForwardStatsCore::merge(stats);
-		_unfinalizedCandidates += stats->_unfinalizedCandidates;
-		_unfinalizedEnqueued += stats->_unfinalizedEnqueued;
+		_javaStats.merge(&stats->_javaStats);
 
 		_ownableSynchronizerSurvived += stats->_ownableSynchronizerSurvived;
 
-		_weakReferenceStats.merge(&stats->_weakReferenceStats);
-		_softReferenceStats.merge(&stats->_softReferenceStats);
-		_phantomReferenceStats.merge(&stats->_phantomReferenceStats);
-
 		_stringConstantsCleared += stats->_stringConstantsCleared;
 		_stringConstantsCandidates += stats->_stringConstantsCandidates;
-
-		_monitorReferenceCleared += stats->_monitorReferenceCleared;
-		_monitorReferenceCandidates += stats->_monitorReferenceCandidates;
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared += stats->_doubleMappedArrayletsCleared;
@@ -134,17 +107,9 @@ public:
 
 	MM_CopyForwardStats() :
 		MM_CopyForwardStatsCore()
-		, _unfinalizedCandidates(0)
-		, _unfinalizedEnqueued(0)
-		, _ownableSynchronizerCandidates(0)
 		, _ownableSynchronizerSurvived(0)
-		, _weakReferenceStats()
-		, _softReferenceStats()
-		, _phantomReferenceStats()
 		, _stringConstantsCleared(0)
 		, _stringConstantsCandidates(0)
-		, _monitorReferenceCleared(0)
-		, _monitorReferenceCandidates(0)
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		, _doubleMappedArrayletsCleared(0)
 		, _doubleMappedArrayletsCandidates(0)

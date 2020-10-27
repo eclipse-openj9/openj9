@@ -479,7 +479,7 @@ MM_CopyForwardScheme::preProcessRegions(MM_EnvironmentVLHGC *env)
 	 * so it is counted for new allocation, but not in Eden region. loose assertion for this special case
 	 */
 		Assert_MM_true(_extensions->allocationStats._ownableSynchronizerObjectCount >= ownableSynchronizerCountInEden);
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._ownableSynchronizerCandidates = ownableSynchronizerCandidates;
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._javaStats._ownableSynchronizerCandidates = ownableSynchronizerCandidates;
 }
 
 void
@@ -1399,7 +1399,7 @@ MM_CopyForwardScheme::mainCleanupForCopyForward(MM_EnvironmentVLHGC *env)
 		Assert_MM_true(_cacheFreeList.getTotalCacheCount() == _cacheFreeList.countCaches());
 	}
 
-	Assert_MM_true(static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._ownableSynchronizerCandidates >= static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._ownableSynchronizerSurvived);
+	Assert_MM_true(static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._javaStats._ownableSynchronizerCandidates >= static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._ownableSynchronizerSurvived);
 }
 
 /**
@@ -3347,7 +3347,7 @@ MM_CopyForwardScheme::scanUnfinalizedObjects(MM_EnvironmentVLHGC *env)
 				J9Object *pointer = region->getUnfinalizedObjectList()->getPriorList();
 				while (NULL != pointer) {
 					bool finalizable = false;
-					env->_copyForwardStats._unfinalizedCandidates += 1;
+					env->_copyForwardStats._javaStats._unfinalizedCandidates += 1;
 
 					Assert_MM_true(region->isAddressInRegion(pointer));
 
@@ -3379,7 +3379,7 @@ MM_CopyForwardScheme::scanUnfinalizedObjects(MM_EnvironmentVLHGC *env)
 					J9Object* next = _extensions->accessBarrier->getFinalizeLink(forwardedPtr);
 					if (finalizable) {
 						/* object was not previously marked -- it is now finalizable so push it to the local buffer */
-						env->_copyForwardStats._unfinalizedEnqueued += 1;
+						env->_copyForwardStats._javaStats._unfinalizedEnqueued += 1;
 						buffer.add(env, forwardedPtr);
 						env->_cycleState->_finalizationRequired = true;
 					} else {
@@ -3835,7 +3835,7 @@ private:
 
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator) {
 		J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
-		MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._monitorReferenceCandidates += 1;
+		MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._javaStats._monitorReferenceCandidates += 1;
 		J9Object *objectPtr = (J9Object *)monitor->userData;
 		if(!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
@@ -3846,7 +3846,7 @@ private:
 			} else {
 				Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
 				monitorReferenceIterator->removeSlot();
-				MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._monitorReferenceCleared += 1;
+				MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._javaStats._monitorReferenceCleared += 1;
 				/* We must call objectMonitorDestroy (as opposed to omrthread_monitor_destroy) when the
 				 * monitor is not internal to the GC
 				 */
@@ -4857,7 +4857,7 @@ MM_CopyForwardScheme::scanWeakReferenceObjects(MM_EnvironmentVLHGC *env)
 	while(NULL != (region = regionIterator.nextRegion())) {
 		if ((region->isSurvivorRegion() || region->_copyForwardData._evacuateSet) && !region->getReferenceObjectList()->wasWeakListEmpty()) {
 			if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-				processReferenceList(env, region, region->getReferenceObjectList()->getPriorWeakList(), &env->_copyForwardStats._weakReferenceStats);
+				processReferenceList(env, region, region->getReferenceObjectList()->getPriorWeakList(), &env->_copyForwardStats._javaStats._weakReferenceStats);
 			}
 		}
 	}
@@ -4876,7 +4876,7 @@ MM_CopyForwardScheme::scanSoftReferenceObjects(MM_EnvironmentVLHGC *env)
 	while(NULL != (region = regionIterator.nextRegion())) {
 		if ((region->isSurvivorRegion() || region->_copyForwardData._evacuateSet) && !region->getReferenceObjectList()->wasSoftListEmpty()) {
 			if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-				processReferenceList(env, region, region->getReferenceObjectList()->getPriorSoftList(), &env->_copyForwardStats._softReferenceStats);
+				processReferenceList(env, region, region->getReferenceObjectList()->getPriorSoftList(), &env->_copyForwardStats._javaStats._softReferenceStats);
 			}
 		}
 	}
@@ -4919,7 +4919,7 @@ MM_CopyForwardScheme::scanPhantomReferenceObjects(MM_EnvironmentVLHGC *env)
 			Assert_MM_false(region->getReferenceObjectList()->wasPhantomListEmpty());
 			phantomReferenceRegionsProcessed += 1;
 			if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-				processReferenceList(env, region, region->getReferenceObjectList()->getPriorPhantomList(), &env->_copyForwardStats._phantomReferenceStats);
+				processReferenceList(env, region, region->getReferenceObjectList()->getPriorPhantomList(), &env->_copyForwardStats._javaStats._phantomReferenceStats);
 			}
 		}
 	}
