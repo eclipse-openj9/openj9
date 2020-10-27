@@ -2552,14 +2552,23 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_nio_Bits_copyFromByteArray,          "copyFromByteArray",          "(Ljava/lang/Object;JJJ)V")},
       {x(TR::java_nio_Bits_keepAlive,                  "keepAlive",                  "(Ljava/lang/Object;)V")},
       {x(TR::java_nio_Bits_byteOrder,                  "byteOrder",                  "()Ljava/nio/ByteOrder;")},
+      {x(TR::java_nio_Bits_getCharB,                   "getCharB",                   "(Ljava/nio/ByteBuffer;I)C")},
+      {x(TR::java_nio_Bits_getCharL,                   "getCharL",                   "(Ljava/nio/ByteBuffer;I)C")},
+      {x(TR::java_nio_Bits_getShortB,                  "getShortB",                  "(Ljava/nio/ByteBuffer;I)S")},
+      {x(TR::java_nio_Bits_getShortL,                  "getShortL",                  "(Ljava/nio/ByteBuffer;I)S")},
+      {x(TR::java_nio_Bits_getIntB,                    "getIntB",                    "(Ljava/nio/ByteBuffer;I)I")},
+      {x(TR::java_nio_Bits_getIntL,                    "getIntL",                    "(Ljava/nio/ByteBuffer;I)I")},
+      {x(TR::java_nio_Bits_getLongB,                   "getLongB",                   "(Ljava/nio/ByteBuffer;I)J")},
+      {x(TR::java_nio_Bits_getLongL,                   "getLongL",                   "(Ljava/nio/ByteBuffer;I)J")},
       {  TR::unknownMethod}
       };
 
    static X HeapByteBufferMethods[] =
-       {
-       {x(TR::java_nio_HeapByteBuffer_put,             "put",                        "(IB)Ljava/nio/ByteBuffer;")},
-       {  TR::unknownMethod}
-       };
+      {
+      {x(TR::java_nio_HeapByteBuffer__get,            "_get",                       "(I)B")},
+      {x(TR::java_nio_HeapByteBuffer_put,             "put",                        "(IB)Ljava/nio/ByteBuffer;")},
+      {  TR::unknownMethod}
+      };
 
    static X MathMethods[] =
       {
