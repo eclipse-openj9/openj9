@@ -43,12 +43,13 @@
 #include "AtomicOperations.hpp" 
 #include "ReferenceStats.hpp"
 #include "JavaStats.hpp"
+#include "ConcurrentMarkStats.hpp"
 
 /**
  * Storage for statistics relevant to the mark phase of a global collection.
  * @ingroup GC_Stats
  */
-class MM_MarkVLHGCStats : public MM_MarkVLHGCStatsCore
+class MM_MarkVLHGCStats : public MM_ConcurrentMarkStats
 {
 /* data members */
 private:
@@ -78,7 +79,7 @@ public:
 
 	void clear()
 	{
-		MM_MarkVLHGCStatsCore::clear();
+		MM_ConcurrentMarkStats::clear();
 		_javaStats.clear();
 
 		_ownableSynchronizerSurvived = 0;
@@ -99,15 +100,13 @@ public:
 
 	void merge(MM_MarkVLHGCStats *statsToMerge)
 	{
-		MM_MarkVLHGCStatsCore::merge(statsToMerge);
+		MM_ConcurrentMarkStats::merge(statsToMerge);
 		_javaStats.merge(&statsToMerge->_javaStats);
 		_ownableSynchronizerSurvived += statsToMerge->_ownableSynchronizerSurvived;
 		_ownableSynchronizerCleared += statsToMerge->_ownableSynchronizerCleared;
 
 		_stringConstantsCleared += statsToMerge->_stringConstantsCleared;
 		_stringConstantsCandidates += statsToMerge->_stringConstantsCandidates;
-
-
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared += statsToMerge->_doubleMappedArrayletsCleared;
@@ -122,7 +121,7 @@ public:
 	}
 	
 	MM_MarkVLHGCStats() :
-		MM_MarkVLHGCStatsCore()
+		MM_ConcurrentMarkStats()
 		,_javaStats()
 		,_ownableSynchronizerSurvived(0)
 		,_ownableSynchronizerCleared(0)

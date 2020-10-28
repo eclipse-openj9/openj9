@@ -414,7 +414,7 @@ MM_SchedulingDelegate::measureScanRate(MM_EnvironmentVLHGC *env, double historic
 	Trc_MM_SchedulingDelegate_measureScanRate_Entry(env->getLanguageVMThread(), env->_cycleState->_collectionType);
 	MM_MarkVLHGCStats *markStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats;
 	
-	UDATA currentBytesScanned = markStats->_bytesScanned + markStats->_bytesCardClean;
+	UDATA currentBytesScanned = markStats->_bytesScanned + markStats->_cardCleaningStats._bytesCardClean;
 
 	if (0 != currentBytesScanned) {
 		PORT_ACCESS_FROM_ENVIRONMENT(env);

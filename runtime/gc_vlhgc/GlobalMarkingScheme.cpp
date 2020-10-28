@@ -468,8 +468,8 @@ MMINLINE void
 MM_GlobalMarkingScheme::updateScanStats(MM_EnvironmentVLHGC *env, UDATA bytesScanned, ScanReason reason)
 {
 	if (SCAN_REASON_DIRTY_CARD == reason) {
-		env->_markVLHGCStats._objectsCardClean += 1;
-		env->_markVLHGCStats._bytesCardClean += bytesScanned;
+		env->_markVLHGCStats._cardCleaningStats._objectsCardClean += 1;
+		env->_markVLHGCStats._cardCleaningStats._bytesCardClean += bytesScanned;
 	} else if (SCAN_REASON_PACKET == reason) {
 		env->_markVLHGCStats._objectsScanned += 1;
 		env->_markVLHGCStats._bytesScanned += bytesScanned;

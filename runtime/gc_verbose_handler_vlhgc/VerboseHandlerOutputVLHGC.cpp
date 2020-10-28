@@ -557,9 +557,9 @@ MM_VerboseHandlerOutputVLHGC::outputMarkSummary(MM_EnvironmentBase *env, const c
 	writer->formatAndOutput(env, 1, "<trace-info objectcount=\"%zu\" scancount=\"%zu\" scanbytes=\"%zu\" />",
 		markStats->_objectsMarked, markStats->_objectsScanned, markStats->_bytesScanned);
 
-	if (0 != markStats->_objectsCardClean) {
+	if (0 != markStats->_cardCleaningStats._objectsCardClean) {
 		writer->formatAndOutput(env, 1, "<cardclean-info objects=\"%zu\" bytes=\"%zu\" />",
-				markStats->_objectsCardClean, markStats->_bytesCardClean);
+				markStats->_cardCleaningStats._objectsCardClean, markStats->_cardCleaningStats._bytesCardClean);
 	}
 
 	if (NULL != irrsStats) {

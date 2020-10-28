@@ -107,6 +107,7 @@ public:
 
 	MM_CopyForwardStats() :
 		MM_CopyForwardStatsCore()
+		, _javaStats()
 		, _ownableSynchronizerSurvived(0)
 		, _stringConstantsCleared(0)
 		, _stringConstantsCandidates(0)
