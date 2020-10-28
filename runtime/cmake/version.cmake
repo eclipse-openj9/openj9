@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,13 +21,10 @@
 ################################################################################
 
 # Set up some default version variables.
-# Note as cache variables these can be overridden on the command line when invoking cmake
-# Using the syntax `-D<VAR_NAME>=<VALUE>`
+# Note as cache variables, these can be overridden on the command line
+# when invoking cmake using the syntax `-D<VAR_NAME>=<VALUE>`.
 
-set(JAVA_SPEC_VERSION "9" CACHE STRING "Version of Java to build")
-# Limit `JAVA_SPEC_VERSION` to reasonable values
-# TODO: this is only a gui thing. It doesn't actually do proper enforcement
-set_property(CACHE JAVA_SPEC_VERSION PROPERTY STRINGS "8" "9" "10" "11" "12" "13")
+set(JAVA_SPEC_VERSION "" CACHE STRING "Version of Java to build")
 
 set(J9VM_VERSION_MAJOR 2 CACHE STRING "")
 set(J9VM_VERSION_MINOR 9 CACHE INTERNAL "")
