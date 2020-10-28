@@ -25,12 +25,18 @@ package java.lang;
 import java.io.InputStream;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
+import java.security.AllPermission;
 import java.security.Permissions;
+/*[IF Java12]*/
+import java.lang.constant.ClassDesc;
+/*[ENDIF] Java12*/
 import java.lang.reflect.*;
 import java.net.URL;
 import java.lang.annotation.*;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -237,19 +243,6 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	 */
 	private static final class ClassReflectNullPlaceHolder {}
 
-	private static final class MetadataCache {
-		MetadataCache() {}
-
-		private static long cachedCanonicalNameOffset = -1;
-		private static long cachedSimpleNameOffset = -1;
-
-		private SoftReference<String> cachedCanonicalName;
-		private SoftReference<String> cachedSimpleName;
-	}
-
-	private transient MetadataCache metadataCache;
-	private static long metadataCacheOffset = -1;
-
 	private transient Class<?>[] cachedInterfaces;
 	private static long cachedInterfacesOffset = -1;
 
@@ -335,6 +328,27 @@ private void checkNonSunProxyMemberAccess(SecurityManager security, ClassLoader 
 			security.checkPackageAccess(packageName);
 		}
 	}
+}
+
+private long getFieldOffset(String fieldName) {
+	try {
+		Field field = Class.class.getDeclaredField(fieldName);
+		return getUnsafe().objectFieldOffset(field);
+	} catch (NoSuchFieldException e) {
+		throw newInternalError(e);
+	}
+}
+
+/**
+ * This helper method atomically writes the given {@code fieldValue} to the
+ * field specified by the {@code fieldOffset}
+ */
+private void writeFieldValue(long fieldOffset, Object fieldValue) {
+	/*[IF Sidecar19-SE]*/
+	getUnsafe().putObjectRelease(this, fieldOffset, fieldValue);
+	/*[ELSE]*/
+	getUnsafe().putOrderedObject(this, fieldOffset, fieldValue);
+	/*[ENDIF]*/
 }
 
 private static void forNameAccessCheck(final SecurityManager sm, final Class<?> callerClass, final Class<?> foundClass) {
@@ -3015,72 +3029,6 @@ private MethodHandle getValueMethod(final Class<? extends Annotation> containedT
 	return valueMethod;
 }
 
-private MetadataCache getMetadataCache() {
-	if (metadataCache == null) {
-		metadataCacheOffset = getFieldOffset("metadataCache"); //$NON-NLS-1$
-		writeFieldValue(metadataCacheOffset, new MetadataCache());
-	}
-	return metadataCache;
-}
-
-private String cacheSimpleName(String simpleName) {
-	MetadataCache cache = getMetadataCache();
-
-	if (cache.cachedSimpleName == null || cache.cachedSimpleName.get() == null) {
-		MetadataCache.cachedSimpleNameOffset = getFieldOffset(
-				MetadataCache.class, "cachedSimpleName", MetadataCache.cachedSimpleNameOffset); //$NON-NLS-1$
-
-		writeFieldValue(cache, MetadataCache.cachedSimpleNameOffset, new SoftReference<>(simpleName));
-	}
-
-	return simpleName;
-}
-
-private String cacheCanonicalName(String canonicalName) {
-	MetadataCache cache = getMetadataCache();
-
-	if (cache.cachedCanonicalName == null || cache.cachedCanonicalName.get() == null) {
-		MetadataCache.cachedCanonicalNameOffset = getFieldOffset(
-				MetadataCache.class, "cachedCanonicalName", MetadataCache.cachedCanonicalNameOffset); //$NON-NLS-1$
-
-		writeFieldValue(cache, MetadataCache.cachedCanonicalNameOffset, new SoftReference<>(canonicalName));
-	}
-
-	return canonicalName;
-}
-
-/**
- * This helper method atomically writes the given {@code fieldValue} to the
- * field specified by the {@code fieldOffset} of the {@code target} object
- */
-private void writeFieldValue(Object target, long fieldOffset, Object fieldValue) {
-	/*[IF Sidecar19-SE]*/
-	getUnsafe().putObjectRelease(target, fieldOffset, fieldValue);
-	/*[ELSE]*/
-	getUnsafe().putOrderedObject(target, fieldOffset, fieldValue);
-	/*[ENDIF]*/
-}
-
-private void writeFieldValue(long fieldOffset, Object fieldValue) {
-	writeFieldValue(this, fieldOffset, fieldValue);
-}
-
-private long getFieldOffset(Class<?> hostClass, String fieldName, long initialOffset) {
-	if (initialOffset == -1) {
-		try {
-			Field field = hostClass.getDeclaredField(fieldName);
-			return getUnsafe().objectFieldOffset(field);
-		} catch (NoSuchFieldException e) {
-			throw newInternalError(e);
-		}
-	}
-	return initialOffset;
-}
-
-private long getFieldOffset(String fieldName) {
-	return getFieldOffset(Class.class, fieldName, -1);
-}
-
 /**
  * Gets the array of containedType from the value() method.
  * 
@@ -3631,14 +3579,6 @@ private native String getSimpleNameImpl();
  * @see #isAnonymousClass()
  */
 public String getSimpleName() {
-	MetadataCache cache = getMetadataCache();
-	if (cache.cachedSimpleName != null) {
-		String cachedSimpleName = cache.cachedSimpleName.get();
-		if (cachedSimpleName != null) {
-			return cachedSimpleName;
-		}
-	}
-
 	int arrayCount = 0;
 	Class<?> baseType = this;
 	if (isArray()) {
@@ -3703,7 +3643,7 @@ public String getSimpleName() {
 		}
 		return result.toString();
 	}
-	return cacheSimpleName(simpleName);
+	return simpleName;
 }
 
 /**
@@ -3719,14 +3659,6 @@ public String getSimpleName() {
  * @see #isLocalClass()
  */
 public String getCanonicalName() {
-	MetadataCache cache = getMetadataCache();
-	if (cache.cachedCanonicalName != null) {
-		String cachedCanonicalName = cache.cachedCanonicalName.get();
-		if (cachedCanonicalName != null) {
-			return cachedCanonicalName;
-		}
-	}
-
 	int arrayCount = 0;
 	Class<?> baseType = this;
 	if (isArray()) {
@@ -3765,7 +3697,7 @@ public String getCanonicalName() {
 		}
 		return result.toString();
 	}
-	return cacheCanonicalName(canonicalName);
+	return canonicalName;
 }
 
 /**
