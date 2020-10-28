@@ -4037,6 +4037,13 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+   static X InvokersMethods[] =
+      {
+      {x(TR::java_lang_invoke_Invokers_checkCustomized,                    "checkCustomized",             "(Ljava/lang/invoke/MethodHandle;)V")},
+      {x(TR::java_lang_invoke_Invokers_checkExactType,                     "checkExactType",              "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)V")},
+      {TR::unknownMethod}
+      };
+
    static X AsTypeHandleMethods[] =
       {
       {  TR::java_lang_invoke_AsTypeHandle_convertArgs,   11, "convertArgs",     (int16_t)-1, "*"},
@@ -4375,6 +4382,7 @@ void TR_ResolvedJ9Method::construct()
 
    static Y class25[] =
       {
+      { "java/lang/invoke/Invokers", InvokersMethods },
       { 0 }
       };
 

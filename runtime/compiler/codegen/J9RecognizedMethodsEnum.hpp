@@ -1011,6 +1011,8 @@
    java_lang_invoke_InsertHandle_numValuesToInsert,
    java_lang_invoke_InterfaceHandle_interfaceCall,
    java_lang_invoke_InterfaceHandle_invokeExact,
+   java_lang_invoke_Invokers_checkCustomized,
+   java_lang_invoke_Invokers_checkExactType,
    java_lang_invoke_MethodHandle_doCustomizationLogic,
    java_lang_invoke_MethodHandle_asType,
    java_lang_invoke_MethodHandle_asType_instance,
