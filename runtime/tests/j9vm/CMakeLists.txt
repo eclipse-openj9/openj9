@@ -69,7 +69,6 @@ if(NOT JAVA_SPEC_VERSION LESS 11)
 	omr_add_exports(j9vmtest Java_com_ibm_oti_jvmtests_SupportJVM_GetNanoTimeAdjustment)
 endif()
 
-
 install(
 	TARGETS j9vmtest
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

@@ -100,11 +100,6 @@ if(OPENJ9_BUILD)
 	add_definitions(-DOPENJ9_BUILD)
 endif()
 
-# clean up the variables we used
-set(versionStr)
-set(checkCondition)
-set(conditionalVersionString)
-
 ###
 ### Handle Generated files
 ###
@@ -113,7 +108,6 @@ configure_file(include/j9cfg.h.in j9cfg.h)
 configure_file(include/j9lib.h.in j9lib.h)
 configure_file(include/j9version.h.in j9version.h)
 configure_file(makelib/copyright.c.in copyright.c)
-
 
 # Definition of add_hookgen pulled in from omr/cmake/modules/OmrHookgen.cmake
 # Here we handle all the .hdf files which don't have a more logical home.
