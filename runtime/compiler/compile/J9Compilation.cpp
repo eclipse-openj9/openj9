@@ -1116,6 +1116,12 @@ J9::Compilation::addAOTNOPSite()
    return site;
    }
 
+bool
+J9::Compilation::incInlineDepth(TR::ResolvedMethodSymbol * method, TR_ByteCodeInfo & bcInfo, int32_t cpIndex, TR::SymbolReference *callSymRef, bool directCall, TR_PrexArgInfo *argInfo)
+   {
+   TR_ASSERT_FATAL(callSymRef == NULL, "Should not be calling this API for non-NULL symref!\n");
+   return OMR::CompilationConnector::incInlineDepth(method, bcInfo, cpIndex, callSymRef, directCall, argInfo);
+   }
 
 bool
 J9::Compilation::isGeneratedReflectionMethod(TR_ResolvedMethod * method)

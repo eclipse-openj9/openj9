@@ -276,6 +276,9 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    TR_CHTable *getCHTable() const { return _transientCHTable; }
 
    // Inliner
+   using OMR::CompilationConnector::incInlineDepth;
+   bool incInlineDepth(TR::ResolvedMethodSymbol *, TR_ByteCodeInfo &, int32_t cpIndex, TR::SymbolReference *callSymRef, bool directCall, TR_PrexArgInfo *argInfo = 0);
+
    bool isGeneratedReflectionMethod(TR_ResolvedMethod *method);
 
    // cache J9 VM pointers
