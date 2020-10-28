@@ -24,6 +24,7 @@
 #define S390PRIVATELINKAGE_INCL
 
 #include "codegen/PrivateLinkage.hpp"
+#include "codegen/Register.hpp"
 
 namespace TR { class S390JNICallDataSnippet; }
 namespace TR { class AutomaticSymbol; }
@@ -88,6 +89,7 @@ public:
    virtual TR::Instruction* buildNoPatchingVirtualDispatchWithResolve(TR::Node *callNode, TR::RegisterDependencyConditions *deps,
       TR::LabelSymbol *doneLabel, intptr_t virtualThunk);
 
+   virtual TR::Instruction *buildNoPatchingIPIC(TR::Node *callNode, TR::RegisterDependencyConditions *deps, TR::Register *vftReg, intptr_t virtualThunk);
    virtual TR::RealRegister::RegNum setMethodMetaDataRegister(TR::RealRegister::RegNum r) { return _methodMetaDataRegister = r; }
    virtual TR::RealRegister::RegNum getMethodMetaDataRegister() { return _methodMetaDataRegister; }
    virtual TR::RealRegister *getMethodMetaDataRealRegister() {return getRealRegister(_methodMetaDataRegister);}
@@ -109,6 +111,37 @@ public:
                                              int32_t &rsd,
                                              int32_t &numInts, int32_t &numFloats);
 
+   /**
+    * For the interface dispatch that does not patch the code cache, following data structure
+    * describes the metadata that is necessary in order for a patchless dispatch sequence to work.
+    * The structure must be allocated in data area that can be written to at runtime also the structure should be
+    * aligned to double word boundary to make sure that we can load the Class and Method Address in single Paired Quadword
+    * instruction.
+    * In Regular JIT Compiled code which can be patched, we have a liberty of chnaging of number of dynamic
+    * cache slots we have for interface call at compile time.
+    * TODO: For patchless code, we have to fix number of dynamic cache slots to 3 which is default at the moment for 
+    * regular JIT code, for patchless code, we should provide a feature to change the number of dynamic cache slots at
+    * compilation time same as we can do in the regular JIT compiled code. One way we can achieve this is by decoupling of
+    * following structure into two parts, one contains the metadata for the interface call and other contains the array of
+    * cached dynamic cached slots.
+    */
+   struct ccInterfaceData
+      {
+      intptr_t slot1Class;
+      intptr_t slot1Method;
+      intptr_t slot2Class;
+      intptr_t slot2Method;
+      intptr_t slot3Class;
+      intptr_t slot3Method;
+      intptr_t cpAddress;
+      intptr_t cpIndex;
+      intptr_t interfaceClass;
+      intptr_t iTableIndex;
+      intptr_t j2iThunkAddress;
+      intptr_t totalSizeOfPicSlots;
+      intptr_t isCacheFull;
+      static const int8_t numberOfPICSlots = 3; 
+      };
 protected:
 
    virtual TR::Register * buildIndirectDispatch(TR::Node * callNode);

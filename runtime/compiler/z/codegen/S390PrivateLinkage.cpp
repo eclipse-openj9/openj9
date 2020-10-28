@@ -22,10 +22,17 @@
 
 #include "codegen/S390PrivateLinkage.hpp"
 
+#include "codegen/CCData.hpp"
+#include "codegen/CCData_inlines.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GCStackAtlas.hpp"
+#include "codegen/InstOpCode.hpp"
 #include "codegen/Linkage_inlines.hpp"
+#include "codegen/RealRegister.hpp"
+#include "codegen/RegisterDependency.hpp"
+#include "codegen/S390Instruction.hpp"
 #include "codegen/Snippet.hpp"
+#include "compile/CompilationException.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "env/CHTable.hpp"
@@ -36,6 +43,7 @@
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
 #include "env/j9method.h"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/ParameterSymbol.hpp"
@@ -43,6 +51,10 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "infra/InterferenceGraph.hpp"
+#include "runtime/CodeCache.hpp"
+#include "runtime/CodeCacheManager.hpp"
+#include "runtime/J9Profiler.hpp"
+#include "runtime/J9ValueProfiler.hpp"
 #include "z/codegen/OpMemToMem.hpp"
 #include "z/codegen/S390Evaluator.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
@@ -51,8 +63,6 @@
 #include "z/codegen/S390StackCheckFailureSnippet.hpp"
 #include "z/codegen/SystemLinkage.hpp"
 #include "z/codegen/SystemLinkagezOS.hpp"
-#include "runtime/J9Profiler.hpp"
-#include "runtime/J9ValueProfiler.hpp"
 
 #define MIN_PROFILED_CALL_FREQUENCY (.075f)
 
@@ -1651,6 +1661,140 @@ J9::Z::PrivateLinkage::buildNoPatchingVirtualDispatchWithResolve(TR::Node *callN
    return cursor;
    }
 
+TR::Instruction *
+J9::Z::PrivateLinkage::buildNoPatchingIPIC(TR::Node *callNode, TR::RegisterDependencyConditions *dependencies, TR::Register *vftReg, intptr_t virtualThunk)
+   {
+   /**
+    * TODO: Right now this function generates all the instruction as we are
+    * fixing the number of PIC slots whereas we can change number of slots at compile
+    * time for regular JIT compiled code. It is not that complicated to do that for
+    * readOnlyCode.
+    * We can create a different data structure to hold the J9Class and method address
+    * size of which can be fixed at compilation time and use that.
+    */
+   OMR::CCData *codeCacheData = cg()->getCodeCache()->manager()->getCodeCacheData();
+   OMR::CCData::index_t index;
+
+   if (!(codeCacheData->put(NULL, sizeof(ccInterfaceData), 16, NULL, index)))
+      {
+      cg()->comp()->failCompilation<TR::CompilationException>("Could not allocate interface dispatch metadata");
+      }
+   ccInterfaceData *ccInterfaceDataAddress = codeCacheData->get<ccInterfaceData>(index);
+
+   // Intialization of CCData
+   ccInterfaceDataAddress->slot1Class  = 0;
+   ccInterfaceDataAddress->slot1Method = 0;
+   ccInterfaceDataAddress->slot2Class  = 0;
+   ccInterfaceDataAddress->slot2Method = 0;
+   ccInterfaceDataAddress->slot3Class  = 0;
+   ccInterfaceDataAddress->slot3Method = 0;
+
+   ccInterfaceDataAddress->cpAddress = reinterpret_cast<intptr_t>(callNode->getSymbolReference()->getOwningMethod(cg()->comp())->constantPool());
+   ccInterfaceDataAddress->cpIndex = static_cast<intptr_t>(callNode->getSymbolReference()->getCPIndexForVM());
+   ccInterfaceDataAddress->interfaceClass = 0;
+   ccInterfaceDataAddress->iTableIndex = 0;
+   ccInterfaceDataAddress->j2iThunkAddress = virtualThunk;
+   ccInterfaceDataAddress->totalSizeOfPicSlots = (ccInterfaceDataAddress->numberOfPICSlots  * sizeof(ccInterfaceDataAddress->slot1Class)) + (ccInterfaceDataAddress->numberOfPICSlots * sizeof(ccInterfaceDataAddress->slot1Method));
+   ccInterfaceDataAddress->isCacheFull = 0;
+
+   // Now we are checking each slot and dispatching methods. 
+   intptr_t interfaceDataAddress = reinterpret_cast<intptr_t>(ccInterfaceDataAddress);
+
+   TR::StaticSymbol *interfaceDataSymbol =
+      TR::StaticSymbol::createWithAddress(trHeapMemory(), TR::Address, reinterpret_cast<void *>(interfaceDataAddress));
+   interfaceDataSymbol->setNotDataAddress();
+   TR::SymbolReference *interfaceDataSymRef = new (trHeapMemory()) TR::SymbolReference(cg()->comp()->getSymRefTab(), interfaceDataSymbol, 0);
+
+   /**
+    * LARL  regEP, interfaceDataAddress
+    * LARL  regRA, returnAddress
+    * Label StartICF: (Attaching predependency conditions here.
+    * LPQ   Class,MethodAddress, 0(interfaceDataReg)
+    * CGR   Class,vftReg
+    * BCR   Equal,MethodAddress
+    * LPQ   Class,MethodAddress, 16(interfaceDataReg)
+    * CGR   Class,vftReg
+    * BCR   Equal,methodAddress
+    * LPQ   Class,MethodAddress, 32(interfaceDataReg)
+    * CGR   Class,vftReg
+    * BCR   Equal,methodAddress
+    * Label SnippetCal: (Cache miss, will be calling the snippet)
+    * BRCL  interfaceCallSnippet
+    * Label doneLabel: (Attaching Post Deps Here)
+    */
+   int32_t numberOfAdditionalPostDeps = 3; // For load pair instruction, we need 3 virtual registers, even reg, odd reg, even-odd pair
+   TR::Register *regRA = dependencies->searchPostConditionRegister(getReturnAddressRegister());
+   if (regRA == NULL)
+      {
+      regRA = cg()->allocateRegister();
+      numberOfAdditionalPostDeps+=1;
+      }
+   TR::Register *regEP = dependencies->searchPostConditionRegister(getEntryPointRegister());
+   if (regEP == NULL)
+      {
+      regEP = cg()->allocateRegister();
+      numberOfAdditionalPostDeps+=1;
+      }
+
+   TR::Instruction *cursor = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, regEP, interfaceDataSymRef, interfaceDataSymbol->getStaticAddress());
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg());
+   cursor = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, regRA, doneLabel, cursor);
+
+   TR::RegisterDependencyConditions *preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies->getPreConditions(), NULL,
+                                                                                                         dependencies->getAddCursorForPre(), 0, cg());
+   
+   TR::RegisterDependencyConditions *postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(NULL, dependencies->getPostConditions(),
+                                                                                                         0, dependencies->getAddCursorForPost() + numberOfAdditionalPostDeps, cg());
+
+   TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg());
+   cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, cFlowRegionStart, preDeps, cursor);
+
+   TR::Register      *slotClassReg = cg()->allocateRegister();
+   TR::Register      *slotMethodAddressReg = cg()->allocateRegister();
+   TR::RegisterPair  *slotClassMethodRegPair = cg()->allocateConsecutiveRegisterPair(slotMethodAddressReg, slotClassReg);
+   postDeps->addPostCondition(slotClassReg, TR::RealRegister::LegalEvenOfPair);
+   postDeps->addPostCondition(slotMethodAddressReg, TR::RealRegister::LegalOddOfPair);
+   postDeps->addPostCondition(slotClassMethodRegPair, TR::RealRegister::EvenOddPair);
+   postDeps->addPostConditionIfNotAlreadyInserted(vftReg, TR::RealRegister::AssignAny);
+   cursor = generateRXInstruction(cg(), TR::InstOpCode::LPQ, callNode, slotClassMethodRegPair,
+                                    generateS390MemoryReference(regEP, offsetof(ccInterfaceData, slot1Class), cg()), cursor);
+   cursor = generateRRInstruction(cg(), TR::InstOpCode::CGR, callNode, slotClassReg, vftReg, cursor);
+   cursor =generateS390BranchInstruction(cg(), TR::InstOpCode::BCR, callNode, TR::InstOpCode::COND_BE, slotMethodAddressReg, cursor);
+
+   cursor = generateRXInstruction(cg(), TR::InstOpCode::LPQ, callNode, slotClassMethodRegPair,
+                                    generateS390MemoryReference(regEP, offsetof(ccInterfaceData, slot2Class), cg()), cursor);
+   cursor = generateRRInstruction(cg(), TR::InstOpCode::CGR, callNode, slotClassReg, vftReg, cursor);
+   cursor =generateS390BranchInstruction(cg(), TR::InstOpCode::BCR, callNode, TR::InstOpCode::COND_BE, slotMethodAddressReg, cursor);
+   
+   cursor = generateRXInstruction(cg(), TR::InstOpCode::LPQ, callNode, slotClassMethodRegPair,
+                                    generateS390MemoryReference(regEP, offsetof(ccInterfaceData, slot3Class), cg()), cursor);
+   cursor = generateRRInstruction(cg(), TR::InstOpCode::CGR, callNode, slotClassReg, vftReg, cursor);
+   cursor =generateS390BranchInstruction(cg(), TR::InstOpCode::BCR, callNode, TR::InstOpCode::COND_BE, slotMethodAddressReg, cursor);
+   
+   TR::LabelSymbol *interfaceCallHelperSnippetLabel = generateLabelSymbol(cg());
+   TR::S390InterfaceCallReadOnlySnippet *snippet = new (trHeapMemory()) TR::S390InterfaceCallReadOnlySnippet(
+      cg(),
+      callNode,
+      interfaceCallHelperSnippetLabel,
+      doneLabel,
+      interfaceDataAddress);
+   // Cache miss, going to slow path to lookup the interface method.
+   cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRCL, callNode, 0xF, snippet, NULL, cg());
+   // Added NOP so that the pattern matching code in jit2itrg icallVMprJavaSendPatchupVirtual
+   cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg()); 
+   generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, doneLabel, postDeps, cursor);
+   cg()->addSnippet(snippet);
+   cg()->stopUsingRegister(regRA);
+   cg()->stopUsingRegister(regEP);
+   cg()->stopUsingRegister(slotClassReg);
+   cg()->stopUsingRegister(slotMethodAddressReg);
+   cg()->stopUsingRegister(slotClassMethodRegPair);
+   return cursor;
+   } 
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::PrivateLinkage::buildVirtualDispatch - build virtual function call
 ////////////////////////////////////////////////////////////////////////////////
@@ -2096,300 +2240,304 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
       }
    else if (methodSymbol->isInterface())
       {
-      int32_t i=0;
-      TR::Register * thisClassRegister;
-      TR::Register * methodRegister ;
-      TR::RegisterPair * classMethodEPPairRegister;
-      int32_t numInterfaceCallCacheSlots =  comp()->getOptions()->getNumInterfaceCallCacheSlots();
-
-      if (comp()->getOption(TR_disableInterfaceCallCaching))
+      if (comp()->getGenerateReadOnlyCode())
          {
-         numInterfaceCallCacheSlots=0;
-         }
-      else if (comp()->getOption(TR_enableInterfaceCallCachingSingleDynamicSlot))
-         {
-         numInterfaceCallCacheSlots=1;
-         }
-
-      TR_ValueProfileInfoManager *valueProfileInfo = TR_ValueProfileInfoManager::get(comp());
-      TR_AddressInfo *info = NULL;
-      uint32_t numStaticPICs = 0;
-      if (valueProfileInfo)
-         info = static_cast<TR_AddressInfo*>(valueProfileInfo->getValueInfo(callNode->getByteCodeInfo(), comp(), AddressInfo));
-
-      TR::list<TR_OpaqueClassBlock*> * profiledClassesList = NULL;
-
-      bool isAddressInfo = info != NULL;
-        uint32_t totalFreq = info ? info->getTotalFrequency() : 0;
-        bool isAOT = cg()->needClassAndMethodPointerRelocations();
-        bool callIsSafe = methodSymRef != comp()->getSymRefTab()->findObjectNewInstanceImplSymbol();
-        if (!isAOT && callIsSafe && isAddressInfo &&
-              (totalFreq!=0 && info->getTopProbability() > MIN_PROFILED_CALL_FREQUENCY))
-           {
-
-           TR_ScratchList<TR_ExtraAddressInfo> allValues(comp()->trMemory());
-           info->getSortedList(comp(), &allValues);
-
-           TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
-           TR_ResolvedMethod *owningMethod = methodSymRef->getOwningMethod(comp());
-
-           ListIterator<TR_ExtraAddressInfo> valuesIt(&allValues);
-
-           uint32_t maxStaticPICs = comp()->getOptions()->getNumInterfaceCallStaticSlots();
-
-           TR_ExtraAddressInfo *profiledInfo;
-           profiledClassesList = new (trHeapMemory()) TR::list<TR_OpaqueClassBlock*>(getTypedAllocator<TR_OpaqueClassBlock*>(comp()->allocator()));
-           for (profiledInfo = valuesIt.getFirst();  numStaticPICs < maxStaticPICs && profiledInfo != NULL; profiledInfo = valuesIt.getNext())
-              {
-
-              float freq = (float) profiledInfo->_frequency / totalFreq;
-              if (freq < MIN_PROFILED_CALL_FREQUENCY)
-                 continue;
-
-              TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *)profiledInfo->_value;
-              if (comp()->getPersistentInfo()->isObsoleteClass(clazz, fej9))
-                 continue;
-
-              TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
-              TR_ResolvedMethod * profiledMethod = methodSymRef->getOwningMethod(comp())->getResolvedInterfaceMethod(comp(),
-                    (TR_OpaqueClassBlock *)clazz, methodSymRef->getCPIndex());
-
-              if (profiledMethod && !profiledMethod->isInterpreted())
-                 {
-                 numInterfaceCallCacheSlots++;
-                 numStaticPICs++;
-                 profiledClassesList->push_front(clazz);
-                 }
-              }
-        }
-
-        if (comp()->getOption(TR_TraceCG))
-           {
-           if (numStaticPICs != 0)
-              traceMsg(comp(), "Interface dispatch with %d cache slots, added extra %d slot(s) for profiled classes.\n", numInterfaceCallCacheSlots, numStaticPICs);
-           else
-              traceMsg(comp(), "Interface dispatch with %d cache slots\n", numInterfaceCallCacheSlots);
-           }
-
-      TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
-      TR::S390InterfaceCallSnippet * ifcSnippet = new (trHeapMemory()) TR::S390InterfaceCallSnippet(cg(), callNode,
-           snippetLabel, sizeOfArguments, numInterfaceCallCacheSlots, virtualThunk, false);
-      cg()->addSnippet(ifcSnippet);
-
-      if (numStaticPICs != 0)
-         cg()->addPICsListForInterfaceSnippet(ifcSnippet->getDataConstantSnippet(), profiledClassesList);
-
-      if (numInterfaceCallCacheSlots == 0 )
-         {
-         //Disabled interface call caching
-         TR::LabelSymbol * hitLabel = generateLabelSymbol(cg());
-         TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
-
-         // Make a copy of input deps, but add on 3 new slots.
-         TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 3, cg());
-         postDeps->setAddCursorForPre(0);        // Ignore all pre-deps that were copied.
-         postDeps->setNumPreConditions(0, trMemory());        // Ignore all pre-deps that were copied.
-
-         gcPoint = generateSnippetCall(cg(), callNode, ifcSnippet, dependencies,methodSymRef);
-
-         // NOP is necessary so that the VM doesn't confuse Virtual Dispatch (expected to always use BASR
-         // with interface dispatch (which must guarantee that RA-2 != 0x0D ie. BASR)
-         //
-         TR::Instruction * cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
-
-         // Fool the snippet into setting up the return address to be after the NOP
-         //
-         gcPoint = cursor;
-         ((TR::S390CallSnippet *) ifcSnippet)->setBranchInstruction(gcPoint);
-         cursor->setDependencyConditions(postDeps);
+         gcPoint = buildNoPatchingIPIC(callNode, dependencies, vftReg, reinterpret_cast<intptr_t>(virtualThunk));
          }
       else
          {
-         TR::Instruction * cursor = NULL;
-         TR::LabelSymbol * paramSetupDummyLabel = generateLabelSymbol(cg());
-         TR::LabelSymbol * returnLocationLabel = generateLabelSymbol(cg());
-         TR::LabelSymbol * cacheFailLabel = generateLabelSymbol(cg());
+         int32_t i=0;
+         TR::Register * thisClassRegister;
+         TR::Register * methodRegister ;
+         TR::RegisterPair * classMethodEPPairRegister;
+         int32_t numInterfaceCallCacheSlots =  comp()->getOptions()->getNumInterfaceCallCacheSlots();
 
-         TR::Register * RegEP = dependencies->searchPostConditionRegister(getEntryPointRegister());
-         TR::Register * RegRA = dependencies->searchPostConditionRegister(getReturnAddressRegister());
-         TR::Register * RegThis = dependencies->searchPreConditionRegister(TR::RealRegister::GPR1);
-         TR::Register * snippetReg = RegEP;
-
-
-         // We split dependencies to make sure the RA doesn't insert any register motion code in the fixed
-         // block sequence and to only enforce parameter setup on head of block.
-         TR::RegisterDependencyConditions * preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(
-            dependencies->getPreConditions(), NULL, dependencies->getAddCursorForPre(), 0, cg());
-
-         // Make a copy of input deps, but add on 3 new slots.
-         TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 5, cg());
-         postDeps->setAddCursorForPre(0);        // Ignore all pre-deps that were copied.
-         postDeps->setNumPreConditions(0, trMemory());        // Ignore all pre-deps that were copied.
-
-         // Check the thisChild to see if anyone uses this object after the call (if not, we won't add it to post Deps)
-         if (callNode->getChild(callNode->getFirstArgumentIndex())->getReferenceCount() > 0)
-           postDeps->addPostCondition(RegThis, TR::RealRegister::AssignAny);
-
-         // Add this reg to post deps to ensure no reg motion
-         postDeps->addPostConditionIfNotAlreadyInserted(vftReg,  TR::RealRegister::AssignAny);
-
-         bool useCLFIandBRCL = false;
-
-         if (comp()->getOption(TR_enableInterfaceCallCachingSingleDynamicSlot))
+         if (comp()->getOption(TR_disableInterfaceCallCaching))
             {
-            cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet->getDataConstantSnippet(), cg());
+            numInterfaceCallCacheSlots=0; 
+            }
+         else if (comp()->getOption(TR_enableInterfaceCallCachingSingleDynamicSlot))
+            {
+            numInterfaceCallCacheSlots=1;
+            }
 
-            // Single dynamic slot case
-            // we cache one class-method pair and atomically load it using LM/LPQ
-            TR::Register * classRegister = cg()->allocateRegister();
-            TR::Register * methodRegister = cg()->allocateRegister();
-            classMethodEPPairRegister = cg()->allocateConsecutiveRegisterPair(methodRegister, classRegister);
+         TR_ValueProfileInfoManager *valueProfileInfo = TR_ValueProfileInfoManager::get(comp());
+         TR_AddressInfo *info = NULL;
+         uint32_t numStaticPICs = 0;
+         if (valueProfileInfo)
+            info = static_cast<TR_AddressInfo*>(valueProfileInfo->getValueInfo(callNode->getByteCodeInfo(), comp(), AddressInfo));
 
-            postDeps->addPostCondition(classMethodEPPairRegister, TR::RealRegister::EvenOddPair);
-            postDeps->addPostCondition(classRegister, TR::RealRegister::LegalEvenOfPair);
-            postDeps->addPostCondition(methodRegister, TR::RealRegister::LegalOddOfPair);
+         TR::list<TR_OpaqueClassBlock*> * profiledClassesList = NULL;
 
-            //Load return address in RegRA
-            cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor, cg());
+         bool isAddressInfo = info != NULL;
+         uint32_t totalFreq = info ? info->getTotalFrequency() : 0;
+         bool isAOT = cg()->needClassAndMethodPointerRelocations();
+         bool callIsSafe = methodSymRef != comp()->getSymRefTab()->findObjectNewInstanceImplSymbol();
+         if (!isAOT && callIsSafe && isAddressInfo &&
+            (totalFreq!=0 && info->getTopProbability() > MIN_PROFILED_CALL_FREQUENCY))
+            {
+            TR_ScratchList<TR_ExtraAddressInfo> allValues(comp()->trMemory());
+            info->getSortedList(comp(), &allValues);
 
-            if (comp()->target().is64Bit())
-               cursor = generateRXInstruction(cg(), TR::InstOpCode::LPQ, callNode, classMethodEPPairRegister,
-                        generateS390MemoryReference(snippetReg, ifcSnippet->getDataConstantSnippet()->getSingleDynamicSlotOffset(), cg()), cursor);
+            TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
+            TR_ResolvedMethod *owningMethod = methodSymRef->getOwningMethod(comp());
+
+            ListIterator<TR_ExtraAddressInfo> valuesIt(&allValues);
+
+            uint32_t maxStaticPICs = comp()->getOptions()->getNumInterfaceCallStaticSlots();
+
+            TR_ExtraAddressInfo *profiledInfo;
+            profiledClassesList = new (trHeapMemory()) TR::list<TR_OpaqueClassBlock*>(getTypedAllocator<TR_OpaqueClassBlock*>(comp()->allocator()));
+            for (profiledInfo = valuesIt.getFirst();  numStaticPICs < maxStaticPICs && profiledInfo != NULL; profiledInfo = valuesIt.getNext())
+               {
+               float freq = (float) profiledInfo->_frequency / totalFreq;
+               if (freq < MIN_PROFILED_CALL_FREQUENCY)
+                  continue;
+
+               TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *)profiledInfo->_value;
+               if (comp()->getPersistentInfo()->isObsoleteClass(clazz, fej9))
+                  continue;
+
+               TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
+               TR_ResolvedMethod * profiledMethod = methodSymRef->getOwningMethod(comp())->getResolvedInterfaceMethod(comp(),
+                                                                                    (TR_OpaqueClassBlock *)clazz, methodSymRef->getCPIndex());
+
+               if (profiledMethod && !profiledMethod->isInterpreted())
+                  {
+                  numInterfaceCallCacheSlots++;
+                  numStaticPICs++;
+                  profiledClassesList->push_front(clazz);
+                  }
+               }
+            }
+
+         if (comp()->getOption(TR_TraceCG))
+            {
+            if (numStaticPICs != 0)
+               traceMsg(comp(), "Interface dispatch with %d cache slots, added extra %d slot(s) for profiled classes.\n", numInterfaceCallCacheSlots, numStaticPICs);
             else
-               cursor = generateRSInstruction(cg(), TR::InstOpCode::LM, callNode, classMethodEPPairRegister,
-                        generateS390MemoryReference(snippetReg, ifcSnippet->getDataConstantSnippet()->getSingleDynamicSlotOffset(), cg()), cursor);
+               traceMsg(comp(), "Interface dispatch with %d cache slots\n", numInterfaceCallCacheSlots);
+            }
 
-            // We need a dummy label to hook dependencies onto
-            cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, paramSetupDummyLabel, preDeps, cursor);
+         TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
+         TR::S390InterfaceCallSnippet * ifcSnippet = new (trHeapMemory()) TR::S390InterfaceCallSnippet(cg(), callNode,
+                                                                                                         snippetLabel, sizeOfArguments, numInterfaceCallCacheSlots, virtualThunk, false);
+         cg()->addSnippet(ifcSnippet);
 
-            //check if cached classPtr matches the receiving object classPtr
-            cursor = generateRXInstruction(cg(), TR::InstOpCode::getCmpLogicalOpCode(), callNode, classRegister,
-                     generateS390MemoryReference(RegThis, 0, cg()), cursor);
+         if (numStaticPICs != 0)
+            cg()->addPICsListForInterfaceSnippet(ifcSnippet->getDataConstantSnippet(), profiledClassesList);
 
-            //Cache hit? then jumpto cached method entrypoint directly
-            cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, methodRegister, cursor);
-            ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BER);
+         if (numInterfaceCallCacheSlots == 0 )
+            {
+            //Disabled interface call caching
+            TR::LabelSymbol * hitLabel = generateLabelSymbol(cg());
+            TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
 
-            cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet,cursor, cg());
+            // Make a copy of input deps, but add on 3 new slots.
+            TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 3, cg());
+            postDeps->setAddCursorForPre(0);        // Ignore all pre-deps that were copied.
+            postDeps->setNumPreConditions(0, trMemory());        // Ignore all pre-deps that were copied.
 
-            // Cache miss... Too bad.. go to the slow path through the interface call snippet
-            cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, snippetReg, cursor);
-            ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BCR);
+            gcPoint = generateSnippetCall(cg(), callNode, ifcSnippet, dependencies,methodSymRef);
 
-            // Added NOP so that the pattern matching code in jit2itrg icallVMprJavaSendPatchupVirtual
-            cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
+            // NOP is necessary so that the VM doesn't confuse Virtual Dispatch (expected to always use BASR
+            // with interface dispatch (which must guarantee that RA-2 != 0x0D ie. BASR)
+            TR::Instruction * cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
+
+            // Fool the snippet into setting up the return address to be after the NOP
+            gcPoint = cursor;
+            ((TR::S390CallSnippet *) ifcSnippet)->setBranchInstruction(gcPoint);
+            cursor->setDependencyConditions(postDeps);
             }
          else
             {
-            useCLFIandBRCL = false && (comp()->target().is64Bit() &&  // Support for 64-bit
-                                   TR::Compiler->om.generateCompressedObjectHeaders() // Classes are <2GB on CompressedRefs only.
-                                   );
+            TR::Instruction * cursor = NULL;
+            TR::LabelSymbol * paramSetupDummyLabel = generateLabelSymbol(cg());
+            TR::LabelSymbol * returnLocationLabel = generateLabelSymbol(cg());
+            TR::LabelSymbol * cacheFailLabel = generateLabelSymbol(cg());
 
-            // Load the interface call data snippet pointer to register is required for non-CLFI / BRCL sequence.
-            if (!useCLFIandBRCL)
+            TR::Register * RegEP = dependencies->searchPostConditionRegister(getEntryPointRegister());
+            TR::Register * RegRA = dependencies->searchPostConditionRegister(getReturnAddressRegister());
+            TR::Register * RegThis = dependencies->searchPreConditionRegister(TR::RealRegister::GPR1);
+            TR::Register * snippetReg = RegEP;
+
+
+            // We split dependencies to make sure the RA doesn't insert any register motion code in the fixed
+            // block sequence and to only enforce parameter setup on head of block.
+            TR::RegisterDependencyConditions * preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies->getPreConditions(), NULL, dependencies->getAddCursorForPre(), 0, cg());
+
+            // Make a copy of input deps, but add on 3 new slots.
+            TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 5, cg());
+            postDeps->setAddCursorForPre(0);        // Ignore all pre-deps that were copied.
+            postDeps->setNumPreConditions(0, trMemory());        // Ignore all pre-deps that were copied.
+
+            // Check the thisChild to see if anyone uses this object after the call (if not, we won't add it to post Deps)
+            if (callNode->getChild(callNode->getFirstArgumentIndex())->getReferenceCount() > 0)
+               postDeps->addPostCondition(RegThis, TR::RealRegister::AssignAny);
+
+            // Add this reg to post deps to ensure no reg motion
+            postDeps->addPostConditionIfNotAlreadyInserted(vftReg,  TR::RealRegister::AssignAny);
+
+            bool useCLFIandBRCL = false;
+
+            if (comp()->getOption(TR_enableInterfaceCallCachingSingleDynamicSlot))
                {
                cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet->getDataConstantSnippet(), cg());
-               methodRegister = cg()->allocateRegister();
+
+               // Single dynamic slot case
+               // we cache one class-method pair and atomically load it using LM/LPQ
+               TR::Register * classRegister = cg()->allocateRegister();
+               TR::Register * methodRegister = cg()->allocateRegister();
+               classMethodEPPairRegister = cg()->allocateConsecutiveRegisterPair(methodRegister, classRegister);
+
+               postDeps->addPostCondition(classMethodEPPairRegister, TR::RealRegister::EvenOddPair);
+               postDeps->addPostCondition(classRegister, TR::RealRegister::LegalEvenOfPair);
+               postDeps->addPostCondition(methodRegister, TR::RealRegister::LegalOddOfPair);
+
+               //Load return address in RegRA
+               cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor, cg());
+
+               if (comp()->target().is64Bit())
+                  {
+                  cursor = generateRXInstruction(cg(), TR::InstOpCode::LPQ, callNode, classMethodEPPairRegister,
+                                                   generateS390MemoryReference(snippetReg, ifcSnippet->getDataConstantSnippet()->getSingleDynamicSlotOffset(), cg()), cursor);
+                  }
+               else
+                  {
+                  cursor = generateRSInstruction(cg(), TR::InstOpCode::LM, callNode, classMethodEPPairRegister,
+                                                   generateS390MemoryReference(snippetReg, ifcSnippet->getDataConstantSnippet()->getSingleDynamicSlotOffset(), cg()), cursor);
+                  }
+               // We need a dummy label to hook dependencies onto
+               cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, paramSetupDummyLabel, preDeps, cursor);
+
+               //check if cached classPtr matches the receiving object classPtr
+               cursor = generateRXInstruction(cg(), TR::InstOpCode::getCmpLogicalOpCode(), callNode, classRegister,
+                                                generateS390MemoryReference(RegThis, 0, cg()), cursor);
+
+               //Cache hit? then jumpto cached method entrypoint directly
+               cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, methodRegister, cursor);
+               ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BER);
+
+               cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet,cursor, cg());
+
+               // Cache miss... Too bad.. go to the slow path through the interface call snippet
+               cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, snippetReg, cursor);
+               ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BCR);
+
+               // Added NOP so that the pattern matching code in jit2itrg icallVMprJavaSendPatchupVirtual
+               cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
                }
             else
                {
+               useCLFIandBRCL = false && (comp()->target().is64Bit() &&  // Support for 64-bit
+                                             TR::Compiler->om.generateCompressedObjectHeaders()); // Classes are <2GB on CompressedRefs only.
+
+               // Load the interface call data snippet pointer to register is required for non-CLFI / BRCL sequence.
+               if (!useCLFIandBRCL)
+                  {
+                  cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet->getDataConstantSnippet(), cg());
+                  methodRegister = cg()->allocateRegister();
+                  }
+               else
+                  {
 #if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
-               if (comp()->getOption(TR_EnableRMODE64))
+                  if (comp()->getOption(TR_EnableRMODE64))
 #endif
-                  {
-                  // Reserve a trampoline for this interface call. Might not be used, but we only
-                  // sacrifice a little trampoline space for it (24-bytes).
-                  if (methodSymRef->getReferenceNumber() >= TR_S390numRuntimeHelpers)
-                     fej9->reserveTrampolineIfNecessary(comp(), methodSymRef, false);
+                     {
+                     // Reserve a trampoline for this interface call. Might not be used, but we only
+                     // sacrifice a little trampoline space for it (24-bytes).
+                     if (methodSymRef->getReferenceNumber() >= TR_S390numRuntimeHelpers)
+                        fej9->reserveTrampolineIfNecessary(comp(), methodSymRef, false);
+                     }
+#endif
                   }
-#endif
-               }
 
-            // 64 bit MultiSlot case
+               // 64 bit MultiSlot case
 
-            cursor = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor);
+               cursor = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor);
 
-            // We need a dummy label to hook dependencies.
-            cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, paramSetupDummyLabel, preDeps, cursor);
+               // We need a dummy label to hook dependencies.
+               cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, paramSetupDummyLabel, preDeps, cursor);
 
-            if (useCLFIandBRCL)
-               {
-               // Update the IFC Snippet to note we are using CLFI/BRCL sequence.
-               // This changes the format of the constants in the data snippet
-               ifcSnippet->setUseCLFIandBRCL(true);
-
-               // We will generate CLFI / BRCL sequence to dispatch to target branches.
-               // First CLFI/BRCL
-               cursor = generateRILInstruction(cg(), TR::InstOpCode::CLFI, callNode, vftReg, 0x0, cursor); //compare against 0
-
-               ifcSnippet->getDataConstantSnippet()->setFirstCLFI(cursor);
-
-               // BRCL
-               cursor = generateRILInstruction(cg(), TR::InstOpCode::BRCL, callNode, static_cast<uint32_t>(0x0), reinterpret_cast<void*>(0x0), cursor);
-
-               for(i = 1; i < numInterfaceCallCacheSlots; i++)
+               if (useCLFIandBRCL)
                   {
+                  // Update the IFC Snippet to note we are using CLFI/BRCL sequence.
+                  // This changes the format of the constants in the data snippet
+                  ifcSnippet->setUseCLFIandBRCL(true);
+
                   // We will generate CLFI / BRCL sequence to dispatch to target branches.
+                  // First CLFI/BRCL
                   cursor = generateRILInstruction(cg(), TR::InstOpCode::CLFI, callNode, vftReg, 0x0, cursor); //compare against 0
+
+                  ifcSnippet->getDataConstantSnippet()->setFirstCLFI(cursor);
 
                   // BRCL
                   cursor = generateRILInstruction(cg(), TR::InstOpCode::BRCL, callNode, static_cast<uint32_t>(0x0), reinterpret_cast<void*>(0x0), cursor);
+
+                  for(i = 1; i < numInterfaceCallCacheSlots; i++)
+                     {
+                     // We will generate CLFI / BRCL sequence to dispatch to target branches.
+                     cursor = generateRILInstruction(cg(), TR::InstOpCode::CLFI, callNode, vftReg, 0x0, cursor); //compare against 0
+
+                     // BRCL
+                     cursor = generateRILInstruction(cg(), TR::InstOpCode::BRCL, callNode, static_cast<uint32_t>(0x0), reinterpret_cast<void*>(0x0), cursor);
+                     }
                   }
+               else
+                  {
+                  int32_t slotOffset = ifcSnippet->getDataConstantSnippet()->getFirstSlotOffset();
+                  for(i = 0; i < numInterfaceCallCacheSlots; i++)
+                     {
+                     TR::InstOpCode::Mnemonic cmpOp = TR::InstOpCode::getCmpLogicalOpCode();
+                     if (comp()->target().is64Bit() && TR::Compiler->om.generateCompressedObjectHeaders())
+                        cmpOp = TR::InstOpCode::CL;
+
+                     //check if cached class matches the receiving object class
+                     cursor = generateRXInstruction(cg(), cmpOp, callNode, vftReg,
+                                                      generateS390MemoryReference(snippetReg, slotOffset, cg()), cursor);
+
+                     //load cached methodEP from current cache slot
+                     cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, methodRegister,
+                                                      generateS390MemoryReference(snippetReg, slotOffset+TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
+
+                     cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, methodRegister, cursor);
+                     ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BER);
+
+                     slotOffset += 2*TR::Compiler->om.sizeofReferenceAddress();
+                     }
+                  }
+
+               cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet,cursor, cg());
+
+               // Cache miss... Too bad.. go to the slow path through the interface call snippet
+               cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, snippetReg, cursor);
+               ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BCR);
+
+               cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::DC, callNode,
+                                                      ifcSnippet->getDataConstantSnippet()->getSnippetLabel());
+
+               // Added NOP so that the pattern matching code in jit2itrg icallVMprJavaSendPatchupVirtual
+               cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
+
+               if (!useCLFIandBRCL)
+                  postDeps->addPostCondition(methodRegister, TR::RealRegister::AssignAny);
+               }
+
+            gcPoint = cursor;
+            ((TR::S390CallSnippet *) ifcSnippet)->setBranchInstruction(gcPoint);
+
+            cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, returnLocationLabel, postDeps);
+
+            if (comp()->getOption(TR_enableInterfaceCallCachingSingleDynamicSlot))
+               {
+               cg()->stopUsingRegister(classMethodEPPairRegister);
                }
             else
                {
-               int32_t slotOffset = ifcSnippet->getDataConstantSnippet()->getFirstSlotOffset();
-               for(i = 0; i < numInterfaceCallCacheSlots; i++)
-                  {
-                  TR::InstOpCode::Mnemonic cmpOp = TR::InstOpCode::getCmpLogicalOpCode();
-                  if (comp()->target().is64Bit() && TR::Compiler->om.generateCompressedObjectHeaders())
-                     cmpOp = TR::InstOpCode::CL;
-
-                  //check if cached class matches the receiving object class
-                  cursor = generateRXInstruction(cg(), cmpOp, callNode, vftReg,
-                        generateS390MemoryReference(snippetReg, slotOffset, cg()), cursor);
-
-                  //load cached methodEP from current cache slot
-                  cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, methodRegister,
-                        generateS390MemoryReference(snippetReg, slotOffset+TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
-
-                  cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, methodRegister, cursor);
-                  ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BER);
-
-                  slotOffset += 2*TR::Compiler->om.sizeofReferenceAddress();
-                  }
+               if (!useCLFIandBRCL)
+                  cg()->stopUsingRegister(methodRegister);
                }
-
-            cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet,cursor, cg());
-
-            // Cache miss... Too bad.. go to the slow path through the interface call snippet
-            cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, snippetReg, cursor);
-            ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BCR);
-
-            cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::DC, callNode,
-               ifcSnippet->getDataConstantSnippet()->getSnippetLabel());
-
-            // Added NOP so that the pattern matching code in jit2itrg icallVMprJavaSendPatchupVirtual
-            cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
-
-            if (!useCLFIandBRCL)
-              postDeps->addPostCondition(methodRegister, TR::RealRegister::AssignAny);
-            }
-
-         gcPoint = cursor;
-         ((TR::S390CallSnippet *) ifcSnippet)->setBranchInstruction(gcPoint);
-
-         cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, returnLocationLabel, postDeps);
-
-         if (comp()->getOption(TR_enableInterfaceCallCachingSingleDynamicSlot))
-            {
-            cg()->stopUsingRegister(classMethodEPPairRegister);
-            }
-         else
-            {
-            if (!useCLFIandBRCL)
-               cg()->stopUsingRegister(methodRegister);
             }
          }
       }
