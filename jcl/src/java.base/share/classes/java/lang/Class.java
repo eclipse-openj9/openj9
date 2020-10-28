@@ -225,7 +225,7 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private transient AnnotationCache annotationCache;
 	private static long annotationCacheOffset = -1;
 	private static boolean reflectCacheEnabled;
-	static boolean reflectCacheDebug;
+	private static boolean reflectCacheDebug;
 	private static boolean reflectCacheAppOnly = true;
 
 	/*
@@ -240,11 +240,11 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private static final class MetadataCache {
 		MetadataCache() {}
 
-		static long cachedCanonicalNameOffset = -1;
-		static long cachedSimpleNameOffset = -1;
+		private static long cachedCanonicalNameOffset = -1;
+		private static long cachedSimpleNameOffset = -1;
 
-		SoftReference<String> cachedCanonicalName;
-		SoftReference<String> cachedSimpleName;
+		private SoftReference<String> cachedCanonicalName;
+		private SoftReference<String> cachedSimpleName;
 	}
 
 	private transient MetadataCache metadataCache;
@@ -2006,7 +2006,7 @@ public ProtectionDomain getProtectionDomain() {
 	return AllPermissionsPD;
 }
 
-private static void allocateAllPermissionsPD() {
+private void allocateAllPermissionsPD() {
 	Permissions collection = new Permissions();
 	collection.add(sun.security.util.SecurityConstants.ALL_PERMISSION);
 	AllPermissionsPD = new ProtectionDomain(null, collection);
@@ -3053,7 +3053,7 @@ private String cacheCanonicalName(String canonicalName) {
  * This helper method atomically writes the given {@code fieldValue} to the
  * field specified by the {@code fieldOffset} of the {@code target} object
  */
-private static void writeFieldValue(Object target, long fieldOffset, Object fieldValue) {
+private void writeFieldValue(Object target, long fieldOffset, Object fieldValue) {
 	/*[IF Sidecar19-SE]*/
 	getUnsafe().putObjectRelease(target, fieldOffset, fieldValue);
 	/*[ELSE]*/
@@ -3065,7 +3065,7 @@ private void writeFieldValue(long fieldOffset, Object fieldValue) {
 	writeFieldValue(this, fieldOffset, fieldValue);
 }
 
-private static long getFieldOffset(Class<?> hostClass, String fieldName, long initialOffset) {
+private long getFieldOffset(Class<?> hostClass, String fieldName, long initialOffset) {
 	if (initialOffset == -1) {
 		try {
 			Field field = hostClass.getDeclaredField(fieldName);
@@ -3077,7 +3077,7 @@ private static long getFieldOffset(Class<?> hostClass, String fieldName, long in
 	return initialOffset;
 }
 
-private static long getFieldOffset(String fieldName) {
+private long getFieldOffset(String fieldName) {
 	return getFieldOffset(Class.class, fieldName, -1);
 }
 
@@ -3089,7 +3089,7 @@ private static long getFieldOffset(String fieldName) {
  * @param containedType the annotationType() stored in the container
  * @return Annotation array if the given annotation has a value() method which returns an array of the containedType. Otherwise, return null.
  */
-private static Annotation[] getAnnotationsArrayFromValue(Annotation container, Class<? extends Annotation> containerType, Class<? extends Annotation> containedType) {
+private Annotation[] getAnnotationsArrayFromValue(Annotation container, Class<? extends Annotation> containerType, Class<? extends Annotation> containedType) {
 	try {
 		MethodHandle valueMethod = containerType.getValueMethod(containedType);
 		if (valueMethod != null) {
@@ -4146,11 +4146,9 @@ private static final class CacheKey {
 	static CacheKey newMethodKey(String methodName, Class<?>[] parameterTypes, Class<?> returnType) {
 		return new CacheKey(methodName, parameterTypes, returnType);
 	}
-	/*[IF Sidecar19-SE] */
 	static CacheKey newDeclaredPublicMethodsKey(String methodName, Class<?>[] parameterTypes) {
 		return new CacheKey("#m" + methodName, parameterTypes, null);	//$NON-NLS-1$
 	}
-	/*[ENDIF] Sidecar19-SE */
 
 	static final CacheKey PublicConstructorsKey = new CacheKey("/c", EmptyParameters, null); //$NON-NLS-1$
 	static final CacheKey PublicFieldsKey = newFieldKey("/f", null); //$NON-NLS-1$
