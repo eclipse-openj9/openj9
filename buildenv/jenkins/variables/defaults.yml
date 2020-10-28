@@ -197,6 +197,11 @@ valhalla:
   extra_configure_options: '--enable-inline-types'
   test_build_list: 'functional/Valhalla,functional/cmdline_options_tester,functional/cmdLineTests/valuetypeddrtests'
 #========================================#
+# OpenJDK JSR292
+#========================================#
+ojdk292:
+  extra_configure_options: '--enable-openjdk-methodhandles'
+#========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
 ppc64le_linux:
@@ -431,6 +436,11 @@ x86-64_linux_xl:
 #========================================#
 x86-64_linux_valhalla:
   extends: ['x86-64_linux', 'valhalla']
+#========================================#
+# Linux x86 64bits Compressed Pointers / OpenJDK JSR292
+#========================================#
+x86-64_linux_ojdk292:
+  extends: ['x86-64_linux', 'ojdk292']
 #========================================#
 # Linux Aarch 64bits Compressed Pointers
 #========================================#
