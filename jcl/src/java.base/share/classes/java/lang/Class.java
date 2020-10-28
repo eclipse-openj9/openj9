@@ -242,22 +242,19 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 
 		static long cachedCanonicalNameOffset = -1;
 		static long cachedSimpleNameOffset = -1;
+		static long cachedInterfacesOffset = -1;
+		static long cachedDeclaringClassOffset = -1;
+		static long cachedEnclosingClassOffset = -1;
 
 		SoftReference<String> cachedCanonicalName;
 		SoftReference<String> cachedSimpleName;
+		Class<?>[] cachedInterfaces;
+		Class<?> cachedDeclaringClass;
+		Class<?> cachedEnclosingClass;
 	}
 
 	private transient MetadataCache metadataCache;
 	private static long metadataCacheOffset = -1;
-
-	private transient Class<?>[] cachedInterfaces;
-	private static long cachedInterfacesOffset = -1;
-
-	private transient Class<?> cachedDeclaringClass;
-	private static long cachedDeclaringClassOffset = -1;
-
-	private transient Class<?> cachedEnclosingClass;
-	private static long cachedEnclosingClassOffset = -1;
 
 	private static Annotation[] EMPTY_ANNOTATION_ARRAY = new Annotation[0];
 	
@@ -1216,25 +1213,24 @@ private native Method[] getDeclaredMethodsImpl();
  */
 @CallerSensitive
 public Class<?> getDeclaringClass() {
-	if (cachedDeclaringClassOffset == -1) {
-		cachedDeclaringClassOffset = getFieldOffset("cachedDeclaringClass"); //$NON-NLS-1$
-	}
-	if (cachedDeclaringClass == null) {
-		Class<?> localDeclaringClass = getDeclaringClassImpl();
-		if (localDeclaringClass == null) {
-			localDeclaringClass = ClassReflectNullPlaceHolder.class;
+	MetadataCache cache = getMetadataCache();
+	if (cache.cachedDeclaringClass == null) {
+		Class<?> declaringClass = getDeclaringClassImpl();
+		if (declaringClass == null) {
+			declaringClass = ClassReflectNullPlaceHolder.class;
 		}
-		writeFieldValue(cachedDeclaringClassOffset, localDeclaringClass);
+		cacheDeclaringClass(declaringClass);
 	}
 
-	/**
+	/*
 	 * ClassReflectNullPlaceHolder.class means the value of cachedDeclaringClass is null
 	 * @see ClassReflectNullPlaceHolder.class
 	 */
-	Class<?> declaringClass = cachedDeclaringClass == ClassReflectNullPlaceHolder.class ? null : cachedDeclaringClass;
-	if (declaringClass == null) {
-		return declaringClass;
+	if (cache.cachedDeclaringClass == ClassReflectNullPlaceHolder.class) {
+		return null;
 	}
+
+	Class<?> declaringClass = cache.cachedDeclaringClass;
 	if (declaringClass.isClassADeclaredClass(this)) {
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
@@ -1393,14 +1389,14 @@ private native Field[] getFieldsImpl();
  *					the interfaces the receiver claims to implement.
  */
 public Class<?>[] getInterfaces() {
-	if (cachedInterfacesOffset == -1) {
-		cachedInterfacesOffset = getFieldOffset("cachedInterfaces"); //$NON-NLS-1$
+	MetadataCache cache = getMetadataCache();
+	if (cache.cachedInterfaces == null) {
+		cacheInterfaces(J9VMInternals.getInterfaces(this));
 	}
-	if (cachedInterfaces == null) {
-		writeFieldValue(cachedInterfacesOffset, J9VMInternals.getInterfaces(this));
-	}
-	Class<?>[] newInterfaces = cachedInterfaces.length == 0 ? cachedInterfaces: cachedInterfaces.clone();
-	return newInterfaces;
+
+	return cache.cachedInterfaces.length == 0
+			? cache.cachedInterfaces
+			: cache.cachedInterfaces.clone();
 }
 
 /**
@@ -3049,6 +3045,39 @@ private String cacheCanonicalName(String canonicalName) {
 	return canonicalName;
 }
 
+private void cacheInterfaces(Class<?>[] interfaces) {
+	MetadataCache cache = getMetadataCache();
+
+	if (cache.cachedInterfaces == null) {
+		MetadataCache.cachedInterfacesOffset = getFieldOffset(
+				MetadataCache.class, "cachedInterfaces", MetadataCache.cachedInterfacesOffset); //$NON-NLS-1$
+
+		writeFieldValue(cache, MetadataCache.cachedInterfacesOffset, interfaces);
+	}
+}
+
+private void cacheDeclaringClass(Class<?> declaringClass) {
+	MetadataCache cache = getMetadataCache();
+
+	if (cache.cachedDeclaringClass == null) {
+		MetadataCache.cachedDeclaringClassOffset = getFieldOffset(
+				MetadataCache.class, "cachedDeclaringClass", MetadataCache.cachedDeclaringClassOffset); //$NON-NLS-1$
+
+		writeFieldValue(cache, MetadataCache.cachedDeclaringClassOffset, declaringClass);
+	}
+}
+
+private void cacheEnclosingClass(Class<?> enclosingClass) {
+	MetadataCache cache = getMetadataCache();
+
+	if (cache.cachedEnclosingClass == null) {
+		MetadataCache.cachedEnclosingClassOffset = getFieldOffset(
+				MetadataCache.class, "cachedEnclosingClass", MetadataCache.cachedEnclosingClassOffset); //$NON-NLS-1$
+
+		writeFieldValue(cache, MetadataCache.cachedEnclosingClassOffset, enclosingClass);
+	}
+}
+
 /**
  * This helper method atomically writes the given {@code fieldValue} to the
  * field specified by the {@code fieldOffset} of the {@code target} object
@@ -3590,21 +3619,24 @@ private native Class<?> getEnclosingObjectClass();
 public Class<?> getEnclosingClass() throws SecurityException {
 	Class<?> enclosingClass = getDeclaringClass();
 	if (enclosingClass == null) {
-		if (cachedEnclosingClassOffset == -1) {
-			cachedEnclosingClassOffset = getFieldOffset("cachedEnclosingClass"); //$NON-NLS-1$
-		}
-		if (cachedEnclosingClass == null) {
-			Class<?> localEnclosingClass = getEnclosingObjectClass();
-			if (localEnclosingClass == null){
-				localEnclosingClass = ClassReflectNullPlaceHolder.class;
+		MetadataCache cache = getMetadataCache();
+		if (cache.cachedEnclosingClass == null) {
+			Class<?> enclosingObjectClass = getEnclosingObjectClass();
+			if (enclosingObjectClass == null){
+				enclosingObjectClass = ClassReflectNullPlaceHolder.class;
 			}
-			writeFieldValue(cachedEnclosingClassOffset, localEnclosingClass);
+			cacheEnclosingClass(enclosingObjectClass);
 		}
-		/**
+
+		/*
 		 * ClassReflectNullPlaceHolder.class means the value of cachedEnclosingClass is null
 		 * @see ClassReflectNullPlaceHolder.class
 		 */
-		enclosingClass = cachedEnclosingClass == ClassReflectNullPlaceHolder.class ? null: cachedEnclosingClass;
+		if (cache.cachedEnclosingClass == ClassReflectNullPlaceHolder.class) {
+			return null;
+		}
+
+		enclosingClass = cache.cachedEnclosingClass;
 	}
 	if (enclosingClass != null) {
 		SecurityManager security = System.getSecurityManager();
