@@ -1142,6 +1142,7 @@ static UDATA jniIsLocalRef(JNIEnv * currentEnv, JNIEnv* env, jobject reference)
 {
 	J9VMThread *vmThread = (J9VMThread *) env;
 	J9VMThread *currentThread = (J9VMThread*)currentEnv;
+	UDATA rc = 0;
 
 	if (vmThread->javaVM->checkJNIData.options  & JNICHK_PEDANTIC) {
 		/* fast case - is the local ref an immediate in the top frame? */
@@ -1170,12 +1171,11 @@ static UDATA jniIsLocalRef(JNIEnv * currentEnv, JNIEnv* env, jobject reference)
 
 			exitVM(vmThread);
 
-			return walkState.userData3 == reference;
+			rc = (walkState.userData3 == reference);
 		}
 	} else {
 		J9JNIReferenceFrame* frame;
 		J9JavaStack* stack = vmThread->stackObject;
-		UDATA rc = 0;
 
 		/* quick check - just check if it's a reference to a stack */
 		while (stack != NULL) {
@@ -1199,17 +1199,15 @@ static UDATA jniIsLocalRef(JNIEnv * currentEnv, JNIEnv* env, jobject reference)
 			}
 			exitVM(vmThread);
 		}
-
-		/* Internal class refs are considered local refs */
-		if (!rc) {
-			J9JavaVM *vm = currentThread->javaVM;
-			if (vm->internalVMFunctions->jniIsInternalClassRef(vm, reference)) {
-				rc = 1;
-			}
-		}
-
-		return rc;
 	}
+
+	/* Internal class refs are considered local refs */
+	if (!rc) {
+		J9JavaVM *vm = currentThread->javaVM;
+		rc = vm->internalVMFunctions->jniIsInternalClassRef(vm, reference);
+	}
+
+	return rc;
 }
 
 
