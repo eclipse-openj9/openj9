@@ -47,7 +47,6 @@
 void J9::RecognizedCallTransformer::processIntrinsicFunction(TR::TreeTop* treetop, TR::Node* node, TR::ILOpCodes opcode)
    {
    TR::Node::recreate(node, opcode);
-   TR::TransformUtil::removeTree(comp(), treetop);
    }
 
 void J9::RecognizedCallTransformer::process_java_lang_Class_IsAssignableFrom(TR::TreeTop* treetop, TR::Node* node)
