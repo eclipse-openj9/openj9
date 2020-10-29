@@ -24,7 +24,6 @@ package com.ibm.j9ddr.vm29.view.dtfj.java;
 import static com.ibm.j9ddr.view.dtfj.J9DDRDTFJUtils.corruptIterator;
 import static com.ibm.j9ddr.vm29.events.EventManager.register;
 import static com.ibm.j9ddr.vm29.events.EventManager.unregister;
-import com.ibm.j9ddr.vm29.j9.ObjectModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,6 +55,7 @@ import com.ibm.j9ddr.view.dtfj.image.J9DDRCorruptData;
 import com.ibm.j9ddr.view.dtfj.image.J9DDRImageSection;
 import com.ibm.j9ddr.vm29.events.EventManager;
 import com.ibm.j9ddr.vm29.j9.DataType;
+import com.ibm.j9ddr.vm29.j9.ObjectModel;
 import com.ibm.j9ddr.vm29.j9.RootScanner;
 import com.ibm.j9ddr.vm29.j9.gc.GCClassLoaderIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCVMThreadListIterator;
@@ -66,12 +66,12 @@ import com.ibm.j9ddr.vm29.pointer.VoidPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassLoaderPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JITConfigPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.OMRMemCategoryPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectMonitorPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ThreadAbstractMonitorPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.MM_MemorySpacePointer;
+import com.ibm.j9ddr.vm29.pointer.generated.OMRMemCategoryPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9JavaVMHelper;
 import com.ibm.j9ddr.vm29.structure.J9JITConfig;
 import com.ibm.j9ddr.vm29.structure.J9JavaVM;
@@ -950,7 +950,7 @@ public class DTFJJavaRuntime implements JavaRuntime {
 		SystemPropertiesEventListener listener = new SystemPropertiesEventListener();
 		register(listener);
 		try {
-			value = getSystemProperties().getProperty(name);
+			value = getSystemProperties_internal().getProperty(name);
 		} catch (Throwable t) {
 			throw J9DDRDTFJUtils.handleAsCorruptDataException(DTFJContext.getProcess(), t);
 		} finally {
@@ -978,16 +978,23 @@ public class DTFJJavaRuntime implements JavaRuntime {
 			corruption = true;
 			this.exception = e;
 		}
-		
 	}
-	
-	private Properties getSystemProperties() throws com.ibm.j9ddr.CorruptDataException
-	{
+
+	private Properties getSystemProperties_internal() throws com.ibm.j9ddr.CorruptDataException {
 		if (systemProperties == null) {
 			systemProperties = J9JavaVMHelper.getSystemProperties(DTFJContext.getVm());
 		}
-		
+
 		return systemProperties;
+	}
+
+	@Override
+	public Properties getSystemProperties() throws DataUnavailable, CorruptDataException {
+		try {
+			return getSystemProperties_internal();
+		} catch (com.ibm.j9ddr.CorruptDataException e) {
+			throw J9DDRDTFJUtils.newCorruptDataException(DTFJContext.getProcess(), e);
+		}
 	}
 
 	private String getServiceLevel() {
