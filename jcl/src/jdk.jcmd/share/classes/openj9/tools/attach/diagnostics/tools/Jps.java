@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,12 +33,28 @@ import com.sun.tools.attach.VirtualMachineDescriptor;
  * A tool for listing Java processes and their information.
  *
  */
+@SuppressWarnings("nls")
 public class Jps {
+
+	private static final String DESCRIPTION =
+			"jps: Print a list of Java processes and information about them%n%n";
+
+	private static final String HELP_TEXT =
+			"Usage:%n" +
+			"    jps [-h] [-J<vm option>] [-l] [-q] [-m] [-v]%n" +
+			"    jps [-h] [-J<vm option>] [-q] [-lmv]%n%n" +
+			"    -h: print jps usage help%n" +
+			"    -J: supply arguments to the Java VM running jps%n" +
+			"    -l: print the application package name%n" +
+			"    -q: print only the virtual machine identifiers%n" +
+			"    -m: print the application arguments%n" +
+			"    -v: print the Java VM arguments, including those produced automatically%n";
 
 	private static boolean printApplicationArguments;
 	private static boolean printJvmArguments;
 	private static boolean noPackageName;
 	private static boolean vmidOnly;
+
 	/**
 	 * Print a list of Java processes and information about them.
 	 * @param args Arguments to the application
@@ -68,38 +84,56 @@ public class Jps {
 		System.exit(rc);
 	}
 	
-	@SuppressWarnings("nls")
 	private static void parseArguments(String[] args) {
 		printApplicationArguments = false;
 		printJvmArguments = false;
 		noPackageName = true;
 		vmidOnly = false;
-		final String HELPTEXT = "jps: Print a list of Java processes and information about them%n"
-				+ "    -J: supply arguments to the Java VM running jps%n"
-				+ "    -l: print the application package name%n"
-				+ "    -q: print only the virtual machine identifiers%n"
-				+ "    -m: print the application arguments%n"
-				+ "    -v: print the Java VM arguments, including those produced automatically%n";
-		for (String a : args) {
-			switch (a) {
-			case "-l":
-				noPackageName = false;
-				break;
-			case "-m":
-				printApplicationArguments = true;
-				break;
-			case "-q":
-				vmidOnly = true;
-				break;
-			case "-v":
-				printJvmArguments = true;
-				break;
-				/* implicitly handle -h and -help via the default case */
-			default: 
-				System.out.printf(HELPTEXT);
-				System.exit(1);
-				break;
+
+		for (String arg : args) {
+			if (isInvalidArgument(arg)) {
+				System.out.printf("illegal argument: %s%n%n", arg);
+				interruptWithHelpMessage();
+			}
+			arg = arg.substring(1);
+			for (char singleArg : arg.toCharArray()) {
+				processArgument(singleArg);
 			}
 		}
 	}
+
+	private static boolean isInvalidArgument(String arg) {
+		return !arg.startsWith("-") || arg.length() == 1 || (arg.contains("q") && arg.length() > 2);
+	}
+
+	private static void processArgument(char arg) {
+		switch (arg) {
+			case 'l':
+				noPackageName = false;
+				break;
+			case 'm':
+				printApplicationArguments = true;
+				break;
+			case 'q':
+				vmidOnly = true;
+				break;
+			case 'v':
+				printJvmArguments = true;
+				break;
+			case 'h':
+				System.out.printf(DESCRIPTION);
+				interruptWithHelpMessage();
+				break;
+			default:
+				System.out.printf("illegal argument: -%c%n%n", arg);
+				interruptWithHelpMessage();
+				break;
+		}
+	}
+
+	private static void interruptWithHelpMessage() {
+		System.out.printf(HELP_TEXT);
+		System.exit(1);
+	}
+
 }
