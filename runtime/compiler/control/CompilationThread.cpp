@@ -2151,6 +2151,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationAotThunkReloFailure:
             case compilationAotHasInvokehandle:
             case compilationAotHasInvokeVarHandle:
+            case compilationAotHasInvokeSpecialInterface:
             case compilationAotValidateMethodExitFailure:
             case compilationAotValidateMethodEnterFailure:
             case compilationAotClassChainPersistenceFailure:
@@ -10959,6 +10960,10 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const J9::AOTHasInvokeVarHandle &e)
       {
       _methodBeingCompiled->_compErrCode = compilationAotHasInvokeVarHandle;
+      }
+   catch (const J9::AOTHasInvokeSpecialInInterface &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationAotHasInvokeSpecialInterface;
       }
    catch (const J9::FSDHasInvokeHandle &e)
       {
