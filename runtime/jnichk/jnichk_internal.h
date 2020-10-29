@@ -96,6 +96,7 @@
 #define JNIC_GLOBALREF '*'
 #define JNIC_LOCALREF '?'
 #define JNIC_CLASSLOADER 'k'
+#define JNIC_CLASSTHROWABLE 'r'
 
 /* Global Ref tracking hash table entry */
 typedef struct JNICHK_GREF_HASHENTRY {
