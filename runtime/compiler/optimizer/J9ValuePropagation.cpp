@@ -1207,9 +1207,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 
             // The following classes cannot be instantiated normally, i.e. via the new bytecode
             // InstantiationException will be thrown when calling java/lang/Class.newInstance on the following classes
-            if (comp()->fej9()->isAbstractClass(newClass) ||
+            if (!comp()->fej9()->isConcreteClass(newClass) ||
                 comp()->fej9()->isPrimitiveClass(newClass) ||
-                comp()->fej9()->isInterfaceClass(newClass) ||
                 comp()->fej9()->isClassArray(newClass))
                {
                if (trace())
@@ -1448,7 +1447,7 @@ J9::ValuePropagation::getParmValues()
                TR::ClassTableCriticalSection usesPreexistence(comp()->fe());
 
                prexClass = opaqueClass;
-               if (TR::Compiler->cls.isInterfaceClass(comp(), opaqueClass) || TR::Compiler->cls.isAbstractClass(comp(), opaqueClass))
+               if (!TR::Compiler->cls.isConcreteClass(comp(), opaqueClass))
                   opaqueClass = comp()->getPersistentInfo()->getPersistentCHTable()->findSingleConcreteSubClass(opaqueClass, comp());
 
                if (!opaqueClass)

@@ -851,7 +851,7 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
 
          // If the caller doesn't provide the output param don't bother with guessing.
          //
-         if (compileTimeGuessClass && (TR::Compiler->cls.isInterfaceClass(cg->comp(), castClass) || TR::Compiler->cls.isAbstractClass(cg->comp(), castClass)))
+         if (compileTimeGuessClass && !TR::Compiler->cls.isConcreteClass(cg->comp(), castClass))
             {
             // Figuring out that an interface/abstract class has a single concrete implementation is not as useful for instanceof as it is for checkcast.
             // For checkcast we expect the cast to succeed and the single concrete implementation is the logical class to do a quick up front test against.

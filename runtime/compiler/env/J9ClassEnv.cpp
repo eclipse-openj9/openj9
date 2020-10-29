@@ -301,6 +301,12 @@ J9::ClassEnv::isInterfaceClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz
    }
 
 bool
+J9::ClassEnv::isConcreteClass(TR::Compilation *comp, TR_OpaqueClassBlock * clazzPointer)
+   {
+   return comp->fej9()->isConcreteClass(clazzPointer);
+   }
+
+bool
 J9::ClassEnv::isEnumClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer, TR_ResolvedMethod *method)
    {
    return comp->fej9()->isEnumClass(clazzPointer, method);
@@ -829,7 +835,7 @@ J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_Pers
             }
          else
             {
-            if (!TR::Compiler->cls.isInterfaceClass(comp, clazz) && !TR::Compiler->cls.isAbstractClass(comp, clazz))
+            if (TR::Compiler->cls.isConcreteClass(comp, clazz))
                {
                if (++count > 1)
                   return false;
@@ -841,7 +847,7 @@ J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_Pers
       for (TR_PersistentClassInfo *ptClassInfo = i.getFirst(); ptClassInfo; ptClassInfo = i.getNext())
          {
          TR_OpaqueClassBlock *clazz = ptClassInfo->getClassId();
-         if (!TR::Compiler->cls.isInterfaceClass(comp, clazz) && !TR::Compiler->cls.isAbstractClass(comp, clazz))
+         if (TR::Compiler->cls.isConcreteClass(comp, clazz))
             {
             if (++count > 1)
                return false;
@@ -855,7 +861,7 @@ J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_Pers
       for (TR_PersistentClassInfo *ptClassInfo = i.getFirst(); ptClassInfo; ptClassInfo = i.getNext())
          {
          TR_OpaqueClassBlock *clazz = ptClassInfo->getClassId();
-         if (!TR::Compiler->cls.isInterfaceClass(comp, clazz) && !TR::Compiler->cls.isAbstractClass(comp, clazz))
+         if (TR::Compiler->cls.isConcreteClass(comp, clazz))
             {
             if (++count > 1)
                return false;
