@@ -2081,6 +2081,8 @@ resolveOpenJDKInvokeHandle(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 	j9object_t *invokeCache = ramClass->invokeCache + invokeCacheIndex;
 	j9object_t result = *invokeCache;
 
+	Trc_VM_resolveInvokeHandle_Entry(vmThread, ramCP, cpIndex, resolveFlags);
+
 	if ((NULL == result) && canRunJavaCode) {
 		J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)&ramCP->romConstantPool[cpIndex];
 		J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
@@ -2109,6 +2111,7 @@ resolveOpenJDKInvokeHandle(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 			}
 		}
 	}
+	Trc_VM_resolveInvokeHandle_Exit(vmThread, result);
 	return result;
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	Trc_VM_Assert_ShouldNeverHappen();
@@ -2252,6 +2255,8 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 	U_16 bsmIndex = bsmIndices[callSiteIndex];
 	U_16 i = 0;
 
+	Trc_VM_resolveInvokeDynamic_Entry(vmThread, callSiteIndex, bsmIndex, resolveFlags);
+
 	/* Check if already resolved */
 	if (NULL == result) {
 		/* Walk bsmData - skip all bootstrap methods before bsmIndex */
@@ -2262,6 +2267,8 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 
 		sendResolveInvokeDynamic(vmThread, ramCP, callSiteIndex, nameAndSig, bsmData);
 		result = (j9object_t) vmThread->returnValue;
+
+		Trc_VM_resolveInvokeDynamic_Resolved(vmThread, callSiteIndex, result);
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 		/* Check if an exception is already pending */
@@ -2309,5 +2316,6 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 		}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	}
+	Trc_VM_resolveInvokeDynamic_Exit(vmThread, result);
 	return result;
 }

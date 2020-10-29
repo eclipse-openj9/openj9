@@ -946,6 +946,7 @@ void JNICALL
 sendResolveOpenJDKInvokeHandle(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA cpIndex, I_32 refKind, J9Class *resolvedClass, J9ROMNameAndSignature *nameAndSig)
 {
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	Trc_VM_sendResolveOpenJDKInvokeHandle_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
 	if (buildCallInStackFrame(currentThread, &newELS, true, false)) {
 		/* Convert name and signature to String objects */
@@ -972,6 +973,7 @@ sendResolveOpenJDKInvokeHandle(J9VMThread *currentThread, J9ConstantPool *ramCP,
 		}
 		restoreCallInFrame(currentThread);
 	}
+	Trc_VM_sendResolveOpenJDKInvokeHandle_Exit(currentThread);
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	Assert_VM_unreachable();
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
