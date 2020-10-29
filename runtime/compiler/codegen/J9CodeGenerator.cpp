@@ -3137,6 +3137,27 @@ static void processAOTGuardSites(TR::CodeGenerator *cg, uint32_t inlinedCallSize
       }
    }
 
+static void addInlinedSiteRelocation(TR::CodeGenerator *cg,
+                                     TR_ExternalRelocationTargetKind reloType,
+                                     uint8_t *reloLocation,
+                                     int32_t inlinedSiteIndex,
+                                     TR::SymbolReference *callSymref,
+                                     TR_OpaqueClassBlock *receiver,
+                                     uint8_t *destinationAddress)
+   {
+   TR_ASSERT_FATAL(reloType != TR_NoRelocation, "TR_NoRelocation specified as reloType for inlinedSiteIndex=%d, reloLocation=%p, callSymref=%p, receiver=%p",
+                   inlinedSiteIndex, reloLocation, callSymref, receiver);
+
+   TR_RelocationRecordInformation *info = new (cg->comp()->trHeapMemory()) TR_RelocationRecordInformation();
+   info->data1 = static_cast<uintptr_t>(inlinedSiteIndex);
+   info->data2 = reinterpret_cast<uintptr_t>(callSymref);
+   info->data3 = reinterpret_cast<uintptr_t>(receiver);
+   info->data4 = reinterpret_cast<uintptr_t>(destinationAddress);
+
+   cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(reloLocation, (uint8_t *)info, reloType, cg),
+                   __FILE__,__LINE__, NULL);
+   }
+
 static void addInliningTableRelocations(TR::CodeGenerator *cg, uint32_t inlinedCallSize, TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable)
    {
    // If have inlined calls, now add the relocation records in descending order
@@ -3146,14 +3167,25 @@ static void addInliningTableRelocations(TR::CodeGenerator *cg, uint32_t inlinedC
       for (int32_t counter = inlinedCallSize - 1; counter >= 0 ; counter--)
          {
          TR_InlinedSiteLinkedListEntry *currentSite = orderedInlinedSiteListTable[counter].first;
-         while (currentSite)
+
+         if (currentSite)
             {
-            cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(currentSite->location,
-                                                                             currentSite->destination,
-                                                                             currentSite->guard,
-                                                                             currentSite->reloType, cg),
-                            __FILE__,__LINE__, NULL);
-            currentSite = currentSite->next;
+            do
+               {
+               TR_VirtualGuard *guard = reinterpret_cast<TR_VirtualGuard *>(currentSite->guard);
+
+               addInlinedSiteRelocation(cg, currentSite->reloType, currentSite->location, counter, guard->getSymbolReference(), guard->getThisClass(), currentSite->destination);
+
+               currentSite = currentSite->next;
+               }
+            while(currentSite);
+            }
+         else
+            {
+            TR_InlinedCallSite &callSite = cg->comp()->getInlinedCallSite(counter);
+            TR_AOTMethodInfo *methodInfo = reinterpret_cast<TR_AOTMethodInfo *>(callSite._methodInfo);
+
+            addInlinedSiteRelocation(cg, methodInfo->reloKind, NULL, counter, methodInfo->callSymRef, methodInfo->receiver, NULL);
             }
          }
       }

@@ -384,20 +384,23 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_InlinedAbstractMethod:
          {
          TR_RelocationRecordInlinedMethod *imRecord = reinterpret_cast<TR_RelocationRecordInlinedMethod *>(reloRecord);
-         uintptr_t destinationAddress = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
-         TR_VirtualGuard *guard = reinterpret_cast<TR_VirtualGuard *>(relocation->getTargetAddress2());
+
+         TR_RelocationRecordInformation *info = reinterpret_cast<TR_RelocationRecordInformation *>(relocation->getTargetAddress());
+
+         int32_t inlinedSiteIndex        = static_cast<int32_t>(info->data1);
+         TR::SymbolReference *callSymRef = reinterpret_cast<TR::SymbolReference *>(info->data2);
+         TR_OpaqueClassBlock *thisClass  = reinterpret_cast<TR_OpaqueClassBlock *>(info->data3);
+         uintptr_t destinationAddress    = info->data4;
 
          uint8_t flags = 0;
          // Setup flags field with type of method that needs to be validated at relocation time
-         if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isStatic())
+         if (callSymRef->getSymbol()->getMethodSymbol()->isStatic())
             flags = inlinedMethodIsStatic;
-         else if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isSpecial())
+         else if (callSymRef->getSymbol()->getMethodSymbol()->isSpecial())
             flags = inlinedMethodIsSpecial;
-         else if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
+         else if (callSymRef->getSymbol()->getMethodSymbol()->isVirtual())
             flags = inlinedMethodIsVirtual;
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-
-         int32_t inlinedSiteIndex = guard->getCurrentInlinedSiteIndex();
 
          TR_ResolvedMethod *resolvedMethod;
          if (kind == TR_InlinedInterfaceMethodWithNopGuard ||
@@ -411,7 +414,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             }
          else
             {
-            resolvedMethod = guard->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod();
+            resolvedMethod = callSymRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod();
             }
 
          // Ugly; this will be cleaned up in a future PR
@@ -419,7 +422,6 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
             TR_OpaqueMethodBlock *method = resolvedMethod->getPersistentIdentifier();
-            TR_OpaqueClassBlock *thisClass = guard->getThisClass();
             uint16_t methodID = symValManager->getIDFromSymbol(static_cast<void *>(method));
             uint16_t receiverClassID = symValManager->getIDFromSymbol(static_cast<void *>(thisClass));
 
@@ -427,7 +429,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             }
          else
             {
-            cpIndexOrData = static_cast<uintptr_t>(guard->getSymbolReference()->getCPIndex());
+            cpIndexOrData = static_cast<uintptr_t>(callSymRef->getCPIndex());
             }
 
          TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
@@ -436,7 +438,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          imRecord->setReloFlags(reloTarget, flags);
          imRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
-         imRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(guard->getSymbolReference()->getOwningMethod(comp)->constantPool()));
+         imRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(callSymRef->getOwningMethod(comp)->constantPool()));
          imRecord->setCpIndex(reloTarget, cpIndexOrData);
          imRecord->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache);
 
@@ -490,11 +492,11 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          {
          TR_RelocationRecordProfiledInlinedMethod *pRecord = reinterpret_cast<TR_RelocationRecordProfiledInlinedMethod *>(reloRecord);
 
-         TR_VirtualGuard *guard = reinterpret_cast<TR_VirtualGuard *>(relocation->getTargetAddress2());
+         TR_RelocationRecordInformation *info = reinterpret_cast<TR_RelocationRecordInformation *>(relocation->getTargetAddress());
 
-         int32_t inlinedSiteIndex = guard->getCurrentInlinedSiteIndex();
+         int32_t inlinedSiteIndex        = static_cast<int32_t>(info->data1);
+         TR::SymbolReference *callSymRef = reinterpret_cast<TR::SymbolReference *>(info->data2);
 
-         TR::SymbolReference *callSymRef = guard->getSymbolReference();
          TR_ResolvedMethod *owningMethod = callSymRef->getOwningMethod(comp);
 
          TR_InlinedCallSite & ics = comp->getInlinedCallSite(inlinedSiteIndex);
