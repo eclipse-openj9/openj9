@@ -47,7 +47,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		generator = new ValueTypeGenerator();
 	}
 	
-	private static byte[] generateClass(String className, String[] fields, boolean isVerifiable, boolean isRef) {
+	private static byte[] generateClass(String className, String[] fields, String valueUsedInCode, String[] valueFields, String nestHost, String containerUsedInCode, String[] containerFields, boolean isVerifiable, boolean isRef) {
 		ClassWriter cw = new ClassWriter(0);
 		FieldVisitor fv;
 		MethodVisitor mv;
@@ -60,6 +60,14 @@ public class ValueTypeGenerator extends ClassLoader {
 		}
 
 		cw.visitSource(className + ".java", null);
+
+		if (nestHost != null) {
+			cw.visitNestHost(nestHost);
+		}
+
+		if (valueUsedInCode != null) {
+			cw.visitNestHost(valueUsedInCode);
+		}
 		
 		int makeMaxLocal = 0;
 		String makeValueSig = "";
@@ -110,6 +118,16 @@ public class ValueTypeGenerator extends ClassLoader {
 			testMonitorExitOnObject(cw, className, fields);
 			testMonitorEnterAndExitWithRefType(cw, className, fields);
 			testCheckCastRefClassOnNull(cw, className, fields);
+			if (valueUsedInCode != null) {
+				testUnresolvedValueTypeDefaultValue(cw, className, valueUsedInCode);
+				if (valueFields != null) {
+					testUnresolvedValueTypeWithField(cw, className, valueUsedInCode, valueFields);
+				}
+			}
+			if (containerFields != null) {
+				testUnresolvedValueTypePutField(cw, className, containerUsedInCode, containerFields);
+				testUnresolvedValueTypeGetField(cw, className, containerUsedInCode, containerFields);
+			}
 		} else {
 			makeValue(cw, className, makeValueSig, fields, makeMaxLocal);
 			makeValueTypeDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal);
@@ -377,6 +395,101 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitTypeInsn(CHECKCAST, className);
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 2);
+		mv.visitEnd();
+	}
+
+	private static void testUnresolvedValueTypeDefaultValue(ClassWriter cw, String className, String valueUsedInCode) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testUnresolvedValueTypeDefaultValue", "(I)Ljava/lang/Object;", null, null);
+		mv.visitCode();
+		mv.visitVarInsn(ILOAD, 0);
+		Label falseLabel = new Label();
+		Label endLabel = new Label();
+		mv.visitJumpInsn(IFEQ, falseLabel);
+		mv.visitTypeInsn(DEFAULTVALUE, getSigFromSimpleName(valueUsedInCode, false));
+		mv.visitJumpInsn(GOTO, endLabel);
+		mv.visitLabel(falseLabel);
+		mv.visitInsn(ACONST_NULL);
+		mv.visitLabel(endLabel);
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(1, 1);
+		mv.visitEnd();
+	}
+
+	private static void testUnresolvedValueTypeWithField(ClassWriter cw, String className, String valueUsedInCode, String[] valueFields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testUnresolvedValueTypeWithField", "(ILjava/lang/Object;)Ljava/lang/Object;", null, null);
+		mv.visitCode();
+		mv.visitVarInsn(ILOAD, 0);
+		Label falseLabel = new Label();
+		Label endLabel = new Label();
+		mv.visitJumpInsn(IFEQ, falseLabel);
+		mv.visitVarInsn(ALOAD, 1);
+		mv.visitTypeInsn(CHECKCAST, valueUsedInCode);
+		for (int i = 0; i < valueFields.length; i++) {
+			String[] nameAndSig = valueFields[i].split(":");
+			mv.visitLdcInsn(Integer.valueOf(i+1));
+			mv.visitFieldInsn(WITHFIELD, valueUsedInCode, nameAndSig[0], nameAndSig[1]);
+		}
+		mv.visitJumpInsn(GOTO, endLabel);
+		mv.visitLabel(falseLabel);
+		mv.visitInsn(ACONST_NULL);
+		mv.visitLabel(endLabel);
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(2, 2);
+		mv.visitEnd();
+	}
+
+	private static void testUnresolvedValueTypeGetField(ClassWriter cw, String className, String containerClassName, String[] containerFields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testUnresolvedValueTypeGetField", "(IL"+containerClassName+";)Ljava/lang/Object;", null, null);
+		mv.visitCode();
+		mv.visitVarInsn(ILOAD, 0);
+		int fieldCount = containerFields.length;
+		Label endLabel = new Label();
+		Label defaultLabel = new Label();
+		Label[] caseLabels = new Label[fieldCount];
+		for (int i = 0; i < fieldCount; i++) {
+			caseLabels[i] = new Label();
+		}
+		mv.visitTableSwitchInsn(0, fieldCount-1, defaultLabel, caseLabels);
+		for (int i = 0; i < fieldCount; i++) {
+			String nameAndSigValue[] = containerFields[i].split(":");
+			mv.visitLabel(caseLabels[i]);
+			mv.visitVarInsn(ALOAD, 1);
+			mv.visitFieldInsn(GETFIELD, containerClassName, nameAndSigValue[0], nameAndSigValue[1]);
+			mv.visitJumpInsn(GOTO, endLabel);
+		}
+		mv.visitLabel(defaultLabel);
+		mv.visitInsn(ACONST_NULL);
+		mv.visitLabel(endLabel);
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(1, 2);
+		mv.visitEnd();
+	}
+
+	private static void testUnresolvedValueTypePutField(ClassWriter cw, String className, String containerClassName, String[] containerFields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testUnresolvedValueTypePutField", "(IL"+containerClassName+";Ljava/lang/Object;)V", null, null);
+		mv.visitCode();
+		mv.visitVarInsn(ILOAD, 0);
+		int fieldCount = containerFields.length;
+		Label endLabel = new Label();
+		Label defaultLabel = new Label();
+		Label[] caseLabels = new Label[fieldCount];
+		for (int i = 0; i < fieldCount; i++) {
+			caseLabels[i] = new Label();
+		}
+		mv.visitTableSwitchInsn(0, fieldCount-1, defaultLabel, caseLabels);
+		for (int i = 0; i < fieldCount; i++) {
+			String nameAndSigValue[] = containerFields[i].split(":");
+			mv.visitLabel(caseLabels[i]);
+			mv.visitVarInsn(ALOAD, 1);
+			mv.visitVarInsn(ALOAD, 2);
+			mv.visitTypeInsn(CHECKCAST, nameAndSigValue[1]);
+			mv.visitFieldInsn(PUTFIELD, containerClassName, nameAndSigValue[0], nameAndSigValue[1]);
+			mv.visitJumpInsn(GOTO, endLabel);
+		}
+		mv.visitLabel(defaultLabel);
+		mv.visitLabel(endLabel);
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(2, 3);
 		mv.visitEnd();
 	}
 
@@ -921,17 +1034,37 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 
 	public static Class<?> generateValueClass(String name, String[] fields) throws Throwable {
-		byte[] bytes = generateClass(name, fields, false, false);
+		byte[] bytes = generateClass(name, fields, null, null, null, null, null, false, false);
+		return generator.defineClass(name, bytes, 0, bytes.length);
+	}
+
+	public static Class<?> generateValueClass(String name, String[] fields, String nestHost) throws Throwable {
+		byte[] bytes = generateClass(name, fields, null, null, nestHost, null, null, false, false);
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateVerifiableValueClass(String name, String[] fields) throws Throwable {
-		byte[] bytes = generateClass(name, fields, true, false);
+		byte[] bytes = generateClass(name, fields, null, null, null, null, null, true, false);
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateRefClass(String name, String[] fields) throws Throwable {
-		byte[] bytes = generateClass(name, fields, false, true);
+		byte[] bytes = generateClass(name, fields, null, null, null, null, null, false, true);
+		return generator.defineClass(name, bytes, 0, bytes.length);
+	}
+
+	public static Class<?> generateRefClass(String name, String[] fields, String valueUsedInCode) throws Throwable {
+		byte[] bytes = generateClass(name, fields, valueUsedInCode, null, null, null, null, false, true);
+		return generator.defineClass(name, bytes, 0, bytes.length);
+	}
+
+	public static Class<?> generateHostRefClass(String name, String[] fields, String valueUsedInCode, String[] valueFields) throws Throwable {
+		byte[] bytes = generateClass(name, fields, valueUsedInCode, valueFields, null, null, null, false, true);
+		return generator.defineClass(name, bytes, 0, bytes.length);
+	}
+
+	public static Class<?> generateRefClass(String name, String[] fields, String containerClassName, String[] containerFields) throws Throwable {
+		byte[] bytes = generateClass(name, fields, null, null, null, containerClassName, containerFields, false, true);
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 

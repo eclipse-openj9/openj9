@@ -2460,6 +2460,322 @@ public class ValueTypeTests {
 		assertNotNull(getB.invoke(getD.invoke(containerC)));
 	}
 	
+	/*
+	 * Test use of DEFAULTVALUE for a value type class that has not been resolved.
+	 * The method is first called so that the DEFAULTVALUE will not be executed,
+	 * and the class not resolved, and then called so that the DEFAULTVALUE
+	 * and class resolution is triggered.
+	 */
+	@Test(priority=1)
+	static public void testUnresolvedDefaultValueUse() throws Throwable {
+		// Set up classes that look roughly like this:
+		//
+		// public inline class UnresolvedA {
+		//     public final int x;
+		//     public final int y;
+		//     public Object getGenericX(int x) {return Integer.valueOf(x);}
+		//     public Object getGenericY(int x) {return Integer.valueOf(y);}
+		// }
+		//
+		// public class UsingUnresolvedA {
+		//     public Object testUnresolvedValueTypeDefaultValue(int doDefaultValue) {
+		//         // Passing in non-zero triggers execution of DEFAULTVALUE and
+		//         // resolution of UnresolvedA class
+		//         //
+		//         return (doDefaultValue != 0) ? (DEFAULTVALUE UnresolvedA) : null;
+		//     }
+		// }
+		//
+		String fields[] = {"x:I", "y:I"};
+		Class valueClass = ValueTypeGenerator.generateValueClass("UnresolvedA", fields);
+		String fields2[] = {};
+		Class usingClass = ValueTypeGenerator.generateRefClass("UsingUnresolvedA", fields2, "UnresolvedA");
+
+		MethodHandle defaultValueUnresolved = lookup.findStatic(usingClass, "testUnresolvedValueTypeDefaultValue", MethodType.methodType(Object.class, int.class));
+
+		for (int i = 0; i < 10; i++) {
+			// Pass zero to avoid execution of DEFAULTVALUE and resolution of value type class
+			//
+			assertNull(defaultValueUnresolved.invoke(0));
+		}
+
+		MethodHandle getX = generateGenericGetter(valueClass, "x");
+		MethodHandle getY = generateGenericGetter(valueClass, "y");
+
+		for (int i = 0; i < 10; i++) {
+			// Pass one to force execution of DEFAULTVALUE and resolution of value type class
+			//
+			Object defaultValue = defaultValueUnresolved.invoke(1);
+			assertNotNull(defaultValue);
+			assertEquals(getX.invoke(defaultValue), Integer.valueOf(0));
+			assertEquals(getY.invoke(defaultValue), Integer.valueOf(0));
+		}
+	}
+
+	@Test(priority=1)
+	static public void testUnresolvedWithFieldUse() throws Throwable {
+		// Set up classes that look roughly like this:
+		//
+		// public inline class UnresolvedD {
+		//     public final int x;
+		//     public final int y;
+		//     public Object getGenericX(int x) {return Integer.valueOf(x);}
+		//     public Object getGenericY(int x) {return Integer.valueOf(y);}
+		// }
+		//
+		// public class UsingUnresolvedD {
+		//     public Object testUnresolvedValueTypeDefaultValue(int doDefaultValue, Object val) {
+		//         // Passing in non-zero triggers execution of WITHFIELD operations and
+		//         // resolution of UnresolvedD class
+		//         //
+		//         return (doDefaultValue != 0)
+		//                    ? (((((UnresolvedD) val) <WITHFIELD-UnresolvedD.X> (1))
+		//                                             <WITHFIELD-UnresolvedD.Y> (2)))
+		//                    : null;
+		//     }
+		// }
+		//
+		String fields[] = {"x:I", "y:I"};
+		Class valueClass = ValueTypeGenerator.generateValueClass("UnresolvedD", fields, "HostD");
+		String fields2[] = {};
+		Class usingClass = ValueTypeGenerator.generateHostRefClass("UsingUnresolvedD", fields2, "UnresolvedD", fields);
+
+		MethodHandle withFieldUnresolved = lookup.findStatic(usingClass, "testUnresolvedValueTypeWithField", MethodType.methodType(Object.class, new Class[] {int.class, Object.class}));
+
+		for (int i = 0; i < 10; i++) {
+			// Pass zero to avoid execution of WITHFIELD and resolution of value type class
+			//
+			assertNull(withFieldUnresolved.invoke(0, null));
+		}
+
+		MethodHandle makeDefaultValue = lookup.findStatic(valueClass, "makeValueTypeDefaultValue", MethodType.methodType(Object.class));
+		Object defaultValue = makeDefaultValue.invoke();
+
+		MethodHandle getX = generateGenericGetter(valueClass, "x");
+		MethodHandle getY = generateGenericGetter(valueClass, "y");
+
+		for (int i = 0; i < 10; i++) {
+			// Pass one to force execution of WITHFIELD and resolution of value type class
+			//
+			Object withFieldValue = (withFieldUnresolved.invoke(1, defaultValue));
+			assertEquals(getX.invoke(withFieldValue), Integer.valueOf(1));
+			assertEquals(getY.invoke(withFieldValue), Integer.valueOf(2));
+		}
+	}
+
+	private static class UnresolvedClassDesc {
+		public String name;
+		public String[] fields;
+		public UnresolvedClassDesc(String name, String[] fields) {
+			this.name = name;
+			this.fields = fields;
+		}
+	}
+
+	/*
+	 * Test use of GETFIELD operations on the fields of a container class, where
+	 * the fields are of value type classes that have not been resolved.
+	 *
+	 * The method is first called so that the GETFIELD will not be executed, and
+	 * the class not resolved, and then called so that the GETFIELD and class
+	 * resolution is triggered.
+	 */
+	@Test(priority=1)
+	static public void testUnresolvedGetFieldUse() throws Throwable {
+		// Set up classes that look roughly like this:
+		//
+		// public inline class UnresolvedB1 {
+		//     public final int a;
+		//     public final int b;
+		// }
+		//
+		// public inline class UnresolvedB2 {
+		//     public final int c;
+		//     public final int d;
+		// }
+		//
+		// public inline class UnresolvedB3 {
+		//     public final int e;
+		//     public final int f;
+		// }
+		//
+		// public class ContainerForUnresolvedB {
+		//     public UnresolvedB1 v1;
+		//     public UnresolvedB2 v2;
+		//     public UnresolvedB3 v3;
+		// }
+		//
+		// public class UsingUnresolvedB {
+		//     public Object testUnresolvedValueTypeGetField(int fieldNum, ContainerForUnresolvedB container) {
+		//         // Passing in a value in the range [0..2] triggers execution of a GETFIELD
+		//         // operation on the corresponding field of "container", triggering
+		//         // resolution of the field.  Passing in a value outside that range, delays
+		//         // triggering resolution of the field
+		//         //
+		//         switch (fieldNum) {
+		//         case 0: return container.v1;
+		//         case 1: return container.v2;
+		//         case 2: return container.v3;
+		//         default: return null;
+		//         }
+		//     }
+		// }
+		//
+		UnresolvedClassDesc[] uclassDescArr = new UnresolvedClassDesc[] {
+								new UnresolvedClassDesc("UnresolvedB1", new String[] {"a:I", "b:I"}),
+								new UnresolvedClassDesc("UnresolvedB2", new String[] {"c:I", "d:I"}),
+								new UnresolvedClassDesc("UnresolvedB3", new String[] {"e:I", "f:I"})};
+
+		Class[] valueClassArr = new Class[uclassDescArr.length];
+		String containerFields[] = new String[uclassDescArr.length];
+		MethodHandle[][] valueFieldGetters = new MethodHandle[uclassDescArr.length][];
+
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			UnresolvedClassDesc desc = uclassDescArr[i];
+			valueClassArr[i] = ValueTypeGenerator.generateValueClass(desc.name, desc.fields);
+			valueFieldGetters[i] = new MethodHandle[desc.fields.length];
+			containerFields[i] = "v"+(i+1)+":Q"+desc.name+";";
+
+			for (int j = 0; j < desc.fields.length; j++) {
+				String[] nameAndSig = desc.fields[j].split(":");
+				valueFieldGetters[i][j] = generateGenericGetter(valueClassArr[i], nameAndSig[0]);
+			}
+		}
+
+		Class containerClass = ValueTypeGenerator.generateRefClass("ContainerForUnresolvedB", containerFields);
+
+		String fieldsUsing[] = {};
+		Class usingClass = ValueTypeGenerator.generateRefClass("UsingUnresolvedB", fieldsUsing, "ContainerForUnresolvedB", containerFields);
+
+		MethodHandle getFieldUnresolved = lookup.findStatic(usingClass, "testUnresolvedValueTypeGetField",
+															MethodType.methodType(Object.class, new Class[] {int.class, containerClass}));
+
+		for (int i = 0; i < 10; i++) {
+			// Pass -1 to avoid execution of GETFIELD against field that has a value type class
+			// In turn that delays the resolution of the value type class
+			assertNull(getFieldUnresolved.invoke(-1, null));
+		}
+
+		Object containerObject = containerClass.newInstance();
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			// Pass 0 or more to trigger execution of GETFIELD against field that has a value type class
+			// In turn that triggers the resolution of the associated value type classes
+			Object fieldVal = getFieldUnresolved.invoke(i, containerObject);
+			assertNotNull(fieldVal);
+
+			for (int j = 0; j < valueFieldGetters[i].length; j++) {
+				assertEquals(valueFieldGetters[i][j].invoke(fieldVal), Integer.valueOf(0));
+			}
+		}
+	}
+
+	/*
+	 * Test use of PUTFIELD operations on the fields of a container class, where
+	 * the fields are of value type classes that have not been resolved.
+	 *
+	 * The method is first called so that the PUTFIELD will not be executed, and
+	 * the class not resolved, and then called so that the PUTFIELD and class
+	 * resolution is triggered.
+	 */
+	@Test(priority=1)
+	static public void testUnresolvedPutFieldUse() throws Throwable {
+		// Set up classes that look roughly like this:
+		//
+		// public inline class UnresolvedC1 {
+		//     public final int a;
+		//     public final int b;
+		// }
+		//
+		// public inline class UnresolvedC2 {
+		//     public final int c;
+		//     public final int d;
+		// }
+		//
+		// public inline class UnresolvedC3 {
+		//     public final int e;
+		//     public final int f;
+		// }
+		//
+		// public class ContainerForUnresolvedC {
+		//     public UnresolvedC1 v1;
+		//     public UnresolvedC2 v2;
+		//     public UnresolvedC3 v3;
+		// }
+		//
+		// public class UsingUnresolvedC {
+		//     public Object testUnresolvedValueTypePutField(int fieldNum, ContainerForUnresolvedC container, Object val) {
+		//         // Passing in a value in the range [0..2] triggers execution of a PUTFIELD
+		//         // operation on the corresponding field of "container", triggering
+		//         // resolution of the class and field.  Passing in a value outside that range,
+		//         // delays triggering that resolution
+		//         //
+		//         switch (fieldNum) {
+		//         case 0: container.v1 = (UnresolvedC3) val; break;
+		//         case 1: container.v2 = (UnresolvedC2) val; break;
+		//         case 2: container.v3 = (UnresolvedC3) val; break;
+		//         default: break;
+		//         }
+		//     }
+		// }
+		//
+		UnresolvedClassDesc[] uclassDescArr = new UnresolvedClassDesc[] {
+								new UnresolvedClassDesc("UnresolvedC1", new String[] {"a:I", "b:I"}),
+								new UnresolvedClassDesc("UnresolvedC2", new String[] {"c:I", "d:I"}),
+								new UnresolvedClassDesc("UnresolvedC3", new String[] {"e:I", "f:I"})};
+
+		Class[] valueClassArr = new Class[uclassDescArr.length];
+		String containerFields[] = new String[uclassDescArr.length];
+		MethodHandle[][] valueFieldGetters = new MethodHandle[uclassDescArr.length][];
+		MethodHandle[] containerFieldGetters = new MethodHandle[uclassDescArr.length];
+
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			UnresolvedClassDesc desc = uclassDescArr[i];
+			valueClassArr[i] = ValueTypeGenerator.generateValueClass(desc.name, desc.fields);
+			valueFieldGetters[i] = new MethodHandle[desc.fields.length];
+			containerFields[i] = "v"+(i+1)+":Q"+desc.name+";";
+
+			for (int j = 0; j < desc.fields.length; j++) {
+				String[] nameAndSig = desc.fields[j].split(":");
+				valueFieldGetters[i][j] = generateGenericGetter(valueClassArr[i], nameAndSig[0]);
+			}
+		}
+
+		Class containerClass = ValueTypeGenerator.generateRefClass("ContainerForUnresolvedC", containerFields);
+
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			String[] nameAndSig = containerFields[i].split(":");
+			containerFieldGetters[i] = generateGenericGetter(containerClass, nameAndSig[0]);
+		}
+
+		String fieldsUsing[] = {};
+		Class usingClass = ValueTypeGenerator.generateRefClass("UsingUnresolvedC", fieldsUsing, "ContainerForUnresolvedC", containerFields);
+
+		MethodHandle putFieldUnresolved = lookup.findStatic(usingClass, "testUnresolvedValueTypePutField",
+												MethodType.methodType(void.class, new Class[] {int.class, containerClass, Object.class}));
+
+		for (int i = 0; i < 10; i++) {
+			// Pass -1 to avoid execution of PUTFIELD into field that has a value type class
+			// In turn that delays the resolution of the value type class
+			putFieldUnresolved.invoke(-1, null, null);
+		}
+
+		Object containerObject = containerClass.newInstance();
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			MethodHandle makeDefaultValue = lookup.findStatic(valueClassArr[i], "makeValueTypeDefaultValue", MethodType.methodType(Object.class));
+			Object valueObject = makeDefaultValue.invoke();
+			// Pass 0 or more to trigger execution of PUTFIELD against field that has a value type class
+			// In turn that triggers the resolution of the associated value type classes
+			putFieldUnresolved.invoke(i, containerObject, valueObject);
+		}
+
+		for (int i = 0; i < containerFieldGetters.length; i++) {
+			Object containerFieldValue = containerFieldGetters[i].invoke(containerObject);
+
+			for (int j = 0; j < valueFieldGetters[i].length; j++) {
+				assertEquals(valueFieldGetters[i][j].invoke(containerFieldValue), Integer.valueOf(0));
+			}
+		}
+	}
 	
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
 		try {
