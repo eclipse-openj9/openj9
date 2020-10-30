@@ -92,6 +92,7 @@
 #include "env/VMJ9.h"
 #include "env/annotations/AnnotationBase.hpp"
 #include "runtime/MethodMetaData.h"
+#include "runtime/RuntimeAssumptions.hpp"
 #include "env/J9JitMemory.hpp"
 #include "env/J9SegmentCache.hpp"
 #include "env/SystemSegmentProvider.hpp"
@@ -9328,6 +9329,13 @@ TR::CompilationInfoPerThreadBase::compile(
                   );
                }
             compiler->failCompilation<J9::MetaDataCreationFailure>("Metadata creation failure");
+            }
+
+         if (compiler->getGenerateReadOnlyCode())
+            {
+            TR::SentinelRuntimeAssumption *sentinel = *reinterpret_cast<TR::SentinelRuntimeAssumption **>(compiler->getMetadataAssumptionList());
+            TR_ASSERT_FATAL(sentinel, "sentinel can't be NULL\n");
+            sentinel->setOwningMetadata(metaData);
             }
 
          if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
