@@ -40,5 +40,12 @@ set(Java_JAVA_EXECUTABLE ${CMAKE_Java_RUNTIME})
 set(Java_JAVAC_EXECUTABLE ${CMAKE_Java_COMPILER})
 set(Java_JAR_EXECUTABLE ${CMAKE_Java_AR})
 
+# Native tooling
+if(CMAKE_CROSSCOMPILING)
+	if(NOT OMR_EXE_LAUNCHER)
+		message(FATAL_ERROR "OMR_EXE_LAUNCHER must be specified when cross-compiling")
+	endif()
+endif()
+
 add_subdirectory(sourcetools)
 add_subdirectory(runtime)
