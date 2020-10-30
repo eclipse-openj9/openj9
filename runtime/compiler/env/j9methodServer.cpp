@@ -329,21 +329,6 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
          }
       else
          {
-         if (((TR_ResolvedJ9Method*)resolvedMethod)->isVarHandleAccessMethod())
-            {
-            // VarHandle access methods are resolved to *_impl()V, restore their signatures to obtain function correctness in the Walker
-            J9ROMConstantPoolItem *cpItem = (J9ROMConstantPoolItem *)romLiterals();
-            J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)(cpItem + cpIndex);
-            int32_t signatureLength = 0;
-            char *signature = getROMString(signatureLength, romMethodRef,
-                                 {
-                                 offsetof(J9ROMMethodRef, nameAndSignature),
-                                 offsetof(J9ROMNameAndSignature, signature)
-                                 });
-
-            ((TR_ResolvedJ9Method *)resolvedMethod)->setSignature(signature, signatureLength, comp->trMemory());
-            }
-
          TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual");
          TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
          }
@@ -354,9 +339,11 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
    if (unresolvedInCP)
        *unresolvedInCP = true;
 
+   bool shouldCompileTimeResolve = shouldCompileTimeResolveMethod(cpIndex);
+
    if (!((_fe->_compInfoPT->getClientData()->getRtResolve()) &&
          !comp->ilGenRequest().details().isMethodHandleThunk() && // cmvc 195373
-         performTransformation(comp, "Setting as unresolved virtual call cpIndex=%d\n",cpIndex) ) || ignoreRtResolve)
+         performTransformation(comp, "Setting as unresolved virtual call cpIndex=%d\n",cpIndex) ) || ignoreRtResolve || shouldCompileTimeResolve)
       {
       _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedPossiblyPrivateVirtualMethodAndMirror, (TR_ResolvedMethod *) _remoteMirror, literals(), cpIndex);
       auto recv = _stream->read<J9Method *, UDATA, bool, TR_ResolvedJ9JITServerMethodInfo>();
@@ -392,6 +379,8 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
          }
       }
 
+   TR_ASSERT_FATAL(resolvedMethod || !shouldCompileTimeResolve, "Method has to be resolved in %s at cpIndex  %d", signature(comp->trMemory()), cpIndex);
+
    if (resolvedMethod == NULL)
       {
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual/null");
@@ -400,21 +389,6 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
       }
    else
       {
-      if (((TR_ResolvedJ9Method*)resolvedMethod)->isVarHandleAccessMethod())
-         {
-         // VarHandle access methods are resolved to *_impl()V, restore their signatures to obtain function correctness in the Walker
-         J9ROMConstantPoolItem *cpItem = (J9ROMConstantPoolItem *)romLiterals();
-         J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)(cpItem + cpIndex);
-         int32_t signatureLength = 0;
-         char *signature = getROMString(signatureLength, romMethodRef,
-                              {
-                              offsetof(J9ROMMethodRef, nameAndSignature),
-                              offsetof(J9ROMNameAndSignature, signature)
-                              });
-
-         ((TR_ResolvedJ9Method *)resolvedMethod)->setSignature(signature, signatureLength, comp->trMemory());
-         }
-
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual");
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
       }
@@ -773,18 +747,41 @@ TR_ResolvedJ9JITServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I
 TR_ResolvedMethod *
 TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats)
    {
-   return new (comp->trHeapMemory()) TR_ResolvedJ9JITServerMethod((TR_OpaqueMethodBlock *) j9Method, _fe, comp->trMemory(), this, vTableSlot);
+   TR_ResolvedMethod *m = new (comp->trHeapMemory()) TR_ResolvedJ9JITServerMethod((TR_OpaqueMethodBlock *) j9Method, _fe, comp->trMemory(), this, vTableSlot);
+   if (((TR_ResolvedJ9Method*)m)->isSignaturePolymorphicMethod())
+      {
+      // Signature polymorphic method's signature varies at different call sites and will be different than its declared signature
+      int32_t signatureLength;
+      char   *signature = getMethodNameAndSignatureFromConstantPool(cpIndex, signatureLength);
+      ((TR_ResolvedJ9Method *)m)->setSignature(signature, signatureLength, comp->trMemory());
+      }
+   return m;
    }
 
 TR_ResolvedMethod *
 TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats, const TR_ResolvedJ9JITServerMethodInfo &methodInfo)
    {
-   return new (comp->trHeapMemory()) TR_ResolvedJ9JITServerMethod((TR_OpaqueMethodBlock *) j9Method, _fe, comp->trMemory(), methodInfo, this, vTableSlot);
+   TR_ResolvedMethod *m = new (comp->trHeapMemory()) TR_ResolvedJ9JITServerMethod((TR_OpaqueMethodBlock *) j9Method, _fe, comp->trMemory(), methodInfo, this, vTableSlot);
+   if (((TR_ResolvedJ9Method*)m)->isSignaturePolymorphicMethod())
+      {
+      // Signature polymorphic method's signature varies at different call sites and will be different than its declared signature
+      int32_t signatureLength;
+      char   *signature = getMethodNameAndSignatureFromConstantPool(cpIndex, signatureLength);
+      ((TR_ResolvedJ9Method *)m)->setSignature(signature, signatureLength, comp->trMemory());
+      }
+   return m;
    }
 
 uint32_t
 TR_ResolvedJ9JITServerMethod::classCPIndexOfMethod(uint32_t methodCPIndex)
    {
+   uint32_t realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClassPtr(), methodCPIndex);
+   J9ROMMethodRef *methodRef = (J9ROMMethodRef *) &romCPBase()[realCPIndex];
+   if (JITServerHelpers::isAddressInROMClass(methodRef, romClassPtr()))
+      {
+      uint32_t classIndex = methodRef->classRefCPIndex;
+      return classIndex;
+      }
    _stream->write(JITServer::MessageType::ResolvedMethod_classCPIndexOfMethod, _remoteMirror, methodCPIndex);
    return std::get<0>(_stream->read<uint32_t>());
    }
@@ -1135,6 +1132,20 @@ TR_ResolvedJ9JITServerMethod::classSignatureOfFieldOrStatic(I_32 cpIndex, int32_
                            offsetof(J9ROMFieldRef, nameAndSignature),
                            offsetof(J9ROMNameAndSignature, signature),
                            });
+   return signature;
+   }
+
+char *
+TR_ResolvedJ9JITServerMethod::getMethodNameAndSignatureFromConstantPool(I_32 cpIndex, int32_t & len)
+   {
+   I_32 realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClassPtr(), cpIndex);
+   if (realCPIndex == -1)
+      return 0;
+   char *signature = getROMString(len, &romCPBase()[realCPIndex],
+                        {
+                        offsetof(J9ROMMethodRef, nameAndSignature),
+                        offsetof(J9ROMNameAndSignature, signature)
+                        });
    return signature;
    }
 
@@ -2341,6 +2352,13 @@ TR_ResolvedRelocatableJ9JITServerMethod::createResolvedMethodFromJ9Method(TR::Co
       }
 
 #endif
+   if (resolvedMethod && ((TR_ResolvedJ9Method*)resolvedMethod)->isSignaturePolymorphicMethod())
+      {
+      // Signature polymorphic method's signature varies at different call sites and will be different than its declared signature
+      int32_t signatureLength;
+      char   *signature = getMethodNameAndSignatureFromConstantPool(cpIndex, signatureLength);
+      ((TR_ResolvedJ9Method *)resolvedMethod)->setSignature(signature, signatureLength, comp->trMemory());
+      }
 
    return resolvedMethod;
    }
@@ -2354,6 +2372,14 @@ TR_ResolvedRelocatableJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::C
    TR_ResolvedMethod *resolvedMethod = NULL;
    if (std::get<0>(methodInfo).remoteMirror)
       resolvedMethod = new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9JITServerMethod((TR_OpaqueMethodBlock *) j9method, _fe, comp->trMemory(), methodInfo, this, vTableSlot);
+
+   if (resolvedMethod && ((TR_ResolvedJ9Method*)resolvedMethod)->isSignaturePolymorphicMethod())
+      {
+      // Signature polymorphic method's signature varies at different call sites and will be different than its declared signature
+      int32_t signatureLength;
+      char   *signature = getMethodNameAndSignatureFromConstantPool(cpIndex, signatureLength);
+      ((TR_ResolvedJ9Method *)resolvedMethod)->setSignature(signature, signatureLength, comp->trMemory());
+      }
 
    return resolvedMethod;
    }
