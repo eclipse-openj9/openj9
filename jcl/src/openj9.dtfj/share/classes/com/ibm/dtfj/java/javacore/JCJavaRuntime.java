@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2020 IBM Corp. and others
+ * Copyright (c) 2007, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -173,11 +173,6 @@ public class JCJavaRuntime implements JavaRuntime {
 	 */
 	public ImagePointer getJavaVM() throws CorruptDataException {
 		throw new CorruptDataException(new JCCorruptData(null));
-	}
-
-	@Override
-	public Properties getSystemProperties() throws DataUnavailable, CorruptDataException {
-		throw new DataUnavailable("System properties are not available for this runtime");
 	}
 
 	/**
