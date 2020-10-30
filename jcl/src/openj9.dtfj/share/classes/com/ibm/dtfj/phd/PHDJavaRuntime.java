@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2008, 2020 IBM Corp. and others
+ * Copyright (c) 2008, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -187,15 +187,8 @@ class PHDJavaRuntime implements JavaRuntime {
 
 	public ImagePointer getJavaVM() throws CorruptDataException {
 		long addr = 0;
-		if (metaJavaRuntime != null) {
-			addr = metaJavaRuntime.getJavaVM().getAddress();
-		}
+		if (metaJavaRuntime != null) addr = metaJavaRuntime.getJavaVM().getAddress();
 		return space.getPointer(addr);
-	}
-
-	@Override
-	public Properties getSystemProperties() throws DataUnavailable, CorruptDataException {
-		throw new DataUnavailable("System properties are not available for this runtime");
 	}
 
 	public JavaVMInitArgs getJavaVMInitArgs() throws DataUnavailable,

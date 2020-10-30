@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2020 IBM Corp. and others
+ * Copyright (c) 2011, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,10 +39,12 @@ import com.ibm.java.diagnostics.utils.plugins.PluginLoader;
 import com.ibm.java.diagnostics.utils.plugins.PluginManager;
 import com.ibm.java.diagnostics.utils.plugins.PluginManagerLocator;
 
+
 /**
  * A DTFJ context within which a DTFJ command executes
  * 
  * @author adam
+ *
  */
 public class DTFJContext extends Context implements IDTFJContext, PluginLoader {
 	private final JavaRuntime rt;
@@ -51,12 +53,12 @@ public class DTFJContext extends Context implements IDTFJContext, PluginLoader {
 	private final int major;
 	private final int minor;
 	private final Properties props = new Properties();
-	private final DTFJImageBean bean;
+	private DTFJImageBean bean = null;
 	private final String apiLevel;
 	private final boolean hasImage;
-	private final ArrayList<PluginConfig> loadedPlugins = new ArrayList<>();
-	private final ArrayList<PluginConfig> failedPlugins = new ArrayList<>();
-
+	private ArrayList<PluginConfig> loadedPlugins = new ArrayList<PluginConfig>();
+	private ArrayList<PluginConfig> failedPlugins = new ArrayList<PluginConfig>();
+	
 	public DTFJContext(int major, int minor,Image image, ImageAddressSpace space, ImageProcess proc, JavaRuntime rt) {
 		super();
 		this.rt = rt;
@@ -138,10 +140,12 @@ public class DTFJContext extends Context implements IDTFJContext, PluginLoader {
 		}
 	}
 
+	
+	
 	public DTFJImageBean getImage() {
 		return bean;
 	}
-
+	
 	/**
 	 * Used to determine if a property has been set in the context property
 	 * bag, and that the value of that property is TRUE
@@ -149,12 +153,17 @@ public class DTFJContext extends Context implements IDTFJContext, PluginLoader {
 	 * @return true if the property exists and Boolean.parseValue() returns true
 	 */
 	public boolean hasPropertyBeenSet(String name) {
-		Object value = getProperties().get(name);
-		if (value != null) {
-			return Boolean.parseBoolean(value.toString());
+		if(getProperties().containsKey(name)) {
+			Object value = getProperties().get(name);
+			if(value == null) {
+				return false;		//not supplied
+			} else {
+				return Boolean.parseBoolean(value.toString());
+			}
+		} else {
+			//this is the default of not being set
+			return false;
 		}
-		// this is the default
-		return false;
 	}
 
 	public ArrayList<PluginConfig> getPlugins() {
