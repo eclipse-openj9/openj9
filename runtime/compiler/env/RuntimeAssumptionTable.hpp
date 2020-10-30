@@ -133,6 +133,8 @@ class TR_RuntimeAssumptionTable
     */
    static bool assumptionCanBeSerialized(TR_RuntimeAssumptionKind kind);
 
+   uint32_t getTotalSizeOfAssumptionsToBeSerialized() { return _totalSizeOfAssumptionsToBeSerialized; }
+
    private:
    friend class OMR::RuntimeAssumption;
    void addAssumption(OMR::RuntimeAssumption *a, TR_RuntimeAssumptionKind kind, TR_FrontEnd *fe, OMR::RuntimeAssumption **sentinel);
@@ -144,6 +146,8 @@ class TR_RuntimeAssumptionTable
    uint32_t _marked;                            // Counts the number of assumptions waiting to be removed
    int32_t assumptionCount[LastAssumptionKind]; // this never gets decremented
    int32_t reclaimedAssumptionCount[LastAssumptionKind];
+
+   uint32_t _totalSizeOfAssumptionsToBeSerialized;
    };
 
 #endif // RUNTIMEASSUMPTIONTABLE_HPP

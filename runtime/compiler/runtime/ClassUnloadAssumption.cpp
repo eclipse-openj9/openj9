@@ -189,6 +189,7 @@ TR_PersistentClassInfo::removeUnloadedSubClasses()
        }
     _marked=0;
     memset(_detachPending, 0, sizeof(bool)*LastAssumptionKind);
+    _totalSizeOfAssumptionsToBeSerialized=0;
     return true;
     }
 
@@ -358,6 +359,10 @@ void TR_RuntimeAssumptionTable::purgeRATTable(TR_FrontEnd *fe)
 void TR_RuntimeAssumptionTable::addAssumption(OMR::RuntimeAssumption *a, TR_RuntimeAssumptionKind kind, TR_FrontEnd *fe, OMR::RuntimeAssumption **sentinel)
    {
    OMR::CriticalSection addAssumption(assumptionTableMutex);
+
+   if (assumptionCanBeSerialized(kind))
+      _totalSizeOfAssumptionsToBeSerialized += a->size();
+
    a->enqueueInListOfAssumptionsForJittedBody(sentinel);
    // FIXME: how should we deal with memory allocation failures at runtime?
 
@@ -392,6 +397,10 @@ void TR_RuntimeAssumptionTable::markForDetachFromRAT(OMR::RuntimeAssumption *ass
    _detachPending[assumption->getAssumptionKind()] = true;
    hashTable->_markedforDetachCount[(assumption->hashCode() % hashTable->_spineArraySize)]++;
    assumption->markForDetach();
+
+   if (assumptionCanBeSerialized(assumption->getAssumptionKind()))
+      _totalSizeOfAssumptionsToBeSerialized -= assumption->size();
+
    _marked++;
    }
 
