@@ -497,8 +497,8 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalGetIntrinsic(TR::TreeTop* callT
       // Default case is impossible due to previous checks
       switch (sourceNumBytes)
          {
-         case 4: op = requiresByteSwap ? TR::iriload : TR::floadi; break;
-         case 8: op = requiresByteSwap ? TR::irlload : TR::dloadi; break;
+         case 4: op = requiresByteSwap ? TR::iloadi : TR::floadi; break;
+         case 8: op = requiresByteSwap ? TR::lloadi : TR::dloadi; break;
          }
 
       // Default case is impossible due to previous checks
@@ -515,8 +515,8 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalGetIntrinsic(TR::TreeTop* callT
          // Default case is impossible due to previous checks
          switch (sourceNumBytes)
             {
-            case 4: valueNode = TR::Node::create(TR::ibits2f, 1, valueNode); break;
-            case 8: valueNode = TR::Node::create(TR::lbits2d, 1, valueNode); break;
+            case 4: valueNode = TR::Node::create(TR::ibits2f, 1, TR::Node::create(TR::ibyteswap, 1, valueNode)); break;
+            case 8: valueNode = TR::Node::create(TR::lbits2d, 1, TR::Node::create(TR::lbyteswap, 1, valueNode)); break;
             }
          }
 
@@ -565,7 +565,7 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalSetIntrinsic(TR::TreeTop* callT
    // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
    bool requiresByteSwap = comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
 
-   if (requiresByteSwap && !comp()->target().cpu.isZ())
+   if (requiresByteSwap && !comp()->cg()->supportsByteswap())
       {
       printInliningStatus (false, callNode, "Unmarshalling is not supported because ByteSwap IL evaluators are not implemented.");
       return NULL;
@@ -600,8 +600,8 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalSetIntrinsic(TR::TreeTop* callT
       // Default case is impossible due to previous checks
       switch (targetNumBytes)
          {
-         case 4: op = requiresByteSwap ? TR::iristore : TR::fstorei; break;
-         case 8: op = requiresByteSwap ? TR::irlstore : TR::dstorei; break;
+         case 4: op = requiresByteSwap ? TR::istorei : TR::fstorei; break;
+         case 8: op = requiresByteSwap ? TR::lstorei : TR::dstorei; break;
          }
 
       // Create the proper conversion if the source and target sizes are different
@@ -615,8 +615,8 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalSetIntrinsic(TR::TreeTop* callT
          // Default case is impossible due to previous checks
          switch (targetNumBytes)
             {
-            case 4: valueNode = TR::Node::create(TR::fbits2i, 1, valueNode); break;
-            case 8: valueNode = TR::Node::create(TR::dbits2l, 1, valueNode); break;
+            case 4: valueNode = TR::Node::create(TR::ibyteswap, 1, TR::Node::create(TR::fbits2i, 1, valueNode)); break;
+            case 8: valueNode = TR::Node::create(TR::lbyteswap, 1, TR::Node::create(TR::dbits2l, 1, valueNode)); break;
             }
          }
 
@@ -750,9 +750,9 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerGetIntrinsic(TR::TreeTop* callT
       }
 
    // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
-   bool requiresByteSwap = comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
+   bool requiresByteSwap = sourceNumBytes != 1 && comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
 
-   if (requiresByteSwap && !comp()->target().cpu.isZ())
+   if (requiresByteSwap && !comp()->cg()->supportsByteswap())
       {
       printInliningStatus (false, callNode, "Unmarshalling is not supported because ByteSwap IL evaluators are not implemented.");
       return NULL;
@@ -820,14 +820,15 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerGetIntrinsic(TR::TreeTop* callT
          }
 
       TR::ILOpCodes op = TR::BadILOp;
+      TR::ILOpCodes byteswapOp = TR::BadILOp;
 
       // Default case is impossible due to previous checks
       switch (sourceNumBytes)
          {
          case 1: op = TR::bloadi; break;
-         case 2: op = requiresByteSwap ? TR::irsload : TR::sloadi; break;
-         case 4: op = requiresByteSwap ? TR::iriload : TR::iloadi; break;
-         case 8: op = requiresByteSwap ? TR::irlload : TR::lloadi; break;
+         case 2: op = TR::sloadi; byteswapOp = TR::sbyteswap; break;
+         case 4: op = TR::iloadi; byteswapOp = TR::ibyteswap; break;
+         case 8: op = TR::lloadi; byteswapOp = TR::lbyteswap; break;
          }
 
       // Default case is impossible due to previous checks
@@ -840,6 +841,11 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerGetIntrinsic(TR::TreeTop* callT
          }
 
       TR::Node* valueNode = TR::Node::createWithSymRef(op, 1, 1, createByteArrayElementAddress(callTreeTop, callNode, byteArrayNode, offsetNode), comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));
+
+      if (requiresByteSwap)
+         {
+         valueNode = TR::Node::create(byteswapOp, 1, valueNode);
+         }
 
       if (sourceDataType != targetDataType)
          {
@@ -873,9 +879,9 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerSetIntrinsic(TR::TreeTop* callT
       }
 
    // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
-   bool requiresByteSwap = comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
+   bool requiresByteSwap = sourceNumBytes != 1 && comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
 
-   if (requiresByteSwap && !comp()->target().cpu.isZ())
+   if (requiresByteSwap && !comp()->cg()->supportsByteswap())
       {
       printInliningStatus (false, callNode, "Marshalling is not supported because ByteSwap IL evaluators are not implemented.");
       return NULL;
@@ -940,14 +946,20 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerSetIntrinsic(TR::TreeTop* callT
          }
 
       TR::ILOpCodes op = TR::BadILOp;
+      TR::ILOpCodes byteswapOp = TR::BadILOp;
 
       // Default case is impossible due to previous checks
       switch (targetNumBytes)
          {
          case 1: op = TR::bstorei; break;
-         case 2: op = requiresByteSwap ? TR::irsstore : TR::sstorei; break;
-         case 4: op = requiresByteSwap ? TR::iristore : TR::istorei; break;
-         case 8: op = requiresByteSwap ? TR::irlstore : TR::lstorei; break;
+         case 2: op = TR::sstorei; byteswapOp = TR::sbyteswap; break;
+         case 4: op = TR::istorei; byteswapOp = TR::ibyteswap; break;
+         case 8: op = TR::lstorei; byteswapOp = TR::lbyteswap; break;
+         }
+
+      if (requiresByteSwap)
+         {
+         valueNode = TR::Node::create(byteswapOp, 1, valueNode);
          }
 
       // Create the proper conversion if the source and target sizes are different

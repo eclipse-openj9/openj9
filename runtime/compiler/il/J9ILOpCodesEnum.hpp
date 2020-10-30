@@ -469,16 +469,7 @@
    de2pd,       // decimal long double to packed decimal
    de2pdSetSign,// decimal long double to packed decimal, setting the sign
    de2pdClean,  // decimal long double to packed decimal with forced sign cleaning
-   BCDCHK,    
-   ircload,     // reverse load [opposite endian to natural platform endian] of an unsigned 2 byte value
-   irsload,     // reverse load [opposite endian to natural platform endian] of a signed 2 byte value
-   iruiload,    // reverse load [opposite endian to natural platform endian] of an unsigned 4 byte value
-   iriload,     // reverse load [opposite endian to natural platform endian] of a signed 4 byte value
-   irulload,    // reverse load [opposite endian to natural platform endian] of an unsigned 8 byte value
-   irlload,     // reverse load [opposite endian to natural platform endian] of a signed 8 byte value
-   irsstore,    // reverse store [opposite endian to natural platform endian] of a 2 byte value
-   iristore,    // reverse store [opposite endian to natural platform endian] of a 4 byte value
-   irlstore,    // reverse store [opposite endian to natural platform endian] of a 8 byte value
-   LastJ9Op = irlstore,
+   BCDCHK,
+   LastJ9Op = BCDCHK,
 
 #endif
