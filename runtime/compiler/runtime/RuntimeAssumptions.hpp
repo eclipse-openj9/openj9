@@ -312,6 +312,18 @@ class TR_UnloadedClassPicSite : public OMR::ValueModifyRuntimeAssumption
     */
    virtual uint32_t size() { return sizeof(SerializedData); }
 
+   /**
+    * @brief Deserializes the assumption
+    *
+    * @param[in] fe - TR_Frontend
+    * @param[in] pm - TR_PersistentMemory
+    * @param[in] cursor - pointer to the start of the section of the serialized assumptions for this kind
+    * @param[in] numAssumptions - number of assumptions in the section
+    *
+    * This method goes through the buffer and calls make to add assumptions to the RAT
+    */
+   static void deserialize(TR_FrontEnd *fe, TR_PersistentMemory * pm, uint8_t *cursor, uint32_t numAssumptions);
+
    private:
    uint8_t    *_picLocation;
    uint32_t    _size;

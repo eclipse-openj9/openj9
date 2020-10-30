@@ -664,6 +664,68 @@ TR_RuntimeAssumptionTable::serialize(J9JITConfig *jitConfig)
    return bufferStart;
    }
 
+/* This method is used to answer the question as to whether an assumption type
+ * has deserialization support. However, the deserialize API's default parameter
+ * for kind is LastAssumptionKind, which is used to deserialize all assumption
+ * kinds. Therefore, the shouldDeserialize API returns true if the filter is
+ * LastAssumptionKind.
+ */
+static bool
+shouldDeserialize(TR_RuntimeAssumptionKind kind, TR_RuntimeAssumptionKind filter)
+   {
+   if (filter == LastAssumptionKind)
+      return true;
+   else
+      return (filter == kind);
+   }
+
+void
+TR_RuntimeAssumptionTable::deserialize(TR_FrontEnd *fe, TR_PersistentMemory *pm, uint8_t *buffer, TR_RuntimeAssumptionKind kind)
+   {
+   if ((!assumptionCanBeSerialized(kind) && kind != LastAssumptionKind))
+      TR_ASSERT_FATAL(false, "Trying to deserialize assumption(s) of kind %d!\n", kind);
+
+   OMR::CriticalSection deserializeAssumptions(assumptionTableMutex);
+
+   SerializedDataAtlas *atlas = (SerializedDataAtlas *)buffer;
+   uint8_t *data = buffer + sizeof(SerializedDataAtlas);
+   uint8_t *cursor = data;
+
+   for (int k=0; k < LastAssumptionKind; k++)
+      {
+      if (shouldDeserialize((TR_RuntimeAssumptionKind)k, kind))
+         {
+         switch(k)
+            {
+            case RuntimeAssumptionOnClassUnload:
+               {
+               TR_UnloadedClassPicSite::deserialize(fe, pm, cursor, atlas->_numAssumptionsPerKind[k]._count);
+               break;
+               }
+
+            case RuntimeAssumptionOnRegisterNative:
+               {
+               TR_PatchJNICallSite::deserialize(fe, pm, cursor, atlas->_numAssumptionsPerKind[k]._count);
+               break;
+               }
+
+            default:
+               {
+               TR_ASSERT_FATAL(atlas->_numAssumptionsPerKind[k]._count == 0, "Non zero assumptions for %d!\n", k);
+               break;
+               }
+            }
+         }
+      else
+         {
+         if (!assumptionCanBeSerialized(kind))
+            TR_ASSERT_FATAL(atlas->_numAssumptionsPerKind[k]._count == 0, "Non zero assumptions for %d!\n", k);
+         }
+
+      cursor += atlas->_numAssumptionsPerKind[k]._size;
+      }
+   }
+
 void TR_RuntimeAssumptionTable::reclaimAssumptions(void *md, bool reclaimPrePrologueAssumptions)
    {
    J9JITExceptionTable *metaData = (J9JITExceptionTable*) md;
@@ -847,6 +909,34 @@ TR_UnloadedClassPicSite::serialize(uint8_t *cursor, uint8_t *owningMetadata)
       }
 
    memcpy(cursor, &serializedData, sizeof(SerializedData));
+   }
+
+void
+TR_UnloadedClassPicSite::deserialize(TR_FrontEnd *fe, TR_PersistentMemory *pm, uint8_t *cursor, uint32_t numAssumptions)
+   {
+   for (uint32_t i = 0; i < numAssumptions; i++)
+      {
+      SerializedData *serializedData = (SerializedData *)cursor;
+      J9JITExceptionTable *owningMetadata = (J9JITExceptionTable *)serializedData->_owningMetadata;
+
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                                        "\tDeserializing RuntimeAssumptionOnClassUnload: "
+                                        "_key=%p, _picLocation=%p, _size=%d, owningMetadata=%p",
+                                        serializedData->_key,
+                                        serializedData->_picLocation,
+                                        serializedData->_size,
+                                        owningMetadata);
+         }
+
+      TR_UnloadedClassPicSite::make(fe, pm, serializedData->_key,
+                                    serializedData->_picLocation, serializedData->_size,
+                                    RuntimeAssumptionOnClassUnload,
+                                    (OMR::RuntimeAssumption **)&owningMetadata->runtimeAssumptionList);
+
+      cursor += sizeof(SerializedData);
+      }
    }
 
 TR_RedefinedClassRPicSite *TR_RedefinedClassRPicSite::make(

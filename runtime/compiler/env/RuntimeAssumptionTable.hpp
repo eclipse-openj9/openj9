@@ -30,6 +30,7 @@
 
 class TR_FrontEnd;
 class TR_OpaqueClassBlock;
+class TR_PersistentMemory;
 namespace OMR { class RuntimeAssumption; }
 
 // Note !!!: routine findAssumptionHashTable() assumes that the types of
@@ -151,6 +152,19 @@ class TR_RuntimeAssumptionTable
     * @return Buffer containing serialized assumptions
     */
    uint8_t *serialize(J9JITConfig *jitConfig);
+
+   /**
+    * @brief Deserializes assumptions from a buffer
+    *
+    * @param[in] fe - TR_Frontend
+    * @param[in] pm - TR_PersistentMemory
+    * @param[in] buffer - pointer to the buffer containing the serialized runtime assumptions
+    * @param[in] kind - Used to only deserialize a specific assumption kind; the default is LastAssumptionKind which means all assumptions
+    *
+    * This method goes through the buffer and calls the static deserialize method on each valid assumption
+    * kind, passing in a pointer to the start of the section for that kind.
+    */
+   void deserialize(TR_FrontEnd *fe, TR_PersistentMemory *pm, uint8_t *buffer, TR_RuntimeAssumptionKind kind = LastAssumptionKind);
 
    private:
 

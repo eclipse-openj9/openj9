@@ -103,6 +103,31 @@ TR_PatchJNICallSite::serialize(uint8_t *cursor, uint8_t *owningMetadata)
    memcpy(cursor, &serializedData, sizeof(SerializedData));
    }
 
+void
+TR_PatchJNICallSite::deserialize(TR_FrontEnd *fe, TR_PersistentMemory *pm, uint8_t *cursor, uint32_t numAssumptions)
+   {
+   for (uint32_t i = 0; i < numAssumptions; i++)
+      {
+      SerializedData *serializedData = (SerializedData *)cursor;
+      J9JITExceptionTable *owningMetadata = (J9JITExceptionTable *)serializedData->_owningMetadata;
+
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                                        "\tDeserializing RuntimeAssumptionOnRegisterNative: "
+                                        "_key=%p, _pc=%p, owningMetadata=%p",
+                                        serializedData->_key,
+                                        serializedData->_pc,
+                                        owningMetadata);
+         }
+
+      TR_PatchJNICallSite::make(fe, pm, serializedData->_key,serializedData->_pc,
+                                (OMR::RuntimeAssumption **)&owningMetadata->runtimeAssumptionList);
+
+      cursor += sizeof(SerializedData);
+      }
+   }
+
 TR_PatchNOPedGuardSiteOnClassExtend *TR_PatchNOPedGuardSiteOnClassExtend::make(
    TR_FrontEnd *fe, TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, uint8_t *loc, uint8_t *dest, OMR::RuntimeAssumption **sentinel)
    {
