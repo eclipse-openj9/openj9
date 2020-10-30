@@ -604,6 +604,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 		ProcessBuilder builder = new ProcessBuilder(processArgs);
 		logger.info(builder.command());
 		lock = new ProcessLocking(tmpFileName);
+		builder.inheritIO();
 		remoteServer = builder.start();
 
 		lock.waitForEvent("child started");
