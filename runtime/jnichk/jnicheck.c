@@ -79,6 +79,7 @@ static IDATA jniCheckParseOptions(J9JavaVM* javaVM, char* options);
 static IDATA jniCheckProcessCommandLine(J9JavaVM* javaVM, J9VMDllLoadInfo* loadInfo);
 static UDATA globrefHashTableHashFn(void *entry, void *userData);
 static UDATA globrefHashTableEqualFn(void *leftEntry, void *rightEntry, void *userData);
+static void jniCheckJClassSubclass(JNIEnv* env, const char* function, IDATA argNum, jclass aJclass, J9Class* expectedSupclass, const char* expectedType);
 
 static UDATA keyInitCount = 0;
 omrthread_tls_key_t jniEntryCountKey;
@@ -418,6 +419,22 @@ void jniCheckClass(JNIEnv* env, const char* function, IDATA argNum, jobject aJob
 	}
 }
 
+/*
+ * Check if the argument jclass object is a subclass of the expectedSupclass
+ *
+ * @param[in] env - the JNIEnv* of the current thread
+ * @param[in] function - the JNI function name being checked
+ * @param[in] argNum - the JNI function argument number
+ * @param[in] aJclass - the JNI function argument, assuming it is a jclass
+ * @param[in] expectedSupclass - the expected super class
+ * @param[in] expectedType - the expected super class string representation
+ */
+static void jniCheckJClassSubclass(JNIEnv* env, const char* function, IDATA argNum, jclass aJclass, J9Class* expectedSupclass, const char* expectedType)
+{
+	if (!isSameOrSuperClassOf(expectedSupclass, J9VM_J9CLASS_FROM_HEAPCLASS((J9VMThread*)env, J9_JNI_UNWRAP_REFERENCE(aJclass)))) {
+		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_X, function, argNum, expectedType);
+	}
+}
 
 void
 jniCheckCallV(const char* function, JNIEnv* env, jobject receiver, UDATA methodType, UDATA returnType, jmethodID method, va_list originalArgs)
@@ -867,6 +884,17 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			jniCheckRef(env, function, argNum, aJobject);
 			jniCheckSubclass(env, function, argNum, aJobject, "java/lang/Throwable");
 			if (trace) jniTraceObject(env, aJobject);
+			break;
+
+		case JNIC_CLASSTHROWABLE:
+			aJobject = va_arg(va, jobject);
+			jniCheckNull(env, function, argNum, aJobject);
+			jniCheckRef(env, function, argNum, aJobject);
+			jniCheckValidClass(env, function, argNum, aJobject);
+			if (trace) {
+				jniTraceObject(env, aJobject);
+			}
+			jniCheckJClassSubclass(env, function, argNum, aJobject, J9VMJAVALANGTHROWABLE_OR_NULL(vm), "java/lang/Throwable");
 			break;
 
 		case JNIC_DIRECTBUFFER:
