@@ -5377,10 +5377,7 @@ J9::CodeGenerator::isMonitorValueType(TR::Node* monNode)
    if (clazz == self()->comp()->getObjectClassPointer())
       return TR_no;
 
-   if (TR::Compiler->cls.isInterfaceClass(self()->comp(), clazz))
-      return TR_maybe;
-
-   if (TR::Compiler->cls.isAbstractClass(self()->comp(), clazz))
+   if (!TR::Compiler->cls.isConcreteClass(self()->comp(), clazz))
       return TR_maybe;
 
    if (TR::Compiler->cls.isValueTypeClass(clazz))

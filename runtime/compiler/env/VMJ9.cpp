@@ -6498,9 +6498,13 @@ TR_J9VMBase::isEnumClass(TR_OpaqueClassBlock * clazzPointer, TR_ResolvedMethod *
 bool
 TR_J9VMBase::isAbstractClass(TR_OpaqueClassBlock * clazzPointer)
    {
-   if (isInterfaceClass(clazzPointer))
-      return false;
-   return (TR::Compiler->cls.romClassOf(clazzPointer)->modifiers & J9AccAbstract) ? true : false;
+   return ((TR::Compiler->cls.romClassOf(clazzPointer)->modifiers & (J9AccInterface | J9AccAbstract)) == J9AccAbstract) ? true : false;
+   }
+
+bool
+TR_J9VMBase::isConcreteClass(TR_OpaqueClassBlock * clazzPointer)
+   {
+   return (TR::Compiler->cls.romClassOf(clazzPointer)->modifiers & (J9AccAbstract | J9AccInterface)) ? false : true;
    }
 
 bool
