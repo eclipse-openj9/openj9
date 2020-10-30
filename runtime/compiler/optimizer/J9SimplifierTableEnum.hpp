@@ -466,13 +466,4 @@
    df2pdSetSignSimplifier,      // TR::de2pdSetSign
    df2pdSimplifier,             // TR::de2pdClean
    dftSimplifier,               // TR::BCDCHK
-   dftSimplifier,               // TR::ircload
-   dftSimplifier,               // TR::irsload
-   dftSimplifier,               // TR::iruiload
-   dftSimplifier,               // TR::iriload
-   dftSimplifier,               // TR::irulload
-   dftSimplifier,               // TR::irlload
-   dftSimplifier,               // TR::irsstore
-   dftSimplifier,               // TR::iristore
-   dftSimplifier,               // TR::irlstore
 #endif
