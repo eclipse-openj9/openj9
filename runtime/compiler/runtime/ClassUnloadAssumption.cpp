@@ -580,7 +580,22 @@ int32_t TR_RuntimeAssumptionTable::countRatAssumptions()
    return count;
    }
 
+bool
+TR_RuntimeAssumptionTable::assumptionCanBeSerialized(TR_RuntimeAssumptionKind kind)
+   {
+   bool canBeSerialized;
 
+   switch (kind)
+      {
+      default:
+         {
+         canBeSerialized = false;
+         break;
+         }
+      }
+
+   return canBeSerialized;
+   }
 
 
 void TR_RuntimeAssumptionTable::reclaimAssumptions(void *md, bool reclaimPrePrologueAssumptions)

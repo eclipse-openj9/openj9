@@ -124,6 +124,15 @@ class TR_RuntimeAssumptionTable
 
    int32_t countRatAssumptions();
 
+   /**
+    * @brief Helper to query whether serializing an assumption kind is supported.
+    *
+    * @param[in] kind - TR_RuntimeAssumptionKind
+    *
+    * @return true if assumption can be serialized, false otherwise
+    */
+   static bool assumptionCanBeSerialized(TR_RuntimeAssumptionKind kind);
+
    private:
    friend class OMR::RuntimeAssumption;
    void addAssumption(OMR::RuntimeAssumption *a, TR_RuntimeAssumptionKind kind, TR_FrontEnd *fe, OMR::RuntimeAssumption **sentinel);
