@@ -58,7 +58,7 @@ class TR_HandleRecompilationOps : public TR::Optimization
       }
 
    bool resolveCHKGuardsValueTypeOperation(TR::TreeTop *currTree, TR::Node *node);
-   void visitNode(TR::TreeTop *currTree, TR::Node *node);
+   bool visitTree(TR::TreeTop *currTree);
 
    public:
 

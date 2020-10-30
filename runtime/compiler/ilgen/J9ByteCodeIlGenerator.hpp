@@ -138,7 +138,7 @@ private:
    TR::Node *    genInvokeDirect(TR::SymbolReference *symRef){ return genInvoke(symRef, NULL); }
    TR::Node *    genInvokeWithVFTChild(TR::SymbolReference *);
    TR::Node *    getReceiverFor(TR::SymbolReference *);
-   void          prepareUnresolvedValueTypeOSRPoint();
+   void          prepareUnresolvedValueTypeOSRPoint(const char *bytecodeName, const char* refType);
    void          stashArgumentsForOSR(TR_J9ByteCode byteCode);
    /** \brief
     *    Tell if the current bytecode is at start of a basic block

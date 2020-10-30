@@ -1887,6 +1887,54 @@ TR_J9ByteCodeIlGenerator::loadConstantValueIfPossible(TR::Node *topNode, uintptr
    return constNode;
    }
 
+/**
+ * @brief Abort compilation due to unsupported unresolved value type operation
+ *
+ * When dealing with unreslved CP references, certain value type operations cannot
+ * be handled. This helper provides a convenient way of aborting the compilation
+ * in such cases.
+ *
+ * The abort is triggered by throwing TR::UnsupportedValueTypeOperation with an
+ * appropriate exception message.
+ *
+ * Static debug counters are also used to keep track of how frequently these
+ * aborts occure. The counters are named using the following formats:
+ *
+ * - for outermost methods: ilgen.abort/unresolved/{bytecodeName}/{refType}/({method signature})/bc={bcIndex}
+ * - for inlining/peeking: ilgen.abort/unresolved/{bytecodeName}/{refType}/({method signature})/bc={bcIndex}/root=({top level method signature})
+ *
+ * @param bytecodeName is the name of the unhandled bytecode instruction
+ * @param refType is the type of unresolved reference (e.g. field, class, etc.)
+ * @throw TR::UnsupportedValueTypeOperation unconditionally
+ */
+ void
+ TR_J9ByteCodeIlGenerator::abortForUnresolvedValueTypeOp(const char* bytecodeName, const char* refType)
+   {
+   const int32_t bcIndex = currentByteCodeIndex();
+   if (isOutermostMethod())
+      {
+      TR::DebugCounter::incStaticDebugCounter(comp(),
+         TR::DebugCounter::debugCounterName(comp(),
+            "ilgen.abort/unresolved/%s/%s/(%s)/bc=%d",
+            bytecodeName,
+            refType,
+            comp()->signature(),
+            bcIndex));
+      }
+   else
+      {
+      TR::DebugCounter::incStaticDebugCounter(comp(),
+         TR::DebugCounter::debugCounterName(comp(),
+            "ilgen.abort/unresolved/%s/%s/(%s)/bc=%d/root=(%s)",
+            bytecodeName,
+            refType,
+            _method->signature(comp()->trMemory()),
+            bcIndex,
+            comp()->signature()));
+      }
+
+   comp()->failCompilation<TR::UnsupportedValueTypeOperation>("Unresolved %s encountered for %s bytecode instruction", refType, bytecodeName);
+   }
 
 //----------------------------------------------
 // gen array
@@ -3469,38 +3517,35 @@ TR_J9ByteCodeIlGenerator::genInvokeWithVFTChild(TR::SymbolReference *symRef)
  * order to prepare for OSR induction for a value type operation involving an unresolved
  * value type class (also known as a primitive class or an inline class) or a field whose type
  * is a value type.
+ *
+ * @param bytecodeName is the name of the unhandled bytecode instruction
+ * @param refType is the type of unresolved reference (e.g. field, class, etc.)
  */
 void
-TR_J9ByteCodeIlGenerator::prepareUnresolvedValueTypeOSRPoint()
+TR_J9ByteCodeIlGenerator::prepareUnresolvedValueTypeOSRPoint(const char* bytecodeName, const char* refType)
    {
+   TR_ASSERT_FATAL(TR::Compiler->om.areValueTypesEnabled(), "Value types should be enabled if the JIT is trying to induce OSR for a value type operation");
+
    TR::Node* osrPointHelperCall = TR::Node::createPotentialOSRPointHelperCallInILGen(NULL, 0);
 
-   if (comp()->getOption(TR_TraceILGen))
-      {
-      traceMsg(comp(), "In TR_J9ByteCodeIlGenerator::prepareUnresolvedValueTypeOSRPoint - enableOSR == %d; supportsInduceOSR == %d; (comp()->getOSRMode() == TR::voluntaryOSR) == %d; isPeekingMethod == %d; isOSRTransitionTarget(postExecutionOSR) == %d\n", comp()->getOption(TR_EnableOSR), comp()->supportsInduceOSR(), comp()->getOSRMode() == TR::voluntaryOSR, comp()->isPeekingMethod(), comp()->isOSRTransitionTarget(TR::postExecutionOSR));
-
-      if (comp()->getOption(TR_EnableOSR)
-       && comp()->supportsInduceOSR()
-       && comp()->getOSRMode() == TR::voluntaryOSR
-       && !comp()->isPeekingMethod()
-       && comp()->isOSRTransitionTarget(TR::postExecutionOSR))
-         {
-         traceMsg(comp(), "    _methodSymbol->cannotAttemptOSRAt == %d; _cannotAttemptOSR == %d\n", _methodSymbol->cannotAttemptOSRAt(osrPointHelperCall->getByteCodeInfo(), NULL, comp()), _cannotAttemptOSR);
-         }
-      }
-
    // Only save stack and pending pushes if voluntary OSR can be induced
-   if ( comp()->getOption(TR_EnableOSR)
-       && comp()->supportsInduceOSR()
-       && comp()->getOSRMode() == TR::voluntaryOSR
-       && !comp()->isPeekingMethod()
-       && comp()->isOSRTransitionTarget(TR::postExecutionOSR)
+   // Otherwise, abort the compilation
+   if (comp()->isOSRAllowedForOperationsRequiringRecompilation()
        && !_methodSymbol->cannotAttemptOSRAt(osrPointHelperCall->getByteCodeInfo(), NULL, comp())
        && !_cannotAttemptOSR)
       {
       saveStack(-1);
       stashPendingPushLivenessForOSR();
       _block->append(TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, osrPointHelperCall)));
+      }
+   else
+      {
+      if (comp()->getOption(TR_TraceILGen))
+         {
+         TR_ByteCodeInfo bci = osrPointHelperCall->getByteCodeInfo();
+         traceMsg(comp(), "   areValueTypesEnabled == %d; isOSRAllowedForOperationsRequiringRecompilation == %d; cannotAttempOSRAt([%d,%d,%d]) == %d; _cannotAttemptOSR == %d\n", TR::Compiler->om.areValueTypesEnabled(), comp()->isOSRAllowedForOperationsRequiringRecompilation(), bci.getCallerIndex(), bci.getByteCodeIndex(), comp()->getLineNumber(osrPointHelperCall), _methodSymbol->cannotAttemptOSRAt(osrPointHelperCall->getByteCodeInfo(), NULL, comp()), _cannotAttemptOSR);
+         }
+      abortForUnresolvedValueTypeOp(bytecodeName, refType);
       }
    }
 
@@ -5094,7 +5139,7 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
          // otherwise, the compilation will be aborted during HandleRecompilationOps.  The reason
          // this is needed is that the JIT cannot know whether the field will have been flattened.
          //
-         prepareUnresolvedValueTypeOSRPoint();
+         prepareUnresolvedValueTypeOSRPoint("getfield", "field");
          }
       else if (owningMethod->isFieldFlattened(comp(), cpIndex, _methodSymbol->isStatic()))
          {
@@ -6366,7 +6411,7 @@ TR_J9ByteCodeIlGenerator::genWithField(uint16_t fieldCpIndex)
 
       if (comp()->getOption(TR_TraceILGen))
          {
-         if (valueClassSymRef->isUnresolved())
+         if (withFieldSymRef->isUnresolved())
             {
             traceMsg(comp(), "Handling unresolved field reference for withfield\n");
             }
@@ -6391,7 +6436,7 @@ TR_J9ByteCodeIlGenerator::genWithField(uint16_t fieldCpIndex)
       // induction, if possible - otherwise, the compilation will be aborted during
       // HandleRecompilationOps.
       //
-      prepareUnresolvedValueTypeOSRPoint();
+      prepareUnresolvedValueTypeOSRPoint("withfield", valueClassSymRef->isUnresolved() ? "class" : "field");
 
       loadSymbol(TR::loadaddr, valueClassSymRef);
       TR::Node *classAddrNode = pop();
@@ -6772,9 +6817,9 @@ TR_J9ByteCodeIlGenerator::genDefaultValue(TR::SymbolReference *valueClassSymRef)
       // If the value type class is unresolved, prepare to induce OSR at this point, and then
       // proceed to generate a fake newvalue operation.  The newvalue on an unresolved type will
       // be recognized by HandleRecompilationOps, and replaced with the required OSR induction,
-      // if possible - otherwise, the compilation will be aborted during HandleRecompilationOps.
+      // if possible.
       //
-      prepareUnresolvedValueTypeOSRPoint();
+      prepareUnresolvedValueTypeOSRPoint("defaultvalue", "class");
 
       newValueNode = genNodeAndPopChildren(TR::newvalue, 1, symRefTab()->findOrCreateNewValueSymbolRef(_methodSymbol));
       }
@@ -7121,7 +7166,7 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
          // otherwise, the compilation will be aborted during HandleRecompilationOps.  The reason
          // this is needed is that the JIT cannot know whether the field will have been flattened.
          //
-         prepareUnresolvedValueTypeOSRPoint();
+         prepareUnresolvedValueTypeOSRPoint("putfield", "field");
          }
       else if (owningMethod->isFieldFlattened(comp(), cpIndex, _methodSymbol->isStatic()))
          {

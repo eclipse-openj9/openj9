@@ -30,6 +30,7 @@
 #include "il/TreeTop_inlines.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/CfgEdge.hpp"
+#include "infra/ILWalk.hpp"
 #include "optimizer/HandleRecompilationOps.hpp"
 #include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
@@ -37,81 +38,42 @@
 int32_t
 TR_HandleRecompilationOps::perform()
    {
-   _enableTransform = true;
+   bool enableTransform = true;
 
    if (trace())
       {
       traceMsg(comp(), "Entering HandleRecompilationOps\n");
       }
 
-   // The following series of tests check whether voluntary OSR is allowed and that recompilation is allowed.
-   // If not, _enableTransform is set to false, but the optimizer still checks for situations in which it
-   // would like to induce OSR.  If any of those situations are encountered with _enableTransform set to
-   // false, the compilation will abort, as correct code generation for those situations requires OSR to be
-   // induced.
+   // Check the conditions that are required to allow OSR to be induced and
+   // recompilation requested for unresolved value type operations.  Exit early
+   // if any is not satisfied.
    //
-   if (comp()->getOption(TR_DisableOSR))
+   if (!TR::Compiler->om.areValueTypesEnabled() || !comp()->isOSRAllowedForOperationsRequiringRecompilation())
       {
       if (trace())
          {
-         traceMsg(comp(), "Disabling Handle Recompilation Operations as OSR is disabled\n");
+         traceMsg(comp(), "Handle Recompilation Operations is not enabled:  areValueTypesEnabled == %d; isOSRAllowedForOperationsRequiringRecompilation == %d\n", TR::Compiler->om.areValueTypesEnabled(), comp()->isOSRAllowedForOperationsRequiringRecompilation());
+         traceMsg(comp(), "Exiting HandleRecompilationOps\n");
          }
 
-      _enableTransform = false;
+      return 0;
       }
 
-   if (comp()->getHCRMode() != TR::osr)
-      {
-      if (trace())
-         {
-         traceMsg(comp(), "Disabling Handle Recompilation Operations as HCR mode is not OSR\n");
-         }
-
-      _enableTransform = false;
-      }
-
-   if (comp()->getOSRMode() == TR::involuntaryOSR)
-      {
-      if (trace())
-         {
-         traceMsg(comp(), "Disabling Handle Recompilation Operations as OSR mode is involuntary\n");
-         }
-
-      _enableTransform = false;
-      }
-
-   if (!comp()->supportsInduceOSR())
-      {
-      if (trace())
-         {
-         traceMsg(comp(), "Disabling Handle Recompilation Operations as induceOSR is not supported\n");
-         }
-
-      _enableTransform = false;
-      }
-
-   if (!comp()->allowRecompilation())
-      {
-      if (trace())
-         {
-         traceMsg(comp(), "Disabling Handle Recompilation Operations as recompilation is not permitted\n");
-         }
-
-      _enableTransform = false;
-      }
+   bool performedTransform = false;
 
    for (TR::TreeTop *tt = comp()->getStartTree(); tt != NULL; tt = tt->getNextTreeTop())
       {
-      TR::Node *node = tt->getNode();
-      visitNode(tt, node);
+      const bool transformedFromCurrentTree = visitTree(tt);
+      performedTransform |= transformedFromCurrentTree;
       }
 
-   if (_enableTransform && trace())
+   if (trace())
      {
      traceMsg(comp(), "Exiting HandleRecompilationOps\n");
      }
 
-   return 0;
+   return performedTransform ? 1 : 0;
    }
 
 bool
@@ -121,19 +83,20 @@ TR_HandleRecompilationOps::resolveCHKGuardsValueTypeOperation(TR::TreeTop *currT
 
    if (resolveChild->getOpCodeValue() == TR::loadaddr)
       {
-      // Check whether the ResolveCHK guards a loadaddr that is used in newvalue
+      // Check whether the ResolveCHK guards a loadaddr that is used in a newvalue
       // operation.
       //
       TR::SymbolReference *loadAddrSymRef = resolveChild->getSymbolReference();
 
       if (loadAddrSymRef->isUnresolved())
          {
-         for (TR::TreeTop *nextTree = currTree->getNextTreeTop();
-              nextTree != NULL && nextTree->getNode()->getOpCodeValue() != TR::BBEnd;
-              nextTree = nextTree->getNextTreeTop())
+         for (TR::TreeTopIterator iter(currTree->getNextTreeTop(), comp());
+              iter.currentNode()->getOpCodeValue() != TR::BBEnd;
+              ++iter)
             {
-            TR::Node *nextNode = nextTree->getNode();
-            if (nextNode->getOpCode().isTreeTop() && nextNode->getNumChildren() > 0)
+            TR::Node *nextNode = iter.currentNode();
+            if ((nextNode->getOpCode().isTreeTop() || nextNode->getOpCode().isCheck())
+                && nextNode->getNumChildren() > 0)
                {
                nextNode = nextNode->getFirstChild();
                }
@@ -167,9 +130,14 @@ TR_HandleRecompilationOps::resolveCHKGuardsValueTypeOperation(TR::TreeTop *currT
    return false;
    }
 
-void
-TR_HandleRecompilationOps::visitNode(TR::TreeTop *currTree, TR::Node *node)
+bool
+TR_HandleRecompilationOps::visitTree(TR::TreeTop *currTree)
    {
+   TR::Node *node = currTree->getNode();
+
+   bool performedTransform = false;
+   bool abortCompilation = false;
+
    TR::ILOpCode opcode = node->getOpCode();
 
    // Is this a ResolveCHK or ResolveAndNULLCHK that guards a value type operation?
@@ -180,11 +148,16 @@ TR_HandleRecompilationOps::visitNode(TR::TreeTop *currTree, TR::Node *node)
       // The matching performed by resolveCHKGuardsValueTypeOperation must be in error if
       // value types are not enabled.
       //
+      // Note that om.areValueTypesEnabled() is currently checked in the perform method,
+      // but in case this optimization is ever needed in cases where value types are not
+      // enabled, we might want to keep this assertion to watch for things that are
+      // incorrectly identified as being value type operations.
+      //
       TR_ASSERT_FATAL(TR::Compiler->om.areValueTypesEnabled(), "TR_HandleRecompilationOps thought node n%dn [%p] was part of a value types operation, but value types are not enabled.\n", node->getGlobalIndex(), node);
 
-      if (_enableTransform
-          && performTransformation(comp(), "%sInserting induceOSR call after ResolveCHK node n%dn [%p]\n", optDetailString(), node->getGlobalIndex(), node))
+      if (performTransformation(comp(), "%sInserting induceOSR call after ResolveCHK node n%dn [%p]\n", optDetailString(), node->getGlobalIndex(), node))
          {
+         performedTransform = true;
          TR_OSRMethodData *osrMethodData = comp()->getOSRCompilationData()->findOrCreateOSRMethodData(node->getByteCodeInfo().getCallerIndex(), _methodSymbol);
 
          if (comp()->getOption(TR_TraceILGen))
@@ -216,10 +189,21 @@ TR_HandleRecompilationOps::visitNode(TR::TreeTop *currTree, TR::Node *node)
             cleanupTT = nextTT;
             }
 
-         TR_ASSERT_FATAL(_methodSymbol->induceOSRAfterAndRecompile(currTree, node->getByteCodeInfo(), branchTT, false, 0, &lastTT), "Unable to generate induce OSR");
-         node->setSymbolReference(getSymRefTab()->findOrCreateResolveCheckSymbolRef(_methodSymbol));
+         if (!_methodSymbol->induceOSRAfterAndRecompile(currTree, node->getByteCodeInfo(), branchTT, false, 0, &lastTT))
+            {
+            if (trace())
+               {
+               traceMsg(comp(),  "Unable to generate induce OSR for ResolveCHK or ResolveAndNULLCHK node at node n%dn [%p].  Aborting compilation\n", node->getGlobalIndex(), node);
+               }
+            abortCompilation = true;
+            }
          }
       else
+         {
+         abortCompilation = true;
+         }
+
+      if (abortCompilation)
          {
          // The optimization has been disabled either explicitly or because OSR is disabled or recompilation
          // is not allowed.  Emit a static debug counter to track the failure and abort the compilation,
@@ -227,7 +211,7 @@ TR_HandleRecompilationOps::visitNode(TR::TreeTop *currTree, TR::Node *node)
          //
          if (comp()->getOption(TR_TraceILGen))
             {
-            traceMsg(comp(), "   Encountered ResolveCHK or ResolveAndNULLCHK node n%dn [%p], but cannot induce OSR.  Aborting compilation\n", node->getGlobalIndex(), node);
+            traceMsg(comp(), "   Encountered ResolveCHK or ResolveAndNULLCHK node n%dn [%p], but cannot induce OSR.  performedTransform == %d.  Aborting compilation\n", node->getGlobalIndex(), node, performedTransform);
             }
 
          TR_ByteCodeInfo nodeBCI = node->getByteCodeInfo();
@@ -249,6 +233,8 @@ TR_HandleRecompilationOps::visitNode(TR::TreeTop *currTree, TR::Node *node)
          comp()->failCompilation<TR::UnsupportedValueTypeOperation>("TR_HandleRecompilationOps encountered ResolveCHK or ResolveAndNULLCHK in node n%dn [%p] guarding value type operation, but transformation is not enabled", node->getGlobalIndex(), node);
          }
       }
+
+   return performedTransform;
    }
 
 const char *
