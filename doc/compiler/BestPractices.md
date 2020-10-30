@@ -71,6 +71,8 @@ are serialized and sent to the server to be used for a particular compilation,
 but JVM global options through static fields cannot be processed because they
 would affect other connected clients.
 
-
-
+:rotating_light:Any time a Front End query or a relocation type is changed or added,
+the `MINOR_NUMBER` **must** be updated to prevent a client from connecting to a
+server that may issue a query or generate a relocation that the client does not
+know how to handle.:rotating_light:
 
