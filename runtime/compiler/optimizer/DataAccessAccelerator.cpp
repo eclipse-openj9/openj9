@@ -469,7 +469,7 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalGetIntrinsic(TR::TreeTop* callT
    // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
    bool requiresByteSwap = comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
 
-   if (requiresByteSwap && !comp()->target().cpu.isZ())
+   if (requiresByteSwap && !comp()->cg()->supportsByteswap())
       {
       printInliningStatus (false, callNode, "Unmarshalling is not supported because ByteSwap IL evaluators are not implemented.");
       return NULL;
