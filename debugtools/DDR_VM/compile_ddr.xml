@@ -33,9 +33,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<property name="findbugs.unpack.dir" value="${findbugs.dir}/unpack"/>
 	<property name="findbugs.results.dir" value="${findbugs.dir}/results"/>
 
-	<condition property="j9ddr_jar" value="${output.libs.dir}/j9ddr.jar" else="${output.libs.dir}/${product}_j9ddr.jar">
-		<equals arg1="${product}" arg2="java8"/>
-	</condition>
+	<property name="j9ddr_jar" value="${output.libs.dir}/j9ddr.jar"/>
 
 	<property name="j9_core_dir" value="../DDR_VM"/>
 	<property name="j9_core_lib" value="${j9_core_dir}/lib"/>
@@ -53,36 +51,20 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<property name="junit.jar" value="${j9_core_lib}/junit.jar"/>
 
-	<if>
-		<!-- VM_VERSION is inherited from DDR_VM/generate.xml -->
-		<equals arg1="${VM_VERSION}" arg2="24"/>
-		<then>
-			<!-- the RAS jars are in RASTools folder in 2.4 VM infrastructure -->
-			<property name="dtfj_interface_dir" value="../RASTools"/>
-			<!-- !snapformat only compiles against a traceformat.jar with the API included -->
-			<property name="traceformat.jar" value="${j9_core_lib}/traceformat.jar"/>
-		</then>
-		<else>
-			<property name="dtfj_interface_dir" value="../../RAS_Binaries"/>
-			<!-- Until DDR is compiled in the modular way, use Java 8 jars for traceformat and DTFJ. -->
-			<property name="traceformat.jar" value="${dtfj_interface_dir}/traceformat.jar"/>
-		</else>
-	</if>
-	<property name="dtfj.jar"    value="${dtfj_interface_dir}/dtfj.jar"/>
-	<property name="dtfj-j9.jar" value="${j9_core_lib}/dtfj.j9-head.jar"/>
-	<property name="ibmjzos.jar" value="${j9_core_lib}/ibmjzos.jar"/>
+	<property name="dtfj_interface_dir" location="../../RAS_Binaries"/>
+	<property name="traceformat.jar" value="${dtfj_interface_dir}/traceformat.jar"/>
+	<property name="dtfj.jar"     value="${dtfj_interface_dir}/dtfj.jar"/>
+	<property name="dtfj-tck.jar" value="${j9_core_lib}/dtfj.pkg.tck-head.jar"/>
+	<property name="ibmjzos.jar"  value="${j9_core_lib}/ibmjzos.jar"/>
 
-	<if>
-		<equals arg1="${product}" arg2="java8"/>
-		<then>
-			<property name="src.level" value="1.8"/>
-			<property name="target.level" value="1.8"/>
-		</then>
-		<else>
-			<property name="src.level" value="1.9"/>
-			<property name="target.level" value="1.9"/>
-		</else>
-	</if>
+	<path id="j9ddr.bootclasspath">
+		<pathelement location="${dtfj.jar}"/>
+		<pathelement location="${ibmjzos.jar}"/>
+		<pathelement location="${traceformat.jar}"/>
+	</path>
+
+	<property name="src.level" value="1.8"/>
+	<property name="target.level" value="1.8"/>
 
 	<!-- Set up task classpath -->
 	<path id="runtime.cp">
@@ -163,19 +145,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo>build.compiler.java = ${build.compiler.java}</echo>
 		<echo>Source Paths:</echo>
 		<echo>- j9_core_src = ${j9_core_src}</echo>
-		<echo>Bootclasspath:</echo>
-		<echo>- dtfj.jar        = ${dtfj.jar}</echo>
-		<echo>- dtfj-j9.jar     = ${dtfj-j9.jar}</echo>
-		<echo>- ibmjzos.jar     = ${ibmjzos.jar}</echo>
-		<echo>- traceformat.jar = ${traceformat.jar}</echo>
 		<echo>Classpath:</echo>
 		<echo>- junit.jar       = ${junit.jar}</echo>
-		<path id="j9ddr.bootclasspath">
-			<pathelement location="${dtfj.jar}"/>
-			<pathelement location="${dtfj-j9.jar}"/>
-			<pathelement location="${ibmjzos.jar}"/>
-			<pathelement location="${traceformat.jar}"/>
-		</path>
 		<javac destdir="${j9_core_bin}" source="${src.level}" target="${target.level}"
 			debug="true" fork="true" executable="${build.compiler.java}">
 			<compilerarg value="-Xbootclasspath/p:${toString:j9ddr.bootclasspath}"/>
@@ -197,18 +168,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo>Source Paths:</echo>
 		<echo>- j9_core_src = ${j9_core_src}</echo>
 		<echo>Classpath:</echo>
-		<echo>- dtfj.jar        = ${dtfj.jar}</echo>
-		<echo>- dtfj-j9.jar     = ${dtfj-j9.jar}</echo>
-		<echo>- ibmjzos.jar     = ${ibmjzos.jar}</echo>
 		<echo>- junit.jar       = ${junit.jar}</echo>
 		<javac destdir="${j9_core_bin}" source="${src.level}" target="${target.level}"
 			debug="true" fork="true" executable="${build.compiler.java}">
+			<compilerarg value="-Xbootclasspath/p:${toString:j9ddr.bootclasspath}"/>
 			<src path="${j9_core_src}"/>
 			<include name="com/ibm/j9ddr/vm${include.core.vmnbr}/**"/>
 			<classpath>
-				<pathelement location="${dtfj.jar}"/>
-				<pathelement location="${dtfj-j9.jar}"/>
-				<pathelement location="${ibmjzos.jar}"/>
 				<pathelement location="${junit.jar}"/>
 			</classpath>
 		</javac>
@@ -222,11 +188,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo>src.level = ${src.level}</echo>
 		<echo>target.level = ${target.level}</echo>
 		<echo>build.compiler.java = ${build.compiler.java}</echo>
-		<echo>Classpaths :</echo>
+		<echo>Classpath:</echo>
 		<echo>- j9_core_bin = ${j9_core_bin}</echo>
 		<echo>- junit.jar = ${junit.jar}</echo>
-		<echo>- ${j9_core_lib}/dtfj.j9-head.jar</echo>
-		<echo>- ${j9_core_lib}/dtfj.pkg.tck-head.jar</echo>
+		<echo>- ${dtfj-tck.jar}</echo>
 		<javac destdir="${j9_core_tests_bin}" source="${src.level}" target="${target.level}"
 			debug="true" fork="yes" executable="${build.compiler.java}">
 			<src path="${j9_core_tests_src}"/>
@@ -234,8 +199,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<classpath>
 				<pathelement location="${j9_core_bin}"/>
 				<pathelement location="${junit.jar}"/>
-				<pathelement location="${j9_core_lib}/dtfj.j9-head.jar"/>
-				<pathelement location="${j9_core_lib}/dtfj.pkg.tck-head.jar"/>
+				<pathelement location="${dtfj-tck.jar}"/>
 			</classpath>
 		</javac>
 	</target>
@@ -251,8 +215,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo>Classpaths :</echo>
 		<echo>- j9_core_bin = ${j9_core_bin}</echo>
 		<echo>- junit.jar = ${junit.jar}</echo>
-		<echo>- ${j9_core_lib}/dtfj.j9-head.jar</echo>
-		<echo>- ${j9_core_lib}/dtfj.pkg.tck-head.jar</echo>
+		<echo>- ${dtfj-tck.jar}</echo>
 		<javac destdir="${j9_core_tests_bin}" source="${src.level}" target="${target.level}"
 			debug="true" fork="yes" executable="${build.compiler.java}">
 			<src path="${j9_core_tests_src}"/>
@@ -260,8 +223,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<classpath>
 				<pathelement location="${j9_core_bin}"/>
 				<pathelement location="${junit.jar}"/>
-				<pathelement location="${j9_core_lib}/dtfj.j9-head.jar"/>
-				<pathelement location="${j9_core_lib}/dtfj.pkg.tck-head.jar"/>
+				<pathelement location="${dtfj-tck.jar}"/>
 			</classpath>
 		</javac>
 	</target>
@@ -307,6 +269,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<mkdir dir="${findbugs.unpack.dir}"/>
 
 		<property name="build.compiler.java" value="${with-boot-jdk}/bin/javac"/>
+
+		<echo>Bootclasspath:</echo>
+		<echo>- dtfj.jar        = ${dtfj.jar}</echo>
+		<echo>- ibmjzos.jar     = ${ibmjzos.jar}</echo>
+		<echo>- traceformat.jar = ${traceformat.jar}</echo>
 	</target>
 
 	<target name="findbugs">
