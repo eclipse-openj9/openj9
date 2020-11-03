@@ -536,10 +536,11 @@ MM_VerboseHandlerOutputVLHGC::handlePGCMarkEnd(J9HookInterface** hook, UDATA eve
 }
 
 void
-MM_VerboseHandlerOutputVLHGC::outputMarkSummary(MM_EnvironmentBase *env, const char *markType, MM_MarkVLHGCStats *markStats, MM_WorkPacketStats *workPacketStats, MM_InterRegionRememberedSetStats *irrsStats)
+MM_VerboseHandlerOutputVLHGC::outputMarkSummary(MM_EnvironmentBase *env, const char *markType, MM_MarkVLHGCStats *markVLHGCStats, MM_WorkPacketStats *workPacketStats, MM_InterRegionRememberedSetStats *irrsStats)
 {
 	MM_VerboseWriterChain* writer = _manager->getWriterChain();
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env->getOmrVM());
+	MM_MarkStats *markStats = &env->_markStats;
 
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
@@ -557,9 +558,9 @@ MM_VerboseHandlerOutputVLHGC::outputMarkSummary(MM_EnvironmentBase *env, const c
 	writer->formatAndOutput(env, 1, "<trace-info objectcount=\"%zu\" scancount=\"%zu\" scanbytes=\"%zu\" />",
 		markStats->_objectsMarked, markStats->_objectsScanned, markStats->_bytesScanned);
 
-	if (0 != markStats->_cardCleaningStats._objectsCardClean) {
+	if (0 != env->_cardCleaningStats._objectsCardClean) {
 		writer->formatAndOutput(env, 1, "<cardclean-info objects=\"%zu\" bytes=\"%zu\" />",
-				markStats->_cardCleaningStats._objectsCardClean, markStats->_cardCleaningStats._bytesCardClean);
+				env->_cardCleaningStats._objectsCardClean, env->_cardCleaningStats._bytesCardClean);
 	}
 
 	if (NULL != irrsStats) {
@@ -567,15 +568,15 @@ MM_VerboseHandlerOutputVLHGC::outputMarkSummary(MM_EnvironmentBase *env, const c
 		outputRememberedSetClearedInfo(env, irrsStats);
 	}
 
-	outputUnfinalizedInfo(env, 1, markStats->_javaStats._unfinalizedCandidates, markStats->_javaStats._unfinalizedEnqueued);
-	outputOwnableSynchronizerInfo(env, 1, markStats->_javaStats._ownableSynchronizerCandidates, markStats->_ownableSynchronizerCleared);
+	outputUnfinalizedInfo(env, 1, markVLHGCStats->_javaStats._unfinalizedCandidates, markVLHGCStats->_javaStats._unfinalizedEnqueued);
+	outputOwnableSynchronizerInfo(env, 1, markVLHGCStats->_javaStats._ownableSynchronizerCandidates, markStats->_ownableSynchronizerCleared);
 
-	outputReferenceInfo(env, 1, "soft", &markStats->_javaStats._softReferenceStats, extensions->getDynamicMaxSoftReferenceAge(), extensions->getMaxSoftReferenceAge());
-	outputReferenceInfo(env, 1, "weak", &markStats->_javaStats._weakReferenceStats, 0, 0);
-	outputReferenceInfo(env, 1, "phantom", &markStats->_javaStats._phantomReferenceStats, 0, 0);
+	outputReferenceInfo(env, 1, "soft", &markVLHGCStats->_javaStats._softReferenceStats, extensions->getDynamicMaxSoftReferenceAge(), extensions->getMaxSoftReferenceAge());
+	outputReferenceInfo(env, 1, "weak", &markVLHGCStats->_javaStats._weakReferenceStats, 0, 0);
+	outputReferenceInfo(env, 1, "phantom", &markVLHGCStats->_javaStats._phantomReferenceStats, 0, 0);
 
 	outputStringConstantInfo(env, 1, markStats->_stringConstantsCandidates, markStats->_stringConstantsCleared);
-	outputMonitorReferenceInfo(env, 1, markStats->_javaStats._monitorReferenceCandidates, markStats->_javaStats._monitorReferenceCleared);
+	outputMonitorReferenceInfo(env, 1, markVLHGCStats->_javaStats._monitorReferenceCandidates, markVLHGCStats->_javaStats._monitorReferenceCleared);
 
 	switch (env->_cycleState->_reasonForMarkCompactPGC) {
 	case MM_CycleState::reason_not_exceptional:

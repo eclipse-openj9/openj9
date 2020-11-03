@@ -51,9 +51,10 @@
 class MM_VLHGCCycleStats : public MM_Base
 {
 public:
-	class MM_MarkVLHGCStats _markStats;  /**< Stats for mark phase of cycle */
-	class MM_MarkVLHGCStats _concurrentMarkStats;  /**< Stats for concurrent mark phase of cycle */
-	class MM_MarkVLHGCStats _incrementalMarkStats;  /**< Stats for incremental (stop-the-world) mark phase of cycle */
+	class MM_MarkStats _markStats;  /**< Stats for mark phase of cycle */
+	class MM_MarkVLHGCStats _markVLHGCStats;  /**< Stats for mark phase of cycle */
+	class MM_MarkStats _concurrentMarkStats;  /**< Stats for concurrent mark phase of cycle */
+	class MM_MarkStats _incrementalMarkStats;  /**< Stats for incremental (stop-the-world) mark phase of cycle */
 	class MM_WorkPacketStats _workPacketStats;  /**< Stats for work packet activity of cycle */
 	class MM_InterRegionRememberedSetStats _irrsStats; /**< Stats for Inter Region Remembered Set processing */
 
@@ -84,6 +85,8 @@ public:
 	MMINLINE void merge(MM_VLHGCIncrementStats *stats)
 	{
 		_markStats.merge(&stats->_markStats);
+		_markVLHGCStats.merge(&stats->_markVLHGCStats);
+		// _markVLHGCStats.merge(&stats->_markVLHGCStats);
 		_workPacketStats.merge(&stats->_workPacketStats);
 		_irrsStats.merge(&stats->_irrsStats);
 

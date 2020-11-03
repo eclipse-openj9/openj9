@@ -47,6 +47,7 @@
 #include "MarkVLHGCStats.hpp"
 #include "SweepVLHGCStats.hpp"
 #include "WorkPacketStats.hpp"
+#include "MarkStats.hpp"
 
 /**
  * Storage for statistics relevant to the sweep phase of global collection
@@ -55,7 +56,8 @@
 class MM_VLHGCIncrementStats : public MM_Base
 {
 public:
-	class MM_MarkVLHGCStats _markStats;  /**< Stats for mark phase of increment */
+	class MM_MarkStats _markStats;  /**<!@: ??? Stats for mark phase of increment */
+	class MM_MarkVLHGCStats _markVLHGCStats;  /**< Stats for mark phase of increment */
 	class MM_SweepVLHGCStats _sweepStats;  /**< Stats for sweep phase of increment */
 #if defined(J9VM_GC_MODRON_COMPACTION)
 	class MM_CompactVLHGCStats _compactStats;  /**< Stats for compact phase of increment */
@@ -75,6 +77,7 @@ public:
 public:
 	MM_VLHGCIncrementStats() :
 		_markStats()
+		,_markVLHGCStats()
 		,_sweepStats()
 #if defined(J9VM_GC_MODRON_COMPACTION)
 		,_compactStats()
@@ -92,6 +95,7 @@ public:
 	MMINLINE void clear()
 	{
 		_markStats.clear();
+		_markVLHGCStats.clear();
 		_sweepStats.clear();
 #if defined(J9VM_GC_MODRON_COMPACTION)
 		_compactStats.clear();
@@ -109,6 +113,7 @@ public:
 	MMINLINE void merge(MM_VLHGCIncrementStats *stats)
 	{
 		_markStats.merge(&stats->_markStats);
+		_markVLHGCStats.merge(&stats->_markVLHGCStats);
 		_sweepStats.merge(&stats->_sweepStats);
 #if defined(J9VM_GC_MODRON_COMPACTION)
 		_compactStats.merge(&stats->_compactStats);

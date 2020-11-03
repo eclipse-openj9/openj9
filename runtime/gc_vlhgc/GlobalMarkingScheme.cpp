@@ -155,11 +155,12 @@ MM_ParallelGlobalMarkTask::setup(MM_EnvironmentBase *envBase)
 	} else {
 		Assert_MM_true(_cycleState == env->_cycleState);
 	}
+	env->_markStats.clear();
 	env->_markVLHGCStats.clear();
 	env->_workPacketStats.clear();
 	
 	/* record that this thread is participating in this cycle */
-	env->_markVLHGCStats._gcCount = MM_GCExtensions::getExtensions(env)->globalVLHGCStats.gcCount;
+	env->_markStats._gcCount = MM_GCExtensions::getExtensions(env)->globalVLHGCStats.gcCount;
 	env->_workPacketStats._gcCount = MM_GCExtensions::getExtensions(env)->globalVLHGCStats.gcCount;
 }
 
@@ -169,7 +170,7 @@ MM_ParallelGlobalMarkTask::cleanup(MM_EnvironmentBase *envBase)
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats.merge(&env->_markVLHGCStats);
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats.merge(&env->_markStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.merge(&env->_workPacketStats);
 	if(!env->isMainThread()) {
 		env->_cycleState = NULL;
@@ -183,14 +184,14 @@ MM_ParallelGlobalMarkTask::cleanup(MM_EnvironmentBase *envBase)
 			(U_32)env->getWorkerID(),
 			(U_32)j9time_hires_delta(0, env->_workPacketStats._workStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 			(U_32)j9time_hires_delta(0, env->_workPacketStats._completeStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
-			(U_32)j9time_hires_delta(0, env->_markVLHGCStats._syncStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
+			(U_32)j9time_hires_delta(0, env->_markStats._syncStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
 			(U_32)env->_workPacketStats._workStallCount,
 			(U_32)env->_workPacketStats._completeStallCount,
-			(U_32)env->_markVLHGCStats._syncStallCount,
+			(U_32)env->_markStats._syncStallCount,
 			env->_workPacketStats.workPacketsAcquired,
 			env->_workPacketStats.workPacketsReleased,
 			env->_workPacketStats.workPacketsExchanged,
-			env->_markVLHGCStats._splitArraysProcessed);
+			env->_markStats._splitArraysProcessed);
 }
 
 bool
@@ -216,7 +217,7 @@ MM_ParallelGlobalMarkTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, con
 	U_64 startTime = j9time_hires_clock();
 	MM_ParallelTask::synchronizeGCThreads(env, id);
 	U_64 endTime = j9time_hires_clock();
-	env->_markVLHGCStats.addToSyncStallTime(startTime, endTime);
+	env->_markStats.addToSyncStallTime(startTime, endTime);
 }
 
 bool
@@ -227,7 +228,7 @@ MM_ParallelGlobalMarkTask::synchronizeGCThreadsAndReleaseMain(MM_EnvironmentBase
 	U_64 startTime = j9time_hires_clock();
 	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMain(env, id);
 	U_64 endTime = j9time_hires_clock();
-	env->_markVLHGCStats.addToSyncStallTime(startTime, endTime);
+	env->_markStats.addToSyncStallTime(startTime, endTime);
 	
 	return result;	
 }
@@ -240,7 +241,7 @@ MM_ParallelGlobalMarkTask::synchronizeGCThreadsAndReleaseSingleThread(MM_Environ
 	U_64 startTime = j9time_hires_clock();
 	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseSingleThread(env, id);
 	U_64 endTime = j9time_hires_clock();
-	env->_markVLHGCStats.addToSyncStallTime(startTime, endTime);
+	env->_markStats.addToSyncStallTime(startTime, endTime);
 
 	return result;
 }
@@ -415,7 +416,7 @@ MM_GlobalMarkingScheme::markObjectNoCheck(MM_EnvironmentVLHGC *env, J9Object *ob
 		env->_workStack.push(env, objectPtr);
 	}
 
-	env->_markVLHGCStats._objectsMarked += 1;
+	env->_markStats._objectsMarked += 1;
 
 	return true;
 }
@@ -468,14 +469,14 @@ MMINLINE void
 MM_GlobalMarkingScheme::updateScanStats(MM_EnvironmentVLHGC *env, UDATA bytesScanned, ScanReason reason)
 {
 	if (SCAN_REASON_DIRTY_CARD == reason) {
-		env->_markVLHGCStats._cardCleaningStats._objectsCardClean += 1;
-		env->_markVLHGCStats._cardCleaningStats._bytesCardClean += bytesScanned;
+		env->_cardCleaningStats._objectsCardClean += 1;
+		env->_cardCleaningStats._bytesCardClean += bytesScanned;
 	} else if (SCAN_REASON_PACKET == reason) {
-		env->_markVLHGCStats._objectsScanned += 1;
-		env->_markVLHGCStats._bytesScanned += bytesScanned;
+		env->_markStats._objectsScanned += 1;
+		env->_markStats._bytesScanned += bytesScanned;
 	} else {
 		Assert_MM_true(SCAN_REASON_OVERFLOWED_REGION == reason);
-		env->_markVLHGCStats._bytesScanned += bytesScanned;
+		env->_markStats._bytesScanned += bytesScanned;
 	} 
 }
 
@@ -694,7 +695,7 @@ MM_GlobalMarkingScheme::scanPointerArrayObjectSplit(MM_EnvironmentVLHGC *env, J9
 			Assert_MM_true(nextIndex == (((UDATA)element2) >> PACKET_ARRAY_SPLIT_SHIFT));
 			env->_workStack.push(env, element1, element2);
 			env->_workStack.flushOutputPacket(env);
-			env->_markVLHGCStats._splitArraysProcessed += 1;
+			env->_markStats._splitArraysProcessed += 1;
 		}
 		
 		/* TODO: this iterator scans the array backwards - change it to forward, and optimize it since we can guarantee the range will be contiguous */
@@ -730,7 +731,7 @@ MM_GlobalMarkingScheme::scanPointerArrayObject(MM_EnvironmentVLHGC *env, J9Index
 		bytesScanned = scanPointerArrayObjectSplit(env, objectPtr, index, reason);
 
 		Assert_MM_true(SCAN_REASON_PACKET == reason);
-		env->_markVLHGCStats._bytesScanned += bytesScanned;
+		env->_markStats._bytesScanned += bytesScanned;
 	} else {
 		/* do this after peeking so as not to disrupt the workStack before we peek it */
 		/* only mark the class the first time we scan any array */
@@ -915,7 +916,7 @@ MM_GlobalMarkingScheme::completeScan(MM_EnvironmentVLHGC *env)
 				objectPtr = (J9Object *)env->_workStack.popNoWait(env);
 			} while (NULL != objectPtr);
 			U_64 scanEndTime = j9time_hires_clock();
-			env->_markVLHGCStats.addToScanTime(scanStartTime, scanEndTime);
+			env->_markStats.addToScanTime(scanStartTime, scanEndTime);
 		}
 		/* A GMP can create an inconsistency in how we observe overflow:  one thread might fall out of the above loop
 		 * due to a timeout while another falls out due to overflow.  This will create a deadlock in overflow processing
@@ -1002,7 +1003,7 @@ MM_GlobalMarkingScheme::scanOwnableSynchronizerObjects(MM_EnvironmentVLHGC *env)
 						if (isMarked(object)) {
 							env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->add(env, object);
 						} else {
-							env->_markVLHGCStats._ownableSynchronizerCleared += 1;
+							env->_markStats._ownableSynchronizerCleared += 1;
 						}
 						object = next;
 					}
@@ -1227,9 +1228,9 @@ private:
 #endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
 
 	virtual void doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator) {
-		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._stringConstantsCandidates += 1;
+		MM_EnvironmentVLHGC::getEnvironment(_env)->_markStats._stringConstantsCandidates += 1;
 		if(!_markingScheme->isMarked(*slotPtr)) {
-			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._stringConstantsCleared += 1;
+			MM_EnvironmentVLHGC::getEnvironment(_env)->_markStats._stringConstantsCleared += 1;
 			stringTableIterator->removeSlot();
 		}
 	}
@@ -1296,7 +1297,7 @@ MM_GlobalMarkingScheme::cleanCardTableForGlobalCollect(MM_EnvironmentVLHGC *env,
 
 	U_64 cleanEndTime = j9time_hires_clock();
 	env->_cardCleaningStats.addToCardCleaningTime(cleanStartTime, cleanEndTime);
-	env->_markVLHGCStats.addToScanTime(cleanStartTime, cleanEndTime);
+	env->_markStats.addToScanTime(cleanStartTime, cleanEndTime);
 }
 
 void
@@ -1509,7 +1510,7 @@ MM_GlobalMarkingScheme::cleanRegion(MM_EnvironmentVLHGC *env, MM_HeapRegionDescr
 			scanObject(env, object, SCAN_REASON_OVERFLOWED_REGION);
 		}
 		U_64 scanEndTime = j9time_hires_clock();
-		env->_markVLHGCStats.addToScanTime(scanStartTime, scanEndTime);
+		env->_markStats.addToScanTime(scanStartTime, scanEndTime);
 	}
 }
 
@@ -1686,7 +1687,7 @@ MM_ConcurrentGlobalMarkTask::shouldYieldFromTask(MM_EnvironmentBase *envBase)
 
 	if (!shouldReturnEarly) {
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-		UDATA bytesScannedSinceGMPStart = env->_markVLHGCStats._bytesScanned;
+		UDATA bytesScannedSinceGMPStart = env->_markStats._bytesScanned;
 		Assert_MM_true(bytesScannedSinceGMPStart >= env->_previousConcurrentYieldCheckBytesScanned);
 		UDATA bytesScannedSinceLastCheck = bytesScannedSinceGMPStart - env->_previousConcurrentYieldCheckBytesScanned;
 		/* add the number of bytes this thread has scanned since the last concurrent yield check */
@@ -1710,15 +1711,15 @@ MM_ConcurrentGlobalMarkTask::setup(MM_EnvironmentBase *envBase)
 
 	/* initialize _previousConcurrentYieldCheckBytesScanned since we need it to check the change in the scanned stats between shouldYieldFromTask calls */
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	env->_previousConcurrentYieldCheckBytesScanned = env->_markVLHGCStats._bytesScanned;
+	env->_previousConcurrentYieldCheckBytesScanned = env->_markStats._bytesScanned;
 }
 
 void
 MM_ConcurrentGlobalMarkTask::cleanup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	Assert_MM_true(env->_markVLHGCStats._bytesScanned >= env->_previousConcurrentYieldCheckBytesScanned);
-	UDATA finalScannedBytes = env->_markVLHGCStats._bytesScanned - env->_previousConcurrentYieldCheckBytesScanned;
+	Assert_MM_true(env->_markStats._bytesScanned >= env->_previousConcurrentYieldCheckBytesScanned);
+	UDATA finalScannedBytes = env->_markStats._bytesScanned - env->_previousConcurrentYieldCheckBytesScanned;
 	_bytesScanned += finalScannedBytes;
 
 	MM_ParallelGlobalMarkTask::cleanup(env);

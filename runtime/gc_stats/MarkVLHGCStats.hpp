@@ -57,20 +57,10 @@ protected:
 public:
 	MM_JavaStats _javaStats;
 
-	UDATA _ownableSynchronizerSurvived;  /**< number of ownable synchronizer objects survived this cycle, used only by PMS */
-	UDATA _ownableSynchronizerCleared;  /**< number of ownable synchronizer objects cleared this cycle, used only by GMP */
-
-	UDATA _stringConstantsCleared;  /**< The number of string constants that have been cleared during marking */
-	UDATA _stringConstantsCandidates; /**< The number of string constants that have been visited in string table during marking */
-
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	UDATA _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
 	UDATA _doubleMappedArrayletsCandidates; /**< The number of double mapped arraylets that have been visited during marking */
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */	
-
-#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
-	UDATA _splitArraysProcessed; /**< The number of array chunks (not counting parts smaller than the split size) processed by this thread */
-#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
 /* function members */
 private:
@@ -79,14 +69,14 @@ public:
 
 	void clear()
 	{
-		MM_ConcurrentMarkStats::clear();
+		// MM_ConcurrentMarkStats::clear();
 		_javaStats.clear();
 
-		_ownableSynchronizerSurvived = 0;
-		_ownableSynchronizerCleared = 0;
+		// _ownableSynchronizerSurvived = 0;
+		// _ownableSynchronizerCleared = 0;
 
-		_stringConstantsCleared = 0;
-		_stringConstantsCandidates = 0;
+		// _stringConstantsCleared = 0;
+		// _stringConstantsCandidates = 0;
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared = 0;
@@ -94,19 +84,19 @@ public:
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */	
 
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
-		_splitArraysProcessed = 0;
+		// _splitArraysProcessed = 0;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 	}
 
 	void merge(MM_MarkVLHGCStats *statsToMerge)
 	{
-		MM_ConcurrentMarkStats::merge(statsToMerge);
+		// MM_ConcurrentMarkStats::merge(statsToMerge);
 		_javaStats.merge(&statsToMerge->_javaStats);
-		_ownableSynchronizerSurvived += statsToMerge->_ownableSynchronizerSurvived;
-		_ownableSynchronizerCleared += statsToMerge->_ownableSynchronizerCleared;
+		// _ownableSynchronizerSurvived += statsToMerge->_ownableSynchronizerSurvived;
+		// _ownableSynchronizerCleared += statsToMerge->_ownableSynchronizerCleared;
 
-		_stringConstantsCleared += statsToMerge->_stringConstantsCleared;
-		_stringConstantsCandidates += statsToMerge->_stringConstantsCandidates;
+		// _stringConstantsCleared += statsToMerge->_stringConstantsCleared;
+		// _stringConstantsCandidates += statsToMerge->_stringConstantsCandidates;
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared += statsToMerge->_doubleMappedArrayletsCleared;
@@ -116,23 +106,23 @@ public:
 
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 		/* It may not ever be useful to merge these stats, but do it anyways */
-		_splitArraysProcessed += statsToMerge->_splitArraysProcessed;
+		// _splitArraysProcessed += statsToMerge->_splitArraysProcessed;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 	}
 	
 	MM_MarkVLHGCStats() :
 		MM_ConcurrentMarkStats()
 		,_javaStats()
-		,_ownableSynchronizerSurvived(0)
-		,_ownableSynchronizerCleared(0)
-		,_stringConstantsCleared(0)
-		,_stringConstantsCandidates(0)
+		// ,_ownableSynchronizerSurvived(0)
+		// ,_ownableSynchronizerCleared(0)
+		// ,_stringConstantsCleared(0)
+		// ,_stringConstantsCandidates(0)
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		,_doubleMappedArrayletsCleared(0)
 		,_doubleMappedArrayletsCandidates(0)
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
-		,_splitArraysProcessed(0)
+		// ,_splitArraysProcessed(0)
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 	{
 	}

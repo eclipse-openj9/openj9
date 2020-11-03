@@ -46,6 +46,7 @@
 #include "HeapRegionManager.hpp"
 #include "IncrementalGenerationalGC.hpp"
 #include "MemoryPoolBumpPointer.hpp"
+#include "MarkStats.hpp"
 
 /* NOTE: old logic for determining incremental thresholds has been deleted. Please 
  * see CVS history, version 1.14, if you need to find this logic
@@ -412,9 +413,9 @@ void
 MM_SchedulingDelegate::measureScanRate(MM_EnvironmentVLHGC *env, double historicWeight)
 {
 	Trc_MM_SchedulingDelegate_measureScanRate_Entry(env->getLanguageVMThread(), env->_cycleState->_collectionType);
-	MM_MarkVLHGCStats *markStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats;
+	MM_MarkStats *markStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats;
 	
-	UDATA currentBytesScanned = markStats->_bytesScanned + markStats->_cardCleaningStats._bytesCardClean;
+	UDATA currentBytesScanned = markStats->_bytesScanned + env->_cardCleaningStats._bytesCardClean;
 
 	if (0 != currentBytesScanned) {
 		PORT_ACCESS_FROM_ENVIRONMENT(env);
@@ -1145,8 +1146,8 @@ MM_SchedulingDelegate::updateGMPStats(MM_EnvironmentVLHGC *env)
 	Assert_MM_true(MM_CycleState::CT_GLOBAL_MARK_PHASE == persistentGMPState->_collectionType);
 	Assert_MM_true(0 != _extensions->gcThreadCount);
 
-	MM_MarkVLHGCStats * incrementalMarkStats = &(persistentGMPState->_vlhgcCycleStats._incrementalMarkStats);
-	MM_MarkVLHGCStats * concurrentMarkStats = &(persistentGMPState->_vlhgcCycleStats._concurrentMarkStats);
+	MM_MarkStats * incrementalMarkStats = &(persistentGMPState->_vlhgcCycleStats._incrementalMarkStats);
+	MM_MarkStats * concurrentMarkStats = &(persistentGMPState->_vlhgcCycleStats._concurrentMarkStats);
 
 	U_64 incrementalScanTime = (U_64) (((double) j9time_hires_delta(0, incrementalMarkStats->getScanTime(), J9PORT_TIME_DELTA_IN_MICROSECONDS)) / ((double) _extensions->gcThreadCount));
 	UDATA concurrentBytesScanned = concurrentMarkStats->_bytesScanned;
