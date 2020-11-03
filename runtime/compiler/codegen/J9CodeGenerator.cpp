@@ -80,25 +80,16 @@ J9::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
    _monitorMapping(std::less<ncount_t>(), MonitorMapAllocator(comp->trMemory()->heapMemoryRegion())),
    _dummyTempStorageRefNode(NULL)
    {
+   /**
+    * Do not add CodeGenerator initialization logic here.
+    * Use the \c initialize() method instead.
+    */
    }
 
 void
 J9::CodeGenerator::initialize()
    {
    self()->OMR::CodeGeneratorConnector::initialize();
-   }
-
-J9::CodeGenerator::CodeGenerator() :
-      OMR::CodeGeneratorConnector(),
-   _gpuSymbolMap(TR::comp()->allocator()),
-   _stackLimitOffsetInMetaData(TR::comp()->fej9()->thisThreadGetStackLimitOffset()),
-   _uncommonedNodes(TR::comp()->trMemory(), stackAlloc),
-   _liveMonitors(NULL),
-   _nodesSpineCheckedList(getTypedAllocator<TR::Node*>(TR::comp()->allocator())),
-   _jniCallSites(getTypedAllocator<TR_Pair<TR_ResolvedMethod,TR::Instruction> *>(TR::comp()->allocator())),
-   _monitorMapping(std::less<ncount_t>(), MonitorMapAllocator(TR::comp()->trMemory()->heapMemoryRegion())),
-   _dummyTempStorageRefNode(NULL)
-   {
    }
 
 TR_J9VMBase *

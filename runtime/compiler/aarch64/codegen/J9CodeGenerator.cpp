@@ -35,6 +35,10 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg);
 J9::ARM64::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
       J9::CodeGenerator(comp)
    {
+   /**
+    * Do not add CodeGenerator initialization logic here.
+    * Use the \c initialize() method instead.
+    */
    }
 
 void
@@ -42,30 +46,6 @@ J9::ARM64::CodeGenerator::initialize()
    {
    self()->J9::CodeGenerator::initialize();
 
-   TR::CodeGenerator *cg = self();
-
-   cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
-
-   /*
-    * "Statically" initialize the FE-specific tree evaluator functions.
-    * This code only needs to execute once per JIT lifetime.
-    */
-   static bool initTreeEvaluatorTable = false;
-   if (!initTreeEvaluatorTable)
-      {
-      TEMPORARY_initJ9ARM64TreeEvaluatorTable(cg);
-      initTreeEvaluatorTable = true;
-      }
-
-   cg->setSupportsInliningOfTypeCoersionMethods();
-   cg->setSupportsDivCheck();
-   if (!comp()->getOption(TR_FullSpeedDebug))
-      cg->setSupportsDirectJNICalls();
-   }
-
-J9::ARM64::CodeGenerator::CodeGenerator() :
-      J9::CodeGenerator()
-   {
    TR::CodeGenerator *cg = self();
 
    cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));

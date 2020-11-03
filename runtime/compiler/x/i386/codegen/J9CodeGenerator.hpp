@@ -56,9 +56,6 @@ protected:
 
 public:
 
-   CodeGenerator() :
-      J9::X86::CodeGenerator() {}
-
    void initialize();
 
    TR::Linkage *createLinkage(TR_LinkageConventions lc);
