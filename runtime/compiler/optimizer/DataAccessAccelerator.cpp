@@ -469,7 +469,7 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalGetIntrinsic(TR::TreeTop* callT
    // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
    bool requiresByteSwap = comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
 
-   if (requiresByteSwap && !comp()->target().cpu.isZ())
+   if (requiresByteSwap && !comp()->cg()->supportsByteswap())
       {
       printInliningStatus (false, callNode, "Unmarshalling is not supported because ByteSwap IL evaluators are not implemented.");
       return NULL;
@@ -749,15 +749,6 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerGetIntrinsic(TR::TreeTop* callT
       return NULL;
       }
 
-   // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
-   bool requiresByteSwap = sourceNumBytes != 1 && comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
-
-   if (requiresByteSwap && !comp()->cg()->supportsByteswap())
-      {
-      printInliningStatus (false, callNode, "Unmarshalling is not supported because ByteSwap IL evaluators are not implemented.");
-      return NULL;
-      }
-
    bool needUnsignedConversion = false;
 
    // This check indicates that the sourceNumBytes value is specified on the callNode, so we must extract it
@@ -798,6 +789,15 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerGetIntrinsic(TR::TreeTop* callT
    else
       {
       sourceNumBytes = targetNumBytes;
+      }
+
+   // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
+   bool requiresByteSwap = sourceNumBytes != 1 && comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
+
+   if (requiresByteSwap && !comp()->cg()->supportsByteswap())
+      {
+      printInliningStatus (false, callNode, "Unmarshalling is not supported because ByteSwap IL evaluators are not implemented.");
+      return NULL;
       }
 
    if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: genSimpleGetBinary call: %p inlined.\n", callNode))
@@ -878,15 +878,6 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerSetIntrinsic(TR::TreeTop* callT
       return NULL;
       }
 
-   // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
-   bool requiresByteSwap = sourceNumBytes != 1 && comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
-
-   if (requiresByteSwap && !comp()->cg()->supportsByteswap())
-      {
-      printInliningStatus (false, callNode, "Marshalling is not supported because ByteSwap IL evaluators are not implemented.");
-      return NULL;
-      }
-
    // This check indicates that the targetNumBytes value is specified on the callNode, so we must extract it
    if (targetNumBytes == 0)
       {
@@ -915,6 +906,15 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerSetIntrinsic(TR::TreeTop* callT
    else
       {
       targetNumBytes = sourceNumBytes;
+      }
+
+   // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
+   bool requiresByteSwap = targetNumBytes != 1 && comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
+
+   if (requiresByteSwap && !comp()->cg()->supportsByteswap())
+      {
+      printInliningStatus (false, callNode, "Marshalling is not supported because ByteSwap IL evaluators are not implemented.");
+      return NULL;
       }
 
    if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: genSimplePutBinary call: %p inlined.\n", callNode))
