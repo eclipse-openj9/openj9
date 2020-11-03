@@ -82,7 +82,7 @@ static void fixLoadingConstraints (J9JavaVM * vm, J9Class * oldClass, J9Class * 
 static UDATA classPairHash(void* entry, void* userData);
 static UDATA classPairEquals(void* left, void* right, void* userData);
 static UDATA findMethodInVTable(J9Method *method, UDATA *vTable);
-static jvmtiError addClassesRequiringNewITables(J9JavaVM *vm, J9HashTable *classHashTable, UDATA *addedMethodCountPtr, UDATA *addedClassCountPtr);
+static jvmtiError addClassesRequiringNewITables(J9JavaVM *vm, J9HashTable *classHashTable, UDATA *addedMethodCountPtr, UDATA *addedClassCountPtr, BOOLEAN fastHCR);
 static jvmtiError verifyFieldsAreSame (J9VMThread * currentThread, UDATA fieldType, J9ROMClass * originalROMClass, J9ROMClass * replacementROMClass,
 									   UDATA extensionsEnabled, UDATA * extensionsUsed);
 static jvmtiError verifyMethodsAreSame (J9VMThread * currentThread, J9JVMTIClassPair * classPair, UDATA extensionsEnabled, UDATA * extensionsUsed);
@@ -2677,7 +2677,7 @@ classPairEquals(void* left, void* right, void* userData)
 }
 
 static jvmtiError
-addClassesRequiringNewITables(J9JavaVM *vm, J9HashTable *classHashTable, UDATA *addedMethodCountPtr, UDATA *addedClassCountPtr)
+addClassesRequiringNewITables(J9JavaVM *vm, J9HashTable *classHashTable, UDATA *addedMethodCountPtr, UDATA *addedClassCountPtr, BOOLEAN fastHCR)
 {
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9Class *clazz;
@@ -2701,59 +2701,62 @@ addClassesRequiringNewITables(J9JavaVM *vm, J9HashTable *classHashTable, UDATA *
 				result = hashTableFind(classHashTable, &exemplar);
 
 				if (NULL != result) {
-					BOOLEAN extensionsUsed = (0 != (result->flags & J9JVMTI_CLASS_PAIR_FLAG_USES_EXTENSIONS));
+					UDATA flags = 0;
+					U_32 nodeCount = hashTableGetCount(classHashTable);
 
-					/* If methods were added or removed (extensionsUsed) or re-ordered in the interface, the class should be redefined. */
-					if (extensionsUsed || (NULL != result->methodRemap)) {
-						U_32 nodeCount = hashTableGetCount(classHashTable);
-
-						memset(&exemplar, 0, sizeof(J9JVMTIClassPair));
-						exemplar.originalRAMClass = clazz;
-						exemplar.replacementClass.romClass = clazz->romClass;
-						exemplar.flags = J9JVMTI_CLASS_PAIR_FLAG_REDEFINED;
-
-						/* An interface of this class is being updated with extensions - this class will require new iTables. */
-						if (NULL == hashTableAdd(classHashTable, &exemplar)) {
-							vmFuncs->allClassesEndDo(&classWalkState);
-							return JVMTI_ERROR_OUT_OF_MEMORY;
+					if (!fastHCR) {
+						BOOLEAN extensionsUsed = (0 != (result->flags & J9JVMTI_CLASS_PAIR_FLAG_USES_EXTENSIONS));
+						/* If methods were added or removed (extensionsUsed) or re-ordered in the interface, the class should be redefined. */
+						if (extensionsUsed || (NULL != result->methodRemap)) {
+							/* An interface of this class is being updated with extensions - this class will require new iTables. */
+							flags = J9JVMTI_CLASS_PAIR_FLAG_REDEFINED;
 						}
+					}
 
-						/* Increment counts if the class was really added (i.e. did not exist before). */
-						if (hashTableGetCount(classHashTable) == (nodeCount + 1)) {
-							J9SubclassWalkState subclassState;
-							J9Class * subclass;
+					memset(&exemplar, 0, sizeof(J9JVMTIClassPair));
+					exemplar.originalRAMClass = clazz;
+					exemplar.replacementClass.romClass = clazz->romClass;
+					exemplar.flags = flags;
 
-							addedMethodCount += clazz->romClass->romMethodCount;
-							addedClassCount += 1;
-	
-							/* Now add all of the subclasses of the affected class to the table */
-							subclass = allSubclassesStartDo(clazz, &subclassState, TRUE);
-							while (subclass != NULL) {
-								U_32 nodeCount = hashTableGetCount(classHashTable);
+					if (NULL == hashTableAdd(classHashTable, &exemplar)) {
+						vmFuncs->allClassesEndDo(&classWalkState);
+						return JVMTI_ERROR_OUT_OF_MEMORY;
+					}
 
-								memset(&exemplar, 0x00, sizeof(J9JVMTIClassPair));
-								exemplar.originalRAMClass = subclass;
-								exemplar.replacementClass.romClass = subclass->romClass;
-								exemplar.flags = J9JVMTI_CLASS_PAIR_FLAG_REDEFINED;
+					/* Increment counts if the class was really added (i.e. did not exist before). */
+					if (hashTableGetCount(classHashTable) == (nodeCount + 1)) {
+						J9SubclassWalkState subclassState;
+						J9Class * subclass;
 
-								/* If this class is already in the table this add will have no effect */
-								result = hashTableAdd(classHashTable, &exemplar);
-								if (NULL == result) {
-									vmFuncs->allClassesEndDo(&classWalkState);
-									return JVMTI_ERROR_OUT_OF_MEMORY;
-								}
-								/* Ensure that classes already in the table get redefined */
-								result->flags |= J9JVMTI_CLASS_PAIR_FLAG_REDEFINED;
+						addedMethodCount += clazz->romClass->romMethodCount;
+						addedClassCount += 1;
 
-								/* Increment counts if the class was really added (i.e. did not exist before). */
-								if (hashTableGetCount(classHashTable) == (nodeCount + 1)) {
-									addedMethodCount += subclass->romClass->romMethodCount;
-									addedClassCount += 1;
-								}
+						/* Now add all of the subclasses of the affected class to the table */
+						subclass = allSubclassesStartDo(clazz, &subclassState, TRUE);
+						while (subclass != NULL) {
+							U_32 nodeCount = hashTableGetCount(classHashTable);
 
-								subclass = allSubclassesNextDo(&subclassState);
+							memset(&exemplar, 0x00, sizeof(J9JVMTIClassPair));
+							exemplar.originalRAMClass = subclass;
+							exemplar.replacementClass.romClass = subclass->romClass;
+							exemplar.flags = flags;
+
+							/* If this class is already in the table this add will have no effect */
+							result = hashTableAdd(classHashTable, &exemplar);
+							if (NULL == result) {
+								vmFuncs->allClassesEndDo(&classWalkState);
+								return JVMTI_ERROR_OUT_OF_MEMORY;
+							}
+							/* Ensure that classes already in the table get redefined */
+							result->flags |= flags;
+
+							/* Increment counts if the class was really added (i.e. did not exist before). */
+							if (hashTableGetCount(classHashTable) == (nodeCount + 1)) {
+								addedMethodCount += subclass->romClass->romMethodCount;
+								addedClassCount += 1;
 							}
 
+							subclass = allSubclassesNextDo(&subclassState);
 						}
 					}
 					break;
@@ -2781,6 +2784,8 @@ determineClassesToRecreate(J9VMThread * currentThread, jint classCount,
 	jvmtiError jvmtiResult;
 	jint i;
 	jint redefinedSubclassCount = 0;
+	UDATA addedClassCount = 0;
+	UDATA addedMethodCount = 0;
 
 	J9HashTable* classHashTable = hashTableNew(
 		OMRPORT_FROM_J9PORT(PORTLIB),
@@ -2864,19 +2869,15 @@ determineClassesToRecreate(J9VMThread * currentThread, jint classCount,
 	}
 	classCount += redefinedSubclassCount;
 
-	if (!fastHCR) {
-		UDATA addedClassCount, addedMethodCount;
-
-		/* Add any classes implementing interfaces that are being updated with extensions or re-ordered methods. */
-		jvmtiResult = addClassesRequiringNewITables(currentThread->javaVM, classHashTable, &addedClassCount, &addedMethodCount);
-		if (JVMTI_ERROR_NONE != jvmtiResult) {
-			hashTableFree(classHashTable);
-			return jvmtiResult;
-		}
-
-		redefinedMethodCount += addedMethodCount;
-		classCount += (jint) addedClassCount;
+	/* Add any classes implementing interfaces that are being updated with extensions or re-ordered methods. */
+	jvmtiResult = addClassesRequiringNewITables(currentThread->javaVM, classHashTable, &addedClassCount, &addedMethodCount, fastHCR);
+	if (JVMTI_ERROR_NONE != jvmtiResult) {
+		hashTableFree(classHashTable);
+		return jvmtiResult;
 	}
+
+	redefinedMethodCount += addedMethodCount;
+	classCount += (jint) addedClassCount;
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	/* Pre-allocate memory to be used for the JIT event callback data */

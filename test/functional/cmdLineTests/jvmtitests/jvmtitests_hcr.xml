@@ -148,6 +148,11 @@
 		<return type="success" value="0"/>
 	</test>
 
+	<test id="rtc003">
+		<command>$EXE$ $JVM_OPTS$ $EXTRA_Add_OPEN_OPTION$ $AGENTLIB$=test:rtc003 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
  	<!--
  		Shared class cache is used when running in Mode 148.
  		Shared cache to be destroyed should have same name as in Mode 148.
