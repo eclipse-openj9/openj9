@@ -2153,6 +2153,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationAotThunkReloFailure:
             case compilationAotHasInvokehandle:
             case compilationAotHasInvokeVarHandle:
+            case compilationAotHasInvokeSpecialInterface:
             case compilationAotValidateMethodExitFailure:
             case compilationAotValidateMethodEnterFailure:
             case compilationAotClassChainPersistenceFailure:
@@ -7300,9 +7301,11 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          else
             {
             // Heuristic: generate AOT only for downgraded compilations in the second run
-            if (!isSecondAOTRun &&
-                entry->_optimizationPlan->isOptLevelDowngraded())
+            if ((!isSecondAOTRun && entry->_optimizationPlan->isOptLevelDowngraded()) ||
+                entry->getMethodDetails().isJitDumpAOTMethod())
+               {
                canDoRelocatableCompile = true;
+               }
             }
          }
       }
@@ -10991,6 +10994,10 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const J9::AOTHasInvokeVarHandle &e)
       {
       _methodBeingCompiled->_compErrCode = compilationAotHasInvokeVarHandle;
+      }
+   catch (const J9::AOTHasInvokeSpecialInInterface &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationAotHasInvokeSpecialInterface;
       }
    catch (const J9::FSDHasInvokeHandle &e)
       {

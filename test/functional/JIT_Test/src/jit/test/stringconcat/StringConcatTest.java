@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,7 +58,7 @@ public class StringConcatTest {
 	}
 	
 	private String buildDefaultStr(){
-		return new Integer(5).toString() + " of us are going to buy " + new Integer(1).toString() + " orange " + "each";
+		return Integer.toString(5) + " of us are going to buy " + Integer.toString(1) + " orange " + "each";
 	}
 		
 	public void testDefaultPattern_With_Negative_Integer(){
@@ -68,7 +68,7 @@ public class StringConcatTest {
 	}
 	
 	private String buildDefaultPattern_With_Negative_Integer(){
-		return new Integer(-5).toString() + " is smaller than " + new Integer(-1).toString() + " to " + "a sane person";
+		return Integer.toString(-5) + " is smaller than " + Integer.toString(-1) + " to " + "a sane person";
 	}
 		
 	public void testNullStr_Middle(){
@@ -78,7 +78,7 @@ public class StringConcatTest {
 	}
 	
 	private String buildNullStr_Middle(){
-		return new Integer(-5).toString() + " is bigger than " + new Integer(1).toString() + null + " to a less than sane person";
+		return Integer.toString(-5) + " is bigger than " + Integer.toString(1) + null + " to a less than sane person";
 	}
 		
 	public void testNullStr_End(){
@@ -88,7 +88,7 @@ public class StringConcatTest {
 	}
 	
 	private String buildNullStr_End(){
-		return new Integer(-5).toString() + " is bigger than " + new Integer(-1).toString() + " to a less than sane person " + null;
+		return Integer.toString(-5) + " is bigger than " + Integer.toString(-1) + " to a less than sane person " + null;
 	}
 		
 	public void testAutoboxedInteger(){
@@ -118,7 +118,7 @@ public class StringConcatTest {
 	}
 	
 	private String buildInvalidPattern_SISS(){
-		return "I wrote " + new Integer(2).toString() + " cliches either side of " + new Integer(1).toString() + " good verse";
+		return "I wrote " + Integer.toString(2) + " cliches either side of " + Integer.toString(1) + " good verse";
 	}
 	
 	public void testInvalidPattern_ISIS(){
@@ -128,7 +128,7 @@ public class StringConcatTest {
 	}
 	
 	private String buildInvalidPattern_ISIS(){
-		return new Integer(1).toString() + " of us is going to sleep at " + new Integer(2).toString() + " am";
+		return Integer.toString(1) + " of us is going to sleep at " + Integer.toString(2) + " am";
 	}
 	
 	public void testInvalidPattern_ISISISIS(){
@@ -144,7 +144,7 @@ public class StringConcatTest {
 	}
 	
 	private String buildInvalidPattern_ISISSS(){
-		return  new Integer(1).toString() + " side of the moon is good enough for " + new Integer(1).toString() + " earth " + "full of " + "moonstruck ants";
+		return Integer.toString(1) + " side of the moon is good enough for " + Integer.toString(1) + " earth " + "full of " + "moonstruck ants";
 	}
 	
 	public void testInvalidPattern_ISISSI(){
@@ -154,7 +154,7 @@ public class StringConcatTest {
 	}
 	
 	private String buildInvalidPattern_ISISSI(){
-		return  new Integer(1).toString() + " side of the moon is good enough for " + new Integer(1).toString() + " earth " + "full of " + "moonstruck ants but " + new Integer(1);
+		return Integer.toString(1) + " side of the moon is good enough for " + Integer.toString(1) + " earth " + "full of " + "moonstruck ants but " + Integer.valueOf(1);
 	}
 	
 	public void testInvalidPattern_ISISSISS(){
@@ -164,7 +164,7 @@ public class StringConcatTest {
 	}
 	
 	private String buildInvalidPattern_ISISSISS(){
-		return  new Integer(1).toString() + " side of the moon is good enough for " + new Integer(1).toString() + " earth " + "full of " + "moonstruck ants but " + new Integer(1) + " disagrees with this";
+		return Integer.toString(1) + " side of the moon is good enough for " + Integer.toString(1) + " earth " + "full of " + "moonstruck ants but " + Integer.valueOf(1) + " disagrees with this";
 	}
 	
 	public void testInvalidPattern_ISISSISC(){
@@ -174,7 +174,7 @@ public class StringConcatTest {
 	}
 	
 	private String buildInvalidPattern_ISISSISC(){
-		return  new Integer(1).toString() + " side of the moon is good enough for " + new Integer(1).toString() + " earth " + "full of " + "moonstruck ants but " + new Integer(1) + " disagrees with thi" + new Character('s');
+		return Integer.toString(1) + " side of the moon is good enough for " + Integer.toString(1) + " earth " + "full of " + "moonstruck ants but " + Integer.valueOf(1) + " disagrees with thi" + Character.valueOf('s');
 	}
 	
 	public void testConstantString(){
@@ -184,7 +184,7 @@ public class StringConcatTest {
 	}
 	
 	private String buildConstantString(){
-		final String s = new Integer(5).toString() + " of us are going to buy " + new Integer(1).toString() + " orange " + "each";
+		final String s = Integer.toString(5) + " of us are going to buy " + Integer.toString(1) + " orange " + "each";
 		return s;
 	}
 	
@@ -199,7 +199,7 @@ public class StringConcatTest {
 		String s = null;
 		int c = 0 ; 
 		do{
-			s = "I am " + new Integer(1).toString() + " therefore I am many";
+			s = "I am " + Integer.toString(1) + " therefore I am many";
 			c++;
 		} while( c < degree );
 		return s;
@@ -216,7 +216,7 @@ public class StringConcatTest {
 		String s = null;
 		int c = 0 ; 
 		do{
-			s = "I think therefore I a" + new Character('m');
+			s = "I think therefore I a" + Character.valueOf('m');
 			c++;
 		} while( c < degree );
 		return s;
@@ -233,7 +233,7 @@ public class StringConcatTest {
 		String s = null;
 		int c = 0 ; 
 		do{
-			s = new Integer(5).toString() + " of us are going to buy " + new Integer(1).toString() + " orange " + "each";
+			s = Integer.toString(5) + " of us are going to buy " + Integer.toString(1) + " orange " + "each";
 			c++;
 		} while( c < degree );
 		return s;

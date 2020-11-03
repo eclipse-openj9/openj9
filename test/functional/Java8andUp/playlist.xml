@@ -328,6 +328,8 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<!-- disable on AIX https://github.com/eclipse/openj9/issues/3081 -->
+		<platformRequirements>^os.aix</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -353,6 +355,8 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<!-- disable on AIX https://github.com/eclipse/openj9/issues/3081 -->
+		<platformRequirements>^os.aix</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>

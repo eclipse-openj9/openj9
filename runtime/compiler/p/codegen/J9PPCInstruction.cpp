@@ -94,9 +94,8 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
 
       if (callToSelf)
          {
-         uint8_t *jitTojitStart = cg()->getCodeStart();
-         jitTojitStart += ((*(int32_t *)(jitTojitStart - 4)) >> 16) & 0x0000ffff;
-         *(int32_t *)cursor |= (jitTojitStart - cursor) & 0x03fffffc;
+         intptr_t jitToJitStart = cg()->getLinkage()->entryPointFromCompiledMethod();
+         *(int32_t *)cursor |= (reinterpret_cast<uint8_t *>(jitToJitStart) - cursor) & 0x03fffffc;
          }
       else if (label != NULL)
          {

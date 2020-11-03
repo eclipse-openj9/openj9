@@ -72,7 +72,7 @@ TR::Instruction *TR_ARMRecompilation::generatePrePrologue()
    TR::Register   *gr4 = machine->getRealRegister(TR::RealRegister::gr4);
    TR::Register   *lr = machine->getRealRegister(TR::RealRegister::gr14); // link register
    TR::Node       *firstNode = _compilation->getStartTree()->getNode();
-   TR::SymbolReference *recompileMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMsamplingRecompileMethod, false, false, false);
+   TR::SymbolReference *recompileMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMsamplingRecompileMethod);
    TR_PersistentJittedBodyInfo *info = getJittedBodyInfo();
 
 

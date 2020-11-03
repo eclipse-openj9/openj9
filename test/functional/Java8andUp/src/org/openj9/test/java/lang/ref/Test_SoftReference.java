@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang.ref;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@ public class Test_SoftReference {
 	public void test_Constructor() {
 		//SM.
 		ReferenceQueue rq = new ReferenceQueue();
-		bool = new Boolean(true);
+		bool = Boolean.valueOf(true);
 		try {
 			SoftReference sr = new SoftReference(bool, rq);
 			AssertJUnit.assertTrue("Initialization failed.", ((Boolean)sr.get()).booleanValue());
@@ -65,7 +65,7 @@ public class Test_SoftReference {
 	@Test
 	public void test_Constructor2() {
 		//SM.
-		bool = new Boolean(true);
+		bool = Boolean.valueOf(true);
 		try {
 			SoftReference sr = new SoftReference(bool);
 			AssertJUnit.assertTrue("Initialization failed.", ((Boolean)sr.get()).booleanValue());
@@ -80,7 +80,7 @@ public class Test_SoftReference {
 	@Test
 	public void test_get() {
 		//SM.
-		bool = new Boolean(false);
+		bool = Boolean.valueOf(false);
 		SoftReference sr = new SoftReference(bool);
 		AssertJUnit.assertTrue("Same object not returned.", bool == sr.get());
 	}

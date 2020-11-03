@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,6 +58,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	private final Method dump_heapDumpToFile;
 	private final Method dump_JavaDump;
 	private final Method dump_javaDumpToFile;
+	private final Method dump_queryDumpOptions;
 	private final Method dump_resetDumpOptions;
 	private final Method dump_setDumpOptions;
 	private final Method dump_SnapDump;
@@ -107,6 +108,23 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 			/*[ENDIF]*/
 		} catch (Exception e) {
 			handleDumpConfigurationUnavailableException(e);
+			throw handleError(e);
+		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String[] queryDumpOptions() {
+		checkManagementSecurityPermission();
+		try {
+			/*[IF Sidecar19-SE]*/ if (2 > 1) {
+			return (String[])dump_queryDumpOptions.invoke(null);
+			/*[ELSE]*/ }
+			return Dump.queryDumpOptions();
+			/*[ENDIF]*/
+		} catch (Exception e) {
 			throw handleError(e);
 		}
 	}
@@ -320,6 +338,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 		dump_heapDumpToFile = dumpClass.getMethod("heapDumpToFile", String.class); //$NON-NLS-1$
 		dump_JavaDump = dumpClass.getMethod("JavaDump"); //$NON-NLS-1$
 		dump_javaDumpToFile = dumpClass.getMethod("javaDumpToFile", String.class); //$NON-NLS-1$
+		dump_queryDumpOptions = dumpClass.getMethod("queryDumpOptions"); //$NON-NLS-1$
 		dump_resetDumpOptions = dumpClass.getMethod("resetDumpOptions"); //$NON-NLS-1$
 		dump_setDumpOptions = dumpClass.getMethod("setDumpOptions", String.class); //$NON-NLS-1$
 		dump_SnapDump = dumpClass.getMethod("SnapDump"); //$NON-NLS-1$

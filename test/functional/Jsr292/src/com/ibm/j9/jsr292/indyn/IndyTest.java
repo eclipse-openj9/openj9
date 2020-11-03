@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,7 +102,7 @@ public class IndyTest {
 	//findSpecial test
 	@Test(groups = { "level.extended" })
 	public void test_indyn_findSpecial() {
-		String s = com.ibm.j9.jsr292.indyn.GenIndyn.call_tostring_of( new Integer( 1 ) );
+		String s = com.ibm.j9.jsr292.indyn.GenIndyn.call_tostring_of( Integer.valueOf( 1 ) );
 		if ( !s.equals( "1" ) ) Assert.fail( "Wrong int returned'" + s +"'" );
 	}
 	

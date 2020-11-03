@@ -1230,6 +1230,12 @@ J9::Options::fePreProcess(void * base)
       self()->setIsVariableActiveCardTableBase(true);
       }
 
+   if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE))
+      {
+      // Disable any fixed-size heap optimizations under portable shared cache mode
+      self()->setIsVariableHeapSizeForBarrierRange0(true);
+      }
+
 #if defined(TR_TARGET_64BIT) && defined(J9ZOS390)
    OMROSDesc desc;
    j9sysinfo_get_os_description(&desc);
@@ -2102,7 +2108,6 @@ J9::Options::setupJITServerOptions()
        compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       self()->setOption(TR_DisableSamplingJProfiling);
-      self()->setIsVariableHeapBaseForBarrierRange0(true);
       self()->setOption(TR_DisableProfiling); // JITServer limitation, JIT profiling data is not available to remote compiles yet
       self()->setOption(TR_DisableEDO); // JITServer limitation, EDO counters are not relocatable yet
       self()->setOption(TR_DisableMethodIsCold); // Shady heuristic; better to disable to reduce client/server traffic

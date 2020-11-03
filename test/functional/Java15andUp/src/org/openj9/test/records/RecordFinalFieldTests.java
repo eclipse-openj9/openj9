@@ -150,7 +150,7 @@ public class RecordFinalFieldTests {
         Field finalRecordField = TestRecord.class.getDeclaredField("recordComponent");
         finalRecordField.setAccessible(true);
         VarHandle finalRecordFieldHandle = MethodHandles.lookup().unreflectVarHandle(finalRecordField);
-        finalRecordFieldHandle.set(new Integer(5));
+        finalRecordFieldHandle.set(Integer.valueOf(5));
     }
 
     /* VarHandle.set is not supported for records. */

@@ -159,11 +159,11 @@ public class J9ObjectHelper
 			try {
 				getObjectField(objPointer, getFieldOffset(objPointer, "value", "[B"));
 
-				isStringBackedByByteArray = new Boolean(true);
+				isStringBackedByByteArray = Boolean.valueOf(true);
 			} catch (NoSuchElementException e) {
 				getObjectField(objPointer, getFieldOffset(objPointer, "value", "[C"));
 
-				isStringBackedByByteArray = new Boolean(false);
+				isStringBackedByByteArray = Boolean.valueOf(false);
 			}
 		}
 		

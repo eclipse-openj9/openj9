@@ -1002,7 +1002,7 @@ old_fast_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 		goto slow;
 	}
 	arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(currentThread, arrayref);
-	if (NULL == value) {
+	if ((J9_IS_J9CLASS_VALUETYPE(arrayrefClass->componentType)) && (NULL == value)) {
 		goto slow;
 	}
 	currentThread->javaVM->internalVMFunctions->storeFlattenableArrayElement(currentThread, arrayref, index, value);

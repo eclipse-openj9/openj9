@@ -50,7 +50,7 @@ uint8_t *TR::X86ForceRecompilationSnippet::emitSnippetBody()
    uint8_t *buffer = cg()->getBinaryBufferCursor();
    getSnippetLabel()->setCodeLocation(buffer);
 
-   TR::SymbolReference *helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(cg()->comp()->target().is64Bit()? TR_AMD64induceRecompilation : TR_IA32induceRecompilation, false, false, false);
+   TR::SymbolReference *helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(cg()->comp()->target().is64Bit()? TR_AMD64induceRecompilation : TR_IA32induceRecompilation);
 
    TR::GlobalFunctionCallData data(helperSymRef, getNode(), buffer, cg());
    buffer = cg()->getObjFmt()->encodeGlobalFunctionCall(data);

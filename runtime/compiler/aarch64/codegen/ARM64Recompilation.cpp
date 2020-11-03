@@ -66,7 +66,7 @@ TR::Instruction *TR_ARM64Recompilation::generatePrePrologue()
    TR::Register *lr = machine->getRealRegister(TR::RealRegister::lr); // Link Register
    TR::Register *xzr = machine->getRealRegister(TR::RealRegister::xzr); // zero register
    TR::Node *firstNode = comp()->getStartTree()->getNode();
-   TR::SymbolReference *recompileMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64samplingRecompileMethod, false, false, false);
+   TR::SymbolReference *recompileMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64samplingRecompileMethod);
    TR_PersistentJittedBodyInfo *info = getJittedBodyInfo();
 
    // Force creation of switch to interpreter preprologue if in Full Speed Debug

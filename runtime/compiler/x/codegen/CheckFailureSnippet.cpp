@@ -304,7 +304,7 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
                           getCheckInstruction()->getNode());
    buffer += 4;
 
-   TR::SymbolReference *glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper(), false, false, false);
+   TR::SymbolReference * glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper());
    TR::GlobalFunctionCallData dataGlue(glueSymRef, getCheckInstruction()->getNode(), buffer, cg());
    buffer = cg()->getObjFmt()->encodeGlobalFunctionCall(dataGlue);
 

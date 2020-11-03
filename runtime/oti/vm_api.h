@@ -3090,6 +3090,14 @@ freeMemorySegmentList(J9JavaVM *javaVM,J9MemorySegmentList *segmentList);
 void
 freeMemorySegmentListEntry(J9MemorySegmentList *segmentList, J9MemorySegment *segment);
 
+/**
+* @brief Iterate through the segmentList and pass the J9MemorySegment * to the segmentCallback
+* @param segmentList The J9MemorySegmentList to iterate through.  Must not be NULL
+* @param segmentCallBack The user supplied callback that operates on the segment.  Must not be NULL.
+* @param userData A void* passed through to the callback for tracking state
+*/
+void
+allSegmentsInMemorySegmentListDo(J9MemorySegmentList *segmentList, void (* segmentCallback)(J9MemorySegment*, void*), void *userData);
 
 /**
 * @brief

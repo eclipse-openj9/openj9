@@ -187,7 +187,7 @@ TR_S390Recompilation::generatePrePrologue()
 
       samplingRecompileMethodAddressMemRef->setOffset(offsetFromEPRegisterValueToSamplingRecompileMethod);
 
-      TR::SymbolReference* helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390samplingRecompileMethod, false, false, false);
+      TR::SymbolReference* helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390samplingRecompileMethod);
 
       // AOT relocation for the interpreter glue address
       TR::S390EncodingRelocation* encodingRelocation = new (cg->trHeapMemory()) TR::S390EncodingRelocation(TR_AbsoluteHelperAddress, helperSymRef);
@@ -401,7 +401,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
 
    TR::Instruction* countingRecompileMethodAddressDataConstant = NULL;
 
-   TR::SymbolReference* helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390countingRecompileMethod, false, false, false);
+   TR::SymbolReference* helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390countingRecompileMethod);
 
    // AOT relocation for the helper address
    TR::S390EncodingRelocation* encodingRelocation = new (cg->trHeapMemory()) TR::S390EncodingRelocation(TR_AbsoluteHelperAddress, NULL);
@@ -486,7 +486,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
 
    TR::Instruction* countingPatchCallSiteAddressDataConstant = NULL;
 
-   helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390countingPatchCallSite, false, false, false);
+   helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390countingPatchCallSite);
 
    // AOT relocation for the helper address
    encodingRelocation = new (cg->trHeapMemory()) TR::S390EncodingRelocation(TR_AbsoluteHelperAddress, NULL);

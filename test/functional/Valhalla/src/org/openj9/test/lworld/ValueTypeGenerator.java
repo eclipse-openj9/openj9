@@ -191,7 +191,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitTypeInsn(NEW, className);
 		mv.visitInsn(DUP);
 		mv.visitMethodInsn(INVOKESPECIAL, className, "<init>", "()V", false);
-		mv.visitLdcInsn(new Long(123L));
+		mv.visitLdcInsn(Long.valueOf(123L));
 		mv.visitFieldInsn(WITHFIELD, className, "longField", "J");
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 2);
@@ -206,7 +206,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testWithFieldOnNull", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitInsn(ACONST_NULL);
-		mv.visitLdcInsn(new Long(123L));
+		mv.visitLdcInsn(Long.valueOf(123L));
 		mv.visitFieldInsn(WITHFIELD, className, "longField", "J");
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 2);
@@ -223,7 +223,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitTypeInsn(NEW, className);
 		mv.visitInsn(DUP);
 		mv.visitMethodInsn(INVOKESPECIAL, className, "<init>", "()V", false);
-		mv.visitLdcInsn(new Long(123L));
+		mv.visitLdcInsn(Long.valueOf(123L));
 		mv.visitFieldInsn(WITHFIELD, "NonExistentClass", "longField", "J");
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 2);

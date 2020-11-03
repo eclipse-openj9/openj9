@@ -233,7 +233,7 @@ FindSingleJittedImplementer::visitSubclass(TR_PersistentClassInfo *cl)
    {
    TR_OpaqueClassBlock * classId = cl->getClassId();
 
-   if (!TR::Compiler->cls.isAbstractClass(comp(), classId) && !TR::Compiler->cls.isInterfaceClass(comp(), classId))
+   if (TR::Compiler->cls.isConcreteClass(comp(), classId))
       {
       TR_ResolvedMethod *method;
       if (_topClassIsInterface)
@@ -643,7 +643,7 @@ TR_PersistentCHTable::findSingleConcreteSubClass(
       for (TR_PersistentClassInfo *subClassInfo = subClassesIt.getFirst(); subClassInfo; subClassInfo = subClassesIt.getNext())
          {
          TR_OpaqueClassBlock *subClass = (TR_OpaqueClassBlock *) subClassInfo->getClassId();
-         if (!TR::Compiler->cls.isAbstractClass(comp, subClass) && !TR::Compiler->cls.isInterfaceClass(comp, subClass))
+         if (TR::Compiler->cls.isConcreteClass(comp, subClass))
             {
             if (concreteSubClass)
                return NULL;

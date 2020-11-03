@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,7 @@ public class InvokeDynamicWithMultipleOrphanComparisonTest {
 		Class<?> cls = Class.forName(InvokeDynamicTestGenerator.GENERATED_CLASS_NAME, true, classLoader);
 		Method m = cls.getMethod("addIntegers", new Class[] { int.class, int.class });
 		try {
-			int result = ((Integer)m.invoke(null, new Object[] { new Integer(10), new Integer(10) })).intValue();
+			int result = ((Integer)m.invoke(null, new Object[] { Integer.valueOf(10), Integer.valueOf(10) })).intValue();
 			System.err.println("Result = " + result);
 			System.err.println(PASS_STRING);
 		} catch (Exception e) {

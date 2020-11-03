@@ -115,7 +115,7 @@ J9::X86::UnresolvedDataSnippet::emitSnippetBody()
       return TR_X86OpCode(BADIA32Op).binary(cursor);
       }
 
-   _glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper(), false, false, false);
+   _glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper());
 
    if (cg()->comp()->target().is64Bit())
       {

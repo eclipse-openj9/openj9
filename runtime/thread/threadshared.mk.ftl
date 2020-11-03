@@ -1,6 +1,5 @@
 # This makefile is generated using an UMA template.
 
-#
 # Copyright (c) 2015, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
@@ -20,7 +19,6 @@
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
-#
 
 # UMA_PATH_TO_ROOT can be overridden by a command-line argument to 'make'.
 UMA_PATH_TO_ROOT ?= ../
@@ -37,11 +35,6 @@ THREAD_SRCDIR := $(top_srcdir)/thread/
 MODULE_NAME_NOSTREAM := j9thr
 MODULE_NAME := $(MODULE_NAME_NOSTREAM)${uma.buildinfo.version.major}${uma.buildinfo.version.minor}
 ARTIFACT_TYPE := c_shared
-
-<#if uma.spec.flags.opt_useOmrDdr.enabled && uma.spec.type.zos>
-CFLAGS   += -Wc,debug
-CXXFLAGS += -Wc,debug
-</#if>
 
 include $(THREAD_SRCDIR)thread_include.mk
 

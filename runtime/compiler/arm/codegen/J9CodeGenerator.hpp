@@ -55,8 +55,6 @@ protected:
 
 public:
 
-   CodeGenerator();
-
    void initialize();
 
    TR::Recompilation *allocateRecompilationInfo();

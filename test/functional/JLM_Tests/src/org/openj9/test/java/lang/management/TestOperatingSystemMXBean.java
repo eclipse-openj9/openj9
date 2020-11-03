@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -271,7 +271,7 @@ public class TestOperatingSystemMXBean {
 			// expected
 		}
 
-		attr = new Attribute("AvailableProcessors", new Integer(2));
+		attr = new Attribute("AvailableProcessors", Integer.valueOf(2));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Should have thrown an exception.");
@@ -280,7 +280,7 @@ public class TestOperatingSystemMXBean {
 		}
 
 		// Try and set the Name attribute with an incorrect type.
-		attr = new Attribute("Name", new Long(42));
+		attr = new Attribute("Name", Long.valueOf(42));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Should have thrown an exception");
@@ -529,7 +529,7 @@ public class TestOperatingSystemMXBean {
 	public final void testInvoke() {
 		// OperatingSystemMXBean has no operations to invoke...
 		try {
-			Object retVal = mbs.invoke(objName, "DoTheRightThing", new Object[] { new Long(7446), new Long(54) },
+			Object retVal = mbs.invoke(objName, "DoTheRightThing", new Object[] { Long.valueOf(7446), Long.valueOf(54) },
 					new String[] { "java.lang.Long", "java.lang.Long" });
 			Assert.fail("Should have thrown an exception.");
 		} catch (Exception e) {

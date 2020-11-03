@@ -1758,6 +1758,13 @@ JVM_LookupLambdaProxyClassFromArchive(JNIEnv *env, jclass arg1, jstring arg2, jo
 	assert(!"JVM_LookupLambdaProxyClassFromArchive unimplemented");
 	return NULL;
 }
+
+JNIEXPORT jboolean JNICALL
+JVM_IsCDSDumpingEnabled(JNIEnv *env)
+{
+	/* OpenJ9 does not support -Xshare:dump, so we return false unconditionally. */
+	return JNI_FALSE;
+}
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 #if JAVA_SPEC_VERSION == 15
@@ -1766,13 +1773,6 @@ JVM_GetRandomSeedForCDSDump()
 {
 	/* OpenJ9 does not support -Xshare:dump, so we return zero unconditionally. */
 	return 0;
-}
-
-JNIEXPORT jboolean JNICALL
-JVM_IsCDSDumpingEnabled(JNIEnv *env)
-{
-	/* OpenJ9 does not support -Xshare:dump, so we return false unconditionally. */
-	return JNI_FALSE;
 }
 
 JNIEXPORT jboolean JNICALL
@@ -1787,13 +1787,6 @@ JVM_GetRandomSeedForDumping()
 {
 	/* OpenJ9 does not support -Xshare:dump, so we return zero unconditionally. */
 	return 0;
-}
-
-JNIEXPORT jboolean JNICALL
-JVM_IsDynamicDumpingEnabled(JNIEnv *env)
-{
-	/* OpenJ9 does not support -Xshare:dump, so we return false unconditionally. */
-	return JNI_FALSE;
 }
 
 JNIEXPORT jboolean JNICALL

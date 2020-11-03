@@ -70,8 +70,6 @@ protected:
 
 public:
 
-   CodeGenerator();
-
    void initialize();
 
    TR_J9VMBase *fej9();
@@ -579,18 +577,18 @@ public:
    bool supportVMInternalNatives();
 
    /**
-    * \brief Intializes the Linkage Info word found before the interpreter entry point.
+    * \brief Determines whether the code generator supports stack allocations
+    */
+   bool supportsStackAllocations() { return false; }
+
+   /**
+    * \brief Initializes the Linkage Info word found before the interpreter entry point.
     *
     * \param[in] linkageInfo : pointer to the linkage info word
     *
     * \return Linkage Info word
     */
    uint32_t initializeLinkageInfo(void *linkageInfoPtr);
-
-   /**
-    * \brief Determines whether the code generator supports stack allocations
-    */
-   bool supportsStackAllocations() { return false; }
 
 private:
 

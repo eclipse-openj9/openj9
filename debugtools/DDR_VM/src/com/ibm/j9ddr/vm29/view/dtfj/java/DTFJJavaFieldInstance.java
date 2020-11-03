@@ -70,11 +70,11 @@ public class DTFJJavaFieldInstance extends DTFJJavaField {
 				case INTEGER_SIGNATURE :
 					return Integer.valueOf(getInt(object));
 				case FLOAT_SIGNATURE :
-					return new Float(getFloat(object));
+					return Float.valueOf(getFloat(object));
 				case LONG_SIGNATURE :
 					return Long.valueOf(getLong(object));
 				case DOUBLE_SIGNATURE :
-					return new Double(getDouble(object));
+					return Double.valueOf(getDouble(object));
 				case ARRAY_PREFIX_SIGNATURE :
 				case OBJECT_PREFIX_SIGNATURE :
 					J9ROMFieldShapePointer fieldShape = fieldOffset.getField();

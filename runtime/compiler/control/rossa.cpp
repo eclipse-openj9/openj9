@@ -211,7 +211,8 @@ char *compilationErrorNames[]={
    "compilationStreamVersionIncompatible", // 58
    "compilationStreamInterrupted", // 59
 #endif /* defined(J9VM_OPT_JITSERVER) */
-   "compilationMaxError"
+   "compilationAotHasInvokeSpecialInterface", //60
+   "compilationMaxError",
 };
 
 int32_t aggressiveOption = 0;

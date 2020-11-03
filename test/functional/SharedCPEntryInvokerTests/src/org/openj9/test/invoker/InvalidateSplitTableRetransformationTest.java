@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,7 +86,7 @@ public class InvalidateSplitTableRetransformationTest {
 
 		characteristics.clear();
 		characteristics.put(ClassGenerator.VERSION, "V1");
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
+		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_INTERFACE, DummyClassGenerator.INVOKE_STATIC });
 		dummyClassGenerator.setCharacteristics(characteristics);
@@ -118,7 +118,7 @@ public class InvalidateSplitTableRetransformationTest {
 		logger.debug("Redefining Interface to V2");
 		characteristics.clear();
 		characteristics.put(ClassGenerator.VERSION, "V2");
-		characteristics.put(ClassGenerator.INTF_HAS_DEFAULT_METHOD, new Boolean(true));
+		characteristics.put(ClassGenerator.INTF_HAS_DEFAULT_METHOD, Boolean.valueOf(true));
 		if (!redefineInterface(intfClass, testName, characteristics)) {
 			Assert.fail("Failed to redefine interface");
 		}
@@ -148,7 +148,7 @@ public class InvalidateSplitTableRetransformationTest {
 		logger.debug("Redefining Interface to V3");
 		characteristics.clear();
 		characteristics.put(ClassGenerator.VERSION, "V3");
-		characteristics.put(ClassGenerator.INTF_HAS_STATIC_METHOD, new Boolean(true));
+		characteristics.put(ClassGenerator.INTF_HAS_STATIC_METHOD, Boolean.valueOf(true));
 		if (!redefineInterface(intfClass, testName, characteristics)) {
 			Assert.fail("Failed to redefine interface");
 		}
@@ -233,8 +233,8 @@ public class InvalidateSplitTableRetransformationTest {
 
 		characteristics.clear();
 		characteristics.put(ClassGenerator.VERSION, "V1");
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
-		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, new Boolean(true));
+		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, Boolean.valueOf(true));
+		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_INTERFACE, DummyClassGenerator.INVOKE_SPECIAL });
 		characteristics.put(ClassGenerator.SHARED_INVOKERS_TARGET, "INTERFACE");
@@ -267,7 +267,7 @@ public class InvalidateSplitTableRetransformationTest {
 		logger.debug("Redefining Interface to V2");
 		characteristics.clear();
 		characteristics.put(ClassGenerator.VERSION, "V2");
-		characteristics.put(ClassGenerator.INTF_HAS_DEFAULT_METHOD, new Boolean(true));
+		characteristics.put(ClassGenerator.INTF_HAS_DEFAULT_METHOD, Boolean.valueOf(true));
 		if (!redefineInterface(intfClass, testName, characteristics)) {
 			Assert.fail("Failed to redefine interface");
 		}
@@ -299,8 +299,8 @@ public class InvalidateSplitTableRetransformationTest {
 		logger.debug("Redefining Dummy class to V2");
 		characteristics.clear();
 		characteristics.put(ClassGenerator.VERSION, "V2");
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
-		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, new Boolean(true));
+		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, Boolean.valueOf(true));
+		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_INTERFACE, DummyClassGenerator.INVOKE_SPECIAL });
 		characteristics.put(ClassGenerator.SHARED_INVOKERS_TARGET, "SUPER");
@@ -332,7 +332,7 @@ public class InvalidateSplitTableRetransformationTest {
 
 		characteristics.clear();
 		characteristics.put(ClassGenerator.VERSION, "V1");
-		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, new Boolean(true));
+		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] { DummyClassGenerator.INVOKE_STATIC, DummyClassGenerator.INVOKE_SPECIAL });
 		dummyClassGenerator.setCharacteristics(characteristics);
@@ -450,8 +450,8 @@ public class InvalidateSplitTableRetransformationTest {
 
 		characteristics.clear();
 		characteristics.put(ClassGenerator.VERSION, "V1");
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
-		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, new Boolean(true));
+		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, Boolean.valueOf(true));
+		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] {
 						DummyClassGenerator.INVOKE_INTERFACE,
@@ -497,7 +497,7 @@ public class InvalidateSplitTableRetransformationTest {
 		logger.debug("Redefining Interface to V2");
 		characteristics.clear();
 		characteristics.put(ClassGenerator.VERSION, "V2");
-		characteristics.put(ClassGenerator.INTF_HAS_DEFAULT_METHOD, new Boolean(true));
+		characteristics.put(ClassGenerator.INTF_HAS_DEFAULT_METHOD, Boolean.valueOf(true));
 		if (!redefineInterface(intfClass, testName, characteristics)) {
 			Assert.fail("Failed to redefine interface");
 		}
@@ -540,7 +540,7 @@ public class InvalidateSplitTableRetransformationTest {
 		logger.debug("Redefining Interface to V3");
 		characteristics.clear();
 		characteristics.put(ClassGenerator.VERSION, "V3");
-		characteristics.put(ClassGenerator.INTF_HAS_STATIC_METHOD, new Boolean(true));
+		characteristics.put(ClassGenerator.INTF_HAS_STATIC_METHOD, Boolean.valueOf(true));
 		if (!redefineInterface(intfClass, testName, characteristics)) {
 			Assert.fail("Failed to redefine interface");
 		}
@@ -581,8 +581,8 @@ public class InvalidateSplitTableRetransformationTest {
 		logger.debug("Redefining Dummy class to V2");
 		characteristics.clear();
 		characteristics.put(ClassGenerator.VERSION, "V2");
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
-		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, new Boolean(true));
+		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, Boolean.valueOf(true));
+		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, Boolean.valueOf(true));
 		characteristics.put(ClassGenerator.SHARED_INVOKERS,
 				new String[] {
 						DummyClassGenerator.INVOKE_INTERFACE,

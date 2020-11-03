@@ -965,7 +965,7 @@ CollectImplementors::visitSubclass(TR_PersistentClassInfo *cl)
    {
    TR_OpaqueClassBlock *classId = cl->getClassId();
    // verify that our subclass meets all conditions
-   if (!TR::Compiler->cls.isAbstractClass(comp(), classId) && !TR::Compiler->cls.isInterfaceClass(comp(), classId))
+   if (TR::Compiler->cls.isConcreteClass(comp(), classId))
       {
       int32_t length;
       char *clazzName = TR::Compiler->cls.classNameChars(comp(), classId, length);

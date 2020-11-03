@@ -303,8 +303,6 @@ public:
 	}
 
 private:
-	bool isVarHandleMethod(U_32 classIndex, U_32 nasIndex);
-
 	/* TODO turn EntryFlags into static const UDATAs instead of an enum type that is never used */
 
 	/* Indices into the ConstantPoolEntry.flags bool array. See comment at the top of the file for more info. */

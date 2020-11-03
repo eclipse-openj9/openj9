@@ -786,7 +786,7 @@ public class TestThreadMXBean {
 	public final void testSetAttribute() {
 		// There are only two writable attributes in this type.
 
-		Attribute attr = new Attribute("ThreadContentionMonitoringEnabled", new Boolean(true));
+		Attribute attr = new Attribute("ThreadContentionMonitoringEnabled", Boolean.valueOf(true));
 
 		if (tb.isThreadContentionMonitoringSupported()) {
 			try {
@@ -808,7 +808,7 @@ public class TestThreadMXBean {
 			}
 		}
 
-		attr = new Attribute("ThreadCpuTimeEnabled", new Boolean(true));
+		attr = new Attribute("ThreadCpuTimeEnabled", Boolean.valueOf(true));
 		if (tb.isThreadCpuTimeSupported()) {
 			try {
 				// TODO : Set - test - Reset, when VM permits
@@ -934,7 +934,7 @@ public class TestThreadMXBean {
 		}
 
 		// Try and set an attribute with an incorrect type.
-		attr = new Attribute("ThreadContentionMonitoringEnabled", new Long(42));
+		attr = new Attribute("ThreadContentionMonitoringEnabled", Long.valueOf(42));
 		if (tb.isThreadContentionMonitoringSupported()) {
 			try {
 				mbs.setAttribute(objName, attr);
@@ -1025,8 +1025,8 @@ public class TestThreadMXBean {
 	public final void testSetAttributes() {
 		// Ideal scenario...
 		AttributeList attList = new AttributeList();
-		Attribute tcme = new Attribute("ThreadContentionMonitoringEnabled", new Boolean(false));
-		Attribute tcte = new Attribute("ThreadCpuTimeEnabled", new Boolean(true));
+		Attribute tcme = new Attribute("ThreadContentionMonitoringEnabled", Boolean.valueOf(false));
+		Attribute tcte = new Attribute("ThreadCpuTimeEnabled", Boolean.valueOf(true));
 		attList.add(tcme);
 		attList.add(tcte);
 		AttributeList setAttrs = null;
@@ -1049,7 +1049,7 @@ public class TestThreadMXBean {
 
 		// A failure scenario - a non-existent attribute...
 		AttributeList badList = new AttributeList();
-		Attribute garbage = new Attribute("Auchenback", new Long(2888));
+		Attribute garbage = new Attribute("Auchenback", Long.valueOf(2888));
 		badList.add(garbage);
 		try {
 			setAttrs = mbs.setAttributes(objName, badList);
@@ -1067,7 +1067,7 @@ public class TestThreadMXBean {
 
 		// Another failure scenario - a non-writable attribute...
 		badList = new AttributeList();
-		garbage = new Attribute("ThreadCount", new Long(2888));
+		garbage = new Attribute("ThreadCount", Long.valueOf(2888));
 		badList.add(garbage);
 		try {
 			setAttrs = mbs.setAttributes(objName, badList);
@@ -1085,7 +1085,7 @@ public class TestThreadMXBean {
 
 		// Yet another failure scenario - a wrongly-typed attribute...
 		badList = new AttributeList();
-		garbage = new Attribute("ThreadCpuTimeEnabled", new Long(2888));
+		garbage = new Attribute("ThreadCpuTimeEnabled", Long.valueOf(2888));
 		badList.add(garbage);
 		try {
 			setAttrs = mbs.setAttributes(objName, badList);
@@ -1121,7 +1121,7 @@ public class TestThreadMXBean {
 		// Good case.
 		try {
 			Object retVal = mbs.invoke(objName, "getThreadCpuTime",
-					new Object[] { new Long(Thread.currentThread().getId()) }, new String[] { Long.TYPE.getName() });
+					new Object[] { Long.valueOf(Thread.currentThread().getId()) }, new String[] { Long.TYPE.getName() });
 			AssertJUnit.assertNotNull(retVal);
 			AssertJUnit.assertTrue(retVal instanceof Long);
 		} catch (Exception e) {
@@ -1131,7 +1131,7 @@ public class TestThreadMXBean {
 
 		// Force exception by passing in a negative Thread id
 		try {
-			Object retVal = mbs.invoke(objName, "getThreadCpuTime", new Object[] { new Long(-757) },
+			Object retVal = mbs.invoke(objName, "getThreadCpuTime", new Object[] { Long.valueOf(-757) },
 					new String[] { Long.TYPE.getName() });
 			Assert.fail("Should have thrown an exception!");
 		} catch (Exception e) {
@@ -1150,7 +1150,7 @@ public class TestThreadMXBean {
 		// Good case. long
 		try {
 			Object retVal = mbs.invoke(objName, "getThreadInfo",
-					new Object[] { new Long(Thread.currentThread().getId()) }, new String[] { Long.TYPE.getName() });
+					new Object[] { Long.valueOf(Thread.currentThread().getId()) }, new String[] { Long.TYPE.getName() });
 			// TODO Can't test until we can get back ThreadInfo objects
 			// from the getThreadInfo(long) method.
 			AssertJUnit.assertNotNull(retVal);
@@ -1167,7 +1167,7 @@ public class TestThreadMXBean {
 
 		// Force exception by passing in a negative Thread id. long
 		try {
-			Object retVal = mbs.invoke(objName, "getThreadInfo", new Object[] { new Long(-5353) },
+			Object retVal = mbs.invoke(objName, "getThreadInfo", new Object[] { Long.valueOf(-5353) },
 					new String[] { Long.TYPE.getName() });
 			Assert.fail("Should have thrown an exception!");
 		} catch (Exception e) {
@@ -1177,7 +1177,7 @@ public class TestThreadMXBean {
 		// Good case. long, int
 		try {
 			Object retVal = mbs.invoke(objName, "getThreadInfo",
-					new Object[] { new Long(Thread.currentThread().getId()), new Integer(0) },
+					new Object[] { Long.valueOf(Thread.currentThread().getId()), Integer.valueOf(0) },
 					new String[] { Long.TYPE.getName(), Integer.TYPE.getName() });
 			// TODO Can't test until we can get back ThreadInfo objects
 			// from the getThreadInfo(long) method.
@@ -1195,7 +1195,7 @@ public class TestThreadMXBean {
 
 		// Force exception by passing in a negative Thread id. long, int
 		try {
-			Object retVal = mbs.invoke(objName, "getThreadInfo", new Object[] { new Long(-8467), new Integer(0) },
+			Object retVal = mbs.invoke(objName, "getThreadInfo", new Object[] { Long.valueOf(-8467), Integer.valueOf(0) },
 					new String[] { Long.TYPE.getName(), Integer.TYPE.getName() });
 			Assert.fail("Should have thrown an exception!");
 		} catch (Exception e) {
@@ -1205,7 +1205,7 @@ public class TestThreadMXBean {
 		// Good case. long[], int
 		try {
 			Object retVal = mbs.invoke(objName, "getThreadInfo",
-					new Object[] { new long[] { Thread.currentThread().getId() }, new Integer(0) },
+					new Object[] { new long[] { Thread.currentThread().getId() }, Integer.valueOf(0) },
 					new String[] { "[J", Integer.TYPE.getName() });
 			// TODO Can't test until we can get back ThreadInfo objects
 			// from the getThreadInfo(long) method.
@@ -1224,7 +1224,7 @@ public class TestThreadMXBean {
 		// Force exception by passing in a negative Thread id. long[], int
 		try {
 			Object retVal = mbs.invoke(objName, "getThreadInfo",
-					new Object[] { new long[] { -54321L }, new Integer(0) },
+					new Object[] { new long[] { -54321L }, Integer.valueOf(0) },
 					new String[] { "[J", Integer.TYPE.getName() });
 			Assert.fail("Should have thrown an exception!");
 		} catch (Exception e) {
@@ -1263,7 +1263,7 @@ public class TestThreadMXBean {
 		// Good case.
 		try {
 			Object retVal = mbs.invoke(objName, "getThreadUserTime",
-					new Object[] { new Long(Thread.currentThread().getId()) }, new String[] { Long.TYPE.getName() });
+					new Object[] { Long.valueOf(Thread.currentThread().getId()) }, new String[] { Long.TYPE.getName() });
 			AssertJUnit.assertNotNull(retVal);
 			AssertJUnit.assertTrue(retVal instanceof Long);
 		} catch (Exception e) {
@@ -1272,7 +1272,7 @@ public class TestThreadMXBean {
 
 		// Force exception by passing in a negative Thread id
 		try {
-			Object retVal = mbs.invoke(objName, "getThreadUserTime", new Object[] { new Long(-757) },
+			Object retVal = mbs.invoke(objName, "getThreadUserTime", new Object[] { Long.valueOf(-757) },
 					new String[] { Long.TYPE.getName() });
 			Assert.fail("Should have thrown an exception!");
 		} catch (Exception e) {

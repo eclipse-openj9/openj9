@@ -100,11 +100,6 @@ if(OPENJ9_BUILD)
 	add_definitions(-DOPENJ9_BUILD)
 endif()
 
-# clean up the variables we used
-set(versionStr)
-set(checkCondition)
-set(conditionalVersionString)
-
 ###
 ### Handle Generated files
 ###
@@ -113,7 +108,6 @@ configure_file(include/j9cfg.h.in j9cfg.h)
 configure_file(include/j9lib.h.in j9lib.h)
 configure_file(include/j9version.h.in j9version.h)
 configure_file(makelib/copyright.c.in copyright.c)
-
 
 # Definition of add_hookgen pulled in from omr/cmake/modules/OmrHookgen.cmake
 # Here we handle all the .hdf files which don't have a more logical home.
@@ -137,15 +131,18 @@ add_custom_target(j9vm_hookgen
 )
 
 # Generate NLS headers
+file(GLOB_RECURSE nls_files "${CMAKE_CURRENT_SOURCE_DIR}/nls/*.nls")
 add_custom_command(
-	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/java.properties"
-	DEPENDS j9nls
+	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/nls.stamp"
+	DEPENDS j9nls ${nls_files}
 	COMMAND "${Java_JAVA_EXECUTABLE}" -cp "$<TARGET_PROPERTY:j9nls,JAR_FILE>" com.ibm.oti.NLSTool.J9NLS -source "${CMAKE_CURRENT_SOURCE_DIR}"
+	COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_CURRENT_BINARY_DIR}/nls.stamp"
+	COMMENT "Generating NLS files"
 	VERBATIM
 )
 add_custom_target(j9vm_nlsgen
 	DEPENDS
-		"${CMAKE_CURRENT_BINARY_DIR}/java.properties"
+		"${CMAKE_CURRENT_BINARY_DIR}/nls.stamp"
 )
 
 set(J9VM_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")

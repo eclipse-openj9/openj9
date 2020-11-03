@@ -470,12 +470,3 @@
    TR::TreeEvaluator::df2pdEvaluator,       // TR::de2pdSetSign
    TR::TreeEvaluator::df2pdEvaluator,       // TR::de2pdClean
    TR::TreeEvaluator::BCDCHKEvaluator,      // TR::BCDCHK
-   TR::TreeEvaluator::rsloadEvaluator,      // TR::ircload
-   TR::TreeEvaluator::rsloadEvaluator,      // TR::irsload
-   TR::TreeEvaluator::riloadEvaluator,      // TR::iruiload
-   TR::TreeEvaluator::riloadEvaluator,      // TR::iriload
-   TR::TreeEvaluator::rlloadEvaluator,      // TR::irulload
-   TR::TreeEvaluator::rlloadEvaluator,      // TR::irlload
-   TR::TreeEvaluator::rsstoreEvaluator,     // TR::irsstore
-   TR::TreeEvaluator::ristoreEvaluator,     // TR::iristore
-   TR::TreeEvaluator::rlstoreEvaluator,     // TR::irlstore

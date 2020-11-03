@@ -1738,6 +1738,7 @@ exit:
 		}
 		return method;
 	}
+
 	static VMINLINE bool
 	objectArrayStoreAllowed(J9VMThread const *currentThread, j9object_t array, j9object_t storeValue)
 	{
@@ -1756,6 +1757,120 @@ exit:
 		return rc;
 	}
 
+	/**
+	 * Determine if the method name corresponds to a VarHandle method with polymorphic
+	 * signature.
+	 *
+	 * @param methodNameData the bytes of the method name
+	 * @param methodNameLength the length of the method name
+	 *
+	 * @return true for a VarHandle method with polymorphic signature. Otherwise,
+	 * return false.
+	 */
+	static VMINLINE bool
+	isPolymorphicVarHandleMethod(const U_8 *methodNameData, U_32 methodNameLength)
+	{
+		bool result = false;
+
+		switch (methodNameLength) {
+		case 3:
+			if ((0 == memcmp(methodNameData, "get", methodNameLength))
+			|| (0 == memcmp(methodNameData, "set", methodNameLength))
+			) {
+				result = true;
+			}
+			break;
+		case 9:
+			if ((0 == memcmp(methodNameData, "getOpaque", methodNameLength))
+			|| (0 == memcmp(methodNameData, "setOpaque", methodNameLength))
+			|| (0 == memcmp(methodNameData, "getAndSet", methodNameLength))
+			|| (0 == memcmp(methodNameData, "getAndAdd", methodNameLength))
+			) {
+				result = true;
+			}
+			break;
+		case 10:
+			if ((0 == memcmp(methodNameData, "getAcquire", methodNameLength))
+			|| (0 == memcmp(methodNameData, "setRelease", methodNameLength))
+			) {
+				result = true;
+			}
+			break;
+		case 11:
+			if ((0 == memcmp(methodNameData, "getVolatile", methodNameLength))
+			|| (0 == memcmp(methodNameData, "setVolatile", methodNameLength))
+			) {
+				result = true;
+			}
+			break;
+		case 13:
+			if (0 == memcmp(methodNameData, "compareAndSet", methodNameLength)) {
+				result = true;
+			}
+			break;
+		case 15:
+			if (0 == memcmp(methodNameData, "getAndBitwiseOr", methodNameLength)) {
+				result = true;
+			}
+			break;
+		case 16:
+			if ((0 == memcmp(methodNameData, "getAndSetAcquire", methodNameLength))
+			|| (0 == memcmp(methodNameData, "getAndSetRelease", methodNameLength))
+			|| (0 == memcmp(methodNameData, "getAndAddAcquire", methodNameLength))
+			|| (0 == memcmp(methodNameData, "getAndAddRelease", methodNameLength))
+			|| (0 == memcmp(methodNameData, "getAndBitwiseAnd", methodNameLength))
+			|| (0 == memcmp(methodNameData, "getAndBitwiseXor", methodNameLength))
+			) {
+				result = true;
+			}
+			break;
+		case 17:
+			if (0 == memcmp(methodNameData, "weakCompareAndSet", methodNameLength)) {
+				result = true;
+			}
+			break;
+		case 18:
+			if (0 == memcmp(methodNameData, "compareAndExchange", methodNameLength)) {
+				result = true;
+			}
+			break;
+		case 22:
+			if ((0 == memcmp(methodNameData, "getAndBitwiseOrAcquire", methodNameLength))
+			|| (0 == memcmp(methodNameData, "getAndBitwiseOrRelease", methodNameLength))
+			|| (0 == memcmp(methodNameData, "weakCompareAndSetPlain", methodNameLength))
+			) {
+				result = true;
+			}
+			break;
+		case 23:
+			if ((0 == memcmp(methodNameData, "getAndBitwiseAndAcquire", methodNameLength))
+			|| (0 == memcmp(methodNameData, "getAndBitwiseAndRelease", methodNameLength))
+			|| (0 == memcmp(methodNameData, "getAndBitwiseXorAcquire", methodNameLength))
+			|| (0 == memcmp(methodNameData, "getAndBitwiseXorRelease", methodNameLength))
+			) {
+				result = true;
+			}
+			break;
+		case 24:
+			if ((0 == memcmp(methodNameData, "weakCompareAndSetAcquire", methodNameLength))
+			|| (0 == memcmp(methodNameData, "weakCompareAndSetRelease", methodNameLength))
+			) {
+				result = true;
+			}
+			break;
+		case 25:
+			if ((0 == memcmp(methodNameData, "compareAndExchangeAcquire", methodNameLength))
+			|| (0 == memcmp(methodNameData, "compareAndExchangeRelease", methodNameLength))
+			) {
+				result = true;
+			}
+			break;
+		default:
+			break;
+		}
+
+		return result;
+	}
 };
 
 #endif /* VMHELPERS_HPP_ */

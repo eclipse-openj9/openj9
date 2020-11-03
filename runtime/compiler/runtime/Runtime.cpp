@@ -477,10 +477,18 @@ JIT_HELPER(__postP10ForwardCopy);
 JIT_HELPER(__postP10GenericCopy);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
-JIT_HELPER(ECP256MUL_PPC);
-JIT_HELPER(ECP256MOD_PPC);
-JIT_HELPER(ECP256addNoMod_PPC);
-JIT_HELPER(ECP256subNoMod_PPC);
+#if defined(OMR_GC_FULL_POINTERS)
+JIT_HELPER(ECP256MUL_PPC_full);
+JIT_HELPER(ECP256MOD_PPC_full);
+JIT_HELPER(ECP256addNoMod_PPC_full);
+JIT_HELPER(ECP256subNoMod_PPC_full);
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+JIT_HELPER(ECP256MUL_PPC_compressed);
+JIT_HELPER(ECP256MOD_PPC_compressed);
+JIT_HELPER(ECP256addNoMod_PPC_compressed);
+JIT_HELPER(ECP256subNoMod_PPC_compressed);
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 #endif
 
 #ifndef LINUX
@@ -505,8 +513,14 @@ JIT_HELPER(AESEncryptVMX_PPC);
 JIT_HELPER(AESDecryptVMX_PPC);
 JIT_HELPER(AESEncrypt_PPC);
 JIT_HELPER(AESDecrypt_PPC);
-JIT_HELPER(AESCBCDecrypt_PPC);
-JIT_HELPER(AESCBCEncrypt_PPC);
+#if defined(OMR_GC_FULL_POINTERS)
+JIT_HELPER(AESCBCDecrypt_PPC_full);
+JIT_HELPER(AESCBCEncrypt_PPC_full);
+#endif /* OMR_GC_FULL_POINTERS */
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+JIT_HELPER(AESCBCDecrypt_PPC_compressed);
+JIT_HELPER(AESCBCEncrypt_PPC_compressed);
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 #endif
 
 #elif defined(TR_HOST_ARM)
@@ -1178,8 +1192,20 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_PPCAESDecryptVMX,   (void *) AESDecryptVMX_PPC,   TR_Helper);
    SET(TR_PPCAESEncrypt,      (void *) AESEncrypt_PPC,      TR_Helper);
    SET(TR_PPCAESDecrypt,      (void *) AESDecrypt_PPC,      TR_Helper);
-   SET(TR_PPCAESCBCDecrypt,   (void *) AESCBCDecrypt_PPC,   TR_Helper);
-   SET(TR_PPCAESCBCEncrypt,   (void *) AESCBCEncrypt_PPC,   TR_Helper);
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+   if (TR::Compiler->om.compressObjectReferences())
+      {
+      SET(TR_PPCAESCBCDecrypt,   (void *) AESCBCDecrypt_PPC_compressed,   TR_Helper);
+      SET(TR_PPCAESCBCEncrypt,   (void *) AESCBCEncrypt_PPC_compressed,   TR_Helper);
+      }
+   else
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+      {
+#if defined(OMR_GC_FULL_POINTERS)
+      SET(TR_PPCAESCBCDecrypt,   (void *) AESCBCDecrypt_PPC_full,   TR_Helper);
+      SET(TR_PPCAESCBCEncrypt,   (void *) AESCBCEncrypt_PPC_full,   TR_Helper);
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+      }
 #else
    SET(TR_isAESSupportedByHardware,    (void *) 0, TR_Helper);
    SET(TR_doAESInHardwareInner,        (void *) 0, TR_Helper);
@@ -1416,10 +1442,24 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_PPCpostP10GenericCopy,           (void *) __postP10GenericCopy,           TR_Helper);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
-   SET(TR_PPCP256Multiply,                 (void *) ECP256MUL_PPC);
-   SET(TR_PPCP256Mod,                      (void *) ECP256MOD_PPC);
-   SET(TR_PPCP256addNoMod,                 (void *) ECP256addNoMod_PPC);
-   SET(TR_PPCP256subNoMod,                 (void *) ECP256subNoMod_PPC);
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+   if (TR::Compiler->om.compressObjectReferences())
+      {
+      SET(TR_PPCP256Multiply,                 (void *) ECP256MUL_PPC_compressed);
+      SET(TR_PPCP256Mod,                      (void *) ECP256MOD_PPC_compressed);
+      SET(TR_PPCP256addNoMod,                 (void *) ECP256addNoMod_PPC_compressed);
+      SET(TR_PPCP256subNoMod,                 (void *) ECP256subNoMod_PPC_compressed);
+      }
+   else
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+      {
+#if defined(OMR_GC_FULL_POINTERS)
+      SET(TR_PPCP256Multiply,                 (void *) ECP256MUL_PPC_full);
+      SET(TR_PPCP256Mod,                      (void *) ECP256MOD_PPC_full);
+      SET(TR_PPCP256addNoMod,                 (void *) ECP256addNoMod_PPC_full);
+      SET(TR_PPCP256subNoMod,                 (void *) ECP256subNoMod_PPC_full);
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+      }
 #endif
 
 #ifndef LINUX
