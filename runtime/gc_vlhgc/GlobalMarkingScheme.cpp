@@ -1239,8 +1239,8 @@ private:
 		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCandidates += 1;
 		if (!_markingScheme->isMarked(objectPtr)) {
 			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCleared += 1;
-			PORT_ACCESS_FROM_ENVIRONMENT(_env);
-			j9vmem_free_memory(identifier->address, identifier->size, identifier);
+			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
+			omrvmem_release_double_mapped_region(identifier->address, identifier->size, identifier);
 		}
     }
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
