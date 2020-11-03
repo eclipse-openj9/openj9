@@ -33,9 +33,6 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGeneratorConnector
    {
    public:
 
-   CodeGenerator() :
-      J9::CodeGeneratorConnector() {}
-
    CodeGenerator(TR::Compilation *comp) :
       J9::CodeGeneratorConnector(comp) {}
    };

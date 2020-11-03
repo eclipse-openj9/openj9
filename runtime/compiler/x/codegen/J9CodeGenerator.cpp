@@ -53,6 +53,10 @@ J9::X86::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
       J9::CodeGenerator(comp),
    _stackFramePaddingSizeInBytes(0)
    {
+   /**
+    * Do not add CodeGenerator initialization logic here.
+    * Use the \c initialize() method instead.
+    */
    }
 
 void
@@ -180,132 +184,6 @@ J9::X86::CodeGenerator::initialize()
 
    comp->setReturnInfo(returnInfo);
    }
-
-J9::X86::CodeGenerator::CodeGenerator() :
-      J9::CodeGenerator(),
-      _stackFramePaddingSizeInBytes(0)
-   {
-   TR::CodeGenerator *cg = self();
-   TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   TR::ResolvedMethodSymbol *methodSymbol  = comp->getJittedMethodSymbol();
-   TR_ResolvedMethod * jittedMethod = methodSymbol->getResolvedMethod();
-
-   cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
-
-   if (!TR::Compiler->om.canGenerateArraylets())
-      {
-      cg->setSupportsReferenceArrayCopy();
-      }
-
-   if (comp->requiresSpineChecks())
-      {
-      // Spine check code doesn't officially support codegen register rematerialization
-      // yet.  Better spill placement interferes with tracking live spills.
-      //
-      cg->setUseNonLinearRegisterAssigner();
-      cg->resetEnableRematerialisation();
-      cg->resetEnableBetterSpillPlacements();
-      }
-
-   static char *disableMonitorCacheLookup = feGetEnv("TR_disableMonitorCacheLookup");
-   if (!disableMonitorCacheLookup)
-      {
-      comp->setOption(TR_EnableMonitorCacheLookup);
-      }
-
-   cg->setSupportsPartialInlineOfMethodHooks();
-   cg->setSupportsInliningOfTypeCoersionMethods();
-   cg->setSupportsNewInstanceImplOpt();
-
-   TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) == cg->getX86ProcessorInfo().supportsSSE4_1(), "supportsSSE4_1() failed\n");
-   TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSSE3) == cg->getX86ProcessorInfo().supportsSSSE3(), "supportsSSSE3() failed\n");
-
-   if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) &&
-       !comp->getOption(TR_DisableSIMDStringCaseConv) &&
-       !TR::Compiler->om.canGenerateArraylets())
-      cg->setSupportsInlineStringCaseConversion();
-
-   if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSSE3) &&
-       !comp->getOption(TR_DisableFastStringIndexOf) &&
-       !TR::Compiler->om.canGenerateArraylets())
-      {
-      cg->setSupportsInlineStringIndexOf();
-      }
-
-   if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) &&
-       !comp->getOption(TR_DisableSIMDStringHashCode) &&
-       !TR::Compiler->om.canGenerateArraylets())
-      {
-      cg->setSupportsInlineStringHashCode();
-      }
-
-   if (comp->generateArraylets() && !comp->getOptions()->realTimeGC())
-      {
-      cg->setSupportsStackAllocationOfArraylets();
-      }
-
-   if (!comp->getOption(TR_FullSpeedDebug))
-      cg->setSupportsDirectJNICalls();
-
-   if (!comp->getOption(TR_DisableBDLLVersioning))
-      {
-      cg->setSupportsBigDecimalLongLookasideVersioning();
-      cg->setSupportsBDLLHardwareOverflowCheck();
-      }
-
-   // Disable fast gencon barriers for AOT compiles because relocations on
-   // the inlined heap addresses are not available (yet).
-   //
-   if (!fej9->supportsEmbeddedHeapBounds())
-      {
-      comp->setOption(TR_DisableWriteBarriersRangeCheck);
-      }
-
-   // Enable copy propagation of floats.
-   //
-   cg->setSupportsJavaFloatSemantics();
-
-   /*
-    * "Statically" initialize the FE-specific tree evaluator functions.
-    * This code only needs to execute once per JIT lifetime.
-    */
-   static bool initTreeEvaluatorTable = false;
-   if (!initTreeEvaluatorTable)
-      {
-      TEMPORARY_initJ9X86TreeEvaluatorTable(cg);
-      initTreeEvaluatorTable = true;
-      }
-
-   // Set return type info here so that we always set it in case the return is optimized out
-   TR_ReturnInfo returnInfo;
-   switch (jittedMethod->returnType())
-      {
-      case TR::NoType:
-         returnInfo = TR_VoidReturn;
-         break;
-      case TR::Int8:
-      case TR::Int16:
-      case TR::Int32:
-         returnInfo = TR_IntReturn;
-         break;
-      case TR::Int64:
-         returnInfo = TR_LongReturn;
-         break;
-      case TR::Address:
-         returnInfo = comp->target().is64Bit() ? TR_ObjectReturn : TR_IntReturn;
-         break;
-      case TR::Float:
-         returnInfo = TR_FloatXMMReturn;
-         break;
-      case TR::Double:
-         returnInfo = TR_DoubleXMMReturn;
-         break;
-      }
-    comp->setReturnInfo(returnInfo);
-
-   }
-
 
 TR::Recompilation *
 J9::X86::CodeGenerator::allocateRecompilationInfo()

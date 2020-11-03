@@ -2389,7 +2389,7 @@ MM_IncrementalGenerationalGC::unloadDeadClassLoaders(MM_EnvironmentVLHGC *env)
 		U_64 quiesceTime = _extensions->classLoaderManager->enterClassUnloadMutex(env);
 		classUnloadStats->_classUnloadMutexQuiesceTime = quiesceTime;
 
-		classUnloadStats->_startScanTime = classUnloadStats->_endSetupTime;
+		classUnloadStats->_startScanTime = j9time_hires_clock();
 
 		/* The list of classLoaders to be unloaded by cleanUpClassLoadersEnd is rooted in unloadLink */
 		J9ClassLoader *unloadLink = NULL;
