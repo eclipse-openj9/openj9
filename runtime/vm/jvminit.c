@@ -637,18 +637,20 @@ freeJavaVM(J9JavaVM * vm)
 	}
 
 	/* Kill global hot field class info pool and its monitor if dynamicBreadthFirstScanOrdering is enabled */
-	hotReferenceFieldRequired = vm->memoryManagerFunctions->j9gc_hot_reference_field_required(vm);
-	if (hotReferenceFieldRequired && NULL != vm->hotFieldClassInfoPool) {
-		pool_kill(vm->hotFieldClassInfoPool);
-		vm->hotFieldClassInfoPool = NULL;
-	}
+	if (NULL != vm->memoryManagerFunctions) {
+		hotReferenceFieldRequired = vm->memoryManagerFunctions->j9gc_hot_reference_field_required(vm);
+		if (hotReferenceFieldRequired && NULL != vm->hotFieldClassInfoPool) {
+			pool_kill(vm->hotFieldClassInfoPool);
+			vm->hotFieldClassInfoPool = NULL;
+		}
 
-	if (hotReferenceFieldRequired && NULL != vm->hotFieldClassInfoPoolMutex) {
-		omrthread_monitor_destroy(vm->hotFieldClassInfoPoolMutex);
-	}
+		if (hotReferenceFieldRequired && NULL != vm->hotFieldClassInfoPoolMutex) {
+			omrthread_monitor_destroy(vm->hotFieldClassInfoPoolMutex);
+		}
 
-	if (hotReferenceFieldRequired && NULL != vm->globalHotFieldPoolMutex) {
-		omrthread_monitor_destroy(vm->globalHotFieldPoolMutex);
+		if (hotReferenceFieldRequired && NULL != vm->globalHotFieldPoolMutex) {
+			omrthread_monitor_destroy(vm->globalHotFieldPoolMutex);
+		}
 	}
 
 	if (NULL != vm->classMemorySegments) {
