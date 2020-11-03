@@ -1079,7 +1079,8 @@ static const char * const excludeArray[] = {
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedAction;Ljava/security/AccessControlContext;)Ljava/lang/Object;",
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;)Ljava/lang/Object;",
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;",
-   "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;"
+   "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;",
+   "jdk/internal/loader/NativeLibraries.load(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z",
 };
 
 bool
@@ -3379,6 +3380,12 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+   static X NativeLibrariesMethods[] =
+      {
+      {x(TR::jdk_internal_loader_NativeLibraries_load, "load", "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z")},
+      {  TR::unknownMethod}
+      };
+
    static X ArrayMethods[] =
       {
       {x(TR::java_lang_reflect_Array_getLength, "getLength", "(Ljava/lang/Object;)I")},
@@ -4431,6 +4438,7 @@ void TR_ResolvedJ9Method::construct()
    static Y class35[] =
       {
       { "java/lang/invoke/ExplicitCastHandle", ExplicitCastHandleMethods },
+      { "jdk/internal/loader/NativeLibraries", NativeLibrariesMethods },
       { 0 }
       };
 
@@ -6413,6 +6421,11 @@ TR_ResolvedJ9Method::isCompilable(TR_Memory * trMemory)
    magic = (J9JNIMethodID *) javaVM->doPrivilegedWithContextPermissionMethodID2;
    if (magic && ramMethod() == magic->method)
       return false;
+
+   magic = (J9JNIMethodID *) javaVM->nativeLibrariesLoadMethodID;
+   if (magic && ramMethod() == magic->method) {
+      return false;
+   }
 
    return true;
    }
