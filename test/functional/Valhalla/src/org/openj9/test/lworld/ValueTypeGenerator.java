@@ -46,8 +46,91 @@ public class ValueTypeGenerator extends ClassLoader {
 	static {
 		generator = new ValueTypeGenerator();
 	}
-	
-	private static byte[] generateClass(String className, String[] fields, String valueUsedInCode, String[] valueFields, String nestHost, String containerUsedInCode, String[] containerFields, boolean isVerifiable, boolean isRef) {
+
+	private static class ClassConfiguration {
+		private String name;
+		private String[] fields;
+		private String nestHost;
+		private boolean isVerifiable;
+		private boolean isReference;
+		private ClassConfiguration accessedContainer;
+		private ClassConfiguration valueClassUsedInCode;
+
+		public ClassConfiguration(String name) {
+			this.name = name;
+		}
+
+		public ClassConfiguration(String name, String[] fields) {
+			this.name = name;
+			this.fields = fields;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public String[] getFields() {
+			return fields;
+		}
+
+		public String getNestHost() {
+			return nestHost;
+		}
+
+		public void setNestHost(String nestHost) {
+			this.nestHost = nestHost;
+		}
+
+		public void setIsReference(boolean isReference) {
+			this.isReference = isReference;
+		}
+
+		public boolean isReference() {
+			return isReference;
+		}
+
+		public void setIsVerifiable(boolean isVerifiable) {
+			this.isVerifiable = isVerifiable;
+		}
+
+		public boolean isVerifiable() {
+			return this.isVerifiable;
+		}
+
+		public void setAccessedContainer(ClassConfiguration accessedContainer) {
+			this.accessedContainer = accessedContainer;
+		}
+
+		public ClassConfiguration getAccessedContainer() {
+			return accessedContainer;
+		}
+
+		public void setValueClassUsedInCode(ClassConfiguration valueClassUsedInCode) {
+			this.valueClassUsedInCode = valueClassUsedInCode;
+		}
+
+		public ClassConfiguration getValueClassUsedInCode() {
+			return valueClassUsedInCode;
+		}
+	}
+
+	private static byte[] generateClass(ClassConfiguration config) {
+		String className = config.getName();
+		String[] fields = config.getFields();
+
+		String nestHost = config.getNestHost();
+
+		ClassConfiguration valueClassConfig = config.getValueClassUsedInCode();
+		String valueUsedInCode = (valueClassConfig != null) ? valueClassConfig.getName() : null;
+		String[] valueFields = (valueClassConfig != null) ? valueClassConfig.getFields() : null;
+
+		ClassConfiguration containerClassConfig = config.getAccessedContainer();
+		String containerUsedInCode = (containerClassConfig != null) ? containerClassConfig.getName() : null;
+		String[] containerFields = (containerClassConfig != null) ? containerClassConfig.getFields() : null;
+
+		boolean isVerifiable = config.isVerifiable();
+		boolean isRef = config.isReference();
+
 		ClassWriter cw = new ClassWriter(0);
 		FieldVisitor fv;
 		MethodVisitor mv;
@@ -1034,37 +1117,64 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 
 	public static Class<?> generateValueClass(String name, String[] fields) throws Throwable {
-		byte[] bytes = generateClass(name, fields, null, null, null, null, null, false, false);
+		ClassConfiguration classConfig = new ClassConfiguration(name, fields);
+
+		byte[] bytes = generateClass(classConfig);
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateValueClass(String name, String[] fields, String nestHost) throws Throwable {
-		byte[] bytes = generateClass(name, fields, null, null, nestHost, null, null, false, false);
+		ClassConfiguration classConfig = new ClassConfiguration(name, fields);
+		classConfig.setNestHost(nestHost);
+
+		byte[] bytes = generateClass(classConfig);
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateVerifiableValueClass(String name, String[] fields) throws Throwable {
-		byte[] bytes = generateClass(name, fields, null, null, null, null, null, true, false);
+		ClassConfiguration classConfig = new ClassConfiguration(name, fields);
+		classConfig.setIsVerifiable(true);
+
+		byte[] bytes = generateClass(classConfig);
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateRefClass(String name, String[] fields) throws Throwable {
-		byte[] bytes = generateClass(name, fields, null, null, null, null, null, false, true);
+		ClassConfiguration classConfig = new ClassConfiguration(name, fields);
+		classConfig.setIsReference(true);
+
+		byte[] bytes = generateClass(classConfig);
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateRefClass(String name, String[] fields, String valueUsedInCode) throws Throwable {
-		byte[] bytes = generateClass(name, fields, valueUsedInCode, null, null, null, null, false, true);
+		ClassConfiguration classConfig = new ClassConfiguration(name, fields);
+		ClassConfiguration valueClassConfig = new ClassConfiguration(valueUsedInCode);
+		classConfig.setValueClassUsedInCode(valueClassConfig);
+		classConfig.setIsReference(true);
+
+		byte[] bytes = generateClass(classConfig);
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateHostRefClass(String name, String[] fields, String valueUsedInCode, String[] valueFields) throws Throwable {
-		byte[] bytes = generateClass(name, fields, valueUsedInCode, valueFields, null, null, null, false, true);
+		ClassConfiguration classConfig = new ClassConfiguration(name, fields);
+		ClassConfiguration valueClassConfig = new ClassConfiguration(valueUsedInCode, valueFields);
+		classConfig.setValueClassUsedInCode(valueClassConfig);
+		classConfig.setIsReference(true);
+
+		byte[] bytes = generateClass(classConfig);
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateRefClass(String name, String[] fields, String containerClassName, String[] containerFields) throws Throwable {
-		byte[] bytes = generateClass(name, fields, null, null, null, containerClassName, containerFields, false, true);
+		ClassConfiguration classConfig = new ClassConfiguration(name, fields);
+		ClassConfiguration containerClassConfig = new ClassConfiguration(containerClassName, containerFields);
+		containerClassConfig.setIsReference(true);
+		classConfig.setAccessedContainer(containerClassConfig);
+		classConfig.setIsReference(true);
+
+		byte[] bytes = generateClass(classConfig);
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
