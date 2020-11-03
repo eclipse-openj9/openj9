@@ -43,19 +43,20 @@
 #include "AtomicOperations.hpp" 
 #include "ReferenceStats.hpp"
 #include "JavaStats.hpp"
-#include "ConcurrentMarkStats.hpp"
 
 /**
  * Storage for statistics relevant to the mark phase of a global collection.
  * @ingroup GC_Stats
  */
-class MM_MarkVLHGCStats : public MM_ConcurrentMarkStats
+class MM_MarkVLHGCStats
 {
 /* data members */
 private:
 protected:
 public:
 	MM_JavaStats _javaStats;
+	uintptr_t _objectsCardClean;	/**< Objects scanned through card cleaning */
+	uintptr_t _bytesCardClean;		/**< Bytes scanned through card cleaning */
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	UDATA _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
@@ -69,14 +70,9 @@ public:
 
 	void clear()
 	{
-		// MM_ConcurrentMarkStats::clear();
 		_javaStats.clear();
-
-		// _ownableSynchronizerSurvived = 0;
-		// _ownableSynchronizerCleared = 0;
-
-		// _stringConstantsCleared = 0;
-		// _stringConstantsCandidates = 0;
+		_objectsCardClean = 0;
+		_bytesCardClean = 0;
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared = 0;
@@ -90,13 +86,9 @@ public:
 
 	void merge(MM_MarkVLHGCStats *statsToMerge)
 	{
-		// MM_ConcurrentMarkStats::merge(statsToMerge);
 		_javaStats.merge(&statsToMerge->_javaStats);
-		// _ownableSynchronizerSurvived += statsToMerge->_ownableSynchronizerSurvived;
-		// _ownableSynchronizerCleared += statsToMerge->_ownableSynchronizerCleared;
-
-		// _stringConstantsCleared += statsToMerge->_stringConstantsCleared;
-		// _stringConstantsCandidates += statsToMerge->_stringConstantsCandidates;
+		_objectsCardClean += statsToMerge->_objectsCardClean;
+		_bytesCardClean += statsToMerge->_bytesCardClean;
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared += statsToMerge->_doubleMappedArrayletsCleared;
@@ -111,19 +103,13 @@ public:
 	}
 	
 	MM_MarkVLHGCStats() :
-		MM_ConcurrentMarkStats()
-		,_javaStats()
-		// ,_ownableSynchronizerSurvived(0)
-		// ,_ownableSynchronizerCleared(0)
-		// ,_stringConstantsCleared(0)
-		// ,_stringConstantsCandidates(0)
+		_javaStats()
+		,_objectsCardClean(0)
+		,_bytesCardClean(0)
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		,_doubleMappedArrayletsCleared(0)
 		,_doubleMappedArrayletsCandidates(0)
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
-#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
-		// ,_splitArraysProcessed(0)
-#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 	{
 	}
 	

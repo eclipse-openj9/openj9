@@ -23,7 +23,6 @@
 
 #include "ScavengerJavaStats.hpp"
 
-
 MM_ScavengerJavaStats::MM_ScavengerJavaStats() :
 	MM_JavaStats()
 	,_ownableSynchronizerTotalSurvived(0)

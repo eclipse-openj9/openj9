@@ -157,6 +157,7 @@ MM_ParallelGlobalMarkTask::setup(MM_EnvironmentBase *envBase)
 	}
 	env->_markStats.clear();
 	env->_markVLHGCStats.clear();
+	env->_cardCleaningStats.clear();
 	env->_workPacketStats.clear();
 	
 	/* record that this thread is participating in this cycle */
@@ -171,6 +172,8 @@ MM_ParallelGlobalMarkTask::cleanup(MM_EnvironmentBase *envBase)
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats.merge(&env->_markStats);
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markVLHGCStats.merge(&env->_markVLHGCStats);
+	// static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._cardCleaningStats.merge(&env->_cardCleaningStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.merge(&env->_workPacketStats);
 	if(!env->isMainThread()) {
 		env->_cycleState = NULL;
@@ -469,8 +472,8 @@ MMINLINE void
 MM_GlobalMarkingScheme::updateScanStats(MM_EnvironmentVLHGC *env, UDATA bytesScanned, ScanReason reason)
 {
 	if (SCAN_REASON_DIRTY_CARD == reason) {
-		env->_cardCleaningStats._objectsCardClean += 1;
-		env->_cardCleaningStats._bytesCardClean += bytesScanned;
+		env->_markVLHGCStats._objectsCardClean += 1;
+		env->_markVLHGCStats._bytesCardClean += bytesScanned;
 	} else if (SCAN_REASON_PACKET == reason) {
 		env->_markStats._objectsScanned += 1;
 		env->_markStats._bytesScanned += bytesScanned;

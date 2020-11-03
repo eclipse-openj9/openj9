@@ -373,6 +373,7 @@ MM_VerboseHandlerOutputVLHGC::handleCopyForwardEnd(J9HookInterface** hook, UDATA
 	MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(event->currentThread);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env->getOmrVM());
 	MM_CopyForwardStats *copyForwardStats = (MM_CopyForwardStats *)event->copyForwardStats;
+	MM_MarkStats *markStats = &env->_markStats;
 	MM_WorkPacketStats *workPacketStats = (MM_WorkPacketStats *)event->workPacketStats;
 	MM_InterRegionRememberedSetStats *irrsStats = (MM_InterRegionRememberedSetStats *)event->irrsStats;
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
@@ -411,13 +412,13 @@ MM_VerboseHandlerOutputVLHGC::handleCopyForwardEnd(J9HookInterface** hook, UDATA
 	outputRememberedSetClearedInfo(env, irrsStats);
 
 	outputUnfinalizedInfo(env, 1, copyForwardStats->_javaStats._unfinalizedCandidates, copyForwardStats->_javaStats._unfinalizedEnqueued);
-	outputOwnableSynchronizerInfo(env, 1, copyForwardStats->_javaStats._ownableSynchronizerCandidates, (copyForwardStats->_javaStats._ownableSynchronizerCandidates-copyForwardStats->_ownableSynchronizerSurvived));
+	outputOwnableSynchronizerInfo(env, 1, copyForwardStats->_javaStats._ownableSynchronizerCandidates, (copyForwardStats->_javaStats._ownableSynchronizerCandidates-markStats->_ownableSynchronizerSurvived));
 
 	outputReferenceInfo(env, 1, "soft", &copyForwardStats->_javaStats._softReferenceStats, extensions->getDynamicMaxSoftReferenceAge(), extensions->getMaxSoftReferenceAge());
 	outputReferenceInfo(env, 1, "weak", &copyForwardStats->_javaStats._weakReferenceStats, 0, 0);
 	outputReferenceInfo(env, 1, "phantom", &copyForwardStats->_javaStats._phantomReferenceStats, 0, 0);
 
-	outputStringConstantInfo(env, 1, copyForwardStats->_stringConstantsCandidates, copyForwardStats->_stringConstantsCleared);
+	outputStringConstantInfo(env, 1, markStats->_stringConstantsCandidates, markStats->_stringConstantsCleared);
 	outputMonitorReferenceInfo(env, 1, copyForwardStats->_javaStats._monitorReferenceCandidates, copyForwardStats->_javaStats._monitorReferenceCleared);
 
 	if(0 != copyForwardStats->_heapExpandedCount) {
@@ -558,9 +559,9 @@ MM_VerboseHandlerOutputVLHGC::outputMarkSummary(MM_EnvironmentBase *env, const c
 	writer->formatAndOutput(env, 1, "<trace-info objectcount=\"%zu\" scancount=\"%zu\" scanbytes=\"%zu\" />",
 		markStats->_objectsMarked, markStats->_objectsScanned, markStats->_bytesScanned);
 
-	if (0 != env->_cardCleaningStats._objectsCardClean) {
+	if (0 != markVLHGCStats->_objectsCardClean) {
 		writer->formatAndOutput(env, 1, "<cardclean-info objects=\"%zu\" bytes=\"%zu\" />",
-				env->_cardCleaningStats._objectsCardClean, env->_cardCleaningStats._bytesCardClean);
+				markVLHGCStats->_objectsCardClean, markVLHGCStats->_bytesCardClean);
 	}
 
 	if (NULL != irrsStats) {

@@ -53,11 +53,6 @@ class MM_CopyForwardStats : public MM_CopyForwardStatsCore
 public:
 	MM_JavaStats _javaStats;
 	/* The below stats include both marked and copied cases */
-	UDATA _ownableSynchronizerSurvived;	/**< number of ownable synchronizer objects survived this cycle */
-
-	UDATA _stringConstantsCleared;  /**< The number of string constants that have been cleared during marking */
-	UDATA _stringConstantsCandidates; /**< The number of string constants that have been visited in string table during marking */
-
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	UDATA _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
 	UDATA _doubleMappedArrayletsCandidates; /**< The number of double mapped arraylets that have been visited during marking */
@@ -75,11 +70,6 @@ public:
 		MM_CopyForwardStatsCore::clear();
 		_javaStats.clear();
 
-		_ownableSynchronizerSurvived = 0;
-
-		_stringConstantsCleared = 0;
-		_stringConstantsCandidates = 0;
-
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared = 0;
 		_doubleMappedArrayletsCandidates = 0;
@@ -94,11 +84,6 @@ public:
 		MM_CopyForwardStatsCore::merge(stats);
 		_javaStats.merge(&stats->_javaStats);
 
-		_ownableSynchronizerSurvived += stats->_ownableSynchronizerSurvived;
-
-		_stringConstantsCleared += stats->_stringConstantsCleared;
-		_stringConstantsCandidates += stats->_stringConstantsCandidates;
-
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared += stats->_doubleMappedArrayletsCleared;
 		_doubleMappedArrayletsCandidates += stats->_doubleMappedArrayletsCandidates;
@@ -108,9 +93,6 @@ public:
 	MM_CopyForwardStats() :
 		MM_CopyForwardStatsCore()
 		, _javaStats()
-		, _ownableSynchronizerSurvived(0)
-		, _stringConstantsCleared(0)
-		, _stringConstantsCandidates(0)
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		, _doubleMappedArrayletsCleared(0)
 		, _doubleMappedArrayletsCandidates(0)

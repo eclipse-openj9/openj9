@@ -1399,7 +1399,7 @@ MM_CopyForwardScheme::mainCleanupForCopyForward(MM_EnvironmentVLHGC *env)
 		Assert_MM_true(_cacheFreeList.getTotalCacheCount() == _cacheFreeList.countCaches());
 	}
 
-	Assert_MM_true(static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._javaStats._ownableSynchronizerCandidates >= static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._ownableSynchronizerSurvived);
+	Assert_MM_true(static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._javaStats._ownableSynchronizerCandidates >= static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._ownableSynchronizerSurvived);
 }
 
 /**
@@ -3327,7 +3327,7 @@ MM_CopyForwardScheme::addOwnableSynchronizerObjectInList(MM_EnvironmentVLHGC *en
 {
 	if (NULL != _extensions->accessBarrier->isObjectInOwnableSynchronizerList(object)) {
 		env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->add(env, object);
-		env->_copyForwardStats._ownableSynchronizerSurvived += 1;
+		env->_markStats._ownableSynchronizerSurvived += 1;
 	}
 }
 
@@ -3874,14 +3874,14 @@ private:
 
 	virtual void doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator) {
 		J9Object *objectPtr = *slotPtr;
-		MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._stringConstantsCandidates += 1;
+		MM_EnvironmentVLHGC::getEnvironment(_env)->_markStats._stringConstantsCandidates += 1;
 		if(!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
 			MM_ScavengerForwardedHeader forwardedHeader(objectPtr, _extensions);
 			objectPtr = forwardedHeader.getForwardedObject();
 			if(NULL == objectPtr) {
 				Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
-				MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._stringConstantsCleared += 1;
+				MM_EnvironmentVLHGC::getEnvironment(_env)->_markStats._stringConstantsCleared += 1;
 				stringTableIterator->removeSlot();
 			} else {
 				*slotPtr = objectPtr;

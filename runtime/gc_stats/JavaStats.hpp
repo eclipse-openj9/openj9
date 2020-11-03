@@ -73,9 +73,9 @@ public:
         _ownableSynchronizerCandidates += statsToMerge->_ownableSynchronizerCandidates;
 
         _weakReferenceStats.merge(&statsToMerge->_weakReferenceStats);
-		_softReferenceStats.merge(&statsToMerge->_softReferenceStats);
-		_phantomReferenceStats.merge(&statsToMerge->_phantomReferenceStats);
-        
+        _softReferenceStats.merge(&statsToMerge->_softReferenceStats);
+        _phantomReferenceStats.merge(&statsToMerge->_phantomReferenceStats);
+
         _monitorReferenceCleared += statsToMerge->_monitorReferenceCleared;
         _monitorReferenceCandidates += statsToMerge->_monitorReferenceCandidates;
     }
@@ -87,9 +87,9 @@ public:
         , _ownableSynchronizerCandidates(0)
         , _weakReferenceStats()
         , _softReferenceStats()
-		, _phantomReferenceStats()
+        , _phantomReferenceStats()
         , _monitorReferenceCleared(0)
-		, _monitorReferenceCandidates(0)
+        , _monitorReferenceCandidates(0)
 	{
         clear();
 	}

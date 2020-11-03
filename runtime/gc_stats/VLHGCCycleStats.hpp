@@ -61,6 +61,7 @@ public:
 public:
 	MM_VLHGCCycleStats() :
 		_markStats()
+		,_markVLHGCStats()
 		,_concurrentMarkStats()
 		,_incrementalMarkStats()
 		,_workPacketStats()
@@ -73,6 +74,7 @@ public:
 	MMINLINE void clear()
 	{
 		_markStats.clear();
+		_markVLHGCStats.clear();
 		_concurrentMarkStats.clear();
 		_incrementalMarkStats.clear();
 		_workPacketStats.clear();
@@ -86,7 +88,6 @@ public:
 	{
 		_markStats.merge(&stats->_markStats);
 		_markVLHGCStats.merge(&stats->_markVLHGCStats);
-		// _markVLHGCStats.merge(&stats->_markVLHGCStats);
 		_workPacketStats.merge(&stats->_workPacketStats);
 		_irrsStats.merge(&stats->_irrsStats);
 
