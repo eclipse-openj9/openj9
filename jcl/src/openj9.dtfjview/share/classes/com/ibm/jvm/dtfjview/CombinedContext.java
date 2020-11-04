@@ -62,21 +62,20 @@ import com.ibm.jvm.dtfjview.spi.IOutputManager;
  * it with a DDR interactive context if one exists.
  * 
  * @author adam
- *
  */
 public class CombinedContext extends DTFJContext implements ICombinedContext {
 	private Logger logger = Logger.getLogger(SessionProperties.LOGGER_PROPERTY);
-	
-	//declarations required to support DDR interactive accessed through this DTFJ context
+
+	// declarations required to support DDR interactive accessed through this DTFJ context
 	private static final String DDR_INTERACTIVE_CLASS = "com.ibm.j9ddr.tools.ddrinteractive.DDRInteractive";
-	private Throwable ddrStartupException = null;	//the exception which was thrown when the DDR interactive session was started
+	private Throwable ddrStartupException = null; // the exception which was thrown when the DDR interactive session was started
 	private Object ddriObject = null;
 	private Method ddriMethod = null;
 	private boolean ddrAvailable = false;
-	private int id = 0;				//context id to be referenced by the 'context' command
-	
+	private int id = 0; // context id to be referenced by the 'context' command
+
 	{
-		//global commands exist irrespective of the context type
+		// global commands exist irrespective of the context type
 		globalCommands.add(new OpenCommand());
 		globalCommands.add(new CloseCommand());
 		globalCommands.add(new SetLoggingCommand());
@@ -84,19 +83,19 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 		globalCommands.add(new PwdCommand());
 		globalCommands.add(new CdCommand());
 	}
-	
+
 	public CombinedContext(int major, int minor, Image image, ImageAddressSpace space, ImageProcess proc, JavaRuntime rt, int id) {
 		super(major, minor, image, space, proc, rt);
 		this.id = id;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ICombinedContext#getId()
 	 */
 	public int getID() {
 		return id;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ICombinedContext#setId(int)
 	 */
@@ -123,9 +122,9 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 	 * up various instance level fields. Commands that directly implement the DTFJ
 	 * plugin interfaces will be ignored.
 	 */
-	private boolean initJdmpviewCommand(CommandParser parser, PrintStream out) throws CommandException {	
+	private boolean initJdmpviewCommand(CommandParser parser, PrintStream out) throws CommandException {
 		for (ICommand command : commands) {
-			if(command.recognises(parser.getCommand(), this)) {
+			if (command.recognises(parser.getCommand(), this)) {
 				try {
 					/*
 					 * This work-around is needed because the BaseJdmpviewCommand is loaded in both the
@@ -136,8 +135,8 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 					 * to get the BaseJdmpviewCommand class and then use reflection to invoke it.
 					 */
 					Class<?> base = command.getClass().getClassLoader().loadClass(BaseJdmpviewCommand.class.getName());
-					if(base.isAssignableFrom(command.getClass())) {
-						Method method = base.getMethod("initCommand", new Class<?>[]{String.class, String[].class, IContext.class, PrintStream.class});
+					if (base.isAssignableFrom(command.getClass())) {
+						Method method = base.getMethod("initCommand", String.class, String[].class, IContext.class, PrintStream.class);
 						Object result = method.invoke(command, parser.getCommand(), parser.getArguments(), this, out);
 						return (Boolean) result;
 					}
@@ -149,7 +148,7 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 		}
 		return false;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ICombinedContext#execute(java.lang.String, java.io.PrintStream)
 	 */
@@ -167,11 +166,11 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 	 * @see com.ibm.jvm.dtfjview.spi.ICombinedContext#execute(com.ibm.java.diagnostics.utils.commands.CommandParser, java.io.PrintStream)
 	 */
 	public void execute(CommandParser command, PrintStream out) {
-		if(isDDRCommand(command.getOriginalLine())) {
+		if (isDDRCommand(command.getOriginalLine())) {
 			executeDDRInteractiveCommand(command.getOriginalLine(), out);
 		} else {
 			try {
-				if(!initJdmpviewCommand(command, out)) {
+				if (!initJdmpviewCommand(command, out)) {
 					super.execute(command, out);
 				}
 			} catch (Exception e) {
@@ -181,17 +180,16 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 		}
 	}
 
-	private boolean isDDRCommand(String cmdline) {
-		return ((cmdline != null) && (cmdline.length() > 0) && (cmdline.charAt(0) == '!'));
+	private static boolean isDDRCommand(String cmdline) {
+		return (cmdline != null) && cmdline.startsWith("!");
 	}
-	
+
 	/*
 	 * Jazz 26694 : integration of DDR interactive with jdmpview.
 	 * A DDR interactive session is started when a core file is opened - if the core is DDR
 	 * enabled then ! commands are available for executing debug extensions.
-	 * 
-	 */	
-	
+	 */
+
 	/**
 	 * Starts a DDR interactive session using the loaded image. If the core file is not DDR enabled
 	 * this is recorded and future pling commands will not be available. In order to get access to the
@@ -227,7 +225,7 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 			}
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
-			if ((cause != null) && (cause instanceof UnsupportedOperationException)) {
+			if (cause instanceof UnsupportedOperationException) {
 				// this is thrown if DDR is not supported for this DTFJ Image e.g. it's pre-DDR, or a javacore etc.
 				logger.fine("DDR is not enabled for " + image.getSource() + " (context " + id + "). It may be pre-DDR or not a core file e.g. javacore or PHD");
 			} else {
@@ -240,31 +238,31 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 			logger.log(Level.FINE, "Error creating DDR Interactive instance", e);
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ICombinedContext#getDDRIObject()
 	 */
 	public Object getDDRIObject() {
 		return ddriObject;
 	}
-	
+
 	/**
 	 * Pass the specified command to the DDR interactive command parser.
 	 * @param line command to process
 	 */
 	private void executeDDRInteractiveCommand(String line, PrintStream out) {
-		if(!ddrAvailable) {
+		if (!ddrAvailable) {
 			out.println("DDR is not enabled for this core file, '!' commands are disabled");
 			return;
 		}
 		try {
-			ddriMethod.invoke(ddriObject, new Object[]{line});
+			ddriMethod.invoke(ddriObject, line);
 		} catch (Exception e) {
 			out.println("Error executing DDR command " + line + " : " + e.getMessage());
-			e.printStackTrace(out);		//these are debugger commands so show the stack trace
+			e.printStackTrace(out); // these are debugger commands so show the stack trace
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ICombinedContext#getDDRStartupException()
 	 */
@@ -277,7 +275,7 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 	 */
 	public void displayContext(IOutputManager out, boolean shortFormat) {
 		out.print(id + " : ");
-		if(ddrAvailable) {
+		if (ddrAvailable) {
 			out.clearBuffer();
 			try {
 				out.setBuffering(true);
@@ -287,8 +285,8 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 				out.setBuffering(false);
 			}
 			int index = out.getBuffer().indexOf(':');
-			if(index != -1) {
-				out.print(out.getBuffer().substring(index + 1).trim());		//skip the * and id at the front put there by DDR interactive
+			if (index != -1) {
+				out.print(out.getBuffer().substring(index + 1).trim()); //skip the * and id at the front put there by DDR interactive
 			}
 			out.print(" : ");
 			out.print(getJREVersion(shortFormat));
@@ -297,46 +295,46 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 		}
 		out.print("\n");
 	}
-	
+
 	private void showDTFJContexts(IOutputManager out, boolean shortFormat) {
-		if(getRuntime() == null) {
+		if (getRuntime() == null) {
 			out.print("<no Java runtime>");
 		} else {
 			out.print(getJREVersion(shortFormat));
 		}
 	}
-	
+
 	private String getJREVersion(boolean shortFormat) {
 		StringBuilder builder = new StringBuilder();
 		try {
-			if(getRuntime() == null) {
+			if (getRuntime() == null) {
 				builder.append("No JRE");
 			} else {
 				try {
-				String version = getRuntime().getVersion();
-				if(shortFormat) {
-					int index = version.indexOf("\n");
-					String firstLine = null;
-					if(index == -1) {
-						if(version.length() == 0) {
-							firstLine = "[cannot determine JRE level]";
+					String version = getRuntime().getVersion();
+					if (shortFormat) {
+						int index = version.indexOf("\n");
+						String firstLine = null;
+						if (index == -1) {
+							if (version.length() == 0) {
+								firstLine = "[cannot determine JRE level]";
+							} else {
+								firstLine = version;
+							}
 						} else {
-							firstLine = version;
+							firstLine = version.substring(0, index).trim();
 						}
+						builder.append(firstLine);
 					} else {
-						firstLine = version.substring(0, index).trim();
+						String[] parts = version.split("\n");
+						for (String part : parts) {
+							builder.append("\n\t\t" + part.trim());
+						}
 					}
-					builder.append(firstLine);
-				} else {
-					String[] parts = version.split("\n");
-					for(String part : parts) {
-						builder.append("\n\t\t" + part.trim());
-					}
-				}
-				} catch (CorruptDataException c ) {
+				} catch (CorruptDataException c) {
 					// Check if the Runtime was broken or we just have no version string.
 					// Will throw another CDE if there is no runtime.
-					if( getRuntime().getJavaVM() != null ) {
+					if (getRuntime().getJavaVM() != null) {
 						builder.append("JRE level unknown");
 					}
 				}
@@ -348,17 +346,18 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 		}
 		return builder.toString();
 	}
-	
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ICombinedContext#setAsCurrent()
 	 */
 	public void setAsCurrent() {
 		URI uri = getImage().getSource();
-		if((uri.getFragment() != null) && (uri.getFragment().length() != 0)) {
-			//need to strip any fragments from the URI which point to the core in the zip file
+		String fragment = uri.getFragment();
+		if ((fragment != null) && !fragment.isEmpty()) {
+			// need to strip any fragments from the URI which point to the core in the zip file
 			try {
-				uri = new URI(uri.getScheme() + "://" + uri.getRawPath());		//need to use getRawPath so that spaces in Windows paths/files are correctly handled
+				// need to use getRawPath so that spaces in Windows paths/files are correctly handled
+				uri = new URI(uri.getScheme() + "://" + uri.getRawPath());
 			} catch (URISyntaxException e) {
 				// this should not be possible as we are constructing the URI from another URI object and so will always be valid
 			}
@@ -371,6 +370,4 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 		return ddrAvailable;
 	}
 
-	
-	
 }
