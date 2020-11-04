@@ -1041,7 +1041,7 @@ J9::Power::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
    deps->addPostCondition(jumpReg, TR::RealRegister::gr11);
 
    // Generate helper address and branch
-   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(helperIndex, false, false, false);
+   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(helperIndex);
    TR::Instruction *call = generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, reinterpret_cast<uintptr_t>(helperSym->getMethodAddress()), deps, helperSym);
    call->PPCNeedsGCMap(linkageProperties.getPreservedRegisterMapForGC());
 
@@ -1181,7 +1181,7 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
    deps->addPostCondition(jumpReg, TR::RealRegister::gr11);
 
    // Generate branch instruction to jump into helper
-   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(helperIndex, false, false, false);
+   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(helperIndex);
    TR::Instruction *call = generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, reinterpret_cast<uintptr_t>(helperSym->getMethodAddress()), deps, helperSym);
    call->PPCNeedsGCMap(linkageProperties.getPreservedRegisterMapForGC());
 
@@ -1697,7 +1697,7 @@ TR::Register *iGenerateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg
    // TR_softwareReadBarrier helper expects the vmThread in r3.
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, r3Reg, metaReg);
 
-   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier, false, false, false);
+   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier);
    generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptr_t)helperSym->getMethodAddress(), deps, helperSym);
 
    generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, objReg, TR::MemoryReference::createWithDisplacement(cg, locationReg, 0, 4));
@@ -1814,7 +1814,7 @@ TR::Register *aGenerateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg
    // TR_softwareReadBarrier helper expects the vmThread in r3.
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, r3Reg, metaReg);
 
-   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier, false, false, false);
+   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier);
    generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptr_t)helperSym->getMethodAddress(), deps, helperSym);
 
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, locationReg, 0, TR::Compiler->om.sizeofReferenceAddress()));
@@ -5312,8 +5312,8 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    TR::Compilation *comp = cg->comp();
 
-   if (comp->getOption(TR_OptimizeForSpace) || 
-         comp->getOption(TR_FullSpeedDebug) || 
+   if (comp->getOption(TR_OptimizeForSpace) ||
+         comp->getOption(TR_FullSpeedDebug) ||
          (TR::Compiler->om.areValueTypesEnabled() && cg->isMonitorValueType(node) == TR_yes) ||
          comp->getOption(TR_DisableInlineMonExit))
       {
@@ -7721,7 +7721,7 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
 void J9::Power::TreeEvaluator::generateCheckForValueTypeMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol *helperCallLabel, TR::Register *objReg, TR::Register *objectClassReg, TR::Register *tempReg, TR::Register *condReg, TR::CodeGenerator *cg)
 {
    //get class of object
-   generateLoadJ9Class(node, objectClassReg, objReg, cg); 
+   generateLoadJ9Class(node, objectClassReg, objReg, cg);
 
    //get memory reference to class flags
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
@@ -7730,7 +7730,7 @@ void J9::Power::TreeEvaluator::generateCheckForValueTypeMonitorEnterOrExit(TR::N
    //check J9ClassIsValueType flag
    generateTrg1MemInstruction(cg,TR::InstOpCode::lwz, node, tempReg, classFlagsMemRef);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, tempReg, tempReg, condReg, J9ClassIsValueType);
-   
+
    //If obj is value type, call VM helper and throw IllegalMonitorState exception, else continue as usual
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, helperCallLabel, condReg);
 }
@@ -7799,7 +7799,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
    TR::addDependency(conditions, objectClassReg, TR::RealRegister::NoReg, TR_GPR, cg);
    conditions->getPreConditions()->getRegisterDependency(conditions->getAddCursorForPre() - 1)->setExcludeGPR0();
    conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
-   
+
    if (lookupOffsetReg)
       {
       TR::addDependency(conditions, lookupOffsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -8747,7 +8747,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
       // TR_softwareReadBarrier helper expects the vmThread in r3.
       generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, r3Reg, metaReg);
 
-      TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier, false, false, false);
+      TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier);
       generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptr_t)helperSym->getMethodAddress(), deps, helperSym);
 
       generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endReadBarrierLabel, deps);
@@ -11268,7 +11268,7 @@ static TR::Register *inlineEncodeUTF16(TR::Node *node, TR::CodeGenerator *cg)
    // Generate helper call
    TR_RuntimeHelper helper;
    helper = bigEndian ? TR_PPCencodeUTF16Big : TR_PPCencodeUTF16Little;
-   TR::SymbolReference *helperSym = cg->comp()->getSymRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
+   TR::SymbolReference *helperSym = cg->comp()->getSymRefTab()->findOrCreateRuntimeHelper(helper);
    generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptr_t)helperSym->getMethodAddress(), deps, helperSym);
 
    for (uint32_t i = 0; i < node->getNumChildren(); ++i) cg->decReferenceCount(node->getChild(i));
@@ -11743,10 +11743,10 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
       TR::Register *regs[4] = {tmp1Reg, tmp2Reg, tmp3Reg, tmp4Reg};
       TR::Register *fpRegs[4] = {fp1Reg, fp2Reg, fp3Reg, fp4Reg};
       int32_t groups, residual;
-   
+
       static bool disableLEArrayCopyInline = (feGetEnv("TR_disableLEArrayCopyInline") != NULL);
       bool supportsLEArrayCopyInline = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && !disableLEArrayCopyInline && cg->comp()->target().cpu.isLittleEndian() && cg->comp()->target().cpu.hasFPU() && cg->comp()->target().is64Bit();
-   
+
       if (cg->comp()->target().is64Bit())
          {
          groups = byteLen >> 5;
@@ -11757,21 +11757,21 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
          groups = byteLen >> 4;
          residual = byteLen & 0x0000000F;
          }
-   
+
       int32_t regIx = 0, ix = 0, fpRegIx = 0;
       int32_t memRefSize;
       TR::InstOpCode::Mnemonic load, store;
       TR::Compilation* comp = cg->comp();
-   
+
       /* Some machines have issues with 64bit loads/stores in 32bit mode, ie. sicily, do not check for is64BitProcessor() */
       memRefSize = TR::Compiler->om.sizeofReferenceAddress();
       load = TR::InstOpCode::Op_load;
       store = TR::InstOpCode::Op_st;
-   
+
       if (groups != 0)
          {
          TR::LabelSymbol *loopStart;
-   
+
          if (groups != 1)
             {
             if (groups <= UPPER_IMMED)
@@ -11779,11 +11779,11 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
             else
                loadConstant(cg, node, groups, regs[0]);
             generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, regs[0]);
-   
+
             loopStart = generateLabelSymbol(cg);
             generateLabelInstruction(cg, TR::InstOpCode::label, node, loopStart);
             }
-   
+
          if (supportsLEArrayCopyInline)
             {
             generateTrg1MemInstruction(cg, TR::InstOpCode::lfd, node, fpRegs[3], TR::MemoryReference::createWithDisplacement(cg, src,            0, memRefSize));
@@ -11798,10 +11798,10 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
             generateTrg1MemInstruction(cg, load, node, regs[1], TR::MemoryReference::createWithDisplacement(cg, src, 2*memRefSize, memRefSize));
             generateTrg1MemInstruction(cg, load, node, regs[0], TR::MemoryReference::createWithDisplacement(cg, src, 3*memRefSize, memRefSize));
             }
-   
+
          if (groups != 1)
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, src, src, 4*memRefSize);
-   
+
          if (supportsLEArrayCopyInline)
             {
             generateMemSrc1Instruction(cg, TR::InstOpCode::stfd, node, TR::MemoryReference::createWithDisplacement(cg, dst,            0, memRefSize), fpRegs[3]);
@@ -11816,7 +11816,7 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
             generateMemSrc1Instruction(cg, store, node, TR::MemoryReference::createWithDisplacement(cg, dst, 2*memRefSize, memRefSize), regs[1]);
             generateMemSrc1Instruction(cg, store, node, TR::MemoryReference::createWithDisplacement(cg, dst, 3*memRefSize, memRefSize), regs[0]);
             }
-   
+
          if (groups != 1)
             {
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, dst, dst, 4*memRefSize);
@@ -11827,7 +11827,7 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
             ix = 4*memRefSize;
             }
          }
-   
+
       for (; residual>=memRefSize; residual-=memRefSize, ix+=memRefSize)
          {
          if (supportsLEArrayCopyInline)
@@ -11847,7 +11847,7 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
             generateMemSrc1Instruction(cg, store, node, TR::MemoryReference::createWithDisplacement(cg, dst, ix, memRefSize), oneReg);
             }
          }
-   
+
       if (residual != 0)
          {
          if (residual & 4)
@@ -11944,7 +11944,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          }
       case TR::jdk_internal_misc_Unsafe_copyMemory0:
       case TR::sun_misc_Unsafe_copyMemory:
-         if (comp->canTransformUnsafeCopyToArrayCopy() 
+         if (comp->canTransformUnsafeCopyToArrayCopy()
             && methodSymbol->isNative()
             && performTransformation(comp,
                   "O^O Call arraycopy instead of Unsafe.copyMemory: %s\n", cg->getDebug()->getName(node)))
@@ -12951,7 +12951,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
                tmp3Reg = cg->allocateRegister(TR_GPR);
                tmp4Reg = cg->allocateRegister(TR_GPR);
                }
-   
+
             if (supportsLEArrayCopyInline)
                {
                numDeps += 4;
@@ -12991,7 +12991,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
                deps->addPostCondition(tmp3Reg, TR::RealRegister::NoReg);
                deps->addPostCondition(tmp4Reg, TR::RealRegister::NoReg);
                }
-   
+
             if (supportsLEArrayCopyInline)
                {
                deps->addPostCondition(fp1Reg, TR::RealRegister::NoReg);
@@ -13046,7 +13046,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
          generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, r3Reg, metaReg);
 
          TR::RegisterDependencyConditions *helperDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 0, cg->trMemory());
-         TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_referenceArrayCopy, false, false, false);
+         TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_referenceArrayCopy);
 
          gcPoint = generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptr_t)helperSym->getMethodAddress(), helperDeps, helperSym);
          gcPoint->PPCNeedsGCMap(pp.getPreservedRegisterMapForGC());
@@ -13380,7 +13380,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, lengthReg, dstAddrReg); //lengthReg is tied to r7.  Need to copy lengthReg first.
 
    TR::RegisterDependencyConditions *helperDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 0, cg->trMemory());
-   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_referenceArrayCopy, false, false, false);
+   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_referenceArrayCopy);
 
    gcPoint = generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptr_t)helperSym->getMethodAddress(), helperDeps, helperSym);
    gcPoint->PPCNeedsGCMap(pp.getPreservedRegisterMapForGC());

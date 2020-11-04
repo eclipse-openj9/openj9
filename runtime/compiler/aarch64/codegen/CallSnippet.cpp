@@ -248,7 +248,7 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
    // Flush in-register arguments back to the stack for interpreter
    cursor = flushArgumentsToStack(cursor, callNode, getSizeOfArguments(), cg());
 
-   glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper(), false, false, false);
+   glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper());
 
    // 'b glueRef' for jitInduceOSRAtCurrentPC, 'bl glueRef' otherwise
    // we use "b" for induceOSR because we want the helper to think that it's been called from the mainline code and not from the snippet.
@@ -407,7 +407,7 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
    uint8_t *cursor = cg()->getBinaryBufferCursor();
    TR::Node *callNode = getNode();
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
-   TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64virtualUnresolvedHelper, false, false, false);
+   TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64virtualUnresolvedHelper);
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    void *thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
 
@@ -549,7 +549,7 @@ uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
    uint8_t *cursor = cg()->getBinaryBufferCursor();
    TR::Node *callNode = getNode();
    TR::SymbolReference *methodSymRef = getNode()->getSymbolReference();
-   TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64interfaceCallHelper, false, false, false);
+   TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64interfaceCallHelper);
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    void* thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
 
@@ -716,7 +716,7 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
                          cg->getDebug()->getName(dataType));
       }
 
-   dispatcher = (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false)->getMethodAddress();
+   dispatcher = (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(helper)->getMethodAddress();
 
    buffer = flushArgumentsToStack(buffer, callNode, argSize, cg);
 
@@ -788,7 +788,7 @@ TR_J2IThunk *TR::ARM64CallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNod
                   cg->getDebug()->getName(dataType));
       }
 
-   dispatcher = (intptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false)->getMethodAddress();
+   dispatcher = (intptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(helper)->getMethodAddress();
 
    buffer = flushArgumentsToStack(buffer, callNode, argSize, cg);
 

@@ -54,11 +54,6 @@ protected:
 
 public:
 
-   /**
-    * @brief Constructor
-    */
-   CodeGenerator();
-
    void initialize();
 
    /**

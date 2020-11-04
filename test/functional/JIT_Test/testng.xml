@@ -564,6 +564,7 @@
     <classes>
       <class name="jit.test.recognizedMethod.TestJavaLangStrictMath" />
       <class name="jit.test.recognizedMethod.TestJavaLangMath" />
+      <class name="jit.test.recognizedMethod.TestRecognizedCallTransformer" />
     </classes>
   </test>
 

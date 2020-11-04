@@ -2,7 +2,7 @@
 package java.lang.reflect;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2010 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,8 +70,12 @@ public static Object get(Object array, int index) throws IllegalArgumentExceptio
 	} else if (arrayClass == short[].class) {
 		return ((short[])array)[index];
 	} else if (arrayClass == byte[].class) {
+		/*[IF JAVA_SPEC_VERSION <= 11]*/
 		/* Avoiding Byte cache yields 5x performance improvement. */
 		return new Byte(((byte[])array)[index]);
+		/*[ELSE]*/
+		return ((byte[])array)[index];
+		/*[ENDIF] JAVA_SPEC_VERSION <= 11 */
 	} else {
 		try {
 			return ((Object[])array)[index];

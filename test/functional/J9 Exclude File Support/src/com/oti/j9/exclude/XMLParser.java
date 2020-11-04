@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -182,7 +182,7 @@ public class XMLParser {
 
 		int base = 10;
 		if (firstDigit == '0') {
-			if (i == length) return new Integer(0);
+			if (i == length) return Integer.valueOf(0);
 			if ((firstDigit = string.charAt(i++)) == 'x' || firstDigit == 'X') {
 				if (i == length) throw new NumberFormatException(string);
 				firstDigit = string.charAt(i++);
@@ -210,7 +210,7 @@ public class XMLParser {
 			result = -result;
 			if (result < 0) throw new NumberFormatException(string);
 		}
-		return new Integer(result);
+		return Integer.valueOf(result);
 	}
 
 	// Primitive: Scan character data

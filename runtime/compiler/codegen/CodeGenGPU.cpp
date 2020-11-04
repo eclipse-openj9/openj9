@@ -1262,15 +1262,6 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::de2pd
    NULL,          // TR::de2pdSetSign
    NULL,          // TR::de2pdClean
-   NULL,          // TR::ircload
-   NULL,          // TR::irsload
-   NULL,          // TR::iruiload
-   NULL,          // TR::iriload
-   NULL,          // TR::irulload
-   NULL,          // TR::irlload
-   NULL,          // TR::irsstore
-   NULL,          // TR::iristore
-   NULL,          // TR::irlstore
 };
 
 static_assert(sizeof(nvvmOpCodeNames) == (TR::NumIlOps*sizeof(char*)), "Number of elements in nvvmOpCodeNames does not match the value of TR::NumIlOps");
@@ -2610,7 +2601,7 @@ J9::CodeGenerator::printNVVMIR(
                    isLongMul ? "i64" : "i32");
       }
    else if (node->getOpCodeValue() == TR::bneg || node->getOpCodeValue() == TR::sneg ||
-            node->getOpCodeValue() == TR::ineg || node->getOpCodeValue() == TR::lneg || 
+            node->getOpCodeValue() == TR::ineg || node->getOpCodeValue() == TR::lneg ||
             node->getOpCodeValue() == TR::fneg || node->getOpCodeValue() == TR::dneg)
       {
       getNodeName(node->getChild(0), name0, self()->comp());
@@ -3596,7 +3587,7 @@ J9::CodeGenerator::generateGPU()
       parm->setSymbolReference(parmSymRef);
       callNode->setAndIncChild(12, parm);
 
-      TR::SymbolReference *helper = self()->comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_callGPU, false, false, false);
+      TR::SymbolReference *helper = self()->comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_callGPU);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(TR_System);
       callNode->setSymbolReference(helper);
       TR::Node *treetop = TR::Node::create(callNode, TR::treetop, 1);

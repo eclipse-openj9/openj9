@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2014 IBM Corp. and others
+ * Copyright (c) 2014, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,7 +124,7 @@ public class ThreadInfoStream extends Stream {
 				props.put("ExitTime_Formatted", exitTimeStr);
 			}
 			
-			threadInfo.put(new Long(threadId), props);
+			threadInfo.put(Long.valueOf(threadId), props);
 		}
 		
 		/* Merge the extra properties into the thread info. */

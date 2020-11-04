@@ -105,6 +105,7 @@ public:
 
    virtual bool isOrdinaryMethod()     const { return true; }
    virtual bool isJitDumpMethod()      const { return false; }
+   virtual bool isJitDumpAOTMethod()   const { return false; }
    virtual bool isNewInstanceThunk()   const { return false; }
    virtual bool isMethodInProgress()   const { return false; }
    virtual bool isArchetypeSpecimen()  const { return false; }
@@ -152,6 +153,7 @@ protected:
          uintptr_t *_handleRef;
          uintptr_t *_argRef;
          } _methodHandleData;
+      bool _aotCompile;
       } _data;
 
    };

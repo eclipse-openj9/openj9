@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -432,7 +432,7 @@ INNER:		for (;j < 10;j++) {
 								'a',
 								'b',
 								'c',
-								new Character('Z'),
+								Character.valueOf('Z'),
 								3.141459,
 								43.2,
 								23432.234,

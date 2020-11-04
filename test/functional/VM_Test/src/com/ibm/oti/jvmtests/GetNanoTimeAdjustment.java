@@ -4,7 +4,7 @@ package com.ibm.oti.jvmtests;
 import junit.framework.TestCase;
 
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,8 +44,8 @@ public class GetNanoTimeAdjustment extends TestCase {
 	 * Make getNanoTime returns a value similar to System.currentTimeMillis()
 	 */
 	public void test_EnsureWallClockTime() {
-		String nanoTime = new Long(SupportJVM.GetNanoTimeAdjustment(0)).toString();
-		String milliTime = new Long(System.currentTimeMillis()).toString();
+		String nanoTime = Long.valueOf(SupportJVM.GetNanoTimeAdjustment(0)).toString();
+		String milliTime = Long.valueOf(System.currentTimeMillis()).toString();
 		
 		/* accuracy of 1 second */
 		milliTime = milliTime.substring(0, milliTime.length() - 3);
@@ -59,7 +59,7 @@ public class GetNanoTimeAdjustment extends TestCase {
 	 */
 	public void test_EnsureResultIsNanoSecondGranularity() {
 		long result = SupportJVM.GetNanoTimeAdjustment(0);
-		assertEquals("GetNanoTimeAdjustment did not return 19 digits", NANO_TIME_DIGITS, new Long(result).toString().length());
+		assertEquals("GetNanoTimeAdjustment did not return 19 digits", NANO_TIME_DIGITS, Long.toString(result).length());
 	}
 	
 	/*

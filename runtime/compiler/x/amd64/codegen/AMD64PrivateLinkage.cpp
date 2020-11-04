@@ -561,22 +561,22 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::generateVirtualIndirectThunk(TR::Node *
    switch (callNode->getDataType())
       {
       case TR::NoType:
-         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64icallVMprJavaSendVirtual0, false, false, false);
+         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64icallVMprJavaSendVirtual0);
          break;
       case TR::Int64:
-         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64icallVMprJavaSendVirtualJ, false, false, false);
+         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64icallVMprJavaSendVirtualJ);
          break;
       case TR::Address:
-         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64icallVMprJavaSendVirtualL, false, false, false);
+         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64icallVMprJavaSendVirtualL);
          break;
       case TR::Int32:
-         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64icallVMprJavaSendVirtual1, false, false, false);
+         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64icallVMprJavaSendVirtual1);
          break;
       case TR::Float:
-         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64icallVMprJavaSendVirtualF, false, false, false);
+         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64icallVMprJavaSendVirtualF);
          break;
       case TR::Double:
-         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64icallVMprJavaSendVirtualD, false, false, false);
+         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_AMD64icallVMprJavaSendVirtualD);
          break;
       default:
          TR_ASSERT(0, "Bad return data type '%s' for call node [" POINTER_PRINTF_FORMAT "]\n",
@@ -635,22 +635,22 @@ TR_J2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::Nod
    switch (callNode->getDataType())
       {
       case TR::NoType:
-         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact0, false, false, false);
+         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact0);
          break;
       case TR::Int64:
-         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactJ, false, false, false);
+         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactJ);
          break;
       case TR::Address:
-         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactL, false, false, false);
+         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactL);
          break;
       case TR::Int32:
-         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1, false, false, false);
+         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1);
          break;
       case TR::Float:
-         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactF, false, false, false);
+         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactF);
          break;
       case TR::Double:
-         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD, false, false, false);
+         glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD);
          break;
       default:
          TR_ASSERT(0, "Bad return data type '%s' for call node [" POINTER_PRINTF_FORMAT "]\n",
@@ -677,7 +677,7 @@ TR_J2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::Nod
       // JMPImm4 helper
       //
       *(uint8_t *)cursor++ = 0xe9;
-      TR::SymbolReference *helper = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_methodHandleJ2IGlue, false, false, false);
+      TR::SymbolReference *helper = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_methodHandleJ2IGlue);
       int32_t disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, helper);
       *(int32_t *)cursor = disp32;
       cursor += 4;

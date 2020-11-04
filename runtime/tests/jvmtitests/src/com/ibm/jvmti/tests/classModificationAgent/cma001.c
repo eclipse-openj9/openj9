@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,10 +54,10 @@ Java_com_ibm_jvmti_tests_classModificationAgent_cma001_retransformClass(JNIEnv *
 	jvmtiError err;
 
 	err = (*jvmti_env)->RetransformClasses(jvmti_env, 1, &originalClass);
-    if (JVMTI_ERROR_NONE != err) {
-    	error(env, err, "RetransformClasses failed");
-    	return JNI_FALSE;
-    }
+	if (JVMTI_ERROR_NONE != err) {
+		error(env, err, "RetransformClasses failed");
+		return JNI_FALSE;
+	}
 
 	return JNI_TRUE;
 }
@@ -86,11 +86,11 @@ Java_com_ibm_jvmti_tests_classModificationAgent_cma001_redefineClass(JNIEnv * jn
 	classdef.class_byte_count = classDataSize;
 	classdef.klass = originalClass;
 
-    err = (*jvmti_env)->RedefineClasses(jvmti_env, 1, &classdef);
-    if (JVMTI_ERROR_NONE != err) {
-    	error(env, err, "RedefineClasses failed");
-    	return JNI_FALSE;
-    }
+	err = (*jvmti_env)->RedefineClasses(jvmti_env, 1, &classdef);
+	if (JVMTI_ERROR_NONE != err) {
+		error(env, err, "RedefineClasses failed");
+		return JNI_FALSE;
+	}
 
 	return JNI_TRUE;
 }

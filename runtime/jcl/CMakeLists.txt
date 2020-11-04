@@ -194,18 +194,6 @@ if(NOT JAVA_SPEC_VERSION LESS 9)
 	)
 endif()
 
-if(NOT JAVA_SPEC_VERSION LESS 10)
-	# sources for Java 10+
-endif()
-
-if(NOT JAVA_SPEC_VERSION LESS 11)
-	# sources for Java 11+
-endif()
-
-if(NOT JAVA_SPEC_VERSION LESS 12)
-	# sources for Java 12+
-endif()
-
 include(exports.cmake)
 
 target_enable_ddr(jclse)

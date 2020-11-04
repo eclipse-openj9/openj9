@@ -79,6 +79,7 @@ static IDATA jniCheckParseOptions(J9JavaVM* javaVM, char* options);
 static IDATA jniCheckProcessCommandLine(J9JavaVM* javaVM, J9VMDllLoadInfo* loadInfo);
 static UDATA globrefHashTableHashFn(void *entry, void *userData);
 static UDATA globrefHashTableEqualFn(void *leftEntry, void *rightEntry, void *userData);
+static void jniCheckJClassSubclass(JNIEnv* env, const char* function, IDATA argNum, jclass aJclass, J9Class* expectedSupclass, const char* expectedType);
 
 static UDATA keyInitCount = 0;
 omrthread_tls_key_t jniEntryCountKey;
@@ -322,6 +323,11 @@ jniCheckParseOptions(J9JavaVM* vm, char* options)
 			continue;
 		}
 
+		if (try_scan(&scan_start, "abortonerror")) {
+			vm->checkJNIData.options |= JNICHK_ABORTONERROR;
+			continue;
+		}
+
 		/* scan for levels */
 		if (try_scan(&scan_start, "level=low")) {
 			vm->checkJNIData.options = (JNICHK_NONFATAL | JNICHK_NOWARN | JNICHK_NOADVICE);
@@ -413,6 +419,22 @@ void jniCheckClass(JNIEnv* env, const char* function, IDATA argNum, jobject aJob
 	}
 }
 
+/*
+ * Check if the argument jclass object is a subclass of the expectedSupclass
+ *
+ * @param[in] env - the JNIEnv* of the current thread
+ * @param[in] function - the JNI function name being checked
+ * @param[in] argNum - the JNI function argument number
+ * @param[in] aJclass - the JNI function argument, assuming it is a jclass
+ * @param[in] expectedSupclass - the expected super class
+ * @param[in] expectedType - the expected super class string representation
+ */
+static void jniCheckJClassSubclass(JNIEnv* env, const char* function, IDATA argNum, jclass aJclass, J9Class* expectedSupclass, const char* expectedType)
+{
+	if (!isSameOrSuperClassOf(expectedSupclass, J9VM_J9CLASS_FROM_HEAPCLASS((J9VMThread*)env, J9_JNI_UNWRAP_REFERENCE(aJclass)))) {
+		jniCheckFatalErrorNLS(env, J9NLS_JNICHK_ARGUMENT_IS_NOT_X, function, argNum, expectedType);
+	}
+}
 
 void
 jniCheckCallV(const char* function, JNIEnv* env, jobject receiver, UDATA methodType, UDATA returnType, jmethodID method, va_list originalArgs)
@@ -864,6 +886,17 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			if (trace) jniTraceObject(env, aJobject);
 			break;
 
+		case JNIC_CLASSTHROWABLE:
+			aJobject = va_arg(va, jobject);
+			jniCheckNull(env, function, argNum, aJobject);
+			jniCheckRef(env, function, argNum, aJobject);
+			jniCheckValidClass(env, function, argNum, aJobject);
+			if (trace) {
+				jniTraceObject(env, aJobject);
+			}
+			jniCheckJClassSubclass(env, function, argNum, aJobject, J9VMJAVALANGTHROWABLE_OR_NULL(vm), "java/lang/Throwable");
+			break;
+
 		case JNIC_DIRECTBUFFER:
 			aJobject = va_arg(va, jobject);
 			jniCheckNull(env, function, argNum, aJobject);
@@ -1055,6 +1088,7 @@ static void printJnichkHelp(J9PortLibrary* portLib) {
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_JNICHK_HELP_13, NULL));
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_JNICHK_HELP_11, NULL));
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_JNICHK_HELP_12, NULL));
+	j9file_printf(PORTLIB, J9PORT_TTY_OUT, j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_JNICHK_HELP_16, NULL));
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "\n");
 }
 
@@ -1136,6 +1170,7 @@ static UDATA jniIsLocalRef(JNIEnv * currentEnv, JNIEnv* env, jobject reference)
 {
 	J9VMThread *vmThread = (J9VMThread *) env;
 	J9VMThread *currentThread = (J9VMThread*)currentEnv;
+	UDATA rc = 0;
 
 	if (vmThread->javaVM->checkJNIData.options  & JNICHK_PEDANTIC) {
 		/* fast case - is the local ref an immediate in the top frame? */
@@ -1164,12 +1199,11 @@ static UDATA jniIsLocalRef(JNIEnv * currentEnv, JNIEnv* env, jobject reference)
 
 			exitVM(vmThread);
 
-			return walkState.userData3 == reference;
+			rc = (walkState.userData3 == reference);
 		}
 	} else {
 		J9JNIReferenceFrame* frame;
 		J9JavaStack* stack = vmThread->stackObject;
-		UDATA rc = 0;
 
 		/* quick check - just check if it's a reference to a stack */
 		while (stack != NULL) {
@@ -1193,17 +1227,15 @@ static UDATA jniIsLocalRef(JNIEnv * currentEnv, JNIEnv* env, jobject reference)
 			}
 			exitVM(vmThread);
 		}
-
-		/* Internal class refs are considered local refs */
-		if (!rc) {
-			J9JavaVM *vm = currentThread->javaVM;
-			if (vm->internalVMFunctions->jniIsInternalClassRef(vm, reference)) {
-				rc = 1;
-			}
-		}
-
-		return rc;
 	}
+
+	/* Internal class refs are considered local refs */
+	if (!rc) {
+		J9JavaVM *vm = currentThread->javaVM;
+		rc = vm->internalVMFunctions->jniIsInternalClassRef(vm, reference);
+	}
+
+	return rc;
 }
 
 
@@ -2180,7 +2212,8 @@ jniCheckPopLocalFrame(JNIEnv* env, const char* function)
 void
 jniCheckFatalErrorNLS(JNIEnv* env, U_32 nlsModule, U_32 nlsIndex, ...)
 {
-	J9JavaVM* vm = ((J9VMThread*)env)->javaVM;
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM* vm = currentThread->javaVM;
 	UDATA options = vm->checkJNIData.options;
 
 	if ( (options & JNICHK_INCLUDEBOOT) || !inBootstrapClass(env)) {
@@ -2198,6 +2231,9 @@ jniCheckFatalErrorNLS(JNIEnv* env, U_32 nlsModule, U_32 nlsIndex, ...)
 		} else {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JNICHK_FATAL_ERROR);
 			j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_JNICHK_FATAL_ERROR_ADVICE);
+			if (J9_ARE_ANY_BITS_SET(options, JNICHK_ABORTONERROR)) {
+				vm->j9rasDumpFunctions->triggerDumpAgents(vm, currentThread, J9RAS_DUMP_ON_ABORT_SIGNAL, NULL);
+			}
 			vm->EsJNIFunctions->FatalError(env, "JNI error");
 		}
 	}

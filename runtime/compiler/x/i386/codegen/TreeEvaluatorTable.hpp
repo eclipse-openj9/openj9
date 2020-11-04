@@ -462,12 +462,3 @@
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::de2pdSetSign
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::de2pdClean
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::BCDCHK
-   TR::TreeEvaluator::badILOpEvaluator,          // TR::ircload (J9)
-   TR::TreeEvaluator::badILOpEvaluator,          // TR::irsload (J9)
-   TR::TreeEvaluator::badILOpEvaluator,          // TR::iruiload (J9)
-   TR::TreeEvaluator::badILOpEvaluator,          // TR::iriload (J9)
-   TR::TreeEvaluator::badILOpEvaluator,          // TR::irulload (J9)
-   TR::TreeEvaluator::badILOpEvaluator,          // TR::irlload (J9)
-   TR::TreeEvaluator::badILOpEvaluator,          // TR::irsstore (J9)
-   TR::TreeEvaluator::badILOpEvaluator,          // TR::iristore (J9)
-   TR::TreeEvaluator::badILOpEvaluator,          // TR::irlstore (J9)

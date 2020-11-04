@@ -3810,7 +3810,7 @@ J9::Z::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::Code
    deps->addPostCondition(scratchReg2, cg->getReturnAddressRegister());
 
    // Now make the call. Return value of the call is in GPR2 (cpIndexReg).
-   TR::Instruction *call = generateDirectCall(cg, node, false /*myself*/, cg->symRefTab()->findOrCreateRuntimeHelper(helperIndex, false, false, false), deps);
+   TR::Instruction *call = generateDirectCall(cg, node, false /*myself*/, cg->symRefTab()->findOrCreateRuntimeHelper(helperIndex), deps);
    call->setNeedsGCMap(0x0000FFFF);
    call->setDependencyConditions(deps);
 
@@ -3966,7 +3966,7 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
    dependencies->addPostCondition(scratch2, cg->getReturnAddressRegister());
 
    // Now generate the call to VM Helper to report the fieldwatch.
-   TR::Instruction *call = generateDirectCall(cg, node, false /*myself*/, cg->symRefTab()->findOrCreateRuntimeHelper(helperIndex, false, false, false), dependencies);
+   TR::Instruction *call = generateDirectCall(cg, node, false /*myself*/, cg->symRefTab()->findOrCreateRuntimeHelper(helperIndex), dependencies);
    call->setNeedsGCMap(0x0000FFFF);
    call->setDependencyConditions(dependencies);
 
@@ -9765,7 +9765,7 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node,
    TR::Register *tmpReg    = cg->allocateRegister();
    TR::Register *R2SaveReg = cg->allocateRegister();
 
-   TR::SymbolReference* helperCallSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390referenceArrayCopyHelper, false, false, false);
+   TR::SymbolReference* helperCallSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390referenceArrayCopyHelper);
    TR::Snippet * helperCallSnippet = new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, node, callLabel,
                                                                               helperCallSymRef, doneLabel);
    cg->addSnippet(helperCallSnippet);
@@ -12015,7 +12015,7 @@ J9::Z::TreeEvaluator::generateSoftwareReadBarrier(TR::Node* node,
    TR::Instruction *gcPoint = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, callLabel);
    gcPoint->setNeedsGCMap(0);
    auto readBarHelperSnippet = new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, node, callLabel,
-                                                                                  cg->symRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier, false, false, false),
+                                                                                  cg->symRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier),
                                                                                   callEndLabel);
    cg->addSnippet(readBarHelperSnippet);
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, callEndLabel);

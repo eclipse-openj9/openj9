@@ -48,6 +48,18 @@ if(OMR_ARCH_X86)
 		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/i386/runtime/"
 	)
 	omr_append_flags(CMAKE_ASM_NASM_FLAGS ${asm_inc_dirs})
+	# For whatever reason cmake does not apply compile definitions when building nasm objects.
+	# The if guard is here in case they ever start doing so.
+	if(NOT CMAKE_ASM_NASM_COMPILE_OBJECT MATCHES "<DEFINES>")
+		# Tack on defines immediately following the compiler name.
+		string(REPLACE
+			"<CMAKE_ASM_NASM_COMPILER>"
+			"<CMAKE_ASM_NASM_COMPILER> <DEFINES>"
+			CMAKE_ASM_NASM_COMPILE_OBJECT
+			"${CMAKE_ASM_NASM_COMPILE_OBJECT}"
+		)
+
+	endif()
 endif()
 
 # Using the linker option -static-libgcc results in an error on OSX. The option -static-libstdc++ is unused. Therefore
@@ -219,8 +231,7 @@ set(J9_CXXFLAGS
 	${OMR_PLATFORM_CXX_COMPILE_OPTIONS}
 )
 if(OMR_OS_LINUX OR OMR_OS_OSX)
-	set(J9_SHAREDFLAGS
-		${J9_SHAREDFLAGS}
+	list(APPEND J9_SHAREDFLAGS
 		-fno-strict-aliasing
 		-Wno-deprecated
 		-Wno-enum-compare
@@ -233,31 +244,24 @@ if(OMR_OS_LINUX OR OMR_OS_OSX)
 
 	# Platform specific CXX flags, also derived from the
 	# Makefiles
-	set(J9_CXXFLAGS
-		${J9_CXXFLAGS}
+	list(APPEND J9_CXXFLAGS
 		-fno-threadsafe-statics
 		-Wno-invalid-offsetof
 	)
 	if(NOT J9VM_OPT_JITSERVER)
-		set(J9_CXXFLAGS
-			${J9_CXXFLAGS}
-			-fno-rtti
-		)
+		list(APPEND J9_CXXFLAGS -fno-rtti)
 	endif()
 
-	set(J9_CFLAGS
-		${J9_CFLAGS}
-		-std=gnu89
-	)
+	list(APPEND J9_CFLAGS -std=gnu89)
 elseif(OMR_OS_WINDOWS)
-	set(J9_SHAREDFLAGS
+	list(APPEND J9_SHAREDFLAGS
 		-D_WIN32
 		-DWIN32
 		-DSUPPORTS_THREAD_LOCAL
 		-DWINDOWS
 	)
 elseif(OMR_OS_AIX)
-	set(J9_SHAREDFLAGS
+	list(APPEND J9_SHAREDFLAGS
 		-DAIXPPC
 		-DRS6000
 		-D_XOPEN_SOURCE_EXTENDED=1
@@ -265,14 +269,14 @@ elseif(OMR_OS_AIX)
 		-DSUPPORTS_THREAD_LOCAL
 	)
 	if(OMR_ENV_DATA64)
-		set(J9_SHAREDFLAGS -q64)
+		list(APPEND J9_SHAREDFLAGS -q64)
 		if(OMR_TOOLCONFIG STREQUAL "xlc")
 			# Modify the arch tuning value we inherit from omr
 			list(REMOVE_ITEM TR_COMPILE_OPTIONS "-qarch=pwr7")
 			list(APPEND TR_COMPILE_OPTIONS "-qarch=ppc64grsq")
 		endif()
 	else()
-		set(J9_SHAREDFLAGS -q32)
+		list(APPEND J9_SHAREDFLAGS -q32)
 	endif()
 else()
 	message(SEND_ERROR "unsupported platform")

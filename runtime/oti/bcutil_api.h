@@ -141,10 +141,11 @@ j9bcutil_freeTranslationBuffers (J9PortLibrary * portLib, J9TranslationBufferSet
 * @param *dest
 * @param *source
 * @param length
+* @param mueAsciiStatus If any non-null ASCII characters are represented in modified UTF-8 2 byte format instead of in 1 byte
 * @return I_32
 */
 I_32 
-j9bcutil_verifyCanonisizeAndCopyUTF8  (U_8 *dest, U_8 *source, U_32 length);
+j9bcutil_verifyCanonisizeAndCopyUTF8  (U_8 *dest, U_8 *source, U_32 length, U_8 *mueAsciiStatus);
 
 
 /**

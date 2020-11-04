@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2019 IBM Corp. and others
+ * Copyright (c) 2010, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ public class TestExpireDestroyOnCorruptCache extends TestUtils {
 		}
 
 		/* expire all caches not used for past 1 min */
-		expireAllCachesWithTime(new Integer(1).toString());
+		expireAllCachesWithTime(Integer.toString(1));
 		/* expire does not delete caches detected as corrupt during oscache->startup() */
 		checkFileExistsForPersistentCache("Foo");
 		

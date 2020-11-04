@@ -2120,16 +2120,6 @@ static bool doResolveAtRuntime(J9Method *method, I_32 cpIndex, TR::Compilation *
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    if (!method)
       return true;
-   else if (method == J9VMJAVALANGINVOKEMETHODHANDLE_INVOKEWITHARGUMENTSHELPER_METHOD(fej9->getJ9JITConfig()->javaVM))
-      {
-      // invokeWithArgumentsHelper is a weirdo
-      if (fej9->isAOT_DEPRECATED_DO_NOT_USE())
-         {
-         comp->failCompilation<TR::CompilationException>("invokeWithArgumentsHelper");
-         }
-      else
-         return false; // It is incorrect to try to resolve this
-      }
    else if (comp->ilGenRequest().details().isMethodHandleThunk()) // cmvc 195373
       return false;
    else if (fej9->getJ9JITConfig()->runtimeFlags & J9JIT_RUNTIME_RESOLVE)
@@ -6339,6 +6329,17 @@ TR_ResolvedJ9Method::getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &le
    return utf8Data(J9ROMCLASSREF_NAME((J9ROMClassRef *) &romLiterals()[cpIndex]), length);
    }
 
+char *
+TR_ResolvedJ9Method::getMethodNameAndSignatureFromConstantPool(I_32 cpIndex, int32_t & len)
+   {
+   I_32 realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClassPtr(), cpIndex);
+   if (realCPIndex == -1)
+      return 0;
+   J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *) (&romCPBase()[realCPIndex]);
+   J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
+   return utf8Data(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig), len);
+   }
+
 const char *
 TR_ResolvedJ9Method::newInstancePrototypeSignature(TR_Memory * m, TR_AllocationKind allocKind)
    {
@@ -6691,16 +6692,12 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
 bool
 TR_ResolvedJ9Method::shouldCompileTimeResolveMethod(I_32 cpIndex)
    {
-   I_32 realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClassPtr(), cpIndex);
-   J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)(cp()->romConstantPool + realCPIndex);
-   J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
    int32_t methodNameLength;
-   char   *methodName = utf8Data(J9ROMNAMEANDSIGNATURE_NAME(nameAndSig), methodNameLength);
+   char *methodName = getMethodNameAndSignatureFromConstantPool(cpIndex, methodNameLength);
 
    I_32 classCPIndex = classCPIndexOfMethod(cpIndex);
-   J9ROMClassRef * classRef = (J9ROMClassRef *)(cp()->romConstantPool + classCPIndex);
-   int32_t classNameLength;
-   char* className = utf8Data(J9ROMCLASSREF_NAME(classRef), classNameLength);
+   uint32_t classNameLength;
+   char *className = getClassNameFromConstantPool(classCPIndex, classNameLength);
 
    if (classNameLength == strlen(JSR292_MethodHandle) &&
        !strncmp(className, JSR292_MethodHandle, classNameLength))

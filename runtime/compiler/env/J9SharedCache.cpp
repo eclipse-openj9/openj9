@@ -1368,11 +1368,7 @@ TR_J9JITServerSharedCache::rememberClass(J9Class *clazz, bool create)
       OMR::CriticalSection classChainDataMapMonitor(clientData->getClassChainDataMapMonitor());
       auto it = cache.find(clazz);
       if (it != cache.end())
-         {
-         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Chain exists (%p) so nothing to store \n", it->second);
          return it->second;
-         }
       }
    _stream->write(JITServer::MessageType::SharedCache_rememberClass, clazz, create);
    UDATA * chainData = std::get<0>(_stream->read<UDATA *>());

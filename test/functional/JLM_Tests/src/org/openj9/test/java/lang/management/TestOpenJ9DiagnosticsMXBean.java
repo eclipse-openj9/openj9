@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -252,8 +252,38 @@ public class TestOpenJ9DiagnosticsMXBean {
 		String dir = "." + File.separator + "local";
 		String dumpFileName = "javacore_alloc.txt";
 		String dumpFilePath = dir + File.separator + dumpFileName;
+
 		diagBean.resetDumpOptions();
+
+		String[] resetOptions = diagBean.queryDumpOptions();
+		for (String option : resetOptions) {
+			if (option.startsWith("java:events=allocation")) {
+				Assert.fail("Found unexpected dump option: " + option);
+			}
+		}
+
 		diagBean.setDumpOptions("java:events=allocation,filter=#1k,range=1..1,file=" + dumpFilePath);
+
+		boolean optionFound = false;
+		String[] options = diagBean.queryDumpOptions();
+		for (String option : options) {
+			// The options get reordered and defaults added, check parts separately
+			if (option.startsWith("java:events=allocation,") &&
+				option.contains(",filter=#1k") &&
+				option.contains(",range=1..1") &&
+				option.contains(dumpFilePath)
+			) {
+				optionFound = true;
+				break;
+			}
+		}
+		if (!optionFound) {
+			for (String option : options) {
+				System.out.println(option);
+			}
+			Assert.fail("Failed to find \"java:events=allocation\" dump option");
+		}
+
 		int[] a = new int[1024 * 1024];
 
 		dumpFileName = "javacore_unsupported.txt";
@@ -339,11 +369,50 @@ public class TestOpenJ9DiagnosticsMXBean {
 		String dir = "." + File.separator + "remote";
 		String dumpFileName = "javacore_alloc.txt";
 		String dumpFilePath = dir + File.separator + dumpFileName;
+
 		diagBeanRemote.resetDumpOptions();
+
+		String[] resetOptions = diagBeanRemote.queryDumpOptions();
+		for (String option : resetOptions) {
+			if (option.startsWith("java:events=allocation") || option.startsWith("java:events=catch")) {
+				Assert.fail("Found unexpected dump option: " + option);
+			}
+		}
+
 		diagBeanRemote.setDumpOptions("java:events=allocation,filter=#1k,range=1..1,file=" + dumpFilePath);
 		dumpFileName = "javacore_unsupported.txt";
-		dumpFilePath = dir + File.separator + dumpFileName;
-		diagBeanRemote.setDumpOptions("java:events=catch,filter=java/io/UnsupportedEncodingException,range=1..1,file=" + dumpFilePath);
+		String catchDumpFilePath = dir + File.separator + dumpFileName;
+		diagBeanRemote.setDumpOptions("java:events=catch,filter=java/io/UnsupportedEncodingException,range=1..1,file=" + catchDumpFilePath);
+
+		String[] options = diagBeanRemote.queryDumpOptions();
+		boolean allocOptionFound = false;
+		boolean catchOptionFound = false;
+		for (String option : options) {
+			// The options get reordered and defaults added, check parts separately
+			if (option.startsWith("java:events=allocation,") &&
+				option.contains(",filter=#1k") &&
+				option.contains(",range=1..1") &&
+				option.contains(dumpFilePath)
+			) {
+				allocOptionFound = true;
+				if (catchOptionFound) break;
+			}
+			if (option.startsWith("java:events=catch,") &&
+				option.contains(",filter=java/io/UnsupportedEncodingException") &&
+				option.contains(",range=1..1") &&
+				option.contains(catchDumpFilePath)
+			) {
+				catchOptionFound = true;
+				if (allocOptionFound) break;
+			}
+		}
+		if (!allocOptionFound || !catchOptionFound) {
+			for (String option : options) {
+				System.out.println(option);
+			}
+			Assert.fail("Failed to find expected dump options");
+		}
+
 		lock.notifyEvent("dump settings done");
 		lock.waitForEvent("events occurred");
 
@@ -535,6 +604,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 		ProcessBuilder builder = new ProcessBuilder(processArgs);
 		logger.info(builder.command());
 		lock = new ProcessLocking(tmpFileName);
+		builder.inheritIO();
 		remoteServer = builder.start();
 
 		lock.waitForEvent("child started");

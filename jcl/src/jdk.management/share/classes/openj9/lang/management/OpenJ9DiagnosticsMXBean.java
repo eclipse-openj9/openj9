@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,9 +69,19 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	public void resetDumpOptions() throws ConfigurationUnavailableException;
 
 	/**
+	 * Returns the current dump configuration as an array of Strings, or null if an internal error occurs.
+	 * The syntax of the option Strings is the same as the -Xdump command-line option,
+	 * with the initial -Xdump: omitted. See the -Xdump option section on dump agents in
+	 * the documentation for the OpenJ9 JVM.
+	 *
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to read the dump settings
+	 */
+	public String[] queryDumpOptions();
+
+	/**
 	 * This function sets options for the dump subsystem.
 	 * The dump option is passed in as a String. Use the same syntax as the -Xdump command-line option, with the 
-	 * initial -Xdump: omitted. See Using the -Xdump option as described in the section on dump agents in the 
+	 * initial -Xdump: omitted. See the -Xdump option section on dump agents in the 
 	 * documentation for the OpenJ9 JVM. This method may throw a ConfigurationUnavailableException if the dump
 	 * configuration cannot be altered.
 	 *

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,17 +40,18 @@
 extern "C" {
 #endif
 
-#define JNICHK_VERBOSE 1
-#define JNICHK_PROFILE 2
-#define JNICHK_NONFATAL 4
-#define JNICHK_PEDANTIC 8
-#define JNICHK_TRACE 16
-#define JNICHK_NOWARN 32
-#define JNICHK_NOADVICE 64
-#define JNICHK_NOBOUNDS 128
-#define JNICHK_NOVALIST 256
-#define JNICHK_INCLUDEBOOT 512
-#define JNICHK_ALWAYSCOPY 1024
+#define JNICHK_VERBOSE 0x1
+#define JNICHK_PROFILE 0x2
+#define JNICHK_NONFATAL 0x4
+#define JNICHK_PEDANTIC 0x8
+#define JNICHK_TRACE 0x10
+#define JNICHK_NOWARN 0x20
+#define JNICHK_NOADVICE 0x40
+#define JNICHK_NOBOUNDS 0x80
+#define JNICHK_NOVALIST 0x100
+#define JNICHK_INCLUDEBOOT 0x200
+#define JNICHK_ALWAYSCOPY 0x400
+#define JNICHK_ABORTONERROR 0x800
 
 #ifdef __cplusplus
 }

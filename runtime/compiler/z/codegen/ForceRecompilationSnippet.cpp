@@ -41,7 +41,7 @@ TR::S390ForceRecompilationSnippet::emitSnippetBody()
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
    uint32_t rEP = (uint32_t) cg()->getEntryPointRegister() - 1;
-   TR::SymbolReference * glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390induceRecompilation, false, false, false);
+   TR::SymbolReference * glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390induceRecompilation);
 
    // Set up the start of data constants and jump to helper.
    // We generate:

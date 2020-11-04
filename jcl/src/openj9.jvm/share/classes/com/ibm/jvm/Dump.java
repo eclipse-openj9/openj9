@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2006, 2019 IBM Corp. and others
+ * Copyright (c) 2006, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,7 @@ import openj9.management.internal.InvalidDumpOptionExceptionBase;
  * <br>
  * The recommended usage of the {@link #javaDumpToFile()}, {@link #systemDumpToFile()},
  * {@link #heapDumpToFile()} and {@link #snapDumpToFile()}
- * methods is to call the no argument versions  of these calls rather than specifying a file
+ * methods is to call the no argument versions of these calls rather than specifying a file
  * name as this will trigger a dump to the default location. Your dump file will go to the
  * default location specified by any -Xdump options given to the JVM at startup time following
  * the user or administrators preferences.
@@ -104,15 +104,15 @@ import openj9.management.internal.InvalidDumpOptionExceptionBase;
 public class Dump {
 	@SuppressWarnings("nls")
 	private static final String SystemRequestPrefix = "z/OS".equalsIgnoreCase(System.getProperty("os.name")) ? "system:dsn=" : "system:file=";
-  
+
 	/**
 	 * Trigger a java dump. A java dump is in a human-readable format, and
 	 * summarizes the state of the JVM.
-	 * 
+	 *
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyDumpSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.DumpPermission
-	 * 
+	 *
 	 * @throws RuntimeException if the vm does not contain RAS dump support
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
 	 */
@@ -124,11 +124,11 @@ public class Dump {
 	/**
 	 * Trigger a heap dump. The default heap dump format (a phd file) is not
 	 * human-readable.
-	 * 
+	 *
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyDumpSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.DumpPermission
-	 * 
+	 *
 	 * @throws RuntimeException if the vm does not contain RAS dump support
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
 	 */
@@ -141,11 +141,11 @@ public class Dump {
 	 * Trigger a system dump. A system dump is a platform-specific
 	 * file that contains information about the active processes, threads, and
 	 * system memory. System dumps are usually large.
-	 * 
+	 *
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyDumpSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.DumpPermission
-	 * 
+	 *
 	 * @throws RuntimeException if the vm does not contain RAS dump support
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
 	 */
@@ -160,392 +160,392 @@ public class Dump {
 	private Dump() {
 		/* empty */
 	}
-	
+
 	/**
-     * Trigger a snap dump. The snap dump format is not human-readable
-     * and must be processed using the trace formatting tool supplied
-     * with the OpenJ9 JVM.
-	 * 
+	 * Trigger a snap dump. The snap dump format is not human-readable
+	 * and must be processed using the trace formatting tool supplied
+	 * with the OpenJ9 JVM.
+	 *
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyDumpSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.DumpPermission
-	 * 
+	 *
 	 * @throws RuntimeException if the vm does not contain RAS dump support
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
 	 */
-    public static void SnapDump() {
-    	checkLegacySecurityPermssion();
-    	SnapDumpImpl();
-    }
-    
+	public static void SnapDump() {
+		checkLegacySecurityPermssion();
+		SnapDumpImpl();
+	}
+
 	private static final DumpPermission DUMP_PERMISSION = new DumpPermission();
 	private static final ToolDumpPermission TOOL_DUMP_PERMISSION = new ToolDumpPermission();
 	private static final String LEGACY_DUMP_PERMISSION_PROPERTY = "com.ibm.jvm.enableLegacyDumpSecurity"; //$NON-NLS-1$
-	
+
 	private static final class DumpOptionsLock {
 		DumpOptionsLock() {
 			super();
 		}
-    }
-    private static final DumpOptionsLock dumpLock = new DumpOptionsLock();
-	
-	/**
-	 * Trigger a java dump. A java dump is in a human-readable format, and
-	 * summarizes the state of the JVM.
-	 * 
-	 * The JVM will attempt to write the file to the specified file name. This may
-	 * include replacement tokens as documented in the section on dump agents
-	 * in the documentation for the OpenJ9 JVM.
-	 * 
-	 * A string containing the actual file name written to is returned. This may not
-	 * be the same as the requested filename for several reasons:
-	 * <ul>
-	 * <li>null or the empty string were specified, this will cause the JVM to write the
-	 *  dump to the default location based on the current dump settings and return that
-	 *  path.</li>
-	 * <li>Replacement (%) tokens were specified in the file name. These will have been
-	 *  expanded.</li>
-	 * <li>The full path is returned, if only a file name with no directory was specified
-	 *  the full path with the directory the dump was written to will be returned.</li>
-	 * <li>The JVM couldn't write to the specified location. In this case it will attempt
-	 *  to write the dump to another location, unless -Xdump:nofailover was specified on
-	 *  the command line.</li>
-	 * </ul>
-	 * 
-	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
-	 * made, if this fails a SecurityException will be thrown.
-	 * 
-	 * @param fileNamePattern the file name to write to, which may be null, empty or include replacement tokens
-	 * @return the file name that the dump was actually written to
-	 * @throws InvalidDumpOptionException if the filename was invalid
-	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
-	 */
-    public static String javaDumpToFile(String fileNamePattern ) throws InvalidDumpOptionException {
-    	String request = null;
-    	if( "".equals(fileNamePattern) ) { //$NON-NLS-1$
-    		fileNamePattern = null;
-    	}
-    	if( fileNamePattern != null ) {
-    		// Check no-one has tried to sneak options onto the end.
-    		checkForExtraOptions(fileNamePattern);
-    		request = "java:file=" + fileNamePattern; //$NON-NLS-1$
-    	} else {
-    		// This is equivalent to the JavaDump() call.
-    		request = "java"; //$NON-NLS-1$
-    	}
-    	String dump = null;
-    	dump = triggerDump(request, "javaDumpToFile"); //$NON-NLS-1$
-     	return dump;
-    }
-
-	/**
-	 * Trigger a java dump. A java dump is in a human-readable format, and
-	 * summarizes the state of the JVM.
-	 * 
-	 * The JVM will attempt to write the file to the default location.
-	 * 
-	 * A string containing the actual file name written to is returned.
-	 * 
-	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
-	 * made, if this fails a SecurityException will be thrown.
-	 * 
-	 * @return the file name that the dump was actually written to
-	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump 
-	 */
-    public static String javaDumpToFile() {
-    	try {
-    		return triggerDump("java", "javaDumpToFile"); //$NON-NLS-1$ //$NON-NLS-2$
-    	} catch (InvalidDumpOptionException e) {
-    		// Cannot actually be thrown, since we aren't specifying anything other than a known dump type.
-    		// Prevent the user having to add a catch block to their call.
-    		return null;
-    	}
-    }
-    
-	/**
-	 * Trigger a heap dump. The default heap dump format (a phd file) is not
-	 * human-readable.
-	 * 
-	 * The JVM will attempt to write the file to the specified file name. This may
-	 * include replacement tokens as documented in the section on dump agents
-	 * in the documentation for the OpenJ9 JVM.
-	 * 
-	 * A string containing the actual file name written to is returned. This may not
-	 * be the same as the requested filename for several reasons:
-	 * <ul>
-	 * <li>null or the empty string were specified, this will cause the JVM to write the
-	 *  dump to the default location based on the current dump settings and return that
-	 *  path.</li>
-	 * <li>Replacement (%) tokens were specified in the file name. These will have been
-	 *  expanded.</li>
-	 * <li>The full path is returned, if only a file name with no directory was specified
-	 *  the full path with the directory the dump was written to will be returned.</li>
-	 * <li>The JVM couldn't write to the specified location. In this case it will attempt
-	 *  to write the dump to another location, unless -Xdump:nofailover was specified on
-	 *  the command line.</li>
-	 * </ul>
-	 * 
-	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
-	 * made, if this fails a SecurityException will be thrown.
-	 * 
-	 * @param fileNamePattern the file name to write to, which may be null, empty or include replacement tokens
-	 * @return the file name that the dump was actually written to
-	 * @throws InvalidDumpOptionException if the filename was invalid
-	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
-	 */
-    public static String heapDumpToFile(String fileNamePattern ) throws InvalidDumpOptionException {
-     	String request = null;
-    	if( "".equals(fileNamePattern) ) { //$NON-NLS-1$
-    		fileNamePattern = null;
-    	}
-    	if( fileNamePattern != null ) {
-    		// Check no-one has tried to sneak options onto the end.
-    		checkForExtraOptions(fileNamePattern);
-    		request = "heap:file=" + fileNamePattern + ","; //$NON-NLS-1$ //$NON-NLS-2$
-    	} else {
-    		// This is equivalent to the HeapDump() call.
-    		request = "heap:"; //$NON-NLS-1$
-    	}
-   		request += "opts=PHD"; //$NON-NLS-1$
-   		String dump = null;
-   		dump = triggerDump(request, "heapDumpToFile"); //$NON-NLS-1$
-    	return dump;
-    }
-    
-	/**
-	 * Trigger a heap dump. The default heap dump format (a phd file) is not
-	 * human-readable.
-	 * 
-	 * The JVM will attempt to write the file to the default location.
-	 * 
-	 * A string containing the actual file name written to is returned.
-	 * 
-	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
-	 * made, if this fails a SecurityException will be thrown.
-	 * 
-	 * @return the file name that the dump was actually written to 
-	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
-	 */
-    public static String heapDumpToFile() {
-    	try {
-    		return triggerDump("heap:opts=PHD", "heapDumpToFile"); //$NON-NLS-1$ //$NON-NLS-2$
-    	} catch (InvalidDumpOptionException e) {
-    		// Cannot actually be thrown, since we aren't specifying anything other than a known dump type.
-    		// Prevent the user having to add a catch block to their call.
-    		return null;
-    	}
-    }
-    
-	/**
-	 * Trigger a system dump. A system dump is a platform-specific
-	 * file that contains information about the active processes, threads, and
-	 * system memory. System dumps are usually large.
-	 * 
-	 * The JVM will attempt to write the file to the specified file name. This may
-	 * include replacement tokens as documented in the section on dump agents
-	 * in the documentation for the OpenJ9 JVM.
-	 * 
-	 * A string containing the actual file name written to is returned. This may not
-	 * be the same as the requested filename for several reasons:
-	 * <ul>
-	 * <li>null or the empty string were specified, this will cause the JVM to write the
-	 *  dump to the default location based on the current dump settings and return that
-	 *  path.</li>
-	 * <li>Replacement (%) tokens were specified in the file name. These will have been
-	 *  expanded.</li>
-	 * <li>The full path is returned, if only a file name with no directory was specified
-	 *  the full path with the directory the dump was written to will be returned.</li>
-	 * <li>The JVM couldn't write to the specified location. In this case it will attempt
-	 *  to write the dump to another location, unless -Xdump:nofailover was specified on
-	 *  the command line.</li>
-	 * </ul>
-	 * 
-	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
-	 * made, if this fails a SecurityException will be thrown.
-	 * 
-	 * @param fileNamePattern the file name to write to, which may be null, empty or include replacement tokens
-	 * @return the file name that the dump was actually written to
-	 * @throws InvalidDumpOptionException if the filename was invalid
-	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
-	 */
-    public static String systemDumpToFile(String fileNamePattern) throws InvalidDumpOptionException {
-    	String request = null;
-    	if( "".equals(fileNamePattern) ) { //$NON-NLS-1$
-    		fileNamePattern = null;
-    	}
-    	if( fileNamePattern != null ) {
-    		// Check no-one has tried to sneak options onto the end.
-    		checkForExtraOptions(fileNamePattern);
-    		request = SystemRequestPrefix + fileNamePattern;
-    	} else {
-    		// This is equivalent the to SystemDump() call.
-    		request = "system"; //$NON-NLS-1$
-    	}
-    	String dump = null;
-       	dump = triggerDump(request, "systemDumpToFile"); //$NON-NLS-1$
-       	return dump;
-    }
-    
-	/**
-	 * Trigger a system dump. A system dump is a platform-specific
-	 * file that contains information about the active processes, threads, and
-	 * system memory. System dumps are usually large.
-	 * 
-	 * The JVM will attempt to write the file to the default location.
-	 * 
-	 * A string containing the actual file name written to is returned.
-	 * 
-	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
-	 * made, if this fails a SecurityException will be thrown.
-	 * 
-	 * @return the file name that the dump was actually written to
-	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
-	 */
-    public static String systemDumpToFile() {
-     	try {
-    		return triggerDump("system", "systemDumpToFile"); //$NON-NLS-1$ //$NON-NLS-2$
-    	} catch (InvalidDumpOptionException e) {
-    		// Cannot actually be thrown, since we aren't specifying anything other than a known dump type.
-    		// Prevent the user having to add a catch block to their call.
-    		return null;
-    	}
-    }
-    
-    /**
-     * Trigger a snap dump. The snap dump format is not human-readable
-     * and must be processed using the trace formatting tool supplied
-     * with the OpenJ9 JVM.
-	 * 
-	 * The JVM will attempt to write the file to the specified file name. This may
-	 * include replacement tokens as documented in the section on dump agents
-	 * in the documentation for the OpenJ9 JVM.
-	 * 
-	 * A string containing the actual file name written to is returned. This may not
-	 * be the same as the requested filename for several reasons:
-	 * <ul>
-	 * <li>null or the empty string were specified, this will cause the JVM to write the
-	 *  dump to the default location based on the current dump settings and return that
-	 *  path.</li>
-	 * <li>Replacement (%) tokens were specified in the file name. These will have been
-	 *  expanded.</li>
-	 * <li>The full path is returned, if only a file name with no directory was specified
-	 *  the full path with the directory the dump was written to will be returned.</li>
-	 * <li>The JVM couldn't write to the specified location. In this case it will attempt
-	 *  to write the dump to another location, unless -Xdump:nofailover was specified on
-	 *  the command line.</li>
-	 * </ul>
-	 * 
-	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
-	 * made, if this fails a SecurityException will be thrown.
-	 * 
-	 * @param fileNamePattern the file name to write to, which may be null, empty or include replacement tokens
-	 * @return the file name that the dump was actually written to
-     * @throws InvalidDumpOptionException if the filename was invalid
-     * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
-	 */
-    public static String snapDumpToFile(String fileNamePattern) throws InvalidDumpOptionException {
-    	String request = null;
-    	if( "".equals(fileNamePattern) ) { //$NON-NLS-1$
-    		fileNamePattern = null;
-    	}
-    	if( fileNamePattern != null ) {
-    		// Check no-one has tried to sneak options onto the end.
-    		checkForExtraOptions(fileNamePattern);
-    		request = "snap:file=" + fileNamePattern; //$NON-NLS-1$
-    	} else {
-    		// This is equivalent to the SnapDump() call.
-    		request = "snap"; //$NON-NLS-1$
-    	}
-    	String dump = null;
-    	dump = triggerDump(request, "snapDumpToFile"); //$NON-NLS-1$
-    	return dump;
-    }
-    
-	/**
-     * Trigger a snap dump. The snap dump format is not human-readable
-     * and must be processed using the trace formatting tool supplied
-     * with the OpenJ9 JVM.
-	 * 
-	 * The JVM will attempt to write the file to the default location.
-	 * 
-	 * A string containing the actual file name written to is returned.
-	 * 
-	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
-	 * made, if this fails a SecurityException will be thrown.
-	 * 
-	 * @return the file name that the dump was actually written to
-	 * 
-	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
-	 */
-    public static String snapDumpToFile() {
-    	try {
-    		return triggerDump("snap", "snapDumpToFile"); //$NON-NLS-1$ //$NON-NLS-2$
-    	} catch (InvalidDumpOptionException e) {
-    		// Cannot actually be thrown, since we aren't specifying anything other than a known dump type.
-    		// Prevent the user having to add a catch block to their call.
-    		return null;
-    	}
-    }
-
-    private static void checkForExtraOptions(String fileNamePattern) throws InvalidDumpOptionException {
-		// Check no-one has tried to sneak options onto the end of a filename.
-    	if (fileNamePattern.contains(",")) { //$NON-NLS-1$
-    		throw new InvalidDumpOptionException("Invalid dump filename specified."); //$NON-NLS-1$
-    	}
 	}
-    
-    private static void checkDumpSecurityPermssion() throws SecurityException {
+	private static final DumpOptionsLock dumpLock = new DumpOptionsLock();
+
+	/**
+	 * Trigger a java dump. A java dump is in a human-readable format, and
+	 * summarizes the state of the JVM.
+	 *
+	 * The JVM will attempt to write the file to the specified file name. This may
+	 * include replacement tokens as documented in the section on dump agents
+	 * in the documentation for the OpenJ9 JVM.
+	 *
+	 * A string containing the actual file name written to is returned. This may not
+	 * be the same as the requested filename for several reasons:
+	 * <ul>
+	 * <li>null or the empty string were specified, this will cause the JVM to write the
+	 *  dump to the default location based on the current dump settings and return that
+	 *  path.</li>
+	 * <li>Replacement (%) tokens were specified in the file name. These will have been
+	 *  expanded.</li>
+	 * <li>The full path is returned, if only a file name with no directory was specified
+	 *  the full path with the directory the dump was written to will be returned.</li>
+	 * <li>The JVM couldn't write to the specified location. In this case it will attempt
+	 *  to write the dump to another location, unless -Xdump:nofailover was specified on
+	 *  the command line.</li>
+	 * </ul>
+	 *
+	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
+	 * made, if this fails a SecurityException will be thrown.
+	 *
+	 * @param fileNamePattern the file name to write to, which may be null, empty or include replacement tokens
+	 * @return the file name that the dump was actually written to
+	 * @throws InvalidDumpOptionException if the filename was invalid
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	 */
+	public static String javaDumpToFile(String fileNamePattern ) throws InvalidDumpOptionException {
+		String request = null;
+		if( "".equals(fileNamePattern) ) { //$NON-NLS-1$
+			fileNamePattern = null;
+		}
+		if( fileNamePattern != null ) {
+			// Check no-one has tried to sneak options onto the end.
+			checkForExtraOptions(fileNamePattern);
+			request = "java:file=" + fileNamePattern; //$NON-NLS-1$
+		} else {
+			// This is equivalent to the JavaDump() call.
+			request = "java"; //$NON-NLS-1$
+		}
+		String dump = null;
+		dump = triggerDump(request, "javaDumpToFile"); //$NON-NLS-1$
+		return dump;
+	}
+
+	/**
+	 * Trigger a java dump. A java dump is in a human-readable format, and
+	 * summarizes the state of the JVM.
+	 *
+	 * The JVM will attempt to write the file to the default location.
+	 *
+	 * A string containing the actual file name written to is returned.
+	 *
+	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
+	 * made, if this fails a SecurityException will be thrown.
+	 *
+	 * @return the file name that the dump was actually written to
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	 */
+	public static String javaDumpToFile() {
+		try {
+			return triggerDump("java", "javaDumpToFile"); //$NON-NLS-1$ //$NON-NLS-2$
+		} catch (InvalidDumpOptionException e) {
+			// Cannot actually be thrown, since we aren't specifying anything other than a known dump type.
+			// Prevent the user having to add a catch block to their call.
+			return null;
+		}
+	}
+
+	/**
+	 * Trigger a heap dump. The default heap dump format (a phd file) is not
+	 * human-readable.
+	 *
+	 * The JVM will attempt to write the file to the specified file name. This may
+	 * include replacement tokens as documented in the section on dump agents
+	 * in the documentation for the OpenJ9 JVM.
+	 *
+	 * A string containing the actual file name written to is returned. This may not
+	 * be the same as the requested filename for several reasons:
+	 * <ul>
+	 * <li>null or the empty string were specified, this will cause the JVM to write the
+	 *  dump to the default location based on the current dump settings and return that
+	 *  path.</li>
+	 * <li>Replacement (%) tokens were specified in the file name. These will have been
+	 *  expanded.</li>
+	 * <li>The full path is returned, if only a file name with no directory was specified
+	 *  the full path with the directory the dump was written to will be returned.</li>
+	 * <li>The JVM couldn't write to the specified location. In this case it will attempt
+	 *  to write the dump to another location, unless -Xdump:nofailover was specified on
+	 *  the command line.</li>
+	 * </ul>
+	 *
+	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
+	 * made, if this fails a SecurityException will be thrown.
+	 *
+	 * @param fileNamePattern the file name to write to, which may be null, empty or include replacement tokens
+	 * @return the file name that the dump was actually written to
+	 * @throws InvalidDumpOptionException if the filename was invalid
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	 */
+	public static String heapDumpToFile(String fileNamePattern ) throws InvalidDumpOptionException {
+		String request = null;
+		if( "".equals(fileNamePattern) ) { //$NON-NLS-1$
+			fileNamePattern = null;
+		}
+		if( fileNamePattern != null ) {
+			// Check no-one has tried to sneak options onto the end.
+			checkForExtraOptions(fileNamePattern);
+			request = "heap:file=" + fileNamePattern + ","; //$NON-NLS-1$ //$NON-NLS-2$
+		} else {
+			// This is equivalent to the HeapDump() call.
+			request = "heap:"; //$NON-NLS-1$
+		}
+		request += "opts=PHD"; //$NON-NLS-1$
+		String dump = null;
+		dump = triggerDump(request, "heapDumpToFile"); //$NON-NLS-1$
+		return dump;
+	}
+
+	/**
+	 * Trigger a heap dump. The default heap dump format (a phd file) is not
+	 * human-readable.
+	 *
+	 * The JVM will attempt to write the file to the default location.
+	 *
+	 * A string containing the actual file name written to is returned.
+	 *
+	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
+	 * made, if this fails a SecurityException will be thrown.
+	 *
+	 * @return the file name that the dump was actually written to
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	 */
+	public static String heapDumpToFile() {
+		try {
+			return triggerDump("heap:opts=PHD", "heapDumpToFile"); //$NON-NLS-1$ //$NON-NLS-2$
+		} catch (InvalidDumpOptionException e) {
+			// Cannot actually be thrown, since we aren't specifying anything other than a known dump type.
+			// Prevent the user having to add a catch block to their call.
+			return null;
+		}
+	}
+
+	/**
+	 * Trigger a system dump. A system dump is a platform-specific
+	 * file that contains information about the active processes, threads, and
+	 * system memory. System dumps are usually large.
+	 *
+	 * The JVM will attempt to write the file to the specified file name. This may
+	 * include replacement tokens as documented in the section on dump agents
+	 * in the documentation for the OpenJ9 JVM.
+	 *
+	 * A string containing the actual file name written to is returned. This may not
+	 * be the same as the requested filename for several reasons:
+	 * <ul>
+	 * <li>null or the empty string were specified, this will cause the JVM to write the
+	 *  dump to the default location based on the current dump settings and return that
+	 *  path.</li>
+	 * <li>Replacement (%) tokens were specified in the file name. These will have been
+	 *  expanded.</li>
+	 * <li>The full path is returned, if only a file name with no directory was specified
+	 *  the full path with the directory the dump was written to will be returned.</li>
+	 * <li>The JVM couldn't write to the specified location. In this case it will attempt
+	 *  to write the dump to another location, unless -Xdump:nofailover was specified on
+	 *  the command line.</li>
+	 * </ul>
+	 *
+	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
+	 * made, if this fails a SecurityException will be thrown.
+	 *
+	 * @param fileNamePattern the file name to write to, which may be null, empty or include replacement tokens
+	 * @return the file name that the dump was actually written to
+	 * @throws InvalidDumpOptionException if the filename was invalid
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	 */
+	public static String systemDumpToFile(String fileNamePattern) throws InvalidDumpOptionException {
+		String request = null;
+		if( "".equals(fileNamePattern) ) { //$NON-NLS-1$
+			fileNamePattern = null;
+		}
+		if( fileNamePattern != null ) {
+			// Check no-one has tried to sneak options onto the end.
+			checkForExtraOptions(fileNamePattern);
+			request = SystemRequestPrefix + fileNamePattern;
+		} else {
+			// This is equivalent the to SystemDump() call.
+			request = "system"; //$NON-NLS-1$
+		}
+		String dump = null;
+		dump = triggerDump(request, "systemDumpToFile"); //$NON-NLS-1$
+		return dump;
+	}
+
+	/**
+	 * Trigger a system dump. A system dump is a platform-specific
+	 * file that contains information about the active processes, threads, and
+	 * system memory. System dumps are usually large.
+	 *
+	 * The JVM will attempt to write the file to the default location.
+	 *
+	 * A string containing the actual file name written to is returned.
+	 *
+	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
+	 * made, if this fails a SecurityException will be thrown.
+	 *
+	 * @return the file name that the dump was actually written to
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	 */
+	public static String systemDumpToFile() {
+		try {
+			return triggerDump("system", "systemDumpToFile"); //$NON-NLS-1$ //$NON-NLS-2$
+		} catch (InvalidDumpOptionException e) {
+			// Cannot actually be thrown, since we aren't specifying anything other than a known dump type.
+			// Prevent the user having to add a catch block to their call.
+			return null;
+		}
+	}
+
+	/**
+	 * Trigger a snap dump. The snap dump format is not human-readable
+	 * and must be processed using the trace formatting tool supplied
+	 * with the OpenJ9 JVM.
+	 *
+	 * The JVM will attempt to write the file to the specified file name. This may
+	 * include replacement tokens as documented in the section on dump agents
+	 * in the documentation for the OpenJ9 JVM.
+	 *
+	 * A string containing the actual file name written to is returned. This may not
+	 * be the same as the requested filename for several reasons:
+	 * <ul>
+	 * <li>null or the empty string were specified, this will cause the JVM to write the
+	 *  dump to the default location based on the current dump settings and return that
+	 *  path.</li>
+	 * <li>Replacement (%) tokens were specified in the file name. These will have been
+	 *  expanded.</li>
+	 * <li>The full path is returned, if only a file name with no directory was specified
+	 *  the full path with the directory the dump was written to will be returned.</li>
+	 * <li>The JVM couldn't write to the specified location. In this case it will attempt
+	 *  to write the dump to another location, unless -Xdump:nofailover was specified on
+	 *  the command line.</li>
+	 * </ul>
+	 *
+	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
+	 * made, if this fails a SecurityException will be thrown.
+	 *
+	 * @param fileNamePattern the file name to write to, which may be null, empty or include replacement tokens
+	 * @return the file name that the dump was actually written to
+	 * @throws InvalidDumpOptionException if the filename was invalid
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	 */
+	public static String snapDumpToFile(String fileNamePattern) throws InvalidDumpOptionException {
+		String request = null;
+		if( "".equals(fileNamePattern) ) { //$NON-NLS-1$
+			fileNamePattern = null;
+		}
+		if( fileNamePattern != null ) {
+			// Check no-one has tried to sneak options onto the end.
+			checkForExtraOptions(fileNamePattern);
+			request = "snap:file=" + fileNamePattern; //$NON-NLS-1$
+		} else {
+			// This is equivalent to the SnapDump() call.
+			request = "snap"; //$NON-NLS-1$
+		}
+		String dump = null;
+		dump = triggerDump(request, "snapDumpToFile"); //$NON-NLS-1$
+		return dump;
+	}
+
+	/**
+	 * Trigger a snap dump. The snap dump format is not human-readable
+	 * and must be processed using the trace formatting tool supplied
+	 * with the OpenJ9 JVM.
+	 *
+	 * The JVM will attempt to write the file to the default location.
+	 *
+	 * A string containing the actual file name written to is returned.
+	 *
+	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
+	 * made, if this fails a SecurityException will be thrown.
+	 *
+	 * @return the file name that the dump was actually written to
+	 *
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	 */
+	public static String snapDumpToFile() {
+		try {
+			return triggerDump("snap", "snapDumpToFile"); //$NON-NLS-1$ //$NON-NLS-2$
+		} catch (InvalidDumpOptionException e) {
+			// Cannot actually be thrown, since we aren't specifying anything other than a known dump type.
+			// Prevent the user having to add a catch block to their call.
+			return null;
+		}
+	}
+
+	private static void checkForExtraOptions(String fileNamePattern) throws InvalidDumpOptionException {
+		// Check no-one has tried to sneak options onto the end of a filename.
+		if (fileNamePattern.contains(",")) { //$NON-NLS-1$
+			throw new InvalidDumpOptionException("Invalid dump filename specified."); //$NON-NLS-1$
+		}
+	}
+
+	private static void checkDumpSecurityPermssion() throws SecurityException {
 		/* Check the caller has DumpPermission. */
 		SecurityManager manager = System.getSecurityManager();
 		if( manager != null ) {
 			manager.checkPermission(DUMP_PERMISSION);
 		}
-    }
-    
-    private static void checkToolSecurityPermssion() throws SecurityException {
+	}
+
+	private static void checkToolSecurityPermssion() throws SecurityException {
 		/* Check the caller has DumpPermission. */
 		SecurityManager manager = System.getSecurityManager();
 		if( manager != null ) {
 			manager.checkPermission(TOOL_DUMP_PERMISSION);
 		}
-    }
-    
-    private static void checkLegacySecurityPermssion() throws SecurityException {
-    	if (!("false".equalsIgnoreCase(com.ibm.oti.vm.VM.getVMLangAccess()	//$NON-NLS-1$
-    		.internalGetProperties().getProperty(LEGACY_DUMP_PERMISSION_PROPERTY)))) {
-    		checkDumpSecurityPermssion();
-    	}
-    }
-   
-    /**
+	}
+
+	private static void checkLegacySecurityPermssion() throws SecurityException {
+		if (!("false".equalsIgnoreCase(com.ibm.oti.vm.VM.getVMLangAccess()	//$NON-NLS-1$
+			.internalGetProperties().getProperty(LEGACY_DUMP_PERMISSION_PROPERTY)))) {
+			checkDumpSecurityPermssion();
+		}
+	}
+
+	/**
 	 * Trigger a dump with the specified options.
 	 * This method will trigger a dump of the specified type,
 	 * with the specified options, immediately. The dump type and
 	 * options are specified using the same string parameters
 	 * as the -Xdump flag as described in the section on dump agents
 	 * in the documentation for the OpenJ9 JVM.
-	 * 
+	 *
 	 * Settings that do not apply to dumps that occur immediately
 	 * ("range=", "priority=", "filter=", "events=", "none" and "defaults")
 	 * will be ignored.
-	 * 
+	 *
 	 * The "opts=" setting is supported if an option is used that causes two
 	 * dumps to occur only the filename for the first will be returned.
-	 * 
+	 *
 	 * If a filename is specified for the dump it may contain replacement strings
 	 * as specified in the documentation. In addition if a dump cannot be created
 	 * with the specified filename the JVM may attempt to write it to another location.
-	 * For these reasons you should always use the file name that is returned from this function 
+	 * For these reasons you should always use the file name that is returned from this function
 	 * when looking for the dump rather than the name you supplied.
-	 * 
+	 *
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown. If a "tool" dump is requested an
 	 * additional check for com.ibm.jvm.ToolDumpPermission will also be made.
-	 * 
+	 *
 	 * @param dumpOptions a dump settings string
-	 * 
-	 * @return The file name of the dump that was created. The String "-" means the dump was written to stderr. 
-	 * 
+	 *
+	 * @return The file name of the dump that was created. The String "-" means the dump was written to stderr.
+	 *
 	 * @throws RuntimeException if the vm does not contain RAS dump support
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
 	 * @throws InvalidDumpOptionException If the dump options are invalid or the dump operation fails
@@ -566,7 +566,7 @@ public class Dump {
 
 		/* Check the caller is allowed to trigger a dump. */
 		checkDumpSecurityPermssion();
-	
+
 		try {
 			return triggerDumpsImpl(dumpSettings, event);
 		} catch (InvalidDumpOptionExceptionBase e) {
@@ -575,44 +575,44 @@ public class Dump {
 	}
 
 	/**
-     * Sets options for the dump subsystem.
-     * The dump option is passed in as an String.
-     * Use the same syntax as the -Xdump command-line option, with the initial -Xdump: omitted.
-     * See Using the -Xdump option as described in the section on dump agents
+	 * Sets options for the dump subsystem.
+	 * The dump option is passed in as an String.
+	 * Use the same syntax as the -Xdump command-line option, with the initial -Xdump: omitted.
+	 * See the -Xdump option section on dump agents
 	 * in the documentation for the OpenJ9 JVM.
-	 * 
+	 *
 	 * This method may throw a DumpConfigurationUnavailableException if the dump configuration
-	 * cannot be altered. If this occurs it will usually be because a dump event is currently 
+	 * cannot be altered. If this occurs it will usually be because a dump event is currently
 	 * being handled. As this can take some time depending on the dumps being generated an
 	 * exception is thrown rather than this call blocking the calling thread potentially for
-	 * minutes. 
-	 * 
+	 * minutes.
+	 *
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown. If a "tool" dump is specified an
 	 * additional check for com.ibm.jvm.ToolDumpPermission will also be made.
-	 * 
-     * @param dumpOptions the options string to set 
-     * @throws InvalidDumpOptionException if the specified option cannot be set or is incorrect
-     * @throws DumpConfigurationUnavailableException If the dump configuration cannot be changed because a dump is currently in progress
-     * @throws SecurityException if there is a security manager and it doesn't allow the checks required to change the dump settings
-     * @throws NullPointerException if options is null
-     */
-    public static void setDumpOptions(String dumpOptions) throws InvalidDumpOptionException, DumpConfigurationUnavailableException {	
+	 *
+	 * @param dumpOptions the options string to set
+	 * @throws InvalidDumpOptionException if the specified option cannot be set or is incorrect
+	 * @throws DumpConfigurationUnavailableException If the dump configuration cannot be changed because a dump is currently in progress
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to change the dump settings
+	 * @throws NullPointerException if options is null
+	 */
+	public static void setDumpOptions(String dumpOptions) throws InvalidDumpOptionException, DumpConfigurationUnavailableException {
 
 		/* Check the caller is allowed to trigger a dump. */
-    	checkDumpSecurityPermssion();
-    	
+		checkDumpSecurityPermssion();
+
 		if (isToolDump(dumpOptions)) {
 			checkToolSecurityPermssion();
 		}
-		
+
 		if( dumpOptions == null ) {
 			throw new NullPointerException();
 		}
-		
+
 		/* Synchronised to prevent two Java threads trying to set/reset dump settings at once.
 		 * resetDumpOptionsImpl is also synchronised in this way.
-		 * A DumpConfigurationUnavailableException can still be thrown if a dump was in 
+		 * A DumpConfigurationUnavailableException can still be thrown if a dump was in
 		 * progress and the dump configuration could not be updated.
 		 */
 		try {
@@ -624,69 +624,69 @@ public class Dump {
 		} catch (DumpConfigurationUnavailableExceptionBase e) {
 			throw new DumpConfigurationUnavailableException(e);
 		}
-    }
-    
-    /**
-     * Returns the current dump configuration as an array of Strings.
-     * The syntax of the option Strings is the same as the -Xdump command-line option,
-     * with the initial -Xdump: omitted. See Using the -Xdump option
-     * in the section on dump agents in the documentation for the OpenJ9 JVM.
-	 * 
+	}
+
+	/**
+	 * Returns the current dump configuration as an array of Strings.
+	 * The syntax of the option Strings is the same as the -Xdump command-line option,
+	 * with the initial -Xdump: omitted. See the -Xdump option
+	 * section on dump agents in the documentation for the OpenJ9 JVM.
+	 *
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
-	 * 
+	 *
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to read the dump settings
-     * @return the options strings
-     */
-    public static String[] queryDumpOptions() {
+	 * @return the options strings
+	 */
+	public static String[] queryDumpOptions() {
 		/* Check the caller is allowed to query dump settings. */
-    	checkDumpSecurityPermssion();
-		
-    	String options = queryDumpOptionsImpl();
-    	if( options != null ) {
-    		if( "".equals(options) ) { //$NON-NLS-1$
-    			String[] empty = {};
-    			return empty;
-    		} else {
-    			return options.split("\n"); //$NON-NLS-1$
-    		}
-    	}
-    	return null;
-    }
-    
-    /**
-     * Reset the JVM dump options to the settings specified when the JVM
-     * was started removing any additional configuration done since then.
-     * 
-     * This method may throw a DumpConfigurationUnavailableException if the dump configuration
-	 * cannot be altered. If this occurs it will usually be because a dump event is currently 
+		checkDumpSecurityPermssion();
+
+		String options = queryDumpOptionsImpl();
+		if( options != null ) {
+			if( "".equals(options) ) { //$NON-NLS-1$
+				String[] empty = {};
+				return empty;
+			} else {
+				return options.split("\n"); //$NON-NLS-1$
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Reset the JVM dump options to the settings specified when the JVM
+	 * was started removing any additional configuration done since then.
+	 *
+	 * This method may throw a DumpConfigurationUnavailableException if the dump configuration
+	 * cannot be altered. If this occurs it will usually be because a dump event is currently
 	 * being handled. As this can take some time depending on the dumps being generated an
 	 * exception is thrown rather than this call blocking the calling thread potentially for
-	 * minutes. 
-	 * 
+	 * minutes.
+	 *
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
-	 * 
-     * @throws com.ibm.jvm.DumpConfigurationUnavailableException if the dump configuration cannot be changed because a dump is currently in progress
-     * @throws SecurityException if there is a security manager and it doesn't allow the checks required to change the dump settings
-     */
-    public static void resetDumpOptions() throws DumpConfigurationUnavailableException {
-    	
+	 *
+	 * @throws com.ibm.jvm.DumpConfigurationUnavailableException if the dump configuration cannot be changed because a dump is currently in progress
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to change the dump settings
+	 */
+	public static void resetDumpOptions() throws DumpConfigurationUnavailableException {
+
 		/* Check the caller is allowed to reset dump settings. */
-    	checkDumpSecurityPermssion();
-		
-    	/* Synchronised to prevent two Java threads trying to update dump settings at once.
-    	 * setDumpOptions is also synchronised in this way.
-    	 * A DumpConfigurationUnavailableException can still be thrown if a dump was in 
-    	 * progress and the dump configuration could not be updated. */
-    	try {
-    		synchronized (dumpLock) {
-    			resetDumpOptionsImpl();
-    		}
-    	} catch (DumpConfigurationUnavailableExceptionBase e) {
-    		throw new DumpConfigurationUnavailableException(e);
-    	}
-    }
+		checkDumpSecurityPermssion();
+
+		/* Synchronised to prevent two Java threads trying to update dump settings at once.
+		 * setDumpOptions is also synchronised in this way.
+		 * A DumpConfigurationUnavailableException can still be thrown if a dump was in
+		 * progress and the dump configuration could not be updated. */
+		try {
+			synchronized (dumpLock) {
+				resetDumpOptionsImpl();
+			}
+		} catch (DumpConfigurationUnavailableExceptionBase e) {
+			throw new DumpConfigurationUnavailableException(e);
+		}
+	}
 
 	private static native int JavaDumpImpl();
 	private static native int HeapDumpImpl();

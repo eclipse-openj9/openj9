@@ -254,6 +254,7 @@ public:
    virtual bool isAbstractClass(TR_OpaqueClassBlock * clazzPointer);
    virtual bool isCloneable(TR_OpaqueClassBlock *);
    virtual bool isInterfaceClass(TR_OpaqueClassBlock * clazzPointer);
+   virtual bool isConcreteClass(TR_OpaqueClassBlock * clazzPointer);
    virtual bool isEnumClass(TR_OpaqueClassBlock * clazzPointer, TR_ResolvedMethod *method);
    virtual bool isPrimitiveClass(TR_OpaqueClassBlock *clazz);
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *);
@@ -1032,8 +1033,8 @@ public:
    // --------------------------------------------------------------------------
 
    virtual bool getNurserySpaceBounds(uintptr_t *base, uintptr_t *top);
-   virtual uintptr_t getLowTenureAddress();
-   virtual uintptr_t getHighTenureAddress();
+   virtual UDATA getLowTenureAddress();
+   virtual UDATA getHighTenureAddress();
    virtual uintptr_t getThreadLowTenureAddressPointerOffset();
    virtual uintptr_t getThreadHighTenureAddressPointerOffset();
    virtual uintptr_t thisThreadRememberedSetFragmentOffset();

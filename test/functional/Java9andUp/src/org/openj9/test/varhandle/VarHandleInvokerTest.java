@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,19 +71,19 @@ public class VarHandleInvokerTest {
 		MethodHandle setHandle = MethodHandles.varHandleInvoker(AccessMode.SET, MethodType.methodType(void.class, VarHandleInvokerTest.class, Integer.class));
 		MethodHandle casHandle = MethodHandles.varHandleInvoker(AccessMode.COMPARE_AND_SET, MethodType.methodType(Boolean.class, VarHandleInvokerTest.class, Integer.class, Integer.class));
 
-		setHandle.invoke(varHandle, vhit, new Integer(12345));
+		setHandle.invoke(varHandle, vhit, Integer.valueOf(12345));
 		Assert.assertEquals(12345, getHandle.invoke(varHandle, vhit));
-		Assert.assertEquals(false, casHandle.invoke(varHandle, vhit, new Integer(54321), new Integer(111)));
+		Assert.assertEquals(false, casHandle.invoke(varHandle, vhit, Integer.valueOf(54321), Integer.valueOf(111)));
 		Assert.assertEquals(12345, getHandle.invoke(varHandle, vhit));
-		Assert.assertEquals(true, casHandle.invoke(varHandle, vhit, new Integer(12345), new Integer(54321)));
+		Assert.assertEquals(true, casHandle.invoke(varHandle, vhit, Integer.valueOf(12345), Integer.valueOf(54321)));
 		Assert.assertEquals(54321, getHandle.invoke(varHandle, vhit));
 
-		setHandle.invokeExact(varHandle, vhit, new Integer(12345));
-		Assert.assertEquals(new Integer(12345), (Integer)getHandle.invokeExact(varHandle, vhit));
-		Assert.assertEquals(new Boolean(false), (Boolean)casHandle.invokeExact(varHandle, vhit, new Integer(54321), new Integer(111)));
-		Assert.assertEquals(new Integer(12345), (Integer)getHandle.invokeExact(varHandle, vhit));
-		Assert.assertEquals(new Boolean(true), (Boolean)casHandle.invokeExact(varHandle, vhit, new Integer(12345), new Integer(54321)));
-		Assert.assertEquals(new Integer(54321), (Integer)getHandle.invokeExact(varHandle, vhit));
+		setHandle.invokeExact(varHandle, vhit, Integer.valueOf(12345));
+		Assert.assertEquals(Integer.valueOf(12345), (Integer)getHandle.invokeExact(varHandle, vhit));
+		Assert.assertEquals(Boolean.valueOf(false), (Boolean)casHandle.invokeExact(varHandle, vhit, Integer.valueOf(54321), Integer.valueOf(111)));
+		Assert.assertEquals(Integer.valueOf(12345), (Integer)getHandle.invokeExact(varHandle, vhit));
+		Assert.assertEquals(Boolean.valueOf(true), (Boolean)casHandle.invokeExact(varHandle, vhit, Integer.valueOf(12345), Integer.valueOf(54321)));
+		Assert.assertEquals(Integer.valueOf(54321), (Integer)getHandle.invokeExact(varHandle, vhit));
 
 		/* Using exact types */
 		getHandle = MethodHandles.varHandleInvoker(AccessMode.GET, MethodType.methodType(int.class, VarHandleInvokerTest.class));
@@ -111,13 +111,13 @@ public class VarHandleInvokerTest {
 	@Test(expectedExceptions = WrongMethodTypeException.class)
 	public void testExactWrongType() throws Throwable {
 		MethodHandle setHandle = MethodHandles.varHandleExactInvoker(AccessMode.SET, MethodType.methodType(void.class, VarHandleInvokerTest.class, Integer.class));
-		setHandle.invoke(varHandle, vhit, new Integer(12345));
+		setHandle.invoke(varHandle, vhit, Integer.valueOf(12345));
 	}
 
 	@Test(expectedExceptions = WrongMethodTypeException.class)
 	public void testExactInvokeExactWrongType() throws Throwable {
 		MethodHandle setHandle = MethodHandles.varHandleExactInvoker(AccessMode.SET, MethodType.methodType(void.class, VarHandleInvokerTest.class, Integer.class));
-		setHandle.invokeExact(varHandle, vhit, new Integer(12345));
+		setHandle.invokeExact(varHandle, vhit, Integer.valueOf(12345));
 	}
 
 	@Test(expectedExceptions = WrongMethodTypeException.class)
@@ -167,12 +167,12 @@ public class VarHandleInvokerTest {
 	@Test(expectedExceptions = NullPointerException.class)
 	public void testGenericNPE3() throws Throwable {
 		MethodHandle setHandle = MethodHandles.varHandleInvoker(AccessMode.SET, MethodType.methodType(void.class, VarHandleInvokerTest.class, Integer.class));
-		setHandle.invoke(null, vhit, new Integer(12345));
+		setHandle.invoke(null, vhit, Integer.valueOf(12345));
 	}
 
 	@Test(expectedExceptions = NullPointerException.class)
 	public void testGenericInvokeExactNPE3() throws Throwable {
 		MethodHandle setHandle = MethodHandles.varHandleInvoker(AccessMode.SET, MethodType.methodType(void.class, VarHandleInvokerTest.class, Integer.class));
-		setHandle.invoke((VarHandle)null, vhit, new Integer(12345));
+		setHandle.invoke((VarHandle)null, vhit, Integer.valueOf(12345));
 	}
 }

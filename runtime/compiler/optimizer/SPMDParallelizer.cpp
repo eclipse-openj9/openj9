@@ -2173,7 +2173,7 @@ void TR_SPMDKernelParallelizer::insertGPUEstimate(TR::Node *firstNode, TR::Block
    TR::ILOpCodes addressLoadOpCode = TR::lload;
 
    TR::Node *estimateGPUNode = TR::Node::create(firstNode, TR::icall, 7);
-   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_estimateGPU, false, false, false);
+   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_estimateGPU);
    helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage);
    estimateGPUNode->setSymbolReference(helper);
 
@@ -2219,7 +2219,7 @@ void TR_SPMDKernelParallelizer::insertGPUParmsAllocate(TR::Node *firstNode, TR::
    TR::ILOpCodes addressLoadOpCode = TR::lload;
 
    TR::Node *allocateParmsNode = TR::Node::create(firstNode, addressCallOpCode, 2);
-   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_allocateGPUKernelParms, false, false, false);
+   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_allocateGPUKernelParms);
    helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage);
    allocateParmsNode->setSymbolReference(helper);
 
@@ -2266,7 +2266,7 @@ void TR_SPMDKernelParallelizer::insertGPUInvalidateSequence(TR::Node *firstNode,
       if (hoistAccess) continue;
 
       invalidateGPUNode = TR::Node::create(firstNode, addressCallOpCode, 2);
-      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_invalidateGPU, false, false, false);
+      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_invalidateGPU);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage/*@*/);
       invalidateGPUNode->setSymbolReference(helper);
 
@@ -2289,7 +2289,7 @@ void TR_SPMDKernelParallelizer::insertGPUErrorHandler(TR::Node *firstNode, TR::B
    TR::CFG *cfg = comp()->getFlowGraph();
 
    TR::Node *getStateGPUNode = TR::Node::create(firstNode, TR::icall, 2);
-   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_getStateGPU, false, false, false);
+   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_getStateGPU);
    helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage);
    getStateGPUNode->setSymbolReference(helper);
 
@@ -2361,7 +2361,7 @@ void TR_SPMDKernelParallelizer::insertGPUCopyFromSequence(TR::Node *firstNode, T
          }
 
       TR::Node *copyFromGPUNode = TR::Node::create(firstNode, TR::icall, 7);
-      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_copyFromGPU, false, false, false);
+      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_copyFromGPU);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage);
       copyFromGPUNode->setSymbolReference(helper);
 
@@ -2474,7 +2474,7 @@ void TR_SPMDKernelParallelizer::insertGPUCopyToSequence(TR::Node *firstNode, TR:
 
       TR::Node *copyToGPUNode = TR::Node::create(firstNode, addressCallOpCode, 10);
 
-      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_copyToGPU, false, false, false);
+      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_copyToGPU);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage);
       copyToGPUNode->setSymbolReference(helper);
 
@@ -2542,7 +2542,7 @@ void TR_SPMDKernelParallelizer::insertGPUKernelLaunch(TR::SymbolReference *alloc
    TR::SymbolReference *helper;
    TR::Node *launchGPUKernelNode = TR::Node::create(firstNode, TR::icall, 8);
 
-   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_launchGPUKernel, false, false, false);
+   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_launchGPUKernel);
    helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage);
    launchGPUKernelNode->setSymbolReference(helper);
 
@@ -2589,7 +2589,7 @@ void TR_SPMDKernelParallelizer::insertGPURegionEntry(TR::Block * loopInvariantBl
 
    TR::Node* regionEntryGPUNode = TR::Node::create(insertionPoint->getNode(), addressCallOpCode, 5);
 
-   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionEntryGPU, false, false, false);
+   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionEntryGPU);
    helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage/*@*/);
    regionEntryGPUNode->setSymbolReference(helper);
 
@@ -2642,7 +2642,7 @@ TR::Node* TR_SPMDKernelParallelizer::insertFlushGPU(TR::Block* flushGPUBlock, TR
    TR::TreeTop *insertionPoint = flushGPUBlock->getEntry();
 
    TR::Node* flushGPUNode = TR::Node::create(insertionPoint->getNode(), TR::icall, 2);
-   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_flushGPU, false, false, false);
+   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_flushGPU);
    helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage/*@*/);
    flushGPUNode->setSymbolReference(helper);
 
@@ -2725,7 +2725,7 @@ void TR_SPMDKernelParallelizer::insertGPURegionExits(List<TR::Block>* exitBlocks
       TR::TreeTop *insertionPoint = exitBlock->getEntry();
 
       TR::Node* regionExitGPUNode = TR::Node::create(insertionPoint->getNode(), TR::icall, 4);
-      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionExitGPU, false, false, false);
+      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionExitGPU);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage/*@*/);
       regionExitGPUNode->setSymbolReference(helper);
 
@@ -2795,7 +2795,7 @@ void TR_SPMDKernelParallelizer::insertGPURegionExitInRegionExits(List<TR::Block>
       TR::TreeTop *insertionPoint = regionExitGPUBlock->getEntry();
 
       TR::Node* regionExitGPUNode = TR::Node::create(insertionPoint->getNode(), TR::icall, 4);
-      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionExitGPU, false, false, false);
+      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionExitGPU);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage/*@*/);
       regionExitGPUNode->setSymbolReference(helper);
 
@@ -3521,7 +3521,7 @@ bool TR_SPMDKernelParallelizer::visitCPUNode(TR::Node *node, int32_t visitCount,
 
       if (method)
          {
-         if (trace()) 
+         if (trace())
             traceMsg(comp(), "inside IntPipeline%s.forEach\n",
                method->getRecognizedMethod() == TR::java_util_stream_IntPipelineHead_forEach ? "$Head" : "");
 
@@ -3542,7 +3542,7 @@ bool TR_SPMDKernelParallelizer::visitCPUNode(TR::Node *node, int32_t visitCount,
 
          TR::Method * method = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod();
          const char * signature = method->signature(comp()->trMemory(), stackAlloc);
-         
+
          if (trace())
             traceMsg(comp(), "signature: %s\n", signature ? signature : "NULL");
 
@@ -4142,7 +4142,7 @@ bool TR_SPMDKernelParallelizer::checkIndependence(TR_RegionStructure *loop, TR_U
             {
             if (trace())
                traceMsg(comp, "SPMD DEPENDENCE ANALYSIS: Testing (def %p, def %p) for dependence\n", defs[dc], defs[dc2]);
-            
+
             if (!loop->isExprInvariant(defs[dc]->getFirstChild()) &&
                 !loop->isExprInvariant(defs[dc2]->getFirstChild()) &&
                 areNodesEquivalent(comp,defs[dc]->getFirstChild(), defs[dc2]->getFirstChild()))
@@ -4160,7 +4160,7 @@ bool TR_SPMDKernelParallelizer::checkIndependence(TR_RegionStructure *loop, TR_U
                traceMsg(comp, "SPMD DEPENDENCE ANALYSIS: def %p and def %p are dependent\n", defs[dc], defs[dc2]);
                traceMsg(comp, "SPMD DEPENDENCE ANALYSIS: will not vectorize\n");
                }
-            
+
             return false;
             }
          }

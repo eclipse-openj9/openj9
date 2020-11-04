@@ -31,6 +31,7 @@
 #include "ClassFileOracle.hpp"
 #include "ROMClassCreationContext.hpp"
 #include "ROMClassVerbosePhase.hpp"
+#include "VMHelpers.hpp"
 
 #include "ut_j9bcu.h"
 
@@ -318,119 +319,6 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 	}
 }
 
-bool
-ConstantPoolMap::isVarHandleMethod(U_32 classIndex, U_32 nasIndex) {
-	bool result = false;
-	U_16 classNameLength = _classFileOracle->getUTF8Length(getCPSlot1(classIndex));
-
-	if ((sizeof(VARHANDLE_CLASS_NAME) - 1) == classNameLength) {
-		const U_8 *classNameData = _classFileOracle->getUTF8Data(getCPSlot1(classIndex));
-		if (0 == memcmp(classNameData, VARHANDLE_CLASS_NAME, classNameLength)) {
-			U_32 methodNameIndex = getCPSlot1(nasIndex);
-			U_16 methodNameLength = _classFileOracle->getUTF8Length(methodNameIndex);
-			const U_8 *methodNameData = _classFileOracle->getUTF8Data(methodNameIndex);
-
-			switch (methodNameLength) {
-			case 3:
-				if ((0 == memcmp(methodNameData, "get", methodNameLength))
-				 || (0 == memcmp(methodNameData, "set", methodNameLength))
-				) {
-					result = true;
-				}
-				break;
-			case 9:
-				if ((0 == memcmp(methodNameData, "getOpaque", methodNameLength))
-				 || (0 == memcmp(methodNameData, "setOpaque", methodNameLength))
-				 || (0 == memcmp(methodNameData, "getAndSet", methodNameLength))
-				 || (0 == memcmp(methodNameData, "getAndAdd", methodNameLength))
-				) {
-					result = true;
-				}
-				break;
-			case 10:
-				if ((0 == memcmp(methodNameData, "getAcquire", methodNameLength))
-				 || (0 == memcmp(methodNameData, "setRelease", methodNameLength))
-				) {
-					result = true;
-				}
-				break;
-			case 11:
-				if ((0 == memcmp(methodNameData, "getVolatile", methodNameLength))
-				 || (0 == memcmp(methodNameData, "setVolatile", methodNameLength))
-				) {
-					result = true;
-				}
-				break;
-			case 13:
-				if (0 == memcmp(methodNameData, "compareAndSet", methodNameLength)) {
-					result = true;
-				}
-				break;
-			case 15:
-				if (0 == memcmp(methodNameData, "getAndBitwiseOr", methodNameLength)) {
-					result = true;
-				}
-				break;
-			case 16:
-				if ((0 == memcmp(methodNameData, "getAndSetAcquire", methodNameLength))
-				 || (0 == memcmp(methodNameData, "getAndSetRelease", methodNameLength))
-				 || (0 == memcmp(methodNameData, "getAndAddAcquire", methodNameLength))
-				 || (0 == memcmp(methodNameData, "getAndAddRelease", methodNameLength))
-				 || (0 == memcmp(methodNameData, "getAndBitwiseAnd", methodNameLength))
-				 || (0 == memcmp(methodNameData, "getAndBitwiseXor", methodNameLength))
-				) {
-					result = TRUE;
-				}
-				break;
-			case 17:
-				if (0 == memcmp(methodNameData, "weakCompareAndSet", methodNameLength)) {
-					result = true;
-				}
-				break;
-			case 18:
-				if (0 == memcmp(methodNameData, "compareAndExchange", methodNameLength)) {
-					result = true;
-				}
-				break;
-			case 22:
-				if ((0 == memcmp(methodNameData, "getAndBitwiseOrAcquire", methodNameLength))
-				 || (0 == memcmp(methodNameData, "getAndBitwiseOrRelease", methodNameLength))
-				 || (0 == memcmp(methodNameData, "weakCompareAndSetPlain", methodNameLength))
-				) {
-					result = TRUE;
-				}
-				break;
-			case 23:
-				if ((0 == memcmp(methodNameData, "getAndBitwiseAndAcquire", methodNameLength))
-				 || (0 == memcmp(methodNameData, "getAndBitwiseAndRelease", methodNameLength))
-				 || (0 == memcmp(methodNameData, "getAndBitwiseXorAcquire", methodNameLength))
-				 || (0 == memcmp(methodNameData, "getAndBitwiseXorRelease", methodNameLength))
-				) {
-					result = TRUE;
-				}
-				break;
-			case 24:
-				if ((0 == memcmp(methodNameData, "weakCompareAndSetAcquire", methodNameLength))
-				 || (0 == memcmp(methodNameData, "weakCompareAndSetRelease", methodNameLength))
-				) {
-					result = true;
-				}
-				break;
-			case 25:
-				if ((0 == memcmp(methodNameData, "compareAndExchangeAcquire", methodNameLength))
-				 || (0 == memcmp(methodNameData, "compareAndExchangeRelease", methodNameLength))
-				) {
-					result = true;
-				}
-				break;
-			default:
-				break;
-			}
-		}
-	}
-	return result;
-}
-
 void
 ConstantPoolMap::findVarHandleMethodRefs()
 {
@@ -442,20 +330,31 @@ ConstantPoolMap::findVarHandleMethodRefs()
 		|| (J9CPTYPE_INTERFACE_INSTANCE_METHOD == _romConstantPoolTypes[i])
 		) {
 			U_16 cfrCPIndex = _romConstantPoolEntries[i];
-			U_32 slot1 = getCPSlot1(cfrCPIndex);
-			U_32 slot2 = getCPSlot2(cfrCPIndex);
+			U_32 classIndex = getCPSlot1(cfrCPIndex);
+			U_32 classNameIndex = getCPSlot1(classIndex);
+			U_16 classNameLength = _classFileOracle->getUTF8Length(classNameIndex);
 
-			if (isVarHandleMethod(slot1, slot2)) {
-				if (NULL == varHandleMethodTable) {
-					/* Allocate a temporary array for storing indices of VarHandle methodrefs */
-					varHandleMethodTable = (U_16*) j9mem_allocate_memory(_romConstantPoolCount * sizeof(U_16), OMRMEM_CATEGORY_VM);
-					if (NULL == varHandleMethodTable) {
-						_buildResult = OutOfMemory;
-						break;
+			if ((sizeof(VARHANDLE_CLASS_NAME) - 1) == classNameLength) {
+				const U_8 *classNameData = _classFileOracle->getUTF8Data(classNameIndex);
+				if (0 == memcmp(classNameData, VARHANDLE_CLASS_NAME, classNameLength)) {
+					U_32 nasIndex = getCPSlot2(cfrCPIndex);
+					U_32 methodNameIndex = getCPSlot1(nasIndex);
+					U_16 methodNameLength = _classFileOracle->getUTF8Length(methodNameIndex);
+					const U_8 *methodNameData = _classFileOracle->getUTF8Data(methodNameIndex);
+
+					if (VM_VMHelpers::isPolymorphicVarHandleMethod(methodNameData, methodNameLength)) {
+						if (NULL == varHandleMethodTable) {
+							/* Allocate a temporary array for storing indices of VarHandle methodrefs. */
+							varHandleMethodTable = (U_16*) j9mem_allocate_memory(_romConstantPoolCount * sizeof(U_16), OMRMEM_CATEGORY_VM);
+							if (NULL == varHandleMethodTable) {
+								_buildResult = OutOfMemory;
+								break;
+							}
+						}
+						varHandleMethodTable[_varHandleMethodTypeCount] = i;
+						_varHandleMethodTypeCount++;
 					}
 				}
-				varHandleMethodTable[_varHandleMethodTypeCount] = i;
-				_varHandleMethodTypeCount++;
 			}
 		}
 	}

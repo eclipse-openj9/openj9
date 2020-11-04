@@ -1689,7 +1689,7 @@ public class VmArgumentTests {
 			int p = 0;
 			for (String a: actualArguments) {
 				if (a.startsWith(op)) {
-					argPositions.put(op, new Integer(p));
+					argPositions.put(op, Integer.valueOf(p));
 					break;
 				} else {
 					++p;

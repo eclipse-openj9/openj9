@@ -27,7 +27,6 @@
  */
 @SuppressWarnings("module")
 module openj9.sharedclasses {
-  requires java.base;
   exports com.ibm.oti.shared;
   provides com.ibm.sharedclasses.spi.SharedClassProvider with com.ibm.oti.shared.provider.SharedClassProviderImpl;
 }

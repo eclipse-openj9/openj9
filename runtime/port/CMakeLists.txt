@@ -80,11 +80,15 @@ if(OMR_OS_ZOS)
 		j9gs_get_supported.s
 		j9gs_load_gscb.s
 		j9gs_store_gscb.s
-		j9guardedstorage.mc
 		j9mprotect.s
 		j9munprotect.s
 		protect_helpers.c
 	)
+	omr_compile_metalc(
+		zos390/j9guardedstorage.mc
+		zos390/j9guardedstorage.o
+	)
+	target_sources(j9prt PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/zos390/j9guardedstorage.o)
 endif()
 
 if(NOT OMR_OS_WINDOWS)
@@ -171,6 +175,10 @@ endif()
 
 if(OMR_OS_OSX OR OMR_OS_AIX)
 	target_link_libraries(j9prt PRIVATE iconv)
+endif()
+
+if(OMR_OS_ZOS)
+	target_link_libraries(j9prt PRIVATE omrport_metalc)
 endif()
 
 target_compile_definitions(j9prt

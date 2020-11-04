@@ -2670,7 +2670,7 @@ J9::Z::PrivateLinkage::callPreJNICallOffloadCheck(TR::Node * callNode)
    TR::CodeGenerator * codeGen = cg();
    TR::LabelSymbol * offloadOffRestartLabel = generateLabelSymbol(codeGen);
    TR::LabelSymbol * offloadOffSnippetLabel = generateLabelSymbol(codeGen);
-   TR::SymbolReference * offloadOffSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitPreJNICallOffloadCheck, false, false, false);
+   TR::SymbolReference * offloadOffSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitPreJNICallOffloadCheck);
 
    TR::Instruction *gcPoint = generateS390BranchInstruction(
       codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, callNode, offloadOffSnippetLabel);
@@ -2691,7 +2691,7 @@ J9::Z::PrivateLinkage::callPostJNICallOffloadCheck(TR::Node * callNode)
    TR::Instruction *gcPoint = generateS390BranchInstruction(
       codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, callNode, offloadOnSnippetLabel);
    gcPoint->setNeedsGCMap(0);
-   TR::SymbolReference * offloadOnSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitPostJNICallOffloadCheck, false, false, false);
+   TR::SymbolReference * offloadOnSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitPostJNICallOffloadCheck);
    codeGen->addSnippet(new (trHeapMemory()) TR::S390HelperCallSnippet(codeGen, callNode,
       offloadOnSnippetLabel, offloadOnSymRef, offloadOnRestartLabel));
    generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, offloadOnRestartLabel);
@@ -2718,7 +2718,7 @@ void J9::Z::PrivateLinkage::collapseJNIReferenceFrame(TR::Node * callNode,
       generateS390BranchInstruction(codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, callNode, refPoolSnippetLabel);
    gcPoint->setNeedsGCMap(0);
 
-   TR::SymbolReference * collapseSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390collapseJNIReferenceFrame, false, false, false);
+   TR::SymbolReference * collapseSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390collapseJNIReferenceFrame);
    codeGen->addSnippet(new (trHeapMemory()) TR::S390HelperCallSnippet(codeGen, callNode,
       refPoolSnippetLabel, collapseSymRef, refPoolRestartLabel));
    generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, refPoolRestartLabel);

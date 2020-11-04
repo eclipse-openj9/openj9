@@ -8449,6 +8449,7 @@ foundITable:
 	VMINLINE VM_BytecodeAction
 	invokevarhandle(REGISTER_ARGS_LIST)
 	{
+#if defined(J9VM_OPT_METHOD_HANDLE)
 		VM_BytecodeAction rc = GOTO_RUN_METHODHANDLE;
 
 		/* Determine stack shape */
@@ -8524,6 +8525,11 @@ foundITable:
 		}
 done:
 		return rc;
+#else /* defined(J9VM_OPT_METHOD_HANDLE) */
+	/* invokevarhandle is not used for OpenJDK VarHandles (J9VM_OPT_OPENJDK_METHODHANDLE). */
+	Assert_VM_unreachable();
+	return EXECUTE_BYTECODE;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	}
 
 	VMINLINE VM_BytecodeAction

@@ -47,6 +47,10 @@ extern void TEMPORARY_initJ9PPCTreeEvaluatorTable(TR::CodeGenerator *cg);
 J9::Power::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
       J9::CodeGenerator(comp)
    {
+   /**
+    * Do not add CodeGenerator initialization logic here.
+    * Use the \c initialize() method instead.
+    */
    }
 
 void
@@ -127,86 +131,6 @@ J9::Power::CodeGenerator::initialize()
 
    if (comp->fej9()->hasFixedFrameC_CallingConvention())
       cg->setHasFixedFrameC_CallingConvention();
-
-   }
-
-
-J9::Power::CodeGenerator::CodeGenerator() :
-      J9::CodeGenerator()
-   {
-   TR::CodeGenerator *cg = self();
-   TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *) (comp->fe());
-
-   cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
-
-   if (!comp->getOption(TR_FullSpeedDebug))
-      cg->setSupportsDirectJNICalls();
-
-   if (!comp->getOption(TR_DisableBDLLVersioning))
-      {
-      cg->setSupportsBigDecimalLongLookasideVersioning();
-      }
-
-   if (cg->getSupportsTM())
-      {
-      cg->setSupportsInlineConcurrentLinkedQueue();
-      }
-
-   cg->setSupportsNewInstanceImplOpt();
-
-   static char *disableMonitorCacheLookup = feGetEnv("TR_disableMonitorCacheLookup");
-   if (!disableMonitorCacheLookup)
-      comp->setOption(TR_EnableMonitorCacheLookup);
-
-   cg->setSupportsPartialInlineOfMethodHooks();
-   cg->setSupportsInliningOfTypeCoersionMethods();
-
-   if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) &&
-      comp->target().is64Bit() && !comp->getOption(TR_DisableFastStringIndexOf) &&
-      !TR::Compiler->om.canGenerateArraylets())
-      cg->setSupportsInlineStringIndexOf();
-
-   if (!comp->getOption(TR_DisableReadMonitors))
-      cg->setSupportsReadOnlyLocks();
-
-   static bool disableTLHPrefetch = (feGetEnv("TR_DisableTLHPrefetch") != NULL);
-
-   // Enable software prefetch of the TLH and configure the TLH prefetching
-   // geometry.
-   //
-   if (!disableTLHPrefetch && comp->getOption(TR_TLHPrefetch) && !comp->compileRelocatableCode())
-      {
-      cg->setEnableTLHPrefetching();
-      }
-
-   //This env-var does 3 things:
-   // 1. Prevents batch clear in frontend/j9/rossa.cpp
-   // 2. Prevents all allocations to nonZeroTLH
-   // 3. Maintains the old semantics zero-init and prefetch.
-   // The use of this env-var is more complete than the JIT Option then.
-   static bool disableDualTLH = (feGetEnv("TR_DisableDualTLH") != NULL);
-   // Enable use of non-zero initialized TLH for object allocations where
-   // zero-initialization is not required as detected by the optimizer.
-   //
-   if (!disableDualTLH && !comp->getOption(TR_DisableDualTLH) && !comp->compileRelocatableCode() && !comp->getOptions()->realTimeGC())
-      {
-      cg->setIsDualTLH();
-      }
-
-   /*
-    * "Statically" initialize the FE-specific tree evaluator functions.
-    * This code only needs to execute once per JIT lifetime.
-    */
-   static bool initTreeEvaluatorTable = false;
-   if (!initTreeEvaluatorTable)
-      {
-      TEMPORARY_initJ9PPCTreeEvaluatorTable(cg);
-      initTreeEvaluatorTable = true;
-      }
-
-   if (comp->fej9()->hasFixedFrameC_CallingConvention())
-      self()->setHasFixedFrameC_CallingConvention();
 
    }
 

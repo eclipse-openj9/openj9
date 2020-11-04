@@ -65,13 +65,20 @@ class JitDumpMethodDetails : public TR::IlGeneratorMethodDetails
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
 
 public:
-   JitDumpMethodDetails(J9Method* method) : TR::IlGeneratorMethodDetails(method) { }
-   JitDumpMethodDetails(const JitDumpMethodDetails& other) : TR::IlGeneratorMethodDetails(other.getMethod()) { }
+   JitDumpMethodDetails(J9Method* method, bool aotCompile) : TR::IlGeneratorMethodDetails(method)
+      {
+      _data._aotCompile = aotCompile;
+      }
+   JitDumpMethodDetails(const JitDumpMethodDetails& other) : TR::IlGeneratorMethodDetails(other.getMethod())
+      {
+      _data._aotCompile = other._data._aotCompile;
+      }
 
    virtual const char * name()     const { return "DumpMethod"; }
 
-   virtual bool isOrdinaryMethod() const { return false; }
-   virtual bool isJitDumpMethod()     const { return true; }
+   virtual bool isOrdinaryMethod()   const { return false; }
+   virtual bool isJitDumpMethod()    const { return true; }
+   virtual bool isJitDumpAOTMethod() const { return _data._aotCompile; }
 
 
    virtual bool sameAs(TR::IlGeneratorMethodDetails & other, TR_FrontEnd *fe)
