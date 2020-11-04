@@ -431,6 +431,9 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             if (testJobName.contains("functional")) {
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "2"
+            } else if (testJobName.contains("jck_s390x_zos")) {
+                PARALLEL = "Dynamic"
+                NUM_MACHINES = "4"
             }
             testJobs[id] = {
                 if (params.ghprbPullId) {
