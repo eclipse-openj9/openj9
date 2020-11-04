@@ -40,6 +40,7 @@ import org.testng.annotations.Test;
 @Test(groups = { "level.extended" })
 public class TestJps extends AttachApiTest {
 
+	private static final String WRONG_PKG_NAME = "Wrong package name: "; //$NON-NLS-1$
 	private static final String MISSING_ARGUMENT = "Missing argument: "; //$NON-NLS-1$
 	private static final String CHILD_IS_MISSING = "child is missing"; //$NON-NLS-1$
 	private static final String TEST_PROCESS_ID_MISSING = "Test process ID missing"; //$NON-NLS-1$
@@ -61,7 +62,6 @@ public class TestJps extends AttachApiTest {
 
 	@Test(groups = { "level.extended" })
 	public void testJpsPackageName() throws IOException {
-		final String WRONG_PKG_NAME = "Wrong package name: "; //$NON-NLS-1$
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
 		List<String> jpsOutput = runCommand(Collections.singletonList("-l")); //$NON-NLS-1$
@@ -99,7 +99,7 @@ public class TestJps extends AttachApiTest {
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null, targetArgs);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
 		List<String> jpsOutput = runCommand(Collections.singletonList("-m")); //$NON-NLS-1$
-		Optional<String> searchResult =  StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput);
+		Optional<String> searchResult = StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput);
 		assertTrue(CHILD_IS_MISSING, StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput).isPresent());
 		for (String a: targetArgs) {
 			assertTrue(MISSING_ARGUMENT + a, searchResult.get().contains(a));
@@ -113,11 +113,26 @@ public class TestJps extends AttachApiTest {
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null, null, vmArgs, null);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
 		List<String> jpsOutput = runCommand(Collections.singletonList("-v")); //$NON-NLS-1$
-		Optional<String> searchResult =  StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput);
+		Optional<String> searchResult = StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput);
 		assertTrue(CHILD_IS_MISSING, StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput).isPresent());
 		for (String a: vmArgs) {
 			assertTrue(MISSING_ARGUMENT + a, searchResult.get().contains(a));
 		}
+		tgtMgr.terminateTarget();
+	}
+
+	@Test(groups = { "level.extended" })
+	public void testComposedArguments() throws IOException {
+		List<String> targetArgs = Arrays.asList("foo", "bar");  //$NON-NLS-1$//$NON-NLS-2$
+		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null, targetArgs);
+		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
+		List<String> jpsOutput = runCommand(Collections.singletonList("-ml")); //$NON-NLS-1$
+		Optional<String> searchResult = StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput);
+		assertTrue(CHILD_IS_MISSING, searchResult.isPresent());
+		for (String a: targetArgs) {
+			assertTrue(MISSING_ARGUMENT + a, searchResult.get().contains(a));
+		}
+		assertTrue(WRONG_PKG_NAME + searchResult.get(), searchResult.get().contains(TargetVM.class.getPackage().getName()));
 		tgtMgr.terminateTarget();
 	}
 
