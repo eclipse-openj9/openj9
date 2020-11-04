@@ -218,7 +218,7 @@ ifeq ($(origin MSVC_VERSION), undefined)
         SOLINK_SLINK+=ucrt vcruntime
     endif
 else
-    ifneq (,$(filter 2015 2017 2019, $(MSVC_VERSION)))
+    ifneq (,$(filter 2013 2015 2017 2019, $(MSVC_VERSION)))
         SOLINK_SLINK+=ucrt vcruntime
     endif
 endif
