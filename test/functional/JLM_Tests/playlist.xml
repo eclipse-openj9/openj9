@@ -985,10 +985,6 @@
 
 	<test>
 		<testCaseName>testOSMXBeanLocal</testCaseName>
-		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
-		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DRUNLOCAL=true \
@@ -1012,10 +1008,6 @@
 
 	<test>
 		<testCaseName>testOSMXBeanRemote</testCaseName>
-		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
-		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DRUNLOCAL=false \
@@ -1040,10 +1032,6 @@
 
 	<test>
 		<testCaseName>testJCMMXBeanLocal_SE80</testCaseName>
-		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
-		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DRUNLOCAL=true \
@@ -1070,10 +1058,6 @@
 
 	<test>
 		<testCaseName>testJCMMXBeanLocal</testCaseName>
-		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
-		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DRUNLOCAL=true --illegal-access=permit \
@@ -1100,10 +1084,6 @@
 
 	<test>
 		<testCaseName>testJCMMXBeanRemote_SE80</testCaseName>
-		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
-		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DRUNLOCAL=false \
@@ -1131,10 +1111,6 @@
 
 	<test>
 		<testCaseName>testJCMMXBeanRemote</testCaseName>
-		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
-		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DRUNLOCAL=false --illegal-access=permit \
@@ -1190,10 +1166,6 @@
 
 	<test>
 		<testCaseName>testGuestOSMXBeanLocal</testCaseName>
-		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
-		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DRUNLOCAL=true \
@@ -1218,10 +1190,6 @@
 
 	<test>
 		<testCaseName>testGuestOSMXBeanRemote</testCaseName>
-		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
-		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DRUNLOCAL=false \

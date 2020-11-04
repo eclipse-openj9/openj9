@@ -66,7 +66,6 @@
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_SE80</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
 			<variation>Mode101</variation>
 			<variation>Mode110</variation>
 			<variation>Mode112</variation>
@@ -109,7 +108,6 @@
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
 			<variation>Mode101</variation>
 			<variation>Mode110</variation>
 			<variation>Mode112</variation>
@@ -153,7 +151,6 @@
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_openi9_none_SCC</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
 			<variation>Mode101</variation>
 			<variation>Mode110</variation>
 			<variation>Mode112</variation>
@@ -196,7 +193,6 @@
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_debug</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
 			<variation>Mode107</variation>
 			<variation>Mode108</variation>
 			<variation>Mode154</variation>
@@ -237,7 +233,6 @@
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_debug_openj9_none_SCC</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
 			<variation>Mode107</variation>
 			<variation>Mode108</variation>
 			<variation>Mode154</variation>
@@ -352,7 +347,6 @@
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_nongold_SE80</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
 			<variation>Mode101</variation>
 			<variation>Mode110</variation>
 			<variation>Mode112</variation>
@@ -395,7 +389,6 @@
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_nongold</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
 			<variation>Mode101</variation>
 			<variation>Mode110</variation>
 			<variation>Mode112</variation>
@@ -513,7 +506,6 @@
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_extended_nongold</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
 			<variation>Mode107</variation>
 			<variation>Mode108</variation>
 			<variation>Mode154</variation>
