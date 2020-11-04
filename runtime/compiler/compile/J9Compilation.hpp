@@ -281,6 +281,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    bool isGeneratedReflectionMethod(TR_ResolvedMethod *method);
 
+   TR_ExternalRelocationTargetKind getReloTypeForMethodToBeInlined(TR_VirtualGuardSelection *guard, TR::Node *callNode, TR_OpaqueClassBlock *receiverClass);
+
    // cache J9 VM pointers
    TR_OpaqueClassBlock *getObjectClassPointer();
    TR_OpaqueClassBlock *getRunnableClassPointer();
