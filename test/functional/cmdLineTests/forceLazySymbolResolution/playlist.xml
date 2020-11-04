@@ -44,6 +44,11 @@
 		<types>
 			<type>native</type>
 		</types>
+		<subsets>
+			<!-- disable for 15+ https://github.com/eclipse/openj9/issues/11076 -->
+			<subset>8</subset>
+			<subset>11</subset>
+		</subsets>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>			
