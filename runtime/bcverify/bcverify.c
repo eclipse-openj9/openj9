@@ -867,16 +867,16 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 	UDATA maxIndex = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod) + J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod);
 	U_32 *bytecodeMap = verifyData->bytecodeMap;
 	UDATA i = 0;
-	UDATA stackIndex;
+	UDATA stackIndex = bytecodeMap[target] >> BRANCH_INDEX_SHIFT;
 	IDATA rewalk = FALSE;
 	IDATA rc = BCV_SUCCESS;
-	UDATA *targetStackPtr, *targetStackTop, *sourceStackPtr, *sourceStackTop, *sourceStackTemps;
+	UDATA *targetStackPtr = NULL;
+	UDATA *targetStackTop = NULL;
+	UDATA *sourceStackPtr = NULL;
+	UDATA *sourceStackTop = NULL;
+	UDATA *sourceStackTemps = NULL;
 	J9BranchTargetStack *liveStack = (J9BranchTargetStack *) verifyData->liveStack;
-	J9BranchTargetStack *targetStack;
-
-
-	stackIndex = bytecodeMap[target] >> BRANCH_INDEX_SHIFT;
-	targetStack = BCV_INDEX_STACK (stackIndex);
+	J9BranchTargetStack *targetStack = BCV_INDEX_STACK(stackIndex);
 
 	Trc_BCV_mergeStacks_Entry(verifyData->vmStruct,
 			(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
@@ -905,8 +905,9 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 		goto _finished;
 
 	} else {
+		/* These variables are reused across loop iterations */
 		UDATA mergePC = (UDATA) -1;
-		U_32 resultArrayBase;
+		U_32 resultArrayBase = 0;
 
 		/* Check stack size equality */
 		if (targetStack->stackTopIndex != liveStack->stackTopIndex) {
@@ -925,7 +926,7 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 
 		/* Now we have to merge stacks */
 		targetStackPtr = targetStack->stackElements;
-		targetStackTop =  RELOAD_STACKTOP(targetStack);
+		targetStackTop = RELOAD_STACKTOP(targetStack);
 		sourceStackPtr = liveStack->stackElements;
 		sourceStackTop = RELOAD_STACKTOP(liveStack);
 
@@ -979,7 +980,6 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 								*targetStackPtr = *sourceStackPtr;
 								rewalk = TRUE;
 							} else {
-
 								/* Use local mapper to check merge necessity in locals */
 								if ((verifyData->verificationFlags & J9_VERIFY_OPTIMIZE) && (maxIndex <= 32)) {
 									/* Only handle 32 locals or less */
