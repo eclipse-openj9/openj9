@@ -37,6 +37,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "net/CommunicationStream.hpp"
 #include "net/LoadSSLLibs.hpp"
 #include "net/ServerStream.hpp"
@@ -184,7 +185,7 @@ acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio)
    }
 
 TR_Listener::TR_Listener()
-   : _listenerThread(NULL), _listenerMonitor(NULL), _listenerOSThread(NULL), 
+   : _listenerThread(NULL), _listenerMonitor(NULL), _listenerOSThread(NULL),
    _listenerThreadAttachAttempted(false), _listenerThreadExitFlag(false)
    {
    }
@@ -332,14 +333,14 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
    {
    J9JITConfig * jitConfig = (J9JITConfig *) entryarg;
    J9JavaVM * vm = jitConfig->javaVM;
-   TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener; 
+   TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener;
    J9VMThread *listenerThread = NULL;
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
 
    int rc = vm->internalVMFunctions->internalAttachCurrentThread(vm, &listenerThread, NULL,
                                   J9_PRIVATE_FLAGS_DAEMON_THREAD | J9_PRIVATE_FLAGS_NO_OBJECT |
                                   J9_PRIVATE_FLAGS_SYSTEM_THREAD | J9_PRIVATE_FLAGS_ATTACHED_THREAD,
-                                  listener->getListenerOSThread()); 
+                                  listener->getListenerOSThread());
 
    listener->getListenerMonitor()->enter();
    listener->setAttachAttempted(true);
@@ -369,7 +370,7 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
 
 void TR_Listener::startListenerThread(J9JavaVM *javaVM)
    {
-   PORT_ACCESS_FROM_JAVAVM(javaVM); 
+   PORT_ACCESS_FROM_JAVAVM(javaVM);
 
    UDATA priority;
    priority = J9THREAD_PRIORITY_NORMAL;
@@ -388,7 +389,7 @@ void TR_Listener::startListenerThread(J9JavaVM *javaVM)
                                                                javaVM->jitConfig,
                                                                J9THREAD_CATEGORY_SYSTEM_JIT_THREAD))
          { // cannot create the listener thread
-         j9tty_printf(PORTLIB, "Error: Unable to create JITServer Listener Thread.\n"); 
+         j9tty_printf(PORTLIB, "Error: Unable to create JITServer Listener Thread.\n");
          TR::Monitor::destroy(_listenerMonitor);
          _listenerMonitor = NULL;
          }

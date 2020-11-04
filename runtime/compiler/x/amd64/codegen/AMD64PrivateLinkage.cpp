@@ -36,6 +36,7 @@
 #include "env/IO.hpp"
 #include "env/J2IThunk.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "env/jittypes.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,7 @@
 #include "runtime/JITServerStatisticsThread.hpp"
 #include "runtime/JITClientSession.hpp" // for purgeOldDataIfNeeded()
 #include "env/VMJ9.h" // for TR_JitPrivateConfig
+#include "env/VerboseLog.hpp"
 #include "control/CompilationRuntime.hpp" // for CompilatonInfo
 
 JITServerStatisticsThread::JITServerStatisticsThread()
@@ -153,7 +154,7 @@ JITServerStatisticsThread::startStatisticsThread(J9JavaVM *javaVM)
                                                                &statisticsThreadProc,
                                                                javaVM->jitConfig,
                                                                J9THREAD_CATEGORY_SYSTEM_JIT_THREAD))
-         { 
+         {
          // cannot create the statistics thread
          TR::Monitor::destroy(_statisticsThreadMonitor);
          _statisticsThreadMonitor = NULL;
