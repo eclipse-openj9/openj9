@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/InstOpCode.hpp"
+#include "codegen/S390PrivateLinkage.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
 #include "env/J2IThunk.hpp"
@@ -34,6 +35,7 @@
 #include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/SymbolReference.hpp"
 #include "objectfmt/GlobalFunctionCallData.hpp"
 #include "objectfmt/ObjectFormat.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -1717,4 +1719,192 @@ TR::S390InterfaceCallReadOnlySnippet::getLength(int32_t estimatedSnippetStart)
            + 2 /*BASR*/
            + sizeof(int32_t)  /*RIP offset to PICSlot data address*/
            + sizeof(int32_t);  /*RIP offset to instruction in mainline*/
+   }
+ 
+uint8_t *
+TR::S390J9CallSnippetRX::emitSnippetBody()
+   {
+   uint8_t *cursor = cg()->getBinaryBufferCursor();
+   TR::SymbolReference *callSymRef = getRealMethodSymbolReference();
+   TR::Node *callNode = getNode();
+   getSnippetLabel()->setCodeLocation(cursor);
+
+   // Arguments are expected to be on Stack for the glue code.
+   cursor = S390flushArgumentsToStack(cursor, getNode(), getSizeOfArguments(), cg());
+
+   if (callSymRef->isUnresolved() || (cg()->comp()->compileRelocatableCode() && !cg()->comp()->getOption(TR_UseSymbolValidationManager)))
+      {
+      typedef J9::Z::PrivateLinkage::ccUnresolvedStaticSpecialData ccUnresolvedStaticSpecialData;
+      ccUnresolvedStaticSpecialData *ccDataAddress = reinterpret_cast<ccUnresolvedStaticSpecialData *>(callSnippetCCDataAddress);
+      ccDataAddress->snippetOrCompiledMethod = reinterpret_cast<intptr_t>(getSnippetLabel()->getCodeLocation());
+      
+      // LGRL  rEP, @(CCUnresolvedStaticOrSpecialData + ramMethod)
+      intptr_t instrAddr = reinterpret_cast<intptr_t>(cursor);
+      *cursor = static_cast<uint8_t>(0xC4);
+      cursor += sizeof(uint8_t);
+      
+      *reinterpret_cast<int8_t *>(cursor) = static_cast<int8_t>(((cg()->getEntryPointRegister() - 1) << 4 ) + 0x8 );
+      cursor += sizeof(int8_t);
+      
+      *reinterpret_cast<int32_t *>(cursor) = static_cast<int32_t>((callSnippetCCDataAddress + offsetof(ccUnresolvedStaticSpecialData, ramMethod) - instrAddr) / 2 );
+      cursor += sizeof(int32_t);
+
+      // CGIJ rEP,0,Label
+      instrAddr = reinterpret_cast<intptr_t>(cursor);
+      *reinterpret_cast<int8_t *>(cursor) = static_cast<int8_t>(0xEC);
+      cursor += sizeof(int8_t);
+      
+      *reinterpret_cast<int8_t *>(cursor) = static_cast<int16_t>(((cg()->getEntryPointRegister() - 1) << 4 ) + 0x6 );
+      cursor += sizeof(int8_t);
+
+      // Now we need to calculate the instruction address for the resolved case, for now Just Skipping the 4 bytes
+      cursor += sizeof(int32_t);
+
+      TR::SymbolReference *helperGlueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(callSymRef->getSymbol()->castToMethodSymbol()->isStatic() ? TR_S390interpretedUnresolvedStaticCallGlueRX : TR_S390interpretedUnresolvedSpecialCallGlueRX,
+                                                                                             false, false, false);
+      TR::GlobalFunctionCallData dataDestination(helperGlueSymRef, callNode, cursor, cg(), self());
+
+      cursor = cg()->getObjFmt()->encodeGlobalFunctionCall(dataDestination);
+      
+      intptr_t helperCallRA = reinterpret_cast<intptr_t>(cursor);
+      *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(callSnippetCCDataAddress - helperCallRA);
+      cursor += sizeof(int32_t);
+     
+      intptr_t doneLabelAddress = reinterpret_cast<intptr_t>(getCallRA());
+      *reinterpret_cast<int32_t *>(cursor) = static_cast<int32_t>(doneLabelAddress - helperCallRA);
+      cursor += sizeof(int32_t);
+      
+      *reinterpret_cast<int32_t *>(instrAddr + sizeof(int8_t) + sizeof(int8_t)) = static_cast<int32_t>((((reinterpret_cast<intptr_t>(cursor) - instrAddr) / 2) << 16) + 0x7C);
+      }
+   else
+      {
+      typedef J9::Z::PrivateLinkage::ccStaticSpecialData ccStaticSpecialData;
+      ccStaticSpecialData *ccDataAddress = reinterpret_cast<ccStaticSpecialData *>(callSnippetCCDataAddress);
+      ccDataAddress->snippetOrCompiledMethod = reinterpret_cast<intptr_t>(getSnippetLabel()->getCodeLocation());
+      }
+
+   TR::SymbolReference *helperGlueSymRef = NULL;
+   if (cg()->supportVMInternalNatives() && callSymRef->getSymbol()->castToMethodSymbol()->isVMInternalNative())
+      {
+      helperGlueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390nativeStaticHelperRX, false, false, false);
+      }
+   else
+      {
+      helperGlueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390interpretedResolvedStaticOrSpecialCallsGlueRX, false, false, false);
+      }
+   TR::GlobalFunctionCallData dataDestination(helperGlueSymRef, callNode, cursor, cg(), self());
+
+   cursor = cg()->getObjFmt()->encodeGlobalFunctionCall(dataDestination);
+
+   // This part is common for resolved and unresolvec Calls
+   // Generate Helper Call For Resolved.
+   intptr_t helperCallRA = reinterpret_cast<intptr_t>(cursor);
+   *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(callSnippetCCDataAddress - helperCallRA);
+   cursor += sizeof(int32_t);
+   
+   intptr_t doneLabelAddress = reinterpret_cast<intptr_t>(getCallRA());
+   *reinterpret_cast<int32_t *>(cursor) = static_cast<int32_t>(doneLabelAddress - helperCallRA);
+   cursor += sizeof(int32_t);
+   
+   return cursor;
+   }
+
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::S390J9CallSnippetRX *snippet)
+   {
+   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
+   TR::Node *callNode = snippet->getNode();
+
+   TR::SymbolReference *callSymRef = snippet->getRealMethodSymbolReference();
+
+   if (callSymRef->isUnresolved() || (_cg->comp()->compileRelocatableCode() && !_cg->comp()->getOption(TR_UseSymbolValidationManager)))
+      {
+      // TODO: callNode->getSymbol()->castToMethodSymbol() should work
+      printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, callSymRef->getSymbol()->castToMethodSymbol()->isStatic() ?  "Unresolved Static Call Glue Read Only" : "Unresolved Specical Call Glue Read Only");
+      bufferPos = printS390ArgumentsFlush(pOutFile, callNode, bufferPos, snippet->getSizeOfArguments());
+
+      TR::MethodSymbol *methodSymbol = callNode->getSymbol()->castToMethodSymbol();
+      TR::Linkage * privateLinkage = _cg->getLinkage(methodSymbol->getLinkageConvention());
+      printPrefix(pOutFile, NULL, bufferPos, 6);
+      trfprintf(pOutFile, "LGRL \t");
+      print(pOutFile, privateLinkage->getEntryPointRealRegister());
+      trfprintf(pOutFile, ", <%p>\t# Load ramMethod from ccUnresolvedStaticSpecialData",
+                     (void *)*(int32_t*)(bufferPos + sizeof(int16_t)));
+      bufferPos += 6;
+
+      printPrefix(pOutFile, NULL, bufferPos, 6);
+      trfprintf(pOutFile, "CGIJ \t");
+      print(pOutFile, privateLinkage->getEntryPointRealRegister());
+      trfprintf(pOutFile, ",0,<%p>\t# If Resolved, goto resolved static Special Call routine",
+                     (void *)(bufferPos + *(int32_t *)(bufferPos + sizeof(int16_t))));
+      bufferPos += 6;
+
+      
+      printPrefix(pOutFile, NULL, bufferPos, 6);
+      trfprintf(pOutFile, "LGRL \tGPR14, <%p>\t# Load address of the Helper Glue, targetAddress = <%p>",
+                    (void *)*(int32_t*)(bufferPos + sizeof(int16_t)),
+                    (void *)(2 * (uintptr_t)*(bufferPos + sizeof(int16_t)) + reinterpret_cast<uintptr_t>(bufferPos)));
+      bufferPos += 6;
+
+      printPrefix(pOutFile, NULL, bufferPos, 2);
+      trfprintf(pOutFile, "BASR \tGPR14, GPR14\t# Branch to Helper");
+      bufferPos += 2;
+
+      printPrefix(pOutFile, NULL, bufferPos, sizeof(int32_t));
+      trfprintf(pOutFile, "<%p>\t# RIP offset to ccUnresolvedStaticSpecialData",
+                    (void*)*(int32_t*)bufferPos);
+      bufferPos += sizeof(int32_t);
+
+      printPrefix(pOutFile, NULL, bufferPos, sizeof(int32_t));
+      trfprintf(pOutFile, "<%p>\t# RIP offset to return to mainline",
+                    (void*)*(int32_t*)bufferPos);
+      bufferPos += sizeof(int32_t);
+      }
+   else
+      {
+      printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, callSymRef->getSymbol()->castToMethodSymbol()->isStatic() ?  "Resolved Static Call Glue Read Only" : "Resolved Specical Call Glue Read Only");
+      bufferPos = printS390ArgumentsFlush(pOutFile, callNode, bufferPos, snippet->getSizeOfArguments());
+      }
+   
+   printPrefix(pOutFile, NULL, bufferPos, 6);
+   trfprintf(pOutFile, "LGRL \tGPR14, <%p>\t# Load address of the Helper Glue, targetAddress = <%p>",
+                 (void *)*(int32_t*)(bufferPos + sizeof(int16_t)),
+                 (void *)(2 * (uintptr_t)*(bufferPos + sizeof(int16_t)) + reinterpret_cast<uintptr_t>(bufferPos)));
+   bufferPos += 6;
+
+   printPrefix(pOutFile, NULL, bufferPos, 2);
+   trfprintf(pOutFile, "BASR \tGPR14, GPR14\t# Branch to Helper");
+   bufferPos += 2;
+
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(int32_t));
+   trfprintf(pOutFile, "<%p>\t# RIP offset to ccUnresolvedStaticSpecialData",
+                 (void*)*(int32_t*)bufferPos);
+   bufferPos += sizeof(int32_t);
+
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(int32_t));
+   trfprintf(pOutFile, "<%p>\t# RIP offset to return to mainline",
+                 (void*)*(int32_t*)bufferPos);
+   }
+
+uint32_t
+TR::S390J9CallSnippetRX::getLength(int32_t estimatedSnippetStart)
+   {
+   TR::Node *callNode = getNode();
+   uint32_t totalLength = instructionCountForArguments(callNode, cg());
+   if (getRealMethodSymbolReference()->isUnresolved() || (cg()->comp()->compileRelocatableCode()
+                                                            && !cg()->comp()->getOption(TR_UseSymbolValidationManager)))
+      {
+      totalLength = totalLength 
+                     +  6 /*LGRL*/
+                     +  6 /*CGIJ*/
+                     +  6 /*LGRL*/
+                     +  2 /*BASR*/
+                     +  sizeof(int32_t) /*RIP Offset to ccUnresolvedStaticOrSpecicalCallsData*/
+                     +  sizeof(int32_t); /*RIP Offset to mainline return address*/
+      }
+   return   totalLength
+          + 6 /*LGRL*/
+          + 2 /*LGRL*/
+          + sizeof(int32_t) /*RIP Offset to ccStaticOrSpecialCallsData*/
+          + sizeof(int32_t); /*RIP Offset to mainline return address*/
    }

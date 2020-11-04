@@ -83,6 +83,9 @@ public:
    virtual int32_t storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Linkage* linkage, TR::RegisterDependencyConditions * dependencies, bool isFastJNI, int32_t stackOffset, int8_t gprSize, uint32_t &numIntegerArgs);
    virtual int64_t addFECustomizedReturnRegDependency(int64_t killMask, TR::Linkage* linkage, TR::DataType resType, TR::RegisterDependencyConditions * dependencies);
 
+   virtual TR::Instruction *buildNoPatchingStaticOrSpecialCall(TR::Node *callNode, TR::SymbolReference *callSymRef,
+      TR::RegisterDependencyConditions *dependencies, int32_t argSize);
+
    virtual void buildVirtualDispatch(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies,
       TR::Register * vftReg, uint32_t sizeOfArguments);
    
@@ -142,6 +145,21 @@ public:
       intptr_t isCacheFull;
       static const int8_t numberOfPICSlots = 3; 
       };
+
+   struct ccUnresolvedStaticSpecialData
+      {
+      intptr_t snippetOrCompiledMethod;
+      intptr_t ramMethod;
+      intptr_t cpAddress;
+      intptr_t cpIndex;
+      };
+
+   struct ccStaticSpecialData
+      {
+      intptr_t snippetOrCompiledMethod;
+      intptr_t ramMethod;
+      };
+
 protected:
 
    virtual TR::Register * buildIndirectDispatch(TR::Node * callNode);
