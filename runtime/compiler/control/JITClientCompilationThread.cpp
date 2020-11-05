@@ -33,6 +33,7 @@
 #include "env/ut_j9jit.h"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "net/ClientStream.hpp"
 #include "optimizer/J9TransformUtil.hpp"
 #include "runtime/CodeCacheExceptions.hpp"

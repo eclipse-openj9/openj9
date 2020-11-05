@@ -29,6 +29,7 @@
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
+#include "env/VerboseLog.hpp"
 #include "env/ut_j9jit.h"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
@@ -327,9 +328,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    bool hasIncNumActiveThreads = false;
    try
       {
-      auto req = stream->readCompileRequest<uint64_t, uint32_t, uint32_t, J9Method *, J9Class*, TR_OptimizationPlan, 
+      auto req = stream->readCompileRequest<uint64_t, uint32_t, uint32_t, J9Method *, J9Class*, TR_OptimizationPlan,
          std::string, J9::IlGeneratorMethodDetailsType,
-         std::vector<TR_OpaqueClassBlock*>, std::vector<TR_OpaqueClassBlock*>, 
+         std::vector<TR_OpaqueClassBlock*>, std::vector<TR_OpaqueClassBlock*>,
          JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string, bool>();
 
       clientId                           = std::get<0>(req);
@@ -450,7 +451,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          // Process the CHTable updates in order
          // Note that applying the updates will acquire the CHTable monitor and VMAccess
          auto chTable = (JITServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
-         TR_ASSERT_FATAL(chTable->isInitialized() || (chtableUnloads.empty() && chtableMods.empty()), 
+         TR_ASSERT_FATAL(chTable->isInitialized() || (chtableUnloads.empty() && chtableMods.empty()),
                          "CHTable must have been initialized for clientUID=%llu", (unsigned long long)clientId);
          if (!chtableUnloads.empty() || !chtableMods.empty())
             chTable->doUpdate(_vm, chtableUnloads, chtableMods);
@@ -458,7 +459,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       else // Internal caches are empty
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will ask for address ranges of unloaded classes and CHTable for clientUID %llu", 
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will ask for address ranges of unloaded classes and CHTable for clientUID %llu",
                getCompThreadId(), (unsigned long long)clientId);
          stream->write(JITServer::MessageType::getUnloadedClassRangesAndCHTable, JITServer::Void());
          auto response = stream->read<std::vector<TR_AddressRange>, int32_t, std::string>();
@@ -470,7 +471,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          clientSession->initializeUnloadedClassAddrRanges(unloadedClassRanges, maxRanges);
          if (!unloadedClasses.empty())
             {
-            // This function updates multiple caches based on the newly unloaded classes list. 
+            // This function updates multiple caches based on the newly unloaded classes list.
             // Pass `false` here to indicate that we want the unloaded class ranges table cache excluded,
             // since we just retrieved the entire table and it should therefore already be up to date.
             clientSession->processUnloadedClasses(unloadedClasses, false);
@@ -480,7 +481,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          // Need CHTable mutex
          TR_ASSERT_FATAL(!chTable->isInitialized(), "CHTable must be empty for clientUID=%llu", (unsigned long long)clientId);
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will initialize CHTable for clientUID %llu size=%zu", 
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will initialize CHTable for clientUID %llu size=%zu",
                getCompThreadId(), (unsigned long long)clientId, serializedCHTable.size());
          chTable->initializeCHTable(_vm, serializedCHTable);
          clientSession->setCachesAreCleared(false);
@@ -525,11 +526,11 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          }
       // Get the ROMClass for the method to be compiled if it is already cached
       // Or read it from the compilation request and cache it otherwise
-      J9ROMClass *romClass = NULL; 
+      J9ROMClass *romClass = NULL;
       if (!(romClass = JITServerHelpers::getRemoteROMClassIfCached(clientSession, clazz)))
          {
          // Check whether the first argument of the classInfoTuple is an empty string
-         // If it's an empty string then I dont't need to cache it 
+         // If it's an empty string then I dont't need to cache it
          if(!(std::get<0>(classInfoTuple).empty()))
             {
             romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), compInfo->persistentMemory());
@@ -538,8 +539,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             {
             // When I receive an empty string I need to check whether the server had the class caches
             // It could be a renewed connection, so that's a new server because old one was shutdown
-            // When the server receives an empty ROM class it would check if it actually has this class cached, 
-            // And if it it's not cached, send a request to the client 
+            // When the server receives an empty ROM class it would check if it actually has this class cached,
+            // And if it it's not cached, send a request to the client
             romClass = JITServerHelpers::getRemoteROMClass(clazz, stream, compInfo->persistentMemory(), &classInfoTuple);
             }
          JITServerHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
@@ -660,7 +661,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       Trc_JITServerStreamInterrupted(compThread, getCompThreadId(), __FUNCTION__, "", "", e.what());
 
       abortCompilation = true;
-      // If the client aborted this compilation it could have happened only while asking for entire 
+      // If the client aborted this compilation it could have happened only while asking for entire
       // CHTable and unloaded class address ranges and at that point the seqNo was not updated.
       // We must update seqNo now to allow for blocking threads to pass through.
       clientSession->getSequencingMonitor()->enter();
@@ -974,7 +975,7 @@ TR::CompilationInfoPerThreadRemote::getCachedIProfilerInfo(TR_OpaqueMethodBlock 
  * @return returns void
  */
 void
-TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, 
+TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method,
                                                         uint32_t vTableSlot, const TR_ResolvedJ9JITServerMethodInfo &methodInfo, int32_t ttlForUnresolved)
    {
    static bool useCaching = !feGetEnv("TR_DisableResolvedMethodsCaching");
@@ -1029,7 +1030,7 @@ TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key
  * @return returns true if method is cached, sets resolvedMethod and unresolvedInCP to cached values, false otherwise.
  */
 bool
-TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITServerMethod *owningMethod, 
+TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITServerMethod *owningMethod,
                                                             TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP)
    {
    TR_ResolvedMethodCacheEntry methodCacheEntry = {0};
@@ -1058,9 +1059,9 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
 
       uint32_t vTableSlot = methodCacheEntry.vTableSlot;
       auto methodInfoStruct = methodCacheEntry.methodInfoStruct;
-      TR_ResolvedJ9JITServerMethodInfo methodInfo = make_tuple(methodInfoStruct, 
-         methodCacheEntry.persistentBodyInfo ? std::string((const char*)methodCacheEntry.persistentBodyInfo, sizeof(TR_PersistentJittedBodyInfo)) : std::string(), 
-         methodCacheEntry.persistentMethodInfo ? std::string((const char*)methodCacheEntry.persistentMethodInfo, sizeof(TR_PersistentMethodInfo)) : std::string(), 
+      TR_ResolvedJ9JITServerMethodInfo methodInfo = make_tuple(methodInfoStruct,
+         methodCacheEntry.persistentBodyInfo ? std::string((const char*)methodCacheEntry.persistentBodyInfo, sizeof(TR_PersistentJittedBodyInfo)) : std::string(),
+         methodCacheEntry.persistentMethodInfo ? std::string((const char*)methodCacheEntry.persistentMethodInfo, sizeof(TR_PersistentMethodInfo)) : std::string(),
          methodCacheEntry.IPMethodInfo ? std::string((const char*)methodCacheEntry.IPMethodInfo, sizeof(TR_ContiguousIPMethodHashTableEntry)) : std::string());
       // Re-add validation record
       if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && !comp->getSymbolValidationManager()->inHeuristicRegion())

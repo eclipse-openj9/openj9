@@ -49,6 +49,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
+#include "env/VerboseLog.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/Node.hpp"
