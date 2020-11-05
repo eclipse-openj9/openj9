@@ -307,6 +307,7 @@ struct JNINativeInterface_;
 struct OMR_VM;
 struct VMIZipFile;
 struct TR_AOTHeader;
+struct J9BranchTargetStack;
 
 /* @ddr_namespace: map_to_type=J9CfrError */
 
@@ -1893,6 +1894,32 @@ typedef struct J9BytecodeVerificationData {
 	struct J9JavaVM* javaVM;
 	BOOLEAN createdStackMap;
 } J9BytecodeVerificationData;
+
+typedef struct J9BytecodeOffset {
+	U_32 first;
+	U_32 second;
+} J9BytecodeOffset;
+
+typedef struct J9NPEMessageData {
+	UDATA npePC;
+	U_32 *bytecodeMap;
+	UDATA bytecodeMapSize;
+	struct J9BytecodeOffset *bytecodeOffset;
+	UDATA bytecodeOffsetSize;
+	UDATA *stackMaps;
+	UDATA stackMapsSize;
+	IDATA stackMapsCount;
+	struct J9BranchTargetStack *liveStack;
+	UDATA liveStackSize;
+	UDATA stackSize;
+	UDATA *unwalkedQueue;
+	UDATA unwalkedQueueHead;
+	UDATA unwalkedQueueTail;
+	UDATA unwalkedQueueSize;
+	struct J9ROMClass *romClass;
+	struct J9ROMMethod *romMethod;
+	struct J9VMThread *vmThread;
+} J9NPEMessageData;
 
 /* @ddr_namespace: map_to_type=J9NativeLibrary */
 
@@ -4425,7 +4452,7 @@ typedef struct J9InternalVMFunctions {
 	void  ( *cleanUpClassLoader)(struct J9VMThread *vmThread, struct J9ClassLoader* classLoader) ;
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 	UDATA  ( *iterateStackTrace)(struct J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callback) (struct J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, struct J9ROMClass * romClass, struct J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, struct J9ClassLoader* classLoader, struct J9Class* ramClass), void * userData, UDATA pruneConstructors) ;
-	char* ( *getCompleteNPEMessage)(struct J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romClass, const char *npeCauseMsg) ;
+	char*  ( *getNPEMessage)(struct J9NPEMessageData *npeMsgData);
 	void  ( *internalReleaseVMAccessNoMutex)(struct J9VMThread * vmThread) ;
 	struct J9HookInterface**  ( *getVMHookInterface)(struct J9JavaVM* vm) ;
 	IDATA  ( *internalAttachCurrentThread)(struct J9JavaVM * vm, struct J9VMThread ** p_env, struct J9JavaVMAttachArgs * thr_args, UDATA threadType, void * osThread) ;

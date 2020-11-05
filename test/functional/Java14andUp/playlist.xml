@@ -81,8 +81,30 @@
         <variations>
             <variation>--enable-preview -XX:+ShowCodeDetailsInExceptionMessages</variation>
         </variations>
-        <command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+        <command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DhasDebugInfo=true \
             -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+            org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JEP358NPEMessageTests \
+            -groups $(TEST_GROUP) \
+            -excludegroups $(DEFAULT_EXCLUDE); \
+            $(TEST_STATUS)
+        </command>
+        <levels>
+            <level>sanity</level>
+        </levels>
+        <groups>
+            <group>functional</group>
+        </groups>
+        <subsets>
+            <subset>14+</subset>
+        </subsets>
+    </test>
+    <test>
+        <testCaseName>JEP358NPEMessageTests-noDebugInfo</testCaseName>
+        <variations>
+            <variation>--enable-preview -XX:+ShowCodeDetailsInExceptionMessages</variation>
+        </variations>
+        <command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DhasDebugInfo=false \
+            -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest-noDebugInfo.jar$(Q) \
             org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JEP358NPEMessageTests \
             -groups $(TEST_GROUP) \
             -excludegroups $(DEFAULT_EXCLUDE); \
