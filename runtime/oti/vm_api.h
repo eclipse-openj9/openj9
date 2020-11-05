@@ -872,19 +872,18 @@ setClassLoadingConstraintSignatureError(J9VMThread *currentThread, J9ClassLoader
 void  
 setClassLoadingConstraintOverrideError(J9VMThread *currentThread, J9UTF8 *newClassNameUTF, J9ClassLoader *loader1, J9UTF8 *class1NameUTF, J9ClassLoader *loader2, J9UTF8 *class2NameUTF, J9UTF8 *exceptionClassNameUTF, U_8 *methodName, UDATA methodNameLength, U_8 *signature, UDATA signatureLength);
 
+/* ---------------- extendedMessageNPE.cpp ---------------- */
+
 /**
-* Return an extended NPE message.
-*
-* Note: the caller is responsible for freeing the returned string if it is not NULL.
-*
-* @param vmThread The current J9VMThread
-* @param bcCurrentPtr The pointer to the bytecode being executed and caused the NPE
-* @param romClass The romClass of the bytecode
-* @param npeCauseMsg The cause of NPE, reserved for future use.
-* @return char* An extended NPE message or NULL if such a message can't be generated
-*/
+ * Return an extended NPE message.
+ *
+ * Note: the caller is responsible for freeing the returned string if it is not NULL.
+ *
+ * @param npeMsgData - the J9NPEMessageData structure holding romClass/romMethod/npePC
+ * @return char* An extended NPE message or NULL if such a message can't be generated
+ */
 char*
-getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romClass, const char *npeCauseMsg);
+getNPEMessage(J9NPEMessageData *npeMsgData);
 
 /* ---------------- gphandle.c ---------------- */
 
