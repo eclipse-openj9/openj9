@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -8620,22 +8620,8 @@ retry:
 		J9Class * volatile resolvedClass = ramCPEntry->value;
 
 		if ((NULL != resolvedClass) && J9_IS_J9CLASS_VALUETYPE(resolvedClass) && !VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
-			j9object_t instance = NULL;
-			if (J9_ARE_NO_BITS_SET(resolvedClass->classFlags, J9ClassContainsUnflattenedFlattenables)) {
-				instance = _objectAllocate.inlineAllocateObject(_currentThread, resolvedClass);
-			}
-			if (NULL == instance) {
-				updateVMStruct(REGISTER_ARGS);
-				instance = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, resolvedClass, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				if (J9_UNEXPECTED(NULL == instance)) {
-					rc = THROW_HEAP_OOM;
-					goto done;
-				}
-			}
 			_pc += 3;
-			*(j9object_t*)--_sp = instance;
-
+			*(j9object_t*)--_sp = resolvedClass->flattenedClassCache->defaultValue;
 			goto done;
 		}
 
