@@ -684,21 +684,7 @@ J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator 
 TR::Register *
 J9::ARM64::TreeEvaluator::instanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::Compilation *comp = cg->comp();
-
-   if (comp->getOption(TR_DisableInlineInstanceOf))
-      {
-      // Call helper
-      TR::ILOpCodes opCode = node->getOpCodeValue();
-      TR::Node::recreate(node, TR::icall);
-      TR::Register *targetRegister = directCallEvaluator(node, cg);
-      TR::Node::recreate(node, opCode);
-      return targetRegister;
-      }
-   else
-      {
-      return VMinstanceofEvaluator(node, cg);
-      }
+   return VMinstanceofEvaluator(node, cg);
    }
 
 /**
@@ -918,10 +904,10 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
    // initial result is false
    generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 0);
 
-   auto it = std::begin(sequences);
-   const auto itEnd = std::next(it, numSequencesRemaining);
+   auto itBegin = std::begin(sequences);
+   const auto itEnd = std::next(itBegin, numSequencesRemaining);
    
-   while (it != itEnd)
+   for (auto it = itBegin; it != itEnd; it++)
       {
       auto current = *it;
       switch (current)
@@ -947,8 +933,9 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
                }
             else
                {
-               // branching to doneLabel to return false
-               generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, objectReg, doneLabel);
+               auto nullLabel = isNextItemHelperCall(it, itEnd) ? callHelperLabel : doneLabel;
+               // branch to doneLabel to return false
+               generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, objectReg, nullLabel);
                }
             break;
          case GoToTrue:
@@ -1043,11 +1030,11 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
             break;
          case ArrayOfJavaLangObjectTest:
             {
+            TR_ASSERT_FATAL(isNextItemGoToFalse(it, itEnd), "ArrayOfJavaLangObjectTest is always followed by GoToFalse");
             if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ArrayOfJavaLangObjectTest\n", node->getOpCode().getName());
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/ArrayTest", comp->signature()),1,TR::DebugCounter::Undetermined);
 
-            auto falseLabel = isNextItemGoToFalse(it, itEnd) ? doneLabel : (isNextItemHelperCall(it, itEnd) ? callHelperLabel : nextSequenceLabel);
-            genInstanceOfOrCheckCastObjectArrayTest(node, objectClassReg, nextSequenceLabel, srm, cg);
+            genInstanceOfOrCheckCastObjectArrayTest(node, objectClassReg, doneLabel, srm, cg);
             generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
             }
             break;
@@ -1064,6 +1051,12 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
             TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::icall, resultReg, callHelperLabel, doneLabel, cg);
 
             cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+
+            if (it == itBegin)
+               {
+               // If HelperCall is only the item in the sequence, branch to OOL
+               generateLabelInstruction(cg, TR::InstOpCode::b, node, callHelperLabel);
+               }
             }
             break;
          }
@@ -1098,6 +1091,14 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
                generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_LE);
                } 
             break;
+         case NullTest:
+            break;
+         default:
+            if (isNextItemHelperCall(it, itEnd))
+               {
+               generateLabelInstruction(cg, TR::InstOpCode::b, node, callHelperLabel);
+               }
+            break;
          }
 
       if (!isTerminalSequence(it, itEnd))
@@ -1106,7 +1107,6 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
          nextSequenceLabel = generateLabelSymbol(cg);
          }
 
-      it++;
       }
 
    if (objectClassReg)
