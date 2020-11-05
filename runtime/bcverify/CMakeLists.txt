@@ -54,3 +54,9 @@ target_link_libraries(j9bcv
 		j9stackmap
 		j9shrcommon
 )
+
+# special handling bcverify.c to deal with ppcle64-specific crash when compiling with gcc 7.5
+if(OMR_ARCH_POWER AND OMR_ENV_LITTLE_ENDIAN AND OMR_ENV_DATA64 AND OMR_OS_LINUX AND (OMR_TOOLCONFIG STREQUAL "gnu"))
+	set_source_files_properties(bcverify.c PROPERTIES COMPILE_FLAGS -O2)
+endif()
+
