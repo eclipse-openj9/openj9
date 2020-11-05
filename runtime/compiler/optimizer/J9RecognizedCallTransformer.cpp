@@ -49,6 +49,16 @@ void J9::RecognizedCallTransformer::processIntrinsicFunction(TR::TreeTop* treeto
    TR::Node::recreate(node, opcode);
    }
 
+void J9::RecognizedCallTransformer::processConvertingUnaryIntrinsicFunction(TR::TreeTop* treetop, TR::Node* node, TR::ILOpCodes argConvertOpcode, TR::ILOpCodes opcode, TR::ILOpCodes resultConvertOpcode)
+   {
+   TR::Node* actualArg = TR::Node::create(argConvertOpcode, 1, node->getFirstChild());
+   TR::Node* actualResult = TR::Node::create(opcode, 1, actualArg);
+
+   TR::Node::recreate(node, resultConvertOpcode);
+   node->getFirstChild()->decReferenceCount();
+   node->setAndIncChild(0, actualResult);
+   }
+
 void J9::RecognizedCallTransformer::process_java_lang_Class_IsAssignableFrom(TR::TreeTop* treetop, TR::Node* node)
    {
    auto toClass = node->getChild(0);
@@ -387,6 +397,10 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
       case TR::java_lang_StrictMath_sqrt:
       case TR::java_lang_Math_sqrt:
          return comp()->target().cpu.getSupportsHardwareSQRT();
+      case TR::java_lang_Short_reverseBytes:
+      case TR::java_lang_Integer_reverseBytes:
+      case TR::java_lang_Long_reverseBytes:
+         return comp()->cg()->supportsByteswap();
       default:
          return false;
       }
@@ -466,6 +480,15 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
       case TR::java_lang_StrictMath_sqrt:
       case TR::java_lang_Math_sqrt:
          process_java_lang_StrictMath_and_Math_sqrt(treetop, node);
+         break;
+      case TR::java_lang_Short_reverseBytes:
+         processConvertingUnaryIntrinsicFunction(treetop, node, TR::i2s, TR::sbyteswap, TR::s2i);
+         break;
+      case TR::java_lang_Integer_reverseBytes:
+         processIntrinsicFunction(treetop, node, TR::ibyteswap);
+         break;
+      case TR::java_lang_Long_reverseBytes:
+         processIntrinsicFunction(treetop, node, TR::lbyteswap);
          break;
       default:
          break;
