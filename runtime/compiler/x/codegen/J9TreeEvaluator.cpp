@@ -9914,16 +9914,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             }
             break;
 
-         case TR::java_lang_Long_reverseBytes:
-         case TR::java_lang_Integer_reverseBytes:
-         case TR::java_lang_Short_reverseBytes:
-            {
-            if(comp->getOption(TR_EnableJCLInline)
-               && performTransformation(comp, "O^O Enable JCL Integer/Long methods inline for: %s\n", cg->getDebug()->getName(node)) )
-               return TR::TreeEvaluator::sbyteswapEvaluator(node, cg) != NULL;
-            break;
-            }
-
          case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
             {
             cg->decReferenceCount(node->getChild(0));
@@ -11600,9 +11590,6 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 
       case TR::java_lang_Math_sqrt:
       case TR::java_lang_StrictMath_sqrt:
-      case TR::java_lang_Long_reverseBytes:
-      case TR::java_lang_Integer_reverseBytes:
-      case TR::java_lang_Short_reverseBytes:
       case TR::java_lang_System_nanoTime:
       case TR::java_util_concurrent_atomic_Fences_orderAccesses:
       case TR::java_util_concurrent_atomic_Fences_orderReads:
