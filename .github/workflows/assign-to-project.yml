@@ -46,7 +46,7 @@ jobs:
 
   assign_mh_project:
     runs-on: ubuntu-latest
-    name: Assign to Snapshot Project
+    name: Assign to MH Project
     if: github.event.label.name == 'project:MH'
     steps:
     - name: MH project assigner
