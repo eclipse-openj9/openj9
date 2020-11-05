@@ -972,11 +972,6 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				errorDataIndex = index;
 				goto _verifyError;
 			}
-			info = &(classfile->constantPool[info->slot1]);
-			if (info->bytes[0] == '[') {
-				errorType = J9NLS_CFR_ERR_BC_NEW_ARRAY__ID;
-				goto _verifyError;
-			}
 			break;
 
 		case CFR_BC_newarray:
