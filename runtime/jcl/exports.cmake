@@ -516,7 +516,6 @@ else()
 	)
 endif()
 
-
 if(JAVA_SPEC_VERSION EQUAL 8)
 	omr_add_exports(jclse Java_sun_misc_URLClassPath_getLookupCacheURLs)
 endif()
@@ -570,7 +569,7 @@ if(NOT JAVA_SPEC_VERSION LESS 9)
 	endif()
 endif()
 
-#java 11+
+# java 11+
 if(NOT JAVA_SPEC_VERSION LESS 11)
 	omr_add_exports(jclse
 		Java_java_lang_Class_getNestHostImpl
@@ -579,11 +578,18 @@ if(NOT JAVA_SPEC_VERSION LESS 11)
 	)
 endif()
 
-#java 15+
+# java 15+
 if(NOT JAVA_SPEC_VERSION LESS 15)
 	omr_add_exports(jclse
 		Java_java_lang_Class_isHiddenImpl
 		Java_java_lang_ClassLoader_defineClassImpl1
 		Java_java_lang_invoke_MethodHandleNatives_checkClassBytes
+	)
+endif()
+
+# java 16+
+if(NOT JAVA_SPEC_VERSION LESS 16)
+	omr_add_exports(jclse
+		Java_java_lang_ref_Reference_refersTo
 	)
 endif()
