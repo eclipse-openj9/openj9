@@ -197,6 +197,11 @@ valhalla:
   extra_configure_options: '--enable-inline-types'
   test_build_list: 'functional/Valhalla,functional/cmdline_options_tester,functional/cmdLineTests/valuetypeddrtests'
 #========================================#
+# OpenJDK JSR292
+#========================================#
+ojdk292:
+  extra_configure_options: '--enable-openjdk-methodhandles'
+#========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
 ppc64le_linux:
@@ -612,3 +617,68 @@ x86-64_mac_uma:
 #========================================#
 x86-64_mac_xl_uma:
   extends: ['x86-64_mac_xl', 'uma']
+#========================================#
+# Linux PPCLE 64bits Compressed Pointers /w OpenJDK JSR292
+#========================================#
+ppc64le_linux_ojdk292:
+  extends: ['ppc64le_linux', 'ojdk292']
+#========================================#
+# Linux PPCLE 64bits Large Heap /w OpenJDK JSR292
+#========================================#
+ppc64le_linux_xl_ojdk292:
+  extends: ['ppc64le_linux_xl', 'ojdk292']
+#========================================#
+# Linux S390 64bits Compressed Pointers /w OpenJDK JSR292
+#========================================#
+s390x_linux_ojdk292:
+  extends: ['s390x_linux', 'ojdk292']
+#========================================#
+# Linux S390 64bits Large Heap /w OpenJDK JSR292
+#========================================#
+s390x_linux_xl_ojdk292:
+  extends: ['s390x_linux_xl', 'ojdk292']
+#========================================#
+# AIX PPC 64bits Compressed Pointers /w OpenJDK JSR292
+#========================================#
+ppc64_aix_ojdk292:
+  extends: ['ppc64_aix', 'ojdk292']
+#========================================#
+# AIX PPC 64bits Large Heap /w OpenJDK JSR292
+#========================================#
+ppc64_aix_xl_ojdk292:
+  extends: ['ppc64_aix_xl', 'ojdk292']
+#========================================#
+# Linux x86 64bits Compressed Pointers /w OpenJDK JSR292
+#========================================#
+x86-64_linux_ojdk292:
+  extends: ['x86-64_linux', 'ojdk292']
+#========================================#
+# Linux x86 64bits Large Heap /w OpenJDK JSR292
+#========================================#
+x86-64_linux_xl_ojdk292:
+  extends: ['x86-64_linux_xl', 'ojdk292']
+#========================================#
+# Windows x86 64bits Compressed Pointers /w OpenJDK JSR292
+#========================================#
+x86-64_windows_ojdk292:
+   extends: ['x86-64_windows', 'ojdk292']
+#========================================#
+# Windows x86 64bits Large Heap /w OpenJDK JSR292
+#========================================#
+x86-64_windows_xl_ojdk292:
+  extends: ['x86-64_windows_xl', 'ojdk292']
+#========================================#
+# Windows x86 32bits /w OpenJDK JSR292
+#========================================#
+x86-32_windows_ojdk292:
+   extends: ['x86-32_windows', 'ojdk292']
+#========================================#
+# OSX x86 64bits Compressed Pointers /w OpenJDK JSR292
+#========================================#
+x86-64_mac_ojdk292:
+  extends: ['x86-64_mac', 'ojdk292']
+#========================================#
+# OSX x86 64bits Large Heap /w OpenJDK JSR292
+#========================================#
+x86-64_mac_xl_ojdk292:
+  extends: ['x86-64_mac_xl', 'ojdk292']
