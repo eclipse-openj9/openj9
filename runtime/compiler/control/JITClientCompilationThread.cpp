@@ -537,6 +537,12 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getObjectClass(objectPointer));
          }
          break;
+      case MessageType::VM_getObjectClassAt:
+         {
+         uintptr_t objectAddress = std::get<0>(client->getRecvData<uintptr_t>());
+         client->write(response, fe->getObjectClassAt(objectAddress));
+         }
+         break;
       case MessageType::VM_getStaticReferenceFieldAtAddress:
          {
          TR::VMAccessCriticalSection getStaticReferenceFieldAtAddress(fe);

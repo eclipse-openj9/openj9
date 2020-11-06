@@ -1110,6 +1110,13 @@ TR_J9VMBase::getObjectClass(uintptr_t objectPointer)
    return convertClassPtrToClassOffset(j9class);
    }
 
+TR_OpaqueClassBlock *
+TR_J9VMBase::getObjectClassAt(uintptr_t objectAddress)
+   {
+   TR::VMAccessCriticalSection getObjectClassAt(this);
+   return getObjectClass(getStaticReferenceFieldAtAddress(objectAddress));
+   }
+
 uintptr_t
 TR_J9VMBase::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    {

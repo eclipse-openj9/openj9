@@ -97,6 +97,7 @@ public:
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *clazz) override;
    virtual uint32_t getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getObjectClass(uintptr_t objectPointer) override;
+   virtual TR_OpaqueClassBlock * getObjectClassAt(uintptr_t objectAddress) override;
    virtual uintptr_t getStaticReferenceFieldAtAddress(uintptr_t fieldAddress) override;
 
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz) override;
