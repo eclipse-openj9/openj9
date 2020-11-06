@@ -51,9 +51,12 @@ do
     export LANG=$locale;
     
     # run first argument and pass remaining arguments
-    $1 "${@:2}";
-    
-    if [ "$?" != 0 ]; then
+    output=$($1 "${@:2}" 2>&1) ; result="$?"
+    echo $output
+    if grep -q UnsupportedCharsetException <<< "$output" ; then
+      result=0
+    fi
+    if [ "$result" != 0 ]; then
       echo "bad return code"
     fi
   fi

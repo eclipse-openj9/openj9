@@ -41,7 +41,7 @@
 			<group>functional</group>
 		</groups>
 		<impls>
-			<!-- temporarily disable this test on openj9; backlog issue 384 -->
+			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
