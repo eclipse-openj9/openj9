@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1703,6 +1703,7 @@ j9vmem_test_reserveExecutableMemory(struct J9PortLibrary *portLibrary)
 				outputComment(PORTLIB, "function length = %d\n",length);
 
 				memcpy(memPtr, (void *)&myFunction1, length);
+				j9cpu_flush_icache(memPtr, length);
 
 				outputComment(PORTLIB, "*memPtr: 0x%zx\n",*memPtr);
 
