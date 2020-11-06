@@ -241,7 +241,16 @@
    java_nio_Bits_copyFromByteArray,
    java_nio_Bits_keepAlive,
    java_nio_Bits_byteOrder,
+   java_nio_Bits_getCharB,
+   java_nio_Bits_getCharL,
+   java_nio_Bits_getShortB,
+   java_nio_Bits_getShortL,
+   java_nio_Bits_getIntB,
+   java_nio_Bits_getIntL,
+   java_nio_Bits_getLongB,
+   java_nio_Bits_getLongL,
 
+   java_nio_HeapByteBuffer__get,
    java_nio_HeapByteBuffer_put,
 
    java_nio_ByteOrder_nativeOrder,
