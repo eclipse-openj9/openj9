@@ -1351,7 +1351,7 @@ simulateStack(J9NPEMessageData *npeMsgData)
 	J9VMThread *vmThread = npeMsgData->vmThread;
 	U_32 *bytecodeMap = npeMsgData->bytecodeMap;
 	J9ROMConstantPoolItem *constantPool = J9_ROM_CP_FROM_ROM_CLASS(romClass);
-	bool checkIfInsideException = romMethod->modifiers & J9AccMethodHasExceptionInfo;
+	bool checkIfInsideException = (0 != (romMethod->modifiers & J9AccMethodHasExceptionInfo));
 	U_8 *bytecode = J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
 	UDATA bytecodeLength = J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod);
 	J9ExceptionInfo *exceptionData = J9_EXCEPTION_DATA_FROM_ROM_METHOD(romMethod);
