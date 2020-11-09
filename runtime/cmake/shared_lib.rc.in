@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,42 +19,37 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-changequote(`[',`]')dnl
 
-#ifndef jvm_generated_h
-#define jvm_generated_h
-
-/** WARNING: Automatically Generated File
- *
- * This file contains automatically generated function prototypes
- * for OpenJDK VM Interface (i.e. JVM_) functions.
- *
- * DO NOT ADD PROTOTYPES MANUALLY, instead modify the table in:
- * redirector/forwarders.m4
- *
- * Generated prototypes for all forwarded functions, see
- * redirector/forwarders.m4 for source data.
- */
-
+#include <windows.h>
+#include <winver.h>
 #include "j9cfg.h"
+#include "j9version.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-include([helpers.m4])
-define([_IF],
-[#if $1
-$2
-#endif])
-dnl (1-name, 2-cc, 3-decorate, 4-ret, 5-args...)
-define([_X],
-[$4 ifelse($2,,,$2 )$1(join([, ],mshift(4,$@)));])
-
-include([forwarders.m4])
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
-
-#endif /* jvm_generated_h */
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION @VERSION_COMMA@
+ PRODUCTVERSION @VERSION_COMMA@
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_DLL
+ FILESUBTYPE 0x0L
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904b0"
+		BEGIN
+			VALUE "CompanyName", "International Business Machines Corporation\0"
+			VALUE "FileDescription", "J9 Virtual Machine Runtime\0"
+			VALUE "FileVersion", "@VERSION_STRING@\0"
+			VALUE "InternalName", "@MODULE_NAME@\0"
+			VALUE "LegalCopyright", J9_COPYRIGHT_STRING
+			VALUE "OriginalFilename", "@MODULE_FILE_NAME@\0"
+			VALUE "ProductName", "IBM SDK, Java(tm) 2 Technology Edition\0"
+			VALUE "ProductVersion", "@VERSION_STRING@\0"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x0409, 1200
+	END
+END
