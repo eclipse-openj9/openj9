@@ -963,8 +963,8 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
             auto falseLabel = isNextItemGoToFalse(it, itEnd) ? doneLabel : (isNextItemHelperCall(it, itEnd) ? callHelperLabel : nextSequenceLabel);
             genInstanceOfOrCheckCastSuperClassTest(node, objectClassReg, castClassReg, castClassDepth, falseLabel, srm, cg);
             generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
-            break;
             }
+            break;
          case ProfiledClassTest:
             {
             if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ProfiledClassTest\n", node->getOpCode().getName());
