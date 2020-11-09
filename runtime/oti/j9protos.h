@@ -1307,6 +1307,7 @@ extern J9_CFUNC void  JNICALL sendResolveConstantDynamic (J9VMThread *vmThread, 
 extern J9_CFUNC void  JNICALL sendResolveInvokeDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSiteIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData);
 extern J9_CFUNC void  JNICALL jitFillOSRBuffer (struct J9VMThread *vmContext, void *osrBlock);
 extern J9_CFUNC void  JNICALL sendRunThread(J9VMThread *vmContext, j9object_t tenantContext);
+extern J9_CFUNC void  JNICALL sendInitEncodings (J9VMThread *vmContext);
 #endif /* _J9VMJAVAINTERPRETERSTARTUP_ */
 
 /* J9VMNativeHelpersLarge*/

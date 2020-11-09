@@ -133,7 +133,16 @@ addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, const char 
 	j9package->packageName = (J9UTF8*)buf;
 	packageNameLength = (UDATA) strlen(packageName);
 	if ((NULL == j9package->packageName) || ((packageNameLength + sizeof(J9UTF8) + 1) > bufLen)) {
-		j9package->packageName = j9mem_allocate_memory(packageNameLength + sizeof(J9UTF8) + 1, OMRMEM_CATEGORY_VM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if ((NULL == buf) && IS_SNAPSHOTTING_ENABLED(vm)) {
+			VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+			j9package->packageName = vmsnapshot_allocate_memory(packageNameLength + sizeof(J9UTF8) + 1, OMRMEM_CATEGORY_VM);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			j9package->packageName = j9mem_allocate_memory(packageNameLength + sizeof(J9UTF8) + 1, OMRMEM_CATEGORY_VM);
+		}
+
 		if (NULL == j9package->packageName) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			return FALSE;

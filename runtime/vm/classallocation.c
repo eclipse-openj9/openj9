@@ -422,7 +422,15 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 			packagePtr = (J9Package**)hashTableNextDo(&packageWalkState);
 			cleanPackage(packageDel);
 			hashTableFree(packageDel->exportsHashTable);
-			j9mem_free_memory(packageDel->packageName);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+				VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+				vmsnapshot_free_memory(packageDel->packageName);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				j9mem_free_memory(packageDel->packageName);
+			}
 			pool_removeElement(javaVM->modularityPool, packageDel);
 		}
 

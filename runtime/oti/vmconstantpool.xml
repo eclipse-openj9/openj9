@@ -384,6 +384,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	This is a limitation of the tool as it would otherwise need to encode the class multiple times - once
 	for each combination of method flags.
 -->
+	<staticmethodref class="java/lang/System" name="initEncodings" signature="()V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="completeInitialization" signature="()V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="checkPackageAccess" signature="(Ljava/lang/Class;Ljava/security/ProtectionDomain;)V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="threadCleanup" signature="(Ljava/lang/Thread;)V"/>
