@@ -8554,6 +8554,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             compiler->setOutOfProcessCompilation();
             // Create the KOT by default at the server as long as it is not disabled at the client.
             compiler->getOrCreateKnownObjectTable();
+            compiler->setClientData(that->getClientData());
             }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
