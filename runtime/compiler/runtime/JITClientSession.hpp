@@ -445,6 +445,14 @@ class ClientSessionData
 
    TR::SymbolValidationManager::SystemClassNotWorthRemembering *getSystemClassesNotWorthRemembering() { return _systemClassesNotWorthRemembering; }
 
+   // Returns the cached client-side pointer to well-known class chain offsets
+   // if included classes and their SCC offsets match, otherwise returns NULL
+   const void *getCachedWellKnownClassChainOffsets(unsigned int includedClasses, size_t numClasses,
+                                                   const uintptr_t *classChainOffsets);
+   // Cache the client-side pointer to well-known class chain offsets
+   void cacheWellKnownClassChainOffsets(unsigned int includedClasses, size_t numClasses,
+                                        const uintptr_t *classChainOffsets, const void *wellKnownClassChainOffsets);
+
    private:
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
@@ -494,6 +502,23 @@ class ClientSessionData
    volatile bool _bClassUnloadingAttempt;
 
    TR::SymbolValidationManager::SystemClassNotWorthRemembering _systemClassesNotWorthRemembering[TR::SymbolValidationManager::SYSTEM_CLASSES_NOT_WORTH_REMEMBERING_COUNT];
+
+   /**
+    * @class WellKnownClassesCache
+    * @brief Stores the most recent version of well-known class chain offsets used by AOT compilations with SVM
+    */
+   struct WellKnownClassesCache
+      {
+      WellKnownClassesCache() { clear(); }
+      void clear() { memset(this, 0, sizeof(*this)); }
+
+      unsigned int _includedClasses;// bitset of indices in the list of well-known classes
+      uintptr_t _classChainOffsets[WELL_KNOWN_CLASS_COUNT];// ROMClass SCC offsets
+      const void *_wellKnownClassChainOffsets;// client-side pointer to "well-known class chain offsets" in SCC
+      };
+
+   WellKnownClassesCache _wellKnownClasses;
+   TR::Monitor *_wellKnownClassesMonitor;
    }; // class ClientSessionData
 
 

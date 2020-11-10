@@ -266,6 +266,18 @@ TR::SymbolValidationManager::populateWellKnownClasses()
 
    *classCount = _wellKnownClasses.size();
 
+#if defined(J9VM_OPT_JITSERVER)
+   ClientSessionData *clientData = _comp->getClientData();
+   if (clientData)
+      {
+      // This is an out-of-process compilation; check the cache in the client session first
+      _wellKnownClassChainOffsets = clientData->getCachedWellKnownClassChainOffsets(
+         includedClasses, _wellKnownClasses.size(), classChainOffsets + 1);
+      if (_wellKnownClassChainOffsets)
+         return;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    char key[128];
    snprintf(key, sizeof (key), "AOTWellKnownClasses:%x", includedClasses);
 
@@ -280,6 +292,16 @@ TR::SymbolValidationManager::populateWellKnownClasses()
          _vmThread,
          key,
          &dataDescriptor);
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (_wellKnownClassChainOffsets && clientData)
+      {
+      // This is an out-of process compilation; cache the pointer to the newly created well-known
+      // class chain offsets in the client session to avoid sending repeated requests to the client
+      clientData->cacheWellKnownClassChainOffsets(includedClasses, _wellKnownClasses.size(),
+                                                  classChainOffsets + 1, _wellKnownClassChainOffsets);
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    SVM_ASSERT_NONFATAL(
       _wellKnownClassChainOffsets != NULL,
