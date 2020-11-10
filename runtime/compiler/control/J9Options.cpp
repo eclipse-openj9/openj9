@@ -2105,6 +2105,13 @@ J9::Options::setupJITServerOptions()
       self()->setOption(TR_DisableJProfilerThread);
       self()->setOption(TR_EnableJProfiling, false);
 
+#if defined(TR_HOST_POWER)
+      // Infrastructure to support the TOC is currently not available for JITServer.
+      // TOC needs to be disabled at setup, even for non-remote client compilations,
+      // because presence of TOC changes trampoline definition.
+      self()->setOption(TR_DisableTOC);
+#endif 
+
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          // The server can compile with VM access in hand because GC is not a factor here
