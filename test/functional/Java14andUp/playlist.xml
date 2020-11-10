@@ -97,6 +97,10 @@
         <subsets>
             <subset>14+</subset>
         </subsets>
+        <impls>
+            <impl>openj9</impl>
+            <impl>ibm</impl>
+        </impls>
     </test>
     <test>
         <testCaseName>JEP358NPEMessageTests-noDebugInfo</testCaseName>
@@ -119,5 +123,9 @@
         <subsets>
             <subset>14+</subset>
         </subsets>
+        <impls>
+            <impl>openj9</impl>
+            <impl>ibm</impl>
+        </impls>
     </test>
 </playlist>
