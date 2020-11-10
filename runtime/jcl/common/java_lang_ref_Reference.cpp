@@ -64,7 +64,7 @@ Java_java_lang_ref_Reference_waitForReferenceProcessingImpl(JNIEnv *env, jclass 
 }
 
 #if JAVA_SPEC_VERSION >= 16
-JNIEXPORT jboolean JNICALL
+jboolean JNICALL
 Java_java_lang_ref_Reference_refersTo(JNIEnv *env, jobject reference, jobject target)
 {
 	J9VMThread * const currentThread = (J9VMThread *)env;
