@@ -93,8 +93,8 @@ detect_hypervisor(struct J9PortLibrary *portLibrary)
 	errMsg = omrnls_lookup_message(J9NLS_ERROR | J9NLS_DO_NOT_APPEND_NEWLINE,
 											J9NLS_PORT_UNSUPPORTED_HYPERVISOR__MODULE,
 											J9NLS_PORT_UNSUPPORTED_HYPERVISOR__ID,
-											NULL);
-	omrerror_set_last_error_with_message(J9PORT_ERROR_HYPERVISOR_UNSUPPORTED,errMsg);
+											"Failed to detect a Supported Hypervisor.");
+	omrerror_set_last_error_with_message(J9PORT_ERROR_HYPERVISOR_UNSUPPORTED, errMsg);
 
 	portLibrary->portGlobals->hypervisorData.isVirtual = J9PORT_ERROR_HYPERVISOR_UNSUPPORTED;
 	portLibrary->portGlobals->hypervisorData.vendorDetails.hypervisorName = NULL;

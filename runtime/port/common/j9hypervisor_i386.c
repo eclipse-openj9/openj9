@@ -98,7 +98,7 @@ detect_hypervisor_i386(struct J9PortLibrary *portLibrary)
 		errMsg = omrnls_lookup_message(J9NLS_ERROR | J9NLS_DO_NOT_APPEND_NEWLINE,
 												J9NLS_PORT_UNSUPPORTED_HYPERVISOR__MODULE,
 												J9NLS_PORT_UNSUPPORTED_HYPERVISOR__ID,
-												NULL);
+												"Failed to detect a Supported Hypervisor.");
 		omrerror_set_last_error_with_message(J9PORT_ERROR_HYPERVISOR_UNSUPPORTED, errMsg);
 		Trc_PRT_virt_j9hypervisor_detect_hypervisor_Exit(J9PORT_ERROR_HYPERVISOR_UNSUPPORTED);
 		return J9PORT_ERROR_HYPERVISOR_UNSUPPORTED;
