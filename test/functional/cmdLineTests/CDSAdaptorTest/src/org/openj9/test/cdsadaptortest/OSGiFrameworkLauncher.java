@@ -1,16 +1,30 @@
 /*******************************************************************************
- * Licensed Materials - Property of IBM
- * "Restricted Materials of IBM"
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
- * (c) Copyright IBM Corp. 2001, 2012 All Rights Reserved
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * US Government Users Restricted Rights - Use, duplication or disclosure
- * restricted by GSA ADP Schedule Contract with IBM Corp.
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package com.ibm.cdsadaptortest;
+
+package org.openj9.test.cdsadaptortest;
 
 import org.osgi.framework.*;
 import org.osgi.framework.launch.*;
+import org.osgi.framework.Constants;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.io.File;
@@ -20,9 +34,6 @@ import java.util.ServiceLoader;
 
 /**
  * This class is used to lauch OSGi framework and to install bundles.
- * 
- * @author administrator
- *
  */
 class OSGiFrameworkLauncher {
 	private String frameworkBundleLocation;
@@ -30,7 +41,7 @@ class OSGiFrameworkLauncher {
 	private Framework framework;
 	private BundleContext fwBundleContext;
 
-	private HashMap<String, String> osgiPropertyMap = null;
+	private HashMap<String, String> osgiPropertyMap = new HashMap<>();
 
 	OSGiFrameworkLauncher(String bundleLocation) {
 		frameworkBundleLocation = bundleLocation;
@@ -49,10 +60,8 @@ class OSGiFrameworkLauncher {
 			osgiPropertyMap = map;
 		}
 		
-		/* osgi.clean is used to clear OSGi cache */
-		System.setProperty("osgi.clean", "true");
-		System.setProperty("osgi.hook.configurators.include",
-				"com.ibm.cds.CDSHookConfigurator");
+		/* Constants.FRAMEWORK_STORAGE_CLEAN is used to clear OSGi cache */
+		osgiPropertyMap.put(Constants.FRAMEWORK_STORAGE_CLEAN, "onFirstInit");
 
 		/* Following is a standard way to launch OSGi framework using Java Service Provider Configuration.
 		 * It requires framework implementation (in this case org.eclipse.osgi bundle) to be on the classpath.  

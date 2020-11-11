@@ -1,4 +1,27 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2001, 2020 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
 <suite id="CDS Adaptor CommandLineOptionTests Suite">
@@ -7,10 +30,11 @@
 	
 	<variable name="XSHARECLASSES" value="-Xshareclasses:name=$CACHENAME$" />
 	
-	<!-- NOTE: Update the version of org.eclipse.osgi and com.ibm.cds bundles whenever new version are checked in -->
-	<variable name="OSGI_CDS_JAR_PATH" value=".$CPDL$.$PATHSEP$org.eclipse.osgi_3.8.0.v20120123-1419.jar$CPDL$.$PATHSEP$FrameworkBundles$PATHSEP$com.ibm.cds_2.2.0.201203051532.jar" />
+	<!-- NOTE: Update the version of org.eclipse.osgi whenever new version are checked in -->
+	<variable name="OSGI_JAR_PATH" value="$TEST_MATERIAL_DIR$$CPDL$$LIB_DIR$$PATHSEP$org.eclipse.osgi_3.16.100.v20200904-1304.jar" />
 	
-	<variable name="FRAMEWORK_BUNDLE_LOCATION" value=".$PATHSEP$FrameworkBundles" />
+	<variable name="FRAMEWORK_BUNDLE_LOCATION" value="$TEST_MATERIAL_DIR$$PATHSEP$FrameworkBundles" />
+	<variable name="TEST_BUNDLE_LOCATION" value="$TEST_MATERIAL_DIR$$PATHSEP$CDSAdaptorOrphanTestBundles" />
 	
 	<test id="Test 0: Destroy existing shared class cache" timeout="600" runPath=".">
 		<command>$EXE$ $XSHARECLASSES$,destroy</command>
@@ -24,7 +48,7 @@
 	</test>
 	
 	<test id="Test 1-a: Create a shared class cache while using weaving hooks" timeout="600" runPath=".">
-		<command>$EXE$ $XSHARECLASSES$ -cp $OSGI_CDS_JAR_PATH$ com.ibm.cdsadaptortest.CDSAdaptorOrphanTest -frameworkBundleLocation $FRAMEWORK_BUNDLE_LOCATION$ -testBundleLocation .$PATHSEP$CDSAdaptorOrphanTestBundles</command>
+		<command>$EXE$ $XSHARECLASSES$ -cp $OSGI_JAR_PATH$ org.openj9.test.cdsadaptortest.CDSAdaptorOrphanTest -frameworkBundleLocation $FRAMEWORK_BUNDLE_LOCATION$ -testBundleLocation $TEST_BUNDLE_LOCATION$</command>
 		<output type="success" caseSensitive="no" regex="no">A message from modified class</output>
 		<output type="failure" caseSensitive="no" regex="no">original</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -33,14 +57,14 @@
 	
 	<test id="Test 1-b: Check shared class cache for presence of Orphan class" timeout="600" runPath=".">
 		<command>$EXE$ $XSHARECLASSES$,printStats=orphan+romclass</command>
-		<output type="success" caseSensitive="no" regex="no">ORPHAN: com/ibm/testbundle/SomeMessageV1</output>
-		<output type="failure" caseSensitive="no" regex="no">ROMCLASS: com/ibm/testbundle/SomeMessageV1</output>
+		<output type="success" caseSensitive="no" regex="no">ORPHAN: org/openj9/test/testbundle/SomeMessageV1</output>
+		<output type="failure" caseSensitive="no" regex="no">ROMCLASS: org/openj9/test/testbundle/SomeMessageV1</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
 	<test id="Test 1-c: Reuse previous cache without using weaving hooks" timeout="600" runPath=".">
-		<command>$EXE$ $XSHARECLASSES$ -cp $OSGI_CDS_JAR_PATH$ com.ibm.cdsadaptortest.CDSAdaptorOrphanTest -frameworkBundleLocation $FRAMEWORK_BUNDLE_LOCATION$ -testBundleLocation .$PATHSEP$CDSAdaptorOrphanTestBundles -ignoreWeavingHookBundle</command>
+		<command>$EXE$ $XSHARECLASSES$ -cp $OSGI_JAR_PATH$ org.openj9.test.cdsadaptortest.CDSAdaptorOrphanTest -frameworkBundleLocation $FRAMEWORK_BUNDLE_LOCATION$ -testBundleLocation $TEST_BUNDLE_LOCATION$ -ignoreWeavingHookBundle</command>
 		<output type="success" caseSensitive="no" regex="no">A message from original class</output>
 		<output type="failure" caseSensitive="no" regex="no">modified</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -49,14 +73,14 @@
 	
 	<test id="Test 1-d: Check shared class cache for presence of ROMClass class" timeout="600" runPath=".">
 		<command>$EXE$ $XSHARECLASSES$,printStats=orphan+romclass</command>
-		<output type="success" caseSensitive="no" regex="no">ORPHAN: com/ibm/testbundle/SomeMessageV1</output>
-		<output type="required" caseSensitive="no" regex="no">ROMCLASS: com/ibm/testbundle/SomeMessageV1</output>
+		<output type="success" caseSensitive="no" regex="no">ORPHAN: org/openj9/test/testbundle/SomeMessageV1</output>
+		<output type="required" caseSensitive="no" regex="no">ROMCLASS: org/openj9/test/testbundle/SomeMessageV1</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
 	<test id="Test 1-e: Reuse previous cache while using weaving hooks" timeout="600" runPath=".">
-		<command>$EXE$ $XSHARECLASSES$ -cp $OSGI_CDS_JAR_PATH$ com.ibm.cdsadaptortest.CDSAdaptorOrphanTest -frameworkBundleLocation $FRAMEWORK_BUNDLE_LOCATION$ -testBundleLocation .$PATHSEP$CDSAdaptorOrphanTestBundles</command>
+		<command>$EXE$ $XSHARECLASSES$ -cp $OSGI_JAR_PATH$ org.openj9.test.cdsadaptortest.CDSAdaptorOrphanTest -frameworkBundleLocation $FRAMEWORK_BUNDLE_LOCATION$ -testBundleLocation $TEST_BUNDLE_LOCATION$</command>
 		<output type="success" caseSensitive="no" regex="no">A message from modified class</output>
 		<output type="failure" caseSensitive="no" regex="no">original</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
