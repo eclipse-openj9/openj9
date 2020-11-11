@@ -24,19 +24,18 @@ package com.ibm.j9ddr.vm29.j9;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagObject;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldSizeDouble;
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccStatic;
+import static com.ibm.j9ddr.vm29.structure.ObjectFieldInfo.OBJECT_SIZE_INCREMENT_IN_BYTES;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 
 import com.ibm.j9ddr.CorruptDataException;
-import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
-import com.ibm.j9ddr.vm29.structure.J9Object;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
@@ -71,10 +70,10 @@ public class ObjectFieldInfo {
 	int totalFlatFieldRefBytes = 0;
 	int totalFlatFieldSingleBytes = 0;
 
-	public static final int	NO_BACKFILL_AVAILABLE = -1;
-	public static final int		BACKFILL_SIZE = U32.SIZEOF;
-	public static final int		LOCKWORD_SIZE = j9objectmonitor_t_SizeOf;
-	public static final int		FINALIZE_LINK_SIZE = fj9object_t_SizeOf;
+	public static final int NO_BACKFILL_AVAILABLE = -1;
+	public static final int BACKFILL_SIZE = U32.SIZEOF;
+	public static final int LOCKWORD_SIZE = j9objectmonitor_t_SizeOf;
+	public static final int FINALIZE_LINK_SIZE = fj9object_t_SizeOf;
 
 	ObjectFieldInfo(J9ROMClassPointer romClass) {
 		instanceObjectCount = 0;
@@ -235,7 +234,7 @@ public class ObjectFieldInfo {
 		boolean doubleAlignment = (totalDoubleCount > 0) || (totalFlatFieldDoubleBytes > 0);
 
 		if (
-			((getSuperclassObjectSize() % ObjectModel.getObjectAlignmentInBytes()) != 0) && /* superclass is not end-aligned */
+			((getSuperclassObjectSize() % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) && /* superclass is not end-aligned */
 			(doubleAlignment || (!objectCanUseBackfill && (totalObjectCount > 0)))
 		) { /* our fields start on a 8-byte boundary */
 			fieldDataStart += BACKFILL_SIZE;
@@ -366,7 +365,7 @@ public class ObjectFieldInfo {
 			accumulator += firstFieldOffset;
 			subclassBackfillOffset = firstFieldOffset;
 		} else {
-			if (((getSuperclassObjectSize() % ObjectModel.getObjectAlignmentInBytes()) != 0)
+			if (((getSuperclassObjectSize() % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0)
 					&& /* superclass is not end-aligned */
 					((totalDoubleCount > 0) || (!objectCanUseBackfill
 							&& (totalObjectCount > 0)))) { /* our fields start on a 8-byte boundary */
@@ -378,7 +377,7 @@ public class ObjectFieldInfo {
 				myBackfillOffset = superclassBackfillOffset;
 				superclassBackfillOffset = NO_BACKFILL_AVAILABLE;
 			}
-			if (((accumulator + J9ObjectHelper.headerSize()) % ObjectModel.getObjectAlignmentInBytes()) != 0) {
+			if (((accumulator + J9ObjectHelper.headerSize()) % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) {
 				/* we have consumed the superclass's backfill (if any), so let our subclass use the residue at the end of this class. */
 				subclassBackfillOffset = (int)accumulator;
 				accumulator += BACKFILL_SIZE;
