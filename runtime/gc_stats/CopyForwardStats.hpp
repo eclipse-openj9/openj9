@@ -51,8 +51,8 @@ class MM_CopyForwardStats : public MM_CopyForwardStatsCore
 	 * Data members 
 	 */
 public:
-	MM_JavaStats _javaStats;
 	/* The below stats include both marked and copied cases */
+	MM_JavaStats _javaStats;
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	UDATA _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
 	UDATA _doubleMappedArrayletsCandidates; /**< The number of double mapped arraylets that have been visited during marking */

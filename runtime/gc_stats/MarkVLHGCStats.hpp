@@ -56,7 +56,7 @@ protected:
 public:
 	MM_JavaStats _javaStats;
 	uintptr_t _objectsCardClean;	/**< Objects scanned through card cleaning */
-	uintptr_t _bytesCardClean;		/**< Bytes scanned through card cleaning */
+	uintptr_t _bytesCardClean;	/**< Bytes scanned through card cleaning */
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	UDATA _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */

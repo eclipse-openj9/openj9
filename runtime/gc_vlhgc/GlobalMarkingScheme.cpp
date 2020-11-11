@@ -157,7 +157,7 @@ MM_ParallelGlobalMarkTask::setup(MM_EnvironmentBase *envBase)
 	}
 	env->_markStats.clear();
 	env->_markVLHGCStats.clear();
-	env->_cardCleaningStats.clear();
+	// env->_cardCleaningStats.clear();
 	env->_workPacketStats.clear();
 	
 	/* record that this thread is participating in this cycle */

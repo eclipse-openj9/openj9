@@ -82,14 +82,14 @@ public:
 
 	MM_JavaStats() :
 		MM_Base()
-        , _unfinalizedCandidates(0)
-        , _unfinalizedEnqueued(0)
-        , _ownableSynchronizerCandidates(0)
-        , _weakReferenceStats()
-        , _softReferenceStats()
-        , _phantomReferenceStats()
-        , _monitorReferenceCleared(0)
-        , _monitorReferenceCandidates(0)
+		, _unfinalizedCandidates(0)
+		, _unfinalizedEnqueued(0)
+		, _ownableSynchronizerCandidates(0)
+		, _weakReferenceStats()
+		, _softReferenceStats()
+		, _phantomReferenceStats()
+		, _monitorReferenceCleared(0)
+		, _monitorReferenceCandidates(0)
 	{
         clear();
 	}
