@@ -197,12 +197,13 @@ TR::SymbolValidationManager::getSystemClassNotWorthRemembering(int idx)
 void
 TR::SymbolValidationManager::populateWellKnownClasses()
    {
-#define WELL_KNOWN_CLASS_COUNT 9
 #define REQUIRED_WELL_KNOWN_CLASS_COUNT 0
 
    // Classes must have names only allowed to be defined by the bootstrap loader
    // The first REQUIRED_WELL_KNOWN_CLASS_COUNT entries are required - if any is
    // missing then the compilation will fail.
+   // Number of entries must match WELL_KNOWN_CLASS_COUNT defined in
+   // SymbolValidationManager.hpp
    static const char * const names[] =
       {
       "java/lang/Class",
@@ -285,7 +286,6 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       "Failed to store well-known classes' class chains");
 
 #undef REQUIRED_WELL_KNOWN_CLASS_COUNT
-#undef WELL_KNOWN_CLASS_COUNT
    }
 
 bool
