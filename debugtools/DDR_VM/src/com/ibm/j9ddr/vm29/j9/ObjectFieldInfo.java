@@ -24,7 +24,6 @@ package com.ibm.j9ddr.vm29.j9;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagObject;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldSizeDouble;
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccStatic;
-import static com.ibm.j9ddr.vm29.structure.ObjectFieldInfo.OBJECT_SIZE_INCREMENT_IN_BYTES;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -33,10 +32,10 @@ import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
@@ -74,6 +73,7 @@ public class ObjectFieldInfo {
 	public static final int BACKFILL_SIZE = U32.SIZEOF;
 	public static final int LOCKWORD_SIZE = j9objectmonitor_t_SizeOf;
 	public static final int FINALIZE_LINK_SIZE = fj9object_t_SizeOf;
+	private static final int OBJECT_SIZE_INCREMENT_IN_BYTES = U64.SIZEOF;
 
 	ObjectFieldInfo(J9ROMClassPointer romClass) {
 		instanceObjectCount = 0;
