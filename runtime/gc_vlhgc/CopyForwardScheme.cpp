@@ -2876,8 +2876,8 @@ MM_CopyForwardScheme::updateScanStats(MM_EnvironmentVLHGC *env, J9Object *object
 		}
 	} else if (SCAN_REASON_DIRTY_CARD == reason) {
 		UDATA objectSize = _extensions->objectModel.getSizeInBytesWithHeader(objectPtr);
-		env->_copyForwardStats._objectsCardClean += 1;
-		env->_copyForwardStats._bytesCardClean += objectSize;
+		env->_cardCleaningStats._objectsCardClean += 1;
+		env->_cardCleaningStats._bytesCardClean += objectSize;
 	}
 
 	/* else:

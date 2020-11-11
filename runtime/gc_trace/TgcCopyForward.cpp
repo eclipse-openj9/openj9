@@ -54,7 +54,7 @@ tgcHookCopyForwardEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 		if ((walkThread == vmThread) || (env->getThreadType() == GC_WORKER_THREAD)) {
 			tgcExtensions->printf("%4zu:   %7zu   %7zu   %7zu   %7zu   %7zu   %7zu\n",
 				env->getWorkerID(),
-				env->_copyForwardStats._objectsCardClean,
+				env->_cardCleaningStats._objectsCardClean,
 				env->_copyForwardStats._objectsScannedFromWorkPackets,
 				env->_copyForwardStats._objectsScannedFromOverflowedRegion,
 				env->_copyForwardStats._objectsScannedFromNextInChain,

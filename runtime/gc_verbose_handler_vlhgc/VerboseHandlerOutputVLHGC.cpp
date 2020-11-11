@@ -373,6 +373,7 @@ MM_VerboseHandlerOutputVLHGC::handleCopyForwardEnd(J9HookInterface** hook, UDATA
 	MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(event->currentThread);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env->getOmrVM());
 	MM_CopyForwardStats *copyForwardStats = (MM_CopyForwardStats *)event->copyForwardStats;
+	MM_CardCleaningStats *cardCleaningStats = &env->_cardCleaningStats;
 	MM_MarkStats *markStats = &env->_markStats;
 	MM_WorkPacketStats *workPacketStats = (MM_WorkPacketStats *)event->workPacketStats;
 	MM_InterRegionRememberedSetStats *irrsStats = (MM_InterRegionRememberedSetStats *)event->irrsStats;
@@ -393,7 +394,7 @@ MM_VerboseHandlerOutputVLHGC::handleCopyForwardEnd(J9HookInterface** hook, UDATA
 	writer->formatAndOutput(env, 1, "<memory-copied type=\"other\" objects=\"%zu\" bytes=\"%zu\" bytesdiscarded=\"%zu\" />",
 				copyForwardStats->_copyObjectsNonEden, copyForwardStats->_copyBytesNonEden, copyForwardStats->_copyDiscardBytesNonEden);
 	writer->formatAndOutput(env, 1, "<memory-cardclean objects=\"%zu\" bytes=\"%zu\" />",
-				copyForwardStats->_objectsCardClean, copyForwardStats->_bytesCardClean);
+				cardCleaningStats->_objectsCardClean, cardCleaningStats->_bytesCardClean);
 	if(copyForwardStats->_aborted || (0 != copyForwardStats->_nonEvacuateRegionCount)) {
 		writer->formatAndOutput(env, 1, "<memory-traced type=\"eden\" objects=\"%zu\" bytes=\"%zu\" />",
 					copyForwardStats->_scanObjectsEden, copyForwardStats->_scanBytesEden);
@@ -542,6 +543,7 @@ MM_VerboseHandlerOutputVLHGC::outputMarkSummary(MM_EnvironmentBase *env, const c
 	MM_VerboseWriterChain* writer = _manager->getWriterChain();
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env->getOmrVM());
 	MM_MarkStats *markStats = &env->_markStats;
+	MM_CardCleaningStats *cardCleaningStats = &env->_cardCleaningStats;
 
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
@@ -559,9 +561,9 @@ MM_VerboseHandlerOutputVLHGC::outputMarkSummary(MM_EnvironmentBase *env, const c
 	writer->formatAndOutput(env, 1, "<trace-info objectcount=\"%zu\" scancount=\"%zu\" scanbytes=\"%zu\" />",
 		markStats->_objectsMarked, markStats->_objectsScanned, markStats->_bytesScanned);
 
-	if (0 != markVLHGCStats->_objectsCardClean) {
+	if (0 != cardCleaningStats->_objectsCardClean) {
 		writer->formatAndOutput(env, 1, "<cardclean-info objects=\"%zu\" bytes=\"%zu\" />",
-				markVLHGCStats->_objectsCardClean, markVLHGCStats->_bytesCardClean);
+				cardCleaningStats->_objectsCardClean, cardCleaningStats->_bytesCardClean);
 	}
 
 	if (NULL != irrsStats) {
