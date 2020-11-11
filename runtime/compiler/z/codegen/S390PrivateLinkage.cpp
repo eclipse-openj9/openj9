@@ -1742,10 +1742,11 @@ J9::Z::PrivateLinkage::buildNoPatchingIPIC(TR::Node *callNode, TR::RegisterDepen
 
    TR::RegisterDependencyConditions *preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies->getPreConditions(), NULL,
                                                                                                          dependencies->getAddCursorForPre(), 0, cg());
-   
+
    TR::RegisterDependencyConditions *postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(NULL, dependencies->getPostConditions(),
                                                                                                          0, dependencies->getAddCursorForPost() + numberOfAdditionalPostDeps, cg());
-
+   postDeps->setAddCursorForPost(dependencies->getAddCursorForPost());
+   
    TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg());
    cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, cFlowRegionStart, preDeps, cursor);
 
