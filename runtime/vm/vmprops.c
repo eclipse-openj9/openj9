@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,6 +116,8 @@ copySystemProperties(J9JavaVM* vm)
  * 		or
  * 	--<name> <value>
  *
+ * 	Note: the allocated memory of the return value needs to be freed after use.
+ *
  * @param [in] vm the J9JavaVM
  * @param [in] argIndex index of the option in the option list
  * @param [in] optionNameLen length of the option
@@ -152,6 +154,11 @@ getOptionArg(J9JavaVM *vm, IDATA argIndex, UDATA optionNameLen)
 	}
 
 _end:
+	if (NULL != optionArg) {
+		/* Convert the value string from the platform encoding to the modified UTF8 */
+		optionArg = (char *)getMUtf8String(vm, optionArg, strlen(optionArg));
+	}
+
 	return optionArg;
 }
 
@@ -188,7 +195,7 @@ addPropertyForOptionWithEqualsArg(J9JavaVM *vm, const char *optionName, UDATA op
 		char *optionArg = getOptionArg(vm, argIndex, optionNameLen - 1);
 
 		if (NULL != optionArg) {
-			rc = addSystemProperty(vm, propName, optionArg, 0);
+			rc = addSystemProperty(vm, propName, optionArg, J9SYSPROP_FLAG_VALUE_ALLOCATED);
 			if (J9SYSPROP_ERROR_NONE != rc) {
 				goto _end;
 			}
@@ -234,7 +241,7 @@ addPropertyForOptionWithPathArg(J9JavaVM *vm, const char *optionName, UDATA opti
 		char *optionArg = getOptionArg(vm, argIndex, optionNameLen);
 
 		if (NULL != optionArg) {
-			rc = addSystemProperty(vm, propName, optionArg, 0);
+			rc = addSystemProperty(vm, propName, optionArg, J9SYSPROP_FLAG_VALUE_ALLOCATED);
 			if (J9SYSPROP_ERROR_NONE != rc) {
 				goto _end;
 			}
@@ -291,6 +298,7 @@ addPropertyForOptionWithModuleListArg(J9JavaVM *vm, const char *optionName, IDAT
 					if (NULL != modulesList) {
 						strncpy(modulesList, optionArg, listSize + 1);
 					} else {
+						j9mem_free_memory(optionArg);
 						rc = J9SYSPROP_ERROR_OUT_OF_MEMORY;
 						goto _end;
 					}
@@ -303,12 +311,15 @@ addPropertyForOptionWithModuleListArg(J9JavaVM *vm, const char *optionName, IDAT
 						j9str_printf(PORTLIB, modulesList, listSize + 2, "%s,%s", prevList, optionArg);
 						j9mem_free_memory(prevList);
 					} else {
+						j9mem_free_memory(optionArg);
 						j9mem_free_memory(prevList);
 						rc = J9SYSPROP_ERROR_OUT_OF_MEMORY;
 						goto _end;
 					}
 				}
 				CONSUME_ARG(j9vm_args, argIndex);
+
+				j9mem_free_memory(optionArg);
 			} else {
 				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_PROPERTY_MODULARITY_OPTION_REQUIRES_MODULES, optionName);
 				rc = J9SYSPROP_ERROR_ARG_MISSING;
@@ -382,7 +393,7 @@ addPropertiesForOptionWithAssignArg(J9JavaVM *vm, const char *optionName, UDATA 
 					goto _end;
 				}
 				j9str_printf(PORTLIB, propName, propNameLen, "%s%zu", basePropName, index);
-				rc = addSystemProperty(vm, propName, optionArg, J9SYSPROP_FLAG_NAME_ALLOCATED);
+				rc = addSystemProperty(vm, propName, optionArg, J9SYSPROP_FLAG_NAME_ALLOCATED | J9SYSPROP_FLAG_VALUE_ALLOCATED );
 				if (J9SYSPROP_ERROR_NONE != rc) {
 					goto _end;
 				}
