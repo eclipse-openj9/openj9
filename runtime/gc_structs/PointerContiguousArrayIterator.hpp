@@ -48,9 +48,9 @@ class GC_PointerContiguousArrayIterator
 private:
 	J9IndexableObject *_arrayPtr;	/**< pointer to the array object being iterated */
 	GC_SlotObject _slotObject;		/**< Create own SlotObject class to provide output */
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 	bool const _compressObjectReferences;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 
 	fj9object_t *_scanPtr;			/**< pointer to the current array slot */
 	fj9object_t *_endPtr;			/**< pointer to the array slot where the iteration will terminate */
@@ -110,9 +110,9 @@ public:
 
 	GC_PointerContiguousArrayIterator(OMR_VM *omrVM)
 		: _slotObject(GC_SlotObject(omrVM, NULL))
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 		, _compressObjectReferences(OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM))
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 		, _omrVM(omrVM)
 	{
 	}
@@ -122,9 +122,9 @@ public:
 	 */
 	GC_PointerContiguousArrayIterator(OMR_VM *omrVM, J9Object *objectPtr)
 		: _slotObject(GC_SlotObject(omrVM, NULL))
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 		, _compressObjectReferences(OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM))
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 		, _omrVM(omrVM)
 	{
 		initialize(objectPtr);
