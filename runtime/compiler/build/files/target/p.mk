@@ -28,6 +28,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/p/codegen/OMRInstOpCode.cpp \
     omr/compiler/p/codegen/OMRInstruction.cpp \
     omr/compiler/p/codegen/OMRLinkage.cpp \
+    omr/compiler/p/codegen/OMRLoadStoreHandler.cpp \
     omr/compiler/p/codegen/OMRMachine.cpp \
     omr/compiler/p/codegen/OMRMemoryReference.cpp \
     omr/compiler/p/codegen/OMRPeephole.cpp \
