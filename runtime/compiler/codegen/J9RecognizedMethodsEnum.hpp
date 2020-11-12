@@ -426,6 +426,8 @@
 
    jdk_internal_misc_Unsafe_copyMemory0,
 
+   jdk_internal_loader_NativeLibraries_load,
+
    java_lang_reflect_Array_getLength,
    java_util_Arrays_fill,
    java_util_Arrays_equals,

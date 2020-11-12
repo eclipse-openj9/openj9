@@ -314,6 +314,10 @@ J9::Node::processJNICall(TR::TreeTop * callNodeTreeTop, TR::ResolvedMethodSymbol
       return self();
       }
 
+   if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_loader_NativeLibraries_load)
+      {
+      return self();
+      }
 
    if (methodSymbol->canReplaceWithHWInstr())
       return self();

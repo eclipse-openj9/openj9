@@ -168,6 +168,37 @@ getCurrentClassLoader(J9VMThread *currentThread)
 		} else {
 			/* use the sender (native method) classloader */
 			classLoader = J9_CLASS_FROM_METHOD(nativeMethod)->classLoader;
+#if JAVA_SPEC_VERSION >= 15
+			/* special case - if jdk/internal/loader/NativeLibraries.load(NativeLibraryImpl impl, String name, boolean isBuiltin, boolean isJNI)
+			 * is the current native method, use the class loader of "impl.fromClass".
+			 * This nativeMethod can't be cached cause HCR might make it invalid.
+			 */
+			if (J9VMJDKINTERNALLOADERNATIVELIBRARIES_LOAD_METHOD(currentThread->javaVM) == nativeMethod) {
+				J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+				vmFuncs->internalEnterVMFromJNI(currentThread);
+				/* The current native method has a NativeLibraryImpl instance as its first argument */
+				j9object_t nativeLibraryImplObject = (j9object_t)(currentThread->arg0EA[0]);
+				Trc_VM_findNativeLibrariesLoad_nativeMethod(currentThread, nativeMethod, nativeLibraryImplObject, classLoader);
+				/* Handle the object reference being redirected by the stack grower */
+				if (J9_ARE_ANY_BITS_SET((UDATA)nativeLibraryImplObject, 1)) {
+					nativeLibraryImplObject = *(j9object_t*)((UDATA)nativeLibraryImplObject - 1);
+				}
+				if (NULL != nativeLibraryImplObject) {
+					Trc_VM_findNativeLibrariesLoad_nativeLibraryImplObject(currentThread, nativeLibraryImplObject);
+					j9object_t fromClassObj = J9VMJDKINTERNALLOADERNATIVELIBRARIESNATIVELIBRARYIMPL_FROMCLASS(currentThread, nativeLibraryImplObject);
+					if (NULL != fromClassObj) {
+						Trc_VM_findNativeLibrariesLoad_fromClassObj(currentThread, fromClassObj);
+						J9Class *fromClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, fromClassObj);
+						Trc_VM_findNativeLibrariesLoad_fromClass(currentThread, fromClass);
+						if ((NULL != fromClass) && (NULL != fromClass->classLoader)) {
+							classLoader = fromClass->classLoader;
+						}
+					}
+				}
+				vmFuncs->internalExitVMToJNI(currentThread);
+				Trc_VM_findNativeLibrariesLoad_classLoader(currentThread, classLoader);
+			}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 		}
 	}
 	return classLoader;
