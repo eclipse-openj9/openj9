@@ -61,6 +61,7 @@
 #include "env/StackMemoryRegion.hpp"
 #include "env/jittypes.h"
 #include "env/ClassTableCriticalSection.hpp"
+#include "env/PersistentCHTable.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VerboseLog.hpp"
 #include "compile/CompilationException.hpp"
@@ -8062,6 +8063,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   aotCompilationReUpgradedToWarm = true;
                   }
                }
+
+
+            TR_PersistentCHTable *cht = that->_compInfo.getPersistentInfo()->getPersistentCHTable();
+            if (cht && !cht->isActive())
+               p->_optimizationPlan->setDisableCHOpts();
 
             // Set up options for this compilation. An option subset might apply
             // to the method, either via an option set index in the limitfile or
