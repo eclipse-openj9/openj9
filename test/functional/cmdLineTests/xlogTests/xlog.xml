@@ -30,6 +30,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="required">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -38,6 +39,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog: -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="required">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -46,6 +48,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:all">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:all -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="required">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -54,6 +57,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:all=off">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:all=off -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="failure">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -62,6 +66,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:any,gc">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:any,gc -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="required">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -70,6 +75,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc,any">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc,any -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="required">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -78,6 +84,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc,any=off">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc,any=off -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="required">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -86,6 +93,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
 		<output regex="no" type="failure">JVMJ9VM007</output>
@@ -94,6 +102,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc:">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc: -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
 		<output regex="no" type="failure">JVMJ9VM007</output>
@@ -102,6 +111,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc:stderr">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:stderr -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
 		<output regex="no" type="failure">JVMJ9VM007</output>
@@ -110,6 +120,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc:stderr">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:stderr: -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
 		<output regex="no" type="failure">JVMJ9VM007</output>
@@ -118,6 +129,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc:stderr:any">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:stderr:any -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">verbosegc</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -126,6 +138,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc:stdout">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:stdout -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">verbosegc</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -134,6 +147,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc:gclog">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:gclog -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="failure">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
 		<output regex="no" type="failure">JVMJ9VM007</output>
@@ -149,6 +163,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc:gclog:">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:gclog: -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="failure">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
 		<output regex="no" type="failure">JVMJ9VM007</output>
@@ -164,6 +179,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc:file=gclog">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:file=gclog -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="failure">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
 		<output regex="no" type="failure">JVMJ9VM007</output>
@@ -179,6 +195,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc=off">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc=off -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="failure">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -187,6 +204,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:any+gc=off">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:any+gc=off -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="failure">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -195,6 +213,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc+any=off">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc+any=off -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="failure">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -203,6 +222,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:gc=off,any">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc=off,any -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="failure">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -211,6 +231,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:any,gc=off">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:any,gc=off -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="failure">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -219,6 +240,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test id="-Xlog:disable">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:disable -version</command>
 		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="failure">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM085</output>
@@ -228,6 +250,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:disable: -version</command>
 		<output regex="no" type="success">JVMJ9VM085E</output>
 		<output regex="no" type="failure">openjdk version</output>
+		<output regex="no" type="failure">java version</output>
 		<output regex="no" type="failure">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM007W</output>
 	</test>
@@ -236,6 +259,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:disable,any -version</command>
 		<output regex="no" type="success">JVMJ9VM085E</output>
 		<output regex="no" type="failure">openjdk version</output>
+		<output regex="no" type="failure">java version</output>
 		<output regex="no" type="failure">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM007W</output>
 	</test>
@@ -244,6 +268,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:disable+any -version</command>
 		<output regex="no" type="success">JVMJ9VM085E</output>
 		<output regex="no" type="failure">openjdk version</output>
+		<output regex="no" type="failure">java version</output>
 		<output regex="no" type="failure">verbosegc</output>
 		<output regex="no" type="failure">JVMJ9VM007W</output>
 	</test>
