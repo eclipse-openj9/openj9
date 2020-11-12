@@ -46,6 +46,25 @@ namespace TR { class ResolvedMethodSymbol; }
 
 class TR_PersistentCHTable
    {
+   private:
+   /**
+    * @brief Enum to denote the state of the CH Table:
+    *
+    *        reset:            CH Table is not active.
+    *        active:           Data in the CH Table can be used and updated.
+    *        activating:       CH Table is in the process of being activated;
+    *                          this state is used when the CH Table is
+    *                          being populated in the restore run.
+    *        activationFailed: CH Table failed activation.
+    */
+   enum Status
+      {
+      reset            = 0x0,
+      active           = 0x1,
+      activating       = 0x2,
+      activationFailed = 0x3
+      };
+
    public:
    TR_ALLOC(TR_Memory::PersistentCHTable)
 
@@ -135,11 +154,18 @@ class TR_PersistentCHTable
    void dumpStats(TR_FrontEnd *);
 #endif
 
+   bool isActive() { return _status == Status::active; }
+   bool isActivating() { return _status == Status::activating; }
+   bool isAccessible() { return (isActive() || isActivating()); }
+   bool failedToActivate() { return _status == Status::activationFailed; }
+
    protected:
    void removeAssumptionFromRAT(OMR::RuntimeAssumption *assumption);
    TR_LinkHead<TR_PersistentClassInfo> *getClasses() const { return _classes; }
 
    private:
+   Status _status;
+
    /**
     * @brief Collects all subclasses of a given class into the ClassList container passed in; assumes
     *        that the class hierarchy mutex has been acquired
@@ -149,6 +175,11 @@ class TR_PersistentCHTable
     * @param marked structure to track visited subclasses
     */
    void collectAllSubClassesLocked(TR_PersistentClassInfo *clazz, ClassList &classList, VisitTracker<> &marked);
+
+   void resetStatus() { _status = Status::reset; }
+   void setActive() { _status = Status::active; }
+   void setActivating() { _status = Status::activating; }
+   void setFailedToActivate() { _status = Status::activationFailed; }
 
    uint8_t _buffer[sizeof(TR_LinkHead<TR_PersistentClassInfo>) * (CLASSHASHTABLE_SIZE + 1)];
    TR_LinkHead<TR_PersistentClassInfo> *_classes;
