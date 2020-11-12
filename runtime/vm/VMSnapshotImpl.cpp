@@ -152,33 +152,41 @@ VMSnapshotImpl::getJ9JavaVM(void)
 
 VMSnapshotImpl::~VMSnapshotImpl()
 {
-	PORT_ACCESS_FROM_JAVAVM(_vm);
 	destroyMonitor();
-	if (IS_SNAPSHOT_RUN(_vm)) {
-		for (int i = 0; i < NUM_OF_MEMORY_SECTIONS; i++) {
-			const J9MemoryRegion *region = &_memoryRegions[i];
-			switch (region->type) {
-			case GENERAL:
-				munmap(region->alignedStartAddr, region->mappableSize);
-				break;
-			case SUB4G:
-				j9mem_free_memory32(region->startAddr);
-				break;
-			case GC_HEAP:
-				/* skip */
-				break;
-			default:
-				j9mem_free_memory(region->startAddr);
-				break;
+
+	/* We can only clean up if the _vm is available.
+	 * If it's not, then we don't know what state we're
+	 * in.  Better to shutdown without crashing than to
+	 * try and cleanup bits and pieces
+	 */
+	if (NULL != _vm) {
+		PORT_ACCESS_FROM_JAVAVM(_vm);
+		if (IS_SNAPSHOT_RUN(_vm)) {
+			for (int i = 0; i < NUM_OF_MEMORY_SECTIONS; i++) {
+				const J9MemoryRegion *region = &_memoryRegions[i];
+				switch (region->type) {
+				case GENERAL:
+					munmap(region->alignedStartAddr, region->mappableSize);
+					break;
+				case SUB4G:
+					j9mem_free_memory32(region->startAddr);
+					break;
+				case GC_HEAP:
+					/* skip */
+					break;
+				default:
+					j9mem_free_memory(region->startAddr);
+					break;
+				}
+			}
+		} else {
+			for (int i = 0; i < NUM_OF_MEMORY_SECTIONS; i++) {
+				munmap(_memoryRegions[i].alignedStartAddr, _memoryRegions[i].mappableSize);
 			}
 		}
-	} else {
-		for (int i = 0; i < NUM_OF_MEMORY_SECTIONS; i++) {
-			munmap(_memoryRegions[i].alignedStartAddr, _memoryRegions[i].mappableSize);
-		}
+		j9mem_free_memory((void *)_memoryRegions);
+		j9mem_free_memory((void *)_snapshotHeader);
 	}
-	j9mem_free_memory((void *)_memoryRegions);
-	j9mem_free_memory((void *)_snapshotHeader);
 }
 
 bool
@@ -209,7 +217,10 @@ VMSnapshotImpl::initializeInvalidITable(void)
 void
 VMSnapshotImpl::destroyMonitor(void)
 {
-	omrthread_monitor_destroy(_vmSnapshotImplMonitor);
+	if (NULL != _vmSnapshotImplMonitor) {
+		omrthread_monitor_destroy(_vmSnapshotImplMonitor);
+		_vmSnapshotImplMonitor = NULL;
+	}
 }
 
 VMSnapshotImpl *
@@ -822,7 +833,7 @@ VMSnapshotImpl::readImageFromFile(void)
 
 	_snapshotFD = omrfile_open(_ramCache, EsOpenRead, 0444);
 	if (-1 == _snapshotFD) {
-		j9tty_printf(PORTLIB, "falied to open ramCache file=%s errno=%d\n", _ramCache, errno);
+		j9tty_printf(PORTLIB, "failed to open ramCache file=%s errno=%d\n", _ramCache, errno);
 		rc = false;
 		goto done;
 	}
@@ -1371,12 +1382,17 @@ initializeVMSnapshotImpl(J9PortLibrary *portLibrary, BOOLEAN isSnapShotRun, cons
 		goto _error;
 	}
 
-	if (isSnapShotRun && (!vmSnapshotImpl->setupColdRun())) {
-		goto _error;
-	}
-
-	if(!isSnapShotRun && (!vmSnapshotImpl->setupWarmRun())) {
-		goto _error;
+	/* Call the appropriate setup api based on the mode
+	 * we're running in
+	 */
+	if (isSnapShotRun) {
+		if (!vmSnapshotImpl->setupColdRun()) {
+			goto _error;
+		}
+	} else {
+		if (!vmSnapshotImpl->setupWarmRun()) {
+			goto _error;
+		}
 	}
 
 	vmSnapshotImplPortLibrary = setupVMSnapshotImplPortLibrary(vmSnapshotImpl, portLibrary, isSnapShotRun);
@@ -1398,14 +1414,27 @@ _error:
 extern "C" void
 setupVMSnapshotImpl(void *vmSnapshotImpl, J9JavaVM* vm)
 {
-	((VMSnapshotImpl *)vmSnapshotImpl)->setJ9JavaVM(vm);
-	vm->vmSnapshotImplPortLibrary = ((VMSnapshotImpl *)vmSnapshotImpl)->getVMSnapshotImplPortLibrary();
+	VMSnapshotImpl *impl = static_cast<VMSnapshotImpl *>(vmSnapshotImpl);
+	J9JavaVM* implVM = impl->getJ9JavaVM();
+	if (implVM != NULL) {
+		if (implVM != vm) {
+			/* Something seriously wrong here! */
+			printf("**** In a Restore run and was passed a different vm pointer.\n");
+			printf("**** Expected VMSnapshotImpl->_vm(%p) was (%p)\n", implVM, vm);
+			abort();
+		}
+		/* No action required */
+	} else {
+		/* Snapshot run - initial set of VM into VMSnapshotImpl*/
+		impl->setJ9JavaVM(vm);
+	}
+	vm->vmSnapshotImplPortLibrary = impl->getVMSnapshotImplPortLibrary();
 }
 
 extern "C" J9JavaVM *
 getJ9JavaVMFromVMSnapshotImpl(void *vmSnapshotImpl)
 {
-	return ((VMSnapshotImpl *)vmSnapshotImpl)->getJ9JavaVM();
+	return static_cast<VMSnapshotImpl *>(vmSnapshotImpl)->getJ9JavaVM();
 }
 
 extern "C" VMSnapshotImplPortLibrary *
