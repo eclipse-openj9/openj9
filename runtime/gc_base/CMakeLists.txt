@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gcbase STATIC
+set(gc_base_sources
 	accessBarrier.cpp
 	AsyncCallbackHandler.cpp
 	ClassLoaderLinkedListIterator.cpp
@@ -55,6 +55,10 @@ j9vm_add_library(j9gcbase STATIC
 	WorkPacketsIterator.cpp
 )
 
+j9vm_add_library(j9gcbase STATIC
+	${gc_base_sources}
+)
+
 target_link_libraries(j9gcbase
 	PRIVATE
 		j9vm_interface
@@ -64,3 +68,16 @@ target_link_libraries(j9gcbase
 
 target_enable_ddr(j9gcbase GLOB_HEADERS)
 ddr_set_add_targets(j9ddr j9gcbase)
+
+if(OMR_MIXED_REFERENCES_MODE_STATIC)
+	j9vm_add_library(j9gcbase_full STATIC
+		${gc_base_sources}
+	)
+
+	target_link_libraries(j9gcbase_full
+		PRIVATE
+			j9vm_interface
+			j9vm_gc_includes
+			omrgc_full
+	)
+endif()

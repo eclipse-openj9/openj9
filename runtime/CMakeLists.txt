@@ -299,12 +299,14 @@ target_link_libraries(j9vm_main_wrapper
 # set up glue library target names
 # See https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md
 set(OMR_GC_GLUE_TARGET "j9vm_gc_glue" CACHE INTERNAL "")
+set(OMR_GC_GLUE_FULL_TARGET "j9vm_gc_glue_full" CACHE INTERNAL "")
 set(OMR_RAS_GLUE_TARGET "j9vm_ras_glue" CACHE INTERNAL "")
 set(OMR_CORE_GLUE_TARGET "j9vm_core_glue" CACHE INTERNAL "")
 set(OMR_UTIL_GLUE_TARGET "j9vm_util_glue" CACHE INTERNAL "")
 
 # setup OMR library overrides
 set(OMR_GC_LIB "j9gc" CACHE INTERNAL "")
+set(OMR_GC_FULL_LIB "j9gc_full" CACHE INTERNAL "")
 set(OMR_HOOK_LIB "j9hookable" CACHE INTERNAL "")
 set(OMR_PORT_LIB "j9prt" CACHE INTERNAL "")
 set(OMR_THREAD_LIB "j9thr" CACHE INTERNAL "")
@@ -312,11 +314,18 @@ set(OMR_TRACE_LIB "j9trc" CACHE INTERNAL "")
 
 set(OMR_DDR_SET "j9ddr" CACHE INTERNAL "")
 
-add_subdirectory(gc_glue_java)
+# Declare the GC glue interface libraries that omr might reference,
+# including the 'full' version. We'll only add sources to the 'full'
+# version in gc_glue_java, below, when appropriate.
+j9vm_add_library(${OMR_GC_GLUE_TARGET} INTERFACE)
+j9vm_add_library(${OMR_GC_GLUE_FULL_TARGET} INTERFACE)
+
 # hack to add our binary dir to omr include path
 # needed to grab the headers created by trace/hookgen
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_subdirectory("${J9VM_OMR_DIR}" omr)
+
+add_subdirectory(gc_glue_java)
 
 # Configure our DDR set
 if(OMR_DDR)

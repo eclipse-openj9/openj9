@@ -260,7 +260,7 @@ static void generateMemoryOptionParseError (J9JavaVM* vm, J9VMDllLoadInfo* loadI
 static void loadDLL (void* dllLoadInfo, void* userDataTemp);
 static void registerIgnoredOptions (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args);
 static UDATA protectedInitializeJavaVM (J9PortLibrary* portLibrary, void * userData);
-static J9Pool *initializeDllLoadTable (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA verboseFlags);
+static J9Pool *initializeDllLoadTable (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA verboseFlags, J9JavaVM *vm);
 #if (defined(J9VM_OPT_SIDECAR))
 static IDATA checkDjavacompiler (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args);
 #endif /* J9VM_OPT_SIDECAR */
@@ -1192,18 +1192,27 @@ static void loadDLL(void* dllLoadInfo, void* userDataTemp) {
  *  Every library used by the VM should have an entry here, except for any user Xruns.
  */
 static J9Pool *
-initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA verboseFlags)
+initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA verboseFlags, J9JavaVM *vm)
 {
 	J9Pool *returnVal = pool_new(sizeof(J9VMDllLoadInfo),  0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(portLibrary));
 	IDATA i;
 	char* testString, *options;
 	J9VMDllLoadInfo* newEntry;
 	char dllNameBuffer[SMALL_STRING_BUF_SIZE];			/* Plenty big enough - needs to be at least DLLNAME_LEN */
+	const char *gcDLLName = J9_GC_DLL_NAME;
+	const char *gccheckDLLName = J9_CHECK_GC_DLL_NAME;
 
 	PORT_ACCESS_FROM_PORT(portLibrary);
 
 	if (NULL == returnVal)
 		goto _error;
+
+#if defined(OMR_MIXED_REFERENCES_MODE_STATIC)
+	if (!J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		gcDLLName = J9_GC_FULL_DLL_NAME;
+		gccheckDLLName = J9_CHECK_GC_FULL_DLL_NAME;
+	}
+#endif /* defined(OMR_MIXED_REFERENCES_MODE_STATIC) */
 
 	JVMINIT_VERBOSE_INIT_TRACE(verboseFlags, "\nInitializing DLL load table:\n");
 #if defined(J9ZOS390)
@@ -1220,7 +1229,7 @@ initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDAT
 
 	if (NULL == createLoadInfo(portLibrary, returnVal, J9_VERIFY_DLL_NAME, NOT_A_LIBRARY, (void*)&j9bcv_J9VMDllMain, verboseFlags))
 		goto _error;
-	if (NULL == createLoadInfo(portLibrary, returnVal, J9_GC_DLL_NAME, (LOAD_BY_DEFAULT | FATAL_NO_DLL), NULL, verboseFlags))
+	if (NULL == createLoadInfo(portLibrary, returnVal, gcDLLName, (LOAD_BY_DEFAULT | FATAL_NO_DLL), NULL, verboseFlags))
 		goto _error;
 	if (NULL == createLoadInfo(portLibrary, returnVal, J9_DYNLOAD_DLL_NAME, NOT_A_LIBRARY, (void*)&bcutil_J9VMDllMain, verboseFlags))
 		goto _error;
@@ -1243,7 +1252,7 @@ initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDAT
 	if (NULL == createLoadInfo(portLibrary, returnVal, J9_JVMTI_DLL_NAME, 0, NULL, verboseFlags))
 		goto _error;
 #endif
-	if (NULL == createLoadInfo(portLibrary, returnVal, J9_CHECK_GC_DLL_NAME, 0, NULL, verboseFlags))
+	if (NULL == createLoadInfo(portLibrary, returnVal, gccheckDLLName, 0, NULL, verboseFlags))
 		goto _error;
 
 	if (NULL == createLoadInfo(portLibrary, returnVal, J9_DEBUG_DLL_NAME, 0, NULL, verboseFlags))
@@ -6576,7 +6585,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	}
 #endif
 
-	vm->dllLoadTable = initializeDllLoadTable(portLibrary, vm->vmArgsArray, localVerboseLevel);
+	vm->dllLoadTable = initializeDllLoadTable(portLibrary, vm->vmArgsArray, localVerboseLevel, vm);
 	if (NULL == vm->dllLoadTable) {
 		goto error;
 	}

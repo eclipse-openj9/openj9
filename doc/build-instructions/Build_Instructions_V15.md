@@ -153,6 +153,8 @@ bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar --with-boot-j
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
+:pencil: **Mixed references support:** If you require a single build with both compressed references and non-compressed references available, enable a mixedrefs build with the `--with-mixedrefs` option during this step. Specify `--with-mixedrefs=static` for the VM to determine the reference mode statically (at compile time), or `--with-mixedrefs=dynamic` for the VM to determine the reference mode dynamically (at run time). The option defaults to determine the reference mode statically, if neither `static` nor `dynamic` is provided. _Note that `--with-cmake` must be used with this option, as it is only available with CMake enabled at this time._
+
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
 
   where:
@@ -280,6 +282,8 @@ bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
 where `<my_home_dir>` is the location where you stored **freemarker.jar** and `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/freeware/include`.
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+
+:pencil: **Mixed references support:** If you require a single build with both compressed references and non-compressed references available, enable a mixedrefs build with the `--with-mixedrefs` option during this step. Specify `--with-mixedrefs=static` for the VM to determine the reference mode statically (at compile time), or `--with-mixedrefs=dynamic` for the VM to determine the reference mode dynamically (at run time). The option defaults to determine the reference mode statically, if neither `static` nor `dynamic` is provided. _Note that `--with-cmake` must be used with this option, as it is only available with CMake enabled at this time._
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
 
@@ -434,6 +438,8 @@ bash configure --disable-warnings-as-errors \
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
+:pencil: **Mixed references support:** If you require a single build with both compressed references and non-compressed references available, enable a mixedrefs build with the `--with-mixedrefs` option during this step. Specify `--with-mixedrefs=static` for the VM to determine the reference mode statically (at compile time), or `--with-mixedrefs=dynamic` for the VM to determine the reference mode dynamically (at run time). The option defaults to determine the reference mode statically, if neither `static` nor `dynamic` is provided. _Note that `--with-cmake` must be used with this option, as it is only available with CMake enabled at this time._
+
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
 
 ### 4. build
@@ -562,6 +568,8 @@ bash configure \
 :pencil: Modify the paths for freemarker and the macOS boot JDK that you installed in step 1. If `configure` is unable to detect Freetype, add the option `--with-freetype=<path to freetype>`, where `<path to freetype>` is typically `/usr/local/Cellar/freetype/2.9.1/`.
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+
+:pencil: **Mixed references support:** If you require a single build with both compressed references and non-compressed references available, enable a mixedrefs build with the `--with-mixedrefs` option during this step. Specify `--with-mixedrefs=static` for the VM to determine the reference mode statically (at compile time), or `--with-mixedrefs=dynamic` for the VM to determine the reference mode dynamically (at run time). The option defaults to determine the reference mode statically, if neither `static` nor `dynamic` is provided. _Note that `--with-cmake` must be used with this option, as it is only available with CMake enabled at this time._
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
 
