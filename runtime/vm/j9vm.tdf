@@ -855,3 +855,9 @@ TraceEvent=Trc_VM_CopyToTargetStack_DumpLiveStack Overhead=1 Level=4 Test Templa
 TraceEvent=Trc_VM_CopyToTargetStack_DumpTargetStack Overhead=1 Level=4 Test Template="copyToTargetStack - targetStack->stackBaseIndex (%llu) targetStack->stackTopIndex (%llu)"
 TraceExit=Trc_VM_CopyToTargetStack_Exit Overhead=1 Level=4 Template="copyToTargetStack bytecodeMap[%llu] (0x%x) targetStack (%p) liveStack (%p) targetStack->stackTopIndex (%llu) liveStack->stackTopIndex (%llu)"
 TraceEvent=Trc_VM_InitStackFromMethodSignature_Result Overhead=1 Level=3 Template="InitStackFromMethodSignature - *stackTopPtr (%p) stackTop (%p) argCount (%llu)"
+
+TraceEvent=Trc_VM_findNativeLibrariesLoad_nativeMethod Overhead=1 Level=3 Template="getCurrentClassLoader - find NativeLibrariesLoad nativeMethod (0x%p) nativeLibraryImplObject (0x%p) classLoader (0x%p)"
+TraceEvent=Trc_VM_findNativeLibrariesLoad_nativeLibraryImplObject Overhead=1 Level=3 Template="getCurrentClassLoader - find NativeLibrariesLoad nativeLibraryImplObject (0x%p)"
+TraceEvent=Trc_VM_findNativeLibrariesLoad_fromClassObj Overhead=1 Level=3 Template="getCurrentClassLoader - find NativeLibrariesLoad fromClassObj (0x%p)"
+TraceEvent=Trc_VM_findNativeLibrariesLoad_fromClass Overhead=1 Level=3 Template="getCurrentClassLoader - find NativeLibrariesLoad fromClass (0x%p)"
+TraceEvent=Trc_VM_findNativeLibrariesLoad_classLoader Overhead=1 Level=3 Template="getCurrentClassLoader - find NativeLibrariesLoad classLoader (0x%p)"

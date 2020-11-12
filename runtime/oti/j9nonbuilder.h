@@ -5290,6 +5290,7 @@ typedef struct J9JavaVM {
 	struct J9ClassLoader* anonClassLoader;
 	UDATA doPrivilegedWithContextPermissionMethodID1;
 	UDATA doPrivilegedWithContextPermissionMethodID2;
+	UDATA nativeLibrariesLoadMethodID;
 #if defined(J9VM_INTERP_CUSTOM_SPIN_OPTIONS)
 	struct J9Pool *customSpinOptions;
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */

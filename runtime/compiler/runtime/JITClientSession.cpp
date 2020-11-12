@@ -46,7 +46,8 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _staticFinalDataMap(decltype(_staticFinalDataMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _rtResolve(false),
    _registeredJ2IThunksMap(decltype(_registeredJ2IThunksMap)::allocator_type(TR::Compiler->persistentAllocator())),
-   _registeredInvokeExactJ2IThunksSet(decltype(_registeredInvokeExactJ2IThunksSet)::allocator_type(TR::Compiler->persistentAllocator()))
+   _registeredInvokeExactJ2IThunksSet(decltype(_registeredInvokeExactJ2IThunksSet)::allocator_type(TR::Compiler->persistentAllocator())),
+   _wellKnownClasses()
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = NULL;
@@ -70,6 +71,8 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
       }
 
    TR::SymbolValidationManager::populateSystemClassesNotWorthRemembering(this);
+
+   _wellKnownClassesMonitor = TR::Monitor::create("JIT-JITServerWellKnownClassesMonitor");
    }
 
 ClientSessionData::~ClientSessionData()
@@ -90,6 +93,8 @@ ClientSessionData::~ClientSessionData()
 
    omrthread_rwmutex_destroy(_classUnloadRWMutex);
    _classUnloadRWMutex = NULL;
+
+   _wellKnownClassesMonitor->destroy();
    }
 
 void
@@ -517,6 +522,8 @@ ClientSessionData::clearCaches()
       jitPersistentFree(_chTable);
       _chTable = NULL;
       }
+
+   _wellKnownClasses.clear();
    }
 
 void
@@ -673,6 +680,42 @@ ClientSessionData::writeReleaseClassUnloadRWMutex()
    _bClassUnloadingAttempt = false;
    omrthread_rwmutex_exit_write(_classUnloadRWMutex);
    }
+
+const void *
+ClientSessionData::getCachedWellKnownClassChainOffsets(unsigned int includedClasses, size_t numClasses,
+                                                       const uintptr_t *classChainOffsets)
+   {
+   TR_ASSERT(numClasses <= WELL_KNOWN_CLASS_COUNT, "Too many well-known classes");
+
+   OMR::CriticalSection wellKnownClasses(_wellKnownClassesMonitor);
+   if (_wellKnownClasses._includedClasses == includedClasses &&
+       memcmp(_wellKnownClasses._classChainOffsets, classChainOffsets,
+              numClasses * sizeof(classChainOffsets[0])) == 0)
+      {
+      TR_ASSERT(_wellKnownClasses._wellKnownClassChainOffsets, "Cached well-known class chain offsets pointer is NULL");
+      return _wellKnownClasses._wellKnownClassChainOffsets;
+      }
+   return NULL;
+   }
+
+void
+ClientSessionData::cacheWellKnownClassChainOffsets(unsigned int includedClasses, size_t numClasses,
+                                                   const uintptr_t *classChainOffsets,
+                                                   const void *wellKnownClassChainOffsets)
+   {
+   TR_ASSERT(wellKnownClassChainOffsets, "Well-known class chain offsets pointer is NULL");
+   TR_ASSERT(numClasses <= WELL_KNOWN_CLASS_COUNT, "Too many well-known classes");
+
+   OMR::CriticalSection wellKnownClasses(_wellKnownClassesMonitor);
+   _wellKnownClasses._includedClasses = includedClasses;
+   memcpy(_wellKnownClasses._classChainOffsets, classChainOffsets,
+          numClasses * sizeof(classChainOffsets[0]));
+   // Zero out the tail of the array
+   memset(_wellKnownClasses._classChainOffsets + numClasses, 0,
+          (WELL_KNOWN_CLASS_COUNT - numClasses) * sizeof(classChainOffsets[0]));
+   _wellKnownClasses._wellKnownClassChainOffsets = wellKnownClassChainOffsets;
+   }
+
 
 ClientSessionHT*
 ClientSessionHT::allocate()

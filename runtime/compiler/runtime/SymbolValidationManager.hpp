@@ -646,6 +646,8 @@ public:
       bool _checkIsSuperClass;
       };
 
+   #define WELL_KNOWN_CLASS_COUNT 9
+
    void populateWellKnownClasses();
    bool validateWellKnownClasses(const uintptr_t *wellKnownClassChainOffsets);
    bool isWellKnownClass(TR_OpaqueClassBlock *clazz);

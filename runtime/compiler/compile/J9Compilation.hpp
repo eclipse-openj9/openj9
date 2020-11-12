@@ -59,6 +59,7 @@ class TR_RelocationRuntime;
 namespace TR { class IlGenRequest; }
 #ifdef J9VM_OPT_JITSERVER
 struct SerializedRuntimeAssumption;
+class ClientSessionData;
 #endif
 
 #define COMPILATION_AOT_HAS_INVOKEHANDLE -9
@@ -323,6 +324,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    bool isRemoteCompilation() const { return _remoteCompilation; } // client side
    void setRemoteCompilation() { _remoteCompilation = true; }
    TR::list<SerializedRuntimeAssumption*>& getSerializedRuntimeAssumptions() { return _serializedRuntimeAssumptions; }
+   ClientSessionData *getClientData() const { return _clientData; }
+   void setClientData(ClientSessionData *clientData) { _clientData = clientData; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
@@ -424,6 +427,9 @@ private:
    // The following flag is set when a request to complete this compilation
    // has been sent to a remote VM (client side in JITServer)
    bool _remoteCompilation;
+   // Client session data for the client that requested this out-of-process
+   // compilation (at the JITServer); unused (always NULL) at the client side
+   ClientSessionData *_clientData;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *_symbolValidationManager;
