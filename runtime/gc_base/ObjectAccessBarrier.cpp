@@ -67,9 +67,9 @@ MM_ObjectAccessBarrier::initialize(MM_EnvironmentBase *env)
 		}
 #endif /* J9VM_GC_REALTIME */
 
-#if defined (OMR_GC_FULL_POINTERS)
+#if defined (OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 		_compressObjectReferences = true;
-#endif /* OMR_GC_FULL_POINTERS */
+#endif /* defined (OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 		_compressedPointersShift = omrVM->_compressedPointersShift;
 		vm->compressedPointersShift = omrVM->_compressedPointersShift;
 		Trc_MM_CompressedAccessBarrierInitialized(env->getLanguageVMThread(), 0, _compressedPointersShift);

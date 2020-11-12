@@ -927,9 +927,9 @@ MM_ScavengerDelegate::MM_ScavengerDelegate(MM_EnvironmentBase* env)
 	: _omrVM(MM_GCExtensions::getExtensions(env)->getOmrVM())
 	, _javaVM(MM_GCExtensions::getExtensions(env)->getJavaVM())
 	, _extensions(MM_GCExtensions::getExtensions(env))
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 	, _compressObjectReferences(env->compressObjectReferences())
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 	, _shouldScavengeFinalizableObjects(false)
 	, _shouldScavengeUnfinalizedObjects(false)
 	, _shouldScavengeSoftReferenceObjects(false)

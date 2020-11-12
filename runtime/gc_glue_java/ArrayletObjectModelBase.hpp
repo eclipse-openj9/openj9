@@ -41,9 +41,9 @@ class GC_ArrayletObjectModelBase
 * Data members
 */
 private:
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 	bool _compressObjectReferences;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	bool _enableDoubleMapping; /** Allows arraylets to be double mapped */
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
