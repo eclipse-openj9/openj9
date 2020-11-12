@@ -4244,6 +4244,16 @@ typedef struct J9ObjectMonitorInfo {
 } J9ObjectMonitorInfo;
 
 /**
+ * @brief See if an object is being waited on by targetThread
+ * @param currentThread
+ * @param targetThread
+ * @param obj
+ * @return BOOLEAN
+ */
+BOOLEAN
+objectIsBeingWaitedOn(J9VMThread *currentThread, J9VMThread *targetThread, j9object_t obj);
+
+/**
  * @brief Get the object monitors locked by a thread
  * @param currentThread
  * @param targetThread
