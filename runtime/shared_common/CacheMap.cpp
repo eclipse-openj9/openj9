@@ -491,6 +491,7 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 
 		do {
 			++tryCntr;
+			doRetry = false;
 			if ((rc == CC_STARTUP_SOFT_RESET) && (deleteRC == -1)) {
 				/* If we've tried SOFT_RESET the first time around and the delete failed,
 			 	 * remove AUTOKILL so that we start up with the existing cache */
@@ -565,6 +566,8 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 								walkManager->cleanup(currentThread);
 								walkManager = managers()->nextDo(&state);
 							}
+							ccToUse->exitWriteMutex(currentThread, fnName);
+							goto error;
 						}
 						CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED);
 						ccToUse->exitWriteMutex(currentThread, fnName);
@@ -711,8 +714,8 @@ error:
 				/* If running read-only, treat the cache as full */
 				ccToUse->markReadOnlyCacheFull();
 			}
+			ccToUse = ccToUse->getPrevious();
 		}
-		ccToUse = ccToUse->getPrevious();
 	} while (NULL != ccToUse && CC_STARTUP_OK == rc);
 
 	if (rc != CC_STARTUP_OK) {
@@ -781,6 +784,7 @@ SH_CacheMap::handleStartupError(J9VMThread* currentThread, SH_CompositeCacheImpl
 				if ((0 == *deleteRC) || (errorCode == CC_STARTUP_SOFT_RESET)) {
 					/* If we deleted the cache, or in the case of SOFT_RESET, even if we failed to delete the cache, retry */
 					Trc_SHR_Assert_True(ccToUse == _ccHead);
+					*_runtimeFlags &= ~J9SHR_RUNTIMEFLAG_DO_NOT_CREATE_CACHE;
 					*doRetry = true;
 				}
 			}
