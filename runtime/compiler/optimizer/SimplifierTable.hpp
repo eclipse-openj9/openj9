@@ -34,7 +34,7 @@ typedef TR::Node *(* SimplifierPtr)(TR::Node *node, TR::Block *block, TR::Simpli
 
 const SimplifierPtr simplifierOpts[TR::NumIlOps] =
    {
-   #include "optimizer/J9SimplifierTableEnum.hpp"
+   #include "optimizer/J9SimplifierTable.enum"
    };
 
 #endif
