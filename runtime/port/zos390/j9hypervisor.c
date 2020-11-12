@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,7 @@ detect_hypervisor(struct J9PortLibrary *portLibrary)
 		errMsg = omrnls_lookup_message(J9NLS_ERROR | J9NLS_DO_NOT_APPEND_NEWLINE,
 												J9NLS_PORT_CSRSIC_FAILURE__MODULE,
 												J9NLS_PORT_CSRSIC_FAILURE__ID,
-												NULL);
+												"Unexpected return code from CSRSI service on z/OS");
 		omrerror_set_last_error_with_message(J9PORT_ERROR_HYPERVISOR_UNSUPPORTED, errMsg);
 		portLibrary->portGlobals->hypervisorData.isVirtual = J9PORT_ERROR_HYPERVISOR_OPFAILED;
 		portLibrary->portGlobals->hypervisorData.vendorDetails.hypervisorName = NULL;

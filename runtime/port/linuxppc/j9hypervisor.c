@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -165,7 +165,7 @@ detect_hypervisor(struct J9PortLibrary *portLibrary)
 	const char* errMsg = omrnls_lookup_message(J9NLS_ERROR | J9NLS_DO_NOT_APPEND_NEWLINE,
 								 J9NLS_PORT_UNSUPPORTED_HYPERVISOR__MODULE,
 							     J9NLS_PORT_UNSUPPORTED_HYPERVISOR__ID,
-							     NULL);
+							     "Failed to detect a Supported Hypervisor.");
 	omrerror_set_last_error_with_message(ret, errMsg);
 	Trc_PRT_virt_j9hypervisor_detect_hypervisor_Exit(-1);
 	return J9PORT_ERROR_HYPERVISOR_UNSUPPORTED;
