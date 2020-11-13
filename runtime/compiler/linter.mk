@@ -18,25 +18,24 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
-# To lint: 
+# To lint:
 #
-# PLATFORM=foo-bar-clang make -f linter.mk 
+# PLATFORM=foo-bar-clang make -f linter.mk
 #
 
 .PHONY: linter
-linter::
+linter:
 
 # Handy macro to check to make sure variables are set
 REQUIRE_VARS=$(foreach VAR,$(1),$(if $($(VAR)),,$(error $(VAR) must be set)))
 $(call REQUIRE_VARS,J9SRC)
 
-
 ifeq ($(PLATFORM),ppc64-linux64-clangLinter)
     export LLVM_CONFIG?=/tr/llvm_checker/ppc-64/sles11/bin/llvm-config
     export CC_PATH?=/tr/llvm_checker/ppc-64/sles11/bin/clang
     export CXX_PATH?=/tr/llvm_checker/ppc-64/sles11/bin/clang++
-else 
-    #default paths, unless overridden 
+else
+    #default paths, unless overridden
     export LLVM_CONFIG?=llvm-config
     export CC_PATH?=clang
     export CXX_PATH?=clang++
@@ -102,9 +101,9 @@ endif
 #
 # Add OMRChecker targets
 #
-# This likely ought to be using the OMRChecker fragment that 
-# exists in that repo, but in the mean time, this is fine. 
-# 
+# This likely ought to be using the OMRChecker fragment that
+# exists in that repo, but in the mean time, this is fine.
+#
 
 OMRCHECKER_DIR?=$(JIT_SRCBASE)/omr/tools/compiler/OMRChecker
 
@@ -131,35 +130,32 @@ omrchecker_cleandll:
 omrchecker_cleanall:
 	cd $(OMRCHECKER_DIR); make cleanall
 
-
-# The core linter bits.  
-# 
-# linter:: is the default target, and we construct a pre-req for each
+# The core linter bits.
+#
+# linter is the default target, and we construct a pre-req for each
 #  .cpp file.
 #
-linter:: omrchecker 
-
+linter: omrchecker
 
 # The clang invocation magic line.
-LINTER_EXTRA=-Xclang -load -Xclang $(OMRCHECKER_OBJECT) -Xclang -add-plugin -Xclang omr-checker 
+LINTER_EXTRA=-Xclang -load -Xclang $(OMRCHECKER_OBJECT) -Xclang -add-plugin -Xclang omr-checker
 LINTER_FLAGS=-std=c++0x -w -fsyntax-only -ferror-limit=0 $(LINTER_FLAGS_EXTRA)
 
 define DEF_RULE.linter
-.PHONY: $(1).linted 
+.PHONY: $(1).linted
 
 $(1).linted: $(1) omrchecker
 	$$(CXX_CMD) $(LINTER_FLAGS) $(LINTER_EXTRA)  $$(patsubst %,-D%,$$(CXX_DEFINES)) $$(patsubst %,-I'%',$$(CXX_INCLUDES)) -o $$@ -c $$<
 
-linter:: $(1).linted 
+linter: $(1).linted
 
 endef # DEF_RULE.linter
 
 RULE.linter=$(eval $(DEF_RULE.linter))
 
-# The list of sources. 
+# The list of sources.
 JIT_CPP_FILES=$(filter %.cpp,$(JIT_PRODUCT_SOURCE_FILES) $(JIT_PRODUCT_BACKEND_SOURCES))
 
-# Construct lint dependencies. 
+# Construct lint dependencies.
 $(foreach SRCFILE,$(JIT_CPP_FILES),\
    $(call RULE.linter,$(FIXED_SRCBASE)/$(SRCFILE)))
-
