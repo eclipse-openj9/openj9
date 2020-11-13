@@ -56,6 +56,12 @@ else
   JAVA := $(if $(J9_ROOT),java8,$(DEV_TOOLS)\ibm-jdk-1.8.0\bin\java)
 endif
 
+# Because we haven't expressed dependencies of these targets clearly, we can't
+# allow make to build them in parallel (at least at this level). Otherwise,
+# some things get built twice. Often we get lucky and both branches leave
+# things in a reasonable state for dependents, but not always.
+.NOTPARALLEL :
+
 default : all
 
 all : ddr tools
