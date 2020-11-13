@@ -943,6 +943,43 @@ sendForGenericInvoke(J9VMThread *currentThread, j9object_t methodHandle, j9objec
 }
 
 void JNICALL
+sendResolveOpenJDKInvokeHandle(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA cpIndex, I_32 refKind, J9Class *resolvedClass, J9ROMNameAndSignature *nameAndSig)
+{
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	Trc_VM_sendResolveOpenJDKInvokeHandle_Entry(currentThread);
+	J9VMEntryLocalStorage newELS;
+	if (buildCallInStackFrame(currentThread, &newELS, true, false)) {
+		/* Convert name and signature to String objects */
+		J9JavaVM *vm = currentThread->javaVM;
+		J9MemoryManagerFunctions const * const mmFuncs = vm->memoryManagerFunctions;
+		J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
+		j9object_t nameString = mmFuncs->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), 0);
+		if (NULL != nameString) {
+			J9UTF8 *sigUTF = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, nameString);
+			j9object_t sigString = mmFuncs->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), 0);
+			nameString = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+			if (NULL != sigString) {
+				/* Run the method */
+				*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(ramCP->ramClass);
+				*(I_32*)--currentThread->sp = refKind;
+				*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(resolvedClass);
+				*--currentThread->sp = (UDATA)nameString;
+				*--currentThread->sp = (UDATA)sigString;
+				currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
+				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLERESOLVER_LINKCALLERMETHOD_METHOD(vm);
+				c_cInterpreter(currentThread);
+			}
+		}
+		restoreCallInFrame(currentThread);
+	}
+	Trc_VM_sendResolveOpenJDKInvokeHandle_Exit(currentThread);
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	Assert_VM_unreachable();
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+}
+
+void JNICALL
 sendResolveConstantDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA cpIndex, J9ROMNameAndSignature *nameAndSig, U_16 *bsmData)
 {
 	Trc_VM_sendResolveConstantDynamic_Entry(currentThread, ramCP, cpIndex, nameAndSig, bsmData);
