@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,9 +22,9 @@
  *******************************************************************************/
 package com.ibm.jvm.dtfjview.tools.utils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
 
 /**
  * This class works with the class OutputStream and class IStringModifier.
@@ -36,40 +36,37 @@ import java.util.ArrayList;
  */
 public class OutputStreamModifier extends OutputStream {
 
+	private final OutputStream _out;
+	private final IStringModifier _modifier;
+	private ByteArrayOutputStream _buffer;
 
 	public OutputStreamModifier(OutputStream out, IStringModifier modifier) {
+		super();
 		_out = out;
 		_modifier = modifier;
-		_buffer = new ArrayList<Byte>();
+		_buffer = new ByteArrayOutputStream();
 	}
-	
 
-	public void write(int b) throws IOException 
-	{
-		_buffer.add(Integer.valueOf(b).byteValue());		
-		if ('\n' == b || 21 == b) { // EBCDIC systems use NL (New Line 0x15).
+	@Override
+	public void write(int b) throws IOException {
+		_buffer.write(b);
+		if ('\n' == b || 0x15 == b) { // EBCDIC systems use NL (New Line 0x15).
 			writeBuffer();
 		}
 	}
-	
+
+	@Override
 	public void close() throws IOException {
 		writeBuffer();
 		super.close();
 	}
-	
+
 	private void writeBuffer() throws IOException {
-		if (0 == _buffer.size()) {
-			return;
+		if (0 != _buffer.size()) {
+			String content = _buffer.toString();
+			_buffer = new ByteArrayOutputStream();
+			_out.write(_modifier.modify(content).getBytes());
 		}
-		byte [] byteArray = new byte[_buffer.size()];
-		for (int i = 0; i < byteArray.length; i++) {
-			byteArray[i] = _buffer.get(i);
-		}
-		_out.write(_modifier.modify(new String(byteArray)).getBytes());
-		_buffer = new ArrayList<Byte>();
 	}
-	
-	OutputStream _out = null;
-	IStringModifier _modifier = null;
-	private ArrayList<Byte> _buffer = null;
+
 }
