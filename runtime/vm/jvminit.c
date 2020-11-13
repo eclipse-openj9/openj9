@@ -2150,13 +2150,14 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				j9port_control(OMRPORT_CTLDATA_VMEM_PERFORM_FULL_MEMORY_SEARCH, 0);
 			}
 
+#if JAVA_SPEC_VERSION >= 15
 			argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXSHOW_EXTENDED_NPE_MESSAGE, NULL);
 			argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOSHOW_EXTENDED_NPE_MESSAGE, NULL);
-			/* Disable NPE extended message by default */
-			if (argIndex2 < argIndex) {
+			if (argIndex2 <= argIndex) {
 				vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_LOCAL_VARIABLE_TABLE;
 				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_SHOW_EXTENDED_NPEMSG;
 			}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 			break;
 
