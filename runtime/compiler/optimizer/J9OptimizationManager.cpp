@@ -56,9 +56,6 @@ J9::OptimizationManager::OptimizationManager(TR::Optimizer *o, OptimizationFacto
          _flags.set(requiresStructure | checkStructure | dumpStructure |
                     requiresLocalsUseDefInfo | requiresLocalsValueNumbering | cannotOmitTrivialDefs);
          break;
-      case OMR::globalLiveVariablesForGC:
-         _flags.set(requiresStructure);
-         break;
       case OMR::recompilationModifier:
          if (self()->comp()->getMethodHotness() > cold)
             self()->setRequiresStructure(true);

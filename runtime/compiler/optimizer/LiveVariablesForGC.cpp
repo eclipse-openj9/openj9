@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -182,109 +182,10 @@ int32_t TR_GlobalLiveVariablesForGC::perform()
       return 0;
       }
 
-   TR::StackMemoryRegion stackMemoryRegion(*trMemory());
-
-   // Temporary until register maps are implemented - spill temps must be
-   // included in the liveness analysis.
-   //
-   if (!comp()->useRegisterMaps())
-      {
-      cg()->lowerTrees();
-      cg()->findAndFixCommonedReferences();
-      }
-
-   // Because only live locals are mapped for GC, there is normally no need to
-   // make sure locals are cleared to NULL during method prologue.
-   // However, we can have cases where GC-collected locals are live at the start
-   // of the method. These locals will have to be cleared to NULL during method
-   // prologue.
-   // This can happen because of the way we treat non-inlined jsrs.
-   //
-   int32_t numLocals = 0;
-   TR::AutomaticSymbol *p;
-   ListIterator<TR::AutomaticSymbol> locals(&comp()->getMethodSymbol()->getAutomaticList());
-   for (p = locals.getFirst(); p != NULL; p = locals.getNext())
-      {
-      // Mark collected locals as initialized. We will reset this property for
-      // any locals that are live at the start of the method.
-      //
-      if (p->isCollectedReference() &&
-          (!comp()->getOption(TR_MimicInterpreterFrameShape) ||
-           !comp()->areSlotsSharedByRefAndNonRef() ||
-           p->isSlotSharedByRefAndNonRef()))
-         p->setInitializedReference();
-      ++numLocals;
-      }
-
-   if (comp()->getOption(TR_EnableAggressiveLiveness))
-      {
-      TR::ParameterSymbol *pp;
-      ListIterator<TR::ParameterSymbol> parms(&comp()->getMethodSymbol()->getParameterList());
-      for (pp = parms.getFirst(); pp != NULL; pp = parms.getNext())
-         ++numLocals;
-      }
-
-   // Nothing to do if there are no locals
-   //
-   if (numLocals == 0)
-      {
-      return 0; // actual cost
-      }
-
-   TR_BitVector *liveVars = NULL;
-
-   if ((comp()->getOption(TR_EnableOSR) && (comp()->getHCRMode() == TR::osr || comp()->getOption(TR_FullSpeedDebug))) || !cg()->getLiveLocals()) // under OSR existing live locals is likely computed without ignoring OSR uses
-      {
-      // Perform liveness analysis
-      //
-      bool ignoreOSRuses = false; // Used to be set to true but we cannot set this to true because a variable may not be live in compiled code but may still be needed (live) in the interpreter
-      /* for mimicInterpreterShape, because OSR points can extend the live range of autos
-       * autos sharing the same slot in interpreter might end up with overlapped
-       * live range if OSRUses are not ignored
-       */
-      if (comp()->getOption(TR_MimicInterpreterFrameShape))
-         ignoreOSRuses = true;
-
-      TR_Liveness liveLocals(comp(), optimizer(), comp()->getFlowGraph()->getStructure(), ignoreOSRuses, NULL, false, comp()->getOption(TR_EnableAggressiveLiveness));
-
-      for (TR::CFGNode *cfgNode = comp()->getFlowGraph()->getFirstNode(); cfgNode; cfgNode = cfgNode->getNext())
-         {
-         TR::Block *block     = toBlock(cfgNode);
-         int32_t blockNum    = block->getNumber();
-         if (blockNum > 0 && liveLocals._blockAnalysisInfo[blockNum])
-            {
-            liveVars = new (trHeapMemory()) TR_BitVector(numLocals, trMemory());
-            *liveVars = *liveLocals._blockAnalysisInfo[blockNum];
-            block->setLiveLocals(liveVars);
-            }
-         }
-
-      // Make sure the code generator knows there are live locals for blocks, and
-      // create a bit vector of the correct size for it.
-      //
-      liveVars = new (trHeapMemory()) TR_BitVector(numLocals, trMemory());
-      cg()->setLiveLocals(liveVars);
-      }
-
-   // See if any collected reference locals are live at the start of the block.
-   // These will need to be initialized at method prologue.
-   //
-   liveVars = comp()->getStartBlock()->getLiveLocals();
-   if (liveVars && !liveVars->isEmpty())
-      {
-      locals.reset();
-      for (p = locals.getFirst(); p != NULL; p = locals.getNext())
-         {
-         if (p->isCollectedReference() &&
-             liveVars->get(p->getLiveLocalIndex()))
-            {
-            if (performTransformation(comp(), "%s Local #%d is live at the start of the method\n",OPT_DETAILS, p->getLiveLocalIndex()))
-               p->setUninitializedReference();
-            }
-         }
-      }
-
-   return 10; // actual cost
+   // Delay liveness analysis to CG since some computations after globalLiveVariablesForGC such as
+   // splitPostGRA could break live locals info.
+   cg()->setRunGlobalLiveVariablesForGC();
+   return 0;
    }
 
 const char *
