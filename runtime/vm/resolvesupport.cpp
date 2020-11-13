@@ -116,6 +116,42 @@ checkForDecompile(J9VMThread *currentThread, J9ROMMethodRef *romMethodRef, bool 
 	}
 }
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+static BOOLEAN
+isMethodHandleINL(U_8 *methodName, U_16 methodNameLength)
+{
+	BOOLEAN isMethodHandle = FALSE;
+
+	switch (methodNameLength) {
+	case 11:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "invokeBasic")) {
+			isMethodHandle = TRUE;
+		}
+		break;
+	case 12:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToStatic")) {
+			isMethodHandle = TRUE;
+		}
+		break;
+	case 13:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToSpecial")
+		||  J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToVirtual")) {
+			isMethodHandle = TRUE;
+		}
+		break;
+	case 15:
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToInterface")) {
+			isMethodHandle = TRUE;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return isMethodHandle;
+}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
 UDATA   
 packageAccessIsLegal(J9VMThread *currentThread, J9Class *targetClass, j9object_t protectionDomain, UDATA canRunJavaCode)
 {
@@ -435,6 +471,7 @@ resolveStaticMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cp
 	J9Class *cpClass;
 	J9Class *methodClass = NULL;
 	BOOLEAN isResolvedClassAnInterface = FALSE;
+	J9ROMNameAndSignature *nameAndSig = NULL;
 	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
 	bool canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
 	bool throwException = canRunJavaCode && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
@@ -451,8 +488,15 @@ resolveStaticMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cp
 
 tryAgain:
 	romMethodRef = (J9ROMMethodRef *)&ramCP->romConstantPool[cpIndex];
+	nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
 
 	checkForDecompile(vmStruct, romMethodRef, jitCompileTimeResolve);
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/* Stack allocate a J9NameAndSignature structure for polymorphic signature methods */
+	J9NameAndSignature onStackNAS = {NULL, NULL};
+	J9UTF8 nullSignature = {0};
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	/* Resolve the class. */
 	resolvedClass = resolveClassRef(vmStruct, ramCP, romMethodRef->classRefCPIndex, resolveFlags);
@@ -496,7 +540,31 @@ tryAgain:
 	if (isResolvedClassAnInterface) {
 		lookupOptions |= J9_LOOK_INTERFACE;
 	}
-	method = (J9Method *)javaLookupMethod(vmStruct, resolvedClass, J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef), cpClass, lookupOptions);
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	if (resolvedClass == J9VMJAVALANGINVOKEMETHODHANDLE(vmStruct->javaVM)) {
+		J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
+		/**
+		 * Check for MH intrinsic methods
+		 *
+		 * Modify the signature to avoid signature mismatch due to varargs
+		 * These methods have special INL send targets
+		 */
+		U_8* methodName = J9UTF8_DATA(nameUTF);
+		U_16 methodNameLength = J9UTF8_LENGTH(nameUTF);
+
+		if (isMethodHandleINL(methodName, methodNameLength)) {
+			/* Create new J9NameAndSignature */
+			onStackNAS.name = nameUTF;
+			onStackNAS.signature = &nullSignature;
+			nameAndSig = (J9ROMNameAndSignature *)(&onStackNAS);
+
+			/* Set flag for partial signature lookup. Signature length is already initialized to 0. */
+			lookupOptions |= (J9_LOOK_DIRECT_NAS | J9_LOOK_PARTIAL_SIGNATURE);
+		}
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	method = (J9Method *)javaLookupMethod(vmStruct, resolvedClass, nameAndSig, cpClass, lookupOptions);
 
 	Trc_VM_resolveStaticMethodRef_lookupMethod(vmStruct, method);
 
@@ -1350,15 +1418,15 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 		J9Method *method = NULL;
 		J9Class *cpClass = NULL;
 
-		/* Stack allocate a byte array for VarHandle method name and signature. The array size is:
+		/* Stack allocate a byte array for MethodHandle & VarHandle method name and signature. The array size is:
 		 *  - J9ROMNameAndSignature
 		 *  - Modified method name
 		 *      - U_16 for J9UTF8 length
-		 *      - 26 bytes for the original method name ("compareAndExchange" is the longest)
+		 *      - 26 bytes for the original method name ("compareAndExchangeAcquire" is the longest)
 		 *      - 5 bytes for "_impl".
 		 *  - J9UTF8 for empty signature
 		 */
-		U_8 nameAndNAS[sizeof(J9ROMNameAndSignature) + (sizeof(U_16) + 26 + 5) + sizeof(J9UTF8)];
+		U_8 onStackNAS[sizeof(J9ROMNameAndSignature) + (sizeof(U_16) + 26 + 5) + sizeof(J9UTF8)];
 
 		lookupOptions |= J9_LOOK_VIRTUAL;
 		if ((resolveFlags & J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) == J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) {
@@ -1368,18 +1436,39 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 			cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(cpClass->romClass);
 			lookupOptions |= J9_LOOK_CLCONSTRAINTS;
 		}
-		
-#if defined(J9VM_OPT_METHOD_HANDLE)
-		/*
-		 * Check for MH.invoke and MH.invokeExact.
-		 *
-		 * Methodrefs corresponding to those methods already have their methodIndex set to index into
-		 * cpClass->methodTypes. We resolve them by calling into MethodType.fromMethodDescriptorString()
-		 * and storing the result into the cpClass->methodTypes table.
-		 */
-		if ((NULL != cpShapeDescription)
-		&& (resolvedClass == J9VMJAVALANGINVOKEMETHODHANDLE(vm))
-		) {
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		J9UTF8 nullSignature = {0};
+		if ((NULL != cpShapeDescription) && (resolvedClass == J9VMJAVALANGINVOKEMETHODHANDLE(vm))) {
+			/**
+			 * Check for MH intrinsic methods
+			 *
+			 * Modify the signature to avoid signature mismatch due to varargs
+			 * These methods have special INL send targets
+			 */
+			J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
+			U_8* methodName = J9UTF8_DATA(nameUTF);
+			U_16 methodNameLength = J9UTF8_LENGTH(nameUTF);
+
+			if (isMethodHandleINL(methodName, methodNameLength)) {
+				/* Create new J9NameAndSignature */
+				((J9NameAndSignature *)onStackNAS)->name = nameUTF;
+				((J9NameAndSignature *)onStackNAS)->signature = &nullSignature;
+				nameAndSig = (J9ROMNameAndSignature *)(&onStackNAS);
+
+				/* Set flag for partial signature lookup. Signature length is already initialized to 0. */
+				lookupOptions |= (J9_LOOK_DIRECT_NAS | J9_LOOK_PARTIAL_SIGNATURE);
+			}
+		}
+#elif defined(J9VM_OPT_METHOD_HANDLE) /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+		if ((NULL != cpShapeDescription) && (resolvedClass == J9VMJAVALANGINVOKEMETHODHANDLE(vm))) {
+			/*
+			* Check for MH.invoke and MH.invokeExact.
+			*
+			* Methodrefs corresponding to those methods already have their methodIndex set to index into
+			* cpClass->methodTypes. We resolve them by calling into MethodType.fromMethodDescriptorString()
+			* and storing the result into the cpClass->methodTypes table.
+			*/
 			J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
 			J9UTF8 *sigUTF = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
 			if ((J9CPTYPE_HANDLE_METHOD == J9_CP_TYPE(cpShapeDescription, cpIndex))
@@ -1535,12 +1624,12 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 			}
 
 			if (isVarHandle) {
-				J9UTF8 *modifiedMethodName = (J9UTF8 *)(nameAndNAS + sizeof(J9ROMNameAndSignature));
-				J9UTF8 *modifiedMethodSig = (J9UTF8 *)(nameAndNAS + sizeof(nameAndNAS) - sizeof(J9UTF8));
-				memset(nameAndNAS, 0, sizeof(nameAndNAS));
+				J9UTF8 *modifiedMethodName = (J9UTF8 *)(onStackNAS + sizeof(J9ROMNameAndSignature));
+				J9UTF8 *modifiedMethodSig = (J9UTF8 *)(onStackNAS + sizeof(onStackNAS) - sizeof(J9UTF8));
+				memset(onStackNAS, 0, sizeof(onStackNAS));
 
 				/* Create new J9ROMNameAndSignature */
-				nameAndSig = (J9ROMNameAndSignature *)nameAndNAS;
+				nameAndSig = (J9ROMNameAndSignature *)onStackNAS;
 				NNSRP_SET(nameAndSig->name, modifiedMethodName);
 				NNSRP_SET(nameAndSig->signature, modifiedMethodSig);
 
@@ -1611,7 +1700,9 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 				}
 			}
 		}
-#endif /* J9VM_OPT_METHOD_HANDLE */
+#else /* defined(J9VM_OPT_METHOD_HANDLE) */
+		Trc_VM_Assert_ShouldNeverHappen();
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 		method = (J9Method *)javaLookupMethod(vmStruct, resolvedClass, nameAndSig, cpClass, lookupOptions);
 
@@ -1662,7 +1753,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 
 #if defined(J9VM_OPT_METHOD_HANDLE)
 done:
-#endif /* J9VM_OPT_METHOD_HANDLE */
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	Trc_VM_resolveVirtualMethodRef_Exit(vmStruct, vTableOffset);
 	return vTableOffset;
 }
@@ -1980,6 +2071,55 @@ resolveMethodHandleRef(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpInde
 }
 
 j9object_t
+resolveOpenJDKInvokeHandle(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags)
+{
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	bool canRunJavaCode = J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_REDEFINE_CLASS);
+	J9RAMMethodRef *ramCPEntry = (J9RAMMethodRef*)ramCP + cpIndex;
+	UDATA invokeCacheIndex = ramCPEntry->methodIndexAndArgCount >> 8;
+	J9Class *ramClass = J9_CLASS_FROM_CP(ramCP);
+	j9object_t *invokeCache = ramClass->invokeCache + invokeCacheIndex;
+	j9object_t result = *invokeCache;
+
+	Trc_VM_resolveInvokeHandle_Entry(vmThread, ramCP, cpIndex, resolveFlags);
+
+	if ((NULL == result) && canRunJavaCode) {
+		J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)&ramCP->romConstantPool[cpIndex];
+		J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
+
+		/* Resolve the class. */
+		J9Class *resolvedClass = resolveClassRef(vmThread, ramCP, romMethodRef->classRefCPIndex, resolveFlags);
+		if (resolvedClass != NULL) {
+			sendResolveOpenJDKInvokeHandle(vmThread, ramCP, cpIndex, MH_REF_INVOKEVIRTUAL, resolvedClass, nameAndSig);
+			result = (j9object_t)vmThread->returnValue;
+
+			if (vmThread->currentException != NULL) {
+				/* Already a pending exception */
+				result = NULL;
+			} else if (result == NULL) {
+				setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+			} else {
+				/* Only write the value in if it is not null */
+				J9MemoryManagerFunctions *gcFuncs = vmThread->javaVM->memoryManagerFunctions;
+
+				/* Ensure that result array elements are written before the array reference is stored */
+				VM_AtomicSupport::writeBarrier();
+				if (0 == gcFuncs->j9gc_objaccess_staticCompareAndSwapObject(vmThread, ramClass, invokeCache, NULL, result)) {
+					/* Another thread beat this thread to updating the call site, ensure both threads return the same method handle. */
+					result = *invokeCache;
+				}
+			}
+		}
+	}
+	Trc_VM_resolveInvokeHandle_Exit(vmThread, result);
+	return result;
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	Trc_VM_Assert_ShouldNeverHappen();
+	return NULL;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+}
+
+j9object_t
 resolveConstantDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags)
 {
 	Assert_VM_true(J9_RESOLVE_FLAG_RUNTIME_RESOLVE == resolveFlags);
@@ -2100,12 +2240,12 @@ retry:
 	return value;
 }
 
-j9object_t   
+j9object_t
 resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSiteIndex, UDATA resolveFlags)
 {
 	Assert_VM_true(J9_RESOLVE_FLAG_RUNTIME_RESOLVE == resolveFlags);
 	j9object_t *callSite = ramCP->ramClass->callSites + callSiteIndex;
-	j9object_t methodHandle = *callSite;
+	j9object_t result = *callSite;
 
 	J9ROMClass *romClass = ramCP->ramClass->romClass;
 	J9SRP *callSiteData = (J9SRP *) J9ROMCLASS_CALLSITEDATA(romClass);
@@ -2113,48 +2253,69 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 	U_16 *bsmData = bsmIndices + romClass->callSiteCount;
 	J9ROMNameAndSignature* nameAndSig = SRP_PTR_GET(callSiteData + callSiteIndex, J9ROMNameAndSignature*);
 	U_16 bsmIndex = bsmIndices[callSiteIndex];
-	U_16 i;
+	U_16 i = 0;
+
+	Trc_VM_resolveInvokeDynamic_Entry(vmThread, callSiteIndex, bsmIndex, resolveFlags);
 
 	/* Check if already resolved */
-	if (methodHandle != NULL) {
-		return methodHandle;
-	}
+	if (NULL == result) {
+		/* Walk bsmData - skip all bootstrap methods before bsmIndex */
+		for (i = 0; i < bsmIndex; i++) {
+			/* increment by size of bsm data plus header */
+			bsmData += bsmData[1] + 2;
+		}
 
-	/* Walk bsmData - skip all bootstrap methods before bsmIndex */
-	for (i = 0; i < bsmIndex; i++) {
-		/* increment by size of bsm data plus header */
-		bsmData += bsmData[1] + 2;
-	}
+		sendResolveInvokeDynamic(vmThread, ramCP, callSiteIndex, nameAndSig, bsmData);
+		result = (j9object_t) vmThread->returnValue;
 
-	sendResolveInvokeDynamic(vmThread, ramCP, callSiteIndex, nameAndSig, bsmData);
-	methodHandle = (j9object_t) vmThread->returnValue;
+		Trc_VM_resolveInvokeDynamic_Resolved(vmThread, callSiteIndex, result);
 
-	/* check if an exception is already pending */
-	if (vmThread->currentException != NULL) {
-		/* Already a pending exception */
-		methodHandle = NULL;
-	} else if (methodHandle == NULL) {
-		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
-	}
-
-	/* Only write the value in if its not null */
-	if (NULL != methodHandle) {
-		J9MemoryManagerFunctions *gcFuncs = vmThread->javaVM->memoryManagerFunctions;
-		methodHandle = gcFuncs->j9gc_objaccess_asConstantPoolObject(
-									vmThread,
-									methodHandle,
-									J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE | J9_GC_ALLOCATE_OBJECT_HASHED);
-
-		if (NULL == methodHandle) {
-			setHeapOutOfMemoryError(vmThread);
-		} else {
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		/* Check if an exception is already pending */
+		if (vmThread->currentException != NULL) {
+			/* Already a pending exception */
+			result = vmThread->currentException;
+		} else if (result == NULL) {
+			setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+		} else { /* (result != NULL) */
+			/* Only write the value in if it is not null */
+			J9MemoryManagerFunctions *gcFuncs = vmThread->javaVM->memoryManagerFunctions;
 			J9Class *j9class = J9_CLASS_FROM_CP(ramCP);
-			if (0 == gcFuncs->j9gc_objaccess_staticCompareAndSwapObject(vmThread, j9class, callSite, NULL, methodHandle)) {
+
+			/* Ensure that result array elements are written before the array reference is stored */
+			VM_AtomicSupport::writeBarrier();
+			if (0 == gcFuncs->j9gc_objaccess_staticCompareAndSwapObject(vmThread, j9class, callSite, NULL, result)) {
 				/* Another thread beat this thread to updating the call site, ensure both threads return the same method handle. */
-				methodHandle = *callSite;
+				result = *callSite;
 			}
 		}
-	}
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+		/* Check if an exception is already pending */
+		if (vmThread->currentException != NULL) {
+			/* Already a pending exception */
+			result = NULL;
+		} else if (result == NULL) {
+			setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+		} else { /* (result != NULL) */
+			/* Only write the value in if it is not null */
+			J9MemoryManagerFunctions *gcFuncs = vmThread->javaVM->memoryManagerFunctions;
+			result = gcFuncs->j9gc_objaccess_asConstantPoolObject(
+										vmThread,
+										result,
+										J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE | J9_GC_ALLOCATE_OBJECT_HASHED);
 
-	return methodHandle;
+			if (NULL == result) {
+				setHeapOutOfMemoryError(vmThread);
+			} else {
+				J9Class *j9class = J9_CLASS_FROM_CP(ramCP);
+				if (0 == gcFuncs->j9gc_objaccess_staticCompareAndSwapObject(vmThread, j9class, callSite, NULL, result)) {
+					/* Another thread beat this thread to updating the call site, ensure both threads return the same method handle. */
+					result = *callSite;
+				}
+			}
+		}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	}
+	Trc_VM_resolveInvokeDynamic_Exit(vmThread, result);
+	return result;
 }

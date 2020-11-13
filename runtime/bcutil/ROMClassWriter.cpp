@@ -395,7 +395,11 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 		cursor->writeU32(optionalFlags, Cursor::OPTIONAL_FLAGS);
 		cursor->writeSRP(_optionalInfoSRPKey, Cursor::SRP_TO_GENERIC);
 		cursor->writeU32(_classFileOracle->getMaxBranchCount(), Cursor::GENERIC);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		cursor->writeU32(_constantPoolMap->getInvokeCacheCount(), Cursor::GENERIC);
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		cursor->writeU32(_constantPoolMap->getMethodTypeCount(), Cursor::GENERIC);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		cursor->writeU32(_constantPoolMap->getVarHandleMethodTypeCount(), Cursor::GENERIC);
 		cursor->writeU32(_classFileOracle->getBootstrapMethodCount(), Cursor::GENERIC);
 		cursor->writeU32(_constantPoolMap->getCallSiteCount(), Cursor::GENERIC);
