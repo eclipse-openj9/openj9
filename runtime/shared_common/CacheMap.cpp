@@ -750,12 +750,8 @@ error:
 void
 SH_CacheMap::handleStartupError(J9VMThread* currentThread, SH_CompositeCacheImpl* ccToUse, IDATA errorCode, U_64 runtimeFlags, UDATA verboseFlags, bool *doRetry, IDATA *deleteRC)
 {
-	PORT_ACCESS_FROM_VMC(currentThread);
 	if (errorCode == CC_STARTUP_CORRUPT) {
 		reportCorruptCache(currentThread, ccToUse);
-	}
-	if (errorCode == CC_STARTUP_NO_CACHELETS) {
-		CACHEMAP_PRINT1(J9NLS_ERROR, J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS, ccToUse->getCacheName());
 	}
 	if (J9_ARE_NO_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_STATS | J9SHR_RUNTIMEFLAG_FAKE_CORRUPTION) 
 		&& (false == ccToUse->isRunningReadOnly())
