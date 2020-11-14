@@ -2333,7 +2333,6 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 
 
 #if defined(J9VM_OPT_SNAPSHOTS)
-			/* in restore runs the immortal classloaders will have been restored by this point */
 			if (IS_SNAPSHOT_RUN(vm)) {
 				if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(vm))))) {
 					goto _error;
@@ -2344,7 +2343,9 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				if (NULL == (vm->jniWeakGlobalReferences = pool_new(sizeof(UDATA), 0, 0, POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(vm))))) {
 					goto _error;
 				}
-			} else if (!IS_RESTORE_RUN(vm))
+			} else if (IS_RESTORE_RUN(vm)) {
+				/* in restore runs the immortal classloaders and jni pools will have been restored by this point */
+			} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 			{
 				if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary)))) {
@@ -2359,7 +2360,16 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			}
 
 			if (J2SE_VERSION(vm) >= J2SE_V11) {
-				vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package),sizeof(J9Module)),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(vm->portLibrary));
+#if defined(J9VM_OPT_SNAPSHOTS)
+				if (IS_SNAPSHOT_RUN(vm)) {
+					vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package), sizeof(J9Module)),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(vm)));
+				} else if (IS_RESTORE_RUN(vm)) {
+					/* vm->modularityPool is already initialized as part of the restore */
+				} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+				{
+					vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package), sizeof(J9Module)),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(vm->portLibrary));
+				}
 				if (NULL == vm->modularityPool) {
 					goto _error;
 				}

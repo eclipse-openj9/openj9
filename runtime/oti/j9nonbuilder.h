@@ -4829,6 +4829,7 @@ typedef struct J9InternalVMFunctions {
 	void ( *storeFlattenableArrayElement)(struct J9VMThread *currentThread, j9object_t receiverObject, U_32 index, j9object_t paramObject);
 	j9object_t ( *loadFlattenableArrayElement)(struct J9VMThread *currentThread, j9object_t receiverObject, U_32 index, BOOLEAN fast);
 	UDATA ( *jniIsInternalClassRef)(struct J9JavaVM *vm, jobject ref);
+	void (JNICALL *sendInitEncodings)(struct J9VMThread *vmContext) ;
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */

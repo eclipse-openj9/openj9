@@ -29,6 +29,7 @@
 #include "j9cp.h"
 #include "jvminit.h"
 #include "j9jclnls.h"
+#include "jclglob.h"
 #include "j2sever.h"
 #include "jclprots.h"
 #include "util_api.h"
@@ -161,6 +162,12 @@ restoreRunStandardInit(J9JavaVM *vm)
 	}
 	((J9NativeLibrary*)nativeLibrary)->flags |= J9NATIVELIB_FLAG_ALLOW_INL;
 
+	/* Run the JCL initialization code (what used to be JNI_OnLoad) */
+	if (!vmFuncs->jniVersionIsValid(nativeLibrary->send_lifecycle_event(vmThread, nativeLibrary, "JCL_OnLoad", JNI_VERSION_1_1))) {
+		rc = JNI_ERR;
+		goto doneReacquire;
+	}
+
 #ifdef J9VM_OPT_SIDECAR
 #if !defined(J9VM_INTERP_MINIMAL_JCL)
 	{
@@ -168,6 +175,16 @@ restoreRunStandardInit(J9JavaVM *vm)
 	}
 #endif /* !J9VM_INTERP_MINIMAL_JCL */
 #endif /* J9VM_OPT_SIDECAR */
+
+#if JAVA_SPEC_VERSION >= 11
+	/* Need to resend System.initEncodings() because it calls into native code which
+	 * has to reinitialize the native static value done by the "InitializeEncoding" native.
+	 * See the code in system.c:: getEncoding
+	 */
+	vmFuncs->internalAcquireVMAccess(vmThread);
+	vmFuncs->sendInitEncodings(vmThread);
+	vmFuncs->internalReleaseVMAccess(vmThread);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	if (0 == vmFuncs->registerBootstrapLibrary(vmThread, "java", &javaLibHandle, 0)) {
 		jstring (JNICALL *nativeFuncAddr)(JNIEnv *env, const char *str) = NULL;

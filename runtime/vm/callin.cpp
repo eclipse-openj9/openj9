@@ -737,6 +737,21 @@ sendCompleteInitialization(J9VMThread *currentThread)
 	Trc_VM_sendCompleteInitialization_Exit(currentThread);
 }
 
+void JNICALL
+sendInitEncodings(J9VMThread *currentThread)
+{
+	Trc_VM_sendCompleteInitialization_Entry(currentThread);
+	J9VMEntryLocalStorage newELS;
+	if (buildCallInStackFrame(currentThread, &newELS, false, true)) {
+		/* Run the method */
+		currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
+		currentThread->returnValue2 = (UDATA)J9VMJAVALANGSYSTEM_INITENCODINGS_METHOD(currentThread->javaVM);
+		c_cInterpreter(currentThread);
+		restoreCallInFrame(currentThread);
+	}
+	Trc_VM_sendCompleteInitialization_Exit(currentThread);
+}
+
 static bool
 isAccessibleToAllModulesViaReflection(J9VMThread *currentThread, J9Class *clazz, bool javaBaseLoaded) {
 	J9JavaVM *vm = currentThread->javaVM;

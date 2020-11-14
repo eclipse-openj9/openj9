@@ -402,5 +402,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 #endif /* JAVA_SPEC_VERSION >= 15 */
 	storeFlattenableArrayElement,
 	loadFlattenableArrayElement,
-	jniIsInternalClassRef
+	jniIsInternalClassRef,
+	sendInitEncodings,
 };
