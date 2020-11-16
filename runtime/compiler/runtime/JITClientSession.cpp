@@ -680,8 +680,10 @@ ClientSessionHT::allocate()
    }
 
 ClientSessionHT::ClientSessionHT() : _clientSessionMap(decltype(_clientSessionMap)::allocator_type(TR::Compiler->persistentAllocator())),
-                                     TIME_BETWEEN_PURGES(1000*60*30), // JITServer TODO: this must come from options
-                                     OLD_AGE(1000*60*1000) // 1000 minutes
+                                     TIME_BETWEEN_PURGES(TR::Options::_timeBetweenPurges),
+                                     OLD_AGE(TR::Options::_oldAge), // 1000 minutes
+                                     OLD_AGE_UNDER_LOW_MEMORY(TR::Options::_oldAgeUnderLowMemory), // 5 minutes
+                                     _compInfo(TR::CompilationController::getCompilationInfo())
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
    _timeOfLastPurge = j9time_current_time_millis();
@@ -786,18 +788,30 @@ ClientSessionHT::purgeOldDataIfNeeded()
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
    int64_t crtTime = j9time_current_time_millis();
+   bool incomplete;
+   int64_t oldAge = OLD_AGE;
+
    if (crtTime - _timeOfLastPurge > TIME_BETWEEN_PURGES)
       {
+      uint64_t freePhysicalMemory = _compInfo->computeAndCacheFreePhysicalMemory(incomplete); //check if memory is free
+      if (freePhysicalMemory != OMRPORT_MEMINFO_NOT_AVAILABLE && !incomplete)
+         {
+         if (freePhysicalMemory < TR::Options::getSafeReservePhysicalMemoryValue())
+            {
+            oldAge = OLD_AGE_UNDER_LOW_MEMORY; //memory is low
+            }
+         }
       // Time for a purge operation.
       // Scan the entire table and delete old elements that are not in use
       for (auto iter = _clientSessionMap.begin(); iter != _clientSessionMap.end(); ++iter)
          {
          TR_ASSERT(iter->second->getInUse() >= 0, "_inUse=%d must be positive\n", iter->second->getInUse());
          if (iter->second->getInUse() == 0 &&
-             crtTime - iter->second->getTimeOflastAccess() > OLD_AGE)
+            crtTime - iter->second->getTimeOflastAccess() > oldAge)
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server will purge session data for clientUID %llu", (unsigned long long)iter->first);
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server will purge session data for clientUID %llu of age %lld", 
+               (unsigned long long)iter->first, (long long)oldAge);
             ClientSessionData::destroy(iter->second); // delete the client data
             _clientSessionMap.erase(iter); // delete the mapping from the hashtable
             }

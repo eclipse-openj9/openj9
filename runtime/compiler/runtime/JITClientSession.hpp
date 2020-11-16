@@ -526,9 +526,11 @@ class ClientSessionHT
    PersistentUnorderedMap<uint64_t, ClientSessionData*> _clientSessionMap;
 
    uint64_t _timeOfLastPurge;
+   TR::CompilationInfo *_compInfo;
    const int64_t TIME_BETWEEN_PURGES; // ms; this defines how often we are willing to scan for old entries to be purged
    const int64_t OLD_AGE;// ms; this defines what an old entry means
                          // This value must be larger than the expected life of a JVM
+   const int64_t OLD_AGE_UNDER_LOW_MEMORY; // ms; this defines what an old entry means when memory is low
    }; // class ClientSessionHT
 
 #endif /* defined(JIT_CLIENT_SESSION_H) */
