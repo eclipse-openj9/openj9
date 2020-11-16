@@ -166,8 +166,6 @@ static const char* getNameForMethodRelocation (int type)
             return "TR_SpecialRamMethodConst";
          case TR_VirtualRamMethodConst:
             return "TR_VirtualRamMethodConst";
-         case TR_ClassAddress:
-            return "TR_ClassAddress";
          default:
             TR_ASSERT(0, "We already cleared one switch, hard to imagine why we would have a different type here");
             break;
@@ -1132,7 +1130,6 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_ConstantPool:
       case TR_Thunks:
       case TR_Trampolines:
-      case TR_MethodObject:
          {
          TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
 
@@ -1142,6 +1139,21 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
             traceMsg(self()->comp(), "\nInlined site index = %d, Constant pool = %x",
                                      cpRecord->inlinedSiteIndex(reloTarget),
                                      cpRecord->constantPool(reloTarget));
+            }
+         }
+         break;
+
+      case TR_MethodObject:
+         {
+         TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nInlined site index = %d, Constant pool = %x, flags = %x",
+                                     cpRecord->inlinedSiteIndex(reloTarget),
+                                     cpRecord->constantPool(reloTarget),
+                                     (uint32_t)cpRecord->reloFlags(reloTarget));
             }
          }
          break;
@@ -1206,7 +1218,6 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_StaticRamMethodConst:
       case TR_SpecialRamMethodConst:
       case TR_VirtualRamMethodConst:
-      case TR_ClassAddress:
          {
          TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
 
@@ -1218,6 +1229,22 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                                      cpiRecord->inlinedSiteIndex(reloTarget),
                                      cpiRecord->constantPool(reloTarget),
                                      cpiRecord->cpIndex(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ClassAddress:
+         {
+         TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Address Relocation (TR_ClassAddress): inlinedIndex = %d, constantPool = %p, CPI = %d, flags = %x",
+                                     cpiRecord->inlinedSiteIndex(reloTarget),
+                                     cpiRecord->constantPool(reloTarget),
+                                     cpiRecord->cpIndex(reloTarget),
+                                     (uint32_t)cpiRecord->reloFlags(reloTarget));
             }
          }
          break;
@@ -1782,10 +1809,11 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n %sSymbol From Manager: symbolID=%d symbolType=%d ",
+            traceMsg(self()->comp(), "\n %sSymbol From Manager: symbolID=%d symbolType=%d flags=%x",
                      kind == TR_DiscontiguousSymbolFromManager ? "Discontiguous " : "",
                      (uint32_t)sfmRecord->symbolID(reloTarget),
-                     (uint32_t)sfmRecord->symbolType(reloTarget));
+                     (uint32_t)sfmRecord->symbolType(reloTarget),
+                     (uint32_t)sfmRecord->reloFlags(reloTarget));
             }
          }
          break;
@@ -1810,11 +1838,12 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nTR_DataAddress: InlinedCallSite index = %d, Constant pool = %x, cpIndex = %d, offset = %x",
+            traceMsg(self()->comp(), "\nTR_DataAddress: InlinedCallSite index = %d, Constant pool = %x, cpIndex = %d, offset = %x, flags = %x",
                                      daRecord->inlinedSiteIndex(reloTarget),
                                      daRecord->constantPool(reloTarget),
                                      daRecord->cpIndex(reloTarget),
-                                     daRecord->offset(reloTarget));
+                                     daRecord->offset(reloTarget),
+                                     (uint32_t)daRecord->reloFlags(reloTarget));
             }
          }
          break;
