@@ -532,11 +532,9 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 
 			if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(definingClassFullQualifiedName), J9UTF8_LENGTH(definingClassFullQualifiedName), "java/lang/NullPointerException")) {
 				if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodName), "<init>")) {
-					if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(methodSig), J9UTF8_LENGTH(methodSig), "()V")) {
-						/* No message generated for new NullPointerException().getMessage() */
-						npeMsgRequired = false;
-						Trc_VM_GetCompleteNPEMessage_Not_Required(vmThread);
-					}
+					/* No message generated for new NullPointerException().getMessage() or new NullPointerException(null).getMessage() */
+					npeMsgRequired = false;
+					Trc_VM_GetCompleteNPEMessage_Not_Required(vmThread);
 				}
 
 			}
