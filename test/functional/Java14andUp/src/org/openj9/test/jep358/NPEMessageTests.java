@@ -1015,6 +1015,8 @@ public class NPEMessageTests {
 	public void test_creation() throws Exception {
 		Assert.assertNull(new NullPointerException().getMessage(),
 				"new NullPointerException().getMessage() is not null!");
+		Assert.assertNull(new NullPointerException(null).getMessage(),
+				"new NullPointerException(null).getMessage() is not null!");
 		String npeMsg = new String("NPE creation messsage");
 		Assert.assertEquals(new NullPointerException(npeMsg).getMessage(), npeMsg);
 		Exception exception = NullPointerException.class.getDeclaredConstructor().newInstance();
