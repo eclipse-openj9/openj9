@@ -968,6 +968,10 @@ SH_ClasspathManagerImpl2::localValidate_CheckAndTimestampManually(J9VMThread* cu
 				Bootstrap loader is always helperID==0 and it DOES lock its jars, so this is safe. */
 			if (rc == 1) {
 				Trc_SHR_CMI_localValidate_CheckAndTimestampManually_DetectedStaleCPEI(currentThread, foundItem);
+				if (_cache->getCompositeCacheAPI()->isRunningReadOnly()) {
+					/* If we're running in read-only mode, disable sharing for this local classpath as it's too expensive to keep checking */
+					compareTo->flags |= MARKED_STALE_FLAG;
+				}
 				if (!(*staleItem)) {
 					*staleItem = foundItem;
 				}
