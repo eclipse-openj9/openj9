@@ -176,24 +176,4 @@ abstract class FieldVarHandle extends VarHandle {
 	final String getFieldName() {
 		return fieldName;
 	}
-
-/*[IF Java16]*/
-	public MethodType accessModeTypeUncached(AccessType type) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-/*[ELSE]*/
-	public MethodType accessModeTypeUncached(AccessMode accessMode) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-/*[ENDIF] Java16 */
-
-/*[IF Java16]*/
-	public VarHandle withInvokeExactBehavior() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-
-	public VarHandle withInvokeBehavior() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-/*[ENDIF] Java16 */
 }

@@ -387,6 +387,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @param varForm an instance of VarForm.
 	 */
 	VarHandle(VarForm varForm) {
+/*[IF Java16]*/
 		this(varForm, false);
 	}
 
@@ -397,7 +398,6 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @param exact has invokeExact behavior.
 	 */
 	VarHandle(VarForm varForm, boolean exact) {
-/*[IF Java16]*/
 		this.exact = exact;
 /*[ENDIF] Java16 */
 		if (varForm.memberName_table == null) {
@@ -414,11 +414,14 @@ public abstract class VarHandle extends VarHandleInternal
 			int numAccessModes = accessModes.length;
 	
 			/* The first argument in AccessType.GET MethodType is the receiver class. */
-/*[IF Java16]*/
-			Class<?> receiverActual = accessModeTypeUncached(AccessMode.GET.at).parameterType(0);
-/*[ELSE]*/
-			Class<?> receiverActual = accessModeTypeUncached(AccessMode.GET).parameterType(0);
-/*[ENDIF] Java16 */
+			Class<?> receiverActual = accessModeTypeUncached(
+					/*[IF Java16]*/
+					AccessMode.GET.at
+					/*[ELSE]*/
+					AccessMode.GET
+					/*[ENDIF] Java16 */
+				).parameterType(0);
+
 			Class<?> receiverVarForm = varForm.methodType_table[AccessType.GET.ordinal()].parameterType(0);
 			
 			/* Specify the exact operation method types if the actual receiver doesn't match the
@@ -783,11 +786,13 @@ public abstract class VarHandle extends VarHandleInternal
 		MethodType modifiedType = null;
 		MethodHandle internalHandle = handleTable[accessMode.ordinal()];
 		if (internalHandle == null) {
-/*[IF Java16]*/
-			modifiedType = accessModeTypeUncached(accessMode.at);
-/*[ELSE]*/
-			modifiedType = accessModeTypeUncached(accessMode);
-/*[ENDIF] Java16 */
+			modifiedType = accessModeTypeUncached(
+					/*[IF Java16]*/
+					accessMode.at
+					/*[ELSE]*/
+					accessMode
+					/*[ENDIF] Java16 */
+				);
 		} else {
 			MethodType internalType = internalHandle.type();
 			int numOfArguments = internalType.parameterCount();
@@ -890,11 +895,15 @@ public abstract class VarHandle extends VarHandleInternal
 			if (mh != null) {
 				mt = mh.type();
 			} else {
-/*[IF Java16]*/
-				mt = accessModeTypeUncached(accessMode.at);
-/*[ELSE]*/
-				mt = accessModeTypeUncached(accessMode);
-/*[ENDIF] Java16 */
+
+				mt = accessModeTypeUncached(
+						/*[IF Java16]*/
+						accessMode.at
+						/*[ELSE]*/
+						accessMode
+						/*[ENDIF] Java16 */
+					);
+
 				/* accessModeTypeUncached does not return null. It throws InternalError if the method type
 				 * cannot be determined.
 				 */
@@ -1724,20 +1733,28 @@ public abstract class VarHandle extends VarHandleInternal
 	}
 /*[ENDIF] Java15 | OPENJDK_METHODHANDLES */
 
-/*[IF Java16]*/
-	abstract MethodType accessModeTypeUncached(AccessType type);
-/*[ELSE]*/
-	abstract MethodType accessModeTypeUncached(AccessMode accessMode);
-/*[ENDIF] Java16 */
+	MethodType accessModeTypeUncached(
+		/*[IF Java16]*/
+		AccessType type
+		/*[ELSE]*/
+		AccessMode accessMode
+		/*[ENDIF] Java16 */
+	) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
 
 /*[IF Java16]*/
 	final MethodType accessModeTypeUncached(int index) {
 		return accessModeTypeUncached(AccessType.values()[index]);
 	}
 
-	public abstract VarHandle withInvokeExactBehavior();
+	public VarHandle withInvokeExactBehavior() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
 
-	public abstract VarHandle withInvokeBehavior();
+	public VarHandle withInvokeBehavior() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
 
 	public boolean hasInvokeExactBehavior() {
 		return exact;
