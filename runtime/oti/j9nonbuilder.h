@@ -3924,6 +3924,8 @@ typedef struct J9JITConfig {
 	U_8* (*codeCacheWarmAlloc)(void *codeCache);
 	U_8* (*codeCacheColdAlloc)(void *codeCache);
 	void ( *printAOTHeaderProcessorFeatures)(struct TR_AOTHeader * aotHeaderAddress, char * buff, const size_t BUFF_SIZE);
+	struct OMRProcessorDesc targetProcessor;
+	struct OMRProcessorDesc relocatableTargetProcessor;
 #if defined(J9VM_OPT_JITSERVER)
 	int32_t (*startJITServer)(struct J9JITConfig *jitConfig);
 	int32_t (*waitJITServerTermination)(struct J9JITConfig *jitConfig);
