@@ -1863,7 +1863,7 @@ static void jitHookClassesUnload(J9HookInterface * * hookInterface, UDATA eventN
    if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
       table = persistentInfo->getPersistentCHTable();
 
-   if (table)
+   if (table && table->isActive())
       {
       TR_FrontEnd * fe = TR_J9VMBase::get(jitConfig, vmThread);
 
@@ -2061,10 +2061,6 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
       TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "Class unloading for class=0x%p\n", j9clazz);
       }
 
-   TR_PersistentCHTable * table = 0;
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
-      table = compInfo->getPersistentInfo()->getPersistentCHTable();
-
    PORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
 
    // remove from compilation request queue any methods that belong to this class
@@ -2112,7 +2108,10 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
 
    // END
 
-   if (table)
+   TR_PersistentCHTable * table = 0;
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+      table = compInfo->getPersistentInfo()->getPersistentCHTable();
+   if (table && table->isActive())
       table->classGotUnloaded(fej9, clazz);
 
 #if defined(J9VM_OPT_JITSERVER)
