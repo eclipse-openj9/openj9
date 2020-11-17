@@ -47,12 +47,21 @@ getUTF8Size(const J9UTF8 *str)
    return OMR::alignNoCheck(str->length, sizeof(*str)) + sizeof(*str);
    }
 
+static size_t
+getPackedUTF8Size(const J9UTF8 *str, const J9ROMClass *romClass)
+   {
+   return JITServerHelpers::isAddressInROMClass(str, romClass) ? 0 : getUTF8Size(str);
+   }
+
 // If the string points outside of the contiguous part of origRomClass, appends
 // it (with padding) at curPos and updates the SRP to the string in the packed
 // ROMClass. Returns the new value of curPos.
 static uint8_t *
 packUTF8(uint8_t *curPos, const J9UTF8 *origStr, const J9ROMClass *origRomClass, J9SRP &srp)
    {
+   if (JITServerHelpers::isAddressInROMClass(origStr, origRomClass))
+      return curPos;
+
    size_t size = getUTF8Size(origStr);
    memcpy(curPos, origStr, origStr->length + sizeof(*origStr));
    static_assert(sizeof(*origStr) == 2, "UTF8 header is not 2 bytes large");
@@ -71,15 +80,19 @@ packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
    {
    size_t totalSize = origRomClass->romSize;
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(origRomClass);
-   totalSize += getUTF8Size(className, origRomClass);
+   totalSize += getPackedUTF8Size(className, origRomClass);
 
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(origRomClass);
    for (size_t i = 0; i < origRomClass->romMethodCount; ++i)
       {
-      totalSize += getUTF8Size(J9ROMMETHOD_NAME(romMethod), origRomClass);
-      totalSize += getUTF8Size(J9ROMMETHOD_SIGNATURE(romMethod), origRomClass);
+      totalSize += getPackedUTF8Size(J9ROMMETHOD_NAME(romMethod), origRomClass);
+      totalSize += getPackedUTF8Size(J9ROMMETHOD_SIGNATURE(romMethod), origRomClass);
       romMethod = nextROMMethod(romMethod);
       }
+
+   // Check if the contiguous part of the ROMClass already contains all the strings visited above
+   if (totalSize == origRomClass->romSize)
+      return std::string((char *)origRomClass, origRomClass->romSize);
 
    J9ROMClass *romClass = (J9ROMClass *)trMemory->allocateHeapMemory(totalSize);
    if (!romClass)
