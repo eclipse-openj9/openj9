@@ -2376,8 +2376,10 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 			break;
 
 		case CFR_ATTRIBUTE_PermittedSubclasses:
-			/* PermittedSubclasses verification is for Java 15 preview only. */
-			if ((59 == classfile->majorVersion) && (0 < classfile->minorVersion)) {
+			/* PermittedSubclasses verification is for Java version >= 15 */
+			if ((classfile->majorVersion > 59) 
+			|| ((59 == classfile->majorVersion) && (65535 == classfile->minorVersion))
+			) {
 				enablePermittedSubclassErrors = TRUE;
 			}
 
