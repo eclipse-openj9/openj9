@@ -3393,30 +3393,143 @@ static void getClassNameIfNecessary(TR_J9VMBase *vm, TR_OpaqueClassBlock *clazz,
       className = vm->getClassNameChars(clazz, len);
    }
 
-static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
+static bool chTableOnClassLoad(J9VMThread *vmThread, TR_OpaqueClassBlock *clazz, TR::CompilationInfo *compInfo, TR_J9VMBase *vm)
    {
-   J9VMInternalClassLoadEvent * classLoadEvent = (J9VMInternalClassLoadEvent *)eventData;
-   J9VMThread * vmThread = classLoadEvent->currentThread;
-   J9Class * cl = classLoadEvent->clazz;
-   J9JITConfig * jitConfig = vmThread->javaVM->jitConfig;
-   if (jitConfig == 0)
-      return; // if a hook gets called after freeJitConfig then not much else we can do
-
+   J9Class *cl = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
    bool allocFailed = false;
 
-   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   if (TR::Options::getCmdLineOptions()->allowRecompilation()
+      && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
+#if defined(J9VM_OPT_JITSERVER)
+      && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+#endif
+      )
+      {
+      TR_PersistentClassInfo *info = compInfo->getPersistentInfo()->getPersistentCHTable()->classGotLoaded(vm, clazz);
 
-   getOutOfIdleStates(TR::CompilationInfo::SAMPLER_DEEPIDLE, compInfo, "class load");
+      if (info)
+         {
+         // If its an interface class it won't be initialized, so we have to update the CHTable now.
+         // Otherwise, we will update the CHTable once the class gets initialized (i.e. live)
+         //
+         if (vm->isInterfaceClass(clazz))
+            {
+            if (!updateCHTable(vmThread, cl))
+               {
+               allocFailed = true;
+               compInfo->getPersistentInfo()->getPersistentCHTable()->removeClass(vm, clazz, info, true);
+               }
+            }
+         else if (vm->isClassArray(clazz))
+            {
+            if (!compInfo->getPersistentInfo()->getPersistentCHTable()->classGotInitialized(vm, compInfo->persistentMemory(), clazz))
+               {
+               TR_PersistentClassInfo *arrayClazzInfo = compInfo->getPersistentInfo()->getPersistentCHTable()->findClassInfo(clazz);
+               if (arrayClazzInfo)
+                  compInfo->getPersistentInfo()->getPersistentCHTable()->removeClass(vm, clazz, arrayClazzInfo, false);
+               }
+            TR_OpaqueClassBlock *compClazz = vm->getComponentClassFromArrayClass(clazz);
+            if (compClazz)
+               {
+               TR_PersistentClassInfo *clazzInfo = compInfo->getPersistentInfo()->getPersistentCHTable()->findClassInfo(compClazz);
+               if (clazzInfo && !clazzInfo->isInitialized())
+                  {
+                  bool initFailed = false;
+                  if (!compInfo->getPersistentInfo()->getPersistentCHTable()->classGotInitialized(vm, compInfo->persistentMemory(), compClazz))
+                     initFailed = true;
 
+                  if (!initFailed &&
+                      !vm->isClassArray(compClazz) &&
+                      !vm->isInterfaceClass(compClazz) &&
+                      !vm->isPrimitiveClass(compClazz))
+                     initFailed = !updateCHTable(vmThread, ((J9Class *) compClazz));
+
+                  if (initFailed)
+                     {
+                     compInfo->getPersistentInfo()->getPersistentCHTable()->removeClass(vm, compClazz, clazzInfo, false);
+                     allocFailed = true;
+                     }
+                  }
+               }
+            }
+         }
+      else
+         allocFailed = true;
+      }
+
+   return allocFailed;
+   }
+
+static void checkForLockReservation(J9VMThread *vmThread,
+                                    J9JITConfig *jitConfig,
+                                    J9ClassLoader *classLoader,
+                                    TR_OpaqueClassBlock *clazz,
+                                    TR_J9VMBase *vm,
+                                    TR::CompilationInfo *compInfo,
+                                    char * className,
+                                    int32_t classNameLen)
+   {
+   TR::Options * options = TR::Options::getCmdLineOptions();
+   if (options->getOption(TR_ReservingLocks)
+#if defined(J9VM_OPT_JITSERVER)
+      && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+#endif
+      )
+      {
+      J9Class *cl = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
+      TR_J9VMBase *fej9 = (TR_J9VMBase *)(TR_J9VMBase::get(jitConfig, 0));
+      int lwOffset = fej9->getByteOffsetToLockword(clazz);
+      if (lwOffset > 0)
+         {
+         bool reserve = options->getOption(TR_ReserveAllLocks);
+
+         if (!reserve && ((J9JavaVM *)vmThread->javaVM)->systemClassLoader == classLoader)
+            {
+            getClassNameIfNecessary(vm, clazz, className, classNameLen);
+            if (classNameLen == 22 && !strncmp(className, "java/lang/StringBuffer", 22))
+               reserve = true;
+            else if (classNameLen == 16 && !strncmp(className, "java/util/Random", 16))
+               reserve = true;
+            }
+
+         TR::SimpleRegex *resRegex = options->getLockReserveClass();
+         if (!reserve && resRegex != NULL)
+            {
+            getClassNameIfNecessary(vm, clazz, className, classNameLen);
+            if (TR::SimpleRegex::match(resRegex, className))
+               reserve = true;
+            }
+
+         if (reserve)
+            {
+            TR_PersistentClassInfo *classInfo = compInfo
+               ->getPersistentInfo()
+               ->getPersistentCHTable()
+               ->findClassInfo(clazz);
+
+            if (classInfo != NULL)
+               {
+               classInfo->setReservable();
+               if (!TR::Options::_aggressiveLockReservation)
+                  J9CLASS_EXTENDED_FLAGS_SET(cl, J9ClassReservableLockWordInit);
+               }
+            }
+         }
+      }
+   }
+
+static void jitHookClassLoadHelper(J9VMThread *vmThread,
+                                   J9JITConfig * jitConfig,
+                                   J9Class * cl,
+                                   TR::CompilationInfo *compInfo,
+                                   UDATA *classLoadEventFailed)
+   {
+   bool allocFailed = false;
    TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, vmThread);
-
-   TR_OpaqueClassBlock *clazz = ((TR_J9VMBase *)vm)->convertClassPtrToClassOffset(cl);
-
+   TR_OpaqueClassBlock *clazz = TR::Compiler->cls.convertClassPtrToClassOffset(cl);
    jitAcquireClassTableMutex(vmThread);
 
    compInfo->getPersistentInfo()->incNumLoadedClasses();
-
-
 
    if (compInfo->getPersistentInfo()->getNumLoadedClasses() == TR::Options::_bigAppThreshold)
       {
@@ -3497,121 +3610,38 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    cl->newInstanceCount = options->getInitialCount();
 #endif
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() 
-      && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
-#if defined(J9VM_OPT_JITSERVER)
-      && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
-#endif
-      )
-      {
-      TR_PersistentClassInfo *info = compInfo->getPersistentInfo()->getPersistentCHTable()->classGotLoaded(vm, clazz);
-
-      if (info)
-         {
-         // If its an interface class it won't be initialized, so we have to update the CHTable now.
-         // Otherwise, we will update the CHTable once the class gets initialized (i.e. live)
-         //
-         if (vm->isInterfaceClass(clazz))
-            {
-            if (!updateCHTable(vmThread, cl))
-               {
-               allocFailed = true;
-               compInfo->getPersistentInfo()->getPersistentCHTable()->removeClass(vm, clazz, info, true);
-               }
-            }
-         else if (vm->isClassArray(clazz))
-            {
-            if (!compInfo->getPersistentInfo()->getPersistentCHTable()->classGotInitialized(vm, compInfo->persistentMemory(), clazz))
-               {
-               TR_PersistentClassInfo *arrayClazzInfo = compInfo->getPersistentInfo()->getPersistentCHTable()->findClassInfo(clazz);
-               if (arrayClazzInfo)
-                  compInfo->getPersistentInfo()->getPersistentCHTable()->removeClass(vm, clazz, arrayClazzInfo, false);
-               }
-            TR_OpaqueClassBlock *compClazz = vm->getComponentClassFromArrayClass(clazz);
-            if (compClazz)
-               {
-               TR_PersistentClassInfo *clazzInfo = compInfo->getPersistentInfo()->getPersistentCHTable()->findClassInfo(compClazz);
-               if (clazzInfo && !clazzInfo->isInitialized())
-                  {
-                  bool initFailed = false;
-                  if (!compInfo->getPersistentInfo()->getPersistentCHTable()->classGotInitialized(vm, compInfo->persistentMemory(), compClazz))
-                     initFailed = true;
-
-                  if (!initFailed &&
-                      !vm->isClassArray(compClazz) &&
-                      !vm->isInterfaceClass(compClazz) &&
-                      !vm->isPrimitiveClass(compClazz))
-                     initFailed = !updateCHTable(vmThread, ((J9Class *) compClazz));
-
-                  if (initFailed)
-                     {
-                     compInfo->getPersistentInfo()->getPersistentCHTable()->removeClass(vm, compClazz, clazzInfo, false);
-                     allocFailed = true;
-                     }
-                  }
-               }
-            }
-         }
-      else
-         allocFailed = true;
-      }
+   allocFailed = chTableOnClassLoad(vmThread, clazz, compInfo, vm);
 
    compInfo->getPersistentInfo()->ensureUnloadedAddressSetsAreInitialized();
    // TODO: change the above line to something like the following in order to handle allocation failures:
    // if (!allocFailed)
    //    allocFailed = !compInfo->getPersistentInfo()->ensureUnloadedAddressSetsAreInitialized();
 
-   classLoadEvent->failed = allocFailed;
+    *classLoadEventFailed = allocFailed;
 
    // Determine whether this class gets lock reservation
-   if (options->getOption(TR_ReservingLocks)
-#if defined(J9VM_OPT_JITSERVER)
-      && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
-#endif
-      )
-      {
-      TR_J9VMBase *fej9 = (TR_J9VMBase *)(TR_J9VMBase::get(jitConfig, 0));
-      int lwOffset = fej9->getByteOffsetToLockword(clazz);
-      if (lwOffset > 0)
-         {
-         bool reserve = options->getOption(TR_ReserveAllLocks);
-
-         if (!reserve && ((J9JavaVM *)vmThread->javaVM)->systemClassLoader == classLoader)
-            {
-            getClassNameIfNecessary(vm, clazz, className, classNameLen);
-            if (classNameLen == 22 && !strncmp(className, "java/lang/StringBuffer", 22))
-               reserve = true;
-            else if (classNameLen == 16 && !strncmp(className, "java/util/Random", 16))
-               reserve = true;
-            }
-
-         TR::SimpleRegex *resRegex = options->getLockReserveClass();
-         if (!reserve && resRegex != NULL)
-            {
-            getClassNameIfNecessary(vm, clazz, className, classNameLen);
-            if (TR::SimpleRegex::match(resRegex, className))
-               reserve = true;
-            }
-
-         if (reserve)
-            {
-            TR_PersistentClassInfo *classInfo = compInfo
-               ->getPersistentInfo()
-               ->getPersistentCHTable()
-               ->findClassInfoAfterLocking(clazz, vm);
-
-            if (classInfo != NULL)
-               {
-               classInfo->setReservable();
-               if (!TR::Options::_aggressiveLockReservation)
-                  J9CLASS_EXTENDED_FLAGS_SET(cl, J9ClassReservableLockWordInit);
-               }
-            }
-         }
-      }
+   checkForLockReservation(vmThread, jitConfig, classLoader, clazz, vm, compInfo, className, classNameLen);
 
    jitReleaseClassTableMutex(vmThread);
+   }
 
+static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
+   {
+   J9VMInternalClassLoadEvent * classLoadEvent = (J9VMInternalClassLoadEvent *)eventData;
+   J9VMThread * vmThread = classLoadEvent->currentThread;
+   J9Class * cl = classLoadEvent->clazz;
+   J9JITConfig * jitConfig = vmThread->javaVM->jitConfig;
+   if (jitConfig == 0)
+      return; // if a hook gets called after freeJitConfig then not much else we can do
+
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   TR_PersistentCHTable * cht = compInfo->getPersistentInfo()->getPersistentCHTable();
+   if (cht && !cht->isActive())
+      return;
+
+   getOutOfIdleStates(TR::CompilationInfo::SAMPLER_DEEPIDLE, compInfo, "class load");
+
+   jitHookClassLoadHelper(vmThread, jitConfig, cl, compInfo, &(classLoadEvent->failed));
    }
 
 int32_t loadingClasses;
