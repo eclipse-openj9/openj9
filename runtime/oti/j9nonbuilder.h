@@ -5034,6 +5034,10 @@ typedef struct J9VMThread {
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	UDATA safePointCount;
+#if defined(J9VM_OPT_SNAPSHOTS)
+	/* BP for the native special frame used when restoring a Java app thread */
+	UDATA *restoreThreadBP;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 } J9VMThread;
 
 #define J9VMTHREAD_ALIGNMENT  0x100

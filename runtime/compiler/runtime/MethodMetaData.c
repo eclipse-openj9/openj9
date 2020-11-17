@@ -369,7 +369,12 @@ static void fastwalkDebug(J9TR_MethodMetaData * methodMetaData, UDATA offsetPC, 
    else
       {
       UDATA fourByteOffsets = HAS_FOUR_BYTE_OFFSET(methodMetaData);
+#if defined(J9VM_OPT_SNAPSHOTS)
+      J9JITStackAtlas * stackAtlas = J9JITEXCEPTIONTABLE_GCSTACKATLAS_GET(methodMetaData);
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
       J9JITStackAtlas * stackAtlas = (J9JITStackAtlas *) methodMetaData->gcStackAtlas;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
       void * stackMap1 = 0;
       void * inlineMap1 = 0;
       void * stackMap2 = 0;

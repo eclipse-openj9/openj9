@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2019 IBM Corp. and others
+Copyright (c) 2006, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1298,5 +1298,12 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<struct>J9VMRuntimeStateChanged</struct>
 		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
 		<data type="U_32" name="state" description="the VM runtime state" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_TRIGGER_SNAPSHOT</name>
+		<description>Triggered just before a snapshot image is about to be written to file. Current thread will have exclusive VM access</description>
+		<struct>J9TriggerSnapshot</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 	</event>
 </interface>

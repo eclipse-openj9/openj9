@@ -1718,6 +1718,22 @@ static void jitHookThreadStart(J9HookInterface * * hookInterface, UDATA eventNum
 #endif //defined(TR_HOST_POWER)
    }
 
+static void jitHookTriggerSnapshot(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
+   {
+#if defined(J9VM_OPT_SNAPSHOTS)
+   J9VMThread *vmThread = ((J9TriggerSnapshot *)eventData)->currentThread;
+
+   J9JITConfig * jitConfig = vmThread->javaVM->jitConfig;
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
+
+   uint8_t *buffer = persistentInfo->getRuntimeAssumptionTable()->serialize(jitConfig);
+   TR_ASSERT_FATAL(buffer, "Serialized Runtime Assumption buffer NULL!\n");
+   jitConfig->serializedRuntimeAssumptions = buffer;
+
+#endif defined(J9VM_OPT_SNAPSHOTS)
+   }
+
 
 static void jitHookThreadCreate(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
@@ -4145,18 +4161,6 @@ void JitShutdown(J9JITConfig * jitConfig)
          hwProfiler->stopHWProfilerThread(javaVM);
          hwProfiler->releaseAllEntries();
          }
-      }
-
-   if (TR::Options::getCmdLineOptions()->getOption(TR_ForceGenerateReadOnlyCode))
-      {
-#if defined(J9VM_OPT_SNAPSHOTS)
-      if (IS_SNAPSHOT_RUN(jitConfig->javaVM))
-         {
-         uint8_t *buffer = persistentInfo->getRuntimeAssumptionTable()->serialize(jitConfig);
-         TR_ASSERT_FATAL(buffer, "Serialized Runtime Assumption buffer NULL!\n");
-         jitConfig->serializedRuntimeAssumptions = buffer;
-         }
-#endif
       }
 
    // Hardware profiling
@@ -6636,6 +6640,16 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
 
       }
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+   if (IS_SNAPSHOT_RUN(jitConfig->javaVM))
+      {
+      if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_TRIGGER_SNAPSHOT, jitHookTriggerSnapshot, OMR_GET_CALLSITE(), NULL))
+         {
+         j9tty_printf(PORTLIB, "Error: Unable to register snapshot event hook\n");
+         return -1;
+         }
+      }
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
    if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INTERNAL_CLASS_LOAD, jitHookClassLoad, OMR_GET_CALLSITE(), NULL) ||
        (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASS_PREINITIALIZE, jitHookClassPreinitialize, OMR_GET_CALLSITE(), NULL) ||
        (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASS_INITIALIZE, jitHookClassInitialize, OMR_GET_CALLSITE(), NULL))
