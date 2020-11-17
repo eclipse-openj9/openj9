@@ -2379,7 +2379,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
       methodList = classPair->methodList;
 
       // Do this before modifying the CHTable
-      if (table && TR::Options::sharedClassCache() && TR::Options::getCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching))
+      if (table && table->isActive() && TR::Options::sharedClassCache() && TR::Options::getCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching))
          {
          table->resetCachedCCVResult(fe, oldClass);
          }

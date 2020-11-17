@@ -432,21 +432,24 @@ TR_PersistentCHTable::classGotRedefined(
    // 2. Swap the old and new classes in the hierarchy, and re-hash
    //
 
-   TR_PersistentClassInfo *newClass = findClassInfo(newClassId);
-   uintptr_t oldIndex = TR_RuntimeAssumptionTable::hashCode((uintptr_t)oldClassId) % CLASSHASHTABLE_SIZE;
-   uintptr_t newIndex = TR_RuntimeAssumptionTable::hashCode((uintptr_t)newClassId) % CLASSHASHTABLE_SIZE;
-   _classes[oldIndex].remove(oldClass);
-   oldClass->setClassId(newClassId);
-   _classes[newIndex].add(oldClass);
-
-   // The new class should have had a class load event that would create a CHTable entry.
-   // We'll use it to represent the moribund old class.
-   //
-   if (newClass)
+   if (isActive())
       {
-      _classes[newIndex].remove(newClass);
-      newClass->setClassId(oldClassId);
-      _classes[oldIndex].add(newClass);
+      TR_PersistentClassInfo *newClass = findClassInfo(newClassId);
+      uintptr_t oldIndex = TR_RuntimeAssumptionTable::hashCode((uintptr_t)oldClassId) % CLASSHASHTABLE_SIZE;
+      uintptr_t newIndex = TR_RuntimeAssumptionTable::hashCode((uintptr_t)newClassId) % CLASSHASHTABLE_SIZE;
+      _classes[oldIndex].remove(oldClass);
+      oldClass->setClassId(newClassId);
+      _classes[newIndex].add(oldClass);
+
+      // The new class should have had a class load event that would create a CHTable entry.
+      // We'll use it to represent the moribund old class.
+      //
+      if (newClass)
+         {
+         _classes[newIndex].remove(newClass);
+         newClass->setClassId(oldClassId);
+         _classes[oldIndex].add(newClass);
+         }
       }
    }
 
