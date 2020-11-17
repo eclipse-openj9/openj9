@@ -3646,47 +3646,19 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
 
 int32_t loadingClasses;
 
-/// This routine is used to indicate successful initialization of the J9Class
-/// before any Java code (<clinit>) is run. When analyzing code in the <clinit>
-/// with CHTable assumptions, this ensures that the CHTable is updated correctly.
-/// Otherwise a class will not be seen as having been initialized in the Java code
-/// reachable from the <clinit>; causing possibly incorrect devirtualization or other
-/// CHTable opts to be applied in a method called by <clinit> (if the <clinit> for class C calls a
-/// virtual method on an object of class C which is instantiated in the code reachable
-/// from <clinit> (this was an actual WSAD scenario)).
-///
-static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
+static bool chTableOnClassPreinitialize(J9VMThread *vmThread,
+                                        J9Class *cl,
+                                        TR_OpaqueClassBlock *clazz,
+                                        TR::CompilationInfo *compInfo,
+                                        TR_J9VMBase *vm)
    {
-   J9VMClassPreinitializeEvent * classPreinitializeEvent = (J9VMClassPreinitializeEvent *)eventData;
-   J9VMThread * vmThread = classPreinitializeEvent->currentThread;
-   J9Class * cl = classPreinitializeEvent->clazz;
    bool initFailed = false;
-
-   J9JITConfig * jitConfig = vmThread->javaVM->jitConfig;
-   if (jitConfig == 0)
-      return; // if a hook gets called after freeJitConfig then not much else we can do
-
-   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
-
-   loadingClasses = true;
-
-   TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, vmThread);
-   TR_OpaqueClassBlock *clazz = ((TR_J9VMBase *)vm)->convertClassPtrToClassOffset(cl);
-   bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassLoading);
-   if (p)
-      {
-      int32_t len;
-      char * className = vm->getClassNameChars(clazz, len);
-      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--init-- %.*s\n", len, className);
-      }
-
-   jitAcquireClassTableMutex(vmThread);
 
 #if defined(J9VM_OPT_JITSERVER)
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
 #endif
       {
-      if (TR::Options::getCmdLineOptions()->allowRecompilation() 
+      if (TR::Options::getCmdLineOptions()->allowRecompilation()
          && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
          )
          {
@@ -3710,9 +3682,55 @@ static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA e
          }
       }
 
-   classPreinitializeEvent->failed = initFailed;
+   return initFailed;
+   }
+
+static void jitHookClassPreinitializeHelper(J9VMThread *vmThread,
+                                            J9JITConfig *jitConfig,
+                                            J9Class *cl,
+                                            UDATA *classPreinitializeEventFailed)
+   {
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, vmThread);
+   TR_OpaqueClassBlock *clazz = ((TR_J9VMBase *)vm)->convertClassPtrToClassOffset(cl);
+   bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassLoading);
+   if (p)
+      {
+      int32_t len;
+      char * className = vm->getClassNameChars(clazz, len);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--init-- %.*s\n", len, className);
+      }
+
+   jitAcquireClassTableMutex(vmThread);
+
+   *classPreinitializeEventFailed = chTableOnClassPreinitialize(vmThread, cl, clazz, compInfo, vm);
 
    jitReleaseClassTableMutex(vmThread);
+   }
+
+
+/// This routine is used to indicate successful initialization of the J9Class
+/// before any Java code (<clinit>) is run. When analyzing code in the <clinit>
+/// with CHTable assumptions, this ensures that the CHTable is updated correctly.
+/// Otherwise a class will not be seen as having been initialized in the Java code
+/// reachable from the <clinit>; causing possibly incorrect devirtualization or other
+/// CHTable opts to be applied in a method called by <clinit> (if the <clinit> for class C calls a
+/// virtual method on an object of class C which is instantiated in the code reachable
+/// from <clinit> (this was an actual WSAD scenario)).
+///
+static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
+   {
+   J9VMClassPreinitializeEvent * classPreinitializeEvent = (J9VMClassPreinitializeEvent *)eventData;
+   J9VMThread * vmThread = classPreinitializeEvent->currentThread;
+   J9Class * cl = classPreinitializeEvent->clazz;
+
+   J9JITConfig * jitConfig = vmThread->javaVM->jitConfig;
+   if (jitConfig == 0)
+      return; // if a hook gets called after freeJitConfig then not much else we can do
+
+   loadingClasses = true;
+
+   jitHookClassPreinitializeHelper(vmThread, jitConfig, cl, &(classPreinitializeEvent->failed));
    }
 
 static void jitHookClassInitialize(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
