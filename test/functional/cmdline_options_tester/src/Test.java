@@ -29,6 +29,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -73,6 +74,7 @@ class Test {
 	
 	static String archName = System.getProperty("os.arch");
 	static boolean isRiscv = archName.toLowerCase().contains("riscv");
+	static boolean isJava8 = System.getProperty("java.specification.version").equals("1.8");
 
 	/**
 	 * Create a new test case with the given id.
@@ -224,7 +226,10 @@ class Test {
 				TestSuite.printErrorMessage("stderr timed out");
 			}
 
-			proc.waitFor();
+			// Wait an additional 10 min after the regular timeout for the process to finish.
+			// It should finish because the ProcessKiller terminates it, but if it doesn't
+			// then don't wait forever.
+			proc.waitFor(_timeout + (10 * 60 * 1000), TimeUnit.MILLISECONDS);
 
 			testTimer.stop();
 			timer = testTimer.getTimeSpent();
@@ -411,14 +416,24 @@ class Test {
 	}
 
 	public static int getUnixPID(Process process) throws Exception {
-		Class<?> cl = process.getClass();
-		if (!cl.getName().equals("java.lang.UNIXProcess") || isRiscv) {
+		if (isRiscv) {
 			return 0;
 		}
-		Field field = cl.getDeclaredField("pid");
-		field.setAccessible(true);
-		Object pidObject = field.get(process);
-		return ((Integer) pidObject).intValue();
+		if (isJava8) {
+			Class<?> cl = process.getClass();
+			if (!cl.getName().equals("java.lang.UNIXProcess")) {
+				return 0;
+			}
+			Field field = cl.getDeclaredField("pid");
+			field.setAccessible(true);
+			Object pidObject = field.get(process);
+			return ((Integer) pidObject).intValue();
+		} else {
+			// if not Java 8 then it must be Java 11 or later
+			Method pidMethod = Process.class.getMethod("pid");
+			Long pid = (Long)pidMethod.invoke(process);
+			return pid.intValue();
+		}
 	}
 
 	private final class StreamMatcher extends Thread {
