@@ -1668,7 +1668,7 @@ TR::S390InterfaceCallReadOnlySnippet::emitSnippetBody()
 
    cursor = cg()->getObjFmt()->encodeGlobalFunctionCall(dataDestination);
 
-   intptr_t helperCallRA = static_cast<intptr_t>(cursor);
+   intptr_t helperCallRA = reinterpret_cast<intptr_t>(cursor);
    TR_ASSERT_FATAL(cg()->canUseRelativeLongInstructions(interfaceCallPICSlotDataAddress), "interfaceCallPICData %p is outside relative immediate range", interfaceCallPICSlotDataAddress);
    *reinterpret_cast<int32_t*>(cursor) = static_cast<int32_t>(interfaceCallPICSlotDataAddress - helperCallRA);
    cursor += sizeof(int32_t);
