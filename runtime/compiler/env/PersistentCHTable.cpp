@@ -73,6 +73,14 @@ TR_PersistentCHTable::TR_PersistentCHTable(TR_PersistentMemory *trPersistentMemo
 void
 TR_PersistentCHTable::commitSideEffectGuards(TR::Compilation *comp)
    {
+   if (!isActive())
+      {
+      TR_ASSERT_FATAL(comp->getClassesThatShouldNotBeLoaded()->isEmpty(), "Classes that should not be loaded is not empty!");
+      TR_ASSERT_FATAL(comp->getClassesThatShouldNotBeNewlyExtended()->isEmpty(), "Classes that should not be newly extended is not empty!");
+      TR_ASSERT_FATAL(comp->getSideEffectGuardPatchSites()->empty(), "Side effect Guard patch sites not empty!");
+      return;
+      }
+
    TR::list<TR_VirtualGuardSite*> *sideEffectPatchSites = comp->getSideEffectGuardPatchSites();
    bool nopAssumptionIsValid = true;
 
@@ -300,6 +308,9 @@ TR_PersistentCHTable::findSingleJittedImplementer(
 TR_PersistentClassInfo *
 TR_PersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
+   if (!isAccessible())
+      return NULL;
+
    TR_PersistentClassInfo *cl = _classes[TR_RuntimeAssumptionTable::hashCode((uintptr_t)classId) % CLASSHASHTABLE_SIZE].getFirst();
    while (cl &&
           cl->getClassId() != classId)
@@ -316,6 +327,9 @@ TR_PersistentCHTable::findClassInfoAfterLocking(TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
       bool returnClassInfoForAOT)
    {
+   if (!isActive())
+      return NULL;
+
    // for AOT do not use the class hierarchy
    if (comp->compileRelocatableCode() && !returnClassInfoForAOT)
       {
@@ -339,6 +353,9 @@ TR_PersistentCHTable::findClassInfoAfterLocking(
       TR_FrontEnd *fe,
       bool returnClassInfoForAOT)
    {
+   if (!isActive())
+      return NULL;
+
    TR::ClassTableCriticalSection findClassInfoAfterLocking(fe);
    return findClassInfo(classId);
    }
@@ -647,6 +664,7 @@ TR_PersistentCHTable::dumpStats(TR_FrontEnd * fe)
 void
 TR_PersistentCHTable::dumpMethodCounts(TR_FrontEnd *fe, TR_Memory &trMemory)
    {
+   TR_ASSERT_FATAL(isActive(), "Should not be called if table is not active!");
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    for (int32_t i = 0; i < CLASSHASHTABLE_SIZE; i++)
       {
@@ -671,6 +689,7 @@ TR_PersistentCHTable::dumpMethodCounts(TR_FrontEnd *fe, TR_Memory &trMemory)
 void
 TR_PersistentCHTable::resetVisitedClasses() // highly time consuming
    {
+   TR_ASSERT_FATAL(isAccessible(), "Should not be called if table is not accessible!");
    for (int32_t i = 0; i <= CLASSHASHTABLE_SIZE; ++i)
       {
       TR_PersistentClassInfo * cl = _classes[i].getFirst();
@@ -689,6 +708,7 @@ TR_PersistentCHTable::classGotUnloaded(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId)
    {
+   TR_ASSERT_FATAL(isActive(), "Should not be called if table is not active!");
    TR_PersistentClassInfo * cl = findClassInfo(classId);
 
    bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassUnloading);
@@ -708,6 +728,7 @@ TR_PersistentCHTable::classGotLoaded(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId)
    {
+   TR_ASSERT_FATAL(isAccessible(), "Should not be called if table is not accessible!");
    TR_ASSERT(!findClassInfo(classId), "Should not add duplicates to hash table\n");
    TR_PersistentClassInfo *clazz = new (PERSISTENT_NEW) TR_PersistentClassInfo(classId);
    if (clazz)
@@ -720,6 +741,7 @@ TR_PersistentCHTable::classGotLoaded(
 void
 TR_PersistentCHTable::collectAllSubClasses(TR_PersistentClassInfo *clazz, ClassList &classList, TR_J9VMBase *fej9, bool locked)
    {
+   TR_ASSERT_FATAL(isActive(), "Should not be called if table is not active!");
    TR::ClassTableCriticalSection collectSubClasses(fej9, locked);
 
    VisitTracker<> marked(TR::Compiler->persistentAllocator());
@@ -730,6 +752,7 @@ TR_PersistentCHTable::collectAllSubClasses(TR_PersistentClassInfo *clazz, ClassL
 void
 TR_PersistentCHTable::collectAllSubClassesLocked(TR_PersistentClassInfo *clazz, ClassList &classList, VisitTracker<> &marked)
    {
+   TR_ASSERT_FATAL(isActive(), "Should not be called if table is not active!");
    for (auto subClass = clazz->getFirstSubclass(); subClass; subClass = subClass->getNext())
       {
       if (!subClass->getClassInfo()->hasBeenVisited())
@@ -745,6 +768,7 @@ TR_PersistentCHTable::collectAllSubClassesLocked(TR_PersistentClassInfo *clazz, 
 void
 TR_PersistentCHTable::resetCachedCCVResult(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz)
    {
+   TR_ASSERT_FATAL(isActive(), "Should not be called if table is not active!");
    TR::ClassTableCriticalSection collectSubClasses(fej9);
 
    ClassList classList(TR::Compiler->persistentAllocator());
