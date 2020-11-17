@@ -3517,11 +3517,11 @@ static void checkForLockReservation(J9VMThread *vmThread,
       }
    }
 
-static void jitHookClassLoadHelper(J9VMThread *vmThread,
-                                   J9JITConfig * jitConfig,
-                                   J9Class * cl,
-                                   TR::CompilationInfo *compInfo,
-                                   UDATA *classLoadEventFailed)
+void jitHookClassLoadHelper(J9VMThread *vmThread,
+                            J9JITConfig * jitConfig,
+                            J9Class * cl,
+                            TR::CompilationInfo *compInfo,
+                            UDATA *classLoadEventFailed)
    {
    bool allocFailed = false;
    TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, vmThread);
@@ -3684,10 +3684,10 @@ static bool chTableOnClassPreinitialize(J9VMThread *vmThread,
    return initFailed;
    }
 
-static void jitHookClassPreinitializeHelper(J9VMThread *vmThread,
-                                            J9JITConfig *jitConfig,
-                                            J9Class *cl,
-                                            UDATA *classPreinitializeEventFailed)
+void jitHookClassPreinitializeHelper(J9VMThread *vmThread,
+                                     J9JITConfig *jitConfig,
+                                     J9Class *cl,
+                                     UDATA *classPreinitializeEventFailed)
    {
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, vmThread);

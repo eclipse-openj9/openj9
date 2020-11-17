@@ -43,6 +43,7 @@ namespace OMR { class RuntimeAssumption; }
 class TR_RuntimeAssumptionTable;
 namespace TR { class Compilation; }
 namespace TR { class ResolvedMethodSymbol; }
+namespace TR { class CompilationInfo; }
 
 class TR_PersistentCHTable
    {
@@ -150,6 +151,19 @@ class TR_PersistentCHTable
     */
    void resetCachedCCVResult(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz);
 
+   /**
+    * @brief API to activate the CH Table. This API should only be used on the restore run. It also
+    *        should only be run with exclusive access in hand; this is because this method goes through
+    *        all J9Classes, runs the necessary JIT Hooks, and adds the classes to the CH Table.
+    *
+    * @param vmThread J9VMThread pointer
+    * @param fej9     TR_J9VMBase pointer
+    * @param compInfo TR::CompilationInfo pointer
+    *
+    * @return true if successfully activated CH Table, false otherwise.
+    */
+   bool activate(J9VMThread *vmThread, TR_J9VMBase *fej9, TR::CompilationInfo *compInfo);
+
 #ifdef DEBUG
    void dumpStats(TR_FrontEnd *);
 #endif
@@ -175,6 +189,29 @@ class TR_PersistentCHTable
     * @param marked structure to track visited subclasses
     */
    void collectAllSubClassesLocked(TR_PersistentClassInfo *clazz, ClassList &classList, VisitTracker<> &marked);
+
+   /**
+    * @brief Recursive method used to add a class to the CH Table. The reason for the recursion is
+    *        because of the way CH Table and JIT Hook code is structured - it assumes that the parent
+    *        of a class is already in the CH Table. Therefore, this method does the following:
+    *
+    *          1. Add superclasses (recursive invocation)
+    *          2. Add interfaces implemented (recursive invocation)
+    *          3. Trigger class load hook
+    *          4. Trigger class preinitialize hook
+    *          5. Add array class (recursive invocation)
+    *
+    * @param vmThread J9VMThread pointer
+    * @param jitConfig J9JITConfig pointer
+    * @param j9clazz Pointer to J9Class of class to be added to CH Table
+    * @param compInfo TR::CompilationInfo pointer
+    *
+    * @return true if successfully added class to CH Table, false otherwise.
+    */
+   bool addClassToTable(J9VMThread *vmThread,
+                        J9JITConfig *jitConfig,
+                        J9Class *j9clazz,
+                        TR::CompilationInfo *compInfo);
 
    void resetStatus() { _status = Status::reset; }
    void setActive() { _status = Status::active; }

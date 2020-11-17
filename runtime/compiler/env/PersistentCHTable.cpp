@@ -782,3 +782,107 @@ TR_PersistentCHTable::resetCachedCCVResult(TR_J9VMBase *fej9, TR_OpaqueClassBloc
       (*iter)->setCCVResult(CCVResult::notYetValidated);
       }
    }
+
+bool
+TR_PersistentCHTable::addClassToTable(J9VMThread *vmThread,
+                                     J9JITConfig *jitConfig,
+                                     J9Class *j9clazz,
+                                     TR::CompilationInfo *compInfo)
+   {
+   TR_OpaqueClassBlock *opaqueClazz = TR::Compiler->cls.convertClassPtrToClassOffset(j9clazz);
+
+   /* Class is already in table */
+   if (findClassInfo(opaqueClazz))
+      return true;
+
+   /* j/l/Object has a NULL at superclasses[-1] */
+   J9Class *superClazz = j9clazz->superclasses[J9CLASS_DEPTH(j9clazz) - 1];
+
+   /* Add super class first */
+   if (superClazz)
+      if (!addClassToTable(vmThread, jitConfig, superClazz, compInfo))
+         return false;
+
+   /* Add interfaces */
+   J9ITable *element = TR::Compiler->cls.iTableOf(opaqueClazz);
+   while (element != NULL)
+      {
+      /* If j9clazz is an interface class, then the first element
+       * will refer back to itself...
+       */
+      if (element->interfaceClass != j9clazz)
+         if (!addClassToTable(vmThread, jitConfig, element->interfaceClass, compInfo))
+            return false;
+
+      element = TR::Compiler->cls.iTableNext(element);
+      }
+
+   UDATA eventFailed = 0;
+
+   /* Trigger Class Load Hook */
+   jitHookClassLoadHelper(vmThread, jitConfig, j9clazz, compInfo, &eventFailed);
+   if (eventFailed)
+      return false;
+
+   /* Trigger Pre-initialize Hook */
+   if (j9clazz->initializeStatus & J9ClassInitStatusMask != J9ClassInitNotInitialized)
+      {
+      jitHookClassPreinitializeHelper(vmThread, jitConfig, j9clazz, &eventFailed);
+      if (eventFailed)
+         return false;
+      }
+
+   /* Add array class if it exists */
+   if (j9clazz->arrayClass)
+      if (!addClassToTable(vmThread, jitConfig, j9clazz->arrayClass, compInfo))
+         return false;
+
+   return true;
+   }
+
+bool
+TR_PersistentCHTable::activate(J9VMThread *vmThread, TR_J9VMBase *fej9, TR::CompilationInfo *compInfo)
+   {
+   TR_ASSERT_FATAL(!isAccessible(), "CH table is already accessible!");
+
+   TR::ClassTableCriticalSection activateTable(fej9);
+
+   if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Activating CH Table...");
+
+   setActivating();
+
+   bool success = true;
+
+   PORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
+   J9ClassWalkState classWalkState;
+   J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
+
+   J9Class *j9clazz = vmFuncs->allClassesStartDo(&classWalkState, vmThread->javaVM, NULL);
+   while (j9clazz)
+      {
+      if (!addClassToTable(vmThread, fej9->getJ9JITConfig(), j9clazz, compInfo))
+         {
+         success = false;
+         break;
+         }
+
+      j9clazz = vmFuncs->allClassesNextDo(&classWalkState);
+      }
+   vmFuncs->allClassesEndDo(&classWalkState);
+
+   if (success)
+      {
+      setActive();
+      if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Finished activating CH Table...");
+      }
+   else
+      {
+      setFailedToActivate();
+      if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Failed to activate CH Table...");
+      }
+
+   return success;
+   }
