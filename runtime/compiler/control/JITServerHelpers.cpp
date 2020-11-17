@@ -67,8 +67,10 @@ packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
    if (!romClass)
       throw std::bad_alloc();
    memcpy(romClass, origRomClass, origRomClass->romSize);
+   // Update the size to include the strings that will be appended at the end
+   romClass->romSize = totalSize;
 
-   uint8_t *curPos = ((uint8_t *)romClass) + romClass->romSize;
+   uint8_t *curPos = ((uint8_t *)romClass) + origRomClass->romSize;
 
    memcpy(curPos, className, classNameSize);
    NNSRP_SET(romClass->className, curPos);
