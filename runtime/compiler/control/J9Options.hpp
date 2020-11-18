@@ -257,6 +257,11 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _TLHPrefetchBoundaryLineCount;
    static int32_t _TLHPrefetchTLHEndLineCount;
    static int32_t _numFirstTimeCompilationsToExitIdleMode; // use large number to disable the feature
+#if defined(J9VM_OPT_JITSERVER)
+   static int64_t _oldAge;
+   static int64_t _oldAgeUnderLowMemory;
+   static int64_t _timeBetweenPurges;
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    static int32_t _waitTimeToEnterIdleMode;
    static int32_t _waitTimeToEnterDeepIdleMode;
