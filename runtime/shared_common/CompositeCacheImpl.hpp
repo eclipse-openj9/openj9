@@ -83,8 +83,11 @@ public:
 
 	static SH_CompositeCacheImpl* newInstance(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, SH_CompositeCacheImpl* memForConstructor, const char* cacheName, I_32 newPersistentCacheReqd, bool startupForStats, I_8 layer);
 	
-	IDATA startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, BlockPtr cacheMemoryUT, U_64* runtimeFlags, UDATA verboseFlags,
-			const char* rootName, const char* ctrlDirName, UDATA cacheDirPerm, U_32* actualSize, UDATA* localCrashCntr, bool isFirstStart, bool* cacheHasIntegrity);
+	IDATA earlystartup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, BlockPtr cacheMemoryUT, U_64* runtimeFlags, UDATA verboseFlags,
+			const char* rootName, const char* ctrlDirName, UDATA cacheDirPerm, bool isFirstStart);
+
+	IDATA startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, BlockPtr cacheMemoryUT, U_32* actualSize,
+		UDATA* localCrashCntr, bool isFirstStart, bool *cacheHasIntegrity);
 
 	void cleanup(J9VMThread* currentThread);
 
@@ -482,6 +485,8 @@ private:
 	bool _reduceStoreContentionDisabled;
 
 	bool _initializingNewCache;
+
+	J9PortShcVersion _versionData;
 
 	UDATA  _minimumAccessedShrCacheMetadata;
 

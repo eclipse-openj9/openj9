@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,7 +92,14 @@ CompositeCacheTest::createTest(J9JavaVM* vm, IDATA testCacheSize, SH_CompositeCa
 	/* Currently requests non-persistent cache */
 	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myRoot", false, false, 0);
 	cache = (char*)((char*)actualCC + requiredBytes);
-	if (actualCC->startup(vm->mainThread, piconfig, cache, runtimeFlags1, 1, "myRoot", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
+
+	IDATA rc;
+	rc = actualCC->earlystartup(vm->mainThread, piconfig, cache, runtimeFlags1, 1, "myRoot", NULL, J9SH_DIRPERM_ABSENT, true);
+	if (rc == 0) {
+		rc = actualCC->startup(vm->mainThread, piconfig, cache, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity);
+	}
+
+	if (rc != 0) {
 		return 2;
 	}
 	if (cacheSize != SMALL_CACHE_SIZE) {
@@ -108,7 +115,13 @@ CompositeCacheTest::createTest(J9JavaVM* vm, IDATA testCacheSize, SH_CompositeCa
 	memset((void*)memForCC, 0, totalSize);
 	/* Currently requests non-persistent cache */
 	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myRoot", false, false, 0);
-	if (actualCC->startup(vm->mainThread, piconfig, cache, runtimeFlags1, 1, "myRoot", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
+
+	rc = actualCC->earlystartup(vm->mainThread, piconfig, cache, runtimeFlags1, 1, "myRoot", NULL, J9SH_DIRPERM_ABSENT, true);
+	if (rc == 0) {
+		rc = actualCC->startup(vm->mainThread, piconfig, cache, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity);
+	}
+
+	if (rc != 0) {
 		return 5;
 	}
 	totalSize = actualCC->getTotalUsableCacheSize();
@@ -129,7 +142,12 @@ CompositeCacheTest::createTest(J9JavaVM* vm, IDATA testCacheSize, SH_CompositeCa
 	/* Currently requests non-persistent cache */
 	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myCache1", false, false, 0);
 	cache = (char*)((char*)actualCC + requiredBytes);
-	if (actualCC->startup(vm->mainThread, piconfig, cache, runtimeFlags1, 1, "myCache1", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
+
+	rc = actualCC->earlystartup(vm->mainThread, piconfig, cache, runtimeFlags1, 1, "myCache1", NULL, J9SH_DIRPERM_ABSENT, true);
+	if (rc == 0) {
+		rc = actualCC->startup(vm->mainThread, piconfig, cache, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity);
+	}
+	if (rc != 0) {
 		return 8;
 	}
 	*cc1 = actualCC;
@@ -140,7 +158,12 @@ CompositeCacheTest::createTest(J9JavaVM* vm, IDATA testCacheSize, SH_CompositeCa
 	}
 	/* Currently requests non-persistent cache */
 	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myCache1a", false, false, 0);
-	if (actualCC->startup(vm->mainThread, piconfig, cache, runtimeFlags0, 1, "myCache1a", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
+
+	rc = actualCC->earlystartup(vm->mainThread, piconfig, cache, runtimeFlags0, 1, "myCache1a", NULL, J9SH_DIRPERM_ABSENT, true);
+	if (rc == 0) {
+		rc = actualCC->startup(vm->mainThread, piconfig, cache, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity);
+	}
+	if (rc != 0) {
 		return 10;
 	}
 	*cc1a = actualCC;
@@ -152,7 +175,12 @@ CompositeCacheTest::createTest(J9JavaVM* vm, IDATA testCacheSize, SH_CompositeCa
 	/* Currently requests non-persistent cache */
 	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myCache2", false, false, 0);
 	cache = (char*)((char*)actualCC + requiredBytes);
-	if (actualCC->startup(vm->mainThread, piconfig, cache, runtimeFlags1, 1, "myCache2", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
+
+	rc = actualCC->earlystartup(vm->mainThread, piconfig, cache, runtimeFlags1, 1, "myCache2", NULL, J9SH_DIRPERM_ABSENT, true);
+	if (rc == 0) {
+		rc = actualCC->startup(vm->mainThread, piconfig, cache, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity);
+	}
+	if (rc != 0) {
 		return 12;
 	}
 	*cc2 = actualCC;
@@ -163,7 +191,11 @@ CompositeCacheTest::createTest(J9JavaVM* vm, IDATA testCacheSize, SH_CompositeCa
 	}
 	/* Currently requests non-persistent cache */
 	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myCache2a", false, false, 0);
-	if (actualCC->startup(vm->mainThread, piconfig, cache, runtimeFlags0, 1, "myCache2a", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
+	rc = actualCC->earlystartup(vm->mainThread, piconfig, cache, runtimeFlags0, 1, "myCache2a", NULL, J9SH_DIRPERM_ABSENT, true);
+	if (rc == 0) {
+		rc = actualCC->startup(vm->mainThread, piconfig, cache, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity);
+	}
+	if (rc != 0) {
 		return 14;
 	}
 	*cc2a = actualCC;

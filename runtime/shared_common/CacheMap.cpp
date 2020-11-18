@@ -415,7 +415,7 @@ SH_CacheMap::sanityWalkROMClassSegment(J9VMThread* currentThread, SH_CompositeCa
 	Trc_SHR_CM_sanityWalkROMClassSegment_ExitOK(currentThread);
 	return 1;
 }
-	
+
 /**
  * Start up this CacheMap. Should be called after initialization.
  * Sets up access to (or creates) the shared cache and registers it as a ROMClassSegment with the vm.
@@ -497,8 +497,12 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 			 	 * remove AUTOKILL so that we start up with the existing cache */
 				*runtimeFlags &= ~J9SHR_RUNTIMEFLAG_AUTOKILL_DIFF_BUILDID;
 			}
+	
+			rc = ccToUse->earlystartup(currentThread, piconfig, cacheMemoryUT, runtimeFlags, _verboseFlags, _cacheName, cacheDirName, cacheDirPerm, true);
+			if (rc == CC_STARTUP_OK) {
+				rc = ccToUse->startup(currentThread, piconfig, cacheMemoryUT, &_actualSize, &_localCrashCntr, true, cacheHasIntegrity);
+			}
 
-			rc = ccToUse->startup(currentThread, piconfig, cacheMemoryUT, runtimeFlags, _verboseFlags, _cacheName, cacheDirName, cacheDirPerm, &_actualSize, &_localCrashCntr, true, cacheHasIntegrity);
 			if (rc == CC_STARTUP_OK) {
 				if (sanityWalkROMClassSegment(currentThread, ccToUse) == 0) {
 					rc = CC_STARTUP_CORRUPT;

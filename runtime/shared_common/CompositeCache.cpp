@@ -893,48 +893,34 @@ SH_CompositeCacheImpl::notifyPagesCommitted(BlockPtr start, BlockPtr end, UDATA 
  * cannot be found, a new one is created
  * 
  * @param [in] currentThread Pointer to J9VMThread structure for the current thread
- * @param [in] sharedClassConfig
- * @param [in] config A pre-init config used for specifying values such as -Xscmx
+ * @param [in] piconfig A pre-init config used for specifying values such as -Xscmx
  * @param [in] cacheMemory  Used in unit testing to avoid use of _oscache (when non-zero).  In normal system use, always specify zero.
  * @param [in] runtimeFlags_  Runtime flags
  * @param [in] verboseFlags_  Flags controlling the level of verbose messages to be issued
  * @param [in] rootName  Name of shared cache to connect to
  * @param [in] cacheDirName  Name of control file directory to be used (optional - typically NULL)
  * @param [in] cacheDirPerm	 Access permissions for ctrlDirName
- * @param [out] actualSize  Ptr to size in MB of new cache (if one is being created).
- *          If one exists, value is set to size of existing cache.
- * @param [out] localCrashCntr  Initializes local CacheMap value
  * @param [out] cacheHasIntegrity Set to true if the cache is new or has been crc integrity checked, false otherwise
  *
  * @return 0 for success, a negative error code for failure.
  * @retval CC_STARTUP_OK (0) success
  * @retval CC_STARTUP_FAILED (-1)
  * @retval CC_STARTUP_CORRUPT (-2)
- * @retval CC_STARTUP_RESET (-3)
- * @retval CC_STARTUP_SOFT_RESET (-4)
  * @retval CC_STARTUP_NO_CACHE (-5)
  */
 IDATA 
-SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, BlockPtr cacheMemory,
-		U_64* runtimeFlags, UDATA verboseFlags, const char* rootName, const char* ctrlDirName, UDATA cacheDirPerm, U_32* actualSize,
-		UDATA* localCrashCntr, bool isFirstStart, bool *cacheHasIntegrity)
+SH_CompositeCacheImpl::earlystartup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, BlockPtr cacheMemory,
+		U_64* runtimeFlags, UDATA verboseFlags, const char* rootName, const char* ctrlDirName, UDATA cacheDirPerm, bool isFirstStart)
 {
 	IDATA rc = 0;
-	const char* fnName = "CC startup";
 	/* _commonCCInfo must be set before startup is called. All composite caches within 
 	 * a JVM should point to the same _commonCCInfo structure.
 	 */
 	Trc_SHR_Assert_True(_commonCCInfo != NULL);
 	SH_SharedCacheHeaderInit* headerInit = SH_SharedCacheHeaderInit::newInstance(_newHdrPtr);
-	J9PortShcVersion versionData;
 	I_32 openMode = 0;
 	UDATA createFlags = J9SH_OSCACHE_CREATE;
-	bool hasWriteMutex = SH_CompositeCacheImpl::hasWriteMutex(currentThread);
-	bool hasReadWriteMutex = SH_CompositeCacheImpl::hasReadWriteMutex(currentThread);
-	bool doReleaseWriteMutex = false;
-	bool doReleaseReadWriteMutex = false;
 	J9JavaVM* vm = currentThread->javaVM;
-	PORT_ACCESS_FROM_PORT(_portlib);
 
 	/* This function/method may be called indirectly from j9shr_init, return CC_STARTUP_OK if it is already started. */
 	if (_started == true) {
@@ -942,8 +928,6 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 	}
 
 	Trc_SHR_CC_startup_Entry1(currentThread, cacheMemory, rootName, ctrlDirName, UnitTest::unitTest);
-
-	*cacheHasIntegrity = false;
 
 	_cacheName = rootName;
 	_runtimeFlags = runtimeFlags;
@@ -1003,8 +987,6 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 		}
 	}
 
-	*actualSize = 0;
-
 	if (cacheMemory != NULL) {
 		if (!(((J9SharedCacheHeader*)cacheMemory)->ccInitComplete & CC_STARTUP_COMPLETE)) {
 			U_32 readWriteBytes = (U_32)((piconfig->sharedClassReadWriteBytes > 0) ? piconfig->sharedClassReadWriteBytes : 0);
@@ -1039,12 +1021,12 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 		IDATA lockID;
 		bool OSCStarted = false;
 
-		setCurrentCacheVersion(vm, J2SE_VERSION(currentThread->javaVM), &versionData);
+		setCurrentCacheVersion(vm, J2SE_VERSION(currentThread->javaVM), &_versionData);
 
 		/* Note that OSCache startup does not leave any kind of lock on the cache, so the cache file could in theory
 		 * be recreated by another process whenever we're not holding a lock on it. This can happen until attach() is called */
 
-		OSCStarted = _oscache->startup(vm, ctrlDirName, cacheDirPerm, rootName, piconfig, ((_ccHead == NULL) ? SH_CompositeCacheImpl::getNumRequiredOSLocks() : 0), createFlags, _verboseFlags, *_runtimeFlags, openMode, vm->sharedCacheAPI->storageKeyTesting, &versionData, headerInit, SHR_STARTUP_REASON_NORMAL);
+		OSCStarted = _oscache->startup(vm, ctrlDirName, cacheDirPerm, rootName, piconfig, ((_ccHead == NULL) ? SH_CompositeCacheImpl::getNumRequiredOSLocks() : 0), createFlags, _verboseFlags, *_runtimeFlags, openMode, vm->sharedCacheAPI->storageKeyTesting, &_versionData, headerInit, SHR_STARTUP_REASON_NORMAL);
 
 		if ((J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_TEST_BAD_BUILDID))
 			&& (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_SNAPSHOT))
@@ -1108,6 +1090,57 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 			}
 		}
 	}
+	
+	Trc_SHR_CC_startup_Exit5(currentThread, rc);
+	return rc;
+}
+
+/**
+ * Starts the SH_CompositeCache. 
+ *
+ * The method tries to attach to the shared cache that was connected by earlystartup()
+ * 
+ * @param [in] currentThread Pointer to J9VMThread structure for the current thread
+ * @param [in] piconfig A pre-init config used for specifying values such as -Xscmx
+ * @param [in] cacheMemory  Used in unit testing to avoid use of _oscache (when non-zero).  In normal system use, always specify zero.
+ * @param [out] actualSize  Ptr to size in MB of new cache (if one is being created).
+ *          If one exists, value is set to size of existing cache.
+ * @param [out] localCrashCntr  Initializes local CacheMap value
+ * @param [out] cacheHasIntegrity Set to true if the cache is new or has been crc integrity checked, false otherwise
+ *
+ * @return 0 for success, a negative error code for failure.
+ * @retval CC_STARTUP_OK (0) success
+ * @retval CC_STARTUP_FAILED (-1)
+ * @retval CC_STARTUP_CORRUPT (-2)
+ * @retval CC_STARTUP_RESET (-3)
+ * @retval CC_STARTUP_SOFT_RESET (-4)
+ * @retval CC_STARTUP_NO_CACHE (-5)
+ */
+IDATA 
+SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, BlockPtr cacheMemory, U_32* actualSize,
+		UDATA* localCrashCntr, bool isFirstStart, bool *cacheHasIntegrity)
+{
+	IDATA rc = 0;
+	const char* fnName = "CC startup";
+	/* _commonCCInfo must be set before startup is called. All composite caches within 
+	 * a JVM should point to the same _commonCCInfo structure.
+	 */
+	Trc_SHR_Assert_True(_commonCCInfo != NULL);
+	bool hasWriteMutex = SH_CompositeCacheImpl::hasWriteMutex(currentThread);
+	bool hasReadWriteMutex = SH_CompositeCacheImpl::hasReadWriteMutex(currentThread);
+	bool doReleaseWriteMutex = false;
+	bool doReleaseReadWriteMutex = false;
+	J9JavaVM* vm = currentThread->javaVM;
+	PORT_ACCESS_FROM_PORT(_portlib);
+
+	/* This function/method may be called indirectly from j9shr_init, return CC_STARTUP_OK if it is already started. */
+	if (_started == true) {
+		return CC_STARTUP_OK;
+	}
+
+	*cacheHasIntegrity = false;
+	*actualSize = 0;
+
 	if (!hasWriteMutex) {
 		IDATA result;
 		
@@ -1126,7 +1159,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 		if (cacheMemory != NULL) {
 			_theca = (J9SharedCacheHeader*)cacheMemory;
 		} else {
-			_theca = (J9SharedCacheHeader*)_oscache->attach(currentThread, &versionData);
+			_theca = (J9SharedCacheHeader*)_oscache->attach(currentThread, &_versionData);
 
 			/* Verify that a non-realtime VM is not attaching to a Realtime cache when printing stats */
 			if ((_theca != 0) && getContainsCachelets() &&
@@ -1564,7 +1597,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 			 * already initialized during _parent startup. Else _debugData needs to be initialized
 			 */
 			if (this->_parent == NULL) {
-				if (_debugData->Init(currentThread, _theca, (AbstractMemoryPermission *)this, verboseFlags, runtimeFlags, false) == false) {
+				if (_debugData->Init(currentThread, _theca, (AbstractMemoryPermission *)this, _verboseFlags, _runtimeFlags, false) == false) {
 					setCorruptCache(currentThread, _debugData->getFailureReason(), _debugData->getFailureValue());
 					rc = CC_STARTUP_CORRUPT;
 				}
