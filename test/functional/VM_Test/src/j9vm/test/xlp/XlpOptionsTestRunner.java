@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -204,6 +204,7 @@ public class XlpOptionsTestRunner extends Runner {
 			break;
 			
 		case LINUX:
+		case MAC:
 		case WINDOWS:
 			/* No -Xlp option */
 			xlpOptionsList.add(new XlpOption(null, false));
@@ -616,6 +617,7 @@ public class XlpOptionsTestRunner extends Runner {
 						switch(osName) {
 						case AIX:
 						case LINUX:
+						case MAC:
 						case WINDOWS:
 							if (line.indexOf(XlpUtil.XLP_PAGE_TYPE_NOT_USED) != -1) {
 								pageTypeFound = true;
@@ -666,6 +668,7 @@ public class XlpOptionsTestRunner extends Runner {
 						switch(osName) {
 						case AIX:
 						case LINUX:
+						case MAC:
 						case WINDOWS:
 							if (line.indexOf(XlpUtil.XLP_PAGE_TYPE_NOT_USED) != -1) {
 								requestedPageType = XlpUtil.XLP_PAGE_TYPE_NOT_USED;
