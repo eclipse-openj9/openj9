@@ -71,6 +71,7 @@
 #include "optimizer/Optimizer.hpp"
 #include "optimizer/SPMDPreCheck.hpp"
 #include "optimizer/Structure.hpp"
+#include "optimizer/TransformUtil.hpp"
 #include "optimizer/UseDefInfo.hpp"
 #include "optimizer/ValueNumberInfo.hpp"
 #include "runtime/J9Runtime.hpp"
@@ -596,8 +597,32 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
          return visitNodeToSIMDize(node, 0, node->getFirstChild(), pSPMDInfo, isCheckMode, loop, comp, usesInLoop, useNodesOfDefsInLoop, useDefInfo, defsInLoop, reductionHashTab, node->getSymbolReference());
          }
       }
-   else if (scalarOp.isBranch() || node->getOpCodeValue()==TR::BBEnd ||
-            node->getOpCodeValue()==TR::BBStart || node->getOpCodeValue()==TR::asynccheck ||
+   else if (node->getOpCodeValue() == TR::asynccheck)
+      {
+      /*
+       * By default, loops with asynccheck nodes are not supported for AutoSIMD.
+       * If TR_enableAutoSIMDSkipAsynccheck is set, the asynccheck nodes will be removed from the loop while vectorizing it.
+       */
+      static bool enableAutoSIMDSkipAsynccheck = feGetEnv("TR_enableAutoSIMDSkipAsynccheck") ? true : false;
+
+      if (enableAutoSIMDSkipAsynccheck)
+         {
+         if (!isCheckMode)
+            {
+            dumpOptDetails(comp, "Removing asynccheck. TreeTop: %p, node: %p\n", tt, node);
+
+            optimizer()->prepareForTreeRemoval(tt);
+            TR::TransformUtil::removeTree(comp, tt);
+            }
+         return true;
+         }
+      else
+         {
+         if (trace) traceMsg(comp, "asynccheck nodes are not supported for AutoSIMD. node: %p\n", node);
+         return false;
+         }
+      }
+   else if (scalarOp.isBranch() || node->getOpCodeValue()==TR::BBEnd || node->getOpCodeValue()==TR::BBStart ||
             (node->getOpCodeValue()==TR::compressedRefs && node->getFirstChild()->getOpCode().isLoad()))
       {
       //Compressed ref treetops with a load can be ignored due to the load
