@@ -49,7 +49,9 @@ namespace J9 { typedef J9::CodeGenerator CodeGeneratorConnector; }
 #include "optimizer/Dominators.hpp"
 #include "cs2/arrayof.h"
 
+#if defined(ENABLE_GPU)
 class NVVMIRBuffer;
+#endif
 class TR_BitVector;
 class TR_SharedMemoryAnnotations;
 class TR_J9VMBase;
@@ -436,6 +438,7 @@ public:
    // --------------------------------------------------------------------------
    // GPU
    //
+#if defined(ENABLE_GPU)
    void generateGPU();
 
    void dumpInvariant(CS2::ArrayOf<gpuParameter, TR::Allocator>::Cursor pit, NVVMIRBuffer &ir, bool isbufferalign);
@@ -451,6 +454,7 @@ public:
    bool handleRecognizedField(TR::Node *node, NVVMIRBuffer &ir);
 
    void printArrayCopyNVVMIR(TR::Node *node, NVVMIRBuffer &ir, TR::Compilation *comp);
+#endif
 
 
    bool hasFixedFrameC_CallingConvention() {return _j9Flags.testAny(HasFixedFrameC_CallingConvention);}

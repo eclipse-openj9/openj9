@@ -1266,6 +1266,7 @@ static const char * nvvmOpCodeNames[] =
 
 static_assert(sizeof(nvvmOpCodeNames) == (TR::NumIlOps*sizeof(char*)), "Number of elements in nvvmOpCodeNames does not match the value of TR::NumIlOps");
 
+#if defined(ENABLE_GPU)
 static const char* getOpCodeName(TR::ILOpCodes opcode) {
 
    TR_ASSERT(opcode < TR::NumIlOps, "Wrong opcode");
@@ -2909,10 +2910,8 @@ J9::CodeGenerator::dumpInvariant(
       }
    }
 
-#ifdef ENABLE_GPU
 bool calculateComputeCapability(int tracing, short* computeMajor, short* computeMinor, int deviceId);
 bool getNvvmVersion(int tracing, int* majorVersion, int* minorVersion);
-#endif
 
 TR::CodeGenerator::GPUResult
 J9::CodeGenerator::dumpNVVMIR(
@@ -2946,7 +2945,6 @@ J9::CodeGenerator::dumpNVVMIR(
    _gpuCanUseReadOnlyCache = false;
    _gpuUseOldLdgCalls = false;
 
-#ifdef ENABLE_GPU
    if (!calculateComputeCapability(/*tracing*/0, &computeMajor, &computeMinor, /*deviceId*/0))
       {
       traceMsg(self()->comp(), "calculateComputeCapability was unsuccessful.\n");
@@ -2972,7 +2970,6 @@ J9::CodeGenerator::dumpNVVMIR(
       {
       _gpuUseOldLdgCalls = true;
       }
-#endif
 
    TR::CFG *cfg = self()->comp()->getFlowGraph();
    TR_BitVector targetBlocks(cfg->getNumberOfNodes(), self()->comp()->trMemory(), stackAlloc, growable);
@@ -3615,3 +3612,4 @@ J9::CodeGenerator::objectHeaderInvariant()
    return self()->objectLengthOffset() + 4 /*length*/ ;
    }
 
+#endif
