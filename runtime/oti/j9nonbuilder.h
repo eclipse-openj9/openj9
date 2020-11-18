@@ -3917,6 +3917,7 @@ typedef struct J9JITConfig {
 	int32_t (*waitJITServerTermination)(struct J9JITConfig *jitConfig);
 	uint64_t clientUID;
 #endif /* J9VM_OPT_JITSERVER */
+	void* serializedRuntimeAssumptions;
 } J9JITConfig;
 
 #define J9JIT_GROW_CACHES  0x100000
