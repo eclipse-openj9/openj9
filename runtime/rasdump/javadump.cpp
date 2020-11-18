@@ -1029,6 +1029,15 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	_OutputStream.writeCharacters("1CIJCLVERSION  " OPENJDK_SHA " based on " OPENJDK_TAG "\n");
 #endif
 
+	/* Write the vendor, product name, and extension version */
+	_OutputStream.writeCharacters("1CIVENDOR      " JAVA_VENDOR "\n");
+#if defined(J9PRODUCT_NAME)
+	_OutputStream.writeCharacters("1CIPRODUCT     " J9PRODUCT_NAME "\n");
+#endif /* defined(J9PRODUCT_NAME) */
+#if defined(J9JDK_EXT_VERSION)
+	_OutputStream.writeCharacters("1CIEXTVERSION  " J9JDK_EXT_VERSION "\n");
+#endif /* defined(J9JDK_EXT_VERSION) */
+
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	_OutputStream.writeCharacters("1CIJITMODES    ");
 
