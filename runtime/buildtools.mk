@@ -210,7 +210,8 @@ constantpool : buildtools
 
 # Backslashes need replacing on Windows/Cygwin
 ESCAPED_JAVA := $(subst \,/,$(JAVA))
-PLATFORM     := $(if $(wildcard buildtools/j9ddr-autoblob.jar),$(shell $(JAVA) -cp buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GetNativeDirectory))
+AUTOBLOB_JAR := buildtools/j9ddr-autoblob.jar
+PLATFORM     := $(if $(wildcard $(AUTOBLOB_JAR)),$(shell $(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.GetNativeDirectory))
 SUPERSET     := superset.$(SPEC).dat
 
 # Trigger cross-compilation & use linux_x86 DDR configuration
@@ -232,7 +233,7 @@ ddr : constantpool hooktool nls tracing
 	if [ -e ddr/j9ddrgen.mk ] ; then \
 		$(MAKE) -C ddr -f ddr_buildtools.mk JAVA=$(ESCAPED_JAVA) PLATFORM=$(PLATFORM) generate_ddr_blob_c ; \
 		echo "Generating updated superset ready for code generation" ; \
-		$(ESCAPED_JAVA) -cp buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GenerateSpecSuperset -d ddr/superset -s ddr,gc_ddr -f $(SUPERSET) ; \
+		$(ESCAPED_JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.GenerateSpecSuperset -d ddr/superset -s ddr,gc_ddr -f $(SUPERSET) ; \
 	fi
 endif
 

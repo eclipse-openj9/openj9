@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 1991, 2017 IBM Corp. and others
+# Copyright (c) 1991, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,76 +29,76 @@
 #3. Run the C++ parser (extract_structures) to produce an .xml file containing structure data
 #4. Transform the data in the XML file, and the #defines in the original header, into C or C++ to be compiled
 
+AUTOBLOB_JAR := ../buildtools/j9ddr-autoblob.jar
+
 #VM blob generation
 %blob.c: %structs.properties
-	$(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GenerateInputCFile $*structs.properties $*structs.c
+	$(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.GenerateInputCFile $*structs.properties $*structs.c
 #linux specific operations 
 ifneq (,$(findstring linux_x86,$(PLATFORM)))
-	chmod 755 ../buildtools/extract_structures/${PLATFORM}/extract_structures
-	cpp -undef -nostdinc -include typestubs.h -Idummy_headers $(shell $(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) -o $*structs.i $*structs.c
+	chmod 755 ../buildtools/extract_structures/$(PLATFORM)/extract_structures
+	cpp -undef -nostdinc -include typestubs.h -Idummy_headers $(shell $(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) -o $*structs.i $*structs.c
 endif
 #windows specific operations
 ifneq (,$(findstring win_x86,$(PLATFORM)))
-	-chmod 755 ../buildtools/extract_structures/${PLATFORM}/extract_structures.exe
-	cl /P -u -X /FItypestubs.h -Idummy_headers $(shell $(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) /Fo$*structs.i $*structs.c
+	-chmod 755 ../buildtools/extract_structures/$(PLATFORM)/extract_structures.exe
+	cl /P -u -X /FItypestubs.h -Idummy_headers $(shell $(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) /Fo$*structs.i $*structs.c
 endif
-	$(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.StripGarbage $*structs.i
-	../buildtools/extract_structures/${PLATFORM}/extract_structures --c89 --no_warnings $*structs.ic
-	$(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GenerateBlobC -props $*structs.properties -cfile $*structs.ic -xmlfile $*structs.xml -outfile $@ -j9flags ../buildspecs/j9.flags $(shell $(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS))
+	$(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.StripGarbage $*structs.i
+	../buildtools/extract_structures/$(PLATFORM)/extract_structures --c89 --no_warnings $*structs.ic
+	$(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.GenerateBlobC -props $*structs.properties -cfile $*structs.ic -xmlfile $*structs.xml -outfile $@ -j9flags ../buildspecs/j9.flags $(shell $(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS))
 	-rm -f $*structs.c $*structs.i $*structs.ic $*structs.xml
 	
 #OMR blob generation
 omrddrblob.c: omrddrstructs.properties
-	$(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GenerateInputCFile omrddrstructs.properties omrddrstructs.c
+	$(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.GenerateInputCFile omrddrstructs.properties omrddrstructs.c
 #linux specific operations 
 ifneq (,$(findstring linux_x86,$(PLATFORM)))
-	chmod 755 ../buildtools/extract_structures/${PLATFORM}/extract_structures
-	cpp -undef -nostdinc -include typestubs.h -Idummy_headers $(shell $(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) -o omrddrstructs.i omrddrstructs.c
+	chmod 755 ../buildtools/extract_structures/$(PLATFORM)/extract_structures
+	cpp -undef -nostdinc -include typestubs.h -Idummy_headers $(shell $(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) -o omrddrstructs.i omrddrstructs.c
 endif
 #windows specific operations
 ifneq (,$(findstring win_x86,$(PLATFORM)))
-	-chmod 755 ../buildtools/extract_structures/${PLATFORM}/extract_structures.exe
-	cl /P -u -X /FItypestubs.h -Idummy_headers $(shell $(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) /Foomrddrstructs.i omrddrstructs.c
+	-chmod 755 ../buildtools/extract_structures/$(PLATFORM)/extract_structures.exe
+	cl /P -u -X /FItypestubs.h -Idummy_headers $(shell $(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) /Foomrddrstructs.i omrddrstructs.c
 endif
-	$(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.StripGarbage omrddrstructs.i
-	../buildtools/extract_structures/${PLATFORM}/extract_structures --c89 --no_warnings omrddrstructs.ic
-	$(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GenerateBlobC -props omrddrstructs.properties -cfile omrddrstructs.ic -xmlfile omrddrstructs.xml -outfile $@ -j9flags ../buildspecs/j9.flags $(shell $(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS))
+	$(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.StripGarbage omrddrstructs.i
+	../buildtools/extract_structures/$(PLATFORM)/extract_structures --c89 --no_warnings omrddrstructs.ic
+	$(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.GenerateBlobC -props omrddrstructs.properties -cfile omrddrstructs.ic -xmlfile omrddrstructs.xml -outfile $@ -j9flags ../buildspecs/j9.flags $(shell $(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS))
 	-rm -f omrddrstructs.c omrddrstructs.i omrddrstructs.ic omrddrstructs.xml
 
 #JIT blob generation
 jitddrblob.c: jitddrstructs.properties
-	$(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GenerateInputCFile jitddrstructs.properties jitddrstructs.c
+	$(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.GenerateInputCFile jitddrstructs.properties jitddrstructs.c
 #linux specific operations
 ifneq (,$(findstring linux_x86,$(PLATFORM)))
-	chmod 755 ../buildtools/extract_structures/${PLATFORM}/extract_structures
-	cpp -nostdinc -include typestubs.h -Idummy_headers $(shell $(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) -o jitddrstructs.i jitddrstructs.c
+	chmod 755 ../buildtools/extract_structures/$(PLATFORM)/extract_structures
+	cpp -nostdinc -include typestubs.h -Idummy_headers $(shell $(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) -o jitddrstructs.i jitddrstructs.c
 endif
 #windows specific operations
 ifneq (,$(findstring win_x86,$(PLATFORM)))
-	-chmod 755 ../buildtools/extract_structures/${PLATFORM}/extract_structures.exe
-	cl /P -X /FItypestubs.h -Idummy_headers $(shell $(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) /Fojitddrstructs.i jitddrstructs.c
+	-chmod 755 ../buildtools/extract_structures/$(PLATFORM)/extract_structures.exe
+	cl /P -X /FItypestubs.h -Idummy_headers $(shell $(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) /Fojitddrstructs.i jitddrstructs.c
 endif
-	$(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.StripGarbage jitddrstructs.i
-	../buildtools/extract_structures/${PLATFORM}/extract_structures --c89 --no_warnings jitddrstructs.ic
-	$(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GenerateBlobC -props jitddrstructs.properties -cfile jitddrstructs.ic -xmlfile jitddrstructs.xml -outfile $@ -j9flags ../buildspecs/j9.flags $(shell $(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS))
+	$(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.StripGarbage jitddrstructs.i
+	../buildtools/extract_structures/$(PLATFORM)/extract_structures --c89 --no_warnings jitddrstructs.ic
+	$(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.GenerateBlobC -props jitddrstructs.properties -cfile jitddrstructs.ic -xmlfile jitddrstructs.xml -outfile $@ -j9flags ../buildspecs/j9.flags $(shell $(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS))
 	-rm -f jitddrstructs.c jitddrstructs.i jitddrstructs.ic jitddrstructs.xml
 
 #GC blob generation
 %blob.cpp: %structs.properties
-	$(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GenerateInputCFile $*structs.properties $*structs.cpp
+	$(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.GenerateInputCFile $*structs.properties $*structs.cpp
 #linux specific operations 
 ifneq (,$(findstring linux_x86,$(PLATFORM)))
-	chmod 755 ../buildtools/extract_structures/${PLATFORM}/extract_structures
-	cpp -undef -nostdinc -include $(UMA_PATH_TO_ROOT)/ddr/typestubs.h -I$(UMA_PATH_TO_ROOT)/ddr/dummy_headers -DTYPESTUB_CPLUSPLUS=1 $(shell $(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) -o $*structs.i $*structs.cpp
+	chmod 755 ../buildtools/extract_structures/$(PLATFORM)/extract_structures
+	cpp -undef -nostdinc -include $(UMA_PATH_TO_ROOT)/ddr/typestubs.h -I$(UMA_PATH_TO_ROOT)/ddr/dummy_headers -DTYPESTUB_CPLUSPLUS=1 $(shell $(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) -o $*structs.i $*structs.cpp
 endif
 #windows specific operations
 ifneq (,$(findstring win_x86,$(PLATFORM)))
-	-chmod 755 ../buildtools/extract_structures/${PLATFORM}/extract_structures.exe
-	cl /P -u -X /FI$(UMA_PATH_TO_ROOT)/ddr/typestubs.h -I$(UMA_PATH_TO_ROOT)/ddr/dummy_headers -DTYPESTUB_CPLUSPLUS=1 $(shell $(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) -o $*structs.i $*structs.cpp
+	-chmod 755 ../buildtools/extract_structures/$(PLATFORM)/extract_structures.exe
+	cl /P -u -X /FI$(UMA_PATH_TO_ROOT)/ddr/typestubs.h -I$(UMA_PATH_TO_ROOT)/ddr/dummy_headers -DTYPESTUB_CPLUSPLUS=1 $(shell $(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS)) -o $*structs.i $*structs.cpp
 endif
-	$(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.StripGarbage $*structs.i
-	../buildtools/extract_structures/${PLATFORM}/extract_structures --c++ --no_warnings $*structs.ic
-	$(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GenerateBlobC -props $*structs.properties -cfile $*structs.ic -xmlfile $*structs.xml -outfile $@ -j9flags ../buildspecs/j9.flags $(shell $(JAVA) -cp ../buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS))
+	$(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.StripGarbage $*structs.i
+	../buildtools/extract_structures/$(PLATFORM)/extract_structures --c++ --no_warnings $*structs.ic
+	$(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.GenerateBlobC -props $*structs.properties -cfile $*structs.ic -xmlfile $*structs.xml -outfile $@ -j9flags ../buildspecs/j9.flags $(shell $(JAVA) -cp $(AUTOBLOB_JAR) com.ibm.j9ddr.autoblob.ExtractCPPFlags $(CFLAGS))
 	-rm -f $*structs.cpp $*structs.i $*structs.ic $*structs.xml
-
-
