@@ -174,8 +174,6 @@ getCurrentClassLoader(J9VMThread *currentThread)
 			 * This nativeMethod can't be cached cause HCR might make it invalid.
 			 */
 			if (J9VMJDKINTERNALLOADERNATIVELIBRARIES_LOAD_METHOD(currentThread->javaVM) == nativeMethod) {
-				J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-				vmFuncs->internalEnterVMFromJNI(currentThread);
 				/* The current native method has a NativeLibraryImpl instance as its first argument */
 				j9object_t nativeLibraryImplObject = (j9object_t)(currentThread->arg0EA[0]);
 				Trc_VM_findNativeLibrariesLoad_nativeMethod(currentThread, nativeMethod, nativeLibraryImplObject, classLoader);
@@ -195,7 +193,6 @@ getCurrentClassLoader(J9VMThread *currentThread)
 						}
 					}
 				}
-				vmFuncs->internalExitVMToJNI(currentThread);
 				Trc_VM_findNativeLibrariesLoad_classLoader(currentThread, classLoader);
 			}
 #endif /* JAVA_SPEC_VERSION >= 15 */
