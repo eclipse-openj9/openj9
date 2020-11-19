@@ -57,7 +57,7 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
    void dumpRelocationData();
    uint8_t* dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose);
 
-   uint8_t *initializeCommonAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationRecord *reloRecord);
+   void initializeCommonAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationRecord *reloRecord);
 
    static void interceptAOTRelocation(TR::ExternalRelocation *relocation);
 

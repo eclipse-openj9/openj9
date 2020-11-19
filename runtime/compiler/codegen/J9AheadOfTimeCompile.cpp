@@ -174,12 +174,10 @@ static const char* getNameForMethodRelocation (int type)
    return NULL;
    }
 
-uint8_t *
+void
 J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationRecord *reloRecord)
    {
-   uint8_t *cursor = relocation->getRelocationData();
-
-   TR::Compilation *comp = TR::comp();
+   TR::Compilation *comp = self()->comp();
    TR_RelocationRuntime *reloRuntime = comp->reloRuntime();
    TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
    TR::SymbolValidationManager *symValManager = comp->getSymbolValidationManager();
@@ -188,11 +186,6 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
    uint8_t * aotMethodCodeStart = reinterpret_cast<uint8_t *>(comp->getRelocatableMethodCodeStart());
 
    TR_ExternalRelocationTargetKind kind = relocation->getTargetKind();
-
-   // initializeCommonAOTRelocationHeader is currently in the process
-   // of becoming the canonical place to initialize the platform agnostic
-   // relocation headers; new relocation records' header should be
-   // initialized here.
    switch (kind)
       {
       case TR_ConstantPool:
@@ -1128,12 +1121,10 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          break;
 
       default:
-         return cursor;
+         TR_ASSERT(false, "Unknown relo type %d!\n", kind);
+         comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown relo type %d!\n", kind);
+         break;
       }
-
-   cursor += TR_RelocationRecord::getSizeOfAOTRelocationHeader(kind);
-
-   return cursor;
    }
 
 uint8_t *
@@ -1150,7 +1141,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
    int32_t offsetSize = reloRecord->wideOffsets(reloTarget) ? 4 : 2;
 
-   uint8_t *startOfOffsets = cursor + TR_RelocationRecord::getSizeOfAOTRelocationHeader(kind);
+   uint8_t *startOfOffsets = cursor + self()->getSizeOfAOTRelocationHeader(kind);
    uint8_t *endOfCurrentRecord = cursor + reloRecord->size(reloTarget);
 
    bool orderedPair = isOrderedPair(kind);

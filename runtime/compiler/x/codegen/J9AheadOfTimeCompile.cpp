@@ -150,14 +150,14 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          TR_ASSERT(comp->target().is64Bit(), "TR_PicTrampolines not supported on 32-bit");
          uint32_t numTrampolines = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress()));
          ptRecord->setNumTrampolines(reloTarget, numTrampolines);
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
         break;
 
       default:
-         cursor = self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
+         self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
       }
+
+   cursor += self()->getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
    return cursor;
    }
 

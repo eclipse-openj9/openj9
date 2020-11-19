@@ -129,8 +129,6 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          dsfmRecord->setSymbolID(reloTarget, symbolID);
          dsfmRecord->setSymbolType(reloTarget, static_cast<TR::SymbolType>(symbolType));
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
@@ -144,15 +142,14 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          hcrRecord->setReloFlags(reloTarget, flags);
          hcrRecord->setOffset(reloTarget, gv);
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
       default:
-         cursor = self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
+         self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
       }
 
+   cursor += self()->getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
    return cursor;
    }
 

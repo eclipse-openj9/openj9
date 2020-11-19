@@ -160,15 +160,14 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
          ecRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          ecRecord->setBCIndex(reloTarget, bcIndex);
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
       default:
-         cursor = self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
-
+         self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
       }
+
+   cursor += self()->getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
    return cursor;
    }
 

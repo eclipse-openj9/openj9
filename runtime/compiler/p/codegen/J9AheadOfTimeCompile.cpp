@@ -156,8 +156,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          caRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          caRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(constantPool));
          caRecord->setCpIndex(reloTarget, symRef->getCPIndex());
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
@@ -179,8 +177,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          daRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(constantPool));
          daRecord->setCpIndex(reloTarget, symRef->getCPIndex());
          daRecord->setOffset(reloTarget, symRef->getOffset());
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
@@ -193,8 +189,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          maRecord->setReloFlags(reloTarget, flags);
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
@@ -216,8 +210,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
             {
             TR_ASSERT_FATAL(false, "Creating TR_FixedSeqAddress/TR_FixedSeq2Address relo for 32-bit target");
             }
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
@@ -242,8 +234,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
             {
             TR_ASSERT_FATAL(0, "Creating TR_LoadAddress/TR_LoadAddressTempReg relo for 32-bit target");
             }
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
@@ -267,8 +257,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          rRecord->setReloFlags(reloTarget, flags);
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
@@ -299,8 +287,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          rsRecord->setReloFlags(reloTarget, flags);
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
@@ -325,8 +311,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          acaRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          acaRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache);
          acaRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache);
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
@@ -352,8 +336,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          gvRecord->setReloFlags(reloTarget, flags);
          gvRecord->setOffset(reloTarget, gv);
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
@@ -374,8 +356,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          dsfmRecord->setSymbolID(reloTarget, symbolID);
          dsfmRecord->setSymbolType(reloTarget, static_cast<TR::SymbolType>(symbolType));
          dsfmRecord->setReloFlags(reloTarget, flags);
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
@@ -389,15 +369,14 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          hcrRecord->setReloFlags(reloTarget, flags);
          hcrRecord->setOffset(reloTarget, gv);
-
-         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
          break;
 
       default:
-         cursor = self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
-
+         self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
       }
+
+   cursor += self()->getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
    return cursor;
    }
 
