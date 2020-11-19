@@ -30,6 +30,7 @@
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/RegisterDependency.hpp"
+#include "codegen/RegisterDependencyStruct.hpp"
 #include "codegen/S390Instruction.hpp"
 #include "codegen/Snippet.hpp"
 #include "compile/CompilationException.hpp"
@@ -48,6 +49,7 @@
 #include "il/Node_inlines.hpp"
 #include "il/ParameterSymbol.hpp"
 #include "il/StaticSymbol.hpp"
+#include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "infra/InterferenceGraph.hpp"
@@ -2564,6 +2566,109 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
    }
 
 TR::Instruction *
+J9::Z::PrivateLinkage::buildNoPatchingStaticOrSpecialCall(TR::Node *callNode, TR::SymbolReference *callSymRef,
+   TR::RegisterDependencyConditions *dependencies, int32_t argSize)
+   {
+   OMR::CCData *codeCacheData = cg()->getCodeCache()->manager()->getCodeCacheData();
+   OMR::CCData::index_t index = 0;
+   intptr_t callSnippetCCDataAddress = NULL;
+   int32_t  offsetOfSnippetOrCompiledMethod = 0;
+   if (callSymRef->isUnresolved() || (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager)))
+      {
+      if (!(codeCacheData->put(NULL, sizeof(ccUnresolvedStaticSpecialData), alignof(ccUnresolvedStaticSpecialData), NULL, index)))
+         {
+         cg()->comp()->failCompilation<TR::CompilationException>("Could not allocate metadata for static or special call");
+         }
+
+      ccUnresolvedStaticSpecialData *ccUnresolvedStaticSpecialDataAddress = codeCacheData->get<ccUnresolvedStaticSpecialData>(index);
+
+      // Shape of the ccData
+      // snippetOrCompiledMethod -> to be updated in binary encoding while emitting snippet body
+      // ramMethod -> Should be NULL for Unresolved
+      // cpAddress -> Filled here
+      // cpIndex   -> Filled here
+
+      ccUnresolvedStaticSpecialDataAddress->cpAddress = reinterpret_cast<intptr_t>(callNode->getSymbolReference()->getOwningMethod(cg()->comp())->constantPool());
+      ccUnresolvedStaticSpecialDataAddress->ramMethod = 0;
+      ccUnresolvedStaticSpecialDataAddress->cpIndex   = static_cast<intptr_t>(callNode->getSymbolReference()->getCPIndexForVM());
+      callSnippetCCDataAddress = reinterpret_cast<intptr_t>(ccUnresolvedStaticSpecialDataAddress);
+      offsetOfSnippetOrCompiledMethod = static_cast<int32_t>(offsetof(ccUnresolvedStaticSpecialData, snippetOrCompiledMethod));
+      }
+   else
+      {
+      if (!(codeCacheData->put(NULL, sizeof(ccStaticSpecialData), alignof(ccStaticSpecialData), NULL, index)))
+         {
+         cg()->comp()->failCompilation<TR::CompilationException>("Could not allocate metadata for static or special call");
+         }
+
+      ccStaticSpecialData *ccStaticSpecialDataAddress = codeCacheData->get<ccStaticSpecialData>(index);
+
+      // Shape of the ccData
+      // snippetOrCompiledMethod -> to be updated in binary encoding while emitting snippet body
+      // ramMethod -> Filled Here
+      TR::MethodSymbol *methodSymbol = callSymRef->getSymbol()->castToMethodSymbol();
+      intptr_t ramMethod;
+#if defined(J9VM_OPT_JITSERVER)
+      ramMethod = comp()->isOutOfProcessCompilation() && methodSymbol->isInterpreted() ?
+                     static_cast<intptr_t>(callSymRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier()) :
+                     static_cast<intptr_t>(methodSymbol->getMethodAddress());
+#else
+      ramMethod = reinterpret_cast<intptr_t>(methodSymbol->getMethodAddress());
+#endif
+      ccStaticSpecialDataAddress->ramMethod = ramMethod;
+      callSnippetCCDataAddress = reinterpret_cast<intptr_t>(ccStaticSpecialDataAddress);
+      offsetOfSnippetOrCompiledMethod = static_cast<int32_t>(offsetof(ccStaticSpecialData, snippetOrCompiledMethod));
+      }
+
+   TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg());
+   TR::S390J9CallSnippetRX *callSnippet = new (trHeapMemory()) TR::S390J9CallSnippetRX(cg(),
+                                                                           callNode,
+                                                                           snippetLabel,
+                                                                           doneLabel,
+                                                                           callSymRef,
+                                                                           argSize,
+                                                                           callSnippetCCDataAddress);
+   void *targetAddress = reinterpret_cast<void *>(callSnippetCCDataAddress + static_cast<intptr_t>(offsetOfSnippetOrCompiledMethod));
+   TR::StaticSymbol *snippetOrCompiledSlotSymbol = TR::StaticSymbol::createWithAddress(comp()->trHeapMemory(), TR::Address, targetAddress);
+   TR::SymbolReference *snippetOrCompiledSlotSymRef = new (comp()->trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), snippetOrCompiledSlotSymbol, 0);
+   snippetOrCompiledSlotSymbol->setNotDataAddress();
+
+   TR::RegisterDependencyConditions *preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies->getPreConditions(), NULL,
+                                                                                                      dependencies->getAddCursorForPre(), 0, cg());
+
+   int32_t numOfAdditionalPostDeps = 0;
+   TR::Register *regRA = dependencies->searchPostConditionRegister(getReturnAddressRegister());
+   if (regRA == NULL)
+      {
+      regRA = cg()->allocateRegister();
+      numOfAdditionalPostDeps += 1;
+      }
+
+   TR::Register *regEP = dependencies->searchPostConditionRegister(getEntryPointRegister());
+   if (regEP == NULL)
+      {
+      regEP = cg()->allocateRegister();
+      numOfAdditionalPostDeps += 1;
+      }
+
+   TR::RegisterDependencyConditions *postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(NULL, dependencies->getPostConditions(), 0, dependencies->getNumPostConditions() + numberOfAdditionalPostDeps, cg());
+   postDeps->setAddCursorForPost(dependencies->getAddCursorForPost());
+   postDeps->addPostConditionIfNotAlreadyInserted(regRA, getReturnAddressRegister());
+   postDeps->addPostConditionIfNotAlreadyInserted(regEP, getEntryPointRegister());
+
+   TR::Instruction *cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, generateLabelSymbol(cg()), preDeps);
+   cursor = generateRILInstruction(cg(), TR::InstOpCode::LGRL, callNode, regRA, snippetOrCompiledSlotSymRef, targetAddress, cursor);
+   cursor = generateRRInstruction(cg(), TR::InstOpCode::BASR, callNode, regRA, regRA, postDeps, cursor);
+   callSnippet->setBranchInstruction(cursor);
+   generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, doneLabel);
+   cg()->addSnippet(callSnippet);
+   cg()->stopUsingRegister(regRA);
+   cg()->stopUsingRegister(regEP);
+   return cursor;
+   }
+
+TR::Instruction *
 J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference * callSymRef,
    TR::RegisterDependencyConditions * dependencies, int32_t argSize)
    {
@@ -2593,10 +2698,13 @@ J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference 
 
    if (comp()->getOption(TR_TraceCG))
       traceMsg(comp(), "Build Direct Call\n");
-
+   // TODO: For read only code cache, we will need to change the jitInduceOSR
+   // call below to use the sequence that is works for RXi, Probably a new
+   // buildDirectCall makes sense here to handle all the cases more cleanly
    // generate call
    if (isJitInduceOSR)
       {
+      TR_ASSERT_FATAL_WITH_NODE(node, !comp()->getGenerateReadOnlyCode(), "jitInduceOSR is not supported under read only mode.");
       TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
       TR::LabelSymbol * reStartLabel = generateLabelSymbol(cg());
 
@@ -2632,26 +2740,33 @@ J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference 
       }
    else
       {
-      if (cg()->getSupportsRuntimeInstrumentation())
-         TR::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(cg(), TR::InstOpCode::RIOFF, callNode);
-
-      // call through snippet if the method is not resolved or not jitted yet
-      TR::LabelSymbol * label = generateLabelSymbol(cg());
-      TR::Snippet * snippet;
-
-      if (callSymRef->isUnresolved() || (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager)))
+      if (comp()->getGenerateReadOnlyCode())
          {
-         snippet = new (trHeapMemory()) TR::S390UnresolvedCallSnippet(cg(), callNode, label, argSize);
+         gcPoint = buildNoPatchingStaticOrSpecialCall(callNode, callSymRef, dependencies, argSize);
          }
       else
-         {
-         snippet = new (trHeapMemory()) TR::S390J9CallSnippet(cg(), callNode, label, callSymRef, argSize);
+         { 
+         if (cg()->getSupportsRuntimeInstrumentation())
+            TR::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(cg(), TR::InstOpCode::RIOFF, callNode);
+
+         // call through snippet if the method is not resolved or not jitted yet
+         TR::LabelSymbol * label = generateLabelSymbol(cg());
+         TR::Snippet * snippet;
+
+         if (callSymRef->isUnresolved() || (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager)))
+            {
+            snippet = new (trHeapMemory()) TR::S390UnresolvedCallSnippet(cg(), callNode, label, argSize);
+            }
+         else
+            {
+            snippet = new (trHeapMemory()) TR::S390J9CallSnippet(cg(), callNode, label, callSymRef, argSize);
+            }
+
+         cg()->addSnippet(snippet);
+
+
+         gcPoint = generateSnippetCall(cg(), callNode, snippet, dependencies, callSymRef);
          }
-
-      cg()->addSnippet(snippet);
-
-
-      gcPoint = generateSnippetCall(cg(), callNode, snippet, dependencies, callSymRef);
 
       if (cg()->getSupportsRuntimeInstrumentation())
          TR::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(cg(), TR::InstOpCode::RION, callNode);

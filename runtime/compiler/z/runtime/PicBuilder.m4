@@ -167,6 +167,14 @@ SETVAL(eq_InterfaceCallHelperReadOnly_RA,4)
 SETVAL(eq_offsetOfMethodAddrInPICSlot,8)
 SETVAL(eq_sizeOfPICSlotForInterfaceCall,16)
 
+ZZ Unresolved/Resolved Static and Special Calls Glue
+SETVAL(eq_ccUnresolvedStaticSpecialCall_cpAddress,16)
+SETVAL(eq_ccUnresolvedStaticSpecialCall_cpIndex,24)
+SETVAL(eq_ccStaticOrSpecialCalls_methodAddress,0)
+SETVAL(eq_ccStaticOrSpecialCalls_ramMethod,8)
+SETVAL(eq_staticOrSpecialCall_ccDataRIP,0)
+SETVAL(eq_staticOrSpecialCall_RA,4)
+
 ZZ These two should really be in codert/jilconsts.inc
 SETVAL(J9TR_MethodConstantPool,8)
 SETVAL(eq_ramclassFromConstantPool,0)
@@ -539,6 +547,143 @@ ZZ   Go through j2iTransition
     BR      rEP
 
     END_FUNC(_interpreterUnresolvedDirectVirtualGlue,intpUnrDVG,12)
+
+ZZ ===================================================================
+ZZ PICBuilder routine _interpretedUnresolvedStaticCallGlueRX
+ZZ
+ZZ ===================================================================
+
+   START_FUNC(_interpretedUnresolvedStaticCallGlueRX,intpUnStGX)
+
+LABEL(_interpretedUnresolvedStaticCallGlueRX_BODY)
+
+   LR_GPR   rEP,r14
+   AGF      rEP,eq_staticOrSpecialCall_ccDataRIP(rEP)
+
+   L_GPR    r2,eq_ccUnresolvedStaticSpecialCall_cpAddress(rEP)
+   L_GPR    r3,eq_ccUnresolvedStaticSpecialCall_cpIndex(rEP)
+
+   LR_GPR   r1,r14
+   AGF      r1,eq_staticOrSpecialCall_RA(r1)
+
+   LR_GPR   r0,14
+
+LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveStaticMethod)
+   BASR     r14,r14
+
+   LR_GPR   r14,r0
+
+   J        L_unresolvedStaticOrSpecialCallsCommonGlueRX
+
+   END_FUNC(_interpretedUnresolvedStaticCallGlueRX,intpUnStGX,12)
+
+ZZ ===================================================================
+ZZ PICBuilder routine _interpretedUnresolvedSpecialCallGlueRX
+ZZ
+ZZ ===================================================================
+
+   START_FUNC(_interpretedUnresolvedSpecialCallGlueRX,intpUnSpGX)
+
+LABEL(_interpretedUnresolvedSpecialCallGlueRX_BODY)
+
+   LR_GPR   rEP,r14
+   AGF      rEP,eq_staticOrSpecialCall_ccDataRIP(rEP)
+
+   L_GPR    r2,eq_ccUnresolvedStaticSpecialCall_cpAddress(rEP)
+   L_GPR    r3,eq_ccUnresolvedStaticSpecialCall_cpIndex(rEP)
+
+   LR_GPR   r1,r14
+   AGF      r1,eq_staticOrSpecialCall_RA(r1)
+
+   LR_GPR   r0,14
+
+LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveSpecialMethod)
+   BASR     r14,r14
+
+   LR_GPR   r14,r0
+
+LABEL(L_unresolvedStaticOrSpecialCallsCommonGlueRX)
+
+   LR_GPR   r1,r2
+   TML      r1,HEX(0001)
+   JNZ      L_staticOrSpecialCallsCommonGlueRX
+
+   ST_GPR   r2,eq_ccStaticOrSpecialCalls_ramMethod(rEP)
+
+   J        L_staticOrSpecialCallsCommonGlueRX
+   
+   END_FUNC(_interpretedUnresolvedSpecialCallGlueRX,intpUnSpGX,12)
+
+ZZ ===================================================================
+ZZ PICBuilder routine _nativeStaticHelperRX
+ZZ
+ZZ ===================================================================
+
+   START_FUNC(_nativeStaticHelperRX,ntStRx)
+
+LABEL(_nativeStaticHelperRX_BODY)
+
+   LR_GPR   r1,r14
+   AGF      r1,eq_staticOrSpecialCall_ccDataRIP(r1)
+   L_GPR    r1,eq_ccStaticOrSpecialCalls_ramMethod(r1)
+
+   J        L_J2ITransitionRX
+
+   END_FUNC(_nativeStaticHelperRX,ntStRx,8)
+
+ZZ ===================================================================
+ZZ PICBuilder routine _interpretedResolvedStaticOrSpecialCallsGlueRX
+ZZ
+ZZ ===================================================================
+
+   START_FUNC(_interpretedResolvedStaticOrSpecialCallsGlueRX,intpResGX)
+   
+
+LABEL(_interpretedResolvedStaticOrSpecialCallsGlueRX_BODY)
+   
+   LR_GPR   rEP,r14
+   AGF      rEP,eq_staticOrSpecialCall_ccDataRIP(rEP)
+   L_GPR    r2,eq_ccStaticOrSpecialCalls_ramMethod(rEP)
+   LR_GPR   r1,r2
+
+LABEL(L_staticOrSpecialCallsCommonGlueRX)
+ZZ This is common Glue used for both resolved and unresolved static/special calls.
+ZZ From the Unresolved Calls Glue when it jumps to here, we should have ramMethod in 
+ZZ R2.
+   NILL     r1,HEX(FFFE)
+
+   TM       eq_methodCompiledFlagOffset(r1),J9TR_MethodNotCompiledBit
+   JZ       L_jittedMethodGlue
+
+LABEL(L_J2ITransitionRX)
+ZZ Method not compiled, call interpreter
+   AGF      r14,eq_staticOrSpecialCall_RA(r14)
+
+ZZ J2ITransition
+LOAD_ADDR_FROM_TOC(rEP,TR_j2iTransition)
+   BR       rEP
+
+LABEL(L_jittedMethodGlue)
+
+   L_GPR    r1,J9TR_MethodPCStartOffset(r1) #Load PCStart
+   LR_GPR   r2,r1   # Copying the jitted method address to branch from glue after updating CCData
+
+ifdef({TR_HOST_64BIT},{dnl
+   LGF      r3,-4(r1)
+},{dnl
+   L        r3,16
+   lgfr     r3,r3
+})dnl
+
+   SRL      r3,16
+   AR_GPR   r1,r3
+
+   ST_GPR   r1,eq_ccStaticOrSpecialCalls_methodAddress(rEP)
+
+   AGF      r14,eq_staticOrSpecialCall_RA(r14)
+   BR       r2
+
+   END_FUNC(_interpretedResolvedStaticOrSpecialCallsGlueRX,intpResGX,11)
 
 
 ZZ ===================================================================
