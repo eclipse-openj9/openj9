@@ -28,7 +28,7 @@
 #include "infra/CriticalSection.hpp"
 #include "infra/Statistics.hpp"
 #include "net/CommunicationStream.hpp"
-
+#include "OMR/Bytes.hpp"// for OMR::alignNoCheck()
 
 
 uint32_t     JITServerHelpers::serverMsgTypeCount[] = {};
@@ -37,62 +37,87 @@ bool         JITServerHelpers::_serverAvailable = true;
 uint64_t     JITServerHelpers::_nextConnectionRetryTime = 0;
 TR::Monitor *JITServerHelpers::_clientStreamMonitor = NULL;
 
+
+// To ensure that the length fields in UTF8 strings appended at the end of the
+// packed ROMClass are properly aligned, we must pad the strings accordingly.
+// This function returns the total size of a UTF8 string with the padding.
 static size_t
-methodStringsLength(J9ROMMethod *method)
+getUTF8Size(const J9UTF8 *str)
    {
-   J9UTF8 *name = J9ROMMETHOD_NAME(method);
-   J9UTF8 *sig = J9ROMMETHOD_SIGNATURE(method);
-   return (name->length + sig->length + (2 * sizeof(U_16)));
+   return OMR::alignNoCheck(str->length, sizeof(*str)) + sizeof(*str);
+   }
+
+static size_t
+getPackedUTF8Size(const J9UTF8 *str, const J9ROMClass *romClass)
+   {
+   return JITServerHelpers::isAddressInROMClass(str, romClass) ? 0 : getUTF8Size(str);
+   }
+
+// If the string points outside of the contiguous part of origRomClass, appends
+// it (with padding) at curPos and updates the SRP to the string in the packed
+// ROMClass. Returns the new value of curPos.
+static uint8_t *
+packUTF8(uint8_t *curPos, const J9UTF8 *origStr, const J9ROMClass *origRomClass, J9SRP &srp)
+   {
+   if (JITServerHelpers::isAddressInROMClass(origStr, origRomClass))
+      return curPos;
+
+   size_t size = getUTF8Size(origStr);
+   memcpy(curPos, origStr, origStr->length + sizeof(*origStr));
+   static_assert(sizeof(*origStr) == 2, "UTF8 header is not 2 bytes large");
+   if (!OMR::alignedNoCheck(origStr->length, sizeof(*origStr)))
+      curPos[size - 1] = '\0';
+   NNSRP_SET(srp, curPos);
+   return curPos + size;
    }
 
 // Packs a ROMClass into a std::string to be transferred to the server.
-// The name and signature of all methods are appended to the end of the cloned class body and the
-// self referential pointers to them are updated to deal with possible interning. The method names
-// and signature are needed on the server but may be interned globally on the client.
+// Some of the name and signature strings are interned and stored outside
+// of the ROMClass body. Such strings are appended to the end of the cloned
+// ROMClass body and the self referential pointers to them are updated.
 static std::string
 packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
    {
+   size_t totalSize = origRomClass->romSize;
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(origRomClass);
-   size_t classNameSize = className->length + sizeof(U_16);
+   totalSize += getPackedUTF8Size(className, origRomClass);
 
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(origRomClass);
-   size_t totalSize = origRomClass->romSize + classNameSize;
    for (size_t i = 0; i < origRomClass->romMethodCount; ++i)
       {
-      totalSize += methodStringsLength(romMethod);
+      totalSize += getPackedUTF8Size(J9ROMMETHOD_NAME(romMethod), origRomClass);
+      totalSize += getPackedUTF8Size(J9ROMMETHOD_SIGNATURE(romMethod), origRomClass);
       romMethod = nextROMMethod(romMethod);
       }
+
+   // Check if the contiguous part of the ROMClass already contains all the strings visited above
+   if (totalSize == origRomClass->romSize)
+      return std::string((char *)origRomClass, origRomClass->romSize);
 
    J9ROMClass *romClass = (J9ROMClass *)trMemory->allocateHeapMemory(totalSize);
    if (!romClass)
       throw std::bad_alloc();
    memcpy(romClass, origRomClass, origRomClass->romSize);
+   // Update the size to include the strings that will be appended at the end
+   romClass->romSize = totalSize;
 
-   uint8_t *curPos = ((uint8_t *)romClass) + romClass->romSize;
-
-   memcpy(curPos, className, classNameSize);
-   NNSRP_SET(romClass->className, curPos);
-   curPos += classNameSize;
+   uint8_t *curPos = ((uint8_t *)romClass) + origRomClass->romSize;
+   curPos = packUTF8(curPos, className, origRomClass, romClass->className);
 
    romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    J9ROMMethod *origRomMethod = J9ROMCLASS_ROMMETHODS(origRomClass);
    for (size_t i = 0; i < romClass->romMethodCount; ++i)
       {
-      J9UTF8 *field = J9ROMMETHOD_NAME(origRomMethod);
-      size_t fieldLen = field->length + sizeof(U_16);
-      memcpy(curPos, field, fieldLen);
-      NNSRP_SET(romMethod->nameAndSignature.name, curPos);
-      curPos += fieldLen;
-
-      field = J9ROMMETHOD_SIGNATURE(origRomMethod);
-      fieldLen = field->length + sizeof(U_16);
-      memcpy(curPos, field, fieldLen);
-      NNSRP_SET(romMethod->nameAndSignature.signature, curPos);
-      curPos += fieldLen;
-
+      curPos = packUTF8(curPos, J9ROMMETHOD_NAME(origRomMethod), origRomClass,
+                        romMethod->nameAndSignature.name);
+      curPos = packUTF8(curPos, J9ROMMETHOD_SIGNATURE(origRomMethod), origRomClass,
+                        romMethod->nameAndSignature.signature);
       romMethod = nextROMMethod(romMethod);
       origRomMethod = nextROMMethod(origRomMethod);
       }
+
+   TR_ASSERT(curPos == (uint8_t *)romClass + romClass->romSize, "Cursor offset mismatch: %zu != %zu",
+             curPos - (uint8_t *)romClass, romClass->romSize);
 
    std::string romClassStr((char *) romClass, totalSize);
    trMemory->freeMemory(romClass, heapAlloc);
