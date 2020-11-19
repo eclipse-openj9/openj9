@@ -73,6 +73,365 @@ extern "C" void _patchVirtualGuard(uint8_t *locationAddr, uint8_t *destinationAd
 extern "C" void ASM_CALL _patchVirtualGuard(uint8_t*, uint8_t*, uint32_t);
 #endif
 
+// START OF BINARY TEMPLATES
+
+// These *BinaryTemplate structs describe the shape of the binary relocation records.
+struct TR_RelocationRecordBinaryTemplate
+   {
+   uint8_t type(TR_RelocationTarget *reloTarget);
+
+   uint16_t _size;
+   uint8_t _type;
+   uint8_t _flags;
+
+#if defined(TR_HOST_64BIT)
+   uint32_t _extra;
+#endif
+   };
+
+// Generating 32-bit code on a 64-bit machine or vice-versa won't work because the alignment won't
+// be right.  Relying on inheritance in the structures here means padding is automatically inserted
+// at each inheritance boundary: this inserted padding won't match across 32-bit and 64-bit platforms.
+// Making as many fields as possible UDATA should minimize the differences and gives the most freedom
+// in the hierarchy of binary relocation record structures, but the header definitely has an inheritance
+// boundary at offset 4B.
+
+// This struct must be identical to TR_RelocationRecordBinaryTemplate
+// in at least the first three (_size, _type, and _flags) fields
+struct TR_RelocationRecordHelperAddressBinaryTemplate
+   {
+   uint16_t _size;
+   uint8_t _type;
+   uint8_t _flags;
+   uint32_t _helperID;
+   };
+static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _size)
+              == offsetof(TR_RelocationRecordHelperAddressBinaryTemplate, _size),
+              "TR_RelocationRecordHelperAddressBinaryTemplate::_size not the same offset as TR_RelocationRecordBinaryTemplate::_size");
+static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _type)
+              == offsetof(TR_RelocationRecordHelperAddressBinaryTemplate, _type),
+              "TR_RelocationRecordHelperAddressBinaryTemplate::_type not the same offset as TR_RelocationRecordBinaryTemplate::_type");
+static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _flags)
+              == offsetof(TR_RelocationRecordHelperAddressBinaryTemplate, _flags),
+              "TR_RelocationRecordHelperAddressBinaryTemplate::_flags not the same offset as TR_RelocationRecordBinaryTemplate::_flags");
+
+// This struct must be identical to TR_RelocationRecordBinaryTemplate
+// in at least the first three (_size, _type, and _flags) fields
+struct TR_RelocationRecordPicTrampolineBinaryTemplate
+   {
+   uint16_t _size;
+   uint8_t _type;
+   uint8_t _flags;
+   uint32_t _numTrampolines;
+   };
+static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _size)
+              == offsetof(TR_RelocationRecordPicTrampolineBinaryTemplate, _size),
+              "TR_RelocationRecordPicTrampolineBinaryTemplate::_size not the offset same as TR_RelocationRecordBinaryTemplate::_size");
+static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _type)
+              == offsetof(TR_RelocationRecordPicTrampolineBinaryTemplate, _type),
+              "TR_RelocationRecordPicTrampolineBinaryTemplate::_type not the offset same as TR_RelocationRecordBinaryTemplate::_type");
+static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _flags)
+              == offsetof(TR_RelocationRecordPicTrampolineBinaryTemplate, _flags),
+              "TR_RelocationRecordPicTrampolineBinaryTemplate::_flags not the offset same as TR_RelocationRecordBinaryTemplate::_flags");
+
+struct TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   UDATA _inlinedSiteIndex;
+   };
+
+struct TR_RelocationRecordValidateArbitraryClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate //public TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate
+   {
+   UDATA _loaderClassChainOffset;
+   UDATA _classChainOffsetForClassBeingValidated;
+   };
+
+
+struct TR_RelocationRecordWithOffsetBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   UDATA _offset;
+   };
+
+struct TR_RelocationRecordConstantPoolBinaryTemplate : public TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate
+   {
+   UDATA _constantPool;
+   };
+
+struct TR_RelocationRecordConstantPoolWithIndexBinaryTemplate : public TR_RelocationRecordConstantPoolBinaryTemplate
+   {
+   UDATA _index;
+   };
+
+typedef TR_RelocationRecordConstantPoolWithIndexBinaryTemplate TR_RelocationRecordClassObjectBinaryTemplate;
+
+struct TR_RelocationRecordJ2IVirtualThunkPointerBinaryTemplate : public TR_RelocationRecordConstantPoolBinaryTemplate
+   {
+   IDATA _offsetToJ2IVirtualThunkPointer;
+   };
+
+struct TR_RelocationRecordInlinedAllocationBinaryTemplate : public TR_RelocationRecordConstantPoolWithIndexBinaryTemplate
+   {
+   UDATA _branchOffset;
+   };
+
+struct TR_RelocationRecordVerifyClassObjectForAllocBinaryTemplate : public TR_RelocationRecordInlinedAllocationBinaryTemplate
+   {
+   UDATA _allocationSize;
+   };
+
+struct TR_RelocationRecordRomClassFromCPBinaryTemplate : public TR_RelocationRecordConstantPoolWithIndexBinaryTemplate
+   {
+   UDATA  _romClassOffsetInSharedCache;
+   };
+
+typedef TR_RelocationRecordRomClassFromCPBinaryTemplate TR_RelocationRecordInlinedMethodBinaryTemplate;
+
+struct TR_RelocationRecordNopGuardBinaryTemplate : public TR_RelocationRecordInlinedMethodBinaryTemplate
+   {
+   UDATA _destinationAddress;
+   };
+
+typedef TR_RelocationRecordNopGuardBinaryTemplate TR_RelocationRecordInlinedStaticMethodWithNopGuardBinaryTemplate;
+typedef TR_RelocationRecordNopGuardBinaryTemplate TR_RelocationRecordInlinedSpecialMethodWithNopGuardBinaryTemplate;
+typedef TR_RelocationRecordNopGuardBinaryTemplate TR_RelocationRecordInlinedVirtualMethodWithNopGuardBinaryTemplate;
+typedef TR_RelocationRecordNopGuardBinaryTemplate TR_RelocationRecordInlinedInterfaceMethodWithNopGuardBinaryTemplate;
+
+
+struct TR_RelocationRecordProfiledInlinedMethodBinaryTemplate : TR_RelocationRecordInlinedMethodBinaryTemplate
+   {
+   UDATA _classChainIdentifyingLoaderOffsetInSharedCache;
+
+   // Class chain of the defining class of the inlined method
+   UDATA _classChainForInlinedMethod;
+
+   // The inlined j9method's index into its defining class' array of j9methods
+   UDATA _methodIndex;
+   };
+
+typedef TR_RelocationRecordProfiledInlinedMethodBinaryTemplate TR_RelocationRecordProfiledGuardBinaryTemplate;
+typedef TR_RelocationRecordProfiledInlinedMethodBinaryTemplate TR_RelocationRecordProfiledClassGuardBinaryTemplate;
+typedef TR_RelocationRecordProfiledInlinedMethodBinaryTemplate TR_RelocationRecordProfiledMethodGuardBinaryTemplate;
+
+
+typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordRamMethodBinaryTemplate;
+
+typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordArrayCopyHelperTemplate;
+
+struct TR_RelocationRecordMethodTracingCheckBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   UDATA _destinationAddress;
+   };
+
+struct TR_RelocationRecordValidateClassBinaryTemplate : public TR_RelocationRecordConstantPoolWithIndexBinaryTemplate
+   {
+   UDATA _classChainOffsetInSharedCache;
+   };
+
+typedef TR_RelocationRecordRomClassFromCPBinaryTemplate TR_RelocationRecordValidateStaticFieldBinaryTemplate;
+
+struct TR_RelocationRecordDataAddressBinaryTemplate : public TR_RelocationRecordConstantPoolWithIndexBinaryTemplate
+   {
+   UDATA _offset;
+   };
+
+struct TR_RelocationRecordPointerBinaryTemplate : TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate
+   {
+   UDATA _classChainIdentifyingLoaderOffsetInSharedCache;
+   UDATA _classChainForInlinedMethod;
+   };
+
+typedef TR_RelocationRecordPointerBinaryTemplate TR_RelocationRecordClassPointerBinaryTemplate;
+struct TR_RelocationRecordMethodPointerBinaryTemplate : TR_RelocationRecordPointerBinaryTemplate
+   {
+   UDATA _vTableSlot;
+   };
+struct TR_RelocationRecordEmitClassBinaryTemplate : public TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate
+   {
+   int32_t _bcIndex;
+#if defined(TR_HOST_64BIT)
+   uint32_t _extra;
+#endif
+   };
+
+struct TR_RelocationRecordDebugCounterBinaryTemplate : public TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate
+   {
+   int8_t _fidelity;
+   int32_t _bcIndex;
+   int32_t _delta;
+   int32_t _staticDelta;
+   UDATA _offsetOfNameString;
+   };
+
+typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadAssumptionBinaryTemplate;
+
+struct TR_RelocationRecordValidateClassByNameBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _classID;
+   uint16_t _beholderID;
+   UDATA _classChainOffsetInSCC;
+   };
+
+struct TR_RelocationRecordValidateProfiledClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _classID;
+   UDATA _classChainOffsetInSCC;
+   UDATA _classChainOffsetForCLInScc;
+   };
+
+struct TR_RelocationRecordValidateClassFromCPBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _classID;
+   uint16_t _beholderID;
+   uint32_t _cpIndex;
+   };
+
+struct TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint8_t _isStatic;
+   uint16_t _classID;
+   uint16_t _beholderID;
+   uint32_t _cpIndex;
+   };
+
+struct TR_RelocationRecordValidateArrayFromCompBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _arrayClassID;
+   uint16_t _componentClassID;
+   };
+
+struct TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _superClassID;
+   uint16_t _childClassID;
+   };
+
+struct TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint8_t _objectTypeIsFixed;
+   uint8_t _castTypeIsFixed;
+   uint8_t _isInstanceOf;
+   uint16_t _classOneID;
+   uint16_t _classTwoID;
+   };
+
+struct TR_RelocationRecordValidateSystemClassByNameBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _systemClassID;
+   UDATA _classChainOffsetInSCC;
+   };
+
+struct TR_RelocationRecordValidateClassChainBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _classID;
+   UDATA _classChainOffsetInSCC;
+   };
+
+struct TR_RelocationRecordValidateMethodFromClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _methodID;
+   uint16_t _beholderID;
+   uint32_t _index;
+   };
+
+struct TR_RelocationRecordValidateMethodFromCPBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _methodID;
+   uint16_t _definingClassID;
+   uint16_t _beholderID;
+   uint16_t _cpIndex; // constrained to 16 bits by the class file format
+   };
+
+struct TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _methodID;
+   uint16_t _definingClassID;
+   uint16_t _beholderID;
+
+   // Value is (offset | ignoreRtResolve); offset must be even
+   uint16_t _virtualCallOffsetAndIgnoreRtResolve;
+   };
+
+struct TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _methodID;
+   uint16_t _definingClassID;
+   uint16_t _beholderID;
+   uint16_t _lookupID;
+   uint16_t _cpIndex; // constrained to 16 bits by the class file format
+   };
+
+struct TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _methodID;
+   uint16_t _definingClassID;
+   uint16_t _lookupClassID;
+   uint16_t _beholderID;
+   UDATA _romMethodOffsetInSCC;
+   };
+
+struct TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _methodID;
+   uint16_t _definingClassID;
+   uint16_t _thisClassID;
+   int32_t _cpIndexOrVftSlot;
+   uint16_t _callerMethodID;
+   uint16_t _useGetResolvedInterfaceMethod;
+   };
+
+struct TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _methodID;
+   uint16_t _definingClassID;
+   uint16_t _thisClassID;
+   uint16_t _callerMethodID;
+   uint16_t _cpIndex; // constrained to 16 bits by the class file format
+   };
+
+struct TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _methodID;
+   uint16_t _definingClassID;
+   uint16_t _thisClassID;
+   uint16_t _callerMethodID;
+   int32_t _vftSlot;
+   };
+
+struct TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _methodID;
+   uint16_t _methodClassID;
+   uint8_t _skipFrames;
+   };
+
+struct TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _classID;
+   uint8_t _isInitialized;
+   };
+
+struct TR_RelocationRecordSymbolFromManagerBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _symbolID;
+   uint16_t _symbolType;
+   };
+
+struct TR_RelocationRecordMethodCallAddressBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   UDATA _methodAddress;
+   };
+
+struct TR_RelocationRecordResolvedTrampolinesBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _symbolID;
+   };
+
+struct TR_RelocationRecordBlockFrequencyBinaryTemplate: public TR_RelocationRecordBinaryTemplate
+   {
+   uintptr_t _frequencyOffset;
+   };
+
+// END OF BINARY TEMPLATES
+
 uint8_t
 TR_RelocationRecordBinaryTemplate::type(TR_RelocationTarget *reloTarget)
    {
