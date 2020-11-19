@@ -216,7 +216,7 @@ public class StructureReader {
 	}
 
 	private void applyAliases() throws IOException {
-		Map<String, String> aliasMap = loadAliasMap(() -> getAliasVersion());
+		Map<String, String> aliasMap = loadAliasMap(getAliasVersion());
 
 		for (StructureDescriptor thisStruct : structures.values()) {
 			for (FieldDescriptor thisField : thisStruct.fields) {
@@ -226,11 +226,11 @@ public class StructureReader {
 	}
 
 	public static Map<String, String> loadAliasMap(long version) throws IOException {
-		return loadAliasMap(() -> Long.toString(version));
+		return loadAliasMap(Long.toString(version));
 	}
 
-	private static Map<String, String> loadAliasMap(Supplier<String> versionSupplier) throws IOException {
-		String mapData = loadAliasMapData(versionSupplier);
+	private static Map<String, String> loadAliasMap(String version) throws IOException {
+		String mapData = loadAliasMapData(version);
 
 		mapData = stripComments(mapData);
 
@@ -268,8 +268,8 @@ public class StructureReader {
 		return version + variant;
 	}
 
-	private static String loadAliasMapData(Supplier<String> versionSupplier) throws IOException {
-		String streamAliasMapResource = "/com/ibm/j9ddr/StructureAliases" + versionSupplier.get() + ".dat";
+	private static String loadAliasMapData(String version) throws IOException {
+		String streamAliasMapResource = "/com/ibm/j9ddr/StructureAliases" + version + ".dat";
 		InputStream is = StructureReader.class.getResourceAsStream(streamAliasMapResource);
 
 		if (null == is) {
