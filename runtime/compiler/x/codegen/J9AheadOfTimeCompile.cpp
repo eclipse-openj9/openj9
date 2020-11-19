@@ -120,9 +120,7 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
 
 uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
-   TR_SharedCache *sharedCache = fej9->sharedCache();
-   TR::Compilation *comp = _cg->comp();
+   TR::Compilation *comp = self()->comp();
    TR_RelocationRuntime *reloRuntime = comp->reloRuntime();
    TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
 

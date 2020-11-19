@@ -113,18 +113,18 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
 
 uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
    {
-   TR::Compilation *comp = _cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
+   TR::Compilation *comp = self()->comp();
+   TR_J9VMBase *fej9 = comp->fej9();
    TR_SharedCache *sharedCache = fej9->sharedCache();
    TR_RelocationRuntime *reloRuntime = comp->reloRuntime();
    TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
 
    uint8_t * aotMethodCodeStart = (uint8_t *) comp->getRelocatableMethodCodeStart();
-   uint8_t flags = 0;
 
    uint8_t *cursor         = relocation->getRelocationData();
    uint8_t targetKind      = relocation->getTargetKind();
    uint16_t sizeOfReloData = relocation->getSizeOfRelocationData();
+   uint8_t wideOffsets     = relocation->needsWideOffsets() ? RELOCATION_TYPE_WIDE_OFFSET : 0;
 
    // Zero-initialize header
    memset(cursor, 0, sizeOfReloData);
@@ -132,7 +132,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
    TR_RelocationRecord storage;
    TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, targetKind, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(cursor));
 
-   uint8_t wideOffsets = relocation->needsWideOffsets() ? RELOCATION_TYPE_WIDE_OFFSET : 0;
    reloRecord->setSize(reloTarget, sizeOfReloData);
    reloRecord->setType(reloTarget, static_cast<TR_RelocationRecordType>(targetKind));
    reloRecord->setFlag(reloTarget, wideOffsets);

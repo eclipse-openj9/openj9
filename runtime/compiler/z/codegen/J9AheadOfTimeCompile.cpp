@@ -125,24 +125,20 @@ void J9::Z::AheadOfTimeCompile::processRelocations()
 
 uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
    {
-   TR::Compilation *comp = _cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
-   TR_SharedCache *sharedCache = fej9->sharedCache();
+   TR::Compilation *comp = self()->comp();
    TR_RelocationRuntime *reloRuntime = comp->reloRuntime();
    TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
 
    uint8_t *cursor         = relocation->getRelocationData();
    uint8_t targetKind      = relocation->getTargetKind();
    uint16_t sizeOfReloData = relocation->getSizeOfRelocationData();
+   uint8_t wideOffsets     = relocation->needsWideOffsets() ? RELOCATION_TYPE_WIDE_OFFSET : 0;
 
    // Zero-initialize header
    memset(cursor, 0, sizeOfReloData);
 
    TR_RelocationRecord storage;
-   TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, targetKind, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(relocation->getRelocationData()));
-
-   uint8_t wideOffsets = relocation->needsWideOffsets() ? RELOCATION_TYPE_WIDE_OFFSET : 0;
-   uint32_t *wordAfterHeader = &reinterpret_cast<TR_RelocationRecordHelperAddressBinaryTemplate *>(cursor)->_helperID;
+   TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, targetKind, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(cursor));
 
    reloRecord->setSize(reloTarget, sizeOfReloData);
    reloRecord->setType(reloTarget, static_cast<TR_RelocationRecordType>(targetKind));
