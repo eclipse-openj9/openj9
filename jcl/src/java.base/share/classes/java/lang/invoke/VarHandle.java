@@ -341,7 +341,13 @@ public abstract class VarHandle extends VarHandleInternal
 	static final Lookup _lookup = Lookup.IMPL_LOOKUP;
 
 /*[IF Java14]*/
-	static final BiFunction<String, List<Integer>, ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
+	static final BiFunction<String,
+				/*[IF Java16]*/
+				List<Number>,
+				/*[ELSE]*/
+				List<Integer>,
+				/*[ENDIF] Java16 */
+				ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
 	VarForm vform = null;
 /*[ENDIF] Java14 */
 	
