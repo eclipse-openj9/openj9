@@ -503,9 +503,15 @@ TR_RelocationRecord::clean(TR_RelocationTarget *reloTarget)
    }
 
 int32_t
-TR_RelocationRecord::bytesInHeaderAndPayload()
+TR_RelocationRecord::bytesInHeader(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
    {
-   return sizeof(TR_RelocationRecordBinaryTemplate);
+   TR_ExternalRelocationTargetKind kind = type(reloTarget);
+   if (kind <= TR_NoRelocation || kind >= TR_NumExternalRelocationKinds)
+      {
+      RELO_LOG(reloRuntime->reloLogger(), 1, "bytesInHeader: Relocation at %p has unknown kind %d!\n", _record, kind);
+      return -1;
+      }
+   return getSizeOfAOTRelocationHeader(kind);
    }
 
 TR_RelocationRecordBinaryTemplate *
@@ -624,11 +630,15 @@ TR_RelocationRecord::action(TR_RelocationRuntime *reloRuntime)
 int32_t
 TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloOrigin)
    {
+   int32_t sizeOfHeader = bytesInHeader(reloRuntime, reloTarget);
+   if (sizeOfHeader <= 0)
+      return compilationAotUnknownReloTypeFailure;
+
    if (reloTarget->isOrderedPairRelocation(this, reloTarget))
       {
       if (wideOffsets(reloTarget))
          {
-         int32_t *offsetsBase = (int32_t *) (((uint8_t*)_record) + bytesInHeaderAndPayload());
+         int32_t *offsetsBase = (int32_t *) (((uint8_t*)_record) + sizeOfHeader);
          int32_t *endOfOffsets = (int32_t *) nextBinaryRecord(reloTarget);
          for (int32_t *offsetPtr = offsetsBase;offsetPtr < endOfOffsets; offsetPtr+=2)
             {
@@ -647,7 +657,7 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
          }
       else
          {
-         int16_t *offsetsBase = (int16_t *) (((uint8_t*)_record) + bytesInHeaderAndPayload());
+         int16_t *offsetsBase = (int16_t *) (((uint8_t*)_record) + sizeOfHeader);
          int16_t *endOfOffsets = (int16_t *) nextBinaryRecord(reloTarget);
          for (int16_t *offsetPtr = offsetsBase;offsetPtr < endOfOffsets; offsetPtr+=2)
             {
@@ -669,7 +679,7 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
       {
       if (wideOffsets(reloTarget))
          {
-         int32_t *offsetsBase = (int32_t *) (((uint8_t*)_record) + bytesInHeaderAndPayload());
+         int32_t *offsetsBase = (int32_t *) (((uint8_t*)_record) + sizeOfHeader);
          int32_t *endOfOffsets = (int32_t *) nextBinaryRecord(reloTarget);
          for (int32_t *offsetPtr = offsetsBase;offsetPtr < endOfOffsets; offsetPtr++)
             {
@@ -686,7 +696,7 @@ TR_RelocationRecord::applyRelocationAtAllOffsets(TR_RelocationRuntime *reloRunti
          }
       else
          {
-         int16_t *offsetsBase = (int16_t *) (((uint8_t*)_record) + bytesInHeaderAndPayload());
+         int16_t *offsetsBase = (int16_t *) (((uint8_t*)_record) + sizeOfHeader);
          int16_t *endOfOffsets = (int16_t *) nextBinaryRecord(reloTarget);
          for (int16_t *offsetPtr = offsetsBase;offsetPtr < endOfOffsets; offsetPtr++)
             {
@@ -729,12 +739,6 @@ uintptr_t
 TR_RelocationRecordWithOffset::offset(TR_RelocationTarget *reloTarget)
    {
    return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordWithOffsetBinaryTemplate *)_record)->_offset);
-   }
-
-int32_t
-TR_RelocationRecordWithOffset::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordWithOffsetBinaryTemplate);
    }
 
 void
@@ -789,12 +793,6 @@ uintptr_t
 TR_RelocationRecordBlockFrequency::frequencyOffset(TR_RelocationTarget *reloTarget)
    {
    return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordBlockFrequencyBinaryTemplate *)_record)->_frequencyOffset);
-   }
-
-int32_t
-TR_RelocationRecordBlockFrequency::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordBlockFrequencyBinaryTemplate);
    }
 
 void
@@ -1030,12 +1028,6 @@ TR_RelocationRecordWithInlinedSiteIndex::inlinedSiteIndex(TR_RelocationTarget *r
    return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate *)_record)->_inlinedSiteIndex);
    }
 
-int32_t
-TR_RelocationRecordWithInlinedSiteIndex::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate);
-   }
-
 TR_OpaqueMethodBlock *
 TR_RelocationRecordWithInlinedSiteIndex::getInlinedSiteCallerMethod(TR_RelocationRuntime *reloRuntime)
    {
@@ -1110,12 +1102,6 @@ TR_RelocationRecordConstantPool::print(TR_RelocationRuntime *reloRuntime)
    TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
    TR_RelocationRecordWithInlinedSiteIndex::print(reloRuntime);
    reloLogger->printf("\tconstant pool %p\n", constantPool(reloTarget));
-   }
-
-int32_t
-TR_RelocationRecordConstantPool::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordConstantPoolBinaryTemplate);
    }
 
 void
@@ -1236,12 +1222,6 @@ uintptr_t
 TR_RelocationRecordConstantPoolWithIndex::cpIndex(TR_RelocationTarget *reloTarget)
    {
    return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordConstantPoolWithIndexBinaryTemplate *)_record)->_index);
-   }
-
-int32_t
-TR_RelocationRecordConstantPoolWithIndex::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate);
    }
 
 TR_OpaqueMethodBlock *
@@ -1427,12 +1407,6 @@ TR_RelocationRecordHelperAddress::print(TR_RelocationRuntime *reloRuntime)
       reloLogger->printf("\thelper %d %s\n", helper, reloRuntime->comp()->findOrCreateDebug()->getRuntimeHelperName(helper));
    else
       reloLogger->printf("\thelper %d\n", helper);
-   }
-
-int32_t
-TR_RelocationRecordHelperAddress::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordHelperAddressBinaryTemplate);
    }
 
 void
@@ -1673,12 +1647,6 @@ uintptr_t
 TR_RelocationRecordDataAddress::offset(TR_RelocationTarget *reloTarget)
    {
    return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordDataAddressBinaryTemplate *)_record)->_offset);
-   }
-
-int32_t
-TR_RelocationRecordDataAddress::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordDataAddressBinaryTemplate);
    }
 
 uint8_t *
@@ -2018,12 +1986,6 @@ TR_RelocationRecordJ2IVirtualThunkPointer::name()
    return "TR_J2IVirtualThunkPointer";
    }
 
-int32_t
-TR_RelocationRecordJ2IVirtualThunkPointer::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordJ2IVirtualThunkPointerBinaryTemplate);
-   }
-
 void
 TR_RelocationRecordJ2IVirtualThunkPointer::setOffsetToJ2IVirtualThunkPointer(TR_RelocationTarget *reloTarget, uintptr_t j2iVirtualThunkPointer)
    {
@@ -2074,12 +2036,6 @@ TR_RelocationRecordPicTrampolines::print(TR_RelocationRuntime *reloRuntime)
    TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
    TR_RelocationRecord::print(reloRuntime);
    reloLogger->printf("\tnumTrampolines %d\n", numTrampolines(reloTarget));
-   }
-
-int32_t
-TR_RelocationRecordPicTrampolines::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordPicTrampolineBinaryTemplate);
    }
 
 void
@@ -2141,12 +2097,6 @@ TR_RelocationRecordInlinedAllocation::print(TR_RelocationRuntime *reloRuntime)
    TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
    TR_RelocationRecordConstantPoolWithIndex::print(reloRuntime);
    reloLogger->printf("\tbranchOffset %p\n", branchOffset(reloTarget));
-   }
-
-int32_t
-TR_RelocationRecordInlinedAllocation::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordInlinedAllocationBinaryTemplate);
    }
 
 void
@@ -2264,12 +2214,6 @@ TR_RelocationRecordVerifyClassObjectForAlloc::print(TR_RelocationRuntime *reloRu
    reloLogger->printf("\tallocationSize %p\n", allocationSize(reloTarget));
    }
 
-int32_t
-TR_RelocationRecordVerifyClassObjectForAlloc::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordVerifyClassObjectForAllocBinaryTemplate);
-   }
-
 void
 TR_RelocationRecordVerifyClassObjectForAlloc::setAllocationSize(TR_RelocationTarget *reloTarget, uintptr_t allocationSize)
    {
@@ -2324,12 +2268,6 @@ uintptr_t
 TR_RelocationRecordInlinedMethod::romClassOffsetInSharedCache(TR_RelocationTarget *reloTarget)
    {
    return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordInlinedMethodBinaryTemplate *)_record)->_romClassOffsetInSharedCache);
-   }
-
-int32_t
-TR_RelocationRecordInlinedMethod::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate);
    }
 
 void
@@ -2593,12 +2531,6 @@ TR_RelocationRecordNopGuard::activateGuard(TR_RelocationRuntime *reloRuntime, TR
       }
    }
 
-int32_t
-TR_RelocationRecordNopGuard::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordNopGuardBinaryTemplate);
-   }
-
 void
 TR_RelocationRecordNopGuard::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
    {
@@ -2838,12 +2770,6 @@ TR_RelocationRecordProfiledInlinedMethod::print(TR_RelocationRuntime *reloRuntim
    reloLogger->printf("\tclassChainIdentifyingLoaderOffsetInSharedCache %x\n", classChainIdentifyingLoaderOffsetInSharedCache(reloTarget));
    reloLogger->printf("\tclassChainForInlinedMethod %x\n", classChainForInlinedMethod(reloTarget));
    reloLogger->printf("\tmethodIndex %x\n", methodIndex(reloTarget));
-   }
-
-int32_t
-TR_RelocationRecordProfiledInlinedMethod::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordProfiledInlinedMethodBinaryTemplate);
    }
 
 void
@@ -3120,12 +3046,6 @@ TR_RelocationRecordMethodTracingCheck::print(TR_RelocationRuntime *reloRuntime)
    reloLogger->printf("\tdestinationAddress %x\n", destinationAddress(reloTarget));
    }
 
-int32_t
-TR_RelocationRecordMethodTracingCheck::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordMethodTracingCheckBinaryTemplate);
-   }
-
 void
 TR_RelocationRecordMethodTracingCheck::setDestinationAddress(TR_RelocationTarget *reloTarget, uintptr_t destinationAddress)
    {
@@ -3203,12 +3123,6 @@ TR_RelocationRecordValidateClass::print(TR_RelocationRuntime *reloRuntime)
    TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
    TR_RelocationRecordConstantPoolWithIndex::print(reloRuntime);
    reloLogger->printf("\tclassChainOffsetInSharedClass %x\n", classChainOffsetInSharedCache(reloTarget));
-   }
-
-int32_t
-TR_RelocationRecordValidateClass::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordValidateClassBinaryTemplate);
    }
 
 void
@@ -3335,12 +3249,6 @@ TR_RelocationRecordValidateStaticField::print(TR_RelocationRuntime *reloRuntime)
    reloLogger->printf("\tromClassOffsetInSharedClass %x\n", romClassOffsetInSharedCache(reloTarget));
    }
 
-int32_t
-TR_RelocationRecordValidateStaticField::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordValidateStaticFieldBinaryTemplate);
-   }
-
 void
 TR_RelocationRecordValidateStaticField::setRomClassOffsetInSharedCache(TR_RelocationTarget *reloTarget, uintptr_t romClassOffsetInSharedCache)
    {
@@ -3417,12 +3325,6 @@ uintptr_t
 TR_RelocationRecordValidateArbitraryClass::classChainOffsetForClassBeingValidated(TR_RelocationTarget *reloTarget)
    {
    return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordValidateArbitraryClassBinaryTemplate *)_record)->_classChainOffsetForClassBeingValidated);
-   }
-
-int32_t
-TR_RelocationRecordValidateArbitraryClass::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordValidateArbitraryClassBinaryTemplate);
    }
 
 void
@@ -5162,12 +5064,6 @@ TR_RelocationRecordPointer::print(TR_RelocationRuntime *reloRuntime)
    reloLogger->printf("\tclassChainForInlinedMethod %x\n", classChainForInlinedMethod(reloTarget));
    }
 
-int32_t
-TR_RelocationRecordPointer::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordPointerBinaryTemplate);
-   }
-
 TR_RelocationRecordAction
 TR_RelocationRecordPointer::action(TR_RelocationRuntime *reloRuntime)
    {
@@ -5379,12 +5275,6 @@ TR_RelocationRecordMethodPointer::vTableSlot(TR_RelocationTarget *reloTarget)
    return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordMethodPointerBinaryTemplate *)_record)->_vTableSlot);
    }
 
-int32_t
-TR_RelocationRecordMethodPointer::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordMethodPointerBinaryTemplate);
-   }
-
 uintptr_t
 TR_RelocationRecordMethodPointer::computePointer(TR_RelocationTarget *reloTarget, TR_OpaqueClassBlock *classPointer)
    {
@@ -5411,12 +5301,6 @@ TR_RelocationRecordMethodPointer::activatePointer(TR_RelocationRuntime *reloRunt
    TR_RelocationRecordPointer::activatePointer(reloRuntime, reloTarget, reloLocation);
    if (reloRuntime->options()->getOption(TR_EnableHCR))
       registerHCRAssumption(reloRuntime, reloLocation);
-   }
-
-int32_t
-TR_RelocationRecordEmitClass::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordEmitClassBinaryTemplate);
    }
 
 void
@@ -5453,12 +5337,6 @@ char *
 TR_RelocationRecordDebugCounter::name()
    {
    return "TR_RelocationRecordDebugCounter";
-   }
-
-int32_t
-TR_RelocationRecordDebugCounter::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordDebugCounterBinaryTemplate);
    }
 
 void
@@ -5652,12 +5530,6 @@ char *
 TR_RelocationRecordClassUnloadAssumption::name()
    {
    return "TR_ClassUnloadAssumption";
-   }
-
-int32_t
-TR_RelocationRecordClassUnloadAssumption::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordClassUnloadAssumptionBinaryTemplate);
    }
 
 int32_t
