@@ -91,27 +91,12 @@ void J9::ARM64::AheadOfTimeCompile::processRelocations()
       }
    }
 
-uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
+void
+J9::ARM64::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::IteratedExternalRelocation *relocation,
+                                                                             TR_RelocationTarget *reloTarget,
+                                                                             TR_RelocationRecord *reloRecord,
+                                                                             uint8_t targetKind)
    {
-   TR::Compilation* comp = self()->comp();
-   TR_RelocationRuntime *reloRuntime = comp->reloRuntime();
-   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
-
-   uint8_t *cursor         = relocation->getRelocationData();
-   uint8_t targetKind      = relocation->getTargetKind();
-   uint16_t sizeOfReloData = relocation->getSizeOfRelocationData();
-   uint8_t wideOffsets     = relocation->needsWideOffsets() ? RELOCATION_TYPE_WIDE_OFFSET : 0;
-
-   // Zero-initialize header
-   memset(cursor, 0, sizeOfReloData);
-
-   TR_RelocationRecord storage;
-   TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, targetKind, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(cursor));
-
-   reloRecord->setSize(reloTarget, sizeOfReloData);
-   reloRecord->setType(reloTarget, static_cast<TR_RelocationRecordType>(targetKind));
-   reloRecord->setFlag(reloTarget, wideOffsets);
-
    switch (targetKind)
       {
       case TR_DiscontiguousSymbolFromManager:
@@ -119,7 +104,7 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          TR_RelocationRecordDiscontiguousSymbolFromManager *dsfmRecord = reinterpret_cast<TR_RelocationRecordDiscontiguousSymbolFromManager *>(reloRecord);
 
          uint8_t *symbol = (uint8_t *)relocation->getTargetAddress();
-         uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
+         uint16_t symbolID = self()->comp()->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
 
          uint16_t symbolType = (uint16_t)(uintptr_t)relocation->getTargetAddress2();
 
@@ -142,10 +127,7 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
 
       default:
-         self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
+         self()->initializeCommonAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind);
       }
-
-   cursor += self()->getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
-   return cursor;
    }
 

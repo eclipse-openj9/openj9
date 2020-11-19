@@ -56,7 +56,18 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
    void dumpRelocationData();
    uint8_t* dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose);
 
-   void initializeCommonAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationRecord *reloRecord);
+   /**
+    * @brief Initializes the common fields in the raw relocation record header. It then delegates
+    *        to initializePlatformSpecificAOTRelocationHeader which must be implemented on all
+    *        platforms that support AOT.
+    *
+    * @param relocation pointer to the iterated external relocation
+    * @return pointer into the buffer right after the fields of the header (ie the offsets section)
+    */
+   virtual uint8_t *initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation);
+
+   void initializePlatformSpecificAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationTarget *reloTarget, TR_RelocationRecord *reloRecord, uint8_t targetKind)
+      { TR_ASSERT_FATAL(false, "Should not be called!\n"); return; }
 
    static void interceptAOTRelocation(TR::ExternalRelocation *relocation);
 
@@ -117,6 +128,17 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
     * @return The offset into the SCC of ptr
     */
    uintptr_t offsetInSharedCacheFromPointer(TR_SharedCache *sharedCache, void *ptr);
+
+   /**
+    * @brief Initialization of relocation record headers for whom data for the fields are acquired
+    *        in a manner that is common on all platforms
+    *
+    * @param relocation pointer to the iterated external relocation
+    * @param reloTarget pointer to the TR_RelocationTarget object
+    * @param reloRecord pointer to the associated TR_RelocationRecord API object
+    * @param kind the TR_ExternalRelocationTargetKind enum value
+    */
+   void initializeCommonAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationTarget *reloTarget, TR_RelocationRecord *reloRecord, uint8_t kind);
    };
 
 }

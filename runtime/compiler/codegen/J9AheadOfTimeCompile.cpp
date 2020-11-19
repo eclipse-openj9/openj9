@@ -166,18 +166,46 @@ static const char* getNameForMethodRelocation (int type)
    return NULL;
    }
 
-void
-J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationRecord *reloRecord)
+uint8_t *
+J9::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
    {
    TR::Compilation *comp = self()->comp();
    TR_RelocationRuntime *reloRuntime = comp->reloRuntime();
    TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+
+   uint8_t *cursor         = relocation->getRelocationData();
+   uint8_t targetKind      = relocation->getTargetKind();
+   uint16_t sizeOfReloData = relocation->getSizeOfRelocationData();
+   uint8_t wideOffsets     = relocation->needsWideOffsets() ? RELOCATION_TYPE_WIDE_OFFSET : 0;
+
+   // Zero-initialize header
+   memset(cursor, 0, sizeOfReloData);
+
+   TR_RelocationRecord storage;
+   TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, targetKind, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(cursor));
+
+   reloRecord->setSize(reloTarget, sizeOfReloData);
+   reloRecord->setType(reloTarget, static_cast<TR_RelocationRecordType>(targetKind));
+   reloRecord->setFlag(reloTarget, wideOffsets);
+
+   self()->initializePlatformSpecificAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind);
+
+   cursor += self()->getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
+   return cursor;
+   }
+
+void
+J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternalRelocation *relocation,
+                                                            TR_RelocationTarget *reloTarget,
+                                                            TR_RelocationRecord *reloRecord,
+                                                            uint8_t kind)
+   {
+   TR::Compilation *comp = self()->comp();
    TR::SymbolValidationManager *symValManager = comp->getSymbolValidationManager();
    TR_J9VMBase *fej9 = comp->fej9();
    TR_SharedCache *sharedCache = fej9->sharedCache();
    uint8_t * aotMethodCodeStart = reinterpret_cast<uint8_t *>(comp->getRelocatableMethodCodeStart());
 
-   TR_ExternalRelocationTargetKind kind = relocation->getTargetKind();
    switch (kind)
       {
       case TR_ConstantPool:
