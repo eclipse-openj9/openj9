@@ -236,6 +236,19 @@ class TR_PatchJNICallSite : public OMR::ValueModifyRuntimeAssumption
 
    virtual void dumpInfo();
 
+   /**
+    * @brief Serializes the assumption
+    * @param[in] cursor - pointer to where the assumption should be serialized
+    * @param[in] owningMetadata - pointer to the metadata that this assumption belongs to
+    */
+   virtual void serialize(uint8_t *cursor, uint8_t *owningMetadata);
+
+   /**
+    * @brief Returns the size of the serialized data
+    * @return size of the serialized data
+    */
+   virtual uint32_t size() { return sizeof(SerializedData); }
+
    virtual void compensate(TR_FrontEnd *vm, bool isSMP, void *newAddress);
    virtual bool equals(OMR::RuntimeAssumption &other)
          {
@@ -251,6 +264,13 @@ class TR_PatchJNICallSite : public OMR::ValueModifyRuntimeAssumption
 
    private:
    uint8_t *_pc;
+
+   struct SerializedData
+      {
+      uintptr_t _key;
+      uint8_t * _pc;
+      uint8_t * _owningMetadata;
+      };
    };
 
 class TR_PreXRecompile : public OMR::LocationRedirectRuntimeAssumption

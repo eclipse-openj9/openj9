@@ -25,6 +25,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "j9.h"
 #include "env/jittypes.h"
 
 class TR_FrontEnd;
@@ -135,7 +136,36 @@ class TR_RuntimeAssumptionTable
 
    uint32_t getTotalSizeOfAssumptionsToBeSerialized() { return _totalSizeOfAssumptionsToBeSerialized; }
 
+   /**
+    * @brief Allocates a buffer and serializes Runtime Assumptions
+    *
+    * This method goes through all the runtime assumptions in the RAT that are NOT marked for detach
+    * and calls the assumption's serialize method.
+    *
+    * It also maintains an Atlas that is placed at the start of the
+    * buffer which holds the number of assumptions per kind as well as the size of the section of the
+    * buffer used for each assumption kind.
+    *
+    * @param[in] jitConfig pointer to the J9JITConfig
+    *
+    * @return Buffer containing serialized assumptions
+    */
+   uint8_t *serialize(J9JITConfig *jitConfig);
+
    private:
+
+   struct AssumptionCountAndSize
+      {
+      uint32_t _count;
+      uint32_t _size;
+      };
+
+   struct SerializedDataAtlas
+      {
+      uint32_t _size;
+      AssumptionCountAndSize _numAssumptionsPerKind[LastAssumptionKind];
+      };
+
    friend class OMR::RuntimeAssumption;
    void addAssumption(OMR::RuntimeAssumption *a, TR_RuntimeAssumptionKind kind, TR_FrontEnd *fe, OMR::RuntimeAssumption **sentinel);
    int32_t reclaimAssumptions(void *md, OMR::RuntimeAssumption **hashTable, OMR::RuntimeAssumption **possiblyRelevantHashTable);

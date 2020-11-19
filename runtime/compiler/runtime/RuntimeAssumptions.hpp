@@ -299,9 +299,30 @@ class TR_UnloadedClassPicSite : public OMR::ValueModifyRuntimeAssumption
 
    virtual void dumpInfo();
 
+   /**
+    * @brief Serializes the assumption
+    * @param[in] cursor - pointer to where the assumption should be serialized
+    * @param[in] owningMetadata - pointer to the metadata that this assumption belongs to
+    */
+   virtual void serialize(uint8_t *cursor, uint8_t *owningMetadata);
+
+   /**
+    * @brief Returns the size of the serialized data
+    * @return size of the serialized data
+    */
+   virtual uint32_t size() { return sizeof(SerializedData); }
+
    private:
    uint8_t    *_picLocation;
    uint32_t    _size;
+
+   struct SerializedData
+      {
+      uint32_t   _size;
+      uintptr_t  _key;
+      uint8_t *  _picLocation;
+      uint8_t *  _owningMetadata;
+      };
    };
 
 #ifdef J9VM_OPT_JITSERVER

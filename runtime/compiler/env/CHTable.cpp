@@ -84,6 +84,25 @@ TR_PatchJNICallSite::dumpInfo()
    TR_VerboseLog::write(" pc=%p", _pc );
    }
 
+void
+TR_PatchJNICallSite::serialize(uint8_t *cursor, uint8_t *owningMetadata)
+   {
+   // TODO: All of this data should be converted into position independent offsets
+   SerializedData serializedData = { getKey(), _pc , owningMetadata };
+
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                                     "\tSerializing RuntimeAssumptionOnRegisterNative: "
+                                     "_key=%p, _pc=%p, owningMetadata=%p",
+                                     serializedData._key,
+                                     serializedData._pc,
+                                     owningMetadata);
+      }
+
+   memcpy(cursor, &serializedData, sizeof(SerializedData));
+   }
+
 TR_PatchNOPedGuardSiteOnClassExtend *TR_PatchNOPedGuardSiteOnClassExtend::make(
    TR_FrontEnd *fe, TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, uint8_t *loc, uint8_t *dest, OMR::RuntimeAssumption **sentinel)
    {

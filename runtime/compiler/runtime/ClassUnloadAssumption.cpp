@@ -596,6 +596,12 @@ TR_RuntimeAssumptionTable::assumptionCanBeSerialized(TR_RuntimeAssumptionKind ki
 
    switch (kind)
       {
+      case RuntimeAssumptionOnClassUnload:
+      case RuntimeAssumptionOnRegisterNative:
+         {
+         canBeSerialized = true;
+         break;
+         }
       default:
          {
          canBeSerialized = false;
@@ -606,6 +612,57 @@ TR_RuntimeAssumptionTable::assumptionCanBeSerialized(TR_RuntimeAssumptionKind ki
    return canBeSerialized;
    }
 
+uint8_t *
+TR_RuntimeAssumptionTable::serialize(J9JITConfig *jitConfig)
+   {
+   OMR::CriticalSection serializeAssumptions(assumptionTableMutex);
+
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Serializing Assumptions:");
+
+   uint8_t *bufferStart = (uint8_t *)TR_PersistentMemory::jitPersistentAlloc(getTotalSizeOfAssumptionsToBeSerialized() + sizeof(SerializedDataAtlas));
+   TR_ASSERT_FATAL(bufferStart, "Failed to allocate memory to serialize runtime assumptions\n");
+
+   SerializedDataAtlas *atlas = (SerializedDataAtlas *)bufferStart;
+   memset(atlas, 0, sizeof(SerializedDataAtlas));
+   atlas->_size = getTotalSizeOfAssumptionsToBeSerialized();
+
+   uint8_t *buffer = bufferStart;
+   buffer += sizeof(SerializedDataAtlas);
+
+   for (int k=0; k < LastAssumptionKind; k++) // for each table
+      {
+      TR_RatHT *hashTable = _tables + k;
+      size_t hashTableSize = hashTable->_spineArraySize;
+      for (size_t i = 0; i < hashTableSize; ++i) // for each bucket
+         {
+         for (OMR::RuntimeAssumption *cursor = hashTable->_htSpineArray[i]; cursor; cursor = cursor->getNext()) // for each entry
+            {
+            if (!cursor->isMarkedForDetach())
+               {
+               TR::SentinelRuntimeAssumption *sentinel = (TR::SentinelRuntimeAssumption *)cursor->getSentinel();
+               TR_ASSERT_FATAL(sentinel, "Sentinel can't be NULL\n");
+
+               uint32_t size = cursor->size();
+               J9JITExceptionTable *owningMetadata = (J9JITExceptionTable *)sentinel->getOwningMetadata();
+               TR_ASSERT_FATAL(owningMetadata, "owningMetadata can't be NULL\n");
+
+               cursor->serialize(buffer, (uint8_t *)owningMetadata);
+
+               atlas->_numAssumptionsPerKind[k]._count++;
+               atlas->_numAssumptionsPerKind[k]._size += size;
+
+               buffer += size;
+               }
+            }
+         }
+
+      if (!assumptionCanBeSerialized((TR_RuntimeAssumptionKind)k))
+         TR_ASSERT_FATAL(atlas->_numAssumptionsPerKind[k]._count == 0, "Assumption(s) of kind %d serialized!", k);
+      }
+
+   return bufferStart;
+   }
 
 void TR_RuntimeAssumptionTable::reclaimAssumptions(void *md, bool reclaimPrePrologueAssumptions)
    {
@@ -770,6 +827,26 @@ TR_UnloadedClassPicSite::dumpInfo()
    {
    OMR::RuntimeAssumption::dumpInfo("TR_UnloadedClassPicSite");
    TR_VerboseLog::write(" picLocation=%p size=%d", _picLocation, _size);
+   }
+
+void
+TR_UnloadedClassPicSite::serialize(uint8_t *cursor, uint8_t *owningMetadata)
+   {
+   // TODO: All of this data should be converted into position independent offsets
+   SerializedData serializedData = { _size, getKey(), _picLocation , owningMetadata };
+
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                                     "\tSerializing RuntimeAssumptionOnClassUnload: "
+                                     "_key=%p, _picLocation=%p, _size=%d, owningMetadata=%p",
+                                     serializedData._key,
+                                     serializedData._picLocation,
+                                     serializedData._size,
+                                     owningMetadata);
+      }
+
+   memcpy(cursor, &serializedData, sizeof(SerializedData));
    }
 
 TR_RedefinedClassRPicSite *TR_RedefinedClassRPicSite::make(
