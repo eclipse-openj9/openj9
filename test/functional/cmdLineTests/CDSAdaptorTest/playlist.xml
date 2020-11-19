@@ -28,8 +28,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(SQ) \
-		-DTEST_MATERIAL_DIR=$(TEST_RESROOT) \
-		-DLIB_DIR=${LIB_DIR} -DCPDL=$(Q)$(P)$(Q) -DPATHSEP=$(Q)$(D)$(Q) \
+		-DTEST_MATERIAL_DIR=$(Q)$(TEST_RESROOT)$(Q) \
+		-DLIB_DIR=$(Q)${LIB_DIR}$(Q) -DCPDL=$(Q)$(P)$(Q) -DPATHSEP=$(Q)$(D)$(Q) \
 		-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)cdsadaptortest.xml$(Q) \
 		-verbose -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
