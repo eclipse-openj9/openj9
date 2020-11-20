@@ -3791,10 +3791,7 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
       return true;
       }
 
-   if (method == TR::java_lang_Long_reverseBytes  ||
-       method == TR::java_lang_Integer_reverseBytes  ||
-       method == TR::java_lang_Short_reverseBytes ||
-       method == TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet ||
+   if (method == TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet ||
        method == TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd ||
        method == TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement ||
        method == TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement ||
@@ -3844,10 +3841,6 @@ extern TR::Register *inlineHighestOneBit(TR::Node *node, TR::CodeGenerator *cg, 
 extern TR::Register *inlineNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator * cg, bool isLong);
 extern TR::Register *inlineNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg, int32_t subfconst);
 extern TR::Register *inlineTrailingZerosQuadWordAtATime(TR::Node *node, TR::CodeGenerator *cg);
-
-extern TR::Register *inlineLongReverseBytes(TR::Node *node, TR::CodeGenerator *cg);
-extern TR::Register *inlineIntegerReverseBytes(TR::Node *node, TR::CodeGenerator *cg);
-extern TR::Register *inlineShortReverseBytes(TR::Node *node, TR::CodeGenerator *cg);
 
 extern TR::Register *inlineBigDecimalConstructor(TR::Node *node, TR::CodeGenerator *cg, bool isLong, bool exp);
 extern TR::Register *inlineBigDecimalBinaryOp(TR::Node * node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, bool scaled);
@@ -4183,22 +4176,6 @@ J9::Z::CodeGenerator::inlineDirectCall(
                break;
             }
          }
-
-
-     switch (methodSymbol->getRecognizedMethod())
-        {
-        case TR::java_lang_Long_reverseBytes:
-            resultReg = inlineLongReverseBytes(node, cg);
-            return true;
-        case TR::java_lang_Integer_reverseBytes:
-            resultReg = inlineIntegerReverseBytes(node, cg);
-            return true;
-        case TR::java_lang_Short_reverseBytes:
-            resultReg = inlineShortReverseBytes(node, cg);
-            return true;
-        default:
-           break;
-        }
 
    if (!comp->compileRelocatableCode() && !comp->getOption(TR_DisableDFP) &&
        comp->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP))
