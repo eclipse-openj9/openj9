@@ -59,7 +59,6 @@ def get_sources() {
     // Temp workaround for Windows clones
     // See #3633 and JENKINS-54612
     if (NODE_LABELS.contains("windows") || NODE_LABELS.contains("zos")) {
-        cleanWs()
 
         CLONE_CMD = "git clone -b ${OPENJDK_BRANCH} ${OPENJDK_REPO} ."
         if (OPENJDK_REFERENCE_REPO) {
