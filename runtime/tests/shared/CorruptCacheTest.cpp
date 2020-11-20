@@ -446,7 +446,10 @@ CorruptCacheTest::openTestCache(J9JavaVM *vm, I_32 cacheType, I_32 cacheSize, U_
 	sharedClassConfig->runtimeFlags |= J9SHR_RUNTIMEFLAG_DISABLE_CORRUPT_CACHE_DUMPS;
 	sharedClassConfig->sharedClassCache = (void*)cacheMap;
 
-	rc = cacheMap->startup(vm->mainThread, piConfig, BROKEN_TEST_CACHE, NULL, J9SH_DIRPERM_ABSENT, NULL, &cacheHasIntegrity);
+	// rc = cacheMap->oldstartup(vm->mainThread, piConfig, BROKEN_TEST_CACHE, NULL, J9SH_DIRPERM_ABSENT, NULL, &cacheHasIntegrity);
+	rc = cacheMap->earlystartup(vm->mainThread, piConfig, BROKEN_TEST_CACHE, NULL, J9SH_DIRPERM_ABSENT, NULL);
+	if (0 == rc)
+		rc = cacheMap->startup(vm->mainThread, piConfig, J9SH_DIRPERM_ABSENT, NULL, &cacheHasIntegrity);
 	if (startupWillFail) {
 		if (0 == rc) {
 			ERRPRINTF("CacheMap.startup() passed when a fail was expected\n");

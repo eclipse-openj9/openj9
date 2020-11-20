@@ -197,7 +197,10 @@ OpenCacheHelper::openTestCache(I_32 cacheType, I_32 cacheSize, const char *cache
 			cacheDirPerm = J9SH_DIRPERM_ABSENT_GROUPACCESS;
 		}
 	}
-	rc = cacheMap->startup(vm->mainThread, piConfig, this->cacheName, this->cacheDir, cacheDirPerm, cacheMemory, &cacheHasIntegrity);
+	// rc = cacheMap->startup(vm->mainThread, piConfig, this->cacheName, this->cacheDir, cacheDirPerm, cacheMemory, &cacheHasIntegrity);
+	rc = cacheMap->earlystartup(vm->mainThread, piConfig, this->cacheName, this->cacheDir, cacheDirPerm, cacheMemory);
+	if (0 == rc)
+		rc = cacheMap->startup(vm->mainThread, piConfig, cacheDirPerm, cacheMemory, &cacheHasIntegrity);
 	if (true == startupWillFail) {
 		if (0 == rc) {
 			ERRPRINTF("CacheMap.startup() passed when a fail was expected");

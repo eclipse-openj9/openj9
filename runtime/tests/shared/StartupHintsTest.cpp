@@ -174,8 +174,10 @@ IDATA storeAndFindHintsTest(J9JavaVM* vm)
 
   	/* Start the cache object */
 
-	rc = cacheObject->startup(currentThread, sharedpiConfig, "Root1", NULL, J9SH_DIRPERM_ABSENT, cache, &cacheHasIntegrity);
-
+	// rc = cacheObject->startup(currentThread, sharedpiConfig, "Root1", NULL, J9SH_DIRPERM_ABSENT, cache, &cacheHasIntegrity);
+	rc = cacheObject->earlystartup(currentThread, sharedpiConfig, "Root1", NULL, J9SH_DIRPERM_ABSENT, cache);
+	if (0 == rc)
+		rc = cacheObject->startup(currentThread, sharedpiConfig, J9SH_DIRPERM_ABSENT, cache, &cacheHasIntegrity);
 	/* Report progress so far */
 	INFOPRINTF5("Store And Find Hints Test cos=%d cs=%d co=%x cba=%x rc=%d\n", cacheObjectSize, sharedpiConfig->sharedClassCacheSize, cacheObject, cache, rc);
 	if (0 != rc) {

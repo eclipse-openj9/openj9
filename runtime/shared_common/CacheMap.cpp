@@ -416,6 +416,8 @@ SH_CacheMap::sanityWalkROMClassSegment(J9VMThread* currentThread, SH_CompositeCa
 	return 1;
 }
 
+
+
 /**
  * Start up this CacheMap. Should be called after initialization.
  * Sets up access to (or creates) the shared cache and registers it as a ROMClassSegment with the vm.
@@ -431,11 +433,11 @@ SH_CacheMap::sanityWalkROMClassSegment(J9VMThread* currentThread, SH_CompositeCa
  * @return 0 on success or -1 for failure
  */
 IDATA 
-SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, const char* rootName, const char* cacheDirName, UDATA cacheDirPerm, BlockPtr cacheMemoryUT, bool* cacheHasIntegrity)
+SH_CacheMap::oldstartup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, const char* rootName, const char* cacheDirName, UDATA cacheDirPerm, BlockPtr cacheMemoryUT, bool* cacheHasIntegrity)
 {
 	IDATA itemsRead = 0;
 	IDATA rc = 0;
-	const char* fnName = "startup";
+	const char* fnName = "startupold";
 	J9JavaVM* vm = currentThread->javaVM;
 
 	IDATA deleteRC = 1;
@@ -497,12 +499,11 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 			 	 * remove AUTOKILL so that we start up with the existing cache */
 				*runtimeFlags &= ~J9SHR_RUNTIMEFLAG_AUTOKILL_DIFF_BUILDID;
 			}
-	
-			rc = ccToUse->earlystartup(currentThread, piconfig, cacheMemoryUT, runtimeFlags, _verboseFlags, _cacheName, cacheDirName, cacheDirPerm, true);
+
+			rc = ccToUse->earlystartup(currentThread, piconfig, cacheMemoryUT, runtimeFlags, _verboseFlags, _cacheName, _cacheDir, cacheDirPerm, true);
 			if (rc == CC_STARTUP_OK) {
 				rc = ccToUse->startup(currentThread, piconfig, cacheMemoryUT, &_actualSize, &_localCrashCntr, true, cacheHasIntegrity);
 			}
-
 			if (rc == CC_STARTUP_OK) {
 				if (sanityWalkROMClassSegment(currentThread, ccToUse) == 0) {
 					rc = CC_STARTUP_CORRUPT;
@@ -609,6 +610,406 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 							preLayer = _sharedClassConfig->layer - 1; 
 						}
 
+						ccNext = SH_CompositeCacheImpl::newInstance(vm, _sharedClassConfig, allocPtr, cacheName, cacheType, false, preLayer);
+						ccNext->setNext(NULL);
+						ccNext->setPrevious(ccToUse);
+						ccToUse->setNext(ccNext);
+						ccPrevious = ccToUse;
+						_ccTail = ccNext;
+					} else {
+						/* no prereq cache, do nothing */
+					}
+					ccToUse->exitWriteMutex(currentThread, fnName);
+				} else {
+					CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX_STARTUP);
+					Trc_SHR_CM_startup_Exit7(currentThread);
+					return -1;
+				}
+			}
+error:
+			if (CC_STARTUP_OK != rc) {
+				if (isCcHead) {
+					cacheFileSize = _ccHead->getTotalSize();
+				}
+				handleStartupError(currentThread, ccToUse, rc, *runtimeFlags, _verboseFlags, &doRetry, &deleteRC);
+
+				if (isCcHead && doRetry) {
+					if (cacheFileSize > 0) {
+						/* If we're recreating, make the new cache the same size as the old 
+						 * Cache may be corrupt, so don't rely on values in the cache header to determine size */
+						piconfig->sharedClassCacheSize = cacheFileSize;
+					}
+				}
+
+			}
+		} while (doRetry && (tryCntr < 2));
+		ccToUse = ccToUse->getNext();
+	} while (NULL != ccToUse && CC_STARTUP_OK == rc);
+
+	if (CC_STARTUP_OK != rc) {
+		CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_FAILED_TO_START_UP);
+		Trc_SHR_CM_startup_Exit11(currentThread);
+		if (CC_STARTUP_NO_CACHE == rc) {
+			return -2;
+		}
+		return rc;
+	}
+
+	setCacheAddressRangeArray();
+	ccToUse = _ccTail;
+	if (J9_ARE_ALL_BITS_SET(*runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_STATS)) {
+		if (UnitTest::CORRUPT_CACHE_TEST != UnitTest::unitTest) {
+			Trc_SHR_Assert_True(J9_ARE_ALL_BITS_SET(*runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_READONLY));
+		}
+		if (J9_ARE_ALL_BITS_SET(vm->sharedCacheAPI->printStatsOptions, PRINTSTATS_SHOW_TOP_LAYER_ONLY)) {
+			ccToUse = _ccHead;
+		}
+	}
+
+	do {
+		if (ccToUse == _ccHead) {
+			runtimeFlags = _runtimeFlags;
+		} else {
+			runtimeFlags = _readOnlyCacheRuntimeFlags;
+		}
+		bool isReadOnly = ccToUse->isRunningReadOnly();
+		/* THREADING: We want the cache mutex here as we are reading all available data. Don't want updates happening as we read. */
+
+		if (ccToUse->enterWriteMutex(currentThread, false, fnName) == 0) {
+			/* populate the hashtables */
+			itemsRead = readCache(currentThread, ccToUse, -1, false);
+			ccToUse->protectPartiallyFilledPages(currentThread);
+			/* Two reasons for moving the code to check for full cache from SH_CompositeCacheImpl::startup()
+			 * to SH_CacheMap::startup():
+			 * 	- While marking cache full, last unsused pages are also protected, which ideally should be done
+			 * 	  after protecting pages belonging to ROMClass area and metadata area.
+			 * 	- Secondly, when setting cache full flags, the code expects to be holding the write mutex, which is not done in
+			 * 	  SH_CompositeCacheImpl::startup().
+			 *
+			 * Do not call fillCacheIfNearlyFull() in readonly mode, as we cannot write anything to cache.
+			 */
+			if (!isReadOnly) {
+				ccToUse->fillCacheIfNearlyFull(currentThread);
+			}
+			ccToUse->exitWriteMutex(currentThread, fnName);
+
+			if (CM_READ_CACHE_FAILED == itemsRead) {
+				Trc_SHR_CM_startup_Exit6(currentThread);
+				return -1;
+			}
+			if (CM_CACHE_CORRUPT == itemsRead) {
+				Trc_SHR_CM_startup_Exit13(currentThread);
+				rc = CC_STARTUP_CORRUPT;
+
+				SH_Managers::ManagerWalkState state;
+				SH_Manager* walkManager = managers()->startDo(currentThread, 0, &state);
+				while (walkManager) {
+					walkManager->cleanup(currentThread);
+					walkManager = managers()->nextDo(&state);
+				}
+			}
+		} else {
+			CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX_STARTUP);
+			Trc_SHR_CM_startup_Exit7(currentThread);
+			return -1;
+		}
+		if (CC_STARTUP_OK == rc) {
+			if (isReadOnly) {
+				*runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_READONLY;
+				/* If running read-only, treat the cache as full */
+				ccToUse->markReadOnlyCacheFull();
+			}
+			ccToUse = ccToUse->getPrevious();
+		}
+	} while (NULL != ccToUse && CC_STARTUP_OK == rc);
+
+	if (rc != CC_STARTUP_OK) {
+		handleStartupError(currentThread, ccToUse, rc, *runtimeFlags, _verboseFlags, &doRetry, &deleteRC);
+		Trc_SHR_CM_startup_Exit1(currentThread);
+		return -1;
+	}
+	
+	if (!initializeROMSegmentList(currentThread)) {
+		CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_FAILED_CREATE_ROMIMAGE);
+		Trc_SHR_CM_startup_Exit4(currentThread);
+		return -1;
+	}
+
+	updateROMSegmentList(currentThread, false, false);
+
+	Trc_SHR_CM_startup_ExitOK(currentThread);
+	return 0;
+}
+
+/**
+ * Start up this CacheMap. Should be called after initialization.
+ * Sets up access to (or creates) the shared cache and registers it as a ROMClassSegment with the vm.
+ * THREADING: Only ever single threaded
+ * 
+ * @param [in] currentThread  The current thread
+ * @param [in] piconfig  The shared class pre-init config
+ * @param [in] rootName  The name of the cache to connect to
+ * @param [in] cacheDirName  The location of the cache file(s)
+ * @param [in] cacheMemoryUT  Used for unit testing. If provided, cache is built into this buffer. 
+ * 
+ * @return 0 on success or -1 for failure
+ */
+IDATA
+SH_CacheMap::earlystartup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, const char* rootName, const char* cacheDirName, UDATA cacheDirPerm, BlockPtr cacheMemoryUT)
+{
+	IDATA rc = 0;
+	IDATA deleteRC = 1;
+	PORT_ACCESS_FROM_PORT(_portlib);
+	_actualSize = (U_32)piconfig->sharedClassCacheSize;
+
+	Trc_SHR_CM_startup_Entry(currentThread, rootName, _actualSize);
+
+	if (_sharedClassConfig) {
+		_runtimeFlags = &(_sharedClassConfig->runtimeFlags);
+		_verboseFlags = _sharedClassConfig->verboseFlags;
+	}
+	_cacheName = rootName;				/* Store the original name as the cache name */
+	_cacheDir = cacheDirName;
+
+	if (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_READONLY) {
+		/* If running readonly, we can't recreate a cache after we delete it, so disable autopunt */
+		*_runtimeFlags &= ~J9SHR_RUNTIMEFLAG_AUTOKILL_DIFF_BUILDID;
+	}
+
+	if (omrthread_monitor_init(&_refreshMutex, 0)) {
+		CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_FAILED_CREATE_REFRESH_MUTEX);
+		Trc_SHR_CM_startup_Exit5(currentThread);
+		return -1;
+	}
+
+	U_32 cacheFileSize = 0;
+	IDATA tryCntr = 0;
+	bool doRetry = false;
+	do {
+		tryCntr += 1;
+		doRetry = false;
+		if ((rc == CC_STARTUP_SOFT_RESET) && (deleteRC == -1)) {
+			/* If we've tried SOFT_RESET the first time around and the delete failed,
+		 	 * remove AUTOKILL so that we start up with the existing cache */
+			*_runtimeFlags &= ~J9SHR_RUNTIMEFLAG_AUTOKILL_DIFF_BUILDID;
+		}
+
+		/* _ccHead->startup will set the _actualSize to the real cache size */
+		rc = _ccHead->earlystartup(currentThread, piconfig, cacheMemoryUT, _runtimeFlags, _verboseFlags, _cacheName, _cacheDir, cacheDirPerm, true);
+		if (CC_STARTUP_OK != rc) {
+			cacheFileSize = _ccHead->getTotalSize();
+			// earlystartup does not set certain error code that will turn on retry
+			handleStartupError(currentThread, _ccHead, rc, *_runtimeFlags, _verboseFlags, &doRetry, &deleteRC);
+
+			if (doRetry) {
+				if (cacheFileSize > 0) {
+						/* If we're recreating, make the new cache the same size as the old 
+						 * Cache may be corrupt, so don't rely on values in the cache header to determine size */
+						piconfig->sharedClassCacheSize = cacheFileSize;
+					}
+			}
+		}
+	} while (doRetry && (tryCntr < 2));
+
+	if (CC_STARTUP_OK != rc) {
+		CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_FAILED_TO_START_UP);
+		Trc_SHR_CM_startup_Exit11(currentThread);
+		if (CC_STARTUP_NO_CACHE == rc) {
+			return -2;
+		}
+		return rc;
+	}
+
+	return 0;
+}
+
+/**
+ * Start up this CacheMap. Should be called after initialization.
+ * Sets up access to (or creates) the shared cache and registers it as a ROMClassSegment with the vm.
+ * THREADING: Only ever single threaded
+ * 
+ * @param [in] currentThread  The current thread
+ * @param [in] piconfig  The shared class pre-init config
+ * @param [in] cacheMemoryUT  Used for unit testing. If provided, cache is built into this buffer. 
+ * @param [out] cacheHasIntegrity Set to true if the cache is new or has been crc integrity checked, false otherwise
+ * 
+ * @return 0 on success or -1 for failure
+ */
+IDATA 
+SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, UDATA cacheDirPerm, BlockPtr cacheMemoryUT, bool* cacheHasIntegrity)
+{
+	IDATA itemsRead = 0;
+	IDATA rc = 0;
+	const char* fnName = "startup";
+	J9JavaVM* vm = currentThread->javaVM;
+
+	IDATA deleteRC = 1;
+	PORT_ACCESS_FROM_PORT(_portlib);
+	SH_CompositeCacheImpl* ccToUse = _ccHead;
+	SH_CompositeCacheImpl* ccNext = NULL;
+	SH_CompositeCacheImpl* ccPrevious = NULL;
+	bool isCacheUniqueIdStored = false;
+
+	Trc_SHR_CM_startup_Entry(currentThread, _cacheName, _actualSize);
+
+	if (omrthread_monitor_init(&_refreshMutex, 0)) {
+		CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_FAILED_CREATE_REFRESH_MUTEX);
+		Trc_SHR_CM_startup_Exit5(currentThread);
+		return -1;
+	}
+
+	/* _ccHead->startup will set the _actualSize to the real cache size */
+	U_32 cacheFileSize = 0;
+	bool doRetry = false;
+	U_64* runtimeFlags = _runtimeFlags;
+	char cacheUniqueID[J9SHR_UNIQUE_CACHE_ID_BUFSIZE];
+	memset(cacheUniqueID, 0, sizeof(cacheUniqueID));
+
+	do {
+		IDATA tryCntr = 0;
+		bool isCcHead = (ccToUse == _ccHead);
+		bool storeToCcHead = (ccPrevious == _ccHead);
+		const char* cacheUniqueIDPtr = NULL;
+
+		/* start up _ccHead (the top layer cache) and then statrt its pre-requiste cache (ccNext). Contine to startup ccNext and its pre-requiste cache, util there is no more pre-requiste cache.
+		 *     _ccHead -------------> ccNext ---------> ccNext --------> ........---------> ccTail
+		 *   (top layer)          (middle layer)     (middle layer)      ........         (layer 0)
+		 */
+
+		if (!isCcHead) {
+			runtimeFlags = &_sharedClassConfig->readOnlyCacheRuntimeFlags;
+		}
+
+		do {
+			++tryCntr;
+			doRetry = false;
+			if ((rc == CC_STARTUP_SOFT_RESET) && (deleteRC == -1)) {
+				/* If we've tried SOFT_RESET the first time around and the delete failed,
+			 	 * remove AUTOKILL so that we start up with the existing cache */
+				*runtimeFlags &= ~J9SHR_RUNTIMEFLAG_AUTOKILL_DIFF_BUILDID;
+			}
+
+			if (!isCcHead) {
+				rc = ccToUse->earlystartup(currentThread, piconfig, cacheMemoryUT, runtimeFlags, _verboseFlags, _cacheName, _cacheDir, cacheDirPerm, true);
+				if (rc == CC_STARTUP_OK) {
+					rc = ccToUse->startup(currentThread, piconfig, cacheMemoryUT, &_actualSize, &_localCrashCntr, true, cacheHasIntegrity);
+				}
+			}
+			else {
+				rc = ccToUse->startup(currentThread, piconfig, cacheMemoryUT, &_actualSize, &_localCrashCntr, true, cacheHasIntegrity);
+			}
+
+			if (rc == CC_STARTUP_OK) {
+
+				// we can skip this in earlystartup
+				if (sanityWalkROMClassSegment(currentThread, ccToUse) == 0) {
+					rc = CC_STARTUP_CORRUPT;
+					goto error;
+				}
+
+				// we can skip this in earlystartup
+				if (!isCcHead) {
+					if (NULL == appendCacheDescriptorList(currentThread, _sharedClassConfig, ccToUse)) {
+						CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR);
+						Trc_SHR_CM_startup_Exit12(currentThread);
+						return -1;
+					}
+				}
+				
+				UDATA idLen = 0;
+				bool isReadOnly = ccToUse->isRunningReadOnly();
+				char cacheDirBuf[J9SH_MAXPATH];
+				U_32 cacheType = J9_ARE_ALL_BITS_SET(*runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE) ? J9PORT_SHR_CACHE_TYPE_PERSISTENT : J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
+				SH_OSCache::getCacheDir(vm, _cacheDir, cacheDirBuf, J9SH_MAXPATH, cacheType, false);
+
+				if (storeToCcHead && !isCacheUniqueIdStored && !ccPrevious->isRunningReadOnly()) {
+					if (ccPrevious->enterWriteMutex(currentThread, false, fnName) == 0) {
+						storeCacheUniqueID(currentThread, cacheDirBuf, ccToUse->getCreateTime(), ccToUse->getMetadataBytes(), ccToUse->getClassesBytes(), ccToUse->getLineNumberTableBytes(), ccToUse->getLocalVariableTableBytes(), &cacheUniqueIDPtr, &idLen);
+						Trc_SHR_Assert_True(idLen < sizeof(cacheUniqueID));
+						memcpy(cacheUniqueID, cacheUniqueIDPtr, idLen);
+						cacheUniqueID[idLen] = 0;
+						ccPrevious->exitWriteMutex(currentThread, fnName);
+					} else {
+						CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX_STARTUP);
+						Trc_SHR_CM_startup_Exit7(currentThread);
+						return -1;
+					}
+				}
+
+				if (ccToUse->enterWriteMutex(currentThread, false, fnName) == 0) {
+
+					if (false == isCcHead) {
+						if (strlen(cacheUniqueID) > 0) {
+							if (false == ccToUse->verifyCacheUniqueID(currentThread, cacheUniqueID)) {
+								/* modification to a low layer cache has been detected */
+								if (_ccHead->isNewCache()) {
+									CACHEMAP_TRACE4(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED, _ccHead->getLayer(), ccToUse->getLayer(), cacheUniqueID, ccToUse->getCacheUniqueID(currentThread));
+									_ccHead->deleteCache(currentThread, true);
+								}
+								CACHEMAP_TRACE1(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED, cacheUniqueID);
+								ccToUse->exitWriteMutex(currentThread, fnName);
+								Trc_SHR_CM_startup_Exit8(currentThread);
+								return -1;
+							}
+						}
+					}
+
+					if (J9_ARE_ANY_BITS_SET(*runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION) && !isReadOnly) {
+						ccToUse->setWriteHash(currentThread, 0);				/* Initialize to zero so that peek will work */
+					}
+
+					IDATA preqRC = getPrereqCache(currentThread, cacheDirBuf, ccToUse, false, &cacheUniqueIDPtr, &idLen, &isCacheUniqueIdStored);
+
+					if (0 > preqRC) {
+						if (CM_CACHE_CORRUPT == preqRC) {
+							rc = CC_STARTUP_CORRUPT;
+							SH_Managers::ManagerWalkState state;
+							SH_Manager* walkManager = managers()->startDo(currentThread, 0, &state);
+							while (walkManager) {
+								walkManager->cleanup(currentThread);
+								walkManager = managers()->nextDo(&state);
+							}
+							ccToUse->exitWriteMutex(currentThread, fnName);
+							goto error;
+						}
+						CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_GET_PREREQ_CACHE_FAILED);
+						ccToUse->exitWriteMutex(currentThread, fnName);
+						Trc_SHR_CM_startup_Exit9(currentThread, preqRC);
+						return -1;
+					} else if (1 == preqRC) {
+						UDATA reqBytes = SH_CompositeCacheImpl::getRequiredConstrBytesWithCommonInfo(false, false);
+						SH_CompositeCacheImpl* allocPtr = (SH_CompositeCacheImpl*)j9mem_allocate_memory(reqBytes, J9MEM_CATEGORY_CLASSES);
+						if (NULL == allocPtr) {
+							ccToUse->exitWriteMutex(currentThread, fnName);
+							CACHEMAP_TRACE1(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_MEMORY_ALLOC_FAILED, reqBytes);
+							Trc_SHR_CM_startup_Exit10(currentThread);
+							return -1;
+						}
+						if (0 == _sharedClassConfig->readOnlyCacheRuntimeFlags) {
+							_sharedClassConfig->readOnlyCacheRuntimeFlags = (_sharedClassConfig->runtimeFlags | J9SHR_RUNTIMEFLAG_ENABLE_READONLY);
+							_sharedClassConfig->readOnlyCacheRuntimeFlags &= ~J9SHR_RUNTIMEFLAG_AUTOKILL_DIFF_BUILDID;
+							_readOnlyCacheRuntimeFlags = &_sharedClassConfig->readOnlyCacheRuntimeFlags;
+						}
+						I_8 preLayer = 0;
+						const char* cacheName = _cacheName;
+						char cacheNameBuf[USER_SPECIFIED_CACHE_NAME_MAXLEN];
+						
+						if (isCacheUniqueIdStored) {
+							Trc_SHR_Assert_True(idLen < sizeof(cacheUniqueID));
+							memcpy(cacheUniqueID, cacheUniqueIDPtr, idLen);
+							cacheUniqueID[idLen] = 0;
+							SH_OSCache::getCacheNameAndLayerFromUnqiueID(vm, cacheUniqueID, idLen, cacheNameBuf, USER_SPECIFIED_CACHE_NAME_MAXLEN, &preLayer);
+							cacheName = cacheNameBuf;
+						} else {
+							/**
+							 * 	The CacheUniqueID of the pre-requisite cache is not stored when a new layer of cache is created (using createLayer or layer=<num> option).
+							 * 	Thus, we get the CacheUniqueID of the current cache and decrement the layer number by 1 to get the cacheName and layer number of the pre-requisite cache.
+							 */
+							preLayer = _sharedClassConfig->layer - 1; 
+						}
+
+						// Harry Yu: this may be a problem we are creating newInstance on the go
+						// TODO: need to look into how this works...
 						ccNext = SH_CompositeCacheImpl::newInstance(vm, _sharedClassConfig, allocPtr, cacheName, cacheType, false, preLayer);
 						ccNext->setNext(NULL);
 						ccNext->setPrevious(ccToUse);

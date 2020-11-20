@@ -87,7 +87,11 @@ public:
 
 	static UDATA getRequiredConstrBytes(bool startupForStats);
 
-	IDATA startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, const char* rootName, const char* cacheDirName, UDATA cacheDirPerm, BlockPtr cacheMemoryUT, bool* cacheHasIntegrity);
+	IDATA earlystartup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, const char* rootName, const char* cacheDirName, UDATA cacheDirPerm, BlockPtr cacheMemoryUT);
+
+	IDATA startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, UDATA cacheDirPerm, BlockPtr cacheMemoryUT, bool* cacheHasIntegrity);
+
+	IDATA oldstartup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, const char* rootName, const char* cacheDirName, UDATA cacheDirPerm, BlockPtr cacheMemoryUT, bool* cacheHasIntegrity);
 
 	/* @see SharedCache.hpp */
 	virtual IDATA enterLocalMutex(J9VMThread* currentThread, omrthread_monitor_t monitor, const char* name, const char* caller);

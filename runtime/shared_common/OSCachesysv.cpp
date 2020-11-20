@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2894,7 +2894,10 @@ SH_OSCachesysv::restoreFromSnapshot(J9JavaVM* vm, const char* cacheName, UDATA n
 				vm->sharedClassConfig->runtimeFlags |= J9SHR_RUNTIMEFLAG_RESTORE_CHECK;
 				/* free memory allocated by SH_OSCachesysv::startup() */
 				cleanup();
-				rc = cm->startup(currentThread, piconfig, cacheName, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, NULL, &cacheHasIntegrity);
+				rc = cm->earlystartup(currentThread, piconfig, cacheName, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, NULL);
+				if (0 == rc)
+					rc = cm->startup(currentThread, piconfig, vm->sharedCacheAPI->cacheDirPerm, NULL, &cacheHasIntegrity);
+
 				/* verboseFlags might be set to 0 in cm->startup(), set it again to ensure the NLS can be printed out */
 				_verboseFlags = vm->sharedClassConfig->verboseFlags;
 				if (0 == rc) {

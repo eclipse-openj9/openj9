@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -189,7 +189,10 @@ SH_CacheMap* createTestCache(J9JavaVM* vm, UDATA size, char* existingCache, char
 		cache = existingCache;
 	}
 	bool cacheHasIntegrity;
-	rc = returnVal->startup(vm->mainThread, sharedpiConfig, "Root1", NULL, J9SH_DIRPERM_ABSENT, cache, &cacheHasIntegrity);
+	rc = returnVal->earlystartup(vm->mainThread, sharedpiConfig, "Root1", NULL, J9SH_DIRPERM_ABSENT, cache);
+	if (rc == 0)
+		rc = returnVal->startup(vm->mainThread, sharedpiConfig, J9SH_DIRPERM_ABSENT, cache, &cacheHasIntegrity);
+	// rc = returnVal->startup(vm->mainThread, sharedpiConfig, "Root1", NULL, J9SH_DIRPERM_ABSENT, cache, &cacheHasIntegrity);
 	if (rc != 0) {
 		return NULL;
 	}

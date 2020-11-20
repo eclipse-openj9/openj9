@@ -148,7 +148,10 @@ createTestCache(J9JavaVM* vm, J9SharedClassPreinitConfig *piconfig, J9SharedClas
 
 		bool cacheHasIntegrity;
 		UnitTest::unitTest = UnitTest::SHAREDCACHE_API_TEST;
-		rc = cacheMap[i]->startup(vm->mainThread, piconfig, cacheInfoList[i].name, cacheInfoList[i].cacheDir, J9SH_DIRPERM_ABSENT, NULL, &cacheHasIntegrity);
+		// rc = cacheMap[i]->startup(vm->mainThread, piconfig, cacheInfoList[i].name, cacheInfoList[i].cacheDir, J9SH_DIRPERM_ABSENT, NULL, &cacheHasIntegrity);
+		rc = cacheMap[i]->earlystartup(vm->mainThread, piconfig, cacheInfoList[i].name, cacheInfoList[i].cacheDir, J9SH_DIRPERM_ABSENT, NULL);
+		if (0 == rc)
+			rc = cacheMap[i]->startup(vm->mainThread, piconfig, J9SH_DIRPERM_ABSENT, NULL, &cacheHasIntegrity);
 		UnitTest::unitTest = UnitTest::NO_TEST;
 		if (rc != 0) {
 			j9tty_printf(PORTLIB, "CacheMap.startup() failed\n");

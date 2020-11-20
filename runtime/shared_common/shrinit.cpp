@@ -3437,7 +3437,9 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 			}
 		}
 	} else {
-		rcStartup = cm->startup(currentThread, piconfig, cacheName, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, NULL, &cacheHasIntegrity);
+		rcStartup = cm->earlystartup(currentThread, piconfig, cacheName, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, NULL);
+		if (rcStartup == 0)
+			rcStartup = cm->startup(currentThread, piconfig, vm->sharedCacheAPI->cacheDirPerm, NULL, &cacheHasIntegrity);
 	}
 
 	if (rcStartup != 0) {

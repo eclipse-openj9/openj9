@@ -203,8 +203,10 @@ IDATA storeAndFindTest(J9JavaVM* vm)
 	cacheObject1 = SH_CacheMap::newInstance(vm, sharedConfig, (SH_CacheMap*)cacheObjectMemory1, "cache1", 0);
 
   	/* Start the cache object */
-
-	rc = cacheObject1->startup(vm->mainThread, sharedpiConfig, "Root1", NULL, J9SH_DIRPERM_ABSENT, cache, &cacheHasIntegrity);
+	// rc = cacheObject1->startup(vm->mainThread, sharedpiConfig, "Root1", NULL, J9SH_DIRPERM_ABSENT, cache, &cacheHasIntegrity);
+	rc = cacheObject1->earlystartup(vm->mainThread, sharedpiConfig, "Root1", NULL, J9SH_DIRPERM_ABSENT, cache);
+	if (0 == rc)
+		rc = cacheObject1->startup(vm->mainThread, sharedpiConfig, J9SH_DIRPERM_ABSENT, cache, &cacheHasIntegrity);
 
 	/* Report progress so far */
 	INFOPRINTF5("Store And Find Test cos=%d cs=%d co=%x cba=%x rc=%d\n", cacheObjectSize, sharedpiConfig->sharedClassCacheSize, cacheObject1, cache, rc);
@@ -320,8 +322,9 @@ IDATA storeAndFindTest(J9JavaVM* vm)
 	cacheObject2 = SH_CacheMap::newInstance(vm, sharedConfig, (SH_CacheMap*)cacheObjectMemory2, "cache1", 0);
 
 	/* Start the cache object */
-	rc = cacheObject2->startup(vm->mainThread, sharedpiConfig, "Root1", NULL, J9SH_DIRPERM_ABSENT, cache, &cacheHasIntegrity);
-
+	rc = cacheObject2->earlystartup(vm->mainThread, sharedpiConfig, "Root1", NULL, J9SH_DIRPERM_ABSENT, cache);
+	if (0 == rc)
+		rc = cacheObject2->startup(vm->mainThread, sharedpiConfig, J9SH_DIRPERM_ABSENT, cache, &cacheHasIntegrity);
 	if (0 != rc) {
 		ERRPRINTF("Failed to startup cacheObject2\n");
 		rc = FAIL;

@@ -297,8 +297,10 @@ AttachedDataTest::openTestCache(J9JavaVM* vm, BlockPtr preallocatedCache, UDATA 
 	memset(memory, 0, cacheMapSize);
 
 	cacheMap = SH_CacheMap::newInstance(vm, sharedClassConfig, (SH_CacheMap*)memory, "attacheddatacache", cacheType);
-
-	rc = cacheMap->startup(currentThread, piConfig, "attacheddatacache", NULL, J9SH_DIRPERM_ABSENT, cacheMemory, &cacheHasIntegrity);
+	// rc = cacheMap->startup(currentThread, piConfig, "attacheddatacache", NULL, J9SH_DIRPERM_ABSENT, cacheMemory, &cacheHasIntegrity);
+	rc = cacheMap->earlystartup(currentThread, piConfig, "attacheddatacache", NULL, J9SH_DIRPERM_ABSENT, cacheMemory);
+	if (0 == rc)
+		rc = cacheMap->startup(currentThread, piConfig, J9SH_DIRPERM_ABSENT, cacheMemory, &cacheHasIntegrity);
 	if (0 != rc) {
 		ERRPRINTF("openTestCache: CacheMap.startup() failed");
 		rc = FAIL;
