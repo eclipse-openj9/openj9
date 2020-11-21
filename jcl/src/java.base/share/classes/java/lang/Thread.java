@@ -156,7 +156,9 @@ private Thread(String vmName, Object vmThreadGroup, int vmPriority, boolean vmIs
 	super();
 
 	String threadName = (vmName == null) ? newName() : vmName;
+	/*[IF JAVA_SPEC_VERSION < 15]*/
 	setNameImpl(threadRef, threadName);
+	/*[ENDIF] JAVA_SPEC_VERSION < 15 */
 	name = threadName;
 	
 	isDaemon = vmIsDaemon;
@@ -170,6 +172,10 @@ private Thread(String vmName, Object vmThreadGroup, int vmPriority, boolean vmIs
 		booting = true;
 		/*[PR CMVC 71192] Initialize the "main" thread group without calling checkAccess() */
 		mainGroup = new ThreadGroup(systemThreadGroup);
+	} else {
+		/*[IF JAVA_SPEC_VERSION >= 15]*/
+		setNameImpl(threadRef, threadName);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 	}
 	threadGroup = vmThreadGroup == null ? mainGroup : (ThreadGroup)vmThreadGroup;
 	
@@ -180,6 +186,16 @@ private Thread(String vmName, Object vmThreadGroup, int vmPriority, boolean vmIs
  	
 	/*[PR 100718] Initialize System.in after the main thread */
 	if (booting) {
+		/*[IF JAVA_SPEC_VERSION >= 15]*/
+		/* JDK15+ native method binding uses java.lang.ClassLoader.findNative():bootstrapClassLoader.nativelibs.find(entryName)
+		 * to lookup native address when not found within systemClassLoader native libraries.
+		 * This requires bootstrapClassLoader is initialized via initialize(booting, threadGroup, null, null, true) above before 
+		 * invoking a native method not present within systemClassLoader native libraries such as following setNameImpl modified
+		 * via JVMTI agent SetNativeMethodPrefix (https://github.com/eclipse/openj9/issues/11181).
+		 * After bootstrapClassLoader initialization, setNameImpl can be invoked before initialize() to set thread name earlier.
+		 */
+		setNameImpl(threadRef, threadName);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		System.completeInitialization();
 	}
 }
