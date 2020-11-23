@@ -119,10 +119,6 @@ final class ArrayVarHandle extends VarHandle {
 	}
 /*[ENDIF] Java12 */
 
-	public MethodType accessModeTypeUncached(AccessMode accessMode) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-
 	/**
 	 * Type specific methods used by array element VarHandle methods.
 	 */
