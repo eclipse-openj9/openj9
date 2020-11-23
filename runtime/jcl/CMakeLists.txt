@@ -129,6 +129,7 @@ target_sources(jclse
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jclreflect.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jcltrace.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jclvm.c
+		${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_internal_misc_ScopedMemoryAccess.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jithelpers.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jniidcacheinit.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/log.c

@@ -69,10 +69,6 @@ abstract class ViewVarHandle extends VarHandle {
 		}
 	}
 
-	public MethodType accessModeTypeUncached(AccessMode accessMode) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-	
 	static class ViewVarHandleOperations extends VarHandleOperations {
 		static final char convertEndian(char value) {
 			return Character.reverseBytes(value);
