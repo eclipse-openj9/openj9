@@ -2456,10 +2456,10 @@ public String toGenericString() {
 		kindOfType = "interface "; //$NON-NLS-1$
 	} else if ((!isArray) && ((modifiers & ENUM) != 0) && (getSuperclass() == Enum.class)) {
 		kindOfType = "enum "; //$NON-NLS-1$
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	} else if (isRecord()) {
 		kindOfType = "record "; //$NON-NLS-1$
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 	} else {
 		kindOfType = "class "; //$NON-NLS-1$	
 	}
@@ -4909,7 +4909,7 @@ SecurityException {
 	}
 /*[ENDIF] Java12 */
 
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	/**
 	 * Returns true if the class instance is a record.
 	 * 
@@ -4942,7 +4942,7 @@ SecurityException {
 	}
 
 	private native RecordComponent[] getRecordComponentsImpl();
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**

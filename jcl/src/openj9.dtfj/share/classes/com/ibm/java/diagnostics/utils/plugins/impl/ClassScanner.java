@@ -47,7 +47,7 @@ public class ClassScanner extends ClassVisitor {
 		/*[IF JAVA_SPEC_VERSION >= 15]*/
 		super(Opcodes.ASM8, null);
 		/*[ELSE]*/
-		/*[IF Java14]*/
+		/*[IF JAVA_SPEC_VERSION >= 14]*/
 		super(Opcodes.ASM7, null);
 		/*[ELSE]*/
 		/*[IF Java11]*/
@@ -55,7 +55,7 @@ public class ClassScanner extends ClassVisitor {
 		/*[ELSE]*/
 		super(Opcodes.ASM5, null);
 		/*[ENDIF] Java11 */
-		/*[ENDIF] Java14 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 		/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		this.url = url;
 		this.listeners = listeners;

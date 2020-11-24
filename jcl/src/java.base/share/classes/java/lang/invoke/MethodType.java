@@ -335,12 +335,12 @@ public final class MethodType implements Serializable
 	public static MethodType fromMethodDescriptorString(String methodDescriptor, ClassLoader loader) {
 		ClassLoader classLoader = loader; 
 		if (classLoader == null) {
-			/*[IF Java14]*/
+			/*[IF JAVA_SPEC_VERSION >= 14]*/
 			SecurityManager security = System.getSecurityManager();
 			if (security != null) {
 				security.checkPermission(sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION);
 			}
-			/*[ENDIF]*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 			classLoader = ClassLoader.getSystemClassLoader();
 		}
 		
@@ -1112,4 +1112,3 @@ public final class MethodType implements Serializable
 	}
 /*[ENDIF]*/
 }
-

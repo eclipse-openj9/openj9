@@ -79,14 +79,14 @@ public class Thread implements Runnable {
 	// Instance variables
 	private long threadRef;									// Used by the VM
 	long stackSize = 0;
-	/*[IF Java14]*/
+	/*[IF JAVA_SPEC_VERSION >= 14]*/
 	/* deadInterrupt tracks the thread interrupt state when threadRef has no reference (ie thread is not alive). 
 	 * Note that this value need not be updated while the thread is running since the interrupt state will be 
 	 * tracked by the vm during that time. Because of this the value should not be used over calling
 	 * isInterrupted() or interrupted().
 	 */
 	private volatile boolean deadInterrupt;
-	/*[ENDIF] Java14 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 	private volatile boolean started;				// If !isAlive(), tells if Thread died already or hasn't even started
 	private String name;						// The Thread's name
 	private int priority = NORM_PRIORITY;			// The Thread's current priority
@@ -550,14 +550,14 @@ public final void checkAccess() {
  *
  * @return		Number of stack frames
  * 
-/*[IF Java14]
+/*[IF JAVA_SPEC_VERSION >= 14]
  * @exception	UnsupportedOperationException
-/*[ELSE] Java14 
+/*[ELSE] JAVA_SPEC_VERSION >= 14
 /*[IF Java13]
  * @exception	IllegalThreadStateException
  *					if this thread has not been suspended.
 /*[ENDIF] Java13
-/*[ENDIF] Java14 
+/*[ENDIF] JAVA_SPEC_VERSION >= 14
  *
  * @deprecated	The semantics of this method are poorly defined and it uses the deprecated suspend() method.
  */
@@ -567,11 +567,11 @@ public final void checkAccess() {
 @Deprecated
 /*[ENDIF] Java11 */
 public int countStackFrames() {
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	throw new UnsupportedOperationException();
-/*[ELSE] Java14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 	return 0;
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 }
 
 /**
@@ -685,9 +685,9 @@ public final ThreadGroup getThreadGroup() {
 /**
  * Posts an interrupt request to the receiver
  * 
-/*[IF Java14]
+/*[IF JAVA_SPEC_VERSION >= 14]
  * From Java 14, the interrupt state for threads that are not alive is tracked.
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 14
  *
  * @exception	SecurityException
  *					if <code>group.checkAccess()</code> fails with a SecurityException
@@ -733,9 +733,9 @@ public static native boolean interrupted();
 /**
  * Posts an interrupt request to the receiver
  * 
-/*[IF Java14]
+/*[IF JAVA_SPEC_VERSION >= 14]
  * From Java 14, the interrupt state for threads that are not alive is tracked.
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 14
  *
  * @see			Thread#interrupted
  * @see			Thread#isInterrupted 
@@ -926,11 +926,11 @@ private synchronized static String newName() {
  * @deprecated	Used with deprecated method Thread.suspend().
  */
 /*[IF Java11]*/
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 @Deprecated(forRemoval=true, since="1.2")
-/*[ELSE] Java14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 /*[ELSE] Java11 */
 @Deprecated
 /*[ENDIF] Java11 */
@@ -1251,11 +1251,11 @@ private native void stopImpl(Throwable throwable);
  * @deprecated May cause deadlocks.
  */
 /*[IF Java11]*/
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 @Deprecated(forRemoval=true, since="1.2")
-/*[ELSE] Java14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 /*[ELSE] Java11 */
 @Deprecated
 /*[ENDIF] Java11 */
@@ -1534,10 +1534,10 @@ void uncaughtException(Throwable e) {
  * @see J9VMInternals#threadCleanup()
  */
 void cleanup() {
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	/* Refresh deadInterrupt value so it is accurate when thread reference is removed. */	
 	deadInterrupt = interrupted();
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
 /*[IF Java11]*/
 	if (threadLocals != null && TerminatingThreadLocal.REGISTRY.isPresent()) {

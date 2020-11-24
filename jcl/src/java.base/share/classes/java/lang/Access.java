@@ -391,11 +391,11 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] Java12 */
 
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	public void loadLibrary(Class<?> caller, String library) {
 		System.loadLibrary(library);
 	}
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	public Class<?> defineClass(ClassLoader classLoader, Class<?> clazz, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object classData) {

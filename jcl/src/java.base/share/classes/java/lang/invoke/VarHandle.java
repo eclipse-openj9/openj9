@@ -50,10 +50,10 @@ import java.util.Objects;
 import java.util.Map;
 import java.util.HashMap;
 
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 import java.util.function.BiFunction;
 import java.lang.reflect.Method;
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
 /**
  * Dynamically typed reference to a field, allowing read and write operations, 
@@ -340,7 +340,7 @@ public abstract class VarHandle extends VarHandleInternal
 	static final Unsafe _unsafe = Unsafe.getUnsafe();
 	static final Lookup _lookup = Lookup.IMPL_LOOKUP;
 
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	static final BiFunction<String,
 				/*[IF JAVA_SPEC_VERSION >= 16]*/
 				List<Number>,
@@ -349,7 +349,7 @@ public abstract class VarHandle extends VarHandleInternal
 				/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 				ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
 	VarForm vform = null;
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 	
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	MethodHandle[] handleTable;
@@ -386,7 +386,7 @@ public abstract class VarHandle extends VarHandleInternal
 /*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 	}
 
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	/**
 	 * Constructs a generic VarHandle instance.
 	 *
@@ -561,7 +561,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 		return MethodHandles.permuteArguments(methodHandle, permuteMethodType, reorder);
 	}
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**
@@ -817,12 +817,12 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @return A boolean value indicating whether the {@link AccessMode} is supported.
 	 */
 	boolean isAccessModeSupportedHelper(AccessMode accessMode) {
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 		if (vform != null) {
 			return (handleTable[accessMode.ordinal()] != null);
 		}
-/*[ENDIF] Java14 */
-		
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
+
 		switch (accessMode) {
 		case GET:
 		case GET_VOLATILE:

@@ -240,11 +240,11 @@ private void add(ThreadGroup g) throws IllegalThreadStateException {
  * @deprecated 	Required deprecated method suspend().
  */
 /*[IF Java11]*/
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 @Deprecated(forRemoval=true, since="1.2")
-/*[ELSE] Java14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 /*[ELSE] Java11 */
 @Deprecated
 /*[ENDIF] Java11 */
@@ -729,11 +729,11 @@ private void remove(ThreadGroup g) {
  * @deprecated Requires deprecated method Thread.resume().
  */
 /*[IF Java11]*/
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 @Deprecated(forRemoval=true, since="1.2")
-/*[ELSE] Java14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 /*[ELSE] Java11 */
 @Deprecated
 /*[ENDIF] Java11 */
@@ -866,11 +866,11 @@ private final boolean stopHelper() {
  * @deprecated Requires deprecated method Thread.suspend().
  */
 /*[IF Java11]*/
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 @Deprecated(forRemoval=true, since="1.2")
-/*[ELSE] Java14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 /*[ELSE] Java11 */
 @Deprecated
 /*[ENDIF] Java11 */

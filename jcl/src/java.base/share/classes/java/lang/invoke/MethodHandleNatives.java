@@ -47,7 +47,7 @@ class MethodHandleNatives {
 		return linkageErr;
 	}
 
-	/*[IF Java14]*/
+	/*[IF JAVA_SPEC_VERSION >= 14]*/
 	static long objectFieldOffset(MemberName memberName) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -59,8 +59,8 @@ class MethodHandleNatives {
 	static Object staticFieldBase(MemberName memberName) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[ENDIF] Java14 */
-	
+	/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
+
 	/*[IF JAVA_SPEC_VERSION >= 15]*/
 	static boolean refKindIsMethod(byte kind) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();

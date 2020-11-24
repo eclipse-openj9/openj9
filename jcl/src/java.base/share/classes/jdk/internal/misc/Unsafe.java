@@ -1042,7 +1042,7 @@ public final class Unsafe {
 	/* @return true if machine is big endian, false otherwise */
 	private native boolean isBigEndian0();
 
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	/**
 	 * Make sure that the virtual memory at address "addr" for length "len" has
 	 * been written back from the cache to physical memory.
@@ -1061,8 +1061,8 @@ public final class Unsafe {
 	 * @return true if cache writeback is possible, else false
 	 */
 	public static native boolean isWritebackEnabled();
-/*[ENDIF] Java14 */
-	
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
+
 	/**
 	 * Getter for unsafe instance.
 	 * 
