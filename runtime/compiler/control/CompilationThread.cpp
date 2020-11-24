@@ -2185,6 +2185,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationAotValidateExceptionHookFailure:
             case compilationAotBlockFrequencyReloFailure:
             case compilationAotRecompQueuedFlagReloFailure:
+            case compilationAOTValidateOSRFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotUseAotCodeFromSharedCache = true;
                tryCompilingAgain = true;

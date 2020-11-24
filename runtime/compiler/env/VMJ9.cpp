@@ -1073,7 +1073,7 @@ UDATA TR_J9VMBase::getOffsetOfJLThreadJ9Thread()
 UDATA TR_J9VMBase::getOSRFrameHeaderSizeInBytes()                   {return sizeof(J9OSRFrame);}
 UDATA TR_J9VMBase::getOSRFrameSizeInBytes(TR_OpaqueMethodBlock* method)  {return osrFrameSize((J9Method*) method);}
 
-bool TR_J9VMBase::ensureOSRBufferSize(uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes)
+bool TR_J9VMBase::ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes)
    {
    J9JavaVM *vm = _jitConfig->javaVM;
    return ::ensureOSRBufferSize(vm, osrFrameSizeInBytes, osrScratchBufferSizeInBytes, osrStackFrameSizeInBytes);
@@ -9026,6 +9026,21 @@ TR_J9SharedCacheVM::canRememberClass(TR_OpaqueClassBlock *classPtr)
    if (_sharedCache)
       return (_sharedCache->rememberClass((J9Class *) classPtr, false) != NULL);
    return false;
+   }
+
+bool
+TR_J9SharedCacheVM::ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes)
+   {
+   bool valid = TR_J9VMBase::ensureOSRBufferSize(comp, osrFrameSizeInBytes, osrScratchBufferSizeInBytes, osrStackFrameSizeInBytes);
+   if (valid)
+      {
+      TR_AOTMethodHeader *aotMethodHeaderEntry = comp->getAotMethodHeaderEntry();
+      aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesOSR;
+      aotMethodHeaderEntry->_osrBufferInfo._frameSizeInBytes = osrFrameSizeInBytes;
+      aotMethodHeaderEntry->_osrBufferInfo._scratchBufferSizeInBytes = osrScratchBufferSizeInBytes;
+      aotMethodHeaderEntry->_osrBufferInfo._stackFrameSizeInBytes = osrStackFrameSizeInBytes;
+      }
+   return valid;
    }
 
 //////////////////////////////////////////////////////////
