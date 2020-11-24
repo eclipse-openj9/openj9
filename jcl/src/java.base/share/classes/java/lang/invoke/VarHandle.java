@@ -342,11 +342,11 @@ public abstract class VarHandle extends VarHandleInternal
 
 /*[IF Java14]*/
 	static final BiFunction<String,
-				/*[IF Java16]*/
+				/*[IF JAVA_SPEC_VERSION >= 16]*/
 				List<Number>,
 				/*[ELSE]*/
 				List<Integer>,
-				/*[ENDIF] Java16 */
+				/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 				ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
 	VarForm vform = null;
 /*[ENDIF] Java14 */
@@ -364,9 +364,9 @@ public abstract class VarHandle extends VarHandleInternal
 	private int hashCode = 0;
 /*[ENDIF] Java12 */
 
-/*[IF Java16]*/
+/*[IF JAVA_SPEC_VERSION >= 16]*/
 	final boolean exact;
-/*[ENDIF] Java16 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 	/**
 	 * Constructs a generic VarHandle instance. 
@@ -381,9 +381,9 @@ public abstract class VarHandle extends VarHandleInternal
 		this.coordinateTypes = coordinateTypes;
 		this.handleTable = handleTable;
 		this.modifiers = modifiers;
-/*[IF Java16]*/
+/*[IF JAVA_SPEC_VERSION >= 16]*/
 		this.exact = false;
-/*[ENDIF] Java16 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 	}
 
 /*[IF Java14]*/
@@ -393,7 +393,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @param varForm an instance of VarForm.
 	 */
 	VarHandle(VarForm varForm) {
-/*[IF Java16]*/
+/*[IF JAVA_SPEC_VERSION >= 16]*/
 		this(varForm, false);
 	}
 
@@ -405,7 +405,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 */
 	VarHandle(VarForm varForm, boolean exact) {
 		this.exact = exact;
-/*[ENDIF] Java16 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 		if (varForm.memberName_table == null) {
 			/* Indirect VarHandle. */
 			MethodType getter = varForm.methodType_table[VarHandle.AccessType.GET.ordinal()];
@@ -421,11 +421,11 @@ public abstract class VarHandle extends VarHandleInternal
 	
 			/* The first argument in AccessType.GET MethodType is the receiver class. */
 			Class<?> receiverActual = accessModeTypeUncached(
-					/*[IF Java16]*/
+					/*[IF JAVA_SPEC_VERSION >= 16]*/
 					AccessMode.GET.at
 					/*[ELSE]*/
 					AccessMode.GET
-					/*[ENDIF] Java16 */
+					/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 				).parameterType(0);
 
 			Class<?> receiverVarForm = varForm.methodType_table[AccessType.GET.ordinal()].parameterType(0);
@@ -793,11 +793,11 @@ public abstract class VarHandle extends VarHandleInternal
 		MethodHandle internalHandle = handleTable[accessMode.ordinal()];
 		if (internalHandle == null) {
 			modifiedType = accessModeTypeUncached(
-					/*[IF Java16]*/
+					/*[IF JAVA_SPEC_VERSION >= 16]*/
 					accessMode.at
 					/*[ELSE]*/
 					accessMode
-					/*[ENDIF] Java16 */
+					/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 				);
 		} else {
 			MethodType internalType = internalHandle.type();
@@ -903,11 +903,11 @@ public abstract class VarHandle extends VarHandleInternal
 			} else {
 
 				mt = accessModeTypeUncached(
-						/*[IF Java16]*/
+						/*[IF JAVA_SPEC_VERSION >= 16]*/
 						accessMode.at
 						/*[ELSE]*/
 						accessMode
-						/*[ENDIF] Java16 */
+						/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 					);
 
 				/* accessModeTypeUncached does not return null. It throws InternalError if the method type
@@ -1740,16 +1740,16 @@ public abstract class VarHandle extends VarHandleInternal
 /*[ENDIF] Java15 | OPENJDK_METHODHANDLES */
 
 	MethodType accessModeTypeUncached(
-		/*[IF Java16]*/
+		/*[IF JAVA_SPEC_VERSION >= 16]*/
 		AccessType type
 		/*[ELSE]*/
 		AccessMode accessMode
-		/*[ENDIF] Java16 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 	) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 
-/*[IF Java16]*/
+/*[IF JAVA_SPEC_VERSION >= 16]*/
 	final MethodType accessModeTypeUncached(int index) {
 		return accessModeTypeUncached(AccessType.values()[index]);
 	}
@@ -1765,6 +1765,6 @@ public abstract class VarHandle extends VarHandleInternal
 	public boolean hasInvokeExactBehavior() {
 		return exact;
 	}
-/*[ENDIF] Java16 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 }

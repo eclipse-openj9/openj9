@@ -30,15 +30,15 @@ import java.util.Objects;
  * on any connected CUDA GPU. A successful sort operation
  * results in the array being sorted in ascending order.
  */
-/*[IF Java16]*/
+/*[IF JAVA_SPEC_VERSION >= 16]*/
 public final class Maths {
 
 	private Maths() {
 		super();
 	}
-/*[ELSE] Java16
+/*[ELSE] JAVA_SPEC_VERSION >= 16
 public class Maths {
-/*[ENDIF] Java16*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
 
 	private static int getDefaultDevice() {
 		return CUDAManager.instanceInternal().getDefaultDevice();

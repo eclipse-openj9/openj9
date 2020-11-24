@@ -430,12 +430,12 @@ final class Access implements JavaLangAccess {
 		return StringConcatHelper.mix(arg0, string);
 	}
 /*[ENDIF] Java15 */
-	
-	/*[IF Java16]*/
+
+	/*[IF JAVA_SPEC_VERSION >= 16]*/
 	public void bindToLoader(ModuleLayer ml, ClassLoader cl) {
 		ml.bindToLoader(cl);
 	}
-	/*[ENDIF] Java16 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 /*[ENDIF] Sidecar19-SE */
 }

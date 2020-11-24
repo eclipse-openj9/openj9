@@ -55,9 +55,9 @@ class GenerateJLIClassesHelper {
 	}
 	/*[ENDIF] Java11*/
 
-	/*[IF Java16]*/
+	/*[IF JAVA_SPEC_VERSION >= 16]*/
 	static Map<String, byte[]> generateHolderClasses(Stream<String> traces) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[ENDIF] Java16*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
 }

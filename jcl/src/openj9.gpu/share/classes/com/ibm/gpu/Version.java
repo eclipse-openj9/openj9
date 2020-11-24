@@ -27,15 +27,15 @@ package com.ibm.gpu;
  * The main method can be launched from the command line, which will print
  * the current level to stdout.
  */
-/*[IF Java16]*/
+/*[IF JAVA_SPEC_VERSION >= 16]*/
 public final class Version {
 
 	private Version() {
 		super();
 	}
-/*[ELSE] Java16
+/*[ELSE] JAVA_SPEC_VERSION >= 16
 public class Version {
-/*[ENDIF] Java16*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
 
 	/**
 	 * The current build level of this package.

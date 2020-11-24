@@ -1498,7 +1498,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				int codepointAtO2 = charAtO2;
 
 				if (charAtO1 == charAtO2) {
-					/*[IF Java16]*/
+					/*[IF JAVA_SPEC_VERSION >= 16]*/
 					if (Character.isHighSurrogate(charAtO1) && (o1 < end)) {
 						codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
 						codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
@@ -1510,7 +1510,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					}
 					/*[ELSE]*/
 					continue;
-					/*[ENDIF] Java16 */
+					/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 				}
 
 				int result = compareValue(codepointAtO1) - compareValue(codepointAtO2);
@@ -1792,22 +1792,22 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			if (charAtO1Last != charAtO2Last
 					&& toUpperCase(charAtO1Last) != toUpperCase(charAtO2Last)
 					&& ((charAtO1Last <= 255 && charAtO2Last <= 255) || Character.toLowerCase(charAtO1Last) != Character.toLowerCase(charAtO2Last))
-					/*[IF Java16]*/
+					/*[IF JAVA_SPEC_VERSION >= 16]*/
 					&& (!Character.isLowSurrogate(charAtO1Last) || !Character.isLowSurrogate(charAtO2Last))
-					/*[ENDIF] Java16 */
+					/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 			) {
 				return false;
 			}
 
-			/*[IF Java16]*/
+			/*[IF JAVA_SPEC_VERSION >= 16]*/
 			while (o1 < end) {
 			/*[ELSE]*/
 			while (o1 < end - 1) {
-			/*[ENDIF] Java16 */
+			/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
 
-				/*[IF Java16]*/
+				/*[IF JAVA_SPEC_VERSION >= 16]*/
 				if (Character.isHighSurrogate(charAtO1) && Character.isHighSurrogate(charAtO2) && (o1 < end)) {
 					int codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
 					int codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
@@ -1817,7 +1817,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 						continue;
 					}
 				}
-				/*[ENDIF] Java16 */
+				/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 				if (charAtO1 != charAtO2 &&
 						toUpperCase(charAtO1) != toUpperCase(charAtO2) &&
@@ -2456,7 +2456,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
 
-				/*[IF Java16]*/
+				/*[IF JAVA_SPEC_VERSION >= 16]*/
 				if (Character.isHighSurrogate(charAtO1) && Character.isHighSurrogate(charAtO2) && (o1 < end)) {
 					int codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
 					int codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
@@ -2464,7 +2464,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 						return false;
 					}
 				}
-				/*[ENDIF] Java16 */
+				/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 				if (charAtO1 != charAtO2 &&
 						toUpperCase(charAtO1) != toUpperCase(charAtO2) &&

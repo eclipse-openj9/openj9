@@ -156,7 +156,6 @@
 	<configuration
 		  label="JAVA16"
 		  outputpath="JAVA16/src"
-		  flags="Java16"
 		  dependencies="JAVA15"
 		  jdkcompliance="1.8">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
