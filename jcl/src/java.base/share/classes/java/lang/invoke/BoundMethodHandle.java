@@ -77,12 +77,12 @@ abstract class BoundMethodHandle extends MethodHandle {
 		LambdaForm.NamedFunction getterFunction(int num) {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
-		
-		/*[IF Java10]*/
+
+		/*[IF JAVA_SPEC_VERSION >= 10]*/
 		MethodHandle factory() {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 	}
 	
 	abstract BoundMethodHandle copyWithExtendL(MethodType mt, LambdaForm lf, Object obj);

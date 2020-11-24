@@ -835,9 +835,9 @@ public final class MethodType implements Serializable
 	 * 		type.parameterType(type.parameterCount() - 1)
 	 * @return class of final parameter, or void.class if there are no parameters
 	 */
-	/*[IF Java10]*/
+	/*[IF JAVA_SPEC_VERSION >= 10]*/
 	public
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 	Class<?> lastParameterType() {
 		Class<?> result = void.class;
 		if (arguments.length > 0) {
@@ -1060,7 +1060,7 @@ public final class MethodType implements Serializable
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 
-	/*[IF Java10]*/
+	/*[IF JAVA_SPEC_VERSION >= 10]*/
 	/**
 	 * Returns the number of stack slots used by the described args in the MethodType.
 	 * @return The number of stack slots
@@ -1068,7 +1068,7 @@ public final class MethodType implements Serializable
 	int parameterSlotCount() {
 		return argSlots;
 	}
-	/*[ENDIF]*/	
+	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 /*[ELSE]*/
 	MethodType asCollectorType(Class<?> clz, int num1) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();

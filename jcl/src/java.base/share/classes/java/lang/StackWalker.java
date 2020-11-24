@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,9 +23,9 @@
 package java.lang;
 
 import java.lang.StackWalker.StackFrameImpl;
-/*[IF Java10]*/
+/*[IF JAVA_SPEC_VERSION >= 10]*/
 import java.lang.invoke.MethodType;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Version;
 import java.security.Permission;
@@ -303,7 +303,7 @@ public final class StackWalker {
 		 */
 		StackTraceElement toStackTraceElement();
 
-		/*[IF Java10]*/
+		/*[IF JAVA_SPEC_VERSION >= 10]*/
 		/**
 		 * @throws UnsupportedOperationException if this method is not overridden
 		 * @return MethodType containing the parameter and return types for the associated method.
@@ -323,7 +323,7 @@ public final class StackWalker {
 			throw new UnsupportedOperationException();
 		}
 
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 	}
 
 	final static class StackFrameImpl implements StackFrame {
@@ -395,7 +395,7 @@ public final class StackWalker {
 					lineNumber);
 		}
 
-		/*[IF Java10]*/
+		/*[IF JAVA_SPEC_VERSION >= 10]*/
 		/**
 		 * Creates a MethodType object for the method associated with this frame.
 		 * @throws UnsupportedOperationException if the StackWalker object is not configured with RETAIN_CLASS_REFERENCE
@@ -420,8 +420,8 @@ public final class StackWalker {
 		public java.lang.String getDescriptor() {
 			return methodSignature;
 		}
-		/*[ENDIF]*/
-		
+		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
+
 	}
 
 	static class PermissionSingleton {
@@ -429,4 +429,3 @@ public final class StackWalker {
 				new RuntimePermission("getStackWalkerWithClassReference"); //$NON-NLS-1$
 	}
 }
-

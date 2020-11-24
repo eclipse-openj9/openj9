@@ -267,11 +267,11 @@ public abstract class ClassLoader {
 		 * More details are at https://github.com/eclipse/openj9/issues/3399#issuecomment-459004840.
 		 */
 		Modifier.isPublic(Modifier.PUBLIC);
-		/*[IF Java10]*/
+		/*[IF JAVA_SPEC_VERSION >= 10]*/
 		try {
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 			System.bootLayer = jdk.internal.module.ModuleBootstrap.boot();
-		/*[IF Java10]*/
+		/*[IF JAVA_SPEC_VERSION >= 10]*/
 		} catch (Exception ex) {
 			System.out.println(ex);
 			Throwable t = ex.getCause();
@@ -281,7 +281,7 @@ public abstract class ClassLoader {
 			}
 			System.exit(1);
 		}
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 		jdk.internal.misc.VM.initLevel(2);
 		String javaSecurityManager = System.internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
 		if ((javaSecurityManager != null) 

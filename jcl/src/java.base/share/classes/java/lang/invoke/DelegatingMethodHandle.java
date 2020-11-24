@@ -51,11 +51,11 @@ abstract class DelegatingMethodHandle extends MethodHandle {
 	static LambdaForm makeReinvokerForm(MethodHandle mh, int num, Object obj, String str, boolean flag, LambdaForm.NamedFunction nf1, LambdaForm.NamedFunction nf2) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[IF Java10]*/
+	/*[IF JAVA_SPEC_VERSION >= 10]*/
 	static LambdaForm makeReinvokerForm(MethodHandle mh, int num, Object obj, boolean flag, LambdaForm.NamedFunction nf1, LambdaForm.NamedFunction nf2) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override

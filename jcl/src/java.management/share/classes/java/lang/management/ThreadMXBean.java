@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -633,7 +633,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	public ThreadInfo[] dumpAllThreads(boolean lockedMonitors,
 			boolean lockedSynchronizers);
 
-	/*[IF Java10]*/
+	/*[IF JAVA_SPEC_VERSION >= 10]*/
 	/**
 	 * Returns an array of {@link ThreadInfo} objects holding information on all
 	 * threads that were alive when the call was invoked.
@@ -663,13 +663,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 *	</ul>
 	 * @since 10
 	 */
-
 	public default ThreadInfo[] dumpAllThreads(
 		boolean lockedMonitors, boolean lockedSynchronizers, int maxDepth
 	) {
 		throw new UnsupportedOperationException();
 	}
-
 
 	/**
 	 * Returns an array of {@link ThreadInfo} objects; one for each of the
@@ -735,5 +733,5 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	) {
 		throw new UnsupportedOperationException();
 	}
-	/*[ENDIF] Java10*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 }

@@ -193,7 +193,7 @@ final class Access implements JavaLangAccess {
 		return result;
 	}
 
-	/*[IF !Java10]*/
+	/*[IF JAVA_SPEC_VERSION < 10]*/
 	/**
 	 * Return a newly created String that uses the passed in char[]
 	 * without copying. The array must not be modified after creating
@@ -207,7 +207,7 @@ final class Access implements JavaLangAccess {
 	public java.lang.String newStringUnsafe(char[] data) {
 		return new String(data, true /*ignored*/);
 	}
-	/*[ENDIF] !Java10 */
+	/*[ENDIF] JAVA_SPEC_VERSION < 10 */
 
 	@Override
 	public void invokeFinalize(java.lang.Object arg0)
@@ -231,12 +231,12 @@ final class Access implements JavaLangAccess {
 		return classLoader.createOrGetServicesCatalog();
 	}
 
-/*[IF !Java10]*/
+/*[IF JAVA_SPEC_VERSION < 10]*/
 	@Deprecated
 	public ServicesCatalog getServicesCatalog(ClassLoader classLoader) {
 		return classLoader.getServicesCatalog();
 	}
-/*[ENDIF] !Java10 */
+/*[ENDIF] JAVA_SPEC_VERSION < 10 */
 
 	public String fastUUID(long param1, long param2) {
 		return Long.fastUUID(param1, param2);
@@ -277,11 +277,11 @@ final class Access implements JavaLangAccess {
 	}
 
 	public void invalidatePackageAccessCache() {
-/*[IF Java10]*/
+/*[IF JAVA_SPEC_VERSION >= 10]*/
 		java.lang.SecurityManager.invalidatePackageAccessCache();
-/*[ELSE] Java10 */
+/*[ELSE] JAVA_SPEC_VERSION >= 10 */
 		return;
-/*[ENDIF] Java10 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 	}
 
 	public Class<?> defineClass(ClassLoader classLoader, String className, byte[] classRep, ProtectionDomain protectionDomain, String str) {
@@ -364,14 +364,14 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] Sidecar19-SE-OpenJ9 */
 
-/*[IF Java10]*/
+/*[IF JAVA_SPEC_VERSION >= 10]*/
 	public String newStringUTF8NoRepl(byte[] bytes, int offset, int length) {
 		return StringCoding.newStringUTF8NoRepl(bytes, offset, length);
 	}
 	public byte[] getBytesUTF8NoRepl(String str) {
 		return StringCoding.getBytesUTF8NoRepl(str);
 	}
-/*[ENDIF] Java10 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 	public void blockedOn(Interruptible interruptible) {

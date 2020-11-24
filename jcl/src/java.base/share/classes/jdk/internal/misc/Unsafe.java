@@ -935,8 +935,8 @@ public final class Unsafe {
 	 * @throws IllegalArgumentException if field is static
 	 */
 	private native long objectFieldOffset0(Field field);
-	
-/*[IF Java10]*/
+
+/*[IF JAVA_SPEC_VERSION >= 10]*/
 	/*
 	 * Returns byte offset to field.
 	 * 
@@ -947,7 +947,7 @@ public final class Unsafe {
 	 * @throws IllegalArgumentException if field is static
 	 */
 	private native long objectFieldOffset1(Class<?> c, String fieldName);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
 	/* 
 	 * Returns byte offset to start of static class or interface.
@@ -1477,8 +1477,8 @@ public final class Unsafe {
 		Objects.requireNonNull(field);
 		return objectFieldOffset0(field);
 	}
-	
-/*[IF Java10]*/
+
+/*[IF JAVA_SPEC_VERSION >= 10]*/
 	/**
 	 * Returns byte offset to field.
 	 * 
@@ -1494,7 +1494,7 @@ public final class Unsafe {
 		Objects.requireNonNull(fieldName);
 		return objectFieldOffset1(c, fieldName);
 	}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
 	/**
 	 * Returns byte offset to start of static class or interface.
