@@ -645,8 +645,7 @@ TraceEntry=Trc_JCL_attach_destroySemaphoreEntry Overhead=1 Level=1 Template="Jav
 
 TraceEvent=Trc_JCL_init_nativeLibrariesLoadMethodID Overhead=1 Level=3 Template="init nativeLibrariesLoadMethodID (0x%zx)"
 
-TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_initImpl_setField Overhead=1 Level=3 Template="Set field MemberName: name=%.*s, signature=%.*s"
-TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_initImpl_setData Overhead=1 Level=3 Template="Set MemberName data: flags=0x%08X, clazz=%p, vmindex=%ld, target=%ld"
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_initImpl_setData Overhead=1 Level=3 Template="Set MemberName data: flags=0x%08X, name=%p, type=%p, clazz=%p, vmindex=%ld, target=%ld"
 
 TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_init_Entry Overhead=1 Level=3 Template="MethodHandleNatives_init Enter: self = %p, ref = %p"
 TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_init_Exit Overhead=1 Level=3 Template="MethodHandleNatives_init Exit"
