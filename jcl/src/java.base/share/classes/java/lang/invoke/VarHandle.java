@@ -351,11 +351,11 @@ public abstract class VarHandle extends VarHandleInternal
 	VarForm vform = null;
 /*[ENDIF] Java14 */
 	
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	MethodHandle[] handleTable;
 /*[ELSE]*/
 	private final MethodHandle[] handleTable;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	final Class<?> fieldType;
 	final Class<?>[] coordinateTypes;
@@ -563,7 +563,7 @@ public abstract class VarHandle extends VarHandleInternal
 	}
 /*[ENDIF] Java14 */
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**
 	 * Generate a MethodHandle which translates:
 	 *     FROM {VarHandle, Receiver, Intermediate ..., Value}ReturnType
@@ -642,7 +642,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 		return operationMHs;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	Class<?> getDefiningClass() {
 		/*[MSG "K0627", "Expected override of this method."]*/
@@ -663,11 +663,11 @@ public abstract class VarHandle extends VarHandleInternal
 	 * 
 	 * @return The field type
 	 */
-	/*[IF Java15]*/
+	/*[IF JAVA_SPEC_VERSION >= 15]*/
 	public Class<?> varType() {
 	/*[ELSE]*/
 	public final Class<?> varType() {
-	/*[ENDIF] Java15 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		return this.fieldType;
 	}
 	
@@ -679,11 +679,11 @@ public abstract class VarHandle extends VarHandleInternal
 	 * 
 	 * @return The parameters required to access the field.
 	 */
-	/*[IF Java15]*/
+	/*[IF JAVA_SPEC_VERSION >= 15]*/
 	public List<Class<?>> coordinateTypes() {
 	/*[ELSE]*/
 	public final List<Class<?>> coordinateTypes() {
-	/*[ENDIF] Java15 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		return Collections.unmodifiableList(Arrays.<Class<?>>asList(coordinateTypes));
 	}
 
@@ -884,11 +884,11 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @return A {@link MethodHandle} for the specified {@link AccessMode}, bound to
 	 * 			this {@link VarHandle} instance.
 	 */
-	/*[IF Java15]*/
+	/*[IF JAVA_SPEC_VERSION >= 15]*/
 	public MethodHandle toMethodHandle(AccessMode accessMode) {
 	/*[ELSE]*/
 	public final MethodHandle toMethodHandle(AccessMode accessMode) {
-	/*[ENDIF] Java15 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		MethodHandle mh = handleTable[accessMode.ordinal()];
 
 		if (mh != null) {
@@ -1680,7 +1680,7 @@ public abstract class VarHandle extends VarHandleInternal
 	}
 /*[ENDIF] Java12 */ 
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**
 	 * Return the target VarHandle. For a direct VarHandle, the target
 	 * VarHandle is null. An indirect VarHandle will override this method to
@@ -1724,9 +1724,9 @@ public abstract class VarHandle extends VarHandleInternal
 	private static VarHandle asDirect(VarHandle varHandle) {
 		return varHandle.asDirect();
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
-/*[IF Java15 | OPENJDK_METHODHANDLES]*/
+/*[IF (JAVA_SPEC_VERSION >= 15) | OPENJDK_METHODHANDLES]*/
 	/**
 	 * Return the MethodHandle corresponding to the integer-value of the AccessMode.
 	 * 
@@ -1737,7 +1737,7 @@ public abstract class VarHandle extends VarHandleInternal
 	MethodHandle getMethodHandle(int i) {
 		return handleTable[i];
 	}
-/*[ENDIF] Java15 | OPENJDK_METHODHANDLES */
+/*[ENDIF] (JAVA_SPEC_VERSION >= 15) | OPENJDK_METHODHANDLES */
 
 	MethodType accessModeTypeUncached(
 		/*[IF JAVA_SPEC_VERSION >= 16]*/

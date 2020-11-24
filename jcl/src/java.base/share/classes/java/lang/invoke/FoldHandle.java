@@ -22,9 +22,9 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 abstract class FoldHandle extends MethodHandle {
 	protected final MethodHandle next;
@@ -97,14 +97,14 @@ abstract class FoldHandle extends MethodHandle {
 		c.compareStructuralParameter(left.argumentIndices, this.argumentIndices);
 	}
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		relatedMHs.add(next);
 		relatedMHs.add(combiner);
 		return true;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	// {{{ JIT support
 	protected static native int foldPosition();
@@ -179,4 +179,3 @@ final class FoldVoidHandle extends FoldHandle {
 		return new FoldVoidHandle(this,  newType);
 	}
 }
-

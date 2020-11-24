@@ -77,10 +77,10 @@ import java.lang.reflect.Module;
 import sun.reflect.CallerSensitive;
 /*[ENDIF] Sidecar19-SE*/
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import jdk.internal.misc.Unsafe;
 import java.util.Collections;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /**
  * Factory class for creating and adapting MethodHandles.
@@ -176,10 +176,10 @@ public class MethodHandles {
 		private static final String INVOKE_EXACT = "invokeExact"; //$NON-NLS-1$
 		private static final String INVOKE = "invoke"; //$NON-NLS-1$
 		
-		/*[IF Java15]*/
+		/*[IF JAVA_SPEC_VERSION >= 15]*/
 		private static final int CLASSOPTION_FLAG_NESTMATE = 1;
 		private static final int CLASSOPTION_FLAG_STRONG = 2;
-		/*[ENDIF] Java15*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 15*/
 
 		static final int VARARGS = 0x80;
 		
@@ -223,11 +223,11 @@ public class MethodHandles {
 		 * For earlier releases, these lookups are illegal
 		  */
 		private static boolean lookupJLIPackageCheckDefault() {
-			/*[IF Java15]
+			/*[IF JAVA_SPEC_VERSION >= 15]
 			return false;
-			/*[ELSE] Java15*/
+			/*[ELSE]*/
 			return true;
-			/*[ENDIF] Java15*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 15*/
 		}
 		
 		Lookup(Class<?> lookupClass, Class<?> prevLookupClass, int lookupMode) {
@@ -1770,9 +1770,9 @@ public class MethodHandles {
 			 */
 			if (Modifier.isFinal(modifiers) && 
 				(!field.isAccessible() || Modifier.isStatic(modifiers)
-			/*[IF Java15]
+			/*[IF JAVA_SPEC_VERSION >= 15]
 				|| declaringClass.isHidden()
-			/*[ENDIF] Java15 */
+			/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 				)
 			) {
 				/*[MSG "K05cf", "illegal setter on final field"]*/
@@ -2287,7 +2287,7 @@ public class MethodHandles {
 		/*[ENDIF] Java14*/
 		/*[ENDIF] Sidecar19-SE */
 		
-		/*[IF Java15]*/
+		/*[IF JAVA_SPEC_VERSION >= 15]*/
 		/**
 		 * The ClassOption used to define the hidden class.
 		 * NESTMATE adds the hidden class into the same nest of the lookup class as a nest member.
@@ -2459,7 +2459,7 @@ public class MethodHandles {
 			}
 			return cls;
 		}
-		/*[ENDIF] Java15 */		
+		/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		
 		/*[IF OPENJDK_METHODHANDLES]*/
 		MemberName resolveOrFail(byte b, MemberName mn) throws ReflectiveOperationException {
@@ -5557,7 +5557,7 @@ public class MethodHandles {
 		}
 	}
 
-	/*[IF Java15]*/
+	/*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**
 	 * Validates that the permute[] specifies a valid permutation from permuteType to handleType.
 	 * This method throws IllegalArgumentException on failure and returns true on success. This
@@ -5700,7 +5700,7 @@ public class MethodHandles {
 
 		return false;
 	}
-	/*[ENDIF] Java15 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	/*[IF Sidecar18-SE-OpenJ9]*/	
 	static MethodHandle basicInvoker(MethodType mt) {

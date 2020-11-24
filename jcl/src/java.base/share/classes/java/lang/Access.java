@@ -23,12 +23,12 @@
 package java.lang;
 
 import java.lang.annotation.Annotation;
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import jdk.internal.misc.Unsafe;
 import java.lang.StringConcatHelper;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
@@ -46,9 +46,9 @@ import java.net.URI;
 import java.security.ProtectionDomain;
 import java.util.Iterator;
 import java.util.List;
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.Set;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 /*[IF Java11]*/
@@ -345,15 +345,15 @@ final class Access implements JavaLangAccess {
 		return clz.getDeclaredPublicMethods(name, types);
 	}
 
-	/*[IF Java15]*/
+	/*[IF JAVA_SPEC_VERSION >= 15]*/
 	public void addOpensToAllUnnamed(Module fromModule, Set<String> concealedPackages, Set<String> exportedPackages) {
 		fromModule.implAddOpensToAllUnnamed(concealedPackages, exportedPackages);
 	}
-	/*[ELSE] Java15 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 15 */
 	public void addOpensToAllUnnamed(Module fromModule, Iterator<String> packages) {
 		fromModule.implAddOpensToAllUnnamed(packages);
 	}
-	/*[ENDIF] Java15 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	public boolean isReflectivelyOpened(Module fromModule, String pkg, Module toModule) {
 		return fromModule.isReflectivelyOpened(pkg, toModule);
@@ -397,7 +397,7 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] Java14 */
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	public Class<?> defineClass(ClassLoader classLoader, Class<?> clazz, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object classData) {
 		ClassLoader targetClassLoader = (null == classLoader) ? ClassLoader.bootstrapClassLoader : classLoader;
 		return targetClassLoader.defineClassInternal(clazz, className, classRep, protectionDomain, init, flags, classData);
@@ -429,7 +429,7 @@ final class Access implements JavaLangAccess {
 	public long stringConcatMix(long arg0, String string) {
 		return StringConcatHelper.mix(arg0, string);
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	/*[IF JAVA_SPEC_VERSION >= 16]*/
 	public void bindToLoader(ModuleLayer ml, ClassLoader cl) {

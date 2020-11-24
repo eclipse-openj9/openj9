@@ -28,7 +28,7 @@ import java.util.List;
 
 import javax.management.ObjectName;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import jdk.internal.misc.VM.BufferPool;
 import jdk.internal.access.SharedSecrets;
 /*[ELSE]
@@ -44,7 +44,7 @@ import sun.misc.JavaNioAccess.BufferPool;
 import sun.misc.SharedSecrets;
 /*[ENDIF] Sidecar19-SE */
 /*[ENDIF] Java12 */
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /**
  * The implementation MXBean for {@link java.lang.management.BufferPoolMXBean}.

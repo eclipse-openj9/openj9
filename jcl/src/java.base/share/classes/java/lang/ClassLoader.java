@@ -63,10 +63,10 @@ import jdk.internal.loader.BootLoader;
 import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import jdk.internal.loader.NativeLibraries;
 import jdk.internal.loader.NativeLibrary;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /**
  * ClassLoaders are used to dynamically load, link and install
@@ -152,9 +152,9 @@ public abstract class ClassLoader {
 /*[ENDIF]*/	
 	private static boolean specialLoaderInited = false;
 	private static InternalAnonymousClassLoader internalAnonClassLoader;
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	private NativeLibraries nativelibs = null;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 	private static native void initAnonClassLoader(InternalAnonymousClassLoader anonClassLoader);
 	
 	/*[PR JAZZ 73143]: ClassLoader incorrectly discards class loading locks*/
@@ -415,9 +415,9 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 		}
 /*[IF Sidecar19-SE]*/
 		unnamedModule = new Module(this);
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 		this.nativelibs = NativeLibraries.jniNativeLibraries(this);
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 /*[ENDIF]*/
 	} 
 /*[IF Sidecar19-SE]*/	
@@ -427,17 +427,17 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 			unnamedModule = null;
 			bootstrapClassLoader = this;
 			VM.initializeClassLoader(bootstrapClassLoader, VM.J9_CLASSLOADER_TYPE_BOOT, false);
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 			this.nativelibs = NativeLibraries.jniNativeLibraries(null);
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		} else {
 			// Assuming the second classloader initialized is platform classloader
 			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
 			specialLoaderInited = true;
 			unnamedModule = new Module(this);
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 			this.nativelibs = NativeLibraries.jniNativeLibraries(this);
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		}
 	}
 	this.classLoaderName = classLoaderName;
@@ -621,7 +621,7 @@ final Class<?> defineClassInternal(
 	return answer;
 }
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 
 private final native Class<?> defineClassImpl1(Class<?> hostClass, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object classData);
 final Class<?> defineClassInternal(
@@ -637,7 +637,7 @@ final Class<?> defineClassInternal(
 	Class<?> answer = defineClassImpl1(hostClass, className, classRep, protectionDomain, init, flags, classData);
 	return answer;
 }
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /*[IF Sidecar19-SE]*/
 /**
@@ -1995,7 +1995,7 @@ static void loadLibrary(Class<?> caller, String name, boolean fullPath) {
 		loadLibraryWithClassLoader(name, caller.getClassLoaderImpl());
 }
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 static void loadLibrary(Class<?> caller, File file) {
 	ClassLoader loader = (caller == null) ? null : caller.getClassLoader();
 	NativeLibraries nls = (loader == null) ? bootstrapClassLoader.nativelibs : loader.nativelibs;
@@ -2046,7 +2046,7 @@ private static long findNative(ClassLoader loader, String entryName) {
 	}
 	return result;
 }
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /**
  * Sets the assertion status of a class.

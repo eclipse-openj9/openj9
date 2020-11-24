@@ -22,9 +22,9 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 import com.ibm.oti.util.Msg;
 
@@ -113,13 +113,13 @@ final class SpreadHandle extends MethodHandle {
 			);
 	}
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		relatedMHs.add(next);
 		return true;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	// }}} JIT support
 
@@ -144,4 +144,3 @@ final class SpreadHandle extends MethodHandle {
 	}
 
 }
-

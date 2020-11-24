@@ -727,7 +727,7 @@ public static void load(String pathName) {
 	if (smngr != null) {
 		smngr.checkLink(pathName);
 	}
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	File fileName = new File(pathName);
 	if (fileName.isAbsolute()) {
 		ClassLoader.loadLibrary(getCallerClass(), fileName);
@@ -737,7 +737,7 @@ public static void load(String pathName) {
 	}
 /*[ELSE]
 	ClassLoader.loadLibraryWithPath(pathName, ClassLoader.callerClassLoader(), null);
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 }
 
 /**
@@ -754,11 +754,11 @@ public static void loadLibrary(String libName) {
 	if (smngr != null) {
 		smngr.checkLink(libName);
 	}
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	ClassLoader.loadLibrary(getCallerClass(), libName);
 /*[ELSE]*/
 	ClassLoader.loadLibraryWithClassLoader(libName, ClassLoader.callerClassLoader());
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 }
 
 /**

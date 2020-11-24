@@ -265,11 +265,11 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 /*[IF Java11]*/
 	private Class<?> nestHost;
 /*[ENDIF] Java11*/
-	
-/*[IF Java15]*/
+
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	private transient Object classData;
-/*[ENDIF] Java15*/
-	
+/*[ENDIF] JAVA_SPEC_VERSION >= 15*/
+
 /**
  * Prevents this class from being instantiated. Instances
  * created by the virtual machine only.
@@ -3667,12 +3667,12 @@ public String getCanonicalName() {
 			arrayCount++;
 		}
 	}
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	if (baseType.isHidden()) {
 		/* Canonical name is always null for hidden classes. */
 		return null;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 	if (baseType.getEnclosingObjectClass() != null) {
 		// local or anonymous class
 		return null;
@@ -4764,7 +4764,7 @@ public boolean isNestmateOf(Class<?> that) {
  * Answers the nest member classes of the receiver's nest host.
  *
  * @throws SecurityException if a SecurityManager is present and package access is not allowed
-/*[IF !Java15]
+/*[IF JAVA_SPEC_VERSION < 15]
  * @throws LinkageError if there is any problem loading or validating a nest member or the nest host
 /*[ENDIF]
  * @throws SecurityException if a returned class is not the current class, a security manager is enabled,
@@ -4774,9 +4774,9 @@ public boolean isNestmateOf(Class<?> that) {
  */
 @CallerSensitive
 public Class<?>[] getNestMembers() throws
-/*[IF !Java15] */
-LinkageError, 
-/*[ENDIF] */
+/*[IF JAVA_SPEC_VERSION < 15] */
+LinkageError,
+/*[ENDIF] JAVA_SPEC_VERSION < 15 */
 SecurityException {
 	if (isArray() || isPrimitive()) {
 		/* By spec, Class objects representing array types or primitive types
@@ -4840,7 +4840,7 @@ SecurityException {
 	 * @return Optional with a nominal descriptor of Class instance
 	 */
 	public Optional<ClassDesc> describeConstable() {
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 		Class<?> clazz = this;
 		if (isArray()) {
 			clazz = getComponentType();
@@ -4852,8 +4852,8 @@ SecurityException {
 			/* It is always an empty Optional for hidden classes. */
 			return Optional.empty(); 
 		}
-/*[ENDIF] Java15 */		
-		
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+
 		ClassDesc classDescriptor = ClassDesc.ofDescriptor(this.descriptorString());
 		return Optional.of(classDescriptor);
 	}
@@ -4888,7 +4888,7 @@ SecurityException {
 			}
 		}
 		String name = this.getName().replace('.', '/');
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 		Class<?> clazz = this;
 		if (isArray()) {
 			clazz = getComponentType();
@@ -4901,7 +4901,7 @@ SecurityException {
 			int index = name.lastIndexOf('/');
 			name = name.substring(0, index)+ '.' + name.substring(index + 1,name.length());
 		}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		if (this.isArray()) {
 			return name;
 		}
@@ -4944,7 +4944,7 @@ SecurityException {
 	private native RecordComponent[] getRecordComponentsImpl();
 /*[ENDIF] Java14 */
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**
 	 * Returns true if class or interface is sealed.
 	 * 
@@ -4994,5 +4994,5 @@ SecurityException {
 	Object getClassData() {
 		return classData;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 }

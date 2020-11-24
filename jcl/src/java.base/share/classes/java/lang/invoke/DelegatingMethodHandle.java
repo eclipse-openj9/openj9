@@ -1,5 +1,4 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9 & !OPENJDK_METHODHANDLES]*/
-
 /*******************************************************************************
  * Copyright (c) 2017, 2020 IBM Corp. and others
  *
@@ -21,21 +20,19 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package java.lang.invoke;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /*
  * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
  */
-
 abstract class DelegatingMethodHandle extends MethodHandle {
-	
+
 	static final LambdaForm.NamedFunction NF_getTarget = null;
-	
+
 	protected DelegatingMethodHandle(MethodHandle mh) {
 		this(mh.type(), mh);
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
@@ -60,10 +57,10 @@ abstract class DelegatingMethodHandle extends MethodHandle {
 	}
 	/*[ENDIF]*/
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		return false;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 }

@@ -24,10 +24,10 @@
 /*[IF Java11]*/
 package java.lang.invoke;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 class MethodHandleNatives {
 	static LinkageError mapLookupExceptionToError(ReflectiveOperationException roe) {
@@ -61,7 +61,7 @@ class MethodHandleNatives {
 	}
 	/*[ENDIF] Java14 */
 	
-	/*[IF Java15]*/
+	/*[IF JAVA_SPEC_VERSION >= 15]*/
 	static boolean refKindIsMethod(byte kind) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -88,6 +88,6 @@ class MethodHandleNatives {
 	}
 
 	native static void checkClassBytes(byte[] bytes);
-	/*[ENDIF] Java15 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 }
 /*[ENDIF] Java11 */

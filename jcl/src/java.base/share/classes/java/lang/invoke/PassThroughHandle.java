@@ -22,9 +22,9 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /*
  * Special handle that in the interpreter calls the equivalent's implementation.
@@ -62,13 +62,12 @@ abstract class PassThroughHandle extends MethodHandle {
 		this.equivalent = originalHandle.equivalent;
 	}
 	
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		relatedMHs.add(equivalent);
 		return true;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 }
-

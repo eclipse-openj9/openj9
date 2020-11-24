@@ -1102,7 +1102,7 @@ public abstract class MethodHandle
 		return "KIND_#"+kind; //$NON-NLS-1$
 	}
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**
 	 * Append to a list the child MethodHandle(s) which form "this" (parent MethodHandle).
 	 * 
@@ -1111,7 +1111,7 @@ public abstract class MethodHandle
 	 * @return true if MethodHandles are added to the list, and false otherwise.
 	 */
 	abstract boolean addRelatedMHs(List<MethodHandle> relatedMHs);
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /*[IF OPENJDK_METHODHANDLES]*/
 	byte customizationCount;
@@ -1760,4 +1760,3 @@ final class StructuralComparator extends Comparator {
 }
 
 // }}} Comparator support
-
