@@ -40,6 +40,10 @@
 
 extern "C" {
 
+/* Constants mapped from java.lang.invoke.MethodHandleNatives$Constants
+ * These constants are validated by the MethodHandleNatives$Constants.verifyConstants()
+ * method when Java assertions are enabled
+ */
 #define MN_IS_METHOD		0x00010000
 #define MN_IS_CONSTRUCTOR	0x00020000
 #define MN_IS_FIELD			0x00040000
@@ -47,11 +51,28 @@ extern "C" {
 #define MN_CALLER_SENSITIVE	0x00100000
 
 #define MN_REFERENCE_KIND_SHIFT	24
-#define MN_REFERENCE_KIND_MASK	0xF
+#define MN_REFERENCE_KIND_MASK	0xF		/* (flag >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK */
 
 #define MN_SEARCH_SUPERCLASSES	0x00100000
 #define MN_SEARCH_INTERFACES	0x00200000
 
+/* Private MemberName object init helper 
+ *
+ * Set the MemberName fields based on the refObject given:
+ * For j.l.reflect.Field:
+ *		find JNIFieldID for refObject, create j.l.String for name and signature and store in MN.name/type fields.
+ *		set vmindex to the fieldID pointer and target to the J9ROMFieldShape struct.
+ *		set MN.clazz to declaring class in the fieldID struct.
+ * For j.l.reflect.Method or j.l.reflect.Constructor:
+ *		find JNIMethodID, set vmindex to the methodID pointer and target to the J9Method struct.
+ *		set MN.clazz to the refObject's declaring class.
+ *
+ * Then for both, compute the MN.flags using access flags and invocation type based on the JNI-id.
+ *
+ * Throw an IllegalArgumentException if the refObject is not a Field/Method/Constructor
+ *
+ * Note: caller must have vmaccess before invoking this helper
+ */
 void
 initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refObject)
 {
@@ -530,6 +551,8 @@ J9Method *
 lookupMethod(J9VMThread *currentThread, J9Class *resolvedClass, J9JNINameAndSignature *nas, J9Class *callerClass, UDATA lookupOptions)
 {
 	J9Method *result = NULL;
+
+	/* If looking for a MethodHandle polymorphic INL method, allow any caller signature. */
 	if (resolvedClass == J9VMJAVALANGINVOKEMETHODHANDLE(currentThread->javaVM)) {
 		if ((0 == strcmp(nas->name, "linkToVirtual"))
 		|| (0 == strcmp(nas->name, "linkToStatic"))
@@ -553,6 +576,11 @@ lookupMethod(J9VMThread *currentThread, J9Class *resolvedClass, J9JNINameAndSign
 
 /**
  * static native void init(MemberName self, Object ref);
+ *
+ * Initializes a MemberName object using the given ref object.
+ *		see initImpl for detail
+ * Throw NPE if self or ref is null
+ * Throw IllegalArgumentException if ref is not a field/method/constructor
  */
 void JNICALL
 Java_java_lang_invoke_MethodHandleNatives_init(JNIEnv *env, jclass clazz, jobject self, jobject ref)
@@ -577,6 +605,12 @@ Java_java_lang_invoke_MethodHandleNatives_init(JNIEnv *env, jclass clazz, jobjec
 
 /**
  * static native void expand(MemberName self);
+ *
+ * Given a MemberName object, try to set the uninitialized fields from existing values.
+ *
+ * Throws NullPointerException if MemberName object is null.
+ * Throws IllegalArgumentException if MemberName doesn't contain required data to expand.
+ * Throws InternalError if the MemberName object contains invalid data or completely uninitialized.
  */
 void JNICALL
 Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobject self)
@@ -599,13 +633,13 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
 
 		Trc_JCL_java_lang_invoke_MethodHandleNatives_expand_Data(env, membernameObject, clazzObject, nameObject, typeObject, flags, vmindex);
 		if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
+			/* For Field MemberName, the clazz and vmindex fields must be set. */
 			if ((NULL != clazzObject) && (NULL != (void*)vmindex)) {
-				// J9Class *declaringClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazzObject);
-
 				J9JNIFieldID *field = (J9JNIFieldID*)vmindex;
 				J9UTF8 *name = J9ROMFIELDSHAPE_NAME(field->field);
 				J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field->field);
 
+				/* if name/type field is uninitialized, create j.l.String from ROM field name/sig and store in MN fields. */
 				if (nameObject == NULL) {
 					j9object_t nameString = vm->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(name), (U_32)J9UTF8_LENGTH(name), J9_STR_INTERN);
 					J9VMJAVALANGINVOKEMEMBERNAME_SET_NAME(currentThread, membernameObject, nameString);
@@ -619,9 +653,11 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
 			}
 		} else if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR)) {
 			if (NULL != (void*)vmindex) {
+				/* For method/constructor MemberName, the vmindex field is required for expand.*/
 				J9JNIMethodID *methodID = (J9JNIMethodID*)vmindex;
 				J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
 
+				/* Retrieve method info using JNIMethodID, store to MN fields. */
 				if (clazzObject == NULL) {
 					j9object_t newClassObject = J9VM_J9CLASS_TO_HEAPCLASS(J9_CLASS_FROM_METHOD(methodID->method));
 					J9VMJAVALANGINVOKEMEMBERNAME_SET_CLAZZ(currentThread, membernameObject, newClassObject);
@@ -650,6 +686,15 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
 /**
  * static native MemberName resolve(MemberName self, Class<?> caller,
  *      boolean speculativeResolve) throws LinkageError, ClassNotFoundException;
+ *
+ * Resolve the method/field represented by the MemberName using the supplied caller
+ * Store the resolved Method/Field's JNI-id in vmindex, field offset / method pointer in vmtarget
+ *
+ * If the speculativeResolve flag is not set, failed resolution will throw the corresponding exception.
+ * If the resolution failed with no exception:
+ * Throw NoSuchFieldError for field MemberName
+ * Throw NoSuchMethodError for method/constructor MemberName
+ * Throw LinkageError for other
  */
 jobject JNICALL
 Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, jobject self, jclass caller, jboolean speculativeResolve)
@@ -677,6 +722,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 		j9object_t new_clazz = NULL;
 
 		Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_Data(env, membernameObject, clazzObject, callerObject, nameObject, typeObject, flags, vmindex, target);
+		/* Check if MemberName is already resolved */
 		if (0 != target) {
 			result = self;
 		} else {
@@ -692,6 +738,12 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 			UDATA signatureLength = 0;
 			char *signature = NULL;
 			J9Class *typeClass = J9OBJECT_CLAZZ(currentThread, typeObject);
+
+			/* The type field of a MemberName could be in:
+			 *     MethodType:	MethodType representing method/constructor MemberName's method signature
+			 *     String:		String representing MemberName's signature (field or method)
+			 *     Class:		Class representing field MemberName's field type
+			 */
 			if (J9VMJAVALANGINVOKEMETHODTYPE(vm) == typeClass) {
 				j9object_t sigString = J9VMJAVALANGINVOKEMETHODTYPE_METHODDESCRIPTOR(currentThread, typeObject);
 				if (NULL != sigString) {
@@ -730,6 +782,8 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 				if (JNI_TRUE == speculativeResolve) {
 					lookupOptions |= J9_LOOK_NO_THROW;
 				}
+
+				/* Determine the lookup type based on reference kind and resolved class flags */
 				switch (ref_kind)
 				{
 					case MH_REF_INVOKEINTERFACE:
@@ -776,6 +830,10 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 					lookupOptions |= J9_RESOLVE_FLAG_NO_THROW_ON_FAIL;
 				}
 
+				/* MemberName doesn't differentiate if a field is static or not,
+				 * the resolve code have to attempt to resolve as instance field first,
+				 * then as static field if the first attempt failed.
+				 */
 				offset = vmFuncs->instanceFieldOffset(currentThread,
 					resolvedClass,
 					(U_8*)name, strlen(name),
@@ -870,6 +928,21 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 /**
  * static native int getMembers(Class<?> defc, String matchName, String matchSig,
  *      int matchFlags, Class<?> caller, int skip, MemberName[] results);
+ *
+ * Search the defc (defining class) chain for field/method that matches the given search parameters,
+ * for each matching result found, initialize the next MemberName object in results array to reference the found field/method
+ *
+ *  - defc: the class to start the search
+ *  - matchName: name to match, NULL to match any field/method name
+ *  - matchSig: signature to match, NULL to match any field/method type
+ *  - matchFlags: flags defining search options:
+ *  		MN_IS_FIELD - search for fields
+ *  		MN_IS_CONSTRUCTOR | MN_IS_METHOD - search for method/constructor
+ *  		MN_SEARCH_SUPERCLASSES - search the superclasses of the defining class
+ *  		MN_SEARCH_INTERFACES - search the interfaces implemented by the defining class
+ *  - caller: the caller class performing the lookup
+ *  - skip: number of matching results to skip before storing
+ *  - results: an array of MemberName objects to hold the matched field/method
  */
 jint JNICALL
 Java_java_lang_invoke_MethodHandleNatives_getMembers(JNIEnv *env, jclass clazz, jclass defc, jstring matchName, jstring matchSig, jint matchFlags, jclass caller, jint skip, jobjectArray results)
@@ -1105,6 +1178,9 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(JNIEnv *env, jclass clazz, 
 
 /**
  * static native long objectFieldOffset(MemberName self);  // e.g., returns vmindex
+ * 
+ * Returns the objectFieldOffset of the field represented by the MemberName
+ * result should be same as if calling Unsafe.objectFieldOffset with the actual field object
  */
 jlong JNICALL
 Java_java_lang_invoke_MethodHandleNatives_objectFieldOffset(JNIEnv *env, jclass clazz, jobject self)
@@ -1143,6 +1219,9 @@ Java_java_lang_invoke_MethodHandleNatives_objectFieldOffset(JNIEnv *env, jclass 
 
 /**
  * static native long staticFieldOffset(MemberName self);  // e.g., returns vmindex
+ * 
+ * Returns the staticFieldOffset of the field represented by the MemberName
+ * result should be same as if calling Unsafe.staticFieldOffset with the actual field object
  */
 jlong JNICALL
 Java_java_lang_invoke_MethodHandleNatives_staticFieldOffset(JNIEnv *env, jclass clazz, jobject self)
@@ -1179,6 +1258,9 @@ Java_java_lang_invoke_MethodHandleNatives_staticFieldOffset(JNIEnv *env, jclass 
 
 /**
  * static native Object staticFieldBase(MemberName self);  // e.g., returns clazz
+ * 
+ * Returns the staticFieldBase of the field represented by the MemberName
+ * result should be same as if calling Unsafe.staticFieldBase with the actual field object
  */
 jobject JNICALL
 Java_java_lang_invoke_MethodHandleNatives_staticFieldBase(JNIEnv *env, jclass clazz, jobject self)
@@ -1214,6 +1296,12 @@ Java_java_lang_invoke_MethodHandleNatives_staticFieldBase(JNIEnv *env, jclass cl
 
 /**
  * static native Object getMemberVMInfo(MemberName self);  // returns {vmindex,vmtarget}
+ * 
+ * Return a 2-element java array containing the vm offset/target data
+ * For a field MemberName, array contains:
+ * 		(field offset, declaring class)
+ * For a method MemberName, array contains:
+ * 		(vtable index, MemberName object)
  */
 jobject JNICALL
 Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo(JNIEnv *env, jclass clazz, jobject self)
@@ -1367,6 +1455,14 @@ Java_java_lang_invoke_MethodHandleNatives_copyOutBootstrapArguments(JNIEnv *env,
 					ifNotAvailableObject = J9_JNI_UNWRAP_REFERENCE(ifNotAvailable);
 				}
 				while (start < end) {
+					/* Copy the arguments between start and end to the buf array
+					 *
+					 * Negative start index refer to the mandatory arguments for a bootstrap method
+					 * -4 -> Lookup
+					 * -3 -> name (String)
+					 * -2 -> signature (MethodType)
+					 * -1 -> argCount of optional arguments
+					 */
 					obj = NULL;
 					if (start >= 0) {
 						U_16 argIndex = bsmData[start];
