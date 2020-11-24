@@ -987,6 +987,12 @@ TR_J9MethodBase::setArchetypeSpecimen(bool b)
    _flags.set(ArchetypeSpecimen, b);
    }
 
+void
+TR_J9MethodBase::setAdapterOrLambdaForm(bool b)
+   {
+   _flags.set(AdapterOrLambdaForm, b);
+   }
+
 char *
 TR_ResolvedJ9Method::localName(U_32 slotNumber, U_32 bcIndex, TR_Memory *trMemory)
    {

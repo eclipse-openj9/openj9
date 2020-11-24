@@ -154,6 +154,7 @@ public:
 
    void                            setSignature(char *newSignature, int32_t newSignatureLength, TR_Memory *); // JSR292
    virtual void                    setArchetypeSpecimen(bool b = true);
+   virtual void                    setAdapterOrLambdaForm(bool b = true);
 
    virtual bool                    isConstructor();
    virtual bool                    isFinalInObject();
@@ -161,6 +162,7 @@ public:
       { return new (comp.trHeapMemory()) TR_J9MethodParameterIterator(*this, comp, r); }
 
    virtual bool                    isArchetypeSpecimen(){ return _flags.testAny(ArchetypeSpecimen); }
+   virtual bool                    isAdapterOrLambdaForm(){ return _flags.testAny(AdapterOrLambdaForm); }
 
 protected:
    friend class TR_Debug;
@@ -182,7 +184,8 @@ protected:
 
    enum Flags
       {
-      ArchetypeSpecimen = 0x00000001, // An "instance" of an archetype method, where the varargs portion of the signature has been expanded into zero or more args
+      ArchetypeSpecimen   = 0x00000001, // An "instance" of an archetype method, where the varargs portion of the signature has been expanded into zero or more args
+      AdapterOrLambdaForm = 0x00000010, // Adapter method of invokehandle/invokedynamic, or LambdaForm method
 
       dummyLastEnum
       };
