@@ -33,10 +33,10 @@ import java.util.Formatter;
 import java.util.StringJoiner;
 import java.util.Iterator;
 import java.nio.charset.Charset;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.util.function.Function;
 import java.util.Optional;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 /*[IF Sidecar19-SE]*/
 import java.util.Spliterator;
 import java.util.stream.StreamSupport;
@@ -51,12 +51,12 @@ import sun.misc.Unsafe;
 import java.util.stream.Stream;
 /*[ENDIF] Java11*/
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.Constable;
 import java.lang.constant.ConstantDesc;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /**
  * Strings are objects which represent immutable arrays of characters.
@@ -67,9 +67,9 @@ import java.lang.invoke.MethodHandles.Lookup;
  * @see StringBuffer
  */
 public final class String implements Serializable, Comparable<String>, CharSequence
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	, Constable, ConstantDesc
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 {
 
 	/*
@@ -8382,7 +8382,7 @@ written authorization of the copyright holder.
 
 /*[ENDIF] Sidecar19-SE*/
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Apply a function to this string. The function expects a single String input
 	 * and returns an R.
@@ -8473,7 +8473,7 @@ written authorization of the copyright holder.
 
 		return builder.toString();
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /*[IF JAVA_SPEC_VERSION >= 13]*/
 	/**

@@ -55,11 +55,11 @@ import java.util.stream.Stream;
 import java.nio.charset.Charset;
 import java.nio.charset.CharacterCodingException;
 /*[ENDIF] Java11 */
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import jdk.internal.access.JavaLangAccess;
-/*[ELSE] Java12 */
+/*[ELSE] JAVA_SPEC_VERSION >= 12 */
 import jdk.internal.misc.JavaLangAccess;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.reflect.ConstantPool;
 /*[ELSE] Sidecar19-SE */
@@ -385,11 +385,11 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] Java11 */
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	public void setCause(Throwable throwable, Throwable cause) {
 		throwable.setCause(cause);
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /*[IF JAVA_SPEC_VERSION >= 14]*/
 	public void loadLibrary(Class<?> caller, String library) {

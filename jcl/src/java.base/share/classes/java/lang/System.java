@@ -31,11 +31,11 @@ import java.lang.reflect.Method;
 
 /*[IF Sidecar19-SE]*/
 import jdk.internal.misc.Unsafe;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import jdk.internal.access.SharedSecrets;
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 12
 import jdk.internal.misc.SharedSecrets;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import jdk.internal.misc.VM;
 import java.lang.StackWalker.Option;
 import jdk.internal.reflect.Reflection;
@@ -401,11 +401,11 @@ private static void ensureProperties(boolean isInitialization) {
 	initProperties(new Properties());
 /*[ENDIF] OpenJ9-RawBuild */
 	
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	Map<String, String> initializedProperties = new Hashtable<String, String>();
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 12
 	Properties initializedProperties = new Properties();
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	if (osEncoding != null) {
 		initializedProperties.put("os.encoding", osEncoding); //$NON-NLS-1$
@@ -415,10 +415,10 @@ private static void ensureProperties(boolean isInitialization) {
 	initializedProperties.put("sun.jnu.encoding", platformEncoding); //$NON-NLS-1$
 	initializedProperties.put("file.encoding", fileEncoding); //$NON-NLS-1$
 	initializedProperties.put("file.encoding.pkg", "sun.io"); //$NON-NLS-1$ //$NON-NLS-2$
-	/*[IF !Java12]*/
+	/*[IF JAVA_SPEC_VERSION < 12]*/
 	/* System property java.specification.vendor is set via VersionProps.init(systemProperties) since JDK12 */
 	initializedProperties.put("java.specification.vendor", "Oracle Corporation"); //$NON-NLS-1$ //$NON-NLS-2$
-	/*[ENDIF] !Java12 */
+	/*[ENDIF] JAVA_SPEC_VERSION < 12 */
 	initializedProperties.put("java.specification.name", "Java Platform API Specification"); //$NON-NLS-1$ //$NON-NLS-2$
 	initializedProperties.put("com.ibm.oti.configuration", "scar"); //$NON-NLS-1$
 
@@ -435,9 +435,9 @@ private static void ensureProperties(boolean isInitialization) {
 	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
 	propertiesInitialized = true;
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	java.lang.VersionProps.init(initializedProperties);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 12
 	/* VersionProps.init requires systemProperties to be set */
 	systemProperties = initializedProperties;
 
@@ -449,47 +449,47 @@ private static void ensureProperties(boolean isInitialization) {
 	StringBuffer.initFromSystemProperties(systemProperties);
 	StringBuilder.initFromSystemProperties(systemProperties);
 /*[ENDIF] Sidecar19-SE */
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	String javaRuntimeVersion = initializedProperties.get("java.runtime.version"); //$NON-NLS-1$
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 12
 	String javaRuntimeVersion = initializedProperties.getProperty("java.runtime.version"); //$NON-NLS-1$
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 	if (null != javaRuntimeVersion) {
-	/*[IF Java12]*/
+	/*[IF JAVA_SPEC_VERSION >= 12]*/
 		String fullVersion = initializedProperties.get("java.fullversion"); //$NON-NLS-1$
-	/*[ELSE]
+	/*[ELSE] JAVA_SPEC_VERSION >= 12
 		String fullVersion = initializedProperties.getProperty("java.fullversion"); //$NON-NLS-1$
-	/*[ENDIF] Java12 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 		if (null != fullVersion) {
 			initializedProperties.put("java.fullversion", (javaRuntimeVersion + "\n" + fullVersion)); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		rasInitializeVersion(javaRuntimeVersion);
 	}
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	lineSeparator = initializedProperties.getOrDefault("line.separator", "\n"); //$NON-NLS-1$
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 12
 	lineSeparator = initializedProperties.getProperty("line.separator", "\n"); //$NON-NLS-1$
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	if (isInitialization) {
 		/*[PR CMVC 179976] System.setProperties(null) throws IllegalStateException */
-		/*[IF Java12]*/
+		/*[IF JAVA_SPEC_VERSION >= 12]*/
 		VM.saveProperties(initializedProperties);
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 12
 		VM.saveAndRemoveProperties(initializedProperties);
-		/*[ENDIF] Java12 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 	}
 
 	/* create systemProperties from properties Map */
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	initializeSystemProperties(initializedProperties);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 12
 	systemProperties = initializedProperties;
-/*[ENDIF] Java12 */
-	
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+
 	/* Preload system property jdk.serialFilter to prevent later modification */
 	jdk.internal.util.StaticProperty.jdkSerialFilter();
 }
@@ -587,10 +587,10 @@ static Properties internalGetProperties() {
  * The properties currently provided by the virtual
  * machine are:
  * <pre>
-/*[IF !Java12]
+/*[IF JAVA_SPEC_VERSION < 12]
  *     java.vendor
  *     java.vendor.url
- /*[ENDIF] Java12
+ /*[ENDIF] JAVA_SPEC_VERSION < 12
  *     java.class.path
  *     user.home
  *     java.class.version
@@ -822,22 +822,22 @@ public static void setProperties(Properties p) {
  * @param		s			the new security manager
  * 
  * @throws		SecurityException 	if the security manager has already been set and its checkPermission method doesn't allow it to be replaced.
- /*[IF Java12]
+ /*[IF JAVA_SPEC_VERSION >= 12]
  * @throws		UnsupportedOperationException 	if s is non-null and a special token "disallow" has been set for system property "java.security.manager"
  * 												which indicates that a security manager is not allowed to be set dynamically.
- /*[ENDIF] Java12
+ /*[ENDIF] JAVA_SPEC_VERSION >= 12
  */
 public static void setSecurityManager(final SecurityManager s) {
 	/*[PR 113606] security field could be modified by another Thread */
 	final SecurityManager currentSecurity = security;
 	
 	if (s != null) {
-		/*[IF Java12]*/
+		/*[IF JAVA_SPEC_VERSION >= 12]*/
 		if ("disallow".equals(systemProperties.getProperty("java.security.manager"))) { //$NON-NLS-1$ //$NON-NLS-2$
 			/*[MSG "K0B00", "`-Djava.security.manager=disallow` has been specified"]*/
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0B00")); //$NON-NLS-1$
 		}
-		/*[ENDIF] Java12 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 		if (currentSecurity == null) {
 			// only preload classes when current security manager is null
 			// not adding an extra static field to preload only once

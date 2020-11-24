@@ -27,10 +27,10 @@ import java.security.PrivilegedAction;
 
 import com.ibm.oti.vm.VM;
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import jdk.internal.access.JavaLangRefAccess;
 import jdk.internal.access.SharedSecrets;
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 12
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.JavaLangRefAccess;
 import jdk.internal.misc.SharedSecrets;
@@ -40,7 +40,7 @@ import sun.misc.JavaLangRefAccess;
 import sun.misc.SharedSecrets;
 /*[ENDIF]*/
 /*[ENDIF]*/
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /**
  * Abstract class which describes behavior common to all reference objects.

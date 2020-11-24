@@ -32,10 +32,10 @@ import javax.management.ObjectName;
 import jdk.internal.misc.VM.BufferPool;
 import jdk.internal.access.SharedSecrets;
 /*[ELSE]
-/*[IF Java12]
+/*[IF JAVA_SPEC_VERSION >= 12]
 import jdk.internal.access.JavaNioAccess.BufferPool;
 import jdk.internal.access.SharedSecrets;
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 12
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.JavaNioAccess.BufferPool;
 import jdk.internal.misc.SharedSecrets;
@@ -43,7 +43,7 @@ import jdk.internal.misc.SharedSecrets;
 import sun.misc.JavaNioAccess.BufferPool;
 import sun.misc.SharedSecrets;
 /*[ENDIF] Sidecar19-SE */
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /**

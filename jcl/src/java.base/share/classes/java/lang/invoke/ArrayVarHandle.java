@@ -25,10 +25,10 @@ package java.lang.invoke;
 import static java.lang.invoke.MethodType.methodType;
 import static java.lang.invoke.ArrayVarHandle.ArrayVarHandleOperations.*;
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
 import java.util.Optional;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /**
  * {@link VarHandle} subclass for array element {@link VarHandle} instances.
@@ -106,7 +106,7 @@ final class ArrayVarHandle extends VarHandle {
 		super(arrayType.getComponentType(), new Class<?>[] {arrayType, int.class}, populateMHs(arrayType), 0);
 	}
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	@Override
 	public Optional<VarHandleDesc> describeConstable() {
 		VarHandleDesc result = null;
@@ -117,7 +117,7 @@ final class ArrayVarHandle extends VarHandle {
 		}
 		return Optional.ofNullable(result);
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/**
 	 * Type specific methods used by array element VarHandle methods.

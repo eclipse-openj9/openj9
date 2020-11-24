@@ -28,11 +28,11 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
 import java.io.ObjectStreamField;
 import java.io.Serializable;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.Constable;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
@@ -43,10 +43,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.util.NoSuchElementException;
 import java.util.Optional;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -70,9 +70,9 @@ import java.lang.invoke.MethodTypeForm;
  */
 @VMCONSTANTPOOL_CLASS
 public final class MethodType implements Serializable 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	, Constable, TypeDescriptor.OfMethod<Class<?>, MethodType>
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 {
 	static final Class<?>[] EMTPY_PARAMS = new Class<?>[0];
 
@@ -1027,12 +1027,12 @@ public final class MethodType implements Serializable
 		}
 		return invoker;
 	}
-	
-/*[IF Java12]*/
+
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	static MethodType makeImpl(Class<?> rtype, Class<?>[] ptypes, boolean arg) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /*[IF Sidecar18-SE-OpenJ9]*/	
 	MethodType basicType() {
@@ -1076,7 +1076,7 @@ public final class MethodType implements Serializable
 /*[ENDIF]*/
 /*[ENDIF]*/
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Return field descriptor of MethodType instance.
 	 * 
@@ -1110,5 +1110,5 @@ public final class MethodType implements Serializable
 			return Optional.empty();
 		}
 	}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 }

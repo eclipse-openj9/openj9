@@ -285,11 +285,11 @@ public abstract class ClassLoader {
 		jdk.internal.misc.VM.initLevel(2);
 		String javaSecurityManager = System.internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
 		if ((javaSecurityManager != null) 
-		/*[IF Java12]*/
+		/*[IF JAVA_SPEC_VERSION >= 12]*/
 			/* See the SecurityManager javadoc for details about special tokens. */
 			&& !javaSecurityManager.equals("disallow") //$NON-NLS-1$ /* special token to disallow SecurityManager */
 			&& !javaSecurityManager.equals("allow") //$NON-NLS-1$ /* special token to allow SecurityManager */
-			/*[ENDIF] Java12 */
+			/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 		) {
 			if (javaSecurityManager.isEmpty() || "default".equals(javaSecurityManager)) { //$NON-NLS-1$
 				System.setSecurityManager(new SecurityManager());

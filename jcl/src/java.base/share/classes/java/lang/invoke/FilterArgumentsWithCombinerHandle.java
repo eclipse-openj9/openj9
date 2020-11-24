@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Java12 & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 12) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright (c) 2018, 2020 IBM Corp. and others
  *

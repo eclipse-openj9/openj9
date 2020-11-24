@@ -29,15 +29,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.util.Optional;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
 /*[ELSE]*/
 import sun.misc.Unsafe;
 /*[ENDIF]*/
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
 import java.lang.constant.Constable;
 import java.lang.constant.ConstantDesc;
@@ -45,7 +45,7 @@ import java.lang.constant.ConstantDescs;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.constant.DynamicConstantDesc;
 import java.util.Objects;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 import java.util.Map;
 import java.util.HashMap;
@@ -64,9 +64,9 @@ import java.lang.reflect.Method;
  * 
  */
 public abstract class VarHandle extends VarHandleInternal 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	implements Constable
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 {
 	/**
 	 * Access mode identifiers for VarHandle operations.
@@ -360,9 +360,9 @@ public abstract class VarHandle extends VarHandleInternal
 	final Class<?> fieldType;
 	final Class<?>[] coordinateTypes;
 	final int modifiers;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	private int hashCode = 0;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /*[IF JAVA_SPEC_VERSION >= 16]*/
 	final boolean exact;
@@ -687,7 +687,7 @@ public abstract class VarHandle extends VarHandleInternal
 		return Collections.unmodifiableList(Arrays.<Class<?>>asList(coordinateTypes));
 	}
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Returns the nominal descriptor of this VarHandle instance, or an empty Optional 
 	 * if construction is not possible.
@@ -777,8 +777,8 @@ public abstract class VarHandle extends VarHandleInternal
 		String coordList = Arrays.toString(coordinateTypes);
 		return String.format(structure, this.fieldType.getName(), coordList);
 	}
-/*[ENDIF]*/
-	
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+
 	/**
 	 * Each {@link AccessMode}, e.g. get and set, requires different parameters
 	 * in addition to the {@link VarHandle#coordinateTypes() coordinateTypes()}. 
@@ -1447,7 +1447,7 @@ public abstract class VarHandle extends VarHandleInternal
 		return handleTable[operation];
 	}
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/* nominal descriptor of a VarHandle constant */
 	public static final class VarHandleDesc extends DynamicConstantDesc<VarHandle> implements ConstantDesc {
 		private Kind type = null;
@@ -1678,7 +1678,7 @@ public abstract class VarHandle extends VarHandleInternal
 			return (ClassDesc)args[0];
 		}		
 	}
-/*[ENDIF] Java12 */ 
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**

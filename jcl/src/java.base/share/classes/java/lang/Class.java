@@ -27,9 +27,9 @@ import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.security.AllPermission;
 import java.security.Permissions;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
-/*[ENDIF] Java12*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12*/
 import java.lang.reflect.*;
 import java.net.URL;
 import java.lang.annotation.*;
@@ -41,19 +41,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.util.Optional;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.security.PrivilegedAction;
 import java.lang.ref.*;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
 import java.lang.constant.Constable;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 import sun.reflect.generics.repository.ClassRepository;
 import sun.reflect.generics.factory.CoreReflectionFactory;
@@ -136,9 +136,9 @@ import sun.security.util.SecurityConstants;
  * @version		initial
  */
 public final class Class<T> implements java.io.Serializable, GenericDeclaration, Type
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	, Constable, TypeDescriptor, TypeDescriptor.OfField<Class<?>>
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 {
 	private static final long serialVersionUID = 3206093459760846163L;
 	private static ProtectionDomain AllPermissionsPD;
@@ -2511,7 +2511,7 @@ private void appendTypeParameters(StringBuilder nameBuilder) {
 			if (comma) nameBuilder.append(',');
 			nameBuilder.append(t);
 			comma = true;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 			Type[] types = t.getBounds();
 			if (types.length == 1 && types[0].equals(Object.class)) {
 				// skip in case the only bound is java.lang.Object
@@ -2522,7 +2522,7 @@ private void appendTypeParameters(StringBuilder nameBuilder) {
 					prefix = " & "; //$NON-NLS-1$
 				}
 			}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 		}
 		nameBuilder.append('>');
 	}
@@ -4806,7 +4806,7 @@ SecurityException {
 }
 /*[ENDIF] Java11 */
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Create class of an array. The component type will be this Class instance.
 	 * 
@@ -4907,7 +4907,7 @@ SecurityException {
 		}
 		return "L"+ name + ";"; //$NON-NLS-1$ //$NON-NLS-2$
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /*[IF JAVA_SPEC_VERSION >= 14]*/
 	/**
