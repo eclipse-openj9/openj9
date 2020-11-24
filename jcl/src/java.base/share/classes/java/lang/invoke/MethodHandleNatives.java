@@ -1,5 +1,4 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9 & !OPENJDK_METHODHANDLES]*/
-
 /*******************************************************************************
  * Copyright (c) 2017, 2020 IBM Corp. and others
  *
@@ -21,7 +20,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 package java.lang.invoke;
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
@@ -90,4 +89,4 @@ class MethodHandleNatives {
 	native static void checkClassBytes(byte[] bytes);
 	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 }
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */

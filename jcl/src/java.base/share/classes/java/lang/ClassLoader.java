@@ -212,7 +212,7 @@ public abstract class ClassLoader {
 			// ignore
 		}
 
-		/*[IF Java11]*/
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		// This static method call ensures jdk.internal.loader.ClassLoaders.BOOT_LOADER initialization first
 		jdk.internal.loader.ClassLoaders.platformClassLoader();
 		if (bootstrapClassLoader.servicesCatalog != null) {
@@ -224,7 +224,7 @@ public abstract class ClassLoader {
 		}
 		bootstrapClassLoader.classLoaderValueMap = BootLoader.getClassLoaderValueMap();
 		applicationClassLoader = ClassLoaders.appClassLoader();
-		/*[ELSE] Java11 */
+		/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 		ClassLoader sysTemp = null;
 		// Proper initialization requires BootstrapLoader is the first loader instantiated
 		String systemLoaderString = System.internalGetProperties().getProperty("systemClassLoader"); //$NON-NLS-1$
@@ -242,7 +242,7 @@ public abstract class ClassLoader {
 		AbstractClassLoader.setBootstrapClassLoader(bootstrapClassLoader);
 		lazyClassLoaderInit = true;
 		applicationClassLoader = bootstrapClassLoader;
-		/*[ENDIF] Java11 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 		/* [PR 78889] The creation of this classLoader requires lazy initialization. The internal classLoader struct
 		 * is created in the initAnonClassLoader call. The "new InternalAnonymousClassLoader()" call must be 

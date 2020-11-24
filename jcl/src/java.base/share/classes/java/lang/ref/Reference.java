@@ -73,11 +73,11 @@ public abstract class Reference<T> extends Object {
 				return waitForReferenceProcessingImpl();
 			}
 
-			/*[IF Java11]*/
+			/*[IF JAVA_SPEC_VERSION >= 11]*/
 			public void runFinalization() {
 				Finalizer.runFinalization();
 			}
-			/*[ENDIF]*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		});
 	}
 	
@@ -253,7 +253,7 @@ public static void reachabilityFence(java.lang.Object ref) {
 }
 /*[ENDIF]*/
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 /**
  * This method will always throw CloneNotSupportedException. A clone of this instance will not be returned 
  * since a Reference cannot be cloned. Workaround is to create a new Reference.
@@ -267,7 +267,7 @@ protected Object clone() throws CloneNotSupportedException {
 	/*[MSG "K0900", "Create a new Reference, since a Reference cannot be cloned."]*/
 	throw new CloneNotSupportedException(com.ibm.oti.util.Msg.getString("K0900")); //$NON-NLS-1$
 }
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /*[IF JAVA_SPEC_VERSION >= 16]*/
 /**

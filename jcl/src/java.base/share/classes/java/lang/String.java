@@ -47,9 +47,9 @@ import java.util.stream.IntStream;
 import sun.misc.Unsafe;
 /*[ENDIF] Sidecar19-SE*/
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 import java.util.stream.Stream;
-/*[ENDIF] Java11*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.Constable;
@@ -2567,7 +2567,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return regionMatches(start, prefix, 0, prefix.lengthInternal());
 	}
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 	/**
 	 * Strip leading and trailing white space from a string.
 	 *
@@ -2665,7 +2665,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return StringUTF16.lines(value);
 		}
 	}
-/*[ENDIF] Java11*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 	/**
 	 * Copies a range of characters into a new String.
@@ -3959,7 +3959,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return value;
 	}
 
-	/*[IF Java11]*/
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	/**
 	 * Returns a string object containing the character (Unicode code point)
 	 * specified.
@@ -4040,7 +4040,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return new String(buffer, UTF16);
 		}
 	}
-	/*[ENDIF] Java11 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /*[ELSE] Sidecar19-SE*/
 	// DO NOT CHANGE OR MOVE THIS LINE

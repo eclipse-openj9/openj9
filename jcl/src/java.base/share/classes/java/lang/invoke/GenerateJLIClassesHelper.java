@@ -49,11 +49,11 @@ class GenerateJLIClassesHelper {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 
-	/*[IF Java11]*/
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	static byte[] generateInvokersHolderClassBytes(String str, MethodType[] invokerMts, MethodType[] callMts) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[ENDIF] Java11*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
 
 	/*[IF JAVA_SPEC_VERSION >= 16]*/
 	static Map<String, byte[]> generateHolderClasses(Stream<String> traces) {

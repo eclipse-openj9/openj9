@@ -61,9 +61,9 @@ import sun.reflect.generics.scope.ClassScope;
 import sun.reflect.annotation.AnnotationType;
 import java.util.Arrays;
 import com.ibm.oti.vm.VM;
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 import static com.ibm.oti.util.Util.doesClassLoaderDescendFrom;
-/*[ENDIF] Java11*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
 
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
@@ -262,9 +262,9 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 		return unsafe;
 	}
 	
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 	private Class<?> nestHost;
-/*[ENDIF] Java11*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	private transient Object classData;
@@ -4688,7 +4688,7 @@ static byte[] getExecutableTypeAnnotationBytes(Executable exec) {
 }
 /*[ENDIF] Sidecar19-SE*/
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 /**
  * Answers the host class of the receiver's nest.
  *
@@ -4804,7 +4804,7 @@ SecurityException {
 
 	return members;
 }
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**

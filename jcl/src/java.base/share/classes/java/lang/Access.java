@@ -51,10 +51,10 @@ import java.util.Set;
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 import java.nio.charset.Charset;
 import java.nio.charset.CharacterCodingException;
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import jdk.internal.access.JavaLangAccess;
 /*[ELSE] JAVA_SPEC_VERSION >= 12 */
@@ -78,11 +78,11 @@ final class Access implements JavaLangAccess {
 
 	/** Set thread's blocker field. */
 	public void blockedOn(java.lang.Thread thread, Interruptible interruptable) {
-		/*[IF Java11]*/
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		Thread.blockedOn(interruptable);
-		/*[ELSE] Java11 */
+		/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 		thread.blockedOn(interruptable);
-		/*[ENDIF] Java11 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 	}
 
 	/**
@@ -373,7 +373,7 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] Java10 */
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 	public void blockedOn(Interruptible interruptible) {
 		Thread.blockedOn(interruptible);
 	}
@@ -383,7 +383,7 @@ final class Access implements JavaLangAccess {
 	public String newStringNoRepl(byte[] bytes, Charset charset) throws CharacterCodingException {
 		return StringCoding.newStringNoRepl(bytes, charset);
 	}
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	public void setCause(Throwable throwable, Throwable cause) {

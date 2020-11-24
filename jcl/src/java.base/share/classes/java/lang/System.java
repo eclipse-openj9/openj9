@@ -770,7 +770,7 @@ public static void runFinalization() {
 	RUNTIME.runFinalization();
 }
 
-/*[IF !Java11]*/
+/*[IF JAVA_SPEC_VERSION < 11]*/
 /**
  * Ensure that, when the virtual machine is about to exit,
  * all objects are finalized. Note that all finalization
@@ -789,7 +789,7 @@ public static void runFinalization() {
 public static void runFinalizersOnExit(boolean flag) {
 	Runtime.runFinalizersOnExit(flag);
 }
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION < 11 */
 
 /**
  * Answers the system properties. Note that the object

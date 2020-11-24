@@ -1165,14 +1165,14 @@ public abstract class MethodHandle
 	}
 	
 	MemberName internalMemberName() {
-		/*[IF Java11]*/
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		/* Note: so far this method is only invoked by java.lang.invoke.ConstantBootstraps.getStaticFinal() 
 		 * to return a MemberName object, and only MemberName.isFinal() is invoked.
 		 */
 		return new MemberName(this);
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 11
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-		/*[ENDIF] Java11 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 	}
 	
 	BoundMethodHandle rebind() {

@@ -256,11 +256,11 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
      * 
      * @deprecated renamed to getGCMainThreadCpuUsed
      */
-    /*[IF Java11]*/
+    /*[IF JAVA_SPEC_VERSION >= 11]*/
     @Deprecated(forRemoval=true, since="15")
-    /*[ELSE] Java11 */
+    /*[ELSE] JAVA_SPEC_VERSION >= 11 */
     @Deprecated
-    /*[ENDIF] Java11 */
+    /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
     public long getGCMasterThreadCpuUsed();
 /*[ENDIF] JAVA_SPEC_VERSION < 16 */
 
@@ -281,11 +281,11 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
      * 
      * @deprecated renamed to getGCWorkerThreadsCpuUsed
      */
-    /*[IF Java11]*/
+    /*[IF JAVA_SPEC_VERSION >= 11]*/
     @Deprecated(forRemoval=true, since="15")
-    /*[ELSE] Java11 */
+    /*[ELSE] JAVA_SPEC_VERSION >= 11 */
     @Deprecated
-    /*[ENDIF] Java11 */
+    /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
     public long getGCSlaveThreadsCpuUsed();
 /*[ENDIF] JAVA_SPEC_VERSION < 16 */
 

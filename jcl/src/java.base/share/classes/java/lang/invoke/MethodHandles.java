@@ -185,15 +185,15 @@ public class MethodHandles {
 		
 		/* single cached value of public Lookup object */
 		static final int mhMask = 
-		/*[IF Java11]*/
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		/*[IF JAVA_SPEC_VERSION >= 14]*/
 		Lookup.UNCONDITIONAL;
 		/*[ELSE] JAVA_SPEC_VERSION >= 14*/
 		Lookup.PUBLIC | Lookup.UNCONDITIONAL;
 		/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
-		/*[ELSE] Java11*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 		Lookup.PUBLIC;
-		/*[ENDIF] Java11*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		static Lookup PUBLIC_LOOKUP = new Lookup(Object.class, mhMask);
 		
 		/* single cached internal privileged lookup */
@@ -498,9 +498,9 @@ public class MethodHandles {
 				return;
 			} else if (Modifier.isPrivate(memberModifiers)) {
 				if (Modifier.isPrivate(accessMode) && ((definingClass == accessClass)
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 						|| definingClass.isNestmateOf(accessClass)
-/*[ENDIF] Java11*/	
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 				)) {
 					return;
 				}
@@ -1086,12 +1086,12 @@ public class MethodHandles {
 				}
 				handle = handle.cloneWithNewType(handle.type.changeParameterType(0, clazz));
 			} else if (!Modifier.isPublic(handle.getModifiers())) {
-				/*[IF Java11]*/
+				/*[IF JAVA_SPEC_VERSION >= 11]*/
 				handle = new DirectHandle(handleClass, methodName, type, MethodHandle.KIND_SPECIAL, handleClass, true);
 				handle = handle.cloneWithNewType(handle.type.changeParameterType(0, clazz));
-				/*[ELSE] Java11
+				/*[ELSE] JAVA_SPEC_VERSION >= 11
 				throw new IllegalAccessException();	
-				/*[ENDIF] Java11*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 			} else {
 				handle = new InterfaceHandle(clazz, methodName, type);
 			}
