@@ -553,10 +553,10 @@ public final void checkAccess() {
 /*[IF JAVA_SPEC_VERSION >= 14]
  * @exception	UnsupportedOperationException
 /*[ELSE] JAVA_SPEC_VERSION >= 14
-/*[IF Java13]
+/*[IF JAVA_SPEC_VERSION >= 13]
  * @exception	IllegalThreadStateException
  *					if this thread has not been suspended.
-/*[ENDIF] Java13
+/*[ENDIF] JAVA_SPEC_VERSION >= 13
 /*[ENDIF] JAVA_SPEC_VERSION >= 14
  *
  * @deprecated	The semantics of this method are poorly defined and it uses the deprecated suspend() method.

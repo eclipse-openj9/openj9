@@ -8475,7 +8475,7 @@ written authorization of the copyright holder.
 	}
 /*[ENDIF] Java12 */
 
-/*[IF Java13]*/
+/*[IF JAVA_SPEC_VERSION >= 13]*/
 	/**
 	 * Determine if current String object is LATIN1.
 	 *
@@ -8668,5 +8668,5 @@ written authorization of the copyright holder.
 		}
 		return builder.toString();
 	}
-/*[ENDIF] Java13 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 13 */
 }

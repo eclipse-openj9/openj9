@@ -128,7 +128,7 @@
 	<configuration
 		  label="JAVA15"
 		  outputpath="JAVA15/src"
-		  flags="Java12,Java13"
+		  flags="Java12"
 		  dependencies="JAVA11"
 		  jdkcompliance="1.8">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
