@@ -1018,8 +1018,7 @@ createStackAtlas(
 void AOTRAS_traceMetaData(TR_J9VMBase *vm, TR_MethodMetaData *data, TR::Compilation *comp)
    {
    traceMsg(comp, "<relocatableDataMetaDataCG>\n");
-   J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
-   TR_AOTMethodHeader *aotMethodHeaderEntry =  (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+   TR_AOTMethodHeader *aotMethodHeaderEntry = comp->getAotMethodHeaderEntry();
 
    traceMsg(comp, "%s\n", comp->signature());
    traceMsg(comp, "%-12s", "startPC");
@@ -1173,8 +1172,7 @@ populateBodyInfo(
 #endif
          )
          {
-         J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
-         TR_AOTMethodHeader *aotMethodHeaderEntry =  (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+         TR_AOTMethodHeader *aotMethodHeaderEntry =  comp->getAotMethodHeaderEntry();
          aotMethodHeaderEntry->offsetToPersistentInfo = 0;
          }
 

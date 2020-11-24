@@ -5312,8 +5312,7 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
    TR::CodeCache *newCache = curCache; // optimistically assume that we will manage to allocate trampoline from current code cache
    if (isAOT_DEPRECATED_DO_NOT_USE() && isRecursive)
       {
-      J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
-      TR_AOTMethodHeader *aotMethodHeaderEntry =  (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+      TR_AOTMethodHeader *aotMethodHeaderEntry =  comp->getAotMethodHeaderEntry();
       aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_NeedsRecursiveMethodTrampolineReservation; // Set flag in TR_AOTMethodHeader
       //newCache = curCache; // done above
       }

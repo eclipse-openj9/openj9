@@ -96,9 +96,8 @@ outOfProcessCompilationEnd(
 
    TR::CodeCache *codeCache = comp->cg()->getCodeCache();
 
-   J9JITDataCacheHeader *aotMethodHeader      = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
-   TR_ASSERT(aotMethodHeader, "The header must have been set");
-   TR_AOTMethodHeader   *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+   TR_ASSERT(comp->getAotMethodDataStart(), "The header must have been set");
+   TR_AOTMethodHeader   *aotMethodHeaderEntry = comp->getAotMethodHeaderEntry();
 
    U_8 *codeStart = (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC;
    OMR::CodeCacheMethodHeader *codeCacheHeader = (OMR::CodeCacheMethodHeader*)codeStart;
