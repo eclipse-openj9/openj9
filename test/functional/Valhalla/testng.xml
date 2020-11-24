@@ -28,12 +28,20 @@
 	</listeners>
 	<test name="ValueTypeTests">
 		<classes>
-			<class name="org.openj9.test.lworld.ValueTypeTests" />
+			<class name="org.openj9.test.lworld.ValueTypeTests">
+				<methods>
+					<exclude name="testUnresolvedWithFieldUse"/>
+				</methods>
+			</class>
 		</classes>
 	</test>
 	<test name="ValueTypeTestsJIT">
 		<classes>
-			<class name="org.openj9.test.lworld.ValueTypeTests"/>
+			<class name="org.openj9.test.lworld.ValueTypeTests">
+				<methods>
+					<exclude name="testUnresolvedWithFieldUse"/>
+				</methods>
+			</class>
 		</classes>
 	</test>
 </suite> <!-- Suite -->
