@@ -56,7 +56,7 @@ public class JITServerTest {
 		final String CLIENT_PROGRAM = System.getProperty("CLIENT_PROGRAM");
 		// -Xjit options may already be on the command line so add extra JIT options via TR_Options instead to avoid one overriding the other.
 		final String JIT_LOG_ENV_OPTION = "verbose={compileEnd|JITServer|heartbeat}";
-		final String JITSERVER_PORT_OPTION_FORMAT_STRING = "-XX:JITServerPort=%0$d";
+		final String JITSERVER_PORT_OPTION_FORMAT_STRING = "-XX:JITServerPort=%d";
 		// Most systems have a specified ephemeral ports range. We're not bothering to find the actual range, just choosing a range that is outside the reserved area, reasonably large, and well-behaved.
 		// The range chosen here is within the actual ephemeral range on recent Linux systems and others (at the time of writing).
 		final int EPHEMERAL_PORTS_START = 33000, EPHEMERAL_PORTS_LAST = 60000;
