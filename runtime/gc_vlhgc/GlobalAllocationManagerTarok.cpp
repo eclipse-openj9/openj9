@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -260,9 +260,9 @@ MM_GlobalAllocationManagerTarok::printAllocationContextStats(MM_EnvironmentBase 
 	
 	for (UDATA i = 0; i < _managedAllocationContextCount; i++) {
 		MM_AllocationContextTarok *ac = (MM_AllocationContextTarok *)_managedAllocationContexts[i];		
-		ac->resetRegionCount(MM_HeapRegionDescriptor::BUMP_ALLOCATED);
-		ac->resetRegionCount(MM_HeapRegionDescriptor::BUMP_ALLOCATED_IDLE);
-		ac->resetRegionCount(MM_HeapRegionDescriptor::BUMP_ALLOCATED_MARKED);
+		ac->resetRegionCount(MM_HeapRegionDescriptor::ADDRESS_ORDERED);
+		ac->resetRegionCount(MM_HeapRegionDescriptor::ADDRESS_ORDERED_IDLE);
+		ac->resetRegionCount(MM_HeapRegionDescriptor::ADDRESS_ORDERED_MARKED);
 		ac->resetThreadCount();
 	}	
 
@@ -285,17 +285,17 @@ MM_GlobalAllocationManagerTarok::printAllocationContextStats(MM_EnvironmentBase 
 	
 	for (UDATA i = 0; i < _managedAllocationContextCount; i++) {
 		MM_AllocationContextTarok *ac = (MM_AllocationContextTarok *)_managedAllocationContexts[i];
-		UDATA acRegionCount = ac->getRegionCount(MM_HeapRegionDescriptor::BUMP_ALLOCATED);
-		acRegionCount += ac->getRegionCount(MM_HeapRegionDescriptor::BUMP_ALLOCATED_IDLE);
-		acRegionCount += ac->getRegionCount(MM_HeapRegionDescriptor::BUMP_ALLOCATED_MARKED);
+		UDATA acRegionCount = ac->getRegionCount(MM_HeapRegionDescriptor::ADDRESS_ORDERED);
+		acRegionCount += ac->getRegionCount(MM_HeapRegionDescriptor::ADDRESS_ORDERED_IDLE);
+		acRegionCount += ac->getRegionCount(MM_HeapRegionDescriptor::ADDRESS_ORDERED_MARKED);
 		totalRegionCount += acRegionCount;
 		UDATA localCount = 0;
 		UDATA foreignCount = 0;
 		ac->getRegionCount(&localCount, &foreignCount);
 
 		j9tty_printf(PORTLIB, "AC %3d %s MPAOL regionCount %5d (AO %5d AO_IDLE %5d AO_MARKED %5d) mutatorCount %3d numaNode %d (%d local, %d foreign)\n",
-				i, eventName, acRegionCount, ac->getRegionCount(MM_HeapRegionDescriptor::BUMP_ALLOCATED),
-				ac->getRegionCount(MM_HeapRegionDescriptor::BUMP_ALLOCATED_IDLE), ac->getRegionCount(MM_HeapRegionDescriptor::BUMP_ALLOCATED_MARKED),
+				i, eventName, acRegionCount, ac->getRegionCount(MM_HeapRegionDescriptor::ADDRESS_ORDERED),
+				ac->getRegionCount(MM_HeapRegionDescriptor::ADDRESS_ORDERED_IDLE), ac->getRegionCount(MM_HeapRegionDescriptor::ADDRESS_ORDERED_MARKED),
 				ac->getThreadCount(), ac->getNumaNode(), localCount, foreignCount);
 	}
 

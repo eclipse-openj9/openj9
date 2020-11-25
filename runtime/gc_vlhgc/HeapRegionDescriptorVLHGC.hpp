@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,7 +67,8 @@ public:
 		bool _survivorSetAborted;  /**< true if the region was part of the survivor set at the time that an abort had occurred, false otherwise */
 		bool _evacuateSet;	/**< true if the region was part of the evacuate set at the beginning of the copy-forward (flag not changed during abort) */
 		bool _requiresPhantomReferenceProcessing; /**< Set to true by main thread if this region must be processed during parallel phantom reference processing */
-		volatile void *_survivorBase;  /**< The base pointer for storage used as survivor, which will NOT match the region base if tail filling has occurred */
+		bool _survivor;
+		bool _freshSurvivor;
 		MM_HeapRegionDescriptorVLHGC *_nextRegion;  /**< Region list link for compact group resource management during a copyforward operation */
 		MM_HeapRegionDescriptorVLHGC *_previousRegion;  /**< Region list link for compact group resource management during a copyforward operation */
 	} _copyForwardData;
@@ -218,7 +219,7 @@ public:
 	{
 		/* this implementation return correct answer for regions contains objects only */
 		Assert_MM_true(containsObjects());
-		return (BUMP_ALLOCATED == getRegionType());
+		return (ADDRESS_ORDERED == getRegionType());
 	}
 
 	/**
@@ -262,17 +263,14 @@ public:
 	MM_RememberedSetCard *getRsclBufferPool() { return _rsclBufferPool; }
 
 	/**
-	 * @return True if the receiver was a tail-filled survivor region (that is, was not freshly allocated from a free region) in the copy-forward which just finished
+	 * @return True if the receiver was a fresh survivor region (is freshly allocated from a free region) in the copy-forward which just finished
 	 */
-	MMINLINE bool isTailFilledSurvivorRegion()
-	{
-		return (NULL != _copyForwardData._survivorBase) && (getLowAddress() != _copyForwardData._survivorBase);
-	}
+	MMINLINE bool isFreshSurvivorRegion() { return _copyForwardData._freshSurvivor; }
 
 	/**
-	 * @return True if region is in survivor set (there is no explicit flag, but info is inferred from _survivorBase being non-null
+	 * @return True if region is in survivor set (there is explicit flag)
 	 */
-	MMINLINE bool isSurvivorRegion() { return NULL != _copyForwardData._survivorBase; }
+	MMINLINE bool isSurvivorRegion() { return _copyForwardData._survivor; }
 
 	/**
 	 * Allocate supporting resources (large enough to justify not to preallocate them for all regions at the startup) when region is being committed.

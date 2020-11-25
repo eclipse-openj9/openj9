@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@
 #include "HeapMapWordIterator.hpp"
 #include "HeapRegionManager.hpp"
 #include "MarkMap.hpp"
-#include "MemoryPoolBumpPointer.hpp"
+#include "MemoryPool.hpp"
 
 void 
 MM_RegionValidator::threadCrash(MM_EnvironmentBase* env)
@@ -82,11 +82,10 @@ MM_RegionValidator::validate(MM_EnvironmentBase *env)
 	env->_activeValidator = this;
 	
 	MM_HeapRegionDescriptor::RegionType regionType = _region->getRegionType();
-	if (MM_HeapRegionDescriptor::BUMP_ALLOCATED == regionType) {
+	if (MM_HeapRegionDescriptor::ADDRESS_ORDERED == regionType) {
 		/* verify that the region starts with either a valid hole, an object, or the allocate pointer hasn't advanced */
-		MM_MemoryPoolBumpPointer *pool = (MM_MemoryPoolBumpPointer *)_region->getMemoryPool();
 		void *lowAddress = _region->getLowAddress();
-		if (pool->getAllocationPointer() > lowAddress) {
+		if (_region->getSize() != _region->getMemoryPool()->getActualFreeMemorySize()) {
 			/* something is here */
 			J9Object *firstObject = (J9Object *)lowAddress;
 			if (!MM_GCExtensions::getExtensions(env)->objectModel.isDeadObject(firstObject)) {
@@ -100,7 +99,7 @@ MM_RegionValidator::validate(MM_EnvironmentBase *env)
 				}
 			}
 		}
-	} else if (MM_HeapRegionDescriptor::BUMP_ALLOCATED_MARKED == regionType) {
+	} else if (MM_HeapRegionDescriptor::ADDRESS_ORDERED_MARKED == regionType) {
 		/* verify that the first object in this region is valid (checks against the previous region overflowing into this one) */
 		MM_HeapMapWordIterator firstWordIterator(MM_GCExtensions::getExtensions(env)->previousMarkMap, _region->getLowAddress());
 		J9Object *firstObject = firstWordIterator.nextObject();
