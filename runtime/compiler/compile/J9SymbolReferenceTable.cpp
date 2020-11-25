@@ -1282,6 +1282,7 @@ J9::SymbolReferenceTable::findOrCreateStringSymbol(TR::ResolvedMethodSymbol * ow
    TR_ResolvedMethod * owningMethod = owningMethodSymbol->getResolvedMethod();
    void * stringConst = owningMethod->stringConstant(cpIndex);
    TR::SymbolReference * symRef;
+   bool isString = true;
    if (owningMethod->isUnresolvedString(cpIndex))
       {
       symRef = findOrCreateCPSymbol(owningMethodSymbol, cpIndex, TR::Address, false, 0);
@@ -1300,8 +1301,29 @@ J9::SymbolReferenceTable::findOrCreateStringSymbol(TR::ResolvedMethodSymbol * ow
          }
       symRef = findOrCreateCPSymbol(owningMethodSymbol, cpIndex, TR::Address, true, stringConst, knownObjectIndex);
       }
+
    TR::StaticSymbol * sym = (TR::StaticSymbol *)symRef->getSymbol();
-   sym->setConstString();
+
+   // If symbol is created the first time
+   if (!symRef->isUnresolved() &&
+       !sym->isConstString() &&
+       !sym->isNonSpecificConstObject())
+      {
+      TR::VMAccessCriticalSection constantCriticalSection(comp()->fej9());
+      TR_OpaqueClassBlock *clazz = comp()->fej9()->getObjectClassAt((uintptr_t)stringConst);
+      isString = comp()->fej9()->isString(clazz);
+      }
+
+   if (isString)
+      sym->setConstString();
+   else
+      {
+      if (comp()->compileRelocatableCode())
+         comp()->failCompilation<J9::AOTHasPatchedCPConstant>("Patched Constant not supported in AOT.");
+
+      sym->setNonSpecificConstObject();
+      }
+
    return symRef;
    }
 
