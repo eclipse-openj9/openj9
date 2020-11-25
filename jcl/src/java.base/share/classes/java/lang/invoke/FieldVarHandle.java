@@ -22,10 +22,10 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
 import java.util.Optional;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import static java.lang.invoke.MethodType.*;
@@ -83,8 +83,8 @@ abstract class FieldVarHandle extends VarHandle {
 		this.vmslot = unreflectField(field, isStatic) + header;
 		checkSetterFieldFinality(handleTable);
 	}
-	
-	/*[IF Java12]*/
+
+	/*[IF JAVA_SPEC_VERSION >= 12]*/
 	@Override
 	public Optional<VarHandleDesc> describeConstable() {
 		VarHandleDesc result = null;
@@ -100,7 +100,7 @@ abstract class FieldVarHandle extends VarHandle {
 		}
 		return Optional.ofNullable(result);
 	}
-	/*[ENDIF] Java12 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/**
 	 * Checks whether the field referenced by this VarHandle, is final. 

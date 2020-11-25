@@ -28,11 +28,11 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
 import java.io.ObjectStreamField;
 import java.io.Serializable;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.Constable;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
@@ -43,10 +43,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.util.NoSuchElementException;
 import java.util.Optional;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -70,9 +70,9 @@ import java.lang.invoke.MethodTypeForm;
  */
 @VMCONSTANTPOOL_CLASS
 public final class MethodType implements Serializable 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	, Constable, TypeDescriptor.OfMethod<Class<?>, MethodType>
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 {
 	static final Class<?>[] EMTPY_PARAMS = new Class<?>[0];
 
@@ -335,12 +335,12 @@ public final class MethodType implements Serializable
 	public static MethodType fromMethodDescriptorString(String methodDescriptor, ClassLoader loader) {
 		ClassLoader classLoader = loader; 
 		if (classLoader == null) {
-			/*[IF Java14]*/
+			/*[IF JAVA_SPEC_VERSION >= 14]*/
 			SecurityManager security = System.getSecurityManager();
 			if (security != null) {
 				security.checkPermission(sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION);
 			}
-			/*[ENDIF]*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 			classLoader = ClassLoader.getSystemClassLoader();
 		}
 		
@@ -835,9 +835,9 @@ public final class MethodType implements Serializable
 	 * 		type.parameterType(type.parameterCount() - 1)
 	 * @return class of final parameter, or void.class if there are no parameters
 	 */
-	/*[IF Java10]*/
+	/*[IF JAVA_SPEC_VERSION >= 10]*/
 	public
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 	Class<?> lastParameterType() {
 		Class<?> result = void.class;
 		if (arguments.length > 0) {
@@ -1027,12 +1027,12 @@ public final class MethodType implements Serializable
 		}
 		return invoker;
 	}
-	
-/*[IF Java12]*/
+
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	static MethodType makeImpl(Class<?> rtype, Class<?>[] ptypes, boolean arg) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /*[IF Sidecar18-SE-OpenJ9]*/	
 	MethodType basicType() {
@@ -1060,7 +1060,7 @@ public final class MethodType implements Serializable
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 
-	/*[IF Java10]*/
+	/*[IF JAVA_SPEC_VERSION >= 10]*/
 	/**
 	 * Returns the number of stack slots used by the described args in the MethodType.
 	 * @return The number of stack slots
@@ -1068,7 +1068,7 @@ public final class MethodType implements Serializable
 	int parameterSlotCount() {
 		return argSlots;
 	}
-	/*[ENDIF]*/	
+	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 /*[ELSE]*/
 	MethodType asCollectorType(Class<?> clz, int num1) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
@@ -1076,7 +1076,7 @@ public final class MethodType implements Serializable
 /*[ENDIF]*/
 /*[ENDIF]*/
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Return field descriptor of MethodType instance.
 	 * 
@@ -1110,6 +1110,5 @@ public final class MethodType implements Serializable
 			return Optional.empty();
 		}
 	}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 }
-

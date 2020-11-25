@@ -22,9 +22,9 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 class InsertHandle extends MethodHandle {
 	final MethodHandle  next;
@@ -49,13 +49,13 @@ class InsertHandle extends MethodHandle {
 		this.values 		= originalHandle.values;
 	}
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		relatedMHs.add(next);
 		return true;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	// {{{ JIT support
 
@@ -115,4 +115,3 @@ class InsertHandle extends MethodHandle {
 		c.compareChildHandle(left.next, this.next);
 	}
 }
-

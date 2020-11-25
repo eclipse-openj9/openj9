@@ -22,9 +22,9 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 import com.ibm.oti.util.Msg;
 
@@ -84,11 +84,11 @@ final class SpreadHandle extends MethodHandle {
 		if (spreadArg == null) {
 			if (spreadCount != 0) {
 				/*[MSG "K05d1", "cannot have null spread argument unless spreadCount is 0"]*/
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 				throw new NullPointerException(Msg.getString("K05d1")); //$NON-NLS-1$
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 				throw new IllegalArgumentException(Msg.getString("K05d1")); //$NON-NLS-1$
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 			}
 		} else if (spreadCount != java.lang.reflect.Array.getLength(spreadArg)) {
 			/*[MSG "K05d2", "expected '{0}' sized array; encountered '{1}' sized array"]*/
@@ -113,13 +113,13 @@ final class SpreadHandle extends MethodHandle {
 			);
 	}
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		relatedMHs.add(next);
 		return true;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	// }}} JIT support
 
@@ -144,4 +144,3 @@ final class SpreadHandle extends MethodHandle {
 	}
 
 }
-

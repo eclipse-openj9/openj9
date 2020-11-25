@@ -22,10 +22,10 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.Collections;
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 final class FilterArgumentsHandle extends MethodHandle {
 	private final MethodHandle   next;
@@ -94,14 +94,14 @@ final class FilterArgumentsHandle extends MethodHandle {
 			ILGenMacros.lastN(numSuffixArgs(), argPlaceholder)));
 	}
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		relatedMHs.add(next);
 		Collections.addAll(relatedMHs, filters);
 		return true;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	// }}} JIT support
 
@@ -127,4 +127,3 @@ final class FilterArgumentsHandle extends MethodHandle {
 		}
 	}
 }
-

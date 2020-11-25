@@ -22,9 +22,9 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 final class PermuteHandle extends MethodHandle {
 	@VMCONSTANTPOOL_FIELD
@@ -67,13 +67,13 @@ final class PermuteHandle extends MethodHandle {
 		return new PermuteHandle(permuteType, next, combinedPermute);
 	}
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		relatedMHs.add(next);
 		return true;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	// {{{ JIT support
 
@@ -122,4 +122,3 @@ final class PermuteHandle extends MethodHandle {
  		c.compareChildHandle(left.next, this.next);
  	}
 }
-

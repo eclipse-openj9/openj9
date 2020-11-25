@@ -1,7 +1,4 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
-
-package java.lang;
-
 /*******************************************************************************
  * Copyright (c) 1998, 2020 IBM Corp. and others
  *
@@ -23,7 +20,7 @@ package java.lang;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
- 
+package java.lang;
 
 /**
  * ThreadGroups are containers of Threads and ThreadGroups, therefore providing
@@ -37,7 +34,6 @@ package java.lang;
  * @see			Thread
  * @see			SecurityManager
  */
-
 public class ThreadGroup implements Thread.UncaughtExceptionHandler {
 
 	private String name;					// Name of this ThreadGroup		
@@ -239,15 +235,15 @@ private void add(ThreadGroup g) throws IllegalThreadStateException {
  *
  * @deprecated 	Required deprecated method suspend().
  */
-/*[IF Java11]*/
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 @Deprecated(forRemoval=true, since="1.2")
-/*[ELSE] Java14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ENDIF] Java14 */
-/*[ELSE] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 @Deprecated
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 public boolean allowThreadSuspension(boolean b) {
 	// Does not apply to this VM, no-op
 	/*[PR 1PR4U1E]*/
@@ -728,15 +724,15 @@ private void remove(ThreadGroup g) {
  *
  * @deprecated Requires deprecated method Thread.resume().
  */
-/*[IF Java11]*/
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 @Deprecated(forRemoval=true, since="1.2")
-/*[ELSE] Java14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ENDIF] Java14 */
-/*[ELSE] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 @Deprecated
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 public final void resume() {
 	checkAccess();
 	synchronized (this.childrenThreadsLock) { // Lock this subpart of the tree as we walk
@@ -865,15 +861,15 @@ private final boolean stopHelper() {
  *
  * @deprecated Requires deprecated method Thread.suspend().
  */
-/*[IF Java11]*/
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 @Deprecated(forRemoval=true, since="1.2")
-/*[ELSE] Java14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ENDIF] Java14 */
-/*[ELSE] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 @Deprecated
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 public final void suspend() {
 	if (suspendHelper())
 		Thread.currentThread().suspend();
