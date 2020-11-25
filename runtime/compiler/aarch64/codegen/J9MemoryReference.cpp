@@ -30,8 +30,9 @@
 J9::ARM64::MemoryReference::MemoryReference(
       TR::Node *node,
       TR::CodeGenerator *cg)
-   : OMR::MemoryReferenceConnector(node, cg)
+   : OMR::MemoryReferenceConnector(node, cg), _j9Flags(0)
    {
+   self()->setupCausesImplicitNullPointerException(cg);
    if (self()->getUnresolvedSnippet())
       self()->adjustForResolution(cg);
    }
@@ -40,10 +41,21 @@ J9::ARM64::MemoryReference::MemoryReference(
       TR::Node *node,
       TR::SymbolReference *symRef,
       TR::CodeGenerator *cg)
-   : OMR::MemoryReferenceConnector(node, symRef, cg)
+   : OMR::MemoryReferenceConnector(node, symRef, cg), _j9Flags(0)
    {
+   self()->setupCausesImplicitNullPointerException(cg);
    if (self()->getUnresolvedSnippet())
       self()->adjustForResolution(cg);
+   }
+
+void J9::ARM64::MemoryReference::setupCausesImplicitNullPointerException(TR::CodeGenerator *cg)
+   {
+   auto topNode = cg->getCurrentEvaluationTreeTop()->getNode();
+   if (cg->getHasResumableTrapHandler() &&
+      (topNode->getOpCode().isNullCheck() || topNode->chkFoldedImplicitNULLCHK()))
+      {
+      self()->setCausesImplicitNullPointerException();
+      }
    }
 
 void
