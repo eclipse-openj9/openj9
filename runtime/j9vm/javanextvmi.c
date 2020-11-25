@@ -110,7 +110,7 @@ JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 		Trc_SC_GetExtendedNPEMessage_Entry2(vmThread, throwableObj);
 		vmFuncs->internalEnterVMFromJNI(vmThread);
 		userData.bytecodeOffset = UDATA_MAX;
-		vmFuncs->iterateStackTrace(vmThread, (j9object_t*)throwableObj, getStackTraceElementIterator, &userData, FALSE);
+		vmFuncs->iterateStackTrace(vmThread, (j9object_t*)throwableObj, getStackTraceElementIterator, &userData, TRUE);
 		if ((NULL != userData.romClass)
 			&& (NULL != userData.romMethod)
 			&& (UDATA_MAX != userData.bytecodeOffset)
