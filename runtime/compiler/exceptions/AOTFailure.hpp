@@ -91,6 +91,16 @@ class AOTHasMethodTypeConstant : public virtual TR::RecoverableILGenException
    };
 
 /**
+ * AOT Has patched CP constant exception type.
+ *
+ * Thrown when a method that has a constant object in CP entry patched to a different type is AOT Compiled.
+ */
+class AOTHasPatchedCPConstant: public virtual TR::RecoverableILGenException
+   {
+   virtual const char* what() const throw() { return "AOT Has Patched CP Constant"; }
+   };
+
+/**
  * AOT Relocation Failure exception type.
  *
  * Thrown when an AOT compilation fails in the relocation phase.
