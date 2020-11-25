@@ -1853,7 +1853,7 @@ MM_WriteOnceCompactor::recycleFreeRegionsAndFixFreeLists(MM_EnvironmentVLHGC *en
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	while(NULL != (region = regionIterator.nextRegion())) {
 		if (region->_compactData._shouldCompact) {
-			MM_MemoryPoolBumpPointer *regionPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
+			MM_MemoryPool *regionPool = region->getMemoryPool();
 			Assert_MM_true(NULL != regionPool);
 			Assert_MM_true(region->isCommitted());
 			void *currentFreeBase = region->_compactData._compactDestination;
@@ -1875,18 +1875,13 @@ MM_WriteOnceCompactor::recycleFreeRegionsAndFixFreeLists(MM_EnvironmentVLHGC *en
 				UDATA currentFreeSize = (NULL == currentFreeBase) ? 0 : ((UDATA)highAddress - (UDATA)currentFreeBase);
 				void *byteAfterFreeEntry = (void *)((UDATA)currentFreeBase + currentFreeSize);
 
+				regionPool->reset(MM_MemoryPool::forCompact);
 				if (currentFreeSize > regionPool->getMinimumFreeEntrySize()) {
-					/* The MemoryPoolBumpPointer doesn't require that its memory be walkable so just update the top pointer (which is more for consistency of the meta-structure than anything else) */
-					regionPool->setAllocationPointer(env, currentFreeBase);
-					regionPool->setFreeMemorySize(currentFreeSize);
-					regionPool->setFreeEntryCount(1);
-					regionPool->setLargestFreeEntry(currentFreeSize);
+					regionPool->recycleHeapChunk(currentFreeBase, byteAfterFreeEntry);
+					regionPool->updateMemoryPoolStatistics(env, currentFreeSize, 1, currentFreeSize);
 				} else {
 					regionPool->abandonHeapChunk(currentFreeBase, byteAfterFreeEntry);
-					regionPool->setAllocationPointer(env, highAddress);
-					regionPool->setFreeMemorySize(0);
-					regionPool->setFreeEntryCount(0);
-					regionPool->setLargestFreeEntry(0);
+					regionPool->updateMemoryPoolStatistics(env, 0, 0, 0);
 				}
 			}
 		}

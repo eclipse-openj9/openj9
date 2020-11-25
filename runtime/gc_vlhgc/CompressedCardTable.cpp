@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,9 +38,6 @@
 #include "GCExtensions.hpp"
 #include "Heap.hpp"
 #include "HeapRegionDescriptor.hpp"
-
-#define BITS_PER_BYTE	8
-#define COMPRESSED_CARDS_PER_WORD	(sizeof(UDATA) * BITS_PER_BYTE)
 
 /*
  * Bit 1 meaning may be dirty (traditional) or clear (inverted)

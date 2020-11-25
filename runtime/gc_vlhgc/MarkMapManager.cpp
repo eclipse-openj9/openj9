@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -249,7 +249,7 @@ MM_MarkMapManager::reportDeletedObjects(MM_EnvironmentVLHGC *env, MM_MarkMap *ol
 				}
 			}
 		} else if (region->containsObjects()) {
-			GC_ObjectHeapIteratorAddressOrderedList iterator(extensions, (J9Object *)region->getLowAddress(), (J9Object *)((MM_MemoryPoolBumpPointer *)region->getMemoryPool())->getAllocationPointer(), false, false);
+			GC_ObjectHeapIteratorAddressOrderedList iterator(extensions, (J9Object *)region->getLowAddress(), (J9Object *)region->getHighAddress(), false, false);
 			J9Object *object = NULL;
 			while (NULL != (object = iterator.nextObject())) {
 				if (!newMap->isBitSet(object)) {
@@ -268,7 +268,7 @@ MM_MarkMapManager::verifyNextMarkMapSubsetOfPrevious(MM_EnvironmentVLHGC *env)
 	GC_HeapRegionIteratorVLHGC regionIterator(regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = regionIterator.nextRegion();
 	while (NULL != region) {
-		/* TODO: check for exactly MM_HeapRegionDescriptor::BUMP_ALLOCATED_MARKED once this is correctly set */
+		/* TODO: check for exactly MM_HeapRegionDescriptor::ADDRESS_ORDERED_MARKED once this is correctly set */
 		if (region->containsObjects()) {
 			MM_HeapMapIterator nextMapWalker(_extensions, _nextMarkMap, (UDATA *)region->getLowAddress(), (UDATA *)region->getHighAddress());
 			J9Object *object = nextMapWalker.nextObject();

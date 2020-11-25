@@ -51,8 +51,8 @@
 #include "InterRegionRememberedSet.hpp"
 #include "PhysicalArenaRegionBased.hpp"
 #include "PhysicalSubArenaRegionBased.hpp"
+#include "SweepPoolManagerAddressOrderedList.hpp"
 #include "SweepPoolManagerVLHGC.hpp"
-
 
 #define TAROK_MINIMUM_REGION_SIZE_BYTES (512 * 1024)
 
@@ -203,9 +203,9 @@ MM_ConfigurationIncrementalGenerational::createDefaultMemorySpace(MM_Environment
 	MM_HeapRegionManager *regionManager = extensions->heapRegionManager;
 	Assert_MM_true(NULL != regionManager);
 
-	/* Create Sweep Pool Manager for MemoryPoolBumpPointer */
-	extensions->sweepPoolManagerBumpPointer = MM_SweepPoolManagerVLHGC::newInstance(MM_EnvironmentVLHGC::getEnvironment(env));
-	if (NULL == extensions->sweepPoolManagerBumpPointer) {
+	/* Create Sweep Pool Manager for VLHGC */
+	extensions->sweepPoolManagerAddressOrderedList = (MM_SweepPoolManagerAddressOrderedList *) MM_SweepPoolManagerVLHGC::newInstance(env);
+	if (NULL == extensions->sweepPoolManagerAddressOrderedList) {
 		return NULL;
 	}
 
@@ -318,11 +318,11 @@ MM_ConfigurationIncrementalGenerational::tearDown(MM_EnvironmentBase *env)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 
-	if (NULL != extensions->sweepPoolManagerBumpPointer) {
-		extensions->sweepPoolManagerBumpPointer->kill(env);
-		extensions->sweepPoolManagerBumpPointer = NULL;
+	if (NULL != extensions->sweepPoolManagerAddressOrderedList) {
+		extensions->sweepPoolManagerAddressOrderedList->kill(env);
+		extensions->sweepPoolManagerAddressOrderedList = NULL;
 	}
-	
+
 	if (NULL != extensions->cardTable) {
 		extensions->cardTable->kill(MM_EnvironmentVLHGC::getEnvironment(env));
 		extensions->cardTable = NULL;

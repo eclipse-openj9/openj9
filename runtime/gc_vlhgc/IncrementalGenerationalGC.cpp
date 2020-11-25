@@ -617,7 +617,7 @@ MM_IncrementalGenerationalGC::preMainGCThreadInitialize(MM_EnvironmentBase *envB
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 	_interRegionRememberedSet->setRememberedSetCardBucketPoolForMainThread(env);
 
-	if (!_markMapManager->collectorStartup(MM_GCExtensions::getExtensions(envBase->getExtensions()))) {
+	if (!_markMapManager->collectorStartup(_extensions)) {
 		Assert_MM_unreachable();
 	}
 }
@@ -1375,7 +1375,7 @@ MM_IncrementalGenerationalGC::postProcessPGCUsingCopyForward(MM_EnvironmentVLHGC
 		GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 		MM_HeapRegionDescriptorVLHGC *region = NULL;
 		while (NULL != (region = regionIterator.nextRegion())) {
-			Assert_MM_false(region->getRegionType() == MM_HeapRegionDescriptor::BUMP_ALLOCATED);
+			Assert_MM_false(region->getRegionType() == MM_HeapRegionDescriptor::ADDRESS_ORDERED);
 		}
 	}
 
@@ -1645,10 +1645,10 @@ MM_IncrementalGenerationalGC::declareAllRegionsAsMarked(MM_EnvironmentVLHGC *env
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->containsObjects()) {
-			if (region->getRegionType() == MM_HeapRegionDescriptor::BUMP_ALLOCATED) {
+			if (region->getRegionType() == MM_HeapRegionDescriptor::ADDRESS_ORDERED) {
 				/* if this is a partial collect, then this region must have been part of the collection set */
 				Assert_MM_true(!isPartialCollect || region->_markData._shouldMark);
-				region->setRegionType(MM_HeapRegionDescriptor::BUMP_ALLOCATED_MARKED);
+				region->setRegionType(MM_HeapRegionDescriptor::ADDRESS_ORDERED_MARKED);
 			}
 			
 			if (isPartialCollect) {
@@ -2148,13 +2148,12 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 				/* Eden and NUMA stats */
 				UDATA usedMemory = 0;
 				if (region->containsObjects()) {
-					MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
+					MM_MemoryPool *memoryPool = region->getMemoryPool();
 					Assert_MM_true(NULL != memoryPool);
 					/* Eden region containing objects, Allocation Age must be smaller then amount allocated since last PGC,
 					 * more accurately, its logical age must be equal to zero */
 					if (0 == region->getLogicalAge()) {
-						/* region is not collected yet, so getActualFreeMemorySize might not be accurate - using getAllocatableBytes instead */
-						UDATA size = memoryPool->getAllocatableBytes();
+						UDATA size = memoryPool->getActualFreeMemorySize();
 						stats->_edenFreeHeapSize += size;
 						usedMemory = regionSize - size;
 						allocateEdenTotal += regionSize;
