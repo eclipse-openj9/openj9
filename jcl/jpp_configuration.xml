@@ -100,7 +100,7 @@
 	<configuration
 		  label="JAVA11"
 		  outputpath="JAVA11/src"
-		  flags="Sidecar18-SE-OpenJ9, DAA, Open-Module-Support,Sidecar19-SE,Sidecar19-SE-OpenJ9,Java10,Java11"
+		  flags="Sidecar18-SE-OpenJ9,DAA,Sidecar19-SE,Sidecar19-SE-OpenJ9"
 		  dependencies="SIDECAR18-SE"
 		  jdkcompliance="1.8">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
@@ -128,7 +128,6 @@
 	<configuration
 		  label="JAVA15"
 		  outputpath="JAVA15/src"
-		  flags="Java12,Java13,Java14,Java15"
 		  dependencies="JAVA11"
 		  jdkcompliance="1.8">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
@@ -156,7 +155,6 @@
 	<configuration
 		  label="JAVA16"
 		  outputpath="JAVA16/src"
-		  flags="Java16"
 		  dependencies="JAVA15"
 		  jdkcompliance="1.8">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>

@@ -88,8 +88,8 @@ final class MethodHandleResolver {
 	 * @throws  IllegalArgumentException if <i>index</i> has wrong constant pool type
 	 */
 	private static final native String getCPClassNameAt(Class<?> clazz, int index);
-	
-/*[IF Java11]*/
+
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 	/*
 	 * sun.reflect.ConstantPool doesn't have a getConstantDynamicAt method.  This is the 
 	 * equivalent for ConstantDynamic.
@@ -169,7 +169,7 @@ final class MethodHandleResolver {
 		
 		return result;
 	}
-/*[ENDIF] Java11*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
 
 	/*[IF ]*/
 	/*
@@ -272,9 +272,9 @@ final class MethodHandleResolver {
 		MethodHandle result = null;
 		MethodType type = null;
 
-/*[IF !Java11]*/
+/*[IF JAVA_SPEC_VERSION < 11]*/
 		try {
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION < 11 */
 			VMLangAccess access = VM.getVMLangAccess();
 			Object internalRamClass = access.createInternalRamClass(j9class);
 			Class<?> classObject = getClassFromJ9Class(j9class);
@@ -308,14 +308,14 @@ final class MethodHandleResolver {
 				staticArgs[BSM_OPTIONAL_ARGUMENTS_START_INDEX + i] = getAdditionalBsmArg(access, internalRamClass, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
 			}
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 		/* JVMS JDK11 5.4.3.6 Dynamically-Computed Constant and Call Site Resolution
 		 * requires that exceptions from BSM invocation be wrapped in a BootstrapMethodError
 		 * unless the exception thrown is a sub-class of Error.
 		 * Exceptions thrown before invocation should be passed through unwrapped.
 		 */
 		try {
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 			CallSite cs = (CallSite)invokeBsm(bsm, staticArgs);
 			if (cs != null) {
 				MethodType callsiteType = cs.type();
@@ -323,14 +323,14 @@ final class MethodHandleResolver {
 					throw WrongMethodTypeException.newWrongMethodTypeException(type, callsiteType);
 				}
 				result = cs.dynamicInvoker();
-			} 
-			/*[IF Java11]*/
+			}
+			/*[IF JAVA_SPEC_VERSION >= 11]*/
 			else {
 				/* The result of the resolution of a dynamically-computed call site must not be null. */
 				/*[MSG "K0A02", "Bootstrap method returned null."]*/
 				throw new ClassCastException(Msg.getString("K0A02")); //$NON-NLS-1$
 			}
-			/*[ENDIF]*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		} catch(Throwable e) {
 
 			/*[IF Sidecar19-SE]*/
@@ -579,11 +579,11 @@ final class MethodHandleResolver {
 		case 14:
 			cpEntry = getCPMethodHandleAt(internalRamClass, index);
 			break;
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 		case 17:
 			cpEntry = getCPConstantDynamicAt(internalRamClass, index);
 			break;
-/*[ENDIF] Java11*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		default:
 			// Do nothing. The null check below will throw the appropriate exception.
 		}

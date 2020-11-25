@@ -1,5 +1,4 @@
-/*[INCLUDE-IF Java11 & !Java14 & !OPENJDK_METHODHANDLES]*/
-
+/*[INCLUDE-IF (11 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 14) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright (c) 2017, 2020 IBM Corp. and others
  *
@@ -21,4 +20,3 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-

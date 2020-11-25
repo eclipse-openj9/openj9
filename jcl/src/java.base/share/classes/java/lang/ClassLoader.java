@@ -63,10 +63,10 @@ import jdk.internal.loader.BootLoader;
 import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import jdk.internal.loader.NativeLibraries;
 import jdk.internal.loader.NativeLibrary;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /**
  * ClassLoaders are used to dynamically load, link and install
@@ -152,9 +152,9 @@ public abstract class ClassLoader {
 /*[ENDIF]*/	
 	private static boolean specialLoaderInited = false;
 	private static InternalAnonymousClassLoader internalAnonClassLoader;
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	private NativeLibraries nativelibs = null;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 	private static native void initAnonClassLoader(InternalAnonymousClassLoader anonClassLoader);
 	
 	/*[PR JAZZ 73143]: ClassLoader incorrectly discards class loading locks*/
@@ -212,7 +212,7 @@ public abstract class ClassLoader {
 			// ignore
 		}
 
-		/*[IF Java11]*/
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		// This static method call ensures jdk.internal.loader.ClassLoaders.BOOT_LOADER initialization first
 		jdk.internal.loader.ClassLoaders.platformClassLoader();
 		if (bootstrapClassLoader.servicesCatalog != null) {
@@ -224,7 +224,7 @@ public abstract class ClassLoader {
 		}
 		bootstrapClassLoader.classLoaderValueMap = BootLoader.getClassLoaderValueMap();
 		applicationClassLoader = ClassLoaders.appClassLoader();
-		/*[ELSE] Java11 */
+		/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 		ClassLoader sysTemp = null;
 		// Proper initialization requires BootstrapLoader is the first loader instantiated
 		String systemLoaderString = System.internalGetProperties().getProperty("systemClassLoader"); //$NON-NLS-1$
@@ -242,7 +242,7 @@ public abstract class ClassLoader {
 		AbstractClassLoader.setBootstrapClassLoader(bootstrapClassLoader);
 		lazyClassLoaderInit = true;
 		applicationClassLoader = bootstrapClassLoader;
-		/*[ENDIF] Java11 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 		/* [PR 78889] The creation of this classLoader requires lazy initialization. The internal classLoader struct
 		 * is created in the initAnonClassLoader call. The "new InternalAnonymousClassLoader()" call must be 
@@ -267,11 +267,11 @@ public abstract class ClassLoader {
 		 * More details are at https://github.com/eclipse/openj9/issues/3399#issuecomment-459004840.
 		 */
 		Modifier.isPublic(Modifier.PUBLIC);
-		/*[IF Java10]*/
+		/*[IF JAVA_SPEC_VERSION >= 10]*/
 		try {
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 			System.bootLayer = jdk.internal.module.ModuleBootstrap.boot();
-		/*[IF Java10]*/
+		/*[IF JAVA_SPEC_VERSION >= 10]*/
 		} catch (Exception ex) {
 			System.out.println(ex);
 			Throwable t = ex.getCause();
@@ -281,15 +281,15 @@ public abstract class ClassLoader {
 			}
 			System.exit(1);
 		}
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 		jdk.internal.misc.VM.initLevel(2);
 		String javaSecurityManager = System.internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
 		if ((javaSecurityManager != null) 
-		/*[IF Java12]*/
+		/*[IF JAVA_SPEC_VERSION >= 12]*/
 			/* See the SecurityManager javadoc for details about special tokens. */
 			&& !javaSecurityManager.equals("disallow") //$NON-NLS-1$ /* special token to disallow SecurityManager */
 			&& !javaSecurityManager.equals("allow") //$NON-NLS-1$ /* special token to allow SecurityManager */
-			/*[ENDIF] Java12 */
+			/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 		) {
 			if (javaSecurityManager.isEmpty() || "default".equals(javaSecurityManager)) { //$NON-NLS-1$
 				System.setSecurityManager(new SecurityManager());
@@ -415,9 +415,9 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 		}
 /*[IF Sidecar19-SE]*/
 		unnamedModule = new Module(this);
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 		this.nativelibs = NativeLibraries.jniNativeLibraries(this);
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 /*[ENDIF]*/
 	} 
 /*[IF Sidecar19-SE]*/	
@@ -427,17 +427,17 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 			unnamedModule = null;
 			bootstrapClassLoader = this;
 			VM.initializeClassLoader(bootstrapClassLoader, VM.J9_CLASSLOADER_TYPE_BOOT, false);
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 			this.nativelibs = NativeLibraries.jniNativeLibraries(null);
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		} else {
 			// Assuming the second classloader initialized is platform classloader
 			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
 			specialLoaderInited = true;
 			unnamedModule = new Module(this);
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 			this.nativelibs = NativeLibraries.jniNativeLibraries(this);
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		}
 	}
 	this.classLoaderName = classLoaderName;
@@ -621,7 +621,7 @@ final Class<?> defineClassInternal(
 	return answer;
 }
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 
 private final native Class<?> defineClassImpl1(Class<?> hostClass, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object classData);
 final Class<?> defineClassInternal(
@@ -637,7 +637,7 @@ final Class<?> defineClassInternal(
 	Class<?> answer = defineClassImpl1(hostClass, className, classRep, protectionDomain, init, flags, classData);
 	return answer;
 }
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /*[IF Sidecar19-SE]*/
 /**
@@ -1995,7 +1995,7 @@ static void loadLibrary(Class<?> caller, String name, boolean fullPath) {
 		loadLibraryWithClassLoader(name, caller.getClassLoaderImpl());
 }
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 static void loadLibrary(Class<?> caller, File file) {
 	ClassLoader loader = (caller == null) ? null : caller.getClassLoader();
 	NativeLibraries nls = (loader == null) ? bootstrapClassLoader.nativelibs : loader.nativelibs;
@@ -2046,7 +2046,7 @@ private static long findNative(ClassLoader loader, String entryName) {
 	}
 	return result;
 }
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /**
  * Sets the assertion status of a class.

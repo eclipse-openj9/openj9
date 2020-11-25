@@ -784,19 +784,19 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 	 */
 	private native long getGCMainThreadCpuUsedImpl();
 
-/*[IF !Java16]*/
+/*[IF JAVA_SPEC_VERSION < 16]*/
 	/**
 	 * {@inheritDoc}
 	 */
-	/*[IF Java11]*/
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	@Deprecated(forRemoval=true, since="15")
-	/*[ELSE] Java11 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 	@Deprecated
-	/*[ENDIF] Java11 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 	public long getGCMasterThreadCpuUsed() {
 		return getGCMainThreadCpuUsedImpl();
 	}
-/*[ENDIF] !Java16 */
+/*[ENDIF] JAVA_SPEC_VERSION < 16 */
 
 	/**
 	 * {@inheritDoc}
@@ -813,19 +813,19 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 	 */
 	private native long getGCWorkerThreadsCpuUsedImpl();
 
-/*[IF !Java16]*/
+/*[IF JAVA_SPEC_VERSION < 16]*/
 	/**
 	 * {@inheritDoc}
 	 */
-	/*[IF Java11]*/
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	@Deprecated(forRemoval=true, since="15")
-	/*[ELSE] Java11 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 	@Deprecated
-	/*[ENDIF] Java11 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 	public long getGCSlaveThreadsCpuUsed() {
 		return getGCWorkerThreadsCpuUsedImpl();
 	}
-/*[ENDIF] !Java16 */
+/*[ENDIF] JAVA_SPEC_VERSION < 16 */
 
 	/**
 	 * {@inheritDoc}

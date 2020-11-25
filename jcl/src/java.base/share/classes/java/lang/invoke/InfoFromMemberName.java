@@ -1,5 +1,4 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9 & !OPENJDK_METHODHANDLES]*/
-
 /*******************************************************************************
  * Copyright (c) 2017, 2020 IBM Corp. and others
  *
@@ -21,7 +20,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 package java.lang.invoke;
 
 import java.lang.invoke.MethodHandles.Lookup;
@@ -45,7 +44,6 @@ class InfoFromMemberName implements MethodHandleInfo {
 	@Override
 	public MethodType getMethodType() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-
 	}
 
 	@Override
@@ -63,5 +61,4 @@ class InfoFromMemberName implements MethodHandleInfo {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 }
-/*[ENDIF] Java15 */
-
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */

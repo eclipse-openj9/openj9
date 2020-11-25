@@ -23,12 +23,12 @@
 package java.lang;
 
 import java.lang.annotation.Annotation;
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import jdk.internal.misc.Unsafe;
 import java.lang.StringConcatHelper;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
@@ -46,20 +46,20 @@ import java.net.URI;
 import java.security.ProtectionDomain;
 import java.util.Iterator;
 import java.util.List;
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.Set;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 import java.nio.charset.Charset;
 import java.nio.charset.CharacterCodingException;
-/*[ENDIF] Java11 */
-/*[IF Java12]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import jdk.internal.access.JavaLangAccess;
-/*[ELSE] Java12 */
+/*[ELSE] JAVA_SPEC_VERSION >= 12 */
 import jdk.internal.misc.JavaLangAccess;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.reflect.ConstantPool;
 /*[ELSE] Sidecar19-SE */
@@ -78,11 +78,11 @@ final class Access implements JavaLangAccess {
 
 	/** Set thread's blocker field. */
 	public void blockedOn(java.lang.Thread thread, Interruptible interruptable) {
-		/*[IF Java11]*/
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		Thread.blockedOn(interruptable);
-		/*[ELSE] Java11 */
+		/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 		thread.blockedOn(interruptable);
-		/*[ENDIF] Java11 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 	}
 
 	/**
@@ -193,7 +193,7 @@ final class Access implements JavaLangAccess {
 		return result;
 	}
 
-	/*[IF !Java10]*/
+	/*[IF JAVA_SPEC_VERSION < 10]*/
 	/**
 	 * Return a newly created String that uses the passed in char[]
 	 * without copying. The array must not be modified after creating
@@ -207,7 +207,7 @@ final class Access implements JavaLangAccess {
 	public java.lang.String newStringUnsafe(char[] data) {
 		return new String(data, true /*ignored*/);
 	}
-	/*[ENDIF] !Java10 */
+	/*[ENDIF] JAVA_SPEC_VERSION < 10 */
 
 	@Override
 	public void invokeFinalize(java.lang.Object arg0)
@@ -231,12 +231,12 @@ final class Access implements JavaLangAccess {
 		return classLoader.createOrGetServicesCatalog();
 	}
 
-/*[IF !Java10]*/
+/*[IF JAVA_SPEC_VERSION < 10]*/
 	@Deprecated
 	public ServicesCatalog getServicesCatalog(ClassLoader classLoader) {
 		return classLoader.getServicesCatalog();
 	}
-/*[ENDIF] !Java10 */
+/*[ENDIF] JAVA_SPEC_VERSION < 10 */
 
 	public String fastUUID(long param1, long param2) {
 		return Long.fastUUID(param1, param2);
@@ -277,11 +277,11 @@ final class Access implements JavaLangAccess {
 	}
 
 	public void invalidatePackageAccessCache() {
-/*[IF Java10]*/
+/*[IF JAVA_SPEC_VERSION >= 10]*/
 		java.lang.SecurityManager.invalidatePackageAccessCache();
-/*[ELSE] Java10 */
+/*[ELSE] JAVA_SPEC_VERSION >= 10 */
 		return;
-/*[ENDIF] Java10 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 	}
 
 	public Class<?> defineClass(ClassLoader classLoader, String className, byte[] classRep, ProtectionDomain protectionDomain, String str) {
@@ -345,15 +345,15 @@ final class Access implements JavaLangAccess {
 		return clz.getDeclaredPublicMethods(name, types);
 	}
 
-	/*[IF Java15]*/
+	/*[IF JAVA_SPEC_VERSION >= 15]*/
 	public void addOpensToAllUnnamed(Module fromModule, Set<String> concealedPackages, Set<String> exportedPackages) {
 		fromModule.implAddOpensToAllUnnamed(concealedPackages, exportedPackages);
 	}
-	/*[ELSE] Java15 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 15 */
 	public void addOpensToAllUnnamed(Module fromModule, Iterator<String> packages) {
 		fromModule.implAddOpensToAllUnnamed(packages);
 	}
-	/*[ENDIF] Java15 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	public boolean isReflectivelyOpened(Module fromModule, String pkg, Module toModule) {
 		return fromModule.isReflectivelyOpened(pkg, toModule);
@@ -364,16 +364,16 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] Sidecar19-SE-OpenJ9 */
 
-/*[IF Java10]*/
+/*[IF JAVA_SPEC_VERSION >= 10]*/
 	public String newStringUTF8NoRepl(byte[] bytes, int offset, int length) {
 		return StringCoding.newStringUTF8NoRepl(bytes, offset, length);
 	}
 	public byte[] getBytesUTF8NoRepl(String str) {
 		return StringCoding.getBytesUTF8NoRepl(str);
 	}
-/*[ENDIF] Java10 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 	public void blockedOn(Interruptible interruptible) {
 		Thread.blockedOn(interruptible);
 	}
@@ -383,21 +383,21 @@ final class Access implements JavaLangAccess {
 	public String newStringNoRepl(byte[] bytes, Charset charset) throws CharacterCodingException {
 		return StringCoding.newStringNoRepl(bytes, charset);
 	}
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	public void setCause(Throwable throwable, Throwable cause) {
 		throwable.setCause(cause);
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	public void loadLibrary(Class<?> caller, String library) {
 		System.loadLibrary(library);
 	}
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	public Class<?> defineClass(ClassLoader classLoader, Class<?> clazz, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object classData) {
 		ClassLoader targetClassLoader = (null == classLoader) ? ClassLoader.bootstrapClassLoader : classLoader;
 		return targetClassLoader.defineClassInternal(clazz, className, classRep, protectionDomain, init, flags, classData);
@@ -429,13 +429,13 @@ final class Access implements JavaLangAccess {
 	public long stringConcatMix(long arg0, String string) {
 		return StringConcatHelper.mix(arg0, string);
 	}
-/*[ENDIF] Java15 */
-	
-	/*[IF Java16]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+
+	/*[IF JAVA_SPEC_VERSION >= 16]*/
 	public void bindToLoader(ModuleLayer ml, ClassLoader cl) {
 		ml.bindToLoader(cl);
 	}
-	/*[ENDIF] Java16 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 /*[ENDIF] Sidecar19-SE */
 }

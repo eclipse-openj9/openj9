@@ -57,15 +57,15 @@ import jdk.internal.reflect.CallerSensitive;
 import java.lang.invoke.VarHandle.AccessMode;
 import java.lang.reflect.Array;
 /*[IF Sidecar19-SE-OpenJ9]*/
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.JavaLangAccess;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 12
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.JavaLangAccess;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import java.security.ProtectionDomain;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.Opcodes;
@@ -77,10 +77,10 @@ import java.lang.reflect.Module;
 import sun.reflect.CallerSensitive;
 /*[ENDIF] Sidecar19-SE*/
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import jdk.internal.misc.Unsafe;
 import java.util.Collections;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /**
  * Factory class for creating and adapting MethodHandles.
@@ -176,24 +176,24 @@ public class MethodHandles {
 		private static final String INVOKE_EXACT = "invokeExact"; //$NON-NLS-1$
 		private static final String INVOKE = "invoke"; //$NON-NLS-1$
 		
-		/*[IF Java15]*/
+		/*[IF JAVA_SPEC_VERSION >= 15]*/
 		private static final int CLASSOPTION_FLAG_NESTMATE = 1;
 		private static final int CLASSOPTION_FLAG_STRONG = 2;
-		/*[ENDIF] Java15*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 15*/
 
 		static final int VARARGS = 0x80;
 		
 		/* single cached value of public Lookup object */
 		static final int mhMask = 
-		/*[IF Java11]*/
-		/*[IF Java14]*/
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
+		/*[IF JAVA_SPEC_VERSION >= 14]*/
 		Lookup.UNCONDITIONAL;
-		/*[ELSE] Java14*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 14*/
 		Lookup.PUBLIC | Lookup.UNCONDITIONAL;
-		/*[ENDIF] Java14*/
-		/*[ELSE] Java11*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 		Lookup.PUBLIC;
-		/*[ENDIF] Java11*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		static Lookup PUBLIC_LOOKUP = new Lookup(Object.class, mhMask);
 		
 		/* single cached internal privileged lookup */
@@ -223,11 +223,11 @@ public class MethodHandles {
 		 * For earlier releases, these lookups are illegal
 		  */
 		private static boolean lookupJLIPackageCheckDefault() {
-			/*[IF Java15]
+			/*[IF JAVA_SPEC_VERSION >= 15]
 			return false;
-			/*[ELSE] Java15*/
+			/*[ELSE]*/
 			return true;
-			/*[ENDIF] Java15*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 15*/
 		}
 		
 		Lookup(Class<?> lookupClass, Class<?> prevLookupClass, int lookupMode) {
@@ -475,17 +475,17 @@ public class MethodHandles {
 				Module accessModule = accessClass.getModule();
 
 				try {
-					/*[IF Java14]*/
+					/*[IF JAVA_SPEC_VERSION >= 14]*/
 					checkClassModuleVisibility(accessMode, accessClass, prevAccessClass, type.returnType());
 					for (Class<?> c: type.ptypes()) {
 						checkClassModuleVisibility(accessMode, accessClass, prevAccessClass, c);
 					}
-					/*[ELSE]*/
+					/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 					checkClassModuleVisibility(accessMode, accessModule, type.returnType());
 					for (Class<?> c: type.ptypes()) {
 						checkClassModuleVisibility(accessMode, accessModule, c);
 					}
-					/*[ENDIF] Java14*/
+					/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
 				} catch (IllegalAccessException exc) {
 					IllegalAccessError err = new IllegalAccessError(exc.getMessage());
 					err.initCause(exc);
@@ -498,17 +498,17 @@ public class MethodHandles {
 				return;
 			} else if (Modifier.isPrivate(memberModifiers)) {
 				if (Modifier.isPrivate(accessMode) && ((definingClass == accessClass)
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 						|| definingClass.isNestmateOf(accessClass)
-/*[ENDIF] Java11*/	
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 				)) {
 					return;
 				}
 			} else if (Modifier.isProtected(memberModifiers)) {
 				/* Ensure that the accessMode is not restricted (public-only) */
-				/*[IF !Java14]*/
+				/*[IF JAVA_SPEC_VERSION < 14]*/
 				if (accessMode != PUBLIC)
-				/*[ELSE]*/
+				/*[ELSE] JAVA_SPEC_VERSION < 14 */
 				/* Note: the lookup with the PUBLIC plus MODULE or UNCONDITIONAL mode 
 				 * can access public types in all modules, which means the access to 
 				 * non-public types should be rejected if the PUBLIC plus MODULE 
@@ -517,7 +517,7 @@ public class MethodHandles {
 				if ((accessMode != PUBLIC) 
 					&& (accessMode != (PUBLIC | MODULE))
 					&& (accessMode != UNCONDITIONAL))
-				/*[ENDIF] Java14 */
+				/*[ENDIF] JAVA_SPEC_VERSION < 14 */
 				{
 					if (definingClass.isArray()) {
 						/* The only methods array classes have are defined on Object and thus accessible */
@@ -599,11 +599,11 @@ public class MethodHandles {
 		 */
 		private void checkClassAccess(Class<?> targetClass) throws IllegalAccessException {
 			/*[IF Sidecar19-SE]*/
-			/*[IF Java14]*/
+			/*[IF JAVA_SPEC_VERSION >= 14]*/
 			checkClassModuleVisibility(accessMode, accessClass, prevAccessClass, targetClass);
-			/*[ELSE]*/
+			/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 			checkClassModuleVisibility(accessMode, accessClass.getModule(), targetClass);
-			/*[ENDIF] Java14*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
 			/*[ENDIF]*/
 			
 			if (NO_ACCESS != accessMode) {
@@ -613,8 +613,8 @@ public class MethodHandles {
 				 */
 				int targetClassModifiers = targetClass.getModifiers();
 				final boolean targetClassIsPublic = (Modifier.isPublic(targetClassModifiers) || Modifier.isProtected(targetClassModifiers));
-				 
-				/*[IF Java14]*/
+
+				/*[IF JAVA_SPEC_VERSION >= 14]*/
 				Module accessModule = accessClass.getModule();
 				Module targetModule = targetClass.getModule();
 				String targetClassPackageName = targetClass.getPackageName();
@@ -643,7 +643,7 @@ public class MethodHandles {
 						return;
 					}
 				} else if ((PUBLIC & accessMode) == PUBLIC) {
-				/*[ENDIF] Java14*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
 					/* target class should always be accessible to the lookup class when they are the same class */
 					if (accessClass == targetClass) {
 						return;
@@ -657,9 +657,9 @@ public class MethodHandles {
 							return;
 						}
 					}
-				/*[IF Java14]*/
+				/*[IF JAVA_SPEC_VERSION >= 14]*/
 				}
-				/*[ENDIF] Java14*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
 			}
 
 			/*[MSG "K0680", "Class '{0}' no access to: class '{1}'"]*/
@@ -873,7 +873,7 @@ public class MethodHandles {
 			return moduleName;
 		}
 		
-		/*[IF Java14]*/
+		/*[IF JAVA_SPEC_VERSION >= 14]*/
 		/**
 		 * Check if targetClass is in a package visible from the accessModule 
 		 * whether the previous lookup class is present or not
@@ -941,7 +941,7 @@ public class MethodHandles {
 				}
 			}
 		}
-		/*[ENDIF] Java14*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
 		/**
 		 * Check if targetClass is in a package visible from the accessModule
@@ -1086,12 +1086,12 @@ public class MethodHandles {
 				}
 				handle = handle.cloneWithNewType(handle.type.changeParameterType(0, clazz));
 			} else if (!Modifier.isPublic(handle.getModifiers())) {
-				/*[IF Java11]*/
+				/*[IF JAVA_SPEC_VERSION >= 11]*/
 				handle = new DirectHandle(handleClass, methodName, type, MethodHandle.KIND_SPECIAL, handleClass, true);
 				handle = handle.cloneWithNewType(handle.type.changeParameterType(0, clazz));
-				/*[ELSE] Java11
+				/*[ELSE] JAVA_SPEC_VERSION >= 11
 				throw new IllegalAccessException();	
-				/*[ENDIF] Java11*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 			} else {
 				handle = new InterfaceHandle(clazz, methodName, type);
 			}
@@ -1275,7 +1275,7 @@ public class MethodHandles {
 			return handle;
 		}
 		
-		/*[IF Java14]*/
+		/*[IF JAVA_SPEC_VERSION >= 14]*/
 		/**
 		 * Create a lookup on the request class.  The resulting lookup will have no more 
 		 * access privileges than the original.
@@ -1286,7 +1286,7 @@ public class MethodHandles {
 		 * @throws IllegalArgumentException - if the requested Class is a primitive type or an array class
 		 */
 		public MethodHandles.Lookup in(Class<?> lookupClass) throws NullPointerException, IllegalArgumentException {
-		/*[ELSE]*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 		/**
 		 * Create a lookup on the request class.  The resulting lookup will have no more 
 		 * access privileges than the original.
@@ -1295,16 +1295,16 @@ public class MethodHandles {
 		 * @return a new MethodHandles.Lookup object
 		 */
 		public MethodHandles.Lookup in(Class<?> lookupClass) {
-		/*[ENDIF] Java14 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 			Objects.requireNonNull(lookupClass);
-			
-			/*[IF Java14]*/
+
+			/*[IF JAVA_SPEC_VERSION >= 14]*/
 			if (lookupClass.isPrimitive() || lookupClass.isArray()) {
 				/*[MSG "K065T", "The requested class: {0} must not be a void type, primitive type or an array class"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065T", lookupClass.getCanonicalName())); //$NON-NLS-1$
 			}
-			/*[ENDIF] Java14 */
-			
+			/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
+
 			// If it's the same class as ourselves, return this
 			if (lookupClass == accessClass) {
 				return this;
@@ -1317,11 +1317,11 @@ public class MethodHandles {
 			/*[IF !Sidecar19-SE-OpenJ9]
 			newAccessMode &= ~PROTECTED;
 			/*[ELSE]*/
-			/*[IF !Java14]*/
+			/*[IF JAVA_SPEC_VERSION < 14]*/
 			/* The UNCONDITIONAL bit is discarded if the new lookup class differs from the old one in Java 9 */
 			newAccessMode &= ~UNCONDITIONAL;
-			/*[ENDIF] Java14 */
-			
+			/*[ENDIF] JAVA_SPEC_VERSION < 14 */
+
 			/* There are 3 cases to be addressed for the new lookup class from a different module:
 			 * 1) There is no access if the package containing the new lookup class is not exported to 
 			 *    the package containing the old one.
@@ -1336,7 +1336,7 @@ public class MethodHandles {
 				if (!lookupClassModule.isExported(lookupClass.getPackageName(), accessClassModule)) {
 					newAccessMode = NO_ACCESS;
 				} else
-				/*[IF !Java14]*/
+				/*[IF JAVA_SPEC_VERSION < 14]*/
 				if (accessClassModule.isNamed()) {
 					/* If the old lookup class is in a named module different from the new lookup class,
 					 * we should keep the public access only when it is a public lookup.
@@ -1347,7 +1347,7 @@ public class MethodHandles {
 						newAccessMode = NO_ACCESS;
 					}
 				} else
-				/*[ENDIF] Java14 */
+				/*[ENDIF] JAVA_SPEC_VERSION < 14 */
 				{
 					newAccessMode &= ~MODULE;
 				}
@@ -1396,7 +1396,7 @@ public class MethodHandles {
 				}
 			}
 			
-			/*[IF Java14]*/
+			/*[IF JAVA_SPEC_VERSION >= 14]*/
 			/* If the new lookup class is not accessible to the old lookup class, 
 			 * then no members, not even public members, will be accessible.
 			 * Note: the invocation of accessClass() is explicitly required since JDK14
@@ -1447,9 +1447,9 @@ public class MethodHandles {
 			}
 			
 			return new Lookup(lookupClass, newPrevAccessClass, newAccessMode, true);
-			/*[ELSE]*/
+			/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 			return new Lookup(lookupClass, newAccessMode);
-			/*[ENDIF] Java14*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
 		}
 		
 		/*
@@ -1474,8 +1474,8 @@ public class MethodHandles {
 		public Class<?> lookupClass() {
 			return accessClass;
 		}
-		
-		/*[IF Java14]*/
+
+		/*[IF JAVA_SPEC_VERSION >= 14]*/
 		/**
 		 * The class previously being used for visibility checks and access permissions.
 		 * 
@@ -1499,8 +1499,8 @@ public class MethodHandles {
 			}
 			return true;
 		}
-		/*[ENDIF] Java14*/
-		
+		/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
+
 		/**
 		 * Make a MethodHandle to the Reflect method.  If the method is non-static, the receiver argument
 		 * is treated as the initial argument in the MethodType.  
@@ -1770,9 +1770,9 @@ public class MethodHandles {
 			 */
 			if (Modifier.isFinal(modifiers) && 
 				(!field.isAccessible() || Modifier.isStatic(modifiers)
-			/*[IF Java15]
+			/*[IF JAVA_SPEC_VERSION >= 15]
 				|| declaringClass.isHidden()
-			/*[ENDIF] Java15 */
+			/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 				)
 			) {
 				/*[MSG "K05cf", "illegal setter on final field"]*/
@@ -1836,12 +1836,12 @@ public class MethodHandles {
 		@Override
 		public String toString() {
 			String toString = accessClass.getName();
-			/*[IF Java14]*/
+			/*[IF JAVA_SPEC_VERSION >= 14]*/
 			if (prevAccessClass != null) {
 				toString += "/" + prevAccessClass.getName(); //$NON-NLS-1$
 			}
-			/*[ENDIF] Java14*/
-			
+			/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
+
 			switch(accessMode) {
 			case NO_ACCESS:
 				toString += "/noaccess"; //$NON-NLS-1$
@@ -1850,7 +1850,7 @@ public class MethodHandles {
 				toString += "/public"; //$NON-NLS-1$
 				break;
 			/*[IF Sidecar19-SE-OpenJ9]
-			/*[IF Java14]*/
+			/*[IF JAVA_SPEC_VERSION >= 14]*/
 			case UNCONDITIONAL:
 				toString += "/publicLookup"; //$NON-NLS-1$
 				break;
@@ -1865,7 +1865,7 @@ public class MethodHandles {
 			case PUBLIC | PACKAGE | PRIVATE | MODULE:
 				toString += "/private"; //$NON-NLS-1$
 				break;
-			/*[ELSE]*/
+			/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 			case PUBLIC | UNCONDITIONAL:
 				toString += "/publicLookup"; //$NON-NLS-1$
 				break;
@@ -1878,7 +1878,7 @@ public class MethodHandles {
 			case PUBLIC | PACKAGE | PRIVATE | MODULE:
 				toString += "/private"; //$NON-NLS-1$
 				break;
-			/*[ENDIF] Java14 */
+			/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 			/*[ELSE]*/
 			case PUBLIC | PACKAGE:
 				toString += "/package"; //$NON-NLS-1$
@@ -2123,9 +2123,9 @@ public class MethodHandles {
 			
 			SecurityManager secmgr = System.getSecurityManager();
 			if ((null != secmgr)
-				/*[IF Java14]*/
+				/*[IF JAVA_SPEC_VERSION >= 14]*/
 				&& !hasFullPrivilegeAccess()
-				/*[ENDIF] Java14*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
 			) {
 				secmgr.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionDefineClass);
 			}
@@ -2195,14 +2195,14 @@ public class MethodHandles {
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065R", Integer.toHexString(dropMode), Integer.toHexString(fullAccessMode))); //$NON-NLS-1$
 			}
 
-			/*[IF Java14]*/
+			/*[IF JAVA_SPEC_VERSION >= 14]*/
 			/* The lookup object has to discard the protected access by default */
 			int newAccessMode = accessMode & ~PROTECTED;
-			/*[ELSE]*/
+			/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 			/* The lookup object has to discard the protected and unconditional access by default */
 			int newAccessMode = accessMode & ~(PROTECTED | UNCONDITIONAL);
-			/*[ENDIF] Java14*/
-			
+			/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
+
 			/* The access mode to be dropped must exist in the current access mode;
 			 * otherwise, the new access mode remains unchanged.
 			 */
@@ -2217,9 +2217,9 @@ public class MethodHandles {
 				newAccessMode &= ~PRIVATE;
 				break;
 			case UNCONDITIONAL:
-				/*[IF Java14]*/
+				/*[IF JAVA_SPEC_VERSION >= 14]*/
 				newAccessMode = NO_ACCESS;
-				/*[ENDIF] Java14*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
 				break;
 			default:
 				/* no change in the access mode */
@@ -2231,8 +2231,8 @@ public class MethodHandles {
 			if ((dropMode == MODULE) || ((dropMode & newAccessMode) == MODULE)) {
 				newAccessMode &= ~(MODULE | PACKAGE | PRIVATE);
 			}
-			
-			/*[IF Java14]*/
+
+			/*[IF JAVA_SPEC_VERSION >= 14]*/
 			/* There is no previous lookup class for the requested lookup class
 			 * if the MODULE or UNCONDITIONAL bit is set in the new access mode.
 			 */
@@ -2244,9 +2244,9 @@ public class MethodHandles {
 			}
 			
 			return new Lookup(accessClass, newPrevAccessClass, newAccessMode, true);
-			/*[ELSE]*/
+			/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 			return new Lookup(accessClass, newAccessMode);
-			/*[ENDIF] Java14*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
 		}
 		
 		/**
@@ -2254,23 +2254,23 @@ public class MethodHandles {
 		 * 
 		 * @return a boolean type indicating whether the lookup class has private access
 		 */
-		/*[IF Java14]*/
+		/*[IF JAVA_SPEC_VERSION >= 14]*/
 		@Deprecated(forRemoval=false, since="14")
-		/*[ENDIF] Java14 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 		public boolean hasPrivateAccess() {
 			/* Full access for use by MH implementation */
 			if (INTERNAL_PRIVILEGED == accessMode) {
 				return true;
 			}
-			
-			/*[IF Java14]*/
+
+			/*[IF JAVA_SPEC_VERSION >= 14]*/
 			return (!isWeakenedLookup() && (MODULE == (accessMode & MODULE)));
-			/*[ELSE]*/
+			/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 			return !isWeakenedLookup();
-			/*[ENDIF] Java14*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
 		}
-		
-		/*[IF Java14]*/
+
+		/*[IF JAVA_SPEC_VERSION >= 14]*/
 		/**
 		 * Return true if the lookup class has full privilege access
 		 * 
@@ -2284,10 +2284,10 @@ public class MethodHandles {
 			
 			return (!isWeakenedLookup() && (MODULE == (accessMode & MODULE)));
 		}
-		/*[ENDIF] Java14*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
 		/*[ENDIF] Sidecar19-SE */
 		
-		/*[IF Java15]*/
+		/*[IF JAVA_SPEC_VERSION >= 15]*/
 		/**
 		 * The ClassOption used to define the hidden class.
 		 * NESTMATE adds the hidden class into the same nest of the lookup class as a nest member.
@@ -2459,7 +2459,7 @@ public class MethodHandles {
 			}
 			return cls;
 		}
-		/*[ENDIF] Java15 */		
+		/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		
 		/*[IF OPENJDK_METHODHANDLES]*/
 		MemberName resolveOrFail(byte b, MemberName mn) throws ReflectiveOperationException {
@@ -2556,32 +2556,32 @@ public class MethodHandles {
 		}
 		
 		int callerLookupMode = callerLookup.lookupModes();
-		/*[IF Java14]*/
+		/*[IF JAVA_SPEC_VERSION >= 14]*/
 		if (!callerLookup.hasFullPrivilegeAccess()) {
 			/*[MSG "K065W1", "The access mode: 0x{0} of the caller lookup doesn't have the PRIVATE & MODULE mode : 0x{1}"]*/
 			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065W1", Integer.toHexString(callerLookupMode), Integer.toHexString(Lookup.PRIVATE | Lookup.MODULE))); //$NON-NLS-1$
 		}
-		/*[ELSE]*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 		if (Lookup.MODULE != (Lookup.MODULE & callerLookupMode)) {
 			/*[MSG "K065W2", "The access mode: 0x{0} of the caller lookup doesn't have the MODULE mode : 0x{1}"]*/
 			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065W2", Integer.toHexString(callerLookupMode), Integer.toHexString(Lookup.MODULE))); //$NON-NLS-1$
 		}
-		/*[ENDIF] Java14*/
-		
+		/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
+
 		SecurityManager secmgr = System.getSecurityManager();
 		if (null != secmgr) {
 			secmgr.checkPermission(com.ibm.oti.util.ReflectPermissions.permissionSuppressAccessChecks);
 		}
-		
-		/*[IF Java14]*/
+
+		/*[IF JAVA_SPEC_VERSION >= 14]*/
 		if (Objects.equals(targetClassModule, accessClassModule)) {
 			return new Lookup(targetClass, null, callerLookupMode, true);
 		} else {
 			return new Lookup(targetClass, callerLookup.lookupClass(), (callerLookupMode & ~Lookup.MODULE), true);
 		}
-		/*[ELSE]*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 		return new Lookup(targetClass);
-		/*[ENDIF] Java14*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
 	}
 	/*[ENDIF] Sidecar19-SE-OpenJ9*/
 	
@@ -3053,12 +3053,12 @@ public class MethodHandles {
 	 */
 	public static VarHandle byteArrayViewVarHandle(Class<?> viewArrayClass, ByteOrder byteOrder) throws IllegalArgumentException {
 		Objects.requireNonNull(byteOrder);
-		/*[IF Java14]*/
+		/*[IF JAVA_SPEC_VERSION >= 14]*/
 		return VarHandles.byteArrayViewHandle(viewArrayClass, (byteOrder == ByteOrder.BIG_ENDIAN));
-		/*[ELSE] Java14
+		/*[ELSE] JAVA_SPEC_VERSION >= 14
 		checkArrayClass(viewArrayClass);
 		return new ByteArrayViewVarHandle(viewArrayClass.getComponentType(), byteOrder);
-		/*[ENDIF] Java14 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 	}
 	
 	/**
@@ -3072,12 +3072,12 @@ public class MethodHandles {
 	 */
 	public static VarHandle byteBufferViewVarHandle(Class<?> viewArrayClass, ByteOrder byteOrder) throws IllegalArgumentException {
 		Objects.requireNonNull(byteOrder);
-		/*[IF Java14]*/
+		/*[IF JAVA_SPEC_VERSION >= 14]*/
 		return VarHandles.makeByteBufferViewHandle(viewArrayClass, (byteOrder == ByteOrder.BIG_ENDIAN));
-		/*[ELSE] Java14
+		/*[ELSE] JAVA_SPEC_VERSION >= 14
 		checkArrayClass(viewArrayClass);
 		return new ByteBufferViewVarHandle(viewArrayClass.getComponentType(), byteOrder);
-		/*[ENDIF] Java14 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 	}
 	
 	private static void checkArrayClass(Class<?> arrayClass) throws IllegalArgumentException {
@@ -3387,7 +3387,7 @@ public class MethodHandles {
 		return result;
 	}
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Modifies a MethodHandle by applying a preprocessor handle as a filter to one of the arguments.
 	 * The preprocessor's return type must be the same as the argument in <i>handle</i> at the <i>filterPosition</i>.
@@ -3496,7 +3496,7 @@ public class MethodHandles {
 	static MethodHandle foldArgumentsWithCombiner(MethodHandle handle, int foldPosition, MethodHandle preprocessor, int... argumentIndices) throws NullPointerException, IllegalArgumentException {
 		return foldArguments(handle, foldPosition, preprocessor, argumentIndices);
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/**
 	 * Produce a MethodHandle that preprocesses some of the arguments by calling the preprocessor handle.
@@ -5557,7 +5557,7 @@ public class MethodHandles {
 		}
 	}
 
-	/*[IF Java15]*/
+	/*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**
 	 * Validates that the permute[] specifies a valid permutation from permuteType to handleType.
 	 * This method throws IllegalArgumentException on failure and returns true on success. This
@@ -5700,7 +5700,7 @@ public class MethodHandles {
 
 		return false;
 	}
-	/*[ENDIF] Java15 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	/*[IF Sidecar18-SE-OpenJ9]*/	
 	static MethodHandle basicInvoker(MethodType mt) {

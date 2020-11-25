@@ -27,12 +27,12 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import sun.security.util.SecurityConstants;
-/*[IF Java11]
+/*[IF JAVA_SPEC_VERSION >= 11]
 import jdk.internal.misc.TerminatingThreadLocal;
 import jdk.internal.reflect.CallerSensitive;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 import sun.reflect.CallerSensitive;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /**
  *	A Thread is a unit of concurrent execution in Java. It has its own call stack
@@ -79,14 +79,14 @@ public class Thread implements Runnable {
 	// Instance variables
 	private long threadRef;									// Used by the VM
 	long stackSize = 0;
-	/*[IF Java14]*/
+	/*[IF JAVA_SPEC_VERSION >= 14]*/
 	/* deadInterrupt tracks the thread interrupt state when threadRef has no reference (ie thread is not alive). 
 	 * Note that this value need not be updated while the thread is running since the interrupt state will be 
 	 * tracked by the vm during that time. Because of this the value should not be used over calling
 	 * isInterrupted() or interrupted().
 	 */
 	private volatile boolean deadInterrupt;
-	/*[ENDIF] Java14 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 	private volatile boolean started;				// If !isAlive(), tells if Thread died already or hasn't even started
 	private String name;						// The Thread's name
 	private int priority = NORM_PRIORITY;			// The Thread's current priority
@@ -550,28 +550,28 @@ public final void checkAccess() {
  *
  * @return		Number of stack frames
  * 
-/*[IF Java14]
+/*[IF JAVA_SPEC_VERSION >= 14]
  * @exception	UnsupportedOperationException
-/*[ELSE] Java14 
-/*[IF Java13]
+/*[ELSE] JAVA_SPEC_VERSION >= 14
+/*[IF JAVA_SPEC_VERSION >= 13]
  * @exception	IllegalThreadStateException
  *					if this thread has not been suspended.
-/*[ENDIF] Java13
-/*[ENDIF] Java14 
+/*[ENDIF] JAVA_SPEC_VERSION >= 13
+/*[ENDIF] JAVA_SPEC_VERSION >= 14
  *
  * @deprecated	The semantics of this method are poorly defined and it uses the deprecated suspend() method.
  */
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 @Deprecated(forRemoval=true, since="1.2")
-/*[ELSE] Java11 */
+/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 @Deprecated
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 public int countStackFrames() {
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	throw new UnsupportedOperationException();
-/*[ELSE] Java14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 	return 0;
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 }
 
 /**
@@ -582,7 +582,7 @@ public int countStackFrames() {
  */
 public static native Thread currentThread();
 
-/*[IF !Java11]*/
+/*[IF JAVA_SPEC_VERSION < 11]*/
 /**
  * 	Destroys the receiver without any monitor cleanup. Not implemented.
  * 
@@ -597,8 +597,7 @@ public void destroy() {
 	/*[PR 121318] Should throw NoSuchMethodError */
 	throw new NoSuchMethodError();
 }
-/*[ENDIF]*/
-
+/*[ENDIF] JAVA_SPEC_VERSION < 11 */
 
 /**
  * 	Prints a text representation of the stack for this Thread.
@@ -685,9 +684,9 @@ public final ThreadGroup getThreadGroup() {
 /**
  * Posts an interrupt request to the receiver
  * 
-/*[IF Java14]
+/*[IF JAVA_SPEC_VERSION >= 14]
  * From Java 14, the interrupt state for threads that are not alive is tracked.
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 14
  *
  * @exception	SecurityException
  *					if <code>group.checkAccess()</code> fails with a SecurityException
@@ -733,9 +732,9 @@ public static native boolean interrupted();
 /**
  * Posts an interrupt request to the receiver
  * 
-/*[IF Java14]
+/*[IF JAVA_SPEC_VERSION >= 14]
  * From Java 14, the interrupt state for threads that are not alive is tracked.
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 14
  *
  * @see			Thread#interrupted
  * @see			Thread#isInterrupted 
@@ -925,15 +924,15 @@ private synchronized static String newName() {
  *
  * @deprecated	Used with deprecated method Thread.suspend().
  */
-/*[IF Java11]*/
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 @Deprecated(forRemoval=true, since="1.2")
-/*[ELSE] Java14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ENDIF] Java14 */
-/*[ELSE] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 @Deprecated
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 public final void resume() {
 	checkAccess();
 	synchronized(lock) {
@@ -1184,7 +1183,7 @@ public final void stop() {
 	}
 }
 
-/*[IF !Java11]*/
+/*[IF JAVA_SPEC_VERSION < 11]*/
 /**
  * Throws UnsupportedOperationException.
  *
@@ -1199,8 +1198,8 @@ public final void stop() {
 /*[ENDIF]*/
 public final void stop(Throwable throwable) {
 	throw new UnsupportedOperationException();
- }
-/*[ENDIF]*/
+}
+/*[ENDIF] JAVA_SPEC_VERSION < 11 */
 
 private final synchronized void stopWithThrowable(Throwable throwable) {
 	checkAccess();
@@ -1250,15 +1249,15 @@ private native void stopImpl(Throwable throwable);
  *
  * @deprecated May cause deadlocks.
  */
-/*[IF Java11]*/
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 @Deprecated(forRemoval=true, since="1.2")
-/*[ELSE] Java14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ENDIF] Java14 */
-/*[ELSE] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
+/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 @Deprecated
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 public final void suspend() { 
 	checkAccess();
 	/*[PR 106321]*/
@@ -1312,16 +1311,16 @@ public static native void yield();
  */
 public static native boolean holdsLock(Object object);
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 static
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 void blockedOn(sun.nio.ch.Interruptible interruptible) {
 	Thread currentThread;
-	/*[IF Java11]*/
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	currentThread = currentThread();
-	/*[ELSE]
+	/*[ELSE] JAVA_SPEC_VERSION >= 11
 	currentThread = this;
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 	synchronized(currentThread.lock) {
 		currentThread.blockOn = interruptible;
 	}
@@ -1534,16 +1533,16 @@ void uncaughtException(Throwable e) {
  * @see J9VMInternals#threadCleanup()
  */
 void cleanup() {
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	/* Refresh deadInterrupt value so it is accurate when thread reference is removed. */	
 	deadInterrupt = interrupted();
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 	if (threadLocals != null && TerminatingThreadLocal.REGISTRY.isPresent()) {
 		TerminatingThreadLocal.threadTerminated();
 	}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 	/*[PR 97317]*/
 	group = null;

@@ -22,9 +22,9 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 final class GuardWithTestHandle extends MethodHandle {
 
@@ -88,7 +88,7 @@ final class GuardWithTestHandle extends MethodHandle {
 		}
 	}
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		relatedMHs.add(guard);
@@ -96,7 +96,7 @@ final class GuardWithTestHandle extends MethodHandle {
 		relatedMHs.add(trueTarget);
 		return true;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	// }}} JIT support
 
@@ -119,4 +119,3 @@ final class GuardWithTestHandle extends MethodHandle {
 		c.compareChildHandle(left.falseTarget, this.falseTarget);
 	}
 }
-
