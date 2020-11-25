@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Panama]*/
+/*[INCLUDE-IF Panama | (JAVA_SPEC_VERSION >= 16)]*/
 /*******************************************************************************
  * Copyright (c) 2009, 2020 IBM Corp. and others
  *
@@ -22,6 +22,7 @@
  *******************************************************************************/
 package java.lang.invoke;
 
+/*[IF Panama]*/
 import java.nicl.LibrarySymbol;
 
 import jdk.internal.nicl.types.PointerTokenImpl;
@@ -112,3 +113,23 @@ public class NativeMethodHandle extends PrimitiveHandle {
 		c.compareStructuralParameter(left.vmSlot, this.vmSlot);
 	}
 }
+/*[ELSE] Panama */
+import java.util.List;
+import jdk.internal.invoke.NativeEntryPoint;
+
+class NativeMethodHandle extends MethodHandle {
+	public static MethodHandle make(NativeEntryPoint entryPoint, MethodHandle mh) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	private NativeMethodHandle(MethodType mt, LambdaForm lf, MethodHandle mh, NativeEntryPoint entryPoint) {
+		super(mt, lf);
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	@Override
+	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+}
+/*[ENDIF] Panama */
