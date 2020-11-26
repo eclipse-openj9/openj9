@@ -109,7 +109,7 @@ protected:
    ClientMessage _cMsg;
 
    static const uint8_t MAJOR_NUMBER = 1;
-   static const uint16_t MINOR_NUMBER = 15;
+   static const uint16_t MINOR_NUMBER = 16;
    static const uint8_t PATCH_NUMBER = 0;
    static uint32_t CONFIGURATION_FLAGS;
 

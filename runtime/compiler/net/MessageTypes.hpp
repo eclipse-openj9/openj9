@@ -96,14 +96,15 @@ enum MessageType : uint16_t
    ResolvedMethod_dynamicConstant,
    ResolvedMethod_definingClassFromCPFieldRef,
    ResolvedMethod_getResolvedImplementorMethods,
+   ResolvedMethod_isFieldFlattened,
 
-   ResolvedRelocatableMethod_createResolvedRelocatableJ9Method, // 66
+   ResolvedRelocatableMethod_createResolvedRelocatableJ9Method, // 67
    ResolvedRelocatableMethod_fieldAttributes,
    ResolvedRelocatableMethod_staticAttributes,
    ResolvedRelocatableMethod_getFieldType,
 
    // For TR_J9ServerVM methods
-   VM_isClassLibraryClass, // 70
+   VM_isClassLibraryClass, // 71
    VM_isClassLibraryMethod,
    VM_getSuperClass,
    VM_isInstanceOf,
@@ -233,15 +234,16 @@ enum MessageType : uint16_t
    ClassEnv_getITable,
    ClassEnv_classHasIllegalStaticFinalFieldModification,
    ClassEnv_getROMClassRefName,
+   ClassEnv_enumerateFields,
 
    // For TR_J9SharedCache
-   SharedCache_getClassChainOffsetInSharedCache, // 196
+   SharedCache_getClassChainOffsetInSharedCache, // 198
    SharedCache_rememberClass,
    SharedCache_addHint,
    SharedCache_storeSharedData,
 
    // For runFEMacro
-   runFEMacro_invokeCollectHandleNumArgsToCollect, // 200
+   runFEMacro_invokeCollectHandleNumArgsToCollect, // 202
    runFEMacro_invokeExplicitCastHandleConvertArgs,
    runFEMacro_targetTypeL,
    runFEMacro_invokeILGenMacrosInvokeExactAndFixup,
@@ -267,24 +269,24 @@ enum MessageType : uint16_t
    runFEMacro_invokeCollectHandleAllocateArray,
 
    // for JITServerPersistentCHTable
-   CHTable_getAllClassInfo, // 224
+   CHTable_getAllClassInfo, // 226
    CHTable_getClassInfoUpdates,
    CHTable_commit,
    CHTable_clearReservable,
 
    // for JITServerIProfiler
-   IProfiler_profilingSample, // 228
+   IProfiler_profilingSample, // 230
    IProfiler_searchForMethodSample,
    IProfiler_getMaxCallCount,
    IProfiler_setCallCount,
 
-   Recompilation_getExistingMethodInfo, // 232
+   Recompilation_getExistingMethodInfo, // 234
    Recompilation_getJittedBodyInfoFromPC,
 
    ClassInfo_getRemoteROMString,
 
    // for KnownObjectTable
-   KnownObjectTable_getOrCreateIndex, // 235
+   KnownObjectTable_getOrCreateIndex, // 237
    KnownObjectTable_getOrCreateIndexAt,
    KnownObjectTable_getPointer,
    KnownObjectTable_getExistingIndexAt,
@@ -298,7 +300,7 @@ enum MessageType : uint16_t
    KnownObjectTable_invokeDirectHandleDirectCall,
    KnownObjectTable_getKnownObjectTableDumpInfo,
 
-   ClassEnv_isClassRefValueType, // 247
+   ClassEnv_isClassRefValueType, // 249
    MessageType_MAXTYPE
    };
 
@@ -372,11 +374,12 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "ResolvedMethod_dynamicConstant",
    "ResolvedMethod_definingClassFromCPFieldRef",
    "ResolvedMethod_getResolvedImplementorMethods",
-   "ResolvedRelocatableMethod_createResolvedRelocatableJ9Method", // 66
+   "ResolvedMethod_isFieldFlattened",
+   "ResolvedRelocatableMethod_createResolvedRelocatableJ9Method", // 67
    "ResolvedRelocatableMethod_fieldAttributes",
    "ResolvedRelocatableMethod_staticAttributes",
    "ResolvedRelocatableMethod_getFieldType",
-   "VM_isClassLibraryClass", // 70
+   "VM_isClassLibraryClass", // 71
    "VM_isClassLibraryMethod",
    "VM_getSuperClass",
    "VM_isInstanceOf",
@@ -502,11 +505,12 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "ClassEnv_getITable",
    "ClassEnv_classHasIllegalStaticFinalFieldModification",
    "ClassEnv_getROMClassRefName",
-   "SharedCache_getClassChainOffsetInSharedCache", // 196
+   "ClassEnv_enumerateFields",
+   "SharedCache_getClassChainOffsetInSharedCache", // 198
    "SharedCache_rememberClass",
    "SharedCache_addHint",
    "SharedCache_storeSharedData",
-   "runFEMacro_invokeCollectHandleNumArgsToCollect", // 200
+   "runFEMacro_invokeCollectHandleNumArgsToCollect", // 202
    "runFEMacro_invokeExplicitCastHandleConvertArgs",
    "runFEMacro_targetTypeL",
    "runFEMacro_invokeILGenMacrosInvokeExactAndFixup",
@@ -530,18 +534,18 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "runFEMacro_invokeFilterArgumentsWithCombinerHandleFilterPosition",
    "runFEMacro_invokeFilterArgumentsWithCombinerHandleArgumentIndices",
    "runFEMacro_invokeCollectHandleAllocateArray",
-   "CHTable_getAllClassInfo", // 224
+   "CHTable_getAllClassInfo", // 226
    "CHTable_getClassInfoUpdates",
    "CHTable_commit",
    "CHTable_clearReservable",
-   "IProfiler_profilingSample", // 228
+   "IProfiler_profilingSample", // 230
    "IProfiler_searchForMethodSample",
    "IProfiler_getMaxCallCount",
    "IProfiler_setCallCount",
-   "Recompilation_getExistingMethodInfo", // 232
+   "Recompilation_getExistingMethodInfo", // 234
    "Recompilation_getJittedBodyInfoFromPC",
    "ClassInfo_getRemoteROMString",
-   "KnownObjectTable_getOrCreateIndex", // 234
+   "KnownObjectTable_getOrCreateIndex", // 236
    "KnownObjectTable_getOrCreateIndexAt",
    "KnownObjectTable_getPointer",
    "KnownObjectTable_getExistingIndexAt",
@@ -553,7 +557,7 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "KnownObjectTable_getReferenceField",
    "KnownObjectTable_invokeDirectHandleDirectCall",
    "KnownObjectTable_getKnownObjectTableDumpInfo",
-   "ClassEnv_isClassRefValueType", // 247
+   "ClassEnv_isClassRefValueType", // 249
    };
    }; // namespace JITServer
 #endif // MESSAGE_TYPES_HPP

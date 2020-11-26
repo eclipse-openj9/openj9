@@ -41,6 +41,7 @@
 #include "runtime/JITClientSession.hpp"
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/RelocationTarget.hpp"
+#include "env/TypeLayout.hpp"
 #include "jitprotos.h"
 #include "vmaccess.h"
 
@@ -1916,6 +1917,15 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, methodInfos, ramMethods, implCount);
          }
          break;
+      case MessageType::ResolvedMethod_isFieldFlattened:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
+         auto mirror = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         bool isStatic = std::get<2>(recv);
+         client->write(response, mirror->isFieldFlattened(comp, cpIndex, isStatic));
+         }
+         break;
       case MessageType::ResolvedRelocatableMethod_createResolvedRelocatableJ9Method:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, J9Method *, int32_t, uint32_t>();
@@ -2166,6 +2176,28 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto clazz = std::get<0>(recv);
          auto cpIndex = std::get<1>(recv);
          client->write(response, TR::Compiler->cls.isClassRefValueType(comp, clazz, cpIndex));
+         }
+         break;
+      case MessageType::ClassEnv_enumerateFields:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *>();
+         const TR::TypeLayout* layout = comp->typeLayout(std::get<0>(recv));
+
+         std::vector<TR::TypeLayoutEntry> entries;
+         std::vector<std::string> fieldNames;
+         std::vector<std::string> typeSignatures;
+         entries.reserve(layout->count());
+         fieldNames.reserve(layout->count());
+         typeSignatures.reserve(layout->count());
+         for (int32_t idx = 0; idx < layout->count(); ++idx)
+            {
+            const TR::TypeLayoutEntry &entry = layout->entry(idx);
+            entries.push_back(entry);
+            // both strings are null-terminated so we don't need to know length
+            fieldNames.push_back(std::string(entry._fieldname));
+            typeSignatures.push_back(std::string(entry._typeSignature));
+            }
+         client->write(response, entries, fieldNames, typeSignatures); 
          }
          break;
       case MessageType::SharedCache_getClassChainOffsetInSharedCache:

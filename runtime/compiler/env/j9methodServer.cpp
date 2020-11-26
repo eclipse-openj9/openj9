@@ -2054,6 +2054,33 @@ TR_ResolvedJ9JITServerMethod::archetypeArgPlaceholderSlot()
    return paramSlots;
    }
 
+bool
+TR_ResolvedJ9JITServerMethod::isFieldQType(int32_t cpIndex)
+   {
+   if (!TR::Compiler->om.areValueTypesEnabled() ||
+      (-1 == cpIndex))
+      return false;
+
+   auto comp = _fe->_compInfoPT->getCompilation();
+   int32_t sigLen;
+   char *sig = fieldOrStaticSignatureChars(cpIndex, sigLen);
+   J9UTF8 *utfWrapper = str2utf8(sig, sigLen, comp->trMemory(), heapAlloc);
+
+   J9VMThread *vmThread = comp->j9VMThread();
+   return vmThread->javaVM->internalVMFunctions->isNameOrSignatureQtype(utfWrapper);
+   }
+
+bool
+TR_ResolvedJ9JITServerMethod::isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bool isStatic)
+   {
+   if (!TR::Compiler->om.areValueTypesEnabled() ||
+      (-1 == cpIndex))
+      return false;
+
+   _stream->write(JITServer::MessageType::ResolvedMethod_isFieldFlattened, _remoteMirror, cpIndex, isStatic);
+   return std::get<0>(_stream->read<bool>());
+   }
+
 TR_ResolvedRelocatableJ9JITServerMethod::TR_ResolvedRelocatableJ9JITServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owner, uint32_t vTableSlot)
    : TR_ResolvedJ9JITServerMethod(aMethod, fe, trMemory, owner, vTableSlot)
    {
