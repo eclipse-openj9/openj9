@@ -24,8 +24,7 @@
 #include "j9consts.h"
 #include "jclprots.h"
 #include "j9protos.h"
-
-
+#include "j9jclnls.h"
 
 jclass 
 defineClassCommon(JNIEnv *env, jobject classLoaderObject,
@@ -144,7 +143,7 @@ retry:
 			/* Bad, we have already defined this class - fail */
 			omrthread_monitor_exit(vm->classTableMutex);
 			if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
-				vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, (UDATA *)*(j9object_t*)className);
+				vmFuncs->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_JCL_DUPLICATE_CLASS_DEFINITION, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, utf8Length, utf8Name);
 			}
 			goto done;
 		}

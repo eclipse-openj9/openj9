@@ -135,7 +135,7 @@ setCurrentExceptionNLSWithArgs(J9VMThread * vmThread, U_32 nlsModule, U_32 nlsID
 	nlsMsgFormat = omrnls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 			nlsModule,
 			nlsID,
-			"");
+			NULL);
 
 	va_start(stringArgList, exceptionIndex);
 	msgCharLength = j9str_vprintf(NULL, 0, nlsMsgFormat, stringArgList);
