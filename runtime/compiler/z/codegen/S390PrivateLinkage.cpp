@@ -1595,9 +1595,8 @@ J9::Z::PrivateLinkage::buildNoPatchingVirtualDispatchWithResolve(TR::Node *callN
       int32_t vtableOffset;
       };
    
-   OMR::CCData *codeCacheData = cg()->getCodeCache()->manager()->getCodeCacheData();
-   OMR::CCData::index_t index;
-   if (!(codeCacheData->put(NULL, sizeof(ccResolveVirtualData), alignof(ccResolveVirtualData), NULL, index)))
+   TR::CCData *codeCacheData = cg()->getCodeCache()->manager()->getCodeCacheData();
+   TR::CCData::index_t index;
       {
       comp()->failCompilation<TR::CompilationException>("Could not allocate resolve virtual dispatch metadata");
       }
@@ -1674,8 +1673,8 @@ J9::Z::PrivateLinkage::buildNoPatchingIPIC(TR::Node *callNode, TR::RegisterDepen
     * We can create a different data structure to hold the J9Class and method address
     * size of which can be fixed at compilation time and use that.
     */
-   OMR::CCData *codeCacheData = cg()->getCodeCache()->manager()->getCodeCacheData();
-   OMR::CCData::index_t index;
+   TR::CCData *codeCacheData = cg()->getCodeCache()->manager()->getCodeCacheData();
+   TR::CCData::index_t index;
 
    if (!(codeCacheData->put(NULL, sizeof(ccInterfaceData), 16, NULL, index)))
       {
