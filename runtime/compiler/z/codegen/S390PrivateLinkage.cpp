@@ -1594,13 +1594,14 @@ J9::Z::PrivateLinkage::buildNoPatchingVirtualDispatchWithResolve(TR::Node *callN
       intptr_t j2iThunk;
       int32_t vtableOffset;
       };
-   
+
    TR::CCData *codeCacheData = cg()->getCodeCache()->manager()->getCodeCacheData();
    TR::CCData::index_t index;
+   if (!(codeCacheData->reserve(sizeof(ccResolveVirtualData), alignof(ccResolveVirtualData), NULL, index)))
       {
       comp()->failCompilation<TR::CompilationException>("Could not allocate resolve virtual dispatch metadata");
       }
- 
+
    ccResolveVirtualData *ccResolveVirtualDataAddress = codeCacheData->get<ccResolveVirtualData>(index);
 
    ccResolveVirtualDataAddress->cpAddress = reinterpret_cast<intptr_t> (callNode->getSymbolReference()->getOwningMethod(comp())->constantPool());
@@ -1611,19 +1612,19 @@ J9::Z::PrivateLinkage::buildNoPatchingVirtualDispatchWithResolve(TR::Node *callN
 
    intptr_t resolveVirtualDataAddress = reinterpret_cast<intptr_t>(ccResolveVirtualDataAddress);
 
-   
+
    TR::StaticSymbol *resolveVirtualDataSymbol =
       TR::StaticSymbol::createWithAddress(comp()->trHeapMemory(), TR::Int32, reinterpret_cast<void *>(resolveVirtualDataAddress + offsetof(ccResolveVirtualData, vtableOffset)));
    resolveVirtualDataSymbol->setNotDataAddress();
    TR::SymbolReference *resolveVirtualDataSymRef = new (comp()->trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), resolveVirtualDataSymbol, 0);
 
-   
+
    TR::LabelSymbol *loadResolvedVtableOffsetLabel = generateLabelSymbol(cg());
    TR::Instruction *cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, loadResolvedVtableOffsetLabel);
 
    // Using GPR0 as the vTableOffsetReg as it is vtableOffset is expected to be in GPR0 when calling through J2IThunk
    TR::Register *vTableOffsetReg = deps->searchPostConditionRegister(TR::RealRegister::GPR0);
-   
+
    TR_ASSERT_FATAL(cg()->canUseRelativeLongInstructions(reinterpret_cast<int64_t>(resolveVirtualDataSymbol->getStaticAddress())), "resolveVirtualDataAddress %p is outside relative immediate range", resolveVirtualDataSymbol->getStaticAddress());
    cursor = generateRILInstruction(cg(), TR::InstOpCode::LGFRL, callNode, vTableOffsetReg, resolveVirtualDataSymRef, resolveVirtualDataSymbol->getStaticAddress());
 
@@ -1644,21 +1645,21 @@ J9::Z::PrivateLinkage::buildNoPatchingVirtualDispatchWithResolve(TR::Node *callN
    TR::RegisterDependencyConditions * preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(deps->getPreConditions(), NULL,
                                                                                                          deps->getAddCursorForPre(), 0, cg());
    generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, generateLabelSymbol(cg()), preDeps);
-   
+
    cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRCL, callNode, 0x8, snippet, NULL, cg());
    cursor->setNeedsGCMap(getPreservedRegisterMapForGC());
-   
+
    TR::RegisterDependencyConditions *postDepsForCall = new (trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg());
    TR::Register * killRegRA = cg()->allocateRegister();
    TR::Register * killRegEP = cg()->allocateRegister();
    postDepsForCall->addPostCondition(killRegRA, cg()->getReturnAddressRegister());
    postDepsForCall->addPostCondition(killRegEP, cg()->getEntryPointRegister());
    generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, snippetCallNextInstrLabel, postDepsForCall);
-   
+
    cg()->addSnippet(snippet);
    cg()->stopUsingRegister(killRegRA);
    cg()->stopUsingRegister(killRegEP);
-   
+
    return cursor;
    }
 
@@ -1676,7 +1677,7 @@ J9::Z::PrivateLinkage::buildNoPatchingIPIC(TR::Node *callNode, TR::RegisterDepen
    TR::CCData *codeCacheData = cg()->getCodeCache()->manager()->getCodeCacheData();
    TR::CCData::index_t index;
 
-   if (!(codeCacheData->put(NULL, sizeof(ccInterfaceData), 16, NULL, index)))
+   if (!(codeCacheData->reserve(sizeof(ccInterfaceData), 16, NULL, index)))
       {
       cg()->comp()->failCompilation<TR::CompilationException>("Could not allocate interface dispatch metadata");
       }
@@ -1698,7 +1699,7 @@ J9::Z::PrivateLinkage::buildNoPatchingIPIC(TR::Node *callNode, TR::RegisterDepen
    ccInterfaceDataAddress->totalSizeOfPicSlots = (ccInterfaceDataAddress->numberOfPICSlots  * sizeof(ccInterfaceDataAddress->slot1Class)) + (ccInterfaceDataAddress->numberOfPICSlots * sizeof(ccInterfaceDataAddress->slot1Method));
    ccInterfaceDataAddress->isCacheFull = 0;
 
-   // Now we are checking each slot and dispatching methods. 
+   // Now we are checking each slot and dispatching methods.
    intptr_t interfaceDataAddress = reinterpret_cast<intptr_t>(ccInterfaceDataAddress);
 
    TR::StaticSymbol *interfaceDataSymbol =
@@ -1767,12 +1768,12 @@ J9::Z::PrivateLinkage::buildNoPatchingIPIC(TR::Node *callNode, TR::RegisterDepen
                                     generateS390MemoryReference(regEP, offsetof(ccInterfaceData, slot2Class), cg()), cursor);
    cursor = generateRRInstruction(cg(), TR::InstOpCode::CGR, callNode, slotClassReg, vftReg, cursor);
    cursor =generateS390BranchInstruction(cg(), TR::InstOpCode::BCR, callNode, TR::InstOpCode::COND_BE, slotMethodAddressReg, cursor);
-   
+
    cursor = generateRXInstruction(cg(), TR::InstOpCode::LPQ, callNode, slotClassMethodRegPair,
                                     generateS390MemoryReference(regEP, offsetof(ccInterfaceData, slot3Class), cg()), cursor);
    cursor = generateRRInstruction(cg(), TR::InstOpCode::CGR, callNode, slotClassReg, vftReg, cursor);
    cursor =generateS390BranchInstruction(cg(), TR::InstOpCode::BCR, callNode, TR::InstOpCode::COND_BE, slotMethodAddressReg, cursor);
-   
+
    TR::LabelSymbol *interfaceCallHelperSnippetLabel = generateLabelSymbol(cg());
    TR::S390InterfaceCallReadOnlySnippet *snippet = new (trHeapMemory()) TR::S390InterfaceCallReadOnlySnippet(
       cg(),
@@ -1783,7 +1784,7 @@ J9::Z::PrivateLinkage::buildNoPatchingIPIC(TR::Node *callNode, TR::RegisterDepen
    // Cache miss, going to slow path to lookup the interface method.
    cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRCL, callNode, 0xF, snippet, NULL, cg());
    // Added NOP so that the pattern matching code in jit2itrg icallVMprJavaSendPatchupVirtual
-   cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg()); 
+   cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
    generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, doneLabel, postDeps, cursor);
    cg()->addSnippet(snippet);
    cg()->stopUsingRegister(regRA);
@@ -1792,7 +1793,7 @@ J9::Z::PrivateLinkage::buildNoPatchingIPIC(TR::Node *callNode, TR::RegisterDepen
    cg()->stopUsingRegister(slotMethodAddressReg);
    cg()->stopUsingRegister(slotClassMethodRegPair);
    return cursor;
-   } 
+   }
 
 
 
@@ -2172,7 +2173,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          {
          classReg = vftReg;
          }
-      
+
       if (comp()->getGenerateReadOnlyCode() && methodSymRef->isUnresolved())
          {
          cursor = generateRXInstruction(cg(), TR::InstOpCode::LG, callNode, RegRA, generateS390MemoryReference(classReg, RegZero, 0, cg()));
@@ -2256,7 +2257,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
          if (comp()->getOption(TR_disableInterfaceCallCaching))
             {
-            numInterfaceCallCacheSlots=0; 
+            numInterfaceCallCacheSlots=0;
             }
          else if (comp()->getOption(TR_enableInterfaceCallCachingSingleDynamicSlot))
             {
