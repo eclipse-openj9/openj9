@@ -86,10 +86,10 @@ public final class MethodType implements Serializable
 	private static InternTableAddLock internTableAddLock = new InternTableAddLock();
 	
 	@VMCONSTANTPOOL_FIELD
-	final Class<?> returnType;
+	final Class<?> rtype;
 	
 	@VMCONSTANTPOOL_FIELD
-	final Class<?>[] arguments;
+	final Class<?>[] ptypes;
 
 	@VMCONSTANTPOOL_FIELD
 	int argSlots;	// Number of stack slots used by the described args in the MethodType
@@ -132,12 +132,12 @@ public final class MethodType implements Serializable
 	 * Private constructor as MethodTypes need to be interned.  
 	 */
 	private MethodType(Class<?> rtype, Class<?>[] ptypes, boolean copyArguments) {
-		returnType = rtype;
+		this.rtype = rtype;
 		if (copyArguments) {
-			arguments = new Class<?>[ptypes.length];
-			System.arraycopy(ptypes, 0, arguments, 0, ptypes.length);
+			this.ptypes = new Class<?>[ptypes.length];
+			System.arraycopy(ptypes, 0, this.ptypes, 0, ptypes.length);
 		} else {
-			arguments = ptypes;
+			this.ptypes = ptypes;
 		}
 	}
 		
@@ -215,9 +215,9 @@ public final class MethodType implements Serializable
 	 */
 	public MethodType changeParameterType(int position, Class<?> type) {
 		//TODO: Should check that position is valid.
-		Class<?>[] newParameters = arguments.clone();
+		Class<?>[] newParameters = ptypes.clone();
 		newParameters[position] = type;
-		return MethodType.methodType(returnType, newParameters, false); 
+		return MethodType.methodType(rtype, newParameters, false); 
 	 }
 	
 	/**
@@ -230,7 +230,7 @@ public final class MethodType implements Serializable
 		/*[IF ]*/
 		//TODO: potential optimization - don't need to check the args, recalculate stack slots etc.
 		/*[ENDIF]*/
-		return methodType(type, arguments, false);
+		return methodType(type, ptypes, false);
 	}
    
 	/**
@@ -248,22 +248,22 @@ public final class MethodType implements Serializable
     	 * or if end is negative or greater than parameterCount() or if start is greater than end.
     	 */
     	/*[ENDIF]*/
-		if ((startPosition >= 0) && (endPosition >= 0) && (startPosition <= endPosition) && (endPosition <= arguments.length)) {
+		if ((startPosition >= 0) && (endPosition >= 0) && (startPosition <= endPosition) && (endPosition <= ptypes.length)) {
     		int delta = endPosition - startPosition;
-    		Class<?>[] newParameters = new Class<?>[arguments.length - delta];
-    		System.arraycopy(arguments, 0, newParameters, 0, startPosition);
-    		System.arraycopy(arguments, endPosition, newParameters, startPosition, arguments.length - endPosition);
-    		return methodType(returnType, newParameters, false);
+    		Class<?>[] newParameters = new Class<?>[ptypes.length - delta];
+    		System.arraycopy(ptypes, 0, newParameters, 0, startPosition);
+    		System.arraycopy(ptypes, endPosition, newParameters, startPosition, ptypes.length - endPosition);
+    		return methodType(rtype, newParameters, false);
 		}
     	throw new IndexOutOfBoundsException("'" + this + "' startPosition=" + startPosition + " endPosition=" + endPosition);  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
 	}
     
     /* Internal helper method that is equivalent to dropParameterTypes(0, 1) */
     MethodType dropFirstParameterType() throws IndexOutOfBoundsException {
-    	if (arguments.length == 0) {
+    	if (ptypes.length == 0) {
     		throw new IndexOutOfBoundsException();
     	}
-    	return methodType(returnType, Arrays.copyOfRange(arguments, 1, arguments.length), false);
+    	return methodType(rtype, Arrays.copyOfRange(ptypes, 1, ptypes.length), false);
 	}
     
 	  
@@ -283,10 +283,10 @@ public final class MethodType implements Serializable
 		}
 
 		MethodType that = (MethodType) x;
-		if ((this.arguments.length != that.arguments.length) || (this.returnType != that.returnType)) {
+		if ((this.ptypes.length != that.ptypes.length) || (this.rtype != that.rtype)) {
 			return false;
 		}
-		return Arrays.equals(this.arguments, that.arguments);
+		return Arrays.equals(this.ptypes, that.ptypes);
 	}
 	
 	/**
@@ -296,13 +296,13 @@ public final class MethodType implements Serializable
 	 * @return a new MethodType with all non-primitive or void return type and parameters changed to Object.
 	 */
 	public MethodType erase() {
-		Class<?>[] newParameters = arguments.clone();
+		Class<?>[] newParameters = ptypes.clone();
 		for (int i= 0; i < newParameters.length; i++){
 			if (!newParameters[i].isPrimitive()) {
 				newParameters[i] = Object.class;
 			}
 		}
-		return methodType(returnType.isPrimitive() ? returnType : Object.class, newParameters, false);
+		return methodType(rtype.isPrimitive() ? rtype : Object.class, newParameters, false);
 	}
 	
 	
@@ -457,7 +457,7 @@ public final class MethodType implements Serializable
 	 * @return a new MethodType with both return and parameter types changed to Object
 	 */
 	public MethodType generic() {
-		return genericMethodType(arguments.length);
+		return genericMethodType(ptypes.length);
 	}
 	
 	
@@ -470,8 +470,8 @@ public final class MethodType implements Serializable
 	 */
 	public int hashCode(){
 		if (hashcode == 0) {
-			int hash = 31 + returnType.hashCode();
-			for (Class<?> c : arguments) {
+			int hash = 31 + rtype.hashCode();
+			for (Class<?> c : ptypes) {
 				hash = 31 * hash + c.hashCode();
 			}
 			hashcode = hash;
@@ -487,10 +487,10 @@ public final class MethodType implements Serializable
 	 * @return whether the MethodType contains any primitive types
 	 */
 	public boolean hasPrimitives(){
-		if (returnType.isPrimitive()){
+		if (rtype.isPrimitive()){
 			return true;
 		}
-		for(Class<?> c : arguments){
+		for(Class<?> c : ptypes){
 			if (c.isPrimitive()) {
 				return true;
 			}
@@ -508,10 +508,10 @@ public final class MethodType implements Serializable
 	 * @return whether the MethodType contains any wrapper types
 	 */
 	public boolean hasWrappers() {
-		if (MethodTypeHelper.WRAPPER_SET.contains(returnType) || (returnType == Void.class)){
+		if (MethodTypeHelper.WRAPPER_SET.contains(rtype) || (rtype == Void.class)){
 			return true;
 		}
-		for(Class<?> c : arguments){
+		for(Class<?> c : ptypes){
 			if (MethodTypeHelper.WRAPPER_SET.contains(c)){
 				return true;
 			}
@@ -529,7 +529,7 @@ public final class MethodType implements Serializable
 	 * @throws IndexOutOfBoundsException if position is less than 0 or greater than than the number of arguments
 	 */
 	public MethodType insertParameterTypes(int position, Class<?>... types) throws IndexOutOfBoundsException {
-		if (position < 0 || position > arguments.length) {
+		if (position < 0 || position > ptypes.length) {
 			throw new IndexOutOfBoundsException();
 		}
 		int typesLength = types.length;
@@ -538,14 +538,14 @@ public final class MethodType implements Serializable
 			return this;
 		}
 		
-		Class<?>[] params = new Class<?>[arguments.length + typesLength];
+		Class<?>[] params = new Class<?>[ptypes.length + typesLength];
 		// Copy from 0 -> position out of the existing MethodType arguments
-		System.arraycopy(arguments, 0, params, 0, position);
+		System.arraycopy(ptypes, 0, params, 0, position);
 		// Copy from position -> types.length out of the types[] array
 		System.arraycopy(types, 0, params, position, typesLength);
 		// Copy from position + types.length -> params.length out of the existing MT arguments
-		System.arraycopy(arguments, position, params, position + typesLength, arguments.length - position);
-		return methodType(returnType, params, false);
+		System.arraycopy(ptypes, position, params, position + typesLength, ptypes.length - position);
+		return methodType(rtype, params, false);
 	}
 	
 	/**
@@ -634,9 +634,9 @@ public final class MethodType implements Serializable
 				return type;
 			}
 			
-			int stackSlots = arguments.length;
+			int stackSlots = ptypes.length;
 			
-			for(Class<?> c : arguments) {
+			for(Class<?> c : ptypes) {
 				/*[IF ]*/
 				/* getClass() gets compiled to just a NULLCHK and consumes fewer bytecodes than 'if (c == null) throw ...' */
 				/*[ENDIF]*/
@@ -655,7 +655,7 @@ public final class MethodType implements Serializable
 			argSlots = stackSlots;
 
 			/* initialize expensive state */
-			stackDescriptionBits = stackDescriptionBits(arguments, argSlots);
+			stackDescriptionBits = stackDescriptionBits(ptypes, argSlots);
 			methodDescriptor = createMethodDescriptorString();
 
 			MethodType tenured = makeTenured(this);
@@ -723,7 +723,7 @@ public final class MethodType implements Serializable
 	 * @return a MethodType object made by changing the return type of the passed in MethodType
 	 */
 	public static MethodType methodType(Class<?> returnType, MethodType methodType) {
-		return methodType(returnType, methodType.arguments, false);
+		return methodType(returnType, methodType.ptypes, false);
 	}
 
 	/**
@@ -774,7 +774,7 @@ public final class MethodType implements Serializable
 	 * @return the parameter types as an array
 	 */
 	public Class<?>[] parameterArray() {
-		return arguments.clone();
+		return ptypes.clone();
 	}
 
 	/**
@@ -783,7 +783,7 @@ public final class MethodType implements Serializable
 	 * @return the number of parameters
 	 */
 	public int parameterCount() {
-		return arguments.length;
+		return ptypes.length;
 	}
 
 	/**
@@ -792,7 +792,7 @@ public final class MethodType implements Serializable
 	 * @return array of arguments
 	 */
 	Class<?>[] ptypes() {
-		return arguments;
+		return ptypes;
 	}
 
 	/**
@@ -803,7 +803,7 @@ public final class MethodType implements Serializable
 	 * @return the parameter types as a List
 	 */
 	public List<Class<?>> parameterList() {
-		List<Class<?>> list = Arrays.asList(arguments.clone()); 
+		List<Class<?>> list = Arrays.asList(ptypes.clone()); 
 		return Collections.unmodifiableList(list);
 	}     
 
@@ -819,14 +819,14 @@ public final class MethodType implements Serializable
 		// IndexOutOfBoundsException is a superclass of ArrayIndexOutOfBoundsException so we are
 		// able to remove the explicit bounds checking.
 		/*[ENDIF]*/
-		return arguments[position];
+		return ptypes[position];
 	}
 	
 	/**
 	 * @return the type of the return
 	 */
 	public Class<?> returnType() {
-		return returnType;
+		return rtype;
 	}
 	
 	/**
@@ -840,8 +840,8 @@ public final class MethodType implements Serializable
 	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 	Class<?> lastParameterType() {
 		Class<?> result = void.class;
-		if (arguments.length > 0) {
-			result = arguments[arguments.length - 1];
+		if (ptypes.length > 0) {
+			result = ptypes[ptypes.length - 1];
 		}
 		return result;
 	}
@@ -858,11 +858,11 @@ public final class MethodType implements Serializable
 	
 	private String createMethodDescriptorString(){
 		StringBuilder sb= new StringBuilder("("); //$NON-NLS-1$
-		for (Class<?> c : arguments){
+		for (Class<?> c : ptypes){
 			sb.append(MethodTypeHelper.getBytecodeStringName(c));
 		}
 		sb.append(")"); //$NON-NLS-1$
-		sb.append(MethodTypeHelper.getBytecodeStringName(returnType));
+		sb.append(MethodTypeHelper.getBytecodeStringName(rtype));
 		return sb.toString();
 	}
 	
@@ -876,14 +876,14 @@ public final class MethodType implements Serializable
 	@Override
 	public String toString(){
 		StringBuilder sb = new StringBuilder("("); //$NON-NLS-1$
-		for (int i = 0; i < arguments.length; i++){
-			sb.append(arguments[i].getSimpleName());
-			if (i < (arguments.length - 1)) {
+		for (int i = 0; i < ptypes.length; i++){
+			sb.append(ptypes[i].getSimpleName());
+			if (i < (ptypes.length - 1)) {
 				sb.append(","); //$NON-NLS-1$
 			}
 		}
 		sb.append(")"); //$NON-NLS-1$
-		sb.append(returnType.getSimpleName());
+		sb.append(rtype.getSimpleName());
 		return sb.toString();
 	}
 
@@ -896,12 +896,12 @@ public final class MethodType implements Serializable
 	 * @see #wrap()
 	 */
 	public MethodType unwrap(){
-		Class<?>[] args = arguments.clone();
+		Class<?>[] args = ptypes.clone();
 		for(int i = 0; i < args.length; i++){
 			args[i] = MethodTypeHelper.unwrapPrimitive(args[i]);
 		}
-		Class<?> unwrappedReturnType = MethodTypeHelper.unwrapPrimitive(returnType);
-		if (MethodTypeHelper.unwrapPrimitive(returnType) == Void.class) {
+		Class<?> unwrappedReturnType = MethodTypeHelper.unwrapPrimitive(rtype);
+		if (MethodTypeHelper.unwrapPrimitive(rtype) == Void.class) {
 			unwrappedReturnType = void.class;
 		}
 		return methodType(unwrappedReturnType, args, false);
@@ -916,11 +916,11 @@ public final class MethodType implements Serializable
 	 * @see #unwrap()
 	 */
 	public MethodType wrap(){
-		Class<?>[] args = arguments.clone();
+		Class<?>[] args = ptypes.clone();
 		for(int i = 0; i < args.length; i++){
 			args[i] = MethodTypeHelper.wrapPrimitive(args[i]);
 		}
-		return methodType(MethodTypeHelper.wrapPrimitive(returnType), args, false);
+		return methodType(MethodTypeHelper.wrapPrimitive(rtype), args, false);
 	}
 	
 	/**
@@ -950,9 +950,9 @@ public final class MethodType implements Serializable
 		if (classes == null) {
 			throw new NullPointerException();
 		}
-		ArrayList<Class<?>> combinedParameters = new ArrayList<Class<?>>(Arrays.asList(arguments));
+		ArrayList<Class<?>> combinedParameters = new ArrayList<Class<?>>(Arrays.asList(ptypes));
 		combinedParameters.addAll(classes);
-		return methodType(returnType, combinedParameters);
+		return methodType(rtype, combinedParameters);
 	}
 
 	/*
@@ -977,8 +977,8 @@ public final class MethodType implements Serializable
 	 */
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		try {
-			final Field fReturnType = getClass().getDeclaredField("returnType"); //$NON-NLS-1$
-			final Field fArguments = getClass().getDeclaredField("arguments"); //$NON-NLS-1$
+			final Field fReturnType = getClass().getDeclaredField("rtype"); //$NON-NLS-1$
+			final Field fArguments = getClass().getDeclaredField("ptypes"); //$NON-NLS-1$
 			AccessController.doPrivileged(new PrivilegedAction<Object>() {
 				public Object run() {
 						fReturnType.setAccessible(true);
@@ -1052,7 +1052,7 @@ public final class MethodType implements Serializable
 	}
 	
 	Class<?> rtype() {
-		return returnType;
+		return rtype;
 	}
 
 /*[IF Sidecar19-SE-OpenJ9]*/	
@@ -1094,13 +1094,13 @@ public final class MethodType implements Serializable
 	 */
 	public Optional<MethodTypeDesc> describeConstable() {
 		try {
-			ClassDesc returnDesc = returnType.describeConstable().orElseThrow();
+			ClassDesc returnDesc = rtype.describeConstable().orElseThrow();
 
 			/* convert parameter classes to ClassDesc */
-			final int argumentsLength = arguments.length;
+			final int argumentsLength = ptypes.length;
 			ClassDesc[] paramDescs = new ClassDesc[argumentsLength];
 			for (int i = 0; i < argumentsLength; i++) {
-				paramDescs[i] = arguments[i].describeConstable().orElseThrow();
+				paramDescs[i] = ptypes[i].describeConstable().orElseThrow();
 			}
 
 			/* create MethodTypeDesc */
