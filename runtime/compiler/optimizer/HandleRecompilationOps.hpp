@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,19 +20,34 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-/*
- * This file will be included within an enum.  Only comments, preprocessor macros,
- * and enumerator definitions are permitted.
- */
+#ifndef HANDLERECOMPILATINOOPS_INCL
+#define HANDLERECOMPILATINOOPS_INCL
 
-#include "optimizer/OMROptimizations.enum"
+#include <stdint.h>
+#include "optimizer/Optimization.hpp"
+#include "optimizer/OptimizationManager.hpp"
 
-   OPTIMIZATION(profileGenerator)
-   OPTIMIZATION(sequentialStoreSimplification)
-   OPTIMIZATION(osrGuardInsertion)
-   OPTIMIZATION(osrGuardRemoval)
-   OPTIMIZATION(jProfilingBlock)
-   OPTIMIZATION(jProfilingValue)
-   OPTIMIZATION(jProfilingRecompLoopTest)
-   OPTIMIZATION(handleRecompilationOps)
-   OPTIMIZATION(hotFieldMarking)
+class TR_HandleRecompilationOps : public TR::Optimization
+   {
+   private:
+
+   TR::ResolvedMethodSymbol *_methodSymbol;
+
+   TR_HandleRecompilationOps(TR::OptimizationManager *manager) : TR::Optimization(manager)
+      {
+      _methodSymbol = comp()->getOwningMethodSymbol(comp()->getCurrentMethod());
+      }
+
+   public:
+
+   static TR::Optimization *create(TR::OptimizationManager *manager)
+      {
+      return new (manager->allocator()) TR_HandleRecompilationOps(manager);
+      }
+
+   virtual int32_t perform();
+   virtual const char * optDetailString() const throw();
+
+   };
+
+#endif // HANDLERECOMPILATINOOPS_INCL

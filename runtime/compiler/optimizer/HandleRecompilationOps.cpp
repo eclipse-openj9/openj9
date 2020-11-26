@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,19 +20,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-/*
- * This file will be included within an enum.  Only comments, preprocessor macros,
- * and enumerator definitions are permitted.
- */
+#include "optimizer/HandleRecompilationOps.hpp"
 
-#include "optimizer/OMROptimizations.enum"
+int32_t
+TR_HandleRecompilationOps::perform()
+   {
+   return 0;
+   }
 
-   OPTIMIZATION(profileGenerator)
-   OPTIMIZATION(sequentialStoreSimplification)
-   OPTIMIZATION(osrGuardInsertion)
-   OPTIMIZATION(osrGuardRemoval)
-   OPTIMIZATION(jProfilingBlock)
-   OPTIMIZATION(jProfilingValue)
-   OPTIMIZATION(jProfilingRecompLoopTest)
-   OPTIMIZATION(handleRecompilationOps)
-   OPTIMIZATION(hotFieldMarking)
+const char *
+TR_HandleRecompilationOps::optDetailString() const throw()
+   {
+   return "O^O HANDLE RECOMPILATION OPERATIONS:";
+   }

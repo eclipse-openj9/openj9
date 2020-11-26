@@ -29,6 +29,7 @@ j9jit_files(
 	optimizer/EscapeAnalysisTools.cpp
 	optimizer/EstimateCodeSize.cpp
 	optimizer/FearPointAnalysis.cpp
+	optimizer/HandleRecompilationOps.cpp
 	optimizer/HCRGuardAnalysis.cpp
 	optimizer/HotFieldMarking.cpp
 	optimizer/IdiomRecognition.cpp
