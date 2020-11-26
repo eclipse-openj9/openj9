@@ -52,14 +52,6 @@ romMethodAtClassIndex(J9ROMClass *romClass, uint64_t methodIndex)
    return romMethod;
    }
 
-static J9UTF8 *str2utf8(const char *str, int32_t length, TR_Memory *trMemory, TR_AllocationKind allocKind)
-   {
-   J9UTF8 *utf8 = (J9UTF8 *) trMemory->allocateMemory(length+sizeof(J9UTF8), allocKind); // This allocates more memory than it needs.
-   J9UTF8_SET_LENGTH(utf8, length);
-   memcpy(J9UTF8_DATA(utf8), str, length);
-   return utf8;
-   }
-
 TR_ResolvedJ9JITServerMethod::TR_ResolvedJ9JITServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    : TR_ResolvedJ9Method(fe, owningMethod)
    {
@@ -272,7 +264,7 @@ TR_ResolvedJ9JITServerMethod::getConstantDynamicTypeFromCP(I_32 cpIndex)
 
    const std::string &retConstantDynamicTypeStr = std::get<0>(_stream->read<std::string>());
    TR_Memory *trMemory = ((TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT)->getCompilation()->trMemory();
-   J9UTF8 * constantDynamicType = str2utf8((char*)&retConstantDynamicTypeStr[0], (int32_t)retConstantDynamicTypeStr.length(), trMemory, heapAlloc);
+   J9UTF8 * constantDynamicType = JITServerHelpers::str2utf8((char*)&retConstantDynamicTypeStr[0], (int32_t)retConstantDynamicTypeStr.length(), trMemory, heapAlloc);
    return constantDynamicType;
    }
 
@@ -1002,80 +994,15 @@ TR_ResolvedJ9JITServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, T
    }
 
 char *
-TR_ResolvedJ9JITServerMethod::getRemoteROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
-   {
-   TR_ASSERT(offsets.size() <= 2, "Number of offsets is greater than 2");
-
-   auto offsetFirst = *offsets.begin();
-   auto offsetSecond = (offsets.size() == 2) ? *(offsets.begin() + 1) : 0;
-
-   TR_ASSERT(offsetFirst < (1 << 16) && offsetSecond < (1 << 16), "Offsets are larger than 16 bits");
-
-   // create a key for hashing into a table of strings
-   TR_RemoteROMStringKey key;
-   uint32_t offsetKey = (offsetFirst << 16) + offsetSecond;
-   key._basePtr = basePtr;
-   key._offsets = offsetKey;
-   
-   std::string *cachedStr = NULL;
-   bool isCached = false;
-   TR::CompilationInfoPerThread *threadCompInfo = _fe->_compInfoPT;
-   {
-      OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
-      auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._remoteROMStringsCache;
-      auto gotStr = stringsCache.find(key);
-      if (gotStr != stringsCache.end())
-         {
-         cachedStr = &(gotStr->second);
-         isCached = true;
-         }
-   }
-
-   // only make a query if a string hasn't been cached
-   if (!isCached)
-      {
-      size_t offsetFromROMClass = (uint8_t*) basePtr - (uint8_t*) romClassPtr();
-      std::string offsetsStr((char*) offsets.begin(), offsets.size() * sizeof(size_t));
-      
-      _stream->write(JITServer::MessageType::ResolvedMethod_getRemoteROMString, _remoteMirror, offsetFromROMClass, offsetsStr);
-         {
-         // reaquire the monitor
-         OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
-         auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._remoteROMStringsCache;
-         cachedStr = &(stringsCache.insert({key, std::get<0>(_stream->read<std::string>())}).first->second);
-         }
-      }
-
-   len = cachedStr->length();
-   return &(cachedStr->at(0));
-   }
-
-// Takes a pointer to some data which is placed statically relative to the rom class,
-// as well as a list of offsets to J9SRP fields. The first offset is applied before the first
-// SRP is followed.
-//
-// If at any point while following the chain of SRP pointers we land outside the ROM class,
-// then we fall back to getRemoteROMString which follows the same process on the client.
-//
-// This is a workaround because some data referenced in the ROM constant pool is located outside of
-// it, but we cannot easily determine if the reference is outside or not (or even if it is a reference!)
-// because the data is untyped.
-char *
 TR_ResolvedJ9JITServerMethod::getROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
    {
-   uint8_t *ptr = (uint8_t*) basePtr;
-   const J9ROMClass * romClass = romClassPtr();
-   for (size_t offset : offsets)
-      {
-      ptr += offset;
-      if (!JITServerHelpers::isAddressInROMClass(ptr, romClass))
-         return getRemoteROMString(len, basePtr, offsets);
-      ptr = ptr + *(J9SRP*)ptr;
-      }
-   if (!JITServerHelpers::isAddressInROMClass(ptr, romClass))
-      return getRemoteROMString(len, basePtr, offsets);
-   char *data = utf8Data((J9UTF8*) ptr, len);
-   return data;
+   return _fe->_compInfoPT->getClientData()->getROMString(_ramClass, len, basePtr, offsets);
+   }
+
+J9UTF8 *
+TR_ResolvedJ9JITServerMethod::getROMStringUTF8(void *basePtr, std::initializer_list<size_t> offsets)
+   {
+   return _fe->_compInfoPT->getClientData()->getROMStringUTF8(_ramClass, basePtr, offsets);
    }
 
 char *
@@ -1085,6 +1012,20 @@ TR_ResolvedJ9JITServerMethod::fieldOrStaticSignatureChars(I_32 cpIndex, int32_t 
       return 0;
 
    char *signature = getROMString(len, &romCPBase()[cpIndex],
+                           {
+                           offsetof(J9ROMFieldRef, nameAndSignature),
+                           offsetof(J9ROMNameAndSignature, signature)
+                           });
+   return signature;
+   }
+
+J9UTF8 *
+TR_ResolvedJ9JITServerMethod::fieldOrStaticSignature(I_32 cpIndex)
+   {
+   if (cpIndex < 0)
+      return 0;
+
+   J9UTF8 *signature = getROMStringUTF8(&romCPBase()[cpIndex],
                            {
                            offsetof(J9ROMFieldRef, nameAndSignature),
                            offsetof(J9ROMNameAndSignature, signature)
@@ -2063,11 +2004,9 @@ TR_ResolvedJ9JITServerMethod::isFieldQType(int32_t cpIndex)
 
    auto comp = _fe->_compInfoPT->getCompilation();
    int32_t sigLen;
-   char *sig = fieldOrStaticSignatureChars(cpIndex, sigLen);
-   J9UTF8 *utfWrapper = str2utf8(sig, sigLen, comp->trMemory(), heapAlloc);
-
+   J9UTF8 *sig = fieldOrStaticSignature(cpIndex);
    J9VMThread *vmThread = comp->j9VMThread();
-   return vmThread->javaVM->internalVMFunctions->isNameOrSignatureQtype(utfWrapper);
+   return vmThread->javaVM->internalVMFunctions->isNameOrSignatureQtype(sig);
    }
 
 bool
@@ -2879,9 +2818,9 @@ TR_J9ServerMethod::TR_J9ServerMethod(TR_FrontEnd * fe, TR_Memory * trMemory, J9C
       cache.insert({cpIndex, {classNameStr, methodNameStr, methodSignatureStr}});
       }
 
-   _className = str2utf8((char*)&classNameStr[0], classNameStr.length(), trMemory, heapAlloc);
-   _name = str2utf8((char*)&methodNameStr[0], methodNameStr.length(), trMemory, heapAlloc);
-   _signature = str2utf8((char*)&methodSignatureStr[0], methodSignatureStr.length(), trMemory, heapAlloc);
+   _className = JITServerHelpers::str2utf8((char*)&classNameStr[0], classNameStr.length(), trMemory, heapAlloc);
+   _name = JITServerHelpers::str2utf8((char*)&methodNameStr[0], methodNameStr.length(), trMemory, heapAlloc);
+   _signature = JITServerHelpers::str2utf8((char*)&methodSignatureStr[0], methodSignatureStr.length(), trMemory, heapAlloc);
 
    parseSignature(trMemory);
    _fullSignature = NULL;

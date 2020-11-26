@@ -32,7 +32,6 @@
 #include "env/VerboseLog.hpp"
 #include "runtime/SymbolValidationManager.hpp"
 
-
 ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _clientUID(clientUID), _expectedSeqNo(seqNo), _maxReceivedSeqNo(seqNo), _OOSequenceEntryList(NULL),
    _chTable(NULL),
@@ -559,42 +558,69 @@ ClientSessionData::getCHTable()
    }
 
 char *
-ClientSessionData::ClassInfo::getRemoteROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
+ClientSessionData::getRemoteROMString(J9Class *clazz, int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
    {
-   auto offsetFirst = *offsets.begin();
-   auto offsetSecond = (offsets.size() == 2) ? *(offsets.begin() + 1) : 0;
 
-   TR_ASSERT(offsetFirst < (1 << 16) && offsetSecond < (1 << 16), "Offsets are larger than 16 bits");
-   TR_ASSERT(offsets.size() <= 2, "Number of offsets is greater than 2");
+      auto offsetFirst = *offsets.begin();
+      auto offsetSecond = (offsets.size() == 2) ? *(offsets.begin() + 1) : 0;
 
-   // create a key for hashing into a table of strings
-   TR_RemoteROMStringKey key;
-   uint32_t offsetKey = (offsetFirst << 16) + offsetSecond;
-   key._basePtr = basePtr;
-   key._offsets = offsetKey;
+      TR_ASSERT(offsetFirst < (1 << 16) && offsetSecond < (1 << 16), "Offsets are larger than 16 bits");
+      TR_ASSERT(offsets.size() <= 2, "Number of offsets is greater than 2");
 
-   std::string *cachedStr = NULL;
-   bool isCached = false;
-   auto gotStr = _remoteROMStringsCache.find(key);
-   if (gotStr != _remoteROMStringsCache.end())
-      {
-      cachedStr = &(gotStr->second);
-      isCached = true;
-      }
+      // create a key for hashing into a table of strings
+      TR_RemoteROMStringKey key;
+      uint32_t offsetKey = (offsetFirst << 16) + offsetSecond;
+      key._basePtr = basePtr;
+      key._offsets = offsetKey;
+
+      std::string *cachedStr = NULL;
+      bool isCached = false;
+
+         {
+         OMR::CriticalSection getRemoteROMClass(getROMMapMonitor()); 
+         auto &classInfo = _romClassMap.find(clazz)->second;
+
+         auto gotStr = classInfo._remoteROMStringsCache.find(key);
+         if (gotStr != classInfo._remoteROMStringsCache.end())
+            {
+            cachedStr = &(gotStr->second);
+            isCached = true;
+            }
+         }
 
    // only make a query if a string hasn't been cached
    if (!isCached)
       {
-      size_t offsetFromROMClass = (uint8_t*) basePtr - (uint8_t*) _romClass;
+      size_t offsetFromROMClass = 0;
+         {
+         // require the monitor
+         OMR::CriticalSection getRemoteROMClass(getROMMapMonitor()); 
+         auto &classInfo = _romClassMap.find(clazz)->second;
+         offsetFromROMClass = (uint8_t*) basePtr - (uint8_t*) classInfo._romClass;
+         }
+
       std::string offsetsStr((char*) offsets.begin(), offsets.size() * sizeof(size_t));
 
       JITServer::ServerStream *stream = TR::CompilationInfo::getStream();
-      stream->write(JITServer::MessageType::ClassInfo_getRemoteROMString, _remoteRomClass, offsetFromROMClass, offsetsStr);
-      cachedStr = &(_remoteROMStringsCache.insert({key, std::get<0>(stream->read<std::string>())}).first->second);
+      stream->write(JITServer::MessageType::ClassInfo_getRemoteROMString, clazz, offsetFromROMClass, offsetsStr);
+         {
+         // require the monitor
+         OMR::CriticalSection getRemoteROMClass(getROMMapMonitor()); 
+         auto &classInfo = _romClassMap.find(clazz)->second;
+         cachedStr = &(classInfo._remoteROMStringsCache.insert({key, std::get<0>(stream->read<std::string>())}).first->second);
+         }
       }
 
    len = cachedStr->length();
    return &(cachedStr->at(0));
+   }
+
+J9UTF8 *
+ClientSessionData::getRemoteROMStringUTF8(J9Class *clazz, void *basePtr, std::initializer_list<size_t> offsets)
+   {
+   int32_t len;
+   char *str = getRemoteROMString(clazz, len, basePtr, offsets);
+   return JITServerHelpers::str2utf8(str, len, TR::comp()->trMemory(), heapAlloc);
    }
 
 // Takes a pointer to some data which is placed statically relative to the rom class,
@@ -608,20 +634,38 @@ ClientSessionData::ClassInfo::getRemoteROMString(int32_t &len, void *basePtr, st
 // it, but we cannot easily determine if the reference is outside or not (or even if it is a reference!)
 // because the data is untyped.
 char *
-ClientSessionData::ClassInfo::getROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
+ClientSessionData::getROMString(J9Class *clazz, int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
    {
+   auto &classInfo = _romClassMap.find(clazz)->second;
    uint8_t *ptr = (uint8_t*) basePtr;
    for (size_t offset : offsets)
       {
       ptr += offset;
-      if (!JITServerHelpers::isAddressInROMClass(ptr, _romClass))
-         return getRemoteROMString(len, basePtr, offsets);
+      if (!JITServerHelpers::isAddressInROMClass(ptr, classInfo._romClass))
+         return getRemoteROMString(clazz, len, basePtr, offsets);
       ptr = ptr + *(J9SRP*)ptr;
       }
-   if (!JITServerHelpers::isAddressInROMClass(ptr, _romClass))
-      return getRemoteROMString(len, basePtr, offsets);
+   if (!JITServerHelpers::isAddressInROMClass(ptr, classInfo._romClass))
+      return getRemoteROMString(clazz, len, basePtr, offsets);
    char *data = utf8Data((J9UTF8*) ptr, len);
    return data;
+   }
+
+J9UTF8 *
+ClientSessionData::getROMStringUTF8(J9Class *clazz, void *basePtr, std::initializer_list<size_t> offsets)
+   {
+   auto &classInfo = _romClassMap.find(clazz)->second;
+   uint8_t *ptr = (uint8_t*) basePtr;
+   for (size_t offset : offsets)
+      {
+      ptr += offset;
+      if (!JITServerHelpers::isAddressInROMClass(ptr, classInfo._romClass))
+         return getRemoteROMStringUTF8(clazz, basePtr, offsets);
+      ptr = ptr + *(J9SRP*)ptr;
+      }
+   if (!JITServerHelpers::isAddressInROMClass(ptr, classInfo._romClass))
+      return getRemoteROMStringUTF8(clazz, basePtr, offsets);
+   return (J9UTF8 *) ptr;
    }
 
 template <typename map, typename key>

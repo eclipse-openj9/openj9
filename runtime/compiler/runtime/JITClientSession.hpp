@@ -271,9 +271,6 @@ class ClientSessionData
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _fieldOrStaticDefiningClassCache;
       PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> _J9MethodNameCache; // key is a cpIndex
       PersistentUnorderedSet<J9ClassLoader *> _referencingClassLoaders;
-
-      char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
-      char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
       }; // struct ClassInfo
 
 
@@ -452,6 +449,11 @@ class ClientSessionData
    // Cache the client-side pointer to well-known class chain offsets
    void cacheWellKnownClassChainOffsets(unsigned int includedClasses, size_t numClasses,
                                         const uintptr_t *classChainOffsets, const void *wellKnownClassChainOffsets);
+
+   char* getROMString(J9Class *clazz, int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
+   char* getRemoteROMString(J9Class *clazz, int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
+   J9UTF8* getROMStringUTF8(J9Class *clazz, void *basePtr, std::initializer_list<size_t> offsets);
+   J9UTF8* getRemoteROMStringUTF8(J9Class *clazz, void *basePtr, std::initializer_list<size_t> offsets);
 
    private:
    const uint64_t _clientUID;

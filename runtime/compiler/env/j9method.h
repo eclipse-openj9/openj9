@@ -497,6 +497,7 @@ public:
 
    virtual char *                  fieldOrStaticNameChars      (int32_t cpIndex, int32_t & len);
    virtual char *                  fieldOrStaticSignatureChars (int32_t cpIndex, int32_t & len);
+   virtual J9UTF8 *                fieldOrStaticSignature      (int32_t cpIndex);
 
    virtual bool                    shouldFailSetRecognizedMethodInfoBecauseOfHCR();
    virtual void                    setRecognizedMethodInfo(TR::RecognizedMethod rm);

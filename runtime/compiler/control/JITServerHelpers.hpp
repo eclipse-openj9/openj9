@@ -104,6 +104,8 @@ class JITServerHelpers
 
    static uintptr_t walkReferenceChainWithOffsets(TR_J9VM * fe, const std::vector<uintptr_t>& listOfOffsets, uintptr_t receiver);
 
+   static J9UTF8 *str2utf8(const char *str, int32_t length, TR_Memory *trMemory, TR_AllocationKind allocKind);
+
    private:
    static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
    static TR::Monitor *getClientStreamMonitor()

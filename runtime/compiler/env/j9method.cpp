@@ -5974,6 +5974,14 @@ TR_ResolvedJ9Method::staticSignatureChars(I_32 cpIndex, int32_t & len)
    return cpIndex >= 0 ? fieldOrStaticSignatureChars(cpIndex, len) : 0;
    }
 
+J9UTF8 *
+TR_ResolvedJ9Method::fieldOrStaticSignature(I_32 cpIndex)
+   {
+   if (cpIndex < 0)
+      return 0;
+   return J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMFIELDREF_NAMEANDSIGNATURE(&romCPBase()[cpIndex]));
+   }
+
 TR_OpaqueClassBlock *
 TR_ResolvedJ9Method::getClassOfStaticFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex)
    {

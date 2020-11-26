@@ -190,6 +190,7 @@ public:
    virtual void *startAddressForInterpreterOfJittedMethod() override;
    virtual TR_ResolvedMethod *getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset , bool ignoreRtResolve) override;
    virtual char * fieldOrStaticSignatureChars(I_32 cpIndex, int32_t & len) override;
+   virtual J9UTF8 * fieldOrStaticSignature(I_32 cpIndex) override;
    virtual char * getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length) override;
    virtual char * classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
    virtual char * classSignatureOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
@@ -257,6 +258,7 @@ private:
 
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
+   J9UTF8* getROMStringUTF8(void *basePtr, std::initializer_list<size_t> offsets);
    virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;
    void unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITServerMethodInfo &methodInfo);
    };

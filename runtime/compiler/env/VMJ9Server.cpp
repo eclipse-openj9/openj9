@@ -608,14 +608,6 @@ TR_J9ServerVM::isThunkArchetype(J9Method * method)
    return std::get<0>(stream->read<bool>());
    }
 
-static J9UTF8 *str2utf8(char *string, int32_t length, TR_Memory *trMemory, TR_AllocationKind allocKind)
-   {
-   J9UTF8 *utf8 = (J9UTF8 *) trMemory->allocateMemory(length, allocKind);
-   J9UTF8_SET_LENGTH(utf8, length);
-   memcpy(J9UTF8_DATA(utf8), string, length);
-   return utf8;
-   }
-
 int32_t
 TR_J9ServerVM::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method)
    {
@@ -626,9 +618,9 @@ TR_J9ServerVM::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMe
    const std::string nameStr = std::get<1>(recv);
    const std::string signatureStr = std::get<2>(recv);
    TR_Memory *trMemory = _compInfoPT->getCompilation()->trMemory();
-   J9UTF8 * className = str2utf8((char*)&classNameStr[0], classNameStr.length(), trMemory, heapAlloc);
-   J9UTF8 * name = str2utf8((char*)&nameStr[0], nameStr.length(), trMemory, heapAlloc);
-   J9UTF8 * signature = str2utf8((char*)&signatureStr[0], signatureStr.length(), trMemory, heapAlloc);
+   J9UTF8 * className = JITServerHelpers::str2utf8((char*)&classNameStr[0], classNameStr.length(), trMemory, heapAlloc);
+   J9UTF8 * name = JITServerHelpers::str2utf8((char*)&nameStr[0], nameStr.length(), trMemory, heapAlloc);
+   J9UTF8 * signature = JITServerHelpers::str2utf8((char*)&signatureStr[0], signatureStr.length(), trMemory, heapAlloc);
    return TR_J9VMBase::printTruncatedSignature(sigBuf, bufLen, className, name, signature);
    }
 
@@ -877,9 +869,9 @@ TR_J9ServerVM::sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_
    const std::string str_className = std::get<0>(recv);
    const std::string str_name = std::get<1>(recv);
    const std::string str_signature = std::get<2>(recv);
-   J9UTF8 * className = str2utf8((char*)&str_className[0], str_className.length(), trMemory, heapAlloc);
-   J9UTF8 * name = str2utf8((char*)&str_name[0], str_name.length(), trMemory, heapAlloc);
-   J9UTF8 * signature = str2utf8((char*)&str_signature[0], str_signature.length(), trMemory, heapAlloc);
+   J9UTF8 * className = JITServerHelpers::str2utf8((char*)&str_className[0], str_className.length(), trMemory, heapAlloc);
+   J9UTF8 * name = JITServerHelpers::str2utf8((char*)&str_name[0], str_name.length(), trMemory, heapAlloc);
+   J9UTF8 * signature = JITServerHelpers::str2utf8((char*)&str_signature[0], str_signature.length(), trMemory, heapAlloc);
 
    int32_t len = J9UTF8_LENGTH(className)+J9UTF8_LENGTH(name)+J9UTF8_LENGTH(signature)+3;
    char * s = len <= bufLen ? buf : (trMemory ? (char*)trMemory->allocateHeapMemory(len) : NULL);

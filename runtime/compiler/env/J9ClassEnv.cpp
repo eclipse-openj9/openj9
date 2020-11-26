@@ -737,16 +737,13 @@ J9::ClassEnv::getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *cla
       TR_ASSERT(JITServerHelpers::isAddressInROMClass(romClassRef, self()->romClassOf(clazz)), "Class ref must be in ROM class");
 
       TR::CompilationInfoPerThread *compInfoPT = TR::compInfoPT;
-      char *name = NULL;
-
-      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto &classMap = compInfoPT->getClientData()->getROMClassMap();
-      auto it = classMap.find(reinterpret_cast<J9Class *>(clazz));
-      auto &classInfo = it->second;
-      name = classInfo.getROMString(classRefLen, romClassRef,
-                             {
-                             offsetof(J9ROMClassRef, name)
-                             });
+      char *name = compInfoPT->getClientData()->getROMString(
+         reinterpret_cast<J9Class *>(clazz),
+         classRefLen,
+         romClassRef,
+         {
+         offsetof(J9ROMClassRef, name)
+         });
       return (uint8_t *) name;
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
