@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2021, 2022 IBM Corp. and others
+# Copyright (c) 2022, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,17 +20,35 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-set(J9VM_ARCH_RISCV ON CACHE BOOL "")
-set(J9VM_ENV_HAS_FPU ON CACHE BOOL "")
-set(J9VM_ENV_LITTLE_ENDIAN ON CACHE BOOL "")
-set(J9VM_ENV_DATA64 ON CACHE BOOL "")
 
-set(J9VM_GC_ENABLE_DOUBLE_MAP OFF CACHE BOOL "")
-set(J9VM_INTERP_SIG_QUIT_THREAD_USES_SEMAPHORES OFF CACHE BOOL "")
-set(J9VM_INTERP_JIT_ON_BY_DEFAULT OFF CACHE BOOL "")
+j9vm_gen_asm(
+	PicBuilder.m4
+	INCLUDE_DIRECTORIES
+		${j9vm_SOURCE_DIR}/compiler
+		${omr_SOURCE_DIR}/compiler
+)
 
-set(OMR_GC_CONCURRENT_SCAVENGER ON CACHE BOOL "")
-set(OMR_GC_IDLE_HEAP_MANAGER ON CACHE BOOL "")
+# Note we have to define a custom target here to ensure the assembly files are made before building
+# j9jit. This would happen automatically if we called j9vm_gen_asm in the same directory as we defined
+# the j9jit target. However, due to the way the jit builds up their source list, this is impractical.
+add_custom_target(j9jit_gen_riscv_runtime_asm
+	DEPENDS
+	PicBuilder.s
+)
+add_dependencies(j9jit_generate j9jit_gen_riscv_runtime_asm)
 
-include("${CMAKE_CURRENT_LIST_DIR}/linux.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/common.cmake")
+# For some reason, following has to be (also?) defined
+# in ../CMakeLists.txt. The Z does that too.
+set_source_files_properties(
+	${CMAKE_CURRENT_BINARY_DIR}/PicBuilder.s
+	PROPERTIES
+	GENERATED TRUE
+)
+
+j9jit_files(
+	${omr_SOURCE_DIR}/compiler/riscv/runtime/CodeSync.cpp
+	${omr_SOURCE_DIR}/compiler/riscv/runtime/VirtualGuardRuntime.cpp
+	riscv/runtime/Recomp.cpp
+	riscv/runtime/Recompilation.spp
+	${CMAKE_CURRENT_BINARY_DIR}/PicBuilder.s
+)

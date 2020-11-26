@@ -3148,14 +3148,6 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 		}
 	}
 
-	/* Temporarily disable JIT/AOT until it is fully implemented */
-#if defined(RISCV64)
-	xint = TRUE;
-	xjit = FALSE;
-	xaot = FALSE;
-	xnoaot = FALSE;
-#endif
-
 	if (xint) {
 		JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "-Xint set\n");
 	}

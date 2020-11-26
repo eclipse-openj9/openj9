@@ -365,12 +365,14 @@ target_link_libraries(j9jit
 )
 
 # This is a bit hokey, but cmake can't track the fact that files are generated across directories.
-# Note: while these are only needed on Z, setting the properties unconditionally has no ill-effect.
+# Note: while these are only needed on Z and RISC-V, setting the properties unconditionally has
+# no ill-effect.
 set_source_files_properties(
 	${CMAKE_CURRENT_BINARY_DIR}/z/runtime/Math.s
 	${CMAKE_CURRENT_BINARY_DIR}/z/runtime/PicBuilder.s
 	${CMAKE_CURRENT_BINARY_DIR}/z/runtime/Recompilation.s
 	${CMAKE_CURRENT_BINARY_DIR}/z/runtime/ValueProf.s
+	${CMAKE_CURRENT_BINARY_DIR}/riscv/runtime/PicBuilder.s
 	PROPERTIES
 	GENERATED TRUE
 )

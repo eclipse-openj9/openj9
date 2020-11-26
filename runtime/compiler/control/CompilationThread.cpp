@@ -6670,7 +6670,7 @@ TR::CompilationInfoPerThreadBase::outputVerboseMMapEntries(
 #pragma option_override(TR::CompilationInfo::compile(J9VMThread *, TR_MethodToBeCompiled *, bool), "OPT(SPILL,256)")
 #endif
 
-#if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
+#if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64) || defined(TR_HOST_RISCV))
 TR_MethodMetaData *
 TR::CompilationInfoPerThreadBase::installAotCachedMethod(
    J9VMThread *vmThread,
