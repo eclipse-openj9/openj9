@@ -432,7 +432,6 @@ UNUSED(jitResolvePackedArrayFieldLength)
 UNUSED(jitResolveIsPackedFieldNested)
 UNUSED(jitNewObjectNoTenantInit)
 UNUSED(jitFindFieldSignatureClass)
-UNUSED(icallVMprJavaSendInvokeWithArgumentsHelperL)
 UNUSED(j2iInvokeWithArguments)
 
 dnl Switch from the C stack to the java stack and jump via tempSlot

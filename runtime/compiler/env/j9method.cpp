@@ -1080,6 +1080,7 @@ static const char * const excludeArray[] = {
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;)Ljava/lang/Object;",
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;",
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;",
+   "java/lang/NullPointerException.fillInStackTrace()Ljava/lang/Throwable;",
    "jdk/internal/loader/NativeLibraries.load(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z",
 };
 
@@ -3918,7 +3919,6 @@ void TR_ResolvedJ9Method::construct()
       {  TR::java_lang_invoke_MethodHandle_invokeExact              ,   11, "invokeExact",                (int16_t)-1, "*"},
       {  TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress ,   24, "invokeExactTargetAddress",   (int16_t)-1, "*"},
       {x(TR::java_lang_invoke_MethodHandle_type                     ,   "type",                       "()Ljava/lang/invoke/MethodType;")},
-      {x(TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper,   "invokeWithArgumentsHelper",  "(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;")},
       {x(TR::java_lang_invoke_MethodHandle_asType, "asType", "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")},
       {x(TR::java_lang_invoke_MethodHandle_asType_instance, "asType", "(Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")},
       {  TR::java_lang_invoke_MethodHandle_invokeBasic              ,   11, "invokeBasic",                (int16_t)-1, "*"},
