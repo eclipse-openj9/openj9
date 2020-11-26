@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017, 2019 IBM Corp. and others
+* Copyright (c) 2017, 2020 IBM Corp. and others
 *
 * This program and the accompanying materials are made available under
 * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,8 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
 
    private:
    void processIntrinsicFunction(TR::TreeTop* treetop, TR::Node* node, TR::ILOpCodes opcode);
+   void processConvertingUnaryIntrinsicFunction(TR::TreeTop* treetop, TR::Node* node, TR::ILOpCodes argConvertOpcode, TR::ILOpCodes opcode, TR::ILOpCodes resultConvertOpcode);
+
    /** \brief
     *     Transforms java/lang/Class.IsAssignableFrom(Ljava/lang/Class;)Z into a JIT helper call TR_checkAssignable with equivalent
     *     semantics.
