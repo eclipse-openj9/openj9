@@ -1018,7 +1018,6 @@
    java_lang_invoke_MethodHandle_invokeExact,
    java_lang_invoke_MethodHandle_invokeBasic,
    java_lang_invoke_MethodHandle_invokeExactTargetAddress,
-   java_lang_invoke_MethodHandle_invokeWithArgumentsHelper,
    java_lang_invoke_MethodHandle_linkToStatic,
    java_lang_invoke_MethodHandle_linkToSpecial,
    java_lang_invoke_MethodHandle_linkToVirtual,

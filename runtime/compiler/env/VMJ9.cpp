@@ -7158,31 +7158,6 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
 #endif /* defined(J9VM_OPT_JITSERVER) */
          return callNode;
          }
-      case TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper:
-         {
-         // This method is implemented as a VM helper.  It must alter the stack
-         // frame shape insuch bizarre ways that it needs special treatment.
-         //
-         TR::SymbolReference *helperSymRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeWithArguments, true, true, false);
-         if (HELPERS_ARE_NEITHER_RESOLVED_NOR_UNRESOLVED)
-            {
-            // Can't just use the the helper symbol because those aren't
-            // unresolved yet don't use TR::ResolvedMethodSymbol.  That confuses
-            // everyone.  We ought to fix that.  Instead, for now, transmute
-            // the existing symbol so it acts like the helper.
-            //
-            TR::MethodSymbol *sym = callNode->getSymbol()->castToMethodSymbol();
-            sym->setVMInternalNative(false);
-            sym->setJITInternalNative(false);
-            sym->setInterpreted(false);
-            sym->setMethodAddress(helperSymRef->getMethodAddress());
-            }
-         else
-            {
-            callNode->setSymbolReference(helperSymRef);
-            }
-         return callNode;
-         }
       default:
         break;
       }
