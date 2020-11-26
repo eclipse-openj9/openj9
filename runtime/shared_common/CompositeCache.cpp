@@ -3710,20 +3710,9 @@ SH_CompositeCacheImpl::runExitCode(J9VMThread *currentThread)
 	 * If not unprotected here, subsequent JVMs will not be able to write to readwrite area.
 	 */
 	unprotectHeaderReadWriteArea(currentThread, true);
-	if (0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL)) {
-		/* If mprotect=all is set, above call to unprotectHeaderReadWriteArea() will set _readWriteProtectCntr to 1. */
-		Trc_SHR_Assert_Equals(_readWriteProtectCntr, 1);
-	} else {
-		Trc_SHR_Assert_Equals(_readWriteProtectCntr, 0);
-	}
 #else
 	unprotectHeaderReadWriteArea(currentThread, false);
-	Trc_SHR_Assert_Equals(_readWriteProtectCntr, 0);
 #endif
-	/* If mprotect=all is not set, then final value of _headerProtectCntr should be same is its initial value (= 1).
-	 * If mprotect=all is set, then above call to unprotectHeaderReadWriteArea() will set it to 1.
-	 */
-	Trc_SHR_Assert_Equals(_headerProtectCntr, 1);
 
 	if (_commonCCInfo->hasRWMutexThreadMprotectAll == currentThread) {
 		Trc_SHR_Assert_Equals(currentThread, _commonCCInfo->hasReadWriteMutexThread);
