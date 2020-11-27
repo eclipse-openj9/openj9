@@ -142,6 +142,10 @@ public class TestMemoryMXBean {
 
 	@AfterClass
 	protected void tearDown() throws Exception {
+		MemoryMXBean bean = (MemoryMXBean)ManagementFactory.getMemoryMXBean();
+		if (bean.isSetMaxHeapSizeSupported()) {
+			bean.setMaxHeapSize(bean.getMaxHeapSizeLimit());
+		}
 	}
 
 	static class ClassForTestMaxHeapSize implements Task {
@@ -809,6 +813,8 @@ public class TestMemoryMXBean {
 			try {
 				mb.setMaxHeapSize(newHeapSize);
 				AssertJUnit.assertEquals(newHeapSize, mb.getMaxHeapSize());
+				// reset to the limit
+				mb.setMaxHeapSize(mb.getMaxHeapSizeLimit());
 			} catch (IllegalArgumentException i) {
 
 			}
