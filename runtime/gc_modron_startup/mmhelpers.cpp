@@ -157,11 +157,11 @@ j9gc_software_read_barrier_enabled(J9JavaVM *javaVM)
 BOOLEAN
 j9gc_hot_reference_field_required(J9JavaVM *javaVM)
 {
-#if defined(J9VM_GC_MODRON_SCAVENGER)
+#if defined(J9VM_GC_MODRON_SCAVENGER) || defined(OMR_GC_VLHGC)
 	return MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST == MM_GCExtensions::getExtensions(javaVM)->scavengerScanOrdering;
-#else /* J9VM_GC_MODRON_SCAVENGER */
+#else /* J9VM_GC_MODRON_SCAVENGER || OMR_GC_VLHGC */
 	return FALSE;
-#endif /* J9VM_GC_MODRON_SCAVENGER */
+#endif /* defined(J9VM_GC_MODRON_SCAVENGER) || defined(OMR_GC_VLHGC) */
 }
 
 /**
