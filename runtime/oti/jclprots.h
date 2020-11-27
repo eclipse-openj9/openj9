@@ -679,6 +679,13 @@ jobject JNICALL Java_jdk_internal_misc_Unsafe_compareAndExchangeObjectVolatile(J
 jint JNICALL Java_jdk_internal_misc_Unsafe_compareAndExchangeIntVolatile(JNIEnv *env, jobject receiver, jobject obj1, jlong size1, jint size2, jint size3);
 jlong JNICALL Java_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile(JNIEnv *env, jobject receiver, jobject obj1, jlong size1, jlong size2, jlong size3);
 
+/* vector natives */
+jint JNICALL
+Java_jdk_internal_vm_vector_VectorSupport_registerNatives(JNIEnv *env, jclass clazz);
+jint JNICALL
+Java_jdk_internal_vm_vector_VectorSupport_getMaxLaneCount(JNIEnv *env, jclass clazz, jclass elementType);
+
+
 /* BBjclNativesCommonVM*/
 jint JNICALL Java_com_ibm_oti_vm_VM_getBootClassPathCount (JNIEnv * env, jclass clazz);
 jint JNICALL 

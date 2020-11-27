@@ -598,5 +598,7 @@ if(NOT JAVA_SPEC_VERSION LESS 16)
 		Java_java_lang_ref_Reference_refersTo
 		Java_jdk_internal_misc_ScopedMemoryAccess_registerNatives
 		Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0
+		Java_jdk_internal_vm_vector_VectorSupport_registerNatives
+		Java_jdk_internal_vm_vector_VectorSupport_getMaxLaneCount
 	)
 endif()
