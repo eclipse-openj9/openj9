@@ -30,6 +30,7 @@ j9vm_add_library(j9gcbase STATIC
 	GCExtensions.cpp
 	GCObjectEvents.cpp
 	GenerationalAccessBarrierComponent.cpp
+	HotFieldUtil.cpp
 	IdleGCManager.cpp
 	IndexableObjectAllocationModel.cpp
 	modronapi.cpp

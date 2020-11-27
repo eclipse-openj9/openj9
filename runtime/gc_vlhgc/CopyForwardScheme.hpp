@@ -866,6 +866,19 @@ private:
 	J9Object *copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ScavengerForwardedHeader* forwardedHeader, bool leafType = false);
 	void updateInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr);
 	
+
+	/* Depth copy the hot fields of an object.
+	 * @param forwardedHeader - forwarded header of an object
+	 * @param destinationObjectPtr - destinationObjectPtr of the object described by the forwardedHeader
+	 */ 
+	MMINLINE void depthCopyHotFields(MM_EnvironmentVLHGC *env, J9Class *clazz, J9Object *destinationObjectPtr, MM_AllocationContextTarok *reservingContext);
+	
+	/* Copy the the hot field of an object.
+	 * Valid if scavenger dynamicBreadthScanOrdering is enabled.
+	 * @param destinationObjectPtr - the object who's hot field will be copied
+	 * @param offset  - the object field offset of the hot field to be copied 
+	 */ 
+	MMINLINE void copyHotField(MM_EnvironmentVLHGC *env, J9Object *destinationObjectPtr, U_8 offset, MM_AllocationContextTarok *reservingContext);
 	/**
 	 * Push any remaining cached mark map data out before the copy scan cache is released.
 	 * @param env GC thread.
