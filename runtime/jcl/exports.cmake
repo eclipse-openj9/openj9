@@ -522,11 +522,16 @@ endif()
 
 # java 9+
 if(NOT JAVA_SPEC_VERSION LESS 9)
+	if(J9VM_OPT_METHOD_HANDLE)
+		omr_add_exports(jclse
+			Java_java_lang_invoke_FieldVarHandle_lookupField
+			Java_java_lang_invoke_FieldVarHandle_unreflectField
+		)
+	endif()
+
 	omr_add_exports(jclse
 		Java_java_lang_StackWalker_getImpl
 		Java_java_lang_StackWalker_walkWrapperImpl
-		Java_java_lang_invoke_FieldVarHandle_lookupField
-		Java_java_lang_invoke_FieldVarHandle_unreflectField
 		Java_java_lang_invoke_VarHandle_addAndGet
 		Java_java_lang_invoke_VarHandle_compareAndExchange
 		Java_java_lang_invoke_VarHandle_compareAndExchangeAcquire
