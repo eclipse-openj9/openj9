@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,6 +63,12 @@ private:
 	U_32 _totalFlatFieldDoubleBytes;
 	U_32 _totalFlatFieldRefBytes;
 	U_32 _totalFlatFieldSingleBytes;
+	U_32 _flatAlignedObjectInstanceBackfill;
+	U_32 _flatAlignedSingleInstanceBackfill;
+	U_32 _flatUnAlignedObjectInstanceBackfill;
+	U_32 _flatUnAlignedSingleInstanceBackfill;
+	bool _classRequiresPrePadding;
+	bool _isBackFillPostPadded;
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	bool _hiddenFieldOffsetResolutionRequired;
@@ -120,6 +126,12 @@ public:
 		_totalFlatFieldDoubleBytes(0),
 		_totalFlatFieldRefBytes(0),
 		_totalFlatFieldSingleBytes(0),
+		_flatAlignedObjectInstanceBackfill(0),
+		_flatAlignedSingleInstanceBackfill(0),
+		_flatUnAlignedObjectInstanceBackfill(0),
+		_flatUnAlignedSingleInstanceBackfill(0),
+		_classRequiresPrePadding(false),
+		_isBackFillPostPadded(false),
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		_hiddenFieldOffsetResolutionRequired(false),
 		_instanceFieldBackfillEligible(false),
@@ -176,16 +188,26 @@ public:
 	 * Priorities for slots are:
 	 * 1. instance singles
 	 * 2. instance objects
-	 * 3. hidden singles
-	 * 4. hidden objects
+	 * 3. flat end-aligned singles
+	 * 4. flat end-aligned objects
+	 * 5. flat end-unaligned singles
+	 * 6. flat end-unaligned objects
+	 * 7. hidden singles
+	 * 8. hidden objects
+	 *
 	 * @return number of object fields (instance and hidden) which do not go  in a backfill slot.
 	 */
 	VMINLINE U_32
 	getNonBackfilledObjectCount(void) const
 	{
 		U_32 nonBackfilledObjects = _totalObjectCount;
-		if (isBackfillSuitableObjectAvailable()  && !isBackfillSuitableInstanceSingleAvailable()
-				&& isMyBackfillSlotAvailable()) {
+		if (isBackfillSuitableObjectAvailable()
+			&& !isBackfillSuitableInstanceSingleAvailable()
+			&& isMyBackfillSlotAvailable()
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			&& (0 != nonBackfilledObjects)
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		) {
 			nonBackfilledObjects -= 1;
 		}
 		return nonBackfilledObjects;
@@ -195,7 +217,12 @@ public:
 	getNonBackfilledSingleCount(void) const
 	{
 		U_32 nonBackfilledSingle = _totalSingleCount;
-		if (isBackfillSuitableSingleAvailable() && isMyBackfillSlotAvailable()) {
+		if (isBackfillSuitableSingleAvailable()
+			&& isMyBackfillSlotAvailable()
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			&& (0 != nonBackfilledSingle)
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		) {
 			nonBackfilledSingle -= 1;
 		}
 		return nonBackfilledSingle;
@@ -203,10 +230,15 @@ public:
 
 	VMINLINE U_32
 	getNonBackfilledInstanceObjectCount(void) const
- {
+	{
 		U_32 nonBackfilledObjects = _instanceObjectCount;
-		if (isBackfillSuitableInstanceObjectAvailable()  && !isBackfillSuitableInstanceSingleAvailable()
-				&& isMyBackfillSlotAvailable()) {
+		if (isBackfillSuitableInstanceObjectAvailable()
+			&& !isBackfillSuitableInstanceSingleAvailable()
+			&& isMyBackfillSlotAvailable()
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			&& (0 != nonBackfilledObjects)
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		) {
 			nonBackfilledObjects -= 1;
 		}
 		return nonBackfilledObjects;
@@ -216,7 +248,12 @@ public:
 	getNonBackfilledInstanceSingleCount(void) const
 	{
 		U_32 nonBackfilledSingle = _instanceSingleCount;
-		if (isBackfillSuitableInstanceSingleAvailable() && isMyBackfillSlotAvailable()) {
+		if (isBackfillSuitableInstanceSingleAvailable()
+		&& isMyBackfillSlotAvailable()
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		&& (0 != nonBackfilledSingle)
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		) {
 			nonBackfilledSingle -= 1;
 		}
 		return nonBackfilledSingle;
@@ -249,25 +286,45 @@ public:
 	VMINLINE bool
 	isBackfillSuitableSingleAvailable(void) const
 	{
-		return (0 != getTotalSingleCount());
+		return ((0 != getTotalSingleCount())
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				|| (0 != getFlatAlignedSingleInstanceBackfillSize())
+				|| (0 != getFlatUnAlignedSingleInstanceBackfillSize())
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		);
 	}
 
 	VMINLINE bool
 	isBackfillSuitableObjectAvailable(void) const
 	{
-		return (_objectCanUseBackfill && (0 != getTotalObjectCount()));
+		return ((_objectCanUseBackfill && (0 != getTotalObjectCount()))
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				|| (0 != getFlatAlignedObjectInstanceBackfillSize())
+				|| (0 != getFlatUnAlignedObjectInstanceBackfillSize())
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		);
 	}
 
 	VMINLINE bool
 	isBackfillSuitableInstanceSingleAvailable(void) const
 	{
-		return (0 != getInstanceSingleCount());
+		return ((0 != getInstanceSingleCount())
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				|| (0 != getFlatAlignedSingleInstanceBackfillSize())
+				|| (0 != getFlatUnAlignedSingleInstanceBackfillSize())
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		);
 	}
 
 	VMINLINE bool
 	isBackfillSuitableInstanceObjectAvailable(void) const
 	{
-		return (_objectCanUseBackfill && (0 != getInstanceObjectCount()));
+		return ((_objectCanUseBackfill && (0 != getInstanceObjectCount()))
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				|| (0 != getFlatAlignedObjectInstanceBackfillSize())
+				|| (0 != getFlatUnAlignedObjectInstanceBackfillSize())
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+				);
 	}
 
 	VMINLINE bool
@@ -276,6 +333,39 @@ public:
 		return isBackfillSuitableSingleAvailable() || isBackfillSuitableObjectAvailable();
 	}
 
+	/**
+	 *
+	 * Returns the size of backfill. The order or precedence is:
+	 * 1. Singles
+	 * 2. Objects
+	 * 3. Flat end-aligned singles
+	 * 4. Flat end-aligned objects
+	 * 5. Flat end-unaligned singles
+	 * 6. Flat end un-aligned objects
+	 *
+	 * @return size of backfill
+	 */
+	VMINLINE U_32
+	getBackfillSize()
+	{
+		U_32 backFillSize = BACKFILL_SIZE;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if ((0 != getInstanceSingleCount()) || (_objectCanUseBackfill && (0 != getInstanceObjectCount()))) {
+			/* BACKFILL_SIZE */
+		} else if (0 != getFlatAlignedSingleInstanceBackfillSize()) {
+			backFillSize = getFlatAlignedSingleInstanceBackfillSize();
+		} else if (_objectCanUseBackfill && (0 != getFlatAlignedObjectInstanceBackfillSize())) {
+			backFillSize = getFlatAlignedObjectInstanceBackfillSize();
+		} else if (0 != getFlatUnAlignedSingleInstanceBackfillSize()) {
+			backFillSize = getFlatUnAlignedSingleInstanceBackfillSize();
+		} else if (_objectCanUseBackfill && (0 != getFlatUnAlignedObjectInstanceBackfillSize())) {
+			backFillSize = getFlatUnAlignedObjectInstanceBackfillSize();
+		}
+		return backFillSize;
+#else /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		return backFillSize;
+#endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	}
 
 	/**
 	 * @note This is used for hidden fields which use an offset from the header
@@ -332,21 +422,39 @@ public:
 	 * @return offset to the first (non-backfilled) field.
 	 */
 	VMINLINE U_32
-	calculateFieldDataStart(void) const
+	calculateFieldDataStart(void)
 	{
 		U_32 fieldDataStart = 0;
 		if (!isContendedClassLayout()) {
 			bool doubleAlignment = (_totalDoubleCount > 0);
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
-			doubleAlignment = doubleAlignment || (_totalFlatFieldDoubleBytes > 0);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+			bool hasObjects = _totalObjectCount > 0;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+
+			/* If the type has double field the doubles need to start on an 8-byte boundary. In the case of valuetypes
+			 * there is no lockword so the super class field size will be zero. This means that valueTypes in compressedrefs
+			 * mode with double alignment fields need to be pre-padded.
+			 */
+			doubleAlignment = (doubleAlignment || (_totalFlatFieldDoubleBytes > 0));
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 			fieldDataStart = getSuperclassFieldsSize();
-			if (
-					((getSuperclassObjectSize() % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) && /* superclass is not end-aligned */
-					(doubleAlignment || (!_objectCanUseBackfill && (_totalObjectCount > 0)))
-			){ /* our fields start on a 8-byte boundary */
+			if (((getSuperclassObjectSize() % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) /* superclass is not end-aligned */
+				&& (doubleAlignment || (!_objectCanUseBackfill && hasObjects))
+			) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				fieldDataStart += getBackfillSize();
+				/* If a flat type is used up as backfill and its size is not 4, 12, 20, ... this
+				 * means that the starting point for doubles will not be on an 8byte boundary. To
+				 * fix this the field start position will be incremented by 4bytes so doubles start
+				 * at the correct position.
+				 */
+				if (!isBackfillTypeEndAligned(fieldDataStart)) {
+					fieldDataStart += BACKFILL_SIZE;
+					_isBackFillPostPadded = true;
+				}
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				fieldDataStart += BACKFILL_SIZE;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			}
 		} else {
 			if (TrcEnabled_Trc_VM_contendedClass) {
@@ -400,7 +508,7 @@ public:
 	VMINLINE UDATA
 	addFlatObjectsArea(UDATA start) const
 	{
-		return start + _totalFlatFieldRefBytes;
+		return start + getNonBackfilledFlatInstanceObjectSize();
 	}
 
 	/**
@@ -410,13 +518,270 @@ public:
 	VMINLINE UDATA
 	addFlatSinglesArea(UDATA start) const
 	{
-		return start + _totalFlatFieldSingleBytes;
+		return start + getNonBackfilledFlatInstanceSingleSize();
 	}
 
+	/**
+	 * Determines if a double field can be placed contiguously after the
+	 * backfill. If this is the case then the back fill is considered
+	 * "end-aligned"
+	 *
+	 * @param fieldDataStart the address immediately following the backfill if any,
+	 * 			otherwise the address following the object header
+	 *
+	 * @return true if double field can be placed immediately after, false otherwise
+	 */
+	VMINLINE bool
+	isBackfillTypeEndAligned(UDATA fieldDataStart) {
+		return BACKFILL_SIZE == (fieldDataStart % sizeof(U_64));
+	}
+
+	/**
+	 * Returns if type is a valuetype
+	 *
+	 * @return true if valuetype, false otherwise
+	 */
 	VMINLINE bool
 	isValue() const
 	{
 		return _isValue;
+	}
+
+	/**
+	 * Returns the size of the end-aligned single backfill.
+	 * See 'isBackfillTypeEndAligned'
+	 *
+	 * @return size of flat single slot end-aligned backfill
+	 */
+	VMINLINE U_32
+	getFlatAlignedSingleInstanceBackfillSize() const
+	{
+		return _flatAlignedSingleInstanceBackfill;
+	}
+
+	/**
+	 * Returns the size of the non end-aligned single backfill.
+	 * See 'isBackfillTypeEndAligned'
+	 *
+	 * @return size of flat single slot non end-aligned backfill
+	 */
+	VMINLINE U_32
+	getFlatUnAlignedSingleInstanceBackfillSize() const
+	{
+		return _flatUnAlignedSingleInstanceBackfill;
+	}
+
+	/**
+	 * Returns the size of the end-aligned object backfill.
+	 * See 'isBackfillTypeEndAligned'
+	 *
+	 * @return size of flat object slot end-aligned backfill
+	 */
+	VMINLINE U_32
+	getFlatAlignedObjectInstanceBackfillSize() const
+	{
+		return _flatAlignedObjectInstanceBackfill;
+	}
+
+	/**
+	 * Returns the size of the non end-aligned single backfill.
+	 * See 'isBackfillTypeEndAligned'
+	 *
+	 * @return size of flat object slot end-aligned backfill
+	 */
+	VMINLINE U_32
+	getFlatUnAlignedObjectInstanceBackfillSize() const
+	{
+		return _flatUnAlignedObjectInstanceBackfill;
+	}
+
+	/**
+	 * Sets the size of the end-aligned single backfill.
+	 * See 'isBackfillTypeEndAligned'
+	 *
+	 * @param size of flat single slot end-aligned backfill
+	 */
+	VMINLINE void
+	setFlatAlignedSingleInstanceBackfill(U_32 size)
+	{
+		_flatAlignedSingleInstanceBackfill = size;
+	}
+
+	/**
+	 * Sets the size of the non end-aligned single backfill.
+	 * See 'isBackfillTypeEndAligned'
+	 *
+	 * @param size of flat single slot non end-aligned backfill
+	 */
+	VMINLINE void
+	setFlatUnAlignedSingleInstanceBackfill(U_32 size)
+	{
+		_flatUnAlignedSingleInstanceBackfill = size;
+	}
+
+	/**
+	 * Sets the size of the end-aligned object backfill.
+	 * See 'isBackfillTypeEndAligned'
+	 *
+	 * @param size of flat object slot end-aligned backfill
+	 */
+	VMINLINE void
+	setFlatAlignedObjectInstanceBackfill(U_32 size)
+	{
+		_flatAlignedObjectInstanceBackfill = size;
+	}
+
+	/**
+	 * Sets the size of the non end-aligned object backfill.
+	 * See 'isBackfillTypeEndAligned'
+	 *
+	 * @param size of flat object slot non end-aligned backfill
+	 */
+	VMINLINE void
+	setFlatUnAlignedObjectInstanceBackfill(U_32 size)
+	{
+		_flatUnAlignedObjectInstanceBackfill = size;
+	}
+
+	/**
+	 * Sets the size of the object backfill. Determines if the backfill
+	 * is end-aligned or not. End-aligned backfill gets precedence, once
+	 * the first end-aligned backfill is set not other object backfill
+	 * can be set. If not non end-aligned backfill will be set (which can
+	 * only be set once).
+	 *
+	 * See 'isBackfillTypeEndAligned'
+	 *
+	 * @param size of flat object slot end-aligned backfill
+	 */
+	VMINLINE void
+	setPotentialFlatObjectInstanceBackfill(U_32 size)
+	{
+		if (_isValue) {
+			if (isBackfillTypeEndAligned(size)) {
+				if (0 == getFlatAlignedObjectInstanceBackfillSize()) {
+					setFlatAlignedObjectInstanceBackfill(size);
+				}
+			} else {
+				if (0 == getFlatUnAlignedObjectInstanceBackfillSize()) {
+					setFlatUnAlignedObjectInstanceBackfill(size);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Sets the size of the single backfill. Determines if the backfill
+	 * is end-aligned or not. End-aligned backfill gets precedence, once
+	 * the first end-aligned backfill is set not other single backfill
+	 * can be set. If not non end-aligned backfill will be set (which can
+	 * only be set once).
+	 *
+	 * See 'isBackfillTypeEndAligned'
+	 *
+	 * @param size of flat single slot end-aligned backfill
+	 */
+	VMINLINE void
+	setPotentialFlatSingleInstanceBackfill(U_32 size)
+	{
+		if (_isValue) {
+			if (isBackfillTypeEndAligned(size)) {
+				if (0 == getFlatAlignedSingleInstanceBackfillSize()) {
+					setFlatAlignedSingleInstanceBackfill(size);
+				}
+			} else {
+				if (0 == getFlatUnAlignedSingleInstanceBackfillSize()) {
+					setFlatUnAlignedSingleInstanceBackfill(size);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Returns the size of the flat object instance bytes minus backfill
+	 *
+	 * @return size of flat object instance bytes
+	 */
+	VMINLINE U_32
+	getNonBackfilledFlatInstanceObjectSize(void) const
+	{
+		U_32 nonBackfilledFlatObjectsSize = _totalFlatFieldRefBytes;
+		if (isBackfillSuitableInstanceObjectAvailable()
+			&& isMyBackfillSlotAvailable()
+			&& (0 == getInstanceSingleCount())
+			&& (_objectCanUseBackfill && (0 == getInstanceObjectCount()))
+			&& (0 == getFlatAlignedSingleInstanceBackfillSize())
+		) {
+			U_32 backfillSize = getFlatAlignedObjectInstanceBackfillSize();
+			if (0 == backfillSize) {
+				if (0 == getFlatUnAlignedSingleInstanceBackfillSize()) {
+					backfillSize = getFlatUnAlignedObjectInstanceBackfillSize();
+				}
+			}
+			nonBackfilledFlatObjectsSize -= backfillSize;
+		}
+		return nonBackfilledFlatObjectsSize;
+	}
+
+	/**
+	 * Returns the size of the flat single instance bytes minus backfill
+	 *
+	 * @return size of flat single instance bytes
+	 */
+	VMINLINE U_32
+	getNonBackfilledFlatInstanceSingleSize(void) const
+	{
+		U_32 nonBackfilledFlatSinglesSize = _totalFlatFieldSingleBytes;
+		if (isBackfillSuitableInstanceSingleAvailable()
+			&& isMyBackfillSlotAvailable()
+			&& (0 == getInstanceSingleCount())
+			&& (_objectCanUseBackfill && (0 == getInstanceObjectCount()))
+		) {
+			U_32 backfillSize = getFlatAlignedSingleInstanceBackfillSize();
+			if (0 == backfillSize) {
+				if (0 == getFlatAlignedObjectInstanceBackfillSize()) {
+					backfillSize = getFlatUnAlignedSingleInstanceBackfillSize();
+				}
+			}
+			nonBackfilledFlatSinglesSize -= backfillSize;
+		}
+		return nonBackfilledFlatSinglesSize;
+	}
+
+	/**
+	 * Returns true if the type requires pre-padding. Pre-padding is
+	 * added on -XcompressedRefs and 32bit modes on valuetypes where there
+	 * is a field with double (64bit) alignment. These types need pre-padding as
+	 * valuetypes do not have lockwords and the double cannot be placed immediately
+	 * after a 32bit header. When a type is flattened the pre-padding is ommitted.
+	 *
+	 * @return true, if the type requires pre-padding
+	 */
+	VMINLINE bool
+	doesClassRequiresPrePadding() const
+	{
+		return _classRequiresPrePadding;
+	}
+
+	/**
+	 * Sets the flag indicating that the type requires pre-padding
+	 */
+	VMINLINE void
+	setClassRequiresPrePadding()
+	{
+		_classRequiresPrePadding = true;
+	}
+
+	/**
+	 * In cases where the backfill is not end-aligned (see isBackfillTypeEndAligned)
+	 * padding bytes need to be added after the backfill so a double can be placed immediately after.
+	 *
+	 * @return if type contains backfill that requires post-padding
+	 */
+	VMINLINE bool
+	isBackFillPostPadded()
+	{
+		return _isBackFillPostPadded;
 	}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 

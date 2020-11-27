@@ -207,8 +207,7 @@ getFlattenableFieldSize(J9VMThread *currentThread, J9Class *fieldOwner, J9ROMFie
 
         UDATA instanceSize = J9VMTHREAD_REFERENCE_SIZE(currentThread);
         if (isFlattenableFieldFlattened(fieldOwner, field)) {
-                J9Class* clazz = getFlattenableFieldType(fieldOwner, field);
-                instanceSize = (clazz)->totalInstanceSize - (clazz)->backfillOffset;
+                instanceSize = J9_VALUETYPE_FLATTENED_SIZE(getFlattenableFieldType(fieldOwner, field));
         }
         return instanceSize;
 }
