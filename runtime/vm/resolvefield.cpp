@@ -856,6 +856,8 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 
 		state->result.totalInstanceSize = fieldInfo.calculateTotalFieldsSizeAndBackfill();
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+		state->flatBackFillSize = fieldInfo.getBackfillSize();
+		state->classRequiresPrePadding = fieldInfo.doesClassRequiresPrePadding();
 		state->firstFlatDoubleOffset = fieldInfo.calculateFieldDataStart();
 		state->firstDoubleOffset = fieldInfo.addFlatDoublesArea(state->firstFlatDoubleOffset);
 		state->firstFlatObjectOffset = fieldInfo.addDoublesArea(state->firstDoubleOffset);
@@ -870,11 +872,28 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 
 
 		if (fieldInfo.isMyBackfillSlotAvailable() && fieldInfo.isBackfillSuitableFieldAvailable() ) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			BOOLEAN objectBackfillAvailable = fieldInfo.isBackfillSuitableObjectAvailable();
+			if (0 != fieldInfo.getInstanceSingleCount()) {
+				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_SINGLE_FIELD;
+			} else if (objectBackfillAvailable && (0 != fieldInfo.getInstanceObjectCount())) {
+				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD;
+			} else if (0 != fieldInfo.getFlatAlignedSingleInstanceBackfillSize()) {
+				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_SINGLE_FIELD;
+			} else if (objectBackfillAvailable && (0 != fieldInfo.getFlatAlignedObjectInstanceBackfillSize())) {
+				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_OBJECT_FIELD;
+			} else if (0 != fieldInfo.getFlatUnAlignedSingleInstanceBackfillSize()) {
+				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_SINGLE_FIELD;
+			} else if (objectBackfillAvailable && (0 != fieldInfo.getFlatUnAlignedObjectInstanceBackfillSize())) {
+				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_OBJECT_FIELD;
+			}
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 			if (fieldInfo.isBackfillSuitableInstanceSingleAvailable()) {
 				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_SINGLE_FIELD;
 			} else if (fieldInfo.isBackfillSuitableInstanceObjectAvailable()) {
 				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD;
 			}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		}
 
 		/*
@@ -1080,17 +1099,38 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 									state->result.offset = state->firstObjectOffset + state->objectsSeen * referenceSize;
 									state->objectsSeen++;
 								} else {
-									U_32 firstFieldOffset = (U_32) fieldClass->backfillOffset;
+									U_32 size = fieldClass->totalInstanceSize;
 									state->result.flattenedClass = fieldClass;
 									if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {
-										state->result.offset = state->firstFlatDoubleOffset + state->currentFlatDoubleOffset - firstFieldOffset;
-										state->currentFlatDoubleOffset += ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - firstFieldOffset, sizeof(U_64));
+										if (J9CLASS_HAS_4BYTE_PREPADDING(fieldClass)) {
+											size -= sizeof(U_32);
+										}
+										state->result.offset = state->firstFlatDoubleOffset + state->currentFlatDoubleOffset;
+										Assert_VM_true((state->result.offset + referenceSize) % sizeof(U_64) == 0);
+										state->currentFlatDoubleOffset += ROUND_UP_TO_POWEROF2(size, sizeof(U_64));
 									} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
-										state->result.offset = state->firstFlatObjectOffset + state->currentFlatObjectOffset - firstFieldOffset;
-										state->currentFlatObjectOffset += ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - firstFieldOffset, referenceSize);
+										size = ROUND_UP_TO_POWEROF2(size, referenceSize);
+										if (J9_ARE_ALL_BITS_SET(state->walkFlags, J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_OBJECT_FIELD)
+											&& (state->flatBackFillSize == size)
+										) {
+											Assert_VM_true(state->backfillOffsetToUse >= 0);
+											state->result.offset = state->backfillOffsetToUse;
+											state->walkFlags &= ~(UDATA)J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_OBJECT_FIELD;
+										} else {
+											state->result.offset = state->firstFlatObjectOffset + state->currentFlatObjectOffset;
+											state->currentFlatObjectOffset += size;
+										}
 									} else {
-										state->result.offset = state->firstFlatSingleOffset + state->currentFlatSingleOffset - firstFieldOffset;
-										state->currentFlatSingleOffset += fieldClass->totalInstanceSize - firstFieldOffset;
+										if (J9_ARE_ALL_BITS_SET(state->walkFlags, J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_SINGLE_FIELD)
+											&& (state->flatBackFillSize == size)
+										) {
+											Assert_VM_true(state->backfillOffsetToUse >= 0);
+											state->result.offset = state->backfillOffsetToUse;
+											state->walkFlags &= ~(UDATA)J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_SINGLE_FIELD;
+										} else {
+											state->result.offset = state->firstFlatSingleOffset + state->currentFlatSingleOffset;
+											state->currentFlatSingleOffset += size;
+										}
 									}
 								}
 							} else

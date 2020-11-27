@@ -123,6 +123,11 @@ public class PrintObjectFieldsHelper {
 			U32 flags = new U32(J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN);
 			for (int i = 0; i < nestedClassHierarchy.length - 1; i++) {
 				clazz = nestedClassHierarchy[i];
+				if ((i > 0) && valueTypeHelper.classRequires4BytePrePadding(clazz)) {
+					/* decrement by 4bytes since the nested type is pre-padded */
+					nestedFieldOffset = nestedFieldOffset.sub(4);
+				}
+				
 				depth = J9ClassHelper.classDepth(clazz).longValue();
 				boolean found = false;
 
@@ -160,7 +165,7 @@ public class PrintObjectFieldsHelper {
 		if (showObjectHeader) {
 			if (flatObject) {
 				padding(out, tabLevel);
-				out.format("// EA = %s, offset in top level container = %d;%n", dataStart.getHexAddress(), nestedFieldOffset.add(ObjectModel.getHeaderSize(localObject)).intValue());
+				out.format("// EA = %s, offset in top level container = %d;%n", dataStart.getHexAddress(), dataStart.sub(address).getAddress());
 			}
 
 			/* print individual fields */
@@ -230,11 +235,19 @@ public class PrintObjectFieldsHelper {
 		String fieldName = J9UTF8Helper.stringValue(fieldShape.nameAndSignature().name());
 		String fieldSignature = J9UTF8Helper.stringValue(fieldShape.nameAndSignature().signature());
 		boolean fieldIsFlattened = valueTypeHelper.isFieldInClassFlattened(localClazz, fieldName);
-		U8Pointer valuePtr = dataStart.add(fieldOffset);
 
+		if (containerIsFlatObject && valueTypeHelper.classRequires4BytePrePadding(localClazz)) {
+			/* If container has pre-padding the dataStart was adjusted to reflect this. 
+			 * Make sure to print out the real offset (the one without pre-padding.
+			 */
+			fieldOffset = fieldOffset.sub(4);
+		}
+		
 		padding(out, tabLevel);
 		out.format("%s %s = ", fieldSignature, fieldName);
 
+		U8Pointer valuePtr = dataStart.add(fieldOffset);
+		
 		if (fieldShape.modifiers().anyBitsIn(J9FieldSizeDouble)) {
 			out.print(U64Pointer.cast(valuePtr).at(0).getHexValue());
 		} else if (fieldShape.modifiers().anyBitsIn(J9FieldFlagObject)) {
@@ -273,13 +286,22 @@ public class PrintObjectFieldsHelper {
 	{
 		J9ROMFieldShapePointer fieldShape = objectFieldOffset.getField();
 		UDATA fieldOffset = objectFieldOffset.getOffsetOrAddress();
+		boolean containerIsFlatObject = (nestingHierarchy != null) && (nestingHierarchy.length > 0);
 		boolean isHiddenField = objectFieldOffset.isHidden();
 		String fieldName = J9UTF8Helper.stringValue(fieldShape.nameAndSignature().name());
 		String fieldSignature = J9UTF8Helper.stringValue(fieldShape.nameAndSignature().signature());
 		boolean fieldIsFlattened = valueTypeHelper.isFieldInClassFlattened(localClazz, fieldName);
-		U8Pointer valuePtr = dataStart.add(fieldOffset);
-
+		
 		padding(out, tabLevel);
+		
+		if (containerIsFlatObject && valueTypeHelper.classRequires4BytePrePadding(localClazz)) {
+			/* If container has pre-padding the dataStart was adjusted to reflect this. 
+			 * Make sure to print out the real offset (the one without pre-padding.
+			 */
+			fieldOffset = fieldOffset.sub(4);
+		}
+		U8Pointer valuePtr = dataStart.add(fieldOffset);
+		
 		if (fieldIsFlattened) {
 			out.format("%s %s { // EA = %s (offset = %d)%n", fieldSignature.substring(1, fieldSignature.length() - 1), fieldName, valuePtr.getHexAddress(), fieldOffset.longValue());
 		} else {

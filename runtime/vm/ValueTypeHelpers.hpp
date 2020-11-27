@@ -306,6 +306,8 @@ public:
 			J9JavaVM *vm = currentThread->javaVM;
 			J9FlattenedClassCacheEntry *cache = (J9FlattenedClassCacheEntry *) cpEntry->valueOffset;
 			J9Class *flattenedFieldClass = J9_VM_FCC_CLASS_FROM_ENTRY(cache);
+			UDATA returnObjectOffset = 0;
+
 			if (fastPath) {
 				returnObjectRef = objectAllocate.inlineAllocateObject(currentThread, flattenedFieldClass, false, false);
 				if (NULL == returnObjectRef) {
@@ -321,13 +323,16 @@ public:
 				flattenedFieldClass = VM_VMHelpers::currentClass(flattenedFieldClass);
 			}
 
+			if (J9CLASS_HAS_4BYTE_PREPADDING(flattenedFieldClass)) {
+				returnObjectOffset += sizeof(U_32);
+			}
+
 			objectAccessBarrier.copyObjectFields(currentThread,
 								flattenedFieldClass,
 								receiver,
 								cache->offset + objectHeaderSize,
 								returnObjectRef,
-								objectHeaderSize);
-
+								objectHeaderSize + returnObjectOffset);
 
 		} else
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
@@ -402,11 +407,17 @@ done:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagFlattened)) {
 			J9FlattenedClassCacheEntry *cache = (J9FlattenedClassCacheEntry *) cpEntry->valueOffset;
+			UDATA fromObjectOffset = 0;
+			J9Class *clazz = J9_VM_FCC_CLASS_FROM_ENTRY(cache);
+
+			if (J9CLASS_HAS_4BYTE_PREPADDING(clazz)) {
+				fromObjectOffset += sizeof(U_32);
+			}
 
 			objectAccessBarrier.copyObjectFields(currentThread,
-								J9_VM_FCC_CLASS_FROM_ENTRY(cache),
+								clazz,
 								paramObject,
-								objectHeaderSize,
+								objectHeaderSize + fromObjectOffset,
 								receiver,
 								cache->offset + objectHeaderSize);
 		} else
