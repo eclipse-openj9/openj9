@@ -530,6 +530,7 @@ done:
 	VMINLINE VM_BytecodeAction
 	i2jMHTransition(REGISTER_ARGS_LIST)
 	{
+#if defined(J9VM_OPT_METHOD_HANDLE)
 		/* VMThread->tempSlot will hold the MethodHandle.
 		 * VMThread->floatTemp1 will hold the compiledEntryPoint
 		 */
@@ -541,6 +542,10 @@ done:
 		Assert_VM_false(jitConfig->fsdEnabled);
 		/* Add one to MethodType->argSlots to account for the MethodHandle receiver */
 		return jitTransition(REGISTER_ARGS, J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(_currentThread, methodType) + 1, jitStartAddress);
+#else /* defined(J9VM_OPT_METHOD_HANDLE) */
+		Assert_VM_unreachable();
+		return EXECUTE_BYTECODE;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	}
 
 	VMINLINE VM_BytecodeAction
@@ -937,6 +942,7 @@ obj:
 	VMINLINE VM_BytecodeAction
 	j2iInvokeExact(REGISTER_ARGS_LIST, j9object_t methodHandle)
 	{
+#if defined(J9VM_OPT_METHOD_HANDLE)
 		VM_JITInterface::disableRuntimeInstrumentation(_currentThread);
 		VM_BytecodeAction rc = GOTO_RUN_METHODHANDLE;
 		static U_8 const bcReturnFromJ2I[] = { JBinvokestatic, 0, 0, JBreturnFromJ2I };
@@ -1009,6 +1015,10 @@ obj:
 			}
 		}
 		return rc;
+#else /* defined(J9VM_OPT_METHOD_HANDLE) */
+		Assert_VM_unreachable();
+		return EXECUTE_BYTECODE;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	}
 
 	/**
