@@ -53,7 +53,8 @@ public class TestJps extends AttachApiTest {
 	public void testJpsSanity() throws IOException {
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
-		List<String> jpsOutput = runCommand();
+		// Allow jps to be attached on z/OS, like other platforms
+		List<String> jpsOutput = runCommand(Collections.singletonList("-J-Dcom.ibm.tools.attach.enable=yes"));
 		assertTrue(TEST_PROCESS_ID_MISSING, StringUtilities.searchSubstring(vmId, jpsOutput).isPresent());
 		assertTrue("jps is missing", StringUtilities.searchSubstring(JPS_Class, jpsOutput).isPresent()); //$NON-NLS-1$
 		assertTrue(CHILD_IS_MISSING, StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput).isPresent());
