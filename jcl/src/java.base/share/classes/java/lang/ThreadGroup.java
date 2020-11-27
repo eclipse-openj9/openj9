@@ -59,7 +59,6 @@ public class ThreadGroup implements Thread.UncaughtExceptionHandler {
 	private boolean isDestroyed;			// Whether this ThreadGroup has already been destroyed or not	
 	/*[PR CMVC 99507] Do not destroy daemon group if threads have been added but not started */
 	private int addedNotStartedThreads;	// Threads that have been added but not yet started
-	private long memorySpace;				// Memory space to associate all new threads with
 
 /**
  * Used by the JVM to create the "system" ThreadGroup. Construct
