@@ -129,7 +129,6 @@ target_sources(jclse
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jclreflect.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jcltrace.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jclvm.c
-		${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_internal_misc_ScopedMemoryAccess.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jithelpers.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jniidcacheinit.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/log.c
@@ -192,6 +191,17 @@ if(NOT JAVA_SPEC_VERSION LESS 9)
 		PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/common/java_lang_invoke_VarHandle.c
 			${CMAKE_CURRENT_SOURCE_DIR}/common/java_lang_StackWalker.cpp
+	)
+endif()
+
+# We'd like to use GREATER_EQUAL here (and below), but that operator requires
+# cmake version 3.7 or better; the minimum version we require is 3.4.
+if(NOT JAVA_SPEC_VERSION LESS 16)
+	# sources for Java 16+
+	target_sources(jclse
+		PRIVATE
+			${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_internal_misc_ScopedMemoryAccess.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/common/vectornatives.cpp
 	)
 endif()
 
