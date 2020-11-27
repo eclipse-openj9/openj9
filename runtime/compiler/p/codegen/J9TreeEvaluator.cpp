@@ -65,6 +65,7 @@
 #include "p/codegen/GenerateInstructions.hpp"
 #include "p/codegen/InterfaceCastSnippet.hpp"
 #include "p/codegen/J9PPCSnippet.hpp"
+#include "p/codegen/LoadStoreHandler.hpp"
 //#include "p/codegen/PPCAheadOfTimeCompile.hpp"
 #include "p/codegen/PPCEvaluator.hpp"
 #include "p/codegen/PPCInstruction.hpp"
@@ -439,7 +440,6 @@ TR::Register *outlinedHelperWrtbarEvaluator(TR::Node *node, TR::CodeGenerator *c
    {
    TR::Register *srcObjectReg = cg->gprClobberEvaluate(node->getFirstChild());
    TR::Register *dstObjectReg = cg->gprClobberEvaluate(node->getSecondChild());
-   TR::MemoryReference *memRef;
    TR::Compilation* comp = cg->comp();
 
    TR::Symbol *storeSym = node->getSymbolReference()->getSymbol();
@@ -454,24 +454,14 @@ TR::Register *outlinedHelperWrtbarEvaluator(TR::Node *node, TR::CodeGenerator *c
       }
    else
       {
-      memRef = TR::MemoryReference::createWithRootLoadOrStore(cg, node, TR::Compiler->om.sizeofReferenceAddress());
-      if (needSync)
-         generateInstruction(cg, TR::InstOpCode::lwsync, node);
-      generateMemSrc1Instruction(cg,TR::InstOpCode::Op_st, node, memRef, srcObjectReg);
-      if (needSync)
-         {
-         // ordered and lazySet operations will not generate a post-write sync
-         // and will not mark unresolved snippets with in sync sequence to avoid
-         // PicBuilder overwriting the instruction that normally would have been sync
-         TR::TreeEvaluator::postSyncConditions(node, cg, srcObjectReg, memRef, TR::InstOpCode::sync, lazyVolatile);
-         }
+      TR::LoadStoreHandler::generateStoreNodeSequence(cg, srcObjectReg, node, TR::InstOpCode::Op_st, TR::Compiler->om.sizeofReferenceAddress());
+
       if (!node->getFirstChild()->isNull())
          VMoutlinedHelperWrtbarEvaluator(node, srcObjectReg, dstObjectReg, node->getFirstChild()->isNonNull(), cg);
       }
 
    cg->decReferenceCount(node->getFirstChild());
    cg->decReferenceCount(node->getSecondChild());
-   memRef->decNodeReferenceCounts(cg);
 
    if (srcObjectReg != node->getFirstChild()->getRegister())
       cg->stopUsingRegister(srcObjectReg);
@@ -503,7 +493,7 @@ static int32_t getOffsetOfJ9ObjectFlags()
    }
 
 static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, TR::Register *condReg, TR::Register *temp1Reg, TR::Register *temp2Reg,
-      TR::Register *temp3Reg, TR::Register *temp4Reg, TR::LabelSymbol *doneLabel, TR::RegisterDependencyConditions *deps, TR::MemoryReference *tempMR, bool dstAddrComputed,
+      TR::Register *temp3Reg, TR::Register *temp4Reg, TR::LabelSymbol *doneLabel, TR::RegisterDependencyConditions *deps,
       bool isCompressedRef, TR::CodeGenerator *cg, bool flagsInTemp1 = false)
    {
    // non-heap objects cannot be marked
@@ -657,14 +647,6 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
       }
    else if (comp->getOptions()->realTimeGC())
       {
-      if (!dstAddrComputed)
-         {
-         if (tempMR->getIndexRegister() != NULL)
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp3Reg, tempMR->getBaseRegister(), tempMR->getIndexRegister());
-         else
-            generateTrg1MemInstruction(cg, TR::InstOpCode::addi2, node, temp3Reg, tempMR);
-         }
-
       if (!comp->getOption(TR_DisableInlineWriteBarriersRT))
          {
          // check if barrier is enabled: if disabled then branch around the rest
@@ -795,7 +777,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
 
    }
 
-static void VMwrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, TR::Register *dstAddrReg, TR::MemoryReference *tempMR,
+static void VMwrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, TR::Register *dstAddrReg,
       TR::RegisterDependencyConditions *conditions, bool srcNonNull, bool needDeps, bool isCompressedRef, TR::CodeGenerator *cg, TR::Register *flagsReg = NULL)
    {
    TR::Compilation *comp = cg->comp();
@@ -844,19 +826,6 @@ static void VMwrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register
          conditions->getPostConditions()->getRegisterDependency(3)->setExcludeGPR0(); //3=temp2Reg
          TR::addDependency(conditions, dstAddrReg, TR::RealRegister::gr4, TR_GPR, cg);
          temp3Reg = dstAddrReg;
-
-         if (node->getSymbolReference()->isUnresolved())
-            {
-            if (tempMR->getBaseRegister() != NULL)
-               {
-               TR::addDependency(conditions, tempMR->getBaseRegister(), TR::RealRegister::NoReg, TR_GPR, cg);
-               conditions->getPreConditions()->getRegisterDependency(3)->setExcludeGPR0();
-               conditions->getPostConditions()->getRegisterDependency(3)->setExcludeGPR0();
-               }
-
-            if (tempMR->getIndexRegister() != NULL)
-               TR::addDependency(conditions, tempMR->getIndexRegister(), TR::RealRegister::NoReg, TR_GPR, cg);
-            }
          }
       else
          TR::addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -890,7 +859,7 @@ static void VMwrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register
          generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, label, cr0);
          }
 
-      VMnonNullSrcWrtBarCardCheckEvaluator(node, srcReg, dstReg, cr0, temp1Reg, temp2Reg, temp3Reg, temp4Reg, label, conditions, tempMR, false, isCompressedRef, cg,
+      VMnonNullSrcWrtBarCardCheckEvaluator(node, srcReg, dstReg, cr0, temp1Reg, temp2Reg, temp3Reg, temp4Reg, label, conditions, isCompressedRef, cg,
             flagsReg != NULL);
       generateDepLabelInstruction(cg, TR::InstOpCode::label, node, label, conditions);
       if (doCrdMrk)
@@ -1345,20 +1314,11 @@ TR::Register *J9::Power::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::Cod
          }
       }
 
-   TR::MemoryReference *tempMR = NULL;
    TR::Register *destinationRegister = cg->evaluate(node->getSecondChild());
    TR::Register *flagsReg = NULL;
    TR::Node *firstChild = node->getFirstChild();
    TR::Register *sourceRegister;
    bool killSource = false;
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && comp->target().isSMP());
-   bool lazyVolatile = false;
-
-   if (node->getSymbolReference()->getSymbol()->isShadow() && node->getSymbolReference()->getSymbol()->isOrdered() && comp->target().isSMP())
-      {
-      needSync = true;
-      lazyVolatile = true;
-      }
 
    if (firstChild->getReferenceCount() > 1 && firstChild->getRegister() != NULL)
       {
@@ -1386,45 +1346,18 @@ TR::Register *J9::Power::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::Cod
    // RealTimeGC write barriers occur BEFORE the store
    if (comp->getOptions()->realTimeGC())
       {
-      tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node, TR::Compiler->om.sizeofReferenceAddress());
       TR::Register *destinationAddressRegister = cg->allocateRegister();
-      VMwrtbarEvaluator(node, sourceRegister, destinationRegister, destinationAddressRegister, tempMR, NULL, firstChild->isNonNull(), true, false, cg);
 
-      TR::MemoryReference *dstMR = TR::MemoryReference::createWithDisplacement(cg, destinationAddressRegister, 0, TR::Compiler->om.sizeofReferenceAddress());
-
-      if (needSync)
-         generateInstruction(cg, TR::InstOpCode::lwsync, node);
-
-      generateMemSrc1Instruction(cg,TR::InstOpCode::Op_st, node, dstMR, sourceRegister);
-
-      if (needSync)
-         {
-         // ordered and lazySet operations will not generate a post-write sync
-         // and will not mark unresolved snippets with in sync sequence to avoid
-         // PicBuilder overwriting the instruction that normally would have been sync
-         postSyncConditions(node, cg, sourceRegister, dstMR, TR::InstOpCode::sync, lazyVolatile);
-         }
+      TR::LoadStoreHandler::generateComputeAddressSequence(cg, destinationAddressRegister, node);
+      VMwrtbarEvaluator(node, sourceRegister, destinationRegister, destinationAddressRegister, NULL, firstChild->isNonNull(), true, false, cg);
+      TR::LoadStoreHandler::generateStoreAddressSequence(cg, sourceRegister, node, destinationAddressRegister, TR::InstOpCode::Op_st, TR::Compiler->om.sizeofReferenceAddress());
 
       cg->stopUsingRegister(destinationAddressRegister);
       }
    else
       {
-      tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node, TR::Compiler->om.sizeofReferenceAddress());
-
-      if (needSync)
-         generateInstruction(cg, TR::InstOpCode::lwsync, node);
-
-      generateMemSrc1Instruction(cg,TR::InstOpCode::Op_st, node, tempMR, sourceRegister);
-
-      if (needSync)
-         {
-         // ordered and lazySet operations will not generate a post-write sync
-         // and will not mark unresolved snippets with in sync sequence to avoid
-         // PicBuilder overwriting the instruction that normally would have been sync
-         postSyncConditions(node, cg, sourceRegister, tempMR, TR::InstOpCode::sync, lazyVolatile);
-         }
-
-      VMwrtbarEvaluator(node, sourceRegister, destinationRegister, NULL, NULL, NULL, firstChild->isNonNull(), true, false, cg, flagsReg);
+      TR::LoadStoreHandler::generateStoreNodeSequence(cg, sourceRegister, node, TR::InstOpCode::Op_st, TR::Compiler->om.sizeofReferenceAddress());
+      VMwrtbarEvaluator(node, sourceRegister, destinationRegister, NULL, NULL, firstChild->isNonNull(), true, false, cg, flagsReg);
       }
 
    if (killSource)
@@ -1432,7 +1365,6 @@ TR::Register *J9::Power::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::Cod
 
    cg->decReferenceCount(node->getFirstChild());
    cg->decReferenceCount(node->getSecondChild());
-   tempMR->decNodeReferenceCounts(cg);
 
    return NULL;
    }
@@ -1455,8 +1387,6 @@ TR::Register *J9::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Co
 
    bool usingCompressedPointers = false;
    bool bumpedRefCount = false;
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && comp->target().isSMP());
-   bool lazyVolatile = false;
 
    if (comp->getOption(TR_EnableFieldWatch) && !node->getSymbolReference()->getSymbol()->isArrayShadowSymbol())
       {
@@ -1464,12 +1394,6 @@ TR::Register *J9::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Co
       // The store evaluator will also evaluate+decrement it. In order to avoid double
       // decrementing the node we skip doing it here and let the store evaluator do it.
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
-      }
-
-   if (node->getSymbolReference()->getSymbol()->isShadow() && node->getSymbolReference()->getSymbol()->isOrdered() && comp->target().isSMP())
-      {
-      needSync = true;
-      lazyVolatile = true;
       }
 
    if (comp->useCompressedPointers() && (node->getSymbolReference()->getSymbol()->getDataType() == TR::Address) && (node->getSecondChild()->getDataType() != TR::Address))
@@ -1484,8 +1408,6 @@ TR::Register *J9::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Co
    int32_t sizeofMR = TR::Compiler->om.sizeofReferenceAddress();
    if (usingCompressedPointers)
       sizeofMR = TR::Compiler->om.sizeofReferenceField();
-
-   TR::MemoryReference *tempMR = NULL;
 
    TR::Register *compressedReg;
    if (secondChild->getReferenceCount() > 1 && secondChild->getRegister() != NULL)
@@ -1519,63 +1441,24 @@ TR::Register *J9::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Co
       generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, flagsReg, TR::MemoryReference::createWithDisplacement(cg, destinationRegister, getOffsetOfJ9ObjectFlags(), 4));
       }
 
+   TR::InstOpCode::Mnemonic storeOp = usingCompressedPointers ? TR::InstOpCode::stw : TR::InstOpCode::Op_st;
+   TR::Register *storeRegister = usingCompressedPointers ? compressedReg : sourceRegister;
+
    // RealTimeGC write barriers occur BEFORE the store
    if (comp->getOptions()->realTimeGC())
       {
-      tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node, sizeofMR);
-
       TR::Register *destinationAddressRegister = cg->allocateRegister();
-      VMwrtbarEvaluator(node, sourceRegister, destinationRegister, destinationAddressRegister, tempMR, NULL, secondChild->isNonNull(), true, usingCompressedPointers, cg);
 
-      TR::MemoryReference *dstMR = TR::MemoryReference::createWithDisplacement(cg, destinationAddressRegister, 0, TR::Compiler->om.sizeofReferenceAddress());
-
-      if (needSync)
-         generateInstruction(cg, TR::InstOpCode::lwsync, node);
-
-      if (usingCompressedPointers)
-         generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, dstMR, compressedReg);
-      else
-         generateMemSrc1Instruction(cg,TR::InstOpCode::Op_st, node, dstMR, sourceRegister);
-
-      if (needSync)
-         {
-         // ordered and lazySet operations will not generate a post-write sync
-         // and will not mark unresolved snippets with in sync sequence to avoid
-         // PicBuilder overwriting the instruction that normally would have been sync
-         if (usingCompressedPointers)
-            postSyncConditions(node, cg, compressedReg, dstMR, TR::InstOpCode::sync, lazyVolatile);
-         else
-            postSyncConditions(node, cg, sourceRegister, dstMR, TR::InstOpCode::sync, lazyVolatile);
-         }
+      TR::LoadStoreHandler::generateComputeAddressSequence(cg, destinationAddressRegister, node);
+      VMwrtbarEvaluator(node, storeRegister, destinationRegister, destinationAddressRegister, NULL, secondChild->isNonNull(), true, usingCompressedPointers, cg);
+      TR::LoadStoreHandler::generateStoreAddressSequence(cg, sourceRegister, node, destinationAddressRegister, storeOp, sizeofMR);
 
       cg->stopUsingRegister(destinationAddressRegister);
       }
    else
       {
-      tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node, sizeofMR);
-
-      if (needSync)
-         generateInstruction(cg, TR::InstOpCode::lwsync, node);
-
-      if (usingCompressedPointers)
-         generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, tempMR, compressedReg);
-      else
-         generateMemSrc1Instruction(cg,TR::InstOpCode::Op_st, node, tempMR, sourceRegister);
-
-      if (needSync)
-         {
-         // ordered and lazySet operations will not generate a post-write sync
-         // and will not mark unresolved snippets with in sync sequence to avoid
-         // PicBuilder overwriting the instruction that normally would have been sync
-         if (usingCompressedPointers)
-            postSyncConditions(node, cg, compressedReg, tempMR, TR::InstOpCode::sync, lazyVolatile);
-         else
-            postSyncConditions(node, cg, sourceRegister, tempMR, TR::InstOpCode::sync, lazyVolatile);
-         }
-
-      cg->insertPrefetchIfNecessary(node, sourceRegister);
-
-      VMwrtbarEvaluator(node, sourceRegister, destinationRegister, NULL, NULL, NULL, secondChild->isNonNull(), true, usingCompressedPointers, cg, flagsReg);
+      TR::LoadStoreHandler::generateStoreNodeSequence(cg, storeRegister, node, storeOp, sizeofMR);
+      VMwrtbarEvaluator(node, sourceRegister, destinationRegister, NULL, NULL, secondChild->isNonNull(), true, usingCompressedPointers, cg, flagsReg);
       }
 
    if (killSource)
@@ -1583,7 +1466,6 @@ TR::Register *J9::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Co
 
    cg->decReferenceCount(node->getSecondChild());
    cg->decReferenceCount(node->getChild(2));
-   tempMR->decNodeReferenceCounts(cg);
 
    if (comp->useCompressedPointers())
       node->setStoreAlreadyEvaluated(true);
@@ -8466,7 +8348,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
          }
 
       VMnonNullSrcWrtBarCardCheckEvaluator(node, comp->useCompressedPointers() ? wrtbarSrcReg : newVReg, objReg, cndReg, temp1Reg, temp2Reg, temp3Reg, temp4Reg, doneLabel,
-            conditions, NULL, false, false, cg);
+            conditions, false, cg);
 
       cg->stopUsingRegister(temp1Reg);
       cg->stopUsingRegister(temp2Reg);
@@ -8517,18 +8399,16 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
          }
 
       TR::Register *dstAddrReg = NULL;
-      bool dstAddrComputed = false;
 
       if (comp->getOptions()->realTimeGC())
          {
          dstAddrReg = cg->allocateRegister();
          TR::addDependency(conditions, dstAddrReg, TR::RealRegister::gr4, TR_GPR, cg);
          generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, dstAddrReg, objReg, offsetReg);
-         dstAddrComputed = true;
          }
 
       VMnonNullSrcWrtBarCardCheckEvaluator(node, comp->useCompressedPointers() ? translatedNode->getRegister() : newVReg, objReg, cndReg, temp1Reg, temp2Reg, dstAddrReg, NULL,
-            wrtBarEndLabel, conditions, NULL, dstAddrComputed, false, cg);
+            wrtBarEndLabel, conditions, false, cg);
 
       if (comp->getOptions()->realTimeGC())
          cg->stopUsingRegister(dstAddrReg);
@@ -9989,13 +9869,13 @@ static TR::Register *inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::Code
          conditions->getPostConditions()->getRegisterDependency(5)->setExcludeGPR0(); //5=temp2Reg
          }
 
-      VMnonNullSrcWrtBarCardCheckEvaluator(node, nReg, pReg, cndReg, qReg, retryCountReg, temp3Reg, temp4Reg, wrtbar1Donelabel, conditions, NULL, false, false, cg, false);
+      VMnonNullSrcWrtBarCardCheckEvaluator(node, nReg, pReg, cndReg, qReg, retryCountReg, temp3Reg, temp4Reg, wrtbar1Donelabel, conditions, false, cg, false);
       // ALG: *** wrtbar1Donelabel
       generateLabelInstruction(cg, TR::InstOpCode::label, node, wrtbar1Donelabel);
 
       generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, pReg, objReg);
 
-      VMnonNullSrcWrtBarCardCheckEvaluator(node, nReg, pReg, cndReg, qReg, retryCountReg, temp3Reg, temp4Reg, returnLabel, conditions, NULL, false, false, cg, false);
+      VMnonNullSrcWrtBarCardCheckEvaluator(node, nReg, pReg, cndReg, qReg, retryCountReg, temp3Reg, temp4Reg, returnLabel, conditions, false, cg, false);
 
       }
    else if (doCrdMrk)
@@ -10166,7 +10046,7 @@ static TR::Register *inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::CodeG
          conditions->getPostConditions()->getRegisterDependency(4)->setExcludeGPR0(); //4=temp2Reg
          }
 
-      VMnonNullSrcWrtBarCardCheckEvaluator(node, qReg, objReg, cndReg, nullReg, pReg, temp3Reg, temp4Reg, returnLabel, conditions, NULL, false, false, cg, false);
+      VMnonNullSrcWrtBarCardCheckEvaluator(node, qReg, objReg, cndReg, nullReg, pReg, temp3Reg, temp4Reg, returnLabel, conditions, false, cg, false);
       }
    else if (doCrdMrk)
       {
