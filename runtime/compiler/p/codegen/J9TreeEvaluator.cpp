@@ -1479,7 +1479,6 @@ TR::Register *iGenerateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg
    TR_ASSERT_FATAL(false, "Concurrent Scavenger not supported.");
 #else
    TR::Compilation *comp = cg->comp();
-   TR::MemoryReference *tempMR = NULL;
 
    TR::Register *objReg = cg->allocateRegister();
    TR::Register *locationReg = cg->allocateRegister();
@@ -1510,25 +1509,8 @@ TR::Register *iGenerateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg
       }
 
    node->setRegister(objReg);
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && comp->target().isSMP());
 
-   // If the reference is volatile or potentially volatile, we keep a fixed instruction
-   // layout in order to patch if it turns out that the reference isn't really volatile.
-   tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node, 4);
-   if (tempMR->getIndexRegister() != NULL)
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, locationReg, tempMR->getBaseRegister(), tempMR->getIndexRegister());
-   else
-      generateTrg1MemInstruction(cg, TR::InstOpCode::addi2, node, locationReg, tempMR);
-
-   /*
-    * Loading the effective address does not actually need a sync instruction.
-    * However, this point sometimes gets patched so a nop is needed here until all the patching code is updated.
-    */
-   //TODO: Patching code needs to be updated to know not to expect a sync instruction here.
-   if (needSync)
-      {
-      TR::TreeEvaluator::postSyncConditions(node, cg, locationReg, tempMR, TR::InstOpCode::nop);
-      }
+   TR::LoadStoreHandler::generateComputeAddressSequence(cg, locationReg, node);
 
    generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, objReg, TR::MemoryReference::createWithDisplacement(cg, locationReg, 0, 4));
 
@@ -1553,15 +1535,13 @@ TR::Register *iGenerateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg
 
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
 
-   //TODO: Patching code needs to be updated to be able to patch out these new sync instructions.
-   if (needSync)
+   // TODO: Allow this to be patched or skipped at runtime for unresolved symrefs
+   if (node->getSymbol()->isSyncVolatile() && comp->target().isSMP())
       {
       generateInstruction(cg, comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7) ? TR::InstOpCode::lwsync : TR::InstOpCode::isync, node);
       }
 
    cg->insertPrefetchIfNecessary(node, objReg);
-
-   tempMR->decNodeReferenceCounts(cg);
 
    cg->stopUsingRegister(evacuateReg);
    cg->stopUsingRegister(locationReg);
@@ -1581,7 +1561,6 @@ TR::Register *aGenerateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg
    TR_ASSERT_FATAL(false, "Concurrent Scavenger not supported.");
 #else
    TR::Compilation *comp = cg->comp();
-   TR::MemoryReference *tempMR = NULL;
 
    TR::Register *tempReg;
    TR::Register *locationReg = cg->allocateRegister();
@@ -1619,29 +1598,9 @@ TR::Register *aGenerateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg
    deps->addPostCondition(metaReg, TR::RealRegister::NoReg);
    deps->addPostCondition(condReg, TR::RealRegister::NoReg);
 
-   // If the reference is volatile or potentially volatile, we keep a fixed instruction
-   // layout in order to patch if it turns out that the reference isn't really volatile.
-
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && comp->target().isSMP());
-
-   tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node, TR::Compiler->om.sizeofReferenceAddress());
-
    node->setRegister(tempReg);
 
-   if (tempMR->getIndexRegister() != NULL)
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, locationReg, tempMR->getBaseRegister(), tempMR->getIndexRegister());
-   else
-      generateTrg1MemInstruction(cg, TR::InstOpCode::addi2, node, locationReg, tempMR);
-
-   /*
-    * Loading the effective address does not actually need a sync instruction.
-    * However, this point sometimes gets patched so a nop is needed here until all the patching code is updated.
-    */
-   //TODO: Patching code needs to be updated to know not to expect a sync instruction here.
-   if (needSync)
-      {
-      TR::TreeEvaluator::postSyncConditions(node, cg, locationReg, tempMR, TR::InstOpCode::nop);
-      }
+   TR::LoadStoreHandler::generateComputeAddressSequence(cg, locationReg, node);
 
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, locationReg, 0, TR::Compiler->om.sizeofReferenceAddress()));
 
@@ -1673,13 +1632,11 @@ TR::Register *aGenerateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg
 
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
 
-   //TODO: Patching code needs to be updated to be able to patch out these new sync instructions.
-   if (needSync)
+   // TODO: Allow this to be patched or skipped at runtime for unresolved symrefs
+   if (node->getSymbol()->isSyncVolatile() && comp->target().isSMP())
       {
       generateInstruction(cg, comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7) ? TR::InstOpCode::lwsync : TR::InstOpCode::isync, node);
       }
-
-   tempMR->decNodeReferenceCounts(cg);
 
    cg->stopUsingRegister(evacuateReg);
    cg->stopUsingRegister(locationReg);
