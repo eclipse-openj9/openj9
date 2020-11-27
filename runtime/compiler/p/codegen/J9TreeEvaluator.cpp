@@ -6928,11 +6928,7 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
       return false;
    if (nextTopNode->getOpCodeValue() == TR::treetop || nextTopNode->getOpCodeValue() == TR::iRegStore)
       nextTopNode = nextTopNode->getFirstChild();
-   if (!nextTopNode->getOpCode().isMemoryReference())
-      return false;
-   if (nextTopNode->getSymbolReference()->isUnresolved())
-      return false;
-   if (nextTopNode->getSymbolReference()->getSymbol()->isSyncVolatile() && comp->target().isSMP())
+   if (!TR::LoadStoreHandler::isSimpleLoad(cg, nextTopNode))
       return false;
    // possible TODO: expand the set of load types we can handle
    if (nextTopNode->getOpCodeValue() != TR::aloadi && nextTopNode->getOpCodeValue() != TR::iloadi)
@@ -7069,7 +7065,7 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
 
    // the following code is derived from the iaload and iiload evaluators
    TR::Register *loadResultReg;
-   TR::MemoryReference *tempMR = NULL;
+   OMR::Power::NodeMemoryReference tempMR;
    if (nextTopNode->getOpCodeValue() == TR::aloadi)
       loadResultReg = cg->allocateCollectedReferenceRegister();
    else
@@ -7085,26 +7081,27 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
       {
       if (TR::Compiler->om.compressObjectReferences() && nextTopNode->getSymbol()->isClassObject())
          {
-         tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, nextTopNode, 4);
+         tempMR = TR::LoadStoreHandler::generateSimpleLoadMemoryReference(cg, nextTopNode, 4);
          loadOpCode = TR::InstOpCode::lwz;
          }
       else
          {
-         tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, nextTopNode, 8);
+         tempMR = TR::LoadStoreHandler::generateSimpleLoadMemoryReference(cg, nextTopNode, 8);
          loadOpCode = TR::InstOpCode::ld;
          }
       }
    else
       {
-      tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, nextTopNode, 4);
+      tempMR = TR::LoadStoreHandler::generateSimpleLoadMemoryReference(cg, nextTopNode, 4);
       loadOpCode = TR::InstOpCode::lwz;
       }
+   TR_ASSERT_FATAL_WITH_NODE(nextTopNode, !tempMR.getMemoryReference()->getIndexRegister(), "Simple read monitors do not currently support indexed loads");
    // end of code derived from the iaload and iiload evaluators
 
    TR::addDependency(conditions, loadResultReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   if (tempMR->getBaseRegister() != objReg)
+   if (tempMR.getMemoryReference()->getBaseRegister() != objReg)
       {
-      TR::addDependency(conditions, tempMR->getBaseRegister(), TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(conditions, tempMR.getMemoryReference()->getBaseRegister(), TR::RealRegister::NoReg, TR_GPR, cg);
       conditions->getPreConditions()->getRegisterDependency(4)->setExcludeGPR0();
       conditions->getPostConditions()->getRegisterDependency(4)->setExcludeGPR0();
       }
@@ -7114,7 +7111,7 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
    if (objectClassReg)
       baseReg = objectClassReg;
 
-   bool altsequence = (comp->target().cpu.is(OMR_PROCESSOR_PPC_GP) || comp->target().cpu.is(OMR_PROCESSOR_PPC_GR)) && tempMR->getBaseRegister() == objReg;
+   bool altsequence = (comp->target().cpu.is(OMR_PROCESSOR_PPC_GP) || comp->target().cpu.is(OMR_PROCESSOR_PPC_GR)) && tempMR.getMemoryReference()->getBaseRegister() == objReg;
 
    TR::LabelSymbol *loopLabel, *restartLabel, *recurCheckLabel, *monExitCallLabel;
    loopLabel = generateLabelSymbol(cg);
@@ -7153,8 +7150,8 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
          opCode = TR::InstOpCode::stwcx_r;
       generateMemSrc1Instruction(cg, opCode, node, TR::MemoryReference::createWithIndexReg(cg, baseReg, offsetReg, lockSize), metaReg);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, cndReg);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::OR, node, tempMR->getBaseRegister(), tempMR->getBaseRegister(), monitorReg);
-      generateTrg1MemInstruction(cg, loadOpCode, node, loadResultReg, tempMR);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::OR, node, tempMR.getMemoryReference()->getBaseRegister(), tempMR.getMemoryReference()->getBaseRegister(), monitorReg);
+      generateTrg1MemInstruction(cg, loadOpCode, node, loadResultReg, tempMR.getMemoryReference());
       if (needlwsync)
          generateInstruction(cg, TR::InstOpCode::lwsync, node);
       else
@@ -7168,8 +7165,8 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
       }
    else
       {
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::OR, node, tempMR->getBaseRegister(), tempMR->getBaseRegister(), monitorReg);
-      generateTrg1MemInstruction(cg, loadOpCode, node, loadResultReg, tempMR);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::OR, node, tempMR.getMemoryReference()->getBaseRegister(), tempMR.getMemoryReference()->getBaseRegister(), monitorReg);
+      generateTrg1MemInstruction(cg, loadOpCode, node, loadResultReg, tempMR.getMemoryReference());
       if (needlwsync)
          generateInstruction(cg, TR::InstOpCode::lwsync, node);
       else
@@ -7197,12 +7194,12 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
    cg->decReferenceCount(objNode);
 
    TR::Snippet *snippet = new (cg->trHeapMemory()) TR::PPCReadMonitorSnippet(cg, node, secondNextTopNode, recurCheckLabel, monExitCallLabel, restartLabel, loadOpCode,
-         tempMR->getOffset(), objectClassReg);
+         tempMR.getMemoryReference()->getOffset(), objectClassReg);
    cg->addSnippet(snippet);
 
    // the load and monexit trees need reference count adjustments and
    // must not be evaluated
-   tempMR->decNodeReferenceCounts(cg);
+   tempMR.decReferenceCounts(cg);
    cg->decReferenceCount(nextTopNode);
    if (secondNextTopNode == secondNextTreeTop->getNode())
       cg->recursivelyDecReferenceCount(secondNextTopNode->getFirstChild());
