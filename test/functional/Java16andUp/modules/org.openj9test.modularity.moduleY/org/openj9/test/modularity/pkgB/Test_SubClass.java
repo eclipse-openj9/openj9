@@ -1,4 +1,4 @@
-package org.openj9.test.utilities;
+package org.openj9.test.modularity.pkgB;
 
 /*******************************************************************************
  * Copyright (c) 2021, 2021 IBM Corp. and others
@@ -22,10 +22,26 @@ package org.openj9.test.utilities;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
- import org.objectweb.asm.*;
+import org.testng.annotations.Test;
+import org.testng.Assert;
+import org.testng.AssertJUnit;
+import org.objectweb.asm.*;
+import static org.objectweb.asm.Opcodes.V_PREVIEW;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.V16;
+import org.openj9.test.modularity.pkgA.SuperClassSealed;
+import org.openj9.test.modularity.pkgA.SuperInterfaceSealed;
+import org.openj9.test.modularity.pkgB.SuperClassFromPkgB;
 
- public class SealedClassGenerator implements Opcodes {
-	private static String dummySubclassName = "TestSubclassGen";
+/**
+ * Test cases for JEP 397: Sealed Classes (Second Preview)
+ * 
+ * Verify whether IncompatibleClassChangeError is thrown out when
+ * the specified non-public subclass is in a different module from
+ * the sealed super class/interface with a named module.
+ */
+ @Test(groups = { "level.sanity" })
+public class Test_SubClass {
 	/* sealed classes are still a preview feature as of jdk 16, and OpenJ9 requires that
 	 * major version match the latest supported version when --enable-preview flag is active
 	 */
@@ -44,49 +60,24 @@ package org.openj9.test.utilities;
 				latestPreviewVersion = V16; // next release
 		}
 	}
-
-	public static byte[] generateFinalSealedClass(String className) {
-		int accessFlags = ACC_FINAL | ACC_SUPER;
-
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cw.visit(latestPreviewVersion | V_PREVIEW, accessFlags, className, null, "java/lang/Object", null);
-
-		/* Sealed class must have a PermittedSubclasses attribute */
-		cw.visitPermittedSubclass(dummySubclassName);
-
-		cw.visitEnd();
-		return cw.toByteArray();
-	}
-
-	public static byte[] generateSubclassIllegallyExtendingSealedSuperclass(String className, Class<?> superClass) {
-		String superName = superClass.getName().replace('.', '/');
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cw.visit(latestPreviewVersion | V_PREVIEW, ACC_SUPER, className, null, superName, null);
-		cw.visitEnd();
-		return cw.toByteArray();
-	}
-
-	public static byte[] generateSubinterfaceIllegallyExtendingSealedSuperinterface(String className, Class<?> superInterface) {
-		String[] interfaces = { superInterface.getName().replace('.', '/') };
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cw.visit(latestPreviewVersion | V_PREVIEW, ACC_SUPER, className, null, "java/lang/Object", interfaces);
-		cw.visitEnd();
-		return cw.toByteArray();
-	}
-
-	public static byte[] generateSealedClass(String className, String[] permittedSubclassNames) {
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cw.visit(latestPreviewVersion | V_PREVIEW, ACC_SUPER, className, null, "java/lang/Object", null);
-
-		for (String psName : permittedSubclassNames) {
-			cw.visitPermittedSubclass(psName);
-		}
-
-		cw.visitEnd();
-		return cw.toByteArray();
+	
+	@Test(expectedExceptions = java.lang.IncompatibleClassChangeError.class)
+	public void test_subClassInTheDifferentModuleFromSealedSuperClass() {
+		String subClassName = "TestSubclass";
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] subClassNameBytes = generateSubclassInDifferentModuleFromSealedSuper(subClassName, SuperClassSealed.class, null);
+		Class<?> clazz = classloader.getClass(subClassName, subClassNameBytes);
 	}
 	
-	public static byte[] generateSubclassInDifferentPackageFromSealedSuper(String className, Class<?> superClass, Class<?> superInterface) {
+	@Test(expectedExceptions = java.lang.IncompatibleClassChangeError.class)
+	public void test_subClassInTheDifferentModuleFromSealedSuperInterface() {
+		String subClassName = "TestSubclass";
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] subClassNameBytes = generateSubclassInDifferentModuleFromSealedSuper(subClassName, SuperClassFromPkgB.class, SuperInterfaceSealed.class);
+		Class<?> clazz = classloader.getClass(subClassName, subClassNameBytes);
+	}
+	
+	private static byte[] generateSubclassInDifferentModuleFromSealedSuper(String className, Class<?> superClass, Class<?> superInterface) {
 		String superClassName = superClass.getName().replace('.', '/');
 		String[] superInterfaceNames = null;
 		if (superInterface != null) {
@@ -95,8 +86,14 @@ package org.openj9.test.utilities;
 		}
 		
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cw.visit(latestPreviewVersion | V_PREVIEW, ACC_PRIVATE, className, null, superClassName, superInterfaceNames);
+		cw.visit(latestPreviewVersion | V_PREVIEW, ACC_PUBLIC, className, null, superClassName, superInterfaceNames);
 		cw.visitEnd();
 		return cw.toByteArray();
 	}
- }
+}
+
+class CustomClassLoader extends ClassLoader {
+	public Class<?> getClass(String name, byte[] bytes){
+		return defineClass(name, bytes, 0, bytes.length);
+	}
+}
