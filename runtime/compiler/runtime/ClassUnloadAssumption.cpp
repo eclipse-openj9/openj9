@@ -669,12 +669,7 @@ TR_RuntimeAssumptionTable::serialize(J9JITConfig *jitConfig)
                owningMetadata->runtimeAssumptionList = NULL;
                buffer += size;
 
-               OMR::RuntimeAssumption *next = cursor->getNext();
-
-               cursor->dequeueFromListOfAssumptionsForJittedBody();
-               TR_PersistentMemory::jitPersistentFree(cursor);
-
-               cursor = next;
+               cursor = cursor->getNext();
                }
             }
          }

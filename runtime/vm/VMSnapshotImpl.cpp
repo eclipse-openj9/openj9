@@ -962,7 +962,7 @@ VMSnapshotImpl::preWriteToImage(J9VMThread *currentThread, VMIntermediateSnapsho
 	_vm->bootstrapClassPath = (U_8 *) tempPath;
 
 	VM_OutOfLineINL_Helpers::restoreSpecialStackFrameLeavingArgs(currentThread, currentThread->arg0EA);
-	currentThread->tempSlot = (UDATA) VM_OutOfLineINL_Helpers::buildInternalNativeStackFrame(currentThread, _triggerMethod);
+	currentThread->restoreThreadBP = VM_OutOfLineINL_Helpers::buildInternalNativeStackFrame(currentThread, _triggerMethod);
 
 	detachVMThreadFromOMR(_vm, currentThread);
 	_vm->omrVM = NULL;
@@ -1137,6 +1137,8 @@ VMSnapshotImpl::writeSnapshotImage(J9VMThread *currentThread)
 	registerGCForSnapshot(currentThread);
 
 	saveJ9JavaVMStructures();
+
+	TRIGGER_J9HOOK_TRIGGER_SNAPSHOT(currentThread->javaVM->hookInterface, currentThread);
 
 	if (!preWriteToImage(currentThread, &intermediateSnapshotState)) {
 		rc = false;
@@ -1353,8 +1355,8 @@ interceptMainAndRestoreSnapshotState(J9VMThread *currentThread, jmethodID method
 			nas.signature = (J9UTF8 *)&runPostRestoreHooks_sig;
 
 			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_SNAPSHOT_STATE_IS_RESTORED;
-			VM_OutOfLineINL_Helpers::recordJNIReturn(currentThread, (UDATA *)currentThread->tempSlot);
-			VM_OutOfLineINL_Helpers::restoreSpecialStackFrameLeavingArgs(currentThread, (UDATA *)currentThread->tempSlot);
+			VM_OutOfLineINL_Helpers::recordJNIReturn(currentThread, currentThread->restoreThreadBP);
+			VM_OutOfLineINL_Helpers::restoreSpecialStackFrameLeavingArgs(currentThread, currentThread->restoreThreadBP);
 
 			runStaticMethod(currentThread, (U_8 *)"com/ibm/oti/vm/SnapshotControlAPI", &nas, 0, NULL);
 
