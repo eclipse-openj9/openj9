@@ -944,8 +944,10 @@ Java_java_lang_invoke_MethodHandleNatives_checkClassBytes(JNIEnv *env, jclass jl
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 /* java_lang_invoke_VarHandle.c */
+#if defined(J9VM_OPT_METHOD_HANDLE)
 jlong JNICALL Java_java_lang_invoke_FieldVarHandle_lookupField(JNIEnv *env, jobject handle, jclass lookupClass, jstring name, jstring signature, jclass type, jboolean isStatic, jclass accessClass);
 jlong JNICALL Java_java_lang_invoke_FieldVarHandle_unreflectField(JNIEnv *env, jobject handle, jobject reflectField, jboolean isStatic);
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 jobject JNICALL Java_java_lang_invoke_VarHandle_get(JNIEnv *env, jobject handle, jobject args);
 void JNICALL Java_java_lang_invoke_VarHandle_set(JNIEnv *env, jobject handle, jobject args);
 jobject JNICALL Java_java_lang_invoke_VarHandle_getVolatile(JNIEnv *env, jobject handle, jobject args);

@@ -39,6 +39,7 @@
 #include "j9vmconstantpool.h"
 #include "j9jclnls.h"
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 static BOOLEAN
 accessCheckFieldType(J9VMThread *currentThread, J9Class* lookupClass, J9Class* type, J9UTF8 *lookupSig)
 {
@@ -162,6 +163,7 @@ Java_java_lang_invoke_FieldVarHandle_unreflectField(JNIEnv *env, jobject handle,
 	vmFuncs->internalExitVMToJNI(vmThread);
 	return fieldOffset;
 }
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 jobject JNICALL
 Java_java_lang_invoke_VarHandle_get(JNIEnv *env, jobject handle, jobject args)
