@@ -47,11 +47,11 @@ public class ThreadGroup implements Thread.UncaughtExceptionHandler {
 
 	/*[PR 106322] - Cannot synchronize on childrenThreads and childrenGroups arrays */
 	/*[PR 122459] LIR646 - Remove use of generic object for synchronization */
-	private static final class ChildrenGroupsLock {}
+	private static final class ChildrenGroupsLock { ChildrenGroupsLock() { super(); } }
 	// Locked when using the childrenGroups field
 	private Object childrenGroupsLock = new ChildrenGroupsLock();
 	/*[PR 122459] LIR646 - Remove use of generic object for synchronization */
-	private static final class ChildrenThreadsLock {}
+	private static final class ChildrenThreadsLock { ChildrenThreadsLock() { super(); } }
 	// Locked when using the childrenThreads field
 	private Object childrenThreadsLock = new ChildrenThreadsLock();
 
@@ -65,6 +65,7 @@ public class ThreadGroup implements Thread.UncaughtExceptionHandler {
  * Used by the JVM to create the "system" ThreadGroup. Construct
  * a ThreadGroup instance, and assign the name "system".
  */
+@SuppressWarnings("unused")
 private ThreadGroup() {
 	name = "system"; //$NON-NLS-1$
 }
@@ -268,8 +269,14 @@ public final void checkAccess() {
  *
  * @throws		IllegalThreadStateException 	if the receiver or any of its subgroups has been destroyed already
  * @throws		SecurityException 				if <code>this.checkAccess()</code> fails with a SecurityException
+/*[IF JAVA_SPEC_VERSION >= 16]
+ * @deprecated
+/*[ENDIF] JAVA_SPEC_VERSION >= 16
  */
-public final void destroy(){
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+@Deprecated(forRemoval = true, since = "16")
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
+public final void destroy() {
 	destroyImpl();
 	removeFromParent();
 }
@@ -575,8 +582,13 @@ public final void interrupt() {
  *
  * @see			#setDaemon 
  * @see			#destroy
+/*[IF JAVA_SPEC_VERSION >= 16]
+ * @deprecated
+/*[ENDIF] JAVA_SPEC_VERSION >= 16
  */
- 
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+@Deprecated(forRemoval = true, since = "16")
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 public final boolean isDaemon() {
 	return isDaemon;
 }
@@ -587,8 +599,14 @@ public final boolean isDaemon() {
  * @return		if the receiver has been destroyed already
  *
  * @see			#destroy
+/*[IF JAVA_SPEC_VERSION >= 16]
+ * @deprecated
+/*[ENDIF] JAVA_SPEC_VERSION >= 16
  */
-public boolean isDestroyed(){
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+@Deprecated(forRemoval = true, since = "16")
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
+public boolean isDestroyed() {
 	// never call this when synchronized on childrenThreadsGroup or deadlock will occur
 	/*[PR JAZZ 9154] ThreadGroup.isDestroyed is not properly synchronized */
 	synchronized(childrenThreadsLock) {
@@ -754,8 +772,13 @@ public final void resume() {
  *
  * @see			#isDaemon 
  * @see			#destroy
+/*[IF JAVA_SPEC_VERSION >= 16]
+ * @deprecated
+/*[ENDIF] JAVA_SPEC_VERSION >= 16
  */
- 
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+@Deprecated(forRemoval = true, since = "16")
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 public final void setDaemon(boolean isDaemon) {
 	checkAccess();
 	this.isDaemon = isDaemon;
@@ -817,11 +840,15 @@ private void setParent(ThreadGroup parent) {
  *
  * @deprecated Requires deprecated method Thread.stop().
  */
-/*[IF Sidecar19-SE]*/
-@Deprecated(forRemoval=false, since="1.2")
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+@Deprecated(forRemoval = true, since = "1.2")
 /*[ELSE]*/
+/*[IF Sidecar19-SE]*/
+@Deprecated(forRemoval = false, since = "1.2")
+/*[ELSE] Sidecar19-SE */
 @Deprecated
-/*[ENDIF]*/
+/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 public final void stop() {
 	/*[PR CMVC 73122] Stop the running thread last */
 	if (stopHelper())
@@ -923,6 +950,7 @@ public String toString() {
  * @see			Thread#stop(Throwable)
  * @see			ThreadDeath
  */
+@Override
 public void uncaughtException(Thread t, Throwable e) {
 	Thread.UncaughtExceptionHandler handler;
 	/*[PR 95801]*/
