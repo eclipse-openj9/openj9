@@ -113,7 +113,7 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 	SLOT_CALLBACK(romClass, J9ROM_UTF8, romClass, className);
 	SLOT_CALLBACK(romClass, J9ROM_UTF8, romClass, superclassName);
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, modifiers);
-	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, extraModifiers);	
+	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, extraModifiers);
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, interfaceCount);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, interfaces);
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, romMethodCount);
@@ -137,7 +137,7 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, innerClassCount);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, innerClasses);
 #if JAVA_SPEC_VERSION >= 11
-	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, nestHost);
+	SLOT_CALLBACK(romClass, J9ROM_UTF8, romClass, nestHost);
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, nestMemberCount);
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, unused);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, nestMembers);
@@ -1071,7 +1071,7 @@ static void allSlotsInStackMapDo(J9ROMClass* romClass, U_8 *stackMap, J9ROMClass
 }
 
 
-static UDATA 
+static UDATA
 allSlotsInMethodParametersDataDo(J9ROMClass* romClass, U_8 * cursor, J9ROMClassWalkCallbacks* callbacks, void* userData)
 {
 	J9MethodParametersData* methodParametersData = (J9MethodParametersData* )cursor;
@@ -1093,7 +1093,7 @@ allSlotsInMethodParametersDataDo(J9ROMClass* romClass, U_8 * cursor, J9ROMClassW
 		SLOT_CALLBACK(romClass, J9ROM_U8, methodParametersData, parameterCount);
 
 		for (; i < methodParametersData->parameterCount; i++) {
-			callbacks->slotCallback(romClass, J9ROM_SRP, &parameters[i].name, "methodParameterName", userData);
+			callbacks->slotCallback(romClass, J9ROM_UTF8, &parameters[i].name, "methodParameterName", userData);
 			callbacks->slotCallback(romClass, J9ROM_U16, &parameters[i].flags, "methodParameterFlag", userData);
 		}
 	}
