@@ -2796,8 +2796,8 @@ fail:
 			 *                      + J9ClassContainsUnflattenedFlattenables
 			 *                     + J9ClassCanSupportFastSubstitutability
 			 *
-			 *                   + Unused
-			 *                  + Unused
+			 *                   + J9ClassHasReferences
+			 *                  + J9ClassIsValueBased
 			 *                 + Unused
 			 *                + Unused
 			 *
@@ -3293,6 +3293,10 @@ retry:
 			if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(className), J9UTF8_LENGTH(className), MAGIC_ACCESSOR_IMPL)) {
 				classFlags |= J9ClassIsExemptFromValidation;
 			}
+		}
+		
+		if (J9ROMCLASS_IS_VALUEBASED(romClass)) {
+			classFlags |= J9ClassIsValueBased;
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)

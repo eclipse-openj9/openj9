@@ -234,4 +234,10 @@ loadFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject
         return VM_ValueTypeHelpers::loadFlattenableArrayElement(currentThread, objectAccessBarrier, objectAllocate, receiverObject, index, fast != false);
 }
 
+BOOLEAN
+areValueBasedMonitorChecksEnabled(J9JavaVM *vm)
+{
+	return J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION | J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING);
+}
+
 } /* extern "C" */

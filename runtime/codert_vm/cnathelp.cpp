@@ -1616,12 +1616,17 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 				resolveFrame->specialFrameFlags = (resolveFrame->specialFrameFlags & ~J9_STACK_FLAGS_JIT_FRAME_SUB_TYPE_MASK) | J9_STACK_FLAGS_JIT_FAILED_METHOD_MONITOR_ENTER_RESOLVE;
 			}
 		}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 		if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monstatus) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			addr = setCurrentExceptionNLSWithArgsFromJIT(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+			Assert_CodertVM_true(J9_ARE_ALL_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
+			addr = setCurrentExceptionNLSWithArgsFromJIT(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			goto done;
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 		if (J9_OBJECT_MONITOR_OOM == monstatus) {
 			addr = setNativeOutOfMemoryErrorFromJIT(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
 			goto done;
