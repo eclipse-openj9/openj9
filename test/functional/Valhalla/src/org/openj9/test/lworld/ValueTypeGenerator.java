@@ -336,7 +336,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitLdcInsn(Long.valueOf(123L));
 		mv.visitFieldInsn(WITHFIELD, className, "longField", "J");
 		mv.visitInsn(ARETURN);
-		mv.visitMaxs(1, 2);
+		mv.visitMaxs(3, 2);
 		mv.visitEnd();
 	}
 	
@@ -351,7 +351,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitLdcInsn(Long.valueOf(123L));
 		mv.visitFieldInsn(WITHFIELD, className, "longField", "J");
 		mv.visitInsn(ARETURN);
-		mv.visitMaxs(1, 2);
+		mv.visitMaxs(3, 2);
 		mv.visitEnd();
 	}
 	
@@ -368,7 +368,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitLdcInsn(Long.valueOf(123L));
 		mv.visitFieldInsn(WITHFIELD, "NonExistentClass", "longField", "J");
 		mv.visitInsn(ARETURN);
-		mv.visitMaxs(1, 2);
+		mv.visitMaxs(3, 2);
 		mv.visitEnd();
 	}
 
