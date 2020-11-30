@@ -309,7 +309,9 @@ objectMonitorEnterNonBlocking(J9VMThread *currentThread, j9object_t object)
 {
 	UDATA result = (UDATA)object;
 	j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, object);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) || (JAVA_SPEC_VERSION >= 16)
 	J9Class * objClass = J9OBJECT_CLAZZ(currentThread, object);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) || (JAVA_SPEC_VERSION >= 16) */
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	if (J9_IS_J9CLASS_VALUETYPE(objClass)) {
