@@ -42,7 +42,10 @@
 #include "codegen/CodeGenerator.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "env/j9method.h"
+#include "env/VMAccessCriticalSection.hpp"
 #include "optimizer/Optimization_inlines.hpp"
+#include "optimizer/PreExistence.hpp"
+#include "il/ParameterSymbol.hpp"
 
 void J9::RecognizedCallTransformer::processIntrinsicFunction(TR::TreeTop* treetop, TR::Node* node, TR::ILOpCodes opcode)
    {
@@ -356,6 +359,217 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
    unsafeCall->setSymbolReference(comp()->getSymRefTab()->findOrCreateCodeGenInlinedHelper(helper));
    }
 
+TR::KnownObjectTable::Index
+J9::RecognizedCallTransformer::getObjectInfoFromNode(TR::Node* node)
+   {
+   TR_ASSERT(node->getType() == TR::Address, "Can't have object info on non-address type node n%dn %p", node->getGlobalIndex(), node);
+
+   if (!node->getOpCode().hasSymbolReference())
+      return TR::KnownObjectTable::UNKNOWN;
+
+   auto symRef = node->getSymbolReference();
+   if (symRef->isUnresolved())
+      return TR::KnownObjectTable::UNKNOWN;
+
+   if (symRef->hasKnownObjectIndex())
+      return symRef->getKnownObjectIndex();
+
+   auto symbol = symRef->getSymbol();
+
+   if (symbol->isAutoOrParm() && _knownObjectInAutoOrParmSlot)
+      return (*_knownObjectInAutoOrParmSlot)[symRef->getCPIndex()];
+
+   auto knot = comp()->getKnownObjectTable();
+   if (knot &&
+       node->getOpCode().isCall() &&
+       !symbol->castToMethodSymbol()->isHelper())
+      {
+      auto rm = symbol->castToMethodSymbol()->getMandatoryRecognizedMethod();
+      switch (rm)
+        {
+        case TR::java_lang_invoke_DirectMethodHandle_internalMemberName:
+        case TR::java_lang_invoke_DirectMethodHandle_internalMemberNameEnsureInit:
+           {
+           auto mhIndex = getObjectInfoFromNode(node->getFirstArgument());
+           if (mhIndex != TR::KnownObjectTable::UNKNOWN && !knot->isNull(mhIndex))
+              {
+              TR::VMAccessCriticalSection dereferenceKnownObjectField(comp()->fej9());
+              uintptr_t mhObject = knot->getPointer(mhIndex);
+              uintptr_t mnObject = comp()->fej9()->getReferenceField(mhObject, "member", "Ljava/lang/invoke/MemberName;");
+              auto mnIndex = knot->getOrCreateIndex(mnObject);
+              if (trace())
+                 traceMsg(comp(), "Get DirectMethodHandle.member known object %d\n", mnIndex);
+              return mnIndex;
+              }
+           }
+        case TR::java_lang_invoke_DirectMethodHandle_constructorMethod:
+           {
+           auto mhIndex = getObjectInfoFromNode(node->getFirstArgument());
+           if (mhIndex != TR::KnownObjectTable::UNKNOWN && !knot->isNull(mhIndex))
+              {
+              TR::VMAccessCriticalSection dereferenceKnownObjectField(comp()->fej9());
+              uintptr_t mhObject = knot->getPointer(mhIndex);
+              uintptr_t mnObject = comp()->fej9()->getReferenceField(mhObject, "initMethod", "Ljava/lang/invoke/MemberName;");
+              auto mnIndex = knot->getOrCreateIndex(mnObject);
+              if (trace())
+                 traceMsg(comp(), "Get DirectMethodHandle.initMethod known object %d\n", mnIndex);
+              return mnIndex;
+              }
+           }
+        }
+      }
+
+   return TR::KnownObjectTable::UNKNOWN;
+   }
+
+// Propagate known object info in autos, this only works for autos that are invariant
+// in the method. If an auto is only invariant in a block, we still don't get any object info
+// for it. The adapter or LambdaForm methods are usually straight line code, so this approach
+// should suffice.
+//
+void
+J9::RecognizedCallTransformer::collectInfoForAdapterOrLambdaForm()
+   {
+   TR_ResolvedMethod* currentMethod = comp()->getCurrentMethod();
+   int32_t numParmSlots = currentMethod->numberOfParameterSlots();
+   int32_t numSlots = numParmSlots + currentMethod->numberOfTemps();
+   if (numSlots == 0) return;
+
+   if (!_knownObjectInAutoOrParmSlot)
+      _knownObjectInAutoOrParmSlot = new (trStackMemory()) TR_Array<TR::KnownObjectTable::Index>(trMemory(), numSlots);
+
+   for (int32_t i = 0; i < numSlots; i++)
+      (*_knownObjectInAutoOrParmSlot)[i] = TR::KnownObjectTable::UNKNOWN;
+
+   // Initialize object info for parms from prex arg info
+   TR_PrexArgInfo *argInfo = comp()->getCurrentInlinedCallArgInfo();
+   if (argInfo)
+      {
+      int32_t numArgs = currentMethod->numberOfParameters();
+      if (!currentMethod->isStatic()) numArgs++;
+
+      TR_ASSERT(argInfo->getNumArgs() == numArgs, "Number of prex arginfo %d doesn't match method parm number %d", argInfo->getNumArgs(), numArgs);
+
+      ListIterator<TR::ParameterSymbol> parms(&comp()->getMethodSymbol()->getParameterList());
+      for (TR::ParameterSymbol *p = parms.getFirst(); p != NULL; p = parms.getNext())
+         {
+         int32_t ordinal = p->getOrdinal();
+         int32_t slotIndex = p->getSlot();
+         TR_PrexArgument *arg = argInfo->get(ordinal);
+         if (arg && arg->getKnownObjectIndex() != TR::KnownObjectTable::UNKNOWN)
+            {
+            (*_knownObjectInAutoOrParmSlot)[slotIndex] = arg->getKnownObjectIndex();
+            }
+         }
+      }
+
+   for (auto treetop = comp()->getMethodSymbol()->getFirstTreeTop(); treetop != NULL; treetop = treetop->getNextTreeTop())
+      {
+      auto ttNode = treetop->getNode();
+      if (ttNode->getOpCode().isStore() &&
+          ttNode->getSymbol()->isAutoOrParm() &&
+          ttNode->getType() == TR::Address)
+         {
+         int32_t slotIndex = ttNode->getSymbolReference()->getCPIndex();
+         auto valueNode = ttNode->getFirstChild();
+
+         if (!valueNode->getOpCode().hasSymbolReference())
+            continue;
+
+         auto symRef = valueNode->getSymbolReference();
+
+         if (symRef->isUnresolved())
+            continue;
+
+         TR::KnownObjectTable::Index objIndex = TR::KnownObjectTable::UNKNOWN;
+
+         if (symRef->hasKnownObjectIndex())
+            {
+            objIndex = symRef->getKnownObjectIndex();
+            }
+         else
+            objIndex = getObjectInfoFromNode(valueNode);
+
+         if (objIndex != TR::KnownObjectTable::UNKNOWN)
+            {
+            TR::KnownObjectTable::Index &origIndex = (*_knownObjectInAutoOrParmSlot)[slotIndex];
+            if (origIndex != TR::KnownObjectTable::UNKNOWN &&
+                origIndex != objIndex)
+               {
+               if (trace())
+                  traceMsg(comp(), "Slot %d can store more than one object, invalidate its known object info\n", slotIndex);
+
+               origIndex = TR::KnownObjectTable::UNKNOWN;
+               }
+            else
+               {
+               if (trace())
+                  traceMsg(comp(), "Slot %d gets known object info obj%d from node n%dn %p\n", slotIndex, objIndex, valueNode->getGlobalIndex(), valueNode);
+
+               origIndex = objIndex;
+               }
+            }
+
+         }
+      }
+
+   if (trace())
+      {
+      traceMsg(comp(), "Known object info in slots:\n");
+      for (int32_t i = 0; i < numSlots; i ++)
+         traceMsg(comp(), "slot %d: obj%d\n", i, (*_knownObjectInAutoOrParmSlot)[i]);
+      }
+   }
+
+void
+J9::RecognizedCallTransformer::preProcess()
+   {
+   if (comp()->getHasMethodHandleInvoke() || static_cast<TR_ResolvedJ9Method*>(comp()->getCurrentMethod())->isAdapterOrLambdaForm())
+      collectInfoForAdapterOrLambdaForm();
+   }
+
+void J9::RecognizedCallTransformer::processInvokeBasic(TR::TreeTop* treetop, TR::Node* node)
+   {
+   TR_J9VMBase* fej9 = comp()->fej9();
+   auto mhNode = node->getFirstArgument();
+   auto objIndex = getObjectInfoFromNode(mhNode);
+   if (objIndex == TR::KnownObjectTable::UNKNOWN)
+      {
+      bool isAdapterOrLambdaForm = static_cast<TR_ResolvedJ9Method*>(comp()->getCurrentMethod())->isAdapterOrLambdaForm();
+      TR::DebugCounter::prependDebugCounter(comp(),
+                                            TR::DebugCounter::debugCounterName(comp(),
+                                                                               "MHUnknownObj/%s/invokeBasic/(%s %s)",
+                                                                               isAdapterOrLambdaForm ? "adapterOrLambdaForm" : "other",
+                                                                               comp()->signature(),
+                                                                               comp()->getHotnessName(comp()->getMethodHotness())),
+                                                                               treetop);
+      return;
+      }
+   TR::TransformUtil::refineMethodHandleInvokeBasic(comp(), tretop, node, objIndex, trace());
+   }
+
+void J9::RecognizedCallTransformer::processLinkTo(TR::TreeTop* treetop, TR::Node* node)
+   {
+   // Get j9method from MemberName
+   TR_J9VMBase* fej9 = comp()->fej9();
+   TR_OpaqueMethodBlock* targetMethod = NULL;
+   auto memberNameNode = node->getLastChild();
+   auto objIndex = getObjectInfoFromNode(memberNameNode);
+   if (objIndex == TR::KnownObjectTable::UNKNOWN)
+      {
+      bool isAdapterOrLambdaForm = static_cast<TR_ResolvedJ9Method*>(comp()->getCurrentMethod())->isAdapterOrLambdaForm();
+      TR::DebugCounter::prependDebugCounter(comp(),
+                                            TR::DebugCounter::debugCounterName(comp(),
+                                                                               "MHUnknownObj/%s/linkToXXX/(%s %s)",
+                                                                               isAdapterOrLambdaForm ? "adapterOrLambdaForm" : "other",
+                                                                               comp()->signature(),
+                                                                               comp()->getHotnessName(comp()->getMethodHotness())),
+                                                                               treetop);
+      return;
+      }
+   TR::TransformUtil::refineMethodHandleLinkTo(comp(), tretop, node, objIndex, trace());
+   }
+
 bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    {
    auto node = treetop->getNode()->getFirstChild();
@@ -401,6 +615,17 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
       case TR::java_lang_Integer_reverseBytes:
       case TR::java_lang_Long_reverseBytes:
          return comp()->cg()->supportsByteswap();
+      case TR::java_lang_invoke_Invokers_checkCustomized:
+      case TR::java_lang_invoke_Invokers_checkExactType:
+         return true;
+      case TR::java_lang_invoke_MethodHandle_invokeBasic:
+      case TR::java_lang_invoke_MethodHandle_linkToSpecial:
+      case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+         // Transformation rely on KOT, it doesn't work in AOT
+         return !comp()->compileRelocatableCode();
+      case TR::java_lang_invoke_MethodHandle_linkToStatic:
+         // Last child is MemberName, we can't do anything if it's unresolved
+         return !node->getLastChild()->getSymbolReference()->isUnresolved() && !comp()->compileRelocatableCode();
       default:
          return false;
       }
@@ -489,6 +714,13 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
          break;
       case TR::java_lang_Long_reverseBytes:
          processIntrinsicFunction(treetop, node, TR::lbyteswap);
+      case TR::java_lang_invoke_MethodHandle_invokeBasic:
+         processInvokeBasic(treetop, node);
+         break;
+      case TR::java_lang_invoke_MethodHandle_linkToStatic:
+      case TR::java_lang_invoke_MethodHandle_linkToSpecial:
+      case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+         processLinkTo(treetop, node);
          break;
       default:
          break;
