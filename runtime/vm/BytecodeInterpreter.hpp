@@ -1567,12 +1567,12 @@ obj:
 					} else {
 						((UDATA*)(((J9SFStackFrame*)_sp) + 1))[-1] |= J9SF_A0_INVISIBLE_TAG;
 					}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 					if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
 						_currentThread->tempSlot = (UDATA) syncObject;
 						rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 					} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 					{
 						rc = THROW_MONITOR_ALLOC_FAIL;
 					}
@@ -1635,12 +1635,12 @@ done:
 
 		if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
 			*bp |= J9SF_A0_INVISIBLE_TAG;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 			if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
 				_currentThread->tempSlot = (UDATA) syncObject;
 				rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 			} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 			{
 				/* Monitor was not entered - hide the frame to prevent exception throw from processing it.
 				 * Note that BP can not have changed during a failed enter.
@@ -1761,12 +1761,12 @@ throwStackOverflow:
 				if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
 					/* Monitor was not entered - hide the frame to prevent exception throw from processing it */
 					*(_arg0EA + relativeBP) |= J9SF_A0_INVISIBLE_TAG;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 					if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
 						_currentThread->tempSlot = (UDATA) syncObject;
 						rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 					} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 					{
 						rc = THROW_MONITOR_ALLOC_FAIL;
 					}
@@ -2125,12 +2125,12 @@ done:
 			// No immediate async possible due to the current frame being for a native method.
 			bp = _arg0EA - relativeBP;
 			if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 				if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
 					_currentThread->tempSlot = (UDATA) receiver;
 					rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 				} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 				{
 					rc = THROW_MONITOR_ALLOC_FAIL;
 				}
@@ -7684,12 +7684,12 @@ done:
 			 * mutually exclusive.
 			 */
 			if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 				if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
 					_currentThread->tempSlot = (UDATA) obj;
 					rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 				} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 				{
 					rc = THROW_MONITOR_ALLOC_FAIL;
 				}
@@ -9247,13 +9247,13 @@ public:
 #define DEBUG_ACTIONS
 #endif
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 #define PERFORM_ACTION_VALUE_TYPE_IMSE \
 	case THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE: \
 	goto valueTypeIllegalMonitorState;
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 16 */
 #define PERFORM_ACTION_VALUE_TYPE_IMSE
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 #define PERFORM_ACTION(functionCall) \
 	do { \
@@ -9919,16 +9919,22 @@ illegalMonitorState:
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 valueTypeIllegalMonitorState:
 	updateVMStruct(REGISTER_ARGS);
 	prepareForExceptionThrow(_currentThread);
 #define badClassName J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, (j9object_t)_currentThread->tempSlot)->romClass)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	Assert_VM_true(J9_ARE_ALL_BITS_SET(_vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
+	setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#undef badClassName
 	_currentThread->tempSlot = 0;
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 incompatibleClassChange:
 	updateVMStruct(REGISTER_ARGS);

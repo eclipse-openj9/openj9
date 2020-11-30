@@ -2363,6 +2363,13 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				}
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if JAVA_SPEC_VERSION >= 16
+			if ((argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXVALUEBASEDCLASSCHECKEXCEPTION, NULL)) >= 0) {
+				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION;
+			} else if ((argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXVALUEBASEDCLASSCHECKWARN, NULL)) >= 0) {
+				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING;
+			}
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 			if ((argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XXDUMPLOADEDCLASSLIST, NULL)) >= 0) {
 				J9HookInterface **vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);

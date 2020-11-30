@@ -83,6 +83,8 @@
 #define J9ClassCanSupportFastSubstitutability 0x8000
 #define J9ClassHasReferences 0x10000
 #define J9ClassRequiresPrePadding 0x20000
+#define J9ClassIsValueBased 0x40000
+
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -4683,6 +4685,7 @@ typedef struct J9InternalVMFunctions {
 	j9object_t ( *loadFlattenableArrayElement)(struct J9VMThread *currentThread, j9object_t receiverObject, U_32 index, BOOLEAN fast);
 	UDATA ( *jniIsInternalClassRef)(struct J9JavaVM *vm, jobject ref);
 	BOOLEAN (*objectIsBeingWaitedOn)(struct J9VMThread *currentThread, struct J9VMThread *targetThread, j9object_t obj);
+	BOOLEAN (*areValueBasedMonitorChecksEnabled)(struct J9JavaVM *vm);
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
@@ -5403,11 +5406,11 @@ typedef struct J9JavaVM {
  */
 #define J9_OBJECT_MONITOR_BLOCKING 3
 
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#if JAVA_SPEC_VERSION >= 16
 #define J9_OBJECT_MONITOR_ENTER_FAILED(rc) ((rc) < J9_OBJECT_MONITOR_BLOCKING)
-#else
+#else /* JAVA_SPEC_VERSION >= 16 */
 #define J9_OBJECT_MONITOR_ENTER_FAILED(rc) ((rc) == J9_OBJECT_MONITOR_OOM)
-#endif
+#endif /* JAVA_SPEC_VERSION >= 16 */
 #define J9JAVAVM_REFERENCE_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(U_32) : sizeof(UDATA))
 #define J9JAVAVM_OBJECT_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))
 #define J9JAVAVM_CONTIGUOUS_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull))
