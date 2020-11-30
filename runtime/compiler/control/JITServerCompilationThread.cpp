@@ -103,13 +103,20 @@ outOfProcessCompilationEnd(
       }
 
    auto resolvedMirrorMethodsPersistIPInfo = compInfoPT->getCachedResolvedMirrorMethodsPersistIPInfo();
+
+   // If the server is running low on memory, tell clients to reduce the number of active compilation threads
+   bool incompleteInfo;
+   uint64_t freePhysicalMemorySizeB = compInfoPT->getCompilationInfo()->computeAndCacheFreePhysicalMemory(incompleteInfo);
+   bool serverHasLowMemory = (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE &&
+       freePhysicalMemorySizeB <= (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue() + TR::Options::getScratchSpaceLowerBound());
+
    entry->_stream->finishCompilation(codeCacheStr, dataCacheStr, chTableData,
                                      std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()),
                                      logFileStr, svmSymbolToIdStr,
                                      (resolvedMirrorMethodsPersistIPInfo) ?
                                                          std::vector<TR_ResolvedJ9Method*>(resolvedMirrorMethodsPersistIPInfo->begin(), resolvedMirrorMethodsPersistIPInfo->end()) :
                                                          std::vector<TR_ResolvedJ9Method*>(),
-                                     *entry->_optimizationPlan, serializedRuntimeAssumptions
+                                     *entry->_optimizationPlan, serializedRuntimeAssumptions, serverHasLowMemory
                                      );
    compInfoPT->clearPerCompilationCaches();
 
