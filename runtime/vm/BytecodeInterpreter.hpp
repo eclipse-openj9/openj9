@@ -8497,14 +8497,13 @@ foundITable:
 				goto done;
 			}
 
-			j9object_t handleType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandle);
+			j9object_t const handleType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandle);
 
 			/* Get call site MethodType */
-			j9object_t volatile callSiteType = NULL;
-			J9Class *ramClass = J9_CLASS_FROM_CP(ramConstantPool);
-			J9ROMClass *romClass = ramClass->romClass;
-			U_32 index = VM_VMHelpers::lookupVarHandleMethodTypeCacheIndex(romClass, cpIndex);
-			callSiteType = ramClass->varHandleMethodTypes[index];
+			J9Class * const ramClass = J9_CLASS_FROM_CP(ramConstantPool);
+			J9ROMClass * const romClass = ramClass->romClass;
+			U_32 const index = VM_VMHelpers::lookupVarHandleMethodTypeCacheIndex(romClass, cpIndex);
+			j9object_t const callSiteType = ramClass->varHandleMethodTypes[index];
 
 			if (callSiteType != handleType) {
 				/* Generic invoke */
