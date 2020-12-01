@@ -1247,16 +1247,16 @@ allSlotsInMethodDebugInfoDo(J9ROMClass* romClass, U_32* cursor, J9ROMClassWalkCa
 			/* Need to walk the name and signature to add them to the UTF8 section */
 			rangeValid = callbacks->validateRangeCallback(romClass, values->nameSrp, sizeof(J9SRP), userData);
 			if (rangeValid) {
-				callbacks->slotCallback(romClass, J9ROM_UTF8, values->nameSrp, "name", userData);
+				callbacks->slotCallback(romClass, J9ROM_UTF8, values->nameSrp, "variableName", userData);
 			}
 			rangeValid = callbacks->validateRangeCallback(romClass, values->signatureSrp, sizeof(J9SRP), userData);
 			if (rangeValid) {
-				callbacks->slotCallback(romClass, J9ROM_UTF8, values->signatureSrp, "signature", userData);
+				callbacks->slotCallback(romClass, J9ROM_UTF8, values->signatureSrp, "variableSignature", userData);
 			}
 			if (NULL != values->genericSignature) {
 				rangeValid = callbacks->validateRangeCallback(romClass, values->genericSignatureSrp, sizeof(J9SRP), userData);
 				if (rangeValid) {
-					callbacks->slotCallback(romClass, J9ROM_UTF8, values->genericSignatureSrp, "genericSignature", userData);
+					callbacks->slotCallback(romClass, J9ROM_UTF8, values->genericSignatureSrp, "variableGenericSignature", userData);
 				}
 			}
 
