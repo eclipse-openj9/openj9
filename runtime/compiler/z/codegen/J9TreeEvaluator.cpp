@@ -66,6 +66,7 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "infra/Bit.hpp"
+#include "OMR/Bytes.hpp"
 #include "ras/Delimiter.hpp"
 #include "ras/DebugCounter.hpp"
 #include "env/VMJ9.h"
@@ -2943,13 +2944,220 @@ J9::Z::TreeEvaluator::anewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg
 TR::Register *
 J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
+   static char *useDirectHelperCall = feGetEnv("TR_MultiANewArrayEvaluatorUseDirectCall");
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = static_cast<TR_J9VMBase *>(comp->fe());
+   TR::Register *targetReg = cg->allocateRegister();
+
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Node *thirdChild = node->getThirdChild();
+
+   TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
+   TR::LabelSymbol *nonZeroFirstDimLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
+   TR::LabelSymbol *oolFailLabel = generateLabelSymbol(cg);
+
+   // oolJumpLabel is a common point that all branches will jump to. From this label, we branch to OOL code.
+   // We do this instead of jumping directly to OOL code from mainline because the RA can only handle the case where there's
+   // a single jump point to OOL code.
+   TR::LabelSymbol *oolJumpLabel = generateLabelSymbol(cg);
+
+   cFlowRegionStart->setStartInternalControlFlow();
+   cFlowRegionEnd->setEndInternalControlFlow();
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
+
+   TR::Register *dimsPtrReg = cg->evaluate(firstChild);
+   TR::Register *dimReg = cg->evaluate(secondChild);
+   TR::Register *classReg = cg->evaluate(thirdChild);
+
+   // In the mainline, first load the first and second dimensions' lengths into registers.
+   TR::Register *firstDimLenReg = cg->allocateRegister();
+   generateRXInstruction(cg, TR::InstOpCode::L, node, firstDimLenReg, generateS390MemoryReference(dimsPtrReg, 4, cg));
+
+   TR::Register *secondDimLenReg = cg->allocateRegister();
+   generateRXInstruction(cg, TR::InstOpCode::L, node, secondDimLenReg, generateS390MemoryReference(dimsPtrReg, 0, cg));
+
+   // Check to see if second dimension is indeed 0. If yes, then proceed to handle the case here. Otherwise jump to OOL code.
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, secondDimLenReg, 0, TR::InstOpCode::COND_BNE, oolJumpLabel, false);
+
+   // Now check to see if first dimension is also 0. If yes, continue below to handle the case when length for both dimensions is 0. Otherwise jump to nonZeroFirstDimLabel.
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, firstDimLenReg, 0, TR::InstOpCode::COND_BNE, nonZeroFirstDimLabel, false);
+
+   // First dimension zero, so only allocate 1 zero-length object array
+   int32_t zeroArraySize = TR::Compiler->om.discontiguousArrayHeaderSizeInBytes();
+   TR::Register *vmThreadReg = cg->getMethodMetaDataRealRegister();
+   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, targetReg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
+
+   // Branch to OOL if there's not enough space for an array of size 0.
+   TR::Register *temp1Reg = cg->allocateRegister();
+   generateRIEInstruction(cg, TR::InstOpCode::getAddHalfWordImmDistinctOperandOpCode(), node, temp1Reg, targetReg, zeroArraySize);
+   generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, temp1Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapTop), cg));
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, node, oolJumpLabel);
+
+   // If there's enough space, then we can continue to allocate.
+   generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, temp1Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
+   
+   bool use64BitClasses = comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
+
+   // Init class and fields, then jump to end of ICF
+   generateRXInstruction(cg, use64BitClasses ? TR::InstOpCode::STG : TR::InstOpCode::ST, node, classReg, generateS390MemoryReference(targetReg, TR::Compiler->om.offsetOfObjectVftField(), cg));
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+   // We end up in this region of the ICF if the first dimension is non-zero and the second dimension is zero.
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, nonZeroFirstDimLabel);
+
+   TR::Register *componentClassReg = cg->allocateRegister();
+   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, componentClassReg, generateS390MemoryReference(classReg, offsetof(J9ArrayClass, componentType), cg));
+
+   // Calculate maximum allowable object size in elements and jump to OOL if it's higher than firstDimLenReg.
+   int32_t elementSize = TR::Compiler->om.sizeofReferenceField();
+   uintptr_t maxObjectSize = cg->getMaxObjectSizeGuaranteedNotToOverflow();
+   uintptr_t maxObjectSizeInElements = maxObjectSize / elementSize;
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, firstDimLenReg, static_cast<int32_t>(maxObjectSizeInElements), TR::InstOpCode::COND_BHR, oolJumpLabel, false);
+
+   // Now check to see if we have enough space to do the allocation. If not then jump to OOL code.
+   int32_t elementSizeAligned = OMR::align(elementSize, TR::Compiler->om.objectAlignmentInBytes());
+   int32_t alignmentCompensation = (elementSize == elementSizeAligned) ? 0 : elementSizeAligned - 1;
+   static const uint8_t multiplierToStrideMap[] = {0, 0, 1, 0, 2, 0, 0, 0, 3};
+   TR_ASSERT_FATAL(elementSize <= 8, "multianewArrayEvaluator - elementSize cannot be greater than 8!");
+   generateRSInstruction(cg, TR::InstOpCode::getShiftLeftLogicalSingleOpCode(), node, temp1Reg, firstDimLenReg, multiplierToStrideMap[elementSize]);
+   generateRILInstruction(cg, TR::InstOpCode::AGFI, node, temp1Reg, static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes()) + alignmentCompensation);
+
+   if (alignmentCompensation != 0)
+      {
+      generateRILInstruction(cg, TR::InstOpCode::NILF, node, temp1Reg, -elementSizeAligned);
+      }
+
+   TR::Register *temp2Reg = cg->allocateRegister();
+   TR_ASSERT_FATAL(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() == 16, "multianewArrayEvaluator - Expecting discontiguousArrayHeaderSizeInBytes to be 16.");
+   // temp2Reg = firstDimLenReg * 16 (discontiguousArrayHeaderSizeInBytes)
+   generateRSInstruction(cg, TR::InstOpCode::getShiftLeftLogicalSingleOpCode(), node, temp2Reg, firstDimLenReg, 4);
+
+   generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, temp2Reg, temp1Reg);
+
+   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, targetReg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
+   generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, temp2Reg, targetReg);
+   generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, temp2Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapTop), cg));
+
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, node, oolJumpLabel);
+
+   // We have enough space, so proceed with the allocation.
+   generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, temp2Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
+
+   // Init 1st dim array class and size fields.
+   generateRXInstruction(cg, use64BitClasses ? TR::InstOpCode::STG : TR::InstOpCode::ST, node, classReg, generateS390MemoryReference(targetReg, TR::Compiler->om.offsetOfObjectVftField(), cg));
+   generateRXInstruction(cg, TR::InstOpCode::ST, node, firstDimLenReg, generateS390MemoryReference(targetReg, fej9->getOffsetOfContiguousArraySizeField(), cg));
+
+   // temp2 point to end of 1st dim array i.e. start of 2nd dim
+   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, temp2Reg, targetReg);
+   generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, temp2Reg, temp1Reg);
+   generateRIEInstruction(cg, TR::InstOpCode::getAddHalfWordImmDistinctOperandOpCode(), node, temp1Reg, targetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+
+   uintptr_t heapBase = TR::Compiler->vm.heapBaseAddress();
+   bool useRegForHeapBase = comp->target().is64Bit() && comp->useCompressedPointers() &&
+                           (heapBase != 0) && (!IS_32BIT_SIGNED(heapBase) || TR::Compiler->om.nativeAddressesCanChangeSize());
+   if (useRegForHeapBase)
+      {
+      uint32_t high32 = heapBase >> 32;
+      generateRILInstruction(cg, TR::InstOpCode::LLIHF, node, secondDimLenReg, high32);
+      generateRILInstruction(cg, TR::InstOpCode::IILF, node, secondDimLenReg, static_cast<uint32_t>(heapBase));
+      }
+
+   // Loop start
+   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, loopLabel);
+
+   // Init 2nd dim element's class
+   generateRXInstruction(cg, use64BitClasses ? TR::InstOpCode::STG : TR::InstOpCode::ST, node, componentClassReg, generateS390MemoryReference(temp2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
+
+   // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
+   TR::Register *temp3Reg = cg->allocateRegister();
+   if (comp->target().is64Bit() && comp->useCompressedPointers())
+      {
+      int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
+      generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, temp3Reg, temp2Reg);
+
+      if (heapBase != 0)
+         {
+         if (useRegForHeapBase)
+            {
+            generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, temp3Reg, secondDimLenReg);
+            }
+         else
+            {
+            generateRILInstruction(cg, TR::InstOpCode::getSubtractLogicalImmOpCode(), node, temp3Reg, static_cast<int32_t>(heapBase));
+            }
+         }
+      if (shiftAmount != 0)
+         {
+         generateRSInstruction(cg, comp->target().is64Bit() ? TR::InstOpCode::SRAG : TR::InstOpCode::SRAK, node, temp3Reg, temp3Reg, shiftAmount);
+         }
+      generateRXInstruction(cg, TR::InstOpCode::ST, node, temp3Reg, generateS390MemoryReference(temp1Reg, 0, cg));
+      }
+   else
+      {
+      generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, temp2Reg, generateS390MemoryReference(temp1Reg, 0, cg));
+      }
+
+   // Advance cursors temp1 and temp2. Then branch back or fall through if done.
+   generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, temp2Reg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes());
+   generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, temp1Reg, elementSize);
+
+   generateRILInstruction(cg, TR::InstOpCode::getSubtractLogicalImmOpCode(), node, firstDimLenReg, 1);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRZ, node, loopLabel);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+   TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0,10,cg);
+   dependencies->addPostCondition(dimReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(secondDimLenReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(firstDimLenReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(targetReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(dimsPtrReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(temp1Reg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(classReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(componentClassReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(temp2Reg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(temp3Reg, TR::RealRegister::AssignAny);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, oolJumpLabel);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, oolFailLabel);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionEnd, dependencies);
+
+   TR::Register *targetRegisterFinal = cg->allocateCollectedReferenceRegister();
+   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, targetRegisterFinal, targetReg);
+
+   // Generate the OOL code before final bookkeeping.
+   TR_S390OutOfLineCodeSection *outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(oolFailLabel, cFlowRegionEnd, cg);
+   cg->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
+   outlinedSlowPath->swapInstructionListsWithCompilation();
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, oolFailLabel);
+
    TR::ILOpCodes opCode = node->getOpCodeValue();
    TR::Node::recreate(node, TR::acall);
-   TR::Register * targetRegister = directCallEvaluator(node, cg);
+   TR::Register *targetReg2 = TR::TreeEvaluator::performCall(node, false, cg);
    TR::Node::recreate(node, opCode);
-   return targetRegister;
-   }
 
+   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, targetReg, targetReg2);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+   outlinedSlowPath->swapInstructionListsWithCompilation();
+
+   // Note: We don't decrement the ref count node's children here (i.e. cg->decReferenceCount(node->getFirstChild())) because it is done by the performCall in the OOL code above.
+   // Doing so here would end up double decrementing the children nodes' ref count.
+
+   cg->stopUsingRegister(targetReg);
+   cg->stopUsingRegister(firstDimLenReg);
+   cg->stopUsingRegister(secondDimLenReg);
+   cg->stopUsingRegister(temp1Reg);
+   cg->stopUsingRegister(temp2Reg);
+   cg->stopUsingRegister(temp3Reg);
+   cg->stopUsingRegister(componentClassReg);
+
+   node->setRegister(targetRegisterFinal);
+   return targetRegisterFinal;
+   }
 
 TR::Register *
 J9::Z::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg)

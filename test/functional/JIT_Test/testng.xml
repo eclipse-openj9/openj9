@@ -46,6 +46,7 @@
       <class name="jit.test.jitt.array.intArrayLoadStore"/>
       <class name="jit.test.jitt.array.intArrayLoadStoreConstIndices"/>
       <class name="jit.test.jitt.array.shortArrayLoadStore"/>
+      <class name="jit.test.jitt.array.multianewarray"/>
     </classes>
   </test>
   <test name="assemblerTest">
