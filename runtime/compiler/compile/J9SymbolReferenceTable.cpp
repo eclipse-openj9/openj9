@@ -467,24 +467,12 @@ J9::SymbolReferenceTable::findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbo
 
 
 TR::SymbolReference *
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-J9::SymbolReferenceTable::findOrCreateCallSiteTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t callSiteIndex, bool isMemberNameObject)
-#else
 J9::SymbolReferenceTable::findOrCreateCallSiteTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t callSiteIndex)
-#endif
    {
    TR::SymbolReference *symRef;
    TR_SymRefIterator i(aliasBuilder.callSiteTableEntrySymRefs(), self());
-   TR_ResolvedJ9Method *owningMethod = static_cast<TR_ResolvedJ9Method*>(owningMethodSymbol->getResolvedMethod());
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-   void * entryLocation = NULL;
-   if (!isMemberNameObject)
-      entryLocation = owningMethod->appendixAddressFromInvokeDynamicSideTable(callSiteIndex);
-   else
-      entryLocation = owningMethod->memberNameAddressFromInvokeDynamicSideTable(callSiteIndex);
-#else
+   TR_ResolvedMethod *owningMethod = owningMethodSymbol->getResolvedMethod();
    void *entryLocation = owningMethod->callSiteTableEntryAddress(callSiteIndex);
-#endif
    for (symRef = i.getNext(); symRef; symRef = i.getNext())
       if (  owningMethodSymbol->getResolvedMethodIndex() == symRef->getOwningMethodIndex()
          && symRef->getSymbol()->castToStaticSymbol()->getStaticAddress() == entryLocation)
@@ -502,7 +490,11 @@ J9::SymbolReferenceTable::findOrCreateCallSiteTableEntrySymbol(TR::ResolvedMetho
       {
       TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
       if (knot)
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+         knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)entryLocation, true);
+#else
          knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)entryLocation);
+#endif
       }
 
    symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1,
@@ -520,26 +512,13 @@ J9::SymbolReferenceTable::findOrCreateCallSiteTableEntrySymbol(TR::ResolvedMetho
    return symRef;
    }
 
-
 TR::SymbolReference *
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-J9::SymbolReferenceTable::findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool isMemberNameObject)
-#else
 J9::SymbolReferenceTable::findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
-#endif
    {
    TR::SymbolReference *symRef;
    TR_SymRefIterator i(aliasBuilder.methodTypeTableEntrySymRefs(), self());
-   TR_ResolvedJ9Method *owningMethod = static_cast<TR_ResolvedJ9Method*>(owningMethodSymbol->getResolvedMethod());
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-   void * entryLocation = NULL;
-   if (!isMemberNameObject)
-      entryLocation = owningMethod->appendixAddressFromInvokeHandleSideTable(cpIndex);
-   else
-      entryLocation = owningMethod->memberNameAddressFromInvokeHandleSideTable(cpIndex);
-#else
+   TR_ResolvedMethod *owningMethod = owningMethodSymbol->getResolvedMethod();
    void *entryLocation = owningMethod->methodTypeTableEntryAddress(cpIndex);
-#endif
    for (symRef = i.getNext(); symRef; symRef = i.getNext())
       if (  owningMethodSymbol->getResolvedMethodIndex() == symRef->getOwningMethodIndex()
          && symRef->getSymbol()->castToStaticSymbol()->getStaticAddress() == entryLocation)
@@ -556,11 +535,15 @@ J9::SymbolReferenceTable::findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMet
       {
       TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
       if (knot)
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+         knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)entryLocation, true);
+#else
          knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)entryLocation);
+#endif
       }
 
    symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1,
-                                                    isUnresolved ? _numUnresolvedSymbols++ : 0);
+                                                    (isUnresolved ? _numUnresolvedSymbols++ : 0), knownObjectIndex);
 
    if (isUnresolved)
       {
@@ -573,6 +556,23 @@ J9::SymbolReferenceTable::findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMet
    aliasBuilder.methodTypeTableEntrySymRefs().set(symRef->getReferenceNumber());
    return symRef;
    }
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+TR::SymbolReference *
+J9::SymbolReferenceTable::refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::ResolvedMethodSymbol * owningMethodSymbol,  TR::SymbolReference * originalSymRef, uintptr_t arrayElementRef)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+   TR::VMAccessCriticalSection invokeCacheEntry(comp());
+   TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+   if (!knot) return originalSymRef;
+   TR_ResolvedJ9Method *owningMethod = static_cast<TR_ResolvedJ9Method*>(owningMethodSymbol->getResolvedMethod());
+   TR::KnownObjectTable::Index arrayElementKnotIndex = TR::KnownObjectTable::UNKNOWN;
+   arrayElementKnotIndex = knot->getOrCreateIndex(arrayElementRef, true);
+   TR::SymbolReference *newRef = findOrCreateSymRefWithKnownObject(originalSymRef, arrayElementKnotIndex);
+   return newRef;
+   }
+
+#endif
 
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateVarHandleMethodTypeTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)

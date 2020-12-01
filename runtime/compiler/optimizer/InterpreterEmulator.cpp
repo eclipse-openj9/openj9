@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -611,17 +611,24 @@ InterpreterEmulator::visitInvokedynamic()
    TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-   if (owningMethod->isUnresolvedCallSiteTableEntry(callSiteIndex)) return;
-
-   // add appendix object to knot and push to stack
-   if (knot) push(new (trStackMemory()) KnownObjOperand(knot->getOrCreateIndexAt((uintptr_t *)owningMethod->appendixAddressFromInvokeDynamicSideTable(callSiteIndex))));
-   else pushUnknownOperand();
-
+   if (owningMethod->isUnresolvedCallSiteTableEntry(callSiteIndex) || comp()->compileRelocatableCode()) return; // do nothing if unresolved or is AOT
    TR_J9VMBase *fej9 = comp()->fej9();
+   // add appendix object to knot and push to stack if emulator is initialized with state
+   if (_iteratorWithState)
+      {
+      if (knot)
+         {
+         TR::VMAccessCriticalSection vmAccess(fej9);
+         push(new (trStackMemory()) KnownObjOperand(knot->getOrCreateIndex((uintptr_t )owningMethod->appendixElementRefFromInvokeDynamicSideTable(callSiteIndex), true)));
+         }
+      else
+         pushUnknownOperand();
+      }
+
    TR_OpaqueMethodBlock* targetMethodObj = 0;
       {
       TR::VMAccessCriticalSection vmAccess(fej9);
-      targetMethodObj = fej9->targetMethodFromMemberName((uintptr_t) *((uintptr_t *)owningMethod->memberNameAddressFromInvokeDynamicSideTable(callSiteIndex)));
+      targetMethodObj = fej9->targetMethodFromMemberName((uintptr_t) owningMethod->memberNameElementRefFromInvokeDynamicSideTable(callSiteIndex));
       }
    TR_ResolvedMethod * targetMethod = fej9->createResolvedMethod(this->trMemory(), targetMethodObj, owningMethod);
 
@@ -676,18 +683,26 @@ InterpreterEmulator::visitInvokehandle()
    int32_t cpIndex = next2Bytes();
    TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
 
-   if (owningMethod->isUnresolvedMethodTypeTableEntry(cpIndex)) return; // unresolved
-
-   // add appendix object to knot and push to stack
-   TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-   if (knot) push(new (trStackMemory()) KnownObjOperand(knot->getOrCreateIndexAt((uintptr_t *)owningMethod->appendixAddressFromInvokeHandleSideTable(cpIndex))));
-   else pushUnknownOperand();
-
+   if (owningMethod->isUnresolvedMethodTypeTableEntry(cpIndex) || comp()->compileRelocatableCode()) return; // do nothing if unresolved or is AOT
    TR_J9VMBase *fej9 = comp()->fej9();
+
+   // add appendix object to knot and push to stack if emulator is initialized with state
+   if (_iteratorWithState)
+      {
+      TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+      if (knot)
+         {
+         TR::VMAccessCriticalSection vmAccess(fej9);
+         push(new (trStackMemory()) KnownObjOperand(knot->getOrCreateIndex((uintptr_t) owningMethod->appendixElementRefFromInvokeHandleSideTable(cpIndex), true)));
+         }
+      else
+         pushUnknownOperand();
+      }
+
    TR_OpaqueMethodBlock * targetMethodObj = 0;
       {
       TR::VMAccessCriticalSection vmAccess(fej9);
-      targetMethodObj = fej9->targetMethodFromMemberName((uintptr_t) *((uintptr_t *)owningMethod->memberNameAddressFromInvokeHandleSideTable(cpIndex)));
+      targetMethodObj = fej9->targetMethodFromMemberName((uintptr_t) owningMethod->memberNameElementRefFromInvokeHandleSideTable(cpIndex));
       }
    TR_ResolvedMethod * targetMethod = fej9->createResolvedMethod(this->trMemory(), targetMethodObj, owningMethod);
 

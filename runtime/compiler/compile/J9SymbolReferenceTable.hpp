@@ -108,12 +108,20 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex);
    TR::SymbolReference * findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, char *signature);
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-   TR::SymbolReference * findOrCreateCallSiteTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t callSiteIndex, bool isMemberNameObject = false);
-   TR::SymbolReference * findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool isMemberNameObject = false);
-#else
+   /**
+    * \brief
+    *    Refines invokeCache element symRef with known object index for invokehandle and invokedynamic bytecode
+    *
+    * \param owningMethodSymbol the owning method symbol
+    * \param originalSymRef the original symref to refine
+    * \param arrayElementRef the array element ref
+    * \return TR::SymbolReference* the refined symRef
+    */
+   TR::SymbolReference * refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::ResolvedMethodSymbol * owningMethodSymbol,  TR::SymbolReference * originalSymRef, uintptr_t arrayElementRef);
+
+#endif
    TR::SymbolReference * findOrCreateCallSiteTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t callSiteIndex);
    TR::SymbolReference * findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex);
-#endif
    TR::SymbolReference * findOrCreateVarHandleMethodTypeTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex);
    TR::SymbolReference * methodSymRefWithSignature(TR::SymbolReference *original, char *effectiveSignature, int32_t effectiveSignatureLength);
    TR::SymbolReference * findOrCreateTypeCheckArrayStoreSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);

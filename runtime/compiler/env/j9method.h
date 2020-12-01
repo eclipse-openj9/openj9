@@ -533,36 +533,36 @@ public:
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    /**
-    * \brief Get member name object address from invokeDynamic side table
+    * \brief Get member name object ref from invokeCacheArray entry in the invokeDynamic side table
     *
     * \param callSiteIndex the call site index
-    * \return void * the member name object address
+    * \return void * the member name object element ref
     */
-   void * memberNameAddressFromInvokeDynamicSideTable(int32_t callSiteIndex);
+   void * memberNameElementRefFromInvokeDynamicSideTable(int32_t callSiteIndex);
 
    /**
-    * \brief Get appendix object address from invokeDynamic side table
+    * \brief Get appendix object ref from invokeCacheArray entry in the invokeDynamic side table
     *
     * \param callSiteIndex the call site index
-    * \return void * the appendix object address
+    * \return void * the appendix object element ref
     */
-   void * appendixAddressFromInvokeDynamicSideTable(int32_t callSiteIndex);
+   void * appendixElementRefFromInvokeDynamicSideTable(int32_t callSiteIndex);
 
    /**
-    * \brief Get member name object address from invokeHandle side table
+    * \brief Get member name object ref from invokeCacheArray entry in the invokeHandle side table
     *
     * \param cpIndex the CP index
-    * \return void * the member name object address
+    * \return void * the member name object element ref
     */
-   void * memberNameAddressFromInvokeHandleSideTable(int32_t cpIndex);
+   void * memberNameElementRefFromInvokeHandleSideTable(int32_t cpIndex);
 
    /**
-    * \brief Get appendix object address from invokeHandle side table
+    * \brief Get appendix object ref from invokeCacheArray entry in the invokeHandle side table
     *
     * \param cpIndex the CP index
-    * \return void * the appendix object address
+    * \return void * the appendix object element ref
     */
-   void * appendixAddressFromInvokeHandleSideTable(int32_t cpIndex);
+   void * appendixElementRefFromInvokeHandleSideTable(int32_t cpIndex);
 #endif
 
 protected:
