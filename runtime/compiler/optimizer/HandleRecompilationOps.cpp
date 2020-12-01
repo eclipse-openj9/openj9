@@ -189,6 +189,16 @@ TR_HandleRecompilationOps::visitTree(TR::TreeTop *currTree)
             cleanupTT = nextTT;
             }
 
+         TR::Block *currBlock = currTree->getEnclosingBlock();
+         TR::CFG *cfg = comp()->getFlowGraph();
+
+         // Inserting an unconditional branch at the end of the current block,
+         // so existing successors should be removed from the CFG
+         for (auto nextEdge = currBlock->getSuccessors().begin(); nextEdge != currBlock->getSuccessors().end();)
+            {
+            cfg->removeEdge(*(nextEdge++));
+            }
+
          if (!_methodSymbol->induceOSRAfterAndRecompile(currTree, node->getByteCodeInfo(), branchTT, false, 0, &lastTT))
             {
             if (trace())
