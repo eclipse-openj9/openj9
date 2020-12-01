@@ -574,18 +574,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->hasFinalFieldsInClass(clazz));
          }
          break;
-      case MessageType::VM_getClassNameSignatureFromMethod:
-         {
-         auto recv = client->getRecvData<J9Method*>();
-         J9Method *method = std::get<0>(recv);
-         J9UTF8 *className, *name, *signature;
-         getClassNameSignatureFromMethod(method, className, name, signature);
-         std::string classNameStr(utf8Data(className), J9UTF8_LENGTH(className));
-         std::string nameStr(utf8Data(name), J9UTF8_LENGTH(name));
-         std::string signatureStr(utf8Data(signature), J9UTF8_LENGTH(signature));
-         client->write(response, classNameStr, nameStr, signatureStr);
-         }
-         break;
       case MessageType::VM_getHostClass:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
