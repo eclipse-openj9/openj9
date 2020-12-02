@@ -3220,7 +3220,7 @@ remoteCompile(
          }
       catch (const JITServer::StreamFailure &e)
          {
-         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
+         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo);
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
                "JITServer::StreamFailure: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
@@ -3322,7 +3322,7 @@ remoteCompile(
          {
          auto recv = client->getRecvData<std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>,
                                          std::string, std::string, std::vector<TR_ResolvedJ9Method*>,
-                                         TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>>();
+                                         TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>, bool>();
          statusCode = compilationOK;
          codeCacheStr = std::get<0>(recv);
          dataCacheStr = std::get<1>(recv);
@@ -3333,6 +3333,8 @@ remoteCompile(
          resolvedMirrorMethodsPersistIPInfo = std::get<6>(recv);
          modifiedOptPlan = std::get<7>(recv);
          serializedRuntimeAssumptions = std::get<8>(recv);
+
+         compInfoPT->getCompilationInfo()->setServerHasLowPhysicalMemory(std::get<9>(recv));
          }
       else
          {
@@ -3355,7 +3357,7 @@ remoteCompile(
       }
    catch (const JITServer::StreamFailure &e)
       {
-      JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
+      JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo);
 
       client->~ClientStream();
       TR_Memory::jitPersistentFree(client);

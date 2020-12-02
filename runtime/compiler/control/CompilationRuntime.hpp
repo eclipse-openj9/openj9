@@ -1048,6 +1048,9 @@ public:
    void  addJITServerSslCert(const std::string &cert) { _sslCerts.push_back(cert); }
    const std::string &getJITServerSslRootCerts() const { return _sslRootCerts; }
    void  setJITServerSslRootCerts(const std::string &cert) { _sslRootCerts = cert; }
+
+   bool serverHasLowPhysicalMemory() const { return _serverHasLowPhysicalMemory; }
+   void setServerHasLowPhysicalMemory(bool isLowMemory) { _serverHasLowPhysicalMemory = isLowMemory; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static void replenishInvocationCount(J9Method* method, TR::Compilation* comp);
@@ -1265,6 +1268,7 @@ private:
    std::string                   _sslRootCerts;
    PersistentVector<std::string> _sslKeys;
    PersistentVector<std::string> _sslCerts;
+   bool _serverHasLowPhysicalMemory;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }; // CompilationInfo
 }

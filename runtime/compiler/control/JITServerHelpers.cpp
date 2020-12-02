@@ -613,7 +613,7 @@ JITServerHelpers::romMethodOfRamMethod(J9Method* method)
    }
 
 void
-JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary)
+JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::CompilationInfo *compInfo)
    {
    OMR::CriticalSection postStreamFailure(getClientStreamMonitor());
 
@@ -625,6 +625,10 @@ JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary)
       }
    _nextConnectionRetryTime = current_time + _waitTimeMs;
    _serverAvailable = false;
+
+   // Reset the low memory flag in case we never reconnect to the server
+   // and client compiles locally or connects to a new server
+   compInfo->setServerHasLowPhysicalMemory(false);
    }
 
 void
