@@ -2944,7 +2944,7 @@ J9::Z::TreeEvaluator::anewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg
 TR::Register *
 J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   static char *useDirectHelperCall = feGetEnv("TR_MultiANewArrayEvaluatorUseDirectCall");
+   bool useDirectHelperCall = true;
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = static_cast<TR_J9VMBase *>(comp->fe());
    TR::Register *targetReg = cg->allocateRegister();
@@ -2952,6 +2952,17 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    TR::Node *firstChild = node->getFirstChild();
    TR::Node *secondChild = node->getSecondChild();
    TR::Node *thirdChild = node->getThirdChild();
+
+   // Disable inlined evaluator due to defect
+   if (useDirectHelperCall)
+      {
+      traceMsg(cg->comp(), "multianewArrayEvaluator - More than 2 dimensions, so we can't handle this scenario in JITT'ed code\n");
+      TR::ILOpCodes opCode = node->getOpCodeValue();
+      TR::Node::recreate(node, TR::acall);
+      TR::Register *helperTargetReg = TR::TreeEvaluator::performCall(node, false, cg);
+      TR::Node::recreate(node, opCode);
+      return helperTargetReg;
+      }
 
    TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
    TR::LabelSymbol *nonZeroFirstDimLabel = generateLabelSymbol(cg);
