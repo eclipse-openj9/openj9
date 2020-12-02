@@ -431,11 +431,15 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
-	/*[IF JAVA_SPEC_VERSION >= 16]*/
+/*[IF JAVA_SPEC_VERSION >= 16]*/
 	public void bindToLoader(ModuleLayer ml, ClassLoader cl) {
 		ml.bindToLoader(cl);
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
+
+	public void addExports(Module fromModule, String pkg) {
+		fromModule.implAddExports(pkg);
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 /*[ENDIF] Sidecar19-SE */
 }
