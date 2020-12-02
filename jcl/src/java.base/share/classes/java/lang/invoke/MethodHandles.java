@@ -162,14 +162,20 @@ public class MethodHandles {
 		 */
 		public static final int UNCONDITIONAL = 0x20;
 		/*[ENDIF] Sidecar19-SE*/
-		
-		static final int INTERNAL_PRIVILEGED = 0x40;
 
-		/*[IF Sidecar19-SE-OpenJ9]
+		static final int INTERNAL_PRIVILEGED = 0x80;
+
+		/*[IF JAVA_SPEC_VERSION >= 16]*/
+		public static final int ORIGINAL = 0x40;
+
+		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE | MODULE | ORIGINAL;
+		/*[ELSE] JAVA_SPEC_VERSION >= 16*/
+		/*[IF Sidecar19-SE-OpenJ9]*/
 		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE | MODULE;
 		/*[ELSE]*/
 		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE;
 		/*[ENDIF] Sidecar19-SE-OpenJ9*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
 		
 		private static final int NO_ACCESS = 0;
 		
@@ -2358,6 +2364,41 @@ public class MethodHandles {
 			ClassDefiner definer = classDefiner(bytes, classOptions);
 			return new Lookup(definer.defineClass(initOption));
 		}
+		
+		/*[IF JAVA_SPEC_VERSION >= 16]*/
+		/**
+		 * Constructs a new hidden class from an array of class file bytes.
+		 * Equivalent to defineHiddenClass(bytes, true, classOptions).
+		 * 
+		 * @param bytes the class file bytes of the hidden class to be defined.
+		 * @param classData the classData to be stored in the hidden class.
+		 * @param initOption whether to initialize the hidden class.
+		 * @param classOptions the {@link ClassOption} to define the hidden class.
+		 * 
+		 * @return A Lookup object of the newly created hidden class.
+		 * @throws IllegalAccessException if this Lookup does not have full privilege access.
+		 */
+		public Lookup defineHiddenClassWithClassData(byte[] bytes, Object classData, boolean initOption, ClassOption... classOptions) throws IllegalAccessException {
+			ClassDefiner definer = classDefiner(bytes, classOptions);
+			return new Lookup(definer.defineClass(initOption, classData));
+		}
+		/*[ELSE] JAVA_SPEC_VERSION >= 16*/
+		/**
+		 * Constructs a new hidden class from an array of class file bytes.
+		 * Equivalent to defineHiddenClass(bytes, true, classOptions).
+		 * 
+		 * @param bytes the class file bytes of the hidden class to be defined.
+		 * @param classData the classData to be stored in the hidden class.
+		 * @param classOptions the {@link ClassOption} to define the hidden class.
+		 * 
+		 * @return A Lookup object of the newly created hidden class.
+		 * @throws IllegalAccessException if this Lookup does not have full privilege access.
+		 */
+		Lookup defineHiddenClassWithClassData(byte[] bytes, Object classData, ClassOption... classOptions) throws IllegalAccessException {
+			ClassDefiner definer = classDefiner(bytes, classOptions);
+			return new Lookup(definer.defineClass(true, classData));
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
 		
 		/**
 		 * Constructs a new hidden class from an array of class file bytes.
