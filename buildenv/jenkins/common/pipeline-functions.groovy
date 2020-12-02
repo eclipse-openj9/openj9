@@ -423,14 +423,14 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             def testJobName = get_test_job_name(id, SPEC, SDK_VERSION, BUILD_IDENTIFIER)
 
             def PARALLEL = "None"
-            if (testJobName.contains("special.system")) {
-                PARALLEL = "Subdir"
-            }
 
             def NUM_MACHINES = ""
-            if (testJobName.contains("functional")) {
+            if (testJobName.contains("functional") || testJobName.contains("sanity.system") || testJobName.contains("extended.system")) {
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "2"
+            } else if (testJobName.contains("special.system")) {
+                PARALLEL = "Dynamic"
+                NUM_MACHINES = "5"
             } else if (testJobName.contains("jck_s390x_zos")) {
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "4"
