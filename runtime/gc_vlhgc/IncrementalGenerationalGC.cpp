@@ -804,6 +804,11 @@ MM_IncrementalGenerationalGC::taxationEntryPoint(MM_EnvironmentBase *envModron, 
 	bool doGlobalMarkPhase = false;
 	_schedulingDelegate.getIncrementWork(env, &doPartialGarbageCollection, &doGlobalMarkPhase);
 	Assert_MM_true(doPartialGarbageCollection != doGlobalMarkPhase);
+	Assert_MM_true(0 == _configuredSubspace->getBytesRemainingBeforeTaxation());
+
+	/* Accumulate allocated bytes since last PGC */
+	_configuredSubspace->setBytesRemainingBeforeTaxation(_taxationThreshold);
+	_allocatedSinceLastPGC += _taxationThreshold;
 
 	/* Report the start of the increment */
 	_extensions->globalVLHGCStats.incrementCount += 1;
@@ -871,15 +876,6 @@ MM_IncrementalGenerationalGC::taxationEntryPoint(MM_EnvironmentBase *envModron, 
 
 	/* Set the next threshold for collection work */
 	_taxationThreshold = _schedulingDelegate.getNextTaxationThreshold(env);
-	_configuredSubspace->setBytesRemainingBeforeTaxation(_taxationThreshold);
-
-	if (doPartialGarbageCollection) {
-		_allocatedSinceLastPGC = _taxationThreshold;
-	} else {
-		_allocatedSinceLastPGC += _taxationThreshold;
-	}
-
-	incrementRegionAges(env, _taxationThreshold, doPartialGarbageCollection);
 
 	/* Report the end of the increment */
 	if (J9_EVENT_IS_HOOKED(_extensions->privateHookInterface, J9HOOK_MM_PRIVATE_TAROK_INCREMENT_END)) {
@@ -1000,6 +996,8 @@ MM_IncrementalGenerationalGC::runGlobalMarkPhaseIncrement(MM_EnvironmentVLHGC *e
 		env->_cycleState->_workPackets = NULL;
 		env->_cycleState->_currentIncrement = 0;
 	}
+
+	incrementRegionAges(env, _taxationThreshold, false);
 
 	/* If the GMP is no longer running, then we have run the final increment of the cycle. */
 	Assert_MM_true(0 == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats.getStallTime());
@@ -1249,10 +1247,15 @@ MM_IncrementalGenerationalGC::partialGarbageCollect(MM_EnvironmentVLHGC *env, MM
 
 	env->_cycleState->_externalCycleState = NULL;
 
+	incrementRegionAges(env, _taxationThreshold, true);
+
 	reportGCCycleFinalIncrementEnding(env);
 	reportGCIncrementEnd(env);
 	reportPGCEnd(env);
 	reportGCCycleEnd(env);
+
+	/* Reset amount allocated for next PGC */
+	_allocatedSinceLastPGC = 0;
 
 	_extensions->allocationStats.clear();
 }
