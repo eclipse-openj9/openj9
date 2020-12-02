@@ -937,8 +937,11 @@ old_fast_jitLoadFlattenableArrayElement(J9VMThread *currentThread)
 		goto slow;
 	}
 	value = (j9object_t) currentThread->javaVM->internalVMFunctions->loadFlattenableArrayElement(currentThread, arrayObject, index, true);
-	if (J9_UNEXPECTED(NULL == value)) {
-		goto slow;
+	if (NULL == value) {
+		J9ArrayClass *arrayObjectClass = (J9ArrayClass *)J9OBJECT_CLAZZ(currentThread, arrayObject);
+		if (J9_IS_J9CLASS_VALUETYPE(arrayObjectClass->componentType)) {
+			goto slow;
+		}
 	}
 	JIT_RETURN_UDATA(value);
 done:
@@ -956,8 +959,8 @@ old_slow_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 {
 	SLOW_JIT_HELPER_PROLOGUE();
 	j9object_t arrayref = (j9object_t)currentThread->floatTemp1;
-	j9object_t value = (j9object_t)currentThread->floatTemp2;
-	U_32 index = *(U_32 *)&currentThread->floatTemp3;
+	U_32 index = *(U_32 *)&currentThread->floatTemp2;
+	j9object_t value = (j9object_t)currentThread->floatTemp3;
 	U_32 arrayLength = 0;
 	void *addr = NULL;
 	buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
@@ -972,7 +975,7 @@ old_slow_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, NULL);
 			} else {
 				J9ArrayClass *arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(currentThread, arrayref);
-				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);;
+				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 			}
 		}
 	}
@@ -985,8 +988,9 @@ old_fast_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 {
 	OLD_JIT_HELPER_PROLOGUE(3);
 	DECLARE_JIT_PARM(j9object_t, arrayref, 1);
-	DECLARE_JIT_PARM(j9object_t, value, 2);
-	DECLARE_JIT_PARM(U_32, index, 3);
+	DECLARE_JIT_PARM(U_32, index, 2);
+	DECLARE_JIT_PARM(j9object_t, value, 3);
+
 	bool slowPathUsed = false;
 	void *slowPath = NULL;
 	U_32 arrayLength = 0;
@@ -1011,8 +1015,8 @@ done:
 slow:
 	slowPathUsed = true;
 	currentThread->floatTemp1 = (void *)arrayref;
-	currentThread->floatTemp2 = (void *)value;
-	currentThread->floatTemp3 = *(void **)&index;
+	currentThread->floatTemp2 = *(void **)&index;
+	currentThread->floatTemp3 = (void *)value;
 	slowPath = (void*)old_slow_jitStoreFlattenableArrayElement;
 	goto done;
 }
