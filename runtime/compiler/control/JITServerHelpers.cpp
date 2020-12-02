@@ -78,7 +78,7 @@ struct ROMClassPackContext
       return (address >= romClass) && (address < (uint8_t *)romClass + _origSize);
       }
 
-   typedef void (*Callback)(const J9ROMClass *, const J9SRP *, ROMClassPackContext &);
+   typedef void (*Callback)(const J9ROMClass *, const J9SRP *, const char *, ROMClassPackContext &);
 
    const size_t _origSize;
    Callback _callback;
@@ -93,12 +93,21 @@ struct ROMClassPackContext
    uint8_t *_cursor;
    };
 
+static bool
+shouldSkipSlot(const char *slotName)
+   {
+   // Skip variable names and signatures in method debug info; only their slot names have prefix "variable"
+   static const char prefix[] = "variable";
+   return strncmp(slotName, prefix, sizeof(prefix) - 1) == 0;
+   }
+
 // Updates size info and maps original string to its future location in the packed ROMClass
 static void
-sizeInfoCallback(const J9ROMClass *romClass, const J9SRP *origSrp, ROMClassPackContext &ctx)
+sizeInfoCallback(const J9ROMClass *romClass, const J9SRP *origSrp, const char *slotName, ROMClassPackContext &ctx)
    {
-   // Skip SRPs stored outside of the ROMClass bounds such as the ones in out-of-line method debug info
-   bool skip = !ctx.isInline(origSrp, romClass);
+   // Skip SRPs stored outside of the ROMClass bounds such as the ones in out-of-line
+   // method debug info, and the ones that point to strings not used by the JIT.
+   bool skip = !ctx.isInline(origSrp, romClass) || shouldSkipSlot(slotName);
    auto str = NNSRP_PTR_GET(origSrp, const J9UTF8 *);
    auto it = ctx._strToOffsetMap.find(str);
    if (it != ctx._strToOffsetMap.end())// duplicate - already visited
@@ -126,7 +135,7 @@ sizeInfoCallback(const J9ROMClass *romClass, const J9SRP *origSrp, ROMClassPackC
 
 // Copies original string into its location in the packed ROMClass and updates the SRP to it
 static void
-packCallback(const J9ROMClass *romClass, const J9SRP *origSrp, ROMClassPackContext &ctx)
+packCallback(const J9ROMClass *romClass, const J9SRP *origSrp, const char *slotName, ROMClassPackContext &ctx)
    {
    // Skip SRPs stored outside of the ROMClass bounds such as the ones in out-of-line method debug info
    if (!ctx.isInline(origSrp, romClass))
@@ -135,8 +144,17 @@ packCallback(const J9ROMClass *romClass, const J9SRP *origSrp, ROMClassPackConte
    auto str = NNSRP_PTR_GET(origSrp, const J9UTF8 *);
    auto srp = (J9SRP *)((uint8_t *)ctx._packedRomClass + ((uint8_t *)origSrp - (uint8_t *)romClass));
 
+   // Zero out skipped string SRPs
+   if (shouldSkipSlot(slotName))
+      {
+      TR_ASSERT(ctx._strToOffsetMap.find(str) != ctx._strToOffsetMap.end(),
+                "UTF8 slot %s not visited in 1st pass", slotName);
+      *srp = 0;
+      return;
+      }
+
    auto it = ctx._strToOffsetMap.find(str);
-   TR_ASSERT(it != ctx._strToOffsetMap.end(), "UTF8 slot not visited in 1st pass");
+   TR_ASSERT(it != ctx._strToOffsetMap.end(), "UTF8 slot %s not visited in 1st pass", slotName);
    auto dst = (uint8_t *)ctx._packedRomClass + (ctx._utf8SectionStart - (uint8_t *)romClass) + it->second;
 
    NNSRP_PTR_SET(srp, dst);
@@ -147,11 +165,11 @@ packCallback(const J9ROMClass *romClass, const J9SRP *origSrp, ROMClassPackConte
    }
 
 static void
-utf8SlotCallback(const J9ROMClass *romClass, const J9SRP *srp, void *userData)
+utf8SlotCallback(const J9ROMClass *romClass, const J9SRP *srp, const char *slotName, void *userData)
    {
    auto &ctx = *(ROMClassPackContext *)userData;
    if (*srp)
-      ctx._callback(romClass, srp, ctx);
+      ctx._callback(romClass, srp, slotName, ctx);
    }
 
 // Invoked for each slot in a ROMClass. Calls ctx._callback for all non-null SRPs to UTF8 strings.
@@ -161,14 +179,14 @@ slotCallback(J9ROMClass *romClass, uint32_t slotType, void *slotPtr, const char 
    switch (slotType)
       {
       case J9ROM_UTF8:
-         utf8SlotCallback(romClass, (const J9SRP *)slotPtr, userData);
+         utf8SlotCallback(romClass, (const J9SRP *)slotPtr, slotName, userData);
          break;
 
       case J9ROM_NAS:
          if (auto nas = SRP_PTR_GET(slotPtr, const J9ROMNameAndSignature *))
             {
-            utf8SlotCallback(romClass, &nas->name, userData);
-            utf8SlotCallback(romClass, &nas->signature, userData);
+            utf8SlotCallback(romClass, &nas->name, slotName, userData);
+            utf8SlotCallback(romClass, &nas->signature, slotName, userData);
             }
          break;
       }
