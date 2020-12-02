@@ -1190,7 +1190,8 @@ allSlotsInMethodDebugInfoDo(J9ROMClass* romClass, U_32* cursor, J9ROMClassWalkCa
 	}
 
 	/* check for low tag to indicate inline or out of line debug information */
-	if (1 == (*cursor & 1)) {
+	BOOLEAN isInline = (1 == (*cursor & 1));
+	if (isInline) {
 		methodDebugInfo = (J9MethodDebugInfo *)cursor;
 		/* set the inline size to stored size in terms of U_32
 		 * NOTE: stored size is aligned
@@ -1201,17 +1202,17 @@ allSlotsInMethodDebugInfoDo(J9ROMClass* romClass, U_32* cursor, J9ROMClassWalkCa
 	}
 
 	rangeValid = callbacks->validateRangeCallback(romClass, methodDebugInfo, sizeof(J9MethodDebugInfo), userData);
-	if (FALSE == rangeValid
-	  /* if not low tagged skip walking the debug info since it is out of line and linear walker doesn't deal with out
-	   * of line data very well */
-	  || (0 == (*cursor & 1))) {
-		if ( inlineSize == 1 ) {
+	if ((FALSE == rangeValid) || (FALSE == isInline)) {
+		if (1 == inlineSize) {
 			callbacks->slotCallback(romClass, J9ROM_SRP, cursor, "SRP to DebugInfo", userData);
 			callbacks->sectionCallback(romClass, cursor, inlineSize * sizeof(U_32), "methodDebugInfo", userData);
 		}
-		return inlineSize;
+		if (FALSE == rangeValid) {
+			/* linear walker will check that the range is within the ROMClass bounds
+			 * so it will skip walking the debug info if it is out of line */
+			return inlineSize;
+		}
 	}
-
 
 	callbacks->slotCallback(romClass, J9ROM_U32, &methodDebugInfo->srpToVarInfo, "SizeOfDebugInfo(low tagged)", userData);
 	callbacks->slotCallback(romClass, J9ROM_U32, &methodDebugInfo->lineNumberCount, "lineNumberCount(low tagged)", userData);
@@ -1272,7 +1273,9 @@ allSlotsInMethodDebugInfoDo(J9ROMClass* romClass, U_32* cursor, J9ROMClassWalkCa
 		}
 		callbacks->sectionCallback(romClass, variableTable, entryLength, "variableInfo", userData);
 	}
-	callbacks->sectionCallback(romClass, cursor, inlineSize * sizeof(U_32), "methodDebugInfo", userData);
+	if (isInline) { /* section callback was already called if debug info is out of line */
+		callbacks->sectionCallback(romClass, cursor, inlineSize * sizeof(U_32), "methodDebugInfo", userData);
+	}
 	return inlineSize;
 }
 
