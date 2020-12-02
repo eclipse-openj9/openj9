@@ -113,6 +113,31 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 	}
 
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+	/**
+	 * Copy bytes from value starting at srcIndex into the bytes array starting at
+	 * destIndex. No range checking is needed. Caller ensures bytes is in UTF16.
+	 * 
+	 * @param bytes copy destination
+	 * @param srcIndex index into value
+	 * @param destIndex index into bytes
+	 * @param coder LATIN1 or UTF16
+	 * @param length the number of elements to copy
+	 */
+	void getBytes(byte[] bytes, int srcIndex, int destIndex, byte coder, int length) {
+		// Check if the String is compressed
+		if (enableCompression && (null == compressionFlag || this.coder == LATIN1)) {
+			if (String.LATIN1 == coder) {
+				compressedArrayCopy(value, srcIndex, bytes, destIndex, length);
+			} else {
+				decompress(value, srcIndex, bytes, destIndex, length);
+			}
+		} else {
+			decompressedArrayCopy(value, srcIndex, bytes, destIndex, length);
+		}
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
+	
 	// no range checking, caller ensures bytes is in UTF16
 	// coder is one of LATIN1 or UTF16
 	void getBytes(byte[] bytes, int offset, byte coder) {
