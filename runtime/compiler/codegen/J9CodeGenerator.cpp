@@ -5426,10 +5426,11 @@ J9::CodeGenerator::getMonClass(TR::Node* monNode)
 TR_YesNoMaybe
 J9::CodeGenerator::isMonitorValueType(TR::Node* monNode)
    {
-   if (_monitorMapping.find(monNode->getGlobalIndex()) == _monitorMapping.end())
+   TR_OpaqueClassBlock *clazz = self()->getMonClass(monNode);
+
+   if (!clazz)
       return TR_maybe;
 
-   TR_OpaqueClassBlock *clazz = _monitorMapping[monNode->getGlobalIndex()];
    //java.lang.Object class is only set when monitor is java.lang.Object but not its subclass
    if (clazz == self()->comp()->getObjectClassPointer())
       return TR_no;
@@ -5438,6 +5439,27 @@ J9::CodeGenerator::isMonitorValueType(TR::Node* monNode)
       return TR_maybe;
 
    if (TR::Compiler->cls.isValueTypeClass(clazz))
+      return TR_yes;
+
+   return TR_no;
+   }
+
+TR_YesNoMaybe
+J9::CodeGenerator::isMonitorValueBasedOrValueType(TR::Node* monNode)
+   {
+   TR_OpaqueClassBlock *clazz = self()->getMonClass(monNode);
+
+   if (!clazz)
+      return TR_maybe;
+
+   //java.lang.Object class is only set when monitor is java.lang.Object but not its subclass
+   if (clazz == self()->comp()->getObjectClassPointer())
+      return TR_no;
+
+   if (!TR::Compiler->cls.isConcreteClass(self()->comp(), clazz))
+      return TR_maybe;
+
+   if (TR::Compiler->cls.isValueBasedOrValueTypeClass(clazz))
       return TR_yes;
 
    return TR_no;

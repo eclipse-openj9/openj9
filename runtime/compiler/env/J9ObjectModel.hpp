@@ -62,6 +62,10 @@ public:
    bool mayRequireSpineChecks();
 
    bool areValueTypesEnabled();
+   /**
+   * @brief Whether the check is enabled on monitor object being value based class type
+   */
+   bool areValueBasedMonitorChecksEnabled();
 
    int32_t sizeofReferenceField();
    bool isHotReferenceFieldRequired();

@@ -332,6 +332,16 @@ public:
     *    TR_maybe It is unknown whether the monitor object is identity type or value type
     */
    TR_YesNoMaybe isMonitorValueType(TR::Node* monNode);
+   /*
+    * \brief
+    *    Whether a monitor object is of value based class type or value type
+    *
+    * \return
+    *    TR_yes The monitor object is definitely value based class type or value type
+    *    TR_no The monitor object is definitely not value based class type or value type
+    *    TR_maybe It is unknown whether the monitor object is value based class type or value type
+    */
+   TR_YesNoMaybe isMonitorValueBasedOrValueType(TR::Node* monNode);
 
 protected:
 

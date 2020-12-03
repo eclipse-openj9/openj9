@@ -116,6 +116,22 @@ J9::ObjectModel::areValueTypesEnabled()
    }
 
 
+bool
+J9::ObjectModel::areValueBasedMonitorChecksEnabled()
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+	   return J9_ARE_ANY_BITS_SET(vmInfo->_extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION | J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING);
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   J9JavaVM * javaVM = TR::Compiler->javaVM;
+   return javaVM->internalVMFunctions->areValueBasedMonitorChecksEnabled(javaVM);
+   }
+
+
 int32_t
 J9::ObjectModel::sizeofReferenceField()
    {
