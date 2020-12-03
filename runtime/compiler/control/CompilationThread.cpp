@@ -2196,6 +2196,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                   }
             case compilationStreamMessageTypeMismatch:
             case compilationStreamVersionIncompatible:
+            case compilationStreamLostMessage:
 #endif
             case compilationInterrupted:
             case compilationCodeReservationFailure:

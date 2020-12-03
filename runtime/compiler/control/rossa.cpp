@@ -206,13 +206,13 @@ char *compilationErrorNames[]={
    "compilationAOTRelocationRecordGenerationFailure", //54
    "compilationAotPatchedCPConstant", //55
 #if defined(J9VM_OPT_JITSERVER)
-   "compilationStreamFailure", //55
-   "compilationStreamLostMessage", // 56
-   "compilationStreamMessageTypeMismatch", // 57
-   "compilationStreamVersionIncompatible", // 58
-   "compilationStreamInterrupted", // 59
+   "compilationStreamFailure", //56
+   "compilationStreamLostMessage", // 57
+   "compilationStreamMessageTypeMismatch", // 58
+   "compilationStreamVersionIncompatible", // 59
+   "compilationStreamInterrupted", // 60
 #endif /* defined(J9VM_OPT_JITSERVER) */
-   "compilationAotHasInvokeSpecialInterface", //60
+   "compilationAotHasInvokeSpecialInterface", //61
    "compilationMaxError",
 };
 

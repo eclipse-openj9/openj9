@@ -33,9 +33,9 @@
 #include "runtime/SymbolValidationManager.hpp"
 
 
-ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
-   _clientUID(clientUID), _expectedSeqNo(seqNo), _maxReceivedSeqNo(seqNo), _OOSequenceEntryList(NULL),
-   _chTable(NULL),
+ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) : 
+   _clientUID(clientUID), _expectedSeqNo(seqNo), _maxReceivedSeqNo(seqNo), _lastProcessedCriticalSeqNo(seqNo), 
+   _OOSequenceEntryList(NULL), _chTable(NULL),
    _romClassMap(decltype(_romClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _J9MethodMap(decltype(_J9MethodMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classBySignatureMap(decltype(_classBySignatureMap)::allocator_type(TR::Compiler->persistentAllocator())),
