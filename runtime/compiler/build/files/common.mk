@@ -405,6 +405,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/CompileService.cpp \
     compiler/runtime/JITClientSession.cpp \
     compiler/runtime/JITServerIProfiler.cpp \
+    compiler/runtime/JITServerROMClassHash.cpp \
     compiler/runtime/JITServerStatisticsThread.cpp \
     compiler/runtime/Listener.cpp
 endif
