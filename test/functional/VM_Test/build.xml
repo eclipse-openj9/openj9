@@ -28,6 +28,8 @@
 		Build VM_Test
 	</description>
 	<import file="${TEST_ROOT}/functional/build.xml"/>
+	<property name="LIB" value="junit4,asm_all,javassist,testng"/>
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/VM_Test" />
@@ -63,7 +65,7 @@
 		<mkdir dir="${databin}/JarFileUpdateTestRunnerResource2" />
 	</target>
 
-	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source  ">
+	<target name="compile" depends="init,getDependentLibs" description="Using java ${JDK_VERSION} to compile the source  ">
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
