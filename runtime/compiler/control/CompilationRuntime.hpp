@@ -1036,7 +1036,10 @@ public:
    TR::Monitor *getclassesCachedAtServerMonitor() const { return _classesCachedAtServerMonitor; }
    TR::Monitor *getSequencingMonitor() const { return _sequencingMonitor; }
    uint32_t getCompReqSeqNo() const { return _compReqSeqNo; }
-   uint32_t incCompReqSeqNo() { return ++_compReqSeqNo; }
+   uint32_t incCompReqSeqNo() { return _compReqSeqNo++; }
+   uint32_t getLastCriticalSeqNo() const { return _lastCriticalCompReqSeqNo; }
+   void setLastCriticalSeqNo(uint32_t seqNo) { _lastCriticalCompReqSeqNo = seqNo; }
+
    void markCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags |= (1 << threadId); }
    void resetCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags &= ~(1 << threadId); }
    uint8_t getCHTableUpdateDone() const { return _chTableUpdateFlags; }
@@ -1262,6 +1265,7 @@ private:
    PersistentVector<TR_OpaqueClassBlock*> *_illegalFinalFieldModificationList; // JITServer list of classes that have J9ClassHasIllegalFinalFieldModifications is set
    TR::Monitor                   *_sequencingMonitor; // Used for ordering outgoing messages at the client
    uint32_t                      _compReqSeqNo; // seqNo for outgoing messages at the client
+   uint32_t                      _lastCriticalCompReqSeqNo; // seqNo for last request that carried information that needs to be processed in order
    PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *_newlyExtendedClasses; // JITServer table of newly extended classes
    uint8_t                       _chTableUpdateFlags;
    uint32_t                      _localGCCounter; // Number of local gc cycles done
