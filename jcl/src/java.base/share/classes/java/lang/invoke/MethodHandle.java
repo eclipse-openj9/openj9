@@ -1113,32 +1113,6 @@ public abstract class MethodHandle
 	abstract boolean addRelatedMHs(List<MethodHandle> relatedMHs);
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
-/*[IF OPENJDK_METHODHANDLES]*/
-	byte customizationCount;
-
-	String debugString() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-
-	MethodHandle copyWith(MethodType mt, LambdaForm lf) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-
-	String internalValues() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-
-	BoundMethodHandle bindArgumentL(int i, Object obj) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-
-	MethodHandle getMethodHandle() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-
-	static native Object linkToStatic(Object... objs);
-/*[ENDIF] OPENJDK_METHODHANDLES */
-
 /*[IF Sidecar18-SE-OpenJ9]*/
 	MethodHandle(MethodType mt, LambdaForm lf) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
@@ -1185,11 +1159,21 @@ public abstract class MethodHandle
 		// https://github.com/eclipse/openj9/issues/7080
 	}
 /*[ENDIF]*/
-	
+
+/*[IF JAVA_SPEC_VERSION < 16]*/
 	void updateForm(LambdaForm lf) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+/*[ELSE] JAVA_SPEC_VERSION < 16 */
+	final void maybeCustomize() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	final void updateForm(java.util.function.Function<LambdaForm, LambdaForm> updater) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF] JAVA_SPEC_VERSION < 16 */
+
 	final Object invokeBasic(Object... objs) throws java.lang.Throwable {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
