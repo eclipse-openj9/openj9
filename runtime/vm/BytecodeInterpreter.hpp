@@ -8674,12 +8674,12 @@ retry:
 		 * a field ref as resolved if only one of the two values has been set (by
 		 * another thread that is in the middle of a resolve).
 		 */
-		if (J9_UNEXPECTED((flags <= valueOffset) || J9_ARE_NO_BITS_SET(flags, J9FieldFlagPutResolved))) {
+		if (!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset)) {
 			/* Field is unresolved */
 			J9Method *method = _literals;
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
-			resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_WITH_FIELD, NULL);
+			resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_WITH_FIELD, NULL);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			if (immediateAsyncPending()) {
 				rc = GOTO_ASYNC_CHECK;

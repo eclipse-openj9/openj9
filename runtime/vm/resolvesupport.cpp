@@ -931,6 +931,7 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 		J9Class *flattenableClass = NULL;
 		J9FlattenedClassCache *flattenedClassCache = NULL;
 #endif		
+		bool isWithField = false;
 		J9Class *currentTargetClass = NULL;
 		J9Class *currentSenderClass = NULL;
 
@@ -949,6 +950,7 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 		name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
 		signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		isWithField = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_WITH_FIELD);
 		/**
 		 * This is an optimization that searches for a field offset in the FCC. 
 		 * If the offset is found there is no need to repeat the process. 
@@ -998,36 +1000,42 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 				goto illegalAccess;
 			}
 
-			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9AccFinal) != 0) {
-				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9AccPrivate, lookupOptions | J9_LOOK_NO_NESTMATES);
-				if (checkResult < J9_VISIBILITY_ALLOWED) {
-					badMemberModifier = J9AccPrivate;
-					targetClass = definingClass;
-illegalAccess:
-					fieldOffset = -1;
-					if (throwException) {
-					PORT_ACCESS_FROM_VMC(vmStruct);
-						if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
-							nlsStr = illegalAccessMessage(vmStruct, badMemberModifier, classFromCP, targetClass, J9_VISIBILITY_NON_MODULE_ACCESS_ERROR);
-						} else {
-							nlsStr = illegalAccessMessage(vmStruct, -1, classFromCP, targetClass, checkResult);
-						}
-						setCurrentExceptionUTF(vmStruct, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, nlsStr);
-						j9mem_free_memory(nlsStr);
-					}
-					goto done;
-				}
-			if (
+			if ((modifiers & J9AccFinal) != 0) {
+				if (J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_FIELD_SETTER)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				/* The withfield bytecode is allowed to set a final field. However, the invoker of withfield must have private access
-				 * to the field (similar to a constructor setting a final field). The private access check is done above, so if we get
-				 * to this point we can skip the finalFieldSetAllowed() if we know its a withfield */
-				J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_WITH_FIELD) &&
+					|| isWithField
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+				) {
+					checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9AccPrivate, isWithField ? lookupOptions : (lookupOptions | J9_LOOK_NO_NESTMATES));
+					if (checkResult < J9_VISIBILITY_ALLOWED) {
+						badMemberModifier = J9AccPrivate;
+						targetClass = definingClass;
+illegalAccess:
+						fieldOffset = -1;
+						if (throwException) {
+							PORT_ACCESS_FROM_VMC(vmStruct);
+							if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
+								nlsStr = illegalAccessMessage(vmStruct, badMemberModifier, classFromCP, targetClass, J9_VISIBILITY_NON_MODULE_ACCESS_ERROR);
+							} else {
+								nlsStr = illegalAccessMessage(vmStruct, -1, classFromCP, targetClass, checkResult);
+							}
+							setCurrentExceptionUTF(vmStruct, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, nlsStr);
+							j9mem_free_memory(nlsStr);
+						}
+						goto done;
+					}
+					if (
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+							/* The withfield bytecode is allowed to set a final field. However, the invoker of withfield must have private access
+							 * to the field (similar to a constructor setting a final field). The private access check is done above, so if we get
+							 * to this point we can skip the finalFieldSetAllowed() if we know its a withfield */
+							!isWithField &&
 #endif
-				!finalFieldSetAllowed(vmStruct, false, method, definingClass, classFromCP, field, canRunJavaCode)
-			) {
-					fieldOffset = -1;
-					goto done;
+							!finalFieldSetAllowed(vmStruct, false, method, definingClass, classFromCP, field, canRunJavaCode)
+					) {
+						fieldOffset = -1;
+						goto done;
+					}
 				}
 			}
 
