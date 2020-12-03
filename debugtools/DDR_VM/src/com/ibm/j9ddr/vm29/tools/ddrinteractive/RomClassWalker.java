@@ -980,6 +980,7 @@ public class RomClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, annotation, increment * U32.SIZEOF, annotationSectionName, true);
 		return increment;
 	}
+
 	long allSlotsInMethodDebugInfoDo(U32Pointer cursor) throws CorruptDataException
 	{
 		J9MethodDebugInfoPointer methodDebugInfo;
@@ -1036,7 +1037,7 @@ public class RomClassWalker extends ClassWalker {
 			if (methodDebugInfo.lineNumberCount().allBitsIn(1)) {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, U32Pointer.cast(methodDebugInfo.add(1)), "compressed line number size");
 			}
-			
+
 			currentLineNumberPtr = J9MethodDebugInfoHelper.getCompressedLineNumberTableForROMClassV1(methodDebugInfo);
 			if (currentLineNumberPtr.notNull()) {
 				for (int j = 0; j < J9MethodDebugInfoHelper.getLineNumberCompressedSize(methodDebugInfo).intValue(); j++) {
@@ -1054,10 +1055,10 @@ public class RomClassWalker extends ClassWalker {
 				LocalVariableTable values = variableInfoValuesIterator.next();
 
 				// Need to walk the name and signature to add them to the UTF8 section
-				classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getName(), "name");
-				classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getSignature(), "getSignature");
+				classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, values.getNameSrp(), "name");
+				classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, values.getSignatureSrp(), "signature");
 				if (values.getGenericSignature().notNull()) {
-					classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getGenericSignature(), "getGenericSignature");
+					classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, values.getGenericSignatureSrp(), "genericSignature");
 				}
 			}
 			U8Pointer end = variableInfoValuesIterator.getLocalVariableTablePtr();
@@ -1073,6 +1074,7 @@ public class RomClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, methodDebugInfo, sectionSizeBytes, "methodDebugInfo" + (inlineDebugExtension?" Inline":""), inlineDebugExtension);
 		return inlineSize;
 	}
+
 	void allSlotsInEnclosingObjectDo(J9EnclosingObjectPointer enclosingObject) throws CorruptDataException
 	{
 		if (enclosingObject.isNull()) {
