@@ -2400,22 +2400,6 @@ public class MethodHandles {
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
 		
-		/**
-		 * Constructs a new hidden class from an array of class file bytes.
-		 * Equivalent to defineHiddenClass(bytes, true, classOptions).
-		 * 
-		 * @param bytes the class file bytes of the hidden class to be defined.
-		 * @param classData the classData to be stored in the hidden class.
-		 * @param classOptions the {@link ClassOption} to define the hidden class.
-		 * 
-		 * @return A Lookup object of the newly created hidden class.
-		 * @throws IllegalAccessException if this Lookup does not have full privilege access.
-		 */
-		Lookup defineHiddenClassWithClassData(byte[] bytes, Object classData, ClassOption... classOptions) throws IllegalAccessException {
-			ClassDefiner definer = classDefiner(bytes, classOptions);
-			return new Lookup(definer.defineClass(true, classData));
-		}
-
 		private ClassDefiner classDefiner(byte[] bytes, ClassOption... classOptions) throws IllegalAccessException {
 			if (!hasFullPrivilegeAccess()) {
 				throw new IllegalAccessException();
