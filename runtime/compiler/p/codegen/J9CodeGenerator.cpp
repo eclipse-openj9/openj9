@@ -403,7 +403,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
    static bool disableStringObjPrefetch = (feGetEnv("TR_DisableStringObjPrefetch") != NULL);
    bool optDisabled = false;
 
-   if (node->getOpCodeValue() == TR::aloadi ||
+   if ((node->getOpCodeValue() == TR::aloadi && !comp->target().is64Bit()) ||
         (comp->target().is64Bit() &&
          comp->useCompressedPointers() &&
          node->getOpCodeValue() == TR::l2a &&
@@ -631,7 +631,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
          }
       }
 
-   if (node->getOpCodeValue() == TR::aloadi ||
+   if ((node->getOpCodeValue() == TR::aloadi && !comp->target().is64Bit()) ||
          (comp->target().is64Bit() &&
           comp->useCompressedPointers() &&
           (node->getOpCodeValue() == TR::iloadi || node->getOpCodeValue() == TR::irdbari) &&
