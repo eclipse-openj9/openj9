@@ -2683,9 +2683,10 @@ TR_RelocationRecordInlinedMethod::inlinedSiteCanBeActivated(TR_RelocationRuntime
       return false;
       }
 
-   if (reloRuntime->fej9()->isAnyMethodTracingEnabled((TR_OpaqueMethodBlock *) currentMethod) ||
-       reloRuntime->fej9()->canMethodEnterEventBeHooked() ||
-       reloRuntime->fej9()->canMethodExitEventBeHooked())
+   if (reloRuntime->fej9()->isAnyMethodTracingEnabled((TR_OpaqueMethodBlock *) currentMethod)
+       || (!reloRuntime->comp()->getOption(TR_FullSpeedDebug)
+           && (reloRuntime->fej9()->canMethodEnterEventBeHooked()
+               || reloRuntime->fej9()->canMethodExitEventBeHooked())))
       {
       RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteCanBeActivated: target may need enter/exit tracing so disabling inline site\n");
       return false;

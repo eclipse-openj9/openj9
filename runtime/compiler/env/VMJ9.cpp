@@ -8254,7 +8254,7 @@ TR_J9SharedCacheVM::canMethodExitEventBeHooked()
 bool
 TR_J9SharedCacheVM::methodsCanBeInlinedEvenIfEventHooksEnabled()
    {
-   return true;
+   return !TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug);
    }
 
 int32_t

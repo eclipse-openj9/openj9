@@ -2349,7 +2349,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
          //setOption(TR_DisableInterpreterProfiling, true);
 
          initializeFSD(javaVM);
-         doAOT = false;
       #else
          return false;
       #endif
@@ -2536,9 +2535,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
                }
             }
          }
-
-      if (self()->getOption(TR_FullSpeedDebug))
-         TR::Options::getAOTCmdLineOptions()->setOption(TR_MimicInterpreterFrameShape);
       }
 #endif
 

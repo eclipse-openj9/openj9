@@ -7173,11 +7173,12 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    entry->_doAotLoad = false;
 
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-   if (entry->_methodIsInSharedCache == TR_yes &&    // possible AOT load
-       !TR::CompilationInfo::isCompiled(method) &&
-       !entry->_doNotUseAotCodeFromSharedCache &&
-       !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) &&
-       !(_jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
+   if (entry->_methodIsInSharedCache == TR_yes     // possible AOT load
+       && !TR::CompilationInfo::isCompiled(method)
+       && !entry->_doNotUseAotCodeFromSharedCache
+       && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT)
+       && !(_jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
+       && !_jitConfig->inlineFieldWatches)
       {
       // Determine whether the compilation filters allows me to relocate
       // Filters should not be applied to out-of-process compilations
@@ -7337,10 +7338,17 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          {
          TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
          eligibleForRelocatableCompile =
+
+            // Shared Classes Enabled
             TR::Options::sharedClassCache()
-            && !details.isNewInstanceThunk()
+
+            // Unsupported compilations
             && !entry->isJNINative()
+            && !details.isNewInstanceThunk()
             && !details.isMethodHandleThunk()
+            && !entry->isDLTCompile()
+
+            // Only generate AOT compilations for first time compiles
             && !TR::CompilationInfo::isCompiled(method)
 
             // If using a loadLimit/loadLimitFile, don't do an AOT compilation
@@ -7351,13 +7359,22 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             && (!TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug)
                 || !entry->_oldStartPC)
 
-            && !entry->isDLTCompile()
+            // Eligibility checks
             && !entry->_doNotUseAotCodeFromSharedCache
             && fe->sharedCache()->isROMClassInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass)
             && !isMethodIneligibleForAot(method)
             && (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap)
                 || fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true)
-            && (NULL != fe->sharedCache()->rememberClass(J9_CLASS_FROM_METHOD(method)));
+
+            // Ensure we can generate a class chain for the class of the
+            // method to be compiled
+            && (NULL != fe->sharedCache()->rememberClass(J9_CLASS_FROM_METHOD(method)))
+
+            // Do not perform AOT compilation if field watch is enabled; there
+            // is no benefit to having an AOT body with field watch as it increases
+            // the validation complexity, and in case the fields being watched changes,
+            // the AOT body cannot be loaded
+            && !_jitConfig->inlineFieldWatches;
          }
 
       bool sharedClassTest = eligibleForRelocatableCompile &&
@@ -9239,6 +9256,7 @@ TR::CompilationInfoPerThreadBase::compile(
       // the compilation queue are invalidated. Set the option here to guarantee the
       // mode is detected at the right moment so that all methods compiled after respect the
       // data watch point.
+      //
       if (_jitConfig->inlineFieldWatches)
          compiler->setOption(TR_EnableFieldWatch);
 

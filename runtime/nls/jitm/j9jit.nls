@@ -160,6 +160,14 @@ J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.user_response=Destroy and recr
 J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH=FSD Enabled feature mismatch. Ignoring AOT code in shared class cache.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.explanation=The JVM is not running in the same FSD mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
 J9NLS_RELOCATABLE_CODE_HCR_MISMATCH=HCR Enabled feature mismatch. Ignoring AOT code in shared class cache.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_HCR_MISMATCH.explanation=The JVM is not running in the same HCR mode as the one that generated the code in the SCC.
