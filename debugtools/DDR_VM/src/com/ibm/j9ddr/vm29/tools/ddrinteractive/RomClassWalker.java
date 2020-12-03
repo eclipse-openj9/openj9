@@ -297,7 +297,7 @@ public class RomClassWalker extends ClassWalker {
 
 		return J9ROMMethodPointer.cast(cursor);
 	}
-	
+
 	private long allSlotsInMethodParametersDataDo(U32Pointer cursor) throws CorruptDataException
 	{
 		J9MethodParametersDataPointer methodParametersData = J9MethodParametersDataPointer.cast(cursor);
@@ -305,30 +305,30 @@ public class RomClassWalker extends ClassWalker {
 		long methodParametersSize = ROMHelp.J9_METHOD_PARAMS_SIZE_FROM_NUMBER_OF_PARAMS(methodParametersData.parameterCount().longValue());
 		long padding = U32.SIZEOF - (methodParametersSize % U32.SIZEOF);
 		long size = 0;
-		
+
 		if (padding == U32.SIZEOF) {
 			padding = 0;
 		}
-		
+
 		size = methodParametersSize + padding;
-		
+
 		classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, methodParametersData.parameterCountEA(), "parameterCount");
-		
+
 		for (int i = 0; i < methodParametersData.parameterCount().longValue(); i++) {
-			classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, parameters.nameEA(), "methodParameterName");
-			classWalkerCallback.addSlot(clazz, SlotType.J9_U16, parameters.flagsEA(), "methodParameterFlag");			
+			classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, parameters.nameEA(), "methodParameterName");
+			classWalkerCallback.addSlot(clazz, SlotType.J9_U16, parameters.flagsEA(), "methodParameterFlag");
 		}
-		
+
 		cursor = cursor.addOffset(methodParametersSize);
 		for (; padding > 0; padding--) {
 			classWalkerCallback.addSlot(clazz, SlotType.J9_U8, cursor, "MethodParameters padding");
 			cursor.addOffset(1);
 		}
-		
+
 		classWalkerCallback.addSection(clazz, methodParametersData, size, "Method Parameters", true);
 		return size/U32.SIZEOF;
 	}
-	
+
 	private int allSlotsInROMFieldDo(J9ROMFieldShapePointer field) throws CorruptDataException {
 		int fieldLength = 0;
 		
