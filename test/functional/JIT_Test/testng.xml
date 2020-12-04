@@ -435,6 +435,11 @@
       <class name="jit.test.tr.signExtensionA.SignExtElimTest" />
     </classes>
   </test>
+  <test name="SIMDCommonedAddressTest">
+         <classes>
+           <class name="jit.test.tr.SIMDOpts.SIMDCommonedAddressTest" />
+         </classes>
+  </test>
   <test name="SIMDOptTest">
 	 <classes>
 	   <class name="jit.test.tr.SIMDOpts.SIMDOptTest" />
