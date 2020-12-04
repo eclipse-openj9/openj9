@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,36 +20,27 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "j9.h"
+#include "jvminit.h"
+
 /**
- * @file
- * @ingroup GC_Modron_Startup
+ * Retrieves the load info for the appropriate GC DLL based on reference mode.
+ *
+ * @param vm The Java VM
+ * @returns J9VMDllLoadInfo for the GC DLL selected
  */
+J9VMDllLoadInfo *
+getGCDllLoadInfo(J9JavaVM *vm)
+{
+	J9VMDllLoadInfo *loadInfo = NULL;
+	const char *gcDLLName = J9_GC_DLL_NAME;
 
-#if !defined(MMINIT_H_)
-#define MMINIT_H_
+#if defined(OMR_MIXED_REFERENCES_MODE_STATIC)
+	if (!J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		gcDLLName = J9_GC_FULL_DLL_NAME;
+	}
+#endif /* defined(OMR_MIXED_REFERENCES_MODE_STATIC) */
+	loadInfo = FIND_DLL_TABLE_ENTRY(gcDLLName);
 
-#include "j9lib.h"
-#include "jniport.h"
-
-struct J9JavaVM;
-struct J9VMThread;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-jint gcInitializeDefaults(J9JavaVM* vm);
-void gcCleanupInitializeDefaults(OMR_VM* omrVM);
-
-jint gcInitializeHeapStructures(J9JavaVM* vm);
-void gcCleanupHeapStructures(J9JavaVM* vm);
-
-jint triggerGCInitialized(J9VMThread* vmThread);
-
-void gcExpandHeapOnStartup(J9JavaVM *javaVM);
-
-#ifdef __cplusplus
-} /* extern "C" { */
-#endif
-
-#endif /* MMINIT_H_ */
+	return loadInfo;
+}
