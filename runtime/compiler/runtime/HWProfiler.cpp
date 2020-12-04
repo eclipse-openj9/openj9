@@ -44,6 +44,7 @@
 #include "env/VMJ9.h"
 #include "env/j9method.h"
 #include "env/VerboseLog.hpp"
+#include "omrformatconsts.h"
 
 
 uint32_t TR_HWProfiler::_STATS_TotalBuffersProcessed = 0;
@@ -866,22 +867,22 @@ TR_HWProfiler::createRecords(TR::Compilation *comp)
 void
 TR_HWProfiler::printStats()
    {
-   printf("Number of recompilations induced = %llu\n",                   _numRecompilationsInduced);
-   printf("Number of reduced warm recompilations induced = %llu\n",      _numReducedWarmRecompilationsInduced);
-   printf("Number of reduced warm recompilations upgraded = %llu\n",     _numReducedWarmRecompilationsUpgraded);
-   printf("Number of recompilations induced due to jitSampling = %d\n",   TR::Recompilation::jitRecompilationsInduced);
-   printf("TR::Recompilation::jitGlobalSampleCount = %d\n",               TR::Recompilation::jitGlobalSampleCount);
-   printf("TR::Recompilation::hwpGlobalSampleCount = %d\n",               TR::Recompilation::hwpGlobalSampleCount);
-   printf("Number of buffers completely filled = %llu\n",                _numBuffersCompletelyFilled);
-   printf("Average buffer filled percentage = %f\n",                     _bufferSizeSum ? (((float)_bufferFilledSum) / ((float)_bufferSizeSum) * 100) : 0);
-   printf("Number of requests = %llu\n",                                 _numRequests);
-   printf("Number of requests skipped = %llu\n",                         _numRequestsSkipped);
-   printf("Memory used by metadata bytecodePC to IA mapping = %llu B\n", _totalMemoryUsedByMetadataMapping);
-   printf("Total buffers processed = %llu\n",                            _STATS_TotalBuffersProcessed);
-   printf("Total buffers processed by App Thread= %llu\n",               _STATS_BuffersProcessedByAppThread);
-   printf("Total event records: %llu\n",                                 _STATS_TotalEntriesProcessed);
-   printf("Total instructions tracked: %u\n",                            _STATS_TotalInstructionsTracked);
-   printf("Total downgrades due to RI: %u\n",                            _STATS_NumCompDowngradesDueToRI);
-   printf("Total upgrades due to RI: %u\n",                              _STATS_NumUpgradesDueToRI);
+   printf("Number of recompilations induced = %" OMR_PRIu64 "\n",                   _numRecompilationsInduced);
+   printf("Number of reduced warm recompilations induced = %" OMR_PRIu64 "\n",      _numReducedWarmRecompilationsInduced);
+   printf("Number of reduced warm recompilations upgraded = %" OMR_PRIu64 "\n",     _numReducedWarmRecompilationsUpgraded);
+   printf("Number of recompilations induced due to jitSampling = %d\n",             TR::Recompilation::jitRecompilationsInduced);
+   printf("TR::Recompilation::jitGlobalSampleCount = %d\n",                         TR::Recompilation::jitGlobalSampleCount);
+   printf("TR::Recompilation::hwpGlobalSampleCount = %d\n",                         TR::Recompilation::hwpGlobalSampleCount);
+   printf("Number of buffers completely filled = %" OMR_PRIu32 "\n",                _numBuffersCompletelyFilled);
+   printf("Average buffer filled percentage = %f\n",                               _bufferSizeSum ? (((float)_bufferFilledSum) / ((float)_bufferSizeSum) * 100) : 0);
+   printf("Number of requests = %" OMR_PRIu64 "\n",                                 _numRequests);
+   printf("Number of requests skipped = %" OMR_PRIu64 "\n",                         _numRequestsSkipped);
+   printf("Memory used by metadata bytecodePC to IA mapping = %" OMR_PRIu64 " B\n", _totalMemoryUsedByMetadataMapping);
+   printf("Total buffers processed = %" OMR_PRIu32 "\n",                            _STATS_TotalBuffersProcessed);
+   printf("Total buffers processed by App Thread= %" OMR_PRIu32 "\n",               _STATS_BuffersProcessedByAppThread);
+   printf("Total event records: %" OMR_PRIu64 "\n",                                 _STATS_TotalEntriesProcessed);
+   printf("Total instructions tracked: %u\n",                                      _STATS_TotalInstructionsTracked);
+   printf("Total downgrades due to RI: %u\n",                                      _STATS_NumCompDowngradesDueToRI);
+   printf("Total upgrades due to RI: %u\n",                                        _STATS_NumUpgradesDueToRI);
    printf("\n");
    }

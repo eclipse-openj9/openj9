@@ -31,6 +31,7 @@
 #include "infra/CriticalSection.hpp"
 #include "compile/Compilation.hpp"
 #include "infra/vector.hpp"
+#include "omrformatconsts.h"
 
 // Global lock used by Array & List profilers
 extern TR::Monitor *vpMonitor;
@@ -696,7 +697,7 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
    if (dumpInfo)
       {
       OMR::CriticalSection lock(vpMonitor);
-      printf("Pre %X", value);
+      printf("Pre %" OMR_PRIX64, static_cast<uint64_t>(value));
       this->dumpInfo(TR::IO::Stdout);
       fflush(stdout);
       }
@@ -790,7 +791,7 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
    if (dumpInfo)
       {
       OMR::CriticalSection lock(vpMonitor);
-      printf("Post %X", value);
+      printf("Post %" OMR_PRIX64, static_cast<uint64_t>(value));
       this->dumpInfo(TR::IO::Stdout);
       fflush(stdout);
       }
@@ -1042,7 +1043,7 @@ TR_EmbeddedHashTable<T, bits>::rearrange(HashFunction &hash)
       {
       for (size_t i = 0; i < length; ++i)
          {
-         printf("%d -> %d\n", i, plannedMoves[i]);
+         printf("%" OMR_PRIu64 " -> %" OMR_PRIu64 "\n", static_cast<uint64_t>(i), static_cast<uint64_t>(plannedMoves[i]));
          }
       }
 

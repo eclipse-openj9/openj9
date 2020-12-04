@@ -38,6 +38,7 @@
 #include "control/CompilationThread.hpp"
 #include "runtime/JITClientSession.hpp"
 #endif
+#include "omrformatconsts.h"
 
 extern TR::Monitor *assumptionTableMutex;
 
@@ -322,7 +323,7 @@ void TR_RuntimeAssumptionTable::purgeAssumptionListHead(OMR::RuntimeAssumption *
    assumptionList->compensate(fe, 0, 0);
 
    OMR::RuntimeAssumption *next = assumptionList->getNextEvenIfDead();
-   printf("Freeing Assumption 0x%x and next assumption is 0x%x \n", assumptionList, next);
+   printf("Freeing Assumption 0x%" OMR_PRIxPTR " and next assumption is 0x%" OMR_PRIxPTR "\n", (uintptr_t)assumptionList, (uintptr_t)next);
 
    assumptionList->dequeueFromListOfAssumptionsForJittedBody();
    incReclaimedAssumptionCount(assumptionList->getAssumptionKind());
@@ -1521,7 +1522,7 @@ void TR_AddressSet::add(uintptr_t start, uintptr_t end)
          {
          fprintf(stderr, "UAR:    ");
          for (int j = 0; (j < 4) && (i+j < _numAddressRanges); j++)
-            fprintf(stderr, " %4d [%p - %p]", i+j, _addressRanges[i+j].getStart(), _addressRanges[i+j].getEnd());
+            fprintf(stderr, " %4d [%#" OMR_PRIxPTR " - %#" OMR_PRIxPTR "]", i+j, _addressRanges[i+j].getStart(), _addressRanges[i+j].getEnd());
          fprintf(stderr, "\n");
          }
       }
@@ -1578,5 +1579,3 @@ int32_t TR_AddressSet::firstHigherAddressRangeIndex(uintptr_t address)
 
    return result;
    }
-
-

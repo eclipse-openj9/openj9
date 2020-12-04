@@ -69,6 +69,7 @@
 #include "control/CompilationThread.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "runtime/HWProfiler.hpp"
+#include "omrformatconsts.h"
 
 typedef std::set<TR_GCStackMap*, std::less<TR_GCStackMap*>, TR::typed_allocator<TR_GCStackMap*, TR::Region&>> GCStackMapSet;
 
@@ -347,7 +348,7 @@ createInternalPtrStackMapInJ9Format(
    // portion of the map will occupy.
    //
    if (debug("traceIP"))
-      printf("JIT Address %x\n", location);
+      printf("JIT Address %" OMR_PRIxPTR "\n", (uintptr_t)location);
    *location = (uint8_t) mapSize;
    if (debug("traceIP"))
       printf("Internal ptr map size = %d\n", *location);
@@ -358,15 +359,15 @@ createInternalPtrStackMapInJ9Format(
 
 
    if (debug("traceIP"))
-      printf("JIT Address %x\n", location);
+      printf("JIT Address %" OMR_PRIxPTR "\n", (uintptr_t)location);
    *((int16_t *) location) = (int16_t) indexOfFirstInternalPtr;
    if (debug("traceIP"))
-      printf("Index of first internal pointer = %d\n", (*((int16_t *) location)));
+      printf("Index of first internal pointer = %" OMR_PRId16 "\n", (*((int16_t *) location)));
    location += 2;
 
    int32_t offsetOfFirstInternalPtr = trStackAtlas->getOffsetOfFirstInternalPointer();
    if (debug("traceIP"))
-      printf("JIT Address %x\n", location);
+      printf("JIT Address %" OMR_PRIxPTR "\n", (uintptr_t)location);
    *((int16_t *) location) = (int16_t) offsetOfFirstInternalPtr;
    if (debug("traceIP"))
       printf("Offset of first internal pointer = %d\n", (*((int16_t *) location)));
@@ -375,7 +376,7 @@ createInternalPtrStackMapInJ9Format(
    // Fill in how many distinct pinning array temps exist
    //
    if (debug("traceIP"))
-      printf("JIT Address %x\n", location);
+      printf("JIT Address %" OMR_PRIxPTR "\n", (uintptr_t)location);
    *location = (uint8_t) (map->getNumDistinctPinningArrays() + numPinningArraysOnlyForInternalPtrRegs);
    if (debug("traceIP"))
       printf("Number of distinct pinning arrays = %d\n", *location);
@@ -401,7 +402,7 @@ createInternalPtrStackMapInJ9Format(
        //
        *location = (uint8_t) (currElement->getData()->getInternalPointerAuto()->getGCMapIndex() - indexOfFirstInternalPtr);
        if (debug("traceIP"))
-          printf("JIT : location %x first internal ptr index %d firstptr %d\n", location, currElement->getData()->getInternalPointerAuto()->getGCMapIndex(), indexOfFirstInternalPtr);
+          printf("JIT : location %" OMR_PRIxPTR " first internal ptr index %d firstptr %d\n", (uintptr_t)location, currElement->getData()->getInternalPointerAuto()->getGCMapIndex(), indexOfFirstInternalPtr);
        location++;
        int32_t numInternalPtrsForThisPinningArray = 1;
        //
@@ -418,7 +419,7 @@ createInternalPtrStackMapInJ9Format(
             {
             *location = (uint8_t) (internalPtrPair->getInternalPointerAuto()->getGCMapIndex() - indexOfFirstInternalPtr);
             if (debug("traceIP"))
-               printf("JIT : location %x internal ptr index %d firstptr %d\n", location, internalPtrPair->getInternalPointerAuto()->getGCMapIndex(), indexOfFirstInternalPtr);
+               printf("JIT : location %" OMR_PRIxPTR " internal ptr index %d firstptr %d\n", (uintptr_t)location, internalPtrPair->getInternalPointerAuto()->getGCMapIndex(), indexOfFirstInternalPtr);
             location++;
             numInternalPtrsForThisPinningArray++;
             searchElement = searchElement->getNextElement();
@@ -436,7 +437,7 @@ createInternalPtrStackMapInJ9Format(
        //
        *((location - numInternalPtrsForThisPinningArray) - 1) = numInternalPtrsForThisPinningArray;
        if (debug("traceIP"))
-          printf("In VMJ9 numInternalPtrs = %d and memory %x\n", numInternalPtrsForThisPinningArray, (location - numInternalPtrsForThisPinningArray));
+          printf("In VMJ9 numInternalPtrs = %d and memory %" OMR_PRIxPTR "\n", numInternalPtrsForThisPinningArray, (uintptr_t)(location - numInternalPtrsForThisPinningArray));
        totalPointers = totalPointers + 1 + numInternalPtrsForThisPinningArray;
        }
 
@@ -493,7 +494,8 @@ createStackMap(
       map->setRegisterBits((1<<cg->getInternalPtrMapBit()));
       if (debug("traceIP"))
          {
-         printf("JIT address %x (lowCode %x) method %s with 4 byte offsets (%d) for register map %d (GC map %x ip map %x)\n", location, lowCode, comp->signature(), fourByteOffsets, map->getRegisterMap(), map, map->getInternalPointerMap());
+         printf("JIT address %" OMR_PRIxPTR " (lowCode %" OMR_PRIxPTR ") method %s with 4 byte offsets (%d) for register map %d (GC map %" OMR_PRIxPTR " ip map %" OMR_PRIxPTR ")\n",\
+             (uintptr_t)location, (uintptr_t)lowCode, comp->signature(), fourByteOffsets, map->getRegisterMap(), (uintptr_t)map, (uintptr_t)map->getInternalPointerMap());
          fflush(stdout);
          }
       }
@@ -548,7 +550,7 @@ createStackMap(
       *location = (uint8_t) internalPtrMap->getSize();
 
       if (debug("traceIP"))
-         printf("JIT Address %x Internal ptr map size = %d\n", location, *location);
+         printf("JIT Address %" OMR_PRIxPTR " Internal ptr map size = %d\n", (uintptr_t)location, *location);
 
       location++;
 
@@ -557,7 +559,7 @@ createStackMap(
       *location = (uint8_t) internalPtrMap->getNumDistinctPinningArrays();
 
       if (debug("traceIP"))
-         printf("JIT Address %x Num pinning arrays = %d\n", location, *location);
+         printf("JIT Address %" OMR_PRIxPTR " Num pinning arrays = %d\n", (uintptr_t)location, *location);
 
       location++;
 
@@ -571,7 +573,7 @@ createStackMap(
          //
          *location = (uint8_t) (currElement->getData()->getPinningArrayPointer()->getGCMapIndex() - indexOfFirstInternalPtr);
          if (debug("traceIP"))
-            printf("JIT Address %x Pinning array = %d\n", location, *location);
+            printf("JIT Address %" OMR_PRIxPTR " Pinning array = %d\n", (uintptr_t)location, *location);
          //
          // Skip over the byte corresponding to number of derived register pointers
          // per base array; to be filled in later.
@@ -582,7 +584,7 @@ createStackMap(
          //
          *location = (uint8_t) currElement->getData()->getInternalPtrRegNum();
          if (debug("traceIP"))
-            printf("JIT : internal ptr reg num %d address %x\n", *location, location);
+            printf("JIT : internal ptr reg num %d address %" OMR_PRIxPTR "\n", *location, (uintptr_t)location);
          location++;
 
          int32_t numInternalPtrsForThisPinningArray = 1;
@@ -600,7 +602,7 @@ createStackMap(
                {
                *location = (uint8_t) internalPtrPair->getInternalPtrRegNum();
                if (debug("traceIP"))
-                  printf("JIT : internal ptr reg num %d address %x\n", *location, location);
+                  printf("JIT : internal ptr reg num %d address %" OMR_PRIxPTR "\n", *location, (uintptr_t)location);
                location++;
                numInternalPtrsForThisPinningArray++;
                searchElement = searchElement->getNextElement();
@@ -618,7 +620,7 @@ createStackMap(
           //
          *((location - numInternalPtrsForThisPinningArray) - 1) = numInternalPtrsForThisPinningArray;
          if (debug("traceIP"))
-            printf("JIT Address %x Num internal ptrs for this array = %d\n", ((location - numInternalPtrsForThisPinningArray) - 1),numInternalPtrsForThisPinningArray);
+            printf("JIT Address %" OMR_PRIxPTR " Num internal ptrs for this array = %d\n", (uintptr_t)((location - numInternalPtrsForThisPinningArray) - 1), numInternalPtrsForThisPinningArray);
          }
       }
 
@@ -637,7 +639,7 @@ createStackMap(
 
    if (debug("traceIP"))
       {
-      printf("Start of map %x end of map %x (lowCode %x)\n", startLocation, (location+mapSize), lowCode);
+      printf("Start of map %" OMR_PRIxPTR " end of map %" OMR_PRIxPTR " (lowCode %" OMR_PRIxPTR ")\n", (uintptr_t)startLocation, (uintptr_t)(location + mapSize), (uintptr_t)lowCode);
       diagnostic("Map bits are being emitted at %x\n", location);
       diagnostic("Number of slots mapped %d\n", map->getNumberOfSlotsMapped());
       int mapBytes = (map->getNumberOfSlotsMapped() + 7) >> 3;
