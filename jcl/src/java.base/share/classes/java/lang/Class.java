@@ -67,12 +67,14 @@ import static com.ibm.oti.util.Util.doesClassLoaderDescendFrom;
 
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
+import jdk.internal.misc.SharedSecrets;
 import java.io.IOException;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.ConstantPool;
 /*[ELSE]*/
 import sun.misc.Unsafe;
+import sun.misc.SharedSecrets;
 import sun.reflect.Reflection;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
@@ -3110,7 +3112,7 @@ private AnnotationCache getAnnotationCache() {
 			Annotation[] directAnnotations = sun.reflect.annotation.AnnotationParser.toArray(
 						sun.reflect.annotation.AnnotationParser.parseAnnotations(
 								annotationsData,
-								new Access().getConstantPool(this),
+								getConstantPool(),
 								this));
 			
 			LinkedHashMap<Class<? extends Annotation>, Annotation> directAnnotationsMap = new LinkedHashMap<>(directAnnotations.length * 4 / 3);
@@ -4670,10 +4672,11 @@ Object setMethodHandleCache(Object cache) {
 	return result;
 }
 
-/*[IF Sidecar19-SE]*/
 ConstantPool getConstantPool() {
-	return new Access().getConstantPool(this);
+	return SharedSecrets.getJavaLangAccess().getConstantPool(this);
 }
+
+/*[IF Sidecar19-SE]*/
 Map<Class<? extends Annotation>, Annotation> getDeclaredAnnotationMap() {
 	throw new Error("Class.getDeclaredAnnotationMap() unimplemented"); //$NON-NLS-1$
 }
