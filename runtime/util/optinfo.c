@@ -580,15 +580,19 @@ variableInfoNextDo(J9VariableInfoWalkState *state)
 		return NULL;
 	}
 
+	state->values.nameSrp = (J9SRP *)state->variableTablePtr;
 	state->values.name = READ_SRP(state->variableTablePtr, J9UTF8*);
 	state->variableTablePtr += sizeof(J9SRP);
+	state->values.signatureSrp = (J9SRP *)state->variableTablePtr;
 	state->values.signature = READ_SRP(state->variableTablePtr, J9UTF8*);
 	state->variableTablePtr += sizeof(J9SRP);
 
 	if (state->values.visibilityLength & J9_ROMCLASS_OPTINFO_VARIABLE_TABLE_HAS_GENERIC) {
+		state->values.genericSignatureSrp = (J9SRP *)state->variableTablePtr;
 		state->values.genericSignature = READ_SRP(state->variableTablePtr, J9UTF8*);
 		state->variableTablePtr += sizeof(J9SRP);
 	} else {
+		state->values.genericSignatureSrp = 0;
 		state->values.genericSignature = NULL;
 	}
 
