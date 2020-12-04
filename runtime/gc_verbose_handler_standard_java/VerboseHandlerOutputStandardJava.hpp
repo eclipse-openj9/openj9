@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,7 +74,7 @@ protected:
 	virtual void outputMemoryInfoInnerStanzaInternal(MM_EnvironmentBase *env, UDATA indent, MM_CollectionStatistics *stats);
 
 	virtual bool getThreadName(char *buf, UDATA bufLen, OMR_VMThread *vmThread);
-	virtual void writeVmArgs(MM_EnvironmentBase* env);
+	virtual void writeVmArgs(MM_EnvironmentBase* env, MM_VerboseBuffer* buffer);
 
 	MM_VerboseHandlerOutputStandardJava(MM_GCExtensions *extensions) :
 		MM_VerboseHandlerOutputStandard(extensions)
