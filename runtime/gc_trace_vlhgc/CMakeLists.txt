@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gctrcvlhgc STATIC
+set(gc_trace_vlhgc_sources
 	TgcDynamicCollectionSet.cpp
 	TgcIntelligentCompact.cpp
 	TgcInterRegionReferences.cpp
@@ -31,8 +31,22 @@ j9vm_add_library(j9gctrcvlhgc STATIC
 	TgcWriteOnceCompactTiming.cpp
 )
 
+j9vm_add_library(j9gctrcvlhgc STATIC
+	${gc_trace_vlhgc_sources}
+)
+
 target_link_libraries(j9gctrcvlhgc
 	PRIVATE
 		omrgc
 )
 
+if(OMR_MIXED_REFERENCES_MODE_STATIC)
+	j9vm_add_library(j9gctrcvlhgc_full STATIC
+		${gc_trace_vlhgc_sources}
+	)
+
+	target_link_libraries(j9gctrcvlhgc_full
+		PRIVATE
+			omrgc_full
+	)
+endif()

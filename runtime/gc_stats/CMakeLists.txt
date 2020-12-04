@@ -20,11 +20,15 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gcstats STATIC
+set(gc_stats_sources
 	CopyForwardStats.cpp
 	FrequentObjectsStats.cpp
 	MarkJavaStats.cpp
 	ScavengerJavaStats.cpp
+)
+
+j9vm_add_library(j9gcstats STATIC
+	${gc_stats_sources}
 )
 
 target_include_directories(j9gcstats PUBLIC .)
@@ -38,3 +42,21 @@ target_link_libraries(j9gcstats
 		j9gcbase
 		j9utilcore
 )
+
+if(OMR_MIXED_REFERENCES_MODE_STATIC)
+	j9vm_add_library(j9gcstats_full STATIC
+		${gc_stats_sources}
+	)
+
+	target_include_directories(j9gcstats_full PUBLIC .)
+
+	target_link_libraries(j9gcstats_full
+		PRIVATE
+			j9vm_interface
+			j9vm_gc_includes
+
+			omrgc_full
+			j9gcbase_full
+			j9utilcore
+	)
+endif()

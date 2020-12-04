@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2020, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,36 +20,5 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-set(gc_api_sources
-	GuaranteedNurseryRange.cpp
-	HeapIteratorAPI.cpp
-	HeapIteratorAPIBufferedIterator.cpp
-	HeapIteratorAPIRootIterator.cpp
-	HeapRootScanner.cpp
-)
-
-j9vm_add_library(j9gcapi STATIC
-	${gc_api_sources}
-)
-
-target_link_libraries(j9gcapi
-	PRIVATE
-		j9vm_interface
-		j9vm_gc_includes
-
-		omrgc
-)
-
-if(OMR_MIXED_REFERENCES_MODE_STATIC)
-	j9vm_add_library(j9gcapi_full STATIC
-		${gc_api_sources}
-	)
-
-	target_link_libraries(j9gcapi_full
-		PRIVATE
-			j9vm_interface
-			j9vm_gc_includes
-
-			omrgc_full
-	)
-endif()
+include("${CMAKE_CURRENT_LIST_DIR}/mxdptrs.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/linux_390-64.cmake")

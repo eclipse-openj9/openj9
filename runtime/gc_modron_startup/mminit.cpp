@@ -218,16 +218,16 @@ initializeMutatorModelJava(J9VMThread* vmThread)
 void
 cleanupMutatorModelJava(J9VMThread* vmThread)
 {
-	J9VMDllLoadInfo* loadInfo;
-	J9JavaVM* vm = vmThread->javaVM;
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 
 	if (NULL != env) {
+		J9JavaVM *vm = vmThread->javaVM;
+		J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
+
 		/* cleanupMutatorModelJava is called as part of the main vmThread shutdown, which happens after
 		 * gcCleanupHeapStructures has been called. We should therefore only flush allocation caches
 		 * if there is still a heap.
 		 */
-		loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
 		if (!IS_STAGE_COMPLETED(loadInfo->completedBits, HEAP_STRUCTURES_FREED)) {
 			/* this can only be called if the heap still exists since it will ask the TLH chunk to be abandoned with crashes if the heap is deallocated */
 			GC_OMRVMThreadInterface::flushCachesForGC(env);
@@ -311,7 +311,7 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 	MM_EnvironmentBase env(vm->omrVM);
 	MM_GlobalCollector *globalCollector;
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
+	J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
 
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE)) {
 		extensions->shouldForceLowMemoryHeapCeilingShiftIfPossible = true;
@@ -515,7 +515,7 @@ gcInitializeHeapStructures(J9JavaVM *vm)
 
 	MM_MemorySpace *defaultMemorySpace;
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
-	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
+	J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
 
 	/* For now, number of segments to default in pool */
 	if ((vm->memorySegments = vm->internalVMFunctions->allocateMemorySegmentList(vm, 10, OMRMEM_CATEGORY_VM)) == NULL) {
@@ -2831,8 +2831,7 @@ configurateGCWithPolicyAndOptions(OMR_VM* omrVM)
 jint
 gcInitializeDefaults(J9JavaVM* vm)
 {
-	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
-
+	J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
 	UDATA tableSize = (opt_none + 1) * sizeof(IDATA);
 	UDATA realtimeSizeClassesAllocationSize = ROUND_TO(sizeof(UDATA), sizeof(J9VMGCSizeClasses));
 	IDATA *memoryParameterTable;

@@ -614,8 +614,13 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 
 	}
 
-	/* decode which VM directory to use */
+	/*
+	 * Decode which VM directory to use.
+	 * If running in Mixed References mode, the 'default' (OPENJ9_NOCR_JVM_DIR) directory is used.
+	 */
 	basePointer = OPENJ9_NOCR_JVM_DIR;
+
+#if !(defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS))
 	if ((xnocompressed != -1) && (xcompressed < xnocompressed)) {
 		basePointer = OPENJ9_NOCR_JVM_DIR;
 		optionUsed = xnocompressedstr;
@@ -659,7 +664,7 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 				basePointer = OPENJ9_CR_JVM_DIR;
 			}
 		}
-		}
+	}
 
 	/*
 	 * Jazz 31002 : if -XXvm:ignoreUnrecognized is specified and that the targeted VM
@@ -668,6 +673,7 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 	if (!isPackagedWithSubdir(basePointer) && (1 == ignoreUnrecognizedEnabled)) {
 		basePointer = OPENJ9_NOCR_JVM_DIR;
 	}
+#endif /* !(defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)) */
 
 	/* if we didn't set the string length already, do it now for the comparison and copy */
 	if (0 == nameLength) {
@@ -693,22 +699,30 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 		}
 		fprintf(stdout, "does not exist.\n");
 
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		fprintf(stdout,
+				"This JVM package includes both the '-Xcompressedrefs' and the '-Xnocompressedrefs' "
+				"configurations, however the VM directory could not be found. Please download the latest "
+				"JVM package or build with the most recent changes and run the JVM again.\n"
+		);
+#else
 		/* direct user to OpenJ9 build configurations to properly generate the requested build. */
 		if (0 == strcmp(OPENJ9_NOCR_JVM_DIR, basePointer)) {
 			fprintf(stdout,
 					"This JVM package only includes the '-Xcompressedrefs' configuration. Please run "
 					"the VM without specifying the '-Xnocompressedrefs' option or by specifying the "
 					"'-Xcompressedrefs' option.\nTo compile the other configuration, please run configure "
-					"with '--with-noncompressedrefs.\n"
+					"with '--with-noncompressedrefs'.\n"
 			);
 		} else if (0 == strcmp(OPENJ9_CR_JVM_DIR, basePointer)) {
 			fprintf(stdout,
 					"This JVM package only includes the '-Xnocompressedrefs' configuration. Please run "
 					"the VM without specifying the '-Xcompressedrefs' option or by specifying the "
 					"'-Xnocompressedrefs' option.\nTo compile the other configuration, please run configure "
-					"without '--with-noncompressedrefs.\n"
+					"without '--with-noncompressedrefs'.\n"
 			);
 		}
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 		exit(-1);
 	}
 }

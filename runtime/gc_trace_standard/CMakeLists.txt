@@ -20,10 +20,14 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gctrcstandard STATIC
+set(gc_trace_standard_sources
 	TgcCompaction.cpp
 	TgcFreeListSummary.cpp
 	TgcLargeAllocation.cpp
+)
+
+j9vm_add_library(j9gctrcstandard STATIC
+	${gc_trace_standard_sources}
 )
 
 target_link_libraries(j9gctrcstandard
@@ -33,3 +37,15 @@ target_link_libraries(j9gctrcstandard
 		omrgc
 )
 
+if(OMR_MIXED_REFERENCES_MODE_STATIC)
+	j9vm_add_library(j9gctrcstandard_full STATIC
+		${gc_trace_standard_sources}
+	)
+
+	target_link_libraries(j9gctrcstandard_full
+		PRIVATE
+			j9vm_interface
+
+			omrgc_full
+	)
+endif()
