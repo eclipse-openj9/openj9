@@ -114,6 +114,8 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Number of clients : %u", compInfo->getClientSessionHT()->size());
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Total compilation threads : %d", compInfo->getNumUsableCompilationThreads());
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Active compilation threads : %d",compInfo->getNumCompThreadsActive());
+            bool incompleteInfo;
+            TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Physical memory available: %llu MB", compInfo->computeAndCacheFreePhysicalMemory(incompleteInfo) >> 20);
             if (cpuUtil->isFunctional())
                {
                TR_VerboseLog::writeLine(TR_Vlog_JITServer, "CpuLoad %d%% (AvgUsage %d%%) JvmCpu %d%%", cpuUsage, avgCpuUsage, vmCpuUsage);
