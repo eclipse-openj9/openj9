@@ -65,6 +65,7 @@ if(J9VM_OPT_JITSERVER)
 		runtime/JITClientSession.cpp
 		runtime/JITServerIProfiler.cpp
 		runtime/JITServerROMClassHash.cpp
+		runtime/JITServerSharedROMClassCache.cpp
 		runtime/JITServerStatisticsThread.cpp
 		runtime/Listener.cpp
 	)
