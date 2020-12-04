@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -369,16 +369,33 @@ final class MethodHandleResolver {
 			String name,
 			String typeDescriptor,
 			ClassLoader loader) throws Throwable {
-		try {
+		MethodType type = null;
 /*[IF OPENJDK_METHODHANDLES]*/
-			/* OpenJDK Lookup does not have a constructor Lookup(Class<?>, boolean). So, it has been replaced
-			 * with Lookup(Class<?>). */
-			MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass);
-/*[ELSE] OPENJDK_METHODHANDLES*/
-			MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass, false);
-/*[ENDIF] OPENJDK_METHODHANDLES*/
+		switch (cpRefKind) {
+		case 1: /* getField */
+		case 2: /* getStatic */
+		case 3: /* putField */
+		case 4: /* putStatic */
+			type = MethodTypeHelper.vmResolveFromMethodDescriptorString("(" + typeDescriptor + ")V", loader, null);
+			break;
+		case 5: /* invokeVirtual */
+		case 6: /* invokeStatic */
+		case 7: /* invokeSpecial */
+		case 8: /* newInvokeSpecial */
+		case 9: /* invokeInterface */
+			type = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+			break;
+		default:
+			/*[MSG "K0686", "Unknown reference kind: '{0}'"]*/
+			throw new InternalError(com.ibm.oti.util.Msg.getString("K0686", cpRefKind)); //$NON-NLS-1$
+		}
 
-			MethodType type = null;
+		/* TODO: Investigate if an equivalent for lookup.accessCheckArgRetTypes(type) is needed for OpenJDK MH. */
+		
+		return MethodHandleNatives.linkMethodHandleConstant(currentClass, cpRefKind, referenceClazz, name, type);
+/*[ELSE] OPENJDK_METHODHANDLES*/
+		try {
+			MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass, false);
 			MethodHandle result = null;
 
 			switch (cpRefKind) {
@@ -396,47 +413,27 @@ final class MethodHandleResolver {
 				break;
 			case 5: /* invokeVirtual */
 				type = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-/*[IF OPENJDK_METHODHANDLES]*/
-				/* TODO: Investigate if an equivalent for lookup.accessCheckArgRetTypes is needed for OpenJDK MH. */
-/*[ELSE] OPENJDK_METHODHANDLES*/
 				lookup.accessCheckArgRetTypes(type);
-/*[ENDIF] OPENJDK_METHODHANDLES*/
 				result = lookup.findVirtual(referenceClazz, name, type);
 				break;
 			case 6: /* invokeStatic */
 				type = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-/*[IF OPENJDK_METHODHANDLES]*/
-				/* TODO: Investigate if an equivalent for lookup.accessCheckArgRetTypes is needed for OpenJDK MH. */
-/*[ELSE] OPENJDK_METHODHANDLES*/
 				lookup.accessCheckArgRetTypes(type);
-/*[ENDIF] OPENJDK_METHODHANDLES*/
 				result = lookup.findStatic(referenceClazz, name, type);
 				break;
 			case 7: /* invokeSpecial */ 
 				type = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-/*[IF OPENJDK_METHODHANDLES]*/
-				/* TODO: Investigate if an equivalent for lookup.accessCheckArgRetTypes is needed for OpenJDK MH. */
-/*[ELSE] OPENJDK_METHODHANDLES*/
 				lookup.accessCheckArgRetTypes(type);
-/*[ENDIF] OPENJDK_METHODHANDLES*/
 				result = lookup.findSpecial(referenceClazz, name, type, currentClass);
 				break;
 			case 8: /* newInvokeSpecial */
 				type = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-/*[IF OPENJDK_METHODHANDLES]*/
-				/* TODO: Investigate if an equivalent for lookup.accessCheckArgRetTypes is needed for OpenJDK MH. */
-/*[ELSE] OPENJDK_METHODHANDLES*/
 				lookup.accessCheckArgRetTypes(type);
-/*[ENDIF] OPENJDK_METHODHANDLES*/
 				result = lookup.findConstructor(referenceClazz, type);
 				break;
 			case 9: /* invokeInterface */
 				type = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-/*[IF OPENJDK_METHODHANDLES]*/
-				/* TODO: Investigate if an equivalent for lookup.accessCheckArgRetTypes is needed for OpenJDK MH. */
-/*[ELSE] OPENJDK_METHODHANDLES*/
 				lookup.accessCheckArgRetTypes(type);
-/*[ENDIF] OPENJDK_METHODHANDLES*/
 				result = lookup.findVirtual(referenceClazz, name, type);
 				break;
 			default:
@@ -445,25 +442,26 @@ final class MethodHandleResolver {
 			}
 			return result;
 		} catch (IllegalAccessException iae) {
-			// Java spec expects an IllegalAccessError instead of IllegalAccessException thrown when an application attempts 
-			// (not reflectively) to access or modify a field, or to invoke a method that it doesn't have access to.
+			/* Java spec expects an IllegalAccessError instead of IllegalAccessException thrown when an application attempts
+			 * (not reflectively) to access or modify a field, or to invoke a method that it doesn't have access to.
+			 */
 			throw new IllegalAccessError(iae.getMessage()).initCause(iae);
 		}
+/*[ENDIF] OPENJDK_METHODHANDLES*/
 	}
 	
+/*[IF !OPENJDK_METHODHANDLES]*/
 	/* Convert the field type descriptor into a MethodType so we can reuse the parsing logic in 
 	 * #fromMethodDescriptorString().  The verifier checks to ensure that the typeDescriptor is
 	 * a valid field descriptor so adding the "()V" around it is valid.
 	 */
 	private static final Class<?> resolveFieldHandleHelper(String typeDescriptor, Lookup lookup, ClassLoader loader) throws Throwable {
 		MethodType mt = MethodTypeHelper.vmResolveFromMethodDescriptorString("(" + typeDescriptor + ")V", loader, null); //$NON-NLS-1$ //$NON-NLS-2$
-/*[IF OPENJDK_METHODHANDLES]*/
-		/* TODO: Investigate if an equivalent for lookup.accessCheckArgRetTypes is needed for OpenJDK MH. */
-/*[ELSE] OPENJDK_METHODHANDLES*/
 		lookup.accessCheckArgRetTypes(mt);
-/*[ENDIF] OPENJDK_METHODHANDLES*/
 		return mt.parameterType(0);
 	}
+/*[ENDIF] !OPENJDK_METHODHANDLES*/
+
 	
 	/**
 	 * Gets class object from RAM class address
