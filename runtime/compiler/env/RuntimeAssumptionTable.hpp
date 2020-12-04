@@ -105,6 +105,7 @@ class TR_RuntimeAssumptionTable
    void notifyIllegalStaticFinalFieldModificationEvent(TR_FrontEnd *vm, void *key);
    void notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool isSMP, void *oldKey, void *newKey);
    void notifyMutableCallSiteChangeEvent(TR_FrontEnd *vm, uintptr_t cookie);
+   void notifyMethodBreakpointed(TR_FrontEnd *fe, TR_OpaqueMethodBlock *method);
 
    int32_t getAssumptionCount(int32_t tableId) const { return assumptionCount[tableId]; }
    int32_t getReclaimedAssumptionCount(int32_t tableId) const { return reclaimedAssumptionCount[tableId]; }

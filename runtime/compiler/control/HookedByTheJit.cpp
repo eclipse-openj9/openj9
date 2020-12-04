@@ -2476,24 +2476,21 @@ void jitFlushCompilationQueue(J9VMThread * currentThread, J9JITFlushCompilationQ
 
 #endif // #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 
-void jitMethodBreakpointed(J9VMThread * vmThread, J9Method *j9method)
+void jitMethodBreakpointed(J9VMThread *currentThread, J9Method *j9method)
    {
-   reportHook(vmThread, "jitMethodbreakpointed", "j9method %p\n", j9method);
-   J9JITConfig * jitConfig = vmThread->javaVM->jitConfig;
+   J9JITConfig * jitConfig = currentThread->javaVM->jitConfig;
+   TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, currentThread);
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    TR_RuntimeAssumptionTable *rat = compInfo->getPersistentInfo()->getRuntimeAssumptionTable();
-   OMR::RuntimeAssumption **headPtr = rat->getBucketPtr(RuntimeAssumptionOnMethodBreakPoint, TR_RuntimeAssumptionTable::hashCode((uintptr_t)j9method));
-   TR_PatchNOPedGuardSiteOnMethodBreakPoint *cursor = (TR_PatchNOPedGuardSiteOnMethodBreakPoint *)(*headPtr);
-   while (cursor)
+
+   reportHook(currentThread, "jitMethodbreakpointed", "j9method %p\n", j9method);
+
+   if (rat)
       {
-      if (cursor->matches((uintptr_t)j9method))
-         {
-         TR::PatchNOPedGuardSite::compensate(0, cursor->getLocation(), cursor->getDestination());
-         }
-      cursor = (TR_PatchNOPedGuardSiteOnMethodBreakPoint *)cursor->getNext();
+      rat->notifyMethodBreakpointed(fe, reinterpret_cast<TR_OpaqueMethodBlock *>(j9method));
       }
 
-   reportHookFinished(vmThread, "jitMethodbreakpointed");
+   reportHookFinished(currentThread, "jitMethodbreakpointed");
    }
 
 /*
