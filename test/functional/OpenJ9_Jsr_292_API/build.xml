@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-   Copyright (c) 2017, 2019 IBM Corp. and others
+   Copyright (c) 2017, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,6 +48,8 @@
 	<property name="modulea_bin" location="./mods/mods.modulea"/>
 	<property name="moduleb_bin" location="./mods/mods.moduleb"/>
 	<property name="modulec_bin" location="./mods/mods.modulec"/>
+	<property name="LIB" value="asm_all,jcommander,testng"/>
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 	
 	<target name="init">
 		<mkdir dir="${DEST}"/>
@@ -127,7 +129,7 @@
 		</if>
 	</target>
 	
-	<target name="compile_tests" depends="init,compile_modulea,compile_moduleb,compile_modulec" description="compile the test source code" >
+	<target name="compile_tests" depends="init,compile_modulea,compile_moduleb,compile_modulec,getDependentLibs" description="compile the test source code" >
 		<echo>Compiling the test source code</echo>
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>

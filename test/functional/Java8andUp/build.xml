@@ -62,6 +62,8 @@
 			<property name="addModules" value="" />
 		</else>
 	</if>
+	<property name="LIB" value="asm_all,javassist,testng,jcommander,commons_cli,jaxb_api,asmtools"/>
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -255,7 +257,7 @@
 		</if>
 	</target>
 
-	<target name="jasm_generator" depends="init" description="prepare jasm files">
+	<target name="jasm_generator" depends="init,getDependentLibs" description="prepare jasm files">
 		<property name="jasm_class_destination" location="${build}/j9vm/test/invoker" />
 		<mkdir dir="${jasm_class_destination}" />
 		<exec executable="${TEST_JDK_HOME}/bin/java" dir="${jasm_class_destination}">
