@@ -201,7 +201,7 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 		}
 
 		if (doVisibilityCheck) {
-			IDATA checkResult = checkVisibility(currentThread, senderClass, methodClass, newModifiers, lookupOptions);
+			IDATA checkResult = checkVisibility(currentThread, senderClass, methodClass, newModifiers, lookupOptions | J9_LOOK_NO_MODULE_CHECKS);
 			if (checkResult < J9_VISIBILITY_ALLOWED) {
 				*exception = J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR;
 				*exceptionClass = methodClass;
