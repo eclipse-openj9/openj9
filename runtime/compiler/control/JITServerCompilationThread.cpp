@@ -108,7 +108,7 @@ outOfProcessCompilationEnd(
    bool incompleteInfo;
    uint64_t freePhysicalMemorySizeB = compInfoPT->getCompilationInfo()->computeAndCacheFreePhysicalMemory(incompleteInfo);
    bool serverHasLowMemory = (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE &&
-       freePhysicalMemorySizeB <= (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue() + TR::Options::getScratchSpaceLowerBound());
+       freePhysicalMemorySizeB <= (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue() + 4 * TR::Options::getScratchSpaceLowerBound());
 
    entry->_stream->finishCompilation(codeCacheStr, dataCacheStr, chTableData,
                                      std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()),
