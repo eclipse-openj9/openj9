@@ -34,6 +34,11 @@ import jdk.internal.reflect.CallerSensitive;
 import sun.reflect.CallerSensitive;
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+
 /**
  *	A Thread is a unit of concurrent execution in Java. It has its own call stack
  * for methods being called and their parameters. Threads in the same VM interact and
@@ -215,6 +220,18 @@ void completeInitialization() {
 	/*[IF Sidecar19-SE|Sidecar18-SE-OpenJ9]*/
 	System.startSNMPAgent();
 	/*[ENDIF]*/ // Sidecar19-SE|Sidecar18-SE-OpenJ9
+	// reopen stdout & stderr, now all charset are accessible
+	// if reopen fails, already opened stdout & stderr are used continuously
+	String csn = System.getProperty("sun.stdout.encoding");
+	if (csn == null)  csn = System.getProperty("file.encoding");
+	try {
+		System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out), true, csn ));
+	} catch (UnsupportedEncodingException e) {}
+	csn = System.getProperty("sun.stderr.encoding");
+	if (csn == null)  csn = System.getProperty("file.encoding");
+	try {
+		System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err), true, csn ));
+	} catch (UnsupportedEncodingException e) {}
 }
 
 /**
