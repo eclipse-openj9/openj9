@@ -164,6 +164,7 @@ TR_PersistentCHTable::classGotUnloadedPost(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId)
    {
+   TR_ASSERT_FATAL(isActive(), "Should not be called if table is not active!");
    TR_PersistentClassInfo * cl;
    int classDepth;
    J9Class *clazzPtr;
@@ -228,6 +229,7 @@ TR_PersistentCHTable::classGotExtended(
       TR_OpaqueClassBlock *superClassId,
       TR_OpaqueClassBlock *subClassId)
    {
+   TR_ASSERT_FATAL(isAccessible(), "Should not be called if table is not accessible!");
    TR_PersistentClassInfo * cl = findClassInfo(superClassId);
    TR_PersistentClassInfo * subClass = findClassInfo(subClassId); // This is actually the class that got loaded extending the superclass
 #if defined(J9VM_OPT_JITSERVER)
@@ -291,6 +293,7 @@ TR_PersistentCHTable::removeClass(
       TR_PersistentClassInfo *info,
       bool removeInfo)
    {
+   TR_ASSERT_FATAL(isAccessible(), "Should not be called if table is not accessible!");
    if (!info)
       return;
 
@@ -349,6 +352,7 @@ TR_PersistentCHTable::classGotInitialized(
       TR_OpaqueClassBlock *classId,
       TR_PersistentClassInfo *clazz)
    {
+   TR_ASSERT_FATAL(isAccessible(), "Should not be called if table is not accessible!");
    if (!clazz) clazz = findClassInfo(classId);
 
    clazz->setInitialized(persistentMemory);
@@ -408,6 +412,7 @@ TR_PersistentCHTable::classGotRedefined(
       TR_OpaqueClassBlock *oldClassId,
       TR_OpaqueClassBlock *newClassId)
    {
+   TR_ASSERT_FATAL(!isActivating(), "Should not be called if table is currently being activated!");
    TR_PersistentClassInfo *oldClass = findClassInfo(oldClassId);
 
    OMR::CriticalSection classGotRedefined(assumptionTableMutex);
@@ -432,21 +437,24 @@ TR_PersistentCHTable::classGotRedefined(
    // 2. Swap the old and new classes in the hierarchy, and re-hash
    //
 
-   TR_PersistentClassInfo *newClass = findClassInfo(newClassId);
-   uintptr_t oldIndex = TR_RuntimeAssumptionTable::hashCode((uintptr_t)oldClassId) % CLASSHASHTABLE_SIZE;
-   uintptr_t newIndex = TR_RuntimeAssumptionTable::hashCode((uintptr_t)newClassId) % CLASSHASHTABLE_SIZE;
-   _classes[oldIndex].remove(oldClass);
-   oldClass->setClassId(newClassId);
-   _classes[newIndex].add(oldClass);
-
-   // The new class should have had a class load event that would create a CHTable entry.
-   // We'll use it to represent the moribund old class.
-   //
-   if (newClass)
+   if (isActive())
       {
-      _classes[newIndex].remove(newClass);
-      newClass->setClassId(oldClassId);
-      _classes[oldIndex].add(newClass);
+      TR_PersistentClassInfo *newClass = findClassInfo(newClassId);
+      uintptr_t oldIndex = TR_RuntimeAssumptionTable::hashCode((uintptr_t)oldClassId) % CLASSHASHTABLE_SIZE;
+      uintptr_t newIndex = TR_RuntimeAssumptionTable::hashCode((uintptr_t)newClassId) % CLASSHASHTABLE_SIZE;
+      _classes[oldIndex].remove(oldClass);
+      oldClass->setClassId(newClassId);
+      _classes[newIndex].add(oldClass);
+
+      // The new class should have had a class load event that would create a CHTable entry.
+      // We'll use it to represent the moribund old class.
+      //
+      if (newClass)
+         {
+         _classes[newIndex].remove(newClass);
+         newClass->setClassId(oldClassId);
+         _classes[oldIndex].add(newClass);
+         }
       }
    }
 
