@@ -384,6 +384,11 @@ ppc64_aix_uma:
 #========================================#
 ppc64_aix_xl:
   extends: ['ppc64_aix', 'largeheap']
+  excluded_tests:
+    8:
+      - special.system
+    11:
+      - special.system
 #========================================#
 # AIX PPC 64bits Large Heap /w CMake
 #========================================#
