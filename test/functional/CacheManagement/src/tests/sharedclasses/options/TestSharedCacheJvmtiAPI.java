@@ -48,7 +48,7 @@ public class TestSharedCacheJvmtiAPI extends TestUtils {
         runDestroyAllCaches();
         if (false == isWindows()) {
         	runDestroyAllSnapshots();
-        	if (isOpenJ9()) {
+        	if (false == isIbmJava8()) {
         		runDestroyAllGroupAccessCaches();
         	}
         }
@@ -63,7 +63,7 @@ public class TestSharedCacheJvmtiAPI extends TestUtils {
 		    	fail("iterateSharedCacheFunction failed with dir " + dir);
 		    }
 	    	
-	    	if (dir == null && false == isWindows() && isOpenJ9()) {
+	    	if (dir == null && false == isWindows() && false == isIbmJava8()) {
 	    		dirGroupAccess = getCacheDir("Foo_groupaccess", false);
 	    		dirRemoveJavaSharedResources = removeJavaSharedResourcesDir(dirGroupAccess);
 	    		oldCacheGroupAccessCount = iterateSharedCache(dirGroupAccess, NO_FLAGS, false) + iterateSharedCache(dirRemoveJavaSharedResources, NO_FLAGS, false);
@@ -156,7 +156,7 @@ public class TestSharedCacheJvmtiAPI extends TestUtils {
 			runDestroyAllCaches();
 			if (false == isWindows()) {
 				runDestroyAllSnapshots();
-				if (isOpenJ9()) {
+				if (false == isIbmJava8()) {
 					runDestroyAllGroupAccessCaches();
 				}
 			}
