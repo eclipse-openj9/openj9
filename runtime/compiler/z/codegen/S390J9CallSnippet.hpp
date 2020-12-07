@@ -23,6 +23,9 @@
 #ifndef TR_S390J9CALLSNIPPET_INCL
 #define TR_S390J9CALLSNIPPET_INCL
 
+#include "il/MethodSymbol.hpp"
+#include "il/SymbolReference.hpp"
+#include "objectfmt/FunctionCallData.hpp"
 #include "z/codegen/CallSnippet.hpp"
 #include "z/codegen/ConstantDataSnippet.hpp"
 #include "z/codegen/S390Instruction.hpp"
@@ -36,6 +39,9 @@ namespace TR {
 
 class S390J9CallSnippet : public TR::S390CallSnippet
    {
+
+   TR::FunctionCallData *dataDestination;
+
    public:
 
    S390J9CallSnippet(
@@ -57,6 +63,15 @@ class S390J9CallSnippet : public TR::S390CallSnippet
 
    static uint8_t *generateVIThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg);
    static TR_J2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, char* signature, TR::CodeGenerator *cg);
+
+   void setFunctionCallData(TR::FunctionCallData *functionCallData) { dataDestination = functionCallData; }
+   TR::FunctionCallData * getFunctionCallData() { return dataDestination; }
+
+   TR_RuntimeHelper getHelper(TR::MethodSymbol *methodSymbol, TR::DataType type);
+   TR_RuntimeHelper getInterpretedDispatchHelper(TR::SymbolReference *methodSymRef, TR::DataType type);
+
+   uint32_t getLength(int32_t estimatedSnippetStart);
+
    virtual uint8_t *emitSnippetBody();
    };
 

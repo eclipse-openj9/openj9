@@ -25,15 +25,21 @@
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/InstOpCode.hpp"
+#include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
 #include "env/J2IThunk.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
 #include "env/VerboseLog.hpp"
+#include "il/DataTypes.hpp"
 #include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/SymbolReference.hpp"
+#include "objectfmt/FunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/Runtime.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
@@ -249,6 +255,135 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
    return thunk;
    }
 
+TR_RuntimeHelper
+TR::S390J9CallSnippet::getHelper(TR::MethodSymbol *methodSymbol, TR::DataType type)
+   {
+   bool synchronised = methodSymbol->isSynchronised();
+
+   if (methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative())
+      {
+      return TR_S390nativeStaticHelper;
+      }
+   else
+      {
+      switch (type)
+         {
+         case TR::NoType:
+            if (synchronised)
+               {
+               return TR_S390interpreterSyncVoidStaticGlue;
+               }
+            else
+               {
+               return TR_S390interpreterVoidStaticGlue;
+               }
+            break;
+
+         case TR::Int8:
+         case TR::Int16:
+         case TR::Int32:
+            if (synchronised)
+               {
+               return TR_S390interpreterSyncIntStaticGlue;
+               }
+            else
+               {
+               return TR_S390interpreterIntStaticGlue;
+               }
+            break;
+
+         case TR::Address:
+            if (cg()->comp()->target().is64Bit())
+               {
+               if (synchronised)
+                  {
+                  return TR_S390interpreterSyncLongStaticGlue;
+                  }
+               else
+                  {
+                  return TR_S390interpreterLongStaticGlue;
+                  }
+               }
+            else
+               {
+               if (synchronised)
+                  {
+                  return TR_S390interpreterSyncIntStaticGlue;
+                  }
+               else
+                  {
+                  return TR_S390interpreterIntStaticGlue;
+                  }
+               }
+            break;
+
+         case TR::Int64:
+            if (synchronised)
+               {
+               return TR_S390interpreterSyncLongStaticGlue;
+               }
+            else
+               {
+               return TR_S390interpreterLongStaticGlue;
+               }
+            break;
+
+         case TR::Float:
+            if (synchronised)
+               {
+               return TR_S390interpreterSyncFloatStaticGlue;
+               }
+            else
+               {
+               return TR_S390interpreterFloatStaticGlue;
+               }
+            break;
+
+         case TR::Double:
+            if (synchronised)
+               {
+               return TR_S390interpreterSyncDoubleStaticGlue;
+               }
+            else
+               {
+               return TR_S390interpreterDoubleStaticGlue;
+               }
+            break;
+
+         default:
+            TR_ASSERT_FATAL(0, "Bad return data type for a call node.  DataType was %s\n", cg()->getDebug()->getName(type));
+            return (TR_RuntimeHelper) 0;
+         }
+      }
+   }
+
+TR_RuntimeHelper
+TR::S390J9CallSnippet::getInterpretedDispatchHelper(TR::SymbolReference *methodSymRef, TR::DataType type)
+   {
+   TR::Compilation *comp = cg()->comp();
+   TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+   bool isJitInduceOSRCall = methodSymbol->isHelper() && methodSymRef->isOSRInductionHelper();
+
+   if (methodSymRef->isUnresolved() || (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager)))
+      {
+      TR_ASSERT_FATAL_WITH_NODE(getNode(), !isJitInduceOSRCall || !comp->compileRelocatableCode(), "calling jitInduceOSR is not supported yet under AOT\n");
+
+      if (methodSymbol->isSpecial())
+         return TR_S390interpreterUnresolvedSpecialGlue;
+      else if (methodSymbol->isStatic())
+         return TR_S390interpreterUnresolvedStaticGlue;
+      else
+         return TR_S390interpreterUnresolvedDirectVirtualGlue;
+      }
+   else if (isJitInduceOSRCall)
+      {
+      return (TR_RuntimeHelper) methodSymRef->getReferenceNumber();
+      }
+   else
+      {
+      return getHelper(methodSymbol, type);
+      }
+   }
 
 uint8_t *
 TR::S390J9CallSnippet::emitSnippetBody()
@@ -277,21 +412,19 @@ TR::S390J9CallSnippet::emitSnippetBody()
    // Generate RIOFF if RI is supported.
    cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RIOFF);
 
+   TR::FunctionCallData *dataDestination = new (cg()->trHeapMemory()) TR::FunctionCallData(glueRef, callNode, cursor, cg(), self(), TR_HelperAddress);
+
    // data area start address
-   uintptr_t dataStartAddr = (uintptr_t) (getPICBinaryLength(cg()) + cursor);
+   uintptr_t dataStartAddr = static_cast<uintptr_t>(cg()->getObjFmt()->functionCallBinaryLength(*dataDestination)) + reinterpret_cast<uintptr_t>(cursor);
 
    // calculate pad bytes to get the data area aligned
    int32_t pad_bytes = (dataStartAddr + (sizeof(uintptr_t) - 1)) / sizeof(uintptr_t) * sizeof(uintptr_t) - dataStartAddr;
 
    setPadBytes(pad_bytes);
 
-   //  branch to the glueRef
-   //
-   //  0d40        BASR  rEP,0
-   //  5840 4006   L     rEP,6(,rEP)   LG   rEP, 8(rEP) for 64bit
-   //  0de4        BASR  r14,rEP
+   cursor = cg()->getObjFmt()->encodeFunctionCall(*dataDestination);
 
-   cursor = generatePICBinary(cg(), cursor, glueRef);
+   setFunctionCallData(dataDestination);
 
    // add NOPs to make sure the data area is aligned
    if (pad_bytes == 2)
@@ -387,6 +520,17 @@ TR::S390J9CallSnippet::emitSnippetBody()
 
    return cursor + sizeof(uintptr_t);
    }
+
+uint32_t
+TR::S390J9CallSnippet::getLength(int32_t estimatedSnippetStart)
+   {
+   return instructionCountForArguments(getNode(), cg())
+            + cg()->getObjFmt()->functionCallBinaryLength(*getFunctionCallData())
+            + getPadBytes()
+            + getRuntimeInstrumentationOnOffInstructionLength(cg())
+            + 3 * sizeof(uintptr_t);
+   }
+         
 
 uint8_t *
 TR::S390UnresolvedCallSnippet::emitSnippetBody()
@@ -512,8 +656,11 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
    // Generate RIOFF if RI is supported.
    cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RIOFF);
 
-   cursor = generatePICBinary(cg(), cursor, glueRef);
+   TR::FunctionCallData *dataDestination = new (cg()->trHeapMemory()) TR::FunctionCallData(glueRef, callNode, cursor, cg(), self(), TR_HelperAddress);
 
+   cursor = cg()->getObjFmt()->encodeFunctionCall(*dataDestination);
+
+   setFunctionCallData(dataDestination);
 
    // Method address
    *(uintptr_t *) cursor = (uintptr_t) glueRef->getMethodAddress();
@@ -587,7 +734,7 @@ uint32_t
 TR::S390VirtualUnresolvedSnippet::getLength(int32_t  estimatedSnippetStart)
    {
    TR::Compilation* comp = cg()->comp();
-   uint32_t length = getPICBinaryLength(cg()) + 7 * sizeof(uintptr_t) + TR::Compiler->om.sizeofReferenceAddress();
+   uint32_t length = cg()->getObjFmt()->functionCallBinaryLength(*(getFunctionCallData())) + 7 * sizeof(uintptr_t) + TR::Compiler->om.sizeofReferenceAddress();
    length += getRuntimeInstrumentationOnOffInstructionLength(cg());
    return length;
    }
@@ -691,8 +838,71 @@ TR::S390InterfaceCallSnippet::getLength(int32_t  estimatedSnippetStart)
    {
    return 12;  // LARL + BRCL
    }
+   
+
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::S390J9CallSnippet * snippet)
+   {
+   uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation();
+   TR::Node * callNode = snippet->getNode();
+   TR::SymbolReference * methodSymRef = snippet->getRealMethodSymbolReference();
+   if(!methodSymRef)
+      methodSymRef = callNode->getSymbolReference();
+
+   TR::MethodSymbol * methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+
+   TR::FunctionCallData *dataDestination = snippet->getFunctionCallData();
+   TR::SymbolReference * glueRef = dataDestination->methodSymRef;
+   int8_t padbytes = snippet->getPadBytes();
+
+   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos,
+      methodSymRef->isUnresolved() ? "Unresolved Call Snippet" : "Call Snippet");
+
+   bufferPos = printS390ArgumentsFlush(pOutFile, callNode, bufferPos, snippet->getSizeOfArguments());
+
+   bufferPos = printRuntimeInstrumentationOnOffInstruction(pOutFile, bufferPos, false); // RIOFF
+
+   bufferPos = _cg->getObjFmt()->print(pOutFile, *dataDestination);
+
+   if (padbytes == 2)
+      {
+      printPrefix(pOutFile, NULL, bufferPos, 2);
+      trfprintf(pOutFile, "DC   \t0x0000 \t\t\t# 2-bytes padding for alignment");
+      bufferPos += 2;
+      }
+   else if (padbytes == 4)
+      {
+      printPrefix(pOutFile, NULL, bufferPos, 4) ;
+      trfprintf(pOutFile, "DC   \t0x00000000 \t\t# 4-bytes padding for alignment");
+      bufferPos += 4;
+      }
+   else if (padbytes == 6)
+      {
+      printPrefix(pOutFile, NULL, bufferPos, 6) ;
+      trfprintf(pOutFile, "DC   \t0x000000000000 \t\t# 6-bytes padding for alignment");
+      bufferPos += 6;
+      }
+
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# Method Address", glueRef->getMethodAddress());
+   bufferPos += sizeof(intptr_t);
 
 
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# Call Site RA", snippet->getCallRA());
+   bufferPos += sizeof(intptr_t);
+
+   if (methodSymRef->isUnresolved())
+      {
+      printPrefix(pOutFile, NULL, bufferPos, 0);
+      }
+   else
+      {
+      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+      }
+
+   trfprintf(pOutFile, "DC   \t%p \t\t# Method Pointer", methodSymRef->isUnresolved() ? 0 : methodSymbol->getMethodAddress());
+   }
 
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::S390UnresolvedCallSnippet * snippet)
