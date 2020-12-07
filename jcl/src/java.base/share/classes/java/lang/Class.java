@@ -67,7 +67,11 @@ import static com.ibm.oti.util.Util.doesClassLoaderDescendFrom;
 
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
+/*[IF JAVA_SPEC_VERSION >= 15]*/
+import jdk.internal.access.SharedSecrets;
+/*[ELSE] JAVA_SPEC_VERSION >= 15
 import jdk.internal.misc.SharedSecrets;
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 import java.io.IOException;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.CallerSensitive;
