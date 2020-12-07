@@ -176,6 +176,7 @@ static void restoreJitArtifacts(J9JavaVM *vm)
       {
       for (J9JITExceptionTable *metadata = currentClassLoader->jitMetaDataList; metadata != NULL; metadata = J9JITEXCEPTIONTABLE_NEXTMETHOD_GET(metadata))
          {
+         metadata->runtimeAssumptionList = NULL;
          jit_artifact_insert(vm, translationArtifacts, metadata);
          }
 
@@ -191,6 +192,7 @@ static void restoreJitArtifacts(J9JavaVM *vm)
       {
       for (J9JITExceptionTable *metadata = clazz->jitMetaDataList; metadata != NULL; metadata = J9JITEXCEPTIONTABLE_NEXTMETHOD_GET(metadata))
          {
+         metadata->runtimeAssumptionList = NULL;
          jit_artifact_insert(vm, translationArtifacts, metadata);
          }
       clazz = vmFuncs->allClassesNextDo(&classWalkState);

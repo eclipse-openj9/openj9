@@ -666,7 +666,6 @@ TR_RuntimeAssumptionTable::serialize(J9JITConfig *jitConfig)
                atlas->_numAssumptionsPerKind[k]._count++;
                atlas->_numAssumptionsPerKind[k]._size += size;
 
-               owningMetadata->runtimeAssumptionList = NULL;
                buffer += size;
 
                cursor = cursor->getNext();
