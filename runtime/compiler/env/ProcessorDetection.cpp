@@ -657,7 +657,4 @@ TR_J9VM::initializeProcessorType()
       {
       TR_ASSERT(0,"Unknown target");
       }
-
-   _jitConfig->targetProcessor = TR::Compiler->target.cpu.getProcessorDescription();
-   _jitConfig->relocatableTargetProcessor = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
    }
