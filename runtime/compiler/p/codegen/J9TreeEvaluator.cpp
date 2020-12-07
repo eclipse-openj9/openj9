@@ -13296,47 +13296,8 @@ J9::Power::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, boo
 
    reference->setIsNonNull(true);
 
-   /*
-   * If the first child is a load with a ref count of 1, just decrement the reference count on the child.
-   * If the first child does not have a register, it means it was never evaluated.
-   * As a result, the grandchild (the variable reference) needs to be decremented as well.
-   *
-   * In other cases, evaluate the child node.
-   *
-   * Under compressedpointers, the first child will have a refCount of at least 2 (the other under an anchor node).
-   */
-   if (opCode.isLoad() && firstChild->getReferenceCount()==1
-         && !firstChild->getSymbolReference()->isUnresolved())
-      {
-      cg->decReferenceCount(firstChild);
-      if (firstChild->getRegister() == NULL)
-         {
-         cg->decReferenceCount(reference);
-         }
-      }
-   else
-      {
-      if (comp->useCompressedPointers())
-         {
-         // for stores under NULLCHKs, artificially bump
-         // down the reference count before evaluation (since stores
-         // return null as registers)
-         //
-         bool fixRefCount = false;
-         if (firstChild->getOpCode().isStoreIndirect()
-               && firstChild->getReferenceCount() > 1)
-            {
-            firstChild->decReferenceCount();
-            fixRefCount = true;
-            }
-         cg->evaluate(firstChild);
-         if (fixRefCount)
-            firstChild->incReferenceCount();
-         }
-      else
-         cg->evaluate(firstChild);
-      cg->decReferenceCount(firstChild);
-      }
+   cg->evaluate(firstChild);
+   cg->decReferenceCount(firstChild);
 
    return NULL;
    }

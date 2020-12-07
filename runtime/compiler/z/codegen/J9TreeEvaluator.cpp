@@ -5908,51 +5908,7 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
 
    if (needLateEvaluation)
       {
-      // If this is a load with ref count of 1, just decrease the ref count
-      // since it must have been evaluated. Otherwise, evaluate it.
-      // for compressedPointers, the firstChild will have a refCount
-      // of atleast 2 (the other under an anchor node)
-      //
-      if (opCode.isLoad() && firstChild->getReferenceCount() == 1
-            && !firstChild->getSymbolReference()->isUnresolved())
-         {
-         if (needExplicitCheck && firstChild->getRegister() == NULL)
-            {
-            // load with reference count 1 and no register, this means load is not evaluated
-            // this load is only meaningful for explicit NULL CHK
-            // it should not be evaluated yet. Its reference counter will be decrease later.
-            cg->decReferenceCount(reference);
-            }
-         else
-            {
-            cg->decReferenceCount(firstChild);
-            cg->decReferenceCount(reference);
-            }
-         }
-      else
-         {
-         // cg->comp()->useCompressedPointers
-         // this will end up evaluating either the l2a sequence (for loads)
-         // or the iistore (in case of iastores)
-         //
-         // for stores under NULLCHKs, artificially bump
-         // down the reference count before evaluation (since stores
-         // return null as registers)
-         //
-         bool fixRefCount = false;
-         if (comp->useCompressedPointers())
-            {
-            if (firstChild->getOpCode().isStoreIndirect()
-                  && firstChild->getReferenceCount() > 1)
-               {
-               firstChild->decReferenceCount();
-               fixRefCount = true;
-               }
-            }
-         cg->evaluate(firstChild);
-         if (fixRefCount)
-            firstChild->incReferenceCount();
-         }
+      cg->evaluate(firstChild);
       }
    else if (needExplicitCheck)
       {

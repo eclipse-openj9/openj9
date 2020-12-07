@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2001,25 +2001,7 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
    //
    if (needLateEvaluation)
       {
-      if (comp->useCompressedPointers())
-         {
-         // for stores under NULLCHKs, artificially bump
-         // down the reference count before evaluation (since stores
-         // return null as registers)
-         //
-         bool fixRefCount = false;
-         if (node->getFirstChild()->getOpCode().isStoreIndirect() &&
-               node->getFirstChild()->getReferenceCount() > 1)
-            {
-            node->getFirstChild()->decReferenceCount();
-            fixRefCount = true;
-            }
-         cg->evaluate(node->getFirstChild());
-         if (fixRefCount)
-            node->getFirstChild()->incReferenceCount();
-         }
-      else
-         cg->evaluate(firstChild);
+      cg->evaluate(node->getFirstChild());
       }
    else if (needExplicitCheck)
       {
