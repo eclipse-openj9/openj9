@@ -508,3 +508,15 @@ J9::VMEnv::getInterpreterVTableOffset()
 #endif /* defined(J9VM_OPT_JITSERVER) */
    return sizeof(J9Class);
    }
+
+bool
+J9::VMEnv::isVMInStartupPhase(J9JITConfig *jitConfig)
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      return TR::compInfoPT->getClientData()->isInStartupPhase();
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   return jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP;
+   }

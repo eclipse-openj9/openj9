@@ -454,6 +454,9 @@ class ClientSessionData
    void cacheWellKnownClassChainOffsets(unsigned int includedClasses, size_t numClasses,
                                         const uintptr_t *classChainOffsets, const void *wellKnownClassChainOffsets);
 
+   bool isInStartupPhase() const { return _isInStartupPhase; }
+   void setIsInStartupPhase(bool isInStartupPhase) { _isInStartupPhase = isInStartupPhase; }
+ 
    private:
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
@@ -523,6 +526,8 @@ class ClientSessionData
 
    WellKnownClassesCache _wellKnownClasses;
    TR::Monitor *_wellKnownClassesMonitor;
+   
+   bool _isInStartupPhase;
    }; // class ClientSessionData
 
 

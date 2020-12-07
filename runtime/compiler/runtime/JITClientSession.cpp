@@ -47,7 +47,8 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _rtResolve(false),
    _registeredJ2IThunksMap(decltype(_registeredJ2IThunksMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _registeredInvokeExactJ2IThunksSet(decltype(_registeredInvokeExactJ2IThunksSet)::allocator_type(TR::Compiler->persistentAllocator())),
-   _wellKnownClasses()
+   _wellKnownClasses(),
+   _isInStartupPhase(false)
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = NULL;
@@ -715,7 +716,6 @@ ClientSessionData::cacheWellKnownClassChainOffsets(unsigned int includedClasses,
           (WELL_KNOWN_CLASS_COUNT - numClasses) * sizeof(classChainOffsets[0]));
    _wellKnownClasses._wellKnownClassChainOffsets = wellKnownClassChainOffsets;
    }
-
 
 ClientSessionHT*
 ClientSessionHT::allocate()
