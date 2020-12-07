@@ -308,7 +308,7 @@ J9::CodeCacheManager::allocateCodeCacheWithDataSegmentRO(size_t segmentSize,
          {
          TR_ASSERT_FATAL(_codeCacheData == NULL, "A CCData instance already exists; this code currently doesn't support multiple codecache segments because we can only allocate one CCData instance. TODO: Fix this limitation.");
          uint8_t * const dataArea = ccDataSegment->baseAddress;
-         _codeCacheData = new OMR::CCData(dataArea, dataAreaSize);
+         _codeCacheData = new TR::CCData(dataArea, dataAreaSize);
          }
       mcc_printf("TR::CodeCache::allocated : codeCacheSegment is %p\n",codeCacheSegment);
       if (config.verboseCodeCache())
@@ -525,7 +525,7 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
          {
          TR_ASSERT_FATAL(_codeCacheData == NULL, "A CCData instance already exists; this code currently doesn't support multiple codecache segments because we can only allocate one CCData instance. TODO: Fix this limitation.");
          uint8_t * const dataArea = codeCacheSegment->baseAddress + codeCacheSizeToAllocate;
-         _codeCacheData = new OMR::CCData(dataArea, dataAreaSize);
+         _codeCacheData = new TR::CCData(dataArea, dataAreaSize);
          }
       mcc_printf("TR::CodeCache::allocated : codeCacheSegment is %p\n",codeCacheSegment);
       if (config.verboseCodeCache())

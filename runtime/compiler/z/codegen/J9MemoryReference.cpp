@@ -397,13 +397,13 @@ J9::Z::MemoryReference::create(TR::CodeGenerator* cg, TR::Node* node)
 
       typedef J9::Z::UnresolvedDataReadOnlySnippet::CCUnresolvedData CCUnresolvedData;
 
-      OMR::CCData *codeCacheData = cg->getCodeCache()->manager()->getCodeCacheData();
-      OMR::CCData::index_t index;
-      if (!(codeCacheData->put(NULL, sizeof(CCUnresolvedData), alignof(CCUnresolvedData), NULL, index)))
+      TR::CCData *codeCacheData = cg->getCodeCache()->manager()->getCodeCacheData();
+      TR::CCData::index_t index;
+      if (!(codeCacheData->reserve(sizeof(CCUnresolvedData), alignof(CCUnresolvedData), NULL, index)))
          {
          comp->failCompilation<TR::CompilationException>("Could not allocate unresolved data metadata");
          }
-      
+
       CCUnresolvedData* ccUnresolvedDataAddress = codeCacheData->get<CCUnresolvedData>(index);
 
       TR::SymbolReference *symRef = node->getSymbolReference();
@@ -459,7 +459,7 @@ J9::Z::MemoryReference::create(TR::CodeGenerator* cg, TR::Node* node)
       auto cursor = new (INSN_HEAP) TR::S390RILInstruction(TR::InstOpCode::BRCL, node, 0x8, snippet, NULL, cg);
       cursor->setNeedsGCMap(0xFFFFFFFF);
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionEnd, dependencies);
-      
+
       TR::MemoryReference *loadStoreDataMR = NULL;
       if (baseReg != NULL)
          {
