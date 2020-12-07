@@ -552,6 +552,36 @@ bool TR_J9VirtualCallSite::findCallSiteTarget(TR_CallStack *callStack, TR_Inline
 
    tryToRefineReceiverClassBasedOnResolvedTypeArgInfo(inliner);
 
+   // Refine receiver class based on CP class
+   // When we have an invokevirtual on an abstract method defined in an interface class,
+   // the call site's class will be more concrete than class of method.
+   // This happens when an abstract class implements an interface class without providing
+   // implementation for the given method, and the call site is refering to the method of
+   // the abstract class, the cp entry of the method ref will be resolved to j9method of
+   // the interface class. However, the class ref from cp will be resolved to the abstract
+   // class, which is more concrete
+   //
+   if (_cpIndex != -1 && _receiverClass && TR::Compiler->cls.isInterfaceClass(comp(), _receiverClass))
+      {
+      TR_ResolvedMethod* owningMethod = _initialCalleeMethod->owningMethod();
+      int32_t classRefCPIndex = owningMethod->classCPIndexOfMethod(_cpIndex);
+      TR_OpaqueClassBlock* callSiteClass = owningMethod->getClassFromConstantPool(comp(), classRefCPIndex);
+      if (callSiteClass &&
+          callSiteClass != _receiverClass &&
+          fe()->isInstanceOf(callSiteClass, _receiverClass, true, true, false) == TR_yes)
+         {
+         if (comp()->trace(OMR::inlining))
+            {
+            char* oldClassSig = TR::Compiler->cls.classSignature(comp(), _receiverClass, comp()->trMemory());
+            char* callSiteClassSig = TR::Compiler->cls.classSignature(comp(), callSiteClass, comp()->trMemory());
+            traceMsg(comp(), "Receiver type %p sig %s is class of an interface method for invokevirtual, improve it to call site receiver type %p sig %s\n", _receiverClass, oldClassSig, callSiteClass, callSiteClassSig);
+            }
+
+         // Update receiver class
+         _receiverClass = callSiteClass;
+         }
+      }
+
    if (addTargetIfMethodIsNotOverriden(inliner) ||
       addTargetIfMethodIsNotOverridenInReceiversHierarchy(inliner) ||
       findCallSiteForAbstractClass(inliner) ||
