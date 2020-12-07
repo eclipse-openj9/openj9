@@ -53,6 +53,7 @@ method already exists in the SCC and loads that instead.
 4. [AOT: Validation](https://blog.openj9.org/2018/11/08/ahead-of-time-compilation-validation/)
 5. [Class Chains](https://github.com/eclipse/openj9/blob/master/doc/compiler/aot/ClassChains.md)
 6. [Symbol Validation Manager](https://github.com/eclipse/openj9/blob/master/doc/compiler/aot/SymbolValidationManager.md)
+7. [Inlined Methods](https://github.com/eclipse/openj9/blob/master/doc/compiler/aot/InlinedMethods.md)
 
 
 <hr/>
