@@ -65,12 +65,22 @@ TR_PersistentCHTable::TR_PersistentCHTable(TR_PersistentMemory *trPersistentMemo
 
    memset(_buffer, 0, sizeof(TR_LinkHead<TR_PersistentClassInfo>) * (CLASSHASHTABLE_SIZE + 1));
    _classes = static_cast<TR_LinkHead<TR_PersistentClassInfo> *>(static_cast<void *>(_buffer));
+
+   setActive();
    }
 
 
 void
 TR_PersistentCHTable::commitSideEffectGuards(TR::Compilation *comp)
    {
+   if (!isActive())
+      {
+      TR_ASSERT_FATAL(comp->getClassesThatShouldNotBeLoaded()->isEmpty(), "Classes that should not be loaded is not empty!");
+      TR_ASSERT_FATAL(comp->getClassesThatShouldNotBeNewlyExtended()->isEmpty(), "Classes that should not be newly extended is not empty!");
+      TR_ASSERT_FATAL(comp->getSideEffectGuardPatchSites()->empty(), "Side effect Guard patch sites not empty!");
+      return;
+      }
+
    TR::list<TR_VirtualGuardSite*> *sideEffectPatchSites = comp->getSideEffectGuardPatchSites();
    bool nopAssumptionIsValid = true;
 
@@ -298,6 +308,9 @@ TR_PersistentCHTable::findSingleJittedImplementer(
 TR_PersistentClassInfo *
 TR_PersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
+   if (!isAccessible())
+      return NULL;
+
    TR_PersistentClassInfo *cl = _classes[TR_RuntimeAssumptionTable::hashCode((uintptr_t)classId) % CLASSHASHTABLE_SIZE].getFirst();
    while (cl &&
           cl->getClassId() != classId)
@@ -314,6 +327,9 @@ TR_PersistentCHTable::findClassInfoAfterLocking(TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
       bool returnClassInfoForAOT)
    {
+   if (!isActive())
+      return NULL;
+
    // for AOT do not use the class hierarchy
    if (comp->compileRelocatableCode() && !returnClassInfoForAOT)
       {
@@ -337,6 +353,9 @@ TR_PersistentCHTable::findClassInfoAfterLocking(
       TR_FrontEnd *fe,
       bool returnClassInfoForAOT)
    {
+   if (!isActive())
+      return NULL;
+
    TR::ClassTableCriticalSection findClassInfoAfterLocking(fe);
    return findClassInfo(classId);
    }
@@ -645,6 +664,7 @@ TR_PersistentCHTable::dumpStats(TR_FrontEnd * fe)
 void
 TR_PersistentCHTable::dumpMethodCounts(TR_FrontEnd *fe, TR_Memory &trMemory)
    {
+   TR_ASSERT_FATAL(isActive(), "Should not be called if table is not active!");
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    for (int32_t i = 0; i < CLASSHASHTABLE_SIZE; i++)
       {
@@ -669,6 +689,7 @@ TR_PersistentCHTable::dumpMethodCounts(TR_FrontEnd *fe, TR_Memory &trMemory)
 void
 TR_PersistentCHTable::resetVisitedClasses() // highly time consuming
    {
+   TR_ASSERT_FATAL(isAccessible(), "Should not be called if table is not accessible!");
    for (int32_t i = 0; i <= CLASSHASHTABLE_SIZE; ++i)
       {
       TR_PersistentClassInfo * cl = _classes[i].getFirst();
@@ -687,6 +708,7 @@ TR_PersistentCHTable::classGotUnloaded(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId)
    {
+   TR_ASSERT_FATAL(isActive(), "Should not be called if table is not active!");
    TR_PersistentClassInfo * cl = findClassInfo(classId);
 
    bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassUnloading);
@@ -706,6 +728,7 @@ TR_PersistentCHTable::classGotLoaded(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId)
    {
+   TR_ASSERT_FATAL(isAccessible(), "Should not be called if table is not accessible!");
    TR_ASSERT(!findClassInfo(classId), "Should not add duplicates to hash table\n");
    TR_PersistentClassInfo *clazz = new (PERSISTENT_NEW) TR_PersistentClassInfo(classId);
    if (clazz)
@@ -718,6 +741,7 @@ TR_PersistentCHTable::classGotLoaded(
 void
 TR_PersistentCHTable::collectAllSubClasses(TR_PersistentClassInfo *clazz, ClassList &classList, TR_J9VMBase *fej9, bool locked)
    {
+   TR_ASSERT_FATAL(isActive(), "Should not be called if table is not active!");
    TR::ClassTableCriticalSection collectSubClasses(fej9, locked);
 
    VisitTracker<> marked(TR::Compiler->persistentAllocator());
@@ -728,6 +752,7 @@ TR_PersistentCHTable::collectAllSubClasses(TR_PersistentClassInfo *clazz, ClassL
 void
 TR_PersistentCHTable::collectAllSubClassesLocked(TR_PersistentClassInfo *clazz, ClassList &classList, VisitTracker<> &marked)
    {
+   TR_ASSERT_FATAL(isActive(), "Should not be called if table is not active!");
    for (auto subClass = clazz->getFirstSubclass(); subClass; subClass = subClass->getNext())
       {
       if (!subClass->getClassInfo()->hasBeenVisited())
@@ -743,6 +768,7 @@ TR_PersistentCHTable::collectAllSubClassesLocked(TR_PersistentClassInfo *clazz, 
 void
 TR_PersistentCHTable::resetCachedCCVResult(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz)
    {
+   TR_ASSERT_FATAL(isActive(), "Should not be called if table is not active!");
    TR::ClassTableCriticalSection collectSubClasses(fej9);
 
    ClassList classList(TR::Compiler->persistentAllocator());
@@ -755,4 +781,108 @@ TR_PersistentCHTable::resetCachedCCVResult(TR_J9VMBase *fej9, TR_OpaqueClassBloc
       {
       (*iter)->setCCVResult(CCVResult::notYetValidated);
       }
+   }
+
+bool
+TR_PersistentCHTable::addClassToTable(J9VMThread *vmThread,
+                                     J9JITConfig *jitConfig,
+                                     J9Class *j9clazz,
+                                     TR::CompilationInfo *compInfo)
+   {
+   TR_OpaqueClassBlock *opaqueClazz = TR::Compiler->cls.convertClassPtrToClassOffset(j9clazz);
+
+   /* Class is already in table */
+   if (findClassInfo(opaqueClazz))
+      return true;
+
+   /* j/l/Object has a NULL at superclasses[-1] */
+   J9Class *superClazz = j9clazz->superclasses[J9CLASS_DEPTH(j9clazz) - 1];
+
+   /* Add super class first */
+   if (superClazz)
+      if (!addClassToTable(vmThread, jitConfig, superClazz, compInfo))
+         return false;
+
+   /* Add interfaces */
+   J9ITable *element = TR::Compiler->cls.iTableOf(opaqueClazz);
+   while (element != NULL)
+      {
+      /* If j9clazz is an interface class, then the first element
+       * will refer back to itself...
+       */
+      if (element->interfaceClass != j9clazz)
+         if (!addClassToTable(vmThread, jitConfig, element->interfaceClass, compInfo))
+            return false;
+
+      element = TR::Compiler->cls.iTableNext(element);
+      }
+
+   UDATA eventFailed = 0;
+
+   /* Trigger Class Load Hook */
+   jitHookClassLoadHelper(vmThread, jitConfig, j9clazz, compInfo, &eventFailed);
+   if (eventFailed)
+      return false;
+
+   /* Trigger Pre-initialize Hook */
+   if (j9clazz->initializeStatus & J9ClassInitStatusMask != J9ClassInitNotInitialized)
+      {
+      jitHookClassPreinitializeHelper(vmThread, jitConfig, j9clazz, &eventFailed);
+      if (eventFailed)
+         return false;
+      }
+
+   /* Add array class if it exists */
+   if (j9clazz->arrayClass)
+      if (!addClassToTable(vmThread, jitConfig, j9clazz->arrayClass, compInfo))
+         return false;
+
+   return true;
+   }
+
+bool
+TR_PersistentCHTable::activate(J9VMThread *vmThread, TR_J9VMBase *fej9, TR::CompilationInfo *compInfo)
+   {
+   TR_ASSERT_FATAL(!isAccessible(), "CH table is already accessible!");
+
+   TR::ClassTableCriticalSection activateTable(fej9);
+
+   if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Activating CH Table...");
+
+   setActivating();
+
+   bool success = true;
+
+   PORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
+   J9ClassWalkState classWalkState;
+   J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
+
+   J9Class *j9clazz = vmFuncs->allClassesStartDo(&classWalkState, vmThread->javaVM, NULL);
+   while (j9clazz)
+      {
+      if (!addClassToTable(vmThread, fej9->getJ9JITConfig(), j9clazz, compInfo))
+         {
+         success = false;
+         break;
+         }
+
+      j9clazz = vmFuncs->allClassesNextDo(&classWalkState);
+      }
+   vmFuncs->allClassesEndDo(&classWalkState);
+
+   if (success)
+      {
+      setActive();
+      if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Finished activating CH Table...");
+      }
+   else
+      {
+      setFailedToActivate();
+      if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Failed to activate CH Table...");
+      }
+
+   return success;
    }
