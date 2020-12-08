@@ -750,6 +750,9 @@ TR_J9VMBase::TR_J9VMBase(
          break;
          }
 
+   if (TR::Options::getCmdLineOptions() && TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug))
+      setFSDIsEnabled(true);
+
    _sharedCache = NULL;
    if (TR::Options::sharedClassCache()
 #if defined(J9VM_OPT_JITSERVER)
