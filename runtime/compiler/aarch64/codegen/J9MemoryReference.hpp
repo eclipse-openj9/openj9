@@ -36,6 +36,7 @@ namespace J9 { typedef J9::ARM64::MemoryReference MemoryReferenceConnector; }
 #endif
 
 #include "codegen/OMRMemoryReference.hpp"
+#include "infra/Flags.hpp"
 
 namespace J9
 {
@@ -45,15 +46,26 @@ namespace ARM64
 
 class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReferenceConnector
    {
+   flags8_t _j9Flags;
+
 public:
    TR_ALLOC(TR_Memory::MemoryReference)
+
+   typedef enum
+      {
+      TR_ARM64MemoryReferenceControl_ThrowsImplicitNullPointerException  = 0x01,
+      /* To be added more if necessary */
+      } TR_ARM64MemoryReferenceExtraControl;
 
    /**
     * @brief Constructor
     * @param[in] cg : CodeGenerator object
     */
    MemoryReference(TR::CodeGenerator *cg)
-      : OMR::MemoryReferenceConnector(cg) {}
+      : OMR::MemoryReferenceConnector(cg), _j9Flags(0)
+      {
+      setupCausesImplicitNullPointerException(cg);
+      }
 
    /**
     * @brief Constructor
@@ -65,7 +77,10 @@ public:
          TR::Register *br,
          TR::Register *ir,
          TR::CodeGenerator *cg)
-      : OMR::MemoryReferenceConnector(br, ir, cg) {}
+      : OMR::MemoryReferenceConnector(br, ir, cg), _j9Flags(0)
+      {
+      setupCausesImplicitNullPointerException(cg);
+      }
 
    /**
     * @brief Constructor
@@ -79,7 +94,10 @@ public:
          TR::Register *ir,
          uint8_t scale,
          TR::CodeGenerator *cg)
-      : OMR::MemoryReferenceConnector(br, ir, scale, cg) {}
+      : OMR::MemoryReferenceConnector(br, ir, scale, cg), _j9Flags(0)
+      {
+      setupCausesImplicitNullPointerException(cg);
+      }
 
    /**
     * @brief Constructor
@@ -91,7 +109,10 @@ public:
          TR::Register *br,
          int32_t disp,
          TR::CodeGenerator *cg)
-      : OMR::MemoryReferenceConnector(br, disp, cg) {}
+      : OMR::MemoryReferenceConnector(br, disp, cg), _j9Flags(0)
+      {
+      setupCausesImplicitNullPointerException(cg);
+      }
 
    /**
     * @brief Constructor
@@ -107,6 +128,29 @@ public:
     * @param[in] cg : CodeGenerator object
     */
    MemoryReference(TR::Node *node, TR::SymbolReference *symRef, TR::CodeGenerator *cg);
+
+   /**
+    * @brief Implicit NullPointerException can be thrown or not
+    * @return true if implicit NullPointerException can be thrown
+    */
+   bool getCausesImplicitNullPointerException()
+      {
+      return _j9Flags.testAll(TR_ARM64MemoryReferenceControl_ThrowsImplicitNullPointerException);
+      }
+
+   /**
+    * @brief Sets Implicit NullPointerException flag
+    */
+   void setCausesImplicitNullPointerException()
+      {
+      _j9Flags.set(TR_ARM64MemoryReferenceControl_ThrowsImplicitNullPointerException);
+      }
+
+   /**
+    * @brief Analyzes current node and sets Implicit NullPointerException flag if necessary
+    * @param[in] cg : CodeGenerator
+    */
+   void setupCausesImplicitNullPointerException(TR::CodeGenerator *cg);
 
    /**
     * @brief Adjustment for resolution
