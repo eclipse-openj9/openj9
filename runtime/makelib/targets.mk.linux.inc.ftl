@@ -273,7 +273,7 @@ CPPFLAGS += -DLINUX -D_REENTRANT
 </#if>
 
 <#-- Add Position Independent compile flag -->
-<#if uma.spec.processor.amd64 || uma.spec.processor.arm || uma.spec.processor.s390 || uma.spec.processor.riscv64>
+<#if uma.spec.processor.amd64 || uma.spec.processor.arm || uma.spec.processor.aarch64 || uma.spec.processor.s390 || uma.spec.processor.riscv64>
   CFLAGS += -fPIC
   CXXFLAGS += -fPIC
 <#elseif uma.spec.processor.ppc>
