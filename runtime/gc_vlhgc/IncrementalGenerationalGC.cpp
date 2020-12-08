@@ -643,7 +643,7 @@ MM_IncrementalGenerationalGC::initializeTaxationThreshold(MM_EnvironmentVLHGC *e
 	}
 	Assert_MM_true(NULL != _configuredSubspace);
 	_configuredSubspace->setBytesRemainingBeforeTaxation(_taxationThreshold);
-	_allocatedSinceLastPGC = _taxationThreshold;
+	_allocatedSinceLastPGC = 0;
 	
 	initialRegionAgesSetup(env, _taxationThreshold);
 }
@@ -807,7 +807,6 @@ MM_IncrementalGenerationalGC::taxationEntryPoint(MM_EnvironmentBase *envModron, 
 	Assert_MM_true(0 == _configuredSubspace->getBytesRemainingBeforeTaxation());
 
 	/* Accumulate allocated bytes since last PGC */
-	_configuredSubspace->setBytesRemainingBeforeTaxation(_taxationThreshold);
 	_allocatedSinceLastPGC += _taxationThreshold;
 
 	/* Report the start of the increment */
@@ -876,6 +875,7 @@ MM_IncrementalGenerationalGC::taxationEntryPoint(MM_EnvironmentBase *envModron, 
 
 	/* Set the next threshold for collection work */
 	_taxationThreshold = _schedulingDelegate.getNextTaxationThreshold(env);
+	_configuredSubspace->setBytesRemainingBeforeTaxation(_taxationThreshold);
 
 	/* Report the end of the increment */
 	if (J9_EVENT_IS_HOOKED(_extensions->privateHookInterface, J9HOOK_MM_PRIVATE_TAROK_INCREMENT_END)) {
