@@ -1032,6 +1032,9 @@ public:
    virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType);
    virtual TR_OpaqueClassBlock * getClassFromNewArrayTypeNonNull(int32_t arrayType);
 
+   virtual TR_OpaqueClassBlock *getClassFromCP(J9ConstantPool *cp);
+   virtual J9ROMMethod *getROMMethodFromRAMMethod(J9Method *ramMethod);
+
    // --------------------------------------------------------------------------
    // Object model
    // --------------------------------------------------------------------------
@@ -1139,8 +1142,6 @@ public:
    virtual uint32_t               getPrimitiveArrayOffsetInJavaVM(uint32_t arrayType);
 
    virtual TR_StaticFinalData dereferenceStaticFinalAddress(void *staticAddress, TR::DataType addressType);
-   virtual TR_OpaqueClassBlock *getClassFromCP(J9ConstantPool *cp);
-   virtual J9ROMMethod *getROMMethodFromRAMMethod(J9Method *ramMethod);
 
    TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t sigLength, J9ConstantPool * constantPool);
 
