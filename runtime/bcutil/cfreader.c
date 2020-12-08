@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2327,17 +2327,6 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 			break;
 
 		case CFR_ATTRIBUTE_Record:
-			/* record classes cannot be abstract */
-			if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT)) {
-				errorCode = J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT__ID;
-				goto _errorFound;
-			}
-			/* record classes must be final */
-			if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_FINAL)) {
-				errorCode = J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL__ID;
-				goto _errorFound;
-			}
-
 			value = ((J9CfrAttributeRecord*)attrib)->nameIndex;
 			if ((0 == value) || (value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
