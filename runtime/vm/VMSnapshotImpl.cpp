@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <string.h>
 #include "rommeth.h"
+#include "util_internal.h"
 
 #include <sys/mman.h> /* TODO: Change to OMRPortLibrary MMAP functionality. Currently does not allow MAP_FIXED as it is not supported in all architectures */
 
@@ -48,6 +49,8 @@ VMSnapshotImpl::VMSnapshotImpl(J9PortLibrary *portLibrary, const char* ramCache,
 	_vm(NULL),
 	_portLibrary(portLibrary),
 	_snapshotHeader(NULL),
+	_acquiredMonitorHeader(NULL),
+	_acquiredMonitors(NULL),
 	_memoryRegions(NULL),
 	_heap(NULL),
 	_heap32(NULL),
@@ -186,6 +189,8 @@ VMSnapshotImpl::~VMSnapshotImpl()
 			}
 		}
 		j9mem_free_memory((void *)_memoryRegions);
+		j9mem_free_memory((void *)_acquiredMonitors);
+		j9mem_free_memory((void *)_acquiredMonitorHeader);
 		j9mem_free_memory((void *)_snapshotHeader);
 	}
 }
@@ -297,9 +302,21 @@ VMSnapshotImpl::allocateImageMemory()
 
 	_snapshotHeader->numOfMemorySections = NUM_OF_MEMORY_SECTIONS;
 
+	_acquiredMonitorHeader = (J9AcquiredMonitorHeader *) j9mem_allocate_memory(sizeof(J9AcquiredMonitorHeader), J9MEM_CATEGORY_CLASSES);
+	if (NULL == _acquiredMonitorHeader) {
+		goto freeHeader;
+	}
+
+	_acquiredMonitorHeader->numOfAcquiredMonitors = 0;
+
+	_acquiredMonitors = (J9AcquiredMonitor *) j9mem_allocate_memory(sizeof(J9AcquiredMonitor) * MAX_NUM_ALLOCATED_MONITORS, J9MEM_CATEGORY_CLASSES);
+	if (NULL == _acquiredMonitors) {
+		goto freeAcquiredMonitorHeader;
+	}
+
 	_memoryRegions = (J9MemoryRegion *) j9mem_allocate_memory(sizeof(J9MemoryRegion) * NUM_OF_MEMORY_SECTIONS, J9MEM_CATEGORY_CLASSES);
 	if (NULL == _memoryRegions) {
-		goto freeHeader;
+		goto freeAcquiredMonitors;
 	}
 
 	//generalMemorySection = j9mem_allocate_memory(GENERAL_MEMORY_SECTION_SIZE + pageSize, J9MEM_CATEGORY_CLASSES);
@@ -339,6 +356,14 @@ freeGeneralMemorySection:
 freeMemorySections:
 	j9mem_free_memory(_memoryRegions);
 	_memoryRegions = NULL;
+
+freeAcquiredMonitors:
+	j9mem_free_memory(_acquiredMonitors);
+	_acquiredMonitors = NULL;
+
+freeAcquiredMonitorHeader:
+	j9mem_free_memory(_acquiredMonitorHeader);
+	_acquiredMonitorHeader = NULL;
 
 freeHeader:
 	j9mem_free_memory(_snapshotHeader);
@@ -845,10 +870,22 @@ VMSnapshotImpl::readImageFromFile(void)
 		goto done;
 	}
 
+	_acquiredMonitorHeader = (J9AcquiredMonitorHeader *) j9mem_allocate_memory(sizeof(J9AcquiredMonitorHeader), J9MEM_CATEGORY_CLASSES);
+	if (NULL == _acquiredMonitorHeader) {
+		rc = false;
+		goto freeSnapshotHeader;
+	}
+
+	_acquiredMonitors = (J9AcquiredMonitor *) j9mem_allocate_memory(sizeof(J9AcquiredMonitor) * MAX_NUM_ALLOCATED_MONITORS, J9MEM_CATEGORY_CLASSES);
+	if (NULL == _acquiredMonitors) {
+		rc = false;
+		goto freeAcquiredMonitorHeader;
+	}
+
 	_memoryRegions = (J9MemoryRegion *) j9mem_allocate_memory(sizeof(J9MemoryRegion) * NUM_OF_MEMORY_SECTIONS, J9MEM_CATEGORY_CLASSES);
 	if (NULL == _memoryRegions) {
 		rc = false;
-		goto freeSnapshotHeader;
+		goto freeAcquiredMonitors;
 	}
 
 	/* Read snapshot header and memory regions then mmap the rest of the image (heap) into memory */
@@ -856,6 +893,16 @@ VMSnapshotImpl::readImageFromFile(void)
 		rc = false;
 		goto freeMemorySections;
 
+	}
+
+	if (-1 == omrfile_read(_snapshotFD, (void *)_acquiredMonitorHeader, sizeof(J9AcquiredMonitorHeader))) {
+		rc = false;
+		goto freeMemorySections;
+	}
+
+	if (-1 == omrfile_read(_snapshotFD, (void *)_acquiredMonitors, sizeof(J9AcquiredMonitor) * MAX_NUM_ALLOCATED_MONITORS)) {
+		rc = false;
+		goto freeMemorySections;
 	}
 
 	if (-1 == omrfile_read(_snapshotFD, (void *)_memoryRegions, sizeof(J9MemoryRegion) * NUM_OF_MEMORY_SECTIONS)) {
@@ -899,9 +946,17 @@ done:
 	Trc_VM_ReadImageFromFile_Exit();
 	return rc;
 
-freeMemorySections:
+freeMemorySections: /* free all allocated memory */
 	j9mem_free_memory(_memoryRegions);
 	_memoryRegions = NULL;
+
+freeAcquiredMonitors:
+	j9mem_free_memory(_acquiredMonitors);
+	_acquiredMonitors = NULL;
+
+freeAcquiredMonitorHeader:
+	j9mem_free_memory(_acquiredMonitorHeader);
+	_acquiredMonitorHeader = NULL;
 
 freeSnapshotHeader:
 	j9mem_free_memory(_snapshotHeader);
@@ -941,6 +996,155 @@ VMSnapshotImpl::saveJ9JavaVMStructures(void)
 
 	_snapshotHeader->vm = _vm;
 	_snapshotHeader->savedJavaVMStructs.vmSnapshotImplPortLibrary = _vm->vmSnapshotImplPortLibrary;
+}
+
+/**
+ * If monitor is acquired by thread save fixup information for image restore.
+ * 
+ * @param thread J9VMThread that may have acquired the monitor
+ * @param cursor next empty spot in allocated snapshot memory for acquired monitors. Will be incremented if slot is filled
+ * @param monitor monitor to save if acquired by thread
+ * @param isObjectMonitor
+ * @param fixupReference
+ * 
+ * @return true if successful, else false
+ */
+bool
+VMSnapshotImpl::saveAcquiredMonitor(J9VMThread *thread, J9AcquiredMonitor **cursor, omrthread_monitor_t monitor, UDATA isObjectMonitor, UDATA fixupReference)
+{
+	bool success = true;
+
+	if (omrthread_monitor_is_acquired(monitor)) {
+		omrthread_t ownerThreadOmr = omrthread_monitor_getCurrentOwner(monitor);
+
+		if (thread->osThread == ownerThreadOmr) {
+
+			/* monitor should be persisted. verify there is enough space allocated. */
+			if (MAX_NUM_ALLOCATED_MONITORS == _acquiredMonitorHeader->numOfAcquiredMonitors) {
+				printf("Error: out of space for persisted monitors\n");
+				success = false;
+				goto done;
+			}
+
+			(*cursor)->isObjectMonitor = isObjectMonitor;
+			(*cursor)->fixupReference = fixupReference;
+			(*cursor)->ownerCount = omrthread_monitor_getNumOfTimesAcquired(monitor);
+			(*cursor)->ownerVmThreadAddress = (UDATA) thread;
+
+			_acquiredMonitorHeader->numOfAcquiredMonitors++;
+			*cursor = *cursor + 1;
+		}
+	}
+
+done:
+	return success;
+}
+
+/** 
+ * At this stage the VM is at a standstill so its safe to start recording lock information.
+ * 
+ * OMR level threads and mutexes are not saved by the snapshot suballocator. Much of these structures is uneccessary 
+ * and impossible (OS thread/mutexes) to persist. Instead save only whats useful to return to this
+ * state on restore. This includes recording which threads have acquired what monitors how many times.
+ * 
+ * @return - false on error (likely memory allocation issue)
+ */
+bool
+VMSnapshotImpl::saveThreadsAndMonitors(void)
+{
+	bool success = true;
+	J9InternalVMFunctions* vmFuncs = _vm->internalVMFunctions;
+	J9VMThread* threadCursor = _vm->mainThread;
+	J9AcquiredMonitor* acquiredMonitorCursor = _acquiredMonitors;
+
+	do {
+		IDATA infoLen = 0;
+
+		/* Save VM JCL monitors. There may be other vm monitors that need to be saved... */
+		if (!saveAcquiredMonitor(threadCursor, &acquiredMonitorCursor, _vm->unsafeMemoryTrackingMutex, FALSE, FIXUPREFVM_UNSAFE_MEMORY_TRACKING_MUTEX)) {
+			success = false;
+			goto done;
+		}
+		if (!saveAcquiredMonitor(threadCursor, &acquiredMonitorCursor, _vm->verboseStateMutex, FALSE, FIXUPREFVM_VERBOSE_STATE_MUTEX)) {
+			success = false;
+			goto done;
+		}
+		if (!saveAcquiredMonitor(threadCursor, &acquiredMonitorCursor, _vm->jclCacheMutex, FALSE, FIXUPREFVM_JCL_CACHE_MUTEX)) {
+			success = false;
+			goto done;
+		}
+		if (!saveAcquiredMonitor(threadCursor, &acquiredMonitorCursor, _vm->constantDynamicMutex, FALSE, FIXUPREFVM_CONSTANT_DYNAMIC_MUTEX)) { /* Java 11 */
+			success = false;
+			goto done;
+		}
+
+		/* Save thread's object monitors that are inflated and acquired. */
+		infoLen = vmFuncs->getOwnedObjectMonitors(threadCursor, threadCursor, NULL, 0);
+		if (infoLen > 0) {
+			PORT_ACCESS_FROM_PORT(_portLibrary);
+
+			J9ObjectMonitorInfo *info = (J9ObjectMonitorInfo*) j9mem_allocate_memory(infoLen * sizeof(J9ObjectMonitorInfo), J9MEM_CATEGORY_CLASSES);
+			if (NULL == info) {
+				goto done;
+			}
+
+			success = vmFuncs->getOwnedObjectMonitors(threadCursor, threadCursor, info, infoLen);
+			if (false == success) {
+				j9mem_free_memory(info);
+				goto done;
+			}
+
+			/* process object monitors */
+			for (IDATA i = 0; i < infoLen; i++) {
+				J9ObjectMonitor *objectMonitor = monitorTablePeek(_vm, info[i].object);
+
+				/* objectMonitor will be NULL if deflated. */
+				if (objectMonitor) {
+					if (!saveAcquiredMonitor(threadCursor, &acquiredMonitorCursor, objectMonitor->monitor, TRUE, (UDATA)info[i].object)) {
+						success = false;
+						j9mem_free_memory(info);
+						goto done;
+					}
+				}
+			}
+
+			j9mem_free_memory(info);	
+		}
+
+		/* Catch-all for threads that should not be restored and threads that currently
+		 * can't be restored because they are in a native frame.
+		 *
+		 * note: not a complete list
+		 */
+		UDATA notSafeToRestorePublicFlags = J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT |
+											J9_PUBLIC_FLAGS_HALT_THREAD_INSPECTION |
+											J9_PUBLIC_FLAGS_THREAD_PARKED |
+											J9_PUBLIC_FLAGS_THREAD_TIMED;
+
+
+		/* Record application category type since omrthreads are not persisted. 
+		 * Daemon thread type is recorded in Java_java_lang_Thread_startImpl */
+		if (J9THREAD_CATEGORY_APPLICATION_THREAD == omrthread_get_category(threadCursor->osThread)
+			&& (NULL != threadCursor->threadObject) /* only persist java threads */
+			&& (0 == threadCursor->inNative) /* can't restore if the thread is in a native frame */
+			&& (J9_ARE_NO_BITS_SET(notSafeToRestorePublicFlags, threadCursor->publicFlags))
+		) {
+			threadCursor->privateFlags2 |= J9_PRIVATE_FLAGS2_APPLICATION_THREAD;
+
+			/* TODO hack in ELS, will need a real solution in the future */
+			memcpy(&(threadCursor->restoreEls), threadCursor->entryLocalStorage, sizeof(J9VMEntryLocalStorage));
+		} else {
+			Trc_VM_Snapshot_NotPersistingThread(threadCursor);
+		}
+
+		/* save monitors from next thread */
+		threadCursor = threadCursor->linkNext;
+	} while (threadCursor != _vm->mainThread);
+
+	Trc_VM_Snapshot_TotalSavedMonitors(_acquiredMonitorHeader->numOfAcquiredMonitors);
+
+done:
+	return success;
 }
 
 bool
@@ -1077,6 +1281,20 @@ VMSnapshotImpl::writeImageToFile(J9VMThread *currentThread)
 	}
 
 	currentFileOffset += bytesWritten;
+	bytesWritten = omrfile_write(fileDescriptor, (void *)_acquiredMonitorHeader, sizeof(J9AcquiredMonitorHeader));
+	if (sizeof(J9AcquiredMonitorHeader) != bytesWritten) {
+		rc = false;
+		goto done;
+	}
+
+	currentFileOffset += bytesWritten;
+	bytesWritten = omrfile_write(fileDescriptor, (void *)_acquiredMonitors, sizeof(J9AcquiredMonitor) * MAX_NUM_ALLOCATED_MONITORS);
+	if ((MAX_NUM_ALLOCATED_MONITORS * sizeof(J9AcquiredMonitor)) != bytesWritten) {
+		rc = false;
+		goto done;
+	}
+
+	currentFileOffset += bytesWritten;
 	bytesWritten = omrfile_write(fileDescriptor, (void *)_memoryRegions, sizeof(J9MemoryRegion) * NUM_OF_MEMORY_SECTIONS);
 	if ((NUM_OF_MEMORY_SECTIONS * sizeof(J9MemoryRegion)) != bytesWritten) {
 		rc = false;
@@ -1140,6 +1358,11 @@ VMSnapshotImpl::writeSnapshotImage(J9VMThread *currentThread)
 	saveJ9JavaVMStructures();
 
 	TRIGGER_J9HOOK_TRIGGER_SNAPSHOT(currentThread->javaVM->hookInterface, currentThread);
+	
+	if (!saveThreadsAndMonitors()) {
+		rc = false;
+		goto done;
+	}
 
 	if (!preWriteToImage(currentThread, &intermediateSnapshotState)) {
 		rc = false;
@@ -1270,65 +1493,317 @@ resetVMThreadState(J9JavaVM *vm, J9VMThread *restoreThread)
 	restoreThread->functions = (JNINativeInterface_*) vm->jniFunctionTable;
 }
 
+/**
+ * Restore acquired object-monitor if it matches the fixup information in monitor.
+ * 
+ * @param monitor fixup information for acquired monitor. This will be incremented to the next data structure if object-monitor is successfully restored.
+ * @param monitorCount number of monitors left to fix up. Should be decremented if monitor is successfully restored.
+ * @param object object-monitor to restore with monitor information
+ * 
+ * @return true if successful, else false
+ */
+bool
+VMSnapshotImpl::restoreAcquiredObjectMonitor(J9AcquiredMonitor** monitor, UDATA* monitorCount, j9object_t object)
+{
+	bool rc = true;
+	if ((*monitorCount > 0) && ((*monitor)->isObjectMonitor) && ((*monitor)->fixupReference == (UDATA)object)) {
+		J9VMThread* monitorOwnerThread = (J9VMThread*)(*monitor)->ownerVmThreadAddress;
+
+		omrthread_t omrThread = monitorOwnerThread->osThread;
+
+		/* re-force inflation so the omrthread_monitor_t can be fixed up */
+		j9objectmonitor_t *lockEA = J9OBJECT_MONITOR_EA(monitorOwnerThread, object);
+		j9objectmonitor_t lock = J9_LOAD_LOCKWORD(monitorOwnerThread, lockEA);
+
+		J9ObjectMonitor *objectMonitor = objectMonitorInflate(monitorOwnerThread, object, lock);
+		if (NULL == objectMonitor) {
+			rc = false;
+			goto done;
+		}
+
+		omrthread_monitor_t omrMonitor = objectMonitor->monitor;
+
+		/* monitor count may be wrong since objectMonitorInflate sets it to J9_FLATLOCK_COUNT(lock).
+		 * notes for this macro indicate that the value may be incorrect for an inflated monitor.
+		 * this monitor has been previously inflated during snapshot run */
+		((J9ThreadAbstractMonitor*)omrMonitor)->count = 1;
+
+		/* objectMonitorInflate has already acquired the monitor once. Acquire additional times to restore proper count. */
+		for (U_32 i = 1; i < (*monitor)->ownerCount; i++) {
+			if (0 != omrthread_monitor_try_enter_using_threadId(omrMonitor, omrThread)) {
+				rc = false;
+				goto done;
+			}
+		}
+
+		Assert_VM_true((*monitor)->ownerCount == omrthread_monitor_getNumOfTimesAcquired(omrMonitor));
+
+		*monitor = *monitor + 1;
+		*monitorCount = *monitorCount - 1;
+	}
+
+done:
+	return rc;
+}
+
+/**
+ * Restore acquired system monitor if it matches the fixup information in monitor.
+ * 
+ * @param monitor fixup information for acquired monitor. This will be incremented to the next data structure if monitor is successfully restored.
+ * @param monitorCount number of monitors left to fix up. Should be decremented if monitor is successfully restored.
+ * @param omrMonitorReference
+ * @param fixupReference
+ * 
+ * @return true if successful, else false
+ */
+bool
+VMSnapshotImpl::restoreSystemMonitor(J9AcquiredMonitor **monitor, UDATA *monitorCount, omrthread_monitor_t omrMonitorReference, UDATA fixupReference)
+{
+	bool rc = true;
+
+	if ((*monitorCount > 0) && (!(*monitor)->isObjectMonitor) && (fixupReference == (*monitor)->fixupReference)) {
+		omrthread_t omrThread = ((J9VMThread*)(*monitor)->ownerVmThreadAddress)->osThread;
+
+		for (U_32 i = 0; i < (*monitor)->ownerCount; i++) {
+			if (0 != omrthread_monitor_try_enter_using_threadId(omrMonitorReference, omrThread)) {
+				rc = false;
+				goto done;
+			}
+		}
+
+		*monitor = *monitor + 1;
+		*monitorCount = *monitorCount - 1;
+	}
+
+done:
+	return rc;
+}
+
+/**
+ * Restore the state of acquired monitors.
+ * 
+ * @return true if successful, else false
+ */
+bool
+VMSnapshotImpl::restoreMonitors(void)
+{
+	bool rc = true;
+
+	if (_acquiredMonitorHeader->numOfAcquiredMonitors > 0) {
+		J9AcquiredMonitor* monitorData = _acquiredMonitors;
+		UDATA monitorCount = _acquiredMonitorHeader->numOfAcquiredMonitors;
+		J9InternalVMFunctions* vmFuncs = _vm->internalVMFunctions;
+		IDATA infoLen = 0;
+		J9VMThread* threadCursor = NULL;
+
+		/* Process vm monitors */
+		rc = restoreSystemMonitor(&monitorData, &monitorCount, _vm->unsafeMemoryTrackingMutex, FIXUPREFVM_UNSAFE_MEMORY_TRACKING_MUTEX);
+		if (false == rc) {
+			goto done;
+		}
+
+		rc = restoreSystemMonitor(&monitorData, &monitorCount, _vm->verboseStateMutex, FIXUPREFVM_VERBOSE_STATE_MUTEX);
+		if (false == rc) {
+			goto done;
+		}
+
+		rc = restoreSystemMonitor(&monitorData,  &monitorCount, _vm->jclCacheMutex, FIXUPREFVM_JCL_CACHE_MUTEX);
+		if (false == rc) {
+			goto done;
+		}
+
+		rc = restoreSystemMonitor(&monitorData, &monitorCount, _vm->constantDynamicMutex, FIXUPREFVM_CONSTANT_DYNAMIC_MUTEX); /* Java 11 */
+		if (false == rc) {
+			goto done;
+		}
+
+		/* Restore object monitors. This should be done one thread at a time in the same order in which they were saved. */
+		threadCursor = _vm->mainThread;
+		do {
+			/* Fixup vmMonitorLookupCache - omrthread_monitor_t mutex in J9ObjectMonitor will not have been persisted */
+			// TODO other options for this is to throw away the cache and start over or don't fix up until monitor_enter is called
+			for (UDATA i = 0; i < J9VM_OBJECT_MONITOR_CACHE_SIZE; i++) {
+				j9objectmonitor_t cacheEntry = threadCursor->objectMonitorLookupCache[i];
+				if (0 != cacheEntry) {
+					J9ObjectMonitor* objectMonitor = (J9ObjectMonitor*) ((UDATA) cacheEntry);
+					if (0 != omrthread_monitor_init_with_name(&(objectMonitor->monitor), J9THREAD_MONITOR_OBJECT, NULL)) {
+						rc = false;
+						goto done;
+					}
+				}
+			}
+
+			infoLen = vmFuncs->getOwnedObjectMonitors(threadCursor, threadCursor, NULL, 0);
+			if (infoLen > 0) {
+				PORT_ACCESS_FROM_PORT(_portLibrary);
+
+				J9ObjectMonitorInfo *info = (J9ObjectMonitorInfo*) j9mem_allocate_memory(infoLen * sizeof(J9ObjectMonitorInfo), J9MEM_CATEGORY_CLASSES);
+				if (NULL == info) {
+					goto done;
+				}
+
+				rc = vmFuncs->getOwnedObjectMonitors(threadCursor, threadCursor, info, infoLen);
+				if (false == rc) {
+					j9mem_free_memory(info);
+					goto done;
+				}
+
+				/* process object monitors - should be in the same order as during snapshot */
+				for (IDATA i = 0; i < infoLen; i++) {
+					/* objects should be in the same order as on restore. */
+					rc = restoreAcquiredObjectMonitor(&monitorData, &monitorCount, info[i].object);
+					if (false == rc) {
+						j9mem_free_memory(info);
+						goto done;
+					}
+				}
+
+				j9mem_free_memory(info);
+
+			}
+
+			threadCursor = threadCursor->linkNext;
+		} while (threadCursor != _vm->mainThread);
+
+		if (monitorCount > 0) {
+			printf("ERROR: somehow not all monitors were restored\n");
+			rc = false;
+		}
+	}
+
+done:
+	return rc;
+}
+
+/**
+ * Process resumes interpreter for arg thread
+ * 
+ * @param thread associated with running OMR thread.
+ * @return 0 for success
+ */
+static int J9THREAD_PROC
+procRestoreThreadState(void* arg)
+{
+	J9VMThread* vmThread = (J9VMThread*)arg;
+
+	/* Restore special frame. Otherwise last bytecode will be run. */
+	if ((UDATA)(vmThread->pc) <= J9SF_MAX_SPECIAL_FRAME_TYPE) {
+		if (J9_ARE_ALL_BITS_SET((UDATA)(vmThread->pc), J9SF_FRAME_TYPE_NATIVE_METHOD)) {
+			VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(vmThread);
+		} else {
+			VM_OutOfLineINL_Helpers::restoreSpecialStackFrameLeavingArgs(vmThread, vmThread->arg0EA);
+		}
+	}
+	restoreThreadState(vmThread);
+
+	/* Destroy Java thread similarly to what happens in Java_java_lang_Thread_startImpl */
+	threadCleanup(vmThread, FALSE);
+	return 0;
+}
+
 extern "C" BOOLEAN
-initRestoreThreads(J9JavaVM *vm, omrthread_t mainOSThread)
+initRestoreThreads(void *vmSnapshotImpl, J9JavaVM *vm, omrthread_t mainOSThread)
 {
 	bool rc = true;
 	J9MemoryManagerFunctions* gcFuncs = vm->memoryManagerFunctions;
-	J9VMThread *restoreThread = vm->mainThread;
-	omrthread_t restoreOSThread = mainOSThread;
-	char *threadName = NULL;
+	/* Restore main thread last so it becomes the "currentThread" */
+	J9VMThread *restoreThread = vm->mainThread->linkNext;
 
-	restoreThread->privateFlags2 |= J9_PRIVATE_FLAGS2_RESTORE_MAINTHREAD;
+	do {
+		omrthread_t restoreOSThread = NULL;
+		char *threadName = NULL;
+		OMR_VMThread *omrVMThread = NULL;
 
-	restoreThread->linkNext = vm->mainThread;
-	restoreThread->linkPrevious = vm->mainThread;
+		if (vm->mainThread == restoreThread) {
+			restoreOSThread = mainOSThread;
+			restoreThread->privateFlags2 |= J9_PRIVATE_FLAGS2_RESTORE_MAINTHREAD;
+		} else if (J9_ARE_ALL_BITS_SET(restoreThread->privateFlags2, J9_PRIVATE_FLAGS2_APPLICATION_THREAD)) {
+			/* non-main application threads should be set up to run procRestoreThreadState when resumed. */
+			if (createThreadWithCategory(&restoreOSThread, 0, J9THREAD_PRIORITY_NORMAL, TRUE, procRestoreThreadState, (void*)restoreThread, J9THREAD_CATEGORY_APPLICATION_THREAD) != J9THREAD_SUCCESS) {
+				rc = false;
+				goto done;
+			}
 
-	resetVMThreadState(vm, restoreThread);
+			/* ELS fix needs to be done before fixing up object monitors */
+			restoreThread->entryLocalStorage = &(restoreThread->restoreEls);
+			restoreThread->entryLocalStorage->oldEntryLocalStorage = NULL;
+		} else {
+			omrthread_attr_t attr = NULL;
+			UDATA category = J9THREAD_CATEGORY_SYSTEM_THREAD;
+			if (J9_ARE_ALL_BITS_SET(restoreThread->privateFlags, J9_PRIVATE_FLAGS_DAEMON_THREAD)) {
+				category = J9THREAD_CATEGORY_RESOURCE_MONITOR_THREAD;
+			}
 
-	OMR_VMThread *omrVMThread = (OMR_VMThread*)(((UDATA)restoreThread) + J9_VMTHREAD_SEGREGATED_ALLOCATION_CACHE_OFFSET + vm->segregatedAllocationCacheSize);
-	memset(omrVMThread, 0, sizeof(OMR_VMThread));
+			if (omrthread_attr_init(&attr) != J9THREAD_SUCCESS) {
+				rc = false;
+				goto done;
+			}
+			if (omrthread_attr_set_category(&attr, category) != J9THREAD_SUCCESS) {
+				rc = false;
+				goto done;
+			}
 
-	omrthread_monitor_init_with_name(&restoreThread->publicFlagsMutex, J9THREAD_MONITOR_JLM_TIME_STAMP_INVALIDATOR, "Thread public flags mutex");
-	if (restoreThread->publicFlagsMutex == NULL) {
-		rc = false;
-		goto done;
-	}
-
-	initOMRVMThread(vm, restoreThread);
-
-	if (JNI_OK != attachVMThreadToOMR(vm, restoreThread, mainOSThread)) {
-		rc = false;
-		goto done;
-	}
-
-	if (0 != gcFuncs->initializeMutatorModelJava(restoreThread)) {
-		rc = false;
-		goto done;
-	}
-
-#ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
-	{
-		j9object_t unicodeChars = J9VMJAVALANGTHREAD_NAME(restoreThread, restoreThread->threadObject);
-		if (NULL != unicodeChars) {
-			threadName = copyStringToUTF8WithMemAlloc(restoreThread, unicodeChars, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
+			if (omrthread_attach_ex(&restoreOSThread, &attr) != J9THREAD_SUCCESS) {
+				rc = false;
+				goto done;
+			}
 		}
-	}
-#else /* J9VM_IVE_RAW_BUILD */
-	threadName = getVMThreadNameFromString(restoreThread, J9VMJAVALANGTHREAD_NAME(vm->mainThread, restoreThread->threadObject));
-#endif /* J9VM_IVE_RAW_BUILD */
-	if (threadName == NULL) {
-		Trc_VM_startJavaThread_failedVMThreadAlloc(vm->mainThread);
-		omrthread_cancel(restoreOSThread);
-		rc = false;
-		goto done;
-	}
 
-	setOMRVMThreadNameWithFlag(vm->mainThread->omrVMThread, restoreThread->omrVMThread, threadName, TRUE);
-#if !defined(LINUX)
-	/* on Linux this is done by the new thread when it starts running */
-	omrthread_set_name(restoreOSThread, threadName);
-#endif
+		restoreThread->osThread = restoreOSThread;
+
+		resetVMThreadState(vm, restoreThread);
+
+		omrVMThread = (OMR_VMThread*)(((UDATA)restoreThread) + J9_VMTHREAD_SEGREGATED_ALLOCATION_CACHE_OFFSET + vm->segregatedAllocationCacheSize);
+		memset(omrVMThread, 0, sizeof(OMR_VMThread));
+
+		omrthread_monitor_init_with_name(&restoreThread->publicFlagsMutex, J9THREAD_MONITOR_JLM_TIME_STAMP_INVALIDATOR, "Thread public flags mutex");
+		if (restoreThread->publicFlagsMutex == NULL) {
+			rc = false;
+			goto done;
+		}
+
+		initOMRVMThread(vm, restoreThread);
+
+		if (JNI_OK != attachVMThreadToOMR(vm, restoreThread, restoreOSThread)) {
+			rc = false;
+			goto done;
+		}
+
+		if (0 != gcFuncs->initializeMutatorModelJava(restoreThread)) {
+			rc = false;
+			goto done;
+		}
+
+		if (J9_ARE_ALL_BITS_SET(restoreThread->privateFlags2, J9_PRIVATE_FLAGS2_APPLICATION_THREAD)) {
+		#ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
+			{
+				j9object_t unicodeChars = J9VMJAVALANGTHREAD_NAME(vm->mainThread, restoreThread->threadObject);
+				if (NULL != unicodeChars) {
+					threadName = copyStringToUTF8WithMemAlloc(vm->mainThread, unicodeChars, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
+				}
+			}
+		#else /* J9VM_IVE_RAW_BUILD */
+			threadName = getVMThreadNameFromString(vm->mainThread, J9VMJAVALANGTHREAD_NAME(vm->mainThread, restoreThread->threadObject));
+		#endif /* J9VM_IVE_RAW_BUILD */
+			if (threadName == NULL) {
+				Trc_VM_startJavaThread_failedVMThreadAlloc(restoreThread);
+				omrthread_cancel(restoreOSThread);
+				rc = false;
+				goto done;
+			}
+
+			setOMRVMThreadNameWithFlag(vm->mainThread->omrVMThread, restoreThread->omrVMThread, threadName, TRUE);
+		#if !defined(LINUX)
+			/* on Linux this is done by the new thread when it starts running */
+			omrthread_set_name(restoreOSThread, threadName);
+		#endif
+		}
+
+		restoreThread = restoreThread->linkNext;
+	} while (vm->mainThread->linkNext != restoreThread);
+
+	/* once threads are restored fixup locks */
+	rc = ((VMSnapshotImpl *)vmSnapshotImpl)->restoreMonitors();
 
 done:
 	return rc;
@@ -1351,6 +1826,7 @@ interceptMainAndRestoreSnapshotState(J9VMThread *currentThread, jmethodID method
 		J9UTF8 *romMethodName = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(jniMethodRef->method));
 
 		if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(romMethodName), J9UTF8_LENGTH(romMethodName), "main")) {
+			/* Run Snapshot API restore hooks before resuming threads */
 			J9NameAndSignature nas = {0};
 			nas.name = (J9UTF8 *)&runPostRestoreHooks_name;
 			nas.signature = (J9UTF8 *)&runPostRestoreHooks_sig;
@@ -1366,6 +1842,15 @@ interceptMainAndRestoreSnapshotState(J9VMThread *currentThread, jmethodID method
 				setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 				VM_OutOfLineINL_Helpers::restoreSpecialStackFrameLeavingArgs(currentThread, bp);
 			} else {
+				/* If restore hook run was successful resume all suspended application threads. Non-main threads
+				 * have been setup to call restoreThreadState when resumed. */
+				J9VMThread* threadCursor = currentThread->linkNext;
+				while (currentThread != threadCursor) {
+					if (J9_ARE_ALL_BITS_SET(threadCursor->privateFlags2, J9_PRIVATE_FLAGS2_APPLICATION_THREAD)) {
+						omrthread_resume(threadCursor->osThread);
+					}
+					threadCursor = threadCursor->linkNext;
+				}
 				restoreThreadState(currentThread);
 			}
 
@@ -1478,20 +1963,6 @@ shutdownVMSnapshotImpl(void *vmSnapshotImpl, J9PortLibrary *portLib)
 		((VMSnapshotImpl *)vmSnapshotImpl)->~VMSnapshotImpl();
 		j9mem_free_memory(vmSnapshotImpl);
 	}
-}
-
-extern "C" void
-teardownVMSnapshotImpl(J9VMThread *currentThread)
-{
-	VMSnapshotImpl *vmSnapshotImpl = (VMSnapshotImpl *)currentThread->javaVM->vmSnapshotImplPortLibrary->vmSnapshotImpl;
-	Assert_VM_notNull(vmSnapshotImpl);
-
-	if (IS_SNAPSHOT_RUN(currentThread->javaVM)) {
-		vmSnapshotImpl->writeSnapshotImage(currentThread);
-	} else {
-		vmSnapshotImpl->saveMemorySegments();
-	}
-	vmSnapshotImpl->freeJ9JavaVMStructures();
 }
 
 void *

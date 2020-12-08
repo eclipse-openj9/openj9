@@ -140,6 +140,9 @@ typedef struct {
 	UDATA j2seVersion;
 	char* j2seRootDirectory;
 	char* j9libvmDirectory;
+#if defined(J9VM_OPT_SNAPSHOTS)
+	void* vmSnapshotImpl; /* VMSnapshotImpl */
+#endif
 } J9InitializeJavaVMArgs;
 
 #define IGNORE_ME_STRING "_ignore_me"
@@ -1023,6 +1026,9 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 		}
 		setupVMSnapshotImpl(vmSnapshotImpl, vm);
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_RAMSTATE_RESTORE_RUN;
+
+		/* Save snapshot information for thread and mutex fixup. */
+		initArgs.vmSnapshotImpl = vmSnapshotImpl;
 	} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	{
@@ -6833,16 +6839,16 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	}
 #endif
 
-	/* env is not used, but must be passed for compatibility */
-	/* use NO_OBJECT, because it's too early to allocate an object -- we'll take care of that later in standardInit() or tinyInit() */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if (IS_RESTORE_RUN(vm)) {
-		if (!initRestoreThreads(vm, osMainThread)) {
+		if (!initRestoreThreads(initArgs->vmSnapshotImpl, vm, osMainThread)) {
 			goto error;
 		}
 		env = vm->mainThread;
 	} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	/* env is not used, but must be passed for compatibility */
+	/* use NO_OBJECT, because it's too early to allocate an object -- we'll take care of that later in standardInit() or tinyInit() */
 	if (JNI_OK != internalAttachCurrentThread(vm, &env, NULL, J9_PRIVATE_FLAGS_NO_OBJECT, osMainThread)) {
 		goto error;
 	}

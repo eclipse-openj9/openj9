@@ -4742,8 +4742,6 @@ void shutdownVMSnapshotImpl(void *vmSnapshotImpl, J9PortLibrary *portLib);
  *
  * @param javaVM[in] the java vm
  */
-void teardownVMSnapshotImpl(J9VMThread *currentThread);
-
 BOOLEAN interceptMainAndRestoreSnapshotState(J9VMThread *currentThread, jmethodID methodID);
 
 void getGCHeapMemoryRegion(J9JavaVM *vm, struct J9MemoryRegion *result);
@@ -4756,7 +4754,7 @@ void setGCSnapshotProperties(J9JavaVM *vm, const struct J9GCSnapshotProperties *
 
 intptr_t getSnapshotFD(J9JavaVM *vm);
 
-BOOLEAN initRestoreThreads(J9JavaVM *vm, omrthread_t mainOSThread);
+BOOLEAN initRestoreThreads(void *vmSnapshotImpl, J9JavaVM *vm, omrthread_t mainOSThread);
 
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 

@@ -889,3 +889,5 @@ TraceExit=Trc_VM_resolveInvokeDynamic_Exit Overhead=1 Level=3 Template="resolveI
 
 TraceEntry=Trc_VM_sendResolveOpenJDKInvokeHandle_Entry Overhead=1 Level=2 Template="sendResolveOpenJDKInvokeHandle"
 TraceExit=Trc_VM_sendResolveOpenJDKInvokeHandle_Exit Overhead=1 Level=2 Template="sendResolveOpenJDKInvokeHandle"
+TraceEvent=Trc_VM_Snapshot_TotalSavedMonitors NoEnv Overhead=1 Level=3 Template="Snapshot total saved monitors: %llu."
+TraceEvent=Trc_VM_Snapshot_NotPersistingThread NoEnv Overhead=1 Level=3 Template="Not persisting j9vmthread=%p."
