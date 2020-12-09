@@ -391,8 +391,10 @@ enum INIT_STAGE {
 #define VMOPT_XXDISABLEVALHALLA "-XX:-EnableValhalla"
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
-#define VMOPT_XXVALUEBASEDCLASSCHECKEXCEPTION "-XX:ValueBasedClassCheck=exception"
-#define VMOPT_XXVALUEBASEDCLASSCHECKWARN "-XX:ValueBasedClassCheck=warn"
+/* Option to turn on exception on synchronization on instances of value-based classes */
+#define VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS1 "-XX:DiagnoseSyncOnValuedBasedClasses=1"
+/* Option to turn on warning on synchronization on instances of value-based classes */
+#define VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS2 "-XX:DiagnoseSyncOnValuedBasedClasses=2"
 
 #define VMOPT_XX_NOSUBALLOC32BITMEM "-XXnosuballoc32bitmem"
 

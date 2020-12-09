@@ -1489,9 +1489,11 @@ areValueTypesEnabled(J9JavaVM *vm);
 
 
 /**
- * @brief Queries if -XX:ValueBasedClassCheck=exception or -XX:ValueBasedClassCheck=exception are found in the CML
+ * @brief Queries if -XX:DiagnoseSyncOnValuedBasedClasses=1 or -XX:DiagnoseSyncOnValuedBasedClasses=2 are found in the CML
  * @param[in] vm pointer to the J9JavaVM
- * @return FALSE if neither of -XX:ValueBasedClassCheck=exception/-XX:ValueBasedClassCheck=exception are found in the CML.
+ * @return FALSE if neither of -XX:DiagnoseSyncOnValuedBasedClasses=1/-XX:DiagnoseSyncOnValuedBasedClasses=2 are found in the CML.
+ * 			(i.e. neither J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION/J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING are set in 
+ * 			vm->extendedRuntimeFlags2)
  * 			Otherwise, return TRUE.
  */
 BOOLEAN areValueBasedMonitorChecksEnabled(J9JavaVM *vm);
