@@ -282,188 +282,6 @@ getSignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObject, UDA
 	return methodDescriptor;
 }
 
-static J9Class *
-classForSignature(struct J9VMThread *vmThread, U_8 **sigDataPtr, struct J9ClassLoader *classLoader)
-{
-	U_8 *sigData = *sigDataPtr;
-	J9JavaVM *vm = vmThread->javaVM;
-	J9Class *clazz = NULL;
-	UDATA arity = 0;
-	U_8 c = 0;
-	UDATA i = 0;
-
-	for (c = *sigData++; '[' == c; c = *sigData++) {
-		arity++;
-	}
-
-	/* Non-array case */
-	switch (c) {
-	case 'Q':
-	case 'L': {
-		/* object case */
-		U_8 *tempData = sigData;
-		UDATA length = 0;
-
-		/* find the signature length -> up to the ";" */
-		while (';' != *sigData++) {
-			length++;
-		}
-
-		/* find the class from the signature chunk */
-		clazz = vm->internalVMFunctions->internalFindClassUTF8(vmThread, tempData, length, classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
-		break;
-	}
-	case 'I':
-		clazz = vm->intReflectClass;
-		break;
-	case 'Z':
-		clazz = vm->booleanReflectClass;
-		break;
-	case 'J':
-		clazz = vm->longReflectClass;
-		break;
-#if defined(J9VM_INTERP_FLOAT_SUPPORT)
-	case 'D':
-		clazz = vm->doubleReflectClass;
-		break;
-	case 'F':
-		clazz = vm->floatReflectClass;
-		break;
-#endif
-	case 'C':
-		clazz = vm->charReflectClass;
-		break;
-	case 'B':
-		clazz = vm->byteReflectClass;
-		break;
-	case 'S':
-		clazz = vm->shortReflectClass;
-		break;
-	case 'V':
-		clazz = vm->voidReflectClass;
-		break;
-	}
-
-	for (i = 0; (i < arity) && (NULL != clazz); i++) {
-		clazz = fetchArrayClass(vmThread, clazz);
-	}
-
-	if (NULL != clazz) {
-		*sigDataPtr = sigData;
-	}
-
-	return clazz;
-}
-
-static j9object_t
-createFieldFromID(struct J9VMThread *vmThread, J9JNIFieldID *j9FieldID)
-{
-	J9UTF8 *nameUTF = NULL;
-	j9object_t nameString = NULL;
-	U_8 *signatureData = NULL;
-	J9Class *typeClass = NULL;
-	j9object_t fieldObject = NULL;
-	J9Class *jlrFieldClass = J9VMJAVALANGREFLECTFIELD(vmThread->javaVM);
-
-	if (NULL == jlrFieldClass) {
-		return NULL;
-	}
-
-	if (VM_VMHelpers::classRequiresInitialization(vmThread, jlrFieldClass)) {
-		vmThread->javaVM->internalVMFunctions->initializeClass(vmThread, jlrFieldClass);
-		if (vmThread->currentException != NULL) {
-			return NULL;
-		}
-	}
-
-	fieldObject = vmThread->javaVM->memoryManagerFunctions->J9AllocateObject(vmThread, jlrFieldClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-	if (NULL == fieldObject) {
-		vmThread->javaVM->internalVMFunctions->setHeapOutOfMemoryError(vmThread);
-		return NULL;
-	}
-
-	PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, fieldObject);
-
-	signatureData = J9UTF8_DATA(J9ROMFIELDSHAPE_SIGNATURE(j9FieldID->field));
-	typeClass = classForSignature(vmThread, &signatureData, j9FieldID->declaringClass->classLoader);
-	if (NULL == typeClass) {
-		DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* fieldObject */
-		return NULL;
-	}
-
-	fieldObject = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
-	J9VMJAVALANGREFLECTFIELD_SET_TYPE(vmThread, fieldObject, J9VM_J9CLASS_TO_HEAPCLASS(typeClass));
-
-	nameUTF = J9ROMFIELDSHAPE_NAME(j9FieldID->field);
-	nameString = vmThread->javaVM->memoryManagerFunctions->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(nameUTF), (U_32) J9UTF8_LENGTH(nameUTF), J9_STR_INTERN);
-	if (NULL == nameString) {
-		DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* fieldObject */
-		return NULL;
-	}
-
-	fieldObject = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
-	J9VMJAVALANGREFLECTFIELD_SET_NAME(vmThread, fieldObject, nameString);
-
-	if (0 != (j9FieldID->field->modifiers & J9FieldFlagHasGenericSignature)) {
-		J9UTF8 *sigUTF = romFieldGenericSignature(j9FieldID->field);
-		j9object_t sigString = vmThread->javaVM->memoryManagerFunctions->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(sigUTF), (U_32) J9UTF8_LENGTH(sigUTF), 0);
-		if (NULL == sigString) {
-			DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* fieldObject */
-			return NULL;
-		}
-
-		fieldObject = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
-#if defined(USE_SUN_REFLECT)
-		J9VMJAVALANGREFLECTFIELD_SET_SIGNATURE(vmThread, fieldObject, sigString);
-#endif
-	}
-
-	{
-		j9object_t byteArray = getFieldAnnotationData(vmThread, j9FieldID->declaringClass, j9FieldID);
-		if (NULL != vmThread->currentException) {
-			DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* fieldObject */
-			return NULL;
-		}
-		if (NULL != byteArray) {
-			fieldObject = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
-			J9VMJAVALANGREFLECTFIELD_SET_ANNOTATIONS(vmThread, fieldObject, byteArray);
-		}
-	}
-
-	fieldObject = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
-
-	/* Java 7 uses int field ID's to avoid modifying Sun JCL code */
-	J9VMJAVALANGREFLECTFIELD_SET_INTFIELDID(vmThread, fieldObject, (U_32)(j9FieldID->index));
-
-	J9VMJAVALANGREFLECTFIELD_SET_DECLARINGCLASS(vmThread, fieldObject, J9VM_J9CLASS_TO_HEAPCLASS(j9FieldID->declaringClass));
-#if defined(USE_SUN_REFLECT)
-	J9VMJAVALANGREFLECTFIELD_SET_MODIFIERS(vmThread, fieldObject, j9FieldID->field->modifiers & CFR_FIELD_ACCESS_MASK);
-#endif
-
-	return fieldObject;
-}
-
-j9object_t
-createFieldObject(J9VMThread *currentThread, J9ROMFieldShape *romField, J9Class *declaringClass, J9UTF8 *name, J9UTF8 *sig, bool isStaticField)
-{
-	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
-
-	J9JNIFieldID *fieldID = NULL;
-	UDATA offset = 0;
-	UDATA inconsistentData = 0;
-
-	if (isStaticField) {
-		offset = (UDATA)vmFuncs->staticFieldAddress(currentThread, declaringClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(sig), J9UTF8_LENGTH(sig), NULL, NULL, 0, NULL);
-		offset -= (UDATA)declaringClass->ramStatics;
-	} else {
-		offset = vmFuncs->instanceFieldOffset(currentThread, declaringClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(sig), J9UTF8_LENGTH(sig), NULL, NULL, 0);
-	}
-
-	fieldID = vmFuncs->getJNIFieldID(currentThread, declaringClass, romField, offset, &inconsistentData);
-
-	return createFieldFromID(currentThread, fieldID);
-}
-
 j9object_t
 resolveRefToObject(J9VMThread *currentThread, J9ConstantPool *ramConstantPool, U_16 cpIndex, bool resolve)
 {
@@ -1015,10 +833,10 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(JNIEnv *env, jclass clazz, 
 											j9object_t fieldObj = NULL;
 											if (romField->modifiers & J9AccStatic) {
 												/* create static field object */
-												fieldObj = createFieldObject(currentThread, romField, defClass, nameUTF, signatureUTF, true);
+												fieldObj = vm->reflectFunctions.createFieldObject(currentThread, romField, defClass, true);
 											} else {
 												/* create instance field object */
-												fieldObj = createFieldObject(currentThread, romField, defClass, nameUTF, signatureUTF, false);
+												fieldObj = vm->reflectFunctions.createFieldObject(currentThread, romField, defClass, false);
 											}
 											initImpl(currentThread, memberName, fieldObj);
 										}
@@ -1062,10 +880,10 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(JNIEnv *env, jclass clazz, 
 												j9object_t fieldObj = NULL;
 												if (romField->modifiers & J9AccStatic) {
 													/* create static field object */
-													fieldObj = createFieldObject(currentThread, romField, defClass, nameUTF, signatureUTF, true);
+													fieldObj = vm->reflectFunctions.createFieldObject(currentThread, romField, defClass, true);
 												} else {
 													/* create instance field object */
-													fieldObj = createFieldObject(currentThread, romField, defClass, nameUTF, signatureUTF, false);
+													fieldObj = vm->reflectFunctions.createFieldObject(currentThread, romField, defClass, false);
 												}
 												initImpl(currentThread, memberName, fieldObj);
 											}

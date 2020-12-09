@@ -1133,6 +1133,21 @@ createStaticFieldObject(struct J9ROMFieldShape *romField, struct J9Class *declar
 	return field;
 }
 
+static j9object_t
+createFieldObject(J9VMThread *vmThread, J9ROMFieldShape *romField, J9Class *declaringClass, bool isStaticField)
+{
+	UDATA inconsistentData = 0;
+	j9object_t field = NULL;
+
+	if (isStaticField) {
+		field = createStaticFieldObject(romField, declaringClass, NULL, vmThread, &inconsistentData);
+	} else {
+		field = createInstanceFieldObject(romField, declaringClass, NULL, vmThread, &inconsistentData);
+	}
+
+	return field;
+}
+
 static jfieldID
 reflectFieldToID(J9VMThread *vmThread, jobject reflectField)
 {
@@ -1194,6 +1209,7 @@ initializeReflection(J9JavaVM *javaVM)
 	reflectFunctions->idFromFieldObject = idFromFieldObject;
 	reflectFunctions->idFromMethodObject = idFromMethodObject;
 	reflectFunctions->idFromConstructorObject = idFromConstructorObject;
+	reflectFunctions->createFieldObject = createFieldObject;
 }
 
 /**
