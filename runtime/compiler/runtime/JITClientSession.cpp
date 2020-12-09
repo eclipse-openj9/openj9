@@ -28,6 +28,7 @@
 #include "env/ut_j9jit.h"
 #include "net/ServerStream.hpp" // for JITServer::ServerStream
 #include "runtime/RuntimeAssumptions.hpp" // for TR_AddressSet
+#include "runtime/JITServerSharedROMClassCache.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
 #include "env/VerboseLog.hpp"
 #include "runtime/SymbolValidationManager.hpp"
@@ -402,7 +403,10 @@ ClientSessionData::ClassInfo::ClassInfo() :
 void
 ClientSessionData::ClassInfo::freeClassInfo(TR_PersistentMemory *persistentMemory)
    {
-   persistentMemory->freePersistentMemory(_romClass);
+   if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
+      cache->release(_romClass);
+   else
+      persistentMemory->freePersistentMemory(_romClass);
 
    // free cached _interfaces
    _interfaces->~PersistentVector<TR_OpaqueClassBlock *>();

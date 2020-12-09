@@ -77,6 +77,7 @@ template <typename T> class TR_PersistentArray;
 typedef J9JITExceptionTable TR_MethodMetaData;
 #if defined(J9VM_OPT_JITSERVER)
 class ClientSessionHT;
+class JITServerSharedROMClassCache;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 struct TR_SignatureCountPair
@@ -1067,6 +1068,9 @@ public:
    void setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy newPolicy) { _activationPolicy = newPolicy; }
    JITServer::CompThreadActivationPolicy getCompThreadActivationPolicy() const { return _activationPolicy; }
    uint64_t getCachedFreePhysicalMemoryB() const { return _cachedFreePhysicalMemoryB; }
+
+   JITServerSharedROMClassCache *getJITServerSharedROMClassCache() const { return _sharedROMClassCache; }
+   void setJITServerSharedROMClassCache(JITServerSharedROMClassCache *cache) { _sharedROMClassCache = cache; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static void replenishInvocationCount(J9Method* method, TR::Compilation* comp);
@@ -1286,6 +1290,7 @@ private:
    PersistentVector<std::string> _sslKeys;
    PersistentVector<std::string> _sslCerts;
    JITServer::CompThreadActivationPolicy _activationPolicy;
+   JITServerSharedROMClassCache *_sharedROMClassCache;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }; // CompilationInfo
 }
