@@ -393,7 +393,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // Obtain monitor RAII style because creating a new hastable entry may throw bad_alloc
       OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
       compInfo->getClientSessionHT()->purgeOldDataIfNeeded(); // Try to purge old data
-      if (!(clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId, seqNo, &sessionDataWasEmpty)))
+      if (!(clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId, criticalSeqNo, &sessionDataWasEmpty)))
          throw std::bad_alloc();
 
       setClientData(clientSession); // Cache the session data into CompilationInfoPerThreadRemote object

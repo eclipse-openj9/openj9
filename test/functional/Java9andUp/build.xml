@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,6 +40,8 @@
 	<property name="dest_module_bin" location="${DEST}/module_bin"/>
 	<property name="build" location="./bin"/>
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
+	<property name="LIB" value="asm_all,testng,jcommander"/>
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
 	<!--<property name="src.level" value="1.9"/>
 	<property name="target.level" value="1.9"/> -->
@@ -49,7 +51,7 @@
 		<mkdir dir="${build}"/>
 	</target>
 
-	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source " >
+	<target name="compile" depends="init,getDependentLibs" description="Using java ${JDK_VERSION} to compile the source " >
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>

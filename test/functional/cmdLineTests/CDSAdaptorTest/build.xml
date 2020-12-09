@@ -39,6 +39,8 @@
 	<property name="build_resource_testBundle" location="./bin_resource_testBundle"/>
 	<property name="build_resource_weavinghookTest" location="./bin_resource_weavinghookTest"/>
 	<property name="resources" location="./resources"/>
+	<property name="LIB" value="osgi"/>
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -48,7 +50,7 @@
 		<mkdir dir="${build_resource_weavinghookTest}"/>
 	</target>
 
-	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source " >
+	<target name="compile" depends="init,getDependentLibs" description="Using java ${JDK_VERSION} to compile the source " >
     	<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>

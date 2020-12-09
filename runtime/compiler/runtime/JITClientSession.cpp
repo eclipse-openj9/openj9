@@ -34,7 +34,7 @@
 
 
 ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) : 
-   _clientUID(clientUID), _expectedSeqNo(seqNo), _maxReceivedSeqNo(seqNo), _lastProcessedCriticalSeqNo(seqNo), 
+   _clientUID(clientUID), _maxReceivedSeqNo(seqNo), _lastProcessedCriticalSeqNo(seqNo), 
    _OOSequenceEntryList(NULL), _chTable(NULL),
    _romClassMap(decltype(_romClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _J9MethodMap(decltype(_J9MethodMap)::allocator_type(TR::Compiler->persistentAllocator())),
@@ -749,7 +749,7 @@ ClientSessionHT::~ClientSessionHT()
 // If the clientUID does not already exist in the HT, insert a new blank entry.
 // Must have compilation monitor in hand when calling this function.
 // Side effects: _inUse is incremented on the ClientSessionData
-//               _expectedSeqNo is populated if a new ClientSessionData is created
+//               _lastProcessedCriticalSeqNo is populated if a new ClientSessionData is created
 //                timeOflastAccess is updated with curent time.
 ClientSessionData *
 ClientSessionHT::findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, bool *newSessionWasCreated)
