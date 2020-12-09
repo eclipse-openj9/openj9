@@ -8789,7 +8789,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          // startup and with hints we move this expensive compilation during startup
          // thus affecting startup time
          // To minimize risk, add hot/scorching hints only if we are in startup mode
-         if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP)
+         if (TR::Compiler->vm.isVMInStartupPhase(jitConfig))
             {
             TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
             if (hotness == hot)
@@ -8813,7 +8813,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       // Look only during startup to avoid creating too many hints.
       // If SCC is larger we could store hints for more methods
       //
-      if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP)
+      if (TR::Compiler->vm.isVMInStartupPhase(jitConfig))
          {
          if (scratchSegmentProvider.regionBytesAllocated() > TR::Options::_memExpensiveCompThreshold)
             {
