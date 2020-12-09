@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -261,6 +261,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int64_t _oldAge;
    static int64_t _oldAgeUnderLowMemory;
    static int64_t _timeBetweenPurges;
+   static bool _shareROMClasses;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static int32_t _waitTimeToEnterIdleMode;
