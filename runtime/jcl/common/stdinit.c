@@ -602,8 +602,15 @@ JCL_OnUnload(J9JavaVM *vm, void *reserved)
 	if (vm->bootstrapClassPath) {
 #if defined(J9VM_OPT_SNAPSHOTS)
 		if (IS_SNAPSHOTTING_ENABLED(vm)) {
-			VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
-			vmsnapshot_free_memory(vm->bootstrapClassPath);
+			if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_SNAPSHOT_STATE_SNAPSHOT_TRIGGERED)) {
+				VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+				vmsnapshot_free_memory(vm->bootstrapClassPath);
+			} else {
+				/* bootstrapClassPath will not have been allocated in snapshot memory if snapshot point was never triggered. */
+				j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_BEGIN_MULTI_LINE, J9NLS_JCL_SNAPSHOT_NOT_TRIGGERED);
+				return JNI_ERR;
+			}
+			
 		} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 		{

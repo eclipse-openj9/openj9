@@ -436,3 +436,10 @@ J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.system_action=The JVM will thro
 J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
+J9NLS_JCL_SNAPSHOT_NOT_TRIGGERED=Snapshot method entered on command line was never called
+# START NON-TRANSLATABLE
+J9NLS_JCL_SNAPSHOT_NOT_TRIGGERED.explanation=Snapshot method entered on command line was never called
+J9NLS_JCL_SNAPSHOT_NOT_TRIGGERED.system_action=
+J9NLS_JCL_SNAPSHOT_NOT_TRIGGERED.user_response=Verify command line input
+
+# END NON-TRANSLATABLE

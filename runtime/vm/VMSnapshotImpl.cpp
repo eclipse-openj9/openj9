@@ -108,6 +108,7 @@ hookMethodEnterForMethodTrigger(J9HookInterface** hook, UDATA eventNum, void* ev
 bool
 VMSnapshotImpl::triggerSnapshot(J9VMThread *currentThread)
 {
+	((J9JavaVM*)currentThread->javaVM)->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_SNAPSHOT_STATE_SNAPSHOT_TRIGGERED;
 	return writeSnapshotImage(currentThread);
 }
 
