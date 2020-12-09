@@ -343,7 +343,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       auto req = stream->readCompileRequest<uint64_t, uint32_t, uint32_t, uint32_t, J9Method *, J9Class*,
          TR_OptimizationPlan, std::string, J9::IlGeneratorMethodDetailsType,
          std::vector<TR_OpaqueClassBlock*>, std::vector<TR_OpaqueClassBlock*>, 
-         JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string, bool>();
+         JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string, bool, bool>();
 
       clientId                           = std::get<0>(req);
       seqNo                              = std::get<1>(req); // Sequence number at the client
@@ -397,6 +397,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          throw std::bad_alloc();
 
       setClientData(clientSession); // Cache the session data into CompilationInfoPerThreadRemote object
+      clientSession->setIsInStartupPhase(std::get<17>(req));
       } // End critical section
 
      if (TR::Options::getVerboseOption(TR_VerboseJITServer))

@@ -3302,7 +3302,7 @@ remoteCompile(
       client->buildCompileRequest(compiler->getPersistentInfo()->getClientUID(), seqNo, lastCriticalSeqNo, romMethodOffset, method,
                                   clazz, *compInfoPT->getMethodBeingCompiled()->_optimizationPlan, detailsStr,
                                   details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr, recompMethodInfoStr,
-                                  chtableUpdates.first, chtableUpdates.second, useAotCompilation);
+                                  chtableUpdates.first, chtableUpdates.second, useAotCompilation, TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()));
       JITServer::MessageType response;
       while(!handleServerMessage(client, compiler->fej9vm(), response));
 
