@@ -37,6 +37,8 @@
 	<property name="build" location="./bin"/>
 	<property name="build-noDebugInfo" location="./bin-noDebugInfo"/>
 	<property name="TestUtilities" location="../TestUtilities/src"/>
+	<property name="LIB" value="asm,testng,jcommander"/>
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -44,7 +46,7 @@
 		<mkdir dir="${build-noDebugInfo}"/>
 	</target>
 	
-	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source" >
+	<target name="compile" depends="init,getDependentLibs" description="Using java ${JDK_VERSION} to compile the source" >
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
