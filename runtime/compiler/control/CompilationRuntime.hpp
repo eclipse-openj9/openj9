@@ -1036,7 +1036,7 @@ public:
    TR::Monitor *getclassesCachedAtServerMonitor() const { return _classesCachedAtServerMonitor; }
    TR::Monitor *getSequencingMonitor() const { return _sequencingMonitor; }
    uint32_t getCompReqSeqNo() const { return _compReqSeqNo; }
-   uint32_t incCompReqSeqNo() { return _compReqSeqNo++; }
+   uint32_t incCompReqSeqNo() { return ++_compReqSeqNo; }
    uint32_t getLastCriticalSeqNo() const { return _lastCriticalCompReqSeqNo; }
    void setLastCriticalSeqNo(uint32_t seqNo) { _lastCriticalCompReqSeqNo = seqNo; }
 
