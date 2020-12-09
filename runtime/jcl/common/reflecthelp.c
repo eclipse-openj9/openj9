@@ -1134,7 +1134,7 @@ createStaticFieldObject(struct J9ROMFieldShape *romField, struct J9Class *declar
 }
 
 static j9object_t
-createFieldObject(J9VMThread *vmThread, J9ROMFieldShape *romField, J9Class *declaringClass, bool isStaticField)
+createFieldObject(J9VMThread *vmThread, J9ROMFieldShape *romField, J9Class *declaringClass, BOOLEAN isStaticField)
 {
 	UDATA inconsistentData = 0;
 	j9object_t field = NULL;
