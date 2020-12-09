@@ -3039,7 +3039,7 @@ remoteCompilationEnd(
       {
       TR_ASSERT(entry->_useAotCompilation, "entry must be an AOT compilation");
       TR_ASSERT(entry->isRemoteCompReq(), "entry must be a remote compilation");
-      J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+      J9ROMMethod *romMethod = comp->fej9()->getROMMethodFromRAMMethod(method);
       TR::CompilationInfo::storeAOTInSharedCache(
          vmThread,
          romMethod,

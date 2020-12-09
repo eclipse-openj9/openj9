@@ -298,7 +298,7 @@ int32_t getCount(J9ROMMethod *romMethod, TR::Options *optionsJIT, TR::Options *o
    }
 
 
-bool sharedCacheContainsProfilingInfoForMethod(J9VMThread *vmThread, TR::CompilationInfo *compInfo, J9Method *method)
+bool sharedCacheContainsProfilingInfoForMethod(J9VMThread *vmThread, TR::CompilationInfo *compInfo, J9ROMMethod * romMethod)
    {
    J9SharedClassConfig * scConfig = compInfo->getJITConfig()->javaVM->sharedClassConfig;
 
@@ -313,8 +313,6 @@ bool sharedCacheContainsProfilingInfoForMethod(J9VMThread *vmThread, TR::Compila
    descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITPROFILE;
    descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
 
-
-   J9ROMMethod * romMethod = (J9ROMMethod*)J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
    IDATA dataIsCorrupt;
    TR_IPBCDataStorageHeader *store = (TR_IPBCDataStorageHeader *)scConfig->findAttachedData(vmThread, romMethod, &descriptor, &dataIsCorrupt);
 
@@ -379,16 +377,6 @@ static uint32_t initializeSendTargetHelperFuncHashValueForSpreading(J9Method* me
 static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum, void * eventData, void * userData)
    {
    J9VMInitializeSendTargetEvent * event = (J9VMInitializeSendTargetEvent *)eventData;
-   J9Method * method = event->method;
-   J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-
-
-   // Allow native and abstract methods to be initialized by the interpreter
-   if (romMethod->modifiers & (J9AccAbstract | J9AccNative))
-      {
-      TR::CompilationInfo::setInitialInvocationCountUnsynchronized(method,0);
-      return;
-      }
 
    J9VMThread  * vmThread = event->currentThread;
    J9JITConfig* jitConfig = vmThread->javaVM->jitConfig;
@@ -398,6 +386,16 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       return; // No need to set counts in this mode
 
    TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, vmThread);
+
+   J9Method * method = event->method;
+   J9ROMMethod * romMethod = fe->getROMMethodFromRAMMethod(method);
+
+   // Allow native and abstract methods to be initialized by the interpreter
+   if (romMethod->modifiers & (J9AccAbstract | J9AccNative))
+      {
+      TR::CompilationInfo::setInitialInvocationCountUnsynchronized(method,0);
+      return;
+      }
 
    TR::Options * optionsJIT = TR::Options::getJITCmdLineOptions();
    TR::Options * optionsAOT = TR::Options::getAOTCmdLineOptions();
@@ -616,7 +614,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
 
    if (TR::Options::getJITCmdLineOptions()->getOption(TR_DumpInitialMethodNamesAndCounts) || TR::Options::getAOTCmdLineOptions()->getOption(TR_DumpInitialMethodNamesAndCounts))
       {
-      bool containsInfo = sharedCacheContainsProfilingInfoForMethod(vmThread, compInfo, method);
+      bool containsInfo = sharedCacheContainsProfilingInfoForMethod(vmThread, compInfo, romMethod);
       char buf[3072];
       J9UTF8 * className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass);
       J9UTF8 * name      = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));

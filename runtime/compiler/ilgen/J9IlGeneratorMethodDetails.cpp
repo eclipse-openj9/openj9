@@ -117,7 +117,7 @@ IlGeneratorMethodDetails::getRomClass() const
 const J9ROMMethod *
 IlGeneratorMethodDetails::getRomMethod(TR_J9VMBase *fe)
    {
-   return J9_ROM_METHOD_FROM_RAM_METHOD(self()->getMethod());
+   return fe->getROMMethodFromRAMMethod(self()->getMethod());
    }
 
 #if defined(J9VM_OPT_JITSERVER)

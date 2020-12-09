@@ -5978,7 +5978,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
          // other JVM added the method to the cache meanwhile. The net effect is that the said
          // method may have its count bumped up and compiled later
          //
-         if (vmThread->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method)))
+         if (vmThread->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, fe->getROMMethodFromRAMMethod(method)))
             {
             if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes)
                {
@@ -6409,18 +6409,14 @@ void *TR::CompilationInfo::compileOnApplicationThread(J9VMThread * vmThread, TR:
       //
       methodEntry._methodIsInSharedCache = TR_no;
 
-      if (vmThread && TR::Options::sharedClassCache() && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) &&
-          details.isOrdinaryMethod() && !isJNINative(method) && !isCompiled(method) &&
-          vmThread->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method)))
+      if (vmThread && TR::Options::sharedClassCache() && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT)
+          && details.isOrdinaryMethod() && !isJNINative(method) && !isCompiled(method))
          {
          TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
-         if (
-            static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
-            || (
-               static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
-               && _sharedCacheReloRuntime.validateAOTHeader(fe, vmThread)
-               )
-            )
+         if (vmThread->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, fe->getROMMethodFromRAMMethod(method))
+             && (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
+                 || (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
+                     && _sharedCacheReloRuntime.validateAOTHeader(fe, vmThread))))
             {
             methodEntry._methodIsInSharedCache = TR_yes;
             }
@@ -8860,7 +8856,7 @@ foundJ9SharedDataForMethod(TR_OpaqueMethodBlock *method, TR::Compilation *comp, 
    descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITPROFILE;
    descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
    J9VMThread *vmThread = ((TR_J9VM *)comp->fej9())->getCurrentVMThread();
-   J9ROMMethod * romMethod = (J9ROMMethod*)J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
+   J9ROMMethod * romMethod = comp->fej9()->getROMMethodFromRAMMethod((J9Method *)method);
    IDATA dataIsCorrupt;
    void *store = (void *)scConfig->findAttachedData(vmThread, romMethod, &descriptor, &dataIsCorrupt);
    if (store != (void *)descriptor.address)  // a stronger check, as found can be error value
@@ -10132,7 +10128,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
                aotMethodHeaderEntry->unused = TR::Compiler->host.is64Bit() ? 0xDEADC0DEDEADC0DEULL : 0xDEADC0DE;
 
-               J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+               J9ROMMethod *romMethod = comp->fej9()->getROMMethodFromRAMMethod(method);
 
                TR::CompilationInfo::storeAOTInSharedCache(
                   vmThread,
@@ -11985,12 +11981,12 @@ void TR_LowPriorityCompQueue::tryToScheduleCompilation(J9VMThread *vmThread, J9M
             // TODO: can we actually detect first run?
             if (TR::Options::sharedClassCache() && // must have AOT enabled
                 !TR::Options::getCmdLineOptions()->getOption(TR_DisableDelayRelocationForAOTCompilations) &&
-               !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) &&
-               vmThread->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(j9method))
-               )
+               !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT))
                {
+               TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
                // Invalidate the entry so that another j9method can use it
-               entry->setInvalid();
+               if (vmThread->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, fe->getROMMethodFromRAMMethod(j9method)))
+                  entry->setInvalid();
                }
             else
                {
