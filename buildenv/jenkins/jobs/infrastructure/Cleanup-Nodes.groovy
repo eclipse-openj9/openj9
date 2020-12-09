@@ -179,6 +179,14 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                         }
                                     }
 
+                                    // Cleanup zOS datasets 
+                                    if (nodeLabels.contains('sw.os.zos')) {
+                                        listcat = sh(script: "tso listcat | grep '${env.USER}' | cut -d. -f 2-", returnStdout: true).trim()
+                                        listcat.split('\n').each {
+                                            sh "tso delete ${it}"
+                                        }
+                                    }
+
                                     // Clean up defunct pipelines workspaces
                                     def retStatus = 0
                                     def cleanWSDirs = get_other_workspaces("${buildWorkspace}/../")
