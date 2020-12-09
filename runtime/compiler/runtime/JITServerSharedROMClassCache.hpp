@@ -35,7 +35,7 @@ class JITServerSharedROMClassCache
 public:
    TR_PERSISTENT_ALLOC(TR_Memory::ROMClass)
 
-   JITServerSharedROMClassCache();
+   JITServerSharedROMClassCache(size_t numPartitions);
    ~JITServerSharedROMClassCache();
 
    J9ROMClass *getOrCreate(const J9ROMClass *packedROMClass);
@@ -43,15 +43,15 @@ public:
 
 private:
    struct Entry;
+   struct Partition;
 
-   TR_PersistentMemory *const _persistentMemory;
-   // To avoid comparing the ROMClass contents inside a critical section when
-   // inserting a new entry (which would increase lock contention), we instead
-   // use a hash of the contents as the key. The hash is computed outside of
-   // the critical section, and key hashing and comparison are very quick.
-   PersistentUnorderedMap<JITServerROMClassHash, Entry *> _map;
-   TR::Monitor *const _monitor;
-   };
+   // To reduce lock contention, the cache is divided into a number of
+   // partitions, each synchronized with a separate monitor
+   Partition &getPartition(const JITServerROMClassHash &hash);
+
+   const size_t _numPartitions;
+   Partition *const _partitions;
+};
 
 
 #endif /* JITSERVER_ROMCLASS_CACHE_H */

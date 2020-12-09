@@ -1733,7 +1733,8 @@ onLoadInternal(
       //NOTE: This must be done only after the SSL library has been successfully loaded
       if (TR::Options::_shareROMClasses)
          {
-         auto cache = new (PERSISTENT_NEW) JITServerSharedROMClassCache();
+         size_t numPartitions = std::max(1, TR::Options::_sharedROMClassCacheNumPartitions);
+         auto cache = new (PERSISTENT_NEW) JITServerSharedROMClassCache(numPartitions);
          if (!cache)
             return -1;
          compInfo->setJITServerSharedROMClassCache(cache);

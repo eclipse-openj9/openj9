@@ -64,20 +64,52 @@ struct JITServerSharedROMClassCache::Entry
    };
 
 
-JITServerSharedROMClassCache::JITServerSharedROMClassCache() :
-   _persistentMemory(TR::Compiler->persistentGlobalMemory()),
-   _map(decltype(_map)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
-   _monitor(TR::Monitor::create("JIT-JITServerSharedROMClassCacheMonitor"))
+struct JITServerSharedROMClassCache::Partition
    {
-   if (!_monitor)
+   TR_PERSISTENT_ALLOC(TR_Memory::ROMClass)
+
+   Partition() :
+      _persistentMemory(TR::Compiler->persistentGlobalMemory()),
+      _map(decltype(_map)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+      _monitor(TR::Monitor::create("JIT-JITServerSharedROMClassCacheMonitor"))
+      {
+      if (!_monitor)
+         throw std::bad_alloc();
+      }
+
+   ~Partition()
+      {
+      for (const auto &kv : _map)
+         _persistentMemory->freePersistentMemory(kv.second);
+      _monitor->destroy();
+      }
+
+   J9ROMClass *getOrCreate(const J9ROMClass *packedROMClass, const JITServerROMClassHash &hash);
+   void release(Entry *entry);
+
+   TR_PersistentMemory *const _persistentMemory;
+   // To avoid comparing the ROMClass contents inside a critical section when
+   // inserting a new entry (which would increase lock contention), we instead
+   // use a hash of the contents as the key. The hash is computed outside of
+   // the critical section, and key hashing and comparison are very quick.
+   PersistentUnorderedMap<JITServerROMClassHash, Entry *> _map;
+   TR::Monitor *const _monitor;
+   };
+
+
+JITServerSharedROMClassCache::JITServerSharedROMClassCache(size_t numPartitions) :
+   _numPartitions(numPartitions),
+   _partitions(new (TR::Compiler->persistentGlobalMemory()) Partition[numPartitions])
+   {
+   if (!_partitions)
       throw std::bad_alloc();
    }
 
 JITServerSharedROMClassCache::~JITServerSharedROMClassCache()
    {
-   for (const auto &kv : _map)
-      _persistentMemory->freePersistentMemory(kv.second);
-   _monitor->destroy();
+   for (size_t i = 0; i < _numPartitions; ++i)
+      _partitions[i].~Partition();
+   TR::Compiler->persistentGlobalAllocator().deallocate(_partitions);
    }
 
 
@@ -85,7 +117,35 @@ J9ROMClass *
 JITServerSharedROMClassCache::getOrCreate(const J9ROMClass *packedROMClass)
    {
    JITServerROMClassHash hash(packedROMClass);
+   return getPartition(hash).getOrCreate(packedROMClass, hash);
+   }
 
+void
+JITServerSharedROMClassCache::release(J9ROMClass *romClass)
+   {
+   auto entry = Entry::get(romClass);
+   // To reduce lock contention, we synchronize access to the reference count
+   // using atomic operations. Releasing a ROMClass doesn't require the monitor
+   // unless it's the last reference. This should help in the scenario when a
+   // client session is destroyed and all its cached ROMClasses are released.
+   if (entry->release() == 0)
+      getPartition(*entry->_hash).release(entry);
+   }
+
+JITServerSharedROMClassCache::Partition &
+JITServerSharedROMClassCache::getPartition(const JITServerROMClassHash &hash)
+   {
+   // Partition index for a given ROMClass is determined by word 1 of its hash
+   // (word 0 is used by the hash function in the partition's unordered map)
+   static_assert(ROMCLASS_HASH_WORDS >= 2, "ROMClass hash must have at least 2 words");
+   return _partitions[hash.getWord(1) % _numPartitions];
+   }
+
+
+J9ROMClass *
+JITServerSharedROMClassCache::Partition::getOrCreate(const J9ROMClass *packedROMClass,
+                                                     const JITServerROMClassHash &hash)
+   {
       {
       OMR::CriticalSection sharedROMClassCache(_monitor);
       auto it = _map.find(hash);
@@ -124,16 +184,8 @@ JITServerSharedROMClassCache::getOrCreate(const J9ROMClass *packedROMClass)
    }
 
 void
-JITServerSharedROMClassCache::release(J9ROMClass *romClass)
+JITServerSharedROMClassCache::Partition::release(JITServerSharedROMClassCache::Entry *entry)
    {
-   auto entry = Entry::get(romClass);
-   // To reduce lock contention, we synchronize access to the reference count
-   // using atomic operations. Releasing a ROMClass doesn't require the monitor
-   // unless it's the last reference. This should help in the scenario when a
-   // client session is destroyed and all its cached ROMClasses are released.
-   if (entry->release() != 0)
-      return;
-
       {
       OMR::CriticalSection sharedROMClassCache(_monitor);
       // Another thread could have looked up and acquired this entry while its reference

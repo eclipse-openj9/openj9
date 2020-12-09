@@ -262,6 +262,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int64_t _oldAgeUnderLowMemory;
    static int64_t _timeBetweenPurges;
    static bool _shareROMClasses;
+   static int32_t _sharedROMClassCacheNumPartitions;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static int32_t _waitTimeToEnterIdleMode;
