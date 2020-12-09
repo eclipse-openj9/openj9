@@ -625,8 +625,8 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
        !TR::Options::getCmdLineOptions()->getOption(TR_DontDowngradeToCold))
       {
       TR::PersistentInfo *persistentInfo = getPersistentInfo();
-      const J9ROMMethod * romMethod = methodDetails.getRomMethod();
       TR_J9VMBase *fe = TR_J9VMBase::get(_jitConfig, NULL);
+      const J9ROMMethod * romMethod = methodDetails.getRomMethod(fe);
 
       // Don't downgrade if method is JSR292. See CMVC 200145
       if (_J9ROMMETHOD_J9MODIFIER_IS_SET(romMethod, J9AccMethodHasMethodHandleInvokes))
@@ -7118,7 +7118,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          {
          // Find the AOT body in the SCC
          //
-         *aotCachedMethod = findAotBodyInSCC(vmThread, entry->getMethodDetails().getRomMethod());
+         *aotCachedMethod = findAotBodyInSCC(vmThread, entry->getMethodDetails().getRomMethod(fe));
 
          // Validate the class chain of the class of the method being AOT loaded
          if (*aotCachedMethod && !fe->sharedCache()->classMatchesCachedVersion(J9_CLASS_FROM_METHOD(method)))
