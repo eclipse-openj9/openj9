@@ -34,15 +34,16 @@ usage() {
   echo "  --build        build the docker image (overrides '--print')"
   echo "  --cuda         include CUDA header files"
   echo "  --dist=...     specify the Linux distribution (e.g. centos, ubuntu)"
+  echo "  --freemarker   include freemarker.jar"
   echo "  --print        write the Dockerfile to stdout (default; overrides '--build')"
   echo "  --tag=...      specify a name for the docker image (may be repeated, default: none)"
   echo "  --user=...     specify the user name (default: 'jenkins')"
-  echo "  --version=...  specify the distribution version (e.g. 6.9, 16.04)"
+  echo "  --version=...  specify the distribution version (e.g. 6, 16.04)"
   echo ""
   local arch="$(uname -m)"
   echo "Supported build patterns on this host ($arch):"
 if [ $arch = x86_64 ] ; then
-  echo "  bash mkdocker.sh --tag=openj9/cent69 --dist=centos --version=6.9 --build"
+  echo "  bash mkdocker.sh --tag=openj9/cent610 --dist=centos --version=6 --build"
 fi
 if [ $arch = x86_64 -o $arch = ppc64le ] ; then
   echo "  bash mkdocker.sh --tag=openj9/cent7  --dist=centos --version=7   --build"
@@ -58,8 +59,10 @@ action=print
 arch=
 cuda=no
 dist=unspecified
+freemarker=no
 tags=()
 user=jenkins
+userid=1000
 version=unspecified
 
 # Frequently used commands.
@@ -82,6 +85,9 @@ parse_options() {
         ;;
       --dist=*)
         dist="${arg#*=}"
+        ;;
+      --freemarker)
+        freemarker=yes
         ;;
       --print)
         action=print
@@ -125,9 +131,9 @@ validate_options() {
         exit 1
       fi
       case $version in
-        6.9)
+        6)
           if [ $arch = ppc64le ] ; then
-            echo "CentOS version 6.9 is not supported on $arch" >&2
+            echo "CentOS version 6 is not supported on $arch" >&2
             exit 1
           fi
           ;;
@@ -223,10 +229,14 @@ fi
 }
 
 install_centos_packages() {
-  echo "RUN yum -y update \\"
-if [ $version = 6.9 ] ; then
-  echo " && yum -y install https://repo.ius.io/ius-release-el6.rpm \\"
+if [ $version = 6 ] ; then
+  echo "RUN sed -i -e 's|mirrorlist|#mirrorlist|' \\"
+  echo "           -e 's|#baseurl=http://mirror.centos.org/centos/\$releasever|baseurl=https://vault.centos.org/6.10|' \\"
+  echo "           /etc/yum.repos.d/CentOS-Base.repo"
+  echo ""
 fi
+  echo "RUN yum -y update \\"
+  echo " && yum install -y epel-release \\"
   echo " && yum -y install \\"
   echo "    alsa-lib-devel \\"
   echo "    automake \\" # required to update make
@@ -532,20 +542,23 @@ prepare_user() {
 create_user() {
   echo ""
   echo "# Add user home and copy authorized_keys and known_hosts."
-  echo "RUN useradd -ms /bin/bash $user \\"
+  echo "RUN useradd -ms /bin/bash --uid $userid $user \\"
   echo " && mkdir /home/$user/.ssh \\"
   echo " && chmod 700 /home/$user/.ssh"
   echo "COPY authorized_keys known_hosts /home/$user/.ssh/"
-  echo "RUN chown -R $user:$user /home/$user \\"
-  echo " && chmod 600 /home/$user/.ssh/authorized_keys /home/$user/.ssh/known_hosts"
+  echo "RUN chmod -R go= /home/$user/.ssh \\"
+  echo " && echo "ulimit -u 32000 -n 2048" >> /home/$user/.bashrc"
+}
+
+adjust_user_directory_perms() {
+  echo "RUN chown -R $user:$user /home/$user"
 }
 
 install_freemarker() {
   echo ""
   local freemarker_version=2.3.8
-  echo "# Download and extract freemarker.jar to /root/freemarker.jar."
-  echo "RUN mkdir -p /root \\"
-  echo " && cd /root \\"
+  echo "# Download and extract freemarker.jar to /home/$user/freemarker.jar."
+  echo "RUN cd /home/$user \\"
   echo " && $wget_O freemarker.tar.gz https://sourceforge.net/projects/freemarker/files/freemarker/$freemarker_version/freemarker-$freemarker_version.tar.gz/download \\"
   echo " && tar -xzf freemarker.tar.gz freemarker-$freemarker_version/lib/freemarker.jar --strip-components=2 \\"
   echo " && rm -f freemarker.tar.gz"
@@ -553,11 +566,7 @@ install_freemarker() {
 
 bootjdk_dirs() {
   for version in $@ ; do
-    if [ $version = 8 ] ; then
-      echo /usr/lib/jvm/adoptojdk-java-80
-    else
-      echo /usr/lib/jvm/adoptojdk-java-$version
-    fi
+    echo /home/$user/bootjdks/jdk$version
   done
 }
 
@@ -612,7 +621,7 @@ install_python() {
 adjust_ldconfig() {
   echo ""
   echo "# Run ldconfig to discover newly installed shared libraries."
-  echo "RUN for dir in lib lib64 ; do echo /usr/local/$dir ; done > /etc/ld.so.conf.d/usr-local.conf \\"
+  echo "RUN for dir in lib lib64 ; do echo /usr/local/\$dir ; done > /etc/ld.so.conf.d/usr-local.conf \\"
   echo " && ldconfig"
 }
 
@@ -671,8 +680,9 @@ print_dockerfile() {
 if [ $cuda != no ] ; then
   install_cuda
 fi
+if [ $freemarker = yes ] ; then
   install_freemarker
-
+fi
   install_compilers
 
   install_cmake
@@ -683,6 +693,7 @@ fi
 
   install_bootjdks
   create_git_cache
+  adjust_user_directory_perms
 }
 
 main() {
