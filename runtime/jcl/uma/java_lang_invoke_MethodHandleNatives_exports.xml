@@ -19,18 +19,18 @@
 	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <exports group="java_lang_invoke_MethodHandleNatives">
-		<export name="Java_java_lang_invoke_MethodHandleNatives_init" />
-		<export name="Java_java_lang_invoke_MethodHandleNatives_expand" />
-		<export name="Java_java_lang_invoke_MethodHandleNatives_resolve" />
-		<export name="Java_java_lang_invoke_MethodHandleNatives_getMembers" />
-		<export name="Java_java_lang_invoke_MethodHandleNatives_objectFieldOffset" />
-		<export name="Java_java_lang_invoke_MethodHandleNatives_staticFieldOffset" />
-		<export name="Java_java_lang_invoke_MethodHandleNatives_staticFieldBase" />
-		<export name="Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo" />
-		<export name="Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetNormal" />
-		<export name="Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetVolatile" />
-		<export name="Java_java_lang_invoke_MethodHandleNatives_copyOutBootstrapArguments" />
-		<export name="Java_java_lang_invoke_MethodHandleNatives_clearCallSiteContext" />
-		<export name="Java_java_lang_invoke_MethodHandleNatives_getNamedCon" />
-		<export name="Java_java_lang_invoke_MethodHandleNatives_registerNatives" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_init" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_expand" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_resolve" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_getMembers" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_objectFieldOffset" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_staticFieldOffset" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_staticFieldBase" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetNormal" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetVolatile" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_copyOutBootstrapArguments" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_clearCallSiteContext" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_getNamedCon" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_registerNatives" />
 </exports>
