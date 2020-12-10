@@ -25,10 +25,6 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>cmdLineTester_forceLazySymbolResolution</testCaseName>
-		<variations>
-			<variation>Mode101</variation>
-			<variation>Mode601</variation>
-		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DJ9JAR=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -Xint -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)forceLazySymbolResolution.xml$(Q) \

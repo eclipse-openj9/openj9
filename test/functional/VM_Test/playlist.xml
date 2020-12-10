@@ -204,8 +204,8 @@
 	<test>
 		<testCaseName>xlpTests</testCaseName>
 		<variations>
-			<variation>Mode109</variation>
-			<variation>Mode609</variation>
+			<variation>Mode110</variation>
+			<variation>Mode610</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) -Dplatform=$(PLATFORM) -cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \
 	j9vm.runner.Menu -test=$(Q)j9vm.test.xlp$(Q) -exe=$(Q)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(Q) \
@@ -226,10 +226,6 @@
 
 		<test>
 		<testCaseName>xlpCodeCacheTests</testCaseName>
-		<variations>
-			<variation>Mode109</variation>
-			<variation>Mode110</variation>
-		</variations>
 		<command>$(JAVA_COMMAND) -Dplatform=$(PLATFORM) -cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \
 	j9vm.runner.Menu -test=$(Q)j9vm.test.xlpcodecache$(Q) -exe=$(Q)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(Q) \
 	-jar=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \

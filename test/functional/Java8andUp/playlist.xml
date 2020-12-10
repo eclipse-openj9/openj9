@@ -138,7 +138,6 @@
 	<test>
 		<testCaseName>jsr335_interfacePrivateMethod</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
 			<variation>NoOptions</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
