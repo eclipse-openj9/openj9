@@ -2777,7 +2777,7 @@ public class ValueTypeTests {
 		 * }
 		 */
 		String fields[] = {"x:I", "y:I"};
-		Class valueClass = ValueTypeGenerator.generateValueClass("UnresolvedD", fields, "HostD");
+		Class valueClass = ValueTypeGenerator.generateValueClass("UnresolvedD", fields, "UsingUnresolvedD");
 		String fields2[] = {};
 		Class usingClass = ValueTypeGenerator.generateHostRefClass("UsingUnresolvedD", fields2, "UnresolvedD", fields);
 
