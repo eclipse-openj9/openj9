@@ -110,11 +110,5 @@ public abstract class CallSite {
 		}
 		return initialTargetHandleCache;
 	}
-	
-/*[IF OPENJDK_METHODHANDLES]*/
-	static CallSite makeSite(MethodHandle mh, String str, MethodType mt, Object obj, Class<?> cls) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();		
-	}
-/*[ENDIF] OPENJDK_METHODHANDLES */
 }
 
