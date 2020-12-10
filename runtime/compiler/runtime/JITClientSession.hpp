@@ -401,8 +401,6 @@ class ClientSessionData
    TR_MethodToBeCompiled *getOOSequenceEntryList() const { return _OOSequenceEntryList; }
    void setOOSequenceEntryList(TR_MethodToBeCompiled *m) { _OOSequenceEntryList = m; }
    TR_MethodToBeCompiled *notifyAndDetachFirstWaitingThread();
-   uint32_t getExpectedSeqNo() const { return _expectedSeqNo; }
-   void setExpectedSeqNo(uint32_t seqNo) { _expectedSeqNo = seqNo; }
    uint32_t getLastProcessedCriticalSeqNo() const { return _lastProcessedCriticalSeqNo; }
    void setLastProcessedCriticalSeqNo(uint32_t seqNo) { _lastProcessedCriticalSeqNo = seqNo; }
    uint32_t getMaxReceivedSeqNo() const { return _maxReceivedSeqNo; }
@@ -474,14 +472,13 @@ class ClientSessionData
    TR::Monitor *_romMapMonitor;
    TR::Monitor *_classMapMonitor;
    TR::Monitor *_classChainDataMapMonitor;
-   // The following monitor is used to protect access to _expectedSeqNo and
+   // The following monitor is used to protect access to _lastProcessedCriticalSeqNo and
    // the list of out-of-sequence compilation requests (_OOSequenceEntryList)
    TR::Monitor *_sequencingMonitor;
    TR::Monitor *_constantPoolMapMonitor;
    // Compilation requests that arrived out-of-sequence wait in
    // _OOSequenceEntryList for their turn to be processed
    TR_MethodToBeCompiled *_OOSequenceEntryList;
-   uint32_t _expectedSeqNo; // used for ordering compilation requests from the same client
    uint32_t _maxReceivedSeqNo; // the largest seqNo received from this client
 
    uint32_t _lastProcessedCriticalSeqNo; // highest seqNo processed request carrying info that needs to be applied in order
