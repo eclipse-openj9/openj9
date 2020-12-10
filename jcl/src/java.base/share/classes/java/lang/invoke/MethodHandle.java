@@ -132,9 +132,6 @@ public abstract class MethodHandle
 	static final byte KIND_FILTERARGUMENTS = 29;
 	static final byte KIND_VARHANDLEINVOKEEXACT = 30;
 	static final byte KIND_VARHANDLEINVOKEGENERIC = 31;
-	/*[IF Panama]*/
-	static final byte KIND_NATIVE = 32;
-	/*[ENDIF]*/
 	/*[IF JAVA_SPEC_VERSION >= 12]*/
 	static final byte KIND_FILTERARGUMENTS_WITHCOMBINER = 33;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
