@@ -226,7 +226,7 @@ S_DEFINES+=$(HOST_DEFINES) $(TARGET_DEFINES)
 S_DEFINES_DEBUG+=DEBUG
 
 S_FLAGS+=--noexecstack
-S_FLAGS_DEBUG+=--gstabs
+S_FLAGS_DEBUG+=--gstabs+ -g
 
 ifeq ($(HOST_ARCH),p)
     S_FLAGS+=-maltivec
