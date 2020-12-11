@@ -5333,7 +5333,7 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
 
       // AOT compiles create a relocation at the snippet do do the trampoline reservation
       // would be better to implement this code via a virtual function that's empty for TR_J9SharedCacheVM
-      if (!isAOT_DEPRECATED_DO_NOT_USE())
+      if (!isAOT_DEPRECATED_DO_NOT_USE() && !comp->isOutOfProcessCompilation())
          {
          bool hadClassUnloadMonitor;
          bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);

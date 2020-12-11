@@ -807,7 +807,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       needToSetCodeLocation = false;
 
       if (cg()->hasCodeCacheSwitched() &&
-          (methodSymRef->getReferenceNumber()>=TR_AMD64numRuntimeHelpers))
+         (methodSymRef->getReferenceNumber()>=TR_AMD64numRuntimeHelpers))
          {
          fej9->reserveTrampolineIfNecessary(comp, methodSymRef, true);
          }
@@ -915,6 +915,13 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
                                                                                     *(uint8_t **)cursor,
                                                                                     getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                                                                     TR_ConstantPool,
+                                                                                    cg()),
+                                  __FILE__, __LINE__, getNode());
+
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                    *(uint8_t **)cursor,
+                                                                                    getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                                                    TR_Trampolines,
                                                                                     cg()),
                                   __FILE__, __LINE__, getNode());
       cursor += sizeof(intptr_t);
