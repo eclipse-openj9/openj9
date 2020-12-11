@@ -3135,6 +3135,18 @@ TR_J9VMBase::methodsCanBeInlinedEvenIfEventHooksEnabled()
    return false;
    }
 
+bool
+TR_J9VMBase::canExceptionEventBeHooked()
+   {
+   J9JavaVM * javaVM = _jitConfig->javaVM;
+   J9HookInterface * * vmHooks = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
+
+   bool catchCanBeHooked = ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_CATCH) != 0);
+   bool throwCanBeHooked = ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_THROW) != 0);
+
+   return (catchCanBeHooked || throwCanBeHooked);
+   }
+
 
 TR::TreeTop *
 TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTop * treeTop)

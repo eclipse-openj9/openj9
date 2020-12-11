@@ -944,6 +944,8 @@ public:
    virtual bool canMethodExitEventBeHooked();
    virtual bool methodsCanBeInlinedEvenIfEventHooksEnabled();
 
+   virtual bool canExceptionEventBeHooked();
+
    TR::TreeTop * lowerMethodHook(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    TR::TreeTop * lowerArrayLength(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    TR::TreeTop * lowerContigArrayLength(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);

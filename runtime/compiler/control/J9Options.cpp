@@ -2369,7 +2369,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       {
       self()->setOption(TR_DisableThrowToGoto);
       self()->setReportByteCodeInfoAtCatchBlock();
-      doAOT = false;
       }
 
    // Determine whether or not to generate method enter and exit hooks
