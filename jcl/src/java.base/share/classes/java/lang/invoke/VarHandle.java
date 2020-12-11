@@ -509,12 +509,7 @@ public abstract class VarHandle extends VarHandleInternal
 						/* Clone the MethodHandles with the exact types if different set of exactTypes are provided. */
 						MethodType exactType = exactTypes[index];
 						if (exactType != null) {
-							/*[IF OPENJDK_METHODHANDLES]*/
-							MethodHandle operationMH = operationMHs[index];
-							operationMHs[index] = operationMH.copyWith(exactType, operationMH.form);
-							/*[ELSE]*/
 							operationMHs[index] = operationMHs[index].cloneWithNewType(exactType);
-							/*[ENDIF] OPENJDK_METHODHANDLES */
 						}
 						operationMHs[index] = permuteHandleJ9ToReference(operationMHs[index]);
 					}
@@ -1380,12 +1375,7 @@ public abstract class VarHandle extends VarHandleInternal
 			if (lookupTypes != exactTypes) {
 				for (AccessMode accessMode : AccessMode.values()) {
 					int index = accessMode.ordinal();
-					/*[IF OPENJDK_METHODHANDLES]*/
-					MethodHandle operationMH = operationMHs[index];
-					operationMHs[index] = operationMH.copyWith(exactTypes[index], operationMH.form);
-					/*[ELSE]*/
 					operationMHs[index] = operationMHs[index].cloneWithNewType(exactTypes[index]);
-					/*[ENDIF] OPENJDK_METHODHANDLES */
 				}
 			}
 		} catch (IllegalAccessException | NoSuchMethodException e) {
@@ -1724,9 +1714,7 @@ public abstract class VarHandle extends VarHandleInternal
 	private static VarHandle asDirect(VarHandle varHandle) {
 		return varHandle.asDirect();
 	}
-/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
-/*[IF (JAVA_SPEC_VERSION >= 15) | OPENJDK_METHODHANDLES]*/
 	/**
 	 * Return the MethodHandle corresponding to the integer-value of the AccessMode.
 	 * 
@@ -1737,7 +1725,7 @@ public abstract class VarHandle extends VarHandleInternal
 	MethodHandle getMethodHandle(int i) {
 		return handleTable[i];
 	}
-/*[ENDIF] (JAVA_SPEC_VERSION >= 15) | OPENJDK_METHODHANDLES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	MethodType accessModeTypeUncached(
 		/*[IF JAVA_SPEC_VERSION >= 16]*/
