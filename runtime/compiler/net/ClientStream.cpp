@@ -130,24 +130,45 @@ SSL_CTX *ClientStream::_sslCtx = NULL;
 
 int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs)
    {
-   // TODO consider using newer API like getaddrinfo to support IPv6
-   struct hostent *entSer = gethostbyname(address.c_str());
-   if (!entSer)
+   // TODO consider support for IPv6
+   struct addrinfo hints;
+   memset(&hints, 0, sizeof(hints));
+   hints.ai_family = AF_INET;    // Allow IPv4 only; could use AF_UNSPEC to allow IPv6 too
+   hints.ai_socktype = SOCK_STREAM;
+   hints.ai_flags = 0;
+   hints.ai_protocol = 0; // Any protocol
+
+   char portName[12];
+   int r = snprintf(portName, 12, "%d", port);
+   if (r < 0 || r > 11)
+      throw StreamFailure("snprintf failed");
+
+   struct addrinfo *addrList = NULL;
+   int res = getaddrinfo(address.c_str(), portName, &hints, &addrList);
+   if (res != 0)
+      {
+      // Can use gai_strerror(res) to show error code
       throw StreamFailure("Cannot resolve server name");
-
-   struct sockaddr_in servAddr;
-   memset(&servAddr, 0, sizeof(servAddr));
-   memcpy(&servAddr.sin_addr.s_addr, entSer->h_addr, entSer->h_length);
-   servAddr.sin_family = AF_INET;
-   servAddr.sin_port = htons(port);
-
-   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+      }
+   struct addrinfo *pAddr;
+   int sockfd = -1;
+   for (pAddr = addrList; pAddr; pAddr = pAddr->ai_next) 
+      {
+      sockfd = socket(pAddr->ai_family, pAddr->ai_socktype, pAddr->ai_protocol);
+      if (sockfd >= 0)
+         break; // Use the first address for which a socket could be created
+      // Try next address
+      }
    if (sockfd < 0)
+      {
+      freeaddrinfo(addrList);
       throw StreamFailure("Cannot create socket for JITServer");
-
+      }
+   
    int flag = 1;
    if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*)&flag, sizeof(flag)) < 0)
       {
+      freeaddrinfo(addrList);
       close(sockfd);
       throw StreamFailure("Cannot set option SO_KEEPALIVE on socket");
       }
@@ -155,6 +176,7 @@ int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs
    struct linger lingerVal = {1, 2}; // linger 2 seconds
    if (setsockopt(sockfd, SOL_SOCKET, SO_LINGER, (void *)&lingerVal, sizeof(lingerVal)) < 0)
       {
+      freeaddrinfo(addrList);
       close(sockfd);
       throw StreamFailure("Cannot set option SO_LINGER on socket");
       }
@@ -162,28 +184,31 @@ int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs
    struct timeval timeout = {(timeoutMs / 1000), ((timeoutMs % 1000) * 1000)};
    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(timeout)) < 0)
       {
+      freeaddrinfo(addrList);
       close(sockfd);
       throw StreamFailure("Cannot set option SO_RCVTIMEO on socket");
       }
 
    if (setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeout, sizeof(timeout)) < 0)
       {
+      freeaddrinfo(addrList);
       close(sockfd);
       throw StreamFailure("Cannot set option SO_SNDTIMEO on socket");
       }
 
    if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag)) < 0)
       {
+      freeaddrinfo(addrList);
       close(sockfd);
       throw StreamFailure("Cannot set option TCP_NODELAY on socket");
       }
-
-   if (connect(sockfd, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0)
+   if (connect(sockfd, pAddr->ai_addr, pAddr->ai_addrlen) < 0)
       {
+      freeaddrinfo(addrList);
       close(sockfd);
       throw StreamFailure("Connect failed");
       }
-
+   freeaddrinfo(addrList);
    return sockfd;
    }
 
