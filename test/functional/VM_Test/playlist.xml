@@ -224,7 +224,7 @@
 		</impls>
 	</test>
 
-		<test>
+	<test>
 		<testCaseName>xlpCodeCacheTests</testCaseName>
 		<variations>
 			<variation>Mode109</variation>
@@ -235,6 +235,8 @@
 	-jar=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \
 	-xids=all,$(PLATFORM),$(VARIATION); \
 	$(TEST_STATUS)</command>
+		<!-- Temporarily disable this test on AIX, issue https://github.com/eclipse/openj9/issues/11104 -->
+		<platformRequirements>^os.aix</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
