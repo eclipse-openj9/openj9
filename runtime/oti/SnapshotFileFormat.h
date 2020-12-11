@@ -29,11 +29,12 @@
 
 #include "j9nonbuilder.h"
 
-/* Fixup codes for system monitors to be persisted. These are used to aid in mapping between OpenJ9 and OMR threads. */
-#define FIXUPREFVM_UNSAFE_MEMORY_TRACKING_MUTEX 0
-#define FIXUPREFVM_VERBOSE_STATE_MUTEX 1
-#define FIXUPREFVM_JCL_CACHE_MUTEX 2
-#define FIXUPREFVM_CONSTANT_DYNAMIC_MUTEX 3 /* Java 11 */
+/* Fixup codes for system monitors to be persisted. These are used to aid in 
+ * mapping between OpenJ9 and OMR threads. Zero is reserved. */
+#define FIXUPREFVM_UNSAFE_MEMORY_TRACKING_MUTEX 1
+#define FIXUPREFVM_VERBOSE_STATE_MUTEX 2
+#define FIXUPREFVM_JCL_CACHE_MUTEX 3
+#define FIXUPREFVM_CONSTANT_DYNAMIC_MUTEX 4 /* Java 11 */
 
 /**
  * Information required to fix up acquired system monitors and acquired inflated object monitors.

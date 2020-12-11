@@ -5099,6 +5099,7 @@ typedef struct J9VMThread {
 	/* BP for the native special frame used when restoring a Java app thread */
 	UDATA *restoreThreadBP;
 	J9VMEntryLocalStorage restoreEls;
+	UDATA waitingMonitorFixupId;
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 } J9VMThread;
 

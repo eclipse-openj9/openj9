@@ -110,6 +110,8 @@ private:
 	void removeUnpersistedClassLoaders(void);
 	void saveJ9JavaVMStructures(void);
 	bool saveAcquiredMonitor(J9VMThread *currentThread, J9AcquiredMonitor **cursor, omrthread_monitor_t monitor, UDATA isObjectMonitor, UDATA fixupReference);
+	UDATA systemMonitorToFixupId(omrthread_monitor_t monitor);
+	void saveSystemMonitorWaiting(J9VMThread *thread);
 	bool saveThreadsAndMonitors(void);
 	bool restorePrimitiveAndArrayClasses(void);
 	bool restoreJ9JavaVMStructures(void);
