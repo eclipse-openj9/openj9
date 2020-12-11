@@ -3104,8 +3104,8 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, temp2Reg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes());
    generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, temp1Reg, elementSize);
 
-   generateRILInstruction(cg, TR::InstOpCode::getSubtractLogicalImmOpCode(), node, firstDimLenReg, 1);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRZ, node, loopLabel);
+   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, firstDimLenReg, 1);
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, firstDimLenReg, 0, TR::InstOpCode::COND_BNE, loopLabel, false);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
 
    TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0,10,cg);
