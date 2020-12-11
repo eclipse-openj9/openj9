@@ -35,6 +35,7 @@
 #define J9AccAnnotation 0x2000
 #define J9AccBridge 0x40
 
+#define J9AccClassIsValueBased 0x40
 #define J9AccClassHiddenOptionNestmate 0x80
 #define J9AccClassHiddenOptionStrong 0x100
 #define J9AccClassAnnnotionRefersDoubleSlotEntry 0x80000

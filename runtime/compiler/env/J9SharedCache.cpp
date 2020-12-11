@@ -108,8 +108,7 @@ TR_YesNoMaybe TR_J9SharedCache::isSharedCacheDisabledBecauseFull(TR::Compilation
 const CCVResult
 TR_J9SharedCache::getCachedCCVResult(TR_OpaqueClassBlock *clazz)
    {
-   if (TR::Options::getCmdLineOptions()->allowRecompilation()
-       && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
       {
       TR::ClassTableCriticalSection cacheResult(_fe);
       TR_PersistentCHTable *table = _compInfo->getPersistentInfo()->getPersistentCHTable();
@@ -122,8 +121,7 @@ TR_J9SharedCache::getCachedCCVResult(TR_OpaqueClassBlock *clazz)
 bool
 TR_J9SharedCache::cacheCCVResult(TR_OpaqueClassBlock *clazz, CCVResult result)
    {
-   if (TR::Options::getCmdLineOptions()->allowRecompilation()
-       && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
       {
       TR::ClassTableCriticalSection cacheResult(_fe);
       TR_PersistentCHTable *table = _compInfo->getPersistentInfo()->getPersistentCHTable();

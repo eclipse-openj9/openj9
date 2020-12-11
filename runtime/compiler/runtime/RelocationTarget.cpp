@@ -49,7 +49,6 @@ TR_RelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecord, TR
    switch (reloRecord->type(reloTarget))
       {
       case TR_AbsoluteMethodAddressOrderedPair :
-      case TR_ConstantPoolOrderedPair :
          return true;
       default:
       	return false;

@@ -264,7 +264,7 @@ static void generateMemoryOptionParseError (J9JavaVM* vm, J9VMDllLoadInfo* loadI
 static void loadDLL (void* dllLoadInfo, void* userDataTemp);
 static void registerIgnoredOptions (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args);
 static UDATA protectedInitializeJavaVM (J9PortLibrary* portLibrary, void * userData);
-static J9Pool *initializeDllLoadTable (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA verboseFlags);
+static J9Pool *initializeDllLoadTable (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA verboseFlags, J9JavaVM *vm);
 #if (defined(J9VM_OPT_SIDECAR))
 static IDATA checkDjavacompiler (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args);
 #endif /* J9VM_OPT_SIDECAR */
@@ -641,18 +641,20 @@ freeJavaVM(J9JavaVM * vm)
 	}
 
 	/* Kill global hot field class info pool and its monitor if dynamicBreadthFirstScanOrdering is enabled */
-	hotReferenceFieldRequired = vm->memoryManagerFunctions->j9gc_hot_reference_field_required(vm);
-	if (hotReferenceFieldRequired && NULL != vm->hotFieldClassInfoPool) {
-		pool_kill(vm->hotFieldClassInfoPool);
-		vm->hotFieldClassInfoPool = NULL;
-	}
+	if (NULL != vm->memoryManagerFunctions) {
+		hotReferenceFieldRequired = vm->memoryManagerFunctions->j9gc_hot_reference_field_required(vm);
+		if (hotReferenceFieldRequired && NULL != vm->hotFieldClassInfoPool) {
+			pool_kill(vm->hotFieldClassInfoPool);
+			vm->hotFieldClassInfoPool = NULL;
+		}
 
-	if (hotReferenceFieldRequired && NULL != vm->hotFieldClassInfoPoolMutex) {
-		omrthread_monitor_destroy(vm->hotFieldClassInfoPoolMutex);
-	}
+		if (hotReferenceFieldRequired && NULL != vm->hotFieldClassInfoPoolMutex) {
+			omrthread_monitor_destroy(vm->hotFieldClassInfoPoolMutex);
+		}
 
-	if (hotReferenceFieldRequired && NULL != vm->globalHotFieldPoolMutex) {
-		omrthread_monitor_destroy(vm->globalHotFieldPoolMutex);
+		if (hotReferenceFieldRequired && NULL != vm->globalHotFieldPoolMutex) {
+			omrthread_monitor_destroy(vm->globalHotFieldPoolMutex);
+		}
 	}
 
 	if (NULL != vm->classMemorySegments) {
@@ -1247,18 +1249,27 @@ static void loadDLL(void* dllLoadInfo, void* userDataTemp) {
  *  Every library used by the VM should have an entry here, except for any user Xruns.
  */
 static J9Pool *
-initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA verboseFlags)
+initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA verboseFlags, J9JavaVM *vm)
 {
 	J9Pool *returnVal = pool_new(sizeof(J9VMDllLoadInfo),  0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(portLibrary));
 	IDATA i;
 	char* testString, *options;
 	J9VMDllLoadInfo* newEntry;
 	char dllNameBuffer[SMALL_STRING_BUF_SIZE];			/* Plenty big enough - needs to be at least DLLNAME_LEN */
+	const char *gcDLLName = J9_GC_DLL_NAME;
+	const char *gccheckDLLName = J9_CHECK_GC_DLL_NAME;
 
 	PORT_ACCESS_FROM_PORT(portLibrary);
 
 	if (NULL == returnVal)
 		goto _error;
+
+#if defined(OMR_MIXED_REFERENCES_MODE_STATIC)
+	if (!J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		gcDLLName = J9_GC_FULL_DLL_NAME;
+		gccheckDLLName = J9_CHECK_GC_FULL_DLL_NAME;
+	}
+#endif /* defined(OMR_MIXED_REFERENCES_MODE_STATIC) */
 
 	JVMINIT_VERBOSE_INIT_TRACE(verboseFlags, "\nInitializing DLL load table:\n");
 #if defined(J9ZOS390)
@@ -1275,7 +1286,7 @@ initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDAT
 
 	if (NULL == createLoadInfo(portLibrary, returnVal, J9_VERIFY_DLL_NAME, NOT_A_LIBRARY, (void*)&j9bcv_J9VMDllMain, verboseFlags))
 		goto _error;
-	if (NULL == createLoadInfo(portLibrary, returnVal, J9_GC_DLL_NAME, (LOAD_BY_DEFAULT | FATAL_NO_DLL), NULL, verboseFlags))
+	if (NULL == createLoadInfo(portLibrary, returnVal, gcDLLName, (LOAD_BY_DEFAULT | FATAL_NO_DLL), NULL, verboseFlags))
 		goto _error;
 	if (NULL == createLoadInfo(portLibrary, returnVal, J9_DYNLOAD_DLL_NAME, NOT_A_LIBRARY, (void*)&bcutil_J9VMDllMain, verboseFlags))
 		goto _error;
@@ -1298,7 +1309,7 @@ initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDAT
 	if (NULL == createLoadInfo(portLibrary, returnVal, J9_JVMTI_DLL_NAME, 0, NULL, verboseFlags))
 		goto _error;
 #endif
-	if (NULL == createLoadInfo(portLibrary, returnVal, J9_CHECK_GC_DLL_NAME, 0, NULL, verboseFlags))
+	if (NULL == createLoadInfo(portLibrary, returnVal, gccheckDLLName, 0, NULL, verboseFlags))
 		goto _error;
 
 	if (NULL == createLoadInfo(portLibrary, returnVal, J9_DEBUG_DLL_NAME, 0, NULL, verboseFlags))
@@ -2228,12 +2239,14 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				j9port_control(OMRPORT_CTLDATA_VMEM_PERFORM_FULL_MEMORY_SEARCH, 0);
 			}
 
+#if JAVA_SPEC_VERSION >= 15
 			argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXSHOW_EXTENDED_NPE_MESSAGE, NULL);
 			argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOSHOW_EXTENDED_NPE_MESSAGE, NULL);
-			/* Disable NPE extended message by default */
-			if (argIndex2 < argIndex) {
+			if (argIndex2 <= argIndex) {
+				vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_LOCAL_VARIABLE_TABLE;
 				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_SHOW_EXTENDED_NPEMSG;
 			}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 			break;
 
@@ -2467,6 +2480,13 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				}
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if JAVA_SPEC_VERSION >= 16
+			if ((argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS1, NULL)) >= 0) {
+				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION;
+			} else if ((argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS2, NULL)) >= 0) {
+				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING;
+			}
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 			if ((argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XXDUMPLOADEDCLASSLIST, NULL)) >= 0) {
 				J9HookInterface **vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
@@ -6114,6 +6134,293 @@ processCompressionOptions(J9JavaVM *vm){
 	}
 }
 
+/**
+ * Returns the original *source.
+ * Find the next delimiter and replace it with NULL. Set *source to the character
+ * after the delimiter. If no delimiter is found, set *source to NULL.
+ */
+static char *
+strUpToDelimiter(char **source, char delimiter)
+{
+	char ch = '\0';
+	char *result = *source;
+	while ('\0' != (ch = **source)) {
+		if (ch == delimiter) {
+			**source = '\0';
+			*source += 1;
+			return result;
+		}
+		*source += 1;
+	}
+	*source = NULL;
+	return result;
+}
+
+/**
+ * For compatibility when -XX:-LegacyXlogOption is not set, parse -Xlog:gc options and add mappings.
+ * Anything besides -Xlog:gc, -Xlog:gc:stderr|<file>|file=<file>[:[:]] gives an unrecognized warning,
+ * although any superset such as -Xlog, -Xlog:all, -Xlog:something,gc, etc. enables gc logging as well.
+ */
+static IDATA
+parseXlogForCompatibility(J9JavaVM *vm)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	IDATA rc = JNI_OK;
+	J9VMInitArgs *j9vm_args = vm->vmArgsArray;
+	IDATA xlogindex = FIND_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH, MAPOPT_XLOG_OPT, NULL);
+	while (xlogindex >= 0) {
+		BOOLEAN unrecognizedOption = FALSE;
+		BOOLEAN setgclog = FALSE;
+		BOOLEAN gclog = FALSE;
+		char *gclogfile = NULL;
+		char xlogoptionsbuf[LARGE_STRING_BUF_SIZE];
+		char *xlogoptions = xlogoptionsbuf;
+		/* Include room for the trailing NULL */
+		UDATA optionLen = strlen(j9vm_args->actualVMArgs->options[xlogindex].optionString) + 1;
+
+		if (optionLen > sizeof(xlogoptionsbuf)) {
+			xlogoptions = j9mem_allocate_memory(optionLen, OMRMEM_CATEGORY_VM);
+			if (NULL == xlogoptions) {
+				rc = JNI_ERR;
+				goto xlogret;
+			}
+		}
+
+		if (OPTION_OK != COPY_OPTION_VALUE(xlogindex, ':', &xlogoptions, optionLen)) {
+			rc = JNI_ERR;
+			goto xlogret;
+		}
+
+		if (NULL == xlogoptions) {
+			/* Reached if just -Xlog is specified */
+			setgclog = TRUE;
+			gclog = TRUE;
+			unrecognizedOption = TRUE;
+		} else {
+			/* -Xlog:gc+other=off,a+b=c:file=abc:dec:options */
+			char *fullOptions = xlogoptions;
+			char *upToColon = strUpToDelimiter(&fullOptions, ':');
+#if defined(DEBUG_XLOG)
+			j9tty_printf(PORTLIB, "upToColon %s fullOptions %s\n", upToColon, fullOptions);
+#endif /* defined(DEBUG_XLOG) */
+			if ('\0' == *upToColon) {
+				/* Nothing specified means all are enabled */
+				setgclog = TRUE;
+				gclog = TRUE;
+				unrecognizedOption = TRUE;
+			} else {
+				char *upToComma = strUpToDelimiter(&upToColon, ',');
+				while (TRUE) {
+					BOOLEAN checkTagLevel = FALSE;
+					char *upToEquals = NULL;
+#if defined(DEBUG_XLOG)
+					j9tty_printf(PORTLIB, "upToComma %s upToColon %s\n", upToComma, upToColon);
+#endif /* defined(DEBUG_XLOG) */
+					if ('\0' == *upToComma) {
+						/* Missing tag */
+xlogerr:
+						CONSUME_ARG(j9vm_args, xlogindex);
+						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_OPTION_MALFORMED, j9vm_args->actualVMArgs->options[xlogindex].optionString);
+						rc = JNI_ERR;
+						goto xlogret;
+					}
+					upToEquals = strUpToDelimiter(&upToComma, '=');
+#if defined(DEBUG_XLOG)
+					j9tty_printf(PORTLIB, "upToEquals %s upToComma %s\n", upToEquals, upToComma);
+#endif /* defined(DEBUG_XLOG) */
+					if ('\0' == *upToEquals) {
+						/* Missing tag */
+						goto xlogerr;
+					} else {
+						UDATA numtags = 0;
+						const char *tag = strUpToDelimiter(&upToEquals, '+');
+						while (TRUE) {
+#if defined(DEBUG_XLOG)
+							j9tty_printf(PORTLIB, "tag %s upToEquals %s\n", tag, upToEquals);
+#endif /* defined(DEBUG_XLOG) */
+							if ('\0' == *tag) {
+								/* Missing tag */
+								goto xlogerr;
+							}
+							if (0 == j9_cmdla_stricmp("all", tag)) {
+								if ((numtags > 0) || (NULL != upToEquals)) {
+									/* Invalid use of keyword all */
+									goto xlogerr;
+								} else {
+									checkTagLevel = TRUE;
+									/* only gc is recognized from all */
+									unrecognizedOption = TRUE;
+								}
+							} else if (0 == j9_cmdla_stricmp("disable", tag)) {
+								if ((numtags > 0)
+									|| (NULL != upToEquals)
+									|| (NULL != upToComma)
+									|| (NULL != upToColon)
+									|| (NULL != fullOptions)
+								) {
+									/* Invalid use of keyword disable */
+									goto xlogerr;
+								} else {
+									setgclog = TRUE;
+									gclog = FALSE;
+								}
+							} else if ((0 == j9_cmdla_stricmp("gc", tag)) || (0 == j9_cmdla_stricmp("gc*", tag))) {
+								checkTagLevel = TRUE;
+							} else {
+								unrecognizedOption = TRUE;
+							}
+							numtags += 1;
+							if (NULL == upToEquals) {
+								break;
+							}
+							tag = strUpToDelimiter(&upToEquals, '+');
+						}
+					}
+					if (checkTagLevel) {
+						/* look for a level after the '=' */
+						setgclog = TRUE;
+						if (NULL == upToComma) {
+							gclog = TRUE;
+						} else {
+							if ('\0' == *upToComma) {
+								goto xlogerr;
+							}
+							gclog = 0 != j9_cmdla_stricmp("off", upToComma);
+							if (gclog) {
+								/* OpenJ9 doesn't understand log levels */
+								unrecognizedOption = TRUE;
+							}
+						}
+					}
+					if (NULL == upToColon) {
+						break;
+					}
+					upToComma = strUpToDelimiter(&upToColon, ',');
+				}
+			}
+			if (NULL != fullOptions) {
+				/* look at the output method */
+				char *output = NULL;
+				upToColon = strUpToDelimiter(&fullOptions, ':');
+#if defined(DEBUG_XLOG)
+				j9tty_printf(PORTLIB, "upToColon %s fullOptions %s\n", upToColon, fullOptions);
+#endif /* defined(DEBUG_XLOG) */
+				output = strUpToDelimiter(&upToColon, '=');
+#if defined(DEBUG_XLOG)
+				j9tty_printf(PORTLIB, "output %s upToColon %s\n", output, upToColon);
+#endif /* defined(DEBUG_XLOG) */
+				/* stderr | stdout | file=<filename> | <filename> */
+				if (0 == j9_cmdla_stricmp("stderr", output)) {
+					if (NULL != upToColon) {
+						goto xlogerr;
+					}
+				} else if (0 == j9_cmdla_stricmp("stdout", output)) {
+					if (NULL != upToColon) {
+						goto xlogerr;
+					}
+					/* Can't log to stdout yet */
+					unrecognizedOption = TRUE;
+				} else if (NULL == upToColon) {
+					if ('\0' != *output) {
+						/* Without `=` anything non-empty is a filename */
+						gclogfile = output;
+					}
+				} else if (0 == j9_cmdla_stricmp("file", output)) {
+					if (NULL == upToColon) {
+						/* `file=` with no filename specified */
+						goto xlogerr;
+					}
+					gclogfile = upToColon;
+				} else {
+					/* Anything else such as `<something>=<something>` is an error */
+					goto xlogerr;
+				}
+
+				if (NULL != fullOptions) {
+					/* Anything besides trailing ':'s is unrecognized */
+					if (('\0' != *fullOptions) && (':' != *fullOptions)) {
+						unrecognizedOption = TRUE;
+					} else {
+						strUpToDelimiter(&fullOptions, ':');
+						if ((NULL != fullOptions) && ('\0' != *fullOptions)) {
+							unrecognizedOption = TRUE;
+						}
+					}
+				}
+			}
+		}
+#if defined(DEBUG_XLOG)
+		j9tty_printf(PORTLIB, "setgclog %d gclog %d file %s\n", setgclog, gclog, gclogfile);
+#endif /* defined(DEBUG_XLOG) */
+		if (setgclog && gclog) {
+			if (NULL != gclogfile) {
+				IDATA mapRc = 0;
+				char *buf = NULL;
+				char timeBuf[20];
+				UDATA sizeRequired = 0;
+				struct J9StringTokens *stringTokens = j9str_create_tokens(j9time_current_time_millis());
+				if (NULL == stringTokens) {
+					rc = JNI_ERR;
+					goto xlogret;
+				}
+				j9str_subst_tokens(timeBuf, sizeof(timeBuf), "%Y-%m-%d_%H-%M-%S", stringTokens);
+
+				if (j9str_set_token(PORTLIB, stringTokens, "p", "%lld", j9sysinfo_get_pid())
+					|| j9str_set_token(PORTLIB, stringTokens, "t", "%s", timeBuf)
+				) {
+					j9str_free_tokens(stringTokens);
+					rc = JNI_ERR;
+					goto xlogret;
+				}
+				sizeRequired = j9str_subst_tokens(NULL, 0, gclogfile, stringTokens);
+				/* sizeRequired already includes space for the NULL */
+				buf = j9mem_allocate_memory(sizeof(MAPOPT_XVERBOSEGCLOG) - 1 + sizeRequired, OMRMEM_CATEGORY_VM);
+				if (NULL == buf) {
+					j9str_free_tokens(stringTokens);
+					rc = JNI_ERR;
+					goto xlogret;
+				}
+				strcpy(buf, MAPOPT_XVERBOSEGCLOG);
+				j9str_subst_tokens(buf + sizeof(MAPOPT_XVERBOSEGCLOG) - 1, sizeRequired, gclogfile, stringTokens);
+				j9str_free_tokens(stringTokens);
+#if defined(DEBUG_XLOG)
+				j9tty_printf(PORTLIB, "mapping %s to %s\n", j9vm_args->actualVMArgs->options[xlogindex].optionString, buf);
+#endif /* defined(DEBUG_XLOG) */
+				mapRc = registerCmdLineMapping(vm, j9vm_args->actualVMArgs->options[xlogindex].optionString, buf, EXACT_MAP_NO_OPTIONS);
+				j9mem_free_memory(buf);
+				if (RC_FAILED == mapRc) {
+					rc = JNI_ERR;
+					goto xlogret;
+				}
+			} else {
+				if (RC_FAILED == registerCmdLineMapping(vm, j9vm_args->actualVMArgs->options[xlogindex].optionString, MAPOPT_VERBOSE_GC, EXACT_MAP_NO_OPTIONS)) {
+					rc = JNI_ERR;
+					goto xlogret;
+				}
+			}
+		} else if (setgclog) {
+			/* ATM there is no OpenJ9 option to disable gc logging */
+			unrecognizedOption = TRUE;
+		} else {
+			unrecognizedOption = TRUE;
+		}
+		if (unrecognizedOption) {
+			CONSUME_ARG(j9vm_args, xlogindex);
+			j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, j9vm_args->actualVMArgs->options[xlogindex].optionString);
+		}
+
+xlogret:
+		if (xlogoptionsbuf != xlogoptions) {
+			j9mem_free_memory(xlogoptions);
+		}
+		if (JNI_OK != rc) {
+			break;
+		}
+
+		xlogindex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, MAPOPT_XLOG_OPT, NULL, xlogindex);
+	}
+	return rc;
+}
 
 static UDATA
 protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
@@ -6127,6 +6434,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	jint stageRC = 0;
 	UDATA requiredDebugAttributes;
 	UDATA localVerboseLevel = 0;
+	BOOLEAN doParseXlogForCompatibility = FALSE;
 	U_32 * stat;
 #if defined(LINUX)
 	int filter = -1;
@@ -6321,6 +6629,8 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 			if (RC_FAILED == registerCmdLineMapping(vm, MAPOPT_XLOG_OPT_COLON, MAPOPT_XSYSLOG_OPT_COLON, MAP_WITH_INCLUSIVE_OPTIONS)) {
 				goto error;
 			}
+		} else {
+			doParseXlogForCompatibility = TRUE;
 		}
 	}
 
@@ -6393,13 +6703,20 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	}
 #endif
 
+	if (doParseXlogForCompatibility) {
+		if (JNI_OK != parseXlogForCompatibility(vm)) {
+			parseError = TRUE;
+			goto error;
+		}
+	}
+
 	/* Registers any unrecognised arguments that need to be mapped to J9 options */
 	if (RC_FAILED == registerVMCmdLineMappings(vm)) {
 		goto error;
 	}
 #endif
 
-	vm->dllLoadTable = initializeDllLoadTable(portLibrary, vm->vmArgsArray, localVerboseLevel);
+	vm->dllLoadTable = initializeDllLoadTable(portLibrary, vm->vmArgsArray, localVerboseLevel, vm);
 	if (NULL == vm->dllLoadTable) {
 		goto error;
 	}

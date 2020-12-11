@@ -642,3 +642,5 @@ TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyCla
 TraceEntry=Trc_JCL_attach_waitSemaphoreEntry2 Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_waitSemaphoreImpl waiting on semaphore (%p)"
 TraceEntry=Trc_JCL_attach_closeSemaphoreEntry Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_closeSemaphoreImpl closing semaphore (%p)"
 TraceEntry=Trc_JCL_attach_destroySemaphoreEntry Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_destroySemaphoreImpl destroying semaphore (%p)"
+
+TraceEvent=Trc_JCL_init_nativeLibrariesLoadMethodID Overhead=1 Level=3 Template="init nativeLibrariesLoadMethodID (0x%zx)"

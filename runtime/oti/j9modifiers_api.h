@@ -70,6 +70,7 @@
 #define J9ROMCLASS_IS_UNMODIFIABLE(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIsUnmodifiable)
 #define J9ROMCLASS_IS_RECORD(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccRecord)
 #define J9ROMCLASS_IS_SEALED(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccSealed)
+#define J9ROMCLASS_IS_VALUEBASED(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIsValueBased)
 
 /* 
  * Note that resolvefield ignores this flag if the cache line size cannot be determined.

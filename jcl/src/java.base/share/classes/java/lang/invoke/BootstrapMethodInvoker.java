@@ -1,5 +1,4 @@
-/*[INCLUDE-IF Java11 & !OPENJDK_METHODHANDLES]*/
-
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 11) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright (c) 2018, 2020 IBM Corp. and others
  *
@@ -26,7 +25,6 @@ package java.lang.invoke;
 /*
  * Stub class for compilation
  */
-
 class BootstrapMethodInvoker {
 
 	static <T> T invoke(Class<T> clz1, MethodHandle mh, String str, Object obj1, Object obj2, Class<?> clz2) {

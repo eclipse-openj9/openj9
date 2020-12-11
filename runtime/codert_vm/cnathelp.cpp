@@ -937,8 +937,11 @@ old_fast_jitLoadFlattenableArrayElement(J9VMThread *currentThread)
 		goto slow;
 	}
 	value = (j9object_t) currentThread->javaVM->internalVMFunctions->loadFlattenableArrayElement(currentThread, arrayObject, index, true);
-	if (J9_UNEXPECTED(NULL == value)) {
-		goto slow;
+	if (NULL == value) {
+		J9ArrayClass *arrayObjectClass = (J9ArrayClass *)J9OBJECT_CLAZZ(currentThread, arrayObject);
+		if (J9_IS_J9CLASS_VALUETYPE(arrayObjectClass->componentType)) {
+			goto slow;
+		}
 	}
 	JIT_RETURN_UDATA(value);
 done:
@@ -956,8 +959,8 @@ old_slow_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 {
 	SLOW_JIT_HELPER_PROLOGUE();
 	j9object_t arrayref = (j9object_t)currentThread->floatTemp1;
-	j9object_t value = (j9object_t)currentThread->floatTemp2;
-	U_32 index = *(U_32 *)&currentThread->floatTemp3;
+	U_32 index = *(U_32 *)&currentThread->floatTemp2;
+	j9object_t value = (j9object_t)currentThread->floatTemp3;
 	U_32 arrayLength = 0;
 	void *addr = NULL;
 	buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
@@ -972,7 +975,7 @@ old_slow_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, NULL);
 			} else {
 				J9ArrayClass *arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(currentThread, arrayref);
-				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);;
+				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 			}
 		}
 	}
@@ -985,8 +988,9 @@ old_fast_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 {
 	OLD_JIT_HELPER_PROLOGUE(3);
 	DECLARE_JIT_PARM(j9object_t, arrayref, 1);
-	DECLARE_JIT_PARM(j9object_t, value, 2);
-	DECLARE_JIT_PARM(U_32, index, 3);
+	DECLARE_JIT_PARM(U_32, index, 2);
+	DECLARE_JIT_PARM(j9object_t, value, 3);
+
 	bool slowPathUsed = false;
 	void *slowPath = NULL;
 	U_32 arrayLength = 0;
@@ -1011,8 +1015,8 @@ done:
 slow:
 	slowPathUsed = true;
 	currentThread->floatTemp1 = (void *)arrayref;
-	currentThread->floatTemp2 = (void *)value;
-	currentThread->floatTemp3 = *(void **)&index;
+	currentThread->floatTemp2 = *(void **)&index;
+	currentThread->floatTemp3 = (void *)value;
 	slowPath = (void*)old_slow_jitStoreFlattenableArrayElement;
 	goto done;
 }
@@ -1616,12 +1620,17 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 				resolveFrame->specialFrameFlags = (resolveFrame->specialFrameFlags & ~J9_STACK_FLAGS_JIT_FRAME_SUB_TYPE_MASK) | J9_STACK_FLAGS_JIT_FAILED_METHOD_MONITOR_ENTER_RESOLVE;
 			}
 		}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 		if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monstatus) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			addr = setCurrentExceptionNLSWithArgsFromJIT(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+			Assert_CodertVM_true(J9_ARE_ALL_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
+			addr = setCurrentExceptionNLSWithArgsFromJIT(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			goto done;
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 		if (J9_OBJECT_MONITOR_OOM == monstatus) {
 			addr = setNativeOutOfMemoryErrorFromJIT(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
 			goto done;
@@ -2325,6 +2334,26 @@ old_slow_jitResolveHandleMethod(J9VMThread *currentThread)
 	DECLARE_JIT_PARM(void*, jitEIP, 3);
 	void *addr = NULL;
 	J9JavaVM *vm = currentThread->javaVM;
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	J9RAMMethodRef *ramMethodRef = ((J9RAMMethodRef*)ramConstantPool) + cpIndex;
+	UDATA invokeCacheIndex = ramMethodRef->methodIndexAndArgCount >> 8;
+retry:
+	j9object_t *invokeCacheArray = &((J9_CLASS_FROM_CP(ramConstantPool)->invokeCache)[invokeCacheIndex]);
+	if (NULL == *invokeCacheArray) {
+		buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_DATA, parmCount, true, 0, jitEIP);
+		/* add new resolve code which calls sendResolveInvokeHandle -> MHN.linkMethod()
+		 * store the memberName/appendix values in invokeCache[invokeCacheIndex]
+		 */
+		vm->internalVMFunctions->resolveOpenJDKInvokeHandle(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+		addr = restoreJITResolveFrame(currentThread, jitEIP);
+		if (NULL != addr) {
+			goto done;
+		}
+		goto retry;
+	}
+	JIT_RETURN_UDATA(invokeCacheArray);
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	j9object_t *methodTypePtr = NULL;
 	j9object_t *methodTypeTablePtr = NULL;
 	UDATA methodTypeIndex = 0;
@@ -2372,6 +2401,7 @@ retry:
 	}
 
 	JIT_RETURN_UDATA(methodTypePtr);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 done:
 	SLOW_JIT_HELPER_EPILOGUE();
 	return addr;

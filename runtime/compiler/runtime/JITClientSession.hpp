@@ -320,7 +320,6 @@ class ClientSessionData
       MM_GCWriteBarrierType _writeBarrierType;
       bool _compressObjectReferences;
       OMRProcessorDesc _processorDescription;
-      J9Method *_invokeWithArgumentsHelperMethod;
       void *_noTypeInvokeExactThunkHelper;
       void *_int64InvokeExactThunkHelper;
       void *_int32InvokeExactThunkHelper;
@@ -402,8 +401,8 @@ class ClientSessionData
    TR_MethodToBeCompiled *getOOSequenceEntryList() const { return _OOSequenceEntryList; }
    void setOOSequenceEntryList(TR_MethodToBeCompiled *m) { _OOSequenceEntryList = m; }
    TR_MethodToBeCompiled *notifyAndDetachFirstWaitingThread();
-   uint32_t getExpectedSeqNo() const { return _expectedSeqNo; }
-   void setExpectedSeqNo(uint32_t seqNo) { _expectedSeqNo = seqNo; }
+   uint32_t getLastProcessedCriticalSeqNo() const { return _lastProcessedCriticalSeqNo; }
+   void setLastProcessedCriticalSeqNo(uint32_t seqNo) { _lastProcessedCriticalSeqNo = seqNo; }
    uint32_t getMaxReceivedSeqNo() const { return _maxReceivedSeqNo; }
    // updateMaxReceivedSeqNo needs to be executed with sequencingMonitor in hand
    void updateMaxReceivedSeqNo(uint32_t seqNo)
@@ -445,6 +444,17 @@ class ClientSessionData
 
    TR::SymbolValidationManager::SystemClassNotWorthRemembering *getSystemClassesNotWorthRemembering() { return _systemClassesNotWorthRemembering; }
 
+   // Returns the cached client-side pointer to well-known class chain offsets
+   // if included classes and their SCC offsets match, otherwise returns NULL
+   const void *getCachedWellKnownClassChainOffsets(unsigned int includedClasses, size_t numClasses,
+                                                   const uintptr_t *classChainOffsets);
+   // Cache the client-side pointer to well-known class chain offsets
+   void cacheWellKnownClassChainOffsets(unsigned int includedClasses, size_t numClasses,
+                                        const uintptr_t *classChainOffsets, const void *wellKnownClassChainOffsets);
+
+   bool isInStartupPhase() const { return _isInStartupPhase; }
+   void setIsInStartupPhase(bool isInStartupPhase) { _isInStartupPhase = isInStartupPhase; }
+ 
    private:
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
@@ -465,15 +475,17 @@ class ClientSessionData
    TR::Monitor *_romMapMonitor;
    TR::Monitor *_classMapMonitor;
    TR::Monitor *_classChainDataMapMonitor;
-   // The following monitor is used to protect access to _expectedSeqNo and
+   // The following monitor is used to protect access to _lastProcessedCriticalSeqNo and
    // the list of out-of-sequence compilation requests (_OOSequenceEntryList)
    TR::Monitor *_sequencingMonitor;
    TR::Monitor *_constantPoolMapMonitor;
    // Compilation requests that arrived out-of-sequence wait in
    // _OOSequenceEntryList for their turn to be processed
    TR_MethodToBeCompiled *_OOSequenceEntryList;
-   uint32_t _expectedSeqNo; // used for ordering compilation requests from the same client
    uint32_t _maxReceivedSeqNo; // the largest seqNo received from this client
+
+   uint32_t _lastProcessedCriticalSeqNo; // highest seqNo processed request carrying info that needs to be applied in order
+
    int8_t  _inUse;  // Number of concurrent compilations from the same client
                     // Accessed with compilation monitor in hand
    int8_t _numActiveThreads; // Number of threads working on compilations for this client
@@ -494,6 +506,25 @@ class ClientSessionData
    volatile bool _bClassUnloadingAttempt;
 
    TR::SymbolValidationManager::SystemClassNotWorthRemembering _systemClassesNotWorthRemembering[TR::SymbolValidationManager::SYSTEM_CLASSES_NOT_WORTH_REMEMBERING_COUNT];
+
+   /**
+    * @class WellKnownClassesCache
+    * @brief Stores the most recent version of well-known class chain offsets used by AOT compilations with SVM
+    */
+   struct WellKnownClassesCache
+      {
+      WellKnownClassesCache() { clear(); }
+      void clear() { memset(this, 0, sizeof(*this)); }
+
+      unsigned int _includedClasses;// bitset of indices in the list of well-known classes
+      uintptr_t _classChainOffsets[WELL_KNOWN_CLASS_COUNT];// ROMClass SCC offsets
+      const void *_wellKnownClassChainOffsets;// client-side pointer to "well-known class chain offsets" in SCC
+      };
+
+   WellKnownClassesCache _wellKnownClasses;
+   TR::Monitor *_wellKnownClassesMonitor;
+   
+   bool _isInStartupPhase;
    }; // class ClientSessionData
 
 
@@ -526,9 +557,11 @@ class ClientSessionHT
    PersistentUnorderedMap<uint64_t, ClientSessionData*> _clientSessionMap;
 
    uint64_t _timeOfLastPurge;
+   TR::CompilationInfo *_compInfo;
    const int64_t TIME_BETWEEN_PURGES; // ms; this defines how often we are willing to scan for old entries to be purged
    const int64_t OLD_AGE;// ms; this defines what an old entry means
                          // This value must be larger than the expected life of a JVM
+   const int64_t OLD_AGE_UNDER_LOW_MEMORY; // ms; this defines what an old entry means when memory is low
    }; // class ClientSessionHT
 
 #endif /* defined(JIT_CLIENT_SESSION_H) */

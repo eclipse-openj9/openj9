@@ -512,7 +512,6 @@ UNUSED(jitNewObjectNoTenantInit)
 UNUSED(jitPostJNICallOffloadCheck)
 UNUSED(jitPreJNICallOffloadCheck)
 UNUSED(jitFindFieldSignatureClass)
-UNUSED(icallVMprJavaSendInvokeWithArgumentsHelperL)
 UNUSED(j2iInvokeWithArguments)
 
 START_PROC(jitThrowClassCastException)

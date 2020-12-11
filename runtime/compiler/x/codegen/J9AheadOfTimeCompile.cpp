@@ -123,204 +123,39 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
    TR_SharedCache *sharedCache = fej9->sharedCache();
    TR::Compilation *comp = _cg->comp();
-   TR::SymbolValidationManager *symValManager = comp->getSymbolValidationManager();
-   uintptr_t numTrampolines;
-   TR::LabelSymbol *label;
-   TR_ResolvedMethod *resolvedMethod;
-   TR_VirtualGuard *guard;
-   uint8_t flags = 0;
-   uint8_t *cursor = relocation->getRelocationData();
-
    TR_RelocationRuntime *reloRuntime = comp->reloRuntime();
    TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
 
-   // size of relocation goes first in all types
-   *(uint16_t *)cursor = relocation->getSizeOfRelocationData();
-   cursor += 2;
-   uint8_t  wideOffsets = relocation->needsWideOffsets() ? RELOCATION_TYPE_WIDE_OFFSET : 0;
-   *cursor++ = (uint8_t)relocation->getTargetKind();
-   uint8_t *flagsCursor = cursor++;
-   *flagsCursor = wideOffsets;
-   uint32_t *wordAfterHeader = (uint32_t*)cursor;
-#if defined(TR_HOST_64BIT)
-   cursor += 4; // padding
-#endif
+   uint8_t *cursor         = relocation->getRelocationData();
+   uint8_t targetKind      = relocation->getTargetKind();
+   uint16_t sizeOfReloData = relocation->getSizeOfRelocationData();
+   uint8_t wideOffsets     = relocation->needsWideOffsets() ? RELOCATION_TYPE_WIDE_OFFSET : 0;
 
-   // This has to be created after the kind has been written into the header
+   // Zero-initialize header
+   memset(cursor, 0, sizeOfReloData);
+
    TR_RelocationRecord storage;
-   TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, reloTarget, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(relocation->getRelocationData()));
+   TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, targetKind, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(cursor));
 
-   switch (relocation->getTargetKind())
+   reloRecord->setSize(reloTarget, sizeOfReloData);
+   reloRecord->setType(reloTarget, static_cast<TR_RelocationRecordType>(targetKind));
+   reloRecord->setFlag(reloTarget, wideOffsets);
+
+   switch (targetKind)
       {
-      case TR_GlobalValue:
-         *(uintptr_t*)cursor = (uintptr_t) relocation->getTargetAddress();
-         cursor += SIZEPOINTER;
-         break;
-
-      case TR_ArbitraryClassAddress:
-         {
-         // ExternalRelocation data is as expected for TR_ClassAddress
-         auto symRef = (TR::SymbolReference *)relocation->getTargetAddress();
-         auto sym = symRef->getSymbol()->castToStaticSymbol();
-         auto j9class = (TR_OpaqueClassBlock *)sym->getStaticAddress();
-         uintptr_t inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(symRef->getOwningMethod(comp)->constantPool(), (uintptr_t)relocation->getTargetAddress2());
-
-         // Data identifying the class is as though for TR_ClassPointer
-         // (TR_RelocationRecordPointerBinaryTemplate)
-         *(uintptr_t *)cursor = inlinedSiteIndex;
-         cursor += SIZEPOINTER;
-
-         uintptr_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-
-         cursor = self()->emitClassChainOffset(cursor, j9class);
-         }
-         break;
-
-      case TR_MethodObject:
-      //case TR_InterfaceObject: Shouldn't have branch that create interface object for X86.
-         {
-         TR_ASSERT((relocation->getTargetKind() != TR_MethodObject), "relocation TR_MethodObject being created");
-         TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
-         // next word is the address of the constant pool to which the index refers
-         // index in the below stored constant pool that indicates the particular
-         // relocation target
-
-         *(uintptr_t *)cursor = (uintptr_t)relocation->getTargetAddress2(); // inlinedSiteIndex
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)tempSR->getOwningMethod(comp)->constantPool();
-         cursor += SIZEPOINTER;
-         }
-         break;
-
-      case TR_ClassAddress:
-         {
-         TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
-         uintptr_t inlinedSiteIndex = (uintptr_t)relocation->getTargetAddress2();
-
-         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), inlinedSiteIndex);
-
-         *(uintptr_t *)cursor = inlinedSiteIndex; // inlinedSiteIndex
-
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)tempSR->getOwningMethod(comp)->constantPool(); // constantPool
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = tempSR->getCPIndex(); // cpIndex
-         cursor += SIZEPOINTER;
-         }
-         break;
-      case TR_DataAddress:
-         {
-         // next word is the address of the constant pool to which the index refers
-         TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
-         uintptr_t inlinedSiteIndex = (uintptr_t)relocation->getTargetAddress2();
-
-         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), inlinedSiteIndex);
-
-         // relocation target
-         *(uintptr_t *)cursor = inlinedSiteIndex; // inlinedSiteIndex
-         //*(uintptr_t *)cursor = inlinedSiteIndex; //(uintptr_t)relocation->getTargetAddress2(); // inlinedSiteIndex
-
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)tempSR->getOwningMethod(comp)->constantPool(); // constantPool
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = tempSR->getCPIndex(); // cpIndex
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = tempSR->getOffset(); // offset
-         cursor += SIZEPOINTER;
-
-         }
-    break;
-
-      case TR_AbsoluteMethodAddressOrderedPair:
-         break;
-
-      case TR_ConstantPoolOrderedPair:
-         {
-         // Note: thunk relos should only be created for 64 bit
-         *(uintptr_t *)cursor = (uintptr_t)relocation->getTargetAddress2(); // inlined site index
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)relocation->getTargetAddress(); // constantPool
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_PicTrampolines:
          {
+         TR_RelocationRecordPicTrampolines *ptRecord = reinterpret_cast<TR_RelocationRecordPicTrampolines *>(reloRecord);
+
          TR_ASSERT(comp->target().is64Bit(), "TR_PicTrampolines not supported on 32-bit");
-         numTrampolines = (uintptr_t)relocation->getTargetAddress();
-         *wordAfterHeader = numTrampolines;
-         cursor = (uint8_t*)wordAfterHeader;
-         cursor += 4;
+         uint32_t numTrampolines = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress()));
+         ptRecord->setNumTrampolines(reloTarget, numTrampolines);
+
+         cursor = relocation->getRelocationData() + TR_RelocationRecord::getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
          }
         break;
 
-     case TR_J2IThunks:
-         {
-         // Note: thunk relos should only be created for 64 bit
-         // *(uintptr_t *)cursor = (uintptr_t)relocation->getTargetAddress2(); // inlined site index
-
-         TR::Node *node = (TR::Node*)relocation->getTargetAddress();
-         TR::SymbolReference *symRef = node->getSymbolReference();
-
-         *(uintptr_t *)cursor = (uintptr_t)node->getInlinedSiteIndex();
-         cursor += SIZEPOINTER;
-
-         *(uintptr_t *)cursor = (uintptr_t)symRef->getOwningMethod(comp)->constantPool(); // cp address
-         cursor += SIZEPOINTER;
-
-
-         *(uintptr_t *)cursor = (uintptr_t)symRef->getCPIndex(); // cp index
-         cursor += SIZEPOINTER;
-
-         break;
-         }
-
-      case TR_HCR:
-         {
-         *(uintptr_t*)cursor = (uintptr_t)relocation->getTargetAddress();
-         cursor += SIZEPOINTER;
-         }
-         break;
-
-      case TR_DebugCounter:
-         {
-         TR::DebugCounterBase *counter = (TR::DebugCounterBase *) relocation->getTargetAddress();
-         if (!counter || !counter->getReloData() || !counter->getName())
-            comp->failCompilation<TR::CompilationException>("Failed to generate debug counter relo data");
-
-         TR::DebugCounterReloData *counterReloData = counter->getReloData();
-
-         uintptr_t offset = (uintptr_t)fej9->sharedCache()->rememberDebugCounterName(counter->getName());
-
-         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_callerIndex;
-         cursor += SIZEPOINTER;
-         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_bytecodeIndex;
-         cursor += SIZEPOINTER;
-         *(uintptr_t *)cursor = offset;
-         cursor += SIZEPOINTER;
-         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_delta;
-         cursor += SIZEPOINTER;
-         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_fidelity;
-         cursor += SIZEPOINTER;
-         *(uintptr_t *)cursor = (uintptr_t)counterReloData->_staticDelta;
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       default:
-         // initializeCommonAOTRelocationHeader is currently in the process
-         // of becoming the canonical place to initialize the platform agnostic
-         // relocation headers; new relocation records' header should be
-         // initialized here.
          cursor = self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
       }
    return cursor;

@@ -1,8 +1,6 @@
 /*[INCLUDE-IF SharedClasses]*/
-package com.ibm.oti.shared;
-
 /*******************************************************************************
- * Copyright (c) 2010, 2019 IBM Corp. and others
+ * Copyright (c) 2010, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +20,7 @@ package com.ibm.oti.shared;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.shared;
 
 /**
  * SharedClassCacheInfo stores information about a shared class cache and
@@ -163,9 +162,9 @@ public class SharedClassCacheInfo {
 	
 	/**
 	 * Gets the JVM level for the shared class cache.  
-	/*[IF Java10] 
+	/*[IF JAVA_SPEC_VERSION >= 10]
 	 * Starting from Java 10, the JVM LEVEL equals to the java version number on which the share class cache is created.
-	/*[ENDIF]
+	/*[ENDIF] JAVA_SPEC_VERSION >= 10
 	 *
 	 * @return		A JVMLEVEL constant.
 	 */					

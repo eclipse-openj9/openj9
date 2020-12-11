@@ -52,9 +52,9 @@ private:
 	UDATA _descriptionIndex;	/**< current bit number in description word */
 	UDATA *_leafDescriptionPtr;	/**< current leaf-bit description pointer */
 	UDATA _leafDescription;		/**< current leaf-bit description word */
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 	bool const _compressObjectReferences;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 
 protected:
 
@@ -218,9 +218,9 @@ public:
 		, _descriptionIndex(0)
 		, _leafDescriptionPtr(NULL)
 		, _leafDescription(0)
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 		, _compressObjectReferences(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm))
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 	  {
 		_objectPtr = objectPtr;
 		J9Class *clazzPtr = J9GC_J9OBJECT_CLAZZ_VM(objectPtr, vm);

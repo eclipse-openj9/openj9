@@ -25,6 +25,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
+#include "runtime/JITClientSession.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 #include "env/ClassEnv.hpp"
 #include "env/CompilerEnv.hpp"
@@ -515,6 +516,13 @@ static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, 
       ListIterator<TR_VMField> iter(fieldsInfo.getFields());
       for (TR_VMField *childField = iter.getFirst(); childField; childField = iter.getNext())
          {
+         IDATA offsetBaseForChild = field->offset + offsetBase;
+         /* Types with fields (flat or non-flat) that require double (64bit) alignment are pre-padded if there isn't
+          * a smaller type that can be used as pre-padding. Pre-padding is eliminated when a type is flattened within
+          * its container. As a result pre-padding must be subtracted from the base offset of the flattened field.
+          */
+         offsetBaseForChild -= J9CLASS_PREPADDING_SIZE(fieldClass);
+
          addEntryForFieldImpl(childField, tlb, region, fieldClass, prefixForChild, prefixLengthForChild, offsetBaseForChild, comp);
          }
       }
@@ -583,13 +591,40 @@ static void addEntryForField(TR_VMField *field, TR::TypeLayoutBuilder &tlb, TR::
 const TR::TypeLayout*
 J9::ClassEnv::enumerateFields(TR::Region &region, TR_OpaqueClassBlock *opaqueClazz, TR::Compilation *comp)
    {
-   TR_VMFieldsInfo fieldsInfo(comp, reinterpret_cast<J9Class*>(opaqueClazz), 1, stackAlloc);
-   ListIterator<TR_VMField> iter(fieldsInfo.getFields());
    TR::TypeLayoutBuilder tlb(region);
-   for (TR_VMField *field = iter.getFirst(); field; field = iter.getNext())
+#if defined(J9VM_OPT_JITSERVER)
+   if (comp->isOutOfProcessCompilation())
       {
-      addEntryForField(field, tlb, region, opaqueClazz, comp);
+      auto stream = TR::CompilationInfo::getStream();
+      stream->write(JITServer::MessageType::ClassEnv_enumerateFields, opaqueClazz);
+      auto recv = stream->read<std::vector<TR::TypeLayoutEntry>, std::vector<std::string>, std::vector<std::string>>();
+      auto entries = std::get<0>(recv);
+      auto fieldNames = std::get<1>(recv);
+      auto typeSignatures = std::get<2>(recv);
+      for (int32_t idx = 0; idx < entries.size(); ++idx)
+         {
+         TR::TypeLayoutEntry entry = entries[idx];
+         char *fieldname = new (region) char[fieldNames[idx].length() + 1];
+         memcpy(fieldname, fieldNames[idx].c_str(), fieldNames[idx].length() + 1);
+         entry._fieldname = fieldname;
+         char *typeSignature = new (region) char[typeSignatures[idx].length() + 1];
+         memcpy(typeSignature, typeSignatures[idx].c_str(), typeSignatures[idx].length() + 1);
+         entry._typeSignature = typeSignature;
+         tlb.add(entry);
+         }
+
       }
+   else
+#endif
+      {
+      TR_VMFieldsInfo fieldsInfo(comp, reinterpret_cast<J9Class*>(opaqueClazz), 1, stackAlloc);
+      ListIterator<TR_VMField> iter(fieldsInfo.getFields());
+      for (TR_VMField *field = iter.getFirst(); field; field = iter.getNext())
+         {
+         addEntryForField(field, tlb, region, opaqueClazz, comp);
+         }
+      }
+   
    return tlb.build();
    }
 

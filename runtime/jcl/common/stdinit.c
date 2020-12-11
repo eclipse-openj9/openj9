@@ -309,6 +309,21 @@ standardInit( J9JavaVM *vm, char *dllName)
 			result = (jint)initializeSystemThreadGroup(vm, (JNIEnv *)vmThread);
 			if (JNI_OK != result) {
 				goto _fail;
+			} else {
+#if JAVA_SPEC_VERSION >= 15
+				JNIEnv *env = (JNIEnv *)vmThread;
+				jclass clz = (*env)->FindClass(env, "jdk/internal/loader/NativeLibraries");
+				jmethodID mid = NULL;
+				if (NULL == clz) {
+					goto _fail;
+				}
+				mid = (*env)->GetStaticMethodID(env, clz, "load", "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z");
+				if (NULL == mid) {
+					goto _fail;
+				}
+				vm->nativeLibrariesLoadMethodID = (UDATA) mid;
+				Trc_JCL_init_nativeLibrariesLoadMethodID(vmThread, vm->nativeLibrariesLoadMethodID);
+#endif /* JAVA_SPEC_VERSION >= 15 */
 			}
 
 	#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)

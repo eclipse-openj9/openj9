@@ -49,6 +49,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
+#include "env/VerboseLog.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/Node.hpp"
@@ -3152,7 +3153,13 @@ TR_IPBCDataCallGraph::loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage,
          if (comp->fej9()->sharedCache()->isROMClassOffsetInSharedCache(csInfoClazzOffset, &romClass))
             ramClass = ((TR_J9VM *)comp->fej9())->matchRAMclassFromROMclass((J9ROMClass *)romClass, comp);
 
-         if (ramClass)
+         // Optimizer and the codegen assume receiver classes of a call from profiling data are initialized,
+         // otherwise they shouldn't show up in the profile. But classes from iprofiling data from last run
+         // may be uninitialized in load time, as the program behavior may change in the second run. Thus
+         // we need to verify that a class is initialized, otherwise optimizer or codegen will make wrong
+         // transformation based on invalid assumption.
+         //
+         if (ramClass && comp->fej9()->isClassInitialized((TR_OpaqueClassBlock*)ramClass))
             {
             _csInfo.setClazz(i, (uintptr_t)ramClass);
             _csInfo._weight[i] = store->_csInfo._weight[i];

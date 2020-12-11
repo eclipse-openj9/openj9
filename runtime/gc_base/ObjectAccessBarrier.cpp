@@ -67,9 +67,9 @@ MM_ObjectAccessBarrier::initialize(MM_EnvironmentBase *env)
 		}
 #endif /* J9VM_GC_REALTIME */
 
-#if defined (OMR_GC_FULL_POINTERS)
+#if defined (OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 		_compressObjectReferences = true;
-#endif /* OMR_GC_FULL_POINTERS */
+#endif /* defined (OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 		_compressedPointersShift = omrVM->_compressedPointersShift;
 		vm->compressedPointersShift = omrVM->_compressedPointersShift;
 		Trc_MM_CompressedAccessBarrierInitialized(env->getLanguageVMThread(), 0, _compressedPointersShift);
@@ -1131,13 +1131,16 @@ MM_ObjectAccessBarrier::indexableStoreI64(J9VMThread *vmThread, J9IndexableObjec
 void
 MM_ObjectAccessBarrier::copyObjectFieldsToFlattenedArrayElement(J9VMThread *vmThread, J9ArrayClass *arrayClazz, j9object_t srcObject, J9IndexableObject *arrayRef, I_32 index)
 {
-	UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread);
+	UDATA elementStartOffset = J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread);
 	U_8 *elementAddress = (U_8*)indexableEffectiveAddress(vmThread, arrayRef, index, J9ARRAYCLASS_GET_STRIDE((J9Class *) arrayClazz));
 	IDATA elementOffset = (elementAddress - (U_8*)arrayRef);
 	J9Class *elementClazz = J9GC_J9OBJECT_CLAZZ_THREAD(srcObject, vmThread);
 	Assert_MM_true(J9_IS_J9CLASS_VALUETYPE(elementClazz));
 	Assert_MM_true(elementClazz == arrayClazz->leafComponentType);
-	copyObjectFields(vmThread, elementClazz, srcObject, objectHeaderSize, (j9object_t) arrayRef, elementOffset);
+
+	elementStartOffset += J9CLASS_PREPADDING_SIZE(elementClazz);
+
+	copyObjectFields(vmThread, elementClazz, srcObject, elementStartOffset, (j9object_t) arrayRef, elementOffset);
 }
 
 /**
@@ -1152,13 +1155,16 @@ MM_ObjectAccessBarrier::copyObjectFieldsToFlattenedArrayElement(J9VMThread *vmTh
 void
 MM_ObjectAccessBarrier::copyObjectFieldsFromFlattenedArrayElement(J9VMThread *vmThread, J9ArrayClass *arrayClazz, j9object_t destObject, J9IndexableObject *arrayRef, I_32 index)
 {
-	UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread);
+	UDATA elementStartOffset = J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread);
 	U_8 *elementAddress = (U_8*)indexableEffectiveAddress(vmThread, arrayRef, index, J9ARRAYCLASS_GET_STRIDE((J9Class *) arrayClazz));
 	IDATA elementOffset = (elementAddress - (U_8*)arrayRef);
 	J9Class *elementClazz = J9GC_J9OBJECT_CLAZZ_THREAD(destObject, vmThread);
 	Assert_MM_true(J9_IS_J9CLASS_VALUETYPE(elementClazz));
 	Assert_MM_true(elementClazz == arrayClazz->leafComponentType);
-	copyObjectFields(vmThread, elementClazz, (j9object_t) arrayRef, elementOffset, destObject, objectHeaderSize);
+
+	elementStartOffset += J9CLASS_PREPADDING_SIZE(elementClazz);
+
+	copyObjectFields(vmThread, elementClazz, (j9object_t) arrayRef, elementOffset, destObject, elementStartOffset);
 }
 
 
@@ -1385,8 +1391,12 @@ MM_ObjectAccessBarrier::getLockwordAddress(J9VMThread *vmThread, J9Object *objec
 void
 MM_ObjectAccessBarrier::cloneObject(J9VMThread *vmThread, J9Object *srcObject, J9Object *destObject)
 {
-	UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread);
-	copyObjectFields(vmThread, J9GC_J9OBJECT_CLAZZ_THREAD(srcObject, vmThread), srcObject, objectHeaderSize, destObject, objectHeaderSize);
+	UDATA elementStartOffset = J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread);
+	J9Class *cloneClazz = J9GC_J9OBJECT_CLAZZ_THREAD(srcObject, vmThread);
+
+	elementStartOffset += J9CLASS_PREPADDING_SIZE(cloneClazz);
+
+	copyObjectFields(vmThread, cloneClazz, srcObject, elementStartOffset, destObject, elementStartOffset);
 }
 
 BOOLEAN
@@ -1396,8 +1406,8 @@ MM_ObjectAccessBarrier::structuralCompareFlattenedObjects(J9VMThread *vmThread, 
 	bool const compressed = J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread);
 	UDATA const referenceSize = J9VMTHREAD_REFERENCE_SIZE(vmThread);
 	bool hasReferences = J9CLASS_HAS_REFERENCES(valueClass);
-	UDATA limit = valueClass->totalInstanceSize;
-	U_32 firstFieldOffset = (U_32) valueClass->backfillOffset;
+	/* for non value-types this is just the instance size */
+	UDATA limit = J9CLASS_UNPADDED_INSTANCE_SIZE(valueClass);
 	UDATA offset = 0;
 
 	Assert_MM_true(J9_IS_J9CLASS_VALUETYPE(valueClass));
@@ -1407,19 +1417,11 @@ MM_ObjectAccessBarrier::structuralCompareFlattenedObjects(J9VMThread *vmThread, 
 		const UDATA *descriptionPtr = (UDATA *) valueClass->instanceDescription;
 		UDATA descriptionBits = 0;
 
-		if (0 != firstFieldOffset) {
-			/* subtract padding */
-			offset += firstFieldOffset;
-			descriptionBits >>= 1;
-			descriptionIndex -= 1;
-		}
-
 		if (((UDATA)descriptionPtr) & 1) {
 			descriptionBits = ((UDATA)descriptionPtr) >> 1;
 		} else {
 			descriptionBits = *descriptionPtr++;
 		}
-
 
 		while (offset < limit) {
 			/* Determine if the slot contains an object pointer or not */
@@ -1445,10 +1447,6 @@ MM_ObjectAccessBarrier::structuralCompareFlattenedObjects(J9VMThread *vmThread, 
 		}
 	} else {
 		/* no instanceDescription bits needed on this path */
-		if (0 != firstFieldOffset) {
-			/* subtract padding */
-			offset += firstFieldOffset;
-		}
 
 		while (offset < limit) {
 			fomrobject_t lhsValue = GC_SlotObject::readSlot((fomrobject_t*)((UDATA)lhsObject + startOffset + offset), compressed);
@@ -1467,7 +1465,10 @@ MM_ObjectAccessBarrier::structuralCompareFlattenedObjects(J9VMThread *vmThread, 
 /**
  * Copy all of the fields of a value class instance to another value class instance.
  * The source or destination may be a flattened value within another object, meaning
- * srcOffset and destOffset need not be equal. This is based on cloneObject(...).
+ * srcOffset and destOffset need not be equal. This is based on cloneObject(...). If
+ * Type has pre-padding the size of the object will be adjusted to remove the padding
+ * bytes. The caller of this API must ensure that the starting offset provided does
+ * not include pre-padding.
  * @TODO This does not currently check if the fields that it is reading are volatile.
  *
  * @oaram objectClass The j9class.
@@ -1502,10 +1503,10 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 	}
 
 	UDATA offset = 0;
-	UDATA limit = objectClass->totalInstanceSize;
+	/* for non value-types this is just the instance size */
+	UDATA limit = J9CLASS_UNPADDED_INSTANCE_SIZE(objectClass);
 	UDATA const referenceSize = J9VMTHREAD_REFERENCE_SIZE(vmThread);
 	bool hasReferences = J9CLASS_HAS_REFERENCES(objectClass);
-	U_32 firstFieldOffset = (U_32) objectClass->backfillOffset;
 
 	if (hasReferences) {
 		const UDATA *descriptionPtr = (UDATA *) objectClass->instanceDescription;
@@ -1517,15 +1518,6 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 		}
 
 		UDATA descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
-
-		if (isValueType) {
-			if (0 != firstFieldOffset) {
-				/* subtract padding */
-				offset += firstFieldOffset;
-				descriptionBits >>= 1;
-				descriptionIndex -= 1;
-			}
-		}
 
 		while (offset < limit) {
 			/* Determine if the slot contains an object pointer or not */
@@ -1550,11 +1542,7 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 		}
 	} else {
 		/* no instanceDescription bits needed on this path */
-		if (isValueType) {
-			if (0 != firstFieldOffset) {
-				offset += firstFieldOffset;
-			}
-		}
+
 		while (offset < limit) {
 			UDATA srcAddress = (UDATA)srcObject + srcOffset + offset;
 			UDATA destAddress = (UDATA)destObject + destOffset + offset;

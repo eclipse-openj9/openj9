@@ -33,6 +33,7 @@
 #include "env/ut_j9jit.h"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "net/ClientStream.hpp"
 #include "optimizer/J9TransformUtil.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
@@ -40,6 +41,7 @@
 #include "runtime/JITClientSession.hpp"
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/RelocationTarget.hpp"
+#include "env/TypeLayout.hpp"
 #include "jitprotos.h"
 #include "vmaccess.h"
 
@@ -536,6 +538,12 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getObjectClass(objectPointer));
          }
          break;
+      case MessageType::VM_getObjectClassAt:
+         {
+         uintptr_t objectAddress = std::get<0>(client->getRecvData<uintptr_t>());
+         client->write(response, fe->getObjectClassAt(objectAddress));
+         }
+         break;
       case MessageType::VM_getStaticReferenceFieldAtAddress:
          {
          TR::VMAccessCriticalSection getStaticReferenceFieldAtAddress(fe);
@@ -564,18 +572,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, fe->hasFinalFieldsInClass(clazz));
-         }
-         break;
-      case MessageType::VM_getClassNameSignatureFromMethod:
-         {
-         auto recv = client->getRecvData<J9Method*>();
-         J9Method *method = std::get<0>(recv);
-         J9UTF8 *className, *name, *signature;
-         getClassNameSignatureFromMethod(method, className, name, signature);
-         std::string classNameStr(utf8Data(className), J9UTF8_LENGTH(className));
-         std::string nameStr(utf8Data(name), J9UTF8_LENGTH(name));
-         std::string signatureStr(utf8Data(signature), J9UTF8_LENGTH(signature));
-         client->write(response, classNameStr, nameStr, signatureStr);
          }
          break;
       case MessageType::VM_getHostClass:
@@ -1909,6 +1905,15 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, methodInfos, ramMethods, implCount);
          }
          break;
+      case MessageType::ResolvedMethod_isFieldFlattened:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
+         auto mirror = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         bool isStatic = std::get<2>(recv);
+         client->write(response, mirror->isFieldFlattened(comp, cpIndex, isStatic));
+         }
+         break;
       case MessageType::ResolvedRelocatableMethod_createResolvedRelocatableJ9Method:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, J9Method *, int32_t, uint32_t>();
@@ -2161,6 +2166,28 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, TR::Compiler->cls.isClassRefValueType(comp, clazz, cpIndex));
          }
          break;
+      case MessageType::ClassEnv_enumerateFields:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *>();
+         const TR::TypeLayout* layout = comp->typeLayout(std::get<0>(recv));
+
+         std::vector<TR::TypeLayoutEntry> entries;
+         std::vector<std::string> fieldNames;
+         std::vector<std::string> typeSignatures;
+         entries.reserve(layout->count());
+         fieldNames.reserve(layout->count());
+         typeSignatures.reserve(layout->count());
+         for (int32_t idx = 0; idx < layout->count(); ++idx)
+            {
+            const TR::TypeLayoutEntry &entry = layout->entry(idx);
+            entries.push_back(entry);
+            // both strings are null-terminated so we don't need to know length
+            fieldNames.push_back(std::string(entry._fieldname));
+            typeSignatures.push_back(std::string(entry._typeSignature));
+            }
+         client->write(response, entries, fieldNames, typeSignatures); 
+         }
+         break;
       case MessageType::SharedCache_getClassChainOffsetInSharedCache:
          {
          auto j9class = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
@@ -2223,7 +2250,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          int32_t collectArraySize = fe->getInt32Field(methodHandle, "collectArraySize");
          uintptr_t arguments = fe->getReferenceField(
                   fe->getReferenceField(methodHandle, "type", "Ljava/lang/invoke/MethodType;"),
-                  "arguments", "[Ljava/lang/Class;");
+                  "ptypes", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          int32_t collectionStart = 0;
          if (getPos)
@@ -2238,7 +2265,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          uintptr_t methodHandle = *std::get<0>(recv);
          uintptr_t guardArgs = fe->getReferenceField(fe->methodHandle_type(fe->getReferenceField(methodHandle,
             "guard", "Ljava/lang/invoke/MethodHandle;")),
-            "arguments", "[Ljava/lang/Class;");
+            "ptypes", "[Ljava/lang/Class;");
          int32_t numGuardArgs = (int32_t)fe->getArrayLengthInElements(guardArgs);
          client->write(response, numGuardArgs);
          }
@@ -2269,14 +2296,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             methodHandle,
             "next",             "Ljava/lang/invoke/MethodHandle;"),
             "type",             "Ljava/lang/invoke/MethodType;"),
-            "arguments",        "[Ljava/lang/Class;");
+            "ptypes",           "[Ljava/lang/Class;");
          TR_OpaqueClassBlock *targetParmClass = (TR_OpaqueClassBlock*)(intptr_t)fe->getInt64Field(fe->getReferenceElement(targetArguments, argIndex),
                                                                           "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
          // Load callsite type and check if two types are compatible
          uintptr_t sourceArguments = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "type",             "Ljava/lang/invoke/MethodType;"),
-            "arguments",        "[Ljava/lang/Class;");
+            "ptypes",           "[Ljava/lang/Class;");
          TR_OpaqueClassBlock *sourceParmClass = (TR_OpaqueClassBlock*)(intptr_t)fe->getInt64Field(fe->getReferenceElement(sourceArguments, argIndex),
                                                                           "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
          client->write(response, sourceParmClass, targetParmClass);
@@ -2338,10 +2365,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR::VMAccessCriticalSection invokeSpreadHandle(fe);
          uintptr_t methodHandle = *std::get<0>(recv);
          bool getSpreadPosition = std::get<1>(recv);
-         uintptr_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+         uintptr_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "ptypes", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          uintptr_t next = fe->getReferenceField(methodHandle, "next", "Ljava/lang/invoke/MethodHandle;");
-         uintptr_t nextArguments = fe->getReferenceField(fe->methodHandle_type(next), "arguments", "[Ljava/lang/Class;");
+         uintptr_t nextArguments = fe->getReferenceField(fe->methodHandle_type(next), "ptypes", "[Ljava/lang/Class;");
          int32_t numNextArguments = (int32_t)fe->getArrayLengthInElements(nextArguments);
          int32_t spreadStart = 0;
          // Guard to protect old code
@@ -2357,7 +2384,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          uintptr_t methodHandle = *std::get<0>(recv);
          int32_t insertionIndex = fe->getInt32Field(methodHandle, "insertionIndex");
          uintptr_t arguments = fe->getReferenceField(fe->getReferenceField(methodHandle, "type",
-                  "Ljava/lang/invoke/MethodType;"), "arguments", "[Ljava/lang/Class;");
+                  "Ljava/lang/invoke/MethodType;"), "ptypes", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          uintptr_t values = fe->getReferenceField(methodHandle, "values", "[Ljava/lang/Object;");
          int32_t numValues = (int32_t)fe->getArrayLengthInElements(values);
@@ -2385,7 +2412,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          else
             {
             uintptr_t combiner         = fe->getReferenceField(methodHandle, "combiner", "Ljava/lang/invoke/MethodHandle;");
-            uintptr_t combinerArguments = fe->getReferenceField(fe->methodHandle_type(combiner), "arguments", "[Ljava/lang/Class;");
+            uintptr_t combinerArguments = fe->getReferenceField(fe->methodHandle_type(combiner), "ptypes", "[Ljava/lang/Class;");
             numArgs = (int32_t)fe->getArrayLengthInElements(combinerArguments);
             }
          client->write(response, indices, foldPosition, numArgs);
@@ -2431,7 +2458,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          uintptr_t methodHandle = *std::get<0>(recv);
          uintptr_t finallyTarget = fe->getReferenceField(methodHandle, "finallyTarget", "Ljava/lang/invoke/MethodHandle;");
          uintptr_t finallyType = fe->getReferenceField(finallyTarget, "type", "Ljava/lang/invoke/MethodType;");
-         uintptr_t arguments        = fe->getReferenceField(finallyType, "arguments", "[Ljava/lang/Class;");
+         uintptr_t arguments        = fe->getReferenceField(finallyType, "ptypes", "[Ljava/lang/Class;");
          int32_t numArgsPassToFinallyTarget = (int32_t)fe->getArrayLengthInElements(arguments);
 
          uintptr_t methodDescriptorRef = fe->getReferenceField(finallyType, "methodDescriptor", "Ljava/lang/String;");
@@ -2446,7 +2473,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fe);
          uintptr_t methodHandle = *std::get<0>(recv);
-         uintptr_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+         uintptr_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "ptypes", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          int32_t filterPos     = (int32_t)fe->getInt32Field(methodHandle, "filterPosition");
          client->write(response, numArguments, filterPos);
@@ -2502,7 +2529,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<uintptr_t*>();
          TR::VMAccessCriticalSection invokeFilderArgumentsHandle(fe);
          uintptr_t methodHandle = *std::get<0>(recv);
-         uintptr_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+         uintptr_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "ptypes", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          int32_t startPos     = (int32_t)fe->getInt32Field(methodHandle, "startPos");
          uintptr_t filters = fe->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
@@ -2519,7 +2546,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          uintptr_t catchArguments = fe->getReferenceField(fe->getReferenceField(
             catchTarget,
             "type", "Ljava/lang/invoke/MethodType;"),
-            "arguments", "[Ljava/lang/Class;");
+            "ptypes", "[Ljava/lang/Class;");
          int32_t numCatchArguments = (int32_t)fe->getArrayLengthInElements(catchArguments);
          client->write(response, numCatchArguments);
          }
@@ -2565,7 +2592,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          uintptr_t arguments = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "type", "Ljava/lang/invoke/MethodType;"),
-            "arguments", "[Ljava/lang/Class;");
+            "ptypes", "[Ljava/lang/Class;");
          int32_t parameterCount = (int32_t)fe->getArrayLengthInElements(arguments);
          client->write(response, parameterCount);
          }
@@ -2610,7 +2637,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                methodHandle,
                "next",             "Ljava/lang/invoke/MethodHandle;"),
                "type",             "Ljava/lang/invoke/MethodType;"),
-               "arguments",        "[Ljava/lang/Class;");
+               "ptypes",           "[Ljava/lang/Class;");
             componentClazz = fe->getComponentClassFromArrayClass(fe->getClassFromJavaLangClass(fe->getReferenceElement(arguments, collectPosition)));
             }
 
@@ -3181,7 +3208,7 @@ remoteCompile(
          }
       catch (const JITServer::StreamFailure &e)
          {
-         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
+         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo);
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
                "JITServer::StreamFailure: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
@@ -3227,6 +3254,7 @@ remoteCompile(
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
    std::string recompMethodInfoStr = compiler->isRecompilationEnabled() ? std::string((char *) compiler->getRecompilationInfo()->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
 
+   // TODO: make this a synchronized region to avoid bad_alloc exceptions
    compInfo->getSequencingMonitor()->enter();
    // Collect the list of unloaded classes
    std::vector<TR_OpaqueClassBlock*> unloadedClasses(compInfo->getUnloadedClassesTempList()->begin(), compInfo->getUnloadedClassesTempList()->end());
@@ -3238,8 +3266,12 @@ remoteCompile(
    auto table = (JITClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
    std::pair<std::string, std::string> chtableUpdates = table->serializeUpdates();
    // Update the sequence number for these updates
-   uint32_t seqNo = compInfo->getCompReqSeqNo();
-   compInfo->incCompReqSeqNo();
+   uint32_t seqNo = compInfo->incCompReqSeqNo();
+   uint32_t lastCriticalSeqNo = compInfo->getLastCriticalSeqNo();
+   // If needed, update the seqNo of the last request that carried information that needed to be processed in order
+   if (!chtableUpdates.first.empty() || !chtableUpdates.second.empty() || !illegalModificationList.empty() || !unloadedClasses.empty())
+      compInfo->setLastCriticalSeqNo(seqNo);
+   
    compInfo->getSequencingMonitor()->exit();
 
    uint32_t statusCode = compilationFailure;
@@ -3267,10 +3299,10 @@ remoteCompile(
 
       Trc_JITServerRemoteCompileRequest(vmThread, seqNo, compiler->signature(), compiler->getHotnessName());
 
-      client->buildCompileRequest(TR::comp()->getPersistentInfo()->getClientUID(), seqNo, romMethodOffset, method,
+      client->buildCompileRequest(compiler->getPersistentInfo()->getClientUID(), seqNo, lastCriticalSeqNo, romMethodOffset, method,
                                   clazz, *compInfoPT->getMethodBeingCompiled()->_optimizationPlan, detailsStr,
                                   details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr, recompMethodInfoStr,
-                                  chtableUpdates.first, chtableUpdates.second, useAotCompilation);
+                                  chtableUpdates.first, chtableUpdates.second, useAotCompilation, TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()));
       JITServer::MessageType response;
       while(!handleServerMessage(client, compiler->fej9vm(), response));
 
@@ -3283,7 +3315,7 @@ remoteCompile(
          {
          auto recv = client->getRecvData<std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>,
                                          std::string, std::string, std::vector<TR_ResolvedJ9Method*>,
-                                         TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>>();
+                                         TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>, bool>();
          statusCode = compilationOK;
          codeCacheStr = std::get<0>(recv);
          dataCacheStr = std::get<1>(recv);
@@ -3294,6 +3326,8 @@ remoteCompile(
          resolvedMirrorMethodsPersistIPInfo = std::get<6>(recv);
          modifiedOptPlan = std::get<7>(recv);
          serializedRuntimeAssumptions = std::get<8>(recv);
+
+         compInfoPT->getCompilationInfo()->setServerHasLowPhysicalMemory(std::get<9>(recv));
          }
       else
          {
@@ -3316,7 +3350,7 @@ remoteCompile(
       }
    catch (const JITServer::StreamFailure &e)
       {
-      JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
+      JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo);
 
       client->~ClientStream();
       TR_Memory::jitPersistentFree(client);

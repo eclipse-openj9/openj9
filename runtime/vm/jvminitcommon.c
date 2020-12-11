@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,7 +107,7 @@ safeCat(char *buffer, const char *text, IDATA length)
  * @returns J9VMDllLoadInfo for the dll specified or NULL on failure
  */
 J9VMDllLoadInfo *
-createLoadInfo(J9PortLibrary *portLibrary, J9Pool *aPool, char *name, U_32 flags, void *methodPointer, UDATA verboseFlags)
+createLoadInfo(J9PortLibrary *portLibrary, J9Pool *aPool, const char *name, U_32 flags, void *methodPointer, UDATA verboseFlags)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
 

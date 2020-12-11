@@ -53,6 +53,7 @@ j9vm_add_library(j9util STATIC
 	fltmath.c
 	fltodd.c
 	fltrem.c
+	gcloadinfo.c
 	genericSignalHandler.c
 	hshelp.c
 	j9crc32.c

@@ -183,6 +183,7 @@ J9::Compilation::Compilation(int32_t id,
 #if defined(J9VM_OPT_JITSERVER)
    _remoteCompilation(false),
    _serializedRuntimeAssumptions(getTypedAllocator<SerializedRuntimeAssumption>(self()->allocator())),
+   _clientData(NULL),
 #endif /* defined(J9VM_OPT_JITSERVER) */
    _osrProhibitedOverRangeOfTrees(false),
    _linkageInfoWord(0)

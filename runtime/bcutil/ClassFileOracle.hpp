@@ -978,6 +978,7 @@ class RecordComponentIterator
 	U_16 getRecordComponentCount() const { return _recordComponentCount; }
 	bool isSealed() const { return _isSealed; }
 	U_16 getPermittedSubclassesClassCount() const { return _isSealed ? _permittedSubclassesAttribute->numberOfClasses : 0; }
+	bool isValueBased() const { return _isClassValueBased; }
 
 	U_16 getPermittedSubclassesClassNameAtIndex(U_16 index) const {
 		U_16 result = 0;
@@ -1016,6 +1017,7 @@ private:
 		JAVA8_CONTENDED_ANNOTATION,
 		CONTENDED_ANNOTATION,
 		UNMODIFIABLE_ANNOTATION,
+		VALUEBASED_ANNOTATION,
 		KNOWN_ANNOTATION_COUNT
 	};
 
@@ -1066,6 +1068,7 @@ private:
 	bool _needsStaticConstantInit;
 	bool _isRecord;
 	bool _isSealed;
+	bool _isClassValueBased;
 
 	FieldInfo *_fieldsInfo;
 	MethodInfo *_methodsInfo;

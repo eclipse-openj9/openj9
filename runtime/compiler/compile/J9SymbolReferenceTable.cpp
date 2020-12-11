@@ -865,11 +865,27 @@ J9::SymbolReferenceTable::findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * ow
       containingClass =
          owningMethod->definingClassFromCPFieldRef(comp(), cpIndex, isStatic);
 
-      TR_ASSERT_FATAL(
-         containingClass != NULL,
-         "failed to get defining class of field ref cpIndex=%d in owning method J9Method=%p",
-         cpIndex,
-         owningMethod->getNonPersistentIdentifier());
+      if (comp()->compileRelocatableCode())
+         {
+         TR_ASSERT_FATAL(
+            containingClass != NULL,
+            "failed to get defining class of field ref cpIndex=%d in owning method J9Method=%p\n"
+            "\tTR_ResolvedJ9Method::definingClassFromCPFieldRef=%p, TR_ResolvedRelocatableJ9Method::definingClassFromCPFieldRef=%p\n"
+            "\tTR_UseSymbolValidationManager=%d",
+            cpIndex,
+            owningMethod->getNonPersistentIdentifier(),
+            owningMethod->TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp(), owningMethod->cp(), cpIndex, isStatic),
+            static_cast<TR_ResolvedRelocatableJ9Method *>(owningMethod)->definingClassFromCPFieldRef(comp(), cpIndex, isStatic),
+            comp()->getOption(TR_UseSymbolValidationManager));
+         }
+      else
+         {
+         TR_ASSERT_FATAL(
+            containingClass != NULL,
+            "failed to get defining class of field ref cpIndex=%d in owning method J9Method=%p",
+            cpIndex,
+            owningMethod->getNonPersistentIdentifier());
+         }
 
       ResolvedFieldShadowKey key(containingClass, offset, type);
       TR::SymbolReference *symRef =
@@ -1282,6 +1298,7 @@ J9::SymbolReferenceTable::findOrCreateStringSymbol(TR::ResolvedMethodSymbol * ow
    TR_ResolvedMethod * owningMethod = owningMethodSymbol->getResolvedMethod();
    void * stringConst = owningMethod->stringConstant(cpIndex);
    TR::SymbolReference * symRef;
+   bool isString = true;
    if (owningMethod->isUnresolvedString(cpIndex))
       {
       symRef = findOrCreateCPSymbol(owningMethodSymbol, cpIndex, TR::Address, false, 0);
@@ -1300,8 +1317,29 @@ J9::SymbolReferenceTable::findOrCreateStringSymbol(TR::ResolvedMethodSymbol * ow
          }
       symRef = findOrCreateCPSymbol(owningMethodSymbol, cpIndex, TR::Address, true, stringConst, knownObjectIndex);
       }
+
    TR::StaticSymbol * sym = (TR::StaticSymbol *)symRef->getSymbol();
-   sym->setConstString();
+
+   // If symbol is created the first time
+   if (!symRef->isUnresolved() &&
+       !sym->isConstString() &&
+       !sym->isNonSpecificConstObject())
+      {
+      TR::VMAccessCriticalSection constantCriticalSection(comp()->fej9());
+      TR_OpaqueClassBlock *clazz = comp()->fej9()->getObjectClassAt((uintptr_t)stringConst);
+      isString = comp()->fej9()->isString(clazz);
+      }
+
+   if (isString)
+      sym->setConstString();
+   else
+      {
+      if (comp()->compileRelocatableCode())
+         comp()->failCompilation<J9::AOTHasPatchedCPConstant>("Patched Constant not supported in AOT.");
+
+      sym->setNonSpecificConstObject();
+      }
+
    return symRef;
    }
 
@@ -1388,7 +1426,11 @@ J9::SymbolReferenceTable::findOrCreateMethodHandleSymbol(TR::ResolvedMethodSymbo
       }
    else
       {
-      symRef = findOrCreateCPSymbol(owningMethodSymbol, cpIndex, TR::Address, true, methodHandleConst);
+      TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
+      TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+      if (knot)
+         knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)methodHandleConst);
+      symRef = findOrCreateCPSymbol(owningMethodSymbol, cpIndex, TR::Address, true, methodHandleConst, knownObjectIndex);
       }
    TR::StaticSymbol * sym = (TR::StaticSymbol *)symRef->getSymbol();
    sym->setConstMethodHandle();

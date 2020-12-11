@@ -204,14 +204,15 @@ char *compilationErrorNames[]={
    "compilationAOTValidateTMFailure", //52
    "compilationILGenUnsupportedValueTypeOperationFailure", //53
    "compilationAOTRelocationRecordGenerationFailure", //54
+   "compilationAotPatchedCPConstant", //55
 #if defined(J9VM_OPT_JITSERVER)
-   "compilationStreamFailure", //55
-   "compilationStreamLostMessage", // 56
-   "compilationStreamMessageTypeMismatch", // 57
-   "compilationStreamVersionIncompatible", // 58
-   "compilationStreamInterrupted", // 59
+   "compilationStreamFailure", //56
+   "compilationStreamLostMessage", // 57
+   "compilationStreamMessageTypeMismatch", // 58
+   "compilationStreamVersionIncompatible", // 59
+   "compilationStreamInterrupted", // 60
 #endif /* defined(J9VM_OPT_JITSERVER) */
-   "compilationAotHasInvokeSpecialInterface", //60
+   "compilationAotHasInvokeSpecialInterface", //61
    "compilationMaxError",
 };
 
@@ -1859,6 +1860,12 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
       return -1;
       }
 
+   if (!TR::Options::getCmdLineOptions()->allowRecompilation() || !TR::Options::getAOTCmdLineOptions()->allowRecompilation())
+      {
+      TR::Options::getCmdLineOptions()->setOption(TR_DisableCHOpts);
+      TR::Options::getAOTCmdLineOptions()->setOption(TR_DisableCHOpts);
+      }
+
    // Get local var names if available (ie. classfile was compiled with -g).
    // We just check getDebug() for lack of a reliable way to check whether there are any methods being logged.
    //
@@ -1959,6 +1966,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
             else
                {
                TR::Compiler->relocatableTarget.cpu = TR::CPU::customize(compInfo->reloRuntime()->getProcessorDescriptionFromSCC(fe, curThread));
+               jitConfig->relocatableTargetProcessor = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
                }
             }
          }

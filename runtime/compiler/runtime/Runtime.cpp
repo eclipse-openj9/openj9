@@ -226,7 +226,6 @@ JIT_HELPER(icallVMprJavaSendInvokeExactJ);
 JIT_HELPER(icallVMprJavaSendInvokeExactL);
 JIT_HELPER(icallVMprJavaSendInvokeExactF);
 JIT_HELPER(icallVMprJavaSendInvokeExactD);
-JIT_HELPER(icallVMprJavaSendInvokeWithArgumentsHelperL);
 JIT_HELPER(initialInvokeExactThunk_unwrapper);
 
 JIT_HELPER(estimateGPU);
@@ -1017,7 +1016,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_icallVMprJavaSendInvokeExactL,                    (void *)icallVMprJavaSendInvokeExactL,               TR_Helper);
    SET(TR_icallVMprJavaSendInvokeExactF,                    (void *)icallVMprJavaSendInvokeExactF,               TR_Helper);
    SET(TR_icallVMprJavaSendInvokeExactD,                    (void *)icallVMprJavaSendInvokeExactD,               TR_Helper);
-   SET(TR_icallVMprJavaSendInvokeWithArguments,             (void *)icallVMprJavaSendInvokeWithArgumentsHelperL, TR_Helper);
    SET(TR_icallVMprJavaSendNativeStatic,                    (void *)icallVMprJavaSendNativeStatic,               TR_Helper);
    SET_CONST(TR_initialInvokeExactThunk_unwrapper,          (void *)initialInvokeExactThunk_unwrapper);
 
@@ -2203,7 +2201,6 @@ bool isOrderedPair(U_8 recordType)
    switch ((recordType & TR_ExternalRelocationTargetKindMask))
       {
       case TR_AbsoluteMethodAddressOrderedPair:
-      case TR_ConstantPoolOrderedPair:
 #if defined(TR_HOST_POWER) || defined(TR_HOST_ARM)
       case TR_ClassAddress:
       case TR_MethodObject:

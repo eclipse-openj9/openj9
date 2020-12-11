@@ -56,9 +56,9 @@ MM_InterRegionRememberedSet::MM_InterRegionRememberedSet(MM_HeapRegionManager *h
 	, _overflowedListTail(NULL)
 	, _regionSize(0)
 	, _shouldFlushBuffersForDecommitedRegions(false)
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 	, _compressObjectReferences(false)
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 	, _overflowedRegionCount(0)
 	, _stableRegionCount(0)
 	, _beingRebuiltRegionCount(0)
@@ -272,9 +272,9 @@ MM_InterRegionRememberedSet::initialize(MM_EnvironmentVLHGC* env)
 	UDATA baseOfHeap = (UDATA) (_heapRegionManager->_regionTable)->getLowAddress();
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 	if (env->compressObjectReferences()) {
-#if defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 		_compressObjectReferences = true;
-#endif /* defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 		_cardToRegionShift = _heapRegionManager->_regionShift - CARD_SIZE_SHIFT;
 		_cardToRegionDisplacement = baseOfHeap >> CARD_SIZE_SHIFT;
 	} else

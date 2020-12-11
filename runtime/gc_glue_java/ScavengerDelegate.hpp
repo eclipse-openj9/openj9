@@ -64,9 +64,9 @@ private:
 	OMR_VM *_omrVM;
 	J9JavaVM *_javaVM;
 	MM_GCExtensions *_extensions;
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 	bool _compressObjectReferences;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 	volatile bool _shouldScavengeFinalizableObjects; /**< Set to true at the beginning of a collection if there are any pending finalizable objects */
 	volatile bool _shouldScavengeUnfinalizedObjects; /**< Set to true at the beginning of a collection if there are any unfinalized objects */
 	volatile bool _shouldScavengeSoftReferenceObjects; /**< Set to true if there are any SoftReference objects discovered */
@@ -102,23 +102,7 @@ private:
 	 */
 	bool private_shouldPercolateGarbageCollect_classUnloading(MM_EnvironmentBase *envBase);
 
-	/**
-	 * Sort all hot fields for all classes.
-	 * Used when scavenger dynamicBreadthFirstScanOrdering is enabled
-	 */
-	void private_SortAllHotFieldData();
 
-	/**
-	 * Reset all hot fields for all classes.
-	 * Used when scavenger dynamicBreadthFirstScanOrdering is enabled and hotFieldResettingEnabled is true
-	 */
-	void private_ResetAllHotFieldData();
-	
-	/**
-	 * Sort all hot fields for a single class.
-	 * Used when scavenger dynamicBreadthFirstScanOrdering is enabled
-	 */
-	void private_SortClassHotFieldList(J9ClassHotFieldsInfo* hotFieldClassInfo);
 
 	/**
 	 * Decide if GC percolation should occur due to active JNI critical

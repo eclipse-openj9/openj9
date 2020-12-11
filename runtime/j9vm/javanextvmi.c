@@ -106,18 +106,19 @@ JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 		J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 		char *npeMsg = NULL;
 		GetStackTraceElementUserData userData = {0};
-		
+
 		Trc_SC_GetExtendedNPEMessage_Entry2(vmThread, throwableObj);
 		vmFuncs->internalEnterVMFromJNI(vmThread);
 		userData.bytecodeOffset = UDATA_MAX;
-		vmFuncs->iterateStackTrace(vmThread, (j9object_t*)throwableObj, getStackTraceElementIterator, &userData, FALSE);
+		vmFuncs->iterateStackTrace(vmThread, (j9object_t*)throwableObj, getStackTraceElementIterator, &userData, TRUE);
 		if ((NULL != userData.romClass)
 			&& (NULL != userData.romMethod)
 			&& (UDATA_MAX != userData.bytecodeOffset)
 		) {
+			PORT_ACCESS_FROM_VMC(vmThread);
+			J9NPEMessageData npeMsgData = {0};
 #if defined(DEBUG_BCV)
 			{
-				PORT_ACCESS_FROM_VMC(vmThread);
 				U_8 *bytecodes = J9_BYTECODE_START_FROM_ROM_METHOD(userData.romMethod);
 				U_32 flags = 0;
 
@@ -129,9 +130,12 @@ JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 				j9bcutil_dumpBytecodes(PORTLIB, userData.romClass, bytecodes, 0, userData.bytecodeOffset, flags, (void *)cfdumpBytecodePrintFunction, PORTLIB, "");
 			}
 #endif /* defined(DEBUG_BCV) */
-			npeMsg = vmFuncs->getCompleteNPEMessage(vmThread, J9_BYTECODE_START_FROM_ROM_METHOD(userData.romMethod) + userData.bytecodeOffset, userData.romClass, npeMsg);
+			npeMsgData.npePC = userData.bytecodeOffset;
+			npeMsgData.vmThread = vmThread;
+			npeMsgData.romClass = userData.romClass;
+			npeMsgData.romMethod = userData.romMethod;
+			npeMsg = vmFuncs->getNPEMessage(&npeMsgData);
 			if (NULL != npeMsg) {
-				PORT_ACCESS_FROM_VMC(vmThread);
 				j9object_t msgObject = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmThread, (U_8 *)npeMsg, strlen(npeMsg), 0);
 				if (NULL != msgObject) {
 					msgObjectRef = vmFuncs->j9jni_createLocalRef(env, msgObject);

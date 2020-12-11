@@ -436,10 +436,18 @@ J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.system_action=The JVM will thro
 J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
+J9NLS_JCL_DUPLICATE_CLASS_DEFINITION=A duplicate class definition for %2$.*1$s is found
+# START NON-TRANSLATABLE
+J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.sample_input_1=3
+J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.sample_input_2=Foo
+J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.explanation=A duplicated class definition is found.
+J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.system_action=The JVM will throw a LinkageError.
+J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.user_response=Ensure there is no duplicate definition for the class in the message and try again.
+# END NON-TRANSLATABLE
+
 J9NLS_JCL_SNAPSHOT_NOT_TRIGGERED=Snapshot method entered on command line was never called
 # START NON-TRANSLATABLE
 J9NLS_JCL_SNAPSHOT_NOT_TRIGGERED.explanation=Snapshot method entered on command line was never called
 J9NLS_JCL_SNAPSHOT_NOT_TRIGGERED.system_action=
 J9NLS_JCL_SNAPSHOT_NOT_TRIGGERED.user_response=Verify command line input
-
 # END NON-TRANSLATABLE

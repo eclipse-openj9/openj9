@@ -26,14 +26,14 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
 import java.lang.constant.Constable;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.constant.DirectMethodHandleDesc.Kind;
 import java.lang.constant.MethodHandleDesc;
 import java.lang.constant.MethodTypeDesc;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Modifier;
 import java.security.AccessController;
@@ -43,20 +43,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import java.util.Objects;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.util.NoSuchElementException;
 import java.util.Optional;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 // {{{ JIT support
 import java.util.concurrent.ConcurrentHashMap;
 
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import jdk.internal.access.SharedSecrets;
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 12
 import jdk.internal.misc.SharedSecrets;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import jdk.internal.reflect.ConstantPool;
 /*[ELSE]*/
 import sun.misc.Unsafe;
@@ -95,10 +95,10 @@ import com.ibm.oti.vm.VMLangAccess;
  * @since 1.7
  */
 @VMCONSTANTPOOL_CLASS
-public abstract class MethodHandle 
-/*[IF Java12]*/
+public abstract class MethodHandle
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	implements Constable
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 {
 	/* Ensure that these stay in sync with the MethodHandleInfo constants and VM constants in VM_MethodHandleKinds.h */
 	/* Order matters here - static and special are direct pointers */
@@ -137,9 +137,9 @@ public abstract class MethodHandle
 	/*[IF Panama]*/
 	static final byte KIND_NATIVE = 32;
 	/*[ENDIF]*/
-	/*[IF Java12]*/
+	/*[IF JAVA_SPEC_VERSION >= 12]*/
 	static final byte KIND_FILTERARGUMENTS_WITHCOMBINER = 33;
-	/*[ENDIF] Java12 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /*[IF Sidecar18-SE-OpenJ9]
 	MethodHandle asTypeCache = null;
@@ -722,8 +722,8 @@ public abstract class MethodHandle
 	public MethodHandle asFixedArity() {
 		return this;
 	}
-	
-/*[IF Java12]*/
+
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Returns the nominal descriptor of this MethodHandle instance, or an empty Optional 
 	 * if construction is not possible.
@@ -996,8 +996,8 @@ public abstract class MethodHandle
 	private MethodHandle returnFilterPlaceHolder() {
 		return this;
 	}
-	
-	/*[IF Java12]*/
+
+	/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/*[IF ]*/
 	/*
 	 * Used to preserve the MH on the stack when avoiding the call-in for
@@ -1010,7 +1010,7 @@ public abstract class MethodHandle
 	private MethodHandle filterArgumentsWithCombinerPlaceHolder() {
 		return this;
 	}
-	/*[ENDIF] Java12 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/*[IF ]*/
 	/*
@@ -1104,7 +1104,7 @@ public abstract class MethodHandle
 		return "KIND_#"+kind; //$NON-NLS-1$
 	}
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**
 	 * Append to a list the child MethodHandle(s) which form "this" (parent MethodHandle).
 	 * 
@@ -1113,33 +1113,7 @@ public abstract class MethodHandle
 	 * @return true if MethodHandles are added to the list, and false otherwise.
 	 */
 	abstract boolean addRelatedMHs(List<MethodHandle> relatedMHs);
-/*[ENDIF] Java15 */
-
-/*[IF OPENJDK_METHODHANDLES]*/
-	byte customizationCount;
-
-	String debugString() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-
-	MethodHandle copyWith(MethodType mt, LambdaForm lf) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-
-	String internalValues() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-
-	BoundMethodHandle bindArgumentL(int i, Object obj) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-
-	MethodHandle getMethodHandle() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
-
-	static native Object linkToStatic(Object... objs);
-/*[ENDIF] OPENJDK_METHODHANDLES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /*[IF Sidecar18-SE-OpenJ9]*/
 	MethodHandle(MethodType mt, LambdaForm lf) {
@@ -1167,14 +1141,14 @@ public abstract class MethodHandle
 	}
 	
 	MemberName internalMemberName() {
-		/*[IF Java11]*/
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		/* Note: so far this method is only invoked by java.lang.invoke.ConstantBootstraps.getStaticFinal() 
 		 * to return a MemberName object, and only MemberName.isFinal() is invoked.
 		 */
 		return new MemberName(this);
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 11
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-		/*[ENDIF] Java11 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 	}
 	
 	BoundMethodHandle rebind() {
@@ -1187,11 +1161,21 @@ public abstract class MethodHandle
 		// https://github.com/eclipse/openj9/issues/7080
 	}
 /*[ENDIF]*/
-	
+
+/*[IF JAVA_SPEC_VERSION < 16]*/
 	void updateForm(LambdaForm lf) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+/*[ELSE] JAVA_SPEC_VERSION < 16 */
+	final void maybeCustomize() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	final void updateForm(java.util.function.Function<LambdaForm, LambdaForm> updater) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF] JAVA_SPEC_VERSION < 16 */
+
 	final Object invokeBasic(Object... objs) throws java.lang.Throwable {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -1771,4 +1755,3 @@ final class StructuralComparator extends Comparator {
 }
 
 // }}} Comparator support
-

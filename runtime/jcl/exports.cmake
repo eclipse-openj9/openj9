@@ -516,18 +516,22 @@ else()
 	)
 endif()
 
-
 if(JAVA_SPEC_VERSION EQUAL 8)
 	omr_add_exports(jclse Java_sun_misc_URLClassPath_getLookupCacheURLs)
 endif()
 
 # java 9+
 if(NOT JAVA_SPEC_VERSION LESS 9)
+	if(J9VM_OPT_METHOD_HANDLE)
+		omr_add_exports(jclse
+			Java_java_lang_invoke_FieldVarHandle_lookupField
+			Java_java_lang_invoke_FieldVarHandle_unreflectField
+		)
+	endif()
+
 	omr_add_exports(jclse
 		Java_java_lang_StackWalker_getImpl
 		Java_java_lang_StackWalker_walkWrapperImpl
-		Java_java_lang_invoke_FieldVarHandle_lookupField
-		Java_java_lang_invoke_FieldVarHandle_unreflectField
 		Java_java_lang_invoke_VarHandle_addAndGet
 		Java_java_lang_invoke_VarHandle_compareAndExchange
 		Java_java_lang_invoke_VarHandle_compareAndExchangeAcquire
@@ -570,7 +574,7 @@ if(NOT JAVA_SPEC_VERSION LESS 9)
 	endif()
 endif()
 
-#java 11+
+# java 11+
 if(NOT JAVA_SPEC_VERSION LESS 11)
 	omr_add_exports(jclse
 		Java_java_lang_Class_getNestHostImpl
@@ -579,11 +583,22 @@ if(NOT JAVA_SPEC_VERSION LESS 11)
 	)
 endif()
 
-#java 15+
+# java 15+
 if(NOT JAVA_SPEC_VERSION LESS 15)
 	omr_add_exports(jclse
 		Java_java_lang_Class_isHiddenImpl
 		Java_java_lang_ClassLoader_defineClassImpl1
 		Java_java_lang_invoke_MethodHandleNatives_checkClassBytes
+	)
+endif()
+
+# java 16+
+if(NOT JAVA_SPEC_VERSION LESS 16)
+	omr_add_exports(jclse
+		Java_java_lang_ref_Reference_refersTo
+		Java_jdk_internal_misc_ScopedMemoryAccess_registerNatives
+		Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0
+		Java_jdk_internal_vm_vector_VectorSupport_registerNatives
+		Java_jdk_internal_vm_vector_VectorSupport_getMaxLaneCount
 	)
 endif()

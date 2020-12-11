@@ -906,13 +906,13 @@ SH_CompositeCacheImpl::notifyPagesCommitted(BlockPtr start, BlockPtr end, UDATA 
  * @param [out] localCrashCntr  Initializes local CacheMap value
  * @param [out] cacheHasIntegrity Set to true if the cache is new or has been crc integrity checked, false otherwise
  *
- * @return 0 for success, -1 for failure and -2 for corrupt.
+ * @return 0 for success, a negative error code for failure.
  * @retval CC_STARTUP_OK (0) success
  * @retval CC_STARTUP_FAILED (-1)
  * @retval CC_STARTUP_CORRUPT (-2)
  * @retval CC_STARTUP_RESET (-3)
  * @retval CC_STARTUP_SOFT_RESET (-4)
- * @retval CC_STARTUP_NO_CACHELETS (-5)
+ * @retval CC_STARTUP_NO_CACHE (-5)
  */
 IDATA 
 SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, BlockPtr cacheMemory,
@@ -3710,20 +3710,9 @@ SH_CompositeCacheImpl::runExitCode(J9VMThread *currentThread)
 	 * If not unprotected here, subsequent JVMs will not be able to write to readwrite area.
 	 */
 	unprotectHeaderReadWriteArea(currentThread, true);
-	if (0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL)) {
-		/* If mprotect=all is set, above call to unprotectHeaderReadWriteArea() will set _readWriteProtectCntr to 1. */
-		Trc_SHR_Assert_Equals(_readWriteProtectCntr, 1);
-	} else {
-		Trc_SHR_Assert_Equals(_readWriteProtectCntr, 0);
-	}
 #else
 	unprotectHeaderReadWriteArea(currentThread, false);
-	Trc_SHR_Assert_Equals(_readWriteProtectCntr, 0);
 #endif
-	/* If mprotect=all is not set, then final value of _headerProtectCntr should be same is its initial value (= 1).
-	 * If mprotect=all is set, then above call to unprotectHeaderReadWriteArea() will set it to 1.
-	 */
-	Trc_SHR_Assert_Equals(_headerProtectCntr, 1);
 
 	if (_commonCCInfo->hasRWMutexThreadMprotectAll == currentThread) {
 		Trc_SHR_Assert_Equals(currentThread, _commonCCInfo->hasReadWriteMutexThread);

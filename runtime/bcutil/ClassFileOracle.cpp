@@ -58,6 +58,9 @@ ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 		{CONTENDED_SIGNATURE, sizeof(CONTENDED_SIGNATURE)},
 #undef CONTENDED_SIGNATURE
 		{J9_UNMODIFIABLE_CLASS_ANNOTATION, sizeof(J9_UNMODIFIABLE_CLASS_ANNOTATION)},
+#define VALUEBASED_SIGNATURE "Ljdk/internal/ValueBased;"
+		{VALUEBASED_SIGNATURE, sizeof(VALUEBASED_SIGNATURE)},
+#undef VALUEBASED_SIGNATURE
 		{0, 0}
 };
 
@@ -190,7 +193,8 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_isRecord(false),
 	_recordComponentCount(0),
 	_permittedSubclassesAttribute(NULL),
-	_isSealed(false)
+	_isSealed(false),
+	_isClassValueBased(false)
 {
 	Trc_BCU_Assert_NotEquals( classFile, NULL );
 
@@ -464,6 +468,7 @@ ClassFileOracle::walkAttributes()
 				knownAnnotations = addAnnotationBit(knownAnnotations, JAVA8_CONTENDED_ANNOTATION);
 			}
 			knownAnnotations = addAnnotationBit(knownAnnotations, UNMODIFIABLE_ANNOTATION);
+			knownAnnotations = addAnnotationBit(knownAnnotations, VALUEBASED_ANNOTATION);
 			_annotationsAttribute = (J9CfrAttributeRuntimeVisibleAnnotations *)attrib;
 			if (0 == _annotationsAttribute->rawDataLength) {
 				UDATA foundAnnotations = walkAnnotations(_annotationsAttribute->numberOfAnnotations, _annotationsAttribute->annotations, knownAnnotations);
@@ -472,6 +477,9 @@ ClassFileOracle::walkAttributes()
 				}
 				if (containsKnownAnnotation(foundAnnotations, UNMODIFIABLE_ANNOTATION)) {
 					_isClassUnmodifiable = true;
+				}
+				if (containsKnownAnnotation(foundAnnotations, VALUEBASED_ANNOTATION)) {
+					_isClassValueBased = true;
 				}
 			}
 			break;
@@ -502,9 +510,10 @@ ClassFileOracle::walkAttributes()
 			break;
 		}
 		case CFR_ATTRIBUTE_PermittedSubclasses: {
-			/* PermittedSubclasses verification is for Java 15 preview only. Don't record the attribute for other class versions
-			 * since it may be corrupt. */
-			if ((59 == _classFile->majorVersion) && (0 < _classFile->minorVersion)) {
+			/* PermittedSubclasses verification is for Java version >= 15 */
+			if ((_classFile->majorVersion > 59)
+			|| ((59 == _classFile->majorVersion) && (65535 == _classFile->minorVersion))
+			) {
 				_isSealed = true;
 				_permittedSubclassesAttribute = (J9CfrAttributePermittedSubclasses *)attrib;
 				for (U_16 numberOfClasses = 0; numberOfClasses < _permittedSubclassesAttribute->numberOfClasses; numberOfClasses++) {

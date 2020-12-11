@@ -1879,7 +1879,7 @@ static void jitHookClassesUnload(J9HookInterface * * hookInterface, UDATA eventN
    //All work here is only done if there is a chtable. Small have no table, thus nothing to do.
 
    TR_PersistentCHTable * table = 0;
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
       table = persistentInfo->getPersistentCHTable();
 
    if (table && table->isActive())
@@ -2274,7 +2274,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, currentThread);
    TR_PersistentCHTable * table = 0;
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
       table = compInfo->getPersistentInfo()->getPersistentCHTable();
 
    TR_RuntimeAssumptionTable * rat = compInfo->getPersistentInfo()->getRuntimeAssumptionTable();
@@ -2603,7 +2603,7 @@ void jitUpdateMethodOverride(J9VMThread * vmThread, J9Class * cl, J9Method * ove
    // rather than querying each time.
    //
    bool isSMP = 1; // conservative
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
       {
       jitAcquireClassTableMutex(vmThread);
       compInfo->getPersistentInfo()->getPersistentCHTable()->methodGotOverridden(
@@ -2967,9 +2967,7 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
 #endif
 
    TR_PersistentCHTable * table = 0;
-   if (TR::Options::getCmdLineOptions()->allowRecompilation()
-      && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
-      )
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
       table = compInfo->getPersistentInfo()->getPersistentCHTable();
 
    TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, vmThread);
@@ -3558,6 +3556,7 @@ void jitHookClassLoadHelper(J9VMThread *vmThread,
    bool allocFailed = false;
    TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, vmThread);
    TR_OpaqueClassBlock *clazz = TR::Compiler->cls.convertClassPtrToClassOffset(cl);
+<<<<<<< HEAD
 
    jitAcquireClassTableMutex(vmThread);
 
@@ -3657,6 +3656,105 @@ void jitHookClassLoadHelper(J9VMThread *vmThread,
    jitReleaseClassTableMutex(vmThread);
    }
 
+=======
+   jitAcquireClassTableMutex(vmThread);
+
+   compInfo->getPersistentInfo()->incNumLoadedClasses();
+
+   if (compInfo->getPersistentInfo()->getNumLoadedClasses() == TR::Options::_bigAppThreshold)
+      {
+#if defined(TR_TARGET_32BIT) && (defined(WINDOWS) || defined(LINUX) || defined(J9ZOS390))
+      // When we reach the bigAppThreshold limit we examine the available virtual memory
+      // and if this is too small we reduce some compilation parameters like:
+      // scratchSpaceLimit, number of compilation threads, optServer, GCR
+      lowerCompilationLimitsOnLowVirtualMemory(compInfo, vmThread);
+#endif
+      // For large applications be more conservative with hot compilations
+      if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableConservativeHotRecompilationForServerMode))
+         {
+         TR::Options::_sampleThreshold /= 3; // divide by 3 to become more conservative (3% instead of 1%)
+         TR::Options::_resetCountThreshold /= 3;
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u INFO: Changed sampleThreshold to %d",
+               (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), TR::Options::_sampleThreshold);
+            }
+         }
+      }
+
+   // todo: why is the override bit on already....temporarily reset it
+   // ALI 20031015: I think I have fixed the above todo - we should never
+   // get an inconsistent state now.  The following should be unnecessary -
+   // verify and remove  FIXME
+   cl->classDepthAndFlags &= ~J9AccClassHasBeenOverridden;
+
+   // For regular classes, cl->classLoader points to the correct class loader by the time we enter this hook.
+   // For anonymous classes however, it points to the anonymous class loader and not the correct class loader.
+   // Once the class is fully loaded the classLoader member will be updated to point to the correct class loader,
+   // which is the anonymous class's host class's class loader, but that doesn't do us any good in this hook.
+   // We need the correct class loader right now, so we grab the host class's class loader instead.
+   // For regular classes, cl->hostClass points back to the class itself, so by doing this we get the correct
+   // class loader for both regular and anonymous classes without having to check if this is an anonymous class.
+   J9ClassLoader *classLoader = cl->hostClass->classLoader;
+
+   bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassLoading);
+   char * className = NULL;
+   int32_t classNameLen = -1;
+   if (p)
+      {
+      getClassNameIfNecessary(vm, clazz, className, classNameLen);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--load-- loader %p, class %p : %.*s\n", classLoader, cl, classNameLen, className);
+      }
+
+   // add the newInstance hook
+#if defined(J9ZOS390)
+   cl->romableAotITable = (UDATA) TOC_UNWRAP_ADDRESS((void *)&jitTranslateNewInstanceMethod);
+#elif defined(TR_HOST_POWER) && (defined(TR_HOST_64BIT) || defined(AIXPPC)) && !defined(__LITTLE_ENDIAN__)
+   cl->romableAotITable = (UDATA) (*(void **)jitTranslateNewInstanceMethod);
+#else
+   cl->romableAotITable = (UDATA) jitTranslateNewInstanceMethod;
+#endif
+
+   if (((J9JavaVM *)vmThread->javaVM)->systemClassLoader != classLoader)
+      {
+      TR::Options::_numberOfUserClassesLoaded ++;
+      }
+
+   compInfo->getPersistentInfo()->getPersistentClassLoaderTable()->associateClassLoaderWithClass(classLoader, clazz);
+
+#ifdef J9VM_JIT_NEW_INSTANCE_PROTOTYPE
+   // Update the count for the newInstance
+   //
+   TR::Options * options = TR::Options::getCmdLineOptions();
+   if (options->anOptionSetContainsACountValue())
+      {
+      J9Method *method = getNewInstancePrototype(vmThread);
+      if (method)
+         {
+         TR::OptionSet * optionSet = findOptionSet(method, false);
+         if (optionSet)
+            options = optionSet->getOptions();
+         }
+      }
+   //fprintf(stderr, "Will set the count for NewInstancePrototype to %d\n", options->getInitialCount());
+   cl->newInstanceCount = options->getInitialCount();
+#endif
+
+   allocFailed = chTableOnClassLoad(vmThread, clazz, compInfo, vm);
+
+   compInfo->getPersistentInfo()->ensureUnloadedAddressSetsAreInitialized();
+   // TODO: change the above line to something like the following in order to handle allocation failures:
+   // if (!allocFailed)
+   //    allocFailed = !compInfo->getPersistentInfo()->ensureUnloadedAddressSetsAreInitialized();
+
+    *classLoadEventFailed = allocFailed;
+
+   // Determine whether this class gets lock reservation
+   checkForLockReservation(vmThread, jitConfig, classLoader, clazz, vm, compInfo, className, classNameLen);
+
+   jitReleaseClassTableMutex(vmThread);
+   }
+
 static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
    J9VMInternalClassLoadEvent * classLoadEvent = (J9VMInternalClassLoadEvent *)eventData;
@@ -3667,7 +3765,9 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
       return; // if a hook gets called after freeJitConfig then not much else we can do
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
-   TR_PersistentCHTable * cht = compInfo->getPersistentInfo()->getPersistentCHTable();
+   TR_PersistentCHTable * cht = NULL;
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+      cht = compInfo->getPersistentInfo()->getPersistentCHTable();
    if (cht && !cht->isActive())
       return;
 
@@ -3677,6 +3777,14 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    }
 
 int32_t loadingClasses;
+
+static bool chTableOnClassPreinitialize(J9VMThread *vmThread,
+                                        J9Class *cl,
+                                        TR_OpaqueClassBlock *clazz,
+                                        TR::CompilationInfo *compInfo,
+                                        TR_J9VMBase *vm)
+   {
+   bool initFailed = false;
 
 static bool chTableOnClassPreinitialize(J9VMThread *vmThread,
                                         J9Class *cl,
@@ -3731,6 +3839,25 @@ void jitHookClassPreinitializeHelper(J9VMThread *vmThread,
       TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--init-- %.*s\n", len, className);
       }
 
+   return initFailed;
+   }
+
+void jitHookClassPreinitializeHelper(J9VMThread *vmThread,
+                                     J9JITConfig *jitConfig,
+                                     J9Class *cl,
+                                     UDATA *classPreinitializeEventFailed)
+   {
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, vmThread);
+   TR_OpaqueClassBlock *clazz = ((TR_J9VMBase *)vm)->convertClassPtrToClassOffset(cl);
+   bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassLoading);
+   if (p)
+      {
+      int32_t len;
+      char * className = vm->getClassNameChars(clazz, len);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--init-- %.*s\n", len, className);
+      }
+
    jitAcquireClassTableMutex(vmThread);
 
    *classPreinitializeEventFailed = chTableOnClassPreinitialize(vmThread, cl, clazz, compInfo, vm);
@@ -3758,6 +3885,13 @@ static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA e
       return; // if a hook gets called after freeJitConfig then not much else we can do
 
    loadingClasses = true;
+
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   TR_PersistentCHTable * cht = NULL;
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+      cht = compInfo->getPersistentInfo()->getPersistentCHTable();
+   if (cht && !cht->isActive())
+      return;
 
    jitHookClassPreinitializeHelper(vmThread, jitConfig, cl, &(classPreinitializeEvent->failed));
    }

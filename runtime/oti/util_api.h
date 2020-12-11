@@ -1107,6 +1107,14 @@ jfloat helperCFloatRemainderFloat(jfloat a, jfloat b);
 
 #endif /* J9VM_INTERP_FLOAT_SUPPORT */ /* End File Level Build Flags */
 
+/**
+* @brief Retrieves the load info for the appropriate
+*        GC DLL based on reference mode.
+* @param[in] vm The Java VM.
+* @return J9VMDllLoadInfo for the GC DLL selected.
+*/
+J9VMDllLoadInfo *getGCDllLoadInfo(J9JavaVM *vm);
+
 /* ---------------- j9crc32.c ---------------- */
 
 /**

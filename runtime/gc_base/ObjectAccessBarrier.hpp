@@ -54,11 +54,11 @@ protected:
 	MM_GCExtensions *_extensions; 
 	MM_Heap *_heap;
 #if defined (OMR_GC_COMPRESSED_POINTERS)
-#if defined (OMR_GC_FULL_POINTERS)
+#if defined (OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 	bool _compressObjectReferences;
-#endif /* OMR_GC_FULL_POINTERS */
+#endif /* defined (OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 	UDATA _compressedPointersShift; /**< the number of bits to shift by when converting between the compressed pointers heap and real heap */
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 	UDATA _referenceLinkOffset; /** Offset within java/lang/ref/Reference of the reference link field */
 	UDATA _ownableSynchronizerLinkOffset; /** Offset within java/util/concurrent/locks/AbstractOwnableSynchronizer of the ownable synchronizer link field */
 public:
@@ -573,9 +573,9 @@ public:
 		, _extensions(NULL) 
 		, _heap(NULL)
 #if defined (OMR_GC_COMPRESSED_POINTERS)
-#if defined (OMR_GC_FULL_POINTERS)
+#if defined (OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 		, _compressObjectReferences(false)
-#endif /* OMR_GC_FULL_POINTERS */
+#endif /* defined (OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 		, _compressedPointersShift(0)
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 		, _referenceLinkOffset(UDATA_MAX)

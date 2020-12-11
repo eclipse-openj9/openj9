@@ -30,9 +30,9 @@ import java.lang.reflect.Modifier;
 import com.ibm.oti.vm.VM;
 import com.ibm.jit.JITHelpers;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 import static java.lang.invoke.MethodHandleResolver.UNSAFE;
 import static java.lang.invoke.MethodHandleResolver.JITHELPERS;
@@ -207,11 +207,11 @@ abstract class PrimitiveHandle extends MethodHandle {
 			throw new IllegalAccessException(e.getMessage());
 		}
 	}
-	
-/*[IF Java15]*/
+
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		return false;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 }

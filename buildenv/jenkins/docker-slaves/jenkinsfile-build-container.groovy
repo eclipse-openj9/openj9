@@ -97,7 +97,7 @@ timeout(time: 5, unit: 'HOURS') {
                     }
                 }
                 stage("Push") {
-                    def CREDENTIALS_ID = (params.credentialsId) ? params.credentialsId : '7fb9f8f0-14bf-469a-9132-91db4dd80c48'
+                    def CREDENTIALS_ID = (params.credentialsId) ? params.credentialsId : 'docker-login'
                     def DOCKER_LOGIN_URL = (params.DOCKER_LOGIN_URL) ? params.DOCKER_LOGIN_URL : ""
                     sh 'docker images'
                     withCredentials([usernamePassword(credentialsId: CREDENTIALS_ID, passwordVariable: 'PASS', usernameVariable: 'USER')]) {

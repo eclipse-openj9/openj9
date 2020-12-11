@@ -196,7 +196,7 @@ static bool isArrayWithConstantElements(TR::SymbolReference *symRef, TR::Compila
       switch (symbol->getRecognizedField())
          {
          case TR::Symbol::Java_lang_invoke_BruteArgumentMoverHandle_extra:
-         case TR::Symbol::Java_lang_invoke_MethodType_arguments:
+         case TR::Symbol::Java_lang_invoke_MethodType_ptypes:
          case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
          case TR::Symbol::Java_lang_String_value:
             return true;

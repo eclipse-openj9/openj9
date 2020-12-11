@@ -113,7 +113,7 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 	SLOT_CALLBACK(romClass, J9ROM_UTF8, romClass, className);
 	SLOT_CALLBACK(romClass, J9ROM_UTF8, romClass, superclassName);
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, modifiers);
-	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, extraModifiers);	
+	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, extraModifiers);
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, interfaceCount);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, interfaces);
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, romMethodCount);
@@ -137,7 +137,7 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, innerClassCount);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, innerClasses);
 #if JAVA_SPEC_VERSION >= 11
-	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, nestHost);
+	SLOT_CALLBACK(romClass, J9ROM_UTF8, romClass, nestHost);
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, nestMemberCount);
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, unused);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, nestMembers);
@@ -147,7 +147,11 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, optionalFlags);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, optionalInfo);
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, maxBranchCount);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, invokeCacheCount);
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, methodTypeCount);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, staticSplitMethodRefCount);
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, specialSplitMethodRefCount);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, staticSplitMethodRefIndexes);
@@ -1067,7 +1071,7 @@ static void allSlotsInStackMapDo(J9ROMClass* romClass, U_8 *stackMap, J9ROMClass
 }
 
 
-static UDATA 
+static UDATA
 allSlotsInMethodParametersDataDo(J9ROMClass* romClass, U_8 * cursor, J9ROMClassWalkCallbacks* callbacks, void* userData)
 {
 	J9MethodParametersData* methodParametersData = (J9MethodParametersData* )cursor;
@@ -1089,7 +1093,7 @@ allSlotsInMethodParametersDataDo(J9ROMClass* romClass, U_8 * cursor, J9ROMClassW
 		SLOT_CALLBACK(romClass, J9ROM_U8, methodParametersData, parameterCount);
 
 		for (; i < methodParametersData->parameterCount; i++) {
-			callbacks->slotCallback(romClass, J9ROM_SRP, &parameters[i].name, "methodParameterName", userData);
+			callbacks->slotCallback(romClass, J9ROM_UTF8, &parameters[i].name, "methodParameterName", userData);
 			callbacks->slotCallback(romClass, J9ROM_U16, &parameters[i].flags, "methodParameterFlag", userData);
 		}
 	}
@@ -1186,7 +1190,8 @@ allSlotsInMethodDebugInfoDo(J9ROMClass* romClass, U_32* cursor, J9ROMClassWalkCa
 	}
 
 	/* check for low tag to indicate inline or out of line debug information */
-	if (1 == (*cursor & 1)) {
+	BOOLEAN isInline = (1 == (*cursor & 1));
+	if (isInline) {
 		methodDebugInfo = (J9MethodDebugInfo *)cursor;
 		/* set the inline size to stored size in terms of U_32
 		 * NOTE: stored size is aligned
@@ -1197,17 +1202,17 @@ allSlotsInMethodDebugInfoDo(J9ROMClass* romClass, U_32* cursor, J9ROMClassWalkCa
 	}
 
 	rangeValid = callbacks->validateRangeCallback(romClass, methodDebugInfo, sizeof(J9MethodDebugInfo), userData);
-	if (FALSE == rangeValid
-	  /* if not low tagged skip walking the debug info since it is out of line and linear walker doesn't deal with out
-	   * of line data very well */
-	  || (0 == (*cursor & 1))) {
-		if ( inlineSize == 1 ) {
+	if ((FALSE == rangeValid) || (FALSE == isInline)) {
+		if (1 == inlineSize) {
 			callbacks->slotCallback(romClass, J9ROM_SRP, cursor, "SRP to DebugInfo", userData);
 			callbacks->sectionCallback(romClass, cursor, inlineSize * sizeof(U_32), "methodDebugInfo", userData);
 		}
-		return inlineSize;
+		if (FALSE == rangeValid) {
+			/* linear walker will check that the range is within the ROMClass bounds
+			 * so it will skip walking the debug info if it is out of line */
+			return inlineSize;
+		}
 	}
-
 
 	callbacks->slotCallback(romClass, J9ROM_U32, &methodDebugInfo->srpToVarInfo, "SizeOfDebugInfo(low tagged)", userData);
 	callbacks->slotCallback(romClass, J9ROM_U32, &methodDebugInfo->lineNumberCount, "lineNumberCount(low tagged)", userData);
@@ -1241,18 +1246,18 @@ allSlotsInMethodDebugInfoDo(J9ROMClass* romClass, U_32* cursor, J9ROMClassWalkCa
 
 		while (NULL != values) {
 			/* Need to walk the name and signature to add them to the UTF8 section */
-			rangeValid = callbacks->validateRangeCallback(romClass, values->name, sizeof(J9UTF8), userData);
+			rangeValid = callbacks->validateRangeCallback(romClass, values->nameSrp, sizeof(J9SRP), userData);
 			if (rangeValid) {
-				callbacks->slotCallback(romClass, J9ROM_UTF8_NOSRP, values->name, "name", userData);
+				callbacks->slotCallback(romClass, J9ROM_UTF8, values->nameSrp, "variableName", userData);
 			}
-			rangeValid = callbacks->validateRangeCallback(romClass, values->signature, sizeof(J9UTF8), userData);
+			rangeValid = callbacks->validateRangeCallback(romClass, values->signatureSrp, sizeof(J9SRP), userData);
 			if (rangeValid) {
-				callbacks->slotCallback(romClass, J9ROM_UTF8_NOSRP, values->signature, "signature", userData);
+				callbacks->slotCallback(romClass, J9ROM_UTF8, values->signatureSrp, "variableSignature", userData);
 			}
 			if (NULL != values->genericSignature) {
-				rangeValid = callbacks->validateRangeCallback(romClass, values->genericSignature, sizeof(J9UTF8), userData);
+				rangeValid = callbacks->validateRangeCallback(romClass, values->genericSignatureSrp, sizeof(J9SRP), userData);
 				if (rangeValid) {
-					callbacks->slotCallback(romClass, J9ROM_UTF8_NOSRP, values->genericSignature, "genericSignature", userData);
+					callbacks->slotCallback(romClass, J9ROM_UTF8, values->genericSignatureSrp, "variableGenericSignature", userData);
 				}
 			}
 
@@ -1268,7 +1273,9 @@ allSlotsInMethodDebugInfoDo(J9ROMClass* romClass, U_32* cursor, J9ROMClassWalkCa
 		}
 		callbacks->sectionCallback(romClass, variableTable, entryLength, "variableInfo", userData);
 	}
-	callbacks->sectionCallback(romClass, cursor, inlineSize * sizeof(U_32), "methodDebugInfo", userData);
+	if (isInline) { /* section callback was already called if debug info is out of line */
+		callbacks->sectionCallback(romClass, cursor, inlineSize * sizeof(U_32), "methodDebugInfo", userData);
+	}
 	return inlineSize;
 }
 

@@ -27,9 +27,7 @@
 extern "C" {
 #endif
 
-
 #include "jcl.h"
-
 
 jint initializeJCLSystemProperties(J9JavaVM * vm);
 #if defined(J9VM_OPT_SNAPSHOTS)
@@ -684,6 +682,13 @@ jobject JNICALL Java_jdk_internal_misc_Unsafe_compareAndExchangeObjectVolatile(J
 jint JNICALL Java_jdk_internal_misc_Unsafe_compareAndExchangeIntVolatile(JNIEnv *env, jobject receiver, jobject obj1, jlong size1, jint size2, jint size3);
 jlong JNICALL Java_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile(JNIEnv *env, jobject receiver, jobject obj1, jlong size1, jlong size2, jlong size3);
 
+/* vector natives */
+jint JNICALL
+Java_jdk_internal_vm_vector_VectorSupport_registerNatives(JNIEnv *env, jclass clazz);
+jint JNICALL
+Java_jdk_internal_vm_vector_VectorSupport_getMaxLaneCount(JNIEnv *env, jclass clazz, jclass elementType);
+
+
 /* BBjclNativesCommonVM*/
 jint JNICALL Java_com_ibm_oti_vm_VM_getBootClassPathCount (JNIEnv * env, jclass clazz);
 jint JNICALL 
@@ -949,8 +954,10 @@ Java_java_lang_invoke_MethodHandleNatives_checkClassBytes(JNIEnv *env, jclass jl
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 /* java_lang_invoke_VarHandle.c */
+#if defined(J9VM_OPT_METHOD_HANDLE)
 jlong JNICALL Java_java_lang_invoke_FieldVarHandle_lookupField(JNIEnv *env, jobject handle, jclass lookupClass, jstring name, jstring signature, jclass type, jboolean isStatic, jclass accessClass);
 jlong JNICALL Java_java_lang_invoke_FieldVarHandle_unreflectField(JNIEnv *env, jobject handle, jobject reflectField, jboolean isStatic);
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 jobject JNICALL Java_java_lang_invoke_VarHandle_get(JNIEnv *env, jobject handle, jobject args);
 void JNICALL Java_java_lang_invoke_VarHandle_set(JNIEnv *env, jobject handle, jobject args);
 jobject JNICALL Java_java_lang_invoke_VarHandle_getVolatile(JNIEnv *env, jobject handle, jobject args);
@@ -1175,8 +1182,19 @@ Java_com_ibm_lang_management_internal_JvmCpuMonitor_getThreadCategoryImpl(JNIEnv
 jint JNICALL
 Java_com_ibm_oti_vm_VM_markCurrentThreadAsSystemImpl(JNIEnv *env);
 
+#if JAVA_SPEC_VERSION >= 16
+jboolean JNICALL
+Java_java_lang_ref_Reference_refersTo(JNIEnv *env, jobject reference, jobject target);
+
+void JNICALL
+Java_jdk_internal_misc_ScopedMemoryAccess_registerNatives(JNIEnv *env, jclass clazz);
+
+jboolean JNICALL
+Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope, jobject exception);
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
 #endif /* JCLPROTS_H */

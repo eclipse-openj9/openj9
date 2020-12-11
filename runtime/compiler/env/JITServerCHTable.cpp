@@ -28,6 +28,7 @@
 #include "il/SymbolReference.hpp"              // for SymbolReference
 #include "codegen/CodeGenerator.hpp"           // for CodeGenerator
 #include "env/VMAccessCriticalSection.hpp"     // for VMAccessCriticalSection
+#include "env/VerboseLog.hpp"
 
 void
 JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_VirtualGuardSite> &sites,
@@ -101,7 +102,7 @@ bool JITClientCHTableCommit(
    std::vector<TR_OpaqueClassBlock*> &classesForStaticFinalFieldModification = std::get<8>(data);
    uint8_t *serverStartPC = std::get<9>(data);
    uint8_t *startPC = (uint8_t*) metaData->startPC;
-   
+
    if (vguards.empty() && sideEffectPatchSites.empty() && preXMethods.empty() && classes.empty() && classesThatShouldNotBeNewlyExtended.empty())
       return true;
 
@@ -243,7 +244,7 @@ bool JITClientCHTableCommit(
          for (auto &inner : innerAssumptions)
             JITClientCommitVirtualGuard(&inner, sites, table, comp);
          }
-      
+
       // osr guards need to be processed after all the guards, because sites' location/destination
       // need to be patched first
       static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
@@ -317,12 +318,12 @@ JITClientCommitOSRVirtualGuards(TR::Compilation *comp, std::vector<VirtualGuardF
          auto &info = std::get<0>(guard);
          auto &sites = std::get<1>(guard);
          if (info._kind == TR_OSRGuard || info._mergedWithOSRGuard)
-            { 
+            {
             for (auto &site : sites)
                points->add(site.getLocation(), site.getDestination());
             }
          }
- 
+
       for (int i = 0; i < clazzesForOSRRedefinition->size(); ++i)
          TR_PatchMultipleNOPedGuardSitesOnClassRedefinition
             ::make(comp->fe(), comp->trPersistentMemory(), (*clazzesForOSRRedefinition)[i], points, comp->getMetadataAssumptionList());
@@ -485,7 +486,7 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
       TR_ASSERT(info->_isInterface && info->_kind == TR_InterfaceGuard, "assertion failure");
       TR_OpaqueClassBlock *thisClass = info->_thisClass;
       TR_ASSERT(thisClass, "assertion failure");
-      
+
       TR_ResolvedMethod *implementer = table->findSingleImplementer(thisClass, cpIndex, owningMethod, comp, true, TR_yes);
       if (!implementer ||
           (info->_testType == TR_VftTest && comp->fe()->classHasBeenExtended(implementer->containingClass())))

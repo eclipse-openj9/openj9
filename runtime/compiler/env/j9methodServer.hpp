@@ -217,6 +217,8 @@ public:
    virtual void getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight = NULL) override;
    virtual bool getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0) override;
    virtual uint16_t archetypeArgPlaceholderSlot() override;
+   virtual bool isFieldQType(int32_t cpIndex) override;
+   virtual bool isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bool isStatic) override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    static void createResolvedMethodMirror(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);

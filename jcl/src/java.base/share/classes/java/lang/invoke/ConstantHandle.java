@@ -24,9 +24,9 @@ package java.lang.invoke;
 
 import static java.lang.invoke.MethodType.*;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /*
  * MethodHandle subclass responsible for dealing with constant values.
@@ -128,13 +128,13 @@ abstract class ConstantHandle extends MethodHandle {
 			return new ConstantIntHandle(methodType, value);
 		}
 	}
-	
-/*[IF Java15]*/
+
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		return false;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 }
 
 final class ConstantObjectHandle extends ConstantHandle {

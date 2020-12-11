@@ -27,9 +27,9 @@ import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.security.AllPermission;
 import java.security.Permissions;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
-/*[ENDIF] Java12*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12*/
 import java.lang.reflect.*;
 import java.net.URL;
 import java.lang.annotation.*;
@@ -41,19 +41,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.util.Optional;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.security.PrivilegedAction;
 import java.lang.ref.*;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
 import java.lang.constant.Constable;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 import sun.reflect.generics.repository.ClassRepository;
 import sun.reflect.generics.factory.CoreReflectionFactory;
@@ -61,18 +61,24 @@ import sun.reflect.generics.scope.ClassScope;
 import sun.reflect.annotation.AnnotationType;
 import java.util.Arrays;
 import com.ibm.oti.vm.VM;
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 import static com.ibm.oti.util.Util.doesClassLoaderDescendFrom;
-/*[ENDIF] Java11*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
 
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
+/*[IF JAVA_SPEC_VERSION >= 15]*/
+import jdk.internal.access.SharedSecrets;
+/*[ELSE] JAVA_SPEC_VERSION >= 15
+import jdk.internal.misc.SharedSecrets;
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 import java.io.IOException;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.ConstantPool;
 /*[ELSE]*/
 import sun.misc.Unsafe;
+import sun.misc.SharedSecrets;
 import sun.reflect.Reflection;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
@@ -136,9 +142,9 @@ import sun.security.util.SecurityConstants;
  * @version		initial
  */
 public final class Class<T> implements java.io.Serializable, GenericDeclaration, Type
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	, Constable, TypeDescriptor, TypeDescriptor.OfField<Class<?>>
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 {
 	private static final long serialVersionUID = 3206093459760846163L;
 	private static ProtectionDomain AllPermissionsPD;
@@ -262,14 +268,14 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 		return unsafe;
 	}
 	
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 	private Class<?> nestHost;
-/*[ENDIF] Java11*/
-	
-/*[IF Java15]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	private transient Object classData;
-/*[ENDIF] Java15*/
-	
+/*[ENDIF] JAVA_SPEC_VERSION >= 15*/
+
 /**
  * Prevents this class from being instantiated. Instances
  * created by the virtual machine only.
@@ -2456,10 +2462,10 @@ public String toGenericString() {
 		kindOfType = "interface "; //$NON-NLS-1$
 	} else if ((!isArray) && ((modifiers & ENUM) != 0) && (getSuperclass() == Enum.class)) {
 		kindOfType = "enum "; //$NON-NLS-1$
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	} else if (isRecord()) {
 		kindOfType = "record "; //$NON-NLS-1$
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 	} else {
 		kindOfType = "class "; //$NON-NLS-1$	
 	}
@@ -2511,7 +2517,7 @@ private void appendTypeParameters(StringBuilder nameBuilder) {
 			if (comma) nameBuilder.append(',');
 			nameBuilder.append(t);
 			comma = true;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 			Type[] types = t.getBounds();
 			if (types.length == 1 && types[0].equals(Object.class)) {
 				// skip in case the only bound is java.lang.Object
@@ -2522,7 +2528,7 @@ private void appendTypeParameters(StringBuilder nameBuilder) {
 					prefix = " & "; //$NON-NLS-1$
 				}
 			}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 		}
 		nameBuilder.append('>');
 	}
@@ -3110,7 +3116,7 @@ private AnnotationCache getAnnotationCache() {
 			Annotation[] directAnnotations = sun.reflect.annotation.AnnotationParser.toArray(
 						sun.reflect.annotation.AnnotationParser.parseAnnotations(
 								annotationsData,
-								new Access().getConstantPool(this),
+								getConstantPool(),
 								this));
 			
 			LinkedHashMap<Class<? extends Annotation>, Annotation> directAnnotationsMap = new LinkedHashMap<>(directAnnotations.length * 4 / 3);
@@ -3667,12 +3673,12 @@ public String getCanonicalName() {
 			arrayCount++;
 		}
 	}
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	if (baseType.isHidden()) {
 		/* Canonical name is always null for hidden classes. */
 		return null;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 	if (baseType.getEnclosingObjectClass() != null) {
 		// local or anonymous class
 		return null;
@@ -4670,10 +4676,11 @@ Object setMethodHandleCache(Object cache) {
 	return result;
 }
 
-/*[IF Sidecar19-SE]*/
 ConstantPool getConstantPool() {
-	return new Access().getConstantPool(this);
+	return SharedSecrets.getJavaLangAccess().getConstantPool(this);
 }
+
+/*[IF Sidecar19-SE]*/
 Map<Class<? extends Annotation>, Annotation> getDeclaredAnnotationMap() {
 	throw new Error("Class.getDeclaredAnnotationMap() unimplemented"); //$NON-NLS-1$
 }
@@ -4688,7 +4695,7 @@ static byte[] getExecutableTypeAnnotationBytes(Executable exec) {
 }
 /*[ENDIF] Sidecar19-SE*/
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 /**
  * Answers the host class of the receiver's nest.
  *
@@ -4764,7 +4771,7 @@ public boolean isNestmateOf(Class<?> that) {
  * Answers the nest member classes of the receiver's nest host.
  *
  * @throws SecurityException if a SecurityManager is present and package access is not allowed
-/*[IF !Java15]
+/*[IF JAVA_SPEC_VERSION < 15]
  * @throws LinkageError if there is any problem loading or validating a nest member or the nest host
 /*[ENDIF]
  * @throws SecurityException if a returned class is not the current class, a security manager is enabled,
@@ -4774,9 +4781,9 @@ public boolean isNestmateOf(Class<?> that) {
  */
 @CallerSensitive
 public Class<?>[] getNestMembers() throws
-/*[IF !Java15] */
-LinkageError, 
-/*[ENDIF] */
+/*[IF JAVA_SPEC_VERSION < 15] */
+LinkageError,
+/*[ENDIF] JAVA_SPEC_VERSION < 15 */
 SecurityException {
 	if (isArray() || isPrimitive()) {
 		/* By spec, Class objects representing array types or primitive types
@@ -4804,9 +4811,9 @@ SecurityException {
 
 	return members;
 }
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Create class of an array. The component type will be this Class instance.
 	 * 
@@ -4840,7 +4847,7 @@ SecurityException {
 	 * @return Optional with a nominal descriptor of Class instance
 	 */
 	public Optional<ClassDesc> describeConstable() {
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 		Class<?> clazz = this;
 		if (isArray()) {
 			clazz = getComponentType();
@@ -4852,8 +4859,8 @@ SecurityException {
 			/* It is always an empty Optional for hidden classes. */
 			return Optional.empty(); 
 		}
-/*[ENDIF] Java15 */		
-		
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+
 		ClassDesc classDescriptor = ClassDesc.ofDescriptor(this.descriptorString());
 		return Optional.of(classDescriptor);
 	}
@@ -4888,7 +4895,7 @@ SecurityException {
 			}
 		}
 		String name = this.getName().replace('.', '/');
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 		Class<?> clazz = this;
 		if (isArray()) {
 			clazz = getComponentType();
@@ -4901,15 +4908,15 @@ SecurityException {
 			int index = name.lastIndexOf('/');
 			name = name.substring(0, index)+ '.' + name.substring(index + 1,name.length());
 		}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		if (this.isArray()) {
 			return name;
 		}
 		return "L"+ name + ";"; //$NON-NLS-1$ //$NON-NLS-2$
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	/**
 	 * Returns true if the class instance is a record.
 	 * 
@@ -4942,9 +4949,9 @@ SecurityException {
 	}
 
 	private native RecordComponent[] getRecordComponentsImpl();
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**
 	 * Returns true if class or interface is sealed.
 	 * 
@@ -4994,5 +5001,5 @@ SecurityException {
 	Object getClassData() {
 		return classData;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 }

@@ -39,10 +39,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="complianceTestingSupportedModes" value="proxytck_cldc11,proxytck_cdc10,proxytck_cdc11,proxytck_foun10,proxytck_foun11"/>
 		<property name="directoryDelimiter" value="/"/>
 		<property name="graph_arch.cpu" value="{$spec.arch.cpuISA$}"/>
-		<property name="graph_commands.chroot" value=""/>
+		<property name="graph_commands.chroot" value="{$commands.docker.rhel6.x86_64$}"/>
 		<property name="graph_commands.unix.remote_host" value=""/>
 		<property name="graph_datamines" value="commands.unix.datamine,site-ottawa.datamine,use.local.datamine"/>
-		<property name="graph_enable_gcc7_cmd" value="source {$buildinfo.fsroot.unixBin$}/platform/linux386/set_gcc7.5_env &amp;&amp;"/>
+		<property name="graph_enable_gcc7_cmd" value=""/>
 		<property name="graph_flags.linux_2.4" value="graph_tck"/>
 		<property name="graph_label.classlib" value="150"/>
 		<property name="graph_label.java5" value="j9vmxi3224"/>
@@ -72,7 +72,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="graph_property.linux_hammer.graph_variant.trailingID" value=".linux_hammer"/>
 		<property name="graph_req.arch0" value="arch:x86"/>
 		<property name="graph_req.arch1" value="arch:32bit"/>
-		<property name="graph_req.aux0" value=""/>
+		<property name="graph_req.aux0" value="docker"/>
 		<property name="graph_req.build" value="{$common.req.build.java9$}"/>
 		<property name="graph_req.build2" value="{$common.req.build.java8$}"/>
 		<property name="graph_req.machine" value="{$machine_mapping.x86$}"/>

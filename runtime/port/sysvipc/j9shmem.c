@@ -613,6 +613,14 @@ j9shmem_attach(struct J9PortLibrary *portLibrary, struct j9shmem_handle *handle,
 				int32_t myerrno = omrerror_last_error_number();
 				if ((J9PORT_ERROR_SYSV_IPC_SHMAT_ERROR + J9PORT_ERROR_SYSV_IPC_ERRNO_EACCES) == myerrno) {
 					omrnls_printf(J9NLS_WARNING, J9NLS_PORT_ZOS_SHMEM_STORAGE_KEY_MISMATCH, handle->controlStorageProtectKey, handle->currentStorageProtectKey);
+					/*
+					 * omrnls_printf() can change the last error, this occurs when libj9ifa29.so is APF authorized (extattr +a).
+					 * The last error may be set to -108 EDC5129I No such file or directory.
+					 * This causes cmdLineTester_shareClassesStorageKey to fail with an unexpected error code. It also shows
+					 * the incorrect last error as the reason the shared cache could not be opened, which is confusing.
+					 * Reset the last error to what it was before omrnls_printf().
+					 */
+					omrerror_set_last_error(EACCES, J9PORT_ERROR_SYSV_IPC_SHMAT_ERROR + J9PORT_ERROR_SYSV_IPC_ERRNO_EACCES);
 				}
 			}
 		}

@@ -46,6 +46,7 @@
       <class name="jit.test.jitt.array.intArrayLoadStore"/>
       <class name="jit.test.jitt.array.intArrayLoadStoreConstIndices"/>
       <class name="jit.test.jitt.array.shortArrayLoadStore"/>
+      <class name="jit.test.jitt.array.multianewarray"/>
     </classes>
   </test>
   <test name="assemblerTest">
@@ -433,6 +434,11 @@
     <classes>
       <class name="jit.test.tr.signExtensionA.SignExtElimTest" />
     </classes>
+  </test>
+  <test name="SIMDCommonedAddressTest">
+         <classes>
+           <class name="jit.test.tr.SIMDOpts.SIMDCommonedAddressTest" />
+         </classes>
   </test>
   <test name="SIMDOptTest">
 	 <classes>

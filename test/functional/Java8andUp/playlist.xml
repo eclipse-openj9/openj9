@@ -405,6 +405,7 @@
 		<testCaseName>TestSunAttachClasses</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 		$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--illegal-access=permit \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
@@ -459,6 +460,7 @@
 	<test>
 		<testCaseName>TestManagementAgent</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--illegal-access=permit \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
@@ -759,6 +761,7 @@
 	<test>
 		<testCaseName>TestFileLocking</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--illegal-access=permit \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=no \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestFileLocking \
@@ -1044,7 +1047,7 @@
 			<variation>-XX:+CompactStrings</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
-	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
+	--illegal-access=permit -Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED \
 	--add-exports java.base/com.ibm.oti.util=ALL-UNNAMED \
@@ -1146,7 +1149,7 @@
 			<variation>-Xshareclasses:none -XX:RecreateClassfileOnload</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
-	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
+	--illegal-access=permit -Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED \
 	--add-exports java.base/com.ibm.oti.util=ALL-UNNAMED \
@@ -1565,7 +1568,7 @@
 
 	<test>
 		<testCaseName>JCL_Test_JITHelpers</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --add-exports=java.base/com.ibm.jit=ALL-UNNAMED \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --illegal-access=permit --add-exports=java.base/com.ibm.jit=ALL-UNNAMED \
 	--add-opens=java.base/com.ibm.jit=ALL-UNNAMED -Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)TestResources.jar$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JCL_TEST_JITHelpers \

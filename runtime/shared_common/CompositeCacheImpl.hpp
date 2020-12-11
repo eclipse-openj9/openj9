@@ -55,8 +55,7 @@
 #define CC_STARTUP_CORRUPT -2
 #define CC_STARTUP_RESET -3
 #define CC_STARTUP_SOFT_RESET -4
-#define CC_STARTUP_NO_CACHELETS -5
-#define CC_STARTUP_NO_CACHE -6
+#define CC_STARTUP_NO_CACHE -5
 
 /* How many bytes to sample from across the cache for calculating the CRC */
 /* Need a value that has negligible impact on performance */

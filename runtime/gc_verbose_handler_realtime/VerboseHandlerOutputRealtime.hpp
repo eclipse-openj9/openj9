@@ -193,7 +193,7 @@ protected:
 	 * @return string representing the human readable "type" of the cycle.
 	 */	
 	virtual const char *getCycleType(UDATA type);
-	virtual void handleInitializedInnerStanzas(J9HookInterface** hook, UDATA eventNum, void* eventData);
+	virtual void outputInitializedInnerStanza(MM_EnvironmentBase *env, MM_VerboseBuffer *buffer);
 
 	MM_VerboseHandlerOutputRealtime(MM_GCExtensions *extensions) :
 		MM_VerboseHandlerOutput(extensions),
@@ -246,7 +246,7 @@ protected:
 	virtual void tearDown(MM_EnvironmentBase *env);
 
 	virtual bool getThreadName(char *buf, UDATA bufLen, OMR_VMThread *vmThread);
-	virtual void writeVmArgs(MM_EnvironmentBase* env);
+	virtual void writeVmArgs(MM_EnvironmentBase* env, MM_VerboseBuffer* buffer);
 
 public:
 	static MM_VerboseHandlerOutput *newInstance(MM_EnvironmentBase *env, MM_VerboseManager *manager);

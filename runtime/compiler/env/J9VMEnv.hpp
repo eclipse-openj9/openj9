@@ -116,7 +116,8 @@ public:
    uintptr_t thisThreadGetGSOperandAddressOffset(TR::Compilation *comp);
    uintptr_t thisThreadGetGSHandlerAddressOffset(TR::Compilation *comp);
    size_t getInterpreterVTableOffset();
-
+   
+   bool isVMInStartupPhase(J9JITConfig *jitConfig);
    };
 
 }

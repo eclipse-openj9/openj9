@@ -943,6 +943,9 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 	case BCV_ERR_BYTECODE_ERROR:
 		printMessage(&msgBuf, "Error exists in the bytecode.");
 		break;
+	case BCV_ERR_NEW_OJBECT_MISMATCH:
+		printMessage(&msgBuf, "The arity (0x%x) of the new object is greater than zero", verifyData->errorTempData);
+		break;
 	default:
 		Assert_VRB_ShouldNeverHappen();
 		break;

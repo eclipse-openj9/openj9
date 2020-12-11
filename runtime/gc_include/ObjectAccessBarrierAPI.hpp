@@ -58,10 +58,10 @@ private:
 	const UDATA _readBarrierType;
 #if defined (OMR_GC_COMPRESSED_POINTERS)
 	const UDATA _compressedPointersShift;
-#if defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 	bool const _compressObjectReferences;
-#endif /* OMR_GC_FULL_POINTERS */
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+#endif /* defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 
 /* Methods */
 public:
@@ -74,10 +74,10 @@ public:
 		, _readBarrierType(currentThread->javaVM->gcReadBarrierType)
 #if defined (OMR_GC_COMPRESSED_POINTERS)
 		, _compressedPointersShift(currentThread->javaVM->compressedPointersShift)
-#if defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 		, _compressObjectReferences(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread))
-#endif /* OMR_GC_FULL_POINTERS */
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+#endif /* defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 	{}
 
 	/**
@@ -374,21 +374,23 @@ public:
 	}
 
 	VMINLINE UDATA
-	mixedObjectGetHeaderSize()
+	mixedObjectGetHeaderSize(J9Class *objectClass)
 	{
-		return compressObjectReferences() ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull);
+		return (compressObjectReferences() ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull)) + J9CLASS_PREPADDING_SIZE(objectClass);
 	}
 
 	VMINLINE UDATA
 	mixedObjectGetDataSize(J9Class *objectClass)
 	{
-		return objectClass->totalInstanceSize;
+		return J9CLASS_UNPADDED_INSTANCE_SIZE(objectClass);
 	}
 
 	VMINLINE void
 	cloneObject(J9VMThread *currentThread, j9object_t original, j9object_t copy, J9Class *objectClass)
 	{
-		copyObjectFields(currentThread, objectClass, original, mixedObjectGetHeaderSize(), copy, mixedObjectGetHeaderSize());
+		UDATA offset = mixedObjectGetHeaderSize(objectClass);
+
+		copyObjectFields(currentThread, objectClass, original, offset, copy, offset);
 	}
 
 	VMINLINE void 
@@ -415,8 +417,8 @@ public:
 		if (hasReferences && (j9gc_modron_readbar_none != _readBarrierType)) {
 			return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_structuralCompareFlattenedObjects(vmThread, valueClass, lhsObject, rhsObject, startOffset);
 		} else {
-			startOffset += valueClass->backfillOffset;
-			UDATA compareSize = mixedObjectGetDataSize(valueClass) - valueClass->backfillOffset;
+			UDATA compareSize = mixedObjectGetDataSize(valueClass);
+			startOffset += J9CLASS_PREPADDING_SIZE(valueClass);
 
 			return (0 == memcmp((void*)((UDATA)lhsObject + startOffset), (void*)((UDATA)rhsObject + startOffset), (size_t)compareSize));
 		}
@@ -446,9 +448,6 @@ public:
 		} else {
 			UDATA offset = 0;
 			UDATA limit = mixedObjectGetDataSize(objectClass);
-			if (J9_IS_J9CLASS_VALUETYPE(objectClass)) {
-				offset += objectClass->backfillOffset;
-			}
 
 			if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
 				while (offset < limit) {

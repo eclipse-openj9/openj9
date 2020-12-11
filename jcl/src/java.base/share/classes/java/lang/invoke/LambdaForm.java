@@ -1,5 +1,4 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9 & !OPENJDK_METHODHANDLES]*/
-
 /*******************************************************************************
  * Copyright (c) 2017, 2020 IBM Corp. and others
  *
@@ -21,7 +20,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package java.lang.invoke;
 
 import java.lang.reflect.Method;
@@ -30,7 +28,6 @@ import sun.invoke.util.Wrapper;
 /*
  * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
  */
-
 class LambdaForm {
 
 	LambdaForm(String str, int num1, Name[] names, int num2) {
@@ -42,7 +39,7 @@ class LambdaForm {
 	LambdaForm(String str, int num, Name[] names, boolean flag) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[IF Java10]*/
+	/*[IF JAVA_SPEC_VERSION >= 10]*/
 	LambdaForm(int a, Name[] b, int c) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -73,8 +70,8 @@ class LambdaForm {
 	LambdaForm(Name[] a, Name[] b, Name c, boolean d) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[ENDIF]*/
-	
+	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
+
 	static class NamedFunction {
 		NamedFunction(MethodHandle mh) {
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
@@ -88,15 +85,15 @@ class LambdaForm {
 		NamedFunction(Method m) {
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
-		/*[IF Java10]*/
+		/*[IF JAVA_SPEC_VERSION >= 10]*/
 		NamedFunction(MethodHandle a, MethodHandleImpl.Intrinsic b){
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
 		NamedFunction(MemberName a, MethodHandle b, MethodHandleImpl.Intrinsic c){
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
-		/*[ENDIF]*/
-		
+		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
+
 		MethodHandle resolvedHandle() {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
@@ -143,7 +140,7 @@ class LambdaForm {
 			return basicType;
 		}
 	}
-	/*[IF Java10]*/
+	/*[IF JAVA_SPEC_VERSION >= 10]*/
 	enum Kind {
 		CONVERT,
 		SPREAD,
@@ -153,8 +150,8 @@ class LambdaForm {
 		LOOP,
 		TRY_FINALLY
 	}
-	/*[ENDIF]*/
-	
+	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
+
 	@interface Hidden{
 	}
 	

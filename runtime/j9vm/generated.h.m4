@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2018 IBM Corp. and others
+ * Copyright (c) 2002, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,16 +24,10 @@ changequote(`[',`]')dnl
 #ifndef jvm_generated_h
 #define jvm_generated_h
 
-#include "j9cfg.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /** WARNING: Automatically Generated File
  *
  * This file contains automatically generated function prototypes
- * for Sun VM Interface (i.e. JVM_) functions.
+ * for OpenJDK VM Interface (i.e. JVM_) functions.
  *
  * DO NOT ADD PROTOTYPES MANUALLY, instead modify the table in:
  * redirector/forwarders.m4
@@ -42,22 +36,25 @@ extern "C" {
  * redirector/forwarders.m4 for source data.
  */
 
+#include "j9cfg.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 include([helpers.m4])
 define([_IF],
 [#if $1
 $2
-dnl #endif /* $1 */
-#endif
-])
-dnl        (1-name,2-cc, 3-decorate, 4-ret, 5-args..)
+#endif])
+dnl (1-name, 2-cc, 3-decorate, 4-ret, 5-args...)
 define([_X],
-[$4 $2
-$1(join([, ],mshift(4,$@)));])
+[$4 ifelse($2,,,$2 )$1(join([, ],mshift(4,$@)));])
 
 include([forwarders.m4])
 
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
 #endif /* jvm_generated_h */

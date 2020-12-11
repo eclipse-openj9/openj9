@@ -224,9 +224,9 @@ MM_VerboseHandlerOutputVLHGC::getThreadName(char *buf, UDATA bufLen, OMR_VMThrea
 }
 
 void
-MM_VerboseHandlerOutputVLHGC::writeVmArgs(MM_EnvironmentBase* env)
+MM_VerboseHandlerOutputVLHGC::writeVmArgs(MM_EnvironmentBase* env, MM_VerboseBuffer* buffer)
 {
-	MM_VerboseHandlerJava::writeVmArgs(_manager, env, static_cast<J9JavaVM*>(_omrVM->_language_vm));
+	MM_VerboseHandlerJava::writeVmArgs(env, buffer, static_cast<J9JavaVM*>(_omrVM->_language_vm));
 }
 
 void
@@ -288,9 +288,8 @@ MM_VerboseHandlerOutputVLHGC::outputReferenceInfo(MM_EnvironmentBase *env, UDATA
 }
 
 void
-MM_VerboseHandlerOutputVLHGC::handleInitializedInnerStanzas(J9HookInterface** hook, UDATA eventNum, void* eventData)
-{
-	handleInitializedRegion(hook, eventNum, eventData);
+MM_VerboseHandlerOutputVLHGC::outputInitializedInnerStanza(MM_EnvironmentBase *env, MM_VerboseBuffer *buffer){
+	outputInitializedRegion(env, buffer);
 }
 
 void

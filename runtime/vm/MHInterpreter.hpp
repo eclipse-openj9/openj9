@@ -207,7 +207,7 @@ private:
 	{
 		return J9VM_J9CLASS_FROM_HEAPCLASS(
 				_currentThread,
-				J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(_currentThread, methodType));
+				J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(_currentThread, methodType));
 	}
 
 	/**
@@ -218,7 +218,7 @@ private:
 	VMINLINE j9object_t
 	getMethodTypeArguments(j9object_t methodType) const
 	{
-		return J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(_currentThread, methodType);
+		return J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(_currentThread, methodType);
 	}
 
 	/**

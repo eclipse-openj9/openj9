@@ -196,7 +196,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	cleanUpClassLoader,
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 	iterateStackTrace,
-	getCompleteNPEMessage,
+	getNPEMessage,
 	internalReleaseVMAccessNoMutex,
 	getVMHookInterface,
 	internalAttachCurrentThread,
@@ -299,8 +299,10 @@ J9InternalVMFunctions J9InternalFunctions = {
 	sendForGenericInvoke,
 	jitFillOSRBuffer,
 	sendResolveMethodHandle,
+	resolveOpenJDKInvokeHandle,
 	resolveConstantDynamic,
 	resolveInvokeDynamic,
+	sendResolveOpenJDKInvokeHandle,
 	sendResolveConstantDynamic,
 	sendResolveInvokeDynamic,
 	resolveMethodHandleRef,
@@ -403,5 +405,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	storeFlattenableArrayElement,
 	loadFlattenableArrayElement,
 	jniIsInternalClassRef,
-	sendInitEncodings,
+	objectIsBeingWaitedOn,
+	areValueBasedMonitorChecksEnabled,
+	sendInitEncodings
 };

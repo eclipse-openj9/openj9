@@ -1114,6 +1114,13 @@ TR_J9VMBase::getObjectClass(uintptr_t objectPointer)
    return convertClassPtrToClassOffset(j9class);
    }
 
+TR_OpaqueClassBlock *
+TR_J9VMBase::getObjectClassAt(uintptr_t objectAddress)
+   {
+   TR::VMAccessCriticalSection getObjectClassAt(this);
+   return getObjectClass(getStaticReferenceFieldAtAddress(objectAddress));
+   }
+
 uintptr_t
 TR_J9VMBase::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    {
@@ -4507,9 +4514,6 @@ TR_J9VMBase::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *comp)
       && (  method->getMandatoryRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact
          || method->isArchetypeSpecimen()))
       {
-      if (isAOT_DEPRECATED_DO_NOT_USE()) // While we're here... we need an AOT relocation for this call
-         comp->cg()->addExternalRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(NULL, (uint8_t *)callNode, (uint8_t *)methodSymbol->getMethod()->signatureChars(), TR_J2IThunks, comp->cg()), __FILE__, __LINE__, callNode);
-
       // We need a j2i thunk when this call executes, in case the target MH has
       // no invokeExact thunk yet.
 
@@ -7159,31 +7163,6 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          // JITServer: store the helper reference number in the node for use in creating TR_HelperAddress relocation
          callNode->getSymbolReference()->setReferenceNumber(helperSymRef->getReferenceNumber());
 #endif /* defined(J9VM_OPT_JITSERVER) */
-         return callNode;
-         }
-      case TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper:
-         {
-         // This method is implemented as a VM helper.  It must alter the stack
-         // frame shape insuch bizarre ways that it needs special treatment.
-         //
-         TR::SymbolReference *helperSymRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeWithArguments, true, true, false);
-         if (HELPERS_ARE_NEITHER_RESOLVED_NOR_UNRESOLVED)
-            {
-            // Can't just use the the helper symbol because those aren't
-            // unresolved yet don't use TR::ResolvedMethodSymbol.  That confuses
-            // everyone.  We ought to fix that.  Instead, for now, transmute
-            // the existing symbol so it acts like the helper.
-            //
-            TR::MethodSymbol *sym = callNode->getSymbol()->castToMethodSymbol();
-            sym->setVMInternalNative(false);
-            sym->setJITInternalNative(false);
-            sym->setInterpreted(false);
-            sym->setMethodAddress(helperSymRef->getMethodAddress());
-            }
-         else
-            {
-            callNode->setSymbolReference(helperSymRef);
-            }
          return callNode;
          }
       default:

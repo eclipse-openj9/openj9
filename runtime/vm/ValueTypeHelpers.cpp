@@ -207,8 +207,7 @@ getFlattenableFieldSize(J9VMThread *currentThread, J9Class *fieldOwner, J9ROMFie
 
         UDATA instanceSize = J9VMTHREAD_REFERENCE_SIZE(currentThread);
         if (isFlattenableFieldFlattened(fieldOwner, field)) {
-                J9Class* clazz = getFlattenableFieldType(fieldOwner, field);
-                instanceSize = (clazz)->totalInstanceSize - (clazz)->backfillOffset;
+                instanceSize = J9_VALUETYPE_FLATTENED_SIZE(getFlattenableFieldType(fieldOwner, field));
         }
         return instanceSize;
 }
@@ -233,6 +232,12 @@ loadFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject
         MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
         MM_ObjectAllocationAPI objectAllocate(currentThread);
         return VM_ValueTypeHelpers::loadFlattenableArrayElement(currentThread, objectAccessBarrier, objectAllocate, receiverObject, index, fast != false);
+}
+
+BOOLEAN
+areValueBasedMonitorChecksEnabled(J9JavaVM *vm)
+{
+	return J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION | J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING);
 }
 
 } /* extern "C" */

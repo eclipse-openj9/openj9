@@ -22,6 +22,6 @@
  *******************************************************************************/
 
 /**
- * Classes to support creation of diagnostic dumps and tracing, as well as getting and setting -Xlog options.
+ * Classes to support creation of diagnostic dumps and tracing, as well as getting and setting -Xsyslog options.
  */
 package com.ibm.jvm;

@@ -151,8 +151,8 @@ static void printBacktrace(struct J9JavaVM *vm, void* gpInfo);
 /* The target register is GPR2 */
 #define UNSAFE_TARGET_REGISTER 2
 #elif defined(J9VM_ARCH_RISCV)
-/* The target register is GPR1 */
-#define UNSAFE_TARGET_REGISTER 1
+/* The target register is GPR15 */
+#define UNSAFE_TARGET_REGISTER 15
 #elif defined(J9ZOS390)
 /* The target register is GPR1 */
 #define UNSAFE_TARGET_REGISTER 1

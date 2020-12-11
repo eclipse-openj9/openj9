@@ -170,7 +170,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 */
 	private native long getFreePhysicalMemorySizeImpl();
 
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	/**
 	 * {@inheritDoc}
 	 */
@@ -194,7 +194,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	public long getFreeMemorySize() {
 		return getFreePhysicalMemorySizeImpl();
 	}
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
 	/**
 	 * {@inheritDoc}

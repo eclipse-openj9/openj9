@@ -1,5 +1,4 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9 & !OPENJDK_METHODHANDLES]*/
-
 /*******************************************************************************
  * Copyright (c) 2017, 2020 IBM Corp. and others
  *
@@ -21,25 +20,23 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package java.lang.invoke;
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 import java.lang.reflect.Method;
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /*
  * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
  */
-
 final class MemberName {
 	/*[IF Sidecar18-SE-OpenJ9&!Sidecar19-SE-OpenJ9]*/
 	static final class Factory {
 		public static Factory INSTANCE = null;
 	}
 	/*[ENDIF]*/
-	
-	/*[IF Java11]*/
+
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	private MethodHandle mh;
 
 	public MemberName() {
@@ -58,7 +55,7 @@ final class MemberName {
 	public boolean isStatic() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[ENDIF] Java11 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 	public boolean isVarargs() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
@@ -83,8 +80,8 @@ final class MemberName {
 	public boolean isNative() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
-	/*[IF Java11]*/
+
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	public MethodType getMethodType() {
 		if (method != null) {
 			return MethodType.methodType(method.getReturnType(), method.getParameterTypes());
@@ -110,11 +107,11 @@ final class MemberName {
 		/*[MSG "K0675", "Unexpected MethodHandle instance: {0} with {1}"]*/
 		throw new InternalError(com.ibm.oti.util.Msg.getString("K0675", mh, mh.getClass())); //$NON-NLS-1$
 	}
-	/*[ENDIF] Java11 */
-	
-	/*[IF Java15]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+
+	/*[IF JAVA_SPEC_VERSION >= 15]*/
 	public byte getReferenceKind() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[ENDIF] Java15 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 }

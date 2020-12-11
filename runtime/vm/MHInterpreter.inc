@@ -348,7 +348,7 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 			insertFourArgumentPlaceHolderFrame(0, parentHandle, 0, 0, 0, J9VMJAVALANGINVOKEMETHODHANDLE_FILTERARGUMENTSPLACEHOLDER_METHOD(_vm));
 
 			/* Accessing FAH.type.arguments[] and its attributes for future operations */
-			j9object_t parentTypeArguments = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(_currentThread, parentType);
+			j9object_t parentTypeArguments = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(_currentThread, parentType);
 			UDATA *parentPtr = UNTAGGED_A0(frameNext);  /* Store pointer to parent */
 
 			/* Copy identical args between parent and next */
@@ -687,7 +687,7 @@ VM_MHInterpreter::impdep1()
 		/* Get the filterHandle.type.arguments[0] to determine the kind of value on the stack */
 		j9object_t filterHandle = *(j9object_t*)_currentThread->arg0EA;
 		j9object_t filterType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, filterHandle);
-		j9object_t argTypes = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(_currentThread, filterType);
+		j9object_t argTypes = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(_currentThread, filterType);
 		UDATA returnSlots = J9INDEXABLEOBJECT_SIZE(_currentThread, argTypes);
 		/* Determine how many slots to pop off the stack */
 		UDATA returnValue0 = 0;
@@ -758,7 +758,7 @@ VM_MHInterpreter::impdep1()
 		/* [... FAH[1] args MTFrame FAH.next UpdatedArgs MTFrame FAH[2] index parentOffset nextOffset PlaceHolderFrame filterReturnValue] */
 		j9object_t parentHandle = *(j9object_t *)_currentThread->arg0EA;
 		j9object_t parentType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, parentHandle);
-		j9object_t parentTypeArguments = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(_currentThread, parentType);
+		j9object_t parentTypeArguments = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(_currentThread, parentType);
 
 		j9object_t filters = J9VMJAVALANGINVOKEFILTERARGUMENTSHANDLE_FILTERS(_currentThread, parentHandle);
 		U_32 filtersLength = J9INDEXABLEOBJECT_SIZE(_currentThread, filters);
@@ -767,7 +767,7 @@ VM_MHInterpreter::impdep1()
 		j9object_t nextHandle = J9VMJAVALANGINVOKEFILTERARGUMENTSHANDLE_NEXT(_currentThread, parentHandle);
 		j9object_t nextType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, nextHandle);
 		U_32 nextArgSlots = (U_32)J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(_currentThread, nextType);
-		j9object_t nextTypeArguments = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(_currentThread, nextType);
+		j9object_t nextTypeArguments = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(_currentThread, nextType);
 
 		U_32 *index = (U_32 *)(_currentThread->arg0EA - 1);
 		U_32 *parentOffset = (U_32 *)(_currentThread->arg0EA - 2);
@@ -1438,7 +1438,7 @@ VM_MHInterpreter::replaceReturnValueForFilterArgumentsWithCombiner()
 	/* Locally store the return value from the combinerHandle and determine stackslots required by the return value */
 	j9object_t combinerHandle = getCombinerHandleForFilter(filterHandle);
 	j9object_t combinerType = getMethodHandleMethodType(combinerHandle);
-	j9object_t combinerReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(_currentThread, combinerType);
+	j9object_t combinerReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(_currentThread, combinerType);
 	J9Class *combinerReturnTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, combinerReturnType);
 	U_32 combinerReturnSlots = 1;
 	UDATA combinerReturnValue0 = _currentThread->sp[0];
@@ -1611,7 +1611,7 @@ VM_MHInterpreter::insertReturnValueForFoldArguments()
 	/* Locally store the return value from the combinerHandle and determine stackslots required by the return value */
 	j9object_t combinerHandle = getCombinerHandleForFold(foldHandle);
 	j9object_t combinerType = getMethodHandleMethodType(combinerHandle);
-	j9object_t combinerReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(_currentThread, combinerType);
+	j9object_t combinerReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(_currentThread, combinerType);
 	J9Class *argTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, combinerReturnType);
 	UDATA combinerReturnSlots = 0;
 	UDATA combinerReturnValue0 = 0;
@@ -1663,7 +1663,7 @@ j9object_t
 VM_MHInterpreter::permuteForPermuteHandle(j9object_t methodHandle)
 {
 	j9object_t currentType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandle);
-	j9object_t currentTypeArguments = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(_currentThread, currentType);
+	j9object_t currentTypeArguments = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(_currentThread, currentType);
 	U_32 currentTypeArgumentsLength = J9INDEXABLEOBJECT_SIZE(_currentThread, currentTypeArguments);
 	U_32 currentArgSlots = (U_32)J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(_currentThread, currentType);
 	j9object_t nextHandle = J9VMJAVALANGINVOKEPERMUTEHANDLE_NEXT(_currentThread, methodHandle);
@@ -1763,7 +1763,7 @@ VM_MHInterpreter::insertArgumentsForInsertHandle(j9object_t methodHandle)
 {
 	j9object_t currentType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandle);
 	U_32 currentArgSlots = (U_32)J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(_currentThread, currentType);
-	j9object_t currentTypeArguments = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(_currentThread, currentType);
+	j9object_t currentTypeArguments = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(_currentThread, currentType);
     U_32 currentTypeArgumentsLength = J9INDEXABLEOBJECT_SIZE(_currentThread, currentTypeArguments);
 	j9object_t nextHandle = J9VMJAVALANGINVOKEINSERTHANDLE_NEXT(_currentThread, methodHandle);
 	j9object_t nextType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, nextHandle);
@@ -1958,7 +1958,7 @@ VM_MHInterpreter::primitiveArrayCollect(j9object_t collectedArgsArrayRef, U_32 c
 ExceptionType
 VM_MHInterpreter::convertArguments(UDATA * currentArgs, j9object_t *currentType, UDATA * nextArgs, j9object_t *nextType, UDATA explicitCast, ClassCastExceptionData *exceptionData)
 {
-	U_32 argCount = (U_32)J9INDEXABLEOBJECT_SIZE(_currentThread, J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(_currentThread, *currentType));
+	U_32 argCount = (U_32)J9INDEXABLEOBJECT_SIZE(_currentThread, J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(_currentThread, *currentType));
 	U_32 i;
 	J9JavaVM * vm = _currentThread->javaVM;
 	J9Class * booleanReflectClass = vm->booleanReflectClass;
@@ -1984,8 +1984,8 @@ VM_MHInterpreter::convertArguments(UDATA * currentArgs, j9object_t *currentType,
 	ExceptionType rc = NO_EXCEPTION;
 
 	for (i = 0; i < argCount; ++i) {
-		J9Class * currentClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, J9JAVAARRAYOFOBJECT_LOAD(_currentThread, J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(_currentThread, *currentType), i));
-		J9Class * nextClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, J9JAVAARRAYOFOBJECT_LOAD(_currentThread, J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(_currentThread, *nextType), i));
+		J9Class * currentClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, J9JAVAARRAYOFOBJECT_LOAD(_currentThread, J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(_currentThread, *currentType), i));
+		J9Class * nextClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, J9JAVAARRAYOFOBJECT_LOAD(_currentThread, J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(_currentThread, *nextType), i));
 
 		if (currentClass == nextClass) {
 			/* Trivial case - types are identical */
@@ -2280,7 +2280,7 @@ VM_MHInterpreter::mhStackValidator(j9object_t methodhandle)
 
 	j9object_t currentType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodhandle);
 	U_32 argSlots = (U_32)J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(_currentThread, currentType);
-	j9object_t arguments = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(_currentThread, currentType);
+	j9object_t arguments = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(_currentThread, currentType);
 	U_32 argCount = (U_32)J9INDEXABLEOBJECT_SIZE(_currentThread, arguments);
 
 	U_32 i;

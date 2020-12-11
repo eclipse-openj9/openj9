@@ -247,7 +247,7 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
      */
     public String getGCMode();
 
-/*[IF !Java16]*/
+/*[IF JAVA_SPEC_VERSION < 16]*/
     /**
      * Returns the amount of CPU time spent in the GC by the master thread, in
      * milliseconds.
@@ -256,13 +256,13 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
      * 
      * @deprecated renamed to getGCMainThreadCpuUsed
      */
-    /*[IF Java11]*/
+    /*[IF JAVA_SPEC_VERSION >= 11]*/
     @Deprecated(forRemoval=true, since="15")
-    /*[ELSE] Java11 */
+    /*[ELSE] JAVA_SPEC_VERSION >= 11 */
     @Deprecated
-    /*[ENDIF] Java11 */
+    /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
     public long getGCMasterThreadCpuUsed();
-/*[ENDIF] !Java16 */
+/*[ENDIF] JAVA_SPEC_VERSION < 16 */
 
     /**
      * Returns the amount of CPU time spent in the GC by the main thread, in
@@ -272,7 +272,7 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
      */
     public long getGCMainThreadCpuUsed();
 
-/*[IF !Java16]*/
+/*[IF JAVA_SPEC_VERSION < 16]*/
     /**
      * Returns the total amount of CPU time spent in the GC by all slave threads, in
      * milliseconds.
@@ -281,13 +281,13 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
      * 
      * @deprecated renamed to getGCWorkerThreadsCpuUsed
      */
-    /*[IF Java11]*/
+    /*[IF JAVA_SPEC_VERSION >= 11]*/
     @Deprecated(forRemoval=true, since="15")
-    /*[ELSE] Java11 */
+    /*[ELSE] JAVA_SPEC_VERSION >= 11 */
     @Deprecated
-    /*[ENDIF] Java11 */
+    /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
     public long getGCSlaveThreadsCpuUsed();
-/*[ENDIF] !Java16 */
+/*[ENDIF] JAVA_SPEC_VERSION < 16 */
 
     /**
      * Returns the total amount of CPU time spent in the GC by all worker threads,

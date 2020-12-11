@@ -93,7 +93,7 @@
 			<input>!j9object $valueAddr$ i</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I i = 0x7FFFFFFF (offset = 0) (ValueInt)</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x12123434 (offset = 0) (ValueInt)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -115,7 +115,7 @@
 			<input>!j9object $arrayIndex1Addr$.i</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I i = 0x7FFFFFFF (offset = 0) (ValueInt)</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x12123434 (offset = 0) (ValueInt)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -125,7 +125,7 @@
 			<input>!j9object $arrayIndex2Addr$.i</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I i = 0xB670C61E (offset = 0) (ValueInt)</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x45456767 (offset = 0) (ValueInt)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -135,7 +135,7 @@
 			<input>!flatobject $arrayIndex1Addr$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I i = 0x7FFFFFFF</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x12123434</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -145,7 +145,7 @@
 			<input>!flatobject $arrayIndex2Addr$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I i = 0xB670C61E</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x45456767</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 </suite>

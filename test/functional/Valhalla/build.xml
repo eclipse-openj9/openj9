@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2017, 2019 IBM Corp. and others
+  Copyright (c) 2017, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,8 @@
 	<property name="src" location="./src"/>
 	<property name="build" location="./bin"/>
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
+	<property name="LIB" value="asm,jcommander,testng"/>
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -44,7 +46,7 @@
 		</copy>
 	</target>
 
-	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source " >
+	<target name="compile" depends="init,getDependentLibs" description="Using java ${JDK_VERSION} to compile the source " >
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
@@ -58,7 +60,7 @@
 			<classpath>
 				<pathelement location="${LIB_DIR}/testng.jar"/>
 				<pathelement location="${LIB_DIR}/jcommander.jar"/>
-				<pathelement location="${LIB_DIR}/asm-all.jar"/>
+				<pathelement location="${LIB_DIR}/asm.jar"/>
 			</classpath>
 		</javac>
 	</target>

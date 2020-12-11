@@ -63,7 +63,11 @@ enum J9ClassFragments {
 	RAM_STATICS_FRAGMENT,
 	RAM_CONSTANT_POOL_FRAGMENT,
 	RAM_CALL_SITES_FRAGMENT,
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	RAM_INVOKE_CACHE_FRAGMENT,
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	RAM_METHOD_TYPES_FRAGMENT,
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	RAM_VARHANDLE_METHOD_TYPES_FRAGMENT,
 	RAM_STATIC_SPLIT_TABLE_FRAGMENT,
 	RAM_SPECIAL_SPLIT_TABLE_FRAGMENT,
@@ -159,7 +163,7 @@ static BOOLEAN loadFlattenableFieldValueClasses(J9VMThread *vmThread, J9ClassLoa
 
 static J9Class* internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
 	J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined, UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state,
-	J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache, UDATA valueTypeFlags);
+	J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache, UDATA *valueTypeFlags);
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 static J9Class* internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
 	J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined, UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state,
@@ -1845,7 +1849,7 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 					}
 
 					if (!J9_IS_J9CLASS_FLATTENED(valueClass)) {
-						*valueTypeFlags |= J9ClassContainsUnflattenedFlattenables;
+						*valueTypeFlags |= (J9ClassContainsUnflattenedFlattenables | J9ClassHasReferences);
 						eligibleForFastSubstitutability = false;
 					} else if (J9_ARE_NO_BITS_SET(valueClass->classFlags, J9ClassCanSupportFastSubstitutability)) {
 						eligibleForFastSubstitutability = false;
@@ -2178,7 +2182,7 @@ initializeClassLinks(J9Class *ramClass, J9Class *superclass, J9MemorySegment *se
 static J9Class*
 internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass,
 	UDATA options, J9Class *elementClass, J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined,
-	UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state, J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache, UDATA valueTypeFlags)
+	UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state, J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache, UDATA *valueTypeFlags)
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 static J9Class*
 internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass,
@@ -2202,7 +2206,7 @@ internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *clas
 	UDATA extendedMethodBlockSize = 0;
 	UDATA totalStaticSlots;
 	UDATA interfaceCount = 0;
-	J9ROMFieldOffsetWalkState romWalkState;
+	J9ROMFieldOffsetWalkState romWalkState = {0};
 	J9ROMFieldOffsetWalkResult *romWalkResult;
 	BOOLEAN hotswapping = (0 != (options & J9_FINDCLASS_FLAG_NO_DEBUG_EVENTS));
 	BOOLEAN fastHCR = (0 != (options & J9_FINDCLASS_FLAG_FAST_HCR));
@@ -2297,8 +2301,13 @@ fail:
 		/* add in the call sites */
 		classSize += romClass->callSiteCount;
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		/* add in the invoke cache entries */
+		classSize += romClass->invokeCacheCount;
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		/* add in the method types */
 		classSize += romClass->methodTypeCount;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 		/* add in the varhandle method types */
 		classSize += romClass->varHandleMethodTypeCount;
@@ -2310,6 +2319,10 @@ fail:
 		romWalkResult = fieldOffsetsStartDo(javaVM, romClass, superclass, &romWalkState,
 			(J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE |
 			 J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS), flattenedClassCache);
+
+		if (romWalkState.classRequiresPrePadding) {
+			*valueTypeFlags |= J9ClassRequiresPrePadding;
+		}
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		romWalkResult = fieldOffsetsStartDo(javaVM, romClass, superclass, &romWalkState,
 			(J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE |
@@ -2327,7 +2340,7 @@ fail:
 
 			if ((temp > highestBitInSlot)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				&& (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassHasReferences))
+				&& (J9_ARE_ALL_BITS_SET(*valueTypeFlags, J9ClassHasReferences))
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 			) {
 				/* reserve additional space for the instance description bits */
@@ -2532,11 +2545,19 @@ fail:
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].alignedSize = romClass->callSiteCount * sizeof(UDATA);
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].address = NULL;
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+			/* invoke cache fragment */
+			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].prefixSize = 0;
+			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].alignment = sizeof(UDATA);
+			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].alignedSize = romClass->invokeCacheCount * sizeof(UDATA);
+			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].address = NULL;
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 			/* method types fragment */
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].alignedSize = romClass->methodTypeCount * sizeof(UDATA);
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].address = NULL;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 			/* varhandle method types fragment */
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].prefixSize = 0;
@@ -2608,7 +2629,11 @@ fail:
 				ramClass->ramStatics = allocationRequests[RAM_STATICS_FRAGMENT].address;
 				ramClass->ramConstantPool = allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].address;
 				ramClass->callSites = (j9object_t *) allocationRequests[RAM_CALL_SITES_FRAGMENT].address;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+				ramClass->invokeCache = (j9object_t *) allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].address;
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 				ramClass->methodTypes = (j9object_t *) allocationRequests[RAM_METHOD_TYPES_FRAGMENT].address;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 				ramClass->varHandleMethodTypes = (j9object_t *) allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].address;
 				ramClass->staticSplitMethodTable = (J9Method **) allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].address;
 				for (U_16 i = 0; i < romClass->staticSplitMethodRefCount; ++i) {
@@ -2771,8 +2796,8 @@ fail:
 			 *                      + J9ClassContainsUnflattenedFlattenables
 			 *                     + J9ClassCanSupportFastSubstitutability
 			 *
-			 *                   + Unused
-			 *                  + Unused
+			 *                   + J9ClassHasReferences
+			 *                  + J9ClassIsValueBased
 			 *                 + Unused
 			 *                + Unused
 			 *
@@ -2845,7 +2870,7 @@ fail:
 			if (!fastHCR) {
 				/* calculate the instanceDescription field */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				calculateInstanceDescription(vmThread, ramClass, superclass, instanceDescription, &romWalkState, romWalkResult, J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassHasReferences));
+				calculateInstanceDescription(vmThread, ramClass, superclass, instanceDescription, &romWalkState, romWalkResult, J9_ARE_ALL_BITS_SET(*valueTypeFlags, J9ClassHasReferences));
 #else /* defined(J9VM_GC_LEAF_BITS) */
 				calculateInstanceDescription(vmThread, ramClass, superclass, instanceDescription, &romWalkState, romWalkResult);
 #endif /* defined(J9VM_GC_LEAF_BITS) */
@@ -3233,7 +3258,7 @@ retry:
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	result = internalCreateRAMClassFromROMClassImpl(vmThread, classLoader, romClass, options, elementClass,
-		methodRemapArray, entryIndex, locationType, classBeingRedefined, packageID, superclass, &state, hostClassLoader, hostClass, module, flattenedClassCache, valueTypeFlags);
+		methodRemapArray, entryIndex, locationType, classBeingRedefined, packageID, superclass, &state, hostClassLoader, hostClass, module, flattenedClassCache, &valueTypeFlags);
 
 		if (flattenedClassCache != (J9FlattenedClassCache *) flattenedClassCacheBuffer) {
 			j9mem_free_memory(flattenedClassCache);
@@ -3269,6 +3294,10 @@ retry:
 				classFlags |= J9ClassIsExemptFromValidation;
 			}
 		}
+		
+		if (J9ROMCLASS_IS_VALUEBASED(romClass)) {
+			classFlags |= J9ClassIsValueBased;
+		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		if (J9_ARE_ALL_BITS_SET(romClass->modifiers, J9AccValueType)) {
@@ -3285,6 +3314,9 @@ retry:
 				classFlags |= J9ClassLargestAlignmentConstraintDouble;
 			} else if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassLargestAlignmentConstraintReference)) {
 				classFlags |= J9ClassLargestAlignmentConstraintReference;
+			}
+			if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassRequiresPrePadding)) {
+				classFlags |= J9ClassRequiresPrePadding;
 			}
 		}
 		if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassContainsUnflattenedFlattenables)) {
