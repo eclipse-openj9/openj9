@@ -1827,8 +1827,10 @@ TR_RelocationRecordAbsoluteHelperAddress::applyRelocation(TR_RelocationRuntime *
    {
    TR_RelocationRecordHelperAddressPrivateData *reloPrivateData = &(privateData()->helperAddress);
    uint8_t *helperAddress = reloPrivateData->_helper;
-
-   reloTarget->storeAddress(helperAddress, reloLocation);
+   if (reloFlags(reloTarget) != 0)
+      reloTarget->storeAddressSequence(helperAddress, reloLocation, reloFlags(reloTarget));
+   else
+      reloTarget->storeAddress(helperAddress, reloLocation);
    return 0;
    }
 
