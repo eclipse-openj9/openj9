@@ -27,6 +27,7 @@
 #include "cfreader.h"
 #include "romclasswalk.h"
 #include "util_internal.h"
+#include "ut_j9util.h"
 
 static void allSlotsInROMMethodsSectionDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static void allSlotsInROMFieldsSectionDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
@@ -705,7 +706,7 @@ static void allSlotsInConstantPoolDo(J9ROMClass* romClass, J9ROMClassWalkCallbac
 
 			default:
 				/* unknown cp type - bail */
-				return;
+				Assert_Util_unreachable();
 		}
 	}
 }
