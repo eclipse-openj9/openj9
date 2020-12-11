@@ -2944,7 +2944,6 @@ J9::Z::TreeEvaluator::anewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg
 TR::Register *
 J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   bool useDirectHelperCall = true;
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = static_cast<TR_J9VMBase *>(comp->fe());
    TR::Register *targetReg = cg->allocateRegister();
@@ -2952,17 +2951,6 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    TR::Node *firstChild = node->getFirstChild();
    TR::Node *secondChild = node->getSecondChild();
    TR::Node *thirdChild = node->getThirdChild();
-
-   // Disable inlined evaluator due to defect
-   if (useDirectHelperCall)
-      {
-      traceMsg(cg->comp(), "multianewArrayEvaluator - More than 2 dimensions, so we can't handle this scenario in JITT'ed code\n");
-      TR::ILOpCodes opCode = node->getOpCodeValue();
-      TR::Node::recreate(node, TR::acall);
-      TR::Register *helperTargetReg = TR::TreeEvaluator::performCall(node, false, cg);
-      TR::Node::recreate(node, opCode);
-      return helperTargetReg;
-      }
 
    TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
    TR::LabelSymbol *nonZeroFirstDimLabel = generateLabelSymbol(cg);
@@ -3033,8 +3021,8 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    int32_t alignmentCompensation = (elementSize == elementSizeAligned) ? 0 : elementSizeAligned - 1;
    static const uint8_t multiplierToStrideMap[] = {0, 0, 1, 0, 2, 0, 0, 0, 3};
    TR_ASSERT_FATAL(elementSize <= 8, "multianewArrayEvaluator - elementSize cannot be greater than 8!");
-   generateRSInstruction(cg, TR::InstOpCode::getShiftLeftLogicalSingleOpCode(), node, temp1Reg, firstDimLenReg, multiplierToStrideMap[elementSize]);
-   generateRILInstruction(cg, TR::InstOpCode::AGFI, node, temp1Reg, static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes()) + alignmentCompensation);
+   generateRSInstruction(cg, TR::InstOpCode::SLLK, node, temp1Reg, firstDimLenReg, multiplierToStrideMap[elementSize]);
+   generateRILInstruction(cg, TR::InstOpCode::AFI, node, temp1Reg, static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes()) + alignmentCompensation);
 
    if (alignmentCompensation != 0)
       {
