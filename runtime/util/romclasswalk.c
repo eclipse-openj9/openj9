@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -691,6 +691,11 @@ static void allSlotsInConstantPoolDo(J9ROMClass* romClass, J9ROMClassWalkCallbac
 			case J9CPTYPE_METHODHANDLE:
 				callbacks->slotCallback(romClass, J9ROM_U32, &((J9ROMMethodHandleRef *)&constantPool[index])->methodOrFieldRefIndex, "cpFieldMethodOrFieldRef", userData);
 				callbacks->slotCallback(romClass, J9ROM_U32, &((J9ROMMethodHandleRef *)&constantPool[index])->handleTypeAndCpType, "cpFieldHandleTypeAndCpType", userData);
+				break;
+
+			case J9CPTYPE_CONSTANT_DYNAMIC:
+				callbacks->slotCallback(romClass, J9ROM_NAS, &((J9ROMConstantDynamicRef *)&constantPool[index])->nameAndSignature, "cpFieldNAS", userData);
+				callbacks->slotCallback(romClass, J9ROM_U32, &((J9ROMConstantDynamicRef *)&constantPool[index])->bsmIndexAndCpType, "cpFieldBSMIndexAndCpType", userData);
 				break;
 
 			case J9CPTYPE_UNUSED:
