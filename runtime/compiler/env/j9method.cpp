@@ -2024,9 +2024,13 @@ TR_OpaqueClassBlock *
 TR_ResolvedRelocatableJ9Method::definingClassFromCPFieldRef(
    TR::Compilation *comp,
    I_32 cpIndex,
-   bool isStatic)
+   bool isStatic,
+   TR_OpaqueClassBlock** fromResolvedJ9Method)
    {
    TR_OpaqueClassBlock *clazz = TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, cp(), cpIndex, isStatic);
+   if (fromResolvedJ9Method != NULL) {
+      *fromResolvedJ9Method = clazz;
+   }
 
    bool valid = false;
    if (comp->getOption(TR_UseSymbolValidationManager))
@@ -7247,9 +7251,14 @@ TR_OpaqueClassBlock *
 TR_ResolvedJ9Method::definingClassFromCPFieldRef(
    TR::Compilation *comp,
    I_32 cpIndex,
-   bool isStatic)
+   bool isStatic,
+   TR_OpaqueClassBlock** fromResolvedJ9Method)
    {
-   return definingClassFromCPFieldRef(comp, cp(), cpIndex, isStatic);
+   auto result = definingClassFromCPFieldRef(comp, cp(), cpIndex, isStatic);
+   if (fromResolvedJ9Method != NULL) {
+      *fromResolvedJ9Method = result;
+   }
+   return result;
    }
 
 bool

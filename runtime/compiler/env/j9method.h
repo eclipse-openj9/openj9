@@ -430,7 +430,7 @@ public:
 
    static TR_OpaqueClassBlock  * definingClassFromCPFieldRef(TR::Compilation *comp, J9ConstantPool *constantPool, int32_t cpIndex, bool isStatic);
    static TR_OpaqueClassBlock  * definingClassAndFieldShapeFromCPFieldRef(TR::Compilation *comp, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic, J9ROMFieldShape **field);
-   virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic);
+   virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic, TR_OpaqueClassBlock** fromResolvedJ9Method = NULL);
 
    virtual char *                  fieldNameChars(int32_t cpIndex, int32_t & len);
    virtual char *                  staticNameChars(int32_t cpIndex, int32_t & len);
@@ -596,7 +596,7 @@ public:
 
    virtual bool                    staticAttributes( TR::Compilation *, int32_t cpIndex, void * *, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation);
 
-   virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic);
+   virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic, TR_OpaqueClassBlock** fromResolvedJ9Method = NULL);
 
    virtual int32_t                 virtualCallSelector(uint32_t cpIndex);
    virtual char *                  fieldSignatureChars(int32_t cpIndex, int32_t & len);

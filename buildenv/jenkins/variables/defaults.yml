@@ -255,20 +255,15 @@ ppc64le_linux_xl_cm:
 ppc64le_linux_xl_uma:
   extends: ['ppc64le_linux_xl', 'uma']
 #========================================#
-# Linux PPCLE 64bits Mixed References
+# Linux PPCLE 64bits Mixed References (CMake Only)
 #========================================#
 ppc64le_linux_mixed:
-  extends: ['ppc64le_linux', 'mixedrefs']
+  extends: ['ppc64le_linux', 'mixedrefs', 'cmake']
   excluded_tests:
     8:
       - special.system
     11:
       - special.system
-#========================================#
-# Linux PPCLE 64bits Mixed References /w CMake
-#========================================#
-ppc64le_linux_mixed_cm:
-  extends: ['ppc64le_linux_mixed', 'cmake']
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers /w JITSERVER
 #========================================#
@@ -323,18 +318,13 @@ s390x_linux_xl_cm:
 s390x_linux_xl_uma:
   extends: ['s390x_linux_xl', 'uma']
 #========================================#
-# Linux S390 64bits Mixed References
+# Linux S390 64bits Mixed References (CMake Only)
 #========================================#
 s390x_linux_mixed:
-  extends: ['s390x_linux', 'mixedrefs']
+  extends: ['s390x_linux', 'mixedrefs', 'cmake']
   excluded_tests:
      11:
       - special.system
-#========================================#
-# Linux S390 64bits Mixed References /w CMake
-#========================================#
-s390x_linux_mixed_cm:
-  extends: ['s390x_linux_mixed', 'cmake']
 #========================================#
 # Linux S390 64bits Compressed Pointers /w JITSERVER
 #========================================#
@@ -400,15 +390,10 @@ ppc64_aix_xl_cm:
 ppc64_aix_xl_uma:
   extends: ['ppc64_aix_xl', 'uma']
 #========================================#
-# AIX PPC 64bits Mixed References
+# AIX PPC 64bits Mixed References (CMake Only)
 #========================================#
 ppc64_aix_mixed:
-  extends: ['ppc64_aix', 'mixedrefs']
-#========================================#
-# AIX PPC 64bits Mixed References /w CMake
-#========================================#
-ppc64_aix_mixed_cm:
-  extends: ['ppc64_aix_mixed', 'cmake']
+  extends: ['ppc64_aix', 'mixedrefs', 'cmake']
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
@@ -480,20 +465,15 @@ x86-64_linux_xl:
     8:
       - special.system
 #========================================#
-# Linux x86 64bits Mixed References
+# Linux x86 64bits Mixed References (CMake Only)
 #========================================#
 x86-64_linux_mixed:
-  extends: ['x86-64_linux', 'mixedrefs']
+  extends: ['x86-64_linux', 'mixedrefs', 'cmake']
   excluded_tests:
     - extended.functional
     - sanity.system
     - extended.system
     - special.system
-#========================================#
-# Linux x86 64bits Mixed References /w CMake
-#========================================#
-x86-64_linux_mixed_cm:
-  extends: ['x86-64_linux_mixed', 'cmake']
 #========================================#
 # Linux x86 64bits Compressed Pointers / Valhalla
 #========================================#
@@ -540,15 +520,10 @@ aarch64_linux_xl_cm:
 aarch64_linux_xl_uma:
   extends: ['aarch64_linux_xl', 'uma']
 #========================================#
-# Linux Aarch 64bits Mixed References
+# Linux Aarch 64bits Mixed References (CMake Only)
 #========================================#
 aarch64_linux_mixed:
-  extends: ['aarch64_linux', 'mixedrefs']
-#========================================#
-# Linux Aarch 64bits Mixed References /w CMake
-#========================================#
-aarch64_linux_mixed_cm:
-  extends: ['aarch64_linux_mixed', 'cmake']
+  extends: ['aarch64_linux', 'mixedrefs', 'cmake']
 #========================================#
 # Windows x86 64bits Compressed Pointers
 #========================================#
@@ -604,15 +579,10 @@ x86-64_windows_xl_cm:
 x86-64_windows_xl_uma:
   extends: ['x86-64_windows_xl', 'uma']
 #========================================#
-# Windows x86 64bits Mixed References
+# Windows x86 64bits Mixed References (CMake Only)
 #========================================#
 x86-64_windows_mixed:
-  extends: ['x86-64_windows', 'mixedrefs']
-#========================================#
-# Windows x86 64bits Mixed References /w CMake
-#========================================#
-x86-64_windows_mixed_cm:
-  extends: ['x86-64_windows_mixed', 'cmake']
+  extends: ['x86-64_windows', 'mixedrefs', 'cmake']
 #========================================#
 # Windows x86 32bits
 #========================================#
@@ -681,10 +651,10 @@ x86-64_mac_xl:
     8:
       - special.system
 #========================================#
-# OSX x86 64bits Mixed References
+# OSX x86 64bits Mixed References (CMake Only)
 #========================================#
 x86-64_mac_mixed:
-  extends: ['x86-64_mac', 'mixedrefs']
+  extends: ['x86-64_mac', 'mixedrefs', 'cmake']
   excluded_tests:
     8:
       - special.system
@@ -698,11 +668,6 @@ x86-64_mac_cm:
 #========================================#
 x86-64_mac_xl_cm:
   extends: ['x86-64_mac_xl', 'cmake']
-#========================================#
-# OSX x86 64bits Mixed References /w CMake
-#========================================#
-x86-64_mac_mixed_cm:
-  extends: ['x86-64_mac_mixed', 'cmake']
 #========================================#
 # OSX x86 64bits Compressed Pointers /w UMA
 #========================================#
