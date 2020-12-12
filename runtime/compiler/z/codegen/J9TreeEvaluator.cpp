@@ -2141,7 +2141,7 @@ J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * c
       // async-check.
       // (the VM ensures that all malloc'ed storage has the high-order-bit cleared)
       TR::Register * testRegister = cg->allocateRegister();
-      TR::MemoryReference * tempMR = generateS390MemoryReference(firstChild, cg);
+      TR::MemoryReference * tempMR = TR::MemoryReference::create(cg, firstChild);
 
       TR_ASSERT( getIntegralValue(secondChild) == -1, "asynccheck bad format");
       TR_ASSERT( comp->target().is32Bit(), "ICM can be used for 32bit code-gen only!");
@@ -2184,7 +2184,7 @@ J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * c
          }
       if (value >= MIN_IMMEDIATE_VAL && value <= MAX_IMMEDIATE_VAL)
          {
-         TR::MemoryReference * tempMR = generateS390MemoryReference(firstChild, cg);
+         TR::MemoryReference * tempMR = TR::MemoryReference::create(cg, firstChild);
 
          if (tempMR->getIndexRegister() != NULL && tempMR->getBaseRegister() != NULL)
             {
@@ -3287,7 +3287,7 @@ J9::Z::TreeEvaluator::DIVCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
        (node->getFirstChild()->getOpCodeValue() == TR::idiv ||
         node->getFirstChild()->getOpCodeValue() == TR::irem))
       {
-      divisorMr = generateS390MemoryReference(secondChild, cg);
+      divisorMr = TR::MemoryReference::create(cg, secondChild);
 
       TR::InstOpCode::Mnemonic op = (dtype.isInt64())? TR::InstOpCode::CLGHSI : TR::InstOpCode::CLFHSI;
       generateSILInstruction(cg, op, node, divisorMr, 0);
@@ -3598,7 +3598,7 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          cursor = generateRSInstruction(cg, opCode,
                                          node, regChild->getRegister(),
                                          getMaskForBranchCondition(compareCondition),
-                                         generateS390MemoryReference(memChild, cg));
+                                         TR::MemoryReference::create(cg, memChild));
          cursor->setExceptBranchOp();
          cg->setCanExceptByTrap(true);
          cursor->setNeedsGCMap(0x0000FFFF);
@@ -5290,7 +5290,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
          {
             srcReg = cg->allocateCollectedReferenceRegister();
 
-            generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), sourceChild, srcReg, generateS390MemoryReference(sourceChild, cg));
+            generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), sourceChild, srcReg, TR::MemoryReference::create(cg, sourceChild));
 
             sourceChild->setRegister(srcReg);
          }
@@ -5307,7 +5307,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    TR::Node *callNode = TR::Node::createWithSymRef(node, TR::call, 2, node->getSymbolReference());
    callNode->setChild(0, sourceChild);
    callNode->setChild(1, classChild);
-   mr1 = generateS390MemoryReference(firstChild, cg);
+   mr1 = TR::MemoryReference::create(cg, firstChild);
 
    TR::Register *compressedReg = srcReg;
    if (usingCompressedPointers)
@@ -5779,7 +5779,7 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
                && reference->getRegister() == NULL)
             {
             targetRegister = cg->allocateCollectedReferenceRegister();
-            appendTo = generateRXInstruction(cg, TR::InstOpCode::getLoadAndTrapOpCode(), node, targetRegister, generateS390MemoryReference(reference, cg), appendTo);
+            appendTo = generateRXInstruction(cg, TR::InstOpCode::getLoadAndTrapOpCode(), node, targetRegister, TR::MemoryReference::create(cg, reference), appendTo);
             reference->setRegister(targetRegister);
             }
          else if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12)
@@ -5850,7 +5850,7 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
                }
 
             reference->setRegister(targetRegister);
-            TR::MemoryReference * tempMR = generateS390MemoryReference(reference, cg);
+            TR::MemoryReference * tempMR = TR::MemoryReference::create(cg, reference);
             appendTo = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), reference, targetRegister, tempMR, appendTo);
             tempMR->stopUsingMemRefRegister(cg);
 
