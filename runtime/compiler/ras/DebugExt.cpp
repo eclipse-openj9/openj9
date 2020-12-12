@@ -3651,6 +3651,7 @@ TR_DebugExt::dxPrintAOTinfo(void *addr)
          case TR_ValidateInstanceField:
          case TR_ValidateStaticField:
          case TR_ValidateClass:
+         case TR_ValidateArbitraryObjectClass:
             {
             TR_RelocationRecordValidateField *record = (TR_RelocationRecordValidateField *) reloRecord;
             _dbgPrintf("0x%-16x  0x%-16x  0x%-16x  0x%-16x", record->inlinedSiteIndex, record->constantPool, record->cpIndex, record->classChainOffsetInSharedCache);

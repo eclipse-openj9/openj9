@@ -1568,6 +1568,25 @@ TR_ResolvedRelocatableJ9Method::validateClassFromConstantPool(TR::Compilation *c
    }
 
 bool
+TR_ResolvedRelocatableJ9Method::validateArbitraryObjectClassFromConstantPool(TR::Compilation *comp, void * arbitraryObject, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind)
+   {
+   TR_OpaqueClassBlock *clazz;
+      {
+      TR::VMAccessCriticalSection constantCriticalSection(comp->fej9());
+      clazz = comp->fej9()->getObjectClassAt((uintptr_t)arbitraryObject); 
+      }
+
+   // if (comp->getOption(TR_UseSymbolValidationManager))
+   //    {
+   //    return comp->getSymbolValidationManager()->addArbitraryObjectClassFromCPRecord(clazz, cp(), cpIndex);
+   //    }
+   // else
+      {
+      return storeValidationRecordIfNecessary(comp, cp(), cpIndex, reloKind, ramMethod(), reinterpret_cast<J9Class *>(clazz));
+      }
+   }
+
+bool
 TR_ResolvedRelocatableJ9Method::validateArbitraryClass(TR::Compilation *comp, J9Class *clazz)
    {
    return storeValidationRecordIfNecessary(comp, cp(), 0, TR_ValidateArbitraryClass, ramMethod(), clazz);
@@ -1743,8 +1762,9 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
          TR_ASSERT(((*info)->_reloKind == TR_ValidateInstanceField ||
                  (*info)->_reloKind == TR_ValidateStaticField ||
                  (*info)->_reloKind == TR_ValidateClass ||
+                 (*info)->_reloKind == TR_ValidateArbitraryObjectClass ||
                  (*info)->_reloKind == TR_ValidateArbitraryClass),
-                "TR::AOTClassInfo reloKind is not TR_ValidateInstanceField or TR_ValidateStaticField or TR_ValidateClass!");
+                "TR::AOTClassInfo reloKind is not TR_ValidateInstanceField or TR_ValidateStaticField or TR_ValidateClass or TR_ValidateArbitraryObjectClass or TR_ValidateArbitraryClass!");
 
          if ((*info)->_reloKind == reloKind)
             {
@@ -6301,6 +6321,14 @@ TR_ResolvedJ9Method::getClassFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, TR::C
    return result;
    }
 
+void *
+TR_ResolvedJ9Method::getArbitraryObjectFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, I_32 cpIndex)
+   {
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+   TR::VMAccessCriticalSection getArbitraryObjectFromCP(fej9);
+   return (void *) ((U_8 *)&(((J9RAMStringRef *) cp->romConstantPool)[cpIndex].stringObject));
+   }
+
 TR_OpaqueClassBlock *
 TR_ResolvedJ9Method::getClassFromConstantPool(TR::Compilation * comp, uint32_t cpIndex, bool)
    {
@@ -6329,6 +6357,12 @@ TR_ResolvedJ9Method::getClassFromConstantPoolForCheckcast(TR::Compilation *comp,
 
 bool
 TR_ResolvedJ9Method::validateClassFromConstantPool(TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind)
+   {
+   return true;
+   }
+
+bool
+TR_ResolvedJ9Method::validateArbitraryObjectClassFromConstantPool(TR::Compilation *comp, void * arbitraryObject, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind)
    {
    return true;
    }

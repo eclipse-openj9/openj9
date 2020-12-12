@@ -318,16 +318,16 @@ public:
 
    virtual void *                  resolvedMethodAddress();
    virtual void *                  startAddressForJittedMethod();
-   virtual void *                  startAddressForJNIMethod( TR::Compilation *);
+   virtual void *                  startAddressForJNIMethod(TR::Compilation *);
    virtual void *                  startAddressForJITInternalNativeMethod();
    virtual void *                  startAddressForInterpreterOfJittedMethod();
-   virtual bool                    isWarmCallGraphTooBig(uint32_t bcIndex,  TR::Compilation *);
-   virtual void                    setWarmCallGraphTooBig(uint32_t bcIndex,  TR::Compilation *);
+   virtual bool                    isWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *);
+   virtual void                    setWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *);
    virtual void                    getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight = NULL);
    virtual bool                    getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0);
 
 
-   virtual intptr_t               getInvocationCount();
+   virtual intptr_t                getInvocationCount();
    virtual bool                    setInvocationCount(intptr_t oldCount, intptr_t newCount);
    virtual bool                    isSameMethod(TR_ResolvedMethod *);
 
@@ -343,12 +343,14 @@ public:
 
    static TR_OpaqueClassBlock *    getClassFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, TR::Compilation *comp, uint32_t cpIndex);
    static TR_OpaqueClassBlock *    getClassOfStaticFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex);
+   static void *                   getArbitraryObjectFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, I_32 cpIndex);
 
    virtual void *                  ramConstantPool();
    virtual void *                  constantPool();
-   virtual TR_OpaqueClassBlock *   getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassForAot=false);
-   virtual bool                    validateClassFromConstantPool( TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass);
-   virtual bool                    validateArbitraryClass( TR::Compilation *comp, J9Class *clazz);
+   virtual TR_OpaqueClassBlock *   getClassFromConstantPool(TR::Compilation *, uint32_t cpIndex, bool returnClassForAot=false);
+   virtual bool                    validateClassFromConstantPool(TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass);
+   virtual bool                    validateArbitraryObjectClassFromConstantPool(TR::Compilation *comp, void * arbitraryObject, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateArbitraryObjectClass);
+   virtual bool                    validateArbitraryClass(TR::Compilation *comp, J9Class *clazz);
 
    virtual char *                  getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length);
    virtual char *                  getMethodSignatureFromConstantPool(int32_t cpIndex, int32_t & len);
@@ -584,6 +586,7 @@ public:
 
    virtual TR_OpaqueClassBlock *   getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassToAOT = false);
    virtual bool                    validateClassFromConstantPool( TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass);
+   virtual bool                    validateArbitraryObjectClassFromConstantPool(TR::Compilation *comp, void * arbitraryObject, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateArbitraryObjectClass);
    virtual bool                    validateArbitraryClass( TR::Compilation *comp, J9Class *clazz);
 
    virtual void *                  stringConstant(int32_t cpIndex);

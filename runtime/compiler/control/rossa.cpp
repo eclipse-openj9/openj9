@@ -216,6 +216,8 @@ char *compilationErrorNames[]={
    "compilationStreamVersionIncompatible", //compilationFirstJITServerFailure+3
    "compilationStreamInterrupted", //compilationFirstJITServerFailure+4
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   "compilationAotHasInvokeSpecialInterface", //61
+   "compilationAotArbitraryObjectClassReloFailure", //62
    "compilationMaxError",
 };
 

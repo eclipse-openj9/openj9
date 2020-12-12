@@ -1337,12 +1337,12 @@ J9::SymbolReferenceTable::findOrCreateStringSymbol(TR::ResolvedMethodSymbol * ow
       sym->setConstString();
    else
       {
-      if (comp()->compileRelocatableCode())
-         comp()->failCompilation<J9::AOTHasPatchedCPConstant>("Patched Constant not supported in AOT.");
-
+      // if (comp()->compileRelocatableCode())
+      //    comp()->failCompilation<J9::AOTHasPatchedCPConstant>("Patched Constant not supported in AOT.");
       sym->setNonSpecificConstObject();
+      static_cast<TR_ResolvedJ9Method*>(owningMethod)->validateArbitraryObjectClassFromConstantPool(comp(), stringConst, cpIndex);
       }
-
+   
    return symRef;
    }
 

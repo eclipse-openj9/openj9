@@ -626,6 +626,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ValidateClass:
          reloRecord = new (storage) TR_RelocationRecordValidateClass(reloRuntime, record);
          break;
+      case TR_ValidateArbitraryObjectClass:
+         reloRecord = new (storage) TR_RelocationRecordValidateArbitraryObjectClass(reloRuntime, record);
+         break;
       case TR_ValidateInstanceField:
          reloRecord = new (storage) TR_RelocationRecordValidateInstanceField(reloRuntime, record);
          break;
@@ -3573,6 +3576,73 @@ TR_RelocationRecordValidateClass::failureCode()
    return compilationAotClassReloFailure;
    }
 
+// TR_RelocationRecordValidateArbitraryObjectClass
+char *
+TR_RelocationRecordValidateArbitraryObjectClass::name()
+   {
+   return "TR_ValidateArbitraryObjectClass";
+   }
+
+int32_t
+TR_RelocationRecordValidateArbitraryObjectClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   reloRuntime->incNumValidations();
+
+   // UDATA thisInlinedSiteIndex = (UDATA) inlinedSiteIndex(reloTarget);
+   // if (thisInlinedSiteIndex == (UDATA) -1)
+   //    return failureCode();
+
+   // // Find CP from inlined method
+   // // Assume that the inlined call site has already been relocated
+   // // And assumes that the method is resolved already, otherwise, we would not have properly relocated the
+   // // ramMethod for the inlined callsite and trying to retrieve stuff from the bogus pointer will result in error
+   // TR_InlinedCallSite *inlinedCallSite = (TR_InlinedCallSite *)getInlinedCallSiteArrayElement(reloRuntime->exceptionTable(), thisInlinedSiteIndex);
+   // J9Method *ramMethod = (J9Method *) inlinedCallSite->_methodInfo;
+
+   J9ConstantPool *cp = (J9ConstantPool *)computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: cp %p\n", cp);
+   void * arbitraryObject = TR_ResolvedJ9Method::getArbitraryObjectFromCP(reloRuntime->fej9(), cp, cpIndex(reloTarget));
+   TR_OpaqueClassBlock *definingClass = reloRuntime->fej9()->getObjectClassAt((uintptr_t)arbitraryObject);
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: definingClass %p\n", definingClass);
+
+   int32_t returnCode = 0;
+   bool verified = false;
+   if (definingClass)
+      {
+      void *classChainOrROMClass;
+      if (isStaticFieldValidation())
+         classChainOrROMClass = reloRuntime->fej9()->sharedCache()->romClassFromOffsetInSharedCache(classChainOffsetInSharedCache(reloTarget));
+      else
+         classChainOrROMClass = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainOffsetInSharedCache(reloTarget));
+
+      verified = validateClass(reloRuntime, definingClass, classChainOrROMClass);
+      }
+
+   if (verified)
+      {
+      uintptr_t *classChain = reinterpret_cast<uintptr_t*>(reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainOffsetInSharedCache(reloTarget)));
+      J9ROMClass *romClass = reloRuntime->fej9()->sharedCache()->startingROMClassOfClassChain(classChain);
+      J9UTF8 * classNameData = J9ROMCLASS_CLASSNAME(romClass);
+      char *className = reinterpret_cast<char *>(J9UTF8_DATA(classNameData));
+      uint32_t classNameLength = J9UTF8_LENGTH(classNameData);
+      TR_OpaqueClassBlock *clazz = reloRuntime->fej9()->getClassFromSignature(className, classNameLength, cp);
+      verified = (clazz == definingClass);
+      }
+
+   if (!verified)
+      {
+      RELO_LOG(reloRuntime->reloLogger(), 1, "\t\tapplyRelocation: could not verify class\n");
+      returnCode = failureCode();
+      }
+
+   return returnCode;
+   }
+
+int32_t
+TR_RelocationRecordValidateArbitraryObjectClass::failureCode()
+   {
+   return compilationAotArbitraryObjectClassReloFailure;
+   }
 
 // TR_VerifyInstanceField
 char *
@@ -6077,4 +6147,5 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedStaticMethod                          = 104
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedSpecialMethod                         = 105
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedAbstractMethod                        = 106
+   sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_ValidateArbitraryObjectClass                 = 107
    };
