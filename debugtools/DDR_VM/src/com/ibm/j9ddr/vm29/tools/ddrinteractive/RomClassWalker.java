@@ -660,6 +660,9 @@ public class RomClassWalker extends ClassWalker {
 
 			} else if ((shapeDesc == J9CPTYPE_UNUSED) || (shapeDesc == J9CPTYPE_UNUSED8)) {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_I64, I64Pointer.cast(cpEntry), "cpFieldUnused");
+
+			} else {
+				throw new CorruptDataException("Unknown CP entry type: " + shapeDesc);
 			}
 
 			cpEntry = cpEntry.addOffset(J9ROMConstantPoolItem.SIZEOF);
