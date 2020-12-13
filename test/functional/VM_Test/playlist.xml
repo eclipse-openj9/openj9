@@ -204,14 +204,16 @@
 	<test>
 		<testCaseName>xlpTests</testCaseName>
 		<variations>
-			<variation>Mode109</variation>
-			<variation>Mode609</variation>
+			<variation>Mode110</variation>
+			<variation>Mode610</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) -Dplatform=$(PLATFORM) -cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \
 	j9vm.runner.Menu -test=$(Q)j9vm.test.xlp$(Q) -exe=$(Q)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(Q) \
 	-jar=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \
 	-xids=all,$(PLATFORM),$(VARIATION); \
 	$(TEST_STATUS)</command>
+		<!-- Temporarily disable this test on mac, issue  https://github.com/eclipse/openj9/issues/11374 -->
+		<platformRequirements>^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -229,6 +231,8 @@
 		<variations>
 			<variation>Mode109</variation>
 			<variation>Mode110</variation>
+			<variation>Mode609</variation>
+			<variation>Mode610</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) -Dplatform=$(PLATFORM) -cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \
 	j9vm.runner.Menu -test=$(Q)j9vm.test.xlpcodecache$(Q) -exe=$(Q)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(Q) \
