@@ -643,7 +643,7 @@ MM_IncrementalGenerationalGC::initializeTaxationThreshold(MM_EnvironmentVLHGC *e
 	}
 	Assert_MM_true(NULL != _configuredSubspace);
 	_configuredSubspace->setBytesRemainingBeforeTaxation(_taxationThreshold);
-	_allocatedSinceLastPGC = _taxationThreshold;
+	_allocatedSinceLastPGC = 0;
 	
 	initialRegionAgesSetup(env, _taxationThreshold);
 }
@@ -804,6 +804,10 @@ MM_IncrementalGenerationalGC::taxationEntryPoint(MM_EnvironmentBase *envModron, 
 	bool doGlobalMarkPhase = false;
 	_schedulingDelegate.getIncrementWork(env, &doPartialGarbageCollection, &doGlobalMarkPhase);
 	Assert_MM_true(doPartialGarbageCollection != doGlobalMarkPhase);
+	Assert_MM_true(0 == _configuredSubspace->getBytesRemainingBeforeTaxation());
+
+	/* Accumulate allocated bytes since last PGC */
+	_allocatedSinceLastPGC += _taxationThreshold;
 
 	/* Report the start of the increment */
 	_extensions->globalVLHGCStats.incrementCount += 1;
@@ -872,14 +876,6 @@ MM_IncrementalGenerationalGC::taxationEntryPoint(MM_EnvironmentBase *envModron, 
 	/* Set the next threshold for collection work */
 	_taxationThreshold = _schedulingDelegate.getNextTaxationThreshold(env);
 	_configuredSubspace->setBytesRemainingBeforeTaxation(_taxationThreshold);
-
-	if (doPartialGarbageCollection) {
-		_allocatedSinceLastPGC = _taxationThreshold;
-	} else {
-		_allocatedSinceLastPGC += _taxationThreshold;
-	}
-
-	incrementRegionAges(env, _taxationThreshold, doPartialGarbageCollection);
 
 	/* Report the end of the increment */
 	if (J9_EVENT_IS_HOOKED(_extensions->privateHookInterface, J9HOOK_MM_PRIVATE_TAROK_INCREMENT_END)) {
@@ -1000,6 +996,8 @@ MM_IncrementalGenerationalGC::runGlobalMarkPhaseIncrement(MM_EnvironmentVLHGC *e
 		env->_cycleState->_workPackets = NULL;
 		env->_cycleState->_currentIncrement = 0;
 	}
+
+	incrementRegionAges(env, _taxationThreshold, false);
 
 	/* If the GMP is no longer running, then we have run the final increment of the cycle. */
 	Assert_MM_true(0 == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats.getStallTime());
@@ -1249,10 +1247,15 @@ MM_IncrementalGenerationalGC::partialGarbageCollect(MM_EnvironmentVLHGC *env, MM
 
 	env->_cycleState->_externalCycleState = NULL;
 
+	incrementRegionAges(env, _taxationThreshold, true);
+
 	reportGCCycleFinalIncrementEnding(env);
 	reportGCIncrementEnd(env);
 	reportPGCEnd(env);
 	reportGCCycleEnd(env);
+
+	/* Reset amount allocated for next PGC */
+	_allocatedSinceLastPGC = 0;
 
 	_extensions->allocationStats.clear();
 }
@@ -2101,6 +2104,8 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 		/* numaNodes is just used as indication to verbose GC that stats we collected are valid and indeed should be reported */
 		stats->_numaNodes = _extensions->_numaManager.getAffinityLeaderCount();
 		UDATA regionSize = _regionManager->getRegionSize();
+		UDATA allocateEdenTotal = 0;
+		stats->_edenHeapSize = getCurrentEdenSizeInBytes(env);
 
 		GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 		MM_HeapRegionDescriptorVLHGC *region = NULL;
@@ -2111,22 +2116,22 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 				if (region->containsObjects()) {
 					MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
 					Assert_MM_true(NULL != memoryPool);
-					/* for Eden region containing objects Allocation Age must be smaller then amount allocated since last PGC */
-					if (region->getAllocationAge() <= _allocatedSinceLastPGC) {
-						stats->_edenHeapSize += regionSize;
+					/* Eden region containing objects, Allocation Age must be smaller then amount allocated since last PGC,
+					 * more accurately, its logical age must be equal to zero */
+					if (0 == region->getLogicalAge()) {
 						/* region is not collected yet, so getActualFreeMemorySize might not be accurate - using getAllocatableBytes instead */
 						UDATA size = memoryPool->getAllocatableBytes();
 						stats->_edenFreeHeapSize += size;
 						usedMemory = regionSize - size;
+						allocateEdenTotal += regionSize;
 					} else {
 						usedMemory = regionSize - memoryPool->getFreeMemoryAndDarkMatterBytes();
 					}
 				} else {
 					Assert_MM_true(region->isArrayletLeaf());
 					usedMemory = regionSize;
-					/* for Eden arraylet leaf Allocation Age must be smaller then amount allocated since last PGC */
-					if (region->getAllocationAge() <= _allocatedSinceLastPGC) {
-						stats->_edenHeapSize += regionSize;
+					if (0 == region->getLogicalAge()) {
+						allocateEdenTotal += regionSize;
 					}
 				}
 
@@ -2178,6 +2183,11 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 			}
 
 		}
+		/* there would be a case that mutators use more than assigned regions, correct totalRegionEdenSize to avoid inconsistent Exception */
+		if (allocateEdenTotal > stats->_edenHeapSize) {
+			stats->_edenHeapSize = allocateEdenTotal;
+		}
+		stats->_edenFreeHeapSize += (stats->_edenHeapSize - allocateEdenTotal);
 	}
 }
 
