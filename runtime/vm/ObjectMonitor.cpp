@@ -473,6 +473,22 @@ restart:
 				} else {
 					/* the monitor is already inflated */
 					objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+					/* restored inflated monitor will not have been fixed up if it wasn't acquired during snapshot. */
+					if (IS_RESTORE_RUN(currentThread->javaVM) && (UDATA)(objectMonitor->monitor) == 0) {
+						objectMonitor = objectMonitorInflate(currentThread, object, lock);
+						if (NULL == objectMonitor) {
+							/* out of memory */
+							result = J9_OBJECT_MONITOR_OOM;
+							goto done;
+						}
+						/* monitor count may be wrong since objectMonitorInflate sets it to J9_FLATLOCK_COUNT(lock).
+						* notes for this macro indicate that the value may be incorrect for an inflated monitor.
+						* this monitor has been previously inflated during snapshot run */
+						((J9ThreadAbstractMonitor*)objectMonitor->monitor)->count = 1;
+					}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 				}
 				if (!spinOnTryEnter(currentThread, objectMonitor, lwEA, object)) {
 					goto wouldBlock;
