@@ -83,7 +83,7 @@ The tests can also be run manually on your own machine, refer to the
 The first line describes the change made. It is written in the imperative mood,
 and should say what happens when the patch is applied. Keep it short and
 simple. The first line should be less than 70 characters, where reasonable,
-and should be written in sentence case preferably not ending in a period.
+and should be written in sentence case (capitalize the first letter) preferably not ending in a period.
 Leave a blank line between the first line and the message body.
 
 The body should be wrapped at 72 characters, where reasonable.
