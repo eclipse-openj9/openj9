@@ -303,6 +303,7 @@ class ClientSessionData
       uintptr_t _processID;
       bool _canMethodEnterEventBeHooked;
       bool _canMethodExitEventBeHooked;
+      bool _canExceptionEventBeHooked;
       bool _usesDiscontiguousArraylets;
       bool _isIProfilerEnabled;
       int32_t _arrayletLeafLogSize;
