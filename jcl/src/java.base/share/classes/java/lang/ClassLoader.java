@@ -101,10 +101,6 @@ public abstract class ClassLoader {
 
 	private long vmRef;
 	ClassLoader parent;
-	
-	/*[IF Panama]*/
-	private static String[]	usr_paths = new String[1];
-	/*[ENDIF]*/
 
 	/*[PR CMVC 130382] Optimize checking ClassLoader assertion status */
 	private static boolean checkAssertionOptions;
@@ -309,11 +305,6 @@ public abstract class ClassLoader {
 		applicationClassLoader = sun.misc.Launcher.getLauncher().getClassLoader();
 		/*[ENDIF]*/
 
-		/*[IF Panama]*/
-		/* RI jdk.internal.nicl.LdLoader uses reflection to lookup this field */
-		usr_paths[0] = System.getProperty("user.dir");
-		/*[ENDIF]*/
-		
 		/* Find the extension class loader */
 		ClassLoader tempLoader = applicationClassLoader;
 		while (null != tempLoader.parent) {

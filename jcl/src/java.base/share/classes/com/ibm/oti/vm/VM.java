@@ -132,9 +132,7 @@ public final class VM {
 	/*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
 	/*[PR CMVC 191554] Provide access to ClassLoader methods to improve performance */
 	private static VMLangAccess javalangVMaccess;
-	/*[IF Panama]*/
-	private static VMLangInvokeAccess javalanginvokeVMaccess;
-	/*[ENDIF]*/
+
 	static {
 		/* Note this is never called - the VM marks this class as initialized immediately after loading.
 		 * The initializer is here solely to trick the compiler into letting us have static final
@@ -558,19 +556,6 @@ public static void setVMLangAccess(VMLangAccess access) {
 public static VMLangAccess getVMLangAccess() {
 	return javalangVMaccess;
 }
-
-/*[IF Panama]*/
-public static void setVMLangInvokeAccess(VMLangInvokeAccess access) {
-	if (javalanginvokeVMaccess != null) {
-		throw new SecurityException(Msg.getString("K05ba")); //$NON-NLS-1$
-	}
-	javalanginvokeVMaccess = access;
-}
-
-public static VMLangInvokeAccess getVMLangInvokeAccess() {
-	return javalanginvokeVMaccess;
-}
-/*[ENDIF]*/
 
 /**
  * Set the current thread as a JVM System Thread
