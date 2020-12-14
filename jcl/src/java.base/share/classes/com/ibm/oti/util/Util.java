@@ -1,12 +1,8 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 package com.ibm.oti.util;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,8 +23,13 @@ import java.io.PrintWriter;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.io.UTFDataFormatException;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.security.CodeSource;
 import java.security.ProtectionDomain;
 
 public final class Util {
@@ -335,10 +336,16 @@ public static void printStackTraceElement(StackTraceElement e, Object elementSou
 			appendTo(buf, (String)elementSource);
 		} else if (elementSource instanceof ProtectionDomain) {
 			ProtectionDomain pd = (ProtectionDomain)elementSource;
-			appendTo(buf, pd.getClassLoader().toString());
-			appendTo(buf, "("); //$NON-NLS-1$
-			appendTo(buf, pd.getCodeSource().getLocation().toString());
-			appendTo(buf, ")"); //$NON-NLS-1$
+			appendTo(buf, String.valueOf(pd.getClassLoader()));
+			CodeSource cs = pd.getCodeSource();
+			if (cs != null) {
+				URL location = cs.getLocation();
+				if (location != null) {
+					appendTo(buf, "("); //$NON-NLS-1$
+					appendTo(buf, location.toString());
+					appendTo(buf, ")"); //$NON-NLS-1$
+				}
+			}
 		}
 	}
 }
