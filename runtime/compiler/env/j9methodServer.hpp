@@ -158,7 +158,7 @@ public:
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm) override;
    virtual J9ClassLoader *getClassLoader() override;
    virtual bool staticAttributes(TR::Compilation *, int32_t cpIndex, void * *, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation) override;
-   virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic) override;
+   virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic, TR_OpaqueClassBlock **fromResolvedJ9Method = NULL) override;
    virtual TR_OpaqueClassBlock * getClassFromConstantPool(TR::Compilation *, uint32_t cpIndex, bool returnClassToAOT = false) override;
    virtual TR_OpaqueClassBlock * getDeclaringClassFromFieldOrStatic(TR::Compilation *comp, int32_t cpIndex) override;
    virtual TR_OpaqueClassBlock * classOfStatic(int32_t cpIndex, bool returnClassForAOT = false) override;
@@ -288,7 +288,7 @@ class TR_ResolvedRelocatableJ9JITServerMethod : public TR_ResolvedJ9JITServerMet
    virtual void *                startAddressForJITInternalNativeMethod() override;
    virtual void *                startAddressForInterpreterOfJittedMethod() override;
 
-   virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic) override;
+   virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic, TR_OpaqueClassBlock **fromResolvedJ9Method = NULL) override;
    virtual TR_OpaqueClassBlock * getClassFromConstantPool(TR::Compilation *, uint32_t cpIndex, bool returnClassToAOT = false) override;
    virtual bool                  validateClassFromConstantPool(TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass) override;
    virtual bool                  validateArbitraryClass(TR::Compilation *comp, J9Class *clazz) override;
