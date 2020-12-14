@@ -30,11 +30,6 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ReflectPermission;
-/*[IF Panama]*/
-import java.nicl.*;
-import java.nicl.types.*;
-import jdk.internal.nicl.types.PointerTokenImpl;
-/*[ENDIF]*/
 
 import java.util.Arrays;
 import java.util.List;
@@ -90,26 +85,16 @@ import java.util.Collections;
 public class MethodHandles {
 	@CallerSensitive
 	static final native Class<?> getStackClass(int depth);
-	
+
 	/* An empty array used by foldArguments without argument indices specified */
 	static final int[] EMPTY_ARG_POSITIONS = new int[0];
-	
-	/*[IF Panama]*/
-	private native static long findNativeAddress(String methodName);
-	/*[ENDIF]*/
-	
+
 	MethodHandles() {
 		/*[IF ]*/
 		// non public constructor so javac doesn't helpfully add a public one
 		/*[ENDIF]*/
 	}
-	
-	/*[IF Panama]*/
-	static {
-		com.ibm.oti.vm.VM.setVMLangInvokeAccess(new VMInvokeAccess());
-	}
-	/*[ENDIF]*/
-	
+
 	/**
 	 * A factory for creating MethodHandles that require access-checking on creation.
 	 * <p>
@@ -991,54 +976,6 @@ public class MethodHandles {
 		}
 		/*[ENDIF]*/
 
-		/*[IF Panama]*/
-		/**
-		 * Return a MethodHandle to a native method.  The MethodHandle will have the same type as the
-		 * method.  The method and all classes in its type must be accessible to the caller.
-		 * 
-		 * @param methodName - the name of the method
-		 * @param type - the MethodType of the method
-		 * @return A MethodHandle able to invoke the requested native method
-		 * @throws IllegalAccessException - if access checking fails
-		 * @throws NullPointerException - if methodName or type is null
-		 * @throws NoSuchMethodException - if no native method named methodName with signature matching type
-		 */
-		public MethodHandle findNative(String methodName, MethodType type) throws IllegalAccessException, NoSuchMethodException {
-			nullCheck(methodName, type);
-
-			long nativeAddress = findNativeAddress(methodName);
-			if(0 == nativeAddress) {
-				throw new NoSuchMethodException("Failed to look up " + methodName); //$NON-NLS-1$
-			}
-			
-			MethodHandle handle = new NativeMethodHandle(methodName, type, nativeAddress);
-			return handle;
-		}
-		
-		/**
-		 * Return a MethodHandle to a native method.  The MethodHandle will have the same type as the
-		 * method.  The method and all classes in its type must be accessible to the caller.
-		 * 
-		 * @param lib - the library of the method
-		 * @param methodName - the name of the method
-		 * @param type - the MethodType of the method
-		 * @return A MethodHandle able to invoke the requested native method
-		 * @throws IllegalAccessException - if access checking fails
-		 * @throws NullPointerException - if methodName or type is null
-		 * @throws NoSuchMethodException - if no native method named methodName with signature matching type
-		 */
-		public MethodHandle findNative(Library lib, String methodName, MethodType type) throws IllegalAccessException, NoSuchMethodException {
-			nullCheck(methodName, type);
-			
-			/* TODO revisit this code, it is likely to change in future versions of the API */
-			PointerToken tok = new PointerTokenImpl();
-			long nativeAddress = lib.lookup(methodName).getAddress().addr(tok);
-			
-			MethodHandle handle = new NativeMethodHandle(methodName, type, nativeAddress);
-			return handle;
-		}
-		/*[ENDIF]*/
-		
 		/**
 		 * Restrict the receiver as indicated in the JVMS for invokespecial and invokevirtual.
 		 * <blockquote>
