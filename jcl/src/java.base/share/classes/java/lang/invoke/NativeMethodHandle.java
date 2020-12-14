@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Panama | (JAVA_SPEC_VERSION >= 16)]*/
+/*[INCLUDE-IF (Panama | (JAVA_SPEC_VERSION >= 16)) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright (c) 2009, 2020 IBM Corp. and others
  *
