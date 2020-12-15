@@ -539,9 +539,17 @@ bool
 ComparingCursor::isRangeValidForUTF8Ptr(J9UTF8 *utf8)
 {
 	U_8 *ptr = (U_8*)utf8;
-
+	/*
+	 * Need to check the UTF8 to verify that it is either in a J9MemorySegment or in the
+	 * SCC.
+	 */
 	if (_checkRangeInSharedCache) {
-		return FALSE != j9shr_Query_IsAddressInCache(_javaVM, utf8, J9UTF8_TOTAL_SIZE(utf8));
+		/* Need to check if the header (length field) is in range first, before reading the length
+		 * to determine if the rest of the data is in range. Failure to do so results in potentially
+		 * dereferencing inaccessible memory.
+		 */
+		return j9shr_Query_IsAddressInCache(_javaVM, utf8, sizeof(J9UTF8))
+				&& j9shr_Query_IsAddressInCache(_javaVM, utf8, J9UTF8_TOTAL_SIZE(utf8));
 	} else {
 		UDATA maxLength = getMaximumValidLengthForPtrInSegment(ptr);
 
