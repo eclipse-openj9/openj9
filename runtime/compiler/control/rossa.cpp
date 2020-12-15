@@ -205,14 +205,15 @@ char *compilationErrorNames[]={
    "compilationILGenUnsupportedValueTypeOperationFailure", //53
    "compilationAOTRelocationRecordGenerationFailure", //54
    "compilationAotPatchedCPConstant", //55
+   "compilationAotHasInvokeSpecialInterface", //56
+   "compilationAotValidateExceptionHookFailure", //57
 #if defined(J9VM_OPT_JITSERVER)
-   "compilationStreamFailure", //56
-   "compilationStreamLostMessage", // 57
-   "compilationStreamMessageTypeMismatch", // 58
-   "compilationStreamVersionIncompatible", // 59
-   "compilationStreamInterrupted", // 60
+   "compilationStreamFailure", //compilationFirstJITServerFailure=58
+   "compilationStreamLostMessage", // compilationFirstJITServerFailure+1
+   "compilationStreamMessageTypeMismatch", //compilationFirstJITServerFailure+2
+   "compilationStreamVersionIncompatible", //compilationFirstJITServerFailure+3
+   "compilationStreamInterrupted", //compilationFirstJITServerFailure+4
 #endif /* defined(J9VM_OPT_JITSERVER) */
-   "compilationAotHasInvokeSpecialInterface", //61
    "compilationMaxError",
 };
 

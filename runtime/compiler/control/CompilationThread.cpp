@@ -2173,6 +2173,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationAOTNoSupportForAOTFailure:
             case compilationAOTValidateTMFailure:
             case compilationAOTRelocationRecordGenerationFailure:
+            case compilationAotValidateExceptionHookFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotUseAotCodeFromSharedCache = true;
                tryCompilingAgain = true;

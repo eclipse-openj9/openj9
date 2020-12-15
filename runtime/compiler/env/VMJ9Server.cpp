@@ -246,6 +246,14 @@ TR_J9ServerVM::canMethodExitEventBeHooked()
    return vmInfo->_canMethodExitEventBeHooked;
    }
 
+bool
+TR_J9ServerVM::canExceptionEventBeHooked()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_canExceptionEventBeHooked;
+   }
+
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
    {

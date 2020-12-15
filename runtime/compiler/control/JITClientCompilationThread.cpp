@@ -437,6 +437,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._processID = fe->getProcessID();
          vmInfo._canMethodEnterEventBeHooked = fe->canMethodEnterEventBeHooked();
          vmInfo._canMethodExitEventBeHooked = fe->canMethodExitEventBeHooked();
+         vmInfo._canExceptionEventBeHooked = fe->canExceptionEventBeHooked();
          vmInfo._usesDiscontiguousArraylets = TR::Compiler->om.usesDiscontiguousArraylets();
          vmInfo._isIProfilerEnabled = fe->getIProfiler();
          vmInfo._arrayletLeafLogSize = TR::Compiler->om.arrayletLeafLogSize();

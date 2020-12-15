@@ -217,6 +217,13 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
       return NULL; // fail
       }
 
+   if (fej9->canExceptionEventBeHooked()
+       && (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfExceptionHook))
+      {
+      setReturnCode(compilationAotValidateExceptionHookFailure);
+      return NULL;
+      }
+
    // Check the flags related to string compression
    if (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_UsesEnableStringCompressionFolding)
       {
