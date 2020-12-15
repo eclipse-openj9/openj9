@@ -306,6 +306,9 @@ public:
    bool traceIsEnabled() { return _flags.testAny(TraceIsEnabled); }
    void setTraceIsEnabled(bool b) { _flags.set(TraceIsEnabled, b); }
 
+   bool fsdIsEnabled() { return _flags.testAny(FSDIsEnabled); }
+   void setFSDIsEnabled(bool b) { _flags.set(FSDIsEnabled, b); }
+
    uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName, char * sig)
       {
       return getInstanceFieldOffset(classPointer, fieldName, (uint32_t)strlen(fieldName), sig, (uint32_t)strlen(sig));
@@ -1031,6 +1034,9 @@ public:
    virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType);
    virtual TR_OpaqueClassBlock * getClassFromNewArrayTypeNonNull(int32_t arrayType);
 
+   virtual TR_OpaqueClassBlock *getClassFromCP(J9ConstantPool *cp);
+   virtual J9ROMMethod *getROMMethodFromRAMMethod(J9Method *ramMethod);
+
    // --------------------------------------------------------------------------
    // Object model
    // --------------------------------------------------------------------------
@@ -1069,6 +1075,7 @@ protected:
    enum // _flags
       {
       TraceIsEnabled = 0x0000001,
+      FSDIsEnabled   = 0x0000002,
       DummyLastEnum
       };
 
@@ -1137,8 +1144,6 @@ public:
    virtual uint32_t               getPrimitiveArrayOffsetInJavaVM(uint32_t arrayType);
 
    virtual TR_StaticFinalData dereferenceStaticFinalAddress(void *staticAddress, TR::DataType addressType);
-   virtual TR_OpaqueClassBlock *getClassFromCP(J9ConstantPool *cp);
-   virtual J9ROMMethod *getROMMethodFromRAMMethod(J9Method *ramMethod);
 
    TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t sigLength, J9ConstantPool * constantPool);
 
