@@ -69,6 +69,7 @@ public:
    virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method) override;
    virtual bool canMethodEnterEventBeHooked() override;
    virtual bool canMethodExitEventBeHooked() override;
+   virtual bool canExceptionEventBeHooked() override;
    virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer) override;
    virtual void * getClassLoader(TR_OpaqueClassBlock * classPointer) override;
    virtual TR_OpaqueClassBlock * getClassOfMethod(TR_OpaqueMethodBlock *method) override;

@@ -118,7 +118,7 @@ public:
    IlGeneratorMethodDetailsType getType() const;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    virtual const J9ROMClass *getRomClass() const;
-   virtual const J9ROMMethod *getRomMethod() const;
+   virtual const J9ROMMethod *getRomMethod(TR_J9VMBase *fe);
 
 
    virtual TR_IlGenerator *getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,

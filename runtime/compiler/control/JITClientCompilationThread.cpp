@@ -437,6 +437,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._processID = fe->getProcessID();
          vmInfo._canMethodEnterEventBeHooked = fe->canMethodEnterEventBeHooked();
          vmInfo._canMethodExitEventBeHooked = fe->canMethodExitEventBeHooked();
+         vmInfo._canExceptionEventBeHooked = fe->canExceptionEventBeHooked();
          vmInfo._usesDiscontiguousArraylets = TR::Compiler->om.usesDiscontiguousArraylets();
          vmInfo._isIProfilerEnabled = fe->getIProfiler();
          vmInfo._arrayletLeafLogSize = TR::Compiler->om.arrayletLeafLogSize();
@@ -3039,7 +3040,7 @@ remoteCompilationEnd(
       {
       TR_ASSERT(entry->_useAotCompilation, "entry must be an AOT compilation");
       TR_ASSERT(entry->isRemoteCompReq(), "entry must be a remote compilation");
-      J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+      J9ROMMethod *romMethod = comp->fej9()->getROMMethodFromRAMMethod(method);
       TR::CompilationInfo::storeAOTInSharedCache(
          vmThread,
          romMethod,

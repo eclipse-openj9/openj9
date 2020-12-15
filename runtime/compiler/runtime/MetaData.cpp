@@ -1580,6 +1580,11 @@ createMethodMetaData(
          aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_IsNotCapableOfMethodEnterTracing;
          }
 
+      if (!vm->canExceptionEventBeHooked())
+         {
+         aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_IsNotCapableOfExceptionHook;
+         }
+
       if (comp->getOption(TR_DisableTM))
          {
          aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_TMDisabled;

@@ -390,7 +390,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
 
       // Allocate memory for every possible node in this method
       //
-      J9ROMMethod * romMethod = (J9ROMMethod *)J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
+      J9ROMMethod * romMethod = comp->fej9()->getROMMethodFromRAMMethod((J9Method *)method);
 
       TR::Options * optionsJIT = TR::Options::getJITCmdLineOptions();
       TR::Options * optionsAOT = TR::Options::getAOTCmdLineOptions();
@@ -1272,7 +1272,7 @@ TR_IProfiler::persistentProfilingSample(TR_OpaqueMethodBlock *method, uint32_t b
       descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITPROFILE;
       descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
       J9VMThread *vmThread = ((TR_J9VM *)comp->fej9())->getCurrentVMThread();
-      J9ROMMethod * romMethod = (J9ROMMethod*)J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
+      J9ROMMethod * romMethod = comp->fej9()->getROMMethodFromRAMMethod((J9Method *)method);
       IDATA dataIsCorrupt;
 
       TR_IPBCDataStorageHeader *store = (TR_IPBCDataStorageHeader *)scConfig->findAttachedData(vmThread, romMethod, &descriptor, &dataIsCorrupt);
@@ -1355,7 +1355,7 @@ TR_IProfiler::getJ9SharedDataDescriptorForMethod(J9SharedDataDescriptor * descri
    descriptor->type = J9SHR_ATTACHED_DATA_TYPE_JITPROFILE;
    descriptor->flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
    J9VMThread *vmThread = ((TR_J9VM *)comp->fej9())->getCurrentVMThread();
-   J9ROMMethod * romMethod = (J9ROMMethod*)J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
+   J9ROMMethod * romMethod = comp->fej9()->getROMMethodFromRAMMethod((J9Method *)method);
    IDATA dataIsCorrupt;
    TR_IPBCDataStorageHeader * store = (TR_IPBCDataStorageHeader *) scConfig->findAttachedData(vmThread, romMethod, descriptor, &dataIsCorrupt);
    if (store != (TR_IPBCDataStorageHeader *)descriptor->address)  // a stronger check, as found can be error value

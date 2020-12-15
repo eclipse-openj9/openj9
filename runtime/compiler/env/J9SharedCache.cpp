@@ -216,7 +216,7 @@ TR_J9SharedCache::getHint(J9VMThread * vmThread, J9Method *method)
    SCCHint result;
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-   J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+   J9ROMMethod * romMethod = fe()->getROMMethodFromRAMMethod(method);
 
    J9SharedDataDescriptor descriptor;
    descriptor.address = (U_8 *)&result;
@@ -296,7 +296,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
    if (newHint)
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-      J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+      J9ROMMethod * romMethod = fej9->getROMMethodFromRAMMethod(method);
       J9VMThread * vmThread = fej9->getCurrentVMThread();
 
       char methodSignature[500];
