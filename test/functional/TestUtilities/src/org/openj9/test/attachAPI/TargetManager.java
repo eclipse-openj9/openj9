@@ -143,9 +143,17 @@ class TargetManager {
 	public static long getProcessId() {
 		long result = -1;
 		try {
-			Class<?> attachHandlerClass = Class.forName(TargetManager.OPENJ9_INTERNAL_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
-			final Method getPid = attachHandlerClass.getMethod("getProcessId");
-			result = (long) getPid.invoke(attachHandlerClass);
+			if (System.getProperty("java.version").startsWith("1.8")) {
+				Class<?> attachHandlerClass = Class.forName(TargetManager.OPENJ9_INTERNAL_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
+				final Method getPid = attachHandlerClass.getMethod("getProcessId");
+				result = (long) getPid.invoke(attachHandlerClass);
+			} else {
+				final Class<?> processHandleClass = Class.forName("java.lang.ProcessHandle");
+				final Method getCurrent = processHandleClass.getMethod("current");
+				final Method getPid = processHandleClass.getMethod("pid");
+				final Object currentHandle = getCurrent.invoke(processHandleClass);
+				result = (long)getPid.invoke(currentHandle);
+			}
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			logger.error("error getting process ID: "+e.getMessage());
 		}
