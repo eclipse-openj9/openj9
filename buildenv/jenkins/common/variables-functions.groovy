@@ -1582,6 +1582,7 @@ def download_boot_jdk(bootJDKVersion, bootJDK) {
                 unzip "\$sdkFile" -d .
                 sdkFolder=`ls -d */`
                 mv "\$sdkFolder"* ${bootJDK}/
+                rm -r "\$sdkFolder"
             else
                 gzip -cd "\$sdkFile" | tar xof - -C ${bootJDK} --strip=${dirStrip}
             fi
