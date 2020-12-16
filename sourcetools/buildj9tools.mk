@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,6 +60,12 @@ JAR         := $(JAVA_BIN)jar
 SPEC_LEVEL  ?= 7
 JAVAC_FLAGS := -nowarn -source $(SPEC_LEVEL) -target $(SPEC_LEVEL)
 
+ifeq (, $(if $(JAVA_SPEC_VERSION),$(findstring $(JAVA_SPEC_VERSION),8 11 15),8))
+  DIR_SEP   := $(if $(or $(findstring Windows,$(OS)),$(findstring CYGWIN,$(OS))),\,/)
+else
+  DIR_SEP   := /
+endif
+
 JAR_TARGETS :=
 
 .PHONY : all clean default distclean
@@ -97,14 +103,14 @@ ifeq ($1,uma)
 endif
 
 $1_SOURCES      := $(call FindAllFiles,$2,*.java)
-$1_TARGET       := $(DEST_DIR)/$1.jar
+$1_TARGET       := $(DEST_DIR)$(DIR_SEP)$1.jar
 $1_WORK_DIR     := $(WORK_PFX)$1
 
 JAR_TARGETS     += $$($1_TARGET)
 
 all : $$($1_TARGET)
 
-$(DEST_DIR)/$1.jar : $$($1_SOURCES) $$($1_OTHER_FILES)
+$(DEST_DIR)$(DIR_SEP)$1.jar : $$($1_SOURCES) $$($1_OTHER_FILES)
 	@echo Building $$@
 	@rm -rf $$($1_WORK_DIR)
 	@mkdir -p $$($1_WORK_DIR)
@@ -122,5 +128,5 @@ $(eval $(call BuildJar_template,om,objectmodel))
 $(eval $(call BuildJar_template,jpp,com.ibm.jpp.preprocessor))
 $(eval $(call BuildJar_template,uma,com.ibm.uma,$(DEST_DIR)/om.jar $(FREEMARKER_JAR)))
 
-$(DEST_DIR)/j9vmcp.jar : $(DEST_DIR)/om.jar
-$(DEST_DIR)/uma.jar : $(DEST_DIR)/om.jar
+$(DEST_DIR)$(DIR_SEP)j9vmcp.jar : $(DEST_DIR)$(DIR_SEP)om.jar
+$(DEST_DIR)$(DIR_SEP)uma.jar : $(DEST_DIR)$(DIR_SEP)om.jar
