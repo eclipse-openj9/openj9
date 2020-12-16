@@ -64,7 +64,6 @@ struct TR_ByteCodeInfo;
 struct TR_InlinedCallSite;
 template <typename ListKind> class List;
 
-
 //////////////////////////
 // PersistentProfileInfos
 //////////////////////////
@@ -174,7 +173,59 @@ class TR_PersistentProfileInfo
 
    void dumpInfo(TR::FILE *);
 
+   /**
+    * @brief Determines the size of the serialized data for this object
+    *
+    * @return Number of bytes required for serializing this object
+    */
+   uint32_t getSizeForSerialization() const;
+
+   /**
+    * @brief Serialize this object and store it in the memory buffer
+    *
+    * @param buffer Memory buffer where serialized data is to be stored
+    *
+    * @note The caller should ensure buffer is large enough to accommodate the serialized data.
+    * On return the buffer gets updated to point to the location past the serialized data.
+    * Also see getSizeForSerialization(), deserialize(uint8_t * &).
+    */
+   void serialize(uint8_t * &buffer) const;
+
+   /**
+    * @brief Method for creating TR_PersistentProfileInfo from serialized data
+    *
+    * @param buffer Memory buffer where serialized data is stored
+    *
+    * @return Pointer to TR_PersistentProfileInfo created from serialized data
+    *
+    * @note This method does not check against buffer over-reads. The caller should ensure that the
+    * the memory buffer has been populated by calling the serialized() method to avoid buffer over-reads.
+    * On return the buffer gets updated to point to the location past the serialized data.
+    * Also see getSizeForSerialization(), serialize().
+    */
+   static TR_PersistentProfileInfo * deserialize(uint8_t * &buffer)
+      {
+      return new (PERSISTENT_NEW) TR_PersistentProfileInfo(buffer);
+      }
+
    private:
+   /**
+    * This data structure contains all the fields required for serializing an object of TR_PersistentProfileInfo.
+    * Members of primitive type are represented as it is, and the pointer types which can have NULL value are 
+    * represented as bool to indicate their absence/presence instead of storing the raw address.
+    */
+   struct SerializedPPI {
+      bool hasCallSiteInfo;
+      bool hasBlockFrequencyInfo;
+      bool hasValueProfileInfo;
+   };
+
+   /**
+    * @brief Constructor for creating TR_PersistentProfileInfo from serialized data
+    *
+    * @param buffer Memory area that contains the serialized PersistentProfileInfo object
+    */
+   TR_PersistentProfileInfo(uint8_t * &buffer);
 
    void prepareForProfiling(TR::Compilation *comp);
 
@@ -612,6 +663,9 @@ private:
    uint32_t _initialBlockFrequency;
    };
 
+// To be used for checking if _counterDerivationInfo[i] is a bit vector or not
+#define IS_VALID_BIT_VECTOR(cdi) (!((uintptr_t)cdi & 0x1))
+
 class TR_BlockFrequencyInfo
    {
    public:
@@ -647,7 +701,71 @@ class TR_BlockFrequencyInfo
    int32_t getCallCount();
    int32_t getMaxRawCount(int32_t callerIndex);
    int32_t getMaxRawCount();
+
+   /**
+    * @brief Determines the size of the serialized data for this object
+    *
+    * @return Number of bytes required for serializing this object
+    */
+   uint32_t getSizeForSerialization() const;
+
+   /**
+    * @brief serialize this object and store it in the memory buffer
+    *
+    * @param buffer Memory buffer where serialized data is to be stored
+    *
+    * @note The caller should ensure buffer is large enough to accommodate the serialized data.
+    * On return the buffer gets updated to point to the location past the serialized data.
+    * Also see getSizeForSerialization(), deserialize(uint8_t * &).
+    */
+   void serialize(uint8_t * &buffer) const;
+
+   /**
+    * @brief Method for creating TR_BlockFrequencyInfo from serialized data
+    *
+    * @param buffer Memory buffer where serialized data is stored
+    * @param currentProfile Pointer to TR_PersistentProfileInfo object at which TR_BlockFrequencyInfo object is anchored at
+    *
+    * @return Pointer to TR_BlockFrequencyInfo created from serialized data
+    *
+    * @note This method does not check against buffer over-reads. The caller should ensure that the
+    * the memory buffer has been populated by calling the serialized() method to avoid buffer over-reads.
+    * On return the buffer gets updated to point to the location past the serialized data.
+    * Also see getSizeForSerialization(), serialize().
+    */
+   static TR_BlockFrequencyInfo * deserialize(uint8_t * &buffer, TR_PersistentProfileInfo *currentProfileInfo);
+
    private:
+
+   /**
+    * @brief Helper method to check if counter derivation info is pointing to valid bit vector or not
+    *
+    * @param counterDerivationInfo pointer to counter derivation info
+    *
+    * @return true if the pointer passed in is an actual pointer to TR_BitVector, false otherwise
+    * See _counterDerivationInfo.
+    */
+   static inline bool isCounterDerivationInfoValidBitVector(TR_BitVector *counterDerivationInfo);
+
+   /**
+    * This data structure contains all the fields required for serializing an object of TR_PersistentProfileInfo.
+    * Members of primitive type are represented as it is, and the pointer types which can have NULL value are 
+    * represented as bool to indicate their absence/presence instead of storing the raw address.
+    */
+   struct SerializedBFI
+      {
+      int32_t numBlocks;
+      };
+
+   /**
+    * @brief Constructor for creating TR_BlockFrequencyInfo from serialized data
+    *
+    * @param serializedData pointer to SerializedBFI that contains serialized data for the member fields of primitive type
+    * @param buffer memory area that contains serialized data for the member fields of pointer type
+    * @param currentProfile pointer to TR_PersistentProfileInfo object at which TR_BlockFrequencyInfo object is anchored at
+    */
+   TR_BlockFrequencyInfo(const SerializedBFI *serializedData, uint8_t * &buffer, TR_PersistentProfileInfo *currentProfile);
+
    int32_t getRawCount(TR::ResolvedMethodSymbol *resolvedMethod, TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSiteInfo, int64_t maxCount, TR::Compilation *comp);
    int32_t getRawCount(TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSiteInfo, int64_t maxCount, TR::Compilation *comp);
    int32_t getOriginalBlockNumberToGetRawCount(TR_ByteCodeInfo &bci, TR::Compilation *comp, bool trace);
@@ -683,6 +801,10 @@ TR_BlockFrequencyInfo * TR_BlockFrequencyInfo::get(TR::Compilation *comp)
 TR_BlockFrequencyInfo * TR_BlockFrequencyInfo::getCurrent(TR::Compilation *comp)
    {
    return get(TR_PersistentProfileInfo::getCurrent(comp));
+   }
+bool TR_BlockFrequencyInfo::isCounterDerivationInfoValidBitVector(TR_BitVector *counterDerivationInfo)
+   {
+   return (counterDerivationInfo != NULL) && !(reinterpret_cast<uintptr_t>(counterDerivationInfo) & 0x1);
    }
 
 class TR_CatchBlockProfileInfo
@@ -753,7 +875,57 @@ class TR_CallSiteInfo
 
    void dumpInfo(TR::FILE *);
 
+   /**
+    * @brief Determines the size of the serialized data for this object
+    *
+    * @return Number of bytes required for serializing this object
+    */
+   uint32_t getSizeForSerialization() const;
+
+   /**
+    * @brief Serialize this object and store it in the memory buffer
+    *
+    * @param buffer Memory buffer where serialized data is to be stored
+    *
+    * @note The caller should ensure buffer is large enough to accommodate the serialized data.
+    * On return the buffer gets updated to point to the location past the serialized data.
+    * Also see getSizeForSerialization(), deserialize(uint8_t * &).
+    */
+   void serialize(uint8_t * &buffer) const;
+
+   /**
+    * @brief Method for creating TR_CallSiteInfo from serialized data
+    *
+    * @param buffer Memory buffer where the serialized data is stored
+    *
+    * @return Pointer to TR_CallSiteInfo created from serialized data
+    *
+    * @note This method does not check against buffer over-reads. The caller should ensure that the
+    * the memory buffer has been populated by calling the serialized() method to avoid buffer over-reads.
+    * On return the buffer gets updated to point to the location past the serialized data.
+    * Also see getSizeForSerialization(), serialize().
+    */
+   static TR_CallSiteInfo * deserialize(uint8_t * &buffer);
+
    private:
+
+   /**
+    * This data structure contains all the fields required for serializing an object of TR_PersistentProfileInfo.
+    * Members of primitive type are represented as it is, and the pointer types which can have NULL value are 
+    * represented as bool to indicate their absence/presence instead of storing the raw address.
+    */
+   struct SerializedCSI
+      {
+      size_t numCallSites;
+      };
+
+   /**
+    * @brief constructor for creating TR_CallSiteInfo from serialized data
+    *
+    * @param serializedData pointer to SerializedCSI that contains serialized data for the member fields of primitive type
+    * @param buffer memory area that contains serialized data for the member fields of pointer type
+    */
+   TR_CallSiteInfo(const SerializedCSI *serializedData, uint8_t * &buffer);
 
    size_t const _numCallSites;
    TR_InlinedCallSite * const _callSites;
