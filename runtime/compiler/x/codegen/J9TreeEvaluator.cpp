@@ -1411,6 +1411,7 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
 
    generateRegInstruction(DEC4Reg, node, firstDimLenReg, cg);
    generateLabelInstruction(JA4, node, loopLabel, cg);
+   generateLabelInstruction(JMP4, node, fallThru, cg);
 
    TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, 13, cg);
 
