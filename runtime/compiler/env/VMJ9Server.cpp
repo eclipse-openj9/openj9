@@ -1817,9 +1817,18 @@ TR_J9ServerVM::getClassFromCP(J9ConstantPool *cp)
    }
 
 void
-TR_J9ServerVM::reserveTrampolineIfNecessary(TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding)
+TR_J9ServerVM::reserveTrampolineIfNecessary(TR::Compilation *comp, TR::SymbolReference *symRef, bool inBinaryEncoding)
    {
-   // Not necessary in JITServer server mode
+   // We only need to reserve trampolines on the client when
+   // we need a resolved trampoline for non-AOT compilation
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   if (!comp->compileRelocatableCode()
+       && _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_needsMethodTrampolines
+       && !symRef->isUnresolved())
+      {
+      J9Method *ramMethod = (J9Method *) symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier();
+      comp->getMethodsRequiringTrampolines().push_front(ramMethod);
+      }
    }
 
 intptr_t

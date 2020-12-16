@@ -110,13 +110,25 @@ outOfProcessCompilationEnd(
    bool serverHasLowMemory = (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE &&
        freePhysicalMemorySizeB <= (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue() + 4 * TR::Options::getScratchSpaceLowerBound());
 
+   // Send methods requring resolved trampolines in this compilation to the client
+   std::vector<J9Method *> methodsRequiringTrampolines;
+   if (comp->getMethodsRequiringTrampolines().size() > 0)
+      {
+      methodsRequiringTrampolines.reserve(comp->getMethodsRequiringTrampolines().size());
+      for (auto it : comp->getMethodsRequiringTrampolines())
+         {
+         methodsRequiringTrampolines.push_back(it);
+         }
+      }
+
    entry->_stream->finishCompilation(codeCacheStr, dataCacheStr, chTableData,
                                      std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()),
                                      logFileStr, svmSymbolToIdStr,
                                      (resolvedMirrorMethodsPersistIPInfo) ?
                                                          std::vector<TR_ResolvedJ9Method*>(resolvedMirrorMethodsPersistIPInfo->begin(), resolvedMirrorMethodsPersistIPInfo->end()) :
                                                          std::vector<TR_ResolvedJ9Method*>(),
-                                     *entry->_optimizationPlan, serializedRuntimeAssumptions, serverHasLowMemory
+                                     *entry->_optimizationPlan, serializedRuntimeAssumptions, serverHasLowMemory,
+                                     methodsRequiringTrampolines
                                      );
    compInfoPT->clearPerCompilationCaches();
 

@@ -184,6 +184,7 @@ J9::Compilation::Compilation(int32_t id,
    _remoteCompilation(false),
    _serializedRuntimeAssumptions(getTypedAllocator<SerializedRuntimeAssumption>(self()->allocator())),
    _clientData(NULL),
+   _methodsRequiringTrampolines(getTypedAllocator<J9Method *>(self()->allocator())),
 #endif /* defined(J9VM_OPT_JITSERVER) */
    _osrProhibitedOverRangeOfTrees(false)
    {

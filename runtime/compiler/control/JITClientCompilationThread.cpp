@@ -37,6 +37,8 @@
 #include "net/ClientStream.hpp"
 #include "optimizer/J9TransformUtil.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
+#include "runtime/CodeCache.hpp"
+#include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9VMAccess.hpp"
 #include "runtime/JITClientSession.hpp"
 #include "runtime/JITServerIProfiler.hpp"
@@ -514,6 +516,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             vmInfo._helperAddresses[i] = runtimeHelperValue((TR_RuntimeHelper) i);
 #endif
          vmInfo._isHotReferenceFieldRequired = TR::Compiler->om.isHotReferenceFieldRequired();
+         vmInfo._needsMethodTrampolines = TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines();
 
          client->write(response, vmInfo, listOfCacheDescriptors);
          }
@@ -3285,6 +3288,7 @@ remoteCompile(
    std::vector<TR_ResolvedJ9Method*> resolvedMirrorMethodsPersistIPInfo;
    TR_OptimizationPlan modifiedOptPlan;
    std::vector<SerializedRuntimeAssumption> serializedRuntimeAssumptions;
+   std::vector<J9Method *> methodsRequiringTrampolines;
    try
       {
       // Release VM access just before sending the compilation request
@@ -3316,7 +3320,7 @@ remoteCompile(
          {
          auto recv = client->getRecvData<std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>,
                                          std::string, std::string, std::vector<TR_ResolvedJ9Method*>,
-                                         TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>, bool>();
+                                         TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>, bool, std::vector<J9Method *>>();
          statusCode = compilationOK;
          codeCacheStr = std::get<0>(recv);
          dataCacheStr = std::get<1>(recv);
@@ -3327,6 +3331,7 @@ remoteCompile(
          resolvedMirrorMethodsPersistIPInfo = std::get<6>(recv);
          modifiedOptPlan = std::get<7>(recv);
          serializedRuntimeAssumptions = std::get<8>(recv);
+         methodsRequiringTrampolines = std::get<10>(recv);
 
          compInfoPT->getCompilationInfo()->setServerHasLowPhysicalMemory(std::get<9>(recv));
          }
@@ -3470,6 +3475,11 @@ remoteCompile(
                   } // end switch (it->getKind())
                }
             metaData->runtimeAssumptionList = *(compiler->getMetadataAssumptionList());
+
+            for (auto& it : methodsRequiringTrampolines)
+               {
+               compInfoPT->reloRuntime()->codeCache()->reserveResolvedTrampoline((TR_OpaqueMethodBlock *) it, true);
+               }
             }
 
          if (!compiler->getOption(TR_DisableCHOpts) && !useAotCompilation)
