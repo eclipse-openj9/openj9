@@ -1661,7 +1661,7 @@ TR_BlockFrequencyInfo::TR_BlockFrequencyInfo(
    _frequencies(
       _numBlocks ?
       /*
-       * The explicit parens value initialize the array,
+       * The explicit parens value initializes the array,
        * which in turn value initializes each array member,
        * which for ints is zero initialization.
        */
@@ -2275,9 +2275,112 @@ int32_t TR_BlockFrequencyInfo::getMaxRawCount()
    return maxCount;
    }
 
+uint32_t TR_BlockFrequencyInfo::getSizeForSerialization() const
+   {
+   uint32_t size = sizeof(SerializedBFI);
+   if (_numBlocks > 0)
+      {
+      size += (_numBlocks * sizeof(*_blocks));
+      size += (_numBlocks * sizeof(*_frequencies));
+      size += (_numBlocks * 2 * sizeof(*_counterDerivationInfo));
+      for (int32_t i = 0; i < (_numBlocks * 2); i++)
+         {
+         if (TR_BlockFrequencyInfo::isCounterDerivationInfoValidBitVector(_counterDerivationInfo[i]))
+            {
+            size += _counterDerivationInfo[i]->getSizeForSerialization();
+            }
+         }
+      }
+   return size;
+   }
+
+void TR_BlockFrequencyInfo::serialize(uint8_t * &buffer) const
+   {
+   SerializedBFI *serializedData = reinterpret_cast<SerializedBFI *>(buffer);
+   serializedData->numBlocks = _numBlocks;
+   buffer += sizeof(SerializedBFI);
+   if (_numBlocks > 0)
+      {
+      size_t blocksSize = _numBlocks * sizeof(*_blocks);
+      memcpy(buffer, _blocks, blocksSize);
+      buffer += blocksSize;
+
+      size_t frequenciesSize = _numBlocks * sizeof(*_frequencies);
+      memcpy(buffer, _frequencies, frequenciesSize);
+      buffer += frequenciesSize;
+
+      size_t counterSize = _numBlocks * 2 * sizeof(*_counterDerivationInfo);
+      memcpy(buffer, _counterDerivationInfo, counterSize);
+      buffer += counterSize;
+      for (int32_t i = 0; i < (_numBlocks * 2); i++)
+         {
+         if (TR_BlockFrequencyInfo::isCounterDerivationInfoValidBitVector(_counterDerivationInfo[i]))
+            {
+            // write the bit vector
+            _counterDerivationInfo[i]->serialize(buffer);
+            }
+         }
+      }
+   }
+
+TR_BlockFrequencyInfo::TR_BlockFrequencyInfo(const SerializedBFI *serializedData, uint8_t * &buffer, TR_PersistentProfileInfo *currentProfile) :
+   _callSiteInfo(currentProfile->getCallSiteInfo()),
+   _numBlocks(serializedData->numBlocks),
+   _blocks(
+      _numBlocks ?
+      new (PERSISTENT_NEW) TR_ByteCodeInfo[_numBlocks] :
+      0
+      ),
+   _frequencies(
+      _numBlocks ?
+      /*
+       * The explicit parens value initializes the array,
+       * which in turn value initializes each array member,
+       * which for ints is zero initialization.
+       */
+      new (PERSISTENT_NEW) int32_t[_numBlocks]() :
+      NULL
+      ),
+   _counterDerivationInfo(
+      _numBlocks ?
+      (TR_BitVector**) new (PERSISTENT_NEW) void**[_numBlocks*2]() :
+      NULL),
+   _entryBlockNumber(-1),
+   _isQueuedForRecompilation(0)
+   {
+   if (_numBlocks > 0)
+      {
+      size_t blocksSize = _numBlocks * sizeof(*_blocks);
+      memcpy(_blocks, buffer, blocksSize);
+      buffer += blocksSize;
+
+      size_t frequenciesSize = _numBlocks * sizeof(*_frequencies);
+      memcpy(_frequencies, buffer, frequenciesSize);
+      buffer += frequenciesSize;
+
+      size_t counterSize = _numBlocks * 2 * sizeof(*_counterDerivationInfo);
+      memcpy(_counterDerivationInfo, buffer, counterSize);
+      buffer += counterSize;
+
+      // Now read the bit vectors if there is any
+      for (int32_t i = 0; i < (_numBlocks * 2); i++)
+         {
+         if (TR_BlockFrequencyInfo::isCounterDerivationInfoValidBitVector(_counterDerivationInfo[i]))
+            {
+            _counterDerivationInfo[i] = new (PERSISTENT_NEW) TR_BitVector(buffer);
+            }
+         }
+      }
+   }
+
+TR_BlockFrequencyInfo * TR_BlockFrequencyInfo::deserialize(uint8_t * &buffer, TR_PersistentProfileInfo *currentProfileInfo)
+   {
+   SerializedBFI *serializedData = reinterpret_cast<SerializedBFI *>(buffer);
+   buffer += sizeof(SerializedBFI);
+   return new (PERSISTENT_NEW) TR_BlockFrequencyInfo(serializedData, buffer, currentProfileInfo);
+   }
 
 const uint32_t TR_CatchBlockProfileInfo::EDOThreshold = 50;
-
 
 TR_CallSiteInfo::TR_CallSiteInfo(TR::Compilation * comp, TR_AllocationKind allocKind) :
    _numCallSites(comp->getNumInlinedCallSites()),
@@ -2632,6 +2735,51 @@ void TR_CallSiteInfo::dumpInfo(TR::FILE *logFile)
       trfprintf(logFile, "   Call site index = %d, method = %p, parent = %d\n", _callSites[i]._byteCodeInfo.getByteCodeIndex(), _callSites[i]._methodInfo, _callSites[i]._byteCodeInfo.getCallerIndex());
    }
 
+uint32_t TR_CallSiteInfo::getSizeForSerialization() const
+   {
+   uint32_t size = sizeof(SerializedCSI);
+   if (_numCallSites > 0)
+      {
+      size += (_numCallSites * sizeof(TR_InlinedCallSite));
+      }
+   return size;
+   }
+
+void TR_CallSiteInfo::serialize(uint8_t * &buffer) const
+   {
+   SerializedCSI *serializedData = reinterpret_cast<SerializedCSI *>(buffer);
+   serializedData->numCallSites = _numCallSites;
+   buffer += sizeof(SerializedCSI);
+   if (_numCallSites > 0)
+      {
+      size_t callSitesSize = _numCallSites * sizeof(TR_InlinedCallSite);
+      memcpy(buffer, _callSites, callSitesSize);
+      buffer += callSitesSize;
+      }
+   }
+
+TR_CallSiteInfo::TR_CallSiteInfo(const SerializedCSI *data, uint8_t * &buffer) :
+   _numCallSites(data->numCallSites),
+   _callSites(
+      _numCallSites ?
+      new (PERSISTENT_NEW) TR_InlinedCallSite[_numCallSites] :
+      NULL
+      ),
+   _allocKind(persistentAlloc)
+   {
+   if (_numCallSites > 0)
+      {
+      memcpy(buffer, _callSites, _numCallSites * sizeof(TR_InlinedCallSite));
+      buffer += (_numCallSites * sizeof(TR_InlinedCallSite));
+      }
+   }
+
+TR_CallSiteInfo * TR_CallSiteInfo::deserialize(uint8_t * &buffer)
+   {
+   SerializedCSI *serializedData = reinterpret_cast<SerializedCSI *>(buffer);
+   buffer += sizeof(SerializedCSI);
+   return new (PERSISTENT_NEW) TR_CallSiteInfo(serializedData, buffer);
+   }
 
 void TR_PersistentProfileInfo::dumpInfo(TR::FILE *logFile)
    {
@@ -2647,6 +2795,55 @@ void TR_PersistentProfileInfo::dumpInfo(TR::FILE *logFile)
    if (_valueProfileInfo)
       _valueProfileInfo->dumpInfo(logFile);
    }
+
+uint32_t TR_PersistentProfileInfo::getSizeForSerialization() const
+   {
+   uint32_t size = sizeof(SerializedPPI);
+   if (_callSiteInfo)
+      {
+      size += _callSiteInfo->getSizeForSerialization();
+      }
+   if (_blockFrequencyInfo)
+      {
+      size += _blockFrequencyInfo->getSizeForSerialization();
+      }
+   return size;
+   }
+
+void TR_PersistentProfileInfo::serialize(uint8_t * &buffer) const
+   {
+   SerializedPPI *serializedData = reinterpret_cast<SerializedPPI *>(buffer);
+   serializedData->hasCallSiteInfo = (_callSiteInfo != NULL);
+   serializedData->hasBlockFrequencyInfo = (_blockFrequencyInfo != NULL);
+   serializedData->hasValueProfileInfo = false;
+   buffer += sizeof(SerializedPPI);
+   if (_callSiteInfo)
+      {
+      _callSiteInfo->serialize(buffer);
+      }
+   if (_blockFrequencyInfo)
+      {
+      _blockFrequencyInfo->serialize(buffer);
+      }
+   }
+
+TR_PersistentProfileInfo::TR_PersistentProfileInfo(uint8_t * &buffer) :
+   _next(NULL),
+   _active(true),
+   _refCount(1)
+   {
+   SerializedPPI *serializedData = reinterpret_cast<SerializedPPI *>(buffer);
+   buffer += sizeof(SerializedPPI);
+   _callSiteInfo = serializedData->hasCallSiteInfo ? TR_CallSiteInfo::deserialize(buffer) : NULL;
+   _blockFrequencyInfo = serializedData->hasBlockFrequencyInfo ? TR_BlockFrequencyInfo::deserialize(buffer, this) : NULL;
+   TR_ASSERT_FATAL(!serializedData->hasValueProfileInfo, "hasValueProfileInfo should be false\n");
+   _valueProfileInfo = NULL;
+
+   // these two are not required
+   memset(_profilingFrequency, 0, sizeof(_profilingFrequency));
+   memset(_profilingCount, 0, sizeof(_profilingCount));
+   }
+
 
 TR_AccessedProfileInfo::TR_AccessedProfileInfo(TR::Region &region) :
     _usedInfo((InfoMapComparator()), (InfoMapAllocator(region))),
