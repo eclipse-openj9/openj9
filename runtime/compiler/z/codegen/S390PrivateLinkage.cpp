@@ -2569,8 +2569,8 @@ TR::Instruction *
 J9::Z::PrivateLinkage::buildNoPatchingStaticOrSpecialCall(TR::Node *callNode, TR::SymbolReference *callSymRef,
    TR::RegisterDependencyConditions *dependencies, int32_t argSize)
    {
-   OMR::CCData *codeCacheData = cg()->getCodeCache()->manager()->getCodeCacheData();
-   OMR::CCData::index_t index = 0;
+   TR::CCData *codeCacheData = cg()->getCodeCache()->manager()->getCodeCacheData();
+   TR::CCData::index_t index = 0;
    intptr_t callSnippetCCDataAddress = NULL;
    int32_t  offsetOfSnippetOrCompiledMethod = 0;
    if (callSymRef->isUnresolved() || (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager)))

@@ -93,7 +93,7 @@ final class J9VMInternals {
 									"sun.nio.ch.IOUtil", //$NON-NLS-1$
 									"sun.nio.ch.FileChannelImpl", //$NON-NLS-1$
 									"sun.nio.ch.ServerSocketChannelImpl", //$NON-NLS-1$
-	/*[IF !Java11]*/
+	/*[IF JAVA_SPEC_VERSION < 11]*/
 									"java.util.zip.ZipFile", //$NON-NLS-1$
 									"java.util.zip.Inflater", //$NON-NLS-1$
 									"java.util.zip.Deflater", //$NON-NLS-1$

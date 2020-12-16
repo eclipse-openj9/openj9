@@ -138,7 +138,6 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 retry:
 
 	omrthread_monitor_enter(vm->classTableMutex);
-<<<<<<< HEAD
 
 	/* Hidden class is never added into the hash table */
 	if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_HIDDEN)) {
