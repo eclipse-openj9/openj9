@@ -282,6 +282,29 @@ else()
 	message(SEND_ERROR "unsupported platform")
 endif()
 
+if(SIZE_OPTIMIZED_JIT)
+	# This step is needed because more than one of these lists can contain the -O3 flag
+	set(OPT_FLAG_SET_IN_SHAREDFLAGS FALSE)
+	set(OPT_FLAG_SET_IN_CXXFLAGS FALSE)
+	set(OPT_FLAG_SET_IN_CFLAGS FALSE)
+	omr_list_contains(J9_SHAREDFLAGS -O3 OPT_FLAG_SET_IN_SHAREDFLAGS)
+	omr_list_contains(J9_CXXFLAGS -O3 OPT_FLAG_SET_IN_CXXFLAGS)
+	omr_list_contains(J9_CFLAGS -O3 OPT_FLAG_SET_IN_CFLAGS)
+	if(OPT_FLAG_SET_IN_SHAREDFLAGS)
+		list(REMOVE_ITEM J9_SHAREDFLAGS -O3)
+	endif()
+	if(OPT_FLAG_SET_IN_CXXFLAGS)
+		list(REMOVE_ITEM J9_CXXFLAGS -O3)
+	endif()
+	if(OPT_FLAG_SET_IN_CFLAGS)
+		list(REMOVE_ITEM J9_CFLAGS -O3)
+	endif()
+	list(APPEND J9_SHAREDFLAGS
+		-DSIZE_OPTIMIZED_JIT
+		-Os
+	)
+endif()
+
 omr_stringify(J9_CFLAGS_STR ${J9_CFLAGS} ${J9_SHAREDFLAGS})
 omr_stringify(J9_CXXFLAGS_STR ${J9_CXXFLAGS} ${J9_SHAREDFLAGS})
 
