@@ -1015,7 +1015,7 @@ VMSnapshotImpl::saveAcquiredMonitor(J9VMThread *thread, J9AcquiredMonitor **curs
 	bool success = true;
 
 	if (omrthread_monitor_is_acquired(monitor)) {
-		omrthread_t ownerThreadOmr = omrthread_monitor_getCurrentOwner(monitor);
+		omrthread_t ownerThreadOmr = omrthread_monitor_get_current_owner(monitor);
 
 		if (thread->osThread == ownerThreadOmr) {
 
@@ -1028,7 +1028,7 @@ VMSnapshotImpl::saveAcquiredMonitor(J9VMThread *thread, J9AcquiredMonitor **curs
 
 			(*cursor)->isObjectMonitor = isObjectMonitor;
 			(*cursor)->fixupReference = fixupReference;
-			(*cursor)->ownerCount = omrthread_monitor_getNumOfTimesAcquired(monitor);
+			(*cursor)->ownerCount = omrthread_monitor_get_acquired_count(monitor);
 			(*cursor)->ownerVmThreadAddress = (UDATA) thread;
 
 			_acquiredMonitorHeader->numOfAcquiredMonitors++;
@@ -1575,7 +1575,7 @@ VMSnapshotImpl::restoreAcquiredObjectMonitor(J9AcquiredMonitor** monitor, UDATA*
 			}
 		}
 
-		Assert_VM_true((*monitor)->ownerCount == omrthread_monitor_getNumOfTimesAcquired(omrMonitor));
+		Assert_VM_true((*monitor)->ownerCount == omrthread_monitor_get_acquired_count(omrMonitor));
 
 		*monitor = *monitor + 1;
 		*monitorCount = *monitorCount - 1;
