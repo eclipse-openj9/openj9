@@ -8181,8 +8181,19 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                }
             TR_ASSERT(!that->_methodBeingCompiled->isOutOfProcessCompReq(), "JITServer should not change options passed by client");
 #endif /* defined(J9VM_OPT_JITSERVER) */
+
             bool aotCompilationReUpgradedToWarm = false;
-            if (that->_methodBeingCompiled->_useAotCompilation)
+
+            // When FSD is enabled, involuntary OSR is also enabled. This means that the code
+            // size increases because of all of the catch block + code blocks, and the data
+            // size increases because of the additional information required in the the
+            // J9JITExceptionTable. This means that for applications that do not use a very
+            // large SCC, the number of methods that can now be put into the SCC reduces.
+            // In this scenario, startup is dominated by the number of AOT loads can that be
+            // performed rather than code quality. Therefore, disabling AOT Warm during startup
+            // disables inlining, thus dramatically reducing the code & data size.
+            if (that->_methodBeingCompiled->_useAotCompilation
+                && !TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug))
                {
                // In some circumstances AOT compilations are performed at warm
                if ((TR::Options::getCmdLineOptions()->getAggressivityLevel() == TR::Options::AGGRESSIVE_AOT ||
