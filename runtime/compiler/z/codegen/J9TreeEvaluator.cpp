@@ -2973,7 +2973,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
 
    // In the mainline, first load the first and second dimensions' lengths into registers.
    TR::Register *firstDimLenReg = cg->allocateRegister();
-   generateRXInstruction(cg, TR::InstOpCode::L, node, firstDimLenReg, generateS390MemoryReference(dimsPtrReg, 4, cg));
+   generateRXInstruction(cg, TR::InstOpCode::LGF, node, firstDimLenReg, generateS390MemoryReference(dimsPtrReg, 4, cg));
 
    TR::Register *secondDimLenReg = cg->allocateRegister();
    generateRXInstruction(cg, TR::InstOpCode::L, node, secondDimLenReg, generateS390MemoryReference(dimsPtrReg, 0, cg));
@@ -3032,7 +3032,8 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    TR::Register *temp2Reg = cg->allocateRegister();
    TR_ASSERT_FATAL(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() == 16, "multianewArrayEvaluator - Expecting discontiguousArrayHeaderSizeInBytes to be 16.");
    // temp2Reg = firstDimLenReg * 16 (discontiguousArrayHeaderSizeInBytes)
-   generateRSInstruction(cg, TR::InstOpCode::getShiftLeftLogicalSingleOpCode(), node, temp2Reg, firstDimLenReg, 4);
+   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, temp2Reg, firstDimLenReg);
+   generateRILInstruction(cg, TR::InstOpCode::MSGFI, node, temp2Reg, zeroArraySize);
 
    generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, temp2Reg, temp1Reg);
 

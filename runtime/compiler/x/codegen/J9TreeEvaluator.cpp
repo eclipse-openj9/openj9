@@ -1298,7 +1298,10 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
 
    generateRegMemInstruction(L4RegMem, node, secondDimLenReg,
                              generateX86MemoryReference(dimsPtrReg, 0, cg), cg);
-   generateRegMemInstruction(L4RegMem, node, firstDimLenReg,
+   // Load the 32-bit length value as a 64-bit value so that the top half of the register
+   // can be zeroed out. This will allow us to treat the value as 64-bit when performing
+   // calculations later on.
+   generateRegMemInstruction(MOVSXReg8Mem4, node, firstDimLenReg,
                              generateX86MemoryReference(dimsPtrReg, 4, cg), cg);
 
    generateRegImmInstruction(CMP4RegImm4, node, secondDimLenReg, 0, cg);
@@ -1357,8 +1360,8 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
       }
 
    // temp2Reg = firstDimLenReg * 16 (discontiguousArrayHeaderSizeInBytes)
-   generateRegRegInstruction(MOVRegReg(),  node, temp2Reg, firstDimLenReg, cg);
-   generateRegImmInstruction(SHLRegImm1(), node, temp2Reg, 4, cg);
+   TR_ASSERT_FATAL(zeroArraySize >= 0 && zeroArraySize <= 127, "discontiguousArrayHeaderSizeInBytes cannot be > 127 for IMulRegRegImms instruction");
+   generateRegRegImmInstruction(IMULRegRegImm4(), node, temp2Reg, firstDimLenReg, zeroArraySize, cg);
 
    // temp2Reg = temp2Reg + temp1Reg
    generateRegRegInstruction(ADDRegReg(), node, temp2Reg, temp1Reg, cg);
