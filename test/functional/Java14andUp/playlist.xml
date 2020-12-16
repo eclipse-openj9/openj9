@@ -80,7 +80,7 @@
     <test>
         <testCaseName>JEP358NPEMessageTests</testCaseName>
         <variations>
-            <variation>--enable-preview -XX:+ShowCodeDetailsInExceptionMessages</variation>
+            <variation>--enable-preview -XX:+ShowCodeDetailsInExceptionMessages --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED</variation>
         </variations>
         <command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DhasDebugInfo=true \
             -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -106,7 +106,7 @@
     <test>
         <testCaseName>JEP358NPEMessageTests-noDebugInfo</testCaseName>
         <variations>
-            <variation>--enable-preview -XX:+ShowCodeDetailsInExceptionMessages</variation>
+            <variation>--enable-preview -XX:+ShowCodeDetailsInExceptionMessages --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED</variation>
         </variations>
         <command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DhasDebugInfo=false \
             -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest-noDebugInfo.jar$(Q) \
