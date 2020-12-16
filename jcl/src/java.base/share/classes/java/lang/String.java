@@ -1454,7 +1454,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return s1len - s2len;
 	}
 
-	private int compareValue(int codepoint) {
+	private static int compareValue(int codepoint) {
 		if ('A' <= codepoint && codepoint <= 'Z') {
 			return codepoint + ('a' - 'A');
 		}
@@ -1462,7 +1462,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return Character.toLowerCase(Character.toUpperCase(codepoint));
 	}
 
-	private char compareValue(char c) {
+	private static char compareValue(char c) {
 		if ('A' <= c && c <= 'Z') {
 			return (char) (c + ('a' - 'A'));
 		}
@@ -1470,11 +1470,27 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return Character.toLowerCase(Character.toUpperCase(c));
 	}
 
-	private char compareValue(byte b) {
+	private static char compareValue(byte b) {
 		if ('A' <= b && b <= 'Z') {
 			return (char)(helpers.byteToCharUnsigned(b) + ('a' - 'A'));
 		}
 		return Character.toLowerCase(Character.toUpperCase(helpers.byteToCharUnsigned(b)));
+	}
+
+	private static boolean charValuesEqualIgnoreCase(char c1, char c2) {
+		boolean charValuesEqual = false;
+		char c1upper = (char) toUpperCase(c1);
+		char c2upper = (char) toUpperCase(c2);
+
+		// If at least one char is ASCII, converting to upper cases then compare should be sufficient.
+		// If both chars are not in ASCII char set, need to convert to lower case and compare as well.
+		if (((c1 <= 255 || c2 <= 255) && (c1upper == c2upper))
+				|| (toLowerCase(c1upper) == toLowerCase(c2upper))
+		) {
+			charValuesEqual = true;
+		}
+
+		return charValuesEqual;
 	}
 
 	/**
@@ -1789,13 +1805,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		byte[] s2Value = s2.value;
 
 		if (enableCompression && (null == compressionFlag || (s1.coder | s2.coder) == LATIN1)) {
-			// Compare the last chars. Under string compression, the compressible char set obeys 1-1 mapping for upper/lower
-			// case, converting to lower cases then compare should be sufficient.
+			// Compare the last chars.
+			// In order to tell 2 chars are different:
+			// Under string compression, the compressible char set obeys 1-1 mapping for upper/lower case,
+			// converting to upper cases then compare should be sufficient.
 			byte byteAtO1Last = helpers.getByteFromArrayByIndex(s1Value, s1len - 1);
 			byte byteAtO2Last = helpers.getByteFromArrayByIndex(s2Value, s1len - 1);
 
-			if (byteAtO1Last != byteAtO2Last &&
-					toUpperCase(helpers.byteToCharUnsigned(byteAtO1Last)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2Last))) {
+			if ((byteAtO1Last != byteAtO2Last)
+					&& (toUpperCase(helpers.byteToCharUnsigned(byteAtO1Last)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2Last)))
+			) {
 				return false;
 			}
 
@@ -1803,20 +1822,22 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				byte byteAtO1 = helpers.getByteFromArrayByIndex(s1Value, o1++);
 				byte byteAtO2 = helpers.getByteFromArrayByIndex(s2Value, o2++);
 
-				if (byteAtO1 != byteAtO2 &&
-						toUpperCase(helpers.byteToCharUnsigned(byteAtO1)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2))) {
+				if ((byteAtO1 != byteAtO2)
+						&& (toUpperCase(helpers.byteToCharUnsigned(byteAtO1)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2)))
+				) {
 					return false;
 				}
 			}
 		} else {
-			// Compare the last chars. Under string compression, the compressible char set obeys 1-1 mapping for upper/lower
-			// case, converting to lower cases then compare should be sufficient.
+			// Compare the last chars.
+			// In order to tell 2 chars are different:
+			// If at least one char is ASCII, converting to upper cases then compare should be sufficient.
+			// If both chars are not in ASCII char set, need to convert to lower case and compare as well.
 			char charAtO1Last = s1.charAtInternal(s1len - 1, s1Value);
 			char charAtO2Last = s2.charAtInternal(s1len - 1, s2Value);
 
-			if (charAtO1Last != charAtO2Last
-					&& toUpperCase(charAtO1Last) != toUpperCase(charAtO2Last)
-					&& ((charAtO1Last <= 255 && charAtO2Last <= 255) || Character.toLowerCase(charAtO1Last) != Character.toLowerCase(charAtO2Last))
+			if ((charAtO1Last != charAtO2Last)
+					&& !charValuesEqualIgnoreCase(charAtO1Last, charAtO2Last)
 					/*[IF JAVA_SPEC_VERSION >= 16]*/
 					&& (!Character.isLowSurrogate(charAtO1Last) || !Character.isLowSurrogate(charAtO2Last))
 					/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
@@ -1836,7 +1857,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				if (Character.isHighSurrogate(charAtO1) && Character.isHighSurrogate(charAtO2) && (o1 < end)) {
 					int codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
 					int codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
-					if ((codepointAtO1 != codepointAtO2) && (compareValue(codepointAtO1) != compareValue(codepointAtO2))) {
+					if ((codepointAtO1 != codepointAtO2)
+							&& (compareValue(codepointAtO1) != compareValue(codepointAtO2))
+					) {
 						return false;
 					} else {
 						continue;
@@ -1844,9 +1867,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				}
 				/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
-				if (charAtO1 != charAtO2 &&
-						toUpperCase(charAtO1) != toUpperCase(charAtO2) &&
-						((charAtO1 <= 255 && charAtO2 <= 255) || Character.toLowerCase(charAtO1) != Character.toLowerCase(charAtO2))) {
+				if ((charAtO1 != charAtO2)
+						&& (!charValuesEqualIgnoreCase(charAtO1, charAtO2))
+				) {
 					return false;
 				}
 			}
@@ -2470,9 +2493,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				byte byteAtO1 = helpers.getByteFromArrayByIndex(s1Value, o1++);
 				byte byteAtO2 = helpers.getByteFromArrayByIndex(s2Value, o2++);
 
-				if (byteAtO1 != byteAtO2 &&
-						toUpperCase(helpers.byteToCharUnsigned(byteAtO1)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2)) &&
-						toLowerCase(helpers.byteToCharUnsigned(byteAtO1)) != toLowerCase(helpers.byteToCharUnsigned(byteAtO2))) {
+				if ((byteAtO1 != byteAtO2)
+						&& (!charValuesEqualIgnoreCase(helpers.byteToCharUnsigned(byteAtO1), helpers.byteToCharUnsigned(byteAtO2)))
+				) {
 					return false;
 				}
 			}
@@ -2485,15 +2508,17 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				if (Character.isHighSurrogate(charAtO1) && Character.isHighSurrogate(charAtO2) && (o1 < end)) {
 					int codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
 					int codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
-					if ((codepointAtO1 != codepointAtO2) && (compareValue(codepointAtO1) != compareValue(codepointAtO2))) {
+					if ((codepointAtO1 != codepointAtO2)
+							&& (compareValue(codepointAtO1) != compareValue(codepointAtO2))
+					) {
 						return false;
 					}
 				}
 				/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
-				if (charAtO1 != charAtO2 &&
-						toUpperCase(charAtO1) != toUpperCase(charAtO2) &&
-						toLowerCase(charAtO1) != toLowerCase(charAtO2)) {
+				if ((charAtO1 != charAtO2)
+						&& (!charValuesEqualIgnoreCase(charAtO1, charAtO2))
+				) {
 					return false;
 				}
 			}
@@ -5497,6 +5522,22 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return Character.toLowerCase(Character.toUpperCase(helpers.byteToCharUnsigned(b)));
 	}
 
+	private static boolean charValuesEqualIgnoreCase(char c1, char c2) {
+		boolean charValuesEqual = false;
+		char c1upper = (char) toUpperCase(c1);
+		char c2upper = (char) toUpperCase(c2);
+
+		// If at least one char is ASCII, converting to upper cases then compare should be sufficient.
+		// If both chars are not in ASCII char set, need to convert to lower case and compare as well.
+		if (((c1 <= 255 || c2 <= 255) && (c1upper == c2upper))
+				|| (toLowerCase(c1upper) == toLowerCase(c2upper))
+		) {
+			charValuesEqual = true;
+		}
+
+		return charValuesEqual;
+	}
+
 	/**
 	 * Compare the receiver to the specified String to determine the relative ordering when the case of the characters is ignored.
 	 *
@@ -5807,12 +5848,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			// Compare the last chars.
 			// In order to tell 2 chars are different:
 			// Under string compression, the compressible char set obeys 1-1 mapping for upper/lower case,
-			// converting to lower cases then compare should be sufficient.
+			// converting to upper cases then compare should be sufficient.
 			byte byteAtO1Last = helpers.getByteFromArrayByIndex(s1Value, s1len - 1);
 			byte byteAtO2Last = helpers.getByteFromArrayByIndex(s2Value, s1len - 1);
 
-			if (byteAtO1Last != byteAtO2Last
-					&& toUpperCase(helpers.byteToCharUnsigned(byteAtO1Last)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2Last))) {
+			if ((byteAtO1Last != byteAtO2Last)
+					&& (toUpperCase(helpers.byteToCharUnsigned(byteAtO1Last)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2Last)))
+			) {
 				return false;
 			}
 
@@ -5820,8 +5862,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				byte byteAtO1 = helpers.getByteFromArrayByIndex(s1Value, o1++);
 				byte byteAtO2 = helpers.getByteFromArrayByIndex(s2Value, o2++);
 
-				if (byteAtO1 != byteAtO2
-						&& toUpperCase(helpers.byteToCharUnsigned(byteAtO1)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2))) {
+				if ((byteAtO1 != byteAtO2)
+						&& (toUpperCase(helpers.byteToCharUnsigned(byteAtO1)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2)))
+				) {
 					return false;
 				}
 			}
@@ -5833,9 +5876,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			char charAtO1Last = s1.charAtInternal(s1len - 1, s1Value);
 			char charAtO2Last = s2.charAtInternal(s1len - 1, s2Value);
 
-			if (charAtO1Last != charAtO2Last
-					&& toUpperCase(charAtO1Last) != toUpperCase(charAtO2Last)
-					&& ((charAtO1Last <= 255 && charAtO2Last <= 255) || Character.toLowerCase(charAtO1Last) != Character.toLowerCase(charAtO2Last))) {
+			if ((charAtO1Last != charAtO2Last)
+					&& (!charValuesEqualIgnoreCase(charAtO1Last, charAtO2Last))
+			) {
 				return false;
 			}
 
@@ -5843,9 +5886,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
 
-				if (charAtO1 != charAtO2
-						&& toUpperCase(charAtO1) != toUpperCase(charAtO2)
-						&& ((charAtO1 <= 255 && charAtO2 <= 255) || Character.toLowerCase(charAtO1) != Character.toLowerCase(charAtO2))) {
+				if ((charAtO1 != charAtO2)
+						&& (!charValuesEqualIgnoreCase(charAtO1, charAtO2))
+				) {
 					return false;
 				}
 			}
@@ -6561,9 +6604,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				byte byteAtO1 = helpers.getByteFromArrayByIndex(s1Value, o1++);
 				byte byteAtO2 = helpers.getByteFromArrayByIndex(s2Value, o2++);
 
-				if (byteAtO1 != byteAtO2
-						&& toUpperCase(helpers.byteToCharUnsigned(byteAtO1)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2))
-						&& toLowerCase(helpers.byteToCharUnsigned(byteAtO1)) != toLowerCase(helpers.byteToCharUnsigned(byteAtO2))) {
+				if ((byteAtO1 != byteAtO2)
+						&& (!charValuesEqualIgnoreCase(helpers.byteToCharUnsigned(byteAtO1), helpers.byteToCharUnsigned(byteAtO2)))
+				) {
 					return false;
 				}
 			}
@@ -6572,9 +6615,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
 
-				if (charAtO1 != charAtO2
-						&& toUpperCase(charAtO1) != toUpperCase(charAtO2)
-						&& toLowerCase(charAtO1) != toLowerCase(charAtO2)) {
+				if ((charAtO1 != charAtO2)
+						&& (!charValuesEqualIgnoreCase(charAtO1, charAtO2))
+				) {
 					return false;
 				}
 			}
