@@ -66,7 +66,7 @@
  *   ENABLE_SUMMARY_AUTO_REFRESH: Boolean - flag to enable the downstream summary auto-refresh, default: false
  */
 
-CURRENT_RELEASES = ['8', '11', '14', '15', 'next']
+CURRENT_RELEASES = ['8', '11', '15', '16', 'next']
 
 SPECS = ['ppc64_aix' : CURRENT_RELEASES,
          'ppc64_aix_cm' : CURRENT_RELEASES,
