@@ -67,6 +67,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/StringPeepholes.cpp \
     compiler/optimizer/UnsafeFastPath.cpp \
     compiler/optimizer/VarHandleTransformer.cpp \
+    compiler/optimizer/MethodHandleTransformer.cpp \
     compiler/optimizer/VPBCDConstraint.cpp \
     compiler/optimizer/TreeLowering.cpp \
     omr/compiler/codegen/Analyser.cpp \
