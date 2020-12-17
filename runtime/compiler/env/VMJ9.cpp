@@ -4064,6 +4064,7 @@ TR_J9VMBase::canDereferenceAtCompileTimeWithFieldSymbol(TR::Symbol * fieldSymbol
       case TR::Symbol::Java_lang_invoke_PrimitiveHandle_rawModifiers:
       case TR::Symbol::Java_lang_invoke_PrimitiveHandle_defc:
       case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
+      case TR::Symbol::Java_lang_invoke_MethodHandleImpl_LoopClauses_clauses:
          {
          return true;
          }
