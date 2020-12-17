@@ -93,7 +93,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    /*
    * \brief
-   *     Generates the sequence to handle cases where the monitor object is value type
+   *     Generates the sequence to handle cases where the monitor object
+   *     is value type or value based class type
    *
    * \param node
    *     the monitor enter/exit node
@@ -102,14 +103,16 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    *     the label for OOL code calling VM monitor enter/exit helpers
    *
    * \details
-   *     Call the VM helper if it's detected at runtime that the monitor object is value type.
-   *     The VM helper throws appropriate IllegalMonitorStateException.
+   *     Call the VM helper if it's detected at runtime that the monitor object
+   *     is value type or value based class type.
+   *     The VM helper throws appropriate IllegalMonitorStateException for value type
+   *     and VirtualMachineError for value based class type.
    *
    * \note
    *     This method only handles the cases where, at compile time, it's unknown whether the
-   *     object is reference type or value type.
+   *     object is reference type or value type or value based class type.
    */
-   static void generateCheckForValueTypeMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol *snippetLabel, TR::CodeGenerator *cg);
+   static void generateCheckForValueMonitorEnterOrExit(TR::Node *node, int32_t classFlag, TR::LabelSymbol *snippetLabel, TR::CodeGenerator *cg);
    static void transactionalMemoryJITMonitorEntry(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol *startLabel, TR::LabelSymbol *snippetLabel, TR::LabelSymbol *JITMonitorEnterSnippetLabel, TR::Register *objectReg, int lwoffset);
    static void generateValueTracingCode(TR::Node *node, TR::Register *vmThreadReg, TR::Register *scratchReg, TR::Register *valueRegHigh, TR::Register *valueRegLow, TR::CodeGenerator *cg);
    static void generateValueTracingCode(TR::Node *node, TR::Register *vmThreadReg, TR::Register *scratchReg, TR::Register *valueReg, TR::CodeGenerator *cg);
