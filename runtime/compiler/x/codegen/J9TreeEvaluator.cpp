@@ -133,7 +133,8 @@ inline void generateLoadJ9Class(TR::Node* node, TR::Register* j9class, TR::Regis
          {
          case TR::monent:
          case TR::monexit:
-            TR_ASSERT_FATAL(TR::Compiler->om.areValueTypesEnabled(), "monent and monexit are expected for generateLoadJ9Class only when value type is enabled");
+            TR_ASSERT_FATAL(TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled(),
+                  "monent and monexit are expected for generateLoadJ9Class only when value type or when value based monitor check is enabled");
          case TR::checkcastAndNULLCHK:
             needsNULLCHK = true;
             break;
@@ -4482,21 +4483,26 @@ void J9::X86::TreeEvaluator::transactionalMemoryJITMonitorEntry(TR::Node        
    }
 
 void
-J9::X86::TreeEvaluator::generateCheckForValueTypeMonitorEnterOrExit(
+J9::X86::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(
       TR::Node *node,
+      int32_t classFlag,
       TR::LabelSymbol *snippetLabel,
       TR::CodeGenerator *cg)
    {
-   if (cg->isMonitorValueType(node) != TR_maybe)
-      return;
    TR::Register *objectReg = cg->evaluate(node->getFirstChild());
    TR::Register *j9classReg = cg->allocateRegister();
    generateLoadJ9Class(node, j9classReg, objectReg, cg);
    auto fej9 = (TR_J9VMBase *)(cg->fe());
    TR::MemoryReference *classFlagsMR = generateX86MemoryReference(j9classReg, (uintptr_t)(fej9->getOffsetOfClassFlags()), cg);
-   static_assert((uint32_t) J9ClassIsValueType < USHRT_MAX, "Expecting J9ClassIsValueType to be less than 16 bits for use in test instruction");
-   //test [j9classReg.classFlags], J9ClassIsValueType
-   generateMemImmInstruction(TEST2MemImm2, node, classFlagsMR, J9ClassIsValueType, cg);
+
+   //test [j9classReg.classFlags], J9ClassIsValueType or J9ClassIsValueBased
+   TR_X86OpCodes testOpCode;
+   if ((uint32_t)classFlag <= USHRT_MAX)
+      testOpCode = TEST2MemImm2;
+   else
+      testOpCode = TEST4MemImm4;
+
+   generateMemImmInstruction(testOpCode, node, classFlagsMR, classFlag, cg);
    generateLabelInstruction(JNE4, node, snippetLabel, cg);
    }
 
@@ -4525,7 +4531,8 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    if (comp->getOption(TR_MimicInterpreterFrameShape) ||
        (comp->getOption(TR_FullSpeedDebug) && node->isSyncMethodMonitor()) ||
        noInline ||
-       TR::Compiler->om.areValueTypesEnabled() && cg->isMonitorValueType(node) == TR_yes ||
+       ((TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled()) &&
+        (cg->isMonitorValueBasedOrValueType(node) == TR_yes)) ||
        comp->getOption(TR_DisableInlineMonEnt) ||
        (firstMonEnt && (*firstMonEnt-'0') > monEntCount++))
       {
@@ -4590,8 +4597,11 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    TR::SymbolReference *originalNodeSymRef = NULL;
 
    TR::Node *helperCallNode = node;
-   if (TR::Compiler->om.areValueTypesEnabled())
-      TR::TreeEvaluator::generateCheckForValueTypeMonitorEnterOrExit(node, snippetLabel, cg);
+
+   if ((TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled())
+      && (cg->isMonitorValueBasedOrValueType(node) == TR_maybe))
+      TR::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(node, J9_CLASS_DISALLOWS_LOCKING_FLAGS, snippetLabel, cg);
+
    if (comp->getOption(TR_ReservingLocks))
       {
       // About to change the node's symref... store the original.
@@ -5143,7 +5153,8 @@ TR::Register
 
    if ((comp->getOption(TR_MimicInterpreterFrameShape) /*&& !comp->getOption(TR_EnableLiveMonitorMetadata)*/) ||
        noInline ||
-       TR::Compiler->om.areValueTypesEnabled() && cg->isMonitorValueType(node) == TR_yes ||
+       ((TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled()) &&
+        (cg->isMonitorValueBasedOrValueType(node) == TR_yes)) ||
        comp->getOption(TR_DisableInlineMonExit) ||
        (firstMonExit && (*firstMonExit-'0') > monExitCount++))
       {
@@ -5193,8 +5204,11 @@ TR::Register
    TR::LabelSymbol *fallThru   = generateLabelSymbol(cg);
    // Create the monitor exit snippet
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
-   if (TR::Compiler->om.areValueTypesEnabled())
-       TR::TreeEvaluator::generateCheckForValueTypeMonitorEnterOrExit(node, snippetLabel, cg);
+
+   if ((TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled())
+      && (cg->isMonitorValueBasedOrValueType(node) == TR_maybe))
+      TR::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(node, J9_CLASS_DISALLOWS_LOCKING_FLAGS, snippetLabel, cg);
+
 #if !defined(J9VM_OPT_REAL_TIME_LOCKING_SUPPORT)
    // Now that the object reference has been generated, see if this is the end
    // of a small synchronized block.

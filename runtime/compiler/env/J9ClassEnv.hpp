@@ -93,6 +93,7 @@ public:
    bool isConcreteClass(TR::Compilation *comp, TR_OpaqueClassBlock * clazzPointer);
    bool isValueTypeClass(TR_OpaqueClassBlock *);
    bool isValueTypeClassFlattened(TR_OpaqueClassBlock *clazz);
+   bool isValueBasedOrValueTypeClass(TR_OpaqueClassBlock *);
 
    /**
     * \brief
