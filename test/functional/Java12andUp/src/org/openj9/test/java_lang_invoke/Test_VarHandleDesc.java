@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -220,6 +220,7 @@ public class Test_VarHandleDesc {
 		VarHandle resolvedHandle = handleDesc.resolveConstantDesc(MethodHandles.lookup());
 
 		logger.debug(testName + " is running.");
-		Assert.assertTrue(handle.equals(resolvedHandle));
+		Assert.assertTrue(handle.varType().equals(resolvedHandle.varType()));
+		Assert.assertTrue(handle.coordinateTypes().equals(resolvedHandle.coordinateTypes()));
 	}
 }
