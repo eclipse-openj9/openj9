@@ -6079,6 +6079,22 @@ TR_J9ByteCodeIlGenerator::loadFromCallSiteTable(int32_t callSiteIndex)
 void
 TR_J9ByteCodeIlGenerator::loadArrayElement(TR::DataType dataType, TR::ILOpCodes nodeop, bool checks)
    {
+   if (TR::Compiler->om.areValueTypesEnabled() && dataType == TR::Address)
+      {
+      TR::Node* elementIndex = pop();
+      TR::Node* arrayBaseAddress = pop();
+      if (!arrayBaseAddress->isNonNull())
+         {
+         auto* nullchk = TR::Node::create(TR::PassThrough, 1, arrayBaseAddress);
+         nullchk = genNullCheck(nullchk);
+         genTreeTop(nullchk);
+         }
+      auto* helperSymRef = comp()->getSymRefTab()->findOrCreateLoadFlattenableArrayElementSymbolRef();
+      auto* helperCallNode = TR::Node::createWithSymRef(TR::acall, 2, 2, elementIndex, arrayBaseAddress, helperSymRef);
+      push(helperCallNode);
+      return;
+      }
+
    bool genSpineChecks = comp()->requiresSpineChecks();
 
    _suppressSpineChecks = false;
@@ -7527,6 +7543,21 @@ TR_J9ByteCodeIlGenerator::storeArrayElement(TR::DataType dataType, TR::ILOpCodes
    TR::Node * value = pop();
 
    handlePendingPushSaveSideEffects(value);
+
+   if (TR::Compiler->om.areValueTypesEnabled() && dataType == TR::Address)
+      {
+      TR::Node* elementIndex = pop();
+      TR::Node* arrayBaseAddress = pop();
+      if (!arrayBaseAddress->isNonNull())
+         {
+         auto* nullchk = TR::Node::create(TR::PassThrough, 1, arrayBaseAddress);
+         nullchk = genNullCheck(nullchk);
+         genTreeTop(nullchk);
+         }
+      auto* helperSymRef = comp()->getSymRefTab()->findOrCreateStoreFlattenableArrayElementSymbolRef();
+      genTreeTop(TR::Node::createWithSymRef(TR::acall, 3, 3, value, elementIndex, arrayBaseAddress, helperSymRef));
+      return;
+      }
 
    bool genSpineChecks = comp()->requiresSpineChecks();
 
