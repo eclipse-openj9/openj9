@@ -7176,7 +7176,7 @@ J9::Z::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node * node, TR::CodeGenerator
    }
 
 /**
- * Generates a quick runtime test for valueType node and in case if node is of valueType, generates a branch to helper call
+ * Generates a quick runtime test for valueType/valueBased node and in case if node is of valueType or valueBased, generates a branch to helper call
  *
  * @param node monent/exit node
  * @param mergeLabel Label pointing to merge point
@@ -7185,20 +7185,18 @@ J9::Z::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node * node, TR::CodeGenerator
  * @return Returns a register containing objectClassPointer
  */
 static TR::Register*
-generateCheckForValueTypeMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol* mergeLabel, TR::LabelSymbol *helperCallLabel, TR::CodeGenerator *cg)
+generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol* mergeLabel, TR::LabelSymbol *helperCallLabel, TR::CodeGenerator *cg)
    {
    TR::Register *objReg = cg->evaluate(node->getFirstChild());
    TR::Register *objectClassReg = cg->allocateRegister();
 
    TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objectClassReg, generateS390MemoryReference(objReg, TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
 
-   // Currently the value of J9ClassIsValueType flag maps to the second (low order) byte of the class flags field. To
-   // be able to use the TM instruction we need to ensure we safe guard against changes of this value since we have to
-   // hardcode the offset from the class flags field to reach the byte corresponding to the bit we want to test.
-   static_assert(static_cast<uint32_t>(J9ClassIsValueType & 0xFF00) == static_cast<uint32_t>(J9ClassIsValueType), "Expecting J9ClassIsValueType to be within second byte of classFlags");
+   TR::Register *tempReg = cg->allocateRegister();
+   generateLoad32BitConstant(cg, node, J9_CLASS_DISALLOWS_LOCKING_FLAGS, tempReg, false);
 
-   TR::MemoryReference *classFlagsMemRef = generateS390MemoryReference(objectClassReg, static_cast<uint32_t>(static_cast<TR_J9VMBase *>(cg->comp()->fe())->getOffsetOfClassFlags()) + 2, cg);
-   generateSIInstruction(cg, TR::InstOpCode::TM, node, classFlagsMemRef, J9ClassIsValueType >> 8);
+   TR::MemoryReference *classFlagsMemRef = generateS390MemoryReference(objectClassReg, static_cast<uint32_t>(static_cast<TR_J9VMBase *>(cg->comp()->fe())->getOffsetOfClassFlags()), cg);
+   generateRXInstruction(cg, TR::InstOpCode::N, node, tempReg, classFlagsMemRef);
 
    bool generateOOLSection = helperCallLabel == NULL;
    if (generateOOLSection)
@@ -7211,7 +7209,7 @@ generateCheckForValueTypeMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol* mer
    //
    // 1. Monitor cache lookup OOL
    // 2. Lock reservation OOL
-   // 3. Value types object OOL
+   // 3. Value types or value based object OOL
    // 4. Recursive CAS sequence for Locking
    //
    // These distinct OOL sections may perform non-trivial logic but what they all have in common is they all have a
@@ -7229,17 +7227,18 @@ generateCheckForValueTypeMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol* mer
 
       TR_Debug *debugObj = cg->getDebug();
       if (debugObj)
-         debugObj->addInstructionComment(cursor, "Denotes Start of OOL for ValueType Node");
+         debugObj->addInstructionComment(cursor, "Denotes Start of OOL for ValueType or ValueBased Node");
 
       cg->getLinkage(TR_CHelper)->buildDirectDispatch(node);
       cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, mergeLabel);
 
       if (debugObj)
-         debugObj->addInstructionComment(cursor, "Denotes End of OOL for ValueType Node");
+         debugObj->addInstructionComment(cursor, "Denotes End of OOL for ValueType or ValueBased Node");
 
       helperCallOOLSection->swapInstructionListsWithCompilation();
       }
 
+   cg->stopUsingRegister(tempReg);
    return objectClassReg;
    }
 
@@ -7250,10 +7249,11 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    J9::Z::CHelperLinkage *helperLink =  static_cast<J9::Z::CHelperLinkage*>(cg->getLinkage(TR_CHelper));
-   TR_YesNoMaybe isMonitorValueType = cg->isMonitorValueType(node);
+   bool isValueTypeOrValueBasedEnabled = (TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled());
+   TR_YesNoMaybe isMonitorValueBasedOrValueType = isValueTypeOrValueBasedEnabled ? cg->isMonitorValueBasedOrValueType(node) : TR_no;
 
    if (comp->getOption(TR_OptimizeForSpace) ||
-       (TR::Compiler->om.areValueTypesEnabled() && isMonitorValueType == TR_yes) ||
+       (isMonitorValueBasedOrValueType == TR_yes) ||
        comp->getOption(TR_DisableInlineMonEnt) ||
        comp->getOption(TR_FullSpeedDebug))  // Required for Live Monitor Meta Data in FSD.
       {
@@ -7313,13 +7313,13 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    if (disableOOL)
       inlineRecursive = false;
 
-   if (TR::Compiler->om.areValueTypesEnabled() && isMonitorValueType == TR_maybe)
+   if (isMonitorValueBasedOrValueType == TR_maybe)
       {
       numDeps += 1;
       // If we are generating code for MonitorCacheLookup then we will not have a separate OOL for inlineRecursive, and callLabel points
       // to the OOL Containing only helper call. Otherwise, OOL will have other code apart from helper call which we do not want to execute
-      // for ValueType and in that scenario we will need to generate another OOL that just contains helper call.
-      objectClassReg = generateCheckForValueTypeMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg);
+      // for ValueType or ValueBased object and in that scenario we will need to generate another OOL that just contains helper call.
+      objectClassReg = generateCheckForValueMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg);
       }
    TR::RegisterDependencyConditions * conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg);
 
@@ -7699,10 +7699,11 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    J9::Z::CHelperLinkage *helperLink =  static_cast<J9::Z::CHelperLinkage*>(cg->getLinkage(TR_CHelper));
-   TR_YesNoMaybe isMonitorValueType = cg->isMonitorValueType(node);
+   bool isValueTypeOrValueBasedEnabled = (TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled());
+   TR_YesNoMaybe isMonitorValueBasedOrValueType = isValueTypeOrValueBasedEnabled ? cg->isMonitorValueBasedOrValueType(node) : TR_no;
 
    if (comp->getOption(TR_OptimizeForSpace) ||
-       (TR::Compiler->om.areValueTypesEnabled() && isMonitorValueType == TR_yes) ||
+       (isMonitorValueBasedOrValueType == TR_yes) ||
        comp->getOption(TR_DisableInlineMonExit) ||
        comp->getOption(TR_FullSpeedDebug))  // Required for Live Monitor Meta Data in FSD.
       {
@@ -7753,10 +7754,10 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    if (comp->getOptions()->enableDebugCounters())
          numDeps += 4;
 
-   if (TR::Compiler->om.areValueTypesEnabled() && isMonitorValueType == TR_maybe)
+   if (isMonitorValueBasedOrValueType == TR_maybe)
       {
       numDeps += 1;
-      objectClassReg = generateCheckForValueTypeMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg);
+      objectClassReg = generateCheckForValueMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg);
       }
    TR::RegisterDependencyConditions * conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg);
 
