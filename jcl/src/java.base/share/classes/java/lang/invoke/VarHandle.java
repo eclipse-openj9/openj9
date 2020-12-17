@@ -360,9 +360,6 @@ public abstract class VarHandle extends VarHandleInternal
 	final Class<?> fieldType;
 	final Class<?>[] coordinateTypes;
 	final int modifiers;
-/*[IF JAVA_SPEC_VERSION >= 12]*/
-	private int hashCode = 0;
-/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /*[IF JAVA_SPEC_VERSION >= 16]*/
 	final boolean exact;
@@ -697,72 +694,6 @@ public abstract class VarHandle extends VarHandleInternal
 	public Optional<VarHandleDesc> describeConstable() {
 		/* this method should be overridden by types that are supported */
 		return Optional.empty();
-	}
-
-	/**
-	 * Compares the specified object to this VarHandle and answer if they are equal.
-	 *
-	 * @param obj the object to compare
-	 * @return true if the specified object is equal to this VarHandle, false otherwise
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-
-		if (!(obj instanceof VarHandle)) {
-			return false;
-		}
-
-		/* argument comparison */
-		VarHandle that = (VarHandle)obj;
-		if (!(this.fieldType.equals(that.fieldType) 
-			&& (this.modifiers == that.modifiers)
-			&& Arrays.equals(this.coordinateTypes, that.coordinateTypes))
-		) {
-			return false;
-		}
-
-		/* Compare properties of FieldVarHandle that are not captured in the parent class */
-		if (obj instanceof FieldVarHandle) {
-			if (!(this instanceof FieldVarHandle)) {
-				return false;
-			}
-
-			FieldVarHandle thisf = (FieldVarHandle)this;
-			FieldVarHandle thatf = (FieldVarHandle)obj;
-			if (!(thisf.definingClass.equals(thatf.definingClass)
-				&& thisf.fieldName.equals(thatf.fieldName))
-			) {
-				return false;
-			}
-			
-		}
-
-		return true;
-	}
-
-	/**
-	 * Answers an integer hash code for the VarHandle. VarHandle instances
-	 * which are equal answer the same value for this method.
-	 *
-	 * @return a hash for this VarHandle
-	 */
-	@Override
-	public int hashCode() {
-		if (hashCode == 0) {
-			hashCode = fieldType.hashCode();
-			for (Class<?> c : coordinateTypes) {
-				hashCode = 31 * hashCode + c.hashCode();
-			}
-
-			/* Add properties for FieldVarHandle */
-			if (this instanceof FieldVarHandle) {
-				hashCode = 31 * hashCode + ((FieldVarHandle)this).definingClass.hashCode();
-			}
-		}
-		return hashCode;
 	}
 
 	/**
