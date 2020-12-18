@@ -30,7 +30,8 @@
 #include "j9nonbuilder.h"
 
 /* Fixup codes for system monitors to be persisted. These are used to aid in 
- * mapping between OpenJ9 and OMR threads. Zero is reserved. */
+ * mapping between OpenJ9 and OMR threads. Zero is reserved.
+ */
 #define FIXUPREFVM_UNSAFE_MEMORY_TRACKING_MUTEX 1
 #define FIXUPREFVM_VERBOSE_STATE_MUTEX 2
 #define FIXUPREFVM_JCL_CACHE_MUTEX 3
@@ -42,14 +43,14 @@
  * Fields:
  * isObjectMonitor - true for object monitor, false for system monitor
  * fixupReference - if object-monitor this will be the address of j9object_t, else the ID for vm fixup
- * ownerCount - Number of times omrthread_monitor_t has been acquired by owner. It must be released the same number of times on restore
  * ownerVmThreadAddress - J9VMThread address of monitor owner (with ASLR off this value will not change between snapshot & restore)
+ * ownerCount - Number of times omrthread_monitor_t has been acquired by owner. It must be released the same number of times on restore
  */
 typedef struct J9AcquiredMonitor {
 	UDATA isObjectMonitor;
 	UDATA fixupReference;
-	IDATA ownerCount;
 	UDATA ownerVmThreadAddress;
+	IDATA ownerCount;
 } J9AcquiredMonitor;
 
 typedef struct J9AcquiredMonitorHeader {

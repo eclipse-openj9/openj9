@@ -1079,7 +1079,7 @@ VMSnapshotImpl::saveSystemMonitorWaiting(J9VMThread *thread) {
 /** 
  * At this stage the VM is at a standstill so its safe to start recording lock information.
  * 
- * OMR level threads and mutexes are not saved by the snapshot suballocator. Much of these structures is uneccessary 
+ * OMR level threads and mutexes are not saved by the snapshot suballocator. Much of these structures is unneccessary 
  * and impossible (OS thread/mutexes) to persist. Instead save only whats useful to return to this
  * state on restore. This includes recording which threads have acquired what monitors how many times.
  * 
@@ -1119,17 +1119,21 @@ VMSnapshotImpl::saveThreadsAndMonitors(void)
 
 		/* Save thread's object monitors that are inflated and acquired. */
 		infoLen = vmFuncs->getOwnedObjectMonitors(threadCursor, threadCursor, NULL, 0);
-		if (infoLen > 0) {
+		if (-1 == infoLen) {
+			success = false;
+			goto done;
+		} else if (infoLen > 0) {
 			PORT_ACCESS_FROM_PORT(_portLibrary);
 
 			J9ObjectMonitorInfo *info = (J9ObjectMonitorInfo*) j9mem_allocate_memory(infoLen * sizeof(J9ObjectMonitorInfo), J9MEM_CATEGORY_CLASSES);
 			if (NULL == info) {
+				success = false;
 				goto done;
 			}
 
-			success = vmFuncs->getOwnedObjectMonitors(threadCursor, threadCursor, info, infoLen);
-			if (false == success) {
+			if (infoLen != vmFuncs->getOwnedObjectMonitors(threadCursor, threadCursor, info, infoLen)) {
 				j9mem_free_memory(info);
+				success = false;
 				goto done;
 			}
 
@@ -1138,7 +1142,7 @@ VMSnapshotImpl::saveThreadsAndMonitors(void)
 				J9ObjectMonitor *objectMonitor = monitorTablePeek(_vm, info[i].object);
 
 				/* objectMonitor will be NULL if deflated. */
-				if (objectMonitor) {
+				if (NULL != objectMonitor) {
 					if (!saveAcquiredMonitor(threadCursor, &acquiredMonitorCursor, objectMonitor->monitor, TRUE, (UDATA)info[i].object)) {
 						success = false;
 						j9mem_free_memory(info);
@@ -1168,9 +1172,11 @@ VMSnapshotImpl::saveThreadsAndMonitors(void)
 			&& (0 == threadCursor->inNative) /* can't restore if the thread is in a native frame */
 			&& (J9_ARE_NO_BITS_SET(notSafeToRestorePublicFlags, threadCursor->publicFlags))
 		) {
-			threadCursor->privateFlags2 |= J9_PRIVATE_FLAGS2_APPLICATION_THREAD;
+			threadCursor->privateFlags2 |= J9_PRIVATE_FLAGS2_SNAPSHOT_APPLICATION_THREAD;
 
-			/* TODO hack in ELS, will need a real solution in the future */
+			/* TODO hack in ELS, will need a real solution in the future. 
+			 * Creating a copy of this large structure will impact footprint.
+			 */
 			memcpy(&(threadCursor->restoreEls), threadCursor->entryLocalStorage, sizeof(J9VMEntryLocalStorage));
 		} else {
 			Trc_VM_Snapshot_NotPersistingThread(threadCursor);
@@ -1660,7 +1666,10 @@ VMSnapshotImpl::restoreMonitors(void)
 		threadCursor = _vm->mainThread;
 		do {
 			infoLen = vmFuncs->getOwnedObjectMonitors(threadCursor, threadCursor, NULL, 0);
-			if (infoLen > 0) {
+			if (-1 == infoLen) {
+				rc = false;
+				goto done;
+			} else if (infoLen > 0) {
 				PORT_ACCESS_FROM_PORT(_portLibrary);
 
 				J9ObjectMonitorInfo *info = (J9ObjectMonitorInfo*) j9mem_allocate_memory(infoLen * sizeof(J9ObjectMonitorInfo), J9MEM_CATEGORY_CLASSES);
@@ -1668,9 +1677,9 @@ VMSnapshotImpl::restoreMonitors(void)
 					goto done;
 				}
 
-				rc = vmFuncs->getOwnedObjectMonitors(threadCursor, threadCursor, info, infoLen);
-				if (false == rc) {
+				if (infoLen != vmFuncs->getOwnedObjectMonitors(threadCursor, threadCursor, info, infoLen)) {
 					j9mem_free_memory(info);
+					rc = false;
 					goto done;
 				}
 
@@ -1714,12 +1723,16 @@ restoreSystemMonitorWaiting(J9VMThread* vmThread) {
 		switch(fixupId) {
 		case FIXUPREFVM_UNSAFE_MEMORY_TRACKING_MUTEX:
 			omrthread_monitor_enter(vm->unsafeMemoryTrackingMutex);
+			break;
 		case FIXUPREFVM_VERBOSE_STATE_MUTEX:
 			omrthread_monitor_enter(vm->verboseStateMutex);
+			break;
 		case FIXUPREFVM_JCL_CACHE_MUTEX:
 			omrthread_monitor_enter(vm->jclCacheMutex);
+			break;
 		case FIXUPREFVM_CONSTANT_DYNAMIC_MUTEX:
 			omrthread_monitor_enter(vm->constantDynamicMutex);
+			break;
 		}
 	}
 }
@@ -1770,7 +1783,7 @@ initRestoreThreads(void *vmSnapshotImpl, J9JavaVM *vm, omrthread_t mainOSThread)
 		if (vm->mainThread == restoreThread) {
 			restoreOSThread = mainOSThread;
 			restoreThread->privateFlags2 |= J9_PRIVATE_FLAGS2_RESTORE_MAINTHREAD;
-		} else if (J9_ARE_ALL_BITS_SET(restoreThread->privateFlags2, J9_PRIVATE_FLAGS2_APPLICATION_THREAD)) {
+		} else if (J9_ARE_ALL_BITS_SET(restoreThread->privateFlags2, J9_PRIVATE_FLAGS2_SNAPSHOT_APPLICATION_THREAD)) {
 			/* non-main application threads should be set up to run procRestoreThreadState when resumed. */
 			if (createThreadWithCategory(&restoreOSThread, 0, J9THREAD_PRIORITY_NORMAL, TRUE, procRestoreThreadState, (void*)restoreThread, J9THREAD_CATEGORY_APPLICATION_THREAD) != J9THREAD_SUCCESS) {
 				rc = false;
@@ -1827,7 +1840,7 @@ initRestoreThreads(void *vmSnapshotImpl, J9JavaVM *vm, omrthread_t mainOSThread)
 			goto done;
 		}
 
-		if (J9_ARE_ALL_BITS_SET(restoreThread->privateFlags2, J9_PRIVATE_FLAGS2_APPLICATION_THREAD)) {
+		if (J9_ARE_ALL_BITS_SET(restoreThread->privateFlags2, J9_PRIVATE_FLAGS2_SNAPSHOT_APPLICATION_THREAD)) {
 		#ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
 			{
 				j9object_t unicodeChars = J9VMJAVALANGTHREAD_NAME(vm->mainThread, restoreThread->threadObject);
@@ -1912,7 +1925,7 @@ interceptMainAndRestoreSnapshotState(J9VMThread *currentThread, jmethodID method
 				 * have been setup to call restoreThreadState when resumed. */
 				J9VMThread* threadCursor = currentThread->linkNext;
 				while (currentThread != threadCursor) {
-					if (J9_ARE_ALL_BITS_SET(threadCursor->privateFlags2, J9_PRIVATE_FLAGS2_APPLICATION_THREAD)) {
+					if (J9_ARE_ALL_BITS_SET(threadCursor->privateFlags2, J9_PRIVATE_FLAGS2_SNAPSHOT_APPLICATION_THREAD)) {
 						omrthread_resume(threadCursor->osThread);
 					}
 					threadCursor = threadCursor->linkNext;
