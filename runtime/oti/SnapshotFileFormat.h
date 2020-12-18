@@ -48,7 +48,7 @@
 typedef struct J9AcquiredMonitor {
 	UDATA isObjectMonitor;
 	UDATA fixupReference;
-	U_32 ownerCount;
+	IDATA ownerCount;
 	UDATA ownerVmThreadAddress;
 } J9AcquiredMonitor;
 
