@@ -77,7 +77,6 @@ public:
    TR::TreeTop *lowerTree(TR::Node *root, TR::TreeTop *treeTop);
 
    void preLowerTrees();
-   void postLowerTrees();
 
    void lowerTreesPreTreeTopVisit(TR::TreeTop *tt, vcount_t visitCount);
 
@@ -93,8 +92,6 @@ public:
 private:
 
    void lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt);
-
-   void runGlobalLiveVariablesForGC();
 
 public:
 
@@ -315,9 +312,6 @@ public:
    TR_BitVector *getLiveMonitors() {return _liveMonitors;}
    TR_BitVector *setLiveMonitors(TR_BitVector *v) {return (_liveMonitors = v);}
 
-   bool isRunGlobalLiveVariablesForGC() { return _runGlobalLiveVariablesForGC; }
-   void setRunGlobalLiveVariablesForGC(bool run = true) { _runGlobalLiveVariablesForGC = run; }
-
 public:
    /*
     * \brief
@@ -422,8 +416,6 @@ private:
    RefinedAliasWalkCollector _refinedAliasWalkCollector;
 
    TR_BitVector *_liveMonitors;
-
-   bool _runGlobalLiveVariablesForGC;
 
 protected:
 
