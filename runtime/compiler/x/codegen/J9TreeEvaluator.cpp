@@ -1252,6 +1252,7 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
 
    // 2-dimensional MultiANewArray
    TR::Compilation *comp = cg->comp();
+   TR_ASSERT_FATAL(comp->target().is64Bit(), "multianewArrayEvaluator is only supported on 64-bit JVMs!");
    TR_J9VMBase *fej9 = static_cast<TR_J9VMBase *>(comp->fe());
 
    TR::Register *dimsPtrReg       = NULL;

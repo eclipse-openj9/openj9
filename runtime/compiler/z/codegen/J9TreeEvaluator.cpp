@@ -2945,6 +2945,7 @@ TR::Register *
 J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR::Compilation *comp = cg->comp();
+   TR_ASSERT_FATAL(comp->target().is64Bit(), "multianewArrayEvaluator is only supported on 64-bit JVMs!");
    TR_J9VMBase *fej9 = static_cast<TR_J9VMBase *>(comp->fe());
    TR::Register *targetReg = cg->allocateRegister();
 
@@ -3030,7 +3031,6 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
       }
 
    TR::Register *temp2Reg = cg->allocateRegister();
-   TR_ASSERT_FATAL(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() == 16, "multianewArrayEvaluator - Expecting discontiguousArrayHeaderSizeInBytes to be 16.");
    // temp2Reg = firstDimLenReg * 16 (discontiguousArrayHeaderSizeInBytes)
    generateRRInstruction(cg, TR::InstOpCode::LGR, node, temp2Reg, firstDimLenReg);
    generateRILInstruction(cg, TR::InstOpCode::MSGFI, node, temp2Reg, zeroArraySize);
