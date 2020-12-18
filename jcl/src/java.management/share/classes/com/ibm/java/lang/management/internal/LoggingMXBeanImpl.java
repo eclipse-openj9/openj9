@@ -300,13 +300,19 @@ public final class LoggingMXBeanImpl
 			// a valid level name.
 /*[IF Sidecar19-SE]*/
 			try {
-				Object newLevel = level_parse.invoke(null, levelName);
+				Object newLevel = null;
+				if (levelName != null) {
+					newLevel = level_parse.invoke(null, levelName);
+				}
 				logger_setLevel.invoke(logger, newLevel);
 			} catch (Exception e) {
 				throw handleError(e);
 			}
 /*[ELSE]*/
-			Level newLevel = Level.parse(levelName);
+			Level newLevel = null;
+			if (levelName != null) {
+				newLevel = Level.parse(levelName);
+			}
 			logger.setLevel(newLevel);
 /*[ENDIF]*/
 		} else {
