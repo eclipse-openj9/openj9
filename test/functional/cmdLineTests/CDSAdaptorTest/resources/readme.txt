@@ -57,7 +57,7 @@ How to run:
 This test is available in the builds at jvmtest/VM/cdsadaptortest/cdsadaptortest.jar.
 Unzip the cdsadaptortest.jar and run following command:
 	
-	java -Xshareclasses -cp .:./org.eclipse.osgi_3.16.100.v20200904-1304.jar org.openj9.test.cdsadaptortest.CDSAdaptorOrphanTest -frameworkBundleLocation ./FrameworkBundles -testBundleLocation ./CDSAdaptorOrphanTestBundles
+	java -Xshareclasses -cp .:./org.eclipse.osgi-3.16.100.jar org.openj9.test.cdsadaptortest.CDSAdaptorOrphanTest -frameworkBundleLocation ./FrameworkBundles -testBundleLocation ./CDSAdaptorOrphanTestBundles
 	
 Version of org.eclipse.osgi and org.openj9.test.cds bundles in the above command may not be correct. 
 Please use the same version as present in cdsadaptortest.jar.
