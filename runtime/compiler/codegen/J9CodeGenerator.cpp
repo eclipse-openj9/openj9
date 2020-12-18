@@ -56,8 +56,6 @@
 #include "infra/BitVector.hpp"
 #include "infra/ILWalk.hpp"
 #include "infra/List.hpp"
-#include "optimizer/DataFlowAnalysis.hpp"
-#include "optimizer/StructuralAnalysis.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "ras/Delimiter.hpp"
@@ -80,8 +78,7 @@ J9::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
    _nodesSpineCheckedList(getTypedAllocator<TR::Node*>(comp->allocator())),
    _jniCallSites(getTypedAllocator<TR_Pair<TR_ResolvedMethod,TR::Instruction> *>(comp->allocator())),
    _monitorMapping(std::less<ncount_t>(), MonitorMapAllocator(comp->trMemory()->heapMemoryRegion())),
-   _dummyTempStorageRefNode(NULL),
-   _runGlobalLiveVariablesForGC(false)
+   _dummyTempStorageRefNode(NULL)
    {
    /**
     * Do not add CodeGenerator initialization logic here.
@@ -854,13 +851,6 @@ J9::CodeGenerator::preLowerTrees()
    _uncommonedNodes.init(64, true);
    }
 
-void
-J9::CodeGenerator::postLowerTrees()
-   {
-   OMR::CodeGeneratorConnector::postLowerTrees();
-   if (self()->isRunGlobalLiveVariablesForGC())
-      self()->runGlobalLiveVariablesForGC();
-   }
 
 void
 J9::CodeGenerator::lowerTreesPreTreeTopVisit(TR::TreeTop *tt, vcount_t visitCount)
@@ -1606,106 +1596,6 @@ J9::CodeGenerator::lowerTreeIfNeeded(
 
    }
 
-void
-J9::CodeGenerator::runGlobalLiveVariablesForGC()
-   {
-   auto comp = self()->comp();
-   auto trHeapMemory = self()->trHeapMemory();
-   auto trMemory = self()->trMemory();
-
-   if (comp->getOption(TR_EnableParanoidOptCheck) || debug("paranoidOptCheck"))
-      comp->verifyCFG(comp->getMethodSymbol());
-
-   TR::StackMemoryRegion stackMemoryRegion(*trMemory);
-   // Because only live locals are mapped for GC, there is normally no need to
-   // make sure locals are cleared to NULL during method prologue.
-   // However, we can have cases where GC-collected locals are live at the start
-   // of the method. These locals will have to be cleared to NULL during method
-   // prologue.
-   // This can happen because of the way we treat non-inlined jsrs.
-   //
-   int32_t numLocals = 0;
-   TR::AutomaticSymbol *p;
-   ListIterator<TR::AutomaticSymbol> locals(&comp->getMethodSymbol()->getAutomaticList());
-   for (p = locals.getFirst(); p != NULL; p = locals.getNext())
-      {
-      // Mark collected locals as initialized. We will reset this property for
-      // any locals that are live at the start of the method.
-      //
-      if (p->isCollectedReference() &&
-          (!comp->getOption(TR_MimicInterpreterFrameShape) ||
-           !comp->areSlotsSharedByRefAndNonRef() ||
-           p->isSlotSharedByRefAndNonRef()))
-         p->setInitializedReference();
-      ++numLocals;
-      }
-
-   if (comp->getOption(TR_EnableAggressiveLiveness))
-      {
-      TR::ParameterSymbol *pp;
-      ListIterator<TR::ParameterSymbol> parms(&comp->getMethodSymbol()->getParameterList());
-      for (pp = parms.getFirst(); pp != NULL; pp = parms.getNext())
-         ++numLocals;
-      }
-
-   // Nothing to do if there are no locals
-   //
-   if (numLocals == 0)
-      return;
-
-   TR_BitVector *liveVars = NULL;
-
-   // Perform liveness analysis
-   //
-   bool ignoreOSRuses = false; // Used to be set to true but we cannot set this to true because a variable may not be live in compiled code but may still be needed (live) in the interpreter
-   /* for mimicInterpreterShape, because OSR points can extend the live range of autos
-    * autos sharing the same slot in interpreter might end up with overlapped
-    * live range if OSRUses are not ignored
-    */
-   if (comp->getOption(TR_MimicInterpreterFrameShape))
-      ignoreOSRuses = true;
-
-   // CFG structure might have become invalid. Force to rebuild the restructure.
-   comp->getFlowGraph()->setStructure(TR_RegionAnalysis::getRegions(comp));
-
-   TR_Liveness liveLocals(comp, NULL, comp->getFlowGraph()->getStructure(), ignoreOSRuses, NULL, false, comp->getOption(TR_EnableAggressiveLiveness));
-
-   for (TR::CFGNode *cfgNode = comp->getFlowGraph()->getFirstNode(); cfgNode; cfgNode = cfgNode->getNext())
-      {
-      TR::Block *block     = toBlock(cfgNode);
-      int32_t blockNum    = block->getNumber();
-      if (blockNum > 0 && liveLocals._blockAnalysisInfo[blockNum])
-         {
-         liveVars = new (trHeapMemory) TR_BitVector(numLocals, trMemory);
-         *liveVars = *liveLocals._blockAnalysisInfo[blockNum];
-         block->setLiveLocals(liveVars);
-         }
-      }
-
-   // Make sure the code generator knows there are live locals for blocks, and
-   // create a bit vector of the correct size for it.
-   //
-   liveVars = new (trHeapMemory) TR_BitVector(numLocals, trMemory);
-   self()->setLiveLocals(liveVars);
-
-   // See if any collected reference locals are live at the start of the block.
-   // These will need to be initialized at method prologue.
-   //
-   liveVars = comp->getStartBlock()->getLiveLocals();
-   if (liveVars && !liveVars->isEmpty())
-      {
-      locals.reset();
-      for (p = locals.getFirst(); p != NULL; p = locals.getNext())
-         {
-         if (p->isCollectedReference() &&
-             liveVars->get(p->getLiveLocalIndex()))
-            {
-            if (performTransformation(comp, "%s Local #%d is live at the start of the method\n", OPT_DETAILS, p->getLiveLocalIndex()))
-               p->setUninitializedReference();
-            }
-         }
-      }
-   }
 
 /*
  * If value types are enabled, and the value that is being assigned to the array
