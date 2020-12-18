@@ -2987,16 +2987,16 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    // First dimension zero, so only allocate 1 zero-length object array
    int32_t zeroArraySize = TR::Compiler->om.discontiguousArrayHeaderSizeInBytes();
    TR::Register *vmThreadReg = cg->getMethodMetaDataRealRegister();
-   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, targetReg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
+   generateRXInstruction(cg, TR::InstOpCode::LG, node, targetReg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
 
    // Branch to OOL if there's not enough space for an array of size 0.
    TR::Register *temp1Reg = cg->allocateRegister();
-   generateRIEInstruction(cg, TR::InstOpCode::getAddHalfWordImmDistinctOperandOpCode(), node, temp1Reg, targetReg, zeroArraySize);
-   generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, temp1Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapTop), cg));
+   generateRIEInstruction(cg, TR::InstOpCode::AGHIK, node, temp1Reg, targetReg, zeroArraySize);
+   generateRXInstruction(cg, TR::InstOpCode::CLG, node, temp1Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapTop), cg));
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, node, oolJumpLabel);
 
    // If there's enough space, then we can continue to allocate.
-   generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, temp1Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
+   generateRXInstruction(cg, TR::InstOpCode::STG, node, temp1Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
    
    bool use64BitClasses = comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
 
@@ -3008,7 +3008,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, nonZeroFirstDimLabel);
 
    TR::Register *componentClassReg = cg->allocateRegister();
-   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, componentClassReg, generateS390MemoryReference(classReg, offsetof(J9ArrayClass, componentType), cg));
+   generateRXInstruction(cg, TR::InstOpCode::LG, node, componentClassReg, generateS390MemoryReference(classReg, offsetof(J9ArrayClass, componentType), cg));
 
    // Calculate maximum allowable object size in elements and jump to OOL if it's higher than firstDimLenReg.
    int32_t elementSize = TR::Compiler->om.sizeofReferenceField();
@@ -3032,38 +3032,28 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    TR::Register *temp2Reg = cg->allocateRegister();
    TR_ASSERT_FATAL(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() == 16, "multianewArrayEvaluator - Expecting discontiguousArrayHeaderSizeInBytes to be 16.");
    // temp2Reg = firstDimLenReg * 16 (discontiguousArrayHeaderSizeInBytes)
-   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, temp2Reg, firstDimLenReg);
+   generateRRInstruction(cg, TR::InstOpCode::LGR, node, temp2Reg, firstDimLenReg);
    generateRILInstruction(cg, TR::InstOpCode::MSGFI, node, temp2Reg, zeroArraySize);
 
-   generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, temp2Reg, temp1Reg);
+   generateRRInstruction(cg, TR::InstOpCode::AGR, node, temp2Reg, temp1Reg);
 
-   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, targetReg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
-   generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, temp2Reg, targetReg);
-   generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, temp2Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapTop), cg));
+   generateRXInstruction(cg, TR::InstOpCode::LG, node, targetReg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
+   generateRRInstruction(cg, TR::InstOpCode::AGR, node, temp2Reg, targetReg);
+   generateRXInstruction(cg, TR::InstOpCode::CLG, node, temp2Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapTop), cg));
 
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, node, oolJumpLabel);
 
    // We have enough space, so proceed with the allocation.
-   generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, temp2Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
+   generateRXInstruction(cg, TR::InstOpCode::STG, node, temp2Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
 
    // Init 1st dim array class and size fields.
    generateRXInstruction(cg, use64BitClasses ? TR::InstOpCode::STG : TR::InstOpCode::ST, node, classReg, generateS390MemoryReference(targetReg, TR::Compiler->om.offsetOfObjectVftField(), cg));
    generateRXInstruction(cg, TR::InstOpCode::ST, node, firstDimLenReg, generateS390MemoryReference(targetReg, fej9->getOffsetOfContiguousArraySizeField(), cg));
 
    // temp2 point to end of 1st dim array i.e. start of 2nd dim
-   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, temp2Reg, targetReg);
-   generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, temp2Reg, temp1Reg);
-   generateRIEInstruction(cg, TR::InstOpCode::getAddHalfWordImmDistinctOperandOpCode(), node, temp1Reg, targetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-
-   uintptr_t heapBase = TR::Compiler->vm.heapBaseAddress();
-   bool useRegForHeapBase = comp->target().is64Bit() && comp->useCompressedPointers() &&
-                           (heapBase != 0) && (!IS_32BIT_SIGNED(heapBase) || TR::Compiler->om.nativeAddressesCanChangeSize());
-   if (useRegForHeapBase)
-      {
-      uint32_t high32 = heapBase >> 32;
-      generateRILInstruction(cg, TR::InstOpCode::LLIHF, node, secondDimLenReg, high32);
-      generateRILInstruction(cg, TR::InstOpCode::IILF, node, secondDimLenReg, static_cast<uint32_t>(heapBase));
-      }
+   generateRRInstruction(cg, TR::InstOpCode::LGR, node, temp2Reg, targetReg);
+   generateRRInstruction(cg, TR::InstOpCode::AGR, node, temp2Reg, temp1Reg);
+   generateRIEInstruction(cg, TR::InstOpCode::AGHIK, node, temp1Reg, targetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
 
    // Loop start
    TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
@@ -3077,33 +3067,21 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    if (comp->target().is64Bit() && comp->useCompressedPointers())
       {
       int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
-      generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, temp3Reg, temp2Reg);
-
-      if (heapBase != 0)
-         {
-         if (useRegForHeapBase)
-            {
-            generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, temp3Reg, secondDimLenReg);
-            }
-         else
-            {
-            generateRILInstruction(cg, TR::InstOpCode::getSubtractLogicalImmOpCode(), node, temp3Reg, static_cast<int32_t>(heapBase));
-            }
-         }
+      generateRRInstruction(cg, TR::InstOpCode::LGR, node, temp3Reg, temp2Reg);
       if (shiftAmount != 0)
          {
-         generateRSInstruction(cg, comp->target().is64Bit() ? TR::InstOpCode::SRAG : TR::InstOpCode::SRAK, node, temp3Reg, temp3Reg, shiftAmount);
+         generateRSInstruction(cg, TR::InstOpCode::SRAG, node, temp3Reg, temp3Reg, shiftAmount);
          }
       generateRXInstruction(cg, TR::InstOpCode::ST, node, temp3Reg, generateS390MemoryReference(temp1Reg, 0, cg));
       }
    else
       {
-      generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, temp2Reg, generateS390MemoryReference(temp1Reg, 0, cg));
+      generateRXInstruction(cg, TR::InstOpCode::STG, node, temp2Reg, generateS390MemoryReference(temp1Reg, 0, cg));
       }
 
    // Advance cursors temp1 and temp2. Then branch back or fall through if done.
-   generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, temp2Reg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes());
-   generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, temp1Reg, elementSize);
+   generateRIInstruction(cg, TR::InstOpCode::AGHI, node, temp2Reg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes());
+   generateRIInstruction(cg, TR::InstOpCode::AGHI, node, temp1Reg, elementSize);
 
    generateRILInstruction(cg, TR::InstOpCode::SLFI, node, firstDimLenReg, 1);
    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, firstDimLenReg, 0, TR::InstOpCode::COND_BNE, loopLabel, false);
@@ -3127,7 +3105,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionEnd, dependencies);
 
    TR::Register *targetRegisterFinal = cg->allocateCollectedReferenceRegister();
-   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, targetRegisterFinal, targetReg);
+   generateRRInstruction(cg, TR::InstOpCode::LGR, node, targetRegisterFinal, targetReg);
 
    // Generate the OOL code before final bookkeeping.
    TR_S390OutOfLineCodeSection *outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(oolFailLabel, cFlowRegionEnd, cg);
@@ -3140,7 +3118,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    TR::Register *targetReg2 = TR::TreeEvaluator::performCall(node, false, cg);
    TR::Node::recreate(node, opCode);
 
-   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, targetReg, targetReg2);
+   generateRRInstruction(cg, TR::InstOpCode::LGR, node, targetReg, targetReg2);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
    outlinedSlowPath->swapInstructionListsWithCompilation();
 
