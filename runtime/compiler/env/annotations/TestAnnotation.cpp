@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,7 @@
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "compile/ResolvedMethod.hpp"
+#include "omrformatconsts.h"
 
 // only purpose of this class is to test that annotations are working.  Will
 // expect specific values
@@ -55,7 +56,7 @@ TR_TestAnnotation::TR_TestAnnotation(TR::Compilation *comp,TR::SymbolReference *
   J9SRP *strPtr;
   if(getValue(symRef,"intField",kInt,&intptr))
      {
-     printf("Found int value %d\n",*intptr);
+     printf("Found int value %" OMR_PRId32 "\n", *intptr);
      }
    if(getValue(symRef,"floatField",kFloat,&fltptr))
      {
@@ -63,7 +64,7 @@ TR_TestAnnotation::TR_TestAnnotation(TR::Compilation *comp,TR::SymbolReference *
      }
    if(getValue(symRef,"booleanField",kBool,&intptr))
      {
-     printf("Found boolean value %d\n",*intptr);
+     printf("Found boolean value %" OMR_PRId32 "\n", *intptr);
      }
    if(getValue(symRef,"doubleField",kDouble,&dblptr))
      {
@@ -71,19 +72,19 @@ TR_TestAnnotation::TR_TestAnnotation(TR::Compilation *comp,TR::SymbolReference *
      }
    if(getValue(symRef,"charField",kChar,&intptr))
      {
-     printf("Found char value %d\n",*intptr);
+     printf("Found char value %" OMR_PRId32 "\n", *intptr);
      }
    if(getValue(symRef,"shortField",kShort,&intptr))
      {
-     printf("Found short value %d\n",*intptr);
+     printf("Found short value %" OMR_PRId32 "\n", *intptr);
      }
    if(getValue(symRef,"byteField",kByte,&intptr))
      {
-     printf("Found byte value %d\n",*intptr);
+     printf("Found byte value %" OMR_PRId32 "\n", *intptr);
      }
    if(getValue(symRef,"longField",kLong,&longptr))
      {
-     printf("Found byte value %lld\n",*longptr);
+     printf("Found long value %" OMR_PRId64 "\n", *longptr);
      }
    char *enumerationName=NULL, *enumerationValue=NULL;
    int32_t nameLen,valueLen;
@@ -110,5 +111,3 @@ TR_TestAnnotation::TR_TestAnnotation(TR::Compilation *comp,TR::SymbolReference *
 
   _isValid=true;
 }
-
-
