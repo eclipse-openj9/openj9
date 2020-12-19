@@ -70,6 +70,7 @@ static UDATA nativeMethodHash(void *key, void *userData);
 static UDATA nativeMethodEqual(void *leftKey, void *rightKey, void *userData);
 static UDATA bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char * longJNI, char * shortJNI, UDATA bindJNINative);
 static UDATA lookupNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, J9NativeLibrary *handle, char *longJNI, char *shortJNI, UDATA functionArgCount, UDATA bindJNINative);
+static UDATA bindNativeClassLoader(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Method *nativeMethod, char *longJNI, char *shortJNI, U_8 argCount, UDATA bindJNINative);
 
 #if JAVA_SPEC_VERSION >= 15
 J9_DECLARE_CONSTANT_UTF8(j9_findnative_sig, "(Ljava/lang/ClassLoader;Ljava/lang/String;)J");
@@ -959,6 +960,41 @@ resolveNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, UDATA ru
 }
 
 /**
+ * Attempt to bind the nativeMethod by looking through native libraries in the classLoader specified
+ *
+ * @param[in] currentThread current J9VMThread
+ * @param[in] classLoader pointer to the classLoader, assuming not NULL
+ * @param[in] nativeMethod the JNI native method to bind
+ * @param[in] longJNI the long mangled JNI name
+ * @param[in] shortJNI the short mangled JNI name
+ * @param[in] argCount the argument count
+ * @param[in] bindJNINative non-zero if JNI natives are allowed, zero for INL-only
+ *
+ * @return J9_NATIVE_METHOD_BIND_SUCCESS on success,
+ *         J9_NATIVE_METHOD_BIND_FAIL on failure.
+ */
+static UDATA
+bindNativeClassLoader(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Method *nativeMethod, char *longJNI, char *shortJNI, U_8 argCount, UDATA bindJNINative)
+{
+	/* Search each shared library in the class loader for a matching native */
+	UDATA rc = J9_NATIVE_METHOD_BIND_FAIL;
+	J9NativeLibrary *nativeLibrary = classLoader->librariesHead;
+	while (NULL != nativeLibrary) {
+		rc = lookupNativeAddress(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, argCount, bindJNINative);
+		if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
+			Trc_VM_bindNative_NativeLibrary_Success(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, bindJNINative);
+			break;
+		} else if (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc) {
+			Trc_VM_bindNative_NativeLibrary_OOM(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, bindJNINative);
+			break;
+		}
+		nativeLibrary = nativeLibrary->next;
+	}
+
+	return rc;
+}
+
+/**
  *Attempt to bind the \c nativeMethod by looking through native libraries in
  *classLoader, and JVMTI agent libraries.
  * \param currentThread
@@ -977,7 +1013,6 @@ bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char *longJNI, cha
 	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(nativeMethod)->classLoader;
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(nativeMethod);
 	U_8 argCount = romMethod->argCount;
-	J9NativeLibrary *nativeLibrary = NULL;
 
 	Trc_VM_bindNative_Entry(currentThread, nativeMethod, longJNI, shortJNI, bindJNINative);
 #if defined(J9VM_INTERP_MINIMAL_JNI)
@@ -995,26 +1030,24 @@ bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char *longJNI, cha
 		++argCount;
 	}
 
+	UDATA rc = J9_NATIVE_METHOD_BIND_SUCCESS;
 #if JAVA_SPEC_VERSION >= 15
-	if (classLoader == vm->systemClassLoader)
+	/* search each shared library in the systemClassLoader first  */
+	rc = bindNativeClassLoader(currentThread, vm->systemClassLoader, nativeMethod, longJNI, shortJNI, argCount, bindJNINative);
+	if ((J9_NATIVE_METHOD_BIND_SUCCESS == rc)
+		|| (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc)
+	) {
+		return rc;
+	}
 #endif /* JAVA_SPEC_VERSION >= 15 */
-	{
-		/* Search each shared library in the class loader for a matching native */
-		nativeLibrary = classLoader->librariesHead;
-		while (nativeLibrary != NULL) {
-			UDATA rc = lookupNativeAddress(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, argCount, bindJNINative);
-			if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
-				Trc_VM_bindNative_NativeLibrary_Success(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, bindJNINative);
-				return J9_NATIVE_METHOD_BIND_SUCCESS;
-			} else if (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc) {
-				Trc_VM_bindNative_NativeLibrary_OOM(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, bindJNINative);
-				return rc;
-			}
-			nativeLibrary = nativeLibrary->next;
-		}
+	rc = bindNativeClassLoader(currentThread, classLoader, nativeMethod, longJNI, shortJNI, argCount, bindJNINative);
+	if ((J9_NATIVE_METHOD_BIND_SUCCESS == rc)
+		|| (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc)
+	) {
+		return rc;
 	}
 #if JAVA_SPEC_VERSION >= 15
-	UDATA rc = lookupNativeAddress(currentThread, nativeMethod, NULL, longJNI, shortJNI, argCount, bindJNINative);
+	rc = lookupNativeAddress(currentThread, nativeMethod, NULL, longJNI, shortJNI, argCount, bindJNINative);
 	if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
 		Trc_VM_bindNative_NullNativeLibrary_Success(currentThread, nativeMethod, longJNI, shortJNI, bindJNINative);
 		return J9_NATIVE_METHOD_BIND_SUCCESS;
