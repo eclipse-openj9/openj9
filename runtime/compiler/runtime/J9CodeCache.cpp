@@ -53,6 +53,7 @@
 #include "env/IO.hpp"
 #include "runtime/HookHelpers.hpp"
 #include "env/VerboseLog.hpp"
+#include "omrformatconsts.h"
 
 OMR::CodeCacheMethodHeader *getCodeCacheMethodHeader(char *p, int searchLimit, J9JITExceptionTable * metaData);
 
@@ -470,8 +471,8 @@ J9::CodeCache::dumpCodeCache()
    {
    self()->OMR::CodeCache::dumpCodeCache();
    printf("  |-- segment                = 0x%p\n", _segment );
-   printf("  |-- segment->heapBase      = 0x%08x\n", _segment->segmentBase() );
-   printf("  |-- segment->heapTop       = 0x%08x\n", _segment->segmentTop() );
+   printf("  |-- segment->heapBase      = 0x%08" OMR_PRIxPTR "\n", (uintptr_t)_segment->segmentBase() );
+   printf("  |-- segment->heapTop       = 0x%08" OMR_PRIxPTR "\n", (uintptr_t)_segment->segmentTop() );
    }
 
 #define HELPER_TRAMPOLINE_AREA_NAME "JIT helper trampoline area"
