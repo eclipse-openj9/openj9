@@ -31,7 +31,7 @@
 	<variable name="XSHARECLASSES" value="-Xshareclasses:name=$CACHENAME$" />
 	
 	<!-- NOTE: Update the version of org.eclipse.osgi whenever new version are checked in -->
-	<variable name="OSGI_JAR_PATH" value="$TEST_MATERIAL_DIR$$CPDL$$LIB_DIR$$PATHSEP$org.eclipse.osgi_3.16.100.v20200904-1304.jar" />
+	<variable name="OSGI_JAR_PATH" value="$TEST_MATERIAL_DIR$$CPDL$$LIB_DIR$$PATHSEP$org.eclipse.osgi-3.16.100.jar" />
 	
 	<variable name="FRAMEWORK_BUNDLE_LOCATION" value="$TEST_MATERIAL_DIR$$PATHSEP$FrameworkBundles" />
 	<variable name="TEST_BUNDLE_LOCATION" value="$TEST_MATERIAL_DIR$$PATHSEP$CDSAdaptorOrphanTestBundles" />
