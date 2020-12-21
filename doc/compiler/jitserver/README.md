@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2000, 2019 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 - [Problem Determination](Problem.md)
 - [Handling Options](OptionsDev.md)
 - [Sockets](Sockets.md)
-- [Serialization (protobuf)](Protobuf.md)
 - [Resolved Method](ResolvedMethod.md)
 - [Frontend](Frontend.md)
 - [CHTable](CHTable.md)

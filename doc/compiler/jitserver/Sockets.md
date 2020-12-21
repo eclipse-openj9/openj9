@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2000, 2019 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,18 +22,18 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 # Sockets
 
-Client server communication via TCP sockets is the default communication backend. The implementation mostly resides within the `rpc` directory. There is a base class `J9Stream`, which is specialized for both the client and server in `J9ClientStream` and `J9ServerStream`.
+Client server communication via TCP sockets is the default communication backend. The implementation resides within the `runtime/compiler/net` directory. There is a base class `CommunicationStream`, which is specialized for both the client and server in `J9ClientStream` and `J9ServerStream`.
 
 Encryption via TLS (OpenSSL) is optionally supported. See [Usage](Usage.md) for encryption setup instructions.
 
 If a network error occurs, `JITServer::StreamFailure` is thrown.
 
-### `J9Stream`
+### `CommunicationStream`
 Implements basic functionality such as stream initialization (with/without TLS), reading/writing objects to streams, and stream cleanup.
 
 ### `J9ClientStream`
 
-One instance per compilation thread. Typically, this is only interacted with through the function `handleServerMessage` in `JITServerCompilationThread.cpp`. An instance is created for a new compilation inside `remoteCompile`, and the `buildCompileRequest` method is then called on it to begin the compilation.
+One instance per compilation thread. Typically, this is only interacted with through the function `handleServerMessage` in `JITClientCompilationThread.cpp`. An instance is created for a new compilation inside `remoteCompile`, and the `buildCompileRequest` method is then called on it to begin the compilation.
 
 ### `J9ServerStream`
 
@@ -42,3 +42,6 @@ There is one instance per compilation thread. Instances are created by `ServerSt
 Accessible on a compilation thread via `TR::CompilationInfo::getStream()`, but beware that a thread local read is performed, so try to avoid calling it in particularly hot code.
 
 Also stores the client ID, accessible via `J9ServerStream::getClientId`.
+
+### TODO
+Add documentation describing implementation of `Message` and `MessageBuffer` classes.
