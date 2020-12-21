@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,47 +108,9 @@ public class Test_VarHandle {
 
 		logger.debug(testName + ": Descriptor of original class varType is: " + handle.varType().descriptorString());
 		logger.debug(testName + ": Descriptor of VarHandleDesc varType is: " + resolvedHandle.varType().descriptorString());
-		Assert.assertTrue(handle.equals(resolvedHandle));
-	}
 
-	/*
-	 * Test Java 12 API VarHandle.equals()
-	 */
-	@Test(groups = { "level.sanity" })
-	public void testVarHandleEquals() {
-		testVarHandleEqualsSub("testVarHandleEquals instance test: ", instanceTest, arrayTest2);
-		testVarHandleEqualsSub("testVarHandleEquals static test: ", staticTest, arrayTest2);
-		testVarHandleEqualsSub("testVarHandleEquals array test: ", arrayTest, arrayTest2);
-		testVarHandleEqualsSub("testVarHandleEquals array test: ", arrayTest2, instanceTest);
-	}
-
-	private void testVarHandleEqualsSub(String testName, VarHandle tester, VarHandle diffHandle) {
-		logger.debug(testName + " the same VarHandle should be equal to itself: " + tester.equals(tester));
-		Assert.assertTrue(tester.equals(tester));
-		logger.debug(testName + " different VarHandle instances should not be equal: " + !tester.equals(diffHandle));
-		Assert.assertTrue(!tester.equals(diffHandle));
-	}
-
-	/*
-	 * Test Java 12 API VarHandle.hashCode()
-	 */
-	@Test(groups = { "level.sanity" })
-	public void testVarHandleHashCode() {
-		testVarHandleHashCodeSub("testVarHandleHashCode instance test: ", instanceTest, instanceTestCopy);
-		testVarHandleHashCodeSub("testVarHandleHashCode static test: ", staticTest, staticTestCopy);
-		testVarHandleHashCodeSub("testVarHandleHashCode array test: ", arrayTest, arrayTestCopy);
-		testVarHandleHashCodeSub("testVarHandleHashCode array test 2: ", arrayTest2, arrayTest2Copy);
-	}
-
-	private void testVarHandleHashCodeSub(String testName, VarHandle tester, VarHandle copy) {
-		/*
-		 * The hashcode is stored for each instance once the method is called. Use a
-		 * replica of the handle for tests so its computed twice
-		 */
-		int testerHash = tester.hashCode();
-		int copyHash = copy.hashCode();
-		logger.debug(testName + " The same VarHandle should produce the same hash. " + (testerHash == copyHash));
-		Assert.assertTrue(testerHash == copyHash);
+		Assert.assertTrue(handle.varType().equals(resolvedHandle.varType()));
+		Assert.assertTrue(handle.coordinateTypes().equals(resolvedHandle.coordinateTypes()));
 	}
 
 	/*
