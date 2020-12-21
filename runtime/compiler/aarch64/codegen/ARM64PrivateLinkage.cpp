@@ -28,6 +28,7 @@
 #include "codegen/CallSnippet.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGeneratorUtils.hpp"
+#include "codegen/ConstantDataSnippet.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage_inlines.hpp"
@@ -47,6 +48,7 @@
 #include "il/SymbolReference.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
+#include "runtime/Runtime.hpp"
 
 uint32_t J9::ARM64::PrivateLinkage::_globalRegisterNumberToRealRegisterMap[] =
    {
@@ -626,6 +628,19 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, NULL, stackOverflowRestartLabel, cursor);
 
       cg()->addSnippet(new (cg()->trHeapMemory()) TR::ARM64StackCheckFailureSnippet(cg(), NULL, stackOverflowRestartLabel, stackOverflowSnippetLabel));
+      }
+   else
+      {
+      // If StackCheckFailureSnippet is not added to the end of the snippet list and no data snippets exist,
+      // we might have a HelperCallSnippet at the end of the method.
+      // HelperCallSnippets add a GCMap to the instruction next to the `bl` instruction to the helper,
+      // and if a HelperCallSnippet is at the end of the method, GCMap is added to the address beyond the range of the method.
+      // To avoid that, we add a dummy ConstantDataSnippet. (Data snippets are emitted after normal snippets.)
+      if (!cg()->hasDataSnippets())
+         {
+         auto snippet = cg()->findOrCreate4ByteConstant(NULL, 0);
+         snippet->setReloType(TR_NoRelocation);
+         }
       }
 
    // --------------------------------------------------------------------------
