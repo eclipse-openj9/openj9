@@ -42,10 +42,12 @@ public class SnapshotHook implements Comparable<SnapshotHook> {
 
 	private final SnapshotHookPriority hookPriority;
 	private final Runnable hook;
+	private final String name;
 
-	public SnapshotHook(SnapshotHookPriority hookPriority, Runnable hook) {
+	public SnapshotHook(SnapshotHookPriority hookPriority, Runnable hook, String name) {
 		this.hookPriority = hookPriority;
 		this.hook = hook;
+		this.name = name;
 	}
 
 	Runnable getHook() {
@@ -61,5 +63,9 @@ public class SnapshotHook implements Comparable<SnapshotHook> {
 		return o.getHookPriority().getPriority() - this.getHookPriority().getPriority();
 	}
 
+	public String toString() {
+		String s = "[SnapshotHook: [" + name + "], priority:["+ hookPriority + "], runnable:[" + hook + "] " + this + "]";
+		return s;
+	}
 
 }

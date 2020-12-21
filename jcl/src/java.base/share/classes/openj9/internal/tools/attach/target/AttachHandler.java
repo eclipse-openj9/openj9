@@ -172,7 +172,7 @@ public class AttachHandler extends Thread {
 					/* Easier to recreate this thread rather than restore it */
 					mainHandler.start();
 				}
-			});
+			}, "AttachAPI: restart mainHandler");
 		}
 	}
 

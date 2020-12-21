@@ -57,27 +57,32 @@ public class SnapshotControlAPI {
 	/**
 	 * Registers a hook that will run after the snapshot is restored and before the JVM application resumes
 	 *
-	 * @param hook
+	 * @param hook The runnable to run
+	 * @param name The name of the hook (for debugging purposes)
 	 */
-	public static void registerPostRestoreHooks(Runnable hook) {
-		postRestoreHooks.add(new SnapshotHook(SnapshotHookPriority.MED, hook));
+	public static void registerPostRestoreHooks(Runnable hook, String name) {
+		postRestoreHooks.add(new SnapshotHook(SnapshotHookPriority.MED, hook, name));
 	}
 
 	/**
 	 * Registers a hook that will run after the snapshot is restored and before the JVM application resumes
 	 *
-	 * @param priority
-	 * @param hook
+	 * @param hook The runnable to run
+	 * @parma name The name of the hook (for debugging purposes)
 	 */
-	public static void registerHighPriorityPostRestoreHooks(Runnable hook) {
-		postRestoreHooks.add(new SnapshotHook(SnapshotHookPriority.HIGH, hook));
+	public static void registerHighPriorityPostRestoreHooks(Runnable hook, String name) {
+		postRestoreHooks.add(new SnapshotHook(SnapshotHookPriority.HIGH, hook, name));
 	}
 
 	private static void runPostRestoreHooks() {
+		// Use com.ibm.oti.vm.VM.dumpString("); to printf debug this code as
+		// the System.out.println calls may not be re-established yet and can
+		// cause crashes here.
 		temparr = postRestoreHooks.toArray();
 		Arrays.sort(temparr);
 		for (Object hookWrapper : temparr) {
-			((SnapshotHook)hookWrapper).getHook().run();
+			SnapshotHook h = ((SnapshotHook)hookWrapper);
+			h.getHook().run();
 		}
 	}
 }

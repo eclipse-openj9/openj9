@@ -1465,7 +1465,7 @@ final class ThunkTuple {
 				public void run() {
 					registerNatives();
 				}	
-			});
+			}, "ThunkTuple:registerNatives");
 		}
 	}
 	
