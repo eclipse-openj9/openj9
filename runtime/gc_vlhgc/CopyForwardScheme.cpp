@@ -1419,10 +1419,8 @@ MM_CopyForwardScheme::mainSetupForCopyForward(MM_EnvironmentVLHGC *env)
 	_failedToExpand = false;
 	_phantomReferenceRegionsToProcess = 0;
 
-	/* Sort all hot fields for all classes if scavenger dynamicBreadthFirstScanOrdering is enabled */
-	if (_extensions->scavengerScanOrdering == MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST) {
-		MM_HotFieldUtil::sortAllHotFieldData(_javaVM, _extensions->globalVLHGCStats.gcCount);
-	}
+	/* Sort all hot fields for all classes as dynamicBreadthFirstScanOrdering is enabled */
+	MM_HotFieldUtil::sortAllHotFieldData(_javaVM, _extensions->globalVLHGCStats.gcCount);
 
 	/* Cache of the mark map */
 	_markMap = env->_cycleState->_markMap;
