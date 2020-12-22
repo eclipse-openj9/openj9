@@ -319,16 +319,11 @@ getSignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObject, UDA
 	strcpy(cursor, rSignature);
 
 done:
-	if (NULL != rSignature) {
-		j9mem_free_memory(rSignature);
-	}
+	j9mem_free_memory(rSignature);
+
 	if (NULL != signatures) {
 		for (U_32 i = 0; i < numArgs; i++) {
-			if (NULL != signatures[i]) {
-				j9mem_free_memory(signatures[i]);
-			} else {
-				break;
-			}
+			j9mem_free_memory(signatures[i]);
 		}
 		j9mem_free_memory(signatures);
 	}
@@ -1153,12 +1148,8 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(JNIEnv *env, jclass clazz, 
 		}
 	}
 done:
-	if (NULL != name) {
-		j9mem_free_memory(name);
-	}
-	if (NULL != sig) {
-		j9mem_free_memory(sig);
-	}
+	j9mem_free_memory(name);
+	j9mem_free_memory(sig);
 
 	Trc_JCL_java_lang_invoke_MethodHandleNatives_getMembers_Exit(env, result);
 	vmFuncs->internalExitVMToJNI(currentThread);
