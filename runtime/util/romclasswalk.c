@@ -180,6 +180,21 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 		}
 	}
 
+#if JAVA_SPEC_VERSION >= 11
+	/* walk nest members SRPs block */
+	if (0 != romClass->nestMemberCount) {
+		srpCursor = J9ROMCLASS_NESTMEMBERS(romClass);
+		count = romClass->nestMemberCount;
+		rangeValid = callbacks->validateRangeCallback(romClass, srpCursor, count * sizeof(J9SRP), userData);
+		if (rangeValid) {
+			callbacks->sectionCallback(romClass, srpCursor, count * sizeof(J9SRP), "nestMembersSRPs", userData);
+			for (; count > 0; count--) {
+				callbacks->slotCallback(romClass, J9ROM_UTF8, srpCursor++, "nestMemberUTF8", userData);
+			}
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 11 */
+
 	/* add CP NAS section */
 	firstMethod = J9ROMCLASS_ROMMETHODS(romClass);
 	count = (U_32)(((UDATA)firstMethod - (UDATA)srpCursor) / (sizeof(J9SRP) * 2));
