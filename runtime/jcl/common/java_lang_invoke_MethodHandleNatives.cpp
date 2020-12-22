@@ -347,96 +347,95 @@ resolveRefToObject(J9VMThread *currentThread, J9ConstantPool *ramConstantPool, U
 	U_32 *cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(J9_CLASS_FROM_CP(ramConstantPool)->romClass);
 
 	switch (J9_CP_TYPE(cpShapeDescription, cpIndex)) {
-		case J9CPTYPE_CLASS:
-		{
-			J9Class *clazz = (J9Class*)ramCP->value;
-			if ((NULL == clazz) && resolve) {
-				clazz = vmFuncs->resolveClassRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
-			}
-			if (NULL != clazz) {
-				result = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
-			}
-			break;
+	case J9CPTYPE_CLASS: {
+		J9Class *clazz = (J9Class*)ramCP->value;
+		if ((NULL == clazz) && resolve) {
+			clazz = vmFuncs->resolveClassRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 		}
-		case J9CPTYPE_STRING:
-		{
-			result = (j9object_t)ramCP->value;
-			if ((NULL == result) && resolve) {
-				result = vmFuncs->resolveStringRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
-			}
-			break;
+		if (NULL != clazz) {
+			result = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 		}
-		case J9CPTYPE_INT:
-		{
-			result = vm->memoryManagerFunctions->J9AllocateObject(currentThread, J9VMJAVALANGINTEGER_OR_NULL(vm), J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-			if (NULL == result) {
-				vmFuncs->setHeapOutOfMemoryError(currentThread);
-				goto done;
-			}
-			J9VMJAVALANGINTEGER_SET_VALUE(currentThread, result, ramCP->value);
-			break;
-		}
-		case J9CPTYPE_FLOAT:
-		{
-			result = vm->memoryManagerFunctions->J9AllocateObject(currentThread, J9VMJAVALANGFLOAT_OR_NULL(vm), J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-			if (NULL == result) {
-				vmFuncs->setHeapOutOfMemoryError(currentThread);
-				goto done;
-			}
-			J9VMJAVALANGFLOAT_SET_VALUE(currentThread, result, ramCP->value);
-			break;
-		}
-		case J9CPTYPE_LONG:
-		{
-			J9ROMConstantRef *romCP = (J9ROMConstantRef*)J9_ROM_CP_FROM_CP(ramConstantPool) + cpIndex;
-			U_64 value = romCP->slot1;
-			value = (value << 32) + romCP->slot2;
-			result = vm->memoryManagerFunctions->J9AllocateObject(currentThread, J9VMJAVALANGLONG_OR_NULL(vm), J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-			if (NULL == result) {
-				vmFuncs->setHeapOutOfMemoryError(currentThread);
-				goto done;
-			}
-			J9VMJAVALANGLONG_SET_VALUE(currentThread, result, value);
-			break;
-		}
-		case J9CPTYPE_DOUBLE:
-		{
-			J9ROMConstantRef *romCP = (J9ROMConstantRef*)J9_ROM_CP_FROM_CP(ramConstantPool) + cpIndex;
-			U_64 value = romCP->slot1;
-			value = (value << 32) + romCP->slot2;
-			result = vm->memoryManagerFunctions->J9AllocateObject(currentThread, J9VMJAVALANGDOUBLE_OR_NULL(vm), J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-			if (NULL == result) {
-				vmFuncs->setHeapOutOfMemoryError(currentThread);
-				goto done;
-			}
-			J9VMJAVALANGDOUBLE_SET_VALUE(currentThread, result, value);
-			break;
-		}
-		case J9CPTYPE_METHOD_TYPE:
-		{
-			result = (j9object_t)ramCP->value;
-			if ((NULL == result) && resolve) {
-				result = vmFuncs->resolveMethodTypeRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
-			}
-			break;
-		}
-		case J9CPTYPE_METHODHANDLE:
-		{
-			result = (j9object_t)ramCP->value;
-			if ((NULL == result) && resolve) {
-				result = vmFuncs->resolveMethodHandleRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_NO_CLASS_INIT);
-			}
-			break;
-		}
-		case J9CPTYPE_CONSTANT_DYNAMIC:
-		{
-			result = (j9object_t)ramCP->value;
-			if ((NULL == result) && resolve) {
-				result = vmFuncs->resolveConstantDynamic(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
-			}
-			break;
-		}
+		break;
 	}
+	case J9CPTYPE_STRING: {
+		result = (j9object_t)ramCP->value;
+		if ((NULL == result) && resolve) {
+			result = vmFuncs->resolveStringRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+		}
+		break;
+	}
+	case J9CPTYPE_INT: {
+		J9ROMSingleSlotConstantRef *romCP = (J9ROMSingleSlotConstantRef*)J9_ROM_CP_FROM_CP(ramConstantPool) + cpIndex;
+		result = vm->memoryManagerFunctions->J9AllocateObject(currentThread, J9VMJAVALANGINTEGER_OR_NULL(vm), J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+		if (NULL == result) {
+			vmFuncs->setHeapOutOfMemoryError(currentThread);
+			goto done;
+		}
+		J9VMJAVALANGINTEGER_SET_VALUE(currentThread, result, romCP->data);
+		break;
+	}
+	case J9CPTYPE_FLOAT: {
+		J9ROMSingleSlotConstantRef *romCP = (J9ROMSingleSlotConstantRef*)J9_ROM_CP_FROM_CP(ramConstantPool) + cpIndex;
+		result = vm->memoryManagerFunctions->J9AllocateObject(currentThread, J9VMJAVALANGFLOAT_OR_NULL(vm), J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+		if (NULL == result) {
+			vmFuncs->setHeapOutOfMemoryError(currentThread);
+			goto done;
+		}
+		J9VMJAVALANGFLOAT_SET_VALUE(currentThread, result, romCP->data);
+		break;
+	}
+	case J9CPTYPE_LONG: {
+		J9ROMConstantRef *romCP = (J9ROMConstantRef*)J9_ROM_CP_FROM_CP(ramConstantPool) + cpIndex;
+#ifdef J9VM_ENV_LITTLE_ENDIAN
+		U_64 value = (((U_64)(romCP->slot2)) << 32) | ((U_64)(romCP->slot1));
+#else
+		U_64 value = (((U_64)(romCP->slot1)) << 32) | ((U_64)(romCP->slot2));
+#endif
+		result = vm->memoryManagerFunctions->J9AllocateObject(currentThread, J9VMJAVALANGLONG_OR_NULL(vm), J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+		if (NULL == result) {
+			vmFuncs->setHeapOutOfMemoryError(currentThread);
+			goto done;
+		}
+		J9VMJAVALANGLONG_SET_VALUE(currentThread, result, value);
+		break;
+	}
+	case J9CPTYPE_DOUBLE: {
+		J9ROMConstantRef *romCP = (J9ROMConstantRef*)J9_ROM_CP_FROM_CP(ramConstantPool) + cpIndex;
+#ifdef J9VM_ENV_LITTLE_ENDIAN
+		U_64 value = (((U_64)(romCP->slot2)) << 32) | ((U_64)(romCP->slot1));
+#else
+		U_64 value = (((U_64)(romCP->slot1)) << 32) | ((U_64)(romCP->slot2));
+#endif
+		result = vm->memoryManagerFunctions->J9AllocateObject(currentThread, J9VMJAVALANGDOUBLE_OR_NULL(vm), J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+		if (NULL == result) {
+			vmFuncs->setHeapOutOfMemoryError(currentThread);
+			goto done;
+		}
+		J9VMJAVALANGDOUBLE_SET_VALUE(currentThread, result, value);
+		break;
+	}
+	case J9CPTYPE_METHOD_TYPE: {
+		result = (j9object_t)ramCP->value;
+		if ((NULL == result) && resolve) {
+			result = vmFuncs->resolveMethodTypeRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+		}
+		break;
+	}
+	case J9CPTYPE_METHODHANDLE: {
+		result = (j9object_t)ramCP->value;
+		if ((NULL == result) && resolve) {
+			result = vmFuncs->resolveMethodHandleRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_NO_CLASS_INIT);
+		}
+		break;
+	}
+	case J9CPTYPE_CONSTANT_DYNAMIC: {
+		result = (j9object_t)ramCP->value;
+		if ((NULL == result) && resolve) {
+			result = vmFuncs->resolveConstantDynamic(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+		}
+		break;
+	}
+	} /* switch */
 done:
 	return result;
 }
