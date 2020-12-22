@@ -500,7 +500,8 @@ Java_java_lang_invoke_MethodHandleNatives_init(JNIEnv *env, jclass clazz, jobjec
 /**
  * static native void expand(MemberName self);
  *
- * Given a MemberName object, try to set the uninitialized fields from existing values.
+ * Given a MemberName object, try to set the uninitialized fields from existing VM metadata.
+ * Uses VM metadata (vmindex & vmtarget) to set symblic data fields (name & type & defc)
  *
  * Throws NullPointerException if MemberName object is null.
  * Throws IllegalArgumentException if MemberName doesn't contain required data to expand.
@@ -594,7 +595,7 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
  * static native MemberName resolve(MemberName self, Class<?> caller,
  *      boolean speculativeResolve) throws LinkageError, ClassNotFoundException;
  *
- * Resolve the method/field represented by the MemberName using the supplied caller
+ * Resolve the method/field represented by the MemberName's symbolic data (name & type & defc) with the supplied caller
  * Store the resolved Method/Field's JNI-id in vmindex, field offset / method pointer in vmtarget
  *
  * If the speculativeResolve flag is not set, failed resolution will throw the corresponding exception.
