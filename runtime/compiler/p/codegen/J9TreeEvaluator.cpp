@@ -3329,18 +3329,7 @@ TR::Register *outlinedHelperArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGener
       VMoutlinedHelperArrayStoreCHKEvaluator(node, srcReg, dstReg, srcNode->isNonNull(), cg);
       }
 
-   TR::MemoryReference *storeMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node->getFirstChild(), TR::Compiler->om.sizeofReferenceAddress());
-
-   generateMemSrc1Instruction(cg,TR::InstOpCode::Op_st, node, storeMR, srcReg);
-
-   if (!srcNode->isNull())
-      {
-      VMoutlinedHelperWrtbarEvaluator(node->getFirstChild(), srcReg, dstReg, srcNode->isNonNull(), cg);
-      }
-
-   cg->decReferenceCount(srcNode);
-   cg->decReferenceCount(dstNode);
-   storeMR->decNodeReferenceCounts(cg);
+   cg->evaluate(node->getFirstChild());
    cg->decReferenceCount(node->getFirstChild());
 
    return NULL;
@@ -3521,16 +3510,10 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
 
    TR::Node * firstChild = node->getFirstChild();
 
-   auto gcMode = TR::Compiler->om.writeBarrierType();
-   bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always)
-         || (comp->getOptions()->realTimeGC());
-   bool doCrdMrk = ((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && !firstChild->isNonHeapObjectWrtBar());
-
    TR::Node *sourceChild = firstChild->getSecondChild();
    TR::Node *destinationChild = firstChild->getChild(2);
 
    bool usingCompressedPointers = false;
-   bool bumpedRefCount = false;
    if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
       {
       // pattern match the sequence
@@ -3585,105 +3568,46 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
       }
 
    TR::Register *srcReg, *dstReg;
-   TR::Register *condReg, *temp1Reg, *temp2Reg, *temp3Reg, *temp4Reg, *baseReg, *indexReg;
-   TR::MemoryReference *tempMR1, *tempMR2;
-   TR::LabelSymbol *wbLabel, *doneLabel, *startLabel, *storeLabel, *wrtBarEndLabel;
+   TR::Register *condReg, *temp1Reg, *temp2Reg, *temp3Reg, *temp4Reg;
+   TR::LabelSymbol *wbLabel, *startLabel;
    TR::RegisterDependencyConditions *conditions;
-   J9::Power::PrivateLinkage *linkage = (J9::Power::PrivateLinkage *) cg->getLinkage();
-   const TR::PPCLinkageProperties &properties = linkage->getProperties();
-   TR::Instruction *gcPoint;
-   bool stopUsingSrc = false;
 
    wbLabel = generateLabelSymbol(cg);
-   doneLabel = generateLabelSymbol(cg);
-   storeLabel = (doWrtBar) ? (generateLabelSymbol(cg)) : NULL;
 
-   tempMR1 = TR::MemoryReference::createWithRootLoadOrStore(cg, firstChild, TR::Compiler->om.sizeofReferenceAddress());
    dstReg = cg->evaluate(destinationChild);
-   TR::Register *compressedReg;
-   if (sourceChild->getReferenceCount() > 1 && (srcReg = sourceChild->getRegister()) != NULL)
-      {
-      TR::Register *tempReg = cg->allocateCollectedReferenceRegister();
+   srcReg = cg->evaluate(sourceChild);
 
-      // Source must be an object.
-      TR_ASSERT(!srcReg->containsInternalPointer(), "Stored value is an internal pointer");
-
-      generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, tempReg, srcReg);
-      srcReg = tempReg;
-      stopUsingSrc = true;
-      compressedReg = srcReg;
-      if (usingCompressedPointers)
-         compressedReg = cg->evaluate(firstChild->getSecondChild());
-      }
-   else
-      {
-      srcReg = cg->evaluate(sourceChild);
-      compressedReg = srcReg;
-      if (usingCompressedPointers)
-         compressedReg = cg->evaluate(firstChild->getSecondChild());
-      }
-
-   int32_t numDeps = 11;
-   if (usingCompressedPointers)
-      numDeps++;
-   if ((gcMode == gc_modron_wrtbar_satb) || (comp->getOptions()->realTimeGC()))
-      numDeps++;
-   if (!firstChild->skipWrtBar())
-      numDeps += 2;
-
-   conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(numDeps, numDeps, cg->trMemory());
+   conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(7, 7, cg->trMemory());
    temp1Reg = cg->allocateRegister();
    temp2Reg = cg->allocateRegister();
    temp3Reg = cg->allocateRegister();
    temp4Reg = cg->allocateRegister();
    condReg = cg->allocateRegister(TR_CCR);
 
-   // !!! Adding any dependency before the baseReg, you have to be careful with the excludeGPR0 order
-   TR::addDependency(conditions, dstReg, TR::RealRegister::gr3, TR_GPR, cg);
-
-   if (comp->getOptions()->realTimeGC())
-      TR::addDependency(conditions, srcReg, TR::RealRegister::gr5, TR_GPR, cg);
-   else
-      TR::addDependency(conditions, srcReg, TR::RealRegister::gr4, TR_GPR, cg);
-
-   TR::addDependency(conditions, temp1Reg, TR::RealRegister::gr11, TR_GPR, cg);
+   TR::addDependency(conditions, dstReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   conditions->getPreConditions()->getRegisterDependency(conditions->getAddCursorForPre() - 1)->setExcludeGPR0();
+   conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
+   TR::addDependency(conditions, srcReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   conditions->getPreConditions()->getRegisterDependency(conditions->getAddCursorForPre() - 1)->setExcludeGPR0();
+   conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
+   TR::addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+   conditions->getPreConditions()->getRegisterDependency(conditions->getAddCursorForPre() - 1)->setExcludeGPR0();
+   conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
    TR::addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+   conditions->getPreConditions()->getRegisterDependency(conditions->getAddCursorForPre() - 1)->setExcludeGPR0();
+   conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
    TR::addDependency(conditions, temp3Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+   conditions->getPreConditions()->getRegisterDependency(conditions->getAddCursorForPre() - 1)->setExcludeGPR0();
+   conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
    TR::addDependency(conditions, temp4Reg, TR::RealRegister::NoReg, TR_GPR, cg);
-   conditions->getPreConditions()->getRegisterDependency(3)->setExcludeGPR0();
-   conditions->getPostConditions()->getRegisterDependency(3)->setExcludeGPR0();
-   conditions->getPreConditions()->getRegisterDependency(4)->setExcludeGPR0();
-   conditions->getPostConditions()->getRegisterDependency(4)->setExcludeGPR0();
+   conditions->getPreConditions()->getRegisterDependency(conditions->getAddCursorForPre() - 1)->setExcludeGPR0();
+   conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
    TR::addDependency(conditions, condReg, TR::RealRegister::cr0, TR_CCR, cg);
-
-   baseReg = tempMR1->getBaseRegister();
-   if (baseReg != NULL && baseReg != srcReg && baseReg != dstReg)
-      {
-      TR::addDependency(conditions, baseReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      conditions->getPreConditions()->getRegisterDependency(7)->setExcludeGPR0();
-      conditions->getPostConditions()->getRegisterDependency(7)->setExcludeGPR0();
-      }
-   indexReg = tempMR1->getIndexRegister();
-   if (indexReg != NULL && indexReg != srcReg && indexReg != dstReg && indexReg != baseReg)
-      {
-      TR::addDependency(conditions, indexReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      }
-
-   TR::Register *dstAddrReg = NULL;
-
-   if (comp->getOptions()->realTimeGC())
-      {
-      dstAddrReg = cg->allocateRegister();
-      TR::addDependency(conditions, dstAddrReg, TR::RealRegister::gr4, TR_GPR, cg);
-      }
-
-   if (usingCompressedPointers)
-      TR::addDependency(conditions, compressedReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
    //--Generate Test to see if 'sourceRegister' is NULL
    generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpli, node, condReg, srcReg, NULLVALUE);
-   //--Generate Jump past ArrayStoreCHKEvaluator or WrtBar depending on GC policy
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, ((!comp->getOptions()->realTimeGC()) && doWrtBar) ? storeLabel : wbLabel, condReg);
+   //--Generate Jump past ArrayStoreCHKEvaluator
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, wbLabel, condReg);
 
    TR::LabelSymbol *helperCall = generateLabelSymbol(cg);
    VMarrayStoreCHKEvaluator(node, srcReg, dstReg, temp1Reg, temp2Reg, temp3Reg, temp4Reg, condReg, wbLabel, helperCall, cg);
@@ -3693,74 +3617,11 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
    cg->decReferenceCount(helperCallNode->getFirstChild());
    cg->decReferenceCount(helperCallNode->getSecondChild());
 
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, wbLabel);
+   generateDepLabelInstruction(cg, TR::InstOpCode::label, node, wbLabel, conditions);
+   cg->evaluate(firstChild);
 
-   if (!comp->getOptions()->realTimeGC())
-      {
-      if (usingCompressedPointers)
-         generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, tempMR1, compressedReg);
-      else
-         generateMemSrc1Instruction(cg,TR::InstOpCode::Op_st, node, tempMR1, srcReg);
-
-      wrtBarEndLabel = doneLabel;
-      }
-   else
-      wrtBarEndLabel = storeLabel;
-
-   if (!firstChild->skipWrtBar())
-      {
-      if (doCrdMrk && !doWrtBar)
-         VMCardCheckEvaluator(firstChild, dstReg, condReg, temp1Reg, temp2Reg, temp3Reg, conditions, cg);
-      else if (doWrtBar && doCrdMrk)
-         VMnonNullSrcWrtBarCardCheckEvaluator(node, srcReg, dstReg, condReg, temp1Reg, temp2Reg, temp3Reg, temp4Reg, doneLabel, conditions, NULL, false, usingCompressedPointers,
-               cg);
-      else if (doWrtBar && !doCrdMrk)
-         VMnonNullSrcWrtBarCardCheckEvaluator(node, srcReg, dstReg, condReg, temp1Reg, temp2Reg, dstAddrReg, temp4Reg, wrtBarEndLabel, conditions, tempMR1, false,
-               usingCompressedPointers, cg);
-      }
-
-   if (doWrtBar)
-      {
-      if (!comp->getOptions()->realTimeGC())
-         generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
-
-      //--Generate the store instruction skipped over if source is null
-      generateLabelInstruction(cg, TR::InstOpCode::label, node, storeLabel);
-      int32_t sizeofMR;
-      TR::InstOpCode::Mnemonic storeOp;
-      if (usingCompressedPointers)
-         {
-         sizeofMR = TR::Compiler->om.sizeofReferenceField();
-         storeOp = TR::InstOpCode::stw;
-         }
-      else
-         {
-         sizeofMR = TR::Compiler->om.sizeofReferenceAddress();
-         storeOp =TR::InstOpCode::Op_st;
-         }
-      tempMR2 = TR::MemoryReference::createWithMemRef(cg, node, *tempMR1, 0, sizeofMR);
-      generateMemSrc1Instruction(cg, storeOp, node, tempMR2, compressedReg);
-      }
-
-   generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
-
-   if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
-      firstChild->setStoreAlreadyEvaluated(true);
-
-   if (usingCompressedPointers)
-      {
-      cg->decReferenceCount(firstChild->getSecondChild());
-      }
-   else
-      cg->decReferenceCount(sourceChild);
-   cg->decReferenceCount(destinationChild);
-   tempMR1->decNodeReferenceCounts(cg);
    cg->decReferenceCount(firstChild);
 
-   if (stopUsingSrc)
-      cg->stopUsingRegister(srcReg);
-   if (comp->getOptions()->realTimeGC())
-      cg->stopUsingRegister(dstAddrReg);
    cg->stopUsingRegister(temp1Reg);
    cg->stopUsingRegister(temp2Reg);
    cg->stopUsingRegister(temp3Reg);
