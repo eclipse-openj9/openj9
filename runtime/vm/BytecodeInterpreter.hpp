@@ -8383,27 +8383,42 @@ done:
 		J9Method *method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
 		UDATA vTableOffset = methodID->vTableIndex;
 
-		if (J9_ARE_ANY_BITS_SET(vTableOffset, J9_JNI_MID_INTERFACE)) {
-			UDATA iTableIndex = vTableOffset & ~(UDATA)J9_JNI_MID_INTERFACE;
-			J9Class *interfaceClass = J9_CLASS_FROM_METHOD(method);
-			vTableOffset = 0;
-			J9ITable * iTable = receiverClass->lastITable;
-			if (interfaceClass == iTable->interfaceClass) {
-				goto foundITable;
-			}
-			iTable = (J9ITable*)receiverClass->iTable;
-			while (NULL != iTable) {
+		/* vmindexOffset (J9JNIMethodID) is initialized using jnicsup.cpp::initializeMethodID.
+		 * initializeMethodID will set J9JNIMethodID->vTableIndex to 0 for private interface
+		 * methods and j.l.Object methods. When J9JNIMethodID->vTableIndex is 0, then
+		 * vmtargetOffset (J9Method) is the _sendMethod, and it will point to the private
+		 * interface method or j.l.Object method. When J9JNIMethodID->vTableIndex is not 0,
+		 * then it is either a vTable offset or an iTable index.
+		 */
+		if (0 == vTableOffset) {
+			/* Private interface method or j.l.Object method. */
+			_sendMethod = method;
+		} else {
+			/* Treat as vTable offset for the method if J9_JNI_MID_INTERFACE is not set. */
+			if (J9_ARE_ANY_BITS_SET(vTableOffset, J9_JNI_MID_INTERFACE)) {
+				/* Treat as iTable index for the method if J9_JNI_MID_INTERFACE is set. */
+				UDATA iTableIndex = vTableOffset & ~(UDATA)J9_JNI_MID_INTERFACE;
+				J9Class *interfaceClass = J9_CLASS_FROM_METHOD(method);
+				/* Get the latest version of the class for the iTable search. */
+				interfaceClass = VM_VMHelpers::currentClass(interfaceClass);
+				vTableOffset = 0;
+				J9ITable * iTable = receiverClass->lastITable;
 				if (interfaceClass == iTable->interfaceClass) {
-					receiverClass->lastITable = iTable;
-foundITable:
-					vTableOffset = ((UDATA*)(iTable + 1))[iTableIndex];
-					break;
+					goto foundITable;
 				}
-				iTable = iTable->next;
+				iTable = (J9ITable*)receiverClass->iTable;
+				while (NULL != iTable) {
+					if (interfaceClass == iTable->interfaceClass) {
+						receiverClass->lastITable = iTable;
+foundITable:
+						vTableOffset = ((UDATA*)(iTable + 1))[iTableIndex];
+						break;
+					}
+					iTable = iTable->next;
+				}
 			}
+			_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
 		}
-
-		_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
 
 		if (fromJIT) {
 			/* Restore sp position before popping memberNameObject. */
