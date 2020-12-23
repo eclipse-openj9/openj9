@@ -514,6 +514,37 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 }
 
 /**
+ * Force a refresh of vmThread's TLH.
+ * @param vmThread
+ * @return result true for success, false for failure
+ */
+BOOLEAN
+J9RefreshTLH(J9VMThread *vmThread) {
+	BOOLEAN result = true;
+#if defined(J9VM_GC_THREAD_LOCAL_HEAP)
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+
+	if (!env->isInlineTLHAllocateEnabled()) {
+		/* For duration of call restore TLH allocate fields;
+		 * we will hide real heapAlloc again on exit to fool JIT/Interpreter
+		 * into thinking TLH is full if needed 
+		 */ 
+		env->enableInlineTLHAllocate();
+	}
+
+	if (OMR_ERROR_NONE != OMR_GC_RefreshTLH(vmThread->omrVMThread)) {
+		result = false;
+	}
+
+	if (extensions->needDisableInlineAllocation()) {
+		env->disableInlineTLHAllocate();
+	}
+#endif /* J9VM_GC_THREAD_LOCAL_HEAP */
+	return result;
+}
+
+/**
  * High level allocate routine (used by VM) to allocate an object array
  * @param allocateFlags a bitfield of flags from the following
  *	OMR_GC_ALLOCATE_OBJECT_TENURED forced Old space allocation even if Generational Heap

@@ -1178,6 +1178,13 @@ VMSnapshotImpl::saveThreadsAndMonitors(void)
 			 * Creating a copy of this large structure will impact footprint.
 			 */
 			memcpy(&(threadCursor->restoreEls), threadCursor->entryLocalStorage, sizeof(J9VMEntryLocalStorage));
+
+			/* Force refresh application thread's TLH. */
+			success = threadCursor->javaVM->memoryManagerFunctions->J9RefreshTLH(threadCursor);
+			if (false == success) {
+				printf("ERROR: Snapshot TLH refresh was unsuccessful\n");
+				goto done;
+			}
 		} else {
 			Trc_VM_Snapshot_NotPersistingThread(threadCursor);
 		}

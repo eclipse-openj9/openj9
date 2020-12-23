@@ -25,6 +25,7 @@
 #include "modronapicore.hpp"
 
 J9MemoryManagerFunctions MemoryManagerFunctions = {
+	J9RefreshTLH,
 	J9AllocateIndexableObject,
 	J9AllocateObject,
 	J9AllocateIndexableObjectNoGC,
