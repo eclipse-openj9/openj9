@@ -956,14 +956,12 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(JNIEnv *env, jclass clazz, 
 											result = -99;
 											goto done;
 										}
-										j9object_t fieldObj = NULL;
-										if (romField->modifiers & J9AccStatic) {
-											/* create static field object */
-											fieldObj = vm->reflectFunctions.createFieldObject(currentThread, romField, defClass, TRUE);
-										} else {
-											/* create instance field object */
-											fieldObj = vm->reflectFunctions.createFieldObject(currentThread, romField, defClass, FALSE);
-										}
+										PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, memberName);
+
+										/* create static field object */
+										j9object_t fieldObj = vm->reflectFunctions.createFieldObject(currentThread, romField, defClass, (romField->modifiers & J9AccStatic) == J9AccStatic);
+										memberName = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+
 										if (NULL != fieldObj) {
 											initImpl(currentThread, memberName, fieldObj);
 										}
@@ -1011,14 +1009,12 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(JNIEnv *env, jclass clazz, 
 												result = -99;
 												goto done;
 											}
-											j9object_t fieldObj = NULL;
-											if (romField->modifiers & J9AccStatic) {
-												/* create static field object */
-												fieldObj = vm->reflectFunctions.createFieldObject(currentThread, romField, defClass, true);
-											} else {
-												/* create instance field object */
-												fieldObj = vm->reflectFunctions.createFieldObject(currentThread, romField, defClass, false);
-											}
+											PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, memberName);
+
+											/* create field object */
+											j9object_t fieldObj = vm->reflectFunctions.createFieldObject(currentThread, romField, defClass, (romField->modifiers & J9AccStatic) == J9AccStatic);
+											memberName = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+
 											if (NULL != fieldObj) {
 												initImpl(currentThread, memberName, fieldObj);
 											}
@@ -1065,6 +1061,8 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(JNIEnv *env, jclass clazz, 
 												result = -99;
 												goto done;
 											}
+											PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, memberName);
+
 											j9object_t methodObj = NULL;
 											if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccStatic) && ('<' == (char)*J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod)))) {
 												/* create constructor object */
@@ -1073,6 +1071,8 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(JNIEnv *env, jclass clazz, 
 												/* create method object */
 												methodObj = vm->reflectFunctions.createMethodObject(currentMethod, currentClass, NULL, currentThread);
 											}
+											memberName = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+
 											if (NULL != methodObj) {
 												initImpl(currentThread, memberName, methodObj);
 											}
@@ -1123,6 +1123,8 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(JNIEnv *env, jclass clazz, 
 												result = -99;
 												goto done;
 											}
+											PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, memberName);
+
 											j9object_t methodObj = NULL;
 											if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccStatic) && ('<' == (char)*J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod)))) {
 												/* create constructor object */
@@ -1131,6 +1133,8 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(JNIEnv *env, jclass clazz, 
 												/* create method object */
 												methodObj = vm->reflectFunctions.createMethodObject(currentMethod, currentClass, NULL, currentThread);
 											}
+											memberName = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+
 											if (NULL != methodObj) {
 												initImpl(currentThread, memberName, methodObj);
 											}
