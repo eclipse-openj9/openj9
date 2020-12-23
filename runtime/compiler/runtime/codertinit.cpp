@@ -90,6 +90,8 @@ extern "C" UDATA jitPPCHandler(J9VMThread* vmThread, U_32 sigType, void* sigInfo
 extern "C" UDATA jit390Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo);
 #elif defined(TR_HOST_X86) && defined(TR_TARGET_X86) && defined(TR_TARGET_64BIT)
 extern "C" UDATA jitAMD64Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo);
+#elif defined(TR_HOST_ARM64) && defined(TR_TARGET_ARM64)
+extern "C" UDATA jitARM64Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo);
 #endif
 #endif
 
@@ -499,6 +501,8 @@ void codert_init_helpers_and_targets(J9JITConfig * jitConfig, char isSMP)
    jitConfig->jitSignalHandler = jit390Handler;
 #elif defined(TR_HOST_X86) && defined(TR_TARGET_X86) && defined(TR_TARGET_64BIT)
    jitConfig->jitSignalHandler = jitAMD64Handler;
+#elif defined(TR_HOST_ARM64) && defined(TR_TARGET_ARM64)
+   jitConfig->jitSignalHandler = jitARM64Handler;
 #endif
 #endif
 

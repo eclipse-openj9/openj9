@@ -126,7 +126,7 @@ TR_J9VMBase::initializeSystemProperties()
    {
    initializeProcessorType();
 
-   #if defined(TR_TARGET_POWER) || defined(TR_TARGET_S390) || defined(TR_TARGET_X86)
+   #if defined(TR_TARGET_POWER) || defined(TR_TARGET_S390) || defined(TR_TARGET_X86) || defined(TR_TARGET_ARM64)
    initializeHasResumableTrapHandler();
    initializeHasFixedFrameC_CallingConvention();
    #endif
