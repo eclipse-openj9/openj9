@@ -1928,6 +1928,8 @@ interceptMainAndRestoreSnapshotState(J9VMThread *currentThread, jmethodID method
 				setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 				VM_OutOfLineINL_Helpers::restoreSpecialStackFrameLeavingArgs(currentThread, bp);
 			} else {
+				/* acquire exclusive while resuming application threads so thread linkedList doesn't change. */
+				acquireExclusiveVMAccess(currentThread);
 				/* If restore hook run was successful resume all suspended application threads. Non-main threads
 				 * have been setup to call restoreThreadState when resumed. */
 				J9VMThread* threadCursor = currentThread->linkNext;
@@ -1937,6 +1939,7 @@ interceptMainAndRestoreSnapshotState(J9VMThread *currentThread, jmethodID method
 					}
 					threadCursor = threadCursor->linkNext;
 				}
+				releaseExclusiveVMAccess(currentThread);
 				restoreThreadState(currentThread);
 			}
 
