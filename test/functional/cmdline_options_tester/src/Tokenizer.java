@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,39 +81,40 @@ class Tokenizer {
          * otherwise it will ends up returning an empty argument to be ignored in forming the command array.
          *
          * Three cases are taken into account in the while loop:
-         * 1) Strings in double-quotes (a argument starting with double-quotes(")) are completely extracted from the command string,
-         *    whether white spaces in the argument exist or not. Double-quotes themselves are discarded after extraction when scanning forward.
-         * 2) Normal arguments (no double-quotes occur in the argument) are split up and extracted with white spaces between arguments.
+         * 1) Strings in double-quotes/single-quotes (an argument starting with double-quotes(") or single-quotes(')) are completely extracted from the command string,
+         *    whether white spaces in the argument exist or not. Double-quotes/single-quotes themselves are discarded after extraction when scanning forward.
+         * 2) Normal arguments (no double-quotes/single-quotes occur in the argument) are split up and extracted with white spaces between arguments.
          * 3) Following the original order of the command line, non-quoted portions of an argument would be extracted in case 2)
          *    and concatenated to quoted portions of the argument extracted in case 1) within the external while loop.
          */
         while ((index < buffer.length()) && !Character.isWhitespace(buffer.charAt(index))) {
 
         	/**
-        	 * Case 1: Expect a double-quoted string once a double-quotes is detected
+        	 * Case 1: Expect a double-quoted or single-quoted string once either is detected
         	 */
-            if (buffer.charAt(index) == '"') {
+            char delim = buffer.charAt(index);
+            if ((delim == '"') || (delim == '\'')) {
                 index++;
                 int i = index;
 
                 /**
-                 * search for another double-quotes since double-quotes appear in pairs.
+                 * search for the closing quote since they appear in pairs.
                  */
-                while ((i < buffer.length()) && (buffer.charAt(i) != '"')) {
+                while ((i < buffer.length()) && (buffer.charAt(i) != delim)) {
                     i++;
                 }
 
                 /**
-                 * Throw out an exception if either of the double-quotes pair is missing
+                 * Throw out an exception if either of the quotes pair is missing
                  */
                 if (i == buffer.length()) {
-                	throw new Exception("TEST CMD FORMAT ERROR: Quote is missing in the path of .jar file: " + buffer);
+                    throw new Exception("TEST CMD FORMAT ERROR: Quote is missing in the path of .jar file: " + buffer);
                 }
 
                 tok += buffer.substring(index, i);
 
                 /**
-                 * In quoted case, it will move forward by one character coz the current character is known as a double-quote(")
+                 * In quoted case, it will move forward by one character because the current character is known as a quote(" or ')
                  * or the end of command string.
                  */
                 index = i + 1;
