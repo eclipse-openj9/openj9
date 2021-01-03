@@ -361,14 +361,14 @@ You must install a number of software dependencies to create a suitable build en
 
 Add the binary path of Clang to the `PATH` environment variable to override the older version of clang integrated in Cygwin. e.g.
 ```
-export PATH="/cygdrive/c/LLVM/bin:$PATH" (in Cygwin for 64bit)
+export PATH="/cygdrive/c/Program Files/LLVM/bin:$PATH" (in Cygwin for 64bit)
 or
-export PATH="/cygdrive/c/LLVM_32/bin:$PATH" (in Cygwin for 32bit)
+export PATH="/cygdrive/c/Program Files/LLVM_32/bin:$PATH" (in Cygwin for 32bit)
 ```
 
 Add the path to `nasm.exe` to the `PATH` environment variable to override the older version of NASM installed in Cygwin. e.g.
 ```
-export PATH="/cygdrive/c/NASM:$PATH" (in Cygwin)
+export PATH="/cygdrive/c/Program Files/NASM:$PATH" (in Cygwin)
 ```
 
 Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
