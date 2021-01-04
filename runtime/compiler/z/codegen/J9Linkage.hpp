@@ -62,7 +62,7 @@ class OMR_EXTENSIBLE Linkage : public OMR::LinkageConnector
    Linkage(TR::CodeGenerator * codeGen)
      : OMR::LinkageConnector(codeGen) {}
 
-   Linkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions elc)
+   Linkage(TR::CodeGenerator * codeGen,TR_LinkageConventions elc)
      : OMR::LinkageConnector(codeGen,elc) {}
 
    TR::Instruction *loadUpArguments(TR::Instruction * cursor);

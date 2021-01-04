@@ -51,7 +51,7 @@ class PrivateLinkage : public J9::PrivateLinkage
 
 public:
 
-   PrivateLinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaPrivate);
+   PrivateLinkage(TR::CodeGenerator * cg, TR_LinkageConventions elc=TR_JavaPrivate);
 
    virtual void createPrologue(TR::Instruction * cursor);
    virtual void createEpilogue(TR::Instruction * cursor);
@@ -148,7 +148,7 @@ class JNILinkage : public PrivateLinkage
    {
 public:
 
-   JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaPrivate);
+   JNILinkage(TR::CodeGenerator * cg, TR_LinkageConventions elc=TR_JavaPrivate);
    virtual TR::Register * buildDirectDispatch(TR::Node * callNode);
 
    /**

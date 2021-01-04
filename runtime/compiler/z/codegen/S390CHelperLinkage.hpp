@@ -48,7 +48,7 @@ class CHelperLinkage : public TR::Linkage
 #endif
 public:
 
-   CHelperLinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaHelper);
+   CHelperLinkage(TR::CodeGenerator * cg, TR_LinkageConventions elc=TR_JavaHelper);
 
    virtual void createPrologue(TR::Instruction * cursor) { TR_UNIMPLEMENTED(); }
    virtual void createEpilogue(TR::Instruction * cursor) { TR_UNIMPLEMENTED(); }

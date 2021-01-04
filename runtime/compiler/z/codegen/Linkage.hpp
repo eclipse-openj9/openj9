@@ -35,7 +35,7 @@ class OMR_EXTENSIBLE Linkage : public J9::LinkageConnector
    Linkage(TR::CodeGenerator *cg)
       : J9::LinkageConnector(cg) {}
 
-   Linkage(TR::CodeGenerator *cg, TR_S390LinkageConventions elc)
+   Linkage(TR::CodeGenerator *cg, TR_LinkageConventions elc)
       : J9::LinkageConnector(cg, elc) {}
    };
 }

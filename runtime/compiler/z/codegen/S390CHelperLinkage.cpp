@@ -55,7 +55,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::CHelperLinkage for J9
 ////////////////////////////////////////////////////////////////////////////////
-J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions elc)
+J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_LinkageConventions elc)
    : TR::Linkage(codeGen,elc)
    {
    TR::Compilation *comp = codeGen->comp();
