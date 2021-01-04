@@ -91,6 +91,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodTypeRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMNameAndSignaturePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMRecordComponentShapePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMStringRefPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9SourceDebugExtensionPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9MethodDebugInfoHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
@@ -101,6 +102,7 @@ import com.ibm.j9ddr.vm29.structure.J9MethodDebugInfo;
 import com.ibm.j9ddr.vm29.structure.J9ROMClass;
 import com.ibm.j9ddr.vm29.structure.J9ROMConstantPoolItem;
 import com.ibm.j9ddr.vm29.structure.J9ROMRecordComponentShape;
+import com.ibm.j9ddr.vm29.structure.J9SourceDebugExtension;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.IClassWalkCallbacks.SlotType;
 import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.U16;
@@ -683,13 +685,13 @@ public class RomClassWalker extends ClassWalker {
 			cursor = cursor.add(1);
 		}
 		if (romClass.optionalFlags().anyBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION)) {
-			classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, cursor, "optionalSourceDebugExtUTF8");
+			classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "optionalSourceDebugExtSRP");
+			allSlotsInSourceDebugExtensionDo(J9SourceDebugExtensionPointer.cast(cursor.get()));
 			cursor = cursor.add(1);
 		}
 		if (romClass.optionalFlags().anyBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_ENCLOSING_METHOD)) {
 			classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "optionalEnclosingMethodSRP");
 			allSlotsInEnclosingObjectDo(J9EnclosingObjectPointer.cast(cursor.get()));
-			
 			cursor = cursor.add(1);
 		}
 		if (romClass.optionalFlags().anyBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SIMPLE_NAME)) {
@@ -718,6 +720,7 @@ public class RomClassWalker extends ClassWalker {
 
 		classWalkerCallback.addSection(clazz, optionalInfo, cursor.getAddress() - optionalInfo.getAddress(), "optionalInfo", true);
 	}
+
 	void allSlotsInIntermediateClassDataDo () throws CorruptDataException
 	{
 		UDATA count = romClass.intermediateClassDataLength();
@@ -1076,6 +1079,27 @@ public class RomClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, enclosingObject, J9EnclosingObject.SIZEOF, "enclosingObject", true);
 		
 		addObjectsasSlot(enclosingObject);
+	}
+
+	void allSlotsInSourceDebugExtensionDo(J9SourceDebugExtensionPointer sde) throws CorruptDataException
+	{
+		if (sde.isNull()) {
+			return;
+		}
+
+		classWalkerCallback.addSlot(clazz, SlotType.J9_U32, sde.sizeEA(), "optionalSourceDebugExtSize");
+		long size = sde.size().longValue();
+		long alignedSize = (size + U32.SIZEOF - 1) & ~(U32.SIZEOF - 1);
+
+		U8Pointer data = U8Pointer.cast(sde.add(1));
+		for (long i = 0; i < size; ++i) {
+			classWalkerCallback.addSlot(clazz, SlotType.J9_U8, data.add(i), "optionalSourceDebugExtData");
+		}
+		for (long i = size; i < alignedSize; ++i) {
+			classWalkerCallback.addSlot(clazz, SlotType.J9_U8, data.add(i), "optionalSourceDebugExtPadding");
+		}
+
+		classWalkerCallback.addSection(clazz, sde, J9SourceDebugExtension.SIZEOF + alignedSize, "optionalSourceDebugExt", true);
 	}
 	
 	private short SWAP2BE(short in) {
