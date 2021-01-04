@@ -28,11 +28,3 @@
 #include "codegen/OMRLinkageConventions.enum"
 
    TR_CHelper,
-   TR_SystemXPLink,                     // (Java) zOS XPLink convention
-
-   // zOS Type 1 linkages (non-Java) - all have bit 0x40 set
-   // zOS Type 1 linkage - C++ Fastlink
-   TR_SystemFastLink          = 0x4D,  // (non-Java) zOS (C++) FastLink convention
-
-   // Linux Platform Linkages
-   TR_SystemLinux,//          = 60     // (Java) zLinux convention
