@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -376,53 +376,55 @@ ROMClassBuilder::releaseClassFileBuffer()
 	_classFileBuffer = NULL;
 	return result;
 }
+
 void
 ROMClassBuilder::getSizeInfo(ROMClassCreationContext *context, ROMClassWriter *romClassWriter, SRPOffsetTable *srpOffsetTable, bool *countDebugDataOutOfLine, SizeInformation *sizeInformation)
 {
-		/* create a new scope to allow the ROMClassVerbosePhase to properly record the amount of time spent in
-		 * preparation */
-		ROMClassVerbosePhase v(context, PrepareROMClass);
-		Cursor mainAreaCursor(RC_TAG, srpOffsetTable, context);
-		Cursor lineNumberCursor(LINE_NUMBER_TAG, srpOffsetTable, context);
-		Cursor variableInfoCursor(VARIABLE_INFO_TAG, srpOffsetTable, context);
-		Cursor utf8Cursor(UTF8_TAG, srpOffsetTable, context);
-		Cursor classDataCursor(INTERMEDIATE_TAG, srpOffsetTable, context);
-		/*
-		 * The need to have separate lineNumber and variableInfo Cursors from mainAreaCursor only exists
-		 * if it is possible to place debug information out of line. That is currently only done when
-		 * shared classes is enabled and it is possible to share the class OR when the allocation strategy
-		 * permits it.
-		 */
-		if (context->canPossiblyStoreDebugInfoOutOfLine()) {
-			/* It's possible that debug information can be stored out of line.
-			 * Calculate sizes and offsets with out of line debug information.*/
-			*countDebugDataOutOfLine = true;
-			romClassWriter
-				->writeROMClass(&mainAreaCursor,
-					&lineNumberCursor,
-					&variableInfoCursor,
-					&utf8Cursor,
-					(context->isIntermediateDataAClassfile()) ? &classDataCursor : NULL,
-					0, 0, 0, 0,
-					ROMClassWriter::MARK_AND_COUNT_ONLY);
-		} else {
-			context->forceDebugDataInLine();
-			romClassWriter
-				->writeROMClass(&mainAreaCursor,
-					&mainAreaCursor,
-					&mainAreaCursor,
-					&utf8Cursor,
-					(context->isIntermediateDataAClassfile()) ? &classDataCursor : NULL,
-					0, 0, 0, 0,
-					ROMClassWriter::MARK_AND_COUNT_ONLY);
-		}
-		sizeInformation->rcWithOutUTF8sSize = mainAreaCursor.getCount();
-		sizeInformation->lineNumberSize = lineNumberCursor.getCount();
-		sizeInformation->variableInfoSize = variableInfoCursor.getCount();
-		sizeInformation->utf8sSize = utf8Cursor.getCount();
-		/* In case of intermediateData being stored as ROMClass, rawClassDataSize will be 0. */
-		sizeInformation->rawClassDataSize = classDataCursor.getCount();
-		sizeInformation->varHandleMethodTypeLookupTableSize = romClassWriter->getVarHandleMethodTypePaddedSize();
+	/* create a new scope to allow the ROMClassVerbosePhase to properly record the amount of time spent in
+	 * preparation */
+	ROMClassVerbosePhase v(context, PrepareROMClass);
+	Cursor mainAreaCursor(RC_TAG, srpOffsetTable, context);
+	Cursor lineNumberCursor(LINE_NUMBER_TAG, srpOffsetTable, context);
+	Cursor variableInfoCursor(VARIABLE_INFO_TAG, srpOffsetTable, context);
+	Cursor utf8Cursor(UTF8_TAG, srpOffsetTable, context);
+	Cursor classDataCursor(INTERMEDIATE_TAG, srpOffsetTable, context);
+	/*
+	 * The need to have separate lineNumber and variableInfo Cursors from mainAreaCursor only exists
+	 * if it is possible to place debug information out of line. That is currently only done when
+	 * shared classes is enabled and it is possible to share the class OR when the allocation strategy
+	 * permits it.
+	 */
+	if (context->canPossiblyStoreDebugInfoOutOfLine()) {
+		/* It's possible that debug information can be stored out of line.
+		 * Calculate sizes and offsets with out of line debug information.*/
+		*countDebugDataOutOfLine = true;
+		romClassWriter
+			->writeROMClass(&mainAreaCursor,
+				&lineNumberCursor,
+				&variableInfoCursor,
+				&utf8Cursor,
+				(context->isIntermediateDataAClassfile()) ? &classDataCursor : NULL,
+				0, 0, 0, 0,
+				ROMClassWriter::MARK_AND_COUNT_ONLY);
+	} else {
+		context->forceDebugDataInLine();
+		romClassWriter
+			->writeROMClass(&mainAreaCursor,
+				&mainAreaCursor,
+				&mainAreaCursor,
+				&utf8Cursor,
+				(context->isIntermediateDataAClassfile()) ? &classDataCursor : NULL,
+				0, 0, 0, 0,
+				ROMClassWriter::MARK_AND_COUNT_ONLY);
+	}
+	/* NOTE: the size of the VarHandle MethodType lookup table is already included in
+	 * rcWithOutUTF8sSize; see ROMClassWriter::writeVarHandleMethodTypeLookupTable() */
+	sizeInformation->rcWithOutUTF8sSize = mainAreaCursor.getCount();
+	sizeInformation->lineNumberSize = lineNumberCursor.getCount();
+	sizeInformation->variableInfoSize = variableInfoCursor.getCount();
+	sizeInformation->utf8sSize = utf8Cursor.getCount();
+	/* In case of intermediateData being stored as ROMClass, rawClassDataSize will be 0. */
+	sizeInformation->rawClassDataSize = classDataCursor.getCount();
 }
 
 BuildResult
@@ -536,8 +538,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 			sizeInformation.lineNumberSize +
 			sizeInformation.variableInfoSize +
 			sizeInformation.utf8sSize +
-			sizeInformation.rawClassDataSize +
-			sizeInformation.varHandleMethodTypeLookupTableSize;
+			sizeInformation.rawClassDataSize;
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 	if (context->isROMClassShareable()) {
@@ -615,7 +616,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 
 			sizeRequirements.romClassMinimalSize =
 					U_32(sizeInformation.rcWithOutUTF8sSize
-					+ sizeInformation.utf8sSize + sizeInformation.rawClassDataSize + sizeInformation.varHandleMethodTypeLookupTableSize);
+					+ sizeInformation.utf8sSize + sizeInformation.rawClassDataSize);
 			sizeRequirements.romClassMinimalSize = ROUND_UP_TO_POWEROF2(sizeRequirements.romClassMinimalSize, sizeof(U_64));
 
 			sizeRequirements.romClassSizeFullSize =
@@ -718,7 +719,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 	AllocationStrategy::AllocatedBuffers allocatedBuffers;
 
 	if ( context->allocationStrategy()->allocateWithOutOfLineData( &allocatedBuffers,
-			sizeInformation.rcWithOutUTF8sSize + sizeInformation.utf8sSize + sizeInformation.rawClassDataSize + sizeInformation.varHandleMethodTypeLookupTableSize,
+			sizeInformation.rcWithOutUTF8sSize + sizeInformation.utf8sSize + sizeInformation.rawClassDataSize,
 			sizeInformation.lineNumberSize, sizeInformation.variableInfoSize)
 	) {
 		romClassBuffer = allocatedBuffers.romClassBuffer;
@@ -1023,12 +1024,13 @@ ROMClassBuilder::finishPrepareAndLaydown(
 									0, 0, 0, 0,
 									ROMClassWriter::MARK_AND_COUNT_ONLY);
 
+		/* NOTE: the size of the VarHandle MethodType lookup table is already included in
+		 * rcWithOutUTF8sSize; see ROMClassWriter::writeVarHandleMethodTypeLookupTable() */
 		sizeInformation->rcWithOutUTF8sSize = mainAreaCursor.getCount();
 		sizeInformation->lineNumberSize = 0;
 		sizeInformation->variableInfoSize = 0;
 		sizeInformation->utf8sSize = utf8Cursor.getCount();
 		sizeInformation->rawClassDataSize = classDataCursor.getCount();
-		sizeInformation->varHandleMethodTypeLookupTableSize = romClassWriter->getVarHandleMethodTypePaddedSize();
 	} else if (internManager.isInterningEnabled()) {
 		/*
 		 * With the interned strings known, do a second pass on the UTF8 block to update SRP offset information
@@ -1043,7 +1045,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
 	/*
 	 * Record the romSize as the final size of the ROMClass with interned strings space removed.
 	 */
-	U_32 romSize = U_32(sizeInformation->rcWithOutUTF8sSize + sizeInformation->utf8sSize + sizeInformation->rawClassDataSize + sizeInformation->varHandleMethodTypeLookupTableSize);
+	U_32 romSize = U_32(sizeInformation->rcWithOutUTF8sSize + sizeInformation->utf8sSize + sizeInformation->rawClassDataSize);
 	romSize = ROUND_UP_TO_POWEROF2(romSize, sizeof(U_64));
 
 	/*
