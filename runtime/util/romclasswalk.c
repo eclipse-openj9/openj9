@@ -46,9 +46,10 @@ static void allSlotsInBytecodesDo (J9ROMClass* romClass, J9ROMMethod* method, J9
 static void allSlotsInCPShapeDescriptionDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static void allSlotsInCallSiteDataDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static UDATA allSlotsInMethodParametersDataDo(J9ROMClass* romClass, U_8* cursor, J9ROMClassWalkCallbacks* callbacks, void* userData);
-
 static void allSlotsInStaticSplitMethodRefIndexesDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static void allSlotsInSpecialSplitMethodRefIndexesDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
+static void allSlotsInSourceDebugExtensionDo (J9ROMClass* romClass, J9SourceDebugExtension* sde, J9ROMClassWalkCallbacks* callbacks, void* userData);
+
 static void nullSlotCallback(J9ROMClass*, U_32, void*, const char*, void*);
 static void nullSectionCallback(J9ROMClass*, void*, UDATA, const char*, void*);
 static BOOLEAN defaultValidateRangeCallback(J9ROMClass*, void*, UDATA, void*);
@@ -846,7 +847,8 @@ allSlotsInOptionalInfoDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callback
 	if (romClass->optionalFlags & J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION) {
 		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(J9SRP), userData);
 		if (rangeValid) {
-			callbacks->slotCallback(romClass, J9ROM_UTF8, cursor, "optionalSourceDebugExtUTF8", userData);
+			callbacks->slotCallback(romClass, J9ROM_SRP, cursor, "optionalSourceDebugExtSRP", userData);
+			allSlotsInSourceDebugExtensionDo(romClass, SRP_PTR_GET(cursor, J9SourceDebugExtension *), callbacks, userData);
 		}
 		cursor++;
 	}
@@ -1378,6 +1380,39 @@ static void allSlotsInCallSiteDataDo (J9ROMClass* romClass, J9ROMClassWalkCallba
 
 	/* bsmDataCursor now points after all the bootstrap method data */
 	callbacks->sectionCallback(romClass, callSiteData, (U_8 *)bsmDataCursor - (U_8 *)callSiteData, "callSiteData", userData);
+}
+
+static void
+allSlotsInSourceDebugExtensionDo(J9ROMClass* romClass, J9SourceDebugExtension* sde, J9ROMClassWalkCallbacks* callbacks, void* userData)
+{
+	BOOLEAN rangeValid;
+	UDATA alignedSize, i;
+	U_8 *data;
+
+	if (NULL == sde) {
+		return;
+	}
+	rangeValid = callbacks->validateRangeCallback(romClass, sde, sizeof(J9SourceDebugExtension), userData);
+	if (FALSE == rangeValid) {
+		return;
+	}
+
+	callbacks->slotCallback(romClass, J9ROM_U32, &sde->size, "optionalSourceDebugExtSize", userData);
+	alignedSize = (sde->size + sizeof(U_32) - 1) & ~(sizeof(U_32) - 1);
+	rangeValid = callbacks->validateRangeCallback(romClass, sde + 1, alignedSize, userData);
+	if (FALSE == rangeValid) {
+		return;
+	}
+
+	data = (U_8 *)(sde + 1);
+	for (i = 0; i < sde->size; ++i) {
+		callbacks->slotCallback(romClass, J9ROM_U8, data + i, "optionalSourceDebugExtData", userData);
+	}
+	for (i = sde->size; i < alignedSize; ++i) {
+		callbacks->slotCallback(romClass, J9ROM_U8, data + i, "optionalSourceDebugExtPadding", userData);
+	}
+
+	callbacks->sectionCallback(romClass, sde, sizeof(J9SourceDebugExtension) + alignedSize, "optionalSourceDebugExt", userData);
 }
 
 static void
