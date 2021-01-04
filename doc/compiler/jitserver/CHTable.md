@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2019 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -104,7 +104,7 @@ call to `computeDataForCHTableCommit` is performed on the server and the data is
 `JITClientCHTableCommit` is called.
 
 Because the vanilla `commit` code uses a bunch of linked lists of complex types including symbol references (which only exist on
-the server) and protobuf gives us vectors when deserializing, the commit code has been duplicated to make use of stripped down
+the server) and networking code gives us vectors when deserializing, the commit code has been duplicated to make use of stripped down
 data types which only include relevant information. This is unfortunate, but it would be rather complex to support a single
 templated implementation which handles both data formats, and it would be inefficient to convert between the two data formats. So
 for this "protoype" CHTable implementation, code duplication is the only reasonable way to make things work. Still, the data is
