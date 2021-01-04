@@ -3960,6 +3960,14 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+   static X DirectMethodHandleMethods[] =
+      {
+      {x(TR::java_lang_invoke_DirectMethodHandle_internalMemberName,            "internalMemberName",                 "(Ljava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::java_lang_invoke_DirectMethodHandle_internalMemberNameEnsureInit,  "internalMemberNameEnsureInit",       "(Ljava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::java_lang_invoke_DirectMethodHandle_constructorMethod,             "constructorMethod",       "(Ljava/lang/Object;)Ljava/lang/Object;")},
+      {  TR::unknownMethod}
+      };
+
    static X PrimitiveHandleMethods[] =
       {
       {x(TR::java_lang_invoke_PrimitiveHandle_initializeClassIfRequired,  "initializeClassIfRequired",       "()V")},
@@ -4470,6 +4478,7 @@ void TR_ResolvedJ9Method::construct()
       {
       { "java/lang/invoke/ExplicitCastHandle", ExplicitCastHandleMethods },
       { "jdk/internal/loader/NativeLibraries", NativeLibrariesMethods },
+      { "java/lang/invoke/DirectMethodHandle", DirectMethodHandleMethods },
       { 0 }
       };
 

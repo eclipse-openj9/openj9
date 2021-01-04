@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1022,6 +1022,9 @@
    java_lang_invoke_MethodHandle_linkToSpecial,
    java_lang_invoke_MethodHandle_linkToVirtual,
    java_lang_invoke_MethodHandle_linkToInterface,
+   java_lang_invoke_DirectMethodHandle_internalMemberName,
+   java_lang_invoke_DirectMethodHandle_internalMemberNameEnsureInit,
+   java_lang_invoke_DirectMethodHandle_constructorMethod,
    java_lang_invoke_MethodHandles_getStackClass,
    java_lang_invoke_MethodHandle_type,
    java_lang_invoke_MethodHandle_undoCustomizationLogic,
