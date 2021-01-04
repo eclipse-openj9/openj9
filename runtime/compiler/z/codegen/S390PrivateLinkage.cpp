@@ -58,10 +58,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::PrivateLinkage for J9
 ////////////////////////////////////////////////////////////////////////////////
-J9::Z::PrivateLinkage::PrivateLinkage(TR::CodeGenerator * codeGen,TR_LinkageConventions elc)
+J9::Z::PrivateLinkage::PrivateLinkage(TR::CodeGenerator * codeGen,TR_LinkageConventions lc)
    : J9::PrivateLinkage(codeGen)
    {
-   setExplicitLinkageType(elc);
+   setLinkageType(lc);
 
    // linkage properties
    setProperty(SplitLongParm);
